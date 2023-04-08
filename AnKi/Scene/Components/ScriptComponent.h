@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -24,9 +24,7 @@ public:
 
 	~ScriptComponent();
 
-	Error loadScriptResource(CString fname);
-
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void loadScriptResource(CString fname);
 
 	Bool isEnabled() const
 	{
@@ -34,9 +32,10 @@ public:
 	}
 
 private:
-	SceneNode* m_node;
 	ScriptResourcePtr m_script;
 	ScriptEnvironment* m_env = nullptr;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

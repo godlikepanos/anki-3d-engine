@@ -1,186 +1,115 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #pragma once
 
+#include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/Assert.h>
-#include <AnKi/Util/Thread.h>
 #include <utility>
 
 namespace anki {
 
+#if ANKI_ENABLE_ASSERTIONS
+extern I32 g_singletonsAllocated;
+#endif
+
 /// @addtogroup util_patterns
 /// @{
 
-/// This template makes a class singleton
+/// If class inherits that it will become a singleton.
 template<typename T>
-class Singleton
+class MakeSingleton
 {
 public:
-	using Value = T;
-
-	// Non copyable
-	Singleton(const Singleton&) = delete;
-	Singleton& operator=(const Singleton&) = delete;
-
-	// Non constructable
-	Singleton() = delete;
-	~Singleton() = delete;
-
-	/// Get instance
-	static Value& get()
+	ANKI_FORCE_INLINE static T& getSingleton()
 	{
-		return *(m_instance ? m_instance : (m_instance = new Value));
+		ANKI_ASSERT(m_initialized);
+		return *reinterpret_cast<T*>(m_global);
 	}
 
-	/// Cleanup
-	static void destroy()
-	{
-		if(m_instance)
-		{
-			delete m_instance;
-		}
-	}
-
-private:
-	static Value* m_instance;
-};
-
-template<typename T>
-typename Singleton<T>::Value* Singleton<T>::m_instance = nullptr;
-
-/// This template makes a class with a destructor with arguments singleton
-template<typename T>
-class SingletonInit
-{
-public:
-	using Value = T;
-
-	// Non copyable
-	SingletonInit(const SingletonInit&) = delete;
-	SingletonInit& operator=(const SingletonInit&) = delete;
-
-	// Non constructable
-	SingletonInit() = delete;
-	~SingletonInit() = delete;
-
-	/// Init the singleton
 	template<typename... TArgs>
-	static void init(TArgs... args)
+	static T& allocateSingleton(TArgs... args)
 	{
-		ANKI_ASSERT(m_instance == nullptr);
-		m_instance = new Value(std::forward<TArgs>(args)...);
+		ANKI_ASSERT(!m_initialized);
+		::new(m_global) T(args...);
+		m_initialized = true;
+#if ANKI_ENABLE_ASSERTIONS
+		++g_singletonsAllocated;
+#endif
+
+		return *reinterpret_cast<T*>(m_global);
 	}
 
-	/// Get instance
-	static Value& get()
+	static void freeSingleton()
 	{
-		ANKI_ASSERT(m_instance != nullptr);
-		return *m_instance;
-	}
-
-	/// Cleanup
-	static void destroy()
-	{
-		if(m_instance)
+		if(m_initialized)
 		{
-			delete m_instance;
+			reinterpret_cast<T*>(m_global)->~T();
+			m_initialized = false;
+#if ANKI_ENABLE_ASSERTIONS
+			--g_singletonsAllocated;
+#endif
 		}
 	}
 
-	static Bool isInitialized()
+	static Bool isAllocated()
 	{
-		return m_instance != nullptr;
+		return m_initialized;
 	}
 
 private:
-	static Value* m_instance;
+	static U8 m_global[];
+	static inline Bool m_initialized = false;
 };
 
 template<typename T>
-typename SingletonInit<T>::Value* SingletonInit<T>::m_instance = nullptr;
+alignas(ANKI_SAFE_ALIGNMENT) U8 MakeSingleton<T>::m_global[sizeof(T)];
 
-/// This template makes a class singleton with thread local instance
+/// If class inherits that it will become a singleton.
 template<typename T>
-class SingletonThreadLocal
+class MakeSingletonPtr
 {
 public:
-	using Value = T;
-
-	// Non copyable
-	SingletonThreadLocal(const SingletonThreadLocal&) = delete;
-	SingletonThreadLocal& operator=(const SingletonThreadLocal&) = delete;
-
-	// Non constructable
-	SingletonThreadLocal() = delete;
-	~SingletonThreadLocal() = delete;
-
-	/// Get instance
-	static Value& get()
+	ANKI_FORCE_INLINE static T& getSingleton()
 	{
-		return *(m_instance ? m_instance : (m_instance = new Value));
+		return *m_global;
 	}
 
-	/// Cleanup
-	void destroy()
+	template<typename... TArgs>
+	static T& allocateSingleton(TArgs... args)
 	{
-		if(m_instance)
+		ANKI_ASSERT(m_global == nullptr);
+		m_global = new T(args...);
+
+#if ANKI_ENABLE_ASSERTIONS
+		++g_singletonsAllocated;
+#endif
+
+		return *m_global;
+	}
+
+	static void freeSingleton()
+	{
+		if(m_global)
 		{
-			delete m_instance;
+			delete m_global;
+			m_global = nullptr;
+#if ANKI_ENABLE_ASSERTIONS
+			--g_singletonsAllocated;
+#endif
 		}
 	}
 
-private:
-	static thread_local Value* m_instance;
-};
-
-template<typename T>
-thread_local typename SingletonThreadLocal<T>::Value* SingletonThreadLocal<T>::m_instance = nullptr;
-
-/// This template makes a class with a destructor with arguments singleton
-template<typename T>
-class SingletonThreadsafe
-{
-public:
-	using Value = T;
-
-	// Non copyable
-	SingletonThreadsafe(const SingletonThreadsafe&) = delete;
-	SingletonThreadsafe& operator=(const SingletonThreadsafe&) = delete;
-
-	// Non constructable
-	SingletonThreadsafe() = delete;
-	~SingletonThreadsafe() = delete;
-
-	/// Get instance
-	static Value& get()
+	static Bool isAllocated()
 	{
-		LockGuard<Mutex> lock(m_mtx);
-		return *(m_instance ? m_instance : (m_instance = new Value));
-	}
-
-	/// Cleanup
-	static void destroy()
-	{
-		LockGuard<Mutex> lock(m_mtx);
-		if(m_instance)
-		{
-			delete m_instance;
-		}
+		return m_global != nullptr;
 	}
 
 private:
-	static Value* m_instance;
-	static Mutex m_mtx;
+	static inline T* m_global = nullptr;
 };
-
-template<typename T>
-typename SingletonThreadsafe<T>::Value* SingletonThreadsafe<T>::m_instance = nullptr;
-
-template<typename T>
-Mutex SingletonThreadsafe<T>::m_mtx;
 /// @}
 
 } // end namespace anki

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,14 +11,14 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Shaders/Include/MaterialTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 namespace anki {
-
-RtShadows::~RtShadows()
-{
-}
 
 Error RtShadows::init()
 {
@@ -35,17 +35,19 @@ Error RtShadows::initInternal()
 {
 	ANKI_R_LOGV("Initializing RT shadows");
 
-	m_useSvgf = getConfig().getRRtShadowsSvgf();
-	m_atrousPassCount = getConfig().getRRtShadowsSvgfAtrousPassCount();
+	m_useSvgf = ConfigSet::getSingleton().getRRtShadowsSvgf();
+	m_atrousPassCount = ConfigSet::getSingleton().getRRtShadowsSvgfAtrousPassCount();
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
+	ANKI_CHECK(
+		ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
 	// Ray gen program
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin", m_rayGenProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin", m_rayGenProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
-		variantInitInfo.addMutation("RAYS_PER_PIXEL", getConfig().getRRtShadowsRaysPerPixel());
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", ConfigSet::getSingleton().getRRtShadowsRaysPerPixel());
 
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);
@@ -55,7 +57,8 @@ Error RtShadows::initInternal()
 
 	// Miss prog
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin", m_missProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin", m_missProg));
 		const ShaderProgramResourceVariant* variant;
 		m_missProg->getOrCreateVariant(variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
@@ -64,10 +67,11 @@ Error RtShadows::initInternal()
 	// Denoise program
 	if(!m_useSvgf)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
-		variantInitInfo.addConstant("kOutImageSize",
-									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
+		variantInitInfo.addConstant("kOutImageSize", UVec2(getRenderer().getInternalResolution().x() / 2,
+														   getRenderer().getInternalResolution().y() / 2));
 		variantInitInfo.addConstant("kMinSampleCount", 8u);
 		variantInitInfo.addConstant("kMaxSampleCount", 32u);
 		variantInitInfo.addMutation("BLUR_ORIENTATION", 0);
@@ -84,11 +88,11 @@ Error RtShadows::initInternal()
 	// SVGF variance program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(
-			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin", m_svgfVarianceProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsSvgfVariance.ankiprogbin",
+																m_svgfVarianceProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfVarianceProg);
-		variantInitInfo.addConstant("kFramebufferSize",
-									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
+		variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x() / 2,
+															  getRenderer().getInternalResolution().y() / 2));
 
 		const ShaderProgramResourceVariant* variant;
 		m_svgfVarianceProg->getOrCreateVariant(variantInitInfo, variant);
@@ -98,11 +102,11 @@ Error RtShadows::initInternal()
 	// SVGF atrous program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(
-			getResourceManager().loadResource("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", m_svgfAtrousProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin",
+																m_svgfAtrousProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
-		variantInitInfo.addConstant("kFramebufferSize",
-									UVec2(m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2));
+		variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x() / 2,
+															  getRenderer().getInternalResolution().y() / 2));
 		variantInitInfo.addMutation("LAST_PASS", 0);
 
 		const ShaderProgramResourceVariant* variant;
@@ -116,10 +120,11 @@ Error RtShadows::initInternal()
 
 	// Upscale program
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsUpscale.ankiprogbin", m_upscaleProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscaleProg);
-		variantInitInfo.addConstant("kOutImageSize",
-									UVec2(m_r->getInternalResolution().x(), m_r->getInternalResolution().y()));
+		variantInitInfo.addConstant("kOutImageSize", UVec2(getRenderer().getInternalResolution().x(),
+														   getRenderer().getInternalResolution().y()));
 
 		const ShaderProgramResourceVariant* variant;
 		m_upscaleProg->getOrCreateVariant(variantInitInfo, variant);
@@ -127,73 +132,76 @@ Error RtShadows::initInternal()
 	}
 
 	// Debug program
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/RtShadowsVisualizeRenderTarget.ankiprogbin",
-												 m_visualizeRenderTargetsProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsVisualizeRenderTarget.ankiprogbin",
+															m_visualizeRenderTargetsProg));
 
 	// Quarter rez shadow RT
 	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::kR32G32_Uint,
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
+			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2,
+			Format::kR32G32_Uint,
 			TextureUsageBit::kAllSampled | TextureUsageBit::kImageTraceRaysWrite | TextureUsageBit::kImageComputeWrite,
 			"RtShadows History");
-		m_historyRt = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_historyRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
 	// Temp shadow RT
 	{
-		m_intermediateShadowsRtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x() / 2,
-																			m_r->getInternalResolution().y() / 2,
-																			Format::kR32G32_Uint, "RtShadows Tmp");
+		m_intermediateShadowsRtDescr = getRenderer().create2DRenderTargetDescription(
+			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2,
+			Format::kR32G32_Uint, "RtShadows Tmp");
 		m_intermediateShadowsRtDescr.bake();
 	}
 
 	// Moments RT
 	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-			m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, Format::kR32G32_Sfloat,
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
+			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2,
+			Format::kR32G32_Sfloat,
 			TextureUsageBit::kAllSampled | TextureUsageBit::kImageTraceRaysWrite | TextureUsageBit::kImageComputeWrite,
 			"RtShadows Moments #1");
-		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_momentsRts[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 
 		texinit.setName("RtShadows Moments #2");
-		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_momentsRts[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
 	// Variance RT
 	if(m_useSvgf)
 	{
-		m_varianceRtDescr = m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x() / 2,
-																 m_r->getInternalResolution().y() / 2,
-																 Format::kR32_Sfloat, "RtShadows Variance");
+		m_varianceRtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x() / 2,
+																		  getRenderer().getInternalResolution().y() / 2,
+																		  Format::kR32_Sfloat, "RtShadows Variance");
 		m_varianceRtDescr.bake();
 	}
 
 	// Final RT
 	{
-		m_upscaledRtDescr =
-			m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-												 Format::kR32G32_Uint, "RtShadows Upscaled");
+		m_upscaledRtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(),
+																		  getRenderer().getInternalResolution().y(),
+																		  Format::kR32G32_Uint, "RtShadows Upscaled");
 		m_upscaledRtDescr.bake();
 	}
 
 	// Misc
-	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
+	m_sbtRecordSize =
+		getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
 
 	return Error::kNone;
 }
 
 void RtShadows::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_RT_SHADOWS);
+	ANKI_TRACE_SCOPED_EVENT(RRtShadows);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	buildSbt(ctx);
-	const U32 prevRtIdx = m_r->getFrameCount() & 1;
+	const U32 prevRtIdx = getRenderer().getFrameCount() & 1;
 
 	// Import RTs
 	{
-		if(ANKI_UNLIKELY(!m_rtsImportedOnce))
+		if(!m_rtsImportedOnce) [[unlikely]]
 		{
 			m_runCtx.m_historyRt = rgraph.importRenderTarget(m_historyRt, TextureUsageBit::kSampledFragment);
 
@@ -235,30 +243,33 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	}
 
 #define ANKI_DEPTH_DEP \
-	m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledTraceRays | TextureUsageBit::kSampledCompute, \
-		kHiZHalfSurface
+	getRenderer().getDepthDownscale().getHiZRt(), \
+		TextureUsageBit::kSampledTraceRays | TextureUsageBit::kSampledCompute, kHiZHalfSurface
 
 	// RT shadows pass
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
-		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			run(ctx, rgraphCtx);
+		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSampledTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kImageTraceRaysWrite);
 		rpass.newAccelerationStructureDependency(
-			m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle(),
+			getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 			AccelerationStructureUsageBit::kTraceRaysRead);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSampledTraceRays);
-		rpass.newTextureDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::kSampledTraceRays);
-		rpass.newTextureDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::kSampledTraceRays);
+		rpass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(),
+								   TextureUsageBit::kSampledTraceRays);
+		rpass.newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(),
+								   TextureUsageBit::kSampledTraceRays);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledTraceRays);
 
 		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSampledTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kImageTraceRaysWrite);
 
-		rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageTraceRaysRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(),
+								  BufferUsageBit::kStorageTraceRaysRead);
 	}
 
 	// Denoise pass horizontal
@@ -271,9 +282,10 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(),
+								   TextureUsageBit::kSampledCompute);
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kImageComputeWrite);
 	}
@@ -288,9 +300,10 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(),
+								   TextureUsageBit::kSampledCompute);
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kImageComputeWrite);
 	}
@@ -305,9 +318,10 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_r->getMotionVectors().getHistoryLengthRt(), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(),
+								   TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kImageComputeWrite);
 		rpass.newTextureDependency(m_runCtx.m_varianceRts[1], TextureUsageBit::kImageComputeWrite);
@@ -329,7 +343,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			});
 
 			rpass.newTextureDependency(ANKI_DEPTH_DEP);
-			rpass.newTextureDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
+			rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
 			rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[readRtIdx], TextureUsageBit::kSampledCompute);
 			rpass.newTextureDependency(m_runCtx.m_varianceRts[readRtIdx], TextureUsageBit::kSampledCompute);
 
@@ -355,7 +369,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
 
 		rpass.newTextureDependency(m_runCtx.m_upscaledRt, TextureUsageBit::kImageComputeWrite);
@@ -428,38 +442,67 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_rtLibraryGrProg);
 
-	bindUniforms(cmdb, 0, 0, rsrc.m_clusteredShadingUniformsToken);
+	// Allocate, set and bind global uniforms
+	{
+		RebarGpuMemoryToken globalUniformsToken;
+		MaterialGlobalUniforms* globalUniforms =
+			static_cast<MaterialGlobalUniforms*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(
+				sizeof(MaterialGlobalUniforms), globalUniformsToken));
 
-	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
+		memset(globalUniforms, 0, sizeof(*globalUniforms)); // Don't care for now
 
-	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
+		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
+								RebarStagingGpuMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset,
+								globalUniformsToken.m_range);
+	}
 
-	cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearRepeat);
+	// More globals
+	cmdb->bindAllBindless(U32(MaterialSet::kBindless));
+	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler),
+					  getRenderer().getSamplers().m_trilinearRepeat);
+	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene),
+							GpuSceneMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[0]);
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
+	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+									UnifiedGeometryMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize, \
+									Format::k##fmt);
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
-	rgraphCtx.bindColorTexture(0, 7, m_runCtx.m_historyRt);
-	cmdb->bindSampler(0, 8, m_r->getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 9, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindTexture(0, 10, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-	rgraphCtx.bindColorTexture(0, 11, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getHistoryLengthRt());
-	rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 14, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
-	rgraphCtx.bindColorTexture(0, 15, m_runCtx.m_prevMomentsRt);
-	rgraphCtx.bindImage(0, 16, m_runCtx.m_currentMomentsRt);
-	cmdb->bindTexture(0, 17, m_blueNoiseImage->getTextureView());
+	constexpr U32 kSet = 2;
 
-	cmdb->bindAllBindless(1);
+	bindUniforms(cmdb, kSet, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 1,
+																			 ClusteredObjectType::kPointLight);
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 2,
+																			 ClusteredObjectType::kSpotLight);
+	rgraphCtx.bindColorTexture(kSet, 3, getRenderer().getShadowMapping().getShadowmapRt());
+
+	bindStorage(cmdb, kSet, 4, getRenderer().getClusterBinning().getClustersRebarToken());
+
+	cmdb->bindSampler(kSet, 5, getRenderer().getSamplers().m_trilinearRepeat);
+
+	rgraphCtx.bindImage(kSet, 6, m_runCtx.m_intermediateShadowsRts[0]);
+
+	rgraphCtx.bindColorTexture(kSet, 7, m_runCtx.m_historyRt);
+	cmdb->bindSampler(kSet, 8, getRenderer().getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(kSet, 9, getRenderer().getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindTexture(kSet, 10, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindColorTexture(kSet, 11, getRenderer().getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(kSet, 12, getRenderer().getMotionVectors().getHistoryLengthRt());
+	rgraphCtx.bindColorTexture(kSet, 13, getRenderer().getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(
+		kSet, 14, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	rgraphCtx.bindColorTexture(kSet, 15, m_runCtx.m_prevMomentsRt);
+	rgraphCtx.bindImage(kSet, 16, m_runCtx.m_currentMomentsRt);
+	cmdb->bindTexture(kSet, 17, m_blueNoiseImage->getTextureView());
 
 	RtShadowsUniforms unis;
 	for(U32 i = 0; i < kMaxRtShadowLayers; ++i)
@@ -469,7 +512,7 @@ void RtShadows::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCt
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_sbtRecordSize, m_runCtx.m_hitGroupCount, 1,
-					m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2, 1);
+					getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, 1);
 }
 
 void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -478,23 +521,24 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	cmdb->bindShaderProgram((m_runCtx.m_denoiseOrientation == 0) ? m_grDenoiseHorizontalProg : m_grDenoiseVerticalProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_intermediateShadowsRts[m_runCtx.m_denoiseOrientation]);
-	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_currentMomentsRt);
-	rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getHistoryLengthRt());
+	rgraphCtx.bindColorTexture(0, 6, getRenderer().getMotionVectors().getHistoryLengthRt());
 
 	rgraphCtx.bindImage(
 		0, 7, (m_runCtx.m_denoiseOrientation == 0) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
 
 	RtShadowsDenoiseUniforms unis;
 	unis.invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-	unis.time = F32(m_r->getGlobalTimestamp());
+	unis.time = F32(GlobalFrameIndex::getSingleton().m_value);
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
+	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
+					  getRenderer().getInternalResolution().y() / 2);
 
 	m_runCtx.m_denoiseOrientation = !m_runCtx.m_denoiseOrientation;
 }
@@ -505,13 +549,13 @@ void RtShadows::runSvgfVariance(const RenderingContext& ctx, RenderPassWorkConte
 
 	cmdb->bindShaderProgram(m_svgfVarianceGrProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_intermediateShadowsRts[0]);
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_currentMomentsRt);
-	rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getHistoryLengthRt());
-	rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindColorTexture(0, 4, getRenderer().getMotionVectors().getHistoryLengthRt());
+	rgraphCtx.bindTexture(0, 5, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
 
 	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[1]);
 	rgraphCtx.bindImage(0, 7, m_runCtx.m_varianceRts[1]);
@@ -519,7 +563,8 @@ void RtShadows::runSvgfVariance(const RenderingContext& ctx, RenderPassWorkConte
 	const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
+	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
+					  getRenderer().getInternalResolution().y() / 2);
 }
 
 void RtShadows::runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -538,10 +583,10 @@ void RtShadows::runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext
 		cmdb->bindShaderProgram(m_svgfAtrousGrProg);
 	}
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 
-	rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindTexture(0, 2, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_intermediateShadowsRts[readRtIdx]);
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_varianceRts[readRtIdx]);
 
@@ -558,7 +603,8 @@ void RtShadows::runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext
 	const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x() / 2, m_r->getInternalResolution().y() / 2);
+	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
+					  getRenderer().getInternalResolution().y() / 2);
 
 	++m_runCtx.m_atrousPassIdx;
 }
@@ -569,15 +615,16 @@ void RtShadows::runUpscale(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_upscaleGrProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
 
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaledRt);
-	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 4, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(),
+						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 }
 
 void RtShadows::buildSbt(RenderingContext& ctx)
@@ -589,17 +636,17 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 	const U32 instanceCount = instanceElements.getSize();
 	ANKI_ASSERT(instanceCount > 0);
 
-	const U32 shaderHandleSize = getGrManager().getDeviceCapabilities().m_shaderGroupHandleSize;
+	const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
 
 	const U32 extraSbtRecords = 1 + 1; // Raygen + miss
 
 	m_runCtx.m_hitGroupCount = instanceCount;
 
 	// Allocate SBT
-	StagingGpuMemoryToken token;
+	RebarGpuMemoryToken token;
 	U8* sbt = allocateStorage<U8*>(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token);
 	[[maybe_unused]] const U8* sbtStart = sbt;
-	m_runCtx.m_sbtBuffer = token.m_buffer;
+	m_runCtx.m_sbtBuffer = RebarStagingGpuMemoryPool::getSingleton().getBuffer();
 	m_runCtx.m_sbtOffset = token.m_offset;
 
 	// Set the miss and ray gen handles
@@ -617,7 +664,14 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 
 		// Init SBT record
 		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndex * shaderHandleSize], shaderHandleSize);
-		// TODO add some reference to the RenderableGpuView
+
+		ANKI_ASSERT(shaderHandleSize + sizeof(GpuSceneRenderable) <= m_sbtRecordSize);
+		GpuSceneRenderable* shaderRecord = reinterpret_cast<GpuSceneRenderable*>(sbt + shaderHandleSize);
+		shaderRecord->m_worldTransformsOffset = element.m_worldTransformsOffset;
+		shaderRecord->m_uniformsOffset = element.m_uniformsOffset;
+		shaderRecord->m_geometryOffset = element.m_geometryOffset;
+		shaderRecord->m_boneTransformsOffset = 0;
+
 		sbt += m_sbtRecordSize;
 	}
 
@@ -626,7 +680,7 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 
 Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistoryBuffer)
 {
-	const U64 crntFrame = m_r->getFrameCount();
+	const U64 crntFrame = getRenderer().getFrameCount();
 	layerIdx = kMaxU32;
 	U32 nextBestLayerIdx = kMaxU32;
 	U64 nextBestLayerFame = crntFrame;

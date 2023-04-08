@@ -1,0 +1,98 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator THREAD_GROUP_SIZE 16 32 64
+#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 5
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+
+#if OBJECT_TYPE == 0
+typedef PointLight ClusteredType;
+typedef GpuScenePointLight GpuSceneType;
+
+[[vk::binding(3)]] StructuredBuffer<PointLightExtra> g_extras;
+#elif OBJECT_TYPE == 1
+typedef SpotLight ClusteredType;
+typedef GpuSceneSpotLight GpuSceneType;
+
+[[vk::binding(3)]] StructuredBuffer<SpotLightExtra> g_extras;
+#elif OBJECT_TYPE == 2
+typedef Decal ClusteredType;
+typedef GpuSceneDecal GpuSceneType;
+#elif OBJECT_TYPE == 3
+typedef FogDensityVolume ClusteredType;
+typedef GpuSceneFogDensityVolume GpuSceneType;
+#elif OBJECT_TYPE == 4
+typedef ReflectionProbe ClusteredType;
+typedef GpuSceneReflectionProbe GpuSceneType;
+#elif OBJECT_TYPE == 5
+typedef GlobalIlluminationProbe ClusteredType;
+typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
+#else
+#	error See file
+#endif
+
+[[vk::binding(0)]] StructuredBuffer<GpuSceneType> g_inBuffer;
+
+[[vk::binding(1)]] RWStructuredBuffer<ClusteredType> g_outBuffer;
+
+[[vk::binding(2)]] StructuredBuffer<U32> g_indices;
+
+struct Uniforms
+{
+	UVec3 m_padding;
+	U32 m_objectCount;
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+
+[numthreads(THREAD_GROUP_SIZE, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 idxOut = svDispatchThreadId.x;
+	if(idxOut >= g_unis.m_objectCount)
+	{
+		return;
+	}
+
+#if OBJECT_TYPE == 0
+	const GpuScenePointLight input = g_inBuffer[g_indices[idxOut]];
+	const PointLightExtra extra = g_extras[idxOut];
+
+	PointLight output;
+	output.m_position = input.m_position;
+	output.m_radius = input.m_radius;
+	output.m_diffuseColor = input.m_diffuseColor;
+	output.m_squareRadiusOverOne = input.m_squareRadiusOverOne;
+	output.m_shadowLayer = (input.m_shadow) ? extra.m_shadowLayer : kMaxU32;
+	output.m_shadowAtlasTileScale = extra.m_shadowAtlasTileScale;
+	output.m_shadowAtlasTileOffsets = extra.m_shadowAtlasTileOffsets;
+
+	g_outBuffer[idxOut] = output;
+#elif OBJECT_TYPE == 1
+	const GpuSceneSpotLight input = g_inBuffer[g_indices[idxOut]];
+	const SpotLightExtra extra = g_extras[idxOut];
+
+	SpotLight output;
+	output.m_position = input.m_position;
+	output.m_edgePoints = input.m_edgePoints;
+	output.m_diffuseColor = input.m_diffuseColor;
+	output.m_radius = input.m_radius;
+	output.m_direction = input.m_direction;
+	output.m_squareRadiusOverOne = input.m_squareRadiusOverOne;
+	output.m_shadowLayer = (input.m_shadow) ? extra.m_shadowLayer : kMaxU32;
+	output.m_outerCos = input.m_outerCos;
+	output.m_innerCos = input.m_innerCos;
+	output.m_textureMatrix = extra.m_textureMatrix;
+
+	g_outBuffer[idxOut] = output;
+#else
+	g_outBuffer[idxOut] = g_inBuffer[g_indices[idxOut]];
+#endif
+}
+
+#pragma anki end

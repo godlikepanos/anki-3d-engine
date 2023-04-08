@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -101,11 +101,11 @@ std::tm getLocalTime()
 
 #if ANKI_OS_ANDROID
 /// Get the name of the apk. Doesn't use File to open files because /proc files are a bit special.
-static Error getAndroidApkName(StringRaii& name)
+static Error getAndroidApkName(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>& name)
 {
 	const pid_t pid = getpid();
 
-	StringRaii path(&name.getMemoryPool());
+	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> path(name.getMemoryPool());
 	path.sprintf("/proc/%d/cmdline", pid);
 
 	const int fd = open(path.cstr(), O_RDONLY);
@@ -124,7 +124,7 @@ static Error getAndroidApkName(StringRaii& name)
 		return Error::kFunctionFailed;
 	}
 
-	name.create('?', readBytes);
+	name = BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>('?', readBytes, name.getMemoryPool());
 	memcpy(&name[0], &tmp[0], readBytes);
 
 	close(fd);
@@ -154,7 +154,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 
 	// Parse the command line args
 	HeapMemoryPool pool(allocAligned, nullptr, "getAndroidCommandLineArguments temp");
-	StringListRaii args(&pool);
+	BaseStringList<MemoryPoolPtrWrapper<HeapMemoryPool>> args(&pool);
 
 	if(jsParam1)
 	{
@@ -164,7 +164,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 	}
 
 	// Add the apk name
-	StringRaii apkName(&pool);
+	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> apkName(&pool);
 	if(!getAndroidApkName(apkName))
 	{
 		args.pushFront(apkName);
@@ -176,7 +176,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 
 	// Allocate memory for all
 	U32 allStringsSize = 0;
-	for(const String& s : args)
+	for(const auto& s : args)
 	{
 		allStringsSize += s.getLength() + 1;
 		++argc;
@@ -192,7 +192,7 @@ void* getAndroidCommandLineArguments(int& argc, char**& argv)
 	cbuffer += sizeof(char*) * argc;
 
 	U32 count = 0;
-	for(const String& s : args)
+	for(const auto& s : args)
 	{
 		memcpy(cbuffer, &s[0], s.getLength() + 1);
 
@@ -212,9 +212,19 @@ void cleanupGetAndroidCommandLineArguments(void* ptr)
 }
 #endif
 
-void preMainInit()
+// The 1st thing that executes before main
+void preMain()
 {
+	Logger::allocateSingleton();
+	ANKI_UTIL_LOGV("Pre main executed. This should be the 1st message");
 	Thread::setCurrentThreadName("Main");
+}
+
+// The last thing that executes after main
+void postMain()
+{
+	ANKI_UTIL_LOGV("Post main executed. This should be the last message");
+	Logger::freeSingleton();
 }
 
 } // end namespace anki

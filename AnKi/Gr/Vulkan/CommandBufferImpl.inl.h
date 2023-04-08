@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -105,7 +105,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage, Vk
 	inf.subresourceRange = range;
 
 	vkCmdPipelineBarrier(m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
-	ANKI_TRACE_INC_COUNTER(VK_PIPELINE_BARRIERS, 1);
+	ANKI_TRACE_INC_COUNTER(VkBarrier, 1);
 }
 
 inline void CommandBufferImpl::drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first,
@@ -132,9 +132,9 @@ inline void CommandBufferImpl::drawArraysIndirectInternal(PrimitiveTopology topo
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
 	ANKI_ASSERT((offset % 4) == 0);
-	ANKI_ASSERT((offset + sizeof(DrawArraysIndirectInfo) * drawCount) <= impl.getSize());
+	ANKI_ASSERT((offset + sizeof(DrawIndirectInfo) * drawCount) <= impl.getSize());
 
-	vkCmdDrawIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawArraysIndirectInfo));
+	vkCmdDrawIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawIndirectInfo));
 }
 
 inline void CommandBufferImpl::drawElementsIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
@@ -145,9 +145,9 @@ inline void CommandBufferImpl::drawElementsIndirectInternal(PrimitiveTopology to
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
 	ANKI_ASSERT((offset % 4) == 0);
-	ANKI_ASSERT((offset + sizeof(DrawElementsIndirectInfo) * drawCount) <= impl.getSize());
+	ANKI_ASSERT((offset + sizeof(DrawIndexedIndirectInfo) * drawCount) <= impl.getSize());
 
-	vkCmdDrawIndexedIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawElementsIndirectInfo));
+	vkCmdDrawIndexedIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawIndexedIndirectInfo));
 }
 
 inline void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
@@ -389,12 +389,13 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffersInternal(ConstWeakAr
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
 
-	if(ANKI_UNLIKELY(m_rpCommandCount == 0))
+	if(m_rpCommandCount == 0) [[unlikely]]
 	{
 		beginRenderPassInternal();
 	}
 
-	DynamicArrayRaii<VkCommandBuffer> handles(m_pool, cmdbs.getSize());
+	DynamicArray<VkCommandBuffer, MemoryPoolPtrWrapper<StackMemoryPool>> handles(m_pool);
+	handles.resize(cmdbs.getSize());
 	for(U32 i = 0; i < cmdbs.getSize(); ++i)
 	{
 		ANKI_ASSERT(static_cast<const CommandBufferImpl&>(*cmdbs[i]).m_finalized);
@@ -419,7 +420,7 @@ inline void CommandBufferImpl::drawcallCommon()
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
 
-	if(ANKI_UNLIKELY(m_rpCommandCount == 0) && !secondLevel())
+	if(m_rpCommandCount == 0 && !secondLevel())
 	{
 		beginRenderPassInternal();
 	}
@@ -470,7 +471,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Flush viewport
-	if(ANKI_UNLIKELY(m_viewportDirty))
+	if(m_viewportDirty) [[unlikely]]
 	{
 		const Bool flipvp = flipViewport();
 
@@ -490,7 +491,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Flush scissor
-	if(ANKI_UNLIKELY(m_scissorDirty))
+	if(m_scissorDirty) [[unlikely]]
 	{
 		const Bool flipvp = flipViewport();
 
@@ -530,7 +531,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 #endif
 
-	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
+	ANKI_TRACE_INC_COUNTER(VkDrawcall, 1);
 }
 
 inline void CommandBufferImpl::fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value)
@@ -644,22 +645,11 @@ inline void CommandBufferImpl::copyBufferToBufferInternal(const BufferPtr& src, 
 
 	commandCommon();
 
-	DynamicArrayRaii<VkBufferCopy> vkCopies(m_pool, copies.getSize());
-
-	for(U32 i = 0; i < copies.getSize(); ++i)
-	{
-		const CopyBufferToBufferInfo& in = copies[i];
-		VkBufferCopy& out = vkCopies[i];
-		ANKI_ASSERT(in.m_sourceOffset + in.m_range <= src->getSize());
-		ANKI_ASSERT(in.m_destinationOffset + in.m_range <= dst->getSize());
-
-		out.srcOffset = in.m_sourceOffset;
-		out.dstOffset = in.m_destinationOffset;
-		out.size = in.m_range;
-	}
+	static_assert(sizeof(CopyBufferToBufferInfo) == sizeof(VkBufferCopy));
+	const VkBufferCopy* vkCopies = reinterpret_cast<const VkBufferCopy*>(&copies[0]);
 
 	vkCmdCopyBuffer(m_handle, static_cast<const BufferImpl&>(*src).getHandle(),
-					static_cast<const BufferImpl&>(*dst).getHandle(), vkCopies.getSize(), &vkCopies[0]);
+					static_cast<const BufferImpl&>(*dst).getHandle(), copies.getSize(), &vkCopies[0]);
 
 	m_microCmdb->pushObjectRef(src);
 	m_microCmdb->pushObjectRef(dst);

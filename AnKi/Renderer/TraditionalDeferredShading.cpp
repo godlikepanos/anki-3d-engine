@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -56,21 +56,12 @@ inline constexpr U16 kConeIndices[] = {0, 1,  2, 2,  1,  3,  3,  1,  4,  4,  1, 
 									   2, 13, 0, 0,  13, 12, 3,  13, 2,  4,  13, 3,  5,  13, 4,  6,  13, 5,
 									   7, 13, 6, 12, 13, 11, 11, 13, 10, 10, 13, 9,  9,  13, 8,  7,  8,  13};
 
-TraditionalDeferredLightShading::TraditionalDeferredLightShading(Renderer* r)
-	: RendererObject(r)
-{
-}
-
-TraditionalDeferredLightShading::~TraditionalDeferredLightShading()
-{
-}
-
 Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
 	{
-		ANKI_CHECK(
-			getResourceManager().loadResource("ShaderBinaries/TraditionalDeferredShading.ankiprogbin", m_lightProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TraditionalDeferredShading.ankiprogbin",
+																m_lightProg));
 
 		for(U32 specular = 0; specular <= 1; ++specular)
 		{
@@ -101,13 +92,13 @@ Error TraditionalDeferredLightShading::init()
 		inf.m_addressing = SamplingAddressing::kClamp;
 		inf.m_mipmapFilter = SamplingFilter::kBase;
 		inf.m_minMagFilter = SamplingFilter::kLinear;
-		m_shadowSampler = getGrManager().newSampler(inf);
+		m_shadowSampler = GrManager::getSingleton().newSampler(inf);
 	}
 
 	// Skybox
 	{
-		ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin",
-													 m_skyboxProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
+			"ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin", m_skyboxProg));
 
 		for(U32 i = 0; i < m_skyboxGrProgs.getSize(); ++i)
 		{
@@ -131,12 +122,12 @@ void TraditionalDeferredLightShading::createProxyMeshes()
 	buffInit.m_size = bufferSize;
 	buffInit.m_usage = BufferUsageBit::kTransferDestination | BufferUsageBit::kIndex | BufferUsageBit::kVertex;
 
-	m_proxyVolumesBuffer = getGrManager().newBuffer(buffInit);
+	m_proxyVolumesBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	buffInit.setName("TempTransfer");
 	buffInit.m_usage = BufferUsageBit::kTransferSource;
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	BufferPtr transferBuffer = getGrManager().newBuffer(buffInit);
+	BufferPtr transferBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	U8* mappedMem = static_cast<U8*>(transferBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -154,11 +145,11 @@ void TraditionalDeferredLightShading::createProxyMeshes()
 	CommandBufferInitInfo cmdbInit("Temp");
 	cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 
-	CommandBufferPtr cmdb = getGrManager().newCommandBuffer(cmdbInit);
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 	cmdb->copyBufferToBuffer(transferBuffer, 0, m_proxyVolumesBuffer, 0, bufferSize);
 	cmdb->flush();
 
-	getGrManager().finish();
+	GrManager::getSingleton().finish();
 }
 
 void TraditionalDeferredLightShading::bindVertexIndexBuffers(ProxyType proxyType, CommandBufferPtr& cmdb,
@@ -208,13 +199,13 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		cmdb->bindShaderProgram(m_skyboxGrProgs[!isSolidColor]);
 
-		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget,
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(!isSolidColor)
 		{
-			cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeatAniso);
+			cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeatAniso);
 			cmdb->bindTexture(0, 3, TextureViewPtr(const_cast<TextureView*>(info.m_skybox->m_skyboxTexture)));
 		}
 
@@ -234,7 +225,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-		cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp);
 
 		rgraphCtx.bindColorTexture(0, 3, info.m_gbufferRenderTargets[0]);
 		rgraphCtx.bindColorTexture(0, 4, info.m_gbufferRenderTargets[1]);

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -8,10 +8,10 @@
 
 #pragma anki start miss
 
-layout(location = 0) rayPayloadInEXT F32 g_payload;
+#include <AnKi/Shaders/RtShadows.hlsl>
 
-void main()
+[shader("miss")] void main(inout RayPayload payload)
 {
-	g_payload = 1.0;
+	payload.m_shadowFactor = 1.0;
 }
 #pragma anki end

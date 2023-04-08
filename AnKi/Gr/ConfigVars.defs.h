@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,6 +9,7 @@ ANKI_CONFIG_VAR_BOOL(GrValidation, false, "Enable or not validation")
 ANKI_CONFIG_VAR_BOOL(GrDebugPrintf, false, "Enable or not debug printf")
 ANKI_CONFIG_VAR_BOOL(GrDebugMarkers, false, "Enable or not debug markers")
 ANKI_CONFIG_VAR_BOOL(GrVsync, false, "Enable or not vsync")
+ANKI_CONFIG_VAR_U8(GrDevice, 0, 0, 16, "Choose an available device. Devices are sorted by performance")
 
 ANKI_CONFIG_VAR_PTR_SIZE(GrDiskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file")
 

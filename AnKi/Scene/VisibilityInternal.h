@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -7,8 +7,9 @@
 
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SoftwareRasterizer.h>
-#include <AnKi/Scene/Components/FrustumComponent.h>
 #include <AnKi/Scene/Octree.h>
+#include <AnKi/Scene/Frustum.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Renderer/RenderQueue.h>
@@ -19,6 +20,30 @@ namespace anki {
 /// @{
 
 constexpr U32 kMaxSpatialsPerVisTest = 48; ///< Num of spatials to test in a single ThreadHive task.
+
+class FrameMemoryPoolWrapper
+{
+public:
+	StackMemoryPool* operator&()
+	{
+		return &SceneGraph::getSingleton().getFrameMemoryPool();
+	}
+
+	operator StackMemoryPool&()
+	{
+		return SceneGraph::getSingleton().getFrameMemoryPool();
+	}
+
+	void* allocate(PtrSize size, PtrSize alignmentBytes)
+	{
+		return SceneGraph::getSingleton().getFrameMemoryPool().allocate(size, alignmentBytes);
+	}
+
+	void free(void* ptr)
+	{
+		SceneGraph::getSingleton().getFrameMemoryPool().free(ptr);
+	}
+};
 
 /// Sort objects on distance
 template<typename T>
@@ -47,14 +72,7 @@ class MaterialDistanceSortFunctor
 public:
 	Bool operator()(const RenderableQueueElement& a, const RenderableQueueElement& b)
 	{
-		if(a.m_lod == b.m_lod)
-		{
-			return a.m_mergeKey < b.m_mergeKey;
-		}
-		else
-		{
-			return a.m_lod < b.m_lod;
-		}
+		return a.m_mergeKey < b.m_mergeKey;
 	}
 };
 
@@ -67,14 +85,15 @@ public:
 	U32 m_elementCount = 0;
 	U32 m_elementStorage = 0;
 
-	T* newElement(StackMemoryPool& pool)
+	T* newElement()
 	{
-		if(ANKI_UNLIKELY(m_elementCount + 1 > m_elementStorage))
+		if(m_elementCount + 1 > m_elementStorage) [[unlikely]]
 		{
 			m_elementStorage = max(kInitialStorage, m_elementStorage * kStorageGrowRate);
 
 			const T* oldElements = m_elements;
-			m_elements = static_cast<T*>(pool.allocate(m_elementStorage * sizeof(T), alignof(T)));
+			m_elements = static_cast<T*>(
+				SceneGraph::getSingleton().getFrameMemoryPool().allocate(m_elementStorage * sizeof(T), alignof(T)));
 
 			if(oldElements)
 			{
@@ -117,19 +136,43 @@ public:
 
 static_assert(std::is_trivially_destructible<RenderQueueView>::value == true, "Should be trivially destructible");
 
+class FrustumFlags
+{
+public:
+	Bool m_gatherModelComponents : 1 = false;
+	Bool m_gatherShadowCasterModelComponents : 1 = false;
+	Bool m_gatherRayTracingModelComponents : 1 = false;
+	Bool m_gatherParticleComponents : 1 = false;
+	Bool m_gatherProbeComponents : 1 = false;
+	Bool m_gatherLightComponents : 1 = false;
+	Bool m_gatherLensFlareComponents : 1 = false;
+	Bool m_gatherDecalComponents : 1 = false;
+	Bool m_gatherFogDensityComponents : 1 = false;
+	Bool m_gatherUiComponents : 1 = false;
+	Bool m_gatherSkyComponents : 1 = false;
+
+	Bool m_coverageBuffer : 1 = false;
+	Bool m_earlyZ : 1 = false;
+	Bool m_nonDirectionalLightsCastShadow : 1 = false;
+	Bool m_directionalLightsCastShadow : 1 = false;
+};
+
+class VisibilityFrustum : public FrustumFlags
+{
+public:
+	Frustum* m_frustum = nullptr;
+};
+
 /// Data common for all tasks.
 class VisibilityContext
 {
 public:
-	SceneGraph* m_scene = nullptr;
 	Atomic<U32> m_testsCount = {0};
 
-	F32 m_earlyZDist = -1.0f; ///< Cache this.
+	List<const Frustum*, FrameMemoryPoolWrapper> m_testedFrustums;
+	Mutex m_testedFrustumsMtx;
 
-	List<const FrustumComponent*> m_testedFrcs;
-	Mutex m_mtx;
-
-	void submitNewWork(const FrustumComponent& frc, const FrustumComponent& primaryFrustum, RenderQueue& result,
+	void submitNewWork(const VisibilityFrustum& frustum, const VisibilityFrustum& primaryFrustum, RenderQueue& result,
 					   ThreadHive& hive);
 };
 
@@ -140,20 +183,26 @@ class FrustumVisibilityContext
 public:
 	VisibilityContext* m_visCtx = nullptr;
 
-	const FrustumComponent* m_frc = nullptr; ///< This is the frustum to be tested.
-	const FrustumComponent* m_primaryFrustum = nullptr; ///< This is the primary camera frustum.
+	VisibilityFrustum m_frustum; ///< This is the frustum to be tested.
+	VisibilityFrustum m_primaryFrustum; ///< This is the primary camera frustum.
 
 	// S/W rasterizer members
 	SoftwareRasterizer* m_r = nullptr;
-	DynamicArray<Vec3> m_verts;
+	DynamicArray<Vec3, FrameMemoryPoolWrapper> m_verts;
 	Atomic<U32> m_rasterizedVertCount = {0}; ///< That will be used by the RasterizeTrianglesTask.
 
 	// Visibility test members
-	DynamicArray<RenderQueueView> m_queueViews; ///< Sub result. Will be combined later.
+	DynamicArray<RenderQueueView, FrameMemoryPoolWrapper> m_queueViews; ///< Sub result. Will be combined later.
 	ThreadHiveSemaphore* m_visTestsSignalSem = nullptr;
 
 	// Gather results members
 	RenderQueue* m_renderQueue = nullptr;
+
+	ReflectionProbeQueueElementForRefresh* m_reflectionProbeForRefresh = nullptr;
+	Atomic<U32> m_reflectionProbesForRefreshCount = {0};
+
+	Atomic<U32> m_giProbesForRefreshCount = {0};
+	GlobalIlluminationProbeQueueElementForRefresh* m_giProbeForRefresh = nullptr;
 };
 
 /// ThreadHive task to set the depth map of the S/W rasterizer.
@@ -188,7 +237,7 @@ public:
 	void gather(ThreadHive& hive);
 
 private:
-	Array<SpatialComponent*, kMaxSpatialsPerVisTest> m_spatials;
+	Array<Spatial*, kMaxSpatialsPerVisTest> m_spatials;
 	U32 m_spatialCount = 0;
 
 	/// Submit tasks to test the m_spatials.
@@ -203,7 +252,7 @@ class VisibilityTestTask
 public:
 	FrustumVisibilityContext* m_frcCtx = nullptr;
 
-	Array<SpatialComponent*, kMaxSpatialsPerVisTest> m_spatialsToTest;
+	Array<Spatial*, kMaxSpatialsPerVisTest> m_spatialsToTest;
 	U32 m_spatialToTestCount = 0;
 
 	VisibilityTestTask(FrustumVisibilityContext* frcCtx)
@@ -238,7 +287,7 @@ public:
 
 private:
 	template<typename T>
-	static void combineQueueElements(StackMemoryPool& pool, WeakArray<TRenderQueueElementStorage<T>> subStorages,
+	static void combineQueueElements(WeakArray<TRenderQueueElementStorage<T>> subStorages,
 									 WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorage, WeakArray<T>& combined,
 									 WeakArray<T*>* ptrCombined);
 };

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -31,28 +31,28 @@ Error GBuffer::init()
 
 Error GBuffer::initInternal()
 {
-	ANKI_R_LOGV("Initializing GBuffer. Resolution %ux%u", m_r->getInternalResolution().x(),
-				m_r->getInternalResolution().y());
+	ANKI_R_LOGV("Initializing GBuffer. Resolution %ux%u", getRenderer().getInternalResolution().x(),
+				getRenderer().getInternalResolution().y());
 
 	// RTs
 	static constexpr Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)
 	{
 		const TextureUsageBit usage = TextureUsageBit::kAllSampled | TextureUsageBit::kAllFramebuffer;
-		TextureInitInfo texinit =
-			m_r->create2DRenderTargetInitInfo(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-											  m_r->getDepthNoStencilFormat(), usage, depthRtNames[i]);
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
+			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+			getRenderer().getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
-		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
 	static constexpr Array<const char*, kGBufferColorRenderTargetCount> rtNames = {
 		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
-		m_colorRtDescrs[i] =
-			m_r->create2DRenderTargetDescription(m_r->getInternalResolution().x(), m_r->getInternalResolution().y(),
-												 kGBufferColorRenderTargetFormats[i], rtNames[i]);
+		m_colorRtDescrs[i] = getRenderer().create2DRenderTargetDescription(
+			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+			kGBufferColorRenderTargetFormats[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 
@@ -76,10 +76,10 @@ Error GBuffer::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
-	if(getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs())
+	if(GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs())
 	{
-		m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
-		m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
+		m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
+		m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
 	}
 
 	m_fbDescr.bake();
@@ -89,7 +89,7 @@ Error GBuffer::initInternal()
 
 void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const
 {
-	ANKI_TRACE_SCOPED_EVENT(R_MS);
+	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
@@ -100,10 +100,14 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	const U32 problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
-	ANKI_ASSERT(end != start);
+
+	if(end == start) [[unlikely]]
+	{
+		return;
+	}
 
 	// Set some state, leave the rest to default
-	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
 	const I32 earlyZStart = max(I32(start), 0);
 	const I32 earlyZEnd = min(I32(end), I32(earlyZCount));
@@ -112,8 +116,8 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 	cmdb->setRasterizationOrder(RasterizationOrder::kRelaxed);
 
-	const Bool enableVrs =
-		getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && getConfig().getRGBufferVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
+						   && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -125,7 +129,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 	args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
-	args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
+	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
 
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)
@@ -136,9 +140,8 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		}
 
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::kGBufferEarlyZ, args,
-										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
-										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd, cmdb);
+		getRenderer().getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
+												 ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd, cmdb);
 
 		// Restore state for the color write
 		if(colorStart < colorEnd)
@@ -156,20 +159,19 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		cmdb->setDepthCompareOperation(CompareOperation::kLessEqual);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::kGBuffer, args,
-										ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
-										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd, cmdb);
+		getRenderer().getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
+												 ctx.m_renderQueue->m_renderables.getBegin() + colorEnd, cmdb);
 	}
 }
 
 void GBuffer::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_MS);
+	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs =
-		getGrManager().getDeviceCapabilities().m_vrs && getConfig().getRVrs() && getConfig().getRGBufferVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
+						   && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(enableVrs != fbDescrHasVrs)
@@ -178,8 +180,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		if(enableVrs)
 		{
-			m_fbDescr.m_shadingRateAttachmentTexelWidth = m_r->getVrsSriGeneration().getSriTexelDimension();
-			m_fbDescr.m_shadingRateAttachmentTexelHeight = m_r->getVrsSriGeneration().getSriTexelDimension();
+			m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
+			m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
 		}
 		else
 		{
@@ -198,25 +200,25 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		rts[i] = m_runCtx.m_colorRts[i];
 	}
 
-	if(ANKI_LIKELY(m_runCtx.m_crntFrameDepthRt.isValid()))
+	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
 	{
 		// Already imported once
 		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1]);
+			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
+		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1]);
 	}
 	else
 	{
 		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::kSampledFragment);
+			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
+		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1],
+																TextureUsageBit::kSampledFragment);
 	}
 
 	RenderTargetHandle sriRt;
 	if(enableVrs)
 	{
-		sriRt = m_r->getVrsSriGeneration().getSriRt();
+		sriRt = getRenderer().getVrsSriGeneration().getSriRt();
 	}
 
 	// Create pass
@@ -242,6 +244,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	{
 		pass.newTextureDependency(sriRt, TextureUsageBit::kFramebufferShadingRate);
 	}
+
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
+							 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 }
 
 } // end namespace anki

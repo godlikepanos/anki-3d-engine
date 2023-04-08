@@ -1,14 +1,11 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/CameraNode.h>
-#include <AnKi/Scene/PhysicsDebugNode.h>
-#include <AnKi/Scene/ModelNode.h>
 #include <AnKi/Scene/Octree.h>
-#include <AnKi/Scene/Components/FrustumComponent.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/MainRenderer.h>
@@ -19,7 +16,7 @@
 
 namespace anki {
 
-const U NODE_UPDATE_BATCH = 10;
+constexpr U32 kUpdateNodeBatchSize = 10;
 
 class SceneGraph::UpdateSceneNodesCtx
 {
@@ -48,46 +45,28 @@ SceneGraph::~SceneGraph()
 
 	if(m_octree)
 	{
-		deleteInstance(m_pool, m_octree);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_octree);
 	}
+
+	m_gpuSceneAllocators.destroy();
 }
 
-Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
-					   ResourceManager* resources, Input* input, ScriptManager* scriptManager, UiManager* uiManager,
-					   ConfigSet* config, const Timestamp* globalTimestamp,
-					   UnifiedGeometryMemoryPool* unifiedGeometryMemPool)
+Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackData)
 {
-	m_globalTimestamp = globalTimestamp;
-	m_threadHive = threadHive;
-	m_resources = resources;
-	m_gr = &m_resources->getGrManager();
-	m_physics = &m_resources->getPhysicsWorld();
-	m_input = input;
-	m_scriptManager = scriptManager;
-	m_uiManager = uiManager;
-	m_config = config;
-	m_unifiedGeometryMemPool = unifiedGeometryMemPool;
+	SceneMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_pool.init(allocCb, allocCbData);
-	m_framePool.init(allocCb, allocCbData, 1 * 1024 * 1024);
+	m_framePool.init(allocCallback, allocCallbackData, 1 * 1024 * 1024);
 
-	ANKI_CHECK(m_events.init(this));
-
-	m_octree = newInstance<Octree>(m_pool, &m_pool);
-	m_octree->init(m_sceneMin, m_sceneMax, m_config->getSceneOctreeMaxDepth());
+	m_octree = newInstance<Octree>(SceneMemoryPool::getSingleton());
+	m_octree->init(m_sceneMin, m_sceneMax, ConfigSet::getSingleton().getSceneOctreeMaxDepth());
 
 	// Init the default main camera
-	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
-	m_defaultMainCam->getFirstComponentOfType<FrustumComponent>().setPerspective(0.1f, 1000.0f, toRad(60.0f),
-																				 (1080.0f / 1920.0f) * toRad(60.0f));
+	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));
+	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
+	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-	// Create a special node for debugging the physics world
-	PhysicsDebugNode* pnode;
-	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
-
-	// Other
-	ANKI_CHECK(m_debugDrawer.init(&getResourceManager()));
+	m_gpuSceneAllocators.init();
 
 	return Error::kNone;
 }
@@ -105,7 +84,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 			return Error::kUserData;
 		}
 
-		m_nodesDict.emplace(m_pool, node->getName(), node);
+		m_nodesDict.emplace(node->getName(), node);
 	}
 
 	// Add to vector
@@ -131,7 +110,7 @@ void SceneGraph::unregisterNode(SceneNode* node)
 	{
 		auto it = m_nodesDict.find(node->getName());
 		ANKI_ASSERT(it != m_nodesDict.getEnd());
-		m_nodesDict.erase(m_pool, it);
+		m_nodesDict.erase(it);
 	}
 }
 
@@ -165,7 +144,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 			{
 				// Delete node
 				unregisterNode(&node);
-				deleteInstance(m_pool, &node);
+				deleteInstance(SceneMemoryPool::getSingleton(), &node);
 				m_objectsMarkedForDeletionCount.fetchSub(1);
 				found = true;
 				break;
@@ -179,19 +158,18 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 {
 	ANKI_ASSERT(m_mainCam);
-	ANKI_TRACE_SCOPED_EVENT(SCENE_UPDATE);
+	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
+
+	m_gpuSceneAllocators.endFrame();
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
-
-	m_timestamp = *m_globalTimestamp;
-	ANKI_ASSERT(m_timestamp > 0);
 
 	// Reset the framepool
 	m_framePool.reset();
 
 	// Delete stuff
 	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_MARKED_FOR_DELETION);
+		ANKI_TRACE_SCOPED_EVENT(SceneRemoveMarkedForDeletion);
 		const Bool fullCleanup = m_objectsMarkedForDeletionCount.load() != 0;
 		m_events.deleteEventsMarkedForDeletion(fullCleanup);
 		deleteNodesMarkedForDeletion();
@@ -199,14 +177,14 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	// Update
 	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
+		ANKI_TRACE_SCOPED_EVENT(ScenePhysics);
 		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime();
-		m_physics->update(crntTime - prevUpdateTime);
+		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
 		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime() - m_stats.m_physicsUpdate;
 	}
 
 	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
+		ANKI_TRACE_SCOPED_EVENT(SceneNodesUpdate);
 		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
 		// Then the rest
@@ -217,7 +195,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
 
-		for(U i = 0; i < m_threadHive->getThreadCount(); i++)
+		for(U i = 0; i < CoreThreadHive::getSingleton().getThreadCount(); i++)
 		{
 			tasks[i] = ANKI_THREAD_HIVE_TASK(
 				{
@@ -229,8 +207,8 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 				&updateCtx, nullptr, nullptr);
 		}
 
-		m_threadHive->submitTasks(&tasks[0], m_threadHive->getThreadCount());
-		m_threadHive->waitAllTasks();
+		CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
+		CoreThreadHive::getSingleton().waitAllTasks();
 	}
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;
@@ -246,38 +224,29 @@ void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
 
 Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 {
-	ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
+	ANKI_TRACE_INC_COUNTER(SceneNodeUpdated, 1);
 
 	Error err = Error::kNone;
 
 	// Components update
 	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
+	componentUpdateInfo.m_framePool = &m_framePool;
 
-	Timestamp componentTimestamp = 0;
 	Bool atLeastOneComponentUpdated = false;
-	node.iterateComponents([&](SceneComponent& comp, Bool isFeedbackComponent) {
+	node.iterateComponents([&](SceneComponent& comp) {
 		if(err)
 		{
 			return;
 		}
 
+		componentUpdateInfo.m_node = &node;
 		Bool updated = false;
-		if(!atLeastOneComponentUpdated && isFeedbackComponent)
-		{
-			// Skip feedback component if prior components didn't got updated
-		}
-		else
-		{
-			componentUpdateInfo.m_node = &node;
-			err = comp.update(componentUpdateInfo, updated);
-		}
+		err = comp.updateReal(componentUpdateInfo, updated);
 
 		if(updated)
 		{
-			ANKI_TRACE_INC_COUNTER(SCENE_COMPONENTS_UPDATED, 1);
-			comp.setTimestamp(node.getSceneGraph().m_timestamp);
-			componentTimestamp = max(componentTimestamp, node.getSceneGraph().m_timestamp);
-			ANKI_ASSERT(componentTimestamp > 0);
+			ANKI_TRACE_INC_COUNTER(SceneComponentUpdated, 1);
+			comp.setTimestamp(GlobalFrameIndex::getSingleton().m_value);
 			atLeastOneComponentUpdated = true;
 		}
 	});
@@ -293,9 +262,9 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Frame update
 	if(!err)
 	{
-		if(componentTimestamp != 0)
+		if(atLeastOneComponentUpdated)
 		{
-			node.setComponentMaxTimestamp(componentTimestamp);
+			node.setComponentMaxTimestamp(GlobalFrameIndex::getSingleton().m_value);
 		}
 		else
 		{
@@ -308,9 +277,9 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	return err;
 }
 
-Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
+Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
+	ANKI_TRACE_SCOPED_EVENT(SceneNodeUpdate);
 
 	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
 
@@ -319,7 +288,7 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
 	while(!quit && !err)
 	{
 		// Fetch a batch of scene nodes that don't have parent
-		Array<SceneNode*, NODE_UPDATE_BATCH> batch;
+		Array<SceneNode*, kUpdateNodeBatchSize> batch;
 		U batchSize = 0;
 
 		{

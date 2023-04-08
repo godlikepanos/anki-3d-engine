@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,28 +9,24 @@ namespace anki {
 
 DeveloperConsole::~DeveloperConsole()
 {
-	LoggerSingleton::get().removeMessageHandler(this, loggerCallback);
+	Logger::getSingleton().removeMessageHandler(this, loggerCallback);
 
 	while(!m_logItems.isEmpty())
 	{
 		LogItem* item = &m_logItems.getFront();
 		m_logItems.popFront();
-		item->m_threadName.destroy(getMemoryPool());
-		item->m_msg.destroy(getMemoryPool());
-		deleteInstance(getMemoryPool(), item);
+		deleteInstance(UiMemoryPool::getSingleton(), item);
 	}
 }
 
-Error DeveloperConsole::init(ScriptManager* scriptManager)
+Error DeveloperConsole::init()
 {
 	zeroMemory(m_inputText);
 
-	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
+	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
 	// Add a new callback to the logger
-	LoggerSingleton::get().addMessageHandler(this, loggerCallback);
-
-	ANKI_CHECK(m_scriptEnv.init(scriptManager));
+	Logger::getSingleton().addMessageHandler(this, loggerCallback);
 
 	return Error::kNone;
 }
@@ -122,8 +118,8 @@ void DeveloperConsole::newLogItem(const LoggerMessageInfo& inf)
 		LogItem* first = &m_logItems.getFront();
 		m_logItems.popFront();
 
-		first->m_msg.destroy(getMemoryPool());
-		first->m_threadName.destroy(getMemoryPool());
+		first->m_msg.destroy();
+		first->m_threadName.destroy();
 
 		// Re-use the log item
 		newLogItem = first;
@@ -131,15 +127,15 @@ void DeveloperConsole::newLogItem(const LoggerMessageInfo& inf)
 	}
 	else
 	{
-		newLogItem = newInstance<LogItem>(getMemoryPool());
+		newLogItem = newInstance<LogItem>(UiMemoryPool::getSingleton());
 	}
 
 	// Create the new item
 	newLogItem->m_file = inf.m_file;
 	newLogItem->m_func = inf.m_func;
 	newLogItem->m_subsystem = inf.m_subsystem;
-	newLogItem->m_threadName.create(getMemoryPool(), inf.m_threadName);
-	newLogItem->m_msg.create(getMemoryPool(), inf.m_msg);
+	newLogItem->m_threadName = inf.m_threadName;
+	newLogItem->m_msg = inf.m_msg;
 	newLogItem->m_line = inf.m_line;
 	newLogItem->m_type = inf.m_type;
 

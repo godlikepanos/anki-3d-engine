@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -170,6 +170,21 @@ private:
 #endif
 };
 
+/// The default global memory pool.
+class DefaultMemoryPool : public HeapMemoryPool, public MakeSingleton<DefaultMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	DefaultMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "DefaultMemPool")
+	{
+	}
+
+	~DefaultMemoryPool() = default;
+};
+
 /// Thread safe memory pool. It's a preallocated memory pool that is used for memory allocations on top of that
 /// preallocated memory. It is mainly used by fast stack allocators
 class StackMemoryPool : public BaseMemoryPool
@@ -331,7 +346,6 @@ public:
 	MemoryPoolPtrWrapper(TMemPool* pool)
 		: m_pool(pool)
 	{
-		ANKI_ASSERT(pool);
 	}
 
 	TMemPool* operator&()
@@ -376,6 +390,42 @@ public:
 
 private:
 	mutable Atomic<I32> m_refcount = {0};
+};
+
+template<typename TMemoryPool>
+class SingletonMemoryPoolWrapper
+{
+public:
+	TMemoryPool* operator&()
+	{
+		return &TMemoryPool::getSingleton();
+	}
+
+	operator TMemoryPool&()
+	{
+		return TMemoryPool::getSingleton();
+	}
+
+	void* allocate(PtrSize size, PtrSize alignmentBytes)
+	{
+		return TMemoryPool::getSingleton().allocate(size, alignmentBytes);
+	}
+
+	void free(void* ptr)
+	{
+		TMemoryPool::getSingleton().free(ptr);
+	}
+};
+
+template<typename TMemoryPool>
+class SingletonMemoryPoolDeleter
+{
+public:
+	template<typename T>
+	void operator()(T* x)
+	{
+		deleteInstance<T>(TMemoryPool::getSingleton(), x);
+	}
 };
 
 inline void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,11 +11,13 @@ using namespace anki;
 class MyApp : public SampleApp
 {
 public:
+	using SampleApp::SampleApp;
+
 	Error sampleExtraInit()
 	{
 		ScriptResourcePtr script;
-		ANKI_CHECK(getResourceManager().loadResource("Assets/Scene.lua", script));
-		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
+		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
 		return Error::kNone;
 	}
@@ -26,7 +28,7 @@ int myMain(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	MyApp* app = new MyApp;
+	MyApp* app = new MyApp(allocAligned, nullptr);
 	err = app->init(argc, argv, "Sponza");
 	if(!err)
 	{

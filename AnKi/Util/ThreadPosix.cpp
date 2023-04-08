@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -38,7 +38,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 		return numberToPtr<void*>(err._getCode());
 	};
 
-	if(ANKI_UNLIKELY(pthread_create(&m_handle, &attr, pthreadCallback, this)))
+	if(pthread_create(&m_handle, &attr, pthreadCallback, this)) [[unlikely]]
 	{
 		ANKI_UTIL_LOGF("pthread_create() failed");
 	}
@@ -54,7 +54,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 Error Thread::join()
 {
 	void* out;
-	if(ANKI_UNLIKELY(pthread_join(m_handle, &out)))
+	if(pthread_join(m_handle, &out)) [[unlikely]]
 	{
 		ANKI_UTIL_LOGF("pthread_join() failed");
 	}

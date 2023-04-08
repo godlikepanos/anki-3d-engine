@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -19,6 +19,7 @@ namespace anki {
 #define ANKI_SHADER_COMPILER_LOGE(...) ANKI_LOG("SHCO", kError, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG("SHCO", kWarning, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", kFatal, __VA_ARGS__)
+#define ANKI_SHADER_COMPILER_LOGV(...) ANKI_LOG("SHCO", kVerbose, __VA_ARGS__)
 
 constexpr U32 kMaxShaderBinaryNameLength = 127;
 
@@ -28,7 +29,7 @@ using MutatorValue = I32; ///< The type of the mutator value
 class ShaderProgramFilesystemInterface
 {
 public:
-	virtual Error readAllText(CString filename, StringRaii& txt) = 0;
+	virtual Error readAllText(CString filename, String& txt) = 0;
 };
 
 /// This controls if the compilation will continue after the parsing stage.

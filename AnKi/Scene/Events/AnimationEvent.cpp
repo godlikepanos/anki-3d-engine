@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,20 +6,14 @@
 #include <AnKi/Scene/Events/AnimationEvent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ResourceManager.h>
 
 namespace anki {
 
-AnimationEvent::AnimationEvent(EventManager* manager)
-	: Event(manager)
-{
-}
-
 Error AnimationEvent::init(CString animationFilename, CString channelName, SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
-	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(animationFilename, m_anim));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(animationFilename, m_anim));
 
 	m_channelIndex = 0;
 	for(const AnimationChannel& channel : m_anim->getChannels())
@@ -39,12 +33,12 @@ Error AnimationEvent::init(CString animationFilename, CString channelName, Scene
 
 	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
 	m_reanimate = true;
-	m_associatedNodes.emplaceBack(getMemoryPool(), movableSceneNode);
+	m_associatedNodes.emplaceBack(movableSceneNode);
 
 	return Error::kNone;
 }
 
-Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
+Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 {
 	Vec3 pos;
 	Quat rot;
@@ -53,11 +47,12 @@ Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, [[maybe_unu
 
 	Transform trf;
 	trf.setOrigin(pos.xyz0());
+	// trf.setOrigin(Vec4(0.0f));
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
+	// trf.setRotation(Mat3x4::getIdentity());
 	trf.setScale(scale);
 
-	MoveComponent& move = m_associatedNodes[0]->getFirstComponentOfType<MoveComponent>();
-	move.setLocalTransform(trf);
+	m_associatedNodes[0]->setLocalTransform(trf);
 
 	return Error::kNone;
 }

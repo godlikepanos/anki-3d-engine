@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -8,6 +8,7 @@
 #include <AnKi/Util/Array.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Util/Enum.h>
 
 // Forward
 struct reproc_t;
@@ -31,6 +32,15 @@ enum class ProcessKillSignal : U8
 	kForce
 };
 
+/// @memberof Process
+enum class ProcessOptions : U8
+{
+	kNone = 0,
+	kOpenStdout = 1 << 0,
+	kOpenStderr = 1 << 1,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ProcessOptions)
+
 /// Executes external processes.
 class Process
 {
@@ -47,7 +57,12 @@ public:
 	/// @param executable The executable to start.
 	/// @param arguments The command line arguments.
 	/// @param environment The environment variables.
-	Error start(CString executable, ConstWeakArray<CString> arguments = {}, ConstWeakArray<CString> environment = {});
+	Error start(CString executable, ConstWeakArray<CString> arguments = {}, ConstWeakArray<CString> environment = {},
+				ProcessOptions options = ProcessOptions::kOpenStderr | ProcessOptions::kOpenStdout);
+
+	/// Same as the other start().
+	Error start(CString executable, const DynamicArray<String>& arguments, const DynamicArray<String>& environment,
+				ProcessOptions options = ProcessOptions::kOpenStderr | ProcessOptions::kOpenStdout);
 
 	/// Wait for the process to finish.
 	/// @param timeout The time to wait. If it's negative wait forever.
@@ -62,20 +77,37 @@ public:
 	Error kill(ProcessKillSignal k);
 
 	/// Read from stdout.
-	Error readFromStdout(StringRaii& text);
+	Error readFromStdout(String& text);
 
 	/// Read from stderr.
-	Error readFromStderr(StringRaii& text);
+	Error readFromStderr(String& text);
 
 	/// Cleanup a finished process. Call this if you want to start a new process again. Need to have waited before
 	/// calling destroy.
 	void destroy();
 
+	/// Call a process and wait.
+	/// @param executable The executable to start.
+	/// @param arguments The command line arguments.
+	/// @param stdOut Optional stdout.
+	/// @param stdErr Optional stderr.
+	/// @param exitCode Exit code.
+	static Error callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr,
+							 I32& exitCode);
+
 private:
+	static constexpr U32 kMaxArgs = 64;
+	static constexpr U32 kMaxEnv = 32;
+
 	reproc_t* m_handle = nullptr;
 
-	Error readCommon(I32 reprocStream, StringRaii& text);
+	Error readCommon(I32 reprocStream, String& text);
+
+	Error startInternal(const Char* arguments[], const Char* environment[], ProcessOptions options);
 };
+
+/// Get the current process ID.
+ANKI_PURE U32 getCurrentProcessId();
 /// @}
 
 } // end namespace anki

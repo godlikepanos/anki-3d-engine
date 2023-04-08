@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -12,7 +12,6 @@
 namespace anki {
 
 // Forward
-class ConfigSet;
 class NativeWindow;
 
 /// @addtogroup graphics
@@ -26,9 +25,6 @@ public:
 	void* m_allocCallbackUserData = nullptr;
 
 	CString m_cacheDirectory;
-
-	ConfigSet* m_config = nullptr;
-	NativeWindow* m_window = nullptr;
 };
 
 /// Graphics statistics.
@@ -46,14 +42,13 @@ public:
 };
 
 /// The graphics manager, owner of all graphics objects.
-class GrManager
+class GrManager : public MakeSingletonPtr<GrManager>
 {
-public:
-	/// Create.
-	static Error newInstance(GrManagerInitInfo& init, GrManager*& gr);
+	template<typename>
+	friend class MakeSingletonPtr;
 
-	/// Destroy.
-	static void deleteInstance(GrManager* gr);
+public:
+	Error init(GrManagerInitInfo& init);
 
 	const GpuDeviceCapabilities& getDeviceCapabilities() const
 	{
@@ -89,11 +84,6 @@ public:
 
 	GrManagerStats getStats() const;
 
-	ANKI_INTERNAL HeapMemoryPool& getMemoryPool() const
-	{
-		return m_pool;
-	}
-
 	ANKI_INTERNAL CString getCacheDirectory() const
 	{
 		return m_cacheDir.toCString();
@@ -104,23 +94,8 @@ public:
 		return m_uuidIndex.fetchAdd(1);
 	}
 
-	ANKI_INTERNAL const ConfigSet& getConfig() const
-	{
-		return *m_config;
-	}
-
-	ANKI_INTERNAL ConfigSet& getConfig()
-	{
-		return *m_config;
-	}
-
 protected:
-	/// Keep it first to get deleted last. It's mutable because its methods are thread-safe and we want to use it in
-	/// const methods.
-	mutable HeapMemoryPool m_pool;
-
-	ConfigSet* m_config = nullptr;
-	String m_cacheDir;
+	GrString m_cacheDir;
 	Atomic<U64> m_uuidIndex = {1};
 	GpuDeviceCapabilities m_capabilities;
 
@@ -128,6 +103,13 @@ protected:
 
 	virtual ~GrManager();
 };
+
+template<>
+template<>
+GrManager& MakeSingletonPtr<GrManager>::allocateSingleton<>();
+
+template<>
+void MakeSingletonPtr<GrManager>::freeSingleton();
 /// @}
 
 } // end namespace anki

@@ -3,9 +3,9 @@ set(common_sources
 	GrObject.cpp
 	RenderGraph.cpp
 	ShaderProgram.cpp
-	Utils/FrameGpuAllocator.cpp
+	Utils/StackGpuMemoryPool.cpp
 	Utils/Functions.cpp
-	Utils/SegregatedListsGpuAllocator.cpp)
+	Utils/SegregatedListsGpuMemoryPool.cpp)
 
 set(common_headers
 	AccelerationStructure.h
@@ -29,10 +29,10 @@ set(common_headers
 	TextureView.h
 	TimestampQuery.h
 	GrUpscaler.h
-	Utils/FrameGpuAllocator.h
+	Utils/StackGpuMemoryPool.h
 	Utils/Functions.h
 	Utils/InstantiationMacros.h
-	Utils/SegregatedListsGpuAllocator.h)
+	Utils/SegregatedListsGpuMemoryPool.h)
 
 if(VULKAN)
 	set(backend_sources
@@ -72,7 +72,6 @@ if(VULKAN)
 		Vulkan/TextureViewImpl.cpp
 		Vulkan/TimestampQuery.cpp
 		Vulkan/TimestampQueryImpl.cpp
-		Vulkan/VulkanObject.cpp
 		Vulkan/FrameGarbageCollector.cpp
 		Vulkan/GrUpscaler.cpp
 		Vulkan/GrUpscalerImpl.cpp)
@@ -81,12 +80,10 @@ if(VULKAN)
 		Vulkan/AccelerationStructureImpl.h
 		Vulkan/BufferImpl.h
 		Vulkan/CommandBufferFactory.h
-		Vulkan/CommandBufferFactory.inl.h
 		Vulkan/CommandBufferImpl.h
 		Vulkan/CommandBufferImpl.inl.h
 		Vulkan/Common.h
 		Vulkan/DeferredBarrierFactory.h
-		Vulkan/DeferredBarrierFactory.inl.h
 		Vulkan/DescriptorSet.h
 		Vulkan/FenceFactory.h
 		Vulkan/FenceFactory.inl.h
@@ -112,7 +109,6 @@ if(VULKAN)
 		Vulkan/TextureImpl.h
 		Vulkan/TextureViewImpl.h
 		Vulkan/TimestampQueryImpl.h
-		Vulkan/VulkanObject.h
 		Vulkan/GrUpscalerImpl.h)
 
 	if(ANKI_HEADLESS)
@@ -139,15 +135,15 @@ add_library(AnKiGr ${backend_sources} ${backend_headers})
 target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon ${extra_libs})
 
-# Copy DLSS files to Bin
+# Copy DLSS files to Binaries
 if(ANKI_DLSS)
 	get_target_property(lib_type AnKiNgx TYPE)
 	if("${lib_type}" STREQUAL "SHARED_LIBRARY")
 		get_target_property(ANKINGX_DLL AnKiNgx IMPORTED_LOCATION)
 		add_custom_command(
 			TARGET AnKiGr
-			COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Bin"
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Bin")
+			COMMENT "Dependant DLLs copy ${ANKINGX_DLL} ${CMAKE_BINARY_DIR}/Binaries"
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ANKINGX_DLL}" "${CMAKE_BINARY_DIR}/Binaries")
 	else()
 		get_property(__NGX_DLLS_LIST TARGET AnKiNgx PROPERTY ANKINGX_EXTRA_DLLS)
 		foreach(dll_path ${__NGX_DLLS_LIST})
@@ -155,8 +151,8 @@ if(ANKI_DLSS)
 			foreach(dll_file ${dll_files})
 				add_custom_command(
 				TARGET AnKiGr
-				COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Bin\n"
-				COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Bin")
+				COMMENT "NGX DLL copy ${dll_file} ${CMAKE_BINARY_DIR}/Binaries\n"
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll_file}" "${CMAKE_BINARY_DIR}/Binaries")
 			endforeach()
 		endforeach()
 	endif()

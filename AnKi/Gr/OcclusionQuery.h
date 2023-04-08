@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -25,8 +25,8 @@ public:
 
 protected:
 	/// Construct.
-	OcclusionQuery(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	OcclusionQuery(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -37,7 +37,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static OcclusionQuery* newInstance(GrManager* manager);
+	[[nodiscard]] static OcclusionQuery* newInstance();
 };
 /// @}
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/TextureView.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/TextureImpl.h>
 
 namespace anki {
@@ -15,11 +14,11 @@ namespace anki {
 /// @{
 
 /// Texture view implementation.
-class TextureViewImpl final : public TextureView, public VulkanObject<TextureView, TextureViewImpl>
+class TextureViewImpl final : public TextureView
 {
 public:
-	TextureViewImpl(GrManager* manager, CString name)
-		: TextureView(manager, name)
+	TextureViewImpl(CString name)
+		: TextureView(name)
 	{
 	}
 

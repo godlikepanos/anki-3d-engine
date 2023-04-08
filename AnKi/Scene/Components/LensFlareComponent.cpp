@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -10,22 +10,53 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(LensFlareComponent)
-
 LensFlareComponent::LensFlareComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
+	, m_spatial(this)
 {
-	ANKI_ASSERT(node);
 }
 
 LensFlareComponent::~LensFlareComponent()
 {
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
-Error LensFlareComponent::loadImageResource(CString filename)
+void LensFlareComponent::loadImageResource(CString filename)
 {
-	return m_node->getSceneGraph().getResourceManager().loadResource(filename, m_image);
+	ImageResourcePtr image;
+	const Error err = ResourceManager::getSingleton().loadResource(filename, image);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load lens flare image");
+		return;
+	}
+
+	m_image = std::move(image);
+}
+
+Error LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	updated = m_dirty || info.m_node->movedThisFrame();
+
+	if(updated)
+	{
+		m_dirty = false;
+
+		m_worldPosition = info.m_node->getWorldTransform().getOrigin().xyz();
+
+		const Aabb aabb(m_worldPosition - (kAabbSize / 2.0f), m_worldPosition + (kAabbSize / 2.0f));
+		m_spatial.setBoundingShape(aabb);
+	}
+
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
+	updated = updated || spatialUpdated;
+
+	return Error::kNone;
+}
+
+void LensFlareComponent::onDestroy([[maybe_unused]] SceneNode& node)
+{
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 } // end namespace anki

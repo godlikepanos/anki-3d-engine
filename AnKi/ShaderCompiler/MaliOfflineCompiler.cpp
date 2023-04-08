@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,33 +11,27 @@
 
 namespace anki {
 
+static Atomic<U32> g_nextFileId = {1};
+
 static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
 {
-	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::NONE;
+	MaliOfflineCompilerHwUnit out = MaliOfflineCompilerHwUnit::kNone;
 
 	if(str.find("FMA") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::FMA;
-	}
-	else if(str.find("CVT") == 0)
-	{
-		out = MaliOfflineCompilerHwUnit::CVT;
-	}
-	else if(str.find("SFU") == 0)
-	{
-		out = MaliOfflineCompilerHwUnit::SFU;
+		out = MaliOfflineCompilerHwUnit::kFma;
 	}
 	else if(str.find("LS") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::LOAD_STORE;
+		out = MaliOfflineCompilerHwUnit::kLoadStore;
 	}
 	else if(str.find("V") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::VARYING;
+		out = MaliOfflineCompilerHwUnit::kVarying;
 	}
 	else if(str.find("T") == 0)
 	{
-		out = MaliOfflineCompilerHwUnit::TEXTURE;
+		out = MaliOfflineCompilerHwUnit::kTexture;
 	}
 	else
 	{
@@ -52,22 +46,22 @@ static CString hwUnitToStr(MaliOfflineCompilerHwUnit u)
 	CString out;
 	switch(u)
 	{
-	case MaliOfflineCompilerHwUnit::FMA:
+	case MaliOfflineCompilerHwUnit::kFma:
 		out = "FMA";
 		break;
-	case MaliOfflineCompilerHwUnit::CVT:
+	case MaliOfflineCompilerHwUnit::kCvt:
 		out = "CVT";
 		break;
-	case MaliOfflineCompilerHwUnit::SFU:
+	case MaliOfflineCompilerHwUnit::kSfu:
 		out = "SFU";
 		break;
-	case MaliOfflineCompilerHwUnit::LOAD_STORE:
+	case MaliOfflineCompilerHwUnit::kLoadStore:
 		out = "LS";
 		break;
-	case MaliOfflineCompilerHwUnit::VARYING:
+	case MaliOfflineCompilerHwUnit::kVarying:
 		out = "VAR";
 		break;
-	case MaliOfflineCompilerHwUnit::TEXTURE:
+	case MaliOfflineCompilerHwUnit::kTexture:
 		out = "TEX";
 		break;
 	default:
@@ -77,23 +71,42 @@ static CString hwUnitToStr(MaliOfflineCompilerHwUnit u)
 	return out;
 }
 
-void MaliOfflineCompilerOut::toString(StringRaii& str) const
+String MaliOfflineCompilerOut::toString() const
 {
-	str.destroy();
+	String str;
 	str.sprintf("Regs %u Spilling %u "
 				"FMA %f CVT %f SFU %f LS %f VAR %f TEX %f Bound %s "
 				"FP16 %f%%",
 				m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture,
 				hwUnitToStr(m_boundUnit).cstr(), m_fp16ArithmeticPercentage);
+	return str;
 }
 
-static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString spirvFilename, ShaderType shaderType,
-											BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
+Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
+							 MaliOfflineCompilerOut& out)
 {
 	out = {};
+	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
+
+	// Create temp file to dump the spirv
+	String tmpDir;
+	ANKI_CHECK(getTempDirectory(tmpDir));
+	String spirvFilename;
+	spirvFilename.sprintf("%s/AnKiMaliocInputSpirv_%u.spv", tmpDir.cstr(), rand);
+
+	File spirvFile;
+	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
+	ANKI_CHECK(spirvFile.write(spirv.getBegin(), spirv.getSizeInBytes()));
+	spirvFile.close();
+
+	CleanupFile cleanupSpirvFile(spirvFilename);
+
+	// Tmp filename
+	String analysisFilename;
+	analysisFilename.sprintf("%s/AnKiMaliocOut_%u.txt", tmpDir.cstr(), rand);
 
 	// Set the arguments
-	Array<CString, 3> args;
+	Array<CString, 6> args;
 
 	switch(shaderType)
 	{
@@ -110,32 +123,38 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 		ANKI_ASSERT(0 && "Unhandled case");
 	}
 
-	args[1] = "--vulkan";
-	args[2] = spirvFilename;
+	args[1] = "-d";
+	args[2] = "--vulkan";
+	args[3] = spirvFilename;
+
+	args[4] = "-o";
+	args[5] = analysisFilename.cstr();
 
 	// Execute
-	Process proc;
-	ANKI_CHECK(proc.start(maliocExecutable, args, {}));
-	ProcessStatus status;
 	I32 exitCode;
-	ANKI_CHECK(proc.wait(-1.0, &status, &exitCode));
+	ANKI_CHECK(Process::callProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
 	if(exitCode != 0)
 	{
-		StringRaii stderre(&tmpPool);
-		const Error err = proc.readFromStderr(stderre);
-		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d. Stderr: %s", exitCode,
-								  (err || stderre.isEmpty()) ? "<no text>" : stderre.cstr());
+		ANKI_SHADER_COMPILER_LOGE("Mali offline compiler failed with exit code %d", exitCode);
 		return Error::kFunctionFailed;
 	}
 
-	// Get stdout
-	StringRaii stdouts(&tmpPool);
-	ANKI_CHECK(proc.readFromStdout(stdouts));
-	const std::string stdoutstl(stdouts.cstr());
+	CleanupFile rgaFileCleanup(analysisFilename);
+
+	// Read the output file
+	File analysisFile;
+	ANKI_CHECK(analysisFile.open(analysisFilename, FileOpenFlag::kRead));
+	String analysisText;
+	ANKI_CHECK(analysisFile.readAllText(analysisText));
+	analysisText.replaceAll("\r", "");
+	analysisFile.close();
+	const std::string analysisTextStl(analysisText.cstr());
+
+	// printf("%d\n%s\n", (int)shaderType, analysisText.cstr());
 
 	// Work registers
 	std::smatch match;
-	if(std::regex_search(stdoutstl, match, std::regex("Work registers: ([0-9]+)")))
+	if(std::regex_search(analysisTextStl, match, std::regex("Work registers: ([0-9]+)")))
 	{
 		ANKI_CHECK(CString(match[1].str().c_str()).toNumber(out.m_workRegisters));
 	}
@@ -152,41 +171,32 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	{
 		// Add the instructions in position and varying variants
 
-		std::string stdoutstl2(stdouts.cstr());
+		std::string stdoutstl2(analysisText.cstr());
 
-		out.m_fma = 0.0;
-		out.m_cvt = 0.0;
-		out.m_sfu = 0.0;
-		out.m_loadStore = 0.0;
-		out.m_texture = 0.0;
-
-		U32 count = 0;
+		U32 count2 = 0;
 		while(std::regex_search(stdoutstl2, match,
 								std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										   "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										   "\\s*([A-Z]+)")))
+										   "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 7);
-			Array<F32, 5> floats;
-			for(U32 i = 0; i < floats.getSize(); ++i)
-			{
-				ANKI_CHECK(CString(match[i + 1].str().c_str()).toNumber(floats[i]));
-			}
+			ANKI_ASSERT(match.size() == 8);
+			U32 count = 2;
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_loadStore));
+			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
 
-			out.m_fma += floats[0];
-			out.m_cvt += floats[1];
-			out.m_sfu += floats[2];
-			out.m_loadStore += floats[3];
-			out.m_texture += floats[4];
+			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
 
-			out.m_boundUnit = strToHwUnit(match[6].str().c_str());
+			ANKI_ASSERT(count == match.size());
 
 			// Advance
-			++count;
+			++count2;
 			stdoutstl2 = match.suffix();
 		}
 
-		if(count == 0)
+		if(count2 == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Error parsing instruction cycles");
 			return Error::kFunctionFailed;
@@ -194,14 +204,14 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	}
 	else if(shaderType == ShaderType::kFragment)
 	{
-		if(std::regex_search(stdoutstl, match,
+		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
+										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 8);
+			ANKI_ASSERT(match.size() == 9);
 
-			U32 count = 1;
+			U32 count = 2;
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
@@ -210,6 +220,8 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
 
 			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
+
+			ANKI_ASSERT(count == match.size());
 		}
 		else
 		{
@@ -221,14 +233,14 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	{
 		ANKI_ASSERT(shaderType == ShaderType::kCompute);
 
-		if(std::regex_search(stdoutstl, match,
+		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
 										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*([A-Z]+)")))
+										"\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
-			ANKI_ASSERT(match.size() == 7);
+			ANKI_ASSERT(match.size() == 8);
 
-			U32 count = 1;
+			U32 count = 2;
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_fma));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_cvt));
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_sfu));
@@ -236,6 +248,8 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 			ANKI_CHECK(CString(match[count++].str().c_str()).toNumber(out.m_texture));
 
 			out.m_boundUnit = strToHwUnit(match[count++].str().c_str());
+
+			ANKI_ASSERT(count == match.size());
 		}
 		else
 		{
@@ -248,7 +262,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 
 	// Spilling
 	{
-		std::string stdoutstl2(stdouts.cstr());
+		std::string stdoutstl2(analysisText.cstr());
 
 		while(std::regex_search(stdoutstl2, match, std::regex("Stack spilling:\\s([0-9]+)")))
 		{
@@ -263,7 +277,7 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 
 	// FP16
 	{
-		std::string stdoutstl2(stdouts.cstr());
+		std::string stdoutstl2(analysisText.cstr());
 
 		U32 count = 0;
 		while(std::regex_search(stdoutstl2, match, std::regex("16-bit arithmetic:\\s(?:([0-9]+|N\\/A))")))
@@ -294,41 +308,12 @@ static Error runMaliOfflineCompilerInternal(CString maliocExecutable, CString sp
 	// Debug
 	if(false)
 	{
-		printf("%s\n", stdouts.cstr());
-		StringRaii str(&tmpPool);
-		out.toString(str);
+		printf("%s\n", analysisText.cstr());
+		String str = out.toString();
 		printf("%s\n", str.cstr());
 	}
 
 	return Error::kNone;
-}
-
-Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-							 BaseMemoryPool& tmpPool, MaliOfflineCompilerOut& out)
-{
-	ANKI_ASSERT(spirv.getSize() > 0);
-
-	// Create temp file to dump the spirv
-	StringRaii tmpDir(&tmpPool);
-	ANKI_CHECK(getTempDirectory(tmpDir));
-	StringRaii spirvFilename(&tmpPool);
-	spirvFilename.sprintf("%s/AnKiMaliocTmpSpirv_%" PRIu64 ".spv", tmpDir.cstr(), getRandom());
-
-	File spirvFile;
-	ANKI_CHECK(spirvFile.open(spirvFilename, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
-	Error err = spirvFile.write(spirv.getBegin(), spirv.getSizeInBytes());
-	spirvFile.close();
-
-	// Call malioc
-	if(!err)
-	{
-		err = runMaliOfflineCompilerInternal(maliocExecutable, spirvFilename, shaderType, tmpPool, out);
-	}
-
-	// Cleanup
-	const Error err2 = removeFile(spirvFilename);
-
-	return (err) ? err : err2;
 }
 
 } // end namespace anki

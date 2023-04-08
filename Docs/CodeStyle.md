@@ -1,19 +1,19 @@
-This document describes the style of code in AnKi 3D Engine. The code is written primarily in C++ with some GLSL and python as well.
+This document describes the style of code in AnKi 3D Engine. The code is written primarily in C++ with some HLSL and python as well.
 
 Table of contents
 =================
 
-* [Comments in C++ & GLSL](#Comments%20in%20C++%20&%20GLSL)
+* [Comments in C++ & HLSL](#Comments%20in%20C++%20&%20HLSL)
 * [Comments in python](#Comments%20in%20python)
-* [Naming conventions in C++ & GLSL](#Naming%20conventions%20in%20C++%20&%20GLSL)
+* [Naming conventions in C++ & HLSL](#Naming%20conventions%20in%20C++%20&%20HLSL)
 * [Naming conventions in python](#Naming%20conventions%20in%20python)
 * [Naming conventions for files and directories](#Naming%20conventions%20for%20files%20and%20directories)
 * [C++ rules](#C++%20rules)
-* [GLSL rules](#GLSL%20rules)
-* [Code formatting in C++ & GLSL](#Code%20formatting%20in%20C++%20&%20GLSL)
+* [HLSL rules](#HLSL%20rules)
+* [Code formatting in C++ & HLSL](#Code%20formatting%20in%20C++%20&%20HLSL)
 * [Code formatting in python](#Code%20formatting%20in%20python)
 
-Comments in C++ & GLSL
+Comments in C++ & HLSL
 ======================
 
 All comments are C++ like (double slash):
@@ -30,7 +30,7 @@ Comments in python
 
 Whatever the PEP 8 guide proposes.
 
-Naming conventions in C++ & GLSL
+Naming conventions in C++ & HLSL
 ================================
 
 **Variables, functions and methods** are lower camelCase.
@@ -54,11 +54,11 @@ All **constexpr expressions** start with a `k` and that includes enumerants.
 
 All **macros and defines** should be SCREAMING_SNAKE_CASE and they should have an `ANKI_` prefix.
 
-	ANKI_ASSERT(...);
+	#define ANKI_ASSERT(expr)
 
 	#define ANKI_MAX_SOMETHING ...
 
-All **template typedefs** should start with `T`. No need for constant template arguments.
+All **template typedefs** should start with `T`. The rule doesn't apply in constant template arguments.
 
 	template<typename TSomething, typename TOther, U32 kSomeConst>
 
@@ -74,13 +74,9 @@ All **function and method names** should form a sentence with at least one verb.
 - All member variables have the `m_` prefix. That applies to classes and structs.
 - All global variables have the `g_` prefix.
 
-In GLSL there are more exceptions:
+In HLSL there are more exceptions:
 
-- All uniforms (buffers, textures, images, push constants) and storage buffers have the `u_` prefix.
-- All input globals the `in_` prefix.
-- All output globals the `out_` prefix.
-- All shared storage the `s_` prefix.
-- All storage or uniform block names have the  `b_` prefix.
+- All groupshared variables use the `s_` prefix.
 
 **Variables that act as a measure for quantity** should have the `count` suffix. Not `num` or `numberOf` or similar.
 
@@ -130,9 +126,9 @@ C++ rules
 **Always use `constexpr`** when applicable. Never use defines for constants.
 
 	constexpr uint kSomeConst = ...; // YES!!
-	#define SOME_CONST (...)         // NO
+	#define SOME_CONST ...           // NO
 
-**Never use `struct`** and always use `class` instead. Since it's difficult to come up with rules on when to use struct over class always use class and be done with it.
+**Always use `class`** and never use `struct`. Since it's difficult to come up with rules on when to use struct over class, always use class and be done with it.
 
 	class MyTrivialType
 	{
@@ -146,14 +142,14 @@ C++ rules
 	auto i = 10;               // NO
 	auto it = list.getBegin(); // ... FINE
 
-**Includes should always have the full file path**. This avoids issues with files of similar name. Non-AnKi includes follow AnKi includes.
+**Includes should always have the full file path**. This avoids issues with files of similar name. Also, non-AnKi includes follow AnKi includes.
 
 	#include <AnKi/Util/Thread.h>
 	#include <AnKi/Util/WeakArray.h>
 	#include <AnKi/Util/Allocator.h>
 	#include <cstdio>
 
-**Never use public nested classes**. Only private nested classes are allowed. Nested classes cannot be forward declared. Nexted typedefs are fine.
+**Never use public nested classes**. Only private nested classes are allowed. Nested classes cannot be forward declared. Nested typedefs are fine.
 
 	class MyClass
 	{
@@ -165,10 +161,10 @@ C++ rules
 		using SomeTypedef = U32;
 
 	private:
-		// OK
+		// OK, it's private
 		class Nested {...};
 
-		// Also OK
+		// Also OK, it's private
 		class
 		{
 			...
@@ -208,8 +204,8 @@ If you have to overload the operator Bool always use **`explicit operator Bool` 
 
 The use of **references and pointers** is govern by some rules. Always use references except when you transfer or share ownership. Pointers are also allowed for optional data that can be nullptr.
 
-	// ptr is a pointer so you CAN NOT destroy it after a call to doSomething is done
-	// ref is a reference so you CAN destroy it after a call to doSomething is done
+	// ptr is a pointer so you CAN NOT destroy after a call to doSomething is done
+	// ref is a reference so you CAN destroy after a call to doSomething is done
 	void Foo::doSomething(TypeA* ptr, TypeB& ref)
 	{
 		// Store the ptr somewhere
@@ -266,23 +262,21 @@ Always **use `override` or `final`** on virtual methods and try to use `final` o
 
 Always place the **condition of a conditional ternary operator** inside parenthesis.
 
-	a = b ? 1 : 0;   // NO
+	a =  b  ? 1 : 0;   // NO
 	a = (b) ? 1 : 0; // YES
 
-GLSL rules
+HLSL rules
 ==========
 
-Same rules as in C++ (when applicable) with one exception: You **can use `structs`** in GLSL because there is no other way.
+Same rules as in C++ (when applicable) with one exception: You should **use `struct` instead of `class`** for user defined types.
 
-Code formatting in C++ & GLSL
+Code formatting in C++ & HLSL
 =============================
 
-clang-format deals with code formatting. To format all the C++ and GLSL files in the source tree type the following in a terminal:
+clang-format deals with code formatting. To format all the C++ and HLSL files in the source tree type the following in a terminal:
 
 	$ cd /path/to/anki
-	$ ./Tools/FormatSource.sh
-
-If you need to format on Windows do the same from a WSL terminal.
+	$ python ./Tools/FormatSource.py
 
 Code formatting in python
 =========================

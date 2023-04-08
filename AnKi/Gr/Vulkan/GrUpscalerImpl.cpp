@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -138,7 +138,7 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 	// Create the feature with a tmp CmdBuffer
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
+	CommandBufferPtr cmdb = getGrManagerImpl().newCommandBuffer(cmdbinit);
 	CommandBufferImpl& cmdbImpl = static_cast<CommandBufferImpl&>(*cmdb);
 
 	cmdbImpl.beginRecordingExt();

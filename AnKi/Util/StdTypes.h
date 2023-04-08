@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -179,7 +179,14 @@ public:
 	/// Check if it is an error.
 	explicit operator Bool() const
 	{
-		return ANKI_UNLIKELY(m_code != kNone);
+		if(m_code != kNone) [[unlikely]]
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	/// @privatesection
@@ -239,6 +246,11 @@ inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
 {
 	return U64(arg);
 }
+
+inline constexpr PtrSize operator"" _PtrSize(unsigned long long arg) noexcept
+{
+	return PtrSize(arg);
+}
 /// @}
 
 /// @name Size user literals
@@ -289,6 +301,11 @@ inline constexpr Second operator""_ns(long double x)
 
 /// @name Distance user literals
 /// @{
+inline constexpr F32 operator""_m(long double x)
+{
+	return F32(x);
+}
+
 inline constexpr F32 operator""_dm(long double x)
 {
 	return F32(x) / 10.0f;

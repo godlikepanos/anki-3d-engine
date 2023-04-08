@@ -1,71 +1,178 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Resource/ImageResource.h>
+#include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Resource/ResourceManager.h>
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeComponent)
-
 GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
-	, m_uuid(node->getSceneGraph().getNewUuid())
-	, m_markedForRendering(false)
-	, m_shapeDirty(true)
+	, m_spatial(this)
 {
-	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/GiProbe.ankitex", m_debugImage))
+	for(U32 i = 0; i < 6; ++i)
 	{
-		ANKI_SCENE_LOGF("Failed to load resources");
+		m_frustums[i].init(FrustumType::kPerspective);
+		m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, 100.0f, kPi / 2.0f, kPi / 2.0f);
+		m_frustums[i].setWorldTransform(
+			Transform(node->getWorldTransform().getOrigin(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+		m_frustums[i].setShadowCascadeCount(1);
+		m_frustums[i].update();
+	}
+
+	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
+
+	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
+																   m_clearTextureProg);
+	if(err)
+	{
+		ANKI_LOGF("Failed to load shader");
 	}
 }
 
-void GlobalIlluminationProbeComponent::draw(RenderQueueDrawContext& ctx) const
+GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
 {
-	const Aabb box = getAabbWorldSpace();
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 
-	const Vec3 tsl = (box.getMax().xyz() + box.getMin().xyz()) / 2.0f;
-	const Vec3 scale = (tsl - box.getMin().xyz());
+	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+		GpuSceneContiguousArrayType::kGlobalIlluminationProbes, m_gpuSceneIndex);
+}
 
-	// Set non uniform scale.
-	Mat3 rot = Mat3::getIdentity();
-	rot(0, 0) *= scale.x();
-	rot(1, 1) *= scale.y();
-	rot(2, 2) *= scale.z();
+Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	updated = info.m_node->movedThisFrame() || m_shapeDirty;
 
-	const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), rot, 1.0f);
-
-	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
-	if(enableDepthTest)
+	if(m_shapeDirty) [[unlikely]]
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
+		TextureInitInfo texInit("GiProbe");
+		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
+							   ? Format::kR16G16B16_Sfloat
+							   : Format::kR16G16B16A16_Sfloat;
+		texInit.m_width = m_cellCounts.x() * 6;
+		texInit.m_height = m_cellCounts.y();
+		texInit.m_depth = m_cellCounts.z();
+		texInit.m_type = TextureType::k3D;
+		texInit.m_usage =
+			TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead;
+
+		m_volTex = GrManager::getSingleton().newTexture(texInit);
+
+		TextureViewInitInfo viewInit(m_volTex, "GiProbe");
+		m_volView = GrManager::getSingleton().newTextureView(viewInit);
+
+		m_volTexBindlessIdx = m_volView->getOrCreateBindlessTextureIndex();
+
+		// Zero the texture
+		const ShaderProgramResourceVariant* variant;
+		ShaderProgramResourceVariantInitInfo variantInit(m_clearTextureProg);
+		variantInit.addMutation("TEXTURE_DIMENSIONS", 3);
+		variantInit.addMutation("COMPONENT_TYPE", 0);
+		m_clearTextureProg->getOrCreateVariant(variantInit, variant);
+
+		CommandBufferInitInfo cmdbInit("ClearGIVol");
+		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+		TextureBarrierInfo texBarrier;
+		texBarrier.m_previousUsage = TextureUsageBit::kNone;
+		texBarrier.m_nextUsage = TextureUsageBit::kImageComputeWrite;
+		texBarrier.m_texture = m_volTex.get();
+		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
+
+		cmdb->bindShaderProgram(variant->getProgram());
+		cmdb->bindImage(0, 0, m_volView);
+
+		const Vec4 clearColor(0.0f);
+		cmdb->setPushConstants(&clearColor, sizeof(clearColor));
+
+		UVec3 wgSize;
+		wgSize.x() = (8 - 1 + m_volTex->getWidth()) / 8;
+		wgSize.y() = (8 - 1 + m_volTex->getHeight()) / 8;
+		wgSize.z() = (8 - 1 + m_volTex->getDepth()) / 8;
+		cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
+
+		texBarrier.m_previousUsage = TextureUsageBit::kImageComputeWrite;
+		texBarrier.m_nextUsage = m_volTex->getTextureUsage();
+		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
+
+		cmdb->flush();
 	}
-	else
+
+	if(updated) [[unlikely]]
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kAlways);
+		m_shapeDirty = false;
+		m_cellIdxToRefresh = 0;
+
+		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
+
+		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
+		m_spatial.setBoundingShape(aabb);
+
+		// Upload to the GPU scene
+		GpuSceneGlobalIlluminationProbe gpuProbe;
+		gpuProbe.m_aabbMin = aabb.getMin().xyz();
+		gpuProbe.m_aabbMax = aabb.getMax().xyz();
+		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
+		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
+		gpuProbe.m_fadeDistance = m_fadeDistance;
+
+		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneGlobalIlluminationProbe)
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
 	}
 
-	m_node->getSceneGraph().getDebugDrawer().drawCubes(
-		ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.729f, 0.635f, 0.196f, 1.0f), 1.0f,
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
-		ctx.m_commandBuffer);
-
-	m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
-		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&m_worldPosition, 1), Vec4(1.0f),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_debugImage->getTextureView(),
-		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
-
-	// Restore state
-	if(!enableDepthTest)
+	if(needsRefresh()) [[unlikely]]
 	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::kLess);
+		updated = true;
+
+		// Compute the position of the cell
+		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
+		U32 x, y, z;
+		unflatten3dArrayIndex(m_cellCounts.x(), m_cellCounts.y(), m_cellCounts.z(), m_cellIdxToRefresh, x, y, z);
+		const Vec3 cellSize = ((m_halfSize * 2.0f) / Vec3(m_cellCounts));
+		const Vec3 halfCellSize = cellSize / 2.0f;
+		const Vec3 cellCenter = aabb.getMin().xyz() + halfCellSize + cellSize * Vec3(UVec3(x, y, z));
+
+		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
+		effectiveDistance = max(effectiveDistance, m_halfSize.z());
+		effectiveDistance = max(effectiveDistance, ConfigSet::getSingleton().getSceneProbeEffectiveDistance());
+
+		const F32 shadowCascadeDistance =
+			min(effectiveDistance, ConfigSet::getSingleton().getSceneProbeShadowEffectiveDistance());
+
+		for(U32 i = 0; i < 6; ++i)
+		{
+			m_frustums[i].setWorldTransform(
+				Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+
+			m_frustums[i].setFar(effectiveDistance);
+			m_frustums[i].setShadowCascadeDistance(0, shadowCascadeDistance);
+
+			// Add something really far to force LOD 0 to be used. The importing tools create LODs with holes some times
+			// and that causes the sky to bleed to GI rendering
+			m_frustums[i].setLodDistances({effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf,
+										   effectiveDistance - 1.0f * kEpsilonf});
+		}
 	}
+
+	for(U32 i = 0; i < 6; ++i)
+	{
+		const Bool frustumUpdated = m_frustums[i].update();
+		updated = updated || frustumUpdated;
+	}
+
+	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
+	updated = updated || spatialUpdated;
+
+	return Error::kNone;
 }
 
 } // end namespace anki

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -8,7 +8,7 @@ ANKI_CONFIG_VAR_GROUP(R)
 ANKI_CONFIG_VAR_U8(RTextureAnisotropy, ((ANKI_PLATFORM_MOBILE) ? 1 : 8), 1, 16,
 				   "Texture anisotropy for the main passes")
 ANKI_CONFIG_VAR_U32(RTileSize, 64, 8, 256, "Tile lighting tile size")
-ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
+ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, kMaxZsplitCount, "Clusterer number of Z splits")
 ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")
 ANKI_CONFIG_VAR_BOOL(RHighQualityHdr, !ANKI_PLATFORM_MOBILE,
 					 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11")
@@ -25,7 +25,8 @@ ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityZ, 4.0f, 1.0f, 16.0f,
 ANKI_CONFIG_VAR_U32(RVolumetricLightingAccumulationFinalZSplit, 26, 1, 256,
 					"Final cluster split that will recieve volumetric lights")
 
-ANKI_CONFIG_VAR_BOOL(RDbgEnabled, false, "Enable or not debugging")
+ANKI_CONFIG_VAR_BOOL(RDbg, false, "Enable or not debug visualization")
+ANKI_CONFIG_VAR_BOOL(RDbgPhysics, false, "Enable or not physics debug visualization")
 
 // VRS
 ANKI_CONFIG_VAR_BOOL(RVrs, true, "Enable VRS in multiple passes")
@@ -46,8 +47,6 @@ ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f),
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, ((ANKI_PLATFORM_MOBILE) ? 16 : 32), 8, 32,
 					"GI tile resolution")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
-ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxCachedProbes, 16, 4, 2048, "Max cached probes")
-ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeMaxVisibleProbes, 8, 1, 256, "Max visible GI probes")
 
 // GI
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseSsgiSampleCount, 8, 1, 1024, "SSGI sample count")
@@ -59,16 +58,14 @@ ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f
 					"The meters that control the VRS SRI generation")
 
 // Shadows
-ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 64 : 256), 16, 2048,
+ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 128 : 256), 16, 2048,
 					"Shadowmapping tile resolution")
 ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 32, 1, 256,
 					"Shadowmapping atlas will have this number squared number of tiles")
 ANKI_CONFIG_VAR_U32(RShadowMappingPcf, ((ANKI_PLATFORM_MOBILE) ? 0 : 1), 0, 1, "Shadow PCF (0: off, 1: on)")
 
 // Probe reflections
-ANKI_CONFIG_VAR_U32(RProbeReflectionResolution, 128, 4, 2048, "Reflection probe face resolution")
 ANKI_CONFIG_VAR_U32(RProbeReflectionIrradianceResolution, 16, 4, 2048, "Reflection probe irradiance resolution")
-ANKI_CONFIG_VAR_U32(RProbeRefectionMaxCachedProbes, 32, 4, 256, "Max cached number of reflection probes")
 ANKI_CONFIG_VAR_U32(RProbeReflectionShadowMapResolution, 64, 4, 2048, "Reflection probe shadow resolution")
 
 // Final composite

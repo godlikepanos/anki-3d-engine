@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -87,7 +87,11 @@ struct DeferredVertexUniforms
 
 struct DeferredSkyboxUniforms
 {
+#if ANKI_GLSL
 	ANKI_RP Vec3 m_solidColor;
+#else
+	RVec3 m_solidColor;
+#endif
 	F32 m_padding1;
 
 	Vec2 m_inputTexUvScale;

@@ -1,14 +1,25 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/Common.h>
+#include <AnKi/Gr/Vulkan/GrManagerImpl.h>
 
 #define VOLK_IMPLEMENTATION
 #include <Volk/volk.h>
 
 namespace anki {
+
+GrManagerImpl& getGrManagerImpl()
+{
+	return static_cast<GrManagerImpl&>(GrManager::getSingleton());
+}
+
+VkDevice getVkDevice()
+{
+	return getGrManagerImpl().getDevice();
+}
 
 VkCompareOp convertCompareOp(CompareOperation ak)
 {
@@ -320,7 +331,8 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 
 	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructure))
 	{
-		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
+		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR
+			   | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 	}
 
 	if(!!(usageMask & BufferUsageBit::kShaderBindingTable))

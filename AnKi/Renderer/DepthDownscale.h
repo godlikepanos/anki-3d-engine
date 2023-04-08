@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -18,10 +18,7 @@ namespace anki {
 class DepthDownscale : public RendererObject
 {
 public:
-	DepthDownscale(Renderer* r)
-		: RendererObject(r)
-	{
-	}
+	DepthDownscale() = default;
 
 	~DepthDownscale();
 
@@ -69,7 +66,7 @@ private:
 
 	SamplerPtr m_reductionSampler;
 
-	DynamicArray<FramebufferDescription> m_fbDescrs;
+	RendererDynamicArray<FramebufferDescription> m_fbDescrs;
 
 	UVec2 m_lastMipSize;
 	U32 m_mipCount = 0;

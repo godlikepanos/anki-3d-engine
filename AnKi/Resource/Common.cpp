@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,9 +13,8 @@ namespace anki {
 template<typename T>
 void ResourcePtrDeleter<T>::operator()(T* ptr)
 {
-	ptr->getManager().unregisterResource(ptr);
-	HeapMemoryPool& pool = ptr->getMemoryPool();
-	deleteInstance(pool, ptr);
+	ResourceManager::getSingleton().unregisterResource(ptr);
+	deleteInstance(ResourceMemoryPool::getSingleton(), ptr);
 }
 
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) template void ResourcePtrDeleter<rsrc_>::operator()(rsrc_* ptr);

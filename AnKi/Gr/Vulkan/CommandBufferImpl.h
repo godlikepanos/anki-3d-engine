@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/CommandBuffer.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/CommandBufferFactory.h>
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/Texture.h>
@@ -29,12 +28,12 @@ class CommandBufferInitInfo;
 /// @{
 
 /// Command buffer implementation.
-class CommandBufferImpl final : public CommandBuffer, public VulkanObject<CommandBuffer, CommandBufferImpl>
+class CommandBufferImpl final : public CommandBuffer
 {
 public:
 	/// Default constructor
-	CommandBufferImpl(GrManager* manager, CString name)
-		: CommandBuffer(manager, name)
+	CommandBufferImpl(CString name)
+		: CommandBuffer(name)
 		, m_renderedToDefaultFb(false)
 		, m_finalized(false)
 		, m_empty(false)
@@ -441,7 +440,7 @@ private:
 #endif
 		m_empty = false;
 
-		if(ANKI_UNLIKELY(!m_beganRecording))
+		if(!m_beganRecording) [[unlikely]]
 		{
 			beginRecording();
 			m_beganRecording = true;

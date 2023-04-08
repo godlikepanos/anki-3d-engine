@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,13 +9,13 @@
 
 namespace anki {
 
-Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
+Shader* Shader::newInstance(const ShaderInitInfo& init)
 {
-	ShaderImpl* impl = anki::newInstance<ShaderImpl>(manager->getMemoryPool(), manager, init.getName());
+	ShaderImpl* impl = anki::newInstance<ShaderImpl>(GrMemoryPool::getSingleton(), init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

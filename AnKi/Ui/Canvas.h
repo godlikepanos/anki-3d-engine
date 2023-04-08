@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -18,9 +18,9 @@ namespace anki {
 class Canvas : public UiObject
 {
 public:
-	Canvas(UiManager* manager);
+	Canvas() = default;
 
-	virtual ~Canvas();
+	~Canvas();
 
 	Error init(FontPtr font, U32 fontHeight, U32 width, U32 height);
 
@@ -85,9 +85,7 @@ private:
 	SamplerPtr m_linearLinearRepeatSampler;
 	SamplerPtr m_nearestNearestRepeatSampler;
 
-	StackMemoryPool m_tempPool;
-
-	List<IntrusivePtr<UiObject>> m_references;
+	UiList<UiObjectPtr> m_references;
 
 	void appendToCommandBufferInternal(CommandBufferPtr& cmdb);
 };

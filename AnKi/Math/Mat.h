@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -39,10 +39,10 @@ public:
 	static constexpr U kRowCount = kTRowCount; ///< Number of rows
 	static constexpr U kColumnCount = kTColumnCount; ///< Number of columns
 	static constexpr U kSize = kTRowCount * kTColumnCount; ///< Number of total elements
-	static constexpr Bool kHasSIMD = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat4SIMD =
+	static constexpr Bool kHasSimd = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kHasMat4Simd =
 		kTRowCount == 4 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat3x4SIMD =
+	static constexpr Bool kHasMat3x4Simd =
 		kTRowCount == 3 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
@@ -193,19 +193,10 @@ public:
 	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
 	explicit constexpr TMat(const TMat<T, 4, 4>& m4)
 	{
-		auto& m = *this;
-		m(0, 0) = m4(0, 0);
-		m(0, 1) = m4(0, 1);
-		m(0, 2) = m4(0, 2);
-		m(0, 3) = m4(0, 3);
-		m(1, 0) = m4(1, 0);
-		m(1, 1) = m4(1, 1);
-		m(1, 2) = m4(1, 2);
-		m(1, 3) = m4(1, 3);
-		m(2, 0) = m4(2, 0);
-		m(2, 1) = m4(2, 1);
-		m(2, 2) = m4(2, 2);
-		m(2, 3) = m4(2, 3);
+		ANKI_ASSERT(m4(3, 0) == T(0) && m4(3, 1) == T(0) && m4(3, 2) == T(0) && m4(3, 3) == T(1));
+		m_rows[0] = m4.getRow(0);
+		m_rows[1] = m4.getRow(1);
+		m_rows[2] = m4.getRow(2);
 	}
 
 	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
@@ -322,7 +313,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasMat4SIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasMat4Simd)
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
@@ -342,7 +333,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasMat4SIMD)
+	ANKI_ENABLE_METHOD(kHasMat4Simd)
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
@@ -496,7 +487,7 @@ public:
 
 	/// @name Operators with other types
 	/// @{
-	ANKI_ENABLE_METHOD(!kHasSIMD)
+	ANKI_ENABLE_METHOD(!kHasSimd)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		const TMat& m = *this;
@@ -513,22 +504,44 @@ public:
 		return out;
 	}
 
-#if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasSIMD)
+#if ANKI_SIMD_SSE
+	ANKI_ENABLE_METHOD(kHasMat4Simd)
+	ColumnVec operator*(const RowVec& v) const
+	{
+		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
+		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
+		__m128 c = _mm_mul_ps(m_simd[2], v.getSimd());
+		__m128 d = _mm_mul_ps(m_simd[3], v.getSimd());
+
+		a = _mm_hadd_ps(a, b);
+		c = _mm_hadd_ps(c, d);
+
+		return RowVec(_mm_hadd_ps(a, c));
+	}
+
+	ANKI_ENABLE_METHOD(kHasMat3x4Simd)
+	ColumnVec operator*(const RowVec& v) const
+	{
+		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
+		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
+		__m128 c = _mm_mul_ps(m_simd[2], v.getSimd());
+
+		a = _mm_hadd_ps(a, b);
+		const RowVec d(_mm_hadd_ps(a, c));
+
+		return ColumnVec(d[0], d[1], d[2] + d[3]);
+	}
+
+#else
+
+	ANKI_ENABLE_METHOD(kHasSimd)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		ColumnVec out;
-#	if ANKI_SIMD_SSE
-		for(U i = 0; i < kTRowCount; i++)
-		{
-			_mm_store_ss(&out[i], _mm_dp_ps(m_simd[i], v.getSimd(), 0xF1));
-		}
-#	else
 		for(U i = 0; i < kTRowCount; i++)
 		{
 			out[i] = RowVec(m_simd[i]).dot(v);
 		}
-#	endif
 		return out;
 	}
 #endif
@@ -929,7 +942,7 @@ public:
 		setColumns(xAxis, yAxis, zAxis);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasSimd)
 	void transpose()
 	{
 		for(U j = 0; j < kTRowCount; j++)
@@ -944,7 +957,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && kHasSimd)
 	void transpose()
 	{
 #	if ANKI_SIMD_SSE
@@ -1164,7 +1177,7 @@ public:
 	}
 
 	/// Create a new matrix that is equivalent to Mat4(this)*Mat4(b)
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && !kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && !kHasSimd)
 	TMat combineTransformations(const TMat& b) const
 	{
 		const auto& a = *this;
@@ -1190,7 +1203,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && kHasSIMD)
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && kHasSimd)
 	TMat combineTransformations(const TMat& b) const
 	{
 		TMat c;
@@ -1371,8 +1384,9 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U VEC_DIMS, ANKI_ENABLE(kTRowCount == 3 && kTColumnCount == 4 && VEC_DIMS >= 3)>
-	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)>
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+					   const TVec<T, kVecDimensions>& up)
 	{
 		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).getNormalized();
 		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).getNormalized();
@@ -1383,8 +1397,9 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U VEC_DIMS, ANKI_ENABLE(kTRowCount == 4 && kTColumnCount == 4 && VEC_DIMS >= 3)>
-	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)>
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+					   const TVec<T, kVecDimensions>& up)
 	{
 		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).getNormalized();
 		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).getNormalized();
@@ -1438,8 +1453,9 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	void toString(StringRaii& str) const
+	String toString() const
 	{
+		String str;
 		for(U j = 0; j < kTRowCount; ++j)
 		{
 			for(U i = 0; i < kTColumnCount; ++i)
@@ -1457,9 +1473,10 @@ public:
 				{
 					fmt = "%f ";
 				}
-				str.append(StringRaii(str.getMemoryPool()).sprintf(fmt, m_arr2[j][i]));
+				str += String().sprintf(fmt, m_arr2[j][i]);
 			}
 		}
+		return str;
 	}
 	/// @}
 

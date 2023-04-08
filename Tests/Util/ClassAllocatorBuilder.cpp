@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -107,15 +107,14 @@ static inline U32 floorPow2(U32 v)
 
 ANKI_TEST(Util, ClassAllocatorBuilder)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
 	ClassAllocatorBuilder<Chunk, Interface, Mutex> calloc;
-	calloc.init(&pool);
+	calloc.init();
 
 	std::mt19937 gen(0);
 
-	const U SHIFT = 15;
-	std::discrete_distribution<U> dis(16 * SHIFT, 0.0, F32(SHIFT), [](F32 c) {
-		return exp2(-0.5 * c);
+	constexpr U kShift = 15;
+	std::discrete_distribution<U> dis(16 * kShift, 0.0f, F32(kShift), [](F32 c) {
+		return F32(exp2(-0.5 * c));
 	});
 
 	auto nextAllocSize = [&]() -> U {

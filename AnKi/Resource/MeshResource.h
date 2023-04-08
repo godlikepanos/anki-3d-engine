@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -25,7 +25,7 @@ class MeshResource : public ResourceObject
 {
 public:
 	/// Default constructor
-	MeshResource(ResourceManager* manager);
+	MeshResource();
 
 	~MeshResource();
 
@@ -64,7 +64,8 @@ public:
 	/// Get vertex buffer info.
 	void getVertexStreamInfo(U32 lod, VertexStreamId stream, PtrSize& bufferOffset, U32& vertexCount) const
 	{
-		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].m_offset;
+		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].m_offset
+					   + m_lods[lod].m_fixedUnifiedGeometryBufferOffset[stream];
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
@@ -102,8 +103,9 @@ private:
 	class Lod
 	{
 	public:
-		SegregatedListsGpuAllocatorToken m_indexBufferAllocationToken;
-		Array<SegregatedListsGpuAllocatorToken, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
+		SegregatedListsGpuMemoryPoolToken m_indexBufferAllocationToken;
+		Array<SegregatedListsGpuMemoryPoolToken, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
+		Array<U8, U32(VertexStreamId::kMeshRelatedCount)> m_fixedUnifiedGeometryBufferOffset = {};
 
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;
@@ -119,8 +121,8 @@ private:
 		Aabb m_aabb;
 	};
 
-	DynamicArray<SubMesh> m_subMeshes;
-	DynamicArray<Lod> m_lods;
+	ResourceDynamicArray<SubMesh> m_subMeshes;
+	ResourceDynamicArray<Lod> m_lods;
 	Aabb m_aabb;
 	IndexType m_indexType;
 	VertexStreamMask m_presentVertStreams = VertexStreamMask::kNone;

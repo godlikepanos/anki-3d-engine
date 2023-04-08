@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,19 +13,14 @@
 
 namespace anki {
 
-// Ugly but there is no other way
-static HeapMemoryPool* g_pool = nullptr;
-
 static void* btAlloc(size_t size)
 {
-	ANKI_ASSERT(g_pool);
-	return g_pool->allocate(size, 16);
+	return PhysicsMemoryPool::getSingleton().allocate(size, 16);
 }
 
 static void btFree(void* ptr)
 {
-	ANKI_ASSERT(g_pool);
-	g_pool->free(ptr);
+	PhysicsMemoryPool::getSingleton().free(ptr);
 }
 
 /// Broad phase collision callback.
@@ -60,8 +55,8 @@ public:
 		}
 
 		// Reject if they are both static
-		if(ANKI_UNLIKELY(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry
-						 && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry))
+		if(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry
+		   && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry) [[unlikely]]
 		{
 			return false;
 		}
@@ -155,25 +150,25 @@ PhysicsWorld::~PhysicsWorld()
 	m_collisionConfig.destroy();
 	m_broadphase.destroy();
 	m_gpc.destroy();
-	deleteInstance(m_pool, m_filterCallback);
+	deleteInstance(PhysicsMemoryPool::getSingleton(), m_filterCallback);
 
-	g_pool = nullptr;
+	PhysicsMemoryPool::freeSingleton();
 }
 
 Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 {
-	m_pool.init(allocCb, allocCbData);
+	PhysicsMemoryPool::allocateSingleton(allocCb, allocCbData);
+
 	m_tmpPool.init(allocCb, allocCbData, 1_KB, 2.0f);
 
 	// Set allocators
-	g_pool = &m_pool;
 	btAlignedAllocSetCustom(btAlloc, btFree);
 
 	// Create objects
 	m_broadphase.init();
 	m_gpc.init();
 	m_broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(m_gpc.get());
-	m_filterCallback = anki::newInstance<MyOverlapFilterCallback>(m_pool);
+	m_filterCallback = anki::newInstance<MyOverlapFilterCallback>(PhysicsMemoryPool::getSingleton());
 	m_broadphase->getOverlappingPairCache()->setOverlapFilterCallback(m_filterCallback);
 
 	m_collisionConfig.init();
@@ -214,7 +209,7 @@ void PhysicsWorld::destroyMarkedForDeletion()
 			break;
 		}
 
-		deleteInstance(m_pool, obj);
+		deleteInstance(PhysicsMemoryPool::getSingleton(), obj);
 #if ANKI_ENABLE_ASSERTIONS
 		const I32 count = m_objectsCreatedCount.fetchSub(1) - 1;
 		ANKI_ASSERT(count >= 0);
@@ -330,7 +325,8 @@ PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(
 	PhysicsTriggerFilteredPair* newPair;
 	if(filtered->m_triggerFilteredPairs[emptySlot] == nullptr)
 	{
-		filtered->m_triggerFilteredPairs[emptySlot] = anki::newInstance<PhysicsTriggerFilteredPair>(m_pool);
+		filtered->m_triggerFilteredPairs[emptySlot] =
+			anki::newInstance<PhysicsTriggerFilteredPair>(PhysicsMemoryPool::getSingleton());
 	}
 	newPair = filtered->m_triggerFilteredPairs[emptySlot];
 

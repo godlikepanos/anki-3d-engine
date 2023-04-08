@@ -1,38 +1,36 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
+#include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
 
 namespace anki {
 
-SceneNode::SceneNode(SceneGraph* scene, CString name)
-	: m_scene(scene)
-	, m_uuid(scene->getNewUuid())
+SceneNode::SceneNode(CString name)
+	: m_uuid(SceneGraph::getSingleton().getNewUuid())
 {
 	if(name)
 	{
-		m_name.create(getMemoryPool(), name);
+		m_name = name;
 	}
+
+	// Add the implicit MoveComponent
+	newComponent<MoveComponent>();
 }
 
 SceneNode::~SceneNode()
 {
-	HeapMemoryPool& pool = getMemoryPool();
-
-	auto it = m_components.getBegin();
-	auto end = m_components.getEnd();
-	for(; it != end; ++it)
+	for(SceneComponent* comp : m_components)
 	{
-		deleteInstance(pool, *it);
-	}
+		comp->onDestroyReal(*this);
+		g_sceneComponentCallbacks.m_destructor[comp->getClassId()](*comp);
 
-	Base::destroy(pool);
-	m_name.destroy(pool);
-	m_components.destroy(pool);
-	m_componentInfos.destroy(pool);
+		SceneMemoryPool::getSingleton().free(comp);
+	}
 }
 
 void SceneNode::setMarkedForDeletion()
@@ -41,7 +39,7 @@ void SceneNode::setMarkedForDeletion()
 	if(!getMarkedForDeletion())
 	{
 		m_markedForDeletion = true;
-		m_scene->increaseObjectsMarkedForDeletion();
+		SceneGraph::getSingleton().increaseObjectsMarkedForDeletion();
 	}
 
 	[[maybe_unused]] const Error err = visitChildren([](SceneNode& obj) -> Error {
@@ -50,36 +48,73 @@ void SceneNode::setMarkedForDeletion()
 	});
 }
 
-Timestamp SceneNode::getGlobalTimestamp() const
+void SceneNode::newComponentInternal(SceneComponent* newc)
 {
-	return m_scene->getGlobalTimestamp();
+	m_componentTypeMask |= 1 << newc->getClassId();
+
+	// Inform all other components that some component was added
+	for(SceneComponent* other : m_components)
+	{
+		other->onOtherComponentRemovedOrAddedReal(newc, true);
+	}
+
+	// Inform the current component about others
+	for(SceneComponent* other : m_components)
+	{
+		newc->onOtherComponentRemovedOrAddedReal(other, true);
+	}
+
+	m_components.emplaceBack(newc);
+
+	// Sort based on update weight
+	std::sort(m_components.getBegin(), m_components.getEnd(), [](const SceneComponent* a, const SceneComponent* b) {
+		const F32 weightA = a->getClassRtti().m_updateWeight;
+		const F32 weightB = b->getClassRtti().m_updateWeight;
+		if(weightA != weightB)
+		{
+			return weightA < weightB;
+		}
+		else
+		{
+			return a->getClassId() < b->getClassId();
+		}
+	});
 }
 
-HeapMemoryPool& SceneNode::getMemoryPool() const
+Bool SceneNode::updateTransform()
 {
-	ANKI_ASSERT(m_scene);
-	return m_scene->getMemoryPool();
-}
+	const Bool needsUpdate = m_localTransformDirty;
+	m_localTransformDirty = false;
+	const Bool updatedLastFrame = m_transformUpdatedThisFrame;
+	m_transformUpdatedThisFrame = needsUpdate;
 
-StackMemoryPool& SceneNode::getFrameMemoryPool() const
-{
-	ANKI_ASSERT(m_scene);
-	return m_scene->getFrameMemoryPool();
-}
+	if(needsUpdate || updatedLastFrame)
+	{
+		m_prevWTrf = m_wtrf;
+	}
 
-ResourceManager& SceneNode::getResourceManager()
-{
-	return m_scene->getResourceManager();
-}
+	// Update world transform
+	if(needsUpdate)
+	{
+		const SceneNode* parent = getParent();
 
-const ConfigSet& SceneNode::getConfig() const
-{
-	return m_scene->getConfig();
-}
+		if(parent == nullptr || m_ignoreParentNodeTransform)
+		{
+			m_wtrf = m_ltrf;
+		}
+		else
+		{
+			m_wtrf = parent->getWorldTransform().combineTransformations(m_ltrf);
+		}
 
-const UnifiedGeometryMemoryPool& SceneNode::getUnifiedGeometryMemoryPool() const
-{
-	return *m_scene->m_unifiedGeometryMemPool;
+		// Make children dirty as well. Don't walk the whole tree because you will re-walk it later
+		[[maybe_unused]] const Error err = visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
+			childNode.m_localTransformDirty = true;
+			return Error::kNone;
+		});
+	}
+
+	return needsUpdate;
 }
 
 } // end namespace anki

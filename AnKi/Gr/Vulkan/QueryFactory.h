@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -74,11 +74,8 @@ public:
 
 	QueryFactory& operator=(const QueryFactory&) = delete; // Non-copyable
 
-	void init(HeapMemoryPool* pool, VkDevice dev, VkQueryType poolType)
+	void init(VkQueryType poolType)
 	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
-		m_dev = dev;
 		m_poolType = poolType;
 	}
 
@@ -91,8 +88,6 @@ public:
 private:
 	using Chunk = QueryFactoryChunk;
 
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev;
 	IntrusiveList<Chunk> m_chunks;
 	Mutex m_mtx;
 	VkQueryType m_poolType = VK_QUERY_TYPE_MAX_ENUM;

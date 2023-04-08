@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,11 +9,11 @@
 
 ANKI_TEST(Gr, TextureBuffer)
 {
-	ConfigSet cfg(allocAligned, nullptr);
+	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
 	cfg.setGrValidation(true);
 
 	NativeWindow* win = createWindow(cfg);
-	GrManager* gr = createGrManager(&cfg, win);
+	GrManager* gr = createGrManager(win);
 
 	{
 		const CString shaderSrc = R"(
@@ -75,6 +75,6 @@ void main()
 		storageBuff->unmap();
 	}
 
-	GrManager::deleteInstance(gr);
-	NativeWindow::deleteInstance(win);
+	GrManager::freeSingleton();
+	NativeWindow::freeSingleton();
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,7 +11,8 @@ using namespace anki;
 
 static constexpr U32 kClassCount = 6;
 
-class SegregatedListsAllocatorBuilderChunk : public SegregatedListsAllocatorBuilderChunkBase
+class SegregatedListsAllocatorBuilderChunk :
+	public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 {
 };
 
@@ -55,15 +56,14 @@ public:
 	}
 };
 
-using SLAlloc = SegregatedListsAllocatorBuilder<SegregatedListsAllocatorBuilderChunk,
-												SegregatedListsAllocatorBuilderInterface, Mutex>;
+using SLAlloc =
+	SegregatedListsAllocatorBuilder<SegregatedListsAllocatorBuilderChunk, SegregatedListsAllocatorBuilderInterface,
+									Mutex, SingletonMemoryPoolWrapper<DefaultMemoryPool>>;
 
 template<typename TAlloc>
 static void printAllocatorBuilder(const TAlloc& sl)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
-	StringListRaii list(&pool);
+	StringList list;
 	sl.printFreeBlocks(list);
 
 	if(list.isEmpty())
@@ -71,7 +71,7 @@ static void printAllocatorBuilder(const TAlloc& sl)
 		return;
 	}
 
-	StringRaii str(&pool);
+	String str;
 	list.join("", str);
 	printf("%s\n", str.cstr());
 }

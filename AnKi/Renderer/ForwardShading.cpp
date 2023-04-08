@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,14 +11,13 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>
+#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
-
-ForwardShading::~ForwardShading()
-{
-}
 
 void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
@@ -34,32 +33,38 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setDepthWrite(false);
 		cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
-		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
-		const U32 set = kMaterialSetGlobal;
-		cmdb->bindSampler(set, kMaterialBindingLinearClampSampler, m_r->getSamplers().m_trilinearClamp);
-		cmdb->bindSampler(set, kMaterialBindingShadowSampler, m_r->getSamplers().m_trilinearClampShadow);
+		const U32 set = U32(MaterialSet::kGlobal);
+		cmdb->bindSampler(set, U32(MaterialBinding::kLinearClampSampler), getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler),
+						  getRenderer().getSamplers().m_trilinearClampShadow);
 
-		rgraphCtx.bindTexture(set, kMaterialBindingDepthRt, m_r->getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-		rgraphCtx.bindColorTexture(set, kMaterialBindingLightVolume, m_r->getVolumetricLightingAccumulation().getRt());
+		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getHiZRt(),
+							  kHiZHalfSurface);
+		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume),
+								   getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		bindUniforms(cmdb, set, kMaterialBindingClusterShadingUniforms, rsrc.m_clusteredShadingUniformsToken);
-		bindUniforms(cmdb, set, kMaterialBindingClusterShadingLights, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, set, kMaterialBindingClusterShadingLights + 1, rsrc.m_spotLightsToken);
-		rgraphCtx.bindColorTexture(set, kMaterialBindingClusterShadingLights + 2,
-								   m_r->getShadowMapping().getShadowmapRt());
-		bindStorage(cmdb, set, kMaterialBindingClusters, rsrc.m_clustersToken);
+		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingUniforms),
+					 getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+			cmdb, set, U32(MaterialBinding::kClusterShadingLights), ClusteredObjectType::kPointLight);
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
+			cmdb, set, U32(MaterialBinding::kClusterShadingLights) + 1, ClusteredObjectType::kSpotLight);
+		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 2,
+								   getRenderer().getShadowMapping().getShadowmapRt());
+		bindStorage(cmdb, set, U32(MaterialBinding::kClusters),
+					getRenderer().getClusterBinning().getClustersRebarToken());
 
 		RenderableDrawerArguments args;
 		args.m_viewMatrix = ctx.m_matrices.m_view;
 		args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 		args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 		args.m_previousViewProjectionMatrix = ctx.m_prevMatrices.m_viewProjectionJitter; // Not sure about that
-		args.m_sampler = m_r->getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
+		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(RenderingTechnique::kForward, args,
-										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
-										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
+		getRenderer().getSceneDrawer().drawRange(args,
+												 ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
+												 ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
 
 		// Restore state
 		cmdb->setDepthWrite(true);
@@ -68,18 +73,20 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	if(threadId == threadCount - 1 && ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		m_r->getLensFlare().runDrawFlares(ctx, cmdb);
+		getRenderer().getLensFlare().runDrawFlares(ctx, cmdb);
 	}
 }
 
 void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass)
 {
-	pass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment, kHiZHalfSurface);
-	pass.newTextureDependency(m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment,
+							  kHiZHalfSurface);
+	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(),
+							  TextureUsageBit::kSampledFragment);
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		pass.newBufferDependency(m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw);
+		pass.newBufferDependency(getRenderer().getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw);
 	}
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,15 +16,7 @@ namespace anki {
 class UiObject
 {
 public:
-	UiObject(UiManager* manager)
-		: m_manager(manager)
-	{
-		ANKI_ASSERT(manager);
-	}
-
 	virtual ~UiObject() = default;
-
-	HeapMemoryPool& getMemoryPool() const;
 
 	void retain() const
 	{
@@ -36,35 +28,10 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	/// Set the global IMGUI allocator.
-	void setImAllocator(BaseMemoryPool* pool = nullptr)
-	{
-		pool = (pool) ? pool : &getMemoryPool();
-
-		auto allocCallback = [](size_t size, void* userData) -> void* {
-			BaseMemoryPool* pool = static_cast<BaseMemoryPool*>(userData);
-			return pool->allocate(size, 16);
-		};
-
-		auto freeCallback = [](void* ptr, void* userData) -> void {
-			if(ptr)
-			{
-				BaseMemoryPool* pool = static_cast<BaseMemoryPool*>(userData);
-				pool->free(ptr);
-			}
-		};
-
-		ImGui::SetAllocatorFunctions(allocCallback, freeCallback, pool);
-	}
-
-	/// Unset the global IMGUI allocator.
-	static void unsetImAllocator()
-	{
-		ImGui::SetAllocatorFunctions(nullptr, nullptr, nullptr);
-	}
-
 protected:
-	UiManager* m_manager;
+	UiObject() = default;
+
+private:
 	mutable Atomic<I32> m_refcount = {0};
 };
 /// @}

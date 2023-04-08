@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -12,42 +12,52 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(ScriptComponent)
-
 ScriptComponent::ScriptComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
 {
 	ANKI_ASSERT(node);
 }
 
 ScriptComponent::~ScriptComponent()
 {
-	deleteInstance(m_node->getMemoryPool(), m_env);
+	deleteInstance(SceneMemoryPool::getSingleton(), m_env);
 }
 
-Error ScriptComponent::loadScriptResource(CString fname)
+void ScriptComponent::loadScriptResource(CString fname)
 {
 	// Load
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_script));
+	ScriptResourcePtr rsrc;
+	Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
 
 	// Create the env
-	if(m_env)
+	ScriptEnvironment* newEnv = nullptr;
+	if(!err)
 	{
-		deleteInstance(m_node->getMemoryPool(), m_env);
+		newEnv = newInstance<ScriptEnvironment>(SceneMemoryPool::getSingleton());
 	}
-	m_env = newInstance<ScriptEnvironment>(m_node->getMemoryPool());
-	ANKI_CHECK(m_env->init(&m_node->getSceneGraph().getScriptManager()));
 
 	// Exec the script
-	ANKI_CHECK(m_env->evalString(m_script->getSource()));
+	if(!err)
+	{
+		err = newEnv->evalString(m_script->getSource());
+	}
 
-	return Error::kNone;
+	// Error
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load the script");
+		deleteInstance(SceneMemoryPool::getSingleton(), newEnv);
+	}
+	else
+	{
+		m_script = std::move(rsrc);
+		deleteInstance(SceneMemoryPool::getSingleton(), m_env);
+		m_env = newEnv;
+	}
 }
 
 Error ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(info.m_node == m_node);
 	updated = false;
 	if(m_env == nullptr)
 	{

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -123,7 +123,7 @@ private:
 
 	F32 m_mass = 1.0f;
 
-	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
+	PhysicsBody(const PhysicsBodyInitInfo& init);
 
 	~PhysicsBody();
 

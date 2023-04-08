@@ -1,9 +1,10 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Common.h>
+#include <AnKi/Gr/GrObject.h>
 #include <AnKi/Math.h>
 
 namespace anki {
@@ -17,6 +18,11 @@ inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 };
+
+void GrObjectDeleter::operator()(GrObject* ptr)
+{
+	deleteInstance(GrMemoryPool::getSingleton(), ptr);
+}
 
 const ShaderVariableDataTypeInfo& getShaderVariableDataTypeInfo(ShaderVariableDataType type)
 {

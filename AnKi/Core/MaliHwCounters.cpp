@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,14 +13,14 @@
 
 namespace anki {
 
-MaliHwCounters::MaliHwCounters(BaseMemoryPool* pool)
-	: m_pool(pool)
+MaliHwCounters::MaliHwCounters()
 {
-	ANKI_ASSERT(pool);
 #if ANKI_HWCPIPE_ENABLE
-	hwcpipe::HWCPipe* hwc = newInstance<hwcpipe::HWCPipe>(*m_pool);
-	hwc->set_enabled_gpu_counters({hwcpipe::GpuCounter::GpuCycles, hwcpipe::GpuCounter::ExternalMemoryWriteBytes,
-								   hwcpipe::GpuCounter::ExternalMemoryReadBytes});
+	const hwcpipe::CpuCounterSet cpuCounters;
+	const hwcpipe::GpuCounterSet gpuCounters = {hwcpipe::GpuCounter::GpuCycles,
+												hwcpipe::GpuCounter::ExternalMemoryWriteBytes,
+												hwcpipe::GpuCounter::ExternalMemoryReadBytes};
+	hwcpipe::HWCPipe* hwc = newInstance<hwcpipe::HWCPipe>(CoreMemoryPool::getSingleton(), cpuCounters, gpuCounters);
 
 	hwc->run();
 
@@ -35,7 +35,7 @@ MaliHwCounters::~MaliHwCounters()
 #if ANKI_HWCPIPE_ENABLE
 	hwcpipe::HWCPipe* hwc = static_cast<hwcpipe::HWCPipe*>(m_impl);
 	hwc->stop();
-	deleteInstance(*m_pool, hwc);
+	deleteInstance(CoreMemoryPool::getSingleton(), hwc);
 	m_impl = nullptr;
 #endif
 }

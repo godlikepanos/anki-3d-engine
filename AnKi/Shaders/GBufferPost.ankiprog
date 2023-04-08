@@ -1,36 +1,39 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
+
+#pragma anki start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 
-#pragma anki start vert
-#include <AnKi/Shaders/QuadVert.glsl>
-#pragma anki end
-
-#pragma anki start frag
-#include <AnKi/Shaders/PackFunctions.glsl>
-#include <AnKi/Shaders/Functions.glsl>
-
-layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2D u_depthTex;
-layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D g_depthTex;
+[[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
 
 #define CLUSTERED_SHADING_SET 0u
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 3u
 #define CLUSTERED_SHADING_DECALS_BINDING 4u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 7u
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 5u
+#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
-layout(location = 0) in Vec2 in_uv;
+ANKI_BINDLESS_SET(1)
 
-layout(location = 0) out ANKI_RP Vec4 out_diffuse;
-layout(location = 1) out ANKI_RP Vec4 out_roughnessMetallicF0;
+struct FragOut
+{
+	RVec4 m_diffuse : SV_TARGET0;
+	RVec4 m_roughnessAndOther : SV_TARGET1;
+};
 
-void main()
+FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION)
 {
 	// This code blends the diffuse and the specular+rougness of the decals with GBuffer render targets.
 	// Normaly the blending is being done ('D' is the decal diffuse and 'f' is decal blend factor):
@@ -39,64 +42,81 @@ void main()
 	// 2nd decal: d''=d'*(1-f')+D'*f' <=> d''=d*(1-f)*(1-f')+D*f*(1-f')+D'*f'
 	// By looking at the trend we will have to multiply the gbuffer.diff with: (1-f)*(1-f') ... (1-f'''')
 
-	ANKI_RP Vec4 diffuse = Vec4(0.0, 0.0, 0.0, 1.0);
-	ANKI_RP Vec4 roughnessMetallicF0 = Vec4(0.0, 0.0, 0.0, 1.0);
+	RVec4 diffuse = Vec4(0.0, 0.0, 0.0, 1.0);
+	RVec4 roughnessAndOther = Vec4(0.0, 0.0, 0.0, 1.0);
 
 	// Get worldPos
-	const F32 depth = textureLod(u_depthTex, u_nearestAnyClampSampler, in_uv, 0.0).r;
-	const Vec2 ndc = UV_TO_NDC(in_uv);
-	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 = mul(g_clusteredShading.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), kTileSize, kTileCount, kZSplitCount,
-										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
+	const Cluster cluster = getClusterFragCoord(Vec3(svPosition.xy, depth), kTileSize, kTileCount, kZSplitCount,
+												g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
 
-	// Process decals
-	if(cluster.m_decalsMask == ExtendedClusterObjectMask(0))
+	// Make the decalsMask uniform across the wave because we are accessing bindless textures later on
+	ExtendedClusterObjectMask decalsMask = WaveActiveBitAnd(cluster.m_decalsMask);
+	if(decalsMask == 0)
 	{
 		discard;
 	}
 
-	ANKI_LOOP while(cluster.m_decalsMask != ExtendedClusterObjectMask(0))
+	[loop] while(decalsMask != 0)
 	{
-		const I32 idx = findLSB2(cluster.m_decalsMask);
-		cluster.m_decalsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const Decal decal = u_decals2[idx];
+		const I32 idx = firstbitlow2(decalsMask);
+		decalsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
+		const Decal decal = g_decals[idx];
 
 		// Project pos to decal space
-		const Vec4 texCoords4 = decal.m_textureMatrix * Vec4(worldPos, 1.0);
+		const Vec4 texCoords4 = mul(decal.m_textureMatrix, Vec4(worldPos, 1.0));
 		if(texCoords4.w <= 0.7)
 		{
 			// Behind the decal, skip
 			continue;
 		}
 
-		Vec2 texCoords2 = texCoords4.xy / texCoords4.w;
+		const Vec2 uv = saturate(texCoords4.xy / texCoords4.w);
 
-		// Clamp the tex coords. Expect a border in the texture atlas
-		texCoords2 = saturate(texCoords2);
+		// Read textures
+		RVec4 diff;
+		if(decal.m_diffuseTexture != kMaxU32)
+		{
+			diff = g_bindlessTextures2dF32[decal.m_diffuseTexture].Sample(g_trilinearRepeatSampler, uv);
+		}
+		else
+		{
+			diff = 0.0f;
+		}
 
-		// Read diffuse
-		const Vec2 diffUv = mad(texCoords2, decal.m_diffuseUv.zw, decal.m_diffuseUv.xy);
-		const ANKI_RP Vec4 decalDiff = texture(u_diffuseDecalTex, u_trilinearRepeatSampler, diffUv);
-
-		// Read roughness
-		const Vec2 specUv = mad(texCoords2, decal.m_normRoughnessUv.zw, decal.m_normRoughnessUv.xy);
-		const ANKI_RP Vec3 spec = texture(u_specularRoughnessDecalTex, u_trilinearRepeatSampler, specUv).rgb;
+		RVec2 roughnessMetalness;
+		RF32 roughnessMetalnessFactor;
+		if(decal.m_roughnessMetalnessTexture != kMaxU32)
+		{
+			roughnessMetalness =
+				g_bindlessTextures2dF32[decal.m_roughnessMetalnessTexture].Sample(g_trilinearRepeatSampler, uv).gb;
+			roughnessMetalnessFactor = diff.a;
+		}
+		else
+		{
+			roughnessMetalness = 0.0f;
+			roughnessMetalnessFactor = 0.0f;
+		}
 
 		// Update diffuse
-		ANKI_RP F32 f = decalDiff.a * decal.m_blendFactors[0];
-		diffuse.rgb = diffuse.rgb * (1.0 - f) + decalDiff.rgb * f;
+		RF32 f = diff.a * decal.m_diffuseBlendFactor;
+		diffuse.rgb = diffuse.rgb * (1.0 - f) + diff.rgb * f;
 		diffuse.a *= (1.0 - f);
 
-		// Update specular
-		f = decalDiff.a * decal.m_blendFactors[1];
-		roughnessMetallicF0.rgb = roughnessMetallicF0.rgb * (1.0 - f) + spec.rgb * f;
-		roughnessMetallicF0.a *= (1.0 - f);
+		// Update only roughness for now. Metalness is weirdly packed
+		f = roughnessMetalnessFactor * decal.m_roughnessMetalnessFactor;
+		roughnessAndOther.r = roughnessMetalness.r * (1.0 - f) + roughnessMetalness.r * f;
+		roughnessAndOther.a *= (1.0 - f);
 	}
 
-	out_diffuse = diffuse;
-	out_roughnessMetallicF0 = roughnessMetallicF0;
+	FragOut output;
+	output.m_diffuse = diffuse;
+	output.m_roughnessAndOther = roughnessAndOther;
+	return output;
 }
 #pragma anki end

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,7 +6,7 @@
 #include <AnKi/Scene/Components/ParticleEmitterComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/Components/RenderComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsBody.h>
@@ -16,8 +16,6 @@
 #include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
-
-ANKI_SCENE_COMPONENT_STATICS(ParticleEmitterComponent)
 
 static Vec3 getRandom(const Vec3& min, const Vec3& max)
 {
@@ -130,9 +128,9 @@ class ParticleEmitterComponent::PhysicsParticle : public ParticleEmitterComponen
 public:
 	PhysicsBodyPtr m_body;
 
-	PhysicsParticle(const PhysicsBodyInitInfo& init, SceneNode* node, ParticleEmitterComponent* component)
+	PhysicsParticle(const PhysicsBodyInitInfo& init, ParticleEmitterComponent* component)
 	{
-		m_body = node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
+		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
 		m_body->setUserData(component);
 		m_body->activate(false);
 		m_body->setMaterialGroup(PhysicsMaterialBit::kParticle);
@@ -198,84 +196,154 @@ public:
 ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
+	, m_spatial(this)
 {
 }
 
 ParticleEmitterComponent::~ParticleEmitterComponent()
 {
-	m_simpleParticles.destroy(m_node->getMemoryPool());
-	m_physicsParticles.destroy(m_node->getMemoryPool());
-}
+	GpuSceneMemoryPool& gpuScenePool = GpuSceneMemoryPool::getSingleton();
+	gpuScenePool.deferredFree(m_gpuScenePositions);
+	gpuScenePool.deferredFree(m_gpuSceneScales);
+	gpuScenePool.deferredFree(m_gpuSceneAlphas);
+	gpuScenePool.deferredFree(m_gpuSceneUniforms);
 
-Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
-{
-	// Create the debug drawer
-	if(!m_dbgImage.isCreated())
+	if(m_gpuSceneIndex != kMaxU32)
 	{
-		ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource("EngineAssets/ParticleEmitter.ankitex",
-																			 m_dbgImage));
+		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+			GpuSceneContiguousArrayType::kParticleEmitters, m_gpuSceneIndex);
 	}
 
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
+}
+
+void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
+{
 	// Load
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, m_particleEmitterResource));
+	ParticleEmitterResourcePtr rsrc;
+	const Error err = ResourceManager::getSingleton().loadResource(filename, rsrc);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load particle emitter");
+		return;
+	}
+
+	m_particleEmitterResource = std::move(rsrc);
+
 	m_props = m_particleEmitterResource->getProperties();
+	m_resourceUpdated = true;
 
 	// Cleanup
-	m_simpleParticles.destroy(m_node->getMemoryPool());
-	m_physicsParticles.destroy(m_node->getMemoryPool());
+	m_simpleParticles.destroy();
+	m_physicsParticles.destroy();
+	GpuSceneMemoryPool& gpuScenePool = GpuSceneMemoryPool::getSingleton();
+	gpuScenePool.deferredFree(m_gpuScenePositions);
+	gpuScenePool.deferredFree(m_gpuSceneScales);
+	gpuScenePool.deferredFree(m_gpuSceneAlphas);
+	gpuScenePool.deferredFree(m_gpuSceneUniforms);
+
+	if(m_gpuSceneIndex != kMaxU32)
+	{
+		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+			GpuSceneContiguousArrayType::kParticleEmitters, m_gpuSceneIndex);
+	}
 
 	// Init particles
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
 	if(m_simulationType == SimulationType::kPhysicsEngine)
 	{
-		PhysicsCollisionShapePtr collisionShape = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(
-			m_props.m_particle.m_minInitialSize / 2.0f);
+		PhysicsCollisionShapePtr collisionShape =
+			PhysicsWorld::getSingleton().newInstance<PhysicsSphere>(m_props.m_particle.m_minInitialSize / 2.0f);
 
 		PhysicsBodyInitInfo binit;
 		binit.m_shape = std::move(collisionShape);
 
-		m_physicsParticles.resizeStorage(m_node->getMemoryPool(), m_props.m_maxNumOfParticles);
+		m_physicsParticles.resizeStorage(m_props.m_maxNumOfParticles);
 		for(U32 i = 0; i < m_props.m_maxNumOfParticles; i++)
 		{
 			binit.m_mass = getRandomRange(m_props.m_particle.m_minMass, m_props.m_particle.m_maxMass);
-			m_physicsParticles.emplaceBack(m_node->getMemoryPool(), binit, m_node, this);
+			m_physicsParticles.emplaceBack(binit, this);
 		}
 	}
 	else
 	{
-		m_simpleParticles.create(m_node->getMemoryPool(), m_props.m_maxNumOfParticles);
+		m_simpleParticles.resize(m_props.m_maxNumOfParticles);
 	}
 
-	m_vertBuffSize = m_props.m_maxNumOfParticles * kVertexSize;
+	// GPU scene allocations
+	gpuScenePool.allocate(sizeof(Vec3) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuScenePositions);
+	gpuScenePool.allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneAlphas);
+	gpuScenePool.allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneScales);
+	gpuScenePool.allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
+						  alignof(U32), m_gpuSceneUniforms);
 
-	return Error::kNone;
+	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+		GpuSceneContiguousArrayType::kParticleEmitters);
 }
 
 Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(ANKI_UNLIKELY(!m_particleEmitterResource.isCreated()))
+	if(!m_particleEmitterResource.isCreated()) [[unlikely]]
 	{
 		updated = false;
 		return Error::kNone;
 	}
 
 	updated = true;
+	Vec3* positions;
+	F32* scales;
+	F32* alphas;
 
+	Aabb aabbWorld;
 	if(m_simulationType == SimulationType::kSimple)
 	{
-		simulate(info.m_previousTime, info.m_currentTime, WeakArray<SimpleParticle>(m_simpleParticles));
+		simulate(info.m_previousTime, info.m_currentTime, WeakArray<SimpleParticle>(m_simpleParticles), positions,
+				 scales, alphas, aabbWorld);
 	}
 	else
 	{
 		ANKI_ASSERT(m_simulationType == SimulationType::kPhysicsEngine);
-		simulate(info.m_previousTime, info.m_currentTime, WeakArray<PhysicsParticle>(m_physicsParticles));
+		simulate(info.m_previousTime, info.m_currentTime, WeakArray<PhysicsParticle>(m_physicsParticles), positions,
+				 scales, alphas, aabbWorld);
 	}
 
+	m_spatial.setBoundingShape(aabbWorld);
+	m_spatial.update(SceneGraph::getSingleton().getOctree());
+
+	// Upload to the GPU scene
+	GpuSceneMicroPatcher& patcher = GpuSceneMicroPatcher::getSingleton();
+	if(m_aliveParticleCount > 0)
+	{
+		patcher.newCopy(*info.m_framePool, m_gpuScenePositions.m_offset, sizeof(Vec3) * m_aliveParticleCount,
+						positions);
+		patcher.newCopy(*info.m_framePool, m_gpuSceneScales.m_offset, sizeof(F32) * m_aliveParticleCount, scales);
+		patcher.newCopy(*info.m_framePool, m_gpuSceneAlphas.m_offset, sizeof(F32) * m_aliveParticleCount, alphas);
+	}
+
+	if(m_resourceUpdated)
+	{
+		GpuSceneParticleEmitter particles = {};
+		particles.m_vertexOffsets[U32(VertexStreamId::kParticlePosition)] = U32(m_gpuScenePositions.m_offset);
+		particles.m_vertexOffsets[U32(VertexStreamId::kParticleColor)] = U32(m_gpuSceneAlphas.m_offset);
+		particles.m_vertexOffsets[U32(VertexStreamId::kParticleScale)] = U32(m_gpuSceneScales.m_offset);
+
+		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneParticleEmitter)
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kParticleEmitters);
+		patcher.newCopy(*info.m_framePool, offset, sizeof(GpuSceneParticleEmitter), &particles);
+
+		patcher.newCopy(*info.m_framePool, m_gpuSceneUniforms.m_offset,
+						m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
+						m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getBegin());
+	}
+
+	m_resourceUpdated = false;
 	return Error::kNone;
 }
 
 template<typename TParticle>
-void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles)
+void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles,
+										Vec3*& positions, F32*& scales, F32*& alphas, Aabb& aabbWorld)
 {
 	// - Deactivate the dead particles
 	// - Calc the AABB
@@ -285,8 +353,12 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	Vec3 aabbMax(kMinF32);
 	m_aliveParticleCount = 0;
 
-	F32* verts = static_cast<F32*>(m_node->getFrameMemoryPool().allocate(m_vertBuffSize, alignof(F32)));
-	m_verts = verts;
+	positions = static_cast<Vec3*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+		m_props.m_maxNumOfParticles * sizeof(Vec3), alignof(Vec3)));
+	scales = static_cast<F32*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+		m_props.m_maxNumOfParticles * sizeof(F32), alignof(F32)));
+	alphas = static_cast<F32*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+		m_props.m_maxNumOfParticles * sizeof(F32), alignof(F32)));
 
 	F32 maxParticleSize = -1.0f;
 
@@ -307,9 +379,6 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 		{
 			// It's alive
 
-			// Do checks
-			ANKI_ASSERT((ptrToNumber(verts) + kVertexSize - ptrToNumber(m_verts)) <= m_vertBuffSize);
-
 			// This will calculate a new world transformation
 			particle.simulate(prevUpdateTime, crntTime);
 
@@ -318,17 +387,14 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 			aabbMin = aabbMin.min(origin);
 			aabbMax = aabbMax.max(origin);
 
-			verts[0] = origin.x();
-			verts[1] = origin.y();
-			verts[2] = origin.z();
+			positions[m_aliveParticleCount] = origin;
 
-			verts[3] = particle.m_crntSize;
+			scales[m_aliveParticleCount] = particle.m_crntSize;
 			maxParticleSize = max(maxParticleSize, particle.m_crntSize);
 
-			verts[4] = clamp(particle.m_crntAlpha, 0.0f, 1.0f);
+			alphas[m_aliveParticleCount] = clamp(particle.m_crntAlpha, 0.0f, 1.0f);
 
 			++m_aliveParticleCount;
-			verts += 5;
 		}
 	}
 
@@ -338,12 +404,13 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 		ANKI_ASSERT(maxParticleSize > 0.0f);
 		const Vec3 min = aabbMin - maxParticleSize;
 		const Vec3 max = aabbMax + maxParticleSize;
-		m_worldBoundingVolume = Aabb(min, max);
+		aabbWorld = Aabb(min, max);
 	}
 	else
 	{
-		m_worldBoundingVolume = Aabb(Vec3(0.0f), Vec3(0.001f));
-		m_verts = nullptr;
+		aabbWorld = Aabb(Vec3(0.0f), Vec3(0.001f));
+		positions = nullptr;
+		alphas = scales = nullptr;
 	}
 
 	//
@@ -360,7 +427,7 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 				continue;
 			}
 
-			particle.revive(m_props, m_transform, crntTime);
+			particle.revive(m_props, m_node->getWorldTransform(), crntTime);
 
 			// do the rest
 			++particleCount;
@@ -378,85 +445,41 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	}
 }
 
-void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
+void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique technique,
+															WeakArray<RenderableQueueElement>& outRenderables) const
 {
-	// Early exit
-	if(ANKI_UNLIKELY(m_aliveParticleCount == 0))
+	if(!(m_particleEmitterResource->getMaterial()->getRenderingTechniques() & RenderingTechniqueBit(1 << technique))
+	   || m_aliveParticleCount == 0)
 	{
+		outRenderables.setArray(nullptr, 0);
 		return;
 	}
 
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	RenderingKey key;
+	key.setRenderingTechnique(technique);
+	ShaderProgramPtr prog;
+	m_particleEmitterResource->getRenderingInfo(key, prog);
 
-	if(!ctx.m_debugDraw)
-	{
-		// Load verts
-		StagingGpuMemoryToken token;
-		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(m_aliveParticleCount * kVertexSize,
-																	StagingGpuMemoryType::kVertex, token);
-		memcpy(gpuStorage, m_verts, m_aliveParticleCount * kVertexSize);
+	RenderableQueueElement* el =
+		static_cast<RenderableQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+			sizeof(RenderableQueueElement), alignof(RenderableQueueElement)));
 
-		// Program
-		ShaderProgramPtr prog;
-		m_particleEmitterResource->getRenderingInfo(ctx.m_key, prog);
-		cmdb->bindShaderProgram(prog);
+	el->m_mergeKey = 0; // Not mergable
+	el->m_program = prog.get();
+	el->m_worldTransformsOffset = 0;
+	el->m_uniformsOffset = U32(m_gpuSceneUniforms.m_offset);
+	el->m_geometryOffset = U32(m_gpuSceneIndex * sizeof(GpuSceneParticleEmitter)
+							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
+								   GpuSceneContiguousArrayType::kParticleEmitters));
+	el->m_boneTransformsOffset = 0;
+	el->m_vertexCount = 6 * m_aliveParticleCount;
+	el->m_firstVertex = 0;
+	el->m_indexed = false;
+	el->m_primitiveTopology = PrimitiveTopology::kTriangles;
+	el->m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
+	el->m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
 
-		// Vertex attribs
-		cmdb->setVertexAttribute(U32(VertexAttributeId::kPosition), 0, Format::kR32G32B32_Sfloat, 0);
-		cmdb->setVertexAttribute(U32(VertexAttributeId::SCALE), 0, Format::kR32_Sfloat, sizeof(Vec3));
-		cmdb->setVertexAttribute(U32(VertexAttributeId::ALPHA), 0, Format::kR32_Sfloat, sizeof(Vec3) + sizeof(F32));
-
-		// Vertex buff
-		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, kVertexSize, VertexStepRate::kInstance);
-
-		// Uniforms
-		Array<Mat3x4, 1> trf = {Mat3x4::getIdentity()};
-		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, trf, trf,
-												  *ctx.m_stagingGpuAllocator);
-
-		// Draw
-		cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4, m_aliveParticleCount, 0, 0);
-	}
-	else
-	{
-		const Vec4 tsl = (m_worldBoundingVolume.getMin() + m_worldBoundingVolume.getMax()) / 2.0f;
-		const Vec4 scale = (m_worldBoundingVolume.getMax() - m_worldBoundingVolume.getMin()) / 2.0f;
-
-		// Set non uniform scale. Add a margin to avoid flickering
-		Mat3 nonUniScale = Mat3::getZero();
-		nonUniScale(0, 0) = scale.x();
-		nonUniScale(1, 1) = scale.y();
-		nonUniScale(2, 2) = scale.z();
-
-		const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
-
-		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDepthTestOn);
-		if(enableDepthTest)
-		{
-			cmdb->setDepthCompareOperation(CompareOperation::kLess);
-		}
-		else
-		{
-			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
-		}
-
-		m_node->getSceneGraph().getDebugDrawer().drawCubes(
-			ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), 2.0f, *ctx.m_stagingGpuAllocator,
-			cmdb);
-
-		const Vec3 pos = m_transform.getOrigin().xyz();
-		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
-			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::kDitheredDepthTestOn), m_dbgImage->getTextureView(),
-			ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
-
-		// Restore state
-		if(!enableDepthTest)
-		{
-			cmdb->setDepthCompareOperation(CompareOperation::kLess);
-		}
-	}
+	outRenderables.setArray(el, 1);
 }
 
 } // end namespace anki

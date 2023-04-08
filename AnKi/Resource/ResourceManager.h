@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Resource/TransferGpuAllocator.h>
+#include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/String.h>
@@ -13,7 +14,6 @@
 namespace anki {
 
 // Forward
-class ConfigSet;
 class GrManager;
 class PhysicsWorld;
 class ResourceManager;
@@ -38,7 +38,7 @@ protected:
 	~TypeResourceManager()
 	{
 		ANKI_ASSERT(m_ptrs.isEmpty() && "Forgot to delete some resources");
-		m_ptrs.destroy(*m_pool);
+		m_ptrs.destroy();
 	}
 
 	Type* findLoadedResource(const CString& filename)
@@ -50,26 +50,19 @@ protected:
 	void registerResource(Type* ptr)
 	{
 		ANKI_ASSERT(find(ptr->getFilename()) == m_ptrs.getEnd());
-		m_ptrs.pushBack(*m_pool, ptr);
+		m_ptrs.pushBack(ptr);
 	}
 
 	void unregisterResource(Type* ptr)
 	{
 		auto it = find(ptr->getFilename());
 		ANKI_ASSERT(it != m_ptrs.end());
-		m_ptrs.erase(*m_pool, it);
-	}
-
-	void init(HeapMemoryPool* pool)
-	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
+		m_ptrs.erase(it);
 	}
 
 private:
-	using Container = List<Type*>;
+	using Container = ResourceList<Type*>;
 
-	HeapMemoryPool* m_pool = nullptr;
 	Container m_ptrs;
 
 	typename Container::Iterator find(const CString& filename)
@@ -88,20 +81,8 @@ private:
 	}
 };
 
-class ResourceManagerInitInfo
-{
-public:
-	GrManager* m_gr = nullptr;
-	PhysicsWorld* m_physics = nullptr;
-	ResourceFilesystem* m_resourceFs = nullptr;
-	ConfigSet* m_config = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
-	AllocAlignedCallback m_allocCallback = 0;
-	void* m_allocCallbackData = nullptr;
-};
-
 /// Resource manager. It holds a few global variables
-class ResourceManager:
+class ResourceManager : public MakeSingleton<ResourceManager>,
 
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) \
 public \
@@ -116,13 +97,13 @@ public \
 {
 	template<typename T>
 	friend class ResourcePtrDeleter;
+	friend class ResourceObject;
+
+	template<typename>
+	friend class MakeSingleton;
 
 public:
-	ResourceManager();
-
-	~ResourceManager();
-
-	Error init(ResourceManagerInitInfo& init);
+	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
 	/// Load a resource.
 	template<typename T>
@@ -130,37 +111,9 @@ public:
 
 	// Internals:
 
-	ANKI_INTERNAL HeapMemoryPool& getMemoryPool() const
-	{
-		return m_pool;
-	}
-
-	ANKI_INTERNAL StackMemoryPool& getTempMemoryPool() const
-	{
-		return m_tmpPool;
-	}
-
-	ANKI_INTERNAL GrManager& getGrManager()
-	{
-		ANKI_ASSERT(m_gr);
-		return *m_gr;
-	}
-
 	ANKI_INTERNAL TransferGpuAllocator& getTransferGpuAllocator()
 	{
 		return *m_transferGpuAlloc;
-	}
-
-	ANKI_INTERNAL PhysicsWorld& getPhysicsWorld()
-	{
-		ANKI_ASSERT(m_physics);
-		return *m_physics;
-	}
-
-	ANKI_INTERNAL ResourceFilesystem& getFilesystem()
-	{
-		ANKI_ASSERT(m_fs);
-		return *m_fs;
 	}
 
 	template<typename T>
@@ -196,36 +149,28 @@ public:
 	ANKI_INTERNAL U64 getAsyncTaskCompletedCount() const;
 
 	/// Return the container of program libraries.
-	const ShaderProgramResourceSystem& getShaderProgramResourceSystem() const
+	ANKI_INTERNAL const ShaderProgramResourceSystem& getShaderProgramResourceSystem() const
 	{
 		return *m_shaderProgramSystem;
 	}
 
-	UnifiedGeometryMemoryPool& getUnifiedGeometryMemoryPool()
+	ANKI_INTERNAL ResourceFilesystem& getFilesystem()
 	{
-		ANKI_ASSERT(m_unifiedGometryMemoryPool);
-		return *m_unifiedGometryMemoryPool;
-	}
-
-	const ConfigSet& getConfig() const
-	{
-		ANKI_ASSERT(m_config);
-		return *m_config;
+		return *m_fs;
 	}
 
 private:
-	GrManager* m_gr = nullptr;
-	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_fs = nullptr;
-	ConfigSet* m_config = nullptr;
-	mutable HeapMemoryPool m_pool; ///< Mutable because it's thread-safe and is may be called by const methods.
-	mutable StackMemoryPool m_tmpPool; ///< Same as above.
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGometryMemoryPool = nullptr;
+	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
+
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
-	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
+
+	ResourceManager();
+
+	~ResourceManager();
 };
 /// @}
 

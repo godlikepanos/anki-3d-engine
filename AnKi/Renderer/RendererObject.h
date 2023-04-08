@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -17,7 +17,6 @@ namespace anki {
 // Forward
 class Renderer;
 class ResourceManager;
-class ConfigSet;
 
 /// @addtogroup renderer
 /// @{
@@ -26,16 +25,9 @@ class ConfigSet;
 class RendererObject
 {
 public:
-	RendererObject(Renderer* r)
-		: m_r(r)
-	{
-	}
+	RendererObject() = default;
 
-	virtual ~RendererObject()
-	{
-	}
-
-	HeapMemoryPool& getMemoryPool() const;
+	virtual ~RendererObject() = default;
 
 	virtual void getDebugRenderTarget([[maybe_unused]] CString rtName,
 									  [[maybe_unused]] Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
@@ -45,14 +37,9 @@ public:
 	}
 
 protected:
-	Renderer* m_r; ///< Know your father
+	static Renderer& getRenderer();
 
-	GrManager& getGrManager();
-	const GrManager& getGrManager() const;
-
-	ResourceManager& getResourceManager();
-
-	void* allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token);
 
 	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
 
@@ -81,42 +68,40 @@ protected:
 	}
 
 	template<typename TPtr>
-	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
+	TPtr allocateUniforms(PtrSize size, RebarGpuMemoryToken& token)
 	{
-		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::kUniform, token));
+		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
 
-	void bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const;
+	void bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const;
 
 	template<typename TPtr>
 	TPtr allocateAndBindUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 	{
-		StagingGpuMemoryToken token;
+		RebarGpuMemoryToken token;
 		TPtr ptr = allocateUniforms<TPtr>(size, token);
 		bindUniforms(cmdb, set, binding, token);
 		return ptr;
 	}
 
 	template<typename TPtr>
-	TPtr allocateStorage(PtrSize size, StagingGpuMemoryToken& token)
+	TPtr allocateStorage(PtrSize size, RebarGpuMemoryToken& token)
 	{
-		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::kStorage, token));
+		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
 
-	void bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const;
+	void bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const;
 
 	template<typename TPtr>
 	TPtr allocateAndBindStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 	{
-		StagingGpuMemoryToken token;
+		RebarGpuMemoryToken token;
 		TPtr ptr = allocateStorage<TPtr>(size, token);
 		bindStorage(cmdb, set, binding, token);
 		return ptr;
 	}
 
 	void registerDebugRenderTarget(CString rtName);
-
-	const ConfigSet& getConfig() const;
 };
 /// @}
 

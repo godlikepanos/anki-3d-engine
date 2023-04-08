@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -8,24 +8,17 @@
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Core/GpuMemoryPools.h>
-#include <AnKi/Input/Input.h>
+#include <AnKi/Window/Input.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>
 
 namespace anki {
 
-Canvas::Canvas(UiManager* manager)
-	: UiObject(manager)
-{
-}
-
 Canvas::~Canvas()
 {
 	if(m_imCtx)
 	{
-		setImAllocator();
 		ImGui::DestroyContext(m_imCtx);
-		unsetImAllocator();
 	}
 }
 
@@ -36,7 +29,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	resize(width, height);
 
 	// Create program
-	ANKI_CHECK(m_manager->getResourceManager().loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Ui.ankiprogbin", m_prog));
 
 	for(U32 i = 0; i < kShaderCount; ++i)
 	{
@@ -52,17 +45,13 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	samplerInit.m_minMagFilter = SamplingFilter::kLinear;
 	samplerInit.m_mipmapFilter = SamplingFilter::kLinear;
 	samplerInit.m_addressing = SamplingAddressing::kRepeat;
-	m_linearLinearRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
+	m_linearLinearRepeatSampler = GrManager::getSingleton().newSampler(samplerInit);
 
 	samplerInit.m_minMagFilter = SamplingFilter::kNearest;
 	samplerInit.m_mipmapFilter = SamplingFilter::kNearest;
-	m_nearestNearestRepeatSampler = m_manager->getGrManager().newSampler(samplerInit);
-
-	// Allocator
-	m_tempPool.init(getMemoryPool().getAllocationCallback(), getMemoryPool().getAllocationCallbackUserData(), 512_B);
+	m_nearestNearestRepeatSampler = GrManager::getSingleton().newSampler(samplerInit);
 
 	// Create the context
-	setImAllocator();
 	m_imCtx = ImGui::CreateContext(font->getImFontAtlas());
 	ImGui::SetCurrentContext(m_imCtx);
 	ImGui::GetIO().IniFilename = nullptr;
@@ -97,17 +86,15 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 #undef ANKI_HANDLE
 
 	ImGui::SetCurrentContext(nullptr);
-	unsetImAllocator();
 
 	return Error::kNone;
 }
 
 void Canvas::handleInput()
 {
-	const Input& in = m_manager->getInput();
+	const Input& in = Input::getSingleton();
 
 	// Begin
-	setImAllocator();
 	ImGui::SetCurrentContext(m_imCtx);
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -166,12 +153,10 @@ void Canvas::handleInput()
 
 	// End
 	ImGui::SetCurrentContext(nullptr);
-	unsetImAllocator();
 }
 
 void Canvas::beginBuilding()
 {
-	setImAllocator();
 	ImGui::SetCurrentContext(m_imCtx);
 
 	ImGuiIO& io = ImGui::GetIO();
@@ -184,7 +169,7 @@ void Canvas::beginBuilding()
 
 void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
 {
-	m_references.pushBack(m_tempPool, IntrusivePtr<UiObject>(const_cast<Font*>(font.get())));
+	m_references.pushBack(UiObjectPtr(const_cast<Font*>(font.get())));
 	ImGui::PushFont(&font->getImFont(fontHeight));
 }
 
@@ -195,8 +180,7 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	// Done
 	ImGui::SetCurrentContext(nullptr);
 
-	m_references.destroy(m_tempPool);
-	m_tempPool.reset();
+	m_references.destroy();
 }
 
 void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
@@ -206,7 +190,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	ImDrawData& drawData = *ImGui::GetDrawData();
 
 	// Allocate index and vertex buffers
-	StagingGpuMemoryToken vertsToken, indicesToken;
+	RebarGpuMemoryToken vertsToken, indicesToken;
 	{
 		const U32 verticesSize = U32(drawData.TotalVtxCount) * sizeof(ImDrawVert);
 		const U32 indicesSize = U32(drawData.TotalIdxCount) * sizeof(ImDrawIdx);
@@ -216,10 +200,10 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 			return;
 		}
 
-		ImDrawVert* verts = static_cast<ImDrawVert*>(
-			m_manager->getStagingGpuMemory().allocateFrame(verticesSize, StagingGpuMemoryType::kVertex, vertsToken));
-		ImDrawIdx* indices = static_cast<ImDrawIdx*>(
-			m_manager->getStagingGpuMemory().allocateFrame(indicesSize, StagingGpuMemoryType::kVertex, indicesToken));
+		ImDrawVert* verts =
+			static_cast<ImDrawVert*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(verticesSize, vertsToken));
+		ImDrawIdx* indices =
+			static_cast<ImDrawIdx*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(indicesSize, indicesToken));
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{
@@ -238,12 +222,14 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(ImDrawVert));
+	cmdb->bindVertexBuffer(0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset,
+						   sizeof(ImDrawVert));
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
 	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
 	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::kU16);
+	cmdb->bindIndexBuffer(RebarStagingGpuMemoryPool::getSingleton().getBuffer(), indicesToken.m_offset,
+						  IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports

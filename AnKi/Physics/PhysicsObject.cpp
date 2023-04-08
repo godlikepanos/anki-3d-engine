@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -21,14 +21,9 @@ PhysicsFilteredObject::~PhysicsFilteredObject()
 
 		if(pair->shouldDelete())
 		{
-			deleteInstance(getMemoryPool(), pair);
+			deleteInstance(PhysicsMemoryPool::getSingleton(), pair);
 		}
 	}
-}
-
-HeapMemoryPool& PhysicsObject::getMemoryPool()
-{
-	return m_world->getMemoryPool();
 }
 
 } // end namespace anki

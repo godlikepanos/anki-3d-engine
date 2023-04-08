@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,13 +9,13 @@
 
 namespace anki {
 
-Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& init)
+Buffer* Buffer::newInstance(const BufferInitInfo& init)
 {
-	BufferImpl* impl = anki::newInstance<BufferImpl>(manager->getMemoryPool(), manager, init.getName());
+	BufferImpl* impl = anki::newInstance<BufferImpl>(GrMemoryPool::getSingleton(), init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

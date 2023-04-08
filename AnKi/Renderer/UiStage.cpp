@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -12,20 +12,12 @@
 
 namespace anki {
 
-UiStage::UiStage(Renderer* r)
-	: RendererObject(r)
-{
-}
-
-UiStage::~UiStage()
-{
-}
-
 Error UiStage::init()
 {
-	ANKI_CHECK(m_r->getUiManager().newInstance(m_font, "EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}));
-	ANKI_CHECK(m_r->getUiManager().newInstance(m_canvas, m_font, 12, m_r->getPostProcessResolution().x(),
-											   m_r->getPostProcessResolution().y()));
+	ANKI_CHECK(
+		UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuRegular.ttf", Array<U32, 3>{12, 16, 20}));
+	ANKI_CHECK(UiManager::getSingleton().newInstance(m_canvas, m_font, 12, getRenderer().getPostProcessResolution().x(),
+													 getRenderer().getPostProcessResolution().y()));
 
 	return Error::kNone;
 }
@@ -38,7 +30,7 @@ void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPt
 		return;
 	}
 
-	ANKI_TRACE_SCOPED_EVENT(UI_RENDER);
+	ANKI_TRACE_SCOPED_EVENT(RUi);
 
 	m_canvas->handleInput();
 	m_canvas->beginBuilding();

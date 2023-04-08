@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+# Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 # All rights reserved.
 # Code licensed under the BSD License.
 # http://www.anki3d.org/LICENSE
@@ -9,9 +9,19 @@ import glob
 import subprocess
 import threading
 import multiprocessing
+import os
+import tempfile
+import platform
 
-file_extensions = ["h", "hpp", "c", "cpp", "glsl", "ankiprog"]
+file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
+hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_TARGET0", "SV_TARGET1", "SV_TARGET2", "SV_TARGET3", "SV_TARGET4",
+                  "SV_TARGET5", "SV_TARGET6", "SV_TARGET7", "SV_DISPATCHTHREADID", "SV_GROUPINDEX", "SV_GROUPID",
+                  "SV_GROUPTHREADID"]
+hlsl_attribs = ["[shader(\"closesthit\")]", "[shader(\"anyhit\")]", "[shader(\"raygeneration\")]", "[shader(\"miss\")]",
+                "[raypayload]"]
+hlsl_attribs_fake = ["______shaderclosesthit", "______shaderanyhit", "______shaderraygeneration", "______shadermiss",
+                     "[[raypaylo]]"]
 
 
 def thread_callback(tid):
@@ -30,7 +40,67 @@ def thread_callback(tid):
         if file_name is None:
             break
 
-        subprocess.check_call(["./ThirdParty/Bin/Windows64/clang-format.exe", "-sort-includes=false", "-i", file_name])
+        unused, file_extension = os.path.splitext(file_name)
+        is_shader = file_extension == ".hlsl" or file_extension == ".ankiprog"
+
+        if is_shader:
+            # Read all text
+            file = open(file_name, mode="r", newline="\n")
+            file_txt = file.read()
+            file.close()
+
+            original_file_hash = hash(file_txt)
+
+            # Replace all semantics
+            for semantic in hlsl_semantics:
+                file_txt = file_txt.replace(": " + semantic, "__" + semantic)
+
+            for i in range(0, len(hlsl_attribs)):
+                file_txt = file_txt.replace(hlsl_attribs[i], hlsl_attribs_fake[i])
+
+            # Write the new file
+            tmp_filefd, tmp_filename = tempfile.mkstemp()
+            with open(tmp_filename, "w", newline="\n") as f:
+                f.write(file_txt)
+                os.close(tmp_filefd)
+
+            orig_filename = file_name
+            file_name = tmp_filename
+
+            style_file = "--style=file:.clang-format-hlsl"
+        else:
+            style_file = "--style=file:.clang-format"
+
+        if platform.system() == "Linux":
+            exe = "./ThirdParty/Bin/Linux64/clang-format"
+        else:
+            exe = "./ThirdParty/Bin/Windows64/clang-format.exe"
+
+        subprocess.check_call([exe, "-sort-includes=false", style_file, "-i", file_name])
+
+        if is_shader:
+            # Read tmp file
+            file = open(tmp_filename, mode="r", newline="\n")
+            file_txt = file.read()
+            file.close()
+
+            # Replace all semantics
+            for semantic in hlsl_semantics:
+                file_txt = file_txt.replace("__" + semantic, ": " + semantic)
+
+            for i in range(0, len(hlsl_attribs)):
+                file_txt = file_txt.replace(hlsl_attribs_fake[i], hlsl_attribs[i])
+
+            new_file_hash = hash(file_txt)
+
+            # Write formatted file
+            if new_file_hash != original_file_hash:
+                file = open(orig_filename, mode="w", newline="\n")
+                file.write(file_txt)
+                file.close()
+
+            # Cleanup
+            os.remove(tmp_filename)
 
 
 # Gather the filenames

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,8 +11,16 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
+class ShaderDumpOptions
+{
+public:
+	Bool m_writeGlsl = true;
+	Bool m_writeSpirv = false;
+};
+
 /// Create a human readable representation of the shader binary.
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringRaii& humanReadable);
+void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary,
+							 String& humanReadable);
 /// @}
 
 } // end namespace anki

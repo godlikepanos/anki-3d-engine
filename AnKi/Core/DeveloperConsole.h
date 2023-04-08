@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -19,14 +19,11 @@ namespace anki {
 class DeveloperConsole : public UiImmediateModeBuilder
 {
 public:
-	DeveloperConsole(UiManager* ui)
-		: UiImmediateModeBuilder(ui)
-	{
-	}
+	DeveloperConsole() = default;
 
 	~DeveloperConsole();
 
-	Error init(ScriptManager* scriptManager);
+	Error init();
 
 	void build(CanvasPtr ctx) override;
 
@@ -39,8 +36,8 @@ private:
 		const Char* m_file;
 		const Char* m_func;
 		const Char* m_subsystem;
-		String m_threadName;
-		String m_msg;
+		UiString m_threadName;
+		UiString m_msg;
 		I32 m_line;
 		LoggerMessageType m_type;
 	};

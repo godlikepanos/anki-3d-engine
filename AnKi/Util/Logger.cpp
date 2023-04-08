@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -39,7 +39,7 @@ Logger::~Logger()
 void Logger::addMessageHandler(void* data, LoggerMessageHandlerCallback callback)
 {
 	LockGuard<Mutex> lock(m_mutex);
-	m_handlers[m_handlersCount++] = Handler(data, callback);
+	m_handlers[m_handlersCount++] = Handler{data, callback};
 }
 
 void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callback)
@@ -69,7 +69,7 @@ void Logger::write(const Char* file, int line, const Char* func, const Char* sub
 				   const Char* threadName, const Char* msg)
 {
 	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
-	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled)
+	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled) [[likely]]
 	{
 		return;
 	}
@@ -180,7 +180,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out, "%s[%s][%s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
+	fprintf(out, "%s[%s][%-4s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
 			info.m_subsystem ? info.m_subsystem : "N/A ", endTerminalColor, terminalColor, info.m_msg, info.m_file,
 			info.m_line, info.m_func, info.m_threadName, endTerminalColor);
 #elif ANKI_OS_WINDOWS

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -122,7 +122,7 @@ class GpuMemoryManager
 	friend class GpuMemoryManagerInterface;
 
 public:
-	GpuMemoryManager() = default;
+	GpuMemoryManager();
 
 	GpuMemoryManager(const GpuMemoryManager&) = delete; // Non-copyable
 
@@ -130,7 +130,7 @@ public:
 
 	GpuMemoryManager& operator=(const GpuMemoryManager&) = delete; // Non-copyable
 
-	void init(VkPhysicalDevice pdev, VkDevice dev, HeapMemoryPool* pool, Bool exposeBufferGpuAddress);
+	void init(Bool exposeBufferGpuAddress);
 
 	void destroy();
 
@@ -153,13 +153,10 @@ public:
 	void getStats(GpuMemoryManagerStats& stats) const;
 
 private:
-	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex>;
+	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex,
+												 SingletonMemoryPoolWrapper<GrMemoryPool>>;
 
-	HeapMemoryPool* m_pool = nullptr;
-
-	VkDevice m_dev = VK_NULL_HANDLE;
-
-	DynamicArray<ClassAllocator> m_callocs;
+	GrDynamicArray<ClassAllocator> m_callocs;
 
 	VkPhysicalDeviceMemoryProperties m_memoryProperties = {};
 	U32 m_bufferImageGranularity = 0;

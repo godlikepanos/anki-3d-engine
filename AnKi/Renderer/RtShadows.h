@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -19,15 +19,12 @@ namespace anki {
 class RtShadows : public RendererObject
 {
 public:
-	RtShadows(Renderer* r)
-		: RendererObject(r)
+	RtShadows()
 	{
 		registerDebugRenderTarget("RtShadows");
 		registerDebugRenderTarget("RtShadows1");
 		registerDebugRenderTarget("RtShadows2");
 	}
-
-	~RtShadows();
 
 	Error init();
 
@@ -120,7 +117,7 @@ public:
 
 	Error initInternal();
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx);
 	void runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runSvgfVariance(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);

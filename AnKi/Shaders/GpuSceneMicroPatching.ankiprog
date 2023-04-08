@@ -1,0 +1,30 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+
+[[vk::binding(0)]] StructuredBuffer<UVec2> g_patchHeaders;
+[[vk::binding(1)]] StructuredBuffer<U32> g_srcBuffer;
+[[vk::binding(2)]] RWStructuredBuffer<U32> g_dstBuffer;
+
+[numthreads(64, 1, 1)] void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	const UVec2 header = g_patchHeaders[svGroupId.x];
+	const U32 dwordCount = (header.x >> 26u) + 1u;
+
+	if(svGroupIndex >= dwordCount)
+	{
+		return;
+	}
+
+	const U32 srcDwordOffset = header.x & 0x3FFFFFFu;
+	const U32 dstDwordOffset = header.y;
+
+	g_dstBuffer[dstDwordOffset + svGroupIndex] = g_srcBuffer[srcDwordOffset + svGroupIndex];
+}
+
+#pragma anki end

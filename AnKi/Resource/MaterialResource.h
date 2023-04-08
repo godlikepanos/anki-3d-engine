@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -26,7 +26,6 @@ enum class BuiltinMutatorId : U8
 {
 	kNone = 0,
 	kTechnique,
-	kLod,
 	kBones,
 	kVelocity,
 
@@ -110,7 +109,7 @@ public:
 	}
 
 protected:
-	String m_name;
+	ResourceString m_name;
 	U32 m_offsetInLocalUniforms = kMaxU32;
 	U32 m_opaqueBinding = kMaxU32; ///< Binding for textures and samplers.
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
@@ -218,7 +217,7 @@ private:
 class MaterialResource : public ResourceObject
 {
 public:
-	MaterialResource(ResourceManager* manager);
+	MaterialResource();
 
 	~MaterialResource();
 
@@ -271,16 +270,16 @@ private:
 
 	class Program;
 
-	DynamicArray<Program> m_programs;
+	ResourceDynamicArray<Program> m_programs;
 
 	Array<U8, U(RenderingTechnique::kCount)> m_techniqueToProgram;
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
 
-	DynamicArray<MaterialVariable> m_vars;
+	ResourceDynamicArray<MaterialVariable> m_vars;
 
 	Bool m_supportsSkinning = false;
 
-	DynamicArray<TexturePtr> m_textures;
+	ResourceDynamicArray<TexturePtr> m_textures;
 
 	void* m_prefilledLocalUniforms = nullptr;
 	U32 m_localUniformsSize = 0;

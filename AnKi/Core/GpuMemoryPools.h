@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -7,86 +7,121 @@
 
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Buffer.h>
-#include <AnKi/Gr/Utils/FrameGpuAllocator.h>
-#include <AnKi/Gr/Utils/SegregatedListsGpuAllocator.h>
+#include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
+#include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
+#include <AnKi/Resource/ShaderProgramResource.h>
 
 namespace anki {
-
-// Forward
-class ConfigSet;
 
 /// @addtogroup core
 /// @{
 
 /// Manages vertex and index memory for the whole application.
-class UnifiedGeometryMemoryPool
+class UnifiedGeometryMemoryPool : public MakeSingleton<UnifiedGeometryMemoryPool>
 {
-public:
-	UnifiedGeometryMemoryPool() = default;
+	template<typename>
+	friend class MakeSingleton;
 
+public:
 	UnifiedGeometryMemoryPool(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
 	UnifiedGeometryMemoryPool& operator=(const UnifiedGeometryMemoryPool&) = delete; // Non-copyable
 
-	void init(HeapMemoryPool* pool, GrManager* gr, const ConfigSet& cfg);
+	void init();
 
-	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuAllocatorToken& token)
+	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_alloc.allocate(size, alignment, token);
+		m_pool.allocate(size, alignment, token);
 	}
 
-	void free(const SegregatedListsGpuAllocatorToken& token)
+	void deferredFree(SegregatedListsGpuMemoryPoolToken& token)
 	{
-		m_alloc.free(token);
+		m_pool.deferredFree(token);
 	}
 
 	void endFrame()
 	{
-		m_alloc.endFrame();
+		m_pool.endFrame();
 	}
 
 	const BufferPtr& getBuffer() const
 	{
-		return m_alloc.getGpuBuffer();
+		return m_pool.getGpuBuffer();
 	}
 
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
 	{
-		m_alloc.getStats(externalFragmentation, userAllocatedSize, totalSize);
+		m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
 	}
 
 private:
-	SegregatedListsGpuAllocator m_alloc;
+	SegregatedListsGpuMemoryPool m_pool;
+
+	UnifiedGeometryMemoryPool() = default;
+
+	~UnifiedGeometryMemoryPool() = default;
 };
 
-enum class StagingGpuMemoryType : U8
+/// Memory pool for the GPU scene.
+class GpuSceneMemoryPool : public MakeSingleton<GpuSceneMemoryPool>
 {
-	kUniform,
-	kStorage,
-	kVertex,
-	kTexture,
+	template<typename>
+	friend class MakeSingleton;
 
-	kCount,
-	kFirst = 0,
+public:
+	GpuSceneMemoryPool(const GpuSceneMemoryPool&) = delete; // Non-copyable
+
+	GpuSceneMemoryPool& operator=(const GpuSceneMemoryPool&) = delete; // Non-copyable
+
+	void init();
+
+	void allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
+	{
+		m_pool.allocate(size, alignment, token);
+	}
+
+	void deferredFree(SegregatedListsGpuMemoryPoolToken& token)
+	{
+		m_pool.deferredFree(token);
+	}
+
+	void endFrame()
+	{
+		m_pool.endFrame();
+	}
+
+	const BufferPtr& getBuffer() const
+	{
+		return m_pool.getGpuBuffer();
+	}
+
+	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
+	{
+		m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
+	}
+
+private:
+	SegregatedListsGpuMemoryPool m_pool;
+
+	GpuSceneMemoryPool() = default;
+
+	~GpuSceneMemoryPool() = default;
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(StagingGpuMemoryType)
 
 /// Token that gets returned when requesting for memory to write to a resource.
-class StagingGpuMemoryToken
+class RebarGpuMemoryToken
 {
 public:
-	BufferPtr m_buffer;
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
-	StagingGpuMemoryType m_type = StagingGpuMemoryType::kCount;
 
-	StagingGpuMemoryToken() = default;
+	RebarGpuMemoryToken() = default;
 
-	~StagingGpuMemoryToken() = default;
+	~RebarGpuMemoryToken() = default;
 
-	Bool operator==(const StagingGpuMemoryToken& b) const
+	Bool operator==(const RebarGpuMemoryToken& b) const
 	{
-		return m_buffer == b.m_buffer && m_offset == b.m_offset && m_range == b.m_range && m_type == b.m_type;
+		return m_offset == b.m_offset && m_range == b.m_range;
 	}
 
 	void markUnused()
@@ -101,44 +136,94 @@ public:
 };
 
 /// Manages staging GPU memory.
-class StagingGpuMemoryPool
+class RebarStagingGpuMemoryPool : public MakeSingleton<RebarStagingGpuMemoryPool>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	StagingGpuMemoryPool() = default;
+	RebarStagingGpuMemoryPool(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
-	StagingGpuMemoryPool(const StagingGpuMemoryPool&) = delete; // Non-copyable
+	~RebarStagingGpuMemoryPool();
 
-	~StagingGpuMemoryPool();
+	RebarStagingGpuMemoryPool& operator=(const RebarStagingGpuMemoryPool&) = delete; // Non-copyable
 
-	StagingGpuMemoryPool& operator=(const StagingGpuMemoryPool&) = delete; // Non-copyable
+	void init();
 
-	Error init(GrManager* gr, const ConfigSet& cfg);
-
-	void endFrame();
+	PtrSize endFrame();
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
 	/// N-(kMaxFramesInFlight-1) frame.
-	void* allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* allocateFrame(PtrSize size, RebarGpuMemoryToken& token);
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
 	/// N-(kMaxFramesInFlight-1) frame.
-	void* tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* tryAllocateFrame(PtrSize size, RebarGpuMemoryToken& token);
+
+	ANKI_PURE const BufferPtr& getBuffer() const
+	{
+		return m_buffer;
+	}
+
+	U8* getBufferMappedAddress()
+	{
+		return m_mappedMem;
+	}
 
 private:
-	class PerFrameBuffer
+	BufferPtr m_buffer;
+	U8* m_mappedMem = nullptr; ///< Cache it.
+	PtrSize m_bufferSize = 0; ///< Cache it.
+	Atomic<PtrSize> m_offset = {0};
+	PtrSize m_previousFrameEndOffset = 0;
+	U32 m_alignment = 0;
+
+	RebarStagingGpuMemoryPool() = default;
+};
+
+/// Creates the copy jobs that will patch the GPU Scene.
+class GpuSceneMicroPatcher : public MakeSingleton<GpuSceneMicroPatcher>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+public:
+	GpuSceneMicroPatcher(const GpuSceneMicroPatcher&) = delete;
+
+	GpuSceneMicroPatcher& operator=(const GpuSceneMicroPatcher&) = delete;
+
+	Error init();
+
+	/// Copy data for the GPU scene to a staging buffer.
+	/// @note It's thread-safe.
+	void newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, PtrSize dataSize, const void* data);
+
+	/// Check if there is a need to call patchGpuScene or if no copies are needed.
+	/// @note Not thread-safe. Nothing else should be happening before calling it.
+	Bool patchingIsNeeded() const
 	{
-	public:
-		PtrSize m_size = 0;
-		BufferPtr m_buff;
-		U8* m_mappedMem = nullptr; ///< Cache it
-		FrameGpuAllocator m_alloc;
-	};
+		return m_crntFramePatchHeaders.getSize() > 0;
+	}
 
-	GrManager* m_gr = nullptr;
-	Array<PerFrameBuffer, U(StagingGpuMemoryType::kCount)> m_perFrameBuffers;
+	/// Copy the data to the GPU scene buffer.
+	/// @note Not thread-safe. Nothing else should be happening before calling it.
+	void patchGpuScene(CommandBuffer& cmdb);
 
-	void initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize, BufferUsageBit usage,
-					GrManager& gr);
+private:
+	static constexpr U32 kDwordsPerPatch = 64;
+
+	class PatchHeader;
+
+	DynamicArray<PatchHeader, MemoryPoolPtrWrapper<StackMemoryPool>> m_crntFramePatchHeaders;
+	DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> m_crntFramePatchData;
+	Mutex m_mtx;
+
+	ShaderProgramResourcePtr m_copyProgram;
+	ShaderProgramPtr m_grProgram;
+
+	GpuSceneMicroPatcher();
+
+	~GpuSceneMicroPatcher();
 };
 /// @}
 

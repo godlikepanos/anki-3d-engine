@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -24,14 +24,14 @@ public:
 	{
 	}
 
-	TEuler(const T x_, const T y_, const T z_)
+	constexpr TEuler(const T x_, const T y_, const T z_)
 	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
+		m_vec.m_x = x_;
+		m_vec.m_y = y_;
+		m_vec.m_z = z_;
 	}
 
-	TEuler(const TEuler& b)
+	constexpr TEuler(const TEuler& b)
 	{
 		x() = b.x();
 		y() = b.y();
@@ -146,9 +146,9 @@ public:
 	/// @name Other
 	/// @{
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	void toString(StringRaii& str) const
+	String toString() const
 	{
-		str.sprintf("%f %f %f", m_vec.m_x, m_vec.m_y, m_vec.m_z);
+		return String().sprintf("%f %f %f", m_vec.m_x, m_vec.m_y, m_vec.m_z);
 	}
 	/// @}
 

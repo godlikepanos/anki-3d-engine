@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -28,7 +28,7 @@ OcclusionQueryResult OcclusionQueryImpl::getResultInternal() const
 	U64 out = 0;
 
 	VkResult res;
-	ANKI_VK_CHECKF(res = vkGetQueryPoolResults(getDevice(), m_handle.getQueryPool(), m_handle.getQueryIndex(), 1,
+	ANKI_VK_CHECKF(res = vkGetQueryPoolResults(getVkDevice(), m_handle.getQueryPool(), m_handle.getQueryIndex(), 1,
 											   sizeof(out), &out, sizeof(out),
 											   VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT
 												   | VK_QUERY_RESULT_PARTIAL_BIT));

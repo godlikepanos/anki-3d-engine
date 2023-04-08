@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -111,7 +111,7 @@ public:
 
 	~TransferGpuAllocator();
 
-	Error init(PtrSize maxSize, GrManager* gr, HeapMemoryPool* pool);
+	Error init(PtrSize maxSize);
 
 	/// Allocate some transfer memory. If there is not enough memory it will block until some is releaced. It's
 	/// threadsafe.
@@ -145,7 +145,7 @@ private:
 	class StackAllocatorBuilderInterface
 	{
 	public:
-		TransferGpuAllocator* m_parent = nullptr;
+		TransferGpuAllocator* m_parent = nullptr; // TODO glob: maybe rm
 
 		// The rest of the functions implement the StackAllocatorBuilder TInterface.
 
@@ -189,29 +189,14 @@ private:
 		}
 	};
 
-	/// StackAllocatorBuilder doesn't need a lock. There is another lock.
-	class DummyMutex
-	{
-	public:
-		void lock()
-		{
-		}
-
-		void unlock()
-		{
-		}
-	};
-
 	class Pool
 	{
 	public:
 		StackAllocatorBuilder<Chunk, StackAllocatorBuilderInterface, DummyMutex> m_stackAlloc;
-		List<FencePtr> m_fences;
+		ResourceList<FencePtr> m_fences;
 		U32 m_pendingReleases = 0;
 	};
 
-	HeapMemoryPool* m_pool = nullptr;
-	GrManager* m_gr = nullptr;
 	PtrSize m_maxAllocSize = 0;
 
 	Mutex m_mtx; ///< Protect all members bellow.

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -7,7 +7,7 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
-#include <AnKi/Input.h>
+#include <AnKi/Window.h>
 #include <AnKi/Core/GpuMemoryPools.h>
 
 using namespace anki;
@@ -57,7 +57,7 @@ public:
 
 ANKI_TEST(Ui, Ui)
 {
-	ConfigSet cfg;
+	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
 	initConfig(cfg);
 	cfg.setGrVsync(true);
 	cfg.setGrValidation(false);
@@ -66,19 +66,14 @@ ANKI_TEST(Ui, Ui)
 	cfg.setRsrcDataPaths("EngineAssets");
 
 	NativeWindow* win = createWindow(cfg);
-	Input* in;
-	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, win, in));
-	GrManager* gr = createGrManager(&cfg, win);
-	PhysicsWorld* physics;
-	ResourceFilesystem* fs;
-	ResourceManager* resource = createResourceManager(&cfg, gr, physics, fs);
-	UiManager* ui = new UiManager();
+	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
+	GrManager* gr = createGrManager(win);
+	createResourceManager(gr);
+	UiManager* ui = &UiManager::allocateSingleton();
 
-	StagingGpuMemoryPool* stagingMem = new StagingGpuMemoryPool();
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
+	RebarStagingGpuMemoryPool::allocateSingleton().init();
 
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ANKI_TEST_EXPECT_NO_ERR(ui->init(allocAligned, nullptr, resource, gr, stagingMem, in));
+	ANKI_TEST_EXPECT_NO_ERR(ui->init(allocAligned, nullptr));
 
 	{
 		FontPtr font;
@@ -87,18 +82,18 @@ ANKI_TEST(Ui, Ui)
 		CanvasPtr canvas;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, win->getWidth(), win->getHeight()));
 
-		IntrusivePtr<Label> label;
+		IntrusivePtr<Label, UiObjectDeleter> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
 
 		Bool done = false;
 		while(!done)
 		{
-			ANKI_TEST_EXPECT_NO_ERR(in->handleEvents());
+			ANKI_TEST_EXPECT_NO_ERR(Input::getSingleton().handleEvents());
 			HighRezTimer timer;
 			timer.start();
 
 			canvas->handleInput();
-			if(in->getKey(KeyCode::kEscape))
+			if(Input::getSingleton().getKey(KeyCode::kEscape))
 			{
 				done = true;
 			}
@@ -142,7 +137,7 @@ ANKI_TEST(Ui, Ui)
 			cmdb->flush();
 
 			gr->swapBuffers();
-			stagingMem->endFrame();
+			RebarStagingGpuMemoryPool::getSingleton().endFrame();
 
 			timer.stop();
 			const F32 TICK = 1.0f / 30.0f;
@@ -153,12 +148,10 @@ ANKI_TEST(Ui, Ui)
 		}
 	}
 
-	delete ui;
-	delete stagingMem;
-	delete resource;
-	delete physics;
-	delete fs;
-	GrManager::deleteInstance(gr);
-	Input::deleteInstance(in);
-	NativeWindow::deleteInstance(win);
+	UiManager::freeSingleton();
+	RebarStagingGpuMemoryPool::freeSingleton();
+	ResourceManager::freeSingleton();
+	GrManager::freeSingleton();
+	Input::freeSingleton();
+	NativeWindow::freeSingleton();
 }

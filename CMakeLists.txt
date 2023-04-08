@@ -1,8 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 
+message("++ CMake version ${CMAKE_VERSION}")
+
 include(ProcessorCount)
 
-PROJECT(AnKi)
+project(AnKi)
 
 ################################################################################
 # Funcs                                                                        #
@@ -11,15 +13,15 @@ PROJECT(AnKi)
 function(anki_install_executable EXE)
 	if(NOT ANDROID)
 		add_custom_command(TARGET ${EXE} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Bin
-			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${EXE}> ${CMAKE_BINARY_DIR}/Bin)
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Binaries
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${EXE}> ${CMAKE_BINARY_DIR}/Binaries)
 	endif()
 endfunction()
 
 macro(anki_new_executable)
 	if(NOT ANDROID)
 		add_executable(${ARGV})
-		set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
+		set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries)
 	else()
 		set(_SKIP TRUE)
 		foreach(ARG ${ARGV})
@@ -232,7 +234,9 @@ if(NOT MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 else()
 	#ProcessorCount(PC)
-	add_compile_options(/MP)
+	add_compile_options(
+		/MP
+		/EHsc) # Disable exceptions
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		#add_definitions(/Ox)
@@ -240,7 +244,8 @@ else()
 
 	add_definitions(
 		-D_CRT_SECURE_NO_WARNINGS=1 # Disable some string function warnings
-		-D_ITERATOR_DEBUG_LEVEL=0)
+		-D_ITERATOR_DEBUG_LEVEL=0
+		-D_HAS_EXCEPTIONS=0)
 
 	# Full paths in compiler diagnostics else you can't click on visual studio have it open the file+line
 	add_compile_options(/FC)
@@ -292,9 +297,9 @@ if(SDL)
 endif()
 
 # glslang
-message("++ Configuring glslang")
-add_subdirectory(ThirdParty/Glslang)
-message("++ End configuring glslang")
+message("++ Configuring SPIRV-tools")
+add_subdirectory(ThirdParty/SpirvTools)
+message("++ End configuring SPIRV-tools")
 
 if(LINUX OR WINDOWS)
 	message("++ Configuring reproc")
@@ -457,12 +462,12 @@ if(NOT MSVC)
 		-Wno-class-memaccess
 		-Wunused-variable)
 
-	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD 20)
 else()
 	string(REPLACE "/W3" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
 	add_compile_options(
-		/std:c++17
+		/std:c++20
 		/W4
 		/wd4324
 		/wd4456

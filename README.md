@@ -99,12 +99,12 @@ Android. Then you have to generate a gradle project per build target.
 For example, if you want to generate a project for the `Sponza` sample just type from a Linux terminal:
 
 	$cd path/to/anki
-	$./Samples/Sponza/GenerateAndroidProject.sh path/to/Bin/ShaderCompiler
+	$./Samples/Sponza/GenerateAndroidProject.sh path/to/Binaries/ShaderCompiler
 
 or from a PowerShell terminal on Windows:
 
 	$cd path/to/anki
-	$./Samples/Sponza/GenerateAndroidProject.bat path/to/Bin/ShaderCompiler.exe
+	$./Samples/Sponza/GenerateAndroidProject.bat path/to/Binaries/ShaderCompiler.exe
 
 The `GenerateAndroidProject` scripts will generate a project in the root directory of AnKi. So for the `Sponza` sample
 the script will create a directory named `AndroidProject_Sponza`.
@@ -126,7 +126,7 @@ directory.
 
 On Linux:
 
-	$./path/to/build/Bin/Sponza
+	$./path/to/build/Binaries/Sponza
 
 On Windows just find the `Sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
 prints some information, including possible errors.

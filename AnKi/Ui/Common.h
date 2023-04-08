@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,6 +16,8 @@ namespace anki {
 
 // Forward
 class UiManager;
+class GrManager;
+class UiObject;
 
 /// @addtogroup ui
 /// @{
@@ -25,14 +27,38 @@ class UiManager;
 #define ANKI_UI_LOGW(...) ANKI_LOG("UI", kWarning, __VA_ARGS__)
 #define ANKI_UI_LOGF(...) ANKI_LOG("UI", kFatal, __VA_ARGS__)
 
-#define ANKI_UI_OBJECT_FW(name_) \
-	class name_; \
-	using name_##Ptr = IntrusivePtr<name_>;
+class UiMemoryPool : public HeapMemoryPool, public MakeSingleton<UiMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	UiMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "UiMemPool")
+	{
+	}
+
+	~UiMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Ui, UiMemoryPool)
+
+class UiObjectDeleter
+{
+public:
+	void operator()(UiObject* x);
+};
+
+#define ANKI_UI_OBJECT_FW(className) \
+	class className; \
+	using className##Ptr = IntrusivePtr<className, UiObjectDeleter>;
 
 ANKI_UI_OBJECT_FW(Font)
 ANKI_UI_OBJECT_FW(Canvas)
 ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 #undef ANKI_UI_OBJECT
+
+using UiObjectPtr = IntrusivePtr<UiObject, UiObjectDeleter>;
 
 inline Vec2 toAnki(const ImVec2& v)
 {

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,12 +16,10 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	MainRenderer* r = binder->getOtherSystems().m_renderer;
-	ANKI_ASSERT(r);
-	return r;
+	return &MainRenderer::getSingleton();
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-3798765529615162251, "MainRenderer",
+LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-6365712250974230727, "MainRenderer",
 													   LuaUserData::computeSizeForGarbageCollected<MainRenderer>(),
 													   nullptr, nullptr};
 
@@ -38,7 +36,7 @@ static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -80,7 +78,7 @@ static inline int pwrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	if(LuaBinder::checkArgsCount(l, 2)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -95,7 +93,7 @@ static inline int pwrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	if(LuaBinder::checkString(l, 2, arg0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -135,7 +133,7 @@ static inline int pwrapgetMainRenderer(lua_State* l)
 	[[maybe_unused]] void* voidp;
 	[[maybe_unused]] PtrSize size;
 
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
+	if(LuaBinder::checkArgsCount(l, 0)) [[unlikely]]
 	{
 		return -1;
 	}
@@ -144,7 +142,7 @@ static inline int pwrapgetMainRenderer(lua_State* l)
 	MainRenderer* ret = getMainRenderer(l);
 
 	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
+	if(ret == nullptr) [[unlikely]]
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;

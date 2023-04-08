@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -60,8 +60,8 @@ protected:
 	GrUpscalerType m_upscalerType = GrUpscalerType::kCount;
 
 	/// Construct.
-	GrUpscaler(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	GrUpscaler(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -72,7 +72,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static GrUpscaler* newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo);
+	[[nodiscard]] static GrUpscaler* newInstance(const GrUpscalerInitInfo& initInfo);
 };
 /// @}
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -186,9 +186,9 @@ public:
 	/// @name Other
 	/// @{
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	void toString(StringRaii& str) const
+	String toString() const
 	{
-		str.sprintf("%f %f %f | %f", m_axis.x(), m_axis.y(), m_axis.z(), m_ang);
+		return String().sprintf("%f %f %f | %f", m_axis.x(), m_axis.y(), m_axis.z(), m_ang);
 	}
 	/// @}
 

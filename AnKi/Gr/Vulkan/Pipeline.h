@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -393,6 +393,11 @@ public:
 		m_pipelineStatisticsEnabled = enable;
 	}
 
+	void setVrsCapable(Bool capable)
+	{
+		m_vrsCapable = capable;
+	}
+
 	/// Flush state
 	void flush(U64& pipelineHash, Bool& stateDirty)
 	{
@@ -427,30 +432,19 @@ private:
 	class DirtyBits
 	{
 	public:
-		Bool m_prog : 1;
-		Bool m_rpass : 1;
-		Bool m_inputAssembler : 1;
-		Bool m_rasterizer : 1;
-		Bool m_depth : 1;
-		Bool m_stencil : 1;
-		Bool m_color : 1;
+		Bool m_prog : 1 = true;
+		Bool m_rpass : 1 = true;
+		Bool m_inputAssembler : 1 = true;
+		Bool m_rasterizer : 1 = true;
+		Bool m_depth : 1 = true;
+		Bool m_stencil : 1 = true;
+		Bool m_color : 1 = true;
 
 		// Vertex
 		BitSet<kMaxVertexAttributes, U8> m_attribs = {true};
 		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {true};
 
 		BitSet<kMaxColorRenderTargets, U8> m_colAttachments = {true};
-
-		DirtyBits()
-			: m_prog(true)
-			, m_rpass(true)
-			, m_inputAssembler(true)
-			, m_rasterizer(true)
-			, m_depth(true)
-			, m_stencil(true)
-			, m_color(true)
-		{
-		}
 	} m_dirty;
 
 	class SetBits
@@ -465,9 +459,9 @@ private:
 	BitSet<kMaxColorRenderTargets, U8> m_shaderColorAttachmentWritemask = {false};
 
 	// Renderpass info
-	Bool m_fbDepth = false;
-	Bool m_fbStencil = false;
-	Bool m_defaultFb = false;
+	Bool m_fbDepth : 1 = false;
+	Bool m_fbStencil : 1 = false;
+	Bool m_defaultFb : 1 = false;
 	BitSet<kMaxColorRenderTargets, U8> m_fbColorAttachmentMask = {false};
 
 	class Hashes
@@ -512,7 +506,8 @@ private:
 		VkPipelineRasterizationStateRasterizationOrderAMD m_rasterOrder;
 	} m_ci;
 
-	Bool m_pipelineStatisticsEnabled = false;
+	Bool m_pipelineStatisticsEnabled : 1 = false;
+	Bool m_vrsCapable : 1 = false;
 
 	Bool updateHashes();
 	void updateSuperHash();
@@ -538,24 +533,17 @@ private:
 class PipelineFactory
 {
 public:
-	PipelineFactory()
-	{
-	}
+	PipelineFactory();
 
-	~PipelineFactory()
-	{
-	}
+	~PipelineFactory();
 
-	void init(HeapMemoryPool* pool, VkDevice dev, VkPipelineCache pplineCache
+	void init(VkPipelineCache pplineCache
 #if ANKI_PLATFORM_MOBILE
 			  ,
 			  Mutex* globalCreatePipelineMtx
 #endif
 	)
 	{
-		ANKI_ASSERT(pool);
-		m_pool = pool;
-		m_dev = dev;
 		m_pplineCache = pplineCache;
 #if ANKI_PLATFORM_MOBILE
 		m_globalCreatePipelineMtx = globalCreatePipelineMtx;
@@ -571,11 +559,9 @@ private:
 	class PipelineInternal;
 	class Hasher;
 
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
-	HashMap<U64, PipelineInternal, Hasher> m_pplines;
+	GrHashMap<U64, PipelineInternal, Hasher> m_pplines;
 	RWMutex m_pplinesMtx;
 #if ANKI_PLATFORM_MOBILE
 	Mutex* m_globalCreatePipelineMtx = nullptr;

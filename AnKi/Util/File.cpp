@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -383,7 +383,7 @@ Error File::writeText(CString text)
 	ANKI_ASSERT((m_flags & FileOpenFlag::kBinary) == FileOpenFlag::kNone);
 
 	const PtrSize writeSize = text.getLength();
-	if(ANKI_UNLIKELY(writeSize == 0))
+	if(writeSize == 0) [[unlikely]]
 	{
 		return Error::kNone;
 	}
@@ -458,42 +458,6 @@ FileOpenFlag File::getMachineEndianness()
 	{
 		return FileOpenFlag::kBigEndian;
 	}
-}
-
-Error File::readAllText(BaseMemoryPool& pool, String& out)
-{
-	Error err = Error::kNone;
-	PtrSize size = getSize();
-
-	if(size != 0)
-	{
-		out.create(pool, '?', size);
-		err = read(&out[0], size);
-	}
-	else
-	{
-		err = Error::kFunctionFailed;
-	}
-
-	return err;
-}
-
-Error File::readAllText(StringRaii& out)
-{
-	Error err = Error::kNone;
-	PtrSize size = getSize();
-
-	if(size != 0)
-	{
-		out.create('?', size);
-		err = read(&out[0], size);
-	}
-	else
-	{
-		err = Error::kFunctionFailed;
-	}
-
-	return err;
 }
 
 } // end namespace anki

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -31,3 +31,4 @@ ANKI_RENDERER_OBJECT_DEF(ClusterBinning, clusterBinning)
 ANKI_RENDERER_OBJECT_DEF(Scale, scale)
 ANKI_RENDERER_OBJECT_DEF(IndirectDiffuse, indirectDiffuse)
 ANKI_RENDERER_OBJECT_DEF(VrsSriGeneration, vrsSriGeneration)
+ANKI_RENDERER_OBJECT_DEF(PackVisibleClusteredObjects, packVisibleClustererObjects)

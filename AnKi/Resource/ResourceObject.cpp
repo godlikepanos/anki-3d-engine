@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,37 +9,16 @@
 
 namespace anki {
 
-ResourceObject::ResourceObject(ResourceManager* manager)
-	: m_manager(manager)
-	, m_refcount(0)
-{
-}
-
-ResourceObject::~ResourceObject()
-{
-	m_fname.destroy(getMemoryPool());
-}
-
-HeapMemoryPool& ResourceObject::getMemoryPool() const
-{
-	return m_manager->getMemoryPool();
-}
-
-StackMemoryPool& ResourceObject::getTempMemoryPool() const
-{
-	return m_manager->getTempMemoryPool();
-}
-
 Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 {
-	return m_manager->getFilesystem().openFile(filename, file);
+	return ResourceManager::getSingleton().getFilesystem().openFile(filename, file);
 }
 
-Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& text)
+Error ResourceObject::openFileReadAllText(const CString& filename, ResourceString& text)
 {
 	// Load file
 	ResourceFilePtr file;
-	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
+	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
 
 	// Read string
 	ANKI_CHECK(file->readAllText(text));
@@ -47,19 +26,14 @@ Error ResourceObject::openFileReadAllText(const CString& filename, StringRaii& t
 	return Error::kNone;
 }
 
-Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml)
+Error ResourceObject::openFileParseXml(const CString& filename, ResourceXmlDocument& xml)
 {
-	StringRaii txt(&xml.getMemoryPool());
+	ResourceString txt;
 	ANKI_CHECK(openFileReadAllText(filename, txt));
 
 	ANKI_CHECK(xml.parse(txt.toCString()));
 
 	return Error::kNone;
-}
-
-const ConfigSet& ResourceObject::getConfig() const
-{
-	return m_manager->getConfig();
 }
 
 } // end namespace anki

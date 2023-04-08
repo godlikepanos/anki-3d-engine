@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -14,8 +14,8 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
-constexpr const char* SHADER_BINARY_MAGIC = "ANKISDR8"; ///< WARNING: If changed change SHADER_BINARY_VERSION
-constexpr U32 SHADER_BINARY_VERSION = 8;
+inline constexpr const char* kShaderBinaryMagic = "ANKISDR8"; //! WARNING: If changed change kShaderBinaryVersion
+constexpr U32 kShaderBinaryVersion = 8;
 
 /// A wrapper over the POD ShaderProgramBinary class.
 /// @memberof ShaderProgramCompiler
@@ -23,7 +23,7 @@ class ShaderProgramBinaryWrapper
 {
 	friend Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
 											  ShaderProgramPostParseInterface* postParseCallback,
-											  ShaderProgramAsyncTaskInterface* taskManager, BaseMemoryPool& tempPool,
+											  ShaderProgramAsyncTaskInterface* taskManager,
 											  const ShaderCompilerOptions& compilerOptions,
 											  ShaderProgramBinaryWrapper& binary);
 
@@ -72,7 +72,7 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 
 	m_singleAllocation = true;
 
-	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], strlen(SHADER_BINARY_MAGIC)) != 0)
+	if(memcmp(kShaderBinaryMagic, &m_binary->m_magic[0], strlen(kShaderBinaryMagic)) != 0)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary.");
 		return Error::kUserData;
@@ -84,8 +84,8 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 /// Takes an AnKi special shader program and spits a binary.
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
 						   ShaderProgramPostParseInterface* postParseCallback,
-						   ShaderProgramAsyncTaskInterface* taskManager, BaseMemoryPool& tempPool,
-						   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binary);
+						   ShaderProgramAsyncTaskInterface* taskManager, const ShaderCompilerOptions& compilerOptions,
+						   ShaderProgramBinaryWrapper& binary);
 /// @}
 
 } // end namespace anki

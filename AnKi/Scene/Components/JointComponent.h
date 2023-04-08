@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -23,7 +23,6 @@ public:
 		: SceneComponent(node, getStaticClassId())
 		, m_node(node)
 	{
-		ANKI_ASSERT(node);
 	}
 
 	~JointComponent();
@@ -37,22 +36,24 @@ public:
 	/// Create a hinge joint on the BodyComponent of the SceneNode.
 	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = kMaxF32);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 private:
 	class JointNode;
 
-	SceneNode* m_node;
+	SceneNode* m_node = nullptr;
+	BodyComponent* m_bodyc = nullptr;
+
 	IntrusiveList<JointNode> m_jointList;
 
 	/// Given a 3 coodrinates that lie in [-1.0, +1.0] compute a pivot point that lies into the AABB of the collision
 	/// shape of the body.
 	static Vec3 computeLocalPivotFromFactors(const PhysicsBodyPtr& body, const Vec3& factors);
 
-	void removeAllJoints();
-
 	template<typename TJoint, typename... TArgs>
 	void newJoint(const Vec3& relPosFactor, F32 brakingImpulse, TArgs&&... args);
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
 };
 /// @}
 

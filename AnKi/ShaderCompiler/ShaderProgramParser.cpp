@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -19,271 +19,19 @@ inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
 	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
-inline constexpr char kShaderHeader[] = R"(#version 460 core
-#define ANKI_%s_SHADER 1
+inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
 #define ANKI_PLATFORM_MOBILE %d
 #define ANKI_FORCE_FULL_FP_PRECISION %d
 
-#define ANKI_SUPPORTS_64BIT !ANKI_PLATFORM_MOBILE
-
-#define gl_VertexID gl_VertexIndex
-
-#extension GL_EXT_control_flow_attributes : require
-#define ANKI_UNROLL [[unroll]]
-#define ANKI_LOOP [[dont_unroll]]
-#define ANKI_BRANCH [[branch]]
-#define ANKI_FLATTEN [[flatten]]
-
-#extension GL_KHR_shader_subgroup_vote : require
-#extension GL_KHR_shader_subgroup_ballot : require
-#extension GL_KHR_shader_subgroup_shuffle : require
-#extension GL_KHR_shader_subgroup_arithmetic : require
-
-#extension GL_EXT_samplerless_texture_functions : require
-#extension GL_EXT_shader_image_load_formatted : require
-#extension GL_EXT_nonuniform_qualifier : enable
-
-#extension GL_EXT_buffer_reference : enable
-#extension GL_EXT_buffer_reference2 : enable
-
-#extension GL_EXT_shader_explicit_arithmetic_types : enable
-#extension GL_EXT_shader_explicit_arithmetic_types_int8 : enable
-#extension GL_EXT_shader_explicit_arithmetic_types_int16 : enable
-#extension GL_EXT_shader_explicit_arithmetic_types_int32 : enable
-#extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
-#extension GL_EXT_shader_explicit_arithmetic_types_float32 : enable
-
-#if ANKI_SUPPORTS_64BIT
-#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
-#extension GL_EXT_shader_explicit_arithmetic_types_float64 : enable
-#extension GL_EXT_shader_atomic_int64 : enable
-#extension GL_EXT_shader_subgroup_extended_types_int64 : enable
-#endif
-
-#extension GL_EXT_nonuniform_qualifier : enable
-#extension GL_EXT_scalar_block_layout : enable
-
 #define kMaxBindlessTextures %uu
 #define kMaxBindlessReadonlyTextureBuffers %uu
-
-#if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
-#	extension GL_EXT_ray_tracing : enable
-#endif
-
-#define ANKI_BINDLESS_SET(s) \
-	layout(set = s, binding = 0) uniform utexture2D u_bindlessTextures2dU32[kMaxBindlessTextures]; \
-	layout(set = s, binding = 0) uniform itexture2D u_bindlessTextures2dI32[kMaxBindlessTextures]; \
-	layout(set = s, binding = 0) uniform texture2D u_bindlessTextures2dF32[kMaxBindlessTextures]; \
-	layout(set = s, binding = 0) uniform texture2DArray u_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
-	layout(set = s, binding = 1) uniform textureBuffer u_bindlessTextureBuffers[kMaxBindlessReadonlyTextureBuffers];
-
-#define F32 float
-const uint kSizeof_float = 4u;
-#define Vec2 vec2
-const uint kSizeof_vec2 = 8u;
-#define Vec3 vec3
-const uint kSizeof_vec3 = 12u;
-#define Vec4 vec4
-const uint kSizeof_vec4 = 16u;
-
-#define F16 float16_t
-const uint kSizeof_float16_t = 2u;
-#define HVec2 f16vec2
-const uint kSizeof_f16vec2 = 4u;
-#define HVec3 f16vec3
-const uint kSizeof_f16vec3 = 6u;
-#define HVec4 f16vec4
-const uint kSizeof_f16vec4 = 8u;
-
-#define U8 uint8_t
-const uint kSizeof_uint8_t = 1u;
-#define U8Vec2 u8vec2
-const uint kSizeof_u8vec2 = 2u;
-#define U8Vec3 u8vec3
-const uint kSizeof_u8vec3 = 3u;
-#define U8Vec4 u8vec4
-const uint kSizeof_u8vec4 = 4u;
-
-#define I8 int8_t
-const uint kSizeof_int8_t = 1u;
-#define I8Vec2 i8vec2
-const uint kSizeof_i8vec2 = 2u;
-#define I8Vec3 i8vec3
-const uint kSizeof_i8vec3 = 3u;
-#define I8Vec4 i8vec4
-const uint kSizeof_i8vec4 = 4u;
-
-#define U16 uint16_t
-const uint kSizeof_uint16_t = 2u;
-#define U16Vec2 u16vec2
-const uint kSizeof_u16vec2 = 4u;
-#define U16Vec3 u16vec3
-const uint kSizeof_u16vec3 = 6u;
-#define U16Vec4 u16vec4
-const uint kSizeof_u16vec4 = 8u;
-
-#define I16 int16_t
-const uint kSizeof_int16_t = 2u;
-#define I16Vec2 i16vec2
-const uint kSizeof_i16vec2 = 4u;
-#define I16Vec3 i16vec3
-const uint kSizeof_i16vec3 = 6u;
-#define i16Vec4 i16vec4
-const uint kSizeof_i16vec4 = 8u;
-
-#define U32 uint
-const uint kSizeof_uint = 4u;
-#define UVec2 uvec2
-const uint kSizeof_uvec2 = 8u;
-#define UVec3 uvec3
-const uint kSizeof_uvec3 = 12u;
-#define UVec4 uvec4
-const uint kSizeof_uvec4 = 16u;
-
-#define I32 int
-const uint kSizeof_int = 4u;
-#define IVec2 ivec2
-const uint kSizeof_ivec2 = 8u;
-#define IVec3 ivec3
-const uint kSizeof_ivec3 = 12u;
-#define IVec4 ivec4
-const uint kSizeof_ivec4 = 16u;
-
-#if ANKI_SUPPORTS_64BIT
-#	define U64 uint64_t
-const uint kSizeof_uint64_t = 8u;
-#	define U64Vec2 u64vec2
-const uint kSizeof_u64vec2 = 16u;
-#	define U64Vec3 u64vec3
-const uint kSizeof_u64vec3 = 24u;
-#	define U64Vec4 u64vec4
-const uint kSizeof_u64vec4 = 32u;
-
-#	define I64 int64_t
-const uint kSizeof_int64_t = 8u;
-#	define I64Vec2 i64vec2
-const uint kSizeof_i64vec2 = 16u;
-#	define I64Vec3 i64vec3
-const uint kSizeof_i64vec3 = 24u;
-#	define I64Vec4 i64vec4
-const uint kSizeof_i64vec4 = 32u;
-#endif
-
-#define Mat3 mat3
-const uint kSizeof_mat3 = 36u;
-
-#define Mat4 mat4
-const uint kSizeof_mat4 = 64u;
-
-#define Mat3x4 mat4x3 // GLSL has the column number first and then the rows
-const uint kSizeof_mat3x4 = 48u;
-
-#define Bool bool
-
-#if ANKI_SUPPORTS_64BIT
-#	define Address U64
-#else
-#	define Address UVec2
-#endif
-const uint kSizeof_Address = 8u;
-
-#define _ANKI_CONCATENATE(a, b) a##b
-#define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
-
-#define ANKI_SIZEOF(type) _ANKI_CONCATENATE(kSizeof_, type)
-#define ANKI_ALIGNOF(type) _ANKI_CONCATENATE(kAlignof_, type)
-
-#define _ANKI_SCONST_X(type, n, id) \
-	layout(constant_id = id) const type n = type(1); \
-	const U32 ANKI_CONCATENATE(n, _CONST_ID) = id
-
-#define _ANKI_SCONST_X2(type, componentType, n, id, constWorkaround) \
-	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = componentType(1); \
-	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = componentType(1); \
-	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_2_, n), ANKI_CONCATENATE(_anki_const_1_2_, n))
-
-#define _ANKI_SCONST_X3(type, componentType, n, id, constWorkaround) \
-	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = componentType(1); \
-	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = componentType(1); \
-	layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = componentType(1); \
-	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
-		ANKI_CONCATENATE(_anki_const_2_3_, n))
-
-#define _ANKI_SCONST_X4(type, componentType, n, id, constWorkaround) \
-	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = componentType(1); \
-	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = componentType(1); \
-	layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = componentType(1); \
-	layout(constant_id = id + 3u) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = componentType(1); \
-	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_4_, n), ANKI_CONCATENATE(_anki_const_1_4_, n), \
-		ANKI_CONCATENATE(_anki_const_2_4_, n), ANKI_CONCATENATE(_anki_const_2_4_, n))
-
-#define ANKI_SPECIALIZATION_CONSTANT_I32(n, id) _ANKI_SCONST_X(I32, n, id)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(n, id) _ANKI_SCONST_X2(IVec2, I32, n, id, const)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(n, id) _ANKI_SCONST_X3(IVec3, I32, n, id, const)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC4(n, id) _ANKI_SCONST_X4(IVec4, I32, n, id, const)
-
-#define ANKI_SPECIALIZATION_CONSTANT_U32(n, id) _ANKI_SCONST_X(U32, n, id)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC2(n, id) _ANKI_SCONST_X2(UVec2, U32, n, id, const)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC3(n, id) _ANKI_SCONST_X3(UVec3, U32, n, id, const)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC4(n, id) _ANKI_SCONST_X4(UVec4, U32, n, id, const)
-
-#define ANKI_SPECIALIZATION_CONSTANT_F32(n, id) _ANKI_SCONST_X(F32, n, id)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id) _ANKI_SCONST_X2(Vec2, F32, n, id,)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id) _ANKI_SCONST_X3(Vec3, F32, n, id,)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id) _ANKI_SCONST_X4(Vec4, F32, n, id,)
-
-#define ANKI_DEFINE_LOAD_STORE(type, alignment) \
-	layout(buffer_reference, scalar, buffer_reference_align = (alignment)) buffer _Ref##type \
-	{ \
-		type m_value; \
-	}; \
-	void load(U64 address, out type o) \
-	{ \
-		o = _Ref##type(address).m_value; \
-	} \
-	void store(U64 address, type i) \
-	{ \
-		_Ref##type(address).m_value = i; \
-	}
-
-#define ANKI_PADDING(bytes) U8 _padding_ ## __LINE__[bytes]
-
-layout(std140, row_major) uniform;
-layout(std140, row_major) buffer;
-
-#if ANKI_FORCE_FULL_FP_PRECISION
-#	define ANKI_RP
-#else
-#	define ANKI_RP mediump
-#endif
-
-#define ANKI_FP highp
-
-precision highp int;
-precision highp float;
-
-Vec2 pow(Vec2 a, F32 b)
-{
-	return pow(a, Vec2(b));
-}
-
-Vec3 pow(Vec3 a, F32 b)
-{
-	return pow(a, Vec3(b));
-}
-
-Vec4 pow(Vec4 a, F32 b)
-{
-	return pow(a, Vec4(b));
-}
 )";
 
 static const U64 kShaderHeaderHash = computeHash(kShaderHeader, sizeof(kShaderHeader));
 
-ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, BaseMemoryPool* pool,
+ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
 										 const ShaderCompilerOptions& compilerOptions)
-	: m_pool(pool)
-	, m_fname(pool, fname)
+	: m_fname(fname)
 	, m_fsystem(fsystem)
 	, m_compilerOptions(compilerOptions)
 {
@@ -293,11 +41,11 @@ ShaderProgramParser::~ShaderProgramParser()
 {
 }
 
-void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayRaii<StringRaii>& tokens) const
+void ShaderProgramParser::tokenizeLine(CString line, DynamicArray<String>& tokens) const
 {
 	ANKI_ASSERT(line.getLength() > 0);
 
-	StringRaii l(m_pool, line);
+	String l = line;
 
 	// Replace all tabs with spaces
 	for(char& c : l)
@@ -309,17 +57,17 @@ void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayRaii<StringRaii
 	}
 
 	// Split
-	StringListRaii spaceTokens(m_pool);
+	StringList spaceTokens;
 	spaceTokens.splitString(l, ' ', false);
 
 	// Create the array
 	for(const String& s : spaceTokens)
 	{
-		tokens.emplaceBack(m_pool, s);
+		tokens.emplaceBack(s);
 	}
 }
 
-Error ShaderProgramParser::parsePragmaStart(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
+Error ShaderProgramParser::parsePragmaStart(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -408,7 +156,7 @@ Error ShaderProgramParser::parsePragmaStart(const StringRaii* begin, const Strin
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaEnd(const StringRaii* begin, const StringRaii* end, CString line, CString fname)
+Error ShaderProgramParser::parsePragmaEnd(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -431,8 +179,7 @@ Error ShaderProgramParser::parsePragmaEnd(const StringRaii* begin, const StringR
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaMutator(const StringRaii* begin, const StringRaii* end, CString line,
-											  CString fname)
+Error ShaderProgramParser::parsePragmaMutator(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -441,7 +188,7 @@ Error ShaderProgramParser::parsePragmaMutator(const StringRaii* begin, const Str
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	m_mutators.emplaceBack(m_pool);
+	m_mutators.emplaceBack();
 	Mutator& mutator = m_mutators.getBack();
 
 	// Name
@@ -466,7 +213,7 @@ Error ShaderProgramParser::parsePragmaMutator(const StringRaii* begin, const Str
 			ANKI_PP_ERROR_MALFORMED_MSG("Too big name");
 		}
 
-		mutator.m_name.create(begin->toCString());
+		mutator.m_name = *begin;
 		++begin;
 	}
 
@@ -505,8 +252,7 @@ Error ShaderProgramParser::parsePragmaMutator(const StringRaii* begin, const Str
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaLibraryName(const StringRaii* begin, const StringRaii* end, CString line,
-												  CString fname)
+Error ShaderProgramParser::parsePragmaLibraryName(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -525,8 +271,7 @@ Error ShaderProgramParser::parsePragmaLibraryName(const StringRaii* begin, const
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaRayType(const StringRaii* begin, const StringRaii* end, CString line,
-											  CString fname)
+Error ShaderProgramParser::parsePragmaRayType(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -550,8 +295,7 @@ Error ShaderProgramParser::parsePragmaRayType(const StringRaii* begin, const Str
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaReflect(const StringRaii* begin, const StringRaii* end, CString line,
-											  CString fname)
+Error ShaderProgramParser::parsePragmaReflect(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -565,8 +309,7 @@ Error ShaderProgramParser::parsePragmaReflect(const StringRaii* begin, const Str
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaSkipMutation(const StringRaii* begin, const StringRaii* end, CString line,
-												   CString fname)
+Error ShaderProgramParser::parsePragmaSkipMutation(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -579,8 +322,8 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const StringRaii* begin, cons
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	PartialMutationSkip& skip = *m_skipMutations.emplaceBack(m_pool);
-	skip.m_partialMutation.create(m_mutators.getSize(), std::numeric_limits<MutatorValue>::max());
+	PartialMutationSkip& skip = *m_skipMutations.emplaceBack();
+	skip.m_partialMutation.resize(m_mutators.getSize(), std::numeric_limits<MutatorValue>::max());
 
 	do
 	{
@@ -623,14 +366,13 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const StringRaii* begin, cons
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRaii* end, CString line, CString fname,
-										U32 depth)
+Error ShaderProgramParser::parseInclude(const String* begin, const String* end, CString line, CString fname, U32 depth)
 {
 	// Gather the path
-	StringRaii path(m_pool);
+	String path;
 	for(; begin < end; ++begin)
 	{
-		path.append(*begin);
+		path += *begin;
 	}
 
 	if(path.isEmpty())
@@ -644,8 +386,7 @@ Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRai
 
 	if((firstChar == '\"' && lastChar == '\"') || (firstChar == '<' && lastChar == '>'))
 	{
-		StringRaii fname2(m_pool);
-		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
+		String fname2(path.begin() + 1, path.begin() + path.getLength() - 1);
 
 		const Bool dontIgnore =
 			fname2.find("AnKi/Shaders/") != String::kNpos || fname2.find("ThirdParty/") != String::kNpos;
@@ -668,15 +409,15 @@ Error ShaderProgramParser::parseInclude(const StringRaii* begin, const StringRai
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
+Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNumber)
 {
 	// Tokenize
-	DynamicArrayRaii<StringRaii> tokens(m_pool);
+	DynamicArray<String> tokens;
 	tokenizeLine(line, tokens);
 	ANKI_ASSERT(tokens.getSize() > 0);
 
-	const StringRaii* token = tokens.getBegin();
-	const StringRaii* end = tokens.getEnd();
+	const String* token = tokens.getBegin();
+	const String* end = tokens.getEnd();
 
 	// Skip the hash
 	Bool foundAloneHash = false;
@@ -690,6 +431,8 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 	{
 		// We _must_ have an #include
 		ANKI_CHECK(parseInclude(token + 1, end, line, fname, depth));
+
+		m_codeLines.pushBackSprintf("#line %u \"%s\"", lineNumber + 2, fname.cstr());
 	}
 	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
 	{
@@ -722,6 +465,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			// Must be a #pragma anki
 
 			++token;
+			Bool addLineBack = true;
 
 			if(*token == "mutator")
 			{
@@ -732,11 +476,13 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaStart(token + 1, end, line, fname));
+				addLineBack = false;
 			}
 			else if(*token == "end")
 			{
 				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaEnd(token + 1, end, line, fname));
+				addLineBack = false;
 			}
 			else if(*token == "skip_mutation")
 			{
@@ -764,6 +510,8 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 				{
 					ANKI_CHECK(checkActiveStruct());
 					ANKI_CHECK(parsePragmaStructEnd(token + 1, end, line, fname));
+
+					m_codeLines.pushBackSprintf("#line %u \"%s\"", lineNumber, fname.cstr());
 				}
 				else
 				{
@@ -776,18 +524,24 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 				ANKI_CHECK(checkActiveStruct());
 				ANKI_CHECK(parsePragmaMember(token + 1, end, line, fname));
 			}
+			else if(*token == "16bit")
+			{
+				ANKI_CHECK(parsePragma16bit(token + 1, end, line, fname));
+			}
 			else
 			{
 				ANKI_PP_ERROR_MALFORMED();
 			}
 
-			// Add the line as a comment because of hashing of the source
-			m_codeLines.pushBackSprintf("//%s", line.cstr());
+			if(addLineBack)
+			{
+				// Add the line as a comment because of hashing of the source
+				m_codeLines.pushBackSprintf("//%s", line.cstr());
+			}
 		}
 		else
 		{
-			// Some other pragma
-			ANKI_SHADER_COMPILER_LOGW("Ignoring: %s", line.cstr());
+			// Some other pragma, ignore
 			m_codeLines.pushBack(line);
 		}
 	}
@@ -800,8 +554,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaStructBegin(const StringRaii* begin, const StringRaii* end, CString line,
-												  CString fname)
+Error ShaderProgramParser::parsePragmaStructBegin(const String* begin, const String* end, CString line, CString fname)
 {
 	const U tokenCount = U(end - begin);
 	if(tokenCount != 1)
@@ -809,8 +562,8 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringRaii* begin, const
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	GhostStruct& gstruct = *m_ghostStructs.emplaceBack(m_pool);
-	gstruct.m_name.create(*begin);
+	GhostStruct& gstruct = *m_ghostStructs.emplaceBack();
+	gstruct.m_name = *begin;
 
 	// Add a '_' to the struct name.
 	//
@@ -831,8 +584,7 @@ Error ShaderProgramParser::parsePragmaStructBegin(const StringRaii* begin, const
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const StringRaii* end, CString line,
-											 CString fname)
+Error ShaderProgramParser::parsePragmaMember(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(m_insideStruct);
 	const U tokenCount = U(end - begin);
@@ -841,7 +593,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const Stri
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	Member& member = *m_ghostStructs.getBack().m_members.emplaceBack(m_pool);
+	Member& member = *m_ghostStructs.getBack().m_members.emplaceBack();
 
 	// Relaxed
 	Bool relaxed = false;
@@ -859,19 +611,19 @@ Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const Stri
 
 	const CString typeStr = *begin;
 	member.m_type = ShaderVariableDataType::kNone;
-	if(typeStr == "F32")
+	if(typeStr == "F32" || typeStr == "RF32")
 	{
 		member.m_type = ShaderVariableDataType::kF32;
 	}
-	else if(typeStr == "Vec2")
+	else if(typeStr == "Vec2" || typeStr == "RVec2")
 	{
 		member.m_type = ShaderVariableDataType::kVec2;
 	}
-	else if(typeStr == "Vec3")
+	else if(typeStr == "Vec3" || typeStr == "RVec3")
 	{
 		member.m_type = ShaderVariableDataType::kVec3;
 	}
-	else if(typeStr == "Vec4")
+	else if(typeStr == "Vec4" || typeStr == "RVec4")
 	{
 		member.m_type = ShaderVariableDataType::kVec4;
 	}
@@ -893,7 +645,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const Stri
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	member.m_name.create(*begin);
+	member.m_name = *begin;
 	++begin;
 
 	// if MUTATOR_NAME is MUTATOR_VALUE
@@ -982,8 +734,7 @@ Error ShaderProgramParser::parsePragmaMember(const StringRaii* begin, const Stri
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const StringRaii* end, CString line,
-												CString fname)
+Error ShaderProgramParser::parsePragmaStructEnd(const String* begin, const String* end, CString line, CString fname)
 {
 	ANKI_ASSERT(m_insideStruct);
 
@@ -1025,23 +776,12 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 
 		// #	define XXX_SIZEOF
 		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF %uu", structName.cstr(), m.m_name.cstr(),
-									getShaderVariableDataTypeInfo(m.m_type).m_size / 4);
+									getShaderVariableDataTypeInfo(m.m_type).m_size);
 
 		// #	define XXX_LOAD()
-		const Bool isIntegral = getShaderVariableDataTypeInfo(m.m_type).m_isIntegral;
-		const U32 componentCount = getShaderVariableDataTypeInfo(m.m_type).m_size / sizeof(U32);
-		StringRaii values(m_pool);
-		for(U32 j = 0; j < componentCount; ++j)
-		{
-			StringRaii tmp(m_pool);
-			tmp.sprintf("%s(ssbo[%s_%s_OFFSETOF + offset + %uu])%s", (isIntegral) ? "" : "uintBitsToFloat",
-						structName.cstr(), m.m_name.cstr(), j, (j != componentCount - 1) ? "," : "");
-
-			values.append(tmp);
-		}
-
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset) %s(%s)%s", structName.cstr(), m.m_name.cstr(),
-									getShaderVariableDataTypeInfo(m.m_type).m_name, values.cstr(),
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) buff.Load<%s>(%s_%s_OFFSETOF + (offset))%s",
+									structName.cstr(), m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name,
+									structName.cstr(), m.m_name.cstr(),
 									(i != gstruct.m_members.getSize() - 1) ? "," : "");
 
 		// #else
@@ -1051,20 +791,20 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF 0u", structName.cstr(), m.m_name.cstr());
 
 		// #	define XXX_LOAD()
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(ssbo, offset)", structName.cstr(), m.m_name.cstr());
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset)", structName.cstr(), m.m_name.cstr());
 
 		// #endif
 		m_codeLines.pushBack("#endif");
 	}
 
-	// Now define the structure LOAD
-	m_codeLines.pushBackSprintf("#define load%s(ssbo, offset) %s( \\", structName.cstr(), structName.cstr());
+	// Now define the structure LOAD in HLSL
+	m_codeLines.pushBackSprintf("#define load%s(buff, offset) { \\", structName.cstr());
 	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
 		const Member& m = gstruct.m_members[i];
-		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(ssbo, offset) \\", structName.cstr(), m.m_name.cstr());
+		m_codeLines.pushBackSprintf("\t%s_%s_LOAD(buff, offset) \\", structName.cstr(), m.m_name.cstr());
 	}
-	m_codeLines.pushBack(")");
+	m_codeLines.pushBack("}");
 
 	// Define the actual struct
 	m_codeLines.pushBackSprintf("#define %s %s_", structName.cstr(), structName.cstr());
@@ -1073,10 +813,25 @@ Error ShaderProgramParser::parsePragmaStructEnd(const StringRaii* begin, const S
 	return Error::kNone;
 }
 
+Error ShaderProgramParser::parsePragma16bit(const String* begin, const String* end, CString line, CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	// Check tokens
+	if(begin != end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	m_16bitTypes = true;
+
+	return Error::kNone;
+}
+
 Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 {
 	// First check the depth
-	if(depth > MAX_INCLUDE_DEPTH)
+	if(depth > kMaxIncludeDepth)
 	{
 		ANKI_SHADER_COMPILER_LOGE("The include depth is too high. Probably circular includance");
 	}
@@ -1084,29 +839,38 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 	Bool foundPragmaOnce = false;
 
 	// Load file in lines
-	StringRaii txt(m_pool);
+	String txt;
 	ANKI_CHECK(m_fsystem->readAllText(fname, txt));
 
-	StringListRaii lines(m_pool);
-	lines.splitString(txt.toCString(), '\n');
+	StringList lines;
+	lines.splitString(txt, '\n', true);
 	if(lines.getSize() < 1)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Source is empty");
 	}
 
+	m_codeLines.pushBackSprintf("#line 0 \"%s\"", fname.cstr());
+
 	// Parse lines
+	U32 lineCount = 0;
 	for(const String& line : lines)
 	{
-		if(line.find("pragma") != String::kNpos || line.find("include") != String::kNpos)
+		if(line.isEmpty())
+		{
+			m_codeLines.pushBack(" ");
+		}
+		else if(line.find("pragma") != String::kNpos || line.find("include") != String::kNpos)
 		{
 			// Possibly a preprocessor directive we care
-			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth));
+			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth, lineCount));
 		}
 		else
 		{
 			// Just append the line
 			m_codeLines.pushBack(line.toCString());
 		}
+
+		++lineCount;
 	}
 
 	if(foundPragmaOnce)
@@ -1192,7 +956,7 @@ Error ShaderProgramParser::parse()
 }
 
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
-												   StringRaii& header)
+												   String& header)
 {
 	header.sprintf(kShaderHeader, kShaderStageNames[shaderType].cstr(), compilerOptions.m_mobilePlatform,
 				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures,
@@ -1212,13 +976,12 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 
 	// Init variant
 	::new(&variant) ShaderProgramParserVariant();
-	variant.m_pool = m_pool;
 
 	// Create the mutator defines
-	StringRaii mutatorDefines(m_pool);
+	String mutatorDefines;
 	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
-		mutatorDefines.append(StringRaii(m_pool).sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]));
+		mutatorDefines += String().sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]);
 	}
 
 	// Generate souce per stage
@@ -1230,14 +993,22 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 		}
 
 		// Create the header
-		StringRaii header(m_pool);
+		String header;
 		generateAnkiShaderHeader(shaderType, m_compilerOptions, header);
 
 		// Create the final source without the bindings
-		StringRaii finalSource(m_pool);
-		finalSource.append(header);
-		finalSource.append(mutatorDefines);
-		finalSource.append(m_codeSource);
+		String finalSource;
+		finalSource += header;
+		if(m_16bitTypes)
+		{
+			finalSource += "#define ANKI_SUPPORTS_16BIT_TYPES 1\n";
+		}
+		else
+		{
+			finalSource += "#define ANKI_SUPPORTS_16BIT_TYPES 0\n";
+		}
+		finalSource += mutatorDefines;
+		finalSource += m_codeSource;
 
 		// Move the source
 		variant.m_sources[shaderType] = std::move(finalSource);

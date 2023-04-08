@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,16 +9,6 @@
 #include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
-
-Event::Event(EventManager* manager)
-	: m_manager(manager)
-{
-}
-
-Event::~Event()
-{
-	m_associatedNodes.destroy(getMemoryPool());
-}
 
 void Event::init(Second startTime, Second duration)
 {
@@ -31,31 +21,16 @@ void Event::init(Second startTime, Second duration)
 	}
 }
 
-HeapMemoryPool& Event::getMemoryPool() const
+Second Event::getDelta(Second crntTime) const
 {
-	return m_manager->getSceneGraph().getMemoryPool();
+	const Second d = crntTime - m_startTime; // delta
+	const Second dp = d / m_duration; // delta as persentage
+	return dp;
 }
 
 void Event::setMarkedForDeletion()
 {
-	m_manager->markEventForDeletion(this);
-}
-
-Second Event::getDelta(Second crntTime) const
-{
-	Second d = crntTime - m_startTime; // delta
-	Second dp = d / m_duration; // delta as persentage
-	return dp;
-}
-
-SceneGraph& Event::getSceneGraph()
-{
-	return m_manager->getSceneGraph();
-}
-
-const SceneGraph& Event::getSceneGraph() const
-{
-	return m_manager->getSceneGraph();
+	SceneGraph::getSingleton().getEventManager().markEventForDeletion(this);
 }
 
 } // end namespace anki

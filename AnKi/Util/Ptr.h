@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -431,7 +431,7 @@ private:
 		if(m_ptr)
 		{
 			auto count = m_ptr->release();
-			if(ANKI_UNLIKELY(count == 1))
+			if(count == 1) [[unlikely]]
 			{
 				TDeleter deleter;
 				deleter(m_ptr);

@@ -7353,12 +7353,22 @@ void CompilerGLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 		emit_binary_func_op(result_type, id, args[0], args[1], "interpolateAtOffset");
 		break;
 
+	// Panos: Treat NMin as FMin because I hate these isnan
+#if 0
 	case GLSLstd450NMin:
 	case GLSLstd450NMax:
 	{
 		emit_nminmax_op(result_type, id, args[0], args[1], op);
 		break;
 	}
+#else
+	case GLSLstd450NMin:
+		emit_binary_func_op(result_type, id, args[0], args[1], "min");
+		break;
+	case GLSLstd450NMax:
+		emit_binary_func_op(result_type, id, args[0], args[1], "max");
+		break;
+#endif
 
 	case GLSLstd450NClamp:
 	{

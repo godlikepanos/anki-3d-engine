@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -10,8 +10,8 @@
 
 namespace anki {
 
-PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape)
-	: PhysicsFilteredObject(kClassType, world)
+PhysicsTrigger::PhysicsTrigger(PhysicsCollisionShapePtr shape)
+	: PhysicsFilteredObject(kClassType)
 {
 	m_shape = shape;
 
@@ -38,23 +38,21 @@ PhysicsTrigger::~PhysicsTrigger()
 
 		if(pair->shouldDelete())
 		{
-			deleteInstance(getMemoryPool(), pair);
+			deleteInstance(PhysicsMemoryPool::getSingleton(), pair);
 		}
 	}
-
-	m_pairs.destroy(getMemoryPool());
 
 	m_ghostShape.destroy();
 }
 
 void PhysicsTrigger::registerToWorld()
 {
-	getWorld().getBtWorld().addCollisionObject(m_ghostShape.get());
+	PhysicsWorld::getSingleton().getBtWorld().addCollisionObject(m_ghostShape.get());
 }
 
 void PhysicsTrigger::unregisterFromWorld()
 {
-	getWorld().getBtWorld().removeCollisionObject(m_ghostShape.get());
+	PhysicsWorld::getSingleton().getBtWorld().removeCollisionObject(m_ghostShape.get());
 }
 
 void PhysicsTrigger::processContacts()
@@ -63,12 +61,13 @@ void PhysicsTrigger::processContacts()
 
 	if(m_contactCallback == nullptr)
 	{
-		m_pairs.destroy(getMemoryPool());
+		m_pairs.destroy();
 		return;
 	}
 
 	// Gather the new pairs
-	DynamicArrayRaii<PhysicsTriggerFilteredPair*> newPairs(&getWorld().getTempMemoryPool());
+	DynamicArray<PhysicsTriggerFilteredPair*, MemoryPoolPtrWrapper<StackMemoryPool>> newPairs(
+		&PhysicsWorld::getSingleton().getTempMemoryPool());
 	newPairs.resizeStorage(m_ghostShape->getOverlappingPairs().size());
 	for(U32 i = 0; i < U32(m_ghostShape->getOverlappingPairs().size()); ++i)
 	{
@@ -79,7 +78,8 @@ void PhysicsTrigger::processContacts()
 		PhysicsFilteredObject* obj = dcast<PhysicsFilteredObject*>(aobj);
 
 		Bool isNew;
-		PhysicsTriggerFilteredPair* pair = getWorld().getOrCreatePhysicsTriggerFilteredPair(this, obj, isNew);
+		PhysicsTriggerFilteredPair* pair =
+			PhysicsWorld::getSingleton().getOrCreatePhysicsTriggerFilteredPair(this, obj, isNew);
 		if(pair)
 		{
 			ANKI_ASSERT(pair->isAlive());
@@ -107,7 +107,7 @@ void PhysicsTrigger::processContacts()
 		if(pair->m_filteredObject == nullptr)
 		{
 			// Filtered object died while inside the tigger, destroy the pair
-			deleteInstance(getMemoryPool(), pair);
+			deleteInstance(PhysicsMemoryPool::getSingleton(), pair);
 		}
 		else if(pair->m_frame == m_processContactsFrame)
 		{
@@ -124,7 +124,7 @@ void PhysicsTrigger::processContacts()
 	}
 
 	// Store the new contacts
-	m_pairs.resize(getMemoryPool(), newPairs.getSize());
+	m_pairs.resize(newPairs.getSize());
 	if(m_pairs.getSize())
 	{
 		memcpy(&m_pairs[0], &newPairs[0], m_pairs.getSizeInBytes());

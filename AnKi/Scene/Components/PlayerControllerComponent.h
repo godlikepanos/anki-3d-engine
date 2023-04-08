@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -21,16 +21,6 @@ class PlayerControllerComponent : public SceneComponent
 public:
 	PlayerControllerComponent(SceneNode* node);
 
-	const Transform& getWorldTransform() const
-	{
-		return m_trf;
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		m_player->moveToPosition(trf.getOrigin().xyz());
-	}
-
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
@@ -41,22 +31,16 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
+	PhysicsPlayerController& getPhysicsPlayerController()
 	{
-		const Transform newTrf = m_player->getTransform();
-		updated = newTrf != m_trf;
-		m_trf = newTrf;
-		return Error::kNone;
-	}
-
-	PhysicsPlayerControllerPtr getPhysicsPlayerController() const
-	{
-		return m_player;
+		return *m_player;
 	}
 
 private:
 	PhysicsPlayerControllerPtr m_player;
-	Transform m_trf = Transform::getIdentity();
+	Vec3 m_worldPos = Vec3(0.0f);
+
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

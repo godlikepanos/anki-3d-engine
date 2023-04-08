@@ -1,68 +1,57 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/ThreadHive.h>
 
 namespace anki {
 
-GrManager& RendererObject::getGrManager()
+Renderer& RendererObject::getRenderer()
 {
-	return m_r->getGrManager();
+	return MainRenderer::getSingleton().getOffscreenRenderer();
 }
 
-const GrManager& RendererObject::getGrManager() const
+void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token)
 {
-	return m_r->getGrManager();
+	return RebarStagingGpuMemoryPool::getSingleton().allocateFrame(size, token);
 }
 
-HeapMemoryPool& RendererObject::getMemoryPool() const
-{
-	return m_r->getMemoryPool();
-}
-
-ResourceManager& RendererObject::getResourceManager()
-{
-	return m_r->getResourceManager();
-}
-
-void* RendererObject::allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
-{
-	return m_r->getStagingGpuMemory().allocateFrame(size, usage, token);
-}
-
-void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding,
-								  const StagingGpuMemoryToken& token) const
+void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindUniformBuffer(set, binding, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
+								token.m_range);
 	}
 	else
 	{
-		cmdb->bindUniformBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBuffer()->getSize());
+		cmdb->bindUniformBuffer(set, binding, getRenderer().getDummyBuffer(), 0,
+								getRenderer().getDummyBuffer()->getSize());
 	}
 }
 
-void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const
+void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+		cmdb->bindStorageBuffer(set, binding, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
+								token.m_range);
 	}
 	else
 	{
-		cmdb->bindStorageBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBuffer()->getSize());
+		cmdb->bindStorageBuffer(set, binding, getRenderer().getDummyBuffer(), 0,
+								getRenderer().getDummyBuffer()->getSize());
 	}
 }
 
 U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
 {
-	const U32 drawcallsPerThread = drawcallCount / m_r->getThreadHive().getThreadCount();
+	const U32 drawcallsPerThread = drawcallCount / CoreThreadHive::getSingleton().getThreadCount();
 	U32 secondLevelCmdbCount;
 	if(drawcallsPerThread < kMinDrawcallsPerSecondaryCommandBuffer)
 	{
@@ -70,7 +59,7 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 	}
 	else
 	{
-		secondLevelCmdbCount = m_r->getThreadHive().getThreadCount();
+		secondLevelCmdbCount = CoreThreadHive::getSingleton().getThreadCount();
 	}
 
 	return secondLevelCmdbCount;
@@ -78,12 +67,7 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 
 void RendererObject::registerDebugRenderTarget(CString rtName)
 {
-	m_r->registerDebugRenderTarget(this, rtName);
-}
-
-const ConfigSet& RendererObject::getConfig() const
-{
-	return m_r->getConfig();
+	getRenderer().registerDebugRenderTarget(this, rtName);
 }
 
 } // end namespace anki

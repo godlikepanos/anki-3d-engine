@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -10,34 +10,16 @@
 
 namespace anki {
 
-CpuMeshResource::CpuMeshResource(ResourceManager* manager)
-	: ResourceObject(manager)
-{
-}
-
-CpuMeshResource::~CpuMeshResource()
-{
-	m_indices.destroy(getMemoryPool());
-	m_positions.destroy(getMemoryPool());
-}
-
 Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
-	MeshBinaryLoader loader(&getManager());
+	MeshBinaryLoader loader(&ResourceMemoryPool::getSingleton());
 
 	ANKI_CHECK(loader.load(filename));
-
-	DynamicArrayRaii<Vec3> tempPositions(&getMemoryPool());
-	DynamicArrayRaii<U32> tempIndices(&getMemoryPool());
-
-	ANKI_CHECK(loader.storeIndicesAndPosition(0, tempIndices, tempPositions));
-
-	m_indices = std::move(tempIndices);
-	m_positions = std::move(tempPositions);
+	ANKI_CHECK(loader.storeIndicesAndPosition(0, m_indices, m_positions));
 
 	// Create the collision shape
 	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);
-	m_physicsShape = getManager().getPhysicsWorld().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
+	m_physicsShape = PhysicsWorld::getSingleton().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
 
 	return Error::kNone;
 }

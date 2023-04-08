@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,15 +9,13 @@ using namespace anki;
 
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	// Init the super class
-	m_config.init(allocAligned, nullptr);
-	m_config.setWindowFullscreen(true);
+	ConfigSet::getSingleton().setWindowFullscreen(true);
 
 #if !ANKI_OS_ANDROID
-	StringRaii mainDataPath(&pool, ANKI_SOURCE_DIRECTORY);
-	StringRaii assetsDataPath(&pool);
+	CString mainDataPath = ANKI_SOURCE_DIRECTORY;
+	HeapMemoryPool tmpPool(allocAligned, nullptr);
+	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> assetsDataPath(&tmpPool);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
 
 	if(!directoryExists(assetsDataPath))
@@ -28,12 +26,13 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		m_config.setRsrcDataPaths(StringRaii(&pool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		ConfigSet::getSingleton().setRsrcDataPaths(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf(
+			"%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	}
 #endif
 
-	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
-	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
+	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(App::init());
 
 	ANKI_CHECK(sampleExtraInit());
 
@@ -46,9 +45,9 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	constexpr F32 MOUSE_SENSITIVITY = 5.0f;
 	quit = false;
 
-	SceneGraph& scene = getSceneGraph();
-	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
-	Input& in = getInput();
+	SceneGraph& scene = SceneGraph::getSingleton();
+	Renderer& renderer = MainRenderer::getSingleton().getOffscreenRenderer();
+	Input& in = Input::getSingleton();
 
 	if(in.getKey(KeyCode::kEscape))
 	{
@@ -138,7 +137,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		m_config.setRVrs(!m_config.getRVrs());
+		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
 	}
 
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
@@ -148,42 +147,38 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mousePosOn1stClick = in.getMousePosition();
 	}
 
+	if(in.getKey(KeyCode::kF1) == 1)
+	{
+		static U mode = 0;
+		mode = (mode + 1) % 3;
+		if(mode == 0)
+		{
+			ConfigSet::getSingleton().setRDbg(false);
+		}
+		else if(mode == 1)
+		{
+			ConfigSet::getSingleton().setRDbg(true);
+			renderer.getDbg().setDepthTestEnabled(true);
+			renderer.getDbg().setDitheredDepthTestEnabled(false);
+		}
+		else
+		{
+			ConfigSet::getSingleton().setRDbg(true);
+			renderer.getDbg().setDepthTestEnabled(false);
+			renderer.getDbg().setDitheredDepthTestEnabled(true);
+		}
+	}
+
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
 	{
 		in.hideCursor(true);
 
 		// move the camera
-		static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+		static SceneNode* mover = &scene.getActiveCameraNode();
 
 		if(in.getKey(KeyCode::k1) == 1)
 		{
-			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
-		}
-
-		if(in.getKey(KeyCode::kF1) == 1)
-		{
-			static U mode = 0;
-			mode = (mode + 1) % 3;
-			if(mode == 0)
-			{
-				getConfig().setRDbgEnabled(false);
-			}
-			else if(mode == 1)
-			{
-				getConfig().setRDbgEnabled(true);
-				renderer.getDbg().setDepthTestEnabled(true);
-				renderer.getDbg().setDitheredDepthTestEnabled(false);
-			}
-			else
-			{
-				getConfig().setRDbgEnabled(true);
-				renderer.getDbg().setDepthTestEnabled(false);
-				renderer.getDbg().setDitheredDepthTestEnabled(true);
-			}
-		}
-		if(in.getKey(KeyCode::kF2) == 1)
-		{
-			// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
+			mover = &scene.getActiveCameraNode();
 		}
 
 		if(in.getKey(KeyCode::kUp))
@@ -251,7 +246,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
 		{
-			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
+			Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 		}
 
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
@@ -274,7 +269,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
 			{
 				rotateCameraTouch = touch;
-				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				rotateEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -287,7 +283,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) > 1)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(rotateCameraTouch) * getWindow().getAspectRatio() - rotateEventInitialPos;
+				in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- rotateEventInitialPos;
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
@@ -306,7 +303,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
 			{
 				moveCameraTouch = touch;
-				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				moveEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -319,7 +317,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(moveCameraTouch) * getWindow().getAspectRatio() - moveEventInitialPos;
+				in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- moveEventInitialPos;
 			velocity *= 2.0f;
 
 			mover->moveLocalX(moveDistance * velocity.x());

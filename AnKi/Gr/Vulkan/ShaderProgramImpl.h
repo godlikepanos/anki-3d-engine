@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/ShaderProgram.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/PipelineLayout.h>
 
 namespace anki {
@@ -29,11 +28,11 @@ public:
 };
 
 /// Shader program implementation.
-class ShaderProgramImpl final : public ShaderProgram, public VulkanObject<ShaderProgram, ShaderProgramImpl>
+class ShaderProgramImpl final : public ShaderProgram
 {
 public:
-	ShaderProgramImpl(GrManager* manager, CString name)
-		: ShaderProgram(manager, name)
+	ShaderProgramImpl(CString name)
+		: ShaderProgram(name)
 	{
 	}
 
@@ -107,7 +106,7 @@ public:
 	}
 
 private:
-	DynamicArray<ShaderPtr> m_shaders;
+	GrDynamicArray<ShaderPtr> m_shaders;
 	ShaderTypeBit m_stages = ShaderTypeBit::kNone;
 
 	PipelineLayout m_pplineLayout = {};
@@ -134,7 +133,7 @@ private:
 	{
 	public:
 		VkPipeline m_ppline = VK_NULL_HANDLE;
-		DynamicArray<U8> m_allHandles;
+		GrDynamicArray<U8> m_allHandles;
 		U32 m_missShaderCount = 0;
 	} m_rt;
 };

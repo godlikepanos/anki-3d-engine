@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -313,15 +313,14 @@ void ListBase<T, TNode>::popFront()
 
 } // end namespace detail
 
-template<typename T>
-template<typename TMemPool>
-void List<T>::destroy(TMemPool& pool)
+template<typename T, typename TMemoryPool>
+void List<T, TMemoryPool>::destroy()
 {
 	Node* el = Base::m_head;
 	while(el)
 	{
 		Node* next = el->m_next;
-		deleteInstance(pool, el);
+		deleteInstance(m_pool, el);
 		el = next;
 	}
 

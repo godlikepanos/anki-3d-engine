@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
@@ -21,8 +22,13 @@ class UiComponent : public SceneComponent
 public:
 	UiComponent(SceneNode* node)
 		: SceneComponent(node, getStaticClassId())
+		, m_spatial(this)
 	{
+		m_spatial.setAlwaysVisible(true);
+		m_spatial.setUpdatesOctreeBounds(false);
 	}
+
+	~UiComponent();
 
 	void init(UiQueueElementDrawCallback callback, void* userData)
 	{
@@ -43,6 +49,9 @@ public:
 private:
 	UiQueueElementDrawCallback m_drawCallback = nullptr;
 	void* m_userData = nullptr;
+	Spatial m_spatial;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

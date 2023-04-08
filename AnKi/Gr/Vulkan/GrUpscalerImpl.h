@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/GrUpscaler.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
 
 // Ngx Sdk forward declarations
@@ -26,11 +25,11 @@ public:
 	UVec2 m_dynamicMinimumRenderSize = UVec2(kMaxU32);
 };
 
-class GrUpscalerImpl final : public GrUpscaler, public VulkanObject<GrUpscaler, GrUpscalerImpl>
+class GrUpscalerImpl final : public GrUpscaler
 {
 public:
-	GrUpscalerImpl(GrManager* manager, CString name)
-		: GrUpscaler(manager, name)
+	GrUpscalerImpl(CString name)
+		: GrUpscaler(name)
 	{
 	}
 

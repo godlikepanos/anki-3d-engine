@@ -1,5 +1,5 @@
 
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -7,13 +7,12 @@
 #include <Tests/Framework/Framework.h>
 #include <Tests/Gr/GrCommon.h>
 #include <AnKi/Gr.h>
-#include <AnKi/Core/NativeWindow.h>
-#include <AnKi/Input/Input.h>
+#include <AnKi/Window/NativeWindow.h>
+#include <AnKi/Window/Input.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>
-#include <AnKi/ShaderCompiler/Glslang.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 #include <AnKi/Collision/Aabb.h>
 #include <ctime>
@@ -232,12 +231,11 @@ void main()
 
 static NativeWindow* g_win = nullptr;
 static GrManager* g_gr = nullptr;
-static StagingGpuMemoryPool* stagingMem = nullptr;
+static RebarStagingGpuMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
-	stagingMem = new StagingGpuMemoryPool(); \
-	ConfigSet cfg(allocAligned, nullptr); \
+	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr); \
 	cfg.setWidth(WIDTH); \
 	cfg.setHeight(HEIGHT); \
 	cfg.setGrValidation(true); \
@@ -245,11 +243,12 @@ static Input* input = nullptr;
 	cfg.setGrRayTracing(true); \
 	cfg.setGrDebugMarkers(true); \
 	g_win = createWindow(cfg); \
-	ANKI_TEST_EXPECT_NO_ERR(Input::newInstance(allocAligned, nullptr, g_win, input)); \
-	g_gr = createGrManager(&cfg, g_win); \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(g_gr, cfg)); \
+	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init()); \
+	g_gr = createGrManager(g_win); \
+	RebarStagingGpuMemoryPool::allocateSingleton().init(); \
+	stagingMem = &RebarStagingGpuMemoryPool::getSingleton(); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, g_gr, &g_gr->getMemoryPool())); \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB)); \
 	while(true) \
 	{
 
@@ -258,27 +257,27 @@ static Input* input = nullptr;
 	} \
 	g_gr->finish(); \
 	delete transfAlloc; \
-	delete stagingMem; \
-	GrManager::deleteInstance(g_gr); \
-	Input::deleteInstance(input); \
-	NativeWindow::deleteInstance(g_win); \
+	RebarStagingGpuMemoryPool::freeSingleton(); \
+	GrManager::freeSingleton(); \
+	Input::freeSingleton(); \
+	NativeWindow::freeSingleton(); \
+	ConfigSet::freeSingleton(); \
 	g_win = nullptr; \
-	g_gr = nullptr; \
-	stagingMem = nullptr;
+	g_gr = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	StagingGpuMemoryToken token;
-	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::kUniform, token);
-	cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+	RebarGpuMemoryToken token;
+	void* ptr = stagingMem->allocateFrame(size, token);
+	cmdb->bindUniformBuffer(set, binding, stagingMem->getBuffer(), token.m_offset, token.m_range);
 	return ptr;
 }
 
 static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	StagingGpuMemoryToken token;
-	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::kStorage, token);
-	cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+	RebarGpuMemoryToken token;
+	void* ptr = stagingMem->allocateFrame(size, token);
+	cmdb->bindStorageBuffer(set, binding, stagingMem->getBuffer(), token.m_offset, token.m_range);
 	return ptr;
 }
 
@@ -1662,7 +1661,7 @@ ANKI_TEST(Gr, RenderGraph)
 		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 
 		GraphicsRenderPassDescription& pass =
-			descr.newGraphicsRenderPass(StringRaii(&pool).sprintf("GI lp%u", faceIdx).toCString());
+			descr.newGraphicsRenderPass(String().sprintf("GI lp%u", faceIdx).toCString());
 		pass.newTextureDependency(giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource);
 		pass.newTextureDependency(giGbuffNormRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(giGbuffDepthRt, TextureUsageBit::kSampledFragment);
@@ -1674,7 +1673,7 @@ ANKI_TEST(Gr, RenderGraph)
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass =
-				descr.newGraphicsRenderPass(StringRaii(&pool).sprintf("GI mip%u", faceIdx).toCString());
+				descr.newGraphicsRenderPass(String().sprintf("GI mip%u", faceIdx).toCString());
 
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
@@ -2627,17 +2626,16 @@ void main()
 }
 		)";
 
-		HeapMemoryPool pool(allocAligned, nullptr);
-		StringRaii fragSrc(&pool);
+		String fragSrc;
 		if(useRayTracing)
 		{
-			fragSrc.append("#define USE_RAY_TRACING 1\n");
+			fragSrc += "#define USE_RAY_TRACING 1\n";
 		}
 		else
 		{
-			fragSrc.append("#define USE_RAY_TRACING 0\n");
+			fragSrc += "#define USE_RAY_TRACING 0\n";
 		}
-		fragSrc.append(src);
+		fragSrc += src;
 		prog = createProgram(VERT_QUAD_STRIP_SRC, fragSrc, *g_gr);
 	}
 
@@ -3145,7 +3143,7 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 			;
 #undef MAGIC_MACRO
 
-		StringRaii commonSrc(&pool);
+		String commonSrc;
 		commonSrc.sprintf(commonSrcPart.cstr(), rtTypesStr.cstr());
 
 		const CString lambertianSrc = R"(
@@ -3354,28 +3352,25 @@ void main()
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
 })";
 
-		ShaderPtr lambertianShader =
-			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()),
-						 ShaderType::kClosestHit, *g_gr);
-		ShaderPtr lambertianRoomShader =
-			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()),
-						 ShaderType::kClosestHit, *g_gr);
-		ShaderPtr emissiveShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr lambertianShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()),
+												  ShaderType::kClosestHit, *g_gr);
+		ShaderPtr lambertianRoomShader = createShader(
+			String().sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()), ShaderType::kClosestHit, *g_gr);
+		ShaderPtr emissiveShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()),
+												ShaderType::kClosestHit, *g_gr);
 
-		ShaderPtr shadowAhitShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::kAnyHit, *g_gr);
-		ShaderPtr shadowChitShader =
-			createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()),
-						 ShaderType::kClosestHit, *g_gr);
-		ShaderPtr missShader = createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()),
-											ShaderType::kMiss, *g_gr);
+		ShaderPtr shadowAhitShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()),
+												  ShaderType::kAnyHit, *g_gr);
+		ShaderPtr shadowChitShader = createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()),
+												  ShaderType::kClosestHit, *g_gr);
+		ShaderPtr missShader =
+			createShader(String().sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::kMiss, *g_gr);
 
-		ShaderPtr shadowMissShader = createShader(
-			StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *g_gr);
+		ShaderPtr shadowMissShader =
+			createShader(String().sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::kMiss, *g_gr);
 
-		ShaderPtr rayGenShader = createShader(StringRaii(&pool).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
-											  ShaderType::kRayGen, *g_gr);
+		ShaderPtr rayGenShader =
+			createShader(String().sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()), ShaderType::kRayGen, *g_gr);
 
 		Array<RayTracingHitGroup, 4> hitGroups;
 		hitGroups[0].m_closestHitShader = lambertianShader;
@@ -3670,11 +3665,10 @@ void main()
 	memset(values, 0, info.m_size);
 
 	// Pre-create some CPU result buffers
-	HeapMemoryPool pool(allocAligned, nullptr);
-	DynamicArrayRaii<U32> atomicsBufferCpu(&pool);
-	atomicsBufferCpu.create(ARRAY_SIZE);
-	DynamicArrayRaii<U32> expectedResultsBufferCpu(&pool);
-	expectedResultsBufferCpu.create(ARRAY_SIZE);
+	DynamicArray<U32> atomicsBufferCpu;
+	atomicsBufferCpu.resize(ARRAY_SIZE);
+	DynamicArray<U32> expectedResultsBufferCpu;
+	expectedResultsBufferCpu.resize(ARRAY_SIZE);
 	for(U32 i = 0; i < ARRAY_SIZE; ++i)
 	{
 		const U32 localInvocation = i % 8;

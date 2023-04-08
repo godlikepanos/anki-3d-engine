@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -17,7 +17,6 @@ class MyApp : public App
 {
 public:
 	Bool m_profile = false;
-	ConfigSet m_config;
 
 	Error init(int argc, char* argv[]);
 	Error userMainLoop(Bool& quit, Second elapsedTime) override;
@@ -36,24 +35,23 @@ Error MyApp::init(int argc, char* argv[])
 #endif
 
 	// Config
-	m_config.init(allocAligned, nullptr);
 #if ANKI_OS_ANDROID
-	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
 #else
-	ANKI_CHECK(m_config.setFromCommandLineArguments(argc - 2, argv + 2));
+	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 #endif
 
 	// Init super class
-	ANKI_CHECK(App::init(&m_config, allocAligned, nullptr));
+	ANKI_CHECK(App::init());
 
 	// Other init
-	ResourceManager& resources = getResourceManager();
+	ResourceManager& resources = ResourceManager::getSingleton();
 
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
-		m_config.setCoreTargetFps(240);
-		TracerSingleton::get().setEnabled(true);
+		ConfigSet::getSingleton().setCoreTargetFps(240);
+		Tracer::getSingleton().setEnabled(true);
 	}
 
 	// Load scene
@@ -63,7 +61,7 @@ Error MyApp::init(int argc, char* argv[])
 #else
 	ANKI_CHECK(resources.loadResource(argv[1], script));
 #endif
-	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+	ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
 	// ANKI_CHECK(renderer.getFinalComposite().loadColorGradingTexture(
 	//	"textures/color_gradient_luts/forge_lut.ankitex"));
@@ -89,9 +87,9 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
 	quit = false;
 
-	SceneGraph& scene = getSceneGraph();
-	Input& in = getInput();
-	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
+	SceneGraph& scene = SceneGraph::getSingleton();
+	Input& in = Input::getSingleton();
+	Renderer& renderer = MainRenderer::getSingleton().getOffscreenRenderer();
 
 	if(in.getKey(KeyCode::kEscape))
 	{
@@ -100,15 +98,15 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 
 	// move the camera
-	static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+	static SceneNode* mover = &scene.getActiveCameraNode();
 
 	if(in.getKey(KeyCode::k1))
 	{
-		mover = scene.getActiveCameraNode().tryGetFirstComponentOfType<MoveComponent>();
+		mover = &scene.getActiveCameraNode();
 	}
 	if(in.getKey(KeyCode::k2))
 	{
-		mover = &scene.findSceneNode("Point.018_Orientation").getFirstComponentOfType<MoveComponent>();
+		mover = &scene.findSceneNode("Point.018_Orientation");
 	}
 
 	if(in.getKey(KeyCode::kL) == 1)
@@ -125,17 +123,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			getConfig().setRDbgEnabled(false);
+			ConfigSet::getSingleton().setRDbg(false);
 		}
 		else if(mode == 1)
 		{
-			getConfig().setRDbgEnabled(true);
+			ConfigSet::getSingleton().setRDbg(true);
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			getConfig().setRDbgEnabled(true);
+			ConfigSet::getSingleton().setRDbg(true);
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -159,7 +157,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
-		TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
+		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 	}
 
 #if !PLAYER
@@ -179,7 +177,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::k1) == 1)
 		{
-			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
+			mover = &scene.getActiveCameraNode();
 		}
 
 		if(in.getKey(KeyCode::kF1) == 1)
@@ -188,17 +186,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				getConfig().setRDbgEnabled(false);
+				ConfigSet::getSingleton().setRDbg(false);
 			}
 			else if(mode == 1)
 			{
-				getConfig().setRDbgEnabled(true);
+				ConfigSet::getSingleton().setRDbg(true);
 				renderer.getDbg().setDepthTestEnabled(true);
 				renderer.getDbg().setDitheredDepthTestEnabled(false);
 			}
 			else
 			{
-				getConfig().setRDbgEnabled(true);
+				ConfigSet::getSingleton().setRDbg(true);
 				renderer.getDbg().setDepthTestEnabled(false);
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}
@@ -273,7 +271,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
 		{
-			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
+			Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 		}
 
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
@@ -296,7 +294,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
 			{
 				rotateCameraTouch = touch;
-				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				rotateEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -309,7 +308,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) > 1)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(rotateCameraTouch) * getWindow().getAspectRatio() - rotateEventInitialPos;
+				in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- rotateEventInitialPos;
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
@@ -328,7 +328,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
 			{
 				moveCameraTouch = touch;
-				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * getWindow().getAspectRatio();
+				moveEventInitialPos =
+					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -341,7 +342,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
 			Vec2 velocity =
-				in.getTouchPointerNdcPosition(moveCameraTouch) * getWindow().getAspectRatio() - moveEventInitialPos;
+				in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
+				- moveEventInitialPos;
 			velocity *= 2.0f;
 
 			mover->moveLocalX(moveDistance * velocity.x());
@@ -409,7 +411,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		m_config.setRVrs(!m_config.getRVrs());
+		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
 	}
 
 	if(in.getEvent(InputEvent::kWindowClosed))
@@ -417,7 +419,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		quit = true;
 	}
 
-	if(m_profile && getGlobalTimestamp() == 1000)
+	if(m_profile && GlobalFrameIndex::getSingleton().m_value == 1000)
 	{
 		quit = true;
 		return Error::kNone;
@@ -438,6 +440,7 @@ int myMain(int argc, char* argv[])
 		err = app->mainLoop();
 	}
 
+	delete app;
 	if(err)
 	{
 		ANKI_LOGE("Error reported. See previous messages");
@@ -446,7 +449,6 @@ int myMain(int argc, char* argv[])
 	{
 		ANKI_LOGI("Bye!!");
 	}
-	delete app;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -84,7 +84,7 @@ void main()
 	class Fsystem : public ShaderProgramFilesystemInterface
 	{
 	public:
-		Error readAllText(CString filename, StringRaii& txt) final
+		Error readAllText(CString filename, String& txt) final
 		{
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
@@ -139,11 +139,12 @@ void main()
 	ShaderProgramBinaryWrapper binary(&pool);
 	ShaderCompilerOptions compilerOptions;
 	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, pool, compilerOptions, binary));
+		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, compilerOptions, binary));
 
 #if 1
-	StringRaii dis(&pool);
-	dumpShaderProgramBinary(binary.getBinary(), dis);
+	String dis;
+	ShaderDumpOptions options;
+	dumpShaderProgramBinary(options, binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
 }
@@ -256,7 +257,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = Vec4(gl_VertexID);
+	gl_Position = Vec4(gl_VertexIndex);
 }
 #pragma anki end
 
@@ -280,7 +281,7 @@ void main()
 	class Fsystem : public ShaderProgramFilesystemInterface
 	{
 	public:
-		Error readAllText(CString filename, StringRaii& txt) final
+		Error readAllText(CString filename, String& txt) final
 		{
 			File file;
 			ANKI_CHECK(file.open(filename, FileOpenFlag::kRead));
@@ -334,11 +335,12 @@ void main()
 
 	ShaderProgramBinaryWrapper binary(&pool);
 	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, pool, ShaderCompilerOptions(), binary));
+		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, ShaderCompilerOptions(), binary));
 
 #if 1
-	StringRaii dis(&pool);
-	dumpShaderProgramBinary(binary.getBinary(), dis);
+	String dis;
+	ShaderDumpOptions options;
+	dumpShaderProgramBinary(options, binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
 }

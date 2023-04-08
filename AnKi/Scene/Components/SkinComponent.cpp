@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,35 +13,43 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(SkinComponent)
-
 SkinComponent::SkinComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
 {
 }
 
 SkinComponent::~SkinComponent()
 {
-	m_boneTrfs[0].destroy(m_node->getMemoryPool());
-	m_boneTrfs[1].destroy(m_node->getMemoryPool());
-	m_animationTrfs.destroy(m_node->getMemoryPool());
+	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
 }
 
-Error SkinComponent::loadSkeletonResource(CString fname)
+void SkinComponent::loadSkeletonResource(CString fname)
 {
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_skeleton));
+	SkeletonResourcePtr rsrc;
+	const Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
+	if(err)
+	{
+		ANKI_SCENE_LOGE("Failed to load skeleton");
+		return;
+	}
 
-	m_boneTrfs[0].destroy(m_node->getMemoryPool());
-	m_boneTrfs[1].destroy(m_node->getMemoryPool());
-	m_animationTrfs.destroy(m_node->getMemoryPool());
+	m_forceFullUpdate = true;
 
-	m_boneTrfs[0].create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_boneTrfs[1].create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_animationTrfs.create(m_node->getMemoryPool(), m_skeleton->getBones().getSize(),
-						   {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+	m_skeleton = std::move(rsrc);
 
-	return Error::kNone;
+	// Cleanup
+	m_boneTrfs[0].destroy();
+	m_boneTrfs[1].destroy();
+	m_animationTrfs.destroy();
+	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
+
+	// Create
+	const U32 boneCount = m_skeleton->getBones().getSize();
+	m_boneTrfs[0].resize(boneCount, Mat3x4::getIdentity());
+	m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
+	m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
+
+	GpuSceneMemoryPool::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4, m_boneTransformsGpuSceneOffset);
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
@@ -66,8 +74,6 @@ void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const An
 
 Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	ANKI_ASSERT(info.m_node == m_node);
-
 	updated = false;
 	if(!m_skeleton.isCreated())
 	{
@@ -168,7 +174,8 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Always update the 1st time
-	updated = updated || (m_absoluteTime == 0.0);
+	updated = updated || m_forceFullUpdate;
+	m_forceFullUpdate = false;
 
 	if(updated)
 	{
@@ -176,11 +183,23 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_crntBoneTrfs = m_crntBoneTrfs ^ 1;
 
 		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+		visitBones(m_skeleton->getRootBone(), Mat3x4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
 		const Vec4 e(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - e);
 		m_boneBoundingVolume.setMax(maxExtend + e);
+
+		// Update the GPU scene
+		const U32 boneCount = m_skeleton->getBones().getSize();
+		DynamicArray<Mat3x4, MemoryPoolPtrWrapper<StackMemoryPool>> trfs(info.m_framePool);
+		trfs.resize(boneCount * 2);
+		for(U32 i = 0; i < boneCount; ++i)
+		{
+			trfs[i * 2 + 0] = getBoneTransforms()[i];
+			trfs[i * 2 + 1] = getPreviousFrameBoneTransforms()[i];
+		}
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_boneTransformsGpuSceneOffset.m_offset,
+													 trfs.getSizeInBytes(), trfs.getBegin());
 	}
 	else
 	{
@@ -192,25 +211,25 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated,
+void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated,
 							   Vec4& minExtend, Vec4& maxExtend)
 {
-	Mat4 outMat;
+	Mat3x4 outMat;
 
 	if(bonesAnimated.get(bone.getIndex()))
 	{
 		const Trf& t = m_animationTrfs[bone.getIndex()];
-		outMat = parentTrf * Mat4(t.m_translation.xyz1(), Mat3(t.m_rotation), t.m_scale);
+		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz(), Mat3(t.m_rotation), t.m_scale));
 	}
 	else
 	{
-		outMat = parentTrf * bone.getTransform();
+		outMat = parentTrf.combineTransformations(bone.getTransform());
 	}
 
-	m_boneTrfs[m_crntBoneTrfs][bone.getIndex()] = outMat * bone.getVertexTransform();
+	m_boneTrfs[m_crntBoneTrfs][bone.getIndex()] = outMat.combineTransformations(bone.getVertexTransform());
 
 	// Update volume
-	const Vec4 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	const Vec3 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	minExtend = minExtend.min(bonePos.xyz0());
 	maxExtend = maxExtend.max(bonePos.xyz0());
 

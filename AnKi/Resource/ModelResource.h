@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -40,6 +40,8 @@ class ModelRayTracingInfo
 public:
 	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
 	U32 m_shaderGroupHandleIndex;
+
+	PtrSize m_indexBufferOffset;
 };
 
 /// Model patch class. Its very important class and it binds a material with a mesh.
@@ -95,8 +97,7 @@ private:
 		return m_mesh->isVertexStreamPresent(VertexStreamId::kBoneIds) && m_mtl->supportsSkinning();
 	}
 
-	Error init(ModelResource* model, CString meshFName, const CString& mtlFName, U32 subMeshIndex, Bool async,
-			   ResourceManager* resources);
+	Error init(ModelResource* model, CString meshFName, const CString& mtlFName, U32 subMeshIndex, Bool async);
 };
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
@@ -121,9 +122,9 @@ private:
 class ModelResource : public ResourceObject
 {
 public:
-	ModelResource(ResourceManager* manager);
+	ModelResource() = default;
 
-	~ModelResource();
+	~ModelResource() = default;
 
 	ConstWeakArray<ModelPatch> getModelPatches() const
 	{
@@ -139,7 +140,7 @@ public:
 	Error load(const ResourceFilename& filename, Bool async);
 
 private:
-	DynamicArray<ModelPatch> m_modelPatches;
+	ResourceDynamicArray<ModelPatch> m_modelPatches;
 	Aabb m_boundingVolume;
 };
 /// @}

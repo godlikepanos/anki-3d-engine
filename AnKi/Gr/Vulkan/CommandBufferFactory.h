@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -29,6 +29,10 @@ public:
 		: m_threadAlloc(allocator)
 	{
 		ANKI_ASSERT(allocator);
+		for(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr : m_objectRefs)
+		{
+			arr = DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>(&m_fastPool);
+		}
 	}
 
 	~MicroCommandBuffer();
@@ -59,8 +63,6 @@ public:
 	{
 		return m_fence;
 	}
-
-	HeapMemoryPool& getMemoryPool();
 
 	/// Interface method.
 	void onFenceDone()
@@ -109,7 +111,7 @@ private:
 	VkCommandBuffer m_handle = {};
 
 	MicroFencePtr m_fence;
-	Array<DynamicArray<GrObjectPtr>, U(GrObjectType::kCount)> m_objectRefs;
+	Array<DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>, U(GrObjectType::kCount)> m_objectRefs;
 
 	// Cacheline boundary
 
@@ -120,7 +122,7 @@ private:
 
 	void reset();
 
-	void pushToArray(DynamicArray<GrObjectPtr>& arr, GrObject* grobj)
+	void pushToArray(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr, GrObject* grobj)
 	{
 		ANKI_ASSERT(grobj);
 
@@ -137,7 +139,7 @@ private:
 		}
 
 		// Not found in the temp cache, add it
-		arr.emplaceBack(m_fastPool, grobj);
+		arr.emplaceBack(grobj);
 	}
 };
 
@@ -179,8 +181,6 @@ public:
 
 	void destroy();
 
-	HeapMemoryPool& getMemoryPool();
-
 	/// Request a new command buffer.
 	Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
@@ -214,7 +214,10 @@ public:
 
 	CommandBufferFactory& operator=(const CommandBufferFactory&) = delete; // Non-copyable
 
-	Error init(HeapMemoryPool* pool, VkDevice dev, const VulkanQueueFamilies& queueFamilies);
+	void init(const VulkanQueueFamilies& queueFamilies)
+	{
+		m_queueFamilies = queueFamilies;
+	}
 
 	void destroy();
 
@@ -228,11 +231,9 @@ public:
 	}
 
 private:
-	HeapMemoryPool* m_pool = nullptr;
-	VkDevice m_dev = VK_NULL_HANDLE;
 	VulkanQueueFamilies m_queueFamilies;
 
-	DynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
+	GrDynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
 	RWMutex m_threadAllocMtx;
 
 	Atomic<U32> m_createdCmdBufferCount = {0};
@@ -240,5 +241,3 @@ private:
 /// @}
 
 } // end namespace anki
-
-#include <AnKi/Gr/Vulkan/CommandBufferFactory.inl.h>

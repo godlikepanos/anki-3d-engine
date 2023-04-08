@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -245,62 +245,41 @@ void initConfig(ConfigSet& cfg)
 NativeWindow* createWindow(ConfigSet& cfg)
 {
 	NativeWindowInitInfo inf;
-	inf.m_allocCallback = allocAligned;
 	inf.m_width = cfg.getWidth();
 	inf.m_height = cfg.getHeight();
 	inf.m_title = "AnKi unit tests";
-	NativeWindow* win;
-	const Error err = NativeWindow::newInstance(inf, win);
+	NativeWindow* win = &NativeWindow::allocateSingleton();
+	const Error err = NativeWindow::getSingleton().init(inf);
 	if(err)
 	{
+		NativeWindow::freeSingleton();
 		return nullptr;
 	}
 
 	return win;
 }
 
-GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win)
+GrManager* createGrManager(NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
-	HeapMemoryPool pool(allocAligned, nullptr);
-	StringRaii home(&pool);
+	String home;
 	const Error err = getTempDirectory(home);
 	if(err)
 	{
 		return nullptr;
 	}
 	inf.m_cacheDirectory = home;
-	inf.m_config = cfg;
-	inf.m_window = win;
-	GrManager* gr;
-	ANKI_TEST_EXPECT_NO_ERR(GrManager::newInstance(inf, gr));
+	GrManager* gr = &GrManager::allocateSingleton();
+	ANKI_TEST_EXPECT_NO_ERR(gr->init(inf));
 
 	return gr;
 }
 
-ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWorld*& physics,
-									   ResourceFilesystem*& resourceFs)
+ResourceManager* createResourceManager(GrManager* gr)
 {
-	physics = new PhysicsWorld();
-
-	ANKI_TEST_EXPECT_NO_ERR(physics->init(allocAligned, nullptr));
-
-	resourceFs = new ResourceFilesystem();
-	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(*cfg, allocAligned, nullptr));
-
-	ResourceManagerInitInfo rinit;
-	rinit.m_gr = gr;
-	rinit.m_physics = physics;
-	rinit.m_resourceFs = resourceFs;
-	rinit.m_config = cfg;
-	rinit.m_allocCallback = allocAligned;
-	rinit.m_allocCallbackData = nullptr;
-	ResourceManager* resources = new ResourceManager();
-
-	ANKI_TEST_EXPECT_NO_ERR(resources->init(rinit));
-
-	return resources;
+	ANKI_TEST_EXPECT_NO_ERR(ResourceManager::allocateSingleton().init(allocAligned, nullptr));
+	return &ResourceManager::getSingleton();
 }
 
 } // end namespace anki

@@ -1,12 +1,17 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Util/Process.h>
 #include <AnKi/Util/Array.h>
+#include <AnKi/Util/Thread.h>
 #if !ANKI_OS_ANDROID
 #	include <ThirdParty/Reproc/reproc/include/reproc/reproc.h>
+#	include <ThirdParty/Subprocess/subprocess.h>
+#endif
+#if ANKI_POSIX
+#	include <unistd.h>
 #endif
 
 namespace anki {
@@ -33,14 +38,12 @@ void Process::destroy()
 #endif
 }
 
-Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment)
+Error Process::start(CString executable, const DynamicArray<String>& arguments, const DynamicArray<String>& environment,
+					 ProcessOptions options)
 {
-#if !ANKI_OS_ANDROID
-	ANKI_ASSERT(m_handle == nullptr && "Already started");
-
 	// Set args and env
-	Array<const Char*, 64> args;
-	Array<const Char*, 32> env;
+	Array<const Char*, kMaxArgs> args;
+	Array<const Char*, kMaxEnv> env;
 
 	args[0] = executable.cstr();
 	for(U32 i = 0; i < arguments.getSize(); ++i)
@@ -57,21 +60,58 @@ Error Process::start(CString executable, ConstWeakArray<CString> arguments, Cons
 	}
 	env[environment.getSize()] = nullptr;
 
+	return startInternal(&args[0], &env[0], options);
+}
+
+Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment,
+					 ProcessOptions options)
+{
+	// Set args and env
+	Array<const Char*, kMaxArgs> args;
+	Array<const Char*, kMaxEnv> env;
+
+	args[0] = executable.cstr();
+	for(U32 i = 0; i < arguments.getSize(); ++i)
+	{
+		args[i + 1] = arguments[i].cstr();
+		ANKI_ASSERT(args[i + 1]);
+	}
+	args[arguments.getSize() + 1] = nullptr;
+
+	for(U32 i = 0; i < environment.getSize(); ++i)
+	{
+		env[i] = environment[i].cstr();
+		ANKI_ASSERT(env[i]);
+	}
+	env[environment.getSize()] = nullptr;
+
+	return startInternal(&args[0], &env[0], options);
+}
+
+Error Process::startInternal(const Char* args[], const Char* env[], ProcessOptions options)
+{
+#if !ANKI_OS_ANDROID
+	ANKI_ASSERT(m_handle == nullptr && "Already started");
+
 	// Start process
 	m_handle = reproc_new();
 
-	reproc_options options = {};
+	reproc_options reprocOptions = {};
 
-	options.env.behavior = REPROC_ENV_EXTEND;
-	if(environment.getSize())
+	reprocOptions.env.behavior = REPROC_ENV_EXTEND;
+	if(env[0] != nullptr)
 	{
-		options.env.extra = &env[0];
+		reprocOptions.env.extra = &env[0];
 	}
-	options.nonblocking = true;
+	reprocOptions.nonblocking = true;
 
-	options.redirect.err.type = REPROC_REDIRECT_PIPE;
+	reprocOptions.redirect.in.type = REPROC_REDIRECT_DISCARD;
+	reprocOptions.redirect.err.type =
+		(!!(options & ProcessOptions::kOpenStderr)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
+	reprocOptions.redirect.out.type =
+		(!!(options & ProcessOptions::kOpenStdout)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
 
-	I32 ret = reproc_start(m_handle, &args[0], options);
+	I32 ret = reproc_start(m_handle, &args[0], reprocOptions);
 	if(ret < 0)
 	{
 		ANKI_UTIL_LOGE("reproc_start() failed: %s", reproc_strerror(ret));
@@ -184,7 +224,7 @@ Error Process::kill(ProcessKillSignal k)
 	return Error::kNone;
 }
 
-Error Process::readFromStdout(StringRaii& text)
+Error Process::readFromStdout(String& text)
 {
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_OUT, text);
@@ -193,7 +233,7 @@ Error Process::readFromStdout(StringRaii& text)
 #endif
 }
 
-Error Process::readFromStderr(StringRaii& text)
+Error Process::readFromStderr(String& text)
 {
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_ERR, text);
@@ -203,7 +243,7 @@ Error Process::readFromStderr(StringRaii& text)
 }
 
 #if !ANKI_OS_ANDROID
-Error Process::readCommon(I32 reprocStream, StringRaii& text)
+Error Process::readCommon(I32 reprocStream, String& text)
 {
 	ANKI_ASSERT(m_handle);
 
@@ -229,11 +269,99 @@ Error Process::readCommon(I32 reprocStream, StringRaii& text)
 		}
 
 		buff[ret] = '\0';
-		text.append(&buff[0]);
+		text += &buff[0];
 	}
 
 	return Error::kNone;
 }
 #endif
+
+Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr,
+						   I32& exitCode)
+{
+#if !ANKI_OS_ANDROID
+	if(true)
+	{
+		ProcessOptions options = ProcessOptions::kNone;
+		options |= (stdOut) ? ProcessOptions::kOpenStdout : ProcessOptions::kNone;
+		options |= (stdErr) ? ProcessOptions::kOpenStderr : ProcessOptions::kNone;
+
+		Process proc;
+		ANKI_CHECK(proc.start(executable, arguments, {}, options));
+
+		ANKI_CHECK(proc.wait(-1.0, nullptr, &exitCode));
+
+		if(stdOut)
+		{
+			ANKI_CHECK(proc.readFromStdout(*stdOut));
+		}
+
+		if(stdErr)
+		{
+			ANKI_CHECK(proc.readFromStderr(*stdErr));
+		}
+
+		proc.destroy();
+	}
+	else
+	{
+		Array<const char*, 128> args;
+		U32 count = 0;
+		args[count++] = executable.cstr();
+		for(U32 i = 0; i < arguments.getSize(); ++i)
+		{
+			args[count++] = arguments[i].cstr();
+		}
+		args[count] = nullptr;
+
+		const int options =
+			subprocess_option_inherit_environment | subprocess_option_no_window | subprocess_option_search_user_path;
+		struct subprocess_s subprocess;
+		int err = subprocess_create(&args[0], options, &subprocess);
+		if(err)
+		{
+			ANKI_UTIL_LOGE("subprocess_create() failed");
+			return Error::kFunctionFailed;
+		}
+
+		err = subprocess_join(&subprocess, &exitCode);
+		if(err)
+		{
+			ANKI_UTIL_LOGE("subprocess_join() failed");
+			subprocess_terminate(&subprocess);
+			return Error::kFunctionFailed;
+		}
+
+		if(stdOut)
+		{
+			ANKI_ASSERT(!"TODO");
+		}
+
+		if(stdErr)
+		{
+			ANKI_ASSERT(!"TODO");
+		}
+
+		subprocess_destroy(&subprocess);
+	}
+#else
+	(void)executable;
+	(void)arguments;
+	(void)stdOut;
+	(void)stdErr;
+	(void)exitCode;
+#endif
+
+	return Error::kNone;
+}
+
+U32 getCurrentProcessId()
+{
+#if ANKI_OS_WINDOWS
+	return GetCurrentProcessId();
+#elif ANKI_POSIX
+	return getpid();
+#endif
+}
 
 } // end namespace anki

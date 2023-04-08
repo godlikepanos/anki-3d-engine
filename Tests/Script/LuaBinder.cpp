@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,9 +9,8 @@
 
 ANKI_TEST(Script, LuaBinder)
 {
-	ScriptManager sm;
+	ScriptManager& sm = ScriptManager::allocateSingleton(allocAligned, nullptr);
 
-	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
 	Vec4 v4(2.0, 3.0, 4.0, 5.0);
 	Vec3 v3(1.1f, 2.2f, 3.3f);
 
@@ -37,15 +36,13 @@ v3:setZ(0.1)
 
 	ANKI_TEST_EXPECT_EQ(v4, Vec4(6, 12, 0, 5.5));
 	ANKI_TEST_EXPECT_EQ(v3, Vec3(1.1f, 2.2f, 0.1f));
+
+	ScriptManager::freeSingleton();
 }
 
 ANKI_TEST(Script, LuaBinderThreads)
 {
-	ScriptManager sm;
-	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
-
 	ScriptEnvironment env;
-	ANKI_TEST_EXPECT_NO_ERR(env.init(&sm));
 
 	static const char* script = R"(
 vec = Vec4.new(0, 0, 0, 0)
@@ -64,15 +61,13 @@ myFunc()
 
 	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script1));
 	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script1));
+
+	ScriptManager::freeSingleton();
 }
 
 ANKI_TEST(Script, LuaBinderSerialize)
 {
-	ScriptManager sm;
-	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
-
 	ScriptEnvironment env;
-	ANKI_TEST_EXPECT_NO_ERR(env.init(&sm));
 
 	static const char* script = R"(
 num = 123.4
@@ -98,7 +93,6 @@ vec = Vec3.new(1, 2, 3)
 	env.serializeGlobals(callback);
 
 	ScriptEnvironment env2;
-	ANKI_TEST_EXPECT_NO_ERR(env2.init(&sm));
 
 	env2.deserializeGlobals(&callback.m_buff[0], callback.m_offset);
 
@@ -109,4 +103,6 @@ print(vec:getX(), vec:getY(), vec:getZ())
 )";
 
 	ANKI_TEST_EXPECT_NO_ERR(env2.evalString(script2));
+
+	ScriptManager::freeSingleton();
 }

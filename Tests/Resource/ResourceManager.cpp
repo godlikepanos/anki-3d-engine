@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,17 +11,10 @@
 ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
-	ConfigSet config;
+	ConfigSet::allocateSingleton(allocAligned, nullptr);
 
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-
-	ResourceManagerInitInfo rinit;
-	rinit.m_gr = nullptr;
-	rinit.m_config = &config;
-	rinit.m_allocCallback = allocAligned;
-	rinit.m_allocCallbackData = nullptr;
-	ResourceManager* resources = alloc.newInstance<ResourceManager>();
-	ANKI_TEST_EXPECT_NO_ERR(resources->init(rinit));
+	ResourceManager* resources = &ResourceManager::allocateSingleton();
+	ANKI_TEST_EXPECT_NO_ERR(resources->init(allocAligned, nullptr));
 
 	// Very simple
 	{
@@ -80,5 +73,5 @@ ANKI_TEST(Resource, ResourceManager)
 	}
 
 	// Delete
-	alloc.deleteInstance(resources);
+	ResourceManager::freeSingleton();
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -46,8 +46,7 @@ exit 6
 		ANKI_TEST_EXPECT_EQ(status, ProcessStatus::kNotRunning);
 		ANKI_TEST_EXPECT_EQ(exitCode, 6);
 
-		HeapMemoryPool pool(allocAligned, nullptr);
-		StringRaii stdOut(&pool);
+		String stdOut;
 		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
 		ANKI_TEST_EXPECT_EQ(stdOut, "Hello from script\n");
 	}
@@ -81,15 +80,14 @@ done
 				break;
 			}
 
-			HeapMemoryPool pool(allocAligned, nullptr);
-			StringRaii stdOut(&pool);
+			String stdOut;
 			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
 			if(stdOut.getLength())
 			{
 				ANKI_TEST_LOGI("%s", stdOut.cstr());
 			}
 
-			StringRaii stderrStr(&pool);
+			String stderrStr;
 			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStderr(stderrStr));
 			if(stderrStr.getLength())
 			{
@@ -116,8 +114,7 @@ sleep 1
 
 		HighRezTimer::sleep(0.5_sec); // Wait a bit more for good measure
 
-		HeapMemoryPool pool(allocAligned, nullptr);
-		StringRaii stdOut(&pool);
+		String stdOut;
 		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
 		ANKI_TEST_EXPECT_EQ(stdOut, "Lala\n");
 	}

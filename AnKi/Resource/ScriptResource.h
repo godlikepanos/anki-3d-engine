@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,12 +16,9 @@ namespace anki {
 class ScriptResource : public ResourceObject
 {
 public:
-	ScriptResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{
-	}
+	ScriptResource() = default;
 
-	~ScriptResource();
+	~ScriptResource() = default;
 
 	Error load(const ResourceFilename& filename, Bool async);
 
@@ -31,7 +28,7 @@ public:
 	}
 
 private:
-	String m_source;
+	ResourceString m_source;
 };
 /// @}
 

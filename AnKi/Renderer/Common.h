@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,12 +13,6 @@
 
 namespace anki {
 
-#define ANKI_R_LOGI(...) ANKI_LOG("REND", kNormal, __VA_ARGS__)
-#define ANKI_R_LOGE(...) ANKI_LOG("REND", kError, __VA_ARGS__)
-#define ANKI_R_LOGW(...) ANKI_LOG("REND", kWarning, __VA_ARGS__)
-#define ANKI_R_LOGF(...) ANKI_LOG("REND", kFatal, __VA_ARGS__)
-#define ANKI_R_LOGV(...) ANKI_LOG("REND", kVerbose, __VA_ARGS__)
-
 // Forward
 #define ANKI_RENDERER_OBJECT_DEF(a, b) class a;
 #include <AnKi/Renderer/RendererObject.defs.h>
@@ -26,20 +20,32 @@ namespace anki {
 
 class Renderer;
 class RendererObject;
-class DebugDrawer;
-
 class RenderQueue;
-class RenderableQueueElement;
-class PointLightQueueElement;
-class DirectionalLightQueueElement;
-class SpotLightQueueElement;
-class ReflectionProbeQueueElement;
-class DecalQueueElement;
-
-class ShaderProgramResourceVariant;
 
 /// @addtogroup renderer
 /// @{
+
+#define ANKI_R_LOGI(...) ANKI_LOG("REND", kNormal, __VA_ARGS__)
+#define ANKI_R_LOGE(...) ANKI_LOG("REND", kError, __VA_ARGS__)
+#define ANKI_R_LOGW(...) ANKI_LOG("REND", kWarning, __VA_ARGS__)
+#define ANKI_R_LOGF(...) ANKI_LOG("REND", kFatal, __VA_ARGS__)
+#define ANKI_R_LOGV(...) ANKI_LOG("REND", kVerbose, __VA_ARGS__)
+
+class RendererMemoryPool : public HeapMemoryPool, public MakeSingleton<RendererMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	RendererMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "RendererMemPool")
+	{
+	}
+
+	~RendererMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Renderer, RendererMemoryPool)
 
 /// Don't create second level command buffers if they contain more drawcalls than this constant.
 constexpr U32 kMinDrawcallsPerSecondaryCommandBuffer = 16;
@@ -70,33 +76,6 @@ constexpr U32 kDownscaleBurDownTo = 32;
 inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRenderTargetFormats = {
 	{Format::kR8G8B8A8_Unorm, Format::kR8G8B8A8_Unorm, Format::kA2B10G10R10_Unorm_Pack32, Format::kR16G16_Snorm}};
 
-/// GPU buffers and textures that the clusterer refers to.
-class ClusteredShadingContext
-{
-public:
-	StagingGpuMemoryToken m_pointLightsToken;
-	void* m_pointLightsAddress = nullptr;
-	StagingGpuMemoryToken m_spotLightsToken;
-	void* m_spotLightsAddress = nullptr;
-	StagingGpuMemoryToken m_reflectionProbesToken;
-	void* m_reflectionProbesAddress = nullptr;
-	StagingGpuMemoryToken m_decalsToken;
-	void* m_decalsAddress = nullptr;
-	StagingGpuMemoryToken m_fogDensityVolumesToken;
-	void* m_fogDensityVolumesAddress = nullptr;
-	StagingGpuMemoryToken m_globalIlluminationProbesToken;
-	void* m_globalIlluminationProbesAddress = nullptr;
-	StagingGpuMemoryToken m_clusteredShadingUniformsToken;
-	void* m_clusteredShadingUniformsAddress = nullptr;
-	StagingGpuMemoryToken m_clustersToken;
-	void* m_clustersAddress = nullptr;
-
-	BufferHandle m_clustersBufferHandle; ///< To track dependencies. Don't track all tokens, not worth it.
-
-	TextureViewPtr m_diffuseDecalTextureView;
-	TextureViewPtr m_specularRoughnessDecalTextureView;
-};
-
 /// Rendering context.
 class RenderingContext
 {
@@ -111,8 +90,6 @@ public:
 
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_outRenderTarget;
-
-	ClusteredShadingContext m_clusteredShading;
 
 	RenderingContext(StackMemoryPool* pool)
 		: m_tempPool(pool)
@@ -134,10 +111,10 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 
 	// First, try to see if the UUID is in the cache
 	auto it = map.find(uuid);
-	if(ANKI_LIKELY(it != map.getEnd()))
+	if(it != map.getEnd()) [[likely]]
 	{
 		const U32 cacheEntryIdx = *it;
-		if(ANKI_LIKELY(entries[cacheEntryIdx].m_uuid == uuid))
+		if(entries[cacheEntryIdx].m_uuid == uuid)
 		{
 			// Found it
 			return cacheEntryIdx;
@@ -155,7 +132,7 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 	Timestamp cacheEntryIdxToKickMinTimestamp = kMaxTimestamp;
 	for(U32 cacheEntryIdx = 0; cacheEntryIdx < entries.getSize(); ++cacheEntryIdx)
 	{
-		if(entries[cacheEntryIdx].m_uuid == 0)
+		if(entries[cacheEntryIdx].m_uuid == 0) [[likely]]
 		{
 			// Found an empty
 			emptyCacheEntryIdx = cacheEntryIdx;

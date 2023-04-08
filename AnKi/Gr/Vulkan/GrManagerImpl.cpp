@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -66,7 +66,7 @@ GrManagerImpl::~GrManagerImpl()
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
 
-	m_pplineCache.destroy(m_device, m_physicalDevice, m_pool);
+	m_pplineCache.destroy();
 
 	m_fenceFactory.destroy();
 
@@ -99,8 +99,12 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 #if ANKI_PLATFORM_MOBILE
-	anki::deleteInstance(m_pool, m_globalCreatePipelineMtx);
+	anki::deleteInstance(GrMemoryPool::getSingleton(), m_globalCreatePipelineMtx);
 #endif
+
+	m_cacheDir.destroy();
+
+	GrMemoryPool::freeSingleton();
 }
 
 Error GrManagerImpl::init(const GrManagerInitInfo& init)
@@ -119,12 +123,13 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 {
 	ANKI_VK_LOGI("Initializing Vulkan backend");
 
-	m_config = init.m_config;
-	ANKI_ASSERT(m_config);
+	GrMemoryPool::allocateSingleton(init.m_allocCallback, init.m_allocCallbackUserData);
+
+	m_cacheDir = init.m_cacheDirectory;
 
 	ANKI_CHECK(initInstance());
-	ANKI_CHECK(initSurface(init));
-	ANKI_CHECK(initDevice(init));
+	ANKI_CHECK(initSurface());
+	ANKI_CHECK(initDevice());
 
 	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
 	{
@@ -138,27 +143,23 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	m_swapchainFactory.init(this, m_config->getGrVsync());
+	m_swapchainFactory.init(ConfigSet::getSingleton().getGrVsync());
 
 	m_crntSwapchain = m_swapchainFactory.newInstance();
 
-	ANKI_CHECK(m_pplineCache.init(m_device, m_physicalDevice, init.m_cacheDirectory, *m_config, m_pool));
+	ANKI_CHECK(m_pplineCache.init(init.m_cacheDirectory));
 
 	ANKI_CHECK(initMemory());
 
-	ANKI_CHECK(m_cmdbFactory.init(&m_pool, m_device, m_queueFamilyIndices));
+	m_cmdbFactory.init(m_queueFamilyIndices);
 
 	for(PerFrame& f : m_perFrame)
 	{
 		resetFrame(f);
 	}
 
-	m_fenceFactory.init(&m_pool, m_device);
-	m_semaphoreFactory.init(&m_pool, m_device);
-	m_samplerFactory.init(this);
-	m_barrierFactory.init(&m_pool, m_device);
-	m_occlusionQueryFactory.init(&m_pool, m_device, VK_QUERY_TYPE_OCCLUSION);
-	m_timestampQueryFactory.init(&m_pool, m_device, VK_QUERY_TYPE_TIMESTAMP);
+	m_occlusionQueryFactory.init(VK_QUERY_TYPE_OCCLUSION);
+	m_timestampQueryFactory.init(VK_QUERY_TYPE_TIMESTAMP);
 
 	// See if unaligned formats are supported
 	{
@@ -195,10 +196,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	ANKI_CHECK(m_descrFactory.init(&m_pool, m_device, kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers));
-	m_pplineLayoutFactory.init(&m_pool, m_device);
+	ANKI_CHECK(m_descrFactory.init(kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers));
 
-	m_frameGarbageCollector.init(this);
+	m_frameGarbageCollector.init();
 
 	return Error::kNone;
 }
@@ -211,8 +211,8 @@ Error GrManagerImpl::initInstance()
 
 	// Create the instance
 	//
-	const U8 vulkanMinor = m_config->getGrVkMinor();
-	const U8 vulkanMajor = m_config->getGrVkMajor();
+	const U8 vulkanMinor = ConfigSet::getSingleton().getGrVkMinor();
+	const U8 vulkanMajor = ConfigSet::getSingleton().getGrVkMajor();
 
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -227,14 +227,15 @@ Error GrManagerImpl::initInstance()
 	ci.pApplicationInfo = &app;
 
 	// Instance layers
-	DynamicArrayRaii<const char*> layersToEnable(&m_pool);
+	GrDynamicArray<const char*> layersToEnable;
 	{
 		U32 layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
 		if(layerCount)
 		{
-			DynamicArrayRaii<VkLayerProperties> layerProps(&m_pool, layerCount);
+			GrDynamicArray<VkLayerProperties> layerProps;
+			layerProps.resize(layerCount);
 			vkEnumerateInstanceLayerProperties(&layerCount, &layerProps[0]);
 
 			ANKI_VK_LOGV("Found the following instance layers:");
@@ -244,7 +245,8 @@ Error GrManagerImpl::initInstance()
 				CString layerName = layer.layerName;
 
 				static constexpr const Char* kValidationName = "VK_LAYER_KHRONOS_validation";
-				if((m_config->getGrValidation() || m_config->getGrDebugPrintf()) && layerName == kValidationName)
+				if((ConfigSet::getSingleton().getGrValidation() || ConfigSet::getSingleton().getGrDebugPrintf())
+				   && layerName == kValidationName)
 				{
 					layersToEnable.emplaceBack(kValidationName);
 				}
@@ -265,14 +267,14 @@ Error GrManagerImpl::initInstance()
 	}
 
 	// Validation features
-	DynamicArrayRaii<VkValidationFeatureEnableEXT> enabledValidationFeatures(&m_pool);
-	DynamicArrayRaii<VkValidationFeatureDisableEXT> disabledValidationFeatures(&m_pool);
-	if(m_config->getGrDebugPrintf())
+	GrDynamicArray<VkValidationFeatureEnableEXT> enabledValidationFeatures;
+	GrDynamicArray<VkValidationFeatureDisableEXT> disabledValidationFeatures;
+	if(ConfigSet::getSingleton().getGrDebugPrintf())
 	{
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
 	}
 
-	if(!m_config->getGrValidation())
+	if(!ConfigSet::getSingleton().getGrValidation())
 	{
 		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
 	}
@@ -292,14 +294,14 @@ Error GrManagerImpl::initInstance()
 	}
 
 	// Extensions
-	DynamicArrayRaii<const char*> instExtensions(&m_pool);
-	DynamicArrayRaii<VkExtensionProperties> instExtensionInf(&m_pool);
+	GrDynamicArray<const char*> instExtensions;
+	GrDynamicArray<VkExtensionProperties> instExtensionInf;
 	U32 extCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
 	if(extCount)
 	{
-		instExtensions.create(extCount);
-		instExtensionInf.create(extCount);
+		instExtensions.resize(extCount);
+		instExtensionInf.resize(extCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extCount, &instExtensionInf[0]);
 
 		ANKI_VK_LOGV("Found the following instance extensions:");
@@ -352,7 +354,8 @@ Error GrManagerImpl::initInstance()
 				instExtensions[instExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
 			}
 			else if(extensionName == VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-					&& (m_config->getGrDebugMarkers() || m_config->getGrValidation() || m_config->getGrDebugPrintf()))
+					&& (ConfigSet::getSingleton().getGrDebugMarkers() || ConfigSet::getSingleton().getGrValidation()
+						|| ConfigSet::getSingleton().getGrDebugPrintf()))
 			{
 				m_extensions |= VulkanExtensions::kEXT_debug_utils;
 				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
@@ -418,54 +421,73 @@ Error GrManagerImpl::initInstance()
 
 	// Create the physical device
 	//
-	uint32_t count = 0;
-	ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, nullptr));
-	ANKI_VK_LOGI("Number of physical devices: %u", count);
-	if(count < 1)
 	{
-		ANKI_VK_LOGE("Wrong number of physical devices");
-		return Error::kFunctionFailed;
-	}
-
-	// Find the correct physical device
-	{
-		DynamicArrayRaii<VkPhysicalDevice> physicalDevices(&m_pool, count);
-		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
-
-		VkPhysicalDevice firstChoice = VK_NULL_HANDLE;
-		VkPhysicalDevice secondChoice = VK_NULL_HANDLE;
-		for(U32 devIdx = 0; devIdx < count; ++devIdx)
+		uint32_t count = 0;
+		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, nullptr));
+		if(count < 1)
 		{
-			VkPhysicalDeviceProperties2 props = {};
-			props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-			vkGetPhysicalDeviceProperties2(physicalDevices[devIdx], &props);
-
-			if(props.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-			{
-				// Found it
-				firstChoice = physicalDevices[devIdx];
-			}
-			else if(props.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
-			{
-				secondChoice = physicalDevices[devIdx];
-			}
-		}
-
-		if(firstChoice != VK_NULL_HANDLE)
-		{
-			m_capabilities.m_discreteGpu = true;
-			m_physicalDevice = firstChoice;
-		}
-		else if(secondChoice != VK_NULL_HANDLE)
-		{
-			m_capabilities.m_discreteGpu = false;
-			m_physicalDevice = secondChoice;
-		}
-		else
-		{
-			ANKI_VK_LOGE("Couldn't find a suitable descrete or integrated physical device");
+			ANKI_VK_LOGE("Wrong number of physical devices");
 			return Error::kFunctionFailed;
 		}
+
+		GrDynamicArray<VkPhysicalDevice> physicalDevices;
+		physicalDevices.resize(count);
+		ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &physicalDevices[0]));
+
+		class Dev
+		{
+		public:
+			VkPhysicalDevice m_pdev;
+			VkPhysicalDeviceProperties2 m_vkProps;
+		};
+
+		GrDynamicArray<Dev> devs;
+		devs.resize(count);
+		for(U32 devIdx = 0; devIdx < count; ++devIdx)
+		{
+			devs[devIdx].m_pdev = physicalDevices[devIdx];
+			devs[devIdx].m_vkProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+			vkGetPhysicalDeviceProperties2(physicalDevices[devIdx], &devs[devIdx].m_vkProps);
+		}
+
+		// Sort the devices with the most powerful first
+		std::sort(devs.getBegin(), devs.getEnd(), [](const Dev& a, const Dev& b) {
+			if(a.m_vkProps.properties.deviceType != b.m_vkProps.properties.deviceType)
+			{
+				auto findDeviceTypeWeight = [](VkPhysicalDeviceType type) {
+					switch(type)
+					{
+					case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+						return 1.0;
+					case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+						return 2.0;
+					default:
+						return 0.0;
+					}
+				};
+
+				// Put descrete GPUs first
+				return findDeviceTypeWeight(a.m_vkProps.properties.deviceType)
+					   > findDeviceTypeWeight(b.m_vkProps.properties.deviceType);
+			}
+			else
+			{
+				return a.m_vkProps.properties.apiVersion >= b.m_vkProps.properties.apiVersion;
+			}
+		});
+
+		const U32 chosenPhysDevIdx = min<U32>(ConfigSet::getSingleton().getGrDevice(), devs.getSize() - 1);
+
+		ANKI_VK_LOGI("Physical devices:");
+		for(U32 devIdx = 0; devIdx < count; ++devIdx)
+		{
+			ANKI_VK_LOGI((devIdx == chosenPhysDevIdx) ? "\t(Selected) %s" : "\t%s",
+						 devs[devIdx].m_vkProps.properties.deviceName);
+		}
+
+		m_capabilities.m_discreteGpu =
+			devs[chosenPhysDevIdx].m_vkProps.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+		m_physicalDevice = devs[chosenPhysDevIdx].m_pdev;
 	}
 
 	m_rtPipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
@@ -538,7 +560,7 @@ Error GrManagerImpl::initInstance()
 	{
 		// Calling vkCreateGraphicsPipeline from multiple threads crashes qualcomm's compiler
 		ANKI_VK_LOGI("Enabling workaround for vkCreateGraphicsPipeline crashing when called from multiple threads");
-		m_globalCreatePipelineMtx = anki::newInstance<Mutex>(m_pool);
+		m_globalCreatePipelineMtx = anki::newInstance<Mutex>(GrMemoryPool::getSingleton());
 	}
 #endif
 
@@ -548,14 +570,14 @@ Error GrManagerImpl::initInstance()
 	return Error::kNone;
 }
 
-Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
+Error GrManagerImpl::initDevice()
 {
 	uint32_t count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, nullptr);
 	ANKI_VK_LOGI("Number of queue families: %u", count);
 
-	DynamicArrayRaii<VkQueueFamilyProperties> queueInfos(&m_pool);
-	queueInfos.create(count);
+	GrDynamicArray<VkQueueFamilyProperties> queueInfos;
+	queueInfos.resize(count);
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
 	const VkQueueFlags GENERAL_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
@@ -586,7 +608,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		return Error::kFunctionFailed;
 	}
 
-	if(!m_config->getGrAsyncCompute())
+	if(!ConfigSet::getSingleton().getGrAsyncCompute())
 	{
 		m_queueFamilyIndices[VulkanQueueType::kCompute] = kMaxU32;
 	}
@@ -624,12 +646,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	U32 extCount = 0;
 	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, nullptr);
 
-	DynamicArrayRaii<VkExtensionProperties> extensionInfos(&m_pool); // Keep it alive in the stack
-	DynamicArrayRaii<const char*> extensionsToEnable(&m_pool);
+	GrDynamicArray<VkExtensionProperties> extensionInfos; // Keep it alive in the stack
+	GrDynamicArray<const char*> extensionsToEnable;
 	if(extCount)
 	{
-		extensionInfos.create(extCount);
-		extensionsToEnable.create(extCount);
+		extensionInfos.resize(extCount);
+		extensionsToEnable.resize(extCount);
 		U32 extensionsToEnableCount = 0;
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, &extensionInfos[0]);
 
@@ -648,7 +670,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::kKHR_swapchain;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_AMD_SHADER_INFO_EXTENSION_NAME && m_config->getCoreDisplayStats())
+			else if(extensionName == VK_AMD_SHADER_INFO_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getCoreDisplayStats())
 			{
 				m_extensions |= VulkanExtensions::kAMD_shader_info;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -658,35 +681,40 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::kAMD_rasterization_order;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME && init.m_config->getGrRayTracing())
+			else if(extensionName == VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getGrRayTracing())
 			{
 				m_extensions |= VulkanExtensions::kKHR_ray_tracing;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 				m_capabilities.m_rayTracingEnabled = true;
 			}
-			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && init.m_config->getGrRayTracing())
+			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && ConfigSet::getSingleton().getGrRayTracing())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME && init.m_config->getGrRayTracing())
+			else if(extensionName == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getGrRayTracing())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME && init.m_config->getGrRayTracing())
+			else if(extensionName == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getGrRayTracing())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME && init.m_config->getGrRayTracing())
+			else if(extensionName == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getGrRayTracing())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME
-					&& m_config->getCoreDisplayStats() > 1)
+					&& ConfigSet::getSingleton().getCoreDisplayStats() > 1)
 			{
 				m_extensions |= VulkanExtensions::kKHR_pipeline_executable_properties;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME && m_config->getGrDebugPrintf())
+			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getGrDebugPrintf())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
@@ -715,7 +743,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::kKHR_shader_float16_int8;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME && m_config->getGr64bitAtomics())
+			else if(extensionName == VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getGr64bitAtomics())
 			{
 				m_extensions |= VulkanExtensions::kKHR_shader_atomic_int64;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -731,7 +760,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 			else if(extensionName == VK_EXT_SAMPLER_FILTER_MINMAX_EXTENSION_NAME
-					&& m_config->getGrSamplerFilterMinMax())
+					&& ConfigSet::getSingleton().getGrSamplerFilterMinMax())
 			{
 				m_extensions |= VulkanExtensions::kKHR_sampler_filter_min_max;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -741,7 +770,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::kKHR_create_renderpass_2;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME && m_config->getGrVrs())
+			else if(extensionName == VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME
+					&& ConfigSet::getSingleton().getGrVrs())
 			{
 				m_extensions |= VulkanExtensions::kKHR_fragment_shading_rate;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -795,7 +825,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures);
 		m_devFeatures = devFeatures.features;
 		m_devFeatures.robustBufferAccess =
-			(m_config->getGrValidation() && m_devFeatures.robustBufferAccess) ? true : false;
+			(ConfigSet::getSingleton().getGrValidation() && m_devFeatures.robustBufferAccess) ? true : false;
 		ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
 		ci.pEnabledFeatures = &m_devFeatures;
@@ -879,7 +909,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
 		m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay =
-			m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay && m_config->getGrDebugMarkers();
+			m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay && ConfigSet::getSingleton().getGrDebugMarkers();
 		m_deviceBufferFeatures.bufferDeviceAddressMultiDevice = false;
 
 		m_deviceBufferFeatures.pNext = const_cast<void*>(ci.pNext);
@@ -1129,20 +1159,19 @@ Error GrManagerImpl::initMemory()
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 
 	// Print some info
-	ANKI_VK_LOGI("Vulkan memory info:");
+	ANKI_VK_LOGV("Vulkan memory info:");
 	for(U32 i = 0; i < m_memoryProperties.memoryHeapCount; ++i)
 	{
-		ANKI_VK_LOGI("\tHeap %u size %zu", i, m_memoryProperties.memoryHeaps[i].size);
+		ANKI_VK_LOGV("\tHeap %u size %zu", i, m_memoryProperties.memoryHeaps[i].size);
 	}
 	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; ++i)
 	{
-		ANKI_VK_LOGI("\tMem type %u points to heap %u, flags %" ANKI_PRIb32, i,
+		ANKI_VK_LOGV("\tMem type %u points to heap %u, flags %" ANKI_PRIb32, i,
 					 m_memoryProperties.memoryTypes[i].heapIndex,
 					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
 	}
 
-	m_gpuMemManager.init(m_physicalDevice, m_device, &m_pool,
-						 !!(m_extensions & VulkanExtensions::kKHR_buffer_device_address));
+	m_gpuMemManager.init(!!(m_extensions & VulkanExtensions::kKHR_buffer_device_address));
 
 	return Error::kNone;
 }
@@ -1151,7 +1180,7 @@ Error GrManagerImpl::initMemory()
 void* GrManagerImpl::allocateCallback(void* userData, size_t size, size_t alignment,
 									  VkSystemAllocationScope allocationScope)
 {
-	if(ANKI_UNLIKELY(size == 0))
+	if(size == 0) [[unlikely]]
 	{
 		return nullptr;
 	}
@@ -1212,7 +1241,7 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 
 TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_ACQUIRE_IMAGE);
+	ANKI_TRACE_SCOPED_EVENT(VkAcquireImage);
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
@@ -1256,7 +1285,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 
 void GrManagerImpl::endFrame()
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_PRESENT);
+	ANKI_TRACE_SCOPED_EVENT(VkPresent);
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
@@ -1423,7 +1452,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 		}
 
 		// Submit
-		ANKI_TRACE_SCOPED_EVENT(VK_QUEUE_SUBMIT);
+		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
 		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[cmdb->getVulkanQueueType()], 1, &submit, fence->getHandle()));
 
 		if(wait)
@@ -1468,7 +1497,7 @@ void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 
 VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 											   [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-											   void* pUserData)
+											   [[maybe_unused]] void* pUserData)
 {
 #if ANKI_PLATFORM_MOBILE
 	if(pCallbackData->messageIdNumber == 101294395)
@@ -1481,23 +1510,22 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 #endif
 
 	// Get all names of affected objects
-	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
-	StringRaii objectNames(&self->m_pool);
+	GrString objectNames;
 	if(pCallbackData->objectCount)
 	{
 		for(U32 i = 0; i < pCallbackData->objectCount; ++i)
 		{
 			const Char* name = pCallbackData->pObjects[i].pObjectName;
-			objectNames.append((name) ? name : "?");
+			objectNames += (name) ? name : "?";
 			if(i < pCallbackData->objectCount - 1)
 			{
-				objectNames.append(", ");
+				objectNames += ", ";
 			}
 		}
 	}
 	else
 	{
-		objectNames.create("N/A");
+		objectNames = "N/A";
 	}
 
 	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
@@ -1537,8 +1565,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 		if(!m_shaderStatsFile.isOpen())
 		{
 			ANKI_CHECK(m_shaderStatsFile.open(
-				StringRaii(&m_pool).sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(),
-				FileOpenFlag::kWrite));
+				GrString().sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(), FileOpenFlag::kWrite));
 
 			ANKI_CHECK(m_shaderStatsFile.writeText("ppline name,hash,"
 												   "stage 0 VGPR,stage 0 SGPR,"
@@ -1551,7 +1578,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 		ANKI_CHECK(m_shaderStatsFile.writeTextf("%s,0x%" PRIx64 ",", name.cstr(), hash));
 
-		StringRaii str(&m_pool);
+		GrString str;
 
 		for(ShaderType type = ShaderType::kFirst; type < ShaderType::kCount; ++type)
 		{
@@ -1566,15 +1593,15 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, VkShaderStageFlagBits(convertShaderTypeBit(stage)),
 												VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
 
-			str.append(StringRaii(&m_pool).sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type),
-												   stats.resourceUsage.numUsedVgprs, stats.resourceUsage.numUsedSgprs));
+			str += GrString().sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
+									  stats.resourceUsage.numUsedSgprs);
 
 			ANKI_CHECK(m_shaderStatsFile.writeTextf((type != ShaderType::kLast) ? "%u,%u," : "%u,%u\n",
 													stats.resourceUsage.numUsedVgprs,
 													stats.resourceUsage.numUsedSgprs));
 		}
 
-		ANKI_VK_LOGI("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());
+		ANKI_VK_LOGV("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());
 
 		// Flush the file just in case
 		ANKI_CHECK(m_shaderStatsFile.flush());
@@ -1582,14 +1609,15 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
-		StringListRaii log(&m_pool);
+		GrStringList log;
 
 		VkPipelineInfoKHR pplineInf = {};
 		pplineInf.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_KHR;
 		pplineInf.pipeline = ppline;
 		U32 executableCount = 0;
 		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
-		DynamicArrayRaii<VkPipelineExecutablePropertiesKHR> executableProps(&m_pool, executableCount);
+		GrDynamicArray<VkPipelineExecutablePropertiesKHR> executableProps;
+		executableProps.resize(executableCount);
 		for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
 		{
 			prop = {};
@@ -1611,7 +1639,8 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			exeInf.pipeline = ppline;
 			U32 statCount = 0;
 			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, nullptr);
-			DynamicArrayRaii<VkPipelineExecutableStatisticKHR> stats(&m_pool, statCount);
+			GrDynamicArray<VkPipelineExecutableStatisticKHR> stats;
+			stats.resize(statCount);
 			for(VkPipelineExecutableStatisticKHR& s : stats)
 			{
 				s = {};
@@ -1650,7 +1679,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			}
 		}
 
-		StringRaii finalLog(&m_pool);
+		GrString finalLog;
 		log.join("", finalLog);
 		ANKI_VK_LOGV("%s", finalLog.cstr());
 	}

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -14,12 +14,6 @@
 #include <AnKi/Collision/Forward.h>
 
 namespace anki {
-
-// Forward
-class ConfigSet;
-class ResourceManager;
-class StagingGpuMemoryPool;
-class UiManager;
 
 /// @addtogroup renderer
 /// @{
@@ -73,8 +67,7 @@ public:
 	}
 
 	/// Init the renderer.
-	Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr, StagingGpuMemoryPool* stagingMem,
-			   UiManager* ui, HeapMemoryPool* pool, ConfigSet* config, Timestamp* globTimestamp, UVec2 swapchainSize);
+	Error init(UVec2 swapchainSize);
 
 	/// This function does all the rendering stages and produces a final result.
 	Error populateRenderGraph(RenderingContext& ctx);
@@ -96,12 +89,6 @@ public:
 		return m_sceneDrawer;
 	}
 
-	UiManager& getUiManager()
-	{
-		ANKI_ASSERT(m_ui);
-		return *m_ui;
-	}
-
 	/// Create the init info for a 2D texture that will be used as a render target.
 	[[nodiscard]] TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage,
 															   CString name = {});
@@ -112,37 +99,6 @@ public:
 
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());
-
-	GrManager& getGrManager()
-	{
-		return *m_gr;
-	}
-
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return *m_pool;
-	}
-
-	ResourceManager& getResourceManager()
-	{
-		return *m_resources;
-	}
-
-	const ConfigSet& getConfig() const
-	{
-		ANKI_ASSERT(m_config);
-		return *m_config;
-	}
-
-	Timestamp getGlobalTimestamp() const
-	{
-		return *m_globTimestamp;
-	}
-
-	Timestamp* getGlobalTimestampPtr()
-	{
-		return m_globTimestamp;
-	}
 
 	/// Returns true if there were resources loaded or loading async tasks that got completed.
 	Bool resourcesLoaded() const
@@ -170,24 +126,6 @@ public:
 		return m_samplers;
 	}
 
-	StagingGpuMemoryPool& getStagingGpuMemory()
-	{
-		ANKI_ASSERT(m_stagingMem);
-		return *m_stagingMem;
-	}
-
-	ThreadHive& getThreadHive()
-	{
-		ANKI_ASSERT(m_threadHive);
-		return *m_threadHive;
-	}
-
-	const ThreadHive& getThreadHive() const
-	{
-		ANKI_ASSERT(m_threadHive);
-		return *m_threadHive;
-	}
-
 	U32 getTileSize() const
 	{
 		return m_tileSize;
@@ -205,6 +143,11 @@ public:
 
 	Format getHdrFormat() const;
 	Format getDepthNoStencilFormat() const;
+
+	BufferHandle getGpuSceneBufferHandle() const
+	{
+		return m_runCtx.m_gpuSceneHandle;
+	}
 
 	/// @name Debug render targets
 	/// @{
@@ -227,18 +170,9 @@ public:
 	/// @}
 
 private:
-	ResourceManager* m_resources = nullptr;
-	ThreadHive* m_threadHive = nullptr;
-	StagingGpuMemoryPool* m_stagingMem = nullptr;
-	GrManager* m_gr = nullptr;
-	UiManager* m_ui = nullptr;
-	Timestamp* m_globTimestamp = nullptr;
-	ConfigSet* m_config = nullptr;
-	mutable HeapMemoryPool* m_pool = nullptr;
-
 	/// @name Rendering stages
 	/// @{
-#define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a> m_##b;
+#define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##b;
 #include <AnKi/Renderer/RendererObject.defs.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
@@ -274,12 +208,20 @@ private:
 	{
 	public:
 		RendererObject* m_obj;
-		String m_rtName;
+		RendererString m_rtName;
 	};
-	DynamicArray<DebugRtInfo> m_debugRts;
-	String m_currentDebugRtName;
+	RendererDynamicArray<DebugRtInfo> m_debugRts;
+	RendererString m_currentDebugRtName;
+
+	class
+	{
+	public:
+		BufferHandle m_gpuSceneHandle;
+	} m_runCtx;
 
 	Error initInternal(UVec2 swapchainSize);
+
+	void gpuSceneCopy(RenderingContext& ctx);
 };
 /// @}
 

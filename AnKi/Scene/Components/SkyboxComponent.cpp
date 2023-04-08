@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSEJ
@@ -12,29 +12,37 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(SkyboxComponent)
-
 SkyboxComponent::SkyboxComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
-	, m_node(node)
+	, m_spatial(this)
 {
+	m_spatial.setAlwaysVisible(true);
+	m_spatial.setUpdatesOctreeBounds(false);
 }
 
 SkyboxComponent::~SkyboxComponent()
 {
+	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
-void SkyboxComponent::setImage(CString filename)
+void SkyboxComponent::loadImageResource(CString filename)
 {
-	const Error err = m_node->getSceneGraph().getResourceManager().loadResource(filename, m_image);
+	ImageResourcePtr img;
+	const Error err = ResourceManager::getSingleton().loadResource(filename, img);
 	if(err)
 	{
 		ANKI_SCENE_LOGE("Setting skybox image failed. Ignoring error");
+		return;
 	}
-	else
-	{
-		m_type = SkyboxType::kImage2D;
-	}
+
+	m_image = std::move(img);
+	m_type = SkyboxType::kImage2D;
+}
+
+Error SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+{
+	updated = m_spatial.update(SceneGraph::getSingleton().getOctree());
+	return Error::kNone;
 }
 
 void SkyboxComponent::setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const

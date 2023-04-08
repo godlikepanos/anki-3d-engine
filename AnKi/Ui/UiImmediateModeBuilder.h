@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,14 +16,9 @@ namespace anki {
 class UiImmediateModeBuilder : public UiObject
 {
 public:
-	UiImmediateModeBuilder(UiManager* manager)
-		: UiObject(manager)
-	{
-	}
+	UiImmediateModeBuilder() = default;
 
-	virtual ~UiImmediateModeBuilder()
-	{
-	}
+	~UiImmediateModeBuilder() = default;
 
 	virtual void build(CanvasPtr ctx) = 0;
 

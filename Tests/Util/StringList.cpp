@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -8,13 +8,11 @@
 
 ANKI_TEST(Util, StringList)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	// Test splitString
 	{
 		CString toSplit = "foo\n\nboo\n";
 
-		StringListRaii list(&pool);
+		StringList list;
 		list.splitString(toSplit, '\n');
 
 		ANKI_TEST_EXPECT_EQ(list.getSize(), 2);

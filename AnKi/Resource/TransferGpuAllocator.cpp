@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,10 +13,10 @@ namespace anki {
 
 Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSize size, Chunk*& out)
 {
-	out = newInstance<Chunk>(*m_parent->m_pool);
+	out = newInstance<Chunk>(ResourceMemoryPool::getSingleton());
 
 	BufferInitInfo bufferInit(size, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "Transfer");
-	out->m_buffer = m_parent->m_gr->newBuffer(bufferInit);
+	out->m_buffer = GrManager::getSingleton().newBuffer(bufferInit);
 
 	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 
@@ -29,7 +29,7 @@ void TransferGpuAllocator::StackAllocatorBuilderInterface::freeChunk(Chunk* chun
 
 	chunk->m_buffer->unmap();
 
-	deleteInstance(*m_parent->m_pool, chunk);
+	deleteInstance(ResourceMemoryPool::getSingleton(), chunk);
 }
 
 TransferGpuAllocator::TransferGpuAllocator()
@@ -38,19 +38,10 @@ TransferGpuAllocator::TransferGpuAllocator()
 
 TransferGpuAllocator::~TransferGpuAllocator()
 {
-	for(Pool& pool : m_pools)
-	{
-		ANKI_ASSERT(pool.m_pendingReleases == 0);
-		pool.m_fences.destroy(*m_pool);
-	}
 }
 
-Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, HeapMemoryPool* pool)
+Error TransferGpuAllocator::init(PtrSize maxSize)
 {
-	ANKI_ASSERT(pool);
-	m_pool = pool;
-	m_gr = gr;
-
 	m_maxAllocSize = getAlignedRoundUp(kChunkInitialSize * kPoolCount, maxSize);
 	ANKI_RESOURCE_LOGI("Will use %zuMB of memory for transfer scratch", m_maxAllocSize / PtrSize(1_MB));
 
@@ -64,7 +55,7 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, HeapMemoryPool*
 
 Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& handle)
 {
-	ANKI_TRACE_SCOPED_EVENT(RSRC_ALLOCATE_TRANSFER);
+	ANKI_TRACE_SCOPED_EVENT(RsrcAllocateTransfer);
 
 	const PtrSize poolSize = m_maxAllocSize / kPoolCount;
 
@@ -85,7 +76,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 		pool = &m_pools[m_crntPool];
 
 		{
-			ANKI_TRACE_SCOPED_EVENT(RSRC_WAIT_TRANSFER);
+			ANKI_TRACE_SCOPED_EVENT(RsrcWaitTransfer);
 
 			// Wait for all memory to be released
 			while(pool->m_pendingReleases != 0)
@@ -101,7 +92,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 				const Bool done = fence->clientWait(kMaxFenceWaitTime);
 				if(done)
 				{
-					pool->m_fences.popFront(*m_pool);
+					pool->m_fences.popFront();
 				}
 			}
 		}
@@ -128,14 +119,14 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 	// decriptors in Linux and we don't want to exceed the process' limit of max open file descriptors
 	for(Pool& p : m_pools)
 	{
-		List<FencePtr>::Iterator it = p.m_fences.getBegin();
+		ResourceList<FencePtr>::Iterator it = p.m_fences.getBegin();
 		while(it != p.m_fences.getEnd())
 		{
 			const Bool fenceDone = (*it)->clientWait(0.0);
 			if(fenceDone)
 			{
 				auto nextIt = it + 1;
-				p.m_fences.erase(*m_pool, it);
+				p.m_fences.erase(it);
 				it = nextIt;
 			}
 			else
@@ -158,7 +149,7 @@ void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr 
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		pool.m_fences.pushBack(*m_pool, fence);
+		pool.m_fences.pushBack(fence);
 
 		ANKI_ASSERT(pool.m_pendingReleases > 0);
 		--pool.m_pendingReleases;

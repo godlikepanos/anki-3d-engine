@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -19,10 +19,7 @@ namespace anki {
 class Font : public UiObject
 {
 public:
-	Font(UiManager* manager)
-		: UiObject(manager)
-	{
-	}
+	Font() = default;
 
 	~Font();
 
@@ -61,7 +58,7 @@ public:
 
 private:
 	ClassWrapper<ImFontAtlas> m_imFontAtlas;
-	DynamicArray<U8> m_fontData;
+	UiDynamicArray<U8> m_fontData;
 
 	class FontEntry
 	{
@@ -70,7 +67,7 @@ private:
 		U32 m_height;
 	};
 
-	DynamicArray<FontEntry> m_fonts;
+	UiDynamicArray<FontEntry> m_fonts;
 
 	TexturePtr m_tex;
 	TextureViewPtr m_texView; ///< Whole texture view

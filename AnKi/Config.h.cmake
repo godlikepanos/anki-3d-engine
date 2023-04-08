@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -165,8 +165,6 @@
 
 // Some compiler attributes
 #if ANKI_COMPILER_GCC_COMPATIBLE
-#	define ANKI_LIKELY(x) __builtin_expect(!!(x), 1)
-#	define ANKI_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #	define ANKI_RESTRICT __restrict
 #	define ANKI_FORCE_INLINE __attribute__((always_inline))
 #	define ANKI_DONT_INLINE __attribute__((noinline))
@@ -177,16 +175,25 @@
 #	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__((format(printf, fmtArgIdx + 1, firstArgIdx + 1))) // On methods you need to include "this"
 #	define ANKI_PURE __attribute__((pure))
-#else
-#	define ANKI_LIKELY(x) (x)
-#	define ANKI_UNLIKELY(x) (x)
+#elif ANKI_COMPILER_MSVC
 #	define ANKI_RESTRICT
-#	define ANKI_FORCE_INLINE
+#	define ANKI_FORCE_INLINE __forceinline
 #	define ANKI_DONT_INLINE
 #	define ANKI_UNUSED
 #	define ANKI_COLD
 #	define ANKI_HOT
 #	define ANKI_UNREACHABLE() __assume(false)
+#	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
+#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
+#	define ANKI_PURE
+#else
+#	define ANKI_RESTRICT
+#	define ANKI_FORCE_INLINE 
+#	define ANKI_DONT_INLINE
+#	define ANKI_UNUSED
+#	define ANKI_COLD
+#	define ANKI_HOT
+#	define ANKI_UNREACHABLE() 
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE
@@ -232,9 +239,28 @@ inline int __builtin_ctzll(unsigned long long x)
 #	define ANKI_INTERNAL [[deprecated("This is an AnKi internal interface. Don't use it")]]
 #endif
 
+// Macro that temporarily disable the ANKI_INTERNAL. It's needed in some cases where an ANKI_INTERNAL is called in a
+// header
+#if ANKI_COMPILER_MSVC
+#	define ANKI_CALL_INTERNAL(...) \
+	__pragma(warning(push)) \
+	__pragma(warning(disable:4996)) \
+	__VA_ARGS__ \
+	__pragma(warning(pop))
+#elif ANKI_COMPILER_GCC_COMPATIBLE
+#	define ANKI_CALL_INTERNAL(...) \
+	_Pragma("GCC diagnostic push") \
+	_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"") \
+	__VA_ARGS__ \
+	_Pragma("GCC diagnostic pop")
+#else
+#	define ANKI_CALL_INTERNAL(...)
+#endif
+
 // Define the main() function.
 namespace anki {
-void preMainInit();
+void preMain();
+void postMain();
 }
 #if ANKI_OS_ANDROID
 extern "C" {
@@ -253,20 +279,23 @@ void cleanupGetAndroidCommandLineArguments(void* ptr);
 	extern "C" void android_main(android_app* app) \
 	{ \
 		anki::g_androidApp = app; \
-		preMainInit(); \
+		preMain(); \
 		char** argv; \
 		int argc; \
 		void* cleanupToken = anki::getAndroidCommandLineArguments(argc, argv); \
 		myMain(argc, argv); \
 		anki::cleanupGetAndroidCommandLineArguments(cleanupToken); \
+		postMain(); \
 	}
 #else
 #	define ANKI_MAIN_FUNCTION(myMain) \
 	int myMain(int argc, char* argv[]); \
 	int main(int argc, char* argv[]) \
 	{ \
-		preMainInit(); \
-		return myMain(argc, argv); \
+		preMain(); \
+		const int exitCode = myMain(argc, argv); \
+		postMain(); \
+		return exitCode; \
 	}
 #endif
 /// @}

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -7,24 +7,17 @@
 
 #include <AnKi/Scene/Common.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/DebugDrawer.h>
+#include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
-#include <AnKi/Core/App.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
 
 namespace anki {
 
 // Forward
-class ResourceManager;
-class CameraNode;
-class Input;
-class ConfigSet;
-class PerspectiveCameraNode;
 class Octree;
-class UiManager;
-class UnifiedGeometryMemoryPool;
+class RenderQueue;
 
 /// @addtogroup scene
 /// @{
@@ -39,29 +32,18 @@ public:
 };
 
 /// The scene graph that  all the scene entities
-class SceneGraph
+class SceneGraph : public MakeSingleton<SceneGraph>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 	friend class SceneNode;
 	friend class UpdateSceneNodesTask;
+	friend class Event;
+	friend class AllGpuSceneContiguousArrays;
 
 public:
-	SceneGraph();
-
-	~SceneGraph();
-
-	Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive, ResourceManager* resources,
-			   Input* input, ScriptManager* scriptManager, UiManager* uiManager, ConfigSet* config,
-			   const Timestamp* globalTimestamp, UnifiedGeometryMemoryPool* unifiedGeometryMemPool);
-
-	Timestamp getGlobalTimestamp() const
-	{
-		return m_timestamp;
-	}
-
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return m_pool;
-	}
+	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
 	StackMemoryPool& getFrameMemoryPool() const
 	{
@@ -80,7 +62,7 @@ public:
 	void setActiveCameraNode(SceneNode* cam)
 	{
 		m_mainCam = cam;
-		m_activeCameraChangeTimestamp = getGlobalTimestamp();
+		m_activeCameraChangeTimestamp = GlobalFrameIndex::getSingleton().m_value;
 	}
 	Timestamp getActiveCameraNodeChangeTimestamp() const
 	{
@@ -99,11 +81,6 @@ public:
 	const EventManager& getEventManager() const
 	{
 		return m_events;
-	}
-
-	ThreadHive& getThreadHive()
-	{
-		return *m_threadHive;
 	}
 
 	Error update(Second prevUpdateTime, Second crntTime);
@@ -163,43 +140,8 @@ public:
 		return m_sceneMax;
 	}
 
-	ResourceManager& getResourceManager()
-	{
-		return *m_resources;
-	}
-
-	GrManager& getGrManager()
-	{
-		return *m_gr;
-	}
-
-	PhysicsWorld& getPhysicsWorld()
-	{
-		return *m_physics;
-	}
-
-	ScriptManager& getScriptManager()
-	{
-		ANKI_ASSERT(m_scriptManager);
-		return *m_scriptManager;
-	}
-
-	const PhysicsWorld& getPhysicsWorld() const
-	{
-		return *m_physics;
-	}
-
-	const Input& getInput() const
-	{
-		ANKI_ASSERT(m_input);
-		return *m_input;
-	}
-
-	UiManager& getUiManager()
-	{
-		return *m_uiManager;
-	}
-
+	/// Get a unique UUID.
+	/// @note It's thread-safe.
 	U64 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
@@ -211,44 +153,32 @@ public:
 		return *m_octree;
 	}
 
-	const DebugDrawer2& getDebugDrawer() const
+	ANKI_INTERNAL AllGpuSceneContiguousArrays& getAllGpuSceneContiguousArrays()
 	{
-		return m_debugDrawer;
-	}
-
-	ANKI_INTERNAL const ConfigSet& getConfig()
-	{
-		ANKI_ASSERT(m_config);
-		return *m_config;
+		return m_gpuSceneAllocators;
 	}
 
 private:
 	class UpdateSceneNodesCtx;
 
-	const Timestamp* m_globalTimestamp = nullptr;
-	Timestamp m_timestamp = 0; ///< Cached timestamp
+	class InitMemPoolDummy
+	{
+	public:
+		~InitMemPoolDummy()
+		{
+			SceneMemoryPool::freeSingleton();
+		}
+	} m_initMemPoolDummy;
 
-	// Sub-systems
-	ThreadHive* m_threadHive = nullptr;
-	ResourceManager* m_resources = nullptr;
-	GrManager* m_gr = nullptr;
-	PhysicsWorld* m_physics = nullptr;
-	Input* m_input = nullptr;
-	ScriptManager* m_scriptManager = nullptr;
-	UiManager* m_uiManager = nullptr;
-	ConfigSet* m_config = nullptr;
-	UnifiedGeometryMemoryPool* m_unifiedGeometryMemPool = nullptr;
-
-	mutable HeapMemoryPool m_pool;
 	mutable StackMemoryPool m_framePool;
 
 	IntrusiveList<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
-	HashMap<CString, SceneNode*> m_nodesDict;
+	GrHashMap<CString, SceneNode*> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = 0;
-	PerspectiveCameraNode* m_defaultMainCam = nullptr;
+	SceneNode* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
 
@@ -263,7 +193,11 @@ private:
 
 	SceneGraphStats m_stats;
 
-	DebugDrawer2 m_debugDrawer;
+	AllGpuSceneContiguousArrays m_gpuSceneAllocators;
+
+	SceneGraph();
+
+	~SceneGraph();
 
 	/// Put a node in the appropriate containers
 	Error registerNode(SceneNode* node);
@@ -272,8 +206,8 @@ private:
 	/// Delete the nodes that are marked for deletion
 	void deleteNodesMarkedForDeletion();
 
-	Error updateNodes(UpdateSceneNodesCtx& ctx) const;
-	[[nodiscard]] static Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
+	Error updateNodes(UpdateSceneNodesCtx& ctx);
+	Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
 
 	/// Do visibility tests.
 	static void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, RenderQueue& rqueue);
@@ -284,7 +218,7 @@ inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&..
 {
 	Error err = Error::kNone;
 
-	node = newInstance<Node>(m_pool, this, name);
+	node = newInstance<Node>(SceneMemoryPool::getSingleton(), name);
 	if(node)
 	{
 		err = node->init(std::forward<Args>(args)...);
@@ -305,7 +239,7 @@ inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&..
 
 		if(node)
 		{
-			deleteInstance(m_pool, node);
+			deleteInstance(SceneMemoryPool::getSingleton(), node);
 			node = nullptr;
 		}
 	}

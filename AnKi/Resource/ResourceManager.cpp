@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -33,41 +33,32 @@ ResourceManager::~ResourceManager()
 {
 	ANKI_RESOURCE_LOGI("Destroying resource manager");
 
-	deleteInstance(m_pool, m_asyncLoader);
-	deleteInstance(m_pool, m_shaderProgramSystem);
-	deleteInstance(m_pool, m_transferGpuAlloc);
+	deleteInstance(ResourceMemoryPool::getSingleton(), m_asyncLoader);
+	deleteInstance(ResourceMemoryPool::getSingleton(), m_shaderProgramSystem);
+	deleteInstance(ResourceMemoryPool::getSingleton(), m_transferGpuAlloc);
+	deleteInstance(ResourceMemoryPool::getSingleton(), m_fs);
+
+	ResourceMemoryPool::freeSingleton();
 }
 
-Error ResourceManager::init(ResourceManagerInitInfo& init)
+Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallbackData)
 {
 	ANKI_RESOURCE_LOGI("Initializing resource manager");
 
-	m_gr = init.m_gr;
-	m_physics = init.m_physics;
-	m_fs = init.m_resourceFs;
-	m_config = init.m_config;
-	m_unifiedGometryMemoryPool = init.m_unifiedGometryMemoryPool;
+	ResourceMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_pool.init(init.m_allocCallback, init.m_allocCallbackData, "Resources");
-	m_tmpPool.init(init.m_allocCallback, init.m_allocCallbackData, 10_MB);
-
-	// Init type resource managers
-#define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(&m_pool);
-#define ANKI_INSTANSIATE_RESOURCE_DELIMITER()
-#include <AnKi/Resource/InstantiationMacros.h>
-#undef ANKI_INSTANTIATE_RESOURCE
-#undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
+	m_fs = newInstance<ResourceFilesystem>(ResourceMemoryPool::getSingleton());
+	ANKI_CHECK(m_fs->init());
 
 	// Init the thread
-	m_asyncLoader = newInstance<AsyncLoader>(m_pool);
-	m_asyncLoader->init(&m_pool);
+	m_asyncLoader = newInstance<AsyncLoader>(ResourceMemoryPool::getSingleton());
 
-	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(m_pool);
-	ANKI_CHECK(m_transferGpuAlloc->init(m_config->getRsrcTransferScratchMemorySize(), m_gr, &m_pool));
+	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(ResourceMemoryPool::getSingleton());
+	ANKI_CHECK(m_transferGpuAlloc->init(ConfigSet::getSingleton().getRsrcTransferScratchMemorySize()));
 
 	// Init the programs
-	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(m_pool, &m_pool);
-	ANKI_CHECK(m_shaderProgramSystem->init(*m_fs, *m_gr));
+	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(ResourceMemoryPool::getSingleton());
+	ANKI_CHECK(m_shaderProgramSystem->init());
 
 	return Error::kNone;
 }
@@ -95,38 +86,22 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 	else
 	{
 		// Allocate ptr
-		T* ptr = newInstance<T>(m_pool, this);
+		T* ptr = newInstance<T>(ResourceMemoryPool::getSingleton());
 		ANKI_ASSERT(ptr->getRefcount() == 0);
 
 		// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
 		ptr->retain();
 
-		// Populate the ptr. Use a block to cleanup temp_pool allocations
-		StackMemoryPool& tmpPool = m_tmpPool;
-
+		err = ptr->load(filename, async);
+		if(err)
 		{
-			[[maybe_unused]] const U allocsCountBefore = tmpPool.getAllocationCount();
-
-			err = ptr->load(filename, async);
-			if(err)
-			{
-				ANKI_RESOURCE_LOGE("Failed to load resource: %s", &filename[0]);
-				deleteInstance(m_pool, ptr);
-				return err;
-			}
-
-			ANKI_ASSERT(tmpPool.getAllocationCount() == allocsCountBefore && "Forgot to deallocate");
+			ANKI_RESOURCE_LOGE("Failed to load resource: %s", &filename[0]);
+			deleteInstance(ResourceMemoryPool::getSingleton(), ptr);
+			return err;
 		}
 
 		ptr->setFilename(filename);
 		ptr->setUuid(++m_uuid);
-
-		// Reset the memory pool if no-one is using it.
-		// NOTE: Check because resources load other resources
-		if(tmpPool.getAllocationCount() == 0)
-		{
-			tmpPool.reset();
-		}
 
 		// Register resource
 		registerResource(ptr);

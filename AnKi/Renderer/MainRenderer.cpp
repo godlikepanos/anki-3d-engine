@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -26,40 +26,44 @@ MainRenderer::MainRenderer()
 MainRenderer::~MainRenderer()
 {
 	ANKI_R_LOGI("Destroying main renderer");
+
+	deleteInstance(RendererMemoryPool::getSingleton(), m_r);
+
+	RendererMemoryPool::freeSingleton();
 }
 
 Error MainRenderer::init(const MainRendererInitInfo& inf)
 {
-	m_pool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, "MainRenderer");
+	RendererMemoryPool::allocateSingleton(inf.m_allocCallback, inf.m_allocCallbackUserData);
+
 	m_framePool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 
 	// Init renderer and manipulate the width/height
 	m_swapchainResolution = inf.m_swapchainSize;
-	m_rDrawToDefaultFb = inf.m_config->getRRenderScaling() == 1.0f;
+	m_rDrawToDefaultFb = ConfigSet::getSingleton().getRRenderScaling() == 1.0f;
 
 	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(),
 				m_swapchainResolution.y());
 
-	m_r.reset(newInstance<Renderer>(m_pool));
-	ANKI_CHECK(m_r->init(inf.m_threadHive, inf.m_resourceManager, inf.m_gr, inf.m_stagingMemory, inf.m_ui, &m_pool,
-						 inf.m_config, inf.m_globTimestamp, m_swapchainResolution));
+	m_r = newInstance<Renderer>(RendererMemoryPool::getSingleton());
+	ANKI_CHECK(m_r->init(m_swapchainResolution));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(inf.m_resourceManager->loadResource("ShaderBinaries/BlitRaster.ankiprogbin", m_blitProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/BlitRaster.ankiprogbin", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
 		m_blitGrProg = variant->getProgram();
 
 		// The RT desc
-		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * inf.m_config->getRRenderScaling());
+		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * ConfigSet::getSingleton().getRRenderScaling());
 		alignRoundDown(2, resolution.x());
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
 			resolution.x(), resolution.y(),
-			(m_r->getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																					   : Format::kR8G8B8A8_Unorm,
+			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
+																							 : Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
 
@@ -70,14 +74,14 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
 	}
 
-	m_rgraph = inf.m_gr->newRenderGraph();
+	m_rgraph = GrManager::getSingleton().newRenderGraph();
 
 	return Error::kNone;
 }
 
 Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDER);
+	ANKI_TRACE_SCOPED_EVENT(Render);
 
 	m_stats.m_renderingCpuTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
 
@@ -142,7 +146,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 
 	// Populate the 2nd level command buffers
 	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
-	for(U i = 0; i < m_r->getThreadHive().getThreadCount(); ++i)
+	for(U i = 0; i < CoreThreadHive::getSingleton().getThreadCount(); ++i)
 	{
 		tasks[i].m_argument = this;
 		tasks[i].m_callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
@@ -153,8 +157,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			self.m_rgraph->runSecondLevel(taskId);
 		};
 	}
-	m_r->getThreadHive().submitTasks(&tasks[0], m_r->getThreadHive().getThreadCount());
-	m_r->getThreadHive().waitAllTasks();
+	CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
+	CoreThreadHive::getSingleton().waitAllTasks();
 
 	// Populate 1st level command buffers
 	m_rgraph->run();

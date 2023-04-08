@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -35,11 +35,15 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 
 	printf("Backtrace:\n");
 	U32 count = 0;
-	HeapMemoryPool pool(allocAligned, nullptr);
-	backtrace(pool, [&count](CString symbol) {
+	backtrace([&count](CString symbol) {
 		printf("%.2u: %s\n", count++, symbol.cstr());
 	});
 
+#	if ANKI_OS_WINDOWS
+	Array<Char, 512> msg;
+	snprintf(msg.getBegin(), msg.getSize(), "%s\n\n%s:%d %s", exprTxt, file, line, func);
+	MessageBoxA(nullptr, msg.getBegin(), "Assert failed", MB_OK | MB_ICONERROR);
+#	endif
 	ANKI_DEBUG_BREAK();
 }
 

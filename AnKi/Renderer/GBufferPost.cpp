@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -7,12 +7,10 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 
 namespace anki {
-
-GBufferPost::~GBufferPost()
-{
-}
 
 Error GBufferPost::init()
 {
@@ -29,12 +27,12 @@ Error GBufferPost::initInternal()
 	ANKI_R_LOGV("Initializing GBufferPost pass");
 
 	// Load shaders
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/GBufferPost.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GBufferPost.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kTileCount", m_r->getTileCounts());
-	variantInitInfo.addConstant("kZSplitCount", m_r->getZSplitCount());
-	variantInitInfo.addConstant("kTileSize", m_r->getTileSize());
+	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
+	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
+	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -62,47 +60,46 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
 
-	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		run(ctx, rgraphCtx);
+	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		run(rgraphCtx);
 	});
 
-	rpass.setFramebufferInfo(m_fbDescr, {m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)});
+	rpass.setFramebufferInfo(m_fbDescr,
+							 {getRenderer().getGBuffer().getColorRt(0), getRenderer().getGBuffer().getColorRt(1)});
 
-	rpass.newTextureDependency(m_r->getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer);
-	rpass.newTextureDependency(m_r->getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);
-	rpass.newTextureDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
+	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer);
+	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);
+	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rpass.newBufferDependency(ctx.m_clusteredShading.m_clustersBufferHandle, BufferUsageBit::kStorageFragmentRead);
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(),
+							  BufferUsageBit::kStorageFragmentRead);
 }
 
-void GBufferPost::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 {
-	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->setViewport(0, 0, m_r->getInternalResolution().x(), m_r->getInternalResolution().y());
+	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
 	cmdb->setBlendFactors(1, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
 
 	// Bind all
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 
-	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(),
+						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeat);
+	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat);
 
-	bindUniforms(cmdb, 0, 3, rsrc.m_clusteredShadingUniformsToken);
-	bindUniforms(cmdb, 0, 4, rsrc.m_decalsToken);
+	bindUniforms(cmdb, 0, 3, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 
-	cmdb->bindTexture(0, 5,
-					  (rsrc.m_diffuseDecalTextureView) ? rsrc.m_diffuseDecalTextureView : m_r->getDummyTextureView2d());
-	cmdb->bindTexture(0, 6,
-					  (rsrc.m_specularRoughnessDecalTextureView) ? rsrc.m_specularRoughnessDecalTextureView
-																 : m_r->getDummyTextureView2d());
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 4, ClusteredObjectType::kDecal);
 
-	bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 5, getRenderer().getClusterBinning().getClustersRebarToken());
+
+	cmdb->bindAllBindless(1);
 
 	// Draw
 	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);

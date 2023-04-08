@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,8 +9,11 @@
 
 ANKI_BEGIN_NAMESPACE
 
-#if __cplusplus
+#if ANKI_HLSL
+enum class VertexStreamId : U32
+#else
 enum class VertexStreamId : U8
+#endif
 {
 	// For regular geometry
 	kPosition,
@@ -25,15 +28,23 @@ enum class VertexStreamId : U8
 
 	// For particles
 	kParticlePosition = 0,
+	kParticlePreviousPosition,
 	kParticleScale,
-	kParticleAlpha,
+	kParticleColor,
 	kParticleLife,
 	kParticleStartingLife,
-	kParticlePreviousPosition,
+	kParticleVelocity,
+
+	kParticleRelatedCount,
+	kParticleRelatedFirst = 0,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexStreamId)
 
+#if ANKI_HLSL
+enum class VertexStreamMask : U32
+#else
 enum class VertexStreamMask : U8
+#endif
 {
 	kNone,
 
@@ -45,35 +56,33 @@ enum class VertexStreamMask : U8
 	kBoneWeights = 1 << 5,
 
 	kParticlePosition = 1 << 0,
-	kParticleScale = 1 << 1,
-	kParticleAlpha = 1 << 2,
-	kParticleLife = 1 << 3,
-	kParticleStartingLife = 1 << 4,
-	kParticlePreviousPosition = 1 << 5,
+	kParticlePreviousPosition = 1 << 1,
+	kParticleScale = 1 << 2,
+	kParticleColor = 1 << 3,
+	kParticleLife = 1 << 4,
+	kParticleStartingLife = 1 << 5,
+	kParticleVelocity = 1 << 6,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexStreamMask)
 
+#if defined(__cplusplus)
 inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRelatedVertexStreamFormats = {
-	Format::kR16G16B16_Unorm, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
-	Format::kR32G32_Sfloat,   Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
+	Format::kR16G16B16A16_Unorm, Format::kR8G8B8A8_Snorm, Format::kR8G8B8A8_Snorm,
+	Format::kR32G32_Sfloat,      Format::kR8G8B8A8_Uint,  Format::kR8G8B8A8_Snorm};
 
-#else
-
-// For regular geometry
-const U32 kVertexStreamIdPosition = 0u;
-const U32 kVertexStreamIdNormal = 1u;
-const U32 kVertexStreamIdTangent = 2u;
-const U32 kVertexStreamIdUv = 3u;
-const U32 kVertexStreamIdBoneIds = 4u;
-const U32 kVertexStreamIdBoneWeights = 5u;
-
-// For particles
-const U32 kVertexStreamIdParticlePosition = 0u;
-const U32 kVertexStreamIdParticleScale = 1u;
-const U32 kVertexStreamIdParticleAlpha = 2u;
-const U32 kVertexStreamIdParticleLife = 3u;
-const U32 kVertexStreamIdParticleStartingLife = 4u;
-const U32 kVertexStreamIdParticlePreviousPosition = 5u;
+inline constexpr Array<Format, U32(VertexStreamId::kParticleRelatedCount)> kParticleRelatedVertexStreamFormats = {
+	Format::kR32G32B32_Sfloat, Format::kR32G32B32_Sfloat, Format::kR32_Sfloat,      Format::kR32G32B32A32_Sfloat,
+	Format::kR32_Sfloat,       Format::kR32_Sfloat,       Format::kR32G32B32_Sfloat};
 #endif
+
+struct UnpackedMeshVertex
+{
+	Vec3 m_position;
+	RVec3 m_normal;
+	RVec4 m_tangent;
+	Vec2 m_uv;
+	UVec4 m_boneIndices;
+	RVec4 m_boneWeights;
+};
 
 ANKI_END_NAMESPACE

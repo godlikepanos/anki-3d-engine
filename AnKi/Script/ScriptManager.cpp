@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,24 +9,28 @@
 
 namespace anki {
 
-ScriptManager::ScriptManager()
+ScriptManager::PoolInit::PoolInit(AllocAlignedCallback allocCb, void* allocCbData)
 {
+	ANKI_SCRIPT_LOGI("Initializing scripting engine...");
+
+	ScriptMemoryPool::allocateSingleton(allocCb, allocCbData);
+}
+
+ScriptManager::PoolInit ::~PoolInit()
+{
+	ANKI_SCRIPT_LOGI("Destroying scripting engine...");
+
+	ScriptMemoryPool::freeSingleton();
+}
+
+ScriptManager::ScriptManager(AllocAlignedCallback allocCb, void* allocCbData)
+	: m_poolInit(allocCb, allocCbData)
+{
+	ANKI_SCRIPT_LOGI("Initializing scripting engine...");
 }
 
 ScriptManager::~ScriptManager()
 {
-	ANKI_SCRIPT_LOGI("Destroying scripting engine...");
-}
-
-Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData)
-{
-	ANKI_SCRIPT_LOGI("Initializing scripting engine...");
-
-	m_pool.init(allocCb, allocCbData);
-
-	ANKI_CHECK(m_lua.init(&m_pool, &m_otherSystems));
-
-	return Error::kNone;
 }
 
 } // end namespace anki

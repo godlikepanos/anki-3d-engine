@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -47,18 +47,16 @@ public:
 	~SkinComponent();
 
 	/// Load the skeleton resource.
-	Error loadSkeletonResource(CString filename);
-
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void loadSkeletonResource(CString filename);
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
-	ConstWeakArray<Mat4> getBoneTransforms() const
+	ConstWeakArray<Mat3x4> getBoneTransforms() const
 	{
 		return m_boneTrfs[m_crntBoneTrfs];
 	}
 
-	ConstWeakArray<Mat4> getPreviousFrameBoneTransforms() const
+	ConstWeakArray<Mat3x4> getPreviousFrameBoneTransforms() const
 	{
 		return m_boneTrfs[m_prevBoneTrfs];
 	}
@@ -76,6 +74,11 @@ public:
 	Bool isEnabled() const
 	{
 		return m_skeleton.isCreated();
+	}
+
+	U32 getBoneTransformsGpuSceneOffset() const
+	{
+		return U32(m_boneTransformsGpuSceneOffset.m_offset);
 	}
 
 private:
@@ -98,17 +101,22 @@ private:
 		F32 m_scale;
 	};
 
-	SceneNode* m_node;
 	SkeletonResourcePtr m_skeleton;
-	Array<DynamicArray<Mat4>, 2> m_boneTrfs;
-	DynamicArray<Trf> m_animationTrfs;
+	Array<SceneDynamicArray<Mat3x4>, 2> m_boneTrfs;
+	SceneDynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Array<Track, kMaxAnimationTracks> m_tracks;
 	Second m_absoluteTime = 0.0;
 	U8 m_crntBoneTrfs = 0;
 	U8 m_prevBoneTrfs = 1;
 
-	void visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
+	Bool m_forceFullUpdate = true;
+
+	SegregatedListsGpuMemoryPoolToken m_boneTransformsGpuSceneOffset;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
 					Vec4& maxExtend);
 };
 /// @}

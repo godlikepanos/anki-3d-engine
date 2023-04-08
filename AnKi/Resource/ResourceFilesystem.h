@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,9 +13,6 @@
 
 namespace anki {
 
-// Forward
-class ConfigSet;
-
 /// @addtogroup resource
 /// @{
 
@@ -23,11 +20,7 @@ class ConfigSet;
 class ResourceFile
 {
 public:
-	ResourceFile(HeapMemoryPool* pool)
-		: m_pool(pool)
-	{
-		ANKI_ASSERT(pool);
-	}
+	ResourceFile() = default;
 
 	ResourceFile(const ResourceFile&) = delete; // Non-copyable
 
@@ -41,7 +34,7 @@ public:
 	virtual Error read(void* buff, PtrSize size) = 0;
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail
-	virtual Error readAllText(StringRaii& out) = 0;
+	virtual Error readAllText(ResourceString& out) = 0;
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's
 	virtual Error readU32(U32& u) = 0;
@@ -67,18 +60,21 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	HeapMemoryPool& getMemoryPool() const
-	{
-		return *m_pool;
-	}
-
 private:
-	mutable HeapMemoryPool* m_pool = nullptr;
 	mutable Atomic<I32> m_refcount = {0};
 };
 
 /// Resource file smart pointer.
-using ResourceFilePtr = IntrusivePtr<ResourceFile>;
+class ResourceFileDeleter
+{
+public:
+	void operator()(ResourceFile* x)
+	{
+		deleteInstance(ResourceMemoryPool::getSingleton(), x);
+	}
+};
+
+using ResourceFilePtr = IntrusivePtr<ResourceFile, ResourceFileDeleter>;
 
 /// Resource filesystem.
 class ResourceFilesystem
@@ -92,7 +88,7 @@ public:
 
 	ResourceFilesystem& operator=(const ResourceFilesystem&) = delete; // Non-copyable
 
-	Error init(const ConfigSet& config, AllocAlignedCallback allocCallback, void* allocCallbackUserData);
+	Error init();
 
 	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
 	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
@@ -103,7 +99,7 @@ public:
 	{
 		for(const Path& path : m_paths)
 		{
-			for(const String& fname : path.m_files)
+			for(const ResourceString& fname : path.m_files)
 			{
 				ANKI_CHECK(func(fname.toCString()));
 			}
@@ -117,8 +113,8 @@ private:
 	class Path
 	{
 	public:
-		StringList m_files; ///< Files inside the directory.
-		String m_path; ///< A directory or an archive.
+		ResourceStringList m_files; ///< Files inside the directory.
+		ResourceString m_path; ///< A directory or an archive.
 		Bool m_isArchive = false;
 
 		Path() = default;
@@ -141,12 +137,11 @@ private:
 		}
 	};
 
-	HeapMemoryPool m_pool;
-	List<Path> m_paths;
-	String m_cacheDir;
+	ResourceList<Path> m_paths;
+	ResourceString m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	Error addNewPath(const CString& path, const StringListRaii& excludedStrings);
+	Error addNewPath(const CString& path, const ResourceStringList& excludedStrings);
 
 	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
 };

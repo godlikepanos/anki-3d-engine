@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,12 +16,9 @@ namespace anki {
 class DownscaleBlur : public RendererObject
 {
 public:
-	DownscaleBlur(Renderer* r)
-		: RendererObject(r)
-	{
-	}
+	DownscaleBlur() = default;
 
-	~DownscaleBlur();
+	~DownscaleBlur() = default;
 
 	Error init();
 
@@ -52,13 +49,11 @@ public:
 	}
 
 private:
-	const Array<U32, 2> m_workgroupSize = {16, 16};
-
 	U32 m_passCount = 0; ///< It's also the mip count of the m_rtTex.
 
 	TexturePtr m_rtTex;
 
-	DynamicArray<FramebufferDescription> m_fbDescrs;
+	RendererDynamicArray<FramebufferDescription> m_fbDescrs;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;

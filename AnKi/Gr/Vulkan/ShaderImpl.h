@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/Shader.h>
-#include <AnKi/Gr/Vulkan/VulkanObject.h>
 #include <AnKi/Gr/Vulkan/DescriptorSet.h>
 #include <AnKi/Util/BitSet.h>
 
@@ -16,12 +15,12 @@ namespace anki {
 /// @{
 
 /// Shader vulkan implementation.
-class ShaderImpl final : public Shader, public VulkanObject<Shader, ShaderImpl>
+class ShaderImpl final : public Shader
 {
 public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
 
-	Array<DynamicArray<DescriptorBinding>, kMaxDescriptorSets> m_bindings;
+	Array<GrDynamicArray<DescriptorBinding>, kMaxDescriptorSets> m_bindings;
 	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
 	BitSet<kMaxVertexAttributes, U8> m_attributeMask = {false};
 	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
@@ -29,8 +28,8 @@ public:
 		{{false}, {false}, {false}}};
 	U32 m_pushConstantsSize = 0;
 
-	ShaderImpl(GrManager* manager, CString name)
-		: Shader(manager, name)
+	ShaderImpl(CString name)
+		: Shader(name)
 	{
 	}
 

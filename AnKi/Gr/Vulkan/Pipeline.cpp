@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -383,7 +383,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		 VK_DYNAMIC_STATE_STENCIL_REFERENCE, VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_DEPTH_BIAS,
 		 VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR}};
 
-	dynCi.dynamicStateCount = kDyn.getSize();
+	dynCi.dynamicStateCount = (m_vrsCapable) ? kDyn.getSize() : (kDyn.getSize() - 1);
 	dynCi.pDynamicStates = &kDyn[0];
 	ci.pDynamicState = &dynCi;
 
@@ -410,27 +410,35 @@ public:
 	}
 };
 
+PipelineFactory::PipelineFactory()
+{
+}
+
+PipelineFactory::~PipelineFactory()
+{
+}
+
 void PipelineFactory::destroy()
 {
 	for(auto it : m_pplines)
 	{
 		if(it.m_handle)
 		{
-			vkDestroyPipeline(m_dev, it.m_handle, nullptr);
+			vkDestroyPipeline(getVkDevice(), it.m_handle, nullptr);
 		}
 	}
 
-	m_pplines.destroy(*m_pool);
+	m_pplines.destroy();
 }
 
 void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty)
 {
-	ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_GET_OR_CREATE);
+	ANKI_TRACE_SCOPED_EVENT(VkPipelineGetOrCreate);
 
 	U64 hash;
 	state.flush(hash, stateDirty);
 
-	if(ANKI_UNLIKELY(!stateDirty))
+	if(!stateDirty) [[unlikely]]
 	{
 		ppline.m_handle = VK_NULL_HANDLE;
 		return;
@@ -443,7 +451,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 		if(it != m_pplines.getEnd())
 		{
 			ppline.m_handle = (*it).m_handle;
-			ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_HIT, 1);
+			ANKI_TRACE_INC_COUNTER(VkPipelineCacheHit, 1);
 			return;
 		}
 	}
@@ -465,7 +473,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 	const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
 
 	{
-		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 
 #if ANKI_PLATFORM_MOBILE
 		if(m_globalCreatePipelineMtx)
@@ -474,7 +482,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 		}
 #endif
 
-		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(getVkDevice(), m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
 
 #if ANKI_PLATFORM_MOBILE
 		if(m_globalCreatePipelineMtx)
@@ -484,14 +492,14 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 #endif
 	}
 
-	ANKI_TRACE_INC_COUNTER(VK_PIPELINES_CACHE_MISS, 1);
+	ANKI_TRACE_INC_COUNTER(VkPipelineCacheMiss, 1);
 
-	m_pplines.emplace(*m_pool, hash, pp);
+	m_pplines.emplace(hash, pp);
 	ppline.m_handle = pp.m_handle;
 
 	// Print shader info
-	state.m_state.m_prog->getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(),
-																	 state.m_state.m_prog->getStages(), hash);
+	getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(),
+											   state.m_state.m_prog->getStages(), hash);
 }
 
 } // end namespace anki

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -101,8 +101,8 @@ protected:
 	ShaderType m_shaderType = ShaderType::kCount;
 
 	/// Construct.
-	Shader(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	Shader(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -113,7 +113,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static Shader* newInstance(GrManager* manager, const ShaderInitInfo& init);
+	[[nodiscard]] static Shader* newInstance(const ShaderInitInfo& init);
 };
 /// @}
 

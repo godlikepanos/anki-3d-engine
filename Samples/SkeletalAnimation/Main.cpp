@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,40 +11,43 @@ using namespace anki;
 class MyApp : public SampleApp
 {
 public:
+	using SampleApp::SampleApp;
+
 	AnimationResourcePtr m_floatAnim;
 	AnimationResourcePtr m_waveAnim;
 
 	Error sampleExtraInit() override
 	{
 		ScriptResourcePtr script;
-		ANKI_CHECK(getResourceManager().loadResource("Assets/Scene.lua", script));
-		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
+		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
-		ANKI_CHECK(getResourceManager().loadResource("Assets/float.001_ccb9eb33e30c8fa4.ankianim", m_floatAnim));
-		ANKI_CHECK(getResourceManager().loadResource("Assets/wave_6cf284ed471bff3b.ankianim", m_waveAnim));
+		ANKI_CHECK(
+			ResourceManager::getSingleton().loadResource("Assets/float.001_ccb9eb33e30c8fa4.ankianim", m_floatAnim));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/wave_6cf284ed471bff3b.ankianim", m_waveAnim));
 
 		AnimationPlayInfo animInfo;
 		animInfo.m_startTime = 2.0;
 		animInfo.m_repeatTimes = -1.0;
-		getSceneGraph()
+		SceneGraph::getSingleton()
 			.findSceneNode("droid.001")
 			.getFirstComponentOfType<SkinComponent>()
 			.playAnimation(0, m_floatAnim, animInfo);
 
-		getConfig().setRBloomThreshold(5.0f);
+		ConfigSet::getSingleton().setRBloomThreshold(5.0f);
 		return Error::kNone;
 	}
 
 	Error userMainLoop(Bool& quit, Second elapsedTime) override
 	{
-		if(getInput().getKey(KeyCode::kZ) == 1)
+		if(Input::getSingleton().getKey(KeyCode::kZ) == 1)
 		{
 			AnimationPlayInfo animInfo;
 			animInfo.m_startTime = 0.5;
 			animInfo.m_repeatTimes = 3.0;
 			animInfo.m_blendInTime = 0.5;
 			animInfo.m_blendOutTime = 0.35;
-			getSceneGraph()
+			SceneGraph::getSingleton()
 				.findSceneNode("droid.001")
 				.getFirstComponentOfType<SkinComponent>()
 				.playAnimation(1, m_waveAnim, animInfo);
@@ -58,7 +61,7 @@ int main(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	MyApp* app = new MyApp;
+	MyApp* app = new MyApp(allocAligned, nullptr);
 	err = app->init(argc, argv, "SkeletalAnimation");
 	if(!err)
 	{

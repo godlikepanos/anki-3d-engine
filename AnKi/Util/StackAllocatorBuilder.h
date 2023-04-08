@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -28,7 +28,7 @@ namespace anki {
 ///                    PtrSize getNextChunkGrowBias();
 ///                    Bool ignoreDeallocationErrors();
 ///                    Error allocateChunk(PtrSize size, TChunk*& out);
-///                    void freeChunk(TChunk* out);
+///                    void freeChunk(TChunk* chunk);
 ///                    void recycleChunk(TChunk& out);
 ///                    Atomic<U32>* getAllocationCount(); // It's optional
 ///                    @endcode

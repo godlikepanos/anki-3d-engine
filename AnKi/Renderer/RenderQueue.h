@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -26,59 +26,67 @@ public:
 	Mat4 m_previousViewProjectionMatrix;
 };
 
-/// Some options that can be used as hints in debug drawcalls.
-enum class RenderQueueDebugDrawFlag : U32
-{
-	kDepthTestOn,
-	kDitheredDepthTestOn,
-	kCount
-};
-
-/// Context that contains variables for drawing and will be passed to RenderQueueDrawCallback.
-class RenderQueueDrawContext final : public RenderingMatrices
-{
-public:
-	RenderingKey m_key;
-	CommandBufferPtr m_commandBuffer;
-	SamplerPtr m_sampler; ///< A trilinear sampler with anisotropy.
-	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
-	StackMemoryPool* m_framePool = nullptr;
-	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
-	BitSet<U(RenderQueueDebugDrawFlag::kCount), U32> m_debugDrawFlags = {false};
-};
-
-/// Draw callback for drawing.
-using RenderQueueDrawCallback = void (*)(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
-
 /// Render queue element that contains info on items that populate the G-buffer or the forward shading buffer etc.
 class RenderableQueueElement final
 {
 public:
-	RenderQueueDrawCallback m_callback;
-	const void* m_userData;
-
-	/// Elements with the same m_mergeKey and same m_callback may be merged and the m_callback will be called once.
-	/// Unless m_mergeKey is zero.
 	U64 m_mergeKey;
+
+	ShaderProgram* m_program;
+
+	U32 m_worldTransformsOffset;
+	U32 m_uniformsOffset;
+	U32 m_geometryOffset;
+	U32 m_boneTransformsOffset;
+
+	union
+	{
+		U32 m_indexCount;
+		U32 m_vertexCount;
+	};
+
+	union
+	{
+		U32 m_firstIndex;
+		U32 m_firstVertex;
+	};
 
 	F32 m_distanceFromCamera; ///< Don't set this. Visibility will.
 
-	U8 m_lod; ///< Don't set this. Visibility will.
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
+
+	Bool m_indexed;
+	PrimitiveTopology m_primitiveTopology;
 
 	RenderableQueueElement()
 	{
 	}
-};
 
-static_assert(std::is_trivially_destructible<RenderableQueueElement>::value == true,
-			  "Should be trivially destructible");
+	void computeMergeKey()
+	{
+		Array<U64, 5> toHash;
+		toHash[0] = ptrToNumber(m_program);
+		toHash[1] = m_indexed;
+		toHash[2] = m_indexCount;
+		toHash[3] = m_firstIndex;
+		toHash[4] = U64(m_primitiveTopology);
+		m_mergeKey = computeHash(toHash.getBegin(), toHash.getSizeInBytes());
+	}
+
+	Bool canMergeWith(const RenderableQueueElement& b) const
+	{
+		return m_mergeKey != 0 && m_mergeKey == b.m_mergeKey;
+	}
+};
+static_assert(std::is_trivially_destructible<RenderableQueueElement>::value == true);
 
 /// Context that contains variables for the GenericGpuComputeJobQueueElement.
 class GenericGpuComputeJobQueueElementContext final : public RenderingMatrices
 {
 public:
 	CommandBufferPtr m_commandBuffer;
-	StagingGpuMemoryPool* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+	RebarStagingGpuMemoryPool* m_rebarStagingPool ANKI_DEBUG_CODE(= nullptr);
 };
 
 /// Callback for GenericGpuComputeJobQueueElement.
@@ -96,9 +104,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<GenericGpuComputeJobQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<GenericGpuComputeJobQueueElement>::value == true);
 
 /// Point light render queue element.
 class PointLightQueueElement final
@@ -109,12 +115,12 @@ public:
 	F32 m_radius;
 	Vec3 m_diffuseColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
 
 	Array<Vec2, 6> m_shadowAtlasTileOffsets; ///< Renderer internal.
 	F32 m_shadowAtlasTileSize; ///< Renderer internal.
 	U8 m_shadowLayer; ///< Renderer internal.
+
+	U32 m_index;
 
 	PointLightQueueElement()
 	{
@@ -125,9 +131,7 @@ public:
 		return m_shadowRenderQueues[0] != nullptr;
 	}
 };
-
-static_assert(std::is_trivially_destructible<PointLightQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<PointLightQueueElement>::value == true);
 
 /// Spot light render queue element.
 class SpotLightQueueElement final
@@ -142,10 +146,10 @@ public:
 	Vec3 m_diffuseColor;
 	Array<Vec3, 4> m_edgePoints;
 	RenderQueue* m_shadowRenderQueue;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
 
 	U8 m_shadowLayer; ///< Renderer internal.
+
+	U32 m_index;
 
 	SpotLightQueueElement()
 	{
@@ -156,8 +160,7 @@ public:
 		return m_shadowRenderQueue != nullptr;
 	}
 };
-
-static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true);
 
 /// Directional light render queue element.
 class DirectionalLightQueueElement final
@@ -165,8 +168,6 @@ class DirectionalLightQueueElement final
 public:
 	Array<Mat4, kMaxShadowCascades> m_textureMatrices;
 	Array<RenderQueue*, kMaxShadowCascades> m_shadowRenderQueues;
-	RenderQueueDrawCallback m_drawCallback;
-	const void* m_drawCallbackUserData;
 	U64 m_uuid; ///< Zero means that there is no dir light
 	Vec3 m_diffuseColor;
 	Vec3 m_direction;
@@ -188,58 +189,47 @@ public:
 		return isEnabled() && m_shadowCascadeCount > 0;
 	}
 };
-
-static_assert(std::is_trivially_destructible<DirectionalLightQueueElement>::value == true,
-			  "Should be trivially destructible");
-
-/// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
-/// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
-/// In that case the visibility tests should fill the render queues of the probe.
-using ReflectionProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData);
+static_assert(std::is_trivially_destructible<DirectionalLightQueueElement>::value == true);
 
 /// Reflection probe render queue element.
 class ReflectionProbeQueueElement final
 {
 public:
-	U64 m_uuid;
-	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
-	void* m_feedbackCallbackUserData;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
-	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_worldPosition;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
-	U32 m_textureArrayIndex; ///< Renderer internal.
+	U32 m_textureBindlessIndex;
+
+	U32 m_index;
 
 	ReflectionProbeQueueElement()
 	{
 	}
 };
+static_assert(std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true);
 
-static_assert(std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true,
-			  "Should be trivially destructible");
-
-/// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
-using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData,
-																	 const Vec4& eyeWorldPosition);
+/// Contains info for a reflection probe that the renderer will have to refresh.
+class ReflectionProbeQueueElementForRefresh final
+{
+public:
+	Array<RenderQueue*, 6> m_renderQueues;
+	Vec3 m_worldPosition;
+	Texture* m_reflectionTexture;
+};
 
 // Probe for global illumination.
 class GlobalIlluminationProbeQueueElement final
 {
 public:
-	U64 m_uuid;
-	GlobalIlluminationProbeQueueElementFeedbackCallback m_feedbackCallback;
-	void* m_feedbackCallbackUserData;
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
-	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
 	UVec3 m_cellCounts;
 	U32 m_totalCellCount;
 	Vec3 m_cellSizes; ///< The cells might not be cubes so have different sizes per dimension.
 	F32 m_fadeDistance;
+	U32 m_volumeTextureBindlessIndex;
+
+	U32 m_index;
 
 	GlobalIlluminationProbeQueueElement()
 	{
@@ -257,9 +247,21 @@ public:
 		}
 	}
 };
+static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true);
 
-static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true,
-			  "Should be trivially destructible");
+/// Contains info for a GI probe that the renderer will have to refresh.
+class GlobalIlluminationProbeQueueElementForRefresh final
+{
+public:
+	Array<RenderQueue*, 6> m_renderQueues;
+	Texture* m_volumeTexture;
+	UVec3 m_cellToRefresh;
+	UVec3 m_cellCounts;
+
+	GlobalIlluminationProbeQueueElementForRefresh()
+	{
+	}
+};
 
 /// Lens flare render queue element.
 class LensFlareQueueElement final
@@ -267,8 +269,6 @@ class LensFlareQueueElement final
 public:
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	const TextureView* m_textureView;
-	const void* m_userData;
-	RenderQueueDrawCallback m_drawCallback;
 	Vec3 m_worldPosition;
 	Vec2 m_firstFlareSize;
 	Vec4 m_colorMultiplier;
@@ -277,34 +277,28 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true);
 
 /// Decal render queue element.
 class DecalQueueElement final
 {
 public:
-	RenderQueueDrawCallback m_debugDrawCallback;
-	const void* m_debugDrawCallbackUserData;
-	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	TextureView* m_diffuseAtlas;
-	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	TextureView* m_specularRoughnessAtlas;
-	Vec4 m_diffuseAtlasUv;
-	Vec4 m_specularRoughnessAtlasUv;
-	F32 m_diffuseAtlasBlendFactor;
-	F32 m_specularRoughnessAtlasBlendFactor;
+	U32 m_diffuseBindlessTextureIndex;
+	U32 m_roughnessMetalnessBindlessTextureIndex;
+	F32 m_diffuseBlendFactor;
+	F32 m_roughnessMetalnessBlendFactor;
 	Mat4 m_textureMatrix;
 	Vec3 m_obbCenter;
 	Vec3 m_obbExtend;
 	Mat3 m_obbRotation;
 
+	U32 m_index;
+
 	DecalQueueElement()
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true);
 
 /// Draw callback for drawing.
 using UiQueueElementDrawCallback = void (*)(CanvasPtr& canvas, void* userData);
@@ -320,8 +314,7 @@ public:
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<UiQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<UiQueueElement>::value == true);
 
 /// Fog density queue element.
 class FogDensityQueueElement final
@@ -340,15 +333,14 @@ public:
 	};
 
 	F32 m_density;
+	U32 m_index;
 	Bool m_isBox;
 
 	FogDensityQueueElement()
 	{
 	}
 };
-
-static_assert(std::is_trivially_destructible<FogDensityQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<FogDensityQueueElement>::value == true);
 
 /// A callback to fill a coverage buffer.
 using FillCoverageBufferCallback = void (*)(void* userData, F32* depthValues, U32 width, U32 height);
@@ -360,15 +352,15 @@ public:
 	AccelerationStructure* m_bottomLevelAccelerationStructure;
 	U32 m_shaderGroupHandleIndex;
 
-	Mat3x4 m_transform; // TODO rm when you'll add the RenderableGpuView
+	U32 m_worldTransformsOffset;
+	U32 m_uniformsOffset;
+	U32 m_geometryOffset;
 
-	/// This points to the GR objects used by this element. Use this to add a refcount to avoid accidential deletions.
-	Array<GrObject*, 8> m_grObjects;
-	U32 m_grObjectCount;
+	U32 m_indexBufferOffset;
+
+	Mat3x4 m_transform;
 };
-
-static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true,
-			  "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true);
 
 /// Skybox info.
 class SkyboxQueueElement final
@@ -389,8 +381,7 @@ public:
 		Vec3 m_diffuseColor;
 	} m_fog;
 };
-
-static_assert(std::is_trivially_destructible<SkyboxQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<SkyboxQueueElement>::value == true);
 
 /// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
@@ -428,6 +419,12 @@ public:
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
 	void* m_fillCoverageBufferCallbackUserData = nullptr;
 
+	ReflectionProbeQueueElementForRefresh* m_reflectionProbeForRefresh = nullptr;
+	GlobalIlluminationProbeQueueElementForRefresh* m_giProbeForRefresh = nullptr;
+
+	Array<PtrSize, U32(ClusteredObjectType::kCount)> m_clustererObjectsArrayOffsets = {};
+	Array<PtrSize, U32(ClusteredObjectType::kCount)> m_clustererObjectsArrayRanges = {};
+
 	RenderQueue()
 	{
 		zeroMemory(m_directionalLight);
@@ -437,7 +434,7 @@ public:
 	U32 countAllRenderables() const;
 };
 
-static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<RenderQueue>::value == true);
 /// @}
 
 } // end namespace anki

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -12,9 +12,6 @@
 
 namespace anki {
 
-// Forward
-class XmlDocument;
-
 /// @addtogroup resource
 /// @{
 
@@ -22,20 +19,11 @@ class XmlDocument;
 class ResourceObject
 {
 	friend class ResourceManager;
+	template<typename>
+	friend class ResourcePtrDeleter;
 
 public:
-	ResourceObject(ResourceManager* manager);
-
-	virtual ~ResourceObject();
-
-	/// @privatesection
-	ResourceManager& getManager() const
-	{
-		return *m_manager;
-	}
-
-	HeapMemoryPool& getMemoryPool() const;
-	StackMemoryPool& getTempMemoryPool() const;
+	virtual ~ResourceObject() = default;
 
 	void retain() const
 	{
@@ -60,12 +48,10 @@ public:
 
 	// Internals:
 
-	ANKI_INTERNAL const ConfigSet& getConfig() const;
-
 	ANKI_INTERNAL void setFilename(const CString& fname)
 	{
 		ANKI_ASSERT(m_fname.isEmpty());
-		m_fname.create(getMemoryPool(), fname);
+		m_fname = fname;
 	}
 
 	ANKI_INTERNAL void setUuid(U64 uuid)
@@ -83,14 +69,13 @@ public:
 
 	ANKI_INTERNAL Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
-	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, StringRaii& file);
+	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, ResourceString& file);
 
-	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
+	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, ResourceXmlDocument& xml);
 
 private:
-	ResourceManager* m_manager;
-	mutable Atomic<I32> m_refcount;
-	String m_fname; ///< Unique resource name.
+	mutable Atomic<I32> m_refcount = {0};
+	ResourceString m_fname; ///< Unique resource name.
 	U64 m_uuid = 0;
 };
 /// @}

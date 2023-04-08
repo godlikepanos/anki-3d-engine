@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,10 +11,6 @@
 #include <AnKi/Util/Functions.h>
 
 namespace anki {
-
-LensFlare::~LensFlare()
-{
-}
 
 Error LensFlare::init()
 {
@@ -39,8 +35,8 @@ Error LensFlare::initInternal()
 
 Error LensFlare::initSprite()
 {
-	m_maxSpritesPerFlare = getConfig().getRLensFlareMaxSpritesPerFlare();
-	m_maxFlares = getConfig().getRLensFlareMaxFlares();
+	m_maxSpritesPerFlare = ConfigSet::getSingleton().getRLensFlareMaxSpritesPerFlare();
+	m_maxFlares = ConfigSet::getSingleton().getRLensFlareMaxFlares();
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{
@@ -51,7 +47,7 @@ Error LensFlare::initSprite()
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
 
 	// Load prog
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg));
 	const ShaderProgramResourceVariant* variant;
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
@@ -61,18 +57,16 @@ Error LensFlare::initSprite()
 
 Error LensFlare::initOcclusion()
 {
-	GrManager& gr = getGrManager();
+	m_indirectBuff = GrManager::getSingleton().newBuffer(BufferInitInfo(
+		m_maxFlares * sizeof(DrawIndirectInfo), BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
+		BufferMapAccessBit::kNone, "LensFlares"));
 
-	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
-												 BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
-												 BufferMapAccessBit::kNone, "LensFlares"));
-
-	ANKI_CHECK(getResourceManager().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
-												 m_updateIndirectBuffProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
+															m_updateIndirectBuffProg));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
-	variantInitInfo.addConstant(
-		"kInDepthMapSize", UVec2(m_r->getInternalResolution().x() / 2 / 2, m_r->getInternalResolution().y() / 2 / 2));
+	variantInitInfo.addConstant("kInDepthMapSize", UVec2(getRenderer().getInternalResolution().x() / 2 / 2,
+														 getRenderer().getInternalResolution().y() / 2 / 2));
 	const ShaderProgramResourceVariant* variant;
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
@@ -88,11 +82,10 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 
 	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
 
-	// Write flare info
-	Vec4* flarePositions = allocateAndBindStorage<Vec4*>(sizeof(Mat4) + count * sizeof(Vec4), cmdb, 0, 0);
-	*reinterpret_cast<Mat4*>(flarePositions) = ctx.m_matrices.m_viewProjectionJitter;
-	flarePositions += 4;
+	cmdb->setPushConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
+	// Write flare info
+	Vec4* flarePositions = allocateAndBindStorage<Vec4*>(count * sizeof(Vec4), cmdb, 0, 0);
 	for(U32 i = 0; i < count; ++i)
 	{
 		*flarePositions = Vec4(ctx.m_renderQueue->m_lensFlares[i].m_worldPosition, 1.0f);
@@ -101,8 +94,8 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 
 	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 	// Bind neareset because you don't need high quality
-	cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), kHiZQuarterSurface);
+	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getHiZRt(), kHiZQuarterSurface);
 	cmdb->dispatchCompute(count, 1, 1);
 }
 
@@ -127,7 +120,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite);
-		rpass.newTextureDependency(m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute,
+		rpass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute,
 								   kHiZQuarterSurface);
 	}
 }
@@ -172,7 +165,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		Vec2 posNdc = posClip.xy() / posClip.w();
 
 		// First flare
-		sprites[c].m_posScale = Vec4(posNdc, flareEl.m_firstFlareSize * Vec2(1.0f, m_r->getAspectRatio()));
+		sprites[c].m_posScale = Vec4(posNdc, flareEl.m_firstFlareSize * Vec2(1.0f, getRenderer().getAspectRatio()));
 		sprites[c].m_depthPad3 = Vec4(0.0f);
 		const F32 alpha = flareEl.m_colorMultiplier.w() * (1.0f - pow(absolute(posNdc.x()), 6.0f))
 						  * (1.0f - pow(absolute(posNdc.y()), 6.0f)); // Fade the flare on the edges
@@ -181,11 +174,10 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 
 		// Render
 		ANKI_ASSERT(flareEl.m_textureView);
-		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearRepeat);
 		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)));
 
-		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawArraysIndirectInfo),
-								 m_indirectBuff);
+		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawIndirectInfo), m_indirectBuff);
 	}
 
 	// Restore state

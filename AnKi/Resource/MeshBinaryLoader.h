@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -26,16 +26,13 @@ namespace anki {
 class MeshBinaryLoader
 {
 public:
-	MeshBinaryLoader(ResourceManager* manager);
-
-	MeshBinaryLoader(ResourceManager* manager, BaseMemoryPool* pool)
-		: m_manager(manager)
-		, m_pool(pool)
+	MeshBinaryLoader(BaseMemoryPool* pool)
+		: m_subMeshes(pool)
 	{
-		ANKI_ASSERT(manager && pool);
+		ANKI_ASSERT(pool);
 	}
 
-	~MeshBinaryLoader();
+	~MeshBinaryLoader() = default;
 
 	Error load(const ResourceFilename& filename);
 
@@ -44,7 +41,7 @@ public:
 	Error storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, PtrSize size);
 
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
-	Error storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& indices, DynamicArrayRaii<Vec3>& positions);
+	Error storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices, ResourceDynamicArray<Vec3>& positions);
 
 	const MeshBinaryHeader& getHeader() const
 	{
@@ -58,13 +55,11 @@ public:
 	}
 
 private:
-	ResourceManager* m_manager = nullptr;
-	BaseMemoryPool* m_pool = nullptr;
 	ResourceFilePtr m_file;
 
 	MeshBinaryHeader m_header;
 
-	DynamicArray<MeshBinarySubMesh> m_subMeshes;
+	DynamicArray<MeshBinarySubMesh, MemoryPoolPtrWrapper<BaseMemoryPool>> m_subMeshes;
 
 	Bool isLoaded() const
 	{

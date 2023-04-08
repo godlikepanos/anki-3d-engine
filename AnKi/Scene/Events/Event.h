@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -20,26 +20,9 @@ class Event : public IntrusiveListEnabled<Event>
 	friend class EventManager;
 
 public:
-	/// Constructor
-	Event(EventManager* manager);
+	Event() = default;
 
-	virtual ~Event();
-
-	HeapMemoryPool& getMemoryPool() const;
-
-	EventManager& getEventManager()
-	{
-		return *m_manager;
-	}
-
-	const EventManager& getEventManager() const
-	{
-		return *m_manager;
-	}
-
-	SceneGraph& getSceneGraph();
-
-	const SceneGraph& getSceneGraph() const;
+	virtual ~Event() = default;
 
 	Second getStartTime() const
 	{
@@ -84,7 +67,7 @@ public:
 	void addAssociatedSceneNode(SceneNode* node)
 	{
 		ANKI_ASSERT(node);
-		m_associatedNodes.emplaceBack(getMemoryPool(), node);
+		m_associatedNodes.emplaceBack(node);
 	}
 
 	/// This method should be implemented by the derived classes
@@ -101,15 +84,13 @@ public:
 	}
 
 protected:
-	EventManager* m_manager = nullptr;
-
 	Second m_startTime = 0.0;
 	Second m_duration = 0.0;
 
 	Bool m_markedForDeletion = false;
 	Bool m_reanimate = false;
 
-	DynamicArray<SceneNode*> m_associatedNodes;
+	SceneDynamicArray<SceneNode*> m_associatedNodes;
 
 	/// @param startTime The time the event will start. If it's < 0 then start the event now.
 	/// @param duration The duration of the event.

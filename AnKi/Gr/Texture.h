@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -18,7 +18,7 @@ class alignas(4) TextureInitInfo : public GrBaseInitInfo
 public:
 	U32 m_width = 0;
 	U32 m_height = 0;
-	U32 m_depth = 1; //< Relevant only for 3D textures.
+	U32 m_depth = 1; ///< Relevant only for 3D textures.
 	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
 
 	Format m_format = Format::kNone;
@@ -254,8 +254,8 @@ protected:
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 
 	/// Construct.
-	Texture(GrManager* manager, CString name)
-		: GrObject(manager, kClassType, name)
+	Texture(CString name)
+		: GrObject(kClassType, name)
 	{
 	}
 
@@ -266,7 +266,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static Texture* newInstance(GrManager* manager, const TextureInitInfo& init);
+	[[nodiscard]] static Texture* newInstance(const TextureInitInfo& init);
 };
 /// @}
 

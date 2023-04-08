@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -17,12 +17,6 @@ namespace anki {
 class JitterMoveEvent : public Event
 {
 public:
-	/// Constructor
-	JitterMoveEvent(EventManager* manager)
-		: Event(manager)
-	{
-	}
-
 	Error init(Second startTime, Second duration, SceneNode* movableSceneNode);
 
 	/// Implements Event::update

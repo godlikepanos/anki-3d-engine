@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,6 +13,7 @@ namespace anki {
 
 // Forward
 class Renderer;
+class RenderableQueueElement;
 
 /// @addtogroup renderer
 /// @{
@@ -28,8 +29,6 @@ public:
 	Mat4 m_previousViewProjectionMatrix;
 
 	SamplerPtr m_sampler;
-	U32 m_minLod = 0;
-	U32 m_maxLod = kMaxLodCount - 1;
 };
 
 /// It uses the render queue to batch and render.
@@ -38,24 +37,19 @@ class RenderableDrawer
 	friend class RenderTask;
 
 public:
-	RenderableDrawer(Renderer* r)
-		: m_r(r)
-	{
-	}
+	RenderableDrawer() = default;
 
 	~RenderableDrawer();
 
-	void drawRange(RenderingTechnique technique, const RenderableDrawerArguments& args,
-				   const RenderableQueueElement* begin, const RenderableQueueElement* end, CommandBufferPtr& cmdb);
+	void drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin,
+				   const RenderableQueueElement* end, CommandBufferPtr& cmdb);
 
 private:
 	class Context;
 
-	Renderer* m_r;
-
 	void flushDrawcall(Context& ctx);
 
-	void drawSingle(Context& ctx);
+	void drawSingle(const RenderableQueueElement* renderEl, Context& ctx);
 };
 /// @}
 

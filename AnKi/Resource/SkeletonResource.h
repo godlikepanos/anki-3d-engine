@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -26,17 +26,17 @@ public:
 
 	~Bone() = default;
 
-	const String& getName() const
+	CString getName() const
 	{
 		return m_name;
 	}
 
-	const Mat4& getTransform() const
+	const Mat3x4& getTransform() const
 	{
 		return m_transform;
 	}
 
-	const Mat4& getVertexTransform() const
+	const Mat3x4& getVertexTransform() const
 	{
 		return m_vertTrf;
 	}
@@ -57,21 +57,16 @@ public:
 	}
 
 private:
-	String m_name; ///< The name of the bone
+	ResourceString m_name; ///< The name of the bone
 
-	Mat4 m_transform; ///< See the class notes.
-	Mat4 m_vertTrf;
+	Mat3x4 m_transform; ///< See the class notes.
+	Mat3x4 m_vertTrf;
 
 	U32 m_idx;
 
 	Bone* m_parent = nullptr;
 	Array<Bone*, kMaxChildrenPerBone> m_children = {};
 	U8 m_childrenCount = 0;
-
-	void destroy(HeapMemoryPool& pool)
-	{
-		m_name.destroy(pool);
-	}
 };
 
 /// It contains the bones with their position and hierarchy
@@ -83,8 +78,8 @@ private:
 /// 	<bones>
 /// 		<bone>
 /// 			<name>X</name>
-/// 			<transform>16 floats</transform>
-/// 			<boneTransform>16 floats</boneTransform>
+/// 			<transform>12 floats</transform>
+/// 			<boneTransform>12 floats</boneTransform>
 /// 			[<parent>bone_name</parent>]
 /// 		<bone>
 ///         ...
@@ -94,17 +89,14 @@ private:
 class SkeletonResource : public ResourceObject
 {
 public:
-	SkeletonResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{
-	}
+	SkeletonResource() = default;
 
-	~SkeletonResource();
+	~SkeletonResource() = default;
 
 	/// Load file
 	Error load(const ResourceFilename& filename, Bool async);
 
-	const DynamicArray<Bone>& getBones() const
+	ConstWeakArray<Bone> getBones() const
 	{
 		return m_bones;
 	}
@@ -129,7 +121,7 @@ public:
 	}
 
 private:
-	DynamicArray<Bone> m_bones;
+	ResourceDynamicArray<Bone> m_bones;
 	U32 m_rootBoneIdx = kMaxU32;
 };
 /// @}

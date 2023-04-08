@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -34,9 +34,9 @@ namespace anki {
 class ImageAtlasResource : public ResourceObject
 {
 public:
-	ImageAtlasResource(ResourceManager* manager);
+	ImageAtlasResource() = default;
 
-	~ImageAtlasResource();
+	~ImageAtlasResource() = default;
 
 	/// Load the atlas.
 	Error load(const ResourceFilename& filename, Bool async);
@@ -78,8 +78,8 @@ private:
 	};
 
 	ImageResourcePtr m_image;
-	DynamicArray<char> m_subTexNames;
-	DynamicArray<SubTex> m_subTexes;
+	ResourceDynamicArray<char> m_subTexNames;
+	ResourceDynamicArray<SubTex> m_subTexes;
 	Array<U32, 2> m_size;
 	U32 m_margin = 0;
 };

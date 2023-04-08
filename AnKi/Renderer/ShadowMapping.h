@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -12,6 +12,10 @@
 
 namespace anki {
 
+// Forward
+class PointLightQueueElement;
+class SpotLightQueueElement;
+
 /// @addtogroup renderer
 /// @{
 
@@ -19,13 +23,6 @@ namespace anki {
 class ShadowMapping : public RendererObject
 {
 public:
-	ShadowMapping(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~ShadowMapping();
-
 	Error init();
 
 	/// Populate the rendergraph.
@@ -81,8 +78,9 @@ private:
 	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy,
 					  U32& renderQueueElementsLod) const;
 
+	template<typename TMemoryPool>
 	void newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,
-					  DynamicArrayRaii<LightToRenderTempInfo>& workItems, U32& drawcallCount) const;
+					  DynamicArray<LightToRenderTempInfo, TMemoryPool>& workItems, U32& drawcallCount) const;
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 };

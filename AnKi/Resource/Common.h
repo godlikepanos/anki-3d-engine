@@ -1,12 +1,10 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #pragma once
 
-#include <AnKi/Util/DynamicArray.h>
-#include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
@@ -20,6 +18,8 @@ class ResourceFilesystem;
 template<typename Type>
 class ResourcePointer;
 class TransferGpuAllocatorHandle;
+class PhysicsWorld;
+class UnifiedGeometryMemoryPool;
 
 /// @addtogroup resource
 /// @{
@@ -29,6 +29,22 @@ class TransferGpuAllocatorHandle;
 #define ANKI_RESOURCE_LOGW(...) ANKI_LOG("RSRC", kWarning, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGF(...) ANKI_LOG("RSRC", kFatal, __VA_ARGS__)
 #define ANKI_RESOURCE_LOGV(...) ANKI_LOG("RSRC", kVerbose, __VA_ARGS__)
+
+class ResourceMemoryPool : public HeapMemoryPool, public MakeSingleton<ResourceMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	ResourceMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "ResourceMemPool")
+	{
+	}
+
+	~ResourceMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Resource, ResourceMemoryPool)
 
 /// Deleter for ResourcePtr.
 template<typename T>

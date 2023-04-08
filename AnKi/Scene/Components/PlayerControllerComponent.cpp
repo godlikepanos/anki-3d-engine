@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -10,15 +10,29 @@
 
 namespace anki {
 
-ANKI_SCENE_COMPONENT_STATICS(PlayerControllerComponent)
-
 PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 {
 	PhysicsPlayerControllerInitInfo init;
-	init.m_position = Vec3(0.0f);
-	m_player = node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(init);
+	init.m_position = node->getWorldTransform().getOrigin().xyz();
+	m_player = PhysicsWorld::getSingleton().newInstance<PhysicsPlayerController>(init);
 	m_player->setUserData(this);
+
+	node->setIgnoreParentTransform(true);
+}
+
+Error PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+{
+	const Vec3 newPos = m_player->getTransform().getOrigin().xyz();
+	updated = newPos != m_worldPos;
+
+	if(updated)
+	{
+		m_worldPos = newPos;
+		info.m_node->setLocalOrigin(newPos.xyz0());
+	}
+
+	return Error::kNone;
 }
 
 } // end namespace anki

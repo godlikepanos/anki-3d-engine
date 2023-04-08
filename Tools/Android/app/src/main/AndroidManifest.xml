@@ -8,6 +8,7 @@
         <activity android:name="android.app.NativeActivity"
                 android:screenOrientation="landscape"
                 android:label="@string/app_name"
+                android:exported="true"
                 android:configChanges="orientation|keyboardHidden">
             <meta-data android:name="android.app.lib_name" android:value="%TARGET%" />
             <intent-filter>
@@ -15,10 +16,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-		
+
 		<!-- For profiling CPU & memory: -->
 		<!-- <profileable android:shell="true"/> -->
-		
+
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,6 +6,8 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Frustum.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Collision/Aabb.h>
 
@@ -28,7 +30,7 @@ public:
 	void setBoxVolumeSize(const Vec3& sizeXYZ)
 	{
 		m_halfSize = sizeXYZ / 2.0f;
-		m_markedForUpdate = true;
+		m_dirty = true;
 	}
 
 	Vec3 getBoxVolumeSize() const
@@ -36,67 +38,59 @@ public:
 		return m_halfSize * 2.0f;
 	}
 
-	Vec3 getWorldPosition() const
+	ANKI_INTERNAL WeakArray<Frustum> getFrustums()
 	{
-		return m_worldPos;
+		return WeakArray<Frustum>(m_frustums);
 	}
 
-	void setWorldPosition(const Vec3& pos)
+	ANKI_INTERNAL void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
 	{
-		m_worldPos = pos;
-		m_markedForUpdate = true;
-	}
-
-	Aabb getAabbWorldSpace() const
-	{
-		return Aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
-	}
-
-	Bool getMarkedForRendering() const
-	{
-		return m_markedForRendering;
-	}
-
-	void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
-	{
-		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
-		el.m_feedbackCallbackUserData = const_cast<ReflectionProbeComponent*>(this);
-		el.m_uuid = m_uuid;
+		ANKI_ASSERT(!m_reflectionNeedsRefresh);
+		ANKI_ASSERT(m_worldPos.x() != kMaxF32);
 		el.m_worldPosition = m_worldPos;
 		el.m_aabbMin = -m_halfSize + m_worldPos;
 		el.m_aabbMax = m_halfSize + m_worldPos;
-		el.m_textureArrayIndex = kMaxU32;
-		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
-			ANKI_ASSERT(userData.getSize() == 1);
-			static_cast<const ReflectionProbeComponent*>(userData[0])->draw(ctx);
-		};
-		el.m_debugDrawCallbackUserData = this;
+		ANKI_ASSERT(el.m_textureBindlessIndex != kMaxU32);
+		el.m_textureBindlessIndex = m_reflectionTexBindlessIndex;
+		ANKI_ASSERT(m_gpuSceneIndex != kMaxU32);
+		el.m_index = m_gpuSceneIndex;
 	}
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
+	ANKI_INTERNAL void setupReflectionProbeQueueElementForRefresh(ReflectionProbeQueueElementForRefresh& el) const
 	{
-		updated = m_markedForUpdate;
-		m_markedForUpdate = false;
-		return Error::kNone;
+		ANKI_ASSERT(m_reflectionNeedsRefresh);
+		el.m_worldPosition = m_worldPos;
+		el.m_reflectionTexture = m_reflectionTex.get();
+	}
+
+	ANKI_INTERNAL Bool getReflectionNeedsRefresh() const
+	{
+		return m_reflectionNeedsRefresh;
+	}
+
+	ANKI_INTERNAL void setReflectionNeedsRefresh(Bool needsRefresh)
+	{
+		m_reflectionNeedsRefresh = needsRefresh;
 	}
 
 private:
-	SceneNode* m_node = nullptr;
-	U64 m_uuid = 0;
-	Vec3 m_worldPos = Vec3(0.0f);
+	Vec3 m_worldPos = Vec3(kMaxF32);
 	Vec3 m_halfSize = Vec3(1.0f);
-	Bool m_markedForRendering : 1;
-	Bool m_markedForUpdate : 1;
 
-	ImageResourcePtr m_debugImage;
+	U32 m_gpuSceneIndex = kMaxU32;
 
-	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
-	{
-		ANKI_ASSERT(userData);
-		static_cast<ReflectionProbeComponent*>(userData)->m_markedForRendering = fillRenderQueuesOnNextFrame;
-	}
+	Spatial m_spatial;
 
-	void draw(RenderQueueDrawContext& ctx) const;
+	Array<Frustum, 6> m_frustums;
+
+	TexturePtr m_reflectionTex;
+	TextureViewPtr m_reflectionView;
+	U32 m_reflectionTexBindlessIndex = kMaxU32;
+
+	Bool m_dirty = true;
+	Bool m_reflectionNeedsRefresh = true;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 

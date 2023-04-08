@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -33,13 +33,13 @@ U32 RenderQueue::countAllRenderables() const
 		}
 	}
 
-	for(const ReflectionProbeQueueElement& probe : m_reflectionProbes)
+	if(m_reflectionProbeForRefresh)
 	{
 		for(U i = 0; i < 6; ++i)
 		{
-			if(probe.m_renderQueues[i])
+			if(m_reflectionProbeForRefresh->m_renderQueues[i])
 			{
-				drawableCount += probe.m_renderQueues[i]->countAllRenderables();
+				drawableCount += m_reflectionProbeForRefresh->m_renderQueues[i]->countAllRenderables();
 			}
 		}
 	}

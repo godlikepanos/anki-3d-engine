@@ -126,7 +126,7 @@ F32 testPlane(const Plane& plane, const ConvexHullShape& hull)
 	for(const Vec4& point : points)
 	{
 		const F32 test = testPlane(pa, point);
-		if(ANKI_UNLIKELY(test == 0.0f))
+		if(test == 0.0f) [[unlikely]]
 		{
 			// Early exit
 			return 0.0f;

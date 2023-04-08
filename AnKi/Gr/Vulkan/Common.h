@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -44,6 +44,9 @@ class GrManagerImpl;
 
 #define ANKI_VK_SELF(class_) class_& self = *static_cast<class_*>(this)
 #define ANKI_VK_SELF_CONST(class_) const class_& self = *static_cast<const class_*>(this)
+
+ANKI_PURE GrManagerImpl& getGrManagerImpl();
+ANKI_PURE VkDevice getVkDevice();
 
 enum class DescriptorType : U8
 {
@@ -123,6 +126,8 @@ class PrivateBufferUsageBit
 {
 public:
 	static constexpr BufferUsageBit kAccelerationStructureBuildScratch = BufferUsageBit(1ull << 29ull);
+
+	/// Buffer that holds the memory for the actual AS.
 	static constexpr BufferUsageBit kAccelerationStructure = static_cast<BufferUsageBit>(1ull << 30ull);
 
 	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructureBuildScratch | kAccelerationStructure;
@@ -134,7 +139,7 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	do \
 	{ \
 		VkResult rez; \
-		if(ANKI_UNLIKELY((rez = (x)) < 0)) \
+		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGF("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 		} \
@@ -145,7 +150,7 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	do \
 	{ \
 		VkResult rez; \
-		if(ANKI_UNLIKELY((rez = (x)) < 0)) \
+		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
 			ANKI_VK_LOGE("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 			return Error::kFunctionFailed; \

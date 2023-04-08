@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,13 +9,13 @@
 
 namespace anki {
 
-GrUpscaler* GrUpscaler::newInstance(GrManager* manager, const GrUpscalerInitInfo& initInfo)
+GrUpscaler* GrUpscaler::newInstance(const GrUpscalerInitInfo& initInfo)
 {
-	GrUpscalerImpl* impl = anki::newInstance<GrUpscalerImpl>(manager->getMemoryPool(), manager, initInfo.getName());
+	GrUpscalerImpl* impl = anki::newInstance<GrUpscalerImpl>(GrMemoryPool::getSingleton(), initInfo.getName());
 	const Error err = impl->initInternal(initInfo);
 	if(err)
 	{
-		deleteInstance(manager->getMemoryPool(), impl);
+		deleteInstance(GrMemoryPool::getSingleton(), impl);
 		impl = nullptr;
 	}
 	return impl;

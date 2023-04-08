@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -10,12 +10,6 @@
 #include <AnKi/Renderer/Renderer.h>
 
 namespace anki {
-
-// Forward
-class ResourceManager;
-class ConfigSet;
-class StagingGpuMemoryPool;
-class UiManager;
 
 /// @addtogroup renderer
 /// @{
@@ -36,24 +30,15 @@ public:
 
 	AllocAlignedCallback m_allocCallback = nullptr;
 	void* m_allocCallbackUserData = nullptr;
-
-	ThreadHive* m_threadHive = nullptr;
-	ResourceManager* m_resourceManager = nullptr;
-	GrManager* m_gr = nullptr;
-	StagingGpuMemoryPool* m_stagingMemory = nullptr;
-	UiManager* m_ui = nullptr;
-	ConfigSet* m_config = nullptr;
-	Timestamp* m_globTimestamp = nullptr;
 };
 
 /// Main onscreen renderer
-class MainRenderer
+class MainRenderer : public MakeSingleton<MainRenderer>
 {
+	template<typename>
+	friend class MakeSingleton;
+
 public:
-	MainRenderer();
-
-	~MainRenderer();
-
 	Error init(const MainRendererInitInfo& inf);
 
 	Error render(RenderQueue& rqueue, TexturePtr presentTex);
@@ -83,10 +68,9 @@ public:
 	}
 
 private:
-	HeapMemoryPool m_pool;
 	StackMemoryPool m_framePool;
 
-	UniquePtr<Renderer> m_r;
+	Renderer* m_r = nullptr;
 	Bool m_rDrawToDefaultFb = false;
 
 	ShaderProgramResourcePtr m_blitProg;
@@ -107,6 +91,10 @@ private:
 		const RenderingContext* m_ctx = nullptr;
 		Atomic<U32> m_secondaryTaskId = {0};
 	} m_runCtx;
+
+	MainRenderer();
+
+	~MainRenderer();
 };
 /// @}
 

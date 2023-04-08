@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,6 +9,7 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Enum.h>
+#include <AnKi/Shaders/Include/Common.h>
 
 namespace anki {
 
@@ -38,6 +39,22 @@ class GrUpscalerInitInfo;
 #define ANKI_GR_LOGF(...) ANKI_LOG("GR", kFatal, __VA_ARGS__)
 #define ANKI_GR_LOGV(...) ANKI_LOG("GR", kVerbose, __VA_ARGS__)
 
+class GrMemoryPool : public HeapMemoryPool, public MakeSingleton<GrMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	GrMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "GrMemPool")
+	{
+	}
+
+	~GrMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Gr, GrMemoryPool)
+
 // Some constants
 constexpr U32 kMaxVertexAttributes = 8;
 constexpr U32 kMaxColorRenderTargets = 4;
@@ -51,9 +68,15 @@ constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
 
+class GrObjectDeleter
+{
+public:
+	void operator()(GrObject* ptr);
+};
+
 /// Smart pointer for resources.
 template<typename T>
-using GrObjectPtrT = IntrusivePtr<T, DefaultPtrDeleter<GrObject>>;
+using GrObjectPtrT = IntrusivePtr<T, GrObjectDeleter>;
 
 using GrObjectPtr = GrObjectPtrT<GrObject>;
 
@@ -782,74 +805,6 @@ enum class VrsRate : U8
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
-
-/// The draw indirect structure for index drawing, also the parameters of a regular drawcall
-class DrawElementsIndirectInfo
-{
-public:
-	U32 m_count = kMaxU32;
-	U32 m_instanceCount = 1;
-	U32 m_firstIndex = 0;
-	U32 m_baseVertex = 0;
-	U32 m_baseInstance = 0;
-
-	DrawElementsIndirectInfo() = default;
-
-	DrawElementsIndirectInfo(const DrawElementsIndirectInfo&) = default;
-
-	DrawElementsIndirectInfo(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
-		: m_count(count)
-		, m_instanceCount(instanceCount)
-		, m_firstIndex(firstIndex)
-		, m_baseVertex(baseVertex)
-		, m_baseInstance(baseInstance)
-	{
-	}
-
-	Bool operator==(const DrawElementsIndirectInfo& b) const
-	{
-		return m_count == b.m_count && m_instanceCount == b.m_instanceCount && m_firstIndex == b.m_firstIndex
-			   && m_baseVertex == b.m_baseVertex && m_baseInstance == b.m_baseInstance;
-	}
-
-	Bool operator!=(const DrawElementsIndirectInfo& b) const
-	{
-		return !(operator==(b));
-	}
-};
-
-/// The draw indirect structure for arrays drawing, also the parameters of a regular drawcall
-class DrawArraysIndirectInfo
-{
-public:
-	U32 m_count = kMaxU32;
-	U32 m_instanceCount = 1;
-	U32 m_first = 0;
-	U32 m_baseInstance = 0;
-
-	DrawArraysIndirectInfo() = default;
-
-	DrawArraysIndirectInfo(const DrawArraysIndirectInfo&) = default;
-
-	DrawArraysIndirectInfo(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
-		: m_count(count)
-		, m_instanceCount(instanceCount)
-		, m_first(first)
-		, m_baseInstance(baseInstance)
-	{
-	}
-
-	Bool operator==(const DrawArraysIndirectInfo& b) const
-	{
-		return m_count == b.m_count && m_instanceCount == b.m_instanceCount && m_first == b.m_first
-			   && m_baseInstance == b.m_baseInstance;
-	}
-
-	Bool operator!=(const DrawArraysIndirectInfo& b) const
-	{
-		return !(operator==(b));
-	}
-};
 
 /// Clear values for textures or attachments.
 class ClearValue

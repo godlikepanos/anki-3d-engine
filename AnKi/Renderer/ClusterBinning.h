@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,7 +16,7 @@ namespace anki {
 class ClusterBinning : public RendererObject
 {
 public:
-	ClusterBinning(Renderer* r);
+	ClusterBinning();
 
 	~ClusterBinning();
 
@@ -29,6 +29,21 @@ public:
 	/// called after the render queue is finalized.
 	void writeClusterBuffersAsync();
 
+	const RebarGpuMemoryToken& getClusteredUniformsRebarToken() const
+	{
+		return m_runCtx.m_clusteredShadingUniformsToken;
+	}
+
+	const RebarGpuMemoryToken& getClustersRebarToken() const
+	{
+		return m_runCtx.m_clustersToken;
+	}
+
+	const BufferHandle& getClustersRenderGraphHandle() const
+	{
+		return m_runCtx.m_rebarHandle;
+	}
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
@@ -40,6 +55,9 @@ private:
 	{
 	public:
 		RenderingContext* m_ctx = nullptr;
+		RebarGpuMemoryToken m_clusteredShadingUniformsToken;
+		RebarGpuMemoryToken m_clustersToken;
+		BufferHandle m_rebarHandle; ///< For dependency tracking.
 	} m_runCtx;
 
 	void writeClustererBuffers(RenderingContext& ctx);

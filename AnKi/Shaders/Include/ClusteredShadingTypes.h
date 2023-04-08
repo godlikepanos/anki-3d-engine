@@ -1,24 +1,30 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #pragma once
 
-#include <AnKi/Shaders/Include/Common.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#define ANKI_CLUSTERED_SHADING_USE_64BIT !ANKI_PLATFORM_MOBILE
+#define ANKI_CLUSTERED_SHADING_USE_64BIT ANKI_SUPPORTS_64BIT_TYPES
 
 ANKI_BEGIN_NAMESPACE
 
 // Enum of clusterer object types
-constexpr U32 kClusterObjectTypePointLight = 0u;
-constexpr U32 kClusterObjectTypeSpotLight = 1u;
-constexpr U32 kClusterObjectTypeDecal = 2u;
-constexpr U32 kClusterObjectTypeFogDensityVolume = 3u;
-constexpr U32 kClusterObjectTypeReflectionProbe = 4u;
-constexpr U32 kClusterObjectTypeGlobalIlluminationProbe = 5u;
-constexpr U32 kClusterObjectTypeCount = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
+enum class ClusteredObjectType : U32
+{
+	kPointLight,
+	kSpotLight,
+	kDecal,
+	kFogDensityVolume,
+	kReflectionProbe,
+	kGlobalIlluminationProbe,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ClusteredObjectType)
 
 // Limits
 #if ANKI_CLUSTERED_SHADING_USE_64BIT
@@ -35,17 +41,18 @@ constexpr U32 kMaxVisibleReflectionProbes = 16u;
 constexpr U32 kMaxVisibleGlobalIlluminationProbes = 8u;
 
 // Other consts
-constexpr ANKI_RP F32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
-constexpr ANKI_RP F32 kSubsurfaceMin = 0.01f;
+constexpr RF32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
+constexpr RF32 kSubsurfaceMin = 0.01f;
+constexpr U32 kMaxZsplitCount = 128u;
 
 /// Point light.
 struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
-	ANKI_RP F32 m_radius; ///< Radius
+	RF32 m_radius; ///< Radius
 
-	ANKI_RP Vec3 m_diffuseColor;
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	RVec3 m_diffuseColor;
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
 	Vec2 m_padding0;
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
@@ -53,8 +60,8 @@ struct PointLight
 
 	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
 };
-constexpr U32 kSizeof_PointLight = 9u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == kSizeof_PointLight);
+constexpr U32 kSizeof_PointLight = 9u * sizeof(Vec4);
+static_assert(sizeof(PointLight) == kSizeof_PointLight);
 
 /// Spot light.
 struct SpotLight
@@ -64,51 +71,51 @@ struct SpotLight
 
 	Vec4 m_edgePoints[4u]; ///< Edge points in world space.
 
-	ANKI_RP Vec3 m_diffuseColor;
-	ANKI_RP F32 m_radius; ///< Max distance.
+	RVec3 m_diffuseColor;
+	RF32 m_radius; ///< Max distance.
 
-	ANKI_RP Vec3 m_direction; ///< Light direction.
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	RVec3 m_direction; ///< Light direction.
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	ANKI_RP F32 m_outerCos;
-	ANKI_RP F32 m_innerCos;
+	RF32 m_outerCos;
+	RF32 m_innerCos;
 	U32 m_padding1;
 
 	Mat4 m_textureMatrix;
 };
-constexpr U32 kSizeof_SpotLight = 12u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == kSizeof_SpotLight);
+constexpr U32 kSizeof_SpotLight = 12u * sizeof(Vec4);
+static_assert(sizeof(SpotLight) == kSizeof_SpotLight);
 
 /// Spot light for binning. This is the same structure as SpotLight (same signature) but it's used for binning.
 struct SpotLightBinning
 {
 	Vec4 m_edgePoints[5u]; ///< Edge points in world space. Point 0 is the eye pos.
 
-	ANKI_RP Vec3 m_diffuseColor;
-	ANKI_RP F32 m_radius; ///< Max distance.
+	RVec3 m_diffuseColor;
+	RF32 m_radius; ///< Max distance.
 
-	ANKI_RP Vec3 m_direction; ///< Light direction.
-	ANKI_RP F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	RVec3 m_direction; ///< Light direction.
+	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	ANKI_RP F32 m_outerCos;
-	ANKI_RP F32 m_innerCos;
+	RF32 m_outerCos;
+	RF32 m_innerCos;
 	U32 m_padding0;
 
 	Mat4 m_textureMatrix;
 };
 constexpr U32 kSizeof_SpotLightBinning = kSizeof_SpotLight;
-ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLightBinning) == kSizeof_SpotLightBinning);
-ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == sizeof(SpotLightBinning));
+static_assert(sizeof(SpotLightBinning) == kSizeof_SpotLightBinning);
+static_assert(sizeof(SpotLight) == sizeof(SpotLightBinning));
 
 /// Directional light (sun).
 struct DirectionalLight
 {
-	ANKI_RP Vec3 m_diffuseColor;
+	RVec3 m_diffuseColor;
 	U32 m_shadowCascadeCount; ///< If it's zero then it doesn't cast shadow.
 
-	ANKI_RP Vec3 m_direction;
+	RVec3 m_direction;
 	U32 m_active;
 
 	Vec4 m_shadowCascadeDistances;
@@ -118,73 +125,21 @@ struct DirectionalLight
 
 	Mat4 m_textureMatrices[kMaxShadowCascades];
 };
-constexpr U32 kSizeof_DirectionalLight = 4u * ANKI_SIZEOF(Vec4) + kMaxShadowCascades * ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == kSizeof_DirectionalLight);
-ANKI_SHADER_STATIC_ASSERT(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances is a Vec4
+constexpr U32 kSizeof_DirectionalLight = 4u * sizeof(Vec4) + kMaxShadowCascades * sizeof(Mat4);
+static_assert(sizeof(DirectionalLight) == kSizeof_DirectionalLight);
+static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances is a Vec4
 
 /// Representation of a reflection probe.
-struct ReflectionProbe
-{
-	Vec3 m_position; ///< Position of the probe in world space.
-	F32 m_cubemapIndex; ///< Index in the cubemap array texture.
-
-	Vec3 m_aabbMin;
-	F32 m_padding0;
-
-	Vec3 m_aabbMax;
-	F32 m_padding1;
-};
-constexpr U32 kSizeof_ReflectionProbe = 3u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == kSizeof_ReflectionProbe);
+typedef GpuSceneReflectionProbe ReflectionProbe;
 
 /// Decal.
-struct Decal
-{
-	Vec4 m_diffuseUv;
-
-	Vec4 m_normRoughnessUv;
-
-	ANKI_RP Vec4 m_blendFactors;
-
-	Mat4 m_textureMatrix;
-
-	Mat4 m_invertedTransform;
-
-	Vec3 m_obbExtend;
-	F32 m_padding0;
-};
-constexpr U32 kSizeof_Decal = 4u * ANKI_SIZEOF(Vec4) + 2u * ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == kSizeof_Decal);
+typedef GpuSceneDecal Decal;
 
 /// Fog density volume.
-struct FogDensityVolume
-{
-	Vec3 m_aabbMinOrSphereCenter;
-	U32 m_isBox;
-
-	Vec3 m_aabbMaxOrSphereRadiusSquared;
-	ANKI_RP F32 m_density;
-};
-constexpr U32 kSizeof_FogDensityVolume = 2u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == kSizeof_FogDensityVolume);
+typedef GpuSceneFogDensityVolume FogDensityVolume;
 
 /// Global illumination probe
-struct GlobalIlluminationProbe
-{
-	Vec3 m_aabbMin;
-	F32 m_padding0;
-
-	Vec3 m_aabbMax;
-	F32 m_padding1;
-
-	U32 m_textureIndex; ///< Index to the array of volume textures.
-	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
-	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
-	ANKI_RP F32 m_fadeDistance;
-	F32 m_padding2;
-};
-constexpr U32 kSizeof_GlobalIlluminationProbe = 3u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == kSizeof_GlobalIlluminationProbe);
+typedef GpuSceneGlobalIlluminationProbe GlobalIlluminationProbe;
 
 /// Common matrices.
 struct CommonMatrices
@@ -216,8 +171,8 @@ struct CommonMatrices
 	/// @endcode
 	Vec4 m_unprojectionParameters;
 };
-constexpr U32 kSizeof_CommonMatrices = 43u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == kSizeof_CommonMatrices);
+constexpr U32 kSizeof_CommonMatrices = 43u * sizeof(Vec4);
+static_assert(sizeof(CommonMatrices) == kSizeof_CommonMatrices);
 
 /// Common uniforms for light shading passes.
 struct ClusteredShadingUniforms
@@ -239,7 +194,7 @@ struct ClusteredShadingUniforms
 	U32 m_tileSize;
 	U32 m_lightVolumeLastZSplit;
 
-	Vec2 m_padding0;
+	UVec2 m_padding0;
 	F32 m_near;
 	F32 m_far;
 
@@ -248,15 +203,19 @@ struct ClusteredShadingUniforms
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;
 
-	/// This are some additive counts used to map a flat index to the index of the specific object.
-	UVec4 m_objectCountsUpTo[kClusterObjectTypeCount];
+	/// This are some additive counts used to map a flat index to the index of the specific object
+#if defined(__cplusplus)
+	Array<UVec4, U32(ClusteredObjectType::kCount)> m_objectCountsUpTo;
+#else
+	UVec4 m_objectCountsUpTo[(U32)ClusteredObjectType::kCount];
+#endif
 };
-constexpr U32 kSizeof_ClusteredShadingUniforms = (6u + kClusterObjectTypeCount) * ANKI_SIZEOF(Vec4)
-												 + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight);
-ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredShadingUniforms);
+constexpr U32 kSizeof_ClusteredShadingUniforms =
+	(6u + (U32)ClusteredObjectType::kCount) * sizeof(Vec4) + 2u * sizeof(CommonMatrices) + sizeof(DirectionalLight);
+static_assert(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredShadingUniforms);
 
 // Define the type of some cluster object masks
-#if !defined(__cplusplus)
+#if ANKI_GLSL
 #	if ANKI_CLUSTERED_SHADING_USE_64BIT
 #		define ExtendedClusterObjectMask U64
 #	else
@@ -264,9 +223,9 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredS
 #	endif
 #else
 #	if ANKI_CLUSTERED_SHADING_USE_64BIT
-using ExtendedClusterObjectMask = U64;
+typedef U64 ExtendedClusterObjectMask;
 #	else
-using ExtendedClusterObjectMask = U32;
+typedef U32 ExtendedClusterObjectMask;
 #	endif
 #endif
 
@@ -292,11 +251,23 @@ struct Cluster
 };
 
 #if ANKI_CLUSTERED_SHADING_USE_64BIT
-constexpr U32 kSizeof_Cluster = 3u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == kSizeof_Cluster);
+constexpr U32 kSizeof_Cluster = 3u * sizeof(Vec4);
+static_assert(sizeof(Cluster) == kSizeof_Cluster);
 #else
-constexpr U32 kSizeof_Cluster = 2u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == kSizeof_Cluster);
+constexpr U32 kSizeof_Cluster = 2u * sizeof(Vec4);
+static_assert(sizeof(Cluster) == kSizeof_Cluster);
 #endif
+
+constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kClusteredObjectSizes) = {
+	sizeof(PointLight),       sizeof(SpotLight),       sizeof(Decal),
+	sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};
+
+constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kMaxVisibleClusteredObjects) = {
+#if ANKI_CLUSTERED_SHADING_USE_64BIT
+	64, 64, 64,
+#else
+	32, 32, 32,
+#endif
+	16, 16, 16};
 
 ANKI_END_NAMESPACE

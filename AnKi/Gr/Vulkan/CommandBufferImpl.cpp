@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -59,6 +59,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	{
 		state.init(m_pool);
 	}
+
+	m_state.setVrsCapable(getGrManagerImpl().getDeviceCapabilities().m_vrs);
 
 	return Error::kNone;
 }
@@ -510,7 +512,7 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 	BufferInitInfo bufferInit;
 	bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructureBuildScratch;
 	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
-	BufferPtr scratchBuff = getManager().newBuffer(bufferInit);
+	BufferPtr scratchBuff = getGrManagerImpl().newBuffer(bufferInit);
 
 	// Create the build info
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
@@ -626,9 +628,9 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 {
 	commandCommon();
 
-	DynamicArrayRaii<VkImageMemoryBarrier> imageBarriers(m_pool);
-	DynamicArrayRaii<VkBufferMemoryBarrier> bufferBarriers(m_pool);
-	DynamicArrayRaii<VkMemoryBarrier> genericBarriers(m_pool);
+	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(m_pool);
+	DynamicArray<VkBufferMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(m_pool);
+	DynamicArray<VkMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> genericBarriers(m_pool);
 	VkPipelineStageFlags srcStageMask = 0;
 	VkPipelineStageFlags dstStageMask = 0;
 
@@ -647,13 +649,13 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 					&& "GENERATE_MIPMAPS should be alone");
 		ANKI_ASSERT(impl.isSubresourceValid(subresource));
 
-		if(ANKI_UNLIKELY(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps))
+		if(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
 		{
 			// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
 			continue;
 		}
 
-		if(ANKI_UNLIKELY(nextUsage == TextureUsageBit::kGenerateMipmaps))
+		if(nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
 		{
 			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
 			// subresource
@@ -746,7 +748,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 						 (bufferBarriers.getSize()) ? &bufferBarriers[0] : nullptr, imageBarriers.getSize(),
 						 (imageBarriers.getSize()) ? &imageBarriers[0] : nullptr);
 
-	ANKI_TRACE_INC_COUNTER(VK_PIPELINE_BARRIERS, 1);
+	ANKI_TRACE_INC_COUNTER(VkBarrier, 1);
 }
 
 } // end namespace anki

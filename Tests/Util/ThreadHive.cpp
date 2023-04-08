@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -239,7 +239,7 @@ ANKI_TEST(Util, ThreadHiveBench)
 
 	const U32 threadCount = getCpuCoresCount();
 	HeapMemoryPool pool(allocAligned, nullptr);
-	ThreadHive hive(threadCount, &pool, true);
+	ThreadHive hive(threadCount, true);
 
 	StackAllocator<U8> salloc(allocAligned, nullptr, 1024);
 	Atomic<U64> sum = {0};

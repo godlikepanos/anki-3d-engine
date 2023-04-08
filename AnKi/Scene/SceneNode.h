@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -15,23 +15,23 @@
 namespace anki {
 
 // Forward
-class ResourceManager;
-class ConfigSet;
-class UnifiedGeometryMemoryPool;
+class SceneGraphExternalSubsystems;
 
 /// @addtogroup scene
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode : public Hierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
+class SceneNode : public SceneHierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
+	friend class SceneComponent;
+
 public:
-	using Base = Hierarchy<SceneNode>;
+	using Base = SceneHierarchy<SceneNode>;
 
 	/// The one and only constructor.
 	/// @param scene The owner scene.
 	/// @param name The unique name of the node. If it's empty the the node is not searchable.
-	SceneNode(SceneGraph* scene, CString name);
+	SceneNode(CString name);
 
 	/// Unregister node
 	virtual ~SceneNode();
@@ -42,19 +42,7 @@ public:
 		return Error::kNone;
 	}
 
-	SceneGraph& getSceneGraph()
-	{
-		return *m_scene;
-	}
-
-	const SceneGraph& getSceneGraph() const
-	{
-		return *m_scene;
-	}
-
-	const ConfigSet& getConfig() const;
-
-	/// Return the name. It may be empty for nodes that we don't want to track
+	/// Return the name. It may be empty for nodes that we don't want to track.
 	CString getName() const
 	{
 		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
@@ -72,10 +60,6 @@ public:
 
 	void setMarkedForDeletion();
 
-	Timestamp getGlobalTimestamp() const;
-
-	const UnifiedGeometryMemoryPool& getUnifiedGeometryMemoryPool() const;
-
 	Timestamp getComponentMaxTimestamp() const
 	{
 		return m_maxComponentTimestamp;
@@ -87,13 +71,9 @@ public:
 		m_maxComponentTimestamp = maxComponentTimestamp;
 	}
 
-	HeapMemoryPool& getMemoryPool() const;
-
-	StackMemoryPool& getFrameMemoryPool() const;
-
 	void addChild(SceneNode* obj)
 	{
-		Base::addChild(getMemoryPool(), obj);
+		Base::addChild(obj);
 	}
 
 	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
@@ -108,10 +88,9 @@ public:
 	template<typename TFunct>
 	void iterateComponents(TFunct func) const
 	{
-		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
+		for(U32 i = 0; i < m_components.getSize(); ++i)
 		{
-			// Use the m_componentInfos to check if it's feedback component for possibly less cache misses
-			func(*m_components[i], m_componentInfos[i].isFeedbackComponent());
+			func(*m_components[i]);
 		}
 	}
 
@@ -119,10 +98,9 @@ public:
 	template<typename TFunct>
 	void iterateComponents(TFunct func)
 	{
-		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
+		for(U32 i = 0; i < m_components.getSize(); ++i)
 		{
-			// Use the m_componentInfos to check if it's feedback component for possibly less cache misses
-			func(*m_components[i], m_componentInfos[i].isFeedbackComponent());
+			func(*m_components[i]);
 		}
 	}
 
@@ -130,11 +108,14 @@ public:
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func) const
 	{
-		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
+		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
 		{
-			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId())
+			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				func(static_cast<const TComponent&>(*m_components[i]));
+				if(m_components[i]->getClassId() == TComponent::getStaticClassId())
+				{
+					func(static_cast<const TComponent&>(*m_components[i]));
+				}
 			}
 		}
 	}
@@ -143,11 +124,14 @@ public:
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func)
 	{
-		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
+		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
 		{
-			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId())
+			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				func(static_cast<TComponent&>(*m_components[i]));
+				if(m_components[i]->getClassId() == TComponent::getStaticClassId())
+				{
+					func(static_cast<TComponent&>(*m_components[i]));
+				}
 			}
 		}
 	}
@@ -156,11 +140,14 @@ public:
 	template<typename TComponent>
 	const TComponent* tryGetFirstComponentOfType() const
 	{
-		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
+		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
 		{
-			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId())
+			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				return static_cast<const TComponent*>(m_components[i]);
+				if(m_components[i]->getClassId() == TComponent::getStaticClassId())
+				{
+					return static_cast<const TComponent*>(m_components[i]);
+				}
 			}
 		}
 		return nullptr;
@@ -195,12 +182,15 @@ public:
 	template<typename TComponent>
 	const TComponent* tryGetNthComponentOfType(U32 nth) const
 	{
-		I32 inth = I32(nth);
-		for(U32 i = 0; i < m_componentInfos.getSize(); ++i)
+		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
 		{
-			if(m_componentInfos[i].getComponentClassId() == TComponent::getStaticClassId() && inth-- == 0)
+			I32 inth = I32(nth);
+			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				return static_cast<const TComponent*>(m_components[i]);
+				if(m_components[i]->getClassId() == TComponent::getStaticClassId() && inth-- == 0)
+				{
+					return static_cast<const TComponent*>(m_components[i]);
+				}
 			}
 		}
 		return nullptr;
@@ -234,7 +224,7 @@ public:
 	template<typename TComponent>
 	TComponent& getComponentAt(U32 idx)
 	{
-		ANKI_ASSERT(m_componentInfos[idx].getComponentClassId() == TComponent::getStaticClassId());
+		ANKI_ASSERT(m_components[idx]->getClassId() == TComponent::getStaticClassId());
 		SceneComponent* c = m_components[idx];
 		return *static_cast<TComponent*>(c);
 	}
@@ -243,7 +233,7 @@ public:
 	template<typename TComponent>
 	const TComponent& getComponentAt(U32 idx) const
 	{
-		ANKI_ASSERT(m_componentInfos[idx].getComponentClassId() == TComponent::getStaticClassId());
+		ANKI_ASSERT(m_components[idx]->getClassId() == TComponent::getStaticClassId());
 		const SceneComponent* c = m_components[idx];
 		return *static_cast<const TComponent*>(c);
 	}
@@ -263,71 +253,156 @@ public:
 		return count;
 	}
 
-protected:
+	/// Ignore parent nodes's transform.
+	void setIgnoreParentTransform(Bool ignore)
+	{
+		m_ignoreParentNodeTransform = ignore;
+	}
+
+	const Transform& getLocalTransform() const
+	{
+		return m_ltrf;
+	}
+
+	void setLocalTransform(const Transform& x)
+	{
+		m_ltrf = x;
+		m_localTransformDirty = true;
+	}
+
+	void setLocalOrigin(const Vec4& x)
+	{
+		m_ltrf.setOrigin(x);
+		m_localTransformDirty = true;
+	}
+
+	const Vec4& getLocalOrigin() const
+	{
+		return m_ltrf.getOrigin();
+	}
+
+	void setLocalRotation(const Mat3x4& x)
+	{
+		m_ltrf.setRotation(x);
+		m_localTransformDirty = true;
+	}
+
+	const Mat3x4& getLocalRotation() const
+	{
+		return m_ltrf.getRotation();
+	}
+
+	void setLocalScale(F32 x)
+	{
+		m_ltrf.setScale(x);
+		m_localTransformDirty = true;
+	}
+
+	F32 getLocalScale() const
+	{
+		return m_ltrf.getScale();
+	}
+
+	const Transform& getWorldTransform() const
+	{
+		return m_wtrf;
+	}
+
+	const Transform& getPreviousWorldTransform() const
+	{
+		return m_prevWTrf;
+	}
+
+	/// @name Mess with the local transform
+	/// @{
+	void rotateLocalX(F32 angleRad)
+	{
+		m_ltrf.getRotation().rotateXAxis(angleRad);
+		m_localTransformDirty = true;
+	}
+	void rotateLocalY(F32 angleRad)
+	{
+		m_ltrf.getRotation().rotateYAxis(angleRad);
+		m_localTransformDirty = true;
+	}
+	void rotateLocalZ(F32 angleRad)
+	{
+		m_ltrf.getRotation().rotateZAxis(angleRad);
+		m_localTransformDirty = true;
+	}
+	void moveLocalX(F32 distance)
+	{
+		Vec3 x_axis = m_ltrf.getRotation().getColumn(0);
+		m_ltrf.getOrigin() += Vec4(x_axis, 0.0) * distance;
+		m_localTransformDirty = true;
+	}
+	void moveLocalY(F32 distance)
+	{
+		Vec3 y_axis = m_ltrf.getRotation().getColumn(1);
+		m_ltrf.getOrigin() += Vec4(y_axis, 0.0) * distance;
+		m_localTransformDirty = true;
+	}
+	void moveLocalZ(F32 distance)
+	{
+		Vec3 z_axis = m_ltrf.getRotation().getColumn(2);
+		m_ltrf.getOrigin() += Vec4(z_axis, 0.0) * distance;
+		m_localTransformDirty = true;
+	}
+	void scale(F32 s)
+	{
+		m_ltrf.getScale() *= s;
+		m_localTransformDirty = true;
+	}
+
+	void lookAtPoint(const Vec4& point)
+	{
+		m_ltrf.lookAt(point, Vec4(0.0f, 1.0f, 0.0f, 0.0f));
+		m_localTransformDirty = true;
+	}
+	/// @}
+
+	Bool movedThisFrame() const
+	{
+		return m_transformUpdatedThisFrame;
+	}
+
+	ANKI_INTERNAL Bool updateTransform();
+
 	/// Create and append a component to the components container. The SceneNode has the ownership.
 	template<typename TComponent>
 	TComponent* newComponent()
 	{
-		TComponent* comp = newInstance<TComponent>(getMemoryPool(), this);
-		m_components.emplaceBack(getMemoryPool(), comp);
-		m_componentInfos.emplaceBack(getMemoryPool(), *comp);
+		TComponent* comp = newInstance<TComponent>(SceneMemoryPool::getSingleton(), this);
+		newComponentInternal(comp);
 		return comp;
 	}
 
-	ResourceManager& getResourceManager();
-
 private:
-	/// This class packs a few info used by components.
-	class ComponentsArrayElement
-	{
-	public:
-		ComponentsArrayElement(const SceneComponent& comp)
-		{
-			m_classId = comp.getClassId() & 0x7F;
-			ANKI_ASSERT(m_classId == comp.getClassId());
-			m_feedbackComponent = comp.isFeedbackComponent();
-		}
-
-		ComponentsArrayElement(const ComponentsArrayElement& b)
-			: m_feedbackComponent(b.m_feedbackComponent)
-			, m_classId(b.m_classId)
-		{
-		}
-
-		ComponentsArrayElement& operator=(const ComponentsArrayElement& b)
-		{
-			m_feedbackComponent = b.m_feedbackComponent;
-			m_classId = b.m_classId;
-			return *this;
-		}
-
-		U8 getComponentClassId() const
-		{
-			return m_classId;
-		}
-
-		Bool isFeedbackComponent() const
-		{
-			return m_feedbackComponent;
-		}
-
-	private:
-		U8 m_feedbackComponent : 1;
-		U8 m_classId : 7;
-	};
-
-	static_assert(sizeof(ComponentsArrayElement) == sizeof(U8), "Wrong size");
-
-	SceneGraph* m_scene = nullptr;
 	U64 m_uuid;
-	String m_name; ///< A unique name.
+	SceneString m_name; ///< A unique name.
 
-	DynamicArray<SceneComponent*> m_components;
-	DynamicArray<ComponentsArrayElement> m_componentInfos; ///< Same size as m_components. Used to iterate fast.
+	GrDynamicArray<SceneComponent*> m_components;
+
+	U32 m_componentTypeMask = 0;
 
 	Timestamp m_maxComponentTimestamp = 0;
 
-	Bool m_markedForDeletion = false;
+	/// The transformation in local space.
+	Transform m_ltrf = Transform::getIdentity();
+
+	/// The transformation in world space (local combined with parent's transformation).
+	Transform m_wtrf = Transform::getIdentity();
+
+	/// Keep the previous transformation for checking if it moved.
+	Transform m_prevWTrf = Transform::getIdentity();
+
+	// Flags
+	Bool m_markedForDeletion : 1 = false;
+	Bool m_localTransformDirty : 1 = true;
+	Bool m_ignoreParentNodeTransform : 1 = false;
+	Bool m_transformUpdatedThisFrame : 1 = true;
+
+	void newComponentInternal(SceneComponent* newc);
 };
 /// @}
 

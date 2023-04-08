@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -13,31 +13,26 @@
 
 namespace anki {
 
-ScriptEvent::ScriptEvent(EventManager* manager)
-	: Event(manager)
+ScriptEvent::ScriptEvent()
 {
 }
 
 ScriptEvent::~ScriptEvent()
 {
-	m_script.destroy(getMemoryPool());
 }
 
 Error ScriptEvent::init(Second startTime, Second duration, CString script)
 {
 	Event::init(startTime, duration);
 
-	// Create the env
-	ANKI_CHECK(m_env.init(&getSceneGraph().getScriptManager()));
-
 	// Do the rest
-	StringRaii extension(&getMemoryPool());
+	String extension;
 	getFilepathExtension(script, extension);
 
 	if(!extension.isEmpty() && extension == "lua")
 	{
 		// It's a file
-		ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(script, m_scriptRsrc));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(script, m_scriptRsrc));
 
 		// Exec the script
 		ANKI_CHECK(m_env.evalString(m_scriptRsrc->getSource()));
@@ -45,7 +40,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	else
 	{
 		// It's a string
-		m_script.create(getMemoryPool(), script);
+		m_script = script;
 
 		// Exec the script
 		ANKI_CHECK(m_env.evalString(m_script.toCString()));

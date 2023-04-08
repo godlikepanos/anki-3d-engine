@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -32,26 +32,22 @@
 
 namespace anki {
 
-Scale::~Scale()
-{
-}
-
 Error Scale::init()
 {
-	const Bool needsScaling = m_r->getPostProcessResolution() != m_r->getInternalResolution();
-	const Bool needsSharpening = getConfig().getRSharpness() > 0.0f;
+	const Bool needsScaling = getRenderer().getPostProcessResolution() != getRenderer().getInternalResolution();
+	const Bool needsSharpening = ConfigSet::getSingleton().getRSharpness() > 0.0f;
 	if(!needsScaling && !needsSharpening)
 	{
 		return Error::kNone;
 	}
 
-	const Bool preferCompute = getConfig().getRPreferCompute();
-	const U32 dlssQuality = getConfig().getRDlssQuality();
-	const U32 fsrQuality = getConfig().getRFsrQuality();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const U32 dlssQuality = ConfigSet::getSingleton().getRDlssQuality();
+	const U32 fsrQuality = ConfigSet::getSingleton().getRFsrQuality();
 
 	if(needsScaling)
 	{
-		if(dlssQuality > 0 && getGrManager().getDeviceCapabilities().m_dlss)
+		if(dlssQuality > 0 && GrManager::getSingleton().getDeviceCapabilities().m_dlss)
 		{
 			m_upscalingMethod = UpscalingMethod::kGr;
 		}
@@ -77,7 +73,7 @@ Error Scale::init()
 	static constexpr Array<const Char*, U32(SharpenMethod::kCount)> sharpenMethodNames = {"none", "RCAS"};
 
 	ANKI_R_LOGV("Initializing upscaling. Upscaling method %s, sharpenning method %s",
-				upscalingMethodNames[U32(m_upscalingMethod)], sharpenMethodNames[U32(m_sharpenMethod)]);
+				upscalingMethodNames[m_upscalingMethod], sharpenMethodNames[m_sharpenMethod]);
 
 	// Scale programs
 	if(m_upscalingMethod == UpscalingMethod::kBilinear)
@@ -85,7 +81,7 @@ Error Scale::init()
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/BlitCompute.ankiprogbin" : "ShaderBinaries/BlitRaster.ankiprogbin";
 
-		ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
 
 		const ShaderProgramResourceVariant* variant;
 		m_scaleProg->getOrCreateVariant(variant);
@@ -96,7 +92,7 @@ Error Scale::init()
 		const CString shaderFname =
 			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin";
 
-		ANKI_CHECK(getResourceManager().loadResource(shaderFname, m_scaleProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_scaleProg);
 		variantInitInfo.addMutation("SHARPEN", 0);
@@ -108,20 +104,20 @@ Error Scale::init()
 	else if(m_upscalingMethod == UpscalingMethod::kGr)
 	{
 		GrUpscalerInitInfo inf;
-		inf.m_sourceTextureResolution = m_r->getInternalResolution();
-		inf.m_targetTextureResolution = m_r->getPostProcessResolution();
+		inf.m_sourceTextureResolution = getRenderer().getInternalResolution();
+		inf.m_targetTextureResolution = getRenderer().getPostProcessResolution();
 		inf.m_upscalerType = GrUpscalerType::kDlss2;
 		inf.m_qualityMode = GrUpscalerQualityMode(dlssQuality - 1);
 
-		m_grUpscaler = getGrManager().newGrUpscaler(inf);
+		m_grUpscaler = GrManager::getSingleton().newGrUpscaler(inf);
 	}
 
 	// Sharpen programs
 	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin"
-																	 : "ShaderBinaries/FsrRaster.ankiprogbin",
-													 m_sharpenProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
+			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin",
+			m_sharpenProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
 		variantInitInfo.addMutation("SHARPEN", 1);
 		variantInitInfo.addMutation("FSR_QUALITY", 0);
@@ -133,9 +129,9 @@ Error Scale::init()
 	// Tonemapping programs
 	if(m_neeedsTonemapping)
 	{
-		ANKI_CHECK(getResourceManager().loadResource((preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin"
-																	 : "ShaderBinaries/TonemapRaster.ankiprogbin",
-													 m_tonemapProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
+			(preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin" : "ShaderBinaries/TonemapRaster.ankiprogbin",
+			m_tonemapProg));
 		const ShaderProgramResourceVariant* variant;
 		m_tonemapProg->getOrCreateVariant(variant);
 		m_tonemapGrProg = variant->getProgram();
@@ -145,9 +141,9 @@ Error Scale::init()
 	Format format;
 	if(m_upscalingMethod == UpscalingMethod::kGr)
 	{
-		format = m_r->getHdrFormat();
+		format = getRenderer().getHdrFormat();
 	}
-	else if(getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
+	else if(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
 	{
 		format = Format::kR8G8B8_Unorm;
 	}
@@ -156,17 +152,18 @@ Error Scale::init()
 		format = Format::kR8G8B8A8_Unorm;
 	}
 
-	m_upscaleAndSharpenRtDescr = m_r->create2DRenderTargetDescription(
-		m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(), format, "Scaling");
+	m_upscaleAndSharpenRtDescr = getRenderer().create2DRenderTargetDescription(
+		getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), format, "Scaling");
 	m_upscaleAndSharpenRtDescr.bake();
 
 	if(m_neeedsTonemapping)
 	{
-		const Format fmt = (getGrManager().getDeviceCapabilities().m_unalignedBbpTextureFormats)
+		const Format fmt = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
 							   ? Format::kR8G8B8_Unorm
 							   : Format::kR8G8B8A8_Unorm;
-		m_tonemapedRtDescr = m_r->create2DRenderTargetDescription(
-			m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y(), fmt, "Tonemapped");
+		m_tonemapedRtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getPostProcessResolution().x(),
+																		   getRenderer().getPostProcessResolution().y(),
+																		   fmt, "Tonemapped");
 		m_tonemapedRtDescr.bake();
 	}
 
@@ -180,15 +177,15 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 {
 	if(m_upscalingMethod == UpscalingMethod::kNone && m_sharpenMethod == SharpenMethod::kNone)
 	{
-		m_runCtx.m_upscaledTonemappedRt = m_r->getTemporalAA().getTonemappedRt();
-		m_runCtx.m_upscaledHdrRt = m_r->getTemporalAA().getHdrRt();
-		m_runCtx.m_sharpenedRt = m_r->getTemporalAA().getTonemappedRt();
-		m_runCtx.m_tonemappedRt = m_r->getTemporalAA().getTonemappedRt();
+		m_runCtx.m_upscaledTonemappedRt = getRenderer().getTemporalAA().getTonemappedRt();
+		m_runCtx.m_upscaledHdrRt = getRenderer().getTemporalAA().getHdrRt();
+		m_runCtx.m_sharpenedRt = getRenderer().getTemporalAA().getTonemappedRt();
+		m_runCtx.m_tonemappedRt = getRenderer().getTemporalAA().getTonemappedRt();
 		return;
 	}
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 
 	// Step 1: Upscaling
 	if(m_upscalingMethod == UpscalingMethod::kGr)
@@ -202,9 +199,9 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		const TextureUsageBit readUsage = TextureUsageBit::kAllSampled & TextureUsageBit::kAllCompute;
 		const TextureUsageBit writeUsage = TextureUsageBit::kAllImage & TextureUsageBit::kAllCompute;
 
-		pass.newTextureDependency(m_r->getLightShading().getRt(), readUsage);
-		pass.newTextureDependency(m_r->getMotionVectors().getMotionVectorsRt(), readUsage);
-		pass.newTextureDependency(m_r->getGBuffer().getDepthRt(), readUsage,
+		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
+		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
 								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		pass.newTextureDependency(m_runCtx.m_upscaledHdrRt, writeUsage);
 
@@ -216,7 +213,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_runCtx.m_upscaledTonemappedRt = rgraph.newRenderTarget(m_upscaleAndSharpenRtDescr);
 		m_runCtx.m_upscaledHdrRt = {};
-		const RenderTargetHandle inRt = m_r->getTemporalAA().getTonemappedRt();
+		const RenderTargetHandle inRt = getRenderer().getTemporalAA().getTonemappedRt();
 		const RenderTargetHandle outRt = m_runCtx.m_upscaledTonemappedRt;
 
 		if(preferCompute)
@@ -245,8 +242,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	{
 		ANKI_ASSERT(m_upscalingMethod == UpscalingMethod::kNone);
 		// Pretend that it got scaled
-		m_runCtx.m_upscaledTonemappedRt = m_r->getTemporalAA().getTonemappedRt();
-		m_runCtx.m_upscaledHdrRt = m_r->getTemporalAA().getHdrRt();
+		m_runCtx.m_upscaledTonemappedRt = getRenderer().getTemporalAA().getTonemappedRt();
+		m_runCtx.m_upscaledHdrRt = getRenderer().getTemporalAA().getHdrRt();
 	}
 
 	// Step 2: Tonemapping
@@ -323,13 +320,13 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getConfig().getRPreferCompute();
-	const RenderTargetHandle inRt = m_r->getTemporalAA().getTonemappedRt();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const RenderTargetHandle inRt = getRenderer().getTemporalAA().getTonemappedRt();
 	const RenderTargetHandle outRt = m_runCtx.m_upscaledTonemappedRt;
 
 	cmdb->bindShaderProgram(m_scaleGrProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, inRt);
 
 	if(preferCompute)
@@ -350,12 +347,12 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 			UVec2 m_padding;
 		} pc;
 
-		const Vec2 inRez(m_r->getInternalResolution());
-		const Vec2 outRez(m_r->getPostProcessResolution());
+		const Vec2 inRez(getRenderer().getInternalResolution());
+		const Vec2 outRez(getRenderer().getPostProcessResolution());
 		FsrEasuCon(&pc.m_fsrConsts0[0], &pc.m_fsrConsts1[0], &pc.m_fsrConsts2[0], &pc.m_fsrConsts3[0], inRez.x(),
 				   inRez.y(), inRez.x(), inRez.y(), outRez.x(), outRez.y());
 
-		pc.m_viewportSize = m_r->getPostProcessResolution();
+		pc.m_viewportSize = getRenderer().getPostProcessResolution();
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
@@ -367,19 +364,21 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 			Vec2 m_viewportSize;
 			UVec2 m_viewportSizeU;
 		} pc;
-		pc.m_viewportSize = Vec2(m_r->getPostProcessResolution());
-		pc.m_viewportSizeU = m_r->getPostProcessResolution();
+		pc.m_viewportSize = Vec2(getRenderer().getPostProcessResolution());
+		pc.m_viewportSizeU = getRenderer().getPostProcessResolution();
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
 
 	if(preferCompute)
 	{
-		dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(),
+						  getRenderer().getPostProcessResolution().y());
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(),
+						  getRenderer().getPostProcessResolution().y());
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
@@ -387,13 +386,13 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 	const RenderTargetHandle inRt = m_runCtx.m_tonemappedRt;
 	const RenderTargetHandle outRt = m_runCtx.m_sharpenedRt;
 
 	cmdb->bindShaderProgram(m_sharpenGrProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, inRt);
 
 	if(preferCompute)
@@ -412,40 +411,43 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 		UVec2 m_padding;
 	} pc;
 
-	F32 sharpness = getConfig().getRSharpness(); // [0, 1]
+	F32 sharpness = ConfigSet::getSingleton().getRSharpness(); // [0, 1]
 	sharpness *= 3.0f; // [0, 3]
 	sharpness = 3.0f - sharpness; // [3, 0], RCAS translates 0 to max sharpness
 	FsrRcasCon(&pc.m_fsrConsts0[0], sharpness);
 
-	pc.m_viewportSize = m_r->getPostProcessResolution();
+	pc.m_viewportSize = getRenderer().getPostProcessResolution();
 
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	if(preferCompute)
 	{
-		dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(),
+						  getRenderer().getPostProcessResolution().y());
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(),
+						  getRenderer().getPostProcessResolution().y());
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
 
 void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	const Vec2 srcRes(m_r->getInternalResolution());
-	const Bool reset = m_r->getFrameCount() == 0;
+	const Vec2 srcRes(getRenderer().getInternalResolution());
+	const Bool reset = getRenderer().getFrameCount() == 0;
 	const Vec2 mvScale = srcRes; // UV space to Pixel space factor
 	// In [-texSize / 2, texSize / 2] -> sub-pixel space {-0.5, 0.5}
 	const Vec2 jitterOffset = ctx.m_matrices.m_jitter.getTranslationPart().xy() * srcRes * 0.5f;
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	TextureViewPtr srcView = rgraphCtx.createTextureView(m_r->getLightShading().getRt());
-	TextureViewPtr motionVectorsView = rgraphCtx.createTextureView(m_r->getMotionVectors().getMotionVectorsRt());
-	TextureViewPtr depthView = rgraphCtx.createTextureView(m_r->getGBuffer().getDepthRt());
-	TextureViewPtr exposureView = rgraphCtx.createTextureView(m_r->getTonemapping().getRt());
+	TextureViewPtr srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt());
+	TextureViewPtr motionVectorsView =
+		rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt());
+	TextureViewPtr depthView = rgraphCtx.createTextureView(getRenderer().getGBuffer().getDepthRt());
+	TextureViewPtr exposureView = rgraphCtx.createTextureView(getRenderer().getTonemapping().getRt());
 	TextureViewPtr dstView = rgraphCtx.createTextureView(m_runCtx.m_upscaledHdrRt);
 
 	cmdb->upscale(m_grUpscaler, srcView, dstView, motionVectorsView, depthView, exposureView, reset, jitterOffset,
@@ -455,16 +457,16 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = getConfig().getRPreferCompute();
+	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
 	const RenderTargetHandle inRt = m_runCtx.m_upscaledHdrRt;
 	const RenderTargetHandle outRt = m_runCtx.m_tonemappedRt;
 
 	cmdb->bindShaderProgram(m_tonemapGrProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 	rgraphCtx.bindColorTexture(0, 1, inRt);
 
-	rgraphCtx.bindImage(0, 2, m_r->getTonemapping().getRt());
+	rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
 
 	if(preferCompute)
 	{
@@ -474,16 +476,18 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 			Vec2 m_viewportSizeOverOne;
 			UVec2 m_viewportSize;
 		} pc;
-		pc.m_viewportSizeOverOne = 1.0f / Vec2(m_r->getPostProcessResolution());
-		pc.m_viewportSize = m_r->getPostProcessResolution();
+		pc.m_viewportSizeOverOne = 1.0f / Vec2(getRenderer().getPostProcessResolution());
+		pc.m_viewportSize = getRenderer().getPostProcessResolution();
 		cmdb->setPushConstants(&pc, sizeof(pc));
 		rgraphCtx.bindImage(0, 3, outRt);
 
-		dispatchPPCompute(cmdb, 8, 8, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(),
+						  getRenderer().getPostProcessResolution().y());
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, m_r->getPostProcessResolution().x(), m_r->getPostProcessResolution().y());
+		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(),
+						  getRenderer().getPostProcessResolution().y());
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }

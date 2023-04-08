@@ -15,20 +15,22 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apt-get update
-        apt install ninja-build
+        add-apt-repository -y ppa:ubuntu-toolchain-r/test
+        apt update
+        apt update -y
+        apt install -y ninja-build gcc-11 g++-11
 
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Configure CMake for Linux
-      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF
+      run: cmake -B ${{github.workspace}}/build -DANKI_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DANKI_EXTRA_CHECKS=OFF -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11
 
     - name: Build Linux ShaderCompiler
       run: cmake --build ${{github.workspace}}/build --config Release --target ShaderCompiler
 
     - name: Generate project
-      run: ./Samples/Sponza/GenerateAndroidProject.sh ${{github.workspace}}/build/Bin/ShaderCompiler
+      run: ./Samples/Sponza/GenerateAndroidProject.sh ${{github.workspace}}/build/Binaries/ShaderCompiler
 
     - name: local.properties
       run: |

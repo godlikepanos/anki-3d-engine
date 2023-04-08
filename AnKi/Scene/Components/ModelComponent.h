@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -6,8 +6,10 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Util/WeakArray.h>
+#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -24,23 +26,11 @@ public:
 
 	~ModelComponent();
 
-	Error loadModelResource(CString filename);
+	void loadModelResource(CString filename);
 
 	const ModelResourcePtr& getModelResource() const
 	{
 		return m_model;
-	}
-
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
-	{
-		updated = m_dirty;
-		m_dirty = false;
-		return Error::kNone;
-	}
-
-	ConstWeakArray<U64> getRenderMergeKeys() const
-	{
-		return m_modelPatchMergeKeys;
 	}
 
 	Bool isEnabled() const
@@ -48,12 +38,46 @@ public:
 		return m_model.isCreated();
 	}
 
+	Bool getCastsShadow() const
+	{
+		return m_castsShadow;
+	}
+
+	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique,
+									  WeakArray<RenderableQueueElement>& outRenderables) const;
+
+	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
+											  WeakArray<RayTracingInstanceQueueElement>& outRenderables) const;
+
 private:
+	class PatchInfo
+	{
+	public:
+		U32 m_gpuSceneUniformsOffset = kMaxU32;
+		U32 m_gpuSceneMeshLodsIndex = kMaxU32;
+		RenderingTechniqueBit m_techniques;
+	};
+
 	SceneNode* m_node = nullptr;
+	SkinComponent* m_skinComponent = nullptr;
+	Spatial m_spatial;
+
 	ModelResourcePtr m_model;
 
-	DynamicArray<U64> m_modelPatchMergeKeys;
-	Bool m_dirty = true;
+	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
+	U32 m_gpuSceneTransformsIndex = kMaxU32;
+	SceneDynamicArray<PatchInfo> m_patchInfos;
+
+	Bool m_dirty : 1 = true;
+	Bool m_castsShadow : 1 = false;
+	Bool m_movedLastFrame : 1 = true;
+	Bool m_firstTimeUpdate : 1 = true; ///< Extra flag in case the component is added in a node that hasn't been moved.
+
+	RenderingTechniqueBit m_presentRenderingTechniques = RenderingTechniqueBit::kNone;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
 };
 /// @}
 

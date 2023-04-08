@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -15,21 +15,26 @@ UiManager::UiManager()
 
 UiManager::~UiManager()
 {
+	ImGui::SetAllocatorFunctions(nullptr, nullptr, nullptr);
+	UiMemoryPool::freeSingleton();
 }
 
-Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackUserData, ResourceManager* resources,
-					  GrManager* gr, StagingGpuMemoryPool* gpuMem, Input* input)
+Error UiManager::init(AllocAlignedCallback allocCallback, void* allocCallbackData)
 {
-	ANKI_ASSERT(resources);
-	ANKI_ASSERT(gr);
-	ANKI_ASSERT(gpuMem);
-	ANKI_ASSERT(input);
+	UiMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_pool.init(allocCallback, allocCallbackUserData);
-	m_resources = resources;
-	m_gr = gr;
-	m_gpuMem = gpuMem;
-	m_input = input;
+	auto imguiAllocCallback = [](size_t size, [[maybe_unused]] void* userData) -> void* {
+		return UiMemoryPool::getSingleton().allocate(size, 16);
+	};
+
+	auto imguiFreeCallback = [](void* ptr, [[maybe_unused]] void* userData) -> void {
+		if(ptr)
+		{
+			UiMemoryPool::getSingleton().free(ptr);
+		}
+	};
+
+	ImGui::SetAllocatorFunctions(imguiAllocCallback, imguiFreeCallback, nullptr);
 
 	return Error::kNone;
 }

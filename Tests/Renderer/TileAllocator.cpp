@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -8,10 +8,8 @@
 
 ANKI_TEST(Renderer, TileAllocator)
 {
-	HeapMemoryPool pool(allocAligned, nullptr);
-
 	TileAllocator talloc;
-	talloc.init(&pool, 8, 8, 3, true);
+	talloc.init(8, 8, 3, true);
 
 	Array<U32, 4> viewport;
 	TileAllocatorResult res;

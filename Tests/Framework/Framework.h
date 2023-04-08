@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -9,6 +9,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Core.h>
+#include <AnKi/Window.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource.h>
 #include <AnKi/Physics.h>
@@ -220,14 +221,14 @@ extern void deleteTesterSingleton();
 /// Check error code.
 #define ANKI_TEST_EXPECT_ERR(x_, y_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
 
+// TODO glob: Cleanup all these
 void initConfig(ConfigSet& cfg);
 
 NativeWindow* createWindow(ConfigSet& cfg);
 
-GrManager* createGrManager(ConfigSet* cfg, NativeWindow* win);
+GrManager* createGrManager(NativeWindow* win);
 
-ResourceManager* createResourceManager(ConfigSet* cfg, GrManager* gr, PhysicsWorld*& physics,
-									   ResourceFilesystem*& resourceFs);
+ResourceManager* createResourceManager(GrManager* gr);
 
 /// Stolen from https://en.cppreference.com/w/cpp/algorithm/random_shuffle because std::random_suffle got deprecated
 template<class TRandomIt>

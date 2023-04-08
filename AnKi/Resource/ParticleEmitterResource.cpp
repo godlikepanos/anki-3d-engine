@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -24,18 +24,9 @@ Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& out, Bool& found
 	return el.getAttributeNumbersOptional(tag, out, found);
 }
 
-ParticleEmitterResource::ParticleEmitterResource(ResourceManager* manager)
-	: ResourceObject(manager)
-{
-}
-
-ParticleEmitterResource::~ParticleEmitterResource()
-{
-}
-
 Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlDocument doc(&getTempMemoryPool());
+	ResourceXmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 	XmlElement rootEl; // Root element
 	ANKI_CHECK(doc.getChildElement("particleEmitter", rootEl));
@@ -83,7 +74,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 	CString cstr;
 	ANKI_CHECK(rootEl.getChildElement("material", el));
 	ANKI_CHECK(el.getAttributeText("value", cstr));
-	ANKI_CHECK(getManager().loadResource(cstr, m_material, async));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(cstr, m_material, async));
 
 	return Error::kNone;
 }

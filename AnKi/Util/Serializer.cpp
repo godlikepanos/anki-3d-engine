@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -29,7 +29,7 @@ Error BinarySerializer::doDynamicArrayBasicType(const void* arr, PtrSize size, U
 		PointerInfo pinfo;
 		pinfo.m_filePos = structFilePos + memberOffset;
 		pinfo.m_value = arrayFilePos - m_beginOfDataFilePos;
-		m_pointerFilePositions.emplaceBack(*m_pool, pinfo);
+		m_pointerFilePositions.emplaceBack(pinfo);
 
 		// Write the array
 		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::kBeginning));

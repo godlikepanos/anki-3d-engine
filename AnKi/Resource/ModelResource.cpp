@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -42,23 +42,25 @@ void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo&
 	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
 	info.m_bottomLevelAccelerationStructure = m_mesh->getBottomLevelAccelerationStructure(meshLod);
 
+	info.m_indexBufferOffset = m_lodInfos[meshLod].m_indexBufferOffset + 2_PtrSize * m_lodInfos[meshLod].m_firstIndex;
+
 	// Material
 	const MaterialVariant& variant = m_mtl->getOrCreateVariant(key);
 	info.m_shaderGroupHandleIndex = variant.getRtShaderGroupHandleIndex();
 }
 
 Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName, const CString& mtlFName,
-					   U32 subMeshIndex, Bool async, ResourceManager* manager)
+					   U32 subMeshIndex, Bool async)
 {
 #if ANKI_ENABLE_ASSERTIONS
 	m_model = model;
 #endif
 
 	// Load material
-	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl, async));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(mtlFName, m_mtl, async));
 
 	// Load mesh
-	ANKI_CHECK(manager->loadResource(meshFName, m_mesh, async));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(meshFName, m_mesh, async));
 
 	if(subMeshIndex != kMaxU32 && subMeshIndex >= m_mesh->getSubMeshCount())
 	{
@@ -107,22 +109,11 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 	return Error::kNone;
 }
 
-ModelResource::ModelResource(ResourceManager* manager)
-	: ResourceObject(manager)
-{
-}
-
-ModelResource::~ModelResource()
-{
-	m_modelPatches.destroy(getMemoryPool());
-}
-
 Error ModelResource::load(const ResourceFilename& filename, Bool async)
 {
 	// Load
 	//
-	XmlElement el;
-	XmlDocument doc(&getTempMemoryPool());
+	ResourceXmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
@@ -151,7 +142,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		return Error::kUserData;
 	}
 
-	m_modelPatches.create(getMemoryPool(), count);
+	m_modelPatches.resize(count);
 
 	count = 0;
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));
@@ -176,7 +167,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		CString cstr;
 		ANKI_CHECK(materialEl.getText(cstr));
 
-		ANKI_CHECK(m_modelPatches[count].init(this, meshFname, cstr, subMeshIndex, async, &getManager()));
+		ANKI_CHECK(m_modelPatches[count].init(this, meshFname, cstr, subMeshIndex, async));
 
 		if(count > 0 && m_modelPatches[count].supportsSkinning() != m_modelPatches[count - 1].supportsSkinning())
 		{

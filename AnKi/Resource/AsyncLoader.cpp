@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -12,6 +12,7 @@ namespace anki {
 AsyncLoader::AsyncLoader()
 	: m_thread("AsyncLoad")
 {
+	m_thread.start(this, threadCallback);
 }
 
 AsyncLoader::~AsyncLoader()
@@ -26,16 +27,9 @@ AsyncLoader::~AsyncLoader()
 		{
 			AsyncLoaderTask* task = &m_taskQueue.getFront();
 			m_taskQueue.popFront();
-			deleteInstance(*m_pool, task);
+			deleteInstance(ResourceMemoryPool::getSingleton(), task);
 		}
 	}
-}
-
-void AsyncLoader::init(HeapMemoryPool* pool)
-{
-	ANKI_ASSERT(pool);
-	m_pool = pool;
-	m_thread.start(this, threadCallback);
 }
 
 void AsyncLoader::stop()
@@ -124,7 +118,7 @@ Error AsyncLoader::threadWorker()
 			AsyncLoaderTaskContext ctx;
 
 			{
-				ANKI_TRACE_SCOPED_EVENT(RSRC_ASYNC_TASK);
+				ANKI_TRACE_SCOPED_EVENT(RsrcAsyncTask);
 				err = (*task)(ctx);
 			}
 
@@ -146,7 +140,7 @@ Error AsyncLoader::threadWorker()
 			else
 			{
 				// Delete the task
-				deleteInstance(*m_pool, task);
+				deleteInstance(ResourceMemoryPool::getSingleton(), task);
 			}
 
 			if(ctx.m_pause)

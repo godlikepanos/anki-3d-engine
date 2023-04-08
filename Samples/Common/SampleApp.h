@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -7,13 +7,17 @@
 
 #include <AnKi/AnKi.h>
 
-class SampleApp : public anki::App
+namespace anki {
+
+class SampleApp : public App
 {
 public:
-	anki::ConfigSet m_config;
+	using App::App;
 
-	anki::Error init(int argc, char** argv, anki::CString sampleName);
-	anki::Error userMainLoop(anki::Bool& quit, anki::Second elapsedTime) override;
+	Error init(int argc, char** argv, CString sampleName);
+	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 
-	virtual anki::Error sampleExtraInit() = 0;
+	virtual Error sampleExtraInit() = 0;
 };
+
+} // end namespace anki

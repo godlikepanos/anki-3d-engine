@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -16,7 +16,7 @@ StatsUi::~StatsUi()
 
 Error StatsUi::init()
 {
-	ANKI_CHECK(m_manager->newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
+	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
 
 	return Error::kNone;
 }
@@ -36,7 +36,7 @@ void StatsUi::labelBytes(PtrSize val, CString name) const
 
 	b = val;
 
-	StringRaii timestamp(&getMemoryPool());
+	UiString timestamp;
 	if(gb)
 	{
 		timestamp.sprintf("%s: %zu,%04zu,%04zu,%04zu", name.cstr(), gb, mb, kb, b);

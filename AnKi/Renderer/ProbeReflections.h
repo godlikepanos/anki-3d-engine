@@ -1,11 +1,10 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 #pragma once
 
-#include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/TraditionalDeferredShading.h>
 #include <AnKi/Resource/ImageResource.h>
@@ -21,10 +20,6 @@ class ProbeReflections : public RendererObject
 	friend class IrTask;
 
 public:
-	ProbeReflections(Renderer* r);
-
-	~ProbeReflections();
-
 	Error init();
 
 	/// Populate the rendergraph.
@@ -45,9 +40,15 @@ public:
 		return m_integrationLutSampler;
 	}
 
-	RenderTargetHandle getReflectionRt() const
+	RenderTargetHandle getCurrentlyRefreshedReflectionRt() const
 	{
+		ANKI_ASSERT(m_ctx.m_lightShadingRt.isValid());
 		return m_ctx.m_lightShadingRt;
+	}
+
+	Bool getHasCurrentlyRefreshedReflectionRt() const
+	{
+		return m_ctx.m_lightShadingRt.isValid();
 	}
 
 private:
@@ -65,14 +66,8 @@ private:
 	public:
 		U32 m_tileSize = 0;
 		U32 m_mipCount = 0;
-		TexturePtr m_cubeArr;
-
+		Array<FramebufferDescription, 6> m_fbDescr;
 		TraditionalDeferredLightShading m_deferred;
-
-		LS(Renderer* r)
-			: m_deferred(r)
-		{
-		}
 	} m_lightShading; ///< Light shading.
 
 	class
@@ -98,18 +93,6 @@ private:
 		FramebufferDescription m_fbDescr;
 	} m_shadowMapping;
 
-	class CacheEntry
-	{
-	public:
-		U64 m_uuid; ///< Probe UUID.
-		Timestamp m_lastUsedTimestamp = 0; ///< When it was last seen by the renderer.
-
-		Array<FramebufferDescription, 6> m_lightShadingFbDescrs;
-	};
-
-	DynamicArray<CacheEntry> m_cacheEntries;
-	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
-
 	// Other
 	ImageResourcePtr m_integrationLut;
 	SamplerPtr m_integrationLutSampler;
@@ -117,8 +100,7 @@ private:
 	class
 	{
 	public:
-		const ReflectionProbeQueueElement* m_probe = nullptr;
-		U32 m_cacheEntryIdx = kMaxU32;
+		const ReflectionProbeQueueElementForRefresh* m_probe = nullptr;
 
 		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
 		RenderTargetHandle m_gbufferDepthRt;
@@ -136,12 +118,6 @@ private:
 	Error initIrradiance();
 	Error initIrradianceToRefl();
 	Error initShadowMapping();
-
-	/// Lazily init the cache entry
-	void initCacheEntry(U32 cacheEntryIdx);
-
-	void prepareProbes(RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate,
-					   U32& probeToUpdateCacheEntryIdx);
 
 	void runGBuffer(RenderPassWorkContext& rgraphCtx);
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);

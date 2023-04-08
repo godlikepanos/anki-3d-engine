@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -12,12 +12,9 @@ class TextureViewerUiNode : public SceneNode
 public:
 	ImageResourcePtr m_imageResource;
 
-	TextureViewerUiNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
+	TextureViewerUiNode(CString name)
+		: SceneNode(name)
 	{
-		SpatialComponent* spatialc = newComponent<SpatialComponent>();
-		spatialc->setAlwaysVisible(true);
-
 		UiComponent* uic = newComponent<UiComponent>();
 		uic->init(
 			[](CanvasPtr& canvas, void* ud) {
@@ -25,10 +22,10 @@ public:
 			},
 			this);
 
-		ANKI_CHECK_AND_IGNORE(getSceneGraph().getUiManager().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf",
-																		 Array<U32, 1>{16}));
+		ANKI_CHECK_AND_IGNORE(
+			UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
-		ANKI_CHECK_AND_IGNORE(getSceneGraph().getResourceManager().loadResource(
+		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource(
 			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
@@ -121,7 +118,7 @@ private:
 
 		// Mips combo
 		{
-			StringListRaii mipLabels(&getFrameMemoryPool());
+			UiStringList mipLabels;
 			for(U32 mip = 0; mip < grTex.getMipmapCount(); ++mip)
 			{
 				mipLabels.pushBackSprintf("Mip %u (%u x %u)", mip, grTex.getWidth() >> mip, grTex.getHeight() >> mip);
@@ -152,7 +149,7 @@ private:
 				TextureViewInitInfo viewInitInf(m_imageResource->getTexture());
 				viewInitInf.m_firstMipmap = m_crntMip;
 				viewInitInf.m_mipmapCount = 1;
-				m_textureView = getSceneGraph().getGrManager().newTextureView(viewInitInf);
+				m_textureView = GrManager::getSingleton().newTextureView(viewInitInf);
 			}
 
 			ImGui::SameLine();
@@ -161,7 +158,7 @@ private:
 		// Depth
 		if(grTex.getTextureType() == TextureType::k3D)
 		{
-			StringListRaii labels(&getFrameMemoryPool());
+			UiStringList labels;
 			for(U32 d = 0; d < grTex.getDepth(); ++d)
 			{
 				labels.pushBackSprintf("Depth %u", d);
@@ -267,7 +264,12 @@ private:
 class MyApp : public App
 {
 public:
-	Error init(ConfigSet* config, int argc, char** argv, [[maybe_unused]] CString appName)
+	MyApp(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: App(allocCb, allocCbUserData)
+	{
+	}
+
+	Error init(int argc, char** argv, [[maybe_unused]] CString appName)
 	{
 		if(argc < 2)
 		{
@@ -275,31 +277,27 @@ public:
 			return Error::kUserData;
 		}
 
-		HeapMemoryPool pool(allocAligned, nullptr);
-		StringRaii mainDataPath(&pool, ANKI_SOURCE_DIRECTORY);
+		ConfigSet::getSingleton().setWindowFullscreen(false);
+		ConfigSet::getSingleton().setRsrcDataPaths(ANKI_SOURCE_DIRECTORY);
+		ConfigSet::getSingleton().setGrValidation(false);
+		ConfigSet::getSingleton().setGrDebugMarkers(false);
+		ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 
-		config->setWindowFullscreen(false);
-		config->setRsrcDataPaths(mainDataPath);
-		config->setGrValidation(false);
-		config->setGrDebugMarkers(false);
-		ANKI_CHECK(config->setFromCommandLineArguments(argc - 2, argv + 2));
-
-		ANKI_CHECK(App::init(config, allocAligned, nullptr));
+		ANKI_CHECK(App::init());
 
 		// Load the texture
 		ImageResourcePtr image;
-		ANKI_CHECK(getResourceManager().loadResource(argv[1], image, false));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(argv[1], image, false));
 
 		// Change window name
-		StringRaii title(&pool);
+		String title;
 		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(),
 					  image->getTexture()->getMipmapCount(), getFormatInfo(image->getTexture()->getFormat()).m_name);
-		getWindow().setWindowTitle(title);
+		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node
-		SceneGraph& scene = getSceneGraph();
 		TextureViewerUiNode* node;
-		ANKI_CHECK(scene.newSceneNode("TextureViewer", node));
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("TextureViewer", node));
 		node->m_imageResource = std::move(image);
 
 		return Error::kNone;
@@ -307,7 +305,7 @@ public:
 
 	Error userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime) override
 	{
-		Input& input = getInput();
+		Input& input = Input::getSingleton();
 		if(input.getKey(KeyCode::kEscape))
 		{
 			quit = true;
@@ -317,13 +315,13 @@ public:
 	}
 };
 
-int main(int argc, char* argv[])
+ANKI_MAIN_FUNCTION(myMain)
+int myMain(int argc, char* argv[])
 {
 	Error err = Error::kNone;
 
-	ConfigSet config(allocAligned, nullptr);
-	MyApp* app = new MyApp;
-	err = app->init(&config, argc, argv, "Texture Viewer");
+	MyApp* app = new MyApp(allocAligned, nullptr);
+	err = app->init(argc, argv, "Texture Viewer");
 	if(!err)
 	{
 		err = app->mainLoop();

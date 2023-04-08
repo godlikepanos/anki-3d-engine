@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -11,13 +11,12 @@
 #if ANKI_ENABLE_TRACE
 ANKI_TEST(Util, Tracer)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	CoreTracer tracer;
-	ANKI_TEST_EXPECT_NO_ERR(tracer.init(alloc, "./"));
-	TracerSingleton::get().setEnabled(true);
+	HeapMemoryPool alloc(allocAligned, nullptr);
+	CoreTracer::allocateSingleton().init("./");
+	Tracer::getSingleton().setEnabled(true);
 
 	// 1st frame
-	tracer.flushFrame(0);
+	CoreTracer::getSingleton().flushFrame(0);
 
 	// 2nd frame
 	// 2 events
@@ -31,7 +30,7 @@ ANKI_TEST(Util, Tracer)
 		HighRezTimer::sleep(0.25);
 	}
 
-	tracer.flushFrame(1);
+	CoreTracer::getSingleton().flushFrame(1);
 
 	// 4rd frame
 	// 2 different events & non zero counter
@@ -47,10 +46,12 @@ ANKI_TEST(Util, Tracer)
 
 	ANKI_TRACE_INC_COUNTER(COUNTER, 100);
 
-	tracer.flushFrame(3);
+	CoreTracer::getSingleton().flushFrame(3);
 
 	// 5th frame
 	ANKI_TRACE_INC_COUNTER(COUNTER, 150);
-	tracer.flushFrame(4);
+	CoreTracer::getSingleton().flushFrame(4);
+
+	CoreTracer::freeSingleton();
 }
 #endif

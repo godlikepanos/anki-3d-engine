@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -8,20 +8,10 @@
 
 namespace anki {
 
-MeshBinaryLoader::MeshBinaryLoader(ResourceManager* manager)
-	: MeshBinaryLoader(manager, &manager->getTempMemoryPool())
-{
-}
-
-MeshBinaryLoader::~MeshBinaryLoader()
-{
-	m_subMeshes.destroy(*m_pool);
-}
-
 Error MeshBinaryLoader::load(const ResourceFilename& filename)
 {
 	// Load header + submeshes
-	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, m_file));
+	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, m_file));
 	ANKI_CHECK(m_file->read(&m_header, sizeof(m_header)));
 	ANKI_CHECK(checkHeader());
 	ANKI_CHECK(loadSubmeshes());
@@ -31,7 +21,7 @@ Error MeshBinaryLoader::load(const ResourceFilename& filename)
 
 Error MeshBinaryLoader::loadSubmeshes()
 {
-	m_subMeshes.create(*m_pool, m_header.m_subMeshCount);
+	m_subMeshes.resize(m_header.m_subMeshCount);
 	ANKI_CHECK(m_file->read(&m_subMeshes[0], m_subMeshes.getSizeInBytes()));
 
 	// Checks
@@ -293,8 +283,8 @@ Error MeshBinaryLoader::storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, Ptr
 	return Error::kNone;
 }
 
-Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& indices,
-												DynamicArrayRaii<Vec3>& positions)
+Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices,
+												ResourceDynamicArray<Vec3>& positions)
 {
 	ANKI_ASSERT(isLoaded());
 	ANKI_ASSERT(lod < m_header.m_lodCount);
@@ -304,8 +294,8 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& 
 		indices.resize(m_header.m_totalIndexCounts[lod]);
 
 		// Store to staging buff
-		DynamicArrayRaii<U8, PtrSize> staging(m_pool);
-		staging.create(getIndexBufferSize(lod));
+		DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize> staging(m_subMeshes.getMemoryPool());
+		staging.resize(getIndexBufferSize(lod));
 		ANKI_CHECK(storeIndexBuffer(lod, &staging[0], staging.getSizeInBytes()));
 
 		// Copy from staging
@@ -319,8 +309,9 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& 
 	// Store positions
 	{
 		const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[VertexStreamId::kPosition];
-		DynamicArrayRaii<U16Vec3> tempPositions(m_pool, m_header.m_totalVertexCounts[lod]);
-		static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16_Unorm,
+		DynamicArray<U16Vec4, MemoryPoolPtrWrapper<BaseMemoryPool>> tempPositions(m_subMeshes.getMemoryPool());
+		tempPositions.resize(m_header.m_totalVertexCounts[lod]);
+		static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16A16_Unorm,
 					  "Incorrect format");
 		ANKI_CHECK(storeVertexBuffer(lod, attrib.m_bufferIndex, &tempPositions[0], tempPositions.getSizeInBytes()));
 
@@ -328,7 +319,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, DynamicArrayRaii<U32>& 
 
 		for(U32 i = 0; i < tempPositions.getSize(); ++i)
 		{
-			positions[i] = Vec3(tempPositions[i]) / F32(kMaxU16);
+			positions[i] = Vec3(tempPositions[i].xyz()) / F32(kMaxU16);
 			positions[i] *= Vec3(&attrib.m_scale[0]);
 			positions[i] += Vec3(&attrib.m_translation[0]);
 		}

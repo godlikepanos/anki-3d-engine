@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -85,12 +85,25 @@ public:
 	/// Read data from the file
 	Error read(void* buff, PtrSize size);
 
-	/// Read all the contents of a text file
-	/// If the file is not rewined it will probably fail
-	Error readAllText(BaseMemoryPool& pool, String& out);
-
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
-	Error readAllText(StringRaii& out);
+	template<typename TMemPool>
+	Error readAllText(BaseString<TMemPool>& out)
+	{
+		Error err = Error::kNone;
+		PtrSize size = getSize();
+
+		if(size != 0)
+		{
+			out = BaseString<TMemPool>('?', size, out.getMemoryPool());
+			err = read(&out[0], size);
+		}
+		else
+		{
+			err = Error::kFunctionFailed;
+		}
+
+		return err;
+	}
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
 	Error readU32(U32& u);

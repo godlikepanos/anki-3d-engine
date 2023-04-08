@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -40,7 +40,7 @@ void ConfigSet::init(AllocAlignedCallback allocCb, void* allocCbUserData)
 	m_pool.init(allocCb, allocCbUserData);
 
 #define ANKI_CONFIG_VAR_NUMERIC(name, defaultValue, minValue, maxValue, description) \
-	ANKI_ASSERT(minValue <= maxValue && defaultValue >= minValue && defaultValue <= maxValue); \
+	ANKI_ASSERT((minValue) <= (maxValue) && (defaultValue) >= (minValue) && (defaultValue) <= (maxValue)); \
 	m_##name.m_name = #name; \
 	m_##name.m_description = description; \
 	m_##name.m_value = defaultValue; \
@@ -106,7 +106,7 @@ Error ConfigSet::loadFromFile(CString filename)
 	ANKI_ASSERT(isInitialized());
 
 	ANKI_CORE_LOGI("Loading config file %s", filename.cstr());
-	XmlDocument xml(&m_pool);
+	CoreXmlDocument xml;
 	ANKI_CHECK(xml.loadFile(filename));
 
 	XmlElement rootel;
@@ -170,7 +170,7 @@ Error ConfigSet::saveToFile(CString filename) const
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::kWrite));
 
-	ANKI_CHECK(file.writeTextf("%s\n<config>\n", XmlDocument::kXmlHeader.cstr()));
+	ANKI_CHECK(file.writeTextf("%s\n<config>\n", CoreXmlDocument::kXmlHeader.cstr()));
 
 #define ANKI_NUMERIC_UINT(name) \
 	ANKI_CHECK(file.writeTextf("\t<!-- %s -->\n", m_##name.m_description.cstr())); \

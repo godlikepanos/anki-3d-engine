@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022, Panagiotis Christopoulos Charitos and contributors.
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -26,22 +26,7 @@ public:
 
 	~TriggerComponent();
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
 	void setSphereVolumeRadius(F32 radius);
-
-	Transform getWorldTransform() const
-	{
-		return (m_trigger.isCreated()) ? m_trigger->getTransform() : Transform::getIdentity();
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		if(m_trigger.isCreated())
-		{
-			m_trigger->setTransform(trf);
-		}
-	}
 
 	WeakArray<BodyComponent*> getBodyComponentsEnter()
 	{
@@ -64,10 +49,12 @@ private:
 	SceneNode* m_node;
 	PhysicsCollisionShapePtr m_shape;
 	PhysicsTriggerPtr m_trigger;
-	DynamicArray<BodyComponent*> m_bodiesEnter;
-	DynamicArray<BodyComponent*> m_bodiesInside;
-	DynamicArray<BodyComponent*> m_bodiesExit;
+	SceneDynamicArray<BodyComponent*> m_bodiesEnter;
+	SceneDynamicArray<BodyComponent*> m_bodiesInside;
+	SceneDynamicArray<BodyComponent*> m_bodiesExit;
 	MyPhysicsTriggerProcessContactCallback* m_callbacks = nullptr;
+
+	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 };
 /// @}
 
