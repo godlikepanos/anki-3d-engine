@@ -28,6 +28,8 @@ public:
 
 	Error init();
 
+	void importRenderTargets(RenderingContext& ctx);
+
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 

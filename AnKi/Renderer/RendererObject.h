@@ -37,7 +37,7 @@ public:
 	}
 
 protected:
-	static Renderer& getRenderer();
+	static ANKI_PURE Renderer& getRenderer();
 
 	void* allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token);
 

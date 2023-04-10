@@ -164,6 +164,26 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	}
 }
 
+void GBuffer::importRenderTargets(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
+	{
+		// Already imported once
+		m_runCtx.m_crntFrameDepthRt =
+			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
+		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1]);
+	}
+	else
+	{
+		m_runCtx.m_crntFrameDepthRt =
+			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
+		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1],
+																TextureUsageBit::kSampledFragment);
+	}
+}
+
 void GBuffer::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
@@ -198,21 +218,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_runCtx.m_colorRts[i] = rgraph.newRenderTarget(m_colorRtDescrs[i]);
 		rts[i] = m_runCtx.m_colorRts[i];
-	}
-
-	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
-	{
-		// Already imported once
-		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1]);
-	}
-	else
-	{
-		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1],
-																TextureUsageBit::kSampledFragment);
 	}
 
 	RenderTargetHandle sriRt;
