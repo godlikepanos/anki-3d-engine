@@ -553,10 +553,10 @@ Error App::mainLoop()
 			}
 
 #if ANKI_ENABLE_TRACE
-			if(m_renderer->getStats().m_renderingGpuTime >= 0.0)
+			if(MainRenderer::getSingleton().getStats().m_renderingGpuTime >= 0.0)
 			{
-				ANKI_TRACE_CUSTOM_EVENT(Gpu, m_renderer->getStats().m_renderingGpuSubmitTimestamp,
-										m_renderer->getStats().m_renderingGpuTime);
+				ANKI_TRACE_CUSTOM_EVENT(Gpu, MainRenderer::getSingleton().getStats().m_renderingGpuSubmitTimestamp,
+										MainRenderer::getSingleton().getStats().m_renderingGpuTime);
 			}
 #endif
 
