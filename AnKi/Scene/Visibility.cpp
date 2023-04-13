@@ -316,7 +316,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			WeakArray<RenderableQueueElement> elements;
 			modelc.setupRenderableQueueElements(
-				lod, (isShadowFrustum) ? RenderingTechnique::kShadow : RenderingTechnique::kGBuffer, elements);
+				lod, (isShadowFrustum) ? RenderingTechnique::kDepth : RenderingTechnique::kGBuffer, elements);
 			for(RenderableQueueElement& el : elements)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
@@ -332,7 +332,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			if(wantsEarlyZ && distanceFromCamera < testedFrustum.getEarlyZDistance())
 			{
-				modelc.setupRenderableQueueElements(lod, RenderingTechnique::kGBufferEarlyZ, elements);
+				modelc.setupRenderableQueueElements(lod, RenderingTechnique::kDepth, elements);
 				for(RenderableQueueElement& el : elements)
 				{
 					el.m_distanceFromCamera = distanceFromCamera;

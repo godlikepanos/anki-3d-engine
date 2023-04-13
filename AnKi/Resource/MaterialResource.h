@@ -226,7 +226,7 @@ public:
 
 	Bool castsShadow() const
 	{
-		return !!(m_techniquesMask & (RenderingTechniqueBit::kShadow | RenderingTechniqueBit::kRtShadow));
+		return !!(m_techniquesMask & (RenderingTechniqueBit::kDepth | RenderingTechniqueBit::kRtShadow));
 	}
 
 	ConstWeakArray<MaterialVariable> getVariables() const

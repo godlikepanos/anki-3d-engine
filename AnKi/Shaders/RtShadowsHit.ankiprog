@@ -6,7 +6,7 @@
 #pragma anki library RtShadows
 #pragma anki ray_type 0
 
-#pragma anki mutator ANKI_TECHNIQUE 4
+#pragma anki mutator ANKI_TECHNIQUE 3
 #pragma anki mutator ALPHA_TEXTURE 0 1
 
 #include <AnKi/Shaders/RtShadows.hlsl>

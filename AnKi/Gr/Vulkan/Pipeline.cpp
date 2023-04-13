@@ -118,8 +118,8 @@ Bool PipelineStateTracker::updateHashes()
 	// Color
 	if(!!m_fbColorAttachmentMask)
 	{
-		ANKI_ASSERT(m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask
-					&& "Shader and fb should have same attachment mask");
+		ANKI_ASSERT((m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask || !m_shaderColorAttachmentWritemask)
+					&& "Shader and FB should have same attachment mask or shader mask should be zero");
 
 		if(m_dirty.m_color)
 		{
@@ -188,13 +188,13 @@ void PipelineStateTracker::updateSuperHash()
 	}
 
 	// Color
-	if(!!m_shaderColorAttachmentWritemask)
+	if(!!m_fbColorAttachmentMask)
 	{
 		buff[count++] = m_hashes.m_color;
 
 		for(U i = 0; i < kMaxColorRenderTargets; ++i)
 		{
-			if(m_shaderColorAttachmentWritemask.get(i))
+			if(m_fbColorAttachmentMask.get(i))
 			{
 				buff[count++] = m_hashes.m_colAttachments[i];
 			}
@@ -342,17 +342,17 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	}
 
 	// Color/blend
-	if(!!m_shaderColorAttachmentWritemask)
+	if(!!m_fbColorAttachmentMask)
 	{
 		VkPipelineColorBlendStateCreateInfo& colCi = m_ci.m_color;
 		colCi = {};
 		colCi.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colCi.attachmentCount = m_shaderColorAttachmentWritemask.getEnabledBitCount();
+		colCi.attachmentCount = m_fbColorAttachmentMask.getEnabledBitCount();
 		colCi.pAttachments = &m_ci.m_colAttachments[0];
 
 		for(U i = 0; i < colCi.attachmentCount; ++i)
 		{
-			ANKI_ASSERT(m_shaderColorAttachmentWritemask.get(i) && "No gaps are allowed");
+			ANKI_ASSERT(m_fbColorAttachmentMask.get(i) && "No gaps are allowed");
 			VkPipelineColorBlendAttachmentState& out = m_ci.m_colAttachments[i];
 			const ColorAttachmentState& in = m_state.m_color.m_attachments[i];
 

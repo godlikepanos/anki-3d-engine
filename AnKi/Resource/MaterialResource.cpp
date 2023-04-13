@@ -14,7 +14,7 @@ inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNa
 	{"NONE", "ANKI_TECHNIQUE", "ANKI_BONES", "ANKI_VELOCITY"}};
 
 inline constexpr Array<CString, U(RenderingTechnique::kCount)> kTechniqueNames = {
-	{"GBuffer", "GBufferEarlyZ", "Shadow", "Forward", "RtShadow"}};
+	{"GBuffer", "Depth", "Forward", "RtShadow"}};
 
 // This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
 namespace {

@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator ANKI_VELOCITY 0 1
-#pragma anki mutator ANKI_TECHNIQUE 0 1 2
+#pragma anki mutator ANKI_TECHNIQUE 0 1
 #pragma anki mutator ANKI_BONES 0 1
 #pragma anki mutator DIFFUSE_TEX 0 1
 #pragma anki mutator SPECULAR_TEX 0 1
@@ -17,7 +17,6 @@
 
 #pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
 #pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 1
-#pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 2
 
 // Some defines the clear up things
 #define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
@@ -90,7 +89,7 @@ struct VertOut
 	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
 };
 
-#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER || ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 struct FragOut
 {
 	Vec4 m_color0 : SV_TARGET0;
@@ -220,7 +219,7 @@ void doAlphaTest(RF32 alpha)
 	}
 }
 
-#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_SHADOWS
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_DEPTH
 void main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
@@ -229,17 +228,6 @@ void main(VertOut input)
 	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
 	doAlphaTest(diffColorA.a);
 #	endif
-}
-#elif ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ
-FragOut main(VertOut input)
-{
-	ANKI_MAYBE_UNUSED(input);
-#	if REALLY_ALPHA_TEST
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
-	doAlphaTest(diffColorA.a);
-#	endif
-	return (FragOut)0;
 }
 #elif ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 // Do normal mapping

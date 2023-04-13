@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_TECHNIQUE 3
+#pragma anki mutator ANKI_TECHNIQUE 2
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
