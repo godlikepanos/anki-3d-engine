@@ -30,7 +30,7 @@ ANKI_CONFIG_VAR_F32(SceneRayTracingExtendedFrustumDistance, 100.0f, 10.0f, 10000
 ANKI_CONFIG_VAR_U32(SceneReflectionProbeResolution, 128, 8, 2048, "The resolution of the reflection probe's reflection")
 
 // GPU scene
-ANKI_CONFIG_VAR_U32(SceneMinGpuSceneTransforms, 8 * 1024, 8, 100 * 1024,
+ANKI_CONFIG_VAR_U32(SceneMinGpuSceneTransforms, 2 * 10 * 1024, 8, 100 * 1024,
 					"The min number of transforms stored in the GPU scene")
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneMeshes, 8 * 1024, 8, 100 * 1024, "The min number of meshes stored in the GPU scene")
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneParticleEmitters, 1 * 1024, 8, 100 * 1024,
@@ -43,3 +43,5 @@ ANKI_CONFIG_VAR_U32(SceneMinGpuSceneGlobalIlluminationProbes, 128, 8, 100 * 1024
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneDecals, 2 * 1024, 8, 100 * 1024, "The min number of decals stored in the GPU scene")
 ANKI_CONFIG_VAR_U32(SceneMinGpuSceneFogDensityVolumes, 512, 8, 100 * 1024,
 					"The min number fog density volumes stored in the GPU scene")
+ANKI_CONFIG_VAR_U32(SceneMinGpuSceneRenderables, 10 * 1024, 8, 100 * 1024,
+					"The min number of renderables stored in the GPU scene")

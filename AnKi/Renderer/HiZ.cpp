@@ -193,8 +193,10 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				// Bind something random
-				rgraphCtx.bindImage(0, 1, m_runCtx.m_hiZRt, firstMipSubresource);
+				// Bind something random that is not the 1st mip
+				TextureSubresourceInfo subresource;
+				subresource.m_firstMipmap = 1;
+				rgraphCtx.bindImage(0, 1, m_runCtx.m_hiZRt, subresource);
 			}
 
 			cmdb->bindStorageBuffer(0, 2, m_mipmapping.m_counterBuffer, 0, kMaxPtrSize);

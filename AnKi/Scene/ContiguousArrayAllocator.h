@@ -24,6 +24,8 @@ enum class GpuSceneContiguousArrayType : U8
 	kGlobalIlluminationProbes,
 	kDecals,
 	kFogDensityVolumes,
+	kRenderablesGBuffer,
+	kRenderableBoundingVolumesGBuffer,
 
 	kCount,
 	kFirst = 0
@@ -140,7 +142,7 @@ private:
 	U8 m_frame = 0;
 
 	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentCount = {
-		2, kMaxLodCount, 1, 1, 1, 1, 1, 1, 1};
+		2, kMaxLodCount, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentSize = {
 		sizeof(Mat3x4),
 		sizeof(GpuSceneMeshLod),
@@ -150,7 +152,9 @@ private:
 		sizeof(GpuSceneReflectionProbe),
 		sizeof(GpuSceneGlobalIlluminationProbe),
 		sizeof(GpuSceneDecal),
-		sizeof(GpuSceneFogDensityVolume)};
+		sizeof(GpuSceneFogDensityVolume),
+		sizeof(GpuSceneRenderable),
+		sizeof(GpuSceneRenderableBoundingVolume)};
 };
 /// @}
 

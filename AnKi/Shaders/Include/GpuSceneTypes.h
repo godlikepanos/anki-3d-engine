@@ -14,12 +14,22 @@ struct GpuSceneRenderable
 {
 	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
 	U32 m_uniformsOffset;
-	U32 m_geometryOffset;
+	U32 m_geometryOffset; ///< Points to a GpuSceneMeshLod or a GpuSceneParticleEmitter
 	U32 m_boneTransformsOffset;
 };
 static_assert(sizeof(GpuSceneRenderable) == sizeof(Vec4) * 1);
 
 typedef UVec4 GpuSceneRenderablePacked;
+
+/// Used in visibility testing.
+struct GpuSceneRenderableBoundingVolume
+{
+	Vec3 m_aabbMin;
+	U32 m_renderableOffset; ///< Points to a GpuSceneRenderable
+
+	Vec3 m_aabbMax;
+	U32 m_renderStateBucket;
+};
 
 struct GpuSceneMeshLod
 {

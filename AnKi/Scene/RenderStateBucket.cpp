@@ -18,7 +18,7 @@ RenderStateBucketContainer::~RenderStateBucketContainer()
 	}
 }
 
-U32 RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingTechnique technique)
+RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingTechnique technique)
 {
 	// Compute state gash
 	Array<U64, 3> toHash;
@@ -28,6 +28,11 @@ U32 RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingT
 	const U64 hash = computeHash(toHash.getBegin(), toHash.getSizeInBytes());
 
 	SceneDynamicArray<ExtendedBucket>& buckets = m_buckets[technique];
+
+	RenderStateBucketIndex out;
+#if ANKI_ENABLE_ASSERTIONS
+	out.m_technique = technique;
+#endif
 
 	LockGuard lock(m_mtx);
 
@@ -48,7 +53,8 @@ U32 RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingT
 				ANKI_ASSERT(buckets[i].m_program.isCreated());
 			}
 
-			return i;
+			out.m_index = i;
+			return out;
 		}
 	}
 
@@ -60,25 +66,36 @@ U32 RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingT
 	newBucket.m_program = state.m_program;
 	newBucket.m_userCount = 1;
 
-	return buckets.getSize() - 1;
+	out.m_index = buckets.getSize() - 1;
+	return out;
 }
 
-void RenderStateBucketContainer::removeUser(U32 bucketIndex, RenderingTechnique technique)
+void RenderStateBucketContainer::removeUser(RenderingTechnique technique, RenderStateBucketIndex& bucketIndex)
 {
-	LockGuard lock(m_mtx);
-
-	ANKI_ASSERT(bucketIndex < m_buckets[technique].getSize());
-
-	ExtendedBucket& bucket = m_buckets[technique][bucketIndex];
-	ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated());
-
-	--bucket.m_userCount;
-
-	if(bucket.m_userCount == 0)
+	if(bucketIndex.m_index == kMaxU32)
 	{
-		// No more users, make sure you release any references
-		bucket.m_program.reset(nullptr);
+		return;
 	}
+
+	{
+		LockGuard lock(m_mtx);
+
+		ANKI_ASSERT(bucketIndex.m_index < m_buckets[technique].getSize());
+		ANKI_ASSERT(bucketIndex.m_technique == technique);
+
+		ExtendedBucket& bucket = m_buckets[technique][bucketIndex.m_index];
+		ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated());
+
+		--bucket.m_userCount;
+
+		if(bucket.m_userCount == 0)
+		{
+			// No more users, make sure you release any references
+			bucket.m_program.reset(nullptr);
+		}
+	}
+
+	bucketIndex = {};
 }
 
 } // end namespace anki

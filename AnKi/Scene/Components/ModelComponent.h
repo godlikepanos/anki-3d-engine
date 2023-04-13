@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
+#include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Util/WeakArray.h>
@@ -55,6 +56,9 @@ private:
 	public:
 		U32 m_gpuSceneUniformsOffset = kMaxU32;
 		U32 m_gpuSceneMeshLodsIndex = kMaxU32;
+		U32 m_gpuSceneRenderableIndex = kMaxU32;
+		U32 m_gpuSceneRenderableBoundingVolumeIndex = kMaxU32;
+		Array2d<RenderStateBucketIndex, U32(RenderingTechnique::kCount), 2> m_renderStateBucketIndices;
 		RenderingTechniqueBit m_techniques;
 	};
 

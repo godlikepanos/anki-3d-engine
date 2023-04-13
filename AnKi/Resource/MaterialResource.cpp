@@ -770,7 +770,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		initInfo.addMutation(kBuiltinMutatorNames[BuiltinMutatorId::kVelocity], MutatorValue(key.getVelocity()));
 	}
 
-	const ShaderProgramResourceVariant* progVariant;
+	const ShaderProgramResourceVariant* progVariant = nullptr;
 	prog.m_prog->getOrCreateVariant(initInfo, progVariant);
 
 	if(!progVariant)

@@ -33,6 +33,19 @@ ModelComponent::~ModelComponent()
 			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
 				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsIndex);
 		}
+
+		if(patch.m_gpuSceneRenderableIndex != kMaxU32)
+		{
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kRenderablesGBuffer, patch.m_gpuSceneRenderableIndex);
+		}
+
+		if(patch.m_gpuSceneRenderableBoundingVolumeIndex != kMaxU32)
+		{
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer,
+				patch.m_gpuSceneRenderableBoundingVolumeIndex);
+		}
 	}
 
 	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
@@ -64,14 +77,34 @@ void ModelComponent::loadModelResource(CString filename)
 			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
 				GpuSceneContiguousArrayType::kMeshLods, patch.m_gpuSceneMeshLodsIndex);
 		}
+
+		if(patch.m_gpuSceneRenderableIndex != kMaxU32)
+		{
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kRenderablesGBuffer, patch.m_gpuSceneRenderableIndex);
+		}
+
+		if(patch.m_gpuSceneRenderableBoundingVolumeIndex != kMaxU32)
+		{
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
+				GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer,
+				patch.m_gpuSceneRenderableBoundingVolumeIndex);
+		}
 	}
 
 	m_patchInfos.resize(modelPatchCount);
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
-		m_patchInfos[i].m_gpuSceneMeshLodsIndex =
-			U32(SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-				GpuSceneContiguousArrayType::kMeshLods));
+		m_patchInfos[i].m_gpuSceneMeshLodsIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+			GpuSceneContiguousArrayType::kMeshLods);
+
+		m_patchInfos[i].m_gpuSceneRenderableIndex =
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+				GpuSceneContiguousArrayType::kRenderablesGBuffer);
+
+		m_patchInfos[i].m_gpuSceneRenderableBoundingVolumeIndex =
+			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
+				GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
 	}
 
 	U32 uniformsSize = 0;
@@ -113,6 +146,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		return Error::kNone;
 	}
 
+	const AllGpuSceneContiguousArrays& gpuArrays = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays();
+
 	const Bool resourceUpdated = m_dirty;
 	m_dirty = false;
 	const Bool moved = info.m_node->movedThisFrame() || m_firstTimeUpdate;
@@ -121,6 +156,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	m_movedLastFrame = moved;
 
 	updated = resourceUpdated || moved || movedLastFrame;
+
+	const Bool hasSkin = m_skinComponent != nullptr && m_skinComponent->isEnabled();
 
 	// Upload mesh LODs and uniforms
 	if(resourceUpdated) [[unlikely]]
@@ -175,11 +212,29 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				meshLods[l] = meshLods[l - 1];
 			}
 
-			const PtrSize offset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(meshLods)
-								   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-									   GpuSceneContiguousArrayType::kMeshLods);
+			PtrSize offset = m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(meshLods)
+							 + gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods);
 			GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, meshLods.getSizeInBytes(),
 														 &meshLods[0]);
+
+			// Upload the GpuSceneRenderable
+			GpuSceneRenderable gpuRenderable;
+
+			gpuRenderable.m_worldTransformsOffset =
+				U32(m_gpuSceneTransformsIndex * sizeof(Mat3x4) * 2
+					+ gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kTransformPairs));
+			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
+
+			gpuRenderable.m_geometryOffset =
+				U32(m_patchInfos[i].m_gpuSceneMeshLodsIndex * sizeof(GpuSceneMeshLod) * kMaxLodCount
+					+ gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods));
+
+			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
+
+			offset = m_patchInfos[i].m_gpuSceneRenderableIndex * sizeof(GpuSceneRenderable)
+					 + gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kRenderablesGBuffer);
+			GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuRenderable),
+														 &gpuRenderable);
 		}
 
 		// Upload the uniforms
@@ -199,6 +254,20 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		ANKI_ASSERT(count * 4 == m_gpuSceneUniforms.m_size);
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneUniforms.m_offset,
 													 m_gpuSceneUniforms.m_size, &allUniforms[0]);
+
+		// Refresh the render state buckets
+		for(U32 i = 0; i < modelPatchCount; ++i)
+		{
+			for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
+			{
+				for(U32 velocity = 0; velocity < 1; ++velocity)
+				{
+					RenderStateBucketContainer& buckets = SceneGraph::getSingleton().getRenderStateBuckets();
+
+					buckets.removeUser(t, m_patchInfos[i].m_renderStateBucketIndices[t][velocity]);
+				}
+			}
+		}
 	}
 
 	// Upload transforms
@@ -231,6 +300,24 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Aabb aabbWorld = aabbLocal.getTransformed(info.m_node->getWorldTransform());
 
 		m_spatial.setBoundingShape(aabbWorld);
+
+		// Upload the GpuSceneRenderableBoundingVolume to the GPU scene
+		const U32 modelPatchCount = m_model->getModelPatches().getSize();
+		for(U32 i = 0; i < modelPatchCount; ++i)
+		{
+			GpuSceneRenderableBoundingVolume gpuVolume;
+			gpuVolume.m_aabbMin = aabbWorld.getMin().xyz();
+			gpuVolume.m_aabbMax = aabbWorld.getMax().xyz();
+			gpuVolume.m_renderableOffset = m_patchInfos[i].m_gpuSceneRenderableIndex * sizeof(GpuSceneRenderable)
+										   + gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kRenderablesGBuffer);
+			gpuVolume.m_renderStateBucket = 0; // TODO
+
+			const PtrSize offset =
+				U32(m_patchInfos[i].m_gpuSceneRenderableBoundingVolumeIndex * sizeof(GpuSceneRenderableBoundingVolume)
+					+ gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer));
+
+			GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuVolume), &gpuVolume);
+		}
 	}
 
 	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());

@@ -108,7 +108,9 @@ void AllGpuSceneContiguousArrays::init()
 		cfg.getSceneMinGpuSceneReflectionProbes(),
 		cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
 		cfg.getSceneMinGpuSceneDecals(),
-		cfg.getSceneMinGpuSceneFogDensityVolumes()};
+		cfg.getSceneMinGpuSceneFogDensityVolumes(),
+		cfg.getSceneMinGpuSceneRenderables(),
+		cfg.getSceneMinGpuSceneRenderables()};
 
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{
