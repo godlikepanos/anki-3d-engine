@@ -33,24 +33,6 @@ LightComponent::~LightComponent()
 {
 	deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
 	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
-
-	if(m_gpuSceneLightIndex != kMaxU32)
-	{
-		if(m_type == LightComponentType::kPoint)
-		{
-			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-				GpuSceneContiguousArrayType::kPointLights, m_gpuSceneLightIndex);
-		}
-		else if(m_type == LightComponentType::kSpot)
-		{
-			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-				GpuSceneContiguousArrayType::kSpotLights, m_gpuSceneLightIndex);
-		}
-		else
-		{
-			ANKI_ASSERT(0);
-		}
-	}
 }
 
 void LightComponent::setLightComponentType(LightComponentType type)
@@ -70,24 +52,20 @@ void LightComponent::setLightComponentType(LightComponentType type)
 		m_spatial.setUpdatesOctreeBounds(true);
 	}
 
-	if(m_typeChanged && m_gpuSceneLightIndex != kMaxU32)
+	if(m_typeChanged)
 	{
-		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-			(m_type == LightComponentType::kPoint) ? GpuSceneContiguousArrayType::kPointLights
-												   : GpuSceneContiguousArrayType::kSpotLights,
-			m_gpuSceneLightIndex);
-		m_gpuSceneLightIndex = kMaxU32;
+		AllGpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneLightIndex);
 	}
 
-	if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kPoint)
+	if(!m_gpuSceneLightIndex.isValid() && type == LightComponentType::kPoint)
 	{
-		m_gpuSceneLightIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-			GpuSceneContiguousArrayType::kPointLights);
+		m_gpuSceneLightIndex =
+			AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kPointLights);
 	}
-	else if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kSpot)
+	else if(!m_gpuSceneLightIndex.isValid() && type == LightComponentType::kSpot)
 	{
-		m_gpuSceneLightIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-			GpuSceneContiguousArrayType::kSpotLights);
+		m_gpuSceneLightIndex =
+			AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kSpotLights);
 	}
 
 	m_type = type;
@@ -154,10 +132,8 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
 		gpuLight.m_shadow = m_shadow;
-		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuScenePointLight)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kPointLights);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(),
+													 gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
@@ -223,10 +199,8 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_shadow = m_shadow;
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
-		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuSceneSpotLight)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kSpotLights);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(),
+													 gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{

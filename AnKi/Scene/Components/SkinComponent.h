@@ -78,7 +78,7 @@ public:
 
 	U32 getBoneTransformsGpuSceneOffset() const
 	{
-		return U32(m_boneTransformsGpuSceneOffset.m_offset);
+		return m_gpuSceneBoneTransforms.getOffset();
 	}
 
 private:
@@ -112,7 +112,7 @@ private:
 
 	Bool m_forceFullUpdate = true;
 
-	SegregatedListsGpuMemoryPoolToken m_boneTransformsGpuSceneOffset;
+	GpuSceneBufferAllocation m_gpuSceneBoneTransforms;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 

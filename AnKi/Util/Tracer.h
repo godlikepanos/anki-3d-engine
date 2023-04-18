@@ -10,6 +10,7 @@
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/Singleton.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/Logger.h>
 
 namespace anki {
 
@@ -95,6 +96,7 @@ public:
 
 	void setEnabled(Bool enabled)
 	{
+		ANKI_UTIL_LOGV("Tracing %s", (enabled) ? "enabled" : "disable");
 		m_enabled = enabled;
 	}
 

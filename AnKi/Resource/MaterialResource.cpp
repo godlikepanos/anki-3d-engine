@@ -728,6 +728,12 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		key.setVelocity(false);
 	}
 
+	if(key.getRenderingTechnique() != RenderingTechnique::kGBuffer && key.getVelocity())
+	{
+		// Only GBuffer technique can write to velocity buffers
+		key.setVelocity(false);
+	}
+
 	ANKI_ASSERT(!key.getSkinned() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kBones)));
 	ANKI_ASSERT(!key.getVelocity() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kVelocity)));
 

@@ -92,8 +92,7 @@ public:
 			el.m_sphereCenter = m_worldPos.xyz();
 			el.m_sphereRadius = m_sphereRadius;
 		}
-		ANKI_ASSERT(m_gpuSceneIndex != kMaxU32);
-		el.m_index = m_gpuSceneIndex;
+		el.m_index = m_gpuSceneIndex.get();
 	}
 
 private:
@@ -110,7 +109,7 @@ private:
 	Vec3 m_worldPos = Vec3(0.0f);
 	F32 m_density = 1.0f;
 
-	U32 m_gpuSceneIndex = kMaxU32;
+	GpuSceneContiguousArrayIndex m_gpuSceneIndex;
 
 	Bool m_isBox = true;
 	Bool m_dirty = true;

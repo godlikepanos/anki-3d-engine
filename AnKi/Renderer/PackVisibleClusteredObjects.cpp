@@ -111,7 +111,7 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		}
 	}
 
-	cmdb->bindStorageBuffer(0, 0, GpuSceneMemoryPool::getSingleton().getBuffer(),
+	cmdb->bindStorageBuffer(0, 0, GpuSceneBuffer::getSingleton().getBuffer(),
 							rqueue.m_clustererObjectsArrayOffsets[kType], rqueue.m_clustererObjectsArrayRanges[kType]);
 
 	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects, m_structureBufferOffsets[kType],

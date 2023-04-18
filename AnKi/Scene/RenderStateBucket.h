@@ -27,30 +27,62 @@ class RenderStateBucketIndex
 	friend class RenderStateBucketContainer;
 
 public:
+	RenderStateBucketIndex() = default;
+
+	RenderStateBucketIndex(const RenderStateBucketIndex&) = delete;
+
+	RenderStateBucketIndex(RenderStateBucketIndex&& b)
+	{
+		*this = std::move(b);
+	}
+
+	~RenderStateBucketIndex();
+
+	RenderStateBucketIndex& operator=(const RenderStateBucketIndex&) = delete;
+
+	RenderStateBucketIndex& operator=(RenderStateBucketIndex&& b)
+	{
+		ANKI_ASSERT(!isValid() && "Forgot to delete");
+		m_index = b.m_index;
+		m_technique = b.m_technique;
+		b.invalidate();
+		return *this;
+	}
+
 	U32 get() const
 	{
 		ANKI_ASSERT(m_index != kMaxU32);
 		return m_index;
 	}
 
+	Bool isValid() const
+	{
+		return m_index != kMaxU32;
+	}
+
 private:
 	U32 m_index = kMaxU32;
-#if ANKI_ENABLE_ASSERTIONS
 	RenderingTechnique m_technique = RenderingTechnique::kCount;
-#endif
+
+	void invalidate()
+	{
+		m_index = kMaxU32;
+		m_technique = RenderingTechnique::kCount;
+	}
 };
 
 /// Holds an array of all render state buckets.
-class RenderStateBucketContainer
+class RenderStateBucketContainer : public MakeSingleton<RenderStateBucketContainer>
 {
-public:
-	~RenderStateBucketContainer();
+	template<typename>
+	friend class MakeSingleton;
 
+public:
 	/// Add a new user for a specific render state and rendering technique.
 	RenderStateBucketIndex addUser(const RenderStateInfo& state, RenderingTechnique technique);
 
 	/// Remove the user.
-	void removeUser(RenderingTechnique technique, RenderStateBucketIndex& bucketIndex);
+	void removeUser(RenderStateBucketIndex& bucketIndex);
 
 	template<typename TFunc>
 	void interateBuckets(RenderingTechnique technique, TFunc func) const
@@ -74,7 +106,16 @@ private:
 
 	Array<SceneDynamicArray<ExtendedBucket>, U32(RenderingTechnique::kCount)> m_buckets;
 	Mutex m_mtx;
+
+	RenderStateBucketContainer() = default;
+
+	~RenderStateBucketContainer();
 };
+
+inline RenderStateBucketIndex::~RenderStateBucketIndex()
+{
+	RenderStateBucketContainer::getSingleton().removeUser(*this);
+}
 /// @}
 
 } // end namespace anki

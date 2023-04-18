@@ -124,8 +124,7 @@ public:
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_shadowLayer = kMaxU8;
-		ANKI_ASSERT(m_gpuSceneLightIndex != kMaxU32);
-		el.m_index = m_gpuSceneLightIndex;
+		el.m_index = m_gpuSceneLightIndex.get();
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
@@ -140,8 +139,7 @@ public:
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_edgePoints = m_spot.m_edgePointsWspace;
 		el.m_shadowLayer = kMaxU8;
-		ANKI_ASSERT(m_gpuSceneLightIndex != kMaxU32);
-		el.m_index = m_gpuSceneLightIndex;
+		el.m_index = m_gpuSceneLightIndex.get();
 	}
 
 	/// Setup a directional queue element.
@@ -187,7 +185,7 @@ private:
 
 	Frustum* m_frustums = nullptr;
 
-	U32 m_gpuSceneLightIndex = kMaxU32;
+	GpuSceneContiguousArrayIndex m_gpuSceneLightIndex;
 
 	LightComponentType m_type;
 

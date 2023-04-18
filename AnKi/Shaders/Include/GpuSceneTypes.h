@@ -22,7 +22,7 @@ static_assert(sizeof(GpuSceneRenderable) == sizeof(Vec4) * 1);
 typedef UVec4 GpuSceneRenderablePacked;
 
 /// Used in visibility testing.
-struct GpuSceneRenderableBoundingVolume
+struct GpuSceneRenderableAabb
 {
 	Vec3 m_aabbMin;
 	U32 m_renderableOffset; ///< Points to a GpuSceneRenderable

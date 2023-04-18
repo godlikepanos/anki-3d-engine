@@ -26,8 +26,8 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-		GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
+	m_gpuSceneIndex =
+		AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
 
 	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
 																   m_clearTextureProg);
@@ -40,9 +40,6 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
 {
 	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
-
-	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-		GpuSceneContiguousArrayType::kGlobalIlluminationProbes, m_gpuSceneIndex);
 }
 
 Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -123,10 +120,8 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
 
-		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneGlobalIlluminationProbe)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(),
+													 gpuProbe);
 	}
 
 	if(needsRefresh()) [[unlikely]]

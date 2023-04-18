@@ -129,8 +129,8 @@ void App::cleanup()
 	ResourceManager::freeSingleton();
 	PhysicsWorld::freeSingleton();
 	RebarStagingGpuMemoryPool::freeSingleton();
-	UnifiedGeometryMemoryPool::freeSingleton();
-	GpuSceneMemoryPool::freeSingleton();
+	UnifiedGeometryBuffer::freeSingleton();
+	GpuSceneBuffer::freeSingleton();
 	CoreThreadHive::freeSingleton();
 	MaliHwCounters::freeSingleton();
 	GrManager::freeSingleton();
@@ -282,8 +282,8 @@ Error App::initInternal()
 	//
 	// GPU mem
 	//
-	UnifiedGeometryMemoryPool::allocateSingleton().init();
-	GpuSceneMemoryPool::allocateSingleton().init();
+	UnifiedGeometryBuffer::allocateSingleton().init();
+	GpuSceneBuffer::allocateSingleton().init();
 	RebarStagingGpuMemoryPool::allocateSingleton().init();
 
 	//
@@ -467,8 +467,8 @@ Error App::mainLoop()
 			}
 
 			const PtrSize rebarMemUsed = RebarStagingGpuMemoryPool::getSingleton().endFrame();
-			UnifiedGeometryMemoryPool::getSingleton().endFrame();
-			GpuSceneMemoryPool::getSingleton().endFrame();
+			UnifiedGeometryBuffer::getSingleton().endFrame();
+			GpuSceneBuffer::getSingleton().endFrame();
 
 			// Update the trace info with some async loader stats
 			U64 asyncTaskCount = ResourceManager::getSingleton().getAsyncLoader().getCompletedTaskCount();
@@ -534,10 +534,10 @@ Error App::mainLoop()
 				in.m_cpuFreeCount = m_memStats.m_freeCount.load();
 
 				const GrManagerStats grStats = GrManager::getSingleton().getStats();
-				UnifiedGeometryMemoryPool::getSingleton().getStats(
+				UnifiedGeometryBuffer::getSingleton().getStats(
 					in.m_unifiedGometryExternalFragmentation, in.m_unifiedGeometryAllocated, in.m_unifiedGeometryTotal);
-				GpuSceneMemoryPool::getSingleton().getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated,
-															in.m_gpuSceneTotal);
+				GpuSceneBuffer::getSingleton().getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated,
+														in.m_gpuSceneTotal);
 				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
 				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;
 				in.m_reBar = rebarMemUsed;

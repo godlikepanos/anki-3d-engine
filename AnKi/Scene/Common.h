@@ -17,8 +17,6 @@ namespace anki {
 class ResourceManager;
 class Input;
 class UiManager;
-class UnifiedGeometryMemoryPool;
-class GpuSceneMemoryPool;
 class GpuSceneMicroPatcher;
 class ScriptManager;
 class GrManager;

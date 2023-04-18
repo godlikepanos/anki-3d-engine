@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Common.h>
+#include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/BitMask.h>
 

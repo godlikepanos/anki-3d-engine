@@ -7,8 +7,6 @@
 
 #include <AnKi/Scene/Common.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/ContiguousArrayAllocator.h>
-#include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Scene/Events/EventManager.h>
@@ -154,16 +152,6 @@ public:
 		return *m_octree;
 	}
 
-	ANKI_INTERNAL AllGpuSceneContiguousArrays& getAllGpuSceneContiguousArrays()
-	{
-		return m_gpuSceneAllocators;
-	}
-
-	ANKI_INTERNAL RenderStateBucketContainer& getRenderStateBuckets()
-	{
-		return m_renderStateBuckets;
-	}
-
 private:
 	class UpdateSceneNodesCtx;
 
@@ -198,10 +186,6 @@ private:
 	Atomic<U64> m_nodesUuid = {1};
 
 	SceneGraphStats m_stats;
-
-	AllGpuSceneContiguousArrays m_gpuSceneAllocators;
-
-	RenderStateBucketContainer m_renderStateBuckets;
 
 	SceneGraph();
 

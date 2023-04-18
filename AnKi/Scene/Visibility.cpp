@@ -763,7 +763,7 @@ void CombineResultsTask::combine()
 				  }
 			  });
 
-	const AllGpuSceneContiguousArrays& arrays = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays();
+	const AllGpuSceneContiguousArrays& arrays = AllGpuSceneContiguousArrays::getSingleton();
 
 	auto setOffset = [&](ClusteredObjectType type, GpuSceneContiguousArrayType type2) {
 		results.m_clustererObjectsArrayOffsets[type] = arrays.getElementCount(type2) ? arrays.getArrayBase(type2) : 0;

@@ -57,17 +57,17 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 	cmdb->bindAllBindless(U32(MaterialSet::kBindless));
 	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
 	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene),
-							GpuSceneMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize);
+							GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-									UnifiedGeometryMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize, \
+									UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, \
 									Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 	// Misc
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
-	cmdb->bindIndexBuffer(UnifiedGeometryMemoryPool::getSingleton().getBuffer(), 0, IndexType::kU16);
+	cmdb->bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, IndexType::kU16);
 
 	// Set a few things
 	Context ctx;

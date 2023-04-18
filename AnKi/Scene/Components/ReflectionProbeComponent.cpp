@@ -27,16 +27,13 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-		GpuSceneContiguousArrayType::kReflectionProbes);
+	m_gpuSceneIndex =
+		AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kReflectionProbes);
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()
 {
 	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
-
-	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-		GpuSceneContiguousArrayType::kReflectionProbes, m_gpuSceneIndex);
 }
 
 Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -104,11 +101,8 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_cubeTexture = m_reflectionTexBindlessIndex;
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
-
-		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneReflectionProbe)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kReflectionProbes);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(),
+													 gpuProbe);
 	}
 
 	// Update spatial and frustums

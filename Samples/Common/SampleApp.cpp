@@ -169,6 +169,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		}
 	}
 
+	if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
+	{
+		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
+	}
+
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
 	{
 		in.hideCursor(true);
@@ -242,11 +247,6 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(in.getKey(KeyCode::kS))
 		{
 			mover->moveLocalZ(moveDistance);
-		}
-
-		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
-		{
-			Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 		}
 
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;

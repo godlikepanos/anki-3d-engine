@@ -12,7 +12,7 @@
 
 namespace anki {
 
-void UnifiedGeometryMemoryPool::init()
+void UnifiedGeometryBuffer::init()
 {
 	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGlobalVertexMemorySize();
 
@@ -29,12 +29,12 @@ void UnifiedGeometryMemoryPool::init()
 	m_pool.init(buffUsage, classes, poolSize, "UnifiedGeometry", false);
 
 	// Allocate something dummy to force creating the GPU buffer
-	SegregatedListsGpuMemoryPoolToken token;
-	allocate(16, 4, token);
-	deferredFree(token);
+	UnifiedGeometryBufferAllocation alloc;
+	allocate(16, 4, alloc);
+	deferredFree(alloc);
 }
 
-void GpuSceneMemoryPool::init()
+void GpuSceneBuffer::init()
 {
 	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGpuSceneInitialSize();
 
@@ -45,9 +45,9 @@ void GpuSceneMemoryPool::init()
 	m_pool.init(buffUsage, classes, poolSize, "GpuScene", true);
 
 	// Allocate something dummy to force creating the GPU buffer
-	SegregatedListsGpuMemoryPoolToken token;
-	allocate(16, 4, token);
-	deferredFree(token);
+	GpuSceneBufferAllocation alloc;
+	allocate(16, 4, alloc);
+	deferredFree(alloc);
 }
 
 RebarStagingGpuMemoryPool::~RebarStagingGpuMemoryPool()
@@ -222,7 +222,7 @@ void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 						   headersToken.m_range);
 	cmdb.bindStorageBuffer(0, 1, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), dataToken.m_offset,
 						   dataToken.m_range);
-	cmdb.bindStorageBuffer(0, 2, GpuSceneMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 	cmdb.bindShaderProgram(m_grProgram);
 

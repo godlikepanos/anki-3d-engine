@@ -7,6 +7,7 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Spatial.h>
+#include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Util/WeakArray.h>
@@ -51,8 +52,6 @@ private:
 		kPhysicsEngine
 	};
 
-	SceneNode* m_node = nullptr;
-
 	ParticleEmitterProperties m_props;
 
 	Spatial m_spatial;
@@ -63,11 +62,15 @@ private:
 	Second m_timeLeftForNextEmission = 0.0;
 	U32 m_aliveParticleCount = 0;
 
-	SegregatedListsGpuMemoryPoolToken m_gpuScenePositions;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneAlphas;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneScales;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	U32 m_gpuSceneIndex = kMaxU32;
+	GpuSceneBufferAllocation m_gpuScenePositions;
+	GpuSceneBufferAllocation m_gpuSceneAlphas;
+	GpuSceneBufferAllocation m_gpuSceneScales;
+	GpuSceneBufferAllocation m_gpuSceneUniforms;
+	GpuSceneContiguousArrayIndex m_gpuSceneIndexParticleEmitter;
+	GpuSceneContiguousArrayIndex m_gpuSceneIndexRenderable;
+	Array<GpuSceneContiguousArrayIndex, U32(RenderingTechnique::kCount)> m_gpuSceneIndexAabbs;
+
+	Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBuckets;
 
 	Bool m_resourceUpdated = true;
 	SimulationType m_simulationType = SimulationType::kUndefined;
@@ -75,8 +78,8 @@ private:
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 	template<typename TParticle>
-	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles, Vec3*& positions,
-				  F32*& scales, F32*& alphas, Aabb& aabbWorld);
+	void simulate(Second prevUpdateTime, Second crntTime, const Transform& worldTransform,
+				  WeakArray<TParticle> particles, Vec3*& positions, F32*& scales, F32*& alphas, Aabb& aabbWorld);
 };
 /// @}
 

@@ -67,7 +67,7 @@ public:
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_index = m_gpuSceneIndex;
+		el.m_index = m_gpuSceneIndex.get();
 	}
 
 private:
@@ -93,7 +93,7 @@ private:
 	Vec3 m_boxSize = Vec3(1.0f);
 	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
 
-	U32 m_gpuSceneIndex = kMaxU32;
+	GpuSceneContiguousArrayIndex m_gpuSceneIndex;
 
 	Bool m_dirty = true;
 

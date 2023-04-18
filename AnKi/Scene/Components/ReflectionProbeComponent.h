@@ -52,8 +52,7 @@ public:
 		el.m_aabbMax = m_halfSize + m_worldPos;
 		ANKI_ASSERT(el.m_textureBindlessIndex != kMaxU32);
 		el.m_textureBindlessIndex = m_reflectionTexBindlessIndex;
-		ANKI_ASSERT(m_gpuSceneIndex != kMaxU32);
-		el.m_index = m_gpuSceneIndex;
+		el.m_index = m_gpuSceneIndex.get();
 	}
 
 	ANKI_INTERNAL void setupReflectionProbeQueueElementForRefresh(ReflectionProbeQueueElementForRefresh& el) const
@@ -77,7 +76,7 @@ private:
 	Vec3 m_worldPos = Vec3(kMaxF32);
 	Vec3 m_halfSize = Vec3(1.0f);
 
-	U32 m_gpuSceneIndex = kMaxU32;
+	GpuSceneContiguousArrayIndex m_gpuSceneIndex;
 
 	Spatial m_spatial;
 

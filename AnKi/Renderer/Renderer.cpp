@@ -693,8 +693,8 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(GpuSceneMemoryPool::getSingleton().getBuffer(),
-													GpuSceneMemoryPool::getSingleton().getBuffer()->getBufferUsage());
+	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(GpuSceneBuffer::getSingleton().getBuffer(),
+													GpuSceneBuffer::getSingleton().getBuffer()->getBufferUsage());
 
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{

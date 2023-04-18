@@ -21,7 +21,6 @@ class AsyncLoader;
 class ResourceManagerModel;
 class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
-class UnifiedGeometryMemoryPool;
 
 /// @addtogroup resource
 /// @{

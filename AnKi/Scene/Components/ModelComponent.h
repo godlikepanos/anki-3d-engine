@@ -55,10 +55,13 @@ private:
 	{
 	public:
 		U32 m_gpuSceneUniformsOffset = kMaxU32;
-		U32 m_gpuSceneMeshLodsIndex = kMaxU32;
-		U32 m_gpuSceneRenderableIndex = kMaxU32;
-		U32 m_gpuSceneRenderableBoundingVolumeIndex = kMaxU32;
-		Array2d<RenderStateBucketIndex, U32(RenderingTechnique::kCount), 2> m_renderStateBucketIndices;
+
+		GpuSceneContiguousArrayIndex m_gpuSceneIndexMeshLods;
+
+		GpuSceneContiguousArrayIndex m_gpuSceneIndexRenderable;
+		Array<GpuSceneContiguousArrayIndex, U32(RenderingTechnique::kCount)> m_gpuSceneIndexRenderableAabbs;
+
+		Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBucketIndices;
 		RenderingTechniqueBit m_techniques;
 	};
 
@@ -68,16 +71,18 @@ private:
 
 	ModelResourcePtr m_model;
 
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	U32 m_gpuSceneTransformsIndex = kMaxU32;
+	GpuSceneBufferAllocation m_gpuSceneUniforms;
+	GpuSceneContiguousArrayIndex m_gpuSceneIndexTransforms;
 	SceneDynamicArray<PatchInfo> m_patchInfos;
 
-	Bool m_dirty : 1 = true;
+	Bool m_resourceChanged : 1 = true;
 	Bool m_castsShadow : 1 = false;
 	Bool m_movedLastFrame : 1 = true;
 	Bool m_firstTimeUpdate : 1 = true; ///< Extra flag in case the component is added in a node that hasn't been moved.
 
 	RenderingTechniqueBit m_presentRenderingTechniques = RenderingTechniqueBit::kNone;
+
+	void freeGpuScene();
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 

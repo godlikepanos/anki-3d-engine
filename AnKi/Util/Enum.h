@@ -205,6 +205,73 @@ public:
 	TEnum m_begin;
 	TEnum m_end;
 };
+
+/// @memberof EnumBitsIterable
+template<typename TEnum, typename TBitEnum>
+class EnumBitsIterableIterator
+{
+public:
+	using Type = typename std::underlying_type<TBitEnum>::type;
+
+	constexpr EnumBitsIterableIterator(TBitEnum val)
+		: m_val(Type(val))
+	{
+	}
+
+	TEnum operator*() const
+	{
+		ANKI_ASSERT(m_val);
+		const TEnum out = TEnum(__builtin_ctzll(m_val));
+		ANKI_ASSERT(out >= TEnum::kFirst && out < TEnum::kCount);
+		return out;
+	}
+
+	void operator++()
+	{
+		ANKI_ASSERT(m_val);
+		m_val ^= Type(1_U64 << __builtin_ctzll(m_val));
+	}
+
+	bool operator!=(EnumBitsIterableIterator b) const
+	{
+		return m_val != b.m_val;
+	}
+
+private:
+	Type m_val;
+};
+
+/// Allow a mask to be used in a for range loop of a compatible enum.
+/// @code
+/// for(SomeEnum type : EnumIterableBits<SomeEnum, SomeCompatibleBitEnum>(bitmask))
+/// {
+/// 	...
+/// }
+/// @endcode
+template<typename TEnum, typename TBitEnum>
+class EnumBitsIterable
+{
+public:
+	using Iterator = EnumBitsIterableIterator<TEnum, TBitEnum>;
+
+	constexpr EnumBitsIterable(TBitEnum bits)
+		: m_bits(bits)
+	{
+	}
+
+	Iterator begin() const
+	{
+		return Iterator(m_bits);
+	}
+
+	Iterator end() const
+	{
+		return Iterator(TBitEnum(0));
+	}
+
+public:
+	TBitEnum m_bits;
+};
 /// @}
 
 } // end namespace anki

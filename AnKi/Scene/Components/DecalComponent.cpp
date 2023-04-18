@@ -14,16 +14,12 @@ DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_spatial(this)
 {
-	m_gpuSceneIndex =
-		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kDecals);
+	m_gpuSceneIndex = AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kDecals);
 }
 
 DecalComponent::~DecalComponent()
 {
 	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
-
-	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kDecals,
-																			 m_gpuSceneIndex);
 }
 
 void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
@@ -90,10 +86,8 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
 
-		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneDecal)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kDecals);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuDecal), &gpuDecal);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(),
+													 gpuDecal);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());

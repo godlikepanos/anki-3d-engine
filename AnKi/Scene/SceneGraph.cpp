@@ -5,6 +5,7 @@
 
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Octree.h>
+#include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -48,14 +49,15 @@ SceneGraph::~SceneGraph()
 		deleteInstance(SceneMemoryPool::getSingleton(), m_octree);
 	}
 
-	m_gpuSceneAllocators.destroy();
+	AllGpuSceneContiguousArrays::freeSingleton();
+	RenderStateBucketContainer::freeSingleton();
 }
 
 Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackData)
 {
 	SceneMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_framePool.init(allocCallback, allocCallbackData, 1 * 1024 * 1024);
+	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, ANKI_SAFE_ALIGNMENT, "SceneGraphFramePool");
 
 	m_octree = newInstance<Octree>(SceneMemoryPool::getSingleton());
 	m_octree->init(m_sceneMin, m_sceneMax, ConfigSet::getSingleton().getSceneOctreeMaxDepth());
@@ -66,7 +68,8 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-	m_gpuSceneAllocators.init();
+	AllGpuSceneContiguousArrays::allocateSingleton();
+	RenderStateBucketContainer::allocateSingleton();
 
 	return Error::kNone;
 }
@@ -160,7 +163,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
 
-	m_gpuSceneAllocators.endFrame();
+	AllGpuSceneContiguousArrays::getSingleton().endFrame();
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
 

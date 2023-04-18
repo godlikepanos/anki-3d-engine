@@ -467,11 +467,11 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler),
 					  getRenderer().getSamplers().m_trilinearRepeat);
 	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene),
-							GpuSceneMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize);
+							GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-									UnifiedGeometryMemoryPool::getSingleton().getBuffer(), 0, kMaxPtrSize, \
+									UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, \
 									Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 

@@ -30,9 +30,7 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	SceneDynamicArray<ExtendedBucket>& buckets = m_buckets[technique];
 
 	RenderStateBucketIndex out;
-#if ANKI_ENABLE_ASSERTIONS
 	out.m_technique = technique;
-#endif
 
 	LockGuard lock(m_mtx);
 
@@ -70,9 +68,9 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	return out;
 }
 
-void RenderStateBucketContainer::removeUser(RenderingTechnique technique, RenderStateBucketIndex& bucketIndex)
+void RenderStateBucketContainer::removeUser(RenderStateBucketIndex& bucketIndex)
 {
-	if(bucketIndex.m_index == kMaxU32)
+	if(!bucketIndex.isValid())
 	{
 		return;
 	}
@@ -80,10 +78,9 @@ void RenderStateBucketContainer::removeUser(RenderingTechnique technique, Render
 	{
 		LockGuard lock(m_mtx);
 
-		ANKI_ASSERT(bucketIndex.m_index < m_buckets[technique].getSize());
-		ANKI_ASSERT(bucketIndex.m_technique == technique);
+		ANKI_ASSERT(bucketIndex.m_index < m_buckets[bucketIndex.m_technique].getSize());
 
-		ExtendedBucket& bucket = m_buckets[technique][bucketIndex.m_index];
+		ExtendedBucket& bucket = m_buckets[bucketIndex.m_technique][bucketIndex.m_index];
 		ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated());
 
 		--bucket.m_userCount;
@@ -95,7 +92,7 @@ void RenderStateBucketContainer::removeUser(RenderingTechnique technique, Render
 		}
 	}
 
-	bucketIndex = {};
+	bucketIndex.invalidate();
 }
 
 } // end namespace anki
