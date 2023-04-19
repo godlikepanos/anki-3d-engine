@@ -123,7 +123,7 @@ void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSi
 {
 	ANKI_ASSERT(m_builder == nullptr);
 	ANKI_ASSERT(initialSize > 0 && alignment > 0);
-	ANKI_ASSERT(nextChunkGrowScale >= 1.0 && nextChunkGrowBias > 0);
+	ANKI_ASSERT(nextChunkGrowScale >= 1.0);
 
 	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
 	BuilderInterface& inter = m_builder->getInterface();

@@ -7,6 +7,7 @@
 
 #include <AnKi/Scene/Common.h>
 #include <AnKi/Resource/RenderingKey.h>
+#include <AnKi/Gr/ShaderProgram.h>
 
 namespace anki {
 

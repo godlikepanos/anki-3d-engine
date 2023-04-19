@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Common.h>
-#include <AnKi/Core/GpuMemoryPools.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 

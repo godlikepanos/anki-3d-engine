@@ -16,16 +16,16 @@ Renderer& RendererObject::getRenderer()
 	return MainRenderer::getSingleton().getOffscreenRenderer();
 }
 
-void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token)
+void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarAllocation& token)
 {
-	return RebarStagingGpuMemoryPool::getSingleton().allocateFrame(size, token);
+	return RebarTransientMemoryPool::getSingleton().allocateFrame(size, token);
 }
 
-void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const
+void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarAllocation& token) const
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindUniformBuffer(set, binding, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
+		cmdb->bindUniformBuffer(set, binding, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset,
 								token.m_range);
 	}
 	else
@@ -35,11 +35,11 @@ void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, 
 	}
 }
 
-void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const
+void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarAllocation& token) const
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindStorageBuffer(set, binding, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
+		cmdb->bindStorageBuffer(set, binding, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset,
 								token.m_range);
 	}
 	else

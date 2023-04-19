@@ -6,16 +6,16 @@
 #include <AnKi/Renderer/DebugDrawer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/GpuMemoryPools.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Gr/Buffer.h>
 
 namespace anki {
 
-void allocateAndPopulateDebugBox(RebarGpuMemoryToken& vertsToken, RebarGpuMemoryToken& indicesToken, U32& indexCount)
+void allocateAndPopulateDebugBox(RebarAllocation& vertsToken, RebarAllocation& indicesToken, U32& indexCount)
 {
 	Vec3* verts =
-		static_cast<Vec3*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Vec3) * 8, vertsToken));
+		static_cast<Vec3*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Vec3) * 8, vertsToken));
 
 	constexpr F32 kSize = 1.0f;
 	verts[0] = Vec3(kSize, kSize, kSize); // front top right
@@ -29,7 +29,7 @@ void allocateAndPopulateDebugBox(RebarGpuMemoryToken& vertsToken, RebarGpuMemory
 
 	constexpr U kIndexCount = 12 * 2;
 	U16* indices = static_cast<U16*>(
-		RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(U16) * kIndexCount, indicesToken));
+		RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U16) * kIndexCount, indicesToken));
 
 	U c = 0;
 	indices[c++] = 0;
@@ -140,9 +140,9 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 							 F32 cubeSideSize, CommandBufferPtr& cmdb) const
 {
 	// Set the uniforms
-	RebarGpuMemoryToken unisToken;
+	RebarAllocation unisToken;
 	Mat4* pmvps = static_cast<Mat4*>(
-		RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Mat4) * mvps.getSize(), unisToken));
+		RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Mat4) * mvps.getSize(), unisToken));
 
 	if(cubeSideSize == 2.0f)
 	{
@@ -167,7 +167,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer, 0, sizeof(Vec3));
 	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::kU16);
 
-	cmdb->bindStorageBuffer(0, 0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), unisToken.m_offset,
+	cmdb->bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset,
 							unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
@@ -182,15 +182,15 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	ANKI_ASSERT(linePositions.getSize() > 0 && (linePositions.getSize() % 2) == 0);
 
 	// Verts
-	RebarGpuMemoryToken vertsToken;
+	RebarAllocation vertsToken;
 	Vec3* verts = static_cast<Vec3*>(
-		RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Vec3) * linePositions.getSize(), vertsToken));
+		RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Vec3) * linePositions.getSize(), vertsToken));
 	memcpy(verts, linePositions.getBegin(), linePositions.getSizeInBytes());
 
 	// Set the uniforms
-	RebarGpuMemoryToken unisToken;
+	RebarAllocation unisToken;
 	Mat4* pmvps = static_cast<Mat4*>(
-		RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Mat4) * mvps.getSize(), unisToken));
+		RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Mat4) * mvps.getSize(), unisToken));
 	memcpy(pmvps, &mvps[0], mvps.getSizeInBytes());
 
 	// Setup state
@@ -204,9 +204,9 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	cmdb->setPushConstants(&color, sizeof(color));
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
-	cmdb->bindVertexBuffer(0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(Vec3));
+	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(Vec3));
 
-	cmdb->bindStorageBuffer(0, 0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), unisToken.m_offset,
+	cmdb->bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset,
 							unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
@@ -217,17 +217,17 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 										 const Vec4& color, Bool ditherFailedDepth, TextureViewPtr tex,
 										 SamplerPtr sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const
 {
-	RebarGpuMemoryToken positionsToken;
+	RebarAllocation positionsToken;
 	Vec3* verts =
-		static_cast<Vec3*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Vec3) * 4, positionsToken));
+		static_cast<Vec3*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Vec3) * 4, positionsToken));
 
 	verts[0] = Vec3(-0.5f, -0.5f, 0.0f);
 	verts[1] = Vec3(+0.5f, -0.5f, 0.0f);
 	verts[2] = Vec3(-0.5f, +0.5f, 0.0f);
 	verts[3] = Vec3(+0.5f, +0.5f, 0.0f);
 
-	RebarGpuMemoryToken uvsToken;
-	Vec2* uvs = static_cast<Vec2*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Vec2) * 4, uvsToken));
+	RebarAllocation uvsToken;
+	Vec2* uvs = static_cast<Vec2*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Vec2) * 4, uvsToken));
 
 	uvs[0] = Vec2(0.0f, 0.0f);
 	uvs[1] = Vec2(1.0f, 0.0f);
@@ -235,9 +235,9 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	uvs[3] = Vec2(1.0f, 1.0f);
 
 	// Set the uniforms
-	RebarGpuMemoryToken unisToken;
+	RebarAllocation unisToken;
 	Mat4* pmvps = static_cast<Mat4*>(
-		RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Mat4) * positions.getSize(), unisToken));
+		RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Mat4) * positions.getSize(), unisToken));
 
 	const Mat4 camTrf = Mat4(viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f)).getInverse();
 	const Vec3 zAxis = camTrf.getZAxis().xyz().getNormalized();
@@ -272,11 +272,11 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->setVertexAttribute(1, 1, Format::kR32G32_Sfloat, 0);
-	cmdb->bindVertexBuffer(0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), positionsToken.m_offset,
+	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), positionsToken.m_offset,
 						   sizeof(Vec3));
-	cmdb->bindVertexBuffer(1, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), uvsToken.m_offset, sizeof(Vec2));
+	cmdb->bindVertexBuffer(1, RebarTransientMemoryPool::getSingleton().getBuffer(), uvsToken.m_offset, sizeof(Vec2));
 
-	cmdb->bindStorageBuffer(0, 0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), unisToken.m_offset,
+	cmdb->bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset,
 							unisToken.m_range);
 	cmdb->bindSampler(0, 3, sampler);
 	cmdb->bindTexture(0, 4, tex);

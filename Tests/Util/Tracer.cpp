@@ -12,7 +12,7 @@
 ANKI_TEST(Util, Tracer)
 {
 	HeapMemoryPool alloc(allocAligned, nullptr);
-	CoreTracer::allocateSingleton().init("./");
+	ANKI_TEST_EXPECT_NO_ERR(CoreTracer::allocateSingleton().init("./"));
 	Tracer::getSingleton().setEnabled(true);
 
 	// 1st frame

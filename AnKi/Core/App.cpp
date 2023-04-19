@@ -6,6 +6,7 @@
 
 #include <AnKi/Core/App.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
@@ -14,6 +15,8 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/CoreTracer.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/DeveloperConsole.h>
 #include <AnKi/Core/StatsUi.h>
 #include <AnKi/Window/NativeWindow.h>
@@ -27,7 +30,6 @@
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Canvas.h>
 #include <csignal>
@@ -128,7 +130,8 @@ void App::cleanup()
 	GpuSceneMicroPatcher::freeSingleton();
 	ResourceManager::freeSingleton();
 	PhysicsWorld::freeSingleton();
-	RebarStagingGpuMemoryPool::freeSingleton();
+	RebarTransientMemoryPool::freeSingleton();
+	GpuVisibleTransientMemoryPool::freeSingleton();
 	UnifiedGeometryBuffer::freeSingleton();
 	GpuSceneBuffer::freeSingleton();
 	CoreThreadHive::freeSingleton();
@@ -284,7 +287,8 @@ Error App::initInternal()
 	//
 	UnifiedGeometryBuffer::allocateSingleton().init();
 	GpuSceneBuffer::allocateSingleton().init();
-	RebarStagingGpuMemoryPool::allocateSingleton().init();
+	RebarTransientMemoryPool::allocateSingleton().init();
+	GpuVisibleTransientMemoryPool::allocateSingleton();
 
 	//
 	// Physics
@@ -466,9 +470,10 @@ Error App::mainLoop()
 				grTime = HighRezTimer::getCurrentTime() - grTime;
 			}
 
-			const PtrSize rebarMemUsed = RebarStagingGpuMemoryPool::getSingleton().endFrame();
+			const PtrSize rebarMemUsed = RebarTransientMemoryPool::getSingleton().endFrame();
 			UnifiedGeometryBuffer::getSingleton().endFrame();
 			GpuSceneBuffer::getSingleton().endFrame();
+			GpuVisibleTransientMemoryPool::getSingleton().endFrame();
 
 			// Update the trace info with some async loader stats
 			U64 asyncTaskCount = ResourceManager::getSingleton().getAsyncLoader().getCompletedTaskCount();

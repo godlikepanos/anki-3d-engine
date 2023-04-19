@@ -15,14 +15,14 @@
 namespace anki {
 
 // Forward
-class RebarStagingGpuMemoryPool;
-class RebarGpuMemoryToken;
+class RebarTransientMemoryPool;
+class RebarAllocation;
 
 /// @addtogroup renderer
 /// @{
 
 /// Allocate memory for a line cube and populate it.
-void allocateAndPopulateDebugBox(RebarGpuMemoryToken& vertsToken, RebarGpuMemoryToken& indicesToken, U32& indexCount);
+void allocateAndPopulateDebugBox(RebarAllocation& vertsToken, RebarAllocation& indicesToken, U32& indexCount);
 
 /// Debug drawer.
 class DebugDrawer2

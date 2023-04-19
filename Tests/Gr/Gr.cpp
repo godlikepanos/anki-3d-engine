@@ -10,8 +10,8 @@
 #include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Window/Input.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 #include <AnKi/Collision/Aabb.h>
@@ -231,7 +231,7 @@ void main()
 
 static NativeWindow* g_win = nullptr;
 static GrManager* g_gr = nullptr;
-static RebarStagingGpuMemoryPool* stagingMem = nullptr;
+static RebarTransientMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
@@ -245,8 +245,8 @@ static Input* input = nullptr;
 	g_win = createWindow(cfg); \
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init()); \
 	g_gr = createGrManager(g_win); \
-	RebarStagingGpuMemoryPool::allocateSingleton().init(); \
-	stagingMem = &RebarStagingGpuMemoryPool::getSingleton(); \
+	RebarTransientMemoryPool::allocateSingleton().init(); \
+	stagingMem = &RebarTransientMemoryPool::getSingleton(); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB)); \
 	while(true) \
@@ -257,7 +257,7 @@ static Input* input = nullptr;
 	} \
 	g_gr->finish(); \
 	delete transfAlloc; \
-	RebarStagingGpuMemoryPool::freeSingleton(); \
+	RebarTransientMemoryPool::freeSingleton(); \
 	GrManager::freeSingleton(); \
 	Input::freeSingleton(); \
 	NativeWindow::freeSingleton(); \
@@ -267,7 +267,7 @@ static Input* input = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	RebarGpuMemoryToken token;
+	RebarAllocation token;
 	void* ptr = stagingMem->allocateFrame(size, token);
 	cmdb->bindUniformBuffer(set, binding, stagingMem->getBuffer(), token.m_offset, token.m_range);
 	return ptr;
@@ -275,7 +275,7 @@ static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 bind
 
 static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	RebarGpuMemoryToken token;
+	RebarAllocation token;
 	void* ptr = stagingMem->allocateFrame(size, token);
 	cmdb->bindStorageBuffer(set, binding, stagingMem->getBuffer(), token.m_offset, token.m_range);
 	return ptr;

@@ -11,6 +11,9 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 
@@ -36,9 +39,9 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 
 	// Allocate, set and bind global uniforms
 	{
-		RebarGpuMemoryToken globalUniformsToken;
+		RebarAllocation globalUniformsToken;
 		MaterialGlobalUniforms* globalUniforms =
-			static_cast<MaterialGlobalUniforms*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(
+			static_cast<MaterialGlobalUniforms*>(RebarTransientMemoryPool::getSingleton().allocateFrame(
 				sizeof(MaterialGlobalUniforms), globalUniformsToken));
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
@@ -49,7 +52,7 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
 		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
-								RebarStagingGpuMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset,
+								RebarTransientMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset,
 								globalUniformsToken.m_range);
 	}
 
@@ -87,9 +90,9 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
 	// Instance buffer
-	RebarGpuMemoryToken token;
+	RebarAllocation token;
 	GpuSceneRenderablePacked* instances =
-		static_cast<GpuSceneRenderablePacked*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(
+		static_cast<GpuSceneRenderablePacked*>(RebarTransientMemoryPool::getSingleton().allocateFrame(
 			sizeof(GpuSceneRenderablePacked) * ctx.m_cachedRenderElementCount, token));
 	for(U32 i = 0; i < ctx.m_cachedRenderElementCount; ++i)
 	{
@@ -101,7 +104,7 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 		instances[i] = packGpuSceneRenderable(renderable);
 	}
 
-	cmdb->bindVertexBuffer(0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset,
+	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset,
 						   sizeof(GpuSceneRenderablePacked), VertexStepRate::kInstance);
 
 	// Set state

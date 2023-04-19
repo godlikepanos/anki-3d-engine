@@ -10,7 +10,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
-#include <AnKi/Core/GpuMemoryPools.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 
 namespace anki {
 
@@ -39,7 +39,7 @@ public:
 protected:
 	static ANKI_PURE Renderer& getRenderer();
 
-	void* allocateRebarStagingMemory(PtrSize size, RebarGpuMemoryToken& token);
+	void* allocateRebarStagingMemory(PtrSize size, RebarAllocation& token);
 
 	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
 
@@ -68,34 +68,34 @@ protected:
 	}
 
 	template<typename TPtr>
-	TPtr allocateUniforms(PtrSize size, RebarGpuMemoryToken& token)
+	TPtr allocateUniforms(PtrSize size, RebarAllocation& token)
 	{
 		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
 
-	void bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const;
+	void bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
 
 	template<typename TPtr>
 	TPtr allocateAndBindUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 	{
-		RebarGpuMemoryToken token;
+		RebarAllocation token;
 		TPtr ptr = allocateUniforms<TPtr>(size, token);
 		bindUniforms(cmdb, set, binding, token);
 		return ptr;
 	}
 
 	template<typename TPtr>
-	TPtr allocateStorage(PtrSize size, RebarGpuMemoryToken& token)
+	TPtr allocateStorage(PtrSize size, RebarAllocation& token)
 	{
 		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
 
-	void bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarGpuMemoryToken& token) const;
+	void bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
 
 	template<typename TPtr>
 	TPtr allocateAndBindStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 	{
-		RebarGpuMemoryToken token;
+		RebarAllocation token;
 		TPtr ptr = allocateStorage<TPtr>(size, token);
 		bindStorage(cmdb, set, binding, token);
 		return ptr;

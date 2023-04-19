@@ -5,10 +5,10 @@
 
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
 #include <AnKi/Window.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 
 using namespace anki;
 
@@ -71,7 +71,7 @@ ANKI_TEST(Ui, Ui)
 	createResourceManager(gr);
 	UiManager* ui = &UiManager::allocateSingleton();
 
-	RebarStagingGpuMemoryPool::allocateSingleton().init();
+	RebarTransientMemoryPool::allocateSingleton().init();
 
 	ANKI_TEST_EXPECT_NO_ERR(ui->init(allocAligned, nullptr));
 
@@ -137,7 +137,7 @@ ANKI_TEST(Ui, Ui)
 			cmdb->flush();
 
 			gr->swapBuffers();
-			RebarStagingGpuMemoryPool::getSingleton().endFrame();
+			RebarTransientMemoryPool::getSingleton().endFrame();
 
 			timer.stop();
 			const F32 TICK = 1.0f / 30.0f;
@@ -149,7 +149,7 @@ ANKI_TEST(Ui, Ui)
 	}
 
 	UiManager::freeSingleton();
-	RebarStagingGpuMemoryPool::freeSingleton();
+	RebarTransientMemoryPool::freeSingleton();
 	ResourceManager::freeSingleton();
 	GrManager::freeSingleton();
 	Input::freeSingleton();

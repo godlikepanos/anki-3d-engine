@@ -86,7 +86,7 @@ class GenericGpuComputeJobQueueElementContext final : public RenderingMatrices
 {
 public:
 	CommandBufferPtr m_commandBuffer;
-	RebarStagingGpuMemoryPool* m_rebarStagingPool ANKI_DEBUG_CODE(= nullptr);
+	class RebarTransientMemoryPool* m_rebarStagingPool ANKI_DEBUG_CODE(= nullptr);
 };
 
 /// Callback for GenericGpuComputeJobQueueElement.

@@ -13,6 +13,7 @@
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>

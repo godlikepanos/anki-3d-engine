@@ -32,7 +32,7 @@ void GenericCompute::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	GenericGpuComputeJobQueueElementContext elementCtx;
 	elementCtx.m_commandBuffer = rgraphCtx.m_commandBuffer;
-	elementCtx.m_rebarStagingPool = &RebarStagingGpuMemoryPool::getSingleton();
+	elementCtx.m_rebarStagingPool = &RebarTransientMemoryPool::getSingleton();
 	elementCtx.m_viewMatrix = ctx.m_matrices.m_view;
 	elementCtx.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
 	elementCtx.m_projectionMatrix = ctx.m_matrices.m_projection;

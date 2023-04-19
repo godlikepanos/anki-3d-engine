@@ -10,7 +10,6 @@
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Collision/Forward.h>
 
 namespace anki {

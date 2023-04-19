@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma once
+
 #include <AnKi/Util/SegregatedListsAllocatorBuilder.h>
 #include <AnKi/Gr/Buffer.h>
 

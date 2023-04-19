@@ -17,6 +17,8 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 
@@ -450,15 +452,15 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	// Allocate, set and bind global uniforms
 	{
-		RebarGpuMemoryToken globalUniformsToken;
+		RebarAllocation globalUniformsToken;
 		MaterialGlobalUniforms* globalUniforms =
-			static_cast<MaterialGlobalUniforms*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(
+			static_cast<MaterialGlobalUniforms*>(RebarTransientMemoryPool::getSingleton().allocateFrame(
 				sizeof(MaterialGlobalUniforms), globalUniformsToken));
 
 		memset(globalUniforms, 0, sizeof(*globalUniforms)); // Don't care for now
 
 		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
-								RebarStagingGpuMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset,
+								RebarTransientMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset,
 								globalUniformsToken.m_range);
 	}
 
@@ -643,10 +645,10 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 	m_runCtx.m_hitGroupCount = instanceCount;
 
 	// Allocate SBT
-	RebarGpuMemoryToken token;
+	RebarAllocation token;
 	U8* sbt = allocateStorage<U8*>(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token);
 	[[maybe_unused]] const U8* sbtStart = sbt;
-	m_runCtx.m_sbtBuffer = RebarStagingGpuMemoryPool::getSingleton().getBuffer();
+	m_runCtx.m_sbtBuffer = RebarTransientMemoryPool::getSingleton().getBuffer();
 	m_runCtx.m_sbtOffset = token.m_offset;
 
 	// Set the miss and ray gen handles

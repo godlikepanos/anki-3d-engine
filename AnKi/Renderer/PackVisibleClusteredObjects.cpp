@@ -9,6 +9,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 
@@ -62,10 +63,10 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		return;
 	}
 
-	RebarGpuMemoryToken token;
+	RebarAllocation token;
 	U32* indices = allocateStorage<U32*>(array.getSize() * sizeof(U32), token);
 
-	RebarGpuMemoryToken extrasToken;
+	RebarAllocation extrasToken;
 	PointLightExtra* plightExtras = nullptr;
 	SpotLightExtra* slightExtras = nullptr;
 	if constexpr(std::is_same_v<TClustererType, PointLight>)
@@ -117,11 +118,11 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects, m_structureBufferOffsets[kType],
 							array.getSize() * sizeof(TClustererType));
 
-	cmdb->bindStorageBuffer(0, 2, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
+	cmdb->bindStorageBuffer(0, 2, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
 
 	if constexpr(std::is_same_v<TClustererType, PointLight> || std::is_same_v<TClustererType, SpotLight>)
 	{
-		cmdb->bindStorageBuffer(0, 3, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset,
+		cmdb->bindStorageBuffer(0, 3, RebarTransientMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset,
 								extrasToken.m_range);
 	}
 

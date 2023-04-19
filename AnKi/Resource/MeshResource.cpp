@@ -7,7 +7,6 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshBinaryLoader.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 

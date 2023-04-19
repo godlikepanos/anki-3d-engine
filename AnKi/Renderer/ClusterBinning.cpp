@@ -55,9 +55,9 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	writeClustererBuffers(ctx);
 
-	m_runCtx.m_rebarHandle = ctx.m_renderGraphDescr.importBuffer(
-		RebarStagingGpuMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone, m_runCtx.m_clustersToken.m_offset,
-		m_runCtx.m_clustersToken.m_range);
+	m_runCtx.m_rebarHandle =
+		ctx.m_renderGraphDescr.importBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+											m_runCtx.m_clustersToken.m_offset, m_runCtx.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
 	if(rqueue.m_pointLights.getSize() == 0 && rqueue.m_spotLights.getSize() == 0 && rqueue.m_decals.getSize() == 0
@@ -149,9 +149,9 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 	}
 
 	// Allocate buffers
-	RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(ClusteredShadingUniforms),
-															m_runCtx.m_clusteredShadingUniformsToken);
-	RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Cluster) * m_clusterCount, m_runCtx.m_clustersToken);
+	RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(ClusteredShadingUniforms),
+														   m_runCtx.m_clusteredShadingUniformsToken);
+	RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Cluster) * m_clusterCount, m_runCtx.m_clustersToken);
 }
 
 void ClusterBinning::writeClusterBuffersAsync()
@@ -174,7 +174,7 @@ void ClusterBinning::writeClustererBuffersTask()
 	// General uniforms
 	{
 		ClusteredShadingUniforms& unis = *reinterpret_cast<ClusteredShadingUniforms*>(
-			RebarStagingGpuMemoryPool::getSingleton().getBufferMappedAddress()
+			RebarTransientMemoryPool::getSingleton().getBufferMappedAddress()
 			+ m_runCtx.m_clusteredShadingUniformsToken.m_offset);
 
 		unis.m_renderingSize =
@@ -249,7 +249,7 @@ void ClusterBinning::writeClustererBuffersTask()
 
 	// Zero the memory because atomics will happen
 	U8* clustersAddress =
-		RebarStagingGpuMemoryPool::getSingleton().getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
+		RebarTransientMemoryPool::getSingleton().getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
 	memset(clustersAddress, 0, sizeof(Cluster) * m_clusterCount);
 }
 
