@@ -1,0 +1,87 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/CollisionFunctions.hlsl>
+
+[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
+[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
+
+[[vk::binding(2)]] Texture2D<U32> g_hiZTex;
+
+// These 2 have the same size
+[[vk::binding(3)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
+[[vk::binding(4)]] RWStructuredBuffer<DrawIndexedIndirectInfo> g_drawIndexedIndirects;
+
+// Index pointing to the above arrays. Its size is equal to the number of render state buckets
+[[vk::binding(5)]] RWStructuredBuffer<U32> g_drawIndirectOffset;
+
+[[vk::binding(6)]] ByteAddressBuffer g_gpuScene;
+
+struct Uniforms
+{
+	Vec4 m_clipPlanes[6u];
+
+	UVec3 m_padding;
+	U32 m_renderableCount;
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+
+[numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 aabbIdx = svDispatchThreadId.x;
+	if(aabbIdx >= g_unis.m_renderableCount)
+	{
+		return;
+	}
+
+	const GpuSceneRenderableAabb aabb = g_aabbs[aabbIdx];
+
+	// Frustum test
+	//
+	Bool behindAtLeastOnePlane = false;
+	[unroll] for(U32 i = 0; i < 6; ++i)
+	{
+		const Bool behind =
+			testPlaneAabb(g_unis.m_clipPlanes[i].xyz, g_unis.m_clipPlanes[i].w, aabb.m_aabbMin, aabb.m_aabbMax) < 0.0;
+		behindAtLeastOnePlane = behindAtLeastOnePlane || behind;
+	}
+
+	if(behindAtLeastOnePlane)
+	{
+		return;
+	}
+
+	// TODO HiZ testing
+
+	// TODO LOD selection
+	const U32 lod = 0;
+
+	// Add the drawcall
+	//
+	U32 indirectIdx;
+	InterlockedAdd(g_drawIndirectOffset[aabb.m_renderStateBucket], 1, indirectIdx);
+
+	const GpuSceneRenderable renderableIn = g_renderables[aabb.m_renderableIndex];
+	const GpuSceneMeshLod meshLod =
+		g_gpuScene.Load<GpuSceneMeshLod>(renderableIn.m_geometryOffset + sizeof(GpuSceneMeshLod) * lod);
+
+	DrawIndexedIndirectInfo indirect;
+	indirect.m_indexCount = meshLod.m_indexCount;
+	indirect.m_instanceCount = 1;
+	indirect.m_firstIndex = meshLod.m_indexBufferOffset / 2;
+	indirect.m_vertexOffset = 0;
+	indirect.m_firstInstance = indirectIdx;
+	g_drawIndexedIndirects[indirectIdx] = indirect;
+
+	GpuSceneRenderable renderableOut = renderableIn;
+	renderableOut.m_geometryOffset += sizeof(GpuSceneMeshLod) * lod;
+	g_instanceRateRenderables[indirectIdx] = renderableOut;
+}
+
+#pragma anki end

@@ -25,7 +25,7 @@ typedef UVec4 GpuSceneRenderablePacked;
 struct GpuSceneRenderableAabb
 {
 	Vec3 m_aabbMin;
-	U32 m_renderableOffset; ///< Points to a GpuSceneRenderable
+	U32 m_renderableIndex; ///< Points to a GpuSceneRenderable
 
 	Vec3 m_aabbMax;
 	U32 m_renderStateBucket;

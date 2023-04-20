@@ -314,7 +314,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			GpuSceneRenderableAabb gpuVolume;
 			gpuVolume.m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
 			gpuVolume.m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
-			gpuVolume.m_renderableOffset = m_patchInfos[i].m_gpuSceneIndexRenderable.getOffsetInGpuScene();
+			gpuVolume.m_renderableIndex = m_patchInfos[i].m_gpuSceneIndexRenderable.get();
 
 			for(RenderingTechnique t :
 				EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques))

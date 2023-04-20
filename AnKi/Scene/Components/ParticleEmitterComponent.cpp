@@ -384,7 +384,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		GpuSceneRenderableAabb aabb;
 		aabb.m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
 		aabb.m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
-		aabb.m_renderableOffset = m_gpuSceneIndexRenderable.getOffsetInGpuScene();
+		aabb.m_renderableIndex = m_gpuSceneIndexRenderable.get();
 		aabb.m_renderStateBucket = m_renderStateBuckets[t].get();
 		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexAabbs[t].getOffsetInGpuScene(), aabb);
 	}

@@ -15,6 +15,8 @@ RenderStateBucketContainer::~RenderStateBucketContainer()
 		{
 			ANKI_ASSERT(!b.m_program.isCreated() && b.m_userCount == 0);
 		}
+
+		ANKI_ASSERT(m_bucketItemCount[t] == 0);
 	}
 }
 
@@ -33,6 +35,8 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	out.m_technique = technique;
 
 	LockGuard lock(m_mtx);
+
+	++m_bucketItemCount[technique];
 
 	// Search bucket
 	for(U32 i = 0; i < buckets.getSize(); ++i)
@@ -79,6 +83,8 @@ void RenderStateBucketContainer::removeUser(RenderStateBucketIndex& bucketIndex)
 		LockGuard lock(m_mtx);
 
 		ANKI_ASSERT(bucketIndex.m_index < m_buckets[bucketIndex.m_technique].getSize());
+
+		--m_bucketItemCount[bucketIndex.m_technique];
 
 		ExtendedBucket& bucket = m_buckets[bucketIndex.m_technique][bucketIndex.m_index];
 		ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated());

@@ -130,3 +130,19 @@ F32 testPlanePoint(Vec3 planeNormal, F32 planeOffset, Vec3 point3d)
 {
 	return dot(planeNormal, point3d) - planeOffset;
 }
+
+F32 testPlaneAabb(Vec3 planeNormal, F32 planeOffset, Vec3 aabbMin, Vec3 aabbMax)
+{
+	const bool3 ge = planeNormal >= 0.0;
+	const Vec3 diagMin = select(aabbMin, aabbMax, ge);
+	const Vec3 diagMax = select(aabbMax, aabbMin, ge);
+
+	F32 test = testPlanePoint(planeNormal, planeOffset, diagMin);
+	if(test > 0.0)
+	{
+		return test;
+	}
+
+	test = testPlanePoint(planeNormal, planeOffset, diagMax);
+	return (test >= 0.0) ? 0.0 : test;
+}

@@ -80,13 +80,15 @@ class RenderStateBucketContainer : public MakeSingleton<RenderStateBucketContain
 
 public:
 	/// Add a new user for a specific render state and rendering technique.
+	/// @note It's thread-safe against addUser and removeUser
 	RenderStateBucketIndex addUser(const RenderStateInfo& state, RenderingTechnique technique);
 
 	/// Remove the user.
+	/// @note It's thread-safe against addUser and removeUser
 	void removeUser(RenderStateBucketIndex& bucketIndex);
 
 	template<typename TFunc>
-	void interateBuckets(RenderingTechnique technique, TFunc func) const
+	void iterateBuckets(RenderingTechnique technique, TFunc func) const
 	{
 		for(const ExtendedBucket& b : m_buckets[technique])
 		{
@@ -95,6 +97,17 @@ public:
 				func(static_cast<const RenderStateInfo&>(b));
 			}
 		}
+	}
+
+	/// Get the number of renderables of all the buckets of a specific rendering technique.
+	U32 getBucketsItemCount(RenderingTechnique technique) const
+	{
+		return m_bucketItemCount[technique];
+	}
+
+	U32 getBucketCount(RenderingTechnique technique) const
+	{
+		return m_buckets[technique].getSize();
 	}
 
 private:
@@ -106,6 +119,7 @@ private:
 	};
 
 	Array<SceneDynamicArray<ExtendedBucket>, U32(RenderingTechnique::kCount)> m_buckets;
+	Array<U32, U32(RenderingTechnique::kCount)> m_bucketItemCount = {};
 	Mutex m_mtx;
 
 	RenderStateBucketContainer() = default;
