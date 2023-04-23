@@ -12,9 +12,10 @@ inline void RenderPassWorkContext::bindAccelerationStructure(U32 set, U32 bindin
 	m_commandBuffer->bindAccelerationStructure(set, binding, m_rgraph->getAs(handle));
 }
 
-inline void RenderPassWorkContext::getBufferState(BufferHandle handle, BufferPtr& buff) const
+inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset,
+												  PtrSize& range) const
 {
-	buff = m_rgraph->getBuffer(handle);
+	m_rgraph->getCachedBuffer(handle, buff, offset, range);
 }
 
 inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle,

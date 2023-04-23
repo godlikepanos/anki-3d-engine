@@ -94,7 +94,7 @@ public:
 		{
 			if(b.m_userCount > 0)
 			{
-				func(static_cast<const RenderStateInfo&>(b));
+				func(static_cast<const RenderStateInfo&>(b), b.m_userCount);
 			}
 		}
 	}

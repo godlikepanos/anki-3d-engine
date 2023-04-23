@@ -211,8 +211,8 @@ private:
 		sizeof(GpuSceneDecal),
 		sizeof(GpuSceneFogDensityVolume),
 		sizeof(GpuSceneRenderable),
-		sizeof(GpuSceneRenderable),
-		sizeof(GpuSceneRenderable),
+		sizeof(GpuSceneRenderableAabb),
+		sizeof(GpuSceneRenderableAabb),
 		sizeof(GpuSceneRenderableAabb)};
 
 	AllGpuSceneContiguousArrays();

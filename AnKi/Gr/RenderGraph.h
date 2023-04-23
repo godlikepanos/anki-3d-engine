@@ -121,7 +121,7 @@ public:
 	U32 m_currentSecondLevelCommandBufferIndex ANKI_DEBUG_CODE(= 0);
 	U32 m_secondLevelCommandBufferCount ANKI_DEBUG_CODE(= 0);
 
-	void getBufferState(BufferHandle handle, BufferPtr& buff) const;
+	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 
 	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
 							  TexturePtr& tex) const;
@@ -206,17 +206,19 @@ public:
 	/// Convenience method.
 	void bindStorageBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
-		BufferPtr buff;
-		getBufferState(handle, buff);
-		m_commandBuffer->bindStorageBuffer(set, binding, buff, 0, kMaxPtrSize);
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindStorageBuffer(set, binding, BufferPtr(buff), offset, range);
 	}
 
 	/// Convenience method.
 	void bindUniformBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
-		BufferPtr buff;
-		getBufferState(handle, buff);
-		m_commandBuffer->bindUniformBuffer(set, binding, buff, 0, kMaxPtrSize);
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindUniformBuffer(set, binding, BufferPtr(buff), offset, range);
 	}
 
 	/// Convenience method.
@@ -685,7 +687,7 @@ private:
 	class Pass;
 	class Batch;
 	class RT;
-	class Buffer;
+	class BufferRange;
 	class AS;
 	class TextureBarrier;
 	class BufferBarrier;
@@ -764,7 +766,7 @@ private:
 	/// @}
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;
-	BufferPtr getBuffer(BufferHandle handle) const;
+	void getCachedBuffer(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 	AccelerationStructurePtr getAs(AccelerationStructureHandle handle) const;
 };
 /// @}

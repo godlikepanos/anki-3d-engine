@@ -102,6 +102,8 @@ protected:
 	}
 
 	void registerDebugRenderTarget(CString rtName);
+
+	static Error loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
 };
 /// @}
 

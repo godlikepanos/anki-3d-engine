@@ -14,6 +14,7 @@
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Math.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 
 namespace anki {
 
@@ -381,12 +382,11 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(
 			m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
 	{
-		GpuSceneRenderableAabb aabb;
-		aabb.m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
-		aabb.m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
-		aabb.m_renderableIndex = m_gpuSceneIndexRenderable.get();
-		aabb.m_renderStateBucket = m_renderStateBuckets[t].get();
-		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexAabbs[t].getOffsetInGpuScene(), aabb);
+		const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(
+			m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
+			m_gpuSceneIndexRenderable.get(), m_renderStateBuckets[t].get());
+
+		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexAabbs[t].getOffsetInGpuScene(), gpuVolume);
 	}
 
 	m_resourceUpdated = false;

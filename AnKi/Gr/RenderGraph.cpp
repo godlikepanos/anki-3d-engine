@@ -41,7 +41,7 @@ public:
 };
 
 /// Same as RT but for buffers.
-class RenderGraph::Buffer
+class RenderGraph::BufferRange
 {
 public:
 	BufferUsageBit m_usage;
@@ -177,7 +177,7 @@ public:
 	BitSet<kMaxRenderGraphPasses, U64> m_passIsInBatch{false};
 	DynamicArray<Batch, MemoryPoolPtrWrapper<StackMemoryPool>> m_batches;
 	DynamicArray<RT, MemoryPoolPtrWrapper<StackMemoryPool>> m_rts;
-	DynamicArray<Buffer, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers;
+	DynamicArray<BufferRange, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers;
 	DynamicArray<AS, MemoryPoolPtrWrapper<StackMemoryPool>> m_as;
 
 	DynamicArray<CommandBufferPtr, MemoryPoolPtrWrapper<StackMemoryPool>> m_graphicsCmdbs;
@@ -350,7 +350,7 @@ void RenderGraph::reset()
 		rt.m_texture.reset(nullptr);
 	}
 
-	for(Buffer& buff : m_ctx->m_buffers)
+	for(BufferRange& buff : m_ctx->m_buffers)
 	{
 		buff.m_buffer.reset(nullptr);
 	}
@@ -1246,10 +1246,12 @@ TexturePtr RenderGraph::getTexture(RenderTargetHandle handle) const
 	return m_ctx->m_rts[handle.m_idx].m_texture;
 }
 
-BufferPtr RenderGraph::getBuffer(BufferHandle handle) const
+void RenderGraph::getCachedBuffer(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const
 {
-	ANKI_ASSERT(m_ctx->m_buffers[handle.m_idx].m_buffer.isCreated());
-	return m_ctx->m_buffers[handle.m_idx].m_buffer;
+	const BufferRange& record = m_ctx->m_buffers[handle.m_idx];
+	buff = record.m_buffer.get();
+	offset = record.m_offset;
+	range = record.m_range;
 }
 
 AccelerationStructurePtr RenderGraph::getAs(AccelerationStructureHandle handle) const

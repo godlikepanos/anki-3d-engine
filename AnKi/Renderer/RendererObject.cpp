@@ -70,4 +70,14 @@ void RendererObject::registerDebugRenderTarget(CString rtName)
 	getRenderer().registerDebugRenderTarget(this, rtName);
 }
 
+Error RendererObject::loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg)
+{
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, rsrc));
+	const ShaderProgramResourceVariant* variant;
+	rsrc->getOrCreateVariant(variant);
+	grProg = variant->getProgram();
+
+	return Error::kNone;
+}
+
 } // end namespace anki

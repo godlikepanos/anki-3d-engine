@@ -19,7 +19,6 @@
 
 #	define ANKI_BEGIN_NAMESPACE namespace anki {
 #	define ANKI_END_NAMESPACE }
-#	define ANKI_SHADER_FUNC_INLINE inline
 
 #	define ANKI_ARRAY(type, size, name) Array<type, U32(size)> name
 
@@ -46,7 +45,8 @@ ANKI_END_NAMESPACE
 
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
-#	define ANKI_SHADER_FUNC_INLINE
+#	define inline
+#	define ANKI_ASSERT(x)
 
 #	define ANKI_ARRAY(type, size, name) type name[(U32)size]
 
@@ -386,7 +386,7 @@ constexpr F32 kPi = 3.14159265358979323846f;
 
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
-#	define ANKI_SHADER_FUNC_INLINE
+#	define inline
 
 #	define ANKI_SHADER_STATIC_ASSERT(cond_)
 

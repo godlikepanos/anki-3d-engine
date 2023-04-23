@@ -9,7 +9,7 @@
 
 ANKI_BEGIN_NAMESPACE
 
-ANKI_SHADER_FUNC_INLINE GpuSceneRenderablePacked packGpuSceneRenderable(GpuSceneRenderable x)
+inline GpuSceneRenderablePacked packGpuSceneRenderable(GpuSceneRenderable x)
 {
 	GpuSceneRenderablePacked o;
 	o[0] = x.m_worldTransformsOffset;
@@ -19,7 +19,7 @@ ANKI_SHADER_FUNC_INLINE GpuSceneRenderablePacked packGpuSceneRenderable(GpuScene
 	return o;
 }
 
-ANKI_SHADER_FUNC_INLINE GpuSceneRenderable unpackGpuSceneRenderable(GpuSceneRenderablePacked x)
+inline GpuSceneRenderable unpackGpuSceneRenderable(GpuSceneRenderablePacked x)
 {
 	GpuSceneRenderable o;
 	o.m_worldTransformsOffset = x[0];
@@ -27,6 +27,28 @@ ANKI_SHADER_FUNC_INLINE GpuSceneRenderable unpackGpuSceneRenderable(GpuSceneRend
 	o.m_geometryOffset = x[2];
 	o.m_boneTransformsOffset = x[3];
 	return o;
+}
+
+inline GpuSceneRenderableAabb initGpuSceneRenderableAabb(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex,
+														 U32 renderStateBucket)
+{
+	GpuSceneRenderableAabb gpuVolume;
+
+	gpuVolume.m_sphereCenter = (aabbMin + aabbMax) * 0.5f;
+	gpuVolume.m_aabbExtend = aabbMax - gpuVolume.m_sphereCenter;
+#if defined(__cplusplus)
+	gpuVolume.m_negativeSphereRadius = -gpuVolume.m_aabbExtend.getLength();
+#else
+	gpuVolume.m_negativeSphereRadius = -length(gpuVolume.m_aabbExtend);
+#endif
+
+	ANKI_ASSERT(renderableIndex <= (1u << 20u) - 1u);
+	gpuVolume.m_renderableIndexAndRenderStateBucket = renderableIndex << 12u;
+
+	ANKI_ASSERT(renderStateBucket <= (1u << 12u) - 1u);
+	gpuVolume.m_renderableIndexAndRenderStateBucket |= renderStateBucket;
+
+	return gpuVolume;
 }
 
 ANKI_END_NAMESPACE

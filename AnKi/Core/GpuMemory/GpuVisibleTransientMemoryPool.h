@@ -20,6 +20,7 @@ class GpuVisibleTransientMemoryAllocation
 public:
 	Buffer* m_buffer = nullptr;
 	PtrSize m_offset = kMaxPtrSize;
+	PtrSize m_size = 0;
 };
 
 /// GPU only transient memory. Used for temporary allocations. Allocations will get reset after each frame.
@@ -33,6 +34,7 @@ public:
 	{
 		GpuVisibleTransientMemoryAllocation out;
 		m_pool.allocate(size, out.m_offset, out.m_buffer);
+		out.m_size = size;
 		return out;
 	}
 

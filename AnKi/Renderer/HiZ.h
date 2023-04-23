@@ -20,6 +20,11 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
+	const RenderTargetHandle& getHiZRt() const
+	{
+		return m_runCtx.m_hiZRt;
+	}
+
 private:
 	RenderTargetDescription m_hiZRtDescr;
 

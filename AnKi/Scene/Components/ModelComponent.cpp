@@ -10,6 +10,7 @@
 #include <AnKi/Scene/Components/SkinComponent.h>
 #include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 
 namespace anki {
 
@@ -311,15 +312,13 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
-			GpuSceneRenderableAabb gpuVolume;
-			gpuVolume.m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
-			gpuVolume.m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
-			gpuVolume.m_renderableIndex = m_patchInfos[i].m_gpuSceneIndexRenderable.get();
-
 			for(RenderingTechnique t :
 				EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques))
 			{
-				gpuVolume.m_renderStateBucket = m_patchInfos[i].m_renderStateBucketIndices[t].get();
+				const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(
+					m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
+					m_patchInfos[i].m_gpuSceneIndexRenderable.get(),
+					m_patchInfos[i].m_renderStateBucketIndices[t].get());
 
 				GpuSceneMicroPatcher::getSingleton().newCopy(
 					*info.m_framePool, m_patchInfos[i].m_gpuSceneIndexRenderableAabbs[t].getOffsetInGpuScene(),

@@ -16,15 +16,22 @@ namespace anki {
 class GpuVisibility : public RendererObject
 {
 public:
-	Error init()
-	{
-		return Error::kNone;
-	}
+	Error init();
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
 private:
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
+
+	class
+	{
+	public:
+		BufferHandle m_instanceRateRenderables;
+		BufferHandle m_drawIndexedIndirects;
+		BufferHandle m_drawIndirectOffsets;
+	} m_runCtx;
 };
 /// @}
 

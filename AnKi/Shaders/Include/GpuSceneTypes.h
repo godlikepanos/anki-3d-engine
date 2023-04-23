@@ -24,12 +24,14 @@ typedef UVec4 GpuSceneRenderablePacked;
 /// Used in visibility testing.
 struct GpuSceneRenderableAabb
 {
-	Vec3 m_aabbMin;
-	U32 m_renderableIndex; ///< Points to a GpuSceneRenderable
+	Vec3 m_sphereCenter;
+	F32 m_negativeSphereRadius;
 
-	Vec3 m_aabbMax;
-	U32 m_renderStateBucket;
+	Vec3 m_aabbExtend;
+	/// High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx
+	U32 m_renderableIndexAndRenderStateBucket;
 };
+static_assert(sizeof(GpuSceneRenderableAabb) == sizeof(Vec4) * 2);
 
 struct GpuSceneMeshLod
 {
