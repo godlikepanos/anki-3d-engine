@@ -87,15 +87,13 @@ public:
 	/// @note It's thread-safe against addUser and removeUser
 	void removeUser(RenderStateBucketIndex& bucketIndex);
 
+	/// Iterate empty and non-empty buckets.
 	template<typename TFunc>
 	void iterateBuckets(RenderingTechnique technique, TFunc func) const
 	{
 		for(const ExtendedBucket& b : m_buckets[technique])
 		{
-			if(b.m_userCount > 0)
-			{
-				func(static_cast<const RenderStateInfo&>(b), b.m_userCount);
-			}
+			func(static_cast<const RenderStateInfo&>(b), b.m_userCount);
 		}
 	}
 

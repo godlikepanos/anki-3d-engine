@@ -27,7 +27,7 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
-	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getActiveBucketCount(RenderingTechnique::kGBuffer);
+	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kGBuffer);
 
 	// Allocate memory for the indirect commands
 	const GpuVisibleTransientMemoryAllocation indirectArgs =
@@ -82,15 +82,15 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 		rpass.bindStorageBuffer(0, 5, m_runCtx.m_drawIndexedIndirectArgs);
 
 		U32* offsets = allocateAndBindStorage<U32*>(
-			sizeof(U32) * RenderStateBucketContainer::getSingleton().getActiveBucketCount(RenderingTechnique::kGBuffer), cmdb, 0, 6);
-		U32 activeBucketCount = 0;
+			sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kGBuffer), cmdb, 0, 6);
+		U32 bucketCount = 0;
 		U32 userCount = 0;
 		RenderStateBucketContainer::getSingleton().iterateBuckets(RenderingTechnique::kGBuffer, [&](const RenderStateInfo&, U32 userCount_) {
-			offsets[activeBucketCount] = userCount;
+			offsets[bucketCount] = userCount;
 			userCount += userCount_;
-			++activeBucketCount;
+			++bucketCount;
 		});
-		ANKI_ASSERT(activeBucketCount == RenderStateBucketContainer::getSingleton().getActiveBucketCount(RenderingTechnique::kGBuffer));
+		ANKI_ASSERT(userCount == RenderStateBucketContainer::getSingleton().getBucketsItemCount(RenderingTechnique::kGBuffer));
 
 		rpass.bindStorageBuffer(0, 7, m_runCtx.m_mdiDrawCounts);
 

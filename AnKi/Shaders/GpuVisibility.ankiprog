@@ -19,9 +19,9 @@
 [[vk::binding(4)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
 [[vk::binding(5)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
 
-// Index pointing to the above arrays. Its size is equal to the number of render state buckets
+// Index pointing to the above arrays. One for each render state bucket
 [[vk::binding(6)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
-// The MDI counts
+// The MDI counts. One for each render state bucket
 [[vk::binding(7)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
 
 struct Uniforms
