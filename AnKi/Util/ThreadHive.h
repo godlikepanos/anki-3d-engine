@@ -40,8 +40,7 @@ private:
 
 /// The callback that defines a ThreadHibe task.
 /// @memberof ThreadHive
-using ThreadHiveTaskCallback = void (*)(void* userData, U32 threadId, ThreadHive& hive,
-										ThreadHiveSemaphore* signalSemaphore);
+using ThreadHiveTaskCallback = void (*)(void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 
 /// Task for the ThreadHive. @memberof ThreadHive
 class ThreadHiveTask
@@ -64,8 +63,7 @@ public:
 /// Initialize a ThreadHiveTask.
 #define ANKI_THREAD_HIVE_TASK(callback_, argument_, waitSemaphore_, signalSemaphore_) \
 	{ \
-		[](void* ud, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, \
-		   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) { \
+		[](void* ud, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) { \
 			[[maybe_unused]] auto self = static_cast<decltype(argument_)>(ud); \
 			callback_ \
 		}, \
@@ -98,8 +96,7 @@ public:
 	ThreadHiveSemaphore* newSemaphore(const U32 initialValue)
 	{
 		ANKI_ASSERT(initialValue > 0);
-		ThreadHiveSemaphore* sem = static_cast<ThreadHiveSemaphore*>(
-			m_pool.allocate(sizeof(ThreadHiveSemaphore), alignof(ThreadHiveSemaphore)));
+		ThreadHiveSemaphore* sem = static_cast<ThreadHiveSemaphore*>(m_pool.allocate(sizeof(ThreadHiveSemaphore), alignof(ThreadHiveSemaphore)));
 		sem->m_atomic.setNonAtomically(initialValue);
 		return sem;
 	}

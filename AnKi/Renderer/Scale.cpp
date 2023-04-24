@@ -68,18 +68,16 @@ Error Scale::init()
 	m_sharpenMethod = (needsSharpening) ? SharpenMethod::kRcas : SharpenMethod::kNone;
 	m_neeedsTonemapping = (m_upscalingMethod == UpscalingMethod::kGr); // Because GR upscaling spits HDR
 
-	static constexpr Array<const Char*, U32(UpscalingMethod::kCount)> upscalingMethodNames = {"none", "bilinear",
-																							  "FSR 1.0", "DLSS 2"};
+	static constexpr Array<const Char*, U32(UpscalingMethod::kCount)> upscalingMethodNames = {"none", "bilinear", "FSR 1.0", "DLSS 2"};
 	static constexpr Array<const Char*, U32(SharpenMethod::kCount)> sharpenMethodNames = {"none", "RCAS"};
 
-	ANKI_R_LOGV("Initializing upscaling. Upscaling method %s, sharpenning method %s",
-				upscalingMethodNames[m_upscalingMethod], sharpenMethodNames[m_sharpenMethod]);
+	ANKI_R_LOGV("Initializing upscaling. Upscaling method %s, sharpenning method %s", upscalingMethodNames[m_upscalingMethod],
+				sharpenMethodNames[m_sharpenMethod]);
 
 	// Scale programs
 	if(m_upscalingMethod == UpscalingMethod::kBilinear)
 	{
-		const CString shaderFname =
-			(preferCompute) ? "ShaderBinaries/BlitCompute.ankiprogbin" : "ShaderBinaries/BlitRaster.ankiprogbin";
+		const CString shaderFname = (preferCompute) ? "ShaderBinaries/BlitCompute.ankiprogbin" : "ShaderBinaries/BlitRaster.ankiprogbin";
 
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
 
@@ -89,8 +87,7 @@ Error Scale::init()
 	}
 	else if(m_upscalingMethod == UpscalingMethod::kFsr)
 	{
-		const CString shaderFname =
-			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin";
+		const CString shaderFname = (preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin";
 
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
 
@@ -116,8 +113,7 @@ Error Scale::init()
 	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
-			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin",
-			m_sharpenProg));
+			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin", m_sharpenProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
 		variantInitInfo.addMutation("SHARPEN", 1);
 		variantInitInfo.addMutation("FSR_QUALITY", 0);
@@ -130,8 +126,7 @@ Error Scale::init()
 	if(m_neeedsTonemapping)
 	{
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
-			(preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin" : "ShaderBinaries/TonemapRaster.ankiprogbin",
-			m_tonemapProg));
+			(preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin" : "ShaderBinaries/TonemapRaster.ankiprogbin", m_tonemapProg));
 		const ShaderProgramResourceVariant* variant;
 		m_tonemapProg->getOrCreateVariant(variant);
 		m_tonemapGrProg = variant->getProgram();
@@ -152,18 +147,16 @@ Error Scale::init()
 		format = Format::kR8G8B8A8_Unorm;
 	}
 
-	m_upscaleAndSharpenRtDescr = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), format, "Scaling");
+	m_upscaleAndSharpenRtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getPostProcessResolution().x(),
+																			   getRenderer().getPostProcessResolution().y(), format, "Scaling");
 	m_upscaleAndSharpenRtDescr.bake();
 
 	if(m_neeedsTonemapping)
 	{
-		const Format fmt = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
-							   ? Format::kR8G8B8_Unorm
-							   : Format::kR8G8B8A8_Unorm;
+		const Format fmt =
+			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm;
 		m_tonemapedRtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getPostProcessResolution().x(),
-																		   getRenderer().getPostProcessResolution().y(),
-																		   fmt, "Tonemapped");
+																		   getRenderer().getPostProcessResolution().y(), fmt, "Tonemapped");
 		m_tonemapedRtDescr.bake();
 	}
 
@@ -201,8 +194,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
-		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
-								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		pass.newTextureDependency(m_runCtx.m_upscaledHdrRt, writeUsage);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -349,8 +341,8 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 
 		const Vec2 inRez(getRenderer().getInternalResolution());
 		const Vec2 outRez(getRenderer().getPostProcessResolution());
-		FsrEasuCon(&pc.m_fsrConsts0[0], &pc.m_fsrConsts1[0], &pc.m_fsrConsts2[0], &pc.m_fsrConsts3[0], inRez.x(),
-				   inRez.y(), inRez.x(), inRez.y(), outRez.x(), outRez.y());
+		FsrEasuCon(&pc.m_fsrConsts0[0], &pc.m_fsrConsts1[0], &pc.m_fsrConsts2[0], &pc.m_fsrConsts3[0], inRez.x(), inRez.y(), inRez.x(), inRez.y(),
+				   outRez.x(), outRez.y());
 
 		pc.m_viewportSize = getRenderer().getPostProcessResolution();
 
@@ -372,13 +364,11 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 
 	if(preferCompute)
 	{
-		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(),
-						  getRenderer().getPostProcessResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(),
-						  getRenderer().getPostProcessResolution().y());
+		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
@@ -422,13 +412,11 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 
 	if(preferCompute)
 	{
-		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(),
-						  getRenderer().getPostProcessResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(),
-						  getRenderer().getPostProcessResolution().y());
+		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }
@@ -444,14 +432,12 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	TextureViewPtr srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt());
-	TextureViewPtr motionVectorsView =
-		rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt());
+	TextureViewPtr motionVectorsView = rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt());
 	TextureViewPtr depthView = rgraphCtx.createTextureView(getRenderer().getGBuffer().getDepthRt());
 	TextureViewPtr exposureView = rgraphCtx.createTextureView(getRenderer().getTonemapping().getRt());
 	TextureViewPtr dstView = rgraphCtx.createTextureView(m_runCtx.m_upscaledHdrRt);
 
-	cmdb->upscale(m_grUpscaler, srcView, dstView, motionVectorsView, depthView, exposureView, reset, jitterOffset,
-				  mvScale);
+	cmdb->upscale(m_grUpscaler, srcView, dstView, motionVectorsView, depthView, exposureView, reset, jitterOffset, mvScale);
 }
 
 void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
@@ -481,13 +467,11 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 		cmdb->setPushConstants(&pc, sizeof(pc));
 		rgraphCtx.bindImage(0, 3, outRt);
 
-		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(),
-						  getRenderer().getPostProcessResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(),
-						  getRenderer().getPostProcessResolution().y());
+		cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}
 }

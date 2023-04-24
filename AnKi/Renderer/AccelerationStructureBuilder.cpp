@@ -16,16 +16,13 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 
 	// Get some things
 	ANKI_ASSERT(ctx.m_renderQueue->m_rayTracingQueue);
-	ConstWeakArray<RayTracingInstanceQueueElement> instanceElements =
-		ctx.m_renderQueue->m_rayTracingQueue->m_rayTracingInstances;
+	ConstWeakArray<RayTracingInstanceQueueElement> instanceElements = ctx.m_renderQueue->m_rayTracingQueue->m_rayTracingInstances;
 	const U32 instanceCount = instanceElements.getSize();
 	ANKI_ASSERT(instanceCount > 0);
 
 	// Create the instances. Allocate but not construct to save some CPU time
-	void* instancesMem = ctx.m_tempPool->allocate(sizeof(AccelerationStructureInstance) * instanceCount,
-												  alignof(AccelerationStructureInstance));
-	WeakArray<AccelerationStructureInstance> instances(static_cast<AccelerationStructureInstance*>(instancesMem),
-													   instanceCount);
+	void* instancesMem = ctx.m_tempPool->allocate(sizeof(AccelerationStructureInstance) * instanceCount, alignof(AccelerationStructureInstance));
+	WeakArray<AccelerationStructureInstance> instances(static_cast<AccelerationStructureInstance*>(instancesMem), instanceCount);
 
 	for(U32 instanceIdx = 0; instanceIdx < instanceCount; ++instanceIdx)
 	{

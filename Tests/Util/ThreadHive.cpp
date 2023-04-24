@@ -30,15 +30,13 @@ public:
 	};
 };
 
-static void decNumber(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-					  [[maybe_unused]] ThreadHiveSemaphore* sem)
+static void decNumber(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, [[maybe_unused]] ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	ctx->m_countAtomic.fetchSub(2);
 }
 
-static void incNumber(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-					  [[maybe_unused]] ThreadHiveSemaphore* sem)
+static void incNumber(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, [[maybe_unused]] ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	ctx->m_countAtomic.fetchAdd(4);
@@ -46,8 +44,7 @@ static void incNumber(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]]
 	hive.submitTask(decNumber, arg);
 }
 
-static void taskToWaitOn(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-						 [[maybe_unused]] ThreadHiveSemaphore* sem)
+static void taskToWaitOn(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, [[maybe_unused]] ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	HighRezTimer::sleep(1.0);
@@ -55,8 +52,7 @@ static void taskToWaitOn(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unuse
 	HighRezTimer::sleep(0.1);
 }
 
-static void taskToWait(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-					   [[maybe_unused]] ThreadHiveSemaphore* sem)
+static void taskToWait(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, [[maybe_unused]] ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	U prev = ctx->m_countAtomic.fetchAdd(1);
@@ -212,8 +208,7 @@ public:
 		}
 	}
 
-	static void callback(void* arg, [[maybe_unused]] U32 taskId, ThreadHive& hive,
-						 [[maybe_unused]] ThreadHiveSemaphore* sem)
+	static void callback(void* arg, [[maybe_unused]] U32 taskId, ThreadHive& hive, [[maybe_unused]] ThreadHiveSemaphore* sem)
 	{
 		static_cast<FibTask*>(arg)->doWork(hive);
 	}

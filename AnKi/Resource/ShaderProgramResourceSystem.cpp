@@ -43,8 +43,7 @@ Error ShaderProgramResourceSystem::init()
 	return err;
 }
 
-Error ShaderProgramResourceSystem::createRayTracingPrograms(
-	ResourceDynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
+Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
 {
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
 	U32 rtProgramCount = 0;
@@ -244,8 +243,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
 				const U32 codeBlockIndex = variant.m_codeBlockIndices[ShaderType::kRayGen];
 				ANKI_ASSERT(codeBlockIndex != kMaxU32);
-				const U32 shaderIdx =
-					lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::kRayGen);
+				const U32 shaderIdx = lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::kRayGen);
 
 				lib->addGroup(filename, mutation.m_hash, shaderIdx, kMaxU32, kMaxU32, kMaxU32);
 			}
@@ -334,15 +332,13 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 				const U32 chitCodeBlockIndex = variant.m_codeBlockIndices[ShaderType::kClosestHit];
 				ANKI_ASSERT(ahitCodeBlockIndex != kMaxU32 || chitCodeBlockIndex != kMaxU32);
 
-				const U32 ahitShaderIdx =
-					(ahitCodeBlockIndex != kMaxU32)
-						? lib->addShader(binary.m_codeBlocks[ahitCodeBlockIndex], progName, ShaderType::kAnyHit)
-						: kMaxU32;
+				const U32 ahitShaderIdx = (ahitCodeBlockIndex != kMaxU32)
+											  ? lib->addShader(binary.m_codeBlocks[ahitCodeBlockIndex], progName, ShaderType::kAnyHit)
+											  : kMaxU32;
 
-				const U32 chitShaderIdx =
-					(chitCodeBlockIndex != kMaxU32)
-						? lib->addShader(binary.m_codeBlocks[chitCodeBlockIndex], progName, ShaderType::kClosestHit)
-						: kMaxU32;
+				const U32 chitShaderIdx = (chitCodeBlockIndex != kMaxU32)
+											  ? lib->addShader(binary.m_codeBlocks[chitCodeBlockIndex], progName, ShaderType::kClosestHit)
+											  : kMaxU32;
 
 				lib->addGroup(filename, mutation.m_hash, kMaxU32, kMaxU32, chitShaderIdx, ahitShaderIdx);
 			}
@@ -363,8 +359,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 			ShaderProgramRaytracingLibrary& outLib = outLibs[libIdx];
 			const Lib& inLib = libs[libIdx];
 
-			if(inLib.m_presentStages
-			   != (ShaderTypeBit::kRayGen | ShaderTypeBit::kMiss | ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit))
+			if(inLib.m_presentStages != (ShaderTypeBit::kRayGen | ShaderTypeBit::kMiss | ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit))
 			{
 				ANKI_RESOURCE_LOGE("The libray is missing shader shader types: %s", inLib.m_name.cstr());
 				return Error::kUserData;
@@ -407,16 +402,14 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 					}
 
 					// The hit shaders are after ray gen and miss shaders
-					const U32 idx =
-						inLib.m_rayGenShaderGroupCount + inLib.m_missShaderGroupCount + initInfoHitGroups.getSize() - 1;
+					const U32 idx = inLib.m_rayGenShaderGroupCount + inLib.m_missShaderGroupCount + initInfoHitGroups.getSize() - 1;
 					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(inShaderGroup.m_hitGroupHash, idx);
 				}
 				else if(inShaderGroup.m_miss < kMaxU32)
 				{
 					// Miss shader
 
-					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32
-								&& inShaderGroup.m_rayGen == kMaxU32);
+					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32 && inShaderGroup.m_rayGen == kMaxU32);
 
 					missShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_miss].m_shader);
 
@@ -428,8 +421,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(
 				{
 					// Ray gen shader
 
-					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32
-								&& inShaderGroup.m_miss == kMaxU32 && inShaderGroup.m_rayGen < kMaxU32);
+					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32 && inShaderGroup.m_miss == kMaxU32
+								&& inShaderGroup.m_rayGen < kMaxU32);
 
 					rayGenShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_rayGen].m_shader);
 

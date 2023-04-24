@@ -17,8 +17,7 @@ namespace anki {
 /// @tparam kTObjectAlignment The maximum alignment of the objects.
 /// @tparam kTObjectsPerChunk How much memory (in objects) will be allocated at once.
 /// @tparam TIndexType        If kTObjectsPerChunk>0xFF make it U16. If kTObjectsPerChunk>0xFFFF make it U32.
-template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk = 64,
-		 typename TIndexType = U8>
+template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
 class ObjectAllocator
 {
 public:
@@ -72,8 +71,7 @@ private:
 
 /// Convenience wrapper for ObjectAllocator.
 template<typename T, typename TMemoryPool, U32 kTObjectsPerChunk = 64, typename TIndexType = U8>
-class ObjectAllocatorSameType :
-	public ObjectAllocator<sizeof(T), U32(alignof(T)), TMemoryPool, kTObjectsPerChunk, TIndexType>
+class ObjectAllocatorSameType : public ObjectAllocator<sizeof(T), U32(alignof(T)), TMemoryPool, kTObjectsPerChunk, TIndexType>
 {
 public:
 	using Base = ObjectAllocator<sizeof(T), U32(alignof(T)), TMemoryPool, kTObjectsPerChunk, TIndexType>;

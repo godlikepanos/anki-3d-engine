@@ -49,8 +49,7 @@ void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo&
 	info.m_shaderGroupHandleIndex = variant.getRtShaderGroupHandleIndex();
 }
 
-Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName, const CString& mtlFName,
-					   U32 subMeshIndex, Bool async)
+Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName, const CString& mtlFName, U32 subMeshIndex, Bool async)
 {
 #if ANKI_ENABLE_ASSERTIONS
 	m_model = model;
@@ -85,8 +84,7 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 	{
 		Lod& lod = m_lodInfos[l];
 		Aabb aabb;
-		m_mesh->getSubMeshInfo(l, (subMeshIndex == kMaxU32) ? 0 : subMeshIndex, lod.m_firstIndex, lod.m_indexCount,
-							   aabb);
+		m_mesh->getSubMeshInfo(l, (subMeshIndex == kMaxU32) ? 0 : subMeshIndex, lod.m_firstIndex, lod.m_indexCount, aabb);
 
 		U32 totalIndexCount;
 		IndexType indexType;

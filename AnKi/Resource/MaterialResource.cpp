@@ -10,11 +10,9 @@
 
 namespace anki {
 
-inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNames = {
-	{"NONE", "ANKI_TECHNIQUE", "ANKI_BONES", "ANKI_VELOCITY"}};
+inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNames = {{"NONE", "ANKI_TECHNIQUE", "ANKI_BONES", "ANKI_VELOCITY"}};
 
-inline constexpr Array<CString, U(RenderingTechnique::kCount)> kTechniqueNames = {
-	{"GBuffer", "Depth", "Forward", "RtShadow"}};
+inline constexpr Array<CString, U(RenderingTechnique::kCount)> kTechniqueNames = {{"GBuffer", "Depth", "Forward", "RtShadow"}};
 
 // This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
 namespace {
@@ -176,8 +174,7 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 
 	if(varsSet.getEnabledBitCount() != m_vars.getSize())
 	{
-		ANKI_RESOURCE_LOGE("Forgot to set a default value in %u input variables",
-						   U32(m_vars.getSize() - varsSet.getEnabledBitCount()));
+		ANKI_RESOURCE_LOGE("Forgot to set a default value in %u input variables", U32(m_vars.getSize() - varsSet.getEnabledBitCount()));
 		return Error::kUserData;
 	}
 
@@ -274,8 +271,8 @@ Error MaterialResource::createVars(Program& prog)
 
 			if(!found)
 			{
-				ANKI_RESOURCE_LOGE("Incorrect combination of member variable %s and dependent mutator %s",
-								   memberName.cstr(), binary.m_mutators[member.m_dependentMutator].m_name.getBegin());
+				ANKI_RESOURCE_LOGE("Incorrect combination of member variable %s and dependent mutator %s", memberName.cstr(),
+								   binary.m_mutators[member.m_dependentMutator].m_name.getBegin());
 				return Error::kUserData;
 			}
 		}
@@ -307,11 +304,10 @@ Error MaterialResource::createVars(Program& prog)
 					const U32 bVarOffset = offsetof;
 					const U32 bVarEnd = bVarOffset + getShaderVariableDataTypeInfo(member.m_type).m_size;
 
-					if((aVarOffset <= bVarOffset && aVarEnd > bVarOffset)
-					   || (bVarOffset <= aVarOffset && bVarEnd > aVarOffset))
+					if((aVarOffset <= bVarOffset && aVarEnd > bVarOffset) || (bVarOffset <= aVarOffset && bVarEnd > aVarOffset))
 					{
-						ANKI_RESOURCE_LOGE("Member %s in AnKiLocalUniforms overlaps with %s. Check your shaders",
-										   memberName.cstr(), otherVar.m_name.cstr());
+						ANKI_RESOURCE_LOGE("Member %s in AnKiLocalUniforms overlaps with %s. Check your shaders", memberName.cstr(),
+										   otherVar.m_name.cstr());
 						return Error::kUserData;
 					}
 				}
@@ -344,15 +340,11 @@ Error MaterialResource::createVars(Program& prog)
 	}
 
 #define ANKI_LOOP(builtIn) \
-	for(U32 i = 0; \
-		i \
-		< ((mutatorPtrs[BuiltinMutatorId::builtIn]) ? mutatorPtrs[BuiltinMutatorId::builtIn]->m_values.getSize() : 1); \
-		++i) \
+	for(U32 i = 0; i < ((mutatorPtrs[BuiltinMutatorId::builtIn]) ? mutatorPtrs[BuiltinMutatorId::builtIn]->m_values.getSize() : 1); ++i) \
 	{ \
 		if(mutatorPtrs[BuiltinMutatorId::builtIn]) \
 		{ \
-			initInfo.addMutation(mutatorPtrs[BuiltinMutatorId::builtIn]->m_name, \
-								 mutatorPtrs[BuiltinMutatorId::builtIn]->m_values[i]); \
+			initInfo.addMutation(mutatorPtrs[BuiltinMutatorId::builtIn]->m_name, mutatorPtrs[BuiltinMutatorId::builtIn]->m_values[i]); \
 		}
 
 #define ANKI_LOOP_END() }
@@ -401,8 +393,8 @@ Error MaterialResource::createVars(Program& prog)
 
 					if(otherVar.m_opaqueBinding == opaque.m_binding)
 					{
-						ANKI_RESOURCE_LOGE("Opaque variable %s has the same binding as %s. Check your shaders",
-										   otherVar.m_name.cstr(), opaqueName.cstr());
+						ANKI_RESOURCE_LOGE("Opaque variable %s has the same binding as %s. Check your shaders", otherVar.m_name.cstr(),
+										   opaqueName.cstr());
 						return Error::kUserData;
 					}
 				}
@@ -535,8 +527,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 	}
 	else
 	{
-		ANKI_RESOURCE_LOGE("Mutator %s should be present in every shader program referenced by a material",
-						   techniqueMutatorName.cstr());
+		ANKI_RESOURCE_LOGE("Mutator %s should be present in every shader program referenced by a material", techniqueMutatorName.cstr());
 		return Error::kUserData;
 	}
 
@@ -555,8 +546,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		{
 			if(bonesMutator->m_values[i] != MutatorValue(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-								   bonesMutatorName.cstr());
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected", bonesMutatorName.cstr());
 				return Error::kUserData;
 			}
 		}
@@ -582,8 +572,7 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		{
 			if(velocityMutator->m_values[i] != MutatorValue(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-								   velocityMutatorName.cstr());
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected", velocityMutatorName.cstr());
 				return Error::kUserData;
 			}
 		}

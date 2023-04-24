@@ -84,8 +84,8 @@ public:
 	{
 		ANKI_ASSERT(m_cellIdxToRefresh < m_totalCellCount);
 		el.m_volumeTexture = m_volTex.get();
-		unflatten3dArrayIndex(m_cellCounts.x(), m_cellCounts.y(), m_cellCounts.z(), m_cellIdxToRefresh,
-							  el.m_cellToRefresh.x(), el.m_cellToRefresh.y(), el.m_cellToRefresh.z());
+		unflatten3dArrayIndex(m_cellCounts.x(), m_cellCounts.y(), m_cellCounts.z(), m_cellIdxToRefresh, el.m_cellToRefresh.x(),
+							  el.m_cellToRefresh.y(), el.m_cellToRefresh.z());
 		el.m_cellCounts = m_cellCounts;
 	}
 

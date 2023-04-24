@@ -47,8 +47,7 @@ GpuSceneMicroPatcher::~GpuSceneMicroPatcher()
 
 Error GpuSceneMicroPatcher::init()
 {
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuSceneMicroPatching.ankiprogbin",
-															m_copyProgram));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuSceneMicroPatching.ankiprogbin", m_copyProgram));
 	const ShaderProgramResourceVariant* variant;
 	m_copyProgram->getOrCreateVariant(variant);
 	m_grProgram = variant->getProgram();
@@ -56,8 +55,7 @@ Error GpuSceneMicroPatcher::init()
 	return Error::kNone;
 }
 
-void GpuSceneMicroPatcher::newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, PtrSize dataSize,
-								   const void* data)
+void GpuSceneMicroPatcher::newCopy(StackMemoryPool& frameCpuPool, PtrSize gpuSceneDestOffset, PtrSize dataSize, const void* data)
 {
 	ANKI_ASSERT(dataSize > 0 && (dataSize % 4) == 0);
 	ANKI_ASSERT((ptrToNumber(data) % 4) == 0);
@@ -112,18 +110,15 @@ void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 	ANKI_TRACE_INC_COUNTER(GpuSceneMicroPatchUploadData, m_crntFramePatchData.getSizeInBytes());
 
 	RebarAllocation headersToken;
-	void* mapped =
-		RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchHeaders.getSizeInBytes(), headersToken);
+	void* mapped = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchHeaders.getSizeInBytes(), headersToken);
 	memcpy(mapped, &m_crntFramePatchHeaders[0], m_crntFramePatchHeaders.getSizeInBytes());
 
 	RebarAllocation dataToken;
 	mapped = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchData.getSizeInBytes(), dataToken);
 	memcpy(mapped, &m_crntFramePatchData[0], m_crntFramePatchData.getSizeInBytes());
 
-	cmdb.bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), headersToken.m_offset,
-						   headersToken.m_range);
-	cmdb.bindStorageBuffer(0, 1, RebarTransientMemoryPool::getSingleton().getBuffer(), dataToken.m_offset,
-						   dataToken.m_range);
+	cmdb.bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), headersToken.m_offset, headersToken.m_range);
+	cmdb.bindStorageBuffer(0, 1, RebarTransientMemoryPool::getSingleton().getBuffer(), dataToken.m_offset, dataToken.m_range);
 	cmdb.bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 	cmdb.bindShaderProgram(m_grProgram);

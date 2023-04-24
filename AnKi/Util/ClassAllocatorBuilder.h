@@ -39,8 +39,7 @@ public:
 ///                    @endcode
 /// @tparam TLock This an optional lock. Can be a Mutex or SpinLock or some dummy class.
 /// @tparam TMemoryPool The memory pool used in internal allocations.
-template<typename TChunk, typename TInterface, typename TLock,
-		 typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>>
+template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 class ClassAllocatorBuilder
 {
 public:

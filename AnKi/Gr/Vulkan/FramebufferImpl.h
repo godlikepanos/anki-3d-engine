@@ -39,8 +39,8 @@ public:
 	}
 
 	/// Use it for binding. It's thread-safe
-	VkRenderPass getRenderPassHandle(const Array<VkImageLayout, kMaxColorRenderTargets>& colorLayouts,
-									 VkImageLayout dsLayout, VkImageLayout shadingRateImageLayout);
+	VkRenderPass getRenderPassHandle(const Array<VkImageLayout, kMaxColorRenderTargets>& colorLayouts, VkImageLayout dsLayout,
+									 VkImageLayout shadingRateImageLayout);
 
 	VkFramebuffer getFramebufferHandle() const
 	{
@@ -146,8 +146,7 @@ private:
 	Error initFbs(const FramebufferInitInfo& init);
 	void initRpassCreateInfo(const FramebufferInitInfo& init);
 	void initClearValues(const FramebufferInitInfo& init);
-	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,
-								   VkImageLayout layout) const;
+	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc, VkImageLayout layout) const;
 
 	U32 getTotalAttachmentCount() const
 	{

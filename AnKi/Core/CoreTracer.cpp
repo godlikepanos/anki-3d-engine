@@ -100,8 +100,7 @@ Error CoreTracer::init(CString directory)
 
 	std::tm tm = getLocalTime();
 	CoreString fname;
-	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
-				  tm.tm_min);
+	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
 
 	ANKI_CHECK(m_traceJsonFile.open(CoreString().sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
 	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
@@ -174,8 +173,7 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 		const ThreadId tid = (event.m_name == "GPU_TIME") ? 1 : item.m_tid;
 
 		ANKI_CHECK(m_traceJsonFile.writeTextf("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
-											  "\"pid\": 1, \"tid\": %" PRIu64 ", \"ts\": %" PRIi64 ", \"dur\": %" PRIi64
-											  "},\n",
+											  "\"pid\": 1, \"tid\": %" PRIu64 ", \"ts\": %" PRIi64 ", \"dur\": %" PRIi64 "},\n",
 											  event.m_name.cstr(), tid, startMicroSec, durMicroSec));
 	}
 
@@ -360,8 +358,7 @@ Error CoreTracer::writeCountersForReal()
 		{
 			Array<char, 3> columnName;
 			getSpreadsheetColumnName(i + 1, columnName);
-			ANKI_CHECK(m_countersCsvFile.writeTextf(",=%s(%s2:%s%zu)", func, &columnName[0], &columnName[0],
-													m_frameCounters.getSize() + 1));
+			ANKI_CHECK(m_countersCsvFile.writeTextf(",=%s(%s2:%s%zu)", func, &columnName[0], &columnName[0], m_frameCounters.getSize() + 1));
 		}
 
 		ANKI_CHECK(m_countersCsvFile.writeText("\n"));

@@ -17,6 +17,7 @@ RenderStateBucketContainer::~RenderStateBucketContainer()
 		}
 
 		ANKI_ASSERT(m_bucketItemCount[t] == 0);
+		ANKI_ASSERT(m_activeBucketCount[t] == 0);
 	}
 }
 
@@ -49,6 +50,7 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 			{
 				ANKI_ASSERT(!buckets[i].m_program.isCreated());
 				buckets[i].m_program = state.m_program;
+				++m_activeBucketCount[technique];
 			}
 			else
 			{
@@ -68,6 +70,8 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	newBucket.m_program = state.m_program;
 	newBucket.m_userCount = 1;
 
+	++m_activeBucketCount[technique];
+
 	out.m_index = buckets.getSize() - 1;
 	return out;
 }
@@ -79,26 +83,29 @@ void RenderStateBucketContainer::removeUser(RenderStateBucketIndex& bucketIndex)
 		return;
 	}
 
-	{
-		LockGuard lock(m_mtx);
-
-		ANKI_ASSERT(bucketIndex.m_index < m_buckets[bucketIndex.m_technique].getSize());
-
-		--m_bucketItemCount[bucketIndex.m_technique];
-
-		ExtendedBucket& bucket = m_buckets[bucketIndex.m_technique][bucketIndex.m_index];
-		ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated());
-
-		--bucket.m_userCount;
-
-		if(bucket.m_userCount == 0)
-		{
-			// No more users, make sure you release any references
-			bucket.m_program.reset(nullptr);
-		}
-	}
-
+	const RenderingTechnique technique = bucketIndex.m_technique;
+	const U32 idx = bucketIndex.m_index;
 	bucketIndex.invalidate();
+
+	LockGuard lock(m_mtx);
+
+	ANKI_ASSERT(idx < m_buckets[technique].getSize());
+
+	--m_bucketItemCount[technique];
+
+	ExtendedBucket& bucket = m_buckets[technique][idx];
+	ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated());
+
+	--bucket.m_userCount;
+
+	if(bucket.m_userCount == 0)
+	{
+		// No more users, make sure you release any references
+		bucket.m_program.reset(nullptr);
+
+		ANKI_ASSERT(m_activeBucketCount[technique] > 0);
+		--m_activeBucketCount[technique];
+	}
 }
 
 } // end namespace anki

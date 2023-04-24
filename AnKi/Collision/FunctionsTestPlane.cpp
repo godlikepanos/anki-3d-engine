@@ -13,8 +13,7 @@ F32 testPlane(const Plane& plane, const Aabb& aabb)
 	__m128 gezero = _mm_cmpge_ps(plane.getNormal().getSimd(), _mm_setzero_ps());
 
 	Vec4 diagMin;
-	diagMin.getSimd() =
-		_mm_or_ps(_mm_and_ps(gezero, aabb.getMin().getSimd()), _mm_andnot_ps(gezero, aabb.getMax().getSimd()));
+	diagMin.getSimd() = _mm_or_ps(_mm_and_ps(gezero, aabb.getMin().getSimd()), _mm_andnot_ps(gezero, aabb.getMax().getSimd()));
 #else
 	Vec4 diagMin(0.0f), diagMax(0.0f);
 	// set min/max values for x,y,z direction
@@ -43,8 +42,7 @@ F32 testPlane(const Plane& plane, const Aabb& aabb)
 
 #if ANKI_SIMD_SSE
 	Vec4 diagMax;
-	diagMax.getSimd() =
-		_mm_or_ps(_mm_and_ps(gezero, aabb.getMax().getSimd()), _mm_andnot_ps(gezero, aabb.getMin().getSimd()));
+	diagMax.getSimd() = _mm_or_ps(_mm_and_ps(gezero, aabb.getMax().getSimd()), _mm_andnot_ps(gezero, aabb.getMin().getSimd()));
 #endif
 
 	ANKI_ASSERT(diagMax.w() == 0.0f);

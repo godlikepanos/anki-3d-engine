@@ -44,11 +44,9 @@ public:
 		return m_castsShadow;
 	}
 
-	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique,
-									  WeakArray<RenderableQueueElement>& outRenderables) const;
+	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique, WeakArray<RenderableQueueElement>& outRenderables) const;
 
-	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
-											  WeakArray<RayTracingInstanceQueueElement>& outRenderables) const;
+	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique, WeakArray<RayTracingInstanceQueueElement>& outRenderables) const;
 
 private:
 	class PatchInfo

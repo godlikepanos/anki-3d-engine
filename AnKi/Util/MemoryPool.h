@@ -32,16 +32,14 @@ using AllocAlignedCallback = void* (*)(void* userData, void* ptr, PtrSize size, 
 /// An internal type.
 using PoolSignature = U32;
 
-/// This is a function that allocates and deallocates heap memory. If the @a ptr is nullptr then it allocates using the
-/// @a size and @a alignment. If the @a ptr is not nullptr it deallocates the memory and the @a size and @a alignment is
-/// ignored.
+/// This is a function that allocates and deallocates heap memory. If the @a ptr is nullptr then it allocates using the @a size and @a alignment. If
+/// the @a ptr is not nullptr it deallocates the memory and the @a size and @a alignment is ignored.
 ///
 /// @param userData Used defined data
 /// @param ptr The pointer to deallocate or nullptr
 /// @param size The size to allocate or 0
 /// @param alignment The allocation alignment or 0
-/// @return On allocation mode it will return the newelly allocated block or nullptr on error. On deallocation mode
-///         returns nullptr
+/// @return On allocation mode it will return the newelly allocated block or nullptr on error. On deallocation returns nullptr
 void* allocAligned(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 /// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool.
@@ -196,13 +194,12 @@ public:
 	}
 
 	/// @see init
-	StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-					F64 nextChunkScale = 2.0, PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
-					U32 alignmentBytes = ANKI_SAFE_ALIGNMENT, const Char* name = nullptr)
+	StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale = 2.0,
+					PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true, U32 alignmentBytes = ANKI_SAFE_ALIGNMENT,
+					const Char* name = nullptr)
 		: StackMemoryPool()
 	{
-		init(allocCb, allocCbUserData, initialChunkSize, nextChunkScale, nextChunkBias, ignoreDeallocationErrors,
-			 alignmentBytes, name);
+		init(allocCb, allocCbUserData, initialChunkSize, nextChunkScale, nextChunkBias, ignoreDeallocationErrors, alignmentBytes, name);
 	}
 
 	/// Destroy
@@ -221,9 +218,8 @@ public:
 	///        true to suppress such errors.
 	/// @param alignmentBytes The maximum supported alignment for returned memory.
 	/// @param name An optional name.
-	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale = 2.0,
-			  PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true, U32 alignmentBytes = ANKI_SAFE_ALIGNMENT,
-			  const Char* name = nullptr);
+	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale = 2.0, PtrSize nextChunkBias = 0,
+			  Bool ignoreDeallocationErrors = true, U32 alignmentBytes = ANKI_SAFE_ALIGNMENT, const Char* name = nullptr);
 
 	/// Manual destroy. The destructor calls that as well.
 	void destroy();

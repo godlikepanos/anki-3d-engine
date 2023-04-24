@@ -131,9 +131,8 @@ private:
 
 		Bool hasChildren() const
 		{
-			return m_children[0] != nullptr || m_children[1] != nullptr || m_children[2] != nullptr
-				   || m_children[3] != nullptr || m_children[4] != nullptr || m_children[5] != nullptr
-				   || m_children[6] != nullptr || m_children[7] != nullptr;
+			return m_children[0] != nullptr || m_children[1] != nullptr || m_children[2] != nullptr || m_children[3] != nullptr
+				   || m_children[4] != nullptr || m_children[5] != nullptr || m_children[6] != nullptr || m_children[7] != nullptr;
 		}
 	};
 
@@ -164,8 +163,7 @@ private:
 		kNegXNegYNegZ = 1 << 7,
 
 		kNone = 0,
-		kAll = kPosXPosYPosZ | kPosXPosYNegZ | kPosXNegYPosZ | kPosXNegYNegZ | kNegXPosYPosZ | kNegXPosYNegZ
-			   | kNegXNegYPosZ | kNegXNegYNegZ,
+		kAll = kPosXPosYPosZ | kPosXPosYNegZ | kPosXNegYPosZ | kPosXNegYNegZ | kNegXPosYPosZ | kNegXPosYNegZ | kNegXNegYPosZ | kNegXNegYNegZ,
 		kRight = kPosXPosYPosZ | kPosXPosYNegZ | kPosXNegYPosZ | kPosXNegYNegZ,
 		kLeft = kNegXPosYPosZ | kNegXPosYNegZ | kNegXNegYPosZ | kNegXNegYNegZ,
 		kTop = kPosXPosYPosZ | kPosXPosYNegZ | kNegXPosYPosZ | kNegXPosYNegZ,
@@ -231,8 +229,8 @@ private:
 
 	static Bool volumeTotallyInsideLeaf(const Aabb& volume, const Leaf& leaf);
 
-	static void computeChildAabb(LeafMask child, const Vec3& parentAabbMin, const Vec3& parentAabbMax,
-								 const Vec3& parentAabbCenter, Vec3& childAabbMin, Vec3& childAabbMax);
+	static void computeChildAabb(LeafMask child, const Vec3& parentAabbMin, const Vec3& parentAabbMax, const Vec3& parentAabbCenter,
+								 Vec3& childAabbMin, Vec3& childAabbMax);
 
 	/// Remove a placeable from the tree.
 	void removeInternal(OctreePlaceable& placeable);

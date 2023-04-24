@@ -20,8 +20,7 @@ Options:
 -spirv     : Print SPIR-V
 )";
 
-static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv,
-								  String& filename)
+static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv, String& filename)
 {
 	// Parse config
 	if(argv.getSize() < 2)
@@ -91,8 +90,8 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 		Stats(F64 v)
 		{
-			m_arm.m_fma = m_arm.m_cvt = m_arm.m_sfu = m_arm.m_loadStore = m_arm.m_varying = m_arm.m_texture =
-				m_arm.m_workRegisters = m_arm.m_fp16ArithmeticPercentage = m_arm.m_spillingCount = v;
+			m_arm.m_fma = m_arm.m_cvt = m_arm.m_sfu = m_arm.m_loadStore = m_arm.m_varying = m_arm.m_texture = m_arm.m_workRegisters =
+				m_arm.m_fp16ArithmeticPercentage = m_arm.m_spillingCount = v;
 
 			m_amd.m_vgprCount = m_amd.m_sgprCount = m_amd.m_isaSize = v;
 		}
@@ -148,14 +147,12 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 	ThreadHive hive(getCpuCoresCount());
 
-	ThreadHiveTaskCallback callback = [](void* userData, [[maybe_unused]] U32 threadId,
-										 [[maybe_unused]] ThreadHive& hive,
+	ThreadHiveTaskCallback callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 										 [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 		Ctx& ctx = *static_cast<Ctx*>(userData);
 		U32 variantIdx;
 
-		while((variantIdx = ctx.m_variantCount.fetchAdd(1)) < ctx.m_bin->m_variants.getSize()
-			  && ctx.m_error.load() == 0)
+		while((variantIdx = ctx.m_variantCount.fetchAdd(1)) < ctx.m_bin->m_variants.getSize() && ctx.m_error.load() == 0)
 		{
 			const ShaderProgramBinaryVariant& variant = ctx.m_bin->m_variants[variantIdx];
 
@@ -299,20 +296,18 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 		const Stats& avg = stage.m_avgStats;
 		printf("  Average:\n");
-		printf("    Arm: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n",
-			   avg.m_arm.m_workRegisters / countf, avg.m_arm.m_fma / countf, avg.m_arm.m_cvt / countf,
-			   avg.m_arm.m_sfu / countf, avg.m_arm.m_loadStore / countf, avg.m_arm.m_varying / countf,
+		printf("    Arm: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n", avg.m_arm.m_workRegisters / countf, avg.m_arm.m_fma / countf,
+			   avg.m_arm.m_cvt / countf, avg.m_arm.m_sfu / countf, avg.m_arm.m_loadStore / countf, avg.m_arm.m_varying / countf,
 			   avg.m_arm.m_texture / countf, avg.m_arm.m_fp16ArithmeticPercentage / countf);
 		printf("    AMD: VGPR %f SGPR %f ISA size %f\n", avg.m_amd.m_vgprCount / countf, avg.m_amd.m_sgprCount / countf,
 			   avg.m_amd.m_isaSize / countf);
 
 		const Stats& maxs = stage.m_maxStats;
 		printf("  Max:\n");
-		printf("    Arm: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n", maxs.m_arm.m_workRegisters,
-			   maxs.m_arm.m_fma, maxs.m_arm.m_cvt, maxs.m_arm.m_sfu, maxs.m_arm.m_loadStore, maxs.m_arm.m_varying,
-			   maxs.m_arm.m_texture, maxs.m_arm.m_fp16ArithmeticPercentage);
-		printf("    AMD: VGPR %f SGPR %f ISA size %f\n", maxs.m_amd.m_vgprCount, maxs.m_amd.m_sgprCount,
-			   maxs.m_amd.m_isaSize);
+		printf("    Arm: Regs %f FMA %f CVT %f SFU %f LS %f VAR %f TEX %f FP16 %f%%\n", maxs.m_arm.m_workRegisters, maxs.m_arm.m_fma,
+			   maxs.m_arm.m_cvt, maxs.m_arm.m_sfu, maxs.m_arm.m_loadStore, maxs.m_arm.m_varying, maxs.m_arm.m_texture,
+			   maxs.m_arm.m_fp16ArithmeticPercentage);
+		printf("    AMD: VGPR %f SGPR %f ISA size %f\n", maxs.m_amd.m_vgprCount, maxs.m_amd.m_sgprCount, maxs.m_amd.m_isaSize);
 	}
 
 	return Error::kNone;

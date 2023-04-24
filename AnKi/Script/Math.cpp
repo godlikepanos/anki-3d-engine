@@ -26,8 +26,8 @@ static void deserializeVec2(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {
-	2841503007170002590, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2, deserializeVec2};
+LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {2841503007170002590, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
+											   deserializeVec2};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec2>()
@@ -1035,8 +1035,8 @@ static void deserializeVec3(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {
-	-8987088827578326891, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3, deserializeVec3};
+LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {-8987088827578326891, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
+											   deserializeVec3};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec3>()
@@ -2180,8 +2180,8 @@ static void deserializeVec4(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {
-	-1904445195878410002, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4, deserializeVec4};
+LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {-1904445195878410002, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
+											   deserializeVec4};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec4>()
@@ -3411,8 +3411,7 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {-6370653520286654332, "Mat3",
-											   LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {-6370653520286654332, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
@@ -3798,8 +3797,8 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {
-	-1491362470876046537, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {-1491362470876046537, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
+												 nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3x4>()
@@ -4203,8 +4202,8 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {
-	-1850302193838084739, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {-1850302193838084739, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
+													nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Transform>()

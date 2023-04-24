@@ -31,8 +31,7 @@
 #if ALPHA_TEXTURE
 	payload.m_shadowFactor = 1.0;
 
-	const Vec3 bary =
-		Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
+	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
 
 	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(g_gpuSceneRenderable.m_geometryOffset);
 

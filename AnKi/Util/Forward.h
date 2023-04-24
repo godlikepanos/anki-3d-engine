@@ -49,8 +49,7 @@ class BaseStringList;
 
 class ThreadHive;
 
-template<typename TFunc, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>,
-		 PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
+template<typename TFunc, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
 class Function;
 
 template<typename, PtrSize>
@@ -78,8 +77,7 @@ class XmlDocument;
 	template<typename T, typename TSize = U32> \
 	using submoduleName##DynamicArray = DynamicArray<T, submoduleName##MemPoolWrapper, TSize>; \
 	template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>> \
-	using submoduleName##HashMap = \
-		HashMap<TKey, TValue, THasher, submoduleName##MemPoolWrapper, HashMapSparseArrayConfig>; \
+	using submoduleName##HashMap = HashMap<TKey, TValue, THasher, submoduleName##MemPoolWrapper, HashMapSparseArrayConfig>; \
 	template<typename T> \
 	using submoduleName##List = List<T, submoduleName##MemPoolWrapper>; \
 	using submoduleName##StringList = BaseStringList<submoduleName##MemPoolWrapper>; \

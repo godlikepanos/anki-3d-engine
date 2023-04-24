@@ -24,15 +24,14 @@ void RebarTransientMemoryPool::init()
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	buffInit.m_size = ConfigSet::getSingleton().getCoreRebarGpuMemorySize();
-	buffInit.m_usage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex
-					   | BufferUsageBit::kIndex | BufferUsageBit::kShaderBindingTable;
+	buffInit.m_usage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex | BufferUsageBit::kIndex
+					   | BufferUsageBit::kShaderBindingTable;
 	m_buffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	m_bufferSize = buffInit.m_size;
 
 	m_alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
-	m_alignment =
-		max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
+	m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
 	m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
 
 	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));

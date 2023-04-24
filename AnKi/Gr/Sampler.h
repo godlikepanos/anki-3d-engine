@@ -38,9 +38,7 @@ public:
 		const U8* first = reinterpret_cast<const U8*>(&m_minLod);
 		const U8* last = reinterpret_cast<const U8*>(&m_addressing) + sizeof(m_addressing);
 		const U32 size = U32(last - first);
-		ANKI_ASSERT(size
-					== sizeof(F32) * 3 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8)
-						   + sizeof(SamplingAddressing));
+		ANKI_ASSERT(size == sizeof(F32) * 3 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8) + sizeof(SamplingAddressing));
 		return anki::computeHash(first, size);
 	}
 };

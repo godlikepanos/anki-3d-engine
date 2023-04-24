@@ -86,8 +86,8 @@ void maybeUnused(T a)
 		[[vk::constant_id(id + 0u)]] const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = (componentType)1; \
 		[[vk::constant_id(id + 1u)]] const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = (componentType)1; \
 		[[vk::constant_id(id + 2u)]] const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = (componentType)1; \
-		static const type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
-								   ANKI_CONCATENATE(_anki_const_2_3_, n))
+		static const type n = \
+			type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), ANKI_CONCATENATE(_anki_const_2_3_, n))
 
 #	define _ANKI_SCONST_X4(type, componentType, n, id) \
 		[[vk::constant_id(id + 0u)]] const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = (componentType)1; \
@@ -428,8 +428,8 @@ constexpr F32 kPi = 3.14159265358979323846f;
 #	extension GL_EXT_nonuniform_qualifier : enable
 #	extension GL_EXT_scalar_block_layout : enable
 
-#	if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) \
-		|| defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
+#	if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) \
+		|| defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #		extension GL_EXT_ray_tracing : enable
 #	endif
 
@@ -576,8 +576,8 @@ const uint kSizeof_mat4x3 = 48u;
 		layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = componentType(1); \
 		layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = componentType(1); \
 		layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = componentType(1); \
-		constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
-									  ANKI_CONCATENATE(_anki_const_2_3_, n))
+		constWorkaround type n = \
+			type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), ANKI_CONCATENATE(_anki_const_2_3_, n))
 
 #	define _ANKI_SCONST_X4(type, componentType, n, id, constWorkaround) \
 		layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = componentType(1); \
@@ -698,7 +698,7 @@ constexpr U32 kMaxShadowCascades = 4u;
 constexpr F32 kShadowsPolygonOffsetFactor = 1.25f;
 constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
 
-struct DrawIndirectInfo
+struct DrawIndirectArgs
 {
 	U32 m_vertexCount;
 	U32 m_instanceCount;
@@ -706,7 +706,7 @@ struct DrawIndirectInfo
 	U32 m_firstInstance;
 
 #if defined(__cplusplus)
-	DrawIndirectInfo()
+	DrawIndirectArgs()
 		: m_vertexCount(kMaxU32)
 		, m_instanceCount(1)
 		, m_firstVertex(0)
@@ -714,9 +714,9 @@ struct DrawIndirectInfo
 	{
 	}
 
-	DrawIndirectInfo(const DrawIndirectInfo&) = default;
+	DrawIndirectArgs(const DrawIndirectArgs&) = default;
 
-	DrawIndirectInfo(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+	DrawIndirectArgs(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 		: m_vertexCount(count)
 		, m_instanceCount(instanceCount)
 		, m_firstVertex(first)
@@ -724,20 +724,20 @@ struct DrawIndirectInfo
 	{
 	}
 
-	Bool operator==(const DrawIndirectInfo& b) const
+	Bool operator==(const DrawIndirectArgs& b) const
 	{
-		return m_vertexCount == b.m_vertexCount && m_instanceCount == b.m_instanceCount
-			   && m_firstVertex == b.m_firstVertex && m_firstInstance == b.m_firstInstance;
+		return m_vertexCount == b.m_vertexCount && m_instanceCount == b.m_instanceCount && m_firstVertex == b.m_firstVertex
+			   && m_firstInstance == b.m_firstInstance;
 	}
 
-	Bool operator!=(const DrawIndirectInfo& b) const
+	Bool operator!=(const DrawIndirectArgs& b) const
 	{
 		return !(operator==(b));
 	}
 #endif
 };
 
-struct DrawIndexedIndirectInfo
+struct DrawIndexedIndirectArgs
 {
 	U32 m_indexCount;
 	U32 m_instanceCount;
@@ -746,7 +746,7 @@ struct DrawIndexedIndirectInfo
 	U32 m_firstInstance;
 
 #if defined(__cplusplus)
-	DrawIndexedIndirectInfo()
+	DrawIndexedIndirectArgs()
 		: m_indexCount(kMaxU32)
 		, m_instanceCount(1)
 		, m_firstIndex(0)
@@ -755,9 +755,9 @@ struct DrawIndexedIndirectInfo
 	{
 	}
 
-	DrawIndexedIndirectInfo(const DrawIndexedIndirectInfo&) = default;
+	DrawIndexedIndirectArgs(const DrawIndexedIndirectArgs&) = default;
 
-	DrawIndexedIndirectInfo(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+	DrawIndexedIndirectArgs(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 		: m_indexCount(count)
 		, m_instanceCount(instanceCount)
 		, m_firstIndex(firstIndex)
@@ -766,13 +766,13 @@ struct DrawIndexedIndirectInfo
 	{
 	}
 
-	Bool operator==(const DrawIndexedIndirectInfo& b) const
+	Bool operator==(const DrawIndexedIndirectArgs& b) const
 	{
 		return m_indexCount == b.m_indexCount && m_instanceCount == b.m_instanceCount && m_firstIndex == b.m_firstIndex
 			   && m_vertexOffset == b.m_vertexOffset && m_firstInstance == b.m_firstInstance;
 	}
 
-	Bool operator!=(const DrawIndexedIndirectInfo& b) const
+	Bool operator!=(const DrawIndexedIndirectArgs& b) const
 	{
 		return !(operator==(b));
 	}

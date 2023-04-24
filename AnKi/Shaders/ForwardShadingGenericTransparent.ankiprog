@@ -59,8 +59,7 @@ FragOut main(VertOut input)
 	ANKI_MAYBE_UNUSED(input);
 	FragOut output;
 
-	const AnKiLocalUniforms localUniforms =
-		loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
 

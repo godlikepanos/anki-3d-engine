@@ -64,8 +64,7 @@ public:
 };
 
 /// Hash map template.
-template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>,
-		 typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>,
+template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>,
 		 typename TSparseArrayConfig = HashMapSparseArrayConfig>
 class HashMap
 {

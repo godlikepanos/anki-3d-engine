@@ -37,8 +37,7 @@ public:
 		return m_particleEmitterResource.isCreated();
 	}
 
-	void setupRenderableQueueElements(RenderingTechnique technique,
-									  WeakArray<RenderableQueueElement>& outRenderables) const;
+	void setupRenderableQueueElements(RenderingTechnique technique, WeakArray<RenderableQueueElement>& outRenderables) const;
 
 private:
 	class ParticleBase;
@@ -78,8 +77,8 @@ private:
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
 	template<typename TParticle>
-	void simulate(Second prevUpdateTime, Second crntTime, const Transform& worldTransform,
-				  WeakArray<TParticle> particles, Vec3*& positions, F32*& scales, F32*& alphas, Aabb& aabbWorld);
+	void simulate(Second prevUpdateTime, Second crntTime, const Transform& worldTransform, WeakArray<TParticle> particles, Vec3*& positions,
+				  F32*& scales, F32*& alphas, Aabb& aabbWorld);
 };
 /// @}
 

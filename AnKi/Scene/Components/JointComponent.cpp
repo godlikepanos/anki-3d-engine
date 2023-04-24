@@ -58,8 +58,7 @@ void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TAr
 	{
 		Vec3 relPos = computeLocalPivotFromFactors(bodyc->getPhysicsBody(), relPosFactor);
 
-		PhysicsJointPtr joint = PhysicsWorld::getSingleton().newInstance<TJoint>(bodyc->getPhysicsBody(), relPos,
-																				 std::forward<TArgs>(args)...);
+		PhysicsJointPtr joint = PhysicsWorld::getSingleton().newInstance<TJoint>(bodyc->getPhysicsBody(), relPos, std::forward<TArgs>(args)...);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
 		JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
@@ -91,8 +90,8 @@ void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3&
 		Vec3 relPosA = computeLocalPivotFromFactors(bodycA->getPhysicsBody(), relPosFactorA);
 		Vec3 relPosB = computeLocalPivotFromFactors(bodycB->getPhysicsBody(), relPosFactorB);
 
-		PhysicsJointPtr joint = PhysicsWorld::getSingleton().newInstance<PhysicsPoint2PointJoint>(
-			bodycA->getPhysicsBody(), relPosA, bodycB->getPhysicsBody(), relPosB);
+		PhysicsJointPtr joint =
+			PhysicsWorld::getSingleton().newInstance<PhysicsPoint2PointJoint>(bodycA->getPhysicsBody(), relPosA, bodycB->getPhysicsBody(), relPosB);
 		joint->setBreakingImpulseThreshold(breakingImpulse);
 
 		JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());

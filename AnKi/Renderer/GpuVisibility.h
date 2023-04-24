@@ -29,8 +29,8 @@ private:
 	{
 	public:
 		BufferHandle m_instanceRateRenderables;
-		BufferHandle m_drawIndexedIndirects;
-		BufferHandle m_drawIndirectOffsets;
+		BufferHandle m_drawIndexedIndirectArgs;
+		BufferHandle m_mdiDrawCounts;
 	} m_runCtx;
 };
 /// @}

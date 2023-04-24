@@ -31,28 +31,25 @@ Error GBuffer::init()
 
 Error GBuffer::initInternal()
 {
-	ANKI_R_LOGV("Initializing GBuffer. Resolution %ux%u", getRenderer().getInternalResolution().x(),
-				getRenderer().getInternalResolution().y());
+	ANKI_R_LOGV("Initializing GBuffer. Resolution %ux%u", getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
 	// RTs
 	static constexpr Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)
 	{
 		const TextureUsageBit usage = TextureUsageBit::kAllSampled | TextureUsageBit::kAllFramebuffer;
-		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-			getRenderer().getDepthNoStencilFormat(), usage, depthRtNames[i]);
+		TextureInitInfo texinit =
+			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+													   getRenderer().getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
 		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
-	static constexpr Array<const char*, kGBufferColorRenderTargetCount> rtNames = {
-		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
+	static constexpr Array<const char*, kGBufferColorRenderTargetCount> rtNames = {{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_colorRtDescrs[i] = getRenderer().create2DRenderTargetDescription(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-			kGBufferColorRenderTargetFormats[i], rtNames[i]);
+			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), kGBufferColorRenderTargetFormats[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 
@@ -116,8 +113,8 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 	cmdb->setRasterizationOrder(RasterizationOrder::kRelaxed);
 
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
-						   && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
+	const Bool enableVrs =
+		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -171,16 +168,14 @@ void GBuffer::importRenderTargets(RenderingContext& ctx)
 	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
 	{
 		// Already imported once
-		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
+		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1]);
 	}
 	else
 	{
-		m_runCtx.m_crntFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1],
-																TextureUsageBit::kSampledFragment);
+		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
+		m_runCtx.m_prevFrameDepthRt =
+			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1], TextureUsageBit::kSampledFragment);
 	}
 }
 
@@ -190,8 +185,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
-						   && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
+	const Bool enableVrs =
+		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(enableVrs != fbDescrHasVrs)
@@ -229,13 +224,13 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
-	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], kGBufferColorRenderTargetCount),
-							m_runCtx.m_crntFrameDepthRt, sriRt);
-	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
-														  + ctx.m_renderQueue->m_renderables.getSize()),
-				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
-					 runInThread(ctx, rgraphCtx);
-				 });
+	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], kGBufferColorRenderTargetCount), m_runCtx.m_crntFrameDepthRt,
+							sriRt);
+	pass.setWork(
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize()),
+		[this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			runInThread(ctx, rgraphCtx);
+		});
 
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
@@ -250,8 +245,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(sriRt, TextureUsageBit::kFramebufferShadingRate);
 	}
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
-							 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 }
 
 } // end namespace anki

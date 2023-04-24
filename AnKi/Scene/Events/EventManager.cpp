@@ -111,8 +111,7 @@ void EventManager::deleteEventsMarkedForDeletion(Bool fullCleanup)
 	if(fullCleanup)
 	{
 		// Gather in an array because we can't call setMarkedForDeletion while iterating m_events
-		DynamicArray<Event*, MemoryPoolPtrWrapper<StackMemoryPool>> markedForDeletion(
-			&SceneGraph::getSingleton().getFrameMemoryPool());
+		DynamicArray<Event*, MemoryPoolPtrWrapper<StackMemoryPool>> markedForDeletion(&SceneGraph::getSingleton().getFrameMemoryPool());
 		for(Event& event : m_events)
 		{
 			for(SceneNode* node : event.m_associatedNodes)

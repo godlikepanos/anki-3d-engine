@@ -64,8 +64,7 @@ ThreadHive::ThreadHive(U32 threadCount, Bool pinToCores)
 	: m_pool(stackPoolAllocate, nullptr, 4_KB)
 	, m_threadCount(threadCount)
 {
-	m_threads =
-		static_cast<Thread*>(DefaultMemoryPool::getSingleton().allocate(sizeof(Thread) * threadCount, alignof(Thread)));
+	m_threads = static_cast<Thread*>(DefaultMemoryPool::getSingleton().allocate(sizeof(Thread) * threadCount, alignof(Thread)));
 
 	const U32 uuid = m_uuid.fetchAdd(1);
 
@@ -163,8 +162,7 @@ void ThreadHive::threadRun(U32 threadId)
 	{
 		// Run the task
 		ANKI_ASSERT(task && task->m_cb);
-		ANKI_HIVE_DEBUG_PRINT("tid: %lu will exec %p (udata: %p)\n", threadId, static_cast<void*>(task),
-							  static_cast<void*>(task->m_arg));
+		ANKI_HIVE_DEBUG_PRINT("tid: %lu will exec %p (udata: %p)\n", threadId, static_cast<void*>(task), static_cast<void*>(task->m_arg));
 		task->m_cb(task->m_arg, threadId, *this, task->m_signalSemaphore);
 
 #if ANKI_EXTRA_CHECKS

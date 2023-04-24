@@ -15,8 +15,7 @@ ANKI_SCENE_COMPONENT_VIRTUAL(onDestroy, void (*)(SceneComponent& self, SceneNode
 ANKI_SCENE_COMPONENT_VIRTUAL_SEPERATOR
 ANKI_SCENE_COMPONENT_VIRTUAL(update, Error (*)(SceneComponent& self, SceneComponentUpdateInfo& info, Bool& updated))
 ANKI_SCENE_COMPONENT_VIRTUAL_SEPERATOR
-ANKI_SCENE_COMPONENT_VIRTUAL(onOtherComponentRemovedOrAdded,
-							 void (*)(SceneComponent& self, SceneComponent* other, Bool added))
+ANKI_SCENE_COMPONENT_VIRTUAL(onOtherComponentRemovedOrAdded, void (*)(SceneComponent& self, SceneComponent* other, Bool added))
 
 #undef ANKI_SCENE_COMPONENT_VIRTUAL
 #undef ANKI_SCENE_COMPONENT_VIRTUAL_SEPERATOR

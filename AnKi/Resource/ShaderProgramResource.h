@@ -241,8 +241,7 @@ public:
 	/// Get or create a graphics shader program variant. If returned variant is nullptr then it means that the mutation
 	/// is skipped and thus incorrect.
 	/// @note It's thread-safe.
-	void getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info,
-							const ShaderProgramResourceVariant*& variant) const;
+	void getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const;
 
 	/// @copydoc getOrCreateVariant
 	void getOrCreateVariant(const ShaderProgramResourceVariant*& variant) const
@@ -279,8 +278,7 @@ private:
 };
 
 template<typename T>
-inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addConstant(CString name,
-																							   const T& value)
+inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addConstant(CString name, const T& value)
 {
 	const ShaderProgramResourceConstant* in = m_ptr->tryFindConstant(name);
 	if(in != nullptr)
@@ -298,8 +296,7 @@ inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInf
 	return *this;
 }
 
-inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addMutation(CString name,
-																							   MutatorValue t)
+inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addMutation(CString name, MutatorValue t)
 {
 	const ShaderProgramResourceMutator* m = m_ptr->tryFindMutator(name);
 	ANKI_ASSERT(m);

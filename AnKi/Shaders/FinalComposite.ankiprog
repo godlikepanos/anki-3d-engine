@@ -57,8 +57,8 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	if(kMotionBlurSamples > 0u)
 	{
-		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, Vec2(kFramebufferSize),
-							  g_linearAnyClampSampler, uv, kMotionBlurSamples);
+		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, Vec2(kFramebufferSize), g_linearAnyClampSampler, uv,
+							  kMotionBlurSamples);
 	}
 	else
 	{

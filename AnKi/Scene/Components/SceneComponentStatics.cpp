@@ -24,8 +24,7 @@
 
 namespace anki {
 
-#define ANKI_DEFINE_SCENE_COMPONENT(className, updateOrder) \
-	ANKI_SCENE_COMPONENT_STATICS(className##Component, updateOrder)
+#define ANKI_DEFINE_SCENE_COMPONENT(className, updateOrder) ANKI_SCENE_COMPONENT_STATICS(className##Component, updateOrder)
 #include <AnKi/Scene/Components/SceneComponentClasses.defs.h>
 
 } // end namespace anki

@@ -39,8 +39,7 @@ public:
 
 		const TVec<T, 3> scales(s0.getLength(), s1.getLength(), s2.getLength());
 		[[maybe_unused]] const T E = T(0.001);
-		ANKI_ASSERT(isZero(scales.x() - scales.y(), E) && isZero(scales.y() - scales.z(), E)
-					&& "Expecting uniform scale");
+		ANKI_ASSERT(isZero(scales.x() - scales.y(), E) && isZero(scales.y() - scales.z(), E) && "Expecting uniform scale");
 
 		m_rotation.setColumns(s0 / scales.x(), s1 / scales.x(), s2 / scales.x(), TVec<T, 3>(T(0)));
 		m_origin = m4.getTranslationPart().xyz0();

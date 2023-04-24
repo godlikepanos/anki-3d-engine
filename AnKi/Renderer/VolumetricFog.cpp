@@ -19,8 +19,7 @@ Error VolumetricFog::init()
 	// Misc
 	const F32 qualityXY = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityXY();
 	const F32 qualityZ = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityZ();
-	m_finalZSplit = min(getRenderer().getZSplitCount() - 1,
-						ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
+	m_finalZSplit = min(getRenderer().getZSplitCount() - 1, ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
 
 	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);
@@ -29,8 +28,7 @@ Error VolumetricFog::init()
 	ANKI_R_LOGV("Initializing volumetric fog. Resolution %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
-	ANKI_CHECK(
-		ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	const ShaderProgramResourceVariant* variant;
@@ -40,8 +38,7 @@ Error VolumetricFog::init()
 	m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 
 	// RT descr
-	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1],
-															  Format::kR16G16B16A16_Sfloat, "Fog");
+	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");
 	m_rtDescr.m_depth = m_volumeSize[2];
 	m_rtDescr.m_type = TextureType::k3D;
 	m_rtDescr.bake();
@@ -58,8 +55,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
-	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(),
-							  TextureUsageBit::kSampledCompute);
+	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;

@@ -155,8 +155,8 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 	// Do some RT checks
 	if(!!(m_shaderStages & ShaderTypeBit::kAllRayTracing))
 	{
-		if(m_shaderStages != (ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit)
-		   && m_shaderStages != ShaderTypeBit::kMiss && m_shaderStages != ShaderTypeBit::kRayGen)
+		if(m_shaderStages != (ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit) && m_shaderStages != ShaderTypeBit::kMiss
+		   && m_shaderStages != ShaderTypeBit::kRayGen)
 		{
 			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages. Miss can't coexist "
 							   "with other stages. Raygen can't coexist with other stages as well");
@@ -193,8 +193,7 @@ Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U3
 	return Error::kNone;
 }
 
-void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info,
-											   const ShaderProgramResourceVariant*& variant) const
+void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const
 {
 	// Sanity checks
 	ANKI_ASSERT(info.m_setMutators.getEnabledBitCount() == m_mutators.getSize());
@@ -209,8 +208,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 
 	if(m_consts.getSize())
 	{
-		hash =
-			appendHash(info.m_constantValues.getBegin(), m_consts.getSize() * sizeof(info.m_constantValues[0]), hash);
+		hash = appendHash(info.m_constantValues.getBegin(), m_consts.getSize() * sizeof(info.m_constantValues[0]), hash);
 	}
 
 	// Check if the variant is in the cache
@@ -247,8 +245,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	variant = v;
 }
 
-ShaderProgramResourceVariant*
-ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const
+ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const
 {
 	const ShaderProgramBinary& binary = m_binary.getBinary();
 
@@ -283,8 +280,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		binaryVariant = &binary.m_variants[0];
 	}
 	ANKI_ASSERT(binaryVariant);
-	ShaderProgramResourceVariant* variant =
-		newInstance<ShaderProgramResourceVariant>(ResourceMemoryPool::getSingleton());
+	ShaderProgramResourceVariant* variant = newInstance<ShaderProgramResourceVariant>(ResourceMemoryPool::getSingleton());
 	variant->m_binaryVariant = binaryVariant;
 
 	// Set the constant values
@@ -334,10 +330,8 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 				const U32 constIdx = m_constBinaryMapping[binaryConstIdx].m_constsIdx;
 				const U32 component = m_constBinaryMapping[binaryConstIdx].m_component;
 				[[maybe_unused]] const Const& c = m_consts[constIdx];
-				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::kU32
-							|| c.m_dataType == ShaderVariableDataType::kUVec2
-							|| c.m_dataType == ShaderVariableDataType::kUVec3
-							|| c.m_dataType == ShaderVariableDataType::kUVec4);
+				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::kU32 || c.m_dataType == ShaderVariableDataType::kUVec2
+							|| c.m_dataType == ShaderVariableDataType::kUVec3 || c.m_dataType == ShaderVariableDataType::kUVec4);
 
 				// Find the value
 				for(U32 i = 0; i < m_consts.getSize(); ++i)
@@ -409,8 +403,7 @@ ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitIn
 		CString libName = &binary.m_libraryName[0];
 		ANKI_ASSERT(libName.getLength() > 0);
 
-		const ShaderProgramResourceSystem& progSystem =
-			ResourceManager::getSingleton().getShaderProgramResourceSystem();
+		const ShaderProgramResourceSystem& progSystem = ResourceManager::getSingleton().getShaderProgramResourceSystem();
 		const ShaderProgramRaytracingLibrary* foundLib = nullptr;
 		for(const ShaderProgramRaytracingLibrary& lib : progSystem.getRayTracingLibraries())
 		{

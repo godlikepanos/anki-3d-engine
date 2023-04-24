@@ -19,18 +19,15 @@ Error VolumetricLightingAccumulation::init()
 	// Misc
 	const F32 qualityXY = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityXY();
 	const F32 qualityZ = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityZ();
-	m_finalZSplit = min(getRenderer().getZSplitCount() - 1,
-						ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
+	m_finalZSplit = min(getRenderer().getZSplitCount() - 1, ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
 
 	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);
 	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
-	ANKI_R_LOGV("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1],
-				m_volumeSize[2]);
+	ANKI_R_LOGV("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
-	if(!isAligned(getRenderer().getTileCounts().x(), m_volumeSize[0])
-	   || !isAligned(getRenderer().getTileCounts().y(), m_volumeSize[1]) || m_volumeSize[0] == 0 || m_volumeSize[1] == 0
-	   || m_volumeSize[2] == 0)
+	if(!isAligned(getRenderer().getTileCounts().x(), m_volumeSize[0]) || !isAligned(getRenderer().getTileCounts().y(), m_volumeSize[1])
+	   || m_volumeSize[0] == 0 || m_volumeSize[1] == 0 || m_volumeSize[2] == 0)
 	{
 		ANKI_R_LOGE("Wrong input");
 		return Error::kUserData;
@@ -39,8 +36,7 @@ Error VolumetricLightingAccumulation::init()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Shaders
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin",
-															m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
@@ -51,11 +47,10 @@ Error VolumetricLightingAccumulation::init()
 	m_workgroupSize = variant->getWorkgroupSizes();
 
 	// Create RTs
-	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-		m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,
-		TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kSampledFragment
-			| TextureUsageBit::kSampledCompute,
-		"VolLight");
+	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,
+																		 TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite
+																			 | TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute,
+																		 "VolLight");
 	texinit.m_depth = m_volumeSize[2];
 	texinit.m_type = TextureType::k3D;
 	m_rtTextures[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
@@ -83,13 +78,11 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kImageComputeWrite);
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(),
-							 BufferUsageBit::kStorageComputeRead);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(), BufferUsageBit::kStorageComputeRead);
 
 	if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
 	{
-		pass.newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(),
-								  TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), TextureUsageBit::kSampledCompute);
 	}
 }
 
@@ -111,17 +104,13 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
 	bindUniforms(cmdb, 0, 6, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 7,
-																			 ClusteredObjectType::kPointLight);
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 8,
-																			 ClusteredObjectType::kSpotLight);
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 7, ClusteredObjectType::kPointLight);
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 8, ClusteredObjectType::kSpotLight);
 	rgraphCtx.bindColorTexture(0, 9, getRenderer().getShadowMapping().getShadowmapRt());
 
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
-		cmdb, 0, 10, ClusteredObjectType::kGlobalIlluminationProbe);
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 10, ClusteredObjectType::kGlobalIlluminationProbe);
 
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 11,
-																			 ClusteredObjectType::kFogDensityVolume);
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 11, ClusteredObjectType::kFogDensityVolume);
 	bindStorage(cmdb, 0, 12, getRenderer().getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindAllBindless(1);
@@ -146,8 +135,7 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	unis.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0],
-					  m_volumeSize[1], m_volumeSize[2]);
+	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 }
 
 } // end namespace anki

@@ -8,13 +8,12 @@
 
 namespace anki {
 
-Array<Mat3x4, 6> Frustum::m_omnidirectionalRotations = {
-	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
-	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
-	Mat3x4(Vec3(0.0f), Mat3(Euler(kPi / 2.0f, 0.0f, 0.0f))),
-	Mat3x4(Vec3(0.0f), Mat3(Euler(-kPi / 2.0f, 0.0f, 0.0f))),
-	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
-	Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, 0.0f, kPi)))};
+Array<Mat3x4, 6> Frustum::m_omnidirectionalRotations = {Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
+														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
+														Mat3x4(Vec3(0.0f), Mat3(Euler(kPi / 2.0f, 0.0f, 0.0f))),
+														Mat3x4(Vec3(0.0f), Mat3(Euler(-kPi / 2.0f, 0.0f, 0.0f))),
+														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
+														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, 0.0f, kPi)))};
 
 Frustum::Frustum()
 {
@@ -75,11 +74,10 @@ Bool Frustum::update()
 
 		if(m_frustumType == FrustumType::kPerspective)
 		{
-			m_projMat = Mat4::calculatePerspectiveProjectionMatrix(m_perspective.m_fovX, m_perspective.m_fovY,
-																   m_perspective.m_near, m_perspective.m_far);
+			m_projMat =
+				Mat4::calculatePerspectiveProjectionMatrix(m_perspective.m_fovX, m_perspective.m_fovY, m_perspective.m_near, m_perspective.m_far);
 
-			computeEdgesOfFrustum(m_perspective.m_far, m_perspective.m_fovX, m_perspective.m_fovY,
-								  &m_perspective.m_edgesL[0]);
+			computeEdgesOfFrustum(m_perspective.m_far, m_perspective.m_fovX, m_perspective.m_fovY, &m_perspective.m_edgesL[0]);
 
 			// Planes
 			F32 c, s; // cos & sine
@@ -103,8 +101,8 @@ Bool Frustum::update()
 		}
 		else
 		{
-			m_projMat = Mat4::calculateOrthographicProjectionMatrix(m_ortho.m_right, m_ortho.m_left, m_ortho.m_top,
-																	m_ortho.m_bottom, m_ortho.m_near, m_ortho.m_far);
+			m_projMat = Mat4::calculateOrthographicProjectionMatrix(m_ortho.m_right, m_ortho.m_left, m_ortho.m_top, m_ortho.m_bottom, m_ortho.m_near,
+																	m_ortho.m_far);
 
 			// OBB
 			const Vec4 c((m_ortho.m_right + m_ortho.m_left) * 0.5f, (m_ortho.m_top + m_ortho.m_bottom) * 0.5f,
@@ -140,8 +138,7 @@ Bool Frustum::update()
 		{
 			if(m_shadowCascadeDistances[i] <= m_common.m_near || m_shadowCascadeDistances[i] > m_common.m_far)
 			{
-				m_shadowCascadeDistances[i] =
-					clamp(m_shadowCascadeDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
+				m_shadowCascadeDistances[i] = clamp(m_shadowCascadeDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
 			}
 
 			if(i != 0 && m_shadowCascadeDistances[i - 1] > m_shadowCascadeDistances[i])

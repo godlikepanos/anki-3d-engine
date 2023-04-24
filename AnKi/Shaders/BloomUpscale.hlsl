@@ -31,8 +31,7 @@ RVec3 textureDistorted(Texture2D<RVec4> tex, SamplerState sampl, Vec2 uv,
 					   Vec3 distortion) // per-channel distortion factor
 {
 #if ENABLE_CHROMATIC_DISTORTION
-	return RVec3(tex.SampleLevel(sampl, uv + direction * distortion.r, 0.0).r,
-				 tex.SampleLevel(sampl, uv + direction * distortion.g, 0.0).g,
+	return RVec3(tex.SampleLevel(sampl, uv + direction * distortion.r, 0.0).r, tex.SampleLevel(sampl, uv + direction * distortion.g, 0.0).g,
 				 tex.SampleLevel(sampl, uv + direction * distortion.b, 0.0).b);
 #else
 	return tex.SampleLevel(uv, 0.0).rgb;
@@ -68,8 +67,7 @@ RVec3 ssLensFlare(Vec2 uv)
 	const Vec2 haloVec = normalize(ghostVec) * kHaloWidth;
 	RF32 weight = length(Vec2(0.5, 0.5) - frac(flipUv + haloVec)) / kLensOfHalf;
 	weight = pow(1.0 - weight, 20.0);
-	result += textureDistorted(g_inputTex, g_linearAnyClampSampler, flipUv + haloVec, direction, kDistortion)
-			  * (weight * kHaloOpacity);
+	result += textureDistorted(g_inputTex, g_linearAnyClampSampler, flipUv + haloVec, direction, kDistortion) * (weight * kHaloOpacity);
 #endif
 
 	// Lens dirt

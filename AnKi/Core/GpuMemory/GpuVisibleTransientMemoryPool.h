@@ -55,14 +55,12 @@ private:
 	GpuVisibleTransientMemoryPool()
 	{
 		U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
-		alignment =
-			max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
+		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
 		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
 
-		const BufferUsageBit buffUsage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage
-										 | BufferUsageBit::kIndirectDraw | BufferUsageBit::kVertex;
-		m_pool.init(10_MB, 2.0, 0, alignment, buffUsage, BufferMapAccessBit::kNone, true,
-					"GpuVisibleTransientMemoryPool");
+		const BufferUsageBit buffUsage =
+			BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kIndirectDraw | BufferUsageBit::kVertex;
+		m_pool.init(10_MB, 2.0, 0, alignment, buffUsage, BufferMapAccessBit::kNone, true, "GpuVisibleTransientMemoryPool");
 	}
 
 	~GpuVisibleTransientMemoryPool() = default;

@@ -20,17 +20,14 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 	{
 		m_frustums[i].init(FrustumType::kPerspective);
 		m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, 100.0f, kPi / 2.0f, kPi / 2.0f);
-		m_frustums[i].setWorldTransform(
-			Transform(node->getWorldTransform().getOrigin(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+		m_frustums[i].setWorldTransform(Transform(node->getWorldTransform().getOrigin(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
 		m_frustums[i].setShadowCascadeCount(1);
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneIndex =
-		AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
+	m_gpuSceneIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
 
-	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
-																   m_clearTextureProg);
+	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTextureProg);
 	if(err)
 	{
 		ANKI_LOGF("Failed to load shader");
@@ -49,15 +46,13 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 	if(m_shapeDirty) [[unlikely]]
 	{
 		TextureInitInfo texInit("GiProbe");
-		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
-							   ? Format::kR16G16B16_Sfloat
-							   : Format::kR16G16B16A16_Sfloat;
+		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat
+																											: Format::kR16G16B16A16_Sfloat;
 		texInit.m_width = m_cellCounts.x() * 6;
 		texInit.m_height = m_cellCounts.y();
 		texInit.m_depth = m_cellCounts.z();
 		texInit.m_type = TextureType::k3D;
-		texInit.m_usage =
-			TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead;
+		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead;
 
 		m_volTex = GrManager::getSingleton().newTexture(texInit);
 
@@ -120,8 +115,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
 
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(),
-													 gpuProbe);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuProbe);
 	}
 
 	if(needsRefresh()) [[unlikely]]
@@ -140,21 +134,19 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		effectiveDistance = max(effectiveDistance, m_halfSize.z());
 		effectiveDistance = max(effectiveDistance, ConfigSet::getSingleton().getSceneProbeEffectiveDistance());
 
-		const F32 shadowCascadeDistance =
-			min(effectiveDistance, ConfigSet::getSingleton().getSceneProbeShadowEffectiveDistance());
+		const F32 shadowCascadeDistance = min(effectiveDistance, ConfigSet::getSingleton().getSceneProbeShadowEffectiveDistance());
 
 		for(U32 i = 0; i < 6; ++i)
 		{
-			m_frustums[i].setWorldTransform(
-				Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+			m_frustums[i].setWorldTransform(Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
 
 			m_frustums[i].setFar(effectiveDistance);
 			m_frustums[i].setShadowCascadeDistance(0, shadowCascadeDistance);
 
 			// Add something really far to force LOD 0 to be used. The importing tools create LODs with holes some times
 			// and that causes the sky to bleed to GI rendering
-			m_frustums[i].setLodDistances({effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf,
-										   effectiveDistance - 1.0f * kEpsilonf});
+			m_frustums[i].setLodDistances(
+				{effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf, effectiveDistance - 1.0f * kEpsilonf});
 		}
 	}
 

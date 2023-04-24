@@ -111,8 +111,7 @@ RVec3 computeLightColorLow(RVec3 diffCol, RVec3 worldPos, Vec4 svPosition)
 
 	const Vec2 uv = svPosition.xy / g_clusteredShading.m_renderingSize;
 	const F32 linearDepth = linearizeDepth(svPosition.z, g_clusteredShading.m_near, g_clusteredShading.m_far);
-	const F32 w =
-		linearDepth * (F32(g_clusteredShading.m_zSplitCount) / F32(g_clusteredShading.m_lightVolumeLastZSplit + 1u));
+	const F32 w = linearDepth * (F32(g_clusteredShading.m_zSplitCount) / F32(g_clusteredShading.m_lightVolumeLastZSplit + 1u));
 	const Vec3 uvw = Vec3(uv, w);
 
 	const RVec3 light = g_lightVol.SampleLevel(g_linearAnyClampSampler, uvw, 0.0).rgb;
@@ -124,8 +123,7 @@ void particleAlpha(RVec4 color, RVec4 scaleColor, RVec4 biasColor, out FragOut o
 	packGBuffer(color * scaleColor + biasColor, output);
 }
 
-void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition,
-		 out FragOut output)
+void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out FragOut output)
 {
 	const Vec2 screenSize = 1.0 / g_clusteredShading.m_renderingSize;
 
@@ -133,8 +131,7 @@ void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVS
 	const F32 depth = g_gbufferDepthTex.Sample(g_linearAnyClampSampler, texCoords, 0.0).r;
 	F32 zFeatherFactor;
 
-	const Vec4 fragPosVspace4 =
-		mul(g_clusteredShading.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
+	const Vec4 fragPosVspace4 = mul(g_clusteredShading.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
 	const F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
 	const F32 diff = max(0.0, zVSpace - sceneZVspace);

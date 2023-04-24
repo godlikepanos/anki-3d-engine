@@ -39,8 +39,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		geom.geometry.triangles.vertexStride = inf.m_bottomLevel.m_positionStride;
 		geom.geometry.triangles.maxVertex = inf.m_bottomLevel.m_positionCount - 1;
 		geom.geometry.triangles.indexType = convertIndexType(inf.m_bottomLevel.m_indexType);
-		geom.geometry.triangles.indexData.deviceAddress =
-			inf.m_bottomLevel.m_indexBuffer->getGpuAddress() + inf.m_bottomLevel.m_indexBufferOffset;
+		geom.geometry.triangles.indexData.deviceAddress = inf.m_bottomLevel.m_indexBuffer->getGpuAddress() + inf.m_bottomLevel.m_indexBufferOffset;
 		geom.flags = 0; // VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO
 
 		// Geom build info
@@ -56,8 +55,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		VkAccelerationStructureBuildSizesInfoKHR buildSizes = {};
 		const U32 primitiveCount = inf.m_bottomLevel.m_indexCount / 3;
 		buildSizes.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo,
-												&primitiveCount, &buildSizes);
+		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &primitiveCount, &buildSizes);
 		m_scratchBufferSize = U32(buildSizes.buildScratchSize);
 
 		// Create the buffer that holds the AS memory
@@ -99,8 +97,8 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_topLevelInfo.m_instancesBuffer = getGrManagerImpl().newBuffer(buffInit);
 
-		VkAccelerationStructureInstanceKHR* instances = static_cast<VkAccelerationStructureInstanceKHR*>(
-			m_topLevelInfo.m_instancesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		VkAccelerationStructureInstanceKHR* instances =
+			static_cast<VkAccelerationStructureInstanceKHR*>(m_topLevelInfo.m_instancesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 		for(U32 i = 0; i < inf.m_topLevel.m_instances.getSize(); ++i)
 		{
 			VkAccelerationStructureInstanceKHR& outInst = instances[i];
@@ -110,10 +108,8 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			outInst.instanceCustomIndex = i & 0xFFFFFF;
 			outInst.mask = inInst.m_mask;
 			outInst.instanceShaderBindingTableRecordOffset = inInst.m_hitgroupSbtRecordIndex & 0xFFFFFF;
-			outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR
-							| VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-			outInst.accelerationStructureReference =
-				static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_deviceAddress;
+			outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR | VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+			outInst.accelerationStructureReference = static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_deviceAddress;
 			ANKI_ASSERT(outInst.accelerationStructureReference != 0);
 
 			// Hold the reference
@@ -145,8 +141,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		VkAccelerationStructureBuildSizesInfoKHR buildSizes = {};
 		const U32 instanceCount = inf.m_topLevel.m_instances.getSize();
 		buildSizes.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo,
-												&instanceCount, &buildSizes);
+		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &instanceCount, &buildSizes);
 		m_scratchBufferSize = U32(buildSizes.buildScratchSize);
 
 		// Create the buffer that holds the AS memory
@@ -175,9 +170,8 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	return Error::kNone;
 }
 
-void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before,
-												   AccelerationStructureUsageBit after, VkPipelineStageFlags& srcStages,
-												   VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
+void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after,
+												   VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
 												   VkAccessFlags& dstAccesses)
 {
 	// Before

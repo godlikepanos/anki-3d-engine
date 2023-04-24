@@ -117,9 +117,8 @@ StackGpuMemoryPool::~StackGpuMemoryPool()
 	}
 }
 
-void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSize nextChunkGrowBias, U32 alignment,
-							  BufferUsageBit bufferUsage, BufferMapAccessBit bufferMapping, Bool allowToGrow,
-							  CString bufferName)
+void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSize nextChunkGrowBias, U32 alignment, BufferUsageBit bufferUsage,
+							  BufferMapAccessBit bufferMapping, Bool allowToGrow, CString bufferName)
 {
 	ANKI_ASSERT(m_builder == nullptr);
 	ANKI_ASSERT(initialSize > 0 && alignment > 0);

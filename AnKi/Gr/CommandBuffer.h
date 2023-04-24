@@ -102,8 +102,7 @@ public:
 	/// @{
 
 	/// Bind vertex buffer.
-	void bindVertexBuffer(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride,
-						  VertexStepRate stepRate = VertexStepRate::kVertex);
+	void bindVertexBuffer(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate = VertexStepRate::kVertex);
 
 	/// Setup a vertex attribute.
 	void setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset);
@@ -131,8 +130,8 @@ public:
 	void setPolygonOffset(F32 factor, F32 units);
 
 	/// Set stencil operations. To disable stencil test put StencilOperation::KEEP to all operations.
-	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
-							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass);
+	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
+							  StencilOperation stencilPassDepthPass);
 
 	/// Set stencil compare operation.
 	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp);
@@ -192,8 +191,7 @@ public:
 	/// @param texView The texture view to bind.
 	/// @param sampler The sampler to override the default sampler of the tex.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindTextureAndSampler(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler,
-							   U32 arrayIdx = 0);
+	void bindTextureAndSampler(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler, U32 arrayIdx = 0);
 
 	/// Bind sampler.
 	/// @param set The set to bind to.
@@ -217,8 +215,7 @@ public:
 	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end
 	///              of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindUniformBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-						   U32 arrayIdx = 0);
+	void bindUniformBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
 
 	/// Bind storage buffer.
 	/// @param set The set to bind to.
@@ -228,8 +225,7 @@ public:
 	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end
 	///              of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindStorageBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-						   U32 arrayIdx = 0);
+	void bindStorageBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
 
 	/// Bind load/store image.
 	/// @param set The set to bind to.
@@ -247,8 +243,7 @@ public:
 	///              of the buffer.
 	/// @param fmt The format of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindReadOnlyTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-								   Format fmt, U32 arrayIdx = 0);
+	void bindReadOnlyTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx = 0);
 
 	/// Bind an acceleration structure.
 	/// @param set The set to bind to.
@@ -269,10 +264,8 @@ public:
 	/// Begin renderpass.
 	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is
 	/// bigger than the render area the results are undefined.
-	void beginRenderPass(const FramebufferPtr& fb,
-						 const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32,
-						 U32 height = kMaxU32);
+	void beginRenderPass(const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
+						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32);
 
 	/// End renderpass.
 	void endRenderPass();
@@ -283,8 +276,7 @@ public:
 
 	/// @name Jobs
 	/// @{
-	void drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
-					  U32 baseVertex = 0, U32 baseInstance = 0);
+	void drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount = 1, U32 firstIndex = 0, U32 baseVertex = 0, U32 baseInstance = 0);
 
 	void drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
@@ -323,8 +315,8 @@ public:
 	/// @param width Width.
 	/// @param height Height.
 	/// @param depth Depth.
-	void traceRays(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount,
-				   U32 rayTypeCount, U32 width, U32 height, U32 depth);
+	void traceRays(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
+				   U32 height, U32 depth);
 
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
 	/// TextureUsageBit::kGenerateMipmaps before calling this method.
@@ -364,8 +356,7 @@ public:
 	/// @param[in] queries The queries to write the result of.
 	/// @param offset The offset inside the buffer to write the result.
 	/// @param buff The buffer to update.
-	void writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset,
-											 const BufferPtr& buff);
+	void writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, const BufferPtr& buff);
 
 	/// Copy buffer to buffer.
 	/// @param[in] src Source buffer.
@@ -373,8 +364,7 @@ public:
 	/// @param[out] dst Destination buffer.
 	/// @param dstOffset Offset in the destination buffer.
 	/// @param range Size to copy.
-	void copyBufferToBuffer(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst, PtrSize dstOffset,
-							PtrSize range)
+	void copyBufferToBuffer(const BufferPtr& src, PtrSize srcOffset, const BufferPtr& dst, PtrSize dstOffset, PtrSize range)
 	{
 		Array<CopyBufferToBufferInfo, 1> copies = {{{srcOffset, dstOffset, range}}};
 		copyBufferToBuffer(src, dst, copies);
@@ -401,8 +391,8 @@ public:
 	/// @param[in] motionVectorsScale Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV
 	///                               space to Pixel space conversion)
 	void upscale(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
-				 const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
-				 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
+				 const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure, const Bool resetAccumulation,
+				 const Vec2& jitterOffset, const Vec2& motionVectorsScale);
 	/// @}
 
 	/// @name Sync

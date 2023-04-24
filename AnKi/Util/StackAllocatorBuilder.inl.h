@@ -38,8 +38,7 @@ void StackAllocatorBuilder<TChunk, TInterface, TLock>::destroy()
 }
 
 template<typename TChunk, typename TInterface, typename TLock>
-Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [[maybe_unused]] PtrSize alignment,
-																 TChunk*& chunk, PtrSize& offset)
+Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [[maybe_unused]] PtrSize alignment, TChunk*& chunk, PtrSize& offset)
 {
 	ANKI_ASSERT(alignment <= m_interface.getMaxAlignment());
 

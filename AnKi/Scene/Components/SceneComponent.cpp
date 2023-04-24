@@ -12,8 +12,7 @@ static SceneComponentRtti* g_rttis[kMaxSceneComponentClasses] = {};
 SceneComponentCallbacks g_sceneComponentCallbacks;
 static U32 g_sceneComponentClassCount = 0;
 
-SceneComponentRtti::SceneComponentRtti(const char* name, F32 updateWeight, U32 size, U32 alignment,
-									   SceneComponentVtable vtable)
+SceneComponentRtti::SceneComponentRtti(const char* name, F32 updateWeight, U32 size, U32 alignment, SceneComponentVtable vtable)
 {
 	if(g_sceneComponentClassCount >= kMaxSceneComponentClasses)
 	{
@@ -35,8 +34,7 @@ SceneComponentRtti::SceneComponentRtti(const char* name, F32 updateWeight, U32 s
 
 	g_rttis[g_sceneComponentClassCount] = this;
 
-#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) \
-	g_sceneComponentCallbacks.m_##name[g_sceneComponentClassCount] = vtable.m_##name;
+#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) g_sceneComponentCallbacks.m_##name[g_sceneComponentClassCount] = vtable.m_##name;
 #include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
 
 	++g_sceneComponentClassCount;

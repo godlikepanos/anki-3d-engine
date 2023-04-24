@@ -38,15 +38,13 @@ Error Bloom::initExposure()
 	m_exposure.m_height = getRenderer().getDownscaleBlur().getPassHeight(kMaxU32) * 2;
 
 	// Create RT info
-	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height,
-																		 kRtPixelFormat, "Bloom Exp");
+	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height, kRtPixelFormat, "Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																? "ShaderBinaries/BloomCompute.ankiprogbin"
-																: "ShaderBinaries/BloomRaster.ankiprogbin",
-															m_exposure.m_prog));
+	CString progFname =
+		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/BloomCompute.ankiprogbin" : "ShaderBinaries/BloomRaster.ankiprogbin";
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_exposure.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
 	if(ConfigSet::getSingleton().getRPreferCompute())
@@ -67,15 +65,13 @@ Error Bloom::initUpscale()
 	m_upscale.m_height = getRenderer().getPostProcessResolution().y() / kBloomFraction;
 
 	// Create RT descr
-	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height,
-																		kRtPixelFormat, "Bloom Upscale");
+	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height, kRtPixelFormat, "Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin"
-																: "ShaderBinaries/BloomUpscaleRaster.ankiprogbin",
-															m_upscale.m_prog));
+	CString progFname = (ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin"
+																		: "ShaderBinaries/BloomUpscaleRaster.ankiprogbin";
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_upscale.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);
 	variantInitInfo.addConstant("kInputTextureSize", UVec2(m_exposure.m_width, m_exposure.m_height));
@@ -89,8 +85,7 @@ Error Bloom::initUpscale()
 	m_upscale.m_grProg = variant->getProgram();
 
 	// Textures
-	ANKI_CHECK(
-		ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
 
 	return Error::kNone;
 }
@@ -114,8 +109,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 
-			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
-									   inputTexSubresource);
+			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kImageComputeWrite);
 
 			prpass = &rpass;
@@ -125,8 +119,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
 			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_exposureRt});
 
-			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment,
-									   inputTexSubresource);
+			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment, inputTexSubresource);
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite);
 
 			prpass = &rpass;
@@ -143,8 +136,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
 			rgraphCtx.bindTexture(0, 1, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
-			const Vec4 uniforms(ConfigSet::getSingleton().getRBloomThreshold(),
-								ConfigSet::getSingleton().getRBloomScale(), 0.0f, 0.0f);
+			const Vec4 uniforms(ConfigSet::getSingleton().getRBloomThreshold(), ConfigSet::getSingleton().getRBloomScale(), 0.0f, 0.0f);
 			cmdb->setPushConstants(&uniforms, sizeof(uniforms));
 
 			rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
@@ -216,8 +208,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void Bloom::getDebugRenderTarget([[maybe_unused]] CString rtName,
-								 Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+void Bloom::getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 								 [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
 {
 	ANKI_ASSERT(rtName == "Bloom");

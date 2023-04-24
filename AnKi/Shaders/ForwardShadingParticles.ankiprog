@@ -53,8 +53,7 @@ VertOut main(VertIn input)
 
 	output.m_uv = Vec2(vertexId & 1u, ((vertexId + 1u) / 3u) & 1u);
 
-	output.m_worldPos =
-		mul(g_globalUniforms.m_cameraTransform, Vec4((output.m_uv - 0.5) * vertScale, 0.0, 0.0)) + vertPos;
+	output.m_worldPos = mul(g_globalUniforms.m_cameraTransform, Vec4((output.m_uv - 0.5) * vertScale, 0.0, 0.0)) + vertPos;
 
 	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
 
@@ -70,12 +69,11 @@ VertOut main(VertIn input)
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalUniforms localUniforms =
-		loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 #if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler,
-										   localUniforms.m_animationPeriod, input.m_uv, g_clusteredShading.m_time);
+	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler, localUniforms.m_animationPeriod,
+										   input.m_uv, g_clusteredShading.m_time);
 #else
 	RVec4 texCol = g_bindlessTextures2dF32[localUniforms.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
 #endif

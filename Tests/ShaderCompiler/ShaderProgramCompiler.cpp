@@ -138,8 +138,7 @@ void main()
 
 	ShaderProgramBinaryWrapper binary(&pool);
 	ShaderCompilerOptions compilerOptions;
-	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, compilerOptions, binary));
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, compilerOptions, binary));
 
 #if 1
 	String dis;
@@ -334,8 +333,7 @@ void main()
 	taskManager.m_pool = &pool;
 
 	ShaderProgramBinaryWrapper binary(&pool);
-	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, ShaderCompilerOptions(), binary));
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, ShaderCompilerOptions(), binary));
 
 #if 1
 	String dis;

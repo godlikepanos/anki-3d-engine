@@ -19,8 +19,7 @@ ModelComponent::ModelComponent(SceneNode* node)
 	, m_node(node)
 	, m_spatial(this)
 {
-	m_gpuSceneIndexTransforms =
-		AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kTransformPairs);
+	m_gpuSceneIndexTransforms = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kTransformPairs);
 }
 
 ModelComponent::~ModelComponent()
@@ -32,7 +31,7 @@ void ModelComponent::freeGpuScene()
 {
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneUniforms);
 
-	AllGpuSceneContiguousArrays& arr = AllGpuSceneContiguousArrays::getSingleton();
+	GpuSceneContiguousArrays& arr = GpuSceneContiguousArrays::getSingleton();
 
 	for(PatchInfo& patch : m_patchInfos)
 	{
@@ -97,16 +96,13 @@ void ModelComponent::loadModelResource(CString filename)
 		out.m_gpuSceneUniformsOffset = m_gpuSceneUniforms.getOffset() + uniformsSize;
 		uniformsSize += U32(in.getMaterial()->getPrefilledLocalUniforms().getSizeInBytes());
 
-		out.m_gpuSceneIndexMeshLods =
-			AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kMeshLods);
+		out.m_gpuSceneIndexMeshLods = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kMeshLods);
 
-		out.m_gpuSceneIndexRenderable =
-			AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kRenderables);
+		out.m_gpuSceneIndexRenderable = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kRenderables);
 
 		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 		{
-			if(!(RenderingTechniqueBit(1 << t) & out.m_techniques)
-			   || !!(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt))
+			if(!(RenderingTechniqueBit(1 << t) & out.m_techniques) || !!(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt))
 			{
 				continue;
 			}
@@ -127,7 +123,7 @@ void ModelComponent::loadModelResource(CString filename)
 				ANKI_ASSERT(0);
 			}
 
-			out.m_gpuSceneIndexRenderableAabbs[t] = AllGpuSceneContiguousArrays::getSingleton().allocate(allocType);
+			out.m_gpuSceneIndexRenderableAabbs[t] = GpuSceneContiguousArrays::getSingleton().allocate(allocType);
 		}
 	}
 }
@@ -203,8 +199,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				meshLods[l] = meshLods[l - 1];
 			}
 
-			GpuSceneMicroPatcher::getSingleton().newCopy(
-				*info.m_framePool, m_patchInfos[i].m_gpuSceneIndexMeshLods.getOffsetInGpuScene(), meshLods);
+			GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_patchInfos[i].m_gpuSceneIndexMeshLods.getOffsetInGpuScene(), meshLods);
 
 			// Upload the GpuSceneRenderable
 			GpuSceneRenderable gpuRenderable;
@@ -212,8 +207,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
 			gpuRenderable.m_geometryOffset = m_patchInfos[i].m_gpuSceneIndexMeshLods.getOffsetInGpuScene();
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
-			GpuSceneMicroPatcher::getSingleton().newCopy(
-				*info.m_framePool, m_patchInfos[i].m_gpuSceneIndexRenderable.getOffsetInGpuScene(), gpuRenderable);
+			GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_patchInfos[i].m_gpuSceneIndexRenderable.getOffsetInGpuScene(),
+														 gpuRenderable);
 		}
 
 		// Upload the uniforms
@@ -224,15 +219,14 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		{
 			const ModelPatch& patch = m_model->getModelPatches()[i];
 			const MaterialResource& mtl = *patch.getMaterial();
-			memcpy(&allUniforms[count], mtl.getPrefilledLocalUniforms().getBegin(),
-				   mtl.getPrefilledLocalUniforms().getSizeInBytes());
+			memcpy(&allUniforms[count], mtl.getPrefilledLocalUniforms().getBegin(), mtl.getPrefilledLocalUniforms().getSizeInBytes());
 
 			count += U32(mtl.getPrefilledLocalUniforms().getSizeInBytes() / 4);
 		}
 
 		ANKI_ASSERT(count * 4 == m_gpuSceneUniforms.getAllocatedSize());
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneUniforms.getOffset(),
-													 m_gpuSceneUniforms.getAllocatedSize(), &allUniforms[0]);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneUniforms.getOffset(), m_gpuSceneUniforms.getAllocatedSize(),
+													 &allUniforms[0]);
 	}
 
 	// Upload transforms
@@ -241,8 +235,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		Array<Mat3x4, 2> trfs;
 		trfs[0] = Mat3x4(info.m_node->getWorldTransform());
 		trfs[1] = Mat3x4(info.m_node->getPreviousWorldTransform());
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndexTransforms.getOffsetInGpuScene(),
-													 trfs);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndexTransforms.getOffsetInGpuScene(), trfs);
 	}
 
 	// Spatial update
@@ -256,8 +249,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 		else
 		{
-			aabbLocal =
-				m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(m_model->getBoundingVolume());
+			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(m_model->getBoundingVolume());
 		}
 
 		const Aabb aabbWorld = aabbLocal.getTransformed(info.m_node->getWorldTransform());
@@ -299,8 +291,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				state.m_indexedDrawcall = true;
 				state.m_program = mvariant.getShaderProgram();
 
-				m_patchInfos[i].m_renderStateBucketIndices[t] =
-					RenderStateBucketContainer::getSingleton().addUser(state, t);
+				m_patchInfos[i].m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(state, t);
 			}
 		}
 	}
@@ -312,17 +303,14 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
-			for(RenderingTechnique t :
-				EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques))
+			for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques))
 			{
-				const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(
-					m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
-					m_patchInfos[i].m_gpuSceneIndexRenderable.get(),
-					m_patchInfos[i].m_renderStateBucketIndices[t].get());
+				const GpuSceneRenderableAabb gpuVolume =
+					initGpuSceneRenderableAabb(m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
+											   m_patchInfos[i].m_gpuSceneIndexRenderable.get(), m_patchInfos[i].m_renderStateBucketIndices[t].get());
 
-				GpuSceneMicroPatcher::getSingleton().newCopy(
-					*info.m_framePool, m_patchInfos[i].m_gpuSceneIndexRenderableAabbs[t].getOffsetInGpuScene(),
-					gpuVolume);
+				GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool,
+															 m_patchInfos[i].m_gpuSceneIndexRenderableAabbs[t].getOffsetInGpuScene(), gpuVolume);
 			}
 		}
 	}
@@ -330,8 +318,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
-void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique technique,
-												  WeakArray<RenderableQueueElement>& outRenderables) const
+void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique technique, WeakArray<RenderableQueueElement>& outRenderables) const
 {
 	ANKI_ASSERT(isEnabled());
 
@@ -355,9 +342,8 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		return;
 	}
 
-	RenderableQueueElement* renderables =
-		static_cast<RenderableQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
-			sizeof(RenderableQueueElement) * renderableCount, alignof(RenderableQueueElement)));
+	RenderableQueueElement* renderables = static_cast<RenderableQueueElement*>(
+		SceneGraph::getSingleton().getFrameMemoryPool().allocate(sizeof(RenderableQueueElement) * renderableCount, alignof(RenderableQueueElement)));
 
 	outRenderables.setArray(renderables, renderableCount);
 
@@ -389,8 +375,7 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		queueElem.m_program = modelInf.m_program.get();
 		queueElem.m_worldTransformsOffset = m_gpuSceneIndexTransforms.getOffsetInGpuScene();
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset =
-			m_patchInfos[i].m_gpuSceneIndexMeshLods.getOffsetInGpuScene() + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneIndexMeshLods.getOffsetInGpuScene() + lod * sizeof(GpuSceneMeshLod);
 		queueElem.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 		queueElem.m_indexCount = modelInf.m_indexCount;
 		queueElem.m_firstIndex = U32(modelInf.m_indexBufferOffset / 2 + modelInf.m_firstIndex);
@@ -431,9 +416,8 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 		return;
 	}
 
-	RayTracingInstanceQueueElement* instances =
-		static_cast<RayTracingInstanceQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
-			sizeof(RayTracingInstanceQueueElement) * instanceCount, alignof(RayTracingInstanceQueueElement)));
+	RayTracingInstanceQueueElement* instances = static_cast<RayTracingInstanceQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
+		sizeof(RayTracingInstanceQueueElement) * instanceCount, alignof(RayTracingInstanceQueueElement)));
 
 	outInstances.setArray(instances, instanceCount);
 
@@ -453,7 +437,7 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 
 		const ModelPatch& patch = m_model->getModelPatches()[i];
 
-		AllGpuSceneContiguousArrays& gpuArrays = AllGpuSceneContiguousArrays::getSingleton();
+		GpuSceneContiguousArrays& gpuArrays = GpuSceneContiguousArrays::getSingleton();
 
 		ModelRayTracingInfo modelInf;
 		patch.getRayTracingInfo(key, modelInf);
@@ -463,8 +447,7 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 		queueElem.m_worldTransformsOffset = m_gpuSceneIndexTransforms.getOffsetInGpuScene();
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
 		queueElem.m_geometryOffset =
-			U32(m_patchInfos[i].m_gpuSceneIndexMeshLods.get() * sizeof(GpuSceneMeshLod) * kMaxLodCount
-				+ lod * sizeof(GpuSceneMeshLod));
+			U32(m_patchInfos[i].m_gpuSceneIndexMeshLods.get() * sizeof(GpuSceneMeshLod) * kMaxLodCount + lod * sizeof(GpuSceneMeshLod));
 		queueElem.m_geometryOffset += U32(gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods));
 		queueElem.m_indexBufferOffset = U32(modelInf.m_indexBufferOffset);
 

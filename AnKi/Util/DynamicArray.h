@@ -14,8 +14,8 @@ namespace anki {
 /// @addtogroup util_containers
 /// @{
 
-/// Dynamic array with manual destruction. It doesn't hold the allocator and that makes it compact. At the same time
-/// that requires manual destruction. Used in permanent classes.
+/// Dynamic array with manual destruction. It doesn't hold the allocator and that makes it compact. At the same time that requires manual destruction.
+/// Used in permanent classes.
 /// @tparam T The type this array will hold.
 /// @tparam TSize The type that denotes the maximum number of elements of the array.
 template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TSize = U32>
@@ -255,8 +255,8 @@ public:
 		}
 	}
 
-	/// Move the data from this object. It's like moving (operator or constructor) but instead of moving to another
-	/// object of the same type it moves to 3 values.
+	/// Move the data from this object. It's like moving (operator or constructor) but instead of moving to another object of the same type it moves
+	/// to 3 values.
 	void moveAndReset(Value*& data, Size& size, Size& storageSize)
 	{
 		data = m_data;

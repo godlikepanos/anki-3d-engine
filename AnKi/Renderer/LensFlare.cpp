@@ -57,16 +57,15 @@ Error LensFlare::initSprite()
 
 Error LensFlare::initOcclusion()
 {
-	m_indirectBuff = GrManager::getSingleton().newBuffer(BufferInitInfo(
-		m_maxFlares * sizeof(DrawIndirectInfo), BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
-		BufferMapAccessBit::kNone, "LensFlares"));
+	m_indirectBuff = GrManager::getSingleton().newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawIndirectArgs),
+																		BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageComputeWrite,
+																		BufferMapAccessBit::kNone, "LensFlares"));
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin",
-															m_updateIndirectBuffProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin", m_updateIndirectBuffProg));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
-	variantInitInfo.addConstant("kInDepthMapSize", UVec2(getRenderer().getInternalResolution().x() / 2 / 2,
-														 getRenderer().getInternalResolution().y() / 2 / 2));
+	variantInitInfo.addConstant("kInDepthMapSize",
+								UVec2(getRenderer().getInternalResolution().x() / 2 / 2, getRenderer().getInternalResolution().y() / 2 / 2));
 	const ShaderProgramResourceVariant* variant;
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
@@ -120,8 +119,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite);
-		rpass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute,
-								   kHiZQuarterSurface);
+		rpass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute, kHiZQuarterSurface);
 	}
 }
 
@@ -157,8 +155,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		U32 spritesCount = max<U32>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
-		LensFlareSprite* tmpSprites =
-			allocateAndBindStorage<LensFlareSprite*>(spritesCount * sizeof(LensFlareSprite), cmdb, 0, 0);
+		LensFlareSprite* tmpSprites = allocateAndBindStorage<LensFlareSprite*>(spritesCount * sizeof(LensFlareSprite), cmdb, 0, 0);
 		WeakArray<LensFlareSprite> sprites(tmpSprites, spritesCount);
 
 		// misc
@@ -177,7 +174,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearRepeat);
 		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)));
 
-		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawIndirectInfo), m_indirectBuff);
+		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawIndirectArgs), m_indirectBuff);
 	}
 
 	// Restore state

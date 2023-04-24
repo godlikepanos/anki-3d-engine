@@ -66,8 +66,7 @@ public:
 
 	Bool operator==(const RenderingKey& b) const
 	{
-		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned
-			   && m_velocity == b.m_velocity;
+		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
 	}
 
 	RenderingTechnique getRenderingTechnique() const

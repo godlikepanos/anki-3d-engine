@@ -22,10 +22,8 @@ constexpr U32 kShaderBinaryVersion = 8;
 class ShaderProgramBinaryWrapper
 {
 	friend Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
-											  ShaderProgramPostParseInterface* postParseCallback,
-											  ShaderProgramAsyncTaskInterface* taskManager,
-											  const ShaderCompilerOptions& compilerOptions,
-											  ShaderProgramBinaryWrapper& binary);
+											  ShaderProgramPostParseInterface* postParseCallback, ShaderProgramAsyncTaskInterface* taskManager,
+											  const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binary);
 
 public:
 	ShaderProgramBinaryWrapper(BaseMemoryPool* pool)
@@ -82,8 +80,7 @@ Error ShaderProgramBinaryWrapper::deserializeFromAnyFile(TFile& file)
 }
 
 /// Takes an AnKi special shader program and spits a binary.
-Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
-						   ShaderProgramPostParseInterface* postParseCallback,
+Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
 						   ShaderProgramAsyncTaskInterface* taskManager, const ShaderCompilerOptions& compilerOptions,
 						   ShaderProgramBinaryWrapper& binary);
 /// @}

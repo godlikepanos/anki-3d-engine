@@ -168,8 +168,7 @@ public:
 			// The forceDir depends on the particle emitter rotation
 			forceDir = trf.getRotation().getRotationPart() * forceDir;
 
-			const F32 forceMag =
-				getRandomRange(props.m_particle.m_minForceMagnitude, props.m_particle.m_maxForceMagnitude);
+			const F32 forceMag = getRandomRange(props.m_particle.m_minForceMagnitude, props.m_particle.m_maxForceMagnitude);
 			m_body->applyForce(forceDir * forceMag, Vec3(0.0f));
 		}
 
@@ -229,11 +228,11 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneAlphas);
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneUniforms);
 
-	AllGpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneIndexParticleEmitter);
-	AllGpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneIndexRenderable);
+	GpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneIndexParticleEmitter);
+	GpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneIndexRenderable);
 	for(GpuSceneContiguousArrayIndex& idx : m_gpuSceneIndexAabbs)
 	{
-		AllGpuSceneContiguousArrays::getSingleton().deferredFree(idx);
+		GpuSceneContiguousArrays::getSingleton().deferredFree(idx);
 	}
 
 	for(RenderStateBucketIndex& idx : m_renderStateBuckets)
@@ -245,8 +244,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
 	if(m_simulationType == SimulationType::kPhysicsEngine)
 	{
-		PhysicsCollisionShapePtr collisionShape =
-			PhysicsWorld::getSingleton().newInstance<PhysicsSphere>(m_props.m_particle.m_minInitialSize / 2.0f);
+		PhysicsCollisionShapePtr collisionShape = PhysicsWorld::getSingleton().newInstance<PhysicsSphere>(m_props.m_particle.m_minInitialSize / 2.0f);
 
 		PhysicsBodyInitInfo binit;
 		binit.m_shape = std::move(collisionShape);
@@ -264,22 +262,18 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	}
 
 	// GPU scene allocations
-	GpuSceneBuffer::getSingleton().allocate(sizeof(Vec3) * m_props.m_maxNumOfParticles, alignof(F32),
-											m_gpuScenePositions);
+	GpuSceneBuffer::getSingleton().allocate(sizeof(Vec3) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuScenePositions);
 	GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneAlphas);
 	GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneScales);
-	GpuSceneBuffer::getSingleton().allocate(
-		m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(), alignof(U32),
-		m_gpuSceneUniforms);
+	GpuSceneBuffer::getSingleton().allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(), alignof(U32),
+											m_gpuSceneUniforms);
 
-	m_gpuSceneIndexRenderable =
-		AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kRenderables);
+	m_gpuSceneIndexRenderable = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kRenderables);
 
-	m_gpuSceneIndexParticleEmitter =
-		AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kParticleEmitters);
+	m_gpuSceneIndexParticleEmitter = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kParticleEmitters);
 
-	for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(
-			m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
+	for(RenderingTechnique t :
+		EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
 	{
 		GpuSceneContiguousArrayType allocType = GpuSceneContiguousArrayType::kCount;
 		switch(t)
@@ -297,12 +291,12 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 			ANKI_ASSERT(0);
 		}
 
-		m_gpuSceneIndexAabbs[t] = AllGpuSceneContiguousArrays::getSingleton().allocate(allocType);
+		m_gpuSceneIndexAabbs[t] = GpuSceneContiguousArrays::getSingleton().allocate(allocType);
 	}
 
 	// Allocate buckets
-	for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(
-			m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
+	for(RenderingTechnique t :
+		EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
 	{
 		RenderingKey key;
 		key.setRenderingTechnique(t);
@@ -333,14 +327,14 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	Aabb aabbWorld;
 	if(m_simulationType == SimulationType::kSimple)
 	{
-		simulate(info.m_previousTime, info.m_currentTime, info.m_node->getWorldTransform(),
-				 WeakArray<SimpleParticle>(m_simpleParticles), positions, scales, alphas, aabbWorld);
+		simulate(info.m_previousTime, info.m_currentTime, info.m_node->getWorldTransform(), WeakArray<SimpleParticle>(m_simpleParticles), positions,
+				 scales, alphas, aabbWorld);
 	}
 	else
 	{
 		ANKI_ASSERT(m_simulationType == SimulationType::kPhysicsEngine);
-		simulate(info.m_previousTime, info.m_currentTime, info.m_node->getWorldTransform(),
-				 WeakArray<PhysicsParticle>(m_physicsParticles), positions, scales, alphas, aabbWorld);
+		simulate(info.m_previousTime, info.m_currentTime, info.m_node->getWorldTransform(), WeakArray<PhysicsParticle>(m_physicsParticles), positions,
+				 scales, alphas, aabbWorld);
 	}
 
 	m_spatial.setBoundingShape(aabbWorld);
@@ -365,8 +359,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexParticleEmitter.getOffsetInGpuScene(), particles);
 
 		// Upload uniforms
-		patcher.newCopy(*info.m_framePool, m_gpuSceneUniforms,
-						m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
+		patcher.newCopy(*info.m_framePool, m_gpuSceneUniforms, m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
 						m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getBegin());
 
 		// Upload the GpuSceneRenderable
@@ -379,12 +372,12 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	}
 
 	// Upload the GpuSceneRenderableAabb always
-	for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(
-			m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
+	for(RenderingTechnique t :
+		EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
 	{
-		const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(
-			m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
-			m_gpuSceneIndexRenderable.get(), m_renderStateBuckets[t].get());
+		const GpuSceneRenderableAabb gpuVolume =
+			initGpuSceneRenderableAabb(m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
+									   m_gpuSceneIndexRenderable.get(), m_renderStateBuckets[t].get());
 
 		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexAabbs[t].getOffsetInGpuScene(), gpuVolume);
 	}
@@ -394,9 +387,8 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 }
 
 template<typename TParticle>
-void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, const Transform& worldTransform,
-										WeakArray<TParticle> particles, Vec3*& positions, F32*& scales, F32*& alphas,
-										Aabb& aabbWorld)
+void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, const Transform& worldTransform, WeakArray<TParticle> particles,
+										Vec3*& positions, F32*& scales, F32*& alphas, Aabb& aabbWorld)
 {
 	// - Deactivate the dead particles
 	// - Calc the AABB
@@ -406,12 +398,10 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	Vec3 aabbMax(kMinF32);
 	m_aliveParticleCount = 0;
 
-	positions = static_cast<Vec3*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
-		m_props.m_maxNumOfParticles * sizeof(Vec3), alignof(Vec3)));
-	scales = static_cast<F32*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
-		m_props.m_maxNumOfParticles * sizeof(F32), alignof(F32)));
-	alphas = static_cast<F32*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
-		m_props.m_maxNumOfParticles * sizeof(F32), alignof(F32)));
+	positions =
+		static_cast<Vec3*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(m_props.m_maxNumOfParticles * sizeof(Vec3), alignof(Vec3)));
+	scales = static_cast<F32*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(m_props.m_maxNumOfParticles * sizeof(F32), alignof(F32)));
+	alphas = static_cast<F32*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(m_props.m_maxNumOfParticles * sizeof(F32), alignof(F32)));
 
 	F32 maxParticleSize = -1.0f;
 
@@ -498,11 +488,9 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	}
 }
 
-void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique technique,
-															WeakArray<RenderableQueueElement>& outRenderables) const
+void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique technique, WeakArray<RenderableQueueElement>& outRenderables) const
 {
-	if(!(m_particleEmitterResource->getMaterial()->getRenderingTechniques() & RenderingTechniqueBit(1 << technique))
-	   || m_aliveParticleCount == 0)
+	if(!(m_particleEmitterResource->getMaterial()->getRenderingTechniques() & RenderingTechniqueBit(1 << technique)) || m_aliveParticleCount == 0)
 	{
 		outRenderables.setArray(nullptr, 0);
 		return;
@@ -513,9 +501,8 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 	ShaderProgramPtr prog;
 	m_particleEmitterResource->getRenderingInfo(key, prog);
 
-	RenderableQueueElement* el =
-		static_cast<RenderableQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
-			sizeof(RenderableQueueElement), alignof(RenderableQueueElement)));
+	RenderableQueueElement* el = static_cast<RenderableQueueElement*>(
+		SceneGraph::getSingleton().getFrameMemoryPool().allocate(sizeof(RenderableQueueElement), alignof(RenderableQueueElement)));
 
 	el->m_mergeKey = 0; // Not mergable
 	el->m_program = prog.get();

@@ -27,10 +27,9 @@ public:
 	using Type = U64;
 };
 
-/// This macro will do an operation between 2 values. It will be used in constexpr functions. There is also an assertion
-/// which makes sure that the result will fit in an enum. Despite the fact that the assertion contains non-constexpr
-/// elements it will work on constexpr expressions. The compiler will compile-time ignore the non-constexpr part if the
-/// assert if the assertion expression is true.
+/// This macro will do an operation between 2 values. It will be used in constexpr functions. There is also an assertion which makes sure that the
+/// result will fit in an enum. Despite the fact that the assertion contains non-constexpr elements it will work on constexpr expressions. The
+/// compiler will compile-time ignore the non-constexpr part if the assert if the assertion expression is true.
 #define _ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b) \
 	using EnumInt = std::underlying_type<enumType>::type; \
 	using SafeInt = EnumSafeIntegerType<EnumInt>::Type; \
@@ -43,13 +42,11 @@ public:
 	{ \
 		_ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b); \
 	} \
-	constexpr qualifier enumType operator regularOperator(const enumType a, \
-														  const std::underlying_type<enumType>::type b) \
+	constexpr qualifier enumType operator regularOperator(const enumType a, const std::underlying_type<enumType>::type b) \
 	{ \
 		_ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b); \
 	} \
-	constexpr qualifier enumType operator regularOperator(const std::underlying_type<enumType>::type a, \
-														  const enumType b) \
+	constexpr qualifier enumType operator regularOperator(const std::underlying_type<enumType>::type a, const enumType b) \
 	{ \
 		_ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b); \
 	} \
@@ -63,8 +60,7 @@ public:
 		a = a regularOperator b; \
 		return a; \
 	} \
-	qualifier std::underlying_type<enumType>::type& operator assignmentOperator( \
-		std::underlying_type<enumType>::type& a, const enumType b) \
+	qualifier std::underlying_type<enumType>::type& operator assignmentOperator(std::underlying_type<enumType>::type& a, const enumType b) \
 	{ \
 		using EnumInt = std::underlying_type<enumType>::type; \
 		a = EnumInt(a regularOperator b); \

@@ -11,8 +11,7 @@ using namespace anki;
 
 static constexpr U32 kClassCount = 6;
 
-class SegregatedListsAllocatorBuilderChunk :
-	public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<DefaultMemoryPool>>
+class SegregatedListsAllocatorBuilderChunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<DefaultMemoryPool>>
 {
 };
 
@@ -56,9 +55,8 @@ public:
 	}
 };
 
-using SLAlloc =
-	SegregatedListsAllocatorBuilder<SegregatedListsAllocatorBuilderChunk, SegregatedListsAllocatorBuilderInterface,
-									Mutex, SingletonMemoryPoolWrapper<DefaultMemoryPool>>;
+using SLAlloc = SegregatedListsAllocatorBuilder<SegregatedListsAllocatorBuilderChunk, SegregatedListsAllocatorBuilderInterface, Mutex,
+												SingletonMemoryPoolWrapper<DefaultMemoryPool>>;
 
 template<typename TAlloc>
 static void printAllocatorBuilder(const TAlloc& sl)
@@ -146,8 +144,8 @@ static void fuzzyTest()
 	{
 		const Second end = HighRezTimer::getCurrentTime();
 		const Second dt = end - start;
-		ANKI_TEST_LOGI("Operations/sec %f. Avg external fragmentation %f. Max external fragmentation %f",
-					   F64(kIterationCount) / dt, avgFragmentation, maxFragmetation);
+		ANKI_TEST_LOGI("Operations/sec %f. Avg external fragmentation %f. Max external fragmentation %f", F64(kIterationCount) / dt, avgFragmentation,
+					   maxFragmetation);
 	}
 }
 

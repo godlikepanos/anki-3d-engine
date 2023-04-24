@@ -8,13 +8,8 @@
 
 namespace anki {
 
-static constexpr Array<GpuMemoryManagerClassInfo, 7> kClasses{{{4_KB, 256_KB},
-															   {128_KB, 8_MB},
-															   {1_MB, 64_MB},
-															   {16_MB, 128_MB},
-															   {64_MB, 128_MB},
-															   {128_MB, 128_MB},
-															   {256_MB, 256_MB}}};
+static constexpr Array<GpuMemoryManagerClassInfo, 7> kClasses{
+	{{4_KB, 256_KB}, {128_KB, 8_MB}, {1_MB, 64_MB}, {16_MB, 128_MB}, {64_MB, 128_MB}, {128_MB, 128_MB}, {256_MB, 256_MB}}};
 
 /// Special classes for the ReBAR memory. Have that as a special case because it's so limited and needs special care.
 static constexpr Array<GpuMemoryManagerClassInfo, 3> kRebarClasses{{{1_MB, 1_MB}, {12_MB, 12_MB}, {24_MB, 24_MB}}};
@@ -37,8 +32,7 @@ Error GpuMemoryManagerInterface::allocateChunk(U32 classIdx, GpuMemoryManagerChu
 	VkDeviceMemory memHandle;
 	if(vkAllocateMemory(getVkDevice(), &ci, nullptr, &memHandle) != VK_SUCCESS) [[unlikely]]
 	{
-		ANKI_VK_LOGF("Out of GPU memory. Mem type index %u, size %zu", m_memTypeIdx,
-					 m_classInfos[classIdx].m_suballocationSize);
+		ANKI_VK_LOGF("Out of GPU memory. Mem type index %u, size %zu", m_memTypeIdx, m_classInfos[classIdx].m_suballocationSize);
 	}
 
 	chunk = newInstance<GpuMemoryManagerChunk>(GrMemoryPool::getSingleton());
@@ -88,8 +82,8 @@ void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 	ANKI_VK_LOGV("Initializing memory manager");
 	for(const GpuMemoryManagerClassInfo& c : kClasses)
 	{
-		ANKI_VK_LOGV("\tGPU mem class. Chunk size: %lu, suballocationSize: %lu, allocsPerChunk %lu", c.m_chunkSize,
-					 c.m_suballocationSize, c.m_chunkSize / c.m_suballocationSize);
+		ANKI_VK_LOGV("\tGPU mem class. Chunk size: %lu, suballocationSize: %lu, allocsPerChunk %lu", c.m_chunkSize, c.m_suballocationSize,
+					 c.m_chunkSize / c.m_suballocationSize);
 	}
 
 	// Image buffer granularity
@@ -101,9 +95,8 @@ void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 
 		if(m_bufferImageGranularity > 4_KB)
 		{
-			ANKI_VK_LOGW(
-				"Buffer/image mem granularity is too high (%u). It will force high alignments and it will waste memory",
-				m_bufferImageGranularity);
+			ANKI_VK_LOGW("Buffer/image mem granularity is too high (%u). It will force high alignments and it will waste memory",
+						 m_bufferImageGranularity);
 		}
 
 		for(const GpuMemoryManagerClassInfo& c : kClasses)
@@ -112,8 +105,7 @@ void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 			{
 				ANKI_VK_LOGW("Memory class is not aligned to buffer/image granularity (%u). It won't be used in "
 							 "allocations: Chunk size: %lu, suballocationSize: %lu, allocsPerChunk %lu",
-							 m_bufferImageGranularity, c.m_chunkSize, c.m_suballocationSize,
-							 c.m_chunkSize / c.m_suballocationSize);
+							 m_bufferImageGranularity, c.m_chunkSize, c.m_suballocationSize, c.m_chunkSize / c.m_suballocationSize);
 			}
 		}
 	}
@@ -133,11 +125,9 @@ void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 
 		// Find if it's ReBAR
 		const VkMemoryPropertyFlags props = m_memoryProperties.memoryTypes[memTypeIdx].propertyFlags;
-		const VkMemoryPropertyFlags reBarProps = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-												 | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-												 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		const PtrSize heapSize =
-			m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[memTypeIdx].heapIndex].size;
+		const VkMemoryPropertyFlags reBarProps =
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		const PtrSize heapSize = m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[memTypeIdx].heapIndex].size;
 		const Bool isReBar = props == reBarProps && heapSize <= 256_MB;
 
 		if(isReBar)
@@ -233,15 +223,13 @@ void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 
 	if(handle.m_chunk->m_mappedAddress == nullptr)
 	{
-		ANKI_VK_CHECKF(vkMapMemory(getVkDevice(), handle.m_chunk->m_handle, 0, handle.m_chunk->m_size, 0,
-								   &handle.m_chunk->m_mappedAddress));
+		ANKI_VK_CHECKF(vkMapMemory(getVkDevice(), handle.m_chunk->m_handle, 0, handle.m_chunk->m_size, 0, &handle.m_chunk->m_mappedAddress));
 	}
 
 	return static_cast<void*>(static_cast<U8*>(handle.m_chunk->m_mappedAddress) + handle.m_offset);
 }
 
-U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags,
-									 VkMemoryPropertyFlags avoidFlags) const
+U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const
 {
 	U32 prefered = kMaxU32;
 
@@ -265,10 +253,8 @@ U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFl
 					// On some Intel drivers there are identical memory types pointing to different heaps. Choose the
 					// biggest heap
 
-					const PtrSize crntHeapSize =
-						m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[i].heapIndex].size;
-					const PtrSize prevHeapSize =
-						m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[prefered].heapIndex].size;
+					const PtrSize crntHeapSize = m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[i].heapIndex].size;
+					const PtrSize prevHeapSize = m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[prefered].heapIndex].size;
 
 					if(crntHeapSize > prevHeapSize)
 					{

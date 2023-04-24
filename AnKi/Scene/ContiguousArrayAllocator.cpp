@@ -9,7 +9,7 @@
 
 namespace anki {
 
-void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::destroy()
+void GpuSceneContiguousArrays::ContiguousArrayAllocator::destroy()
 {
 	for(U32 i = 0; i < kMaxFramesInFlight; ++i)
 	{
@@ -17,7 +17,7 @@ void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::destroy()
 	}
 }
 
-U32 AllGpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject()
+U32 GpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject()
 {
 	LockGuard lock(m_mtx);
 
@@ -47,7 +47,7 @@ U32 AllGpuSceneContiguousArrays::ContiguousArrayAllocator::allocateObject()
 	return idx;
 }
 
-void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::deferredFree(U32 crntFrameIdx, U32 index)
+void GpuSceneContiguousArrays::ContiguousArrayAllocator::deferredFree(U32 crntFrameIdx, U32 index)
 {
 	LockGuard lock(m_mtx);
 
@@ -55,7 +55,7 @@ void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::deferredFree(U32 crn
 	m_garbage[crntFrameIdx].emplaceBack(index);
 }
 
-void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 newFrameIdx)
+void GpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 newFrameIdx)
 {
 	LockGuard lock(m_mtx);
 
@@ -79,8 +79,7 @@ void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 n
 
 	// Adjust the stack size
 	const U32 allocatedSlots = m_nextSlotIndex;
-	if(U32(F32(allocatedSlots) * m_growRate) < m_freeSlotStack.getSize()
-	   && m_freeSlotStack.getSize() > m_initialArraySize)
+	if(U32(F32(allocatedSlots) * m_growRate) < m_freeSlotStack.getSize() && m_freeSlotStack.getSize() > m_initialArraySize)
 	{
 		// Shrink
 		ANKI_ASSERT(!"TODO");
@@ -93,25 +92,24 @@ void AllGpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 n
 	}
 }
 
-AllGpuSceneContiguousArrays::AllGpuSceneContiguousArrays()
+GpuSceneContiguousArrays::GpuSceneContiguousArrays()
 {
 	const ConfigSet& cfg = ConfigSet::getSingleton();
 	constexpr F32 kGrowRate = 2.0;
 
-	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {
-		cfg.getSceneMinGpuSceneTransforms(),
-		cfg.getSceneMinGpuSceneMeshes(),
-		cfg.getSceneMinGpuSceneParticleEmitters(),
-		cfg.getSceneMinGpuSceneLights(),
-		cfg.getSceneMinGpuSceneLights(),
-		cfg.getSceneMinGpuSceneReflectionProbes(),
-		cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
-		cfg.getSceneMinGpuSceneDecals(),
-		cfg.getSceneMinGpuSceneFogDensityVolumes(),
-		cfg.getSceneMinGpuSceneRenderables(),
-		cfg.getSceneMinGpuSceneRenderables(),
-		cfg.getSceneMinGpuSceneRenderables(),
-		cfg.getSceneMinGpuSceneRenderables()};
+	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {cfg.getSceneMinGpuSceneTransforms(),
+																				  cfg.getSceneMinGpuSceneMeshes(),
+																				  cfg.getSceneMinGpuSceneParticleEmitters(),
+																				  cfg.getSceneMinGpuSceneLights(),
+																				  cfg.getSceneMinGpuSceneLights(),
+																				  cfg.getSceneMinGpuSceneReflectionProbes(),
+																				  cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
+																				  cfg.getSceneMinGpuSceneDecals(),
+																				  cfg.getSceneMinGpuSceneFogDensityVolumes(),
+																				  cfg.getSceneMinGpuSceneRenderables(),
+																				  cfg.getSceneMinGpuSceneRenderables(),
+																				  cfg.getSceneMinGpuSceneRenderables(),
+																				  cfg.getSceneMinGpuSceneRenderables()};
 
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{
@@ -122,7 +120,7 @@ AllGpuSceneContiguousArrays::AllGpuSceneContiguousArrays()
 	}
 }
 
-AllGpuSceneContiguousArrays::~AllGpuSceneContiguousArrays()
+GpuSceneContiguousArrays::~GpuSceneContiguousArrays()
 {
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{
@@ -130,7 +128,7 @@ AllGpuSceneContiguousArrays::~AllGpuSceneContiguousArrays()
 	}
 }
 
-GpuSceneContiguousArrayIndex AllGpuSceneContiguousArrays::allocate(GpuSceneContiguousArrayType type)
+GpuSceneContiguousArrayIndex GpuSceneContiguousArrays::allocate(GpuSceneContiguousArrayType type)
 {
 	GpuSceneContiguousArrayIndex out;
 	out.m_index = m_allocs[type].allocateObject();
@@ -139,7 +137,7 @@ GpuSceneContiguousArrayIndex AllGpuSceneContiguousArrays::allocate(GpuSceneConti
 	return out;
 }
 
-void AllGpuSceneContiguousArrays::deferredFree(GpuSceneContiguousArrayIndex& idx)
+void GpuSceneContiguousArrays::deferredFree(GpuSceneContiguousArrayIndex& idx)
 {
 	if(idx.isValid())
 	{
@@ -148,7 +146,7 @@ void AllGpuSceneContiguousArrays::deferredFree(GpuSceneContiguousArrayIndex& idx
 	}
 }
 
-void AllGpuSceneContiguousArrays::endFrame()
+void GpuSceneContiguousArrays::endFrame()
 {
 	m_frame = (m_frame + 1) % kMaxFramesInFlight;
 

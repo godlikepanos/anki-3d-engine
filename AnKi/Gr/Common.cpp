@@ -11,8 +11,7 @@ namespace anki {
 
 /// @warning Don't use Array because the compilers can't handle it for some reason.
 inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
-#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
-	{ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) {ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
@@ -35,16 +34,9 @@ FormatInfo getFormatInfo(Format fmt)
 	FormatInfo out = {};
 	switch(fmt)
 	{
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
-						depthStencil) \
+#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
 	case Format::k##type: \
-		out = {componentCount, \
-			   texelSize, \
-			   blockWidth, \
-			   blockHeight, \
-			   blockSize, \
-			   shaderType, \
-			   DepthStencilAspectBit::k##depthStencil, \
+		out = {componentCount,      texelSize, blockWidth, blockHeight, blockSize, shaderType, DepthStencilAspectBit::k##depthStencil, \
 			   ANKI_STRINGIZE(type)}; \
 		break;
 #include <AnKi/Gr/Format.defs.h>

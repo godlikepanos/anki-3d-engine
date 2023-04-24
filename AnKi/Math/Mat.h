@@ -40,10 +40,8 @@ public:
 	static constexpr U kColumnCount = kTColumnCount; ///< Number of columns
 	static constexpr U kSize = kTRowCount * kTColumnCount; ///< Number of total elements
 	static constexpr Bool kHasSimd = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat4Simd =
-		kTRowCount == 4 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat3x4Simd =
-		kTRowCount == 3 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kHasMat4Simd = kTRowCount == 4 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kHasMat3x4Simd = kTRowCount == 3 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
 	/// @{
@@ -114,8 +112,7 @@ public:
 	// 4x4 specific constructors
 
 	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
-	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31,
-				   T m32, T m33)
+	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33)
 	{
 		auto& m = *this;
 		m(0, 0) = m00;
@@ -724,9 +721,8 @@ public:
 	void rotateXAxis(const T rad)
 	{
 		TMat& m = *this;
-		// If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in
-		// mat's columns. This means that: mat3.colomn[0] == i * mat3. rotateXAxis() rotates rad angle not from i
-		// vector (aka x axis) but from the vector from colomn 0
+		// If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in mat's columns. This means that:
+		// mat3.colomn[0] == i * mat3. rotateXAxis() rotates rad angle not from i vector (aka x axis) but from the vector from colomn 0
 		// NOTE: See the clean code from < r664
 
 		T sina, cosa;
@@ -927,8 +923,7 @@ public:
 
 	void reorthogonalize()
 	{
-		// There are 2 methods, the standard and the Gram-Schmidt method with a twist for zAxis. This uses the 2nd. For
-		// the first see < r664
+		// There are 2 methods, the standard and the Gram-Schmidt method with a twist for zAxis. This uses the 2nd. For the first see < r664
 		ColumnVec xAxis, yAxis, zAxis;
 		getColumns(xAxis, yAxis, zAxis);
 
@@ -1013,18 +1008,14 @@ public:
 	T getDet() const
 	{
 		const auto& t = *this;
-		return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0) - t(0, 2) * t(1, 3) * t(2, 1) * t(3, 0)
-			   - t(0, 3) * t(1, 1) * t(2, 2) * t(3, 0) + t(0, 1) * t(1, 3) * t(2, 2) * t(3, 0)
-			   + t(0, 2) * t(1, 1) * t(2, 3) * t(3, 0) - t(0, 1) * t(1, 2) * t(2, 3) * t(3, 0)
-			   - t(0, 3) * t(1, 2) * t(2, 0) * t(3, 1) + t(0, 2) * t(1, 3) * t(2, 0) * t(3, 1)
-			   + t(0, 3) * t(1, 0) * t(2, 2) * t(3, 1) - t(0, 0) * t(1, 3) * t(2, 2) * t(3, 1)
-			   - t(0, 2) * t(1, 0) * t(2, 3) * t(3, 1) + t(0, 0) * t(1, 2) * t(2, 3) * t(3, 1)
-			   + t(0, 3) * t(1, 1) * t(2, 0) * t(3, 2) - t(0, 1) * t(1, 3) * t(2, 0) * t(3, 2)
-			   - t(0, 3) * t(1, 0) * t(2, 1) * t(3, 2) + t(0, 0) * t(1, 3) * t(2, 1) * t(3, 2)
-			   + t(0, 1) * t(1, 0) * t(2, 3) * t(3, 2) - t(0, 0) * t(1, 1) * t(2, 3) * t(3, 2)
-			   - t(0, 2) * t(1, 1) * t(2, 0) * t(3, 3) + t(0, 1) * t(1, 2) * t(2, 0) * t(3, 3)
-			   + t(0, 2) * t(1, 0) * t(2, 1) * t(3, 3) - t(0, 0) * t(1, 2) * t(2, 1) * t(3, 3)
-			   - t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) + t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
+		return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0) - t(0, 2) * t(1, 3) * t(2, 1) * t(3, 0) - t(0, 3) * t(1, 1) * t(2, 2) * t(3, 0)
+			   + t(0, 1) * t(1, 3) * t(2, 2) * t(3, 0) + t(0, 2) * t(1, 1) * t(2, 3) * t(3, 0) - t(0, 1) * t(1, 2) * t(2, 3) * t(3, 0)
+			   - t(0, 3) * t(1, 2) * t(2, 0) * t(3, 1) + t(0, 2) * t(1, 3) * t(2, 0) * t(3, 1) + t(0, 3) * t(1, 0) * t(2, 2) * t(3, 1)
+			   - t(0, 0) * t(1, 3) * t(2, 2) * t(3, 1) - t(0, 2) * t(1, 0) * t(2, 3) * t(3, 1) + t(0, 0) * t(1, 2) * t(2, 3) * t(3, 1)
+			   + t(0, 3) * t(1, 1) * t(2, 0) * t(3, 2) - t(0, 1) * t(1, 3) * t(2, 0) * t(3, 2) - t(0, 3) * t(1, 0) * t(2, 1) * t(3, 2)
+			   + t(0, 0) * t(1, 3) * t(2, 1) * t(3, 2) + t(0, 1) * t(1, 0) * t(2, 3) * t(3, 2) - t(0, 0) * t(1, 1) * t(2, 3) * t(3, 2)
+			   - t(0, 2) * t(1, 1) * t(2, 0) * t(3, 3) + t(0, 1) * t(1, 2) * t(2, 0) * t(3, 3) + t(0, 2) * t(1, 0) * t(2, 1) * t(3, 3)
+			   - t(0, 0) * t(1, 2) * t(2, 1) * t(3, 3) - t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) + t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 	}
 
 	ANKI_ENABLE_METHOD(kTColumnCount == 3 && kTRowCount == 3)
@@ -1149,8 +1140,7 @@ public:
 		// See the clean code in < r664
 
 		// one of the 2 mat4 doesnt represent transformation
-		ANKI_ASSERT(isZero<T>(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - T(1))
-					&& isZero<T>(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - T(1)));
+		ANKI_ASSERT(isZero<T>(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - T(1)) && isZero<T>(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - T(1)));
 
 		TMat m4;
 
@@ -1310,8 +1300,7 @@ public:
 		return m;
 	}
 
-	/// Given the parameters that construct a projection matrix extract 4 values that can be used to unproject a point
-	/// from NDC to view space.
+	/// Given the parameters that construct a projection matrix extract 4 values that can be used to unproject a point from NDC to view space.
 	/// @code
 	/// Vec4 unprojParams = calculatePerspectiveUnprojectionParams(...);
 	/// F32 z = unprojParams.z() / (unprojParams.w() + depth);
@@ -1349,8 +1338,7 @@ public:
 		return out;
 	}
 
-	/// Assuming this is a projection matrix extract the unprojection parameters. See
-	/// calculatePerspectiveUnprojectionParams for more info.
+	/// Assuming this is a projection matrix extract the unprojection parameters. See calculatePerspectiveUnprojectionParams for more info.
 	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	TVec<T, 4> extractPerspectiveUnprojectionParams() const
 	{
@@ -1385,8 +1373,7 @@ public:
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
 	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)>
-	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
-					   const TVec<T, kVecDimensions>& up)
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint, const TVec<T, kVecDimensions>& up)
 	{
 		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).getNormalized();
 		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).getNormalized();
@@ -1398,8 +1385,7 @@ public:
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
 	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)>
-	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
-					   const TVec<T, kVecDimensions>& up)
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint, const TVec<T, kVecDimensions>& up)
 	{
 		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).getNormalized();
 		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).getNormalized();

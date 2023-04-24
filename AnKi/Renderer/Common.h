@@ -103,8 +103,7 @@ public:
 
 /// A convenience function to find empty cache entries. Used for various probes.
 template<typename THashMap, typename TCacheEntryArray, typename TMemPool>
-U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map,
-					   TMemPool& pool)
+U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map, TMemPool& pool)
 {
 	ANKI_ASSERT(uuid > 0);
 

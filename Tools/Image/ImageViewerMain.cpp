@@ -22,11 +22,9 @@ public:
 			},
 			this);
 
-		ANKI_CHECK_AND_IGNORE(
-			UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
+		ANKI_CHECK_AND_IGNORE(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
-		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource(
-			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
+		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource("ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
 	Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
@@ -69,8 +67,7 @@ private:
 			m_imageGrProgram = variant->getProgram();
 		}
 
-		ImGui::Begin("Console", nullptr,
-					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+		ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
 		canvas->pushFont(m_font, 16);
 
@@ -191,8 +188,7 @@ private:
 
 		// Next
 		ImGui::EndChild();
-		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), false,
-						  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
+		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), false, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
 
 		// Image
 		{
@@ -217,8 +213,8 @@ private:
 			m_imageIdExtra.m_extraPushConstantsSize = U8(sizeof(pc));
 			m_imageIdExtra.setExtraPushConstants(&pc, sizeof(pc));
 
-			ImGui::Image(UiImageId(&m_imageIdExtra, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f),
-						 Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImGui::Image(UiImageId(&m_imageIdExtra, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f), Vec4(1.0f),
+						 Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 			if(ImGui::IsItemHovered())
 			{
@@ -291,8 +287,8 @@ public:
 
 		// Change window name
 		String title;
-		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(),
-					  image->getTexture()->getMipmapCount(), getFormatInfo(image->getTexture()->getFormat()).m_name);
+		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(), image->getTexture()->getMipmapCount(),
+					  getFormatInfo(image->getTexture()->getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node

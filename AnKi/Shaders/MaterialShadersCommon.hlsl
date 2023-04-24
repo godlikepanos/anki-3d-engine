@@ -14,14 +14,12 @@
 ANKI_BINDLESS_SET(MaterialSet::kBindless)
 
 [[vk::binding(MaterialBinding::kTrilinearRepeatSampler, MaterialSet::kGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(MaterialBinding::kGlobalUniforms, MaterialSet::kGlobal)]] ConstantBuffer<MaterialGlobalUniforms>
-	g_globalUniforms;
+[[vk::binding(MaterialBinding::kGlobalUniforms, MaterialSet::kGlobal)]] ConstantBuffer<MaterialGlobalUniforms> g_globalUniforms;
 [[vk::binding(MaterialBinding::kGpuScene, MaterialSet::kGlobal)]] ByteAddressBuffer g_gpuScene;
 
 // Unified geom:
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	[[vk::binding(MaterialBinding::kUnifiedGeometry_##fmt, MaterialSet::kGlobal)]] Buffer<shaderType> \
-		g_unifiedGeom_##fmt;
+	[[vk::binding(MaterialBinding::kUnifiedGeometry_##fmt, MaterialSet::kGlobal)]] Buffer<shaderType> g_unifiedGeom_##fmt;
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 // FW shading specific
@@ -50,8 +48,7 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	if(bones)
 	{
 		v.m_boneIndices = g_unifiedGeom_R8G8B8A8_Uint[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + svVertexId];
-		v.m_boneWeights =
-			g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + svVertexId];
+		v.m_boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + svVertexId];
 	}
 
 	return v;

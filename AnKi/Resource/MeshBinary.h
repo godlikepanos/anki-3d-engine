@@ -78,8 +78,7 @@ public:
 		s.doValue("m_format", offsetof(MeshBinaryVertexAttribute, m_format), self.m_format);
 		s.doValue("m_relativeOffset", offsetof(MeshBinaryVertexAttribute, m_relativeOffset), self.m_relativeOffset);
 		s.doArray("m_scale", offsetof(MeshBinaryVertexAttribute, m_scale), &self.m_scale[0], self.m_scale.getSize());
-		s.doArray("m_translation", offsetof(MeshBinaryVertexAttribute, m_translation), &self.m_translation[0],
-				  self.m_translation.getSize());
+		s.doArray("m_translation", offsetof(MeshBinaryVertexAttribute, m_translation), &self.m_translation[0], self.m_translation.getSize());
 	}
 
 	template<typename TDeserializer>
@@ -111,10 +110,8 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray("m_firstIndices", offsetof(MeshBinarySubMesh, m_firstIndices), &self.m_firstIndices[0],
-				  self.m_firstIndices.getSize());
-		s.doArray("m_indexCounts", offsetof(MeshBinarySubMesh, m_indexCounts), &self.m_indexCounts[0],
-				  self.m_indexCounts.getSize());
+		s.doArray("m_firstIndices", offsetof(MeshBinarySubMesh, m_firstIndices), &self.m_firstIndices[0], self.m_firstIndices.getSize());
+		s.doArray("m_indexCounts", offsetof(MeshBinarySubMesh, m_indexCounts), &self.m_indexCounts[0], self.m_indexCounts.getSize());
 		s.doValue("m_aabbMin", offsetof(MeshBinarySubMesh, m_aabbMin), self.m_aabbMin);
 		s.doValue("m_aabbMax", offsetof(MeshBinarySubMesh, m_aabbMax), self.m_aabbMax);
 	}
@@ -158,8 +155,7 @@ public:
 	{
 		s.doArray("m_magic", offsetof(MeshBinaryHeader, m_magic), &self.m_magic[0], self.m_magic.getSize());
 		s.doValue("m_flags", offsetof(MeshBinaryHeader, m_flags), self.m_flags);
-		s.doArray("m_vertexBuffers", offsetof(MeshBinaryHeader, m_vertexBuffers), &self.m_vertexBuffers[0],
-				  self.m_vertexBuffers.getSize());
+		s.doArray("m_vertexBuffers", offsetof(MeshBinaryHeader, m_vertexBuffers), &self.m_vertexBuffers[0], self.m_vertexBuffers.getSize());
 		s.doArray("m_vertexAttributes", offsetof(MeshBinaryHeader, m_vertexAttributes), &self.m_vertexAttributes[0],
 				  self.m_vertexAttributes.getSize());
 		s.doValue("m_indexType", offsetof(MeshBinaryHeader, m_indexType), self.m_indexType);

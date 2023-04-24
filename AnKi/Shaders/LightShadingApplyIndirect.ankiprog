@@ -107,8 +107,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Do specular
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 =
-		mul(g_clusteredShading.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depthCenter, 1.0));
+	const Vec4 worldPos4 = mul(g_clusteredShading.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depthCenter, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	const RVec3 viewDir = normalize(g_clusteredShading.m_cameraPosition - worldPos);
 	const F32 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));

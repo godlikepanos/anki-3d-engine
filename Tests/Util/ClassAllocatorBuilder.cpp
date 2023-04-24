@@ -47,8 +47,8 @@ public:
 		PtrSize m_chunkSize;
 	};
 
-	Array<Class, 7> m_classes = {{Class(256, 16_KB), Class(4_KB, 256_KB), Class(128_KB, 8_MB), Class(1_MB, 32_MB),
-								  Class(16_MB, 128_MB), Class(64_MB, 256_MB), Class(128_MB, 256_MB)}};
+	Array<Class, 7> m_classes = {{Class(256, 16_KB), Class(4_KB, 256_KB), Class(128_KB, 8_MB), Class(1_MB, 32_MB), Class(16_MB, 128_MB),
+								  Class(64_MB, 256_MB), Class(128_MB, 256_MB)}};
 	static constexpr PtrSize MAX_SIZE = 128_MB;
 	PtrSize m_crntSize = 0;
 

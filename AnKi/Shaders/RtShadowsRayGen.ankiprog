@@ -94,10 +94,7 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 		const UVec3 irandom = rand3DPCG16(UVec3(DispatchRaysIndex().xy, frameIdx));
 		random[i] = Vec3(irandom) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
 #else
-		random[i] =
-			g_blueNoiseTex
-				.SampleLevel(g_trilinearRepeatSampler, Vec2(DispatchRaysDimensions().xy) / Vec2(64.0, 64.0) * uv, 0.0)
-				.rgb;
+		random[i] = g_blueNoiseTex.SampleLevel(g_trilinearRepeatSampler, Vec2(DispatchRaysDimensions().xy) / Vec2(64.0, 64.0) * uv, 0.0).rgb;
 		random[i] = animateBlueNoise(random[i], frameIdx);
 		random[i] = random[i] * 2.0 - 1.0; // In [-1.0, 1.0]
 #endif
@@ -140,8 +137,7 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 				const F32 lambertTerm = dot(rayDir, normal);
 				[branch] if(inside && lambertTerm > 0.0)
 				{
-					shadowFactors[light.m_shadowLayer] +=
-						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
+					shadowFactors[light.m_shadowLayer] += trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
 				}
 			}
 		}
@@ -166,8 +162,7 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 				const F32 lambertTerm = dot(rayDir, normal);
 				[branch] if(lambertTerm > 0.0)
 				{
-					shadowFactors[light.m_shadowLayer] +=
-						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
+					shadowFactors[light.m_shadowLayer] += trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
 				}
 			}
 		}

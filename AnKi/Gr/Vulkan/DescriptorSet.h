@@ -193,8 +193,7 @@ public:
 		m_layout = layout;
 	}
 
-	void bindTextureAndSampler(U32 binding, U32 arrayIdx, const TextureView* texView, const Sampler* sampler,
-							   VkImageLayout layout)
+	void bindTextureAndSampler(U32 binding, U32 arrayIdx, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
 		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
@@ -272,8 +271,7 @@ public:
 		unbindBindlessDSet();
 	}
 
-	void bindReadOnlyTextureBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range,
-								   Format fmt)
+	void bindReadOnlyTextureBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range, Format fmt)
 	{
 		const VkBufferView view = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
@@ -311,8 +309,7 @@ public:
 		b = {};
 		b.m_type = DescriptorType::kAccelerationStructure;
 		b.m_uuids[0] = b.m_uuids[1] = as->getUuid();
-		b.m_accelerationStructure.m_accelerationStructureHandle =
-			static_cast<const AccelerationStructureImpl*>(as)->getHandle();
+		b.m_accelerationStructure.m_accelerationStructureHandle = static_cast<const AccelerationStructureImpl*>(as)->getHandle();
 
 		m_dirtyBindings.set(binding);
 		unbindBindlessDSet();
@@ -341,8 +338,7 @@ private:
 
 	/// Only DescriptorSetFactory should call this.
 	/// @param hash If hash is zero then the DS doesn't need rebind.
-	void flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets, U32& dynamicOffsetCount,
-			   Bool& bindlessDSet);
+	void flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets, U32& dynamicOffsetCount, Bool& bindlessDSet);
 
 	void unbindBindlessDSet()
 	{

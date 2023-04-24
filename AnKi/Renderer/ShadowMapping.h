@@ -65,18 +65,15 @@ private:
 
 	void processLights(RenderingContext& ctx, U32& threadCountForScratchPass);
 
-	Bool allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices,
-							const U32* drawcallsCount, const U32* hierarchies, UVec4* atlasTileViewports,
-							TileAllocatorResult* subResults);
+	Bool allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices, const U32* drawcallsCount,
+							const U32* hierarchies, UVec4* atlasTileViewports, TileAllocatorResult* subResults);
 
 	Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 
 	/// Find the detail of the light
-	void chooseDetail(const Vec4& cameraOrigin, const PointLightQueueElement& light, U32& tileAllocatorHierarchy,
-					  U32& renderQueueElementsLod) const;
+	void chooseDetail(const Vec4& cameraOrigin, const PointLightQueueElement& light, U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const;
 	/// Find the detail of the light
-	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy,
-					  U32& renderQueueElementsLod) const;
+	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const;
 
 	template<typename TMemoryPool>
 	void newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,

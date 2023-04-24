@@ -75,8 +75,7 @@ public:
 
 	Bool isBoundableTexture() const
 	{
-		return m_dataType >= ShaderVariableDataType::kTextureFirst
-			   && m_dataType <= ShaderVariableDataType::kTextureLast;
+		return m_dataType >= ShaderVariableDataType::kTextureFirst && m_dataType <= ShaderVariableDataType::kTextureLast;
 	}
 
 	Bool isBindlessTexture() const
@@ -136,8 +135,7 @@ protected:
 		return member; \
 	}
 
-#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
-	ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type))
+#define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type))
 #include <AnKi/Gr/ShaderVariableDataType.defs.h>
 #undef ANKI_SVDT_MACRO
 

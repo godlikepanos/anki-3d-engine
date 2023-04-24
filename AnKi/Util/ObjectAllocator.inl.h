@@ -9,8 +9,7 @@ namespace anki {
 
 template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk, typename TIndexType>
 template<typename T, typename... TArgs>
-T* ObjectAllocator<kTObjectSize, kTObjectAlignment, TMemoryPool, kTObjectsPerChunk, TIndexType>::newInstance(
-	TArgs&&... args)
+T* ObjectAllocator<kTObjectSize, kTObjectAlignment, TMemoryPool, kTObjectsPerChunk, TIndexType>::newInstance(TArgs&&... args)
 {
 	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
 	static_assert(sizeof(T) <= kObjectSize, "Wrong object size");
@@ -72,8 +71,7 @@ T* ObjectAllocator<kTObjectSize, kTObjectAlignment, TMemoryPool, kTObjectsPerChu
 
 template<PtrSize kTObjectSize, U32 kTObjectAlignment, typename TMemoryPool, U32 kTObjectsPerChunk, typename TIndexType>
 template<typename T>
-void ObjectAllocator<kTObjectSize, kTObjectAlignment, TMemoryPool, kTObjectsPerChunk, TIndexType>::deleteInstance(
-	T* obj)
+void ObjectAllocator<kTObjectSize, kTObjectAlignment, TMemoryPool, kTObjectsPerChunk, TIndexType>::deleteInstance(T* obj)
 {
 	static_assert(alignof(T) <= kObjectAlignment, "Wrong object alignment");
 	static_assert(sizeof(T) <= kObjectSize, "Wrong object size");

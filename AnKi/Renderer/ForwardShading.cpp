@@ -35,24 +35,18 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 		const U32 set = U32(MaterialSet::kGlobal);
 		cmdb->bindSampler(set, U32(MaterialBinding::kLinearClampSampler), getRenderer().getSamplers().m_trilinearClamp);
-		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler),
-						  getRenderer().getSamplers().m_trilinearClampShadow);
+		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler), getRenderer().getSamplers().m_trilinearClampShadow);
 
-		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getHiZRt(),
-							  kHiZHalfSurface);
-		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume),
-								   getRenderer().getVolumetricLightingAccumulation().getRt());
+		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume), getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingUniforms),
-					 getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
-		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
-			cmdb, set, U32(MaterialBinding::kClusterShadingLights), ClusteredObjectType::kPointLight);
-		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(
-			cmdb, set, U32(MaterialBinding::kClusterShadingLights) + 1, ClusteredObjectType::kSpotLight);
-		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 2,
-								   getRenderer().getShadowMapping().getShadowmapRt());
-		bindStorage(cmdb, set, U32(MaterialBinding::kClusters),
-					getRenderer().getClusterBinning().getClustersRebarToken());
+		bindUniforms(cmdb, set, U32(MaterialBinding::kClusterShadingUniforms), getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, set, U32(MaterialBinding::kClusterShadingLights),
+																				 ClusteredObjectType::kPointLight);
+		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, set, U32(MaterialBinding::kClusterShadingLights) + 1,
+																				 ClusteredObjectType::kSpotLight);
+		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 2, getRenderer().getShadowMapping().getShadowmapRt());
+		bindStorage(cmdb, set, U32(MaterialBinding::kClusters), getRenderer().getClusterBinning().getClustersRebarToken());
 
 		RenderableDrawerArguments args;
 		args.m_viewMatrix = ctx.m_matrices.m_view;
@@ -62,8 +56,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
 
 		// Start drawing
-		getRenderer().getSceneDrawer().drawRange(args,
-												 ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
+		getRenderer().getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
 												 ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
 
 		// Restore state
@@ -79,10 +72,8 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass)
 {
-	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment,
-							  kHiZHalfSurface);
-	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(),
-							  TextureUsageBit::kSampledFragment);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment, kHiZHalfSurface);
+	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment);
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{

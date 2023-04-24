@@ -56,15 +56,15 @@ Error ProbeReflections::initGBuffer()
 
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = getRenderer().create2DRenderTargetDescription(
-			m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize, kGBufferColorRenderTargetFormats[0], "CubeRefl GBuffer");
+		RenderTargetDescription texinit = getRenderer().create2DRenderTargetDescription(m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize,
+																						kGBufferColorRenderTargetFormats[0], "CubeRefl GBuffer");
 
 		// Create color RT descriptions
 		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
 			texinit.m_format = kGBufferColorRenderTargetFormats[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("CubeRefl GBuff Col #%u", i).toCString());
+			m_gbuffer.m_colorRtDescrs[i].setName(RendererString().sprintf("CubeRefl GBuff Col #%u", i));
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
@@ -122,8 +122,7 @@ Error ProbeReflections::initIrradiance()
 
 	// Create prog
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin",
-																m_irradiance.m_prog));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 
@@ -151,14 +150,7 @@ Error ProbeReflections::initIrradiance()
 Error ProbeReflections::initIrradianceToRefl()
 {
 	// Create program
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin",
-															m_irradianceToRefl.m_prog));
-
-	const ShaderProgramResourceVariant* variant;
-	m_irradianceToRefl.m_prog->getOrCreateVariant(ShaderProgramResourceVariantInitInfo(m_irradianceToRefl.m_prog),
-												  variant);
-	m_irradianceToRefl.m_grProg = variant->getProgram();
-
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin", m_irradianceToRefl.m_prog, m_irradianceToRefl.m_grProg));
 	return Error::kNone;
 }
 
@@ -168,8 +160,8 @@ Error ProbeReflections::initShadowMapping()
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
-	m_shadowMapping.m_rtDescr = getRenderer().create2DRenderTargetDescription(
-		resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "CubeRefl SM");
+	m_shadowMapping.m_rtDescr =
+		getRenderer().create2DRenderTargetDescription(resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "CubeRefl SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -191,8 +183,8 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 
 	I32 start, end;
 	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
-						 m_ctx.m_gbufferRenderableCount, startu, endu);
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, m_ctx.m_gbufferRenderableCount,
+						 startu, endu);
 	start = I32(startu);
 	end = I32(endu);
 
@@ -219,8 +211,8 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
 			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat;
 
-			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
-													 rqueue.m_renderables.getBegin() + localEnd, cmdb);
+			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart, rqueue.m_renderables.getBegin() + localEnd,
+													 cmdb);
 		}
 	}
 
@@ -245,11 +237,9 @@ void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx
 	dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
 	dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart().xyz1();
 	dsInfo.m_viewport = UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
-	dsInfo.m_gbufferTexCoordsScale =
-		Vec2(1.0f / F32(m_lightShading.m_tileSize * 6), 1.0f / F32(m_lightShading.m_tileSize));
+	dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_lightShading.m_tileSize * 6), 1.0f / F32(m_lightShading.m_tileSize));
 	dsInfo.m_gbufferTexCoordsBias = Vec2(F32(faceIdx) * (1.0f / 6.0f), 0.0f);
-	dsInfo.m_lightbufferTexCoordsScale =
-		Vec2(1.0f / F32(m_lightShading.m_tileSize), 1.0f / F32(m_lightShading.m_tileSize));
+	dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_lightShading.m_tileSize), 1.0f / F32(m_lightShading.m_tileSize));
 	dsInfo.m_lightbufferTexCoordsBias = Vec2(0.0f, 0.0f);
 	dsInfo.m_cameraNear = probe.m_renderQueues[faceIdx]->m_cameraNear;
 	dsInfo.m_cameraFar = probe.m_renderQueues[faceIdx]->m_cameraFar;
@@ -394,8 +384,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	}
 
 	// Shadow pass. Optional
-	if(m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_uuid
-	   && m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
+	if(m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_uuid && m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
 	{
 		// Update light matrices
 		for(U i = 0; i < 6; ++i)
@@ -407,8 +396,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			const F32 yScale = 1.0f;
 			const F32 xOffset = F32(i) * (1.0f / 6.0f);
 			const F32 yOffset = 0.0f;
-			const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-								0.0f, 0.0f, 1.0f);
+			const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 			Mat4& lightMat = m_ctx.m_probe->m_renderQueues[i]->m_directionalLight.m_textureMatrices[0];
 			lightMat = atlasMtx * lightMat;
@@ -418,8 +406,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_shadowRenderableCount = 0;
 		for(U32 i = 0; i < 6; ++i)
 		{
-			m_ctx.m_shadowRenderableCount +=
-				m_ctx.m_probe->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
+			m_ctx.m_shadowRenderableCount += m_ctx.m_probe->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
 		}
 		const U32 taskCount = computeNumberOfSecondLevelCommandBuffers(m_ctx.m_shadowRenderableCount);
 
@@ -447,13 +434,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	// Light shading passes
 	{
 		// RT
-		m_ctx.m_lightShadingRt =
-			rgraph.importRenderTarget(TexturePtr(m_ctx.m_probe->m_reflectionTexture), TextureUsageBit::kNone);
+		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(TexturePtr(m_ctx.m_probe->m_reflectionTexture), TextureUsageBit::kNone);
 
 		// Passes
-		static constexpr Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1",
-														"CubeRefl LightShad #2", "CubeRefl LightShad #3",
-														"CubeRefl LightShad #4", "CubeRefl LightShad #5"};
+		static constexpr Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1", "CubeRefl LightShad #2",
+														"CubeRefl LightShad #3", "CubeRefl LightShad #4", "CubeRefl LightShad #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -481,8 +466,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Irradiance passes
 	{
-		m_ctx.m_irradianceDiceValuesBuffHandle =
-			rgraph.importBuffer(m_irradiance.m_diceValuesBuff, BufferUsageBit::kNone);
+		m_ctx.m_irradianceDiceValuesBuffHandle = rgraph.importBuffer(m_irradiance.m_diceValuesBuff, BufferUsageBit::kNone);
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl Irradiance");
 
@@ -513,9 +497,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = 6;
-		pass.newTextureDependency(m_ctx.m_lightShadingRt,
-								  TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite,
-								  subresource);
+		pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite, subresource);
 
 		pass.newBufferDependency(m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeRead);
 	}
@@ -546,8 +528,8 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 	I32 start, end;
 	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
-						 m_ctx.m_shadowRenderableCount, startu, endu);
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, m_ctx.m_shadowRenderableCount,
+						 startu, endu);
 	start = I32(startu);
 	end = I32(endu);
 

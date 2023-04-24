@@ -108,8 +108,7 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
 	const U32 slice = 0u;
 	const UVec2 offset = UVec2(0, 0);
-	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_uniforms.m_mipmapCount), AU1(g_uniforms.m_workgroupCount),
-				  slice, offset);
+	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_uniforms.m_mipmapCount), AU1(g_uniforms.m_workgroupCount), slice, offset);
 }
 
 #pragma anki end

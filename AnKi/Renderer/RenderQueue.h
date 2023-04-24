@@ -90,8 +90,7 @@ public:
 };
 
 /// Callback for GenericGpuComputeJobQueueElement.
-using GenericGpuComputeJobQueueElementCallback = void (*)(GenericGpuComputeJobQueueElementContext& ctx,
-														  const void* userData);
+using GenericGpuComputeJobQueueElementCallback = void (*)(GenericGpuComputeJobQueueElementContext& ctx, const void* userData);
 
 /// It has enough info to execute generic compute on the GPU.
 class GenericGpuComputeJobQueueElement final
@@ -402,8 +401,7 @@ public:
 	WeakArray<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 	WeakArray<RayTracingInstanceQueueElement> m_rayTracingInstances;
 
-	/// Contains the ray tracing elements. The rest of the members are unused. It's separate to avoid multithreading
-	/// bugs.
+	/// Contains the ray tracing elements. The rest of the members are unused. It's separate to avoid multithreading bugs.
 	RenderQueue* m_rayTracingQueue = nullptr;
 
 	SkyboxQueueElement m_skybox;

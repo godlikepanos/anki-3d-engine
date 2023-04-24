@@ -92,8 +92,7 @@ public:
 	/// @param stdOut Optional stdout.
 	/// @param stdErr Optional stderr.
 	/// @param exitCode Exit code.
-	static Error callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr,
-							 I32& exitCode);
+	static Error callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr, I32& exitCode);
 
 private:
 	static constexpr U32 kMaxArgs = 64;

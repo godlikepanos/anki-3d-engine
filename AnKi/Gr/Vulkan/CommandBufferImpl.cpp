@@ -118,9 +118,8 @@ void CommandBufferImpl::beginRecording()
 	}
 }
 
-void CommandBufferImpl::beginRenderPassInternal(
-	const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-	TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
+void CommandBufferImpl::beginRenderPassInternal(const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
+												TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -332,24 +331,20 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i, 0, face, layer), aspect),
-											   range);
+			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i, 0, face, layer), aspect), range);
 
-			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
-							VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-							VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
+			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+							VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
 							range);
 		}
 
 		// Transition destination
 		{
 			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(
-				TextureSubresourceInfo(TextureSurfaceInfo(i + 1, 0, face, layer), aspect), range);
+			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i + 1, 0, face, layer), aspect), range);
 
-			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, VK_IMAGE_LAYOUT_UNDEFINED,
-							VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
-							VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tex.m_imageHandle, range);
+			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TRANSFER_BIT,
+							VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tex.m_imageHandle, range);
 		}
 
 		// Setup the blit struct
@@ -393,17 +388,16 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		blit.dstOffsets[0] = {0, 0, 0};
 		blit.dstOffsets[1] = {dstWidth, dstHeight, 1};
 
-		vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
-					   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
-					   (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+		vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+					   &blit, (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	}
 
 	// Hold the reference
 	m_microCmdb->pushObjectRef(texView);
 }
 
-void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset,
-														[[maybe_unused]] PtrSize range, const TextureViewPtr& texView)
+void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, [[maybe_unused]] PtrSize range,
+														const TextureViewPtr& texView)
 {
 	commandCommon();
 
@@ -415,8 +409,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 	const Bool is3D = tex.getTextureType() == TextureType::k3D;
 	const VkImageAspectFlags aspect = convertImageAspect(view.getSubresource().m_depthStencilAspect);
 
-	const TextureSurfaceInfo surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, 0,
-								  view.getSubresource().m_firstLayer);
+	const TextureSurfaceInfo surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, 0, view.getSubresource().m_firstLayer);
 	const TextureVolumeInfo vol(view.getSubresource().m_firstMipmap);
 
 	// Compute the sizes of the mip
@@ -448,8 +441,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 	region.bufferImageHeight = 0;
 	region.bufferRowLength = 0;
 
-	vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle, layout, 1,
-						   &region);
+	vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle, layout, 1, &region);
 
 	m_microCmdb->pushObjectRef(texView);
 	m_microCmdb->pushObjectRef(buff);
@@ -467,8 +459,7 @@ void CommandBufferImpl::rebindDynamicState()
 	// Rebind the stencil compare mask
 	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])
 	{
-		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-								   m_stencilCompareMasks[0]);
+		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[0]);
 	}
 	else
 	{
@@ -479,8 +470,7 @@ void CommandBufferImpl::rebindDynamicState()
 	// Rebind the stencil write mask
 	if(m_stencilWriteMasks[0] == m_stencilWriteMasks[1])
 	{
-		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-								 m_stencilWriteMasks[0]);
+		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[0]);
 	}
 	else
 	{
@@ -491,8 +481,7 @@ void CommandBufferImpl::rebindDynamicState()
 	// Rebind the stencil reference
 	if(m_stencilReferenceMasks[0] == m_stencilReferenceMasks[1])
 	{
-		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-								 m_stencilReferenceMasks[0]);
+		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[0]);
 	}
 	else
 	{
@@ -542,16 +531,13 @@ static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl
 	const Bool isUAV = !!(tex.m_vkUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT);
 
 	// TODO Not sure if I should pass the width,height of the image or the view
-	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format, tex.getWidth(),
-												  tex.getHeight(), isUAV);
+	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format, tex.getWidth(), tex.getHeight(), isUAV);
 }
 #endif
 
-void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor,
-										const TextureViewPtr& outUpscaledColor, const TextureViewPtr& motionVectors,
-										const TextureViewPtr& depth, const TextureViewPtr& exposure,
-										const Bool resetAccumulation, const Vec2& jitterOffset,
-										const Vec2& motionVectorsScale)
+void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
+										const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
+										const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale)
 {
 #if ANKI_DLSS
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_dlss);
@@ -599,14 +585,12 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 	getGrManagerImpl().beginMarker(m_handle, "DLSS");
 	NVSDK_NGX_Parameter* dlssParameters = &upscalerImpl.getParameters();
 	NVSDK_NGX_Handle* dlssFeature = &upscalerImpl.getFeature();
-	const NVSDK_NGX_Result result =
-		NGX_VULKAN_EVALUATE_DLSS_EXT(m_handle, dlssFeature, dlssParameters, &vkDlssEvalParams);
+	const NVSDK_NGX_Result result = NGX_VULKAN_EVALUATE_DLSS_EXT(m_handle, dlssFeature, dlssParameters, &vkDlssEvalParams);
 	getGrManagerImpl().endMarker(m_handle);
 
 	if(NVSDK_NGX_FAILED(result))
 	{
-		ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result,
-					 GetNGXResultAsString(result));
+		ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result, GetNGXResultAsString(result));
 	}
 #else
 	ANKI_ASSERT(0 && "Not supported");
@@ -622,9 +606,8 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 #endif
 }
 
-void CommandBufferImpl::setPipelineBarrierInternal(
-	ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
-	ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
+void CommandBufferImpl::setPipelineBarrierInternal(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
+												   ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
 {
 	commandCommon();
 
@@ -674,8 +657,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
-		impl.computeBarrierInfo(prevUsage, nextUsage, inf.subresourceRange.baseMipLevel, srcStage, inf.srcAccessMask,
-								dstStage, inf.dstAccessMask);
+		impl.computeBarrierInfo(prevUsage, nextUsage, inf.subresourceRange.baseMipLevel, srcStage, inf.srcAccessMask, dstStage, inf.dstAccessMask);
 		inf.oldLayout = impl.computeLayout(prevUsage, inf.subresourceRange.baseMipLevel);
 		inf.newLayout = impl.computeLayout(nextUsage, inf.subresourceRange.baseMipLevel);
 
@@ -734,8 +716,8 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
-		AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage,
-													  inf.srcAccessMask, dstStage, inf.dstAccessMask);
+		AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage, inf.srcAccessMask, dstStage,
+													  inf.dstAccessMask);
 
 		srcStageMask |= srcStage;
 		dstStageMask |= dstStage;

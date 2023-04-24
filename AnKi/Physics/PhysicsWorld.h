@@ -95,8 +95,8 @@ public:
 
 	ANKI_INTERNAL void destroyObject(PhysicsObject* obj);
 
-	ANKI_INTERNAL PhysicsTriggerFilteredPair*
-	getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger, PhysicsFilteredObject* filtered, Bool& isNew);
+	ANKI_INTERNAL PhysicsTriggerFilteredPair* getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger, PhysicsFilteredObject* filtered,
+																					Bool& isNew);
 
 private:
 	class MyOverlapFilterCallback;

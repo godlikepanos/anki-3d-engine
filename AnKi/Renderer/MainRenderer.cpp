@@ -42,8 +42,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	m_swapchainResolution = inf.m_swapchainSize;
 	m_rDrawToDefaultFb = ConfigSet::getSingleton().getRRenderScaling() == 1.0f;
 
-	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(),
-				m_swapchainResolution.y());
+	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(), m_swapchainResolution.y());
 
 	m_r = newInstance<Renderer>(RendererMemoryPool::getSingleton());
 	ANKI_CHECK(m_r->init(m_swapchainResolution));
@@ -62,8 +61,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
 			resolution.x(), resolution.y(),
-			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																							 : Format::kR8G8B8A8_Unorm,
+			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
 

@@ -71,11 +71,10 @@ Error MyApp::init(int argc, char* argv[])
 	SceneNode& cam = scene.getActiveCameraNode();
 
 	PlayerNode* pnode;
-	ANKI_CHECK(scene.newSceneNode<PlayerNode>(
-		"player", pnode, cam.getFirstComponentOfType<MoveComponent>().getLocalOrigin() - Vec4(0.0, 1.0, 0.0, 0.0)));
+	ANKI_CHECK(
+		scene.newSceneNode<PlayerNode>("player", pnode, cam.getFirstComponentOfType<MoveComponent>().getLocalOrigin() - Vec4(0.0, 1.0, 0.0, 0.0)));
 
-	cam.getFirstComponentOfType<MoveComponent>().setLocalTransform(
-		Transform(Vec4(0.0, 0.0, 0.0, 0.0), Mat3x4::getIdentity(), 1.0));
+	cam.getFirstComponentOfType<MoveComponent>().setLocalTransform(Transform(Vec4(0.0, 0.0, 0.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
 	pnode->addChild(&cam);
 #endif
@@ -290,12 +289,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 rotateEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
+			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
 			{
 				rotateCameraTouch = touch;
-				rotateEventInitialPos =
-					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
+				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -307,9 +304,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) > 1)
 		{
-			Vec2 velocity =
-				in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
-				- rotateEventInitialPos;
+			Vec2 velocity = in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - rotateEventInitialPos;
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
@@ -324,12 +319,10 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 moveEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
+			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
 			{
 				moveCameraTouch = touch;
-				moveEventInitialPos =
-					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
+				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -341,9 +334,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
-			Vec2 velocity =
-				in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
-				- moveEventInitialPos;
+			Vec2 velocity = in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - moveEventInitialPos;
 			velocity *= 2.0f;
 
 			mover->moveLocalX(moveDistance * velocity.x());
@@ -358,8 +349,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kU) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
 	}
 
 	if(in.getKey(KeyCode::kI) == 1)
@@ -369,14 +359,12 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kO) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "ResolvedShadows") ? "" : "ResolvedShadows");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "ResolvedShadows") ? "" : "ResolvedShadows");
 	}
 
 	if(in.getKey(KeyCode::kH) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
 	}
 
 	/*if(in.getKey(KeyCode::J) == 1)

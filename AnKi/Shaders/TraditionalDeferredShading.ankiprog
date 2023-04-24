@@ -81,8 +81,7 @@ RVec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 	// Decode and process gbuffer
 	GbufferInfo gbuffer = (GbufferInfo)0;
-	unpackGBufferNoVelocity(g_gbufferTex0.SampleLevel(g_gbufferSampler, uvToRead, 0.0),
-							g_gbufferTex1.SampleLevel(g_gbufferSampler, uvToRead, 0.0),
+	unpackGBufferNoVelocity(g_gbufferTex0.SampleLevel(g_gbufferSampler, uvToRead, 0.0), g_gbufferTex1.SampleLevel(g_gbufferSampler, uvToRead, 0.0),
 							g_gbufferTex2.SampleLevel(g_gbufferSampler, uvToRead, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin * 8.0);
 

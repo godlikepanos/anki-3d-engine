@@ -83,8 +83,7 @@ public:
 		ANKI_TEST_EXPECT_EQ(copyCount, 0); // copy
 		ANKI_TEST_EXPECT_GEQ(moveCount, 0); // move
 
-		constructor0Count = constructor1Count = constructor2Count = constructor3Count = destructorCount = copyCount =
-			moveCount = 0;
+		constructor0Count = constructor1Count = constructor2Count = constructor3Count = destructorCount = copyCount = moveCount = 0;
 	}
 };
 
@@ -293,8 +292,7 @@ ANKI_TEST(Util, SparseArray)
 
 static I64 akAllocSize = 0;
 static I64 akMaxAllocSize = 0;
-static ANKI_DONT_INLINE void* allocAlignedAk([[maybe_unused]] void* userData, void* ptr, PtrSize size,
-											 [[maybe_unused]] PtrSize alignment)
+static ANKI_DONT_INLINE void* allocAlignedAk([[maybe_unused]] void* userData, void* ptr, PtrSize size, [[maybe_unused]] PtrSize alignment)
 {
 	if(ptr == nullptr)
 	{
@@ -317,8 +315,7 @@ static ANKI_DONT_INLINE void* allocAlignedAk([[maybe_unused]] void* userData, vo
 
 static I64 stlAllocSize = 0;
 static I64 stlMaxAllocSize = 0;
-static ANKI_DONT_INLINE void* allocAlignedStl([[maybe_unused]] void* userData, void* ptr, PtrSize size,
-											  [[maybe_unused]] PtrSize alignment)
+static ANKI_DONT_INLINE void* allocAlignedStl([[maybe_unused]] void* userData, void* ptr, PtrSize size, [[maybe_unused]] PtrSize alignment)
 {
 	if(ptr == nullptr)
 	{
@@ -344,8 +341,7 @@ ANKI_TEST(Util, SparseArrayBench)
 	HeapMemoryPool pool(allocAlignedAk, nullptr);
 	HeapAllocator<U8> allocStl(allocAlignedStl, nullptr);
 
-	using StlMap =
-		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
+	using StlMap = std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
 
 	using AkMap = SparseArray<int, SingletonMemoryPoolWrapper<DefaultMemoryPool>, Config<U32>>;
@@ -431,8 +427,8 @@ ANKI_TEST(Util, SparseArrayBench)
 	// Mem usage
 	const I64 stlMemUsage = stlMaxAllocSize + sizeof(stdMap);
 	const I64 akMemUsage = akMaxAllocSize + sizeof(akMap);
-	ANKI_TEST_LOGI("Max mem usage: STL %li AnKi %li | %f%% (At any given time what was the max mem usage)", stlMemUsage,
-				   akMemUsage, F64(stlMemUsage) / F32(akMemUsage) * 100.0f);
+	ANKI_TEST_LOGI("Max mem usage: STL %li AnKi %li | %f%% (At any given time what was the max mem usage)", stlMemUsage, akMemUsage,
+				   F64(stlMemUsage) / F32(akMemUsage) * 100.0f);
 
 	// Deletes
 	{

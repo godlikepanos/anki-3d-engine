@@ -42,8 +42,8 @@ Error TemporalAA::initInternal()
 
 		if(ConfigSet::getSingleton().getRPreferCompute())
 		{
-			variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(),
-																  getRenderer().getInternalResolution().y()));
+			variantInitInfo.addConstant("kFramebufferSize",
+										UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
 		}
 
 		const ShaderProgramResourceVariant* variant;
@@ -54,20 +54,17 @@ Error TemporalAA::initInternal()
 	for(U i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (ConfigSet::getSingleton().getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite
-																 : TextureUsageBit::kFramebufferWrite;
+		usage |= (ConfigSet::getSingleton().getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-			getRenderer().getHdrFormat(), usage, "TemporalAA");
+			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), usage, "TemporalAA");
 
 		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
 	m_tonemappedRtDescr = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																						 : Format::kR8G8B8A8_Unorm,
+		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 		"TemporalAA Tonemapped");
 	m_tonemappedRtDescr.bake();
 
@@ -126,8 +123,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		prpass = &pass;
 	}
 
-	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
-								 TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	prpass->newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 	prpass->newTextureDependency(m_runCtx.m_historyRt, readUsage);
 	prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
@@ -148,13 +144,11 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 			rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(),
-							  getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}
 		else
 		{
-			cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(),
-							  getRenderer().getInternalResolution().y());
+			cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
 			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 		}

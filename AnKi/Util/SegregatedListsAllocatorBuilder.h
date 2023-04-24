@@ -49,8 +49,7 @@ private:
 };
 
 /// It provides the tools to build allocators base on segregated lists and best fit.
-/// @tparam TChunk A user defined class that contains a memory chunk. It should inherit from
-///                SegregatedListsAllocatorBuilderChunkBase.
+/// @tparam TChunk A user defined class that contains a memory chunk. It should inherit from SegregatedListsAllocatorBuilderChunkBase.
 /// @tparam TInterface The interface that contains the following members:
 ///                    @code
 ///                    /// The number of classes
@@ -133,8 +132,7 @@ private:
 	U32 findClass(PtrSize size, PtrSize alignment) const;
 
 	/// Choose the best free block out of 2 given the allocation size and alignment.
-	static Bool chooseBestFit(PtrSize allocSize, PtrSize allocAlignment, FreeBlock* blockA, FreeBlock* blockB,
-							  FreeBlock*& bestBlock);
+	static Bool chooseBestFit(PtrSize allocSize, PtrSize allocAlignment, FreeBlock* blockA, FreeBlock* blockB, FreeBlock*& bestBlock);
 
 	/// Place a free block in one of the lists.
 	/// @param[in,out] chunk The input chunk. If it's freed the pointer will become null.

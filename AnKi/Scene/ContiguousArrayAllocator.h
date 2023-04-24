@@ -38,7 +38,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneContiguousArrayType)
 
 class GpuSceneContiguousArrayIndex
 {
-	friend class AllGpuSceneContiguousArrays;
+	friend class GpuSceneContiguousArrays;
 
 public:
 	GpuSceneContiguousArrayIndex() = default;
@@ -88,7 +88,7 @@ private:
 };
 
 /// Contains a number of contiguous array allocators for various GPU scene contiguous objects.
-class AllGpuSceneContiguousArrays : public MakeSingleton<AllGpuSceneContiguousArrays>
+class GpuSceneContiguousArrays : public MakeSingleton<GpuSceneContiguousArrays>
 {
 	template<typename>
 	friend class MakeSingleton;
@@ -132,7 +132,7 @@ private:
 	/// This array is a contiguous piece of memory. This helps same, in function, objects be close together.
 	class ContiguousArrayAllocator
 	{
-		friend class AllGpuSceneContiguousArrays;
+		friend class GpuSceneContiguousArrays;
 
 	public:
 		~ContiguousArrayAllocator()
@@ -198,36 +198,34 @@ private:
 
 	U8 m_frame = 0;
 
-	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentCount = {
-		2, kMaxLodCount, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentSize = {
-		sizeof(Mat3x4),
-		sizeof(GpuSceneMeshLod),
-		sizeof(GpuSceneParticleEmitter),
-		sizeof(GpuScenePointLight),
-		sizeof(GpuSceneSpotLight),
-		sizeof(GpuSceneReflectionProbe),
-		sizeof(GpuSceneGlobalIlluminationProbe),
-		sizeof(GpuSceneDecal),
-		sizeof(GpuSceneFogDensityVolume),
-		sizeof(GpuSceneRenderable),
-		sizeof(GpuSceneRenderableAabb),
-		sizeof(GpuSceneRenderableAabb),
-		sizeof(GpuSceneRenderableAabb)};
+	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentCount = {2, kMaxLodCount, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+	static constexpr Array<U8, U32(GpuSceneContiguousArrayType::kCount)> m_componentSize = {sizeof(Mat3x4),
+																							sizeof(GpuSceneMeshLod),
+																							sizeof(GpuSceneParticleEmitter),
+																							sizeof(GpuScenePointLight),
+																							sizeof(GpuSceneSpotLight),
+																							sizeof(GpuSceneReflectionProbe),
+																							sizeof(GpuSceneGlobalIlluminationProbe),
+																							sizeof(GpuSceneDecal),
+																							sizeof(GpuSceneFogDensityVolume),
+																							sizeof(GpuSceneRenderable),
+																							sizeof(GpuSceneRenderableAabb),
+																							sizeof(GpuSceneRenderableAabb),
+																							sizeof(GpuSceneRenderableAabb)};
 
-	AllGpuSceneContiguousArrays();
+	GpuSceneContiguousArrays();
 
-	~AllGpuSceneContiguousArrays();
+	~GpuSceneContiguousArrays();
 };
 
 inline GpuSceneContiguousArrayIndex::~GpuSceneContiguousArrayIndex()
 {
-	AllGpuSceneContiguousArrays::getSingleton().deferredFree(*this);
+	GpuSceneContiguousArrays::getSingleton().deferredFree(*this);
 }
 
 inline U32 GpuSceneContiguousArrayIndex::getOffsetInGpuScene() const
 {
-	return AllGpuSceneContiguousArrays::getSingleton().getElementOffsetInGpuScene(*this);
+	return GpuSceneContiguousArrays::getSingleton().getElementOffsetInGpuScene(*this);
 }
 /// @}
 

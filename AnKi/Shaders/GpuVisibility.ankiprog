@@ -17,10 +17,12 @@
 
 // These 2 have the same size
 [[vk::binding(4)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
-[[vk::binding(5)]] RWStructuredBuffer<DrawIndexedIndirectInfo> g_drawIndexedIndirects;
+[[vk::binding(5)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
 
 // Index pointing to the above arrays. Its size is equal to the number of render state buckets
-[[vk::binding(6)]] RWStructuredBuffer<U32> g_drawIndirectOffset;
+[[vk::binding(6)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
+// The MDI counts
+[[vk::binding(7)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
 
 struct Uniforms
 {
@@ -67,19 +69,19 @@ struct Uniforms
 	const U32 renderableIdx = aabb.m_renderableIndexAndRenderStateBucket >> 12u;
 
 	U32 indirectIdx;
-	InterlockedAdd(g_drawIndirectOffset[renderStateBucket], 1, indirectIdx);
+	InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, indirectIdx);
+	indirectIdx += g_drawIndirectArgsOffsets[renderStateBucket];
 
 	const GpuSceneRenderable renderableIn = g_renderables[renderableIdx];
-	const GpuSceneMeshLod meshLod =
-		g_gpuScene.Load<GpuSceneMeshLod>(renderableIn.m_geometryOffset + sizeof(GpuSceneMeshLod) * lod);
+	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderableIn.m_geometryOffset + sizeof(GpuSceneMeshLod) * lod);
 
-	DrawIndexedIndirectInfo indirect;
+	DrawIndexedIndirectArgs indirect;
 	indirect.m_indexCount = meshLod.m_indexCount;
 	indirect.m_instanceCount = 1;
 	indirect.m_firstIndex = meshLod.m_indexBufferOffset / 2;
 	indirect.m_vertexOffset = 0;
 	indirect.m_firstInstance = indirectIdx;
-	g_drawIndexedIndirects[indirectIdx] = indirect;
+	g_drawIndexedIndirectArgs[indirectIdx] = indirect;
 
 	GpuSceneRenderable renderableOut = renderableIn;
 	renderableOut.m_geometryOffset += sizeof(GpuSceneMeshLod) * lod;

@@ -229,8 +229,7 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 
 				// Compute AABB
 				Vec3 childAabbMin, childAabbMax;
-				computeChildAabb(crntBit, parent->m_aabbMin, parent->m_aabbMax, center, child->m_aabbMin,
-								 child->m_aabbMax);
+				computeChildAabb(crntBit, parent->m_aabbMin, parent->m_aabbMax, center, child->m_aabbMin, child->m_aabbMax);
 
 				parent->m_children[i] = child;
 			}
@@ -241,8 +240,8 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 	}
 }
 
-void Octree::computeChildAabb(LeafMask child, const Vec3& parentAabbMin, const Vec3& parentAabbMax,
-							  const Vec3& parentAabbCenter, Vec3& childAabbMin, Vec3& childAabbMax)
+void Octree::computeChildAabb(LeafMask child, const Vec3& parentAabbMin, const Vec3& parentAabbMax, const Vec3& parentAabbCenter, Vec3& childAabbMin,
+							  Vec3& childAabbMax)
 {
 	ANKI_ASSERT(__builtin_popcount(U32(child)) == 1);
 

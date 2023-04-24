@@ -37,9 +37,8 @@ public:
 
 	/// Allocate some tiles.
 	/// @param hierarchy If it's 0 it chooses the smallest tile.
-	[[nodiscard]] TileAllocatorResult allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid,
-											   U32 lightFace, U32 drawcallCount, U32 hierarchy,
-											   Array<U32, 4>& tileViewport);
+	[[nodiscard]] TileAllocatorResult allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid, U32 lightFace, U32 drawcallCount,
+											   U32 hierarchy, Array<U32, 4>& tileViewport);
 
 	/// Remove an light from the cache.
 	void invalidateCache(U64 lightUuid, U32 lightFace);
@@ -80,11 +79,10 @@ private:
 	}
 
 	/// Search for a tile recursively.
-	Bool searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy, U32 allocationHierarchy, Timestamp crntTimestamp,
-							   U32& emptyTileIdx, U32& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const;
+	Bool searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy, U32 allocationHierarchy, Timestamp crntTimestamp, U32& emptyTileIdx,
+							   U32& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const;
 
-	Bool evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32& emptyTileIdx, U32& toKickTileIdx,
-						   Timestamp& tileToKickMinTimestamp) const;
+	Bool evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32& emptyTileIdx, U32& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const;
 };
 /// @}
 

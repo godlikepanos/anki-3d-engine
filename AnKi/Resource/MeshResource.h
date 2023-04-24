@@ -64,8 +64,7 @@ public:
 	/// Get vertex buffer info.
 	void getVertexStreamInfo(U32 lod, VertexStreamId stream, PtrSize& bufferOffset, U32& vertexCount) const
 	{
-		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset()
-					   + m_lods[lod].m_fixedUnifiedGeometryBufferOffset[stream];
+		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset() + m_lods[lod].m_fixedUnifiedGeometryBufferOffset[stream];
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 

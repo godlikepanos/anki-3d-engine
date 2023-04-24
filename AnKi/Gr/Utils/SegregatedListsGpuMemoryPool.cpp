@@ -9,8 +9,7 @@
 
 namespace anki {
 
-class SegregatedListsGpuMemoryPool::Chunk :
-	public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<GrMemoryPool>>
+class SegregatedListsGpuMemoryPool::Chunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<GrMemoryPool>>
 {
 public:
 	PtrSize m_offsetInGpuBuffer;
@@ -50,8 +49,8 @@ public:
 	/// @}
 };
 
-void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes,
-										PtrSize initialGpuBufferSize, CString bufferName, Bool allowCoWs)
+void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
+										CString bufferName, Bool allowCoWs)
 {
 	ANKI_ASSERT(!isInitialized());
 
@@ -245,8 +244,7 @@ void SegregatedListsGpuMemoryPool::endFrame()
 	m_garbage[m_frame].destroy();
 }
 
-void SegregatedListsGpuMemoryPool::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize,
-											PtrSize& totalSize) const
+void SegregatedListsGpuMemoryPool::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
 {
 	ANKI_ASSERT(isInitialized());
 

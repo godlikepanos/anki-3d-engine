@@ -11,8 +11,7 @@
 // Common uniforms
 //
 #if defined(CLUSTERED_SHADING_UNIFORMS_BINDING)
-[[vk::binding(CLUSTERED_SHADING_UNIFORMS_BINDING, CLUSTERED_SHADING_SET)]] ConstantBuffer<ClusteredShadingUniforms>
-	g_clusteredShading;
+[[vk::binding(CLUSTERED_SHADING_UNIFORMS_BINDING, CLUSTERED_SHADING_SET)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
 #endif
 
 //
@@ -28,8 +27,7 @@
 // Reflection probes (1)
 //
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
-[[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<ReflectionProbe>
-	g_reflectionProbes;
+[[vk::binding(CLUSTERED_SHADING_REFLECTIONS_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<ReflectionProbe> g_reflectionProbes;
 #endif
 
 //
@@ -43,16 +41,14 @@
 // Fog density uniforms (1)
 //
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
-[[vk::binding(CLUSTERED_SHADING_FOG_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<FogDensityVolume>
-	g_fogDensityVolumes;
+[[vk::binding(CLUSTERED_SHADING_FOG_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<FogDensityVolume> g_fogDensityVolumes;
 #endif
 
 //
 // GI (1)
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
-[[vk::binding(CLUSTERED_SHADING_GI_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<GlobalIlluminationProbe>
-	g_giProbes;
+[[vk::binding(CLUSTERED_SHADING_GI_BINDING, CLUSTERED_SHADING_SET)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
 #endif
 
 //
@@ -133,10 +129,8 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 	outCluster.m_pointLightsMask = ANKI_OR_MASKS(tileCluster.m_pointLightsMask & zCluster.m_pointLightsMask);
 	outCluster.m_spotLightsMask = ANKI_OR_MASKS(tileCluster.m_spotLightsMask & zCluster.m_spotLightsMask);
 	outCluster.m_decalsMask = ANKI_OR_MASKS(tileCluster.m_decalsMask & zCluster.m_decalsMask);
-	outCluster.m_fogDensityVolumesMask =
-		ANKI_OR_MASKS(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
-	outCluster.m_reflectionProbesMask =
-		ANKI_OR_MASKS(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
+	outCluster.m_fogDensityVolumesMask = ANKI_OR_MASKS(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
+	outCluster.m_reflectionProbesMask = ANKI_OR_MASKS(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
 	outCluster.m_giProbesMask = ANKI_OR_MASKS(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
 
 #undef ANKI_OR_MASKS
@@ -149,15 +143,13 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 Cluster getClusterFragCoord(Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
 {
 	const Cluster tileCluster = g_clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
-	const Cluster zCluster =
-		g_clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
+	const Cluster zCluster = g_clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
 	return mergeClusters(tileCluster, zCluster);
 }
 
 Cluster getClusterFragCoord(Vec3 fragCoord)
 {
-	return getClusterFragCoord(fragCoord, g_clusteredShading.m_tileSize, g_clusteredShading.m_tileCounts,
-							   g_clusteredShading.m_zSplitCount, g_clusteredShading.m_zSplitMagic.x,
-							   g_clusteredShading.m_zSplitMagic.y);
+	return getClusterFragCoord(fragCoord, g_clusteredShading.m_tileSize, g_clusteredShading.m_tileCounts, g_clusteredShading.m_zSplitCount,
+							   g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
 }
 #endif

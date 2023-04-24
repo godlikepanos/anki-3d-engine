@@ -54,11 +54,9 @@ Error ShadowMapping::initInternal()
 					m_tileResolution * m_tileCountBothAxis);
 
 		// RT
-		const TextureUsageBit usage =
-			TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute | TextureUsageBit::kAllFramebuffer;
-		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(m_tileResolution * m_tileCountBothAxis,
-																			 m_tileResolution * m_tileCountBothAxis,
-																			 Format::kD16_Unorm, usage, "ShadowAtlas");
+		const TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute | TextureUsageBit::kAllFramebuffer;
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
+			m_tileResolution * m_tileCountBothAxis, m_tileResolution * m_tileCountBothAxis, Format::kD16_Unorm, usage, "ShadowAtlas");
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
 		m_atlasTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment, clearVal);
@@ -71,8 +69,7 @@ Error ShadowMapping::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ShadowmappingClearDepth.ankiprogbin",
-															m_clearDepthProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ShadowmappingClearDepth.ankiprogbin", m_clearDepthProg));
 	const ShaderProgramResourceVariant* variant;
 	m_clearDepthProg->getOrCreateVariant(variant);
 	m_clearDepthGrProg = variant->getProgram();
@@ -144,12 +141,11 @@ Mat4 ShadowMapping::createSpotLightTextureMatrix(const UVec4& viewport) const
 	ANKI_ASSERT(viewport[2] == viewport[3]);
 	const F32 sizeTextureSpace = F32(viewport[2]) / atlasSize;
 
-	return Mat4(sizeTextureSpace, 0.0f, 0.0f, uv.x(), 0.0f, sizeTextureSpace, 0.0f, uv.y(), 0.0f, 0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f);
+	return Mat4(sizeTextureSpace, 0.0f, 0.0f, uv.x(), 0.0f, sizeTextureSpace, 0.0f, uv.y(), 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const PointLightQueueElement& light,
-								 U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const
+void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const PointLightQueueElement& light, U32& tileAllocatorHierarchy,
+								 U32& renderQueueElementsLod) const
 {
 	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
 	if(distFromTheCamera < ConfigSet::getSingleton().getLod0MaxDistance())
@@ -164,8 +160,8 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const PointLightQueue
 	}
 }
 
-void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light,
-								 U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const
+void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy,
+								 U32& renderQueueElementsLod) const
 {
 	// Get some data
 	const Vec4 coneOrigin = light.m_worldTransform.getTranslationPart().xyz0();
@@ -195,9 +191,8 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueE
 	}
 }
 
-Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices,
-									   const U32* drawcallsCount, const U32* hierarchies, UVec4* atlasTileViewports,
-									   TileAllocatorResult* subResults)
+Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices, const U32* drawcallsCount,
+									   const U32* hierarchies, UVec4* atlasTileViewports, TileAllocatorResult* subResults)
 {
 	ANKI_ASSERT(lightUuid > 0);
 	ANKI_ASSERT(faceCount > 0);
@@ -209,8 +204,8 @@ Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* 
 	for(U i = 0; i < faceCount; ++i)
 	{
 		Array<U32, 4> tileViewport;
-		subResults[i] = m_tileAlloc.allocate(GlobalFrameIndex::getSingleton().m_value, faceTimestamps[i], lightUuid,
-											 faceIndices[i], drawcallsCount[i], hierarchies[i], tileViewport);
+		subResults[i] = m_tileAlloc.allocate(GlobalFrameIndex::getSingleton().m_value, faceTimestamps[i], lightUuid, faceIndices[i],
+											 drawcallsCount[i], hierarchies[i], tileViewport);
 
 		if(subResults[i] == TileAllocatorResult::kAllocationFailed)
 		{
@@ -266,8 +261,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 	UVec4 emptyTileViewport;
 	{
 		Array<U32, 4> tileViewport;
-		[[maybe_unused]] const TileAllocatorResult res = m_tileAlloc.allocate(
-			GlobalFrameIndex::getSingleton().m_value, 1, kMaxU64, 0, 1, kPointLightMaxTileAllocHierarchy, tileViewport);
+		[[maybe_unused]] const TileAllocatorResult res =
+			m_tileAlloc.allocate(GlobalFrameIndex::getSingleton().m_value, 1, kMaxU64, 0, 1, kPointLightMaxTileAllocHierarchy, tileViewport);
 
 		emptyTileViewport = UVec4(tileViewport);
 
@@ -312,18 +307,16 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 				drawcallCounts[activeCascades] = 1; // Doesn't matter
 
 				// Change the quality per cascade
-				hierarchies[activeCascades] =
-					(cascade <= 1) ? (kTileAllocHierarchyCount - 1) : (kTileAllocHierarchyCount - 2);
+				hierarchies[activeCascades] = (cascade <= 1) ? (kTileAllocHierarchyCount - 1) : (kTileAllocHierarchyCount - 2);
 				renderQueueElementsLods[activeCascades] = (cascade == 0) ? 0 : (kMaxLodCount - 1);
 
 				++activeCascades;
 			}
 		}
 
-		const Bool allocationFailed =
-			activeCascades == 0
-			|| !allocateAtlasTiles(light.m_uuid, activeCascades, &timestamps[0], &cascadeIndices[0], &drawcallCounts[0],
-								   &hierarchies[0], &atlasViewports[0], &subResults[0]);
+		const Bool allocationFailed = activeCascades == 0
+									  || !allocateAtlasTiles(light.m_uuid, activeCascades, &timestamps[0], &cascadeIndices[0], &drawcallCounts[0],
+															 &hierarchies[0], &atlasViewports[0], &subResults[0]);
 
 		if(!allocationFailed)
 		{
@@ -340,8 +333,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 						createSpotLightTextureMatrix(atlasViewports[activeCascades]) * light.m_textureMatrices[cascade];
 
 					// Push work
-					newWorkItems(atlasViewports[activeCascades], light.m_shadowRenderQueues[cascade],
-								 renderQueueElementsLods[activeCascades], lightsToRender, drawcallCount);
+					newWorkItems(atlasViewports[activeCascades], light.m_shadowRenderQueues[cascade], renderQueueElementsLods[activeCascades],
+								 lightsToRender, drawcallCount);
 
 					++activeCascades;
 				}
@@ -349,8 +342,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 				{
 					// Empty cascade, point it to the empty tile
 
-					light.m_textureMatrices[cascade] =
-						createSpotLightTextureMatrix(emptyTileViewport) * light.m_textureMatrices[cascade];
+					light.m_textureMatrices[cascade] = createSpotLightTextureMatrix(emptyTileViewport) * light.m_textureMatrices[cascade];
 				}
 			}
 		}
@@ -390,8 +382,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 				// Has renderables, need to allocate tiles for it so add it to the arrays
 
 				faceIndices[numOfFacesThatHaveDrawcalls] = face;
-				timestamps[numOfFacesThatHaveDrawcalls] =
-					light.m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
+				timestamps[numOfFacesThatHaveDrawcalls] = light.m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
 
 				drawcallCounts[numOfFacesThatHaveDrawcalls] = light.m_shadowRenderQueues[face]->m_renderables.getSize();
 
@@ -401,10 +392,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 			}
 		}
 
-		const Bool allocationFailed =
-			numOfFacesThatHaveDrawcalls == 0
-			|| !allocateAtlasTiles(light.m_uuid, numOfFacesThatHaveDrawcalls, &timestamps[0], &faceIndices[0],
-								   &drawcallCounts[0], &hierarchies[0], &atlasViewports[0], &subResults[0]);
+		const Bool allocationFailed = numOfFacesThatHaveDrawcalls == 0
+									  || !allocateAtlasTiles(light.m_uuid, numOfFacesThatHaveDrawcalls, &timestamps[0], &faceIndices[0],
+															 &drawcallCounts[0], &hierarchies[0], &atlasViewports[0], &subResults[0]);
 
 		if(!allocationFailed)
 		{
@@ -442,8 +432,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 
 					if(subResults[numOfFacesThatHaveDrawcalls] != TileAllocatorResult::kCached)
 					{
-						newWorkItems(atlasViewport, light.m_shadowRenderQueues[face], renderQueueElementsLod,
-									 lightsToRender, drawcallCount);
+						newWorkItems(atlasViewport, light.m_shadowRenderQueues[face], renderQueueElementsLod, lightsToRender, drawcallCount);
 					}
 
 					++numOfFacesThatHaveDrawcalls;
@@ -486,10 +475,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 		U32 hierarchy, renderQueueElementsLod;
 		chooseDetail(cameraOrigin, light, hierarchy, renderQueueElementsLod);
 
-		const Bool allocationFailed =
-			localDrawcallCount == 0
-			|| !allocateAtlasTiles(light.m_uuid, 1, &light.m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
-								   &faceIdx, &localDrawcallCount, &hierarchy, &atlasViewport, &subResult);
+		const Bool allocationFailed = localDrawcallCount == 0
+									  || !allocateAtlasTiles(light.m_uuid, 1, &light.m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
+															 &faceIdx, &localDrawcallCount, &hierarchy, &atlasViewport, &subResult);
 
 		if(!allocationFailed)
 		{
@@ -500,8 +488,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 
 			if(subResult != TileAllocatorResult::kCached)
 			{
-				newWorkItems(atlasViewport, light.m_shadowRenderQueue, renderQueueElementsLod, lightsToRender,
-							 drawcallCount);
+				newWorkItems(atlasViewport, light.m_shadowRenderQueue, renderQueueElementsLod, lightsToRender, drawcallCount);
 			}
 		}
 		else
@@ -554,8 +541,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 				if(lightToRenderDrawcallCount == 0)
 				{
 					++lightToRender;
-					lightToRenderDrawcallCount =
-						(lightToRender != lightToRenderEnd) ? lightToRender->m_drawcallCount : 0;
+					lightToRenderDrawcallCount = (lightToRender != lightToRenderEnd) ? lightToRender->m_drawcallCount : 0;
 				}
 			}
 		}
@@ -615,9 +601,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 		getRenderer().getSceneDrawer().drawRange(
 			args, work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
-			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
-				+ work.m_renderableElementCount,
-			cmdb);
+			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement + work.m_renderableElementCount, cmdb);
 	}
 }
 

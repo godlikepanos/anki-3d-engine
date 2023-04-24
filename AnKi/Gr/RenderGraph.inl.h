@@ -12,15 +12,12 @@ inline void RenderPassWorkContext::bindAccelerationStructure(U32 set, U32 bindin
 	m_commandBuffer->bindAccelerationStructure(set, binding, m_rgraph->getAs(handle));
 }
 
-inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset,
-												  PtrSize& range) const
+inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const
 {
 	m_rgraph->getCachedBuffer(handle, buff, offset, range);
 }
 
-inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle,
-														const TextureSubresourceInfo& subresource,
-														TexturePtr& tex) const
+inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex) const
 {
 	TextureUsageBit usage;
 	m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
@@ -187,10 +184,11 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(
-	const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
-	U32 miny, U32 maxx, U32 maxy)
+inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
+															  std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
+															  RenderTargetHandle depthStencilRenderTargetHandle,
+															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
+															  U32 maxy)
 {
 	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
 	U32 count = 0;
@@ -198,14 +196,15 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	{
 		rts[count++] = h;
 	}
-	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle,
-					   shadingRateRenderTargetHandle, minx, miny, maxx, maxy);
+	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle, shadingRateRenderTargetHandle,
+					   minx, miny, maxx, maxy);
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(
-	const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
-	U32 miny, U32 maxx, U32 maxy)
+inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
+															  ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
+															  RenderTargetHandle depthStencilRenderTargetHandle,
+															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
+															  U32 maxy)
 {
 #if ANKI_ENABLE_ASSERTIONS
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
@@ -299,8 +298,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTargetDescription& initInf)
 {
 	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
-	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone
-				&& "Don't need to supply the usage. Render grap will find it");
+	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone && "Don't need to supply the usage. Render grap will find it");
 	RT& rt = *m_renderTargets.emplaceBack();
 	rt.m_initInfo = initInf;
 	rt.m_hash = initInf.m_hash;
@@ -313,8 +311,7 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	return out;
 }
 
-inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset,
-														 PtrSize range)
+inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset, PtrSize range)
 {
 	// Checks
 	if(range == kMaxPtrSize)
@@ -330,8 +327,7 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 
 	for([[maybe_unused]] const Buffer& bb : m_buffers)
 	{
-		ANKI_ASSERT((bb.m_importedBuff != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range))
-					&& "Range already imported");
+		ANKI_ASSERT((bb.m_importedBuff != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range)) && "Range already imported");
 	}
 
 	Buffer& b = *m_buffers.emplaceBack();
@@ -346,8 +342,8 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 	return out;
 }
 
-inline AccelerationStructureHandle
-RenderGraphDescription::importAccelerationStructure(AccelerationStructurePtr as, AccelerationStructureUsageBit usage)
+inline AccelerationStructureHandle RenderGraphDescription::importAccelerationStructure(AccelerationStructurePtr as,
+																					   AccelerationStructureUsageBit usage)
 {
 	for([[maybe_unused]] const AS& a : m_as)
 	{

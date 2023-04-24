@@ -15,7 +15,7 @@ DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_spatial(this)
 {
-	m_gpuSceneIndex = AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kDecals);
+	m_gpuSceneIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kDecals);
 }
 
 DecalComponent::~DecalComponent()
@@ -58,12 +58,10 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		const Mat4 viewMat = worldTransform.getInverse();
 
-		const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(),
-																		 halfBoxSize.y(), -halfBoxSize.y(),
+		const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(), halfBoxSize.y(), -halfBoxSize.y(),
 																		 kClusterObjectFrustumNearPlane, m_boxSize.z());
 
-		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-							1.0f);
+		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 		m_biasProjViewMat = biasMat4 * projMat * viewMat;
 
@@ -87,8 +85,7 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
 
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(),
-													 gpuDecal);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuDecal);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());

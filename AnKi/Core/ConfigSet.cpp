@@ -174,8 +174,7 @@ Error ConfigSet::saveToFile(CString filename) const
 
 #define ANKI_NUMERIC_UINT(name) \
 	ANKI_CHECK(file.writeTextf("\t<!-- %s -->\n", m_##name.m_description.cstr())); \
-	ANKI_CHECK(file.writeTextf("\t<%s>%" PRIu64 "</%s>\n", m_##name.m_name.cstr(), U64(m_##name.m_value), \
-							   m_##name.m_name.cstr()));
+	ANKI_CHECK(file.writeTextf("\t<%s>%" PRIu64 "</%s>\n", m_##name.m_name.cstr(), U64(m_##name.m_value), m_##name.m_name.cstr()));
 
 #define ANKI_CONFIG_VAR_U8(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC_UINT(name)
 #define ANKI_CONFIG_VAR_U32(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC_UINT(name)
@@ -183,8 +182,7 @@ Error ConfigSet::saveToFile(CString filename) const
 #define ANKI_CONFIG_VAR_F32(name, defaultValue, minValue, maxValue, description) ANKI_NUMERIC_UINT(name)
 #define ANKI_CONFIG_VAR_BOOL(name, defaultValue, description) \
 	ANKI_CHECK(file.writeTextf("\t<!-- %s -->\n", m_##name.m_description.cstr())); \
-	ANKI_CHECK(file.writeTextf("\t<%s>%s</%s>\n", m_##name.m_name.cstr(), (m_##name.m_value) ? "true" : "false", \
-							   m_##name.m_name.cstr()));
+	ANKI_CHECK(file.writeTextf("\t<%s>%s</%s>\n", m_##name.m_name.cstr(), (m_##name.m_value) ? "true" : "false", m_##name.m_name.cstr()));
 #define ANKI_CONFIG_VAR_STRING(name, defaultValue, description) \
 	ANKI_CHECK(file.writeTextf("\t<!-- %s -->\n", m_##name.m_description.cstr())); \
 	ANKI_CHECK(file.writeTextf("\t<%s>%s</%s>\n", m_##name.m_name.cstr(), m_##name.m_value, m_##name.m_name.cstr()));

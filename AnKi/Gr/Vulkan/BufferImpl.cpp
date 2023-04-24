@@ -46,8 +46,8 @@ BufferImpl::~BufferImpl()
 Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
-	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_buffer_device_address)
-								  && !!(inf.m_usage & ~BufferUsageBit::kAllTransfer);
+	const Bool exposeGpuAddress =
+		!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_buffer_device_address) && !!(inf.m_usage & ~BufferUsageBit::kAllTransfer);
 
 	PtrSize size = inf.m_size;
 	BufferMapAccessBit access = inf.m_mapAccess;
@@ -134,11 +134,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Read or read/write
 
 		// Cached & coherent
-		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-																		 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-																			 | VK_MEMORY_PROPERTY_HOST_CACHED_BIT
-																			 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-																		 0);
+		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
+			req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0);
 
 		// Fallback: Just cached
 		if(memIdx == kMaxU32)
@@ -159,14 +156,13 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		ANKI_ASSERT(access == BufferMapAccessBit::kNone);
 
 		// Device only
-		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-			req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+																		 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		// Fallback: Device with anything else
 		if(memIdx == kMaxU32)
 		{
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-																			 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		}
 	}
 
@@ -305,14 +301,12 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead
 										   | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageTraceRaysRead
 										   | BufferUsageBit::kTextureGeometryRead | BufferUsageBit::kTextureFragmentRead
-										   | BufferUsageBit::kTextureComputeRead
-										   | BufferUsageBit::kTextureTraceRaysRead;
+										   | BufferUsageBit::kTextureComputeRead | BufferUsageBit::kTextureTraceRaysRead;
 
-	constexpr BufferUsageBit kShaderWrite =
-		BufferUsageBit::kStorageGeometryWrite | BufferUsageBit::kStorageFragmentWrite
-		| BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageTraceRaysWrite
-		| BufferUsageBit::kTextureGeometryWrite | BufferUsageBit::kTextureFragmentWrite
-		| BufferUsageBit::kTextureComputeWrite | BufferUsageBit::kTextureTraceRaysWrite;
+	constexpr BufferUsageBit kShaderWrite = BufferUsageBit::kStorageGeometryWrite | BufferUsageBit::kStorageFragmentWrite
+											| BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageTraceRaysWrite
+											| BufferUsageBit::kTextureGeometryWrite | BufferUsageBit::kTextureFragmentWrite
+											| BufferUsageBit::kTextureComputeWrite | BufferUsageBit::kTextureTraceRaysWrite;
 
 	if(!!(usage & BufferUsageBit::kAllUniform))
 	{
@@ -362,9 +356,8 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 	return mask;
 }
 
-void BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages,
-									VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
-									VkAccessFlags& dstAccesses) const
+void BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
+									VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const
 {
 	ANKI_ASSERT(usageValid(before) && usageValid(after));
 	ANKI_ASSERT(!!after);
@@ -388,11 +381,9 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	ANKI_ASSERT(!!(m_usage & BufferUsageBit::kAllTexture));
 	ANKI_ASSERT(offset + range <= m_size);
 
-	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_textureBufferBindOffsetAlignment, offset)
-				&& "Offset not aligned");
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_textureBufferBindOffsetAlignment, offset) && "Offset not aligned");
 
-	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0
-				&& "Range doesn't align with the number of texel elements");
+	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0 && "Range doesn't align with the number of texel elements");
 
 	[[maybe_unused]] const PtrSize elementCount = range / getFormatInfo(fmt).m_texelSize;
 	ANKI_ASSERT(elementCount <= getGrManagerImpl().getPhysicalDeviceProperties().limits.maxTexelBufferElements);

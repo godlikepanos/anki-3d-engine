@@ -55,8 +55,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		// Ray tracing
 
-		m_shaders.resizeStorage(inf.m_rayTracingShaders.m_rayGenShaders.getSize()
-								+ inf.m_rayTracingShaders.m_missShaders.getSize() + 1); // Plus at least one hit shader
+		m_shaders.resizeStorage(inf.m_rayTracingShaders.m_rayGenShaders.getSize() + inf.m_rayTracingShaders.m_missShaders.getSize()
+								+ 1); // Plus at least one hit shader
 
 		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_rayGenShaders)
 		{
@@ -162,8 +162,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		DescriptorSetLayoutInitInfo dsinf;
 		dsinf.m_bindings = WeakArray<DescriptorBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]);
 
-		ANKI_CHECK(
-			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(dsinf, m_descriptorSetLayouts[set]));
+		ANKI_CHECK(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(dsinf, m_descriptorSetLayouts[set]));
 
 		// Even if the dslayout is empty we will have to list it because we'll have to bind a DS for it.
 		m_refl.m_descriptorSetMask.set(set);
@@ -171,21 +170,17 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the ppline layout
 	//
-	WeakArray<DescriptorSetLayout> dsetLayouts((descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr,
-											   descriptorSetCount);
-	ANKI_CHECK(getGrManagerImpl().getPipelineLayoutFactory().newPipelineLayout(dsetLayouts, m_refl.m_pushConstantsSize,
-																			   m_pplineLayout));
+	WeakArray<DescriptorSetLayout> dsetLayouts((descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr, descriptorSetCount);
+	ANKI_CHECK(getGrManagerImpl().getPipelineLayoutFactory().newPipelineLayout(dsetLayouts, m_refl.m_pushConstantsSize, m_pplineLayout));
 
 	// Get some masks
 	//
 	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::kAllGraphics);
 	if(graphicsProg)
 	{
-		m_refl.m_attributeMask =
-			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kVertex]).m_attributeMask;
+		m_refl.m_attributeMask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kVertex]).m_attributeMask;
 
-		m_refl.m_colorAttachmentWritemask =
-			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kFragment]).m_colorAttachmentWritemask;
+		m_refl.m_colorAttachmentWritemask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kFragment]).m_colorAttachmentWritemask;
 
 		const U32 attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
 		for(U32 i = 0; i < attachmentCount; ++i)
@@ -202,8 +197,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*shader);
 
-			VkPipelineShaderStageCreateInfo& createInf =
-				m_graphics.m_shaderCreateInfos[m_graphics.m_shaderCreateInfoCount++];
+			VkPipelineShaderStageCreateInfo& createInf = m_graphics.m_shaderCreateInfos[m_graphics.m_shaderCreateInfoCount++];
 			createInf = {};
 			createInf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			createInf.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType())));
@@ -249,8 +243,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
 		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
-		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
-											   &m_compute.m_ppline));
+		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_compute.m_ppline));
 		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::kCompute);
 	}
 
@@ -282,8 +275,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		defaultGroup.anyHitShader = VK_SHADER_UNUSED_KHR;
 		defaultGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 
-		U32 groupCount = inf.m_rayTracingShaders.m_rayGenShaders.getSize()
-						 + inf.m_rayTracingShaders.m_missShaders.getSize()
+		U32 groupCount = inf.m_rayTracingShaders.m_rayGenShaders.getSize() + inf.m_rayTracingShaders.m_missShaders.getSize()
 						 + inf.m_rayTracingShaders.m_hitGroups.getSize();
 		GrDynamicArray<VkRayTracingShaderGroupCreateInfoKHR> groups;
 		groups.resize(groupCount, defaultGroup);
@@ -311,8 +303,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			groups[groupCount].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
 			if(inf.m_rayTracingShaders.m_hitGroups[i].m_anyHitShader)
 			{
-				groups[groupCount].anyHitShader =
-					*shaderUuidToMShadersIdx.find(inf.m_rayTracingShaders.m_hitGroups[i].m_anyHitShader->getUuid());
+				groups[groupCount].anyHitShader = *shaderUuidToMShadersIdx.find(inf.m_rayTracingShaders.m_hitGroups[i].m_anyHitShader->getUuid());
 			}
 
 			if(inf.m_rayTracingShaders.m_hitGroups[i].m_closestHitShader)
@@ -337,16 +328,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		{
 			ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
-			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(
-				getVkDevice(), VK_NULL_HANDLE, getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_rt.m_ppline));
+			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getVkDevice(), VK_NULL_HANDLE, getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
+														 &m_rt.m_ppline));
 		}
 
 		// Get RT handles
-		const U32 handleArraySize =
-			getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
+		const U32 handleArraySize = getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
 		m_rt.m_allHandles.resize(handleArraySize, 0_U8);
-		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getVkDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize,
-														   &m_rt.m_allHandles[0]));
+		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getVkDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize, &m_rt.m_allHandles[0]));
 	}
 
 	return Error::kNone;

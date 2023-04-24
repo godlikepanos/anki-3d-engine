@@ -105,9 +105,16 @@ public:
 		return m_bucketItemCount[technique];
 	}
 
+	/// Get number of empty and non-empty buckets.
 	U32 getBucketCount(RenderingTechnique technique) const
 	{
 		return m_buckets[technique].getSize();
+	}
+
+	/// Get number of non-empty buckets.
+	U32 getActiveBucketCount(RenderingTechnique technique) const
+	{
+		return m_activeBucketCount[technique];
 	}
 
 private:
@@ -120,6 +127,8 @@ private:
 
 	Array<SceneDynamicArray<ExtendedBucket>, U32(RenderingTechnique::kCount)> m_buckets;
 	Array<U32, U32(RenderingTechnique::kCount)> m_bucketItemCount = {};
+	Array<U32, U32(RenderingTechnique::kCount)> m_activeBucketCount = {};
+
 	Mutex m_mtx;
 
 	RenderStateBucketContainer() = default;

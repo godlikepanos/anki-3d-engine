@@ -17,8 +17,7 @@ SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::~Segreg
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-U32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::findClass(PtrSize size,
-																					   PtrSize alignment) const
+U32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::findClass(PtrSize size, PtrSize alignment) const
 {
 	ANKI_ASSERT(size > 0 && alignment > 0);
 
@@ -46,8 +45,9 @@ U32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::fin
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-Bool SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::chooseBestFit(
-	PtrSize allocSize, PtrSize allocAlignment, FreeBlock* blockA, FreeBlock* blockB, FreeBlock*& bestBlock)
+Bool SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::chooseBestFit(PtrSize allocSize, PtrSize allocAlignment,
+																							FreeBlock* blockA, FreeBlock* blockB,
+																							FreeBlock*& bestBlock)
 {
 	ANKI_ASSERT(allocSize > 0 && allocAlignment > 0);
 	ANKI_ASSERT(blockA || blockB);
@@ -101,9 +101,7 @@ Bool SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::ch
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::placeFreeBlock(PtrSize address,
-																							 PtrSize size,
-																							 ChunksIterator chunkIt)
+void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::placeFreeBlock(PtrSize address, PtrSize size, ChunksIterator chunkIt)
 {
 	ANKI_ASSERT(size > 0 && isAligned(m_interface.getMinSizeAlignment(), size));
 	ANKI_ASSERT(chunkIt != m_chunks.getEnd());
@@ -128,10 +126,9 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pl
 		FreeBlock newBlock;
 		newBlock.m_address = address;
 		newBlock.m_size = size;
-		auto it = std::lower_bound(freeLists.getBegin(), freeLists.getEnd(), newBlock,
-								   [](const FreeBlock& a, const FreeBlock& b) {
-									   return a.m_address + a.m_size < b.m_address;
-								   });
+		auto it = std::lower_bound(freeLists.getBegin(), freeLists.getEnd(), newBlock, [](const FreeBlock& a, const FreeBlock& b) {
+			return a.m_address + a.m_size < b.m_address;
+		});
 
 		if(it == freeLists.getEnd())
 		{
@@ -229,10 +226,9 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pl
 	ANKI_ASSERT(newClassIdx != kMaxU32);
 	chunk.m_freeLists[newClassIdx].emplaceBack(newBlock);
 
-	std::sort(chunk.m_freeLists[newClassIdx].getBegin(), chunk.m_freeLists[newClassIdx].getEnd(),
-			  [](const FreeBlock& a, const FreeBlock& b) {
-				  return a.m_address < b.m_address;
-			  });
+	std::sort(chunk.m_freeLists[newClassIdx].getBegin(), chunk.m_freeLists[newClassIdx].getEnd(), [](const FreeBlock& a, const FreeBlock& b) {
+		return a.m_address < b.m_address;
+	});
 
 	// Adjust chunk free size
 	chunk.m_freeSize += size;
@@ -258,9 +254,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pl
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::allocate(PtrSize origSize,
-																						PtrSize origAlignment,
-																						TChunk*& outChunk,
+Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::allocate(PtrSize origSize, PtrSize origAlignment, TChunk*& outChunk,
 																						PtrSize& outOffset)
 {
 	ANKI_ASSERT(origSize > 0 && origAlignment > 0);
@@ -390,8 +384,7 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::a
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::free(TChunk* chunk, PtrSize offset,
-																				   PtrSize size)
+void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::free(TChunk* chunk, PtrSize offset, PtrSize size)
 {
 	ANKI_ASSERT(chunk && size);
 
@@ -432,9 +425,8 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::v
 	for(const TChunk* chunk : m_chunks)
 	{
 		ANKI_SLAB_ASSERT(chunk->m_totalSize > 0, "Chunk %u: Total size can't be 0", chunkIdx);
-		ANKI_SLAB_ASSERT(chunk->m_freeSize < chunk->m_totalSize,
-						 "Chunk %u: Free size (%zu) should be less than total size (%zu)", chunkIdx, chunk->m_freeSize,
-						 chunk->m_totalSize);
+		ANKI_SLAB_ASSERT(chunk->m_freeSize < chunk->m_totalSize, "Chunk %u: Free size (%zu) should be less than total size (%zu)", chunkIdx,
+						 chunk->m_freeSize, chunk->m_totalSize);
 
 		PtrSize freeSize = 0;
 		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
@@ -446,23 +438,20 @@ Error SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::v
 				freeSize += crnt.m_size;
 
 				const U32 classIdx = findClass(crnt.m_size, 1);
-				ANKI_SLAB_ASSERT(classIdx == c, "Chunk %u class %u block %u: Free block not in the correct class",
-								 chunkIdx, c, i);
+				ANKI_SLAB_ASSERT(classIdx == c, "Chunk %u class %u block %u: Free block not in the correct class", chunkIdx, c, i);
 
 				if(i > 0)
 				{
 					const FreeBlock& prev = chunk->m_freeLists[c][i - 1];
-					ANKI_SLAB_ASSERT(prev.m_address < crnt.m_address,
-									 "Chunk %u class %u block %u: Previous block should have lower address", chunkIdx,
-									 c, i);
-					ANKI_SLAB_ASSERT(prev.m_address + prev.m_size < crnt.m_address,
-									 "Chunk %u class %u block %u: Block overlaps with previous", chunkIdx, c, i);
+					ANKI_SLAB_ASSERT(prev.m_address < crnt.m_address, "Chunk %u class %u block %u: Previous block should have lower address",
+									 chunkIdx, c, i);
+					ANKI_SLAB_ASSERT(prev.m_address + prev.m_size < crnt.m_address, "Chunk %u class %u block %u: Block overlaps with previous",
+									 chunkIdx, c, i);
 				}
 			}
 		}
 
-		ANKI_SLAB_ASSERT(freeSize == chunk->m_freeSize,
-						 "Chunk %u: Free size calculated doesn't match chunk's free size", chunkIdx);
+		ANKI_SLAB_ASSERT(freeSize == chunk->m_freeSize, "Chunk %u: Free size calculated doesn't match chunk's free size", chunkIdx);
 		++chunkIdx;
 	}
 
@@ -530,8 +519,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pr
 	U32 chunkCount = 0;
 	for(const TChunk* chunk : m_chunks)
 	{
-		strList.pushBackSprintf("Chunk #%u, total size %zu, free size %zu\n", chunkCount, chunk->m_totalSize,
-								chunk->m_freeSize);
+		strList.pushBackSprintf("Chunk #%u, total size %zu, free size %zu\n", chunkCount, chunk->m_totalSize, chunk->m_freeSize);
 
 		for(U32 c = 0; c < m_interface.getClassCount(); ++c)
 		{
@@ -557,8 +545,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pr
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-F32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::computeExternalFragmentation(
-	PtrSize baseSize) const
+F32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::computeExternalFragmentation(PtrSize baseSize) const
 {
 	ANKI_ASSERT(baseSize > 0);
 
@@ -587,8 +574,7 @@ F32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::com
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-F32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::computeExternalFragmentationSawicki(
-	PtrSize baseSize) const
+F32 SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::computeExternalFragmentationSawicki(PtrSize baseSize) const
 {
 	ANKI_ASSERT(baseSize > 0);
 

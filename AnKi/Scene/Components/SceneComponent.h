@@ -88,10 +88,9 @@ private:
 
 /// Define the statics of a scene component.
 #define ANKI_SCENE_COMPONENT_STATICS(className, updateWeight) \
-	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), updateWeight, sizeof(className), \
-										  alignof(className), \
-										  {className::_construct, className::_destruct, className::_onDestroy, \
-										   className::_update, className::_onOtherComponentRemovedOrAdded});
+	SceneComponentRtti className::_m_rtti( \
+		ANKI_STRINGIZE(className), updateWeight, sizeof(className), alignof(className), \
+		{className::_construct, className::_destruct, className::_onDestroy, className::_update, className::_onOtherComponentRemovedOrAdded});
 
 /// Passed to SceneComponent::update.
 /// @memberof SceneComponent

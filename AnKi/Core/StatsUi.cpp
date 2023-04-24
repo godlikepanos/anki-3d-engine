@@ -128,8 +128,7 @@ void StatsUi::build(CanvasPtr canvas)
 	ImGui::Text("----"); \
 	ImGui::Text(x); \
 	ImGui::Text("----");
-#define ANKI_STATS_UI_VALUE(type, name, text, flags) \
-	writeText(m_##name, text, flags, std::is_floating_point<type>::value);
+#define ANKI_STATS_UI_VALUE(type, name, text, flags) writeText(m_##name, text, flags, std::is_floating_point<type>::value);
 #include <AnKi/Core/StatsUi.defs.h>
 #undef ANKI_STATS_UI_BEGIN_GROUP
 #undef ANKI_STATS_UI_VALUE
@@ -139,8 +138,7 @@ void StatsUi::build(CanvasPtr canvas)
 			const Second maxTime = max(m_cpuFrameTime.m_float, m_gpuFrameTime.m_float);
 			const F32 fps = F32(1.0 / maxTime);
 			const Bool cpuBound = m_cpuFrameTime.m_float > m_gpuFrameTime.m_float;
-			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f",
-							   fps);
+			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f", fps);
 		}
 	}
 

@@ -328,8 +328,7 @@ int myMain(int argc, char** argv)
 	config.m_tempDirectory = tmp;
 
 #if ANKI_OS_WINDOWS
-	config.m_compressonatorFilename =
-		ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/Compressonator/compressonatorcli.exe";
+	config.m_compressonatorFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/Compressonator/compressonatorcli.exe";
 	config.m_astcencFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/astcenc-avx2.exe";
 #elif ANKI_OS_LINUX
 	config.m_compressonatorFilename = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/Compressonator/compressonatorcli";

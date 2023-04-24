@@ -82,8 +82,7 @@ F32 computeVarianceCenter(Vec2 uv)
 
 	// Decide the amount of blurring
 	const F32 varianceCenter = computeVarianceCenter(uv);
-	const F32 historyLength =
-		g_historyLengthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x * kRtShadowsMaxHistoryLength;
+	const F32 historyLength = g_historyLengthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x * kRtShadowsMaxHistoryLength;
 
 	U32 sampleCount;
 	if(historyLength < 2.0)
@@ -127,8 +126,7 @@ F32 computeVarianceCenter(Vec2 uv)
 
 		const F32 depthTap = g_depthTex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0).r;
 		const Vec3 positionTap = unproject(uvToNdc(sampleUv), depthTap);
-		const Vec3 normalTap =
-			unpackNormalFromGBuffer(g_gbuffer2Tex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0));
+		const Vec3 normalTap = unpackNormalFromGBuffer(g_gbuffer2Tex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0));
 
 		// F32 w = calculateBilateralWeighPlane(depthCenter, depthTap, 1.0);
 		F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);

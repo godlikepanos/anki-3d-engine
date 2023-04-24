@@ -63,8 +63,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 	// Rand idx
 	const Vec2 noiseUv = Vec2(g_unis.m_framebufferSize) / kNoiseTexSize * uv;
-	const Vec3 noise =
-		animateBlueNoise(g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb, g_unis.m_frameCount % 8u);
+	const Vec3 noise = animateBlueNoise(g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb, g_unis.m_frameCount % 8u);
 
 	// Get view pos
 	const Vec4 viewPos4 = mul(g_unis.m_invProjMat, Vec4(uvToNdc(uv), depth, 1.0));
@@ -91,9 +90,8 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 		const F32 stepf = F32(step);
 		const F32 minStepf = stepf / 4.0;
 		F32 hitAttenuation;
-		raymarchGroundTruth(viewPos, reflDir, uv, depth, g_unis.m_projMat, g_unis.m_maxSteps, g_depthRt,
-							g_trilinearClampSampler, F32(lod), g_unis.m_depthBufferSize, step,
-							U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
+		raymarchGroundTruth(viewPos, reflDir, uv, depth, g_unis.m_projMat, g_unis.m_maxSteps, g_depthRt, g_trilinearClampSampler, F32(lod),
+							g_unis.m_depthBufferSize, step, U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
 
 		ssrAttenuation *= hitAttenuation;
 	}
@@ -106,8 +104,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	// Reject backfacing
 	[branch] if(ssrAttenuation > 0.0)
 	{
-		const Vec3 gbufferNormal =
-			unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0));
+		const Vec3 gbufferNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0));
 		const Vec3 hitNormal = mul(g_unis.m_normalMat, Vec4(gbufferNormal, 0.0));
 		F32 backFaceAttenuation;
 		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
@@ -214,9 +211,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 			// Sample
 			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-			probeColor = g_bindlessTexturesCubeF32[probe.m_cubeTexture]
-							 .SampleLevel(g_trilinearClampSampler, cubeUv, reflLod)
-							 .rgb;
+			probeColor = g_bindlessTexturesCubeF32[probe.m_cubeTexture].SampleLevel(g_trilinearClampSampler, cubeUv, reflLod).rgb;
 		}
 		else
 		{
@@ -236,11 +231,9 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 				totalBlendWeight += blendWeight;
 
 				// Sample reflections
-				const Vec3 cubeUv =
-					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-				const Vec3 c = g_bindlessTexturesCubeF32[NonUniformResourceIndex(probe.m_cubeTexture)]
-								   .SampleLevel(g_trilinearClampSampler, cubeUv, reflLod)
-								   .rgb;
+				const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+				const Vec3 c =
+					g_bindlessTexturesCubeF32[NonUniformResourceIndex(probe.m_cubeTexture)].SampleLevel(g_trilinearClampSampler, cubeUv, reflLod).rgb;
 				probeColor += c * blendWeight;
 			}
 

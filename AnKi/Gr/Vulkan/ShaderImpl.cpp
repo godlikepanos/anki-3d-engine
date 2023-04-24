@@ -32,8 +32,7 @@ ShaderImpl::~ShaderImpl()
 
 	if(m_specConstInfo.pMapEntries)
 	{
-		deleteArray(GrMemoryPool::getSingleton(), const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries),
-					m_specConstInfo.mapEntryCount);
+		deleteArray(GrMemoryPool::getSingleton(), const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries), m_specConstInfo.mapEntryCount);
 	}
 
 	if(m_specConstInfo.pData)
@@ -52,12 +51,10 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 #if ANKI_DUMP_SHADERS
 	{
 		StringRaii fnameSpirv(getAllocator());
-		fnameSpirv.sprintf("%s/%s_t%u_%05u.spv", getManager().getCacheDirectory().cstr(), getName().cstr(),
-						   U(m_shaderType), getUuid());
+		fnameSpirv.sprintf("%s/%s_t%u_%05u.spv", getManager().getCacheDirectory().cstr(), getName().cstr(), U(m_shaderType), getUuid());
 
 		File fileSpirv;
-		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(),
-								  FileOpenFlag::kBinary | FileOpenFlag::kWrite | FileOpenFlag::kSpecial));
+		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(), FileOpenFlag::kBinary | FileOpenFlag::kWrite | FileOpenFlag::kSpecial));
 		ANKI_CHECK(fileSpirv.write(&inf.m_binary[0], inf.m_binary.getSize()));
 	}
 #endif
@@ -233,8 +230,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	// Push consts
 	if(rsrc.push_constant_buffers.size() == 1)
 	{
-		const U32 blockSize =
-			U32(spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id)));
+		const U32 blockSize = U32(spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id)));
 		ANKI_ASSERT(blockSize > 0);
 		ANKI_ASSERT(blockSize % 16 == 0 && "Should be aligned");
 		ANKI_ASSERT(blockSize <= getGrManagerImpl().getDeviceCapabilities().m_pushConstantsSize);

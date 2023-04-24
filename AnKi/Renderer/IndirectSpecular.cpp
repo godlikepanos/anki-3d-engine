@@ -42,8 +42,7 @@ Error IndirectSpecular::initInternal()
 
 	usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
-	TextureInitInfo texInit =
-		getRenderer().create2DRenderTargetInitInfo(size.x(), size.y(), getRenderer().getHdrFormat(), usage, "SSR #1");
+	TextureInitInfo texInit = getRenderer().create2DRenderTargetInitInfo(size.x(), size.y(), getRenderer().getHdrFormat(), usage, "SSR #1");
 	m_rts[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
 	texInit.setName("SSR #2");
 	m_rts[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
@@ -71,8 +70,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs
-						   && ConfigSet::getSingleton().getRVrs() && !preferCompute;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && !preferCompute;
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	// Create/import RTs
@@ -126,8 +124,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSR");
 			pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rts[kWrite]}, {},
-									(enableVrs) ? getRenderer().getVrsSriGeneration().getDownscaledSriRt()
-												: RenderTargetHandle());
+									(enableVrs) ? getRenderer().getVrsSriGeneration().getDownscaledSriRt() : RenderTargetHandle());
 
 			ppass = &pass;
 			readUsage = TextureUsageBit::kSampledFragment;
@@ -135,8 +132,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 
 			if(enableVrs)
 			{
-				ppass->newTextureDependency(getRenderer().getVrsSriGeneration().getDownscaledSriRt(),
-											TextureUsageBit::kFramebufferShadingRate);
+				ppass->newTextureDependency(getRenderer().getVrsSriGeneration().getDownscaledSriRt(), TextureUsageBit::kFramebufferShadingRate);
 			}
 		}
 
@@ -146,14 +142,12 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
 
 		TextureSubresourceInfo hizSubresource;
-		hizSubresource.m_mipmapCount =
-			min(ConfigSet::getSingleton().getRSsrDepthLod() + 1, getRenderer().getDepthDownscale().getMipmapCount());
+		hizSubresource.m_mipmapCount = min(ConfigSet::getSingleton().getRSsrDepthLod() + 1, getRenderer().getDepthDownscale().getMipmapCount());
 		ppass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
 
 		if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
 		{
-			ppass->newTextureDependency(getRenderer().getProbeReflections().getCurrentlyRefreshedReflectionRt(),
-										readUsage);
+			ppass->newTextureDependency(getRenderer().getProbeReflections().getCurrentlyRefreshedReflectionRt(), readUsage);
 		}
 
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
@@ -170,21 +164,18 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_grProg);
 
-	const U32 depthLod =
-		min(ConfigSet::getSingleton().getRSsrDepthLod(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
+	const U32 depthLod = min(ConfigSet::getSingleton().getRSsrDepthLod(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
 	unis->m_depthBufferSize = getRenderer().getInternalResolution() >> (depthLod + 1);
-	unis->m_framebufferSize =
-		UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()) / 2;
+	unis->m_framebufferSize = UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()) / 2;
 	unis->m_frameCount = getRenderer().getFrameCount() & kMaxU32;
 	unis->m_depthMipCount = getRenderer().getDepthDownscale().getMipmapCount();
 	unis->m_maxSteps = ConfigSet::getSingleton().getRSsrMaxSteps();
 	unis->m_lightBufferMipCount = getRenderer().getDownscaleBlur().getMipmapCount();
 	unis->m_firstStepPixels = ConfigSet::getSingleton().getRSsrFirstStepPixels();
-	unis->m_prevViewProjMatMulInvViewProjMat =
-		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	unis->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
 	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	unis->m_normalMat = Mat3x4(Vec3(0.0f), ctx.m_matrices.m_view.getRotationPart());
@@ -210,8 +201,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	cmdb->bindTexture(0, 10, m_noiseImage->getTextureView());
 
 	bindUniforms(cmdb, 0, 11, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12,
-																			 ClusteredObjectType::kReflectionProbe);
+	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12, ClusteredObjectType::kReflectionProbe);
 	bindStorage(cmdb, 0, 13, getRenderer().getClusterBinning().getClustersRebarToken());
 
 	cmdb->bindAllBindless(1);
@@ -220,13 +210,11 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	{
 		rgraphCtx.bindImage(0, 14, m_runCtx.m_rts[kWrite], TextureSubresourceInfo());
 
-		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2,
-						  getRenderer().getInternalResolution().y() / 2);
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x() / 2,
-						  getRenderer().getInternalResolution().y() / 2);
+		cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 
 		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 	}

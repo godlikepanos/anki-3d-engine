@@ -25,13 +25,11 @@ void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, 
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindUniformBuffer(set, binding, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset,
-								token.m_range);
+		cmdb->bindUniformBuffer(set, binding, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
 	}
 	else
 	{
-		cmdb->bindUniformBuffer(set, binding, getRenderer().getDummyBuffer(), 0,
-								getRenderer().getDummyBuffer()->getSize());
+		cmdb->bindUniformBuffer(set, binding, getRenderer().getDummyBuffer(), 0, getRenderer().getDummyBuffer()->getSize());
 	}
 }
 
@@ -39,13 +37,11 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, c
 {
 	if(!token.isUnused())
 	{
-		cmdb->bindStorageBuffer(set, binding, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset,
-								token.m_range);
+		cmdb->bindStorageBuffer(set, binding, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
 	}
 	else
 	{
-		cmdb->bindStorageBuffer(set, binding, getRenderer().getDummyBuffer(), 0,
-								getRenderer().getDummyBuffer()->getSize());
+		cmdb->bindStorageBuffer(set, binding, getRenderer().getDummyBuffer(), 0, getRenderer().getDummyBuffer()->getSize());
 	}
 }
 

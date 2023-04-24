@@ -188,9 +188,7 @@ static Error work(const CmdLineArgs& info)
 			return Error::kNone;
 		}
 	} taskManager;
-	taskManager.m_hive.reset((info.m_threadCount)
-								 ? newInstance<ThreadHive>(DefaultMemoryPool::getSingleton(), info.m_threadCount, true)
-								 : nullptr);
+	taskManager.m_hive.reset((info.m_threadCount) ? newInstance<ThreadHive>(DefaultMemoryPool::getSingleton(), info.m_threadCount, true) : nullptr);
 
 	// Compiler options
 	ShaderCompilerOptions compilerOptions;
@@ -199,8 +197,7 @@ static Error work(const CmdLineArgs& info)
 
 	// Compile
 	ShaderProgramBinaryWrapper binary(&pool);
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr,
-									compilerOptions, binary));
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, compilerOptions, binary));
 
 	// Store the binary
 	ANKI_CHECK(binary.serializeToFile(info.m_outFname));

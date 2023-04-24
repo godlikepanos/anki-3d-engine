@@ -34,8 +34,7 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_uniforms.m_viewportSize,
-								  svDispatchThreadId.xy))
+	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_uniforms.m_viewportSize, svDispatchThreadId.xy))
 	{
 		return;
 	}

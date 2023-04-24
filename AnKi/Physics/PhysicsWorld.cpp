@@ -55,8 +55,8 @@ public:
 		}
 
 		// Reject if they are both static
-		if(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry
-		   && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry) [[unlikely]]
+		if(fobj0->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry && fobj1->getMaterialGroup() == PhysicsMaterialBit::kStaticGeometry)
+			[[unlikely]]
 		{
 			return false;
 		}
@@ -282,9 +282,7 @@ void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts) con
 	}
 }
 
-PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger,
-																				PhysicsFilteredObject* filtered,
-																				Bool& isNew)
+PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger, PhysicsFilteredObject* filtered, Bool& isNew)
 {
 	ANKI_ASSERT(trigger && filtered);
 
@@ -325,8 +323,7 @@ PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(
 	PhysicsTriggerFilteredPair* newPair;
 	if(filtered->m_triggerFilteredPairs[emptySlot] == nullptr)
 	{
-		filtered->m_triggerFilteredPairs[emptySlot] =
-			anki::newInstance<PhysicsTriggerFilteredPair>(PhysicsMemoryPool::getSingleton());
+		filtered->m_triggerFilteredPairs[emptySlot] = anki::newInstance<PhysicsTriggerFilteredPair>(PhysicsMemoryPool::getSingleton());
 	}
 	newPair = filtered->m_triggerFilteredPairs[emptySlot];
 

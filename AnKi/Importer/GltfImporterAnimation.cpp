@@ -36,8 +36,7 @@ public:
 
 /// Optimize out same animation keys.
 template<typename T, typename TZeroFunc, typename TLerpFunc>
-static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& identity, TZeroFunc isZeroFunc,
-							TLerpFunc lerpFunc)
+static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& identity, TZeroFunc isZeroFunc, TLerpFunc lerpFunc)
 {
 	constexpr F32 kMinSkippedToTotalRatio = 0.1f;
 
@@ -93,8 +92,7 @@ static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& 
 		ANKI_ASSERT(newArr.getSize() <= arr.getSize());
 
 		// Check if identity
-		if(newArr.getSize() == 2 && isZeroFunc(newArr[0].m_value - newArr[1].m_value)
-		   && isZeroFunc(newArr[0].m_value - identity))
+		if(newArr.getSize() == 2 && isZeroFunc(newArr[0].m_value - newArr[1].m_value) && isZeroFunc(newArr[0].m_value - identity))
 		{
 			newArr.destroy();
 		}
@@ -246,11 +244,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 				Vec3 scale = scales[i];
 				scale.normalize();
 
-				if(!scaleErrorReported
-				   && (absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon))
+				if(!scaleErrorReported && (absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon))
 				{
-					ANKI_IMPORTER_LOGW("Expecting uniform scale (%f %f %f)", scales[i].x(), scales[i].y(),
-									   scales[i].z());
+					ANKI_IMPORTER_LOGW("Expecting uniform scale (%f %f %f)", scales[i].x(), scales[i].y(), scales[i].z());
 					scaleErrorReported = true;
 				}
 
@@ -307,8 +303,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite));
 
-	ANKI_CHECK(
-		file.writeTextf("%s\n<animation>\n", XmlDocument<MemoryPoolPtrWrapper<BaseMemoryPool>>::kXmlHeader.cstr()));
+	ANKI_CHECK(file.writeTextf("%s\n<animation>\n", XmlDocument<MemoryPoolPtrWrapper<BaseMemoryPool>>::kXmlHeader.cstr()));
 	ANKI_CHECK(file.writeText("\t<channels>\n"));
 
 	for(const GltfAnimChannel& channel : tempChannels)
@@ -321,8 +316,8 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
 			for(const GltfAnimKey<Vec3>& key : channel.m_positions)
 			{
-				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n", key.m_time, key.m_value.x(),
-										   key.m_value.y(), key.m_value.z()));
+				ANKI_CHECK(
+					file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n", key.m_time, key.m_value.x(), key.m_value.y(), key.m_value.z()));
 			}
 			ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
 		}
@@ -333,8 +328,8 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
 			for(const GltfAnimKey<Quat>& key : channel.m_rotations)
 			{
-				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n", key.m_time, key.m_value.x(),
-										   key.m_value.y(), key.m_value.z(), key.m_value.w()));
+				ANKI_CHECK(file.writeTextf("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n", key.m_time, key.m_value.x(), key.m_value.y(),
+										   key.m_value.z(), key.m_value.w()));
 			}
 			ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
 		}
@@ -372,8 +367,8 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		}
 
 		ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:tryFindSceneNode(\"%s\")\n", node.name));
-		ANKI_CHECK(m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s%s\", \"%s\", node)\n",
-										  m_rpath.cstr(), animFname.cstr(), node.name));
+		ANKI_CHECK(
+			m_sceneFile.writeTextf("getEventManager():newAnimationEvent(\"%s%s\", \"%s\", node)\n", m_rpath.cstr(), animFname.cstr(), node.name));
 	}
 
 	return Error::kNone;

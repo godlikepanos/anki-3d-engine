@@ -50,8 +50,7 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, DynamicArray<U8>& spirv,
-						 String& errorMessage)
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, DynamicArray<U8>& spirv, String& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
 	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
@@ -126,8 +125,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 			// There was an error, run again just to get the stderr
 			ANKI_CHECK(Process::callProcess(dxcBin, dxcArgs2, nullptr, &errorMessage, exitCode));
 
-			if(!errorMessage.isEmpty()
-			   && errorMessage.find("The process cannot access the file because") != CString::kNpos)
+			if(!errorMessage.isEmpty() && errorMessage.find("The process cannot access the file because") != CString::kNpos)
 			{
 				// DXC might fail to read the HLSL because the antivirus might be having a lock on it. Try again
 				errorMessage.destroy();

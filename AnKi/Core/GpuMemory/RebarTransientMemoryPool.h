@@ -49,20 +49,22 @@ class RebarTransientMemoryPool : public MakeSingleton<RebarTransientMemoryPool>
 public:
 	RebarTransientMemoryPool(const RebarTransientMemoryPool&) = delete; // Non-copyable
 
-	~RebarTransientMemoryPool();
-
 	RebarTransientMemoryPool& operator=(const RebarTransientMemoryPool&) = delete; // Non-copyable
 
 	void init();
 
 	PtrSize endFrame();
 
-	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(kMaxFramesInFlight-1) frame.
+	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
 	void* allocateFrame(PtrSize size, RebarAllocation& token);
 
-	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(kMaxFramesInFlight-1) frame.
+	template<typename T>
+	T* allocateFrame(U32 count, RebarAllocation& token)
+	{
+		return static_cast<T*>(allocateFrame(count * sizeof(T), token));
+	}
+
+	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
 	void* tryAllocateFrame(PtrSize size, RebarAllocation& token);
 
 	ANKI_PURE const BufferPtr& getBuffer() const
@@ -84,6 +86,8 @@ private:
 	U32 m_alignment = 0;
 
 	RebarTransientMemoryPool() = default;
+
+	~RebarTransientMemoryPool();
 };
 /// @}
 

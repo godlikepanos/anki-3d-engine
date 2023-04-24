@@ -64,15 +64,13 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		run(rgraphCtx);
 	});
 
-	rpass.setFramebufferInfo(m_fbDescr,
-							 {getRenderer().getGBuffer().getColorRt(0), getRenderer().getGBuffer().getColorRt(1)});
+	rpass.setFramebufferInfo(m_fbDescr, {getRenderer().getGBuffer().getColorRt(0), getRenderer().getGBuffer().getColorRt(1)});
 
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer);
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);
 	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(),
-							  BufferUsageBit::kStorageFragmentRead);
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(), BufferUsageBit::kStorageFragmentRead);
 }
 
 void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
@@ -88,8 +86,7 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 	// Bind all
 	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
 
-	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(),
-						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat);
 

@@ -49,7 +49,7 @@ SceneGraph::~SceneGraph()
 		deleteInstance(SceneMemoryPool::getSingleton(), m_octree);
 	}
 
-	AllGpuSceneContiguousArrays::freeSingleton();
+	GpuSceneContiguousArrays::freeSingleton();
 	RenderStateBucketContainer::freeSingleton();
 }
 
@@ -68,7 +68,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-	AllGpuSceneContiguousArrays::allocateSingleton();
+	GpuSceneContiguousArrays::allocateSingleton();
 	RenderStateBucketContainer::allocateSingleton();
 
 	return Error::kNone;
@@ -163,7 +163,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
 
-	AllGpuSceneContiguousArrays::getSingleton().endFrame();
+	GpuSceneContiguousArrays::getSingleton().endFrame();
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
 

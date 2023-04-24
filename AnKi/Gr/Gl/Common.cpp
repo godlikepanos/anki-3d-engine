@@ -270,8 +270,7 @@ GLenum convertBlendFactor(BlendFactor in)
 	return out;
 }
 
-void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLenum& internalFormat, GLenum& type,
-							   DepthStencilAspectBit& dsAspect)
+void convertTextureInformation(Format pf, Bool& compressed, GLenum& format, GLenum& internalFormat, GLenum& type, DepthStencilAspectBit& dsAspect)
 {
 	compressed = formatIsCompressed(pf);
 	dsAspect = computeFormatAspect(pf);

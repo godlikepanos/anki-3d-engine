@@ -82,8 +82,7 @@ Bool Fence::clientWait(Second seconds)
 	{
 		// Send a cmd that will update the fence's status in case someone calls clientWait with seconds==0.0 all the
 		// time
-		static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CheckFenceCommand>(FencePtr(this), seconds, 0.0,
-																					 nullptr);
+		static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CheckFenceCommand>(FencePtr(this), seconds, 0.0, nullptr);
 		static_cast<CommandBufferImpl&>(*cmdb).flush();
 
 		return false;
@@ -94,8 +93,7 @@ Bool Fence::clientWait(Second seconds)
 
 		Second flushTime = HighRezTimer::getCurrentTime();
 
-		static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CheckFenceCommand>(FencePtr(this), seconds, flushTime,
-																					 &barrier);
+		static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CheckFenceCommand>(FencePtr(this), seconds, flushTime, &barrier);
 		static_cast<CommandBufferImpl&>(*cmdb).flush();
 
 		barrier.wait();

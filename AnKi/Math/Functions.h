@@ -105,8 +105,7 @@ inline T modf(T x, T& intPart)
 }
 
 /// The same as abs/fabs. For ints and floats.
-template<typename T,
-		 ANKI_ENABLE(std::is_floating_point<T>::value || (std::is_integral<T>::value && std::is_signed<T>::value))>
+template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value || (std::is_integral<T>::value && std::is_signed<T>::value))>
 inline constexpr T absolute(const T f)
 {
 	return (f < T(0)) ? -f : f;

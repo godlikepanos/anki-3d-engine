@@ -28,10 +28,8 @@ OcclusionQueryResult OcclusionQueryImpl::getResultInternal() const
 	U64 out = 0;
 
 	VkResult res;
-	ANKI_VK_CHECKF(res = vkGetQueryPoolResults(getVkDevice(), m_handle.getQueryPool(), m_handle.getQueryIndex(), 1,
-											   sizeof(out), &out, sizeof(out),
-											   VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT
-												   | VK_QUERY_RESULT_PARTIAL_BIT));
+	ANKI_VK_CHECKF(res = vkGetQueryPoolResults(getVkDevice(), m_handle.getQueryPool(), m_handle.getQueryIndex(), 1, sizeof(out), &out, sizeof(out),
+											   VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT | VK_QUERY_RESULT_PARTIAL_BIT));
 
 	OcclusionQueryResult qout = OcclusionQueryResult::kNotAvailable;
 	if(res == VK_SUCCESS)

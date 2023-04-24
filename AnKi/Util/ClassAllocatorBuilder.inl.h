@@ -78,8 +78,7 @@ ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::findClass(PtrSize
 }
 
 template<typename TChunk, typename TInterface, typename TLock, typename TMemoryPool>
-Error ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::allocate(PtrSize size, PtrSize alignment,
-																			  TChunk*& chunk, PtrSize& offset)
+Error ClassAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::allocate(PtrSize size, PtrSize alignment, TChunk*& chunk, PtrSize& offset)
 {
 	ANKI_ASSERT(isInitialized());
 	ANKI_ASSERT(size > 0 && alignment > 0);

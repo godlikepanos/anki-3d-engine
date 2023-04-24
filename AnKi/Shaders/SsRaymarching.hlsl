@@ -62,8 +62,8 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 			  Vec2 uv, // UV the ray starts
 			  F32 depthRef, // Depth the ray starts
 			  Mat4 projMat, // Projection matrix
-			  U32 randFrom0To3, U32 maxIterations, Texture2D hizTex, SamplerState hizSampler, U32 hizMipCount,
-			  UVec2 hizMip0Size, out Vec3 hitPoint, out F32 attenuation)
+			  U32 randFrom0To3, U32 maxIterations, Texture2D hizTex, SamplerState hizSampler, U32 hizMipCount, UVec2 hizMip0Size, out Vec3 hitPoint,
+			  out F32 attenuation)
 {
 	ANKI_MAYBE_UNUSED(uv);
 	ANKI_MAYBE_UNUSED(depthRef);
@@ -135,8 +135,8 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 	// Write the values
 	const F32 blackMargin = 0.05 / 4.0;
 	const F32 whiteMargin = 0.1 / 2.0;
-	const Vec2 marginAttenuation2d = smoothstep(blackMargin, whiteMargin, origin.xy)
-									 * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
+	const Vec2 marginAttenuation2d =
+		smoothstep(blackMargin, whiteMargin, origin.xy) * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
 	const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
 	attenuation = marginAttenuation * cameraContribution;
 
@@ -220,8 +220,8 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 			// Compute attenuation
 			const F32 blackMargin = 0.05 / 4.0;
 			const F32 whiteMargin = 0.1 / 2.0;
-			const Vec2 marginAttenuation2d = smoothstep(blackMargin, whiteMargin, origin.xy)
-											 * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
+			const Vec2 marginAttenuation2d =
+				smoothstep(blackMargin, whiteMargin, origin.xy) * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
 			const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
 			attenuation = marginAttenuation * cameraContribution;
 

@@ -74,8 +74,7 @@ void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 	}
 }
 
-void Obb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride,
-							[[maybe_unused]] PtrSize buffSize)
+void Obb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, [[maybe_unused]] PtrSize buffSize)
 {
 	// Preconditions
 	ANKI_ASSERT(pointBuffer);

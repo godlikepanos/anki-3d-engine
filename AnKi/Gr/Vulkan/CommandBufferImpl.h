@@ -76,8 +76,7 @@ public:
 		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
 
-	void bindVertexBufferInternal(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride,
-								  VertexStepRate stepRate)
+	void bindVertexBufferInternal(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 	{
 		commandCommon();
 		m_state.bindVertexBuffer(binding, stride, stepRate);
@@ -95,8 +94,7 @@ public:
 	void bindIndexBufferInternal(const BufferPtr& buff, PtrSize offset, IndexType type)
 	{
 		commandCommon();
-		vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset,
-							 convertIndexType(type));
+		vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset, convertIndexType(type));
 		m_microCmdb->pushObjectRef(buff);
 	}
 
@@ -157,8 +155,8 @@ public:
 		vkCmdSetDepthBias(m_handle, factor, 0.0f, units);
 	}
 
-	void setStencilOperationsInternal(FaceSelectionBit face, StencilOperation stencilFail,
-									  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
+	void setStencilOperationsInternal(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
+									  StencilOperation stencilPassDepthPass)
 	{
 		commandCommon();
 		m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
@@ -200,8 +198,7 @@ public:
 		m_state.setColorChannelWriteMask(attachment, mask);
 	}
 
-	void setBlendFactorsInternal(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA,
-								 BlendFactor dstA)
+	void setBlendFactorsInternal(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 	{
 		commandCommon();
 		m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
@@ -213,8 +210,7 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTextureAndSamplerInternal(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler,
-									   U32 arrayIdx)
+	void bindTextureAndSamplerInternal(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -253,8 +249,7 @@ public:
 		commandCommon();
 		m_dsetState[set].bindImage(binding, arrayIdx, img.get());
 
-		const Bool isPresentable = !!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage()
-									  & TextureUsageBit::kPresent);
+		const Bool isPresentable = !!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage() & TextureUsageBit::kPresent);
 		if(isPresentable)
 		{
 			m_renderedToDefaultFb = true;
@@ -276,10 +271,8 @@ public:
 		m_dsetState[set].bindBindlessDescriptorSet();
 	}
 
-	void beginRenderPassInternal(const FramebufferPtr& fb,
-								 const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-								 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
-								 U32 height);
+	void beginRenderPassInternal(const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
+								 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height);
 
 	void endRenderPassInternal();
 
@@ -287,8 +280,7 @@ public:
 
 	void drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance);
 
-	void drawElementsInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex,
-							  U32 baseInstance);
+	void drawElementsInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance);
 
 	void drawArraysIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset, const BufferPtr& buff);
 
@@ -296,8 +288,8 @@ public:
 
 	void dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void traceRaysInternal(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize,
-						   U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
+	void traceRaysInternal(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+						   U32 width, U32 height, U32 depth);
 
 	void resetOcclusionQueriesInternal(ConstWeakArray<OcclusionQuery*> queries);
 
@@ -323,53 +315,45 @@ public:
 
 	void endRecording();
 
-	void setPipelineBarrierInternal(ConstWeakArray<TextureBarrierInfo> textures,
-									ConstWeakArray<BufferBarrierInfo> buffers,
+	void setPipelineBarrierInternal(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 									ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures);
 
 	void fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value);
 
-	void writeOcclusionQueriesResultToBufferInternal(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset,
-													 const BufferPtr& buff);
+	void writeOcclusionQueriesResultToBufferInternal(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, const BufferPtr& buff);
 
 	void bindShaderProgramInternal(const ShaderProgramPtr& prog);
 
-	void bindUniformBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-								   U32 arrayIdx)
+	void bindUniformBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void bindStorageBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-								   U32 arrayIdx)
+	void bindStorageBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void bindReadOnlyTextureBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-										   Format fmt, U32 arrayIdx)
+	void bindReadOnlyTextureBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
 	{
 		commandCommon();
 		m_dsetState[set].bindReadOnlyTextureBuffer(binding, arrayIdx, buff.get(), offset, range, fmt);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, PtrSize range,
-										 const TextureViewPtr& texView);
+	void copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, PtrSize range, const TextureViewPtr& texView);
 
-	void copyBufferToBufferInternal(const BufferPtr& src, const BufferPtr& dst,
-									ConstWeakArray<CopyBufferToBufferInfo> copies);
+	void copyBufferToBufferInternal(const BufferPtr& src, const BufferPtr& dst, ConstWeakArray<CopyBufferToBufferInfo> copies);
 
 	void buildAccelerationStructureInternal(const AccelerationStructurePtr& as);
 
-	void upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor,
-						 const TextureViewPtr& outUpscaledColor, const TextureViewPtr& motionVectors,
-						 const TextureViewPtr& depth, const TextureViewPtr& exposure, const Bool resetAccumulation,
-						 const Vec2& jitterOffset, const Vec2& motionVectorsScale);
+	void upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
+						 const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
+						 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
 
 	void setPushConstantsInternal(const void* data, U32 dataSize);
 
@@ -446,8 +430,7 @@ private:
 			m_beganRecording = true;
 		}
 
-		ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
-					&& "Commands must be recorder and flushed by the thread this command buffer was created");
+		ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid && "Commands must be recorder and flushed by the thread this command buffer was created");
 		ANKI_ASSERT(m_handle);
 	}
 
@@ -465,9 +448,8 @@ private:
 		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
 
-	void setImageBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkImageLayout prevLayout,
-						 VkPipelineStageFlags dstStage, VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img,
-						 const VkImageSubresourceRange& range);
+	void setImageBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkImageLayout prevLayout, VkPipelineStageFlags dstStage,
+						 VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img, const VkImageSubresourceRange& range);
 
 	void beginRecording();
 

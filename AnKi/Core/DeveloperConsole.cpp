@@ -68,9 +68,8 @@ void DeveloperConsole::build(CanvasPtr ctx)
 		}
 
 		constexpr Array<const Char*, U(LoggerMessageType::kCount)> kMsgText = {"I", "E", "W", "F"};
-		ImGui::TextWrapped("[%s][%s] %s [%s:%d][%s][%s]", kMsgText[item.m_type],
-						   (item.m_subsystem) ? item.m_subsystem : "N/A ", item.m_msg.cstr(), item.m_file, item.m_line,
-						   item.m_func, item.m_threadName.cstr());
+		ImGui::TextWrapped("[%s][%s] %s [%s:%d][%s][%s]", kMsgText[item.m_type], (item.m_subsystem) ? item.m_subsystem : "N/A ", item.m_msg.cstr(),
+						   item.m_file, item.m_line, item.m_func, item.m_threadName.cstr());
 
 		ImGui::PopStyleColor();
 	}
@@ -89,8 +88,7 @@ void DeveloperConsole::build(CanvasPtr ctx)
 	// Commands
 	ImGui::Separator();
 	ImGui::PushItemWidth(-1.0f); // Use the whole size
-	if(ImGui::InputText("##noname", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue,
-						nullptr, nullptr))
+	if(ImGui::InputText("##noname", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue, nullptr, nullptr))
 	{
 		const Error err = m_scriptEnv.evalString(&m_inputText[0]);
 		if(!err)

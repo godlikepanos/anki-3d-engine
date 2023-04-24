@@ -54,10 +54,8 @@ public:
 	{
 		if(isZero<T>(m3(0, 1) - m3(1, 0)) && isZero<T>(m3(0, 2) - m3(2, 0)) && isZero<T>(m3(1, 2) - m3(2, 1)))
 		{
-
 			if((absolute<T>(m3(0, 1) + m3(1, 0)) < T(0.1)) && (absolute<T>(m3(0, 2) + m3(2, 0)) < T(0.1))
-			   && (absolute<T>(m3(1, 2) + m3(2, 1)) < T(0.1))
-			   && (absolute<T>(m3(0, 0) + m3(1, 1) + m3(2, 2)) - 3) < T(0.1))
+			   && (absolute<T>(m3(1, 2) + m3(2, 1)) < T(0.1)) && (absolute<T>(m3(0, 0) + m3(1, 1) + m3(2, 2)) - 3) < T(0.1))
 			{
 				m_axis = TVec<T, 3>(T(1), T(0), T(0));
 				m_ang = T(0);

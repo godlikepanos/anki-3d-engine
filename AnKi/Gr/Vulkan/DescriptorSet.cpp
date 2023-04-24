@@ -100,8 +100,7 @@ public:
 	Error init();
 	Error createNewPool();
 
-	Error getOrCreateSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
-						 StackMemoryPool& tmpPool, const DS*& out)
+	Error getOrCreateSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, StackMemoryPool& tmpPool, const DS*& out)
 	{
 		out = tryFindSet(hash);
 		if(out == nullptr)
@@ -123,10 +122,8 @@ private:
 	GrHashMap<U64, DS*> m_hashmap;
 
 	[[nodiscard]] const DS* tryFindSet(U64 hash);
-	Error newSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
-				 StackMemoryPool& tmpPool, const DS*& out);
-	void writeSet(const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set,
-				  StackMemoryPool& tmpPool);
+	Error newSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, StackMemoryPool& tmpPool, const DS*& out);
+	void writeSet(const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set, StackMemoryPool& tmpPool);
 };
 
 class alignas(ANKI_CACHE_LINE_SIZE) DescriptorSetFactory::ThreadLocal
@@ -171,8 +168,7 @@ public:
 DescriptorSetFactory::BindlessDescriptorSet::~BindlessDescriptorSet()
 {
 	ANKI_ASSERT(m_freeTexIndexCount == m_freeTexIndices.getSize() && "Forgot to unbind some textures");
-	ANKI_ASSERT(m_freeTexelBufferIndexCount == m_freeTexelBufferIndices.getSize()
-				&& "Forgot to unbind some texel buffers");
+	ANKI_ASSERT(m_freeTexelBufferIndexCount == m_freeTexelBufferIndices.getSize() && "Forgot to unbind some texel buffers");
 
 	if(m_dsPool)
 	{
@@ -203,8 +199,7 @@ Error DescriptorSetFactory::BindlessDescriptorSet::init(U32 bindlessTextureCount
 		bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
 
 		Array<VkDescriptorBindingFlagsEXT, 2> bindingFlags = {};
-		bindingFlags[0] = VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
-						  | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT
+		bindingFlags[0] = VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT
 						  | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT;
 		bindingFlags[1] = bindingFlags[0];
 
@@ -334,8 +329,7 @@ U32 DescriptorSetFactory::BindlessDescriptorSet::bindUniformTexelBuffer(VkBuffer
 	return idx;
 }
 
-void DescriptorSetFactory::BindlessDescriptorSet::unbindCommon(U32 idx, GrDynamicArray<U16>& freeIndices,
-															   U16& freeIndexCount)
+void DescriptorSetFactory::BindlessDescriptorSet::unbindCommon(U32 idx, GrDynamicArray<U16>& freeIndices, U16& freeIndexCount)
 {
 	LockGuard<Mutex> lock(m_mtx);
 
@@ -379,14 +373,12 @@ Error DescriptorSetFactory::DSAllocator::init()
 
 Error DescriptorSetFactory::DSAllocator::createNewPool()
 {
-	m_lastPoolDSCount =
-		(m_lastPoolDSCount != 0) ? U32(F32(m_lastPoolDSCount) * kDescriptorPoolSizeScale) : kDescriptorPoolInitialSize;
+	m_lastPoolDSCount = (m_lastPoolDSCount != 0) ? U32(F32(m_lastPoolDSCount) * kDescriptorPoolSizeScale) : kDescriptorPoolInitialSize;
 	m_lastPoolFreeDSCount = m_lastPoolDSCount;
 
 	// Set the create info
 	Array<VkDescriptorPoolSize, U(DescriptorType::kCount)> poolSizes;
-	memcpy(&poolSizes[0], &m_layoutEntry->m_poolSizesCreateInf[0],
-		   sizeof(poolSizes[0]) * m_layoutEntry->m_poolCreateInf.poolSizeCount);
+	memcpy(&poolSizes[0], &m_layoutEntry->m_poolSizesCreateInf[0], sizeof(poolSizes[0]) * m_layoutEntry->m_poolCreateInf.poolSizeCount);
 
 	for(U i = 0; i < m_layoutEntry->m_poolCreateInf.poolSizeCount; ++i)
 	{
@@ -432,8 +424,7 @@ const DS* DescriptorSetFactory::DSAllocator::tryFindSet(U64 hash)
 	}
 }
 
-Error DescriptorSetFactory::DSAllocator::newSet(U64 hash,
-												const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
+Error DescriptorSetFactory::DSAllocator::newSet(U64 hash, const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings,
 												StackMemoryPool& tmpPool, const DS*& out_)
 {
 	DS* out = nullptr;
@@ -504,8 +495,8 @@ Error DescriptorSetFactory::DSAllocator::newSet(U64 hash,
 	return Error::kNone;
 }
 
-void DescriptorSetFactory::DSAllocator::writeSet(
-	const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set, StackMemoryPool& tmpPool)
+void DescriptorSetFactory::DSAllocator::writeSet(const Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet>& bindings, const DS& set,
+												 StackMemoryPool& tmpPool)
 {
 	DynamicArray<VkWriteDescriptorSet, MemoryPoolPtrWrapper<StackMemoryPool>> writeInfos(&tmpPool);
 	DynamicArray<VkDescriptorImageInfo, MemoryPoolPtrWrapper<StackMemoryPool>> texInfos(&tmpPool);
@@ -521,8 +512,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 			for(U arrIdx = 0; arrIdx < m_layoutEntry->m_bindingArraySize[bindingIdx]; ++arrIdx)
 			{
 				ANKI_ASSERT(bindings[bindingIdx].m_arraySize >= m_layoutEntry->m_bindingArraySize[bindingIdx]);
-				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single
-																			  : bindings[bindingIdx].m_array[arrIdx];
+				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single : bindings[bindingIdx].m_array[arrIdx];
 
 				switch(b.m_type)
 				{
@@ -608,8 +598,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 		{
 			for(U32 arrIdx = 0; arrIdx < m_layoutEntry->m_bindingArraySize[bindingIdx]; ++arrIdx)
 			{
-				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single
-																			  : bindings[bindingIdx].m_array[arrIdx];
+				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single : bindings[bindingIdx].m_array[arrIdx];
 
 				VkWriteDescriptorSet& writeInfo = *writeInfos.emplaceBack(writeTemplate);
 				writeInfo.descriptorType = convertDescriptorType(b.m_type);
@@ -643,8 +632,7 @@ void DescriptorSetFactory::DSAllocator::writeSet(
 	}
 
 	// Write
-	vkUpdateDescriptorSets(getVkDevice(), writeInfos.getSize(), (writeInfos.getSize() > 0) ? &writeInfos[0] : nullptr,
-						   0, nullptr);
+	vkUpdateDescriptorSets(getVkDevice(), writeInfos.getSize(), (writeInfos.getSize() > 0) ? &writeInfos[0] : nullptr, 0, nullptr);
 }
 
 DSLayoutCacheEntry::~DSLayoutCacheEntry()
@@ -818,8 +806,7 @@ AnyBinding& DescriptorSetState::getBindingToPopulate(U32 bindingIdx, U32 arrayId
 	return *out;
 }
 
-void DescriptorSetState::flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets,
-							   U32& dynamicOffsetCount, Bool& bindlessDSet)
+void DescriptorSetState::flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets, U32& dynamicOffsetCount, Bool& bindlessDSet)
 {
 	// Set some values
 	hash = 0;
@@ -829,8 +816,7 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescript
 	// There is a chance where the bindless set is bound but the actual shaders have an empty DS layout (maybe because
 	// the dead code elimination eliminated the bindless set). In that case we can't bind the bindless DS. We have to
 	// treat it as regular set
-	ANKI_ASSERT(!(m_layout.m_entry == nullptr && !m_bindlessDSetBound)
-				&& "DS layout points to bindless but no bindless is bound");
+	ANKI_ASSERT(!(m_layout.m_entry == nullptr && !m_bindlessDSetBound) && "DS layout points to bindless but no bindless is bound");
 	const Bool reallyBindless = m_bindlessDSetBound && m_layout.m_entry == nullptr;
 
 	if(!reallyBindless)
@@ -872,8 +858,7 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescript
 						ANKI_ASSERT(m_bindings[i].m_array[arrIdx].m_type == m_bindings[i].m_array[arrIdx - 1].m_type);
 					}
 
-					const AnyBinding& anyBinding =
-						(m_bindings[i].m_arraySize == 1) ? m_bindings[i].m_single : m_bindings[i].m_array[arrIdx];
+					const AnyBinding& anyBinding = (m_bindings[i].m_arraySize == 1) ? m_bindings[i].m_single : m_bindings[i].m_array[arrIdx];
 
 					ANKI_ASSERT(anyBinding.m_uuids[0] != 0 && "Forgot to bind");
 
@@ -882,8 +867,7 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescript
 					switch(entry.m_bindingType[i])
 					{
 					case DescriptorType::kCombinedTextureSampler:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kCombinedTextureSampler
-									&& "Have bound the wrong type");
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kCombinedTextureSampler && "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_uuids[1];
 						toHash[toHashCount++] = U64(anyBinding.m_texAndSampler.m_layout);
 						break;
@@ -907,21 +891,18 @@ void DescriptorSetState::flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescript
 						dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
 						break;
 					case DescriptorType::kReadTextureBuffer:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kReadTextureBuffer
-									&& "Have bound the wrong type");
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kReadTextureBuffer && "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_uuids[1];
 						break;
 					case DescriptorType::kReadWriteTextureBuffer:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kReadWriteTextureBuffer
-									&& "Have bound the wrong type");
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kReadWriteTextureBuffer && "Have bound the wrong type");
 						toHash[toHashCount++] = anyBinding.m_uuids[1];
 						break;
 					case DescriptorType::kImage:
 						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kImage && "Have bound the wrong type");
 						break;
 					case DescriptorType::kAccelerationStructure:
-						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kAccelerationStructure
-									&& "Have bound the wrong type");
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::kAccelerationStructure && "Have bound the wrong type");
 						break;
 					default:
 						ANKI_ASSERT(0);
@@ -1010,10 +991,9 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	if(init.m_bindings.getSize() > 0)
 	{
 		memcpy(bindings.getBegin(), init.m_bindings.getBegin(), init.m_bindings.getSizeInBytes());
-		std::sort(bindings.getBegin(), bindings.getBegin() + bindingCount,
-				  [](const DescriptorBinding& a, const DescriptorBinding& b) {
-					  return a.m_binding < b.m_binding;
-				  });
+		std::sort(bindings.getBegin(), bindings.getBegin() + bindingCount, [](const DescriptorBinding& a, const DescriptorBinding& b) {
+			return a.m_binding < b.m_binding;
+		});
 
 		hash = computeHash(&bindings[0], init.m_bindings.getSizeInBytes());
 		ANKI_ASSERT(hash != 1);
@@ -1031,8 +1011,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		for(U32 i = 0; i < bindingCount; ++i)
 		{
 			const DescriptorBinding& binding = bindings[i];
-			if(binding.m_binding == 0 && binding.m_type == DescriptorType::kTexture
-			   && binding.m_arraySize == m_bindlessTextureCount)
+			if(binding.m_binding == 0 && binding.m_type == DescriptorType::kTexture && binding.m_arraySize == m_bindlessTextureCount)
 			{
 				// All good
 			}
@@ -1086,9 +1065,8 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	return Error::kNone;
 }
 
-Error DescriptorSetFactory::newDescriptorSet(StackMemoryPool& tmpPool, DescriptorSetState& state, DescriptorSet& set,
-											 Bool& dirty, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets,
-											 U32& dynamicOffsetCount)
+Error DescriptorSetFactory::newDescriptorSet(StackMemoryPool& tmpPool, DescriptorSetState& state, DescriptorSet& set, Bool& dirty,
+											 Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets, U32& dynamicOffsetCount)
 {
 	ANKI_TRACE_SCOPED_EVENT(VkDescriptorSetGetOrCreate);
 

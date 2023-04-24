@@ -74,8 +74,7 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 
 	// Construct the output filename
 	String outFilename;
-	outFilename.sprintf("%s/gfx1030_AnKiRgaOutAnalysis_%u_%s.csv", tmpDir.cstr(), rand,
-						getPipelineStageString(shaderType).cstr());
+	outFilename.sprintf("%s/gfx1030_AnKiRgaOutAnalysis_%u_%s.csv", tmpDir.cstr(), rand, getPipelineStageString(shaderType).cstr());
 
 	CleanupFile rgaFileCleanup(outFilename);
 

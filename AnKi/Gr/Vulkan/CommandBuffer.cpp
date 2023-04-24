@@ -38,10 +38,9 @@ void CommandBuffer::flush(ConstWeakArray<FencePtr> waitFences, FencePtr* signalF
 		}
 
 		MicroSemaphorePtr signalSemaphore;
-		getGrManagerImpl().flushCommandBuffer(
-			self.getMicroCommandBuffer(), self.renderedToDefaultFramebuffer(),
-			WeakArray<MicroSemaphorePtr>(waitSemaphores.getBegin(), waitFences.getSize()),
-			(signalFence) ? &signalSemaphore : nullptr);
+		getGrManagerImpl().flushCommandBuffer(self.getMicroCommandBuffer(), self.renderedToDefaultFramebuffer(),
+											  WeakArray<MicroSemaphorePtr>(waitSemaphores.getBegin(), waitFences.getSize()),
+											  (signalFence) ? &signalSemaphore : nullptr);
 
 		if(signalFence)
 		{
@@ -57,8 +56,7 @@ void CommandBuffer::flush(ConstWeakArray<FencePtr> waitFences, FencePtr* signalF
 	}
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride,
-									 VertexStepRate stepRate)
+void CommandBuffer::bindVertexBuffer(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.bindVertexBufferInternal(binding, buff, offset, stride, stepRate);
@@ -112,8 +110,8 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 	self.setPolygonOffsetInternal(factor, units);
 }
 
-void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
-										 StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
+void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
+										 StencilOperation stencilPassDepthPass)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setStencilOperationsInternal(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
@@ -167,8 +165,7 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	self.setColorChannelWriteMaskInternal(attachment, mask);
 }
 
-void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA,
-									BlendFactor dstA)
+void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setBlendFactorsInternal(attachment, srcRgb, dstRgb, srcA, dstA);
@@ -180,8 +177,7 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	self.setBlendOperationInternal(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, const TextureViewPtr& texView,
-										  const SamplerPtr& sampler, U32 arrayIdx)
+void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, arrayIdx);
@@ -199,15 +195,13 @@ void CommandBuffer::bindSampler(U32 set, U32 binding, const SamplerPtr& sampler,
 	self.bindSamplerInternal(set, binding, sampler, arrayIdx);
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-									  U32 arrayIdx)
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.bindUniformBufferInternal(set, binding, buff, offset, range, arrayIdx);
 }
 
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range,
-									  U32 arrayIdx)
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.bindStorageBufferInternal(set, binding, buff, offset, range, arrayIdx);
@@ -225,8 +219,7 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, const Accele
 	self.bindAccelerationStructureInternal(set, binding, as, arrayIdx);
 }
 
-void CommandBuffer::bindReadOnlyTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset,
-											  PtrSize range, Format fmt, U32 arrayIdx)
+void CommandBuffer::bindReadOnlyTextureBuffer(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.bindReadOnlyTextureBufferInternal(set, binding, buff, offset, range, fmt, arrayIdx);
@@ -244,10 +237,8 @@ void CommandBuffer::bindShaderProgram(const ShaderProgramPtr& prog)
 	self.bindShaderProgramInternal(prog);
 }
 
-void CommandBuffer::beginRenderPass(const FramebufferPtr& fb,
-									const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-									TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
-									U32 height)
+void CommandBuffer::beginRenderPass(const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
+									TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.beginRenderPassInternal(fb, colorAttachmentUsages, depthStencilAttachmentUsage, minx, miny, width, height);
@@ -265,8 +256,7 @@ void CommandBuffer::setVrsRate(VrsRate rate)
 	self.setVrsRateInternal(rate);
 }
 
-void CommandBuffer::drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex,
-								 U32 baseVertex, U32 baseInstance)
+void CommandBuffer::drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.drawElementsInternal(topology, count, instanceCount, firstIndex, baseVertex, baseInstance);
@@ -284,8 +274,7 @@ void CommandBuffer::drawArraysIndirect(PrimitiveTopology topology, U32 drawCount
 	self.drawArraysIndirectInternal(topology, drawCount, offset, buff);
 }
 
-void CommandBuffer::drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
-										 const BufferPtr& buff)
+void CommandBuffer::drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, const BufferPtr& buff)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.drawElementsIndirectInternal(topology, drawCount, offset, buff);
@@ -297,12 +286,11 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 	self.dispatchComputeInternal(groupCountX, groupCountY, groupCountZ);
 }
 
-void CommandBuffer::traceRays(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize,
-							  U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth)
+void CommandBuffer::traceRays(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+							  U32 width, U32 height, U32 depth)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.traceRaysInternal(sbtBuffer, sbtBufferOffset, sbtRecordSize, hitGroupSbtRecordCount, rayTypeCount, width,
-						   height, depth);
+	self.traceRaysInternal(sbtBuffer, sbtBufferOffset, sbtRecordSize, hitGroupSbtRecordCount, rayTypeCount, width, height, depth);
 }
 
 void CommandBuffer::generateMipmaps2d(const TextureViewPtr& texView)
@@ -316,8 +304,7 @@ void CommandBuffer::generateMipmaps3d([[maybe_unused]] const TextureViewPtr& tex
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::blitTextureViews([[maybe_unused]] const TextureViewPtr& srcView,
-									 [[maybe_unused]] const TextureViewPtr& destView)
+void CommandBuffer::blitTextureViews([[maybe_unused]] const TextureViewPtr& srcView, [[maybe_unused]] const TextureViewPtr& destView)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -328,8 +315,7 @@ void CommandBuffer::clearTextureView(const TextureViewPtr& texView, const ClearV
 	self.clearTextureViewInternal(texView, clearValue);
 }
 
-void CommandBuffer::copyBufferToTextureView(const BufferPtr& buff, PtrSize offset, PtrSize range,
-											const TextureViewPtr& texView)
+void CommandBuffer::copyBufferToTextureView(const BufferPtr& buff, PtrSize offset, PtrSize range, const TextureViewPtr& texView)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.copyBufferToTextureViewInternal(buff, offset, range, texView);
@@ -341,15 +327,13 @@ void CommandBuffer::fillBuffer(const BufferPtr& buff, PtrSize offset, PtrSize si
 	self.fillBufferInternal(buff, offset, size, value);
 }
 
-void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset,
-														const BufferPtr& buff)
+void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, const BufferPtr& buff)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.writeOcclusionQueriesResultToBufferInternal(queries, offset, buff);
 }
 
-void CommandBuffer::copyBufferToBuffer(const BufferPtr& src, const BufferPtr& dst,
-									   ConstWeakArray<CopyBufferToBufferInfo> copies)
+void CommandBuffer::copyBufferToBuffer(const BufferPtr& src, const BufferPtr& dst, ConstWeakArray<CopyBufferToBufferInfo> copies)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.copyBufferToBufferInternal(src, dst, copies);
@@ -361,18 +345,15 @@ void CommandBuffer::buildAccelerationStructure(const AccelerationStructurePtr& a
 	self.buildAccelerationStructureInternal(as);
 }
 
-void CommandBuffer::upscale(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor,
-							const TextureViewPtr& outUpscaledColor, const TextureViewPtr& motionVectors,
-							const TextureViewPtr& depth, const TextureViewPtr& exposure, const Bool resetAccumulation,
-							const Vec2& jitterOffset, const Vec2& motionVectorsScale)
+void CommandBuffer::upscale(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
+							const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
+							const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.upscaleInternal(upscaler, inColor, outUpscaledColor, motionVectors, depth, exposure, resetAccumulation,
-						 jitterOffset, motionVectorsScale);
+	self.upscaleInternal(upscaler, inColor, outUpscaledColor, motionVectors, depth, exposure, resetAccumulation, jitterOffset, motionVectorsScale);
 }
 
-void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures,
-									   ConstWeakArray<BufferBarrierInfo> buffers,
+void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 									   ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

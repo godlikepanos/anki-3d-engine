@@ -58,8 +58,7 @@ void PhysicsPlayerController::moveToPositionForReal()
 
 	btDynamicsWorld& btworld = PhysicsWorld::getSingleton().getBtWorld();
 
-	btworld.getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(m_ghostObject->getBroadphaseHandle(),
-																			btworld.getDispatcher());
+	btworld.getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(m_ghostObject->getBroadphaseHandle(), btworld.getDispatcher());
 
 	m_controller->reset(&btworld);
 	m_controller->warp(toBt(m_moveToPosition));

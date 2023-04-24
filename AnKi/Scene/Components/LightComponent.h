@@ -146,8 +146,7 @@ public:
 	/// @param[in] cameraFrustum The frustum that is looking that directional light. Used to calculate the cascades.
 	/// @param[out] el The queue element to fill out.
 	/// @param[out] cascadeFrustums Fill those frustums as well. The size of this array is the count of the cascades.
-	void setupDirectionalLightQueueElement(const Frustum& cameraFrustum, DirectionalLightQueueElement& el,
-										   WeakArray<Frustum> cascadeFrustums) const;
+	void setupDirectionalLightQueueElement(const Frustum& cameraFrustum, DirectionalLightQueueElement& el, WeakArray<Frustum> cascadeFrustums) const;
 
 private:
 	U64 m_uuid;

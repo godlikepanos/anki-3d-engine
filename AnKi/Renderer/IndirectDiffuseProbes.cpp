@@ -74,8 +74,8 @@ Error IndirectDiffuseProbes::initGBuffer()
 {
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = getRenderer().create2DRenderTargetDescription(
-			m_tileSize * 6, m_tileSize, kGBufferColorRenderTargetFormats[0], "GI GBuffer");
+		RenderTargetDescription texinit =
+			getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, kGBufferColorRenderTargetFormats[0], "GI GBuffer");
 
 		// Create color RT descriptions
 		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -118,8 +118,8 @@ Error IndirectDiffuseProbes::initShadowMapping()
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
-	m_shadowMapping.m_rtDescr = getRenderer().create2DRenderTargetDescription(
-		resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
+	m_shadowMapping.m_rtDescr =
+		getRenderer().create2DRenderTargetDescription(resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -136,8 +136,7 @@ Error IndirectDiffuseProbes::initLightShading()
 {
 	// Init RT descr
 	{
-		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize,
-																				 getRenderer().getHdrFormat(), "GI LS");
+		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, getRenderer().getHdrFormat(), "GI LS");
 		m_lightShading.m_rtDescr.bake();
 	}
 
@@ -156,8 +155,7 @@ Error IndirectDiffuseProbes::initLightShading()
 
 Error IndirectDiffuseProbes::initIrradiance()
 {
-	ANKI_CHECK(
-		ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);
@@ -245,18 +243,15 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		for(U i = 0; i < 6; ++i)
 		{
 			ANKI_ASSERT(giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_uuid
-						&& giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_shadowCascadeCount
-							   == 1);
+						&& giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_shadowCascadeCount == 1);
 
 			const F32 xScale = 1.0f / 6.0f;
 			const F32 yScale = 1.0f;
 			const F32 xOffset = F32(i) * (1.0f / 6.0f);
 			const F32 yOffset = 0.0f;
-			const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-								0.0f, 0.0f, 1.0f);
+			const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
-			Mat4& lightMat =
-				giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_textureMatrices[0];
+			Mat4& lightMat = giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_textureMatrices[0];
 			lightMat = atlasMtx * lightMat;
 		}
 
@@ -299,8 +294,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		{
 			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledFragment);
 		}
-		pass.newTextureDependency(giCtx->m_gbufferDepthRt, TextureUsageBit::kSampledFragment,
-								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(giCtx->m_gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(giCtx->m_shadowsRt.isValid())
 		{
@@ -310,8 +304,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 	// Irradiance pass. First & 2nd bounce
 	{
-		m_giCtx->m_irradianceVolume = rgraph.importRenderTarget(
-			TexturePtr(m_giCtx->m_probeToUpdateThisFrame->m_volumeTexture), TextureUsageBit::kNone);
+		m_giCtx->m_irradianceVolume =
+			rgraph.importRenderTarget(TexturePtr(m_giCtx->m_probeToUpdateThisFrame->m_volumeTexture), TextureUsageBit::kNone);
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
 
@@ -340,8 +334,8 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 
 	I32 start, end;
 	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
-						 giCtx.m_gbufferDrawcallCount, startu, endu);
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, giCtx.m_gbufferDrawcallCount,
+						 startu, endu);
 	start = I32(startu);
 	end = I32(endu);
 
@@ -369,8 +363,8 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat;
 
-			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
-													 rqueue.m_renderables.getBegin() + localEnd, cmdb);
+			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart, rqueue.m_renderables.getBegin() + localEnd,
+													 cmdb);
 		}
 
 		drawcallCount += faceDrawcallCount;
@@ -389,8 +383,8 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 
 	I32 start, end;
 	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
-						 giCtx.m_smDrawcallCount, startu, endu);
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, giCtx.m_smDrawcallCount, startu,
+						 endu);
 	start = I32(startu);
 	end = I32(endu);
 

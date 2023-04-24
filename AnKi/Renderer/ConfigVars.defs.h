@@ -5,25 +5,18 @@
 
 ANKI_CONFIG_VAR_GROUP(R)
 
-ANKI_CONFIG_VAR_U8(RTextureAnisotropy, ((ANKI_PLATFORM_MOBILE) ? 1 : 8), 1, 16,
-				   "Texture anisotropy for the main passes")
+ANKI_CONFIG_VAR_U8(RTextureAnisotropy, ((ANKI_PLATFORM_MOBILE) ? 1 : 8), 1, 16, "Texture anisotropy for the main passes")
 ANKI_CONFIG_VAR_U32(RTileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_VAR_U32(RZSplitCount, 64, 8, kMaxZsplitCount, "Clusterer number of Z splits")
 ANKI_CONFIG_VAR_BOOL(RPreferCompute, !ANKI_PLATFORM_MOBILE, "Prefer compute shaders")
-ANKI_CONFIG_VAR_BOOL(RHighQualityHdr, !ANKI_PLATFORM_MOBILE,
-					 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11")
+ANKI_CONFIG_VAR_BOOL(RHighQualityHdr, !ANKI_PLATFORM_MOBILE, "If true use R16G16B16 for HDR images. Alternatively use B10G11R11")
 
-ANKI_CONFIG_VAR_F32(RInternalRenderScaling, 1.0f, 0.5f, 1.0f,
-					"A factor over the requested swapchain resolution. Applies to all passes up to TAA")
-ANKI_CONFIG_VAR_F32(RRenderScaling, 1.0f, 0.5f, 8.0f,
-					"A factor over the requested swapchain resolution. Applies to post-processing and UI")
+ANKI_CONFIG_VAR_F32(RInternalRenderScaling, 1.0f, 0.5f, 1.0f, "A factor over the requested swapchain resolution. Applies to all passes up to TAA")
+ANKI_CONFIG_VAR_F32(RRenderScaling, 1.0f, 0.5f, 8.0f, "A factor over the requested swapchain resolution. Applies to post-processing and UI")
 
-ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityXY, 4.0f, 1.0f, 16.0f,
-					"Quality of XY dimensions of volumetric lights")
-ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityZ, 4.0f, 1.0f, 16.0f,
-					"Quality of Z dimension of volumetric lights")
-ANKI_CONFIG_VAR_U32(RVolumetricLightingAccumulationFinalZSplit, 26, 1, 256,
-					"Final cluster split that will recieve volumetric lights")
+ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityXY, 4.0f, 1.0f, 16.0f, "Quality of XY dimensions of volumetric lights")
+ANKI_CONFIG_VAR_F32(RVolumetricLightingAccumulationQualityZ, 4.0f, 1.0f, 16.0f, "Quality of Z dimension of volumetric lights")
+ANKI_CONFIG_VAR_U32(RVolumetricLightingAccumulationFinalZSplit, 26, 1, 256, "Final cluster split that will recieve volumetric lights")
 
 ANKI_CONFIG_VAR_BOOL(RDbg, false, "Enable or not debug visualization")
 ANKI_CONFIG_VAR_BOOL(RDbgPhysics, false, "Enable or not physics debug visualization")
@@ -36,16 +29,14 @@ ANKI_CONFIG_VAR_BOOL(RVrsLimitTo2x2, false, "If true the max rate will be 2x2")
 
 // SSR
 ANKI_CONFIG_VAR_U32(RSsrFirstStepPixels, 32, 1, 256, "The 1st step in ray marching")
-ANKI_CONFIG_VAR_U32(RSsrDepthLod, ((ANKI_PLATFORM_MOBILE) ? 2 : 0), 0, 1000,
-					"Texture LOD of the depth texture that will be raymarched")
+ANKI_CONFIG_VAR_U32(RSsrDepthLod, ((ANKI_PLATFORM_MOBILE) ? 2 : 0), 0, 1000, "Texture LOD of the depth texture that will be raymarched")
 ANKI_CONFIG_VAR_U32(RSsrMaxSteps, 64, 1, 256, "Max SSR raymarching steps")
 ANKI_CONFIG_VAR_BOOL(RSsrStochastic, false, "Stochastic reflections")
 ANKI_CONFIG_VAR_F32(RSsrRoughnessCutoff, ((ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f), 0.0f, 1.0f,
 					"Materials with roughness higher that this value will fallback to probe reflections")
 
 // GI probes
-ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, ((ANKI_PLATFORM_MOBILE) ? 16 : 32), 8, 32,
-					"GI tile resolution")
+ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeTileResolution, ((ANKI_PLATFORM_MOBILE) ? 16 : 32), 8, 32, "GI tile resolution")
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseProbeShadowMapResolution, 128, 4, 2048, "GI shadowmap resolution")
 
 // GI
@@ -54,14 +45,11 @@ ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsgiRadius, 2.0f, 0.1f, 100.0f, "SSGI radius
 ANKI_CONFIG_VAR_U32(RIndirectDiffuseDenoiseSampleCount, 4, 1, 128, "Indirect diffuse denoise sample count")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoStrength, 2.5f, 0.1f, 10.0f, "SSAO strength")
 ANKI_CONFIG_VAR_F32(RIndirectDiffuseSsaoBias, -0.1f, -10.0f, 10.0f, "SSAO bias")
-ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f,
-					"The meters that control the VRS SRI generation")
+ANKI_CONFIG_VAR_F32(RIndirectDiffuseVrsDistanceThreshold, 0.01f, 0.00001f, 10.0f, "The meters that control the VRS SRI generation")
 
 // Shadows
-ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 128 : 256), 16, 2048,
-					"Shadowmapping tile resolution")
-ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 32, 1, 256,
-					"Shadowmapping atlas will have this number squared number of tiles")
+ANKI_CONFIG_VAR_U32(RShadowMappingTileResolution, ((ANKI_PLATFORM_MOBILE) ? 128 : 256), 16, 2048, "Shadowmapping tile resolution")
+ANKI_CONFIG_VAR_U32(RShadowMappingTileCountPerRowOrColumn, 32, 1, 256, "Shadowmapping atlas will have this number squared number of tiles")
 ANKI_CONFIG_VAR_U32(RShadowMappingPcf, ((ANKI_PLATFORM_MOBILE) ? 0 : 1), 0, 1, "Shadow PCF (0: off, 1: on)")
 
 // Probe reflections

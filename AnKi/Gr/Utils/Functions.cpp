@@ -8,8 +8,7 @@
 namespace anki {
 
 template<typename T>
-static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo,
-											   [[maybe_unused]] const void* elements,
+static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo, [[maybe_unused]] const void* elements,
 											   [[maybe_unused]] U32 elementsCount, [[maybe_unused]] void* buffBegin,
 											   [[maybe_unused]] const void* buffEnd)
 {
@@ -34,8 +33,8 @@ static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& va
 }
 
 template<typename T>
-static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkInfo, const void* elements,
-										 U32 elementsCount, void* buffBegin, const void* buffEnd)
+static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin,
+										 const void* buffEnd)
 {
 	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 
@@ -53,8 +52,8 @@ static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkIn
 }
 
 template<typename T, typename Vec>
-static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkInfo, const void* elements,
-										 U32 elementsCount, void* buffBegin, const void* buffEnd)
+static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin,
+										 const void* buffEnd)
 {
 	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 	ANKI_ASSERT(varBlkInfo.m_matrixStride > 0);
@@ -102,8 +101,7 @@ template<typename T, Bool isMatrix = IsShaderVarDataTypeAMatrix<T>::kValue>
 class WriteShaderBlockMemory
 {
 public:
-	void operator()(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin,
-					const void* buffEnd)
+	void operator()(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd)
 	{
 		using RowVec = typename T::RowVec;
 		writeShaderBlockMemoryMatrix<T, RowVec>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
@@ -114,8 +112,7 @@ template<typename T>
 class WriteShaderBlockMemory<T, false>
 {
 public:
-	void operator()(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin,
-					const void* buffEnd)
+	void operator()(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd)
 	{
 		writeShaderBlockMemorySimple<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 	}
@@ -123,8 +120,8 @@ public:
 
 } // namespace
 
-void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo,
-							const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd)
+void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount,
+							void* buffBegin, const void* buffEnd)
 {
 	switch(type)
 	{

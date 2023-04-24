@@ -123,8 +123,7 @@ public:
 
 	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 
-	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
-							  TexturePtr& tex) const;
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex) const;
 
 	/// Create a whole texture view from a handle
 	TextureViewPtr createTextureView(RenderTargetHandle handle)
@@ -136,8 +135,7 @@ public:
 	}
 
 	/// Convenience method.
-	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle,
-							   const TextureSubresourceInfo& subresource, const SamplerPtr& sampler)
+	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, const SamplerPtr& sampler)
 	{
 		TexturePtr tex;
 		getRenderTargetState(handle, subresource, tex);
@@ -177,8 +175,7 @@ public:
 	}
 
 	/// Convenience method.
-	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
-				   U32 arrayIdx = 0)
+	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
 	{
 		TexturePtr tex;
 		getRenderTargetState(handle, subresource, tex);
@@ -193,8 +190,7 @@ public:
 		TexturePtr tex;
 #if ANKI_ENABLE_ASSERTIONS
 		tex = getTexture(handle);
-		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1
-					&& tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
+		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1 && tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
 #endif
 		const TextureSubresourceInfo subresource;
 		getRenderTargetState(handle, subresource, tex);
@@ -249,8 +245,7 @@ public:
 	}
 
 	/// Dependency to the whole texture.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage,
-						 DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_texture({handle, usage, TextureSubresourceInfo()})
 		, m_type(Type::kTexture)
 	{
@@ -335,14 +330,12 @@ public:
 		setWork(0, func);
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage,
-							  const TextureSubresourceInfo& subresource)
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
 	{
 		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, subresource));
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage,
-							  DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
 		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, aspect));
 	}
@@ -465,17 +458,13 @@ public:
 		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
 	}
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo,
-							ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {},
-							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
-							U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setFramebufferInfo(const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
+							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
+							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo,
-							std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {},
-							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
-							U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setFramebufferInfo(const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
+							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
+							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
 
 private:
 	Array<RenderTargetHandle, kMaxColorRenderTargets + 2> m_rtHandles;
@@ -536,8 +525,7 @@ public:
 	BufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = kMaxPtrSize);
 
 	/// Import an AS.
-	AccelerationStructureHandle importAccelerationStructure(AccelerationStructurePtr as,
-															AccelerationStructureUsageBit usage);
+	AccelerationStructureHandle importAccelerationStructure(AccelerationStructurePtr as, AccelerationStructureUsageBit usage);
 
 	/// Gather statistics.
 	void setStatisticsEnabled(Bool gather)
@@ -737,8 +725,8 @@ private:
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles,
-										  CString name, Bool& drawsToPresentableTex);
+	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name,
+										  Bool& drawsToPresentableTex);
 
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();
@@ -754,8 +742,7 @@ private:
 	template<typename TFunc>
 	static void iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func);
 
-	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource,
-					  TextureUsageBit& usage) const;
+	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{

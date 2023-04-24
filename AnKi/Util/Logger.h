@@ -67,13 +67,12 @@ public:
 	void addFileMessageHandler(File* file);
 
 	/// Send a message.
-	void write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
-			   const Char* threadName, const Char* msg);
+	void write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName, const Char* msg);
 
 	/// Send a formated message.
 	ANKI_CHECK_FORMAT(7, 8)
-	void writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
-					   const Char* threadName, const Char* fmt, ...);
+	void writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
+					   const Char* fmt, ...);
 
 	/// Enable or disable logger verbosity.
 	void enableVerbosity(Bool enable)
@@ -106,8 +105,8 @@ private:
 #define ANKI_LOG(subsystem_, t, ...) \
 	do \
 	{ \
-		Logger::getSingleton().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, \
-											 Thread::getCurrentThreadName(), __VA_ARGS__); \
+		Logger::getSingleton().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, Thread::getCurrentThreadName(), \
+											 __VA_ARGS__); \
 	} while(false)
 /// @}
 

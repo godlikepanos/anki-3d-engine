@@ -38,8 +38,7 @@ void Process::destroy()
 #endif
 }
 
-Error Process::start(CString executable, const DynamicArray<String>& arguments, const DynamicArray<String>& environment,
-					 ProcessOptions options)
+Error Process::start(CString executable, const DynamicArray<String>& arguments, const DynamicArray<String>& environment, ProcessOptions options)
 {
 	// Set args and env
 	Array<const Char*, kMaxArgs> args;
@@ -63,8 +62,7 @@ Error Process::start(CString executable, const DynamicArray<String>& arguments, 
 	return startInternal(&args[0], &env[0], options);
 }
 
-Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment,
-					 ProcessOptions options)
+Error Process::start(CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment, ProcessOptions options)
 {
 	// Set args and env
 	Array<const Char*, kMaxArgs> args;
@@ -106,10 +104,8 @@ Error Process::startInternal(const Char* args[], const Char* env[], ProcessOptio
 	reprocOptions.nonblocking = true;
 
 	reprocOptions.redirect.in.type = REPROC_REDIRECT_DISCARD;
-	reprocOptions.redirect.err.type =
-		(!!(options & ProcessOptions::kOpenStderr)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
-	reprocOptions.redirect.out.type =
-		(!!(options & ProcessOptions::kOpenStdout)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
+	reprocOptions.redirect.err.type = (!!(options & ProcessOptions::kOpenStderr)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
+	reprocOptions.redirect.out.type = (!!(options & ProcessOptions::kOpenStdout)) ? REPROC_REDIRECT_PIPE : REPROC_REDIRECT_DISCARD;
 
 	I32 ret = reproc_start(m_handle, &args[0], reprocOptions);
 	if(ret < 0)
@@ -253,8 +249,7 @@ Error Process::readCommon(I32 reprocStream, String& text)
 	{
 		Array<Char, 256> buff;
 
-		const I32 ret =
-			reproc_read(m_handle, REPROC_STREAM(reprocStream), reinterpret_cast<U8*>(&buff[0]), buff.getSize() - 1);
+		const I32 ret = reproc_read(m_handle, REPROC_STREAM(reprocStream), reinterpret_cast<U8*>(&buff[0]), buff.getSize() - 1);
 
 		if(ret == 0 || ret == REPROC_EPIPE || ret == REPROC_EWOULDBLOCK)
 		{
@@ -276,8 +271,7 @@ Error Process::readCommon(I32 reprocStream, String& text)
 }
 #endif
 
-Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr,
-						   I32& exitCode)
+Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments, String* stdOut, String* stdErr, I32& exitCode)
 {
 #if !ANKI_OS_ANDROID
 	if(true)
@@ -314,8 +308,7 @@ Error Process::callProcess(CString executable, ConstWeakArray<CString> arguments
 		}
 		args[count] = nullptr;
 
-		const int options =
-			subprocess_option_inherit_environment | subprocess_option_no_window | subprocess_option_search_user_path;
+		const int options = subprocess_option_inherit_environment | subprocess_option_no_window | subprocess_option_search_user_path;
 		struct subprocess_s subprocess;
 		int err = subprocess_create(&args[0], options, &subprocess);
 		if(err)

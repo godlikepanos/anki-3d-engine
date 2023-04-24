@@ -420,9 +420,7 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 		ANKI_CHECK(file->m_file.open(filename, openFlags));
 
 #if !ANKI_OS_ANDROID
-		ANKI_RESOURCE_LOGW(
-			"Loading resource outside the resource paths/archives. This is only OK for tools and debugging: %s",
-			filename.cstr());
+		ANKI_RESOURCE_LOGW("Loading resource outside the resource paths/archives. This is only OK for tools and debugging: %s", filename.cstr());
 #endif
 	}
 

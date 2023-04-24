@@ -28,8 +28,7 @@ public:
 		m_firstLayer = 0;
 		m_layerCount = tex->getLayerCount();
 		m_firstFace = 0;
-		m_faceCount =
-			(tex->getTextureType() == TextureType::kCubeArray || tex->getTextureType() == TextureType::kCube) ? 6 : 1;
+		m_faceCount = (tex->getTextureType() == TextureType::kCubeArray || tex->getTextureType() == TextureType::kCube) ? 6 : 1;
 
 		m_depthStencilAspect = getFormatInfo(tex->getFormat()).m_depthStencil;
 	}
@@ -39,8 +38,8 @@ public:
 	{
 	}
 
-	TextureViewInitInfo(TexturePtr tex, const TextureSurfaceInfo& surf,
-						DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone, CString name = {})
+	TextureViewInitInfo(TexturePtr tex, const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone,
+						CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -119,9 +118,8 @@ protected:
 
 	Bool initialized() const
 	{
-		return m_texType != TextureType::kCount && m_subresource.m_firstMipmap < kMaxU32
-			   && m_subresource.m_mipmapCount < kMaxU32 && m_subresource.m_firstLayer < kMaxU32
-			   && m_subresource.m_layerCount < kMaxU32 && m_subresource.m_firstFace < kMaxU8
+		return m_texType != TextureType::kCount && m_subresource.m_firstMipmap < kMaxU32 && m_subresource.m_mipmapCount < kMaxU32
+			   && m_subresource.m_firstLayer < kMaxU32 && m_subresource.m_layerCount < kMaxU32 && m_subresource.m_firstFace < kMaxU8
 			   && m_subresource.m_faceCount < kMaxU8;
 	}
 

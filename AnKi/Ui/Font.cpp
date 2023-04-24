@@ -39,8 +39,7 @@ Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 	{
 		cfg.SizePixels = F32(height);
 
-		m_fonts[count].m_imFont =
-			m_imFontAtlas->AddFontFromMemoryTTF(&m_fontData[0], I32(m_fontData.getSize()), F32(height), &cfg);
+		m_fonts[count].m_imFont = m_imFontAtlas->AddFontFromMemoryTTF(&m_fontData[0], I32(m_fontData.getSize()), F32(height), &cfg);
 		m_fonts[count].m_height = height;
 		++count;
 	}
@@ -63,8 +62,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 
 	// Create and populate the buffer
 	const U32 buffSize = width * height * 4;
-	BufferPtr buff = GrManager::getSingleton().newBuffer(
-		BufferInitInfo(buffSize, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "UI"));
+	BufferPtr buff = GrManager::getSingleton().newBuffer(BufferInitInfo(buffSize, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "UI"));
 	void* mapped = buff->map(0, buffSize, BufferMapAccessBit::kWrite);
 	memcpy(mapped, data, buffSize);
 	buff->flush(0, buffSize);
@@ -75,8 +73,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_width = width;
 	texInit.m_height = height;
 	texInit.m_format = Format::kR8G8B8A8_Unorm;
-	texInit.m_usage =
-		TextureUsageBit::kTransferDestination | TextureUsageBit::kSampledFragment | TextureUsageBit::kGenerateMipmaps;
+	texInit.m_usage = TextureUsageBit::kTransferDestination | TextureUsageBit::kSampledFragment | TextureUsageBit::kGenerateMipmaps;
 	texInit.m_mipmapCount = 1; // No mips because it will appear blurry with trilinear filtering
 
 	m_tex = GrManager::getSingleton().newTexture(texInit);

@@ -146,15 +146,13 @@ public:
 	[[nodiscard]] void* getMappedAddress(GpuMemoryHandle& handle);
 
 	/// Find a suitable memory type.
-	U32 findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags,
-					   VkMemoryPropertyFlags avoidFlags) const;
+	U32 findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
 
 	/// Get some statistics.
 	void getStats(GpuMemoryManagerStats& stats) const;
 
 private:
-	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex,
-												 SingletonMemoryPoolWrapper<GrMemoryPool>>;
+	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex, SingletonMemoryPoolWrapper<GrMemoryPool>>;
 
 	GrDynamicArray<ClassAllocator> m_callocs;
 

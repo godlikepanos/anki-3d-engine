@@ -70,8 +70,7 @@ Bool isGiProbe(U32 objectIdx)
 	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kGlobalIlluminationProbe].x;
 }
 
-[numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID,
-											   U32 svGroupIdx : SV_GROUPINDEX)
+[numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIdx : SV_GROUPINDEX)
 {
 	const U32 dispatchThreadIdX = min(svDispatchThreadId.x, kTileCount * kSampleCount);
 	const U32 tileIdx = dispatchThreadIdX / kSampleCount;
@@ -165,26 +164,22 @@ Bool isGiProbe(U32 objectIdx)
 	// Fog volume
 	else if(isFogVolume(clustererObjectIdx))
 	{
-		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kFogDensityVolume - 1u].x;
+		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kFogDensityVolume - 1u].x;
 		const FogDensityVolume vol = g_fogVolumes[objectArrayIdx];
 
 		if(vol.m_isBox != 0u)
 		{
-			collides =
-				testRayAabb(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, t0, t1);
+			collides = testRayAabb(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, t0, t1);
 		}
 		else
 		{
-			collides = testRaySphere(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter,
-									 sqrt(vol.m_aabbMaxOrSphereRadiusSquared.x), t0, t1);
+			collides = testRaySphere(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, sqrt(vol.m_aabbMaxOrSphereRadiusSquared.x), t0, t1);
 		}
 	}
 	// Reflection probe
 	else if(isReflectionProbe(clustererObjectIdx))
 	{
-		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kReflectionProbe - 1u].x;
+		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kReflectionProbe - 1u].x;
 		const ReflectionProbe probe = g_reflectionProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
@@ -192,8 +187,7 @@ Bool isGiProbe(U32 objectIdx)
 	// GI probe
 	else
 	{
-		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kGlobalIlluminationProbe - 1u].x;
+		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kGlobalIlluminationProbe - 1u].x;
 		const GlobalIlluminationProbe probe = g_giProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
@@ -203,17 +197,14 @@ Bool isGiProbe(U32 objectIdx)
 	if(collides)
 	{
 		// Set the tile
-		const ExtendedClusterObjectMask mask = ExtendedClusterObjectMask(1)
-											   << ExtendedClusterObjectMask(objectArrayIdx);
+		const ExtendedClusterObjectMask mask = ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(objectArrayIdx);
 		InterlockedOr(s_tileMasks[localTileIdx], mask);
 
 		// Compute and set the Z splits
 		const Vec3 hitpointA = rayDir * t0 + rayOrigin;
 		const Vec3 hitpointB = rayDir * t1 + rayOrigin;
-		const F32 distFromNearPlaneA =
-			testPlanePoint(g_unis.m_nearPlaneWSpace.xyz, g_unis.m_nearPlaneWSpace.w, hitpointA);
-		const F32 distFromNearPlaneB =
-			testPlanePoint(g_unis.m_nearPlaneWSpace.xyz, g_unis.m_nearPlaneWSpace.w, hitpointB);
+		const F32 distFromNearPlaneA = testPlanePoint(g_unis.m_nearPlaneWSpace.xyz, g_unis.m_nearPlaneWSpace.w, hitpointA);
+		const F32 distFromNearPlaneB = testPlanePoint(g_unis.m_nearPlaneWSpace.xyz, g_unis.m_nearPlaneWSpace.w, hitpointB);
 
 		F32 minDistFromNearPlane;
 		F32 maxDistFromNearPlane;
@@ -229,8 +220,7 @@ Bool isGiProbe(U32 objectIdx)
 		}
 
 		const I32 startZSplit = max(I32(minDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0);
-		const I32 endZSplit =
-			clamp(I32(maxDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0, I32(kZSplitCount) - 1);
+		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0, I32(kZSplitCount) - 1);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
 			InterlockedOr(s_zSplitMasks[i], mask);

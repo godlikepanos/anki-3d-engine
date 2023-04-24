@@ -42,10 +42,8 @@ public:
 
 	/// @name FB
 	/// @{
-	Array2d<Bool, kMaxColorRenderTargets, 4> m_colorWriteMasks = {{{{true, true, true, true}},
-																   {{true, true, true, true}},
-																   {{true, true, true, true}},
-																   {{true, true, true, true}}}};
+	Array2d<Bool, kMaxColorRenderTargets, 4> m_colorWriteMasks = {
+		{{{true, true, true, true}}, {{true, true, true, true}}, {{true, true, true, true}}, {{true, true, true, true}}}};
 
 	Bool m_depthWriteMask = true;
 

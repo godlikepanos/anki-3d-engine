@@ -114,8 +114,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	return Error::kNone;
 }
 
-void FramebufferImpl::attachTextureInternal(GLenum attachment, const TextureViewImpl& view,
-											const FramebufferAttachmentInfo& info)
+void FramebufferImpl::attachTextureInternal(GLenum attachment, const TextureViewImpl& view, const FramebufferAttachmentInfo& info)
 {
 	const GLenum target = GL_FRAMEBUFFER;
 	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
@@ -129,12 +128,11 @@ void FramebufferImpl::attachTextureInternal(GLenum attachment, const TextureView
 		glFramebufferTexture2D(target, attachment, tex.m_target, tex.getGlName(), view.getSubresource().m_firstMipmap);
 		break;
 	case GL_TEXTURE_CUBE_MAP:
-		glFramebufferTexture2D(target, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X + view.getSubresource().m_firstFace,
-							   tex.getGlName(), view.getSubresource().m_firstMipmap);
+		glFramebufferTexture2D(target, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X + view.getSubresource().m_firstFace, tex.getGlName(),
+							   view.getSubresource().m_firstMipmap);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		glFramebufferTextureLayer(target, attachment, tex.getGlName(), view.getSubresource().m_firstMipmap,
-								  view.getSubresource().m_firstLayer);
+		glFramebufferTextureLayer(target, attachment, tex.getGlName(), view.getSubresource().m_firstMipmap, view.getSubresource().m_firstLayer);
 		break;
 	case GL_TEXTURE_3D:
 		ANKI_ASSERT(!"TODO");
@@ -178,8 +176,7 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 	// Invalidate
 	if(m_invalidateBuffersCount)
 	{
-		glInvalidateSubFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount, &m_invalidateBuffers[0], minx, miny, width,
-								   height);
+		glInvalidateSubFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount, &m_invalidateBuffers[0], minx, miny, width, height);
 	}
 
 	// Clear buffers
@@ -191,8 +188,8 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 		{
 			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
 			Bool restore = false;
-			if(state.m_colorWriteMasks[i][0] != true || state.m_colorWriteMasks[i][1] != true
-			   || state.m_colorWriteMasks[i][2] != true || state.m_colorWriteMasks[i][3] != true)
+			if(state.m_colorWriteMasks[i][0] != true || state.m_colorWriteMasks[i][1] != true || state.m_colorWriteMasks[i][2] != true
+			   || state.m_colorWriteMasks[i][3] != true)
 			{
 				glColorMaski(i, true, true, true, true);
 				restore = true;
@@ -202,8 +199,8 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 
 			if(restore)
 			{
-				glColorMaski(i, state.m_colorWriteMasks[i][0], state.m_colorWriteMasks[i][1],
-							 state.m_colorWriteMasks[i][2], state.m_colorWriteMasks[i][3]);
+				glColorMaski(i, state.m_colorWriteMasks[i][0], state.m_colorWriteMasks[i][1], state.m_colorWriteMasks[i][2],
+							 state.m_colorWriteMasks[i][3]);
 			}
 		}
 	}

@@ -116,9 +116,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u",
-				m_postProcessResolution.x(), m_postProcessResolution.y(), m_internalResolution.x(),
-				m_internalResolution.y());
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x(),
+				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
 
 	m_tileSize = ConfigSet::getSingleton().getRTileSize();
 	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
@@ -132,8 +131,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		return Error::kUserData;
 	}
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
-															m_clearTexComputeProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTexComputeProg));
 
 	// Dummy resources
 	{
@@ -152,16 +150,15 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		viewinit = TextureViewInitInfo(tex);
 		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
 
-		m_dummyBuff = GrManager::getSingleton().newBuffer(BufferInitInfo(
-			1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
+		m_dummyBuff = GrManager::getSingleton().newBuffer(
+			BufferInitInfo(1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_genericCompute.reset(newInstance<GenericCompute>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_genericCompute->init());
 
-	m_volumetricLightingAccumulation.reset(
-		newInstance<VolumetricLightingAccumulation>(RendererMemoryPool::getSingleton()));
+	m_volumetricLightingAccumulation.reset(newInstance<VolumetricLightingAccumulation>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_volumetricLightingAccumulation->init());
 
 	m_indirectDiffuseProbes.reset(newInstance<IndirectDiffuseProbes>(RendererMemoryPool::getSingleton()));
@@ -227,11 +224,9 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_indirectDiffuse->init());
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
-	   && ConfigSet::getSingleton().getSceneRayTracedShadows())
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && ConfigSet::getSingleton().getSceneRayTracedShadows())
 	{
-		m_accelerationStructureBuilder.reset(
-			newInstance<AccelerationStructureBuilder>(RendererMemoryPool::getSingleton()));
+		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_accelerationStructureBuilder->init());
 
 		m_rtShadows.reset(newInstance<RtShadows>(RendererMemoryPool::getSingleton()));
@@ -322,14 +317,12 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_jitter.setTranslationPart(Vec4(jitter, 0.0f, 1.0f));
 
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
-	ctx.m_matrices.m_viewProjectionJitter =
-		ctx.m_matrices.m_projectionJitter * Mat4(ctx.m_matrices.m_view, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * Mat4(ctx.m_matrices.m_view, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
 	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
 
-	ctx.m_matrices.m_reprojection =
-		ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
+	ctx.m_matrices.m_reprojection = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
@@ -417,8 +410,7 @@ void Renderer::finalize(const RenderingContext& ctx)
 		U32 width;
 		U32 height;
 		m_depthDownscale->getClientDepthMapInfo(depthValues, width, height);
-		ctx.m_renderQueue->m_fillCoverageBufferCallback(ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData,
-														depthValues, width, height);
+		ctx.m_renderQueue->m_fillCoverageBufferCallback(ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData, depthValues, width, height);
 	}
 }
 
@@ -457,11 +449,9 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 	return init;
 }
 
-TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
-												const ClearValue& clearVal)
+TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage, const ClearValue& clearVal)
 {
-	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite)
-				|| !!(inf.m_usage & TextureUsageBit::kImageComputeWrite));
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kImageComputeWrite));
 
 	const U faceCount = (inf.m_type == TextureType::kCube || inf.m_type == TextureType::kCubeArray) ? 6 : 1;
 
@@ -518,8 +508,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						TextureViewPtr view =
-							GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf, aspect));
 
 						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
 						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
@@ -541,8 +530,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					}
 					FramebufferPtr fb = GrManager::getSingleton().newFramebuffer(fbInit);
 
-					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
-												  surf};
+					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, surf};
 					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
@@ -588,8 +576,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf));
 					cmdb->bindImage(0, 0, view);
 
-					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone,
-														TextureUsageBit::kImageComputeWrite, surf};
+					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite, surf};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
@@ -601,8 +588,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kImageComputeWrite,
-															initialUsage, surf};
+						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kImageComputeWrite, initialUsage, surf};
 
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
@@ -633,8 +619,7 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(std::move(inf));
 }
 
-Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-										   ShaderProgramPtr& optionalShaderProgram)
+Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram)
 {
 	if(m_currentDebugRtName.isEmpty()) [[likely]]
 	{
@@ -699,8 +684,8 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(GpuSceneBuffer::getSingleton().getBuffer(),
-													GpuSceneBuffer::getSingleton().getBuffer()->getBufferUsage());
+	m_runCtx.m_gpuSceneHandle =
+		rgraph.importBuffer(GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneBuffer::getSingleton().getBuffer()->getBufferUsage());
 
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{

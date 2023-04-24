@@ -43,8 +43,7 @@ static const GlDbg gldbgseverity[] = {{GL_DEBUG_SEVERITY_LOW, "GL_DEBUG_SEVERITY
 __stdcall
 #	endif
 	void
-	oglMessagesCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message,
-						const GLvoid* userParam)
+	oglMessagesCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, const GLvoid* userParam)
 {
 	using namespace anki;
 
@@ -122,8 +121,7 @@ void GlState::initRenderThread()
 			{
 				for(U sv = 0; sv < sizeof(gldbgseverity) / sizeof(GlDbg); sv++)
 				{
-					glDebugMessageControl(gldbgsource[s].token, gldbgtype[t].token, gldbgseverity[sv].token, 0, nullptr,
-										  GL_TRUE);
+					glDebugMessageControl(gldbgsource[s].token, gldbgtype[t].token, gldbgseverity[sv].token, 0, nullptr, GL_TRUE);
 				}
 			}
 		}

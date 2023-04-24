@@ -8,8 +8,7 @@
 
 namespace anki {
 
-static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags,
-														  const VulkanQueueFamilies& queueFamilies)
+static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags, const VulkanQueueFamilies& queueFamilies)
 {
 	ANKI_ASSERT(!!(flags & CommandBufferFlag::kGeneralWork) ^ !!(flags & CommandBufferFlag::kComputeWork));
 	if(!(flags & CommandBufferFlag::kGeneralWork) && queueFamilies[VulkanQueueType::kCompute] != kMaxU32)
@@ -129,8 +128,8 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		MicroCommandBuffer* newCmdb = newInstance<MicroCommandBuffer>(GrMemoryPool::getSingleton(), this);
 
-		newCmdb->m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(),
-								 GrMemoryPool::getSingleton().getAllocationCallbackUserData(), 256_KB, 2.0f);
+		newCmdb->m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(), GrMemoryPool::getSingleton().getAllocationCallbackUserData(),
+								 256_KB, 2.0f);
 
 		for(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr : newCmdb->m_objectRefs)
 		{

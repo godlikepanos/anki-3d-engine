@@ -33,9 +33,8 @@ public:
 		: m_pool(pool)
 	{
 		// Init storage
-		constexpr Bool useInlineStorage = sizeof(TFunc) <= kInlineStorageSize
-										  && std::is_trivially_copyable<TFunc>::value
-										  && std::is_trivially_destructible<TFunc>::value;
+		constexpr Bool useInlineStorage =
+			sizeof(TFunc) <= kInlineStorageSize && std::is_trivially_copyable<TFunc>::value && std::is_trivially_destructible<TFunc>::value;
 		if(useInlineStorage)
 		{
 			setState(kStateInlineStorage);
@@ -113,8 +112,7 @@ public:
 
 			// Allocate callable
 			ANKI_ASSERT(b.m_callablePtr && b.m_callablePtr->m_alignment > 0 && b.m_callablePtr->m_size > 0);
-			m_callablePtr =
-				static_cast<CallableBase*>(m_pool.allocate(b.m_callablePtr->m_size, b.m_callablePtr->m_alignment));
+			m_callablePtr = static_cast<CallableBase*>(m_pool.allocate(b.m_callablePtr->m_size, b.m_callablePtr->m_alignment));
 
 			// Copy
 			b.m_callablePtr->m_copyCallback(*b.m_callablePtr, *m_callablePtr);

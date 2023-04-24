@@ -70,8 +70,7 @@ public:
 	/// @param userData The user data of the thread callback
 	/// @param callback The thread callback that will be executed
 	/// @param coreAffintyMask Pin the thread to a number of cores.
-	void start(void* userData, ThreadCallback callback,
-			   const ThreadCoreAffinityMask& coreAffinityMask = ThreadCoreAffinityMask(false));
+	void start(void* userData, ThreadCallback callback, const ThreadCoreAffinityMask& coreAffinityMask = ThreadCoreAffinityMask(false));
 
 	/// Wait for the thread to finish
 	/// @return The error code of the thread's callback

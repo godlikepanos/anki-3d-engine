@@ -61,10 +61,8 @@ void TileAllocator::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Boo
 	{
 		const U32 hierarchyTileCountX = tileCountX >> hierarchy;
 		const U32 hierarchyTileCountY = tileCountY >> hierarchy;
-		ANKI_ASSERT((hierarchyTileCountX << hierarchy) == tileCountX
-					&& "Every hierarchy should be power of 2 of its parent hierarchy");
-		ANKI_ASSERT((hierarchyTileCountY << hierarchy) == tileCountY
-					&& "Every hierarchy should be power of 2 of its parent hierarchy");
+		ANKI_ASSERT((hierarchyTileCountX << hierarchy) == tileCountX && "Every hierarchy should be power of 2 of its parent hierarchy");
+		ANKI_ASSERT((hierarchyTileCountY << hierarchy) == tileCountY && "Every hierarchy should be power of 2 of its parent hierarchy");
 
 		m_firstTileIdxOfHierarchy[hierarchy] = tileCount;
 
@@ -85,8 +83,7 @@ void TileAllocator::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Boo
 		{
 			for(U32 x = 0; x < hierarchyTileCountX; ++x)
 			{
-				ANKI_ASSERT(tileIdx >= m_firstTileIdxOfHierarchy[hierarchy]
-							&& tileIdx <= m_firstTileIdxOfHierarchy[hierarchy + 1]);
+				ANKI_ASSERT(tileIdx >= m_firstTileIdxOfHierarchy[hierarchy] && tileIdx <= m_firstTileIdxOfHierarchy[hierarchy + 1]);
 				Tile& tile = m_allTiles[tileIdx];
 
 				tile.m_viewport[0] = x << hierarchy;
@@ -149,9 +146,8 @@ void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 	}
 }
 
-Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy, U32 allocationHierarchy,
-										  Timestamp crntTimestamp, U32& emptyTileIdx, U32& toKickTileIdx,
-										  Timestamp& tileToKickMinTimestamp) const
+Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy, U32 allocationHierarchy, Timestamp crntTimestamp, U32& emptyTileIdx,
+										  U32& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[crntTileIdx];
 
@@ -159,8 +155,7 @@ Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy
 	{
 		// We may have a candidate
 
-		const Bool done =
-			evaluateCandidate(crntTileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
+		const Bool done = evaluateCandidate(crntTileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
 
 		if(done)
 		{
@@ -175,8 +170,8 @@ Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy
 
 		for(const U32 idx : tile.m_subTiles)
 		{
-			const Bool done = searchTileRecursively(idx, crntTileHierarchy - 1, allocationHierarchy, crntTimestamp,
-													emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
+			const Bool done = searchTileRecursively(idx, crntTileHierarchy - 1, allocationHierarchy, crntTimestamp, emptyTileIdx, toKickTileIdx,
+													tileToKickMinTimestamp);
 
 			if(done)
 			{
@@ -220,9 +215,8 @@ Bool TileAllocator::evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32&
 	return false;
 }
 
-TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid,
-											U32 lightFace, U32 drawcallCount, U32 hierarchy,
-											Array<U32, 4>& tileViewport)
+TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid, U32 lightFace, U32 drawcallCount,
+											U32 hierarchy, Array<U32, 4>& tileViewport)
 {
 	// Preconditions
 	ANKI_ASSERT(crntTimestamp > 0);
@@ -252,16 +246,13 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 			{
 				// Same light & hierarchy & face, found the cache entry.
 
-				ANKI_ASSERT(tile.m_lastUsedTimestamp != crntTimestamp
-							&& "Trying to allocate the same thing twice in this timestamp?");
+				ANKI_ASSERT(tile.m_lastUsedTimestamp != crntTimestamp && "Trying to allocate the same thing twice in this timestamp?");
 
-				ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightHierarchy == hierarchy
-							&& tile.m_lightFace == lightFace);
+				ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightHierarchy == hierarchy && tile.m_lightFace == lightFace);
 
 				tileViewport = {tile.m_viewport[0], tile.m_viewport[1], tile.m_viewport[2], tile.m_viewport[3]};
 
-				const Bool needsReRendering =
-					tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp < lightTimestamp;
+				const Bool needsReRendering = tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp < lightTimestamp;
 
 				tile.m_lightTimestamp = lightTimestamp;
 				tile.m_lastUsedTimestamp = crntTimestamp;
@@ -284,11 +275,9 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	{
 		// This search is simple, iterate the tiles of the max hierarchy
 
-		for(U32 tileIdx = m_firstTileIdxOfHierarchy[maxHierarchy];
-			tileIdx <= m_firstTileIdxOfHierarchy[maxHierarchy + 1]; ++tileIdx)
+		for(U32 tileIdx = m_firstTileIdxOfHierarchy[maxHierarchy]; tileIdx <= m_firstTileIdxOfHierarchy[maxHierarchy + 1]; ++tileIdx)
 		{
-			const Bool done =
-				evaluateCandidate(tileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
+			const Bool done = evaluateCandidate(tileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
 
 			if(done)
 			{
@@ -300,11 +289,10 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	{
 		// Need to do a recursive search
 
-		for(U32 tileIdx = m_firstTileIdxOfHierarchy[maxHierarchy];
-			tileIdx <= m_firstTileIdxOfHierarchy[maxHierarchy + 1]; ++tileIdx)
+		for(U32 tileIdx = m_firstTileIdxOfHierarchy[maxHierarchy]; tileIdx <= m_firstTileIdxOfHierarchy[maxHierarchy + 1]; ++tileIdx)
 		{
-			const Bool done = searchTileRecursively(tileIdx, maxHierarchy, hierarchy, crntTimestamp, emptyTileIdx,
-													toKickTileIdx, tileToKickMinTimestamp);
+			const Bool done =
+				searchTileRecursively(tileIdx, maxHierarchy, hierarchy, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
 
 			if(done)
 			{
@@ -348,8 +336,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp l
 	}
 
 	// Return
-	tileViewport = {allocatedTile.m_viewport[0], allocatedTile.m_viewport[1], allocatedTile.m_viewport[2],
-					allocatedTile.m_viewport[3]};
+	tileViewport = {allocatedTile.m_viewport[0], allocatedTile.m_viewport[1], allocatedTile.m_viewport[2], allocatedTile.m_viewport[3]};
 
 	return TileAllocatorResult::kAllocationSucceded;
 }

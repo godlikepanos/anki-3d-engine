@@ -29,8 +29,7 @@ inline GpuSceneRenderable unpackGpuSceneRenderable(GpuSceneRenderablePacked x)
 	return o;
 }
 
-inline GpuSceneRenderableAabb initGpuSceneRenderableAabb(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex,
-														 U32 renderStateBucket)
+inline GpuSceneRenderableAabb initGpuSceneRenderableAabb(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex, U32 renderStateBucket)
 {
 	GpuSceneRenderableAabb gpuVolume;
 

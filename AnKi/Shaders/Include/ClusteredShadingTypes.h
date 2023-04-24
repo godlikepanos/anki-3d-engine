@@ -259,8 +259,7 @@ static_assert(sizeof(Cluster) == kSizeof_Cluster);
 #endif
 
 constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kClusteredObjectSizes) = {
-	sizeof(PointLight),       sizeof(SpotLight),       sizeof(Decal),
-	sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};
+	sizeof(PointLight), sizeof(SpotLight), sizeof(Decal), sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};
 
 constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kMaxVisibleClusteredObjects) = {
 #if ANKI_CLUSTERED_SHADING_USE_64BIT

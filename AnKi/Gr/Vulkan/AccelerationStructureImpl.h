@@ -46,9 +46,8 @@ public:
 		rangeInfo = m_rangeInfo;
 	}
 
-	static void computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after,
-								   VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
-								   VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses);
+	static void computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after, VkPipelineStageFlags& srcStages,
+								   VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses);
 
 private:
 	class ASBottomLevelInfo

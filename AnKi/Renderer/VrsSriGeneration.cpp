@@ -34,22 +34,16 @@ Error VrsSriGeneration::initInternal()
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
 
 	// Create textures
-	const TextureUsageBit texUsage =
-		TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kAllSampled;
-	TextureInitInfo sriInitInfo =
-		getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
+	const TextureUsageBit texUsage = TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kAllSampled;
+	TextureInitInfo sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
 	m_sriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
-	const UVec2 rezDownscaled =
-		(getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
-	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint,
-															 texUsage, "VrsSriDownscaled");
-	m_downscaledSriTex =
-		getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
+	const UVec2 rezDownscaled = (getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
+	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint, texUsage, "VrsSriDownscaled");
+	m_downscaledSriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
 	// Load programs
-	ANKI_CHECK(
-		ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
 
@@ -76,13 +70,11 @@ Error VrsSriGeneration::initInternal()
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg = variant->getProgram();
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin",
-															m_visualizeProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg));
 	m_visualizeProg->getOrCreateVariant(variant);
 	m_visualizeGrProg = variant->getProgram();
 
-	ANKI_CHECK(
-		ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriDownscale.ankiprogbin", m_downscaleProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriDownscale.ankiprogbin", m_downscaleProg));
 	m_downscaleProg->getOrCreateVariant(variant);
 	m_downscaleGrProg = variant->getProgram();
 
@@ -107,8 +99,7 @@ void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHa
 
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
-	const Bool enableVrs =
-		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(!enableVrs)
 	{
 		return;
@@ -122,16 +113,14 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 	else
 	{
 		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex, TextureUsageBit::kFramebufferShadingRate);
-		m_runCtx.m_downscaledRt =
-			ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex, TextureUsageBit::kFramebufferShadingRate);
+		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex, TextureUsageBit::kFramebufferShadingRate);
 		m_sriTexImportedOnce = true;
 	}
 }
 
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
-	const Bool enableVrs =
-		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(!enableVrs)
 	{
 		return;
@@ -154,13 +143,12 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 0, getRenderer().getLightShading().getRt());
 			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
-			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()),
-						  ConfigSet::getSingleton().getRVrsThreshold(), 0.0f);
+			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), ConfigSet::getSingleton().getRVrsThreshold(), 0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
-			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY,
-							  getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, getRenderer().getInternalResolution().x(),
+							  getRenderer().getInternalResolution().y());
 		});
 	}
 
@@ -172,8 +160,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kImageComputeWrite);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			const UVec2 rezDownscaled =
-				(getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
+			const UVec2 rezDownscaled = (getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 

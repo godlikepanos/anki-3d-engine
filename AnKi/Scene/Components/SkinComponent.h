@@ -117,8 +117,7 @@ private:
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated);
 
-	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
-					Vec4& maxExtend);
+	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend);
 };
 /// @}
 

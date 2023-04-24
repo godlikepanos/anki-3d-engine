@@ -63,8 +63,7 @@ void initParticle(UVec3 svDispatchThreadId, out GpuParticle p)
 	const U32 randomFactorCount = asuint(g_randomFactors[0]);
 	const F32 randFactor = g_randomFactors[((svDispatchThreadId.x + g_state.m_randomIndex) % randomFactorCount) + 1];
 
-	p.m_newWorldPosition =
-		lerp(g_props.m_minStartingPosition, g_props.m_maxStartingPosition, randFactor) + g_state.m_emitterPosition;
+	p.m_newWorldPosition = lerp(g_props.m_minStartingPosition, g_props.m_maxStartingPosition, randFactor) + g_state.m_emitterPosition;
 	p.m_oldWorldPosition = p.m_newWorldPosition;
 
 	p.m_mass = lerp(g_props.m_minMass, g_props.m_maxMass, randFactor);
@@ -73,8 +72,7 @@ void initParticle(UVec3 svDispatchThreadId, out GpuParticle p)
 	p.m_acceleration = lerp(g_props.m_minGravity, g_props.m_maxGravity, randFactor);
 
 	// Calculate the initial velocity
-	const Vec3 initialForce =
-		mul(g_state.m_emitterRotation, Vec4(lerp(g_props.m_minForce, g_props.m_maxForce, randFactor), 0.0));
+	const Vec3 initialForce = mul(g_state.m_emitterRotation, Vec4(lerp(g_props.m_minForce, g_props.m_maxForce, randFactor), 0.0));
 	const Vec3 totalForce = (p.m_acceleration * p.m_mass) + initialForce;
 	const Vec3 acceleration = totalForce / p.m_mass;
 	p.m_velocity = acceleration * g_state.m_dt;

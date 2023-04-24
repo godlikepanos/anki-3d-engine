@@ -63,8 +63,7 @@ RVec3 tonemapACESFilm(RVec3 x)
 RVec3 invertTonemapACESFilm(RVec3 x)
 {
 	RVec3 res = kAcesD * x - kAcesB;
-	res += sqrt(x * x * (kAcesD * kAcesD - 4.0 * kAcesE * kAcesC) + x * (4.0 * kAcesE * kAcesA - 2.0 * kAcesB * kAcesD)
-				+ kAcesB * kAcesB);
+	res += sqrt(x * x * (kAcesD * kAcesD - 4.0 * kAcesE * kAcesC) + x * (4.0 * kAcesE * kAcesA - 2.0 * kAcesB * kAcesD) + kAcesB * kAcesB);
 	res /= 2.0 * kAcesA - 2.0 * kAcesC * x;
 
 	return res;

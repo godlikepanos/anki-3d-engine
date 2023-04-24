@@ -26,21 +26,18 @@ Error MotionVectors::initInternal()
 	ANKI_R_LOGV("Initializing motion vectors");
 
 	// Prog
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
-																: "ShaderBinaries/MotionVectorsRaster.ankiprogbin",
-															m_prog));
+	CString progFname = (ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
+																		: "ShaderBinaries/MotionVectorsRaster.ankiprogbin";
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(),
-														  getRenderer().getInternalResolution().y()));
+	variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
 	// RTs
-	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(),
-																		   getRenderer().getInternalResolution().y(),
-																		   Format::kR16G16_Sfloat, "MotionVectors");
+	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(
+		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16_Sfloat, "MotionVectors");
 	m_motionVectorsRtDescr.bake();
 
 	TextureUsageBit historyLengthUsage = TextureUsageBit::kAllSampled;
@@ -53,14 +50,12 @@ Error MotionVectors::initInternal()
 		historyLengthUsage |= TextureUsageBit::kFramebufferWrite;
 	}
 
-	TextureInitInfo historyLengthTexInit = getRenderer().create2DRenderTargetInitInfo(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR8_Unorm,
-		historyLengthUsage, "MotionVectorsHistoryLen#1");
-	m_historyLengthTextures[0] =
-		getRenderer().createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);
+	TextureInitInfo historyLengthTexInit =
+		getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+												   Format::kR8_Unorm, historyLengthUsage, "MotionVectorsHistoryLen#1");
+	m_historyLengthTextures[0] = getRenderer().createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);
 	historyLengthTexInit.setName("MotionVectorsHistoryLen#2");
-	m_historyLengthTextures[1] =
-		getRenderer().createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);
+	m_historyLengthTextures[1] = getRenderer().createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);
 
 	m_fbDescr.m_colorAttachmentCount = 2;
 	m_fbDescr.bake();
@@ -79,16 +74,14 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 	if(m_historyLengthTexturesImportedOnce) [[likely]]
 	{
-		m_runCtx.m_historyLengthWriteRtHandle =
-			rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx]);
+		m_runCtx.m_historyLengthWriteRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx]);
 		m_runCtx.m_historyLengthReadRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx]);
 	}
 	else
 	{
 		m_runCtx.m_historyLengthWriteRtHandle =
 			rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx], TextureUsageBit::kAllSampled);
-		m_runCtx.m_historyLengthReadRtHandle =
-			rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx], TextureUsageBit::kAllSampled);
+		m_runCtx.m_historyLengthReadRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx], TextureUsageBit::kAllSampled);
 
 		m_historyLengthTexturesImportedOnce = true;
 	}
@@ -133,10 +126,8 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(),
-						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getPreviousFrameDepthRt(),
-						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(3));
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_historyLengthReadRtHandle);
 
@@ -161,8 +152,7 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 
 	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
-		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(),
-						  getRenderer().getInternalResolution().y());
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	}
 	else
 	{

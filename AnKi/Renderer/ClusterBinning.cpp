@@ -37,8 +37,7 @@ Error ClusterBinning::init()
 	variantInitInfo.addConstant("kTileCountX", getRenderer().getTileCounts().x());
 	variantInitInfo.addConstant("kTileCountY", getRenderer().getTileCounts().y());
 	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	variantInitInfo.addConstant(
-		"kRenderingSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
+	variantInitInfo.addConstant("kRenderingSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -55,14 +54,12 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	writeClustererBuffers(ctx);
 
-	m_runCtx.m_rebarHandle =
-		ctx.m_renderGraphDescr.importBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
-											m_runCtx.m_clustersToken.m_offset, m_runCtx.m_clustersToken.m_range);
+	m_runCtx.m_rebarHandle = ctx.m_renderGraphDescr.importBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+																 m_runCtx.m_clustersToken.m_offset, m_runCtx.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
 	if(rqueue.m_pointLights.getSize() == 0 && rqueue.m_spotLights.getSize() == 0 && rqueue.m_decals.getSize() == 0
-	   && rqueue.m_reflectionProbes.getSize() == 0 && rqueue.m_fogDensityVolumes.getSize() == 0
-	   && rqueue.m_giProbes.getSize() == 0) [[unlikely]]
+	   && rqueue.m_reflectionProbes.getSize() == 0 && rqueue.m_fogDensityVolumes.getSize() == 0 && rqueue.m_giProbes.getSize() == 0) [[unlikely]]
 	{
 		return;
 	}
@@ -109,15 +106,13 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 	RenderQueue& rqueue = *ctx.m_renderQueue;
 	if(rqueue.m_pointLights.getSize() > kMaxVisiblePointLights) [[unlikely]]
 	{
-		ANKI_R_LOGW("Visible point lights exceed the max value by %u",
-					rqueue.m_pointLights.getSize() - kMaxVisiblePointLights);
+		ANKI_R_LOGW("Visible point lights exceed the max value by %u", rqueue.m_pointLights.getSize() - kMaxVisiblePointLights);
 		rqueue.m_pointLights.setArray(rqueue.m_pointLights.getBegin(), kMaxVisiblePointLights);
 	}
 
 	if(rqueue.m_spotLights.getSize() > kMaxVisibleSpotLights) [[unlikely]]
 	{
-		ANKI_R_LOGW("Visible spot lights exceed the max value by %u",
-					rqueue.m_spotLights.getSize() - kMaxVisibleSpotLights);
+		ANKI_R_LOGW("Visible spot lights exceed the max value by %u", rqueue.m_spotLights.getSize() - kMaxVisibleSpotLights);
 		rqueue.m_spotLights.setArray(rqueue.m_spotLights.getBegin(), kMaxVisibleSpotLights);
 	}
 
@@ -129,36 +124,31 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	if(rqueue.m_fogDensityVolumes.getSize() > kMaxVisibleFogDensityVolumes) [[unlikely]]
 	{
-		ANKI_R_LOGW("Visible fog volumes exceed the max value by %u",
-					rqueue.m_fogDensityVolumes.getSize() - kMaxVisibleFogDensityVolumes);
+		ANKI_R_LOGW("Visible fog volumes exceed the max value by %u", rqueue.m_fogDensityVolumes.getSize() - kMaxVisibleFogDensityVolumes);
 		rqueue.m_fogDensityVolumes.setArray(rqueue.m_fogDensityVolumes.getBegin(), kMaxVisibleFogDensityVolumes);
 	}
 
 	if(rqueue.m_reflectionProbes.getSize() > kMaxVisibleReflectionProbes) [[unlikely]]
 	{
-		ANKI_R_LOGW("Visible reflection probes exceed the max value by %u",
-					rqueue.m_reflectionProbes.getSize() - kMaxVisibleReflectionProbes);
+		ANKI_R_LOGW("Visible reflection probes exceed the max value by %u", rqueue.m_reflectionProbes.getSize() - kMaxVisibleReflectionProbes);
 		rqueue.m_reflectionProbes.setArray(rqueue.m_reflectionProbes.getBegin(), kMaxVisibleReflectionProbes);
 	}
 
 	if(rqueue.m_giProbes.getSize() > kMaxVisibleGlobalIlluminationProbes) [[unlikely]]
 	{
-		ANKI_R_LOGW("Visible GI probes exceed the max value by %u",
-					rqueue.m_giProbes.getSize() - kMaxVisibleGlobalIlluminationProbes);
+		ANKI_R_LOGW("Visible GI probes exceed the max value by %u", rqueue.m_giProbes.getSize() - kMaxVisibleGlobalIlluminationProbes);
 		rqueue.m_giProbes.setArray(rqueue.m_giProbes.getBegin(), kMaxVisibleGlobalIlluminationProbes);
 	}
 
 	// Allocate buffers
-	RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(ClusteredShadingUniforms),
-														   m_runCtx.m_clusteredShadingUniformsToken);
+	RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(ClusteredShadingUniforms), m_runCtx.m_clusteredShadingUniformsToken);
 	RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Cluster) * m_clusterCount, m_runCtx.m_clustersToken);
 }
 
 void ClusterBinning::writeClusterBuffersAsync()
 {
 	CoreThreadHive::getSingleton().submitTask(
-		[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-		   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
+		[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive, [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
 			static_cast<ClusterBinning*>(userData)->writeClustererBuffersTask();
 		},
 		this);
@@ -174,11 +164,9 @@ void ClusterBinning::writeClustererBuffersTask()
 	// General uniforms
 	{
 		ClusteredShadingUniforms& unis = *reinterpret_cast<ClusteredShadingUniforms*>(
-			RebarTransientMemoryPool::getSingleton().getBufferMappedAddress()
-			+ m_runCtx.m_clusteredShadingUniformsToken.m_offset);
+			RebarTransientMemoryPool::getSingleton().getBufferMappedAddress() + m_runCtx.m_clusteredShadingUniformsToken.m_offset);
 
-		unis.m_renderingSize =
-			Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
+		unis.m_renderingSize = Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
 
 		unis.m_time = F32(HighRezTimer::getCurrentTime());
 		unis.m_frame = getRenderer().getFrameCount() & kMaxU32;
@@ -192,10 +180,8 @@ void ClusterBinning::writeClustererBuffersTask()
 
 		unis.m_tileCounts = getRenderer().getTileCounts();
 		unis.m_zSplitCount = getRenderer().getZSplitCount();
-		unis.m_zSplitCountOverFrustumLength =
-			F32(getRenderer().getZSplitCount()) / (rqueue.m_cameraFar - rqueue.m_cameraNear);
-		unis.m_zSplitMagic.x() =
-			(rqueue.m_cameraNear - rqueue.m_cameraFar) / (rqueue.m_cameraNear * F32(getRenderer().getZSplitCount()));
+		unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (rqueue.m_cameraFar - rqueue.m_cameraNear);
+		unis.m_zSplitMagic.x() = (rqueue.m_cameraNear - rqueue.m_cameraFar) / (rqueue.m_cameraNear * F32(getRenderer().getZSplitCount()));
 		unis.m_zSplitMagic.y() = rqueue.m_cameraFar / (rqueue.m_cameraNear * F32(getRenderer().getZSplitCount()));
 		unis.m_tileSize = getRenderer().getTileSize();
 		unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
@@ -206,14 +192,11 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_objectCountsUpTo[ClusteredObjectType::kDecal].x() =
 			unis.m_objectCountsUpTo[ClusteredObjectType::kDecal - 1].x() + rqueue.m_decals.getSize();
 		unis.m_objectCountsUpTo[ClusteredObjectType::kFogDensityVolume].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kFogDensityVolume - 1].x()
-			+ rqueue.m_fogDensityVolumes.getSize();
+			unis.m_objectCountsUpTo[ClusteredObjectType::kFogDensityVolume - 1].x() + rqueue.m_fogDensityVolumes.getSize();
 		unis.m_objectCountsUpTo[ClusteredObjectType::kReflectionProbe].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kReflectionProbe - 1].x()
-			+ rqueue.m_reflectionProbes.getSize();
+			unis.m_objectCountsUpTo[ClusteredObjectType::kReflectionProbe - 1].x() + rqueue.m_reflectionProbes.getSize();
 		unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe - 1].x()
-			+ rqueue.m_giProbes.getSize();
+			unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe - 1].x() + rqueue.m_giProbes.getSize();
 
 		unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
 
@@ -248,8 +231,7 @@ void ClusterBinning::writeClustererBuffersTask()
 	}
 
 	// Zero the memory because atomics will happen
-	U8* clustersAddress =
-		RebarTransientMemoryPool::getSingleton().getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
+	U8* clustersAddress = RebarTransientMemoryPool::getSingleton().getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
 	memset(clustersAddress, 0, sizeof(Cluster) * m_clusterCount);
 }
 

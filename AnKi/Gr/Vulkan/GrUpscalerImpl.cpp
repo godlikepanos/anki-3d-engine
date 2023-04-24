@@ -60,8 +60,7 @@ Error GrUpscalerImpl::initInternal(const GrUpscalerInitInfo& initInfo)
 static NVSDK_NGX_PerfQuality_Value getDlssQualityModeToNVQualityMode(GrUpscalerQualityMode mode)
 {
 	static Array<NVSDK_NGX_PerfQuality_Value, U32(GrUpscalerQualityMode::kCount)> nvQualityModes = {
-		NVSDK_NGX_PerfQuality_Value_MaxPerf, NVSDK_NGX_PerfQuality_Value_Balanced,
-		NVSDK_NGX_PerfQuality_Value_MaxQuality};
+		NVSDK_NGX_PerfQuality_Value_MaxPerf, NVSDK_NGX_PerfQuality_Value_Balanced, NVSDK_NGX_PerfQuality_Value_MaxQuality};
 
 	return nvQualityModes[mode];
 }
@@ -82,8 +81,7 @@ Error GrUpscalerImpl::initDlss(const GrUpscalerInitInfo& initInfo)
 	// Currently, the SDK and this sample are not in sync.  The sample is a bit forward looking, in this case. This will
 	// likely be resolved very shortly, and therefore, the code below should be thought of as needed for a smooth user
 	// experience.
-#	if defined(NVSDK_NGX_Parameter_SuperSampling_NeedsUpdatedDriver) \
-		&& defined(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMajor) \
+#	if defined(NVSDK_NGX_Parameter_SuperSampling_NeedsUpdatedDriver) && defined(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMajor) \
 		&& defined(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMinor)
 
 	// If NGX Successfully initialized then it should set those flags in return
@@ -106,8 +104,7 @@ Error GrUpscalerImpl::initDlss(const GrUpscalerInitInfo& initInfo)
 	}
 
 	// Create the feature
-	ANKI_CHECK(createDlssFeature(initInfo.m_sourceTextureResolution, initInfo.m_targetTextureResolution,
-								 initInfo.m_qualityMode));
+	ANKI_CHECK(createDlssFeature(initInfo.m_sourceTextureResolution, initInfo.m_targetTextureResolution, initInfo.m_qualityMode));
 
 	return Error::kNone;
 }
@@ -116,15 +113,14 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 {
 	NVSDK_NGX_PerfQuality_Value nvQuality = getDlssQualityModeToNVQualityMode(quality);
 	F32 sharpness; // Deprecared in newer DLSS
-	ANKI_NGX_CHECK(NGX_DLSS_GET_OPTIMAL_SETTINGS(
-		m_ngxParameters, dstRes.x(), dstRes.y(), nvQuality, &m_recommendedSettings.m_optimalRenderSize.x(),
-		&m_recommendedSettings.m_optimalRenderSize.y(), &m_recommendedSettings.m_dynamicMaximumRenderSize.x(),
-		&m_recommendedSettings.m_dynamicMaximumRenderSize.y(), &m_recommendedSettings.m_dynamicMinimumRenderSize.x(),
-		&m_recommendedSettings.m_dynamicMinimumRenderSize.y(), &sharpness));
+	ANKI_NGX_CHECK(
+		NGX_DLSS_GET_OPTIMAL_SETTINGS(m_ngxParameters, dstRes.x(), dstRes.y(), nvQuality, &m_recommendedSettings.m_optimalRenderSize.x(),
+									  &m_recommendedSettings.m_optimalRenderSize.y(), &m_recommendedSettings.m_dynamicMaximumRenderSize.x(),
+									  &m_recommendedSettings.m_dynamicMaximumRenderSize.y(), &m_recommendedSettings.m_dynamicMinimumRenderSize.x(),
+									  &m_recommendedSettings.m_dynamicMinimumRenderSize.y(), &sharpness));
 
 	// Next create features	(See NVSDK_NGX_DLSS_Feature_Flags in nvsdk_ngx_defs.h)
-	const I32 dlssCreateFeatureFlags =
-		NVSDK_NGX_DLSS_Feature_Flags_MVLowRes | NVSDK_NGX_DLSS_Feature_Flags_IsHDR; // TODO
+	const I32 dlssCreateFeatureFlags = NVSDK_NGX_DLSS_Feature_Flags_MVLowRes | NVSDK_NGX_DLSS_Feature_Flags_IsHDR; // TODO
 
 	NVSDK_NGX_DLSS_Create_Params dlssCreateParams;
 	memset(&dlssCreateParams, 0, sizeof(dlssCreateParams));
@@ -144,8 +140,8 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 	cmdbImpl.beginRecordingExt();
 	const U32 creationNodeMask = 1;
 	const U32 visibilityNodeMask = 1;
-	ANKI_NGX_CHECK(NGX_VULKAN_CREATE_DLSS_EXT(cmdbImpl.getHandle(), creationNodeMask, visibilityNodeMask,
-											  &m_dlssFeature, m_ngxParameters, &dlssCreateParams));
+	ANKI_NGX_CHECK(
+		NGX_VULKAN_CREATE_DLSS_EXT(cmdbImpl.getHandle(), creationNodeMask, visibilityNodeMask, &m_dlssFeature, m_ngxParameters, &dlssCreateParams));
 	FencePtr fence;
 	cmdb->flush({}, &fence);
 	fence->clientWait(60.0_sec);

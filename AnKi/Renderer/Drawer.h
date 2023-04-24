@@ -41,8 +41,8 @@ public:
 
 	~RenderableDrawer();
 
-	void drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin,
-				   const RenderableQueueElement* end, CommandBufferPtr& cmdb);
+	void drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin, const RenderableQueueElement* end,
+				   CommandBufferPtr& cmdb);
 
 private:
 	class Context;

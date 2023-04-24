@@ -121,8 +121,7 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 		m_height = init.m_height;
 	}
 
-	m_sdlWindow =
-		SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
+	m_sdlWindow = SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
 
 	if(m_sdlWindow == nullptr)
 	{

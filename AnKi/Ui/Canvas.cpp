@@ -200,10 +200,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 			return;
 		}
 
-		ImDrawVert* verts =
-			static_cast<ImDrawVert*>(RebarTransientMemoryPool::getSingleton().allocateFrame(verticesSize, vertsToken));
-		ImDrawIdx* indices =
-			static_cast<ImDrawIdx*>(RebarTransientMemoryPool::getSingleton().allocateFrame(indicesSize, indicesToken));
+		ImDrawVert* verts = static_cast<ImDrawVert*>(RebarTransientMemoryPool::getSingleton().allocateFrame(verticesSize, vertsToken));
+		ImDrawIdx* indices = static_cast<ImDrawIdx*>(RebarTransientMemoryPool::getSingleton().allocateFrame(indicesSize, indicesToken));
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{
@@ -222,8 +220,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset,
-						   sizeof(ImDrawVert));
+	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(ImDrawVert));
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
 	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
 	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
@@ -270,8 +267,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 
 					// Apply scissor/clipping rectangle
-					cmdb->setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()),
-									 U32(clipRect.w() - clipRect.y()));
+					cmdb->setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()), U32(clipRect.w() - clipRect.y()));
 
 					UiImageId id(pcmd.TextureId);
 					const UiImageIdExtra* idExtra = nullptr;
@@ -303,9 +299,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					// Bindings
 					if(textureView.isCreated())
 					{
-						cmdb->bindSampler(0, 0,
-										  (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler
-																	  : m_linearLinearRepeatSampler);
+						cmdb->bindSampler(0, 0, (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler : m_linearLinearRepeatSampler);
 						cmdb->bindTexture(0, 1, textureView);
 					}
 
@@ -324,8 +318,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					if(idExtra && idExtra->m_extraPushConstantsSize)
 					{
 						ANKI_ASSERT(idExtra->m_extraPushConstantsSize <= sizeof(idExtra->m_extraPushConstants));
-						memcpy(&pc.m_extra[0], idExtra->m_extraPushConstants.getBegin(),
-							   idExtra->m_extraPushConstantsSize);
+						memcpy(&pc.m_extra[0], idExtra->m_extraPushConstants.getBegin(), idExtra->m_extraPushConstantsSize);
 
 						extraPushConstantsSize = idExtra->m_extraPushConstantsSize;
 					}

@@ -59,9 +59,8 @@ public:
 
 	WeakArray<SceneNode*> getAssociatedSceneNodes()
 	{
-		return (m_associatedNodes.getSize() == 0)
-				   ? WeakArray<SceneNode*>()
-				   : WeakArray<SceneNode*>(&m_associatedNodes[0], m_associatedNodes.getSize());
+		return (m_associatedNodes.getSize() == 0) ? WeakArray<SceneNode*>()
+												  : WeakArray<SceneNode*>(&m_associatedNodes[0], m_associatedNodes.getSize());
 	}
 
 	void addAssociatedSceneNode(SceneNode* node)

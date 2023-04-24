@@ -8,8 +8,7 @@
 #include <AnKi/Shaders/Common.hlsl>
 
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u,
-					 out F32 v)
+Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u, out F32 v)
 {
 	const Vec3 v0v1 = v1 - v0;
 	const Vec3 v0v2 = v2 - v0;

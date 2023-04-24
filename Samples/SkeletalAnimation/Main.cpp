@@ -22,17 +22,13 @@ public:
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/Scene.lua", script));
 		ANKI_CHECK(ScriptManager::getSingleton().evalString(script->getSource()));
 
-		ANKI_CHECK(
-			ResourceManager::getSingleton().loadResource("Assets/float.001_ccb9eb33e30c8fa4.ankianim", m_floatAnim));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/float.001_ccb9eb33e30c8fa4.ankianim", m_floatAnim));
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("Assets/wave_6cf284ed471bff3b.ankianim", m_waveAnim));
 
 		AnimationPlayInfo animInfo;
 		animInfo.m_startTime = 2.0;
 		animInfo.m_repeatTimes = -1.0;
-		SceneGraph::getSingleton()
-			.findSceneNode("droid.001")
-			.getFirstComponentOfType<SkinComponent>()
-			.playAnimation(0, m_floatAnim, animInfo);
+		SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>().playAnimation(0, m_floatAnim, animInfo);
 
 		ConfigSet::getSingleton().setRBloomThreshold(5.0f);
 		return Error::kNone;
@@ -47,10 +43,7 @@ public:
 			animInfo.m_repeatTimes = 3.0;
 			animInfo.m_blendInTime = 0.5;
 			animInfo.m_blendOutTime = 0.35;
-			SceneGraph::getSingleton()
-				.findSceneNode("droid.001")
-				.getFirstComponentOfType<SkinComponent>()
-				.playAnimation(1, m_waveAnim, animInfo);
+			SceneGraph::getSingleton().findSceneNode("droid.001").getFirstComponentOfType<SkinComponent>().playAnimation(1, m_waveAnim, animInfo);
 		}
 
 		return SampleApp::userMainLoop(quit, elapsedTime);

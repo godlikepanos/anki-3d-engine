@@ -72,8 +72,7 @@ void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, [[ma
 
 		// Allocate
 		App* self = static_cast<App*>(userData);
-		Header* allocation = static_cast<Header*>(
-			self->m_originalAllocCallback(self->m_originalAllocUserData, nullptr, newSize, newAlignment));
+		Header* allocation = static_cast<Header*>(self->m_originalAllocCallback(self->m_originalAllocUserData, nullptr, newSize, newAlignment));
 		allocation->m_allocatedSize = size;
 		++allocation;
 		out = static_cast<void*>(allocation);
@@ -216,8 +215,7 @@ Error App::initInternal()
 #if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
 	if(!__builtin_cpu_supports("sse4.2"))
 	{
-		ANKI_CORE_LOGF(
-			"AnKi is built with sse4.2 support but your CPU doesn't support it. Try bulding without SSE support");
+		ANKI_CORE_LOGF("AnKi is built with sse4.2 support but your CPU doesn't support it. Try bulding without SSE support");
 	}
 #endif
 
@@ -276,8 +274,7 @@ Error App::initInternal()
 	//
 	// Mali HW counters
 	//
-	if(GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm
-	   && ConfigSet::getSingleton().getCoreMaliHwCounters())
+	if(GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm && ConfigSet::getSingleton().getCoreMaliHwCounters())
 	{
 		MaliHwCounters::allocateSingleton();
 	}
@@ -327,8 +324,7 @@ Error App::initInternal()
 	// Renderer
 	//
 	MainRendererInitInfo renderInit;
-	renderInit.m_swapchainSize =
-		UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
+	renderInit.m_swapchainSize = UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 	renderInit.m_allocCallback = allocCb;
 	renderInit.m_allocCallbackUserData = allocCbUserData;
 	ANKI_CHECK(MainRenderer::allocateSingleton().init(renderInit));
@@ -444,8 +440,7 @@ Error App::mainLoop()
 
 			// Render
 			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-			MainRenderer::getSingleton().setStatsEnabled(ConfigSet::getSingleton().getCoreDisplayStats() > 0
-														 || benchmarkMode
+			MainRenderer::getSingleton().setStatsEnabled(ConfigSet::getSingleton().getCoreDisplayStats() > 0 || benchmarkMode
 #if ANKI_ENABLE_TRACE
 														 || Tracer::getSingleton().getEnabled()
 #endif
@@ -539,10 +534,9 @@ Error App::mainLoop()
 				in.m_cpuFreeCount = m_memStats.m_freeCount.load();
 
 				const GrManagerStats grStats = GrManager::getSingleton().getStats();
-				UnifiedGeometryBuffer::getSingleton().getStats(
-					in.m_unifiedGometryExternalFragmentation, in.m_unifiedGeometryAllocated, in.m_unifiedGeometryTotal);
-				GpuSceneBuffer::getSingleton().getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated,
-														in.m_gpuSceneTotal);
+				UnifiedGeometryBuffer::getSingleton().getStats(in.m_unifiedGometryExternalFragmentation, in.m_unifiedGeometryAllocated,
+															   in.m_unifiedGeometryTotal);
+				GpuSceneBuffer::getSingleton().getStats(in.m_gpuSceneExternalFragmentation, in.m_gpuSceneAllocated, in.m_gpuSceneTotal);
 				in.m_gpuDeviceMemoryAllocated = grStats.m_deviceMemoryAllocated;
 				in.m_gpuDeviceMemoryInUse = grStats.m_deviceMemoryInUse;
 				in.m_reBar = rebarMemUsed;
@@ -551,9 +545,8 @@ Error App::mainLoop()
 				in.m_vkCommandBufferCount = grStats.m_commandBufferCount;
 
 				StatsUi& statsUi = *static_cast<StatsUi*>(m_statsUi.get());
-				const StatsUiDetail detail = (ConfigSet::getSingleton().getCoreDisplayStats() == 1)
-												 ? StatsUiDetail::kFpsOnly
-												 : StatsUiDetail::kDetailed;
+				const StatsUiDetail detail =
+					(ConfigSet::getSingleton().getCoreDisplayStats() == 1) ? StatsUiDetail::kFpsOnly : StatsUiDetail::kDetailed;
 				statsUi.setStats(in, detail);
 			}
 
@@ -569,8 +562,7 @@ Error App::mainLoop()
 
 			if(benchmarkMode) [[unlikely]]
 			{
-				if(GlobalFrameIndex::getSingleton().m_value
-				   >= ConfigSet::getSingleton().getCoreBenchmarkModeFrameCount())
+				if(GlobalFrameIndex::getSingleton().m_value >= ConfigSet::getSingleton().getCoreBenchmarkModeFrameCount())
 				{
 					quit = true;
 				}

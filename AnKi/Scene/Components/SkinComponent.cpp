@@ -197,8 +197,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			trfs[i * 2 + 0] = getBoneTransforms()[i];
 			trfs[i * 2 + 1] = getPreviousFrameBoneTransforms()[i];
 		}
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneBoneTransforms, trfs.getSizeInBytes(),
-													 trfs.getBegin());
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneBoneTransforms, trfs.getSizeInBytes(), trfs.getBegin());
 	}
 	else
 	{
@@ -210,8 +209,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated,
-							   Vec4& minExtend, Vec4& maxExtend)
+void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)
 {
 	Mat3x4 outMat;
 

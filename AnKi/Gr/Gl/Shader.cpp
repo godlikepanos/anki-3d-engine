@@ -19,8 +19,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 		StringRaii m_source;
 		DynamicArrayRaii<ShaderSpecializationConstValue> m_constValues;
 
-		ShaderCreateCommand(Shader* shader, ConstWeakArray<U8> bin,
-							ConstWeakArray<ShaderSpecializationConstValue> constValues,
+		ShaderCreateCommand(Shader* shader, ConstWeakArray<U8> bin, ConstWeakArray<ShaderSpecializationConstValue> constValues,
 							const CommandBufferAllocator<U8>& alloc)
 			: m_shader(shader)
 			, m_source(alloc)
@@ -41,8 +40,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 
 			Error err = impl.init(m_source.toCString(), m_constValues);
 
-			GlObject::State oldState =
-				impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+			GlObject::State oldState = impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 			(void)oldState;
 

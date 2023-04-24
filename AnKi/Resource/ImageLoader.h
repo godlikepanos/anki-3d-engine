@@ -147,17 +147,15 @@ private:
 	static Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
 								   DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
-	static Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-						 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
+	static Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
 	static Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height,
 						 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 
 	static Error loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
 							   DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>>& surfaces,
-							   DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes,
-							   U32& width, U32& height, U32& depth, U32& layerCount, U32& mipCount,
-							   ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
+							   DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes, U32& width, U32& height, U32& depth,
+							   U32& layerCount, U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize);
 
 	Error loadInternal(FileInterface& file, const CString& filename, U32 maxImageSize);
 };

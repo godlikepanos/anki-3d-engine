@@ -54,13 +54,11 @@ Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewS
 	uvw.z = linearDepth;
 
 	// Z view space
-	negativeZViewSpace =
-		linearDepth * (g_clusteredShading.m_far - g_clusteredShading.m_near) + g_clusteredShading.m_near;
+	negativeZViewSpace = linearDepth * (g_clusteredShading.m_far - g_clusteredShading.m_near) + g_clusteredShading.m_near;
 	const F32 zViewSpace = -negativeZViewSpace;
 
 	// Get the position in view space
-	const Vec2 uv =
-		lerp(g_svDispatchThreadId.xy, g_svDispatchThreadId.xy + 1.0, relativePos.xy) / Vec2(g_fogUnis.m_volumeSize.xy);
+	const Vec2 uv = lerp(g_svDispatchThreadId.xy, g_svDispatchThreadId.xy + 1.0, relativePos.xy) / Vec2(g_fogUnis.m_volumeSize.xy);
 	uvw.xy = uv;
 	const Vec2 xyViewSpace = uvToNdc(uv) * g_clusteredShading.m_matrices.m_unprojectionParameters.xy * zViewSpace;
 
@@ -104,14 +102,11 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		F32 factor = phaseFunction(viewDir, dirLight.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
-		if(dirLight.m_shadowCascadeCount > 0u
-		   && negativeZViewSpace < dirLight.m_shadowCascadeDistances[dirLight.m_shadowCascadeCount - 1u])
+		if(dirLight.m_shadowCascadeCount > 0u && negativeZViewSpace < dirLight.m_shadowCascadeDistances[dirLight.m_shadowCascadeCount - 1u])
 		{
-			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances,
-															 dirLight.m_shadowCascadeCount);
+			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, dirLight.m_shadowCascadeCount);
 
-			factor *= computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex,
-												  g_linearAnyClampShadowSampler);
+			factor *= computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -178,8 +173,8 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			const GlobalIlluminationProbe probe = g_giProbes[firstbitlow2(cluster.m_giProbesMask)];
 
 			// Sample
-			diffIndirect = sampleGlobalIllumination(
-				worldPos, viewDir, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_linearAnyClampSampler);
+			diffIndirect =
+				sampleGlobalIllumination(worldPos, viewDir, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_linearAnyClampSampler);
 		}
 		else
 		{
@@ -196,14 +191,12 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 				const GlobalIlluminationProbe probe = g_giProbes[idx];
 
 				// Compute blend weight
-				const F32 blendWeight =
-					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
 				totalBlendWeight += blendWeight;
 
 				// Sample
 				const Vec3 c = sampleGlobalIllumination(
-					worldPos, viewDir, probe, g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)],
-					g_linearAnyClampSampler);
+					worldPos, viewDir, probe, g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)], g_linearAnyClampSampler);
 				diffIndirect += c * blendWeight;
 			}
 
@@ -232,8 +225,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			F32 factor;
 			[branch] if(vol.m_isBox == 1u)
 			{
-				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter,
-												 vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
+				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
 			}
 			else
 			{
@@ -293,9 +285,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		if(all(prevClipPos.xy > -1.0) && all(prevClipPos.xy < 1.0))
 		{
 			const F32 linearDepth = linearizeDepth(prevClipPos.z, g_clusteredShading.m_near, g_clusteredShading.m_far);
-			const Vec3 uvw =
-				Vec3(ndcToUv(prevClipPos.xy),
-					 linearDepth * (F32(g_clusteredShading.m_zSplitCount) / g_fogUnis.m_maxZSplitsToProcessf));
+			const Vec3 uvw = Vec3(ndcToUv(prevClipPos.xy), linearDepth * (F32(g_clusteredShading.m_zSplitCount) / g_fogUnis.m_maxZSplitsToProcessf));
 			const Vec4 history = g_prevVolume.SampleLevel(g_linearAnyClampSampler, uvw, 0.0);
 			lightAndFog = lerp(history, lightAndFog, 1.0 / 16.0);
 		}

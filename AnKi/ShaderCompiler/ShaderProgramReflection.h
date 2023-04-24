@@ -20,8 +20,8 @@ class ShaderReflectionVisitorInterface
 public:
 	virtual Error setWorkgroupSizes(U32 x, U32 y, U32 z, U32 specConstMask) = 0;
 
-	virtual Error setCounts(U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount, Bool pushConstantBlock,
-							U32 constsCount, U32 structCount) = 0;
+	virtual Error setCounts(U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount, Bool pushConstantBlock, U32 constsCount,
+							U32 structCount) = 0;
 
 	virtual Error visitUniformBlock(U32 idx, CString name, U32 set, U32 binding, U32 size, U32 varCount) = 0;
 
@@ -35,25 +35,22 @@ public:
 
 	virtual Error visitPushConstantsBlock(CString name, U32 size, U32 varCount) = 0;
 
-	virtual Error visitPushConstant(U32 idx, CString name, ShaderVariableDataType type,
-									const ShaderVariableBlockInfo& blockInfo) = 0;
+	virtual Error visitPushConstant(U32 idx, CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
 
-	virtual Error visitOpaque(U32 idx, CString name, ShaderVariableDataType type, U32 set, U32 binding,
-							  U32 arraySize) = 0;
+	virtual Error visitOpaque(U32 idx, CString name, ShaderVariableDataType type, U32 set, U32 binding, U32 arraySize) = 0;
 
 	virtual Error visitConstant(U32 idx, CString name, ShaderVariableDataType type, U32 constantId) = 0;
 
 	virtual Error visitStruct(U32 idx, CString name, U32 memberCount, U32 size) = 0;
 
-	virtual Error visitStructMember(U32 structIdx, CString structName, U32 memberIdx, CString memberName,
-									ShaderVariableDataType type, CString typeStructName, U32 offset, U32 arraySize) = 0;
+	virtual Error visitStructMember(U32 structIdx, CString structName, U32 memberIdx, CString memberName, ShaderVariableDataType type,
+									CString typeStructName, U32 offset, U32 arraySize) = 0;
 
 	[[nodiscard]] virtual Bool skipSymbol(CString symbol) const = 0;
 };
 
 /// Does reflection using SPIR-V.
-Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv,
-							 ShaderReflectionVisitorInterface& interface);
+Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::kCount)> spirv, ShaderReflectionVisitorInterface& interface);
 /// @}
 
 } // end namespace anki

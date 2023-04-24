@@ -31,9 +31,8 @@ public:
 
 	Bool isValid() const
 	{
-		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::kCount
-		   || m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::kNone
-		   || m_positionCount == 0)
+		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::kCount || m_positionBuffer.get() == nullptr
+		   || m_positionStride == 0 || m_positionsFormat == Format::kNone || m_positionCount == 0)
 		{
 			return false;
 		}

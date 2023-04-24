@@ -176,8 +176,7 @@ void HeapMemoryPool::destroy()
 	const U32 count = m_allocationCount.load();
 	if(count != 0)
 	{
-		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count,
-					   getName());
+		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count, getName());
 	}
 	BaseMemoryPool::destroy();
 }
@@ -276,9 +275,8 @@ void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk([[maybe_unuse
 #endif
 }
 
-void StackMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-						   F64 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors, U32 alignmentBytes,
-						   const Char* name)
+void StackMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale, PtrSize nextChunkBias,
+						   Bool ignoreDeallocationErrors, U32 alignmentBytes, const Char* name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);

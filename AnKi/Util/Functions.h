@@ -42,9 +42,8 @@ namespace anki {
 #define _ANKI_FORMAT_HELPER(byte, bit) (U64(byte) & (U64(1) << U64(bit))) ? '1' : '0'
 
 #define ANKI_FORMAT_U8(byte) \
-	_ANKI_FORMAT_HELPER((byte), 7), _ANKI_FORMAT_HELPER((byte), 6), _ANKI_FORMAT_HELPER((byte), 5), \
-		_ANKI_FORMAT_HELPER((byte), 4), _ANKI_FORMAT_HELPER((byte), 3), _ANKI_FORMAT_HELPER((byte), 2), \
-		_ANKI_FORMAT_HELPER((byte), 1), _ANKI_FORMAT_HELPER((byte), 0)
+	_ANKI_FORMAT_HELPER((byte), 7), _ANKI_FORMAT_HELPER((byte), 6), _ANKI_FORMAT_HELPER((byte), 5), _ANKI_FORMAT_HELPER((byte), 4), \
+		_ANKI_FORMAT_HELPER((byte), 3), _ANKI_FORMAT_HELPER((byte), 2), _ANKI_FORMAT_HELPER((byte), 1), _ANKI_FORMAT_HELPER((byte), 0)
 
 #define ANKI_FORMAT_U16(u16) ANKI_FORMAT_U8(u16 >> 8), ANKI_FORMAT_U8(u16)
 #define ANKI_FORMAT_U32(u32) ANKI_FORMAT_U16(u32 >> 16), ANKI_FORMAT_U16(u32)
@@ -83,12 +82,10 @@ struct PrivateEnum
 		typename PrivateEnum<line>::Type ANKI_CONCATENATE( \
 			privateEnum, line) = PrivateEnum<line>::Type::kNA, \
 						 bool ANKI_CONCATENATE(privateBool, line) = true, \
-						 typename = typename std::enable_if_t<(ANKI_CONCATENATE(privateBool, line) \
-															   && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>
+						 typename = typename std::enable_if_t<(ANKI_CONCATENATE(privateBool, line) && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>
 #else
 
-#	define ANKI_ENABLE_INTERNAL(line, ...) \
-		bool privateBool##line = true, typename std::enable_if_t<(privateBool##line && __VA_ARGS__), int> = 0
+#	define ANKI_ENABLE_INTERNAL(line, ...) bool privateBool##line = true, typename std::enable_if_t<(privateBool##line && __VA_ARGS__), int> = 0
 
 #endif
 
@@ -107,8 +104,7 @@ struct PrivateEnum
 /// 	void foo(ANKI_ENABLE_ARG(Boo, expr) b) {}
 ///	};
 /// @endcode
-#define ANKI_ENABLE_ARG(type_, expression) \
-	typename std::conditional<(expression), type_, DummyType<type_, __LINE__>>::type
+#define ANKI_ENABLE_ARG(type_, expression) typename std::conditional<(expression), type_, DummyType<type_, __LINE__>>::type
 
 /// Use it to enable a method based on a constant expression.
 /// @code
@@ -327,8 +323,7 @@ constexpr Bool isPacked()
 /// Imagine an array [sizeA][sizeB][sizeC] and a flat index in that array. Then this function will compute the unflatten
 /// indices.
 template<typename T, typename TI, typename TOut>
-inline void unflatten3dArrayIndex(const T sizeA, const T sizeB, const T sizeC, const TI flatIdx, TOut& a, TOut& b,
-								  TOut& c)
+inline void unflatten3dArrayIndex(const T sizeA, const T sizeB, const T sizeC, const TI flatIdx, TOut& a, TOut& b, TOut& c)
 {
 	ANKI_ASSERT(flatIdx < (sizeA * sizeB * sizeC));
 	a = (flatIdx / (sizeB * sizeC)) % sizeA;

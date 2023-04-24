@@ -46,8 +46,7 @@ Error FinalComposite::initInternal()
 		m_grProgs[dbg] = variant->getProgram();
 	}
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin",
-															m_defaultVisualizeRenderTargetProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg));
 	const ShaderProgramResourceVariant* variant;
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
 	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
@@ -151,16 +150,14 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getBloom().getRt());
 		cmdb->bindTexture(0, 5, m_lut->getTextureView());
 		rgraphCtx.bindColorTexture(0, 6, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(dbgEnabled)
 		{
 			rgraphCtx.bindColorTexture(0, 8, getRenderer().getDbg().getRt());
 		}
 
-		const UVec4 pc(0, 0, floatBitsToUint(ConfigSet::getSingleton().getRFilmGrainStrength()),
-					   getRenderer().getFrameCount() & kMaxU32);
+		const UVec4 pc(0, 0, floatBitsToUint(ConfigSet::getSingleton().getRFilmGrainStrength()), getRenderer().getFrameCount() & kMaxU32);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 	}
 	else
@@ -181,8 +178,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	drawQuad(cmdb);
 
 	// Draw UI
-	getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(),
-									getRenderer().getPostProcessResolution().y(), ctx, cmdb);
+	getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), ctx, cmdb);
 }
 
 } // end namespace anki

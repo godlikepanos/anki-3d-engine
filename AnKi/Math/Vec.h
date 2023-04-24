@@ -2899,10 +2899,12 @@ public:
 	ANKI_ENABLE_METHOD(kTComponentCount == 4)
 	TVec operator*(const TMat<T, 4, 4>& m4) const
 	{
-		return TVec(x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0),
-					x() * m4(0, 1) + y() * m4(1, 1) + z() * m4(2, 1) + w() * m4(3, 1),
-					x() * m4(0, 2) + y() * m4(1, 2) + z() * m4(2, 2) + w() * m4(3, 2),
-					x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3));
+		TVec out;
+		out.x() = x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0);
+		out.y() = x() * m4(0, 1) + y() * m4(1, 1) + z() * m4(2, 1) + w() * m4(3, 1);
+		out.z() = x() * m4(0, 2) + y() * m4(1, 2) + z() * m4(2, 2) + w() * m4(3, 2);
+		out.w() = x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3);
+		return out;
 	}
 	/// @}
 
@@ -2963,10 +2965,8 @@ public:
 		constexpr unsigned int mask0 = _MM_SHUFFLE(3, 0, 2, 1);
 		constexpr unsigned int mask1 = _MM_SHUFFLE(3, 1, 0, 2);
 
-		const __m128 tmp0 =
-			_mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask0)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask1)));
-		const __m128 tmp1 =
-			_mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask1)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask0)));
+		const __m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask0)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask1)));
+		const __m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask1)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask0)));
 
 		return TVec(_mm_sub_ps(tmp0, tmp1));
 #	else

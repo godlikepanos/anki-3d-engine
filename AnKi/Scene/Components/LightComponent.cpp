@@ -54,18 +54,16 @@ void LightComponent::setLightComponentType(LightComponentType type)
 
 	if(m_typeChanged)
 	{
-		AllGpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneLightIndex);
+		GpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneLightIndex);
 	}
 
 	if(!m_gpuSceneLightIndex.isValid() && type == LightComponentType::kPoint)
 	{
-		m_gpuSceneLightIndex =
-			AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kPointLights);
+		m_gpuSceneLightIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kPointLights);
 	}
 	else if(!m_gpuSceneLightIndex.isValid() && type == LightComponentType::kSpot)
 	{
-		m_gpuSceneLightIndex =
-			AllGpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kSpotLights);
+		m_gpuSceneLightIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kSpotLights);
 	}
 
 	m_type = type;
@@ -102,10 +100,8 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				for(U32 i = 0; i < 6; i++)
 				{
 					m_frustums[i].init(FrustumType::kPerspective);
-					m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, m_point.m_radius, kPi / 2.0f,
-												 kPi / 2.0f);
-					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(),
-															  Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+					m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, m_point.m_radius, kPi / 2.0f, kPi / 2.0f);
+					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
 				}
 			}
 
@@ -119,8 +115,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 				if(moveUpdated || shapeUpdated)
 				{
-					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(),
-															  Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
 				}
 			}
 		}
@@ -132,16 +127,14 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
 		gpuLight.m_shadow = m_shadow;
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(),
-													 gpuLight);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(), gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
 		// Update texture matrix
-		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-							1.0f);
-		const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
-																	 kClusterObjectFrustumNearPlane, m_spot.m_distance);
+		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		const Mat4 proj =
+			Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle, kClusterObjectFrustumNearPlane, m_spot.m_distance);
 		m_spot.m_textureMat = biasMat4 * proj * Mat4(m_worldTransform.getInverse());
 
 		// Update the spatial
@@ -166,8 +159,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				m_frustumCount = 1;
 
 				m_frustums[0].init(FrustumType::kPerspective);
-				m_frustums[0].setPerspective(kClusterObjectFrustumNearPlane, m_spot.m_distance, m_spot.m_outerAngle,
-											 m_spot.m_outerAngle);
+				m_frustums[0].setPerspective(kClusterObjectFrustumNearPlane, m_spot.m_distance, m_spot.m_outerAngle, m_spot.m_outerAngle);
 				m_frustums[0].setWorldTransform(m_worldTransform);
 			}
 
@@ -199,8 +191,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_shadow = m_shadow;
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(),
-													 gpuLight);
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(), gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{
@@ -275,13 +266,11 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 			//           |
 			// The square distance of A-C is equal to B-C. Solve the equation to find the z.
 			const F32 f = primaryFrustum.getShadowCascadeDistance(i); // Cascade far
-			const F32 n =
-				(i == 0) ? primaryFrustum.getNear() : primaryFrustum.getShadowCascadeDistance(i - 1); // Cascade near
+			const F32 n = (i == 0) ? primaryFrustum.getNear() : primaryFrustum.getShadowCascadeDistance(i - 1); // Cascade near
 			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
-			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength())
-						<= kEpsilonf * 100.0f);
+			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength()) <= kEpsilonf * 100.0f);
 
 			Vec3 C(0.0f, 0.0f, z); // Sphere center
 
@@ -320,8 +309,8 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 
 			// Projection
 			const F32 far = (eye - sphereCenter).getLength() + sphereRadius;
-			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(
-				sphereRadius, -sphereRadius, sphereRadius, -sphereRadius, kClusterObjectFrustumNearPlane, far);
+			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(sphereRadius, -sphereRadius, sphereRadius, -sphereRadius,
+																			  kClusterObjectFrustumNearPlane, far);
 
 			// View
 			Transform cascadeTransform = m_worldTransform;
@@ -350,8 +339,7 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 			}
 
 			// Light matrix
-			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-								0.0f, 1.0f);
+			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
 
 			// Fill the frustum with the fixed projection parameters from the fixed projection matrix

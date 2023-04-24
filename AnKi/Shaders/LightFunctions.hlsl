@@ -13,8 +13,8 @@
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-constexpr Vec2 kPoissonDisk[4u] = {Vec2(-0.94201624, -0.39906216), Vec2(0.94558609, -0.76890725),
-								   Vec2(-0.094184101, -0.92938870), Vec2(0.34495938, 0.29387760)};
+constexpr Vec2 kPoissonDisk[4u] = {Vec2(-0.94201624, -0.39906216), Vec2(0.94558609, -0.76890725), Vec2(-0.094184101, -0.92938870),
+								   Vec2(0.34495938, 0.29387760)};
 constexpr RF32 kPcfScale = 2.0f;
 
 // Fresnel term unreal
@@ -113,8 +113,7 @@ RF32 computeSpotFactor(RVec3 l, RF32 outerCos, RF32 innerCos, RVec3 spotDir)
 	return spotFactor;
 }
 
-RF32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, Texture2D shadowTex,
-									 SamplerComparisonState shadowMapSampler, RF32 randFactor)
+RF32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, RF32 randFactor)
 {
 	const Vec4 texCoords4 = mul(light.m_textureMatrix, Vec4(worldPos, 1.0));
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -148,8 +147,7 @@ RF32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, Texture2D s
 	return shadow;
 }
 
-RF32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, Texture2D shadowTex,
-								  SamplerComparisonState shadowMapSampler)
+RF32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler)
 {
 	const Vec4 texCoords4 = mul(light.m_textureMatrix, Vec4(worldPos, 1.0));
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -157,8 +155,8 @@ RF32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, Texture2D shad
 }
 
 // Compute the shadow factor of point (omni) lights.
-RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Texture2D shadowMap,
-										  SamplerComparisonState shadowMapSampler, RF32 randFactor, Bool pcf)
+RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler,
+										  RF32 randFactor, Bool pcf)
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);
@@ -227,14 +225,13 @@ RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Tex
 	return shadow;
 }
 
-RF32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, Texture2D shadowMap,
-								   SamplerComparisonState shadowMapSampler)
+RF32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler)
 {
 	return computeShadowFactorPointLightGeneric(light, frag2Light, shadowMap, shadowMapSampler, -1.0, false);
 }
 
-RF32 computeShadowFactorPointLightPcf(PointLight light, Vec3 frag2Light, Texture2D shadowMap,
-									  SamplerComparisonState shadowMapSampler, RF32 randFactor)
+RF32 computeShadowFactorPointLightPcf(PointLight light, Vec3 frag2Light, Texture2D shadowMap, SamplerComparisonState shadowMapSampler,
+									  RF32 randFactor)
 {
 	return computeShadowFactorPointLightGeneric(light, frag2Light, shadowMap, shadowMapSampler, randFactor, true);
 }
@@ -306,8 +303,7 @@ RF32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 cascadeIdx, 
 	return shadow;
 }
 
-RF32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, Texture2D shadowMap,
-								 SamplerComparisonState shadowMapSampler)
+RF32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, Texture2D shadowMap, SamplerComparisonState shadowMapSampler)
 {
 	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, -1.0, false);
 }
@@ -315,13 +311,11 @@ RF32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 wo
 RF32 computeShadowFactorDirLightPcf(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, Texture2D shadowMap,
 									SamplerComparisonState shadowMapSampler, F32 randFactor)
 {
-	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, randFactor,
-											  true);
+	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, randFactor, true);
 }
 
 // Compute the shadow factor of a directional light
-RF32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, Texture2D<RVec4> shadowMap,
-								 SamplerComparisonState shadowMapSampler)
+RF32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, Texture2D<RVec4> shadowMap, SamplerComparisonState shadowMapSampler)
 {
 	const Vec4 texCoords4 = mul(lightProjectionMat, Vec4(worldPos, 1.0));
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -416,8 +410,8 @@ RVec3 sampleAmbientDice(RVec3 posx, RVec3 negx, RVec3 posy, RVec3 negy, RVec3 po
 }
 
 // Sample the irradiance term from the clipmap
-RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
-							   Texture3D<RVec4> tex, SamplerState linearAnyClampSampler)
+RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe, Texture3D<RVec4> tex,
+							   SamplerState linearAnyClampSampler)
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);
@@ -440,8 +434,8 @@ RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glo
 	}
 
 	// Sample the irradiance
-	const RVec3 irradiance = sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2],
-											   irradiancePerDir[3], irradiancePerDir[4], irradiancePerDir[5], normal);
+	const RVec3 irradiance = sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2], irradiancePerDir[3],
+											   irradiancePerDir[4], irradiancePerDir[5], normal);
 
 	return irradiance;
 }

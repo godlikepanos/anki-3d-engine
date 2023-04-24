@@ -10,8 +10,7 @@
 
 namespace anki {
 
-inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
-							  ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
+inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
 {
 	String header;
 	ShaderCompilerOptions compilerOptions;

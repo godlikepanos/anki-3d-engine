@@ -138,8 +138,7 @@ public:
 	}
 
 	/// @see newCopy
-	void newCopy(StackMemoryPool& frameCpuPool, const GpuSceneBufferAllocation& dest, PtrSize dataSize,
-				 const void* data)
+	void newCopy(StackMemoryPool& frameCpuPool, const GpuSceneBufferAllocation& dest, PtrSize dataSize, const void* data)
 	{
 		ANKI_ASSERT(dataSize <= dest.getAllocatedSize());
 		newCopy(frameCpuPool, dest.getOffset(), dataSize, data);

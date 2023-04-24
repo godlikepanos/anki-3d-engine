@@ -56,18 +56,16 @@ F32 sampleViewPositionZ(Vec2 uv, I32 offsetX, I32 offsetY)
 	return v4.z / v4.w;
 }
 
-[numthreads(THREAD_GROUP_SIZE_X, THREAD_GROUP_SIZE_Y, 1)] void
-main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupId : SV_GROUPID)
+[numthreads(THREAD_GROUP_SIZE_X, THREAD_GROUP_SIZE_Y, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX,
+																	UVec3 svGroupId : SV_GROUPID)
 {
 #if SHARED_MEMORY
 	U32 wavesPerThreadGroup;
 	U32 waveIndexInsideThreadGroup;
-	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup,
-											   wavesPerThreadGroup);
+	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup, wavesPerThreadGroup);
 #endif
 
-	const Vec2 uv =
-		(Vec2(svDispatchThreadId.xy) * Vec2(REGION_SIZE_X, REGION_SIZE_Y) + 0.5) * g_unis.m_oneOverViewportSize;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) * Vec2(REGION_SIZE_X, REGION_SIZE_Y) + 0.5) * g_unis.m_oneOverViewportSize;
 
 #if SRI_TEXEL_DIMENSION == 8
 	// Get positions

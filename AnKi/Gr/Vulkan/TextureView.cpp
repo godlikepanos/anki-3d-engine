@@ -24,8 +24,7 @@ TextureView* TextureView::newInstance(const TextureViewInitInfo& init)
 U32 TextureView::getOrCreateBindlessTextureIndex()
 {
 	ANKI_VK_SELF(TextureViewImpl);
-	ANKI_ASSERT(self.getTextureImpl().computeLayout(TextureUsageBit::kAllSampled, 0)
-				== VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	ANKI_ASSERT(self.getTextureImpl().computeLayout(TextureUsageBit::kAllSampled, 0) == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	return self.getOrCreateBindlessIndex();
 }
 

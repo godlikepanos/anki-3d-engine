@@ -33,8 +33,7 @@ PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec
 	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
-PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB,
-												 const Vec3& relPosB)
+PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB)
 	: PhysicsJoint(JointType::kP2P)
 {
 	ANKI_ASSERT(bodyA != bodyB);

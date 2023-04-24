@@ -96,11 +96,9 @@ Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #if SHARPEN
 	FsrRcasH(color.r, color.g, color.b, uv, g_uniforms.m_fsrConsts0);
 #elif FSR_QUALITY == 0
-	FsrEasuL(color, uv, g_uniforms.m_fsrConsts0, g_uniforms.m_fsrConsts1, g_uniforms.m_fsrConsts2,
-			 g_uniforms.m_fsrConsts3);
+	FsrEasuL(color, uv, g_uniforms.m_fsrConsts0, g_uniforms.m_fsrConsts1, g_uniforms.m_fsrConsts2, g_uniforms.m_fsrConsts3);
 #else
-	FsrEasuH(color, uv, g_uniforms.m_fsrConsts0, g_uniforms.m_fsrConsts1, g_uniforms.m_fsrConsts2,
-			 g_uniforms.m_fsrConsts3);
+	FsrEasuH(color, uv, g_uniforms.m_fsrConsts0, g_uniforms.m_fsrConsts1, g_uniforms.m_fsrConsts2, g_uniforms.m_fsrConsts3);
 #endif
 
 #if defined(ANKI_COMPUTE_SHADER)

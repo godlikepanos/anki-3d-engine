@@ -84,11 +84,9 @@ void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
 		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::kClear
 		   || init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::kClear)
 		{
-			m_clearVals[m_colorAttCount].depthStencil.depth =
-				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;
+			m_clearVals[m_colorAttCount].depthStencil.depth = init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;
 
-			m_clearVals[m_colorAttCount].depthStencil.stencil =
-				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
+			m_clearVals[m_colorAttCount].depthStencil.stencil = init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
 		}
 		else
 		{
@@ -179,8 +177,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	return Error::kNone;
 }
 
-void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc,
-												VkImageLayout layout) const
+void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription2& desc, VkImageLayout layout) const
 {
 	desc = {};
 	desc.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
@@ -199,8 +196,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	// Setup attachments and references
 	for(U32 i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
-		setupAttachmentDescriptor(init.m_colorAttachments[i], m_attachmentDescriptions[i],
-								  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		setupAttachmentDescriptor(init.m_colorAttachments[i], m_attachmentDescriptions[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		VkAttachmentReference2& ref = m_references[i];
 		ref.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
@@ -229,8 +225,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		VkAttachmentDescription2& desc = m_attachmentDescriptions[sriAttachmentIdx];
 		desc = {};
 		desc.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
-		desc.format = convertFormat(
-			static_cast<const TextureViewImpl&>(*init.m_shadingRateImage.m_textureView).getTextureImpl().getFormat());
+		desc.format = convertFormat(static_cast<const TextureViewImpl&>(*init.m_shadingRateImage.m_textureView).getTextureImpl().getFormat());
 		desc.samples = VK_SAMPLE_COUNT_1_BIT;
 		desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		desc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -270,8 +265,8 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	m_rpassCi.pSubpasses = &m_subpassDescr;
 }
 
-VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, kMaxColorRenderTargets>& colorLayouts,
-												  VkImageLayout dsLayout, VkImageLayout shadingRateImageLayout)
+VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, kMaxColorRenderTargets>& colorLayouts, VkImageLayout dsLayout,
+												  VkImageLayout shadingRateImageLayout)
 {
 	VkRenderPass out = VK_NULL_HANDLE;
 

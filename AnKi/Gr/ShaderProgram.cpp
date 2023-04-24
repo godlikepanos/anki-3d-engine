@@ -22,9 +22,7 @@ Bool ShaderProgramInitInfo::isValid() const
 		}
 	}
 
-	if(!!graphicsMask
-	   && (graphicsMask & (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment))
-			  != (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment))
+	if(!!graphicsMask && (graphicsMask & (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment)) != (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment))
 	{
 		return false;
 	}

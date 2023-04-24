@@ -56,8 +56,7 @@ F32 calculateBilateralWeightPlane(Vec3 positionCenter, Vec3 centerNormal, Vec3 p
 	// How far off the expected plane (on the perpendicular) is this point? Max value is unbounded.
 	const F32 planeError = max(abs(dot(dq, normalTap)), abs(dot(dq, centerNormal)));
 
-	return (distance2 < lowDistanceThreshold2) ? 1.0
-											   : pow(max(0.0, 1.0 - 2.0 * phi * planeError / sqrt(distance2)), 2.0);
+	return (distance2 < lowDistanceThreshold2) ? 1.0 : pow(max(0.0, 1.0 - 2.0 * phi * planeError / sqrt(distance2)), 2.0);
 }
 
 // https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
@@ -68,8 +67,8 @@ F32 calculateBilateralWeightRoughness(F32 roughnessCenter, F32 roughnessTap, F32
 }
 
 // From SVGF sample code.
-F32 calculateBilateralWeightLinearDepthAndLuminance(F32 depthCenter, F32 luminanceCenter, F32 depthTap,
-													F32 luminanceTap, F32 phiDepth, F32 phiLuminance)
+F32 calculateBilateralWeightLinearDepthAndLuminance(F32 depthCenter, F32 luminanceCenter, F32 depthTap, F32 luminanceTap, F32 phiDepth,
+													F32 phiLuminance)
 {
 	const F32 wZ = calculateBilateralWeightDepth2(depthCenter, depthTap, phiDepth);
 	const F32 wL = abs(luminanceCenter - luminanceTap) / phiLuminance;
@@ -95,8 +94,8 @@ struct SpatialBilateralContext
 
 // Initialize the spatial bilateral context. Its purpose it to create samples that form a spiral around the reference
 // point. To experiment and play with the values use this: https://www.shadertoy.com/view/3s3BRs
-SpatialBilateralContext spatialBilateralInit(U32 sampleCount, UVec2 referencePointUnormalizedTextureUv,
-											 U32 maxRadiusPixels, U32 spiralTurnCount, F32 time)
+SpatialBilateralContext spatialBilateralInit(U32 sampleCount, UVec2 referencePointUnormalizedTextureUv, U32 maxRadiusPixels, U32 spiralTurnCount,
+											 F32 time)
 {
 	SpatialBilateralContext ctx;
 

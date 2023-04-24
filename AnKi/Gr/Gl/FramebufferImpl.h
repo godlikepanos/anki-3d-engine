@@ -52,12 +52,10 @@ private:
 	Bool m_clearStencil = false;
 
 	/// Attach a texture
-	static void attachTextureInternal(GLenum attachment, const TextureViewImpl& view,
-									  const FramebufferAttachmentInfo& info);
+	static void attachTextureInternal(GLenum attachment, const TextureViewImpl& view, const FramebufferAttachmentInfo& info);
 
 	/// Create the FBO
-	ANKI_USE_RESULT Error createFbo(const Array<U, kMaxColorRenderTargets + 1>& layers,
-									GLenum depthStencilBindingPoint);
+	ANKI_USE_RESULT Error createFbo(const Array<U, kMaxColorRenderTargets + 1>& layers, GLenum depthStencilBindingPoint);
 };
 /// @}
 

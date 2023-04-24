@@ -105,9 +105,8 @@ public:
 	}
 	/// @}
 
-	void flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain,
-							WeakArray<MicroSemaphorePtr> waitSemaphores, MicroSemaphorePtr* signalSemaphore,
-							Bool wait = false);
+	void flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphorePtr> waitSemaphores,
+							MicroSemaphorePtr* signalSemaphore, Bool wait = false);
 
 	/// @name Memory
 	/// @{
@@ -338,19 +337,16 @@ private:
 	Error initMemory();
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
-	static void* allocateCallback(void* userData, size_t size, size_t alignment,
-								  VkSystemAllocationScope allocationScope);
+	static void* allocateCallback(void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
-	static void* reallocateCallback(void* userData, void* original, size_t size, size_t alignment,
-									VkSystemAllocationScope allocationScope);
+	static void* reallocateCallback(void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
 	static void freeCallback(void* userData, void* ptr);
 #endif
 
 	void resetFrame(PerFrame& frame);
 
-	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-										   VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
 	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const;

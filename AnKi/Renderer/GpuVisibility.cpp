@@ -26,48 +26,27 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	U32 activeBucketCount = 0;
-	U32 aabbCount = 0;
-	RenderStateBucketContainer::getSingleton().iterateBuckets(RenderingTechnique::kGBuffer,
-															  [&](const RenderStateInfo&, U32 userCount) {
-																  ++activeBucketCount;
-																  aabbCount += userCount;
-															  });
-
-	ANKI_ASSERT(aabbCount
-				== AllGpuSceneContiguousArrays::getSingleton().getElementCount(
-					GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer));
-	aabbCount = AllGpuSceneContiguousArrays::getSingleton().getElementCount(
-		GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
+	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
+	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getActiveBucketCount(RenderingTechnique::kGBuffer);
 
 	// Allocate memory for the indirect commands
-	const GpuVisibleTransientMemoryAllocation indirectCalls =
-		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectInfo));
+	const GpuVisibleTransientMemoryAllocation indirectArgs =
+		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectArgs));
 	const GpuVisibleTransientMemoryAllocation instanceRateRenderables =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(GpuSceneRenderable));
 
-	// Allocate and fill the offsets to the atomic counters for each bucket
-	RebarAllocation atomicsAlloc;
-	U32* atomics = static_cast<U32*>(
-		RebarTransientMemoryPool::getSingleton().allocateFrame(activeBucketCount * sizeof(U32), atomicsAlloc));
-	U32 count = 0;
-	activeBucketCount = 0;
-	RenderStateBucketContainer::getSingleton().iterateBuckets(RenderingTechnique::kGBuffer,
-															  [&](const RenderStateInfo&, U32 userCount) {
-																  atomics[activeBucketCount] = count;
-																  count += userCount;
-																  ++activeBucketCount;
-															  });
+	// Allocate and zero the MDI counts
+	RebarAllocation mdiDrawCounts;
+	U32* atomics = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(bucketCount, mdiDrawCounts);
+	memset(atomics, 0, mdiDrawCounts.m_range);
 
 	// Import buffers
-	m_runCtx.m_instanceRateRenderables =
-		rgraph.importBuffer(BufferPtr(instanceRateRenderables.m_buffer), BufferUsageBit::kNone,
-							instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
-	m_runCtx.m_drawIndexedIndirects = rgraph.importBuffer(BufferPtr(indirectCalls.m_buffer), BufferUsageBit::kNone,
-														  indirectCalls.m_offset, indirectCalls.m_size);
-	m_runCtx.m_drawIndirectOffsets =
-		rgraph.importBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
-							atomicsAlloc.m_offset, atomicsAlloc.m_range);
+	m_runCtx.m_instanceRateRenderables = rgraph.importBuffer(BufferPtr(instanceRateRenderables.m_buffer), BufferUsageBit::kNone,
+															 instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
+	m_runCtx.m_drawIndexedIndirectArgs =
+		rgraph.importBuffer(BufferPtr(indirectArgs.m_buffer), BufferUsageBit::kNone, indirectArgs.m_offset, indirectArgs.m_size);
+	m_runCtx.m_mdiDrawCounts = rgraph.importBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+												   mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
 	constexpr BufferUsageBit bufferUsage = BufferUsageBit::kStorageComputeRead;
@@ -76,34 +55,44 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), bufferUsage);
 	pass.newTextureDependency(getRenderer().getHiZ().getHiZRt(), TextureUsageBit::kSampledCompute);
 	pass.newBufferDependency(m_runCtx.m_instanceRateRenderables, bufferUsage);
-	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirects, bufferUsage);
-	pass.newBufferDependency(m_runCtx.m_drawIndirectOffsets, bufferUsage);
+	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirectArgs, bufferUsage);
+	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, bufferUsage);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rpass) {
 		CommandBufferPtr& cmdb = rpass.m_commandBuffer;
 
 		cmdb->bindShaderProgram(m_grProg);
 
-		cmdb->bindStorageBuffer(0, 0, GpuSceneBuffer::getSingleton().getBuffer(),
-								AllGpuSceneContiguousArrays::getSingleton().getArrayBase(
-									GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer),
-								AllGpuSceneContiguousArrays::getSingleton().getElementCount(
-									GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer)
-									* sizeof(GpuSceneRenderableAabb));
-
 		cmdb->bindStorageBuffer(
-			0, 1, GpuSceneBuffer::getSingleton().getBuffer(),
-			AllGpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderables),
-			AllGpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderables)
-				* sizeof(GpuSceneRenderable));
+			0, 0, GpuSceneBuffer::getSingleton().getBuffer(),
+			GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer),
+			GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer)
+				* sizeof(GpuSceneRenderableAabb));
+
+		cmdb->bindStorageBuffer(0, 1, GpuSceneBuffer::getSingleton().getBuffer(),
+								GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderables),
+								GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderables)
+									* sizeof(GpuSceneRenderable));
 
 		cmdb->bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 		rpass.bindColorTexture(0, 3, getRenderer().getHiZ().getHiZRt());
 
 		rpass.bindStorageBuffer(0, 4, m_runCtx.m_instanceRateRenderables);
-		rpass.bindStorageBuffer(0, 5, m_runCtx.m_drawIndexedIndirects);
-		rpass.bindStorageBuffer(0, 6, m_runCtx.m_drawIndirectOffsets);
+		rpass.bindStorageBuffer(0, 5, m_runCtx.m_drawIndexedIndirectArgs);
+
+		U32* offsets = allocateAndBindStorage<U32*>(
+			sizeof(U32) * RenderStateBucketContainer::getSingleton().getActiveBucketCount(RenderingTechnique::kGBuffer), cmdb, 0, 6);
+		U32 activeBucketCount = 0;
+		U32 userCount = 0;
+		RenderStateBucketContainer::getSingleton().iterateBuckets(RenderingTechnique::kGBuffer, [&](const RenderStateInfo&, U32 userCount_) {
+			offsets[activeBucketCount] = userCount;
+			userCount += userCount_;
+			++activeBucketCount;
+		});
+		ANKI_ASSERT(activeBucketCount == RenderStateBucketContainer::getSingleton().getActiveBucketCount(RenderingTechnique::kGBuffer));
+
+		rpass.bindStorageBuffer(0, 7, m_runCtx.m_mdiDrawCounts);
 
 		struct Uniforms
 		{
@@ -120,11 +109,10 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 			unis.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
 
-		unis.m_aabbCount = AllGpuSceneContiguousArrays::getSingleton().getElementCount(
-			GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
+		unis.m_aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
 		cmdb->setPushConstants(&unis, sizeof(unis));
 
-		dispatchPPCompute(cmdb, 64, 1, 1, unis.m_aabbCount, 1, 1);
+		dispatchPPCompute(cmdb, 64, 1, unis.m_aabbCount, 1);
 	});
 }
 

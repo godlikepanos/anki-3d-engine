@@ -15,8 +15,7 @@ namespace anki {
 
 Error PackVisibleClusteredObjects::init()
 {
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/PackVisibleClusteredObjects.ankiprogbin",
-															m_packProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/PackVisibleClusteredObjects.ankiprogbin", m_packProg));
 
 	U32 maxWaveSize = GrManager::getSingleton().getDeviceCapabilities().m_maxSubgroupSize;
 	if(maxWaveSize == 16 || maxWaveSize == 32)
@@ -55,8 +54,7 @@ Error PackVisibleClusteredObjects::init()
 }
 
 template<typename TClustererType, ClusteredObjectType kType, typename TRenderQueueElement>
-void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue,
-											   CommandBufferPtr& cmdb)
+void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue, CommandBufferPtr& cmdb)
 {
 	if(array.getSize() == 0)
 	{
@@ -112,18 +110,16 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		}
 	}
 
-	cmdb->bindStorageBuffer(0, 0, GpuSceneBuffer::getSingleton().getBuffer(),
-							rqueue.m_clustererObjectsArrayOffsets[kType], rqueue.m_clustererObjectsArrayRanges[kType]);
+	cmdb->bindStorageBuffer(0, 0, GpuSceneBuffer::getSingleton().getBuffer(), rqueue.m_clustererObjectsArrayOffsets[kType],
+							rqueue.m_clustererObjectsArrayRanges[kType]);
 
-	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects, m_structureBufferOffsets[kType],
-							array.getSize() * sizeof(TClustererType));
+	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects, m_structureBufferOffsets[kType], array.getSize() * sizeof(TClustererType));
 
 	cmdb->bindStorageBuffer(0, 2, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
 
 	if constexpr(std::is_same_v<TClustererType, PointLight> || std::is_same_v<TClustererType, SpotLight>)
 	{
-		cmdb->bindStorageBuffer(0, 3, RebarTransientMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset,
-								extrasToken.m_range);
+		cmdb->bindStorageBuffer(0, 3, RebarTransientMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset, extrasToken.m_range);
 	}
 
 	cmdb->bindShaderProgram(m_grProgs[kType]);
@@ -152,11 +148,9 @@ void PackVisibleClusteredObjects::populateRenderGraph(RenderingContext& ctx)
 		dispatchType<PointLight, ClusteredObjectType::kPointLight>(rqueue.m_pointLights, rqueue, cmdb);
 		dispatchType<SpotLight, ClusteredObjectType::kSpotLight>(rqueue.m_spotLights, rqueue, cmdb);
 		dispatchType<Decal, ClusteredObjectType::kDecal>(rqueue.m_decals, rqueue, cmdb);
-		dispatchType<FogDensityVolume, ClusteredObjectType::kFogDensityVolume>(rqueue.m_fogDensityVolumes, rqueue,
-																			   cmdb);
+		dispatchType<FogDensityVolume, ClusteredObjectType::kFogDensityVolume>(rqueue.m_fogDensityVolumes, rqueue, cmdb);
 		dispatchType<ReflectionProbe, ClusteredObjectType::kReflectionProbe>(rqueue.m_reflectionProbes, rqueue, cmdb);
-		dispatchType<GlobalIlluminationProbe, ClusteredObjectType::kGlobalIlluminationProbe>(rqueue.m_giProbes, rqueue,
-																							 cmdb);
+		dispatchType<GlobalIlluminationProbe, ClusteredObjectType::kGlobalIlluminationProbe>(rqueue.m_giProbes, rqueue, cmdb);
 	});
 }
 

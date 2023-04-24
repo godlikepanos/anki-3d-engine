@@ -56,9 +56,8 @@ public:
 		return m_actualSize;
 	}
 
-	void computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages,
-							VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
-							VkAccessFlags& dstAccesses) const;
+	void computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
+							VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const;
 
 	ANKI_FORCE_INLINE void flush(PtrSize offset, PtrSize range) const
 	{

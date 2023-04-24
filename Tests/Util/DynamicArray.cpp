@@ -148,8 +148,7 @@ ANKI_TEST(Util, DynamicArray)
 		arr = DynamicArray<DynamicArrayFoo>();
 		vec = std::vector<DynamicArrayFoo>();
 		ANKI_TEST_EXPECT_GT(g_destructorCount, 0);
-		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
-							g_destructorCount);
+		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count, g_destructorCount);
 	}
 }
 
@@ -262,8 +261,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 		arr.destroy();
 		vec.resize(0);
 
-		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
-							g_destructorCount);
+		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count, g_destructorCount);
 	}
 }
 
@@ -314,7 +312,6 @@ ANKI_TEST(Util, DynamicArrayErase)
 		arr.destroy();
 		vec.resize(0);
 
-		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count,
-							g_destructorCount);
+		ANKI_TEST_EXPECT_EQ(g_constructor0Count + g_constructor1Count + g_constructor2Count + g_constructor3Count, g_destructorCount);
 	}
 }

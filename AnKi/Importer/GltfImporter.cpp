@@ -136,8 +136,7 @@ static Error getNodeTransform(const cgltf_node& node, Transform& trf)
 	return Error::kNone;
 }
 
-static Bool stringsExist(const ImporterHashMap<CString, ImporterString>& map,
-						 const std::initializer_list<CString>& list)
+static Bool stringsExist(const ImporterHashMap<CString, ImporterString>& map, const std::initializer_list<CString>& list)
 {
 	for(CString item : list)
 	{
@@ -275,8 +274,7 @@ Error GltfImporter::writeAll()
 			m_hive->submitTask(
 				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-					ImportRequest<MaterialImportRequest>* req =
-						static_cast<ImportRequest<MaterialImportRequest>*>(userData);
+					ImportRequest<MaterialImportRequest>* req = static_cast<ImportRequest<MaterialImportRequest>*>(userData);
 					Error err = req->m_importer->m_errorInThread.load();
 
 					if(!err)
@@ -510,15 +508,13 @@ Error GltfImporter::parseArrayOfNumbers(CString str, ImporterDynamicArray<F64>& 
 
 	if(expectedArraySize && *expectedArraySize != out.getSize())
 	{
-		ANKI_IMPORTER_LOGE("Failed to parse floats. Expecting %u floats got %u: %s", *expectedArraySize, out.getSize(),
-						   str.cstr());
+		ANKI_IMPORTER_LOGE("Failed to parse floats. Expecting %u floats got %u: %s", *expectedArraySize, out.getSize(), str.cstr());
 	}
 
 	return Error::kNone;
 }
 
-Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf,
-							  const ImporterHashMap<CString, ImporterString>& parentExtras)
+Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf, const ImporterHashMap<CString, ImporterString>& parentExtras)
 {
 	// Check error from a thread
 	const Error threadErr = m_errorInThread.load();
@@ -578,8 +574,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 			}
 		}
-		else if(stringsExist(extras, {"skybox_solid_color", "skybox_image", "fog_min_density", "fog_max_density",
-									  "fog_height_of_min_density", "fog_height_of_max_density"}))
+		else if(stringsExist(extras, {"skybox_solid_color", "skybox_image", "fog_min_density", "fog_max_density", "fog_height_of_min_density",
+									  "fog_height_of_max_density"}))
 		{
 			// Atmosphere
 
@@ -611,8 +607,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					solidColor[count++] = f;
 				}
 
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", solidColor.x(),
-												  solidColor.y(), solidColor.z()));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", solidColor.x(), solidColor.y(), solidColor.z()));
 			}
 			else if((it = extras.find("skybox_image")) != extras.getEnd())
 			{
@@ -675,8 +670,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newReflectionProbeComponent()\n"));
-			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(),
-											  boxSize.z()));
+			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(), boxSize.z()));
 
 			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
@@ -704,8 +698,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newGlobalIlluminationProbeComponent()\n"));
-			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(),
-											  boxSize.z()));
+			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(), boxSize.z()));
 
 			if(fadeDistance > 0.0f)
 			{
@@ -762,14 +755,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newDecalComponent()\n"));
 			if(diffuseAtlas)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", diffuseAtlas.cstr(),
-												  diffuseFactor));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", diffuseAtlas.cstr(), diffuseFactor));
 			}
 
 			if(specularRougnessMetallicAtlas)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadRoughnessMetallnessTexture(\"%s\", %f)\n",
-												  specularRougnessMetallicAtlas.cstr(),
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadRoughnessMetallnessTexture(\"%s\", %f)\n", specularRougnessMetallicAtlas.cstr(),
 												  specularRougnessMetallicFactor));
 			}
 
@@ -846,8 +837,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 Error GltfImporter::writeTransform(const Transform& trf)
 {
 	ANKI_CHECK(m_sceneFile.writeText("trf = Transform.new()\n"));
-	ANKI_CHECK(m_sceneFile.writeTextf("trf:setOrigin(Vec4.new(%f, %f, %f, 0))\n", trf.getOrigin().x(),
-									  trf.getOrigin().y(), trf.getOrigin().z()));
+	ANKI_CHECK(m_sceneFile.writeTextf("trf:setOrigin(Vec4.new(%f, %f, %f, 0))\n", trf.getOrigin().x(), trf.getOrigin().y(), trf.getOrigin().z()));
 
 	ANKI_CHECK(m_sceneFile.writeText("rot = Mat3x4.new()\n"));
 	ANKI_CHECK(m_sceneFile.writeText("rot:setAll("));
@@ -891,8 +881,7 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh) const
 		}
 		else
 		{
-			ANKI_CHECK(file.writeTextf("\t\t\t<mesh subMeshIndex=\"%u\">%s%s</mesh>\n", primIdx, m_rpath.cstr(),
-									   meshFname.cstr()));
+			ANKI_CHECK(file.writeTextf("\t\t\t<mesh subMeshIndex=\"%u\">%s%s</mesh>\n", primIdx, m_rpath.cstr(), meshFname.cstr()));
 		}
 
 		ImporterHashMap<CString, ImporterString> materialExtras(m_pool);
@@ -937,8 +926,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite));
 
-	ANKI_CHECK(
-		file.writeTextf("%s\n<skeleton>\n", XmlDocument<MemoryPoolPtrWrapper<BaseMemoryPool>>::kXmlHeader.cstr()));
+	ANKI_CHECK(file.writeTextf("%s\n<skeleton>\n", XmlDocument<MemoryPoolPtrWrapper<BaseMemoryPool>>::kXmlHeader.cstr()));
 	ANKI_CHECK(file.writeTextf("\t<bones>\n"));
 
 	for(U32 i = 0; i < skin.joints_count; ++i)
@@ -1019,8 +1007,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 	Vec3 color(light.color[0], light.color[1], light.color[2]);
 	color *= light.intensity;
 	color *= m_lightIntensityScale;
-	ANKI_CHECK(
-		m_sceneFile.writeTextf("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x(), color.y(), color.z()));
+	ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x(), color.y(), color.z()));
 
 	auto shadow = extras.find("shadow");
 	if(shadow != extras.getEnd())
@@ -1037,13 +1024,11 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 
 	if(light.type == cgltf_light_type_point)
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setRadius(%f)\n",
-										  (light.range > 0.0f) ? light.range : computeLightRadius(color)));
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setRadius(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
 	}
 	else if(light.type == cgltf_light_type_spot)
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setDistance(%f)\n",
-										  (light.range > 0.0f) ? light.range : computeLightRadius(color)));
+		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setDistance(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
 
 		const F32 outer = light.spot_outer_cone_angle * 2.0f;
 		ANKI_CHECK(m_sceneFile.writeTextf("lcomp:setOuterAngle(%f)\n", outer));
@@ -1093,8 +1078,8 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 			const U32 count = 4;
 			ANKI_CHECK(parseArrayOfNumbers(lsColor->toCString(), numbers, &count));
 
-			ANKI_CHECK(m_sceneFile.writeTextf("lfcomp:setColorMultiplier(Vec4.new(%f, %f, %f, %f))\n", numbers[0],
-											  numbers[1], numbers[2], numbers[3]));
+			ANKI_CHECK(
+				m_sceneFile.writeTextf("lfcomp:setColorMultiplier(Vec4.new(%f, %f, %f, %f))\n", numbers[0], numbers[1], numbers[2], numbers[3]));
 		}
 	}
 
@@ -1109,8 +1094,8 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 			ImporterDynamicArray<F64> numbers(m_pool);
 			const U32 count = 4;
 			ANKI_CHECK(parseArrayOfNumbers(lightEventIntensity->toCString(), numbers, &count));
-			ANKI_CHECK(m_sceneFile.writeTextf("event:setIntensityMultiplier(Vec4.new(%f, %f, %f, %f))\n", numbers[0],
-											  numbers[1], numbers[2], numbers[3]));
+			ANKI_CHECK(
+				m_sceneFile.writeTextf("event:setIntensityMultiplier(Vec4.new(%f, %f, %f, %f))\n", numbers[0], numbers[1], numbers[2], numbers[3]));
 		}
 
 		if(lightEventFrequency != extras.getEnd())
@@ -1125,8 +1110,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const ImporterHashMap<CSt
 	return Error::kNone;
 }
 
-Error GltfImporter::writeCamera(const cgltf_node& node,
-								[[maybe_unused]] const ImporterHashMap<CString, ImporterString>& parentExtras)
+Error GltfImporter::writeCamera(const cgltf_node& node, [[maybe_unused]] const ImporterHashMap<CString, ImporterString>& parentExtras)
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
@@ -1141,8 +1125,8 @@ Error GltfImporter::writeCamera(const cgltf_node& node,
 	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node)\n"));
 	ANKI_CHECK(m_sceneFile.writeText("comp = node:newCameraComponent()\n"));
 
-	ANKI_CHECK(m_sceneFile.writeTextf("comp:setPerspective(%f, %f, getMainRenderer():getAspectRatio() * %f, %f)\n",
-									  cam.znear, cam.zfar, cam.yfov, cam.yfov));
+	ANKI_CHECK(m_sceneFile.writeTextf("comp:setPerspective(%f, %f, getMainRenderer():getAspectRatio() * %f, %f)\n", cam.znear, cam.zfar, cam.yfov,
+									  cam.yfov));
 
 	return Error::kNone;
 }
@@ -1157,8 +1141,7 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const ImporterHashMap
 	const ImporterString modelFname = computeModelResourceFilename(*node.mesh);
 
 	ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
-	ANKI_CHECK(m_sceneFile.writeTextf("node:newModelComponent():loadModelResource(\"%s%s\")\n", m_rpath.cstr(),
-									  modelFname.cstr()));
+	ANKI_CHECK(m_sceneFile.writeTextf("node:newModelComponent():loadModelResource(\"%s%s\")\n", m_rpath.cstr(), modelFname.cstr()));
 
 	if(node.skin)
 	{

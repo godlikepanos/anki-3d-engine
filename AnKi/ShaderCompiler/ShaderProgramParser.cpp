@@ -15,9 +15,9 @@ namespace anki {
 	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
 	return Error::kUserData
 
-inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {
-	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
-	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
+inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION",
+																			   "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN", "ANY_HIT", "CLOSEST_HIT",
+																			   "MISS", "INTERSECTION", "CALLABLE"}};
 
 inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
 #define ANKI_PLATFORM_MOBILE %d
@@ -29,8 +29,7 @@ inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
 
 static const U64 kShaderHeaderHash = computeHash(kShaderHeader, sizeof(kShaderHeader));
 
-ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
-										 const ShaderCompilerOptions& compilerOptions)
+ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, const ShaderCompilerOptions& compilerOptions)
 	: m_fname(fname)
 	, m_fsystem(fsystem)
 	, m_compilerOptions(compilerOptions)
@@ -388,8 +387,7 @@ Error ShaderProgramParser::parseInclude(const String* begin, const String* end, 
 	{
 		String fname2(path.begin() + 1, path.begin() + path.getLength() - 1);
 
-		const Bool dontIgnore =
-			fname2.find("AnKi/Shaders/") != String::kNpos || fname2.find("ThirdParty/") != String::kNpos;
+		const Bool dontIgnore = fname2.find("AnKi/Shaders/") != String::kNpos || fname2.find("ThirdParty/") != String::kNpos;
 		if(!dontIgnore)
 		{
 			// The shaders can't include C++ files. Ignore the include
@@ -718,12 +716,10 @@ Error ShaderProgramParser::parsePragmaMember(const String* begin, const String* 
 	// Code
 	if(member.m_dependentMutator != kMaxU32)
 	{
-		m_codeLines.pushBackSprintf("#if %s == %d", m_mutators[member.m_dependentMutator].m_name.cstr(),
-									member.m_mutatorValue);
+		m_codeLines.pushBackSprintf("#if %s == %d", m_mutators[member.m_dependentMutator].m_name.cstr(), member.m_mutatorValue);
 	}
 
-	m_codeLines.pushBackSprintf("#\tdefine %s_%s_DEFINED 1", m_ghostStructs.getBack().m_name.cstr(),
-								member.m_name.cstr());
+	m_codeLines.pushBackSprintf("#\tdefine %s_%s_DEFINED 1", m_ghostStructs.getBack().m_name.cstr(), member.m_name.cstr());
 	m_codeLines.pushBackSprintf("\t%s %s %s;", (relaxed) ? "ANKI_RP" : "", typeStr.cstr(), member.m_name.cstr());
 
 	if(member.m_dependentMutator != kMaxU32)
@@ -766,22 +762,19 @@ Error ShaderProgramParser::parsePragmaStructEnd(const String* begin, const Strin
 		else
 		{
 			const Member& prev = gstruct.m_members[i - 1];
-			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF (%s_%s_OFFSETOF + %s_%s_SIZEOF)", structName.cstr(),
-										m.m_name.cstr(), structName.cstr(), prev.m_name.cstr(), structName.cstr(),
-										prev.m_name.cstr());
+			m_codeLines.pushBackSprintf("#define %s_%s_OFFSETOF (%s_%s_OFFSETOF + %s_%s_SIZEOF)", structName.cstr(), m.m_name.cstr(),
+										structName.cstr(), prev.m_name.cstr(), structName.cstr(), prev.m_name.cstr());
 		}
 
 		// #if XXX_DEFINED
 		m_codeLines.pushBackSprintf("#if defined(%s_%s_DEFINED)", structName.cstr(), m.m_name.cstr());
 
 		// #	define XXX_SIZEOF
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF %uu", structName.cstr(), m.m_name.cstr(),
-									getShaderVariableDataTypeInfo(m.m_type).m_size);
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_SIZEOF %uu", structName.cstr(), m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_size);
 
 		// #	define XXX_LOAD()
-		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) buff.Load<%s>(%s_%s_OFFSETOF + (offset))%s",
-									structName.cstr(), m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name,
-									structName.cstr(), m.m_name.cstr(),
+		m_codeLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) buff.Load<%s>(%s_%s_OFFSETOF + (offset))%s", structName.cstr(),
+									m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name, structName.cstr(), m.m_name.cstr(),
 									(i != gstruct.m_members.getSize() - 1) ? "," : "");
 
 		// #else
@@ -955,16 +948,13 @@ Error ShaderProgramParser::parse()
 	return Error::kNone;
 }
 
-void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
-												   String& header)
+void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions, String& header)
 {
 	header.sprintf(kShaderHeader, kShaderStageNames[shaderType].cstr(), compilerOptions.m_mobilePlatform,
-				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures,
-				   kMaxBindlessReadonlyTextureBuffers);
+				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers);
 }
 
-Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
-										   ShaderProgramParserVariant& variant) const
+Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation, ShaderProgramParserVariant& variant) const
 {
 	// Sanity checks
 	ANKI_ASSERT(m_codeSource.getLength() > 0);
