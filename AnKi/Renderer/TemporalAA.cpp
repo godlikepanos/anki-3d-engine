@@ -48,7 +48,7 @@ Error TemporalAA::initInternal()
 
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProg = variant->getProgram();
+		m_grProg.reset(&variant->getProgram());
 	}
 
 	for(U i = 0; i < 2; ++i)
@@ -85,15 +85,15 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	// Import RTs
 	if(m_rtTexturesImportedOnce[historyRtIdx]) [[likely]]
 	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx]);
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get());
 	}
 	else
 	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx], TextureUsageBit::kSampledFragment);
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSampledFragment);
 		m_rtTexturesImportedOnce[historyRtIdx] = true;
 	}
 
-	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx], TextureUsageBit::kNone);
+	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx].get(), TextureUsageBit::kNone);
 	m_runCtx.m_tonemappedRt = rgraph.newRenderTarget(m_tonemappedRtDescr);
 
 	// Create pass
@@ -131,9 +131,9 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg);
+		cmdb->bindShaderProgram(m_grProg.get());
 
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
 		rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
@@ -150,7 +150,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		{
 			cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
-			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+			cmdb->draw(PrimitiveTopology::kTriangles, 3);
 		}
 	});
 }

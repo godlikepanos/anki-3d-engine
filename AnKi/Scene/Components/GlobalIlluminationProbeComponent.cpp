@@ -56,7 +56,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		m_volTex = GrManager::getSingleton().newTexture(texInit);
 
-		TextureViewInitInfo viewInit(m_volTex, "GiProbe");
+		TextureViewInitInfo viewInit(m_volTex.get(), "GiProbe");
 		m_volView = GrManager::getSingleton().newTextureView(viewInit);
 
 		m_volTexBindlessIdx = m_volView->getOrCreateBindlessTextureIndex();
@@ -78,8 +78,8 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texBarrier.m_texture = m_volTex.get();
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
-		cmdb->bindShaderProgram(variant->getProgram());
-		cmdb->bindImage(0, 0, m_volView);
+		cmdb->bindShaderProgram(&variant->getProgram());
+		cmdb->bindImage(0, 0, m_volView.get());
 
 		const Vec4 clearColor(0.0f);
 		cmdb->setPushConstants(&clearColor, sizeof(clearColor));

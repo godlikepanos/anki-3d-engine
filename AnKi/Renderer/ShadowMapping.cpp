@@ -72,7 +72,7 @@ Error ShadowMapping::initInternal()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ShadowmappingClearDepth.ankiprogbin", m_clearDepthProg));
 	const ShaderProgramResourceVariant* variant;
 	m_clearDepthProg->getOrCreateVariant(variant);
-	m_clearDepthGrProg = variant->getProgram();
+	m_clearDepthGrProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -86,11 +86,11 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	// Import
 	if(m_rtImportedOnce) [[likely]]
 	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex);
+		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get());
 	}
 	else
 	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex, TextureUsageBit::kSampledFragment);
+		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get(), TextureUsageBit::kSampledFragment);
 		m_rtImportedOnce = true;
 	}
 
@@ -582,10 +582,10 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		// The 1st drawcall will clear the depth buffer
 		if(work.m_firstRenderableElement == 0)
 		{
-			cmdb->bindShaderProgram(m_clearDepthGrProg);
+			cmdb->bindShaderProgram(m_clearDepthGrProg.get());
 			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
 			cmdb->setPolygonOffset(0.0f, 0.0f);
-			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3, 1);
+			cmdb->draw(PrimitiveTopology::kTriangles, 3, 1);
 
 			// Restore state
 			cmdb->setDepthCompareOperation(CompareOperation::kLess);
@@ -597,7 +597,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 		args.m_viewProjectionMatrix = work.m_renderQueue->m_viewProjectionMatrix;
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso;
+		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
 
 		getRenderer().getSceneDrawer().drawRange(
 			args, work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,

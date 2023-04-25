@@ -165,7 +165,7 @@ Error IndirectDiffuseProbes::initIrradiance()
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_irradiance.m_grProg = variant->getProgram();
+	m_irradiance.m_grProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -304,8 +304,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 	// Irradiance pass. First & 2nd bounce
 	{
-		m_giCtx->m_irradianceVolume =
-			rgraph.importRenderTarget(TexturePtr(m_giCtx->m_probeToUpdateThisFrame->m_volumeTexture), TextureUsageBit::kNone);
+		m_giCtx->m_irradianceVolume = rgraph.importRenderTarget(m_giCtx->m_probeToUpdateThisFrame->m_volumeTexture, TextureUsageBit::kNone);
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
 
@@ -361,7 +360,7 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 
 			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart, rqueue.m_renderables.getBegin() + localEnd,
 													 cmdb);
@@ -417,7 +416,7 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
 
 			getRenderer().getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
 													 cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
@@ -484,10 +483,10 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
-	cmdb->bindShaderProgram(m_irradiance.m_grProg);
+	cmdb->bindShaderProgram(m_irradiance.m_grProg.get());
 
 	// Bind resources
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 	rgraphCtx.bindColorTexture(0, 1, giCtx.m_lightShadingRt);
 
 	for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)

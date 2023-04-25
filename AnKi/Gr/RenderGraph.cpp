@@ -121,11 +121,12 @@ public:
 	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
 
 	DynamicArray<CommandBufferPtr, MemoryPoolPtrWrapper<StackMemoryPool>> m_secondLevelCmdbs;
-	/// Will reuse the m_secondLevelCmdbInitInfo.m_framebuffer to get the framebuffer.
 	CommandBufferInitInfo m_secondLevelCmdbInitInfo;
 	Array<U32, 4> m_fbRenderArea;
 	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorUsages = {}; ///< For beginRender pass
 	TextureUsageBit m_dsUsage = TextureUsageBit::kNone; ///< For beginRender pass
+
+	FramebufferPtr m_framebuffer;
 
 	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
 	Bool m_drawsToPresentable = false;
@@ -135,16 +136,6 @@ public:
 		, m_consumedTextures(pool)
 		, m_secondLevelCmdbs(pool)
 	{
-	}
-
-	FramebufferPtr& fb()
-	{
-		return m_secondLevelCmdbInitInfo.m_framebuffer;
-	}
-
-	const FramebufferPtr& fb() const
-	{
-		return m_secondLevelCmdbInitInfo.m_framebuffer;
 	}
 };
 
@@ -365,7 +356,7 @@ void RenderGraph::reset()
 
 	for(Pass& p : m_ctx->m_passes)
 	{
-		p.fb().reset(nullptr);
+		p.m_framebuffer.reset(nullptr);
 		p.m_secondLevelCmdbs.destroy();
 		p.m_callback.destroy();
 	}
@@ -479,7 +470,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 			outAtt.m_storeOperation = inAtt.m_storeOperation;
 
 			// Create texture view
-			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[i].m_idx].m_texture, TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
+			const TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[i].m_idx].m_texture.get(), TextureSubresourceInfo(inAtt.m_surface),
+											   "RenderGraph");
 			TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 
 			outAtt.m_textureView = std::move(view);
@@ -497,8 +489,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 			outAtt.m_stencilStoreOperation = inAtt.m_stencilStoreOperation;
 
 			// Create texture view
-			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets].m_idx].m_texture,
-										 TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect), "RenderGraph");
+			const TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets].m_idx].m_texture.get(),
+											   TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect), "RenderGraph");
 			TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 
 			outAtt.m_textureView = std::move(view);
@@ -506,8 +498,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 		if(fbDescr.m_shadingRateAttachmentTexelWidth > 0)
 		{
-			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets + 1].m_idx].m_texture, fbDescr.m_shadingRateAttachmentSurface,
-										 "RenderGraph SRI");
+			const TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[kMaxColorRenderTargets + 1].m_idx].m_texture.get(),
+											   fbDescr.m_shadingRateAttachmentSurface, "RenderGraph SRI");
 			TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 
 			fbInit.m_shadingRateImage.m_texelWidth = fbDescr.m_shadingRateAttachmentTexelWidth;
@@ -817,7 +809,8 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 			if(graphicsPass.hasFramebuffer())
 			{
 				Bool drawsToPresentable;
-				outPass.fb() = getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], inPass.m_name.cstr(), drawsToPresentable);
+				outPass.m_framebuffer =
+					getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], inPass.m_name.cstr(), drawsToPresentable);
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
 				outPass.m_drawsToPresentable = drawsToPresentable;
@@ -874,8 +867,8 @@ void RenderGraph::initBatches()
 		}
 
 		// Get or create cmdb for the batch.
-		// Create a new cmdb if the batch is writing to swapchain. This will help Vulkan to have a dependency of the
-		// swap chain image acquire to the 2nd command buffer instead of adding it to a single big cmdb.
+		// Create a new cmdb if the batch is writing to swapchain. This will help Vulkan to have a dependency of the swap chain image acquire to the
+		// 2nd command buffer instead of adding it to a single big cmdb.
 		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToPresentable)
 		{
 			CommandBufferInitInfo cmdbInit;
@@ -893,7 +886,7 @@ void RenderGraph::initBatches()
 				TimestampQueryPtr query = GrManager::getSingleton().newTimestampQuery();
 				TimestampQuery* pQuery = query.get();
 				cmdb->resetTimestampQueries({&pQuery, 1});
-				cmdb->writeTimestamp(query);
+				cmdb->writeTimestamp(query.get());
 
 				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
 				m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2] = query;
@@ -957,7 +950,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 					outPass.m_secondLevelCmdbs.resize(inPass.m_secondLevelCmdbsCount);
 					CommandBufferInitInfo& cmdbInit = outPass.m_secondLevelCmdbInitInfo;
 					cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSecondLevel;
-					ANKI_ASSERT(cmdbInit.m_framebuffer.isCreated());
+					cmdbInit.m_framebuffer = outPass.m_framebuffer.get();
 					cmdbInit.m_colorAttachmentUsages = outPass.m_colorUsages;
 					cmdbInit.m_depthStencilAttachmentUsage = outPass.m_dsUsage;
 				}
@@ -975,7 +968,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 }
 
 template<typename TFunc>
-void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func)
+void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceInfo& subresource, TFunc func)
 {
 	for(U32 mip = subresource.m_firstMipmap; mip < subresource.m_firstMipmap + subresource.m_mipmapCount; ++mip)
 	{
@@ -984,8 +977,8 @@ void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubr
 			for(U32 face = subresource.m_firstFace; face < U32(subresource.m_firstFace + subresource.m_faceCount); ++face)
 			{
 				// Compute surf or vol idx
-				const U32 faceCount = textureTypeIsCube(tex->getTextureType()) ? 6 : 1;
-				const U32 idx = (faceCount * tex->getLayerCount()) * mip + faceCount * layer + face;
+				const U32 faceCount = textureTypeIsCube(tex.getTextureType()) ? 6 : 1;
+				const U32 idx = (faceCount * tex.getLayerCount()) * mip + faceCount * layer + face;
 				const TextureSurfaceInfo surf(mip, 0, face, layer);
 
 				if(!func(idx, surf))
@@ -1007,7 +1000,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 	const TextureUsageBit depUsage = dep.m_texture.m_usage;
 	RT& rt = ctx.m_rts[rtIdx];
 
-	iterateSurfsOrVolumes(rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSurfaceInfo& surf) {
+	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSurfaceInfo& surf) {
 		TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
 		if(crntUsage != depUsage)
 		{
@@ -1226,10 +1219,10 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackMemo
 #endif
 }
 
-TexturePtr RenderGraph::getTexture(RenderTargetHandle handle) const
+Texture& RenderGraph::getTexture(RenderTargetHandle handle) const
 {
 	ANKI_ASSERT(m_ctx->m_rts[handle.m_idx].m_texture.isCreated());
-	return m_ctx->m_rts[handle.m_idx].m_texture;
+	return *m_ctx->m_rts[handle.m_idx].m_texture;
 }
 
 void RenderGraph::getCachedBuffer(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const
@@ -1240,10 +1233,10 @@ void RenderGraph::getCachedBuffer(BufferHandle handle, Buffer*& buff, PtrSize& o
 	range = record.m_range;
 }
 
-AccelerationStructurePtr RenderGraph::getAs(AccelerationStructureHandle handle) const
+AccelerationStructure* RenderGraph::getAs(AccelerationStructureHandle handle) const
 {
 	ANKI_ASSERT(m_ctx->m_as[handle.m_idx].m_as.isCreated());
-	return m_ctx->m_as[handle.m_idx].m_as;
+	return m_ctx->m_as[handle.m_idx].m_as.get();
 }
 
 void RenderGraph::runSecondLevel(U32 threadIdx)
@@ -1335,9 +1328,9 @@ void RenderGraph::run() const
 		{
 			const Pass& pass = m_ctx->m_passes[passIdx];
 
-			if(pass.fb().isCreated())
+			if(pass.m_framebuffer)
 			{
-				cmdb->beginRenderPass(pass.fb(), pass.m_colorUsages, pass.m_dsUsage, pass.m_fbRenderArea[0], pass.m_fbRenderArea[1],
+				cmdb->beginRenderPass(pass.m_framebuffer.get(), pass.m_colorUsages, pass.m_dsUsage, pass.m_fbRenderArea[0], pass.m_fbRenderArea[1],
 									  pass.m_fbRenderArea[2], pass.m_fbRenderArea[3]);
 			}
 
@@ -1361,7 +1354,7 @@ void RenderGraph::run() const
 				cmdb->pushSecondLevelCommandBuffers(cmdbs);
 			}
 
-			if(pass.fb().isCreated())
+			if(pass.m_framebuffer)
 			{
 				cmdb->endRenderPass();
 			}
@@ -1382,7 +1375,7 @@ void RenderGraph::flush()
 			TimestampQueryPtr query = GrManager::getSingleton().newTimestampQuery();
 			TimestampQuery* pQuery = query.get();
 			m_ctx->m_graphicsCmdbs[i]->resetTimestampQueries({&pQuery, 1});
-			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
+			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(pQuery);
 
 			m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2 + 1] = query;
 			m_statistics.m_cpuStartTimes[m_statistics.m_nextTimestamp] = HighRezTimer::getCurrentTime();

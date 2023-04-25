@@ -620,7 +620,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		ANKI_CHECK(inputEl.getAttributeText("value", texfname));
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource(texfname, foundVar->m_image, async));
 
-		m_textures.emplaceBack(foundVar->m_image->getTexture());
+		m_textures.emplaceBack(&foundVar->m_image->getTexture());
 	}
 	else if(foundVar->m_dataType == ShaderVariableDataType::kU32)
 	{
@@ -645,7 +645,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		{
 			ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
 
-			foundVar->m_U32 = foundVar->m_image->getTextureView()->getOrCreateBindlessTextureIndex();
+			foundVar->m_U32 = foundVar->m_image->getTextureView().getOrCreateBindlessTextureIndex();
 		}
 		else
 		{
@@ -773,7 +773,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		ANKI_RESOURCE_LOGF("Fetched skipped mutation on program %s", getFilename().cstr());
 	}
 
-	variant.m_prog = progVariant->getProgram();
+	variant.m_prog.reset(&progVariant->getProgram());
 
 	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::kAllRt))
 	{

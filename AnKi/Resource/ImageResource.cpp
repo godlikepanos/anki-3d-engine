@@ -233,7 +233,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	m_layerCount = init.m_layerCount;
 
 	// Create the texture view
-	TextureViewInitInfo viewInit(m_tex, "Rsrc");
+	TextureViewInitInfo viewInit(m_tex.get(), "Rsrc");
 	m_texView = GrManager::getSingleton().newTextureView(viewInit);
 
 	return Error::kNone;
@@ -324,9 +324,9 @@ Error ImageResource::load(LoadingContext& ctx)
 				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, 0, face, layer));
 			}
 
-			TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex, subresource, "RsrcTmp"));
+			TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex.get(), subresource, "RsrcTmp"));
 
-			cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView);
+			cmdb->copyBufferToTextureView(&handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView.get());
 		}
 
 		// Set the barriers of the batch

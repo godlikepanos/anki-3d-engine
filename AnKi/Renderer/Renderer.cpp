@@ -141,13 +141,13 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
-		TextureViewInitInfo viewinit(tex);
+		TextureViewInitInfo viewinit(tex.get());
 		m_dummyTexView2d = GrManager::getSingleton().newTextureView(viewinit);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
 		tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
-		viewinit = TextureViewInitInfo(tex);
+		viewinit = TextureViewInitInfo(tex.get());
 		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
 
 		m_dummyBuff = GrManager::getSingleton().newBuffer(
@@ -508,7 +508,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf, aspect));
 
 						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
 						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
@@ -519,7 +519,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					}
 					else
 					{
-						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf));
+						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
 
 						fbInit.m_colorAttachmentCount = 1;
 						fbInit.m_colorAttachments[0].m_textureView = view;
@@ -534,7 +534,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-					cmdb->beginRenderPass(fb, colUsage, dsUsage);
+					cmdb->beginRenderPass(fb.get(), colUsage, dsUsage);
 					cmdb->endRenderPass();
 
 					if(!!initialUsage)
@@ -569,12 +569,12 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					const ShaderProgramResourceVariant* variant;
 					m_clearTexComputeProg->getOrCreateVariant(variantInitInfo, variant);
 
-					cmdb->bindShaderProgram(variant->getProgram());
+					cmdb->bindShaderProgram(&variant->getProgram());
 
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
-					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf));
-					cmdb->bindImage(0, 0, view);
+					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
+					cmdb->bindImage(0, 0, view.get());
 
 					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite, surf};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
@@ -685,7 +685,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_gpuSceneHandle =
-		rgraph.importBuffer(GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneBuffer::getSingleton().getBuffer()->getBufferUsage());
+		rgraph.importBuffer(&GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneBuffer::getSingleton().getBuffer().getBufferUsage());
 
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{

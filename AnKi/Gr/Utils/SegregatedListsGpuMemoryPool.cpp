@@ -152,7 +152,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		barriers[1].m_nextUsage = BufferUsageBit::kTransferDestination;
 		cmdb->setPipelineBarrier({}, barriers, {});
 
-		cmdb->copyBufferToBuffer(m_gpuBuffer, 0, newBuffer, 0, m_gpuBuffer->getSize());
+		cmdb->copyBufferToBuffer(m_gpuBuffer.get(), 0, newBuffer.get(), 0, m_gpuBuffer->getSize());
 
 		barriers[1].m_previousUsage = BufferUsageBit::kTransferDestination;
 		barriers[1].m_nextUsage = m_bufferUsage;

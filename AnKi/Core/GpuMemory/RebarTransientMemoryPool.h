@@ -67,9 +67,9 @@ public:
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
 	void* tryAllocateFrame(PtrSize size, RebarAllocation& token);
 
-	ANKI_PURE const BufferPtr& getBuffer() const
+	ANKI_PURE Buffer& getBuffer() const
 	{
-		return m_buffer;
+		return *m_buffer;
 	}
 
 	U8* getBufferMappedAddress()

@@ -74,10 +74,10 @@ public:
 
 	/// Need to be checking this constantly to get the updated buffer in case of CoWs.
 	/// @note It's not thread-safe.
-	const BufferPtr& getGpuBuffer() const
+	Buffer& getGpuBuffer() const
 	{
 		ANKI_ASSERT(m_gpuBuffer.isCreated() && "The buffer hasn't been created yet");
-		return m_gpuBuffer;
+		return *m_gpuBuffer;
 	}
 
 	/// @note It's thread-safe.

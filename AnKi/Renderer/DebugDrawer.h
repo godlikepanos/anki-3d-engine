@@ -54,10 +54,10 @@ public:
 	}
 
 	void drawBillboardTextures(const Mat4& projMat, const Mat3x4& viewMat, ConstWeakArray<Vec3> positions, const Vec4& color, Bool ditherFailedDepth,
-							   TextureViewPtr tex, SamplerPtr sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const;
+							   TextureView* tex, Sampler* sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const;
 
-	void drawBillboardTexture(const Mat4& projMat, const Mat3x4& viewMat, Vec3 position, const Vec4& color, Bool ditherFailedDepth,
-							  TextureViewPtr tex, SamplerPtr sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const
+	void drawBillboardTexture(const Mat4& projMat, const Mat3x4& viewMat, Vec3 position, const Vec4& color, Bool ditherFailedDepth, TextureView* tex,
+							  Sampler* sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const
 	{
 		drawBillboardTextures(projMat, viewMat, ConstWeakArray<Vec3>(&position, 1), color, ditherFailedDepth, tex, sampler, billboardSize, cmdb);
 	}

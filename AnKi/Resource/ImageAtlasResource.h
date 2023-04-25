@@ -41,12 +41,12 @@ public:
 	/// Load the atlas.
 	Error load(const ResourceFilename& filename, Bool async);
 
-	TexturePtr getTexture() const
+	const Texture& getTexture() const
 	{
 		return m_image->getTexture();
 	}
 
-	TextureViewPtr getTextureView() const
+	const TextureView& getTextureView() const
 	{
 		return m_image->getTextureView();
 	}

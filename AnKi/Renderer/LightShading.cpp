@@ -65,11 +65,11 @@ Error LightShading::initLightShading()
 
 	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 0);
 	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_lightShading.m_grProg[0] = variant->getProgram();
+	m_lightShading.m_grProg[0].reset(&variant->getProgram());
 
 	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 1);
 	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_lightShading.m_grProg[1] = variant->getProgram();
+	m_lightShading.m_grProg[1].reset(&variant->getProgram());
 
 	// Create RT descr
 	const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -108,7 +108,7 @@ Error LightShading::initSkybox()
 		const ShaderProgramResourceVariant* variant;
 		m_skybox.m_prog->getOrCreateVariant(variantInitInfo, variant);
 
-		m_skybox.m_grProgs[method] = variant->getProgram();
+		m_skybox.m_grProgs[method].reset(&variant->getProgram());
 	}
 
 	return Error::kNone;
@@ -125,7 +125,7 @@ Error LightShading::initApplyFog()
 
 	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_applyFog.m_grProg = variant->getProgram();
+	m_applyFog.m_grProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -152,7 +152,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Do light shading first
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
-		cmdb->bindShaderProgram(m_lightShading.m_grProg[getRenderer().getRtShadowsEnabled()]);
+		cmdb->bindShaderProgram(m_lightShading.m_grProg[getRenderer().getRtShadowsEnabled()].get());
 		cmdb->setDepthWrite(false);
 
 		// Bind all
@@ -164,8 +164,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		bindStorage(cmdb, 0, 4, getRenderer().getClusterBinning().getClustersRebarToken());
 
-		cmdb->bindSampler(0, 5, getRenderer().getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 5, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb->bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 9, getRenderer().getGBuffer().getColorRt(2));
@@ -188,10 +188,10 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
 		cmdb->setDepthWrite(false);
-		cmdb->bindShaderProgram(m_applyIndirect.m_grProg);
+		cmdb->bindShaderProgram(m_applyIndirect.m_grProg.get());
 
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 2, getRenderer().getIndirectDiffuse().getRt());
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getIndirectSpecular().getRt());
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getDepthDownscale().getHiZRt());
@@ -199,7 +199,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 6, getRenderer().getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
-		cmdb->bindTexture(0, 9, getRenderer().getProbeReflections().getIntegrationLut());
+		cmdb->bindTexture(0, 9, &getRenderer().getProbeReflections().getIntegrationLut());
 
 		bindUniforms(cmdb, 0, 10, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 
@@ -223,14 +223,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		if(isSolidColor)
 		{
-			cmdb->bindShaderProgram(m_skybox.m_grProgs[0]);
+			cmdb->bindShaderProgram(m_skybox.m_grProgs[0].get());
 
 			const Vec4 color(ctx.m_renderQueue->m_skybox.m_solidColor, 0.0);
 			cmdb->setPushConstants(&color, sizeof(color));
 		}
 		else
 		{
-			cmdb->bindShaderProgram(m_skybox.m_grProgs[1]);
+			cmdb->bindShaderProgram(m_skybox.m_grProgs[1].get());
 
 			class
 			{
@@ -245,8 +245,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb->setPushConstants(&pc, sizeof(pc));
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias);
-			cmdb->bindTexture(0, 1, TextureViewPtr(const_cast<TextureView*>(ctx.m_renderQueue->m_skybox.m_skyboxTexture)));
+			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
+			cmdb->bindTexture(0, 1, ctx.m_renderQueue->m_skybox.m_skyboxTexture);
 		}
 
 		drawQuad(cmdb);
@@ -258,11 +258,11 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Do the fog apply
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == rgraphCtx.m_secondLevelCommandBufferCount - 1u)
 	{
-		cmdb->bindShaderProgram(m_applyFog.m_grProg);
+		cmdb->bindShaderProgram(m_applyFog.m_grProg.get());
 
 		// Bind all
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 
 		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getVolumetricFog().getRt());

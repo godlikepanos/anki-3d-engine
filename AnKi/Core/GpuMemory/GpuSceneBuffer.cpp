@@ -50,7 +50,7 @@ Error GpuSceneMicroPatcher::init()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuSceneMicroPatching.ankiprogbin", m_copyProgram));
 	const ShaderProgramResourceVariant* variant;
 	m_copyProgram->getOrCreateVariant(variant);
-	m_grProgram = variant->getProgram();
+	m_grProgram.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -117,11 +117,11 @@ void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 	mapped = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchData.getSizeInBytes(), dataToken);
 	memcpy(mapped, &m_crntFramePatchData[0], m_crntFramePatchData.getSizeInBytes());
 
-	cmdb.bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), headersToken.m_offset, headersToken.m_range);
-	cmdb.bindStorageBuffer(0, 1, RebarTransientMemoryPool::getSingleton().getBuffer(), dataToken.m_offset, dataToken.m_range);
-	cmdb.bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(), headersToken.m_offset, headersToken.m_range);
+	cmdb.bindStorageBuffer(0, 1, &RebarTransientMemoryPool::getSingleton().getBuffer(), dataToken.m_offset, dataToken.m_range);
+	cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-	cmdb.bindShaderProgram(m_grProgram);
+	cmdb.bindShaderProgram(m_grProgram.get());
 
 	const U32 workgroupCountX = m_crntFramePatchHeaders.getSize();
 	cmdb.dispatchCompute(workgroupCountX, 1, 1);

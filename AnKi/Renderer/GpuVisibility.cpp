@@ -41,11 +41,11 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 	memset(atomics, 0, mdiDrawCounts.m_range);
 
 	// Import buffers
-	m_runCtx.m_instanceRateRenderables = rgraph.importBuffer(BufferPtr(instanceRateRenderables.m_buffer), BufferUsageBit::kNone,
+	m_runCtx.m_instanceRateRenderables = rgraph.importBuffer(instanceRateRenderables.m_buffer, BufferUsageBit::kNone,
 															 instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
 	m_runCtx.m_drawIndexedIndirectArgs =
-		rgraph.importBuffer(BufferPtr(indirectArgs.m_buffer), BufferUsageBit::kNone, indirectArgs.m_offset, indirectArgs.m_size);
-	m_runCtx.m_mdiDrawCounts = rgraph.importBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+		rgraph.importBuffer(indirectArgs.m_buffer, BufferUsageBit::kNone, indirectArgs.m_offset, indirectArgs.m_size);
+	m_runCtx.m_mdiDrawCounts = rgraph.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
 												   mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
@@ -61,20 +61,20 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this, &ctx](RenderPassWorkContext& rpass) {
 		CommandBufferPtr& cmdb = rpass.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg);
+		cmdb->bindShaderProgram(m_grProg.get());
 
 		cmdb->bindStorageBuffer(
-			0, 0, GpuSceneBuffer::getSingleton().getBuffer(),
+			0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
 			GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer),
 			GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer)
 				* sizeof(GpuSceneRenderableAabb));
 
-		cmdb->bindStorageBuffer(0, 1, GpuSceneBuffer::getSingleton().getBuffer(),
+		cmdb->bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(),
 								GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderables),
 								GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderables)
 									* sizeof(GpuSceneRenderable));
 
-		cmdb->bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+		cmdb->bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 		rpass.bindColorTexture(0, 3, getRenderer().getHiZ().getHiZRt());
 

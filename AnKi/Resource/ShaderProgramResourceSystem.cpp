@@ -48,7 +48,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
 	U32 rtProgramCount = 0;
 
-	class Shader
+	class ShaderH
 	{
 	public:
 		ShaderPtr m_shader;
@@ -69,7 +69,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 	{
 	public:
 		ResourceString m_name;
-		ResourceDynamicArray<Shader> m_shaders;
+		ResourceDynamicArray<ShaderH> m_shaders;
 		ResourceDynamicArray<ShaderGroup> m_shaderGroups;
 		ShaderTypeBit m_presentStages = ShaderTypeBit::kNone;
 		U32 m_rayTypeCount = 0;
@@ -80,8 +80,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 
 		U32 addShader(const ShaderProgramBinaryCodeBlock& codeBlock, CString progName, ShaderType shaderType)
 		{
-			Shader* shader = nullptr;
-			for(Shader& s : m_shaders)
+			ShaderH* shader = nullptr;
+			for(ShaderH& s : m_shaders)
 			{
 				if(s.m_hash == codeBlock.m_hash)
 				{
@@ -375,8 +375,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			outLib.m_rayTypeCount = inLib.m_rayTypeCount;
 
 			ResourceDynamicArray<RayTracingHitGroup> initInfoHitGroups;
-			ResourceDynamicArray<ShaderPtr> missShaders;
-			ResourceDynamicArray<ShaderPtr> rayGenShaders;
+			ResourceDynamicArray<Shader*> missShaders;
+			ResourceDynamicArray<Shader*> rayGenShaders;
 
 			// Add the hitgroups to the init info
 			for(U32 shaderGroupIdx = 0; shaderGroupIdx < inLib.m_shaderGroups.getSize(); ++shaderGroupIdx)
@@ -393,12 +393,12 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 
 					if(inShaderGroup.m_ahit < kMaxU32)
 					{
-						infoHitGroup->m_anyHitShader = inLib.m_shaders[inShaderGroup.m_ahit].m_shader;
+						infoHitGroup->m_anyHitShader = inLib.m_shaders[inShaderGroup.m_ahit].m_shader.get();
 					}
 
 					if(inShaderGroup.m_chit < kMaxU32)
 					{
-						infoHitGroup->m_closestHitShader = inLib.m_shaders[inShaderGroup.m_chit].m_shader;
+						infoHitGroup->m_closestHitShader = inLib.m_shaders[inShaderGroup.m_chit].m_shader.get();
 					}
 
 					// The hit shaders are after ray gen and miss shaders
@@ -411,7 +411,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 
 					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32 && inShaderGroup.m_rayGen == kMaxU32);
 
-					missShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_miss].m_shader);
+					missShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_miss].m_shader.get());
 
 					// The miss shaders are after ray gen
 					const U32 idx = inLib.m_rayGenShaderGroupCount + missShaders.getSize() - 1;
@@ -424,7 +424,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32 && inShaderGroup.m_miss == kMaxU32
 								&& inShaderGroup.m_rayGen < kMaxU32);
 
-					rayGenShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_rayGen].m_shader);
+					rayGenShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_rayGen].m_shader.get());
 
 					// Ray gen shaders are first
 					const U32 idx = rayGenShaders.getSize() - 1;

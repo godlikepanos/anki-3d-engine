@@ -364,27 +364,24 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 		}
 
 		ShaderProgramInitInfo progInf(cprogName);
-		for(ShaderType shaderType : EnumIterable<ShaderType>())
+		Array<ShaderPtr, U32(ShaderType::kCount)> shaderRefs; // Just for refcounting
+		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(m_shaderStages))
 		{
-			if(!(ShaderTypeBit(1 << shaderType) & m_shaderStages))
-			{
-				continue;
-			}
-
 			ShaderInitInfo inf(cprogName);
 			inf.m_shaderType = shaderType;
 			inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
 			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
 			ShaderPtr shader = GrManager::getSingleton().newShader(inf);
+			shaderRefs[shaderType] = shader;
 
 			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
 			if(!!(shaderBit & ShaderTypeBit::kAllGraphics))
 			{
-				progInf.m_graphicsShaders[shaderType] = shader;
+				progInf.m_graphicsShaders[shaderType] = shader.get();
 			}
 			else if(shaderType == ShaderType::kCompute)
 			{
-				progInf.m_computeShader = std::move(shader);
+				progInf.m_computeShader = shader.get();
 			}
 			else
 			{

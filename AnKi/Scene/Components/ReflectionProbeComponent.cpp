@@ -55,7 +55,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 		m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
 
-		TextureViewInitInfo viewInit(m_reflectionTex, "ReflectionPRobe");
+		TextureViewInitInfo viewInit(m_reflectionTex.get(), "ReflectionPRobe");
 		m_reflectionView = GrManager::getSingleton().newTextureView(viewInit);
 
 		m_reflectionTexBindlessIndex = m_reflectionView->getOrCreateBindlessTextureIndex();

@@ -88,11 +88,11 @@ Error IndirectDiffuse::initInternal()
 
 		const ShaderProgramResourceVariant* variant;
 		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
-		m_vrs.m_grProg = variant->getProgram();
+		m_vrs.m_grProg.reset(&variant->getProgram());
 
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_vrs.m_visualizeProg));
 		m_vrs.m_visualizeProg->getOrCreateVariant(variant);
-		m_vrs.m_visualizeGrProg = variant->getProgram();
+		m_vrs.m_visualizeGrProg.reset(&variant->getProgram());
 	}
 
 	// Init SSGI+probes pass
@@ -103,7 +103,7 @@ Error IndirectDiffuse::initInternal()
 
 		const ShaderProgramResourceVariant* variant;
 		m_main.m_prog->getOrCreateVariant(variant);
-		m_main.m_grProg = variant->getProgram();
+		m_main.m_grProg.reset(&variant->getProgram());
 	}
 
 	// Init denoise
@@ -119,11 +119,11 @@ Error IndirectDiffuse::initInternal()
 		variantInit.addMutation("BLUR_ORIENTATION", 0);
 		const ShaderProgramResourceVariant* variant;
 		m_denoise.m_prog->getOrCreateVariant(variantInit, variant);
-		m_denoise.m_grProgs[0] = variant->getProgram();
+		m_denoise.m_grProgs[0].reset(&variant->getProgram());
 
 		variantInit.addMutation("BLUR_ORIENTATION", 1);
 		m_denoise.m_prog->getOrCreateVariant(variantInit, variant);
-		m_denoise.m_grProgs[1] = variant->getProgram();
+		m_denoise.m_grProgs[1].reset(&variant->getProgram());
 	}
 
 	return Error::kNone;
@@ -169,10 +169,10 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_vrs.m_grProg);
+			cmdb->bindShaderProgram(m_vrs.m_grProg.get());
 
 			rgraphCtx.bindTexture(0, 0, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_sriRt);
 
 			class
@@ -198,13 +198,13 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		const U32 writeRtIdx = !readRtIdx;
 		if(m_rtsImportedOnce) [[likely]]
 		{
-			m_runCtx.m_mainRtHandles[0] = rgraph.importRenderTarget(m_rts[readRtIdx]);
-			m_runCtx.m_mainRtHandles[1] = rgraph.importRenderTarget(m_rts[writeRtIdx]);
+			m_runCtx.m_mainRtHandles[0] = rgraph.importRenderTarget(m_rts[readRtIdx].get());
+			m_runCtx.m_mainRtHandles[1] = rgraph.importRenderTarget(m_rts[writeRtIdx].get());
 		}
 		else
 		{
-			m_runCtx.m_mainRtHandles[0] = rgraph.importRenderTarget(m_rts[readRtIdx], TextureUsageBit::kAllSampled);
-			m_runCtx.m_mainRtHandles[1] = rgraph.importRenderTarget(m_rts[writeRtIdx], TextureUsageBit::kAllSampled);
+			m_runCtx.m_mainRtHandles[0] = rgraph.importRenderTarget(m_rts[readRtIdx].get(), TextureUsageBit::kAllSampled);
+			m_runCtx.m_mainRtHandles[1] = rgraph.importRenderTarget(m_rts[writeRtIdx].get(), TextureUsageBit::kAllSampled);
 			m_rtsImportedOnce = true;
 		}
 
@@ -251,13 +251,13 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 		prpass->setWork([this, &ctx, enableVrs](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-			cmdb->bindShaderProgram(m_main.m_grProg);
+			cmdb->bindShaderProgram(m_main.m_grProg.get());
 
 			bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 			getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kGlobalIlluminationProbe);
 			bindStorage(cmdb, 0, 2, getRenderer().getClusterBinning().getClustersRebarToken());
 
-			cmdb->bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp);
+			cmdb->bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));
 
 			TextureSubresourceInfo hizSubresource;
@@ -301,7 +301,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 					cmdb->setVrsRate(VrsRate::k1x1);
 				}
 
-				cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+				cmdb->draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}
@@ -339,9 +339,9 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 		prpass->setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-			cmdb->bindShaderProgram(m_denoise.m_grProgs[dir]);
+			cmdb->bindShaderProgram(m_denoise.m_grProgs[dir].get());
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_mainRtHandles[readIdx]);
 			TextureSubresourceInfo hizSubresource;
 			hizSubresource.m_mipmapCount = 1;
@@ -369,7 +369,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			{
 				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
 
-				cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+				cmdb->draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}

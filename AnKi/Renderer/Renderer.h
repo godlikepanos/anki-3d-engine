@@ -103,19 +103,19 @@ public:
 		return m_resourcesDirty;
 	}
 
-	TextureViewPtr getDummyTextureView2d() const
+	TextureView& getDummyTextureView2d() const
 	{
-		return m_dummyTexView2d;
+		return *m_dummyTexView2d;
 	}
 
-	TextureViewPtr getDummyTextureView3d() const
+	TextureView& getDummyTextureView3d() const
 	{
-		return m_dummyTexView3d;
+		return *m_dummyTexView3d;
 	}
 
-	BufferPtr getDummyBuffer() const
+	Buffer& getDummyBuffer() const
 	{
-		return m_dummyBuff;
+		return *m_dummyBuff;
 	}
 
 	const RendererPrecreatedSamplers& getSamplers() const

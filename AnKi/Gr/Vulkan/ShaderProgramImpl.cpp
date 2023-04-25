@@ -43,7 +43,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	}
 	else if(inf.m_graphicsShaders[ShaderType::kVertex])
 	{
-		for(const ShaderPtr& s : inf.m_graphicsShaders)
+		for(Shader* s : inf.m_graphicsShaders)
 		{
 			if(s)
 			{
@@ -58,12 +58,12 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		m_shaders.resizeStorage(inf.m_rayTracingShaders.m_rayGenShaders.getSize() + inf.m_rayTracingShaders.m_missShaders.getSize()
 								+ 1); // Plus at least one hit shader
 
-		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_rayGenShaders)
+		for(Shader* s : inf.m_rayTracingShaders.m_rayGenShaders)
 		{
 			m_shaders.emplaceBack(s);
 		}
 
-		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_missShaders)
+		for(Shader* s : inf.m_rayTracingShaders.m_missShaders)
 		{
 			m_shaders.emplaceBack(s);
 		}

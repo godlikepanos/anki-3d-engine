@@ -52,16 +52,15 @@ public:
 		return m_refcount.load();
 	}
 
-	void setFence(MicroFencePtr& fence)
+	void setFence(MicroFence* fence)
 	{
 		ANKI_ASSERT(!(m_flags & CommandBufferFlag::kSecondLevel));
-		ANKI_ASSERT(!m_fence.isCreated());
-		m_fence = fence;
+		m_fence.reset(fence);
 	}
 
-	MicroFencePtr& getFence()
+	MicroFence* getFence() const
 	{
-		return m_fence;
+		return m_fence.tryGet();
 	}
 
 	/// Interface method.
@@ -82,14 +81,10 @@ public:
 	}
 
 	template<typename T>
-	void pushObjectRef(const GrObjectPtrT<T>& x)
-	{
-		pushToArray(m_objectRefs[T::kClassType], x.get());
-	}
-
-	template<typename T>
 	void pushObjectRef(T* x)
 	{
+		ANKI_ASSERT(T::kClassType != GrObjectType::kTexture && T::kClassType != GrObjectType::kTextureView && T::kClassType != GrObjectType::kBuffer
+					&& "No need to push references of buffers and textures");
 		pushToArray(m_objectRefs[T::kClassType], x);
 	}
 
@@ -142,12 +137,6 @@ private:
 		arr.emplaceBack(grobj);
 	}
 };
-
-template<>
-inline void MicroCommandBuffer::pushObjectRef<GrObject>(const GrObjectPtr& x)
-{
-	pushToArray(m_objectRefs[x->getType()], x.get());
-}
 
 /// Deleter.
 class MicroCommandBufferPtrDeleter

@@ -17,16 +17,16 @@ namespace anki {
 class RayTracingHitGroup
 {
 public:
-	ShaderPtr m_closestHitShader;
-	ShaderPtr m_anyHitShader;
+	Shader* m_closestHitShader = nullptr;
+	Shader* m_anyHitShader = nullptr;
 };
 
 /// @memberof ShaderProgramInitInfo
 class RayTracingShaders
 {
 public:
-	WeakArray<ShaderPtr> m_rayGenShaders;
-	WeakArray<ShaderPtr> m_missShaders;
+	WeakArray<Shader*> m_rayGenShaders;
+	WeakArray<Shader*> m_missShaders;
 	WeakArray<RayTracingHitGroup> m_hitGroups;
 	U32 m_maxRecursionDepth = 1;
 };
@@ -36,10 +36,10 @@ class ShaderProgramInitInfo : public GrBaseInitInfo
 {
 public:
 	/// Option 1
-	Array<ShaderPtr, U32(ShaderType::kLastGraphics + 1)> m_graphicsShaders;
+	Array<Shader*, U32(ShaderType::kLastGraphics + 1)> m_graphicsShaders = {};
 
 	/// Option 2
-	ShaderPtr m_computeShader;
+	Shader* m_computeShader = nullptr;
 
 	/// Option 3
 	RayTracingShaders m_rayTracingShaders;

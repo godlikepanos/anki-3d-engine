@@ -90,7 +90,7 @@ public:
 		m_pool.endFrame();
 	}
 
-	const BufferPtr& getBuffer() const
+	Buffer& getBuffer() const
 	{
 		return m_pool.getGpuBuffer();
 	}

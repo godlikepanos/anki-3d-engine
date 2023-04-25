@@ -267,7 +267,7 @@ class LensFlareQueueElement final
 {
 public:
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	const TextureView* m_textureView;
+	TextureView* m_textureView;
 	Vec3 m_worldPosition;
 	Vec2 m_firstFlareSize;
 	Vec4 m_colorMultiplier;
@@ -365,7 +365,7 @@ static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::va
 class SkyboxQueueElement final
 {
 public:
-	const TextureView* m_skyboxTexture;
+	TextureView* m_skyboxTexture;
 	Vec3 m_solidColor;
 
 	class

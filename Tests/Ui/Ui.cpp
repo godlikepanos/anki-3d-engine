@@ -105,7 +105,7 @@ ANKI_TEST(Ui, Ui)
 			FramebufferPtr fb;
 			{
 				TextureViewInitInfo init;
-				init.m_texture = presentTex;
+				init.m_texture = presentTex.get();
 				TextureViewPtr view = gr->newTextureView(init);
 
 				FramebufferInitInfo fbinit;
@@ -126,7 +126,7 @@ ANKI_TEST(Ui, Ui)
 			barrier.m_texture = presentTex.get();
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->beginRenderPass(fb, {{TextureUsageBit::kFramebufferWrite}}, {});
+			cmdb->beginRenderPass(fb.get(), {{TextureUsageBit::kFramebufferWrite}}, {});
 			canvas->appendToCommandBuffer(cmdb);
 			cmdb->endRenderPass();
 

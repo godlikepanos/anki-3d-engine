@@ -34,7 +34,7 @@ Error PackVisibleClusteredObjects::init()
 		variantInit.addMutation("OBJECT_TYPE", U32(type));
 		variantInit.addMutation("THREAD_GROUP_SIZE", m_threadGroupSize);
 		m_packProg->getOrCreateVariant(variantInit, variant);
-		m_grProgs[type] = variant->getProgram();
+		m_grProgs[type].reset(&variant->getProgram());
 	}
 
 	U32 offset = 0;
@@ -110,19 +110,19 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		}
 	}
 
-	cmdb->bindStorageBuffer(0, 0, GpuSceneBuffer::getSingleton().getBuffer(), rqueue.m_clustererObjectsArrayOffsets[kType],
+	cmdb->bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), rqueue.m_clustererObjectsArrayOffsets[kType],
 							rqueue.m_clustererObjectsArrayRanges[kType]);
 
-	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects, m_structureBufferOffsets[kType], array.getSize() * sizeof(TClustererType));
+	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects.get(), m_structureBufferOffsets[kType], array.getSize() * sizeof(TClustererType));
 
-	cmdb->bindStorageBuffer(0, 2, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
+	cmdb->bindStorageBuffer(0, 2, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
 
 	if constexpr(std::is_same_v<TClustererType, PointLight> || std::is_same_v<TClustererType, SpotLight>)
 	{
-		cmdb->bindStorageBuffer(0, 3, RebarTransientMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset, extrasToken.m_range);
+		cmdb->bindStorageBuffer(0, 3, &RebarTransientMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset, extrasToken.m_range);
 	}
 
-	cmdb->bindShaderProgram(m_grProgs[kType]);
+	cmdb->bindShaderProgram(m_grProgs[kType].get());
 
 	const UVec4 pc(array.getSize());
 	cmdb->setPushConstants(&pc, sizeof(pc));
@@ -138,7 +138,7 @@ void PackVisibleClusteredObjects::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 
-	m_allClustererObjectsHandle = rgraph.importBuffer(m_allClustererObjects, BufferUsageBit::kNone);
+	m_allClustererObjectsHandle = rgraph.importBuffer(m_allClustererObjects.get(), BufferUsageBit::kNone);
 	pass.newBufferDependency(m_allClustererObjectsHandle, BufferUsageBit::kStorageComputeWrite);
 
 	pass.setWork([&ctx, this](RenderPassWorkContext& rgraphCtx) {

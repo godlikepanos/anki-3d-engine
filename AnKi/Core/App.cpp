@@ -445,7 +445,7 @@ Error App::mainLoop()
 														 || Tracer::getSingleton().getEnabled()
 #endif
 			);
-			ANKI_CHECK(MainRenderer::getSingleton().render(rqueue, presentableTex));
+			ANKI_CHECK(MainRenderer::getSingleton().render(rqueue, presentableTex.get()));
 
 			// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
 			ResourceManager::getSingleton().getAsyncLoader().pause();

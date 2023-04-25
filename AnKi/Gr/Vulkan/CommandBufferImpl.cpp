@@ -51,7 +51,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		m_activeFb = init.m_framebuffer;
 		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
 		m_depthStencilAttachmentUsage = init.m_depthStencilAttachmentUsage;
-		m_state.beginRenderPass(static_cast<FramebufferImpl*>(m_activeFb.get()));
+		m_state.beginRenderPass(static_cast<FramebufferImpl*>(m_activeFb));
 		m_microCmdb->pushObjectRef(m_activeFb);
 	}
 
@@ -118,7 +118,7 @@ void CommandBufferImpl::beginRecording()
 	}
 }
 
-void CommandBufferImpl::beginRenderPassInternal(const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
+void CommandBufferImpl::beginRenderPassInternal(Framebuffer* fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 												TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
 {
 	commandCommon();
@@ -248,7 +248,7 @@ void CommandBufferImpl::endRenderPassInternal()
 	vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo);
 	getGrManagerImpl().endMarker(m_handle);
 
-	m_activeFb.reset(nullptr);
+	m_activeFb = nullptr;
 	m_state.endRenderPass();
 
 	// After pushing second level command buffers the state is undefined. Reset the tracker and rebind the dynamic state
@@ -304,7 +304,7 @@ void CommandBufferImpl::endRecording()
 #endif
 }
 
-void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
+void CommandBufferImpl::generateMipmaps2dInternal(TextureView* texView)
 {
 	commandCommon();
 
@@ -391,13 +391,9 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
 					   &blit, (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	}
-
-	// Hold the reference
-	m_microCmdb->pushObjectRef(texView);
 }
 
-void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, [[maybe_unused]] PtrSize range,
-														const TextureViewPtr& texView)
+void CommandBufferImpl::copyBufferToTextureViewInternal(Buffer* buff, PtrSize offset, [[maybe_unused]] PtrSize range, TextureView* texView)
 {
 	commandCommon();
 
@@ -442,9 +438,6 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 	region.bufferRowLength = 0;
 
 	vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle, layout, 1, &region);
-
-	m_microCmdb->pushObjectRef(texView);
-	m_microCmdb->pushObjectRef(buff);
 }
 
 void CommandBufferImpl::rebindDynamicState()
@@ -490,7 +483,7 @@ void CommandBufferImpl::rebindDynamicState()
 	}
 }
 
-void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStructurePtr& as)
+void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructure* as)
 {
 	commandCommon();
 
@@ -514,7 +507,6 @@ void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStr
 
 	// Push refs
 	m_microCmdb->pushObjectRef(as);
-	m_microCmdb->pushObjectRef(scratchBuff);
 }
 
 #if ANKI_DLSS
@@ -535,9 +527,9 @@ static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl
 }
 #endif
 
-void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
-										const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
-										const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale)
+void CommandBufferImpl::upscaleInternal(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors,
+										TextureView* depth, TextureView* exposure, const Bool resetAccumulation, const Vec2& jitterOffset,
+										const Vec2& motionVectorsScale)
 {
 #if ANKI_DLSS
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_dlss);
@@ -663,8 +655,6 @@ void CommandBufferImpl::setPipelineBarrierInternal(ConstWeakArray<TextureBarrier
 
 		srcStageMask |= srcStage;
 		dstStageMask |= dstStage;
-
-		m_microCmdb->pushObjectRef(barrier.m_texture);
 	}
 
 	for(const BufferBarrierInfo& barrier : buffers)
@@ -702,8 +692,6 @@ void CommandBufferImpl::setPipelineBarrierInternal(ConstWeakArray<TextureBarrier
 
 		srcStageMask |= srcStage;
 		dstStageMask |= dstStage;
-
-		m_microCmdb->pushObjectRef(barrier.m_buffer);
 	}
 
 	for(const AccelerationStructureBarrierInfo& barrier : accelerationStructures)

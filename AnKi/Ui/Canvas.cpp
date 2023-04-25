@@ -37,7 +37,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("TEXTURE_TYPE", i);
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProgs[i] = variant->getProgram();
+		m_grProgs[i].reset(&variant->getProgram());
 	}
 
 	// Sampler
@@ -220,12 +220,12 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(ImDrawVert));
+	cmdb->bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(ImDrawVert));
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
 	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
 	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb->bindIndexBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), indicesToken.m_offset, IndexType::kU16);
+	cmdb->bindIndexBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), indicesToken.m_offset, IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports
@@ -285,22 +285,23 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					// Bind program
 					if(idExtra && idExtra->m_customProgram.isCreated())
 					{
-						cmdb->bindShaderProgram(idExtra->m_customProgram);
+						cmdb->bindShaderProgram(idExtra->m_customProgram.get());
 					}
 					else if(textureView.isCreated())
 					{
-						cmdb->bindShaderProgram(m_grProgs[kRgbaTex]);
+						cmdb->bindShaderProgram(m_grProgs[kRgbaTex].get());
 					}
 					else
 					{
-						cmdb->bindShaderProgram(m_grProgs[kNoTex]);
+						cmdb->bindShaderProgram(m_grProgs[kNoTex].get());
 					}
 
 					// Bindings
 					if(textureView.isCreated())
 					{
-						cmdb->bindSampler(0, 0, (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler : m_linearLinearRepeatSampler);
-						cmdb->bindTexture(0, 1, textureView);
+						cmdb->bindSampler(0, 0,
+										  (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
+						cmdb->bindTexture(0, 1, textureView.get());
 					}
 
 					// Push constants
@@ -325,7 +326,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					cmdb->setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
 
 					// Draw
-					cmdb->drawElements(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
+					cmdb->drawIndexed(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
 				}
 			}
 			idxOffset += pcmd.ElemCount;

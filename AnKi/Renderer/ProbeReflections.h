@@ -30,7 +30,7 @@ public:
 		return m_lightShading.m_mipCount;
 	}
 
-	TextureViewPtr getIntegrationLut() const
+	TextureView& getIntegrationLut() const
 	{
 		return m_integrationLut->getTextureView();
 	}

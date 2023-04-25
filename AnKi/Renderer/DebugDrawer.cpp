@@ -156,19 +156,19 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	cmdb->bindShaderProgram(variant->getProgram());
+	cmdb->bindShaderProgram(&variant->getProgram());
 
 	cmdb->setPushConstants(&color, sizeof(color));
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
-	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer, 0, sizeof(Vec3));
-	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::kU16);
+	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer.get(), 0, sizeof(Vec3));
+	cmdb->bindIndexBuffer(m_cubeIndicesBuffer.get(), 0, IndexType::kU16);
 
-	cmdb->bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset, unisToken.m_range);
+	cmdb->bindStorageBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
 	constexpr U kIndexCount = 12 * 2;
-	cmdb->drawElements(PrimitiveTopology::kLines, kIndexCount, mvps.getSize());
+	cmdb->drawIndexed(PrimitiveTopology::kLines, kIndexCount, mvps.getSize());
 }
 
 void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, ConstWeakArray<Vec3> linePositions,
@@ -193,22 +193,21 @@ void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	cmdb->bindShaderProgram(variant->getProgram());
+	cmdb->bindShaderProgram(&variant->getProgram());
 
 	cmdb->setPushConstants(&color, sizeof(color));
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
-	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(Vec3));
+	cmdb->bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(Vec3));
 
-	cmdb->bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset, unisToken.m_range);
+	cmdb->bindStorageBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	cmdb->drawArrays(PrimitiveTopology::kLines, linePositions.getSize(), mvps.getSize());
+	cmdb->draw(PrimitiveTopology::kLines, linePositions.getSize(), mvps.getSize());
 }
 
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& viewMat, ConstWeakArray<Vec3> positions, const Vec4& color,
-										 Bool ditherFailedDepth, TextureViewPtr tex, SamplerPtr sampler, Vec2 billboardSize,
-										 CommandBufferPtr& cmdb) const
+										 Bool ditherFailedDepth, TextureView* tex, Sampler* sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const
 {
 	RebarAllocation positionsToken;
 	Vec3* verts = static_cast<Vec3*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(Vec3) * 4, positionsToken));
@@ -257,20 +256,20 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat, const Mat3x4& view
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	cmdb->bindShaderProgram(variant->getProgram());
+	cmdb->bindShaderProgram(&variant->getProgram());
 
 	cmdb->setPushConstants(&color, sizeof(color));
 
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->setVertexAttribute(1, 1, Format::kR32G32_Sfloat, 0);
-	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), positionsToken.m_offset, sizeof(Vec3));
-	cmdb->bindVertexBuffer(1, RebarTransientMemoryPool::getSingleton().getBuffer(), uvsToken.m_offset, sizeof(Vec2));
+	cmdb->bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), positionsToken.m_offset, sizeof(Vec3));
+	cmdb->bindVertexBuffer(1, &RebarTransientMemoryPool::getSingleton().getBuffer(), uvsToken.m_offset, sizeof(Vec2));
 
-	cmdb->bindStorageBuffer(0, 0, RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset, unisToken.m_range);
+	cmdb->bindStorageBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(), unisToken.m_offset, unisToken.m_range);
 	cmdb->bindSampler(0, 3, sampler);
 	cmdb->bindTexture(0, 4, tex);
 
-	cmdb->drawArrays(PrimitiveTopology::kTriangleStrip, 4, positions.getSize());
+	cmdb->draw(PrimitiveTopology::kTriangleStrip, 4, positions.getSize());
 }
 
 void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color)

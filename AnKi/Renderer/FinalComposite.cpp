@@ -43,13 +43,13 @@ Error FinalComposite::initInternal()
 		const ShaderProgramResourceVariant* variant;
 		variantInitInfo.addMutation("DBG_ENABLED", dbg);
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProgs[dbg] = variant->getProgram();
+		m_grProgs[dbg].reset(&variant->getProgram());
 	}
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg));
 	const ShaderProgramResourceVariant* variant;
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
-	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
+	m_defaultVisualizeRenderTargetGrProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -127,28 +127,28 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	// Bind program
 	if(hasDebugRt && optionalDebugProgram.isCreated())
 	{
-		cmdb->bindShaderProgram(optionalDebugProgram);
+		cmdb->bindShaderProgram(optionalDebugProgram.get());
 	}
 	else if(hasDebugRt)
 	{
-		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg);
+		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg.get());
 	}
 	else
 	{
-		cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
+		cmdb->bindShaderProgram(m_grProgs[dbgEnabled].get());
 	}
 
 	// Bind stuff
 	if(!hasDebugRt)
 	{
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
-		cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getScale().getTonemappedRt());
 
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getBloom().getRt());
-		cmdb->bindTexture(0, 5, m_lut->getTextureView());
+		cmdb->bindTexture(0, 5, &m_lut->getTextureView());
 		rgraphCtx.bindColorTexture(0, 6, getRenderer().getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
@@ -162,7 +162,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	}
 	else
 	{
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		U32 count = 1;
 		for(const RenderTargetHandle& handle : dbgRts)

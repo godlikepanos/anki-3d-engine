@@ -47,14 +47,14 @@ public:
 		return m_refcount.load();
 	}
 
-	void setFence(MicroFencePtr fence)
+	void setFence(MicroFence* fence)
 	{
-		m_fence = fence;
+		m_fence.reset(fence);
 	}
 
-	MicroFencePtr& getFence()
+	MicroFence* getFence() const
 	{
-		return m_fence;
+		return m_fence.tryGet();
 	}
 
 	/// Interface method.

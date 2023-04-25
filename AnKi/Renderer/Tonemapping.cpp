@@ -36,7 +36,7 @@ Error Tonemapping::initInternal()
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	// Create exposure texture.
 	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no
@@ -53,7 +53,7 @@ Error Tonemapping::initInternal()
 void Tonemapping::importRenderTargets(RenderingContext& ctx)
 {
 	// Just import it. It will not be used in resource tracking
-	m_runCtx.m_exposureLuminanceHandle = ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1, TextureUsageBit::kAllImage);
+	m_runCtx.m_exposureLuminanceHandle = ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kAllImage);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
@@ -66,7 +66,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg);
+		cmdb->bindShaderProgram(m_grProg.get());
 		rgraphCtx.bindImage(0, 1, m_runCtx.m_exposureLuminanceHandle);
 
 		TextureSubresourceInfo inputTexSubresource;

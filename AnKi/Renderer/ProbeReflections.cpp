@@ -133,7 +133,7 @@ Error ProbeReflections::initIrradiance()
 
 		const ShaderProgramResourceVariant* variant;
 		m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_irradiance.m_grProg = variant->getProgram();
+		m_irradiance.m_grProg.reset(&variant->getProgram());
 	}
 
 	// Create buff
@@ -209,7 +209,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 			args.m_cameraTransform = rqueue.m_cameraTransform;
 			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 
 			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart, rqueue.m_renderables.getBegin() + localEnd,
 													 cmdb);
@@ -270,11 +270,12 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 	TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 	subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
-	TexturePtr texToBind;
+	Texture* texToBind;
 	rgraphCtx.getRenderTargetState(m_ctx.m_lightShadingRt, subresource, texToBind);
 
 	TextureViewInitInfo viewInit(texToBind, subresource);
-	rgraphCtx.m_commandBuffer->generateMipmaps2d(GrManager::getSingleton().newTextureView(viewInit));
+	TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
+	rgraphCtx.m_commandBuffer->generateMipmaps2d(view.get());
 }
 
 void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
@@ -283,16 +284,16 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_irradiance.m_grProg);
+	cmdb->bindShaderProgram(m_irradiance.m_grProg.get());
 
 	// Bind stuff
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	TextureSubresourceInfo subresource;
 	subresource.m_faceCount = 6;
 	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
-	cmdb->bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb->bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	// Draw
 	cmdb->dispatchCompute(1, 1, 1);
@@ -304,16 +305,16 @@ void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_irradianceToRefl.m_grProg);
+	cmdb->bindShaderProgram(m_irradianceToRefl.m_grProg.get());
 
 	// Bind resources
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[0], 0);
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[1], 1);
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[2], 2);
 
-	cmdb->bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb->bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	for(U8 f = 0; f < 6; ++f)
 	{
@@ -434,7 +435,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	// Light shading passes
 	{
 		// RT
-		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(TexturePtr(m_ctx.m_probe->m_reflectionTexture), TextureUsageBit::kNone);
+		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_ctx.m_probe->m_reflectionTexture, TextureUsageBit::kNone);
 
 		// Passes
 		static constexpr Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1", "CubeRefl LightShad #2",
@@ -466,7 +467,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Irradiance passes
 	{
-		m_ctx.m_irradianceDiceValuesBuffHandle = rgraph.importBuffer(m_irradiance.m_diceValuesBuff, BufferUsageBit::kNone);
+		m_ctx.m_irradianceDiceValuesBuffHandle = rgraph.importBuffer(m_irradiance.m_diceValuesBuff.get(), BufferUsageBit::kNone);
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl Irradiance");
 
@@ -563,7 +564,7 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
 			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
 
 			getRenderer().getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
 													 cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);

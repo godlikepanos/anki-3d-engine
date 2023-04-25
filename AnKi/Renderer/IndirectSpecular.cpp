@@ -61,7 +61,7 @@ Error IndirectSpecular::initInternal()
 	variantInit.addMutation("STOCHASTIC", ConfigSet::getSingleton().getRSsrStochastic());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -78,13 +78,13 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 	const U32 writeRtIdx = !readRtIdx;
 	if(m_rtsImportedOnce) [[likely]]
 	{
-		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx]);
-		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx]);
+		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx].get());
+		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx].get());
 	}
 	else
 	{
-		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx], TextureUsageBit::kAllSampled);
-		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx], TextureUsageBit::kAllSampled);
+		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rts[readRtIdx].get(), TextureUsageBit::kAllSampled);
+		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rts[writeRtIdx].get(), TextureUsageBit::kAllSampled);
 		m_rtsImportedOnce = true;
 	}
 
@@ -162,7 +162,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg.get());
 
 	const U32 depthLod = min(ConfigSet::getSingleton().getRSsrDepthLod(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
 
@@ -182,7 +182,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	unis->m_roughnessCutoff = ConfigSet::getSingleton().getRSsrRoughnessCutoff();
 
 	// Bind all
-	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 
 	rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(1));
 	rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(2));
@@ -197,8 +197,8 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	rgraphCtx.bindColorTexture(0, 7, getRenderer().getMotionVectors().getMotionVectorsRt());
 	rgraphCtx.bindColorTexture(0, 8, getRenderer().getMotionVectors().getHistoryLengthRt());
 
-	cmdb->bindSampler(0, 9, getRenderer().getSamplers().m_trilinearRepeat);
-	cmdb->bindTexture(0, 10, m_noiseImage->getTextureView());
+	cmdb->bindSampler(0, 9, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb->bindTexture(0, 10, &m_noiseImage->getTextureView());
 
 	bindUniforms(cmdb, 0, 11, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12, ClusteredObjectType::kReflectionProbe);
@@ -216,7 +216,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	{
 		cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 
-		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+		cmdb->draw(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

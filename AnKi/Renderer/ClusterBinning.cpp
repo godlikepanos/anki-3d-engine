@@ -41,7 +41,7 @@ Error ClusterBinning::init()
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
 	m_clusterCount = m_tileCount + getRenderer().getZSplitCount();
@@ -54,7 +54,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	writeClustererBuffers(ctx);
 
-	m_runCtx.m_rebarHandle = ctx.m_renderGraphDescr.importBuffer(RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+	m_runCtx.m_rebarHandle = ctx.m_renderGraphDescr.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
 																 m_runCtx.m_clustersToken.m_offset, m_runCtx.m_clustersToken.m_range);
 
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
@@ -75,7 +75,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg);
+		cmdb->bindShaderProgram(m_grProg.get());
 
 		bindUniforms(cmdb, 0, 0, m_runCtx.m_clusteredShadingUniformsToken);
 		bindStorage(cmdb, 0, 1, m_runCtx.m_clustersToken);

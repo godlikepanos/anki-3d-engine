@@ -182,6 +182,9 @@ public:
 	/// Min size of a texel in the shading rate image.
 	U32 m_minShadingRateImageTexelSize = 0;
 
+	/// The max number of drawcalls in draw indirect count calls.
+	U32 m_maxDrawIndirectCount = 0;
+
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::kUnknown;
 

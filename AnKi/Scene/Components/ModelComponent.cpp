@@ -303,11 +303,13 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
-			for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques))
+			for(RenderingTechnique t :
+				EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques & ~RenderingTechniqueBit::kAllRt))
 			{
-				const GpuSceneRenderableAabb gpuVolume =
-					initGpuSceneRenderableAabb(m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
-											   m_patchInfos[i].m_gpuSceneIndexRenderable.get(), m_patchInfos[i].m_renderStateBucketIndices[t].get());
+				const Vec3 aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
+				const Vec3 aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
+				const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(aabbMin, aabbMax, m_patchInfos[i].m_gpuSceneIndexRenderable.get(),
+																					m_patchInfos[i].m_renderStateBucketIndices[t].get());
 
 				GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool,
 															 m_patchInfos[i].m_gpuSceneIndexRenderableAabbs[t].getOffsetInGpuScene(), gpuVolume);

@@ -79,7 +79,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	m_tex = GrManager::getSingleton().newTexture(texInit);
 
 	// Create the whole texture view
-	m_texView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(m_tex, "Font"));
+	m_texView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(m_tex.get(), "Font"));
 	m_imFontAtlas->SetTexID(UiImageId(m_texView));
 
 	// Do the copy
@@ -88,20 +88,20 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-	TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::kNone, "TempFont");
+	TextureViewInitInfo viewInit(m_tex.get(), surf, DepthStencilAspectBit::kNone, "TempFont");
 	TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(viewInit);
 
 	TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, surf};
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-	cmdb->copyBufferToTextureView(buff, 0, buffSize, tmpView);
+	cmdb->copyBufferToTextureView(buff.get(), 0, buffSize, tmpView.get());
 
 	barrier.m_previousUsage = TextureUsageBit::kTransferDestination;
 	barrier.m_nextUsage = TextureUsageBit::kGenerateMipmaps;
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 	// Gen mips
-	cmdb->generateMipmaps2d(m_texView);
+	cmdb->generateMipmaps2d(m_texView.get());
 
 	barrier.m_previousUsage = TextureUsageBit::kGenerateMipmaps;
 	barrier.m_nextUsage = TextureUsageBit::kSampledFragment;

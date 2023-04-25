@@ -63,7 +63,7 @@ Error DownscaleBlur::initInternal()
 		(preferCompute) ? "ShaderBinaries/DownscaleBlurCompute.ankiprogbin" : "ShaderBinaries/DownscaleBlurRaster.ankiprogbin", m_prog));
 	const ShaderProgramResourceVariant* variant = nullptr;
 	m_prog->getOrCreateVariant(variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -71,7 +71,7 @@ Error DownscaleBlur::initInternal()
 void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::kSampledCompute);
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex.get(), TextureUsageBit::kSampledCompute);
 }
 
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
@@ -148,12 +148,12 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg.get());
 
 	const U32 vpWidth = m_rtTex->getWidth() >> passIdx;
 	const U32 vpHeight = m_rtTex->getHeight() >> passIdx;
 
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 	if(passIdx > 0)
 	{
@@ -186,7 +186,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb->setViewport(0, 0, vpWidth, vpHeight);
 
-		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+		cmdb->draw(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

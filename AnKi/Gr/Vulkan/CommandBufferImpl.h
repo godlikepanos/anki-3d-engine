@@ -45,7 +45,7 @@ public:
 
 	Error init(const CommandBufferInitInfo& init);
 
-	void setFence(MicroFencePtr& fence)
+	void setFence(MicroFence* fence)
 	{
 		m_microCmdb->setFence(fence);
 	}
@@ -76,47 +76,45 @@ public:
 		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
 
-	void bindVertexBufferInternal(U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
+	ANKI_FORCE_INLINE void bindVertexBufferInternal(U32 binding, Buffer* buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 	{
 		commandCommon();
 		m_state.bindVertexBuffer(binding, stride, stepRate);
 		const VkBuffer vkbuff = static_cast<const BufferImpl&>(*buff).getHandle();
 		vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset);
-		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void setVertexAttributeInternal(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
+	ANKI_FORCE_INLINE void setVertexAttributeInternal(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
 	{
 		commandCommon();
 		m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset);
 	}
 
-	void bindIndexBufferInternal(const BufferPtr& buff, PtrSize offset, IndexType type)
+	ANKI_FORCE_INLINE void bindIndexBufferInternal(Buffer* buff, PtrSize offset, IndexType type)
 	{
 		commandCommon();
 		vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset, convertIndexType(type));
-		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void setPrimitiveRestartInternal(Bool enable)
+	ANKI_FORCE_INLINE void setPrimitiveRestartInternal(Bool enable)
 	{
 		commandCommon();
 		m_state.setPrimitiveRestart(enable);
 	}
 
-	void setFillModeInternal(FillMode mode)
+	ANKI_FORCE_INLINE void setFillModeInternal(FillMode mode)
 	{
 		commandCommon();
 		m_state.setFillMode(mode);
 	}
 
-	void setCullModeInternal(FaceSelectionBit mode)
+	ANKI_FORCE_INLINE void setCullModeInternal(FaceSelectionBit mode)
 	{
 		commandCommon();
 		m_state.setCullMode(mode);
 	}
 
-	void setViewportInternal(U32 minx, U32 miny, U32 width, U32 height)
+	ANKI_FORCE_INLINE void setViewportInternal(U32 minx, U32 miny, U32 width, U32 height)
 	{
 		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
@@ -132,7 +130,7 @@ public:
 		}
 	}
 
-	void setScissorInternal(U32 minx, U32 miny, U32 width, U32 height)
+	ANKI_FORCE_INLINE void setScissorInternal(U32 minx, U32 miny, U32 width, U32 height)
 	{
 		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
@@ -148,21 +146,21 @@ public:
 		}
 	}
 
-	void setPolygonOffsetInternal(F32 factor, F32 units)
+	ANKI_FORCE_INLINE void setPolygonOffsetInternal(F32 factor, F32 units)
 	{
 		commandCommon();
 		m_state.setPolygonOffset(factor, units);
 		vkCmdSetDepthBias(m_handle, factor, 0.0f, units);
 	}
 
-	void setStencilOperationsInternal(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
-									  StencilOperation stencilPassDepthPass)
+	ANKI_FORCE_INLINE void setStencilOperationsInternal(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
+														StencilOperation stencilPassDepthPass)
 	{
 		commandCommon();
 		m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
 	}
 
-	void setStencilCompareOperationInternal(FaceSelectionBit face, CompareOperation comp)
+	ANKI_FORCE_INLINE void setStencilCompareOperationInternal(FaceSelectionBit face, CompareOperation comp)
 	{
 		commandCommon();
 		m_state.setStencilCompareOperation(face, comp);
@@ -174,43 +172,43 @@ public:
 
 	void setStencilReferenceInternal(FaceSelectionBit face, U32 ref);
 
-	void setDepthWriteInternal(Bool enable)
+	ANKI_FORCE_INLINE void setDepthWriteInternal(Bool enable)
 	{
 		commandCommon();
 		m_state.setDepthWrite(enable);
 	}
 
-	void setDepthCompareOperationInternal(CompareOperation op)
+	ANKI_FORCE_INLINE void setDepthCompareOperationInternal(CompareOperation op)
 	{
 		commandCommon();
 		m_state.setDepthCompareOperation(op);
 	}
 
-	void setAlphaToCoverageInternal(Bool enable)
+	ANKI_FORCE_INLINE void setAlphaToCoverageInternal(Bool enable)
 	{
 		commandCommon();
 		m_state.setAlphaToCoverage(enable);
 	}
 
-	void setColorChannelWriteMaskInternal(U32 attachment, ColorBit mask)
+	ANKI_FORCE_INLINE void setColorChannelWriteMaskInternal(U32 attachment, ColorBit mask)
 	{
 		commandCommon();
 		m_state.setColorChannelWriteMask(attachment, mask);
 	}
 
-	void setBlendFactorsInternal(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
+	ANKI_FORCE_INLINE void setBlendFactorsInternal(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 	{
 		commandCommon();
 		m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
 	}
 
-	void setBlendOperationInternal(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
+	ANKI_FORCE_INLINE void setBlendOperationInternal(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 	{
 		commandCommon();
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTextureAndSamplerInternal(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindTextureAndSamplerInternal(U32 set, U32 binding, TextureView* texView, Sampler* sampler, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -218,13 +216,12 @@ public:
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
 
-		m_dsetState[set].bindTextureAndSampler(binding, arrayIdx, &view, sampler.get(), lay);
+		m_dsetState[set].bindTextureAndSampler(binding, arrayIdx, &view, sampler, lay);
 
-		m_microCmdb->pushObjectRef(texView);
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindTextureInternal(U32 set, U32 binding, const TextureViewPtr& texView, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindTextureInternal(U32 set, U32 binding, TextureView* texView, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -232,78 +229,133 @@ public:
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
 
-		m_dsetState[set].bindTexture(binding, arrayIdx, &view, lay);
-
-		m_microCmdb->pushObjectRef(texView);
+		m_dsetState[set].bindTexture(binding, arrayIdx, texView, lay);
 	}
 
-	void bindSamplerInternal(U32 set, U32 binding, const SamplerPtr& sampler, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindSamplerInternal(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindSampler(binding, arrayIdx, sampler.get());
+		m_dsetState[set].bindSampler(binding, arrayIdx, sampler);
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindImageInternal(U32 set, U32 binding, const TextureViewPtr& img, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindImageInternal(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindImage(binding, arrayIdx, img.get());
+		m_dsetState[set].bindImage(binding, arrayIdx, img);
 
 		const Bool isPresentable = !!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage() & TextureUsageBit::kPresent);
 		if(isPresentable)
 		{
 			m_renderedToDefaultFb = true;
 		}
-
-		m_microCmdb->pushObjectRef(img);
 	}
 
-	void bindAccelerationStructureInternal(U32 set, U32 binding, const AccelerationStructurePtr& as, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindAccelerationStructureInternal(U32 set, U32 binding, AccelerationStructure* as, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindAccelerationStructure(binding, arrayIdx, as.get());
+		m_dsetState[set].bindAccelerationStructure(binding, arrayIdx, as);
 		m_microCmdb->pushObjectRef(as);
 	}
 
-	void bindAllBindlessInternal(U32 set)
+	ANKI_FORCE_INLINE void bindAllBindlessInternal(U32 set)
 	{
 		commandCommon();
 		m_dsetState[set].bindBindlessDescriptorSet();
 	}
 
-	void beginRenderPassInternal(const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
+	void beginRenderPassInternal(Framebuffer* fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
 								 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height);
 
 	void endRenderPassInternal();
 
-	void setVrsRateInternal(VrsRate rate);
+	ANKI_FORCE_INLINE void setVrsRateInternal(VrsRate rate)
+	{
+		ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs);
+		ANKI_ASSERT(rate < VrsRate::kCount);
+		commandCommon();
 
-	void drawArraysInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance);
+		if(m_vrsRate != rate)
+		{
+			m_vrsRate = rate;
+			m_vrsRateDirty = true;
+		}
+	}
 
-	void drawElementsInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance);
+	ANKI_FORCE_INLINE void drawInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+	{
+		m_state.setPrimitiveTopology(topology);
+		drawcallCommon();
+		vkCmdDraw(m_handle, count, instanceCount, first, baseInstance);
+	}
 
-	void drawArraysIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset, const BufferPtr& buff);
+	ANKI_FORCE_INLINE void drawIndexedInternal(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex,
+											   U32 baseInstance)
+	{
+		m_state.setPrimitiveTopology(topology);
+		drawcallCommon();
+		vkCmdDrawIndexed(m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance);
+	}
 
-	void drawElementsIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset, const BufferPtr& buff);
+	ANKI_FORCE_INLINE void drawIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* buff)
+	{
+		m_state.setPrimitiveTopology(topology);
+		drawcallCommon();
+		const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
+		ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
+		ANKI_ASSERT((offset % 4) == 0);
+		ANKI_ASSERT((offset + sizeof(DrawIndirectArgs) * drawCount) <= impl.getSize());
+
+		vkCmdDrawIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawIndirectArgs));
+	}
+
+	ANKI_FORCE_INLINE void drawIndexedIndirectInternal(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* buff)
+	{
+		m_state.setPrimitiveTopology(topology);
+		drawcallCommon();
+		const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
+		ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
+		ANKI_ASSERT((offset % 4) == 0);
+		ANKI_ASSERT((offset + sizeof(DrawIndexedIndirectArgs) * drawCount) <= impl.getSize());
+
+		vkCmdDrawIndexedIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawIndexedIndirectArgs));
+	}
+
+	ANKI_FORCE_INLINE void drawIndexedIndirectCountInternal(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset,
+															Buffer* countBuffer, PtrSize countBufferOffset)
+	{
+		m_state.setPrimitiveTopology(topology);
+		drawcallCommon();
+		const BufferImpl& argBufferImpl = static_cast<const BufferImpl&>(*argBuffer);
+		ANKI_ASSERT(argBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
+		ANKI_ASSERT((argBufferOffset % 4) == 0);
+
+		const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(*countBuffer);
+		ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
+		ANKI_ASSERT((countBufferOffset % 4) == 0);
+
+		vkCmdDrawIndexedIndirectCountKHR(m_handle, argBufferImpl.getHandle(), argBufferOffset, countBufferImpl.getHandle(), countBufferOffset,
+										 kMaxU32, sizeof(DrawIndexedIndirectArgs));
+	}
 
 	void dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void traceRaysInternal(const BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
-						   U32 width, U32 height, U32 depth);
+	void traceRaysInternal(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
+						   U32 height, U32 depth);
 
 	void resetOcclusionQueriesInternal(ConstWeakArray<OcclusionQuery*> queries);
 
-	void beginOcclusionQueryInternal(const OcclusionQueryPtr& query);
+	void beginOcclusionQueryInternal(OcclusionQuery* query);
 
-	void endOcclusionQueryInternal(const OcclusionQueryPtr& query);
+	void endOcclusionQueryInternal(OcclusionQuery* query);
 
 	void resetTimestampQueriesInternal(ConstWeakArray<TimestampQuery*> queries);
 
-	void writeTimestampInternal(const TimestampQueryPtr& query);
+	void writeTimestampInternal(TimestampQuery* query);
 
-	void generateMipmaps2dInternal(const TextureViewPtr& texView);
+	void generateMipmaps2dInternal(TextureView* texView);
 
-	void clearTextureViewInternal(const TextureViewPtr& texView, const ClearValue& clearValue);
+	void clearTextureViewInternal(TextureView* texView, const ClearValue& clearValue);
 
 	void pushSecondLevelCommandBuffersInternal(ConstWeakArray<CommandBuffer*> cmdbs);
 
@@ -318,48 +370,61 @@ public:
 	void setPipelineBarrierInternal(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 									ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures);
 
-	void fillBufferInternal(const BufferPtr& buff, PtrSize offset, PtrSize size, U32 value);
+	void fillBufferInternal(Buffer* buff, PtrSize offset, PtrSize size, U32 value);
 
-	void writeOcclusionQueriesResultToBufferInternal(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, const BufferPtr& buff);
+	void writeOcclusionQueriesResultToBufferInternal(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, Buffer* buff);
 
-	void bindShaderProgramInternal(const ShaderProgramPtr& prog);
+	void bindShaderProgramInternal(ShaderProgram* prog);
 
-	void bindUniformBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindUniformBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff.get(), offset, range);
-		m_microCmdb->pushObjectRef(buff);
+		m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff, offset, range);
 	}
 
-	void bindStorageBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindStorageBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff.get(), offset, range);
-		m_microCmdb->pushObjectRef(buff);
+		m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff, offset, range);
 	}
 
-	void bindReadOnlyTextureBufferInternal(U32 set, U32 binding, const BufferPtr& buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindReadOnlyTextureBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt,
+															 U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindReadOnlyTextureBuffer(binding, arrayIdx, buff.get(), offset, range, fmt);
-		m_microCmdb->pushObjectRef(buff);
+		m_dsetState[set].bindReadOnlyTextureBuffer(binding, arrayIdx, buff, offset, range, fmt);
 	}
 
-	void copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset, PtrSize range, const TextureViewPtr& texView);
+	void copyBufferToTextureViewInternal(Buffer* buff, PtrSize offset, PtrSize range, TextureView* texView);
 
-	void copyBufferToBufferInternal(const BufferPtr& src, const BufferPtr& dst, ConstWeakArray<CopyBufferToBufferInfo> copies);
+	void copyBufferToBufferInternal(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies);
 
-	void buildAccelerationStructureInternal(const AccelerationStructurePtr& as);
+	void buildAccelerationStructureInternal(AccelerationStructure* as);
 
-	void upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor, const TextureViewPtr& outUpscaledColor,
-						 const TextureViewPtr& motionVectors, const TextureViewPtr& depth, const TextureViewPtr& exposure,
-						 const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
+	void upscaleInternal(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
+						 TextureView* exposure, const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
 
 	void setPushConstantsInternal(const void* data, U32 dataSize);
 
-	void setRasterizationOrderInternal(RasterizationOrder order);
+	ANKI_FORCE_INLINE void setRasterizationOrderInternal(RasterizationOrder order)
+	{
+		commandCommon();
 
-	void setLineWidthInternal(F32 width);
+		if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kAMD_rasterization_order))
+		{
+			m_state.setRasterizationOrder(order);
+		}
+	}
+
+	ANKI_FORCE_INLINE void setLineWidthInternal(F32 width)
+	{
+		commandCommon();
+		vkCmdSetLineWidth(m_handle, width);
+
+#if ANKI_ENABLE_ASSERTIONS
+		m_lineWidthSet = true;
+#endif
+	}
 
 private:
 	StackMemoryPool* m_pool = nullptr;
@@ -377,7 +442,7 @@ private:
 	U32 m_setPushConstantsSize = 0;
 #endif
 
-	FramebufferPtr m_activeFb;
+	Framebuffer* m_activeFb = nullptr;
 	Array<U32, 4> m_renderArea = {0, 0, kMaxU32, kMaxU32};
 	Array<U32, 2> m_fbSize = {0, 0};
 	U32 m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
@@ -438,7 +503,7 @@ private:
 
 	Bool insideRenderPass() const
 	{
-		return m_activeFb.isCreated();
+		return m_activeFb != nullptr;
 	}
 
 	void beginRenderPassInternal();

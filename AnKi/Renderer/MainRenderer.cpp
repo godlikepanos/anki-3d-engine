@@ -53,7 +53,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/BlitRaster.ankiprogbin", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
-		m_blitGrProg = variant->getProgram();
+		m_blitGrProg.reset(&variant->getProgram());
 
 		// The RT desc
 		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * ConfigSet::getSingleton().getRRenderScaling());
@@ -77,7 +77,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	return Error::kNone;
 }
 
-Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
+Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
@@ -118,11 +118,11 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 			cmdb->setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 
-			cmdb->bindShaderProgram(m_blitGrProg);
-			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+			cmdb->bindShaderProgram(m_blitGrProg.get());
+			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
 
-			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+			cmdb->draw(PrimitiveTopology::kTriangles, 3);
 		});
 
 		pass.newTextureDependency(presentRt, TextureUsageBit::kFramebufferWrite);

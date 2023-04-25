@@ -28,7 +28,7 @@ public:
 	Mat4 m_viewProjectionMatrix;
 	Mat4 m_previousViewProjectionMatrix;
 
-	SamplerPtr m_sampler;
+	Sampler* m_sampler;
 };
 
 /// It uses the render queue to batch and render.

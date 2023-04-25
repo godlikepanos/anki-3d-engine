@@ -18,12 +18,12 @@ namespace anki {
 class BottomLevelAccelerationStructureInitInfo
 {
 public:
-	BufferPtr m_indexBuffer;
+	const Buffer* m_indexBuffer = nullptr;
 	PtrSize m_indexBufferOffset = 0;
 	U32 m_indexCount = 0;
 	IndexType m_indexType = IndexType::kCount;
 
-	BufferPtr m_positionBuffer;
+	const Buffer* m_positionBuffer = nullptr;
 	PtrSize m_positionBufferOffset = 0;
 	U32 m_positionStride = 0;
 	Format m_positionsFormat = Format::kNone;
@@ -31,8 +31,8 @@ public:
 
 	Bool isValid() const
 	{
-		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::kCount || m_positionBuffer.get() == nullptr
-		   || m_positionStride == 0 || m_positionsFormat == Format::kNone || m_positionCount == 0)
+		if(m_indexBuffer == nullptr || m_indexCount == 0 || m_indexType == IndexType::kCount || m_positionBuffer == nullptr || m_positionStride == 0
+		   || m_positionsFormat == Format::kNone || m_positionCount == 0)
 		{
 			return false;
 		}

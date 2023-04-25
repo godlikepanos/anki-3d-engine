@@ -51,22 +51,22 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
 		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
-								RebarTransientMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset, globalUniformsToken.m_range);
+								&RebarTransientMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset, globalUniformsToken.m_range);
 	}
 
 	// More globals
 	cmdb->bindAllBindless(U32(MaterialSet::kBindless));
 	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
-	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-									UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
+									&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 	// Misc
 	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
-	cmdb->bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, IndexType::kU16);
+	cmdb->bindIndexBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, IndexType::kU16);
 
 	// Set a few things
 	Context ctx;
@@ -99,7 +99,7 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 		instances[i] = packGpuSceneRenderable(renderable);
 	}
 
-	cmdb->bindVertexBuffer(0, RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, sizeof(GpuSceneRenderablePacked),
+	cmdb->bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, sizeof(GpuSceneRenderablePacked),
 						   VertexStepRate::kInstance);
 
 	// Set state
@@ -107,17 +107,17 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 
 	if(firstElement.m_program != ctx.m_lastBoundShaderProgram)
 	{
-		cmdb->bindShaderProgram(ShaderProgramPtr(firstElement.m_program));
+		cmdb->bindShaderProgram(firstElement.m_program);
 		ctx.m_lastBoundShaderProgram = firstElement.m_program;
 	}
 
 	if(firstElement.m_indexed)
 	{
-		cmdb->drawElements(firstElement.m_primitiveTopology, firstElement.m_indexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstIndex);
+		cmdb->drawIndexed(firstElement.m_primitiveTopology, firstElement.m_indexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstIndex);
 	}
 	else
 	{
-		cmdb->drawArrays(firstElement.m_primitiveTopology, firstElement.m_vertexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstVertex);
+		cmdb->draw(firstElement.m_primitiveTopology, firstElement.m_vertexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstVertex);
 	}
 
 	// Rendered something, reset the cached transforms

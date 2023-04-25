@@ -126,7 +126,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 	args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
-	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias;
+	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)
@@ -168,14 +168,14 @@ void GBuffer::importRenderTargets(RenderingContext& ctx)
 	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
 	{
 		// Already imported once
-		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
-		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1]);
+		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
+		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get());
 	}
 	else
 	{
-		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1], TextureUsageBit::kNone);
+		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1], TextureUsageBit::kSampledFragment);
+			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kSampledFragment);
 	}
 }
 

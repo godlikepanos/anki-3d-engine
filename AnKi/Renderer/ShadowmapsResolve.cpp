@@ -53,7 +53,7 @@ Error ShadowmapsResolve::initInternal()
 	variantInitInfo.addMutation("PCF", ConfigSet::getSingleton().getRShadowMappingPcf());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
@@ -102,7 +102,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg.get());
 
 	bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
@@ -110,9 +110,9 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 3, getRenderer().getShadowMapping().getShadowmapRt());
 	bindStorage(cmdb, 0, 4, getRenderer().getClusterBinning().getClustersRebarToken());
 
-	cmdb->bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClampShadow);
-	cmdb->bindSampler(0, 7, getRenderer().getSamplers().m_trilinearRepeat);
+	cmdb->bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb->bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb->bindSampler(0, 7, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	if(m_quarterRez)
 	{
@@ -122,7 +122,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	{
 		rgraphCtx.bindTexture(0, 8, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	}
-	cmdb->bindTexture(0, 9, m_noiseImage->getTextureView());
+	cmdb->bindTexture(0, 9, &m_noiseImage->getTextureView());
 
 	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
@@ -132,7 +132,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	else
 	{
 		cmdb->setViewport(0, 0, m_rtDescr.m_width, m_rtDescr.m_height);
-		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+		cmdb->draw(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

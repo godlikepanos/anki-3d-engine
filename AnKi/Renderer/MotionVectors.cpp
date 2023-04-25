@@ -33,7 +33,7 @@ Error MotionVectors::initInternal()
 	variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	// RTs
 	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(
@@ -74,14 +74,15 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 	if(m_historyLengthTexturesImportedOnce) [[likely]]
 	{
-		m_runCtx.m_historyLengthWriteRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx]);
-		m_runCtx.m_historyLengthReadRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx]);
+		m_runCtx.m_historyLengthWriteRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx].get());
+		m_runCtx.m_historyLengthReadRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx].get());
 	}
 	else
 	{
 		m_runCtx.m_historyLengthWriteRtHandle =
-			rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx], TextureUsageBit::kAllSampled);
-		m_runCtx.m_historyLengthReadRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx], TextureUsageBit::kAllSampled);
+			rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx].get(), TextureUsageBit::kAllSampled);
+		m_runCtx.m_historyLengthReadRtHandle =
+			rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx].get(), TextureUsageBit::kAllSampled);
 
 		m_historyLengthTexturesImportedOnce = true;
 	}
@@ -123,9 +124,9 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg.get());
 
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(3));
@@ -158,7 +159,7 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 	{
 		cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
-		cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+		cmdb->draw(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

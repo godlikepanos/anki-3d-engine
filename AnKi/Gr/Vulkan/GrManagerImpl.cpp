@@ -537,6 +537,7 @@ Error GrManagerImpl::initInstance()
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
 	m_capabilities.m_textureBufferMaxRange = kMaxU32;
 	m_capabilities.m_computeSharedMemorySize = m_devProps.properties.limits.maxComputeSharedMemorySize;
+	m_capabilities.m_maxDrawIndirectCount = m_devProps.properties.limits.maxDrawIndirectCount;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
 	m_capabilities.m_minorApiVersion = vulkanMinor;
@@ -782,6 +783,11 @@ Error GrManagerImpl::initDevice()
 			else if(extensionName == VK_KHR_MAINTENANCE_4_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::kKHR_maintenance_4;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_draw_indirect_count;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 		}
@@ -1097,6 +1103,12 @@ Error GrManagerImpl::initDevice()
 		ci.pNext = &maintenance4Features;
 	}
 
+	if(!(m_extensions & VulkanExtensions::kKHR_draw_indirect_count) || m_capabilities.m_maxDrawIndirectCount < kMaxU32)
+	{
+		ANKI_VK_LOGE(VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME " not supported or too small maxDrawIndirectCount");
+		return Error::kFunctionFailed;
+	}
+
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
 
 	// Get VK_AMD_shader_info entry points
@@ -1338,7 +1350,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 
 	// Command buffer
 	const VkCommandBuffer handle = cmdb->getHandle();
-	cmdb->setFence(fence);
+	cmdb->setFence(fence.get());
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers = &handle;
 
@@ -1368,7 +1380,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 		++submit.waitSemaphoreCount;
 
 		// Refresh the fence because the semaphore can't be recycled until the current submission is done
-		userWaitSemaphore->setFence(fence);
+		userWaitSemaphore->setFence(fence.get());
 	}
 
 	if(userSignalSemaphore)
@@ -1399,7 +1411,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 			++submit.waitSemaphoreCount;
 
 			// Refresh the fence because the semaphore can't be recycled until the current submission is done
-			frame.m_acquireSemaphore->setFence(fence);
+			frame.m_acquireSemaphore->setFence(fence.get());
 
 			// Create the semaphore to signal
 			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
@@ -1411,7 +1423,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 			frame.m_presentFence = fence;
 
 			// Update the swapchain's fence
-			m_crntSwapchain->setFence(fence);
+			m_crntSwapchain->setFence(fence.get());
 
 			frame.m_queueWroteToSwapchainImage = cmdb->getVulkanQueueType();
 		}

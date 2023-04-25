@@ -49,7 +49,7 @@ void SkyboxComponent::setupSkyboxQueueElement(SkyboxQueueElement& queueElement) 
 {
 	if(m_type == SkyboxType::kImage2D)
 	{
-		queueElement.m_skyboxTexture = m_image->getTextureView().get();
+		queueElement.m_skyboxTexture = &m_image->getTextureView();
 	}
 	else
 	{

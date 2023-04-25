@@ -95,6 +95,7 @@ enum class VulkanExtensions : U32
 	kNVX_image_view_handle = 1 << 27,
 	kKHR_push_descriptor = 1 << 28,
 	kKHR_maintenance_4 = 1 << 29,
+	kKHR_draw_indirect_count = 1 << 30
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 

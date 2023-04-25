@@ -43,7 +43,7 @@ Error VolumetricLightingAccumulation::init()
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 	m_workgroupSize = variant->getWorkgroupSizes();
 
 	// Create RTs
@@ -65,8 +65,8 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	const U readRtIdx = getRenderer().getFrameCount() & 1;
 
-	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx], TextureUsageBit::kSampledFragment);
-	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx], TextureUsageBit::kNone);
+	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx].get(), TextureUsageBit::kSampledFragment);
+	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx].get(), TextureUsageBit::kNone);
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 
@@ -90,16 +90,16 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg.get());
 
 	// Bind all
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat);
-	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow);
+	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
-	cmdb->bindTexture(0, 4, m_noiseImage->getTextureView());
+	cmdb->bindTexture(0, 4, &m_noiseImage->getTextureView());
 
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 

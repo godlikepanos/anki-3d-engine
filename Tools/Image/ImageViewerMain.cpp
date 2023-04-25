@@ -31,7 +31,7 @@ public:
 	{
 		if(!m_textureView.isCreated())
 		{
-			m_textureView = m_imageResource->getTextureView();
+			m_textureView.reset(&m_imageResource->getTextureView());
 		}
 
 		return Error::kNone;
@@ -53,7 +53,7 @@ private:
 
 	void draw(CanvasPtr& canvas)
 	{
-		const Texture& grTex = *m_imageResource->getTexture().get();
+		const Texture& grTex = m_imageResource->getTexture();
 		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
 		ANKI_ASSERT(grTex.getTextureType() == TextureType::k2D || grTex.getTextureType() == TextureType::k3D);
 
@@ -64,7 +64,7 @@ private:
 
 			const ShaderProgramResourceVariant* variant;
 			m_imageProgram->getOrCreateVariant(variantInit, variant);
-			m_imageGrProgram = variant->getProgram();
+			m_imageGrProgram.reset(&variant->getProgram());
 		}
 
 		ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
@@ -143,7 +143,7 @@ private:
 			if(lastCrntMip != m_crntMip)
 			{
 				// Re-create the image view
-				TextureViewInitInfo viewInitInf(m_imageResource->getTexture());
+				TextureViewInitInfo viewInitInf(&m_imageResource->getTexture());
 				viewInitInf.m_firstMipmap = m_crntMip;
 				viewInitInf.m_mipmapCount = 1;
 				m_textureView = GrManager::getSingleton().newTextureView(viewInitInf);
@@ -287,8 +287,8 @@ public:
 
 		// Change window name
 		String title;
-		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(), image->getTexture()->getMipmapCount(),
-					  getFormatInfo(image->getTexture()->getFormat()).m_name);
+		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(), image->getTexture().getMipmapCount(),
+					  getFormatInfo(image->getTexture().getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node

@@ -28,7 +28,7 @@ public:
 
 	void bindClusteredObjectBuffer(CommandBufferPtr& cmdb, U32 set, U32 binding, ClusteredObjectType type) const
 	{
-		cmdb->bindStorageBuffer(set, binding, m_allClustererObjects, m_structureBufferOffsets[type],
+		cmdb->bindStorageBuffer(set, binding, m_allClustererObjects.get(), m_structureBufferOffsets[type],
 								kClusteredObjectSizes[type] * kMaxVisibleClusteredObjects[type]);
 	}
 

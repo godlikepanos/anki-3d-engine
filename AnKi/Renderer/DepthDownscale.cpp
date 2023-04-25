@@ -77,7 +77,7 @@ Error DepthDownscale::initInternal()
 
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProg = variant->getProgram();
+		m_grProg.reset(&variant->getProgram());
 	}
 	else
 	{
@@ -88,12 +88,12 @@ Error DepthDownscale::initInternal()
 
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProg = variant->getProgram();
+		m_grProg.reset(&variant->getProgram());
 
 		// 1st mip prog
 		variantInitInfo.addMutation("REDUCTION_SAMPLER", 1);
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_firstMipGrProg = variant->getProgram();
+		m_firstMipGrProg.reset(&variant->getProgram());
 	}
 
 	// Counter buffer
@@ -166,11 +166,11 @@ void DepthDownscale::importRenderTargets(RenderingContext& ctx)
 	// Import RT
 	if(m_hizTexImportedOnce)
 	{
-		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex);
+		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex.get());
 	}
 	else
 	{
-		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex, TextureUsageBit::kSampledFragment);
+		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex.get(), TextureUsageBit::kSampledFragment);
 		m_hizTexImportedOnce = true;
 	}
 }
@@ -241,14 +241,14 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	{
 		m_counterBufferZeroed = true;
 
-		cmdb->fillBuffer(m_counterBuffer, 0, kMaxPtrSize, 0);
+		cmdb->fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
 
 		const BufferBarrierInfo barrier = {m_counterBuffer.get(), BufferUsageBit::kTransferDestination, BufferUsageBit::kStorageComputeWrite, 0,
 										   kMaxPtrSize};
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 	}
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg.get());
 
 	varAU2(dispatchThreadGroupCountXY);
 	varAU2(workGroupOffset); // needed if Left and Top are not 0,0
@@ -295,10 +295,10 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindImage(0, 1, m_runCtx.m_hizRt, subresource);
 	}
 
-	cmdb->bindStorageBuffer(0, 2, m_counterBuffer, 0, kMaxPtrSize);
-	cmdb->bindStorageBuffer(0, 3, m_clientBuffer, 0, kMaxPtrSize);
+	cmdb->bindStorageBuffer(0, 2, m_counterBuffer.get(), 0, kMaxPtrSize);
+	cmdb->bindStorageBuffer(0, 3, m_clientBuffer.get(), 0, kMaxPtrSize);
 
-	cmdb->bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
 	rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 	cmdb->dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
@@ -312,9 +312,9 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 	{
 		rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 
-		cmdb->bindShaderProgram(m_firstMipGrProg);
+		cmdb->bindShaderProgram(m_firstMipGrProg.get());
 	}
 	else
 	{
@@ -324,24 +324,24 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 
 		if(m_reductionSampler.isCreated())
 		{
-			cmdb->bindSampler(0, 1, m_reductionSampler);
+			cmdb->bindSampler(0, 1, m_reductionSampler.get());
 		}
 		else
 		{
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		}
 
-		cmdb->bindShaderProgram(m_grProg);
+		cmdb->bindShaderProgram(m_grProg.get());
 	}
 
-	cmdb->bindStorageBuffer(0, 2, m_clientBuffer, 0, kMaxPtrSize);
+	cmdb->bindStorageBuffer(0, 2, m_clientBuffer.get(), 0, kMaxPtrSize);
 
 	const UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;
 	cmdb->setViewport(0, 0, size.x(), size.y());
-	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+	cmdb->draw(PrimitiveTopology::kTriangles, 3);
 }
 
 } // end namespace anki

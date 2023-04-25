@@ -47,10 +47,7 @@ Error LensFlare::initSprite()
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
 
 	// Load prog
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg));
-	const ShaderProgramResourceVariant* variant;
-	m_realProg->getOrCreateVariant(variant);
-	m_realGrProg = variant->getProgram();
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg, m_realGrProg));
 
 	return Error::kNone;
 }
@@ -68,7 +65,7 @@ Error LensFlare::initOcclusion()
 								UVec2(getRenderer().getInternalResolution().x() / 2 / 2, getRenderer().getInternalResolution().y() / 2 / 2));
 	const ShaderProgramResourceVariant* variant;
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
-	m_updateIndirectBuffGrProg = variant->getProgram();
+	m_updateIndirectBuffGrProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -79,7 +76,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 	U32 count = min<U32>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	ANKI_ASSERT(count > 0);
 
-	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
+	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg.get());
 
 	cmdb->setPushConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
@@ -93,7 +90,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 
 	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 	// Bind neareset because you don't need high quality
-	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp.get());
 	rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getHiZRt(), kHiZQuarterSurface);
 	cmdb->dispatchCompute(count, 1, 1);
 }
@@ -108,7 +105,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Import buffer
-	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_indirectBuff, BufferUsageBit::kNone);
+	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_indirectBuff.get(), BufferUsageBit::kNone);
 
 	// Update the indirect buffer
 	{
@@ -132,7 +129,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 
 	const U32 count = min<U32>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 
-	cmdb->bindShaderProgram(m_realGrProg);
+	cmdb->bindShaderProgram(m_realGrProg.get());
 	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 	cmdb->setDepthWrite(false);
 
@@ -171,10 +168,10 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 
 		// Render
 		ANKI_ASSERT(flareEl.m_textureView);
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearRepeat);
-		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)));
+		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb->bindTexture(0, 2, flareEl.m_textureView);
 
-		cmdb->drawArraysIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawIndirectArgs), m_indirectBuff);
+		cmdb->drawIndirect(PrimitiveTopology::kTriangleStrip, 1, i * sizeof(DrawIndirectArgs), m_indirectBuff.get());
 	}
 
 	// Restore state

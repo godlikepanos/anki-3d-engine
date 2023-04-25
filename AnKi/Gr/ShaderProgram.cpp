@@ -43,7 +43,7 @@ Bool ShaderProgramInitInfo::isValid() const
 	}
 
 	ShaderTypeBit rtMask = ShaderTypeBit::kNone;
-	for(const ShaderPtr& s : m_rayTracingShaders.m_rayGenShaders)
+	for(const Shader* s : m_rayTracingShaders.m_rayGenShaders)
 	{
 		if(s->getShaderType() != ShaderType::kRayGen)
 		{
@@ -52,7 +52,7 @@ Bool ShaderProgramInitInfo::isValid() const
 		rtMask |= ShaderTypeBit::kRayGen;
 	}
 
-	for(const ShaderPtr& s : m_rayTracingShaders.m_missShaders)
+	for(const Shader* s : m_rayTracingShaders.m_missShaders)
 	{
 		if(s->getShaderType() != ShaderType::kMiss)
 		{

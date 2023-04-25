@@ -17,9 +17,9 @@ namespace anki {
 class TextureViewInitInfo : public GrBaseInitInfo, public TextureSubresourceInfo
 {
 public:
-	TexturePtr m_texture;
+	Texture* m_texture = nullptr;
 
-	TextureViewInitInfo(TexturePtr tex, CString name = {})
+	TextureViewInitInfo(Texture* tex, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -38,8 +38,7 @@ public:
 	{
 	}
 
-	TextureViewInitInfo(TexturePtr tex, const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone,
-						CString name = {})
+	TextureViewInitInfo(Texture* tex, const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -53,7 +52,7 @@ public:
 		ANKI_ASSERT(isValid());
 	}
 
-	TextureViewInitInfo(TexturePtr tex, const TextureSubresourceInfo& subresource, CString name = {})
+	TextureViewInitInfo(Texture* tex, const TextureSubresourceInfo& subresource, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -63,7 +62,7 @@ public:
 
 	Bool isValid() const
 	{
-		return m_texture.isCreated() && m_texture->isSubresourceValid(*this);
+		return m_texture != nullptr && m_texture->isSubresourceValid(*this);
 	}
 };
 

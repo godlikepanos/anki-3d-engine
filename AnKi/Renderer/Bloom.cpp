@@ -54,7 +54,7 @@ Error Bloom::initExposure()
 
 	const ShaderProgramResourceVariant* variant;
 	m_exposure.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_exposure.m_grProg = variant->getProgram();
+	m_exposure.m_grProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -82,7 +82,7 @@ Error Bloom::initUpscale()
 
 	const ShaderProgramResourceVariant* variant;
 	m_upscale.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_upscale.m_grProg = variant->getProgram();
+	m_upscale.m_grProg.reset(&variant->getProgram());
 
 	// Textures
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
@@ -128,12 +128,12 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_exposure.m_grProg);
+			cmdb->bindShaderProgram(m_exposure.m_grProg.get());
 
 			TextureSubresourceInfo inputTexSubresource;
 			inputTexSubresource.m_firstMipmap = getRenderer().getDownscaleBlur().getMipmapCount() - 1;
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(0, 1, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
 			const Vec4 uniforms(ConfigSet::getSingleton().getRBloomThreshold(), ConfigSet::getSingleton().getRBloomScale(), 0.0f, 0.0f);
@@ -151,7 +151,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			{
 				cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 
-				cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+				cmdb->draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}
@@ -186,11 +186,11 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_upscale.m_grProg);
+			cmdb->bindShaderProgram(m_upscale.m_grProg.get());
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
-			cmdb->bindTexture(0, 2, m_upscale.m_lensDirtImage->getTextureView());
+			cmdb->bindTexture(0, 2, &m_upscale.m_lensDirtImage->getTextureView());
 
 			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
@@ -202,7 +202,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			{
 				cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 
-				cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+				cmdb->draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}

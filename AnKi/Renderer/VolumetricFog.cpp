@@ -33,7 +33,7 @@ Error VolumetricFog::init()
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 	m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
 	m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 
@@ -60,9 +60,9 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
 		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg);
+		cmdb->bindShaderProgram(m_grProg.get());
 
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getVolumetricLightingAccumulation().getRt());
 
 		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());

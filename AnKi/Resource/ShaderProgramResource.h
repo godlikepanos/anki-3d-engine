@@ -70,9 +70,9 @@ public:
 	~ShaderProgramResourceVariant();
 
 	/// @note On ray tracing program resources it points to the actual ray tracing program that contains everything.
-	const ShaderProgramPtr& getProgram() const
+	ShaderProgram& getProgram() const
 	{
-		return m_prog;
+		return *m_prog;
 	}
 
 	/// Return true if the the variable is active in this variant.

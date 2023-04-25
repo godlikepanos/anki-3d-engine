@@ -68,15 +68,15 @@ Error VrsSriGeneration::initInternal()
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg));
 	m_visualizeProg->getOrCreateVariant(variant);
-	m_visualizeGrProg = variant->getProgram();
+	m_visualizeGrProg.reset(&variant->getProgram());
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriDownscale.ankiprogbin", m_downscaleProg));
 	m_downscaleProg->getOrCreateVariant(variant);
-	m_downscaleGrProg = variant->getProgram();
+	m_downscaleGrProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -107,13 +107,13 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 
 	if(m_sriTexImportedOnce)
 	{
-		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex);
-		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex);
+		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex.get());
+		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex.get());
 	}
 	else
 	{
-		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex, TextureUsageBit::kFramebufferShadingRate);
-		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex, TextureUsageBit::kFramebufferShadingRate);
+		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex.get(), TextureUsageBit::kFramebufferShadingRate);
+		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex.get(), TextureUsageBit::kFramebufferShadingRate);
 		m_sriTexImportedOnce = true;
 	}
 }
@@ -138,10 +138,10 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_grProg);
+			cmdb->bindShaderProgram(m_grProg.get());
 
 			rgraphCtx.bindColorTexture(0, 0, getRenderer().getLightShading().getRt());
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
 			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), ConfigSet::getSingleton().getRVrsThreshold(), 0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));
@@ -164,10 +164,10 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_downscaleGrProg);
+			cmdb->bindShaderProgram(m_downscaleGrProg.get());
 
 			rgraphCtx.bindColorTexture(0, 0, m_runCtx.m_rt);
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
+			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_downscaledRt);
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
 			cmdb->setPushConstants(&pc, sizeof(pc));

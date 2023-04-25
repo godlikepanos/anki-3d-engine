@@ -64,7 +64,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	cmdb->setDepthWrite(false);
 
-	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
@@ -140,8 +140,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.729f, 0.635f, 0.196f, 1.0f), 1.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
 
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, ConstWeakArray<Vec3>(&tsl, 1), Vec4(1.0f),
-										   m_ditheredDepthTestOn, m_giProbeImage->getTextureView(),
-										   getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
+										   m_ditheredDepthTestOn, &m_giProbeImage->getTextureView(),
+										   getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -154,7 +154,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			color /= max(max(color.x(), color.y()), color.z());
 
 			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, el.m_worldPosition, color.xyz1(), m_ditheredDepthTestOn,
-										  m_pointLightImage->getTextureView(), getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
+										  &m_pointLightImage->getTextureView(), getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f),
+										  cmdb);
 		}
 
 		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
@@ -163,8 +164,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			color /= max(max(color.x(), color.y()), color.z());
 
 			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, el.m_worldTransform.getTranslationPart().xyz(),
-										  color.xyz1(), m_ditheredDepthTestOn, m_spotLightImage->getTextureView(),
-										  getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
+										  color.xyz1(), m_ditheredDepthTestOn, &m_spotLightImage->getTextureView(),
+										  getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -188,8 +189,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 			const Vec3 pos = el.m_obbCenter;
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-										   m_ditheredDepthTestOn, m_decalImage->getTextureView(), getRenderer().getSamplers().m_trilinearRepeatAniso,
-										   Vec2(0.75f), cmdb);
+										   m_ditheredDepthTestOn, &m_decalImage->getTextureView(),
+										   getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
 		}
 	}
 
@@ -212,8 +213,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
 
 			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, ConstWeakArray<Vec3>(&el.m_worldPosition, 1),
-										   Vec4(1.0f), m_ditheredDepthTestOn, m_reflectionImage->getTextureView(),
-										   getRenderer().getSamplers().m_trilinearRepeatAniso, Vec2(0.75f), cmdb);
+										   Vec4(1.0f), m_ditheredDepthTestOn, &m_reflectionImage->getTextureView(),
+										   getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
 		}
 	}
 
