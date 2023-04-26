@@ -26,8 +26,10 @@ void GenericCompute::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute);
 }
 
-void GenericCompute::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void GenericCompute::run([[maybe_unused]] const RenderingContext& ctx, [[maybe_unused]] RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_ASSERT(!"TODO");
+#if 0
 	ANKI_ASSERT(ctx.m_renderQueue->m_genericGpuComputeJobs.getSize() > 0);
 
 	GenericGpuComputeJobQueueElementContext elementCtx;
@@ -47,6 +49,7 @@ void GenericCompute::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		ANKI_ASSERT(element.m_callback);
 		element.m_callback(elementCtx, element.m_userData);
 	}
+#endif
 }
 
 } // end namespace anki

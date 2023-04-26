@@ -20,7 +20,7 @@ class LensFlare : public RendererObject
 public:
 	Error init();
 
-	void runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb);
+	void runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb);
 
 	void populateRenderGraph(RenderingContext& ctx);
 

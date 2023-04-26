@@ -122,11 +122,11 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg.get());
+	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(3));
@@ -157,9 +157,9 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
-		cmdb->draw(PrimitiveTopology::kTriangles, 3);
+		cmdb.draw(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

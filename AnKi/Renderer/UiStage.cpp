@@ -21,7 +21,7 @@ Error UiStage::init()
 	return Error::kNone;
 }
 
-void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb)
+void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBuffer& cmdb)
 {
 	// Early exit
 	if(ctx.m_renderQueue->m_uis.getSize() == 0)
@@ -43,9 +43,9 @@ void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPt
 	m_canvas->appendToCommandBuffer(cmdb);
 
 	// UI messes with the state, restore it
-	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-	cmdb->setBlendOperation(0, BlendOperation::kAdd);
-	cmdb->setCullMode(FaceSelectionBit::kBack);
+	cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb.setBlendOperation(0, BlendOperation::kAdd);
+	cmdb.setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

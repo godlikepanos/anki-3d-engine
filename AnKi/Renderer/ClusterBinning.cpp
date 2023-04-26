@@ -73,9 +73,9 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(m_runCtx.m_rebarHandle, BufferUsageBit::kStorageComputeWrite);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_grProg.get());
 
 		bindUniforms(cmdb, 0, 0, m_runCtx.m_clusteredShadingUniformsToken);
 		bindStorage(cmdb, 0, 1, m_runCtx.m_clustersToken);
@@ -94,7 +94,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		clusterObjectCounts += rqueue.m_giProbes.getSize();
 		clusterObjectCounts += rqueue.m_fogDensityVolumes.getSize();
 		clusterObjectCounts += rqueue.m_decals.getSize();
-		cmdb->dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
+		cmdb.dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
 	});
 }
 

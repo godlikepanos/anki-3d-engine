@@ -167,12 +167,12 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			const UVec2 viewport = getRenderer().getInternalResolution() / 2u;
 
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_vrs.m_grProg.get());
+			cmdb.bindShaderProgram(m_vrs.m_grProg.get());
 
 			rgraphCtx.bindTexture(0, 0, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_sriRt);
 
 			class
@@ -185,7 +185,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			pc.m_v4 = Vec4(1.0f / Vec2(viewport), ConfigSet::getSingleton().getRIndirectDiffuseVrsDistanceThreshold(), 0.0f);
 			pc.m_invertedProjectionJitter = ctx.m_matrices.m_invertedProjectionJitter;
 
-			cmdb->setPushConstants(&pc, sizeof(pc));
+			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			dispatchPPCompute(cmdb, m_vrs.m_sriTexelDimension, m_vrs.m_sriTexelDimension, viewport.x(), viewport.y());
 		});
@@ -250,14 +250,14 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[kRead], readUsage);
 
 		prpass->setWork([this, &ctx, enableVrs](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-			cmdb->bindShaderProgram(m_main.m_grProg.get());
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			cmdb.bindShaderProgram(m_main.m_grProg.get());
 
 			bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 			getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kGlobalIlluminationProbe);
 			bindStorage(cmdb, 0, 2, getRenderer().getClusterBinning().getClustersRebarToken());
 
-			cmdb->bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));
 
 			TextureSubresourceInfo hizSubresource;
@@ -273,7 +273,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindImage(0, 10, m_runCtx.m_mainRtHandles[kWrite]);
 			}
 
-			cmdb->bindAllBindless(1);
+			cmdb.bindAllBindless(1);
 
 			// Bind uniforms
 			IndirectDiffuseUniforms unis;
@@ -286,7 +286,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_sampleCountf = F32(unis.m_sampleCount);
 			unis.m_ssaoBias = ConfigSet::getSingleton().getRIndirectDiffuseSsaoBias();
 			unis.m_ssaoStrength = ConfigSet::getSingleton().getRIndirectDiffuseSsaoStrength();
-			cmdb->setPushConstants(&unis, sizeof(unis));
+			cmdb.setPushConstants(&unis, sizeof(unis));
 
 			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
@@ -294,14 +294,14 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+				cmdb.setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
 
 				if(enableVrs)
 				{
-					cmdb->setVrsRate(VrsRate::k1x1);
+					cmdb.setVrsRate(VrsRate::k1x1);
 				}
 
-				cmdb->draw(PrimitiveTopology::kTriangles, 3);
+				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}
@@ -338,10 +338,10 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[!readIdx], writeUsage);
 
 		prpass->setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-			cmdb->bindShaderProgram(m_denoise.m_grProgs[dir].get());
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			cmdb.bindShaderProgram(m_denoise.m_grProgs[dir].get());
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_mainRtHandles[readIdx]);
 			TextureSubresourceInfo hizSubresource;
 			hizSubresource.m_mipmapCount = 1;
@@ -359,7 +359,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_sampleCountDiv2 = F32(ConfigSet::getSingleton().getRIndirectDiffuseDenoiseSampleCount());
 			unis.m_sampleCountDiv2 = max(1.0f, std::round(unis.m_sampleCountDiv2 / 2.0f));
 
-			cmdb->setPushConstants(&unis, sizeof(unis));
+			cmdb.setPushConstants(&unis, sizeof(unis));
 
 			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
@@ -367,9 +367,9 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				cmdb->setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
+				cmdb.setViewport(0, 0, unis.m_viewportSize.x(), unis.m_viewportSize.y());
 
-				cmdb->draw(PrimitiveTopology::kTriangles, 3);
+				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}

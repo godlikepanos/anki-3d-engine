@@ -115,14 +115,14 @@ Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 
 		pass.setFramebufferInfo(m_fbDescr, {presentRt});
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-			cmdb->setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 
-			cmdb->bindShaderProgram(m_blitGrProg.get());
-			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp.get());
+			cmdb.bindShaderProgram(m_blitGrProg.get());
+			cmdb.bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
 
-			cmdb->draw(PrimitiveTopology::kTriangles, 3);
+			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		});
 
 		pass.newTextureDependency(presentRt, TextureUsageBit::kFramebufferWrite);

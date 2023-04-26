@@ -173,7 +173,7 @@ void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
 	ImGui::PushFont(&font->getImFont(fontHeight));
 }
 
-void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
+void Canvas::appendToCommandBuffer(CommandBuffer& cmdb)
 {
 	appendToCommandBufferInternal(cmdb);
 
@@ -183,7 +183,7 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	m_references.destroy();
 }
 
-void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
+void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 {
 	ImGui::PopFont();
 	ImGui::Render();
@@ -213,19 +213,19 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		}
 	}
 
-	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
-	cmdb->setCullMode(FaceSelectionBit::kNone);
+	cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
+	cmdb.setCullMode(FaceSelectionBit::kNone);
 
 	const F32 fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
-	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
+	cmdb.setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb->bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(ImDrawVert));
-	cmdb->setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
-	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
-	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
+	cmdb.bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(ImDrawVert));
+	cmdb.setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
+	cmdb.setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
+	cmdb.setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb->bindIndexBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), indicesToken.m_offset, IndexType::kU16);
+	cmdb.bindIndexBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), indicesToken.m_offset, IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports
@@ -267,7 +267,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 
 					// Apply scissor/clipping rectangle
-					cmdb->setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()), U32(clipRect.w() - clipRect.y()));
+					cmdb.setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()), U32(clipRect.w() - clipRect.y()));
 
 					UiImageId id(pcmd.TextureId);
 					const UiImageIdExtra* idExtra = nullptr;
@@ -285,23 +285,22 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					// Bind program
 					if(idExtra && idExtra->m_customProgram.isCreated())
 					{
-						cmdb->bindShaderProgram(idExtra->m_customProgram.get());
+						cmdb.bindShaderProgram(idExtra->m_customProgram.get());
 					}
 					else if(textureView.isCreated())
 					{
-						cmdb->bindShaderProgram(m_grProgs[kRgbaTex].get());
+						cmdb.bindShaderProgram(m_grProgs[kRgbaTex].get());
 					}
 					else
 					{
-						cmdb->bindShaderProgram(m_grProgs[kNoTex].get());
+						cmdb.bindShaderProgram(m_grProgs[kNoTex].get());
 					}
 
 					// Bindings
 					if(textureView.isCreated())
 					{
-						cmdb->bindSampler(0, 0,
-										  (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
-						cmdb->bindTexture(0, 1, textureView.get());
+						cmdb.bindSampler(0, 0, (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
+						cmdb.bindTexture(0, 1, textureView.get());
 					}
 
 					// Push constants
@@ -323,10 +322,10 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 
 						extraPushConstantsSize = idExtra->m_extraPushConstantsSize;
 					}
-					cmdb->setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
+					cmdb.setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
 
 					// Draw
-					cmdb->drawIndexed(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
+					cmdb.drawIndexed(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
 				}
 			}
 			idxOffset += pcmd.ElemCount;
@@ -335,8 +334,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-	cmdb->setCullMode(FaceSelectionBit::kBack);
+	cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb.setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

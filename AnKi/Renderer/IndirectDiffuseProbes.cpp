@@ -328,7 +328,7 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
 	I32 start, end;
@@ -348,8 +348,8 @@ void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx,
 		if(localStart < localEnd)
 		{
 			const U32 viewportX = faceIdx * m_tileSize;
-			cmdb->setViewport(viewportX, 0, m_tileSize, m_tileSize);
-			cmdb->setScissor(viewportX, 0, m_tileSize, m_tileSize);
+			cmdb.setViewport(viewportX, 0, m_tileSize, m_tileSize);
+			cmdb.setScissor(viewportX, 0, m_tileSize, m_tileSize);
 
 			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
@@ -387,8 +387,8 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 	start = I32(startu);
 	end = I32(endu);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
 	I32 drawcallCount = 0;
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
@@ -406,8 +406,8 @@ void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgra
 		if(localStart < localEnd)
 		{
 			const U32 rez = m_shadowMapping.m_rtDescr.m_height;
-			cmdb->setViewport(rez * faceIdx, 0, rez, rez);
-			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+			cmdb.setViewport(rez * faceIdx, 0, rez, rez);
+			cmdb.setScissor(rez * faceIdx, 0, rez, rez);
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 
@@ -433,7 +433,7 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
@@ -441,8 +441,8 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
 		const U32 rez = m_tileSize;
-		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
-		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
+		cmdb.setScissor(rez * faceIdx, 0, rez, rez);
+		cmdb.setViewport(rez * faceIdx, 0, rez, rez);
 
 		// Draw light shading
 		TraditionalDeferredLightShadingDrawInfo dsInfo;
@@ -459,7 +459,7 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 		dsInfo.m_directionalLight = (rqueue.m_directionalLight.isEnabled()) ? &rqueue.m_directionalLight : nullptr;
 		dsInfo.m_pointLights = rqueue.m_pointLights;
 		dsInfo.m_spotLights = rqueue.m_spotLights;
-		dsInfo.m_commandBuffer = cmdb;
+		dsInfo.m_commandBuffer = &cmdb;
 		dsInfo.m_gbufferRenderTargets[0] = giCtx.m_gbufferColorRts[0];
 		dsInfo.m_gbufferRenderTargets[1] = giCtx.m_gbufferColorRts[1];
 		dsInfo.m_gbufferRenderTargets[2] = giCtx.m_gbufferColorRts[2];
@@ -479,14 +479,14 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 {
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
-	cmdb->bindShaderProgram(m_irradiance.m_grProg.get());
+	cmdb.bindShaderProgram(m_irradiance.m_grProg.get());
 
 	// Bind resources
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 	rgraphCtx.bindColorTexture(0, 1, giCtx.m_lightShadingRt);
 
 	for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
@@ -505,10 +505,10 @@ void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, Inte
 
 	unis.m_volumeTexel = IVec3(probe.m_cellToRefresh.x(), probe.m_cellToRefresh.y(), probe.m_cellToRefresh.z());
 	unis.m_nextTexelOffsetInU = probe.m_cellCounts.x();
-	cmdb->setPushConstants(&unis, sizeof(unis));
+	cmdb.setPushConstants(&unis, sizeof(unis));
 
 	// Dispatch
-	cmdb->dispatchCompute(1, 1, 1);
+	cmdb.dispatchCompute(1, 1, 1);
 }
 
 } // end namespace anki

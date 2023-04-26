@@ -117,9 +117,9 @@ class RenderPassWorkContext
 	friend class RenderGraph;
 
 public:
-	CommandBufferPtr m_commandBuffer;
-	U32 m_currentSecondLevelCommandBufferIndex ANKI_DEBUG_CODE(= 0);
-	U32 m_secondLevelCommandBufferCount ANKI_DEBUG_CODE(= 0);
+	CommandBuffer* m_commandBuffer = nullptr;
+	U32 m_currentSecondLevelCommandBufferIndex = 0;
+	U32 m_secondLevelCommandBufferCount = 0;
 
 	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 

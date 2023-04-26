@@ -693,7 +693,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {
-			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer.get());
+			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer);
 		});
 	}
 }

@@ -234,21 +234,21 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	// Zero the counter buffer before everything else
 	if(!m_counterBufferZeroed) [[unlikely]]
 	{
 		m_counterBufferZeroed = true;
 
-		cmdb->fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
+		cmdb.fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
 
 		const BufferBarrierInfo barrier = {m_counterBuffer.get(), BufferUsageBit::kTransferDestination, BufferUsageBit::kStorageComputeWrite, 0,
 										   kMaxPtrSize};
-		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
+		cmdb.setPipelineBarrier({}, {&barrier, 1}, {});
 	}
 
-	cmdb->bindShaderProgram(m_grProg.get());
+	cmdb.bindShaderProgram(m_grProg.get());
 
 	varAU2(dispatchThreadGroupCountXY);
 	varAU2(workGroupOffset); // needed if Left and Top are not 0,0
@@ -263,7 +263,7 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 	pc.m_srcTexSizeOverOne = 1.0f / Vec2(getRenderer().getInternalResolution());
 	pc.m_lastMipWidth = m_lastMipSize.x();
 
-	cmdb->setPushConstants(&pc, sizeof(pc));
+	cmdb.setPushConstants(&pc, sizeof(pc));
 
 	constexpr U32 maxMipsSpdCanProduce = 12;
 	for(U32 mip = 0; mip < maxMipsSpdCanProduce; ++mip)
@@ -295,26 +295,26 @@ void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindImage(0, 1, m_runCtx.m_hizRt, subresource);
 	}
 
-	cmdb->bindStorageBuffer(0, 2, m_counterBuffer.get(), 0, kMaxPtrSize);
-	cmdb->bindStorageBuffer(0, 3, m_clientBuffer.get(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(0, 2, m_counterBuffer.get(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(0, 3, m_clientBuffer.get(), 0, kMaxPtrSize);
 
-	cmdb->bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
 	rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	cmdb->dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
+	cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 }
 
 void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	if(mip == 0)
 	{
 		rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 
-		cmdb->bindShaderProgram(m_firstMipGrProg.get());
+		cmdb.bindShaderProgram(m_firstMipGrProg.get());
 	}
 	else
 	{
@@ -324,24 +324,24 @@ void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
 
 		if(m_reductionSampler.isCreated())
 		{
-			cmdb->bindSampler(0, 1, m_reductionSampler.get());
+			cmdb.bindSampler(0, 1, m_reductionSampler.get());
 		}
 		else
 		{
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		}
 
-		cmdb->bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_grProg.get());
 	}
 
-	cmdb->bindStorageBuffer(0, 2, m_clientBuffer.get(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(0, 2, m_clientBuffer.get(), 0, kMaxPtrSize);
 
 	const UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
-	cmdb->setPushConstants(&pc, sizeof(pc));
+	cmdb.setPushConstants(&pc, sizeof(pc));
 
 	const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;
-	cmdb->setViewport(0, 0, size.x(), size.y());
-	cmdb->draw(PrimitiveTopology::kTriangles, 3);
+	cmdb.setViewport(0, 0, size.x(), size.y());
+	cmdb.draw(PrimitiveTopology::kTriangles, 3);
 }
 
 } // end namespace anki

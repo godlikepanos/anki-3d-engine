@@ -136,15 +136,15 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), TextureUsageBit::kSampledCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_grProg.get());
+			cmdb.bindShaderProgram(m_grProg.get());
 
 			rgraphCtx.bindColorTexture(0, 0, getRenderer().getLightShading().getRt());
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
 			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), ConfigSet::getSingleton().getRVrsThreshold(), 0.0f);
-			cmdb->setPushConstants(&pc, sizeof(pc));
+			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
 			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, getRenderer().getInternalResolution().x(),
@@ -162,15 +162,15 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			const UVec2 rezDownscaled = (getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_downscaleGrProg.get());
+			cmdb.bindShaderProgram(m_downscaleGrProg.get());
 
 			rgraphCtx.bindColorTexture(0, 0, m_runCtx.m_rt);
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_downscaledRt);
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
-			cmdb->setPushConstants(&pc, sizeof(pc));
+			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			dispatchPPCompute(cmdb, 8, 8, rezDownscaled.x(), rezDownscaled.y());
 		});

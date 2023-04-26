@@ -74,15 +74,15 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(m_runCtx.m_hiZRt, TextureUsageBit::kImageComputeWrite, firstMipSubresource);
 
 		pass.setWork([this](RenderPassWorkContext& rctx) {
-			CommandBufferPtr& cmdb = rctx.m_commandBuffer;
+			CommandBuffer& cmdb = *rctx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_clearHiZ.m_grProg.get());
+			cmdb.bindShaderProgram(m_clearHiZ.m_grProg.get());
 
 			TextureSubresourceInfo firstMipSubresource;
 			rctx.bindImage(0, 0, m_runCtx.m_hiZRt, firstMipSubresource);
 
 			UVec4 clearColor(0u);
-			cmdb->setPushConstants(&clearColor, sizeof(clearColor));
+			cmdb.setPushConstants(&clearColor, sizeof(clearColor));
 
 			dispatchPPCompute(cmdb, 8, 8, 1, m_hiZRtDescr.m_width, m_hiZRtDescr.m_height, 1);
 		});
@@ -95,15 +95,15 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureUsageBit::kSampledCompute);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rctx) {
-			CommandBufferPtr& cmdb = rctx.m_commandBuffer;
+			CommandBuffer& cmdb = *rctx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_reproj.m_grProg.get());
+			cmdb.bindShaderProgram(m_reproj.m_grProg.get());
 
 			rctx.bindTexture(0, 0, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			TextureSubresourceInfo firstMipSubresource;
 			rctx.bindImage(0, 1, m_runCtx.m_hiZRt, firstMipSubresource);
 
-			cmdb->setPushConstants(&ctx.m_matrices.m_reprojection, sizeof(Mat4));
+			cmdb.setPushConstants(&ctx.m_matrices.m_reprojection, sizeof(Mat4));
 
 			dispatchPPCompute(cmdb, 8, 8, 1, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
 		});
@@ -123,7 +123,7 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			TextureSubresourceInfo firstMipSubresource;
 			const U32 mipsToCompute = m_hiZRtDescr.m_mipmapCount - 1;
@@ -133,14 +133,14 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 			{
 				m_mipmapping.m_counterBufferZeroed = true;
 
-				cmdb->fillBuffer(m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize, 0);
+				cmdb.fillBuffer(m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize, 0);
 
 				const BufferBarrierInfo barrier = {m_mipmapping.m_counterBuffer.get(), BufferUsageBit::kTransferDestination,
 												   BufferUsageBit::kStorageComputeWrite, 0, kMaxPtrSize};
-				cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
+				cmdb.setPipelineBarrier({}, {&barrier, 1}, {});
 			}
 
-			cmdb->bindShaderProgram(m_mipmapping.m_grProg.get());
+			cmdb.bindShaderProgram(m_mipmapping.m_grProg.get());
 
 			varAU2(dispatchThreadGroupCountXY);
 			varAU2(workGroupOffset); // needed if Left and Top are not 0,0
@@ -159,7 +159,7 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 			pc.m_threadGroupCount = numWorkGroupsAndMips[0];
 			pc.m_mipmapCount = numWorkGroupsAndMips[1];
 
-			cmdb->setPushConstants(&pc, sizeof(pc));
+			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			constexpr U32 maxMipsSpdCanProduce = 12;
 			for(U32 mip = 0; mip < maxMipsSpdCanProduce; ++mip)
@@ -191,11 +191,11 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindImage(0, 1, m_runCtx.m_hiZRt, subresource);
 			}
 
-			cmdb->bindStorageBuffer(0, 2, m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize);
+			cmdb.bindStorageBuffer(0, 2, m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize);
 
 			rgraphCtx.bindTexture(0, 3, m_runCtx.m_hiZRt, firstMipSubresource);
 
-			cmdb->dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
+			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
 	}
 }

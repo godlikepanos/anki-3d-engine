@@ -58,11 +58,11 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
-		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getVolumetricLightingAccumulation().getRt());
 
 		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
@@ -78,7 +78,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 		regs.m_volumeSize = UVec3(m_volumeSize);
 		regs.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
 
-		cmdb->setPushConstants(&regs, sizeof(regs));
+		cmdb.setPushConstants(&regs, sizeof(regs));
 
 		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_volumeSize[0], m_volumeSize[1]);
 	});

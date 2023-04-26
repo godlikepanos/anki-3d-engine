@@ -322,7 +322,7 @@ public:
 	}
 
 	ANKI_FORCE_INLINE void drawIndexedIndirectCountInternal(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset,
-															Buffer* countBuffer, PtrSize countBufferOffset)
+															Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
 	{
 		m_state.setPrimitiveTopology(topology);
 		drawcallCommon();
@@ -334,8 +334,10 @@ public:
 		ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
 		ANKI_ASSERT((countBufferOffset % 4) == 0);
 
+		ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
+
 		vkCmdDrawIndexedIndirectCountKHR(m_handle, argBufferImpl.getHandle(), argBufferOffset, countBufferImpl.getHandle(), countBufferOffset,
-										 kMaxU32, sizeof(DrawIndexedIndirectArgs));
+										 maxDrawCount, sizeof(DrawIndexedIndirectArgs));
 	}
 
 	void dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ);

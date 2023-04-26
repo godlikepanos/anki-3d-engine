@@ -138,22 +138,22 @@ Error LightShading::initApplyIndirect()
 
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
-		cmdb->setVrsRate(VrsRate::k1x1);
+		cmdb.setVrsRate(VrsRate::k1x1);
 	}
 
 	// Do light shading first
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
-		cmdb->bindShaderProgram(m_lightShading.m_grProg[getRenderer().getRtShadowsEnabled()].get());
-		cmdb->setDepthWrite(false);
+		cmdb.bindShaderProgram(m_lightShading.m_grProg[getRenderer().getRtShadowsEnabled()].get());
+		cmdb.setDepthWrite(false);
 
 		// Bind all
 		bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
@@ -164,8 +164,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		bindStorage(cmdb, 0, 4, getRenderer().getClusterBinning().getClustersRebarToken());
 
-		cmdb->bindSampler(0, 5, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb->bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 9, getRenderer().getGBuffer().getColorRt(2));
@@ -187,11 +187,11 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	// Apply indirect
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
-		cmdb->setDepthWrite(false);
-		cmdb->bindShaderProgram(m_applyIndirect.m_grProg.get());
+		cmdb.setDepthWrite(false);
+		cmdb.bindShaderProgram(m_applyIndirect.m_grProg.get());
 
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 2, getRenderer().getIndirectDiffuse().getRt());
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getIndirectSpecular().getRt());
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getDepthDownscale().getHiZRt());
@@ -199,38 +199,38 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 6, getRenderer().getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
-		cmdb->bindTexture(0, 9, &getRenderer().getProbeReflections().getIntegrationLut());
+		cmdb.bindTexture(0, 9, &getRenderer().getProbeReflections().getIntegrationLut());
 
 		bindUniforms(cmdb, 0, 10, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 
 		const Vec4 pc(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, 0.0f, 0.0f);
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb.setPushConstants(&pc, sizeof(pc));
 
-		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
 
 		drawQuad(cmdb);
 
 		// Restore state
-		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	}
 
 	// Skybox
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
-		cmdb->setDepthCompareOperation(CompareOperation::kEqual);
+		cmdb.setDepthCompareOperation(CompareOperation::kEqual);
 
 		const Bool isSolidColor = ctx.m_renderQueue->m_skybox.m_skyboxTexture == nullptr;
 
 		if(isSolidColor)
 		{
-			cmdb->bindShaderProgram(m_skybox.m_grProgs[0].get());
+			cmdb.bindShaderProgram(m_skybox.m_grProgs[0].get());
 
 			const Vec4 color(ctx.m_renderQueue->m_skybox.m_solidColor, 0.0);
-			cmdb->setPushConstants(&color, sizeof(color));
+			cmdb.setPushConstants(&color, sizeof(color));
 		}
 		else
 		{
-			cmdb->bindShaderProgram(m_skybox.m_grProgs[1].get());
+			cmdb.bindShaderProgram(m_skybox.m_grProgs[1].get());
 
 			class
 			{
@@ -243,26 +243,26 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			pc.m_invertedViewProjectionJitter = ctx.m_matrices.m_invertedViewProjectionJitter;
 			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 
-			cmdb->setPushConstants(&pc, sizeof(pc));
+			cmdb.setPushConstants(&pc, sizeof(pc));
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
-			cmdb->bindTexture(0, 1, ctx.m_renderQueue->m_skybox.m_skyboxTexture);
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
+			cmdb.bindTexture(0, 1, ctx.m_renderQueue->m_skybox.m_skyboxTexture);
 		}
 
 		drawQuad(cmdb);
 
 		// Restore state
-		cmdb->setDepthCompareOperation(CompareOperation::kLess);
+		cmdb.setDepthCompareOperation(CompareOperation::kLess);
 	}
 
 	// Do the fog apply
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == rgraphCtx.m_secondLevelCommandBufferCount - 1u)
 	{
-		cmdb->bindShaderProgram(m_applyFog.m_grProg.get());
+		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
 
 		// Bind all
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 
 		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getVolumetricFog().getRt());
@@ -277,21 +277,21 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		regs.m_near = ctx.m_renderQueue->m_cameraNear;
 		regs.m_far = ctx.m_renderQueue->m_cameraFar;
 
-		cmdb->setPushConstants(&regs, sizeof(regs));
+		cmdb.setPushConstants(&regs, sizeof(regs));
 
 		// finalPixelColor = pixelWithoutFog * transmitance + inScattering (see the shader)
-		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha);
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha);
 
 		drawQuad(cmdb);
 
 		// Reset state
-		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	}
 
 	// Forward shading last
 	if(enableVrs)
 	{
-		cmdb->setVrsRate(VrsRate::k2x2);
+		cmdb.setVrsRate(VrsRate::k2x2);
 	}
 
 	getRenderer().getForwardShading().run(ctx, rgraphCtx);
@@ -299,7 +299,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	if(enableVrs)
 	{
 		// Restore
-		cmdb->setVrsRate(VrsRate::k1x1);
+		cmdb.setVrsRate(VrsRate::k1x1);
 	}
 }
 

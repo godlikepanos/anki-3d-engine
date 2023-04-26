@@ -146,14 +146,14 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 
 void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg.get());
+	cmdb.bindShaderProgram(m_grProg.get());
 
 	const U32 vpWidth = m_rtTex->getWidth() >> passIdx;
 	const U32 vpHeight = m_rtTex->getHeight() >> passIdx;
 
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 	if(passIdx > 0)
 	{
@@ -172,7 +172,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 
 	const Bool revertTonemap = passIdx == 0 && !getRenderer().getScale().hasUpscaledHdrRt();
 	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
-	cmdb->setPushConstants(&fbSize, sizeof(fbSize));
+	cmdb.setPushConstants(&fbSize, sizeof(fbSize));
 
 	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
@@ -184,9 +184,9 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, vpWidth, vpHeight);
+		cmdb.setViewport(0, 0, vpWidth, vpHeight);
 
-		cmdb->draw(PrimitiveTopology::kTriangles, 3);
+		cmdb.draw(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

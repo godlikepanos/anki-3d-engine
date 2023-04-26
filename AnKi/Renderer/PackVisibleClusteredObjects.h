@@ -26,10 +26,10 @@ public:
 		return m_allClustererObjectsHandle;
 	}
 
-	void bindClusteredObjectBuffer(CommandBufferPtr& cmdb, U32 set, U32 binding, ClusteredObjectType type) const
+	void bindClusteredObjectBuffer(CommandBuffer& cmdb, U32 set, U32 binding, ClusteredObjectType type) const
 	{
-		cmdb->bindStorageBuffer(set, binding, m_allClustererObjects.get(), m_structureBufferOffsets[type],
-								kClusteredObjectSizes[type] * kMaxVisibleClusteredObjects[type]);
+		cmdb.bindStorageBuffer(set, binding, m_allClustererObjects.get(), m_structureBufferOffsets[type],
+							   kClusteredObjectSizes[type] * kMaxVisibleClusteredObjects[type]);
 	}
 
 private:
@@ -44,7 +44,7 @@ private:
 	U32 m_threadGroupSize = 0;
 
 	template<typename TClustererType, ClusteredObjectType kType, typename TRenderQueueElement>
-	void dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue, CommandBufferPtr& cmdb);
+	void dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue, CommandBuffer& cmdb);
 };
 /// @}
 

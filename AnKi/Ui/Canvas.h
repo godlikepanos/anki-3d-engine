@@ -63,7 +63,7 @@ public:
 		ImGui::PopFont();
 	}
 
-	void appendToCommandBuffer(CommandBufferPtr cmdb);
+	void appendToCommandBuffer(CommandBuffer& cmdb);
 	/// @}
 
 private:
@@ -87,7 +87,7 @@ private:
 
 	UiList<UiObjectPtr> m_references;
 
-	void appendToCommandBufferInternal(CommandBufferPtr& cmdb);
+	void appendToCommandBufferInternal(CommandBuffer& cmdb);
 };
 /// @}
 

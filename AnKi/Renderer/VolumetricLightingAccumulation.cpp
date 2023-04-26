@@ -88,18 +88,18 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg.get());
+	cmdb.bindShaderProgram(m_grProg.get());
 
 	// Bind all
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
-	cmdb->bindTexture(0, 4, &m_noiseImage->getTextureView());
+	cmdb.bindTexture(0, 4, &m_noiseImage->getTextureView());
 
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
@@ -113,7 +113,7 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 11, ClusteredObjectType::kFogDensityVolume);
 	bindStorage(cmdb, 0, 12, getRenderer().getClusterBinning().getClustersRebarToken());
 
-	cmdb->bindAllBindless(1);
+	cmdb.bindAllBindless(1);
 
 	VolumetricLightingUniforms unis;
 	const SkyboxQueueElement& queueEl = ctx.m_renderQueue->m_skybox;
@@ -133,7 +133,7 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	}
 	unis.m_volumeSize = UVec3(m_volumeSize);
 	unis.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
-	cmdb->setPushConstants(&unis, sizeof(unis));
+	cmdb.setPushConstants(&unis, sizeof(unis));
 
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 }

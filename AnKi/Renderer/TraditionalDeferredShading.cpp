@@ -142,10 +142,10 @@ void TraditionalDeferredLightShading::createProxyMeshes()
 	GrManager::getSingleton().finish();
 }
 
-void TraditionalDeferredLightShading::bindVertexIndexBuffers(ProxyType proxyType, CommandBufferPtr& cmdb, U32& indexCount) const
+void TraditionalDeferredLightShading::bindVertexIndexBuffers(ProxyType proxyType, CommandBuffer& cmdb, U32& indexCount) const
 {
 	// Attrib
-	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
+	cmdb.setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 
 	// Vert buff
 	PtrSize offset;
@@ -157,7 +157,7 @@ void TraditionalDeferredLightShading::bindVertexIndexBuffers(ProxyType proxyType
 	{
 		offset = sizeof(kIcosphereVertices);
 	}
-	cmdb->bindVertexBuffer(0, m_proxyVolumesBuffer.get(), offset, sizeof(Vec3));
+	cmdb.bindVertexBuffer(0, m_proxyVolumesBuffer.get(), offset, sizeof(Vec3));
 
 	// Idx buff
 	if(proxyType == ProxyType::kProxySphere)
@@ -171,30 +171,30 @@ void TraditionalDeferredLightShading::bindVertexIndexBuffers(ProxyType proxyType
 		indexCount = sizeof(kConeIndices) / sizeof(U16);
 	}
 
-	cmdb->bindIndexBuffer(m_proxyVolumesBuffer.get(), offset, IndexType::kU16);
+	cmdb.bindIndexBuffer(m_proxyVolumesBuffer.get(), offset, IndexType::kU16);
 }
 
 void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShadingDrawInfo& info)
 {
-	CommandBufferPtr& cmdb = info.m_commandBuffer;
+	CommandBuffer& cmdb = *info.m_commandBuffer;
 	RenderPassWorkContext& rgraphCtx = *info.m_renderpassContext;
 
 	// Set common state for all
-	cmdb->setViewport(info.m_viewport.x(), info.m_viewport.y(), info.m_viewport.z(), info.m_viewport.w());
+	cmdb.setViewport(info.m_viewport.x(), info.m_viewport.y(), info.m_viewport.z(), info.m_viewport.w());
 
 	// Skybox first
 	{
 		const Bool isSolidColor = info.m_skybox->m_skyboxTexture == nullptr;
 
-		cmdb->bindShaderProgram(m_skyboxGrProgs[!isSolidColor].get());
+		cmdb.bindShaderProgram(m_skyboxGrProgs[!isSolidColor].get());
 
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(!isSolidColor)
 		{
-			cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
-			cmdb->bindTexture(0, 3, info.m_skybox->m_skyboxTexture);
+			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
+			cmdb.bindTexture(0, 3, info.m_skybox->m_skyboxTexture);
 		}
 
 		DeferredSkyboxUniforms unis;
@@ -203,17 +203,17 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		unis.m_inputTexUvScale = info.m_gbufferTexCoordsScale;
 		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
 		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
-		cmdb->setPushConstants(&unis, sizeof(unis));
+		cmdb.setPushConstants(&unis, sizeof(unis));
 
 		drawQuad(cmdb);
 	}
 
 	// Set common state for all light drawcalls
 	{
-		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-		cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		rgraphCtx.bindColorTexture(0, 3, info.m_gbufferRenderTargets[0]);
 		rgraphCtx.bindColorTexture(0, 4, info.m_gbufferRenderTargets[1]);
@@ -222,7 +222,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		rgraphCtx.bindTexture(0, 6, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		// Set shadowmap resources
-		cmdb->bindSampler(0, 7, m_shadowSampler.get());
+		cmdb.bindSampler(0, 7, m_shadowSampler.get());
 
 		if(info.m_directionalLight && info.m_directionalLight->hasShadow())
 		{
@@ -242,7 +242,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	{
 		ANKI_ASSERT(info.m_directionalLight->m_uuid && info.m_directionalLight->m_shadowCascadeCount == 1);
 
-		cmdb->bindShaderProgram(m_dirLightGrProg[info.m_computeSpecular].get());
+		cmdb.bindShaderProgram(m_dirLightGrProg[info.m_computeSpecular].get());
 
 		DeferredDirectionalLightUniforms* unis =
 			allocateAndBindUniforms<DeferredDirectionalLightUniforms*>(sizeof(DeferredDirectionalLightUniforms), cmdb, 0, 1);
@@ -274,12 +274,12 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	}
 
 	// Set other light state
-	cmdb->setCullMode(FaceSelectionBit::kFront);
+	cmdb.setCullMode(FaceSelectionBit::kFront);
 
 	// Do point lights
 	U32 indexCount;
 	bindVertexIndexBuffers(ProxyType::kProxySphere, cmdb, indexCount);
-	cmdb->bindShaderProgram(m_plightGrProg[info.m_computeSpecular].get());
+	cmdb.bindShaderProgram(m_plightGrProg[info.m_computeSpecular].get());
 
 	for(const PointLightQueueElement& plightEl : info.m_pointLights)
 	{
@@ -303,12 +303,12 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		light->m_diffuseColor = plightEl.m_diffuseColor;
 
 		// Draw
-		cmdb->drawIndexed(PrimitiveTopology::kTriangles, indexCount);
+		cmdb.drawIndexed(PrimitiveTopology::kTriangles, indexCount);
 	}
 
 	// Do spot lights
 	bindVertexIndexBuffers(ProxyType::kProxyCone, cmdb, indexCount);
-	cmdb->bindShaderProgram(m_slightGrProg[info.m_computeSpecular].get());
+	cmdb.bindShaderProgram(m_slightGrProg[info.m_computeSpecular].get());
 
 	for(const SpotLightQueueElement& splightEl : info.m_spotLights)
 	{
@@ -348,12 +348,12 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		light->m_innerCos = cos(splightEl.m_innerAngle / 2.0f);
 
 		// Draw
-		cmdb->drawIndexed(PrimitiveTopology::kTriangles, indexCount);
+		cmdb.drawIndexed(PrimitiveTopology::kTriangles, indexCount);
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-	cmdb->setCullMode(FaceSelectionBit::kBack);
+	cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb.setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

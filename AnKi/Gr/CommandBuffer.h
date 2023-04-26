@@ -285,7 +285,7 @@ public:
 	void drawIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* indirectBuff);
 
 	void drawIndexedIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, Buffer* countBuffer,
-								  PtrSize countBufferOffset);
+								  PtrSize countBufferOffset, U32 maxDrawCount);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 

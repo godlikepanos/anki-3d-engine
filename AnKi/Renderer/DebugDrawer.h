@@ -35,29 +35,27 @@ public:
 		return m_prog.isCreated();
 	}
 
-	void drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, F32 cubeSideSize,
-				   CommandBufferPtr& cmdb) const;
+	void drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, F32 cubeSideSize, CommandBuffer& cmdb) const;
 
-	void drawCube(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, F32 cubeSideSize, CommandBufferPtr& cmdb) const
+	void drawCube(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, F32 cubeSideSize, CommandBuffer& cmdb) const
 	{
 		drawCubes(ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, cubeSideSize, cmdb);
 	}
 
 	void drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, ConstWeakArray<Vec3> linePositions,
-				   CommandBufferPtr& cmdb) const;
+				   CommandBuffer& cmdb) const;
 
-	void drawLine(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, const Vec3& a, const Vec3& b,
-				  CommandBufferPtr& cmdb) const
+	void drawLine(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, const Vec3& a, const Vec3& b, CommandBuffer& cmdb) const
 	{
 		Array<Vec3, 2> points = {a, b};
 		drawLines(ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, points, cmdb);
 	}
 
 	void drawBillboardTextures(const Mat4& projMat, const Mat3x4& viewMat, ConstWeakArray<Vec3> positions, const Vec4& color, Bool ditherFailedDepth,
-							   TextureView* tex, Sampler* sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const;
+							   TextureView* tex, Sampler* sampler, Vec2 billboardSize, CommandBuffer& cmdb) const;
 
 	void drawBillboardTexture(const Mat4& projMat, const Mat3x4& viewMat, Vec3 position, const Vec4& color, Bool ditherFailedDepth, TextureView* tex,
-							  Sampler* sampler, Vec2 billboardSize, CommandBufferPtr& cmdb) const
+							  Sampler* sampler, Vec2 billboardSize, CommandBuffer& cmdb) const
 	{
 		drawBillboardTextures(projMat, viewMat, ConstWeakArray<Vec3>(&position, 1), color, ditherFailedDepth, tex, sampler, billboardSize, cmdb);
 	}
@@ -77,11 +75,11 @@ public:
 	{
 	}
 
-	void start(const Mat4& mvp, CommandBufferPtr& cmdb)
+	void start(const Mat4& mvp, CommandBuffer& cmdb)
 	{
 		ANKI_ASSERT(m_vertCount == 0);
 		m_mvp = mvp;
-		m_cmdb = cmdb;
+		m_cmdb.reset(&cmdb);
 	}
 
 	void drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color) final;

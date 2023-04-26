@@ -563,10 +563,10 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 	ANKI_ASSERT(m_runCtx.m_workItems.getSize());
 	ANKI_TRACE_SCOPED_EVENT(RSm);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const U threadIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 
-	cmdb->setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
 	for(ThreadWorkItem& work : m_runCtx.m_workItems)
 	{
@@ -576,20 +576,20 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		}
 
 		// Set state
-		cmdb->setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-		cmdb->setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
+		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
+		cmdb.setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 
 		// The 1st drawcall will clear the depth buffer
 		if(work.m_firstRenderableElement == 0)
 		{
-			cmdb->bindShaderProgram(m_clearDepthGrProg.get());
-			cmdb->setDepthCompareOperation(CompareOperation::kAlways);
-			cmdb->setPolygonOffset(0.0f, 0.0f);
-			cmdb->draw(PrimitiveTopology::kTriangles, 3, 1);
+			cmdb.bindShaderProgram(m_clearDepthGrProg.get());
+			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+			cmdb.setPolygonOffset(0.0f, 0.0f);
+			cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
 
 			// Restore state
-			cmdb->setDepthCompareOperation(CompareOperation::kLess);
-			cmdb->setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+			cmdb.setDepthCompareOperation(CompareOperation::kLess);
+			cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 		}
 
 		RenderableDrawerArguments args;

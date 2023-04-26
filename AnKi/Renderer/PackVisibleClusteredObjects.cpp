@@ -54,7 +54,7 @@ Error PackVisibleClusteredObjects::init()
 }
 
 template<typename TClustererType, ClusteredObjectType kType, typename TRenderQueueElement>
-void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue, CommandBufferPtr& cmdb)
+void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue, CommandBuffer& cmdb)
 {
 	if(array.getSize() == 0)
 	{
@@ -110,22 +110,22 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		}
 	}
 
-	cmdb->bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), rqueue.m_clustererObjectsArrayOffsets[kType],
-							rqueue.m_clustererObjectsArrayRanges[kType]);
+	cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), rqueue.m_clustererObjectsArrayOffsets[kType],
+						   rqueue.m_clustererObjectsArrayRanges[kType]);
 
-	cmdb->bindStorageBuffer(0, 1, m_allClustererObjects.get(), m_structureBufferOffsets[kType], array.getSize() * sizeof(TClustererType));
+	cmdb.bindStorageBuffer(0, 1, m_allClustererObjects.get(), m_structureBufferOffsets[kType], array.getSize() * sizeof(TClustererType));
 
-	cmdb->bindStorageBuffer(0, 2, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
+	cmdb.bindStorageBuffer(0, 2, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
 
 	if constexpr(std::is_same_v<TClustererType, PointLight> || std::is_same_v<TClustererType, SpotLight>)
 	{
-		cmdb->bindStorageBuffer(0, 3, &RebarTransientMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset, extrasToken.m_range);
+		cmdb.bindStorageBuffer(0, 3, &RebarTransientMemoryPool::getSingleton().getBuffer(), extrasToken.m_offset, extrasToken.m_range);
 	}
 
-	cmdb->bindShaderProgram(m_grProgs[kType].get());
+	cmdb.bindShaderProgram(m_grProgs[kType].get());
 
 	const UVec4 pc(array.getSize());
-	cmdb->setPushConstants(&pc, sizeof(pc));
+	cmdb.setPushConstants(&pc, sizeof(pc));
 
 	dispatchPPCompute(cmdb, m_threadGroupSize, 1, 1, array.getSize(), 1, 1);
 }
@@ -143,7 +143,7 @@ void PackVisibleClusteredObjects::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setWork([&ctx, this](RenderPassWorkContext& rgraphCtx) {
 		const RenderQueue& rqueue = *ctx.m_renderQueue;
-		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		dispatchType<PointLight, ClusteredObjectType::kPointLight>(rqueue.m_pointLights, rqueue, cmdb);
 		dispatchType<SpotLight, ClusteredObjectType::kSpotLight>(rqueue.m_spotLights, rqueue, cmdb);

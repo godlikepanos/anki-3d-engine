@@ -14,6 +14,7 @@
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Scene/RenderStateBucket.h>
 
 namespace anki {
 
@@ -21,8 +22,6 @@ namespace anki {
 class RenderableDrawer::Context
 {
 public:
-	CommandBufferPtr m_commandBuffer;
-
 	Array<const RenderableQueueElement*, kMaxInstanceCount> m_cachedRenderElements;
 	U32 m_cachedRenderElementCount = 0;
 	ShaderProgram* m_lastBoundShaderProgram = nullptr;
@@ -32,11 +31,8 @@ RenderableDrawer::~RenderableDrawer()
 {
 }
 
-void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin, const RenderableQueueElement* end,
-								 CommandBufferPtr& cmdb)
+void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
 {
-	ANKI_ASSERT(begin && end && begin < end);
-
 	// Allocate, set and bind global uniforms
 	{
 		RebarAllocation globalUniformsToken;
@@ -50,41 +46,44 @@ void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const Re
 		static_assert(sizeof(globalUniforms->m_cameraTransform) == sizeof(args.m_cameraTransform));
 		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
-		cmdb->bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
-								&RebarTransientMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset, globalUniformsToken.m_range);
+		cmdb.bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
+							   &RebarTransientMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset, globalUniformsToken.m_range);
 	}
 
 	// More globals
-	cmdb->bindAllBindless(U32(MaterialSet::kBindless));
-	cmdb->bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
-	cmdb->bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindAllBindless(U32(MaterialSet::kBindless));
+	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
+	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	cmdb->bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-									&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
+	cmdb.bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+								   &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 	// Misc
-	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
-	cmdb->bindIndexBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, IndexType::kU16);
+	cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
+	cmdb.bindIndexBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, IndexType::kU16);
+}
 
-	// Set a few things
+void RenderableDrawer::drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin, const RenderableQueueElement* end,
+								 CommandBuffer& cmdb)
+{
+	ANKI_ASSERT(begin && end && begin < end);
+
+	setState(args, cmdb);
+
 	Context ctx;
-	ctx.m_commandBuffer = cmdb;
-
 	for(; begin != end; ++begin)
 	{
-		drawSingle(begin, ctx);
+		drawSingle(begin, ctx, cmdb);
 	}
 
 	// Flush the last drawcall
-	flushDrawcall(ctx);
+	flushDrawcall(ctx, cmdb);
 }
 
-void RenderableDrawer::flushDrawcall(Context& ctx)
+void RenderableDrawer::flushDrawcall(Context& ctx, CommandBuffer& cmdb)
 {
-	CommandBufferPtr cmdb = ctx.m_commandBuffer;
-
 	// Instance buffer
 	RebarAllocation token;
 	GpuSceneRenderablePacked* instances = static_cast<GpuSceneRenderablePacked*>(
@@ -99,25 +98,25 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 		instances[i] = packGpuSceneRenderable(renderable);
 	}
 
-	cmdb->bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, sizeof(GpuSceneRenderablePacked),
-						   VertexStepRate::kInstance);
+	cmdb.bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, sizeof(GpuSceneRenderablePacked),
+						  VertexStepRate::kInstance);
 
 	// Set state
 	const RenderableQueueElement& firstElement = *ctx.m_cachedRenderElements[0];
 
 	if(firstElement.m_program != ctx.m_lastBoundShaderProgram)
 	{
-		cmdb->bindShaderProgram(firstElement.m_program);
+		cmdb.bindShaderProgram(firstElement.m_program);
 		ctx.m_lastBoundShaderProgram = firstElement.m_program;
 	}
 
 	if(firstElement.m_indexed)
 	{
-		cmdb->drawIndexed(firstElement.m_primitiveTopology, firstElement.m_indexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstIndex);
+		cmdb.drawIndexed(firstElement.m_primitiveTopology, firstElement.m_indexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstIndex);
 	}
 	else
 	{
-		cmdb->draw(firstElement.m_primitiveTopology, firstElement.m_vertexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstVertex);
+		cmdb.draw(firstElement.m_primitiveTopology, firstElement.m_vertexCount, ctx.m_cachedRenderElementCount, firstElement.m_firstVertex);
 	}
 
 	// Rendered something, reset the cached transforms
@@ -128,11 +127,11 @@ void RenderableDrawer::flushDrawcall(Context& ctx)
 	ctx.m_cachedRenderElementCount = 0;
 }
 
-void RenderableDrawer::drawSingle(const RenderableQueueElement* renderEl, Context& ctx)
+void RenderableDrawer::drawSingle(const RenderableQueueElement* renderEl, Context& ctx, CommandBuffer& cmdb)
 {
 	if(ctx.m_cachedRenderElementCount == kMaxInstanceCount)
 	{
-		flushDrawcall(ctx);
+		flushDrawcall(ctx, cmdb);
 	}
 
 	const Bool shouldFlush =
@@ -140,12 +139,45 @@ void RenderableDrawer::drawSingle(const RenderableQueueElement* renderEl, Contex
 
 	if(shouldFlush)
 	{
-		flushDrawcall(ctx);
+		flushDrawcall(ctx, cmdb);
 	}
 
 	// Cache the new one
 	ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount] = renderEl;
 	++ctx.m_cachedRenderElementCount;
+}
+
+void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
+{
+	setState(args, cmdb);
+
+	cmdb.bindVertexBuffer(0, args.m_instaceRateRenderables, args.m_instaceRateRenderablesOffset, sizeof(GpuSceneRenderablePacked),
+						  VertexStepRate::kInstance);
+
+	U32 allUserCount = 0;
+	U32 bucketCount = 0;
+	RenderStateBucketContainer::getSingleton().iterateBuckets(args.m_renderingTechinuqe, [&](const RenderStateInfo& state, U32 userCount) {
+		if(userCount == 0)
+		{
+			++bucketCount;
+			return;
+		}
+
+		ANKI_ASSERT(state.m_indexedDrawcall && "TODO non-indexed");
+
+		ShaderProgramPtr prog = state.m_program;
+		cmdb.bindShaderProgram(prog.get());
+
+		const U32 maxDrawCount = userCount;
+		cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer,
+									  args.m_drawIndexedIndirectArgsBufferOffset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
+									  args.m_mdiDrawCountsBuffer, args.m_mdiDrawCountsBufferOffset + sizeof(U32) * bucketCount, maxDrawCount);
+
+		++bucketCount;
+		allUserCount += userCount;
+	});
+
+	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));
 }
 
 } // end namespace anki

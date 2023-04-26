@@ -59,22 +59,22 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, bufferUsage);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rpass) {
-		CommandBufferPtr& cmdb = rpass.m_commandBuffer;
+		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb->bindStorageBuffer(
+		cmdb.bindStorageBuffer(
 			0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
 			GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer),
 			GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer)
 				* sizeof(GpuSceneRenderableAabb));
 
-		cmdb->bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(),
-								GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderables),
-								GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderables)
-									* sizeof(GpuSceneRenderable));
+		cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(),
+							   GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderables),
+							   GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderables)
+								   * sizeof(GpuSceneRenderable));
 
-		cmdb->bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 		rpass.bindColorTexture(0, 3, getRenderer().getHiZ().getHiZRt());
 
@@ -110,7 +110,7 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		unis.m_aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
-		cmdb->setPushConstants(&unis, sizeof(unis));
+		cmdb.setPushConstants(&unis, sizeof(unis));
 
 		dispatchPPCompute(cmdb, 64, 1, unis.m_aabbCount, 1);
 	});

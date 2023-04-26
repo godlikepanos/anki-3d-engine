@@ -64,16 +64,16 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("AvgLuminance");
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_grProg.get());
 		rgraphCtx.bindImage(0, 1, m_runCtx.m_exposureLuminanceHandle);
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_inputTexMip;
 		rgraphCtx.bindTexture(0, 0, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
-		cmdb->dispatchCompute(1, 1, 1);
+		cmdb.dispatchCompute(1, 1, 1);
 	});
 
 	TextureSubresourceInfo inputTexSubresource;

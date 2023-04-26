@@ -117,7 +117,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const Bool dbgEnabled = ConfigSet::getSingleton().getRDbg();
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
@@ -127,28 +127,28 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	// Bind program
 	if(hasDebugRt && optionalDebugProgram.isCreated())
 	{
-		cmdb->bindShaderProgram(optionalDebugProgram.get());
+		cmdb.bindShaderProgram(optionalDebugProgram.get());
 	}
 	else if(hasDebugRt)
 	{
-		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg.get());
+		cmdb.bindShaderProgram(m_defaultVisualizeRenderTargetGrProg.get());
 	}
 	else
 	{
-		cmdb->bindShaderProgram(m_grProgs[dbgEnabled].get());
+		cmdb.bindShaderProgram(m_grProgs[dbgEnabled].get());
 	}
 
 	// Bind stuff
 	if(!hasDebugRt)
 	{
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getScale().getTonemappedRt());
 
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getBloom().getRt());
-		cmdb->bindTexture(0, 5, &m_lut->getTextureView());
+		cmdb.bindTexture(0, 5, &m_lut->getTextureView());
 		rgraphCtx.bindColorTexture(0, 6, getRenderer().getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
@@ -158,11 +158,11 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		}
 
 		const UVec4 pc(0, 0, floatBitsToUint(ConfigSet::getSingleton().getRFilmGrainStrength()), getRenderer().getFrameCount() & kMaxU32);
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb.setPushConstants(&pc, sizeof(pc));
 	}
 	else
 	{
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		U32 count = 1;
 		for(const RenderTargetHandle& handle : dbgRts)
@@ -174,7 +174,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		}
 	}
 
-	cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+	cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	drawQuad(cmdb);
 
 	// Draw UI

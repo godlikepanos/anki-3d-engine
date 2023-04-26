@@ -1256,12 +1256,12 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 			ANKI_ASSERT(!p.m_secondLevelCmdbs[threadIdx].isCreated());
 			p.m_secondLevelCmdbs[threadIdx] = GrManager::getSingleton().newCommandBuffer(p.m_secondLevelCmdbInitInfo);
 
-			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx];
+			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx].get();
 			ctx.m_secondLevelCommandBufferCount = size;
 			ctx.m_passIdx = U32(&p - &m_ctx->m_passes[0]);
 			ctx.m_batchIdx = p.m_batchIdx;
 
-			ANKI_ASSERT(ctx.m_commandBuffer.isCreated());
+			ANKI_ASSERT(ctx.m_commandBuffer);
 
 			{
 				ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);
@@ -1287,8 +1287,8 @@ void RenderGraph::run() const
 
 	for(const Batch& batch : m_ctx->m_batches)
 	{
-		ctx.m_commandBuffer.reset(batch.m_cmdb);
-		CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+		ctx.m_commandBuffer = batch.m_cmdb;
+		CommandBuffer& cmdb = *ctx.m_commandBuffer;
 
 		// Set the barriers
 		DynamicArray<TextureBarrierInfo, MemoryPoolPtrWrapper<StackMemoryPool>> texBarriers(pool);
@@ -1321,7 +1321,7 @@ void RenderGraph::run() const
 			inf.m_nextUsage = barrier.m_usageAfter;
 			inf.m_as = m_ctx->m_as[barrier.m_idx].m_as.get();
 		}
-		cmdb->setPipelineBarrier(texBarriers, buffBarriers, asBarriers);
+		cmdb.setPipelineBarrier(texBarriers, buffBarriers, asBarriers);
 
 		// Call the passes
 		for(U32 passIdx : batch.m_passIndices)
@@ -1330,8 +1330,8 @@ void RenderGraph::run() const
 
 			if(pass.m_framebuffer)
 			{
-				cmdb->beginRenderPass(pass.m_framebuffer.get(), pass.m_colorUsages, pass.m_dsUsage, pass.m_fbRenderArea[0], pass.m_fbRenderArea[1],
-									  pass.m_fbRenderArea[2], pass.m_fbRenderArea[3]);
+				cmdb.beginRenderPass(pass.m_framebuffer.get(), pass.m_colorUsages, pass.m_dsUsage, pass.m_fbRenderArea[0], pass.m_fbRenderArea[1],
+									 pass.m_fbRenderArea[2], pass.m_fbRenderArea[3]);
 			}
 
 			const U32 size = pass.m_secondLevelCmdbs.getSize();
@@ -1351,12 +1351,12 @@ void RenderGraph::run() const
 				{
 					cmdbs.emplaceBack(cmdb2nd.get());
 				}
-				cmdb->pushSecondLevelCommandBuffers(cmdbs);
+				cmdb.pushSecondLevelCommandBuffers(cmdbs);
 			}
 
 			if(pass.m_framebuffer)
 			{
-				cmdb->endRenderPass();
+				cmdb.endRenderPass();
 			}
 		}
 	}

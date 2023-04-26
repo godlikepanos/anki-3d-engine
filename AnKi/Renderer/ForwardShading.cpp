@@ -21,7 +21,7 @@ namespace anki {
 
 void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 	const U32 problemSize = ctx.m_renderQueue->m_forwardShadingRenderables.getSize();
@@ -30,12 +30,12 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	if(start != end)
 	{
-		cmdb->setDepthWrite(false);
-		cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
+		cmdb.setDepthWrite(false);
+		cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
 		const U32 set = U32(MaterialSet::kGlobal);
-		cmdb->bindSampler(set, U32(MaterialBinding::kLinearClampSampler), getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb->bindSampler(set, U32(MaterialBinding::kShadowSampler), getRenderer().getSamplers().m_trilinearClampShadow.get());
+		cmdb.bindSampler(set, U32(MaterialBinding::kLinearClampSampler), getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(set, U32(MaterialBinding::kShadowSampler), getRenderer().getSamplers().m_trilinearClampShadow.get());
 
 		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
 		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume), getRenderer().getVolumetricLightingAccumulation().getRt());
@@ -60,8 +60,8 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 												 ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end, cmdb);
 
 		// Restore state
-		cmdb->setDepthWrite(true);
-		cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+		cmdb.setDepthWrite(true);
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
 	}
 
 	if(threadId == threadCount - 1 && ctx.m_renderQueue->m_lensFlares.getSize())

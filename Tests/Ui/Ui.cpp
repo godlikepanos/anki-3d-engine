@@ -127,7 +127,7 @@ ANKI_TEST(Ui, Ui)
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 			cmdb->beginRenderPass(fb.get(), {{TextureUsageBit::kFramebufferWrite}}, {});
-			canvas->appendToCommandBuffer(cmdb);
+			canvas->appendToCommandBuffer(*cmdb);
 			cmdb->endRenderPass();
 
 			barrier.m_previousUsage = TextureUsageBit::kFramebufferWrite;

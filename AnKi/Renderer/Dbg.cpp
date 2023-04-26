@@ -58,18 +58,18 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
 	ANKI_ASSERT(ConfigSet::getSingleton().getRDbg());
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	// Set common state
-	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-	cmdb->setDepthWrite(false);
+	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+	cmdb.setDepthWrite(false);
 
-	cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
-	cmdb->setDepthCompareOperation((m_depthTestOn) ? CompareOperation::kLess : CompareOperation::kAlways);
+	cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
+	cmdb.setDepthCompareOperation((m_depthTestOn) ? CompareOperation::kLess : CompareOperation::kAlways);
 
 	// Draw renderables
 	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
@@ -226,7 +226,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	}
 
 	// Restore state
-	cmdb->setDepthCompareOperation(CompareOperation::kLess);
+	cmdb.setDepthCompareOperation(CompareOperation::kLess);
 }
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)

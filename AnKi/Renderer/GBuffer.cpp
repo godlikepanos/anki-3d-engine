@@ -88,7 +88,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 {
 	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 
@@ -104,21 +104,21 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	}
 
 	// Set some state, leave the rest to default
-	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
 	const I32 earlyZStart = max(I32(start), 0);
 	const I32 earlyZEnd = min(I32(end), I32(earlyZCount));
 	const I32 colorStart = max(I32(start) - I32(earlyZCount), 0);
 	const I32 colorEnd = I32(end) - I32(earlyZCount);
 
-	cmdb->setRasterizationOrder(RasterizationOrder::kRelaxed);
+	cmdb.setRasterizationOrder(RasterizationOrder::kRelaxed);
 
 	const Bool enableVrs =
 		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
-		cmdb->setVrsRate(VrsRate::k1x1);
+		cmdb.setVrsRate(VrsRate::k1x1);
 	}
 
 	RenderableDrawerArguments args;
@@ -133,7 +133,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	{
 		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			cmdb->setColorChannelWriteMask(i, ColorBit::kNone);
+			cmdb.setColorChannelWriteMask(i, ColorBit::kNone);
 		}
 
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
@@ -145,7 +145,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		{
 			for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				cmdb->setColorChannelWriteMask(i, ColorBit::kAll);
+				cmdb.setColorChannelWriteMask(i, ColorBit::kAll);
 			}
 		}
 	}
@@ -153,7 +153,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	// Do the color writes
 	if(colorStart < colorEnd)
 	{
-		cmdb->setDepthCompareOperation(CompareOperation::kLessEqual);
+		cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
 		getRenderer().getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_renderables.getBegin() + colorStart,

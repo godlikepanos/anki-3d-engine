@@ -100,9 +100,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_grProg.get());
+	cmdb.bindShaderProgram(m_grProg.get());
 
 	bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
@@ -110,9 +110,9 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 3, getRenderer().getShadowMapping().getShadowmapRt());
 	bindStorage(cmdb, 0, 4, getRenderer().getClusterBinning().getClustersRebarToken());
 
-	cmdb->bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
-	cmdb->bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClampShadow.get());
-	cmdb->bindSampler(0, 7, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb.bindSampler(0, 7, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	if(m_quarterRez)
 	{
@@ -122,7 +122,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	{
 		rgraphCtx.bindTexture(0, 8, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	}
-	cmdb->bindTexture(0, 9, &m_noiseImage->getTextureView());
+	cmdb.bindTexture(0, 9, &m_noiseImage->getTextureView());
 
 	if(ConfigSet::getSingleton().getRPreferCompute())
 	{
@@ -131,8 +131,8 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		cmdb->setViewport(0, 0, m_rtDescr.m_width, m_rtDescr.m_height);
-		cmdb->draw(PrimitiveTopology::kTriangles, 3);
+		cmdb.setViewport(0, 0, m_rtDescr.m_width, m_rtDescr.m_height);
+		cmdb.draw(PrimitiveTopology::kTriangles, 3);
 	}
 }
 

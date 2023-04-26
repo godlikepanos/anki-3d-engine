@@ -29,6 +29,21 @@ public:
 	Mat4 m_previousViewProjectionMatrix;
 
 	Sampler* m_sampler;
+
+	// For MDI
+	RenderingTechnique m_renderingTechinuqe = RenderingTechnique::kCount;
+
+	Buffer* m_mdiDrawCountsBuffer = nullptr;
+	PtrSize m_mdiDrawCountsBufferOffset = 0;
+	PtrSize m_mdiDrawCountsBufferRange = 0;
+
+	Buffer* m_drawIndexedIndirectArgsBuffer = nullptr;
+	PtrSize m_drawIndexedIndirectArgsBufferOffset = 0;
+	PtrSize m_drawIndexedIndirectArgsBufferRange = 0;
+
+	Buffer* m_instaceRateRenderables = nullptr;
+	PtrSize m_instaceRateRenderablesOffset = 0;
+	PtrSize m_instaceRateRenderablesRange = 0;
 };
 
 /// It uses the render queue to batch and render.
@@ -42,14 +57,18 @@ public:
 	~RenderableDrawer();
 
 	void drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin, const RenderableQueueElement* end,
-				   CommandBufferPtr& cmdb);
+				   CommandBuffer& cmdb);
+
+	void drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
 
 private:
 	class Context;
 
-	void flushDrawcall(Context& ctx);
+	void setState(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
 
-	void drawSingle(const RenderableQueueElement* renderEl, Context& ctx);
+	void flushDrawcall(Context& ctx, CommandBuffer& cmdb);
+
+	void drawSingle(const RenderableQueueElement* renderEl, Context& ctx, CommandBuffer& cmdb);
 };
 /// @}
 

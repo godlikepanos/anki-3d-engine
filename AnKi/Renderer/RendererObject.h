@@ -43,26 +43,26 @@ protected:
 	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
 
 	/// Used in fullscreen quad draws.
-	static void drawQuad(CommandBufferPtr& cmdb)
+	static void drawQuad(CommandBuffer& cmdb)
 	{
-		cmdb->draw(PrimitiveTopology::kTriangles, 3, 1);
+		cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
 	}
 
 	/// Dispatch a compute job equivelent to drawQuad
-	static void dispatchPPCompute(CommandBufferPtr& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 outImageWidth, U32 outImageHeight)
+	static void dispatchPPCompute(CommandBuffer& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 outImageWidth, U32 outImageHeight)
 	{
 		const U32 sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
 		const U32 sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
-		cmdb->dispatchCompute(sizeX, sizeY, 1);
+		cmdb.dispatchCompute(sizeX, sizeY, 1);
 	}
 
-	static void dispatchPPCompute(CommandBufferPtr& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 workgroupSizeZ, U32 outImageWidth,
+	static void dispatchPPCompute(CommandBuffer& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 workgroupSizeZ, U32 outImageWidth,
 								  U32 outImageHeight, U32 outImageDepth)
 	{
 		const U32 sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
 		const U32 sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
 		const U32 sizeZ = (outImageDepth + workgroupSizeZ - 1) / workgroupSizeZ;
-		cmdb->dispatchCompute(sizeX, sizeY, sizeZ);
+		cmdb.dispatchCompute(sizeX, sizeY, sizeZ);
 	}
 
 	template<typename TPtr>
@@ -71,10 +71,10 @@ protected:
 		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
 
-	void bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
+	void bindUniforms(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
 
 	template<typename TPtr>
-	TPtr allocateAndBindUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
+	TPtr allocateAndBindUniforms(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding)
 	{
 		RebarAllocation token;
 		TPtr ptr = allocateUniforms<TPtr>(size, token);
@@ -88,10 +88,10 @@ protected:
 		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
 
-	void bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
+	void bindStorage(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
 
 	template<typename TPtr>
-	TPtr allocateAndBindStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
+	TPtr allocateAndBindStorage(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding)
 	{
 		RebarAllocation token;
 		TPtr ptr = allocateStorage<TPtr>(size, token);

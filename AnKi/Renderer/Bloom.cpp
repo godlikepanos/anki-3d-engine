@@ -126,18 +126,18 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_exposure.m_grProg.get());
+			cmdb.bindShaderProgram(m_exposure.m_grProg.get());
 
 			TextureSubresourceInfo inputTexSubresource;
 			inputTexSubresource.m_firstMipmap = getRenderer().getDownscaleBlur().getMipmapCount() - 1;
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(0, 1, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
 			const Vec4 uniforms(ConfigSet::getSingleton().getRBloomThreshold(), ConfigSet::getSingleton().getRBloomScale(), 0.0f, 0.0f);
-			cmdb->setPushConstants(&uniforms, sizeof(uniforms));
+			cmdb.setPushConstants(&uniforms, sizeof(uniforms));
 
 			rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
 
@@ -149,9 +149,9 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
+				cmdb.setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 
-				cmdb->draw(PrimitiveTopology::kTriangles, 3);
+				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}
@@ -184,13 +184,13 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb->bindShaderProgram(m_upscale.m_grProg.get());
+			cmdb.bindShaderProgram(m_upscale.m_grProg.get());
 
-			cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
-			cmdb->bindTexture(0, 2, &m_upscale.m_lensDirtImage->getTextureView());
+			cmdb.bindTexture(0, 2, &m_upscale.m_lensDirtImage->getTextureView());
 
 			if(ConfigSet::getSingleton().getRPreferCompute())
 			{
@@ -200,9 +200,9 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
+				cmdb.setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 
-				cmdb->draw(PrimitiveTopology::kTriangles, 3);
+				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
 		});
 	}

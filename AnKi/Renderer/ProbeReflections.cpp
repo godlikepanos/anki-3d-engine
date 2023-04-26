@@ -179,7 +179,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 	ANKI_ASSERT(m_ctx.m_probe);
 	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 	const ReflectionProbeQueueElementForRefresh& probe = *m_ctx.m_probe;
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	I32 start, end;
 	U32 startu, endu;
@@ -198,8 +198,8 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 		if(localStart < localEnd)
 		{
 			const U32 viewportX = faceIdx * m_gbuffer.m_tileSize;
-			cmdb->setViewport(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
-			cmdb->setScissor(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+			cmdb.setViewport(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+			cmdb.setScissor(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
 
 			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
@@ -217,7 +217,7 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 	}
 
 	// Restore state
-	cmdb->setScissor(0, 0, kMaxU32, kMaxU32);
+	cmdb.setScissor(0, 0, kMaxU32, kMaxU32);
 }
 
 void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx, RenderPassWorkContext& rgraphCtx)
@@ -225,7 +225,7 @@ void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx
 	ANKI_ASSERT(faceIdx <= 6);
 	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	ANKI_ASSERT(m_ctx.m_probe);
 	const ReflectionProbeQueueElementForRefresh& probe = *m_ctx.m_probe;
@@ -246,7 +246,7 @@ void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx
 	dsInfo.m_directionalLight = (hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr;
 	dsInfo.m_pointLights = rqueue.m_pointLights;
 	dsInfo.m_spotLights = rqueue.m_spotLights;
-	dsInfo.m_commandBuffer = cmdb;
+	dsInfo.m_commandBuffer = &cmdb;
 	dsInfo.m_gbufferRenderTargets[0] = m_ctx.m_gbufferColorRts[0];
 	dsInfo.m_gbufferRenderTargets[1] = m_ctx.m_gbufferColorRts[1];
 	dsInfo.m_gbufferRenderTargets[2] = m_ctx.m_gbufferColorRts[2];
@@ -282,39 +282,39 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_irradiance.m_grProg.get());
+	cmdb.bindShaderProgram(m_irradiance.m_grProg.get());
 
 	// Bind stuff
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	TextureSubresourceInfo subresource;
 	subresource.m_faceCount = 6;
 	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
-	cmdb->bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb.bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	// Draw
-	cmdb->dispatchCompute(1, 1, 1);
+	cmdb.dispatchCompute(1, 1, 1);
 }
 
 void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_irradianceToRefl.m_grProg.get());
+	cmdb.bindShaderProgram(m_irradianceToRefl.m_grProg.get());
 
 	// Bind resources
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[0], 0);
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[1], 1);
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[2], 2);
 
-	cmdb->bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb.bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	for(U8 f = 0; f < 6; ++f)
 	{
@@ -534,8 +534,8 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 	start = I32(startu);
 	end = I32(endu);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
 	I32 drawcallCount = 0;
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
@@ -554,8 +554,8 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		if(localStart < localEnd)
 		{
 			const U32 rez = m_shadowMapping.m_rtDescr.m_height;
-			cmdb->setViewport(rez * faceIdx, 0, rez, rez);
-			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+			cmdb.setViewport(rez * faceIdx, 0, rez, rez);
+			cmdb.setScissor(rez * faceIdx, 0, rez, rez);
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
 

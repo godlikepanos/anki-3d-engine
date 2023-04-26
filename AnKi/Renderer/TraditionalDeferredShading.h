@@ -31,7 +31,7 @@ public:
 	ConstWeakArray<PointLightQueueElement> m_pointLights;
 	ConstWeakArray<SpotLightQueueElement> m_spotLights;
 	const SkyboxQueueElement* m_skybox = nullptr;
-	CommandBufferPtr m_commandBuffer;
+	CommandBuffer* m_commandBuffer = nullptr;
 	Bool m_computeSpecular = false;
 
 	// Render targets
@@ -74,7 +74,7 @@ private:
 
 	SamplerPtr m_shadowSampler;
 
-	void bindVertexIndexBuffers(ProxyType proxyType, CommandBufferPtr& cmdb, U32& indexCount) const;
+	void bindVertexIndexBuffers(ProxyType proxyType, CommandBuffer& cmdb, U32& indexCount) const;
 
 	void createProxyMeshes();
 };
