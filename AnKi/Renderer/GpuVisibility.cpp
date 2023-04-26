@@ -49,14 +49,13 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 												   mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
-	constexpr BufferUsageBit bufferUsage = BufferUsageBit::kStorageComputeRead;
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion GBuffer");
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), bufferUsage);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 	pass.newTextureDependency(getRenderer().getHiZ().getHiZRt(), TextureUsageBit::kSampledCompute);
-	pass.newBufferDependency(m_runCtx.m_instanceRateRenderables, bufferUsage);
-	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirectArgs, bufferUsage);
-	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, bufferUsage);
+	pass.newBufferDependency(m_runCtx.m_instanceRateRenderables, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirectArgs, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, BufferUsageBit::kStorageComputeWrite);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;

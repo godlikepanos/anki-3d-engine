@@ -78,7 +78,7 @@ struct Uniforms
 	DrawIndexedIndirectArgs indirect;
 	indirect.m_indexCount = meshLod.m_indexCount;
 	indirect.m_instanceCount = 1;
-	indirect.m_firstIndex = meshLod.m_indexBufferOffset / 2;
+	indirect.m_firstIndex = meshLod.m_firstIndex;
 	indirect.m_vertexOffset = 0;
 	indirect.m_firstInstance = indirectIdx;
 	g_drawIndexedIndirectArgs[indirectIdx] = indirect;

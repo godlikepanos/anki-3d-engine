@@ -21,6 +21,21 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	BufferHandle getMdiDrawCountsBufferHandle() const
+	{
+		return m_runCtx.m_mdiDrawCounts;
+	}
+
+	BufferHandle getDrawIndexedIndirectArgsBufferHandle() const
+	{
+		return m_runCtx.m_drawIndexedIndirectArgs;
+	}
+
+	BufferHandle getInstanceRateRenderablesBufferHandle() const
+	{
+		return m_runCtx.m_instanceRateRenderables;
+	}
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;

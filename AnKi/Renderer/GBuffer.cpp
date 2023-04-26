@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -89,28 +90,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
-
-	// Get some stuff
-	const U32 earlyZCount = ctx.m_renderQueue->m_earlyZRenderables.getSize();
-	const U32 problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
-	U32 start, end;
-	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
-
-	if(end == start) [[unlikely]]
-	{
-		return;
-	}
 
 	// Set some state, leave the rest to default
 	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-
-	const I32 earlyZStart = max(I32(start), 0);
-	const I32 earlyZEnd = min(I32(end), I32(earlyZCount));
-	const I32 colorStart = max(I32(start) - I32(earlyZCount), 0);
-	const I32 colorEnd = I32(end) - I32(earlyZCount);
-
 	cmdb.setRasterizationOrder(RasterizationOrder::kRelaxed);
 
 	const Bool enableVrs =
@@ -127,38 +109,18 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
 	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
+	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 
-	// First do early Z (if needed)
-	if(earlyZStart < earlyZEnd)
-	{
-		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
-		{
-			cmdb.setColorChannelWriteMask(i, ColorBit::kNone);
-		}
+	const GpuVisibility& gpuVis = getRenderer().getGpuVisibility();
+	rgraphCtx.getBufferState(gpuVis.getMdiDrawCountsBufferHandle(), args.m_mdiDrawCountsBuffer, args.m_mdiDrawCountsBufferOffset,
+							 args.m_mdiDrawCountsBufferRange);
+	rgraphCtx.getBufferState(gpuVis.getDrawIndexedIndirectArgsBufferHandle(), args.m_drawIndexedIndirectArgsBuffer,
+							 args.m_drawIndexedIndirectArgsBufferOffset, args.m_drawIndexedIndirectArgsBufferRange);
+	rgraphCtx.getBufferState(gpuVis.getInstanceRateRenderablesBufferHandle(), args.m_instaceRateRenderablesBuffer,
+							 args.m_instaceRateRenderablesOffset, args.m_instaceRateRenderablesRange);
 
-		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
-		getRenderer().getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
-												 ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd, cmdb);
-
-		// Restore state for the color write
-		if(colorStart < colorEnd)
-		{
-			for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
-			{
-				cmdb.setColorChannelWriteMask(i, ColorBit::kAll);
-			}
-		}
-	}
-
-	// Do the color writes
-	if(colorStart < colorEnd)
-	{
-		cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
-
-		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-		getRenderer().getSceneDrawer().drawRange(args, ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
-												 ctx.m_renderQueue->m_renderables.getBegin() + colorEnd, cmdb);
-	}
+	cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
+	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 }
 
 void GBuffer::importRenderTargets(RenderingContext& ctx)
@@ -226,11 +188,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], kGBufferColorRenderTargetCount), m_runCtx.m_crntFrameDepthRt,
 							sriRt);
-	pass.setWork(
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize()),
-		[this, &ctx](RenderPassWorkContext& rgraphCtx) {
-			runInThread(ctx, rgraphCtx);
-		});
+	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		runInThread(ctx, rgraphCtx);
+	});
 
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
@@ -246,6 +206,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+
+	// Only add one depedency to the GPU visibility. No need to track all buffers
+	pass.newBufferDependency(getRenderer().getGpuVisibility().getMdiDrawCountsBufferHandle(), BufferUsageBit::kIndirectDraw);
 }
 
 } // end namespace anki

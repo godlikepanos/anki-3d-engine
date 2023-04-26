@@ -41,7 +41,7 @@ public:
 	PtrSize m_drawIndexedIndirectArgsBufferOffset = 0;
 	PtrSize m_drawIndexedIndirectArgsBufferRange = 0;
 
-	Buffer* m_instaceRateRenderables = nullptr;
+	Buffer* m_instaceRateRenderablesBuffer = nullptr;
 	PtrSize m_instaceRateRenderablesOffset = 0;
 	PtrSize m_instaceRateRenderablesRange = 0;
 };
@@ -59,6 +59,7 @@ public:
 	void drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin, const RenderableQueueElement* end,
 				   CommandBuffer& cmdb);
 
+	/// Draw using multidraw indirect.
 	void drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
 
 private:

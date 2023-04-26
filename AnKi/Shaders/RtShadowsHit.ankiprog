@@ -35,9 +35,9 @@
 
 	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(g_gpuSceneRenderable.m_geometryOffset);
 
-	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_indexBufferOffset + PrimitiveIndex() * 3 + 0];
-	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_indexBufferOffset + PrimitiveIndex() * 3 + 1];
-	const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_indexBufferOffset + PrimitiveIndex() * 3 + 2];
+	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
+	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];
+	const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 2];
 
 	const UnpackedMeshVertex vert0 = loadVertex(mesh, idx0, false);
 	const UnpackedMeshVertex vert1 = loadVertex(mesh, idx1, false);

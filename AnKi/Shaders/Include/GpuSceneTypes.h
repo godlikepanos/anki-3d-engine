@@ -33,11 +33,12 @@ struct GpuSceneRenderableAabb
 };
 static_assert(sizeof(GpuSceneRenderableAabb) == sizeof(Vec4) * 2);
 
+/// Represents the geometry data of a single LOD of an indexed mesh.
 struct GpuSceneMeshLod
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_indexCount;
-	U32 m_indexBufferOffset; // In sizeof(indexType)
+	U32 m_firstIndex; // In sizeof(indexType)
 
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;

@@ -189,7 +189,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				PtrSize offset;
 				IndexType indexType;
 				mesh.getIndexBufferInfo(l, offset, indexCount, indexType);
-				meshLod.m_indexBufferOffset = U32(offset) / getIndexSize(indexType) + firstIndex;
+				ANKI_ASSERT((U32(offset) % getIndexSize(indexType)) == 0);
+				meshLod.m_firstIndex = U32(offset) / getIndexSize(indexType) + firstIndex;
 				meshLod.m_indexCount = indexCount;
 			}
 
