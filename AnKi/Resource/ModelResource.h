@@ -44,6 +44,19 @@ public:
 	PtrSize m_indexBufferOffset;
 };
 
+/// @memberof ModelResource
+/// Part of the information required render the model.
+class ModelPatchGeometryInfo
+{
+public:
+	PtrSize m_indexBufferOffset;
+	U32 m_indexCount;
+	IndexType m_indexType;
+
+	/// Offset to the vertex buffer or kMaxPtrSize if stream is not present.
+	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets;
+};
+
 /// Model patch class. Its very important class and it binds a material with a mesh.
 class ModelPatch
 {
@@ -67,6 +80,8 @@ public:
 
 	/// Get information for rendering.
 	void getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const;
+
+	void getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const;
 
 	/// Get the ray tracing info.
 	void getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const;

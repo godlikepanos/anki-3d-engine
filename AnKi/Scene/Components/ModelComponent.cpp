@@ -165,33 +165,26 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				meshLod.m_positionScale = mesh.getPositionsScale();
 				meshLod.m_positionTranslation = mesh.getPositionsTranslation();
 
-				for(VertexStreamId stream = VertexStreamId::kPosition; stream <= VertexStreamId::kBoneWeights; ++stream)
+				ModelPatchGeometryInfo inf;
+				patch.getGeometryInfo(l, inf);
+
+				ANKI_ASSERT((inf.m_indexBufferOffset % getIndexSize(inf.m_indexType)) == 0);
+				meshLod.m_firstIndex = U32(inf.m_indexBufferOffset / getIndexSize(inf.m_indexType));
+				meshLod.m_indexCount = inf.m_indexCount;
+
+				for(VertexStreamId stream = VertexStreamId::kMeshRelatedFirst; stream < VertexStreamId::kMeshRelatedCount; ++stream)
 				{
-					if(!mesh.isVertexStreamPresent(stream))
+					if(mesh.isVertexStreamPresent(stream))
 					{
-						continue;
+						const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+						ANKI_ASSERT((inf.m_vertexBufferOffsets[stream] % elementSize) == 0);
+						meshLod.m_vertexOffsets[U32(stream)] = U32(inf.m_vertexBufferOffsets[stream] / elementSize);
 					}
-
-					PtrSize offset;
-					U32 vertCount;
-					mesh.getVertexStreamInfo(l, stream, offset, vertCount);
-
-					const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
-
-					ANKI_ASSERT((offset % elementSize) == 0);
-					meshLod.m_vertexOffsets[U32(stream)] = U32(offset / elementSize);
+					else
+					{
+						meshLod.m_vertexOffsets[U32(stream)] = kMaxU32;
+					}
 				}
-
-				U32 firstIndex;
-				U32 indexCount;
-				Aabb aabb;
-				mesh.getSubMeshInfo(l, i, firstIndex, indexCount, aabb);
-				PtrSize offset;
-				IndexType indexType;
-				mesh.getIndexBufferInfo(l, offset, indexCount, indexType);
-				ANKI_ASSERT((U32(offset) % getIndexSize(indexType)) == 0);
-				meshLod.m_firstIndex = U32(offset) / getIndexSize(indexType) + firstIndex;
-				meshLod.m_indexCount = indexCount;
 			}
 
 			// Copy the last LOD to the rest just in case

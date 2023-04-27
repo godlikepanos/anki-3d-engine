@@ -34,6 +34,20 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 	inf.m_program = variant.getShaderProgram();
 }
 
+void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
+{
+	lod = min<U32>(lod, m_meshLodCount - 1);
+
+	inf.m_indexBufferOffset = m_lodInfos[lod].m_indexBufferOffset + m_lodInfos[lod].m_firstIndex * getIndexSize(IndexType::kU16);
+	inf.m_indexType = IndexType::kU16;
+	inf.m_indexCount = m_lodInfos[lod].m_indexCount;
+
+	for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
+	{
+		inf.m_vertexBufferOffsets[stream] = m_lodInfos[lod].m_vertexBufferOffsets[stream];
+	}
+}
+
 void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const
 {
 	ANKI_ASSERT(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit(1 << key.getRenderingTechnique())));
