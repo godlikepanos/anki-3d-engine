@@ -147,4 +147,17 @@ struct SpotLightExtra
 	Mat4 m_textureMatrix;
 };
 
+struct GpuVisibilityUniforms
+{
+	Vec4 m_clipPlanes[6u];
+
+	UVec3 m_padding1;
+	U32 m_aabbCount;
+
+	Vec4 m_maxLodDistances;
+
+	Vec3 m_cameraOrigin;
+	F32 m_padding2;
+};
+
 ANKI_END_NAMESPACE

@@ -145,3 +145,16 @@ F32 testPlaneAabb(Vec3 planeNormal, F32 planeOffset, Vec3 aabbMin, Vec3 aabbMax)
 	test = testPlanePoint(planeNormal, planeOffset, diagMax);
 	return (test >= 0.0) ? 0.0 : test;
 }
+
+F32 testPlaneSphere(Vec3 planeNormal, F32 planeOffset, Vec3 sphereCenter, F32 sphereRadius)
+{
+	const F32 centerDist = testPlanePoint(planeNormal, planeOffset, sphereCenter);
+	F32 dist = centerDist - sphereRadius;
+	if(dist >= 0.0f)
+	{
+		return dist;
+	}
+
+	dist = centerDist + sphereRadius;
+	return (dist < 0.0f) ? dist : 0.0f;
+}

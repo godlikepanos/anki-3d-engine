@@ -12,6 +12,8 @@
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -93,25 +95,28 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.bindStorageBuffer(0, 7, m_runCtx.m_mdiDrawCounts);
 
-		struct Uniforms
-		{
-			Vec4 m_clipPlanes[6u];
-
-			UVec3 m_padding;
-			U32 m_aabbCount;
-		} unis;
+		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 8);
 
 		Array<Plane, 6> planes;
 		extractClipPlanes(ctx.m_matrices.m_viewProjection, planes);
 		for(U32 i = 0; i < 6; ++i)
 		{
-			unis.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+			unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
 
-		unis.m_aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
-		cmdb.setPushConstants(&unis, sizeof(unis));
+		const U32 aabbCount =
+			GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
+		unis->m_aabbCount = aabbCount;
 
-		dispatchPPCompute(cmdb, 64, 1, unis.m_aabbCount, 1);
+		ANKI_ASSERT(kMaxLodCount == 3);
+		unis->m_maxLodDistances[0] = ConfigSet::getSingleton().getLod0MaxDistance();
+		unis->m_maxLodDistances[1] = ConfigSet::getSingleton().getLod1MaxDistance();
+		unis->m_maxLodDistances[2] = kMaxF32;
+		unis->m_maxLodDistances[3] = kMaxF32;
+
+		unis->m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+
+		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});
 }
 

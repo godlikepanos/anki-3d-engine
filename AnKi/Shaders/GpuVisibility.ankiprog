@@ -6,6 +6,7 @@
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
 // Buffers that point to the GPU scene
@@ -24,15 +25,7 @@
 // The MDI counts. One for each render state bucket
 [[vk::binding(7)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
 
-struct Uniforms
-{
-	Vec4 m_clipPlanes[6u];
-
-	UVec3 m_padding;
-	U32 m_aabbCount;
-};
-
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+[[vk::binding(8)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -60,9 +53,24 @@ struct Uniforms
 
 	// TODO HiZ testing
 
-	// TODO LOD selection
-	const U32 lod = 0;
+	// Compute the LOD
+	//
+	const Vec4 nearPlane = g_unis.m_clipPlanes[0];
+	const F32 distFromNearPlane = testPlaneSphere(nearPlane.xyz, nearPlane.w, aabb.m_sphereCenter, -aabb.m_negativeSphereRadius);
 
+	U32 lod;
+	if(distFromNearPlane < g_unis.m_maxLodDistances[0])
+	{
+		lod = 0u;
+	}
+	else if(distFromNearPlane < g_unis.m_maxLodDistances[1])
+	{
+		lod = 1u;
+	}
+	else
+	{
+		lod = 2u;
+	}
 	// Add the drawcall
 	//
 	const U32 renderStateBucket = aabb.m_renderableIndexAndRenderStateBucket & ((1u << 12u) - 1u);
@@ -73,7 +81,8 @@ struct Uniforms
 	indirectIdx += g_drawIndirectArgsOffsets[renderStateBucket];
 
 	const GpuSceneRenderable renderableIn = g_renderables[renderableIdx];
-	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderableIn.m_geometryOffset + sizeof(GpuSceneMeshLod) * lod);
+	const U32 meshLodOffset = renderableIn.m_geometryOffset + sizeof(GpuSceneMeshLod) * lod;
+	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
 
 	DrawIndexedIndirectArgs indirect;
 	indirect.m_indexCount = meshLod.m_indexCount;
@@ -84,7 +93,7 @@ struct Uniforms
 	g_drawIndexedIndirectArgs[indirectIdx] = indirect;
 
 	GpuSceneRenderable renderableOut = renderableIn;
-	renderableOut.m_geometryOffset += sizeof(GpuSceneMeshLod) * lod;
+	renderableOut.m_geometryOffset = meshLodOffset;
 	g_instanceRateRenderables[indirectIdx] = renderableOut;
 }
 
