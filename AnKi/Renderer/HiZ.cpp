@@ -50,7 +50,7 @@ Error HiZ::init()
 
 	m_hiZRtDescr = getRenderer().create2DRenderTargetDescription(ConfigSet::getSingleton().getRHiZWidth(), ConfigSet::getSingleton().getRHiZHeight(),
 																 Format::kR32_Uint, "HiZ U32");
-	m_hiZRtDescr.m_mipmapCount = U8(computeMaxMipmapCount2d(m_hiZRtDescr.m_width, m_hiZRtDescr.m_height, 16));
+	m_hiZRtDescr.m_mipmapCount = U8(computeMaxMipmapCount2d(m_hiZRtDescr.m_width, m_hiZRtDescr.m_height, 1));
 	m_hiZRtDescr.bake();
 
 	BufferInitInfo buffInit("HiZCounterBuffer");
@@ -177,23 +177,8 @@ void HiZ::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindImage(0, 0, m_runCtx.m_hiZRt, subresource, mip);
 			}
 
-			if(mipsToCompute >= 5)
-			{
-				TextureSubresourceInfo subresource;
-				subresource.m_firstMipmap = 4;
-				rgraphCtx.bindImage(0, 1, m_runCtx.m_hiZRt, subresource);
-			}
-			else
-			{
-				// Bind something random that is not the 1st mip
-				TextureSubresourceInfo subresource;
-				subresource.m_firstMipmap = 1;
-				rgraphCtx.bindImage(0, 1, m_runCtx.m_hiZRt, subresource);
-			}
-
-			cmdb.bindStorageBuffer(0, 2, m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize);
-
-			rgraphCtx.bindTexture(0, 3, m_runCtx.m_hiZRt, firstMipSubresource);
+			cmdb.bindStorageBuffer(0, 1, m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize);
+			rgraphCtx.bindTexture(0, 2, m_runCtx.m_hiZRt, firstMipSubresource);
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});

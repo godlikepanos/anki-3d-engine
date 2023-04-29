@@ -158,6 +158,8 @@ struct GpuVisibilityUniforms
 
 	Vec3 m_cameraOrigin;
 	F32 m_padding2;
+
+	Mat4 m_viewProjectionMat;
 };
 
 ANKI_END_NAMESPACE

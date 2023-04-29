@@ -78,12 +78,13 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 		rpass.bindColorTexture(0, 3, getRenderer().getHiZ().getHiZRt());
+		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-		rpass.bindStorageBuffer(0, 4, m_runCtx.m_instanceRateRenderables);
-		rpass.bindStorageBuffer(0, 5, m_runCtx.m_drawIndexedIndirectArgs);
+		rpass.bindStorageBuffer(0, 5, m_runCtx.m_instanceRateRenderables);
+		rpass.bindStorageBuffer(0, 6, m_runCtx.m_drawIndexedIndirectArgs);
 
 		U32* offsets = allocateAndBindStorage<U32*>(
-			sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kGBuffer), cmdb, 0, 6);
+			sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kGBuffer), cmdb, 0, 7);
 		U32 bucketCount = 0;
 		U32 userCount = 0;
 		RenderStateBucketContainer::getSingleton().iterateBuckets(RenderingTechnique::kGBuffer, [&](const RenderStateInfo&, U32 userCount_) {
@@ -93,9 +94,9 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 		});
 		ANKI_ASSERT(userCount == RenderStateBucketContainer::getSingleton().getBucketsItemCount(RenderingTechnique::kGBuffer));
 
-		rpass.bindStorageBuffer(0, 7, m_runCtx.m_mdiDrawCounts);
+		rpass.bindStorageBuffer(0, 8, m_runCtx.m_mdiDrawCounts);
 
-		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 8);
+		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 9);
 
 		Array<Plane, 6> planes;
 		extractClipPlanes(ctx.m_matrices.m_viewProjection, planes);
@@ -115,6 +116,7 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 		unis->m_maxLodDistances[3] = kMaxF32;
 
 		unis->m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+		unis->m_viewProjectionMat = ctx.m_matrices.m_viewProjection;
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});

@@ -15,17 +15,18 @@
 [[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
 
 [[vk::binding(3)]] Texture2D<U32> g_hiZTex;
+[[vk::binding(4)]] SamplerState g_nearestAnyClampSampler;
 
 // These 2 have the same size
-[[vk::binding(4)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
-[[vk::binding(5)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
+[[vk::binding(5)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
+[[vk::binding(6)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
 
 // Index pointing to the above arrays. One for each render state bucket
-[[vk::binding(6)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
+[[vk::binding(7)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
 // The MDI counts. One for each render state bucket
-[[vk::binding(7)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+[[vk::binding(8)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
 
-[[vk::binding(8)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
+[[vk::binding(9)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -51,7 +52,72 @@
 		return;
 	}
 
-	// TODO HiZ testing
+	// Screen-space AABB calculation and checking
+	//
+	const Vec3 A = aabb.m_sphereCenter - aabb.m_aabbExtend;
+	const Vec3 B = aabb.m_sphereCenter + aabb.m_aabbExtend;
+	const Vec3 aabbEdges[8u] = {Vec3(A.x, A.y, A.z), Vec3(B.x, A.y, A.z), Vec3(A.x, B.y, A.z), Vec3(A.x, A.y, B.z),
+								Vec3(B.x, B.y, A.z), Vec3(B.x, A.y, B.z), Vec3(A.x, B.y, B.z), Vec3(B.x, B.y, B.z)};
+
+	F32 aabbMinDepth = 1.0f;
+	Vec2 minNdc = 1000.0f;
+	Vec2 maxNdc = -1000.0f;
+	[unroll] for(U32 i = 0; i < 8; ++i)
+	{
+		Vec4 p = mul(g_unis.m_viewProjectionMat, Vec4(aabbEdges[i], 1.0f));
+
+		p.z = max(p.z, 0.0f);
+		p.xyz /= p.w;
+
+		minNdc = min(minNdc, p.xy);
+		maxNdc = max(maxNdc, p.xy);
+		aabbMinDepth = min(aabbMinDepth, p.z);
+	}
+
+	aabbMinDepth = saturate(aabbMinDepth);
+	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
+	{
+		return;
+	}
+
+	// HiZ culling
+	//
+
+	// Compute the mip
+	Vec2 texSize;
+	F32 mipCount;
+	g_hiZTex.GetDimensions(0, texSize.x, texSize.y, mipCount);
+
+	const Vec2 minUv = saturate(ndcToUv(minNdc));
+	const Vec2 maxUv = saturate(ndcToUv(maxNdc));
+	const Vec2 sizeXY = (maxUv - minUv) * texSize;
+	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
+	mip = clamp(mip, 0.0, mipCount - 1.0);
+
+	const F32 levelLower = max(mip - 1.0, 0.0);
+	const Vec2 scale = exp2(-levelLower);
+	const Vec2 a = floor(minUv * scale);
+	const Vec2 b = ceil(maxUv * scale);
+	const Vec2 dims = b - a;
+
+	if(dims.x <= 2.0 && dims.y <= 2.0)
+	{
+		mip = levelLower;
+	}
+
+	// Sample mip
+	Vec4 depths;
+	depths[0] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, minUv, mip));
+	depths[1] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, maxUv, mip));
+	depths[2] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip));
+	depths[3] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip));
+
+	const F32 maxDepth = max(depths[0], max(depths[1], max(depths[2], depths[3])));
+
+	if(aabbMinDepth > maxDepth)
+	{
+		return;
+	}
 
 	// Compute the LOD
 	//
@@ -71,6 +137,7 @@
 	{
 		lod = 2u;
 	}
+
 	// Add the drawcall
 	//
 	const U32 renderStateBucket = aabb.m_renderableIndexAndRenderStateBucket & ((1u << 12u) - 1u);
