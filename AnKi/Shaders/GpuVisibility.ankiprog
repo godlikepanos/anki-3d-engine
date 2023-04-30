@@ -66,8 +66,7 @@
 	{
 		Vec4 p = mul(g_unis.m_viewProjectionMat, Vec4(aabbEdges[i], 1.0f));
 
-		p.z = max(p.z, 0.0f);
-		p.xyz /= p.w;
+		p.xyz /= abs(p.w);
 
 		minNdc = min(minNdc, p.xy);
 		maxNdc = max(maxNdc, p.xy);
