@@ -91,8 +91,9 @@
 	const Vec2 maxUv = saturate(ndcToUv(maxNdc));
 	const Vec2 sizeXY = (maxUv - minUv) * texSize;
 	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
-	mip = clamp(mip, 0.0, mipCount - 1.0);
 
+#if 0
+	mip = clamp(mip, 0.0, mipCount - 1.0);
 	const F32 levelLower = max(mip - 1.0, 0.0);
 	const Vec2 scale = exp2(-levelLower);
 	const Vec2 a = floor(minUv * scale);
@@ -103,6 +104,7 @@
 	{
 		mip = levelLower;
 	}
+#endif
 
 	// Sample mip
 	Vec4 depths;
