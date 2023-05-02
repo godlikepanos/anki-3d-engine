@@ -13,7 +13,7 @@ namespace anki {
 /// @{
 
 /// XXX
-class GpuVisibility : public RendererObject
+class GPUVisibility : public RendererObject
 {
 public:
 	Error init();
@@ -21,9 +21,9 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	BufferHandle getMdiDrawCountsBufferHandle() const
+	BufferHandle getMDIDrawCountsBufferHandle() const
 	{
-		return m_runCtx.m_mdiDrawCounts;
+		return m_runCtx.m_MDIDrawCounts;
 	}
 
 	BufferHandle getDrawIndexedIndirectArgsBufferHandle() const
@@ -45,7 +45,7 @@ private:
 	public:
 		BufferHandle m_instanceRateRenderables;
 		BufferHandle m_drawIndexedIndirectArgs;
-		BufferHandle m_mdiDrawCounts;
+		BufferHandle m_MDIDrawCounts;
 	} m_runCtx;
 };
 /// @}

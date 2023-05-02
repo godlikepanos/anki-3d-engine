@@ -10,11 +10,11 @@
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
 // Buffers that point to the GPU scene
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
+[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableAabb> g_AABBs;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
+[[vk::binding(2)]] ByteAddressBuffer g_GPUScene;
 
-[[vk::binding(3)]] Texture2D<U32> g_hiZTex;
+[[vk::binding(3)]] Texture2D<U32> g_HZBTex;
 [[vk::binding(4)]] SamplerState g_nearestAnyClampSampler;
 
 // These 2 have the same size
@@ -24,9 +24,9 @@
 // Index pointing to the above arrays. One for each render state bucket
 [[vk::binding(7)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
 // The MDI counts. One for each render state bucket
-[[vk::binding(8)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+[[vk::binding(8)]] RWStructuredBuffer<U32> g_MDIDrawCounts;
 
-[[vk::binding(9)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
+[[vk::binding(9)]] ConstantBuffer<GPUVisibilityUniforms> g_unis;
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -36,7 +36,7 @@
 		return;
 	}
 
-	const GpuSceneRenderableAabb aabb = g_aabbs[aabbIdx];
+	const GpuSceneRenderableAabb aabb = g_AABBs[aabbIdx];
 
 	// Frustum test
 	//
@@ -85,7 +85,7 @@
 	// Compute the mip
 	Vec2 texSize;
 	F32 mipCount;
-	g_hiZTex.GetDimensions(0, texSize.x, texSize.y, mipCount);
+	g_HZBTex.GetDimensions(0, texSize.x, texSize.y, mipCount);
 
 	const Vec2 minUv = saturate(ndcToUv(minNdc));
 	const Vec2 maxUv = saturate(ndcToUv(maxNdc));
@@ -108,10 +108,10 @@
 
 	// Sample mip
 	Vec4 depths;
-	depths[0] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, minUv, mip));
-	depths[1] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, maxUv, mip));
-	depths[2] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip));
-	depths[3] = asfloat(g_hiZTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip));
+	depths[0] = asfloat(g_HZBTex.SampleLevel(g_nearestAnyClampSampler, minUv, mip));
+	depths[1] = asfloat(g_HZBTex.SampleLevel(g_nearestAnyClampSampler, maxUv, mip));
+	depths[2] = asfloat(g_HZBTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip));
+	depths[3] = asfloat(g_HZBTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip));
 
 	const F32 maxDepth = max(depths[0], max(depths[1], max(depths[2], depths[3])));
 
@@ -145,12 +145,12 @@
 	const U32 renderableIdx = aabb.m_renderableIndexAndRenderStateBucket >> 12u;
 
 	U32 indirectIdx;
-	InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, indirectIdx);
+	InterlockedAdd(g_MDIDrawCounts[renderStateBucket], 1, indirectIdx);
 	indirectIdx += g_drawIndirectArgsOffsets[renderStateBucket];
 
 	const GpuSceneRenderable renderableIn = g_renderables[renderableIdx];
 	const U32 meshLodOffset = renderableIn.m_geometryOffset + sizeof(GpuSceneMeshLod) * lod;
-	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
+	const GpuSceneMeshLod meshLod = g_GPUScene.Load<GpuSceneMeshLod>(meshLodOffset);
 
 	DrawIndexedIndirectArgs indirect;
 	indirect.m_indexCount = meshLod.m_indexCount;

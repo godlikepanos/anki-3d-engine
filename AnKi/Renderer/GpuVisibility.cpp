@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/GpuVisibility.h>
+#include <AnKi/Renderer/GPUVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/HiZ.h>
+#include <AnKi/Renderer/HZB.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
@@ -17,14 +17,14 @@
 
 namespace anki {
 
-Error GpuVisibility::init()
+Error GPUVisibility::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin", m_prog, m_grProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GPUVisibility.ankiprogbin", m_prog, m_grProg));
 
 	return Error::kNone;
 }
 
-void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
+void GPUVisibility::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
@@ -47,17 +47,17 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 															 instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
 	m_runCtx.m_drawIndexedIndirectArgs =
 		rgraph.importBuffer(indirectArgs.m_buffer, BufferUsageBit::kNone, indirectArgs.m_offset, indirectArgs.m_size);
-	m_runCtx.m_mdiDrawCounts = rgraph.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+	m_runCtx.m_MDIDrawCounts = rgraph.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
 												   mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion GBuffer");
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newTextureDependency(getRenderer().getHiZ().getHiZRt(), TextureUsageBit::kSampledCompute);
+	pass.newTextureDependency(getRenderer().getHZB().getHZBRt(), TextureUsageBit::kSampledCompute);
 	pass.newBufferDependency(m_runCtx.m_instanceRateRenderables, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirectArgs, BufferUsageBit::kStorageComputeWrite);
-	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(m_runCtx.m_MDIDrawCounts, BufferUsageBit::kStorageComputeWrite);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
@@ -77,7 +77,7 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-		rpass.bindColorTexture(0, 3, getRenderer().getHiZ().getHiZRt());
+		rpass.bindColorTexture(0, 3, getRenderer().getHZB().getHZBRt());
 		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		rpass.bindStorageBuffer(0, 5, m_runCtx.m_instanceRateRenderables);
@@ -94,9 +94,9 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 		});
 		ANKI_ASSERT(userCount == RenderStateBucketContainer::getSingleton().getBucketsItemCount(RenderingTechnique::kGBuffer));
 
-		rpass.bindStorageBuffer(0, 8, m_runCtx.m_mdiDrawCounts);
+		rpass.bindStorageBuffer(0, 8, m_runCtx.m_MDIDrawCounts);
 
-		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 9);
+		GPUVisibilityUniforms* unis = allocateAndBindUniforms<GPUVisibilityUniforms*>(sizeof(GPUVisibilityUniforms), cmdb, 0, 9);
 
 		Array<Plane, 6> planes;
 		extractClipPlanes(ctx.m_matrices.m_viewProjection, planes);

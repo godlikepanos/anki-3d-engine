@@ -44,8 +44,8 @@
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
-#include <AnKi/Renderer/HiZ.h>
-#include <AnKi/Renderer/GpuVisibility.h>
+#include <AnKi/Renderer/HZB.h>
+#include <AnKi/Renderer/GPUVisibility.h>
 
 namespace anki {
 
@@ -247,11 +247,11 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_packVisibleClustererObjects->init());
 
-	m_hiZ.reset(newInstance<HiZ>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_hiZ->init());
+	m_HZB.reset(newInstance<HZB>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_HZB->init());
 
-	m_gpuVisibility.reset(newInstance<GpuVisibility>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_gpuVisibility->init());
+	m_GPUVisibility.reset(newInstance<GPUVisibility>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_GPUVisibility->init());
 
 	// Init samplers
 	{
@@ -347,9 +347,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbuffer->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
-	m_hiZ->populateRenderGraph(ctx);
+	m_HZB->populateRenderGraph(ctx);
 	gpuSceneCopy(ctx);
-	m_gpuVisibility->populateRenderGraph(ctx);
+	m_GPUVisibility->populateRenderGraph(ctx);
 	m_packVisibleClustererObjects->populateRenderGraph(ctx);
 	m_genericCompute->populateRenderGraph(ctx);
 	m_clusterBinning->populateRenderGraph(ctx);

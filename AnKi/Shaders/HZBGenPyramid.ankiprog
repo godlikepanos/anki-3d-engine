@@ -18,7 +18,7 @@ struct Uniforms
 
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 
-[[vk::binding(0)]] globallycoherent RWTexture2D<UVec4> g_dstUavs[12u];
+[[vk::binding(0)]] globallycoherent RWTexture2D<UVec4> g_dstUAVs[12u];
 [[vk::binding(1)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
 [[vk::binding(2)]] Texture2D<UVec4> g_srcTex;
 
@@ -40,14 +40,14 @@ AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 AF4 SpdLoad(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	const U32 u = g_dstUavs[5][p].r;
+	const U32 u = g_dstUAVs[5][p].r;
 	return AF4(asfloat(u), 0.0, 0.0, 0.0);
 }
 
 void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	g_dstUavs[mip][p] = Vec4(asuint(value.x), 0.0, 0.0, 0.0);
+	g_dstUAVs[mip][p] = Vec4(asuint(value.x), 0.0, 0.0, 0.0);
 }
 
 void SpdIncreaseAtomicCounter(AU1 slice)
