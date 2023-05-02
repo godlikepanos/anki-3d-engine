@@ -7,7 +7,7 @@
 #include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GPUMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Window/Input.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>

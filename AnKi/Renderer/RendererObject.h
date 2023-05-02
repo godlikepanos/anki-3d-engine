@@ -10,7 +10,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GPUMemory/RebarTransientMemoryPool.h>
 
 namespace anki {
 

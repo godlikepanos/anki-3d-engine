@@ -5,9 +5,9 @@ set(sources
 	CoreTracer.cpp
 	MaliHwCounters.cpp
 	StatsUi.cpp
-	GpuMemory/UnifiedGeometryBuffer.cpp
-	GpuMemory/GpuSceneBuffer.cpp
-	GpuMemory/RebarTransientMemoryPool.cpp)
+	GPUMemory/UnifiedGeometryBuffer.cpp
+	GPUMemory/GpuSceneBuffer.cpp
+	GPUMemory/RebarTransientMemoryPool.cpp)
 
 set(headers
 	AllConfigVars.defs.h
@@ -21,9 +21,9 @@ set(headers
 	StatsUi.h
 	StatsUi.defs.h
 	StdinListener.h
-	GpuMemory/UnifiedGeometryBuffer.h
-	GpuMemory/GpuSceneBuffer.h
-	GpuMemory/RebarTransientMemoryPool.h)
+	GPUMemory/UnifiedGeometryBuffer.h
+	GPUMemory/GpuSceneBuffer.h
+	GPUMemory/RebarTransientMemoryPool.h)
 
 add_library(AnKiCore ${sources} ${headers})
 

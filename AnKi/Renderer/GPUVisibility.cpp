@@ -8,9 +8,9 @@
 #include <AnKi/Renderer/HZB.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Core/GPUMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/Core/GPUMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GPUMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Core/ConfigSet.h>

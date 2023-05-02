@@ -10,7 +10,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Shaders/Include/MeshTypes.h>
-#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Core/GPUMemory/UnifiedGeometryBuffer.h>
 
 namespace anki {
 
