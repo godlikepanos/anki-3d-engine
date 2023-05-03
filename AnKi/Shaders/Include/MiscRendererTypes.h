@@ -147,7 +147,7 @@ struct SpotLightExtra
 	Mat4 m_textureMatrix;
 };
 
-struct GPUVisibilityUniforms
+struct GpuVisibilityUniforms
 {
 	Vec4 m_clipPlanes[6u];
 

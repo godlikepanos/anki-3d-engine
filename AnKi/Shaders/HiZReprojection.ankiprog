@@ -8,7 +8,7 @@
 #include <AnKi/Shaders/Common.hlsl>
 
 [[vk::binding(0)]] Texture2D g_inputDepthTex;
-[[vk::binding(1), vk::image_format("r32ui")]] RWTexture2D<U32> g_HZBUAVTex;
+[[vk::binding(1), vk::image_format("r32ui")]] RWTexture2D<U32> g_hiZUavTex;
 
 [[vk::push_constant]] ConstantBuffer<Mat4> g_reprojectionMat;
 
@@ -32,15 +32,19 @@
 	const Vec2 newUv = ndcToUv(newNdc);
 
 	// Store
-	Vec2 HZBTexSize;
-	g_HZBUAVTex.GetDimensions(HZBTexSize.x, HZBTexSize.y);
-	const Vec2 texCoordsf = newUv * HZBTexSize;
-	if(any(texCoordsf < Vec2(0.0f, 0.0f)) || any(texCoordsf >= HZBTexSize))
+	Vec2 hiZTexSize;
+	g_hiZUavTex.GetDimensions(hiZTexSize.x, hiZTexSize.y);
+	const Vec2 texCoordsf = newUv * hiZTexSize;
+	if(any(texCoordsf < Vec2(0.0f, 0.0f)) || any(texCoordsf >= hiZTexSize))
 	{
 		return;
 	}
 
-	InterlockedMax(g_HZBUAVTex[IVec2(texCoordsf)], asuint(depth));
+	U32 v;
+	if(svDispatchThreadId.x > 3440 / 2)
+		InterlockedMax(g_hiZUavTex[IVec2(texCoordsf)], asuint(depth), v);
+	else
+		InterlockedMax(g_hiZUavTex[IVec2(uv * hiZTexSize)], asuint(depth), v);
 }
 
 #pragma anki end

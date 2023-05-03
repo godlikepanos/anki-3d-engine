@@ -111,12 +111,12 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 
-	const GPUVisibility& GPUVis = getRenderer().getGPUVisibility();
-	rgraphCtx.getBufferState(GPUVis.getMDIDrawCountsBufferHandle(), args.m_mdiDrawCountsBuffer, args.m_mdiDrawCountsBufferOffset,
+	const GpuVisibility& gpuVis = getRenderer().getGpuVisibility();
+	rgraphCtx.getBufferState(gpuVis.getMdiDrawCountsBufferHandle(), args.m_mdiDrawCountsBuffer, args.m_mdiDrawCountsBufferOffset,
 							 args.m_mdiDrawCountsBufferRange);
-	rgraphCtx.getBufferState(GPUVis.getDrawIndexedIndirectArgsBufferHandle(), args.m_drawIndexedIndirectArgsBuffer,
+	rgraphCtx.getBufferState(gpuVis.getDrawIndexedIndirectArgsBufferHandle(), args.m_drawIndexedIndirectArgsBuffer,
 							 args.m_drawIndexedIndirectArgsBufferOffset, args.m_drawIndexedIndirectArgsBufferRange);
-	rgraphCtx.getBufferState(GPUVis.getInstanceRateRenderablesBufferHandle(), args.m_instaceRateRenderablesBuffer,
+	rgraphCtx.getBufferState(gpuVis.getInstanceRateRenderablesBufferHandle(), args.m_instaceRateRenderablesBuffer,
 							 args.m_instaceRateRenderablesOffset, args.m_instaceRateRenderablesRange);
 
 	cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
@@ -208,7 +208,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
-	pass.newBufferDependency(getRenderer().getGPUVisibility().getMDIDrawCountsBufferHandle(), BufferUsageBit::kIndirectDraw);
+	pass.newBufferDependency(getRenderer().getGpuVisibility().getMdiDrawCountsBufferHandle(), BufferUsageBit::kIndirectDraw);
 }
 
 } // end namespace anki
