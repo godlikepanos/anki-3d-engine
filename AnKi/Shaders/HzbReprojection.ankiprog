@@ -40,11 +40,7 @@
 		return;
 	}
 
-	U32 v;
-	if(svDispatchThreadId.x > 3440 / 2)
-		InterlockedMax(g_hiZUavTex[IVec2(texCoordsf)], asuint(depth), v);
-	else
-		InterlockedMax(g_hiZUavTex[IVec2(uv * hiZTexSize)], asuint(depth), v);
+	InterlockedMax(g_hiZUavTex[IVec2(texCoordsf)], asuint(depth));
 }
 
 #pragma anki end

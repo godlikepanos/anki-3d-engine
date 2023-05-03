@@ -171,6 +171,7 @@ void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgr
 			spirv_cross::CompilerGLSL::Options options;
 			options.vulkan_semantics = true;
 			options.version = 460;
+			options.force_temporary = true;
 
 			const unsigned int* spvb = reinterpret_cast<const unsigned int*>(code.m_binary.getBegin());
 			ANKI_ASSERT((code.m_binary.getSize() % (sizeof(unsigned int))) == 0);

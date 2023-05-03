@@ -40,8 +40,8 @@
 
 	// Frustum test
 	//
-	F32 minPlaneDistance = 0.0f;
-	[unroll] for(U32 i = 0; i < 6; ++i)
+	F32 minPlaneDistance = testPlanePoint(g_unis.m_clipPlanes[0].xyz, g_unis.m_clipPlanes[0].w, aabb.m_sphereCenter);
+	[unroll] for(U32 i = 1; i < 6; ++i)
 	{
 		const F32 d = testPlanePoint(g_unis.m_clipPlanes[i].xyz, g_unis.m_clipPlanes[i].w, aabb.m_sphereCenter);
 		minPlaneDistance = min(minPlaneDistance, d);
