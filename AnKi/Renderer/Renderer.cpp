@@ -44,7 +44,7 @@
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
-#include <AnKi/Renderer/HiZ.h>
+#include <AnKi/Renderer/Hzb.h>
 #include <AnKi/Renderer/GpuVisibility.h>
 
 namespace anki {
@@ -247,8 +247,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_packVisibleClustererObjects->init());
 
-	m_hiZ.reset(newInstance<HiZ>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_hiZ->init());
+	m_hzb.reset(newInstance<Hzb>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_hzb->init());
 
 	m_gpuVisibility.reset(newInstance<GpuVisibility>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_gpuVisibility->init());
@@ -347,7 +347,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbuffer->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
-	m_hiZ->populateRenderGraph(ctx);
+	m_hzb->populateRenderGraph(ctx);
 	gpuSceneCopy(ctx);
 	m_gpuVisibility->populateRenderGraph(ctx);
 	m_packVisibleClustererObjects->populateRenderGraph(ctx);

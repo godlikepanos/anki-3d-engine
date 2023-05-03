@@ -13,27 +13,27 @@ namespace anki {
 /// @{
 
 /// Hierarchical depth generator.
-class HiZ : public RendererObject
+class Hzb : public RendererObject
 {
 public:
 	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	const RenderTargetHandle& getHiZRt() const
+	const RenderTargetHandle& getHzbRt() const
 	{
-		return m_runCtx.m_hiZRt;
+		return m_runCtx.m_hzbRt;
 	}
 
 private:
-	RenderTargetDescription m_hiZRtDescr;
+	RenderTargetDescription m_hzbRtDescr;
 
 	class
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-	} m_clearHiZ;
+	} m_clearHzb;
 
 	class
 	{
@@ -54,7 +54,7 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_hiZRt;
+		RenderTargetHandle m_hzbRt;
 	} m_runCtx;
 };
 /// @}

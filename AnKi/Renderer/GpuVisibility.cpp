@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/HiZ.h>
+#include <AnKi/Renderer/Hzb.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
@@ -54,7 +54,7 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion GBuffer");
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newTextureDependency(getRenderer().getHiZ().getHiZRt(), TextureUsageBit::kSampledCompute);
+	pass.newTextureDependency(getRenderer().getHzb().getHzbRt(), TextureUsageBit::kSampledCompute);
 	pass.newBufferDependency(m_runCtx.m_instanceRateRenderables, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirectArgs, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, BufferUsageBit::kStorageComputeWrite);
@@ -77,7 +77,7 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-		rpass.bindColorTexture(0, 3, getRenderer().getHiZ().getHiZRt());
+		rpass.bindColorTexture(0, 3, getRenderer().getHzb().getHzbRt());
 		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		rpass.bindStorageBuffer(0, 5, m_runCtx.m_instanceRateRenderables);
