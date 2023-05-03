@@ -6,7 +6,7 @@
 
 #include <AnKi/Core/App.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Core/GPUMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
@@ -15,8 +15,8 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/CoreTracer.h>
-#include <AnKi/Core/GPUMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/GPUMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/DeveloperConsole.h>
 #include <AnKi/Core/StatsUi.h>
 #include <AnKi/Window/NativeWindow.h>

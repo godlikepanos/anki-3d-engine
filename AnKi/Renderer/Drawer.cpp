@@ -11,9 +11,9 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
-#include <AnKi/Core/GPUMemory/UnifiedGeometryBuffer.h>
-#include <AnKi/Core/GPUMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/GPUMemory/GpuSceneBuffer.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 
 namespace anki {

@@ -5,7 +5,7 @@
 
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Core/GPUMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
 #include <AnKi/Window.h>

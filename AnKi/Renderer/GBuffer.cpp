@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Scale.h>
-#include <AnKi/Renderer/GPUVisibility.h>
+#include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>

@@ -9,7 +9,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Core/GPUMemory/GpuSceneBuffer.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 

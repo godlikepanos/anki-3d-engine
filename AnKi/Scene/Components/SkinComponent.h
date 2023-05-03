@@ -11,7 +11,7 @@
 #include <AnKi/Util/Forward.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
-#include <AnKi/Core/GPUMemory/GpuSceneBuffer.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 

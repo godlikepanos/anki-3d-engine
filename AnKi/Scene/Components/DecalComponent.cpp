@@ -7,7 +7,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Core/GPUMemory/GpuSceneBuffer.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 

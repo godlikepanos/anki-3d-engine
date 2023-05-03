@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/DebugDrawer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/GPUMemory/RebarTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Gr/Buffer.h>
 

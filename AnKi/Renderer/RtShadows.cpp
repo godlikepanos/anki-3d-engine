@@ -17,8 +17,8 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Core/GPUMemory/UnifiedGeometryBuffer.h>
-#include <AnKi/Core/GPUMemory/GpuSceneBuffer.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 
