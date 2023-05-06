@@ -17,9 +17,9 @@
 [[vk::binding(3)]] Texture2D<RVec4> g_quarterSpecularIndirectTex;
 [[vk::binding(4)]] Texture2D g_quarterDepthTex;
 [[vk::binding(5)]] Texture2D g_fullDepthTex;
-[[vk::binding(6)]] Texture2D<RVec4> g_gbuffer0Tex;
-[[vk::binding(7)]] Texture2D<RVec4> g_gbuffer1Tex;
-[[vk::binding(8)]] Texture2D<RVec4> g_gbuffer2Tex;
+[[vk::binding(6)]] Texture2D<Vec4> g_gbuffer0Tex;
+[[vk::binding(7)]] Texture2D<Vec4> g_gbuffer1Tex;
+[[vk::binding(8)]] Texture2D<Vec4> g_gbuffer2Tex;
 [[vk::binding(9)]] Texture2D<RVec4> g_integrationLut;
 
 #define CLUSTERED_SHADING_SET 0u

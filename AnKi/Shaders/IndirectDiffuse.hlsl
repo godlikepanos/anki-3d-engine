@@ -26,7 +26,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 #include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
 [[vk::binding(3)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(4)]] Texture2D<RVec4> g_gbufferRt2;
+[[vk::binding(4)]] Texture2D<Vec4> g_gbufferRt2;
 [[vk::binding(5)]] Texture2D g_depthTex;
 [[vk::binding(6)]] Texture2D<RVec4> g_lightBufferRt;
 [[vk::binding(7)]] Texture2D<RVec4> g_historyTex;
