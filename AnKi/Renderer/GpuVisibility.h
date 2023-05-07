@@ -6,20 +6,22 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Resource/RenderingKey.h>
 
 namespace anki {
 
 /// @addtogroup renderer
 /// @{
 
-/// XXX
+/// Performs GPU visibility for some pass.
 class GpuVisibility : public RendererObject
 {
 public:
 	Error init();
 
 	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 cameraPosition, RenderTargetHandle hzbRt,
+							 RenderGraphDescription& rgraph);
 
 	BufferHandle getMdiDrawCountsBufferHandle() const
 	{

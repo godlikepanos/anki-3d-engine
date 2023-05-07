@@ -9,6 +9,7 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/GpuVisibility.h>
+#include <AnKi/Renderer/Hzb.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -21,7 +22,13 @@ GBuffer::~GBuffer()
 
 Error GBuffer::init()
 {
-	const Error err = initInternal();
+	Error err = initInternal();
+
+	if(!err)
+	{
+		err = m_visibility.init();
+	}
+
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize g-buffer pass");
@@ -111,7 +118,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 
-	const GpuVisibility& gpuVis = getRenderer().getGpuVisibility();
+	const GpuVisibility& gpuVis = m_visibility;
 	rgraphCtx.getBufferState(gpuVis.getMdiDrawCountsBufferHandle(), args.m_mdiDrawCountsBuffer, args.m_mdiDrawCountsBufferOffset,
 							 args.m_mdiDrawCountsBufferRange);
 	rgraphCtx.getBufferState(gpuVis.getDrawIndexedIndirectArgsBufferHandle(), args.m_drawIndexedIndirectArgsBuffer,
@@ -146,6 +153,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	m_visibility.populateRenderGraph(RenderingTechnique::kGBuffer, ctx.m_matrices.m_viewProjection,
+									 ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz(), getRenderer().getHzb().getHzbRt(), rgraph);
 
 	const Bool enableVrs =
 		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
@@ -208,7 +218,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
-	pass.newBufferDependency(getRenderer().getGpuVisibility().getMdiDrawCountsBufferHandle(), BufferUsageBit::kIndirectDraw);
+	pass.newBufferDependency(m_visibility.getMdiDrawCountsBufferHandle(), BufferUsageBit::kIndirectDraw);
 }
 
 } // end namespace anki

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Gr.h>
 
 namespace anki {
@@ -73,6 +74,8 @@ private:
 	Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	FramebufferDescription m_fbDescr;
+
+	GpuVisibility m_visibility;
 
 	class
 	{

@@ -17,6 +17,25 @@
 
 namespace anki {
 
+static GpuSceneContiguousArrayType techniqueToArrayType(RenderingTechnique technique)
+{
+	GpuSceneContiguousArrayType arrayType;
+	switch(technique)
+	{
+	case RenderingTechnique::kGBuffer:
+		arrayType = GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer;
+		break;
+	case RenderingTechnique::kDepth:
+		arrayType = GpuSceneContiguousArrayType::kRenderableBoundingVolumesDepth;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		arrayType = GpuSceneContiguousArrayType::kCount;
+	}
+
+	return arrayType;
+}
+
 Error GpuVisibility::init()
 {
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin", m_prog, m_grProg));
@@ -24,12 +43,11 @@ Error GpuVisibility::init()
 	return Error::kNone;
 }
 
-void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
+void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 cameraPosition, RenderTargetHandle hzbRt,
+										RenderGraphDescription& rgraph)
 {
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-
-	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
-	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kGBuffer);
+	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(techniqueToArrayType(technique));
+	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);
 
 	// Allocate memory for the indirect commands
 	const GpuVisibleTransientMemoryAllocation indirectArgs =
@@ -51,24 +69,23 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 												   mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion GBuffer");
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion");
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newTextureDependency(getRenderer().getHzb().getHzbRt(), TextureUsageBit::kSampledCompute);
+	pass.newTextureDependency(hzbRt, TextureUsageBit::kSampledCompute);
 	pass.newBufferDependency(m_runCtx.m_instanceRateRenderables, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirectArgs, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, BufferUsageBit::kStorageComputeWrite);
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rpass) {
+	pass.setWork([this, viewProjectionMat, cameraPosition, technique, hzbRt](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb.bindStorageBuffer(
-			0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
-			GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer),
-			GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer)
-				* sizeof(GpuSceneRenderableAabb));
+		const GpuSceneContiguousArrayType type = techniqueToArrayType(technique);
+
+		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneContiguousArrays::getSingleton().getArrayBase(type),
+							   GpuSceneContiguousArrays::getSingleton().getElementCount(type) * sizeof(GpuSceneRenderableAabb));
 
 		cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(),
 							   GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderables),
@@ -77,36 +94,34 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-		rpass.bindColorTexture(0, 3, getRenderer().getHzb().getHzbRt());
+		rpass.bindColorTexture(0, 3, hzbRt);
 		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		rpass.bindStorageBuffer(0, 5, m_runCtx.m_instanceRateRenderables);
 		rpass.bindStorageBuffer(0, 6, m_runCtx.m_drawIndexedIndirectArgs);
 
-		U32* offsets = allocateAndBindStorage<U32*>(
-			sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kGBuffer), cmdb, 0, 7);
+		U32* offsets = allocateAndBindStorage<U32*>(sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(technique), cmdb, 0, 7);
 		U32 bucketCount = 0;
 		U32 userCount = 0;
-		RenderStateBucketContainer::getSingleton().iterateBuckets(RenderingTechnique::kGBuffer, [&](const RenderStateInfo&, U32 userCount_) {
+		RenderStateBucketContainer::getSingleton().iterateBuckets(technique, [&](const RenderStateInfo&, U32 userCount_) {
 			offsets[bucketCount] = userCount;
 			userCount += userCount_;
 			++bucketCount;
 		});
-		ANKI_ASSERT(userCount == RenderStateBucketContainer::getSingleton().getBucketsItemCount(RenderingTechnique::kGBuffer));
+		ANKI_ASSERT(userCount == RenderStateBucketContainer::getSingleton().getBucketsItemCount(technique));
 
 		rpass.bindStorageBuffer(0, 8, m_runCtx.m_mdiDrawCounts);
 
 		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 9);
 
 		Array<Plane, 6> planes;
-		extractClipPlanes(ctx.m_matrices.m_viewProjection, planes);
+		extractClipPlanes(viewProjectionMat, planes);
 		for(U32 i = 0; i < 6; ++i)
 		{
 			unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
 
-		const U32 aabbCount =
-			GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer);
+		const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(type);
 		unis->m_aabbCount = aabbCount;
 
 		ANKI_ASSERT(kMaxLodCount == 3);
@@ -115,8 +130,8 @@ void GpuVisibility::populateRenderGraph(RenderingContext& ctx)
 		unis->m_maxLodDistances[2] = kMaxF32;
 		unis->m_maxLodDistances[3] = kMaxF32;
 
-		unis->m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-		unis->m_viewProjectionMat = ctx.m_matrices.m_viewProjection;
+		unis->m_cameraOrigin = cameraPosition;
+		unis->m_viewProjectionMat = viewProjectionMat;
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});
