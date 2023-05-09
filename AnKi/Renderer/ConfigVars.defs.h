@@ -78,6 +78,7 @@ ANKI_CONFIG_VAR_U8(RFsrQuality, 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2
 ANKI_CONFIG_VAR_U8(RDlssQuality, 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality")
 ANKI_CONFIG_VAR_F32(RSharpness, ((ANKI_PLATFORM_MOBILE) ? 0.0f : 0.8f), 0.0f, 1.0f, "Sharpen the image. It's a factor")
 
-// HiZ
-ANKI_CONFIG_VAR_U32(RHiZWidth, 512, 128, 4 * 1024, "HiZ map width")
-ANKI_CONFIG_VAR_U32(RHiZHeight, 256, 128, 4 * 1024, "HiZ map height")
+// HZB
+ANKI_CONFIG_VAR_U32(RHzbWidth, 512, 16, 4 * 1024, "HZB map width")
+ANKI_CONFIG_VAR_U32(RHzbHeight, 256, 16, 4 * 1024, "HZB map height")
+ANKI_CONFIG_VAR_U32(RHzbShadowSize, 128, 16, 4 * 1024, "Shadows HZB map width and height")

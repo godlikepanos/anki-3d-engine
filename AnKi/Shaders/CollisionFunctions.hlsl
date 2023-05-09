@@ -15,6 +15,10 @@ Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Boo
 	const Vec3 pvec = cross(rayDir, v0v2);
 	const F32 det = dot(v0v1, pvec);
 
+	t = 0.0f;
+	u = 0.0f;
+	v = 0.0f;
+
 	if((backfaceCulling && det < kEpsilonF32) || abs(det) < kEpsilonF32)
 	{
 		return false;
@@ -94,6 +98,9 @@ Bool testRayObb(Vec3 rayOrigin, Vec3 rayDir, Vec3 obbExtend, Mat4 obbTransformIn
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRadius, out F32 t0, out F32 t1)
 {
+	t0 = 0.0f;
+	t1 = 0.0f;
+
 	const Vec3 L = sphereCenter - rayOrigin;
 	const F32 tca = dot(L, rayDir);
 	const F32 d2 = dot(L, L) - tca * tca;

@@ -6,7 +6,9 @@
 #include <AnKi/Renderer/Hzb.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -32,26 +34,40 @@ Error Hzb::init()
 	registerDebugRenderTarget("Hzb");
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/HzbReprojection.ankiprogbin", m_reproj.m_prog));
-
 	const ShaderProgramResourceVariant* variant;
-	m_reproj.m_prog->getOrCreateVariant(variant);
-	m_reproj.m_grProg.reset(&variant->getProgram());
+	ShaderProgramResourceVariantInitInfo variantInit(m_reproj.m_prog);
+	for(U32 i = 0; i < m_reproj.m_grProgs.getSize(); ++i)
+	{
+		variantInit.addMutation("SHADOW_TEXTURE_COUNT", i);
+		m_reproj.m_prog->getOrCreateVariant(variantInit, variant);
+		m_reproj.m_grProgs[i].reset(&variant->getProgram());
+	}
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearHzb.m_prog));
-	ShaderProgramResourceVariantInitInfo variantInit(m_clearHzb.m_prog);
-	variantInit.addMutation("TEXTURE_DIMENSIONS", 2);
-	variantInit.addMutation("COMPONENT_TYPE", 1);
-	m_clearHzb.m_prog->getOrCreateVariant(variantInit, variant);
+	ShaderProgramResourceVariantInitInfo variantInit2(m_clearHzb.m_prog);
+	variantInit2.addMutation("TEXTURE_DIMENSIONS", 2);
+	variantInit2.addMutation("COMPONENT_TYPE", 1);
+	m_clearHzb.m_prog->getOrCreateVariant(variantInit2, variant);
 	m_clearHzb.m_grProg.reset(&variant->getProgram());
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/HzbGenPyramid.ankiprogbin", m_mipmapping.m_prog));
 	m_mipmapping.m_prog->getOrCreateVariant(variant);
 	m_mipmapping.m_grProg.reset(&variant->getProgram());
 
-	m_hzbRtDescr = getRenderer().create2DRenderTargetDescription(ConfigSet::getSingleton().getRHiZWidth(), ConfigSet::getSingleton().getRHiZHeight(),
-																 Format::kR32_Uint, "Hzb U32");
+	m_hzbRtDescr = getRenderer().create2DRenderTargetDescription(ConfigSet::getSingleton().getRHzbWidth(), ConfigSet::getSingleton().getRHzbHeight(),
+																 Format::kR32_Uint, "HZB U32");
 	m_hzbRtDescr.m_mipmapCount = U8(computeMaxMipmapCount2d(m_hzbRtDescr.m_width, m_hzbRtDescr.m_height, 1));
 	m_hzbRtDescr.bake();
+
+	for(U32 i = 0; i < kMaxShadowCascades; ++i)
+	{
+		RendererString name;
+		name.sprintf("Shadow HZB U32 #%u", i);
+		m_hzbShadowRtDescrs[i] = getRenderer().create2DRenderTargetDescription(
+			ConfigSet::getSingleton().getRHzbShadowSize(), ConfigSet::getSingleton().getRHzbShadowSize(), Format::kR32_Uint, name);
+		m_hzbShadowRtDescrs[i].m_mipmapCount = U8(computeMaxMipmapCount2d(m_hzbShadowRtDescrs[i].m_width, m_hzbShadowRtDescrs[i].m_height, 1));
+		m_hzbShadowRtDescrs[i].bake();
+	}
 
 	BufferInitInfo buffInit("HiZCounterBuffer");
 	buffInit.m_size = sizeof(U32);
@@ -64,13 +80,19 @@ Error Hzb::init()
 void Hzb::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-
-	m_runCtx.m_hzbRt = rgraph.newRenderTarget(m_hzbRtDescr);
+	const U32 cascadeCount = ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount;
 	TextureSubresourceInfo firstMipSubresource;
 
-	// Clear RT
+	// Create RTs
+	m_runCtx.m_hzbRt = rgraph.newRenderTarget(m_hzbRtDescr);
+	for(U32 i = 0; i < cascadeCount; ++i)
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Hzb clear");
+		m_runCtx.m_hzbShadowRts[i] = rgraph.newRenderTarget(m_hzbShadowRtDescrs[i]);
+	}
+
+	// Clear main RT
+	{
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB clear");
 		pass.newTextureDependency(m_runCtx.m_hzbRt, TextureUsageBit::kImageComputeWrite, firstMipSubresource);
 
 		pass.setWork([this](RenderPassWorkContext& rctx) {
@@ -84,34 +106,72 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 			UVec4 clearColor(0u);
 			cmdb.setPushConstants(&clearColor, sizeof(clearColor));
 
-			dispatchPPCompute(cmdb, 8, 8, 1, m_hzbRtDescr.m_width, m_hzbRtDescr.m_height, 1);
+			dispatchPPCompute(cmdb, 8, 8, m_hzbRtDescr.m_width, m_hzbRtDescr.m_height);
+		});
+	}
+
+	// Clear SM RTs
+	for(U32 i = 0; i < cascadeCount; ++i)
+	{
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Shadow HZB clear");
+		pass.newTextureDependency(m_runCtx.m_hzbShadowRts[i], TextureUsageBit::kImageComputeWrite, firstMipSubresource);
+
+		pass.setWork([this, i](RenderPassWorkContext& rctx) {
+			CommandBuffer& cmdb = *rctx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_clearHzb.m_grProg.get());
+
+			TextureSubresourceInfo firstMipSubresource;
+			rctx.bindImage(0, 0, m_runCtx.m_hzbShadowRts[i], firstMipSubresource);
+
+			UVec4 clearColor(1u);
+			cmdb.setPushConstants(&clearColor, sizeof(clearColor));
+
+			dispatchPPCompute(cmdb, 8, 8, m_hzbShadowRtDescrs[i].m_width, m_hzbShadowRtDescrs[i].m_height);
 		});
 	}
 
 	// Reproject
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Hzb reprojection");
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB reprojection");
+
 		pass.newTextureDependency(m_runCtx.m_hzbRt, TextureUsageBit::kImageComputeWrite, firstMipSubresource);
+		for(U32 i = 0; i < cascadeCount; ++i)
+		{
+			pass.newTextureDependency(m_runCtx.m_hzbShadowRts[i], TextureUsageBit::kImageComputeWrite, firstMipSubresource);
+		}
 		pass.newTextureDependency(getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureUsageBit::kSampledCompute);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rctx) {
+			const U32 cascadeCount = ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount;
 			CommandBuffer& cmdb = *rctx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_reproj.m_grProg.get());
+			cmdb.bindShaderProgram(m_reproj.m_grProgs[cascadeCount].get());
 
 			rctx.bindTexture(0, 0, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			TextureSubresourceInfo firstMipSubresource;
 			rctx.bindImage(0, 1, m_runCtx.m_hzbRt, firstMipSubresource);
 
-			cmdb.setPushConstants(&ctx.m_matrices.m_reprojection, sizeof(Mat4));
+			HzbUniforms* unis = allocateAndBindUniforms<HzbUniforms*>(sizeof(*unis), cmdb, 0, 3);
+			unis->m_reprojectionMatrix = ctx.m_matrices.m_reprojection;
+			unis->m_invertedViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;
+			for(U32 i = 0; i < ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount; ++i)
+			{
+				unis->m_shadowCascadeViewProjectionMatrices[i] = ctx.m_renderQueue->m_directionalLight.m_viewProjectionMatrices[i];
+			}
 
-			dispatchPPCompute(cmdb, 8, 8, 1, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+			for(U32 i = 0; i < cascadeCount; ++i)
+			{
+				rctx.bindImage(0, 2, m_runCtx.m_hzbShadowRts[i], firstMipSubresource, i);
+			}
+
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});
 	}
 
 	// Mipmap
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Hzb mip gen");
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB mip gen");
 
 		pass.newTextureDependency(m_runCtx.m_hzbRt, TextureUsageBit::kSampledCompute, firstMipSubresource);
 

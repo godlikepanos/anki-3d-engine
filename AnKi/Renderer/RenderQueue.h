@@ -166,6 +166,7 @@ class DirectionalLightQueueElement final
 {
 public:
 	Array<Mat4, kMaxShadowCascades> m_textureMatrices;
+	Array<Mat4, kMaxShadowCascades> m_viewProjectionMatrices;
 	Array<RenderQueue*, kMaxShadowCascades> m_shadowRenderQueues;
 	U64 m_uuid; ///< Zero means that there is no dir light
 	Vec3 m_diffuseColor;

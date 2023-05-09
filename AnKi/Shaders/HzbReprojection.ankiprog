@@ -3,14 +3,21 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator SHADOW_TEXTURE_COUNT 0 1 2 3 4
+
 #pragma anki start comp
 
 #include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 [[vk::binding(0)]] Texture2D g_inputDepthTex;
-[[vk::binding(1), vk::image_format("r32ui")]] RWTexture2D<U32> g_hiZUavTex;
+[[vk::binding(1), vk::image_format("r32ui")]] RWTexture2D<U32> g_hzbUavTex;
 
-[[vk::push_constant]] ConstantBuffer<Mat4> g_reprojectionMat;
+#if SHADOW_TEXTURE_COUNT > 0
+[[vk::binding(2), vk::image_format("r32ui")]] RWTexture2D<U32> g_shadowsHzbUavTex[SHADOW_TEXTURE_COUNT];
+#endif
+
+[[vk::binding(3)]] ConstantBuffer<HzbUniforms> g_unis;
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -27,20 +34,42 @@
 	const Vec2 ndc = uvToNdc(uv);
 
 	// Reproject
-	const Vec4 v4 = mul(g_reprojectionMat, Vec4(ndc, depth, 1.0));
-	const Vec2 newNdc = v4.xy / v4.w;
-	const Vec2 newUv = ndcToUv(newNdc);
+	Vec4 v4 = mul(g_unis.m_reprojectionMatrix, Vec4(ndc, depth, 1.0));
+	Vec2 newNdc = v4.xy / v4.w;
+	Vec2 newUv = ndcToUv(newNdc);
 
 	// Store
-	Vec2 hiZTexSize;
-	g_hiZUavTex.GetDimensions(hiZTexSize.x, hiZTexSize.y);
-	const Vec2 texCoordsf = newUv * hiZTexSize;
-	if(any(texCoordsf < Vec2(0.0f, 0.0f)) || any(texCoordsf >= hiZTexSize))
+	Vec2 hzbTexSize;
+	g_hzbUavTex.GetDimensions(hzbTexSize.x, hzbTexSize.y);
+	Vec2 texCoordsf = newUv * hzbTexSize;
+	if(all(texCoordsf >= Vec2(0.0f, 0.0f)) && all(texCoordsf < hzbTexSize))
 	{
-		return;
+		InterlockedMax(g_hzbUavTex[IVec2(texCoordsf)], asuint(depth));
 	}
 
-	InterlockedMax(g_hiZUavTex[IVec2(texCoordsf)], asuint(depth));
+	// Now do the same for the shadow cascades
+#if SHADOW_TEXTURE_COUNT > 0
+	v4 = mul(g_unis.m_invertedViewProjectionMatrix, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = v4.xyz / v4.w;
+
+	for(U32 i = 0; i < SHADOW_TEXTURE_COUNT; ++i)
+	{
+		v4 = mul(g_unis.m_shadowCascadeViewProjectionMatrices[i], Vec4(worldPos, 1.0f));
+
+		newNdc = v4.xy / v4.w;
+		newUv = ndcToUv(newNdc);
+
+		const F32 smDepth = saturate(v4.z / v4.w);
+
+		g_shadowsHzbUavTex[i].GetDimensions(hzbTexSize.x, hzbTexSize.y);
+		texCoordsf = newUv * hzbTexSize;
+
+		if(all(texCoordsf >= Vec2(0.0f, 0.0f)) && all(texCoordsf < hzbTexSize))
+		{
+			InterlockedMax(g_shadowsHzbUavTex[i][IVec2(texCoordsf)], asuint(smDepth));
+		}
+	}
+#endif
 }
 
 #pragma anki end

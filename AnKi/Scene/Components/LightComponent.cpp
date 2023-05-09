@@ -340,7 +340,8 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 
 			// Light matrix
 			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
+			el.m_viewProjectionMatrices[i] = cascadeProjMat * cascadeViewMat;
+			el.m_textureMatrices[i] = biasMat4 * el.m_viewProjectionMatrices[i];
 
 			// Fill the frustum with the fixed projection parameters from the fixed projection matrix
 			Plane plane;

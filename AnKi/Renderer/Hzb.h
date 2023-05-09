@@ -27,6 +27,7 @@ public:
 
 private:
 	RenderTargetDescription m_hzbRtDescr;
+	Array<RenderTargetDescription, kMaxShadowCascades> m_hzbShadowRtDescrs;
 
 	class
 	{
@@ -39,7 +40,7 @@ private:
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
+		Array<ShaderProgramPtr, kMaxShadowCascades + 1> m_grProgs;
 	} m_reproj;
 
 	class
@@ -55,6 +56,7 @@ private:
 	{
 	public:
 		RenderTargetHandle m_hzbRt;
+		Array<RenderTargetHandle, kMaxShadowCascades> m_hzbShadowRts;
 	} m_runCtx;
 };
 /// @}
