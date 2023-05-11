@@ -19,6 +19,10 @@ namespace anki {
 /// atomic min on integers and -0.0 > 1.0 > 0.0 if seen as U32. Downscaling also uses min becase we want the farthest value. When testing against the
 /// HZB we only need to bring depth back to normal which is 0.0 for near and 1.0 for far. So it's a plain 1.0-x. So far becomes 1.0, near is 0.0 and
 /// untouched becomes 1.0 which transaltes to far and it's what we want.
+///
+/// Shadows are a little bit different. Clear clears to -0.0. Reprojection treats 0 as near and 1 as far and chooses the min value because we want to
+/// cull everything behind the shadow. HZB generation reinterprets the values and uses max. Uppon testing we have 0 for near, 1 for far and -0.0 for
+/// clear which is what we want. If nothing reprojected (=clear color) then cull early.
 class Hzb : public RendererObject
 {
 public:
@@ -53,9 +57,13 @@ private:
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
+		Array<ShaderProgramPtr, 2> m_grProgs;
+
 		BufferPtr m_counterBuffer;
 		Bool m_counterBufferZeroed = false;
+
+		Array<BufferPtr, kMaxShadowCascades> m_shadowCounterBuffers;
+		Array<Bool, kMaxShadowCascades> m_shadowCounterBufferZeroed = {};
 	} m_mipmapping;
 
 	class
@@ -64,6 +72,9 @@ private:
 		RenderTargetHandle m_hzbRt;
 		Array<RenderTargetHandle, kMaxShadowCascades> m_hzbShadowRts;
 	} m_runCtx;
+
+	static void runMipmaping(RenderPassWorkContext& rgraphCtx, const RenderTargetDescription& rtDescr, RenderTargetHandle rtHandle,
+							 Bool& counterBufferZeroed, Buffer& counterBuffer, ShaderProgram& reductionProgram);
 };
 /// @}
 

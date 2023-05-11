@@ -51,8 +51,13 @@ Error Hzb::init()
 	m_clearHzb.m_grProg.reset(&variant->getProgram());
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/HzbGenPyramid.ankiprogbin", m_mipmapping.m_prog));
-	m_mipmapping.m_prog->getOrCreateVariant(variant);
-	m_mipmapping.m_grProg.reset(&variant->getProgram());
+	for(U32 i = 0; i < 2; ++i)
+	{
+		ShaderProgramResourceVariantInitInfo variantInit(m_mipmapping.m_prog);
+		variantInit.addMutation("REDUCTION_TYPE", i);
+		m_mipmapping.m_prog->getOrCreateVariant(variantInit, variant);
+		m_mipmapping.m_grProgs[i].reset(&variant->getProgram());
+	}
 
 	m_hzbRtDescr = getRenderer().create2DRenderTargetDescription(ConfigSet::getSingleton().getRHzbWidth(), ConfigSet::getSingleton().getRHzbHeight(),
 																 Format::kR32_Uint, "HZB U32");
@@ -63,16 +68,34 @@ Error Hzb::init()
 	{
 		RendererString name;
 		name.sprintf("Shadow HZB U32 #%u", i);
-		m_hzbShadowRtDescrs[i] = getRenderer().create2DRenderTargetDescription(
-			ConfigSet::getSingleton().getRHzbShadowSize(), ConfigSet::getSingleton().getRHzbShadowSize(), Format::kR32_Uint, name);
+
+		// Calc the size of the cascade
+		UVec2 smSize(ConfigSet::getSingleton().getRShadowMappingTileResolution());
+		smSize >>= chooseDirectionalLightShadowCascadeDetail(i);
+
+		// No need for the HZB to have the same quality of the cascade
+		const UVec2 hzbSize = smSize >> 1;
+
+		m_hzbShadowRtDescrs[i] = getRenderer().create2DRenderTargetDescription(hzbSize.x(), hzbSize.y(), Format::kR32_Uint, name);
 		m_hzbShadowRtDescrs[i].m_mipmapCount = U8(computeMaxMipmapCount2d(m_hzbShadowRtDescrs[i].m_width, m_hzbShadowRtDescrs[i].m_height, 1));
 		m_hzbShadowRtDescrs[i].bake();
 	}
 
-	BufferInitInfo buffInit("HiZCounterBuffer");
+	BufferInitInfo buffInit("HzbCounterBuffer");
 	buffInit.m_size = sizeof(U32);
 	buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
 	m_mipmapping.m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
+
+	for(U32 i = 0; i < kMaxShadowCascades; ++i)
+	{
+		RendererString name;
+		name.sprintf("ShadowHzbCounterBuffer", i);
+
+		BufferInitInfo buffInit(name);
+		buffInit.m_size = sizeof(U32);
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
+		m_mipmapping.m_shadowCounterBuffers[i] = GrManager::getSingleton().newBuffer(buffInit);
+	}
 
 	return Error::kNone;
 }
@@ -90,7 +113,7 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_hzbShadowRts[i] = rgraph.newRenderTarget(m_hzbShadowRtDescrs[i]);
 	}
 
-	// Clear main RT
+	// Clear primary HZB
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB clear");
 		pass.newTextureDependency(m_runCtx.m_hzbRt, TextureUsageBit::kImageComputeWrite, firstMipSubresource);
@@ -115,7 +138,7 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 		});
 	}
 
-	// Clear SM RTs
+	// Clear SM HZBs
 	for(U32 i = 0; i < cascadeCount; ++i)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Shadow HZB clear");
@@ -129,14 +152,19 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 			TextureSubresourceInfo firstMipSubresource;
 			rctx.bindImage(0, 0, m_runCtx.m_hzbShadowRts[i], firstMipSubresource);
 
-			UVec4 clearColor(1u);
+			// See the comments in the class on what this -0 means
+			const F32 negativeZero = -0.0f;
+			U32 negativeZerou;
+			memcpy(&negativeZerou, &negativeZero, sizeof(U32));
+			ANKI_ASSERT(negativeZerou > 0);
+			UVec4 clearColor(negativeZerou);
 			cmdb.setPushConstants(&clearColor, sizeof(clearColor));
 
 			dispatchPPCompute(cmdb, 8, 8, m_hzbShadowRtDescrs[i].m_width, m_hzbShadowRtDescrs[i].m_height);
 		});
 	}
 
-	// Reproject
+	// Reproject all HZBs
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB reprojection");
 
@@ -174,7 +202,7 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 		});
 	}
 
-	// Mipmap
+	// Mipmap primary HZB
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB mip gen");
 
@@ -188,66 +216,93 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			TextureSubresourceInfo firstMipSubresource;
-			const U32 mipsToCompute = m_hzbRtDescr.m_mipmapCount - 1;
-
-			// Zero the counter buffer once before everything else
-			if(!m_mipmapping.m_counterBufferZeroed) [[unlikely]]
-			{
-				m_mipmapping.m_counterBufferZeroed = true;
-
-				cmdb.fillBuffer(m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize, 0);
-
-				const BufferBarrierInfo barrier = {m_mipmapping.m_counterBuffer.get(), BufferUsageBit::kTransferDestination,
-												   BufferUsageBit::kStorageComputeWrite, 0, kMaxPtrSize};
-				cmdb.setPipelineBarrier({}, {&barrier, 1}, {});
-			}
-
-			cmdb.bindShaderProgram(m_mipmapping.m_grProg.get());
-
-			varAU2(dispatchThreadGroupCountXY);
-			varAU2(workGroupOffset); // needed if Left and Top are not 0,0
-			varAU2(numWorkGroupsAndMips);
-			varAU4(rectInfo) = initAU4(0, 0, m_hzbRtDescr.m_width, m_hzbRtDescr.m_height);
-			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, mipsToCompute);
-
-			struct Uniforms
-			{
-				U32 m_threadGroupCount;
-				U32 m_mipmapCount;
-				U32 m_padding0;
-				U32 m_padding1;
-			} pc;
-
-			pc.m_threadGroupCount = numWorkGroupsAndMips[0];
-			pc.m_mipmapCount = numWorkGroupsAndMips[1];
-
-			cmdb.setPushConstants(&pc, sizeof(pc));
-
-			constexpr U32 maxMipsSpdCanProduce = 12;
-			for(U32 mip = 0; mip < maxMipsSpdCanProduce; ++mip)
-			{
-				TextureSubresourceInfo subresource;
-				if(mip < mipsToCompute)
-				{
-					subresource.m_firstMipmap = mip + 1;
-				}
-				else
-				{
-					subresource.m_firstMipmap = 1;
-				}
-
-				rgraphCtx.bindImage(0, 0, m_runCtx.m_hzbRt, subresource, mip);
-			}
-
-			cmdb.bindStorageBuffer(0, 1, m_mipmapping.m_counterBuffer.get(), 0, kMaxPtrSize);
-			rgraphCtx.bindTexture(0, 2, m_runCtx.m_hzbRt, firstMipSubresource);
-
-			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
+			runMipmaping(rgraphCtx, m_hzbRtDescr, m_runCtx.m_hzbRt, m_mipmapping.m_counterBufferZeroed, *m_mipmapping.m_counterBuffer,
+						 *m_mipmapping.m_grProgs[0]);
 		});
 	}
+
+	// Mipmap shadow HZBs
+	for(U32 i = 0; i < cascadeCount; ++i)
+	{
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Shadow HZB mip gen");
+
+		pass.newTextureDependency(m_runCtx.m_hzbShadowRts[i], TextureUsageBit::kSampledCompute, firstMipSubresource);
+
+		for(U32 mip = 1; mip < m_hzbShadowRtDescrs[i].m_mipmapCount; ++mip)
+		{
+			TextureSubresourceInfo subresource;
+			subresource.m_firstMipmap = mip;
+			pass.newTextureDependency(m_runCtx.m_hzbShadowRts[i], TextureUsageBit::kImageComputeWrite, subresource);
+		}
+
+		pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) {
+			runMipmaping(rgraphCtx, m_hzbShadowRtDescrs[i], m_runCtx.m_hzbShadowRts[i], m_mipmapping.m_shadowCounterBufferZeroed[i],
+						 *m_mipmapping.m_shadowCounterBuffers[i], *m_mipmapping.m_grProgs[1]);
+		});
+	}
+}
+
+void Hzb::runMipmaping(RenderPassWorkContext& rgraphCtx, const RenderTargetDescription& rtDescr, RenderTargetHandle rtHandle,
+					   Bool& counterBufferZeroed, Buffer& counterBuffer, ShaderProgram& reductionProgram)
+{
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+	TextureSubresourceInfo firstMipSubresource;
+	const U32 mipsToCompute = rtDescr.m_mipmapCount - 1;
+
+	// Zero the counter buffer once before everything else
+	if(!counterBufferZeroed) [[unlikely]]
+	{
+		counterBufferZeroed = true;
+
+		cmdb.fillBuffer(&counterBuffer, 0, kMaxPtrSize, 0);
+
+		const BufferBarrierInfo barrier = {&counterBuffer, BufferUsageBit::kTransferDestination, BufferUsageBit::kStorageComputeWrite, 0,
+										   kMaxPtrSize};
+		cmdb.setPipelineBarrier({}, {&barrier, 1}, {});
+	}
+
+	cmdb.bindShaderProgram(&reductionProgram);
+
+	varAU2(dispatchThreadGroupCountXY);
+	varAU2(workGroupOffset); // needed if Left and Top are not 0,0
+	varAU2(numWorkGroupsAndMips);
+	varAU4(rectInfo) = initAU4(0, 0, rtDescr.m_width, rtDescr.m_height);
+	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, mipsToCompute);
+
+	struct Uniforms
+	{
+		U32 m_threadGroupCount;
+		U32 m_mipmapCount;
+		U32 m_padding0;
+		U32 m_padding1;
+	} pc;
+
+	pc.m_threadGroupCount = numWorkGroupsAndMips[0];
+	pc.m_mipmapCount = numWorkGroupsAndMips[1];
+
+	cmdb.setPushConstants(&pc, sizeof(pc));
+
+	constexpr U32 maxMipsSpdCanProduce = 12;
+	for(U32 mip = 0; mip < maxMipsSpdCanProduce; ++mip)
+	{
+		TextureSubresourceInfo subresource;
+		if(mip < mipsToCompute)
+		{
+			subresource.m_firstMipmap = mip + 1;
+		}
+		else
+		{
+			subresource.m_firstMipmap = 1;
+		}
+
+		rgraphCtx.bindImage(0, 0, rtHandle, subresource, mip);
+	}
+
+	cmdb.bindStorageBuffer(0, 1, &counterBuffer, 0, kMaxPtrSize);
+	rgraphCtx.bindTexture(0, 2, rtHandle, firstMipSubresource);
+
+	cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 }
 
 } // end namespace anki

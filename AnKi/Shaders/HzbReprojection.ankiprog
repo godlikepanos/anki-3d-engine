@@ -67,7 +67,7 @@
 
 		if(all(texCoordsf >= Vec2(0.0f, 0.0f)) && all(texCoordsf < hzbTexSize))
 		{
-			InterlockedMax(g_shadowsHzbUavTex[i][IVec2(texCoordsf)], asuint(smDepth));
+			InterlockedMin(g_shadowsHzbUavTex[i][IVec2(texCoordsf)], asuint(smDepth));
 		}
 	}
 #endif

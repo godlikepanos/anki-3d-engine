@@ -162,6 +162,12 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 
 	return outCacheEntryIdx;
 }
+
+/// Choose the detail of a shadow cascade. 0 means high detail and >0 is progressively lower.
+inline U32 chooseDirectionalLightShadowCascadeDetail(U32 cascade)
+{
+	return (cascade <= 1) ? 0 : 1;
+}
 /// @}
 
 } // end namespace anki

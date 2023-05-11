@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// The 1st reduction is average depth. The next reductions are max depth
+#pragma anki mutator REDUCTION_TYPE 0 1 // 0: min 1: max
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.hlsl>
@@ -79,8 +79,12 @@ void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
 
 AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
-	const F32 minValue = min(v0.x, min(v1.x, min(v2.x, v3.x)));
-	return AF4(minValue, 0.0, 0.0, 0.0);
+#if REDUCTION_TYPE == 0
+	const F32 value = min(v0.x, min(v1.x, min(v2.x, v3.x)));
+#else
+	const F32 value = max(v0.x, max(v1.x, max(v2.x, v3.x)));
+#endif
+	return AF4(value, 0.0, 0.0, 0.0);
 }
 
 #include <ThirdParty/FidelityFX/ffx_spd.h>
