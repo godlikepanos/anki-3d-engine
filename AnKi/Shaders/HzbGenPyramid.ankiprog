@@ -79,8 +79,8 @@ void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
 
 AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
-	const F32 maxDepth = max(v0.x, max(v1.x, max(v2.x, v3.x)));
-	return AF4(maxDepth, 0.0, 0.0, 0.0);
+	const F32 minValue = min(v0.x, min(v1.x, min(v2.x, v3.x)));
+	return AF4(minValue, 0.0, 0.0, 0.0);
 }
 
 #include <ThirdParty/FidelityFX/ffx_spd.h>

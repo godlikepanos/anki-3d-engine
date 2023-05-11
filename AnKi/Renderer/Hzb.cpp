@@ -103,7 +103,12 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 			TextureSubresourceInfo firstMipSubresource;
 			rctx.bindImage(0, 0, m_runCtx.m_hzbRt, firstMipSubresource);
 
-			UVec4 clearColor(0u);
+			// See the comments in the class on what this -0 means
+			const F32 negativeZero = -0.0f;
+			U32 negativeZerou;
+			memcpy(&negativeZerou, &negativeZero, sizeof(U32));
+			ANKI_ASSERT(negativeZerou > 0);
+			UVec4 clearColor(negativeZerou);
 			cmdb.setPushConstants(&clearColor, sizeof(clearColor));
 
 			dispatchPPCompute(cmdb, 8, 8, m_hzbRtDescr.m_width, m_hzbRtDescr.m_height);

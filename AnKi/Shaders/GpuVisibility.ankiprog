@@ -113,7 +113,7 @@
 	depths[2] = asfloat(g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip));
 	depths[3] = asfloat(g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip));
 
-	const F32 maxDepth = max(depths[0], max(depths[1], max(depths[2], depths[3])));
+	const F32 maxDepth = 1.0 - min(depths[0], min(depths[1], min(depths[2], depths[3])));
 
 	if(aabbMinDepth > maxDepth)
 	{

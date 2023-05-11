@@ -44,7 +44,8 @@
 	Vec2 texCoordsf = newUv * hzbTexSize;
 	if(all(texCoordsf >= Vec2(0.0f, 0.0f)) && all(texCoordsf < hzbTexSize))
 	{
-		InterlockedMax(g_hzbUavTex[IVec2(texCoordsf)], asuint(depth));
+		// See the C++ code what that 1-depth means
+		InterlockedMin(g_hzbUavTex[IVec2(texCoordsf)], asuint(1.0 - depth));
 	}
 
 	// Now do the same for the shadow cascades
