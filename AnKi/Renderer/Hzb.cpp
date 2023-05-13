@@ -182,10 +182,18 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_reproj.m_grProgs[cascadeCount].get());
 
 			rctx.bindTexture(0, 0, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-			TextureSubresourceInfo firstMipSubresource;
-			rctx.bindImage(0, 1, m_runCtx.m_hzbRt, firstMipSubresource);
 
-			HzbUniforms* unis = allocateAndBindUniforms<HzbUniforms*>(sizeof(*unis), cmdb, 0, 3);
+			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
+
+			TextureSubresourceInfo firstMipSubresource;
+			rctx.bindImage(0, 2, m_runCtx.m_hzbRt, firstMipSubresource);
+
+			for(U32 i = 0; i < cascadeCount; ++i)
+			{
+				rctx.bindImage(0, 3, m_runCtx.m_hzbShadowRts[i], firstMipSubresource, i);
+			}
+
+			HzbUniforms* unis = allocateAndBindUniforms<HzbUniforms*>(sizeof(*unis), cmdb, 0, 4);
 			unis->m_reprojectionMatrix = ctx.m_matrices.m_reprojection;
 			unis->m_invertedViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;
 			for(U32 i = 0; i < ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount; ++i)
@@ -193,12 +201,8 @@ void Hzb::populateRenderGraph(RenderingContext& ctx)
 				unis->m_shadowCascadeViewProjectionMatrices[i] = ctx.m_renderQueue->m_directionalLight.m_viewProjectionMatrices[i];
 			}
 
-			for(U32 i = 0; i < cascadeCount; ++i)
-			{
-				rctx.bindImage(0, 2, m_runCtx.m_hzbShadowRts[i], firstMipSubresource, i);
-			}
-
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			ANKI_ASSERT((getRenderer().getInternalResolution().x() % 2) == 0 && (getRenderer().getInternalResolution().y() % 2) == 0);
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 		});
 	}
 

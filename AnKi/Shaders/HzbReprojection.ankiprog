@@ -11,30 +11,35 @@
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 [[vk::binding(0)]] Texture2D g_inputDepthTex;
-[[vk::binding(1), vk::image_format("r32ui")]] RWTexture2D<U32> g_hzbUavTex;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
+
+[[vk::binding(2), vk::image_format("r32ui")]] RWTexture2D<U32> g_hzbUavTex;
 
 #if SHADOW_TEXTURE_COUNT > 0
-[[vk::binding(2), vk::image_format("r32ui")]] RWTexture2D<U32> g_shadowsHzbUavTex[SHADOW_TEXTURE_COUNT];
+[[vk::binding(3), vk::image_format("r32ui")]] RWTexture2D<U32> g_shadowsHzbUavTex[SHADOW_TEXTURE_COUNT];
 #endif
 
-[[vk::binding(3)]] ConstantBuffer<HzbUniforms> g_unis;
+[[vk::binding(4)]] ConstantBuffer<HzbUniforms> g_unis;
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 inputDepthTexSize;
 	g_inputDepthTex.GetDimensions(inputDepthTexSize.x, inputDepthTexSize.y);
+	const UVec2 quarterInputDepthTexSize = inputDepthTexSize / 2u;
 
-	if(any(svDispatchThreadId.xy >= inputDepthTexSize))
+	if(any(svDispatchThreadId.xy >= quarterInputDepthTexSize))
 	{
 		return;
 	}
 
-	const F32 depth = g_inputDepthTex[svDispatchThreadId.xy].r;
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(inputDepthTexSize);
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) / Vec2(quarterInputDepthTexSize);
 	const Vec2 ndc = uvToNdc(uv);
 
+	const Vec4 depths = g_inputDepthTex.GatherRed(g_linearAnyClampSampler, uv, 0);
+	const F32 maxDepth = max4(depths);
+
 	// Reproject
-	Vec4 v4 = mul(g_unis.m_reprojectionMatrix, Vec4(ndc, depth, 1.0));
+	Vec4 v4 = mul(g_unis.m_reprojectionMatrix, Vec4(ndc, maxDepth, 1.0));
 	Vec2 newNdc = v4.xy / v4.w;
 	Vec2 newUv = ndcToUv(newNdc);
 
@@ -45,12 +50,12 @@
 	if(all(texCoordsf >= Vec2(0.0f, 0.0f)) && all(texCoordsf < hzbTexSize))
 	{
 		// See the C++ code what that 1-depth means
-		InterlockedMin(g_hzbUavTex[IVec2(texCoordsf)], asuint(1.0 - depth));
+		InterlockedMin(g_hzbUavTex[IVec2(texCoordsf)], asuint(1.0 - maxDepth));
 	}
 
 	// Now do the same for the shadow cascades
 #if SHADOW_TEXTURE_COUNT > 0
-	v4 = mul(g_unis.m_invertedViewProjectionMatrix, Vec4(ndc, depth, 1.0));
+	v4 = mul(g_unis.m_invertedViewProjectionMatrix, Vec4(ndc, maxDepth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;
 
 	for(U32 i = 0; i < SHADOW_TEXTURE_COUNT; ++i)
