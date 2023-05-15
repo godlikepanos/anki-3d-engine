@@ -5,7 +5,6 @@
 
 #include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/Hzb.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>

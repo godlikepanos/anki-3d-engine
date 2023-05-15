@@ -9,7 +9,6 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/GpuVisibility.h>
-#include <AnKi/Renderer/Hzb.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -27,6 +26,11 @@ Error GBuffer::init()
 	if(!err)
 	{
 		err = m_visibility.init();
+	}
+
+	if(!err)
+	{
+		err = m_hzb.init();
 	}
 
 	if(err)
@@ -59,6 +63,17 @@ Error GBuffer::initInternal()
 		m_colorRtDescrs[i] = getRenderer().create2DRenderTargetDescription(
 			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), kGBufferColorRenderTargetFormats[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
+	}
+
+	{
+		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kImageComputeWrite;
+
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
+			ConfigSet::getSingleton().getRHzbWidth(), ConfigSet::getSingleton().getRHzbWidth(), Format::kR32_Sfloat, usage, "GBuffer HZB");
+		texinit.m_mipmapCount = U8(computeMaxMipmapCount2d(texinit.m_width, texinit.m_height));
+		ClearValue clear;
+		clear.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
+		m_hzbRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute, clear);
 	}
 
 	// FB descr
@@ -139,12 +154,16 @@ void GBuffer::importRenderTargets(RenderingContext& ctx)
 		// Already imported once
 		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get());
+
+		m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get());
 	}
 	else
 	{
 		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt =
 			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kSampledFragment);
+
+		m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get(), TextureUsageBit::kSampledCompute);
 	}
 }
 
@@ -154,8 +173,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_visibility.populateRenderGraph(RenderingTechnique::kGBuffer, ctx.m_matrices.m_viewProjection,
-									 ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz(), getRenderer().getHzb().getHzbRt(), rgraph);
+	const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
+	m_visibility.populateRenderGraph(RenderingTechnique::kGBuffer, matrices.m_viewProjection, matrices.m_cameraTransform.getTranslationPart().xyz(),
+									 m_runCtx.m_hzbRt, rgraph);
 
 	const Bool enableVrs =
 		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
@@ -219,6 +239,10 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
 	pass.newBufferDependency(m_visibility.getMdiDrawCountsBufferHandle(), BufferUsageBit::kIndirectDraw);
+
+	// HZB generation
+	m_hzb.populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
+							  UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), ctx);
 }
 
 } // end namespace anki

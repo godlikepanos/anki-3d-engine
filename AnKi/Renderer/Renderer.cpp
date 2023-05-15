@@ -44,7 +44,6 @@
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
-#include <AnKi/Renderer/Hzb.h>
 
 namespace anki {
 
@@ -246,9 +245,6 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_packVisibleClustererObjects->init());
 
-	m_hzb.reset(newInstance<Hzb>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_hzb->init());
-
 	// Init samplers
 	{
 		SamplerInitInfo sinit("NearestNearestClamp");
@@ -343,7 +339,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbuffer->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
-	m_hzb->populateRenderGraph(ctx);
 	gpuSceneCopy(ctx);
 	m_packVisibleClustererObjects->populateRenderGraph(ctx);
 	m_genericCompute->populateRenderGraph(ctx);

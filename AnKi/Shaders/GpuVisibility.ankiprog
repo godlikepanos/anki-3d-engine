@@ -14,7 +14,7 @@
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
 
-[[vk::binding(3)]] Texture2D<U32> g_hzbTex;
+[[vk::binding(3)]] Texture2D<Vec4> g_hzbTex;
 [[vk::binding(4)]] SamplerState g_nearestAnyClampSampler;
 
 // These 2 have the same size
@@ -108,12 +108,11 @@
 
 	// Sample mip
 	Vec4 depths;
-	depths[0] = asfloat(g_hzbTex.SampleLevel(g_nearestAnyClampSampler, minUv, mip));
-	depths[1] = asfloat(g_hzbTex.SampleLevel(g_nearestAnyClampSampler, maxUv, mip));
-	depths[2] = asfloat(g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip));
-	depths[3] = asfloat(g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip));
-
-	const F32 maxDepth = 1.0 - min(depths[0], min(depths[1], min(depths[2], depths[3])));
+	depths[0] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, minUv, mip);
+	depths[1] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, maxUv, mip);
+	depths[2] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip);
+	depths[3] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip);
+	const F32 maxDepth = max4(depths);
 
 	if(aabbMinDepth > maxDepth)
 	{
