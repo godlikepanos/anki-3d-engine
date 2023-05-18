@@ -9,6 +9,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Renderer/TileAllocator.h>
+#include <AnKi/Renderer/GpuVisibility.h>
 
 namespace anki {
 
@@ -34,8 +35,7 @@ public:
 	}
 
 private:
-	class LightToRenderTempInfo;
-	class ThreadWorkItem;
+	class ViewportWorkItem;
 
 	TileAllocator m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
@@ -53,17 +53,19 @@ private:
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
 
+	GpuVisibility m_visibility;
+
 	class
 	{
 	public:
 		RenderTargetHandle m_rt;
-		WeakArray<ThreadWorkItem> m_workItems;
+		WeakArray<ViewportWorkItem> m_workItems;
 		UVec4 m_fullViewport; ///< Calculate the viewport that contains all of the work items. Mobile optimization.
 	} m_runCtx;
 
 	Error initInternal();
 
-	void processLights(RenderingContext& ctx, U32& threadCountForScratchPass);
+	void processLights(RenderingContext& ctx);
 
 	Bool allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices, const U32* drawcallsCount,
 							const U32* hierarchies, UVec4* atlasTileViewports, TileAllocatorResult* subResults);
@@ -76,8 +78,8 @@ private:
 	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const;
 
 	template<typename TMemoryPool>
-	void newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,
-					  DynamicArray<LightToRenderTempInfo, TMemoryPool>& workItems, U32& drawcallCount) const;
+	void newWorkItem(const UVec4& atlasViewport, const RenderQueue& queue, RenderGraphDescription& rgraph,
+					 DynamicArray<ViewportWorkItem, TMemoryPool>& workItems);
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 };

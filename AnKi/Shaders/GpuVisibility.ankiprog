@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator HZB_TEST 0 1
+
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -14,19 +16,21 @@
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
 
-[[vk::binding(3)]] Texture2D<Vec4> g_hzbTex;
-[[vk::binding(4)]] SamplerState g_nearestAnyClampSampler;
-
 // These 2 have the same size
-[[vk::binding(5)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
-[[vk::binding(6)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
+[[vk::binding(3)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
+[[vk::binding(4)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
 
 // Index pointing to the above arrays. One for each render state bucket
-[[vk::binding(7)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
+[[vk::binding(5)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
 // The MDI counts. One for each render state bucket
-[[vk::binding(8)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+[[vk::binding(6)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
 
-[[vk::binding(9)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
+[[vk::binding(7)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
+
+#if HZB_TEST
+[[vk::binding(8)]] Texture2D<Vec4> g_hzbTex;
+[[vk::binding(9)]] SamplerState g_nearestAnyClampSampler;
+#endif
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -82,6 +86,7 @@
 	// HiZ culling
 	//
 
+#if HZB_TEST
 	// Compute the mip
 	Vec2 texSize;
 	F32 mipCount;
@@ -92,7 +97,7 @@
 	const Vec2 sizeXY = (maxUv - minUv) * texSize;
 	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
 
-#if 0
+#	if 0
 	mip = clamp(mip, 0.0, mipCount - 1.0);
 	const F32 levelLower = max(mip - 1.0, 0.0);
 	const Vec2 scale = exp2(-levelLower);
@@ -104,7 +109,7 @@
 	{
 		mip = levelLower;
 	}
-#endif
+#	endif
 
 	// Sample mip
 	Vec4 depths;
@@ -118,18 +123,18 @@
 	{
 		return;
 	}
+#endif
 
 	// Compute the LOD
 	//
-	const Vec4 nearPlane = g_unis.m_clipPlanes[0];
-	const F32 distFromNearPlane = testPlaneSphere(nearPlane.xyz, nearPlane.w, aabb.m_sphereCenter, -aabb.m_negativeSphereRadius);
+	const F32 distFromLodPoint = length(aabb.m_sphereCenter - g_unis.m_lodReferencePoint) + aabb.m_negativeSphereRadius;
 
 	U32 lod;
-	if(distFromNearPlane < g_unis.m_maxLodDistances[0])
+	if(distFromLodPoint < g_unis.m_maxLodDistances[0])
 	{
 		lod = 0u;
 	}
-	else if(distFromNearPlane < g_unis.m_maxLodDistances[1])
+	else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
 	{
 		lod = 1u;
 	}

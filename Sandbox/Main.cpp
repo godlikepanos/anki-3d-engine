@@ -167,6 +167,11 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mousePosOn1stClick = in.getMousePosition();
 	}
 
+	if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
+	{
+		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
+	}
+
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
 	{
 		constexpr F32 ROTATE_ANGLE = toRad(2.5f);
@@ -266,11 +271,6 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(in.getKey(KeyCode::kS))
 		{
 			mover->moveLocalZ(moveDistance);
-		}
-
-		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
-		{
-			Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 		}
 
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;

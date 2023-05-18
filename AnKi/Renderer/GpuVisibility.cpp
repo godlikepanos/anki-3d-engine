@@ -12,7 +12,6 @@
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
@@ -37,13 +36,25 @@ static GpuSceneContiguousArrayType techniqueToArrayType(RenderingTechnique techn
 
 Error GpuVisibility::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin", m_prog, m_grProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuVisibility.ankiprogbin", m_prog));
+
+	for(U32 i = 0; i < 2; ++i)
+	{
+		ShaderProgramResourceVariantInitInfo variantInit(m_prog);
+		variantInit.addMutation("HZB_TEST", i);
+
+		const ShaderProgramResourceVariant* variant;
+		m_prog->getOrCreateVariant(variantInit, variant);
+
+		m_grProgs[i].reset(&variant->getProgram());
+	}
 
 	return Error::kNone;
 }
 
-void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 cameraPosition, RenderTargetHandle hzbRt,
-										RenderGraphDescription& rgraph)
+void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
+										const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt,
+										RenderGraphDescription& rgraph, GpuVisibilityOutput& out)
 {
 	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(techniqueToArrayType(technique));
 	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);
@@ -51,35 +62,55 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 	// Allocate memory for the indirect commands
 	const GpuVisibleTransientMemoryAllocation indirectArgs =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectArgs));
+	out.m_drawIndexedIndirectArgsBuffer = indirectArgs.m_buffer;
+	out.m_drawIndexedIndirectArgsBufferOffset = indirectArgs.m_offset;
+	out.m_drawIndexedIndirectArgsBufferRange = indirectArgs.m_size;
+
 	const GpuVisibleTransientMemoryAllocation instanceRateRenderables =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(GpuSceneRenderable));
+	out.m_instanceRateRenderablesBuffer = instanceRateRenderables.m_buffer;
+	out.m_instanceRateRenderablesBufferOffset = instanceRateRenderables.m_offset;
+	out.m_instanceRateRenderablesBufferRange = instanceRateRenderables.m_size;
 
 	// Allocate and zero the MDI counts
 	RebarAllocation mdiDrawCounts;
 	U32* atomics = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(bucketCount, mdiDrawCounts);
 	memset(atomics, 0, mdiDrawCounts.m_range);
+	out.m_mdiDrawCountsBuffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
+	out.m_mdiDrawCountsBufferOffset = mdiDrawCounts.m_offset;
+	out.m_mdiDrawCountsBufferRange = mdiDrawCounts.m_range;
 
 	// Import buffers
-	m_runCtx.m_instanceRateRenderables = rgraph.importBuffer(instanceRateRenderables.m_buffer, BufferUsageBit::kNone,
-															 instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
-	m_runCtx.m_drawIndexedIndirectArgs =
+	out.m_instanceRateRenderablesHandle = rgraph.importBuffer(instanceRateRenderables.m_buffer, BufferUsageBit::kNone,
+															  instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
+	out.m_drawIndexedIndirectArgsHandle =
 		rgraph.importBuffer(indirectArgs.m_buffer, BufferUsageBit::kNone, indirectArgs.m_offset, indirectArgs.m_size);
-	m_runCtx.m_mdiDrawCounts = rgraph.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
-												   mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
+	out.m_mdiDrawCountsHandle = rgraph.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+													mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion");
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newTextureDependency(hzbRt, TextureUsageBit::kSampledCompute);
-	pass.newBufferDependency(m_runCtx.m_instanceRateRenderables, BufferUsageBit::kStorageComputeWrite);
-	pass.newBufferDependency(m_runCtx.m_drawIndexedIndirectArgs, BufferUsageBit::kStorageComputeWrite);
-	pass.newBufferDependency(m_runCtx.m_mdiDrawCounts, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(out.m_instanceRateRenderablesHandle, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(out.m_drawIndexedIndirectArgsHandle, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(out.m_mdiDrawCountsHandle, BufferUsageBit::kStorageComputeWrite);
 
-	pass.setWork([this, viewProjectionMat, cameraPosition, technique, hzbRt](RenderPassWorkContext& rpass) {
+	if(hzbRt)
+	{
+		pass.newTextureDependency(*hzbRt, TextureUsageBit::kSampledCompute);
+	}
+
+	const RenderTargetHandle hzbRtCopy =
+		(hzbRt) ? *hzbRt : RenderTargetHandle(); // Can't pass to the lambda the hzbRt which is a pointer to who knows what
+
+	pass.setWork([this, viewProjectionMat, lodReferencePoint, lodDistances, technique, hzbRtCopy,
+				  drawIndexedIndirectArgsHandle = out.m_drawIndexedIndirectArgsHandle,
+				  instanceRateRenderablesHandle = out.m_instanceRateRenderablesHandle,
+				  mdiDrawCountsHandle = out.m_mdiDrawCountsHandle](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
-		cmdb.bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_grProgs[hzbRtCopy.isValid()].get());
 
 		const GpuSceneContiguousArrayType type = techniqueToArrayType(technique);
 
@@ -93,13 +124,10 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-		rpass.bindColorTexture(0, 3, hzbRt);
-		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		rpass.bindStorageBuffer(0, 3, instanceRateRenderablesHandle);
+		rpass.bindStorageBuffer(0, 4, drawIndexedIndirectArgsHandle);
 
-		rpass.bindStorageBuffer(0, 5, m_runCtx.m_instanceRateRenderables);
-		rpass.bindStorageBuffer(0, 6, m_runCtx.m_drawIndexedIndirectArgs);
-
-		U32* offsets = allocateAndBindStorage<U32*>(sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(technique), cmdb, 0, 7);
+		U32* offsets = allocateAndBindStorage<U32*>(sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(technique), cmdb, 0, 5);
 		U32 bucketCount = 0;
 		U32 userCount = 0;
 		RenderStateBucketContainer::getSingleton().iterateBuckets(technique, [&](const RenderStateInfo&, U32 userCount_) {
@@ -109,9 +137,9 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 		});
 		ANKI_ASSERT(userCount == RenderStateBucketContainer::getSingleton().getBucketsItemCount(technique));
 
-		rpass.bindStorageBuffer(0, 8, m_runCtx.m_mdiDrawCounts);
+		rpass.bindStorageBuffer(0, 6, mdiDrawCountsHandle);
 
-		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 9);
+		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 7);
 
 		Array<Plane, 6> planes;
 		extractClipPlanes(viewProjectionMat, planes);
@@ -124,13 +152,19 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 		unis->m_aabbCount = aabbCount;
 
 		ANKI_ASSERT(kMaxLodCount == 3);
-		unis->m_maxLodDistances[0] = ConfigSet::getSingleton().getLod0MaxDistance();
-		unis->m_maxLodDistances[1] = ConfigSet::getSingleton().getLod1MaxDistance();
+		unis->m_maxLodDistances[0] = lodDistances[0];
+		unis->m_maxLodDistances[1] = lodDistances[1];
 		unis->m_maxLodDistances[2] = kMaxF32;
 		unis->m_maxLodDistances[3] = kMaxF32;
 
-		unis->m_cameraOrigin = cameraPosition;
+		unis->m_lodReferencePoint = lodReferencePoint;
 		unis->m_viewProjectionMat = viewProjectionMat;
+
+		if(hzbRtCopy.isValid())
+		{
+			rpass.bindColorTexture(0, 8, hzbRtCopy);
+			cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		}
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});

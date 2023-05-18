@@ -107,7 +107,7 @@ Error GBuffer::initInternal()
 	return Error::kNone;
 }
 
-void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const
+void GBuffer::runInThread(const RenderingContext& ctx, const GpuVisibilityOutput& visOut, RenderPassWorkContext& rgraphCtx) const
 {
 	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
 
@@ -132,14 +132,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
-
-	const GpuVisibility& gpuVis = m_visibility;
-	rgraphCtx.getBufferState(gpuVis.getMdiDrawCountsBufferHandle(), args.m_mdiDrawCountsBuffer, args.m_mdiDrawCountsBufferOffset,
-							 args.m_mdiDrawCountsBufferRange);
-	rgraphCtx.getBufferState(gpuVis.getDrawIndexedIndirectArgsBufferHandle(), args.m_drawIndexedIndirectArgsBuffer,
-							 args.m_drawIndexedIndirectArgsBufferOffset, args.m_drawIndexedIndirectArgsBufferRange);
-	rgraphCtx.getBufferState(gpuVis.getInstanceRateRenderablesBufferHandle(), args.m_instaceRateRenderablesBuffer,
-							 args.m_instaceRateRenderablesOffset, args.m_instaceRateRenderablesRange);
+	args.fillMdi(visOut);
 
 	cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
 	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
@@ -174,8 +167,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
+	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
+													   ConfigSet::getSingleton().getLod1MaxDistance()};
+	GpuVisibilityOutput visOut;
 	m_visibility.populateRenderGraph(RenderingTechnique::kGBuffer, matrices.m_viewProjection, matrices.m_cameraTransform.getTranslationPart().xyz(),
-									 m_runCtx.m_hzbRt, rgraph);
+									 lodDistances, &m_runCtx.m_hzbRt, rgraph, visOut);
 
 	const Bool enableVrs =
 		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
@@ -218,8 +214,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], kGBufferColorRenderTargetCount), m_runCtx.m_crntFrameDepthRt,
 							sriRt);
-	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		runInThread(ctx, rgraphCtx);
+	pass.setWork(1, [this, &ctx, visOut](RenderPassWorkContext& rgraphCtx) {
+		runInThread(ctx, visOut, rgraphCtx);
 	});
 
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -238,9 +234,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
-	pass.newBufferDependency(m_visibility.getMdiDrawCountsBufferHandle(), BufferUsageBit::kIndirectDraw);
+	pass.newBufferDependency(visOut.m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
 
-	// HZB generation
+	// HZB generation for the next frame
 	m_hzb.populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
 							  UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), ctx);
 }

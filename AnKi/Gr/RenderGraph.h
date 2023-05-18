@@ -31,7 +31,7 @@ class RenderGraphDescription;
 /// @{
 constexpr U32 kMaxRenderGraphPasses = 128;
 constexpr U32 kMaxRenderGraphRenderTargets = 64; ///< Max imported or not render targets in RenderGraph.
-constexpr U32 kMaxRenderGraphBuffers = 64;
+constexpr U32 kMaxRenderGraphBuffers = 128;
 constexpr U32 kMaxRenderGraphAccelerationStructures = 32;
 /// @}
 

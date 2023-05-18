@@ -151,7 +151,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 {
 	setState(args, cmdb);
 
-	cmdb.bindVertexBuffer(0, args.m_instaceRateRenderablesBuffer, args.m_instaceRateRenderablesOffset, sizeof(GpuSceneRenderablePacked),
+	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer, args.m_instanceRateRenderablesBufferOffset, sizeof(GpuSceneRenderablePacked),
 						  VertexStepRate::kInstance);
 
 	U32 allUserCount = 0;

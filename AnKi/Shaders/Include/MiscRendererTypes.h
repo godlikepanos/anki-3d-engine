@@ -156,7 +156,7 @@ struct GpuVisibilityUniforms
 
 	Vec4 m_maxLodDistances;
 
-	Vec3 m_cameraOrigin;
+	Vec3 m_lodReferencePoint;
 	F32 m_padding2;
 
 	Mat4 m_viewProjectionMat;

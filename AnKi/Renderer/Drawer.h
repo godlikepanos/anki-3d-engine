@@ -7,6 +7,7 @@
 
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Resource/RenderingKey.h>
+#include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Gr.h>
 
 namespace anki {
@@ -41,9 +42,22 @@ public:
 	PtrSize m_drawIndexedIndirectArgsBufferOffset = 0;
 	PtrSize m_drawIndexedIndirectArgsBufferRange = 0;
 
-	Buffer* m_instaceRateRenderablesBuffer = nullptr;
-	PtrSize m_instaceRateRenderablesOffset = 0;
-	PtrSize m_instaceRateRenderablesRange = 0;
+	Buffer* m_instanceRateRenderablesBuffer = nullptr;
+	PtrSize m_instanceRateRenderablesBufferOffset = 0;
+	PtrSize m_instanceRateRenderablesBufferRange = 0;
+
+	void fillMdi(const GpuVisibilityOutput& visOut)
+	{
+		m_mdiDrawCountsBuffer = visOut.m_mdiDrawCountsBuffer;
+		m_mdiDrawCountsBufferOffset = visOut.m_mdiDrawCountsBufferOffset;
+		m_mdiDrawCountsBufferRange = visOut.m_mdiDrawCountsBufferRange;
+		m_drawIndexedIndirectArgsBuffer = visOut.m_drawIndexedIndirectArgsBuffer;
+		m_drawIndexedIndirectArgsBufferOffset = visOut.m_drawIndexedIndirectArgsBufferOffset;
+		m_drawIndexedIndirectArgsBufferRange = visOut.m_drawIndexedIndirectArgsBufferRange;
+		m_instanceRateRenderablesBuffer = visOut.m_instanceRateRenderablesBuffer;
+		m_instanceRateRenderablesBufferOffset = visOut.m_instanceRateRenderablesBufferOffset;
+		m_instanceRateRenderablesBufferRange = visOut.m_instanceRateRenderablesBufferRange;
+	}
 };
 
 /// It uses the render queue to batch and render.

@@ -13,6 +13,26 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+class GpuVisibilityOutput
+{
+public:
+	BufferHandle m_instanceRateRenderablesHandle;
+	BufferHandle m_drawIndexedIndirectArgsHandle;
+	BufferHandle m_mdiDrawCountsHandle;
+
+	Buffer* m_instanceRateRenderablesBuffer;
+	Buffer* m_drawIndexedIndirectArgsBuffer;
+	Buffer* m_mdiDrawCountsBuffer;
+
+	PtrSize m_instanceRateRenderablesBufferOffset;
+	PtrSize m_drawIndexedIndirectArgsBufferOffset;
+	PtrSize m_mdiDrawCountsBufferOffset;
+
+	PtrSize m_instanceRateRenderablesBufferRange;
+	PtrSize m_drawIndexedIndirectArgsBufferRange;
+	PtrSize m_mdiDrawCountsBufferRange;
+};
+
 /// Performs GPU visibility for some pass.
 class GpuVisibility : public RendererObject
 {
@@ -20,35 +40,13 @@ public:
 	Error init();
 
 	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 cameraPosition, RenderTargetHandle hzbRt,
-							 RenderGraphDescription& rgraph);
-
-	BufferHandle getMdiDrawCountsBufferHandle() const
-	{
-		return m_runCtx.m_mdiDrawCounts;
-	}
-
-	BufferHandle getDrawIndexedIndirectArgsBufferHandle() const
-	{
-		return m_runCtx.m_drawIndexedIndirectArgs;
-	}
-
-	BufferHandle getInstanceRateRenderablesBufferHandle() const
-	{
-		return m_runCtx.m_instanceRateRenderables;
-	}
+	void populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
+							 const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt, RenderGraphDescription& rgraph,
+							 GpuVisibilityOutput& out);
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-
-	class
-	{
-	public:
-		BufferHandle m_instanceRateRenderables;
-		BufferHandle m_drawIndexedIndirectArgs;
-		BufferHandle m_mdiDrawCounts;
-	} m_runCtx;
+	Array<ShaderProgramPtr, 2> m_grProgs;
 };
 /// @}
 

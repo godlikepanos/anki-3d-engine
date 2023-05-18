@@ -91,7 +91,7 @@ private:
 
 	Error initInternal();
 
-	void runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
+	void runInThread(const RenderingContext& ctx, const GpuVisibilityOutput& visOut, RenderPassWorkContext& rgraphCtx) const;
 };
 /// @}
 

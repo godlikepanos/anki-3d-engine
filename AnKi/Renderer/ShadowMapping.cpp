@@ -12,24 +12,14 @@
 
 namespace anki {
 
-class ShadowMapping::LightToRenderTempInfo
+class ShadowMapping::ViewportWorkItem
 {
 public:
 	UVec4 m_viewport;
-	RenderQueue* m_renderQueue;
-	U32 m_drawcallCount;
-	U32 m_renderQueueElementsLod;
-};
+	Mat4 m_mvp;
+	Mat3x4 m_viewMatrix;
 
-class ShadowMapping::ThreadWorkItem
-{
-public:
-	UVec4 m_viewport;
-	RenderQueue* m_renderQueue;
-	U32 m_firstRenderableElement;
-	U32 m_renderableElementCount;
-	U32 m_threadPoolTaskIdx;
-	U32 m_renderQueueElementsLod;
+	GpuVisibilityOutput m_visOut;
 };
 
 Error ShadowMapping::init()
@@ -74,6 +64,8 @@ Error ShadowMapping::initInternal()
 	m_clearDepthProg->getOrCreateVariant(variant);
 	m_clearDepthGrProg.reset(&variant->getProgram());
 
+	ANKI_CHECK(m_visibility.init());
+
 	return Error::kNone;
 }
 
@@ -95,8 +87,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// First process the lights
-	U32 threadCountForPass = 0;
-	processLights(ctx, threadCountForPass);
+	processLights(ctx);
 
 	// Build the render graph
 	if(m_runCtx.m_workItems.getSize())
@@ -111,17 +102,21 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("ShadowMapping");
 
-		pass.setFramebufferInfo(m_fbDescr, {}, m_runCtx.m_rt, {}, minx, miny, width, height);
-		ANKI_ASSERT(threadCountForPass && threadCountForPass <= CoreThreadHive::getSingleton().getThreadCount());
-		pass.setWork(threadCountForPass, [this](RenderPassWorkContext& rgraphCtx) {
-			runShadowMapping(rgraphCtx);
-		});
+		for(const ViewportWorkItem& work : m_runCtx.m_workItems)
+		{
+			pass.newBufferDependency(work.m_visOut.m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+		}
 
 		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kAllFramebuffer, subresource);
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+
+		pass.setFramebufferInfo(m_fbDescr, {}, m_runCtx.m_rt, {}, minx, miny, width, height);
+		pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
+			runShadowMapping(rgraphCtx);
+		});
 	}
 }
 
@@ -235,50 +230,29 @@ Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* 
 }
 
 template<typename TMemoryPool>
-void ShadowMapping::newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,
-								 DynamicArray<LightToRenderTempInfo, TMemoryPool>& workItems, U32& drawcallCount) const
+void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& queue, RenderGraphDescription& rgraph,
+								DynamicArray<ViewportWorkItem, TMemoryPool>& workItems)
 {
-	LightToRenderTempInfo toRender;
-	toRender.m_renderQueue = lightRenderQueue;
-	toRender.m_viewport = atlasViewport;
-	toRender.m_drawcallCount = lightRenderQueue->m_renderables.getSize();
-	toRender.m_renderQueueElementsLod = renderQueueElementsLod;
+	ViewportWorkItem& work = *workItems.emplaceBack();
 
-	workItems.emplaceBack(toRender);
-	drawcallCount += toRender.m_drawcallCount;
+	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
+													   ConfigSet::getSingleton().getLod1MaxDistance()};
+	m_visibility.populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix, queue.m_cameraTransform.getTranslationPart().xyz(),
+									 lodDistances, nullptr, rgraph, work.m_visOut);
+
+	work.m_viewport = atlasViewport;
+	work.m_mvp = queue.m_viewProjectionMatrix;
+	work.m_viewMatrix = queue.m_viewMatrix;
 }
 
-void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass)
+void ShadowMapping::processLights(RenderingContext& ctx)
 {
 	m_runCtx.m_fullViewport = UVec4(kMaxU32, kMaxU32, kMinU32, kMinU32);
 
 	// Vars
 	const Vec4 cameraOrigin = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz0();
-	DynamicArray<LightToRenderTempInfo, MemoryPoolPtrWrapper<StackMemoryPool>> lightsToRender(ctx.m_tempPool);
-	U32 drawcallCount = 0;
-
-	// First thing, allocate an empty tile for empty faces of point lights
-	UVec4 emptyTileViewport;
-	{
-		Array<U32, 4> tileViewport;
-		[[maybe_unused]] const TileAllocatorResult res =
-			m_tileAlloc.allocate(GlobalFrameIndex::getSingleton().m_value, 1, kMaxU64, 0, 1, kPointLightMaxTileAllocHierarchy, tileViewport);
-
-		emptyTileViewport = UVec4(tileViewport);
-
-#if ANKI_ENABLE_ASSERTIONS
-		static Bool firstRun = true;
-		if(firstRun)
-		{
-			ANKI_ASSERT(res == TileAllocatorResult::kAllocationSucceded);
-			firstRun = false;
-		}
-		else
-		{
-			ANKI_ASSERT(res == TileAllocatorResult::kCached);
-		}
-#endif
-	}
+	DynamicArray<ViewportWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(ctx.m_tempPool);
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Process the directional light first.
 	if(ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount > 0)
@@ -293,57 +267,31 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 		Array<U32, kMaxShadowCascades> hierarchies;
 		Array<U32, kMaxShadowCascades> renderQueueElementsLods;
 
-		U32 activeCascades = 0;
-
 		for(U32 cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 		{
 			ANKI_ASSERT(light.m_shadowRenderQueues[cascade]);
-			if(light.m_shadowRenderQueues[cascade]->m_renderables.getSize() > 0)
-			{
-				// Cascade with drawcalls, will need tiles
 
-				timestamps[activeCascades] = GlobalFrameIndex::getSingleton().m_value; // This light is always updated
-				cascadeIndices[activeCascades] = cascade;
-				drawcallCounts[activeCascades] = 1; // Doesn't matter
+			timestamps[cascade] = GlobalFrameIndex::getSingleton().m_value; // This light is always updated
+			cascadeIndices[cascade] = cascade;
+			drawcallCounts[cascade] = 1; // Doesn't matter
 
-				// Change the quality per cascade
-				hierarchies[activeCascades] = kTileAllocHierarchyCount - 1 - chooseDirectionalLightShadowCascadeDetail(cascade);
-				renderQueueElementsLods[activeCascades] = (cascade == 0) ? 0 : (kMaxLodCount - 1);
-
-				++activeCascades;
-			}
+			// Change the quality per cascade
+			hierarchies[cascade] = kTileAllocHierarchyCount - 1 - chooseDirectionalLightShadowCascadeDetail(cascade);
+			renderQueueElementsLods[cascade] = (cascade == 0) ? 0 : (kMaxLodCount - 1);
 		}
 
-		const Bool allocationFailed = activeCascades == 0
-									  || !allocateAtlasTiles(light.m_uuid, activeCascades, &timestamps[0], &cascadeIndices[0], &drawcallCounts[0],
-															 &hierarchies[0], &atlasViewports[0], &subResults[0]);
+		const Bool allocationFailed = !allocateAtlasTiles(light.m_uuid, light.m_shadowCascadeCount, &timestamps[0], &cascadeIndices[0],
+														  &drawcallCounts[0], &hierarchies[0], &atlasViewports[0], &subResults[0]);
 
 		if(!allocationFailed)
 		{
-			activeCascades = 0;
-
 			for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 			{
-				if(light.m_shadowRenderQueues[cascade]->m_renderables.getSize() > 0)
-				{
-					// Cascade with drawcalls, push some work for it
+				// Update the texture matrix to point to the correct region in the atlas
+				light.m_textureMatrices[cascade] = createSpotLightTextureMatrix(atlasViewports[cascade]) * light.m_textureMatrices[cascade];
 
-					// Update the texture matrix to point to the correct region in the atlas
-					light.m_textureMatrices[cascade] =
-						createSpotLightTextureMatrix(atlasViewports[activeCascades]) * light.m_textureMatrices[cascade];
-
-					// Push work
-					newWorkItems(atlasViewports[activeCascades], light.m_shadowRenderQueues[cascade], renderQueueElementsLods[activeCascades],
-								 lightsToRender, drawcallCount);
-
-					++activeCascades;
-				}
-				else
-				{
-					// Empty cascade, point it to the empty tile
-
-					light.m_textureMatrices[cascade] = createSpotLightTextureMatrix(emptyTileViewport) * light.m_textureMatrices[cascade];
-				}
+				// Push work
+				newWorkItem(atlasViewports[cascade], *light.m_shadowRenderQueues[cascade], rgraph, workItems);
 			}
 		}
 		else
@@ -369,7 +317,6 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 		Array<UVec4, 6> atlasViewports;
 		Array<TileAllocatorResult, 6> subResults;
 		Array<U32, 6> hierarchies;
-		U32 numOfFacesThatHaveDrawcalls = 0;
 
 		U32 hierarchy, renderQueueElementsLod;
 		chooseDetail(cameraOrigin, light, hierarchy, renderQueueElementsLod);
@@ -377,24 +324,17 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 		for(U32 face = 0; face < 6; ++face)
 		{
 			ANKI_ASSERT(light.m_shadowRenderQueues[face]);
-			if(light.m_shadowRenderQueues[face]->m_renderables.getSize())
-			{
-				// Has renderables, need to allocate tiles for it so add it to the arrays
 
-				faceIndices[numOfFacesThatHaveDrawcalls] = face;
-				timestamps[numOfFacesThatHaveDrawcalls] = light.m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
+			faceIndices[face] = face;
+			timestamps[face] = light.m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
 
-				drawcallCounts[numOfFacesThatHaveDrawcalls] = light.m_shadowRenderQueues[face]->m_renderables.getSize();
+			drawcallCounts[face] = light.m_shadowRenderQueues[face]->m_renderables.getSize();
 
-				hierarchies[numOfFacesThatHaveDrawcalls] = hierarchy;
-
-				++numOfFacesThatHaveDrawcalls;
-			}
+			hierarchies[face] = hierarchy;
 		}
 
-		const Bool allocationFailed = numOfFacesThatHaveDrawcalls == 0
-									  || !allocateAtlasTiles(light.m_uuid, numOfFacesThatHaveDrawcalls, &timestamps[0], &faceIndices[0],
-															 &drawcallCounts[0], &hierarchies[0], &atlasViewports[0], &subResults[0]);
+		const Bool allocationFailed = !allocateAtlasTiles(light.m_uuid, 6, &timestamps[0], &faceIndices[0], &drawcallCounts[0], &hierarchies[0],
+														  &atlasViewports[0], &subResults[0]);
 
 		if(!allocationFailed)
 		{
@@ -417,36 +357,17 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 
 			light.m_shadowAtlasTileSize = superTileSize / atlasResolution;
 
-			numOfFacesThatHaveDrawcalls = 0;
 			for(U face = 0; face < 6; ++face)
 			{
-				if(light.m_shadowRenderQueues[face]->m_renderables.getSize())
+				const UVec4& atlasViewport = atlasViewports[face];
+
+				// Add a half texel to the viewport's start to avoid bilinear filtering bleeding
+				light.m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + texelsBorder) / atlasResolution;
+				light.m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + texelsBorder) / atlasResolution;
+
+				if(subResults[face] != TileAllocatorResult::kCached)
 				{
-					// Has drawcalls, asigned it to a tile
-
-					const UVec4& atlasViewport = atlasViewports[numOfFacesThatHaveDrawcalls];
-
-					// Add a half texel to the viewport's start to avoid bilinear filtering bleeding
-					light.m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + texelsBorder) / atlasResolution;
-					light.m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + texelsBorder) / atlasResolution;
-
-					if(subResults[numOfFacesThatHaveDrawcalls] != TileAllocatorResult::kCached)
-					{
-						newWorkItems(atlasViewport, light.m_shadowRenderQueues[face], renderQueueElementsLod, lightsToRender, drawcallCount);
-					}
-
-					++numOfFacesThatHaveDrawcalls;
-				}
-				else
-				{
-					// Doesn't have renderables, point the face to the empty tile
-					UVec4 atlasViewport = emptyTileViewport;
-					ANKI_ASSERT(F32(atlasViewport[2]) <= superTileSize && F32(atlasViewport[3]) <= superTileSize);
-					atlasViewport[2] = U32(superTileSize);
-					atlasViewport[3] = U32(superTileSize);
-
-					light.m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + texelsBorder) / atlasResolution;
-					light.m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + texelsBorder) / atlasResolution;
+					newWorkItem(atlasViewport, *light.m_shadowRenderQueues[face], rgraph, workItems);
 				}
 			}
 		}
@@ -475,9 +396,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 		U32 hierarchy, renderQueueElementsLod;
 		chooseDetail(cameraOrigin, light, hierarchy, renderQueueElementsLod);
 
-		const Bool allocationFailed = localDrawcallCount == 0
-									  || !allocateAtlasTiles(light.m_uuid, 1, &light.m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
-															 &faceIdx, &localDrawcallCount, &hierarchy, &atlasViewport, &subResult);
+		const Bool allocationFailed = !allocateAtlasTiles(light.m_uuid, 1, &light.m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
+														  &faceIdx, &localDrawcallCount, &hierarchy, &atlasViewport, &subResult);
 
 		if(!allocationFailed)
 		{
@@ -488,7 +408,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 
 			if(subResult != TileAllocatorResult::kCached)
 			{
-				newWorkItems(atlasViewport, light.m_shadowRenderQueue, renderQueueElementsLod, lightsToRender, drawcallCount);
+				newWorkItem(atlasViewport, *light.m_shadowRenderQueue, rgraph, workItems);
 			}
 		}
 		else
@@ -498,57 +418,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForPass
 		}
 	}
 
-	// Split the work that will happen in the scratch buffer
-	if(lightsToRender.getSize())
+	// Move the work to the context
+	if(workItems.getSize())
 	{
-		DynamicArray<ThreadWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(ctx.m_tempPool);
-		LightToRenderTempInfo* lightToRender = lightsToRender.getBegin();
-		U32 lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
-		const LightToRenderTempInfo* lightToRenderEnd = lightsToRender.getEnd();
-
-		const U32 threadCount = computeNumberOfSecondLevelCommandBuffers(drawcallCount);
-		threadCountForPass = threadCount;
-		for(U32 taskId = 0; taskId < threadCount; ++taskId)
-		{
-			U32 start, end;
-			splitThreadedProblem(taskId, threadCount, drawcallCount, start, end);
-
-			// While there are drawcalls in this task emit new work items
-			U32 taskDrawcallCount = end - start;
-			ANKI_ASSERT(taskDrawcallCount > 0 && "Because we used computeNumberOfSecondLevelCommandBuffers()");
-
-			while(taskDrawcallCount)
-			{
-				ANKI_ASSERT(lightToRender != lightToRenderEnd);
-				const U32 workItemDrawcallCount = min(lightToRenderDrawcallCount, taskDrawcallCount);
-
-				ThreadWorkItem workItem;
-				workItem.m_viewport = lightToRender->m_viewport;
-				workItem.m_renderQueue = lightToRender->m_renderQueue;
-				workItem.m_firstRenderableElement = lightToRender->m_drawcallCount - lightToRenderDrawcallCount;
-				workItem.m_renderableElementCount = workItemDrawcallCount;
-				workItem.m_threadPoolTaskIdx = taskId;
-				workItem.m_renderQueueElementsLod = lightToRender->m_renderQueueElementsLod;
-				workItems.emplaceBack(workItem);
-
-				// Decrease the drawcall counts for the task and the light
-				ANKI_ASSERT(taskDrawcallCount >= workItemDrawcallCount);
-				taskDrawcallCount -= workItemDrawcallCount;
-				ANKI_ASSERT(lightToRenderDrawcallCount >= workItemDrawcallCount);
-				lightToRenderDrawcallCount -= workItemDrawcallCount;
-
-				// Move to the next light
-				if(lightToRenderDrawcallCount == 0)
-				{
-					++lightToRender;
-					lightToRenderDrawcallCount = (lightToRender != lightToRenderEnd) ? lightToRender->m_drawcallCount : 0;
-				}
-			}
-		}
-
-		ANKI_ASSERT(lightToRender == lightToRenderEnd);
-		ANKI_ASSERT(lightsToRender.getSize() <= workItems.getSize());
-
 		// All good, store the work items for the threads to pick up
 		workItems.moveAndReset(m_runCtx.m_workItems);
 	}
@@ -564,23 +436,16 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 	ANKI_TRACE_SCOPED_EVENT(RSm);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const U threadIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 
 	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
-	for(ThreadWorkItem& work : m_runCtx.m_workItems)
+	for(ViewportWorkItem& work : m_runCtx.m_workItems)
 	{
-		if(work.m_threadPoolTaskIdx != threadIdx)
-		{
-			continue;
-		}
-
 		// Set state
 		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		cmdb.setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 
-		// The 1st drawcall will clear the depth buffer
-		if(work.m_firstRenderableElement == 0)
+		// Clear the depth buffer
 		{
 			cmdb.bindShaderProgram(m_clearDepthGrProg.get());
 			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
@@ -593,15 +458,15 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		}
 
 		RenderableDrawerArguments args;
-		args.m_viewMatrix = work.m_renderQueue->m_viewMatrix;
+		args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+		args.m_viewMatrix = work.m_viewMatrix;
 		args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
-		args.m_viewProjectionMatrix = work.m_renderQueue->m_viewProjectionMatrix;
+		args.m_viewProjectionMatrix = work.m_mvp;
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
+		args.fillMdi(work.m_visOut);
 
-		getRenderer().getSceneDrawer().drawRange(
-			args, work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
-			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement + work.m_renderableElementCount, cmdb);
+		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 	}
 }
 
