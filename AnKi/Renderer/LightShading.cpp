@@ -20,6 +20,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -138,6 +139,8 @@ Error LightShading::initApplyIndirect()
 
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(ForwardShading);
+
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());

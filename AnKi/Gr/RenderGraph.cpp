@@ -14,6 +14,7 @@
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Core/Common.h>
 
 namespace anki {
 
@@ -1239,38 +1240,50 @@ AccelerationStructure* RenderGraph::getAs(AccelerationStructureHandle handle) co
 	return m_ctx->m_as[handle.m_idx].m_as.get();
 }
 
-void RenderGraph::runSecondLevel(U32 threadIdx)
+void RenderGraph::runSecondLevel()
 {
 	ANKI_TRACE_SCOPED_EVENT(GrRenderGraph2ndLevel);
 	ANKI_ASSERT(m_ctx);
 
-	RenderPassWorkContext ctx;
-	ctx.m_rgraph = this;
-	ctx.m_currentSecondLevelCommandBufferIndex = threadIdx;
+	StackMemoryPool& pool = *m_ctx->m_rts.getMemoryPool().m_pool;
 
-	for(Pass& p : m_ctx->m_passes)
+	for(Pass& pass : m_ctx->m_passes)
 	{
-		const U32 size = p.m_secondLevelCmdbs.getSize();
-		if(threadIdx < size)
+		for(U32 cmdIdx = 0; cmdIdx < pass.m_secondLevelCmdbs.getSize(); ++cmdIdx)
 		{
-			ANKI_ASSERT(!p.m_secondLevelCmdbs[threadIdx].isCreated());
-			p.m_secondLevelCmdbs[threadIdx] = GrManager::getSingleton().newCommandBuffer(p.m_secondLevelCmdbInitInfo);
+			RenderPassWorkContext* ctx = anki::newInstance<RenderPassWorkContext>(pool);
+			ctx->m_rgraph = this;
+			ctx->m_currentSecondLevelCommandBufferIndex = cmdIdx;
+			ctx->m_secondLevelCommandBufferCount = pass.m_secondLevelCmdbs.getSize();
+			ctx->m_passIdx = U32(&pass - &m_ctx->m_passes[0]);
+			ctx->m_batchIdx = pass.m_batchIdx;
 
-			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx].get();
-			ctx.m_secondLevelCommandBufferCount = size;
-			ctx.m_passIdx = U32(&p - &m_ctx->m_passes[0]);
-			ctx.m_batchIdx = p.m_batchIdx;
+			auto callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+							   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
+				RenderPassWorkContext& self = *static_cast<RenderPassWorkContext*>(userData);
 
-			ANKI_ASSERT(ctx.m_commandBuffer);
+				ANKI_TRACE_SCOPED_EVENT(GrExecuteSecondaryCmdb);
 
-			{
-				ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);
-				p.m_callback(ctx);
-			}
+				// Create the command buffer in the thread
+				Pass& pass = self.m_rgraph->m_ctx->m_passes[self.m_passIdx];
+				ANKI_ASSERT(!pass.m_secondLevelCmdbs[self.m_currentSecondLevelCommandBufferIndex].isCreated());
+				pass.m_secondLevelCmdbs[self.m_currentSecondLevelCommandBufferIndex] =
+					GrManager::getSingleton().newCommandBuffer(pass.m_secondLevelCmdbInitInfo);
+				self.m_commandBuffer = pass.m_secondLevelCmdbs[self.m_currentSecondLevelCommandBufferIndex].get();
 
-			ctx.m_commandBuffer->flush();
+				{
+					ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);
+					pass.m_callback(self);
+				}
+
+				self.m_commandBuffer->flush();
+			};
+
+			CoreThreadHive::getSingleton().submitTask(callback, ctx);
 		}
 	}
+
+	CoreThreadHive::getSingleton().waitAllTasks();
 }
 
 void RenderGraph::run() const

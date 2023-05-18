@@ -143,20 +143,7 @@ Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
 
 	// Populate the 2nd level command buffers
-	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
-	for(U i = 0; i < CoreThreadHive::getSingleton().getThreadCount(); ++i)
-	{
-		tasks[i].m_argument = this;
-		tasks[i].m_callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-								 [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-			MainRenderer& self = *static_cast<MainRenderer*>(userData);
-
-			const U32 taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);
-			self.m_rgraph->runSecondLevel(taskId);
-		};
-	}
-	CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
-	CoreThreadHive::getSingleton().waitAllTasks();
+	m_rgraph->runSecondLevel();
 
 	// Populate 1st level command buffers
 	m_rgraph->run();
