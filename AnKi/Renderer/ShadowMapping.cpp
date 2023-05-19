@@ -98,7 +98,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		const U32 width = m_runCtx.m_fullViewport[2] - m_runCtx.m_fullViewport[0];
 		const U32 height = m_runCtx.m_fullViewport[3] - m_runCtx.m_fullViewport[1];
 
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("ShadowMapping");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Shadowmapping");
 
 		for(const ViewportWorkItem& work : m_runCtx.m_workItems)
 		{
@@ -235,7 +235,7 @@ void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& q
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
 													   ConfigSet::getSingleton().getLod1MaxDistance()};
-	getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
+	getRenderer().getGpuVisibility().populateRenderGraph("Shadowmapping visibility", RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
 														 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
 														 work.m_visOut);
 

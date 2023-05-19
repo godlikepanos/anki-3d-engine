@@ -52,7 +52,7 @@ Error GpuVisibility::init()
 	return Error::kNone;
 }
 
-void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
+void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
 										const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt,
 										RenderGraphDescription& rgraph, GpuVisibilityOutput& out) const
 {
@@ -85,7 +85,7 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 													mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion");
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passesName);
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(out.m_mdiDrawCountsHandle, BufferUsageBit::kStorageComputeWrite);

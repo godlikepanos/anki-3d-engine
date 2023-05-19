@@ -129,6 +129,8 @@ public:
 
 	FramebufferPtr m_framebuffer;
 
+	BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> m_name;
+
 	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
 	Bool m_drawsToPresentable = false;
 
@@ -136,6 +138,7 @@ public:
 		: m_dependsOn(pool)
 		, m_consumedTextures(pool)
 		, m_secondLevelCmdbs(pool)
+		, m_name(pool)
 	{
 	}
 };
@@ -360,6 +363,7 @@ void RenderGraph::reset()
 		p.m_framebuffer.reset(nullptr);
 		p.m_secondLevelCmdbs.destroy();
 		p.m_callback.destroy();
+		p.m_name.destroy();
 	}
 
 	m_ctx->m_graphicsCmdbs.destroy();
@@ -788,6 +792,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		Pass& outPass = *ctx.m_passes.emplaceBack(ctx.m_as.getMemoryPool().m_pool);
 
 		outPass.m_callback = inPass.m_callback;
+		outPass.m_name = inPass.m_name;
 
 		// Create consumer info
 		outPass.m_consumedTextures.resize(inPass.m_rtDeps.getSize());
@@ -1341,11 +1346,20 @@ void RenderGraph::run() const
 		{
 			const Pass& pass = m_ctx->m_passes[passIdx];
 
+			Vec3 passColor;
 			if(pass.m_framebuffer)
 			{
 				cmdb.beginRenderPass(pass.m_framebuffer.get(), pass.m_colorUsages, pass.m_dsUsage, pass.m_fbRenderArea[0], pass.m_fbRenderArea[1],
 									 pass.m_fbRenderArea[2], pass.m_fbRenderArea[3]);
+
+				passColor = Vec3(0.0f, 1.0f, 0.0f);
 			}
+			else
+			{
+				passColor = Vec3(1.0f, 1.0f, 0.0f);
+			}
+
+			cmdb.pushDebugMarker(pass.m_name, passColor);
 
 			const U32 size = pass.m_secondLevelCmdbs.getSize();
 			if(size == 0)
@@ -1371,6 +1385,8 @@ void RenderGraph::run() const
 			{
 				cmdb.endRenderPass();
 			}
+
+			cmdb.popDebugMarker();
 		}
 	}
 }

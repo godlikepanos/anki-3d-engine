@@ -179,31 +179,6 @@ public:
 
 	/// @name Debug report
 	/// @{
-	void beginMarker(VkCommandBuffer cmdb, CString name, Vec3 color = Vec3(1.0f, 0.0f, 0.0f)) const
-	{
-		ANKI_ASSERT(cmdb);
-		if(!!(m_extensions & VulkanExtensions::kEXT_debug_utils))
-		{
-			VkDebugUtilsLabelEXT label = {};
-			label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-			label.pLabelName = name.cstr();
-			label.color[0] = color[0];
-			label.color[1] = color[1];
-			label.color[2] = color[2];
-			label.color[3] = 1.0f;
-			vkCmdBeginDebugUtilsLabelEXT(cmdb, &label);
-		}
-	}
-
-	void endMarker(VkCommandBuffer cmdb) const
-	{
-		ANKI_ASSERT(cmdb);
-		if(!!(m_extensions & VulkanExtensions::kEXT_debug_utils))
-		{
-			vkCmdEndDebugUtilsLabelEXT(cmdb);
-		}
-	}
-
 	void trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const;
 
 	void trySetVulkanHandleName(CString name, VkObjectType type, void* handle) const

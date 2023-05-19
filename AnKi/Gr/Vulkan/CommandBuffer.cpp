@@ -426,4 +426,16 @@ void CommandBuffer::setLineWidth(F32 width)
 	self.setLineWidthInternal(width);
 }
 
+void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.pushDebugMarkerInternal(name, color);
+}
+
+void CommandBuffer::popDebugMarker()
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.popDebugMarkerInternal();
+}
+
 } // end namespace anki

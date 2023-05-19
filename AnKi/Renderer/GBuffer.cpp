@@ -164,7 +164,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
 													   ConfigSet::getSingleton().getLod1MaxDistance()};
 	GpuVisibilityOutput visOut;
-	getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kGBuffer, matrices.m_viewProjection,
+	getRenderer().getGpuVisibility().populateRenderGraph("GBuffer visibility", RenderingTechnique::kGBuffer, matrices.m_viewProjection,
 														 matrices.m_cameraTransform.getTranslationPart().xyz(), lodDistances, &m_runCtx.m_hzbRt,
 														 rgraph, visOut);
 

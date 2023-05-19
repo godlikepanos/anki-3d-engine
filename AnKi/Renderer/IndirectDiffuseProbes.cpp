@@ -192,7 +192,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	{
 		const RenderQueue& queue = *giCtx->m_probeToUpdateThisFrame->m_renderQueues[i];
 		Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
-		getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kGBuffer, queue.m_viewProjectionMatrix,
+		getRenderer().getGpuVisibility().populateRenderGraph("GI GBuffer visibility", RenderingTechnique::kGBuffer, queue.m_viewProjectionMatrix,
 															 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
 															 giCtx->m_gbufferVisOut[i]);
 	}
@@ -207,7 +207,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		giCtx->m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI GBuffer");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, giCtx->m_gbufferColorRts, giCtx->m_gbufferDepthRt);
 		pass.setWork(6, [this](RenderPassWorkContext& rgraphCtx) {
 			runGBufferInThread(rgraphCtx);
@@ -239,7 +239,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		{
 			const RenderQueue& queue = *giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0];
 			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
-			getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
+			getRenderer().getGpuVisibility().populateRenderGraph("GI shadows visibility", RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
 																 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
 																 giCtx->m_shadowsVisOut[i]);
 		}
@@ -268,7 +268,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		giCtx->m_shadowsRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
 
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI shadows");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, giCtx->m_shadowsRt);
 		pass.setWork(6, [this](RenderPassWorkContext& rgraphCtx) {
 			runShadowmappingInThread(rgraphCtx);
@@ -296,7 +296,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		giCtx->m_lightShadingRt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);
 
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI LS");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI light shading");
 		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {giCtx->m_lightShadingRt});
 		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
 			runLightShading(rgraphCtx);
@@ -320,7 +320,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	{
 		m_giCtx->m_irradianceVolume = rgraph.importRenderTarget(m_giCtx->m_probeToUpdateThisFrame->m_volumeTexture, TextureUsageBit::kNone);
 
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI irradiance");
 
 		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) {
 			runIrradiance(rgraphCtx);

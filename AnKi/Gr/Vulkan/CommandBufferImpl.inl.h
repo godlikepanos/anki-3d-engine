@@ -114,8 +114,6 @@ ANKI_FORCE_INLINE void CommandBufferImpl::dispatchComputeInternal(U32 groupCount
 
 	commandCommon();
 
-	getGrManagerImpl().beginMarker(m_handle, m_computeProg->getName(), Vec3(1.0f, 1.0f, 0.0f));
-
 	// Bind descriptors
 	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
 	{
@@ -149,8 +147,6 @@ ANKI_FORCE_INLINE void CommandBufferImpl::dispatchComputeInternal(U32 groupCount
 	}
 
 	vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
-
-	getGrManagerImpl().endMarker(m_handle);
 }
 
 ANKI_FORCE_INLINE void CommandBufferImpl::traceRaysInternal(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize32,
@@ -171,8 +167,6 @@ ANKI_FORCE_INLINE void CommandBufferImpl::traceRaysInternal(Buffer* sbtBuffer, P
 	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBufferOffset));
 
 	commandCommon();
-
-	getGrManagerImpl().beginMarker(m_handle, m_rtProg->getName(), Vec3(0.0f, 0.0f, 1.0f));
 
 	// Bind descriptors
 	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
@@ -229,8 +223,6 @@ ANKI_FORCE_INLINE void CommandBufferImpl::traceRaysInternal(Buffer* sbtBuffer, P
 	regions[3] = VkStridedDeviceAddressRegionKHR();
 
 	vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth);
-
-	getGrManagerImpl().endMarker(m_handle);
 }
 
 ANKI_FORCE_INLINE void CommandBufferImpl::pushSecondLevelCommandBuffersInternal(ConstWeakArray<CommandBuffer*> cmdbs)

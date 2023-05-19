@@ -425,6 +425,10 @@ public:
 	void pushSecondLevelCommandBuffers(ConstWeakArray<CommandBuffer*> cmdbs);
 
 	Bool isEmpty() const;
+
+	void pushDebugMarker(CString name, Vec3 color);
+
+	void popDebugMarker();
 	/// @}
 
 protected:

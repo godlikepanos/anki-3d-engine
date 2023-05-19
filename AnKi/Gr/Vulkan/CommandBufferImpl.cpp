@@ -33,6 +33,10 @@ CommandBufferImpl::~CommandBufferImpl()
 	{
 		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
+
+#if ANKI_EXTRA_CHECKS
+	ANKI_ASSERT(m_debugMarkersPushed == 0);
+#endif
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
@@ -61,6 +65,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	}
 
 	m_state.setVrsCapable(getGrManagerImpl().getDeviceCapabilities().m_vrs);
+
+	m_debugMarkers = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_debug_utils);
 
 	return Error::kNone;
 }
@@ -205,8 +211,6 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.renderArea.extent.width = m_renderArea[2];
 	bi.renderArea.extent.height = m_renderArea[3];
 
-	getGrManagerImpl().beginMarker(m_handle, impl.getName(), Vec3(0.0f, 1.0f, 0.0f));
-
 #if !ANKI_PLATFORM_MOBILE
 	// nVidia SRI cache workaround
 	if(impl.hasSri())
@@ -246,7 +250,6 @@ void CommandBufferImpl::endRenderPassInternal()
 	subpassEndInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_END_INFO;
 
 	vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo);
-	getGrManagerImpl().endMarker(m_handle);
 
 	m_activeFb = nullptr;
 	m_state.endRenderPass();

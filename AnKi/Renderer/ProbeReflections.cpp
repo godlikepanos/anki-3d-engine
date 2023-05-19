@@ -333,9 +333,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		const RenderQueue& queue = *m_ctx.m_probe->m_renderQueues[i];
 		Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
-		getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kGBuffer, queue.m_viewProjectionMatrix,
-															 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
-															 visOuts[i]);
+		getRenderer().getGpuVisibility().populateRenderGraph("Cube refl GBuffer visibility", RenderingTechnique::kGBuffer,
+															 queue.m_viewProjectionMatrix, queue.m_cameraTransform.getTranslationPart().xyz(),
+															 lodDistances, nullptr, rgraph, visOuts[i]);
 	}
 
 	// GBuffer pass
@@ -350,7 +350,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl GBuffer");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Cube refl GBuffer");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
 		pass.setWork(6, [this, visOuts](RenderPassWorkContext& rgraphCtx) {
 			runGBuffer(visOuts, rgraphCtx);
@@ -384,9 +384,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			const RenderQueue& queue = *m_ctx.m_probe->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0];
 			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
 
-			getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
-																 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
-																 shadowVisOuts[i]);
+			getRenderer().getGpuVisibility().populateRenderGraph("Cube refl shadows visibility", RenderingTechnique::kDepth,
+																 queue.m_viewProjectionMatrix, queue.m_cameraTransform.getTranslationPart().xyz(),
+																 lodDistances, nullptr, rgraph, shadowVisOuts[i]);
 		}
 	}
 
@@ -413,7 +413,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_shadowMapRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
 
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl SM");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Cube refl shadows");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
 		pass.setWork(6, [this, shadowVisOuts](RenderPassWorkContext& rgraphCtx) {
 			runShadowMapping(shadowVisOuts, rgraphCtx);
@@ -441,8 +441,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_ctx.m_probe->m_reflectionTexture, TextureUsageBit::kNone);
 
 		// Passes
-		static constexpr Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1", "CubeRefl LightShad #2",
-														"CubeRefl LightShad #3", "CubeRefl LightShad #4", "CubeRefl LightShad #5"};
+		static constexpr Array<CString, 6> passNames = {"Cube refl light shading #0", "Cube refl light shading #1", "Cube refl light shading #2",
+														"Cube refl light shading #3", "Cube refl light shading #4", "Cube refl light shading #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -472,7 +472,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		m_ctx.m_irradianceDiceValuesBuffHandle = rgraph.importBuffer(m_irradiance.m_diceValuesBuff.get(), BufferUsageBit::kNone);
 
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl Irradiance");
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cube refl irradiance");
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			runIrradiance(rgraphCtx);
@@ -488,7 +488,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Write irradiance back to refl
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl apply indirect");
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cube refl apply indirect");
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			runIrradianceToRefl(rgraphCtx);
@@ -508,8 +508,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Mipmapping "passes"
 	{
-		static constexpr Array<CString, 6> passNames = {"CubeRefl Mip #0", "CubeRefl Mip #1", "CubeRefl Mip #2",
-														"CubeRefl Mip #3", "CubeRefl Mip #4", "CubeRefl Mip #5"};
+		static constexpr Array<CString, 6> passNames = {"Cube refl gen mips #0", "Cube refl gen mips #1", "Cube refl gen mips #2",
+														"Cube refl gen mips #3", "Cube refl gen mips #4", "Cube refl gen mips #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);

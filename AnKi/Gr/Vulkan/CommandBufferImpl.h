@@ -34,10 +34,6 @@ public:
 	/// Default constructor
 	CommandBufferImpl(CString name)
 		: CommandBuffer(name)
-		, m_renderedToDefaultFb(false)
-		, m_finalized(false)
-		, m_empty(false)
-		, m_beganRecording(false)
 	{
 	}
 
@@ -430,6 +426,40 @@ public:
 #endif
 	}
 
+	ANKI_FORCE_INLINE void pushDebugMarkerInternal(CString name, Vec3 color)
+	{
+		if(m_debugMarkers) [[unlikely]]
+		{
+			commandCommon();
+
+			VkDebugUtilsLabelEXT label = {};
+			label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+			label.pLabelName = name.cstr();
+			label.color[0] = color[0];
+			label.color[1] = color[1];
+			label.color[2] = color[2];
+			label.color[3] = 1.0f;
+			vkCmdBeginDebugUtilsLabelEXT(m_handle, &label);
+		}
+
+#if ANKI_EXTRA_CHECKS
+		++m_debugMarkersPushed;
+#endif
+	}
+
+	ANKI_FORCE_INLINE void popDebugMarkerInternal()
+	{
+		if(m_debugMarkers) [[unlikely]]
+		{
+			commandCommon();
+			vkCmdEndDebugUtilsLabelEXT(m_handle);
+		}
+
+#if ANKI_EXTRA_CHECKS
+		ANKI_ASSERT(m_debugMarkersPushed > 0);
+#endif
+	}
+
 private:
 	StackMemoryPool* m_pool = nullptr;
 
@@ -437,13 +467,15 @@ private:
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
 	ThreadId m_tid = ~ThreadId(0);
 	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
-	Bool m_renderedToDefaultFb : 1;
-	Bool m_finalized : 1;
-	Bool m_empty : 1;
-	Bool m_beganRecording : 1;
+	Bool m_renderedToDefaultFb : 1 = false;
+	Bool m_finalized : 1 = false;
+	Bool m_empty : 1 = true;
+	Bool m_beganRecording : 1 = false;
+	Bool m_debugMarkers : 1 = false;
 #if ANKI_EXTRA_CHECKS
 	U32 m_commandCount = 0;
 	U32 m_setPushConstantsSize = 0;
+	U32 m_debugMarkersPushed = 0;
 #endif
 
 	Framebuffer* m_activeFb = nullptr;

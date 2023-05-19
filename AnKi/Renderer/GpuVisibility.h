@@ -38,7 +38,7 @@ public:
 	Error init();
 
 	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
+	void populateRenderGraph(CString passesName, RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
 							 const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt, RenderGraphDescription& rgraph,
 							 GpuVisibilityOutput& out) const;
 
