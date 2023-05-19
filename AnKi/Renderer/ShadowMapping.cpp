@@ -64,8 +64,6 @@ Error ShadowMapping::initInternal()
 	m_clearDepthProg->getOrCreateVariant(variant);
 	m_clearDepthGrProg.reset(&variant->getProgram());
 
-	ANKI_CHECK(m_visibility.init());
-
 	return Error::kNone;
 }
 
@@ -237,8 +235,9 @@ void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& q
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
 													   ConfigSet::getSingleton().getLod1MaxDistance()};
-	m_visibility.populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix, queue.m_cameraTransform.getTranslationPart().xyz(),
-									 lodDistances, nullptr, rgraph, work.m_visOut);
+	getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
+														 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
+														 work.m_visOut);
 
 	work.m_viewport = atlasViewport;
 	work.m_mvp = queue.m_viewProjectionMatrix;

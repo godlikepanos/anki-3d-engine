@@ -53,9 +53,9 @@ Vec4 main([[vk::location(0)]] Vec3 position : POSITION) : SV_POSITION
 	g_unis;
 
 [[vk::binding(2)]] SamplerState g_gbufferSampler;
-[[vk::binding(3)]] Texture2D<RVec4> g_gbufferTex0;
-[[vk::binding(4)]] Texture2D<RVec4> g_gbufferTex1;
-[[vk::binding(5)]] Texture2D<RVec4> g_gbufferTex2;
+[[vk::binding(3)]] Texture2D<Vec4> g_gbufferTex0;
+[[vk::binding(4)]] Texture2D<Vec4> g_gbufferTex1;
+[[vk::binding(5)]] Texture2D<Vec4> g_gbufferTex2;
 [[vk::binding(6)]] Texture2D g_depthTex;
 
 #if LIGHT_TYPE == DIR_LIGHT_TYPE

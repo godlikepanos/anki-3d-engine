@@ -54,7 +54,7 @@ Error GpuVisibility::init()
 
 void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
 										const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt,
-										RenderGraphDescription& rgraph, GpuVisibilityOutput& out)
+										RenderGraphDescription& rgraph, GpuVisibilityOutput& out) const
 {
 	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(techniqueToArrayType(technique));
 	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);

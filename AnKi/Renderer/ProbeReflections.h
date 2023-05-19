@@ -11,6 +11,9 @@
 
 namespace anki {
 
+// Forward
+class GpuVisibilityOutput;
+
 /// @addtogroup renderer
 /// @{
 
@@ -107,9 +110,6 @@ private:
 		RenderTargetHandle m_lightShadingRt;
 		BufferHandle m_irradianceDiceValuesBuffHandle;
 		RenderTargetHandle m_shadowMapRt;
-
-		U32 m_gbufferRenderableCount = 0;
-		U32 m_shadowRenderableCount = 0;
 	} m_ctx; ///< Runtime context.
 
 	Error initInternal();
@@ -119,8 +119,8 @@ private:
 	Error initIrradianceToRefl();
 	Error initShadowMapping();
 
-	void runGBuffer(RenderPassWorkContext& rgraphCtx);
-	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
+	void runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx);
+	void runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx);
 	void runLightShading(U32 faceIdx, const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);

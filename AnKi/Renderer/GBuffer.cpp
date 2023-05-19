@@ -8,7 +8,6 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Scale.h>
-#include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
@@ -22,11 +21,6 @@ GBuffer::~GBuffer()
 Error GBuffer::init()
 {
 	Error err = initInternal();
-
-	if(!err)
-	{
-		err = m_visibility.init();
-	}
 
 	if(!err)
 	{
@@ -170,8 +164,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
 													   ConfigSet::getSingleton().getLod1MaxDistance()};
 	GpuVisibilityOutput visOut;
-	m_visibility.populateRenderGraph(RenderingTechnique::kGBuffer, matrices.m_viewProjection, matrices.m_cameraTransform.getTranslationPart().xyz(),
-									 lodDistances, &m_runCtx.m_hzbRt, rgraph, visOut);
+	getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kGBuffer, matrices.m_viewProjection,
+														 matrices.m_cameraTransform.getTranslationPart().xyz(), lodDistances, &m_runCtx.m_hzbRt,
+														 rgraph, visOut);
 
 	const Bool enableVrs =
 		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();

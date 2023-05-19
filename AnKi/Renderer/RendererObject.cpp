@@ -16,7 +16,7 @@ Renderer& RendererObject::getRenderer()
 	return MainRenderer::getSingleton().getOffscreenRenderer();
 }
 
-void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarAllocation& token)
+void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarAllocation& token) const
 {
 	return RebarTransientMemoryPool::getSingleton().allocateFrame(size, token);
 }

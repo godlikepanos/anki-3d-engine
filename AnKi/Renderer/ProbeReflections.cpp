@@ -174,50 +174,31 @@ Error ProbeReflections::initShadowMapping()
 	return Error::kNone;
 }
 
-void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_ctx.m_probe);
 	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 	const ReflectionProbeQueueElementForRefresh& probe = *m_ctx.m_probe;
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	I32 start, end;
-	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, m_ctx.m_gbufferRenderableCount,
-						 startu, endu);
-	start = I32(startu);
-	end = I32(endu);
+	const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 
-	I32 drawcallCount = 0;
-	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		const I32 faceDrawcallCount = I32(probe.m_renderQueues[faceIdx]->m_renderables.getSize());
-		const I32 localStart = max(I32(0), start - drawcallCount);
-		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
+	const U32 viewportX = faceIdx * m_gbuffer.m_tileSize;
+	cmdb.setViewport(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+	cmdb.setScissor(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
 
-		if(localStart < localEnd)
-		{
-			const U32 viewportX = faceIdx * m_gbuffer.m_tileSize;
-			cmdb.setViewport(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
-			cmdb.setScissor(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
-			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
-			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
+	RenderableDrawerArguments args;
+	args.m_viewMatrix = rqueue.m_viewMatrix;
+	args.m_cameraTransform = rqueue.m_cameraTransform;
+	args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
+	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
+	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
+	args.fillMdi(visOuts[faceIdx]);
 
-			RenderableDrawerArguments args;
-			args.m_viewMatrix = rqueue.m_viewMatrix;
-			args.m_cameraTransform = rqueue.m_cameraTransform;
-			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
-			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
-
-			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart, rqueue.m_renderables.getBegin() + localEnd,
-													 cmdb);
-		}
-	}
-
-	// Restore state
-	cmdb.setScissor(0, 0, kMaxU32, kMaxU32);
+	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 }
 
 void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx, RenderPassWorkContext& rgraphCtx)
@@ -346,7 +327,18 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
 
-	// G-buffer pass
+	// GBuffer visibility
+	Array<GpuVisibilityOutput, 6> visOuts;
+	for(U32 i = 0; i < 6; ++i)
+	{
+		const RenderQueue& queue = *m_ctx.m_probe->m_renderQueues[i];
+		Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+		getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kGBuffer, queue.m_viewProjectionMatrix,
+															 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
+															 visOuts[i]);
+	}
+
+	// GBuffer pass
 	{
 		// RTs
 		Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
@@ -357,19 +349,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		}
 		m_ctx.m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 
-		// Compute task count
-		m_ctx.m_gbufferRenderableCount = 0;
-		for(U32 i = 0; i < 6; ++i)
-		{
-			m_ctx.m_gbufferRenderableCount += m_ctx.m_probe->m_renderQueues[i]->m_renderables.getSize();
-		}
-		const U32 taskCount = computeNumberOfSecondLevelCommandBuffers(m_ctx.m_gbufferRenderableCount);
-
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl gbuff");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl GBuffer");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
-		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) {
-			runGBuffer(rgraphCtx);
+		pass.setWork(6, [this, visOuts](RenderPassWorkContext& rgraphCtx) {
+			runGBuffer(visOuts, rgraphCtx);
 		});
 
 		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -382,10 +366,32 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+
+		for(U32 i = 0; i < 6; ++i)
+		{
+			pass.newBufferDependency(visOuts[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+		}
 	}
 
-	// Shadow pass. Optional
-	if(m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_uuid && m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
+	// Shadow visibility. Optional
+	const Bool doShadows =
+		m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_uuid && m_ctx.m_probe->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0;
+	Array<GpuVisibilityOutput, 6> shadowVisOuts;
+	if(doShadows)
+	{
+		for(U i = 0; i < 6; ++i)
+		{
+			const RenderQueue& queue = *m_ctx.m_probe->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0];
+			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+
+			getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
+																 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
+																 shadowVisOuts[i]);
+		}
+	}
+
+	// Shadows. Optional
+	if(doShadows)
 	{
 		// Update light matrices
 		for(U i = 0; i < 6; ++i)
@@ -403,22 +409,14 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			lightMat = atlasMtx * lightMat;
 		}
 
-		// Compute task count
-		m_ctx.m_shadowRenderableCount = 0;
-		for(U32 i = 0; i < 6; ++i)
-		{
-			m_ctx.m_shadowRenderableCount += m_ctx.m_probe->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
-		}
-		const U32 taskCount = computeNumberOfSecondLevelCommandBuffers(m_ctx.m_shadowRenderableCount);
-
 		// RT
 		m_ctx.m_shadowMapRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
 
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl SM");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
-		pass.setWork(taskCount, [this](RenderPassWorkContext& rgraphCtx) {
-			runShadowMapping(rgraphCtx);
+		pass.setWork(6, [this, shadowVisOuts](RenderPassWorkContext& rgraphCtx) {
+			runShadowMapping(shadowVisOuts, rgraphCtx);
 		});
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
@@ -426,6 +424,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+
+		for(U32 i = 0; i < 6; ++i)
+		{
+			pass.newBufferDependency(shadowVisOuts[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+		}
 	}
 	else
 	{
@@ -522,54 +525,37 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	}
 }
 
-void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_ctx.m_probe);
 	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
 
-	I32 start, end;
-	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, m_ctx.m_shadowRenderableCount,
-						 startu, endu);
-	start = I32(startu);
-	end = I32(endu);
-
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
-	I32 drawcallCount = 0;
-	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		ANKI_ASSERT(m_ctx.m_probe->m_renderQueues[faceIdx]);
-		const RenderQueue& faceRenderQueue = *m_ctx.m_probe->m_renderQueues[faceIdx];
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_uuid != 0);
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowCascadeCount == 1);
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
-		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
+	const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 
-		const I32 faceDrawcallCount = I32(cascadeRenderQueue.m_renderables.getSize());
-		const I32 localStart = max(I32(0), start - drawcallCount);
-		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
+	ANKI_ASSERT(m_ctx.m_probe->m_renderQueues[faceIdx]);
+	const RenderQueue& faceRenderQueue = *m_ctx.m_probe->m_renderQueues[faceIdx];
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_uuid != 0);
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowCascadeCount == 1);
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
+	const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
 
-		if(localStart < localEnd)
-		{
-			const U32 rez = m_shadowMapping.m_rtDescr.m_height;
-			cmdb.setViewport(rez * faceIdx, 0, rez, rez);
-			cmdb.setScissor(rez * faceIdx, 0, rez, rez);
+	const U32 rez = m_shadowMapping.m_rtDescr.m_height;
+	cmdb.setViewport(rez * faceIdx, 0, rez, rez);
+	cmdb.setScissor(rez * faceIdx, 0, rez, rez);
 
-			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
+	RenderableDrawerArguments args;
+	args.m_viewMatrix = cascadeRenderQueue.m_viewMatrix;
+	args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+	args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
+	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
+	args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+	args.fillMdi(visOuts[faceIdx]);
 
-			RenderableDrawerArguments args;
-			args.m_viewMatrix = cascadeRenderQueue.m_viewMatrix;
-			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
-			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
-			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
-
-			getRenderer().getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
-													 cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
-		}
-	}
+	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 }
 
 } // end namespace anki

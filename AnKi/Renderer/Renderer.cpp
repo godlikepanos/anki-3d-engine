@@ -290,6 +290,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_jitterOffsets[i] = generateJitter(i);
 	}
 
+	ANKI_CHECK(m_visibility.init());
+
 	return Error::kNone;
 }
 

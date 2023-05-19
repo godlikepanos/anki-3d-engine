@@ -9,7 +9,6 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Renderer/TileAllocator.h>
-#include <AnKi/Renderer/GpuVisibility.h>
 
 namespace anki {
 
@@ -52,8 +51,6 @@ private:
 
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
-
-	GpuVisibility m_visibility;
 
 	class
 	{

@@ -38,7 +38,7 @@ public:
 protected:
 	static ANKI_PURE Renderer& getRenderer();
 
-	void* allocateRebarStagingMemory(PtrSize size, RebarAllocation& token);
+	void* allocateRebarStagingMemory(PtrSize size, RebarAllocation& token) const;
 
 	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
 
@@ -66,7 +66,7 @@ protected:
 	}
 
 	template<typename TPtr>
-	TPtr allocateUniforms(PtrSize size, RebarAllocation& token)
+	TPtr allocateUniforms(PtrSize size, RebarAllocation& token) const
 	{
 		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
@@ -74,7 +74,7 @@ protected:
 	void bindUniforms(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
 
 	template<typename TPtr>
-	TPtr allocateAndBindUniforms(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding)
+	TPtr allocateAndBindUniforms(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding) const
 	{
 		RebarAllocation token;
 		TPtr ptr = allocateUniforms<TPtr>(size, token);
@@ -83,7 +83,7 @@ protected:
 	}
 
 	template<typename TPtr>
-	TPtr allocateStorage(PtrSize size, RebarAllocation& token)
+	TPtr allocateStorage(PtrSize size, RebarAllocation& token) const
 	{
 		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
 	}
@@ -91,7 +91,7 @@ protected:
 	void bindStorage(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
 
 	template<typename TPtr>
-	TPtr allocateAndBindStorage(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding)
+	TPtr allocateAndBindStorage(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding) const
 	{
 		RebarAllocation token;
 		TPtr ptr = allocateStorage<TPtr>(size, token);

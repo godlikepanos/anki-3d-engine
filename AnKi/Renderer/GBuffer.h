@@ -6,11 +6,13 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Renderer/HzbHelper.h>
 #include <AnKi/Gr.h>
 
 namespace anki {
+
+// Forward
+class GpuVisibilityOutput;
 
 /// @addtogroup renderer
 /// @{
@@ -78,7 +80,6 @@ private:
 	FramebufferDescription m_fbDescr;
 
 	HzbHelper m_hzb;
-	GpuVisibility m_visibility;
 
 	class
 	{

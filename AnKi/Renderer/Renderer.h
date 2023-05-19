@@ -7,6 +7,7 @@
 
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Renderer/Drawer.h>
+#include <AnKi/Renderer/GpuVisibility.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
@@ -86,6 +87,11 @@ public:
 	RenderableDrawer& getSceneDrawer()
 	{
 		return m_sceneDrawer;
+	}
+
+	const GpuVisibility& getGpuVisibility() const
+	{
+		return m_visibility;
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
@@ -181,6 +187,7 @@ private:
 	UVec2 m_postProcessResolution = UVec2(0u); ///< The resolution of post processing and following passes.
 
 	RenderableDrawer m_sceneDrawer;
+	GpuVisibility m_visibility;
 
 	U64 m_frameCount; ///< Frame number
 
