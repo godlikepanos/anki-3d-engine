@@ -27,8 +27,8 @@ public:
 	RenderTargetHandle m_lightShadingRt;
 	RenderTargetHandle m_irradianceVolume;
 
-	U32 m_gbufferDrawcallCount = kMaxU32;
-	U32 m_smDrawcallCount = kMaxU32;
+	Array<GpuVisibilityOutput, 6> m_gbufferVisOut;
+	Array<GpuVisibilityOutput, 6> m_shadowsVisOut;
 
 	static void foo()
 	{
@@ -187,24 +187,14 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	giCtx->m_probeToUpdateThisFrame = rctx.m_renderQueue->m_giProbeForRefresh;
 	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
 
-	// Compute task counts for some of the passes
-	U32 gbufferTaskCount, smTaskCount;
+	// GBuffer visibility
+	for(U32 i = 0; i < 6; ++i)
 	{
-		giCtx->m_gbufferDrawcallCount = 0;
-		giCtx->m_smDrawcallCount = 0;
-		for(const RenderQueue* rq : giCtx->m_probeToUpdateThisFrame->m_renderQueues)
-		{
-			ANKI_ASSERT(rq);
-			giCtx->m_gbufferDrawcallCount += rq->m_renderables.getSize();
-
-			if(rq->m_directionalLight.hasShadow())
-			{
-				giCtx->m_smDrawcallCount += rq->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
-			}
-		}
-
-		gbufferTaskCount = computeNumberOfSecondLevelCommandBuffers(giCtx->m_gbufferDrawcallCount);
-		smTaskCount = computeNumberOfSecondLevelCommandBuffers(giCtx->m_smDrawcallCount);
+		const RenderQueue& queue = *giCtx->m_probeToUpdateThisFrame->m_renderQueues[i];
+		Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+		getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kGBuffer, queue.m_viewProjectionMatrix,
+															 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
+															 giCtx->m_gbufferVisOut[i]);
 	}
 
 	// GBuffer
@@ -219,8 +209,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, giCtx->m_gbufferColorRts, giCtx->m_gbufferDepthRt);
-		pass.setWork(gbufferTaskCount, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runGBufferInThread(rgraphCtx, *giCtx);
+		pass.setWork(6, [this](RenderPassWorkContext& rgraphCtx) {
+			runGBufferInThread(rgraphCtx);
 		});
 
 		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -233,11 +223,30 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+
+		for(U32 i = 0; i < 6; ++i)
+		{
+			pass.newBufferDependency(giCtx->m_gbufferVisOut[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+		}
+	}
+
+	// Shadow visibility. Optional
+	const Bool hasShadows = giCtx->m_probeToUpdateThisFrame->m_renderQueues[0]->m_directionalLight.m_uuid
+							&& giCtx->m_probeToUpdateThisFrame->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0;
+	if(hasShadows)
+	{
+		for(U32 i = 0; i < 6; ++i)
+		{
+			const RenderQueue& queue = *giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0];
+			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+			getRenderer().getGpuVisibility().populateRenderGraph(RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
+																 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
+																 giCtx->m_shadowsVisOut[i]);
+		}
 	}
 
 	// Shadow pass. Optional
-	if(giCtx->m_probeToUpdateThisFrame->m_renderQueues[0]->m_directionalLight.m_uuid
-	   && giCtx->m_probeToUpdateThisFrame->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
+	if(hasShadows)
 	{
 		// Update light matrices
 		for(U i = 0; i < 6; ++i)
@@ -261,8 +270,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, giCtx->m_shadowsRt);
-		pass.setWork(smTaskCount, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runShadowmappingInThread(rgraphCtx, *giCtx);
+		pass.setWork(6, [this](RenderPassWorkContext& rgraphCtx) {
+			runShadowmappingInThread(rgraphCtx);
 		});
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
@@ -270,6 +279,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
 								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+
+		for(U32 i = 0; i < 6; ++i)
+		{
+			pass.newBufferDependency(giCtx->m_shadowsVisOut[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+		}
 	}
 	else
 	{
@@ -285,7 +299,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI LS");
 		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {giCtx->m_lightShadingRt});
 		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runLightShading(rgraphCtx, *giCtx);
+			runLightShading(rgraphCtx);
 		});
 
 		pass.newTextureDependency(giCtx->m_lightShadingRt, TextureUsageBit::kFramebufferWrite);
@@ -309,7 +323,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
 
 		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runIrradiance(rgraphCtx, *giCtx);
+			runIrradiance(rgraphCtx);
 		});
 
 		pass.newTextureDependency(giCtx->m_lightShadingRt, TextureUsageBit::kSampledCompute);
@@ -323,116 +337,81 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	}
 }
 
-void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
+void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx) const
 {
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
+	ANKI_ASSERT(m_giCtx->m_probeToUpdateThisFrame);
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
+	const GlobalIlluminationProbeQueueElementForRefresh& probe = *m_giCtx->m_probeToUpdateThisFrame;
 
-	I32 start, end;
-	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, giCtx.m_gbufferDrawcallCount,
-						 startu, endu);
-	start = I32(startu);
-	end = I32(endu);
+	const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 
-	I32 drawcallCount = 0;
-	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		const I32 faceDrawcallCount = I32(probe.m_renderQueues[faceIdx]->m_renderables.getSize());
-		const I32 localStart = max(I32(0), start - drawcallCount);
-		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
+	const U32 viewportX = faceIdx * m_tileSize;
+	cmdb.setViewport(viewportX, 0, m_tileSize, m_tileSize);
+	cmdb.setScissor(viewportX, 0, m_tileSize, m_tileSize);
 
-		if(localStart < localEnd)
-		{
-			const U32 viewportX = faceIdx * m_tileSize;
-			cmdb.setViewport(viewportX, 0, m_tileSize, m_tileSize);
-			cmdb.setScissor(viewportX, 0, m_tileSize, m_tileSize);
+	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
-			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
+	RenderableDrawerArguments args;
+	args.m_viewMatrix = rqueue.m_viewMatrix;
+	args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+	args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
+	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
+	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+	args.fillMdi(m_giCtx->m_gbufferVisOut[faceIdx]);
 
-			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
-
-			RenderableDrawerArguments args;
-			args.m_viewMatrix = rqueue.m_viewMatrix;
-			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
-			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
-			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
-
-			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart, rqueue.m_renderables.getBegin() + localEnd,
-													 cmdb);
-		}
-
-		drawcallCount += faceDrawcallCount;
-	}
-	ANKI_ASSERT(giCtx.m_gbufferDrawcallCount == U32(drawcallCount));
+	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 
 	// It's secondary, no need to restore the state
 }
 
-void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
+void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgraphCtx) const
 {
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
-	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
+	const InternalContext& giCtx = *m_giCtx;
+	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 
-	I32 start, end;
-	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount, giCtx.m_smDrawcallCount, startu,
-						 endu);
-	start = I32(startu);
-	end = I32(endu);
+	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
-	I32 drawcallCount = 0;
-	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
-		const RenderQueue& faceRenderQueue = *probe.m_renderQueues[faceIdx];
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.hasShadow());
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
-		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
+	const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 
-		const I32 faceDrawcallCount = I32(cascadeRenderQueue.m_renderables.getSize());
-		const I32 localStart = max(I32(0), start - drawcallCount);
-		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
+	ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
+	const RenderQueue& faceRenderQueue = *probe.m_renderQueues[faceIdx];
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.hasShadow());
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
+	const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
 
-		if(localStart < localEnd)
-		{
-			const U32 rez = m_shadowMapping.m_rtDescr.m_height;
-			cmdb.setViewport(rez * faceIdx, 0, rez, rez);
-			cmdb.setScissor(rez * faceIdx, 0, rez, rez);
+	const U32 rez = m_shadowMapping.m_rtDescr.m_height;
+	cmdb.setViewport(rez * faceIdx, 0, rez, rez);
+	cmdb.setScissor(rez * faceIdx, 0, rez, rez);
 
-			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
+	RenderableDrawerArguments args;
+	args.m_viewMatrix = cascadeRenderQueue.m_viewMatrix;
+	args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+	args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
+	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
+	args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+	args.fillMdi(giCtx.m_shadowsVisOut[faceIdx]);
 
-			RenderableDrawerArguments args;
-			args.m_viewMatrix = cascadeRenderQueue.m_viewMatrix;
-			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
-			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
-			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
-
-			getRenderer().getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
-													 cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
-		}
-	}
+	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 
 	// It's secondary, no need to restore the state
 }
 
-void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
+void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
+	InternalContext& giCtx = *m_giCtx;
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
-
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
@@ -475,10 +454,11 @@ void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, In
 	}
 }
 
-void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
+void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
+	InternalContext& giCtx = *m_giCtx;
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;

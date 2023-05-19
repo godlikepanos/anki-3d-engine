@@ -81,10 +81,6 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 	out.m_mdiDrawCountsBufferRange = mdiDrawCounts.m_range;
 
 	// Import buffers
-	out.m_instanceRateRenderablesHandle = rgraph.importBuffer(instanceRateRenderables.m_buffer, BufferUsageBit::kNone,
-															  instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
-	out.m_drawIndexedIndirectArgsHandle =
-		rgraph.importBuffer(indirectArgs.m_buffer, BufferUsageBit::kNone, indirectArgs.m_offset, indirectArgs.m_size);
 	out.m_mdiDrawCountsHandle = rgraph.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
 													mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
@@ -92,8 +88,6 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GPU occlusion");
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newBufferDependency(out.m_instanceRateRenderablesHandle, BufferUsageBit::kStorageComputeWrite);
-	pass.newBufferDependency(out.m_drawIndexedIndirectArgsHandle, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(out.m_mdiDrawCountsHandle, BufferUsageBit::kStorageComputeWrite);
 
 	if(hzbRt)
@@ -104,10 +98,8 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 	const RenderTargetHandle hzbRtCopy =
 		(hzbRt) ? *hzbRt : RenderTargetHandle(); // Can't pass to the lambda the hzbRt which is a pointer to who knows what
 
-	pass.setWork([this, viewProjectionMat, lodReferencePoint, lodDistances, technique, hzbRtCopy,
-				  drawIndexedIndirectArgsHandle = out.m_drawIndexedIndirectArgsHandle,
-				  instanceRateRenderablesHandle = out.m_instanceRateRenderablesHandle,
-				  mdiDrawCountsHandle = out.m_mdiDrawCountsHandle](RenderPassWorkContext& rpass) {
+	pass.setWork([this, viewProjectionMat, lodReferencePoint, lodDistances, technique, hzbRtCopy, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle,
+				  instanceRateRenderables, indirectArgs](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProgs[hzbRtCopy.isValid()].get());
@@ -124,8 +116,8 @@ void GpuVisibility::populateRenderGraph(RenderingTechnique technique, const Mat4
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-		rpass.bindStorageBuffer(0, 3, instanceRateRenderablesHandle);
-		rpass.bindStorageBuffer(0, 4, drawIndexedIndirectArgsHandle);
+		cmdb.bindStorageBuffer(0, 3, instanceRateRenderables.m_buffer, instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
+		cmdb.bindStorageBuffer(0, 4, indirectArgs.m_buffer, indirectArgs.m_offset, indirectArgs.m_size);
 
 		U32* offsets = allocateAndBindStorage<U32*>(sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(technique), cmdb, 0, 5);
 		U32 bucketCount = 0;

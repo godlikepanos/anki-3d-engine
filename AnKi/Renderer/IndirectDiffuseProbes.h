@@ -72,10 +72,10 @@ private:
 	Error initLightShading();
 	Error initIrradiance();
 
-	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
-	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
-	void runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
-	void runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
+	void runGBufferInThread(RenderPassWorkContext& rgraphCtx) const;
+	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx) const;
+	void runLightShading(RenderPassWorkContext& rgraphCtx);
+	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

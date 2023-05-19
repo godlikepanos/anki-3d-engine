@@ -16,9 +16,7 @@ namespace anki {
 class GpuVisibilityOutput
 {
 public:
-	BufferHandle m_instanceRateRenderablesHandle;
-	BufferHandle m_drawIndexedIndirectArgsHandle;
-	BufferHandle m_mdiDrawCountsHandle;
+	BufferHandle m_mdiDrawCountsHandle; ///< Just expose one handle for depedencies. No need to track all other buffers.
 
 	Buffer* m_instanceRateRenderablesBuffer;
 	Buffer* m_drawIndexedIndirectArgsBuffer;
