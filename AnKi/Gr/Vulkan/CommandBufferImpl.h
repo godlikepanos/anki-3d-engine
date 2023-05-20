@@ -457,6 +457,7 @@ public:
 
 #if ANKI_EXTRA_CHECKS
 		ANKI_ASSERT(m_debugMarkersPushed > 0);
+		--m_debugMarkersPushed;
 #endif
 	}
 

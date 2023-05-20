@@ -15,6 +15,7 @@
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
@@ -78,12 +79,14 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(ctx, rgraphCtx);
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
@@ -117,6 +120,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
+
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const Bool dbgEnabled = ConfigSet::getSingleton().getRDbg();
 

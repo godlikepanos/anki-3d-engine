@@ -577,11 +577,9 @@ void CommandBufferImpl::upscaleInternal(GrUpscaler* upscaler, TextureView* inCol
 	vkDlssEvalParams.InMVSubrectBase = renderingOffset;
 	vkDlssEvalParams.InRenderSubrectDimensions = renderingSize;
 
-	getGrManagerImpl().beginMarker(m_handle, "DLSS");
 	NVSDK_NGX_Parameter* dlssParameters = &upscalerImpl.getParameters();
 	NVSDK_NGX_Handle* dlssFeature = &upscalerImpl.getFeature();
 	const NVSDK_NGX_Result result = NGX_VULKAN_EVALUATE_DLSS_EXT(m_handle, dlssFeature, dlssParameters, &vkDlssEvalParams);
-	getGrManagerImpl().endMarker(m_handle);
 
 	if(NVSDK_NGX_FAILED(result))
 	{
