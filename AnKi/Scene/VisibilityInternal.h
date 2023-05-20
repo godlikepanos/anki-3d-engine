@@ -109,7 +109,6 @@ class RenderQueueView
 public:
 	TRenderQueueElementStorage<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
 	TRenderQueueElementStorage<RenderableQueueElement> m_forwardShadingRenderables;
-	TRenderQueueElementStorage<RenderableQueueElement> m_earlyZRenderables;
 	TRenderQueueElementStorage<PointLightQueueElement> m_pointLights;
 	TRenderQueueElementStorage<SpotLightQueueElement> m_spotLights;
 	DirectionalLightQueueElement m_directionalLight;
@@ -151,7 +150,6 @@ public:
 	Bool m_gatherSkyComponents : 1 = false;
 
 	Bool m_coverageBuffer : 1 = false;
-	Bool m_earlyZ : 1 = false;
 	Bool m_nonDirectionalLightsCastShadow : 1 = false;
 	Bool m_directionalLightsCastShadow : 1 = false;
 };

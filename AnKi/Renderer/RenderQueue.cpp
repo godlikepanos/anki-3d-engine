@@ -10,7 +10,6 @@ namespace anki {
 U32 RenderQueue::countAllRenderables() const
 {
 	U32 drawableCount = 0;
-	drawableCount += m_earlyZRenderables.getSize();
 	drawableCount += m_renderables.getSize();
 	drawableCount += m_forwardShadingRenderables.getSize();
 

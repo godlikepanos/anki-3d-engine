@@ -388,7 +388,6 @@ class RenderQueue : public RenderingMatrices
 {
 public:
 	WeakArray<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
-	WeakArray<RenderableQueueElement> m_earlyZRenderables; ///< Some renderables that will be used for Early Z pass.
 	WeakArray<RenderableQueueElement> m_forwardShadingRenderables;
 	WeakArray<PointLightQueueElement> m_pointLights; ///< Those who cast shadows are first.
 	WeakArray<SpotLightQueueElement> m_spotLights; ///< Those who cast shadows are first.

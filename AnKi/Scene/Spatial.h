@@ -19,6 +19,7 @@ class Spatial
 public:
 	Spatial(SceneComponent* owner)
 		: m_owner(owner)
+		, m_sceneComponentClassId(owner->getClassId())
 	{
 		ANKI_ASSERT(owner);
 		m_octreeInfo.m_userData = this;
@@ -41,6 +42,11 @@ public:
 	SceneComponent& getSceneComponent()
 	{
 		return *m_owner;
+	}
+
+	U8 getSceneComponentClassId() const
+	{
+		return m_sceneComponentClassId;
 	}
 
 	const Aabb& getAabbWorldSpace() const
@@ -131,6 +137,7 @@ private:
 	OctreePlaceable m_octreeInfo;
 
 	SceneComponent* m_owner;
+	U8 m_sceneComponentClassId; ///< Cache it.
 
 	Bool m_placed : 1 = false;
 	Bool m_updatesOctreeBounds : 1 = true;
