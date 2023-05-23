@@ -404,6 +404,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			const Plane& nearPlane = primaryFrustum.getViewPlanes()[FrustumPlaneType::kNear];
 			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, aabb));
+			Bool updateTimestamp = false;
 
 			WeakArray<RenderableQueueElement> elements;
 			partemitc.setupRenderableQueueElements(RenderingTechnique::kGBuffer, elements);
@@ -411,6 +412,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			{
 				el.m_distanceFromCamera = distanceFromCamera;
 				*result.m_renderables.newElement() = el;
+				updateTimestamp = true;
 			}
 
 			partemitc.setupRenderableQueueElements(RenderingTechnique::kForward, elements);
@@ -421,8 +423,11 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 
 			// Update timestamp
-			ANKI_ASSERT(comp.getTimestamp() > 0);
-			m_frcCtx->m_queueViews[taskId].m_timestamp = max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
+			if(updateTimestamp)
+			{
+				ANKI_ASSERT(comp.getTimestamp() > 0);
+				m_frcCtx->m_queueViews[taskId].m_timestamp = max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
+			}
 		}
 		else if(compClassId == LightComponent::getStaticClassId())
 		{

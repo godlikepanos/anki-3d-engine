@@ -17,6 +17,7 @@
 #include <AnKi/Core/CoreTracer.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/Core/GpuMemory/GpuReadbackMemoryPool.h>
 #include <AnKi/Core/DeveloperConsole.h>
 #include <AnKi/Core/StatsUi.h>
 #include <AnKi/Window/NativeWindow.h>
@@ -133,6 +134,7 @@ void App::cleanup()
 	GpuVisibleTransientMemoryPool::freeSingleton();
 	UnifiedGeometryBuffer::freeSingleton();
 	GpuSceneBuffer::freeSingleton();
+	GpuReadbackMemoryPool::freeSingleton();
 	CoreThreadHive::freeSingleton();
 	MaliHwCounters::freeSingleton();
 	GrManager::freeSingleton();
@@ -286,6 +288,7 @@ Error App::initInternal()
 	GpuSceneBuffer::allocateSingleton().init();
 	RebarTransientMemoryPool::allocateSingleton().init();
 	GpuVisibleTransientMemoryPool::allocateSingleton();
+	GpuReadbackMemoryPool::allocateSingleton();
 
 	//
 	// Physics
@@ -469,6 +472,7 @@ Error App::mainLoop()
 			UnifiedGeometryBuffer::getSingleton().endFrame();
 			GpuSceneBuffer::getSingleton().endFrame();
 			GpuVisibleTransientMemoryPool::getSingleton().endFrame();
+			GpuReadbackMemoryPool::getSingleton().endFrame();
 
 			// Update the trace info with some async loader stats
 			U64 asyncTaskCount = ResourceManager::getSingleton().getAsyncLoader().getCompletedTaskCount();

@@ -7,7 +7,8 @@ set(sources
 	StatsUi.cpp
 	GpuMemory/UnifiedGeometryBuffer.cpp
 	GpuMemory/GpuSceneBuffer.cpp
-	GpuMemory/RebarTransientMemoryPool.cpp)
+	GpuMemory/RebarTransientMemoryPool.cpp
+	GpuMemory/GpuReadbackMemoryPool.cpp)
 
 set(headers
 	AllConfigVars.defs.h
@@ -23,7 +24,8 @@ set(headers
 	StdinListener.h
 	GpuMemory/UnifiedGeometryBuffer.h
 	GpuMemory/GpuSceneBuffer.h
-	GpuMemory/RebarTransientMemoryPool.h)
+	GpuMemory/RebarTransientMemoryPool.h
+	GpuMemory/GpuReadbackMemoryPool.h)
 
 add_library(AnKiCore ${sources} ${headers})
 

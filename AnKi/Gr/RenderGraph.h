@@ -649,7 +649,7 @@ public:
 
 	/// @name 3rd step methods
 	/// @{
-	void flush();
+	void flush(FencePtr* optionalFence = nullptr);
 	/// @}
 
 	/// @name 4th step methods

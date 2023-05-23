@@ -21,6 +21,9 @@ public:
 	void populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
 							 RenderingContext& ctx);
 
+	void populateRenderGraphDirectionalLight(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, WeakArray<RenderTargetHandle> dstHzbRts,
+											 WeakArray<Mat4> viewProjectionMatrices, RenderingContext& ctx);
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;

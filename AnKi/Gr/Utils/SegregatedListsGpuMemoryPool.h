@@ -40,8 +40,8 @@ private:
 	PtrSize m_chunkOffset = kMaxPtrSize;
 };
 
-/// GPU memory allocator based on segregated lists. It allocates a GPU buffer with some initial size. If there is a need
-/// to grow it allocates a bigger buffer and copies contents of the old one to the new (CoW).
+/// GPU memory allocator based on segregated lists. It allocates a GPU buffer with some initial size. If there is a need to grow it allocates a bigger
+/// buffer and copies contents of the old one to the new (CoW).
 class SegregatedListsGpuMemoryPool
 {
 public:
@@ -57,7 +57,7 @@ public:
 	SegregatedListsGpuMemoryPool& operator=(const SegregatedListsGpuMemoryPool&) = delete;
 
 	void init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize, CString bufferName,
-			  Bool allowCoWs);
+			  Bool allowCoWs, BufferMapAccessBit map = BufferMapAccessBit::kNone);
 
 	void destroy();
 
@@ -80,6 +80,12 @@ public:
 		return *m_gpuBuffer;
 	}
 
+	void* getGpuBufferMappedMemory() const
+	{
+		ANKI_ASSERT(m_mappedGpuBufferMemory);
+		return m_mappedGpuBufferMemory;
+	}
+
 	/// @note It's thread-safe.
 	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const;
 
@@ -97,6 +103,7 @@ private:
 
 	Builder* m_builder = nullptr;
 	BufferPtr m_gpuBuffer;
+	void* m_mappedGpuBufferMemory = nullptr;
 	PtrSize m_allocatedSize = 0;
 
 	GrDynamicArray<Chunk*> m_deletedChunks;
@@ -104,6 +111,8 @@ private:
 	Array<GrDynamicArray<SegregatedListsGpuMemoryPoolToken>, kMaxFramesInFlight> m_garbage;
 	U8 m_frame = 0;
 	Bool m_allowCoWs = true;
+
+	BufferMapAccessBit m_mapAccess = BufferMapAccessBit::kNone;
 
 	Error allocateChunk(Chunk*& newChunk, PtrSize& chunkSize);
 	void deleteChunk(Chunk* chunk);

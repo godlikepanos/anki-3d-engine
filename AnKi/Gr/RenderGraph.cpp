@@ -1396,7 +1396,7 @@ void RenderGraph::run() const
 	}
 }
 
-void RenderGraph::flush()
+void RenderGraph::flush(FencePtr* optionalFence)
 {
 	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphFlush);
 
@@ -1416,7 +1416,7 @@ void RenderGraph::flush()
 		}
 
 		// Flush
-		m_ctx->m_graphicsCmdbs[i]->flush();
+		m_ctx->m_graphicsCmdbs[i]->flush({}, (i == m_ctx->m_graphicsCmdbs.getSize() - 1) ? optionalFence : nullptr);
 	}
 }
 

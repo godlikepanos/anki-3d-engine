@@ -50,7 +50,7 @@ public:
 };
 
 void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
-										CString bufferName, Bool allowCoWs)
+										CString bufferName, Bool allowCoWs, BufferMapAccessBit map)
 {
 	ANKI_ASSERT(!isInitialized());
 
@@ -75,6 +75,7 @@ void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeak
 	m_frame = 0;
 	m_allocatedSize = 0;
 	m_allowCoWs = allowCoWs;
+	m_mapAccess = map;
 }
 
 void SegregatedListsGpuMemoryPool::destroy()
@@ -85,6 +86,11 @@ void SegregatedListsGpuMemoryPool::destroy()
 	}
 
 	GrManager::getSingleton().finish();
+
+	if(m_mappedGpuBufferMemory)
+	{
+		m_gpuBuffer->unmap();
+	}
 
 	for(GrDynamicArray<SegregatedListsGpuMemoryPoolToken>& arr : m_garbage)
 	{
@@ -114,7 +120,13 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_initialBufferSize;
 		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
+		buffInit.m_mapAccess = m_mapAccess;
 		m_gpuBuffer = GrManager::getSingleton().newBuffer(buffInit);
+
+		if(!!m_mapAccess)
+		{
+			m_mappedGpuBufferMemory = m_gpuBuffer->map(0, kMaxPtrSize, m_mapAccess);
+		}
 
 		newChunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
 		newChunk->m_offsetInGpuBuffer = 0;
@@ -136,6 +148,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_gpuBuffer->getSize() * 2;
 		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
+		buffInit.m_mapAccess = m_mapAccess;
 		BufferPtr newBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		// Do the copy
@@ -166,6 +179,11 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 
 		// Switch the buffers
 		m_gpuBuffer = newBuffer;
+
+		if(!!m_mapAccess)
+		{
+			m_mappedGpuBufferMemory = m_gpuBuffer->map(0, kMaxPtrSize, m_mapAccess);
+		}
 	}
 	else
 	{
