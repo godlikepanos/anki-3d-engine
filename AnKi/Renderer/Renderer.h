@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Renderer/Drawer.h>
 #include <AnKi/Renderer/GpuVisibility.h>
+#include <AnKi/Renderer/HzbHelper.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
@@ -92,6 +93,11 @@ public:
 	const GpuVisibility& getGpuVisibility() const
 	{
 		return m_visibility;
+	}
+
+	const HzbHelper& getHzbHelper() const
+	{
+		return m_hzbHelper;
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
@@ -188,6 +194,7 @@ private:
 
 	RenderableDrawer m_sceneDrawer;
 	GpuVisibility m_visibility;
+	HzbHelper m_hzbHelper;
 
 	U64 m_frameCount; ///< Frame number
 

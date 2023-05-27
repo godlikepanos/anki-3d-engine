@@ -684,8 +684,8 @@ F32 fastCos(F32 x)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-/// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on
-/// local variables (the compiler can't see it's groupshared).
+/// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on local variables (the compiler
+/// can't see it's groupshared).
 /// @param svGroupIndex Self explanatory.
 /// @param tmpGroupsharedU32Var A U32 groupshared variable that will help with the calculation.
 /// @param waveIndexInsideThreadgroup The SubgroupID.

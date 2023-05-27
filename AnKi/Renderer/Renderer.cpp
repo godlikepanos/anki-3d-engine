@@ -291,6 +291,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	}
 
 	ANKI_CHECK(m_visibility.init());
+	ANKI_CHECK(m_hzbHelper.init());
 
 	return Error::kNone;
 }

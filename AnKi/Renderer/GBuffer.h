@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/HzbHelper.h>
 #include <AnKi/Gr.h>
 
 namespace anki {
@@ -78,8 +77,6 @@ private:
 	Array<TexturePtr, 2> m_depthRts;
 	TexturePtr m_hzbRt;
 	FramebufferDescription m_fbDescr;
-
-	HzbHelper m_hzb;
 
 	class
 	{

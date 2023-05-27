@@ -5,6 +5,7 @@
 
 #pragma anki mutator REDUCTION_TYPE 0 1 // 0: min 1: max
 #pragma anki mutator MIN_MAX_SAMPLER 0 1
+#pragma anki mutator REVERSE_1_TO_0 0 1 // Used in shadows where we want to move the far (1.0) close to the camera to cull
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.hlsl>
@@ -44,7 +45,15 @@ AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 #if MIN_MAX_SAMPLER
 	const F32 f = g_srcTex.SampleLevel(g_minMaxAnyClampSampler, uv, 0.0).r;
 #else
-	const Vec4 samples = g_srcTex.GatherRed(g_linearAnyClampSampler, uv);
+	Vec4 samples = g_srcTex.GatherRed(g_linearAnyClampSampler, uv);
+
+#	if REVERSE_1_TO_0
+	[unroll] for(U32 i = 0; i < 4; ++i)
+	{
+		samples[i] = (samples[i] == 1.0f) ? 0.0f : samples[i];
+	}
+#	endif
+
 #	if REDUCTION_TYPE == 0
 	const F32 f = min4(samples);
 #	else

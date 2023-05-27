@@ -52,6 +52,8 @@ private:
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
 
+	Array<RenderTargetDescription, kMaxShadowCascades> m_cascadeHzbRtDescrs;
+
 	class
 	{
 	public:
@@ -76,7 +78,7 @@ private:
 
 	template<typename TMemoryPool>
 	void newWorkItem(const UVec4& atlasViewport, const RenderQueue& queue, RenderGraphDescription& rgraph,
-					 DynamicArray<ViewportWorkItem, TMemoryPool>& workItems);
+					 DynamicArray<ViewportWorkItem, TMemoryPool>& workItems, RenderTargetHandle* hzbRt = nullptr);
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 };

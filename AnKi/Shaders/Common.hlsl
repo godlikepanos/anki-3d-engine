@@ -7,7 +7,11 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/Common.h>
+#if defined(__INTELLISENSE__)
+#	include <AnKi/Shaders/Intellisense.hlsl>
+#else
+#	include <AnKi/Shaders/Include/Common.h>
+#endif
 
 template<typename T>
 T uvToNdc(T x)

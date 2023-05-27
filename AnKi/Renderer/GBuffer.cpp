@@ -22,11 +22,6 @@ Error GBuffer::init()
 {
 	Error err = initInternal();
 
-	if(!err)
-	{
-		err = m_hzb.init();
-	}
-
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize g-buffer pass");
@@ -232,8 +227,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(visOut.m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
 
 	// HZB generation for the next frame
-	m_hzb.populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
-							  UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), ctx);
+	getRenderer().getHzbHelper().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
+													 UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), rgraph);
 }
 
 } // end namespace anki

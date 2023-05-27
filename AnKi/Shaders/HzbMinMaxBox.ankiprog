@@ -1,0 +1,73 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader draws tile aligned boxes in order to fill the HZB buffer for cascaded shadows
+
+#include <AnKi/Shaders/Functions.hlsl>
+
+#pragma anki start vert
+
+constexpr U32 kTileSize = 64;
+
+[[vk::binding(0)]] Texture2D<Vec4> g_minMaxRt;
+
+struct Uniforms
+{
+	Mat4 m_reprojectionMat;
+	UVec2 m_mainCameraDepthBufferSize;
+	UVec2 m_padding;
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+
+Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_POSITION
+{
+	UVec2 minMaxRtSize;
+	g_minMaxRt.GetDimensions(minMaxRtSize.x, minMaxRtSize.y);
+
+	const U32 tileX = svInstanceId % minMaxRtSize.x;
+	const U32 tileY = svInstanceId / minMaxRtSize.x;
+
+	const Vec2 depths = g_minMaxRt[UVec2(tileX, tileY)].xy;
+	const F32 minDepth = depths.x;
+	const F32 maxDepth = depths.y;
+
+	// Z
+	Vec3 ndc;
+	ndc.z = (svVertexId <= 3) ? minDepth : maxDepth;
+
+	// X
+	ndc.x = F32(tileX * kTileSize);
+	if(svVertexId == 1 || svVertexId == 2 || svVertexId == 5 || svVertexId == 6)
+	{
+		// Right side, move the point
+		ndc.x += kTileSize;
+	}
+	ndc.x /= F32(g_unis.m_mainCameraDepthBufferSize.x);
+
+	// Y
+	ndc.y = F32(tileY * kTileSize);
+	if(svVertexId == 3 || svVertexId == 2 || svVertexId == 7 || svVertexId == 6)
+	{
+		// Top side, move the point
+		ndc.y += kTileSize;
+	}
+	ndc.y /= F32(g_unis.m_mainCameraDepthBufferSize.y);
+
+	ndc.xy = uvToNdc(saturate(ndc.xy));
+
+	// Unproject and project
+	return mul(g_unis.m_reprojectionMat, Vec4(ndc, 1.0));
+}
+
+#pragma anki end
+
+#pragma anki start frag
+
+void main()
+{
+}
+
+#pragma anki end

@@ -77,7 +77,7 @@ public:
 	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
 
-	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
+	CommandBufferFlag m_flags = CommandBufferFlag::kGeneralWork;
 
 	CommandBufferInitInfo(CString name = {})
 		: GrBaseInitInfo(name)

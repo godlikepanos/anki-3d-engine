@@ -5,6 +5,7 @@
 
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/ThreadHive.h>
@@ -63,6 +64,20 @@ Error ShadowMapping::initInternal()
 	const ShaderProgramResourceVariant* variant;
 	m_clearDepthProg->getOrCreateVariant(variant);
 	m_clearDepthGrProg.reset(&variant->getProgram());
+
+	for(U32 i = 0; i < kMaxShadowCascades; ++i)
+	{
+		RendererString name;
+		name.sprintf("DirLight HZB #%d", i);
+
+		UVec2 size(m_tileResolution >> chooseDirectionalLightShadowCascadeDetail(i),
+				   m_tileResolution >> chooseDirectionalLightShadowCascadeDetail(i));
+		size /= 2;
+
+		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), Format::kR32_Sfloat, name);
+		m_cascadeHzbRtDescrs[i].m_mipmapCount = U8(computeMaxMipmapCount2d(m_cascadeHzbRtDescrs[i].m_width, m_cascadeHzbRtDescrs[i].m_height));
+		m_cascadeHzbRtDescrs[i].bake();
+	}
 
 	return Error::kNone;
 }
@@ -229,14 +244,14 @@ Bool ShadowMapping::allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* 
 
 template<typename TMemoryPool>
 void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& queue, RenderGraphDescription& rgraph,
-								DynamicArray<ViewportWorkItem, TMemoryPool>& workItems)
+								DynamicArray<ViewportWorkItem, TMemoryPool>& workItems, RenderTargetHandle* hzbRt)
 {
 	ViewportWorkItem& work = *workItems.emplaceBack();
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
 													   ConfigSet::getSingleton().getLod1MaxDistance()};
 	getRenderer().getGpuVisibility().populateRenderGraph("Shadowmapping visibility", RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
-														 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
+														 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, hzbRt, rgraph,
 														 work.m_visOut);
 
 	work.m_viewport = atlasViewport;
@@ -284,13 +299,29 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		if(!allocationFailed)
 		{
+			// HZB generation
+			Array<RenderTargetHandle, kMaxShadowCascades> hzbRts;
+			Array<UVec2, kMaxShadowCascades> hzbSizes;
+			Array<Mat4, kMaxShadowCascades> dstViewProjectionMats;
+
+			for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
+			{
+				hzbRts[cascade] = rgraph.newRenderTarget(m_cascadeHzbRtDescrs[cascade]);
+				hzbSizes[cascade] = UVec2(m_cascadeHzbRtDescrs[cascade].m_width, m_cascadeHzbRtDescrs[cascade].m_height);
+				dstViewProjectionMats[cascade] = ctx.m_renderQueue->m_directionalLight.m_shadowRenderQueues[cascade]->m_viewProjectionMatrix;
+			}
+
+			getRenderer().getHzbHelper().populateRenderGraphDirectionalLight(getRenderer().getGBuffer().getDepthRt(),
+																			 getRenderer().getInternalResolution(), hzbRts, dstViewProjectionMats,
+																			 hzbSizes, ctx.m_matrices.m_invertedViewProjection, rgraph);
+
 			for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 			{
 				// Update the texture matrix to point to the correct region in the atlas
 				light.m_textureMatrices[cascade] = createSpotLightTextureMatrix(atlasViewports[cascade]) * light.m_textureMatrices[cascade];
 
 				// Push work
-				newWorkItem(atlasViewports[cascade], *light.m_shadowRenderQueues[cascade], rgraph, workItems);
+				newWorkItem(atlasViewports[cascade], *light.m_shadowRenderQueues[cascade], rgraph, workItems, &hzbRts[cascade]);
 			}
 		}
 		else
