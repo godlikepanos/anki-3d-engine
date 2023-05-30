@@ -70,11 +70,11 @@ Error ShadowMapping::initInternal()
 		RendererString name;
 		name.sprintf("DirLight HZB #%d", i);
 
-		UVec2 size(m_tileResolution >> chooseDirectionalLightShadowCascadeDetail(i),
-				   m_tileResolution >> chooseDirectionalLightShadowCascadeDetail(i));
+		const U32 cascadeResolution = (m_tileResolution * (1 << (kTileAllocHierarchyCount - 1))) >> chooseDirectionalLightShadowCascadeDetail(i);
+		UVec2 size(min(cascadeResolution, 1024u));
 		size /= 2;
 
-		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), Format::kR32_Sfloat, name);
+		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), Format::kR16_Sfloat, name);
 		m_cascadeHzbRtDescrs[i].m_mipmapCount = U8(computeMaxMipmapCount2d(m_cascadeHzbRtDescrs[i].m_width, m_cascadeHzbRtDescrs[i].m_height));
 		m_cascadeHzbRtDescrs[i].bake();
 	}
