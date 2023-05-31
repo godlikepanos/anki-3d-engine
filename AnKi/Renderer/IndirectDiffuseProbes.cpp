@@ -298,7 +298,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI light shading");
 		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {giCtx->m_lightShadingRt});
-		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
 			runLightShading(rgraphCtx);
 		});
 
@@ -322,7 +322,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI irradiance");
 
-		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			runIrradiance(rgraphCtx);
 		});
 

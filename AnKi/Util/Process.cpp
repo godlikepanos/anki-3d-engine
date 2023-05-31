@@ -122,6 +122,10 @@ Error Process::startInternal(const Char* args[], const Char* env[], ProcessOptio
 		m_handle = reproc_destroy(m_handle);
 		return Error::kUserData;
 	}
+#else
+	(void)args;
+	(void)env;
+	(void)options;
 #endif
 
 	return Error::kNone;
@@ -176,6 +180,10 @@ Error Process::wait(Second timeout, ProcessStatus* pStatus, I32* pExitCode)
 	}
 
 	ANKI_ASSERT(!(status == ProcessStatus::kRunning && timeout < 0.0));
+#else
+	(void)timeout;
+	(void)pStatus;
+	(void)pExitCode;
 #endif
 
 	return Error::kNone;
@@ -186,6 +194,8 @@ Error Process::getStatus(ProcessStatus& status)
 #if !ANKI_OS_ANDROID
 	ANKI_ASSERT(m_handle);
 	ANKI_CHECK(wait(0.0, &status, nullptr));
+#else
+	(void)status;
 #endif
 
 	return Error::kNone;
@@ -215,6 +225,8 @@ Error Process::kill(ProcessKillSignal k)
 		ANKI_UTIL_LOGE("%s() failed: %s", funcName.cstr(), reproc_strerror(ret));
 		return Error::kFunctionFailed;
 	}
+#else
+	(void)k;
 #endif
 
 	return Error::kNone;
@@ -225,6 +237,7 @@ Error Process::readFromStdout(String& text)
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_OUT, text);
 #else
+	(void)text;
 	return Error::kNone;
 #endif
 }
@@ -234,6 +247,7 @@ Error Process::readFromStderr(String& text)
 #if !ANKI_OS_ANDROID
 	return readCommon(REPROC_STREAM_ERR, text);
 #else
+	(void)text;
 	return Error::kNone;
 #endif
 }
