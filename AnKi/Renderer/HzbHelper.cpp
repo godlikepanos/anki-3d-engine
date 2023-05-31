@@ -49,13 +49,13 @@ Error HzbHelper::init()
 
 		ShaderProgramResourceVariantInitInfo variantInit(m_genPyramidProg);
 		variantInit.addMutation("REDUCTION_TYPE", 1);
-		variantInit.addMutation("REVERSE_1_TO_0", 0);
+		variantInit.addMutation("GENERATE_SHADOW_MASK", 0);
 		variantInit.addMutation("MIN_MAX_SAMPLER", m_maxSampler.isCreated());
 		const ShaderProgramResourceVariant* variant;
 		m_genPyramidProg->getOrCreateVariant(variantInit, variant);
 		m_genPyramidMainCameraGrProg.reset(&variant->getProgram());
 
-		variantInit.addMutation("REVERSE_1_TO_0", 1);
+		variantInit.addMutation("GENERATE_SHADOW_MASK", 1);
 		variantInit.addMutation("MIN_MAX_SAMPLER", 0);
 		m_genPyramidProg->getOrCreateVariant(variantInit, variant);
 		m_genPyramidShadowGrProg.reset(&variant->getProgram());
