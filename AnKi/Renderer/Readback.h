@@ -13,43 +13,48 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-class MultiframeReadback
+/// TODO
+class MultiframeReadbackToken
 {
-public:
-	void* getMostRecentReadData(PtrSize* dataSize = nullptr) const
-	{
-	}
-
-	void freeMostRecentData()
-	{
-	}
-
-	void allocateData(PtrSize size, Buffer*& buffer, PtrSize bufferOffset)
-	{
-		if(m_fences[m_crntSlot].isCreated())
-		{
-			ANKI_R_LOGW("Allocation not freed. Will have to free it now");
-			GpuReadbackMemoryPool::getSingleton().deferredFree(m_allocations[m_crntSlot]);
-			m_fences[m_crntSlot].reset(nullptr);
-		}
-
-		m_crntSlot = (m_crntSlot + 1) % kMaxFramesInFlight;
-	}
+	friend class ReadbackManager;
 
 private:
 	Array<GpuReadbackMemoryAllocation, kMaxFramesInFlight> m_allocations;
-	Array<U64, kMaxFramesInFlight> m_frames;
+	Array<U64, kMaxFramesInFlight> m_frameIds = {};
+	U32 m_slot = 0;
 };
 
-class ReadbackManager : public MakeSingleton<ReadbackManager>
+/// TODO
+class ReadbackManager
 {
 	template<typename>
 	friend class MakeSingleton;
 
 public:
-private:
-};
+	/// @note Not thread-safe
+	void allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset);
 
+	/// XXX
+	/// @note Not thread-safe
+	void getMostRecentReadDataAndRelease(MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut);
+
+	/// @note Not thread-safe
+	template<typename TMemPool>
+	void getMostRecentReadDataAndRelease(MultiframeReadbackToken& token, DynamicArray<U8, TMemPool>& data);
+
+	/// @note Not thread-safe
+	void endFrame(Fence* fence);
+
+private:
+	class Frame
+	{
+	public:
+		FencePtr m_fence;
+	};
+
+	Array<Frame, kMaxFramesInFlight> m_frames;
+	U64 m_frameId = kMaxFramesInFlight;
+};
 /// @}
 
 } // end namespace anki

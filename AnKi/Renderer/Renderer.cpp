@@ -390,7 +390,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	return Error::kNone;
 }
 
-void Renderer::finalize(const RenderingContext& ctx)
+void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
 {
 	++m_frameCount;
 
@@ -405,6 +405,8 @@ void Renderer::finalize(const RenderingContext& ctx)
 		m_depthDownscale->getClientDepthMapInfo(depthValues, width, height);
 		ctx.m_renderQueue->m_fillCoverageBufferCallback(ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData, depthValues, width, height);
 	}
+
+	m_readbaks.endFrame(fence);
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)

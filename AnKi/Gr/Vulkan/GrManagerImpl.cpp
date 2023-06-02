@@ -1362,7 +1362,6 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 	timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
 	timelineInfo.waitSemaphoreValueCount = userWaitSemaphores.getSize();
 	timelineInfo.pWaitSemaphoreValues = &waitTimelineValues[0];
-	timelineInfo.signalSemaphoreValueCount = (userSignalSemaphore != nullptr);
 	timelineInfo.pSignalSemaphoreValues = &signalTimelineValues[0];
 	submit.pNext = &timelineInfo;
 
@@ -1387,11 +1386,8 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 	{
 		*userSignalSemaphore = m_semaphoreFactory.newInstance(fence, true);
 
-		signalSemaphores[submit.signalSemaphoreCount] = (*userSignalSemaphore)->getHandle();
-
-		signalTimelineValues[submit.signalSemaphoreCount] = (*userSignalSemaphore)->getNextSemaphoreValue();
-
-		++submit.signalSemaphoreCount;
+		signalSemaphores[submit.signalSemaphoreCount++] = (*userSignalSemaphore)->getHandle();
+		signalTimelineValues[timelineInfo.signalSemaphoreValueCount++] = (*userSignalSemaphore)->getNextSemaphoreValue();
 	}
 
 	// Submit
@@ -1418,6 +1414,9 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 			frame.m_renderSemaphore = m_semaphoreFactory.newInstance(fence, false);
 
 			signalSemaphores[submit.signalSemaphoreCount++] = frame.m_renderSemaphore->getHandle();
+
+			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
+			signalTimelineValues[timelineInfo.signalSemaphoreValueCount++] = 0;
 
 			// Update the frame fence
 			frame.m_presentFence = fence;

@@ -149,11 +149,12 @@ Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 	m_rgraph->run();
 
 	// Flush
-	m_rgraph->flush();
+	FencePtr fence;
+	m_rgraph->flush(&fence);
 
 	// Reset for the next frame
 	m_rgraph->reset();
-	m_r->finalize(ctx);
+	m_r->finalize(ctx, fence.get());
 
 	// Stats
 	if(m_statsEnabled)

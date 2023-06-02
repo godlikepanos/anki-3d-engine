@@ -13,6 +13,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Collision/Forward.h>
+#include <AnKi/Renderer/Readback.h>
 
 namespace anki {
 
@@ -73,7 +74,7 @@ public:
 	/// This function does all the rendering stages and produces a final result.
 	Error populateRenderGraph(RenderingContext& ctx);
 
-	void finalize(const RenderingContext& ctx);
+	void finalize(const RenderingContext& ctx, Fence* fence);
 
 	U64 getFrameCount() const
 	{
@@ -98,6 +99,11 @@ public:
 	const HzbHelper& getHzbHelper() const
 	{
 		return m_hzbHelper;
+	}
+
+	ReadbackManager& getReadbackManager()
+	{
+		return m_readbaks;
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
@@ -195,6 +201,7 @@ private:
 	RenderableDrawer m_sceneDrawer;
 	GpuVisibility m_visibility;
 	HzbHelper m_hzbHelper;
+	ReadbackManager m_readbaks;
 
 	U64 m_frameCount; ///< Frame number
 

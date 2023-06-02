@@ -64,6 +64,12 @@ public:
 		return *m_buffer;
 	}
 
+	const void* getMappedMemory() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_mappedMemory;
+	}
+
 private:
 	SegregatedListsGpuMemoryPoolToken m_token;
 	Buffer* m_buffer = nullptr;

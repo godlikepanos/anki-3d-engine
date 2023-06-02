@@ -36,6 +36,7 @@ GpuReadbackMemoryAllocation GpuReadbackMemoryPool::allocate(PtrSize size)
 void GpuReadbackMemoryPool::deferredFree(GpuReadbackMemoryAllocation& allocation)
 {
 	m_pool.deferredFree(allocation.m_token);
+	::new(&allocation) GpuReadbackMemoryAllocation();
 }
 
 void GpuReadbackMemoryPool::endFrame()
