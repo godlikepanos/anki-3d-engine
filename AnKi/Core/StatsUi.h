@@ -26,7 +26,7 @@ enum class StatsUiDetail : U8
 class StatsUi : public UiImmediateModeBuilder
 {
 public:
-	StatsUi() = default;
+	StatsUi();
 
 	~StatsUi();
 
@@ -40,8 +40,15 @@ public:
 	}
 
 private:
+	class Value;
+
+	static constexpr U32 kBufferedFrames = 30;
+
 	FontPtr m_font;
 	StatsUiDetail m_detail = StatsUiDetail::kDetailed;
+
+	CoreDynamicArray<Value> m_averageValues;
+	U32 m_bufferedFrames = 0;
 
 	static void labelTime(Second val, CString name)
 	{

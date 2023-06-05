@@ -24,10 +24,11 @@ enum class StatFlag : U16
 	kThreadSafe = 1 << 1,
 	kFloat = 1 << 2,
 
-	kSecond = (1 << 3) | kFloat,
-	kMilisecond = (1 << 4) | kFloat,
-	kNanoSeconds = 1 << 5,
-	kBytes = 1 << 6,
+	kShowAverage = 1 << 3,
+	kSecond = (1 << 4) | kFloat,
+	kMilisecond = (1 << 5) | kFloat,
+	kNanoSeconds = 1 << 6,
+	kBytes = 1 << 7,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(StatFlag)
 
@@ -334,6 +335,15 @@ public:
 	{
 	}
 #endif
+
+	U32 getCounterCount() const
+	{
+#if ANKI_STATS_ENABLED
+		return m_statCounterArrSize;
+#else
+		return 0;
+#endif
+	}
 
 private:
 #if ANKI_STATS_ENABLED

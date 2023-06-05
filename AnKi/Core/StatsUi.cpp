@@ -14,6 +14,28 @@ namespace anki {
 extern StatCounter g_cpuTotalTime;
 extern StatCounter g_rendererGpuTime;
 
+class StatsUi::Value
+{
+public:
+	F64 m_avg = 0.0;
+	F64 m_rollingAvg = 0.0;
+
+	void update(F64 x, Bool flush)
+	{
+		m_rollingAvg += x / F64(kBufferedFrames);
+
+		if(flush)
+		{
+			m_avg = m_rollingAvg;
+			m_rollingAvg = 0.0;
+		}
+	}
+};
+
+StatsUi::StatsUi()
+{
+}
+
 StatsUi::~StatsUi()
 {
 }
@@ -21,6 +43,11 @@ StatsUi::~StatsUi()
 Error StatsUi::init()
 {
 	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
+
+	if(StatsSet::getSingleton().getCounterCount())
+	{
+		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
+	}
 
 	return Error::kNone;
 }
@@ -62,6 +89,14 @@ void StatsUi::labelBytes(PtrSize val, CString name)
 
 void StatsUi::build(CanvasPtr canvas)
 {
+	Bool flush = false;
+	if(m_bufferedFrames == kBufferedFrames)
+	{
+		flush = true;
+		m_bufferedFrames = 0;
+	}
+	++m_bufferedFrames;
+
 	canvas->pushFont(m_font, 24);
 
 	const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
@@ -75,6 +110,7 @@ void StatsUi::build(CanvasPtr canvas)
 		if(m_detail == StatsUiDetail::kDetailed)
 		{
 			StatCategory category = StatCategory::kCount;
+			U32 count = 0;
 			StatsSet::getSingleton().iterateStats(
 				[&](StatCategory c, const Char* name, U64 value, StatFlag flags) {
 					if(category != c)
@@ -91,15 +127,24 @@ void StatsUi::build(CanvasPtr canvas)
 					{
 						ImGui::Text("%s: %zu", name, value);
 					}
+
+					++count;
 				},
-				[&](StatCategory c, const Char* name, F64 value, StatFlag) {
+				[&](StatCategory c, const Char* name, F64 value, StatFlag flags) {
 					if(category != c)
 					{
 						category = c;
 						ImGui::Text("-- %s --", kStatCategoryTexts[c].cstr());
 					}
 
+					if(!!(flags & StatFlag::kShowAverage))
+					{
+						m_averageValues[count].update(value, flush);
+						value = m_averageValues[count].m_avg;
+					}
+
 					ImGui::Text("%s: %f", name, value);
+					++count;
 				});
 		}
 		else

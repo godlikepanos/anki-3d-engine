@@ -47,7 +47,7 @@ namespace anki {
 android_app* g_androidApp = nullptr;
 #endif
 
-StatCounter g_cpuTotalTime(StatCategory::kTime, "CPU total", StatFlag::kMilisecond);
+StatCounter g_cpuTotalTime(StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage);
 static StatCounter g_cpuAllocatedMem(StatCategory::kCpuMem, "Total", StatFlag::kBytes | StatFlag::kThreadSafe);
 static StatCounter g_cpuAllocationCount(StatCategory::kCpuMem, "Allocations/frame",
 										StatFlag::kBytes | StatFlag::kZeroEveryFrame | StatFlag::kThreadSafe);

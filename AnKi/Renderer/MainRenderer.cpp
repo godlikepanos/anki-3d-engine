@@ -20,8 +20,8 @@
 
 namespace anki {
 
-static StatCounter g_rendererCpuTime(StatCategory::kTime, "Renderer", StatFlag::kMilisecond);
-StatCounter g_rendererGpuTime(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond);
+static StatCounter g_rendererCpuTime(StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage);
+StatCounter g_rendererGpuTime(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage);
 
 MainRenderer::MainRenderer()
 {
