@@ -6,11 +6,16 @@
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {
+
+static StatCounter g_gpuSceneBufferAllocatedSize(StatCategory::kGpuMem, "GPU scene allocated", StatFlag::kBytes);
+static StatCounter g_gpuSceneBufferTotal(StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes);
+static StatCounter g_gpuSceneBufferFragmentation(StatCategory::kGpuMem, "GPU scene fragmentation", StatFlag::kFloat);
 
 void GpuSceneBuffer::init()
 {
@@ -26,6 +31,17 @@ void GpuSceneBuffer::init()
 	GpuSceneBufferAllocation alloc;
 	allocate(16, 4, alloc);
 	deferredFree(alloc);
+}
+
+void GpuSceneBuffer::updateStats() const
+{
+	F32 externalFragmentation;
+	PtrSize userAllocatedSize, totalSize;
+	m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
+
+	g_gpuSceneBufferAllocatedSize.set(userAllocatedSize);
+	g_gpuSceneBufferTotal.set(totalSize);
+	g_gpuSceneBufferFragmentation.set(externalFragmentation);
 }
 
 /// It packs the source and destination offsets as well as the size of the patch itself.

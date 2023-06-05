@@ -167,7 +167,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mousePosOn1stClick = in.getMousePosition();
 	}
 
-	if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
+	if(in.getKey(KeyCode::kF12) == 1 && ANKI_TRACING_ENABLED)
 	{
 		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 	}

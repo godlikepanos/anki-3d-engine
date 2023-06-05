@@ -21,15 +21,6 @@ class RenderQueue;
 /// @addtogroup scene
 /// @{
 
-/// SceneGraph statistics.
-class SceneGraphStats
-{
-public:
-	Second m_updateTime ANKI_DEBUG_CODE(= 0.0);
-	Second m_visibilityTestsTime ANKI_DEBUG_CODE(= 0.0);
-	Second m_physicsUpdate ANKI_DEBUG_CODE(= 0.0);
-};
-
 /// The scene graph that  all the scene entities
 class SceneGraph : public MakeSingleton<SceneGraph>
 {
@@ -124,11 +115,6 @@ public:
 		m_objectsMarkedForDeletionCount.fetchAdd(1);
 	}
 
-	const SceneGraphStats& getStats() const
-	{
-		return m_stats;
-	}
-
 	const Vec3& getSceneMin() const
 	{
 		return m_sceneMin;
@@ -184,8 +170,6 @@ private:
 	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 
 	Atomic<U64> m_nodesUuid = {1};
-
-	SceneGraphStats m_stats;
 
 	SceneGraph();
 

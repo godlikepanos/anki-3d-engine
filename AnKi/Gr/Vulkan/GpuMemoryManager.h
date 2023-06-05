@@ -104,18 +104,6 @@ private:
 	}
 };
 
-/// @memberof GpuMemoryManager
-class GpuMemoryManagerStats
-{
-public:
-	PtrSize m_deviceMemoryAllocated;
-	PtrSize m_deviceMemoryInUse;
-	U32 m_deviceMemoryAllocationCount;
-	PtrSize m_hostMemoryAllocated;
-	PtrSize m_hostMemoryInUse;
-	U32 m_hostMemoryAllocationCount;
-};
-
 /// Dynamic GPU memory allocator for all types.
 class GpuMemoryManager
 {
@@ -148,8 +136,7 @@ public:
 	/// Find a suitable memory type.
 	U32 findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
 
-	/// Get some statistics.
-	void getStats(GpuMemoryManagerStats& stats) const;
+	void updateStats() const;
 
 private:
 	using ClassAllocator = ClassAllocatorBuilder<GpuMemoryManagerChunk, GpuMemoryManagerInterface, Mutex, SingletonMemoryPoolWrapper<GrMemoryPool>>;

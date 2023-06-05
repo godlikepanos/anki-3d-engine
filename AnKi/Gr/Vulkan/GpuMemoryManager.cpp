@@ -5,8 +5,16 @@
 
 #include <AnKi/Gr/Vulkan/GpuMemoryManager.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
+
+static StatCounter g_deviceMemoryAllocatedStatVar(StatCategory::kGpuMem, "Device mem", StatFlag::kBytes);
+static StatCounter g_deviceMemoryInUseStatVar(StatCategory::kGpuMem, "Device mem in use", StatFlag::kBytes);
+static StatCounter g_deviceMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Device mem allocations");
+static StatCounter g_hostMemoryAllocatedStatVar(StatCategory::kGpuMem, "Host mem", StatFlag::kBytes);
+static StatCounter g_hostMemoryInUseStatVar(StatCategory::kGpuMem, "Host mem in use", StatFlag::kBytes);
+static StatCounter g_hostMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Host mem allocations");
 
 static constexpr Array<GpuMemoryManagerClassInfo, 7> kClasses{
 	{{4_KB, 256_KB}, {128_KB, 8_MB}, {1_MB, 64_MB}, {16_MB, 128_MB}, {64_MB, 128_MB}, {128_MB, 128_MB}, {256_MB, 256_MB}}};
@@ -250,8 +258,7 @@ U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFl
 				}
 				else
 				{
-					// On some Intel drivers there are identical memory types pointing to different heaps. Choose the
-					// biggest heap
+					// On some Intel drivers there are identical memory types pointing to different heaps. Choose the biggest heap
 
 					const PtrSize crntHeapSize = m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[i].heapIndex].size;
 					const PtrSize prevHeapSize = m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[prefered].heapIndex].size;
@@ -268,9 +275,14 @@ U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFl
 	return prefered;
 }
 
-void GpuMemoryManager::getStats(GpuMemoryManagerStats& stats) const
+void GpuMemoryManager::updateStats() const
 {
-	stats = {};
+	g_deviceMemoryAllocatedStatVar.set(0);
+	g_deviceMemoryAllocationCountStatVar.set(0);
+	g_deviceMemoryInUseStatVar.set(0);
+	g_hostMemoryAllocatedStatVar.set(0);
+	g_hostMemoryAllocationCountStatVar.set(0);
+	g_hostMemoryInUseStatVar.set(0);
 
 	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
@@ -280,23 +292,23 @@ void GpuMemoryManager::getStats(GpuMemoryManagerStats& stats) const
 
 		if(iface.m_isDeviceMemory)
 		{
-			stats.m_deviceMemoryAllocated += cstats.m_allocatedSize;
-			stats.m_deviceMemoryInUse += cstats.m_inUseSize;
-			stats.m_deviceMemoryAllocationCount += cstats.m_chunkCount;
+			g_deviceMemoryAllocatedStatVar.increment(cstats.m_allocatedSize);
+			g_deviceMemoryInUseStatVar.increment(cstats.m_inUseSize);
+			g_deviceMemoryAllocationCountStatVar.increment(cstats.m_chunkCount);
 		}
 		else
 		{
-			stats.m_hostMemoryAllocated += cstats.m_allocatedSize;
-			stats.m_hostMemoryInUse += cstats.m_inUseSize;
-			stats.m_hostMemoryAllocationCount += cstats.m_chunkCount;
+			g_hostMemoryAllocatedStatVar.increment(cstats.m_allocatedSize);
+			g_hostMemoryInUseStatVar.increment(cstats.m_inUseSize);
+			g_hostMemoryAllocationCountStatVar.increment(cstats.m_chunkCount);
 		}
 	}
 
 	// Add dedicated stats
 	const PtrSize dedicatedAllocatedMemory = m_dedicatedAllocatedMemory.load();
-	stats.m_deviceMemoryAllocated += dedicatedAllocatedMemory;
-	stats.m_deviceMemoryInUse += dedicatedAllocatedMemory;
-	stats.m_deviceMemoryAllocationCount += m_dedicatedAllocationCount.load();
+	g_deviceMemoryAllocatedStatVar.increment(dedicatedAllocatedMemory);
+	g_deviceMemoryInUseStatVar.increment(dedicatedAllocatedMemory);
+	g_deviceMemoryAllocationCountStatVar.increment(m_dedicatedAllocationCount.load());
 }
 
 } // end namespace anki

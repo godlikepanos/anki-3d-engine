@@ -81,26 +81,6 @@ void GrManager::finish()
 	self.finish();
 }
 
-GrManagerStats GrManager::getStats() const
-{
-	ANKI_VK_SELF_CONST(GrManagerImpl);
-	GrManagerStats out;
-
-	GpuMemoryManagerStats memStats;
-	self.getGpuMemoryManager().getStats(memStats);
-
-	out.m_deviceMemoryAllocated = memStats.m_deviceMemoryAllocated;
-	out.m_deviceMemoryInUse = memStats.m_deviceMemoryInUse;
-	out.m_deviceMemoryAllocationCount = memStats.m_deviceMemoryAllocationCount;
-	out.m_hostMemoryAllocated = memStats.m_hostMemoryAllocated;
-	out.m_hostMemoryInUse = memStats.m_hostMemoryInUse;
-	out.m_hostMemoryAllocationCount = memStats.m_hostMemoryAllocationCount;
-
-	out.m_commandBufferCount = self.getCommandBufferFactory().getCreatedCommandBufferCount();
-
-	return out;
-}
-
 #define ANKI_NEW_GR_OBJECT(type) \
 	type##Ptr GrManager::new##type(const type##InitInfo& init) \
 	{ \

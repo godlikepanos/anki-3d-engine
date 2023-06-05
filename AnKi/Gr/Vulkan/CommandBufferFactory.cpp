@@ -5,8 +5,11 @@
 
 #include <AnKi/Gr/Vulkan/CommandBufferFactory.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
+
+static StatCounter g_commandBufferCountStat(StatCategory::kMisc, "CommandBufferCount", StatFlag::kThreadSafe);
 
 static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags, const VulkanQueueFamilies& queueFamilies)
 {
@@ -37,8 +40,7 @@ MicroCommandBuffer::~MicroCommandBuffer()
 		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[m_queue], 1, &m_handle);
 		m_handle = {};
 
-		[[maybe_unused]] const U32 count = m_threadAlloc->m_factory->m_createdCmdBufferCount.fetchSub(1);
-		ANKI_ASSERT(count > 0);
+		g_commandBufferCountStat.atomicDecrement(1_U64);
 	}
 }
 
@@ -123,6 +125,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		ci.commandBufferCount = 1;
 
 		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
+		g_commandBufferCountStat.atomicIncrement(1_U64);
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(getVkDevice(), &ci, &cmdb));
 
@@ -141,8 +144,6 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		newCmdb->m_queue = queue;
 
 		out = newCmdb;
-
-		m_factory->m_createdCmdBufferCount.fetchAdd(1);
 	}
 	else
 	{

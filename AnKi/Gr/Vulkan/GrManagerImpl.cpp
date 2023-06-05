@@ -1319,6 +1319,7 @@ void GrManagerImpl::endFrame()
 	}
 
 	m_descrFactory.endFrame();
+	m_gpuMemManager.updateStats();
 
 	// Finalize
 	++m_frame;

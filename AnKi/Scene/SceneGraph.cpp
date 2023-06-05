@@ -11,11 +11,16 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
+
+static StatCounter g_sceneUpdateTime(StatCategory::kTime, "All scene update", StatFlag::kMilisecond);
+static StatCounter g_sceneVisibilityTime(StatCategory::kTime, "Scene visibility", StatFlag::kMilisecond);
+static StatCounter g_scenePhysicsTime(StatCategory::kTime, "Physics", StatFlag::kMilisecond);
 
 constexpr U32 kUpdateNodeBatchSize = 10;
 
@@ -165,7 +170,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	GpuSceneContiguousArrays::getSingleton().endFrame();
 
-	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
+	const Second startUpdateTime = HighRezTimer::getCurrentTime();
 
 	// Reset the framepool
 	m_framePool.reset();
@@ -181,9 +186,11 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Update
 	{
 		ANKI_TRACE_SCOPED_EVENT(ScenePhysics);
-		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime();
+		const Second physicsUpdate = HighRezTimer::getCurrentTime();
+
 		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
-		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime() - m_stats.m_physicsUpdate;
+
+		g_scenePhysicsTime.set((HighRezTimer::getCurrentTime() - physicsUpdate) * 1000.0);
 	}
 
 	{
@@ -214,15 +221,15 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		CoreThreadHive::getSingleton().waitAllTasks();
 	}
 
-	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;
+	g_sceneUpdateTime.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
 	return Error::kNone;
 }
 
 void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
 {
-	m_stats.m_visibilityTestsTime = HighRezTimer::getCurrentTime();
+	const Second startTime = HighRezTimer::getCurrentTime();
 	doVisibilityTests(*m_mainCam, *this, rqueue);
-	m_stats.m_visibilityTestsTime = HighRezTimer::getCurrentTime() - m_stats.m_visibilityTestsTime;
+	g_sceneVisibilityTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 }
 
 Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)

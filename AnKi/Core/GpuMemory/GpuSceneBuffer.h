@@ -89,16 +89,14 @@ public:
 	void endFrame()
 	{
 		m_pool.endFrame();
+#if ANKI_STATS_ENABLED
+		updateStats();
+#endif
 	}
 
 	Buffer& getBuffer() const
 	{
 		return m_pool.getGpuBuffer();
-	}
-
-	void getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
-	{
-		m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
 	}
 
 private:
@@ -107,6 +105,8 @@ private:
 	GpuSceneBuffer() = default;
 
 	~GpuSceneBuffer() = default;
+
+	void updateStats() const;
 };
 
 inline GpuSceneBufferAllocation::~GpuSceneBufferAllocation()

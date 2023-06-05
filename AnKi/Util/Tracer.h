@@ -149,7 +149,7 @@ private:
 	Tracer* m_tracer;
 };
 
-#if ANKI_ENABLE_TRACE
+#if ANKI_TRACING_ENABLED
 #	define ANKI_TRACE_SCOPED_EVENT(name_) TracerScopedEvent _tse##name_(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)))
 #	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) \
 		Tracer::getSingleton().addCustomEvent(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)), start_, duration_)

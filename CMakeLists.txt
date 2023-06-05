@@ -132,9 +132,16 @@ option(ANKI_STRIP "Strip the symbols from the executables" OFF)
 
 option(ANKI_TRACE "Enable performance tracing. Small overhead" OFF)
 if(ANKI_TRACE)
-	set(_ANKI_ENABLE_TRACE 1)
+	set(_ANKI_TRACING_ENABLED 1)
 else()
-	set(_ANKI_ENABLE_TRACE 0)
+	set(_ANKI_TRACING_ENABLED 0)
+endif()
+
+option(ANKI_STATS "Enable performance statistics. Small overhead" OFF)
+if(ANKI_STATS)
+	set(_ANKI_STATS_ENABLED 1)
+else()
+	set(_ANKI_STATS_ENABLED 0)
 endif()
 
 option(ANKI_SIMD "Enable SIMD optimizations" ON)

@@ -69,15 +69,7 @@ private:
 	void* m_originalAllocUserData = nullptr;
 	AllocAlignedCallback m_originalAllocCallback = nullptr;
 
-	class MemStats
-	{
-	public:
-		Atomic<PtrSize> m_allocatedMem = {0};
-		Atomic<U64> m_allocCount = {0};
-		Atomic<U64> m_freeCount = {0};
-
-		static void* allocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
-	} m_memStats;
+	static void* statsAllocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 	void initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData);
 

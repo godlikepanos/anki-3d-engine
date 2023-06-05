@@ -110,6 +110,23 @@ public:
 private:
 	static inline T* m_global = nullptr;
 };
+
+/// If class inherits that it will become a singleton. This is a simple version without a need for init.
+template<typename T>
+class MakeSingletonSimple
+{
+public:
+	ANKI_FORCE_INLINE static T& getSingleton()
+	{
+		return m_global;
+	}
+
+private:
+	static T m_global;
+};
+
+template<typename T>
+T MakeSingletonSimple<T>::m_global;
 /// @}
 
 } // end namespace anki

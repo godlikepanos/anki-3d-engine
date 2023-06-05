@@ -213,19 +213,11 @@ public:
 	/// Request a new command buffer.
 	Error newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
-	/// Stats.
-	U32 getCreatedCommandBufferCount() const
-	{
-		return m_createdCmdBufferCount.load();
-	}
-
 private:
 	VulkanQueueFamilies m_queueFamilies;
 
 	GrDynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
 	RWMutex m_threadAllocMtx;
-
-	Atomic<U32> m_createdCmdBufferCount = {0};
 };
 /// @}
 

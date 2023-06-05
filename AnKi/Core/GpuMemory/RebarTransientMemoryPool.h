@@ -53,7 +53,7 @@ public:
 
 	void init();
 
-	PtrSize endFrame();
+	void endFrame();
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
 	void* allocateFrame(PtrSize size, RebarAllocation& token);

@@ -5,6 +5,7 @@ set(sources
 	CoreTracer.cpp
 	MaliHwCounters.cpp
 	StatsUi.cpp
+	StatsSet.cpp
 	GpuMemory/UnifiedGeometryBuffer.cpp
 	GpuMemory/GpuSceneBuffer.cpp
 	GpuMemory/RebarTransientMemoryPool.cpp
@@ -20,7 +21,7 @@ set(headers
 	DeveloperConsole.h
 	MaliHwCounters.h
 	StatsUi.h
-	StatsUi.defs.h
+	StatsSet.h
 	StdinListener.h
 	GpuMemory/UnifiedGeometryBuffer.h
 	GpuMemory/GpuSceneBuffer.h

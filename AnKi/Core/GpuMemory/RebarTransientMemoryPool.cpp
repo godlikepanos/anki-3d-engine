@@ -5,11 +5,14 @@
 
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Buffer.h>
 
 namespace anki {
+
+static StatCounter g_rebarUserMemory(StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes);
 
 RebarTransientMemoryPool::~RebarTransientMemoryPool()
 {
@@ -70,7 +73,7 @@ void* RebarTransientMemoryPool::tryAllocateFrame(PtrSize origSize, RebarAllocati
 	return address;
 }
 
-PtrSize RebarTransientMemoryPool::endFrame()
+void RebarTransientMemoryPool::endFrame()
 {
 	const PtrSize crntOffset = m_offset.getNonAtomically();
 
@@ -83,7 +86,7 @@ PtrSize RebarTransientMemoryPool::endFrame()
 	}
 
 	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);
-	return usedMemory;
+	g_rebarUserMemory.set(usedMemory);
 }
 
 } // end namespace anki

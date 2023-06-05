@@ -4,11 +4,15 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Core/StatsUi.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/Canvas.h>
 
 namespace anki {
+
+extern StatCounter g_cpuTotalTime;
+extern StatCounter g_rendererGpuTime;
 
 StatsUi::~StatsUi()
 {
@@ -21,7 +25,7 @@ Error StatsUi::init()
 	return Error::kNone;
 }
 
-void StatsUi::labelBytes(PtrSize val, CString name) const
+void StatsUi::labelBytes(PtrSize val, CString name)
 {
 	PtrSize gb, mb, kb, b;
 
@@ -56,25 +60,6 @@ void StatsUi::labelBytes(PtrSize val, CString name) const
 	ImGui::TextUnformatted(timestamp.cstr());
 }
 
-void StatsUi::setStats(const StatsUiInput& input, StatsUiDetail detail)
-{
-	Bool flush = false;
-	if(m_bufferedFrames == kBufferedFrames)
-	{
-		flush = true;
-		m_bufferedFrames = 0;
-	}
-	++m_bufferedFrames;
-
-#define ANKI_STATS_UI_BEGIN_GROUP(x)
-#define ANKI_STATS_UI_VALUE(type, name, text, flags) m_##name.update(input.m_##name, flags, flush);
-#include <AnKi/Core/StatsUi.defs.h>
-#undef ANKI_STATS_UI_BEGIN_GROUP
-#undef ANKI_STATS_UI_VALUE
-
-	m_detail = detail;
-}
-
 void StatsUi::build(CanvasPtr canvas)
 {
 	canvas->pushFont(m_font, 24);
@@ -87,57 +72,41 @@ void StatsUi::build(CanvasPtr canvas)
 		ImGui::SetWindowPos(Vec2(5.0f, 5.0f));
 		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
-		auto writeText = [this](const Value& v, const Char* text, ValueFlag flags, Bool isFloat) {
-			if(isFloat)
-			{
-				if(!!(flags & ValueFlag::kSeconds))
-				{
-					labelTime(v.m_float, text);
-				}
-				else
-				{
-					ImGui::Text("%s: %f", text, v.m_float);
-				}
-			}
-			else
-			{
-				U64 val;
-				if(!!(flags & ValueFlag::kAverage))
-				{
-					val = U64(v.m_avg);
-				}
-				else
-				{
-					val = v.m_int;
-				}
-
-				if(!!(flags & ValueFlag::kBytes))
-				{
-					labelBytes(val, text);
-				}
-				else
-				{
-					ImGui::Text("%s: %zu", text, val);
-				}
-			}
-		};
-
 		if(m_detail == StatsUiDetail::kDetailed)
 		{
-#define ANKI_STATS_UI_BEGIN_GROUP(x) \
-	ImGui::Text("----"); \
-	ImGui::Text(x); \
-	ImGui::Text("----");
-#define ANKI_STATS_UI_VALUE(type, name, text, flags) writeText(m_##name, text, flags, std::is_floating_point<type>::value);
-#include <AnKi/Core/StatsUi.defs.h>
-#undef ANKI_STATS_UI_BEGIN_GROUP
-#undef ANKI_STATS_UI_VALUE
+			StatCategory category = StatCategory::kCount;
+			StatsSet::getSingleton().iterateStats(
+				[&](StatCategory c, const Char* name, U64 value, StatFlag flags) {
+					if(category != c)
+					{
+						category = c;
+						ImGui::Text("-- %s --", kStatCategoryTexts[c].cstr());
+					}
+
+					if(!!(flags & StatFlag::kBytes))
+					{
+						labelBytes(value, name);
+					}
+					else
+					{
+						ImGui::Text("%s: %zu", name, value);
+					}
+				},
+				[&](StatCategory c, const Char* name, F64 value, StatFlag) {
+					if(category != c)
+					{
+						category = c;
+						ImGui::Text("-- %s --", kStatCategoryTexts[c].cstr());
+					}
+
+					ImGui::Text("%s: %f", name, value);
+				});
 		}
 		else
 		{
-			const Second maxTime = max(m_cpuFrameTime.m_float, m_gpuFrameTime.m_float);
+			const Second maxTime = max(g_cpuTotalTime.getValue<F64>(), g_rendererGpuTime.getValue<F64>()) / 1000.0;
 			const F32 fps = F32(1.0 / maxTime);
-			const Bool cpuBound = m_cpuFrameTime.m_float > m_gpuFrameTime.m_float;
+			const Bool cpuBound = g_cpuTotalTime.getValue<F64>() > g_rendererGpuTime.getValue<F64>();
 			ImGui::TextColored((cpuBound) ? Vec4(1.0f, 0.5f, 0.5f, 1.0f) : Vec4(0.5f, 1.0f, 0.5f, 1.0f), "FPS %.1f", fps);
 		}
 	}

@@ -14,10 +14,14 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Util/ThreadHive.h>
 
 namespace anki {
+
+static StatCounter g_rendererCpuTime(StatCategory::kTime, "Renderer", StatFlag::kMilisecond);
+StatCounter g_rendererGpuTime(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond);
 
 MainRenderer::MainRenderer()
 {
@@ -81,7 +85,7 @@ Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
-	m_stats.m_renderingCpuTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
+	const Second startTime = HighRezTimer::getCurrentTime();
 
 	// First thing, reset the temp mem pool
 	m_framePool.reset();
@@ -90,7 +94,7 @@ Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 	RenderingContext ctx(&m_framePool);
 	m_runCtx.m_ctx = &ctx;
 	m_runCtx.m_secondaryTaskId.setNonAtomically(0);
-	ctx.m_renderGraphDescr.setStatisticsEnabled(m_statsEnabled);
+	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
 
 	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::kNone);
 
@@ -157,14 +161,18 @@ Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 	m_r->finalize(ctx, fence.get());
 
 	// Stats
-	if(m_statsEnabled)
+	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
 	{
-		m_stats.m_renderingCpuTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingCpuTime;
+		g_rendererCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
-		m_stats.m_renderingGpuTime = rgraphStats.m_gpuTime;
-		m_stats.m_renderingGpuSubmitTimestamp = rgraphStats.m_cpuStartTime;
+		g_rendererGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
+
+		if(rgraphStats.m_gpuTime > 0.0)
+		{
+			ANKI_TRACE_CUSTOM_EVENT(Gpu, rgraphStats.m_cpuStartTime, rgraphStats.m_gpuTime);
+		}
 	}
 
 	return Error::kNone;

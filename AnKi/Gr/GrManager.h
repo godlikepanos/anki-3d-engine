@@ -27,20 +27,6 @@ public:
 	CString m_cacheDirectory;
 };
 
-/// Graphics statistics.
-class GrManagerStats
-{
-public:
-	PtrSize m_deviceMemoryAllocated = 0;
-	PtrSize m_deviceMemoryInUse = 0;
-	U32 m_deviceMemoryAllocationCount = 0;
-	PtrSize m_hostMemoryAllocated = 0;
-	PtrSize m_hostMemoryInUse = 0;
-	U32 m_hostMemoryAllocationCount = 0;
-
-	U32 m_commandBufferCount = 0;
-};
-
 /// The graphics manager, owner of all graphics objects.
 class GrManager : public MakeSingletonPtr<GrManager>
 {
@@ -81,8 +67,6 @@ public:
 	[[nodiscard]] GrUpscalerPtr newGrUpscaler(const GrUpscalerInitInfo& init);
 	[[nodiscard]] AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);
 	/// @}
-
-	GrManagerStats getStats() const;
 
 	ANKI_INTERNAL CString getCacheDirectory() const
 	{

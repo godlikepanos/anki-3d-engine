@@ -5,9 +5,14 @@
 
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Gr/GrManager.h>
 
 namespace anki {
+
+static StatCounter g_unifiedGeomBufferAllocatedSize(StatCategory::kGpuMem, "UGB allocated", StatFlag::kBytes);
+static StatCounter g_unifiedGeomBufferTotal(StatCategory::kGpuMem, "UGB total", StatFlag::kBytes);
+static StatCounter g_unifiedGeomBufferFragmentation(StatCategory::kGpuMem, "UGB fragmentation", StatFlag::kFloat);
 
 void UnifiedGeometryBuffer::init()
 {
@@ -29,6 +34,17 @@ void UnifiedGeometryBuffer::init()
 	UnifiedGeometryBufferAllocation alloc;
 	allocate(16, 4, alloc);
 	deferredFree(alloc);
+}
+
+void UnifiedGeometryBuffer::updateStats() const
+{
+	F32 externalFragmentation;
+	PtrSize userAllocatedSize, totalSize;
+	m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
+
+	g_unifiedGeomBufferAllocatedSize.set(userAllocatedSize);
+	g_unifiedGeomBufferTotal.set(totalSize);
+	g_unifiedGeomBufferFragmentation.set(externalFragmentation);
 }
 
 } // end namespace anki
