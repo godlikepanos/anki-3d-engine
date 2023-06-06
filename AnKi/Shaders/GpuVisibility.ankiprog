@@ -184,7 +184,11 @@
 
 	// Now update the stats
 #if STATS
-	InterlockedAdd(g_testsPassed[0], 1);
+	const U32 activeLanes = WaveActiveCountBits(true);
+	if(WaveIsFirstLane())
+	{
+		InterlockedAdd(g_testsPassed[0], activeLanes);
+	}
 #endif
 }
 

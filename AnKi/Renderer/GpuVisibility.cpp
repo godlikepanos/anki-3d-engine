@@ -54,10 +54,12 @@ Error GpuVisibility::init()
 		m_grProgs[i].reset(&variant->getProgram());
 	}
 
+#if ANKI_STATS_ENABLED
 	for(GpuReadbackMemoryAllocation& alloc : m_readbackMemory)
 	{
 		alloc = GpuReadbackMemoryPool::getSingleton().allocate(sizeof(U32));
 	}
+#endif
 
 	return Error::kNone;
 }
