@@ -45,6 +45,7 @@ void ReadbackManager::getMostRecentReadDataAndRelease(MultiframeReadbackToken& t
 		if(token.m_frameIds[i] == earliestFrame && token.m_allocations[i].isValid())
 		{
 			bestSlot = i;
+			break;
 		}
 		else if(token.m_frameIds[i] < earliestFrame && token.m_allocations[i].isValid())
 		{
@@ -59,9 +60,9 @@ void ReadbackManager::getMostRecentReadDataAndRelease(MultiframeReadbackToken& t
 	}
 
 	GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
-	dataSize = allocation.getAllocatedSize();
+	dataOut = min(dataSize, PtrSize(allocation.getAllocatedSize()));
 
-	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()) + allocation.getOffset(), min(dataSize, dataSize));
+	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()) + allocation.getOffset(), min(dataOut, dataOut));
 
 	GpuReadbackMemoryPool::getSingleton().deferredFree(allocation);
 }

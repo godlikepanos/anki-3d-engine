@@ -147,6 +147,14 @@ T max(T a, T b);
 template<typename T>
 T saturate(T a);
 
+// Atomics
+
+template<typename T>
+void InterlockedAdd(T dest, T value, T& originalValue);
+
+template<typename T>
+void InterlockedAdd(T dest, T value);
+
 // Wave ops
 
 template<typename T>

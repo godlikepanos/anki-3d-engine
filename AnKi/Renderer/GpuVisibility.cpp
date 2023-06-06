@@ -12,8 +12,12 @@
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
+
+static StatCounter g_visibleObjects(StatCategory::kMisc, "Visible objects", StatFlag::kZeroEveryFrame);
+static StatCounter g_testedObjects(StatCategory::kMisc, "Visbility tested objects", StatFlag::kZeroEveryFrame);
 
 static GpuSceneContiguousArrayType techniqueToArrayType(RenderingTechnique technique)
 {
@@ -42,6 +46,7 @@ Error GpuVisibility::init()
 	{
 		ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 		variantInit.addMutation("HZB_TEST", i);
+		variantInit.addMutation("STATS", ANKI_STATS_ENABLED);
 
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInit, variant);
@@ -49,15 +54,47 @@ Error GpuVisibility::init()
 		m_grProgs[i].reset(&variant->getProgram());
 	}
 
+	for(GpuReadbackMemoryAllocation& alloc : m_readbackMemory)
+	{
+		alloc = GpuReadbackMemoryPool::getSingleton().allocate(sizeof(U32));
+	}
+
 	return Error::kNone;
 }
 
 void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
 										const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt,
-										RenderGraphDescription& rgraph, GpuVisibilityOutput& out) const
+										RenderGraphDescription& rgraph, GpuVisibilityOutput& out)
 {
 	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(techniqueToArrayType(technique));
 	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);
+
+#if ANKI_STATS_ENABLED
+	Bool firstCallInTheFrame = false;
+	if(m_lastFrameIdx != getRenderer().getFrameCount())
+	{
+		firstCallInTheFrame = true;
+		m_lastFrameIdx = getRenderer().getFrameCount();
+	}
+
+	const GpuReadbackMemoryAllocation& readAlloc = m_readbackMemory[(m_lastFrameIdx + 1) % m_readbackMemory.getSize()];
+	const GpuReadbackMemoryAllocation& writeAlloc = m_readbackMemory[m_lastFrameIdx % m_readbackMemory.getSize()];
+
+	Buffer* clearStatsBuffer = &readAlloc.getBuffer();
+	const PtrSize clearStatsBufferOffset = readAlloc.getOffset();
+	Buffer* writeStatsBuffer = &writeAlloc.getBuffer();
+	const PtrSize writeStatsBufferOffset = writeAlloc.getOffset();
+
+	if(firstCallInTheFrame)
+	{
+		U32 visibleCount;
+		memcpy(&visibleCount, readAlloc.getMappedMemory(), sizeof(visibleCount));
+
+		g_visibleObjects.set(visibleCount);
+	}
+
+	g_testedObjects.increment(aabbCount);
+#endif
 
 	// Allocate memory for the indirect commands
 	const GpuVisibleTransientMemoryAllocation indirectArgs =
@@ -99,7 +136,12 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 		(hzbRt) ? *hzbRt : RenderTargetHandle(); // Can't pass to the lambda the hzbRt which is a pointer to who knows what
 
 	pass.setWork([this, viewProjectionMat, lodReferencePoint, lodDistances, technique, hzbRtCopy, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle,
-				  instanceRateRenderables, indirectArgs](RenderPassWorkContext& rpass) {
+				  instanceRateRenderables, indirectArgs
+#if ANKI_STATS_ENABLED
+				  ,
+				  clearStatsBuffer, clearStatsBufferOffset, writeStatsBuffer, writeStatsBufferOffset
+#endif
+	](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProgs[hzbRtCopy.isValid()].get());
@@ -157,6 +199,11 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 			rpass.bindColorTexture(0, 8, hzbRtCopy);
 			cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		}
+
+#if ANKI_STATS_ENABLED
+		cmdb.bindStorageBuffer(0, 10, writeStatsBuffer, writeStatsBufferOffset, sizeof(U32));
+		cmdb.bindStorageBuffer(0, 11, clearStatsBuffer, clearStatsBufferOffset, sizeof(U32));
+#endif
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});

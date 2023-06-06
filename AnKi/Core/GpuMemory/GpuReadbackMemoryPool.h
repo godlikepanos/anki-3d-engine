@@ -37,6 +37,8 @@ public:
 		ANKI_ASSERT(!isValid() && "Forgot to delete");
 		m_token = b.m_token;
 		b.m_token = {};
+		m_buffer = b.m_buffer;
+		m_mappedMemory = b.m_mappedMemory;
 		return *this;
 	}
 

@@ -91,7 +91,7 @@ public:
 		return m_sceneDrawer;
 	}
 
-	const GpuVisibility& getGpuVisibility() const
+	GpuVisibility& getGpuVisibility()
 	{
 		return m_visibility;
 	}

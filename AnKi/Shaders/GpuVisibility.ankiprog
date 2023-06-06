@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator HZB_TEST 0 1
+#pragma anki mutator STATS 0 1
 
 #pragma anki start comp
 
@@ -33,6 +34,11 @@
 [[vk::binding(9)]] SamplerState g_nearestAnyClampSampler;
 #endif
 
+#if STATS
+[[vk::binding(10)]] RWStructuredBuffer<U32> g_testsPassed;
+[[vk::binding(11)]] RWStructuredBuffer<U32> g_testsPassedClear; ///< Some previous value. Will be cleared this frame
+#endif
+
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	const U32 aabbIdx = svDispatchThreadId.x;
@@ -40,6 +46,13 @@
 	{
 		return;
 	}
+
+#if STATS
+	if(svDispatchThreadId.x == 0)
+	{
+		g_testsPassedClear[0] = 0;
+	}
+#endif
 
 	const GpuSceneRenderableAabb aabb = g_aabbs[aabbIdx];
 
@@ -168,6 +181,11 @@
 	GpuSceneRenderable renderableOut = renderableIn;
 	renderableOut.m_geometryOffset = meshLodOffset;
 	g_instanceRateRenderables[indirectIdx] = renderableOut;
+
+	// Now update the stats
+#if STATS
+	InterlockedAdd(g_testsPassed[0], 1);
+#endif
 }
 
 #pragma anki end
