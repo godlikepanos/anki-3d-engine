@@ -61,8 +61,10 @@ struct GpuScenePointLight
 	RVec3 m_diffuseColor;
 	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
-	Vec3 m_padding;
 	U32 m_shadow;
+	U32 m_uuid;
+	U32 m_padding0;
+	U32 m_padding1;
 };
 constexpr U32 kSizeof_GpuScenePointLight = 3u * sizeof(Vec4);
 static_assert(sizeof(GpuScenePointLight) == kSizeof_GpuScenePointLight);
@@ -84,7 +86,7 @@ struct GpuSceneSpotLight
 	U32 m_shadow;
 	RF32 m_outerCos;
 	RF32 m_innerCos;
-	U32 m_padding1;
+	U32 m_uuid;
 };
 constexpr U32 kSizeof_GpuSceneSpotLight = 8u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneSpotLight) == kSizeof_GpuSceneSpotLight);
@@ -96,7 +98,7 @@ struct GpuSceneReflectionProbe
 	U32 m_cubeTexture; ///< Bindless index of the reflection texture.
 
 	Vec3 m_aabbMin;
-	F32 m_padding0;
+	F32 m_uuid;
 
 	Vec3 m_aabbMax;
 	F32 m_padding1;
@@ -136,8 +138,10 @@ struct GpuSceneDecal
 
 	Vec3 m_obbExtend;
 	F32 m_padding0;
+
+	Vec4 m_boundingSphere;
 };
-constexpr U32 kSizeof_GpuSceneDecal = 2u * sizeof(Vec4) + 2u * sizeof(Mat4);
+constexpr U32 kSizeof_GpuSceneDecal = 3u * sizeof(Vec4) + 2u * sizeof(Mat4);
 static_assert(sizeof(GpuSceneDecal) == kSizeof_GpuSceneDecal);
 
 /// Fog density volume.
@@ -146,10 +150,37 @@ struct GpuSceneFogDensityVolume
 	Vec3 m_aabbMinOrSphereCenter;
 	U32 m_isBox;
 
-	Vec3 m_aabbMaxOrSphereRadiusSquared;
+	Vec3 m_aabbMaxOrSphereRadius;
 	RF32 m_density;
 };
 constexpr U32 kSizeof_GpuSceneFogDensityVolume = 2u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneFogDensityVolume) == kSizeof_GpuSceneFogDensityVolume);
+
+enum class GpuSceneNonRenderableObjectType : U32
+{
+	kPointLight,
+	kSpotLight,
+	kDecal,
+	kFogDensityVolume,
+	kReflectionProbe,
+	kGlobalIlluminationProbe,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectType)
+
+enum class GpuSceneNonRenderableObjectTypeBit : U32
+{
+	kNone = 0,
+
+	kPointLight = 1 << 0,
+	kSpotLight = 1 << 1,
+	kDecal = 1 << 2,
+	kFogDensityVolume = 1 << 3,
+	kReflectionProbe = 1 << 4,
+	kGlobalIlluminationProbe = 1 << 5,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectTypeBit)
 
 ANKI_END_NAMESPACE

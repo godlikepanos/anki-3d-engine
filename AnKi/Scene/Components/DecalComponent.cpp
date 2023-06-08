@@ -85,6 +85,8 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
 
+		gpuDecal.m_boundingSphere = Vec4(m_obb.getCenter().xyz(), m_obb.getExtend().getLength());
+
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuDecal);
 	}
 

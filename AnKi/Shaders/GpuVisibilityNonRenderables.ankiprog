@@ -1,0 +1,104 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator HZB_TEST 0 1
+#pragma anki mutator STATS 0 1
+#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 5
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/CollisionFunctions.hlsl>
+
+#if OBJECT_TYPE == 0
+typedef GpuScenePointLight ObjectType;
+#elif OBJECT_TYPE == 1
+typedef GpuSceneSpotLight ObjectType;
+#elif OBJECT_TYPE == 2
+typedef GpuSceneDecal ObjectType;
+#elif OBJECT_TYPE == 3
+typedef GpuSceneFogDensityVolume ObjectType;
+#elif OBJECT_TYPE == 4
+typedef GpuSceneReflectionProbe ObjectType;
+#else
+typedef GpuSceneGlobalIlluminationProbe ObjectType;
+#endif
+
+[[vk::binding(0)]] StructuredBuffer<ObjectType> g_objects;
+[[vk::binding(1)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
+[[vk::binding(2)]] RWStructuredBuffer<U32> g_visibleCount;
+[[vk::binding(3)]] RWStructuredBuffer<U32> g_visibleIndices;
+
+Vec4 getSphere(GpuScenePointLight l)
+{
+	return Vec4(l.m_position, l.m_radius);
+}
+
+Vec4 getSphere(GpuSceneSpotLight l)
+{
+	return Vec4(l.m_position, l.m_radius);
+}
+
+Vec4 getSphere(GpuSceneDecal l)
+{
+	return l.m_boundingSphere;
+}
+
+Vec4 getSphere(GpuSceneFogDensityVolume l)
+{
+	if(l.m_isBox)
+	{
+		const Vec3 center = (l.m_aabbMinOrSphereCenter + l.m_aabbMaxOrSphereRadius) / 2.0f;
+		const F32 radius = length(l.m_aabbMaxOrSphereRadius - center);
+		return Vec4(center, radius);
+	}
+	else
+	{
+		return Vec4(l.m_aabbMinOrSphereCenter, l.m_aabbMaxOrSphereRadius.x);
+	}
+}
+
+Vec4 getSphere(GpuSceneReflectionProbe l)
+{
+	const Vec3 center = (l.m_aabbMin + l.m_aabbMax) / 2.0f;
+	const F32 radius = length(center - l.m_aabbMax);
+	return Vec4(center, radius);
+}
+
+Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
+{
+	const Vec3 center = (l.m_aabbMin + l.m_aabbMax) / 2.0f;
+	const F32 radius = length(center - l.m_aabbMax);
+	return Vec4(center, radius);
+}
+
+[numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	U32 objectCount, unused;
+	g_objects.GetDimensions(objectCount, unused);
+
+	if(svDispatchThreadId.x >= objectCount)
+	{
+		return;
+	}
+
+	// Frustum test
+	//
+	const Vec4 sphere = getSphere(g_objects[svDispatchThreadId.x]);
+	if(!frustumTest(g_unis.m_clipPlanes, sphere.xyz, sphere.w))
+	{
+		return;
+	}
+
+	// Add the object
+	//
+	U32 idx;
+	InterlockedAdd(g_visibleIndices[0], 1, idx);
+	g_visibleIndices[idx] = svDispatchThreadId.x;
+}
+
+#pragma anki end

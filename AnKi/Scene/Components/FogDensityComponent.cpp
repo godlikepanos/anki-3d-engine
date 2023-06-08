@@ -48,11 +48,11 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		if(m_isBox)
 		{
 			gpuVolume.m_aabbMinOrSphereCenter = m_aabbMin.xyz();
-			gpuVolume.m_aabbMaxOrSphereRadiusSquared = m_aabbMax.xyz();
+			gpuVolume.m_aabbMaxOrSphereRadius = m_aabbMax.xyz();
 		}
 		else
 		{
-			gpuVolume.m_aabbMaxOrSphereRadiusSquared = Vec3(m_sphereRadius * m_sphereRadius);
+			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(m_sphereRadius);
 			gpuVolume.m_aabbMinOrSphereCenter = m_worldPos.xyz();
 		}
 		gpuVolume.m_isBox = m_isBox;

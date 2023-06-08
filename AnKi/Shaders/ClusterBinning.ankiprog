@@ -169,11 +169,11 @@ Bool isGiProbe(U32 objectIdx)
 
 		if(vol.m_isBox != 0u)
 		{
-			collides = testRayAabb(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, t0, t1);
+			collides = testRayAabb(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadius, t0, t1);
 		}
 		else
 		{
-			collides = testRaySphere(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, sqrt(vol.m_aabbMaxOrSphereRadiusSquared.x), t0, t1);
+			collides = testRaySphere(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadius.x, t0, t1);
 		}
 	}
 	// Reflection probe

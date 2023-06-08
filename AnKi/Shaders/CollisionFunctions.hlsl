@@ -165,3 +165,15 @@ F32 testPlaneSphere(Vec3 planeNormal, F32 planeOffset, Vec3 sphereCenter, F32 sp
 	dist = centerDist + sphereRadius;
 	return (dist < 0.0f) ? dist : 0.0f;
 }
+
+Bool frustumTest(Vec4 frustumPlanes[6], Vec3 sphereCenter, F32 sphereRadius)
+{
+	F32 minPlaneDistance = testPlanePoint(frustumPlanes[0].xyz, frustumPlanes[0].w, sphereCenter);
+	[unroll] for(U32 i = 1; i < 6; ++i)
+	{
+		const F32 d = testPlanePoint(frustumPlanes[i].xyz, frustumPlanes[i].w, sphereCenter);
+		minPlaneDistance = min(minPlaneDistance, d);
+	}
+
+	return minPlaneDistance > -sphereRadius;
+}

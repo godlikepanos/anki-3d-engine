@@ -211,4 +211,25 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 	});
 }
 
+Error GpuVisibilityNonRenderables::init()
+{
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuVisibilityNonRenderables.ankiprogbin", m_prog));
+
+	for(U32 hzb = 0; hzb < 2; ++hzb)
+	{
+		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
+		{
+			ShaderProgramResourceVariantInitInfo variantInit(m_prog);
+			variantInit.addMutation("HZB_TEST", hzb);
+			variantInit.addMutation("STATS", ANKI_STATS_ENABLED);
+			variantInit.addMutation("OBJECT_TYPE", U32(type));
+
+			const ShaderProgramResourceVariant* variant;
+			m_prog->getOrCreateVariant(variantInit, variant);
+
+			m_grProgs[hzb][type].reset(&variant->getProgram());
+		}
+	}
+}
+
 } // end namespace anki

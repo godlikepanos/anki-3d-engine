@@ -225,12 +225,12 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			F32 factor;
 			[branch] if(vol.m_isBox == 1u)
 			{
-				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
+				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadius, 0.2);
 			}
 			else
 			{
 				const Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
-				F32 distSq = dot(diff, diff) / vol.m_aabbMaxOrSphereRadiusSquared.x;
+				F32 distSq = dot(diff, diff) / (vol.m_aabbMaxOrSphereRadius.x * vol.m_aabbMaxOrSphereRadius.x);
 				distSq = min(1.0, distSq);
 				factor = 1.0 - distSq;
 			}

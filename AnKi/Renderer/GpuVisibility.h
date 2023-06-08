@@ -52,6 +52,31 @@ private:
 	U64 m_lastFrameIdx = kMaxU64;
 #endif
 };
+
+/// @memberof GpuVisibilityNonRenderables
+class GpuVisibilityNonRenderablesOutput
+{
+public:
+	BufferHandle m_bufferHandle; ///< Some buffer handle to be used for tracking. No need to track all buffers.
+
+	Array<Buffer*, U32(GpuSceneNonRenderableObjectType::kCount)> m_buffers = {};
+	Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_bufferOffsets = {};
+	Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_bufferRanges = {};
+};
+
+/// GPU visibility of lights, probes etc.
+class GpuVisibilityNonRenderables : public RendererObject
+{
+public:
+	Error init();
+
+	void populateRenderGraph(CString passesName, GpuSceneNonRenderableObjectTypeBit objectTypes, const Mat4& viewProjectionMat,
+							 const RenderTargetHandle* hzbRt, RenderGraphDescription& rgraph, GpuVisibilityNonRenderablesOutput& out);
+
+private:
+	ShaderProgramResourcePtr m_prog;
+	Array2d<ShaderProgramPtr, 2, U32(GpuSceneNonRenderableObjectType::kCount)> m_grProgs;
+};
 /// @}
 
 } // end namespace anki

@@ -28,6 +28,7 @@ using U8 = unsigned int;
 using U16 = unsigned int;
 using U32 = unsigned int;
 using F32 = float;
+using Bool = bool;
 
 struct UVec2
 {
@@ -120,6 +121,8 @@ template<typename T>
 struct StructuredBuffer
 {
 	T& operator[](U32 index);
+
+	void GetDimensions(U32& length, U32& stride);
 };
 
 template<typename T>
