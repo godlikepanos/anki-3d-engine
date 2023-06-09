@@ -7,7 +7,7 @@
 
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Renderer/Drawer.h>
-#include <AnKi/Renderer/GpuVisibility.h>
+#include <AnKi/Renderer/GpuVisibilityHelpers.h>
 #include <AnKi/Renderer/HzbHelper.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>

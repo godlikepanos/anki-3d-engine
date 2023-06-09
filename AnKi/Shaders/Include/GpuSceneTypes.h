@@ -110,7 +110,7 @@ static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe
 struct GpuSceneGlobalIlluminationProbe
 {
 	Vec3 m_aabbMin;
-	F32 m_padding0;
+	F32 m_uuid;
 
 	Vec3 m_aabbMax;
 	F32 m_padding1;
@@ -169,6 +169,13 @@ enum class GpuSceneNonRenderableObjectType : U32
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectType)
+
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT 0
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT 1
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL 2
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME 3
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE 4
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE 5
 
 enum class GpuSceneNonRenderableObjectTypeBit : U32
 {

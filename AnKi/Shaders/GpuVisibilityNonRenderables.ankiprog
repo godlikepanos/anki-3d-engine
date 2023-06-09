@@ -4,25 +4,28 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator HZB_TEST 0 1
-#pragma anki mutator STATS 0 1
-#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 5
+#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 5 // Same as GpuSceneNonRenderableObjectType
+#pragma anki mutator CPU_FEEDBACK 0 1
+
+#pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 2
+#pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 3
 
 #pragma anki start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
-#if OBJECT_TYPE == 0
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT
 typedef GpuScenePointLight ObjectType;
-#elif OBJECT_TYPE == 1
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT
 typedef GpuSceneSpotLight ObjectType;
-#elif OBJECT_TYPE == 2
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 typedef GpuSceneDecal ObjectType;
-#elif OBJECT_TYPE == 3
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
 typedef GpuSceneFogDensityVolume ObjectType;
-#elif OBJECT_TYPE == 4
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
 typedef GpuSceneReflectionProbe ObjectType;
 #else
 typedef GpuSceneGlobalIlluminationProbe ObjectType;
@@ -30,8 +33,12 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 
 [[vk::binding(0)]] StructuredBuffer<ObjectType> g_objects;
 [[vk::binding(1)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
-[[vk::binding(2)]] RWStructuredBuffer<U32> g_visibleCount;
-[[vk::binding(3)]] RWStructuredBuffer<U32> g_visibleIndices;
+[[vk::binding(2)]] RWStructuredBuffer<U32> g_visibleIndices; // 1st element is the count. What follows is indices
+
+#if CPU_FEEDBACK
+// 1st element is a count. What follows is a pair of object index and object UUID.
+[[vk::binding(3)]] RWStructuredBuffer<U32> g_cpuFeedbackBuffer;
+#endif
 
 Vec4 getSphere(GpuScenePointLight l)
 {
@@ -88,7 +95,8 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 
 	// Frustum test
 	//
-	const Vec4 sphere = getSphere(g_objects[svDispatchThreadId.x]);
+	const ObjectType obj = g_objects[svDispatchThreadId.x];
+	const Vec4 sphere = getSphere(obj);
 	if(!frustumTest(g_unis.m_clipPlanes, sphere.xyz, sphere.w))
 	{
 		return;
@@ -98,7 +106,28 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	//
 	U32 idx;
 	InterlockedAdd(g_visibleIndices[0], 1, idx);
-	g_visibleIndices[idx] = svDispatchThreadId.x;
+	g_visibleIndices[idx + 1] = svDispatchThreadId.x;
+
+	// Give feedback to the CPU
+	//
+#if CPU_FEEDBACK \
+	&& (OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT || OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT \
+		|| OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE \
+		|| OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)
+#	if(OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT || OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT)
+	if(obj.m_shadow)
+#	endif
+	{
+		U32 count;
+		InterlockedAdd(g_cpuFeedbackBuffer[0], 1, count);
+
+		count *= 2;
+		++count;
+
+		g_cpuFeedbackBuffer[count] = svDispatchThreadId.x;
+		g_cpuFeedbackBuffer[count + 1] = obj.m_uuid;
+	}
+#endif
 }
 
 #pragma anki end

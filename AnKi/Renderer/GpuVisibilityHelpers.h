@@ -59,9 +59,28 @@ class GpuVisibilityNonRenderablesOutput
 public:
 	BufferHandle m_bufferHandle; ///< Some buffer handle to be used for tracking. No need to track all buffers.
 
-	Array<Buffer*, U32(GpuSceneNonRenderableObjectType::kCount)> m_buffers = {};
-	Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_bufferOffsets = {};
-	Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_bufferRanges = {};
+	Buffer* m_visibleIndicesBuffer = nullptr;
+	PtrSize m_visibleIndicesBufferOffset = 0;
+	PtrSize m_visibleIndicesBufferRange = 0;
+};
+
+/// @memberof GpuVisibilityNonRenderables
+class GpuVisibilityNonRenderablesInput
+{
+public:
+	CString m_passesName;
+	GpuSceneNonRenderableObjectType m_objectType = GpuSceneNonRenderableObjectType::kCount;
+	Mat4 m_viewProjectionMat;
+	const RenderTargetHandle* m_hzbRt = nullptr;
+	RenderGraphDescription* m_rgraph = nullptr;
+
+	class
+	{
+	public:
+		Buffer* m_buffer = nullptr;
+		PtrSize m_bufferOffset = 0;
+		PtrSize m_bufferRange = 0;
+	} m_cpuFeedback;
 };
 
 /// GPU visibility of lights, probes etc.
@@ -70,12 +89,11 @@ class GpuVisibilityNonRenderables : public RendererObject
 public:
 	Error init();
 
-	void populateRenderGraph(CString passesName, GpuSceneNonRenderableObjectTypeBit objectTypes, const Mat4& viewProjectionMat,
-							 const RenderTargetHandle* hzbRt, RenderGraphDescription& rgraph, GpuVisibilityNonRenderablesOutput& out);
+	void populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out);
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	Array2d<ShaderProgramPtr, 2, U32(GpuSceneNonRenderableObjectType::kCount)> m_grProgs;
+	Array3d<ShaderProgramPtr, 2, U32(GpuSceneNonRenderableObjectType::kCount), 2> m_grProgs;
 };
 /// @}
 

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/GpuVisibility.h>
+#include <AnKi/Renderer/GpuVisibilityHelpers.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
@@ -11,7 +11,7 @@
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Core/StatsSet.h>
 
 namespace anki {
@@ -36,6 +36,37 @@ static GpuSceneContiguousArrayType techniqueToArrayType(RenderingTechnique techn
 	}
 
 	return arrayType;
+}
+
+static GpuSceneContiguousArrayType objectTypeToArrayType(GpuSceneNonRenderableObjectType type)
+{
+	GpuSceneContiguousArrayType out;
+	switch(type)
+	{
+	case GpuSceneNonRenderableObjectType::kPointLight:
+		out = GpuSceneContiguousArrayType::kPointLights;
+		break;
+	case GpuSceneNonRenderableObjectType::kSpotLight:
+		out = GpuSceneContiguousArrayType::kSpotLights;
+		break;
+	case GpuSceneNonRenderableObjectType::kDecal:
+		out = GpuSceneContiguousArrayType::kDecals;
+		break;
+	case GpuSceneNonRenderableObjectType::kFogDensityVolume:
+		out = GpuSceneContiguousArrayType::kFogDensityVolumes;
+		break;
+	case GpuSceneNonRenderableObjectType::kReflectionProbe:
+		out = GpuSceneContiguousArrayType::kReflectionProbes;
+		break;
+	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+		out = GpuSceneContiguousArrayType::kGlobalIlluminationProbes;
+		break;
+	default:
+		ANKI_ASSERT(1);
+		out = GpuSceneContiguousArrayType::kCount;
+	}
+
+	return out;
 }
 
 Error GpuVisibility::init()
@@ -219,17 +250,91 @@ Error GpuVisibilityNonRenderables::init()
 	{
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			ShaderProgramResourceVariantInitInfo variantInit(m_prog);
-			variantInit.addMutation("HZB_TEST", hzb);
-			variantInit.addMutation("STATS", ANKI_STATS_ENABLED);
-			variantInit.addMutation("OBJECT_TYPE", U32(type));
+			for(U32 cpuFeedback = 0; cpuFeedback < 2; ++cpuFeedback)
+			{
+				ShaderProgramResourceVariantInitInfo variantInit(m_prog);
+				variantInit.addMutation("HZB_TEST", hzb);
+				variantInit.addMutation("OBJECT_TYPE", U32(type));
+				variantInit.addMutation("CPU_FEEDBACK", cpuFeedback);
 
-			const ShaderProgramResourceVariant* variant;
-			m_prog->getOrCreateVariant(variantInit, variant);
+				const ShaderProgramResourceVariant* variant;
+				m_prog->getOrCreateVariant(variantInit, variant);
 
-			m_grProgs[hzb][type].reset(&variant->getProgram());
+				m_grProgs[hzb][type][cpuFeedback].reset(&variant->getProgram());
+			}
 		}
 	}
+
+	return Error::kNone;
+}
+
+void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out)
+{
+	const GpuSceneContiguousArrayType arrayType = objectTypeToArrayType(in.m_objectType);
+	const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
+
+	if(objCount == 0)
+	{
+		return;
+	}
+
+	if(in.m_cpuFeedback.m_buffer)
+	{
+		ANKI_ASSERT(in.m_cpuFeedback.m_bufferRange == sizeof(U32) * 2 * objCount + 1);
+	}
+
+	// Allocate memory for the result
+	RebarAllocation visibleIndicesAlloc;
+	U32* indices = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(objCount, visibleIndicesAlloc);
+	indices[0] = 0;
+
+	out.m_visibleIndicesBuffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
+	out.m_visibleIndicesBufferOffset = visibleIndicesAlloc.m_offset;
+	out.m_visibleIndicesBufferRange = visibleIndicesAlloc.m_range;
+
+	// Import buffers
+	RenderGraphDescription& rgraph = *in.m_rgraph;
+	out.m_bufferHandle =
+		rgraph.importBuffer(out.m_visibleIndicesBuffer, BufferUsageBit::kNone, out.m_visibleIndicesBufferOffset, out.m_visibleIndicesBufferRange);
+
+	// Create the renderpass
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
+
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
+	pass.newBufferDependency(out.m_bufferHandle, BufferUsageBit::kStorageComputeWrite);
+
+	if(in.m_hzbRt)
+	{
+		pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
+	}
+
+	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedback.m_buffer, feedbackBufferOffset = in.m_cpuFeedback.m_bufferOffset,
+				  feedbackBufferRange = in.m_cpuFeedback.m_bufferRange, viewProjectionMat = in.m_viewProjectionMat,
+				  visibleIndicesBuffHandle = out.m_bufferHandle](RenderPassWorkContext& rgraph) {
+		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
+		const GpuSceneContiguousArrayType arrayType = objectTypeToArrayType(objType);
+		const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
+		const GpuSceneContiguousArrays& cArrays = GpuSceneContiguousArrays::getSingleton();
+
+		cmdb.bindShaderProgram(m_grProgs[0][objType][0].get());
+
+		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), cArrays.getArrayBase(arrayType),
+							   cArrays.getElementCount(GpuSceneContiguousArrayType::kRenderables),
+							   cArrays.getElementSize(arrayType) * cArrays.getElementCount(arrayType));
+
+		GpuVisibilityNonRenderableUniforms* unis =
+			allocateAndBindUniforms<GpuVisibilityNonRenderableUniforms*>(sizeof(GpuVisibilityNonRenderableUniforms), cmdb, 0, 1);
+		Array<Plane, 6> planes;
+		extractClipPlanes(viewProjectionMat, planes);
+		for(U32 i = 0; i < 6; ++i)
+		{
+			unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+		}
+
+		rgraph.bindStorageBuffer(0, 2, visibleIndicesBuffHandle);
+
+		dispatchPPCompute(cmdb, 64, 1, objCount, 1);
+	});
 }
 
 } // end namespace anki

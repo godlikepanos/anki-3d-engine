@@ -24,6 +24,11 @@ struct GpuVisibilityUniforms
 	Mat4 m_viewProjectionMat;
 };
 
+struct GpuVisibilityNonRenderableUniforms
+{
+	Vec4 m_clipPlanes[6u];
+};
+
 struct PointLightRendererCacheEntry
 {
 	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
