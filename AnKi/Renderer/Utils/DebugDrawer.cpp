@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/DebugDrawer.h>
+#include <AnKi/Renderer/Utils/DebugDrawer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>

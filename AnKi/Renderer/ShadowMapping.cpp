@@ -311,7 +311,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				dstViewProjectionMats[cascade] = ctx.m_renderQueue->m_directionalLight.m_shadowRenderQueues[cascade]->m_viewProjectionMatrix;
 			}
 
-			getRenderer().getHzbHelper().populateRenderGraphDirectionalLight(
+			getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(
 				getRenderer().getGBuffer().getDepthRt(), getRenderer().getInternalResolution(), {hzbRts.getBegin(), light.m_shadowCascadeCount},
 				{dstViewProjectionMats.getBegin(), light.m_shadowCascadeCount}, {hzbSizes.getBegin(), light.m_shadowCascadeCount},
 				ctx.m_matrices.m_invertedViewProjection, rgraph);

@@ -13,7 +13,7 @@ namespace anki {
 /// @{
 
 /// Hierarchical depth generator.
-class HzbHelper : public RendererObject
+class HzbGenerator : public RendererObject
 {
 public:
 	Error init();

@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Renderer/TileAllocator.h>
+#include <AnKi/Renderer/Utils/TileAllocator.h>
 
 namespace anki {
 

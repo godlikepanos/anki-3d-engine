@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/Renderer/TileAllocator2.h>
+#include <AnKi/Renderer/Utils/TileAllocator2.h>
 
 ANKI_TEST(Renderer, TileAllocator)
 {

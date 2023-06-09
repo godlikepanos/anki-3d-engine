@@ -227,8 +227,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(visOut.m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
 
 	// HZB generation for the next frame
-	getRenderer().getHzbHelper().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
-													 UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), rgraph);
+	getRenderer().getHzbGenerator().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
+														UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), rgraph);
 }
 
 } // end namespace anki

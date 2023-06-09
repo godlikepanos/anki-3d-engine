@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/DebugDrawer.h>
+#include <AnKi/Renderer/Utils/DebugDrawer.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Renderer/RenderQueue.h>

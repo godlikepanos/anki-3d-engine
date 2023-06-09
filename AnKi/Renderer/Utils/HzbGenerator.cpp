@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/HzbHelper.h>
+#include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Renderer/Renderer.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
@@ -33,7 +33,7 @@ namespace anki {
 // 0 +----+  1
 static constexpr U16 kBoxIndices[] = {1, 5, 2, 2, 5, 6, 0, 3, 4, 4, 3, 7, 3, 2, 7, 7, 2, 6, 0, 4, 1, 1, 4, 5, 0, 1, 3, 3, 1, 2, 4, 7, 5, 5, 7, 6};
 
-Error HzbHelper::init()
+Error HzbGenerator::init()
 {
 	if(GrManager::getSingleton().getDeviceCapabilities().m_samplingFilterMinMax)
 	{
@@ -101,8 +101,8 @@ Error HzbHelper::init()
 	return Error::kNone;
 }
 
-void HzbHelper::populateRenderGraphInternal(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-											RenderGraphDescription& rgraph, CString customName, ShaderProgram* prog, Sampler* sampler) const
+void HzbGenerator::populateRenderGraphInternal(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
+											   RenderGraphDescription& rgraph, CString customName, ShaderProgram* prog, Sampler* sampler) const
 {
 	TextureSubresourceInfo firstMipSubresource;
 
@@ -162,16 +162,17 @@ void HzbHelper::populateRenderGraphInternal(RenderTargetHandle srcDepthRt, UVec2
 	});
 }
 
-void HzbHelper::populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-									RenderGraphDescription& rgraph, CString customName) const
+void HzbGenerator::populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
+									   RenderGraphDescription& rgraph, CString customName) const
 {
 	populateRenderGraphInternal(srcDepthRt, srcDepthRtSize, dstHzbRt, dstHzbRtSize, rgraph, customName, m_genPyramidMainCameraGrProg.get(),
 								m_maxSampler.isCreated() ? m_maxSampler.get() : getRenderer().getSamplers().m_trilinearClamp.get());
 }
 
-void HzbHelper::populateRenderGraphDirectionalLight(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, ConstWeakArray<RenderTargetHandle> dstHzbRts,
-													ConstWeakArray<Mat4> dstViewProjectionMats, ConstWeakArray<UVec2> dstHzbSizes,
-													const Mat4& invViewProjMat, RenderGraphDescription& rgraph) const
+void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize,
+													   ConstWeakArray<RenderTargetHandle> dstHzbRts, ConstWeakArray<Mat4> dstViewProjectionMats,
+													   ConstWeakArray<UVec2> dstHzbSizes, const Mat4& invViewProjMat,
+													   RenderGraphDescription& rgraph) const
 {
 	RenderTargetHandle minMaxRt;
 	constexpr U32 kTileSize = 64;

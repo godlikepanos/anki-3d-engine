@@ -6,14 +6,14 @@
 #pragma once
 
 #include <AnKi/Renderer/Common.h>
-#include <AnKi/Renderer/Drawer.h>
-#include <AnKi/Renderer/GpuVisibilityHelpers.h>
-#include <AnKi/Renderer/HzbHelper.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
+#include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Collision/Forward.h>
-#include <AnKi/Renderer/Readback.h>
+#include <AnKi/Renderer/Utils/Readback.h>
 
 namespace anki {
 
@@ -96,9 +96,9 @@ public:
 		return m_visibility;
 	}
 
-	const HzbHelper& getHzbHelper() const
+	const HzbGenerator& getHzbGenerator() const
 	{
-		return m_hzbHelper;
+		return m_hzbGenerator;
 	}
 
 	ReadbackManager& getReadbackManager()
@@ -200,7 +200,7 @@ private:
 
 	RenderableDrawer m_sceneDrawer;
 	GpuVisibility m_visibility;
-	HzbHelper m_hzbHelper;
+	HzbGenerator m_hzbGenerator;
 	ReadbackManager m_readbaks;
 
 	U64 m_frameCount; ///< Frame number

@@ -7,7 +7,7 @@
 
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Resource/RenderingKey.h>
-#include <AnKi/Renderer/GpuVisibilityHelpers.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Gr.h>
 
 namespace anki {

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/TraditionalDeferredShading.h>
+#include <AnKi/Renderer/Utils/TraditionalDeferredShading.h>
 #include <AnKi/Resource/ImageResource.h>
 
 namespace anki {

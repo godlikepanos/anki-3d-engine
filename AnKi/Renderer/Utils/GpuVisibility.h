@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/Readback.h>
+#include <AnKi/Renderer/Utils/Readback.h>
 #include <AnKi/Resource/RenderingKey.h>
 
 namespace anki {
