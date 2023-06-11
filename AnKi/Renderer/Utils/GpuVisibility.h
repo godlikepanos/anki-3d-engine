@@ -89,7 +89,7 @@ class GpuVisibilityNonRenderables : public RendererObject
 public:
 	Error init();
 
-	void populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out);
+	void populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out) const;
 
 private:
 	ShaderProgramResourcePtr m_prog;

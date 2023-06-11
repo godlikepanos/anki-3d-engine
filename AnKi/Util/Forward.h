@@ -39,6 +39,9 @@ class List;
 template<typename T, typename TMemoryPool, typename TConfig>
 class SparseArray;
 
+template<typename T, typename TMemoryPool, typename TConfig>
+class BlockArray;
+
 class CString;
 
 template<typename>

@@ -268,7 +268,7 @@ Error GpuVisibilityNonRenderables::init()
 	return Error::kNone;
 }
 
-void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out)
+void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out) const
 {
 	const GpuSceneContiguousArrayType arrayType = objectTypeToArrayType(in.m_objectType);
 	const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);

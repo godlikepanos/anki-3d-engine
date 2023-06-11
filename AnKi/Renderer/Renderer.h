@@ -96,6 +96,11 @@ public:
 		return m_visibility;
 	}
 
+	const GpuVisibilityNonRenderables& getGpuVisibilityNonRenderables() const
+	{
+		return m_nonRenderablesVisibility;
+	}
+
 	const HzbGenerator& getHzbGenerator() const
 	{
 		return m_hzbGenerator;
@@ -200,6 +205,7 @@ private:
 
 	RenderableDrawer m_sceneDrawer;
 	GpuVisibility m_visibility;
+	GpuVisibilityNonRenderables m_nonRenderablesVisibility;
 	HzbGenerator m_hzbGenerator;
 	ReadbackManager m_readbaks;
 

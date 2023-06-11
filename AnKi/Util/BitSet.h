@@ -264,6 +264,22 @@ public:
 		return kMaxU32;
 	}
 
+	/// Get the least significant bit that is enabled. Or kMaxU32 if all is zero.
+	U32 getLeastSignificantBit() const
+	{
+		for(U32 i = 0; i < kChunkCount; ++i)
+		{
+			const U64 bits = m_chunks[i];
+			if(bits != 0)
+			{
+				const U32 lsb = U32(__builtin_ctzll(bits));
+				return lsb + (i * kChunkBitCount);
+			}
+		}
+
+		return kMaxU32;
+	}
+
 	Array<TChunkType, kChunkCount> getData() const
 	{
 		return m_chunks;

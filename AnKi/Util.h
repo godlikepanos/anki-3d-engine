@@ -35,6 +35,7 @@
 #include <AnKi/Util/Visitor.h>
 #include <AnKi/Util/INotify.h>
 #include <AnKi/Util/SparseArray.h>
+#include <AnKi/Util/BlockArray.h>
 #include <AnKi/Util/ObjectAllocator.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Serializer.h>
