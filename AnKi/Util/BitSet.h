@@ -285,6 +285,28 @@ public:
 		return m_chunks;
 	}
 
+	/// Unset the N least significant bits of the bitset.
+	BitSet& unsetNLeastSignificantBits(U32 n)
+	{
+		ANKI_ASSERT(n);
+		U32 high, low;
+		position(n - 1, high, low);
+		for(U32 i = 0; i < high; ++i)
+		{
+			m_chunks[i] = 0;
+		}
+
+		// This could be a simple 1<<(low+1) but that may overflow so...
+		ChunkType mask = (ChunkType(1) << ChunkType(low)) - 1;
+		mask <<= 1;
+		mask |= 1;
+
+		mask = ~mask;
+		m_chunks[high] &= mask;
+
+		return *this;
+	}
+
 private:
 	Array<ChunkType, kChunkCount> m_chunks;
 

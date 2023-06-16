@@ -132,6 +132,23 @@ static void checkLsb()
 	ANKI_TEST_EXPECT_EQ(a.getLeastSignificantBit(), 0);
 }
 
+template<typename TChunkType>
+static void checkSetNLeastSignificant()
+{
+	constexpr U32 kCount = 256;
+	BitSet<kCount, TChunkType> a = {true};
+
+	for(U32 n = 1; n <= kCount; ++n)
+	{
+		a.setAll();
+		a.unsetNLeastSignificantBits(n);
+		for(U i = 0; i < kCount; ++i)
+		{
+			ANKI_TEST_EXPECT_EQ(a.get(i), (i < n) ? false : true);
+		}
+	}
+}
+
 ANKI_TEST(Util, BitSet)
 {
 	{
@@ -159,4 +176,9 @@ ANKI_TEST(Util, BitSet)
 	checkLsb<U16>();
 	checkLsb<U32>();
 	checkLsb<U64>();
+
+	checkSetNLeastSignificant<U8>();
+	checkSetNLeastSignificant<U16>();
+	checkSetNLeastSignificant<U32>();
+	checkSetNLeastSignificant<U64>();
 }

@@ -23,7 +23,7 @@ class BlockArrayDefaultConfig
 public:
 	static constexpr U32 getElementCountPerBlock()
 	{
-		return getAlignedRoundDown(ANKI_CACHE_LINE_SIZE, sizeof(T) * 64) / sizeof(T);
+		return U32(getAlignedRoundDown(ANKI_CACHE_LINE_SIZE, sizeof(T) * 64) / sizeof(T));
 	}
 };
 
@@ -31,6 +31,12 @@ public:
 template<typename TValuePointer, typename TValueReference, typename TBlockArrayPtr>
 class BlockArrayIterator
 {
+	template<typename, typename, typename>
+	friend class BlockArray;
+
+	template<typename, typename, typename>
+	friend class BlockArrayIterator;
+
 public:
 	/// Default constructor.
 	BlockArrayIterator()
@@ -103,7 +109,7 @@ public:
 	BlockArrayIterator& operator++()
 	{
 		check();
-		m_elementIdx = (m_elementIdx != kMaxU32) ? (m_elementIdx + 1) : kMaxU32;
+		m_elementIdx = (m_elementIdx != kMaxU32) ? (m_array->getNextElementIndex(m_elementIdx)) : kMaxU32;
 		return *this;
 	}
 
@@ -142,6 +148,13 @@ public:
 		return !(*this == b);
 	}
 
+	/// Returns the imaginary index inside the BlockArray.
+	U32 getArrayIndex() const
+	{
+		ANKI_ASSERT(m_elementIdx != kMaxU32);
+		return m_elementIdx;
+	}
+
 private:
 	TBlockArrayPtr m_array;
 	U32 m_elementIdx;
@@ -162,6 +175,9 @@ private:
 template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TConfig = BlockArrayDefaultConfig<T>>
 class BlockArray
 {
+	template<typename, typename, typename>
+	friend class BlockArrayIterator;
+
 public:
 	// Typedefs
 	using Config = TConfig;
@@ -208,8 +224,6 @@ public:
 		m_blockMetadatas = std::move(b.m_blockMetadatas);
 		m_elementCount = b.m_elementCount;
 		b.m_elementCount = 0;
-		m_firstElement = b.m_firstElement;
-		b.m_firstElement = kMaxU32;
 		return *this;
 	}
 
@@ -219,7 +233,7 @@ public:
 		const U32 localIdx = idx % kElementCountPerBlock;
 		ANKI_ASSERT(blockIdx < m_blockMetadatas.getSize());
 		ANKI_ASSERT(m_blockStorages[blockIdx] != nullptr);
-		ANKI_ASSERT(m_blockMetadatas[blockIdx].m_elementsInUseMask[localIdx].get() == true);
+		ANKI_ASSERT(m_blockMetadatas[blockIdx].m_elementsInUseMask.get(localIdx) == true);
 		return *reinterpret_cast<Value*>(&m_blockStorages[blockIdx]->m_storage[localIdx * sizeof(Value)]);
 	}
 
@@ -232,9 +246,9 @@ public:
 	/// Get begin.
 	Iterator getBegin()
 	{
-		return Iterator(this, m_firstElement
+		return Iterator(this, getFirstElementIndex()
 #if ANKI_EXTRA_CHECKS
-						,
+								  ,
 						m_iteratorVer
 #endif
 		);
@@ -243,9 +257,9 @@ public:
 	/// Get begin.
 	ConstIterator getBegin() const
 	{
-		return ConstIterator(this, m_firstElement
+		return ConstIterator(this, getFirstElementIndex()
 #if ANKI_EXTRA_CHECKS
-							 ,
+									   ,
 							 m_iteratorVer
 #endif
 		);
@@ -330,19 +344,61 @@ private:
 		U8 m_storage[sizeof(T) * kElementCountPerBlock];
 	};
 
+	using Mask = BitSet<kElementCountPerBlock, U64>;
+
 	class BlockMetadata
 	{
 	public:
-		BitSet<kElementCountPerBlock, U64> m_elementsInUseMask{false};
+		Mask m_elementsInUseMask{false};
 	};
 
 	DynamicArray<BlockStorage*, TMemoryPool> m_blockStorages;
 	DynamicArray<BlockMetadata, TMemoryPool> m_blockMetadatas;
 	U32 m_elementCount = 0;
-	U32 m_firstElement = kMaxU32;
 #if ANKI_EXTRA_CHECKS
 	U32 m_iteratorVer = 1;
 #endif
+
+	U32 getFirstElementIndex() const
+	{
+		for(U32 blockIdx = 0; blockIdx < m_blockMetadatas.getSize(); ++blockIdx)
+		{
+			U32 localIdx;
+			if((localIdx = m_blockMetadatas[blockIdx].m_elementsInUseMask.getLeastSignificantBit()) != kMaxU32)
+			{
+				return localIdx + blockIdx * kElementCountPerBlock;
+			}
+		}
+
+		return kMaxU32;
+	}
+
+	U32 getNextElementIndex(U32 crnt) const
+	{
+		ANKI_ASSERT(crnt < kMaxU32);
+		const U32 localIdx = crnt % kElementCountPerBlock;
+		U32 blockIdx = crnt / kElementCountPerBlock;
+		ANKI_ASSERT(blockIdx < m_blockMetadatas.getSize());
+
+		Mask mask = m_blockMetadatas[blockIdx].m_elementsInUseMask;
+		mask.unsetNLeastSignificantBits(localIdx + 1);
+		U32 locIdx;
+		if((locIdx = mask.getLeastSignificantBit()) != kMaxU32)
+		{
+			return blockIdx * kElementCountPerBlock + locIdx;
+		}
+
+		++blockIdx;
+		for(; blockIdx < m_blockMetadatas.getSize(); ++blockIdx)
+		{
+			if((locIdx = m_blockMetadatas[blockIdx].m_elementsInUseMask.getLeastSignificantBit()) != kMaxU32)
+			{
+				return blockIdx * kElementCountPerBlock + locIdx;
+			}
+		}
+
+		return kMaxU32;
+	}
 };
 /// @}
 
