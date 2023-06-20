@@ -17,7 +17,7 @@ namespace anki {
 /// @{
 
 /// Global illumination probe component. It's an axis aligned box divided into cells.
-class GlobalIlluminationProbeComponent : public SceneComponent
+class GlobalIlluminationProbeComponent : public QueryableSceneComponent<GlobalIlluminationProbeComponent>
 {
 	ANKI_SCENE_COMPONENT(GlobalIlluminationProbeComponent)
 

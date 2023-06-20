@@ -797,7 +797,7 @@ void CombineResultsTask::combine()
 	const GpuSceneContiguousArrays& arrays = GpuSceneContiguousArrays::getSingleton();
 
 	auto setOffset = [&](ClusteredObjectType type, GpuSceneContiguousArrayType type2) {
-		results.m_clustererObjectsArrayOffsets[type] = arrays.getElementCount(type2) ? arrays.getArrayBase(type2) : 0;
+		results.m_clustererObjectsArrayOffsets[type] = arrays.getElementCount(type2) ? arrays.getArrayBaseOffset(type2) : 0;
 		results.m_clustererObjectsArrayRanges[type] = arrays.getElementCount(type2) * arrays.getElementSize(type2);
 	};
 

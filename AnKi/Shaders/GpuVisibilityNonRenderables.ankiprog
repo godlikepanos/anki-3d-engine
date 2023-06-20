@@ -124,12 +124,12 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 #if CPU_FEEDBACK
 	if(obj.m_uuid != 0)
 	{
-		U32 count;
-		InterlockedAdd(g_counterBuffer[g_unis.m_feedbackCounterIdx], 1, count);
+		U32 idx;
+		InterlockedAdd(g_counterBuffer[g_unis.m_feedbackCounterIdx], 1, idx);
 
 		U32 dummy;
-		InterlockedExchange(g_cpuFeedbackBuffer[0], count, dummy);
-		g_cpuFeedbackBuffer[count + 1] = obj.m_uuid;
+		InterlockedExchange(g_cpuFeedbackBuffer[0], idx + 1, dummy);
+		g_cpuFeedbackBuffer[idx + 1] = obj.m_uuid;
 	}
 #endif
 }

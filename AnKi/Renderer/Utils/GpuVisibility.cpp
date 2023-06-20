@@ -150,13 +150,14 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 
 		const GpuSceneContiguousArrayType type = techniqueToArrayType(technique);
 
-		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneContiguousArrays::getSingleton().getArrayBase(type),
-							   GpuSceneContiguousArrays::getSingleton().getElementCount(type) * sizeof(GpuSceneRenderableAabb));
+		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneContiguousArrays::getSingleton().getArrayBaseOffset(type),
+							   GpuSceneContiguousArrays::getSingleton().getElementCount(type)
+								   * GpuSceneContiguousArrays::getSingleton().getElementSize(type));
 
 		cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(),
-							   GpuSceneContiguousArrays::getSingleton().getArrayBase(GpuSceneContiguousArrayType::kRenderables),
+							   GpuSceneContiguousArrays::getSingleton().getArrayBaseOffset(GpuSceneContiguousArrayType::kRenderables),
 							   GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderables)
-								   * sizeof(GpuSceneRenderable));
+								   * GpuSceneContiguousArrays::getSingleton().getElementSize(GpuSceneContiguousArrayType::kRenderables));
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
@@ -295,7 +296,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	// Allocate memory for the result
 	RebarAllocation visibleIndicesAlloc;
-	U32* indices = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(objCount, visibleIndicesAlloc);
+	U32* indices = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(objCount + 1, visibleIndicesAlloc);
 	indices[0] = 0;
 
 	out.m_visibleIndicesBuffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
@@ -330,9 +331,8 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 		cmdb.bindShaderProgram(m_grProgs[0][objType][needsFeedback].get());
 
-		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), cArrays.getArrayBase(arrayType),
-							   cArrays.getElementCount(GpuSceneContiguousArrayType::kRenderables),
-							   cArrays.getElementSize(arrayType) * cArrays.getElementCount(arrayType));
+		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), cArrays.getArrayBaseOffset(arrayType),
+							   cArrays.getElementSize(arrayType) * cArrays.getElementCount(arrayType), 0);
 
 		GpuVisibilityNonRenderableUniforms* unis =
 			allocateAndBindUniforms<GpuVisibilityNonRenderableUniforms*>(sizeof(GpuVisibilityNonRenderableUniforms), cmdb, 0, 1);

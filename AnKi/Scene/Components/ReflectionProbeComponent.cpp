@@ -12,7 +12,7 @@
 namespace anki {
 
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: QueryableSceneComponent<ReflectionProbeComponent>(node, getStaticClassId())
 	, m_spatial(this)
 {
 	m_worldPos = node->getWorldTransform().getOrigin().xyz();
@@ -89,12 +89,16 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		const Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabbWorld);
 
+		// New UUID
+		refreshUuid();
+
 		// Upload to the GPU scene
 		GpuSceneReflectionProbe gpuProbe;
 		gpuProbe.m_position = m_worldPos;
 		gpuProbe.m_cubeTexture = m_reflectionTexBindlessIndex;
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
+		gpuProbe.m_uuid = getUuid();
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuProbe);
 	}
 

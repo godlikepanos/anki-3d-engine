@@ -444,7 +444,7 @@ void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTech
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
 		queueElem.m_geometryOffset =
 			U32(m_patchInfos[i].m_gpuSceneIndexMeshLods.get() * sizeof(GpuSceneMeshLod) * kMaxLodCount + lod * sizeof(GpuSceneMeshLod));
-		queueElem.m_geometryOffset += U32(gpuArrays.getArrayBase(GpuSceneContiguousArrayType::kMeshLods));
+		queueElem.m_geometryOffset += U32(gpuArrays.getArrayBaseOffset(GpuSceneContiguousArrayType::kMeshLods));
 		queueElem.m_indexBufferOffset = U32(modelInf.m_indexBufferOffset);
 
 		const Transform positionTransform(patch.getMesh()->getPositionsTranslation().xyz0(), Mat3x4::getIdentity(),

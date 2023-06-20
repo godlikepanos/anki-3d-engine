@@ -17,7 +17,7 @@ namespace anki {
 /// @{
 
 /// Reflection probe component.
-class ReflectionProbeComponent : public SceneComponent
+class ReflectionProbeComponent : public QueryableSceneComponent<ReflectionProbeComponent>
 {
 	ANKI_SCENE_COMPONENT(ReflectionProbeComponent)
 

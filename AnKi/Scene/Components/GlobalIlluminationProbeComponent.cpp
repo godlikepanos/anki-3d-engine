@@ -13,7 +13,7 @@
 namespace anki {
 
 GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: QueryableSceneComponent<GlobalIlluminationProbeComponent>(node, getStaticClassId())
 	, m_spatial(this)
 {
 	for(U32 i = 0; i < 6; ++i)
@@ -107,6 +107,9 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		m_spatial.setBoundingShape(aabb);
 
+		// New UUID
+		refreshUuid();
+
 		// Upload to the GPU scene
 		GpuSceneGlobalIlluminationProbe gpuProbe;
 		gpuProbe.m_aabbMin = aabb.getMin().xyz();
@@ -114,6 +117,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
+		gpuProbe.m_uuid = getUuid();
 
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuProbe);
 	}

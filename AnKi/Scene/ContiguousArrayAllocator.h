@@ -98,7 +98,7 @@ public:
 	GpuSceneContiguousArrayIndex allocate(GpuSceneContiguousArrayType type);
 
 	/// @note It's not thread-safe
-	PtrSize getArrayBase(GpuSceneContiguousArrayType type) const
+	PtrSize getArrayBaseOffset(GpuSceneContiguousArrayType type) const
 	{
 		return m_allocs[type].getArrayBase();
 	}
@@ -113,7 +113,7 @@ public:
 	U32 getElementOffsetInGpuScene(const GpuSceneContiguousArrayIndex& idx) const
 	{
 		ANKI_ASSERT(idx.isValid());
-		return U32(getArrayBase(idx.m_type) + m_componentCount[idx.m_type] * m_componentSize[idx.m_type] * idx.m_index);
+		return U32(getArrayBaseOffset(idx.m_type) + m_componentCount[idx.m_type] * m_componentSize[idx.m_type] * idx.m_index);
 	}
 
 	constexpr static U32 getElementSize(GpuSceneContiguousArrayType type)

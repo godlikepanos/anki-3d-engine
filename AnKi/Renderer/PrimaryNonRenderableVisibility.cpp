@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/NonRenderableVisibility.h>
+#include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 
 namespace anki {
 
-void NonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
+void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
@@ -63,6 +63,8 @@ void NonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 
 		GpuVisibilityNonRenderablesOutput out;
 		getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, out);
+
+		m_runCtx.m_visOutBufferHandle[type] = out.m_bufferHandle;
 	}
 }
 

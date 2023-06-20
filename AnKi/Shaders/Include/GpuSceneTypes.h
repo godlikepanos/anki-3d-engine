@@ -98,7 +98,7 @@ struct GpuSceneReflectionProbe
 	U32 m_cubeTexture; ///< Bindless index of the reflection texture.
 
 	Vec3 m_aabbMin;
-	F32 m_uuid;
+	U32 m_uuid;
 
 	Vec3 m_aabbMax;
 	F32 m_padding1;
@@ -110,7 +110,7 @@ static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe
 struct GpuSceneGlobalIlluminationProbe
 {
 	Vec3 m_aabbMin;
-	F32 m_uuid;
+	U32 m_uuid;
 
 	Vec3 m_aabbMax;
 	F32 m_padding1;
