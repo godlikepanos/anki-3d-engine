@@ -127,7 +127,7 @@ public:
 
 	/// Get a unique UUID.
 	/// @note It's thread-safe.
-	U64 getNewUuid()
+	U32 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
 	}
@@ -169,7 +169,7 @@ private:
 
 	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 
-	Atomic<U64> m_nodesUuid = {1};
+	Atomic<U32> m_nodesUuid = {1};
 
 	SceneGraph();
 

@@ -169,3 +169,5 @@ T WaveActiveMax(T value);
 bool WaveIsFirstLane();
 
 unsigned WaveActiveCountBits(bool bit);
+
+unsigned WaveGetLaneCount();

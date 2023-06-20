@@ -54,17 +54,6 @@ private:
 };
 
 /// @memberof GpuVisibilityNonRenderables
-class GpuVisibilityNonRenderablesOutput
-{
-public:
-	BufferHandle m_bufferHandle; ///< Some buffer handle to be used for tracking. No need to track all buffers.
-
-	Buffer* m_visibleIndicesBuffer = nullptr;
-	PtrSize m_visibleIndicesBufferOffset = 0;
-	PtrSize m_visibleIndicesBufferRange = 0;
-};
-
-/// @memberof GpuVisibilityNonRenderables
 class GpuVisibilityNonRenderablesInput
 {
 public:
@@ -83,17 +72,35 @@ public:
 	} m_cpuFeedback;
 };
 
+/// @memberof GpuVisibilityNonRenderables
+class GpuVisibilityNonRenderablesOutput
+{
+public:
+	BufferHandle m_bufferHandle; ///< Some buffer handle to be used for tracking. No need to track all buffers.
+
+	Buffer* m_visibleIndicesBuffer = nullptr;
+	PtrSize m_visibleIndicesBufferOffset = 0;
+	PtrSize m_visibleIndicesBufferRange = 0;
+};
+
 /// GPU visibility of lights, probes etc.
 class GpuVisibilityNonRenderables : public RendererObject
 {
 public:
 	Error init();
 
-	void populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out) const;
+	void populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out);
 
 private:
 	ShaderProgramResourcePtr m_prog;
 	Array3d<ShaderProgramPtr, 2, U32(GpuSceneNonRenderableObjectType::kCount), 2> m_grProgs;
+
+	static constexpr U32 kMaxFeedbackRequestsPerFrame = 6;
+
+	Array<BufferPtr, kMaxFeedbackRequestsPerFrame> m_counterBuffers; ///< A buffer containing multiple counters for atomic operations.
+	Array<U8, kMaxFeedbackRequestsPerFrame> m_counterIdx = {};
+	U64 m_lastFrameIdx = kMaxU64;
+	U32 m_feedbackRequestCountThisFrame = 0;
 };
 /// @}
 

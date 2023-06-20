@@ -189,6 +189,78 @@ private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 	U8 m_classId; ///< Cache the type ID.
 };
+
+/// Scene component that has a UUID and a static method that can be used to fetch the component by using the UUID.
+template<typename T>
+class QueryableSceneComponent : public SceneComponent
+{
+public:
+	QueryableSceneComponent(SceneNode* node, U8 classId)
+		: SceneComponent(node, classId)
+	{
+	}
+
+	~QueryableSceneComponent()
+	{
+		releaseUuid();
+	}
+
+	U32 getUuid() const
+	{
+		ANKI_ASSERT(m_uuid);
+		return m_uuid;
+	}
+
+	static T* tryFindComponent(U32 uuid)
+	{
+		auto it = m_uuidToSceneComponent.find(uuid);
+		return (it != m_uuidToSceneComponent.getEnd()) ? *it : nullptr;
+	}
+
+protected:
+	/// @note Not thread-safe.
+	void refreshUuid()
+	{
+		const U32 oldUuid = m_uuid;
+		m_uuid = SceneGraph::getSingleton().getNewUuid();
+
+		LockGuard lock(m_uuidToSceneComponentLock);
+		if(oldUuid != 0)
+		{
+			auto it = m_uuidToSceneComponent.find(oldUuid);
+			ANKI_ASSERT(it != m_uuidToSceneComponent.getEnd());
+			m_uuidToSceneComponent.erase(it);
+		}
+
+		ANKI_ASSERT(m_uuidToSceneComponent.find(m_uuid) == m_uuidToSceneComponent.getEnd());
+		m_uuidToSceneComponent.emplace(m_uuid, static_cast<T*>(this));
+	}
+
+	/// @note Not thread-safe.
+	void releaseUuid()
+	{
+		if(m_uuid != 0)
+		{
+			LockGuard lock(m_uuidToSceneComponentLock);
+			auto it = m_uuidToSceneComponent.find(m_uuid);
+			ANKI_ASSERT(it != m_uuidToSceneComponent.getEnd());
+			m_uuidToSceneComponent.erase(it);
+
+			m_uuid = 0;
+		}
+	}
+
+	Bool hasUuid() const
+	{
+		return m_uuid != 0;
+	}
+
+private:
+	U32 m_uuid = 0;
+
+	inline static SceneHashMap<U32, T*> m_uuidToSceneComponent;
+	inline static SpinLock m_uuidToSceneComponentLock;
+};
 /// @}
 
 } // end namespace anki

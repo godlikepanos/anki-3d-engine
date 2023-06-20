@@ -38,37 +38,6 @@ static GpuSceneContiguousArrayType techniqueToArrayType(RenderingTechnique techn
 	return arrayType;
 }
 
-static GpuSceneContiguousArrayType objectTypeToArrayType(GpuSceneNonRenderableObjectType type)
-{
-	GpuSceneContiguousArrayType out;
-	switch(type)
-	{
-	case GpuSceneNonRenderableObjectType::kPointLight:
-		out = GpuSceneContiguousArrayType::kPointLights;
-		break;
-	case GpuSceneNonRenderableObjectType::kSpotLight:
-		out = GpuSceneContiguousArrayType::kSpotLights;
-		break;
-	case GpuSceneNonRenderableObjectType::kDecal:
-		out = GpuSceneContiguousArrayType::kDecals;
-		break;
-	case GpuSceneNonRenderableObjectType::kFogDensityVolume:
-		out = GpuSceneContiguousArrayType::kFogDensityVolumes;
-		break;
-	case GpuSceneNonRenderableObjectType::kReflectionProbe:
-		out = GpuSceneContiguousArrayType::kReflectionProbes;
-		break;
-	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
-		out = GpuSceneContiguousArrayType::kGlobalIlluminationProbes;
-		break;
-	default:
-		ANKI_ASSERT(1);
-		out = GpuSceneContiguousArrayType::kCount;
-	}
-
-	return out;
-}
-
 Error GpuVisibility::init()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuVisibility.ankiprogbin", m_prog));
@@ -260,17 +229,44 @@ Error GpuVisibilityNonRenderables::init()
 				const ShaderProgramResourceVariant* variant;
 				m_prog->getOrCreateVariant(variantInit, variant);
 
-				m_grProgs[hzb][type][cpuFeedback].reset(&variant->getProgram());
+				if(variant)
+				{
+					m_grProgs[hzb][type][cpuFeedback].reset(&variant->getProgram());
+				}
+				else
+				{
+					m_grProgs[hzb][type][cpuFeedback].reset(nullptr);
+				}
 			}
 		}
+	}
+
+	{
+		CommandBufferInitInfo cmdbInit("TmpClear");
+		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+		for(U32 i = 0; i < kMaxFeedbackRequestsPerFrame; ++i)
+		{
+			BufferInitInfo buffInit("GpuVisibilityNonRenderablesFeedbackCounters");
+			buffInit.m_size = 2 * sizeof(U32);
+			buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
+
+			m_counterBuffers[i] = GrManager::getSingleton().newBuffer(buffInit);
+
+			cmdb->fillBuffer(m_counterBuffers[i].get(), 0, kMaxPtrSize, 0);
+		}
+
+		cmdb->flush();
+		GrManager::getSingleton().finish();
 	}
 
 	return Error::kNone;
 }
 
-void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out) const
+void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out)
 {
-	const GpuSceneContiguousArrayType arrayType = objectTypeToArrayType(in.m_objectType);
+	const GpuSceneContiguousArrayType arrayType = gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(in.m_objectType);
 	const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
 
 	if(objCount == 0)
@@ -280,7 +276,21 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	if(in.m_cpuFeedback.m_buffer)
 	{
-		ANKI_ASSERT(in.m_cpuFeedback.m_bufferRange == sizeof(U32) * 2 * objCount + 1);
+		ANKI_ASSERT(in.m_cpuFeedback.m_bufferRange == sizeof(U32) * (objCount + 1));
+	}
+
+	// Find the counter buffer required for feedback
+	U32 counterBufferIdx = kMaxU32;
+	if(in.m_cpuFeedback.m_buffer)
+	{
+		if(m_lastFrameIdx != getRenderer().getFrameCount())
+		{
+			m_lastFrameIdx = getRenderer().getFrameCount();
+			m_feedbackRequestCountThisFrame = 0;
+		}
+
+		counterBufferIdx = m_feedbackRequestCountThisFrame++;
+		m_counterIdx[counterBufferIdx] = (m_counterIdx[counterBufferIdx] + 1) & 1;
 	}
 
 	// Allocate memory for the result
@@ -310,13 +320,15 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedback.m_buffer, feedbackBufferOffset = in.m_cpuFeedback.m_bufferOffset,
 				  feedbackBufferRange = in.m_cpuFeedback.m_bufferRange, viewProjectionMat = in.m_viewProjectionMat,
-				  visibleIndicesBuffHandle = out.m_bufferHandle](RenderPassWorkContext& rgraph) {
+				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBufferIdx,
+				  counterIdx = m_counterIdx[counterBufferIdx]](RenderPassWorkContext& rgraph) {
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
-		const GpuSceneContiguousArrayType arrayType = objectTypeToArrayType(objType);
+		const GpuSceneContiguousArrayType arrayType = gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(objType);
 		const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
 		const GpuSceneContiguousArrays& cArrays = GpuSceneContiguousArrays::getSingleton();
+		const Bool needsFeedback = feedbackBuffer != nullptr;
 
-		cmdb.bindShaderProgram(m_grProgs[0][objType][0].get());
+		cmdb.bindShaderProgram(m_grProgs[0][objType][needsFeedback].get());
 
 		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), cArrays.getArrayBase(arrayType),
 							   cArrays.getElementCount(GpuSceneContiguousArrayType::kRenderables),
@@ -331,7 +343,15 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 			unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
 
+		unis->m_feedbackCounterIdx = counterIdx;
+
 		rgraph.bindStorageBuffer(0, 2, visibleIndicesBuffHandle);
+
+		if(needsFeedback)
+		{
+			cmdb.bindStorageBuffer(0, 3, feedbackBuffer, feedbackBufferOffset, feedbackBufferRange);
+			cmdb.bindStorageBuffer(0, 4, m_counterBuffers[counterBufferIdx].get(), 0, kMaxPtrSize);
+		}
 
 		dispatchPPCompute(cmdb, 64, 1, objCount, 1);
 	});

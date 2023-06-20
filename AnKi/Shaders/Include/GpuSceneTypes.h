@@ -190,4 +190,17 @@ enum class GpuSceneNonRenderableObjectTypeBit : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectTypeBit)
 
+/// Non-renderable types that require GPU to CPU feedback.
+enum class GpuSceneNonRenderableObjectTypeWithFeedback : U32
+{
+	kPointLight,
+	kSpotLight,
+	kReflectionProbe,
+	kGlobalIlluminationProbe,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectTypeWithFeedback)
+
 ANKI_END_NAMESPACE

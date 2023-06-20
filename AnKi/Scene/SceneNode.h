@@ -378,7 +378,7 @@ public:
 	}
 
 private:
-	U64 m_uuid;
+	U32 m_uuid;
 	SceneString m_name; ///< A unique name.
 
 	GrDynamicArray<SceneComponent*> m_components;

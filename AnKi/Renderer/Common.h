@@ -9,6 +9,7 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Scene/ContiguousArrayAllocator.h>
 
 namespace anki {
 
@@ -167,6 +168,37 @@ U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray
 inline U32 chooseDirectionalLightShadowCascadeDetail(U32 cascade)
 {
 	return (cascade <= 1) ? 0 : 1;
+}
+
+inline GpuSceneContiguousArrayType gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(GpuSceneNonRenderableObjectType type)
+{
+	GpuSceneContiguousArrayType out;
+	switch(type)
+	{
+	case GpuSceneNonRenderableObjectType::kPointLight:
+		out = GpuSceneContiguousArrayType::kPointLights;
+		break;
+	case GpuSceneNonRenderableObjectType::kSpotLight:
+		out = GpuSceneContiguousArrayType::kSpotLights;
+		break;
+	case GpuSceneNonRenderableObjectType::kDecal:
+		out = GpuSceneContiguousArrayType::kDecals;
+		break;
+	case GpuSceneNonRenderableObjectType::kFogDensityVolume:
+		out = GpuSceneContiguousArrayType::kFogDensityVolumes;
+		break;
+	case GpuSceneNonRenderableObjectType::kReflectionProbe:
+		out = GpuSceneContiguousArrayType::kReflectionProbes;
+		break;
+	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+		out = GpuSceneContiguousArrayType::kGlobalIlluminationProbes;
+		break;
+	default:
+		ANKI_ASSERT(1);
+		out = GpuSceneContiguousArrayType::kCount;
+	}
+
+	return out;
 }
 /// @}
 

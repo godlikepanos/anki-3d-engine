@@ -13,7 +13,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// TODO
+/// A persistent GPU readback token. It's essentially a group of allocations.
 class MultiframeReadbackToken
 {
 	friend class ReadbackManager;
@@ -24,25 +24,33 @@ private:
 	U32 m_slot = 0;
 };
 
-/// TODO
+/// A small class that is used to streamling the use of GPU readbacks.
 class ReadbackManager
 {
-	template<typename>
-	friend class MakeSingleton;
-
 public:
-	/// @note Not thread-safe
-	void allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset);
+	void allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset) const;
 
-	/// XXX
-	/// @note Not thread-safe
-	void getMostRecentReadDataAndRelease(MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut);
+	/// Read the most up to date data from the GPU.
+	void readMostRecentData(const MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut) const;
 
-	/// @note Not thread-safe
-	template<typename TMemPool>
-	void getMostRecentReadDataAndRelease(MultiframeReadbackToken& token, DynamicArray<U8, TMemPool>& data);
+	/// Read the most up to date data from the GPU.
+	template<typename T, typename TMemPool>
+	void readMostRecentData(const MultiframeReadbackToken& token, DynamicArray<T, TMemPool>& data) const
+	{
+		const U32 slot = findBestSlot(token);
+		if(slot != kMaxU32 && token.m_allocations[slot].isValid())
+		{
+			const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
 
-	/// @note Not thread-safe
+			data.resize(allocation.getAllocatedSize() / sizeof(T));
+			memcpy(&data[0], static_cast<const U8*>(allocation.getMappedMemory()) + allocation.getOffset(), allocation.getAllocatedSize());
+		}
+		else
+		{
+			data.resize(0);
+		}
+	}
+
 	void endFrame(Fence* fence);
 
 private:
@@ -54,6 +62,8 @@ private:
 
 	Array<Frame, kMaxFramesInFlight> m_frames;
 	U64 m_frameId = kMaxFramesInFlight;
+
+	U32 findBestSlot(const MultiframeReadbackToken& token) const;
 };
 /// @}
 

@@ -32,12 +32,15 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 #endif
 
 [[vk::binding(0)]] StructuredBuffer<ObjectType> g_objects;
-[[vk::binding(1)]] ConstantBuffer<GpuVisibilityUniforms> g_unis;
+[[vk::binding(1)]] ConstantBuffer<GpuVisibilityNonRenderableUniforms> g_unis;
 [[vk::binding(2)]] RWStructuredBuffer<U32> g_visibleIndices; // 1st element is the count. What follows is indices
 
 #if CPU_FEEDBACK
-// 1st element is a count. What follows is a pair of object index and object UUID.
+// 1st element is a count. What follows is an array of UUIDs.
 [[vk::binding(3)]] RWStructuredBuffer<U32> g_cpuFeedbackBuffer;
+
+// Contains 2 U32s. One that it gets cleared and another that will be incremented.
+[[vk::binding(4)]] RWStructuredBuffer<U32> g_counterBuffer;
 #endif
 
 Vec4 getSphere(GpuScenePointLight l)
@@ -88,6 +91,14 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	U32 objectCount, unused;
 	g_objects.GetDimensions(objectCount, unused);
 
+#if CPU_FEEDBACK
+	// Zero feedback counters of the next frame
+	if(svDispatchThreadId.x == 0)
+	{
+		g_counterBuffer[!g_unis.m_feedbackCounterIdx] = 0u;
+	}
+#endif
+
 	if(svDispatchThreadId.x >= objectCount)
 	{
 		return;
@@ -110,21 +121,14 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 
 	// Give feedback to the CPU
 	//
-#if CPU_FEEDBACK \
-	&& (OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT || OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT \
-		|| OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE \
-		|| OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)
-#	if(OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT || OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT)
-	if(obj.m_shadow)
-#	endif
+#if CPU_FEEDBACK
+	if(obj.m_uuid != 0)
 	{
 		U32 count;
-		InterlockedAdd(g_cpuFeedbackBuffer[0], 1, count);
+		InterlockedAdd(g_counterBuffer[g_unis.m_feedbackCounterIdx], 1, count);
 
-		count *= 2;
-		++count;
-
-		g_cpuFeedbackBuffer[count] = svDispatchThreadId.x;
+		U32 dummy;
+		InterlockedExchange(g_cpuFeedbackBuffer[0], count, dummy);
 		g_cpuFeedbackBuffer[count + 1] = obj.m_uuid;
 	}
 #endif

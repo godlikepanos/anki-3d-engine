@@ -50,4 +50,27 @@ inline GpuSceneRenderableAabb initGpuSceneRenderableAabb(Vec3 aabbMin, Vec3 aabb
 	return gpuVolume;
 }
 
+inline GpuSceneNonRenderableObjectTypeWithFeedback toGpuSceneNonRenderableObjectTypeWithFeedback(GpuSceneNonRenderableObjectType type)
+{
+	GpuSceneNonRenderableObjectTypeWithFeedback ret;
+	switch(type)
+	{
+	case GpuSceneNonRenderableObjectType::kPointLight:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kPointLight;
+		break;
+	case GpuSceneNonRenderableObjectType::kSpotLight:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kSpotLight;
+		break;
+	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kGlobalIlluminationProbe;
+		break;
+	case GpuSceneNonRenderableObjectType::kReflectionProbe:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kReflectionProbe;
+		break;
+	default:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kCount;
+	}
+	return ret;
+}
+
 ANKI_END_NAMESPACE

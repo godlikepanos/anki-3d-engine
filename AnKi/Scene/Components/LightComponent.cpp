@@ -17,12 +17,10 @@
 namespace anki {
 
 LightComponent::LightComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
-	, m_uuid(SceneGraph::getSingleton().getNewUuid())
+	: QueryableSceneComponent<LightComponent>(node, getStaticClassId())
 	, m_spatial(this)
 	, m_type(LightComponentType::kPoint)
 {
-	ANKI_ASSERT(m_uuid > 0);
 	m_point.m_radius = 1.0f;
 
 	setLightComponentType(LightComponentType::kPoint);
@@ -67,6 +65,11 @@ void LightComponent::setLightComponentType(LightComponentType type)
 	}
 
 	m_type = type;
+
+	if(type != LightComponentType::kDirectional)
+	{
+		refreshUuid();
+	}
 }
 
 Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -120,6 +123,15 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 		}
 
+		if(m_shadow && shapeUpdated)
+		{
+			refreshUuid();
+		}
+		else if(!m_shadow)
+		{
+			releaseUuid();
+		}
+
 		// Upload to the GPU scene
 		GpuScenePointLight gpuLight;
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
@@ -127,6 +139,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
 		gpuLight.m_shadow = m_shadow;
+		gpuLight.m_uuid = (m_shadow) ? getUuid() : 0;
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(), gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
@@ -177,6 +190,15 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 		}
 
+		if(m_shadow && shapeUpdated)
+		{
+			refreshUuid();
+		}
+		else if(!m_shadow)
+		{
+			releaseUuid();
+		}
+
 		// Upload to the GPU scene
 		GpuSceneSpotLight gpuLight;
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
@@ -191,6 +213,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_shadow = m_shadow;
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
+		gpuLight.m_uuid = (m_shadow) ? getUuid() : 0;
 		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(), gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
@@ -222,7 +245,7 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 
 	const U32 shadowCascadeCount = cascadeFrustums.getSize();
 
-	el.m_uuid = m_uuid;
+	el.m_uuid = hasUuid() ? getUuid() : 0;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = -m_worldTransform.getRotation().getZAxis().xyz();
 	for(U32 i = 0; i < shadowCascadeCount; ++i)

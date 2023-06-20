@@ -7,35 +7,34 @@
 
 namespace anki {
 
-void ReadbackManager::allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset)
+void ReadbackManager::allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset) const
 {
 	for([[maybe_unused]] U64 frame : token.m_frameIds)
 	{
 		ANKI_ASSERT(frame != m_frameId && "Can't allocate multiple times in a frame");
 	}
 
-	if(token.m_allocations[token.m_slot].isValid()) [[unlikely]]
+	GpuReadbackMemoryAllocation& allocation = token.m_allocations[token.m_slot];
+
+	if(allocation.isValid() && allocation.getAllocatedSize() != size)
 	{
-		ANKI_R_LOGW("Allocation hasn't been released. Haven't called getMostRecentReadDataAndRelease");
-		GpuReadbackMemoryPool::getSingleton().deferredFree(token.m_allocations[token.m_slot]);
+		GpuReadbackMemoryPool::getSingleton().deferredFree(allocation);
 	}
 
-	ANKI_ASSERT(!token.m_allocations[token.m_slot].isValid());
-
-	token.m_allocations[token.m_slot] = GpuReadbackMemoryPool::getSingleton().allocate(size);
+	if(!allocation.isValid())
+	{
+		allocation = GpuReadbackMemoryPool::getSingleton().allocate(size);
+	}
 	token.m_frameIds[token.m_slot] = m_frameId;
 
-	buffer = &token.m_allocations[token.m_slot].getBuffer();
-	bufferOffset = token.m_allocations[token.m_slot].getOffset();
+	buffer = &allocation.getBuffer();
+	bufferOffset = allocation.getOffset();
 
 	token.m_slot = (token.m_slot + 1) % kMaxFramesInFlight;
 }
 
-void ReadbackManager::getMostRecentReadDataAndRelease(MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut)
+U32 ReadbackManager::findBestSlot(const MultiframeReadbackToken& token) const
 {
-	ANKI_ASSERT(data && dataSize > 0);
-	dataOut = 0;
-
 	const U64 earliestFrame = m_frameId - (kMaxFramesInFlight - 1);
 	U32 bestSlot = kMaxU32;
 	U32 secondBestSlot = kMaxU32;
@@ -54,17 +53,24 @@ void ReadbackManager::getMostRecentReadDataAndRelease(MultiframeReadbackToken& t
 	}
 
 	const U32 slot = (bestSlot != kMaxU32) ? bestSlot : secondBestSlot;
+	return slot;
+}
+
+void ReadbackManager::readMostRecentData(const MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut) const
+{
+	ANKI_ASSERT(data && dataSize > 0);
+	dataOut = 0;
+
+	const U32 slot = findBestSlot(token);
 	if(slot == kMaxU32)
 	{
 		return;
 	}
 
-	GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
+	const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
 	dataOut = min(dataSize, PtrSize(allocation.getAllocatedSize()));
 
-	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()) + allocation.getOffset(), min(dataOut, dataOut));
-
-	GpuReadbackMemoryPool::getSingleton().deferredFree(allocation);
+	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()) + allocation.getOffset(), dataOut);
 }
 
 void ReadbackManager::endFrame(Fence* fence)

@@ -29,7 +29,7 @@ enum class LightComponentType : U8
 };
 
 /// Light component. Contains all the info of lights.
-class LightComponent : public SceneComponent
+class LightComponent : public QueryableSceneComponent<LightComponent>
 {
 	ANKI_SCENE_COMPONENT(LightComponent)
 
@@ -119,7 +119,7 @@ public:
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kPoint);
-		el.m_uuid = m_uuid;
+		el.m_uuid = getUuid();
 		el.m_worldPosition = m_worldTransform.getOrigin().xyz();
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
@@ -130,7 +130,7 @@ public:
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kSpot);
-		el.m_uuid = m_uuid;
+		el.m_uuid = getUuid();
 		el.m_worldTransform = Mat4(m_worldTransform);
 		el.m_textureMatrix = m_spot.m_textureMat;
 		el.m_distance = m_spot.m_distance;
@@ -149,7 +149,6 @@ public:
 	void setupDirectionalLightQueueElement(const Frustum& cameraFrustum, DirectionalLightQueueElement& el, WeakArray<Frustum> cascadeFrustums) const;
 
 private:
-	U64 m_uuid;
 	Vec4 m_diffColor = Vec4(0.5f);
 	Transform m_worldTransform = Transform::getIdentity();
 

@@ -96,7 +96,7 @@ public:
 		return m_visibility;
 	}
 
-	const GpuVisibilityNonRenderables& getGpuVisibilityNonRenderables() const
+	GpuVisibilityNonRenderables& getGpuVisibilityNonRenderables()
 	{
 		return m_nonRenderablesVisibility;
 	}

@@ -8,19 +8,31 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Renderer/Utils/Readback.h>
 
 namespace anki {
 
 /// @addtogroup renderer
 /// @{
 
-/// XXX
+/// Multiple passes for GPU visibility of non-renderable entities.
 class NonRenderableVisibility : public RendererObject
 {
 public:
-	void populateRenderGraph(RenderingContext& rgraph);
+	void populateRenderGraph(RenderingContext& ctx);
 
 private:
+	Array<MultiframeReadbackToken, U32(GpuSceneNonRenderableObjectTypeWithFeedback::kCount)> m_readbacks;
+
+	class
+	{
+	public:
+		Array<Buffer*, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBuffers = {};
+		Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBufferOffsets = {};
+		Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBufferRanges = {};
+
+		Array<WeakArray<U32>, U32(GpuSceneNonRenderableObjectTypeWithFeedback::kCount)> m_uuids;
+	} m_runCtx;
 };
 /// @}
 

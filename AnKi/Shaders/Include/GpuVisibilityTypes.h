@@ -13,13 +13,15 @@ struct GpuVisibilityUniforms
 {
 	Vec4 m_clipPlanes[6u];
 
-	UVec3 m_padding1;
 	U32 m_aabbCount;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
 
 	Vec4 m_maxLodDistances;
 
 	Vec3 m_lodReferencePoint;
-	F32 m_padding2;
+	F32 m_padding3;
 
 	Mat4 m_viewProjectionMat;
 };
@@ -27,6 +29,11 @@ struct GpuVisibilityUniforms
 struct GpuVisibilityNonRenderableUniforms
 {
 	Vec4 m_clipPlanes[6u];
+
+	U32 m_feedbackCounterIdx;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
 };
 
 struct PointLightRendererCacheEntry
