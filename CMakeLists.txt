@@ -137,7 +137,7 @@ else()
 	set(_ANKI_TRACING_ENABLED 0)
 endif()
 
-option(ANKI_STATS "Enable performance statistics. Small overhead" OFF)
+option(ANKI_STATS "Enable performance statistics. Small overhead" ON)
 if(ANKI_STATS)
 	set(_ANKI_STATS_ENABLED 1)
 else()

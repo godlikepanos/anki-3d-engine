@@ -228,7 +228,7 @@ protected:
 	/// @note Not thread-safe.
 	void refreshUuid()
 	{
-		refreshUuidCustom(SceneGraph::getSingleton().getNewUuid());
+		refreshUuidCustom(m_nextUuid.fetchAdd(1));
 	}
 
 	/// @note Not thread-safe.
@@ -275,6 +275,7 @@ private:
 
 	inline static SceneHashMap<U32, T*> m_uuidToSceneComponent;
 	inline static SpinLock m_uuidToSceneComponentLock;
+	inline static Atomic<U32> m_nextUuid = {1};
 };
 /// @}
 

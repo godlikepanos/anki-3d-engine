@@ -1038,7 +1038,6 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		LockGuard<SpinLock> lock(m_cachesMtx);
 
 		DSLayoutCacheEntry* cache = nullptr;
-		U count = 0;
 		for(DSLayoutCacheEntry* it : m_caches)
 		{
 			if(it->m_hash == hash)
@@ -1046,7 +1045,6 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 				cache = it;
 				break;
 			}
-			++count;
 		}
 
 		if(cache == nullptr)

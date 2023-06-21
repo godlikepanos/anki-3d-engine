@@ -531,8 +531,8 @@ Error App::mainLoop()
 					MaliHwCountersOut out;
 					MaliHwCounters::getSingleton().sample(out);
 					g_maliGpuActive.set(out.m_gpuActive);
-					g_maliReadBandwidth.set(out.m_readBandwidth);
-					g_maliWriteBandwidth.set(out.m_writeBandwidth);
+					g_maliGpuReadBandwidth.set(out.m_readBandwidth);
+					g_maliGpuWriteBandwidth.set(out.m_writeBandwidth);
 				}
 #endif
 
