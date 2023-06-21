@@ -4,11 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator HZB_TEST 0 1
-#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 5 // Same as GpuSceneNonRenderableObjectType
+#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 #pragma anki mutator CPU_FEEDBACK 0 1
 
+#pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 1
 #pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 2
-#pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 3
 
 #pragma anki start comp
 
@@ -17,10 +17,8 @@
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
-#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT
-typedef GpuScenePointLight ObjectType;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT
-typedef GpuSceneSpotLight ObjectType;
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+typedef GpuSceneLight ObjectType;
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 typedef GpuSceneDecal ObjectType;
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
@@ -43,12 +41,7 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 [[vk::binding(4)]] RWStructuredBuffer<U32> g_counterBuffer;
 #endif
 
-Vec4 getSphere(GpuScenePointLight l)
-{
-	return Vec4(l.m_position, l.m_radius);
-}
-
-Vec4 getSphere(GpuSceneSpotLight l)
+Vec4 getSphere(GpuSceneLight l)
 {
 	return Vec4(l.m_position, l.m_radius);
 }

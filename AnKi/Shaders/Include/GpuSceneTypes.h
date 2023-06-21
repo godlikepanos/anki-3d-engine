@@ -52,44 +52,25 @@ struct GpuSceneParticleEmitter
 };
 static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 
-/// Point light.
-struct GpuScenePointLight
+/// Point or spot light.
+struct GpuSceneLight
 {
 	Vec3 m_position; ///< Position in world space.
-	RF32 m_radius; ///< Radius
+	RF32 m_radius; ///< Radius.
 
 	RVec3 m_diffuseColor;
 	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
+	U32 m_type; ///< 0: point, 1: spot.
 	U32 m_shadow;
 	U32 m_uuid;
-	U32 m_padding0;
-	U32 m_padding1;
-};
-constexpr U32 kSizeof_GpuScenePointLight = 3u * sizeof(Vec4);
-static_assert(sizeof(GpuScenePointLight) == kSizeof_GpuScenePointLight);
-
-/// Spot light.
-struct GpuSceneSpotLight
-{
-	Vec3 m_position;
-	F32 m_padding0;
-
-	Vec4 m_edgePoints[4u]; ///< Edge points in world space.
-
-	RVec3 m_diffuseColor;
-	RF32 m_radius; ///< Max distance.
+	F32 m_innerCos; ///< Only for spot light.
 
 	RVec3 m_direction; ///< Light direction.
-	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	RF32 m_outerCos; ///< Only for spot light.
 
-	U32 m_shadow;
-	RF32 m_outerCos;
-	RF32 m_innerCos;
-	U32 m_uuid;
+	Vec4 m_edgePoints[4u]; ///< Edge points in world space. Only for spot light.
 };
-constexpr U32 kSizeof_GpuSceneSpotLight = 8u * sizeof(Vec4);
-static_assert(sizeof(GpuSceneSpotLight) == kSizeof_GpuSceneSpotLight);
 
 /// Representation of a reflection probe.
 struct GpuSceneReflectionProbe
@@ -158,8 +139,7 @@ static_assert(sizeof(GpuSceneFogDensityVolume) == kSizeof_GpuSceneFogDensityVolu
 
 enum class GpuSceneNonRenderableObjectType : U32
 {
-	kPointLight,
-	kSpotLight,
+	kLight,
 	kDecal,
 	kFogDensityVolume,
 	kReflectionProbe,
@@ -170,31 +150,28 @@ enum class GpuSceneNonRenderableObjectType : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectType)
 
-#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_POINT_LIGHT 0
-#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_SPOT_LIGHT 1
-#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL 2
-#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME 3
-#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE 4
-#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE 5
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT 0
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL 1
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME 2
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE 3
+#define ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE 4
 
 enum class GpuSceneNonRenderableObjectTypeBit : U32
 {
 	kNone = 0,
 
-	kPointLight = 1 << 0,
-	kSpotLight = 1 << 1,
-	kDecal = 1 << 2,
-	kFogDensityVolume = 1 << 3,
-	kReflectionProbe = 1 << 4,
-	kGlobalIlluminationProbe = 1 << 5,
+	kPLight = 1 << 0,
+	kDecal = 1 << 1,
+	kFogDensityVolume = 1 << 2,
+	kReflectionProbe = 1 << 3,
+	kGlobalIlluminationProbe = 1 << 4,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneNonRenderableObjectTypeBit)
 
 /// Non-renderable types that require GPU to CPU feedback.
 enum class GpuSceneNonRenderableObjectTypeWithFeedback : U32
 {
-	kPointLight,
-	kSpotLight,
+	kLight,
 	kReflectionProbe,
 	kGlobalIlluminationProbe,
 

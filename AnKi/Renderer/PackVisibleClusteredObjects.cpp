@@ -10,6 +10,7 @@
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Scene/ContiguousArrayAllocator.h>
 
 namespace anki {
 
@@ -54,7 +55,7 @@ Error PackVisibleClusteredObjects::init()
 }
 
 template<typename TClustererType, ClusteredObjectType kType, typename TRenderQueueElement>
-void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue, CommandBuffer& cmdb)
+void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> array, CommandBuffer& cmdb)
 {
 	if(array.getSize() == 0)
 	{
@@ -110,8 +111,32 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		}
 	}
 
-	cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), rqueue.m_clustererObjectsArrayOffsets[kType],
-						   rqueue.m_clustererObjectsArrayRanges[kType]);
+	GpuSceneContiguousArrayType arrayType;
+	switch(kType)
+	{
+	case ClusteredObjectType::kPointLight:
+	case ClusteredObjectType::kSpotLight:
+		arrayType = GpuSceneContiguousArrayType::kLights;
+		break;
+	case ClusteredObjectType::kDecal:
+		arrayType = GpuSceneContiguousArrayType::kDecals;
+		break;
+	case ClusteredObjectType::kFogDensityVolume:
+		arrayType = GpuSceneContiguousArrayType::kFogDensityVolumes;
+		break;
+	case ClusteredObjectType::kGlobalIlluminationProbe:
+		arrayType = GpuSceneContiguousArrayType::kGlobalIlluminationProbes;
+		break;
+	case ClusteredObjectType::kReflectionProbe:
+		arrayType = GpuSceneContiguousArrayType::kReflectionProbes;
+		break;
+	default:
+		arrayType = GpuSceneContiguousArrayType::kCount;
+	}
+
+	cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneContiguousArrays::getSingleton().getArrayBaseOffset(arrayType),
+						   GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType)
+							   * GpuSceneContiguousArrays::getSingleton().getElementSize(arrayType));
 
 	cmdb.bindStorageBuffer(0, 1, m_allClustererObjects.get(), m_structureBufferOffsets[kType], array.getSize() * sizeof(TClustererType));
 
@@ -145,12 +170,12 @@ void PackVisibleClusteredObjects::populateRenderGraph(RenderingContext& ctx)
 		const RenderQueue& rqueue = *ctx.m_renderQueue;
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		dispatchType<PointLight, ClusteredObjectType::kPointLight>(rqueue.m_pointLights, rqueue, cmdb);
-		dispatchType<SpotLight, ClusteredObjectType::kSpotLight>(rqueue.m_spotLights, rqueue, cmdb);
-		dispatchType<Decal, ClusteredObjectType::kDecal>(rqueue.m_decals, rqueue, cmdb);
-		dispatchType<FogDensityVolume, ClusteredObjectType::kFogDensityVolume>(rqueue.m_fogDensityVolumes, rqueue, cmdb);
-		dispatchType<ReflectionProbe, ClusteredObjectType::kReflectionProbe>(rqueue.m_reflectionProbes, rqueue, cmdb);
-		dispatchType<GlobalIlluminationProbe, ClusteredObjectType::kGlobalIlluminationProbe>(rqueue.m_giProbes, rqueue, cmdb);
+		dispatchType<PointLight, ClusteredObjectType::kPointLight>(rqueue.m_pointLights, cmdb);
+		dispatchType<SpotLight, ClusteredObjectType::kSpotLight>(rqueue.m_spotLights, cmdb);
+		dispatchType<Decal, ClusteredObjectType::kDecal>(rqueue.m_decals, cmdb);
+		dispatchType<FogDensityVolume, ClusteredObjectType::kFogDensityVolume>(rqueue.m_fogDensityVolumes, cmdb);
+		dispatchType<ReflectionProbe, ClusteredObjectType::kReflectionProbe>(rqueue.m_reflectionProbes, cmdb);
+		dispatchType<GlobalIlluminationProbe, ClusteredObjectType::kGlobalIlluminationProbe>(rqueue.m_giProbes, cmdb);
 	});
 }
 

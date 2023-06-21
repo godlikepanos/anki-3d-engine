@@ -44,7 +44,7 @@ private:
 	U32 m_threadGroupSize = 0;
 
 	template<typename TClustererType, ClusteredObjectType kType, typename TRenderQueueElement>
-	void dispatchType(WeakArray<TRenderQueueElement> array, const RenderQueue& rqueue, CommandBuffer& cmdb);
+	void dispatchType(WeakArray<TRenderQueueElement> array, CommandBuffer& cmdb);
 };
 /// @}
 

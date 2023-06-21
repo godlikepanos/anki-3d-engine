@@ -13,12 +13,12 @@
 
 #if OBJECT_TYPE == 0
 typedef PointLight ClusteredType;
-typedef GpuScenePointLight GpuSceneType;
+typedef GpuSceneLight GpuSceneType;
 
 [[vk::binding(3)]] StructuredBuffer<PointLightExtra> g_extras;
 #elif OBJECT_TYPE == 1
 typedef SpotLight ClusteredType;
-typedef GpuSceneSpotLight GpuSceneType;
+typedef GpuSceneLight GpuSceneType;
 
 [[vk::binding(3)]] StructuredBuffer<SpotLightExtra> g_extras;
 #elif OBJECT_TYPE == 2
@@ -60,7 +60,7 @@ struct Uniforms
 	}
 
 #if OBJECT_TYPE == 0
-	const GpuScenePointLight input = g_inBuffer[g_indices[idxOut]];
+	const GpuSceneLight input = g_inBuffer[g_indices[idxOut]];
 	const PointLightExtra extra = g_extras[idxOut];
 
 	PointLight output;
@@ -74,7 +74,7 @@ struct Uniforms
 
 	g_outBuffer[idxOut] = output;
 #elif OBJECT_TYPE == 1
-	const GpuSceneSpotLight input = g_inBuffer[g_indices[idxOut]];
+	const GpuSceneLight input = g_inBuffer[g_indices[idxOut]];
 	const SpotLightExtra extra = g_extras[idxOut];
 
 	SpotLight output;

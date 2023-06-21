@@ -55,13 +55,9 @@ void LightComponent::setLightComponentType(LightComponentType type)
 		GpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneLightIndex);
 	}
 
-	if(!m_gpuSceneLightIndex.isValid() && type == LightComponentType::kPoint)
+	if(!m_gpuSceneLightIndex.isValid() && (type == LightComponentType::kPoint || type == LightComponentType::kSpot))
 	{
-		m_gpuSceneLightIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kPointLights);
-	}
-	else if(!m_gpuSceneLightIndex.isValid() && type == LightComponentType::kSpot)
-	{
-		m_gpuSceneLightIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kSpotLights);
+		m_gpuSceneLightIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kLights);
 	}
 
 	m_type = type;
@@ -128,7 +124,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Upload to the GPU scene
-		GpuScenePointLight gpuLight;
+		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
 		gpuLight.m_radius = m_point.m_radius;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
@@ -195,7 +191,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Upload to the GPU scene
-		GpuSceneSpotLight gpuLight;
+		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
 		for(U32 i = 0; i < 4; ++i)
 		{

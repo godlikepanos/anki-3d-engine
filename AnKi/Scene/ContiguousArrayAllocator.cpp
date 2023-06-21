@@ -97,19 +97,13 @@ GpuSceneContiguousArrays::GpuSceneContiguousArrays()
 	const ConfigSet& cfg = ConfigSet::getSingleton();
 	constexpr F32 kGrowRate = 2.0;
 
-	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {cfg.getSceneMinGpuSceneTransforms(),
-																				  cfg.getSceneMinGpuSceneMeshes(),
-																				  cfg.getSceneMinGpuSceneParticleEmitters(),
-																				  cfg.getSceneMinGpuSceneLights(),
-																				  cfg.getSceneMinGpuSceneLights(),
-																				  cfg.getSceneMinGpuSceneReflectionProbes(),
-																				  cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
-																				  cfg.getSceneMinGpuSceneDecals(),
-																				  cfg.getSceneMinGpuSceneFogDensityVolumes(),
-																				  cfg.getSceneMinGpuSceneRenderables(),
-																				  cfg.getSceneMinGpuSceneRenderables(),
-																				  cfg.getSceneMinGpuSceneRenderables(),
-																				  cfg.getSceneMinGpuSceneRenderables()};
+	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {
+		cfg.getSceneMinGpuSceneTransforms(),       cfg.getSceneMinGpuSceneMeshes(),
+		cfg.getSceneMinGpuSceneParticleEmitters(), cfg.getSceneMinGpuSceneLights(),
+		cfg.getSceneMinGpuSceneReflectionProbes(), cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
+		cfg.getSceneMinGpuSceneDecals(),           cfg.getSceneMinGpuSceneFogDensityVolumes(),
+		cfg.getSceneMinGpuSceneRenderables(),      cfg.getSceneMinGpuSceneRenderables(),
+		cfg.getSceneMinGpuSceneRenderables(),      cfg.getSceneMinGpuSceneRenderables()};
 
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{

@@ -794,20 +794,6 @@ void CombineResultsTask::combine()
 				  }
 			  });
 
-	const GpuSceneContiguousArrays& arrays = GpuSceneContiguousArrays::getSingleton();
-
-	auto setOffset = [&](ClusteredObjectType type, GpuSceneContiguousArrayType type2) {
-		results.m_clustererObjectsArrayOffsets[type] = arrays.getElementCount(type2) ? arrays.getArrayBaseOffset(type2) : 0;
-		results.m_clustererObjectsArrayRanges[type] = arrays.getElementCount(type2) * arrays.getElementSize(type2);
-	};
-
-	setOffset(ClusteredObjectType::kPointLight, GpuSceneContiguousArrayType::kPointLights);
-	setOffset(ClusteredObjectType::kSpotLight, GpuSceneContiguousArrayType::kSpotLights);
-	setOffset(ClusteredObjectType::kDecal, GpuSceneContiguousArrayType::kDecals);
-	setOffset(ClusteredObjectType::kFogDensityVolume, GpuSceneContiguousArrayType::kFogDensityVolumes);
-	setOffset(ClusteredObjectType::kGlobalIlluminationProbe, GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
-	setOffset(ClusteredObjectType::kReflectionProbe, GpuSceneContiguousArrayType::kReflectionProbes);
-
 	// Cleanup
 	if(m_frcCtx->m_r)
 	{

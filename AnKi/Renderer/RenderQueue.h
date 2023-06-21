@@ -420,9 +420,6 @@ public:
 	ReflectionProbeQueueElementForRefresh* m_reflectionProbeForRefresh = nullptr;
 	GlobalIlluminationProbeQueueElementForRefresh* m_giProbeForRefresh = nullptr;
 
-	Array<PtrSize, U32(ClusteredObjectType::kCount)> m_clustererObjectsArrayOffsets = {};
-	Array<PtrSize, U32(ClusteredObjectType::kCount)> m_clustererObjectsArrayRanges = {};
-
 	RenderQueue()
 	{
 		zeroMemory(m_directionalLight);

@@ -175,11 +175,8 @@ inline GpuSceneContiguousArrayType gpuSceneNonRenderableObjectTypeToGpuSceneCont
 	GpuSceneContiguousArrayType out;
 	switch(type)
 	{
-	case GpuSceneNonRenderableObjectType::kPointLight:
-		out = GpuSceneContiguousArrayType::kPointLights;
-		break;
-	case GpuSceneNonRenderableObjectType::kSpotLight:
-		out = GpuSceneContiguousArrayType::kSpotLights;
+	case GpuSceneNonRenderableObjectType::kLight:
+		out = GpuSceneContiguousArrayType::kLights;
 		break;
 	case GpuSceneNonRenderableObjectType::kDecal:
 		out = GpuSceneContiguousArrayType::kDecals;

@@ -55,11 +55,8 @@ inline GpuSceneNonRenderableObjectTypeWithFeedback toGpuSceneNonRenderableObject
 	GpuSceneNonRenderableObjectTypeWithFeedback ret;
 	switch(type)
 	{
-	case GpuSceneNonRenderableObjectType::kPointLight:
-		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kPointLight;
-		break;
-	case GpuSceneNonRenderableObjectType::kSpotLight:
-		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kSpotLight;
+	case GpuSceneNonRenderableObjectType::kLight:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kLight;
 		break;
 	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
 		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kGlobalIlluminationProbe;
