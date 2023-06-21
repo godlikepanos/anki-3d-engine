@@ -65,11 +65,6 @@ void LightComponent::setLightComponentType(LightComponentType type)
 	}
 
 	m_type = type;
-
-	if(type != LightComponentType::kDirectional)
-	{
-		refreshUuid();
-	}
 }
 
 Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)

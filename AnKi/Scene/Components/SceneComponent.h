@@ -213,16 +213,31 @@ public:
 
 	static T* tryFindComponent(U32 uuid)
 	{
+		ANKI_ASSERT(uuid != 0);
 		auto it = m_uuidToSceneComponent.find(uuid);
 		return (it != m_uuidToSceneComponent.getEnd()) ? *it : nullptr;
+	}
+
+	static T* tryFindComponentThreadSafe(U32 uuid)
+	{
+		LockGuard lock(m_uuidToSceneComponentLock);
+		return tryFindComponent(uuid);
 	}
 
 protected:
 	/// @note Not thread-safe.
 	void refreshUuid()
 	{
+		refreshUuidCustom(SceneGraph::getSingleton().getNewUuid());
+	}
+
+	/// @note Not thread-safe.
+	void refreshUuidCustom(U32 customUuid)
+	{
+		ANKI_ASSERT(customUuid != 0);
+
 		const U32 oldUuid = m_uuid;
-		m_uuid = SceneGraph::getSingleton().getNewUuid();
+		m_uuid = customUuid;
 
 		LockGuard lock(m_uuidToSceneComponentLock);
 		if(oldUuid != 0)
