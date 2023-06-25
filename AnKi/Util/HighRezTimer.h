@@ -35,7 +35,7 @@ public:
 	static ANKI_PURE U64 getCurrentTimeUs();
 
 	/// Micro sleep. The resolution is in nanoseconds.
-	static ANKI_PURE void sleep(Second seconds);
+	static void sleep(Second seconds);
 
 private:
 	Second m_startTime = 0.0;

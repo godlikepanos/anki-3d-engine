@@ -591,11 +591,11 @@ private:
 		}
 		else if(offsetA <= offsetB)
 		{
-			return offsetA + rangeA >= offsetB;
+			return offsetA + rangeA > offsetB;
 		}
 		else
 		{
-			return offsetB + rangeB >= offsetA;
+			return offsetB + rangeB > offsetA;
 		}
 	}
 };

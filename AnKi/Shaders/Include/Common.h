@@ -54,6 +54,9 @@ ANKI_END_NAMESPACE
 
 #	define constexpr static const
 
+// Workaround until DXC fixes a bug
+#	define nointerpolation
+
 template<typename T>
 void maybeUnused(T a)
 {
