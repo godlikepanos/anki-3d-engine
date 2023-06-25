@@ -63,13 +63,7 @@ public:
 	const RenderTargetHandle* m_hzbRt = nullptr;
 	RenderGraphDescription* m_rgraph = nullptr;
 
-	class
-	{
-	public:
-		Buffer* m_buffer = nullptr;
-		PtrSize m_bufferOffset = 0;
-		PtrSize m_bufferRange = 0;
-	} m_cpuFeedback;
+	BufferOffsetRange m_cpuFeedbackBuffer; ///< Optional.
 };
 
 /// @memberof GpuVisibilityNonRenderables
@@ -77,10 +71,7 @@ class GpuVisibilityNonRenderablesOutput
 {
 public:
 	BufferHandle m_bufferHandle; ///< Some buffer handle to be used for tracking. No need to track all buffers.
-
-	Buffer* m_visibleIndicesBuffer = nullptr;
-	PtrSize m_visibleIndicesBufferOffset = 0;
-	PtrSize m_visibleIndicesBufferRange = 0;
+	BufferOffsetRange m_visiblesBuffer;
 };
 
 /// GPU visibility of lights, probes etc.

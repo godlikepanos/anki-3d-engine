@@ -275,14 +275,14 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		return;
 	}
 
-	if(in.m_cpuFeedback.m_buffer)
+	if(in.m_cpuFeedbackBuffer.m_buffer)
 	{
-		ANKI_ASSERT(in.m_cpuFeedback.m_bufferRange == sizeof(U32) * (objCount + 1));
+		ANKI_ASSERT(in.m_cpuFeedbackBuffer.m_range == sizeof(U32) * (objCount + 1));
 	}
 
 	// Find the counter buffer required for feedback
 	U32 counterBufferIdx = kMaxU32;
-	if(in.m_cpuFeedback.m_buffer)
+	if(in.m_cpuFeedbackBuffer.m_buffer)
 	{
 		if(m_lastFrameIdx != getRenderer().getFrameCount())
 		{
@@ -299,14 +299,14 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	U32* indices = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(objCount + 1, visibleIndicesAlloc);
 	indices[0] = 0;
 
-	out.m_visibleIndicesBuffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
-	out.m_visibleIndicesBufferOffset = visibleIndicesAlloc.m_offset;
-	out.m_visibleIndicesBufferRange = visibleIndicesAlloc.m_range;
+	out.m_visiblesBuffer.m_buffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
+	out.m_visiblesBuffer.m_offset = visibleIndicesAlloc.m_offset;
+	out.m_visiblesBuffer.m_range = visibleIndicesAlloc.m_range;
 
 	// Import buffers
 	RenderGraphDescription& rgraph = *in.m_rgraph;
 	out.m_bufferHandle =
-		rgraph.importBuffer(out.m_visibleIndicesBuffer, BufferUsageBit::kNone, out.m_visibleIndicesBufferOffset, out.m_visibleIndicesBufferRange);
+		rgraph.importBuffer(out.m_visiblesBuffer.m_buffer, BufferUsageBit::kNone, out.m_visiblesBuffer.m_offset, out.m_visiblesBuffer.m_range);
 
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
@@ -319,15 +319,14 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
 	}
 
-	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedback.m_buffer, feedbackBufferOffset = in.m_cpuFeedback.m_bufferOffset,
-				  feedbackBufferRange = in.m_cpuFeedback.m_bufferRange, viewProjectionMat = in.m_viewProjectionMat,
+	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
 				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBufferIdx,
 				  counterIdx = m_counterIdx[counterBufferIdx]](RenderPassWorkContext& rgraph) {
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 		const GpuSceneContiguousArrayType arrayType = gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(objType);
 		const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
 		const GpuSceneContiguousArrays& cArrays = GpuSceneContiguousArrays::getSingleton();
-		const Bool needsFeedback = feedbackBuffer != nullptr;
+		const Bool needsFeedback = feedbackBuffer.m_buffer != nullptr;
 
 		cmdb.bindShaderProgram(m_grProgs[0][objType][needsFeedback].get());
 
@@ -349,7 +348,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 		if(needsFeedback)
 		{
-			cmdb.bindStorageBuffer(0, 3, feedbackBuffer, feedbackBufferOffset, feedbackBufferRange);
+			cmdb.bindStorageBuffer(0, 3, feedbackBuffer.m_buffer, feedbackBuffer.m_offset, feedbackBuffer.m_range);
 			cmdb.bindStorageBuffer(0, 4, m_counterBuffers[counterBufferIdx].get(), 0, kMaxPtrSize);
 		}
 

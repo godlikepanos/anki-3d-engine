@@ -56,9 +56,9 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 			}
 
 			// Allocate feedback buffer for this frame
-			in.m_cpuFeedback.m_bufferRange = (objCount + 1) * sizeof(U32);
-			getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], in.m_cpuFeedback.m_bufferRange, in.m_cpuFeedback.m_buffer,
-															in.m_cpuFeedback.m_bufferOffset);
+			in.m_cpuFeedbackBuffer.m_range = (objCount + 1) * sizeof(U32);
+			getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], in.m_cpuFeedbackBuffer.m_range,
+															in.m_cpuFeedbackBuffer.m_buffer, in.m_cpuFeedbackBuffer.m_offset);
 		}
 
 		GpuVisibilityNonRenderablesOutput out;

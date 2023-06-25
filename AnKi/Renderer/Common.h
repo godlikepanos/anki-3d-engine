@@ -102,67 +102,13 @@ public:
 	RenderingContext& operator=(const RenderingContext&) = delete;
 };
 
-/// A convenience function to find empty cache entries. Used for various probes.
-template<typename THashMap, typename TCacheEntryArray, typename TMemPool>
-U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map, TMemPool& pool)
+class BufferOffsetRange
 {
-	ANKI_ASSERT(uuid > 0);
-
-	// First, try to see if the UUID is in the cache
-	auto it = map.find(uuid);
-	if(it != map.getEnd()) [[likely]]
-	{
-		const U32 cacheEntryIdx = *it;
-		if(entries[cacheEntryIdx].m_uuid == uuid)
-		{
-			// Found it
-			return cacheEntryIdx;
-		}
-		else
-		{
-			// Cache entry is wrong, remove it
-			map.erase(pool, it);
-		}
-	}
-
-	// 2nd and 3rd choice, find an empty entry or some entry to re-use
-	U32 emptyCacheEntryIdx = kMaxU32;
-	U32 cacheEntryIdxToKick = kMaxU32;
-	Timestamp cacheEntryIdxToKickMinTimestamp = kMaxTimestamp;
-	for(U32 cacheEntryIdx = 0; cacheEntryIdx < entries.getSize(); ++cacheEntryIdx)
-	{
-		if(entries[cacheEntryIdx].m_uuid == 0) [[likely]]
-		{
-			// Found an empty
-			emptyCacheEntryIdx = cacheEntryIdx;
-			break;
-		}
-		else if(entries[cacheEntryIdx].m_lastUsedTimestamp != crntTimestamp
-				&& entries[cacheEntryIdx].m_lastUsedTimestamp < cacheEntryIdxToKickMinTimestamp)
-		{
-			// Found some with low timestamp
-			cacheEntryIdxToKick = cacheEntryIdx;
-			cacheEntryIdxToKickMinTimestamp = entries[cacheEntryIdx].m_lastUsedTimestamp;
-		}
-	}
-
-	U32 outCacheEntryIdx;
-	if(emptyCacheEntryIdx != kMaxU32)
-	{
-		outCacheEntryIdx = emptyCacheEntryIdx;
-	}
-	else if(cacheEntryIdxToKick != kMaxU32)
-	{
-		outCacheEntryIdx = cacheEntryIdxToKick;
-	}
-	else
-	{
-		// We are out of cache entries. Return OOM
-		outCacheEntryIdx = kMaxU32;
-	}
-
-	return outCacheEntryIdx;
-}
+public:
+	Buffer* m_buffer = nullptr;
+	PtrSize m_offset = kMaxPtrSize;
+	PtrSize m_range = 0;
+};
 
 /// Choose the detail of a shadow cascade. 0 means high detail and >0 is progressively lower.
 inline U32 chooseDirectionalLightShadowCascadeDetail(U32 cascade)
