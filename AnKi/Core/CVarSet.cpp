@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Xml.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/File.h>

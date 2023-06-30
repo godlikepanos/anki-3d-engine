@@ -7,7 +7,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/ThreadHive.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Plane.h>

@@ -6,5 +6,5 @@
 #pragma once
 
 #include <AnKi/Core/App.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/CoreTracer.h>

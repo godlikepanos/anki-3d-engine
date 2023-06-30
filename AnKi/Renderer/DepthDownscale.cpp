@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push

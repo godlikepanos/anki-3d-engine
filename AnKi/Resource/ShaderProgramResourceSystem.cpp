@@ -13,7 +13,7 @@
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/BitSet.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/LightShading.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

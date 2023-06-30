@@ -11,7 +11,7 @@
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

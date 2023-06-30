@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/Tonemapping.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

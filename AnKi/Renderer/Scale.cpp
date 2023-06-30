@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/TemporalAA.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/MotionVectors.h>

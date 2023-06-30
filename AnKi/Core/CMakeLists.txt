@@ -1,6 +1,6 @@
 set(sources
 	App.cpp
-	ConfigSet.cpp
+	CVarSet.cpp
 	DeveloperConsole.cpp
 	CoreTracer.cpp
 	MaliHwCounters.cpp
@@ -12,11 +12,9 @@ set(sources
 	GpuMemory/GpuReadbackMemoryPool.cpp)
 
 set(headers
-	AllConfigVars.defs.h
 	App.h
 	Common.h
-	ConfigSet.h
-	ConfigVars.defs.h
+	CVarSet.h
 	CoreTracer.h
 	DeveloperConsole.h
 	MaliHwCounters.h

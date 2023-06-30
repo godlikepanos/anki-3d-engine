@@ -7,7 +7,7 @@
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Filesystem.h>
 
 namespace anki {

@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Functions.h>

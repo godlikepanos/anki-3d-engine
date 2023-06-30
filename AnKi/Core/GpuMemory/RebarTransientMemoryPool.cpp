@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>

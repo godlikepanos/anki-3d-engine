@@ -9,7 +9,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/ProbeReflections.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/HighRezTimer.h>

@@ -5,7 +5,7 @@
 
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <ZLib/contrib/minizip/unzip.h>
 #if ANKI_OS_ANDROID

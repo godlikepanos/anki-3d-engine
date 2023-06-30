@@ -10,7 +10,7 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

@@ -13,7 +13,7 @@
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Util/ThreadHive.h>

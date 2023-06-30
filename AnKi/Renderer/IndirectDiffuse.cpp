@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

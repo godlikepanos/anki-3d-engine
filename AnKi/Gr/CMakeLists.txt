@@ -12,7 +12,6 @@ set(common_headers
 	Buffer.h
 	CommandBuffer.h
 	Common.h
-	ConfigVars.defs.h
 	Fence.h
 	Format.defs.h
 	Framebuffer.h

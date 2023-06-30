@@ -5,7 +5,7 @@
 
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/ResourceManager.h>

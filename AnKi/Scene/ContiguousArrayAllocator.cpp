@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/ContiguousArrayAllocator.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Gr/GrManager.h>
 
 namespace anki {

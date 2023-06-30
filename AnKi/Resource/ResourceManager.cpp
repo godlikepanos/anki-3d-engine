@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ShaderProgramResourceSystem.h>
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/MeshResource.h>

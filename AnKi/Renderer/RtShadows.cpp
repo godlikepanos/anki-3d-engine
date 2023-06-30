@@ -14,7 +14,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>

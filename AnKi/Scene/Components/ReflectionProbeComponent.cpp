@@ -7,7 +7,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

@@ -8,7 +8,7 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Util/String.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

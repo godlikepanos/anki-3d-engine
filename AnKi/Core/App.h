@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>

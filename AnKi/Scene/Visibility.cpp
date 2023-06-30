@@ -20,7 +20,7 @@
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/ThreadHive.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

@@ -12,7 +12,7 @@
 #include <AnKi/Scene.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Collision/ConvexHullShape.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 

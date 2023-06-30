@@ -7,7 +7,7 @@
 
 #include <AnKi/Gr.h>
 #include <AnKi/Util/Ptr.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Scene/ContiguousArrayAllocator.h>

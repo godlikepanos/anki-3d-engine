@@ -9,7 +9,7 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>

@@ -10,7 +10,7 @@
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/App.h>
 
 namespace anki {

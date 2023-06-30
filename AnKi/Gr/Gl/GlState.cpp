@@ -8,7 +8,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Core/Trace.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <algorithm>
 #include <cstring>
 

@@ -10,7 +10,7 @@
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Ptr.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

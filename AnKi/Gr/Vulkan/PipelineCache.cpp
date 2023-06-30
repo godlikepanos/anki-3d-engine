@@ -5,7 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/PipelineCache.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/File.h>
 

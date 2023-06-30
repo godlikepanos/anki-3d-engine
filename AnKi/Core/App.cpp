@@ -5,7 +5,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Core/App.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/File.h>
