@@ -16,6 +16,18 @@
 
 namespace anki {
 
+static NumericCVar<U32> g_indirectDiffuseSsgiSampleCountCVar(CVarSubsystem::kRenderer, "IndirectDiffuseSsgiSampleCount", 8, 1, 1024,
+															 "SSGI sample count");
+static NumericCVar<F32> g_indirectDiffuseSsgiRadiusCVar(CVarSubsystem::kRenderer, "IndirectDiffuseSsgiRadius", 2.0f, 0.1f, 100.0f,
+														"SSGI radius in meters");
+static NumericCVar<U32> g_indirectDiffuseDenoiseSampleCountCVar(CVarSubsystem::kRenderer, "IndirectDiffuseDenoiseSampleCount", 4, 1, 128,
+																"Indirect diffuse denoise sample count");
+static NumericCVar<F32> g_indirectDiffuseSsaoStrengthCVar(CVarSubsystem::kRenderer, "IndirectDiffuseSsaoStrength", 2.5f, 0.1f, 10.0f,
+														  "SSAO strength");
+static NumericCVar<F32> g_indirectDiffuseSsaoBiasCVar(CVarSubsystem::kRenderer, "IndirectDiffuseSsaoBias", -0.1f, -10.0f, 10.0f, "SSAO bias");
+static NumericCVar<F32> g_indirectDiffuseVrsDistanceThresholdCVar(CVarSubsystem::kRenderer, "IndirectDiffuseVrsDistanceThreshold", 0.01f, 0.00001f,
+																  10.0f, "The meters that control the VRS SRI generation");
+
 Error IndirectDiffuse::init()
 {
 	const Error err = initInternal();
@@ -33,7 +45,7 @@ Error IndirectDiffuse::initInternal()
 
 	ANKI_R_LOGV("Initializing indirect diffuse. Resolution %ux%u", size.x(), size.y());
 
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Init textures
 	TextureUsageBit usage = TextureUsageBit::kAllSampled;
@@ -52,7 +64,7 @@ Error IndirectDiffuse::initInternal()
 	}
 
 	// Init VRS SRI generation
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && !preferCompute;
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && !preferCompute;
 	if(enableVrs)
 	{
 		m_vrs.m_sriTexelDimension = GrManager::getSingleton().getDeviceCapabilities().m_minShadingRateImageTexelSize;
@@ -84,7 +96,7 @@ Error IndirectDiffuse::initInternal()
 			variantInit.addMutation("SHARED_MEMORY", 1);
 		}
 
-		variantInit.addMutation("LIMIT_RATE_TO_2X2", ConfigSet::getSingleton().getRVrsLimitTo2x2());
+		variantInit.addMutation("LIMIT_RATE_TO_2X2", g_vrsLimitTo2x2CVar.get());
 
 		const ShaderProgramResourceVariant* variant;
 		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
@@ -132,8 +144,8 @@ Error IndirectDiffuse::initInternal()
 void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && !preferCompute;
+	const Bool preferCompute = g_preferComputeCVar.get();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && !preferCompute;
 	const Bool fbDescrHasVrs = m_main.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(!preferCompute && enableVrs != fbDescrHasVrs)
@@ -182,7 +194,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 				Mat4 m_invertedProjectionJitter;
 			} pc;
 
-			pc.m_v4 = Vec4(1.0f / Vec2(viewport), ConfigSet::getSingleton().getRIndirectDiffuseVrsDistanceThreshold(), 0.0f);
+			pc.m_v4 = Vec4(1.0f / Vec2(viewport), g_indirectDiffuseVrsDistanceThresholdCVar.get(), 0.0f);
 			pc.m_invertedProjectionJitter = ctx.m_matrices.m_invertedProjectionJitter;
 
 			cmdb.setPushConstants(&pc, sizeof(pc));
@@ -268,7 +280,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 8, getRenderer().getMotionVectors().getMotionVectorsRt());
 			rgraphCtx.bindColorTexture(0, 9, getRenderer().getMotionVectors().getHistoryLengthRt());
 
-			if(ConfigSet::getSingleton().getRPreferCompute())
+			if(g_preferComputeCVar.get())
 			{
 				rgraphCtx.bindImage(0, 10, m_runCtx.m_mainRtHandles[kWrite]);
 			}
@@ -281,14 +293,14 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
 			const Mat4& pmat = ctx.m_matrices.m_projection;
 			unis.m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
-			unis.m_radius = ConfigSet::getSingleton().getRIndirectDiffuseSsgiRadius();
-			unis.m_sampleCount = ConfigSet::getSingleton().getRIndirectDiffuseSsgiSampleCount();
+			unis.m_radius = g_indirectDiffuseSsgiRadiusCVar.get();
+			unis.m_sampleCount = g_indirectDiffuseSsgiSampleCountCVar.get();
 			unis.m_sampleCountf = F32(unis.m_sampleCount);
-			unis.m_ssaoBias = ConfigSet::getSingleton().getRIndirectDiffuseSsaoBias();
-			unis.m_ssaoStrength = ConfigSet::getSingleton().getRIndirectDiffuseSsaoStrength();
+			unis.m_ssaoBias = g_indirectDiffuseSsaoBiasCVar.get();
+			unis.m_ssaoStrength = g_indirectDiffuseSsaoStrengthCVar.get();
 			cmdb.setPushConstants(&unis, sizeof(unis));
 
-			if(ConfigSet::getSingleton().getRPreferCompute())
+			if(g_preferComputeCVar.get())
 			{
 				dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
 			}
@@ -347,7 +359,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			hizSubresource.m_mipmapCount = 1;
 			rgraphCtx.bindTexture(0, 2, getRenderer().getDepthDownscale().getHiZRt(), hizSubresource);
 
-			if(ConfigSet::getSingleton().getRPreferCompute())
+			if(g_preferComputeCVar.get())
 			{
 				rgraphCtx.bindImage(0, 3, m_runCtx.m_mainRtHandles[!readIdx]);
 			}
@@ -356,12 +368,12 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			unis.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 			unis.m_viewportSize = getRenderer().getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
-			unis.m_sampleCountDiv2 = F32(ConfigSet::getSingleton().getRIndirectDiffuseDenoiseSampleCount());
+			unis.m_sampleCountDiv2 = F32(g_indirectDiffuseDenoiseSampleCountCVar.get());
 			unis.m_sampleCountDiv2 = max(1.0f, std::round(unis.m_sampleCountDiv2 / 2.0f));
 
 			cmdb.setPushConstants(&unis, sizeof(unis));
 
-			if(ConfigSet::getSingleton().getRPreferCompute())
+			if(g_preferComputeCVar.get())
 			{
 				dispatchPPCompute(cmdb, 8, 8, unis.m_viewportSize.x(), unis.m_viewportSize.y());
 			}

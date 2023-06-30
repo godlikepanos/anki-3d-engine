@@ -127,6 +127,24 @@ private:
 
 template<typename T>
 T MakeSingletonSimple<T>::m_global;
+
+/// If class inherits that it will become a singleton. This is a simple version with implicit init.
+template<typename T>
+class MakeSingletonLazyInit
+{
+public:
+	ANKI_FORCE_INLINE static T& getSingleton()
+	{
+		if(m_global == nullptr) [[unlikely]]
+		{
+			m_global = new T;
+		}
+		return *m_global;
+	}
+
+private:
+	static inline T* m_global = nullptr;
+};
 /// @}
 
 } // end namespace anki

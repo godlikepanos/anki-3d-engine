@@ -136,9 +136,9 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 		effectiveDistance = max(effectiveDistance, m_halfSize.z());
-		effectiveDistance = max(effectiveDistance, ConfigSet::getSingleton().getSceneProbeEffectiveDistance());
+		effectiveDistance = max(effectiveDistance, g_probeEffectiveDistanceCVar.get());
 
-		const F32 shadowCascadeDistance = min(effectiveDistance, ConfigSet::getSingleton().getSceneProbeShadowEffectiveDistance());
+		const F32 shadowCascadeDistance = min(effectiveDistance, g_probeShadowEffectiveDistanceCVar.get());
 
 		for(U32 i = 0; i < 6; ++i)
 		{

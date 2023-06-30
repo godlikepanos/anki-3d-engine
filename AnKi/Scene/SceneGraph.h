@@ -11,12 +11,15 @@
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
 // Forward
 class Octree;
 class RenderQueue;
+extern NumericCVar<F32> g_probeEffectiveDistanceCVar;
+extern NumericCVar<F32> g_probeShadowEffectiveDistanceCVar;
 
 /// @addtogroup scene
 /// @{

@@ -20,6 +20,9 @@
 
 namespace anki {
 
+static NumericCVar<U32> g_motionBlurSamplesCVar(CVarSubsystem::kRenderer, "MotionBlurSamples", 32, 0, 2048, "Max motion blur samples");
+static NumericCVar<F32> g_filmGrainStrengthCVar(CVarSubsystem::kRenderer, "FilmGrainStrength", 16.0f, 0.0f, 250.0f, "Film grain strength");
+
 Error FinalComposite::initInternal()
 {
 	ANKI_R_LOGV("Initializing final composite");
@@ -33,11 +36,11 @@ Error FinalComposite::initInternal()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("FILM_GRAIN", (ConfigSet::getSingleton().getRFilmGrainStrength() > 0.0) ? 1 : 0);
+	variantInitInfo.addMutation("FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("kLutSize", U32(kLutSize));
 	variantInitInfo.addConstant("kFramebufferSize", getRenderer().getPostProcessResolution());
-	variantInitInfo.addConstant("kMotionBlurSamples", ConfigSet::getSingleton().getRMotionBlurSamples());
+	variantInitInfo.addConstant("kMotionBlurSamples", g_motionBlurSamplesCVar.get());
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
@@ -93,7 +96,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
-	if(ConfigSet::getSingleton().getRDbg())
+	if(g_dbgCVar.get())
 	{
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSampledFragment);
 	}
@@ -123,7 +126,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = ConfigSet::getSingleton().getRDbg();
+	const Bool dbgEnabled = g_dbgCVar.get();
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr optionalDebugProgram;
@@ -162,7 +165,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			rgraphCtx.bindColorTexture(0, 8, getRenderer().getDbg().getRt());
 		}
 
-		const UVec4 pc(0, 0, floatBitsToUint(ConfigSet::getSingleton().getRFilmGrainStrength()), getRenderer().getFrameCount() & kMaxU32);
+		const UVec4 pc(0, 0, floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32);
 		cmdb.setPushConstants(&pc, sizeof(pc));
 	}
 	else

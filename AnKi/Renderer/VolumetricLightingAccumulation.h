@@ -9,6 +9,11 @@
 
 namespace anki {
 
+// Forward
+extern NumericCVar<F32> g_volumetricLightingAccumulationQualityXYCVar;
+extern NumericCVar<F32> g_volumetricLightingAccumulationQualityZCVar;
+extern NumericCVar<U32> g_volumetricLightingAccumulationFinalZSplitCVar;
+
 /// @addtogroup renderer
 /// @{
 

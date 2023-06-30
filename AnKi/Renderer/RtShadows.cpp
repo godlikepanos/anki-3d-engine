@@ -22,6 +22,11 @@
 
 namespace anki {
 
+static BoolCVar g_rtShadowsSvgfCVar(CVarSubsystem::kRenderer, "RtShadowsSvgf", false, "Enable or not RT shadows SVGF");
+static NumericCVar<U8> g_rtShadowsSvgfAtrousPassCountCVar(CVarSubsystem::kRenderer, "RtShadowsSvgfAtrousPassCount", 3, 1, 20,
+														  "Number of atrous passes of SVGF");
+static NumericCVar<U32> g_rtShadowsRaysPerPixelCVar(CVarSubsystem::kRenderer, "RtShadowsRaysPerPixel", 1, 1, 8, "Number of shadow rays per pixel");
+
 Error RtShadows::init()
 {
 	const Error err = initInternal();
@@ -37,8 +42,8 @@ Error RtShadows::initInternal()
 {
 	ANKI_R_LOGV("Initializing RT shadows");
 
-	m_useSvgf = ConfigSet::getSingleton().getRRtShadowsSvgf();
-	m_atrousPassCount = ConfigSet::getSingleton().getRRtShadowsSvgfAtrousPassCount();
+	m_useSvgf = g_rtShadowsSvgfCVar.get();
+	m_atrousPassCount = g_rtShadowsSvgfAtrousPassCountCVar.get();
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
@@ -47,7 +52,7 @@ Error RtShadows::initInternal()
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin", m_rayGenProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
-		variantInitInfo.addMutation("RAYS_PER_PIXEL", ConfigSet::getSingleton().getRRtShadowsRaysPerPixel());
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar.get());
 
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);

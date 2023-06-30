@@ -8,11 +8,13 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki {
 
 // Forward
 class NativeWindow;
+extern BoolCVar g_vsyncCVar;
 
 /// @addtogroup graphics
 /// @{

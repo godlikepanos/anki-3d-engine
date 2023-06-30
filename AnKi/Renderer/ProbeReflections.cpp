@@ -13,8 +13,14 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
+#include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 
 namespace anki {
+
+static NumericCVar<U32> g_probeReflectionIrradianceResolutionCVar(CVarSubsystem::kRenderer, "ProbeReflectionIrradianceResolution", 16, 4, 2048,
+																  "Reflection probe irradiance resolution");
+static NumericCVar<U32> g_probeReflectionShadowMapResolutionCVar(CVarSubsystem::kRenderer, "ProbeReflectionShadowMapResolution", 64, 4, 2048,
+																 "Reflection probe shadow resolution");
 
 Error ProbeReflections::init()
 {
@@ -52,7 +58,7 @@ Error ProbeReflections::initInternal()
 
 Error ProbeReflections::initGBuffer()
 {
-	m_gbuffer.m_tileSize = ConfigSet::getSingleton().getSceneReflectionProbeResolution();
+	m_gbuffer.m_tileSize = g_reflectionProbeResolutionCVar.get();
 
 	// Create RT descriptions
 	{
@@ -96,7 +102,7 @@ Error ProbeReflections::initGBuffer()
 
 Error ProbeReflections::initLightShading()
 {
-	m_lightShading.m_tileSize = ConfigSet::getSingleton().getSceneReflectionProbeResolution();
+	m_lightShading.m_tileSize = g_reflectionProbeResolutionCVar.get();
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
@@ -118,7 +124,7 @@ Error ProbeReflections::initLightShading()
 
 Error ProbeReflections::initIrradiance()
 {
-	m_irradiance.m_workgroupSize = ConfigSet::getSingleton().getRProbeReflectionIrradianceResolution();
+	m_irradiance.m_workgroupSize = g_probeReflectionIrradianceResolutionCVar.get();
 
 	// Create prog
 	{
@@ -156,7 +162,7 @@ Error ProbeReflections::initIrradianceToRefl()
 
 Error ProbeReflections::initShadowMapping()
 {
-	const U32 resolution = ConfigSet::getSingleton().getRProbeReflectionShadowMapResolution();
+	const U32 resolution = g_probeReflectionShadowMapResolutionCVar.get();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr

@@ -18,6 +18,14 @@
 
 namespace anki {
 
+static NumericCVar<U32> g_ssrFirstStepPixelsCVar(CVarSubsystem::kRenderer, "SsrFirstStepPixels", 32, 1, 256, "The 1st step in ray marching");
+static NumericCVar<U32> g_ssrDepthLodCVar(CVarSubsystem::kRenderer, "SsrDepthLod", (ANKI_PLATFORM_MOBILE) ? 2 : 0, 0, 1000,
+										  "Texture LOD of the depth texture that will be raymarched");
+static NumericCVar<U32> g_ssrMaxStepsCVar(CVarSubsystem::kRenderer, "SsrMaxSteps", 64, 1, 256, "Max SSR raymarching steps");
+static BoolCVar g_ssrStochasticCVar(CVarSubsystem::kRenderer, "SsrStochastic", false, "Stochastic reflections");
+static NumericCVar<F32> g_ssrRoughnessCutoffCVar(CVarSubsystem::kRenderer, "SsrRoughnessCutoff", (ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f, 0.0f, 1.0f,
+												 "Materials with roughness higher that this value will fallback to probe reflections");
+
 Error IndirectSpecular::init()
 {
 	const Error err = initInternal();
@@ -31,7 +39,7 @@ Error IndirectSpecular::init()
 Error IndirectSpecular::initInternal()
 {
 	const UVec2 size = getRenderer().getInternalResolution() / 2;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 
 	ANKI_R_LOGV("Initializing indirect specular. Resolution %ux%u", size.x(), size.y());
 
@@ -51,14 +59,13 @@ Error IndirectSpecular::initInternal()
 	m_fbDescr.bake();
 
 	// Create shader
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																? "ShaderBinaries/IndirectSpecularCompute.ankiprogbin"
-																: "ShaderBinaries/IndirectSpecularRaster.ankiprogbin",
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource((g_preferComputeCVar.get()) ? "ShaderBinaries/IndirectSpecularCompute.ankiprogbin"
+																						: "ShaderBinaries/IndirectSpecularRaster.ankiprogbin",
 															m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("EXTRA_REJECTION", false);
-	variantInit.addMutation("STOCHASTIC", ConfigSet::getSingleton().getRSsrStochastic());
+	variantInit.addMutation("STOCHASTIC", g_ssrStochasticCVar.get());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg.reset(&variant->getProgram());
@@ -69,8 +76,8 @@ Error IndirectSpecular::initInternal()
 void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && !preferCompute;
+	const Bool preferCompute = g_preferComputeCVar.get();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && !preferCompute;
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	// Create/import RTs
@@ -142,7 +149,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
 
 		TextureSubresourceInfo hizSubresource;
-		hizSubresource.m_mipmapCount = min(ConfigSet::getSingleton().getRSsrDepthLod() + 1, getRenderer().getDepthDownscale().getMipmapCount());
+		hizSubresource.m_mipmapCount = min(g_ssrDepthLodCVar.get() + 1, getRenderer().getDepthDownscale().getMipmapCount());
 		ppass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
 
 		if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
@@ -164,7 +171,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	const U32 depthLod = min(ConfigSet::getSingleton().getRSsrDepthLod(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
+	const U32 depthLod = min(g_ssrDepthLodCVar.get(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
@@ -172,14 +179,14 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	unis->m_framebufferSize = UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()) / 2;
 	unis->m_frameCount = getRenderer().getFrameCount() & kMaxU32;
 	unis->m_depthMipCount = getRenderer().getDepthDownscale().getMipmapCount();
-	unis->m_maxSteps = ConfigSet::getSingleton().getRSsrMaxSteps();
+	unis->m_maxSteps = g_ssrMaxStepsCVar.get();
 	unis->m_lightBufferMipCount = getRenderer().getDownscaleBlur().getMipmapCount();
-	unis->m_firstStepPixels = ConfigSet::getSingleton().getRSsrFirstStepPixels();
+	unis->m_firstStepPixels = g_ssrFirstStepPixelsCVar.get();
 	unis->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
 	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	unis->m_normalMat = Mat3x4(Vec3(0.0f), ctx.m_matrices.m_view.getRotationPart());
-	unis->m_roughnessCutoff = ConfigSet::getSingleton().getRSsrRoughnessCutoff();
+	unis->m_roughnessCutoff = g_ssrRoughnessCutoffCVar.get();
 
 	// Bind all
 	cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
@@ -206,7 +213,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	cmdb.bindAllBindless(1);
 
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		rgraphCtx.bindImage(0, 14, m_runCtx.m_rts[kWrite], TextureSubresourceInfo());
 

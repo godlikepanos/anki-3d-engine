@@ -12,6 +12,8 @@
 
 namespace anki {
 
+static NumericCVar<U32> g_maxImageSizeCVar(CVarSubsystem::kResource, "MaxImageSize", 1024u * 1024u, 4u, kMaxU32, "Max image size to load");
+
 class ImageResource::LoadingContext
 {
 public:
@@ -66,7 +68,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, ConfigSet::getSingleton().getRsrcMaxImageSize()));
+	ANKI_CHECK(loader.load(file, filename, g_maxImageSizeCVar.get()));
 
 	// Various sizes
 	init.m_width = loader.getWidth();

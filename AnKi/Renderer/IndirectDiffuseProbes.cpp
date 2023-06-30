@@ -13,6 +13,11 @@
 
 namespace anki {
 
+static NumericCVar<U32> g_indirectDiffuseProbeTileResolutionCVar(CVarSubsystem::kRenderer, "IndirectDiffuseProbeTileResolution",
+																 (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32, "GI tile resolution");
+static NumericCVar<U32> g_indirectDiffuseProbeShadowMapResolutionCVar(CVarSubsystem::kRenderer, "IndirectDiffuseProbeShadowMapResolution", 128, 4,
+																	  2048, "GI shadowmap resolution");
+
 class IndirectDiffuseProbes::InternalContext
 {
 public:
@@ -60,7 +65,7 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = ConfigSet::getSingleton().getRIndirectDiffuseProbeTileResolution();
+	m_tileSize = g_indirectDiffuseProbeTileResolutionCVar.get();
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -114,7 +119,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = ConfigSet::getSingleton().getRIndirectDiffuseProbeShadowMapResolution();
+	const U32 resolution = g_indirectDiffuseProbeShadowMapResolutionCVar.get();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr

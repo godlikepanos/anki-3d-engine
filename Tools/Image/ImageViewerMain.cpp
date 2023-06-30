@@ -273,11 +273,9 @@ public:
 			return Error::kUserData;
 		}
 
-		ConfigSet::getSingleton().setWindowFullscreen(false);
-		ConfigSet::getSingleton().setRsrcDataPaths(ANKI_SOURCE_DIRECTORY);
-		ConfigSet::getSingleton().setGrValidation(false);
-		ConfigSet::getSingleton().setGrDebugMarkers(false);
-		ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
+		g_windowFullscreenCVar.set(0);
+		g_dataPathsCVar.set(ANKI_SOURCE_DIRECTORY);
+		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 
 		ANKI_CHECK(App::init());
 

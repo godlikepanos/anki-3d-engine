@@ -18,6 +18,9 @@
 
 namespace anki {
 
+BoolCVar g_dbgCVar(CVarSubsystem::kRenderer, "Dbg", false, "Enable or not debug visualization");
+static BoolCVar g_dbgPhysicsCVar(CVarSubsystem::kRenderer, "DbgPhysics", false, "Enable or not physics debug visualization");
+
 Dbg::Dbg()
 {
 }
@@ -56,7 +59,7 @@ Error Dbg::init()
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
-	ANKI_ASSERT(ConfigSet::getSingleton().getRDbg());
+	ANKI_ASSERT(g_dbgCVar.get());
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -218,7 +221,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		}
 	}
 
-	if(threadId == (threadCount - 1) && ConfigSet::getSingleton().getRDbgPhysics())
+	if(threadId == (threadCount - 1) && g_dbgPhysicsCVar.get())
 	{
 		m_physicsDrawer.start(ctx.m_matrices.m_viewProjection, cmdb);
 		m_physicsDrawer.drawWorld(PhysicsWorld::getSingleton());
@@ -231,7 +234,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
-	if(!ConfigSet::getSingleton().getRDbg())
+	if(!g_dbgCVar.get())
 	{
 		return;
 	}

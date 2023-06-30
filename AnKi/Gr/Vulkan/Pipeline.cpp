@@ -490,7 +490,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 	ppline.m_handle = pp.m_handle;
 
 	// Print shader info
-	getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(), state.m_state.m_prog->getStages(), hash);
+	getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(), hash);
 }
 
 } // end namespace anki

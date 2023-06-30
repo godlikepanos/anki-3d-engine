@@ -14,6 +14,7 @@
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -47,6 +48,20 @@
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 
 namespace anki {
+
+static NumericCVar<F32> g_internalRenderScalingCVar(CVarSubsystem::kRenderer, "InternalRenderScaling", 1.0f, 0.5f, 1.0f,
+													"A factor over the requested swapchain resolution. Applies to all passes up to TAA");
+NumericCVar<F32> g_renderScalingCVar(CVarSubsystem::kRenderer, "RenderScaling", 1.0f, 0.5f, 8.0f,
+									 "A factor over the requested swapchain resolution. Applies to post-processing and UI");
+static NumericCVar<U32> g_tileSizeCVar(CVarSubsystem::kRenderer, "TileSize", 64, 8, 256, "Tile lighting tile size");
+static NumericCVar<U32> g_zSplitCountCVar(CVarSubsystem::kRenderer, "ZSplitCount", 64, 8, kMaxZsplitCount, "Clusterer number of Z splits");
+static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 8, 1, 16,
+											   "Texture anisotropy for the main passes");
+BoolCVar g_preferComputeCVar(CVarSubsystem::kRenderer, "PreferCompute", !ANKI_PLATFORM_MOBILE, "Prefer compute shaders");
+static BoolCVar g_highQualityHdrCVar(CVarSubsystem::kRenderer, "HighQualityHdr", !ANKI_PLATFORM_MOBILE,
+									 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11");
+BoolCVar g_vrsLimitTo2x2CVar(CVarSubsystem::kRenderer, "VrsLimitTo2x2", false, "If true the max rate will be 2x2");
+BoolCVar g_vrsCVar(CVarSubsystem::kRenderer, "Vrs", true, "Enable VRS in multiple passes");
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -107,21 +122,21 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_frameCount = 0;
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * ConfigSet::getSingleton().getRRenderScaling());
+	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * g_renderScalingCVar.get());
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * ConfigSet::getSingleton().getRInternalRenderScaling());
+	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_internalRenderScalingCVar.get());
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
 	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x(),
 				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
 
-	m_tileSize = ConfigSet::getSingleton().getRTileSize();
+	m_tileSize = g_tileSizeCVar.get();
 	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
 	m_tileCounts.y() = (m_internalResolution.y() + m_tileSize - 1) / m_tileSize;
-	m_zSplitCount = ConfigSet::getSingleton().getRZSplitCount();
+	m_zSplitCount = g_zSplitCountCVar.get();
 
 	// A few sanity checks
 	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
@@ -223,7 +238,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_indirectDiffuse->init());
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && ConfigSet::getSingleton().getSceneRayTracedShadows())
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get())
 	{
 		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_accelerationStructureBuilder->init());
@@ -267,7 +282,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAniso");
-		sinit.m_anisotropyLevel = ConfigSet::getSingleton().getRTextureAnisotropy();
+		sinit.m_anisotropyLevel = g_textureAnisotropyCVar.get();
 		m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
@@ -654,7 +669,7 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 Format Renderer::getHdrFormat() const
 {
 	Format out;
-	if(!ConfigSet::getSingleton().getRHighQualityHdr())
+	if(!g_highQualityHdrCVar.get())
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}

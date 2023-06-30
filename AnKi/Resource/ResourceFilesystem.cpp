@@ -14,6 +14,12 @@
 
 namespace anki {
 
+StringCVar g_dataPathsCVar(CVarSubsystem::kResource, "DataPaths", ".",
+						   "The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive "
+						   "letters in Windows)");
+static StringCVar g_dataPathExcludeStringsCVar(CVarSubsystem::kResource, "DataPathExcludedStrings", "AndroidProject",
+											   "A list of string separated by : that will be used to exclude paths from rsrc_dataPaths");
+
 /// C resource file
 class CResourceFile final : public ResourceFile
 {
@@ -192,10 +198,10 @@ ResourceFilesystem::~ResourceFilesystem()
 Error ResourceFilesystem::init()
 {
 	ResourceStringList paths;
-	paths.splitString(ConfigSet::getSingleton().getRsrcDataPaths(), ':');
+	paths.splitString(g_dataPathsCVar.get(), ':');
 
 	ResourceStringList excludedStrings;
-	excludedStrings.splitString(ConfigSet::getSingleton().getRsrcDataPathExcludedStrings(), ':');
+	excludedStrings.splitString(g_dataPathExcludeStringsCVar.get(), ':');
 
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
@@ -224,7 +230,7 @@ Error ResourceFilesystem::init()
 
 	if(paths.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("Config option \"RsrcDataPaths\" is empty");
+		ANKI_RESOURCE_LOGE("Config option \"g_dataPathsCVar\" is empty");
 		return Error::kUserData;
 	}
 

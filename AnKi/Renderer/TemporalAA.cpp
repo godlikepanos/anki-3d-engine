@@ -28,10 +28,8 @@ Error TemporalAA::initInternal()
 {
 	ANKI_R_LOGV("Initializing TAA");
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																? "ShaderBinaries/TemporalAACompute.ankiprogbin"
-																: "ShaderBinaries/TemporalAARaster.ankiprogbin",
-															m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(
+		(g_preferComputeCVar.get()) ? "ShaderBinaries/TemporalAACompute.ankiprogbin" : "ShaderBinaries/TemporalAARaster.ankiprogbin", m_prog));
 
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
@@ -40,7 +38,7 @@ Error TemporalAA::initInternal()
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
 		variantInitInfo.addMutation("YCBCR", 0);
 
-		if(ConfigSet::getSingleton().getRPreferCompute())
+		if(g_preferComputeCVar.get())
 		{
 			variantInitInfo.addConstant("kFramebufferSize",
 										UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
@@ -54,7 +52,7 @@ Error TemporalAA::initInternal()
 	for(U i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (ConfigSet::getSingleton().getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
+		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), usage, "TemporalAA");
@@ -80,7 +78,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Import RTs
 	if(m_rtTexturesImportedOnce[historyRtIdx]) [[likely]]
@@ -139,7 +137,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindImage(0, 4, getRenderer().getTonemapping().getRt());
 
-		if(ConfigSet::getSingleton().getRPreferCompute())
+		if(g_preferComputeCVar.get())
 		{
 			rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 			rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());

@@ -188,7 +188,7 @@ public:
 	/// @}
 
 	/// @note It's thread-safe.
-	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash = 0) const;
+	void printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash = 0) const;
 
 	FrameGarbageCollector& getFrameGarbageCollector()
 	{
@@ -243,7 +243,6 @@ private:
 
 	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;
 
-	PFN_vkGetShaderInfoAMD m_pfnGetShaderInfoAMD = nullptr;
 	mutable File m_shaderStatsFile;
 	mutable SpinLock m_shaderStatsFileMtx;
 
@@ -324,7 +323,7 @@ private:
 	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
-	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const;
+	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, U64 hash) const;
 };
 /// @}
 

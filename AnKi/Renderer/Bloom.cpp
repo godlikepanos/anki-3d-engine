@@ -12,6 +12,9 @@
 
 namespace anki {
 
+NumericCVar<F32> g_bloomThresholdCVar(CVarSubsystem::kRenderer, "BloomThreshold", 2.5f, 0.0f, 256.0f, "Bloom threshold");
+static NumericCVar<F32> g_bloomScaleCVar(CVarSubsystem::kRenderer, "BloomScale", 2.5f, 0.0f, 256.0f, "Bloom scale");
+
 Bloom::Bloom()
 {
 	registerDebugRenderTarget("Bloom");
@@ -42,12 +45,11 @@ Error Bloom::initExposure()
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	CString progFname =
-		(ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/BloomCompute.ankiprogbin" : "ShaderBinaries/BloomRaster.ankiprogbin";
+	CString progFname = (g_preferComputeCVar.get()) ? "ShaderBinaries/BloomCompute.ankiprogbin" : "ShaderBinaries/BloomRaster.ankiprogbin";
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_exposure.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		variantInitInfo.addConstant("kViewport", UVec2(m_exposure.m_width, m_exposure.m_height));
 	}
@@ -69,13 +71,13 @@ Error Bloom::initUpscale()
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	CString progFname = (ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin"
-																		: "ShaderBinaries/BloomUpscaleRaster.ankiprogbin";
+	CString progFname =
+		(g_preferComputeCVar.get()) ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin" : "ShaderBinaries/BloomUpscaleRaster.ankiprogbin";
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_upscale.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);
 	variantInitInfo.addConstant("kInputTextureSize", UVec2(m_exposure.m_width, m_exposure.m_height));
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		variantInitInfo.addConstant("kViewport", UVec2(m_upscale.m_width, m_upscale.m_height));
 	}
@@ -93,7 +95,7 @@ Error Bloom::initUpscale()
 void Bloom::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Main pass
 	{
@@ -136,12 +138,12 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(0, 1, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
-			const Vec4 uniforms(ConfigSet::getSingleton().getRBloomThreshold(), ConfigSet::getSingleton().getRBloomScale(), 0.0f, 0.0f);
+			const Vec4 uniforms(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
 			cmdb.setPushConstants(&uniforms, sizeof(uniforms));
 
 			rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
 
-			if(ConfigSet::getSingleton().getRPreferCompute())
+			if(g_preferComputeCVar.get())
 			{
 				rgraphCtx.bindImage(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
 
@@ -192,7 +194,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
 			cmdb.bindTexture(0, 2, &m_upscale.m_lensDirtImage->getTextureView());
 
-			if(ConfigSet::getSingleton().getRPreferCompute())
+			if(g_preferComputeCVar.get())
 			{
 				rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 

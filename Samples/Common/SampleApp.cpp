@@ -10,7 +10,7 @@ using namespace anki;
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
 	// Init the super class
-	ConfigSet::getSingleton().setWindowFullscreen(true);
+	g_windowFullscreenCVar.set(1);
 
 #if !ANKI_OS_ANDROID
 	CString mainDataPath = ANKI_SOURCE_DIRECTORY;
@@ -26,12 +26,11 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		ConfigSet::getSingleton().setRsrcDataPaths(
-			BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		g_dataPathsCVar.set(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	}
 #endif
 
-	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
 	ANKI_CHECK(App::init());
 
 	ANKI_CHECK(sampleExtraInit());
@@ -133,7 +132,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
+		g_vrsCVar.set(!g_vrsCVar.get());
 	}
 
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
@@ -149,17 +148,17 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			ConfigSet::getSingleton().setRDbg(false);
+			g_dbgCVar.set(false);
 		}
 		else if(mode == 1)
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}

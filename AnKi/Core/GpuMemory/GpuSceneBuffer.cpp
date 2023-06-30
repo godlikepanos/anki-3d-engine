@@ -17,9 +17,12 @@ static StatCounter g_gpuSceneBufferAllocatedSize(StatCategory::kGpuMem, "GPU sce
 static StatCounter g_gpuSceneBufferTotal(StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes);
 static StatCounter g_gpuSceneBufferFragmentation(StatCategory::kGpuMem, "GPU scene fragmentation", StatFlag::kFloat);
 
+static NumericCVar<PtrSize> g_gpuSceneInitialSizeCVar(CVarSubsystem::kCore, "GpuSceneInitialSize", 64_MB, 16_MB, 2_GB,
+													  "Global memory for the GPU scene");
+
 void GpuSceneBuffer::init()
 {
-	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGpuSceneInitialSize();
+	const PtrSize poolSize = g_gpuSceneInitialSizeCVar.get();
 
 	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
 

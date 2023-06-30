@@ -13,6 +13,8 @@
 
 namespace anki {
 
+extern NumericCVar<U32> g_reflectionProbeResolutionCVar;
+
 /// @addtogroup scene
 /// @{
 

@@ -244,7 +244,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_compute.m_ppline));
-		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::kCompute);
+		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName());
 	}
 
 	// Create the RT pipeline

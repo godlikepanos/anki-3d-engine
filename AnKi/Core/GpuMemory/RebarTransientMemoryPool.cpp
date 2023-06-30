@@ -14,6 +14,9 @@ namespace anki {
 
 static StatCounter g_rebarUserMemory(StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes);
 
+static NumericCVar<PtrSize> g_rebarGpuMemorySizeCvar(CVarSubsystem::kCore, "RebarGpuMemorySize", 24_MB, 1_MB, 1_GB,
+													 "ReBAR: always mapped GPU memory");
+
 RebarTransientMemoryPool::~RebarTransientMemoryPool()
 {
 	GrManager::getSingleton().finish();
@@ -26,7 +29,7 @@ void RebarTransientMemoryPool::init()
 {
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	buffInit.m_size = ConfigSet::getSingleton().getCoreRebarGpuMemorySize();
+	buffInit.m_size = g_rebarGpuMemorySizeCvar.get();
 	buffInit.m_usage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kVertex | BufferUsageBit::kIndex
 					   | BufferUsageBit::kShaderBindingTable | BufferUsageBit::kAllIndirect;
 	m_buffer = GrManager::getSingleton().newBuffer(buffInit);

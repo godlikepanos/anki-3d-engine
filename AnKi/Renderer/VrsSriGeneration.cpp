@@ -10,6 +10,9 @@
 
 namespace anki {
 
+static NumericCVar<F32> g_vrsThresholdCVar(CVarSubsystem::kRenderer, "VrsThreshold", 0.1f, 0.0f, 1.0f,
+										   "Threshold under which a lower shading rate will be applied");
+
 Error VrsSriGeneration::init()
 {
 	const Error err = initInternal();
@@ -64,7 +67,7 @@ Error VrsSriGeneration::initInternal()
 		variantInit.addMutation("SHARED_MEMORY", 1);
 	}
 
-	variantInit.addMutation("LIMIT_RATE_TO_2X2", ConfigSet::getSingleton().getRVrsLimitTo2x2());
+	variantInit.addMutation("LIMIT_RATE_TO_2X2", g_vrsLimitTo2x2CVar.get());
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
@@ -99,7 +102,7 @@ void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHa
 
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get();
 	if(!enableVrs)
 	{
 		return;
@@ -120,7 +123,7 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get();
 	if(!enableVrs)
 	{
 		return;
@@ -143,7 +146,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_rt);
-			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), ConfigSet::getSingleton().getRVrsThreshold(), 0.0f);
+			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar.get(), 0.0f);
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;

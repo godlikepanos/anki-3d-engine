@@ -11,8 +11,13 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
+
+static NumericCVar<U32> g_hzbWidthCVar(CVarSubsystem::kRenderer, "HzbWidth", 512, 16, 4 * 1024, "HZB map width");
+static NumericCVar<U32> g_hzbHeightCVar(CVarSubsystem::kRenderer, "HzbHeight", 256, 16, 4 * 1024, "HZB map height");
+static BoolCVar g_gbufferVrsCVar(CVarSubsystem::kRenderer, "GBufferVrs", false, "Enable VRS in GBuffer");
 
 GBuffer::~GBuffer()
 {
@@ -57,8 +62,8 @@ Error GBuffer::initInternal()
 	{
 		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kImageComputeWrite;
 
-		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			ConfigSet::getSingleton().getRHzbWidth(), ConfigSet::getSingleton().getRHzbWidth(), Format::kR32_Sfloat, usage, "GBuffer HZB");
+		TextureInitInfo texinit =
+			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar.get(), g_hzbHeightCVar.get(), Format::kR32_Sfloat, usage, "GBuffer HZB");
 		texinit.m_mipmapCount = U8(computeMaxMipmapCount2d(texinit.m_width, texinit.m_height));
 		ClearValue clear;
 		clear.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -85,7 +90,7 @@ Error GBuffer::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs())
+	if(GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get())
 	{
 		m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
 		m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
@@ -106,8 +111,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, const GpuVisibilityOutput
 	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	cmdb.setRasterizationOrder(RasterizationOrder::kRelaxed);
 
-	const Bool enableVrs =
-		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
 	if(enableVrs)
 	{
 		// Just set some low value, the attachment will take over
@@ -156,15 +160,13 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
-	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
-													   ConfigSet::getSingleton().getLod1MaxDistance()};
+	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 	GpuVisibilityOutput visOut;
 	getRenderer().getGpuVisibility().populateRenderGraph("GBuffer visibility", RenderingTechnique::kGBuffer, matrices.m_viewProjection,
 														 matrices.m_cameraTransform.getTranslationPart().xyz(), lodDistances, &m_runCtx.m_hzbRt,
 														 rgraph, visOut);
 
-	const Bool enableVrs =
-		GrManager::getSingleton().getDeviceCapabilities().m_vrs && ConfigSet::getSingleton().getRVrs() && ConfigSet::getSingleton().getRGBufferVrs();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
 
 	if(enableVrs != fbDescrHasVrs)

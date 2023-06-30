@@ -26,8 +26,8 @@ Error MotionVectors::initInternal()
 	ANKI_R_LOGV("Initializing motion vectors");
 
 	// Prog
-	CString progFname = (ConfigSet::getSingleton().getRPreferCompute()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin"
-																		: "ShaderBinaries/MotionVectorsRaster.ankiprogbin";
+	CString progFname =
+		(g_preferComputeCVar.get()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin" : "ShaderBinaries/MotionVectorsRaster.ankiprogbin";
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
@@ -41,7 +41,7 @@ Error MotionVectors::initInternal()
 	m_motionVectorsRtDescr.bake();
 
 	TextureUsageBit historyLengthUsage = TextureUsageBit::kAllSampled;
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		historyLengthUsage |= TextureUsageBit::kImageComputeWrite;
 	}
@@ -90,7 +90,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	RenderPassDescriptionBase* ppass;
 	TextureUsageBit readUsage;
 	TextureUsageBit writeUsage;
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("MotionVectors");
 
@@ -145,13 +145,13 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 	pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 	pc->m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedViewProjectionJitter;
 
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		rgraphCtx.bindImage(0, 6, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
 		rgraphCtx.bindImage(0, 7, m_runCtx.m_historyLengthWriteRtHandle, TextureSubresourceInfo());
 	}
 
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	}

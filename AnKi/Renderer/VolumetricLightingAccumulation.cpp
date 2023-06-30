@@ -14,12 +14,19 @@
 
 namespace anki {
 
+NumericCVar<F32> g_volumetricLightingAccumulationQualityXYCVar(CVarSubsystem::kRenderer, "VolumetricLightingAccumulationQualityXY", 4.0f, 1.0f, 16.0f,
+															   "Quality of XY dimensions of volumetric lights");
+NumericCVar<F32> g_volumetricLightingAccumulationQualityZCVar(CVarSubsystem::kRenderer, "VolumetricLightingAccumulationQualityZ", 4.0f, 1.0f, 16.0f,
+															  "Quality of Z dimension of volumetric lights");
+NumericCVar<U32> g_volumetricLightingAccumulationFinalZSplitCVar(CVarSubsystem::kRenderer, "VolumetricLightingAccumulationFinalZSplit", 26, 1, 256,
+																 "Final cluster split that will recieve volumetric lights");
+
 Error VolumetricLightingAccumulation::init()
 {
 	// Misc
-	const F32 qualityXY = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityXY();
-	const F32 qualityZ = ConfigSet::getSingleton().getRVolumetricLightingAccumulationQualityZ();
-	m_finalZSplit = min(getRenderer().getZSplitCount() - 1, ConfigSet::getSingleton().getRVolumetricLightingAccumulationFinalZSplit());
+	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar.get();
+	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar.get();
+	m_finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
 
 	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);

@@ -14,9 +14,12 @@ static StatCounter g_unifiedGeomBufferAllocatedSize(StatCategory::kGpuMem, "UGB 
 static StatCounter g_unifiedGeomBufferTotal(StatCategory::kGpuMem, "UGB total", StatFlag::kBytes);
 static StatCounter g_unifiedGeomBufferFragmentation(StatCategory::kGpuMem, "UGB fragmentation", StatFlag::kFloat);
 
+static NumericCVar<PtrSize> g_unifiedGometryBufferSizeCvar(CVarSubsystem::kCore, "UnifiedGeometryBufferSize", 128_MB, 16_MB, 2_GB,
+														   "Global index and vertex buffer size");
+
 void UnifiedGeometryBuffer::init()
 {
-	const PtrSize poolSize = ConfigSet::getSingleton().getCoreGlobalVertexMemorySize();
+	const PtrSize poolSize = g_unifiedGometryBufferSizeCvar.get();
 
 	const Array classes = {1_KB, 8_KB, 32_KB, 128_KB, 512_KB, 4_MB, 8_MB, 16_MB, poolSize};
 

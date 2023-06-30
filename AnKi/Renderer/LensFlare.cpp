@@ -12,6 +12,10 @@
 
 namespace anki {
 
+static NumericCVar<U8> g_lensFlareMaxSpritesPerFlareCVar(CVarSubsystem::kRenderer, "LensFlareMaxSpritesPerFlare", 8, 4, 255,
+														 "Max sprites per lens flare");
+static NumericCVar<U8> g_lensFlareMaxFlaresCVar(CVarSubsystem::kRenderer, "LensFlareMaxFlares", 16, 8, 255, "Max flare count");
+
 Error LensFlare::init()
 {
 	const Error err = initInternal();
@@ -35,8 +39,8 @@ Error LensFlare::initInternal()
 
 Error LensFlare::initSprite()
 {
-	m_maxSpritesPerFlare = ConfigSet::getSingleton().getRLensFlareMaxSpritesPerFlare();
-	m_maxFlares = ConfigSet::getSingleton().getRLensFlareMaxFlares();
+	m_maxSpritesPerFlare = g_lensFlareMaxSpritesPerFlareCVar.get();
+	m_maxFlares = g_lensFlareMaxFlaresCVar.get();
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{

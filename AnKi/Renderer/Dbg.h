@@ -13,6 +13,9 @@
 
 namespace anki {
 
+// Forward
+extern BoolCVar g_dbgCVar;
+
 /// @addtogroup renderer
 /// @{
 

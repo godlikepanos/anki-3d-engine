@@ -36,9 +36,9 @@ Error MyApp::init(int argc, char* argv[])
 
 	// Config
 #if ANKI_OS_ANDROID
-	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
 #else
-	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 #endif
 
 	// Init super class
@@ -50,7 +50,7 @@ Error MyApp::init(int argc, char* argv[])
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
-		ConfigSet::getSingleton().setCoreTargetFps(240);
+		g_targetFpsCVar.set(240);
 		Tracer::getSingleton().setEnabled(true);
 	}
 
@@ -122,17 +122,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			ConfigSet::getSingleton().setRDbg(false);
+			g_dbgCVar.set(false);
 		}
 		else if(mode == 1)
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -190,17 +190,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				ConfigSet::getSingleton().setRDbg(false);
+				g_dbgCVar.set(false);
 			}
 			else if(mode == 1)
 			{
-				ConfigSet::getSingleton().setRDbg(true);
+				g_dbgCVar.set(true);
 				renderer.getDbg().setDepthTestEnabled(true);
 				renderer.getDbg().setDitheredDepthTestEnabled(false);
 			}
 			else
 			{
-				ConfigSet::getSingleton().setRDbg(true);
+				g_dbgCVar.set(true);
 				renderer.getDbg().setDepthTestEnabled(false);
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}
@@ -399,7 +399,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
+		g_vrsCVar.set(!g_vrsCVar.get());
 	}
 
 	if(in.getEvent(InputEvent::kWindowClosed))

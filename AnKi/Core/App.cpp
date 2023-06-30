@@ -53,10 +53,31 @@ static StatCounter g_cpuAllocationCount(StatCategory::kCpuMem, "Allocations/fram
 										StatFlag::kBytes | StatFlag::kZeroEveryFrame | StatFlag::kThreadSafe);
 static StatCounter g_cpuFreesCount(StatCategory::kCpuMem, "Frees/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame | StatFlag::kThreadSafe);
 
+static NumericCVar<U32> g_widthCVar(CVarSubsystem::kCore, "Width", 1920, 16, 16 * 1024, "Width");
+static NumericCVar<U32> g_heightCVar(CVarSubsystem::kCore, "Height", 1080, 16, 16 * 1024, "Height");
+NumericCVar<U32> g_windowFullscreenCVar(CVarSubsystem::kCore, "WindowFullscreen", 1, 0, 2,
+										"0: windowed, 1: borderless fullscreen, 2: exclusive fullscreen");
+NumericCVar<U32> g_targetFpsCVar(CVarSubsystem::kCore, "TargetFps", 60u, 1u, kMaxU32, "Target FPS");
+static NumericCVar<U32> g_jobThreadCountCVar(CVarSubsystem::kCore, "JobThreadCount", max(2u, getCpuCoresCount() / 2u), 2u, 1024u,
+											 "Number of job thread");
+NumericCVar<U32> g_displayStatsCVar(CVarSubsystem::kCore, "DisplayStats", 0, 0, 2, "Display stats, 0: None, 1: Simple, 2: Detailed");
+BoolCVar g_clearCachesCVar(CVarSubsystem::kCore, "ClearCaches", false, "Clear all caches");
+BoolCVar g_verboseLogCVar(CVarSubsystem::kCore, "VerboseLog", false, "Verbose logging");
+BoolCVar g_benchmarkModeCVar(CVarSubsystem::kCore, "BenchmarkMode", false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS");
+NumericCVar<U32> g_benchmarkModeFrameCountCVar(CVarSubsystem::kCore, "BenchmarkModeFrameCount", 60 * 60 * 2, 1, kMaxU32,
+											   "How many frames the benchmark will run before it quits");
+
+NumericCVar<F32> g_lod0MaxDistanceCVar(CVarSubsystem::kCore, "Lod0MaxDistance", 20.0f, 1.0f, kMaxF32,
+									   "Distance that will be used to calculate the LOD 0");
+NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kCore, "Lod1MaxDistance", 40.0f, 2.0f, kMaxF32,
+									   "Distance that will be used to calculate the LOD 1");
+
 #if ANKI_PLATFORM_MOBILE
 static StatCounter g_maliGpuActive(StatCategory::kGpuMisc, "Mali active cycles");
 static StatCounter g_maliGpuReadBandwidth(StatCategory::kGpuMisc, "Mali read bandwidth");
 static StatCounter g_maliGpuWriteBandwidth(StatCategory::kGpuMisc, "Mali write bandwidth");
+
+static BoolCVar g_maliHwCountersCVar(CVarSubsystem::kCore, "MaliHwCounters", false, "Enable Mali counters");
 #endif
 
 void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_unused]] PtrSize alignment)
@@ -120,9 +141,6 @@ App::App(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	m_originalAllocCallback = allocCb;
 	m_originalAllocUserData = allocCbUserData;
-
-	// Config set is a bit special so init it ASAP
-	ConfigSet::allocateSingleton(allocCb, allocCbUserData);
 }
 
 App::~App()
@@ -159,7 +177,6 @@ void App::cleanup()
 #endif
 
 	GlobalFrameIndex::freeSingleton();
-	ConfigSet::freeSingleton();
 
 	m_settingsDir.destroy();
 	m_cacheDir.destroy();
@@ -182,7 +199,7 @@ Error App::init()
 
 Error App::initInternal()
 {
-	Logger::getSingleton().enableVerbosity(ConfigSet::getSingleton().getCoreVerboseLog());
+	Logger::getSingleton().enableVerbosity(g_verboseLogCVar.get());
 
 	setSignalHandlers();
 
@@ -234,12 +251,12 @@ Error App::initInternal()
 	}
 #endif
 
-	ANKI_CORE_LOGI("Number of job threads: %u", ConfigSet::getSingleton().getCoreJobThreadCount());
+	ANKI_CORE_LOGI("Number of job threads: %u", g_jobThreadCountCVar.get());
 
-	if(ConfigSet::getSingleton().getCoreBenchmarkMode() && ConfigSet::getSingleton().getGrVsync())
+	if(g_benchmarkModeCVar.get() && g_vsyncCVar.get())
 	{
 		ANKI_CORE_LOGW("Vsync is enabled and benchmark mode as well. Will turn vsync off");
-		ConfigSet::getSingleton().setGrVsync(false);
+		g_vsyncCVar.set(false);
 	}
 
 	GlobalFrameIndex::allocateSingleton();
@@ -255,13 +272,13 @@ Error App::initInternal()
 	// Window
 	//
 	NativeWindowInitInfo nwinit;
-	nwinit.m_width = ConfigSet::getSingleton().getWidth();
-	nwinit.m_height = ConfigSet::getSingleton().getHeight();
+	nwinit.m_width = g_widthCVar.get();
+	nwinit.m_height = g_heightCVar.get();
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = ConfigSet::getSingleton().getWindowFullscreen() > 0;
-	nwinit.m_exclusiveFullscreen = ConfigSet::getSingleton().getWindowFullscreen() == 2;
-	nwinit.m_targetFps = ConfigSet::getSingleton().getCoreTargetFps();
+	nwinit.m_fullscreenDesktopRez = g_windowFullscreenCVar.get() > 0;
+	nwinit.m_exclusiveFullscreen = g_windowFullscreenCVar.get() == 2;
+	nwinit.m_targetFps = g_targetFpsCVar.get();
 	NativeWindow::allocateSingleton();
 	ANKI_CHECK(NativeWindow::getSingleton().init(nwinit));
 
@@ -275,7 +292,7 @@ Error App::initInternal()
 	// ThreadPool
 	//
 	const Bool pinThreads = !ANKI_OS_ANDROID;
-	CoreThreadHive::allocateSingleton(ConfigSet::getSingleton().getCoreJobThreadCount(), pinThreads);
+	CoreThreadHive::allocateSingleton(g_jobThreadCountCVar.get(), pinThreads);
 
 	//
 	// Graphics API
@@ -289,11 +306,12 @@ Error App::initInternal()
 	//
 	// Mali HW counters
 	//
-	if(ANKI_STATS_ENABLED && GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm
-	   && ConfigSet::getSingleton().getCoreMaliHwCounters())
+#if ANKI_PLATFORM_MOBILE
+	if(ANKI_STATS_ENABLED && GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kArm && g_maliHwCountersCVar.get())
 	{
 		MaliHwCounters::allocateSingleton();
 	}
+#endif
 
 	//
 	// GPU mem
@@ -321,8 +339,8 @@ Error App::initInternal()
 	String shadersPath;
 	getParentFilepath(executableFname, shadersPath);
 	shadersPath += ":";
-	shadersPath += ConfigSet::getSingleton().getRsrcDataPaths();
-	ConfigSet::getSingleton().setRsrcDataPaths(shadersPath);
+	shadersPath += g_dataPathsCVar.get();
+	g_dataPathsCVar.set(shadersPath);
 #endif
 
 	ANKI_CHECK(ResourceManager::allocateSingleton().init(allocCb, allocCbUserData));
@@ -393,7 +411,7 @@ Error App::initDirs()
 	m_cacheDir.sprintf("%s/cache", &m_settingsDir[0]);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
-	if(ConfigSet::getSingleton().getCoreClearCaches() && cacheDirExists)
+	if(g_clearCachesCVar.get() && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", m_cacheDir.cstr());
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
@@ -417,7 +435,7 @@ Error App::mainLoop()
 	Second crntTime = prevUpdateTime;
 
 	// Benchmark mode stuff:
-	const Bool benchmarkMode = ConfigSet::getSingleton().getCoreBenchmarkMode();
+	const Bool benchmarkMode = g_benchmarkModeCVar.get();
 	Second aggregatedCpuTime = 0.0;
 	Second aggregatedGpuTime = 0.0;
 	constexpr U32 kBenchmarkFramesToGatherBeforeFlush = 60;
@@ -465,14 +483,14 @@ Error App::mainLoop()
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to
 			// count that
 			Second grTime = 0.0;
-			if(benchmarkMode || ConfigSet::getSingleton().getCoreDisplayStats() > 0) [[unlikely]]
+			if(benchmarkMode || g_displayStatsCVar.get() > 0) [[unlikely]]
 			{
 				grTime = HighRezTimer::getCurrentTime();
 			}
 
 			GrManager::getSingleton().swapBuffers();
 
-			if(benchmarkMode || ConfigSet::getSingleton().getCoreDisplayStats() > 0) [[unlikely]]
+			if(benchmarkMode || g_displayStatsCVar.get() > 0) [[unlikely]]
 			{
 				grTime = HighRezTimer::getCurrentTime() - grTime;
 			}
@@ -497,7 +515,7 @@ Error App::mainLoop()
 			g_cpuTotalTime.set((frameTime - grTime) * 1000.0);
 			if(!benchmarkMode) [[likely]]
 			{
-				const Second timerTick = 1.0_sec / Second(ConfigSet::getSingleton().getCoreTargetFps());
+				const Second timerTick = 1.0_sec / Second(g_targetFpsCVar.get());
 				if(frameTime < timerTick)
 				{
 					ANKI_TRACE_SCOPED_EVENT(TimerTickSleep);
@@ -523,7 +541,7 @@ Error App::mainLoop()
 			}
 
 			// Stats
-			if(ConfigSet::getSingleton().getCoreDisplayStats() > 0)
+			if(g_displayStatsCVar.get() > 0)
 			{
 #if ANKI_PLATFORM_MOBILE
 				if(MaliHwCounters::isAllocated())
@@ -537,8 +555,7 @@ Error App::mainLoop()
 #endif
 
 				StatsUi& statsUi = *static_cast<StatsUi*>(m_statsUi.get());
-				const StatsUiDetail detail =
-					(ConfigSet::getSingleton().getCoreDisplayStats() == 1) ? StatsUiDetail::kFpsOnly : StatsUiDetail::kDetailed;
+				const StatsUiDetail detail = (g_displayStatsCVar.get() == 1) ? StatsUiDetail::kFpsOnly : StatsUiDetail::kDetailed;
 				statsUi.setStatsDetail(detail);
 
 				StatsSet::getSingleton().endFrame();
@@ -548,7 +565,7 @@ Error App::mainLoop()
 
 			if(benchmarkMode) [[unlikely]]
 			{
-				if(GlobalFrameIndex::getSingleton().m_value >= ConfigSet::getSingleton().getCoreBenchmarkModeFrameCount())
+				if(GlobalFrameIndex::getSingleton().m_value >= g_benchmarkModeFrameCountCVar.get())
 				{
 					quit = true;
 				}
@@ -572,9 +589,9 @@ Error App::mainLoop()
 void App::injectUiElements(CoreDynamicArray<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
 {
 	const U32 originalCount = rqueue.m_uis.getSize();
-	if(ConfigSet::getSingleton().getCoreDisplayStats() > 0 || m_consoleEnabled)
+	if(g_displayStatsCVar.get() > 0 || m_consoleEnabled)
 	{
-		const U32 extraElements = (ConfigSet::getSingleton().getCoreDisplayStats() > 0) + (m_consoleEnabled != 0);
+		const U32 extraElements = (g_displayStatsCVar.get() > 0) + (m_consoleEnabled != 0);
 		newUiElementArr.resize(originalCount + extraElements);
 
 		if(originalCount > 0)
@@ -586,7 +603,7 @@ void App::injectUiElements(CoreDynamicArray<UiQueueElement>& newUiElementArr, Re
 	}
 
 	U32 count = originalCount;
-	if(ConfigSet::getSingleton().getCoreDisplayStats() > 0)
+	if(g_displayStatsCVar.get() > 0)
 	{
 		newUiElementArr[count].m_userData = m_statsUi.get();
 		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
@@ -607,7 +624,7 @@ void App::injectUiElements(CoreDynamicArray<UiQueueElement>& newUiElementArr, Re
 
 void App::initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData)
 {
-	if(ANKI_STATS_ENABLED && ConfigSet::getSingleton().getCoreDisplayStats() > 1)
+	if(ANKI_STATS_ENABLED && g_displayStatsCVar.get() > 1)
 	{
 		allocCb = statsAllocCallback;
 		allocCbUserData = this;

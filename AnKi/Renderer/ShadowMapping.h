@@ -15,6 +15,7 @@ namespace anki {
 // Forward
 class PointLightQueueElement;
 class SpotLightQueueElement;
+extern NumericCVar<U32> g_shadowMappingPcfCVar;
 
 /// @addtogroup renderer
 /// @{

@@ -242,7 +242,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kJ) == 1)
 	{
-		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
+		g_vrsCVar.set(!g_vrsCVar.get());
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)
@@ -251,17 +251,17 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			ConfigSet::getSingleton().setRDbg(false);
+			g_dbgCVar.set(false);
 		}
 		else if(mode == 1)
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(true);
 			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(false);
 			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(true);
 		}

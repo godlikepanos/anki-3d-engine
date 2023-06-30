@@ -7,11 +7,18 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/App.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
+
+static NumericCVar<U32> g_shadowMappingTileResolutionCVar(CVarSubsystem::kRenderer, "ShadowMappingTileResolution", (ANKI_PLATFORM_MOBILE) ? 128 : 256,
+														  16, 2048, "Shadowmapping tile resolution");
+static NumericCVar<U32> g_shadowMappingTileCountPerRowOrColumnCVar(CVarSubsystem::kRenderer, "ShadowMappingTileCountPerRowOrColumn", 32, 1, 256,
+																   "Shadowmapping atlas will have this number squared number of tiles");
+NumericCVar<U32> g_shadowMappingPcfCVar(CVarSubsystem::kRenderer, "ShadowMappingPcf", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1,
+										"Shadow PCF (CVarSubsystem::kRenderer, 0: off, 1: on)");
 
 class ShadowMapping::ViewportWorkItem
 {
@@ -38,8 +45,8 @@ Error ShadowMapping::initInternal()
 {
 	// Init RT
 	{
-		m_tileResolution = ConfigSet::getSingleton().getRShadowMappingTileResolution();
-		m_tileCountBothAxis = ConfigSet::getSingleton().getRShadowMappingTileCountPerRowOrColumn();
+		m_tileResolution = g_shadowMappingTileResolutionCVar.get();
+		m_tileCountBothAxis = g_shadowMappingTileCountPerRowOrColumnCVar.get();
 
 		ANKI_R_LOGV("Initializing shadowmapping. Atlas resolution %ux%u", m_tileResolution * m_tileCountBothAxis,
 					m_tileResolution * m_tileCountBothAxis);
@@ -156,7 +163,7 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const PointLightQueue
 								 U32& renderQueueElementsLod) const
 {
 	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
-	if(distFromTheCamera < ConfigSet::getSingleton().getLod0MaxDistance())
+	if(distFromTheCamera < g_lod0MaxDistanceCVar.get())
 	{
 		tileAllocatorHierarchy = kPointLightMaxTileAllocHierarchy;
 		renderQueueElementsLod = 0;
@@ -182,12 +189,12 @@ void ShadowMapping::chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueE
 	const F32 V1len = V.dot(coneDir);
 	const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
 
-	if(distFromTheCamera < ConfigSet::getSingleton().getLod0MaxDistance())
+	if(distFromTheCamera < g_lod0MaxDistanceCVar.get())
 	{
 		tileAllocatorHierarchy = kSpotLightMaxTileAllocHierarchy;
 		renderQueueElementsLod = 0;
 	}
-	else if(distFromTheCamera < ConfigSet::getSingleton().getLod1MaxDistance())
+	else if(distFromTheCamera < g_lod1MaxDistanceCVar.get())
 	{
 		tileAllocatorHierarchy = max(kSpotLightMaxTileAllocHierarchy, 1u) - 1;
 		renderQueueElementsLod = kMaxLodCount - 1;
@@ -248,8 +255,7 @@ void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& q
 {
 	ViewportWorkItem& work = *workItems.emplaceBack();
 
-	const Array<F32, kMaxLodCount - 1> lodDistances = {ConfigSet::getSingleton().getLod0MaxDistance(),
-													   ConfigSet::getSingleton().getLod1MaxDistance()};
+	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 	getRenderer().getGpuVisibility().populateRenderGraph("Shadowmapping visibility", RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
 														 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, hzbRt, rgraph,
 														 work.m_visOut);
@@ -373,7 +379,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Remove a few texels to avoid bilinear filtering bleeding
 			F32 texelsBorder;
-			if(ConfigSet::getSingleton().getRShadowMappingPcf())
+			if(g_shadowMappingPcfCVar.get())
 			{
 				texelsBorder = 2.0f; // 2 texels
 			}

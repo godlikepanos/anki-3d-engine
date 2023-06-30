@@ -74,7 +74,6 @@ enum class VulkanExtensions : U32
 	kKHR_swapchain = 1 << 6,
 	kKHR_surface = 1 << 7,
 	kEXT_debug_utils = 1 << 8,
-	kAMD_shader_info = 1 << 9,
 	kAMD_rasterization_order = 1 << 10,
 	kKHR_ray_tracing = 1 << 11,
 	kKHR_pipeline_executable_properties = 1 << 12,

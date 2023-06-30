@@ -11,6 +11,9 @@
 
 namespace anki {
 
+NumericCVar<U32> g_reflectionProbeResolutionCVar(CVarSubsystem::kScene, "ReflectionProbeResolution", 128, 8, 2048,
+												 "The resolution of the reflection probe's reflection");
+
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	: QueryableSceneComponent<ReflectionProbeComponent>(node, getStaticClassId())
 	, m_spatial(this)
@@ -46,7 +49,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		TextureInitInfo texInit("ReflectionProbe");
 		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat
 																											: Format::kR16G16B16A16_Sfloat;
-		texInit.m_width = ConfigSet::getSingleton().getSceneReflectionProbeResolution();
+		texInit.m_width = g_reflectionProbeResolutionCVar.get();
 		texInit.m_height = texInit.m_width;
 		texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
 		texInit.m_type = TextureType::kCube;
@@ -69,9 +72,9 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 
 		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 		effectiveDistance = max(effectiveDistance, m_halfSize.z());
-		effectiveDistance = max(effectiveDistance, ConfigSet::getSingleton().getSceneProbeEffectiveDistance());
+		effectiveDistance = max(effectiveDistance, g_probeEffectiveDistanceCVar.get());
 
-		const F32 shadowCascadeDistance = min(effectiveDistance, ConfigSet::getSingleton().getSceneProbeShadowEffectiveDistance());
+		const F32 shadowCascadeDistance = min(effectiveDistance, g_probeShadowEffectiveDistanceCVar.get());
 
 		for(U32 i = 0; i < 6; ++i)
 		{

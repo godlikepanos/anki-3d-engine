@@ -22,6 +22,13 @@ static StatCounter g_sceneUpdateTime(StatCategory::kTime, "All scene update", St
 static StatCounter g_sceneVisibilityTime(StatCategory::kTime, "Scene visibility", StatFlag::kMilisecond | StatFlag::kShowAverage);
 static StatCounter g_scenePhysicsTime(StatCategory::kTime, "Physics", StatFlag::kMilisecond | StatFlag::kShowAverage);
 
+static NumericCVar<U32> g_octreeMaxDepthCVar(CVarSubsystem::kScene, "OctreeMaxDepth", 5, 2, 10, "The max depth of the octree");
+
+NumericCVar<F32> g_probeEffectiveDistanceCVar(CVarSubsystem::kScene, "ProbeEffectiveDistance", 256.0f, 1.0f, kMaxF32,
+											  "How far various probes can render");
+NumericCVar<F32> g_probeShadowEffectiveDistanceCVar(CVarSubsystem::kScene, "ProbeShadowEffectiveDistance", 32.0f, 1.0f, kMaxF32,
+													"How far to render shadows for the various probes");
+
 constexpr U32 kUpdateNodeBatchSize = 10;
 
 class SceneGraph::UpdateSceneNodesCtx
@@ -65,7 +72,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, ANKI_SAFE_ALIGNMENT, "SceneGraphFramePool");
 
 	m_octree = newInstance<Octree>(SceneMemoryPool::getSingleton());
-	m_octree->init(m_sceneMin, m_sceneMax, ConfigSet::getSingleton().getSceneOctreeMaxDepth());
+	m_octree->init(m_sceneMin, m_sceneMax, g_octreeMaxDepthCVar.get());
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));

@@ -32,18 +32,23 @@
 
 namespace anki {
 
+static NumericCVar<U8> g_fsrQualityCVar(CVarSubsystem::kRenderer, "FsrQuality", 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality");
+static NumericCVar<U8> g_dlssQualityCVar(CVarSubsystem::kRenderer, "DlssQuality", 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality");
+static NumericCVar<F32> g_sharpnessCVar(CVarSubsystem::kRenderer, "Sharpness", (ANKI_PLATFORM_MOBILE) ? 0.0f : 0.8f, 0.0f, 1.0f,
+										"Sharpen the image. It's a factor");
+
 Error Scale::init()
 {
 	const Bool needsScaling = getRenderer().getPostProcessResolution() != getRenderer().getInternalResolution();
-	const Bool needsSharpening = ConfigSet::getSingleton().getRSharpness() > 0.0f;
+	const Bool needsSharpening = g_sharpnessCVar.get() > 0.0f;
 	if(!needsScaling && !needsSharpening)
 	{
 		return Error::kNone;
 	}
 
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const U32 dlssQuality = ConfigSet::getSingleton().getRDlssQuality();
-	const U32 fsrQuality = ConfigSet::getSingleton().getRFsrQuality();
+	const Bool preferCompute = g_preferComputeCVar.get();
+	const U32 dlssQuality = g_dlssQualityCVar.get();
+	const U32 fsrQuality = g_fsrQualityCVar.get();
 
 	if(needsScaling)
 	{
@@ -178,7 +183,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Step 1: Upscaling
 	if(m_upscalingMethod == UpscalingMethod::kGr)
@@ -312,7 +317,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 	const RenderTargetHandle inRt = getRenderer().getTemporalAA().getTonemappedRt();
 	const RenderTargetHandle outRt = m_runCtx.m_upscaledTonemappedRt;
 
@@ -376,7 +381,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 	const RenderTargetHandle inRt = m_runCtx.m_tonemappedRt;
 	const RenderTargetHandle outRt = m_runCtx.m_sharpenedRt;
 
@@ -401,7 +406,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 		UVec2 m_padding;
 	} pc;
 
-	F32 sharpness = ConfigSet::getSingleton().getRSharpness(); // [0, 1]
+	F32 sharpness = g_sharpnessCVar.get(); // [0, 1]
 	sharpness *= 3.0f; // [0, 3]
 	sharpness = 3.0f - sharpness; // [3, 0], RCAS translates 0 to max sharpness
 	FsrRcasCon(&pc.m_fsrConsts0[0], sharpness);
@@ -444,7 +449,7 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 	const RenderTargetHandle inRt = m_runCtx.m_upscaledHdrRt;
 	const RenderTargetHandle outRt = m_runCtx.m_tonemappedRt;
 

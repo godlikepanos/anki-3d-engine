@@ -9,6 +9,25 @@
 
 namespace anki {
 
+static NumericCVar<U32> g_minGpuSceneTransformsCVar(CVarSubsystem::kScene, "MinGpuSceneTransforms", 2 * 10 * 1024, 8, 100 * 1024,
+													"The min number of transforms stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneMeshesCVar(CVarSubsystem::kScene, "MinGpuSceneMeshes", 8 * 1024, 8, 100 * 1024,
+												"The min number of meshes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneParticleEmittersCVar(CVarSubsystem::kScene, "MinGpuSceneParticleEmitters", 1 * 1024, 8, 100 * 1024,
+														  "The min number of particle emitters stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneLightsCVar(CVarSubsystem::kScene, "MinGpuSceneLights", 2 * 1024, 8, 100 * 1024,
+												"The min number of lights stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneReflectionProbesCVar(CVarSubsystem::kScene, "MinGpuSceneReflectionProbes", 128, 8, 100 * 1024,
+														  "The min number of reflection probes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneGlobalIlluminationProbesCVar(CVarSubsystem::kScene, "MinGpuSceneGlobalIlluminationProbes", 128, 8, 100 * 1024,
+																  "The min number of GI probes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneDecalsCVar(CVarSubsystem::kScene, "MinGpuSceneDecals", 2 * 1024, 8, 100 * 1024,
+												"The min number of decals stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneFogDensityVolumesCVar(CVarSubsystem::kScene, "MinGpuSceneFogDensityVolumes", 512, 8, 100 * 1024,
+														   "The min number fog density volumes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneRenderablesCVar(CVarSubsystem::kScene, "MinGpuSceneRenderables", 10 * 1024, 8, 100 * 1024,
+													 "The min number of renderables stored in the GPU scene");
+
 void GpuSceneContiguousArrays::ContiguousArrayAllocator::destroy()
 {
 	for(U32 i = 0; i < kMaxFramesInFlight; ++i)
@@ -94,16 +113,15 @@ void GpuSceneContiguousArrays::ContiguousArrayAllocator::collectGarbage(U32 newF
 
 GpuSceneContiguousArrays::GpuSceneContiguousArrays()
 {
-	const ConfigSet& cfg = ConfigSet::getSingleton();
 	constexpr F32 kGrowRate = 2.0;
 
 	const Array<U32, U32(GpuSceneContiguousArrayType::kCount)> minElementCount = {
-		cfg.getSceneMinGpuSceneTransforms(),       cfg.getSceneMinGpuSceneMeshes(),
-		cfg.getSceneMinGpuSceneParticleEmitters(), cfg.getSceneMinGpuSceneLights(),
-		cfg.getSceneMinGpuSceneReflectionProbes(), cfg.getSceneMinGpuSceneGlobalIlluminationProbes(),
-		cfg.getSceneMinGpuSceneDecals(),           cfg.getSceneMinGpuSceneFogDensityVolumes(),
-		cfg.getSceneMinGpuSceneRenderables(),      cfg.getSceneMinGpuSceneRenderables(),
-		cfg.getSceneMinGpuSceneRenderables(),      cfg.getSceneMinGpuSceneRenderables()};
+		g_minGpuSceneTransformsCVar.get(),       g_minGpuSceneMeshesCVar.get(),
+		g_minGpuSceneParticleEmittersCVar.get(), g_minGpuSceneLightsCVar.get(),
+		g_minGpuSceneReflectionProbesCVar.get(), g_minGpuSceneGlobalIlluminationProbesCVar.get(),
+		g_minGpuSceneDecalsCVar.get(),           g_minGpuSceneFogDensityVolumesCVar.get(),
+		g_minGpuSceneRenderablesCVar.get(),      g_minGpuSceneRenderablesCVar.get(),
+		g_minGpuSceneRenderablesCVar.get(),      g_minGpuSceneRenderablesCVar.get()};
 
 	for(GpuSceneContiguousArrayType type : EnumIterable<GpuSceneContiguousArrayType>())
 	{

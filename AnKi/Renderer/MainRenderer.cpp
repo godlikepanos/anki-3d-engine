@@ -44,7 +44,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 
 	// Init renderer and manipulate the width/height
 	m_swapchainResolution = inf.m_swapchainSize;
-	m_rDrawToDefaultFb = ConfigSet::getSingleton().getRRenderScaling() == 1.0f;
+	m_rDrawToDefaultFb = g_renderScalingCVar.get() == 1.0f;
 
 	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(), m_swapchainResolution.y());
 
@@ -60,7 +60,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		m_blitGrProg.reset(&variant->getProgram());
 
 		// The RT desc
-		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * ConfigSet::getSingleton().getRRenderScaling());
+		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * g_renderScalingCVar.get());
 		alignRoundDown(2, resolution.x());
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(

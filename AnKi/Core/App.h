@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
+#include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>
@@ -15,6 +15,11 @@ namespace anki {
 // Forward
 class UiQueueElement;
 class RenderQueue;
+extern NumericCVar<U32> g_windowFullscreenCVar;
+extern NumericCVar<U32> g_targetFpsCVar;
+extern NumericCVar<F32> g_lod0MaxDistanceCVar;
+extern NumericCVar<F32> g_lod1MaxDistanceCVar;
+extern NumericCVar<U32> g_displayStatsCVar;
 
 /// The core class of the engine.
 class App

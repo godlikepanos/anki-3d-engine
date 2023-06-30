@@ -14,6 +14,8 @@
 
 namespace anki {
 
+static BoolCVar g_smResolveQuarterRezCVar(CVarSubsystem::kRenderer, "SmResolveQuarterRez", ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality");
+
 Error ShadowmapsResolve::init()
 {
 	const Error err = initInternal();
@@ -27,7 +29,7 @@ Error ShadowmapsResolve::init()
 
 Error ShadowmapsResolve::initInternal()
 {
-	m_quarterRez = ConfigSet::getSingleton().getRSmResolveQuarterRez();
+	m_quarterRez = g_smResolveQuarterRezCVar.get();
 	const U32 width = getRenderer().getInternalResolution().x() / (m_quarterRez + 1);
 	const U32 height = getRenderer().getInternalResolution().y() / (m_quarterRez + 1);
 
@@ -41,16 +43,15 @@ Error ShadowmapsResolve::initInternal()
 	m_fbDescr.bake();
 
 	// Prog
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
-																: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource((g_preferComputeCVar.get()) ? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
+																						: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
 															m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
 	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
 	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
 	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
-	variantInitInfo.addMutation("PCF", ConfigSet::getSingleton().getRShadowMappingPcf());
+	variantInitInfo.addMutation("PCF", g_shadowMappingPcfCVar.get() != 0);
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg.reset(&variant->getProgram());
@@ -65,7 +66,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ResolveShadows");
 
@@ -124,7 +125,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	}
 	cmdb.bindTexture(0, 9, &m_noiseImage->getTextureView());
 
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	if(g_preferComputeCVar.get())
 	{
 		rgraphCtx.bindImage(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
