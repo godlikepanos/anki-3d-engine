@@ -26,13 +26,13 @@ public:
 	Second getElapsedTime() const;
 
 	/// Get the current date's seconds
-	static ANKI_PURE Second getCurrentTime();
+	static Second getCurrentTime();
 
 	/// Get the current date's mili seconds
-	static ANKI_PURE U64 getCurrentTimeMs();
+	static U64 getCurrentTimeMs();
 
 	/// Get the current date's micro seconds
-	static ANKI_PURE U64 getCurrentTimeUs();
+	static U64 getCurrentTimeUs();
 
 	/// Micro sleep. The resolution is in nanoseconds.
 	static void sleep(Second seconds);

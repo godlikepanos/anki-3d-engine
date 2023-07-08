@@ -9,7 +9,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Window/Input.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>
@@ -235,14 +235,12 @@ static RebarTransientMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
-	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr); \
-	cfg.setWidth(WIDTH); \
-	cfg.setHeight(HEIGHT); \
-	cfg.setGrValidation(true); \
-	cfg.setGrVsync(false); \
-	cfg.setGrRayTracing(true); \
-	cfg.setGrDebugMarkers(true); \
-	g_win = createWindow(cfg); \
+	g_windowWidthCVar.set(WIDTH); \
+	g_windowHeightCVar.set(HEIGHT); \
+	g_validationCVar.set(true); \
+	g_vsyncCVar.set(false); \
+	g_debugMarkersCVar.set(true); \
+	g_win = createWindow(); \
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init()); \
 	g_gr = createGrManager(g_win); \
 	RebarTransientMemoryPool::allocateSingleton().init(); \
@@ -261,7 +259,6 @@ static Input* input = nullptr;
 	GrManager::freeSingleton(); \
 	Input::freeSingleton(); \
 	NativeWindow::freeSingleton(); \
-	ConfigSet::freeSingleton(); \
 	g_win = nullptr; \
 	g_gr = nullptr;
 

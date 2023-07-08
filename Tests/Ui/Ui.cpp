@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
@@ -57,15 +56,13 @@ public:
 
 ANKI_TEST(Ui, Ui)
 {
-	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
-	initConfig(cfg);
-	cfg.setGrVsync(true);
-	cfg.setGrValidation(false);
-	cfg.setWidth(1024);
-	cfg.setHeight(760);
-	cfg.setRsrcDataPaths("EngineAssets");
+	g_vsyncCVar.set(true);
+	g_validationCVar.set(true);
+	g_windowWidthCVar.set(1024);
+	g_windowHeightCVar.set(760);
+	g_dataPathsCVar.set("EngineAssets");
 
-	NativeWindow* win = createWindow(cfg);
+	NativeWindow* win = createWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
 	GrManager* gr = createGrManager(win);
 	createResourceManager(gr);

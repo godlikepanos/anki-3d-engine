@@ -9,10 +9,9 @@
 
 ANKI_TEST(Gr, TextureBuffer)
 {
-	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
-	cfg.setGrValidation(true);
+	g_validationCVar.set(true);
 
-	NativeWindow* win = createWindow(cfg);
+	NativeWindow* win = createWindow();
 	GrManager* gr = createGrManager(win);
 
 	{

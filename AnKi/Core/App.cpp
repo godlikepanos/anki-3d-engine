@@ -53,8 +53,8 @@ static StatCounter g_cpuAllocationCount(StatCategory::kCpuMem, "Allocations/fram
 										StatFlag::kBytes | StatFlag::kZeroEveryFrame | StatFlag::kThreadSafe);
 static StatCounter g_cpuFreesCount(StatCategory::kCpuMem, "Frees/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame | StatFlag::kThreadSafe);
 
-static NumericCVar<U32> g_widthCVar(CVarSubsystem::kCore, "Width", 1920, 16, 16 * 1024, "Width");
-static NumericCVar<U32> g_heightCVar(CVarSubsystem::kCore, "Height", 1080, 16, 16 * 1024, "Height");
+NumericCVar<U32> g_windowWidthCVar(CVarSubsystem::kCore, "Width", 1920, 16, 16 * 1024, "Width");
+NumericCVar<U32> g_windowHeightCVar(CVarSubsystem::kCore, "Height", 1080, 16, 16 * 1024, "Height");
 NumericCVar<U32> g_windowFullscreenCVar(CVarSubsystem::kCore, "WindowFullscreen", 1, 0, 2,
 										"0: windowed, 1: borderless fullscreen, 2: exclusive fullscreen");
 NumericCVar<U32> g_targetFpsCVar(CVarSubsystem::kCore, "TargetFps", 60u, 1u, kMaxU32, "Target FPS");
@@ -272,8 +272,8 @@ Error App::initInternal()
 	// Window
 	//
 	NativeWindowInitInfo nwinit;
-	nwinit.m_width = g_widthCVar.get();
-	nwinit.m_height = g_heightCVar.get();
+	nwinit.m_width = g_windowWidthCVar.get();
+	nwinit.m_height = g_windowHeightCVar.get();
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
 	nwinit.m_fullscreenDesktopRez = g_windowFullscreenCVar.get() > 0;

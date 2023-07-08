@@ -10,8 +10,6 @@ ANKI_TEST(Resource, ResourceFilesystem)
 {
 	printf("Test requires the Data dir\n");
 
-	ConfigSet::allocateSingleton(allocAligned, nullptr);
-
 	ResourceFilesystem fs;
 	ANKI_TEST_EXPECT_NO_ERR(fs.init());
 
