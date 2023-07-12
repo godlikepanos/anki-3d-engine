@@ -86,12 +86,11 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	Array3d<ShaderProgramPtr, 2, U32(GpuSceneNonRenderableObjectType::kCount), 2> m_grProgs;
 
-	static constexpr U32 kMaxFeedbackRequestsPerFrame = 6;
+	static constexpr U32 kMaxPopulateRenderGraphPerFrame = 32; ///< Max times the populateRenderGraph() will be called per frame.
 
-	Array<BufferPtr, kMaxFeedbackRequestsPerFrame> m_counterBuffers; ///< A buffer containing multiple counters for atomic operations.
-	Array<U8, kMaxFeedbackRequestsPerFrame> m_counterIdx = {};
+	Array<BufferPtr, kMaxPopulateRenderGraphPerFrame> m_counterBuffers; ///< A buffer containing multiple counters for atomic operations.
 	U64 m_lastFrameIdx = kMaxU64;
-	U32 m_feedbackRequestCountThisFrame = 0;
+	U32 m_runIdx = 0;
 };
 /// @}
 

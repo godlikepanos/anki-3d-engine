@@ -202,7 +202,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		if(!m_capabilities.m_unalignedBbpTextureFormats)
 		{
-			ANKI_VK_LOGI("R8G8B8, R16G16B16 and R32G32B32 image formats are not supported");
+			ANKI_VK_LOGV("R8G8B8, R16G16B16 and R32G32B32 image formats are not supported");
 		}
 	}
 

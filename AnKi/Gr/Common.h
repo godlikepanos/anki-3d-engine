@@ -61,7 +61,7 @@ constexpr U32 kMaxColorRenderTargets = 4;
 constexpr U32 kMaxDescriptorSets = 3; ///< Groups that can be bound at the same time.
 constexpr U32 kMaxBindingsPerDescriptorSet = 32;
 constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
-constexpr U32 kMaxGrObjectNameLength = 31;
+constexpr U32 kMaxGrObjectNameLength = 61;
 constexpr U32 kMaxBindlessTextures = 512;
 constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
 

@@ -247,10 +247,13 @@ Error GpuVisibilityNonRenderables::init()
 		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-		for(U32 i = 0; i < kMaxFeedbackRequestsPerFrame; ++i)
+		for(U32 i = 0; i < kMaxRenderGraphAccelerationStructures; ++i)
 		{
-			BufferInitInfo buffInit("GpuVisibilityNonRenderablesFeedbackCounters");
-			buffInit.m_size = 2 * sizeof(U32);
+			RendererString name;
+			name.sprintf("GpuVisibilityNonRenderablesCounters#%u", i);
+
+			BufferInitInfo buffInit(name);
+			buffInit.m_size = 3 * sizeof(U32);
 			buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
 
 			m_counterBuffers[i] = GrManager::getSingleton().newBuffer(buffInit);
@@ -280,28 +283,22 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		ANKI_ASSERT(in.m_cpuFeedbackBuffer.m_range == sizeof(U32) * (objCount + 1));
 	}
 
-	// Find the counter buffer required for feedback
+	// Find the counter buffer
 	U32 counterBufferIdx = kMaxU32;
-	if(in.m_cpuFeedbackBuffer.m_buffer)
+	if(m_lastFrameIdx != getRenderer().getFrameCount())
 	{
-		if(m_lastFrameIdx != getRenderer().getFrameCount())
-		{
-			m_lastFrameIdx = getRenderer().getFrameCount();
-			m_feedbackRequestCountThisFrame = 0;
-		}
-
-		counterBufferIdx = m_feedbackRequestCountThisFrame++;
-		m_counterIdx[counterBufferIdx] = (m_counterIdx[counterBufferIdx] + 1) & 1;
+		m_lastFrameIdx = getRenderer().getFrameCount();
+		m_runIdx = 0;
 	}
 
-	// Allocate memory for the result
-	RebarAllocation visibleIndicesAlloc;
-	U32* indices = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(objCount + 1, visibleIndicesAlloc);
-	indices[0] = 0;
+	counterBufferIdx = m_runIdx++;
 
-	out.m_visiblesBuffer.m_buffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
+	// Allocate memory for the result
+	GpuVisibleTransientMemoryAllocation visibleIndicesAlloc = GpuVisibleTransientMemoryPool::getSingleton().allocate((objCount + 1) * sizeof(U32));
+
+	out.m_visiblesBuffer.m_buffer = visibleIndicesAlloc.m_buffer;
 	out.m_visiblesBuffer.m_offset = visibleIndicesAlloc.m_offset;
-	out.m_visiblesBuffer.m_range = visibleIndicesAlloc.m_range;
+	out.m_visiblesBuffer.m_range = visibleIndicesAlloc.m_size;
 
 	// Import buffers
 	RenderGraphDescription& rgraph = *in.m_rgraph;
@@ -320,8 +317,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	}
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
-				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBufferIdx,
-				  counterIdx = m_counterIdx[counterBufferIdx]](RenderPassWorkContext& rgraph) {
+				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBufferIdx](RenderPassWorkContext& rgraph) {
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 		const GpuSceneContiguousArrayType arrayType = gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(objType);
 		const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
@@ -333,23 +329,21 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), cArrays.getArrayBaseOffset(arrayType),
 							   cArrays.getElementSize(arrayType) * cArrays.getElementCount(arrayType), 0);
 
-		GpuVisibilityNonRenderableUniforms* unis =
-			allocateAndBindUniforms<GpuVisibilityNonRenderableUniforms*>(sizeof(GpuVisibilityNonRenderableUniforms), cmdb, 0, 1);
+		GpuVisibilityNonRenderableUniforms unis;
 		Array<Plane, 6> planes;
 		extractClipPlanes(viewProjectionMat, planes);
 		for(U32 i = 0; i < 6; ++i)
 		{
-			unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+			unis.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
+		cmdb.setPushConstants(&unis, sizeof(unis));
 
-		unis->m_feedbackCounterIdx = counterIdx;
-
-		rgraph.bindStorageBuffer(0, 2, visibleIndicesBuffHandle);
+		rgraph.bindStorageBuffer(0, 1, visibleIndicesBuffHandle);
+		cmdb.bindStorageBuffer(0, 2, m_counterBuffers[counterBufferIdx].get(), 0, kMaxPtrSize);
 
 		if(needsFeedback)
 		{
 			cmdb.bindStorageBuffer(0, 3, feedbackBuffer.m_buffer, feedbackBuffer.m_offset, feedbackBuffer.m_range);
-			cmdb.bindStorageBuffer(0, 4, m_counterBuffers[counterBufferIdx].get(), 0, kMaxPtrSize);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, objCount, 1);

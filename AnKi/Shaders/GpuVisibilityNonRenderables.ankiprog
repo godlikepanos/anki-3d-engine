@@ -30,15 +30,17 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 #endif
 
 [[vk::binding(0)]] StructuredBuffer<ObjectType> g_objects;
-[[vk::binding(1)]] ConstantBuffer<GpuVisibilityNonRenderableUniforms> g_unis;
-[[vk::binding(2)]] RWStructuredBuffer<U32> g_visibleIndices; // 1st element is the count. What follows is indices
+[[vk::push_constant]] ConstantBuffer<GpuVisibilityNonRenderableUniforms> g_unis;
+[[vk::binding(1)]] RWStructuredBuffer<U32> g_visibleIndices; // 1st element is the count. What follows is indices
+
+constexpr U32 kVisibleObjCounterIdx = 1;
+constexpr U32 kThreadgroupCounterIdx = 0;
+constexpr U32 kFeedbackCounterIdx = 2;
+[[vk::binding(2)]] RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch with an optional 3rd for feedback
 
 #if CPU_FEEDBACK
 // 1st element is a count. What follows is an array of UUIDs.
 [[vk::binding(3)]] RWStructuredBuffer<U32> g_cpuFeedbackBuffer;
-
-// Contains 2 U32s. One that it gets cleared and another that will be incremented.
-[[vk::binding(4)]] RWStructuredBuffer<U32> g_counterBuffer;
 #endif
 
 Vec4 getSphere(GpuSceneLight l)
@@ -79,52 +81,69 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	return Vec4(center, radius);
 }
 
-[numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+#define NUMTHREADS 64
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
+	Bool skip = false;
+
 	U32 objectCount, unused;
 	g_objects.GetDimensions(objectCount, unused);
-
-#if CPU_FEEDBACK
-	// Zero feedback counters of the next frame
-	if(svDispatchThreadId.x == 0)
-	{
-		g_counterBuffer[!g_unis.m_feedbackCounterIdx] = 0u;
-	}
-#endif
-
-	if(svDispatchThreadId.x >= objectCount)
-	{
-		return;
-	}
+	skip = (svDispatchThreadId >= objectCount);
 
 	// Frustum test
 	//
-	const ObjectType obj = g_objects[svDispatchThreadId.x];
-	const Vec4 sphere = getSphere(obj);
-	if(!frustumTest(g_unis.m_clipPlanes, sphere.xyz, sphere.w))
+	if(!skip)
 	{
-		return;
+		const Vec4 sphere = getSphere(g_objects[svDispatchThreadId]);
+		skip = !frustumTest(g_unis.m_clipPlanes, sphere.xyz, sphere.w);
 	}
 
 	// Add the object
 	//
-	U32 idx;
-	InterlockedAdd(g_visibleIndices[0], 1, idx);
-	g_visibleIndices[idx + 1] = svDispatchThreadId.x;
+	if(!skip)
+	{
+		U32 idx;
+		InterlockedAdd(g_counterBuffer[kVisibleObjCounterIdx], 1, idx);
+
+		g_visibleIndices[idx + 1] = svDispatchThreadId;
+	}
 
 	// Give feedback to the CPU
 	//
 #if CPU_FEEDBACK
-	if(obj.m_uuid != 0)
+	if(!skip && g_objects[svDispatchThreadId].m_uuid != 0)
 	{
 		U32 idx;
-		InterlockedAdd(g_counterBuffer[g_unis.m_feedbackCounterIdx], 1, idx);
+		InterlockedAdd(g_counterBuffer[kFeedbackCounterIdx], 1, idx);
 
-		U32 dummy;
-		InterlockedExchange(g_cpuFeedbackBuffer[0], idx + 1, dummy);
-		g_cpuFeedbackBuffer[idx + 1] = obj.m_uuid;
+		g_cpuFeedbackBuffer[idx + 1] = g_objects[svDispatchThreadId].m_uuid;
 	}
 #endif
+
+	// Store the counters to the actual buffers
+	//
+	Bool lastThreadgroupExecuting = false;
+	if(svGroupIndex == 0)
+	{
+		U32 threadgroupIdx;
+		InterlockedAdd(g_counterBuffer[kThreadgroupCounterIdx], 1, threadgroupIdx);
+		const U32 threadgroupCount = (objectCount + NUMTHREADS - 1) / NUMTHREADS;
+		lastThreadgroupExecuting = (threadgroupIdx == threadgroupCount);
+	}
+
+	// Sync to make sure all the atomic ops have finished before the following code reads them
+	GroupMemoryBarrier();
+
+	if(lastThreadgroupExecuting)
+	{
+		g_visibleIndices[0] = g_counterBuffer[kVisibleObjCounterIdx];
+		g_counterBuffer[kVisibleObjCounterIdx] = 0;
+#if CPU_FEEDBACK
+		g_cpuFeedbackBuffer[0] = g_counterBuffer[kFeedbackCounterIdx];
+		g_counterBuffer[kFeedbackCounterIdx] = 0;
+#endif
+		g_counterBuffer[kThreadgroupCounterIdx] = 0;
+	}
 }
 
 #pragma anki end

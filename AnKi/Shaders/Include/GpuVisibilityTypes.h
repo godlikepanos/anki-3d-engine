@@ -29,11 +29,6 @@ struct GpuVisibilityUniforms
 struct GpuVisibilityNonRenderableUniforms
 {
 	Vec4 m_clipPlanes[6u];
-
-	U32 m_feedbackCounterIdx;
-	U32 m_padding0;
-	U32 m_padding1;
-	U32 m_padding2;
 };
 
 struct PointLightRendererCacheEntry
