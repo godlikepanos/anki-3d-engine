@@ -36,7 +36,7 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 constexpr U32 kVisibleObjCounterIdx = 1;
 constexpr U32 kThreadgroupCounterIdx = 0;
 constexpr U32 kFeedbackCounterIdx = 2;
-[[vk::binding(2)]] RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch with an optional 3rd for feedback
+[[vk::binding(2)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch with an optional 3rd for feedback
 
 #if CPU_FEEDBACK
 // 1st element is a count. What follows is an array of UUIDs.
@@ -128,11 +128,11 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 		U32 threadgroupIdx;
 		InterlockedAdd(g_counterBuffer[kThreadgroupCounterIdx], 1, threadgroupIdx);
 		const U32 threadgroupCount = (objectCount + NUMTHREADS - 1) / NUMTHREADS;
-		lastThreadgroupExecuting = (threadgroupIdx == threadgroupCount);
+		lastThreadgroupExecuting = (threadgroupIdx + 1 == threadgroupCount);
 	}
 
 	// Sync to make sure all the atomic ops have finished before the following code reads them
-	GroupMemoryBarrier();
+	AllMemoryBarrierWithGroupSync();
 
 	if(lastThreadgroupExecuting)
 	{

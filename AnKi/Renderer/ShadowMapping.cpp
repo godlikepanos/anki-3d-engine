@@ -256,9 +256,17 @@ void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& q
 	ViewportWorkItem& work = *workItems.emplaceBack();
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
-	getRenderer().getGpuVisibility().populateRenderGraph("Shadowmapping visibility", RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
-														 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, hzbRt, rgraph,
-														 work.m_visOut);
+
+	GpuVisibilityInput visIn;
+	visIn.m_passesName = "Shadows visibility";
+	visIn.m_technique = RenderingTechnique::kDepth;
+	visIn.m_viewProjectionMatrix = queue.m_viewProjectionMatrix;
+	visIn.m_lodReferencePoint = queue.m_cameraTransform.getTranslationPart().xyz();
+	visIn.m_lodDistances = lodDistances;
+	visIn.m_hzbRt = hzbRt;
+	visIn.m_rgraph = &rgraph;
+
+	getRenderer().getGpuVisibility().populateRenderGraph(visIn, work.m_visOut);
 
 	work.m_viewport = atlasViewport;
 	work.m_mvp = queue.m_viewProjectionMatrix;

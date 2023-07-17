@@ -197,9 +197,16 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	{
 		const RenderQueue& queue = *giCtx->m_probeToUpdateThisFrame->m_renderQueues[i];
 		Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
-		getRenderer().getGpuVisibility().populateRenderGraph("GI GBuffer visibility", RenderingTechnique::kGBuffer, queue.m_viewProjectionMatrix,
-															 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
-															 giCtx->m_gbufferVisOut[i]);
+
+		GpuVisibilityInput visIn;
+		visIn.m_passesName = "GI GBuffer visibility";
+		visIn.m_technique = RenderingTechnique::kGBuffer;
+		visIn.m_viewProjectionMatrix = queue.m_viewProjectionMatrix;
+		visIn.m_lodReferencePoint = queue.m_cameraTransform.getTranslationPart().xyz();
+		visIn.m_lodDistances = lodDistances;
+		visIn.m_rgraph = &rgraph;
+
+		getRenderer().getGpuVisibility().populateRenderGraph(visIn, giCtx->m_gbufferVisOut[i]);
 	}
 
 	// GBuffer
@@ -244,9 +251,16 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		{
 			const RenderQueue& queue = *giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0];
 			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
-			getRenderer().getGpuVisibility().populateRenderGraph("GI shadows visibility", RenderingTechnique::kDepth, queue.m_viewProjectionMatrix,
-																 queue.m_cameraTransform.getTranslationPart().xyz(), lodDistances, nullptr, rgraph,
-																 giCtx->m_shadowsVisOut[i]);
+
+			GpuVisibilityInput visIn;
+			visIn.m_passesName = "GI shadows visibility";
+			visIn.m_technique = RenderingTechnique::kDepth;
+			visIn.m_viewProjectionMatrix = queue.m_viewProjectionMatrix;
+			visIn.m_lodReferencePoint = queue.m_cameraTransform.getTranslationPart().xyz();
+			visIn.m_lodDistances = lodDistances;
+			visIn.m_rgraph = &rgraph;
+
+			getRenderer().getGpuVisibility().populateRenderGraph(visIn, giCtx->m_shadowsVisOut[i]);
 		}
 	}
 

@@ -34,29 +34,15 @@ public:
 	// For MDI
 	RenderingTechnique m_renderingTechinuqe = RenderingTechnique::kCount;
 
-	Buffer* m_mdiDrawCountsBuffer = nullptr;
-	PtrSize m_mdiDrawCountsBufferOffset = 0;
-	PtrSize m_mdiDrawCountsBufferRange = 0;
-
-	Buffer* m_drawIndexedIndirectArgsBuffer = nullptr;
-	PtrSize m_drawIndexedIndirectArgsBufferOffset = 0;
-	PtrSize m_drawIndexedIndirectArgsBufferRange = 0;
-
-	Buffer* m_instanceRateRenderablesBuffer = nullptr;
-	PtrSize m_instanceRateRenderablesBufferOffset = 0;
-	PtrSize m_instanceRateRenderablesBufferRange = 0;
+	BufferOffsetRange m_mdiDrawCountsBuffer;
+	BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
+	BufferOffsetRange m_instanceRateRenderablesBuffer;
 
 	void fillMdi(const GpuVisibilityOutput& visOut)
 	{
 		m_mdiDrawCountsBuffer = visOut.m_mdiDrawCountsBuffer;
-		m_mdiDrawCountsBufferOffset = visOut.m_mdiDrawCountsBufferOffset;
-		m_mdiDrawCountsBufferRange = visOut.m_mdiDrawCountsBufferRange;
 		m_drawIndexedIndirectArgsBuffer = visOut.m_drawIndexedIndirectArgsBuffer;
-		m_drawIndexedIndirectArgsBufferOffset = visOut.m_drawIndexedIndirectArgsBufferOffset;
-		m_drawIndexedIndirectArgsBufferRange = visOut.m_drawIndexedIndirectArgsBufferRange;
 		m_instanceRateRenderablesBuffer = visOut.m_instanceRateRenderablesBuffer;
-		m_instanceRateRenderablesBufferOffset = visOut.m_instanceRateRenderablesBufferOffset;
-		m_instanceRateRenderablesBufferRange = visOut.m_instanceRateRenderablesBufferRange;
 	}
 };
 

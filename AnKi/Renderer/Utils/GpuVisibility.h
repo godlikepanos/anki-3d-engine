@@ -14,22 +14,28 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+/// @memberof GpuVisibility
+class GpuVisibilityInput
+{
+public:
+	CString m_passesName;
+	RenderingTechnique m_technique = RenderingTechnique::kCount;
+	Mat4 m_viewProjectionMatrix = Mat4::getIdentity();
+	Vec3 m_lodReferencePoint = Vec3(0.0f);
+	Array<F32, kMaxLodCount - 1> m_lodDistances = {};
+	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
+	RenderGraphDescription* m_rgraph = nullptr;
+};
+
+/// @memberof GpuVisibility
 class GpuVisibilityOutput
 {
 public:
 	BufferHandle m_mdiDrawCountsHandle; ///< Just expose one handle for depedencies. No need to track all other buffers.
 
-	Buffer* m_instanceRateRenderablesBuffer;
-	Buffer* m_drawIndexedIndirectArgsBuffer;
-	Buffer* m_mdiDrawCountsBuffer;
-
-	PtrSize m_instanceRateRenderablesBufferOffset;
-	PtrSize m_drawIndexedIndirectArgsBufferOffset;
-	PtrSize m_mdiDrawCountsBufferOffset;
-
-	PtrSize m_instanceRateRenderablesBufferRange;
-	PtrSize m_drawIndexedIndirectArgsBufferRange;
-	PtrSize m_mdiDrawCountsBufferRange;
+	BufferOffsetRange m_instanceRateRenderablesBuffer;
+	BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
+	BufferOffsetRange m_mdiDrawCountsBuffer;
 };
 
 /// Performs GPU visibility for some pass.
@@ -39,9 +45,7 @@ public:
 	Error init();
 
 	/// Populate the rendergraph.
-	void populateRenderGraph(CString passesName, RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
-							 const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt, RenderGraphDescription& rgraph,
-							 GpuVisibilityOutput& out);
+	void populateRenderGraph(GpuVisibilityInput& in, GpuVisibilityOutput& out);
 
 private:
 	ShaderProgramResourcePtr m_prog;

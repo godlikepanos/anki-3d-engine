@@ -151,8 +151,8 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 {
 	setState(args, cmdb);
 
-	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer, args.m_instanceRateRenderablesBufferOffset, sizeof(GpuSceneRenderablePacked),
-						  VertexStepRate::kInstance);
+	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer.m_buffer, args.m_instanceRateRenderablesBuffer.m_offset,
+						  sizeof(GpuSceneRenderablePacked), VertexStepRate::kInstance);
 
 	U32 allUserCount = 0;
 	U32 bucketCount = 0;
@@ -170,9 +170,10 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 		const U32 maxDrawCount = userCount;
 
-		cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer,
-									  args.m_drawIndexedIndirectArgsBufferOffset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
-									  args.m_mdiDrawCountsBuffer, args.m_mdiDrawCountsBufferOffset + sizeof(U32) * bucketCount, maxDrawCount);
+		cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
+									  args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
+									  args.m_mdiDrawCountsBuffer.m_buffer, args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount,
+									  maxDrawCount);
 
 		++bucketCount;
 		allUserCount += userCount;

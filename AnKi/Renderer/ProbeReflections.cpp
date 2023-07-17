@@ -339,9 +339,16 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		const RenderQueue& queue = *m_ctx.m_probe->m_renderQueues[i];
 		Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
-		getRenderer().getGpuVisibility().populateRenderGraph("Cube refl GBuffer visibility", RenderingTechnique::kGBuffer,
-															 queue.m_viewProjectionMatrix, queue.m_cameraTransform.getTranslationPart().xyz(),
-															 lodDistances, nullptr, rgraph, visOuts[i]);
+
+		GpuVisibilityInput visIn;
+		visIn.m_passesName = "Cube refl GBuffer visibility";
+		visIn.m_technique = RenderingTechnique::kGBuffer;
+		visIn.m_viewProjectionMatrix = queue.m_viewProjectionMatrix;
+		visIn.m_lodReferencePoint = queue.m_cameraTransform.getTranslationPart().xyz();
+		visIn.m_lodDistances = lodDistances;
+		visIn.m_rgraph = &rgraph;
+
+		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOuts[i]);
 	}
 
 	// GBuffer pass
@@ -390,9 +397,15 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			const RenderQueue& queue = *m_ctx.m_probe->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0];
 			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
 
-			getRenderer().getGpuVisibility().populateRenderGraph("Cube refl shadows visibility", RenderingTechnique::kDepth,
-																 queue.m_viewProjectionMatrix, queue.m_cameraTransform.getTranslationPart().xyz(),
-																 lodDistances, nullptr, rgraph, shadowVisOuts[i]);
+			GpuVisibilityInput visIn;
+			visIn.m_passesName = "Cube refl shadows visibility";
+			visIn.m_technique = RenderingTechnique::kDepth;
+			visIn.m_viewProjectionMatrix = queue.m_viewProjectionMatrix;
+			visIn.m_lodReferencePoint = queue.m_cameraTransform.getTranslationPart().xyz();
+			visIn.m_lodDistances = lodDistances;
+			visIn.m_rgraph = &rgraph;
+
+			getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOuts[i]);
 		}
 	}
 

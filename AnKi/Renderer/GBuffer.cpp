@@ -161,10 +161,18 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
 	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+
+	GpuVisibilityInput visIn;
+	visIn.m_passesName = "GBuffer visibility";
+	visIn.m_technique = RenderingTechnique::kGBuffer;
+	visIn.m_viewProjectionMatrix = matrices.m_viewProjection;
+	visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz();
+	visIn.m_lodDistances = lodDistances;
+	visIn.m_rgraph = &rgraph;
+	visIn.m_hzbRt = &m_runCtx.m_hzbRt;
+
 	GpuVisibilityOutput visOut;
-	getRenderer().getGpuVisibility().populateRenderGraph("GBuffer visibility", RenderingTechnique::kGBuffer, matrices.m_viewProjection,
-														 matrices.m_cameraTransform.getTranslationPart().xyz(), lodDistances, &m_runCtx.m_hzbRt,
-														 rgraph, visOut);
+	getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;

@@ -45,12 +45,10 @@ Error GpuVisibility::init()
 	return Error::kNone;
 }
 
-void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique technique, const Mat4& viewProjectionMat, Vec3 lodReferencePoint,
-										const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt,
-										RenderGraphDescription& rgraph, GpuVisibilityOutput& out)
+void GpuVisibility::populateRenderGraph(GpuVisibilityInput& in, GpuVisibilityOutput& out)
 {
 	U32 aabbCount = 0;
-	switch(technique)
+	switch(in.m_technique)
 	{
 	case RenderingTechnique::kGBuffer:
 		aabbCount = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount();
@@ -61,7 +59,7 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 		ANKI_ASSERT(0);
 	}
 
-	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);
+	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(in.m_technique);
 
 #if ANKI_STATS_ENABLED
 	Bool firstCallInTheFrame = false;
@@ -93,44 +91,39 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 	// Allocate memory for the indirect commands
 	const GpuVisibleTransientMemoryAllocation indirectArgs =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectArgs));
-	out.m_drawIndexedIndirectArgsBuffer = indirectArgs.m_buffer;
-	out.m_drawIndexedIndirectArgsBufferOffset = indirectArgs.m_offset;
-	out.m_drawIndexedIndirectArgsBufferRange = indirectArgs.m_size;
+	out.m_drawIndexedIndirectArgsBuffer = {indirectArgs.m_buffer, indirectArgs.m_offset, indirectArgs.m_size};
 
 	const GpuVisibleTransientMemoryAllocation instanceRateRenderables =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(GpuSceneRenderable));
-	out.m_instanceRateRenderablesBuffer = instanceRateRenderables.m_buffer;
-	out.m_instanceRateRenderablesBufferOffset = instanceRateRenderables.m_offset;
-	out.m_instanceRateRenderablesBufferRange = instanceRateRenderables.m_size;
+	out.m_instanceRateRenderablesBuffer = {instanceRateRenderables.m_buffer, instanceRateRenderables.m_offset, instanceRateRenderables.m_size};
 
 	// Allocate and zero the MDI counts
 	RebarAllocation mdiDrawCounts;
 	U32* atomics = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(bucketCount, mdiDrawCounts);
 	memset(atomics, 0, mdiDrawCounts.m_range);
-	out.m_mdiDrawCountsBuffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
-	out.m_mdiDrawCountsBufferOffset = mdiDrawCounts.m_offset;
-	out.m_mdiDrawCountsBufferRange = mdiDrawCounts.m_range;
+	out.m_mdiDrawCountsBuffer = {&RebarTransientMemoryPool::getSingleton().getBuffer(), mdiDrawCounts.m_offset, mdiDrawCounts.m_range};
 
 	// Import buffers
-	out.m_mdiDrawCountsHandle = rgraph.importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
-													mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
+	out.m_mdiDrawCountsHandle = in.m_rgraph->importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
+														  mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
 
 	// Create the renderpass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passesName);
+	ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(in.m_passesName);
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(out.m_mdiDrawCountsHandle, BufferUsageBit::kStorageComputeWrite);
 
-	if(hzbRt)
+	if(in.m_hzbRt)
 	{
-		pass.newTextureDependency(*hzbRt, TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
 	}
 
 	const RenderTargetHandle hzbRtCopy =
-		(hzbRt) ? *hzbRt : RenderTargetHandle(); // Can't pass to the lambda the hzbRt which is a pointer to who knows what
+		(in.m_hzbRt) ? *in.m_hzbRt : RenderTargetHandle(); // Can't pass to the lambda the hzbRt which is a pointer to who knows what
 
-	pass.setWork([this, viewProjectionMat, lodReferencePoint, lodDistances, technique, hzbRtCopy, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle,
-				  instanceRateRenderables, indirectArgs, aabbCount
+	pass.setWork([this, viewProjectionMat = in.m_viewProjectionMatrix, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
+				  technique = in.m_technique, hzbRtCopy, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle, instanceRateRenderables, indirectArgs,
+				  aabbCount
 #if ANKI_STATS_ENABLED
 				  ,
 				  clearStatsBuffer, clearStatsBufferOffset, writeStatsBuffer, writeStatsBufferOffset
