@@ -25,7 +25,7 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
+	m_gpuSceneProbe.allocate();
 
 	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTextureProg);
 	if(err)
@@ -118,8 +118,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
 		gpuProbe.m_uuid = getUuid();
-
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuProbe);
+		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 
 	if(needsRefresh()) [[unlikely]]

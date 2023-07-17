@@ -142,7 +142,7 @@ public:
 
 	Bool usageValid(TextureUsageBit usage) const
 	{
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		LockGuard<SpinLock> lock(m_usedForMtx);
 		m_usedFor |= usage;
 #endif
@@ -191,7 +191,7 @@ private:
 	/// the hashmap above.
 	MicroImageView m_singleSurfaceImageView;
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	mutable TextureUsageBit m_usedFor = TextureUsageBit::kNone;
 	mutable SpinLock m_usedForMtx;
 #endif

@@ -102,7 +102,7 @@ private:
 	public:
 		OctreePlaceable* m_placeable = nullptr;
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		~PlaceableNode()
 		{
 			m_placeable = nullptr;
@@ -120,7 +120,7 @@ private:
 		Vec3 m_aabbMax;
 		Array<Leaf*, 8> m_children = {};
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		~Leaf()
 		{
 			ANKI_ASSERT(m_placeables.isEmpty());
@@ -142,7 +142,7 @@ private:
 	public:
 		Leaf* m_leaf = nullptr;
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		~LeafNode()
 		{
 			m_leaf = nullptr;

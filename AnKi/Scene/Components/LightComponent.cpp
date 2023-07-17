@@ -50,16 +50,6 @@ void LightComponent::setLightComponentType(LightComponentType type)
 		m_spatial.setUpdatesOctreeBounds(true);
 	}
 
-	if(m_typeChanged)
-	{
-		GpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneLightIndex);
-	}
-
-	if(!m_gpuSceneLightIndex.isValid() && (type == LightComponentType::kPoint || type == LightComponentType::kSpot))
-	{
-		m_gpuSceneLightIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kLights);
-	}
-
 	m_type = type;
 }
 
@@ -131,7 +121,11 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
 		gpuLight.m_shadow = m_shadow;
 		gpuLight.m_uuid = (m_shadow) ? getUuid() : 0;
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(), gpuLight);
+		if(!m_gpuSceneLight.isValid())
+		{
+			m_gpuSceneLight.allocate();
+		}
+		m_gpuSceneLight.uploadToGpuScene(gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
@@ -205,12 +199,18 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
 		gpuLight.m_uuid = (m_shadow) ? getUuid() : 0;
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneLightIndex.getOffsetInGpuScene(), gpuLight);
+		if(!m_gpuSceneLight.isValid())
+		{
+			m_gpuSceneLight.allocate();
+		}
+		m_gpuSceneLight.uploadToGpuScene(gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{
 		// Update the scene bounds always
 		SceneGraph::getSingleton().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
+
+		m_gpuSceneLight.free();
 	}
 
 	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());

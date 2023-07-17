@@ -95,13 +95,13 @@ public:
 
 private:
 	Vec4 m_origin
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		= Vec4(kMaxF32)
 #endif
 		;
 
 	Vec4 m_dir
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		= Vec4(kMaxF32)
 #endif
 		;

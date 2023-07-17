@@ -42,7 +42,10 @@
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	const U32 aabbIdx = svDispatchThreadId.x;
-	if(aabbIdx >= g_unis.m_aabbCount)
+	U32 aabbCount;
+	U32 unused;
+	g_aabbs.GetDimensions(aabbCount, unused);
+	if(aabbIdx >= aabbCount)
 	{
 		return;
 	}
@@ -58,7 +61,7 @@
 
 	// Frustum test
 	//
-	if(!frustumTest(g_unis.m_clipPlanes, aabb.m_sphereCenter, -aabb.m_negativeSphereRadius))
+	if(!frustumTest(g_unis.m_clipPlanes, aabb.m_sphereCenter, aabb.m_sphereRadius))
 	{
 		return;
 	}
@@ -134,7 +137,7 @@
 
 	// Compute the LOD
 	//
-	const F32 distFromLodPoint = length(aabb.m_sphereCenter - g_unis.m_lodReferencePoint) + aabb.m_negativeSphereRadius;
+	const F32 distFromLodPoint = length(aabb.m_sphereCenter - g_unis.m_lodReferencePoint) - aabb.m_sphereRadius;
 
 	U32 lod;
 	if(distFromLodPoint < g_unis.m_maxLodDistances[0])

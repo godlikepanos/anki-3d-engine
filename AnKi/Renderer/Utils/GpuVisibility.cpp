@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Scene/RenderStateBucket.h>
-#include <AnKi/Scene/ContiguousArrayAllocator.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
@@ -18,25 +18,6 @@ namespace anki {
 
 static StatCounter g_visibleObjects(StatCategory::kMisc, "Visible objects", StatFlag::kZeroEveryFrame);
 static StatCounter g_testedObjects(StatCategory::kMisc, "Visbility tested objects", StatFlag::kZeroEveryFrame);
-
-static GpuSceneContiguousArrayType techniqueToArrayType(RenderingTechnique technique)
-{
-	GpuSceneContiguousArrayType arrayType;
-	switch(technique)
-	{
-	case RenderingTechnique::kGBuffer:
-		arrayType = GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer;
-		break;
-	case RenderingTechnique::kDepth:
-		arrayType = GpuSceneContiguousArrayType::kRenderableBoundingVolumesDepth;
-		break;
-	default:
-		ANKI_ASSERT(0);
-		arrayType = GpuSceneContiguousArrayType::kCount;
-	}
-
-	return arrayType;
-}
 
 Error GpuVisibility::init()
 {
@@ -68,7 +49,18 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 										const Array<F32, kMaxLodCount - 1> lodDistances, const RenderTargetHandle* hzbRt,
 										RenderGraphDescription& rgraph, GpuVisibilityOutput& out)
 {
-	const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(techniqueToArrayType(technique));
+	U32 aabbCount = 0;
+	switch(technique)
+	{
+	case RenderingTechnique::kGBuffer:
+		aabbCount = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount();
+	case RenderingTechnique::kDepth:
+		aabbCount = GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementCount();
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
 	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);
 
 #if ANKI_STATS_ENABLED
@@ -138,7 +130,7 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 		(hzbRt) ? *hzbRt : RenderTargetHandle(); // Can't pass to the lambda the hzbRt which is a pointer to who knows what
 
 	pass.setWork([this, viewProjectionMat, lodReferencePoint, lodDistances, technique, hzbRtCopy, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle,
-				  instanceRateRenderables, indirectArgs
+				  instanceRateRenderables, indirectArgs, aabbCount
 #if ANKI_STATS_ENABLED
 				  ,
 				  clearStatsBuffer, clearStatsBufferOffset, writeStatsBuffer, writeStatsBufferOffset
@@ -148,16 +140,27 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 
 		cmdb.bindShaderProgram(m_grProgs[hzbRtCopy.isValid()].get());
 
-		const GpuSceneContiguousArrayType type = techniqueToArrayType(technique);
+		switch(technique)
+		{
+		case RenderingTechnique::kGBuffer:
+			cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
+								   GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getGpuSceneOffsetOfArrayBase(),
+								   GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount()
+									   * GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementSize());
+			break;
+		case RenderingTechnique::kDepth:
+			cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
+								   GpuSceneArrays::RenderableAabbDepth::getSingleton().getGpuSceneOffsetOfArrayBase(),
+								   GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementCount()
+									   * GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementSize());
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
 
-		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneContiguousArrays::getSingleton().getArrayBaseOffset(type),
-							   GpuSceneContiguousArrays::getSingleton().getElementCount(type)
-								   * GpuSceneContiguousArrays::getSingleton().getElementSize(type));
-
-		cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(),
-							   GpuSceneContiguousArrays::getSingleton().getArrayBaseOffset(GpuSceneContiguousArrayType::kRenderables),
-							   GpuSceneContiguousArrays::getSingleton().getElementCount(GpuSceneContiguousArrayType::kRenderables)
-								   * GpuSceneContiguousArrays::getSingleton().getElementSize(GpuSceneContiguousArrayType::kRenderables));
+		cmdb.bindStorageBuffer(
+			0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneArrays::Renderable::getSingleton().getGpuSceneOffsetOfArrayBase(),
+			GpuSceneArrays::Renderable::getSingleton().getElementCount() * GpuSceneArrays::Renderable::getSingleton().getElementSize());
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
@@ -184,9 +187,6 @@ void GpuVisibility::populateRenderGraph(CString passesName, RenderingTechnique t
 		{
 			unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
-
-		const U32 aabbCount = GpuSceneContiguousArrays::getSingleton().getElementCount(type);
-		unis->m_aabbCount = aabbCount;
 
 		ANKI_ASSERT(kMaxLodCount == 3);
 		unis->m_maxLodDistances[0] = lodDistances[0];
@@ -270,8 +270,27 @@ Error GpuVisibilityNonRenderables::init()
 
 void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out)
 {
-	const GpuSceneContiguousArrayType arrayType = gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(in.m_objectType);
-	const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
+	U32 objCount = 0;
+	switch(in.m_objectType)
+	{
+	case GpuSceneNonRenderableObjectType::kLight:
+		objCount = GpuSceneArrays::Light::getSingleton().getElementCount();
+		break;
+	case GpuSceneNonRenderableObjectType::kDecal:
+		objCount = GpuSceneArrays::Decal::getSingleton().getElementCount();
+		break;
+	case GpuSceneNonRenderableObjectType::kFogDensityVolume:
+		objCount = GpuSceneArrays::FogDensityVolume::getSingleton().getElementCount();
+		break;
+	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+		objCount = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount();
+		break;
+	case GpuSceneNonRenderableObjectType::kReflectionProbe:
+		objCount = GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount();
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
 
 	if(objCount == 0)
 	{
@@ -317,17 +336,44 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	}
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
-				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBufferIdx](RenderPassWorkContext& rgraph) {
+				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBufferIdx, objCount](RenderPassWorkContext& rgraph) {
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
-		const GpuSceneContiguousArrayType arrayType = gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(objType);
-		const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
-		const GpuSceneContiguousArrays& cArrays = GpuSceneContiguousArrays::getSingleton();
+
 		const Bool needsFeedback = feedbackBuffer.m_buffer != nullptr;
 
 		cmdb.bindShaderProgram(m_grProgs[0][objType][needsFeedback].get());
 
-		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), cArrays.getArrayBaseOffset(arrayType),
-							   cArrays.getElementSize(arrayType) * cArrays.getElementCount(arrayType), 0);
+		PtrSize objBufferOffset = 0;
+		PtrSize objBufferRange = 0;
+		switch(objType)
+		{
+		case GpuSceneNonRenderableObjectType::kLight:
+			objBufferOffset = GpuSceneArrays::Light::getSingleton().getGpuSceneOffsetOfArrayBase();
+			objBufferRange = GpuSceneArrays::Light::getSingleton().getElementCount() * GpuSceneArrays::Light::getSingleton().getElementSize();
+			break;
+		case GpuSceneNonRenderableObjectType::kDecal:
+			objBufferOffset = GpuSceneArrays::Decal::getSingleton().getGpuSceneOffsetOfArrayBase();
+			objBufferRange = GpuSceneArrays::Decal::getSingleton().getElementCount() * GpuSceneArrays::Decal::getSingleton().getElementSize();
+			break;
+		case GpuSceneNonRenderableObjectType::kFogDensityVolume:
+			objBufferOffset = GpuSceneArrays::FogDensityVolume::getSingleton().getGpuSceneOffsetOfArrayBase();
+			objBufferRange = GpuSceneArrays::FogDensityVolume::getSingleton().getElementCount()
+							 * GpuSceneArrays::FogDensityVolume::getSingleton().getElementSize();
+			break;
+		case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+			objBufferOffset = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+			objBufferRange = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount()
+							 * GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize();
+			break;
+		case GpuSceneNonRenderableObjectType::kReflectionProbe:
+			objBufferOffset = GpuSceneArrays::ReflectionProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+			objBufferRange =
+				GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount() * GpuSceneArrays::ReflectionProbe::getSingleton().getElementSize();
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
 
 		GpuVisibilityNonRenderableUniforms unis;
 		Array<Plane, 6> planes;

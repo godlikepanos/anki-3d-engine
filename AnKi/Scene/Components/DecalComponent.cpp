@@ -15,7 +15,7 @@ DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_spatial(this)
 {
-	m_gpuSceneIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kDecals);
+	m_gpuSceneDecal.allocate();
 }
 
 DecalComponent::~DecalComponent()
@@ -85,9 +85,10 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
 
-		gpuDecal.m_boundingSphere = Vec4(m_obb.getCenter().xyz(), m_obb.getExtend().getLength());
+		gpuDecal.m_sphereCenter = m_obb.getCenter().xyz();
+		gpuDecal.m_sphereRadius = m_obb.getExtend().getLength();
 
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuDecal);
+		m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());

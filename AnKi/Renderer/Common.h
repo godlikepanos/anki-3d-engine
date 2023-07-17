@@ -10,7 +10,7 @@
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Scene/ContiguousArrayAllocator.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 
 namespace anki {
 
@@ -115,34 +115,6 @@ public:
 inline U32 chooseDirectionalLightShadowCascadeDetail(U32 cascade)
 {
 	return (cascade <= 1) ? 0 : 1;
-}
-
-inline GpuSceneContiguousArrayType gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(GpuSceneNonRenderableObjectType type)
-{
-	GpuSceneContiguousArrayType out;
-	switch(type)
-	{
-	case GpuSceneNonRenderableObjectType::kLight:
-		out = GpuSceneContiguousArrayType::kLights;
-		break;
-	case GpuSceneNonRenderableObjectType::kDecal:
-		out = GpuSceneContiguousArrayType::kDecals;
-		break;
-	case GpuSceneNonRenderableObjectType::kFogDensityVolume:
-		out = GpuSceneContiguousArrayType::kFogDensityVolumes;
-		break;
-	case GpuSceneNonRenderableObjectType::kReflectionProbe:
-		out = GpuSceneContiguousArrayType::kReflectionProbes;
-		break;
-	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
-		out = GpuSceneContiguousArrayType::kGlobalIlluminationProbes;
-		break;
-	default:
-		ANKI_ASSERT(1);
-		out = GpuSceneContiguousArrayType::kCount;
-	}
-
-	return out;
 }
 /// @}
 

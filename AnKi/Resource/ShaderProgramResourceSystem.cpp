@@ -109,7 +109,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 		void addGroup(CString filename, U64 mutationHash, U32 rayGen, U32 miss, U32 chit, U32 ahit)
 		{
 			const U64 groupHash = ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash);
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 			for(const ShaderGroup& group : m_shaderGroups)
 			{
 				ANKI_ASSERT(group.m_hitGroupHash != groupHash && "Shouldn't find group with the same hash");

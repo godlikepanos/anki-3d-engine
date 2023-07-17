@@ -228,13 +228,6 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneAlphas);
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneUniforms);
 
-	GpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneIndexParticleEmitter);
-	GpuSceneContiguousArrays::getSingleton().deferredFree(m_gpuSceneIndexRenderable);
-	for(GpuSceneContiguousArrayIndex& idx : m_gpuSceneIndexAabbs)
-	{
-		GpuSceneContiguousArrays::getSingleton().deferredFree(idx);
-	}
-
 	for(RenderStateBucketIndex& idx : m_renderStateBuckets)
 	{
 		RenderStateBucketContainer::getSingleton().removeUser(idx);
@@ -267,32 +260,6 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneScales);
 	GpuSceneBuffer::getSingleton().allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(), alignof(U32),
 											m_gpuSceneUniforms);
-
-	m_gpuSceneIndexRenderable = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kRenderables);
-
-	m_gpuSceneIndexParticleEmitter = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kParticleEmitters);
-
-	for(RenderingTechnique t :
-		EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
-	{
-		GpuSceneContiguousArrayType allocType = GpuSceneContiguousArrayType::kCount;
-		switch(t)
-		{
-		case RenderingTechnique::kGBuffer:
-			allocType = GpuSceneContiguousArrayType::kRenderableBoundingVolumesGBuffer;
-			break;
-		case RenderingTechnique::kForward:
-			allocType = GpuSceneContiguousArrayType::kRenderableBoundingVolumesForward;
-			break;
-		case RenderingTechnique::kDepth:
-			allocType = GpuSceneContiguousArrayType::kRenderableBoundingVolumesDepth;
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
-
-		m_gpuSceneIndexAabbs[t] = GpuSceneContiguousArrays::getSingleton().allocate(allocType);
-	}
 
 	// Allocate buckets
 	for(RenderingTechnique t :
@@ -356,7 +323,11 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticlePosition)] = m_gpuScenePositions.getOffset();
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticleColor)] = m_gpuSceneAlphas.getOffset();
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticleScale)] = m_gpuSceneScales.getOffset();
-		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexParticleEmitter.getOffsetInGpuScene(), particles);
+		if(!m_gpuSceneParticleEmitter.isValid())
+		{
+			m_gpuSceneParticleEmitter.allocate();
+		}
+		m_gpuSceneParticleEmitter.uploadToGpuScene(particles);
 
 		// Upload uniforms
 		patcher.newCopy(*info.m_framePool, m_gpuSceneUniforms, m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
@@ -365,21 +336,72 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		// Upload the GpuSceneRenderable
 		GpuSceneRenderable renderable;
 		renderable.m_boneTransformsOffset = 0;
-		renderable.m_geometryOffset = m_gpuSceneIndexParticleEmitter.getOffsetInGpuScene();
+		renderable.m_geometryOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 		renderable.m_uniformsOffset = m_gpuSceneUniforms.getOffset();
 		renderable.m_worldTransformsOffset = 0;
-		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexRenderable.getOffsetInGpuScene(), renderable);
+		if(!m_gpuSceneRenderable.isValid())
+		{
+			m_gpuSceneRenderable.allocate();
+		}
+		m_gpuSceneRenderable.uploadToGpuScene(renderable);
 	}
 
 	// Upload the GpuSceneRenderableAabb always
-	for(RenderingTechnique t :
-		EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
+	for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 	{
-		const GpuSceneRenderableAabb gpuVolume =
-			initGpuSceneRenderableAabb(m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
-									   m_gpuSceneIndexRenderable.get(), m_renderStateBuckets[t].get());
-
-		patcher.newCopy(*info.m_framePool, m_gpuSceneIndexAabbs[t].getOffsetInGpuScene(), gpuVolume);
+		if(!!(RenderingTechniqueBit(1 << t) & m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
+		{
+			const GpuSceneRenderableAabb gpuVolume =
+				initGpuSceneRenderableAabb(m_spatial.getAabbWorldSpace().getMin().xyz(), m_spatial.getAabbWorldSpace().getMax().xyz(),
+										   m_gpuSceneRenderable.getIndex(), m_renderStateBuckets[t].get());
+			switch(t)
+			{
+			case RenderingTechnique::kGBuffer:
+				if(!m_gpuSceneRenderableAabbGBuffer.isValid())
+				{
+					m_gpuSceneRenderableAabbGBuffer.allocate();
+				}
+				m_gpuSceneRenderableAabbGBuffer.uploadToGpuScene(gpuVolume);
+				break;
+			case RenderingTechnique::kDepth:
+				if(!m_gpuSceneRenderableAabbDepth.isValid())
+				{
+					m_gpuSceneRenderableAabbDepth.allocate();
+				}
+				m_gpuSceneRenderableAabbDepth.uploadToGpuScene(gpuVolume);
+				break;
+			case RenderingTechnique::kForward:
+				if(!m_gpuSceneRenderableAabbForward.isValid())
+				{
+					m_gpuSceneRenderableAabbForward.allocate();
+				}
+				m_gpuSceneRenderableAabbForward.uploadToGpuScene(gpuVolume);
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+		}
+		else if(!!(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt))
+		{
+			continue;
+		}
+		else
+		{
+			switch(t)
+			{
+			case RenderingTechnique::kGBuffer:
+				m_gpuSceneRenderableAabbGBuffer.free();
+				break;
+			case RenderingTechnique::kDepth:
+				m_gpuSceneRenderableAabbDepth.free();
+				break;
+			case RenderingTechnique::kForward:
+				m_gpuSceneRenderableAabbForward.free();
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+		}
 	}
 
 	m_resourceUpdated = false;
@@ -508,7 +530,7 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 	el->m_program = prog.get();
 	el->m_worldTransformsOffset = 0;
 	el->m_uniformsOffset = m_gpuSceneUniforms.getOffset();
-	el->m_geometryOffset = m_gpuSceneIndexParticleEmitter.getOffsetInGpuScene();
+	el->m_geometryOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 	el->m_boneTransformsOffset = 0;
 	el->m_vertexCount = 6 * m_aliveParticleCount;
 	el->m_firstVertex = 0;

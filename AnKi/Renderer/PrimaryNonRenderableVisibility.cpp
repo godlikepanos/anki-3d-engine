@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Scene/ContiguousArrayAllocator.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 
 namespace anki {
@@ -18,8 +18,27 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 
 	for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 	{
-		const GpuSceneContiguousArrayType arrayType = gpuSceneNonRenderableObjectTypeToGpuSceneContiguousArrayType(type);
-		const U32 objCount = GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType);
+		U32 objCount = 0;
+		switch(type)
+		{
+		case GpuSceneNonRenderableObjectType::kLight:
+			objCount = GpuSceneArrays::Light::getSingleton().getElementCount();
+			break;
+		case GpuSceneNonRenderableObjectType::kDecal:
+			objCount = GpuSceneArrays::Decal::getSingleton().getElementCount();
+			break;
+		case GpuSceneNonRenderableObjectType::kFogDensityVolume:
+			objCount = GpuSceneArrays::FogDensityVolume::getSingleton().getElementCount();
+			break;
+		case GpuSceneNonRenderableObjectType::kReflectionProbe:
+			objCount = GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount();
+			break;
+		case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+			objCount = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount();
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
 
 		if(objCount == 0)
 		{

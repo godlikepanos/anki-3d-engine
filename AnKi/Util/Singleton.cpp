@@ -7,7 +7,7 @@
 
 namespace anki {
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 I32 g_singletonsAllocated = 0;
 
 class SingletonsAllocatedChecker

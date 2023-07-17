@@ -8,6 +8,7 @@
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Spatial.h>
 #include <AnKi/Scene/RenderStateBucket.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Util/WeakArray.h>
@@ -65,9 +66,11 @@ private:
 	GpuSceneBufferAllocation m_gpuSceneAlphas;
 	GpuSceneBufferAllocation m_gpuSceneScales;
 	GpuSceneBufferAllocation m_gpuSceneUniforms;
-	GpuSceneContiguousArrayIndex m_gpuSceneIndexParticleEmitter;
-	GpuSceneContiguousArrayIndex m_gpuSceneIndexRenderable;
-	Array<GpuSceneContiguousArrayIndex, U32(RenderingTechnique::kCount)> m_gpuSceneIndexAabbs;
+	GpuSceneArrays::ParticleEmitter::Allocation m_gpuSceneParticleEmitter;
+	GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
+	GpuSceneArrays::RenderableAabbGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
+	GpuSceneArrays::RenderableAabbDepth::Allocation m_gpuSceneRenderableAabbDepth;
+	GpuSceneArrays::RenderableAabbForward::Allocation m_gpuSceneRenderableAabbForward;
 
 	Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBuckets;
 

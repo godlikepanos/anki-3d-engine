@@ -188,7 +188,7 @@ public:
 	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
 	{
 		Texture* tex;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		tex = &getTexture(handle);
 		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1 && tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
 #endif

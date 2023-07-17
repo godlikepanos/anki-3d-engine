@@ -64,7 +64,7 @@ U32 MicroImageView::getOrCreateBindlessIndex(GrManagerImpl& gr) const
 
 TextureImpl::~TextureImpl()
 {
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	if(m_usage != m_usedFor)
 	{
 		ANKI_VK_LOGW("Texture %s hasn't been used in all types of usages", getName().cstr());

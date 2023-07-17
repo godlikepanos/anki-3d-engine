@@ -65,7 +65,7 @@ void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo&
 
 Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName, const CString& mtlFName, U32 subMeshIndex, Bool async)
 {
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	m_model = model;
 #endif
 

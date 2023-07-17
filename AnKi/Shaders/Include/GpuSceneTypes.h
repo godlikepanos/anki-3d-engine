@@ -3,11 +3,18 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// This file contains the GPU scene data types.
+// These types have in-place initialization for some members. Members that are used in visibility testing. These default values aim to essentially
+// make these objects not visible.
+
 #pragma once
 
 #include <AnKi/Shaders/Include/MeshTypes.h>
 
 ANKI_BEGIN_NAMESPACE
+
+/// Some far distance that will make objects not visible. Don't use kMaxF32 because this value will be used in math ops and it might overflow.
+constexpr F32 kSomeFarDistance = 100000.0f;
 
 /// @note All offsets in bytes
 struct GpuSceneRenderable
@@ -24,12 +31,11 @@ typedef UVec4 GpuSceneRenderablePacked;
 /// Used in visibility testing.
 struct GpuSceneRenderableAabb
 {
-	Vec3 m_sphereCenter;
-	F32 m_negativeSphereRadius;
+	Vec3 m_sphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
+	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
 
-	Vec3 m_aabbExtend;
-	/// High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx
-	U32 m_renderableIndexAndRenderStateBucket;
+	Vec3 m_aabbExtend ANKI_CPP_CODE(= Vec3(0.0f));
+	U32 m_renderableIndexAndRenderStateBucket; ///< High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx.
 };
 static_assert(sizeof(GpuSceneRenderableAabb) == sizeof(Vec4) * 2);
 
@@ -55,8 +61,8 @@ static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 /// Point or spot light.
 struct GpuSceneLight
 {
-	Vec3 m_position; ///< Position in world space.
-	RF32 m_radius; ///< Radius.
+	Vec3 m_position ANKI_CPP_CODE(= Vec3(kSomeFarDistance)); ///< Position in world space.
+	RF32 m_radius ANKI_CPP_CODE(= 0.0f); ///< Radius.
 
 	RVec3 m_diffuseColor;
 	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
@@ -78,10 +84,10 @@ struct GpuSceneReflectionProbe
 	Vec3 m_position; ///< Position of the probe in world space.
 	U32 m_cubeTexture; ///< Bindless index of the reflection texture.
 
-	Vec3 m_aabbMin;
+	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	U32 m_uuid;
 
-	Vec3 m_aabbMax;
+	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	F32 m_padding1;
 };
 constexpr U32 kSizeof_GpuSceneReflectionProbe = 3u * sizeof(Vec4);
@@ -90,16 +96,15 @@ static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe
 /// Global illumination probe
 struct GpuSceneGlobalIlluminationProbe
 {
-	Vec3 m_aabbMin;
+	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	U32 m_uuid;
 
-	Vec3 m_aabbMax;
+	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	F32 m_padding1;
 
 	U32 m_volumeTexture; ///< Bindless index of the irradiance volume texture.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
-	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
-	RF32 m_fadeDistance;
+	RF32 m_fadeDistance; ///< Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
 	F32 m_padding2;
 };
 constexpr U32 kSizeof_GpuSceneGlobalIlluminationProbe = 3u * sizeof(Vec4);
@@ -117,10 +122,11 @@ struct GpuSceneDecal
 
 	Mat4 m_invertedTransform;
 
-	Vec3 m_obbExtend;
+	Vec3 m_obbExtend ANKI_CPP_CODE(= Vec3(0.0f));
 	F32 m_padding0;
 
-	Vec4 m_boundingSphere;
+	Vec3 m_sphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
+	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
 };
 constexpr U32 kSizeof_GpuSceneDecal = 3u * sizeof(Vec4) + 2u * sizeof(Mat4);
 static_assert(sizeof(GpuSceneDecal) == kSizeof_GpuSceneDecal);
@@ -128,10 +134,10 @@ static_assert(sizeof(GpuSceneDecal) == kSizeof_GpuSceneDecal);
 /// Fog density volume.
 struct GpuSceneFogDensityVolume
 {
-	Vec3 m_aabbMinOrSphereCenter;
-	U32 m_isBox;
+	Vec3 m_aabbMinOrSphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
+	U32 m_isBox ANKI_CPP_CODE(= 1);
 
-	Vec3 m_aabbMaxOrSphereRadius;
+	Vec3 m_aabbMaxOrSphereRadius ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	RF32 m_density;
 };
 constexpr U32 kSizeof_GpuSceneFogDensityVolume = 2u * sizeof(Vec4);

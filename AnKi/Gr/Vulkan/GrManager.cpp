@@ -29,7 +29,7 @@ GrManager& MakeSingletonPtr<GrManager>::allocateSingleton<>()
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new GrManagerImpl;
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	++g_singletonsAllocated;
 #endif
 
@@ -43,7 +43,7 @@ void MakeSingletonPtr<GrManager>::freeSingleton()
 	{
 		delete static_cast<GrManagerImpl*>(m_global);
 		m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		--g_singletonsAllocated;
 #endif
 	}

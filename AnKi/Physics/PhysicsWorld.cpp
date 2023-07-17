@@ -210,7 +210,7 @@ void PhysicsWorld::destroyMarkedForDeletion()
 		}
 
 		deleteInstance(PhysicsMemoryPool::getSingleton(), obj);
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		const I32 count = m_objectsCreatedCount.fetchSub(1) - 1;
 		ANKI_ASSERT(count >= 0);
 #endif

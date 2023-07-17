@@ -366,7 +366,7 @@ ANKI_FORCE_INLINE void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Some checks
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	if(m_state.getPrimitiveTopology() == PrimitiveTopology::kLines || m_state.getPrimitiveTopology() == PrimitiveTopology::kLineStip)
 	{
 		ANKI_ASSERT(m_lineWidthSet == true);

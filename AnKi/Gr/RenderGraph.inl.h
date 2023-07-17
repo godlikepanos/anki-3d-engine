@@ -143,7 +143,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx].m_usageDerivedByDeps |= dep.m_texture.m_usage;
 
 		// Checks
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 		if((!rt.m_importedTex.isCreated() && !!getFormatInfo(rt.m_initInfo.m_format).m_depthStencil)
 		   || (rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect()))
@@ -206,7 +206,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferD
 															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
 															  U32 maxy)
 {
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
 	for(U32 i = 0; i < colorRenderTargetHandles.getSize(); ++i)
 	{

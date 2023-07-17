@@ -36,9 +36,9 @@ inline GpuSceneRenderableAabb initGpuSceneRenderableAabb(Vec3 aabbMin, Vec3 aabb
 	gpuVolume.m_sphereCenter = (aabbMin + aabbMax) * 0.5f;
 	gpuVolume.m_aabbExtend = aabbMax - gpuVolume.m_sphereCenter;
 #if defined(__cplusplus)
-	gpuVolume.m_negativeSphereRadius = -gpuVolume.m_aabbExtend.getLength();
+	gpuVolume.m_sphereRadius = gpuVolume.m_aabbExtend.getLength();
 #else
-	gpuVolume.m_negativeSphereRadius = -length(gpuVolume.m_aabbExtend);
+	gpuVolume.m_sphereRadius = length(gpuVolume.m_aabbExtend);
 #endif
 
 	ANKI_ASSERT(renderableIndex <= (1u << 20u) - 1u);

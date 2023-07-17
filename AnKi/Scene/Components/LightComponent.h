@@ -124,7 +124,7 @@ public:
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_shadowLayer = kMaxU8;
-		el.m_index = m_gpuSceneLightIndex.get();
+		el.m_index = m_gpuSceneLight.getIndex();
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
@@ -139,7 +139,7 @@ public:
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_edgePoints = m_spot.m_edgePointsWspace;
 		el.m_shadowLayer = kMaxU8;
-		el.m_index = m_gpuSceneLightIndex.get();
+		el.m_index = m_gpuSceneLight.getIndex();
 	}
 
 	/// Setup a directional queue element.
@@ -183,7 +183,7 @@ private:
 
 	Frustum* m_frustums = nullptr;
 
-	GpuSceneContiguousArrayIndex m_gpuSceneLightIndex;
+	GpuSceneArrays::Light::Allocation m_gpuSceneLight;
 
 	LightComponentType m_type;
 

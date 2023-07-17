@@ -22,6 +22,8 @@
 
 #	define ANKI_ARRAY(type, size, name) Array<type, U32(size)> name
 
+#	define ANKI_CPP_CODE(...) __VA_ARGS__
+
 ANKI_BEGIN_NAMESPACE
 using Address = U64;
 using ScalarVec4 = Array<F32, 4>;
@@ -49,6 +51,8 @@ ANKI_END_NAMESPACE
 #	define ANKI_ASSERT(x)
 
 #	define ANKI_ARRAY(type, size, name) type name[(U32)size]
+
+#	define ANKI_CPP_CODE(...)
 
 #	define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enum_)
 

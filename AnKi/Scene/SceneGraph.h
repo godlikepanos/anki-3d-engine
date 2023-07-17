@@ -33,7 +33,6 @@ class SceneGraph : public MakeSingleton<SceneGraph>
 	friend class SceneNode;
 	friend class UpdateSceneNodesTask;
 	friend class Event;
-	friend class GpuSceneContiguousArrays;
 
 public:
 	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);

@@ -150,6 +150,9 @@ T max(T a, T b);
 template<typename T>
 T saturate(T a);
 
+template<typename T>
+float dot(T a, T b);
+
 // Atomics
 
 template<typename T>

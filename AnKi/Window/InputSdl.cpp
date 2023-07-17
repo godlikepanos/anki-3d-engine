@@ -55,7 +55,7 @@ Input& MakeSingletonPtr<Input>::allocateSingleton<>()
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new InputSdl;
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	++g_singletonsAllocated;
 #endif
 
@@ -69,7 +69,7 @@ void MakeSingletonPtr<Input>::freeSingleton()
 	{
 		delete static_cast<InputSdl*>(m_global);
 		m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		--g_singletonsAllocated;
 #endif
 	}

@@ -50,7 +50,7 @@ Vec4 getSphere(GpuSceneLight l)
 
 Vec4 getSphere(GpuSceneDecal l)
 {
-	return l.m_boundingSphere;
+	return Vec4(l.m_sphereCenter, l.m_sphereRadius);
 }
 
 Vec4 getSphere(GpuSceneFogDensityVolume l)

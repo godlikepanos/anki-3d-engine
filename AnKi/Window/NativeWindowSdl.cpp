@@ -17,7 +17,7 @@ NativeWindow& MakeSingletonPtr<NativeWindow>::allocateSingleton<>()
 {
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new NativeWindowSdl();
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	++g_singletonsAllocated;
 #endif
 	return *m_global;
@@ -30,7 +30,7 @@ void MakeSingletonPtr<NativeWindow>::freeSingleton()
 	{
 		delete static_cast<NativeWindowSdl*>(m_global);
 		m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		--g_singletonsAllocated;
 #endif
 	}

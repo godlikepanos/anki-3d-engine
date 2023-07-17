@@ -7,6 +7,7 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Spatial.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Sphere.h>
@@ -92,7 +93,7 @@ public:
 			el.m_sphereCenter = m_worldPos.xyz();
 			el.m_sphereRadius = m_sphereRadius;
 		}
-		el.m_index = m_gpuSceneIndex.get();
+		el.m_index = m_gpuSceneVolume.getIndex();
 	}
 
 private:
@@ -109,7 +110,7 @@ private:
 	Vec3 m_worldPos = Vec3(0.0f);
 	F32 m_density = 1.0f;
 
-	GpuSceneContiguousArrayIndex m_gpuSceneIndex;
+	GpuSceneArrays::FogDensityVolume::Allocation m_gpuSceneVolume;
 
 	Bool m_isBox = true;
 	Bool m_dirty = true;

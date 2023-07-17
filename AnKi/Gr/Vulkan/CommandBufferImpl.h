@@ -421,7 +421,7 @@ public:
 		commandCommon();
 		vkCmdSetLineWidth(m_handle, width);
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		m_lineWidthSet = true;
 #endif
 	}
@@ -507,7 +507,7 @@ private:
 	Array<U32, 2> m_stencilCompareMasks = {0x5A5A5A5A, 0x5A5A5A5A}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {0x5A5A5A5A, 0x5A5A5A5A};
 	Array<U32, 2> m_stencilReferenceMasks = {0x5A5A5A5A, 0x5A5A5A5A};
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	Bool m_lineWidthSet = false;
 #endif
 	Bool m_vrsRateDirty = true;

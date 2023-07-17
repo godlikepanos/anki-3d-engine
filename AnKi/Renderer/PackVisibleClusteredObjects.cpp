@@ -10,7 +10,7 @@
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
-#include <AnKi/Scene/ContiguousArrayAllocator.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 
 namespace anki {
 
@@ -111,32 +111,40 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 		}
 	}
 
-	GpuSceneContiguousArrayType arrayType;
+	PtrSize bufferOffset;
+	PtrSize bufferRange;
 	switch(kType)
 	{
 	case ClusteredObjectType::kPointLight:
 	case ClusteredObjectType::kSpotLight:
-		arrayType = GpuSceneContiguousArrayType::kLights;
+		bufferOffset = GpuSceneArrays::Light::getSingleton().getGpuSceneOffsetOfArrayBase();
+		bufferRange = GpuSceneArrays::Light::getSingleton().getElementSize() * GpuSceneArrays::Light::getSingleton().getElementCount();
 		break;
 	case ClusteredObjectType::kDecal:
-		arrayType = GpuSceneContiguousArrayType::kDecals;
+		bufferOffset = GpuSceneArrays::Decal::getSingleton().getGpuSceneOffsetOfArrayBase();
+		bufferRange = GpuSceneArrays::Decal::getSingleton().getElementSize() * GpuSceneArrays::Decal::getSingleton().getElementCount();
 		break;
 	case ClusteredObjectType::kFogDensityVolume:
-		arrayType = GpuSceneContiguousArrayType::kFogDensityVolumes;
+		bufferOffset = GpuSceneArrays::FogDensityVolume::getSingleton().getGpuSceneOffsetOfArrayBase();
+		bufferRange =
+			GpuSceneArrays::FogDensityVolume::getSingleton().getElementSize() * GpuSceneArrays::FogDensityVolume::getSingleton().getElementCount();
 		break;
 	case ClusteredObjectType::kGlobalIlluminationProbe:
-		arrayType = GpuSceneContiguousArrayType::kGlobalIlluminationProbes;
+		bufferOffset = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+		bufferRange = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize()
+					  * GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount();
 		break;
 	case ClusteredObjectType::kReflectionProbe:
-		arrayType = GpuSceneContiguousArrayType::kReflectionProbes;
+		bufferOffset = GpuSceneArrays::ReflectionProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+		bufferRange =
+			GpuSceneArrays::ReflectionProbe::getSingleton().getElementSize() * GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount();
 		break;
 	default:
-		arrayType = GpuSceneContiguousArrayType::kCount;
+		bufferOffset = 0;
+		bufferRange = 0;
 	}
 
-	cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneContiguousArrays::getSingleton().getArrayBaseOffset(arrayType),
-						   GpuSceneContiguousArrays::getSingleton().getElementCount(arrayType)
-							   * GpuSceneContiguousArrays::getSingleton().getElementSize(arrayType));
+	cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), bufferOffset, bufferRange);
 
 	cmdb.bindStorageBuffer(0, 1, m_allClustererObjects.get(), m_structureBufferOffsets[kType], array.getSize() * sizeof(TClustererType));
 

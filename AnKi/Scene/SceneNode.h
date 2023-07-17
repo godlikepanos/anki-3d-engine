@@ -14,9 +14,6 @@
 
 namespace anki {
 
-// Forward
-class SceneGraphExternalSubsystems;
-
 /// @addtogroup scene
 /// @{
 

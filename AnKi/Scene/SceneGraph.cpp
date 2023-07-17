@@ -29,6 +29,26 @@ NumericCVar<F32> g_probeEffectiveDistanceCVar(CVarSubsystem::kScene, "ProbeEffec
 NumericCVar<F32> g_probeShadowEffectiveDistanceCVar(CVarSubsystem::kScene, "ProbeShadowEffectiveDistance", 32.0f, 1.0f, kMaxF32,
 													"How far to render shadows for the various probes");
 
+// Gpu scene arrays
+static NumericCVar<U32> g_minGpuSceneTransformsCVar(CVarSubsystem::kScene, "MinGpuSceneTransforms", 2 * 10 * 1024, 8, 100 * 1024,
+													"The min number of transforms stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneMeshesCVar(CVarSubsystem::kScene, "MinGpuSceneMeshes", 8 * 1024, 8, 100 * 1024,
+												"The min number of meshes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneParticleEmittersCVar(CVarSubsystem::kScene, "MinGpuSceneParticleEmitters", 1 * 1024, 8, 100 * 1024,
+														  "The min number of particle emitters stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneLightsCVar(CVarSubsystem::kScene, "MinGpuSceneLights", 2 * 1024, 8, 100 * 1024,
+												"The min number of lights stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneReflectionProbesCVar(CVarSubsystem::kScene, "MinGpuSceneReflectionProbes", 128, 8, 100 * 1024,
+														  "The min number of reflection probes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneGlobalIlluminationProbesCVar(CVarSubsystem::kScene, "MinGpuSceneGlobalIlluminationProbes", 128, 8, 100 * 1024,
+																  "The min number of GI probes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneDecalsCVar(CVarSubsystem::kScene, "MinGpuSceneDecals", 2 * 1024, 8, 100 * 1024,
+												"The min number of decals stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneFogDensityVolumesCVar(CVarSubsystem::kScene, "MinGpuSceneFogDensityVolumes", 512, 8, 100 * 1024,
+														   "The min number fog density volumes stored in the GPU scene");
+static NumericCVar<U32> g_minGpuSceneRenderablesCVar(CVarSubsystem::kScene, "MinGpuSceneRenderables", 10 * 1024, 8, 100 * 1024,
+													 "The min number of renderables stored in the GPU scene");
+
 constexpr U32 kUpdateNodeBatchSize = 10;
 
 class SceneGraph::UpdateSceneNodesCtx
@@ -61,7 +81,9 @@ SceneGraph::~SceneGraph()
 		deleteInstance(SceneMemoryPool::getSingleton(), m_octree);
 	}
 
-	GpuSceneContiguousArrays::freeSingleton();
+#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::freeSingleton();
+#include <AnKi/Scene/GpuSceneArrays.def.h>
+
 	RenderStateBucketContainer::freeSingleton();
 }
 
@@ -80,7 +102,9 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-	GpuSceneContiguousArrays::allocateSingleton();
+#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(cvarName.get());
+#include <AnKi/Scene/GpuSceneArrays.def.h>
+
 	RenderStateBucketContainer::allocateSingleton();
 
 	return Error::kNone;
@@ -175,8 +199,6 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
 
-	GpuSceneContiguousArrays::getSingleton().endFrame();
-
 	const Second startUpdateTime = HighRezTimer::getCurrentTime();
 
 	// Reset the framepool
@@ -227,6 +249,9 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
 		CoreThreadHive::getSingleton().waitAllTasks();
 	}
+
+#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::getSingleton().flush();
+#include <AnKi/Scene/GpuSceneArrays.def.h>
 
 	g_sceneUpdateTime.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
 	return Error::kNone;

@@ -106,7 +106,7 @@ public:
 	{
 		ANKI_ASSERT(size > 0 && alignment > 0);
 		void* out = m_pool.allocate(size, alignment);
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		memset(out, 0, size);
 #endif
 		return out;

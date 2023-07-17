@@ -29,7 +29,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 		m_frustums[i].update();
 	}
 
-	m_gpuSceneIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kReflectionProbes);
+	m_gpuSceneProbe.allocate();
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()
@@ -102,7 +102,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
 		gpuProbe.m_uuid = getUuid();
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuProbe);
+		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 
 	// Update spatial and frustums

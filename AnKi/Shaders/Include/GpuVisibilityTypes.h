@@ -13,11 +13,6 @@ struct GpuVisibilityUniforms
 {
 	Vec4 m_clipPlanes[6u];
 
-	U32 m_aabbCount;
-	U32 m_padding0;
-	U32 m_padding1;
-	U32 m_padding2;
-
 	Vec4 m_maxLodDistances;
 
 	Vec3 m_lodReferencePoint;

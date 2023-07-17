@@ -7,6 +7,7 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Spatial.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Collision/Obb.h>
 #include <AnKi/Renderer/RenderQueue.h>
@@ -67,7 +68,7 @@ public:
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_index = m_gpuSceneIndex.get();
+		el.m_index = m_gpuSceneDecal.getIndex();
 	}
 
 private:
@@ -93,7 +94,7 @@ private:
 	Vec3 m_boxSize = Vec3(1.0f);
 	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
 
-	GpuSceneContiguousArrayIndex m_gpuSceneIndex;
+	GpuSceneArrays::Decal::Allocation m_gpuSceneDecal;
 
 	Bool m_dirty = true;
 

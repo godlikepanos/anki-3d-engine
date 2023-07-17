@@ -14,7 +14,7 @@ FogDensityComponent::FogDensityComponent(SceneNode* node)
 	: SceneComponent(node, getStaticClassId())
 	, m_spatial(this)
 {
-	m_gpuSceneIndex = GpuSceneContiguousArrays::getSingleton().allocate(GpuSceneContiguousArrayType::kFogDensityVolumes);
+	m_gpuSceneVolume.allocate();
 }
 
 FogDensityComponent ::~FogDensityComponent()
@@ -58,7 +58,7 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuVolume.m_isBox = m_isBox;
 		gpuVolume.m_density = m_density;
 
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneIndex.getOffsetInGpuScene(), gpuVolume);
+		m_gpuSceneVolume.uploadToGpuScene(gpuVolume);
 	}
 
 	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());

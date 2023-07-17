@@ -54,10 +54,11 @@ private:
 	public:
 		U32 m_gpuSceneUniformsOffset = kMaxU32;
 
-		GpuSceneContiguousArrayIndex m_gpuSceneIndexMeshLods;
-
-		GpuSceneContiguousArrayIndex m_gpuSceneIndexRenderable;
-		Array<GpuSceneContiguousArrayIndex, U32(RenderingTechnique::kCount)> m_gpuSceneIndexRenderableAabbs;
+		GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
+		GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
+		GpuSceneArrays::RenderableAabbGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
+		GpuSceneArrays::RenderableAabbDepth::Allocation m_gpuSceneRenderableAabbDepth;
+		GpuSceneArrays::RenderableAabbForward::Allocation m_gpuSceneRenderableAabbForward;
 
 		Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBucketIndices;
 		RenderingTechniqueBit m_techniques;
@@ -70,7 +71,7 @@ private:
 	ModelResourcePtr m_model;
 
 	GpuSceneBufferAllocation m_gpuSceneUniforms;
-	GpuSceneContiguousArrayIndex m_gpuSceneIndexTransforms;
+	GpuSceneArrays::Transform::Allocation m_gpuSceneTransforms;
 	SceneDynamicArray<PatchInfo> m_patchInfos;
 
 	Bool m_resourceChanged : 1 = true;

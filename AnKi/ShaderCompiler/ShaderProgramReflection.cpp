@@ -569,7 +569,7 @@ Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, [[maybe_
 		// Store the block
 		blocks.emplaceBack(std::move(newBlock));
 	}
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	else
 	{
 		DynamicArray<Var> vars;

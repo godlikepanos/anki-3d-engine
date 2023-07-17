@@ -97,7 +97,7 @@ private:
 		Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets = {};
 	};
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	ModelResource* m_model = nullptr;
 #endif
 	MaterialResourcePtr m_mtl;
