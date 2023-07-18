@@ -235,34 +235,13 @@ Error GpuVisibilityNonRenderables::init()
 		}
 	}
 
-	{
-		CommandBufferInitInfo cmdbInit("TmpClear");
-		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
-
-		for(U32 i = 0; i < kMaxRenderGraphAccelerationStructures; ++i)
-		{
-			RendererString name;
-			name.sprintf("GpuVisibilityNonRenderablesCounters#%u", i);
-
-			BufferInitInfo buffInit(name);
-			buffInit.m_size = 3 * sizeof(U32);
-			buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
-
-			m_counterBuffers[i] = GrManager::getSingleton().newBuffer(buffInit);
-
-			cmdb->fillBuffer(m_counterBuffers[i].get(), 0, kMaxPtrSize, 0);
-		}
-
-		cmdb->flush();
-		GrManager::getSingleton().finish();
-	}
-
 	return Error::kNone;
 }
 
 void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out)
 {
+	RenderGraphDescription& rgraph = *in.m_rgraph;
+
 	U32 objCount = 0;
 	switch(in.m_objectType)
 	{
@@ -295,15 +274,44 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		ANKI_ASSERT(in.m_cpuFeedbackBuffer.m_range == sizeof(U32) * (objCount + 1));
 	}
 
-	// Find the counter buffer
-	U32 counterBufferIdx = kMaxU32;
-	if(m_lastFrameIdx != getRenderer().getFrameCount())
+	const Bool firstRunInFrame = m_lastFrameIdx != getRenderer().getFrameCount();
+	if(firstRunInFrame)
 	{
+		// 1st run in this frame, do some bookkeeping
 		m_lastFrameIdx = getRenderer().getFrameCount();
-		m_runIdx = 0;
+		m_counterBufferOffset = 0;
+		m_counterBufferZeroingHandle = {};
 	}
 
-	counterBufferIdx = m_runIdx++;
+	constexpr U32 kCountersPerDispatch = 3; // 1 for the threadgroup, 1 for the visbile object count and 1 for objects with feedback
+	const U32 counterBufferElementSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
+														   U32(kCountersPerDispatch * sizeof(U32)));
+	if(!m_counterBuffer.isCreated() || m_counterBufferOffset + counterBufferElementSize > m_counterBuffer->getSize()) [[unlikely]]
+	{
+		// Counter buffer not created or not big enough, create a new one
+
+		BufferInitInfo buffInit("GpuVisibilityNonRenderablesCounters");
+		buffInit.m_size = (m_counterBuffer.isCreated()) ? m_counterBuffer->getSize() * 2
+														: kCountersPerDispatch * counterBufferElementSize * kInitialCounterArraySize;
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kTransferDestination;
+		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
+
+		m_counterBufferZeroingHandle = rgraph.importBuffer(m_counterBuffer.get(), buffInit.m_usage, 0, kMaxPtrSize);
+
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GpuVisibilityNonRenderablesClearCounterBuffer");
+
+		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kTransferDestination);
+
+		pass.setWork([counterBuffer = m_counterBuffer](RenderPassWorkContext& rgraph) {
+			rgraph.m_commandBuffer->fillBuffer(counterBuffer.get(), 0, kMaxPtrSize, 0);
+		});
+
+		m_counterBufferOffset = 0;
+	}
+	else if(!firstRunInFrame)
+	{
+		m_counterBufferOffset += counterBufferElementSize;
+	}
 
 	// Allocate memory for the result
 	GpuVisibleTransientMemoryAllocation visibleIndicesAlloc = GpuVisibleTransientMemoryPool::getSingleton().allocate((objCount + 1) * sizeof(U32));
@@ -313,7 +321,6 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	out.m_visiblesBuffer.m_range = visibleIndicesAlloc.m_size;
 
 	// Import buffers
-	RenderGraphDescription& rgraph = *in.m_rgraph;
 	out.m_bufferHandle =
 		rgraph.importBuffer(out.m_visiblesBuffer.m_buffer, BufferUsageBit::kNone, out.m_visiblesBuffer.m_offset, out.m_visiblesBuffer.m_range);
 
@@ -328,8 +335,14 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
 	}
 
+	if(m_counterBufferZeroingHandle.isValid()) [[unlikely]]
+	{
+		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageComputeWrite);
+	}
+
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
-				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBufferIdx, objCount](RenderPassWorkContext& rgraph) {
+				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBuffer = m_counterBuffer, counterBufferOffset = m_counterBufferOffset,
+				  objCount](RenderPassWorkContext& rgraph) {
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 		const Bool needsFeedback = feedbackBuffer.m_buffer != nullptr;
@@ -378,7 +391,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
 		rgraph.bindStorageBuffer(0, 1, visibleIndicesBuffHandle);
-		cmdb.bindStorageBuffer(0, 2, m_counterBuffers[counterBufferIdx].get(), 0, kMaxPtrSize);
+		cmdb.bindStorageBuffer(0, 2, counterBuffer.get(), counterBufferOffset, sizeof(U32) * kCountersPerDispatch);
 
 		if(needsFeedback)
 		{
