@@ -18,11 +18,14 @@ SkyboxComponent::SkyboxComponent(SceneNode* node)
 {
 	m_spatial.setAlwaysVisible(true);
 	m_spatial.setUpdatesOctreeBounds(false);
+
+	SceneGraph::getSingleton().addSkybox(this);
 }
 
 SkyboxComponent::~SkyboxComponent()
 {
 	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
+	SceneGraph::getSingleton().removeSkybox(this);
 }
 
 void SkyboxComponent::loadImageResource(CString filename)

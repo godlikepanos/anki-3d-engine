@@ -31,6 +31,11 @@ LightComponent::~LightComponent()
 {
 	deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
 	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
+
+	if(m_type == LightComponentType::kDirectional)
+	{
+		SceneGraph::getSingleton().removeDirectionalLight(this);
+	}
 }
 
 void LightComponent::setLightComponentType(LightComponentType type)
@@ -48,6 +53,20 @@ void LightComponent::setLightComponentType(LightComponentType type)
 	{
 		m_spatial.setAlwaysVisible(false);
 		m_spatial.setUpdatesOctreeBounds(true);
+	}
+
+	if(m_typeChanged)
+	{
+		if(type == LightComponentType::kDirectional)
+		{
+			// Now it's directional, inform the scene
+			SceneGraph::getSingleton().addDirectionalLight(this);
+		}
+		else if(m_type == LightComponentType::kDirectional)
+		{
+			// It was directional, inform the scene
+			SceneGraph::getSingleton().removeDirectionalLight(this);
+		}
 	}
 
 	m_type = type;

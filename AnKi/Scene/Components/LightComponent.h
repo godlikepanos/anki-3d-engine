@@ -53,6 +53,7 @@ public:
 	void setDiffuseColor(const Vec4& x)
 	{
 		m_diffColor = x;
+		m_shapeUpdated = true;
 	}
 
 	void setRadius(F32 x)

@@ -173,25 +173,17 @@ BlockArray<T, TMemoryPool, TConfig>& BlockArray<T, TMemoryPool, TConfig>::operat
 template<typename T, typename TMemoryPool, typename TConfig>
 U32 BlockArray<T, TMemoryPool, TConfig>::getNextElementIndex(U32 crnt) const
 {
-	ANKI_ASSERT(crnt < kMaxU32);
-	const U32 localIdx = crnt % kElementCountPerBlock;
-	U32 blockIdx = crnt / kElementCountPerBlock;
-	ANKI_ASSERT(blockIdx < m_blockMetadatas.getSize());
+	ANKI_ASSERT(crnt < m_endIndex);
 
-	Mask mask = m_blockMetadatas[blockIdx].m_elementsInUseMask;
-	mask.unsetNLeastSignificantBits(localIdx + 1);
-	U32 locIdx;
-	if((locIdx = mask.getLeastSignificantBit()) != kMaxU32)
+	++crnt;
+	for(; crnt < m_endIndex; ++crnt)
 	{
-		return blockIdx * kElementCountPerBlock + locIdx;
-	}
+		const U32 localIdx = crnt % kElementCountPerBlock;
+		const U32 blockIdx = crnt / kElementCountPerBlock;
 
-	++blockIdx;
-	for(; blockIdx < m_blockMetadatas.getSize(); ++blockIdx)
-	{
-		if((locIdx = m_blockMetadatas[blockIdx].m_elementsInUseMask.getLeastSignificantBit()) != kMaxU32)
+		if(m_blockMetadatas[blockIdx].m_elementsInUseMask.get(localIdx))
 		{
-			return blockIdx * kElementCountPerBlock + locIdx;
+			return crnt;
 		}
 	}
 

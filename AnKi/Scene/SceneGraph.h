@@ -161,6 +161,47 @@ public:
 		return m_componentArrays;
 	}
 
+	void addDirectionalLight(LightComponent* comp)
+	{
+		ANKI_ASSERT(m_dirLights.find(comp) == m_dirLights.getEnd());
+		m_dirLights.emplaceBack(comp);
+		if(m_dirLights.getSize() > 1)
+		{
+			ANKI_SCENE_LOGW("More than one directional lights detected");
+		}
+	}
+
+	void removeDirectionalLight(LightComponent* comp)
+	{
+		auto it = m_dirLights.find(comp);
+		ANKI_ASSERT(it != m_dirLights.getEnd());
+		m_dirLights.erase(it);
+	}
+
+	LightComponent* getDirectionalLight() const;
+
+	void addSkybox(SkyboxComponent* comp)
+	{
+		ANKI_ASSERT(m_skyboxes.find(comp) == m_skyboxes.getEnd());
+		m_skyboxes.emplaceBack(comp);
+		if(m_skyboxes.getSize() > 1)
+		{
+			ANKI_SCENE_LOGW("More than one skyboxes detected");
+		}
+	}
+
+	void removeSkybox(SkyboxComponent* comp)
+	{
+		auto it = m_skyboxes.find(comp);
+		ANKI_ASSERT(it != m_skyboxes.getEnd());
+		m_skyboxes.erase(it);
+	}
+
+	SkyboxComponent* getSkybox() const
+	{
+		return (m_skyboxes.getSize()) ? m_skyboxes[0] : nullptr;
+	}
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -195,6 +236,9 @@ private:
 	Atomic<U32> m_nodesUuid = {1};
 
 	SceneComponentArrays m_componentArrays;
+
+	SceneDynamicArray<LightComponent*> m_dirLights;
+	SceneDynamicArray<SkyboxComponent*> m_skyboxes;
 
 	SceneGraph();
 

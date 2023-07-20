@@ -387,4 +387,11 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 	return err;
 }
 
+LightComponent* SceneGraph::getDirectionalLight() const
+{
+	LightComponent* out = (m_dirLights.getSize()) ? m_dirLights[0] : nullptr;
+	ANKI_ASSERT(out->getLightComponentType() == LightComponentType::kDirectional);
+	return out;
+}
+
 } // end namespace anki

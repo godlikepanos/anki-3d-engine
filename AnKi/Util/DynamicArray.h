@@ -280,6 +280,21 @@ public:
 	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
 	void resizeStorage(Size newSize);
 
+	/// Search the array until you find the 1st value.
+	Iterator find(const Value& what)
+	{
+		Value* it = m_data;
+		Value* end = m_data + m_size;
+		for(; it != end; ++it)
+		{
+			if(*it == what)
+			{
+				return it;
+			}
+		}
+		return end;
+	}
+
 	TMemoryPool& getMemoryPool()
 	{
 		return m_pool;
