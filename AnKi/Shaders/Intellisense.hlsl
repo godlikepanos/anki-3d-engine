@@ -102,6 +102,10 @@ struct SamplerState
 {
 };
 
+struct SamplerComparisonState
+{
+};
+
 template<typename T>
 struct Texture2D
 {

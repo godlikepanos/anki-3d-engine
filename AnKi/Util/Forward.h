@@ -39,6 +39,9 @@ class List;
 template<typename T, typename TMemoryPool, typename TConfig>
 class SparseArray;
 
+template<typename T>
+class BlockArrayDefaultConfig;
+
 template<typename T, typename TMemoryPool, typename TConfig>
 class BlockArray;
 
@@ -86,6 +89,8 @@ class XmlDocument;
 	using submoduleName##StringList = BaseStringList<submoduleName##MemPoolWrapper>; \
 	using submoduleName##XmlDocument = XmlDocument<submoduleName##MemPoolWrapper>; \
 	template<typename T> \
-	using submoduleName##Hierarchy = Hierarchy<T, submoduleName##MemPoolWrapper>;
+	using submoduleName##Hierarchy = Hierarchy<T, submoduleName##MemPoolWrapper>; \
+	template<typename T, typename TConfig = BlockArrayDefaultConfig<T>> \
+	using submoduleName##BlockArray = BlockArray<T, submoduleName##MemPoolWrapper, TConfig>;
 
 } // end namespace anki

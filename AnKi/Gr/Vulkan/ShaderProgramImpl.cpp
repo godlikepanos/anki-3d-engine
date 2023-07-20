@@ -182,7 +182,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		m_refl.m_colorAttachmentWritemask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kFragment]).m_colorAttachmentWritemask;
 
-		const U32 attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
+		const U32 attachmentCount = m_refl.m_colorAttachmentWritemask.getSetBitCount();
 		for(U32 i = 0; i < attachmentCount; ++i)
 		{
 			ANKI_ASSERT(m_refl.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");

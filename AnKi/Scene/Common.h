@@ -8,7 +8,6 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Scene/Forward.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <functional>
 
 namespace anki {
 

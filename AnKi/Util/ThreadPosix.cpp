@@ -45,7 +45,7 @@ void Thread::start(void* userData, ThreadCallback callback, const ThreadCoreAffi
 
 	pthread_attr_destroy(&attr);
 
-	if(coreAffintyMask.getEnabledBitCount())
+	if(coreAffintyMask.getSetBitCount())
 	{
 		pinToCores(coreAffintyMask);
 	}
@@ -75,7 +75,7 @@ void Thread::pinToCores(const ThreadCoreAffinityMask& coreAffintyMask)
 	CPU_ZERO(&cpus);
 
 	ThreadCoreAffinityMask affinity = coreAffintyMask;
-	while(affinity.getEnabledBitCount() > 0)
+	while(affinity.getSetBitCount() > 0)
 	{
 		const U32 msb = affinity.getMostSignificantBit();
 		ANKI_ASSERT(msb != kMaxU32);

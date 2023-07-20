@@ -29,7 +29,7 @@ enum class LightComponentType : U8
 };
 
 /// Light component. Contains all the info of lights.
-class LightComponent : public QueryableSceneComponent<LightComponent>
+class LightComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(LightComponent)
 
@@ -119,7 +119,7 @@ public:
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kPoint);
-		el.m_uuid = getUuid();
+		el.m_uuid = m_uuid;
 		el.m_worldPosition = m_worldTransform.getOrigin().xyz();
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
@@ -130,7 +130,7 @@ public:
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kSpot);
-		el.m_uuid = getUuid();
+		el.m_uuid = m_uuid;
 		el.m_worldTransform = Mat4(m_worldTransform);
 		el.m_textureMatrix = m_spot.m_textureMat;
 		el.m_distance = m_spot.m_distance;
@@ -185,6 +185,8 @@ private:
 
 	GpuSceneArrays::Light::Allocation m_gpuSceneLight;
 
+	U32 m_uuid = 0;
+
 	LightComponentType m_type;
 
 	U8 m_shadow : 1 = false;
@@ -192,7 +194,7 @@ private:
 	U8 m_typeChanged : 1 = true;
 	U8 m_frustumCount : 4 = 0; ///< The size of m_frustums array.
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

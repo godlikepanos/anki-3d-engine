@@ -26,7 +26,7 @@ ANKI_TEST(Util, BlockArray)
 		auto it3 = arr.emplace(666);
 		ANKI_TEST_EXPECT_EQ(it3->m_x, 666);
 
-		arr.erase(arr.getBegin() + 1);
+		arr.erase(it2);
 		ANKI_TEST_EXPECT_EQ(arr.getSize(), 2);
 
 		int sum = 0;
@@ -35,6 +35,52 @@ ANKI_TEST(Util, BlockArray)
 			sum += it.m_x;
 		}
 		ANKI_TEST_EXPECT_EQ(sum, 123 + 666);
+	}
+	ANKI_TEST_EXPECT_EQ(TestFoo::m_constructorCount, TestFoo::m_destructorCount);
+	ANKI_TEST_EXPECT_EQ(TestFoo::m_copyCount, 0);
+
+	// Copy
+	TestFoo::reset();
+	{
+		constexpr U32 kInsertionCount = 100;
+		BlockArray<TestFoo> arr;
+
+		// Add some
+		for(U32 i = 0; i < kInsertionCount; ++i)
+		{
+			arr.emplace(rand());
+		}
+
+		// Remove some
+		for(U32 i = 0; i < kInsertionCount / 2; ++i)
+		{
+			const U32 idx = U32(rand()) % kInsertionCount;
+			if(arr.indexExists(idx))
+			{
+				arr.erase(arr.indexToIterator(idx));
+			}
+			arr.validate();
+		}
+
+		// Copy
+		BlockArray<TestFoo> arr2 = arr;
+		arr2.validate();
+
+		// Test
+		I64 sum = 0;
+		for(auto it : arr)
+		{
+			sum += it.m_x;
+		}
+
+		I64 sum2 = 0;
+		for(auto it : arr2)
+		{
+			sum2 += it.m_x;
+		}
+
+		ANKI_TEST_EXPECT_EQ(sum, sum2);
+		ANKI_TEST_EXPECT_EQ(arr.getSize(), arr2.getSize());
 	}
 	ANKI_TEST_EXPECT_EQ(TestFoo::m_constructorCount, TestFoo::m_destructorCount);
 	ANKI_TEST_EXPECT_EQ(TestFoo::m_copyCount, 0);
@@ -56,8 +102,7 @@ ANKI_TEST(Util, BlockArray)
 				const int randPos = rand() % int(vec.size());
 
 				ANKI_TEST_EXPECT_EQ(arr[vec[randPos].first].m_x, vec[randPos].second);
-				auto it = arr.getBegin();
-				arr.erase(it + (vec[randPos].first - it.getArrayIndex()));
+				arr.erase(arr.indexToIterator(vec[randPos].first));
 
 				vec.erase(vec.begin() + randPos);
 			}
@@ -65,8 +110,8 @@ ANKI_TEST(Util, BlockArray)
 			{
 				// Add something
 				const int randVal = rand();
-				auto it = arr.emplace(randVal);
-				vec.push_back({it.getArrayIndex(), randVal});
+				auto idx = arr.emplace(randVal);
+				vec.push_back({idx.getArrayIndex(), randVal});
 			}
 			else if(vec.size())
 			{
@@ -78,6 +123,8 @@ ANKI_TEST(Util, BlockArray)
 				arr[vec[randPos].first].m_x = 1234;
 				vec[randPos].second = 1234;
 			}
+
+			arr.validate();
 		}
 
 		ANKI_TEST_EXPECT_EQ(vec.size(), arr.getSize());
@@ -90,6 +137,7 @@ ANKI_TEST(Util, BlockArray)
 	ANKI_TEST_EXPECT_EQ(TestFoo::m_copyCount, 0);
 
 	// Performance
+	if(ANKI_OPTIMIZE)
 	{
 		// Insertion
 		std::vector<U64> vec;

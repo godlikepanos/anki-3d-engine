@@ -23,7 +23,7 @@ class BlockArrayDefaultConfig
 public:
 	static constexpr U32 getElementCountPerBlock()
 	{
-		return U32(getAlignedRoundDown(ANKI_CACHE_LINE_SIZE, sizeof(T) * 64) / sizeof(T));
+		return 64;
 	}
 };
 
@@ -42,9 +42,6 @@ public:
 	BlockArrayIterator()
 		: m_array(nullptr)
 		, m_elementIdx(kMaxU32)
-#if ANKI_EXTRA_CHECKS
-		, m_iteratorVer(kMaxU32)
-#endif
 	{
 	}
 
@@ -52,10 +49,8 @@ public:
 	BlockArrayIterator(const BlockArrayIterator& b)
 		: m_array(b.m_array)
 		, m_elementIdx(b.m_elementIdx)
-#if ANKI_EXTRA_CHECKS
-		, m_iteratorVer(b.m_iteratorVer)
-#endif
 	{
+		check();
 	}
 
 	/// Allow conversion from iterator to const iterator.
@@ -63,34 +58,22 @@ public:
 	BlockArrayIterator(const BlockArrayIterator<YValuePointer, YValueReference, YBlockArrayPtr>& b)
 		: m_array(b.m_array)
 		, m_elementIdx(b.m_elementIdx)
-#if ANKI_EXTRA_CHECKS
-		, m_iteratorVer(b.m_iteratorVer)
-#endif
 	{
+		check();
 	}
 
-	BlockArrayIterator(TBlockArrayPtr arr, U32 idx
-#if ANKI_EXTRA_CHECKS
-					   ,
-					   U32 ver
-#endif
-					   )
+	BlockArrayIterator(TBlockArrayPtr arr, U32 idx)
 		: m_array(arr)
 		, m_elementIdx(idx)
-#if ANKI_EXTRA_CHECKS
-		, m_iteratorVer(ver)
-#endif
 	{
-		ANKI_ASSERT(arr);
+		check();
 	}
 
 	BlockArrayIterator& operator=(const BlockArrayIterator& b)
 	{
 		m_array = b.m_array;
 		m_elementIdx = b.m_elementIdx;
-#if ANKI_EXTRA_CHECKS
-		m_iteratorVer = b.m_iteratorVer;
-#endif
+		check();
 		return *this;
 	}
 
@@ -109,7 +92,7 @@ public:
 	BlockArrayIterator& operator++()
 	{
 		check();
-		m_elementIdx = (m_elementIdx != kMaxU32) ? (m_array->getNextElementIndex(m_elementIdx)) : kMaxU32;
+		m_elementIdx = m_array->getNextElementIndex(m_elementIdx);
 		return *this;
 	}
 
@@ -121,25 +104,9 @@ public:
 		return out;
 	}
 
-	BlockArrayIterator operator+(U32 n) const
-	{
-		check();
-		BlockArrayIterator out = *this;
-		out.m_elementIdx = (out.m_elementIdx != kMaxU32) ? (out.m_elementIdx + n) : kMaxU32;
-		return out;
-	}
-
-	BlockArrayIterator& operator+=(U32 n)
-	{
-		check();
-		m_elementIdx = (m_elementIdx != kMaxU32) ? (m_elementIdx + n) : kMaxU32;
-		return *this;
-	}
-
 	Bool operator==(const BlockArrayIterator& b) const
 	{
 		ANKI_ASSERT(m_array == b.m_array);
-		ANKI_ASSERT(m_iteratorVer == b.m_iteratorVer);
 		return m_elementIdx == b.m_elementIdx;
 	}
 
@@ -151,20 +118,18 @@ public:
 	/// Returns the imaginary index inside the BlockArray.
 	U32 getArrayIndex() const
 	{
-		ANKI_ASSERT(m_elementIdx != kMaxU32);
+		check();
 		return m_elementIdx;
 	}
 
 private:
 	TBlockArrayPtr m_array;
 	U32 m_elementIdx;
-#if ANKI_EXTRA_CHECKS
-	U32 m_iteratorVer; ///< See BlockArray::m_iteratorVer.
-#endif
 
 	void check() const
 	{
 		ANKI_ASSERT(m_array);
+		ANKI_ASSERT(m_array->indexExists(m_elementIdx));
 	}
 };
 
@@ -224,6 +189,10 @@ public:
 		m_blockMetadatas = std::move(b.m_blockMetadatas);
 		m_elementCount = b.m_elementCount;
 		b.m_elementCount = 0;
+		m_firstIndex = b.m_firstIndex;
+		b.m_firstIndex = 0;
+		m_endIndex = b.m_endIndex;
+		b.m_endIndex = 0;
 		return *this;
 	}
 
@@ -246,45 +215,25 @@ public:
 	/// Get begin.
 	Iterator getBegin()
 	{
-		return Iterator(this, getFirstElementIndex()
-#if ANKI_EXTRA_CHECKS
-								  ,
-						m_iteratorVer
-#endif
-		);
+		return Iterator(this, m_firstIndex);
 	}
 
 	/// Get begin.
 	ConstIterator getBegin() const
 	{
-		return ConstIterator(this, getFirstElementIndex()
-#if ANKI_EXTRA_CHECKS
-									   ,
-							 m_iteratorVer
-#endif
-		);
+		return ConstIterator(this, m_firstIndex);
 	}
 
 	/// Get end.
 	Iterator getEnd()
 	{
-		return Iterator(this, kMaxU32
-#if ANKI_EXTRA_CHECKS
-						,
-						m_iteratorVer
-#endif
-		);
+		return Iterator(this, m_endIndex);
 	}
 
 	/// Get end.
 	ConstIterator getEnd() const
 	{
-		return ConstIterator(this, kMaxU32
-#if ANKI_EXTRA_CHECKS
-							 ,
-							 m_iteratorVer
-#endif
-		);
+		return ConstIterator(this, m_endIndex);
 	}
 
 	/// Get begin.
@@ -330,12 +279,40 @@ public:
 
 	/// Removes one element.
 	/// @param at Points to the position of the element to remove.
-	void erase(ConstIterator at);
+	void erase(Iterator idx);
+
+	/// Removes one element.
+	/// @param at Points to the position of the element to remove.
+	void erase(U32 index)
+	{
+		erase(indexToIterator(index));
+	}
+
+	Iterator indexToIterator(U32 idx)
+	{
+		ANKI_ASSERT(indexExists(idx));
+		return Iterator(this, idx);
+	}
+
+	ConstIterator indexToIterator(U32 idx) const
+	{
+		ANKI_ASSERT(indexExists(idx));
+		return ConstIterator(this, idx);
+	}
+
+	Bool indexExists(U32 idx) const
+	{
+		const U32 localIdx = idx % kElementCountPerBlock;
+		const U32 blockIdx = idx / kElementCountPerBlock;
+		return blockIdx < m_blockMetadatas.getSize() && m_blockMetadatas[blockIdx].m_elementsInUseMask.get(localIdx) == true;
+	}
 
 	TMemoryPool& getMemoryPool()
 	{
 		return m_blockStorages.getMemoryPool();
 	}
+
+	void validate() const;
 
 private:
 	class alignas(alignof(T)) BlockStorage
@@ -355,9 +332,8 @@ private:
 	DynamicArray<BlockStorage*, TMemoryPool> m_blockStorages;
 	DynamicArray<BlockMetadata, TMemoryPool> m_blockMetadatas;
 	U32 m_elementCount = 0;
-#if ANKI_EXTRA_CHECKS
-	U32 m_iteratorVer = 1;
-#endif
+	U32 m_firstIndex = 0;
+	U32 m_endIndex = 0; ///< The index after the last.
 
 	U32 getFirstElementIndex() const
 	{
@@ -370,35 +346,27 @@ private:
 			}
 		}
 
-		return kMaxU32;
+		ANKI_ASSERT(0);
+		return 0;
 	}
 
-	U32 getNextElementIndex(U32 crnt) const
+	U32 getLastElementIndex() const
 	{
-		ANKI_ASSERT(crnt < kMaxU32);
-		const U32 localIdx = crnt % kElementCountPerBlock;
-		U32 blockIdx = crnt / kElementCountPerBlock;
-		ANKI_ASSERT(blockIdx < m_blockMetadatas.getSize());
-
-		Mask mask = m_blockMetadatas[blockIdx].m_elementsInUseMask;
-		mask.unsetNLeastSignificantBits(localIdx + 1);
-		U32 locIdx;
-		if((locIdx = mask.getLeastSignificantBit()) != kMaxU32)
+		U32 blockIdx = m_blockMetadatas.getSize();
+		while(blockIdx--)
 		{
-			return blockIdx * kElementCountPerBlock + locIdx;
-		}
-
-		++blockIdx;
-		for(; blockIdx < m_blockMetadatas.getSize(); ++blockIdx)
-		{
-			if((locIdx = m_blockMetadatas[blockIdx].m_elementsInUseMask.getLeastSignificantBit()) != kMaxU32)
+			U32 localIdx;
+			if((localIdx = m_blockMetadatas[blockIdx].m_elementsInUseMask.getMostSignificantBit()) != kMaxU32)
 			{
-				return blockIdx * kElementCountPerBlock + locIdx;
+				return localIdx + blockIdx * kElementCountPerBlock;
 			}
 		}
 
-		return kMaxU32;
+		ANKI_ASSERT(0);
+		return 0;
 	}
+
+	U32 getNextElementIndex(U32 crnt) const;
 };
 /// @}
 

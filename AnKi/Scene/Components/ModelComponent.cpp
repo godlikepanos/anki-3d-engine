@@ -15,7 +15,7 @@
 namespace anki {
 
 ModelComponent::ModelComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 	, m_node(node)
 	, m_spatial(this)
 {
@@ -459,7 +459,7 @@ void ModelComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool 
 {
 	ANKI_ASSERT(other);
 
-	if(other->getClassId() != SkinComponent::getStaticClassId())
+	if(other->getType() != SceneComponentType::kSkin)
 	{
 		return;
 	}

@@ -546,7 +546,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 
 		const BitSet<kMaxRenderGraphRenderTargets, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
-		if(fullDep.getAny())
+		if(fullDep.getAnySet())
 		{
 			// There might be an overlap
 
@@ -588,7 +588,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 
 		const BitSet<kMaxRenderGraphBuffers, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
-		if(fullDep.getAny())
+		if(fullDep.getAnySet())
 		{
 			// There might be an overlap
 

@@ -194,7 +194,7 @@ public:
 };
 
 ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 	, m_spatial(this)
 {
 }

@@ -196,8 +196,8 @@ Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U3
 void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const
 {
 	// Sanity checks
-	ANKI_ASSERT(info.m_setMutators.getEnabledBitCount() == m_mutators.getSize());
-	ANKI_ASSERT(info.m_setConstants.getEnabledBitCount() == m_consts.getSize());
+	ANKI_ASSERT(info.m_setMutators.getSetBitCount() == m_mutators.getSize());
+	ANKI_ASSERT(info.m_setConstants.getSetBitCount() == m_consts.getSize());
 
 	// Compute variant hash
 	U64 hash = 0;

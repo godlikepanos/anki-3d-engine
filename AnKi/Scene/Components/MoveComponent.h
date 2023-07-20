@@ -19,14 +19,14 @@ class MoveComponent : public SceneComponent
 
 public:
 	MoveComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, kClassType)
 	{
 	}
 
 	~MoveComponent() = default;
 
 private:
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

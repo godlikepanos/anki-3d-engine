@@ -149,12 +149,12 @@ public:
 
 	Bool operator!() const
 	{
-		return !getAny();
+		return !getAnySet();
 	}
 
 	explicit operator Bool() const
 	{
-		return getAny();
+		return getAnySet();
 	}
 
 	/// Set or unset a bit at the given position.
@@ -230,14 +230,14 @@ public:
 	}
 
 	/// Any are enabled.
-	Bool getAny() const
+	Bool getAnySet() const
 	{
 		const BitSet kZero(false);
 		return *this != kZero;
 	}
 
 	/// Count bits.
-	U32 getEnabledBitCount() const
+	U32 getSetBitCount() const
 	{
 		U32 count = 0;
 		for(U i = 0; i < kChunkCount; ++i)

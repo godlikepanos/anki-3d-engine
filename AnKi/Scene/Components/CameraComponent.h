@@ -137,7 +137,7 @@ private:
 
 	Bool m_usesExtendedFrustum : 1 = false;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	Transform computeExtendedFrustumTransform(const Transform& cameraTransform) const;
 };

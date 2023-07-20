@@ -17,7 +17,7 @@
 namespace anki {
 
 LightComponent::LightComponent(SceneNode* node)
-	: QueryableSceneComponent<LightComponent>(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 	, m_spatial(this)
 	, m_type(LightComponentType::kPoint)
 {
@@ -106,11 +106,11 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		if(m_shadow && shapeUpdated)
 		{
-			refreshUuid();
+			m_uuid = SceneGraph::getSingleton().getNewUuid();
 		}
 		else if(!m_shadow)
 		{
-			releaseUuid();
+			m_uuid = 0;
 		}
 
 		// Upload to the GPU scene
@@ -120,7 +120,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
 		gpuLight.m_shadow = m_shadow;
-		gpuLight.m_uuid = (m_shadow) ? getUuid() : 0;
+		gpuLight.m_uuid = (m_shadow) ? m_uuid : 0;
 		if(!m_gpuSceneLight.isValid())
 		{
 			m_gpuSceneLight.allocate();
@@ -177,11 +177,11 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		if(m_shadow && shapeUpdated)
 		{
-			refreshUuid();
+			m_uuid = SceneGraph::getSingleton().getNewUuid();
 		}
 		else if(!m_shadow)
 		{
-			releaseUuid();
+			m_uuid = 0;
 		}
 
 		// Upload to the GPU scene
@@ -198,7 +198,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_shadow = m_shadow;
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
-		gpuLight.m_uuid = (m_shadow) ? getUuid() : 0;
+		gpuLight.m_uuid = (m_shadow) ? m_uuid : 0;
 		if(!m_gpuSceneLight.isValid())
 		{
 			m_gpuSceneLight.allocate();
@@ -236,7 +236,7 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 
 	const U32 shadowCascadeCount = cascadeFrustums.getSize();
 
-	el.m_uuid = hasUuid() ? getUuid() : 0;
+	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = -m_worldTransform.getRotation().getZAxis().xyz();
 	for(U32 i = 0; i < shadowCascadeCount; ++i)

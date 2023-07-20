@@ -46,7 +46,7 @@ GpuSceneArrayAllocation<TGpuSceneObject, kId> GpuSceneArray<TGpuSceneObject, kId
 	{
 		// No freed indices this frame, get a new one
 
-		for(U maskGroup = 0; maskGroup < m_inUseIndicesMask.getSize(); ++maskGroup)
+		for(U32 maskGroup = 0; maskGroup < m_inUseIndicesMask.getSize(); ++maskGroup)
 		{
 			SubMask submask = m_inUseIndicesMask[maskGroup];
 			submask = ~submask;
@@ -143,7 +143,7 @@ void GpuSceneArray<TGpuSceneObject, kId>::validate() const
 	U32 maskGroupCount = 0;
 	for(const SubMask& mask : m_inUseIndicesMask)
 	{
-		count += mask.getEnabledBitCount();
+		count += mask.getSetBitCount();
 		maxIdx = max(maxIdx, (mask.getMostSignificantBit() != kMaxU32) ? (mask.getMostSignificantBit() + maskGroupCount * 64) : 0);
 		++maskGroupCount;
 	}

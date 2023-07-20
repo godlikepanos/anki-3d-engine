@@ -172,9 +172,9 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 		} while(inputEl);
 	}
 
-	if(varsSet.getEnabledBitCount() != m_vars.getSize())
+	if(varsSet.getSetBitCount() != m_vars.getSize())
 	{
-		ANKI_RESOURCE_LOGE("Forgot to set a default value in %u input variables", U32(m_vars.getSize() - varsSet.getEnabledBitCount()));
+		ANKI_RESOURCE_LOGE("Forgot to set a default value in %u input variables", U32(m_vars.getSize() - varsSet.getSetBitCount()));
 		return Error::kUserData;
 	}
 

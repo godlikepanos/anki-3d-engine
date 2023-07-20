@@ -29,7 +29,7 @@ static NumericCVar<F32>
 											"Every object that its distance from the camera is bellow that value will take part in ray tracing");
 
 CameraComponent::CameraComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 {
 	// Init main frustum
 	m_frustum.init(FrustumType::kPerspective);

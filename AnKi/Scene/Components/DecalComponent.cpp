@@ -12,7 +12,7 @@
 namespace anki {
 
 DecalComponent::DecalComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 	, m_spatial(this)
 {
 	m_gpuSceneDecal.allocate();

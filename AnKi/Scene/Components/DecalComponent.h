@@ -100,7 +100,7 @@ private:
 
 	void setLayer(CString fname, F32 blendFactor, LayerType type);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

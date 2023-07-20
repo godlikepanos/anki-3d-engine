@@ -14,7 +14,7 @@
 namespace anki {
 
 SkinComponent::SkinComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 {
 }
 

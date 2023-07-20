@@ -19,7 +19,7 @@ extern NumericCVar<U32> g_reflectionProbeResolutionCVar;
 /// @{
 
 /// Reflection probe component.
-class ReflectionProbeComponent : public QueryableSceneComponent<ReflectionProbeComponent>
+class ReflectionProbeComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(ReflectionProbeComponent)
 
@@ -87,11 +87,12 @@ private:
 	TexturePtr m_reflectionTex;
 	TextureViewPtr m_reflectionView;
 	U32 m_reflectionTexBindlessIndex = kMaxU32;
+	U32 m_uuid = 0;
 
 	Bool m_dirty = true;
 	Bool m_reflectionNeedsRefresh = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

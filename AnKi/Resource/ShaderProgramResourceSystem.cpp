@@ -365,7 +365,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 				return Error::kUserData;
 			}
 
-			if(inLib.m_rayTypeCount != inLib.m_rayTypeMask.getEnabledBitCount())
+			if(inLib.m_rayTypeCount != inLib.m_rayTypeMask.getSetBitCount())
 			{
 				ANKI_RESOURCE_LOGE("Ray types are not contiguous for library: %s", inLib.m_name.cstr());
 				return Error::kUserData;

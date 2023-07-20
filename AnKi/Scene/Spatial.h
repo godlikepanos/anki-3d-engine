@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Octree.h>
+#include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Collision.h>
 
 namespace anki {
@@ -19,7 +20,7 @@ class Spatial
 public:
 	Spatial(SceneComponent* owner)
 		: m_owner(owner)
-		, m_sceneComponentClassId(owner->getClassId())
+		, m_sceneComponentType(owner->getType())
 	{
 		ANKI_ASSERT(owner);
 		m_octreeInfo.m_userData = this;
@@ -44,9 +45,9 @@ public:
 		return *m_owner;
 	}
 
-	U8 getSceneComponentClassId() const
+	SceneComponentType getSceneComponentClassId() const
 	{
-		return m_sceneComponentClassId;
+		return m_sceneComponentType;
 	}
 
 	const Aabb& getAabbWorldSpace() const
@@ -137,7 +138,7 @@ private:
 	OctreePlaceable m_octreeInfo;
 
 	SceneComponent* m_owner;
-	U8 m_sceneComponentClassId; ///< Cache it.
+	SceneComponentType m_sceneComponentType; ///< Cache it.
 
 	Bool m_placed : 1 = false;
 	Bool m_updatesOctreeBounds : 1 = true;

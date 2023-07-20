@@ -90,7 +90,7 @@ void QueryFactory::deleteQuery(MicroQuery& handle)
 	{
 		// Delete the chunk
 
-		ANKI_ASSERT(chunk->m_allocatedMask.getAny());
+		ANKI_ASSERT(chunk->m_allocatedMask.getAnySet());
 		vkDestroyQueryPool(getVkDevice(), chunk->m_pool, nullptr);
 
 		m_chunks.erase(chunk);

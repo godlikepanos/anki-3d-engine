@@ -83,7 +83,7 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 		GpuVisibilityNonRenderablesOutput out;
 		getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, out);
 
-		m_runCtx.m_visOutBufferHandle[type] = out.m_bufferHandle;
+		m_runCtx.m_visOutBufferHandle[type] = out.m_visiblesBufferHandle;
 	}
 }
 

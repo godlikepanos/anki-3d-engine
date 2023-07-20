@@ -21,7 +21,7 @@ class UiComponent : public SceneComponent
 
 public:
 	UiComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, kClassType)
 		, m_spatial(this)
 	{
 		m_spatial.setAlwaysVisible(true);
@@ -51,7 +51,7 @@ private:
 	void* m_userData = nullptr;
 	Spatial m_spatial;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

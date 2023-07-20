@@ -32,12 +32,7 @@ private:
 	class
 	{
 	public:
-		Array<Buffer*, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBuffers = {};
-		Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBufferOffsets = {};
-		Array<PtrSize, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBufferRanges = {};
-
 		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBufferHandle;
-
 		Array<WeakArray<U32>, U32(GpuSceneNonRenderableObjectTypeWithFeedback::kCount)> m_uuids;
 	} m_runCtx;
 };

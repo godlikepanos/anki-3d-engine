@@ -15,7 +15,7 @@ NumericCVar<U32> g_reflectionProbeResolutionCVar(CVarSubsystem::kScene, "Reflect
 												 "The resolution of the reflection probe's reflection");
 
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
-	: QueryableSceneComponent<ReflectionProbeComponent>(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 	, m_spatial(this)
 {
 	m_worldPos = node->getWorldTransform().getOrigin().xyz();
@@ -83,8 +83,8 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 			m_frustums[i].setFar(effectiveDistance);
 			m_frustums[i].setShadowCascadeDistance(0, shadowCascadeDistance);
 
-			// Add something really far to force LOD 0 to be used. The importing tools create LODs with holes some times
-			// and that causes the sky to bleed to GI rendering
+			// Add something really far to force LOD 0 to be used. The importing tools create LODs with holes some times and that causes the sky to
+			// bleed to GI rendering
 			m_frustums[i].setLodDistances(
 				{effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf, effectiveDistance - 1.0f * kEpsilonf});
 		}
@@ -93,7 +93,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		m_spatial.setBoundingShape(aabbWorld);
 
 		// New UUID
-		refreshUuid();
+		m_uuid = SceneGraph::getSingleton().getNewUuid();
 
 		// Upload to the GPU scene
 		GpuSceneReflectionProbe gpuProbe;
@@ -101,7 +101,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_cubeTexture = m_reflectionTexBindlessIndex;
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
-		gpuProbe.m_uuid = getUuid();
+		gpuProbe.m_uuid = m_uuid;
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 

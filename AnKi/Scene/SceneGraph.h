@@ -9,6 +9,7 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
+#include <AnKi/Util/BlockArray.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
 #include <AnKi/Core/CVarSet.h>
@@ -23,6 +24,21 @@ extern NumericCVar<F32> g_probeShadowEffectiveDistanceCVar;
 
 /// @addtogroup scene
 /// @{
+
+class SceneComponentArrays
+{
+public:
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+	SceneBlockArray<name##Component>& get##name##s() \
+	{ \
+		return m_##name##Array; \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
+private:
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) SceneBlockArray<name##Component> m_##name##Array;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+};
 
 /// The scene graph that  all the scene entities
 class SceneGraph : public MakeSingleton<SceneGraph>
@@ -140,6 +156,11 @@ public:
 		return *m_octree;
 	}
 
+	SceneComponentArrays& getComponentArrays()
+	{
+		return m_componentArrays;
+	}
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -172,6 +193,8 @@ private:
 	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 
 	Atomic<U32> m_nodesUuid = {1};
+
+	SceneComponentArrays m_componentArrays;
 
 	SceneGraph();
 

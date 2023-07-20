@@ -65,7 +65,7 @@ public:
 };
 
 TriggerComponent::TriggerComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 	, m_node(node)
 {
 	ANKI_ASSERT(node);

@@ -6,7 +6,6 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Octree.h>
 #include <AnKi/Scene/RenderStateBucket.h>
-#include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Renderer/MainRenderer.h>
@@ -15,6 +14,25 @@
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
+
+#include <AnKi/Scene/Components/BodyComponent.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/Components/DecalComponent.h>
+#include <AnKi/Scene/Components/FogDensityComponent.h>
+#include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Scene/Components/JointComponent.h>
+#include <AnKi/Scene/Components/LensFlareComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
+#include <AnKi/Scene/Components/ModelComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
+#include <AnKi/Scene/Components/ParticleEmitterComponent.h>
+#include <AnKi/Scene/Components/PlayerControllerComponent.h>
+#include <AnKi/Scene/Components/ReflectionProbeComponent.h>
+#include <AnKi/Scene/Components/ScriptComponent.h>
+#include <AnKi/Scene/Components/SkinComponent.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <AnKi/Scene/Components/TriggerComponent.h>
+#include <AnKi/Scene/Components/UiComponent.h>
 
 namespace anki {
 
@@ -283,7 +301,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 		componentUpdateInfo.m_node = &node;
 		Bool updated = false;
-		err = comp.updateReal(componentUpdateInfo, updated);
+		err = comp.update(componentUpdateInfo, updated);
 
 		if(updated)
 		{

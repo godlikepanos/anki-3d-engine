@@ -315,20 +315,17 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	// Allocate memory for the result
 	GpuVisibleTransientMemoryAllocation visibleIndicesAlloc = GpuVisibleTransientMemoryPool::getSingleton().allocate((objCount + 1) * sizeof(U32));
-
 	out.m_visiblesBuffer.m_buffer = visibleIndicesAlloc.m_buffer;
 	out.m_visiblesBuffer.m_offset = visibleIndicesAlloc.m_offset;
 	out.m_visiblesBuffer.m_range = visibleIndicesAlloc.m_size;
-
-	// Import buffers
-	out.m_bufferHandle =
+	out.m_visiblesBufferHandle =
 		rgraph.importBuffer(out.m_visiblesBuffer.m_buffer, BufferUsageBit::kNone, out.m_visiblesBuffer.m_offset, out.m_visiblesBuffer.m_range);
 
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newBufferDependency(out.m_bufferHandle, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(out.m_visiblesBufferHandle, BufferUsageBit::kStorageComputeWrite);
 
 	if(in.m_hzbRt)
 	{
@@ -341,7 +338,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	}
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
-				  visibleIndicesBuffHandle = out.m_bufferHandle, counterBuffer = m_counterBuffer, counterBufferOffset = m_counterBufferOffset,
+				  visibleIndicesBuffHandle = out.m_visiblesBufferHandle, counterBuffer = m_counterBuffer, counterBufferOffset = m_counterBufferOffset,
 				  objCount](RenderPassWorkContext& rgraph) {
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 

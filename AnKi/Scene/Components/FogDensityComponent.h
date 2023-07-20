@@ -115,7 +115,7 @@ private:
 	Bool m_isBox = true;
 	Bool m_dirty = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 
 } // end namespace anki

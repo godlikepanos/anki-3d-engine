@@ -228,49 +228,49 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 		[&](void* placeableUserData) {
 			ANKI_ASSERT(placeableUserData);
 			Spatial* spatial = static_cast<Spatial*>(placeableUserData);
-			const U8 compClassId = spatial->getSceneComponentClassId();
+			const SceneComponentType compType = spatial->getSceneComponentClassId();
 			const FrustumFlags frustumFlags = m_frcCtx->m_frustum;
 
 			Bool gather = false;
 
-			if(compClassId == ModelComponent::getStaticClassId())
+			if(compType == ModelComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherModelComponents || frustumFlags.m_gatherShadowCasterModelComponents
 						 || frustumFlags.m_gatherRayTracingModelComponents;
 			}
-			else if(compClassId == ParticleEmitterComponent::getStaticClassId())
+			else if(compType == ParticleEmitterComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherParticleComponents;
 			}
-			else if(compClassId == LightComponent::getStaticClassId())
+			else if(compType == LightComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherLightComponents;
 			}
-			else if(compClassId == LensFlareComponent::getStaticClassId())
+			else if(compType == LensFlareComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherLensFlareComponents;
 			}
-			else if(compClassId == ReflectionProbeComponent::getStaticClassId())
+			else if(compType == ReflectionProbeComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherProbeComponents;
 			}
-			else if(compClassId == DecalComponent::getStaticClassId())
+			else if(compType == DecalComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherDecalComponents;
 			}
-			else if(compClassId == FogDensityComponent::getStaticClassId())
+			else if(compType == FogDensityComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherFogDensityComponents;
 			}
-			else if(compClassId == GlobalIlluminationProbeComponent::getStaticClassId())
+			else if(compType == GlobalIlluminationProbeComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherProbeComponents;
 			}
-			else if(compClassId == UiComponent::getStaticClassId())
+			else if(compType == UiComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherUiComponents;
 			}
-			else if(compClassId == SkyboxComponent::getStaticClassId())
+			else if(compType == SkyboxComponent::kClassType)
 			{
 				gather = frustumFlags.m_gatherSkyComponents;
 			}
@@ -344,14 +344,14 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		Spatial* spatial = m_spatialsToTest[i];
 		ANKI_ASSERT(spatial);
 		SceneComponent& comp = spatial->getSceneComponent();
-		const U8 compClassId = spatial->getSceneComponentClassId();
+		const SceneComponentType compType = spatial->getSceneComponentClassId();
 		const Aabb& aabb = spatial->getAabbWorldSpace();
 
 		auto isInside = [&] {
 			return spatial->getAlwaysVisible() || (testedFrustum.insideFrustum(aabb) && testAgainstRasterizer(aabb));
 		};
 
-		if(compClassId == ModelComponent::getStaticClassId())
+		if(compType == ModelComponent::kClassType)
 		{
 			const ModelComponent& modelc = static_cast<ModelComponent&>(comp);
 			const Bool isShadowFrustum = frustumFlags.m_gatherShadowCasterModelComponents;
@@ -394,7 +394,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			ANKI_ASSERT(comp.getTimestamp() > 0);
 			m_frcCtx->m_queueViews[taskId].m_timestamp = max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
 		}
-		else if(compClassId == ParticleEmitterComponent::getStaticClassId())
+		else if(compType == ParticleEmitterComponent::kClassType)
 		{
 			const ParticleEmitterComponent& partemitc = static_cast<ParticleEmitterComponent&>(comp);
 			if(!partemitc.isEnabled() || !isInside())
@@ -429,7 +429,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				m_frcCtx->m_queueViews[taskId].m_timestamp = max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
 			}
 		}
-		else if(compClassId == LightComponent::getStaticClassId())
+		else if(compType == LightComponent::kClassType)
 		{
 			const LightComponent& lightc = static_cast<LightComponent&>(comp);
 			if(lightc.getLightComponentType() != LightComponentType::kDirectional && !isInside())
@@ -543,7 +543,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				ANKI_ASSERT(0);
 			}
 		}
-		else if(compClassId == LensFlareComponent::getStaticClassId())
+		else if(compType == LensFlareComponent::kClassType)
 		{
 			const LensFlareComponent& flarec = static_cast<LensFlareComponent&>(comp);
 
@@ -555,7 +555,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			LensFlareQueueElement* el = result.m_lensFlares.newElement();
 			flarec.setupLensFlareQueueElement(*el);
 		}
-		else if(compClassId == ReflectionProbeComponent::getStaticClassId())
+		else if(compType == ReflectionProbeComponent::kClassType)
 		{
 			if(!isInside())
 			{
@@ -589,7 +589,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				reflc.setupReflectionProbeQueueElement(*el);
 			}
 		}
-		else if(compClassId == DecalComponent::getStaticClassId())
+		else if(compType == DecalComponent::kClassType)
 		{
 			const DecalComponent& decalc = static_cast<DecalComponent&>(comp);
 
@@ -601,7 +601,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			DecalQueueElement* el = result.m_decals.newElement();
 			decalc.setupDecalQueueElement(*el);
 		}
-		else if(compClassId == FogDensityComponent::getStaticClassId())
+		else if(compType == FogDensityComponent::kClassType)
 		{
 			if(!isInside())
 			{
@@ -613,7 +613,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			FogDensityQueueElement* el = result.m_fogDensityVolumes.newElement();
 			fogc.setupFogDensityQueueElement(*el);
 		}
-		else if(compClassId == GlobalIlluminationProbeComponent::getStaticClassId())
+		else if(compType == GlobalIlluminationProbeComponent::kClassType)
 		{
 			if(!isInside())
 			{
@@ -645,7 +645,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement();
 			giprobec.setupGlobalIlluminationProbeQueueElement(*el);
 		}
-		else if(compClassId == UiComponent::getStaticClassId())
+		else if(compType == UiComponent::kClassType)
 		{
 			if(!isInside())
 			{
@@ -656,7 +656,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			UiQueueElement* el = result.m_uis.newElement();
 			uic.setupUiQueueElement(*el);
 		}
-		else if(compClassId == SkyboxComponent::getStaticClassId())
+		else if(compType == SkyboxComponent::kClassType)
 		{
 			if(!isInside())
 			{

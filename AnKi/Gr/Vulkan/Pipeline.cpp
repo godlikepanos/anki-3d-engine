@@ -45,7 +45,7 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// Vertex
-	if(m_dirty.m_attribs.getAny() || m_dirty.m_vertBindings.getAny())
+	if(m_dirty.m_attribs.getAnySet() || m_dirty.m_vertBindings.getAnySet())
 	{
 		for(U i = 0; i < kMaxVertexAttributes; ++i)
 		{
@@ -340,7 +340,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		VkPipelineColorBlendStateCreateInfo& colCi = m_ci.m_color;
 		colCi = {};
 		colCi.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colCi.attachmentCount = m_fbColorAttachmentMask.getEnabledBitCount();
+		colCi.attachmentCount = m_fbColorAttachmentMask.getSetBitCount();
 		colCi.pAttachments = &m_ci.m_colAttachments[0];
 
 		for(U i = 0; i < colCi.attachmentCount; ++i)

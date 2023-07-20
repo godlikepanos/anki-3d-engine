@@ -74,7 +74,7 @@ public:
 class GpuVisibilityNonRenderablesOutput
 {
 public:
-	BufferHandle m_bufferHandle; ///< Some buffer handle to be used for tracking. No need to track all buffers.
+	BufferHandle m_visiblesBufferHandle; ///< Buffer handle holding the visible objects. Used for tracking. No need to track all buffers.
 	BufferOffsetRange m_visiblesBuffer;
 };
 

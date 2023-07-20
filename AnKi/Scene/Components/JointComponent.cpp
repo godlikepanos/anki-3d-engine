@@ -139,7 +139,7 @@ Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 void JointComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
 {
-	if(other->getClassId() != BodyComponent::getStaticClassId())
+	if(other->getType() != SceneComponentType::kBody)
 	{
 		return;
 	}

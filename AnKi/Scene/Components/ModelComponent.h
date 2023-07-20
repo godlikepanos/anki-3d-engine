@@ -83,9 +83,9 @@ private:
 
 	void freeGpuScene();
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
-	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 };
 /// @}
 

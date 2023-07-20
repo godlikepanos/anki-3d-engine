@@ -17,7 +17,7 @@ namespace anki {
 /// @{
 
 /// Global illumination probe component. It's an axis aligned box divided into cells.
-class GlobalIlluminationProbeComponent : public QueryableSceneComponent<GlobalIlluminationProbeComponent>
+class GlobalIlluminationProbeComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(GlobalIlluminationProbeComponent)
 
@@ -121,6 +121,8 @@ private:
 
 	U32 m_cellIdxToRefresh = 0;
 
+	U32 m_uuid = 0;
+
 	Bool m_shapeDirty = true;
 
 	/// Recalc come values.
@@ -132,7 +134,7 @@ private:
 		m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
 	}
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 
