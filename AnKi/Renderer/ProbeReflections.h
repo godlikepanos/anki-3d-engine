@@ -121,7 +121,7 @@ private:
 
 	void runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx);
 	void runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx);
-	void runLightShading(U32 faceIdx, const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runLightShading(U32 faceIdx, const BufferOffsetRange& visResult, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 	void runIrradianceToRefl(RenderPassWorkContext& rgraphCtx);

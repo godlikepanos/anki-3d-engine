@@ -314,6 +314,7 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 inline BufferHandle RenderGraphDescription::importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset, PtrSize range)
 {
 	// Checks
+	ANKI_ASSERT(buff);
 	if(range == kMaxPtrSize)
 	{
 		ANKI_ASSERT(offset < buff->getSize());

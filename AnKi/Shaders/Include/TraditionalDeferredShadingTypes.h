@@ -9,89 +9,37 @@
 
 ANKI_BEGIN_NAMESPACE
 
-struct DeferredPointLightUniforms
+struct TraditionalDeferredShadingDirectionalLight
 {
-	// Use these to get the correct face UVs
-	Vec2 m_inputTexUvScale;
-	Vec2 m_inputTexUvBias;
-
-	Vec2 m_fbUvScale;
-	Vec2 m_fbUvBias;
-
-	Mat4 m_invViewProjMat;
-
-	Vec3 m_camPos;
-	F32 m_padding;
-
-	// Light props
-	Vec3 m_position;
-	F32 m_oneOverSquareRadius; // 1/radius^2
-
 	Vec3 m_diffuseColor;
-	F32 m_padding2;
-};
+	U32 m_active;
 
-struct DeferredSpotLightUniforms
-{
-	// Use these to get the correct face UVs
-	Vec2 m_inputTexUvScale;
-	Vec2 m_inputTexUvBias;
-
-	Vec2 m_fbUvScale;
-	Vec2 m_fbUvBias;
-
-	Mat4 m_invViewProjMat;
-
-	Vec3 m_camPos;
-	F32 m_padding;
-
-	// Light props
-	Vec3 m_position;
-	F32 m_oneOverSquareRadius; // 1/radius^2
-
-	Vec3 m_diffuseColor;
-	F32 m_outerCos;
-
-	Vec3 m_lightDir;
-	F32 m_innerCos;
-};
-
-struct DeferredDirectionalLightUniforms
-{
-	// Use these to get the correct face UVs
-	Vec2 m_inputTexUvScale;
-	Vec2 m_inputTexUvBias;
-
-	Vec2 m_fbUvScale;
-	Vec2 m_fbUvBias;
-
-	Mat4 m_invViewProjMat;
-
-	Vec3 m_camPos;
-	F32 m_near;
-
-	// Light props
-	Vec3 m_diffuseColor;
-	F32 m_far;
-
-	Vec3 m_lightDir;
+	Vec3 m_direction;
 	F32 m_effectiveShadowDistance;
 
 	Mat4 m_lightMatrix;
 };
 
-struct DeferredVertexUniforms
+struct TraditionalDeferredShadingUniforms
 {
-	Mat4 m_mvp;
+	// Use these to get the correct face UVs
+	Vec2 m_inputTexUvScale;
+	Vec2 m_inputTexUvBias;
+
+	Vec2 m_fbUvScale;
+	Vec2 m_fbUvBias;
+
+	Mat4 m_invViewProjMat;
+
+	Vec3 m_cameraPos;
+	F32 m_padding0;
+
+	TraditionalDeferredShadingDirectionalLight m_dirLight;
 };
 
-struct DeferredSkyboxUniforms
+struct TraditionalDeferredSkyboxUniforms
 {
-#if ANKI_GLSL
-	ANKI_RP Vec3 m_solidColor;
-#else
 	RVec3 m_solidColor;
-#endif
 	F32 m_padding1;
 
 	Vec2 m_inputTexUvScale;

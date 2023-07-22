@@ -74,7 +74,7 @@ private:
 
 	void runGBufferInThread(RenderPassWorkContext& rgraphCtx) const;
 	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx) const;
-	void runLightShading(RenderPassWorkContext& rgraphCtx);
+	void runLightShading(const Array<BufferOffsetRange, 6>& lightVisBuffers, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 };
 /// @}

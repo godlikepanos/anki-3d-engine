@@ -35,13 +35,30 @@ public:
 
 	~SkyboxComponent();
 
+	SkyboxType getSkyboxType() const
+	{
+		return m_type;
+	}
+
 	void setSolidColor(const Vec3& color)
 	{
 		m_type = SkyboxType::kSolidColor;
 		m_color = color.max(Vec3(0.0f));
 	}
 
+	Vec3 getSolidColor() const
+	{
+		ANKI_ASSERT(m_type == SkyboxType::kSolidColor);
+		return m_color;
+	}
+
 	void loadImageResource(CString filename);
+
+	ImageResource& getImageResource() const
+	{
+		ANKI_ASSERT(m_type == SkyboxType::kImage2D);
+		return *m_image;
+	}
 
 	void setMinFogDensity(F32 density)
 	{

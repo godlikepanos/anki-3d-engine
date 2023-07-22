@@ -117,6 +117,11 @@ public:
 		return WeakArray<Frustum>(m_frustums, m_frustumCount);
 	}
 
+	Vec3 getDirection() const
+	{
+		return -m_worldTransform.getRotation().getZAxis().xyz();
+	}
+
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kPoint);

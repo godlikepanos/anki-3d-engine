@@ -25,13 +25,11 @@ public:
 	Vec2 m_gbufferTexCoordsBias;
 	Vec2 m_lightbufferTexCoordsScale;
 	Vec2 m_lightbufferTexCoordsBias;
-	F32 m_cameraNear;
-	F32 m_cameraFar;
-	const DirectionalLightQueueElement* m_directionalLight = nullptr;
-	ConstWeakArray<PointLightQueueElement> m_pointLights;
-	ConstWeakArray<SpotLightQueueElement> m_spotLights;
-	const SkyboxQueueElement* m_skybox = nullptr;
-	CommandBuffer* m_commandBuffer = nullptr;
+	F32 m_effectiveShadowDistance = -1.0f; // TODO rm
+	Mat4 m_dirLightMatrix; // TODO rm
+
+	BufferOffsetRange m_visibleLightsBuffer;
+
 	Bool m_computeSpecular = false;
 
 	// Render targets
@@ -48,35 +46,17 @@ class TraditionalDeferredLightShading : public RendererObject
 public:
 	Error init();
 
-	/// Run the light shading. It will iterate over the lights and draw them. It doesn't bind anything related to
-	/// GBuffer or the output buffer.
+	/// Run the light shading. It will iterate over the lights and draw them. It doesn't bind anything related to GBuffer or the output buffer.
 	void drawLights(TraditionalDeferredLightShadingDrawInfo& info);
 
 private:
-	enum class ProxyType
-	{
-		kProxySphere,
-		kProxyCone
-	};
-
 	ShaderProgramResourcePtr m_lightProg;
-	Array<ShaderProgramPtr, 2> m_plightGrProg;
-	Array<ShaderProgramPtr, 2> m_slightGrProg;
-	Array<ShaderProgramPtr, 2> m_dirLightGrProg;
+	Array<ShaderProgramPtr, 2> m_lightGrProg;
 
 	ShaderProgramResourcePtr m_skyboxProg;
 	Array<ShaderProgramPtr, 2> m_skyboxGrProgs;
 
-	/// @name Meshes of light volumes.
-	/// @{
-	BufferPtr m_proxyVolumesBuffer;
-	/// @}
-
 	SamplerPtr m_shadowSampler;
-
-	void bindVertexIndexBuffers(ProxyType proxyType, CommandBuffer& cmdb, U32& indexCount) const;
-
-	void createProxyMeshes();
 };
 /// @}
 } // end namespace anki

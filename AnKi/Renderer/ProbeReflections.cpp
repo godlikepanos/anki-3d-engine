@@ -207,12 +207,10 @@ void ProbeReflections::runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, 
 	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 }
 
-void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx, RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runLightShading(U32 faceIdx, const BufferOffsetRange& visResult, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
 	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
-
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	ANKI_ASSERT(m_ctx.m_probe);
 	const ReflectionProbeQueueElementForRefresh& probe = *m_ctx.m_probe;
@@ -228,22 +226,18 @@ void ProbeReflections::runLightShading(U32 faceIdx, const RenderingContext& rctx
 	dsInfo.m_gbufferTexCoordsBias = Vec2(F32(faceIdx) * (1.0f / 6.0f), 0.0f);
 	dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_lightShading.m_tileSize), 1.0f / F32(m_lightShading.m_tileSize));
 	dsInfo.m_lightbufferTexCoordsBias = Vec2(0.0f, 0.0f);
-	dsInfo.m_cameraNear = probe.m_renderQueues[faceIdx]->m_cameraNear;
-	dsInfo.m_cameraFar = probe.m_renderQueues[faceIdx]->m_cameraFar;
-	dsInfo.m_directionalLight = (hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr;
-	dsInfo.m_pointLights = rqueue.m_pointLights;
-	dsInfo.m_spotLights = rqueue.m_spotLights;
-	dsInfo.m_commandBuffer = &cmdb;
+	dsInfo.m_effectiveShadowDistance = (hasDirLight) ? probe.m_renderQueues[faceIdx]->m_directionalLight.m_shadowCascadesDistances[0] : 0.0f;
+	dsInfo.m_dirLightMatrix = (hasDirLight) ? probe.m_renderQueues[faceIdx]->m_directionalLight.m_textureMatrices[0] : Mat4::getIdentity();
+	dsInfo.m_visibleLightsBuffer = visResult;
 	dsInfo.m_gbufferRenderTargets[0] = m_ctx.m_gbufferColorRts[0];
 	dsInfo.m_gbufferRenderTargets[1] = m_ctx.m_gbufferColorRts[1];
 	dsInfo.m_gbufferRenderTargets[2] = m_ctx.m_gbufferColorRts[2];
 	dsInfo.m_gbufferDepthRenderTarget = m_ctx.m_gbufferDepthRt;
-	if(hasDirLight && dsInfo.m_directionalLight->hasShadow())
+	if(hasDirLight && probe.m_renderQueues[faceIdx]->m_directionalLight.hasShadow())
 	{
 		dsInfo.m_directionalLightShadowmapRenderTarget = m_ctx.m_shadowMapRt;
 	}
 	dsInfo.m_renderpassContext = &rgraphCtx;
-	dsInfo.m_skybox = &rctx.m_renderQueue->m_skybox;
 
 	m_lightShading.m_deferred.drawLights(dsInfo);
 }
@@ -454,6 +448,18 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_shadowMapRt = {};
 	}
 
+	// Light visibility
+	Array<GpuVisibilityNonRenderablesOutput, 6> lightVis;
+	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
+	{
+		GpuVisibilityNonRenderablesInput in;
+		in.m_passesName = "Cube refl light visibility";
+		in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
+		in.m_viewProjectionMat = m_ctx.m_probe->m_renderQueues[faceIdx]->m_viewProjectionMatrix;
+		in.m_rgraph = &rgraph;
+		getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, lightVis[faceIdx]);
+	}
+
 	// Light shading passes
 	{
 		// RT
@@ -465,10 +471,13 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
+
 			pass.setFramebufferInfo(m_lightShading.m_fbDescr[faceIdx], {m_ctx.m_lightShadingRt});
-			pass.setWork([this, faceIdx, &rctx](RenderPassWorkContext& rgraphCtx) {
-				runLightShading(faceIdx, rctx, rgraphCtx);
+			pass.setWork([this, visResult = lightVis[faceIdx].m_visiblesBuffer, faceIdx](RenderPassWorkContext& rgraphCtx) {
+				runLightShading(faceIdx, visResult, rgraphCtx);
 			});
+
+			pass.newBufferDependency(lightVis[faceIdx].m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 			pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kFramebufferWrite, subresource);
