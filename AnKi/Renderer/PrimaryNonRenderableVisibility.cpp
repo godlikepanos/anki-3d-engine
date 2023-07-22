@@ -55,18 +55,18 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 		const GpuSceneNonRenderableObjectTypeWithFeedback feedbackType = toGpuSceneNonRenderableObjectTypeWithFeedback(type);
 		if(feedbackType != GpuSceneNonRenderableObjectTypeWithFeedback::kCount)
 		{
-			// Read feedback UUIDs from the GPU
+			// Read feedback from the GPU
 			DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> readbackData(ctx.m_tempPool);
 			getRenderer().getReadbackManager().readMostRecentData(m_readbacks[feedbackType], readbackData);
 
 			if(readbackData.getSize())
 			{
 				ANKI_ASSERT(readbackData.getSize() > 1);
-				const U32 uuidCount = readbackData[0];
+				const U32 pairCount = readbackData[0];
 
-				if(uuidCount)
+				if(pairCount)
 				{
-					m_runCtx.m_uuids[feedbackType] = WeakArray<U32>(&readbackData[1], readbackData[0]);
+					m_runCtx.m_uuidArrayIndexPairs[feedbackType] = WeakArray<UVec2>(reinterpret_cast<UVec2*>(&readbackData[1]), pairCount);
 
 					// Transfer ownership
 					WeakArray<U32> dummy;
@@ -75,7 +75,7 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 			}
 
 			// Allocate feedback buffer for this frame
-			in.m_cpuFeedbackBuffer.m_range = (objCount + 1) * sizeof(U32);
+			in.m_cpuFeedbackBuffer.m_range = (objCount * 2 + 1) * sizeof(U32);
 			getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], in.m_cpuFeedbackBuffer.m_range,
 															in.m_cpuFeedbackBuffer.m_buffer, in.m_cpuFeedbackBuffer.m_offset);
 		}

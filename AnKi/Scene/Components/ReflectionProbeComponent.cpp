@@ -102,6 +102,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
 		gpuProbe.m_uuid = m_uuid;
+		gpuProbe.m_arrayIndex = getArrayIndex();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 

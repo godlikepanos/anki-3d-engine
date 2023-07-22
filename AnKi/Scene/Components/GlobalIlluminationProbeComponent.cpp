@@ -118,6 +118,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
 		gpuProbe.m_uuid = m_uuid;
+		gpuProbe.m_arrayIndex = getArrayIndex();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 

@@ -39,7 +39,7 @@ constexpr U32 kFeedbackCounterIdx = 2;
 [[vk::binding(2)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch with an optional 3rd for feedback
 
 #if CPU_FEEDBACK
-// 1st element is a count. What follows is an array of UUIDs.
+// 1st element is a count. What follows is an array pairs of UUIDs and array index.
 [[vk::binding(3)]] RWStructuredBuffer<U32> g_cpuFeedbackBuffer;
 #endif
 
@@ -116,7 +116,8 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 		U32 idx;
 		InterlockedAdd(g_counterBuffer[kFeedbackCounterIdx], 1, idx);
 
-		g_cpuFeedbackBuffer[idx + 1] = g_objects[svDispatchThreadId].m_uuid;
+		g_cpuFeedbackBuffer[idx * 2 + 1] = g_objects[svDispatchThreadId].m_uuid;
+		g_cpuFeedbackBuffer[idx * 2 + 2] = g_objects[svDispatchThreadId].m_arrayIndex;
 	}
 #endif
 

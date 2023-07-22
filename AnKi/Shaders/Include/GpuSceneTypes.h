@@ -58,6 +58,15 @@ struct GpuSceneParticleEmitter
 };
 static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 
+enum class GpuSceneLightFlag : U32
+{
+	kNone = 0,
+	kPointLight = 1 << 0,
+	kSpotLight = 1 << 1,
+	kShadow = 1 << 2
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneLightFlag)
+
 /// Point or spot light.
 struct GpuSceneLight
 {
@@ -67,8 +76,8 @@ struct GpuSceneLight
 	RVec3 m_diffuseColor;
 	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
-	U32 m_type; ///< 0: point, 1: spot.
-	U32 m_shadow;
+	GpuSceneLightFlag m_flags;
+	U32 m_arrayIndex; ///< Array in the CPU scene.
 	U32 m_uuid;
 	F32 m_innerCos; ///< Only for spot light.
 
@@ -88,7 +97,7 @@ struct GpuSceneReflectionProbe
 	U32 m_uuid;
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	F32 m_padding1;
+	U32 m_arrayIndex; ///< Array in the CPU scene.
 };
 constexpr U32 kSizeof_GpuSceneReflectionProbe = 3u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe);
@@ -100,7 +109,7 @@ struct GpuSceneGlobalIlluminationProbe
 	U32 m_uuid;
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	F32 m_padding1;
+	U32 m_arrayIndex; ///< Array in the CPU scene.
 
 	U32 m_volumeTexture; ///< Bindless index of the irradiance volume texture.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0

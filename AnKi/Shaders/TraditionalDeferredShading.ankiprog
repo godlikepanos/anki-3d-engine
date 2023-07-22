@@ -109,7 +109,9 @@ RVec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 		const F32 att = computeAttenuationFactor(1.0f / (light.m_radius * light.m_radius), frag2Light);
 		const F32 lambert = nol;
-		const F32 spot = (light.m_type == 1) ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction) : 1.0f;
+		const F32 spot = ((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
+							 ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction)
+							 : 1.0f;
 		const F32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
 
 #if SPECULAR == 1

@@ -68,7 +68,7 @@ struct Uniforms
 	output.m_radius = input.m_radius;
 	output.m_diffuseColor = input.m_diffuseColor;
 	output.m_squareRadiusOverOne = input.m_squareRadiusOverOne;
-	output.m_shadowLayer = (input.m_shadow) ? extra.m_shadowLayer : kMaxU32;
+	output.m_shadowLayer = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kShadow) ? extra.m_shadowLayer : kMaxU32;
 	output.m_shadowAtlasTileScale = extra.m_shadowAtlasTileScale;
 	output.m_shadowAtlasTileOffsets = extra.m_shadowAtlasTileOffsets;
 
@@ -84,7 +84,7 @@ struct Uniforms
 	output.m_radius = input.m_radius;
 	output.m_direction = input.m_direction;
 	output.m_squareRadiusOverOne = input.m_squareRadiusOverOne;
-	output.m_shadowLayer = (input.m_shadow) ? extra.m_shadowLayer : kMaxU32;
+	output.m_shadowLayer = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kShadow) ? extra.m_shadowLayer : kMaxU32;
 	output.m_outerCos = input.m_outerCos;
 	output.m_innerCos = input.m_innerCos;
 	output.m_textureMatrix = extra.m_textureMatrix;

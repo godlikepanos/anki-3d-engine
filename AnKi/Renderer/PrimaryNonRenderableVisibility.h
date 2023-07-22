@@ -33,7 +33,9 @@ private:
 	{
 	public:
 		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBufferHandle;
-		Array<WeakArray<U32>, U32(GpuSceneNonRenderableObjectTypeWithFeedback::kCount)> m_uuids;
+
+		/// Feedback from the GPU. It's an array of object UUID and array index.
+		Array<WeakArray<UVec2>, U32(GpuSceneNonRenderableObjectTypeWithFeedback::kCount)> m_uuidArrayIndexPairs;
 	} m_runCtx;
 };
 /// @}

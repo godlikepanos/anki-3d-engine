@@ -138,8 +138,10 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_radius = m_point.m_radius;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
-		gpuLight.m_shadow = m_shadow;
-		gpuLight.m_uuid = (m_shadow) ? m_uuid : 0;
+		gpuLight.m_flags = GpuSceneLightFlag::kPointLight;
+		gpuLight.m_flags |= (m_shadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
+		gpuLight.m_arrayIndex = getArrayIndex();
+		gpuLight.m_uuid = m_uuid;
 		if(!m_gpuSceneLight.isValid())
 		{
 			m_gpuSceneLight.allocate();
@@ -214,10 +216,11 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_radius = m_spot.m_distance;
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
 		gpuLight.m_squareRadiusOverOne = 1.0f / (m_spot.m_distance * m_spot.m_distance);
-		gpuLight.m_shadow = m_shadow;
+		gpuLight.m_flags = GpuSceneLightFlag::kSpotLight;
+		gpuLight.m_flags |= (m_shadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
-		gpuLight.m_uuid = (m_shadow) ? m_uuid : 0;
+		gpuLight.m_uuid = m_uuid;
 		if(!m_gpuSceneLight.isValid())
 		{
 			m_gpuSceneLight.allocate();

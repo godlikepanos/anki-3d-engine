@@ -271,7 +271,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	if(in.m_cpuFeedbackBuffer.m_buffer)
 	{
-		ANKI_ASSERT(in.m_cpuFeedbackBuffer.m_range == sizeof(U32) * (objCount + 1));
+		ANKI_ASSERT(in.m_cpuFeedbackBuffer.m_range == sizeof(U32) * (objCount * 2 + 1));
 	}
 
 	const Bool firstRunInFrame = m_lastFrameIdx != getRenderer().getFrameCount();
