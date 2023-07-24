@@ -341,19 +341,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
-	// Check if resources got loaded
-	if(m_prevLoadRequestCount != ResourceManager::getSingleton().getLoadingRequestCount()
-	   || m_prevAsyncTasksCompleted != ResourceManager::getSingleton().getAsyncTaskCompletedCount())
-	{
-		m_prevLoadRequestCount = ResourceManager::getSingleton().getLoadingRequestCount();
-		m_prevAsyncTasksCompleted = ResourceManager::getSingleton().getAsyncTaskCompletedCount();
-		m_resourcesDirty = true;
-	}
-	else
-	{
-		m_resourcesDirty = false;
-	}
-
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);

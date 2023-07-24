@@ -4,10 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
+
+static StatCounter g_asyncTasksInFlightStatVar(StatCategory::kMisc, "Async loader tasks", StatFlag::kThreadSafe);
 
 AsyncLoader::AsyncLoader()
 	: m_thread("AsyncLoad")
@@ -43,25 +46,6 @@ void AsyncLoader::stop()
 	[[maybe_unused]] Error err = m_thread.join();
 }
 
-void AsyncLoader::pause()
-{
-	{
-		LockGuard<Mutex> lock(m_mtx);
-		m_paused = true;
-		m_sync = true;
-		m_condVar.notifyOne();
-	}
-
-	m_barrier.wait();
-}
-
-void AsyncLoader::resume()
-{
-	LockGuard<Mutex> lock(m_mtx);
-	m_paused = false;
-	m_condVar.notifyOne();
-}
-
 Error AsyncLoader::threadCallback(ThreadCallbackInfo& info)
 {
 	AsyncLoader& self = *reinterpret_cast<AsyncLoader*>(info.m_userData);
@@ -76,12 +60,11 @@ Error AsyncLoader::threadWorker()
 	{
 		AsyncLoaderTask* task = nullptr;
 		Bool quit = false;
-		Bool sync = false;
 
 		{
 			// Wait for something
 			LockGuard<Mutex> lock(m_mtx);
-			while((m_taskQueue.isEmpty() || m_paused) && !m_quit && !m_sync)
+			while(m_taskQueue.isEmpty() && !m_quit)
 			{
 				m_condVar.wait(m_mtx);
 			}
@@ -90,11 +73,6 @@ Error AsyncLoader::threadWorker()
 			if(m_quit)
 			{
 				quit = true;
-			}
-			else if(m_sync)
-			{
-				sync = true;
-				m_sync = false;
 			}
 			else
 			{
@@ -107,10 +85,6 @@ Error AsyncLoader::threadWorker()
 		{
 			break;
 		}
-		else if(sync)
-		{
-			m_barrier.wait();
-		}
 		else
 		{
 			// Exec the task
@@ -120,11 +94,12 @@ Error AsyncLoader::threadWorker()
 			{
 				ANKI_TRACE_SCOPED_EVENT(RsrcAsyncTask);
 				err = (*task)(ctx);
+				g_asyncTasksInFlightStatVar.atomicDecrement(1);
 			}
 
 			if(!err)
 			{
-				m_completedTaskCount.fetchAdd(1);
+				m_tasksInFlightCount.fetchSub(1);
 			}
 			else
 			{
@@ -142,12 +117,6 @@ Error AsyncLoader::threadWorker()
 				// Delete the task
 				deleteInstance(ResourceMemoryPool::getSingleton(), task);
 			}
-
-			if(ctx.m_pause)
-			{
-				LockGuard<Mutex> lock(m_mtx);
-				m_paused = true;
-			}
 		}
 	}
 
@@ -158,15 +127,12 @@ void AsyncLoader::submitTask(AsyncLoaderTask* task)
 {
 	ANKI_ASSERT(task);
 
-	// Append task to the list
+	m_tasksInFlightCount.fetchAdd(1);
+	g_asyncTasksInFlightStatVar.atomicIncrement(1);
+
 	LockGuard<Mutex> lock(m_mtx);
 	m_taskQueue.pushBack(task);
-
-	if(!m_paused)
-	{
-		// Wake up the thread if it's not paused
-		m_condVar.notifyOne();
-	}
+	m_condVar.notifyOne();
 }
 
 } // end namespace anki

@@ -126,12 +126,6 @@ public:
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());
 
-	/// Returns true if there were resources loaded or loading async tasks that got completed.
-	Bool resourcesLoaded() const
-	{
-		return m_resourcesDirty;
-	}
-
 	TextureView& getDummyTextureView2d() const
 	{
 		return *m_dummyTexView2d;
@@ -216,10 +210,6 @@ private:
 	ReadbackManager m_readbaks;
 
 	U64 m_frameCount; ///< Frame number
-
-	U64 m_prevLoadRequestCount = 0;
-	U64 m_prevAsyncTasksCompleted = 0;
-	Bool m_resourcesDirty = true;
 
 	CommonMatrices m_prevMatrices;
 

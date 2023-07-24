@@ -66,18 +66,12 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 	return Error::kNone;
 }
 
-U64 ResourceManager::getAsyncTaskCompletedCount() const
-{
-	return m_asyncLoader->getCompletedTaskCount();
-}
-
 template<typename T>
 Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out, Bool async)
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
 	Error err = Error::kNone;
-	++m_loadRequestCount;
 
 	T* const other = findLoadedResource<T>(filename);
 

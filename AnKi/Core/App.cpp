@@ -477,9 +477,6 @@ Error App::mainLoop()
 			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
 			ANKI_CHECK(MainRenderer::getSingleton().render(rqueue, presentableTex.get()));
 
-			// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
-			ResourceManager::getSingleton().getAsyncLoader().pause();
-
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to
 			// count that
 			Second grTime = 0.0;
@@ -500,14 +497,6 @@ Error App::mainLoop()
 			GpuSceneBuffer::getSingleton().endFrame();
 			GpuVisibleTransientMemoryPool::getSingleton().endFrame();
 			GpuReadbackMemoryPool::getSingleton().endFrame();
-
-			// Update the trace info with some async loader stats
-			U64 asyncTaskCount = ResourceManager::getSingleton().getAsyncLoader().getCompletedTaskCount();
-			ANKI_TRACE_INC_COUNTER(RsrcAsyncTasks, asyncTaskCount - m_resourceCompletedAsyncTaskCount);
-			m_resourceCompletedAsyncTaskCount = asyncTaskCount;
-
-			// Now resume the loader
-			ResourceManager::getSingleton().getAsyncLoader().resume();
 
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();

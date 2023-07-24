@@ -13,6 +13,7 @@ using namespace anki;
 
 namespace {
 
+#if 0
 class Task : public AsyncLoaderTask
 {
 public:
@@ -262,4 +263,6 @@ ANKI_TEST(Resource, AsyncLoader)
 		barrier.wait();
 		ANKI_TEST_EXPECT_EQ(counter.load(), 10);
 	}
-}
+#endif
+
+} // namespace

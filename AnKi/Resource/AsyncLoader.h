@@ -20,9 +20,6 @@ class AsyncLoader;
 class AsyncLoaderTaskContext
 {
 public:
-	/// Pause the async loader.
-	Bool m_pause = false;
-
 	/// Resubmit the same task at the end of the queue.
 	Bool m_resubmitTask = false;
 };
@@ -63,17 +60,10 @@ public:
 		submitTask(newTask<TTask>(std::forward<TArgs>(args)...));
 	}
 
-	/// Pause the loader. This method will block the caller for the current async task to finish. The rest of the
-	/// tasks in the queue will not be executed until resume is called.
-	void pause();
-
-	/// Resume the async loading.
-	void resume();
-
 	/// Get the total number of completed tasks.
-	U64 getCompletedTaskCount() const
+	U32 getTasksInFlightCount() const
 	{
-		return m_completedTaskCount.load();
+		return m_tasksInFlightCount.load();
 	}
 
 private:
@@ -84,10 +74,8 @@ private:
 	ConditionVariable m_condVar;
 	IntrusiveList<AsyncLoaderTask> m_taskQueue;
 	Bool m_quit = false;
-	Bool m_paused = false;
-	Bool m_sync = false;
 
-	Atomic<U64> m_completedTaskCount = {0};
+	Atomic<U32> m_tasksInFlightCount = {0};
 
 	/// Thread callback
 	static Error threadCallback(ThreadCallbackInfo& info);

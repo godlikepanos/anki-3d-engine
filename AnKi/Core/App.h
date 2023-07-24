@@ -71,7 +71,6 @@ private:
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache
-	U64 m_resourceCompletedAsyncTaskCount = 0;
 
 	void* m_originalAllocUserData = nullptr;
 	AllocAlignedCallback m_originalAllocCallback = nullptr;
