@@ -16,7 +16,7 @@ namespace anki {
 
 // Forward
 #define ANKI_RENDERER_OBJECT_DEF(a, b) class a;
-#include <AnKi/Renderer/RendererObject.defs.h>
+#include <AnKi/Renderer/RendererObject.def.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 
 class Renderer;
@@ -88,6 +88,9 @@ public:
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_prevMatrices;
+
+	F32 m_cameraNear = 0.0f;
+	F32 m_cameraFar = 0.0f;
 
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_outRenderTarget;

@@ -783,4 +783,11 @@ struct DrawIndexedIndirectArgs
 #endif
 };
 
+struct DispatchIndirectArgs
+{
+	U32 m_threadGroupCountX;
+	U32 m_threadGroupCountY;
+	U32 m_threadGroupCountZ;
+};
+
 ANKI_END_NAMESPACE

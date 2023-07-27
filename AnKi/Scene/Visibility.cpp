@@ -557,37 +557,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 		else if(compType == ReflectionProbeComponent::kClassType)
 		{
-			if(!isInside())
-			{
-				continue;
-			}
-
-			ReflectionProbeComponent& reflc = static_cast<ReflectionProbeComponent&>(comp);
-
-			if(reflc.getReflectionNeedsRefresh() && m_frcCtx->m_reflectionProbesForRefreshCount.fetchAdd(1) == 0)
-			{
-				ReflectionProbeQueueElementForRefresh* el = newInstance<ReflectionProbeQueueElementForRefresh>(framePool);
-				m_frcCtx->m_reflectionProbeForRefresh = el;
-
-				reflc.setupReflectionProbeQueueElementForRefresh(*el);
-				reflc.setReflectionNeedsRefresh(false);
-
-				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, 6), 6);
-				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, 6), 6);
-
-				for(U32 i = 0; i < 6; ++i)
-				{
-					el->m_renderQueues[i] = &nextQueues[i];
-
-					nextFrustums[i].m_frustum = &reflc.getFrustums()[i];
-					static_cast<FrustumFlags&>(nextFrustums[i]) = getProbeFrustumFlags();
-				}
-			}
-			else if(!reflc.getReflectionNeedsRefresh())
-			{
-				ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement();
-				reflc.setupReflectionProbeQueueElement(*el);
-			}
+			ANKI_ASSERT(!"Refl probes use GPU visibility from now on");
 		}
 		else if(compType == DecalComponent::kClassType)
 		{

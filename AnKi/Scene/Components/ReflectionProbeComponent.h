@@ -33,6 +33,7 @@ public:
 	{
 		m_halfSize = sizeXYZ / 2.0f;
 		m_dirty = true;
+		m_reflectionNeedsRefresh = true;
 	}
 
 	Vec3 getBoxVolumeSize() const
@@ -40,38 +41,36 @@ public:
 		return m_halfSize * 2.0f;
 	}
 
-	ANKI_INTERNAL WeakArray<Frustum> getFrustums()
-	{
-		return WeakArray<Frustum>(m_frustums);
-	}
-
-	ANKI_INTERNAL void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
-	{
-		ANKI_ASSERT(!m_reflectionNeedsRefresh);
-		ANKI_ASSERT(m_worldPos.x() != kMaxF32);
-		el.m_worldPosition = m_worldPos;
-		el.m_aabbMin = -m_halfSize + m_worldPos;
-		el.m_aabbMax = m_halfSize + m_worldPos;
-		ANKI_ASSERT(el.m_textureBindlessIndex != kMaxU32);
-		el.m_textureBindlessIndex = m_reflectionTexBindlessIndex;
-		el.m_index = m_gpuSceneProbe.getIndex();
-	}
-
-	ANKI_INTERNAL void setupReflectionProbeQueueElementForRefresh(ReflectionProbeQueueElementForRefresh& el) const
-	{
-		ANKI_ASSERT(m_reflectionNeedsRefresh);
-		el.m_worldPosition = m_worldPos;
-		el.m_reflectionTexture = m_reflectionTex.get();
-	}
-
-	ANKI_INTERNAL Bool getReflectionNeedsRefresh() const
+	ANKI_INTERNAL Bool getEnvironmentTextureNeedsRefresh() const
 	{
 		return m_reflectionNeedsRefresh;
 	}
 
-	ANKI_INTERNAL void setReflectionNeedsRefresh(Bool needsRefresh)
+	ANKI_INTERNAL void setEnvironmentTextureAsRefreshed()
 	{
-		m_reflectionNeedsRefresh = needsRefresh;
+		m_reflectionNeedsRefresh = false;
+		m_dirty = true; // To force update of the gpu scene
+	}
+
+	U32 getUuid() const
+	{
+		return m_uuid;
+	}
+
+	Vec3 getWorldPosition() const
+	{
+		ANKI_ASSERT(m_worldPos.x() != kMaxF32);
+		return m_worldPos;
+	}
+
+	/// The radius around the probe's center that can infuence the rendering of the env texture.
+	F32 getRenderRadius() const;
+
+	F32 getShadowsRenderRadius() const;
+
+	Texture& getReflectionTexture() const
+	{
+		return *m_reflectionTex;
 	}
 
 private:
@@ -80,12 +79,8 @@ private:
 
 	GpuSceneArrays::ReflectionProbe::Allocation m_gpuSceneProbe;
 
-	Spatial m_spatial;
-
-	Array<Frustum, 6> m_frustums;
-
 	TexturePtr m_reflectionTex;
-	TextureViewPtr m_reflectionView;
+	TextureViewPtr m_reflectionView; ///< Keept alive for the bindless index.
 	U32 m_reflectionTexBindlessIndex = kMaxU32;
 	U32 m_uuid = 0;
 

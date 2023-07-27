@@ -51,7 +51,7 @@ public:
 	{ \
 		return *m_##b; \
 	}
-#include <AnKi/Renderer/RendererObject.defs.h>
+#include <AnKi/Renderer/RendererObject.def.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 
 	Bool getRtShadowsEnabled() const
@@ -192,7 +192,7 @@ private:
 	/// @name Rendering stages
 	/// @{
 #define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##b;
-#include <AnKi/Renderer/RendererObject.defs.h>
+#include <AnKi/Renderer/RendererObject.def.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
 

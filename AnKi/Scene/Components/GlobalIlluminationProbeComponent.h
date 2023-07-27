@@ -99,6 +99,12 @@ public:
 		++m_cellIdxToRefresh;
 	}
 
+	U32 getUuid() const
+	{
+		ANKI_ASSERT(m_uuid);
+		return m_uuid;
+	}
+
 private:
 	Vec3 m_halfSize = Vec3(0.5f);
 	Vec3 m_worldPos = Vec3(0.0f);

@@ -154,6 +154,20 @@ public:
 	/// @param[out] cascadeFrustums Fill those frustums as well. The size of this array is the count of the cascades.
 	void setupDirectionalLightQueueElement(const Frustum& cameraFrustum, DirectionalLightQueueElement& el, WeakArray<Frustum> cascadeFrustums) const;
 
+	/// Calculate some matrices for each cascade. For dir lights.
+	/// @param cameraFrustum Who is looking at the light.
+	/// @param cascadeDistances The distances of the cascades.
+	/// @param cascadeViewProjMats View projection matrices for each cascade.
+	/// @param cascadeViewMats View matrices for each cascade. Optional.
+	void computeCascadeFrustums(const Frustum& cameraFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeViewProjMats,
+								WeakArray<Mat3x4> cascadeViewMats = {}) const;
+
+	U32 getUuid() const
+	{
+		ANKI_ASSERT(m_uuid);
+		return m_uuid;
+	}
+
 private:
 	Vec4 m_diffColor = Vec4(0.5f);
 	Transform m_worldTransform = Transform::getIdentity();

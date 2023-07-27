@@ -16,107 +16,78 @@ NumericCVar<U32> g_reflectionProbeResolutionCVar(CVarSubsystem::kScene, "Reflect
 
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
-	, m_spatial(this)
 {
 	m_worldPos = node->getWorldTransform().getOrigin().xyz();
-
-	for(U32 i = 0; i < 6; ++i)
-	{
-		m_frustums[i].init(FrustumType::kPerspective);
-		m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, 100.0f, kPi / 2.0f, kPi / 2.0f);
-		m_frustums[i].setWorldTransform(Transform(m_worldPos.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-		m_frustums[i].setShadowCascadeCount(1);
-		m_frustums[i].update();
-	}
-
 	m_gpuSceneProbe.allocate();
+
+	TextureInitInfo texInit("ReflectionProbe");
+	texInit.m_format =
+		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat : Format::kR16G16B16A16_Sfloat;
+	texInit.m_width = g_reflectionProbeResolutionCVar.get();
+	texInit.m_height = texInit.m_width;
+	texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
+	texInit.m_type = TextureType::kCube;
+	texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead
+					  | TextureUsageBit::kAllFramebuffer | TextureUsageBit::kGenerateMipmaps;
+
+	m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
+
+	TextureViewInitInfo viewInit(m_reflectionTex.get(), "ReflectionProbe");
+	m_reflectionView = GrManager::getSingleton().newTextureView(viewInit);
+
+	m_reflectionTexBindlessIndex = m_reflectionView->getOrCreateBindlessTextureIndex();
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()
 {
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	const Bool moved = info.m_node->movedThisFrame();
-	const Bool shapeUpdated = m_dirty;
+	updated = moved || m_dirty;
 	m_dirty = false;
-	updated = moved || shapeUpdated;
 
-	if(shapeUpdated && !m_reflectionTex) [[unlikely]]
+	if(moved) [[unlikely]]
 	{
-		TextureInitInfo texInit("ReflectionProbe");
-		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat
-																											: Format::kR16G16B16A16_Sfloat;
-		texInit.m_width = g_reflectionProbeResolutionCVar.get();
-		texInit.m_height = texInit.m_width;
-		texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
-		texInit.m_type = TextureType::kCube;
-		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead
-						  | TextureUsageBit::kAllFramebuffer | TextureUsageBit::kGenerateMipmaps;
-
-		m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
-
-		TextureViewInitInfo viewInit(m_reflectionTex.get(), "ReflectionPRobe");
-		m_reflectionView = GrManager::getSingleton().newTextureView(viewInit);
-
-		m_reflectionTexBindlessIndex = m_reflectionView->getOrCreateBindlessTextureIndex();
+		m_reflectionNeedsRefresh = true;
 	}
 
 	if(updated) [[unlikely]]
 	{
-		m_reflectionNeedsRefresh = true;
-
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
 
-		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
-		effectiveDistance = max(effectiveDistance, m_halfSize.z());
-		effectiveDistance = max(effectiveDistance, g_probeEffectiveDistanceCVar.get());
-
-		const F32 shadowCascadeDistance = min(effectiveDistance, g_probeShadowEffectiveDistanceCVar.get());
-
-		for(U32 i = 0; i < 6; ++i)
-		{
-			m_frustums[i].setWorldTransform(Transform(m_worldPos.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-
-			m_frustums[i].setFar(effectiveDistance);
-			m_frustums[i].setShadowCascadeDistance(0, shadowCascadeDistance);
-
-			// Add something really far to force LOD 0 to be used. The importing tools create LODs with holes some times and that causes the sky to
-			// bleed to GI rendering
-			m_frustums[i].setLodDistances(
-				{effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf, effectiveDistance - 1.0f * kEpsilonf});
-		}
-
-		const Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
-		m_spatial.setBoundingShape(aabbWorld);
-
-		// New UUID
-		m_uuid = SceneGraph::getSingleton().getNewUuid();
+		// Update the UUID
+		m_uuid = (m_reflectionNeedsRefresh) ? SceneGraph::getSingleton().getNewUuid() : 0;
 
 		// Upload to the GPU scene
 		GpuSceneReflectionProbe gpuProbe;
 		gpuProbe.m_position = m_worldPos;
 		gpuProbe.m_cubeTexture = m_reflectionTexBindlessIndex;
+
+		const Aabb aabbWorld(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
+
 		gpuProbe.m_uuid = m_uuid;
 		gpuProbe.m_arrayIndex = getArrayIndex();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 
-	// Update spatial and frustums
-	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
-	updated = updated || spatialUpdated;
-
-	for(U32 i = 0; i < 6; ++i)
-	{
-		const Bool frustumUpdated = m_frustums[i].update();
-		updated = updated || frustumUpdated;
-	}
-
 	return Error::kNone;
+}
+
+F32 ReflectionProbeComponent::getRenderRadius() const
+{
+	F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
+	effectiveDistance = max(effectiveDistance, m_halfSize.z());
+	effectiveDistance = max(effectiveDistance, g_probeEffectiveDistanceCVar.get());
+	return effectiveDistance;
+}
+
+F32 ReflectionProbeComponent::getShadowsRenderRadius() const
+{
+	return min(getRenderRadius(), g_probeShadowEffectiveDistanceCVar.get());
 }
 
 } // end namespace anki

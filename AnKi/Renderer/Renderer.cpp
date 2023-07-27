@@ -46,6 +46,7 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
 
 namespace anki {
 
@@ -258,6 +259,9 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_clusterBinning.reset(newInstance<ClusterBinning>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_clusterBinning->init());
 
+	m_clusterBinning2.reset(newInstance<ClusterBinning2>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_clusterBinning2->init());
+
 	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_packVisibleClustererObjects->init());
 
@@ -341,6 +345,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
+	ctx.m_cameraNear = ctx.m_renderQueue->m_cameraNear;
+	ctx.m_cameraFar = ctx.m_renderQueue->m_cameraFar;
+
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
@@ -354,6 +361,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_packVisibleClustererObjects->populateRenderGraph(ctx);
 	m_genericCompute->populateRenderGraph(ctx);
 	m_clusterBinning->populateRenderGraph(ctx);
+	m_clusterBinning2->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);

@@ -340,6 +340,8 @@ public:
 
 	void dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
+	void dispatchComputeIndirectInternal(Buffer* argBuffer, PtrSize argBufferOffset);
+
 	void traceRaysInternal(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
 						   U32 height, U32 depth);
 
@@ -537,6 +539,8 @@ private:
 	}
 
 	void drawcallCommon();
+
+	void dispatchCommon();
 
 	Bool insideRenderPass() const
 	{

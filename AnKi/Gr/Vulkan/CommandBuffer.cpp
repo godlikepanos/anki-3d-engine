@@ -293,6 +293,12 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 	self.dispatchComputeInternal(groupCountX, groupCountY, groupCountZ);
 }
 
+void CommandBuffer::dispatchComputeIndirect(Buffer* argBuffer, PtrSize argBufferOffset)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.dispatchComputeIndirectInternal(argBuffer, argBufferOffset);
+}
+
 void CommandBuffer::traceRays(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
 							  U32 height, U32 depth)
 {

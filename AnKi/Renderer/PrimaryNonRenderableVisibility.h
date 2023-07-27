@@ -15,6 +15,16 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+/// Contains some interesting visible scene components that will be used by various renderer systems.
+/// @memberof PrimaryNonRenderableVisibility
+class InterestingVisibleComponents
+{
+public:
+	WeakArray<LightComponent*> m_shadowLights;
+	WeakArray<ReflectionProbeComponent*> m_reflectionProbes;
+	WeakArray<GlobalIlluminationProbeComponent*> m_globalIlluminationProbes;
+};
+
 /// Multiple passes for GPU visibility of non-renderable entities.
 class PrimaryNonRenderableVisibility : public RendererObject
 {
@@ -26,16 +36,32 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
+	const InterestingVisibleComponents& getInterestingVisibleComponents() const
+	{
+		return m_runCtx.m_interestingComponents;
+	}
+
+	BufferHandle getVisibleIndicesBufferHandle(GpuSceneNonRenderableObjectType type) const
+	{
+		return m_runCtx.m_visibleIndicesHandles[type];
+	}
+
+	const BufferOffsetRange& getVisibleIndicesBuffer(GpuSceneNonRenderableObjectType type) const
+	{
+		return m_runCtx.m_visibleIndicesBuffers[type];
+	}
+
 private:
 	Array<MultiframeReadbackToken, U32(GpuSceneNonRenderableObjectTypeWithFeedback::kCount)> m_readbacks;
 
 	class
 	{
 	public:
-		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_visOutBufferHandle;
+		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_visibleIndicesHandles;
+		Array<BufferOffsetRange, U32(GpuSceneNonRenderableObjectType::kCount)> m_visibleIndicesBuffers;
 
-		/// Feedback from the GPU. It's an array of object UUID and array index.
-		Array<WeakArray<UVec2>, U32(GpuSceneNonRenderableObjectTypeWithFeedback::kCount)> m_uuidArrayIndexPairs;
+		/// Feedback from the GPU
+		InterestingVisibleComponents m_interestingComponents;
 	} m_runCtx;
 };
 /// @}

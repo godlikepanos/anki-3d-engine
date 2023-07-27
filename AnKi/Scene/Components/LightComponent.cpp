@@ -404,4 +404,130 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 	}
 }
 
+void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeViewProjMats,
+											WeakArray<Mat3x4> cascadeViewMats) const
+{
+	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
+	ANKI_ASSERT(m_shadow);
+	ANKI_ASSERT(cascadeViewProjMats.getSize() <= kMaxShadowCascades && cascadeViewProjMats.getSize() > 0);
+	ANKI_ASSERT(cascadeDistances.getSize() == cascadeViewProjMats.getSize());
+
+	const U32 shadowCascadeCount = cascadeViewProjMats.getSize();
+
+	// Compute the texture matrices
+	const Mat4 lightTrf(m_worldTransform);
+	if(primaryFrustum.getFrustumType() == FrustumType::kPerspective)
+	{
+		// Get some stuff
+		const F32 fovX = primaryFrustum.getFovX();
+		const F32 fovY = primaryFrustum.getFovY();
+
+		// Compute a sphere per cascade
+		Array<Sphere, kMaxShadowCascades> boundingSpheres;
+		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
+		{
+			// Compute the center of the sphere
+			//           ^ z
+			//           |
+			// ----------|---------- A(a, -f)
+			//  \        |        /
+			//   \       |       /
+			//    \    C(0,z)   /
+			//     \     |     /
+			//      \    |    /
+			//       \---|---/ B(b, -n)
+			//        \  |  /
+			//         \ | /
+			//           v
+			// --------------------------> x
+			//           |
+			// The square distance of A-C is equal to B-C. Solve the equation to find the z.
+			const F32 f = cascadeDistances[cascade]; // Cascade far
+			const F32 n = (cascade == 0) ? primaryFrustum.getNear() : cascadeDistances[cascade - 1]; // Cascade near
+			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
+			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
+			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
+			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength()) <= kEpsilonf * 100.0f);
+
+			Vec3 C(0.0f, 0.0f, z); // Sphere center
+
+			// Compute the radius of the sphere
+			const Vec3 A(a, tan(fovY / 2.0f) * f, -f);
+			const F32 r = (A - C).getLength();
+
+			// Set the sphere
+			boundingSpheres[cascade].setRadius(r);
+			boundingSpheres[cascade].setCenter(primaryFrustum.getWorldTransform().transform(C));
+		}
+
+		// Compute the matrices
+		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
+		{
+			const Sphere& sphere = boundingSpheres[cascade];
+			const Vec3 sphereCenter = sphere.getCenter().xyz();
+			const F32 sphereRadius = sphere.getRadius();
+			const Vec3& lightDir = getDirection();
+			const Vec3 sceneMin = m_dir.m_sceneMin - Vec3(sphereRadius); // Push the bounds a bit
+			const Vec3 sceneMax = m_dir.m_sceneMax + Vec3(sphereRadius);
+
+			// Compute the intersections with the scene bounds
+			Vec3 eye;
+			if(sphereCenter > sceneMin && sphereCenter < sceneMax)
+			{
+				// Inside the scene bounds
+				const Aabb sceneBox(sceneMin, sceneMax);
+				const F32 t = testCollisionInside(sceneBox, Ray(sphereCenter, -lightDir));
+				eye = sphereCenter + t * (-lightDir);
+			}
+			else
+			{
+				eye = sphereCenter + sphereRadius * (-lightDir);
+			}
+
+			// View
+			Transform cascadeTransform = m_worldTransform;
+			cascadeTransform.setOrigin(eye.xyz0());
+			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
+
+			// Projection
+			const F32 far = (eye - sphereCenter).getLength() + sphereRadius;
+			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(sphereRadius, -sphereRadius, sphereRadius, -sphereRadius,
+																			  kClusterObjectFrustumNearPlane, far);
+
+			// Now it's time to stabilize the shadows by aligning the projection matrix
+			{
+				// Project a random fixed point to the light matrix
+				const Vec4 randomPointAlmostLightSpace = (cascadeProjMat * cascadeViewMat) * Vec3(0.0f).xyz1();
+
+				// Chose a random low shadowmap size and align the random point
+				const F32 shadowmapSize = 128.0f;
+				const F32 shadowmapSize2 = shadowmapSize / 2.0f; // Div with 2 because the projected point is in NDC
+				const F32 alignedX = std::round(randomPointAlmostLightSpace.x() * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedY = std::round(randomPointAlmostLightSpace.y() * shadowmapSize2) / shadowmapSize2;
+
+				const F32 dx = alignedX - randomPointAlmostLightSpace.x();
+				const F32 dy = alignedY - randomPointAlmostLightSpace.y();
+
+				// Fix the projection matrix by applying an offset
+				Mat4 correctionTranslationMat = Mat4::getIdentity();
+				correctionTranslationMat.setTranslationPart(Vec4(dx, dy, 0, 1.0f));
+
+				cascadeProjMat = correctionTranslationMat * cascadeProjMat;
+			}
+
+			// Write the results
+			cascadeViewProjMats[cascade] = cascadeProjMat * cascadeViewMat;
+
+			if(cascade < cascadeViewMats.getSize())
+			{
+				cascadeViewMats[cascade] = Mat3x4(cascadeViewMat);
+			}
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
+}
+
 } // end namespace anki

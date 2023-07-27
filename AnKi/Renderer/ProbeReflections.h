@@ -103,8 +103,6 @@ private:
 	class
 	{
 	public:
-		const ReflectionProbeQueueElementForRefresh* m_probe = nullptr;
-
 		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
 		RenderTargetHandle m_gbufferDepthRt;
 		RenderTargetHandle m_lightShadingRt;
@@ -119,9 +117,12 @@ private:
 	Error initIrradianceToRefl();
 	Error initShadowMapping();
 
-	void runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx);
-	void runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, RenderPassWorkContext& rgraphCtx);
-	void runLightShading(U32 faceIdx, const BufferOffsetRange& visResult, RenderPassWorkContext& rgraphCtx);
+	void runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMatx, const Array<Mat3x4, 6> viewMats,
+					RenderPassWorkContext& rgraphCtx);
+	void runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMats, const Array<Mat3x4, 6>& viewMats,
+						  RenderPassWorkContext& rgraphCtx);
+	void runLightShading(U32 faceIdx, const BufferOffsetRange& visResult, const Mat4& viewProjMat, const Mat4& cascadeViewProjMat,
+						 const ReflectionProbeComponent& probe, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 	void runIrradianceToRefl(RenderPassWorkContext& rgraphCtx);

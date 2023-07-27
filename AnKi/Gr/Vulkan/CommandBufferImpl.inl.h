@@ -109,44 +109,18 @@ ANKI_FORCE_INLINE void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags s
 
 ANKI_FORCE_INLINE void CommandBufferImpl::dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
-	ANKI_ASSERT(m_computeProg);
-	ANKI_ASSERT(m_computeProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
-
-	commandCommon();
-
-	// Bind descriptors
-	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
-	{
-		if(m_computeProg->getReflectionInfo().m_descriptorSetMask.get(i))
-		{
-			DescriptorSet dset;
-			Bool dirty;
-			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
-			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize,
-																			 dynamicOffsetCount))
-			{
-				ANKI_VK_LOGF("Cannot recover");
-			}
-
-			if(dirty)
-			{
-				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
-				Array<U32, kMaxBindingsPerDescriptorSet> dynamicOffsets;
-				for(U32 i = 0; i < dynamicOffsetCount; ++i)
-				{
-					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
-				}
-
-				VkDescriptorSet dsHandle = dset.getHandle();
-
-				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, m_computeProg->getPipelineLayout().getHandle(), i, 1, &dsHandle,
-										dynamicOffsetCount, &dynamicOffsets[0]);
-			}
-		}
-	}
-
+	ANKI_ASSERT(groupCountX > 0 && groupCountY > 0 && groupCountZ > 0);
+	dispatchCommon();
 	vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
+}
+
+ANKI_FORCE_INLINE void CommandBufferImpl::dispatchComputeIndirectInternal(Buffer* argBuffer, PtrSize argBufferOffset)
+{
+	ANKI_ASSERT(argBuffer);
+	ANKI_ASSERT(argBufferOffset + sizeof(U32) * 2 < argBuffer->getSize());
+	ANKI_ASSERT(argBufferOffset % 4 == 0);
+	dispatchCommon();
+	vkCmdDispatchIndirect(m_handle, static_cast<BufferImpl*>(argBuffer)->getHandle(), argBufferOffset);
 }
 
 ANKI_FORCE_INLINE void CommandBufferImpl::traceRaysInternal(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize32,
@@ -374,6 +348,46 @@ ANKI_FORCE_INLINE void CommandBufferImpl::drawcallCommon()
 #endif
 
 	ANKI_TRACE_INC_COUNTER(VkDrawcall, 1);
+}
+
+ANKI_FORCE_INLINE void CommandBufferImpl::dispatchCommon()
+{
+	ANKI_ASSERT(m_computeProg);
+	ANKI_ASSERT(m_computeProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
+
+	commandCommon();
+
+	// Bind descriptors
+	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
+	{
+		if(m_computeProg->getReflectionInfo().m_descriptorSetMask.get(i))
+		{
+			DescriptorSet dset;
+			Bool dirty;
+			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
+			U32 dynamicOffsetCount;
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize,
+																			 dynamicOffsetCount))
+			{
+				ANKI_VK_LOGF("Cannot recover");
+			}
+
+			if(dirty)
+			{
+				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
+				Array<U32, kMaxBindingsPerDescriptorSet> dynamicOffsets;
+				for(U32 i = 0; i < dynamicOffsetCount; ++i)
+				{
+					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
+				}
+
+				VkDescriptorSet dsHandle = dset.getHandle();
+
+				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, m_computeProg->getPipelineLayout().getHandle(), i, 1, &dsHandle,
+										dynamicOffsetCount, &dynamicOffsets[0]);
+			}
+		}
+	}
 }
 
 ANKI_FORCE_INLINE void CommandBufferImpl::writeOcclusionQueriesResultToBufferInternal(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset,

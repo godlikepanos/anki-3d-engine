@@ -103,6 +103,12 @@ public:
 	}
 
 	/// @note Thread-safe
+	PtrSize getBufferRange() const
+	{
+		return getElementCount() * getElementSize();
+	}
+
+	/// @note Thread-safe
 	U32 getElementCount() const
 	{
 		LockGuard lock(m_mtx);

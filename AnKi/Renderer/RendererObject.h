@@ -102,6 +102,15 @@ protected:
 	void registerDebugRenderTarget(CString rtName);
 
 	static Error loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
+
+	class SubMutation
+	{
+	public:
+		CString m_mutatorName;
+		MutatorValue m_value;
+	};
+
+	static Error loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
 };
 /// @}
 

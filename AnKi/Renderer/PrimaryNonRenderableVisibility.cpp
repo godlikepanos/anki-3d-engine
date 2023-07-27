@@ -5,10 +5,37 @@
 
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Scene/GpuSceneArray.h>
+#include <AnKi/Scene/Components/LightComponent.h>
+#include <AnKi/Scene/Components/ReflectionProbeComponent.h>
+#include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 
 namespace anki {
+
+template<typename TComponent, typename TArray, typename TPool>
+static WeakArray<TComponent*> gatherComponents(ConstWeakArray<UVec2> pairs, TArray& array, TPool& pool)
+{
+	DynamicArray<TComponent*, MemoryPoolPtrWrapper<StackMemoryPool>> components(&pool);
+
+	for(UVec2 pair : pairs)
+	{
+		if(!array.indexExists(pair.y()))
+		{
+			continue;
+		}
+
+		TComponent* comp = &array[pair.y()];
+		if(comp->getUuid() == pair.x())
+		{
+			components.emplaceBack(comp);
+		}
+	}
+
+	WeakArray<TComponent*> out;
+	components.moveAndReset(out);
+	return out;
+}
 
 void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 {
@@ -19,22 +46,28 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 	for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 	{
 		U32 objCount = 0;
+		CString passName;
 		switch(type)
 		{
 		case GpuSceneNonRenderableObjectType::kLight:
 			objCount = GpuSceneArrays::Light::getSingleton().getElementCount();
+			passName = "Primary non-renderable visibility: Lights";
 			break;
 		case GpuSceneNonRenderableObjectType::kDecal:
 			objCount = GpuSceneArrays::Decal::getSingleton().getElementCount();
+			passName = "Primary non-renderable visibility: Decals";
 			break;
 		case GpuSceneNonRenderableObjectType::kFogDensityVolume:
 			objCount = GpuSceneArrays::FogDensityVolume::getSingleton().getElementCount();
+			passName = "Primary non-renderable visibility: Fog volumes";
 			break;
 		case GpuSceneNonRenderableObjectType::kReflectionProbe:
 			objCount = GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount();
+			passName = "Primary non-renderable visibility: Refl probes";
 			break;
 		case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
 			objCount = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount();
+			passName = "Primary non-renderable visibility: GI probes";
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -42,48 +75,77 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 
 		if(objCount == 0)
 		{
-			continue;
+			// No objects, point to a buffer with zeros
+
+			RebarAllocation alloc;
+			void* mem = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), alloc);
+			memset(mem, 0, sizeof(U32));
+
+			m_runCtx.m_visibleIndicesBuffers[type].m_buffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
+			m_runCtx.m_visibleIndicesBuffers[type].m_offset = alloc.m_offset;
+			m_runCtx.m_visibleIndicesBuffers[type].m_range = alloc.m_range;
+
+			m_runCtx.m_visibleIndicesHandles[type] =
+				rgraph.importBuffer(m_runCtx.m_visibleIndicesBuffers[type].m_buffer, BufferUsageBit::kNone,
+									m_runCtx.m_visibleIndicesBuffers[type].m_offset, m_runCtx.m_visibleIndicesBuffers[type].m_range);
 		}
-
-		GpuVisibilityNonRenderablesInput in;
-		in.m_passesName = "NonRenderableVisibility";
-		in.m_objectType = type;
-		in.m_viewProjectionMat = ctx.m_matrices.m_viewProjection;
-		in.m_hzbRt = nullptr; // TODO
-		in.m_rgraph = &rgraph;
-
-		const GpuSceneNonRenderableObjectTypeWithFeedback feedbackType = toGpuSceneNonRenderableObjectTypeWithFeedback(type);
-		if(feedbackType != GpuSceneNonRenderableObjectTypeWithFeedback::kCount)
+		else
 		{
-			// Read feedback from the GPU
-			DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> readbackData(ctx.m_tempPool);
-			getRenderer().getReadbackManager().readMostRecentData(m_readbacks[feedbackType], readbackData);
+			// Some objects, perform visibility testing
 
-			if(readbackData.getSize())
+			GpuVisibilityNonRenderablesInput in;
+			in.m_passesName = passName;
+			in.m_objectType = type;
+			in.m_viewProjectionMat = ctx.m_matrices.m_viewProjection;
+			in.m_hzbRt = nullptr; // TODO
+			in.m_rgraph = &rgraph;
+
+			const GpuSceneNonRenderableObjectTypeWithFeedback feedbackType = toGpuSceneNonRenderableObjectTypeWithFeedback(type);
+			if(feedbackType != GpuSceneNonRenderableObjectTypeWithFeedback::kCount)
 			{
-				ANKI_ASSERT(readbackData.getSize() > 1);
-				const U32 pairCount = readbackData[0];
+				// Read feedback from the GPU
+				DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> readbackData(ctx.m_tempPool);
+				getRenderer().getReadbackManager().readMostRecentData(m_readbacks[feedbackType], readbackData);
 
-				if(pairCount)
+				if(readbackData.getSize())
 				{
-					m_runCtx.m_uuidArrayIndexPairs[feedbackType] = WeakArray<UVec2>(reinterpret_cast<UVec2*>(&readbackData[1]), pairCount);
+					ANKI_ASSERT(readbackData.getSize() > 1);
+					const U32 pairCount = readbackData[0];
 
-					// Transfer ownership
-					WeakArray<U32> dummy;
-					readbackData.moveAndReset(dummy);
+					if(pairCount)
+					{
+						WeakArray<UVec2> pairs(reinterpret_cast<UVec2*>(&readbackData[1]), pairCount);
+						if(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kLight)
+						{
+							m_runCtx.m_interestingComponents.m_shadowLights =
+								gatherComponents<LightComponent>(pairs, SceneGraph::getSingleton().getComponentArrays().getLights(), *ctx.m_tempPool);
+						}
+						else if(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kReflectionProbe)
+						{
+							m_runCtx.m_interestingComponents.m_reflectionProbes = gatherComponents<ReflectionProbeComponent>(
+								pairs, SceneGraph::getSingleton().getComponentArrays().getReflectionProbes(), *ctx.m_tempPool);
+						}
+						else
+						{
+							ANKI_ASSERT(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kGlobalIlluminationProbe);
+							m_runCtx.m_interestingComponents.m_globalIlluminationProbes = gatherComponents<GlobalIlluminationProbeComponent>(
+								pairs, SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes(), *ctx.m_tempPool);
+						}
+					}
 				}
+
+				// Allocate feedback buffer for this frame
+				in.m_cpuFeedbackBuffer.m_range = (objCount * 2 + 1) * sizeof(U32);
+				getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], in.m_cpuFeedbackBuffer.m_range,
+																in.m_cpuFeedbackBuffer.m_buffer, in.m_cpuFeedbackBuffer.m_offset);
 			}
 
-			// Allocate feedback buffer for this frame
-			in.m_cpuFeedbackBuffer.m_range = (objCount * 2 + 1) * sizeof(U32);
-			getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], in.m_cpuFeedbackBuffer.m_range,
-															in.m_cpuFeedbackBuffer.m_buffer, in.m_cpuFeedbackBuffer.m_offset);
+			GpuVisibilityNonRenderablesOutput out;
+			getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, out);
+
+			m_runCtx.m_visibleIndicesHandles[type] = out.m_visiblesBufferHandle;
+			m_runCtx.m_visibleIndicesBuffers[type] = out.m_visiblesBuffer;
 		}
-
-		GpuVisibilityNonRenderablesOutput out;
-		getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, out);
-
-		m_runCtx.m_visOutBufferHandle[type] = out.m_visiblesBufferHandle;
 	}
 }
 

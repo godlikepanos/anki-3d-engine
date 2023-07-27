@@ -289,6 +289,8 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
+	void dispatchComputeIndirect(Buffer* argBuffer, PtrSize argBufferOffset);
+
 	/// Trace rays.
 	///
 	/// The 1st thing in the sbtBuffer is the ray gen shader group handle:

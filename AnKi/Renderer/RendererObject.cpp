@@ -76,4 +76,26 @@ Error RendererObject::loadShaderProgram(CString filename, ShaderProgramResourceP
 	return Error::kNone;
 }
 
+Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
+										ShaderProgramPtr& grProg)
+{
+	if(!rsrc.isCreated())
+	{
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, rsrc));
+	}
+
+	ShaderProgramResourceVariantInitInfo initInf(rsrc);
+	for(SubMutation pair : mutators)
+	{
+		initInf.addMutation(pair.m_mutatorName, pair.m_value);
+	}
+
+	const ShaderProgramResourceVariant* variant;
+	rsrc->getOrCreateVariant(initInf, variant);
+
+	grProg.reset(&variant->getProgram());
+
+	return Error::kNone;
+}
+
 } // end namespace anki

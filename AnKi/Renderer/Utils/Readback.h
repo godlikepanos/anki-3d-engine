@@ -43,7 +43,7 @@ public:
 			const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
 
 			data.resize(allocation.getAllocatedSize() / sizeof(T));
-			memcpy(&data[0], static_cast<const U8*>(allocation.getMappedMemory()) + allocation.getOffset(), allocation.getAllocatedSize());
+			memcpy(&data[0], static_cast<const U8*>(allocation.getMappedMemory()), allocation.getAllocatedSize());
 		}
 		else
 		{
