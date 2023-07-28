@@ -62,15 +62,6 @@ static FrustumFlags getDirectionalLightFrustumFlags()
 	return flags;
 }
 
-static FrustumFlags getProbeFrustumFlags()
-{
-	FrustumFlags flags;
-	flags.m_gatherLightComponents = true;
-	flags.m_gatherSkyComponents = true;
-	flags.m_directionalLightsCastShadow = true;
-	return flags;
-}
-
 static FrustumFlags getCameraFrustumFlags()
 {
 	FrustumFlags flags;
@@ -585,35 +576,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 		else if(compType == GlobalIlluminationProbeComponent::kClassType)
 		{
-			if(!isInside())
-			{
-				continue;
-			}
-
-			GlobalIlluminationProbeComponent& giprobec = static_cast<GlobalIlluminationProbeComponent&>(comp);
-
-			if(giprobec.needsRefresh() && m_frcCtx->m_giProbesForRefreshCount.fetchAdd(1) == 0)
-			{
-				nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, 6), 6);
-				nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, 6), 6);
-
-				GlobalIlluminationProbeQueueElementForRefresh* el = newInstance<GlobalIlluminationProbeQueueElementForRefresh>(framePool);
-
-				m_frcCtx->m_giProbeForRefresh = el;
-
-				giprobec.setupGlobalIlluminationProbeQueueElementForRefresh(*el);
-				giprobec.progressRefresh();
-
-				for(U32 i = 0; i < 6; ++i)
-				{
-					el->m_renderQueues[i] = &nextQueues[i];
-					nextFrustums[i].m_frustum = &giprobec.getFrustums()[i];
-					static_cast<FrustumFlags&>(nextFrustums[i]) = getProbeFrustumFlags();
-				}
-			}
-
-			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement();
-			giprobec.setupGlobalIlluminationProbeQueueElement(*el);
+			ANKI_ASSERT(!"GI probes use GPU visibility from now on");
 		}
 		else if(compType == UiComponent::kClassType)
 		{

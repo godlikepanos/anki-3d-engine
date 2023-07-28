@@ -150,8 +150,14 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 				default:
 					ANKI_ASSERT(0);
 				}
-				cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
 
+				if(objBufferRange == 0)
+				{
+					objBufferOffset = 0;
+					objBufferRange = kMaxPtrSize;
+				}
+
+				cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
 				cmdb.bindStorageBuffer(0, 2, m_runCtx.m_clustersBuffer.m_buffer, m_runCtx.m_clustersBuffer.m_offset,
 									   m_runCtx.m_clustersBuffer.m_range);
 
@@ -244,6 +250,12 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 					break;
 				default:
 					ANKI_ASSERT(0);
+				}
+
+				if(objBufferRange == 0)
+				{
+					objBufferOffset = 0;
+					objBufferRange = kMaxPtrSize;
 				}
 
 				cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);

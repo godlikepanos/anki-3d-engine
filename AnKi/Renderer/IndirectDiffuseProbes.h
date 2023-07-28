@@ -26,13 +26,18 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getCurrentlyRefreshedVolumeRt() const;
+	RenderTargetHandle getCurrentlyRefreshedVolumeRt() const
+	{
+		ANKI_ASSERT(m_runCtx.m_probeVolumeHandle.isValid());
+		return m_runCtx.m_probeVolumeHandle;
+	}
 
-	Bool hasCurrentlyRefreshedVolumeRt() const;
+	Bool hasCurrentlyRefreshedVolumeRt() const
+	{
+		return m_runCtx.m_probeVolumeHandle.isValid();
+	}
 
 private:
-	class InternalContext;
-
 	class
 	{
 	public:
@@ -63,19 +68,21 @@ private:
 		ShaderProgramPtr m_grProg;
 	} m_irradiance; ///< Irradiance.
 
-	InternalContext* m_giCtx = nullptr;
+	static constexpr U32 kProbeCellRefreshesPerFrame = 2;
+
 	U32 m_tileSize = 0;
+
+	class
+	{
+	public:
+		RenderTargetHandle m_probeVolumeHandle;
+	} m_runCtx;
 
 	Error initInternal();
 	Error initGBuffer();
 	Error initShadowMapping();
 	Error initLightShading();
 	Error initIrradiance();
-
-	void runGBufferInThread(RenderPassWorkContext& rgraphCtx) const;
-	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx) const;
-	void runLightShading(const Array<BufferOffsetRange, 6>& lightVisBuffers, RenderPassWorkContext& rgraphCtx);
-	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

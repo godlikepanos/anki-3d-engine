@@ -61,48 +61,58 @@ public:
 	void setFadeDistance(F32 dist)
 	{
 		m_fadeDistance = max(0.0f, dist);
+		m_shapeDirty = true;
 	}
 
-	WeakArray<Frustum> getFrustums()
+	/// Check if any of the probe's cells need to be re-rendered.
+	Bool getCellsNeedsRefresh() const
 	{
-		return m_frustums;
+		return m_cellsRefreshedCount < m_totalCellCount;
 	}
 
-	void setupGlobalIlluminationProbeQueueElement(GlobalIlluminationProbeQueueElement& el)
+	U32 getNextCellForRefresh() const
 	{
-		el.m_aabbMin = -m_halfSize + m_worldPos;
-		el.m_aabbMax = m_halfSize + m_worldPos;
-		el.m_cellCounts = m_cellCounts;
-		el.m_totalCellCount = m_totalCellCount;
-		el.m_cellSizes = (m_halfSize * 2.0f) / Vec3(m_cellCounts);
-		el.m_fadeDistance = m_fadeDistance;
-		el.m_volumeTextureBindlessIndex = m_volTexBindlessIdx;
-		el.m_index = m_gpuSceneProbe.getIndex();
+		ANKI_ASSERT(getCellsNeedsRefresh());
+		return m_cellsRefreshedCount;
 	}
 
-	void setupGlobalIlluminationProbeQueueElementForRefresh(GlobalIlluminationProbeQueueElementForRefresh& el)
+	/// Add to the number of texels that got refreshed this frame.
+	void incrementRefreshedCells(U32 cellCount)
 	{
-		ANKI_ASSERT(m_cellIdxToRefresh < m_totalCellCount);
-		el.m_volumeTexture = m_volTex.get();
-		unflatten3dArrayIndex(m_cellCounts.x(), m_cellCounts.y(), m_cellCounts.z(), m_cellIdxToRefresh, el.m_cellToRefresh.x(),
-							  el.m_cellToRefresh.y(), el.m_cellToRefresh.z());
-		el.m_cellCounts = m_cellCounts;
-	}
-
-	Bool needsRefresh() const
-	{
-		return m_cellIdxToRefresh < m_totalCellCount;
-	}
-
-	void progressRefresh()
-	{
-		++m_cellIdxToRefresh;
+		ANKI_ASSERT(getCellsNeedsRefresh());
+		m_cellsRefreshedCount += cellCount;
+		ANKI_ASSERT(m_cellsRefreshedCount <= m_totalCellCount);
+		m_refreshDirty = true;
 	}
 
 	U32 getUuid() const
 	{
-		ANKI_ASSERT(m_uuid);
 		return m_uuid;
+	}
+
+	/// The radius around the probe's center that can infuence the rendering of the env texture.
+	F32 getRenderRadius() const;
+
+	F32 getShadowsRenderRadius() const;
+
+	const Vec3& getWorldPosition() const
+	{
+		return m_worldPos;
+	}
+
+	const UVec3& getCellCountsPerDimension() const
+	{
+		return m_cellCounts;
+	}
+
+	U32 getCellCount() const
+	{
+		return m_totalCellCount;
+	}
+
+	Texture& getVolumeTexture() const
+	{
+		return *m_volTex;
 	}
 
 private:
@@ -119,17 +129,14 @@ private:
 
 	GpuSceneArrays::GlobalIlluminationProbe::Allocation m_gpuSceneProbe;
 
-	Array<Frustum, 6> m_frustums;
-
-	Spatial m_spatial;
-
 	ShaderProgramResourcePtr m_clearTextureProg;
-
-	U32 m_cellIdxToRefresh = 0;
 
 	U32 m_uuid = 0;
 
+	U32 m_cellsRefreshedCount = 0;
+
 	Bool m_shapeDirty = true;
+	Bool m_refreshDirty = true;
 
 	/// Recalc come values.
 	void updateMembers()

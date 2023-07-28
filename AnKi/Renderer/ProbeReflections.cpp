@@ -406,9 +406,6 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_ctx.m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
-								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
-
 		for(U32 i = 0; i < 6; ++i)
 		{
 			pass.newBufferDependency(visOuts[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
@@ -459,9 +456,6 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_ctx.m_shadowMapRt, TextureUsageBit::kAllFramebuffer, subresource);
-
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
-								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 		for(U32 i = 0; i < 6; ++i)
 		{
