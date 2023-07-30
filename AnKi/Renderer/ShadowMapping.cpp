@@ -257,7 +257,7 @@ void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& q
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
-	GpuVisibilityInput visIn;
+	FrustumGpuVisibilityInput visIn;
 	visIn.m_passesName = "Shadows visibility";
 	visIn.m_technique = RenderingTechnique::kDepth;
 	visIn.m_viewProjectionMatrix = queue.m_viewProjectionMatrix;

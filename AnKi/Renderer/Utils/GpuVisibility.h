@@ -14,17 +14,32 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// @memberof GpuVisibility
-class GpuVisibilityInput
+class BaseGpuVisibilityInput
 {
 public:
 	CString m_passesName;
 	RenderingTechnique m_technique = RenderingTechnique::kCount;
-	Mat4 m_viewProjectionMatrix = Mat4::getIdentity();
+
 	Vec3 m_lodReferencePoint = Vec3(0.0f);
 	Array<F32, kMaxLodCount - 1> m_lodDistances = {};
-	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
+
 	RenderGraphDescription* m_rgraph = nullptr;
+};
+
+/// @memberof GpuVisibility
+class FrustumGpuVisibilityInput : public BaseGpuVisibilityInput
+{
+public:
+	Mat4 m_viewProjectionMatrix = Mat4::getIdentity();
+	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
+};
+
+/// @memberof GpuVisibility
+class DistanceGpuVisibilityInput : public BaseGpuVisibilityInput
+{
+public:
+	Vec3 m_pointOfTest = Vec3(0.0f);
+	F32 m_testRadius = 1.0f;
 };
 
 /// @memberof GpuVisibility
@@ -44,17 +59,29 @@ class GpuVisibility : public RendererObject
 public:
 	Error init();
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(GpuVisibilityInput& in, GpuVisibilityOutput& out);
+	/// Perform frustum visibility testing.
+	void populateRenderGraph(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out)
+	{
+		populateRenderGraphInternal(false, in, out);
+	}
+
+	/// Perform simple distance-based visibility testing.
+	void populateRenderGraph(DistanceGpuVisibilityInput& in, GpuVisibilityOutput& out)
+	{
+		populateRenderGraphInternal(true, in, out);
+	}
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	Array<ShaderProgramPtr, 2> m_grProgs;
+	Array<ShaderProgramPtr, 2> m_frustumGrProgs;
+	ShaderProgramPtr m_distGrProg;
 
 #if ANKI_STATS_ENABLED
 	Array<GpuReadbackMemoryAllocation, kMaxFramesInFlight> m_readbackMemory;
 	U64 m_lastFrameIdx = kMaxU64;
 #endif
+
+	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
 };
 
 /// @memberof GpuVisibilityNonRenderables
@@ -64,9 +91,9 @@ public:
 	CString m_passesName;
 	GpuSceneNonRenderableObjectType m_objectType = GpuSceneNonRenderableObjectType::kCount;
 	Mat4 m_viewProjectionMat;
-	const RenderTargetHandle* m_hzbRt = nullptr;
 	RenderGraphDescription* m_rgraph = nullptr;
 
+	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
 	BufferOffsetRange m_cpuFeedbackBuffer; ///< Optional.
 };
 

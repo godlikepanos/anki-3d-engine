@@ -139,7 +139,7 @@ void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgra
 		Mat4 m_viewProjectionInvMat;
 		Mat4 m_prevViewProjectionInvMat;
 	} * pc;
-	pc = allocateAndBindUniforms<Uniforms*>(sizeof(*pc), cmdb, 0, 5);
+	pc = allocateAndBindUniforms<Uniforms>(cmdb, 0, 5);
 
 	pc->m_reprojectionMat = ctx.m_matrices.m_reprojection;
 	pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;

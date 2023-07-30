@@ -77,8 +77,10 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		bindUniforms(cmdb, 0, 0, m_runCtx.m_clusteredShadingUniformsToken);
-		bindStorage(cmdb, 0, 1, m_runCtx.m_clustersToken);
+		cmdb.bindUniformBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(), m_runCtx.m_clusteredShadingUniformsToken.m_offset,
+							   m_runCtx.m_clusteredShadingUniformsToken.m_range);
+		cmdb.bindStorageBuffer(0, 1, &RebarTransientMemoryPool::getSingleton().getBuffer(), m_runCtx.m_clustersToken.m_offset,
+							   m_runCtx.m_clustersToken.m_range);
 
 		for(ClusteredObjectType type : EnumIterable<ClusteredObjectType>())
 		{

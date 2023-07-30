@@ -105,10 +105,11 @@ Renderer::~Renderer()
 {
 }
 
-Error Renderer::init(UVec2 swapchainSize)
+Error Renderer::init(UVec2 swapchainSize, StackMemoryPool* framePool)
 {
 	ANKI_TRACE_SCOPED_EVENT(RInit);
 
+	m_framePool = framePool;
 	const Error err = initInternal(swapchainSize);
 	if(err)
 	{

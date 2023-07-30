@@ -105,11 +105,15 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+	cmdb.bindUniformBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 2, ClusteredObjectType::kSpotLight);
 	rgraphCtx.bindColorTexture(0, 3, getRenderer().getShadowMapping().getShadowmapRt());
-	bindStorage(cmdb, 0, 4, getRenderer().getClusterBinning().getClustersRebarToken());
+	cmdb.bindStorageBuffer(0, 4, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
 
 	cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
 	cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClampShadow.get());

@@ -49,7 +49,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(), m_swapchainResolution.y());
 
 	m_r = newInstance<Renderer>(RendererMemoryPool::getSingleton());
-	ANKI_CHECK(m_r->init(m_swapchainResolution));
+	ANKI_CHECK(m_r->init(m_swapchainResolution, &m_framePool));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)

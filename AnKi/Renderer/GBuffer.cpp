@@ -162,7 +162,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
 	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
-	GpuVisibilityInput visIn;
+	FrustumGpuVisibilityInput visIn;
 	visIn.m_passesName = "GBuffer visibility";
 	visIn.m_technique = RenderingTechnique::kGBuffer;
 	visIn.m_viewProjectionMatrix = matrices.m_viewProjection;

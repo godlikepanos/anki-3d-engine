@@ -265,9 +265,13 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.bindShaderProgram(m_main.m_grProg.get());
 
-			bindUniforms(cmdb, 0, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+			cmdb.bindUniformBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+								   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
+								   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
 			getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kGlobalIlluminationProbe);
-			bindStorage(cmdb, 0, 2, getRenderer().getClusterBinning().getClustersRebarToken());
+			cmdb.bindStorageBuffer(0, 2, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+								   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
+								   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
 
 			cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));

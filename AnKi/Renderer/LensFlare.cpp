@@ -85,7 +85,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 	cmdb.setPushConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
 	// Write flare info
-	Vec4* flarePositions = allocateAndBindStorage<Vec4*>(count * sizeof(Vec4), cmdb, 0, 0);
+	Vec4* flarePositions = allocateAndBindStorage<Vec4>(cmdb, 0, 0, count);
 	for(U32 i = 0; i < count; ++i)
 	{
 		*flarePositions = Vec4(ctx.m_renderQueue->m_lensFlares[i].m_worldPosition, 1.0f);
@@ -156,7 +156,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 		U32 spritesCount = max<U32>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
-		LensFlareSprite* tmpSprites = allocateAndBindStorage<LensFlareSprite*>(spritesCount * sizeof(LensFlareSprite), cmdb, 0, 0);
+		LensFlareSprite* tmpSprites = allocateAndBindStorage<LensFlareSprite>(cmdb, 0, 0, spritesCount);
 		WeakArray<LensFlareSprite> sprites(tmpSprites, spritesCount);
 
 		// misc

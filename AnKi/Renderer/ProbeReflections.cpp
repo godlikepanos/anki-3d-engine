@@ -360,7 +360,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
 
-		GpuVisibilityInput visIn;
+		FrustumGpuVisibilityInput visIn;
 		visIn.m_passesName = "Cube refl GBuffer visibility";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
 		visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
@@ -429,7 +429,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
 
-			GpuVisibilityInput visIn;
+			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = "Cube refl shadows visibility";
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[i];

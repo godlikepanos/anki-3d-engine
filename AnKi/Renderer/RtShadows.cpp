@@ -453,13 +453,17 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	constexpr U32 kSet = 2;
 
-	bindUniforms(cmdb, kSet, 0, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+	cmdb.bindUniformBuffer(kSet, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
 
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 1, ClusteredObjectType::kPointLight);
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 2, ClusteredObjectType::kSpotLight);
 	rgraphCtx.bindColorTexture(kSet, 3, getRenderer().getShadowMapping().getShadowmapRt());
 
-	bindStorage(cmdb, kSet, 4, getRenderer().getClusterBinning().getClustersRebarToken());
+	cmdb.bindStorageBuffer(kSet, 4, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
 
 	cmdb.bindSampler(kSet, 5, getRenderer().getSamplers().m_trilinearRepeat.get());
 
@@ -611,7 +615,8 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 
 	// Allocate SBT
 	RebarAllocation token;
-	U8* sbt = allocateStorage<U8*>(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token);
+	U8* sbt =
+		static_cast<U8*>(RebarTransientMemoryPool::getSingleton().allocateFrame(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token));
 	[[maybe_unused]] const U8* sbtStart = sbt;
 	m_runCtx.m_sbtBuffer.reset(const_cast<Buffer*>(&RebarTransientMemoryPool::getSingleton().getBuffer()));
 	m_runCtx.m_sbtOffset = token.m_offset;

@@ -21,19 +21,16 @@ static StatCounter g_testedObjects(StatCategory::kMisc, "Visbility tested object
 
 Error GpuVisibility::init()
 {
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuVisibility.ankiprogbin", m_prog));
-
-	for(U32 i = 0; i < 2; ++i)
+	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
 	{
-		ShaderProgramResourceVariantInitInfo variantInit(m_prog);
-		variantInit.addMutation("HZB_TEST", i);
-		variantInit.addMutation("STATS", ANKI_STATS_ENABLED);
-
-		const ShaderProgramResourceVariant* variant;
-		m_prog->getOrCreateVariant(variantInit, variant);
-
-		m_grProgs[i].reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+									 Array<SubMutation, 3>{{{"HZB_TEST", hzb}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 0}}}, m_prog,
+									 m_frustumGrProgs[hzb]));
 	}
+
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+								 Array<SubMutation, 3>{{{"HZB_TEST", 0}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 1}}}, m_prog,
+								 m_distGrProg));
 
 #if ANKI_STATS_ENABLED
 	for(GpuReadbackMemoryAllocation& alloc : m_readbackMemory)
@@ -45,8 +42,39 @@ Error GpuVisibility::init()
 	return Error::kNone;
 }
 
-void GpuVisibility::populateRenderGraph(GpuVisibilityInput& in, GpuVisibilityOutput& out)
+void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out)
 {
+	class DistanceTestData
+	{
+	public:
+		Vec3 m_pointOfTest;
+		F32 m_testRadius;
+	};
+
+	class FrustumTestData
+	{
+	public:
+		RenderTargetHandle m_hzbRt;
+		Mat4 m_viewProjMat;
+	};
+
+	FrustumTestData* frustumTestData = nullptr;
+	DistanceTestData* distTestData = nullptr;
+
+	if(distanceBased)
+	{
+		distTestData = newInstance<DistanceTestData>(getRenderer().getFrameMemoryPool());
+		const DistanceGpuVisibilityInput& din = static_cast<DistanceGpuVisibilityInput&>(in);
+		distTestData->m_pointOfTest = din.m_pointOfTest;
+		distTestData->m_testRadius = din.m_testRadius;
+	}
+	else
+	{
+		frustumTestData = newInstance<FrustumTestData>(getRenderer().getFrameMemoryPool());
+		const FrustumGpuVisibilityInput& fin = static_cast<FrustumGpuVisibilityInput&>(in);
+		frustumTestData->m_viewProjMat = fin.m_viewProjectionMatrix;
+	}
+
 	U32 aabbCount = 0;
 	switch(in.m_technique)
 	{
@@ -113,17 +141,14 @@ void GpuVisibility::populateRenderGraph(GpuVisibilityInput& in, GpuVisibilityOut
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(out.m_mdiDrawCountsHandle, BufferUsageBit::kStorageComputeWrite);
 
-	if(in.m_hzbRt)
+	if(!distanceBased && static_cast<FrustumGpuVisibilityInput&>(in).m_hzbRt)
 	{
-		pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
+		frustumTestData->m_hzbRt = *static_cast<FrustumGpuVisibilityInput&>(in).m_hzbRt;
+		pass.newTextureDependency(frustumTestData->m_hzbRt, TextureUsageBit::kSampledCompute);
 	}
 
-	const RenderTargetHandle hzbRtCopy =
-		(in.m_hzbRt) ? *in.m_hzbRt : RenderTargetHandle(); // Can't pass to the lambda the hzbRt which is a pointer to who knows what
-
-	pass.setWork([this, viewProjectionMat = in.m_viewProjectionMatrix, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
-				  technique = in.m_technique, hzbRtCopy, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle, instanceRateRenderables, indirectArgs,
-				  aabbCount
+	pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
+				  technique = in.m_technique, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle, instanceRateRenderables, indirectArgs, aabbCount
 #if ANKI_STATS_ENABLED
 				  ,
 				  clearStatsBuffer, clearStatsBufferOffset, writeStatsBuffer, writeStatsBufferOffset
@@ -131,36 +156,41 @@ void GpuVisibility::populateRenderGraph(GpuVisibilityInput& in, GpuVisibilityOut
 	](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
-		cmdb.bindShaderProgram(m_grProgs[hzbRtCopy.isValid()].get());
+		if(frustumTestData)
+		{
+			cmdb.bindShaderProgram(m_frustumGrProgs[frustumTestData->m_hzbRt.isValid()].get());
+		}
+		else
+		{
+			cmdb.bindShaderProgram(m_distGrProg.get());
+		}
 
 		switch(technique)
 		{
 		case RenderingTechnique::kGBuffer:
 			cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
 								   GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getGpuSceneOffsetOfArrayBase(),
-								   GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount()
-									   * GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementSize());
+								   GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getBufferRange());
 			break;
 		case RenderingTechnique::kDepth:
 			cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
 								   GpuSceneArrays::RenderableAabbDepth::getSingleton().getGpuSceneOffsetOfArrayBase(),
-								   GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementCount()
-									   * GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementSize());
+								   GpuSceneArrays::RenderableAabbDepth::getSingleton().getBufferRange());
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 
-		cmdb.bindStorageBuffer(
-			0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneArrays::Renderable::getSingleton().getGpuSceneOffsetOfArrayBase(),
-			GpuSceneArrays::Renderable::getSingleton().getElementCount() * GpuSceneArrays::Renderable::getSingleton().getElementSize());
+		cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(),
+							   GpuSceneArrays::Renderable::getSingleton().getGpuSceneOffsetOfArrayBase(),
+							   GpuSceneArrays::Renderable::getSingleton().getBufferRange());
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 		cmdb.bindStorageBuffer(0, 3, instanceRateRenderables.m_buffer, instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
 		cmdb.bindStorageBuffer(0, 4, indirectArgs.m_buffer, indirectArgs.m_offset, indirectArgs.m_size);
 
-		U32* offsets = allocateAndBindStorage<U32*>(sizeof(U32) * RenderStateBucketContainer::getSingleton().getBucketCount(technique), cmdb, 0, 5);
+		U32* offsets = allocateAndBindStorage<U32>(cmdb, 0, 5, RenderStateBucketContainer::getSingleton().getBucketCount(technique));
 		U32 bucketCount = 0;
 		U32 userCount = 0;
 		RenderStateBucketContainer::getSingleton().iterateBuckets(technique, [&](const RenderStateInfo&, U32 userCount_) {
@@ -172,28 +202,46 @@ void GpuVisibility::populateRenderGraph(GpuVisibilityInput& in, GpuVisibilityOut
 
 		rpass.bindStorageBuffer(0, 6, mdiDrawCountsHandle);
 
-		GpuVisibilityUniforms* unis = allocateAndBindUniforms<GpuVisibilityUniforms*>(sizeof(GpuVisibilityUniforms), cmdb, 0, 7);
-
-		Array<Plane, 6> planes;
-		extractClipPlanes(viewProjectionMat, planes);
-		for(U32 i = 0; i < 6; ++i)
+		if(frustumTestData)
 		{
-			unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+			FrustumGpuVisibilityUniforms* unis = allocateAndBindUniforms<FrustumGpuVisibilityUniforms>(cmdb, 0, 7);
+
+			Array<Plane, 6> planes;
+			extractClipPlanes(frustumTestData->m_viewProjMat, planes);
+			for(U32 i = 0; i < 6; ++i)
+			{
+				unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+			}
+
+			ANKI_ASSERT(kMaxLodCount == 3);
+			unis->m_maxLodDistances[0] = lodDistances[0];
+			unis->m_maxLodDistances[1] = lodDistances[1];
+			unis->m_maxLodDistances[2] = kMaxF32;
+			unis->m_maxLodDistances[3] = kMaxF32;
+
+			unis->m_lodReferencePoint = lodReferencePoint;
+			unis->m_viewProjectionMat = frustumTestData->m_viewProjMat;
+
+			if(frustumTestData->m_hzbRt.isValid())
+			{
+				rpass.bindColorTexture(0, 8, frustumTestData->m_hzbRt);
+				cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			}
 		}
-
-		ANKI_ASSERT(kMaxLodCount == 3);
-		unis->m_maxLodDistances[0] = lodDistances[0];
-		unis->m_maxLodDistances[1] = lodDistances[1];
-		unis->m_maxLodDistances[2] = kMaxF32;
-		unis->m_maxLodDistances[3] = kMaxF32;
-
-		unis->m_lodReferencePoint = lodReferencePoint;
-		unis->m_viewProjectionMat = viewProjectionMat;
-
-		if(hzbRtCopy.isValid())
+		else
 		{
-			rpass.bindColorTexture(0, 8, hzbRtCopy);
-			cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			DistanceGpuVisibilityUniforms unis;
+			unis.m_pointOfTest = distTestData->m_pointOfTest;
+			unis.m_testRadius = distTestData->m_testRadius;
+
+			unis.m_maxLodDistances[0] = lodDistances[0];
+			unis.m_maxLodDistances[1] = lodDistances[1];
+			unis.m_maxLodDistances[2] = kMaxF32;
+			unis.m_maxLodDistances[3] = kMaxF32;
+
+			unis.m_lodReferencePoint = lodReferencePoint;
+
+			cmdb.setPushConstants(&unis, sizeof(unis));
 		}
 
 #if ANKI_STATS_ENABLED

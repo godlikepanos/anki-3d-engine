@@ -38,8 +38,6 @@ public:
 protected:
 	static ANKI_PURE Renderer& getRenderer();
 
-	void* allocateRebarStagingMemory(PtrSize size, RebarAllocation& token) const;
-
 	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
 
 	/// Used in fullscreen quad draws.
@@ -65,37 +63,23 @@ protected:
 		cmdb.dispatchCompute(sizeX, sizeY, sizeZ);
 	}
 
-	template<typename TPtr>
-	TPtr allocateUniforms(PtrSize size, RebarAllocation& token) const
+	template<typename T>
+	static T* allocateAndBindUniforms(CommandBuffer& cmdb, U32 set, U32 binding)
 	{
-		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
-	}
-
-	void bindUniforms(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
-
-	template<typename TPtr>
-	TPtr allocateAndBindUniforms(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding) const
-	{
-		RebarAllocation token;
-		TPtr ptr = allocateUniforms<TPtr>(size, token);
-		bindUniforms(cmdb, set, binding, token);
+		RebarAllocation alloc;
+		T* ptr = static_cast<T*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(T), alloc));
+		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
+		cmdb.bindUniformBuffer(set, binding, &RebarTransientMemoryPool::getSingleton().getBuffer(), alloc.m_offset, alloc.m_range);
 		return ptr;
 	}
 
-	template<typename TPtr>
-	TPtr allocateStorage(PtrSize size, RebarAllocation& token) const
+	template<typename T>
+	static T* allocateAndBindStorage(CommandBuffer& cmdb, U32 set, U32 binding, PtrSize count = 1)
 	{
-		return static_cast<TPtr>(allocateRebarStagingMemory(size, token));
-	}
-
-	void bindStorage(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const;
-
-	template<typename TPtr>
-	TPtr allocateAndBindStorage(PtrSize size, CommandBuffer& cmdb, U32 set, U32 binding) const
-	{
-		RebarAllocation token;
-		TPtr ptr = allocateStorage<TPtr>(size, token);
-		bindStorage(cmdb, set, binding, token);
+		RebarAllocation alloc;
+		T* ptr = static_cast<T*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(T) * count, alloc));
+		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
+		cmdb.bindStorageBuffer(set, binding, &RebarTransientMemoryPool::getSingleton().getBuffer(), alloc.m_offset, alloc.m_range);
 		return ptr;
 	}
 

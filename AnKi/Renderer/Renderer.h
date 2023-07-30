@@ -75,7 +75,7 @@ public:
 	}
 
 	/// Init the renderer.
-	Error init(UVec2 swapchainSize);
+	Error init(UVec2 swapchainSize, StackMemoryPool* framePool);
 
 	/// This function does all the rendering stages and produces a final result.
 	Error populateRenderGraph(RenderingContext& ctx);
@@ -188,6 +188,12 @@ public:
 	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram);
 	/// @}
 
+	StackMemoryPool& getFrameMemoryPool() const
+	{
+		ANKI_ASSERT(m_framePool);
+		return *m_framePool;
+	}
+
 private:
 	/// @name Rendering stages
 	/// @{
@@ -222,6 +228,8 @@ private:
 	RendererPrecreatedSamplers m_samplers;
 
 	ShaderProgramResourcePtr m_clearTexComputeProg;
+
+	StackMemoryPool* m_framePool = nullptr;
 
 	class DebugRtInfo
 	{

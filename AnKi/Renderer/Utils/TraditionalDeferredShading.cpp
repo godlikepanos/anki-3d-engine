@@ -100,8 +100,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	{
 		const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 
-		TraditionalDeferredShadingUniforms* unis =
-			allocateAndBindUniforms<TraditionalDeferredShadingUniforms*>(sizeof(TraditionalDeferredShadingUniforms), cmdb, 0, 0);
+		TraditionalDeferredShadingUniforms* unis = allocateAndBindUniforms<TraditionalDeferredShadingUniforms>(cmdb, 0, 0);
 
 		unis->m_inputTexUvScale = info.m_gbufferTexCoordsScale;
 		unis->m_inputTexUvBias = info.m_gbufferTexCoordsBias;

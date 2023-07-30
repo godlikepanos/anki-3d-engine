@@ -174,7 +174,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	const U32 depthLod = min(g_ssrDepthLodCVar.get(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
 
 	// Bind uniforms
-	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
+	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms>(cmdb, 0, 0);
 	unis->m_depthBufferSize = getRenderer().getInternalResolution() >> (depthLod + 1);
 	unis->m_framebufferSize = UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()) / 2;
 	unis->m_frameCount = getRenderer().getFrameCount() & kMaxU32;
@@ -207,9 +207,13 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_trilinearRepeat.get());
 	cmdb.bindTexture(0, 10, &m_noiseImage->getTextureView());
 
-	bindUniforms(cmdb, 0, 11, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+	cmdb.bindUniformBuffer(0, 11, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12, ClusteredObjectType::kReflectionProbe);
-	bindStorage(cmdb, 0, 13, getRenderer().getClusterBinning().getClustersRebarToken());
+	cmdb.bindStorageBuffer(0, 13, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
 
 	cmdb.bindAllBindless(1);
 

@@ -63,18 +63,18 @@ void PackVisibleClusteredObjects::dispatchType(WeakArray<TRenderQueueElement> ar
 	}
 
 	RebarAllocation token;
-	U32* indices = allocateStorage<U32*>(array.getSize() * sizeof(U32), token);
+	U32* indices = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(array.getSize(), token);
 
 	RebarAllocation extrasToken;
 	PointLightExtra* plightExtras = nullptr;
 	SpotLightExtra* slightExtras = nullptr;
 	if constexpr(std::is_same_v<TClustererType, PointLight>)
 	{
-		plightExtras = allocateStorage<PointLightExtra*>(array.getSize() * sizeof(PointLightExtra), extrasToken);
+		plightExtras = RebarTransientMemoryPool::getSingleton().allocateFrame<PointLightExtra>(array.getSize(), extrasToken);
 	}
 	else if constexpr(std::is_same_v<TClustererType, SpotLight>)
 	{
-		slightExtras = allocateStorage<SpotLightExtra*>(array.getSize() * sizeof(SpotLightExtra), extrasToken);
+		slightExtras = RebarTransientMemoryPool::getSingleton().allocateFrame<SpotLightExtra>(array.getSize(), extrasToken);
 	}
 
 	// Write ReBAR

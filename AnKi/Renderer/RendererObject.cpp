@@ -16,35 +16,6 @@ Renderer& RendererObject::getRenderer()
 	return MainRenderer::getSingleton().getOffscreenRenderer();
 }
 
-void* RendererObject::allocateRebarStagingMemory(PtrSize size, RebarAllocation& token) const
-{
-	return RebarTransientMemoryPool::getSingleton().allocateFrame(size, token);
-}
-
-void RendererObject::bindUniforms(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const
-{
-	if(!token.isUnused())
-	{
-		cmdb.bindUniformBuffer(set, binding, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
-	}
-	else
-	{
-		cmdb.bindUniformBuffer(set, binding, &getRenderer().getDummyBuffer(), 0, getRenderer().getDummyBuffer().getSize());
-	}
-}
-
-void RendererObject::bindStorage(CommandBuffer& cmdb, U32 set, U32 binding, const RebarAllocation& token) const
-{
-	if(!token.isUnused())
-	{
-		cmdb.bindStorageBuffer(set, binding, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, token.m_range);
-	}
-	else
-	{
-		cmdb.bindStorageBuffer(set, binding, &getRenderer().getDummyBuffer(), 0, getRenderer().getDummyBuffer().getSize());
-	}
-}
-
 U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
 {
 	const U32 drawcallsPerThread = drawcallCount / CoreThreadHive::getSingleton().getThreadCount();

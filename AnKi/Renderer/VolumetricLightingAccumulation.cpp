@@ -110,7 +110,9 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
-	bindUniforms(cmdb, 0, 6, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+	cmdb.bindUniformBuffer(0, 6, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 7, ClusteredObjectType::kPointLight);
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 8, ClusteredObjectType::kSpotLight);
 	rgraphCtx.bindColorTexture(0, 9, getRenderer().getShadowMapping().getShadowmapRt());
@@ -118,7 +120,9 @@ void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPass
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 10, ClusteredObjectType::kGlobalIlluminationProbe);
 
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 11, ClusteredObjectType::kFogDensityVolume);
-	bindStorage(cmdb, 0, 12, getRenderer().getClusterBinning().getClustersRebarToken());
+	cmdb.bindStorageBuffer(0, 12, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
 
 	cmdb.bindAllBindless(1);
 

@@ -238,7 +238,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
 
-			GpuVisibilityInput visIn;
+			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = "GI GBuffer visibility";
 			visIn.m_technique = RenderingTechnique::kGBuffer;
 			visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
@@ -314,7 +314,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
 
-				GpuVisibilityInput visIn;
+				FrustumGpuVisibilityInput visIn;
 				visIn.m_passesName = "GI shadows visibility";
 				visIn.m_technique = RenderingTechnique::kDepth;
 				visIn.m_viewProjectionMatrix = cascadeViewProjMats[i];

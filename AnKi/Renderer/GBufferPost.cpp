@@ -90,11 +90,15 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-	bindUniforms(cmdb, 0, 3, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
+	cmdb.bindUniformBuffer(0, 3, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
 
 	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 4, ClusteredObjectType::kDecal);
 
-	bindStorage(cmdb, 0, 5, getRenderer().getClusterBinning().getClustersRebarToken());
+	cmdb.bindStorageBuffer(0, 5, &RebarTransientMemoryPool::getSingleton().getBuffer(),
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
+						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
 
 	cmdb.bindAllBindless(1);
 
