@@ -10,7 +10,7 @@
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
-#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/CVarSet.h>
 
@@ -223,12 +223,14 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		// Create main pass
 		TextureUsageBit readUsage;
 		TextureUsageBit writeUsage;
+		BufferUsageBit readBufferUsage;
 		RenderPassDescriptionBase* prpass;
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("IndirectDiffuse");
 			readUsage = TextureUsageBit::kSampledCompute;
 			writeUsage = TextureUsageBit::kImageComputeWrite;
+			readBufferUsage = BufferUsageBit::kStorageComputeRead;
 			prpass = &rpass;
 		}
 		else
@@ -237,6 +239,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			rpass.setFramebufferInfo(m_main.m_fbDescr, {m_runCtx.m_mainRtHandles[kWrite]}, {}, (enableVrs) ? m_runCtx.m_sriRt : RenderTargetHandle());
 			readUsage = TextureUsageBit::kSampledFragment;
 			writeUsage = TextureUsageBit::kFramebufferWrite;
+			readBufferUsage = BufferUsageBit::kStorageFragmentRead;
 			prpass = &rpass;
 
 			if(enableVrs)
@@ -261,17 +264,23 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		prpass->newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(), readUsage);
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[kRead], readUsage);
 
+		prpass->newBufferDependency(
+			getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe),
+			readBufferUsage);
+		prpass->newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), readBufferUsage);
+
 		prpass->setWork([this, &ctx, enableVrs](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.bindShaderProgram(m_main.m_grProg.get());
 
-			cmdb.bindUniformBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-								   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
-								   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
-			getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kGlobalIlluminationProbe);
-			cmdb.bindStorageBuffer(0, 2, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-								   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
-								   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
+			BufferOffsetRange buff = getRenderer().getClusterBinning2().getClusteredShadingUniforms();
+			cmdb.bindUniformBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range);
+
+			buff = getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe);
+			cmdb.bindStorageBuffer(0, 1, buff.m_buffer, buff.m_offset, buff.m_range);
+
+			buff = getRenderer().getClusterBinning2().getClustersBuffer();
+			cmdb.bindStorageBuffer(0, 2, buff.m_buffer, buff.m_offset, buff.m_range);
 
 			cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));

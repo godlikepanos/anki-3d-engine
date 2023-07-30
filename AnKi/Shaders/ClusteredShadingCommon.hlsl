@@ -139,6 +139,8 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 }
 
 #if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
+// TODO rm
+
 /// Get the final cluster after ORing and ANDing the masks.
 Cluster getClusterFragCoord(Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
 {
@@ -151,5 +153,19 @@ Cluster getClusterFragCoord(Vec3 fragCoord)
 {
 	return getClusterFragCoord(fragCoord, g_clusteredShading.m_tileSize, g_clusteredShading.m_tileCounts, g_clusteredShading.m_zSplitCount,
 							   g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
+}
+#else
+/// Get the final cluster after ORing and ANDing the masks.
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
+{
+	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
+	const Cluster zCluster = clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
+	return mergeClusters(tileCluster, zCluster);
+}
+
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClusteredShadingUniforms2 unis, Vec3 fragCoord)
+{
+	return getClusterFragCoord(clusters, fragCoord, unis.m_tileSize, unis.m_tileCounts, unis.m_zSplitCount, unis.m_zSplitMagic.x,
+							   unis.m_zSplitMagic.y);
 }
 #endif

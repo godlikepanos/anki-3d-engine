@@ -6,9 +6,14 @@
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/ProbeReflections.h>
+#include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Collision/Functions.h>
+#include <AnKi/Util/Tracer.h>
+#include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
 
@@ -46,6 +51,23 @@ Error ClusterBinning2::init()
 void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	// Fire an async job to fill the general uniforms
+	{
+		m_runCtx.m_rctx = &ctx;
+
+		RebarAllocation alloc;
+		m_runCtx.m_uniformsCpu = RebarTransientMemoryPool::getSingleton().allocateFrame<ClusteredShadingUniforms2>(1, alloc);
+
+		m_runCtx.m_clusterUniformsOffset = alloc.m_offset;
+
+		CoreThreadHive::getSingleton().submitTask(
+			[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
+			   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
+				static_cast<ClusterBinning2*>(userData)->writeClusterUniformsInternal();
+			},
+			this);
+	}
 
 	// Allocate the clusters buffer
 	{
@@ -269,6 +291,67 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);
 			}
 		});
+	}
+}
+
+void ClusterBinning2::writeClusterUniformsInternal()
+{
+	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
+
+	RenderingContext& ctx = *m_runCtx.m_rctx;
+	ClusteredShadingUniforms2& unis = *m_runCtx.m_uniformsCpu;
+
+	unis.m_renderingSize = Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
+
+	unis.m_time = F32(HighRezTimer::getCurrentTime());
+	unis.m_frame = getRenderer().getFrameCount() & kMaxU32;
+
+	Plane nearPlane;
+	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
+	unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+	unis.m_near = ctx.m_cameraNear;
+	unis.m_far = ctx.m_cameraFar;
+	unis.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+
+	unis.m_tileCounts = getRenderer().getTileCounts();
+	unis.m_zSplitCount = getRenderer().getZSplitCount();
+	unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
+	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
+	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
+	unis.m_tileSize = getRenderer().getTileSize();
+	unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
+
+	unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
+
+	unis.m_matrices = ctx.m_matrices;
+	unis.m_previousMatrices = ctx.m_prevMatrices;
+
+	// Directional light
+	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+	if(dirLight)
+	{
+		const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
+
+		DirectionalLight& out = unis.m_directionalLight;
+
+		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
+		out.m_shadowCascadeCount = cam.getShadowCascadeCount();
+		out.m_direction = dirLight->getDirection();
+		out.m_active = 1;
+		for(U32 i = 0; i < kMaxShadowCascades; ++i)
+		{
+			out.m_shadowCascadeDistances[i] = cam.getShadowCascadeDistance(i);
+		}
+		out.m_shadowLayer = (dirLight->getShadowEnabled()) ? 1 : kMaxU32; // TODO RT
+
+		for(U cascade = 0; cascade < cam.getShadowCascadeCount(); ++cascade)
+		{
+			// out.m_textureMatrices[cascade] = in.m_textureMatrices[cascade]; TODO
+		}
+	}
+	else
+	{
+		unis.m_directionalLight.m_active = 0;
 	}
 }
 

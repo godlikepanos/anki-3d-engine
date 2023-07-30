@@ -282,6 +282,36 @@ constexpr U32 kSizeof_ClusteredShadingUniforms =
 	(6u + (U32)ClusteredObjectType::kCount) * sizeof(Vec4) + 2u * sizeof(CommonMatrices) + sizeof(DirectionalLight);
 static_assert(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredShadingUniforms);
 
+/// Common uniforms for light shading passes.
+struct ClusteredShadingUniforms2
+{
+	Vec2 m_renderingSize;
+	F32 m_time;
+	U32 m_frame;
+
+	Vec4 m_nearPlaneWSpace;
+
+	Vec3 m_cameraPosition;
+	F32 m_reflectionProbesMipCount;
+
+	UVec2 m_tileCounts;
+	U32 m_zSplitCount;
+	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
+
+	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
+	U32 m_tileSize;
+	U32 m_lightVolumeLastZSplit;
+
+	UVec2 m_padding0;
+	F32 m_near;
+	F32 m_far;
+
+	DirectionalLight m_directionalLight;
+
+	CommonMatrices m_matrices;
+	CommonMatrices m_previousMatrices;
+};
+
 // Define the type of some cluster object masks
 #if ANKI_GLSL
 #	if ANKI_CLUSTERED_SHADING_USE_64BIT

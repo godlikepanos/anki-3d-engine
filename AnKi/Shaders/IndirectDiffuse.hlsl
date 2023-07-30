@@ -10,6 +10,7 @@
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
 
 #define ENABLE_SSGI true
 #define ENABLE_PROBES true
@@ -19,19 +20,16 @@
 
 ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
-#define CLUSTERED_SHADING_GI_BINDING 1u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 2u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
-
+[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms2> g_clusteredShading;
+[[vk::binding(1)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
+[[vk::binding(2)]] StructuredBuffer<Cluster> g_clusters;
 [[vk::binding(3)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(4)]] Texture2D<Vec4> g_gbufferRt2;
-[[vk::binding(5)]] Texture2D g_depthTex;
+[[vk::binding(5)]] Texture2D<Vec4> g_depthTex;
 [[vk::binding(6)]] Texture2D<RVec4> g_lightBufferRt;
 [[vk::binding(7)]] Texture2D<RVec4> g_historyTex;
-[[vk::binding(8)]] Texture2D g_motionVectorsTex;
-[[vk::binding(9)]] Texture2D g_historyLengthTex;
+[[vk::binding(8)]] Texture2D<Vec4> g_motionVectorsTex;
+[[vk::binding(9)]] Texture2D<Vec4> g_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
@@ -151,7 +149,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 		RVec3 probeColor = Vec3(0.0, 0.0, 0.0);
 
 		// Get the cluster
-		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
+		Cluster cluster = getClusterFragCoord(g_clusters, g_clusteredShading, Vec3(fragCoord * 2.0, depth));
 
 		const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_giProbesMask) == 1);
 		if(oneProbe)

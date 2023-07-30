@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
-#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/CVarSet.h>
 
@@ -119,6 +119,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		RenderPassDescriptionBase* ppass;
 		TextureUsageBit readUsage;
 		TextureUsageBit writeUsage;
+		BufferUsageBit readBufferUsage;
 		if(preferCompute)
 		{
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SSR");
@@ -126,6 +127,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 			ppass = &pass;
 			readUsage = TextureUsageBit::kSampledCompute;
 			writeUsage = TextureUsageBit::kImageComputeWrite;
+			readBufferUsage = BufferUsageBit::kStorageComputeRead;
 		}
 		else
 		{
@@ -136,6 +138,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 			ppass = &pass;
 			readUsage = TextureUsageBit::kSampledFragment;
 			writeUsage = TextureUsageBit::kFramebufferWrite;
+			readBufferUsage = BufferUsageBit::kStorageFragmentRead;
 
 			if(enableVrs)
 			{
@@ -159,6 +162,10 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(), readUsage);
+
+		ppass->newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kReflectionProbe),
+								   readBufferUsage);
+		ppass->newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), readBufferUsage);
 
 		ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(ctx, rgraphCtx);
@@ -207,13 +214,14 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_trilinearRepeat.get());
 	cmdb.bindTexture(0, 10, &m_noiseImage->getTextureView());
 
-	cmdb.bindUniformBuffer(0, 11, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 12, ClusteredObjectType::kReflectionProbe);
-	cmdb.bindStorageBuffer(0, 13, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
+	BufferOffsetRange buff = getRenderer().getClusterBinning2().getClusteredShadingUniforms();
+	cmdb.bindUniformBuffer(0, 11, buff.m_buffer, buff.m_offset, buff.m_range);
+
+	buff = getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe);
+	cmdb.bindStorageBuffer(0, 12, buff.m_buffer, buff.m_offset, buff.m_range);
+
+	buff = getRenderer().getClusterBinning2().getClustersBuffer();
+	cmdb.bindStorageBuffer(0, 13, buff.m_buffer, buff.m_offset, buff.m_range);
 
 	cmdb.bindAllBindless(1);
 

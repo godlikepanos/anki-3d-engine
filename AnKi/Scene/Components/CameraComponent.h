@@ -92,6 +92,11 @@ public:
 		}
 	}
 
+	U32 getShadowCascadeCount() const
+	{
+		return m_frustum.getShadowCascadeCount();
+	}
+
 	F32 getShadowCascadeDistance(U32 cascade) const
 	{
 		if(ANKI_SCENE_ASSERT(cascade < m_frustum.getShadowCascadeCount()))
