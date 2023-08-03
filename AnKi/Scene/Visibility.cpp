@@ -49,19 +49,6 @@ static U8 computeLod(const Frustum& frustum, F32 distanceFromTheNearPlane)
 	return lod;
 }
 
-static FrustumFlags getLightFrustumFlags()
-{
-	FrustumFlags flags;
-	flags.m_gatherShadowCasterModelComponents = true;
-	return flags;
-}
-
-static FrustumFlags getDirectionalLightFrustumFlags()
-{
-	FrustumFlags flags;
-	return flags;
-}
-
 static FrustumFlags getCameraFrustumFlags()
 {
 	FrustumFlags flags;
@@ -422,117 +409,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 		else if(compType == LightComponent::kClassType)
 		{
-			const LightComponent& lightc = static_cast<LightComponent&>(comp);
-			if(lightc.getLightComponentType() != LightComponentType::kDirectional && !isInside())
-			{
-				continue;
-			}
-
-			// Check if it casts shadow
-			Bool castsShadow = lightc.getShadowEnabled();
-			if(castsShadow && lightc.getLightComponentType() != LightComponentType::kDirectional)
-			{
-				// Extra check
-
-				// Compute distance from the frustum
-				const Plane& nearPlane = primaryFrustum.getViewPlanes()[FrustumPlaneType::kNear];
-				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, aabb));
-
-				const F32 shadowEffectiveDistance = (primaryFrustum.getShadowCascadeCount() > 0)
-														? primaryFrustum.getShadowCascadeDistance(primaryFrustum.getShadowCascadeCount() - 1)
-														: primaryFrustum.getFar();
-				castsShadow = distFromFrustum < shadowEffectiveDistance;
-			}
-
-			switch(lightc.getLightComponentType())
-			{
-			case LightComponentType::kPoint:
-			{
-				PointLightQueueElement* el = result.m_pointLights.newElement();
-				lightc.setupPointLightQueueElement(*el);
-
-				if(castsShadow && frustumFlags.m_nonDirectionalLightsCastShadow)
-				{
-					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, 6), 6);
-					nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, 6), 6);
-
-					for(U32 f = 0; f < 6; ++f)
-					{
-						el->m_shadowRenderQueues[f] = &nextQueues[f];
-						nextFrustums[f].m_frustum = &lightc.getFrustums()[f];
-						static_cast<FrustumFlags&>(nextFrustums[f]) = getLightFrustumFlags();
-					}
-				}
-				else
-				{
-					zeroMemory(el->m_shadowRenderQueues);
-				}
-
-				break;
-			}
-			case LightComponentType::kSpot:
-			{
-				SpotLightQueueElement* el = result.m_spotLights.newElement();
-				lightc.setupSpotLightQueueElement(*el);
-
-				if(castsShadow && frustumFlags.m_nonDirectionalLightsCastShadow)
-				{
-					nextQueues = WeakArray<RenderQueue>(newInstance<RenderQueue>(framePool), 1);
-					el->m_shadowRenderQueue = &nextQueues[0];
-
-					nextFrustums = WeakArray<VisibilityFrustum>(newInstance<VisibilityFrustum>(framePool), 1);
-					nextFrustums[0].m_frustum = &lightc.getFrustums()[0];
-					static_cast<FrustumFlags&>(nextFrustums[0]) = getLightFrustumFlags();
-				}
-				else
-				{
-					el->m_shadowRenderQueue = nullptr;
-				}
-
-				break;
-			}
-			case LightComponentType::kDirectional:
-			{
-				U32 cascadeCount;
-				if(!castsShadow || !frustumFlags.m_directionalLightsCastShadow)
-				{
-					cascadeCount = 0;
-				}
-				else
-				{
-					cascadeCount = testedFrustum.getShadowCascadeCount();
-				}
-				ANKI_ASSERT(cascadeCount <= kMaxShadowCascades);
-
-				// Create some dummy frustum components and initialize them
-				WeakArray<Frustum> frustums;
-				if(cascadeCount)
-				{
-					nextQueues = WeakArray<RenderQueue>(newArray<RenderQueue>(framePool, cascadeCount), cascadeCount);
-					nextFrustums = WeakArray<VisibilityFrustum>(newArray<VisibilityFrustum>(framePool, cascadeCount), cascadeCount);
-					frustums = WeakArray<Frustum>(newArray<Frustum>(framePool, cascadeCount), cascadeCount);
-				}
-
-				for(U32 i = 0; i < cascadeCount; ++i)
-				{
-					nextFrustums[i].m_frustum = &frustums[i];
-					static_cast<FrustumFlags&>(nextFrustums[i]) = getDirectionalLightFrustumFlags();
-
-					result.m_directionalLight.m_shadowRenderQueues[i] = &nextQueues[i];
-				}
-
-				lightc.setupDirectionalLightQueueElement(testedFrustum, result.m_directionalLight, frustums);
-
-				// Despite the fact that it's the same light it will have different properties if viewed by different
-				// cameras. If the renderer finds the same UUID it will think it's cached and use wrong shadow tiles.
-				// That's why we need to change its UUID and bind it to the frustum that is currently viewing the light
-				result.m_directionalLight.m_uuid = ptrToNumber(&testedFrustum);
-
-				break;
-			}
-			default:
-				ANKI_ASSERT(0);
-			}
+			ANKI_ASSERT(!"Lights use GPU visibility from now on");
 		}
 		else if(compType == LensFlareComponent::kClassType)
 		{

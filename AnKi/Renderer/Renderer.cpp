@@ -15,6 +15,7 @@
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -40,11 +41,9 @@
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/ClusterBinning2.h>
 
@@ -257,14 +256,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_motionVectors.reset(newInstance<MotionVectors>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_motionVectors->init());
 
-	m_clusterBinning.reset(newInstance<ClusterBinning>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_clusterBinning->init());
-
 	m_clusterBinning2.reset(newInstance<ClusterBinning2>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_clusterBinning2->init());
-
-	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_packVisibleClustererObjects->init());
 
 	m_primaryNonRenderableVisibility.reset(newInstance<PrimaryNonRenderableVisibility>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_primaryNonRenderableVisibility->init());
@@ -359,16 +352,14 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	// Populate render graph. WARNING Watch the order
 	gpuSceneCopy(ctx);
 	m_primaryNonRenderableVisibility->populateRenderGraph(ctx);
-	m_packVisibleClustererObjects->populateRenderGraph(ctx);
 	m_genericCompute->populateRenderGraph(ctx);
-	m_clusterBinning->populateRenderGraph(ctx);
-	m_clusterBinning2->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
 	m_gbuffer->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
+	m_clusterBinning2->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
@@ -400,9 +391,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_dbg->populateRenderGraph(ctx);
 
 	m_finalComposite->populateRenderGraph(ctx);
-
-	// Populate the uniforms
-	m_clusterBinning->writeClusterBuffersAsync();
 
 	return Error::kNone;
 }

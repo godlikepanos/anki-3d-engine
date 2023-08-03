@@ -10,21 +10,21 @@
 #pragma anki start frag
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/LightFunctions.hlsl>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(2)]] Texture2D<RVec4> g_quarterDiffuseIndirectTex;
 [[vk::binding(3)]] Texture2D<RVec4> g_quarterSpecularIndirectTex;
-[[vk::binding(4)]] Texture2D g_quarterDepthTex;
-[[vk::binding(5)]] Texture2D g_fullDepthTex;
+[[vk::binding(4)]] Texture2D<Vec4> g_quarterDepthTex;
+[[vk::binding(5)]] Texture2D<Vec4> g_fullDepthTex;
 [[vk::binding(6)]] Texture2D<Vec4> g_gbuffer0Tex;
 [[vk::binding(7)]] Texture2D<Vec4> g_gbuffer1Tex;
 [[vk::binding(8)]] Texture2D<Vec4> g_gbuffer2Tex;
 [[vk::binding(9)]] Texture2D<RVec4> g_integrationLut;
-
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 10u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+[[vk::binding(10)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
 
 struct Uniforms
 {

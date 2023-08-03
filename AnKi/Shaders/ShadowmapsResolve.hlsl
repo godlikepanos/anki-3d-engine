@@ -5,11 +5,7 @@
 
 #pragma anki mutator PCF 0 1
 
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
-#define CLUSTERED_SHADING_LIGHTS_BINDING 1u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
@@ -18,14 +14,20 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 
 #define DEBUG_CASCADES 0
 
-[[vk::binding(5)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(6)]] SamplerComparisonState g_linearAnyClampShadowSampler;
-[[vk::binding(7)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(8)]] Texture2D g_depthRt;
-[[vk::binding(9)]] Texture2D g_noiseTex;
+[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(1)]] StructuredBuffer<PointLight> g_pointLights;
+[[vk::binding(1)]] StructuredBuffer<SpotLight> g_spotLights;
+[[vk::binding(2)]] Texture2D<Vec4> g_shadowAtlasTex;
+[[vk::binding(3)]] StructuredBuffer<Cluster> g_clusters;
+
+[[vk::binding(4)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(5)]] SamplerComparisonState g_linearAnyClampShadowSampler;
+[[vk::binding(6)]] SamplerState g_trilinearRepeatSampler;
+[[vk::binding(7)]] Texture2D<Vec4> g_depthRt;
+[[vk::binding(8)]] Texture2D<Vec4> g_noiseTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
-[[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
+[[vk::binding(9)]] RWTexture2D<RVec4> g_outUav;
 #endif
 
 Vec3 computeDebugShadowCascadeColor(U32 cascade)
@@ -80,7 +82,7 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Cluster
 	const Vec2 fragCoord = uv * g_clusteredShading.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth), kTileSize, kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
+	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(fragCoord, depth), kTileSize, kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
 										  g_clusteredShading.m_zSplitMagic.y);
 
 	// Layers

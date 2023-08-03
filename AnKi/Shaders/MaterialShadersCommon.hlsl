@@ -24,15 +24,18 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 
 // FW shading specific
 #if defined(FORWARD_SHADING)
+#	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+
 [[vk::binding(MaterialBinding::kLinearClampSampler, MaterialSet::kGlobal)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(MaterialBinding::kDepthRt, MaterialSet::kGlobal)]] Texture2D g_gbufferDepthTex;
 [[vk::binding(MaterialBinding::kLightVolume, MaterialSet::kGlobal)]] Texture3D<RVec4> g_lightVol;
 [[vk::binding(MaterialBinding::kShadowSampler, MaterialSet::kGlobal)]] SamplerComparisonState g_shadowSampler;
-#	define CLUSTERED_SHADING_SET MaterialSet::kGlobal
-#	define CLUSTERED_SHADING_UNIFORMS_BINDING (U32) MaterialBinding::kClusterShadingUniforms
-#	define CLUSTERED_SHADING_LIGHTS_BINDING (U32) MaterialBinding::kClusterShadingLights
-#	define CLUSTERED_SHADING_CLUSTERS_BINDING (U32) MaterialBinding::kClusters
-#	include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+
+[[vk::binding(MaterialBinding::kClusterShadingUniforms, MaterialSet::kGlobal)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(MaterialBinding::kClusters, MaterialSet::kGlobal)]] StructuredBuffer<Cluster> g_clusters;
+[[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<PointLight> g_pointLights;
+[[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<SpotLight> g_spotLights;
+[[vk::binding((U32)MaterialBinding::kClusterShadingLights + 1u, MaterialSet::kGlobal)]] Texture2D<Vec4> g_shadowAtlasTex;
 #endif
 
 UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)

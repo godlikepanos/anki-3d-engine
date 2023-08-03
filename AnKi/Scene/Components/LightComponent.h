@@ -53,13 +53,13 @@ public:
 	void setDiffuseColor(const Vec4& x)
 	{
 		m_diffColor = x;
-		m_shapeUpdated = true;
+		m_dirty = true;
 	}
 
 	void setRadius(F32 x)
 	{
 		m_point.m_radius = x;
-		m_shapeUpdated = true;
+		m_dirty = true;
 	}
 
 	F32 getRadius() const
@@ -70,7 +70,7 @@ public:
 	void setDistance(F32 x)
 	{
 		m_spot.m_distance = x;
-		m_shapeUpdated = true;
+		m_dirty = true;
 	}
 
 	F32 getDistance() const
@@ -81,7 +81,7 @@ public:
 	void setInnerAngle(F32 ang)
 	{
 		m_spot.m_innerAngle = ang;
-		m_shapeUpdated = true;
+		m_dirty = true;
 	}
 
 	F32 getInnerAngle() const
@@ -92,7 +92,7 @@ public:
 	void setOuterAngle(F32 ang)
 	{
 		m_spot.m_outerAngle = ang;
-		m_shapeUpdated = true;
+		m_dirty = true;
 	}
 
 	F32 getOuterAngle() const
@@ -108,13 +108,7 @@ public:
 	void setShadowEnabled(const Bool x)
 	{
 		m_shadow = x;
-		m_shapeUpdated = true;
-	}
-
-	ANKI_INTERNAL WeakArray<Frustum> getFrustums() const
-	{
-		ANKI_ASSERT(m_shadow);
-		return WeakArray<Frustum>(m_frustums, m_frustumCount);
+		m_dirty = true;
 	}
 
 	Vec3 getDirection() const
@@ -122,37 +116,22 @@ public:
 		return -m_worldTransform.getRotation().getZAxis().xyz();
 	}
 
-	void setupPointLightQueueElement(PointLightQueueElement& el) const
+	Vec3 getWorldPosition() const
 	{
-		ANKI_ASSERT(m_type == LightComponentType::kPoint);
-		el.m_uuid = m_uuid;
-		el.m_worldPosition = m_worldTransform.getOrigin().xyz();
-		el.m_radius = m_point.m_radius;
-		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_shadowLayer = kMaxU8;
-		el.m_index = m_gpuSceneLight.getIndex();
+		return m_worldTransform.getOrigin().xyz();
 	}
 
-	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
+	const Mat4& getSpotLightViewProjectionMatrix() const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::kSpot);
-		el.m_uuid = m_uuid;
-		el.m_worldTransform = Mat4(m_worldTransform);
-		el.m_textureMatrix = m_spot.m_textureMat;
-		el.m_distance = m_spot.m_distance;
-		el.m_outerAngle = m_spot.m_outerAngle;
-		el.m_innerAngle = m_spot.m_innerAngle;
-		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_edgePoints = m_spot.m_edgePointsWspace;
-		el.m_shadowLayer = kMaxU8;
-		el.m_index = m_gpuSceneLight.getIndex();
+		return m_spot.m_viewProjMat;
 	}
 
-	/// Setup a directional queue element.
-	/// @param[in] cameraFrustum The frustum that is looking that directional light. Used to calculate the cascades.
-	/// @param[out] el The queue element to fill out.
-	/// @param[out] cascadeFrustums Fill those frustums as well. The size of this array is the count of the cascades.
-	void setupDirectionalLightQueueElement(const Frustum& cameraFrustum, DirectionalLightQueueElement& el, WeakArray<Frustum> cascadeFrustums) const;
+	const Mat3x4& getSpotLightViewMatrix() const
+	{
+		ANKI_ASSERT(m_type == LightComponentType::kSpot);
+		return m_spot.m_viewMat;
+	}
 
 	/// Calculate some matrices for each cascade. For dir lights.
 	/// @param cameraFrustum Who is looking at the light.
@@ -168,6 +147,8 @@ public:
 		return m_uuid;
 	}
 
+	ANKI_INTERNAL void setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports);
+
 private:
 	Vec4 m_diffColor = Vec4(0.5f);
 	Transform m_worldTransform = Transform::getIdentity();
@@ -181,11 +162,11 @@ private:
 	class Spot
 	{
 	public:
-		Mat4 m_textureMat = Mat4::getIdentity();
+		Mat3x4 m_viewMat = Mat3x4::getIdentity();
+		Mat4 m_viewProjMat = Mat4::getIdentity();
 		F32 m_distance = 1.0f;
 		F32 m_outerAngle = toRad(30.0f);
 		F32 m_innerAngle = toRad(15.0f);
-		Array<Vec3, 4> m_edgePointsWspace = {};
 	};
 
 	class Dir
@@ -199,20 +180,17 @@ private:
 	Spot m_spot;
 	Dir m_dir;
 
-	Spatial m_spatial;
-
-	Frustum* m_frustums = nullptr;
-
 	GpuSceneArrays::Light::Allocation m_gpuSceneLight;
+
+	Array<Vec4, 6> m_shadowAtlasUvViewports;
 
 	U32 m_uuid = 0;
 
 	LightComponentType m_type;
 
 	U8 m_shadow : 1 = false;
-	U8 m_shapeUpdated : 1 = true;
-	U8 m_typeChanged : 1 = true;
-	U8 m_frustumCount : 4 = 0; ///< The size of m_frustums array.
+	U8 m_dirty : 1 = true;
+	U8 m_shadowAtlasUvViewportCount : 3 = 0;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };

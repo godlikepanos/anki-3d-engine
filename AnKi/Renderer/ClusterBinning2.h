@@ -29,7 +29,7 @@ public:
 	{
 		ANKI_ASSERT(m_runCtx.m_clusterUniformsOffset != kMaxPtrSize);
 		return BufferOffsetRange{&RebarTransientMemoryPool::getSingleton().getBuffer(), m_runCtx.m_clusterUniformsOffset,
-								 sizeof(ClusteredShadingUniforms2)};
+								 sizeof(ClusteredShadingUniforms)};
 	}
 
 	const BufferOffsetRange& getPackedObjectsBuffer(GpuSceneNonRenderableObjectType type) const
@@ -72,7 +72,7 @@ private:
 		Array<BufferOffsetRange, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsBuffers;
 
 		PtrSize m_clusterUniformsOffset = kMaxPtrSize; ///< Offset into the ReBAR buffer.
-		ClusteredShadingUniforms2* m_uniformsCpu = nullptr;
+		ClusteredShadingUniforms* m_uniformsCpu = nullptr;
 		RenderingContext* m_rctx = nullptr;
 	} m_runCtx;
 

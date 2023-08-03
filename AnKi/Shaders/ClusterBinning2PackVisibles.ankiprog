@@ -56,17 +56,17 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 	output.m_diffuseColor = input.m_diffuseColor;
 	output.m_lightType = (isPoint) ? 0 : 1;
 
-	output.m_shadowLayer = kMaxU32; // TODO
+	output.m_shadowLayer = kMaxU32; // TODO rt
 	output.m_shadow = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kShadow) ? 1 : 0;
 	output.m_innerCos = input.m_innerCos;
 	output.m_outerCos = input.m_outerCos;
 
 	output.m_direction = input.m_direction;
-	output.m_shadowAtlasTileScale = 0.0f; // TODO
+	output.m_shadowAtlasTileScale = input.m_spotLightMatrixOrPointLightUvViewports[0].z; // Scale should be the same for all
 
 	for(U32 i = 0; i < 6; ++i)
 	{
-		output.m_shadowAtlasTileOffsetsOrTextureMat[i] = 0.0f; // TODO
+		output.m_spotLightMatrixOrPointLightUvViewports[i] = input.m_spotLightMatrixOrPointLightUvViewports[i];
 	}
 
 	g_outBuffer[idxOut] = output;

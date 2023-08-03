@@ -10,7 +10,7 @@
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 #define ENABLE_SSGI true
 #define ENABLE_PROBES true
@@ -20,7 +20,7 @@
 
 ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 
-[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms2> g_clusteredShading;
+[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
 [[vk::binding(1)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
 [[vk::binding(2)]] StructuredBuffer<Cluster> g_clusters;
 [[vk::binding(3)]] SamplerState g_linearAnyClampSampler;

@@ -8,8 +8,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/ClusterBinning.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Core/CVarSet.h>
 
 namespace anki {
@@ -79,7 +78,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(), BufferUsageBit::kStorageComputeRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
+								  BufferUsageBit::kStorageComputeRead);
 	}
 	else
 	{
@@ -95,7 +96,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(), BufferUsageBit::kStorageFragmentRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
+								  BufferUsageBit::kStorageFragmentRead);
 	}
 }
 
@@ -105,33 +108,28 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb.bindUniformBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 2, ClusteredObjectType::kSpotLight);
-	rgraphCtx.bindColorTexture(0, 3, getRenderer().getShadowMapping().getShadowmapRt());
-	cmdb.bindStorageBuffer(0, 4, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
+	cmdb.bindUniformBuffer(0, 0, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
+	cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
+	cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning2().getClustersBuffer());
 
-	cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
-	cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClampShadow.get());
-	cmdb.bindSampler(0, 7, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	if(m_quarterRez)
 	{
-		rgraphCtx.bindTexture(0, 8, getRenderer().getDepthDownscale().getHiZRt(), TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0)));
+		rgraphCtx.bindTexture(0, 7, getRenderer().getDepthDownscale().getHiZRt(), TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0)));
 	}
 	else
 	{
-		rgraphCtx.bindTexture(0, 8, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	}
-	cmdb.bindTexture(0, 9, &m_noiseImage->getTextureView());
+	cmdb.bindTexture(0, 8, &m_noiseImage->getTextureView());
 
 	if(g_preferComputeCVar.get())
 	{
-		rgraphCtx.bindImage(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 9, m_runCtx.m_rt, TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
 	}
 	else

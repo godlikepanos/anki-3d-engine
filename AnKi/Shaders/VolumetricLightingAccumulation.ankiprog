@@ -10,14 +10,7 @@
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
-
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 6u
-#define CLUSTERED_SHADING_LIGHTS_BINDING 7u
-#define CLUSTERED_SHADING_GI_BINDING 10u
-#define CLUSTERED_SHADING_FOG_BINDING 11u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 12u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 constexpr F32 kPhaseFunctionAnisotropy = 0.3;
 
@@ -26,8 +19,16 @@ constexpr F32 kPhaseFunctionAnisotropy = 0.3;
 [[vk::binding(2)]] SamplerComparisonState g_linearAnyClampShadowSampler;
 
 [[vk::binding(3)]] RWTexture3D<Vec4> g_volume;
-[[vk::binding(4)]] Texture2D g_noiseTex;
-[[vk::binding(5)]] Texture3D g_prevVolume;
+[[vk::binding(4)]] Texture2D<Vec4> g_noiseTex;
+[[vk::binding(5)]] Texture3D<Vec4> g_prevVolume;
+
+[[vk::binding(6)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(7)]] StructuredBuffer<PointLight> g_pointLights;
+[[vk::binding(7)]] StructuredBuffer<SpotLight> g_spotLights;
+[[vk::binding(8)]] Texture2D<Vec4> g_shadowAtlasTex;
+[[vk::binding(9)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
+[[vk::binding(10)]] StructuredBuffer<FogDensityVolume> g_fogDensityVolumes;
+[[vk::binding(11)]] StructuredBuffer<Cluster> g_clusters;
 
 [[vk::push_constant]] ConstantBuffer<VolumetricLightingUniforms> g_fogUnis;
 
@@ -121,7 +122,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const PointLight light = g_pointLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		F32 factor = computeAttenuationFactor(light.m_radius, frag2Light);
 
 		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_position), kPhaseFunctionAnisotropy);
 
@@ -143,7 +144,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const SpotLight light = g_spotLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		F32 factor = computeAttenuationFactor(light.m_radius, frag2Light);
 
 		const Vec3 l = normalize(frag2Light);
 

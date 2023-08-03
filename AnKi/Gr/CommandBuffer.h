@@ -217,6 +217,16 @@ public:
 	/// @param arrayIdx The array index if the binding is an array.
 	void bindUniformBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
 
+	/// Bind uniform buffer.
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param[in,out] buff The buffer to bind.
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindUniformBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
+	{
+		bindUniformBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
+	}
+
 	/// Bind storage buffer.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.
@@ -226,6 +236,16 @@ public:
 	///              of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
 	void bindStorageBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
+
+	/// Bind storage buffer.
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param[in,out] buff The buffer to bind.
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindStorageBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
+	{
+		bindStorageBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
+	}
 
 	/// Bind load/store image.
 	/// @param set The set to bind to.

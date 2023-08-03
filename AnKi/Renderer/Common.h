@@ -95,23 +95,18 @@ public:
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_outRenderTarget;
 
+	Array<Mat4, kMaxShadowCascades> m_dirLightTextureMatrices;
+
 	RenderingContext(StackMemoryPool* pool)
 		: m_tempPool(pool)
 		, m_renderGraphDescr(pool)
 	{
+		zeroMemory(m_dirLightTextureMatrices);
 	}
 
 	RenderingContext(const RenderingContext&) = delete;
 
 	RenderingContext& operator=(const RenderingContext&) = delete;
-};
-
-class BufferOffsetRange
-{
-public:
-	Buffer* m_buffer = nullptr;
-	PtrSize m_offset = kMaxPtrSize;
-	PtrSize m_range = 0;
 };
 
 /// Choose the detail of a shadow cascade. 0 means high detail and >0 is progressively lower.

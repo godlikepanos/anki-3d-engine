@@ -71,7 +71,7 @@ enum class MaterialBinding : U32
 	kLightVolume,
 	kClusterShadingUniforms,
 	kClusterShadingLights,
-	kClusters = kClusterShadingLights + 3,
+	kClusters = kClusterShadingLights + 2,
 
 	kCount,
 	kFirst = 0

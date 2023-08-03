@@ -11,8 +11,7 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Renderer/ClusterBinning.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
@@ -254,7 +253,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSampledTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kImageTraceRaysWrite);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(), BufferUsageBit::kStorageTraceRaysRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageTraceRaysRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
+								  BufferUsageBit::kStorageTraceRaysRead);
 	}
 
 	// Denoise pass horizontal
@@ -453,33 +454,25 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	constexpr U32 kSet = 2;
 
-	cmdb.bindUniformBuffer(kSet, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
+	cmdb.bindUniformBuffer(kSet, 0, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
+	cmdb.bindStorageBuffer(kSet, 1, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	cmdb.bindStorageBuffer(kSet, 2, getRenderer().getClusterBinning2().getClustersBuffer());
 
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 1, ClusteredObjectType::kPointLight);
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, kSet, 2, ClusteredObjectType::kSpotLight);
-	rgraphCtx.bindColorTexture(kSet, 3, getRenderer().getShadowMapping().getShadowmapRt());
+	cmdb.bindSampler(kSet, 3, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-	cmdb.bindStorageBuffer(kSet, 4, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
+	rgraphCtx.bindImage(kSet, 4, m_runCtx.m_intermediateShadowsRts[0]);
 
-	cmdb.bindSampler(kSet, 5, getRenderer().getSamplers().m_trilinearRepeat.get());
-
-	rgraphCtx.bindImage(kSet, 6, m_runCtx.m_intermediateShadowsRts[0]);
-
-	rgraphCtx.bindColorTexture(kSet, 7, m_runCtx.m_historyRt);
-	cmdb.bindSampler(kSet, 8, getRenderer().getSamplers().m_trilinearClamp.get());
-	cmdb.bindSampler(kSet, 9, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindTexture(kSet, 10, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
-	rgraphCtx.bindColorTexture(kSet, 11, getRenderer().getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(kSet, 12, getRenderer().getMotionVectors().getHistoryLengthRt());
-	rgraphCtx.bindColorTexture(kSet, 13, getRenderer().getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(kSet, 14, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-	rgraphCtx.bindColorTexture(kSet, 15, m_runCtx.m_prevMomentsRt);
-	rgraphCtx.bindImage(kSet, 16, m_runCtx.m_currentMomentsRt);
-	cmdb.bindTexture(kSet, 17, &m_blueNoiseImage->getTextureView());
+	rgraphCtx.bindColorTexture(kSet, 5, m_runCtx.m_historyRt);
+	cmdb.bindSampler(kSet, 6, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(kSet, 7, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	rgraphCtx.bindTexture(kSet, 8, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindColorTexture(kSet, 9, getRenderer().getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(kSet, 10, getRenderer().getMotionVectors().getHistoryLengthRt());
+	rgraphCtx.bindColorTexture(kSet, 11, getRenderer().getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(kSet, 12, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	rgraphCtx.bindColorTexture(kSet, 13, m_runCtx.m_prevMomentsRt);
+	rgraphCtx.bindImage(kSet, 14, m_runCtx.m_currentMomentsRt);
+	cmdb.bindTexture(kSet, 15, &m_blueNoiseImage->getTextureView());
 
 	RtShadowsUniforms unis;
 	for(U32 i = 0; i < kMaxRtShadowLayers; ++i)

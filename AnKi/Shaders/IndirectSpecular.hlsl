@@ -11,7 +11,7 @@
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/SsRaymarching.hlsl>
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 [[vk::binding(0)]] ConstantBuffer<SsrUniforms> g_unis;
 
@@ -28,7 +28,7 @@
 [[vk::binding(9)]] SamplerState g_trilinearRepeatSampler;
 [[vk::binding(10)]] Texture2D<RVec4> g_noiseTex;
 
-[[vk::binding(11)]] ConstantBuffer<ClusteredShadingUniforms2> g_clusteredShading;
+[[vk::binding(11)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
 [[vk::binding(12)]] StructuredBuffer<ReflectionProbe> g_reflectionProbes;
 [[vk::binding(13)]] StructuredBuffer<Cluster> g_clusters;
 

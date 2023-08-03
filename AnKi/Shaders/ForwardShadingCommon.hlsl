@@ -45,7 +45,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	Vec3 outColor = Vec3(0.0, 0.0, 0.0);
 
 	// Find the cluster and then the light counts
-	Cluster cluster = getClusterFragCoord(svPosition.xyz);
+	Cluster cluster = getClusterFragCoord(g_clusters, g_clusteredShading, svPosition.xyz);
 
 	// Point lights
 	[loop] while(cluster.m_pointLightsMask != 0)
@@ -57,7 +57,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
 
 #	if defined(ANKI_LOD) && ANKI_LOD > 1
 		const F32 shadow = 1.0;
@@ -82,7 +82,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
 
 		const Vec3 l = normalize(frag2Light);
 

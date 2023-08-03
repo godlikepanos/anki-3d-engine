@@ -144,6 +144,10 @@ struct ByteAddressBuffer
 	T& Load(U32 offset);
 };
 
+struct RaytracingAccelerationStructure
+{
+};
+
 // Basic functions
 
 template<typename T>

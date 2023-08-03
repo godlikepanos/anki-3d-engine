@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ClusterBinning2.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Core/CVarSet.h>
 
 namespace anki {

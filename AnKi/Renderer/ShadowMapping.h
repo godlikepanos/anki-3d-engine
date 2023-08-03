@@ -8,13 +8,11 @@
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Renderer/Utils/TileAllocator.h>
+#include <AnKi/Renderer/Utils/TileAllocator2.h>
 
 namespace anki {
 
 // Forward
-class PointLightQueueElement;
-class SpotLightQueueElement;
 extern NumericCVar<U32> g_shadowMappingPcfCVar;
 
 /// @addtogroup renderer
@@ -37,7 +35,7 @@ public:
 private:
 	class ViewportWorkItem;
 
-	TileAllocator m_tileAlloc;
+	TileAllocator2 m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
 	static constexpr U32 kPointLightMaxTileAllocHierarchy = 1;
 	static constexpr U32 kSpotLightMaxTileAllocHierarchy = 1;
@@ -67,15 +65,12 @@ private:
 
 	void processLights(RenderingContext& ctx);
 
-	Bool allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices, const U32* drawcallsCount,
-							const U32* hierarchies, UVec4* atlasTileViewports, TileAllocatorResult* subResults);
+	Bool allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies, UVec4* atlasTileViewports,
+							TileAllocatorResult2* subResults);
 
 	Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 
-	/// Find the detail of the light
-	void chooseDetail(const Vec4& cameraOrigin, const PointLightQueueElement& light, U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const;
-	/// Find the detail of the light
-	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy, U32& renderQueueElementsLod) const;
+	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, U32& tileAllocatorHierarchy) const;
 
 	template<typename TMemoryPool>
 	void newWorkItem(const UVec4& atlasViewport, const RenderQueue& queue, RenderGraphDescription& rgraph,

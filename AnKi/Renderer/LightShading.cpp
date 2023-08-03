@@ -17,8 +17,7 @@
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
-#include <AnKi/Renderer/ClusterBinning.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -159,32 +158,25 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthWrite(false);
 
 		// Bind all
-		cmdb.bindUniformBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-							   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
-							   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
+		cmdb.bindUniformBuffer(0, 0, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
+		cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
+		cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning2().getClustersBuffer());
 
-		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 1, ClusteredObjectType::kPointLight);
-		getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 2, ClusteredObjectType::kSpotLight);
-		rgraphCtx.bindColorTexture(0, 3, getRenderer().getShadowMapping().getShadowmapRt());
-
-		cmdb.bindStorageBuffer(0, 4, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-							   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
-							   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
-
-		cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 9, getRenderer().getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 10, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindColorTexture(0, 6, getRenderer().getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 9, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(getRenderer().getRtShadowsEnabled())
 		{
-			rgraphCtx.bindColorTexture(0, 11, getRenderer().getRtShadows().getRt());
+			rgraphCtx.bindColorTexture(0, 10, getRenderer().getRtShadows().getRt());
 		}
 		else
 		{
-			rgraphCtx.bindColorTexture(0, 12, getRenderer().getShadowmapsResolve().getRt());
+			rgraphCtx.bindColorTexture(0, 11, getRenderer().getShadowmapsResolve().getRt());
 		}
 
 		// Draw
@@ -208,9 +200,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
 		cmdb.bindTexture(0, 9, &getRenderer().getProbeReflections().getIntegrationLut());
 
-		cmdb.bindUniformBuffer(0, 10, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-							   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
-							   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
+		cmdb.bindUniformBuffer(0, 10, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
 
 		const Vec4 pc(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, 0.0f, 0.0f);
 		cmdb.setPushConstants(&pc, sizeof(pc));
@@ -379,7 +369,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	{
 		pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
 	}
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(), BufferUsageBit::kStorageFragmentRead);
+	pass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+	pass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
+							 BufferUsageBit::kStorageFragmentRead);
 
 	// Apply indirect
 	pass.newTextureDependency(getRenderer().getIndirectDiffuse().getRt(), readUsage);

@@ -77,14 +77,17 @@ struct GpuSceneLight
 	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
 
 	GpuSceneLightFlag m_flags;
-	U32 m_arrayIndex; ///< Array in the CPU scene.
-	U32 m_uuid;
+	U32 m_arrayIndex; ///< Array index of the LightComponent in the CPU scene.
+	U32 m_uuid; ///< The UUID of that light. If it's zero the GPU will not inform the CPU about it.
 	F32 m_innerCos; ///< Only for spot light.
 
-	RVec3 m_direction; ///< Light direction.
+	RVec3 m_direction; ///< Only for spot light. Light direction.
 	RF32 m_outerCos; ///< Only for spot light.
 
 	Vec4 m_edgePoints[4u]; ///< Edge points in world space. Only for spot light.
+
+	/// If it's a spot light the 4 first rows are the texture matrix. If it's point light it's the UV viewports in the shadow atlas.
+	Vec4 m_spotLightMatrixOrPointLightUvViewports[6u];
 };
 
 /// Representation of a reflection probe.

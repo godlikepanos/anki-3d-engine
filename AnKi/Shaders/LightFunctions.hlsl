@@ -354,10 +354,10 @@ Vec3 computeCubemapVecCheap(Vec3 r, F32 R2, Vec3 f)
 	return r;
 }
 
-RF32 computeAttenuationFactor(RF32 squareRadiusOverOne, RVec3 frag2Light)
+RF32 computeAttenuationFactor(RF32 lightRadius, RVec3 frag2Light)
 {
 	const RF32 fragLightDist = dot(frag2Light, frag2Light);
-	RF32 att = 1.0 - fragLightDist * squareRadiusOverOne;
+	RF32 att = 1.0 - fragLightDist / (lightRadius * lightRadius);
 	att = max(0.0, att);
 	return att * att;
 }

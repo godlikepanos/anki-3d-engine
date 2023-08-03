@@ -66,11 +66,12 @@ struct LightUnion
 
 	/// When it's a point light this is an array of 6 Vec2s (but because of padding it's actually Vec4s). When it's a spot light the first 4 Vec4s are
 	/// the rows of the texture matrix
-	Vec4 m_shadowAtlasTileOffsetsOrTextureMat[6u];
+	Vec4 m_spotLightMatrixOrPointLightUvViewports[6u];
 };
 
 /// Point light.
-struct PointLight2
+/// WARNING: Don't change the layout without looking at LightUnion.
+struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
 	RF32 m_radius; ///< Radius
@@ -88,10 +89,11 @@ struct PointLight2
 
 	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
 };
-static_assert(sizeof(PointLight2) == sizeof(LightUnion));
+static_assert(sizeof(PointLight) == sizeof(LightUnion));
 
 /// Spot light.
-struct SpotLight2
+/// WARNING: Don't change the layout without looking at LightUnion.
+struct SpotLight
 {
 	Vec3 m_position; ///< Position in world space.
 	RF32 m_radius; ///< Radius
@@ -111,71 +113,7 @@ struct SpotLight2
 
 	Vec4 m_padding3[2];
 };
-static_assert(sizeof(SpotLight2) == sizeof(LightUnion));
-
-/// Point light.
-struct PointLight
-{
-	Vec3 m_position; ///< Position in world space.
-	RF32 m_radius; ///< Radius
-
-	RVec3 m_diffuseColor;
-	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
-
-	Vec2 m_padding0;
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
-
-	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
-};
-constexpr U32 kSizeof_PointLight = 9u * sizeof(Vec4);
-static_assert(sizeof(PointLight) == kSizeof_PointLight);
-
-/// Spot light.
-struct SpotLight
-{
-	Vec3 m_position;
-	F32 m_padding0;
-
-	Vec4 m_edgePoints[4u]; ///< Edge points in world space.
-
-	RVec3 m_diffuseColor;
-	RF32 m_radius; ///< Max distance.
-
-	RVec3 m_direction; ///< Light direction.
-	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
-
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	RF32 m_outerCos;
-	RF32 m_innerCos;
-	U32 m_padding1;
-
-	Mat4 m_textureMatrix;
-};
-constexpr U32 kSizeof_SpotLight = 12u * sizeof(Vec4);
-static_assert(sizeof(SpotLight) == kSizeof_SpotLight);
-
-/// Spot light for binning. This is the same structure as SpotLight (same signature) but it's used for binning.
-struct SpotLightBinning
-{
-	Vec4 m_edgePoints[5u]; ///< Edge points in world space. Point 0 is the eye pos.
-
-	RVec3 m_diffuseColor;
-	RF32 m_radius; ///< Max distance.
-
-	RVec3 m_direction; ///< Light direction.
-	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
-
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	RF32 m_outerCos;
-	RF32 m_innerCos;
-	U32 m_padding0;
-
-	Mat4 m_textureMatrix;
-};
-constexpr U32 kSizeof_SpotLightBinning = kSizeof_SpotLight;
-static_assert(sizeof(SpotLightBinning) == kSizeof_SpotLightBinning);
-static_assert(sizeof(SpotLight) == sizeof(SpotLightBinning));
+static_assert(sizeof(SpotLight) == sizeof(LightUnion));
 
 /// Directional light (sun).
 struct DirectionalLight
@@ -244,46 +182,6 @@ static_assert(sizeof(CommonMatrices) == kSizeof_CommonMatrices);
 
 /// Common uniforms for light shading passes.
 struct ClusteredShadingUniforms
-{
-	Vec2 m_renderingSize;
-	F32 m_time;
-	U32 m_frame;
-
-	Vec4 m_nearPlaneWSpace;
-
-	Vec3 m_cameraPosition;
-	F32 m_reflectionProbesMipCount;
-
-	UVec2 m_tileCounts;
-	U32 m_zSplitCount;
-	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
-
-	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
-	U32 m_tileSize;
-	U32 m_lightVolumeLastZSplit;
-
-	UVec2 m_padding0;
-	F32 m_near;
-	F32 m_far;
-
-	DirectionalLight m_directionalLight;
-
-	CommonMatrices m_matrices;
-	CommonMatrices m_previousMatrices;
-
-	/// This are some additive counts used to map a flat index to the index of the specific object
-#if defined(__cplusplus)
-	Array<UVec4, U32(ClusteredObjectType::kCount)> m_objectCountsUpTo;
-#else
-	UVec4 m_objectCountsUpTo[(U32)ClusteredObjectType::kCount];
-#endif
-};
-constexpr U32 kSizeof_ClusteredShadingUniforms =
-	(6u + (U32)ClusteredObjectType::kCount) * sizeof(Vec4) + 2u * sizeof(CommonMatrices) + sizeof(DirectionalLight);
-static_assert(sizeof(ClusteredShadingUniforms) == kSizeof_ClusteredShadingUniforms);
-
-/// Common uniforms for light shading passes.
-struct ClusteredShadingUniforms2
 {
 	Vec2 m_renderingSize;
 	F32 m_time;

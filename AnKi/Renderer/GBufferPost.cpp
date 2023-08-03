@@ -7,8 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
-#include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
 
 namespace anki {
 
@@ -70,7 +69,10 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);
 	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(), BufferUsageBit::kStorageFragmentRead);
+
+	rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+	rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kDecal),
+							  BufferUsageBit::kStorageFragmentRead);
 }
 
 void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
@@ -90,15 +92,9 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-	cmdb.bindUniformBuffer(0, 3, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClusteredUniformsRebarToken().m_range);
-
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 4, ClusteredObjectType::kDecal);
-
-	cmdb.bindStorageBuffer(0, 5, &RebarTransientMemoryPool::getSingleton().getBuffer(),
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_offset,
-						   getRenderer().getClusterBinning().getClustersRebarToken().m_range);
+	cmdb.bindUniformBuffer(0, 3, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
+	cmdb.bindStorageBuffer(0, 4, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
+	cmdb.bindStorageBuffer(0, 5, getRenderer().getClusterBinning2().getClustersBuffer());
 
 	cmdb.bindAllBindless(1);
 

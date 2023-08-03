@@ -57,7 +57,7 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_rctx = &ctx;
 
 		RebarAllocation alloc;
-		m_runCtx.m_uniformsCpu = RebarTransientMemoryPool::getSingleton().allocateFrame<ClusteredShadingUniforms2>(1, alloc);
+		m_runCtx.m_uniformsCpu = RebarTransientMemoryPool::getSingleton().allocateFrame<ClusteredShadingUniforms>(1, alloc);
 
 		m_runCtx.m_clusterUniformsOffset = alloc.m_offset;
 
@@ -299,7 +299,7 @@ void ClusterBinning2::writeClusterUniformsInternal()
 	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
 
 	RenderingContext& ctx = *m_runCtx.m_rctx;
-	ClusteredShadingUniforms2& unis = *m_runCtx.m_uniformsCpu;
+	ClusteredShadingUniforms& unis = *m_runCtx.m_uniformsCpu;
 
 	unis.m_renderingSize = Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
 
@@ -346,7 +346,8 @@ void ClusterBinning2::writeClusterUniformsInternal()
 
 		for(U cascade = 0; cascade < cam.getShadowCascadeCount(); ++cascade)
 		{
-			// out.m_textureMatrices[cascade] = in.m_textureMatrices[cascade]; TODO
+			ANKI_ASSERT(m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade] != Mat4::getZero());
+			out.m_textureMatrices[cascade] = m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade];
 		}
 	}
 	else
