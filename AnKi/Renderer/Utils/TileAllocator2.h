@@ -13,12 +13,11 @@ namespace anki {
 /// @{
 
 /// The result of a tile allocation.
-enum class TileAllocatorResult2 : U32
+enum class TileAllocatorResult2 : U8
 {
 	kAllocationFailed = 0,
-	kAllocationSucceded = 1 << 0, ///< Allocation succedded or out of tile space.
-	kOtherTileKicked = 1 << 1, ///< Another tile was kicked.
-	kNeedsRefresh = 1 << 2, ///< Additional identification or hierarchy missmatch. Needs to be re-rendered.
+	kAllocationSucceded = 1 << 0, ///< Allocation succedded.
+	kTileCached = 1 << 1, ///< The tile was in the cache already. Goes only with kAllocationSucceded.
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TileAllocatorResult2)
 
@@ -42,8 +41,8 @@ public:
 
 	/// Allocate some tiles.
 	/// @param hierarchy If it's 0 it chooses the smallest tile.
-	[[nodiscard]] TileAllocatorResult2 allocate(Timestamp crntTimestamp, U64 lightUuid, U64 lightAdditionalIdentification, U32 hierarchy,
-												Array<U32, 4>& tileViewport, ArrayOfLightUuids& kickedOutLightUuids);
+	[[nodiscard]] TileAllocatorResult2 allocate(Timestamp crntTimestamp, U64 lightUuid, U32 hierarchy, Array<U32, 4>& tileViewport,
+												ArrayOfLightUuids& kickedOutLightUuids);
 
 	/// Remove an light from the cache.
 	void invalidateCache(U64 lightUuid);

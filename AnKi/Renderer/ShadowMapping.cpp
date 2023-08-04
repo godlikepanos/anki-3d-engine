@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Core/App.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/LightComponent.h>
@@ -21,6 +22,8 @@ static NumericCVar<U32> g_shadowMappingTileCountPerRowOrColumnCVar(CVarSubsystem
 																   "Shadowmapping atlas will have this number squared number of tiles");
 NumericCVar<U32> g_shadowMappingPcfCVar(CVarSubsystem::kRenderer, "ShadowMappingPcf", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1,
 										"Shadow PCF (CVarSubsystem::kRenderer, 0: off, 1: on)");
+
+static StatCounter g_tilesAllocatedStatVar(StatCategory::kRenderer, "Shadow tiles (re)allocated");
 
 class LightHash
 {
@@ -175,10 +178,10 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		// Will have to create render passes
 
 		// Compute render area
-		const U32 minx = m_runCtx.m_fullViewport[0];
-		const U32 miny = m_runCtx.m_fullViewport[1];
-		const U32 width = m_runCtx.m_fullViewport[2] - m_runCtx.m_fullViewport[0];
-		const U32 height = m_runCtx.m_fullViewport[3] - m_runCtx.m_fullViewport[1];
+		const U32 minx = m_runCtx.m_renderAreaMin.x();
+		const U32 miny = m_runCtx.m_renderAreaMin.y();
+		const U32 width = m_runCtx.m_renderAreaMax.x() - m_runCtx.m_renderAreaMin.x();
+		const U32 height = m_runCtx.m_renderAreaMax.y() - m_runCtx.m_renderAreaMin.y();
 
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Shadowmapping");
 
@@ -244,20 +247,22 @@ void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent&
 	}
 }
 
-Bool ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies, UVec4* atlasTileViewports,
-									   TileAllocatorResult2* subResults)
+TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies,
+													   UVec4* atlasTileViewports)
 {
 	ANKI_ASSERT(lightUuid > 0);
 	ANKI_ASSERT(faceCount > 0);
 	ANKI_ASSERT(hierarchies);
+
+	TileAllocatorResult2 goodResult = TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kTileCached;
 
 	for(U i = 0; i < faceCount; ++i)
 	{
 		TileAllocator2::ArrayOfLightUuids kickedOutLights(&getRenderer().getFrameMemoryPool());
 
 		Array<U32, 4> tileViewport;
-		subResults[i] = m_tileAlloc.allocate(GlobalFrameIndex::getSingleton().m_value, encodeTileHash(lightUuid, componentIndex, i), 0,
-											 hierarchies[i], tileViewport, kickedOutLights);
+		const TileAllocatorResult2 result = m_tileAlloc.allocate(
+			GlobalFrameIndex::getSingleton().m_value, encodeTileHash(lightUuid, componentIndex, i), hierarchies[i], tileViewport, kickedOutLights);
 
 		for(U64 kickedLightHash : kickedOutLights)
 		{
@@ -273,7 +278,7 @@ Bool ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 fa
 			}
 		}
 
-		if(!!(subResults[i] & TileAllocatorResult2::kAllocationFailed))
+		if(!!(result & TileAllocatorResult2::kAllocationFailed))
 		{
 			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. Increase the %s or decrease the scene's shadow casters",
 						g_shadowMappingTileCountPerRowOrColumnCVar.getFullName().cstr());
@@ -281,23 +286,28 @@ Bool ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 fa
 			// Invalidate cache entries for what we already allocated
 			for(U j = 0; j < i; ++j)
 			{
-				m_tileAlloc.invalidateCache(lightUuid);
+				m_tileAlloc.invalidateCache(encodeTileHash(lightUuid, componentIndex, j));
 			}
 
-			return false;
+			return TileAllocatorResult2::kAllocationFailed;
 		}
+
+		if(!(result & TileAllocatorResult2::kTileCached))
+		{
+			g_tilesAllocatedStatVar.increment(1);
+		}
+
+		goodResult &= result;
 
 		// Set viewport
 		const UVec4 viewport = UVec4(tileViewport) * m_tileResolution;
 		atlasTileViewports[i] = viewport;
 
-		m_runCtx.m_fullViewport[0] = min(m_runCtx.m_fullViewport[0], viewport[0]);
-		m_runCtx.m_fullViewport[1] = min(m_runCtx.m_fullViewport[1], viewport[1]);
-		m_runCtx.m_fullViewport[2] = max(m_runCtx.m_fullViewport[2], viewport[0] + viewport[2]);
-		m_runCtx.m_fullViewport[3] = max(m_runCtx.m_fullViewport[3], viewport[1] + viewport[3]);
+		m_runCtx.m_renderAreaMin = m_runCtx.m_renderAreaMin.min(UVec2(viewport[0], viewport[1]));
+		m_runCtx.m_renderAreaMax = m_runCtx.m_renderAreaMax.max(UVec2(viewport[0] + viewport[2], viewport[1] + viewport[3]));
 	}
 
-	return true;
+	return goodResult;
 }
 
 template<typename TMemoryPool>
@@ -326,7 +336,8 @@ void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& q
 
 void ShadowMapping::processLights(RenderingContext& ctx)
 {
-	m_runCtx.m_fullViewport = UVec4(kMaxU32, kMaxU32, kMinU32, kMinU32);
+	m_runCtx.m_renderAreaMin = UVec2(kMaxU32, kMaxU32);
+	m_runCtx.m_renderAreaMax = UVec2(kMinU32, kMinU32);
 
 	// Vars
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
@@ -351,11 +362,9 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		}
 
 		Array<UVec4, kMaxShadowCascades> atlasViewports;
-		Array<TileAllocatorResult2, kMaxShadowCascades> subResults;
-		[[maybe_unused]] const Bool allocationFailed =
-			!allocateAtlasTiles(kMaxU32, 0, cascadeCount, &hierarchies[0], &atlasViewports[0], &subResults[0]);
+		[[maybe_unused]] const TileAllocatorResult2 res = allocateAtlasTiles(kMaxU32, 0, cascadeCount, &hierarchies[0], &atlasViewports[0]);
 
-		ANKI_ASSERT(!allocationFailed && "Dir light should never fail");
+		ANKI_ASSERT(!!(res & TileAllocatorResult2::kAllocationSucceded) && "Dir light should never fail");
 
 		// Compute the view projection matrices
 		Array<F32, kMaxShadowCascades> cascadeDistances;
@@ -426,11 +435,9 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		hierarchies.fill(hierarchy);
 
 		Array<UVec4, 6> atlasViewports;
-		Array<TileAllocatorResult2, 6> subResults;
-		const Bool allocationFailed =
-			!allocateAtlasTiles(lightc->getUuid(), lightc->getArrayIndex(), 6, &hierarchies[0], &atlasViewports[0], &subResults[0]);
+		const TileAllocatorResult2 result = allocateAtlasTiles(lightc->getUuid(), lightc->getArrayIndex(), 6, &hierarchies[0], &atlasViewports[0]);
 
-		if(!allocationFailed)
+		if(!!(result & TileAllocatorResult2::kAllocationSucceded))
 		{
 			// All good, update the light
 
@@ -458,7 +465,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				uvViewports[face] = Vec4(uvViewportXY, Vec2(superTileSize / atlasResolution));
 			}
 
-			lightc->setShadowAtlasUvViewports(uvViewports);
+			if(!(result & TileAllocatorResult2::kTileCached))
+			{
+				lightc->setShadowAtlasUvViewports(uvViewports);
+			}
 
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
@@ -508,17 +518,19 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		// Allocate tile
 		U32 hierarchy;
 		chooseDetail(cameraOrigin, *lightc, hierarchy);
-		TileAllocatorResult2 subResult;
 		UVec4 atlasViewport;
-		const Bool allocationFailed = !allocateAtlasTiles(lightc->getUuid(), lightc->getArrayIndex(), 1, &hierarchy, &atlasViewport, &subResult);
+		const TileAllocatorResult2 result = allocateAtlasTiles(lightc->getUuid(), lightc->getArrayIndex(), 1, &hierarchy, &atlasViewport);
 
-		if(!allocationFailed)
+		if(!!(result & TileAllocatorResult2::kAllocationSucceded))
 		{
 			// All good, update the light
 
-			const F32 atlasResolution = F32(m_tileResolution * m_tileCountBothAxis);
-			const Vec4 uvViewport = Vec4(atlasViewport) / atlasResolution;
-			lightc->setShadowAtlasUvViewports({&uvViewport, 1});
+			if(!(result & TileAllocatorResult2::kTileCached))
+			{
+				const F32 atlasResolution = F32(m_tileResolution * m_tileCountBothAxis);
+				const Vec4 uvViewport = Vec4(atlasViewport) / atlasResolution;
+				lightc->setShadowAtlasUvViewports({&uvViewport, 1});
+			}
 
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};

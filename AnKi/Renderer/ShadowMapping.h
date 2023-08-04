@@ -58,15 +58,16 @@ private:
 	public:
 		RenderTargetHandle m_rt;
 		WeakArray<ViewportWorkItem> m_workItems;
-		UVec4 m_fullViewport; ///< Calculate the viewport that contains all of the work items. Mobile optimization.
+
+		UVec2 m_renderAreaMin; ///< Calculate the viewport that contains all of the work items. Mobile optimization.
+		UVec2 m_renderAreaMax;
 	} m_runCtx;
 
 	Error initInternal();
 
 	void processLights(RenderingContext& ctx);
 
-	Bool allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies, UVec4* atlasTileViewports,
-							TileAllocatorResult2* subResults);
+	TileAllocatorResult2 allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies, UVec4* atlasTileViewports);
 
 	Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 

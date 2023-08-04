@@ -26,7 +26,7 @@ static NumericCVar<U32> g_probeReflectionIrradianceResolutionCVar(CVarSubsystem:
 																  "Reflection probe irradiance resolution");
 static NumericCVar<U32> g_probeReflectionShadowMapResolutionCVar(CVarSubsystem::kRenderer, "ProbeReflectionShadowMapResolution", 64, 4, 2048,
 																 "Reflection probe shadow resolution");
-static StatCounter g_probeReflectionCountStatVar(StatCategory::kMisc, "Reflection probes rendered");
+static StatCounter g_probeReflectionCountStatVar(StatCategory::kRenderer, "Reflection probes rendered");
 
 Error ProbeReflections::init()
 {

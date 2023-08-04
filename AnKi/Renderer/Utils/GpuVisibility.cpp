@@ -16,8 +16,8 @@
 
 namespace anki {
 
-static StatCounter g_visibleObjects(StatCategory::kMisc, "Visible objects", StatFlag::kZeroEveryFrame);
-static StatCounter g_testedObjects(StatCategory::kMisc, "Visbility tested objects", StatFlag::kZeroEveryFrame);
+static StatCounter g_visibleObjects(StatCategory::kRenderer, "Visible objects", StatFlag::kZeroEveryFrame);
+static StatCounter g_testedObjects(StatCategory::kRenderer, "Visbility tested objects", StatFlag::kZeroEveryFrame);
 
 Error GpuVisibility::init()
 {

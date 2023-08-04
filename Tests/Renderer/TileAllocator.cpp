@@ -23,7 +23,6 @@ ANKI_TEST(Renderer, TileAllocator)
 		TileAllocatorResult2 res;
 
 		const U64 lightUuid = 1000;
-		const U64 dcCount = 666;
 		Timestamp crntTimestamp = 1;
 
 		constexpr U kSmallTile = 0;
@@ -31,43 +30,53 @@ ANKI_TEST(Renderer, TileAllocator)
 		constexpr U kBigTile = 2;
 
 		// Allocate 1 med
-		res = talloc.allocate(crntTimestamp, lightUuid + 1, dcCount, kMedTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
+		res = talloc.allocate(crntTimestamp, lightUuid + 1, kMedTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
 
 		// Allocate 3 big
-		res = talloc.allocate(crntTimestamp, lightUuid + 2, dcCount, kBigTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
-		res = talloc.allocate(crntTimestamp, lightUuid + 3, dcCount, kBigTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
-		res = talloc.allocate(crntTimestamp, lightUuid + 4, dcCount, kBigTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
+		res = talloc.allocate(crntTimestamp, lightUuid + 2, kBigTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
+		res = talloc.allocate(crntTimestamp, lightUuid + 3, kBigTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
+		res = talloc.allocate(crntTimestamp, lightUuid + 4, kBigTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
 
 		// Fail to allocate 1 big
-		res = talloc.allocate(crntTimestamp, lightUuid + 5, dcCount, kBigTile, viewport, kickedOutUuids);
+		res = talloc.allocate(crntTimestamp, lightUuid + 5, kBigTile, viewport, kickedOutUuids);
 		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationFailed);
 
 		// Allocate 3 med
-		res = talloc.allocate(crntTimestamp, lightUuid + 6, dcCount, kMedTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
-		res = talloc.allocate(crntTimestamp, lightUuid + 7, dcCount, kMedTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
-		res = talloc.allocate(crntTimestamp, lightUuid + 8, dcCount, kMedTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
+		res = talloc.allocate(crntTimestamp, lightUuid + 6, kMedTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
+		res = talloc.allocate(crntTimestamp, lightUuid + 7, kMedTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
+		res = talloc.allocate(crntTimestamp, lightUuid + 8, kMedTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
 
 		// Fail to allocate a small
-		res = talloc.allocate(crntTimestamp, lightUuid + 9, dcCount, kSmallTile, viewport, kickedOutUuids);
+		res = talloc.allocate(crntTimestamp, lightUuid + 9, kSmallTile, viewport, kickedOutUuids);
 		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationFailed);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
 
 		// New frame
 		++crntTimestamp;
 
 		// Allocate the same 3 big again
-		res = talloc.allocate(crntTimestamp, lightUuid + 2, dcCount + 1, kBigTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
-		res = talloc.allocate(crntTimestamp, lightUuid + 3, dcCount, kBigTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
-		res = talloc.allocate(crntTimestamp, lightUuid + 4, dcCount + 1, kBigTile, viewport, kickedOutUuids);
-		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh);
+		res = talloc.allocate(crntTimestamp, lightUuid + 2, kBigTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kTileCached);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
+		res = talloc.allocate(crntTimestamp, lightUuid + 3, kBigTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kTileCached);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
+		res = talloc.allocate(crntTimestamp, lightUuid + 4, kBigTile, viewport, kickedOutUuids);
+		ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kTileCached);
+		ANKI_TEST_EXPECT_EQ(kickedOutUuids.getSize(), 0);
 
 		// New frame
 		++crntTimestamp;
@@ -76,8 +85,8 @@ ANKI_TEST(Renderer, TileAllocator)
 		TileAllocator2::ArrayOfLightUuids allKicked(&pool);
 		for(U i = 0; i < 16; ++i)
 		{
-			res = talloc.allocate(crntTimestamp, lightUuid + 10 + i, dcCount, 0, viewport, kickedOutUuids);
-			ANKI_TEST_EXPECT_EQ(!!(res & (TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh)), true);
+			res = talloc.allocate(crntTimestamp, lightUuid + 10 + i, kSmallTile, viewport, kickedOutUuids);
+			ANKI_TEST_EXPECT_EQ(res, TileAllocatorResult2::kAllocationSucceded);
 
 			for(U64 uuid : kickedOutUuids)
 			{

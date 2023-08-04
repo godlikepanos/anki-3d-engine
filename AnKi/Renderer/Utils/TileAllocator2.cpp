@@ -12,7 +12,6 @@ class TileAllocator2::Tile
 public:
 	Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used.
 	U64 m_lightUuid = 0;
-	U64 m_lightAdditionalIdendification = 0;
 	Array<U32, 4> m_viewport = {};
 	Array<U32, 4> m_subTiles = {kMaxU32, kMaxU32, kMaxU32, kMaxU32};
 	U32 m_superTile = kMaxU32; ///< The parent.
@@ -118,7 +117,6 @@ void TileAllocator2::updateSubTiles(const Tile& updateFrom, U64 crntLightUuid, A
 
 		m_allTiles[idx].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
 		m_allTiles[idx].m_lightUuid = updateFrom.m_lightUuid;
-		m_allTiles[idx].m_lightAdditionalIdendification = updateFrom.m_lightAdditionalIdendification;
 		m_allTiles[idx].m_lightHierarchy = updateFrom.m_lightHierarchy;
 
 		updateSubTiles(m_allTiles[idx], crntLightUuid, kickedOutLights);
@@ -209,8 +207,8 @@ Bool TileAllocator2::evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32
 	return false;
 }
 
-TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 lightUuid, U64 lightAdditionalIdentification, U32 hierarchy,
-											  Array<U32, 4>& tileViewport, ArrayOfLightUuids& kickedOutLightUuids)
+TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 lightUuid, U32 hierarchy, Array<U32, 4>& tileViewport,
+											  ArrayOfLightUuids& kickedOutLightUuids)
 {
 	// Preconditions
 	ANKI_ASSERT(crntTimestamp > 0);
@@ -242,21 +240,12 @@ TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 light
 
 				tileViewport = {tile.m_viewport[0], tile.m_viewport[1], tile.m_viewport[2], tile.m_viewport[3]};
 
-				const Bool needsReRendering = tile.m_lightAdditionalIdendification != lightAdditionalIdentification;
-
 				tile.m_lastUsedTimestamp = crntTimestamp;
-				tile.m_lightAdditionalIdendification = lightAdditionalIdentification;
 
 				updateTileHierarchy(tile, lightUuid, kickedOutLightUuids);
 				ANKI_ASSERT(kickedOutLightUuids.getSize() == 0);
 
-				TileAllocatorResult2 result = TileAllocatorResult2::kAllocationSucceded;
-				if(needsReRendering)
-				{
-					result |= TileAllocatorResult2::kNeedsRefresh;
-				}
-
-				return result;
+				return TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kTileCached;
 			}
 		}
 	}
@@ -296,8 +285,6 @@ TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 light
 		}
 	}
 
-	TileAllocatorResult2 result = TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kNeedsRefresh;
-
 	U32 allocatedTileIdx;
 	if(emptyTileIdx != kMaxU32)
 	{
@@ -319,15 +306,9 @@ TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 light
 	Tile& allocatedTile = m_allTiles[allocatedTileIdx];
 	allocatedTile.m_lastUsedTimestamp = crntTimestamp;
 	allocatedTile.m_lightUuid = lightUuid;
-	allocatedTile.m_lightAdditionalIdendification = lightAdditionalIdentification;
 	allocatedTile.m_lightHierarchy = U8(hierarchy);
 
 	updateTileHierarchy(allocatedTile, lightUuid, kickedOutLightUuids);
-
-	if(kickedOutLightUuids.getSize())
-	{
-		result |= TileAllocatorResult2::kOtherTileKicked;
-	}
 
 	// Update the cache
 	if(m_cachingEnabled)
@@ -338,7 +319,7 @@ TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 light
 	// Return
 	tileViewport = {allocatedTile.m_viewport[0], allocatedTile.m_viewport[1], allocatedTile.m_viewport[2], allocatedTile.m_viewport[3]};
 
-	return result;
+	return TileAllocatorResult2::kAllocationSucceded;
 }
 
 void TileAllocator2::invalidateCache(U64 lightUuid)
