@@ -16,6 +16,15 @@
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
+struct DrawIndirectArgsWithPadding
+{
+	U32 m_vertexCount;
+	U32 m_instanceCount;
+	U32 m_firstVertex;
+	U32 m_firstInstance;
+	U32 m_padding;
+};
+
 // Buffers that point to the GPU scene
 [[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
@@ -24,6 +33,7 @@
 // These 2 have the same size
 [[vk::binding(3)]] RWStructuredBuffer<UVec4> g_instanceRateRenderables;
 [[vk::binding(4)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
+[[vk::binding(4)]] RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs;
 
 // Index pointing to the above arrays. One for each render state bucket
 [[vk::binding(5)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
@@ -183,20 +193,45 @@
 	const U32 meshLodOffset = renderableIn.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
 	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
 
-	DrawIndexedIndirectArgs indirect;
-	indirect.m_indexCount = meshLod.m_indexCount;
-	indirect.m_instanceCount = 1;
-	indirect.m_firstIndex = meshLod.m_firstIndex;
-	indirect.m_vertexOffset = 0;
-	indirect.m_firstInstance = indirectIdx;
-	g_drawIndexedIndirectArgs[indirectIdx] = indirect;
+	const Bool isParticleEmitter = renderableIn.m_particleEmitterOffset != 0;
 
-	UVec4 instanceVertex;
-	instanceVertex.x = renderableIn.m_worldTransformsOffset;
-	instanceVertex.y = renderableIn.m_uniformsOffset;
-	instanceVertex.z = meshLodOffset;
-	instanceVertex.w = renderableIn.m_boneTransformsOffset;
-	g_instanceRateRenderables[indirectIdx] = instanceVertex;
+	if(!isParticleEmitter)
+	{
+		// Regular renderables are always indexed
+
+		DrawIndexedIndirectArgs indirect;
+		indirect.m_indexCount = meshLod.m_indexCount;
+		indirect.m_instanceCount = 1;
+		indirect.m_firstIndex = meshLod.m_firstIndex;
+		indirect.m_vertexOffset = 0;
+		indirect.m_firstInstance = indirectIdx;
+		g_drawIndexedIndirectArgs[indirectIdx] = indirect;
+
+		UVec4 instanceVertex;
+		instanceVertex.x = renderableIn.m_worldTransformsOffset;
+		instanceVertex.y = renderableIn.m_uniformsOffset;
+		instanceVertex.z = meshLodOffset;
+		instanceVertex.w = renderableIn.m_boneTransformsOffset;
+		g_instanceRateRenderables[indirectIdx] = instanceVertex;
+	}
+	else
+	{
+		const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderableIn.m_particleEmitterOffset);
+
+		DrawIndirectArgsWithPadding indirect;
+		indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
+		indirect.m_instanceCount = 1;
+		indirect.m_firstVertex = 0;
+		indirect.m_firstInstance = indirectIdx;
+		g_drawIndirectArgs[indirectIdx] = indirect;
+
+		UVec4 instanceVertex;
+		instanceVertex.x = renderableIn.m_worldTransformsOffset;
+		instanceVertex.y = renderableIn.m_uniformsOffset;
+		instanceVertex.z = meshLodOffset;
+		instanceVertex.w = renderableIn.m_particleEmitterOffset;
+		g_instanceRateRenderables[indirectIdx] = instanceVertex;
+	}
 
 	// Now update the stats
 #if STATS

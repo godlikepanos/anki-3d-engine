@@ -274,11 +274,18 @@ void CommandBuffer::drawIndirect(PrimitiveTopology topology, U32 drawCount, PtrS
 	self.drawIndirectInternal(topology, drawCount, offset, buff);
 }
 
-void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, Buffer* countBuffer,
-											 PtrSize countBufferOffset, U32 maxDrawCount)
+void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride,
+											 Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.drawIndexedIndirectCountInternal(topology, argBuffer, argBufferOffset, countBuffer, countBufferOffset, maxDrawCount);
+	self.drawIndexedIndirectCountInternal(topology, argBuffer, argBufferOffset, argBufferStride, countBuffer, countBufferOffset, maxDrawCount);
+}
+
+void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride,
+									  Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.drawIndirectCountInternal(topology, argBuffer, argBufferOffset, argBufferStride, countBuffer, countBufferOffset, maxDrawCount);
 }
 
 void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* buff)

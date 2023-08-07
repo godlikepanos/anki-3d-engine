@@ -416,6 +416,22 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		m_gpuSceneRenderable.uploadToGpuScene(renderable);
 	}
 
+	if(!m_resourceUpdated)
+	{
+		// Always upload GpuSceneParticleEmitter
+
+		GpuSceneParticleEmitter particles = {};
+		particles.m_vertexOffsets[U32(VertexStreamId::kParticlePosition)] = m_gpuScenePositions.getOffset();
+		particles.m_vertexOffsets[U32(VertexStreamId::kParticleColor)] = m_gpuSceneAlphas.getOffset();
+		particles.m_vertexOffsets[U32(VertexStreamId::kParticleScale)] = m_gpuSceneScales.getOffset();
+		particles.m_aliveParticleCount = m_aliveParticleCount;
+		if(!m_gpuSceneParticleEmitter.isValid())
+		{
+			m_gpuSceneParticleEmitter.allocate();
+		}
+		m_gpuSceneParticleEmitter.uploadToGpuScene(particles);
+	}
+
 	// Upload the GpuSceneRenderableAabb always
 	for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 	{

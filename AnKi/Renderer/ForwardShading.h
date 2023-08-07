@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
 
 namespace anki {
 
@@ -25,9 +26,18 @@ public:
 		return Error::kNone;
 	}
 
+	void populateRenderGraph(RenderingContext& ctx);
+
 	void setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass);
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+private:
+	class
+	{
+	public:
+		GpuVisibilityOutput m_visOut;
+	} m_runCtx;
 };
 /// @}
 

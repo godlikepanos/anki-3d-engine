@@ -165,17 +165,26 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			return;
 		}
 
-		ANKI_ASSERT(state.m_indexedDrawcall && "TODO non-indexed");
-
 		ShaderProgramPtr prog = state.m_program;
 		cmdb.bindShaderProgram(prog.get());
 
 		const U32 maxDrawCount = userCount;
 
-		cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
-									  args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
-									  args.m_mdiDrawCountsBuffer.m_buffer, args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount,
-									  maxDrawCount);
+		if(state.m_indexedDrawcall)
+		{
+			cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
+										  args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
+										  sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
+										  args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
+		}
+		else
+		{
+			// Yes, the DrawIndexedIndirectArgs is intentional
+			cmdb.drawIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
+								   args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
+								   sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
+								   args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
+		}
 
 		++bucketCount;
 		allUserCount += userCount;

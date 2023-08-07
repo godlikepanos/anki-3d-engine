@@ -51,6 +51,11 @@ public:
 		return m_runCtx.m_prevFrameDepthRt;
 	}
 
+	RenderTargetHandle getHzbRt() const
+	{
+		return m_runCtx.m_hzbRt;
+	}
+
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{

@@ -84,6 +84,9 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	case RenderingTechnique::kDepth:
 		aabbCount = GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementCount();
 		break;
+	case RenderingTechnique::kForward:
+		aabbCount = GpuSceneArrays::RenderableAabbForward::getSingleton().getElementCount();
+		break;
 	default:
 		ANKI_ASSERT(0);
 	}
@@ -177,6 +180,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
 								   GpuSceneArrays::RenderableAabbDepth::getSingleton().getGpuSceneOffsetOfArrayBase(),
 								   GpuSceneArrays::RenderableAabbDepth::getSingleton().getBufferRange());
+			break;
+		case RenderingTechnique::kForward:
+			cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(),
+								   GpuSceneArrays::RenderableAabbForward::getSingleton().getGpuSceneOffsetOfArrayBase(),
+								   GpuSceneArrays::RenderableAabbForward::getSingleton().getBufferRange());
 			break;
 		default:
 			ANKI_ASSERT(0);

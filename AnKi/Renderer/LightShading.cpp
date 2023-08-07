@@ -152,7 +152,6 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 
 	// Do light shading first
-	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
 		cmdb.bindShaderProgram(m_lightShading.m_grProg[getRenderer().getRtShadowsEnabled()].get());
 		cmdb.setDepthWrite(false);
@@ -184,7 +183,6 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 
 	// Apply indirect
-	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
 		cmdb.setDepthWrite(false);
 		cmdb.bindShaderProgram(m_applyIndirect.m_grProg.get());
@@ -214,7 +212,6 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 
 	// Skybox
-	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
 		cmdb.setDepthCompareOperation(CompareOperation::kEqual);
 
@@ -254,8 +251,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthCompareOperation(CompareOperation::kLess);
 	}
 
-	// Do the fog apply
-	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == rgraphCtx.m_secondLevelCommandBufferCount - 1u)
+	// Apply the fog
 	{
 		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
 
@@ -288,17 +284,19 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 
 	// Forward shading last
-	if(enableVrs)
 	{
-		cmdb.setVrsRate(VrsRate::k2x2);
-	}
+		if(enableVrs)
+		{
+			cmdb.setVrsRate(VrsRate::k2x2);
+		}
 
-	getRenderer().getForwardShading().run(ctx, rgraphCtx);
+		getRenderer().getForwardShading().run(ctx, rgraphCtx);
 
-	if(enableVrs)
-	{
-		// Restore
-		cmdb.setVrsRate(VrsRate::k1x1);
+		if(enableVrs)
+		{
+			// Restore
+			cmdb.setVrsRate(VrsRate::k1x1);
+		}
 	}
 }
 
@@ -339,10 +337,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad");
 
-	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()),
-				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
-					 run(ctx, rgraphCtx);
-				 });
+	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		run(ctx, rgraphCtx);
+	});
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt(), sriRt);
 
 	const TextureUsageBit readUsage = TextureUsageBit::kSampledFragment;

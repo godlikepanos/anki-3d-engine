@@ -318,14 +318,15 @@ public:
 	}
 
 	ANKI_FORCE_INLINE void drawIndexedIndirectCountInternal(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset,
-															Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
+															U32 argBufferStride, Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
 	{
 		m_state.setPrimitiveTopology(topology);
 		drawcallCommon();
 		const BufferImpl& argBufferImpl = static_cast<const BufferImpl&>(*argBuffer);
 		ANKI_ASSERT(argBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
 		ANKI_ASSERT((argBufferOffset % 4) == 0);
-		ANKI_ASSERT(argBufferOffset + maxDrawCount * sizeof(DrawIndexedIndirectArgs) <= argBuffer->getSize());
+		ANKI_ASSERT(argBufferStride >= sizeof(DrawIndexedIndirectArgs));
+		ANKI_ASSERT(argBufferOffset + maxDrawCount * argBufferStride <= argBuffer->getSize());
 
 		const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(*countBuffer);
 		ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
@@ -335,7 +336,29 @@ public:
 		ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
 
 		vkCmdDrawIndexedIndirectCountKHR(m_handle, argBufferImpl.getHandle(), argBufferOffset, countBufferImpl.getHandle(), countBufferOffset,
-										 maxDrawCount, sizeof(DrawIndexedIndirectArgs));
+										 maxDrawCount, argBufferStride);
+	}
+
+	ANKI_FORCE_INLINE void drawIndirectCountInternal(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride,
+													 Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
+	{
+		m_state.setPrimitiveTopology(topology);
+		drawcallCommon();
+		const BufferImpl& argBufferImpl = static_cast<const BufferImpl&>(*argBuffer);
+		ANKI_ASSERT(argBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
+		ANKI_ASSERT((argBufferOffset % 4) == 0);
+		ANKI_ASSERT(argBufferStride >= sizeof(DrawIndirectArgs));
+		ANKI_ASSERT(argBufferOffset + maxDrawCount * argBufferStride <= argBuffer->getSize());
+
+		const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(*countBuffer);
+		ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
+		ANKI_ASSERT((countBufferOffset % 4) == 0);
+		ANKI_ASSERT(countBufferOffset + maxDrawCount * sizeof(U32) <= countBuffer->getSize());
+
+		ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
+
+		vkCmdDrawIndirectCountKHR(m_handle, argBufferImpl.getHandle(), argBufferOffset, countBufferImpl.getHandle(), countBufferOffset, maxDrawCount,
+								  argBufferStride);
 	}
 
 	void dispatchComputeInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
