@@ -76,9 +76,11 @@ public:
 
 	void init();
 
-	void allocate(PtrSize size, U32 alignment, GpuSceneBufferAllocation& alloc)
+	GpuSceneBufferAllocation allocate(PtrSize size, U32 alignment)
 	{
+		GpuSceneBufferAllocation alloc;
 		m_pool.allocate(size, alignment, alloc.m_token);
+		return alloc;
 	}
 
 	void deferredFree(GpuSceneBufferAllocation& alloc)

@@ -676,15 +676,15 @@ void CommandBufferImpl::setPipelineBarrierInternal(ConstWeakArray<TextureBarrier
 		ANKI_ASSERT(barrier.m_offset < impl.getSize());
 		inf.offset = barrier.m_offset;
 
-		if(barrier.m_size == kMaxPtrSize)
+		if(barrier.m_range == kMaxPtrSize)
 		{
 			inf.size = VK_WHOLE_SIZE;
 		}
 		else
 		{
-			ANKI_ASSERT(barrier.m_size > 0);
-			ANKI_ASSERT(barrier.m_offset + barrier.m_size <= impl.getSize());
-			inf.size = barrier.m_size;
+			ANKI_ASSERT(barrier.m_range > 0);
+			ANKI_ASSERT(barrier.m_offset + barrier.m_range <= impl.getSize());
+			inf.size = barrier.m_range;
 		}
 
 		VkPipelineStageFlags srcStage;

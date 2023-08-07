@@ -1333,7 +1333,7 @@ void RenderGraph::run() const
 			inf.m_previousUsage = barrier.m_usageBefore;
 			inf.m_nextUsage = barrier.m_usageAfter;
 			inf.m_offset = m_ctx->m_buffers[barrier.m_idx].m_offset;
-			inf.m_size = m_ctx->m_buffers[barrier.m_idx].m_range;
+			inf.m_range = m_ctx->m_buffers[barrier.m_idx].m_range;
 			inf.m_buffer = m_ctx->m_buffers[barrier.m_idx].m_buffer.get();
 		}
 		DynamicArray<AccelerationStructureBarrierInfo, MemoryPoolPtrWrapper<StackMemoryPool>> asBarriers(pool);

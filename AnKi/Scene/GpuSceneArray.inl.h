@@ -14,7 +14,7 @@ GpuSceneArray<TGpuSceneObject, kId>::GpuSceneArray(U32 maxArraySize)
 {
 	maxArraySize = getAlignedRoundUp(sizeof(SubMask), maxArraySize);
 	const U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment;
-	GpuSceneBuffer::getSingleton().allocate(sizeof(TGpuSceneObject) * maxArraySize, alignment, m_gpuSceneAllocation);
+	m_gpuSceneAllocation = GpuSceneBuffer::getSingleton().allocate(sizeof(TGpuSceneObject) * maxArraySize, alignment);
 
 	m_inUseIndicesMask.resize(maxArraySize / sizeof(SubMask), false);
 	ANKI_ASSERT(m_inuUseIndicesCount == 0);

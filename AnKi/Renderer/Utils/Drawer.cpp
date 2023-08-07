@@ -86,19 +86,21 @@ void RenderableDrawer::flushDrawcall(Context& ctx, CommandBuffer& cmdb)
 {
 	// Instance buffer
 	RebarAllocation token;
-	GpuSceneRenderablePacked* instances = static_cast<GpuSceneRenderablePacked*>(
-		RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(GpuSceneRenderablePacked) * ctx.m_cachedRenderElementCount, token));
+	GpuSceneRenderableVertex* instances = static_cast<GpuSceneRenderableVertex*>(
+		RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(GpuSceneRenderableVertex) * ctx.m_cachedRenderElementCount, token));
 	for(U32 i = 0; i < ctx.m_cachedRenderElementCount; ++i)
 	{
-		GpuSceneRenderable renderable = {};
+		GpuSceneRenderableVertex renderable = {};
 		renderable.m_worldTransformsOffset = ctx.m_cachedRenderElements[i]->m_worldTransformsOffset;
 		renderable.m_uniformsOffset = ctx.m_cachedRenderElements[i]->m_uniformsOffset;
-		renderable.m_geometryOffset = ctx.m_cachedRenderElements[i]->m_geometryOffset;
-		renderable.m_boneTransformsOffset = ctx.m_cachedRenderElements[i]->m_boneTransformsOffset;
-		instances[i] = packGpuSceneRenderable(renderable);
+		renderable.m_meshLodOffset = ctx.m_cachedRenderElements[i]->m_meshLodOffset;
+		renderable.m_boneTransformsOrParticleEmitterOffset = ctx.m_cachedRenderElements[i]->m_boneTransformsOffset
+																 ? ctx.m_cachedRenderElements[i]->m_boneTransformsOffset
+																 : ctx.m_cachedRenderElements[i]->m_particleEmitterOffset;
+		instances[i] = renderable;
 	}
 
-	cmdb.bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, sizeof(GpuSceneRenderablePacked),
+	cmdb.bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), token.m_offset, sizeof(GpuSceneRenderableVertex),
 						  VertexStepRate::kInstance);
 
 	// Set state
@@ -152,7 +154,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	setState(args, cmdb);
 
 	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer.m_buffer, args.m_instanceRateRenderablesBuffer.m_offset,
-						  sizeof(GpuSceneRenderablePacked), VertexStepRate::kInstance);
+						  sizeof(GpuSceneRenderableVertex), VertexStepRate::kInstance);
 
 	U32 allUserCount = 0;
 	U32 bucketCount = 0;

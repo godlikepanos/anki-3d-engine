@@ -18,7 +18,7 @@
 
 struct VertIn
 {
-	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
+	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -36,8 +36,8 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset);
+	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
 	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
 

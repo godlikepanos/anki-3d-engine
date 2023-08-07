@@ -90,6 +90,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.emplaceBack(profile(shaderType));
 	dxcArgs.emplaceBack("-spirv");
 	dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4");
+	// dxcArgs.emplaceBack("-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
 	// dxcArgs.emplaceBack("-Zi"); // Debug info
 	dxcArgs.emplaceBack(hlslFilename);
 

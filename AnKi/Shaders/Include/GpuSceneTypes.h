@@ -21,12 +21,20 @@ struct GpuSceneRenderable
 {
 	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
 	U32 m_uniformsOffset;
-	U32 m_geometryOffset; ///< Points to a GpuSceneMeshLod or a GpuSceneParticleEmitter
-	U32 m_boneTransformsOffset;
+	U32 m_meshLodsOffset; ///< Points to an array of GpuSceneMeshLod sized kMaxLodCount.
+	U32 m_boneTransformsOffset; ///< Array of Mat3x4 or 0 if its not a skin.
+	U32 m_particleEmitterOffset; ///< Offset to GpuSceneParticleEmitter or 0 if it's not an emitter.
 };
-static_assert(sizeof(GpuSceneRenderable) == sizeof(Vec4) * 1);
 
-typedef UVec4 GpuSceneRenderablePacked;
+/// Almost similar to GpuSceneRenderable but with only what the material shaders need. Needs to fit in a UVec4 vertex attribute.
+struct GpuSceneRenderableVertex
+{
+	U32 m_worldTransformsOffset;
+	U32 m_uniformsOffset;
+	U32 m_meshLodOffset; ///< Points to a single GpuSceneMeshLod and not an array
+	U32 m_boneTransformsOrParticleEmitterOffset;
+};
+static_assert(sizeof(GpuSceneRenderableVertex) == sizeof(UVec4));
 
 /// Used in visibility testing.
 struct GpuSceneRenderableAabb
@@ -54,7 +62,7 @@ static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 3);
 struct GpuSceneParticleEmitter
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kParticleRelatedCount];
-	U32 m_padding0;
+	U32 m_aliveParticleCount;
 };
 static_assert(sizeof(GpuSceneParticleEmitter) == sizeof(Vec4) * 2);
 

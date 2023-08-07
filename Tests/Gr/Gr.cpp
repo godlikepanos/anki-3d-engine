@@ -406,7 +406,7 @@ static void setBufferBarrier(CommandBufferPtr cmdb, BufferPtr buffer, BufferUsag
 	barrier.m_previousUsage = before;
 	barrier.m_nextUsage = after;
 	barrier.m_offset = offset;
-	barrier.m_size = range;
+	barrier.m_range = range;
 	barrier.m_buffer = buffer.get();
 
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});

@@ -36,8 +36,10 @@ public:
 
 	U32 m_worldTransformsOffset;
 	U32 m_uniformsOffset;
-	U32 m_geometryOffset;
+	U32 m_meshLodOffset;
 	U32 m_boneTransformsOffset;
+	U32 m_particleEmitterOffset;
+	U32 m_instanceCount;
 
 	union
 	{

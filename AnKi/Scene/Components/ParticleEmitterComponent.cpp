@@ -15,6 +15,7 @@
 #include <AnKi/Math.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 
 namespace anki {
 
@@ -197,6 +198,55 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 	, m_spatial(this)
 {
+	// Allocate and populate a quad
+	const U32 vertCount = 4;
+	const U32 indexCount = 6;
+
+	m_quadPositions = UnifiedGeometryBuffer::getSingleton().allocateFormat(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition], vertCount);
+	m_quadUvs = UnifiedGeometryBuffer::getSingleton().allocateFormat(kMeshRelatedVertexStreamFormats[VertexStreamId::kUv], vertCount);
+	m_quadIndices = UnifiedGeometryBuffer::getSingleton().allocateFormat(Format::kR16_Uint, indexCount);
+
+	RebarAllocation positionsAlloc;
+	static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16A16_Unorm);
+	U16Vec4* transientPositions = RebarTransientMemoryPool::getSingleton().allocateFrame<U16Vec4>(vertCount, positionsAlloc);
+	transientPositions[0] = U16Vec4(0, 0, 0, 0);
+	transientPositions[1] = U16Vec4(kMaxU16, 0, 0, 0);
+	transientPositions[2] = U16Vec4(kMaxU16, kMaxU16, 0, 0);
+	transientPositions[3] = U16Vec4(0, kMaxU16, 0, 0);
+
+	RebarAllocation uvsAlloc;
+	static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kUv] == Format::kR32G32_Sfloat);
+	Vec2* transientUvs = RebarTransientMemoryPool::getSingleton().allocateFrame<Vec2>(vertCount, uvsAlloc);
+	transientUvs[0] = Vec2(0.0f);
+	transientUvs[1] = Vec2(1.0f, 0.0f);
+	transientUvs[2] = Vec2(1.0f, 1.0f);
+	transientUvs[3] = Vec2(0.0f, 1.0f);
+
+	RebarAllocation indicesAlloc;
+	U16* transientIndices = RebarTransientMemoryPool::getSingleton().allocateFrame<U16>(indexCount, indicesAlloc);
+	transientIndices[0] = 0;
+	transientIndices[1] = 1;
+	transientIndices[2] = 3;
+	transientIndices[3] = 1;
+	transientIndices[4] = 2;
+	transientIndices[5] = 3;
+
+	CommandBufferInitInfo cmdbInit("Particle quad upload");
+	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+	Buffer* srcBuff = &RebarTransientMemoryPool::getSingleton().getBuffer();
+	Buffer* dstBuff = &UnifiedGeometryBuffer::getSingleton().getBuffer();
+	cmdb->copyBufferToBuffer(srcBuff, positionsAlloc.m_offset, dstBuff, m_quadPositions.getOffset(), positionsAlloc.m_range);
+	cmdb->copyBufferToBuffer(srcBuff, uvsAlloc.m_offset, dstBuff, m_quadUvs.getOffset(), uvsAlloc.m_range);
+	cmdb->copyBufferToBuffer(srcBuff, indicesAlloc.m_offset, dstBuff, m_quadIndices.getOffset(), indicesAlloc.m_range);
+	BufferBarrierInfo barrier;
+	barrier.m_buffer = dstBuff;
+	barrier.m_offset = 0;
+	barrier.m_range = kMaxPtrSize;
+	barrier.m_previousUsage = BufferUsageBit::kTransferDestination;
+	barrier.m_nextUsage = dstBuff->getBufferUsage();
+	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
+	cmdb->flush();
 }
 
 ParticleEmitterComponent::~ParticleEmitterComponent()
@@ -255,11 +305,11 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	}
 
 	// GPU scene allocations
-	GpuSceneBuffer::getSingleton().allocate(sizeof(Vec3) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuScenePositions);
-	GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneAlphas);
-	GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32), m_gpuSceneScales);
-	GpuSceneBuffer::getSingleton().allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(), alignof(U32),
-											m_gpuSceneUniforms);
+	m_gpuScenePositions = GpuSceneBuffer::getSingleton().allocate(sizeof(Vec3) * m_props.m_maxNumOfParticles, alignof(F32));
+	m_gpuSceneAlphas = GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32));
+	m_gpuSceneScales = GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32));
+	m_gpuSceneUniforms =
+		GpuSceneBuffer::getSingleton().allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(), alignof(U32));
 
 	// Allocate buckets
 	for(RenderingTechnique t :
@@ -323,6 +373,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticlePosition)] = m_gpuScenePositions.getOffset();
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticleColor)] = m_gpuSceneAlphas.getOffset();
 		particles.m_vertexOffsets[U32(VertexStreamId::kParticleScale)] = m_gpuSceneScales.getOffset();
+		particles.m_aliveParticleCount = m_aliveParticleCount;
 		if(!m_gpuSceneParticleEmitter.isValid())
 		{
 			m_gpuSceneParticleEmitter.allocate();
@@ -333,11 +384,30 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		patcher.newCopy(*info.m_framePool, m_gpuSceneUniforms, m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
 						m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getBegin());
 
+		// Upload mesh LODs
+		GpuSceneMeshLod meshLod = {};
+		meshLod.m_vertexOffsets[U32(VertexStreamId::kPosition)] =
+			m_quadPositions.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
+		meshLod.m_vertexOffsets[U32(VertexStreamId::kUv)] =
+			m_quadUvs.getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kUv]).m_texelSize;
+		meshLod.m_indexCount = 6;
+		meshLod.m_firstIndex = m_quadIndices.getOffset() / sizeof(U16);
+		meshLod.m_positionScale = 1.0f;
+		meshLod.m_positionTranslation = Vec3(-0.5f, -0.5f, 0.0f);
+		Array<GpuSceneMeshLod, kMaxLodCount> meshLods;
+		meshLods.fill(meshLod);
+		if(!m_gpuSceneMeshLods.isValid())
+		{
+			m_gpuSceneMeshLods.allocate();
+		}
+		m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
+
 		// Upload the GpuSceneRenderable
 		GpuSceneRenderable renderable;
 		renderable.m_boneTransformsOffset = 0;
-		renderable.m_geometryOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 		renderable.m_uniformsOffset = m_gpuSceneUniforms.getOffset();
+		renderable.m_meshLodsOffset = m_gpuSceneMeshLods.getGpuSceneOffset();
+		renderable.m_particleEmitterOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 		renderable.m_worldTransformsOffset = 0;
 		if(!m_gpuSceneRenderable.isValid())
 		{
@@ -530,7 +600,8 @@ void ParticleEmitterComponent::setupRenderableQueueElements(RenderingTechnique t
 	el->m_program = prog.get();
 	el->m_worldTransformsOffset = 0;
 	el->m_uniformsOffset = m_gpuSceneUniforms.getOffset();
-	el->m_geometryOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
+	el->m_meshLodOffset = m_gpuSceneMeshLods.getGpuSceneOffset();
+	el->m_particleEmitterOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 	el->m_boneTransformsOffset = 0;
 	el->m_vertexCount = 6 * m_aliveParticleCount;
 	el->m_firstVertex = 0;

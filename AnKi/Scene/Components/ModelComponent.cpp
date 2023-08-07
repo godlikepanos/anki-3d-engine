@@ -75,7 +75,7 @@ void ModelComponent::loadModelResource(CString filename)
 		uniformsSize += size;
 	}
 
-	GpuSceneBuffer::getSingleton().allocate(uniformsSize, 4, m_gpuSceneUniforms);
+	m_gpuSceneUniforms = GpuSceneBuffer::getSingleton().allocate(uniformsSize, 4);
 	uniformsSize = 0;
 
 	// Init the patches
@@ -187,10 +187,10 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			m_patchInfos[i].m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
 
 			// Upload the GpuSceneRenderable
-			GpuSceneRenderable gpuRenderable;
+			GpuSceneRenderable gpuRenderable = {};
 			gpuRenderable.m_worldTransformsOffset = m_gpuSceneTransforms.getGpuSceneOffset();
 			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-			gpuRenderable.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset();
+			gpuRenderable.m_meshLodsOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset();
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 			m_patchInfos[i].m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);
 		}
@@ -373,7 +373,8 @@ void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique te
 		queueElem.m_program = modelInf.m_program.get();
 		queueElem.m_worldTransformsOffset = m_gpuSceneTransforms.getGpuSceneOffset();
 		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset() + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_meshLodOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset() + lod * sizeof(GpuSceneMeshLod);
+		queueElem.m_particleEmitterOffset = 0;
 		queueElem.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 		queueElem.m_indexCount = modelInf.m_indexCount;
 		queueElem.m_firstIndex = U32(modelInf.m_indexBufferOffset / 2 + modelInf.m_firstIndex);

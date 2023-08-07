@@ -64,7 +64,7 @@ public:
 	/// Get vertex buffer info.
 	void getVertexStreamInfo(U32 lod, VertexStreamId stream, PtrSize& bufferOffset, U32& vertexCount) const
 	{
-		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset() + m_lods[lod].m_fixedUnifiedGeometryBufferOffset[stream];
+		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset();
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
@@ -104,7 +104,6 @@ private:
 	public:
 		UnifiedGeometryBufferAllocation m_indexBufferAllocationToken;
 		Array<UnifiedGeometryBufferAllocation, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
-		Array<U8, U32(VertexStreamId::kMeshRelatedCount)> m_fixedUnifiedGeometryBufferOffset = {};
 
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;

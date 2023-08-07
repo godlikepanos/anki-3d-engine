@@ -31,8 +31,7 @@ void GpuSceneBuffer::init()
 	m_pool.init(buffUsage, classes, poolSize, "GpuScene", true);
 
 	// Allocate something dummy to force creating the GPU buffer
-	GpuSceneBufferAllocation alloc;
-	allocate(16, 4, alloc);
+	GpuSceneBufferAllocation alloc = allocate(16, 4);
 	deferredFree(alloc);
 }
 

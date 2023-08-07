@@ -10,6 +10,7 @@
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Util/WeakArray.h>
 
@@ -62,12 +63,17 @@ private:
 	Second m_timeLeftForNextEmission = 0.0;
 	U32 m_aliveParticleCount = 0;
 
+	UnifiedGeometryBufferAllocation m_quadPositions;
+	UnifiedGeometryBufferAllocation m_quadUvs;
+	UnifiedGeometryBufferAllocation m_quadIndices;
+
 	GpuSceneBufferAllocation m_gpuScenePositions;
 	GpuSceneBufferAllocation m_gpuSceneAlphas;
 	GpuSceneBufferAllocation m_gpuSceneScales;
 	GpuSceneBufferAllocation m_gpuSceneUniforms;
 	GpuSceneArrays::ParticleEmitter::Allocation m_gpuSceneParticleEmitter;
 	GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
+	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
 	GpuSceneArrays::RenderableAabbGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
 	GpuSceneArrays::RenderableAabbDepth::Allocation m_gpuSceneRenderableAabbDepth;
 	GpuSceneArrays::RenderableAabbForward::Allocation m_gpuSceneRenderableAabbForward;

@@ -9,6 +9,8 @@
 
 ANKI_TEST(Util, String)
 {
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+
 	// Copy
 	{
 		String a, b;
@@ -182,7 +184,7 @@ ANKI_TEST(Util, String)
 		ANKI_TEST_EXPECT_EQ(i, -9223372036854775807);
 
 		F64 f;
-		a += "123456789.145";
+		a = "123456789.145";
 		ANKI_TEST_EXPECT_NO_ERR(a.toNumber(f));
 		ANKI_TEST_EXPECT_EQ(f, 123456789.145);
 	}
@@ -205,4 +207,6 @@ ANKI_TEST(Util, String)
 		a.replaceAll("%foo%", "");
 		ANKI_TEST_EXPECT_EQ(a, "ajlkadsf");
 	}
+
+	DefaultMemoryPool::freeSingleton();
 }

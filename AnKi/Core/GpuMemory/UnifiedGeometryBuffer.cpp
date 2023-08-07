@@ -34,8 +34,7 @@ void UnifiedGeometryBuffer::init()
 	m_pool.init(buffUsage, classes, poolSize, "UnifiedGeometry", false);
 
 	// Allocate something dummy to force creating the GPU buffer
-	UnifiedGeometryBufferAllocation alloc;
-	allocate(16, 4, alloc);
+	UnifiedGeometryBufferAllocation alloc = allocate(16, 4);
 	deferredFree(alloc);
 }
 

@@ -22,7 +22,7 @@
 [[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
 
 // These 2 have the same size
-[[vk::binding(3)]] RWStructuredBuffer<GpuSceneRenderable> g_instanceRateRenderables;
+[[vk::binding(3)]] RWStructuredBuffer<UVec4> g_instanceRateRenderables;
 [[vk::binding(4)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
 
 // Index pointing to the above arrays. One for each render state bucket
@@ -180,7 +180,7 @@
 	indirectIdx += g_drawIndirectArgsOffsets[renderStateBucket];
 
 	const GpuSceneRenderable renderableIn = g_renderables[renderableIdx];
-	const U32 meshLodOffset = renderableIn.m_geometryOffset + sizeof(GpuSceneMeshLod) * lod;
+	const U32 meshLodOffset = renderableIn.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
 	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
 
 	DrawIndexedIndirectArgs indirect;
@@ -191,9 +191,12 @@
 	indirect.m_firstInstance = indirectIdx;
 	g_drawIndexedIndirectArgs[indirectIdx] = indirect;
 
-	GpuSceneRenderable renderableOut = renderableIn;
-	renderableOut.m_geometryOffset = meshLodOffset;
-	g_instanceRateRenderables[indirectIdx] = renderableOut;
+	UVec4 instanceVertex;
+	instanceVertex.x = renderableIn.m_worldTransformsOffset;
+	instanceVertex.y = renderableIn.m_uniformsOffset;
+	instanceVertex.z = meshLodOffset;
+	instanceVertex.w = renderableIn.m_boneTransformsOffset;
+	g_instanceRateRenderables[indirectIdx] = instanceVertex;
 
 	// Now update the stats
 #if STATS

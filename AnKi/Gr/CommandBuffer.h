@@ -32,7 +32,7 @@ public:
 	BufferUsageBit m_previousUsage = BufferUsageBit::kNone;
 	BufferUsageBit m_nextUsage = BufferUsageBit::kNone;
 	PtrSize m_offset = 0;
-	PtrSize m_size = 0;
+	PtrSize m_range = 0;
 };
 
 class AccelerationStructureBarrierInfo

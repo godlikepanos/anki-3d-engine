@@ -118,7 +118,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		lod.m_indexCount = header.m_totalIndexCounts[l];
 		ANKI_ASSERT((lod.m_indexCount % 3) == 0 && "Expecting triangles");
 		const PtrSize indexBufferSize = PtrSize(lod.m_indexCount) * getIndexSize(m_indexType);
-		UnifiedGeometryBuffer::getSingleton().allocate(indexBufferSize, getIndexSize(m_indexType), lod.m_indexBufferAllocationToken);
+		lod.m_indexBufferAllocationToken = UnifiedGeometryBuffer::getSingleton().allocate(indexBufferSize, getIndexSize(m_indexType));
 
 		// Vertex stuff
 		lod.m_vertexCount = header.m_totalVertexCounts[l];
@@ -131,19 +131,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 			m_presentVertStreams |= VertexStreamMask(1 << stream);
 
-			const U32 texelSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
-			const U32 alignment = max(4u, nextPowerOfTwo(texelSize));
-			const PtrSize vertexBufferSize = PtrSize(lod.m_vertexCount) * texelSize + alignment;
-
-			UnifiedGeometryBuffer::getSingleton().allocate(vertexBufferSize, alignment, lod.m_vertexBuffersAllocationToken[stream]);
-
-			// We need to align the actual offset to the texel size
-			const PtrSize remainder = lod.m_vertexBuffersAllocationToken[stream].getOffset() % texelSize;
-			lod.m_fixedUnifiedGeometryBufferOffset[stream] = U8(texelSize - remainder);
-
-			ANKI_ASSERT((lod.m_vertexBuffersAllocationToken[stream].getOffset() + lod.m_fixedUnifiedGeometryBufferOffset[stream]) % texelSize == 0);
-			ANKI_ASSERT(lod.m_fixedUnifiedGeometryBufferOffset[stream] + PtrSize(lod.m_vertexCount) * texelSize
-						<= lod.m_vertexBuffersAllocationToken[stream].getAllocatedSize());
+			lod.m_vertexBuffersAllocationToken[stream] =
+				UnifiedGeometryBuffer::getSingleton().allocateFormat(kMeshRelatedVertexStreamFormats[stream], lod.m_vertexCount);
 		}
 
 		// BLAS
@@ -157,8 +146,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			inf.m_bottomLevel.m_indexCount = lod.m_indexCount;
 			inf.m_bottomLevel.m_indexType = m_indexType;
 			inf.m_bottomLevel.m_positionBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
-			inf.m_bottomLevel.m_positionBufferOffset = lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition].getOffset()
-													   + lod.m_fixedUnifiedGeometryBufferOffset[VertexStreamId::kPosition];
+			inf.m_bottomLevel.m_positionBufferOffset = lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition].getOffset();
 			inf.m_bottomLevel.m_positionStride = getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
 			inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
 			inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
@@ -272,8 +260,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 			// Copy
 			cmdb->copyBufferToBuffer(&handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
-									 lod.m_vertexBuffersAllocationToken[stream].getOffset() + lod.m_fixedUnifiedGeometryBufferOffset[stream],
-									 handle.getRange());
+									 lod.m_vertexBuffersAllocationToken[stream].getOffset(), handle.getRange());
 		}
 	}
 
@@ -285,7 +272,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		BufferBarrierInfo bufferBarrier;
 		bufferBarrier.m_buffer = unifiedGeometryBuffer;
 		bufferBarrier.m_offset = 0;
-		bufferBarrier.m_size = kMaxPtrSize;
+		bufferBarrier.m_range = kMaxPtrSize;
 		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
 		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
@@ -321,7 +308,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		BufferBarrierInfo bufferBarrier;
 		bufferBarrier.m_buffer = unifiedGeometryBuffer;
 		bufferBarrier.m_offset = 0;
-		bufferBarrier.m_size = kMaxPtrSize;
+		bufferBarrier.m_range = kMaxPtrSize;
 		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
 		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 

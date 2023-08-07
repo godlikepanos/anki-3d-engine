@@ -80,6 +80,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	{
 	case RenderingTechnique::kGBuffer:
 		aabbCount = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount();
+		break;
 	case RenderingTechnique::kDepth:
 		aabbCount = GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementCount();
 		break;

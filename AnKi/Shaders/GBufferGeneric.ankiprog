@@ -60,7 +60,7 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
+	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
 };
 
 struct VertOut
@@ -107,16 +107,17 @@ struct Mat3x4_2
 	Mat3x4 m_b;
 };
 
-Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, GpuSceneRenderable renderable, U32 index)
+Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, GpuSceneRenderableVertex renderable, U32 index)
 {
 	const U32 boneIdx = vert.m_boneIndices[index];
-	U32 byteOffset = renderable.m_boneTransformsOffset;
+	U32 byteOffset = renderable.m_boneTransformsOrParticleEmitterOffset;
 	byteOffset += boneIdx * sizeof(Mat3x4) * 2;
 	return g_gpuScene.Load<Mat3x4_2>(byteOffset);
 }
 
 #if ANKI_BONES
-void skinning(UnpackedMeshVertex vert, GpuSceneRenderable renderable, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal, inout RVec4 tangent)
+void skinning(UnpackedMeshVertex vert, GpuSceneRenderableVertex renderable, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal,
+			  inout RVec4 tangent)
 {
 	Mat3x4_2 mats = loadBoneTransforms(vert, renderable, 0);
 
@@ -170,8 +171,8 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset);
+	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
 
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);

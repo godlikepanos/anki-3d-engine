@@ -310,8 +310,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	const FrustumFlags frustumFlags = m_frcCtx->m_frustum;
 	const Frustum& primaryFrustum = *m_frcCtx->m_primaryFrustum.m_frustum;
 
-	StackMemoryPool& framePool = SceneGraph::getSingleton().getFrameMemoryPool();
-
 	WeakArray<RenderQueue> nextQueues;
 	WeakArray<VisibilityFrustum> nextFrustums;
 

@@ -630,12 +630,12 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 		// Init SBT record
 		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndex * shaderHandleSize], shaderHandleSize);
 
-		ANKI_ASSERT(shaderHandleSize + sizeof(GpuSceneRenderable) <= m_sbtRecordSize);
-		GpuSceneRenderable* shaderRecord = reinterpret_cast<GpuSceneRenderable*>(sbt + shaderHandleSize);
+		ANKI_ASSERT(shaderHandleSize + sizeof(GpuSceneRenderableVertex) <= m_sbtRecordSize);
+		GpuSceneRenderableVertex* shaderRecord = reinterpret_cast<GpuSceneRenderableVertex*>(sbt + shaderHandleSize);
 		shaderRecord->m_worldTransformsOffset = element.m_worldTransformsOffset;
 		shaderRecord->m_uniformsOffset = element.m_uniformsOffset;
-		shaderRecord->m_geometryOffset = element.m_geometryOffset;
-		shaderRecord->m_boneTransformsOffset = 0;
+		shaderRecord->m_meshLodOffset = element.m_geometryOffset;
+		shaderRecord->m_boneTransformsOrParticleEmitterOffset = 0;
 
 		sbt += m_sbtRecordSize;
 	}

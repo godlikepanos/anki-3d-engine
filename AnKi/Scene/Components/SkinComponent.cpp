@@ -48,7 +48,7 @@ void SkinComponent::loadSkeletonResource(CString fname)
 	m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
 	m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
-	GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4, m_gpuSceneBoneTransforms);
+	m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)

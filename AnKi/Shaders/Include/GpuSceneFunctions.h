@@ -9,23 +9,13 @@
 
 ANKI_BEGIN_NAMESPACE
 
-inline GpuSceneRenderablePacked packGpuSceneRenderable(GpuSceneRenderable x)
+inline GpuSceneRenderableVertex unpackGpuSceneRenderableVertex(UVec4 x)
 {
-	GpuSceneRenderablePacked o;
-	o[0] = x.m_worldTransformsOffset;
-	o[1] = x.m_uniformsOffset;
-	o[2] = x.m_geometryOffset;
-	o[3] = x.m_boneTransformsOffset;
-	return o;
-}
-
-inline GpuSceneRenderable unpackGpuSceneRenderable(GpuSceneRenderablePacked x)
-{
-	GpuSceneRenderable o;
+	GpuSceneRenderableVertex o;
 	o.m_worldTransformsOffset = x[0];
 	o.m_uniformsOffset = x[1];
-	o.m_geometryOffset = x[2];
-	o.m_boneTransformsOffset = x[3];
+	o.m_meshLodOffset = x[2];
+	o.m_boneTransformsOrParticleEmitterOffset = x[3];
 	return o;
 }
 
