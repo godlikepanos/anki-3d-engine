@@ -735,7 +735,6 @@ private:
 	{
 		ANKI_ASSERT(str != nullptr);
 		ANKI_ASSERT(strLen > 0);
-		ANKI_ASSERT(strLen == strlen(str));
 
 		auto size = m_data.getSize();
 

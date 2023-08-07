@@ -203,9 +203,9 @@ ANKI_TEST(Util, String)
 		a.replaceAll("a", "b");
 		ANKI_TEST_EXPECT_EQ(a, "jjhfblkbkljlb");
 
-		a = "%foo%ajlkadsf%foo%";
+		a = "a%foo%ajlkadsf%foo%b";
 		a.replaceAll("%foo%", "");
-		ANKI_TEST_EXPECT_EQ(a, "ajlkadsf");
+		ANKI_TEST_EXPECT_EQ(a, "aajlkadsfb");
 	}
 
 	DefaultMemoryPool::freeSingleton();
