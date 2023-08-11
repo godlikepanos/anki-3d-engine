@@ -44,8 +44,6 @@ public:
 		return m_castsShadow;
 	}
 
-	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique, WeakArray<RenderableQueueElement>& outRenderables) const;
-
 	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique, WeakArray<RayTracingInstanceQueueElement>& outRenderables) const;
 
 private:
@@ -66,7 +64,6 @@ private:
 
 	SceneNode* m_node = nullptr;
 	SkinComponent* m_skinComponent = nullptr;
-	Spatial m_spatial;
 
 	ModelResourcePtr m_model;
 
@@ -86,6 +83,8 @@ private:
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
+
+	Aabb computeAabbWorldSpace(const Transform& worldTransform) const;
 };
 /// @}
 

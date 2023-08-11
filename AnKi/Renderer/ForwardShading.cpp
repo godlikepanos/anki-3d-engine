@@ -14,6 +14,7 @@
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Core/App.h>
@@ -33,6 +34,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 	visIn.m_lodDistances = lodDistances;
 	visIn.m_rgraph = &rgraph;
+	visIn.m_gatherAabbIndices = g_dbgCVar.get();
 	RenderTargetHandle hzb = getRenderer().getGBuffer().getHzbRt();
 	visIn.m_hzbRt = &hzb;
 

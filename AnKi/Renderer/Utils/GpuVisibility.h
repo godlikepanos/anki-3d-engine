@@ -20,17 +20,19 @@ public:
 	CString m_passesName;
 	RenderingTechnique m_technique = RenderingTechnique::kCount;
 
-	Vec3 m_lodReferencePoint = Vec3(0.0f);
+	Vec3 m_lodReferencePoint = Vec3(kMaxF32);
 	Array<F32, kMaxLodCount - 1> m_lodDistances = {};
 
 	RenderGraphDescription* m_rgraph = nullptr;
+
+	Bool m_gatherAabbIndices = false; ///< For debug draw.
 };
 
 /// @memberof GpuVisibility
 class FrustumGpuVisibilityInput : public BaseGpuVisibilityInput
 {
 public:
-	Mat4 m_viewProjectionMatrix = Mat4::getIdentity();
+	Mat4 m_viewProjectionMatrix;
 	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
 };
 
@@ -51,6 +53,8 @@ public:
 	BufferOffsetRange m_instanceRateRenderablesBuffer;
 	BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
 	BufferOffsetRange m_mdiDrawCountsBuffer;
+
+	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< Optional.
 };
 
 /// Performs GPU visibility for some pass.
@@ -62,6 +66,7 @@ public:
 	/// Perform frustum visibility testing.
 	void populateRenderGraph(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out)
 	{
+		ANKI_ASSERT(in.m_viewProjectionMatrix != Mat4::getZero());
 		populateRenderGraphInternal(false, in, out);
 	}
 
@@ -73,8 +78,8 @@ public:
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	Array<ShaderProgramPtr, 2> m_frustumGrProgs;
-	ShaderProgramPtr m_distGrProg;
+	Array2d<ShaderProgramPtr, 2, 2> m_frustumGrProgs;
+	Array<ShaderProgramPtr, 2> m_distGrProgs;
 
 #if ANKI_STATS_ENABLED
 	Array<GpuReadbackMemoryAllocation, kMaxFramesInFlight> m_readbackMemory;

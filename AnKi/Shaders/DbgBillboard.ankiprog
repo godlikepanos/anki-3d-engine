@@ -1,0 +1,145 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator DITHERED_DEPTH_TEST 0 1
+#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#include <AnKi/Shaders/TonemappingFunctions.hlsl>
+
+constexpr F32 kAlpha = 0.95f;
+constexpr F32 kBillboardScale = 0.25f;
+
+struct Uniforms
+{
+	Mat4 m_viewProjMat;
+	Mat3x4 m_camTrf;
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+typedef LightUnion ClusteredType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+typedef Decal ClusteredType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+typedef FogDensityVolume ClusteredType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+typedef ReflectionProbe ClusteredType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+typedef GlobalIlluminationProbe ClusteredType;
+#else
+#	error See file
+#endif
+
+[[vk::binding(2)]] StructuredBuffer<ClusteredType> g_visibleObjects;
+[[vk::binding(3)]] StructuredBuffer<U32> g_visibleObjectCount;
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+	Vec2 m_uv : TEXCOORD;
+	Vec4 m_colorScale : COLOR;
+	nointerpolation U32 m_textureIndex : TEX_INDEX;
+};
+
+#pragma anki start vert
+
+struct VertIn
+{
+	U32 m_svInstanceId : SV_INSTANCEID;
+	U32 m_svVertexId : SV_VERTEXID;
+};
+
+VertOut main(VertIn input)
+{
+	VertOut output;
+
+	output.m_colorScale = Vec4(1.0f, 1.0f, 1.0f, kAlpha);
+	output.m_textureIndex = 0;
+
+	output.m_uv = Vec2(input.m_svVertexId & 1u, ((input.m_svVertexId + 1u) / 3u) & 1u);
+
+	const U32 objCount = g_visibleObjectCount[0];
+
+	if(input.m_svInstanceId < objCount)
+	{
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
+		output.m_colorScale.xyz = reinhardTonemap(g_visibleObjects[input.m_svInstanceId].m_diffuseColor);
+		output.m_textureIndex = g_visibleObjects[input.m_svInstanceId].m_lightType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_sphereCenter;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+		const ClusteredType obj = g_visibleObjects[input.m_svInstanceId];
+		const Vec3 localPos = (obj.m_isBox) ? (obj.m_aabbMinOrSphereCenter + obj.m_aabbMaxOrSphereRadius) / 2.0f : obj.m_aabbMinOrSphereCenter;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+		const Vec3 localPos = (g_visibleObjects[input.m_svInstanceId].m_aabbMin + g_visibleObjects[input.m_svInstanceId].m_aabbMax) / 2.0f;
+#else
+#	error See file
+#endif
+
+		// Rotate towards the camera and apply translation
+		const Vec3 worldPos = mul(g_unis.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + localPos;
+
+		output.m_svPosition = mul(g_unis.m_viewProjMat, Vec4(worldPos, 1.0));
+	}
+	else
+	{
+		// Skip this instance by making the vertex degenerate
+		output.m_svPosition = 0.0f;
+	}
+
+	return output;
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <AnKi/Shaders/ImportanceSampling.hlsl>
+
+[[vk::binding(4)]] SamplerState g_trilinearRepeatSampler;
+[[vk::binding(5)]] Texture2D g_tex;
+[[vk::binding(6)]] Texture2D g_tex2;
+
+// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
+#if DITHERED_DEPTH_TEST == 1
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D g_depthRt;
+#endif
+
+Vec4 main(VertOut input) : SV_TARGET0
+{
+	ANKI_MAYBE_UNUSED(input);
+
+	// Check if we should skip the frag
+#if DITHERED_DEPTH_TEST == 1
+	const UVec2 random = rand3DPCG16(UVec3(UVec2(input.m_svPosition.xy), 1)).xy;
+	const Vec2 noise = Vec2(random) / 65536.0;
+	const F32 factor = noise.x * noise.y;
+	Vec2 texSize;
+	g_depthRt.GetDimensions(texSize.x, texSize.y);
+	const Vec2 uv = input.m_svPosition.xy / texSize;
+	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
+	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+	if(depthTestFailed && factor < 0.5)
+	{
+		discard;
+	}
+#endif
+
+	// Write the color
+	if(input.m_textureIndex == 0)
+	{
+		return g_tex.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale;
+	}
+	else
+	{
+		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale;
+	}
+}
+#pragma anki end

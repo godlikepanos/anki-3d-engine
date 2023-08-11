@@ -17,14 +17,12 @@ namespace anki {
 ModelComponent::ModelComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 	, m_node(node)
-	, m_spatial(this)
 {
 	m_gpuSceneTransforms.allocate();
 }
 
 ModelComponent::~ModelComponent()
 {
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 void ModelComponent::freeGpuScene()
@@ -222,27 +220,13 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_gpuSceneTransforms.uploadToGpuScene(trfs);
 	}
 
-	// Spatial update
-	const Bool spatialNeedsUpdate = moved || resourceUpdated || m_skinComponent;
-	if(spatialNeedsUpdate) [[unlikely]]
+	// Scene bounds update
+	const Bool aabbUpdated = moved || resourceUpdated || m_skinComponent;
+	if(aabbUpdated) [[unlikely]]
 	{
-		Aabb aabbLocal;
-		if(m_skinComponent == nullptr) [[likely]]
-		{
-			aabbLocal = m_model->getBoundingVolume();
-		}
-		else
-		{
-			aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(m_model->getBoundingVolume());
-		}
-
-		const Aabb aabbWorld = aabbLocal.getTransformed(info.m_node->getWorldTransform());
-
-		m_spatial.setBoundingShape(aabbWorld);
+		const Aabb aabbWorld = computeAabbWorldSpace(info.m_node->getWorldTransform());
+		SceneGraph::getSingleton().updateSceneBounds(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz());
 	}
-
-	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
-	updated = updated || spatialUpdated;
 
 	// Update the buckets
 	const Bool bucketsNeedUpdate = resourceUpdated || moved != movedLastFrame;
@@ -281,19 +265,20 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	// Upload the AABBs to the GPU scene
-	const Bool gpuSceneAabbsNeedUpdate = spatialNeedsUpdate || bucketsNeedUpdate;
+	const Bool gpuSceneAabbsNeedUpdate = aabbUpdated || bucketsNeedUpdate;
 	if(gpuSceneAabbsNeedUpdate)
 	{
+		const Aabb aabbWorld = computeAabbWorldSpace(info.m_node->getWorldTransform());
+
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
 			for(RenderingTechnique t :
 				EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques & ~RenderingTechniqueBit::kAllRt))
 			{
-				const Vec3 aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
-				const Vec3 aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
-				const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(aabbMin, aabbMax, m_patchInfos[i].m_gpuSceneRenderable.getIndex(),
-																					m_patchInfos[i].m_renderStateBucketIndices[t].get());
+				const GpuSceneRenderableAabb gpuVolume =
+					initGpuSceneRenderableAabb(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_patchInfos[i].m_gpuSceneRenderable.getIndex(),
+											   m_patchInfos[i].m_renderStateBucketIndices[t].get());
 
 				switch(t)
 				{
@@ -314,80 +299,6 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	return Error::kNone;
-}
-
-void ModelComponent::setupRenderableQueueElements(U32 lod, RenderingTechnique technique, WeakArray<RenderableQueueElement>& outRenderables) const
-{
-	ANKI_ASSERT(isEnabled());
-
-	outRenderables.setArray(nullptr, 0);
-
-	const RenderingTechniqueBit requestedRenderingTechniqueMask = RenderingTechniqueBit(1 << technique);
-	if(!(m_presentRenderingTechniques & requestedRenderingTechniqueMask))
-	{
-		return;
-	}
-
-	// Allocate renderables
-	U32 renderableCount = 0;
-	for(U32 i = 0; i < m_patchInfos.getSize(); ++i)
-	{
-		renderableCount += !!(m_patchInfos[i].m_techniques & requestedRenderingTechniqueMask);
-	}
-
-	if(renderableCount == 0)
-	{
-		return;
-	}
-
-	RenderableQueueElement* renderables = static_cast<RenderableQueueElement*>(
-		SceneGraph::getSingleton().getFrameMemoryPool().allocate(sizeof(RenderableQueueElement) * renderableCount, alignof(RenderableQueueElement)));
-
-	outRenderables.setArray(renderables, renderableCount);
-
-	// Fill renderables
-	const Bool moved = m_node->movedThisFrame() && technique == RenderingTechnique::kGBuffer;
-	const Bool hasSkin = m_skinComponent != nullptr && m_skinComponent->isEnabled();
-
-	RenderingKey key;
-	key.setLod(lod);
-	key.setRenderingTechnique(technique);
-	key.setVelocity(moved);
-	key.setSkinned(hasSkin);
-
-	renderableCount = 0;
-	for(U32 i = 0; i < m_patchInfos.getSize(); ++i)
-	{
-		if(!(m_patchInfos[i].m_techniques & requestedRenderingTechniqueMask))
-		{
-			continue;
-		}
-
-		RenderableQueueElement& queueElem = renderables[renderableCount];
-
-		const ModelPatch& patch = m_model->getModelPatches()[i];
-
-		ModelRenderingInfo modelInf;
-		patch.getRenderingInfo(key, modelInf);
-
-		queueElem.m_program = modelInf.m_program.get();
-		queueElem.m_worldTransformsOffset = m_gpuSceneTransforms.getGpuSceneOffset();
-		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_meshLodOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset() + lod * sizeof(GpuSceneMeshLod);
-		queueElem.m_particleEmitterOffset = 0;
-		queueElem.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
-		queueElem.m_indexCount = modelInf.m_indexCount;
-		queueElem.m_firstIndex = U32(modelInf.m_indexBufferOffset / 2 + modelInf.m_firstIndex);
-		queueElem.m_indexed = true;
-		queueElem.m_primitiveTopology = PrimitiveTopology::kTriangles;
-
-		queueElem.m_aabbMin = m_spatial.getAabbWorldSpace().getMin().xyz();
-		queueElem.m_aabbMax = m_spatial.getAabbWorldSpace().getMax().xyz();
-
-		queueElem.computeMergeKey();
-
-		++renderableCount;
-	}
 }
 
 void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
@@ -476,6 +387,21 @@ void ModelComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool 
 		m_skinComponent = nullptr;
 		m_resourceChanged = true;
 	}
+}
+
+Aabb ModelComponent::computeAabbWorldSpace(const Transform& worldTransform) const
+{
+	Aabb aabbLocal;
+	if(m_skinComponent == nullptr) [[likely]]
+	{
+		aabbLocal = m_model->getBoundingVolume();
+	}
+	else
+	{
+		aabbLocal = m_skinComponent->getBoneBoundingVolumeLocalSpace().getCompoundShape(m_model->getBoundingVolume());
+	}
+
+	return aabbLocal.getTransformed(worldTransform);
 }
 
 } // end namespace anki

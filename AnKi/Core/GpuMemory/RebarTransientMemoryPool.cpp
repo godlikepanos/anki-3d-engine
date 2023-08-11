@@ -43,18 +43,18 @@ void RebarTransientMemoryPool::init()
 	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 }
 
-void* RebarTransientMemoryPool::allocateFrame(PtrSize size, RebarAllocation& token)
+RebarAllocation RebarTransientMemoryPool::allocateFrame(PtrSize size, void*& mappedMem)
 {
-	void* address = tryAllocateFrame(size, token);
-	if(address == nullptr) [[unlikely]]
+	RebarAllocation out = tryAllocateFrame(size, mappedMem);
+	if(!out.isValid()) [[unlikely]]
 	{
 		ANKI_CORE_LOGF("Out of ReBAR GPU memory");
 	}
 
-	return address;
+	return out;
 }
 
-void* RebarTransientMemoryPool::tryAllocateFrame(PtrSize origSize, RebarAllocation& token)
+RebarAllocation RebarTransientMemoryPool::tryAllocateFrame(PtrSize origSize, void*& mappedMem)
 {
 	const PtrSize size = getAlignedRoundUp(m_alignment, origSize);
 
@@ -69,11 +69,12 @@ void* RebarTransientMemoryPool::tryAllocateFrame(PtrSize origSize, RebarAllocati
 		done = offset < end;
 	} while(!done);
 
-	void* address = m_mappedMem + offset;
-	token.m_offset = offset;
-	token.m_range = origSize;
+	mappedMem = m_mappedMem + offset;
+	RebarAllocation out;
+	out.m_offset = offset;
+	out.m_range = origSize;
 
-	return address;
+	return out;
 }
 
 void RebarTransientMemoryPool::endFrame()

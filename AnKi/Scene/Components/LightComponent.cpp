@@ -166,9 +166,6 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{
-		// Update the scene bounds always
-		SceneGraph::getSingleton().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
-
 		m_gpuSceneLight.free();
 	}
 
@@ -237,8 +234,9 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			const Vec3 sphereCenter = sphere.getCenter().xyz();
 			const F32 sphereRadius = sphere.getRadius();
 			const Vec3& lightDir = getDirection();
-			const Vec3 sceneMin = m_dir.m_sceneMin - Vec3(sphereRadius); // Push the bounds a bit
-			const Vec3 sceneMax = m_dir.m_sceneMax + Vec3(sphereRadius);
+			Array<Vec3, 2> sceneBounds = SceneGraph::getSingleton().getSceneBounds();
+			const Vec3 sceneMin = sceneBounds[0] - Vec3(sphereRadius); // Push the bounds a bit
+			const Vec3 sceneMax = sceneBounds[1] + Vec3(sphereRadius);
 
 			// Compute the intersections with the scene bounds
 			Vec3 eye;

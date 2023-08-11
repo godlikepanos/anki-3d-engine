@@ -66,20 +66,20 @@ protected:
 	template<typename T>
 	static T* allocateAndBindUniforms(CommandBuffer& cmdb, U32 set, U32 binding)
 	{
-		RebarAllocation alloc;
-		T* ptr = static_cast<T*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(T), alloc));
+		T* ptr;
+		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(1, ptr);
 		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
-		cmdb.bindUniformBuffer(set, binding, &RebarTransientMemoryPool::getSingleton().getBuffer(), alloc.m_offset, alloc.m_range);
+		cmdb.bindUniformBuffer(set, binding, alloc);
 		return ptr;
 	}
 
 	template<typename T>
-	static T* allocateAndBindStorage(CommandBuffer& cmdb, U32 set, U32 binding, PtrSize count = 1)
+	static T* allocateAndBindStorage(CommandBuffer& cmdb, U32 set, U32 binding, U32 count = 1)
 	{
-		RebarAllocation alloc;
-		T* ptr = static_cast<T*>(RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(T) * count, alloc));
+		T* ptr;
+		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(count, ptr);
 		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
-		cmdb.bindStorageBuffer(set, binding, &RebarTransientMemoryPool::getSingleton().getBuffer(), alloc.m_offset, alloc.m_range);
+		cmdb.bindStorageBuffer(set, binding, alloc);
 		return ptr;
 	}
 

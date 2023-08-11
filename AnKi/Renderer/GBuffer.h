@@ -77,6 +77,13 @@ public:
 		}
 	}
 
+	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
+	const BufferOffsetRange& getVisibleAabbsBuffer() const
+	{
+		ANKI_ASSERT(m_runCtx.m_visibleAabbsBuffer.m_buffer != nullptr);
+		return m_runCtx.m_visibleAabbsBuffer;
+	}
+
 private:
 	Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
@@ -90,6 +97,8 @@ private:
 		RenderTargetHandle m_crntFrameDepthRt;
 		RenderTargetHandle m_prevFrameDepthRt;
 		RenderTargetHandle m_hzbRt;
+
+		BufferOffsetRange m_visibleAabbsBuffer; ///< Optional
 	} m_runCtx;
 
 	Error initInternal();

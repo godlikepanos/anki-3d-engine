@@ -23,14 +23,22 @@ Error GpuVisibility::init()
 {
 	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
-									 Array<SubMutation, 3>{{{"HZB_TEST", hzb}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 0}}}, m_prog,
-									 m_frustumGrProgs[hzb]));
+		for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
+		{
+			ANKI_CHECK(loadShaderProgram(
+				"ShaderBinaries/GpuVisibility.ankiprogbin",
+				Array<SubMutation, 4>{{{"HZB_TEST", hzb}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}}},
+				m_prog, m_frustumGrProgs[hzb][gatherAabbs]));
+		}
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
-								 Array<SubMutation, 3>{{{"HZB_TEST", 0}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 1}}}, m_prog,
-								 m_distGrProg));
+	for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
+	{
+		ANKI_CHECK(loadShaderProgram(
+			"ShaderBinaries/GpuVisibility.ankiprogbin",
+			Array<SubMutation, 4>{{{"HZB_TEST", 0}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}}}, m_prog,
+			m_distGrProgs[gatherAabbs]));
+	}
 
 #if ANKI_STATS_ENABLED
 	for(GpuReadbackMemoryAllocation& alloc : m_readbackMemory)
@@ -44,6 +52,8 @@ Error GpuVisibility::init()
 
 void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out)
 {
+	ANKI_ASSERT(in.m_lodReferencePoint.x() != kMaxF32);
+
 	class DistanceTestData
 	{
 	public:
@@ -91,6 +101,28 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		ANKI_ASSERT(0);
 	}
 
+	if(aabbCount == 0) [[unlikely]]
+	{
+		// Early exit
+
+		out.m_instanceRateRenderablesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(1 * sizeof(GpuSceneRenderable));
+		out.m_drawIndexedIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(1 * sizeof(DrawIndexedIndirectArgs));
+
+		U32* atomics;
+		out.m_mdiDrawCountsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(1, atomics);
+		atomics[0] = 0;
+		out.m_mdiDrawCountsHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, out.m_mdiDrawCountsBuffer);
+
+		if(in.m_gatherAabbIndices)
+		{
+			U32* atomic;
+			out.m_visibleAaabbIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(1, atomic);
+			atomic[0] = 0;
+		}
+
+		return;
+	}
+
 	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(in.m_technique);
 
 #if ANKI_STATS_ENABLED
@@ -123,21 +155,28 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	// Allocate memory for the indirect commands
 	const GpuVisibleTransientMemoryAllocation indirectArgs =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectArgs));
-	out.m_drawIndexedIndirectArgsBuffer = {indirectArgs.m_buffer, indirectArgs.m_offset, indirectArgs.m_size};
+	out.m_drawIndexedIndirectArgsBuffer = indirectArgs;
 
 	const GpuVisibleTransientMemoryAllocation instanceRateRenderables =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(GpuSceneRenderable));
-	out.m_instanceRateRenderablesBuffer = {instanceRateRenderables.m_buffer, instanceRateRenderables.m_offset, instanceRateRenderables.m_size};
+	out.m_instanceRateRenderablesBuffer = instanceRateRenderables;
 
 	// Allocate and zero the MDI counts
-	RebarAllocation mdiDrawCounts;
-	U32* atomics = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(bucketCount, mdiDrawCounts);
-	memset(atomics, 0, mdiDrawCounts.m_range);
-	out.m_mdiDrawCountsBuffer = {&RebarTransientMemoryPool::getSingleton().getBuffer(), mdiDrawCounts.m_offset, mdiDrawCounts.m_range};
+	U32* atomics;
+	RebarAllocation mdiDrawCounts = RebarTransientMemoryPool::getSingleton().allocateFrame(bucketCount, atomics);
+	memset(atomics, 0, mdiDrawCounts.getRange());
+	out.m_mdiDrawCountsBuffer = mdiDrawCounts;
 
 	// Import buffers
-	out.m_mdiDrawCountsHandle = in.m_rgraph->importBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone,
-														  mdiDrawCounts.m_offset, mdiDrawCounts.m_range);
+	out.m_mdiDrawCountsHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, mdiDrawCounts);
+
+	// Allocate memory for AABB indices
+	if(in.m_gatherAabbIndices)
+	{
+		U32* atomic;
+		out.m_visibleAaabbIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(aabbCount + 1, atomic);
+		atomic[0] = 0;
+	}
 
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(in.m_passesName);
@@ -152,7 +191,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 
 	pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
-				  technique = in.m_technique, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle, instanceRateRenderables, indirectArgs, aabbCount
+				  technique = in.m_technique, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle, instanceRateRenderables, indirectArgs, aabbCount,
+				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer
 #if ANKI_STATS_ENABLED
 				  ,
 				  clearStatsBuffer, clearStatsBufferOffset, writeStatsBuffer, writeStatsBufferOffset
@@ -160,13 +200,15 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
+		const Bool gatherAabbIndices = visibleAabbsBuffer.m_buffer != nullptr;
+
 		if(frustumTestData)
 		{
-			cmdb.bindShaderProgram(m_frustumGrProgs[frustumTestData->m_hzbRt.isValid()].get());
+			cmdb.bindShaderProgram(m_frustumGrProgs[frustumTestData->m_hzbRt.isValid()][gatherAabbIndices].get());
 		}
 		else
 		{
-			cmdb.bindShaderProgram(m_distGrProg.get());
+			cmdb.bindShaderProgram(m_distGrProgs[gatherAabbIndices].get());
 		}
 
 		switch(technique)
@@ -196,8 +238,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
-		cmdb.bindStorageBuffer(0, 3, instanceRateRenderables.m_buffer, instanceRateRenderables.m_offset, instanceRateRenderables.m_size);
-		cmdb.bindStorageBuffer(0, 4, indirectArgs.m_buffer, indirectArgs.m_offset, indirectArgs.m_size);
+		cmdb.bindStorageBuffer(0, 3, instanceRateRenderables);
+		cmdb.bindStorageBuffer(0, 4, indirectArgs);
 
 		U32* offsets = allocateAndBindStorage<U32>(cmdb, 0, 5, RenderStateBucketContainer::getSingleton().getBucketCount(technique));
 		U32 bucketCount = 0;
@@ -258,6 +300,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		cmdb.bindStorageBuffer(0, 11, clearStatsBuffer, clearStatsBufferOffset, sizeof(U32));
 #endif
 
+		if(gatherAabbIndices)
+		{
+			cmdb.bindStorageBuffer(0, 12, visibleAabbsBuffer);
+		}
+
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});
 }
@@ -297,6 +344,7 @@ Error GpuVisibilityNonRenderables::init()
 
 void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out)
 {
+	ANKI_ASSERT(in.m_viewProjectionMat != Mat4::getZero());
 	RenderGraphDescription& rgraph = *in.m_rgraph;
 
 	U32 objCount = 0;
@@ -371,12 +419,8 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	}
 
 	// Allocate memory for the result
-	GpuVisibleTransientMemoryAllocation visibleIndicesAlloc = GpuVisibleTransientMemoryPool::getSingleton().allocate((objCount + 1) * sizeof(U32));
-	out.m_visiblesBuffer.m_buffer = visibleIndicesAlloc.m_buffer;
-	out.m_visiblesBuffer.m_offset = visibleIndicesAlloc.m_offset;
-	out.m_visiblesBuffer.m_range = visibleIndicesAlloc.m_size;
-	out.m_visiblesBufferHandle =
-		rgraph.importBuffer(out.m_visiblesBuffer.m_buffer, BufferUsageBit::kNone, out.m_visiblesBuffer.m_offset, out.m_visiblesBuffer.m_range);
+	out.m_visiblesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate((objCount + 1) * sizeof(U32));
+	out.m_visiblesBufferHandle = rgraph.importBuffer(BufferUsageBit::kNone, out.m_visiblesBuffer);
 
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
@@ -403,37 +447,28 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 		cmdb.bindShaderProgram(m_grProgs[0][objType][needsFeedback].get());
 
-		PtrSize objBufferOffset = 0;
-		PtrSize objBufferRange = 0;
+		BufferOffsetRange objBuffer;
 		switch(objType)
 		{
 		case GpuSceneNonRenderableObjectType::kLight:
-			objBufferOffset = GpuSceneArrays::Light::getSingleton().getGpuSceneOffsetOfArrayBase();
-			objBufferRange = GpuSceneArrays::Light::getSingleton().getElementCount() * GpuSceneArrays::Light::getSingleton().getElementSize();
+			objBuffer = GpuSceneArrays::Light::getSingleton().getBufferOffsetRange();
 			break;
 		case GpuSceneNonRenderableObjectType::kDecal:
-			objBufferOffset = GpuSceneArrays::Decal::getSingleton().getGpuSceneOffsetOfArrayBase();
-			objBufferRange = GpuSceneArrays::Decal::getSingleton().getElementCount() * GpuSceneArrays::Decal::getSingleton().getElementSize();
+			objBuffer = GpuSceneArrays::Decal::getSingleton().getBufferOffsetRange();
 			break;
 		case GpuSceneNonRenderableObjectType::kFogDensityVolume:
-			objBufferOffset = GpuSceneArrays::FogDensityVolume::getSingleton().getGpuSceneOffsetOfArrayBase();
-			objBufferRange = GpuSceneArrays::FogDensityVolume::getSingleton().getElementCount()
-							 * GpuSceneArrays::FogDensityVolume::getSingleton().getElementSize();
+			objBuffer = GpuSceneArrays::FogDensityVolume::getSingleton().getBufferOffsetRange();
 			break;
 		case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
-			objBufferOffset = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
-			objBufferRange = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount()
-							 * GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize();
+			objBuffer = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferOffsetRange();
 			break;
 		case GpuSceneNonRenderableObjectType::kReflectionProbe:
-			objBufferOffset = GpuSceneArrays::ReflectionProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
-			objBufferRange =
-				GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount() * GpuSceneArrays::ReflectionProbe::getSingleton().getElementSize();
+			objBuffer = GpuSceneArrays::ReflectionProbe::getSingleton().getBufferOffsetRange();
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
-		cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
+		cmdb.bindStorageBuffer(0, 0, objBuffer);
 
 		GpuVisibilityNonRenderableUniforms unis;
 		Array<Plane, 6> planes;

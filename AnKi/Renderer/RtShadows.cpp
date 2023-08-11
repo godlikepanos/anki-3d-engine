@@ -432,14 +432,12 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	// Allocate, set and bind global uniforms
 	{
-		RebarAllocation globalUniformsToken;
-		MaterialGlobalUniforms* globalUniforms = static_cast<MaterialGlobalUniforms*>(
-			RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(MaterialGlobalUniforms), globalUniformsToken));
+		MaterialGlobalUniforms* globalUniforms;
+		const RebarAllocation globalUniformsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUniforms);
 
 		memset(globalUniforms, 0, sizeof(*globalUniforms)); // Don't care for now
 
-		cmdb.bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms),
-							   &RebarTransientMemoryPool::getSingleton().getBuffer(), globalUniformsToken.m_offset, globalUniformsToken.m_range);
+		cmdb.bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms), globalUniformsToken);
 	}
 
 	// More globals
@@ -607,12 +605,12 @@ void RtShadows::buildSbt(RenderingContext& ctx)
 	m_runCtx.m_hitGroupCount = instanceCount;
 
 	// Allocate SBT
-	RebarAllocation token;
-	U8* sbt =
-		static_cast<U8*>(RebarTransientMemoryPool::getSingleton().allocateFrame(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token));
+	U8* sbt;
+	const RebarAllocation token =
+		RebarTransientMemoryPool::getSingleton().allocateFrame(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), sbt);
 	[[maybe_unused]] const U8* sbtStart = sbt;
 	m_runCtx.m_sbtBuffer.reset(const_cast<Buffer*>(&RebarTransientMemoryPool::getSingleton().getBuffer()));
-	m_runCtx.m_sbtOffset = token.m_offset;
+	m_runCtx.m_sbtOffset = token.getOffset();
 
 	// Set the miss and ray gen handles
 	ConstWeakArray<U8> shaderGroupHandles = m_rtLibraryGrProg->getShaderGroupHandles();

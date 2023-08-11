@@ -329,81 +329,11 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		if(compType == ModelComponent::kClassType)
 		{
-			const ModelComponent& modelc = static_cast<ModelComponent&>(comp);
-			const Bool isShadowFrustum = frustumFlags.m_gatherShadowCasterModelComponents;
-			if(!modelc.isEnabled() || (isShadowFrustum && !modelc.getCastsShadow()) || !isInside())
-			{
-				continue;
-			}
-
-			const Plane& nearPlane = primaryFrustum.getViewPlanes()[FrustumPlaneType::kNear];
-			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, aabb));
-			const U8 lod = computeLod(primaryFrustum, distanceFromCamera);
-
-			WeakArray<RenderableQueueElement> elements;
-			modelc.setupRenderableQueueElements(lod, (isShadowFrustum) ? RenderingTechnique::kDepth : RenderingTechnique::kGBuffer, elements);
-			for(RenderableQueueElement& el : elements)
-			{
-				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_renderables.newElement() = el;
-			}
-
-			modelc.setupRenderableQueueElements(lod, RenderingTechnique::kForward, elements);
-			for(RenderableQueueElement& el : elements)
-			{
-				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_forwardShadingRenderables.newElement() = el;
-			}
-
-			if(frustumFlags.m_gatherRayTracingModelComponents)
-			{
-				WeakArray<RayTracingInstanceQueueElement> rtElements;
-				modelc.setupRayTracingInstanceQueueElements(lod, RenderingTechnique::kRtShadow, rtElements);
-
-				for(RayTracingInstanceQueueElement& el : rtElements)
-				{
-					*result.m_rayTracingInstances.newElement() = el;
-				}
-			}
-
-			// Update timestamp
-			ANKI_ASSERT(comp.getTimestamp() > 0);
-			m_frcCtx->m_queueViews[taskId].m_timestamp = max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
+			ANKI_ASSERT(0);
 		}
 		else if(compType == ParticleEmitterComponent::kClassType)
 		{
-			const ParticleEmitterComponent& partemitc = static_cast<ParticleEmitterComponent&>(comp);
-			if(!partemitc.isEnabled() || !isInside())
-			{
-				continue;
-			}
-
-			const Plane& nearPlane = primaryFrustum.getViewPlanes()[FrustumPlaneType::kNear];
-			const F32 distanceFromCamera = max(0.0f, testPlane(nearPlane, aabb));
-			Bool updateTimestamp = false;
-
-			WeakArray<RenderableQueueElement> elements;
-			partemitc.setupRenderableQueueElements(RenderingTechnique::kGBuffer, elements);
-			for(RenderableQueueElement& el : elements)
-			{
-				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_renderables.newElement() = el;
-				updateTimestamp = true;
-			}
-
-			partemitc.setupRenderableQueueElements(RenderingTechnique::kForward, elements);
-			for(RenderableQueueElement& el : elements)
-			{
-				el.m_distanceFromCamera = distanceFromCamera;
-				*result.m_forwardShadingRenderables.newElement() = el;
-			}
-
-			// Update timestamp
-			if(updateTimestamp)
-			{
-				ANKI_ASSERT(comp.getTimestamp() > 0);
-				m_frcCtx->m_queueViews[taskId].m_timestamp = max(m_frcCtx->m_queueViews[taskId].m_timestamp, comp.getTimestamp());
-			}
+			ANKI_ASSERT(0);
 		}
 		else if(compType == LightComponent::kClassType)
 		{

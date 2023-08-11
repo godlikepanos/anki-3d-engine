@@ -3,45 +3,51 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator COLOR_TEXTURE 0 1
 #pragma anki mutator DITHERED_DEPTH_TEST 0 1
 
 #include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
 struct Uniforms
 {
 	Vec4 m_color;
+	Mat4 m_viewProjMat;
 };
 
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 
-[[vk::binding(0)]] StructuredBuffer<Mat4> g_mvps;
-
-struct VertIn
-{
-	[[vk::location(0)]] Vec3 m_position : POSITION;
-#if COLOR_TEXTURE == 1
-	[[vk::location(1)]] Vec2 m_uv : TEXCOORD;
-#endif
-	U32 m_svInstanceId : SV_INSTANCEID;
-};
+[[vk::binding(2)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
+[[vk::binding(3)]] StructuredBuffer<U32> g_visibleAabbIndices;
 
 struct VertOut
 {
 	Vec4 m_svPosition : SV_POSITION;
-	Vec2 m_uv : TEXCOORD;
 };
 
 #pragma anki start vert
+struct VertIn
+{
+	[[vk::location(0)]] Vec3 m_position : POSITION;
+	U32 m_svInstanceId : SV_INSTANCEID;
+};
 
 VertOut main(VertIn input)
 {
 	VertOut output;
 
-#if COLOR_TEXTURE == 1
-	output.m_uv = input.m_uv;
-#endif
-	output.m_svPosition = mul(g_mvps[input.m_svInstanceId], Vec4(input.m_position, 1.0));
+	const U32 aabbCount = g_visibleAabbIndices[0];
+
+	if(input.m_svInstanceId < aabbCount)
+	{
+		const GpuSceneRenderableAabb aabb = g_aabbs[g_visibleAabbIndices[input.m_svInstanceId + 1]];
+		Vec3 localPos = input.m_position * aabb.m_aabbExtend + aabb.m_sphereCenter;
+		output.m_svPosition = mul(g_uniforms.m_viewProjMat, Vec4(localPos, 1.0));
+	}
+	else
+	{
+		// Skip this instance by making the vertex degenerate
+		output.m_svPosition = 0.0f;
+	}
 
 	return output;
 }
@@ -50,15 +56,10 @@ VertOut main(VertIn input)
 #pragma anki start frag
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
-#if COLOR_TEXTURE == 1
-[[vk::binding(3)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(4)]] Texture2D g_tex;
-#endif
-
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
 #if DITHERED_DEPTH_TEST == 1
-[[vk::binding(1)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(2)]] Texture2D g_depthRt;
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D g_depthRt;
 #endif
 
 Vec4 main(VertOut input) : SV_TARGET0
@@ -82,10 +83,6 @@ Vec4 main(VertOut input) : SV_TARGET0
 #endif
 
 	// Write the color
-#if COLOR_TEXTURE == 1
-	return g_tex.Sample(g_trilinearRepeatSampler, input.m_uv) * g_uniforms.m_color;
-#else
 	return g_uniforms.m_color;
-#endif
 }
 #pragma anki end

@@ -9,6 +9,9 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Renderer/ForwardShading.h>
+#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Scene.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Enum.h>
@@ -47,14 +50,107 @@ Error Dbg::init()
 	m_fbDescr.bake();
 
 	ResourceManager& rsrcManager = ResourceManager::getSingleton();
-	ANKI_CHECK(m_drawer.init());
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GiProbe.ankitex", m_giProbeImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/LightBulb.ankitex", m_pointLightImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/SpotLight.ankitex", m_spotLightImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GreenDecal.ankitex", m_decalImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Mirror.ankitex", m_reflectionImage));
 
+	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/DbgRenderables.ankiprogbin", m_renderablesProg));
+	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/DbgBillboard.ankiprogbin", m_nonRenderablesProg));
+
+	{
+		BufferInitInfo buffInit("Dbg cube verts");
+		buffInit.m_size = sizeof(Vec3) * 8;
+		buffInit.m_usage = BufferUsageBit::kVertex;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+		m_cubeVertsBuffer = GrManager::getSingleton().newBuffer(buffInit);
+
+		Vec3* verts = static_cast<Vec3*>(m_cubeVertsBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+
+		constexpr F32 kSize = 1.0f;
+		verts[0] = Vec3(kSize, kSize, kSize); // front top right
+		verts[1] = Vec3(-kSize, kSize, kSize); // front top left
+		verts[2] = Vec3(-kSize, -kSize, kSize); // front bottom left
+		verts[3] = Vec3(kSize, -kSize, kSize); // front bottom right
+		verts[4] = Vec3(kSize, kSize, -kSize); // back top right
+		verts[5] = Vec3(-kSize, kSize, -kSize); // back top left
+		verts[6] = Vec3(-kSize, -kSize, -kSize); // back bottom left
+		verts[7] = Vec3(kSize, -kSize, -kSize); // back bottom right
+
+		m_cubeVertsBuffer->unmap();
+
+		constexpr U kIndexCount = 12 * 2;
+		buffInit.setName("Dbg cube indices");
+		buffInit.m_usage = BufferUsageBit::kIndex;
+		buffInit.m_size = kIndexCount * sizeof(U16);
+		m_cubeIndicesBuffer = GrManager::getSingleton().newBuffer(buffInit);
+		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+
+		U c = 0;
+		indices[c++] = 0;
+		indices[c++] = 1;
+		indices[c++] = 1;
+		indices[c++] = 2;
+		indices[c++] = 2;
+		indices[c++] = 3;
+		indices[c++] = 3;
+		indices[c++] = 0;
+
+		indices[c++] = 4;
+		indices[c++] = 5;
+		indices[c++] = 5;
+		indices[c++] = 6;
+		indices[c++] = 6;
+		indices[c++] = 7;
+		indices[c++] = 7;
+		indices[c++] = 4;
+
+		indices[c++] = 0;
+		indices[c++] = 4;
+		indices[c++] = 1;
+		indices[c++] = 5;
+		indices[c++] = 2;
+		indices[c++] = 6;
+		indices[c++] = 3;
+		indices[c++] = 7;
+
+		m_cubeIndicesBuffer->unmap();
+
+		ANKI_ASSERT(c == kIndexCount);
+	}
+
 	return Error::kNone;
+}
+
+void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
+							CommandBuffer& cmdb)
+{
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_nonRenderablesProg);
+	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(m_ditheredDepthTestOn != 0));
+	variantInitInfo.addMutation("OBJECT_TYPE", U32(type));
+	const ShaderProgramResourceVariant* variant;
+	m_nonRenderablesProg->getOrCreateVariant(variantInitInfo, variant);
+	cmdb.bindShaderProgram(&variant->getProgram());
+
+	class Uniforms
+	{
+	public:
+		Mat4 m_viewProjMat;
+		Mat3x4 m_camTrf;
+	} unis;
+	unis.m_viewProjMat = ctx.m_matrices.m_viewProjection;
+	unis.m_camTrf = ctx.m_matrices.m_cameraTransform;
+	cmdb.setPushConstants(&unis, sizeof(unis));
+
+	cmdb.bindStorageBuffer(0, 2, getRenderer().getClusterBinning2().getPackedObjectsBuffer(type));
+	cmdb.bindStorageBuffer(0, 3, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
+
+	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindTexture(0, 5, &image.getTextureView());
+	cmdb.bindTexture(0, 6, &m_spotLightImage->getTextureView());
+
+	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
 }
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
@@ -67,166 +163,61 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	cmdb.setDepthWrite(false);
 
-	cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
-
-	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
 	cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 	cmdb.setDepthCompareOperation((m_depthTestOn) ? CompareOperation::kLess : CompareOperation::kAlways);
+	cmdb.setLineWidth(2.0f);
 
-	// Draw renderables
-	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
-	const U32 problemSize = ctx.m_renderQueue->m_renderables.getSize();
-	U32 start, end;
-	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	// Renderables
-	for(U32 i = start; i < end; ++i)
+	// GBuffer renderables
 	{
-		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
+		const U32 allAabbCount = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount();
 
-		const Vec3 tsl = (el.m_aabbMin + el.m_aabbMax) / 2.0f;
-		constexpr F32 kMargin = 0.1f;
-		const Vec3 scale = (el.m_aabbMax - el.m_aabbMin + kMargin) / 2.0f;
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_renderablesProg);
+		variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(m_ditheredDepthTestOn != 0));
+		const ShaderProgramResourceVariant* variant;
+		m_renderablesProg->getOrCreateVariant(variantInitInfo, variant);
+		cmdb.bindShaderProgram(&variant->getProgram());
 
-		// Set non uniform scale. Add a margin to avoid flickering
-		Mat3 nonUniScale = Mat3::getZero();
-
-		nonUniScale(0, 0) = scale.x();
-		nonUniScale(1, 1) = scale.y();
-		nonUniScale(2, 2) = scale.z();
-
-		const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
-
-		m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
-	}
-
-	// Forward shaded renderables
-	if(threadId == 0)
-	{
-		for(const RenderableQueueElement& el : ctx.m_renderQueue->m_forwardShadingRenderables)
+		class Uniforms
 		{
-			const Vec3 tsl = (el.m_aabbMin + el.m_aabbMax) / 2.0f;
-			constexpr F32 kMargin = 0.1f;
-			const Vec3 scale = (el.m_aabbMax - el.m_aabbMin + kMargin) / 2.0f;
+		public:
+			Vec4 m_color;
+			Mat4 m_viewProjMat;
+		} unis;
+		unis.m_color = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
+		unis.m_viewProjMat = ctx.m_matrices.m_viewProjection;
 
-			// Set non uniform scale. Add a margin to avoid flickering
-			Mat3 nonUniScale = Mat3::getZero();
+		cmdb.setPushConstants(&unis, sizeof(unis));
+		cmdb.bindVertexBuffer(0, m_cubeVertsBuffer.get(), 0, sizeof(Vec3));
+		cmdb.setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
+		cmdb.bindIndexBuffer(m_cubeIndicesBuffer.get(), 0, IndexType::kU16);
 
-			nonUniScale(0, 0) = scale.x();
-			nonUniScale(1, 1) = scale.y();
-			nonUniScale(2, 2) = scale.z();
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 3, getRenderer().getGBuffer().getVisibleAabbsBuffer());
 
-			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
-
-			m_drawer.drawCube(mvp, Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
-		}
+		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 	}
 
-	// GI probes
-	if(threadId == 0)
+	// Forward shading renderables
 	{
-		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
-		{
-			const Vec3 tsl = (el.m_aabbMax + el.m_aabbMin) / 2.0f;
-			const Vec3 scale = (tsl - el.m_aabbMin);
+		const U32 allAabbCount = GpuSceneArrays::RenderableAabbForward::getSingleton().getElementCount();
 
-			// Set non uniform scale.
-			Mat3 rot = Mat3::getIdentity();
-			rot(0, 0) *= scale.x();
-			rot(1, 1) *= scale.y();
-			rot(2, 2) *= scale.z();
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableAabbForward::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 3, getRenderer().getForwardShading().getVisibleAabbsBuffer());
 
-			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), rot, 1.0f);
-
-			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.729f, 0.635f, 0.196f, 1.0f), 1.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
-
-			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, ConstWeakArray<Vec3>(&tsl, 1), Vec4(1.0f),
-										   m_ditheredDepthTestOn, &m_giProbeImage->getTextureView(),
-										   getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
-		}
+		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 	}
 
-	// Lights
-	if(threadId == 0)
-	{
-		for(const PointLightQueueElement& el : ctx.m_renderQueue->m_pointLights)
-		{
-			Vec3 color = el.m_diffuseColor.xyz();
-			color /= max(max(color.x(), color.y()), color.z());
-
-			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, el.m_worldPosition, color.xyz1(), m_ditheredDepthTestOn,
-										  &m_pointLightImage->getTextureView(), getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f),
-										  cmdb);
-		}
-
-		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
-		{
-			Vec3 color = el.m_diffuseColor.xyz();
-			color /= max(max(color.x(), color.y()), color.z());
-
-			m_drawer.drawBillboardTexture(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, el.m_worldTransform.getTranslationPart().xyz(),
-										  color.xyz1(), m_ditheredDepthTestOn, &m_spotLightImage->getTextureView(),
-										  getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
-		}
-	}
-
-	// Decals
-	if(threadId == 0)
-	{
-		for(const DecalQueueElement& el : ctx.m_renderQueue->m_decals)
-		{
-			const Mat3 rot = el.m_obbRotation;
-			const Vec4 tsl = el.m_obbCenter.xyz1();
-			const Vec3 scale = el.m_obbExtend;
-
-			Mat3 nonUniScale = Mat3::getZero();
-			nonUniScale(0, 0) = scale.x();
-			nonUniScale(1, 1) = scale.y();
-			nonUniScale(2, 2) = scale.z();
-
-			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl, rot * nonUniScale, 1.0f);
-
-			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
-
-			const Vec3 pos = el.m_obbCenter;
-			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
-										   m_ditheredDepthTestOn, &m_decalImage->getTextureView(),
-										   getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
-		}
-	}
-
-	// Reflection probes
-	if(threadId == 0)
-	{
-		for(const ReflectionProbeQueueElement& el : ctx.m_renderQueue->m_reflectionProbes)
-		{
-			const Vec3 tsl = el.m_worldPosition;
-			const Vec3 scale = (el.m_aabbMax - el.m_aabbMin);
-
-			// Set non uniform scale.
-			Mat3 rot = Mat3::getIdentity();
-			rot(0, 0) *= scale.x();
-			rot(1, 1) *= scale.y();
-			rot(2, 2) *= scale.z();
-
-			const Mat4 mvp = ctx.m_matrices.m_viewProjection * Mat4(tsl.xyz1(), rot, 1.0f);
-
-			m_drawer.drawCubes(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, m_ditheredDepthTestOn, 2.0f, cmdb);
-
-			m_drawer.drawBillboardTextures(ctx.m_matrices.m_projection, ctx.m_matrices.m_view, ConstWeakArray<Vec3>(&el.m_worldPosition, 1),
-										   Vec4(1.0f), m_ditheredDepthTestOn, &m_reflectionImage->getTextureView(),
-										   getRenderer().getSamplers().m_trilinearRepeatAniso.get(), Vec2(0.75f), cmdb);
-		}
-	}
-
-	if(threadId == (threadCount - 1) && g_dbgPhysicsCVar.get())
-	{
-		m_physicsDrawer.start(ctx.m_matrices.m_viewProjection, cmdb);
-		m_physicsDrawer.drawWorld(PhysicsWorld::getSingleton());
-		m_physicsDrawer.end();
-	}
+	// Draw non-renderables
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), ctx, *m_pointLightImage,
+					  cmdb);
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), ctx, *m_decalImage, cmdb);
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
+					  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), ctx, *m_giProbeImage, cmdb);
+	drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe, GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(), ctx,
+					  *m_reflectionImage, cmdb);
 
 	// Restore state
 	cmdb.setDepthCompareOperation(CompareOperation::kLess);
@@ -245,12 +236,11 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("DBG");
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Debug");
 
-	pass.setWork(computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()),
-				 [this, &ctx](RenderPassWorkContext& rgraphCtx) {
-					 run(rgraphCtx, ctx);
-				 });
+	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		run(rgraphCtx, ctx);
+	});
 
 	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt());
 

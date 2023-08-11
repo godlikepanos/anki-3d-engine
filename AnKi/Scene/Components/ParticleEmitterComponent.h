@@ -39,8 +39,6 @@ public:
 		return m_particleEmitterResource.isCreated();
 	}
 
-	void setupRenderableQueueElements(RenderingTechnique technique, WeakArray<RenderableQueueElement>& outRenderables) const;
-
 private:
 	class ParticleBase;
 	class SimpleParticle;
@@ -54,8 +52,6 @@ private:
 	};
 
 	ParticleEmitterProperties m_props;
-
-	Spatial m_spatial;
 
 	ParticleEmitterResourcePtr m_particleEmitterResource;
 	SceneDynamicArray<SimpleParticle> m_simpleParticles;

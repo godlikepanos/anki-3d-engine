@@ -474,7 +474,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		GpuVisibilityNonRenderablesInput in;
 		in.m_passesName = "Cube refl light visibility";
 		in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
-		in.m_viewProjectionMat = cascadeViewProjMats[faceIdx];
+		in.m_viewProjectionMat = frustums[faceIdx].getViewProjectionMatrix();
 		in.m_rgraph = &rgraph;
 		getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, lightVis[faceIdx]);
 	}

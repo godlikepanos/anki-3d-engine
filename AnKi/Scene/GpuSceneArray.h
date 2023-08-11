@@ -120,6 +120,12 @@ public:
 		return sizeof(TGpuSceneObject);
 	}
 
+	/// @note Thread-safe
+	BufferOffsetRange getBufferOffsetRange() const
+	{
+		return {&GpuSceneBuffer::getSingleton().getBuffer(), getGpuSceneOffsetOfArrayBase(), getBufferRange()};
+	}
+
 	/// Some bookeeping. Needs to be called once per frame.
 	/// @note Thread-safe
 	void flush()

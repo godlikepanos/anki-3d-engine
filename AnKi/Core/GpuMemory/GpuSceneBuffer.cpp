@@ -127,16 +127,15 @@ void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 	ANKI_TRACE_INC_COUNTER(GpuSceneMicroPatches, m_crntFramePatchHeaders.getSize());
 	ANKI_TRACE_INC_COUNTER(GpuSceneMicroPatchUploadData, m_crntFramePatchData.getSizeInBytes());
 
-	RebarAllocation headersToken;
-	void* mapped = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchHeaders.getSizeInBytes(), headersToken);
+	void* mapped;
+	const RebarAllocation headersToken = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchHeaders.getSizeInBytes(), mapped);
 	memcpy(mapped, &m_crntFramePatchHeaders[0], m_crntFramePatchHeaders.getSizeInBytes());
 
-	RebarAllocation dataToken;
-	mapped = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchData.getSizeInBytes(), dataToken);
+	const RebarAllocation dataToken = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchData.getSizeInBytes(), mapped);
 	memcpy(mapped, &m_crntFramePatchData[0], m_crntFramePatchData.getSizeInBytes());
 
-	cmdb.bindStorageBuffer(0, 0, &RebarTransientMemoryPool::getSingleton().getBuffer(), headersToken.m_offset, headersToken.m_range);
-	cmdb.bindStorageBuffer(0, 1, &RebarTransientMemoryPool::getSingleton().getBuffer(), dataToken.m_offset, dataToken.m_range);
+	cmdb.bindStorageBuffer(0, 0, headersToken);
+	cmdb.bindStorageBuffer(0, 1, dataToken);
 	cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 	cmdb.bindShaderProgram(m_grProgram.get());

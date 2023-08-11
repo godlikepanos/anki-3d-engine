@@ -17,7 +17,35 @@ namespace anki {
 /// @memberof GpuVisibleTransientMemoryPool
 class GpuVisibleTransientMemoryAllocation
 {
+	friend class GpuVisibleTransientMemoryPool;
+
 public:
+	Buffer& getBuffer() const
+	{
+		ANKI_ASSERT(isValid());
+		return *m_buffer;
+	}
+
+	PtrSize getOffset() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_offset;
+	}
+
+	PtrSize getRange() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_size;
+	}
+
+	Bool isValid() const
+	{
+		return m_buffer != nullptr;
+	}
+
+	operator BufferOffsetRange() const;
+
+private:
 	Buffer* m_buffer = nullptr;
 	PtrSize m_offset = kMaxPtrSize;
 	PtrSize m_size = 0;
@@ -65,6 +93,12 @@ private:
 
 	~GpuVisibleTransientMemoryPool() = default;
 };
+
+inline GpuVisibleTransientMemoryAllocation::operator BufferOffsetRange() const
+{
+	ANKI_ASSERT(isValid());
+	return {m_buffer, m_offset, m_size};
+}
 /// @}
 
 } // end namespace anki

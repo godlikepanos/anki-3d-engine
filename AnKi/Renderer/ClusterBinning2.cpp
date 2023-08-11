@@ -56,10 +56,7 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_runCtx.m_rctx = &ctx;
 
-		RebarAllocation alloc;
-		m_runCtx.m_uniformsCpu = RebarTransientMemoryPool::getSingleton().allocateFrame<ClusteredShadingUniforms>(1, alloc);
-
-		m_runCtx.m_clusterUniformsOffset = alloc.m_offset;
+		m_runCtx.m_clusterUniformsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, m_runCtx.m_uniformsCpu);
 
 		CoreThreadHive::getSingleton().submitTask(
 			[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
@@ -72,11 +69,8 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 	// Allocate the clusters buffer
 	{
 		const U32 clusterCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y() + getRenderer().getZSplitCount();
-		const GpuVisibleTransientMemoryAllocation alloc = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(Cluster) * clusterCount);
-		m_runCtx.m_clustersBuffer.m_buffer = alloc.m_buffer;
-		m_runCtx.m_clustersBuffer.m_offset = alloc.m_offset;
-		m_runCtx.m_clustersBuffer.m_range = alloc.m_size;
-		m_runCtx.m_clustersHandle = rgraph.importBuffer(alloc.m_buffer, BufferUsageBit::kNone, alloc.m_offset, alloc.m_size);
+		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(Cluster) * clusterCount);
+		m_runCtx.m_clustersHandle = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_clustersBuffer);
 	}
 
 	// Setup the indirect dispatches and zero the clusters buffer
@@ -85,12 +79,8 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 	{
 		// Allocate memory for the indirect args
 		constexpr U32 dispatchCount = U32(GpuSceneNonRenderableObjectType::kCount) * 2;
-		const GpuVisibleTransientMemoryAllocation alloc =
-			GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * dispatchCount);
-		indirectArgsBuff.m_buffer = alloc.m_buffer;
-		indirectArgsBuff.m_offset = alloc.m_offset;
-		indirectArgsBuff.m_range = alloc.m_size;
-		indirectArgsHandle = rgraph.importBuffer(alloc.m_buffer, BufferUsageBit::kNone, alloc.m_offset, alloc.m_size);
+		indirectArgsBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * dispatchCount);
+		indirectArgsHandle = rgraph.importBuffer(BufferUsageBit::kNone, indirectArgsBuff);
 
 		// Create the pass
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning setup");
@@ -222,12 +212,9 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 		// Allocations
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			const GpuVisibleTransientMemoryAllocation alloc =
+			m_runCtx.m_packedObjectsBuffers[type] =
 				GpuVisibleTransientMemoryPool::getSingleton().allocate(kClusteredObjectSizes2[type] * kMaxVisibleClusteredObjects2[type]);
-			m_runCtx.m_packedObjectsBuffers[type].m_buffer = alloc.m_buffer;
-			m_runCtx.m_packedObjectsBuffers[type].m_offset = alloc.m_offset;
-			m_runCtx.m_packedObjectsBuffers[type].m_range = alloc.m_size;
-			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(alloc.m_buffer, BufferUsageBit::kNone, alloc.m_offset, alloc.m_size);
+			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_packedObjectsBuffers[type]);
 		}
 
 		// Create the pass

@@ -89,13 +89,15 @@ RVec3 tonemap(RVec3 color, RF32 avgLum, RF32 threshold)
 }
 
 // https://graphicrants.blogspot.com/2013/12/tone-mapping.html
-RVec3 reinhardTonemap(RVec3 colour)
+template<typename TVec3>
+TVec3 reinhardTonemap(TVec3 colour)
 {
 	// rgb / (1 + max(rgb))
 	return colour / (1.0 + max(max(colour.r, colour.g), colour.b));
 }
 
-RVec3 invertReinhardTonemap(RVec3 colour)
+template<typename TVec3>
+TVec3 invertReinhardTonemap(TVec3 colour)
 {
 	// rgb / (1 - max(rgb))
 	return colour / max(1.0 / 32768.0, 1.0 - max(max(colour.r, colour.g), colour.b));

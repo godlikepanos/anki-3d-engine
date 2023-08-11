@@ -325,11 +325,6 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOuts[i]);
 			}
 		}
-		else
-		{
-			zeroMemory(cascadeViewProjMats);
-			zeroMemory(cascadeViewMats);
-		}
 
 		// Shadow pass. Optional
 		if(doShadows)
@@ -377,7 +372,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			GpuVisibilityNonRenderablesInput in;
 			in.m_passesName = "GI light visibility";
 			in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
-			in.m_viewProjectionMat = cascadeViewProjMats[faceIdx];
+			in.m_viewProjectionMat = frustums[faceIdx].getViewProjectionMatrix();
 			in.m_rgraph = &rgraph;
 			getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, lightVis[faceIdx]);
 		}

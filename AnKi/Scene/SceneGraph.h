@@ -202,6 +202,22 @@ public:
 		return (m_skyboxes.getSize()) ? m_skyboxes[0] : nullptr;
 	}
 
+	/// @note It's thread-safe.
+	void updateSceneBounds(const Vec3& min, const Vec3& max)
+	{
+		LockGuard lock(m_sceneBoundsMtx);
+		m_sceneMin = m_sceneMin.min(min);
+		m_sceneMax = m_sceneMax.max(max);
+	}
+
+	/// @note It's thread-safe.
+	Array<Vec3, 2> getSceneBounds() const
+	{
+		LockGuard lock(m_sceneBoundsMtx);
+		ANKI_ASSERT(m_sceneMin < m_sceneMax);
+		return {m_sceneMin, m_sceneMax};
+	}
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -228,8 +244,9 @@ private:
 
 	Octree* m_octree = nullptr;
 
-	Vec3 m_sceneMin = Vec3(-1000.0f, -200.0f, -1000.0f);
-	Vec3 m_sceneMax = Vec3(1000.0f, 200.0f, 1000.0f);
+	Vec3 m_sceneMin = Vec3(kMaxF32);
+	Vec3 m_sceneMax = Vec3(kMinF32);
+	mutable SpinLock m_sceneBoundsMtx;
 
 	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 

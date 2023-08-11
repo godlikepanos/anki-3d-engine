@@ -13,37 +13,31 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 	U32 maxObjects = 0u;
 	I32 count = 0;
 
-	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kPointLight)) != 0u)
+	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kLight)) != 0u)
 	{
-		maxObjects += kMaxVisiblePointLights;
-		count += I32(countbits(cluster.m_pointLightsMask));
+		maxObjects += kMaxVisibleLights;
+		count += I32(countbits(cluster.m_pointLightsMask | cluster.m_spotLightsMask));
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kSpotLight)) != 0u)
-	{
-		maxObjects += kMaxVisibleSpotLights;
-		count += I32(countbits(cluster.m_spotLightsMask));
-	}
-
-	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kDecal)) != 0u)
+	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kDecal)) != 0u)
 	{
 		maxObjects += kMaxVisibleDecals;
 		count += I32(countbits(cluster.m_decalsMask));
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kFogDensityVolume)) != 0u)
+	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kFogDensityVolume)) != 0u)
 	{
 		maxObjects += kMaxVisibleFogDensityVolumes;
 		count += countbits(cluster.m_fogDensityVolumesMask);
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kReflectionProbe)) != 0u)
+	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kReflectionProbe)) != 0u)
 	{
 		maxObjects += kMaxVisibleReflectionProbes;
 		count += countbits(cluster.m_reflectionProbesMask);
 	}
 
-	if((objectTypeMask & (1u << (U32)ClusteredObjectType::kGlobalIlluminationProbe)) != 0u)
+	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe)) != 0u)
 	{
 		maxObjects += kMaxVisibleGlobalIlluminationProbes;
 		count += countbits(cluster.m_giProbesMask);

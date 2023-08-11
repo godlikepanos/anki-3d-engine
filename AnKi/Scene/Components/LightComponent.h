@@ -172,8 +172,6 @@ private:
 	class Dir
 	{
 	public:
-		Vec3 m_sceneMin = Vec3(-1.0f);
-		Vec3 m_sceneMax = Vec3(1.0f);
 	};
 
 	Point m_point;

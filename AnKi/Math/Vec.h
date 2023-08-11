@@ -29,8 +29,9 @@ public:
 	/// @name Constructors
 	/// @{
 
-	/// Defaut constructor. IT WILL NOT INITIALIZE ANYTHING.
-	TVec()
+	/// Defaut constructor. It will zero it.
+	constexpr TVec()
+		: TVec(T(0))
 	{
 	}
 

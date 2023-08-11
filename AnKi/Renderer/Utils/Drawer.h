@@ -56,20 +56,11 @@ public:
 
 	~RenderableDrawer();
 
-	void drawRange(const RenderableDrawerArguments& args, const RenderableQueueElement* begin, const RenderableQueueElement* end,
-				   CommandBuffer& cmdb);
-
 	/// Draw using multidraw indirect.
 	void drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
 
 private:
-	class Context;
-
 	void setState(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
-
-	void flushDrawcall(Context& ctx, CommandBuffer& cmdb);
-
-	void drawSingle(const RenderableQueueElement* renderEl, Context& ctx, CommandBuffer& cmdb);
 };
 /// @}
 

@@ -192,16 +192,15 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 	// Allocate index and vertex buffers
 	RebarAllocation vertsToken, indicesToken;
 	{
-		const U32 verticesSize = U32(drawData.TotalVtxCount) * sizeof(ImDrawVert);
-		const U32 indicesSize = U32(drawData.TotalIdxCount) * sizeof(ImDrawIdx);
-
-		if(verticesSize == 0 || indicesSize == 0)
+		if(drawData.TotalVtxCount == 0 || drawData.TotalIdxCount == 0)
 		{
 			return;
 		}
 
-		ImDrawVert* verts = static_cast<ImDrawVert*>(RebarTransientMemoryPool::getSingleton().allocateFrame(verticesSize, vertsToken));
-		ImDrawIdx* indices = static_cast<ImDrawIdx*>(RebarTransientMemoryPool::getSingleton().allocateFrame(indicesSize, indicesToken));
+		ImDrawVert* verts;
+		vertsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(drawData.TotalVtxCount, verts);
+		ImDrawIdx* indices;
+		indicesToken = RebarTransientMemoryPool::getSingleton().allocateFrame(drawData.TotalIdxCount, indices);
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{
@@ -220,12 +219,12 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb.setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb.bindVertexBuffer(0, &RebarTransientMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset, sizeof(ImDrawVert));
+	cmdb.bindVertexBuffer(0, &vertsToken.getBuffer(), vertsToken.getOffset(), sizeof(ImDrawVert));
 	cmdb.setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
 	cmdb.setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
 	cmdb.setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb.bindIndexBuffer(&RebarTransientMemoryPool::getSingleton().getBuffer(), indicesToken.m_offset, IndexType::kU16);
+	cmdb.bindIndexBuffer(&indicesToken.getBuffer(), indicesToken.getOffset(), IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports

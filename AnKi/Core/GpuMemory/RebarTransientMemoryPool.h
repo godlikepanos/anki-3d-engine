@@ -16,10 +16,9 @@ namespace anki {
 /// Token that gets returned when requesting for memory to write to a resource.
 class RebarAllocation
 {
-public:
-	PtrSize m_offset = 0;
-	PtrSize m_range = 0;
+	friend class RebarTransientMemoryPool;
 
+public:
 	RebarAllocation() = default;
 
 	~RebarAllocation() = default;
@@ -29,15 +28,30 @@ public:
 		return m_offset == b.m_offset && m_range == b.m_range;
 	}
 
-	void markUnused()
+	Bool isValid() const
 	{
-		m_offset = m_range = kMaxU32;
+		return m_range != 0;
 	}
 
-	Bool isUnused() const
+	PtrSize getOffset() const
 	{
-		return m_offset == kMaxU32 && m_range == kMaxU32;
+		ANKI_ASSERT(isValid());
+		return m_offset;
 	}
+
+	PtrSize getRange() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_range;
+	}
+
+	Buffer& getBuffer() const;
+
+	operator BufferOffsetRange() const;
+
+private:
+	PtrSize m_offset = kMaxPtrSize;
+	PtrSize m_range = 0;
 };
 
 /// Manages staging GPU memory.
@@ -56,16 +70,28 @@ public:
 	void endFrame();
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
-	void* allocateFrame(PtrSize size, RebarAllocation& token);
+	RebarAllocation allocateFrame(PtrSize size, void*& mappedMem);
 
 	template<typename T>
-	T* allocateFrame(U32 count, RebarAllocation& token)
+	RebarAllocation allocateFrame(U32 count, T*& mappedMem)
 	{
-		return static_cast<T*>(allocateFrame(count * sizeof(T), token));
+		void* mem;
+		const RebarAllocation out = allocateFrame(count * sizeof(T), mem);
+		mappedMem = static_cast<T*>(mem);
+		return out;
+	}
+
+	template<typename T>
+	RebarAllocation allocateFrame(U32 count, WeakArray<T>& arr)
+	{
+		void* mem;
+		const RebarAllocation out = allocateFrame(count * sizeof(T), mem);
+		arr = {static_cast<T*>(mem), count};
+		return out;
 	}
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
-	void* tryAllocateFrame(PtrSize size, RebarAllocation& token);
+	RebarAllocation tryAllocateFrame(PtrSize size, void*& mappedMem);
 
 	ANKI_PURE Buffer& getBuffer() const
 	{
@@ -89,6 +115,17 @@ private:
 
 	~RebarTransientMemoryPool();
 };
+
+inline Buffer& RebarAllocation::getBuffer() const
+{
+	return RebarTransientMemoryPool::getSingleton().getBuffer();
+}
+
+inline RebarAllocation::operator BufferOffsetRange() const
+{
+	ANKI_ASSERT(isValid());
+	return {&RebarTransientMemoryPool::getSingleton().getBuffer(), m_offset, m_range};
+}
 /// @}
 
 } // end namespace anki

@@ -264,17 +264,17 @@ static Input* input = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	RebarAllocation token;
-	void* ptr = stagingMem->allocateFrame(size, token);
-	cmdb->bindUniformBuffer(set, binding, &stagingMem->getBuffer(), token.m_offset, token.m_range);
+	void* ptr;
+	const RebarAllocation token = stagingMem->allocateFrame(size, ptr);
+	cmdb->bindUniformBuffer(set, binding, token);
 	return ptr;
 }
 
 static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
-	RebarAllocation token;
-	void* ptr = stagingMem->allocateFrame(size, token);
-	cmdb->bindStorageBuffer(set, binding, &stagingMem->getBuffer(), token.m_offset, token.m_range);
+	void* ptr;
+	const RebarAllocation token = stagingMem->allocateFrame(size, ptr);
+	cmdb->bindStorageBuffer(set, binding, token);
 	return ptr;
 }
 

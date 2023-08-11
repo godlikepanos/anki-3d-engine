@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/CVarSet.h>
@@ -159,20 +160,26 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
-	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
-
-	FrustumGpuVisibilityInput visIn;
-	visIn.m_passesName = "GBuffer visibility";
-	visIn.m_technique = RenderingTechnique::kGBuffer;
-	visIn.m_viewProjectionMatrix = matrices.m_viewProjection;
-	visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz();
-	visIn.m_lodDistances = lodDistances;
-	visIn.m_rgraph = &rgraph;
-	visIn.m_hzbRt = &m_runCtx.m_hzbRt;
-
+	// Visibility
 	GpuVisibilityOutput visOut;
-	getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+	{
+		const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
+		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+
+		FrustumGpuVisibilityInput visIn;
+		visIn.m_passesName = "GBuffer visibility";
+		visIn.m_technique = RenderingTechnique::kGBuffer;
+		visIn.m_viewProjectionMatrix = matrices.m_viewProjection;
+		visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz();
+		visIn.m_lodDistances = lodDistances;
+		visIn.m_rgraph = &rgraph;
+		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
+		visIn.m_gatherAabbIndices = g_dbgCVar.get();
+
+		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+		m_runCtx.m_visibleAabbsBuffer = visOut.m_visibleAaabbIndicesBuffer;
+	}
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
 	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;

@@ -19,7 +19,10 @@ class TTransform
 public:
 	/// @name Constructors
 	/// @{
-	TTransform()
+	constexpr TTransform()
+		: m_origin(T(0))
+		, m_rotation(TMat<T, 3, 4>::getIdentity())
+		, m_scale(1.0)
 	{
 	}
 

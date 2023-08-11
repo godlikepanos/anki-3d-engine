@@ -112,7 +112,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, ANKI_SAFE_ALIGNMENT, "SceneGraphFramePool");
 
 	m_octree = newInstance<Octree>(SceneMemoryPool::getSingleton());
-	m_octree->init(m_sceneMin, m_sceneMax, g_octreeMaxDepthCVar.get());
+	m_octree->init(Vec3(-1000.0f, -200.0f, -1000.0f), Vec3(1000.0f, 200.0f, 1000.0f), g_octreeMaxDepthCVar.get());
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));
@@ -390,7 +390,10 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 LightComponent* SceneGraph::getDirectionalLight() const
 {
 	LightComponent* out = (m_dirLights.getSize()) ? m_dirLights[0] : nullptr;
-	ANKI_ASSERT(out->getLightComponentType() == LightComponentType::kDirectional);
+	if(out)
+	{
+		ANKI_ASSERT(out->getLightComponentType() == LightComponentType::kDirectional);
+	}
 	return out;
 }
 

@@ -144,8 +144,8 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		}
 		else
 		{
-			// No shadows for the dir light, bind something random
-			rgraphCtx.bindColorTexture(0, 9, info.m_gbufferRenderTargets[0]);
+			// No shadows for the dir light, bind a random depth texture (need depth because validation complains)
+			rgraphCtx.bindTexture(0, 9, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		}
 
 		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular].get());

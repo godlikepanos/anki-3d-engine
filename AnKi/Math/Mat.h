@@ -45,7 +45,8 @@ public:
 
 	/// @name Constructors
 	/// @{
-	TMat()
+	constexpr TMat()
+		: TMat(T(0))
 	{
 	}
 

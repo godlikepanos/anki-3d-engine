@@ -11,31 +11,12 @@
 
 ANKI_BEGIN_NAMESPACE
 
-// Enum of clusterer object types
-enum class ClusteredObjectType : U32
-{
-	kPointLight,
-	kSpotLight,
-	kDecal,
-	kFogDensityVolume,
-	kReflectionProbe,
-	kGlobalIlluminationProbe,
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ClusteredObjectType)
-
 // Limits
 #if ANKI_CLUSTERED_SHADING_USE_64BIT
 constexpr U32 kMaxVisibleLights = 64u;
-constexpr U32 kMaxVisiblePointLights = 64u;
-constexpr U32 kMaxVisibleSpotLights = 64u;
 constexpr U32 kMaxVisibleDecals = 64u;
 #else
 constexpr U32 kMaxVisibleLights = 32u;
-constexpr U32 kMaxVisiblePointLights = 32u;
-constexpr U32 kMaxVisibleSpotLights = 32u;
 constexpr U32 kMaxVisibleDecals = 32u;
 #endif
 constexpr U32 kMaxVisibleFogDensityVolumes = 16u;
@@ -253,19 +234,6 @@ static_assert(sizeof(Cluster) == kSizeof_Cluster);
 constexpr U32 kSizeof_Cluster = 2u * sizeof(Vec4);
 static_assert(sizeof(Cluster) == kSizeof_Cluster);
 #endif
-
-// TODO rm
-constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kClusteredObjectSizes) = {
-	sizeof(PointLight), sizeof(SpotLight), sizeof(Decal), sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};
-
-// TODO rm
-constexpr ANKI_ARRAY(U32, ClusteredObjectType::kCount, kMaxVisibleClusteredObjects) = {
-#if ANKI_CLUSTERED_SHADING_USE_64BIT
-	64, 64, 64,
-#else
-	32, 32, 32,
-#endif
-	16, 16, 16};
 
 constexpr ANKI_ARRAY(U32, GpuSceneNonRenderableObjectType::kCount, kClusteredObjectSizes2) = {
 	sizeof(LightUnion), sizeof(Decal), sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};

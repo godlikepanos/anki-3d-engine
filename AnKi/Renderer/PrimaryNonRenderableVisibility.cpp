@@ -77,17 +77,12 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 		{
 			// No objects, point to a buffer with zeros
 
-			RebarAllocation alloc;
-			void* mem = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), alloc);
+			void* mem;
+			RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), mem);
 			memset(mem, 0, sizeof(U32));
 
-			m_runCtx.m_visibleIndicesBuffers[type].m_buffer = &RebarTransientMemoryPool::getSingleton().getBuffer();
-			m_runCtx.m_visibleIndicesBuffers[type].m_offset = alloc.m_offset;
-			m_runCtx.m_visibleIndicesBuffers[type].m_range = alloc.m_range;
-
-			m_runCtx.m_visibleIndicesHandles[type] =
-				rgraph.importBuffer(m_runCtx.m_visibleIndicesBuffers[type].m_buffer, BufferUsageBit::kNone,
-									m_runCtx.m_visibleIndicesBuffers[type].m_offset, m_runCtx.m_visibleIndicesBuffers[type].m_range);
+			m_runCtx.m_visibleIndicesBuffers[type] = alloc;
+			m_runCtx.m_visibleIndicesHandles[type] = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_visibleIndicesBuffers[type]);
 		}
 		else
 		{

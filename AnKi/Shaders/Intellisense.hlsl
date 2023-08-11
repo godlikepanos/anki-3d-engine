@@ -7,6 +7,7 @@
 
 #define groupshared
 #define globallycoherent
+#define nointerpolation
 #define SV_DISPATCHTHREADID // gl_GlobalInvocationID
 #define SV_GROUPINDEX // gl_LocalInvocationIndex
 #define SV_GROUPID // gl_WorkGroupID

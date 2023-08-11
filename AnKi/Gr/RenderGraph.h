@@ -523,6 +523,12 @@ public:
 	/// Import a buffer.
 	BufferHandle importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = kMaxPtrSize);
 
+	/// Import a buffer.
+	BufferHandle importBuffer(BufferUsageBit usage, const BufferOffsetRange& buff)
+	{
+		return importBuffer(buff.m_buffer, usage, buff.m_offset, buff.m_range);
+	}
+
 	/// Import an AS.
 	AccelerationStructureHandle importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage);
 

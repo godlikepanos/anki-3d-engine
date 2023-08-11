@@ -6,6 +6,7 @@
 #pragma anki mutator HZB_TEST 0 1
 #pragma anki mutator STATS 0 1
 #pragma anki mutator DISTANCE_TEST 0 1
+#pragma anki mutator GATHER_AABBS 0 1
 
 #pragma anki skip_mutation DISTANCE_TEST 1 HZB_TEST 1
 
@@ -54,6 +55,10 @@ struct DrawIndirectArgsWithPadding
 #if STATS
 [[vk::binding(10)]] RWStructuredBuffer<U32> g_testsPassed;
 [[vk::binding(11)]] RWStructuredBuffer<U32> g_testsPassedClear; ///< Some previous value. Will be cleared this frame
+#endif
+
+#if GATHER_AABBS
+[[vk::binding(12)]] RWStructuredBuffer<U32> g_visibleAabbIndices; ///< Indices of the visible AABBs. The 1st element is the count.
 #endif
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -232,6 +237,12 @@ struct DrawIndirectArgsWithPadding
 		instanceVertex.w = renderableIn.m_particleEmitterOffset;
 		g_instanceRateRenderables[indirectIdx] = instanceVertex;
 	}
+
+#if GATHER_AABBS
+	U32 index;
+	InterlockedAdd(g_visibleAabbIndices[0], 1, index);
+	g_visibleAabbIndices[index + 1] = aabbIdx;
+#endif
 
 	// Now update the stats
 #if STATS
