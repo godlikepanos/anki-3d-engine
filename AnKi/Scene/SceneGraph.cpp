@@ -14,6 +14,9 @@
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Core/App.h>
+#include <AnKi/Scene/StatsUiNode.h>
+#include <AnKi/Scene/DeveloperConsoleUiNode.h>
 
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
@@ -124,6 +127,17 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
 	RenderStateBucketContainer::allocateSingleton();
+
+	// Construct a few common nodex
+	if(g_displayStatsCVar.get() > 0)
+	{
+		StatsUiNode* statsNode;
+		ANKI_CHECK(newSceneNode("_StatsUi", statsNode));
+		statsNode->setFpsOnly(g_displayStatsCVar.get() == 1);
+	}
+
+	DeveloperConsoleUiNode* consoleNode;
+	ANKI_CHECK(newSceneNode("_DevConsole", consoleNode));
 
 	return Error::kNone;
 }

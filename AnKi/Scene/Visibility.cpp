@@ -385,14 +385,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 		else if(compType == UiComponent::kClassType)
 		{
-			if(!isInside())
-			{
-				continue;
-			}
-
-			const UiComponent& uic = static_cast<UiComponent&>(comp);
-			UiQueueElement* el = result.m_uis.newElement();
-			uic.setupUiQueueElement(*el);
+			ANKI_ASSERT(0);
 		}
 		else if(compType == SkyboxComponent::kClassType)
 		{

@@ -17,6 +17,12 @@ ANKI_TEST(Util, BlockArray)
 	TestFoo::reset();
 	{
 		BlockArray<TestFoo> arr;
+
+		for(TestFoo& f : arr) // Iterate empty
+		{
+			f.m_x = 1;
+		}
+
 		auto it = arr.emplace(123);
 		ANKI_TEST_EXPECT_EQ(it->m_x, 123);
 

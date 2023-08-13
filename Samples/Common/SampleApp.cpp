@@ -56,7 +56,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kBackquote) == 1)
 	{
-		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
+		toggleDeveloperConsole();
+	}
+
+	if(getDeveloperConsoleEnabled())
+	{
+		return Error::kNone;
 	}
 
 	if(in.getKey(KeyCode::kY) == 1)

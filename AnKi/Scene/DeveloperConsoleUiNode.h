@@ -5,27 +5,31 @@
 
 #pragma once
 
-#include <AnKi/Ui.h>
-#include <AnKi/Core/Common.h>
-#include <AnKi/Util/List.h>
+#include <AnKi/Scene/SceneNode.h>
+#include <AnKi/Ui/Canvas.h>
 #include <AnKi/Script/ScriptEnvironment.h>
 
 namespace anki {
 
-/// @addtogroup core
+/// @addtogroup scene
 /// @{
 
-/// Developer console UI.
-class DeveloperConsole : public UiImmediateModeBuilder
+/// A node that draws the developer console.
+class DeveloperConsoleUiNode : public SceneNode
 {
 public:
-	DeveloperConsole() = default;
+	DeveloperConsoleUiNode(CString name);
 
-	~DeveloperConsole();
+	~DeveloperConsoleUiNode();
 
 	Error init();
 
-	void build(CanvasPtr ctx) override;
+	void toggleConsole();
+
+	Bool isConsoleEnabled() const
+	{
+		return m_enabled;
+	}
 
 private:
 	static constexpr U kMaxLogItems = 64;
@@ -36,8 +40,8 @@ private:
 		const Char* m_file;
 		const Char* m_func;
 		const Char* m_subsystem;
-		UiString m_threadName;
-		UiString m_msg;
+		SceneString m_threadName;
+		SceneString m_msg;
 		I32 m_line;
 		LoggerMessageType m_type;
 	};
@@ -45,19 +49,23 @@ private:
 	FontPtr m_font;
 	IntrusiveList<LogItem> m_logItems;
 	U32 m_logItemCount = 0;
-	Array<char, 256> m_inputText;
+	Array<Char, 256> m_inputText = {};
 
 	Atomic<U32> m_logItemsTimestamp = {1};
 	U32 m_logItemsTimestampConsumed = 0;
 
 	ScriptEnvironment m_scriptEnv;
 
+	Bool m_enabled = false;
+
 	void newLogItem(const LoggerMessageInfo& inf);
 
 	static void loggerCallback(void* userData, const LoggerMessageInfo& info)
 	{
-		static_cast<DeveloperConsole*>(userData)->newLogItem(info);
+		static_cast<DeveloperConsoleUiNode*>(userData)->newLogItem(info);
 	}
+
+	void draw(CanvasPtr& canvas);
 };
 /// @}
 

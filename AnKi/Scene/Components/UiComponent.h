@@ -22,13 +22,12 @@ class UiComponent : public SceneComponent
 public:
 	UiComponent(SceneNode* node)
 		: SceneComponent(node, kClassType)
-		, m_spatial(this)
 	{
-		m_spatial.setAlwaysVisible(true);
-		m_spatial.setUpdatesOctreeBounds(false);
 	}
 
-	~UiComponent();
+	~UiComponent()
+	{
+	}
 
 	void init(UiQueueElementDrawCallback callback, void* userData)
 	{
@@ -38,20 +37,34 @@ public:
 		m_userData = userData;
 	}
 
-	void setupUiQueueElement(UiQueueElement& el) const
+	void drawUi(CanvasPtr& canvas)
 	{
-		ANKI_ASSERT(el.m_drawCallback != nullptr);
-		el.m_drawCallback = m_drawCallback;
-		ANKI_ASSERT(el.m_userData != nullptr);
-		el.m_userData = m_userData;
+		if(m_drawCallback && m_enabled)
+		{
+			m_drawCallback(canvas, m_userData);
+		}
+	}
+
+	Bool isEnabled() const
+	{
+		return m_enabled;
+	}
+
+	void setEnabled(Bool enabled)
+	{
+		m_enabled = enabled;
 	}
 
 private:
 	UiQueueElementDrawCallback m_drawCallback = nullptr;
 	void* m_userData = nullptr;
-	Spatial m_spatial;
+	Bool m_enabled = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
+	{
+		updated = false;
+		return Error::kNone;
+	}
 };
 /// @}
 

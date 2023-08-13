@@ -50,7 +50,6 @@ public:
 		: m_array(b.m_array)
 		, m_elementIdx(b.m_elementIdx)
 	{
-		check();
 	}
 
 	/// Allow conversion from iterator to const iterator.
@@ -59,21 +58,18 @@ public:
 		: m_array(b.m_array)
 		, m_elementIdx(b.m_elementIdx)
 	{
-		check();
 	}
 
 	BlockArrayIterator(TBlockArrayPtr arr, U32 idx)
 		: m_array(arr)
 		, m_elementIdx(idx)
 	{
-		check();
 	}
 
 	BlockArrayIterator& operator=(const BlockArrayIterator& b)
 	{
 		m_array = b.m_array;
 		m_elementIdx = b.m_elementIdx;
-		check();
 		return *this;
 	}
 

@@ -18,8 +18,6 @@
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuReadbackMemoryPool.h>
-#include <AnKi/Core/DeveloperConsole.h>
-#include <AnKi/Core/StatsUi.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Core/MaliHwCounters.h>
@@ -34,6 +32,7 @@
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Canvas.h>
+#include <AnKi/Scene/DeveloperConsoleUiNode.h>
 #include <csignal>
 
 #if ANKI_OS_ANDROID
@@ -151,9 +150,6 @@ App::~App()
 
 void App::cleanup()
 {
-	m_statsUi.reset(nullptr);
-	m_console.reset(nullptr);
-
 	SceneGraph::freeSingleton();
 	ScriptManager::freeSingleton();
 	MainRenderer::freeSingleton();
@@ -374,12 +370,6 @@ Error App::initInternal()
 	//
 	ANKI_CHECK(SceneGraph::allocateSingleton().init(allocCb, allocCbUserData));
 
-	//
-	// Misc
-	//
-	ANKI_CHECK(UiManager::getSingleton().newInstance<StatsUi>(m_statsUi));
-	ANKI_CHECK(UiManager::getSingleton().newInstance<DeveloperConsole>(m_console));
-
 	ANKI_CORE_LOGI("Application initialized");
 
 	return Error::kNone;
@@ -469,16 +459,11 @@ Error App::mainLoop()
 			RenderQueue rqueue;
 			SceneGraph::getSingleton().doVisibilityTests(rqueue);
 
-			// Inject stats UI
-			CoreDynamicArray<UiQueueElement> newUiElementArr;
-			injectUiElements(newUiElementArr, rqueue);
-
 			// Render
 			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
 			ANKI_CHECK(MainRenderer::getSingleton().render(rqueue, presentableTex.get()));
 
-			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to
-			// count that
+			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
 			Second grTime = 0.0;
 			if(benchmarkMode || g_displayStatsCVar.get() > 0) [[unlikely]]
 			{
@@ -530,25 +515,18 @@ Error App::mainLoop()
 			}
 
 			// Stats
-			if(g_displayStatsCVar.get() > 0)
-			{
 #if ANKI_PLATFORM_MOBILE
-				if(MaliHwCounters::isAllocated())
-				{
-					MaliHwCountersOut out;
-					MaliHwCounters::getSingleton().sample(out);
-					g_maliGpuActive.set(out.m_gpuActive);
-					g_maliGpuReadBandwidth.set(out.m_readBandwidth);
-					g_maliGpuWriteBandwidth.set(out.m_writeBandwidth);
-				}
+			if(MaliHwCounters::isAllocated())
+			{
+				MaliHwCountersOut out;
+				MaliHwCounters::getSingleton().sample(out);
+				g_maliGpuActive.set(out.m_gpuActive);
+				g_maliGpuReadBandwidth.set(out.m_readBandwidth);
+				g_maliGpuWriteBandwidth.set(out.m_writeBandwidth);
+			}
 #endif
 
-				StatsUi& statsUi = *static_cast<StatsUi*>(m_statsUi.get());
-				const StatsUiDetail detail = (g_displayStatsCVar.get() == 1) ? StatsUiDetail::kFpsOnly : StatsUiDetail::kDetailed;
-				statsUi.setStatsDetail(detail);
-
-				StatsSet::getSingleton().endFrame();
-			}
+			StatsSet::getSingleton().endFrame();
 
 			++GlobalFrameIndex::getSingleton().m_value;
 
@@ -573,42 +551,6 @@ Error App::mainLoop()
 	}
 
 	return Error::kNone;
-}
-
-void App::injectUiElements(CoreDynamicArray<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
-{
-	const U32 originalCount = rqueue.m_uis.getSize();
-	if(g_displayStatsCVar.get() > 0 || m_consoleEnabled)
-	{
-		const U32 extraElements = (g_displayStatsCVar.get() > 0) + (m_consoleEnabled != 0);
-		newUiElementArr.resize(originalCount + extraElements);
-
-		if(originalCount > 0)
-		{
-			memcpy(&newUiElementArr[0], &rqueue.m_uis[0], rqueue.m_uis.getSizeInBytes());
-		}
-
-		rqueue.m_uis = WeakArray<UiQueueElement>(newUiElementArr);
-	}
-
-	U32 count = originalCount;
-	if(g_displayStatsCVar.get() > 0)
-	{
-		newUiElementArr[count].m_userData = m_statsUi.get();
-		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
-			static_cast<StatsUi*>(userData)->build(canvas);
-		};
-		++count;
-	}
-
-	if(m_consoleEnabled)
-	{
-		newUiElementArr[count].m_userData = m_console.get();
-		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
-			static_cast<DeveloperConsole*>(userData)->build(canvas);
-		};
-		++count;
-	}
 }
 
 void App::initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData)
@@ -670,6 +612,14 @@ void App::setSignalHandlers()
 	signal(SIGBUS, handler);
 #endif
 	// Ignore for now: signal(SIGABRT, handler);
+}
+
+Bool App::toggleDeveloperConsole()
+{
+	SceneNode& node = SceneGraph::getSingleton().findSceneNode("_DevConsole");
+	static_cast<DeveloperConsoleUiNode&>(node).toggleConsole();
+	m_consoleEnabled = static_cast<DeveloperConsoleUiNode&>(node).isConsoleEnabled();
+	return m_consoleEnabled;
 }
 
 } // end namespace anki

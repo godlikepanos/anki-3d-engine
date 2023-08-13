@@ -15,6 +15,7 @@ namespace anki {
 // Forward
 class UiQueueElement;
 class RenderQueue;
+class StatCounter;
 extern NumericCVar<U32> g_windowWidthCVar;
 extern NumericCVar<U32> g_windowHeightCVar;
 extern NumericCVar<U32> g_windowFullscreenCVar;
@@ -22,6 +23,8 @@ extern NumericCVar<U32> g_targetFpsCVar;
 extern NumericCVar<F32> g_lod0MaxDistanceCVar;
 extern NumericCVar<F32> g_lod1MaxDistanceCVar;
 extern NumericCVar<U32> g_displayStatsCVar;
+extern StatCounter g_cpuTotalTime;
+extern StatCounter g_rendererGpuTime;
 
 /// The core class of the engine.
 class App
@@ -54,20 +57,14 @@ public:
 		return Error::kNone;
 	}
 
-	void setDisplayDeveloperConsole(Bool display)
-	{
-		m_consoleEnabled = display;
-	}
+	Bool toggleDeveloperConsole();
 
-	Bool getDisplayDeveloperConsole() const
+	Bool getDeveloperConsoleEnabled() const
 	{
 		return m_consoleEnabled;
 	}
 
 private:
-	// Misc
-	UiImmediateModeBuilderPtr m_statsUi;
-	UiImmediateModeBuilderPtr m_console;
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache
@@ -83,9 +80,6 @@ private:
 
 	Error initDirs();
 	void cleanup();
-
-	/// Inject a new UI element in the render queue for displaying various stuff.
-	void injectUiElements(CoreDynamicArray<UiQueueElement>& elements, RenderQueue& rqueue);
 
 	void setSignalHandlers();
 };

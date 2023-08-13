@@ -8,6 +8,8 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/UiManager.h>
+#include <AnKi/Scene/Components/UiComponent.h>
+#include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -21,11 +23,11 @@ Error UiStage::init()
 	return Error::kNone;
 }
 
-void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBuffer& cmdb)
+void UiStage::draw(U32 width, U32 height, CommandBuffer& cmdb)
 {
-	// Early exit
-	if(ctx.m_renderQueue->m_uis.getSize() == 0)
+	if(SceneGraph::getSingleton().getComponentArrays().getUis().getSize() == 0)
 	{
+		// Early exit
 		return;
 	}
 
@@ -35,9 +37,9 @@ void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBuffer& 
 	m_canvas->beginBuilding();
 	m_canvas->resize(width, height);
 
-	for(UiQueueElement& el : ctx.m_renderQueue->m_uis)
+	for(UiComponent& comp : SceneGraph::getSingleton().getComponentArrays().getUis())
 	{
-		el.m_drawCallback(m_canvas, el.m_userData);
+		comp.drawUi(m_canvas);
 	}
 
 	m_canvas->appendToCommandBuffer(cmdb);

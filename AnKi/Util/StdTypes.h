@@ -212,6 +212,13 @@ private:
 		} \
 	} while(0)
 
+/// Macro to check if a method/function returned an error. It will abort on error.
+#define ANKI_CHECKF(x_) \
+	if(x_) \
+	{ \
+		ANKI_LOGF("Failed and won't recover"); \
+	}
+
 /// Macro to check if a method/function returned an error.
 #define ANKI_CHECK_AND_IGNORE(x_) \
 	do \

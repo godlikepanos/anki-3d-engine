@@ -1,10 +1,8 @@
 set(sources
 	App.cpp
 	CVarSet.cpp
-	DeveloperConsole.cpp
 	CoreTracer.cpp
 	MaliHwCounters.cpp
-	StatsUi.cpp
 	StatsSet.cpp
 	GpuMemory/UnifiedGeometryBuffer.cpp
 	GpuMemory/GpuSceneBuffer.cpp
@@ -16,9 +14,7 @@ set(headers
 	Common.h
 	CVarSet.h
 	CoreTracer.h
-	DeveloperConsole.h
 	MaliHwCounters.h
-	StatsUi.h
 	StatsSet.h
 	StdinListener.h
 	GpuMemory/UnifiedGeometryBuffer.h

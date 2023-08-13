@@ -89,8 +89,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		run(ctx, rgraphCtx);
+	pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
+		run(rgraphCtx);
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
 
@@ -121,7 +121,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
 
@@ -186,7 +186,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	drawQuad(cmdb);
 
 	// Draw UI
-	getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), ctx, cmdb);
+	getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), cmdb);
 }
 
 } // end namespace anki

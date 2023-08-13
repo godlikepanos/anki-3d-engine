@@ -3,56 +3,16 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/StatsUi.h>
+#include <AnKi/Scene/StatsUiNode.h>
+#include <AnKi/Scene/Components/UiComponent.h>
 #include <AnKi/Core/StatsSet.h>
+#include <AnKi/Core/App.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Font.h>
-#include <AnKi/Ui/Canvas.h>
 
 namespace anki {
 
-extern StatCounter g_cpuTotalTime;
-extern StatCounter g_rendererGpuTime;
-
-class StatsUi::Value
-{
-public:
-	F64 m_avg = 0.0;
-	F64 m_rollingAvg = 0.0;
-
-	void update(F64 x, Bool flush)
-	{
-		m_rollingAvg += x / F64(kBufferedFrames);
-
-		if(flush)
-		{
-			m_avg = m_rollingAvg;
-			m_rollingAvg = 0.0;
-		}
-	}
-};
-
-StatsUi::StatsUi()
-{
-}
-
-StatsUi::~StatsUi()
-{
-}
-
-Error StatsUi::init()
-{
-	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
-
-	if(StatsSet::getSingleton().getCounterCount())
-	{
-		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
-	}
-
-	return Error::kNone;
-}
-
-void StatsUi::labelBytes(PtrSize val, CString name)
+static void labelBytes(PtrSize val, CString name)
 {
 	PtrSize gb, mb, kb, b;
 
@@ -87,7 +47,51 @@ void StatsUi::labelBytes(PtrSize val, CString name)
 	ImGui::TextUnformatted(timestamp.cstr());
 }
 
-void StatsUi::build(CanvasPtr canvas)
+class StatsUiNode::Value
+{
+public:
+	F64 m_avg = 0.0;
+	F64 m_rollingAvg = 0.0;
+
+	void update(F64 x, Bool flush)
+	{
+		m_rollingAvg += x / F64(kBufferedFrames);
+
+		if(flush)
+		{
+			m_avg = m_rollingAvg;
+			m_rollingAvg = 0.0;
+		}
+	}
+};
+
+StatsUiNode::StatsUiNode(CString name)
+	: SceneNode(name)
+{
+	UiComponent* uic = newComponent<UiComponent>();
+	uic->init(
+		[](CanvasPtr& canvas, void* ud) {
+			static_cast<StatsUiNode*>(ud)->draw(canvas);
+		},
+		this);
+
+	if(StatsSet::getSingleton().getCounterCount())
+	{
+		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
+	}
+}
+
+StatsUiNode::~StatsUiNode()
+{
+}
+
+Error StatsUiNode::init()
+{
+	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
+	return Error::kNone;
+}
+
+void StatsUiNode::draw(CanvasPtr& canvas)
 {
 	Bool flush = false;
 	if(m_bufferedFrames == kBufferedFrames)
@@ -107,7 +111,7 @@ void StatsUi::build(CanvasPtr canvas)
 		ImGui::SetWindowPos(Vec2(5.0f, 5.0f));
 		ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
-		if(m_detail == StatsUiDetail::kDetailed)
+		if(!m_fpsOnly)
 		{
 			StatCategory category = StatCategory::kCount;
 			U32 count = 0;
