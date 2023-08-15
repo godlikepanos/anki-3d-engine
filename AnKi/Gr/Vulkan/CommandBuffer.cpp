@@ -365,6 +365,13 @@ void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as)
 	self.buildAccelerationStructureInternal(as);
 }
 
+void CommandBuffer::buildAccelerationStructureIndirect(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset,
+													   Buffer* rangeBuffer, PtrSize rangeBufferOffsset)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.buildAccelerationStructureIndirectInternal(as, scratchBuffer, scratchBufferOffset, rangeBuffer, rangeBufferOffsset);
+}
+
 void CommandBuffer::upscale(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
 							TextureView* exposure, Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale)
 {

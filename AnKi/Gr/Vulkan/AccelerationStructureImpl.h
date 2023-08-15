@@ -32,10 +32,10 @@ public:
 		return m_handle;
 	}
 
-	U32 getBuildScratchBufferSize() const
+	U32 getMaxInstanceCount() const
 	{
-		ANKI_ASSERT(m_scratchBufferSize > 0);
-		return m_scratchBufferSize;
+		ANKI_ASSERT(m_topLevelInfo.m_maxInstanceCount);
+		return m_topLevelInfo.m_maxInstanceCount;
 	}
 
 	void generateBuildInfo(U64 scratchBufferAddress, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
@@ -61,7 +61,8 @@ private:
 	{
 	public:
 		BufferPtr m_instancesBuffer;
-		GrDynamicArray<AccelerationStructurePtr> m_blas;
+		GrDynamicArray<AccelerationStructurePtr> m_blases;
+		U32 m_maxInstanceCount = 0; ///< Only for indirect.
 	};
 
 	BufferPtr m_asBuffer;
@@ -76,7 +77,6 @@ private:
 	VkAccelerationStructureGeometryKHR m_geometry = {};
 	VkAccelerationStructureBuildGeometryInfoKHR m_buildInfo = {};
 	VkAccelerationStructureBuildRangeInfoKHR m_rangeInfo = {};
-	U32 m_scratchBufferSize = 0;
 	/// @}
 };
 /// @}

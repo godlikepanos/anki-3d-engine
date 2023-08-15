@@ -790,4 +790,31 @@ struct DispatchIndirectArgs
 	U32 m_threadGroupCountZ;
 };
 
+/// Mirrors VkAccelerationStructureBuildRangeInfoKHR.
+struct AccelerationStructureBuildRangeInfo
+{
+	U32 m_primitiveCount; ///< For a TLAS it's the instance count.
+	U32 m_primitiveOffset;
+	U32 m_firstVertex;
+	U32 m_transformOffset;
+};
+
+/// Mirrors VkGeometryInstanceFlagBitsKHR
+enum class AccellerationStructureFlag : U32
+{
+	kTriangleFacingCullDisable = 1 << 0,
+	kFlipFacing = 1 << 1,
+	kForceOpaque = 1 << 2,
+	kForceNoOpaque = 1 << 3
+};
+
+/// Mirrors VkAccelerationStructureInstanceKHR.
+struct AccelerationStructureInstance
+{
+	Mat3x4 m_transform;
+	U32 m_instanceCustomIndex24_mask8;
+	U32 m_instanceShaderBindingTableRecordOffset24_flags8; ///< flags is AccellerationStructureFlag.
+	UVec2 m_accelerationStructureAddress;
+};
+
 ANKI_END_NAMESPACE

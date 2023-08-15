@@ -2464,8 +2464,8 @@ ANKI_TEST(Gr, RayQuery)
 	{
 		AccelerationStructureInitInfo init;
 		init.m_type = AccelerationStructureType::kTopLevel;
-		Array<AccelerationStructureInstance, 1> instances = {{{blas, Mat3x4::getIdentity()}}};
-		init.m_topLevel.m_instances = instances;
+		Array<AccelerationStructureInstanceInfo, 1> instances = {{{blas, Mat3x4::getIdentity()}}};
+		init.m_topLevel.m_directArgs.m_instances = instances;
 
 		tlas = g_gr->newAccelerationStructure(init);
 	}
@@ -2900,7 +2900,7 @@ void main()
 		}
 
 		// TLAS
-		Array<AccelerationStructureInstance, U32(GeomWhat::kCount)> instances;
+		Array<AccelerationStructureInstanceInfo, U32(GeomWhat::kCount)> instances;
 		U32 count = 0;
 		for(Geom& g : geometries)
 		{
@@ -2914,7 +2914,7 @@ void main()
 
 		AccelerationStructureInitInfo inf;
 		inf.m_type = AccelerationStructureType::kTopLevel;
-		inf.m_topLevel.m_instances = instances;
+		inf.m_topLevel.m_directArgs.m_instances = instances;
 
 		tlas = g_gr->newAccelerationStructure(inf);
 	}

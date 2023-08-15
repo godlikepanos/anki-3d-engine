@@ -5,16 +5,17 @@
 
 #include <AnKi/Gr/Vulkan/AccelerationStructureImpl.h>
 #include <AnKi/Gr/Vulkan/GrManagerImpl.h>
+#include <AnKi/Gr/Vulkan/FrameGarbageCollector.h>
 
 namespace anki {
 
 AccelerationStructureImpl::~AccelerationStructureImpl()
 {
-	m_topLevelInfo.m_blas.destroy();
-
 	if(m_handle)
 	{
-		vkDestroyAccelerationStructureKHR(getGrManagerImpl().getDevice(), m_handle, nullptr);
+		ASGarbage* garbage = anki::newInstance<ASGarbage>(GrMemoryPool::getSingleton());
+		garbage->m_asHandle = m_handle;
+		getGrManagerImpl().getFrameGarbageCollector().newASGarbage(garbage);
 	}
 }
 
@@ -56,7 +57,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		const U32 primitiveCount = inf.m_bottomLevel.m_indexCount / 3;
 		buildSizes.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &primitiveCount, &buildSizes);
-		m_scratchBufferSize = U32(buildSizes.buildScratchSize);
+		m_scratchBufferSize = buildSizes.buildScratchSize;
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
@@ -88,36 +89,52 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	}
 	else
 	{
-		// Create the instances buffer
-		m_topLevelInfo.m_blas.resizeStorage(inf.m_topLevel.m_instances.getSize());
+		const Bool isIndirect = inf.m_topLevel.m_indirectArgs.m_maxInstanceCount > 0;
 
-		BufferInitInfo buffInit("AS instances");
-		buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_instances.getSize();
-		buffInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
-		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-		m_topLevelInfo.m_instancesBuffer = getGrManagerImpl().newBuffer(buffInit);
-
-		VkAccelerationStructureInstanceKHR* instances =
-			static_cast<VkAccelerationStructureInstanceKHR*>(m_topLevelInfo.m_instancesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
-		for(U32 i = 0; i < inf.m_topLevel.m_instances.getSize(); ++i)
+		if(!isIndirect)
 		{
-			VkAccelerationStructureInstanceKHR& outInst = instances[i];
-			const AccelerationStructureInstance& inInst = inf.m_topLevel.m_instances[i];
-			static_assert(sizeof(outInst.transform) == sizeof(inInst.m_transform), "See file");
-			memcpy(&outInst.transform, &inInst.m_transform, sizeof(inInst.m_transform));
-			outInst.instanceCustomIndex = i & 0xFFFFFF;
-			outInst.mask = inInst.m_mask;
-			outInst.instanceShaderBindingTableRecordOffset = inInst.m_hitgroupSbtRecordIndex & 0xFFFFFF;
-			outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR | VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-			outInst.accelerationStructureReference = static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_deviceAddress;
-			ANKI_ASSERT(outInst.accelerationStructureReference != 0);
+			// Create and populate the instances buffer
+			m_topLevelInfo.m_blases.resizeStorage(inf.m_topLevel.m_directArgs.m_instances.getSize());
 
-			// Hold the reference
-			m_topLevelInfo.m_blas.emplaceBack(inf.m_topLevel.m_instances[i].m_bottomLevel);
+			BufferInitInfo buffInit("AS instances");
+			buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_directArgs.m_instances.getSize();
+			buffInit.m_usage = PrivateBufferUsageBit::kAccelerationStructure;
+			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+			m_topLevelInfo.m_instancesBuffer = getGrManagerImpl().newBuffer(buffInit);
+
+			VkAccelerationStructureInstanceKHR* instances =
+				static_cast<VkAccelerationStructureInstanceKHR*>(m_topLevelInfo.m_instancesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+			for(U32 i = 0; i < inf.m_topLevel.m_directArgs.m_instances.getSize(); ++i)
+			{
+				VkAccelerationStructureInstanceKHR& outInst = instances[i];
+				const AccelerationStructureInstanceInfo& inInst = inf.m_topLevel.m_directArgs.m_instances[i];
+				static_assert(sizeof(outInst.transform) == sizeof(inInst.m_transform), "See file");
+				memcpy(&outInst.transform, &inInst.m_transform, sizeof(inInst.m_transform));
+				outInst.instanceCustomIndex = i & 0xFFFFFF;
+				outInst.mask = inInst.m_mask;
+				outInst.instanceShaderBindingTableRecordOffset = inInst.m_hitgroupSbtRecordIndex & 0xFFFFFF;
+				outInst.flags =
+					VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR | VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+				outInst.accelerationStructureReference = static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_deviceAddress;
+				ANKI_ASSERT(outInst.accelerationStructureReference != 0);
+
+				// Hold the reference
+				m_topLevelInfo.m_blases.emplaceBack(inf.m_topLevel.m_directArgs.m_instances[i].m_bottomLevel);
+			}
+
+			m_topLevelInfo.m_instancesBuffer->flush(0, kMaxPtrSize);
+			m_topLevelInfo.m_instancesBuffer->unmap();
 		}
+		else
+		{
+			// Instances buffer already created
+			ANKI_ASSERT(inf.m_topLevel.m_indirectArgs.m_instancesBufferOffset
+							+ sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_indirectArgs.m_maxInstanceCount
+						<= inf.m_topLevel.m_indirectArgs.m_instancesBuffer->getSize());
+			m_topLevelInfo.m_instancesBuffer.reset(inf.m_topLevel.m_indirectArgs.m_instancesBuffer);
 
-		m_topLevelInfo.m_instancesBuffer->flush(0, kMaxPtrSize);
-		m_topLevelInfo.m_instancesBuffer->unmap();
+			m_topLevelInfo.m_maxInstanceCount = inf.m_topLevel.m_indirectArgs.m_maxInstanceCount;
+		}
 
 		// Geom
 		VkAccelerationStructureGeometryKHR& geom = m_geometry;
@@ -125,6 +142,10 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		geom.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
 		geom.geometry.instances.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
 		geom.geometry.instances.data.deviceAddress = m_topLevelInfo.m_instancesBuffer->getGpuAddress();
+		if(isIndirect)
+		{
+			geom.geometry.instances.data.deviceAddress += inf.m_topLevel.m_indirectArgs.m_instancesBufferOffset;
+		}
 		geom.geometry.instances.arrayOfPointers = false;
 		geom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO
 
@@ -139,10 +160,10 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		// Get memory info
 		VkAccelerationStructureBuildSizesInfoKHR buildSizes = {};
-		const U32 instanceCount = inf.m_topLevel.m_instances.getSize();
+		const U32 instanceCount = (isIndirect) ? inf.m_topLevel.m_indirectArgs.m_maxInstanceCount : inf.m_topLevel.m_directArgs.m_instances.getSize();
 		buildSizes.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 		vkGetAccelerationStructureBuildSizesKHR(vkdev, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &instanceCount, &buildSizes);
-		m_scratchBufferSize = U32(buildSizes.buildScratchSize);
+		m_scratchBufferSize = buildSizes.buildScratchSize;
 
 		// Create the buffer that holds the AS memory
 		BufferInitInfo bufferInit(inf.getName());
@@ -164,7 +185,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		buildInfo.dstAccelerationStructure = m_handle;
 
 		// Range info
-		m_rangeInfo.primitiveCount = inf.m_topLevel.m_instances.getSize();
+		m_rangeInfo.primitiveCount = inf.m_topLevel.m_directArgs.m_instances.getSize();
 	}
 
 	return Error::kNone;

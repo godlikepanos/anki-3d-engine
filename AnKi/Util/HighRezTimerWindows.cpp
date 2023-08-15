@@ -7,6 +7,7 @@
 #include <AnKi/Util/Assert.h>
 #include <AnKi/Util/Win32Minimal.h>
 #include <cstdio>
+#include <cstdlib>
 
 namespace anki {
 

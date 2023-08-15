@@ -426,6 +426,9 @@ public:
 
 	void buildAccelerationStructureInternal(AccelerationStructure* as);
 
+	void buildAccelerationStructureIndirectInternal(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset,
+													Buffer* rangeBuffer, PtrSize rangeBufferOffsset);
+
 	void upscaleInternal(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
 						 TextureView* exposure, const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
 

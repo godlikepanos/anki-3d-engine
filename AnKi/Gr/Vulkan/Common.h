@@ -125,12 +125,10 @@ constexpr Second kMaxFenceOrSemaphoreWaitTime = 10.0;
 class PrivateBufferUsageBit
 {
 public:
-	static constexpr BufferUsageBit kAccelerationStructureBuildScratch = BufferUsageBit(1ull << 29ull);
-
 	/// Buffer that holds the memory for the actual AS.
-	static constexpr BufferUsageBit kAccelerationStructure = static_cast<BufferUsageBit>(1ull << 30ull);
+	static constexpr BufferUsageBit kAccelerationStructure = BufferUsageBit(1ull << 30ull);
 
-	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructureBuildScratch | kAccelerationStructure;
+	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructure;
 };
 static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Update the bits in PrivateBufferUsageBit");
 

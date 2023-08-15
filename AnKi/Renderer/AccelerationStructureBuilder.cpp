@@ -21,16 +21,17 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	ANKI_ASSERT(instanceCount > 0);
 
 	// Create the instances. Allocate but not construct to save some CPU time
-	void* instancesMem = ctx.m_tempPool->allocate(sizeof(AccelerationStructureInstance) * instanceCount, alignof(AccelerationStructureInstance));
-	WeakArray<AccelerationStructureInstance> instances(static_cast<AccelerationStructureInstance*>(instancesMem), instanceCount);
+	void* instancesMem =
+		ctx.m_tempPool->allocate(sizeof(AccelerationStructureInstanceInfo) * instanceCount, alignof(AccelerationStructureInstanceInfo));
+	WeakArray<AccelerationStructureInstanceInfo> instances(static_cast<AccelerationStructureInstanceInfo*>(instancesMem), instanceCount);
 
 	for(U32 instanceIdx = 0; instanceIdx < instanceCount; ++instanceIdx)
 	{
 		const RayTracingInstanceQueueElement& element = instanceElements[instanceIdx];
 
 		// Init instance
-		AccelerationStructureInstance& out = instances[instanceIdx];
-		::new(&out) AccelerationStructureInstance();
+		AccelerationStructureInstanceInfo& out = instances[instanceIdx];
+		::new(&out) AccelerationStructureInstanceInfo();
 		out.m_bottomLevel.reset(element.m_bottomLevelAccelerationStructure);
 		memcpy(&out.m_transform, &element.m_transform, sizeof(out.m_transform));
 		out.m_hitgroupSbtRecordIndex = instanceIdx;
@@ -40,7 +41,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	// Create the TLAS
 	AccelerationStructureInitInfo initInf("MainTlas");
 	initInf.m_type = AccelerationStructureType::kTopLevel;
-	initInf.m_topLevel.m_instances = instances;
+	initInf.m_topLevel.m_directArgs.m_instances = instances;
 	m_runCtx.m_tlas = GrManager::getSingleton().newAccelerationStructure(initInf);
 
 	// Need a cleanup

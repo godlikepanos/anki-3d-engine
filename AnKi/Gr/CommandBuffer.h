@@ -407,6 +407,15 @@ public:
 	/// Build the acceleration structure.
 	void buildAccelerationStructure(AccelerationStructure* as);
 
+	/// Build an acceleration stracture indirectly. Only valid for TLASes.
+	/// @param as The AS to build.
+	/// @param scratchBuffer A scratch buffer. Ask the AS for size.
+	/// @param scratchBufferOffset Scratch buffer offset.
+	/// @param rangeBuffer Points to a single AccelerationStructureBuildRangeInfo.
+	/// @param rangeBufferOffsset Offset in rangeBuffer.
+	void buildAccelerationStructureIndirect(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset, Buffer* rangeBuffer,
+											PtrSize rangeBufferOffsset);
+
 	/// Do upscaling by an external upscaler
 	/// @param[in] upscaler the upscaler to use for upscaling
 	/// @param[in] inColor Source LowRes RenderTarget.

@@ -701,6 +701,7 @@ enum class BufferUsageBit : U64
 
 	kAccelerationStructureBuild = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
 	kShaderBindingTable = 1ull << 28ull, ///< Will be used as SBT in a traceRays() command.
+	kAccelerationStructureBuildScratch = 1ull << 29ull, ///< Used in buildAccelerationStructureXXX commands.
 
 	// Derived
 	kAllUniform = kUniformGeometry | kUniformFragment | kUniformCompute | kUniformTraceRays,
@@ -718,12 +719,12 @@ enum class BufferUsageBit : U64
 	kAllTraceRays = kUniformTraceRays | kStorageTraceRaysRead | kStorageTraceRaysWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite
 					| kIndirectTraceRays | kShaderBindingTable,
 
-	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild,
+	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch,
 	kAllRead = kAllUniform | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead | kTextureGeometryRead
 			   | kTextureFragmentRead | kTextureComputeRead | kTextureTraceRaysRead | kIndex | kVertex | kIndirectCompute | kIndirectDraw
 			   | kIndirectTraceRays | kTransferSource | kAccelerationStructureBuild | kShaderBindingTable,
 	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kTextureGeometryWrite
-				| kTextureFragmentWrite | kTextureComputeWrite | kTextureTraceRaysWrite | kTransferDestination,
+				| kTextureFragmentWrite | kTextureComputeWrite | kTextureTraceRaysWrite | kTransferDestination | kAccelerationStructureBuildScratch,
 	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)

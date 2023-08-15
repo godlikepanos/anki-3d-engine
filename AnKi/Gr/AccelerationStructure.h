@@ -60,7 +60,7 @@ public:
 };
 
 /// @memberof AccelerationStructureInitInfo
-class AccelerationStructureInstance
+class AccelerationStructureInstanceInfo
 {
 public:
 	AccelerationStructurePtr m_bottomLevel;
@@ -73,11 +73,24 @@ public:
 class TopLevelAccelerationStructureInitInfo
 {
 public:
-	ConstWeakArray<AccelerationStructureInstance> m_instances;
+	class
+	{
+	public:
+		ConstWeakArray<AccelerationStructureInstanceInfo> m_instances;
+	} m_directArgs; ///< Pass some representation of the instances.
+
+	class
+	{
+	public:
+		U32 m_maxInstanceCount = 0;
+		Buffer* m_instancesBuffer = nullptr;
+		PtrSize m_instancesBufferOffset = kMaxPtrSize;
+	} m_indirectArgs; ///< Pass the instances GPU buffer directly.
 
 	Bool isValid() const
 	{
-		return m_instances.getSize() > 0;
+		return m_directArgs.m_instances.getSize() > 0
+			   || (m_indirectArgs.m_maxInstanceCount > 0 && m_indirectArgs.m_instancesBuffer && m_indirectArgs.m_instancesBufferOffset < kMaxPtrSize);
 	}
 };
 
@@ -120,7 +133,15 @@ public:
 		return m_type;
 	}
 
+	/// Get the size of the scratch buffer used in building this AS.
+	PtrSize getBuildScratchBufferSize() const
+	{
+		ANKI_ASSERT(m_scratchBufferSize != 0);
+		return m_scratchBufferSize;
+	}
+
 protected:
+	PtrSize m_scratchBufferSize = 0;
 	AccelerationStructureType m_type = AccelerationStructureType::kCount;
 
 	/// Construct.
