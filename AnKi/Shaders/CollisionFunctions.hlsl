@@ -57,6 +57,14 @@ Bool testAabbAabb(Vec3 aMin, Vec3 aMax, Vec3 bMin, Vec3 bMax)
 	return all(aMin < bMax) && all(bMin < aMax);
 }
 
+Bool testSphereSphereCollision(Vec3 sphereCenterA, F32 sphereRadiusA, Vec3 sphereCenterB, F32 sphereRadiusB)
+{
+	const Vec3 vec = sphereCenterA - sphereCenterB;
+	const F32 distSquared = dot(vec, vec);
+	const F32 maxDist = sphereRadiusA + sphereRadiusB;
+	return (distSquared < maxDist * maxDist);
+}
+
 /// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
 /// intersection point is rayOrigin + rayDir * a
 /// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity

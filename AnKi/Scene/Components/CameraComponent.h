@@ -119,32 +119,10 @@ public:
 		return m_frustum;
 	}
 
-	ANKI_INTERNAL Bool getHasExtendedFrustum() const
-	{
-		return m_usesExtendedFrustum;
-	}
-
-	ANKI_INTERNAL const Frustum& getExtendedFrustum() const
-	{
-		ANKI_ASSERT(m_usesExtendedFrustum);
-		return m_extendedFrustum;
-	}
-
-	ANKI_INTERNAL Frustum& getExtendedFrustum()
-	{
-		ANKI_ASSERT(m_usesExtendedFrustum);
-		return m_extendedFrustum;
-	}
-
 private:
 	Frustum m_frustum;
-	Frustum m_extendedFrustum; ///< For ray tracing.
-
-	Bool m_usesExtendedFrustum : 1 = false;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
-	Transform computeExtendedFrustumTransform(const Transform& cameraTransform) const;
 };
 /// @}
 

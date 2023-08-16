@@ -140,6 +140,8 @@ public:
 		return m_scratchBufferSize;
 	}
 
+	U64 getGpuAddress() const;
+
 protected:
 	PtrSize m_scratchBufferSize = 0;
 	AccelerationStructureType m_type = AccelerationStructureType::kCount;

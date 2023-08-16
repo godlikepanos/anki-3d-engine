@@ -158,10 +158,7 @@ struct DrawIndirectArgsWithPadding
 	}
 #	endif // HZB_TEST
 #else // DISTANCE_TEST == 1
-	const Vec3 vec = aabb.m_sphereCenter - g_unis.m_pointOfTest;
-	const F32 distFromTestPointSquared = dot(vec, vec);
-	const F32 maxDist = g_unis.m_testRadius + aabb.m_sphereRadius;
-	if(distFromTestPointSquared >= maxDist * maxDist)
+	if(!testSphereSphereCollision(aabb.m_sphereCenter, aabb.m_sphereRadius, g_unis.m_pointOfTest, aabb.m_sphereRadius))
 	{
 		return;
 	}

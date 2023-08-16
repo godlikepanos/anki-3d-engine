@@ -24,9 +24,6 @@ static NumericCVar<F32> g_shadowCascade3DistanceCVar(CVarSubsystem::kScene, "Sha
 static NumericCVar<F32> g_earyZDistanceCVar(CVarSubsystem::kScene, "EarlyZDistance", (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, kMaxF32,
 											"Objects with distance lower than that will be used in early Z");
 BoolCVar g_rayTracedShadowsCVar(CVarSubsystem::kScene, "RayTracedShadows", true, "Enable or not ray traced shadows. Ignored if RT is not supported");
-static NumericCVar<F32>
-	g_rayTracingExtendedFrustumDistanceCVar(CVarSubsystem::kScene, "RayTracingExtendedFrustumDistance", 100.0f, 10.0f, 10000.0f,
-											"Every object that its distance from the camera is bellow that value will take part in ray tracing");
 
 CameraComponent::CameraComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
@@ -49,21 +46,6 @@ CameraComponent::CameraComponent(SceneNode* node)
 	m_frustum.setEarlyZDistance(g_earyZDistanceCVar.get());
 
 	m_frustum.update();
-
-	// Init extended frustum
-	m_usesExtendedFrustum = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get();
-
-	if(m_usesExtendedFrustum)
-	{
-		m_extendedFrustum.init(FrustumType::kOrthographic);
-
-		const F32 dist = g_rayTracingExtendedFrustumDistanceCVar.get();
-
-		m_extendedFrustum.setOrthographic(0.1f, dist * 2.0f, dist, -dist, dist, -dist);
-		m_extendedFrustum.setWorldTransform(computeExtendedFrustumTransform(node->getWorldTransform()));
-
-		m_extendedFrustum.update();
-	}
 }
 
 CameraComponent::~CameraComponent()
@@ -75,33 +57,11 @@ Error CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	if(info.m_node->movedThisFrame())
 	{
 		m_frustum.setWorldTransform(info.m_node->getWorldTransform());
-
-		if(m_usesExtendedFrustum)
-		{
-			m_extendedFrustum.setWorldTransform(computeExtendedFrustumTransform(info.m_node->getWorldTransform()));
-		}
 	}
 
 	updated = m_frustum.update();
 
-	if(m_usesExtendedFrustum)
-	{
-		const Bool extendedUpdated = m_extendedFrustum.update();
-		updated = updated || extendedUpdated;
-	}
-
 	return Error::kNone;
-}
-
-Transform CameraComponent::computeExtendedFrustumTransform(const Transform& cameraTransform) const
-{
-	const F32 far = m_extendedFrustum.getFar();
-	Transform extendedFrustumTransform = Transform::getIdentity();
-	Vec3 newOrigin = cameraTransform.getOrigin().xyz();
-	newOrigin.z() += far / 2.0f;
-	extendedFrustumTransform.setOrigin(newOrigin.xyz0());
-
-	return extendedFrustumTransform;
 }
 
 } // end namespace anki

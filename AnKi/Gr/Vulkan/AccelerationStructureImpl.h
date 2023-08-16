@@ -38,6 +38,12 @@ public:
 		return m_topLevelInfo.m_maxInstanceCount;
 	}
 
+	VkDeviceAddress getAsDeviceAddress() const
+	{
+		ANKI_ASSERT(m_deviceAddress);
+		return m_deviceAddress;
+	}
+
 	void generateBuildInfo(U64 scratchBufferAddress, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
 						   VkAccelerationStructureBuildRangeInfoKHR& rangeInfo) const
 	{

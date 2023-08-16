@@ -800,12 +800,13 @@ struct AccelerationStructureBuildRangeInfo
 };
 
 /// Mirrors VkGeometryInstanceFlagBitsKHR
-enum class AccellerationStructureFlag : U32
+enum AccellerationStructureFlag : U32
 {
-	kTriangleFacingCullDisable = 1 << 0,
-	kFlipFacing = 1 << 1,
-	kForceOpaque = 1 << 2,
-	kForceNoOpaque = 1 << 3
+	kAccellerationStructureFlagTriangleFacingCullDisable = 1 << 0,
+	kAccellerationStructureFlagFlipFacing = 1 << 1,
+	kAccellerationStructureFlagForceOpaque = 1 << 2,
+	kAccellerationStructureFlagForceNoOpaque = 1 << 3,
+	kAccellerationStructureFlagTriangleFrontCounterlockwise = kAccellerationStructureFlagFlipFacing
 };
 
 /// Mirrors VkAccelerationStructureInstanceKHR.

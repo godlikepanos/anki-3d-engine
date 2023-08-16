@@ -55,6 +55,8 @@ public:
 
 	/// Offset to the vertex buffer or kMaxPtrSize if stream is not present.
 	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets;
+
+	AccelerationStructurePtr m_blas;
 };
 
 /// Model patch class. Its very important class and it binds a material with a mesh.

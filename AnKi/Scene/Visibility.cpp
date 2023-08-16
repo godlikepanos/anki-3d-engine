@@ -641,16 +641,6 @@ void SceneGraph::doVisibilityTests(SceneNode& camera, SceneGraph& scene, RenderQ
 	static_cast<FrustumFlags&>(visFrustum) = getCameraFrustumFlags();
 	ctx.submitNewWork(visFrustum, visFrustum, rqueue, hive);
 
-	if(camerac.getHasExtendedFrustum())
-	{
-		VisibilityFrustum evisFrustum;
-		evisFrustum.m_frustum = &camerac.getExtendedFrustum();
-		static_cast<FrustumFlags&>(evisFrustum) = getCameraExtendedFrustumFlags();
-
-		rqueue.m_rayTracingQueue = newInstance<RenderQueue>(scene.getFrameMemoryPool());
-		ctx.submitNewWork(evisFrustum, visFrustum, *rqueue.m_rayTracingQueue, hive);
-	}
-
 	hive.waitAllTasks();
 }
 

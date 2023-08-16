@@ -129,6 +129,66 @@ private:
 	U64 m_lastFrameIdx = kMaxU64;
 	U32 m_counterBufferOffset = 0;
 };
+
+/// @memberof GpuVisibilityAccelerationStructures
+class GpuVisibilityAccelerationStructuresInput
+{
+public:
+	CString m_passesName;
+	RenderingTechnique m_technique = RenderingTechnique::kCount;
+
+	Vec3 m_lodReferencePoint = Vec3(kMaxF32);
+	Array<F32, kMaxLodCount - 1> m_lodDistances = {};
+
+	Vec3 m_pointOfTest = Vec3(kMaxF32);
+	F32 m_testRadius = kMaxF32;
+
+	Mat4 m_viewProjectionMatrix;
+
+	RenderGraphDescription* m_rgraph = nullptr;
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_passesName.getLength() > 0);
+		ANKI_ASSERT(m_technique != RenderingTechnique::kCount);
+		ANKI_ASSERT(m_lodReferencePoint.x() != kMaxF32);
+		ANKI_ASSERT(m_lodReferencePoint == m_pointOfTest && "For now these should be the same");
+		ANKI_ASSERT(m_testRadius != kMaxF32);
+		ANKI_ASSERT(m_viewProjectionMatrix != Mat4());
+		ANKI_ASSERT(m_rgraph);
+	}
+};
+
+/// @memberof GpuVisibilityAccelerationStructures
+class GpuVisibilityAccelerationStructuresOutput
+{
+public:
+	BufferHandle m_someBufferHandle; ///< Some handle to track dependencies. No need to track every buffer.
+
+	BufferOffsetRange m_rangeBuffer; ///< Points to a single AccelerationStructureBuildRangeInfo. The m_primitiveCount holds the instance count.
+	BufferOffsetRange m_instancesBuffer; ///< Points to AccelerationStructureBuildRangeInfo::m_primitiveCount number of AccelerationStructureInstance.
+	BufferOffsetRange m_renderableIndicesBuffer; ///< AccelerationStructureBuildRangeInfo::m_primitiveCount number of indices to renderables.
+};
+
+/// Performs visibility to gather bottom-level acceleration structures in a buffer that can be used to build a TLAS.
+class GpuVisibilityAccelerationStructures : public RendererObject
+{
+public:
+	Error init();
+
+	void pupulateRenderGraph(GpuVisibilityAccelerationStructuresInput& in, GpuVisibilityAccelerationStructuresOutput& out);
+
+private:
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
+
+	static constexpr U32 kInitialCounterBufferElementCount = 3;
+	BufferPtr m_counterBuffer; ///< A buffer containing multiple counters for atomic operations.
+	U64 m_lastFrameIdx = kMaxU64;
+	U32 m_currentCounterBufferOffset = 0;
+
+	BufferHandle m_counterBufferHandle;
+};
 /// @}
 
 } // end namespace anki

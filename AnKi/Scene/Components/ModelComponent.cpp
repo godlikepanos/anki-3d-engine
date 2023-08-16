@@ -174,6 +174,12 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 						meshLod.m_vertexOffsets[U32(stream)] = kMaxU32;
 					}
 				}
+
+				if(inf.m_blas)
+				{
+					const U64 address = inf.m_blas->getGpuAddress();
+					memcpy(&meshLod.m_blasAddress, &address, sizeof(meshLod.m_blasAddress));
+				}
 			}
 
 			// Copy the last LOD to the rest just in case
@@ -299,72 +305,6 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	return Error::kNone;
-}
-
-void ModelComponent::setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
-														  WeakArray<RayTracingInstanceQueueElement>& outInstances) const
-{
-	ANKI_ASSERT(isEnabled());
-
-	outInstances.setArray(nullptr, 0);
-
-	const RenderingTechniqueBit requestedRenderingTechniqueMask = RenderingTechniqueBit(1 << technique);
-	if(!(m_presentRenderingTechniques & requestedRenderingTechniqueMask))
-	{
-		return;
-	}
-
-	// Allocate instances
-	U32 instanceCount = 0;
-	for(U32 i = 0; i < m_patchInfos.getSize(); ++i)
-	{
-		instanceCount += !!(m_patchInfos[i].m_techniques & requestedRenderingTechniqueMask);
-	}
-
-	if(instanceCount == 0)
-	{
-		return;
-	}
-
-	RayTracingInstanceQueueElement* instances = static_cast<RayTracingInstanceQueueElement*>(SceneGraph::getSingleton().getFrameMemoryPool().allocate(
-		sizeof(RayTracingInstanceQueueElement) * instanceCount, alignof(RayTracingInstanceQueueElement)));
-
-	outInstances.setArray(instances, instanceCount);
-
-	RenderingKey key;
-	key.setLod(lod);
-	key.setRenderingTechnique(technique);
-
-	instanceCount = 0;
-	for(U32 i = 0; i < m_patchInfos.getSize(); ++i)
-	{
-		if(!(m_patchInfos[i].m_techniques & requestedRenderingTechniqueMask))
-		{
-			continue;
-		}
-
-		RayTracingInstanceQueueElement& queueElem = instances[instanceCount];
-
-		const ModelPatch& patch = m_model->getModelPatches()[i];
-
-		ModelRayTracingInfo modelInf;
-		patch.getRayTracingInfo(key, modelInf);
-
-		queueElem.m_bottomLevelAccelerationStructure = modelInf.m_bottomLevelAccelerationStructure.get();
-		queueElem.m_shaderGroupHandleIndex = modelInf.m_shaderGroupHandleIndex;
-		queueElem.m_worldTransformsOffset = m_gpuSceneTransforms.getGpuSceneOffset();
-		queueElem.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-		queueElem.m_geometryOffset =
-			U32(m_patchInfos[i].m_gpuSceneMeshLods.getIndex() * sizeof(GpuSceneMeshLod) * kMaxLodCount + lod * sizeof(GpuSceneMeshLod));
-		queueElem.m_geometryOffset += U32(GpuSceneArrays::MeshLod::getSingleton().getGpuSceneOffsetOfArrayBase());
-		queueElem.m_indexBufferOffset = U32(modelInf.m_indexBufferOffset);
-
-		const Transform positionTransform(patch.getMesh()->getPositionsTranslation().xyz0(), Mat3x4::getIdentity(),
-										  patch.getMesh()->getPositionsScale());
-		queueElem.m_transform = Mat3x4(m_node->getWorldTransform()).combineTransformations(Mat3x4(positionTransform));
-
-		++instanceCount;
-	}
 }
 
 void ModelComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)

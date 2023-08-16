@@ -1,0 +1,130 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/CollisionFunctions.hlsl>
+
+// Buffers that point to the GPU scene
+[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
+[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
+[[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
+
+[[vk::binding(3)]] RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances;
+[[vk::binding(4)]] RWStructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+[[vk::binding(5)]] RWStructuredBuffer<AccelerationStructureBuildRangeInfo> g_range;
+
+[[vk::binding(6)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch
+
+[[vk::push_constant]] ConstantBuffer<GpuVisibilityAccelerationStructuresUniforms> g_unis;
+
+#define NUMTHREADS 64
+
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	// Skip remaining threads
+	const U32 aabbIdx = svDispatchThreadId;
+	U32 aabbCount;
+	U32 unused;
+	g_aabbs.GetDimensions(aabbCount, unused);
+	Bool visible = (aabbIdx < aabbCount);
+
+	// Sphere test
+	GpuSceneRenderableAabb aabb;
+	if(visible)
+	{
+		aabb = g_aabbs[aabbIdx];
+		visible = testSphereSphereCollision(aabb.m_sphereCenter, aabb.m_sphereRadius, g_unis.m_pointOfTest, aabb.m_sphereRadius);
+	}
+
+	// All good, write the instance
+	if(visible)
+	{
+		// LOD selection
+		U32 lod;
+		const Bool insideCameraFrustum = frustumTest(g_unis.m_clipPlanes, aabb.m_sphereCenter, aabb.m_sphereRadius);
+		if(insideCameraFrustum)
+		{
+			// Visible by the camera, need to match the camera LODs
+			const F32 distFromLodPoint = length(aabb.m_sphereCenter - g_unis.m_pointOfTest) - aabb.m_sphereRadius;
+			if(distFromLodPoint < g_unis.m_maxLodDistances[0])
+			{
+				lod = 0u;
+			}
+			else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
+			{
+				lod = 1u;
+			}
+			else
+			{
+				lod = 2u;
+			}
+		}
+		else
+		{
+			// Not visible by the main camera, lowest LOD
+			lod = 2u;
+		}
+
+		const U32 renderableIdx = aabb.m_renderableIndexAndRenderStateBucket >> 12u;
+		const GpuSceneRenderable renderable = g_renderables[renderableIdx];
+
+		const U32 meshLodOffset = renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
+		const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
+
+		if(meshLod.m_blasAddress.x != 0 || meshLod.m_blasAddress.y != 0)
+		{
+			// It has a BLAS, write what is to write
+			U32 instanceIdx;
+			InterlockedAdd(g_counterBuffer[0], 1, instanceIdx);
+
+			AccelerationStructureInstance instance;
+			instance.m_transform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+			instance.m_instanceCustomIndex24_mask8 = (instanceIdx << 8u) | (meshLod.m_tlasInstanceMask & 0xFFu);
+			instance.m_instanceShaderBindingTableRecordOffset24_flags8 =
+				(instanceIdx << 8u)
+				| (kAccellerationStructureFlagTriangleFrontCounterlockwise | kAccellerationStructureFlagTriangleFacingCullDisable);
+			instance.m_accelerationStructureAddress = meshLod.m_blasAddress;
+			g_visibleInstances[instanceIdx] = instance;
+
+			g_visibleRenderableIndices[instanceIdx + 1] = renderableIdx;
+		}
+	}
+
+	// Store the counters to the actual buffers
+	{
+		Bool lastThreadgroupExecuting = false;
+		if(svGroupIndex == 0)
+		{
+			U32 threadgroupIdx;
+			InterlockedAdd(g_counterBuffer[1], 1, threadgroupIdx);
+			const U32 threadgroupCount = (aabbCount + NUMTHREADS - 1) / NUMTHREADS;
+			lastThreadgroupExecuting = (threadgroupIdx + 1 == threadgroupCount);
+		}
+
+		// Sync to make sure all the atomic ops have finished before the following code reads them
+		AllMemoryBarrierWithGroupSync();
+
+		if(lastThreadgroupExecuting)
+		{
+			AccelerationStructureBuildRangeInfo range;
+			range.m_primitiveCount = g_counterBuffer[0];
+			range.m_primitiveOffset = 0;
+			range.m_firstVertex = 0;
+			range.m_transformOffset = 0;
+			g_range[0] = range;
+
+			g_visibleRenderableIndices[0] = g_counterBuffer[0];
+
+			g_counterBuffer[0] = 0;
+			g_counterBuffer[1] = 0;
+		}
+	}
+}
+
+#pragma anki end

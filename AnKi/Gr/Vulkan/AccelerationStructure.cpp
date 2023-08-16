@@ -21,4 +21,10 @@ AccelerationStructure* AccelerationStructure::newInstance(const AccelerationStru
 	return impl;
 }
 
+U64 AccelerationStructure::getGpuAddress() const
+{
+	ANKI_VK_SELF_CONST(AccelerationStructureImpl);
+	return self.getAsDeviceAddress();
+}
+
 } // end namespace anki

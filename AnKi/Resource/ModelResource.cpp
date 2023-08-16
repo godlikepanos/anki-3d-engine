@@ -46,6 +46,11 @@ void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 	{
 		inf.m_vertexBufferOffsets[stream] = m_lodInfos[lod].m_vertexBufferOffsets[stream];
 	}
+
+	if(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
+	{
+		inf.m_blas = m_mesh->getBottomLevelAccelerationStructure(lod);
+	}
 }
 
 void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const

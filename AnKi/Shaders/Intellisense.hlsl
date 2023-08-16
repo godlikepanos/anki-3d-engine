@@ -18,6 +18,9 @@
 #define numthreads(x, y, z) [nodiscard]
 #define unroll [nodiscard]
 #define loop [nodiscard]
+#define out
+#define in
+#define inout
 
 #define ANKI_BEGIN_NAMESPACE
 #define ANKI_END_NAMESPACE

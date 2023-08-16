@@ -37,24 +37,14 @@ struct GpuVisibilityNonRenderableUniforms
 	Vec4 m_clipPlanes[6u];
 };
 
-struct PointLightRendererCacheEntry
+struct GpuVisibilityAccelerationStructuresUniforms
 {
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
-	U32 m_uuid;
-	F32 m_padding0;
+	Vec4 m_clipPlanes[6u];
 
-	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
-};
+	Vec3 m_pointOfTest;
+	F32 m_testRadius;
 
-struct SpotLightRendererCacheEntry
-{
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-	U32 m_uuid;
-	U32 m_padding0;
-	U32 m_padding1;
-
-	Mat4 m_textureMatrix;
+	Vec4 m_maxLodDistances;
 };
 
 ANKI_END_NAMESPACE
