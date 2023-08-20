@@ -6,13 +6,14 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
-#include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Ui/Canvas.h>
 
 namespace anki {
 
 /// @addtogroup scene
 /// @{
+
+using UiQueueElementDrawCallback = void (*)(CanvasPtr& canvas, void* userData);
 
 /// UI scene component.
 class UiComponent : public SceneComponent

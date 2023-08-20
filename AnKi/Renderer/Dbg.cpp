@@ -8,7 +8,6 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/FinalComposite.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>

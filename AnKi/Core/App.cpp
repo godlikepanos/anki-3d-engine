@@ -23,7 +23,6 @@
 #include <AnKi/Core/MaliHwCounters.h>
 #include <AnKi/Window/Input.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Renderer/MainRenderer.h>
@@ -456,12 +455,9 @@ Error App::mainLoop()
 
 			ANKI_CHECK(SceneGraph::getSingleton().update(prevUpdateTime, crntTime));
 
-			RenderQueue rqueue;
-			SceneGraph::getSingleton().doVisibilityTests(rqueue);
-
 			// Render
 			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-			ANKI_CHECK(MainRenderer::getSingleton().render(rqueue, presentableTex.get()));
+			ANKI_CHECK(MainRenderer::getSingleton().render(presentableTex.get()));
 
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
 			Second grTime = 0.0;

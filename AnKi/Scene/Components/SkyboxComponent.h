@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Math.h>
 
@@ -132,10 +131,7 @@ public:
 		return m_fog.m_diffuseColor;
 	}
 
-	void setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const;
-
 private:
-	Spatial m_spatial;
 	SkyboxType m_type = SkyboxType::kSolidColor;
 	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
 	ImageResourcePtr m_image;

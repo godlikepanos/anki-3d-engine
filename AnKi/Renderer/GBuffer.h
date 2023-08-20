@@ -51,7 +51,7 @@ public:
 		return m_runCtx.m_prevFrameDepthRt;
 	}
 
-	RenderTargetHandle getHzbRt() const
+	const RenderTargetHandle& getHzbRt() const
 	{
 		return m_runCtx.m_hzbRt;
 	}

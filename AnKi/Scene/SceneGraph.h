@@ -17,7 +17,6 @@
 namespace anki {
 
 // Forward
-class Octree;
 class RenderQueue;
 extern NumericCVar<F32> g_probeEffectiveDistanceCVar;
 extern NumericCVar<F32> g_probeShadowEffectiveDistanceCVar;
@@ -93,8 +92,6 @@ public:
 
 	Error update(Second prevUpdateTime, Second crntTime);
 
-	void doVisibilityTests(RenderQueue& rqueue);
-
 	SceneNode& findSceneNode(const CString& name);
 	SceneNode* tryFindSceneNode(const CString& name);
 
@@ -148,12 +145,6 @@ public:
 	U32 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
-	}
-
-	Octree& getOctree()
-	{
-		ANKI_ASSERT(m_octree);
-		return *m_octree;
 	}
 
 	SceneComponentArrays& getComponentArrays()
@@ -242,8 +233,6 @@ private:
 
 	EventManager m_events;
 
-	Octree* m_octree = nullptr;
-
 	Vec3 m_sceneMin = Vec3(kMaxF32);
 	Vec3 m_sceneMax = Vec3(kMinF32);
 	mutable SpinLock m_sceneBoundsMtx;
@@ -270,9 +259,6 @@ private:
 
 	Error updateNodes(UpdateSceneNodesCtx& ctx);
 	Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
-
-	/// Do visibility tests.
-	static void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, RenderQueue& rqueue);
 };
 
 template<typename Node, typename... Args>

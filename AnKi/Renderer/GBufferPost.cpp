@@ -6,7 +6,6 @@
 #include <AnKi/Renderer/GBufferPost.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ClusterBinning2.h>
 
 namespace anki {

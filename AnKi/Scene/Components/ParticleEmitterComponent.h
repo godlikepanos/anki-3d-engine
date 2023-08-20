@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>

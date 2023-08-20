@@ -8,7 +8,6 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/LightShading.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>

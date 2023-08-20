@@ -5,7 +5,6 @@
 
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Scene/Components/UiComponent.h>

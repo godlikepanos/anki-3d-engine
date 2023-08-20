@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Octree.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -40,7 +39,6 @@
 namespace anki {
 
 static StatCounter g_sceneUpdateTime(StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage);
-static StatCounter g_sceneVisibilityTime(StatCategory::kTime, "Scene visibility", StatFlag::kMilisecond | StatFlag::kShowAverage);
 static StatCounter g_scenePhysicsTime(StatCategory::kTime, "Physics", StatFlag::kMilisecond | StatFlag::kShowAverage);
 
 static NumericCVar<U32> g_octreeMaxDepthCVar(CVarSubsystem::kScene, "OctreeMaxDepth", 5, 2, 10, "The max depth of the octree");
@@ -97,11 +95,6 @@ SceneGraph::~SceneGraph()
 
 	deleteNodesMarkedForDeletion();
 
-	if(m_octree)
-	{
-		deleteInstance(SceneMemoryPool::getSingleton(), m_octree);
-	}
-
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::freeSingleton();
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
@@ -113,9 +106,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	SceneMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
 	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, ANKI_SAFE_ALIGNMENT, "SceneGraphFramePool");
-
-	m_octree = newInstance<Octree>(SceneMemoryPool::getSingleton());
-	m_octree->init(Vec3(-1000.0f, -200.0f, -1000.0f), Vec3(1000.0f, 200.0f, 1000.0f), g_octreeMaxDepthCVar.get());
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));
@@ -287,13 +277,6 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	g_sceneUpdateTime.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
 	return Error::kNone;
-}
-
-void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
-{
-	const Second startTime = HighRezTimer::getCurrentTime();
-	doVisibilityTests(*m_mainCam, *this, rqueue);
-	g_sceneVisibilityTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 }
 
 Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)

@@ -310,30 +310,6 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 	return goodResult;
 }
 
-template<typename TMemoryPool>
-void ShadowMapping::newWorkItem(const UVec4& atlasViewport, const RenderQueue& queue, RenderGraphDescription& rgraph,
-								DynamicArray<ViewportWorkItem, TMemoryPool>& workItems, RenderTargetHandle* hzbRt)
-{
-	ViewportWorkItem& work = *workItems.emplaceBack();
-
-	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
-
-	FrustumGpuVisibilityInput visIn;
-	visIn.m_passesName = "Shadows visibility";
-	visIn.m_technique = RenderingTechnique::kDepth;
-	visIn.m_viewProjectionMatrix = queue.m_viewProjectionMatrix;
-	visIn.m_lodReferencePoint = queue.m_cameraTransform.getTranslationPart().xyz();
-	visIn.m_lodDistances = lodDistances;
-	visIn.m_hzbRt = hzbRt;
-	visIn.m_rgraph = &rgraph;
-
-	getRenderer().getGpuVisibility().populateRenderGraph(visIn, work.m_visOut);
-
-	work.m_viewport = atlasViewport;
-	work.m_mvp = queue.m_viewProjectionMatrix;
-	work.m_viewMatrix = queue.m_viewMatrix;
-}
-
 void ShadowMapping::processLights(RenderingContext& ctx)
 {
 	m_runCtx.m_renderAreaMin = UVec2(kMaxU32, kMaxU32);

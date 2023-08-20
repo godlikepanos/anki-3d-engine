@@ -32,7 +32,7 @@ class MainRenderer : public MakeSingleton<MainRenderer>
 public:
 	Error init(const MainRendererInitInfo& inf);
 
-	Error render(RenderQueue& rqueue, Texture* presentTex);
+	Error render(Texture* presentTex);
 
 	Dbg& getDbg();
 

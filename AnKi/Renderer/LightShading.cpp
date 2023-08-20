@@ -8,7 +8,6 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/DepthDownscale.h>

@@ -5,7 +5,6 @@
 
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>

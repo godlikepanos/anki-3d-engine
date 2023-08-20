@@ -9,6 +9,8 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Gr/Texture.h>
+#include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {
 

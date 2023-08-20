@@ -7,10 +7,10 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/RenderStateBucket.h>
-#include <AnKi/Scene/Spatial.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Util/WeakArray.h>
-#include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Collision/Aabb.h>
 
 namespace anki {
 

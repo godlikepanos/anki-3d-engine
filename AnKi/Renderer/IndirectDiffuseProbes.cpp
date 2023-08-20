@@ -5,7 +5,6 @@
 
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>

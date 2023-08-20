@@ -73,10 +73,6 @@ private:
 
 	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, U32& tileAllocatorHierarchy) const;
 
-	template<typename TMemoryPool>
-	void newWorkItem(const UVec4& atlasViewport, const RenderQueue& queue, RenderGraphDescription& rgraph,
-					 DynamicArray<ViewportWorkItem, TMemoryPool>& workItems, RenderTargetHandle* hzbRt = nullptr);
-
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 };
 /// @}

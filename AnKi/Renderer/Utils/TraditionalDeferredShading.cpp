@@ -5,7 +5,6 @@
 
 #include <AnKi/Renderer/Utils/TraditionalDeferredShading.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Resource/ImageResource.h>

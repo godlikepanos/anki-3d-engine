@@ -8,6 +8,8 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Gr/Texture.h>
+#include <AnKi/Gr/TextureView.h>
 
 namespace anki {
 

@@ -7,7 +7,6 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Utils/TraditionalDeferredShading.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Collision/Forward.h>
 
 namespace anki {

@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Core/CVarSet.h>

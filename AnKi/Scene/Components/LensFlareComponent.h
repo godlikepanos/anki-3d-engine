@@ -6,9 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 

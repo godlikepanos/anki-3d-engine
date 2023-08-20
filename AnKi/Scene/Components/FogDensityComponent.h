@@ -6,9 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Scene/GpuSceneArray.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Sphere.h>
 

@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/App.h>

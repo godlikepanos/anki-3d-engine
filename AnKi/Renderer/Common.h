@@ -82,7 +82,6 @@ class RenderingContext
 {
 public:
 	StackMemoryPool* m_tempPool = nullptr;
-	RenderQueue* m_renderQueue = nullptr;
 
 	RenderGraphDescription m_renderGraphDescr;
 

@@ -10,7 +10,6 @@
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/CVarSet.h>
@@ -457,7 +456,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rpass.setWork([this, &ctx, passIdx = i](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				const Bool lastPass = passIdx == m_atrousPassCount - 1;
+				const Bool lastPass = passIdx == U32(m_atrousPassCount - 1);
 				const U32 readRtIdx = (passIdx + 1) & 1;
 
 				if(lastPass)
@@ -544,8 +543,8 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 }
 
-void RtShadows::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-									 ShaderProgramPtr& optionalShaderProgram) const
+void RtShadows::getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+									 [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const
 {
 	handles[0] = m_runCtx.m_upscaledRt;
 }

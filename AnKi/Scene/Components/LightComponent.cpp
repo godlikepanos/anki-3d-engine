@@ -8,7 +8,6 @@
 #include <AnKi/Scene/Frustum.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Octree.h>
 #include <AnKi/Collision.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ImageResource.h>

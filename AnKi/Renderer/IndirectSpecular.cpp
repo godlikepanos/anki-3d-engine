@@ -8,7 +8,6 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/DownscaleBlur.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>

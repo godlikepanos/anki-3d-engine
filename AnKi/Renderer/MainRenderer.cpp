@@ -8,7 +8,6 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
@@ -81,7 +80,7 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	return Error::kNone;
 }
 
-Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
+Error MainRenderer::render(Texture* presentTex)
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
@@ -109,7 +108,6 @@ Error MainRenderer::render(RenderQueue& rqueue, Texture* presentTex)
 		ctx.m_outRenderTarget = ctx.m_renderGraphDescr.newRenderTarget(m_tmpRtDesc);
 	}
 
-	ctx.m_renderQueue = &rqueue;
 	ANKI_CHECK(m_r->populateRenderGraph(ctx));
 
 	// Blit renderer's result to default FB if needed

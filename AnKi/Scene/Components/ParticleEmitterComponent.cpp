@@ -13,7 +13,6 @@
 #include <AnKi/Physics/PhysicsCollisionShape.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Math.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 

@@ -5,7 +5,6 @@
 
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/ShadowMapping.h>
