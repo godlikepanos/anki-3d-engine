@@ -12,14 +12,12 @@ namespace anki {
 
 FogDensityComponent::FogDensityComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
-	, m_spatial(this)
 {
 	m_gpuSceneVolume.allocate();
 }
 
 FogDensityComponent ::~FogDensityComponent()
 {
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -31,17 +29,6 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		m_dirty = false;
 
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
-
-		if(m_isBox)
-		{
-			const Aabb aabb(m_aabbMin + m_worldPos, m_aabbMax + m_worldPos);
-			m_spatial.setBoundingShape(aabb);
-		}
-		else
-		{
-			const Sphere sphere(m_worldPos, m_sphereRadius);
-			m_spatial.setBoundingShape(sphere);
-		}
 
 		// Upload to the GPU scene
 		GpuSceneFogDensityVolume gpuVolume;
@@ -60,9 +47,6 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		m_gpuSceneVolume.uploadToGpuScene(gpuVolume);
 	}
-
-	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
-	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

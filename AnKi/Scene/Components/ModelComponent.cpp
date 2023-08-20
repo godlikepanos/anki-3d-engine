@@ -36,6 +36,7 @@ void ModelComponent::freeGpuScene()
 		patch.m_gpuSceneRenderableAabbDepth.free();
 		patch.m_gpuSceneRenderableAabbForward.free();
 		patch.m_gpuSceneRenderableAabbGBuffer.free();
+		patch.m_gpuSceneRenderableAabbRt.free();
 
 		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 		{
@@ -92,13 +93,8 @@ void ModelComponent::loadModelResource(CString filename)
 		out.m_gpuSceneMeshLods.allocate();
 		out.m_gpuSceneRenderable.allocate();
 
-		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
+		for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(out.m_techniques))
 		{
-			if(!(RenderingTechniqueBit(1 << t) & out.m_techniques) || !!(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt))
-			{
-				continue;
-			}
-
 			switch(t)
 			{
 			case RenderingTechnique::kGBuffer:
@@ -109,6 +105,9 @@ void ModelComponent::loadModelResource(CString filename)
 				break;
 			case RenderingTechnique::kDepth:
 				out.m_gpuSceneRenderableAabbDepth.allocate();
+				break;
+			case RenderingTechnique::kRtShadow:
+				out.m_gpuSceneRenderableAabbRt.allocate();
 				break;
 			default:
 				ANKI_ASSERT(0);
@@ -144,6 +143,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		{
 			const ModelPatch& patch = m_model->getModelPatches()[i];
 			const MeshResource& mesh = *patch.getMesh();
+			const MaterialResource& mtl = *patch.getMaterial();
 
 			Array<GpuSceneMeshLod, kMaxLodCount> meshLods;
 
@@ -196,6 +196,12 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
 			gpuRenderable.m_meshLodsOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset();
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
+			if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
+			{
+				const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false);
+				const MaterialVariant& variant = mtl.getOrCreateVariant(key);
+				gpuRenderable.m_rtShadowsShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
+			}
 			m_patchInfos[i].m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);
 		}
 
@@ -279,6 +285,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const U32 modelPatchCount = m_model->getModelPatches().getSize();
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
+			// Do raster techniques
 			for(RenderingTechnique t :
 				EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques & ~RenderingTechniqueBit::kAllRt))
 			{
@@ -300,6 +307,16 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				default:
 					ANKI_ASSERT(0);
 				}
+			}
+
+			// Do RT techniques
+			if(!!(m_patchInfos[i].m_techniques & RenderingTechniqueBit::kAllRt))
+			{
+				const U32 bucket = 0;
+				const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(),
+																					m_patchInfos[i].m_gpuSceneRenderable.getIndex(), bucket);
+
+				m_patchInfos[i].m_gpuSceneRenderableAabbRt.uploadToGpuScene(gpuVolume);
 			}
 		}
 	}

@@ -20,6 +20,7 @@
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
 
 namespace anki {
 
@@ -63,13 +64,8 @@ Error LightShading::initLightShading()
 	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 	const ShaderProgramResourceVariant* variant;
 
-	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 0);
 	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_lightShading.m_grProg[0].reset(&variant->getProgram());
-
-	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 1);
-	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_lightShading.m_grProg[1].reset(&variant->getProgram());
+	m_lightShading.m_grProg.reset(&variant->getProgram());
 
 	// Create RT descr
 	const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -153,7 +149,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 	// Do light shading first
 	{
-		cmdb.bindShaderProgram(m_lightShading.m_grProg[getRenderer().getRtShadowsEnabled()].get());
+		cmdb.bindShaderProgram(m_lightShading.m_grProg.get());
 		cmdb.setDepthWrite(false);
 
 		// Bind all
@@ -200,7 +196,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		cmdb.bindUniformBuffer(0, 10, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
 
-		const Vec4 pc(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, 0.0f, 0.0f);
+		const Vec4 pc(ctx.m_cameraNear, ctx.m_cameraFar, 0.0f, 0.0f);
 		cmdb.setPushConstants(&pc, sizeof(pc));
 
 		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kOne);
@@ -215,13 +211,15 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	{
 		cmdb.setDepthCompareOperation(CompareOperation::kEqual);
 
-		const Bool isSolidColor = ctx.m_renderQueue->m_skybox.m_skyboxTexture == nullptr;
+		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+
+		const Bool isSolidColor = (sky) ? sky->getSkyboxType() == SkyboxType::kSolidColor : false;
 
 		if(isSolidColor)
 		{
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[0].get());
 
-			const Vec4 color(ctx.m_renderQueue->m_skybox.m_solidColor, 0.0);
+			const Vec4 color((sky) ? sky->getSolidColor() : Vec3(0.0f), 0.0);
 			cmdb.setPushConstants(&color, sizeof(color));
 		}
 		else
@@ -242,7 +240,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
-			cmdb.bindTexture(0, 1, ctx.m_renderQueue->m_skybox.m_skyboxTexture);
+			cmdb.bindTexture(0, 1, &sky->getImageResource().getTextureView());
 		}
 
 		drawQuad(cmdb);
@@ -269,8 +267,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			F32 m_near;
 			F32 m_far;
 		} regs;
-		regs.m_near = ctx.m_renderQueue->m_cameraNear;
-		regs.m_far = ctx.m_renderQueue->m_cameraFar;
+		regs.m_near = ctx.m_cameraNear;
+		regs.m_far = ctx.m_cameraFar;
 
 		cmdb.setPushConstants(&regs, sizeof(regs));
 
@@ -379,7 +377,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getVolumetricFog().getRt(), readUsage);
 
 	// For forward shading
-	getRenderer().getForwardShading().setDependencies(ctx, pass);
+	getRenderer().getForwardShading().setDependencies(pass);
 }
 
 void LightShading::getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,

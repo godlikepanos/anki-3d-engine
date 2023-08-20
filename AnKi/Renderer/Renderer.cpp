@@ -36,7 +36,6 @@
 #include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
-#include <AnKi/Renderer/GenericCompute.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
@@ -62,6 +61,8 @@ static BoolCVar g_highQualityHdrCVar(CVarSubsystem::kRenderer, "HighQualityHdr",
 									 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11");
 BoolCVar g_vrsLimitTo2x2CVar(CVarSubsystem::kRenderer, "VrsLimitTo2x2", false, "If true the max rate will be 2x2");
 BoolCVar g_vrsCVar(CVarSubsystem::kRenderer, "Vrs", true, "Enable VRS in multiple passes");
+BoolCVar g_rayTracedShadowsCVar(CVarSubsystem::kRenderer, "RayTracedShadows", true,
+								"Enable or not ray traced shadows. Ignored if RT is not supported");
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -170,9 +171,6 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	m_genericCompute.reset(newInstance<GenericCompute>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_genericCompute->init());
-
 	m_volumetricLightingAccumulation.reset(newInstance<VolumetricLightingAccumulation>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_volumetricLightingAccumulation->init());
 
@@ -247,11 +245,9 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_rtShadows.reset(newInstance<RtShadows>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_rtShadows->init());
 	}
-	else
-	{
-		m_shadowmapsResolve.reset(newInstance<ShadowmapsResolve>(RendererMemoryPool::getSingleton()));
-		ANKI_CHECK(m_shadowmapsResolve->init());
-	}
+
+	m_shadowmapsResolve.reset(newInstance<ShadowmapsResolve>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_shadowmapsResolve->init());
 
 	m_motionVectors.reset(newInstance<MotionVectors>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_motionVectors->init());
@@ -317,12 +313,14 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
+	const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
+
 	ctx.m_prevMatrices = m_prevMatrices;
 
-	ctx.m_matrices.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
-	ctx.m_matrices.m_view = ctx.m_renderQueue->m_viewMatrix;
-	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
-	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
+	ctx.m_matrices.m_cameraTransform = Mat3x4(cam.getFrustum().getWorldTransform());
+	ctx.m_matrices.m_view = cam.getFrustum().getViewMatrix();
+	ctx.m_matrices.m_projection = cam.getFrustum().getProjectionMatrix();
+	ctx.m_matrices.m_viewProjection = cam.getFrustum().getViewProjectionMatrix();
 
 	Vec2 jitter = m_jitterOffsets[m_frameCount & (m_jitterOffsets.getSize() - 1)]; // In [-0.5, 0.5]
 	const Vec2 ndcPixelSize = 2.0f / Vec2(m_internalResolution);
@@ -340,8 +338,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
-	ctx.m_cameraNear = ctx.m_renderQueue->m_cameraNear;
-	ctx.m_cameraFar = ctx.m_renderQueue->m_cameraFar;
+	ctx.m_cameraNear = cam.getNear();
+	ctx.m_cameraFar = cam.getFar();
 
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
@@ -353,7 +351,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	// Populate render graph. WARNING Watch the order
 	gpuSceneCopy(ctx);
 	m_primaryNonRenderableVisibility->populateRenderGraph(ctx);
-	m_genericCompute->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
@@ -372,10 +369,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
 	}
-	else
-	{
-		m_shadowmapsResolve->populateRenderGraph(ctx);
-	}
+	m_shadowmapsResolve->populateRenderGraph(ctx);
 	m_volumetricFog->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_indirectSpecular->populateRenderGraph(ctx);
@@ -402,17 +396,6 @@ void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
 	++m_frameCount;
 
 	m_prevMatrices = ctx.m_matrices;
-
-	// Inform about the HiZ map. Do it as late as possible
-	if(ctx.m_renderQueue->m_fillCoverageBufferCallback)
-	{
-		F32* depthValues;
-		U32 width;
-		U32 height;
-		m_depthDownscale->getClientDepthMapInfo(depthValues, width, height);
-		ctx.m_renderQueue->m_fillCoverageBufferCallback(ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData, depthValues, width, height);
-	}
-
 	m_readbaks.endFrame(fence);
 }
 

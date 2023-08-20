@@ -55,6 +55,7 @@ private:
 		GpuSceneArrays::RenderableAabbGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
 		GpuSceneArrays::RenderableAabbDepth::Allocation m_gpuSceneRenderableAabbDepth;
 		GpuSceneArrays::RenderableAabbForward::Allocation m_gpuSceneRenderableAabbForward;
+		GpuSceneArrays::RenderableAabbForward::Allocation m_gpuSceneRenderableAabbRt;
 
 		Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBucketIndices;
 		RenderingTechniqueBit m_techniques;

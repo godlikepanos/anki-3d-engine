@@ -36,6 +36,8 @@ ANKI_CAT_SEPARATOR
 ANKI_CAT_TYPE(RenderableAabbForward, GpuSceneRenderableAabb, 1, g_minGpuSceneRenderablesCVar)
 ANKI_CAT_SEPARATOR
 ANKI_CAT_TYPE(RenderableAabbDepth, GpuSceneRenderableAabb, 2, g_minGpuSceneRenderablesCVar)
+ANKI_CAT_SEPARATOR
+ANKI_CAT_TYPE(RenderableAabbRt, GpuSceneRenderableAabb, 3, g_minGpuSceneRenderablesCVar)
 
 #undef ANKI_TRF_ARR
 #undef ANKI_MESH_ARR

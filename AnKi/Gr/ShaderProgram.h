@@ -60,16 +60,18 @@ class ShaderProgram : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kShaderProgram;
 
-	/// Get the shader group handles that will be used in the SBTs. The size of each handle is
-	/// GpuDeviceCapabilities::m_shaderGroupHandleSize. To access a handle use:
+	/// Get the shader group handles that will be used in the SBTs. The size of each handle is GpuDeviceCapabilities::m_shaderGroupHandleSize. To
+	/// access a handle use:
 	/// @code
 	/// const U8* handleBegin = &getShaderGroupHandles()[handleIdx * devCapabilities.m_shaderGroupHandleSize];
 	/// const U8* handleEnd = &getShaderGroupHandles()[(handleIdx + 1) * devCapabilities.m_shaderGroupHandleSize];
 	/// @endcode
-	/// The handleIdx is defined via a convention. The ray gen shaders appear first where handleIdx is in the same order
-	/// as the shader in RayTracingShaders::m_rayGenShaders. Then miss shaders follow with a similar rule. Then hit
-	/// groups follow.
+	/// The handleIdx is defined via a convention. The ray gen shaders appear first where handleIdx is in the same order as the shader in
+	/// RayTracingShaders::m_rayGenShaders. Then miss shaders follow with a similar rule. Then hit groups follow.
 	ConstWeakArray<U8> getShaderGroupHandles() const;
+
+	/// Same as getShaderGroupHandles but the data live in a GPU buffer.
+	Buffer& getShaderGroupHandlesGpuBuffer() const;
 
 protected:
 	/// Construct.

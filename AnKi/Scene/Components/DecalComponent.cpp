@@ -13,14 +13,12 @@ namespace anki {
 
 DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
-	, m_spatial(this)
 {
 	m_gpuSceneDecal.allocate();
 }
 
 DecalComponent::~DecalComponent()
 {
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
 }
 
 void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
@@ -70,7 +68,6 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Vec4 extend(halfBoxSize.x(), halfBoxSize.y(), halfBoxSize.z(), 0.0f);
 		const Obb obbL(center, Mat3x4::getIdentity(), extend);
 		m_obb = obbL.getTransformed(info.m_node->getWorldTransform());
-		m_spatial.setBoundingShape(m_obb);
 
 		// Upload to the GPU scene
 		GpuSceneDecal gpuDecal;
@@ -90,9 +87,6 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 	}
-
-	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
-	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

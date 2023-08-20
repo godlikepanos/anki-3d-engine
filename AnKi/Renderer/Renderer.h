@@ -22,6 +22,7 @@ extern BoolCVar g_vrsCVar;
 extern BoolCVar g_vrsLimitTo2x2CVar;
 extern BoolCVar g_preferComputeCVar;
 extern NumericCVar<F32> g_renderScalingCVar;
+extern BoolCVar g_rayTracedShadowsCVar;
 
 /// @addtogroup renderer
 /// @{

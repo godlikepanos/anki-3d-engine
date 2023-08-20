@@ -98,10 +98,15 @@ public:
 		return m_rt.m_missShaderCount;
 	}
 
-	ConstWeakArray<U8> getShaderGroupHandles() const
+	ConstWeakArray<U8> getShaderGroupHandlesInternal() const
 	{
 		ANKI_ASSERT(m_rt.m_allHandles.getSize() > 0);
 		return m_rt.m_allHandles;
+	}
+
+	Buffer& getShaderGroupHandlesGpuBufferInternal() const
+	{
+		return *m_rt.m_allHandlesBuff;
 	}
 
 private:
@@ -133,6 +138,7 @@ private:
 		VkPipeline m_ppline = VK_NULL_HANDLE;
 		GrDynamicArray<U8> m_allHandles;
 		U32 m_missShaderCount = 0;
+		BufferPtr m_allHandlesBuff;
 	} m_rt;
 };
 /// @}

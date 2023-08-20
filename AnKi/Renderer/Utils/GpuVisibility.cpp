@@ -530,21 +530,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	}
 
 	// Allocate the transient buffers
-	U32 aabbCount = 0;
-	switch(in.m_technique)
-	{
-	case RenderingTechnique::kGBuffer:
-		aabbCount = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount();
-		break;
-	case RenderingTechnique::kDepth:
-		aabbCount = GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementCount();
-		break;
-	case RenderingTechnique::kForward:
-		aabbCount = GpuSceneArrays::RenderableAabbForward::getSingleton().getElementCount();
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
+	const U32 aabbCount = GpuSceneArrays::RenderableAabbRt::getSingleton().getElementCount();
 
 	out.m_instancesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(AccelerationStructureInstance));
 	out.m_someBufferHandle = rgraph.importBuffer(BufferUsageBit::kStorageComputeWrite, out.m_instancesBuffer);
@@ -564,9 +550,8 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	}
 
 	pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
-				  testRadius = in.m_testRadius, technique = in.m_technique, instancesBuff = out.m_instancesBuffer,
-				  indicesBuff = out.m_renderableIndicesBuffer, rangeBuff = out.m_rangeBuffer, counterBufferOffset = m_currentCounterBufferOffset,
-				  aabbCount](RenderPassWorkContext& rgraph) {
+				  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, indicesBuff = out.m_renderableIndicesBuffer,
+				  rangeBuff = out.m_rangeBuffer, counterBufferOffset = m_currentCounterBufferOffset](RenderPassWorkContext& rgraph) {
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());
@@ -590,23 +575,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
-		BufferOffsetRange aabbsBuffer;
-		switch(technique)
-		{
-		case RenderingTechnique::kGBuffer:
-			aabbsBuffer = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getBufferOffsetRange();
-			break;
-		case RenderingTechnique::kDepth:
-			aabbsBuffer = GpuSceneArrays::RenderableAabbDepth::getSingleton().getBufferOffsetRange();
-			break;
-		case RenderingTechnique::kForward:
-			aabbsBuffer = GpuSceneArrays::RenderableAabbForward::getSingleton().getBufferOffsetRange();
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
-
-		cmdb.bindStorageBuffer(0, 0, aabbsBuffer);
+		cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableAabbRt::getSingleton().getBufferOffsetRange());
 		cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 		cmdb.bindStorageBuffer(0, 3, instancesBuff);
@@ -614,6 +583,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		cmdb.bindStorageBuffer(0, 5, rangeBuff);
 		cmdb.bindStorageBuffer(0, 6, m_counterBuffer.get(), counterBufferOffset, sizeof(U32) * 2);
 
+		const U32 aabbCount = GpuSceneArrays::RenderableAabbRt::getSingleton().getElementCount();
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});
 

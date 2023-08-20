@@ -54,8 +54,6 @@ private:
 	public:
 		Array<RenderTargetHandle, 2> m_rts;
 	} m_runCtx; ///< Runtime context.
-
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

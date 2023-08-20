@@ -57,20 +57,6 @@ public:
 		return m_boxSize;
 	}
 
-	void setupDecalQueueElement(DecalQueueElement& el) const
-	{
-		ANKI_ASSERT(isEnabled());
-		el.m_diffuseBindlessTextureIndex = m_layers[LayerType::kDiffuse].m_bindlessTextureIndex;
-		el.m_roughnessMetalnessBindlessTextureIndex = m_layers[LayerType::kRoughnessMetalness].m_bindlessTextureIndex;
-		el.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
-		el.m_roughnessMetalnessBlendFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
-		el.m_textureMatrix = m_biasProjViewMat;
-		el.m_obbCenter = m_obb.getCenter().xyz();
-		el.m_obbExtend = m_obb.getExtend().xyz();
-		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_index = m_gpuSceneDecal.getIndex();
-	}
-
 private:
 	enum class LayerType : U8
 	{
@@ -86,8 +72,6 @@ private:
 		F32 m_blendFactor = 0.0f;
 		U32 m_bindlessTextureIndex = kMaxU32;
 	};
-
-	Spatial m_spatial;
 
 	Array<Layer, U(LayerType::kCount)> m_layers;
 	Mat4 m_biasProjViewMat = Mat4::getIdentity();

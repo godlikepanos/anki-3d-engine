@@ -148,6 +148,15 @@ struct ByteAddressBuffer
 	T& Load(U32 offset);
 };
 
+struct RWByteAddressBuffer
+{
+	template<typename T>
+	T& Load(U32 offset);
+
+	template<typename T>
+	void Store(U32 offset, T x);
+};
+
 struct RaytracingAccelerationStructure
 {
 };

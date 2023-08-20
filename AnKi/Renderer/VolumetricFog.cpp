@@ -11,6 +11,7 @@
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
 
 namespace anki {
 
@@ -67,13 +68,14 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
 
+		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+
 		VolumetricFogUniforms regs;
-		const SkyboxQueueElement& el = ctx.m_renderQueue->m_skybox;
-		regs.m_fogDiffuse = el.m_fog.m_diffuseColor;
-		regs.m_fogScatteringCoeff = el.m_fog.m_scatteringCoeff;
-		regs.m_fogAbsorptionCoeff = el.m_fog.m_absorptionCoeff;
-		regs.m_near = ctx.m_renderQueue->m_cameraNear;
-		regs.m_far = ctx.m_renderQueue->m_cameraFar;
+		regs.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
+		regs.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
+		regs.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;
+		regs.m_near = ctx.m_cameraNear;
+		regs.m_far = ctx.m_cameraFar;
 		regs.m_zSplitCountf = F32(getRenderer().getZSplitCount());
 		regs.m_volumeSize = UVec3(m_volumeSize);
 		regs.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);

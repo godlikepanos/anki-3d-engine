@@ -48,7 +48,7 @@ Error GBufferPost::initInternal()
 
 void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 {
-	if(ctx.m_renderQueue->m_decals.getSize() == 0)
+	if(GpuSceneArrays::Decal::getSingleton().getElementCount() == 0)
 	{
 		// If there are no decals don't bother
 		return;

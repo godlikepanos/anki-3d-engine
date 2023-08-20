@@ -67,12 +67,14 @@ public:
 		return m_colorMul;
 	}
 
-	void setupLensFlareQueueElement(LensFlareQueueElement& el) const
+	const Vec3& getWorldPosition() const
 	{
-		el.m_worldPosition = m_worldPosition;
-		el.m_firstFlareSize = m_firstFlareSize;
-		el.m_colorMultiplier = m_colorMul;
-		el.m_textureView = &m_image->getTextureView();
+		return m_worldPosition;
+	}
+
+	const ImageResource& getImage() const
+	{
+		return *m_image;
 	}
 
 private:
@@ -82,8 +84,6 @@ private:
 
 	ImageResourcePtr m_image; ///< Array of textures.
 
-	Spatial m_spatial;
-
 	Vec2 m_firstFlareSize = Vec2(1.0f);
 	Vec2 m_otherFlareSize = Vec2(1.0f);
 
@@ -92,8 +92,6 @@ private:
 	Bool m_dirty = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
-	void onDestroy(SceneNode& node) override;
 };
 /// @}
 

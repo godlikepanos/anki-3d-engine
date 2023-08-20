@@ -11,9 +11,6 @@
 
 namespace anki {
 
-// Forward
-extern BoolCVar g_rayTracedShadowsCVar;
-
 /// @addtogroup scene
 /// @{
 

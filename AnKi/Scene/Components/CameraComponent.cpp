@@ -23,7 +23,6 @@ static NumericCVar<F32> g_shadowCascade3DistanceCVar(CVarSubsystem::kScene, "Sha
 													 "The distance of the 4th cascade");
 static NumericCVar<F32> g_earyZDistanceCVar(CVarSubsystem::kScene, "EarlyZDistance", (ANKI_PLATFORM_MOBILE) ? 0.0f : 10.0f, 0.0f, kMaxF32,
 											"Objects with distance lower than that will be used in early Z");
-BoolCVar g_rayTracedShadowsCVar(CVarSubsystem::kScene, "RayTracedShadows", true, "Enable or not ray traced shadows. Ignored if RT is not supported");
 
 CameraComponent::CameraComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)

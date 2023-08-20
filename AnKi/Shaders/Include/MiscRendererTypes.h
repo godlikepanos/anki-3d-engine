@@ -10,21 +10,22 @@
 ANKI_BEGIN_NAMESPACE
 
 // RT shadows
-constexpr U32 kMaxRtShadowLayers = 8u;
-
-struct RtShadowsUniforms
-{
-	F32 historyRejectFactor[kMaxRtShadowLayers]; // 1.0 means reject, 0.0 not reject
-};
-
 struct RtShadowsDenoiseUniforms
 {
-	Mat4 invViewProjMat;
+	Mat4 m_invViewProjMat;
 
-	F32 time;
-	F32 padding0;
-	F32 padding1;
-	F32 padding2;
+	F32 m_time;
+	F32 m_padding0;
+	F32 m_padding1;
+	F32 m_padding2;
+};
+
+struct RtShadowsSbtBuildUniforms
+{
+	U32 m_shaderHandleDwordSize;
+	U32 m_sbtRecordDwordSize;
+	U32 m_padding0;
+	U32 m_padding1;
 };
 
 // Indirect diffuse

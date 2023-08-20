@@ -9,6 +9,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Core/CVarSet.h>
 
 namespace anki {
@@ -51,6 +52,8 @@ Error ShadowmapsResolve::initInternal()
 	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
 	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 	variantInitInfo.addMutation("PCF", g_shadowMappingPcfCVar.get() != 0);
+	variantInitInfo.addMutation("DIRECTIONAL_LIGHT_SHADOW_RESOLVED",
+								GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg.reset(&variant->getProgram());
@@ -62,6 +65,8 @@ Error ShadowmapsResolve::initInternal()
 
 void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 {
+	const Bool rtShadowsEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get();
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
@@ -81,6 +86,11 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
 		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 								  BufferUsageBit::kStorageComputeRead);
+
+		if(rtShadowsEnabled)
+		{
+			rpass.newTextureDependency(getRenderer().getRtShadows().getRt(), TextureUsageBit::kSampledCompute);
+		}
 	}
 	else
 	{
@@ -99,6 +109,11 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
 		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 								  BufferUsageBit::kStorageFragmentRead);
+
+		if(rtShadowsEnabled)
+		{
+			rpass.newTextureDependency(getRenderer().getRtShadows().getRt(), TextureUsageBit::kSampledFragment);
+		}
 	}
 }
 
@@ -127,9 +142,15 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	}
 	cmdb.bindTexture(0, 8, &m_noiseImage->getTextureView());
 
+	const Bool rtShadowsEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get();
+	if(rtShadowsEnabled)
+	{
+		rgraphCtx.bindColorTexture(0, 9, getRenderer().getRtShadows().getRt());
+	}
+
 	if(g_preferComputeCVar.get())
 	{
-		rgraphCtx.bindImage(0, 9, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
 	}
 	else

@@ -1,0 +1,28 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <AnKi/Shaders/RtShadows.hlsl>
+
+#pragma anki start comp
+
+[[vk::binding(0)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+
+[[vk::binding(1)]] RWStructuredBuffer<DispatchIndirectArgs> g_args;
+
+#define NUMTHREADS 64
+
+[numthreads(1, 1, 1)] void main()
+{
+	const U32 renderableCount = g_visibleRenderableIndices[0];
+
+	DispatchIndirectArgs args;
+	args.m_threadGroupCountX = (renderableCount + NUMTHREADS - 1) / NUMTHREADS;
+	args.m_threadGroupCountY = 1;
+	args.m_threadGroupCountZ = 1;
+
+	g_args[0] = args;
+}
+
+#pragma anki end

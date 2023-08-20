@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator PCF 0 1
+#pragma anki mutator DIRECTIONAL_LIGHT_SHADOW_RESOLVED 0 1
 
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
@@ -26,8 +27,12 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 [[vk::binding(7)]] Texture2D<Vec4> g_depthRt;
 [[vk::binding(8)]] Texture2D<Vec4> g_noiseTex;
 
+#if DIRECTIONAL_LIGHT_SHADOW_RESOLVED
+[[vk::binding(9)]] Texture2D<Vec4> g_dirLightResolvedShadowsTex;
+#endif
+
 #if defined(ANKI_COMPUTE_SHADER)
-[[vk::binding(9)]] RWTexture2D<RVec4> g_outUav;
+[[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
 #endif
 
 Vec3 computeDebugShadowCascadeColor(U32 cascade)
@@ -91,6 +96,10 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	RVec4 shadowFactors = 0.0f;
 
 	// Dir light
+#if DIRECTIONAL_LIGHT_SHADOW_RESOLVED
+	shadowFactors[0] = g_dirLightResolvedShadowsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).x;
+	++shadowCasterCountPerFragment;
+#else
 	const DirectionalLight dirLight = g_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
 	{
@@ -105,25 +114,25 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 			const UVec2 cascadeIndices =
 				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances, dirLight.m_shadowCascadeCount, cascadeBlendFactor);
 
-#if DEBUG_CASCADES
+#	if DEBUG_CASCADES
 			const Vec3 debugColorA = computeDebugShadowCascadeColor(cascadeIndices[0]);
 			const Vec3 debugColorB = computeDebugShadowCascadeColor(cascadeIndices[1]);
 			const Vec3 debugColor = lerp(debugColorA, debugColorB, cascadeBlendFactor);
-#	if defined(ANKI_COMPUTE_SHADER)
+#		if defined(ANKI_COMPUTE_SHADER)
 			g_outUav[svDispatchThreadId.xy] = shadowFactors;
 			return;
-#	else
+#		else
 			return shadowFactors;
+#		endif
 #	endif
-#endif
 
-#if PCF
+#	if PCF
 			const F32 shadowFactorCascadeA =
 				computeShadowFactorDirLightPcf(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
-#else
+#	else
 			const F32 shadowFactorCascadeA =
 				computeShadowFactorDirLight(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
-#endif
+#	endif
 
 			if(cascadeBlendFactor < 0.01 || cascadeIndices.x == cascadeIndices.y)
 			{
@@ -132,15 +141,15 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 			}
 			else
 			{
-#if PCF
+#	if PCF
 				// Blend cascades
 				const F32 shadowFactorCascadeB =
 					computeShadowFactorDirLightPcf(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
-#else
+#	else
 				// Blend cascades
 				const F32 shadowFactorCascadeB =
 					computeShadowFactorDirLight(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
-#endif
+#	endif
 				shadowFactor = lerp(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
 			}
 
@@ -156,6 +165,7 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 		shadowFactors[0] = shadowFactor;
 		++shadowCasterCountPerFragment;
 	}
+#endif // DIRECTIONAL_LIGHT_SHADOW_RESOLVED
 
 	// Point lights
 	[loop] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))

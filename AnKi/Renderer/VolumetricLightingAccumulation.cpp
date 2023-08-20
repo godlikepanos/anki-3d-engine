@@ -10,6 +10,7 @@
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
 
 namespace anki {
 
@@ -76,10 +77,6 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		run(ctx, rgraphCtx);
-	});
-
 	pass.newTextureDependency(m_runCtx.m_rts[0], TextureUsageBit::kSampledCompute);
 	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kImageComputeWrite);
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
@@ -97,56 +94,63 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	{
 		pass.newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), TextureUsageBit::kSampledCompute);
 	}
-}
 
-void VolumetricLightingAccumulation::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
-{
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb.bindShaderProgram(m_grProg.get());
+		cmdb.bindShaderProgram(m_grProg.get());
 
-	// Bind all
-	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-	cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-	cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
+		// Bind all
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-	rgraphCtx.bindImage(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
-	cmdb.bindTexture(0, 4, &m_noiseImage->getTextureView());
+		cmdb.bindTexture(0, 4, &m_noiseImage->getTextureView());
 
-	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
+		rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
-	cmdb.bindUniformBuffer(0, 6, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
-	cmdb.bindStorageBuffer(0, 7, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-	rgraphCtx.bindColorTexture(0, 8, getRenderer().getShadowMapping().getShadowmapRt());
-	cmdb.bindStorageBuffer(0, 9,
-						   getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-	cmdb.bindStorageBuffer(0, 10, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
-	cmdb.bindStorageBuffer(0, 11, getRenderer().getClusterBinning2().getClustersBuffer());
+		cmdb.bindUniformBuffer(0, 6, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
+		cmdb.bindStorageBuffer(0, 7, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		rgraphCtx.bindColorTexture(0, 8, getRenderer().getShadowMapping().getShadowmapRt());
+		cmdb.bindStorageBuffer(0, 9,
+							   getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		cmdb.bindStorageBuffer(0, 10, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
+		cmdb.bindStorageBuffer(0, 11, getRenderer().getClusterBinning2().getClustersBuffer());
 
-	cmdb.bindAllBindless(1);
+		cmdb.bindAllBindless(1);
 
-	VolumetricLightingUniforms unis;
-	const SkyboxQueueElement& queueEl = ctx.m_renderQueue->m_skybox;
-	if(queueEl.m_fog.m_heightOfMaxDensity > queueEl.m_fog.m_heightOfMinDensity)
-	{
-		unis.m_minHeight = queueEl.m_fog.m_heightOfMinDensity;
-		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMaxDensity - unis.m_minHeight + kEpsilonf);
-		unis.m_densityAtMinHeight = queueEl.m_fog.m_minDensity;
-		unis.m_densityAtMaxHeight = queueEl.m_fog.m_maxDensity;
-	}
-	else
-	{
-		unis.m_minHeight = queueEl.m_fog.m_heightOfMaxDensity;
-		unis.m_oneOverMaxMinusMinHeight = 1.0f / (queueEl.m_fog.m_heightOfMinDensity - unis.m_minHeight + kEpsilonf);
-		unis.m_densityAtMinHeight = queueEl.m_fog.m_maxDensity;
-		unis.m_densityAtMaxHeight = queueEl.m_fog.m_minDensity;
-	}
-	unis.m_volumeSize = UVec3(m_volumeSize);
-	unis.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
-	cmdb.setPushConstants(&unis, sizeof(unis));
+		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
+		VolumetricLightingUniforms unis;
+		if(!sky)
+		{
+			unis.m_minHeight = 0.0f;
+			unis.m_oneOverMaxMinusMinHeight = 0.0f;
+			unis.m_densityAtMinHeight = 0.0f;
+			unis.m_densityAtMaxHeight = 0.0f;
+		}
+		else if(sky->getHeightOfMaxFogDensity() > sky->getHeightOfMaxFogDensity())
+		{
+			unis.m_minHeight = sky->getHeightOfMinFogDensity();
+			unis.m_oneOverMaxMinusMinHeight = 1.0f / (sky->getHeightOfMaxFogDensity() - unis.m_minHeight + kEpsilonf);
+			unis.m_densityAtMinHeight = sky->getMinFogDensity();
+			unis.m_densityAtMaxHeight = sky->getMaxFogDensity();
+		}
+		else
+		{
+			unis.m_minHeight = sky->getHeightOfMaxFogDensity();
+			unis.m_oneOverMaxMinusMinHeight = 1.0f / (sky->getHeightOfMinFogDensity() - unis.m_minHeight + kEpsilonf);
+			unis.m_densityAtMinHeight = sky->getMaxFogDensity();
+			unis.m_densityAtMaxHeight = sky->getMinFogDensity();
+		}
+		unis.m_volumeSize = UVec3(m_volumeSize);
+		unis.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
+		cmdb.setPushConstants(&unis, sizeof(unis));
+
+		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
+	});
 }
 
 } // end namespace anki

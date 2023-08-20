@@ -135,7 +135,6 @@ class GpuVisibilityAccelerationStructuresInput
 {
 public:
 	CString m_passesName;
-	RenderingTechnique m_technique = RenderingTechnique::kCount;
 
 	Vec3 m_lodReferencePoint = Vec3(kMaxF32);
 	Array<F32, kMaxLodCount - 1> m_lodDistances = {};
@@ -150,7 +149,6 @@ public:
 	void validate() const
 	{
 		ANKI_ASSERT(m_passesName.getLength() > 0);
-		ANKI_ASSERT(m_technique != RenderingTechnique::kCount);
 		ANKI_ASSERT(m_lodReferencePoint.x() != kMaxF32);
 		ANKI_ASSERT(m_lodReferencePoint == m_pointOfTest && "For now these should be the same");
 		ANKI_ASSERT(m_testRadius != kMaxF32);

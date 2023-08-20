@@ -330,8 +330,7 @@ public:
 	/// @code HG = HG_offset + (HG_stride * (R_offset + R_stride * G_id + I_offset)) @endcode
 	/// The HG_offset is equal to sbtBufferOffset + GpuDeviceCapabilities::m_sbtRecordSize * (missShaderCount + 1).
 	/// The HG_stride is equal GpuDeviceCapabilities::m_sbtRecordSize * rayTypecount.
-	/// The R_offset and R_stride are provided in traceRayEXT. The R_offset is the "ray type" and R_stride the number of
-	/// ray types.
+	/// The R_offset and R_stride are provided in traceRayEXT. The R_offset is the "ray type" and R_stride the number of ray types.
 	/// The G_id is always 0 ATM.
 	/// The I_offset is the AccelerationStructureInstance::m_hitgroupSbtRecordIndex.
 	///

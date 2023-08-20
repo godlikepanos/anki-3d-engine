@@ -341,15 +341,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 		else if(compType == LensFlareComponent::kClassType)
 		{
-			const LensFlareComponent& flarec = static_cast<LensFlareComponent&>(comp);
-
-			if(!isInside() || !flarec.isEnabled())
-			{
-				continue;
-			}
-
-			LensFlareQueueElement* el = result.m_lensFlares.newElement();
-			flarec.setupLensFlareQueueElement(*el);
 		}
 		else if(compType == ReflectionProbeComponent::kClassType)
 		{
@@ -357,27 +348,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		}
 		else if(compType == DecalComponent::kClassType)
 		{
-			const DecalComponent& decalc = static_cast<DecalComponent&>(comp);
-
-			if(!isInside() || !decalc.isEnabled())
-			{
-				continue;
-			}
-
-			DecalQueueElement* el = result.m_decals.newElement();
-			decalc.setupDecalQueueElement(*el);
 		}
 		else if(compType == FogDensityComponent::kClassType)
 		{
-			if(!isInside())
-			{
-				continue;
-			}
-
-			const FogDensityComponent& fogc = static_cast<FogDensityComponent&>(comp);
-
-			FogDensityQueueElement* el = result.m_fogDensityVolumes.newElement();
-			fogc.setupFogDensityQueueElement(*el);
 		}
 		else if(compType == GlobalIlluminationProbeComponent::kClassType)
 		{

@@ -22,8 +22,6 @@ public:
 	RtShadows()
 	{
 		registerDebugRenderTarget("RtShadows");
-		registerDebugRenderTarget("RtShadows1");
-		registerDebugRenderTarget("RtShadows2");
 	}
 
 	Error init();
@@ -39,13 +37,6 @@ public:
 	}
 
 public:
-	class ShadowLayer
-	{
-	public:
-		U64 m_lightUuid = kMaxU64;
-		U64 m_frameLastUsed = kMaxU64;
-	};
-
 	/// @name Render targets
 	/// @{
 	TexturePtr m_historyRt;
@@ -59,6 +50,12 @@ public:
 
 	/// @name Programs
 	/// @{
+	ShaderProgramResourcePtr m_setupBuildSbtProg;
+	ShaderProgramPtr m_setupBuildSbtGrProg;
+
+	ShaderProgramResourcePtr m_buildSbtProg;
+	ShaderProgramPtr m_buildSbtGrProg;
+
 	ShaderProgramResourcePtr m_rayGenProg;
 	ShaderProgramPtr m_rtLibraryGrProg;
 	U32 m_rayGenShaderGroupIdx = kMaxU32;
@@ -79,13 +76,9 @@ public:
 
 	ShaderProgramResourcePtr m_upscaleProg;
 	ShaderProgramPtr m_upscaleGrProg;
-
-	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
 	/// @}
 
 	ImageResourcePtr m_blueNoiseImage;
-
-	Array<ShadowLayer, kMaxRtShadowLayers> m_shadowLayers;
 
 	U32 m_sbtRecordSize = 256;
 
@@ -104,28 +97,11 @@ public:
 		RenderTargetHandle m_currentMomentsRt;
 
 		Array<RenderTargetHandle, 2> m_varianceRts;
-
-		BufferPtr m_sbtBuffer;
-		PtrSize m_sbtOffset;
-		U32 m_hitGroupCount = 0;
-
-		BitSet<kMaxRtShadowLayers, U8> m_layersWithRejectedHistory = {false};
-
-		U8 m_atrousPassIdx = 0;
-		U8 m_denoiseOrientation = 0;
 	} m_runCtx;
 
 	Error initInternal();
 
-	void run(RenderPassWorkContext& rgraphCtx);
-	void runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-	void runSvgfVariance(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-	void runSvgfAtrous(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-	void runUpscale(RenderPassWorkContext& rgraphCtx);
-
-	void buildSbt(RenderingContext& ctx);
-
-	Bool findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistoryBuffer);
+	void runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, Bool horizontal);
 
 	U32 getPassCountWithoutUpscaling() const
 	{

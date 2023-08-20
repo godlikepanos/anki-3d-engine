@@ -79,23 +79,6 @@ public:
 		return m_density;
 	}
 
-	void setupFogDensityQueueElement(FogDensityQueueElement& el) const
-	{
-		el.m_density = m_density;
-		el.m_isBox = m_isBox;
-		if(m_isBox)
-		{
-			el.m_aabbMin = (m_aabbMin + m_worldPos).xyz();
-			el.m_aabbMax = (m_aabbMax + m_worldPos).xyz();
-		}
-		else
-		{
-			el.m_sphereCenter = m_worldPos.xyz();
-			el.m_sphereRadius = m_sphereRadius;
-		}
-		el.m_index = m_gpuSceneVolume.getIndex();
-	}
-
 private:
 	Vec3 m_aabbMin = Vec3(0.0f); ///< In local space.
 
@@ -104,8 +87,6 @@ private:
 		Vec3 m_aabbMax = Vec3(1.0f);
 		F32 m_sphereRadius;
 	};
-
-	Spatial m_spatial;
 
 	Vec3 m_worldPos = Vec3(0.0f);
 	F32 m_density = 1.0f;
