@@ -163,15 +163,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
 		rgraphCtx.bindTexture(0, 9, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
-		if(getRenderer().getRtShadowsEnabled())
-		{
-			rgraphCtx.bindColorTexture(0, 10, getRenderer().getRtShadows().getRt());
-		}
-		else
-		{
-			rgraphCtx.bindColorTexture(0, 11, getRenderer().getShadowmapsResolve().getRt());
-		}
+		rgraphCtx.bindColorTexture(0, 10, getRenderer().getShadowmapsResolve().getRt());
 
 		// Draw
 		drawQuad(cmdb);
@@ -355,14 +347,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead,
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), readUsage);
-	if(getRenderer().getRtShadowsEnabled())
-	{
-		pass.newTextureDependency(getRenderer().getRtShadows().getRt(), readUsage);
-	}
-	else
-	{
-		pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
-	}
+	pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
 	pass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
 	pass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 							 BufferUsageBit::kStorageFragmentRead);

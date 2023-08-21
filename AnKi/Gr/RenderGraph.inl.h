@@ -155,6 +155,8 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 	else if(kType == RenderPassDependency::Type::kBuffer)
 	{
+		ANKI_ASSERT(!!(m_descr->m_buffers[dep.m_buffer.m_handle.m_idx].m_importedBuff->getBufferUsage() & dep.m_buffer.m_usage));
+
 		m_buffDeps.emplaceBack(dep);
 
 		if(!!(dep.m_buffer.m_usage & BufferUsageBit::kAllRead))

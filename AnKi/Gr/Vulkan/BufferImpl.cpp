@@ -270,7 +270,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::kAccelerationStructureBuild))
+	if(!!(usage & (BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructureBuildScratch)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 	}
@@ -351,6 +351,11 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 	if(!!(usage & BufferUsageBit::kAccelerationStructureBuild))
 	{
 		mask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+	}
+
+	if(!!(usage & BufferUsageBit::kAccelerationStructureBuildScratch))
+	{
+		mask |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
 	}
 
 	return mask;

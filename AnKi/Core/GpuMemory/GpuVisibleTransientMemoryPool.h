@@ -86,8 +86,12 @@ private:
 		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
 		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
 
-		const BufferUsageBit buffUsage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kIndirectDraw
-										 | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertex | BufferUsageBit::kTransferDestination;
+		BufferUsageBit buffUsage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kIndirectDraw
+								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertex | BufferUsageBit::kTransferDestination;
+		if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+		{
+			buffUsage |= (BufferUsageBit::kAccelerationStructureBuildScratch | BufferUsageBit::kAccelerationStructureBuild);
+		}
 		m_pool.init(10_MB, 2.0, 0, alignment, buffUsage, BufferMapAccessBit::kNone, true, "GpuVisibleTransientMemoryPool");
 	}
 

@@ -30,7 +30,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 [[vk::binding(7)]] Texture2D<Vec4> g_gbuffer1Tex;
 [[vk::binding(8)]] Texture2D<Vec4> g_gbuffer2Tex;
 [[vk::binding(9)]] Texture2D g_depthTex;
-[[vk::binding(11)]] Texture2D<RVec4> g_resolvedShadowsTex;
+[[vk::binding(10)]] Texture2D<RVec4> g_resolvedShadowsTex;
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \

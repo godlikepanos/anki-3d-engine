@@ -52,8 +52,7 @@ Error ShadowmapsResolve::initInternal()
 	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
 	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 	variantInitInfo.addMutation("PCF", g_shadowMappingPcfCVar.get() != 0);
-	variantInitInfo.addMutation("DIRECTIONAL_LIGHT_SHADOW_RESOLVED",
-								GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get());
+	variantInitInfo.addMutation("DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg.reset(&variant->getProgram());
@@ -65,8 +64,6 @@ Error ShadowmapsResolve::initInternal()
 
 void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 {
-	const Bool rtShadowsEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get();
-
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
@@ -87,7 +84,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 								  BufferUsageBit::kStorageComputeRead);
 
-		if(rtShadowsEnabled)
+		if(getRenderer().getRtShadowsEnabled())
 		{
 			rpass.newTextureDependency(getRenderer().getRtShadows().getRt(), TextureUsageBit::kSampledCompute);
 		}
@@ -110,7 +107,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 								  BufferUsageBit::kStorageFragmentRead);
 
-		if(rtShadowsEnabled)
+		if(getRenderer().getRtShadowsEnabled())
 		{
 			rpass.newTextureDependency(getRenderer().getRtShadows().getRt(), TextureUsageBit::kSampledFragment);
 		}
@@ -142,8 +139,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	}
 	cmdb.bindTexture(0, 8, &m_noiseImage->getTextureView());
 
-	const Bool rtShadowsEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get();
-	if(rtShadowsEnabled)
+	if(getRenderer().getRtShadowsEnabled())
 	{
 		rgraphCtx.bindColorTexture(0, 9, getRenderer().getRtShadows().getRt());
 	}
