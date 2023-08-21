@@ -11,7 +11,7 @@
 
 constexpr U32 kTileSize = 64;
 
-[[vk::binding(0)]] Texture2D<Vec4> g_minMaxRt;
+[[vk::binding(0)]] Texture2D<Vec4> g_maxDepthRt;
 
 struct Uniforms
 {
@@ -24,23 +24,21 @@ struct Uniforms
 
 Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_POSITION
 {
-	UVec2 minMaxRtSize;
-	g_minMaxRt.GetDimensions(minMaxRtSize.x, minMaxRtSize.y);
+	UVec2 maxDepthRtSize;
+	g_maxDepthRt.GetDimensions(maxDepthRtSize.x, maxDepthRtSize.y);
 
-	const U32 tileX = svInstanceId % minMaxRtSize.x;
-	const U32 tileY = svInstanceId / minMaxRtSize.x;
+	const U32 tileX = svInstanceId % maxDepthRtSize.x;
+	const U32 tileY = svInstanceId / maxDepthRtSize.x;
 
-	const Vec2 depths = g_minMaxRt[UVec2(tileX, tileY)].xy;
-	const F32 minDepth = depths.x;
-	const F32 maxDepth = depths.y;
+	const F32 maxDepth = g_maxDepthRt[UVec2(tileX, tileY)].x;
 
 	// Z
 	Vec3 ndc;
-	ndc.z = (svVertexId <= 3) ? minDepth : maxDepth;
+	ndc.z = (svVertexId <= 1) ? 0.0 : maxDepth;
 
 	// X
 	ndc.x = F32(tileX * kTileSize);
-	if(svVertexId == 1 || svVertexId == 2 || svVertexId == 5 || svVertexId == 6)
+	if(svVertexId == 1 || svVertexId == 2)
 	{
 		// Right side, move the point
 		ndc.x += kTileSize;
@@ -49,11 +47,6 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 
 	// Y
 	ndc.y = F32(tileY * kTileSize);
-	if(svVertexId == 3 || svVertexId == 2 || svVertexId == 7 || svVertexId == 6)
-	{
-		// Top side, move the point
-		ndc.y += kTileSize;
-	}
 	ndc.y /= F32(g_unis.m_mainCameraDepthBufferSize.y);
 
 	ndc.xy = uvToNdc(saturate(ndc.xy));

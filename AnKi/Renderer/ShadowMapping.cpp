@@ -122,7 +122,7 @@ Error ShadowMapping::initInternal()
 		UVec2 size(min(cascadeResolution, 1024u));
 		size /= 2;
 
-		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), Format::kR8_Unorm, name);
+		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), Format::kR32_Sfloat, name);
 		m_cascadeHzbRtDescrs[i].m_mipmapCount = U8(computeMaxMipmapCount2d(m_cascadeHzbRtDescrs[i].m_width, m_cascadeHzbRtDescrs[i].m_height));
 		m_cascadeHzbRtDescrs[i].bake();
 	}

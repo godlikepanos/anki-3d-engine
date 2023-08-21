@@ -120,6 +120,11 @@ struct Texture2D
 
 	T SampleLevel(SamplerState sampler, Vec2 uvs, F32 lod, IVec2 offset = {});
 
+	F32 GatherRed(SamplerState sampler, Vec2 uv);
+	F32 GatherGreen(SamplerState sampler, Vec2 uv);
+	F32 GatherBlue(SamplerState sampler, Vec2 uv);
+	F32 GatherAlpha(SamplerState sampler, Vec2 uv);
+
 	T& operator[](UVec2 coords);
 };
 

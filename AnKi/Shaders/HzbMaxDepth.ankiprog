@@ -1,0 +1,50 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <AnKi/Shaders/Functions.hlsl>
+
+#pragma anki start comp
+
+[[vk::binding(0)]] Texture2D<Vec4> g_depthRt;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(2)]] RWTexture2D<Vec4> g_maxDepthUav;
+
+#define TILE_SIZE 64
+#define THREADGROUP_SIZE_XY 32
+#define MIN_POSSIBLE_WAVE_SIZE 8
+
+groupshared U32 s_maxDepth;
+
+[numthreads(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY, 1)] void main(UVec2 svGroupThreadId : SV_GROUPTHREADID, UVec2 svGroupId : SV_GROUPID,
+																	U32 svGroupIndex : SV_GROUPINDEX)
+{
+	if(svGroupIndex == 0)
+	{
+		s_maxDepth = 0;
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	Vec2 depthRtSize;
+	g_depthRt.GetDimensions(depthRtSize.x, depthRtSize.y);
+
+	const Vec2 uv = Vec2(svGroupId * TILE_SIZE + svGroupThreadId * 2u + 1u) / depthRtSize;
+
+	const Vec4 depths = g_depthRt.GatherRed(g_linearAnyClampSampler, uv);
+
+	const F32 maxDepth = max4(depths);
+	const U32 maxDepthu = asuint(maxDepth);
+
+	InterlockedMax(s_maxDepth, maxDepthu);
+
+	GroupMemoryBarrierWithGroupSync();
+
+	if(svGroupIndex == 0)
+	{
+		g_maxDepthUav[svGroupId] = asfloat(s_maxDepth);
+	}
+}
+
+#pragma anki end
