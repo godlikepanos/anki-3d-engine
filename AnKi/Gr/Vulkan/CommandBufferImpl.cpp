@@ -660,8 +660,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(ConstWeakArray<TextureBarrier
 
 		if(nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
 		{
-			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
-			// subresource
+			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the subresource
 
 			ANKI_ASSERT(subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == 1);
 		}

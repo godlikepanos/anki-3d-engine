@@ -39,14 +39,23 @@ private:
 
 	SamplerPtr m_maxSampler;
 
+	// This class assumes that the populateRenderGraph and the populateRenderGraphDirectionalLight will be called once per frame
+	static constexpr U32 kCounterBufferElementCount = 1 + kMaxShadowCascades; ///< One for the main pass and a few for shadow cascades
+	U32 m_counterBufferElementSize = 0;
 	BufferPtr m_counterBuffer;
 
 	BufferPtr m_boxIndexBuffer;
 
 	FramebufferDescription m_fbDescr;
 
+#if ANKI_ASSERTIONS_ENABLED
+	// Some helper things to make sure that we don't re-use the counters inside a frame
+	mutable U64 m_crntFrame = 0;
+	mutable U8 m_counterBufferElementUseMask = 0;
+#endif
+
 	void populateRenderGraphInternal(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-									 RenderGraphDescription& rgraph, CString customName) const;
+									 U32 counterBufferElement, RenderGraphDescription& rgraph, CString customName) const;
 };
 /// @}
 
