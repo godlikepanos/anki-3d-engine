@@ -26,6 +26,15 @@ public:
 											 const Mat4& invViewProjMat, RenderGraphDescription& rgraph) const;
 
 private:
+	class DispatchInput
+	{
+	public:
+		RenderTargetHandle m_srcDepthRt;
+		UVec2 m_srcDepthRtSize;
+		RenderTargetHandle m_dstHzbRt;
+		UVec2 m_dstHzbRtSize;
+	};
+
 	static constexpr U32 kMaxSpdMips = 12;
 
 	ShaderProgramResourcePtr m_genPyramidProg;
@@ -54,8 +63,8 @@ private:
 	mutable U8 m_counterBufferElementUseMask = 0;
 #endif
 
-	void populateRenderGraphInternal(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-									 U32 counterBufferElement, RenderGraphDescription& rgraph, CString customName) const;
+	void populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, U32 firstCounterBufferElement, CString customName,
+									 RenderGraphDescription& rgraph) const;
 };
 /// @}
 
