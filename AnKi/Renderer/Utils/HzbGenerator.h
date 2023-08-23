@@ -35,8 +35,6 @@ private:
 		UVec2 m_dstHzbRtSize;
 	};
 
-	static constexpr U32 kMaxSpdMips = 12;
-
 	ShaderProgramResourcePtr m_genPyramidProg;
 	ShaderProgramPtr m_genPyramidGrProg;
 

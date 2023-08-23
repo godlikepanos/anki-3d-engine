@@ -79,7 +79,8 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Lens flare indirect");
 
 	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite);
-	rpass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute, kHiZQuarterSurface);
+	rpass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledCompute,
+							   DepthDownscale::kEighthInternalResolution);
 
 	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -102,7 +103,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 		// Bind neareset because you don't need high quality
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getHiZRt(), kHiZQuarterSurface);
+		rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kEighthInternalResolution);
 
 		cmdb.dispatchCompute(flareCount, 1, 1);
 	});

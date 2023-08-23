@@ -76,7 +76,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
-		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getHiZRt() : getRenderer().getGBuffer().getDepthRt(),
+		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
 								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
@@ -99,7 +99,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
-		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getHiZRt() : getRenderer().getGBuffer().getDepthRt(),
+		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
 								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
@@ -131,7 +131,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	if(m_quarterRez)
 	{
-		rgraphCtx.bindTexture(0, 7, getRenderer().getDepthDownscale().getHiZRt(), TextureSubresourceInfo(TextureSurfaceInfo(0, 0, 0, 0)));
+		rgraphCtx.bindTexture(0, 7, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	}
 	else
 	{

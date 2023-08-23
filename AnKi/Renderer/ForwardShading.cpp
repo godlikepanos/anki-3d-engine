@@ -53,7 +53,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	cmdb.bindSampler(set, U32(MaterialBinding::kLinearClampSampler), getRenderer().getSamplers().m_trilinearClamp.get());
 	cmdb.bindSampler(set, U32(MaterialBinding::kShadowSampler), getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-	rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+	rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume), getRenderer().getVolumetricLightingAccumulation().getRt());
 
 	cmdb.bindUniformBuffer(set, U32(MaterialBinding::kClusterShadingUniforms), getRenderer().getClusterBinning2().getClusteredShadingUniforms());
@@ -86,7 +86,8 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 void ForwardShading::setDependencies(GraphicsRenderPassDescription& pass)
 {
-	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledFragment, kHiZHalfSurface);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledFragment,
+							  DepthDownscale::kQuarterInternalResolution);
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment);
 
 	if(getRenderer().getLensFlare().getIndirectDrawBuffer().isValid())

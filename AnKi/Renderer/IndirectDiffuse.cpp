@@ -173,7 +173,8 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("IndirectDiffuse VRS SRI gen");
 
 		pass.newTextureDependency(m_runCtx.m_sriRt, TextureUsageBit::kImageComputeWrite);
-		pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), TextureUsageBit::kSampledCompute, kHiZHalfSurface);
+		pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledCompute,
+								  DepthDownscale::kQuarterInternalResolution);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			const UVec2 viewport = getRenderer().getInternalResolution() / 2u;
@@ -182,7 +183,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_vrs.m_grProg.get());
 
-			rgraphCtx.bindTexture(0, 0, getRenderer().getDepthDownscale().getHiZRt(), kHiZHalfSurface);
+			rgraphCtx.bindTexture(0, 0, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindImage(0, 2, m_runCtx.m_sriRt);
 
@@ -255,9 +256,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		prpass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-		TextureSubresourceInfo hizSubresource;
-		hizSubresource.m_mipmapCount = 1;
-		prpass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
+		prpass->newTextureDependency(getRenderer().getDepthDownscale().getRt(), readUsage, DepthDownscale::kQuarterInternalResolution);
 		prpass->newTextureDependency(getRenderer().getDownscaleBlur().getRt(), readUsage);
 		prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 		prpass->newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(), readUsage);
@@ -283,10 +282,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));
-
-			TextureSubresourceInfo hizSubresource;
-			hizSubresource.m_mipmapCount = 1;
-			rgraphCtx.bindTexture(0, 5, getRenderer().getDepthDownscale().getHiZRt(), hizSubresource);
+			rgraphCtx.bindTexture(0, 5, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 			rgraphCtx.bindColorTexture(0, 6, getRenderer().getDownscaleBlur().getRt());
 			rgraphCtx.bindColorTexture(0, 7, m_runCtx.m_mainRtHandles[kRead]);
 			rgraphCtx.bindColorTexture(0, 8, getRenderer().getMotionVectors().getMotionVectorsRt());
@@ -355,10 +351,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[readIdx], readUsage);
-
-		TextureSubresourceInfo hizSubresource;
-		hizSubresource.m_mipmapCount = 1;
-		prpass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
+		prpass->newTextureDependency(getRenderer().getDepthDownscale().getRt(), readUsage, DepthDownscale::kQuarterInternalResolution);
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[!readIdx], writeUsage);
 
 		prpass->setWork([this, &ctx, dir, readIdx](RenderPassWorkContext& rgraphCtx) {
@@ -367,9 +360,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_mainRtHandles[readIdx]);
-			TextureSubresourceInfo hizSubresource;
-			hizSubresource.m_mipmapCount = 1;
-			rgraphCtx.bindTexture(0, 2, getRenderer().getDepthDownscale().getHiZRt(), hizSubresource);
+			rgraphCtx.bindTexture(0, 2, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 
 			if(g_preferComputeCVar.get())
 			{

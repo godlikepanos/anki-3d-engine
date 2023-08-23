@@ -72,13 +72,8 @@ struct LensFlareSprite
 struct DepthDownscaleUniforms
 {
 	Vec2 m_srcTexSizeOverOne;
-	U32 m_workgroupCount;
+	U32 m_threadgroupCount;
 	U32 m_mipmapCount;
-
-	U32 m_lastMipWidth;
-	F32 m_padding0;
-	F32 m_padding1;
-	F32 m_padding2;
 };
 
 // Screen space reflections uniforms

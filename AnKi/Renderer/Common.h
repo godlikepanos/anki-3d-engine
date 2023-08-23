@@ -54,12 +54,6 @@ constexpr U32 kMinDrawcallsPerSecondaryCommandBuffer = 16;
 /// Bloom size is rendererSize/kBloomFraction.
 constexpr U32 kBloomFraction = 4;
 
-/// Used to calculate the mipmap count of the HiZ map.
-constexpr U32 hHierachicalZMinHeight = 80;
-
-constexpr TextureSubresourceInfo kHiZHalfSurface(TextureSurfaceInfo(0, 0, 0, 0));
-constexpr TextureSubresourceInfo kHiZQuarterSurface(TextureSurfaceInfo(1, 0, 0, 0));
-
 constexpr U32 kMaxDebugRenderTargets = 2;
 
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal (see shaders)

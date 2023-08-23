@@ -13,13 +13,11 @@
 
 [[vk::push_constant]] ConstantBuffer<DepthDownscaleUniforms> g_uniforms;
 
-[[vk::binding(0)]] RWTexture2D<Vec4> g_dstUavs[12u];
-[[vk::binding(1)]] globallycoherent RWTexture2D<Vec4> g_dstUav5;
-[[vk::binding(2)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
-[[vk::binding(3)]] RWStructuredBuffer<F32> g_clientBuff;
+[[vk::binding(0)]] RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce];
+[[vk::binding(1)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
 
-[[vk::binding(4)]] SamplerState u_linearAnyClampSampler;
-[[vk::binding(5)]] Texture2D g_srcTex;
+[[vk::binding(2)]] SamplerState u_linearAnyClampSampler;
+[[vk::binding(3)]] Texture2D g_srcTex;
 
 // Include SPD
 #define A_GPU 1
@@ -39,28 +37,13 @@ AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 AF4 SpdLoad(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	return AF4(g_dstUav5[UVec2(p)].r, 0.0, 0.0, 0.0);
+	return AF4(g_dstUavs[5][p].r, 0.0, 0.0, 0.0);
 }
 
 void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-
-	if(mip == 5u)
-	{
-		g_dstUav5[UVec2(p)] = Vec4(value.x, 0.0, 0.0, 0.0);
-	}
-	else
-	{
-		g_dstUavs[mip][UVec2(p)] = Vec4(value.x, 0.0, 0.0, 0.0);
-	}
-
-	// Store the last mip to the buffer as well
-	if(mip == g_uniforms.m_mipmapCount - 1u)
-	{
-		const U32 idx = p.y * g_uniforms.m_lastMipWidth + p.x;
-		g_clientBuff[idx] = value.x;
-	}
+	g_dstUavs[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
 }
 
 void SpdIncreaseAtomicCounter(AU1 slice)
@@ -92,8 +75,8 @@ void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
 
 AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
-	const F32 maxDepth = max(v0.x, max(v1.x, max(v2.x, v3.x)));
-	return AF4(maxDepth, 0.0, 0.0, 0.0);
+	const F32 avg = (v0.x + v1.x + v2.x + v3.x) / 4.0f;
+	return AF4(avg, 0.0, 0.0, 0.0);
 }
 
 #define SPD_LINEAR_SAMPLER 1
@@ -108,7 +91,7 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
 	const U32 slice = 0u;
 	const UVec2 offset = UVec2(0, 0);
-	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_uniforms.m_mipmapCount), AU1(g_uniforms.m_workgroupCount), slice, offset);
+	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_uniforms.m_mipmapCount), AU1(g_uniforms.m_threadgroupCount), slice, offset);
 }
 
 #pragma anki end

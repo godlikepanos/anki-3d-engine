@@ -343,7 +343,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
-	m_depthDownscale->importRenderTargets(ctx);
 	m_vrsSriGeneration->importRenderTargets(ctx);
 	m_gbuffer->importRenderTargets(ctx);
 

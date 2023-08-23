@@ -148,10 +148,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(m_runCtx.m_rts[kRead], readUsage);
 		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
 		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-
-		TextureSubresourceInfo hizSubresource;
-		hizSubresource.m_mipmapCount = min(g_ssrDepthLodCVar.get() + 1, getRenderer().getDepthDownscale().getMipmapCount());
-		ppass->newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage, hizSubresource);
+		ppass->newTextureDependency(getRenderer().getDepthDownscale().getRt(), readUsage);
 
 		if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
 		{
@@ -201,7 +198,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	TextureSubresourceInfo hizSubresource;
 	hizSubresource.m_mipmapCount = depthLod + 1;
-	rgraphCtx.bindTexture(0, 4, getRenderer().getDepthDownscale().getHiZRt(), hizSubresource);
+	rgraphCtx.bindTexture(0, 4, getRenderer().getDepthDownscale().getRt(), hizSubresource);
 
 	rgraphCtx.bindColorTexture(0, 5, getRenderer().getDownscaleBlur().getRt());
 

@@ -178,7 +178,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 2, getRenderer().getIndirectDiffuse().getRt());
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getIndirectSpecular().getRt());
-		rgraphCtx.bindColorTexture(0, 4, getRenderer().getDepthDownscale().getHiZRt());
+		rgraphCtx.bindColorTexture(0, 4, getRenderer().getDepthDownscale().getRt());
 		rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		rgraphCtx.bindColorTexture(0, 6, getRenderer().getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(1));
@@ -354,7 +354,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// Apply indirect
 	pass.newTextureDependency(getRenderer().getIndirectDiffuse().getRt(), readUsage);
-	pass.newTextureDependency(getRenderer().getDepthDownscale().getHiZRt(), readUsage);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getIndirectSpecular().getRt(), readUsage);
 
 	// Fog

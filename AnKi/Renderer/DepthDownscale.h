@@ -18,22 +18,22 @@ namespace anki {
 class DepthDownscale : public RendererObject
 {
 public:
+	static constexpr TextureSubresourceInfo kQuarterInternalResolution = TextureSurfaceInfo(0, 0, 0, 0);
+	static constexpr TextureSubresourceInfo kEighthInternalResolution = TextureSurfaceInfo(1, 0, 0, 0);
+
 	DepthDownscale() = default;
 
 	~DepthDownscale();
 
 	Error init();
 
-	/// Import render targets
-	void importRenderTargets(RenderingContext& ctx);
-
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
 	/// Return a FP color render target with hierarchical Z (min Z) in it's mips.
-	RenderTargetHandle getHiZRt() const
+	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_hizRt;
+		return m_runCtx.m_rt;
 	}
 
 	U32 getMipmapCount() const
@@ -41,46 +41,25 @@ public:
 		return m_mipCount;
 	}
 
-	void getClientDepthMapInfo(F32*& depthValues, U32& width, U32& height) const
-	{
-		width = m_lastMipSize.x();
-		height = m_lastMipSize.y();
-		ANKI_ASSERT(m_clientBuffer);
-		m_clientBuffer->invalidate(0, kMaxPtrSize);
-		depthValues = static_cast<F32*>(m_clientBufferAddr);
-	}
-
 private:
-	TexturePtr m_hizTex;
-	Bool m_hizTexImportedOnce = false;
+	RenderTargetDescription m_rtDescr;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	ShaderProgramPtr m_firstMipGrProg;
 
 	BufferPtr m_counterBuffer;
-	Bool m_counterBufferZeroed = false;
-
-	BufferPtr m_clientBuffer;
-	void* m_clientBufferAddr = nullptr;
-
-	SamplerPtr m_reductionSampler;
 
 	RendererDynamicArray<FramebufferDescription> m_fbDescrs;
 
-	UVec2 m_lastMipSize;
 	U32 m_mipCount = 0;
 
 	class
 	{
 	public:
-		RenderTargetHandle m_hizRt;
+		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Run context.
 
 	Error initInternal();
-
-	void runCompute(RenderPassWorkContext& rgraphCtx);
-	void runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 
