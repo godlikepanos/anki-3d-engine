@@ -195,7 +195,7 @@ void BlockArray<T, TMemoryPool, TConfig>::validate() const
 {
 	ANKI_ASSERT(m_blockStorages.getSize() == m_blockMetadatas.getSize());
 
-	U32 count = 0;
+	[[maybe_unused]] U32 count = 0;
 	U32 first = 0;
 	U32 end = 0;
 	for(U32 i = 0; i < m_blockStorages.getSize(); ++i)

@@ -42,7 +42,7 @@ Error ClusterBinning2::init()
 		m_binningGrProgs[type].reset(&variant->getProgram());
 
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning2PackVisibles.ankiprogbin",
-									 Array<SubMutation, 1>{{"OBJECT_TYPE", MutatorValue(type)}}, m_packingProg, m_packingGrProgs[type]));
+									 Array<SubMutation, 1>{{{"OBJECT_TYPE", MutatorValue(type)}}}, m_packingProg, m_packingGrProgs[type]));
 	}
 
 	return Error::kNone;
@@ -225,7 +225,7 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kStorageComputeWrite);
 		}
 
-		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			PtrSize indirectArgsBuffOffset = indirectArgsBuff.m_offset + sizeof(DispatchIndirectArgs) * U32(GpuSceneNonRenderableObjectType::kCount);
@@ -325,7 +325,8 @@ void ClusterBinning2::writeClusterUniformsInternal()
 		out.m_shadowCascadeCount = cam.getShadowCascadeCount();
 		out.m_direction = dirLight->getDirection();
 		out.m_active = 1;
-		for(U32 i = 0; i < kMaxShadowCascades; ++i)
+		out.m_shadowCascadeDistances = Vec4(0.0f);
+		for(U32 i = 0; i < cam.getShadowCascadeCount(); ++i)
 		{
 			out.m_shadowCascadeDistances[i] = cam.getShadowCascadeDistance(i);
 		}

@@ -168,14 +168,8 @@ private:
 		F32 m_innerAngle = toRad(15.0f);
 	};
 
-	class Dir
-	{
-	public:
-	};
-
 	Point m_point;
 	Spot m_spot;
-	Dir m_dir;
 
 	GpuSceneArrays::Light::Allocation m_gpuSceneLight;
 

@@ -79,6 +79,8 @@ public:
 	{
 	}
 
+	virtual ~SceneComponent() = default;
+
 	SceneComponentType getType() const
 	{
 		return m_type;

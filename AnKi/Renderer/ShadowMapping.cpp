@@ -28,16 +28,17 @@ static StatCounter g_tilesAllocatedStatVar(StatCategory::kRenderer, "Shadow tile
 class LightHash
 {
 public:
+	class Unpacked
+	{
+	public:
+		U64 m_uuid : 31;
+		U64 m_componentIndex : 30;
+		U64 m_faceIdx : 3;
+	};
+
 	union
 	{
-		class
-		{
-		public:
-			U64 m_uuid : 31;
-			U64 m_componentIndex : 30;
-			U64 m_faceIdx : 3;
-		} m_unpacked;
-
+		Unpacked m_unpacked;
 		U64 m_packed;
 	};
 };
@@ -256,7 +257,7 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 	TileAllocatorResult2 goodResult = TileAllocatorResult2::kAllocationSucceded | TileAllocatorResult2::kTileCached;
 
-	for(U i = 0; i < faceCount; ++i)
+	for(U32 i = 0; i < faceCount; ++i)
 	{
 		TileAllocator2::ArrayOfLightUuids kickedOutLights(&getRenderer().getFrameMemoryPool());
 
@@ -284,7 +285,7 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 						g_shadowMappingTileCountPerRowOrColumnCVar.getFullName().cstr());
 
 			// Invalidate cache entries for what we already allocated
-			for(U j = 0; j < i; ++j)
+			for(U32 j = 0; j < i; ++j)
 			{
 				m_tileAlloc.invalidateCache(encodeTileHash(lightUuid, componentIndex, j));
 			}

@@ -55,7 +55,7 @@ Error DepthDownscale::initInternal()
 	if(preferCompute)
 	{
 		ANKI_CHECK(
-			loadShaderProgram("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", Array<SubMutation, 1>{{"WAVE_OPERATIONS", 0}}, m_prog, m_grProg));
+			loadShaderProgram("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", Array<SubMutation, 1>{{{"WAVE_OPERATIONS", 0}}}, m_prog, m_grProg));
 	}
 	else
 	{
@@ -113,11 +113,11 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
+	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+
 	if(g_preferComputeCVar.get())
 	{
 		// Do it with compute
-
-		m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Depth downscale");
 

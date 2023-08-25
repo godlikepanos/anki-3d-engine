@@ -16,7 +16,6 @@ namespace anki {
 
 ModelComponent::ModelComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
-	, m_node(node)
 {
 	m_gpuSceneTransforms.allocate();
 }

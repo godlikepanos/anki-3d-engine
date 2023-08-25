@@ -15,8 +15,8 @@ static NumericCVar<U8> g_shadowCascadeCountCVar(CVarSubsystem::kScene, "ShadowCa
 												kMaxShadowCascades, "Max number of shadow cascades for directional lights");
 static NumericCVar<F32> g_shadowCascade0DistanceCVar(CVarSubsystem::kScene, "ShadowCascade0Distance", 18.0, 1.0, kMaxF32,
 													 "The distance of the 1st cascade");
-static NumericCVar<F32> g_shadowCascade1DistanceCVar(CVarSubsystem::kScene, "ShadowCascade1Distance", 40.0, 1.0, kMaxF32,
-													 "The distance of the 2nd cascade");
+static NumericCVar<F32> g_shadowCascade1DistanceCVar(CVarSubsystem::kScene, "ShadowCascade1Distance", (ANKI_PLATFORM_MOBILE) ? 100.0f : 40.0, 1.0,
+													 kMaxF32, "The distance of the 2nd cascade");
 static NumericCVar<F32> g_shadowCascade2DistanceCVar(CVarSubsystem::kScene, "ShadowCascade2Distance", 80.0, 1.0, kMaxF32,
 													 "The distance of the 3rd cascade");
 static NumericCVar<F32> g_shadowCascade3DistanceCVar(CVarSubsystem::kScene, "ShadowCascade3Distance", 200.0, 1.0, kMaxF32,

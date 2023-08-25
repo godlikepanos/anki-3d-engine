@@ -68,7 +68,8 @@ Error CommandBufferThreadAllocator::init()
 			continue;
 		}
 
-		VkCommandPoolCreateInfo ci = {VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+		VkCommandPoolCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		ci.queueFamilyIndex = m_factory->m_queueFamilies[qtype];
 

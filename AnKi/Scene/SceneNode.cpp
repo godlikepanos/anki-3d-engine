@@ -66,6 +66,8 @@ SceneNode::~SceneNode()
 		SceneGraph::getSingleton().getComponentArrays().get##name##s().erase(comp->getArrayIndex()); \
 		break;
 #include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+		default:
+			ANKI_ASSERT(0);
 		}
 	}
 }

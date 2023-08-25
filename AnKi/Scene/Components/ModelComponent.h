@@ -61,7 +61,6 @@ private:
 		RenderingTechniqueBit m_techniques;
 	};
 
-	SceneNode* m_node = nullptr;
 	SkinComponent* m_skinComponent = nullptr;
 
 	ModelResourcePtr m_model;

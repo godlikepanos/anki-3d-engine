@@ -85,7 +85,7 @@ public:
 #if ANKI_STATS_ENABLED
 		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
 		checkThread();
-		const F64 orig;
+		F64 orig;
 		if(!!(m_flags & StatFlag::kMainThreadUpdates))
 		{
 			orig = m_f;

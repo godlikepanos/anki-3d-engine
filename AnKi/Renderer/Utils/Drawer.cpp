@@ -18,8 +18,8 @@
 
 namespace anki {
 
-static StatCounter g_executedDrawcallsStatVar(StatCategory::kRenderer, "Visible objects", StatFlag::kZeroEveryFrame);
-static StatCounter g_maxDrawcallsStatVar(StatCategory::kRenderer, "Objects tested for visibility", StatFlag::kZeroEveryFrame);
+static StatCounter g_executedDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls executed", StatFlag::kZeroEveryFrame);
+static StatCounter g_maxDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls possible", StatFlag::kZeroEveryFrame);
 
 RenderableDrawer::~RenderableDrawer()
 {
@@ -83,7 +83,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
 {
 #if ANKI_STATS_ENABLED
-	U32 variant;
+	U32 variant = 0;
 	switch(args.m_renderingTechinuqe)
 	{
 	case RenderingTechnique::kGBuffer:
