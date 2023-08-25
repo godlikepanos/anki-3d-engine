@@ -28,9 +28,7 @@ private:
 class ReadbackManager
 {
 public:
-	void allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset) const;
-
-	/// Read the most up to date data from the GPU.
+	/// Read the most up to date data from the GPU. 1st thing to call in a frame.
 	void readMostRecentData(const MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut) const;
 
 	/// Read the most up to date data from the GPU.
@@ -51,6 +49,10 @@ public:
 		}
 	}
 
+	/// Allocate new data for the following frame. 2nd thing to call in a frame.
+	void allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset) const;
+
+	/// Last thing to call in a frame.
 	void endFrame(Fence* fence);
 
 private:

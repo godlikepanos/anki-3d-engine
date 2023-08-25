@@ -16,36 +16,24 @@
 
 namespace anki {
 
-static StatCounter g_visibleObjects(StatCategory::kRenderer, "Visible objects", StatFlag::kZeroEveryFrame);
-static StatCounter g_testedObjects(StatCategory::kRenderer, "Visbility tested objects", StatFlag::kZeroEveryFrame);
-
 Error GpuVisibility::init()
 {
 	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
 	{
 		for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
 		{
-			ANKI_CHECK(loadShaderProgram(
-				"ShaderBinaries/GpuVisibility.ankiprogbin",
-				Array<SubMutation, 4>{{{"HZB_TEST", hzb}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}}},
-				m_prog, m_frustumGrProgs[hzb][gatherAabbs]));
+			ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+										 Array<SubMutation, 3>{{{"HZB_TEST", hzb}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}}}, m_prog,
+										 m_frustumGrProgs[hzb][gatherAabbs]));
 		}
 	}
 
 	for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
 	{
-		ANKI_CHECK(loadShaderProgram(
-			"ShaderBinaries/GpuVisibility.ankiprogbin",
-			Array<SubMutation, 4>{{{"HZB_TEST", 0}, {"STATS", ANKI_STATS_ENABLED}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}}}, m_prog,
-			m_distGrProgs[gatherAabbs]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+									 Array<SubMutation, 3>{{{"HZB_TEST", 0}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}}}, m_prog,
+									 m_distGrProgs[gatherAabbs]));
 	}
-
-#if ANKI_STATS_ENABLED
-	for(GpuReadbackMemoryAllocation& alloc : m_readbackMemory)
-	{
-		alloc = GpuReadbackMemoryPool::getSingleton().allocate(sizeof(U32));
-	}
-#endif
 
 	return Error::kNone;
 }
@@ -125,33 +113,6 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(in.m_technique);
 
-#if ANKI_STATS_ENABLED
-	Bool firstCallInTheFrame = false;
-	if(m_lastFrameIdx != getRenderer().getFrameCount())
-	{
-		firstCallInTheFrame = true;
-		m_lastFrameIdx = getRenderer().getFrameCount();
-	}
-
-	const GpuReadbackMemoryAllocation& readAlloc = m_readbackMemory[(m_lastFrameIdx + 1) % m_readbackMemory.getSize()];
-	const GpuReadbackMemoryAllocation& writeAlloc = m_readbackMemory[m_lastFrameIdx % m_readbackMemory.getSize()];
-
-	Buffer* clearStatsBuffer = &readAlloc.getBuffer();
-	const PtrSize clearStatsBufferOffset = readAlloc.getOffset();
-	Buffer* writeStatsBuffer = &writeAlloc.getBuffer();
-	const PtrSize writeStatsBufferOffset = writeAlloc.getOffset();
-
-	if(firstCallInTheFrame)
-	{
-		U32 visibleCount;
-		memcpy(&visibleCount, readAlloc.getMappedMemory(), sizeof(visibleCount));
-
-		g_visibleObjects.set(visibleCount);
-	}
-
-	g_testedObjects.increment(aabbCount);
-#endif
-
 	// Allocate memory for the indirect commands
 	const GpuVisibleTransientMemoryAllocation indirectArgs =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectArgs));
@@ -192,12 +153,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 	pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
 				  technique = in.m_technique, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle, instanceRateRenderables, indirectArgs, aabbCount,
-				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer
-#if ANKI_STATS_ENABLED
-				  ,
-				  clearStatsBuffer, clearStatsBufferOffset, writeStatsBuffer, writeStatsBufferOffset
-#endif
-	](RenderPassWorkContext& rpass) {
+				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		const Bool gatherAabbIndices = visibleAabbsBuffer.m_buffer != nullptr;
@@ -286,11 +242,6 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			cmdb.setPushConstants(&unis, sizeof(unis));
 		}
-
-#if ANKI_STATS_ENABLED
-		cmdb.bindStorageBuffer(0, 10, writeStatsBuffer, writeStatsBufferOffset, sizeof(U32));
-		cmdb.bindStorageBuffer(0, 11, clearStatsBuffer, clearStatsBufferOffset, sizeof(U32));
-#endif
 
 		if(gatherAabbIndices)
 		{

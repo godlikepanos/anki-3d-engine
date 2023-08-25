@@ -21,7 +21,7 @@ enum class StatFlag : U16
 	kNone = 0,
 
 	kZeroEveryFrame = 1 << 0,
-	kThreadSafe = 1 << 1,
+	kMainThreadUpdates = 1 << 1, ///< Can only be updated from the main thread.
 	kFloat = 1 << 2,
 
 	kShowAverage = 1 << 3,
@@ -54,16 +54,24 @@ class StatCounter
 public:
 	/// Construct.
 	/// @param name Name of the counter. The object will share ownership of the pointer.
-	StatCounter(StatCategory category, const Char* name, StatFlag flags = StatFlag::kNone);
+	StatCounter(StatCategory category, const Char* name, StatFlag flags);
 
 	template<std::integral T>
 	U64 increment(T value)
 	{
 #if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!(m_flags & StatFlag::kThreadSafe));
 		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		const U64 orig = m_u;
-		m_u += value;
+		checkThread();
+		U64 orig;
+		if(!!(m_flags & StatFlag::kMainThreadUpdates))
+		{
+			orig = m_u;
+			m_u += value;
+		}
+		else
+		{
+			orig = m_atomic.fetchAdd(value);
+		}
 		return orig;
 #else
 		(void)value;
@@ -75,38 +83,21 @@ public:
 	F64 increment(T value)
 	{
 #if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!(m_flags & StatFlag::kThreadSafe));
 		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		const F64 orig = m_f;
-		m_f += value;
+		checkThread();
+		const F64 orig;
+		if(!!(m_flags & StatFlag::kMainThreadUpdates))
+		{
+			orig = m_f;
+			m_f += value;
+		}
+		else
+		{
+			LockGuard lock(m_floatLock);
+			orig = m_f;
+			m_f += value;
+		}
 		return orig;
-#else
-		(void)value;
-		return 0.0;
-#endif
-	}
-
-	template<std::integral T>
-	U64 atomicIncrement(T value)
-	{
-#if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		return m_atomic.fetchAdd(value);
-#else
-		(void)value;
-		return 0;
-#endif
-	}
-
-	template<std::floating_point T>
-	F64 atomicIncrement(T value)
-	{
-#if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		LockGuard lock(m_floatLock);
-		return increment(value);
 #else
 		(void)value;
 		return 0.0;
@@ -117,57 +108,20 @@ public:
 	U64 decrement(T value)
 	{
 #if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!(m_flags & StatFlag::kThreadSafe));
 		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		const U64 orig = m_u;
+		checkThread();
+		U64 orig;
+		if(!!(m_flags & StatFlag::kMainThreadUpdates))
+		{
+			orig = m_u;
+			m_u -= value;
+		}
+		else
+		{
+			orig = m_atomic.fetchSub(value);
+		}
 		ANKI_ASSERT(orig >= value);
-		m_u -= value;
 		return orig;
-#else
-		(void)value;
-		return 0;
-#endif
-	}
-
-	template<std::floating_point T>
-	F64 decrement(T value)
-	{
-#if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		const F64 orig = m_f;
-		ANKI_ASSERT(orig >= value);
-		m_f -= value;
-		return orig;
-#else
-		(void)value;
-		return 0;
-#endif
-	}
-
-	template<std::integral T>
-	U64 atomicDecrement(T value)
-	{
-#if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		const U64 out = m_atomic.fetchSub(value);
-		ANKI_ASSERT(out >= value);
-		return out;
-#else
-		(void)value;
-		return 0;
-#endif
-	}
-
-	template<std::floating_point T>
-	F64 atomicDecrement(T value)
-	{
-#if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		LockGuard lock(m_floatLock);
-		return decrement(value);
 #else
 		(void)value;
 		return 0;
@@ -178,10 +132,18 @@ public:
 	U64 set(T value)
 	{
 #if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!(m_flags & StatFlag::kThreadSafe));
 		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		const U64 orig = m_u;
-		m_u = value;
+		checkThread();
+		U64 orig;
+		if(!!(m_flags & StatFlag::kMainThreadUpdates))
+		{
+			orig = m_u;
+			m_u = value;
+		}
+		else
+		{
+			orig = m_atomic.exchange(value);
+		}
 		return orig;
 #else
 		(void)value;
@@ -193,10 +155,20 @@ public:
 	F64 set(T value)
 	{
 #if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!(m_flags & StatFlag::kThreadSafe));
 		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		const F64 orig = m_f;
-		m_f = value;
+		checkThread();
+		F64 orig;
+		if(!!(m_flags & StatFlag::kMainThreadUpdates))
+		{
+			orig = m_f;
+			m_f = value;
+		}
+		else
+		{
+			LockGuard lock(m_floatLock);
+			orig = m_f;
+			m_f = value;
+		}
 		return orig;
 #else
 		(void)value;
@@ -205,39 +177,12 @@ public:
 	}
 
 	template<std::integral T>
-	U64 atomicSet(T value)
-	{
-#if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		return m_atomic.exchange(value);
-#else
-		(void)value;
-		return 0;
-#endif
-	}
-
-	template<std::floating_point T>
-	F64 atomicSet(T value)
-	{
-#if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		LockGuard lock(m_floatLock);
-		return set(value);
-#else
-		(void)value;
-		return 0;
-#endif
-	}
-
-	template<std::integral T>
 	U64 getValue() const
 	{
 #if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		return m_u;
+		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
+		checkThread();
+		return !!(m_flags & StatFlag::kMainThreadUpdates) ? m_u : m_atomic.load();
 #else
 		return 0;
 #endif
@@ -247,9 +192,17 @@ public:
 	F64 getValue() const
 	{
 #if ANKI_STATS_ENABLED
-		ANKI_ASSERT(!!(m_flags & StatFlag::kThreadSafe));
-		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		return m_f;
+		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
+		checkThread();
+		if(!!(m_flags & StatFlag::kMainThreadUpdates))
+		{
+			return m_f;
+		}
+		else
+		{
+			LockGuard lock(m_floatLock);
+			return m_f;
+		}
 #else
 		return -1.0;
 #endif
@@ -264,6 +217,12 @@ private:
 		F64 m_f;
 	};
 
+	union
+	{
+		U64 m_prevValueu = 0;
+		F64 m_prevValuef;
+	};
+
 	const Char* m_name = nullptr;
 
 	mutable SpinLock m_floatLock;
@@ -271,19 +230,7 @@ private:
 	StatFlag m_flags = StatFlag::kNone;
 	StatCategory m_category = StatCategory::kCount;
 
-	template<std::floating_point T>
-	F64& get()
-	{
-		ANKI_ASSERT(!!(m_flags & StatFlag::kFloat));
-		return m_f;
-	}
-
-	template<std::integral T>
-	U64& get()
-	{
-		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
-		return m_u;
-	}
+	void checkThread() const;
 #endif
 };
 
@@ -296,6 +243,7 @@ class StatsSet : public MakeSingletonSimple<StatsSet>
 	friend class MakeSingletonSimple;
 
 public:
+	/// @note Not thread-safe.
 	template<typename TFuncUint, typename TFuncFloat>
 	void iterateStats(TFuncUint funcUint, TFuncFloat funcFloat)
 	{
@@ -305,22 +253,11 @@ public:
 			const StatCounter& counter = *m_statCounterArr[i];
 			if(!!(counter.m_flags & StatFlag::kFloat))
 			{
-				F64 value;
-				if(!!(counter.m_flags & StatFlag::kThreadSafe))
-				{
-					LockGuard lock(counter.m_floatLock);
-					value = counter.m_f;
-				}
-				else
-				{
-					value = counter.m_f;
-				}
-				funcFloat(counter.m_category, counter.m_name, value, counter.m_flags);
+				funcFloat(counter.m_category, counter.m_name, counter.m_prevValuef, counter.m_flags);
 			}
 			else
 			{
-				const U64 value = !!(counter.m_flags & StatFlag::kThreadSafe) ? counter.m_atomic.load() : counter.m_u;
-				funcUint(counter.m_category, counter.m_name, value, counter.m_flags);
+				funcUint(counter.m_category, counter.m_name, counter.m_prevValueu, counter.m_flags);
 			}
 		}
 #else
@@ -329,6 +266,7 @@ public:
 #endif
 	}
 
+	/// @note Not thread-safe.
 	void endFrame()
 #if ANKI_STATS_ENABLED
 		;
@@ -337,6 +275,7 @@ public:
 	}
 #endif
 
+	/// @note Thread-safe.
 	U32 getCounterCount() const
 	{
 #if ANKI_STATS_ENABLED
@@ -351,6 +290,7 @@ private:
 	StatCounter** m_statCounterArr = nullptr;
 	U32 m_statCounterArrSize = 0;
 	U32 m_statCounterArrStorageSize = 0;
+	U64 m_mainThreadId = kMaxU64;
 #endif
 
 	StatsSet() = default;
@@ -377,6 +317,16 @@ inline StatCounter::StatCounter(StatCategory category, const Char* name, StatFla
 	(void)category;
 	(void)name;
 	(void)flags;
+}
+#endif
+
+#if ANKI_STATS_ENABLED
+inline void StatCounter::checkThread() const
+{
+	if(!!(m_flags & StatFlag::kMainThreadUpdates))
+	{
+		ANKI_ASSERT(StatsSet::getSingleton().m_mainThreadId == Thread::getCurrentThreadId() && "Counter can only be updated from the main thread");
+	}
 }
 #endif
 /// @}

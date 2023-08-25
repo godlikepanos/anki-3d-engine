@@ -38,8 +38,10 @@
 
 namespace anki {
 
-static StatCounter g_sceneUpdateTime(StatCategory::kTime, "All scene update", StatFlag::kMilisecond | StatFlag::kShowAverage);
-static StatCounter g_scenePhysicsTime(StatCategory::kTime, "Physics", StatFlag::kMilisecond | StatFlag::kShowAverage);
+static StatCounter g_sceneUpdateTimeStatVar(StatCategory::kTime, "All scene update",
+											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+static StatCounter g_scenePhysicsTimeStatVar(StatCategory::kTime, "Physics",
+											 StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 static NumericCVar<U32> g_octreeMaxDepthCVar(CVarSubsystem::kScene, "OctreeMaxDepth", 5, 2, 10, "The max depth of the octree");
 
@@ -241,7 +243,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
 
-		g_scenePhysicsTime.set((HighRezTimer::getCurrentTime() - physicsUpdate) * 1000.0);
+		g_scenePhysicsTimeStatVar.set((HighRezTimer::getCurrentTime() - physicsUpdate) * 1000.0);
 	}
 
 	{
@@ -275,7 +277,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::getSingleton().flush();
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
-	g_sceneUpdateTime.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
+	g_sceneUpdateTimeStatVar.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
 	return Error::kNone;
 }
 

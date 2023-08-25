@@ -45,11 +45,10 @@ namespace anki {
 android_app* g_androidApp = nullptr;
 #endif
 
-StatCounter g_cpuTotalTime(StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage);
-static StatCounter g_cpuAllocatedMem(StatCategory::kCpuMem, "Total", StatFlag::kBytes | StatFlag::kThreadSafe);
-static StatCounter g_cpuAllocationCount(StatCategory::kCpuMem, "Allocations/frame",
-										StatFlag::kBytes | StatFlag::kZeroEveryFrame | StatFlag::kThreadSafe);
-static StatCounter g_cpuFreesCount(StatCategory::kCpuMem, "Frees/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame | StatFlag::kThreadSafe);
+StatCounter g_cpuTotalTimeStatVar(StatCategory::kTime, "CPU total", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+static StatCounter g_cpuAllocatedMemStatVar(StatCategory::kCpuMem, "Total", StatFlag::kBytes);
+static StatCounter g_cpuAllocationCountStatVar(StatCategory::kCpuMem, "Allocations/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame);
+static StatCounter g_cpuFreesCountStatVar(StatCategory::kCpuMem, "Frees/frame", StatFlag::kBytes | StatFlag::kZeroEveryFrame);
 
 NumericCVar<U32> g_windowWidthCVar(CVarSubsystem::kCore, "Width", 1920, 16, 16 * 1024, "Width");
 NumericCVar<U32> g_windowHeightCVar(CVarSubsystem::kCore, "Height", 1080, 16, 16 * 1024, "Height");
@@ -71,9 +70,9 @@ NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kCore, "Lod1MaxDistance", 
 									   "Distance that will be used to calculate the LOD 1");
 
 #if ANKI_PLATFORM_MOBILE
-static StatCounter g_maliGpuActive(StatCategory::kGpuMisc, "Mali active cycles");
-static StatCounter g_maliGpuReadBandwidth(StatCategory::kGpuMisc, "Mali read bandwidth");
-static StatCounter g_maliGpuWriteBandwidth(StatCategory::kGpuMisc, "Mali write bandwidth");
+static StatCounter g_maliGpuActiveStatVar(StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates);
+static StatCounter g_maliGpuReadBandwidthStatVar(StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates);
+static StatCounter g_maliGpuWriteBandwidthStatVar(StatCategory::kGpuMisc, "Mali write bandwidth", StatFlag::kMainThreadUpdates);
 
 static BoolCVar g_maliHwCountersCVar(CVarSubsystem::kCore, "MaliHwCounters", false, "Enable Mali counters");
 #endif
@@ -111,8 +110,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		out = static_cast<void*>(allocation);
 
 		// Update stats
-		g_cpuAllocatedMem.atomicIncrement(size);
-		g_cpuAllocationCount.atomicIncrement(1);
+		g_cpuAllocatedMemStatVar.increment(size);
+		g_cpuAllocationCountStatVar.increment(1);
 	}
 	else
 	{
@@ -125,8 +124,8 @@ void* App::statsAllocCallback(void* userData, void* ptr, PtrSize size, [[maybe_u
 		ANKI_ASSERT(allocation->m_allocatedSize > 0);
 
 		// Update stats
-		g_cpuAllocatedMem.atomicDecrement(allocation->m_allocatedSize);
-		g_cpuFreesCount.atomicIncrement(1);
+		g_cpuAllocatedMemStatVar.decrement(allocation->m_allocatedSize);
+		g_cpuFreesCountStatVar.increment(1);
 
 		// Free
 		self->m_originalAllocCallback(self->m_originalAllocUserData, allocation, 0, 0);
@@ -482,7 +481,7 @@ Error App::mainLoop()
 			// Sleep
 			const Second endTime = HighRezTimer::getCurrentTime();
 			const Second frameTime = endTime - startTime;
-			g_cpuTotalTime.set((frameTime - grTime) * 1000.0);
+			g_cpuTotalTimeStatVar.set((frameTime - grTime) * 1000.0);
 			if(!benchmarkMode) [[likely]]
 			{
 				const Second timerTick = 1.0_sec / Second(g_targetFpsCVar.get());

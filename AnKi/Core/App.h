@@ -23,8 +23,8 @@ extern NumericCVar<U32> g_targetFpsCVar;
 extern NumericCVar<F32> g_lod0MaxDistanceCVar;
 extern NumericCVar<F32> g_lod1MaxDistanceCVar;
 extern NumericCVar<U32> g_displayStatsCVar;
-extern StatCounter g_cpuTotalTime;
-extern StatCounter g_rendererGpuTime;
+extern StatCounter g_cpuTotalTimeStatVar;
+extern StatCounter g_rendererGpuTimeStatVar;
 
 /// The core class of the engine.
 class App

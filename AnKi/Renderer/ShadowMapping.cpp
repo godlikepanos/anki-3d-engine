@@ -23,7 +23,7 @@ static NumericCVar<U32> g_shadowMappingTileCountPerRowOrColumnCVar(CVarSubsystem
 NumericCVar<U32> g_shadowMappingPcfCVar(CVarSubsystem::kRenderer, "ShadowMappingPcf", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1,
 										"Shadow PCF (CVarSubsystem::kRenderer, 0: off, 1: on)");
 
-static StatCounter g_tilesAllocatedStatVar(StatCategory::kRenderer, "Shadow tiles (re)allocated");
+static StatCounter g_tilesAllocatedStatVar(StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates);
 
 class LightHash
 {

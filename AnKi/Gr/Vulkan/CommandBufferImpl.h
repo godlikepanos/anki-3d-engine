@@ -331,7 +331,7 @@ public:
 		const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(*countBuffer);
 		ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
 		ANKI_ASSERT((countBufferOffset % 4) == 0);
-		ANKI_ASSERT(countBufferOffset + maxDrawCount * sizeof(U32) <= countBuffer->getSize());
+		ANKI_ASSERT(countBufferOffset + sizeof(U32) <= countBuffer->getSize());
 
 		ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
 

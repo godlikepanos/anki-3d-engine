@@ -70,7 +70,7 @@ void ReadbackManager::readMostRecentData(const MultiframeReadbackToken& token, v
 	const GpuReadbackMemoryAllocation& allocation = token.m_allocations[slot];
 	dataOut = min(dataSize, PtrSize(allocation.getAllocatedSize()));
 
-	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()) + allocation.getOffset(), dataOut);
+	memcpy(data, static_cast<const U8*>(allocation.getMappedMemory()), dataOut);
 }
 
 void ReadbackManager::endFrame(Fence* fence)

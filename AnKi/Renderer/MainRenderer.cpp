@@ -19,8 +19,9 @@
 
 namespace anki {
 
-static StatCounter g_rendererCpuTime(StatCategory::kTime, "Renderer", StatFlag::kMilisecond | StatFlag::kShowAverage);
-StatCounter g_rendererGpuTime(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage);
+static StatCounter g_rendererCpuTimeStatVar(StatCategory::kTime, "Renderer",
+											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+StatCounter g_rendererGpuTimeStatVar(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 MainRenderer::MainRenderer()
 {
@@ -161,11 +162,11 @@ Error MainRenderer::render(Texture* presentTex)
 	// Stats
 	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
 	{
-		g_rendererCpuTime.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+		g_rendererCpuTimeStatVar.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
-		g_rendererGpuTime.set(rgraphStats.m_gpuTime * 1000.0);
+		g_rendererGpuTimeStatVar.set(rgraphStats.m_gpuTime * 1000.0);
 
 		if(rgraphStats.m_gpuTime > 0.0)
 		{

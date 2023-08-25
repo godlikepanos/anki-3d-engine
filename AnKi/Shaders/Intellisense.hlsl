@@ -21,6 +21,7 @@
 #define out
 #define in
 #define inout
+#define discard return
 
 #define ANKI_BEGIN_NAMESPACE
 #define ANKI_END_NAMESPACE

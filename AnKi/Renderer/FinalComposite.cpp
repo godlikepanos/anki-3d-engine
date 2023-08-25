@@ -165,8 +165,11 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 			rgraphCtx.bindColorTexture(0, 8, getRenderer().getDbg().getRt());
 		}
 
-		const UVec4 pc(0, 0, floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32);
-		cmdb.setPushConstants(&pc, sizeof(pc));
+		if(g_filmGrainStrengthCVar.get() > 0.0f)
+		{
+			const UVec4 pc(0, 0, floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32);
+			cmdb.setPushConstants(&pc, sizeof(pc));
+		}
 	}
 	else
 	{

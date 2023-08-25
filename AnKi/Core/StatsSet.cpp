@@ -26,14 +26,51 @@ void StatsSet::endFrame()
 	{
 		StatCounter& counter = *m_statCounterArr[i];
 		const Bool needsReset = !!(counter.m_flags & StatFlag::kZeroEveryFrame);
-		const Bool atomic = !!(counter.m_flags & StatFlag::kThreadSafe);
-		if(needsReset && atomic)
+		const Bool atomic = !(counter.m_flags & StatFlag::kMainThreadUpdates);
+		const Bool isFloat = !!(counter.m_flags & StatFlag::kFloat);
+
+		// Store the previous value
+		if(isFloat)
 		{
-			counter.m_atomic.store(0);
+			if(atomic)
+			{
+				LockGuard lock(counter.m_floatLock);
+				counter.m_prevValuef = counter.m_f;
+
+				if(needsReset)
+				{
+					counter.m_f = 0.0;
+				}
+			}
+			else
+			{
+				counter.m_prevValuef = counter.m_f;
+
+				if(needsReset)
+				{
+					counter.m_f = 0;
+				}
+			}
 		}
-		else if(needsReset)
+		else
 		{
-			counter.m_u = 0;
+			if(atomic && needsReset)
+			{
+				counter.m_prevValueu = counter.m_atomic.exchange(0);
+			}
+			else if(atomic && !needsReset)
+			{
+				counter.m_prevValueu = counter.m_atomic.load();
+			}
+			else if(!atomic && needsReset)
+			{
+				counter.m_prevValueu = counter.m_u;
+				counter.m_u = 0;
+			}
+			else if(!atomic && !needsReset)
+			{
+				counter.m_prevValueu = counter.m_u;
+			}
 		}
 	}
 }
@@ -41,6 +78,11 @@ void StatsSet::endFrame()
 void StatsSet::registerCounter(StatCounter* counter)
 {
 	ANKI_ASSERT(counter);
+
+	if(m_mainThreadId == kMaxU64)
+	{
+		m_mainThreadId = Thread::getCurrentThreadId();
+	}
 
 	// Try grow the array
 	if(m_statCounterArrSize + 1 > m_statCounterArrStorageSize)

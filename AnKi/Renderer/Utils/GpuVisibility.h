@@ -81,11 +81,6 @@ private:
 	Array2d<ShaderProgramPtr, 2, 2> m_frustumGrProgs;
 	Array<ShaderProgramPtr, 2> m_distGrProgs;
 
-#if ANKI_STATS_ENABLED
-	Array<GpuReadbackMemoryAllocation, kMaxFramesInFlight> m_readbackMemory;
-	U64 m_lastFrameIdx = kMaxU64;
-#endif
-
 	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
 };
 

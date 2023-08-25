@@ -13,12 +13,39 @@
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 
 namespace anki {
 
+static StatCounter g_executedDrawcallsStatVar(StatCategory::kRenderer, "Visible objects", StatFlag::kZeroEveryFrame);
+static StatCounter g_maxDrawcallsStatVar(StatCategory::kRenderer, "Objects tested for visibility", StatFlag::kZeroEveryFrame);
+
 RenderableDrawer::~RenderableDrawer()
 {
+}
+
+Error RenderableDrawer::init()
+{
+#if ANKI_STATS_ENABLED
+	constexpr Array<MutatorValue, 3> kColorAttachmentCounts = {0, 1, 4};
+
+	U32 count = 0;
+	for(MutatorValue attachmentCount : kColorAttachmentCounts)
+	{
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DrawerStats.ankiprogbin",
+									 Array<SubMutation, 2>{{{"CLEAR_COUNTER_BUFFER", 0}, {"COLOR_ATTACHMENT_COUNT", attachmentCount}}},
+									 m_stats.m_statsProg, m_stats.m_updateStatsGrProgs[count]));
+
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DrawerStats.ankiprogbin",
+									 Array<SubMutation, 2>{{{"CLEAR_COUNTER_BUFFER", 1}, {"COLOR_ATTACHMENT_COUNT", attachmentCount}}},
+									 m_stats.m_statsProg, m_stats.m_resetCounterGrProgs[count]));
+
+		++count;
+	}
+#endif
+
+	return Error::kNone;
 }
 
 void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
@@ -55,6 +82,50 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 
 void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
 {
+#if ANKI_STATS_ENABLED
+	U32 variant;
+	switch(args.m_renderingTechinuqe)
+	{
+	case RenderingTechnique::kGBuffer:
+		variant = 2;
+		break;
+	case RenderingTechnique::kForward:
+		variant = 1;
+		break;
+	case RenderingTechnique::kDepth:
+		variant = 0;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	{
+		LockGuard lock(m_stats.m_mtx);
+
+		if(m_stats.m_frameIdx != getRenderer().getFrameCount())
+		{
+			m_stats.m_frameIdx = getRenderer().getFrameCount();
+
+			// Get previous stats
+			U32 prevFrameCount;
+			PtrSize dataRead;
+			getRenderer().getReadbackManager().readMostRecentData(m_stats.m_readback, &prevFrameCount, sizeof(prevFrameCount), dataRead);
+			if(dataRead > 0) [[likely]]
+			{
+				g_executedDrawcallsStatVar.set(prevFrameCount);
+			}
+
+			// Get place to write new stats
+			getRenderer().getReadbackManager().allocateData(m_stats.m_readback, sizeof(U32), m_stats.m_statsBuffer, m_stats.m_statsBufferOffset);
+
+			// First drawcall clears the counter buffer for this frame
+			cmdb.bindShaderProgram(m_stats.m_resetCounterGrProgs[variant].get());
+			cmdb.bindStorageBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
+			cmdb.draw(PrimitiveTopology::kTriangles, 6);
+		}
+	}
+#endif
+
 	setState(args, cmdb);
 
 	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer.m_buffer, args.m_instanceRateRenderablesBuffer.m_offset,
@@ -95,6 +166,25 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	});
 
 	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));
+
+	// Update the stats
+#if ANKI_STATS_ENABLED
+	{
+		LockGuard lock(m_stats.m_mtx);
+
+		U32* counter;
+		BufferOffsetRange threadCountBuff = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), counter);
+		*counter = 0;
+
+		cmdb.bindShaderProgram(m_stats.m_updateStatsGrProgs[variant].get());
+		cmdb.bindStorageBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
+		cmdb.bindStorageBuffer(0, 1, threadCountBuff);
+		cmdb.bindStorageBuffer(0, 2, args.m_mdiDrawCountsBuffer);
+		cmdb.draw(PrimitiveTopology::kTriangles, 6);
+	}
+
+	g_maxDrawcallsStatVar.increment(allUserCount);
+#endif
 }
 
 } // end namespace anki

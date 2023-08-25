@@ -306,6 +306,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	ANKI_CHECK(m_nonRenderablesVisibility.init());
 	ANKI_CHECK(m_asVisibility.init());
 	ANKI_CHECK(m_hzbGenerator.init());
+	ANKI_CHECK(m_sceneDrawer.init());
 
 	return Error::kNone;
 }

@@ -13,9 +13,11 @@
 
 namespace anki {
 
-static StatCounter g_gpuSceneBufferAllocatedSize(StatCategory::kGpuMem, "GPU scene allocated", StatFlag::kBytes);
-static StatCounter g_gpuSceneBufferTotal(StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes);
-static StatCounter g_gpuSceneBufferFragmentation(StatCategory::kGpuMem, "GPU scene fragmentation", StatFlag::kFloat);
+static StatCounter g_gpuSceneBufferAllocatedSizeStatVar(StatCategory::kGpuMem, "GPU scene allocated",
+														StatFlag::kBytes | StatFlag::kMainThreadUpdates);
+static StatCounter g_gpuSceneBufferTotalStatVar(StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
+static StatCounter g_gpuSceneBufferFragmentationStatVar(StatCategory::kGpuMem, "GPU scene fragmentation",
+														StatFlag::kFloat | StatFlag::kMainThreadUpdates);
 
 static NumericCVar<PtrSize> g_gpuSceneInitialSizeCVar(CVarSubsystem::kCore, "GpuSceneInitialSize", 64_MB, 16_MB, 2_GB,
 													  "Global memory for the GPU scene");
@@ -41,9 +43,9 @@ void GpuSceneBuffer::updateStats() const
 	PtrSize userAllocatedSize, totalSize;
 	m_pool.getStats(externalFragmentation, userAllocatedSize, totalSize);
 
-	g_gpuSceneBufferAllocatedSize.set(userAllocatedSize);
-	g_gpuSceneBufferTotal.set(totalSize);
-	g_gpuSceneBufferFragmentation.set(externalFragmentation);
+	g_gpuSceneBufferAllocatedSizeStatVar.set(userAllocatedSize);
+	g_gpuSceneBufferTotalStatVar.set(totalSize);
+	g_gpuSceneBufferFragmentationStatVar.set(externalFragmentation);
 }
 
 /// It packs the source and destination offsets as well as the size of the patch itself.

@@ -12,7 +12,7 @@
 
 namespace anki {
 
-static StatCounter g_rebarUserMemory(StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes);
+static StatCounter g_rebarUserMemoryStatVar(StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
 
 static NumericCVar<PtrSize> g_rebarGpuMemorySizeCvar(CVarSubsystem::kCore, "RebarGpuMemorySize", 24_MB, 1_MB, 1_GB,
 													 "ReBAR: always mapped GPU memory");
@@ -90,7 +90,7 @@ void RebarTransientMemoryPool::endFrame()
 	}
 
 	ANKI_TRACE_INC_COUNTER(ReBarUsedMemory, usedMemory);
-	g_rebarUserMemory.set(usedMemory);
+	g_rebarUserMemoryStatVar.set(usedMemory);
 }
 
 } // end namespace anki

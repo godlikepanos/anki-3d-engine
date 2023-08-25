@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator HZB_TEST 0 1
-#pragma anki mutator STATS 0 1
 #pragma anki mutator DISTANCE_TEST 0 1
 #pragma anki mutator GATHER_AABBS 0 1
 
@@ -52,11 +51,6 @@ struct DrawIndirectArgsWithPadding
 [[vk::binding(9)]] SamplerState g_nearestAnyClampSampler;
 #endif
 
-#if STATS
-[[vk::binding(10)]] RWStructuredBuffer<U32> g_testsPassed;
-[[vk::binding(11)]] RWStructuredBuffer<U32> g_testsPassedClear; ///< Some previous value. Will be cleared this frame
-#endif
-
 #if GATHER_AABBS
 [[vk::binding(12)]] RWStructuredBuffer<U32> g_visibleAabbIndices; ///< Indices of the visible AABBs. The 1st element is the count.
 #endif
@@ -71,13 +65,6 @@ struct DrawIndirectArgsWithPadding
 	{
 		return;
 	}
-
-#if STATS
-	if(svDispatchThreadId.x == 0)
-	{
-		g_testsPassedClear[0] = 0;
-	}
-#endif
 
 	const GpuSceneRenderableAabb aabb = g_aabbs[aabbIdx];
 
@@ -239,15 +226,6 @@ struct DrawIndirectArgsWithPadding
 	U32 index;
 	InterlockedAdd(g_visibleAabbIndices[0], 1, index);
 	g_visibleAabbIndices[index + 1] = aabbIdx;
-#endif
-
-	// Now update the stats
-#if STATS
-	const U32 activeLanes = WaveActiveCountBits(true);
-	if(WaveIsFirstLane())
-	{
-		InterlockedAdd(g_testsPassed[0], activeLanes);
-	}
 #endif
 }
 

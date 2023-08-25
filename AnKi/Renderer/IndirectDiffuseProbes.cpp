@@ -23,8 +23,8 @@ static NumericCVar<U32> g_indirectDiffuseProbeTileResolutionCVar(CVarSubsystem::
 static NumericCVar<U32> g_indirectDiffuseProbeShadowMapResolutionCVar(CVarSubsystem::kRenderer, "IndirectDiffuseProbeShadowMapResolution", 128, 4,
 																	  2048, "GI shadowmap resolution");
 
-static StatCounter g_giProbeRenderCountStatVar(StatCategory::kRenderer, "GI probes rendered");
-static StatCounter g_giProbeCellsRenderCountStatVar(StatCategory::kRenderer, "GI probes cells rendered");
+static StatCounter g_giProbeRenderCountStatVar(StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates);
+static StatCounter g_giProbeCellsRenderCountStatVar(StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates);
 
 static Vec3 computeCellCenter(U32 cellIdx, const GlobalIlluminationProbeComponent& probe)
 {

@@ -9,7 +9,7 @@
 
 namespace anki {
 
-static StatCounter g_commandBufferCountStat(StatCategory::kMisc, "CommandBufferCount", StatFlag::kThreadSafe);
+static StatCounter g_commandBufferCountStatVar(StatCategory::kMisc, "CommandBufferCount", StatFlag::kNone);
 
 static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags, const VulkanQueueFamilies& queueFamilies)
 {
@@ -40,7 +40,7 @@ MicroCommandBuffer::~MicroCommandBuffer()
 		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[m_queue], 1, &m_handle);
 		m_handle = {};
 
-		g_commandBufferCountStat.atomicDecrement(1_U64);
+		g_commandBufferCountStatVar.decrement(1_U64);
 	}
 }
 
@@ -124,7 +124,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		ci.commandBufferCount = 1;
 
 		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
-		g_commandBufferCountStat.atomicIncrement(1_U64);
+		g_commandBufferCountStatVar.increment(1_U64);
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(getVkDevice(), &ci, &cmdb));
 

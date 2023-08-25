@@ -11,10 +11,10 @@ namespace anki {
 
 static StatCounter g_deviceMemoryAllocatedStatVar(StatCategory::kGpuMem, "Device mem", StatFlag::kBytes);
 static StatCounter g_deviceMemoryInUseStatVar(StatCategory::kGpuMem, "Device mem in use", StatFlag::kBytes);
-static StatCounter g_deviceMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Device mem allocations");
+static StatCounter g_deviceMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Device mem allocations", StatFlag::kNone);
 static StatCounter g_hostMemoryAllocatedStatVar(StatCategory::kGpuMem, "Host mem", StatFlag::kBytes);
 static StatCounter g_hostMemoryInUseStatVar(StatCategory::kGpuMem, "Host mem in use", StatFlag::kBytes);
-static StatCounter g_hostMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Host mem allocations");
+static StatCounter g_hostMemoryAllocationCountStatVar(StatCategory::kGpuMem, "Host mem allocations", StatFlag::kNone);
 
 static constexpr Array<GpuMemoryManagerClassInfo, 7> kClasses{
 	{{4_KB, 256_KB}, {128_KB, 8_MB}, {1_MB, 64_MB}, {16_MB, 128_MB}, {64_MB, 128_MB}, {128_MB, 128_MB}, {256_MB, 256_MB}}};
