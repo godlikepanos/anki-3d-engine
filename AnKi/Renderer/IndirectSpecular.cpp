@@ -13,6 +13,7 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -73,6 +74,7 @@ Error IndirectSpecular::initInternal()
 
 void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(IndirectSpecular);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = g_preferComputeCVar.get();
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && !preferCompute;

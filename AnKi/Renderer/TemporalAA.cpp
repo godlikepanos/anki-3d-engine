@@ -10,6 +10,7 @@
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -74,6 +75,7 @@ Error TemporalAA::initInternal()
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(TemporalAA);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
@@ -127,6 +129,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 
 	prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(TemporalAA);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());

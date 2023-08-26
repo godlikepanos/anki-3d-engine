@@ -165,7 +165,7 @@ Error IndirectDiffuseProbes::initIrradiance()
 
 void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
 
 	// Iterate the visible probes to find a candidate for update
 	WeakArray<GlobalIlluminationProbeComponent*> visibleProbes =

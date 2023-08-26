@@ -14,6 +14,7 @@
 #include <AnKi/Scene.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Enum.h>
+#include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Collision/ConvexHullShape.h>
 #include <AnKi/Physics/PhysicsWorld.h>
@@ -154,6 +155,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Dbg);
 	ANKI_ASSERT(g_dbgCVar.get());
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -224,6 +226,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Dbg);
+
 	if(!g_dbgCVar.get())
 	{
 		return;

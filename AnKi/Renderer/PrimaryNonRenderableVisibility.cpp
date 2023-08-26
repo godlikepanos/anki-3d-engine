@@ -11,6 +11,7 @@
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -40,6 +41,7 @@ static WeakArray<TComponent*> gatherComponents(ConstWeakArray<UVec2> pairs, TArr
 
 void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(PrimaryNonRenderableVisibility);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx = {};

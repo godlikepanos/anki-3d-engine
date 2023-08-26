@@ -188,7 +188,7 @@ Error ProbeReflections::initShadowMapping()
 void ProbeReflections::runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMatx, const Array<Mat3x4, 6> viewMats,
 								  RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
+	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
@@ -213,7 +213,7 @@ void ProbeReflections::runLightShading(U32 faceIdx, const BufferOffsetRange& vis
 									   const ReflectionProbeComponent& probe, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
-	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
+	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 	TraditionalDeferredLightShadingDrawInfo dsInfo;
 	dsInfo.m_viewProjectionMatrix = viewProjMat;
@@ -252,7 +252,7 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 {
 	ANKI_ASSERT(faceIdx < 6);
 
-	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
+	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 	TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 	subresource.m_mipmapCount = m_lightShading.m_mipCount;
@@ -267,7 +267,7 @@ void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkCo
 
 void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
+	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -288,7 +288,7 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 
 void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
+	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -316,7 +316,7 @@ void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 
 void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
+	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 	// Iterate the visible probes to find a candidate for update
 	WeakArray<ReflectionProbeComponent*> visibleProbes =
@@ -575,7 +575,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 void ProbeReflections::runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMats,
 										const Array<Mat3x4, 6>& viewMats, RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RCubeRefl);
+	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);

@@ -10,6 +10,7 @@
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -62,6 +63,7 @@ Error LensFlare::initOcclusion()
 
 void LensFlare::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(LensFlare);
 	const U32 flareCount = SceneGraph::getSingleton().getComponentArrays().getLensFlares().getSize();
 	if(flareCount == 0)
 	{
@@ -83,6 +85,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 							   DepthDownscale::kEighthInternalResolution);
 
 	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(LensFlare);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		const U32 flareCount = SceneGraph::getSingleton().getComponentArrays().getLensFlares().getSize();

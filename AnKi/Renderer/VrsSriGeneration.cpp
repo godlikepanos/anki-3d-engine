@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -129,6 +130,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
+	ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// SRI generation
@@ -139,6 +142,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), TextureUsageBit::kSampledCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_grProg.get());
@@ -163,6 +167,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kImageComputeWrite);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
 			const UVec2 rezDownscaled = (getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

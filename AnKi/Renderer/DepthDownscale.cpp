@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -111,6 +112,7 @@ Error DepthDownscale::init()
 
 void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);

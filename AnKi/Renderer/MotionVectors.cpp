@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -64,6 +65,7 @@ Error MotionVectors::initInternal()
 
 void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(MotionVectors);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDescr);
@@ -108,7 +110,46 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
-		run(ctx, rgraphCtx);
+		ANKI_TRACE_SCOPED_EVENT(MotionVectors);
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+		cmdb.bindShaderProgram(m_grProg.get());
+
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(3));
+		rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_historyLengthReadRtHandle);
+
+		class Uniforms
+		{
+		public:
+			Mat4 m_reprojectionMat;
+			Mat4 m_viewProjectionInvMat;
+			Mat4 m_prevViewProjectionInvMat;
+		} * pc;
+		pc = allocateAndBindUniforms<Uniforms>(cmdb, 0, 5);
+
+		pc->m_reprojectionMat = ctx.m_matrices.m_reprojection;
+		pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+		pc->m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedViewProjectionJitter;
+
+		if(g_preferComputeCVar.get())
+		{
+			rgraphCtx.bindImage(0, 6, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
+			rgraphCtx.bindImage(0, 7, m_runCtx.m_historyLengthWriteRtHandle, TextureSubresourceInfo());
+		}
+
+		if(g_preferComputeCVar.get())
+		{
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		}
+		else
+		{
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+
+			cmdb.draw(PrimitiveTopology::kTriangles, 3);
+		}
 	});
 
 	ppass->newTextureDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage);
@@ -117,49 +158,6 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(3), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getPreviousFrameDepthRt(), readUsage);
-}
-
-void MotionVectors::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
-{
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-	cmdb.bindShaderProgram(m_grProg.get());
-
-	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(3));
-	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_historyLengthReadRtHandle);
-
-	class Uniforms
-	{
-	public:
-		Mat4 m_reprojectionMat;
-		Mat4 m_viewProjectionInvMat;
-		Mat4 m_prevViewProjectionInvMat;
-	} * pc;
-	pc = allocateAndBindUniforms<Uniforms>(cmdb, 0, 5);
-
-	pc->m_reprojectionMat = ctx.m_matrices.m_reprojection;
-	pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-	pc->m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedViewProjectionJitter;
-
-	if(g_preferComputeCVar.get())
-	{
-		rgraphCtx.bindImage(0, 6, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
-		rgraphCtx.bindImage(0, 7, m_runCtx.m_historyLengthWriteRtHandle, TextureSubresourceInfo());
-	}
-
-	if(g_preferComputeCVar.get())
-	{
-		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-	}
-	else
-	{
-		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-
-		cmdb.draw(PrimitiveTopology::kTriangles, 3);
-	}
 }
 
 } // end namespace anki

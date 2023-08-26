@@ -103,7 +103,7 @@ Error GBuffer::initInternal()
 
 void GBuffer::runInThread(const RenderingContext& ctx, const GpuVisibilityOutput& visOut, RenderPassWorkContext& rgraphCtx) const
 {
-	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
+	ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -155,7 +155,7 @@ void GBuffer::importRenderTargets(RenderingContext& ctx)
 
 void GBuffer::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RGBuffer);
+	ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 

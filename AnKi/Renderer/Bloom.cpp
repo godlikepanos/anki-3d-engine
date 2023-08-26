@@ -9,6 +9,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -94,6 +95,8 @@ Error Bloom::initUpscale()
 
 void Bloom::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Bloom);
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = g_preferComputeCVar.get();
 

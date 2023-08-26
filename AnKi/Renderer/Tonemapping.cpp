@@ -6,6 +6,7 @@
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -58,12 +59,14 @@ void Tonemapping::importRenderTargets(RenderingContext& ctx)
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Tonemapping);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create the pass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("AvgLuminance");
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(Tonemapping);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());

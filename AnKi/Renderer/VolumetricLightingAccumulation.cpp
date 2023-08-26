@@ -11,6 +11,7 @@
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -68,6 +69,7 @@ Error VolumetricLightingAccumulation::init()
 
 void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(VolumetricLightingAccumulation);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const U readRtIdx = getRenderer().getFrameCount() & 1;
@@ -96,6 +98,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(VolumetricLightingAccumulation);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());

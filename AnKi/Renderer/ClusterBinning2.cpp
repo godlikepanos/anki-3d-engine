@@ -50,6 +50,8 @@ Error ClusterBinning2::init()
 
 void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(ClusterBinning);
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Fire an async job to fill the general uniforms

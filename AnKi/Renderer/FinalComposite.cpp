@@ -123,7 +123,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
+	ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const Bool dbgEnabled = g_dbgCVar.get();

@@ -12,6 +12,7 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Tonemapping.h>
+#include <AnKi/Util/Tracer.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -173,6 +174,7 @@ Error Scale::init()
 
 void Scale::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Scale);
 	if(m_upscalingMethod == UpscalingMethod::kNone && m_sharpenMethod == SharpenMethod::kNone)
 	{
 		m_runCtx.m_upscaledTonemappedRt = getRenderer().getTemporalAA().getTonemappedRt();
@@ -316,6 +318,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Scale);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const Bool preferCompute = g_preferComputeCVar.get();
 	const RenderTargetHandle inRt = getRenderer().getTemporalAA().getTonemappedRt();
@@ -380,6 +383,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 
 void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Scale);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const Bool preferCompute = g_preferComputeCVar.get();
 	const RenderTargetHandle inRt = m_runCtx.m_tonemappedRt;
@@ -428,6 +432,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 
 void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Scale);
 	const Vec2 srcRes(getRenderer().getInternalResolution());
 	const Bool reset = getRenderer().getFrameCount() == 0;
 	const Vec2 mvScale = srcRes; // UV space to Pixel space factor
@@ -448,6 +453,7 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 
 void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(Scale);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 	const Bool preferCompute = g_preferComputeCVar.get();
 	const RenderTargetHandle inRt = m_runCtx.m_upscaledHdrRt;

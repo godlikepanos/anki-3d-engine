@@ -17,7 +17,7 @@ static NumericCVar<F32>
 
 void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RTlas);
+	ANKI_TRACE_SCOPED_EVENT(ASBuilder);
 
 	// Do visibility
 	GpuVisibilityAccelerationStructuresOutput visOut;
@@ -60,7 +60,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kAccelerationStructureBuild);
 
 		rpass.setWork([this, scratchBuff, rangeBuff = visOut.m_rangeBuffer](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RTlas);
+			ANKI_TRACE_SCOPED_EVENT(ASBuilder);
 			rgraphCtx.m_commandBuffer->buildAccelerationStructureIndirect(m_runCtx.m_tlas.get(), scratchBuff.m_buffer, scratchBuff.m_offset,
 																		  rangeBuff.m_buffer, rangeBuff.m_offset);
 		});

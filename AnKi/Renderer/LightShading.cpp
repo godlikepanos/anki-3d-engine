@@ -133,7 +133,7 @@ Error LightShading::initApplyIndirect()
 
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_TRACE_SCOPED_EVENT(ForwardShading);
+	ANKI_TRACE_SCOPED_EVENT(LightShading);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -291,6 +291,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(LightShading);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get();

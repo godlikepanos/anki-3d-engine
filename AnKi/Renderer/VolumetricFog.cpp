@@ -11,6 +11,7 @@
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -48,6 +49,7 @@ Error VolumetricFog::init()
 
 void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(VolumetricFog);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
@@ -57,7 +59,8 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) -> void {
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(VolumetricFog);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());

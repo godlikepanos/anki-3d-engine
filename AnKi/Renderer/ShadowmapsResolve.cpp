@@ -11,6 +11,7 @@
 #include <AnKi/Renderer/ClusterBinning2.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -64,6 +65,8 @@ Error ShadowmapsResolve::initInternal()
 
 void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
@@ -116,6 +119,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	cmdb.bindShaderProgram(m_grProg.get());

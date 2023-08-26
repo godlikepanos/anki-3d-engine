@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -76,6 +77,7 @@ void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
 
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(DownscaleBlur);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create passes

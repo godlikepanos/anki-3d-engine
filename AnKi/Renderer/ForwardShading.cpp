@@ -17,6 +17,7 @@
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Core/App.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -42,6 +43,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 
 void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	ANKI_TRACE_SCOPED_EVENT(ForwardShading);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	// Set state

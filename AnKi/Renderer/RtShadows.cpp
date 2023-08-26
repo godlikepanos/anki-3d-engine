@@ -165,7 +165,7 @@ Error RtShadows::initInternal()
 
 void RtShadows::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RRtShadows);
+	ANKI_TRACE_SCOPED_EVENT(RtShadows);
 
 #define ANKI_DEPTH_DEP \
 	getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledTraceRays | TextureUsageBit::kSampledCompute, \
@@ -227,6 +227,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows setup build SBT");
 
 		rpass.setWork([this, sbtBuildIndirectArgsBuffer](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_setupBuildSbtGrProg.get());
@@ -265,6 +266,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kIndirectCompute);
 
 		rpass.setWork([this, sbtBuildIndirectArgsBuffer, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_buildSbtGrProg.get());
@@ -306,6 +308,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageTraceRaysRead);
 
 		rpass.setWork([this, sbtBuffer](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_rtLibraryGrProg.get());
@@ -407,6 +410,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_varianceRts[1], TextureUsageBit::kImageComputeWrite);
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_svgfVarianceGrProg.get());
@@ -455,6 +459,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			}
 
 			rpass.setWork([this, &ctx, passIdx = i](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(RtShadows);
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 				const Bool lastPass = passIdx == U32(m_atrousPassCount - 1);
@@ -505,6 +510,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_upscaledRt, TextureUsageBit::kImageComputeWrite);
 
 		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_upscaleGrProg.get());
@@ -523,6 +529,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, Bool horizontal)
 {
+	ANKI_TRACE_SCOPED_EVENT(RtShadows);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	cmdb.bindShaderProgram((horizontal) ? m_grDenoiseHorizontalProg.get() : m_grDenoiseVerticalProg.get());
