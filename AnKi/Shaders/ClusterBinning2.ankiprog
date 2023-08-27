@@ -146,7 +146,7 @@ groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
 		collides = (hits != 0u);
 	}
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-	collides = testRayObb(rayOrigin, rayDir, obj.m_obbExtend, obj.m_invertedTransform, t0, t1);
+	collides = testRaySphere(rayOrigin, rayDir, obj.m_sphereCenter, obj.m_sphereRadius, t0, t1);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
 	if(obj.m_isBox != 0u)
 	{

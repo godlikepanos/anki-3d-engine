@@ -67,7 +67,7 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Vec4 center(0.0f, 0.0f, -halfBoxSize.z(), 0.0f);
 		const Vec4 extend(halfBoxSize.x(), halfBoxSize.y(), halfBoxSize.z(), 0.0f);
 		const Obb obbL(center, Mat3x4::getIdentity(), extend);
-		m_obb = obbL.getTransformed(info.m_node->getWorldTransform());
+		const Obb obbW = obbL.getTransformed(info.m_node->getWorldTransform());
 
 		// Upload to the GPU scene
 		GpuSceneDecal gpuDecal;
@@ -76,14 +76,8 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuDecal.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
 		gpuDecal.m_roughnessMetalnessFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
 		gpuDecal.m_textureMatrix = m_biasProjViewMat;
-
-		const Mat4 trf(m_obb.getCenter().xyz1(), m_obb.getRotation().getRotationPart(), 1.0f);
-		gpuDecal.m_invertedTransform = trf.getInverse();
-
-		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
-
-		gpuDecal.m_sphereCenter = m_obb.getCenter().xyz();
-		gpuDecal.m_sphereRadius = m_obb.getExtend().getLength();
+		gpuDecal.m_sphereCenter = obbW.getCenter().xyz();
+		gpuDecal.m_sphereRadius = obbW.getExtend().getLength();
 
 		m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 	}

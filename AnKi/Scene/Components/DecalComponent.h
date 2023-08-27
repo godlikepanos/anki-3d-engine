@@ -74,7 +74,6 @@ private:
 	Array<Layer, U(LayerType::kCount)> m_layers;
 	Mat4 m_biasProjViewMat = Mat4::getIdentity();
 	Vec3 m_boxSize = Vec3(1.0f);
-	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
 
 	GpuSceneArrays::Decal::Allocation m_gpuSceneDecal;
 

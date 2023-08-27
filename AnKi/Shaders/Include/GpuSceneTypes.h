@@ -145,15 +145,10 @@ struct GpuSceneDecal
 
 	Mat4 m_textureMatrix;
 
-	Mat4 m_invertedTransform;
-
-	Vec3 m_obbExtend ANKI_CPP_CODE(= Vec3(0.0f));
-	F32 m_padding0;
-
 	Vec3 m_sphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
 };
-constexpr U32 kSizeof_GpuSceneDecal = 3u * sizeof(Vec4) + 2u * sizeof(Mat4);
+constexpr U32 kSizeof_GpuSceneDecal = 2u * sizeof(Vec4) + 1u * sizeof(Mat4);
 static_assert(sizeof(GpuSceneDecal) == kSizeof_GpuSceneDecal);
 
 /// Fog density volume.
