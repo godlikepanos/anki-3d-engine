@@ -204,12 +204,12 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, U32& tileAllocatorHierarchy) const
+void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const
 {
 	if(lightc.getLightComponentType() == LightComponentType::kPoint)
 	{
 		const F32 distFromTheCamera = (cameraOrigin - lightc.getWorldPosition()).getLength() - lightc.getRadius();
-		if(distFromTheCamera < g_lod0MaxDistanceCVar.get())
+		if(distFromTheCamera < lodDistances[0])
 		{
 			tileAllocatorHierarchy = kPointLightMaxTileAllocHierarchy;
 		}
@@ -233,11 +233,11 @@ void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent&
 		const F32 V1len = V.dot(coneDir);
 		const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
 
-		if(distFromTheCamera < g_lod0MaxDistanceCVar.get())
+		if(distFromTheCamera < lodDistances[0])
 		{
 			tileAllocatorHierarchy = kSpotLightMaxTileAllocHierarchy;
 		}
-		else if(distFromTheCamera < g_lod1MaxDistanceCVar.get())
+		else if(distFromTheCamera < lodDistances[1])
 		{
 			tileAllocatorHierarchy = max(kSpotLightMaxTileAllocHierarchy, 1u) - 1;
 		}
@@ -318,15 +318,15 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 	// Vars
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-	DynamicArray<ViewportWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(ctx.m_tempPool);
+	DynamicArray<ViewportWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(&getRenderer().getFrameMemoryPool());
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const CameraComponent& mainCam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
 	// Process the directional light first.
 	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-	if(dirLight && dirLight->getShadowEnabled() && mainCam.getShadowCascadeCount())
+	if(dirLight && dirLight->getShadowEnabled() && g_shadowCascadeCountCVar.get())
 	{
-		const U32 cascadeCount = mainCam.getShadowCascadeCount();
+		const U32 cascadeCount = g_shadowCascadeCountCVar.get();
 
 		Array<U32, kMaxShadowCascades> cascadeIndices;
 		Array<U32, kMaxShadowCascades> hierarchies;
@@ -345,10 +345,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		// Compute the view projection matrices
 		Array<F32, kMaxShadowCascades> cascadeDistances;
-		for(U32 i = 0; i < cascadeCount; ++i)
-		{
-			cascadeDistances[i] = mainCam.getShadowCascadeDistance(i);
-		}
+		cascadeDistances[0] = g_shadowCascade0DistanceCVar.get();
+		cascadeDistances[1] = g_shadowCascade1DistanceCVar.get();
+		cascadeDistances[2] = g_shadowCascade2DistanceCVar.get();
+		cascadeDistances[3] = g_shadowCascade3DistanceCVar.get();
 
 		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
 		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
@@ -407,7 +407,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		// Prepare data to allocate tiles and allocate
 		U32 hierarchy;
-		chooseDetail(cameraOrigin, *lightc, hierarchy);
+		chooseDetail(cameraOrigin, *lightc, {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()}, hierarchy);
 		Array<U32, 6> hierarchies;
 		hierarchies.fill(hierarchy);
 
@@ -494,7 +494,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		// Allocate tile
 		U32 hierarchy;
-		chooseDetail(cameraOrigin, *lightc, hierarchy);
+		chooseDetail(cameraOrigin, *lightc, {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()}, hierarchy);
 		UVec4 atlasViewport;
 		const TileAllocatorResult2 result = allocateAtlasTiles(lightc->getUuid(), lightc->getArrayIndex(), 1, &hierarchy, &atlasViewport);
 

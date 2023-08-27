@@ -71,7 +71,7 @@ private:
 
 	Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 
-	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, U32& tileAllocatorHierarchy) const;
+	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const;
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 };

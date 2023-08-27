@@ -23,6 +23,13 @@ extern BoolCVar g_vrsLimitTo2x2CVar;
 extern BoolCVar g_preferComputeCVar;
 extern NumericCVar<F32> g_renderScalingCVar;
 extern BoolCVar g_rayTracedShadowsCVar;
+extern NumericCVar<U8> g_shadowCascadeCountCVar;
+extern NumericCVar<F32> g_shadowCascade0DistanceCVar;
+extern NumericCVar<F32> g_shadowCascade1DistanceCVar;
+extern NumericCVar<F32> g_shadowCascade2DistanceCVar;
+extern NumericCVar<F32> g_shadowCascade3DistanceCVar;
+extern NumericCVar<F32> g_lod0MaxDistanceCVar;
+extern NumericCVar<F32> g_lod1MaxDistanceCVar;
 
 /// @addtogroup renderer
 /// @{

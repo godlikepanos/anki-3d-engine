@@ -102,7 +102,7 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 			if(feedbackType != GpuSceneNonRenderableObjectTypeWithFeedback::kCount)
 			{
 				// Read feedback from the GPU
-				DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> readbackData(ctx.m_tempPool);
+				DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> readbackData(&getRenderer().getFrameMemoryPool());
 				getRenderer().getReadbackManager().readMostRecentData(m_readbacks[feedbackType], readbackData);
 
 				if(readbackData.getSize())
@@ -115,19 +115,20 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 						WeakArray<UVec2> pairs(reinterpret_cast<UVec2*>(&readbackData[1]), pairCount);
 						if(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kLight)
 						{
-							m_runCtx.m_interestingComponents.m_shadowLights =
-								gatherComponents<LightComponent>(pairs, SceneGraph::getSingleton().getComponentArrays().getLights(), *ctx.m_tempPool);
+							m_runCtx.m_interestingComponents.m_shadowLights = gatherComponents<LightComponent>(
+								pairs, SceneGraph::getSingleton().getComponentArrays().getLights(), getRenderer().getFrameMemoryPool());
 						}
 						else if(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kReflectionProbe)
 						{
 							m_runCtx.m_interestingComponents.m_reflectionProbes = gatherComponents<ReflectionProbeComponent>(
-								pairs, SceneGraph::getSingleton().getComponentArrays().getReflectionProbes(), *ctx.m_tempPool);
+								pairs, SceneGraph::getSingleton().getComponentArrays().getReflectionProbes(), getRenderer().getFrameMemoryPool());
 						}
 						else
 						{
 							ANKI_ASSERT(feedbackType == GpuSceneNonRenderableObjectTypeWithFeedback::kGlobalIlluminationProbe);
 							m_runCtx.m_interestingComponents.m_globalIlluminationProbes = gatherComponents<GlobalIlluminationProbeComponent>(
-								pairs, SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes(), *ctx.m_tempPool);
+								pairs, SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes(),
+								getRenderer().getFrameMemoryPool());
 						}
 					}
 				}

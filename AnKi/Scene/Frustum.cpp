@@ -19,12 +19,6 @@ Frustum::Frustum()
 {
 	// Set some default values
 	init(FrustumType::kPerspective);
-	for(U i = 0; i < m_maxLodDistances.getSize(); ++i)
-	{
-		const F32 dist = (m_common.m_far - m_common.m_near) / F32(kMaxLodCount + 1);
-		m_maxLodDistances[i] = m_common.m_near + dist * F32(i + 1);
-	}
-
 	update();
 }
 
@@ -55,17 +49,6 @@ void Frustum::init(FrustumType type)
 Bool Frustum::update()
 {
 	Bool updated = false;
-
-	for(U32 i = kPrevMatrixHistory - 1; i != 0; --i)
-	{
-		m_prevViewProjMats[i] = m_prevViewProjMats[i - 1];
-		m_prevViewMats[i] = m_prevViewMats[i - 1];
-		m_prevProjMats[i] = m_prevProjMats[i - 1];
-	}
-
-	m_prevViewProjMats[0] = m_viewProjMat;
-	m_prevViewMats[0] = m_viewMat;
-	m_prevProjMats[0] = m_projMat;
 
 	// Update the shape
 	if(m_shapeDirty)
@@ -128,44 +111,10 @@ Bool Frustum::update()
 		m_viewMat = Mat3x4(m_worldTransform.getInverse());
 	}
 
-	// Fixup the misc data
-	if(m_miscDirty)
-	{
-		updated = true;
-		const F32 frustumFraction = (m_common.m_far - m_common.m_near) / 100.0f;
-
-		for(U32 i = 0; i < m_shadowCascadeCount; ++i)
-		{
-			if(m_shadowCascadeDistances[i] <= m_common.m_near || m_shadowCascadeDistances[i] > m_common.m_far)
-			{
-				m_shadowCascadeDistances[i] = clamp(m_shadowCascadeDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
-			}
-
-			if(i != 0 && m_shadowCascadeDistances[i - 1] > m_shadowCascadeDistances[i])
-			{
-				m_shadowCascadeDistances[i] = m_shadowCascadeDistances[i - 1] + frustumFraction;
-			}
-		}
-
-		for(U32 i = 0; i < m_maxLodDistances.getSize(); ++i)
-		{
-			if(m_maxLodDistances[i] <= m_common.m_near || m_maxLodDistances[i] > m_common.m_far)
-			{
-				m_maxLodDistances[i] = clamp(m_maxLodDistances[i], m_common.m_near + kEpsilonf, m_common.m_far);
-			}
-
-			if(i != 0 && m_maxLodDistances[i - 1] > m_maxLodDistances[i])
-			{
-				m_maxLodDistances[i] = m_maxLodDistances[i - 1] + frustumFraction;
-			}
-		}
-	}
-
 	// Updates that are affected by transform & shape updates
 	if(updated)
 	{
 		m_shapeDirty = false;
-		m_miscDirty = false;
 		m_worldTransformDirty = false;
 
 		m_viewProjMat = m_projMat * Mat4(m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -191,28 +140,7 @@ Bool Frustum::update()
 		}
 	}
 
-	m_updatedThisFrame = updated;
-
 	return updated;
-}
-
-void Frustum::setCoverageBuffer(F32* depths, U32 width, U32 height)
-{
-	ANKI_ASSERT(depths && width > 0 && height > 0);
-
-	const U32 elemCount = width * height;
-	if(m_depthMap.getSize() != elemCount) [[unlikely]]
-	{
-		m_depthMap.resize(elemCount);
-	}
-
-	if(depths && elemCount > 0) [[likely]]
-	{
-		memcpy(m_depthMap.getBegin(), depths, elemCount * sizeof(F32));
-	}
-
-	m_depthMapWidth = width;
-	m_depthMapHeight = height;
 }
 
 } // end namespace anki

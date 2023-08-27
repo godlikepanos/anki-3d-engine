@@ -20,8 +20,6 @@ extern NumericCVar<U32> g_windowWidthCVar;
 extern NumericCVar<U32> g_windowHeightCVar;
 extern NumericCVar<U32> g_windowFullscreenCVar;
 extern NumericCVar<U32> g_targetFpsCVar;
-extern NumericCVar<F32> g_lod0MaxDistanceCVar;
-extern NumericCVar<F32> g_lod1MaxDistanceCVar;
 extern NumericCVar<U32> g_displayStatsCVar;
 extern StatCounter g_cpuTotalTimeStatVar;
 extern StatCounter g_rendererGpuTimeStatVar;

@@ -155,36 +155,20 @@ public:
 
 	const Mat4& getProjectionMatrix() const
 	{
+		ANKI_ASSERT(!isDirty());
 		return m_projMat;
 	}
 
 	const Mat3x4& getViewMatrix() const
 	{
+		ANKI_ASSERT(!isDirty());
 		return m_viewMat;
 	}
 
 	const Mat4& getViewProjectionMatrix() const
 	{
+		ANKI_ASSERT(!isDirty());
 		return m_viewProjMat;
-	}
-
-	/// @param nMinusOneFrame The number of the previous frame. If 0 means the previous frame, 1 means the
-	///                       previous-previous frame.
-	const Mat4& getPreviousViewProjectionMatrix(U32 nMinusOneFrame = 0) const
-	{
-		return m_prevViewProjMats[nMinusOneFrame];
-	}
-
-	/// @see getPreviousViewProjectionMatrix.
-	const Mat3x4& getPreviousViewMatrix(U32 nMinusOneFrame = 0) const
-	{
-		return m_prevViewMats[nMinusOneFrame];
-	}
-
-	/// @see getPreviousViewProjectionMatrix.
-	const Mat4& getPreviousProjectionMatrix(U32 nMinusOneFrame = 0) const
-	{
-		return m_prevProjMats[nMinusOneFrame];
 	}
 
 	/// Check if a shape is inside the frustum.
@@ -202,90 +186,24 @@ public:
 		return true;
 	}
 
-	Bool hasCoverageBuffer() const
-	{
-		return m_depthMap.getSize() > 0;
-	}
-
-	void getCoverageBufferInfo(ConstWeakArray<F32>& depthBuff, U32& width, U32& height) const
-	{
-		if(m_depthMap.getSize() > 0)
-		{
-			depthBuff = ConstWeakArray<F32>(&m_depthMap[0], m_depthMap.getSize());
-			width = m_depthMapWidth;
-			height = m_depthMapHeight;
-			ANKI_ASSERT(width > 0 && height > 0);
-		}
-		else
-		{
-			depthBuff = ConstWeakArray<F32>();
-			width = height = 0;
-		}
-	}
-
-	void setCoverageBuffer(F32* depths, U32 width, U32 height);
-
-	void setShadowCascadeDistance(U32 cascade, F32 distance)
-	{
-		m_shadowCascadeDistances[cascade] = distance;
-		m_miscDirty = true;
-	}
-
-	F32 getShadowCascadeDistance(U32 cascade) const
-	{
-		return m_shadowCascadeDistances[cascade];
-	}
-
-	[[nodiscard]] U32 getShadowCascadeCount() const
-	{
-		return m_shadowCascadeCount;
-	}
-
-	void setShadowCascadeCount(U32 count)
-	{
-		ANKI_ASSERT(count <= kMaxShadowCascades);
-		m_shadowCascadeCount = U8(count);
-		m_miscDirty = true;
-	}
-
 	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
+		ANKI_ASSERT(!isDirty());
 		return m_perspective.m_hull;
 	}
 
 	const Obb& getOrthographicBoundingShapeWorldSpace() const
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
+		ANKI_ASSERT(!isDirty());
 		return m_ortho.m_obbW;
 	}
 
 	const Array<Plane, U32(FrustumPlaneType::kCount)>& getViewPlanes() const
 	{
+		ANKI_ASSERT(!isDirty());
 		return m_viewPlanesW;
-	}
-
-	/// Set the lod distance. It doesn't interact with the far plane.
-	void setLodDistance(U32 lod, F32 maxDistance)
-	{
-		m_maxLodDistances[lod] = maxDistance;
-		m_miscDirty = true;
-	}
-
-	void setLodDistances(const Array<F32, kMaxLodCount>& distances)
-	{
-		for(U i = 0; i < m_maxLodDistances.getSize(); ++i)
-		{
-			ANKI_ASSERT(distances[i] > m_common.m_near && distances[i] <= m_common.m_far);
-			m_maxLodDistances[i] = distances[i];
-		}
-	}
-
-	/// See setLodDistance.
-	F32 getLodDistance(U32 lod) const
-	{
-		ANKI_ASSERT(m_maxLodDistances[lod] > 0.0f);
-		return m_maxLodDistances[lod];
 	}
 
 	void setWorldTransform(const Transform& worldTransform)
@@ -297,22 +215,6 @@ public:
 	const Transform& getWorldTransform() const
 	{
 		return m_worldTransform;
-	}
-
-	F32 getEarlyZDistance() const
-	{
-		return m_earlyZDistance;
-	}
-
-	void setEarlyZDistance(F32 dist)
-	{
-		ANKI_ASSERT(dist >= 0.0f);
-		m_earlyZDistance = dist;
-	}
-
-	Bool getUpdatedThisFrame() const
-	{
-		return m_updatedThisFrame;
 	}
 
 	Bool update();
@@ -373,31 +275,17 @@ private:
 	Mat3x4 m_viewMat = Mat3x4::getIdentity(); ///< View matrix
 	Mat4 m_viewProjMat = Mat4::getIdentity(); ///< View projection matrix
 
-	static constexpr U32 kPrevMatrixHistory = 2;
-	Array<Mat3x4, kPrevMatrixHistory> m_prevViewMats = {Mat3x4::getIdentity(), Mat3x4::getIdentity()};
-	Array<Mat4, kPrevMatrixHistory> m_prevProjMats = {Mat4::getIdentity(), Mat4::getIdentity()};
-	Array<Mat4, kPrevMatrixHistory> m_prevViewProjMats = {Mat4::getIdentity(), Mat4::getIdentity()};
-
-	Array<F32, kMaxShadowCascades> m_shadowCascadeDistances = {};
-	Array<F32, kMaxLodCount - 1> m_maxLodDistances = {};
-
-	F32 m_earlyZDistance = 0.0f;
-
-	// Coverage buffer stuff
-	SceneDynamicArray<F32> m_depthMap;
-	U32 m_depthMapWidth = 0;
-	U32 m_depthMapHeight = 0;
-
 	FrustumType m_frustumType = FrustumType::kCount;
 
-	U8 m_shadowCascadeCount = 0;
-
 	Bool m_shapeDirty : 1 = true;
-	Bool m_miscDirty : 1 = true;
 	Bool m_worldTransformDirty : 1 = true;
-	Bool m_updatedThisFrame : 1 = true;
 
 	static Array<Mat3x4, 6> m_omnidirectionalRotations;
+
+	Bool isDirty() const
+	{
+		return m_shapeDirty || m_worldTransformDirty;
+	}
 };
 /// @}
 

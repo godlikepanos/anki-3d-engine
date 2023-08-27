@@ -319,22 +319,17 @@ void ClusterBinning2::writeClusterUniformsInternal()
 	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 	if(dirLight)
 	{
-		const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
-
 		DirectionalLight& out = unis.m_directionalLight;
 
 		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
-		out.m_shadowCascadeCount = cam.getShadowCascadeCount();
+		out.m_shadowCascadeCount = g_shadowCascadeCountCVar.get();
 		out.m_direction = dirLight->getDirection();
 		out.m_active = 1;
-		out.m_shadowCascadeDistances = Vec4(0.0f);
-		for(U32 i = 0; i < cam.getShadowCascadeCount(); ++i)
-		{
-			out.m_shadowCascadeDistances[i] = cam.getShadowCascadeDistance(i);
-		}
+		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
+											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
 		out.m_shadowLayer = (dirLight->getShadowEnabled()) ? 1 : kMaxU32; // TODO RT
 
-		for(U cascade = 0; cascade < cam.getShadowCascadeCount(); ++cascade)
+		for(U cascade = 0; cascade < g_shadowCascadeCountCVar.get(); ++cascade)
 		{
 			ANKI_ASSERT(m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade] != Mat4::getZero());
 			out.m_textureMatrices[cascade] = m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade];

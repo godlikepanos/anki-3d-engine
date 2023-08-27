@@ -75,8 +75,6 @@ inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRend
 class RenderingContext
 {
 public:
-	StackMemoryPool* m_tempPool = nullptr;
-
 	RenderGraphDescription m_renderGraphDescr;
 
 	CommonMatrices m_matrices;
@@ -91,10 +89,8 @@ public:
 	Array<Mat4, kMaxShadowCascades> m_dirLightTextureMatrices;
 
 	RenderingContext(StackMemoryPool* pool)
-		: m_tempPool(pool)
-		, m_renderGraphDescr(pool)
+		: m_renderGraphDescr(pool)
 	{
-		zeroMemory(m_dirLightTextureMatrices);
 	}
 
 	RenderingContext(const RenderingContext&) = delete;

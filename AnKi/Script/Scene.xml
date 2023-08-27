@@ -49,7 +49,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	SceneGraph* scene = binder->getOtherSystems().m_sceneGraph;
+	SceneGraph* scene = &SceneGraph::getSingleton();
 	ANKI_ASSERT(scene);
 	return scene;
 }
@@ -262,18 +262,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>F32</arg>
 						<arg>F32</arg>
 					</args>
-				</method>
-				<method name="setShadowCascadeDistance">
-					<args>
-						<arg>U32</arg>
-						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="getShadowCascadeDistance">
-					<args>
-						<arg>U32</arg>
-					</args>
-					<return>F32</return>
 				</method>
 			</methods>
 		</class>

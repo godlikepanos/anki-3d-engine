@@ -64,11 +64,6 @@ BoolCVar g_benchmarkModeCVar(CVarSubsystem::kCore, "BenchmarkMode", false, "Run 
 NumericCVar<U32> g_benchmarkModeFrameCountCVar(CVarSubsystem::kCore, "BenchmarkModeFrameCount", 60 * 60 * 2, 1, kMaxU32,
 											   "How many frames the benchmark will run before it quits");
 
-NumericCVar<F32> g_lod0MaxDistanceCVar(CVarSubsystem::kCore, "Lod0MaxDistance", 20.0f, 1.0f, kMaxF32,
-									   "Distance that will be used to calculate the LOD 0");
-NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kCore, "Lod1MaxDistance", 40.0f, 2.0f, kMaxF32,
-									   "Distance that will be used to calculate the LOD 1");
-
 #if ANKI_PLATFORM_MOBILE
 static StatCounter g_maliGpuActiveStatVar(StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates);
 static StatCounter g_maliGpuReadBandwidthStatVar(StatCategory::kGpuMisc, "Mali read bandwidth", StatFlag::kMainThreadUpdates);

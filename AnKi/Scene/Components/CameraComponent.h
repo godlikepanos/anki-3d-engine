@@ -81,31 +81,6 @@ public:
 		m_frustum.setPerspective(near, far, fovx, fovy);
 	}
 
-	void setShadowCascadeDistance(U32 cascade, F32 distance)
-	{
-		if(ANKI_SCENE_ASSERT(cascade < m_frustum.getShadowCascadeCount()))
-		{
-			m_frustum.setShadowCascadeDistance(cascade, distance);
-		}
-	}
-
-	U32 getShadowCascadeCount() const
-	{
-		return m_frustum.getShadowCascadeCount();
-	}
-
-	F32 getShadowCascadeDistance(U32 cascade) const
-	{
-		if(ANKI_SCENE_ASSERT(cascade < m_frustum.getShadowCascadeCount()))
-		{
-			return m_frustum.getShadowCascadeDistance(cascade);
-		}
-		else
-		{
-			return 0.0f;
-		}
-	}
-
 	ANKI_INTERNAL const Frustum& getFrustum() const
 	{
 		return m_frustum;
