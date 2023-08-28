@@ -97,7 +97,7 @@ void ForwardShading::setDependencies(GraphicsRenderPassDescription& pass)
 		pass.newBufferDependency(getRenderer().getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::kIndirectDraw);
 	}
 
-	pass.newBufferDependency(m_runCtx.m_visOut.m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+	pass.newBufferDependency(m_runCtx.m_visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
 }
 
 } // end namespace anki

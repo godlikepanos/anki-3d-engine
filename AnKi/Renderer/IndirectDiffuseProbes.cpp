@@ -271,7 +271,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			for(U32 i = 0; i < 6; ++i)
 			{
-				pass.newBufferDependency(visOuts[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+				pass.newBufferDependency(visOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
 			}
 
 			pass.setWork(6, [this, visOuts, viewProjMats, viewMats](RenderPassWorkContext& rgraphCtx) {
@@ -334,7 +334,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			for(U32 i = 0; i < 6; ++i)
 			{
-				pass.newBufferDependency(shadowVisOuts[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+				pass.newBufferDependency(shadowVisOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
 			}
 
 			pass.setWork(6, [this, shadowVisOuts, cascadeViewProjMats, cascadeViewMats](RenderPassWorkContext& rgraphCtx) {

@@ -407,7 +407,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		for(U32 i = 0; i < 6; ++i)
 		{
-			pass.newBufferDependency(visOuts[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+			pass.newBufferDependency(visOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
 		}
 	}
 
@@ -458,7 +458,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		for(U32 i = 0; i < 6; ++i)
 		{
-			pass.newBufferDependency(shadowVisOuts[i].m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+			pass.newBufferDependency(shadowVisOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
 		}
 	}
 	else

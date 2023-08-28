@@ -188,7 +188,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 		for(const ViewportWorkItem& work : m_runCtx.m_workItems)
 		{
-			pass.newBufferDependency(work.m_visOut.m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+			pass.newBufferDependency(work.m_visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
 		}
 
 		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);

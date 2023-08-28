@@ -25,6 +25,7 @@ struct GpuSceneRenderable
 	U32 m_boneTransformsOffset; ///< Array of Mat3x4 or 0 if its not a skin.
 	U32 m_particleEmitterOffset; ///< Offset to GpuSceneParticleEmitter or 0 if it's not an emitter.
 	U32 m_rtShadowsShaderHandleIndex; ///< The index of the shader handle in the array of library's handles.
+	U32 m_uuid;
 };
 
 /// Almost similar to GpuSceneRenderable but with only what the material shaders need. Needs to fit in a UVec4 vertex attribute.

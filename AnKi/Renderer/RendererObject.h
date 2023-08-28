@@ -95,6 +95,8 @@ protected:
 	};
 
 	static Error loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
+
+	static void zeroBuffer(Buffer* buff);
 };
 /// @}
 

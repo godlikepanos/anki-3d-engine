@@ -6,6 +6,7 @@
 #pragma anki mutator HZB_TEST 0 1
 #pragma anki mutator DISTANCE_TEST 0 1
 #pragma anki mutator GATHER_AABBS 0 1
+#pragma anki mutator HASH_VISIBLES 0 1
 
 #pragma anki skip_mutation DISTANCE_TEST 1 HZB_TEST 1
 
@@ -53,6 +54,10 @@ struct DrawIndirectArgsWithPadding
 
 #if GATHER_AABBS
 [[vk::binding(12)]] RWStructuredBuffer<U32> g_visibleAabbIndices; ///< Indices of the visible AABBs. The 1st element is the count.
+#endif
+
+#if HASH_VISIBLES
+[[vk::binding(13)]] RWStructuredBuffer<GpuVisibilityHash> g_hash;
 #endif
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -178,11 +183,11 @@ struct DrawIndirectArgsWithPadding
 	InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, indirectIdx);
 	indirectIdx += g_drawIndirectArgsOffsets[renderStateBucket];
 
-	const GpuSceneRenderable renderableIn = g_renderables[renderableIdx];
-	const U32 meshLodOffset = renderableIn.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
+	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
+	const U32 meshLodOffset = renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
 	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
 
-	const Bool isParticleEmitter = renderableIn.m_particleEmitterOffset != 0;
+	const Bool isParticleEmitter = renderable.m_particleEmitterOffset != 0;
 
 	if(!isParticleEmitter)
 	{
@@ -197,15 +202,15 @@ struct DrawIndirectArgsWithPadding
 		g_drawIndexedIndirectArgs[indirectIdx] = indirect;
 
 		UVec4 instanceVertex;
-		instanceVertex.x = renderableIn.m_worldTransformsOffset;
-		instanceVertex.y = renderableIn.m_uniformsOffset;
+		instanceVertex.x = renderable.m_worldTransformsOffset;
+		instanceVertex.y = renderable.m_uniformsOffset;
 		instanceVertex.z = meshLodOffset;
-		instanceVertex.w = renderableIn.m_boneTransformsOffset;
+		instanceVertex.w = renderable.m_boneTransformsOffset;
 		g_instanceRateRenderables[indirectIdx] = instanceVertex;
 	}
 	else
 	{
-		const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderableIn.m_particleEmitterOffset);
+		const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_particleEmitterOffset);
 
 		DrawIndirectArgsWithPadding indirect;
 		indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
@@ -215,12 +220,34 @@ struct DrawIndirectArgsWithPadding
 		g_drawIndirectArgs[indirectIdx] = indirect;
 
 		UVec4 instanceVertex;
-		instanceVertex.x = renderableIn.m_worldTransformsOffset;
-		instanceVertex.y = renderableIn.m_uniformsOffset;
+		instanceVertex.x = renderable.m_worldTransformsOffset;
+		instanceVertex.y = renderable.m_uniformsOffset;
 		instanceVertex.z = meshLodOffset;
-		instanceVertex.w = renderableIn.m_particleEmitterOffset;
+		instanceVertex.w = renderable.m_particleEmitterOffset;
 		g_instanceRateRenderables[indirectIdx] = instanceVertex;
 	}
+
+#if HASH_VISIBLES
+	// Update the renderables hash
+	{
+		const Mat3x4 trf = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+		const Vec3 pos = trf.getTranslationPart();
+		const UVec3 posu = UVec3(asuint(pos.x), asuint(pos.y), asuint(pos.z));
+
+		U32 hash = posu.x;
+		hash ^= posu.y;
+		hash ^= posu.z;
+		hash ^= renderable.m_uuid;
+
+		InterlockedXor(g_hash[0].m_renderablesHash, hash);
+
+		const Bool deformable = isParticleEmitter || renderable.m_boneTransformsOffset != 0;
+		if(deformable)
+		{
+			g_hash[0].m_containsDeformable = 1;
+		}
+	}
+#endif
 
 #if GATHER_AABBS
 	U32 index;

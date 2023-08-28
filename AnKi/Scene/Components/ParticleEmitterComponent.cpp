@@ -403,6 +403,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		renderable.m_meshLodsOffset = m_gpuSceneMeshLods.getGpuSceneOffset();
 		renderable.m_particleEmitterOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 		renderable.m_worldTransformsOffset = 0;
+		renderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
 		if(!m_gpuSceneRenderable.isValid())
 		{
 			m_gpuSceneRenderable.allocate();

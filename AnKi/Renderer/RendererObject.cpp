@@ -69,4 +69,18 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 	return Error::kNone;
 }
 
+void RendererObject::zeroBuffer(Buffer* buff)
+{
+	CommandBufferInitInfo cmdbInit("Zero buffer");
+	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+	cmdb->fillBuffer(buff, 0, kMaxPtrSize, 0);
+
+	FencePtr fence;
+	cmdb->flush({}, &fence);
+
+	fence->clientWait(16.0_sec);
+}
+
 } // end namespace anki

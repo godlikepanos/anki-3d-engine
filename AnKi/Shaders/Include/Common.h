@@ -280,6 +280,11 @@ struct Mat3x4
 	Vec4 m_row2;
 
 	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(Mat3x4, F32)
+
+	Vec3 getTranslationPart()
+	{
+		return Vec3(m_row0.w, m_row1.w, m_row2.w);
+	}
 };
 
 #	if ANKI_FORCE_FULL_FP_PRECISION

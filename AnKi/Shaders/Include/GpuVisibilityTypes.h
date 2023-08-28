@@ -47,4 +47,10 @@ struct GpuVisibilityAccelerationStructuresUniforms
 	Vec4 m_maxLodDistances;
 };
 
+struct GpuVisibilityHash
+{
+	U32 m_renderablesHash;
+	U32 m_containsDeformable;
+};
+
 ANKI_END_NAMESPACE

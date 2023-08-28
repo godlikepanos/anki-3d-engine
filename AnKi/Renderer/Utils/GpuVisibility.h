@@ -26,6 +26,7 @@ public:
 	RenderGraphDescription* m_rgraph = nullptr;
 
 	Bool m_gatherAabbIndices = false; ///< For debug draw.
+	Bool m_hashVisibles = false; ///< Create a hash for the visible renderables.
 };
 
 /// @memberof GpuVisibility
@@ -48,13 +49,15 @@ public:
 class GpuVisibilityOutput
 {
 public:
-	BufferHandle m_mdiDrawCountsHandle; ///< Just expose one handle for depedencies. No need to track all other buffers.
+	BufferHandle m_someBufferHandle; ///< Just expose one handle for depedencies. No need to track all buffers.
 
-	BufferOffsetRange m_instanceRateRenderablesBuffer;
-	BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
-	BufferOffsetRange m_mdiDrawCountsBuffer;
+	BufferOffsetRange m_instanceRateRenderablesBuffer; ///< An array of GpuSceneRenderableVertex.
+	BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< An array of DrawIndexedIndirectArgs.
+	BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket.
 
 	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< Optional.
+
+	BufferOffsetRange m_visiblesHashBuffer; ///< Optional.
 };
 
 /// Performs GPU visibility for some pass.
@@ -64,6 +67,7 @@ public:
 	Error init();
 
 	/// Perform frustum visibility testing.
+	/// @note Not thread-safe.
 	void populateRenderGraph(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out)
 	{
 		ANKI_ASSERT(in.m_viewProjectionMatrix != Mat4::getZero());
@@ -71,6 +75,7 @@ public:
 	}
 
 	/// Perform simple distance-based visibility testing.
+	/// @note Not thread-safe.
 	void populateRenderGraph(DistanceGpuVisibilityInput& in, GpuVisibilityOutput& out)
 	{
 		populateRenderGraphInternal(true, in, out);
@@ -78,8 +83,8 @@ public:
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	Array2d<ShaderProgramPtr, 2, 2> m_frustumGrProgs;
-	Array<ShaderProgramPtr, 2> m_distGrProgs;
+	Array3d<ShaderProgramPtr, 2, 2, 2> m_frustumGrProgs;
+	Array2d<ShaderProgramPtr, 2, 2> m_distGrProgs;
 
 	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
 };

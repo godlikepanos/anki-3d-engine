@@ -22,17 +22,25 @@ Error GpuVisibility::init()
 	{
 		for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
 		{
-			ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
-										 Array<SubMutation, 3>{{{"HZB_TEST", hzb}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}}}, m_prog,
-										 m_frustumGrProgs[hzb][gatherAabbs]));
+			for(MutatorValue genHash = 0; genHash < 2; ++genHash)
+			{
+				ANKI_CHECK(loadShaderProgram(
+					"ShaderBinaries/GpuVisibility.ankiprogbin",
+					Array<SubMutation, 4>{{{"HZB_TEST", hzb}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}}},
+					m_prog, m_frustumGrProgs[hzb][gatherAabbs][genHash]));
+			}
 		}
 	}
 
 	for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
-									 Array<SubMutation, 3>{{{"HZB_TEST", 0}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}}}, m_prog,
-									 m_distGrProgs[gatherAabbs]));
+		for(MutatorValue genHash = 0; genHash < 2; ++genHash)
+		{
+			ANKI_CHECK(loadShaderProgram(
+				"ShaderBinaries/GpuVisibility.ankiprogbin",
+				Array<SubMutation, 4>{{{"HZB_TEST", 0}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}}}, m_prog,
+				m_distGrProgs[gatherAabbs][genHash]));
+		}
 	}
 
 	return Error::kNone;
@@ -99,7 +107,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		U32* atomics;
 		out.m_mdiDrawCountsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(1, atomics);
 		atomics[0] = 0;
-		out.m_mdiDrawCountsHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, out.m_mdiDrawCountsBuffer);
+		out.m_someBufferHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, out.m_mdiDrawCountsBuffer);
 
 		if(in.m_gatherAabbIndices)
 		{
@@ -114,36 +122,61 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(in.m_technique);
 
 	// Allocate memory for the indirect commands
-	const GpuVisibleTransientMemoryAllocation indirectArgs =
-		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectArgs));
-	out.m_drawIndexedIndirectArgsBuffer = indirectArgs;
-
-	const GpuVisibleTransientMemoryAllocation instanceRateRenderables =
-		GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(GpuSceneRenderable));
-	out.m_instanceRateRenderablesBuffer = instanceRateRenderables;
-
-	// Allocate and zero the MDI counts
-	U32* atomics;
-	RebarAllocation mdiDrawCounts = RebarTransientMemoryPool::getSingleton().allocateFrame(bucketCount, atomics);
-	memset(atomics, 0, mdiDrawCounts.getRange());
-	out.m_mdiDrawCountsBuffer = mdiDrawCounts;
-
-	// Import buffers
-	out.m_mdiDrawCountsHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, mdiDrawCounts);
+	out.m_drawIndexedIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(DrawIndexedIndirectArgs));
+	out.m_instanceRateRenderablesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(GpuSceneRenderableVertex));
 
 	// Allocate memory for AABB indices
 	if(in.m_gatherAabbIndices)
 	{
-		U32* atomic;
-		out.m_visibleAaabbIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(aabbCount + 1, atomic);
-		atomic[0] = 0;
+		out.m_visibleAaabbIndicesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate((aabbCount + 1) * sizeof(U32));
 	}
+
+	// Allocate memory for counters
+	PtrSize counterMemory = 0;
+	if(in.m_hashVisibles)
+	{
+		counterMemory += sizeof(GpuVisibilityHash);
+		alignRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment, counterMemory);
+	}
+
+	const PtrSize mdiBufferOffset = counterMemory;
+	const PtrSize mdiBufferSize = sizeof(U32) * bucketCount;
+	counterMemory += mdiBufferSize;
+	alignRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment, counterMemory);
+
+	const BufferOffsetRange counterBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(counterMemory);
+	const BufferHandle counterBufferHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, counterBuffer);
+	out.m_someBufferHandle = counterBufferHandle;
+
+	BufferOffsetRange hashBuffer;
+	if(in.m_hashVisibles)
+	{
+		hashBuffer = {counterBuffer.m_buffer, 0, sizeof(GpuVisibilityHash)};
+	}
+
+	// Zero some stuff
+	{
+		ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass("GPU visibility: Zero stuff");
+		pass.newBufferDependency(counterBufferHandle, BufferUsageBit::kTransferDestination);
+
+		pass.setWork([counterBuffer, visibleAaabbIndicesBuffer = out.m_visibleAaabbIndicesBuffer](RenderPassWorkContext& rpass) {
+			rpass.m_commandBuffer->fillBuffer(counterBuffer.m_buffer, counterBuffer.m_offset, counterBuffer.m_range, 0);
+
+			if(visibleAaabbIndicesBuffer.m_buffer)
+			{
+				rpass.m_commandBuffer->fillBuffer(visibleAaabbIndicesBuffer.m_buffer, visibleAaabbIndicesBuffer.m_offset, sizeof(U32), 0);
+			}
+		});
+	}
+
+	// Set the MDI count buffer
+	out.m_mdiDrawCountsBuffer = {counterBuffer.m_buffer, counterBuffer.m_offset + mdiBufferOffset, mdiBufferSize};
 
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(in.m_passesName);
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newBufferDependency(out.m_mdiDrawCountsHandle, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(counterBufferHandle, BufferUsageBit::kStorageComputeWrite);
 
 	if(!distanceBased && static_cast<FrustumGpuVisibilityInput&>(in).m_hzbRt)
 	{
@@ -152,19 +185,21 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 
 	pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
-				  technique = in.m_technique, mdiDrawCountsHandle = out.m_mdiDrawCountsHandle, instanceRateRenderables, indirectArgs, aabbCount,
-				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer](RenderPassWorkContext& rpass) {
+				  technique = in.m_technique, mdiDrawCountsBuffer = out.m_mdiDrawCountsBuffer,
+				  instanceRateRenderables = out.m_instanceRateRenderablesBuffer, indirectArgs = out.m_drawIndexedIndirectArgsBuffer, aabbCount,
+				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer, hashBuffer](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		const Bool gatherAabbIndices = visibleAabbsBuffer.m_buffer != nullptr;
+		const Bool genHash = hashBuffer.m_buffer != nullptr;
 
 		if(frustumTestData)
 		{
-			cmdb.bindShaderProgram(m_frustumGrProgs[frustumTestData->m_hzbRt.isValid()][gatherAabbIndices].get());
+			cmdb.bindShaderProgram(m_frustumGrProgs[frustumTestData->m_hzbRt.isValid()][gatherAabbIndices][genHash].get());
 		}
 		else
 		{
-			cmdb.bindShaderProgram(m_distGrProgs[gatherAabbIndices].get());
+			cmdb.bindShaderProgram(m_distGrProgs[gatherAabbIndices][genHash].get());
 		}
 
 		BufferOffsetRange aabbsBuffer;
@@ -199,7 +234,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		});
 		ANKI_ASSERT(userCount == RenderStateBucketContainer::getSingleton().getBucketsItemCount(technique));
 
-		rpass.bindStorageBuffer(0, 6, mdiDrawCountsHandle);
+		cmdb.bindStorageBuffer(0, 6, mdiDrawCountsBuffer);
 
 		if(frustumTestData)
 		{
@@ -246,6 +281,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		if(gatherAabbIndices)
 		{
 			cmdb.bindStorageBuffer(0, 12, visibleAabbsBuffer);
+		}
+
+		if(genHash)
+		{
+			cmdb.bindStorageBuffer(0, 13, hashBuffer);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);

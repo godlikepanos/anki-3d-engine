@@ -240,7 +240,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
-	pass.newBufferDependency(visOut.m_mdiDrawCountsHandle, BufferUsageBit::kIndirectDraw);
+	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
 
 	// HZB generation for the next frame
 	getRenderer().getHzbGenerator().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,

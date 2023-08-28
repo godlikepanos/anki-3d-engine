@@ -201,6 +201,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				const MaterialVariant& variant = mtl.getOrCreateVariant(key);
 				gpuRenderable.m_rtShadowsShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
 			}
+			gpuRenderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
 			m_patchInfos[i].m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);
 		}
 
