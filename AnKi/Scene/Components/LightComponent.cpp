@@ -43,7 +43,8 @@ void LightComponent::setLightComponentType(LightComponentType newType)
 	{
 		m_type = newType;
 		m_shadowAtlasUvViewportCount = 0;
-		m_dirty = true;
+		m_shapeDirty = true;
+		m_otherDirty = true;
 		m_uuid = 0;
 
 		if(newType == LightComponentType::kDirectional)
@@ -62,8 +63,7 @@ void LightComponent::setLightComponentType(LightComponentType newType)
 Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	const Bool moveUpdated = info.m_node->movedThisFrame();
-	updated = moveUpdated || m_dirty;
-	m_dirty = false;
+	updated = moveUpdated || m_shapeDirty || m_otherDirty;
 
 	if(moveUpdated)
 	{
@@ -83,12 +83,27 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 6;
 
+		// Upload the hash
+		if(reallyShadow)
+		{
+			if(!m_hash.isValid())
+			{
+				m_hash.allocate();
+			}
+
+			if(m_shapeDirty || moveUpdated)
+			{
+				GpuSceneLightVisibleRenderablesHash hash = {};
+				m_hash.uploadToGpuScene(hash);
+			}
+		}
+
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
 		gpuLight.m_radius = m_point.m_radius;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
-		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
+		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_flags = GpuSceneLightFlag::kPointLight;
 		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
 		gpuLight.m_arrayIndex = getArrayIndex();
@@ -117,12 +132,27 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 1;
 
+		// Upload the hash
+		if(reallyShadow)
+		{
+			if(!m_hash.isValid())
+			{
+				m_hash.allocate();
+			}
+
+			if(m_shapeDirty || moveUpdated)
+			{
+				GpuSceneLightVisibleRenderablesHash hash = {};
+				m_hash.uploadToGpuScene(hash);
+			}
+		}
+
 		// Upload to the GPU scene
 		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
 		gpuLight.m_radius = m_spot.m_distance;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
-		gpuLight.m_squareRadiusOverOne = 1.0f / (m_spot.m_distance * m_spot.m_distance);
+		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_flags = GpuSceneLightFlag::kSpotLight;
 		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
 		gpuLight.m_arrayIndex = getArrayIndex();
@@ -167,6 +197,9 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		m_gpuSceneLight.free();
 	}
+
+	m_shapeDirty = false;
+	m_otherDirty = false;
 
 	return Error::kNone;
 }
@@ -324,7 +357,7 @@ void LightComponent::setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports)
 			m_shadowAtlasUvViewports[i] = viewports[i];
 		}
 
-		m_dirty = true;
+		m_shapeDirty = true;
 	}
 }
 

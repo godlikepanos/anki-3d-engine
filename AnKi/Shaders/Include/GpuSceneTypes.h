@@ -81,6 +81,12 @@ enum class GpuSceneLightFlag : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuSceneLightFlag)
 
+/// A hash of all visible renderables. If it matches between vis tests then skip the drawcalls. Touched only by the GPU.
+struct GpuSceneLightVisibleRenderablesHash
+{
+	U32 m_hash;
+};
+
 /// Point or spot light.
 struct GpuSceneLight
 {
@@ -88,7 +94,7 @@ struct GpuSceneLight
 	RF32 m_radius ANKI_CPP_CODE(= 0.0f); ///< Radius.
 
 	RVec3 m_diffuseColor;
-	RF32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	U32 m_visibleRenderablesHashIndex; ///< Points to a GpuSceneLightVisibleRenderablesHash
 
 	GpuSceneLightFlag m_flags;
 	U32 m_arrayIndex; ///< Array index of the LightComponent in the CPU scene.

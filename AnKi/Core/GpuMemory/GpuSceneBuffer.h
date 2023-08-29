@@ -101,6 +101,11 @@ public:
 		return m_pool.getGpuBuffer();
 	}
 
+	BufferOffsetRange getBufferOffsetRange() const
+	{
+		return {&m_pool.getGpuBuffer(), 0, kMaxPtrSize};
+	}
+
 private:
 	SegregatedListsGpuMemoryPool m_pool;
 

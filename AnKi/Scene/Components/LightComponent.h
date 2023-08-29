@@ -52,13 +52,13 @@ public:
 	void setDiffuseColor(const Vec4& x)
 	{
 		m_diffColor = x;
-		m_dirty = true;
+		m_otherDirty = true;
 	}
 
 	void setRadius(F32 x)
 	{
 		m_point.m_radius = x;
-		m_dirty = true;
+		m_shapeDirty = true;
 	}
 
 	F32 getRadius() const
@@ -69,7 +69,7 @@ public:
 	void setDistance(F32 x)
 	{
 		m_spot.m_distance = x;
-		m_dirty = true;
+		m_shapeDirty = true;
 	}
 
 	F32 getDistance() const
@@ -80,7 +80,7 @@ public:
 	void setInnerAngle(F32 ang)
 	{
 		m_spot.m_innerAngle = ang;
-		m_dirty = true;
+		m_shapeDirty = true;
 	}
 
 	F32 getInnerAngle() const
@@ -91,7 +91,7 @@ public:
 	void setOuterAngle(F32 ang)
 	{
 		m_spot.m_outerAngle = ang;
-		m_dirty = true;
+		m_shapeDirty = true;
 	}
 
 	F32 getOuterAngle() const
@@ -106,8 +106,11 @@ public:
 
 	void setShadowEnabled(const Bool x)
 	{
-		m_shadow = x;
-		m_dirty = true;
+		if(x != m_shadow)
+		{
+			m_shadow = x;
+			m_shapeDirty = m_otherDirty = true;
+		}
 	}
 
 	Vec3 getDirection() const
@@ -172,6 +175,7 @@ private:
 	Spot m_spot;
 
 	GpuSceneArrays::Light::Allocation m_gpuSceneLight;
+	GpuSceneArrays::LightVisibleRenderablesHash::Allocation m_hash;
 
 	Array<Vec4, 6> m_shadowAtlasUvViewports;
 
@@ -180,7 +184,8 @@ private:
 	LightComponentType m_type;
 
 	U8 m_shadow : 1 = false;
-	U8 m_dirty : 1 = true;
+	U8 m_shapeDirty : 1 = true;
+	U8 m_otherDirty : 1 = true;
 	U8 m_shadowAtlasUvViewportCount : 3 = 0;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;

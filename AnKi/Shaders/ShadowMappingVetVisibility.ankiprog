@@ -1,0 +1,70 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// A very simle compute shader that checks if the light shadows needs rendering or not.
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+
+[[vk::binding(0)]] StructuredBuffer<GpuVisibilityHash> g_hash;
+[[vk::binding(1)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+[[vk::binding(2)]] RWStructuredBuffer<GpuSceneLight> g_lights;
+[[vk::binding(3)]] RWStructuredBuffer<GpuSceneLightVisibleRenderablesHash> g_lightHashes;
+[[vk::binding(4)]] RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs;
+
+struct Uniforms
+{
+	U32 m_lightIndex;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+
+groupshared U32 s_renderLight;
+
+[numthreads(64, 1, 1)] void main(U32 svGroupIndex : SV_GROUPINDEX)
+{
+	if(svGroupIndex == 0)
+	{
+		const GpuSceneLight light = g_lights[g_unis.m_lightIndex];
+		const U32 crntHash = g_lightHashes[light.m_visibleRenderablesHashIndex].m_hash;
+		s_renderLight = crntHash != g_hash[0].m_renderablesHash || g_hash[0].m_containsDeformable == 1;
+
+		if(s_renderLight)
+		{
+			g_lightHashes[light.m_visibleRenderablesHashIndex].m_hash = g_hash[0].m_renderablesHash;
+
+			g_clearTileIndirectArgs[0] = (DrawIndirectArgs)0;
+			g_clearTileIndirectArgs[0].m_vertexCount = 3;
+			g_clearTileIndirectArgs[0].m_instanceCount = 1;
+		}
+		else
+		{
+			g_clearTileIndirectArgs[0] = (DrawIndirectArgs)0;
+		}
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	if(s_renderLight == 0)
+	{
+		// Won't render, nullify MDI counts
+
+		U32 renderStateBucketCount, unused;
+		g_mdiDrawCounts.GetDimensions(renderStateBucketCount, unused);
+
+		if(svGroupIndex < renderStateBucketCount)
+		{
+			g_mdiDrawCounts[svGroupIndex] = 0;
+		}
+	}
+}
+
+#pragma anki end

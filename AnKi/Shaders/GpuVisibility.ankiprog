@@ -150,7 +150,7 @@ struct DrawIndirectArgsWithPadding
 	}
 #	endif // HZB_TEST
 #else // DISTANCE_TEST == 1
-	if(!testSphereSphereCollision(aabb.m_sphereCenter, aabb.m_sphereRadius, g_unis.m_pointOfTest, aabb.m_sphereRadius))
+	if(!testSphereSphereCollision(aabb.m_sphereCenter, aabb.m_sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius))
 	{
 		return;
 	}

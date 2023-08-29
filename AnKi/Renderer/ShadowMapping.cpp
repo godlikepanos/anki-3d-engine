@@ -9,10 +9,12 @@
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Core/StatsSet.h>
+#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/RenderStateBucket.h>
 
 namespace anki {
 
@@ -70,6 +72,8 @@ public:
 	Mat3x4 m_viewMat;
 
 	GpuVisibilityOutput m_visOut;
+
+	BufferOffsetRange m_clearTileIndirectArgs;
 };
 
 Error ShadowMapping::init()
@@ -109,10 +113,8 @@ Error ShadowMapping::initInternal()
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ShadowmappingClearDepth.ankiprogbin", m_clearDepthProg));
-	const ShaderProgramResourceVariant* variant;
-	m_clearDepthProg->getOrCreateVariant(variant);
-	m_clearDepthGrProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingClearDepth.ankiprogbin", m_clearDepthProg, m_clearDepthGrProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingVetVisibility.ankiprogbin", m_vetVisibilityProg, m_vetVisibilityGrProg));
 
 	for(U32 i = 0; i < kMaxShadowCascades; ++i)
 	{
@@ -457,9 +459,18 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			visIn.m_rgraph = &rgraph;
 			visIn.m_pointOfTest = lightc->getWorldPosition();
 			visIn.m_testRadius = lightc->getRadius();
+			visIn.m_hashVisibles = true;
 
 			GpuVisibilityOutput visOut;
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+			// Vet visibility
+			const Bool renderAllways = !(result & TileAllocatorResult2::kTileCached);
+			BufferOffsetRange clearTileIndirectArgs;
+			if(!renderAllways)
+			{
+				clearTileIndirectArgs = vetVisibilityPass("Shadows visibility: Vet point light", *lightc, visOut, rgraph);
+			}
 
 			// Add work
 			for(U32 face = 0; face < 6; ++face)
@@ -475,6 +486,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				work.m_viewMat = frustum.getViewMatrix();
 				work.m_viewport = atlasViewports[face];
 				work.m_visOut = visOut;
+				work.m_clearTileIndirectArgs = clearTileIndirectArgs;
 			}
 		}
 		else
@@ -518,9 +530,18 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
 			visIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
+			visIn.m_hashVisibles = true;
 
 			GpuVisibilityOutput visOut;
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+			// Vet visibility
+			const Bool renderAllways = !(result & TileAllocatorResult2::kTileCached);
+			BufferOffsetRange clearTileIndirectArgs;
+			if(!renderAllways)
+			{
+				clearTileIndirectArgs = vetVisibilityPass("Shadows visibility: Vet spot light", *lightc, visOut, rgraph);
+			}
 
 			// Add work
 			ViewportWorkItem& work = *workItems.emplaceBack();
@@ -568,7 +589,15 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			cmdb.bindShaderProgram(m_clearDepthGrProg.get());
 			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
 			cmdb.setPolygonOffset(0.0f, 0.0f);
-			cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
+
+			if(work.m_clearTileIndirectArgs.m_buffer)
+			{
+				cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, work.m_clearTileIndirectArgs.m_offset, work.m_clearTileIndirectArgs.m_buffer);
+			}
+			else
+			{
+				cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
+			}
 
 			// Restore state
 			cmdb.setDepthCompareOperation(CompareOperation::kLess);
@@ -586,6 +615,40 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 	}
+}
+
+BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+												   RenderGraphDescription& rgraph) const
+{
+	BufferOffsetRange clearTileIndirectArgs;
+
+	clearTileIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs));
+
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName);
+
+	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
+	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
+
+	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_mdiDrawCountsBuffer,
+				  clearTileIndirectArgs](RenderPassWorkContext& rpass) {
+		CommandBuffer& cmdb = *rpass.m_commandBuffer;
+
+		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());
+
+		const UVec4 lightIndex(lightc.getArrayIndex());
+		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
+
+		cmdb.bindStorageBuffer(0, 0, hashBuff);
+		cmdb.bindStorageBuffer(0, 1, mdiBuff);
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 4, clearTileIndirectArgs);
+
+		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
+		cmdb.dispatchCompute(1, 1, 1);
+	});
+
+	return clearTileIndirectArgs;
 }
 
 } // end namespace anki

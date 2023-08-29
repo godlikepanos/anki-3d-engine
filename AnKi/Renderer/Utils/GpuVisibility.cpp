@@ -148,10 +148,9 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	const BufferHandle counterBufferHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, counterBuffer);
 	out.m_someBufferHandle = counterBufferHandle;
 
-	BufferOffsetRange hashBuffer;
 	if(in.m_hashVisibles)
 	{
-		hashBuffer = {counterBuffer.m_buffer, 0, sizeof(GpuVisibilityHash)};
+		out.m_visiblesHashBuffer = {counterBuffer.m_buffer, counterBuffer.m_offset, sizeof(GpuVisibilityHash)};
 	}
 
 	// Zero some stuff
@@ -187,7 +186,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
 				  technique = in.m_technique, mdiDrawCountsBuffer = out.m_mdiDrawCountsBuffer,
 				  instanceRateRenderables = out.m_instanceRateRenderablesBuffer, indirectArgs = out.m_drawIndexedIndirectArgsBuffer, aabbCount,
-				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer, hashBuffer](RenderPassWorkContext& rpass) {
+				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer, hashBuffer = out.m_visiblesHashBuffer](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		const Bool gatherAabbIndices = visibleAabbsBuffer.m_buffer != nullptr;

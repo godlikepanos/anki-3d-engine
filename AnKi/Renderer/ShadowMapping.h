@@ -13,6 +13,7 @@
 namespace anki {
 
 // Forward
+class GpuVisibilityOutput;
 extern NumericCVar<U32> g_shadowMappingPcfCVar;
 
 /// @addtogroup renderer
@@ -51,6 +52,9 @@ private:
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
 
+	ShaderProgramResourcePtr m_vetVisibilityProg;
+	ShaderProgramPtr m_vetVisibilityGrProg;
+
 	Array<RenderTargetDescription, kMaxShadowCascades> m_cascadeHzbRtDescrs;
 
 	class
@@ -74,6 +78,9 @@ private:
 	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const;
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
+
+	BufferOffsetRange vetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+										RenderGraphDescription& rgraph) const;
 };
 /// @}
 
