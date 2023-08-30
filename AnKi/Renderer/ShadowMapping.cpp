@@ -635,7 +635,7 @@ BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const Light
 
 		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());
 
-		const UVec4 lightIndex(lightc.getArrayIndex());
+		const UVec4 lightIndex(lightc.getGpuSceneLightAllocation().getIndex());
 		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
 
 		cmdb.bindStorageBuffer(0, 0, hashBuff);

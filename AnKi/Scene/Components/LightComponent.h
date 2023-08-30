@@ -151,6 +151,11 @@ public:
 
 	ANKI_INTERNAL void setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports);
 
+	const GpuSceneArrays::Light::Allocation& getGpuSceneLightAllocation() const
+	{
+		return m_gpuSceneLight;
+	}
+
 private:
 	Vec4 m_diffColor = Vec4(0.5f);
 	Transform m_worldTransform = Transform::getIdentity();
