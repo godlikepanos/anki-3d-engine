@@ -549,6 +549,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			work.m_viewMat = lightc->getSpotLightViewMatrix();
 			work.m_viewport = atlasViewport;
 			work.m_visOut = visOut;
+			work.m_clearTileIndirectArgs = clearTileIndirectArgs;
 		}
 		else
 		{
