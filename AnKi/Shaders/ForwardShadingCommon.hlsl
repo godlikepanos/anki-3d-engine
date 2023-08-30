@@ -92,7 +92,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const F32 shadow = 1.0;
 #	else
 		F32 shadow = 1.0;
-		[branch] if(light.m_shadowLayer != kMaxU32)
+		[branch] if(light.m_shadow != 0u)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}

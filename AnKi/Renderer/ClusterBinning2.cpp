@@ -322,12 +322,11 @@ void ClusterBinning2::writeClusterUniformsInternal()
 		DirectionalLight& out = unis.m_directionalLight;
 
 		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
-		out.m_shadowCascadeCount = g_shadowCascadeCountCVar.get();
+		out.m_shadowCascadeCount = dirLight->getShadowEnabled() ? g_shadowCascadeCountCVar.get() : 0;
 		out.m_direction = dirLight->getDirection();
 		out.m_active = 1;
 		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
 											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
-		out.m_shadowLayer = (dirLight->getShadowEnabled()) ? 1 : kMaxU32; // TODO RT
 
 		for(U cascade = 0; cascade < g_shadowCascadeCountCVar.get(); ++cascade)
 		{

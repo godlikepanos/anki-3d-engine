@@ -153,7 +153,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		factor *= phaseFunction(viewDir, light.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
-		if(light.m_shadowLayer != kMaxU32)
+		if(light.m_shadow)
 		{
 			factor *= computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}

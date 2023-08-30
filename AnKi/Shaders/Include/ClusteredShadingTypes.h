@@ -37,10 +37,10 @@ struct LightUnion
 	RVec3 m_diffuseColor;
 	U32 m_lightType; ///< 0 is point and 1 is spot
 
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows
 	U32 m_shadow;
 	F32 m_innerCos; ///< SPOT LIGHTS
 	F32 m_outerCos; ///< SPOT LIGHTS
+	F32 m_padding;
 
 	RVec3 m_direction; ///< SPOT LIGHTS: Light direction.
 	F32 m_shadowAtlasTileScale; ///< POINT LIGHTS: UV scale for all tiles.
@@ -60,12 +60,12 @@ struct PointLight
 	RVec3 m_diffuseColor;
 	U32 m_padding1;
 
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	F32 m_shadow;
 	F32 m_padding2;
 	U32 m_padding3;
+	U32 m_padding4;
 
-	RVec3 m_padding4;
+	RVec3 m_padding5;
 	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
 
 	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
@@ -82,17 +82,17 @@ struct SpotLight
 	RVec3 m_diffuseColor;
 	U32 m_padding1;
 
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	U32 m_shadow;
 	F32 m_innerCos;
 	F32 m_outerCos;
+	F32 m_padding2;
 
 	RVec3 m_direction;
-	F32 m_padding2;
+	F32 m_padding3;
 
 	Mat4 m_textureMatrix;
 
-	Vec4 m_padding3[2];
+	Vec4 m_padding4[2];
 };
 static_assert(sizeof(SpotLight) == sizeof(LightUnion));
 
@@ -107,12 +107,9 @@ struct DirectionalLight
 
 	Vec4 m_shadowCascadeDistances;
 
-	Vec3 m_padding0;
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
-
 	Mat4 m_textureMatrices[kMaxShadowCascades];
 };
-constexpr U32 kSizeof_DirectionalLight = 4u * sizeof(Vec4) + kMaxShadowCascades * sizeof(Mat4);
+constexpr U32 kSizeof_DirectionalLight = 3u * sizeof(Vec4) + kMaxShadowCascades * sizeof(Mat4);
 static_assert(sizeof(DirectionalLight) == kSizeof_DirectionalLight);
 static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances is a Vec4
 

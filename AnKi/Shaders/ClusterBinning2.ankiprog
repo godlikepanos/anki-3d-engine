@@ -118,13 +118,15 @@ groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
 
 		// Iterate all triangles
 		const U32 indices[6u * 3u] = {0u, 1u, 2u, 0u, 2u, 3u, 0u, 3u, 4u, 0u, 1u, 4u, 1u, 2u, 3u, 3u, 4u, 1u};
+		const Vec3 edgePoints[5u] = {obj.m_position, obj.m_edgePoints[0].xyz, obj.m_edgePoints[1].xyz, obj.m_edgePoints[2].xyz,
+									 obj.m_edgePoints[3].xyz};
 		U32 hits = 0u;
 		U32 idx = 0u;
 		do
 		{
-			const Vec3 v0 = obj.m_edgePoints[indices[idx + 0u]].xyz;
-			const Vec3 v1 = obj.m_edgePoints[indices[idx + 1u]].xyz;
-			const Vec3 v2 = obj.m_edgePoints[indices[idx + 2u]].xyz;
+			const Vec3 v0 = edgePoints[indices[idx + 0u]];
+			const Vec3 v1 = edgePoints[indices[idx + 1u]];
+			const Vec3 v2 = edgePoints[indices[idx + 2u]];
 
 			F32 t, u, v;
 			const Bool localCollides = testRayTriangle(rayOrigin, rayDir, v0, v1, v2, false, t, u, v);

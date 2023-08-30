@@ -165,7 +165,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		computeEdgesOfFrustum(m_spot.m_distance, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
 		for(U32 i = 0; i < 4; ++i)
 		{
-			m_worldTransform.transform(points[i]);
+			points[i] = m_worldTransform.transform(points[i]);
 			gpuLight.m_edgePoints[i] = points[i].xyz0();
 		}
 

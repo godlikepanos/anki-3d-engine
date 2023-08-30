@@ -56,7 +56,6 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 	output.m_diffuseColor = input.m_diffuseColor;
 	output.m_lightType = (isPoint) ? 0 : 1;
 
-	output.m_shadowLayer = kMaxU32; // TODO rt
 	output.m_shadow = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kShadow) ? 1 : 0;
 	output.m_innerCos = input.m_innerCos;
 	output.m_outerCos = input.m_outerCos;

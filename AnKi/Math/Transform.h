@@ -85,12 +85,12 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const TVec<T, 4>& getOrigin() const
+	[[nodiscard]] const TVec<T, 4>& getOrigin() const
 	{
 		return m_origin;
 	}
 
-	TVec<T, 4>& getOrigin()
+	[[nodiscard]] TVec<T, 4>& getOrigin()
 	{
 		return m_origin;
 	}
@@ -101,12 +101,12 @@ public:
 		checkW();
 	}
 
-	const TMat<T, 3, 4>& getRotation() const
+	[[nodiscard]] const TMat<T, 3, 4>& getRotation() const
 	{
 		return m_rotation;
 	}
 
-	TMat<T, 3, 4>& getRotation()
+	[[nodiscard]] TMat<T, 3, 4>& getRotation()
 	{
 		return m_rotation;
 	}
@@ -116,12 +116,12 @@ public:
 		m_rotation = r;
 	}
 
-	T getScale() const
+	[[nodiscard]] T getScale() const
 	{
 		return m_scale;
 	}
 
-	T& getScale()
+	[[nodiscard]] T& getScale()
 	{
 		return m_scale;
 	}
@@ -161,13 +161,13 @@ public:
 		(*this) = getIdentity();
 	}
 
-	static TTransform getIdentity()
+	[[nodiscard]] static TTransform getIdentity()
 	{
 		return TTransform(TVec<T, 4>(T(0)), TMat<T, 3, 4>::getIdentity(), T(1));
 	}
 
 	/// @copybrief combineTTransformations
-	TTransform combineTransformations(const TTransform& b) const
+	[[nodiscard]] TTransform combineTransformations(const TTransform& b) const
 	{
 		checkW();
 		const TTransform& a = *this;
@@ -182,7 +182,7 @@ public:
 	}
 
 	/// Get the inverse transformation. Its faster that inverting a Mat4
-	TTransform getInverse() const
+	[[nodiscard]] TTransform getInverse() const
 	{
 		checkW();
 		TTransform o;
@@ -201,14 +201,14 @@ public:
 	}
 
 	/// Transform a TVec3
-	TVec<T, 3> transform(const TVec<T, 3>& b) const
+	[[nodiscard]] TVec<T, 3> transform(const TVec<T, 3>& b) const
 	{
 		checkW();
 		return (m_rotation.getRotationPart() * (b * m_scale)) + m_origin.xyz();
 	}
 
 	/// Transform a TVec4. SIMD optimized
-	TVec<T, 4> transform(const TVec<T, 4>& b) const
+	[[nodiscard]] TVec<T, 4> transform(const TVec<T, 4>& b) const
 	{
 		checkW();
 		TVec<T, 4> out = TVec<T, 4>(m_rotation * (b * m_scale), T(0)) + m_origin;
@@ -227,7 +227,7 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	String toString() const
+	[[nodiscard]] String toString() const
 	{
 		String str;
 		String b = m_origin.toString();

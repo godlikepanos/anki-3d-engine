@@ -195,7 +195,7 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = g_spotLights[idx];
 
-		[branch] if(light.m_shadowLayer != kMaxU32)
+		[branch] if(light.m_shadow)
 		{
 #if PCF
 			const RF32 shadowFactor = computeShadowFactorSpotLightPcf(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
