@@ -97,7 +97,7 @@ struct GpuSceneLight
 	U32 m_visibleRenderablesHashIndex; ///< Points to a GpuSceneLightVisibleRenderablesHash
 
 	GpuSceneLightFlag m_flags;
-	U32 m_arrayIndex; ///< Array index of the LightComponent in the CPU scene.
+	U32 m_componentArrayIndex; ///< Array index of the LightComponent in the CPU scene.
 	U32 m_uuid; ///< The UUID of that light. If it's zero the GPU will not inform the CPU about it.
 	F32 m_innerCos; ///< Only for spot light.
 
@@ -120,7 +120,7 @@ struct GpuSceneReflectionProbe
 	U32 m_uuid;
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_arrayIndex; ///< Array in the CPU scene.
+	U32 m_componentArrayIndex; ///< Array in the CPU scene.
 };
 constexpr U32 kSizeof_GpuSceneReflectionProbe = 3u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe);
@@ -132,7 +132,7 @@ struct GpuSceneGlobalIlluminationProbe
 	U32 m_uuid;
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_arrayIndex; ///< Array in the CPU scene.
+	U32 m_componentArrayIndex; ///< Array in the CPU scene.
 
 	U32 m_volumeTexture; ///< Bindless index of the irradiance volume texture.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0

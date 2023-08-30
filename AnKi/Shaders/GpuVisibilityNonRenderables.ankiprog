@@ -117,7 +117,7 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 		InterlockedAdd(g_counterBuffer[kFeedbackCounterIdx], 1, idx);
 
 		g_cpuFeedbackBuffer[idx * 2 + 1] = g_objects[svDispatchThreadId].m_uuid;
-		g_cpuFeedbackBuffer[idx * 2 + 2] = g_objects[svDispatchThreadId].m_arrayIndex;
+		g_cpuFeedbackBuffer[idx * 2 + 2] = g_objects[svDispatchThreadId].m_componentArrayIndex;
 	}
 #endif
 

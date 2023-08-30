@@ -106,7 +106,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_flags = GpuSceneLightFlag::kPointLight;
 		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
-		gpuLight.m_arrayIndex = getArrayIndex();
+		gpuLight.m_componentArrayIndex = getArrayIndex();
 		gpuLight.m_uuid = m_uuid;
 		for(U32 f = 0; f < m_shadowAtlasUvViewportCount; ++f)
 		{
@@ -155,7 +155,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
 		gpuLight.m_flags = GpuSceneLightFlag::kSpotLight;
 		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
-		gpuLight.m_arrayIndex = getArrayIndex();
+		gpuLight.m_componentArrayIndex = getArrayIndex();
 		gpuLight.m_uuid = m_uuid;
 		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
