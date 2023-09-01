@@ -25,10 +25,13 @@
 
 namespace anki {
 
-//   3 +----+ 2
-//    /    /
+//   7 +----+ 6
+//    /|   /|
+// 3 +----+2|
+//   | *--| + 5
+//   |/4  |/
 // 0 +----+  1
-static constexpr U16 kBoxIndices[] = {0, 1, 3, 3, 1, 2};
+static constexpr U16 kBoxIndices[] = {1, 2, 5, 2, 6, 5, 0, 4, 3, 4, 7, 3, 3, 7, 2, 7, 6, 2, 0, 1, 4, 1, 5, 4, 0, 3, 1, 3, 2, 1, 4, 5, 7, 5, 6, 7};
 
 Error HzbGenerator::init()
 {
@@ -271,7 +274,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDep
 
 			cmdb.bindIndexBuffer(m_boxIndexBuffer.get(), 0, IndexType::kU16);
 
-			cmdb.drawIndexed(PrimitiveTopology::kTriangles, 3 * 2, maxDepthRtSize.x() * maxDepthRtSize.y());
+			cmdb.drawIndexed(PrimitiveTopology::kTriangles, sizeof(kBoxIndices) / sizeof(kBoxIndices[0]), maxDepthRtSize.x() * maxDepthRtSize.y());
 
 			// Restore state
 			cmdb.setDepthCompareOperation(CompareOperation::kLess);

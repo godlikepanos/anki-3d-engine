@@ -30,20 +30,25 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 
 	// Z
 	Vec3 ndc;
-	ndc.z = (svVertexId <= 1) ? 0.0 : maxDepth;
+	ndc.z = (svVertexId <= 3) ? 0.0 : maxDepth;
 
 	// X
 	ndc.x = F32(tileX);
-	if(svVertexId == 1 || svVertexId == 2)
+	if(svVertexId == 1 || svVertexId == 2 || svVertexId == 5 || svVertexId == 6)
 	{
 		// Right side, move the point
 		ndc.x += 1.0f;
 	}
-	ndc.x /= F32(maxDepthRtSize.x);
 
 	// Y
-	ndc.y = F32(tileY) / F32(maxDepthRtSize.y);
+	ndc.y = F32(tileY);
+	if(svVertexId == 3 || svVertexId == 2 || svVertexId == 7 || svVertexId == 6)
+	{
+		// Top side, move the point
+		ndc.y += 1.0f;
+	}
 
+	ndc.xy /= Vec2(maxDepthRtSize);
 	ndc.xy = uvToNdc(saturate(ndc.xy));
 
 	// Unproject and project
