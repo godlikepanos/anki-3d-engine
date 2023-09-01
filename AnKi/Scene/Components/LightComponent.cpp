@@ -285,8 +285,16 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			}
 
 			// View
-			Transform cascadeTransform = m_worldTransform;
-			cascadeTransform.setOrigin(eye.xyz0());
+			const Vec3 zAxis = m_worldTransform.getRotation().getZAxis();
+			const Vec3 xAxis = Vec3(0.0f, 1.0f, 0.0f).cross(zAxis);
+			const Vec3 yAxis = zAxis.cross(xAxis);
+			Mat3x4 rot;
+			rot.setXAxis(xAxis);
+			rot.setYAxis(yAxis);
+			rot.setZAxis(zAxis);
+			rot.setTranslationPart(Vec3(0.0f));
+
+			const Transform cascadeTransform(eye.xyz0(), rot, 1.0f);
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
 
 			// Projection
