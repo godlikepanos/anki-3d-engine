@@ -9,15 +9,11 @@
 
 #pragma anki start vert
 
-constexpr U32 kTileSize = 64;
-
 [[vk::binding(0)]] Texture2D<Vec4> g_maxDepthRt;
 
 struct Uniforms
 {
 	Mat4 m_reprojectionMat;
-	UVec2 m_mainCameraDepthBufferSize;
-	UVec2 m_padding;
 };
 
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
@@ -37,17 +33,16 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 	ndc.z = (svVertexId <= 1) ? 0.0 : maxDepth;
 
 	// X
-	ndc.x = F32(tileX * kTileSize);
+	ndc.x = F32(tileX);
 	if(svVertexId == 1 || svVertexId == 2)
 	{
 		// Right side, move the point
-		ndc.x += kTileSize;
+		ndc.x += 1.0f;
 	}
-	ndc.x /= F32(g_unis.m_mainCameraDepthBufferSize.x);
+	ndc.x /= F32(maxDepthRtSize.x);
 
 	// Y
-	ndc.y = F32(tileY * kTileSize);
-	ndc.y /= F32(g_unis.m_mainCameraDepthBufferSize.y);
+	ndc.y = F32(tileY) / F32(maxDepthRtSize.y);
 
 	ndc.xy = uvToNdc(saturate(ndc.xy));
 

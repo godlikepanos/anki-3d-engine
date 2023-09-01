@@ -248,8 +248,8 @@ void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDep
 		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(depthRts[i], TextureUsageBit::kFramebufferWrite, DepthStencilAspectBit::kDepth);
 
-		pass.setWork([this, maxDepthRt, invViewProjMat, lightViewProjMat = dstViewProjectionMats[i], viewport = dstHzbSizes[i] * 2, maxDepthRtSize,
-					  srcDepthRtSize](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, maxDepthRt, invViewProjMat, lightViewProjMat = dstViewProjectionMats[i], viewport = dstHzbSizes[i] * 2,
+					  maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.setDepthCompareOperation(CompareOperation::kGreater);
@@ -263,12 +263,9 @@ void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDep
 			struct Uniforms
 			{
 				Mat4 m_reprojectionMat;
-				UVec2 m_mainCameraDepthBufferSize;
-				UVec2 m_padding;
 			} unis;
 
 			unis.m_reprojectionMat = lightViewProjMat * invViewProjMat;
-			unis.m_mainCameraDepthBufferSize = srcDepthRtSize;
 
 			cmdb.setPushConstants(&unis, sizeof(unis));
 
