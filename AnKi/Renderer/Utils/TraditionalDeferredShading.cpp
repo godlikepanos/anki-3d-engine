@@ -113,7 +113,6 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			unis->m_dirLight.m_diffuseColor = dirLightc->getDiffuseColor().xyz();
 			unis->m_dirLight.m_active = 1;
 			unis->m_dirLight.m_direction = dirLightc->getDirection();
-			ANKI_ASSERT(info.m_effectiveShadowDistance > 0.0f);
 			unis->m_dirLight.m_effectiveShadowDistance = info.m_effectiveShadowDistance;
 			unis->m_dirLight.m_lightMatrix = info.m_dirLightMatrix;
 		}

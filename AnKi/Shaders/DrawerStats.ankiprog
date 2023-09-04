@@ -7,7 +7,6 @@
 // It's simple drawcall that draws a very small quad to the screen. Only one thread of the fragment shader will read the multi-draw counts and write
 // the number of drawcalls in a buffer.
 
-#pragma anki mutator CLEAR_COUNTER_BUFFER 0 1
 #pragma anki mutator COLOR_ATTACHMENT_COUNT 0 1 4
 
 #include <AnKi/Shaders/Common.hlsl>
@@ -37,10 +36,9 @@ VertOut main(U32 vertId : SV_VERTEXID)
 #pragma anki start frag
 
 [[vk::binding(0)]] RWStructuredBuffer<U32> g_visibleObjectCount;
-#if CLEAR_COUNTER_BUFFER == 0
 [[vk::binding(1)]] RWStructuredBuffer<U32> g_fragThreadCount;
 [[vk::binding(2)]] StructuredBuffer<U32> g_mdiDrawCounts;
-#endif
+[[vk::binding(3)]] RWStructuredBuffer<U32> g_passCount;
 
 #if COLOR_ATTACHMENT_COUNT > 0
 struct FragOut
@@ -61,9 +59,6 @@ void
 #endif
 main()
 {
-#if CLEAR_COUNTER_BUFFER == 1
-	g_visibleObjectCount[0] = 0;
-#else
 	U32 threadIdx;
 	InterlockedAdd(g_fragThreadCount[0], 1, threadIdx);
 
@@ -78,12 +73,20 @@ main()
 			visiblesCount += g_mdiDrawCounts[i];
 		}
 
-		if(visiblesCount > 0)
+		U32 passIdx;
+		InterlockedAdd(g_passCount[0], 1, passIdx);
+
+		if(passIdx == 0)
+		{
+			// 1st pass initializes the atomic
+			U32 origValue;
+			InterlockedExchange(g_visibleObjectCount[0], visiblesCount, origValue);
+		}
+		else if(visiblesCount > 0)
 		{
 			InterlockedAdd(g_visibleObjectCount[0], visiblesCount);
 		}
 	}
-#endif
 
 	discard;
 

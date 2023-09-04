@@ -33,14 +33,8 @@ Error RenderableDrawer::init()
 	U32 count = 0;
 	for(MutatorValue attachmentCount : kColorAttachmentCounts)
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DrawerStats.ankiprogbin",
-									 Array<SubMutation, 2>{{{"CLEAR_COUNTER_BUFFER", 0}, {"COLOR_ATTACHMENT_COUNT", attachmentCount}}},
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DrawerStats.ankiprogbin", Array<SubMutation, 1>{{{"COLOR_ATTACHMENT_COUNT", attachmentCount}}},
 									 m_stats.m_statsProg, m_stats.m_updateStatsGrProgs[count]));
-
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DrawerStats.ankiprogbin",
-									 Array<SubMutation, 2>{{{"CLEAR_COUNTER_BUFFER", 1}, {"COLOR_ATTACHMENT_COUNT", attachmentCount}}},
-									 m_stats.m_statsProg, m_stats.m_resetCounterGrProgs[count]));
-
 		++count;
 	}
 #endif
@@ -118,11 +112,27 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			// Get place to write new stats
 			getRenderer().getReadbackManager().allocateData(m_stats.m_readback, sizeof(U32), m_stats.m_statsBuffer, m_stats.m_statsBufferOffset);
 
-			// First drawcall clears the counter buffer for this frame
-			cmdb.bindShaderProgram(m_stats.m_resetCounterGrProgs[variant].get());
-			cmdb.bindStorageBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
-			cmdb.draw(PrimitiveTopology::kTriangles, 6);
+			// Allocate another atomic to count the passes. Do that because the calls to drawMdi might not be in the same order as they run on the GPU
+			U32* counter;
+			m_stats.m_passCountBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), counter);
+			*counter = 0;
 		}
+
+		U32* counter;
+		BufferOffsetRange threadCountBuff = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), counter);
+		*counter = 0;
+
+		cmdb.pushDebugMarker("Draw stats", Vec3(0.0f, 1.0f, 0.0f));
+
+		cmdb.bindShaderProgram(m_stats.m_updateStatsGrProgs[variant].get());
+		cmdb.bindStorageBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
+		cmdb.bindStorageBuffer(0, 1, threadCountBuff);
+		cmdb.bindStorageBuffer(0, 2, args.m_mdiDrawCountsBuffer);
+		cmdb.bindStorageBuffer(0, 3, m_stats.m_passCountBuffer);
+
+		cmdb.draw(PrimitiveTopology::kTriangles, 6);
+
+		cmdb.popDebugMarker();
 	}
 #endif
 
@@ -167,24 +177,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));
 
-	// Update the stats
-#if ANKI_STATS_ENABLED
-	{
-		LockGuard lock(m_stats.m_mtx);
-
-		U32* counter;
-		BufferOffsetRange threadCountBuff = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), counter);
-		*counter = 0;
-
-		cmdb.bindShaderProgram(m_stats.m_updateStatsGrProgs[variant].get());
-		cmdb.bindStorageBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
-		cmdb.bindStorageBuffer(0, 1, threadCountBuff);
-		cmdb.bindStorageBuffer(0, 2, args.m_mdiDrawCountsBuffer);
-		cmdb.draw(PrimitiveTopology::kTriangles, 6);
-	}
-
 	g_maxDrawcallsStatVar.increment(allUserCount);
-#endif
 }
 
 } // end namespace anki

@@ -328,7 +328,7 @@ void ClusterBinning2::writeClusterUniformsInternal()
 		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
 											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
 
-		for(U cascade = 0; cascade < g_shadowCascadeCountCVar.get(); ++cascade)
+		for(U cascade = 0; cascade < out.m_shadowCascadeCount; ++cascade)
 		{
 			ANKI_ASSERT(m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade] != Mat4::getZero());
 			out.m_textureMatrices[cascade] = m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade];
