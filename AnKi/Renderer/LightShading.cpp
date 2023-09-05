@@ -204,7 +204,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 
-		const Bool isSolidColor = (sky) ? sky->getSkyboxType() == SkyboxType::kSolidColor : false;
+		const Bool isSolidColor = (sky) ? sky->getSkyboxType() == SkyboxType::kSolidColor : true;
 
 		if(isSolidColor)
 		{

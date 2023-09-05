@@ -17,7 +17,7 @@ GpuSceneArray<TGpuSceneObject, kId>::GpuSceneArray(U32 maxArraySize)
 	m_gpuSceneAllocation = GpuSceneBuffer::getSingleton().allocate(sizeof(TGpuSceneObject) * maxArraySize, alignment);
 
 	m_inUseIndicesMask.resize(maxArraySize / sizeof(SubMask), false);
-	ANKI_ASSERT(m_inuUseIndicesCount == 0);
+	ANKI_ASSERT(m_inUseIndicesCount == 0);
 	m_maxInUseIndex = 0;
 }
 
@@ -26,7 +26,7 @@ GpuSceneArray<TGpuSceneObject, kId>::~GpuSceneArray()
 {
 	flushInternal(false);
 	validate();
-	ANKI_ASSERT(m_inuUseIndicesCount == 0 && "Forgot to free");
+	ANKI_ASSERT(m_inUseIndicesCount == 0 && "Forgot to free");
 }
 
 template<typename TGpuSceneObject, U32 kId>
@@ -66,7 +66,7 @@ GpuSceneArrayAllocation<TGpuSceneObject, kId> GpuSceneArray<TGpuSceneObject, kId
 	m_inUseIndicesMask[idx / 64].set(idx % 64);
 
 	m_maxInUseIndex = max(m_maxInUseIndex, idx);
-	++m_inuUseIndicesCount;
+	++m_inUseIndicesCount;
 
 	Allocation out;
 	out.m_index = idx;
@@ -90,8 +90,8 @@ void GpuSceneArray<TGpuSceneObject, kId>::free(Allocation& alloc)
 	ANKI_ASSERT(m_inUseIndicesMask[idx / 64].get(idx % 64) == true);
 	m_inUseIndicesMask[idx / 64].unset(idx % 64);
 
-	ANKI_ASSERT(m_inuUseIndicesCount > 0);
-	--m_inuUseIndicesCount;
+	ANKI_ASSERT(m_inUseIndicesCount > 0);
+	--m_inUseIndicesCount;
 
 	// Sort because allocations later on should preferably grab the lowest index possible
 	std::sort(m_freedAllocations.getBegin(), m_freedAllocations.getEnd());
@@ -116,7 +116,7 @@ void GpuSceneArray<TGpuSceneObject, kId>::flushInternal(Bool nullifyElements)
 		}
 
 		// Update the the last index
-		U32 maskGroup = m_maxInUseIndex / 64;
+		U32 maskGroup = m_maxInUseIndex / 64 + 1;
 		m_maxInUseIndex = 0;
 		while(maskGroup--)
 		{
@@ -148,7 +148,7 @@ void GpuSceneArray<TGpuSceneObject, kId>::validate() const
 		++maskGroupCount;
 	}
 
-	ANKI_ASSERT(count == m_inuUseIndicesCount);
+	ANKI_ASSERT(count == m_inUseIndicesCount);
 	ANKI_ASSERT(maxIdx == m_maxInUseIndex);
 #endif
 }

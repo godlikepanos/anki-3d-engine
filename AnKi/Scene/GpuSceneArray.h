@@ -112,7 +112,7 @@ public:
 	U32 getElementCount() const
 	{
 		LockGuard lock(m_mtx);
-		return (m_inuUseIndicesCount) ? m_maxInUseIndex + 1 : 0;
+		return (m_inUseIndicesCount) ? m_maxInUseIndex + 1 : 0;
 	}
 
 	constexpr static U32 getElementSize()
@@ -140,7 +140,7 @@ private:
 
 	SceneDynamicArray<SubMask> m_inUseIndicesMask;
 
-	U32 m_inuUseIndicesCount = 0; ///< Doesn't count null elements.
+	U32 m_inUseIndicesCount = 0; ///< Doesn't count null elements.
 	U32 m_maxInUseIndex = 0; ///< Counts null elements.
 
 	SceneDynamicArray<U32> m_freedAllocations;
