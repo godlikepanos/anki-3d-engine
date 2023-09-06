@@ -51,7 +51,6 @@ Error ShadowmapsResolve::initInternal()
 	variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
 	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
 	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 	variantInitInfo.addMutation("PCF", g_shadowMappingPcfCVar.get() != 0);
 	variantInitInfo.addMutation("DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled());
 	const ShaderProgramResourceVariant* variant;

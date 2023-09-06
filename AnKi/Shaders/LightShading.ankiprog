@@ -15,7 +15,6 @@
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 
 [[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
 [[vk::binding(1)]] StructuredBuffer<PointLight> g_pointLights;
@@ -56,8 +55,8 @@ RVec3 main(Vec4 svPosition : SV_POSITION, Vec2 uv : TEXCOORD) : SV_TARGET0
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(svPosition.xy, depth), kTileSize, kTileCount, kZSplitCount,
-										  g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(svPosition.xy, depth), kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
+										  g_clusteredShading.m_zSplitMagic.y);
 
 	// return clusterHeatmap(cluster, 1u << (U32)ClusteredObjectType::kPointLight);
 

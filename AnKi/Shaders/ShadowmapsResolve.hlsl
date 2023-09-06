@@ -11,7 +11,6 @@
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 
 #define DEBUG_CASCADES 0
 
@@ -87,7 +86,7 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Cluster
 	const Vec2 fragCoord = uv * g_clusteredShading.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(fragCoord, depth), kTileSize, kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
+	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(fragCoord, depth), kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
 										  g_clusteredShading.m_zSplitMagic.y);
 
 	// Layers

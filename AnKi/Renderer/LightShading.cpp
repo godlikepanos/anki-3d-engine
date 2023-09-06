@@ -60,7 +60,6 @@ Error LightShading::initLightShading()
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
 	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
 	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 	const ShaderProgramResourceVariant* variant;
 
 	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);

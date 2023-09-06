@@ -27,6 +27,7 @@ constexpr U32 kMaxVisibleGlobalIlluminationProbes = 8u;
 constexpr RF32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
 constexpr RF32 kSubsurfaceMin = 0.01f;
 constexpr U32 kMaxZsplitCount = 128u;
+constexpr U32 kClusteredShadingTileSize = 64; ///< The size of the tile in clustered shading.
 
 /// A union of all fields of spot and point lights. Since we don't have unions in HLSL we had to get creative.
 struct LightUnion
@@ -175,8 +176,8 @@ struct ClusteredShadingUniforms
 	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
 
 	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
-	U32 m_tileSize;
 	U32 m_lightVolumeLastZSplit;
+	U32 m_padding1;
 
 	UVec2 m_padding0;
 	F32 m_near;

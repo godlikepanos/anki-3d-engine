@@ -12,7 +12,6 @@
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 1u);
 
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
@@ -52,32 +51,24 @@ struct ClusterBinningUniforms
 
 #define THREADGROUP_SIZE 64
 
-// DX Sample locations
-constexpr U32 kSampleCount = 4u;
-#define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(kTileSize))
-constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(-2, -6), LOCATION(6, -2), LOCATION(-6, 2), LOCATION(2, 6)};
+// ALMOST like DX Sample locations (https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels)
+constexpr U32 kSampleCount = 8u;
+#define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(kClusteredShadingTileSize))
+constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 3),  LOCATION(5, 1), LOCATION(-6, -6),
+												  LOCATION(-6, 6), LOCATION(-7, -1), LOCATION(6, 7), LOCATION(7, -7)};
 #undef LOCATION
 
-constexpr U32 kTilesPerThreadgroup = THREADGROUP_SIZE / kSampleCount;
-
-// A mask per tile of this threadgroup for the clusterer object being processed by this workgroup
-groupshared ExtendedClusterObjectMask s_tileMasks[kTilesPerThreadgroup];
-
-// A mask for each Z split for a specific clusterer object
-groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
-
-[numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIdx : SV_GROUPINDEX)
+[numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	const U32 dispatchThreadIdX = min(svDispatchThreadId.x, g_unis.m_tileCount * kSampleCount);
 	const U32 tileIdx = dispatchThreadIdX / kSampleCount;
 	const U32 sampleIdx = dispatchThreadIdX % kSampleCount;
-	const U32 localTileIdx = svGroupIdx / kSampleCount;
 	const U32 visibleObjectIdx = svDispatchThreadId.y;
 
 	const UVec2 tileXY = UVec2(tileIdx % g_unis.m_tileCountX, tileIdx / g_unis.m_tileCountX);
 
 	// This is a pixel in one of the main framebuffers of the renderer, eg the gbuffer's framebuffers
-	const UVec2 pixel = tileXY * kTileSize + kSampleLocations[sampleIdx];
+	const UVec2 pixel = tileXY * kClusteredShadingTileSize + kSampleLocations[sampleIdx];
 	const Vec2 uv = Vec2(pixel) / g_unis.m_renderingSize;
 	const Vec2 ndc = uvToNdc(uv);
 
@@ -88,16 +79,6 @@ groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
 	// Create the ray that will test the clusterer objects
 	const Vec3 rayOrigin = g_unis.m_cameraOrigin;
 	const Vec3 rayDir = normalize(farWorldPos - rayOrigin);
-
-	// Zero shared memory
-	s_tileMasks[localTileIdx] = 0;
-	const U32 splitsPerInvocation = max(1u, kZSplitCount / THREADGROUP_SIZE);
-	for(U32 i = svGroupIdx * splitsPerInvocation; i < (svGroupIdx + 1u) * splitsPerInvocation && i < kZSplitCount; ++i)
-	{
-		s_zSplitMasks[i] = 0;
-	}
-
-	GroupMemoryBarrierWithGroupSync();
 
 	// Do collision
 	F32 t0, t1;
@@ -170,7 +151,26 @@ groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
 	{
 		// Set the tile
 		const ExtendedClusterObjectMask mask = ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(visibleObjectIdx);
-		InterlockedOr(s_tileMasks[localTileIdx], mask);
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+		if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
+		{
+			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask, mask);
+		}
+		else
+		{
+			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask, mask);
+		}
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+		InterlockedOr(g_clusters[tileIdx].m_decalsMask, mask);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+		InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, U32(mask));
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+		InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, U32(mask));
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+		InterlockedOr(g_clusters[tileIdx].m_giProbesMask, U32(mask));
+#else
+#	error See file
+#endif
 
 		// Compute and set the Z splits
 		const Vec3 hitpointA = rayDir * t0 + rayOrigin;
@@ -195,61 +195,27 @@ groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
 		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0, I32(kZSplitCount) - 1);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
-			InterlockedOr(s_zSplitMasks[i], mask);
-		}
-	}
-
-	// Sync
-	GroupMemoryBarrierWithGroupSync();
-
-	// First sample writes the tile mask
-	if(sampleIdx == 0u && s_tileMasks[localTileIdx] != 0)
-	{
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-		if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
-		{
-			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask, s_tileMasks[localTileIdx]);
-		}
-		else
-		{
-			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask, s_tileMasks[localTileIdx]);
-		}
+			if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
+			{
+				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_pointLightsMask, mask);
+			}
+			else
+			{
+				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_spotLightsMask, mask);
+			}
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-		InterlockedOr(g_clusters[tileIdx].m_decalsMask, s_tileMasks[localTileIdx]);
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_decalsMask, mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-		InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, U32(s_tileMasks[localTileIdx]));
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_fogDensityVolumesMask, U32(mask));
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-		InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, U32(s_tileMasks[localTileIdx]));
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_reflectionProbesMask, U32(mask));
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-		InterlockedOr(g_clusters[tileIdx].m_giProbesMask, U32(s_tileMasks[localTileIdx]));
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_giProbesMask, U32(mask));
 #else
 #	error See file
 #endif
-	}
-
-	// All invocations write at least one Z split
-	for(U32 i = svGroupIdx * splitsPerInvocation; i < (svGroupIdx + 1u) * splitsPerInvocation && i < kZSplitCount; ++i)
-	{
-#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-		if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
-		{
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_pointLightsMask, s_zSplitMasks[i]);
 		}
-		else
-		{
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_spotLightsMask, s_zSplitMasks[i]);
-		}
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-		InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_decalsMask, s_zSplitMasks[i]);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-		InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_fogDensityVolumesMask, U32(s_zSplitMasks[i]));
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-		InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_reflectionProbesMask, U32(s_zSplitMasks[i]));
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-		InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_giProbesMask, U32(s_zSplitMasks[i]));
-#else
-#	error See file
-#endif
 	}
 }
 

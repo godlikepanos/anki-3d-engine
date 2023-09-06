@@ -51,7 +51,6 @@ static NumericCVar<F32> g_internalRenderScalingCVar(CVarSubsystem::kRenderer, "I
 													"A factor over the requested swapchain resolution. Applies to all passes up to TAA");
 NumericCVar<F32> g_renderScalingCVar(CVarSubsystem::kRenderer, "RenderScaling", 1.0f, 0.5f, 8.0f,
 									 "A factor over the requested swapchain resolution. Applies to post-processing and UI");
-static NumericCVar<U32> g_tileSizeCVar(CVarSubsystem::kRenderer, "TileSize", 64, 8, 256, "Tile lighting tile size");
 static NumericCVar<U32> g_zSplitCountCVar(CVarSubsystem::kRenderer, "ZSplitCount", 64, 8, kMaxZsplitCount, "Clusterer number of Z splits");
 static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 8, 1, 16,
 											   "Texture anisotropy for the main passes");
@@ -148,9 +147,8 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x(),
 				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
 
-	m_tileSize = g_tileSizeCVar.get();
-	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
-	m_tileCounts.y() = (m_internalResolution.y() + m_tileSize - 1) / m_tileSize;
+	m_tileCounts.x() = (m_internalResolution.x() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+	m_tileCounts.y() = (m_internalResolution.y() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
 	m_zSplitCount = g_zSplitCountCVar.get();
 
 	// A few sanity checks

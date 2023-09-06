@@ -159,11 +159,6 @@ public:
 		return m_samplers;
 	}
 
-	U32 getTileSize() const
-	{
-		return m_tileSize;
-	}
-
 	const UVec2& getTileCounts() const
 	{
 		return m_tileCounts;
@@ -215,7 +210,6 @@ private:
 #undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
 
-	U32 m_tileSize = 0;
 	UVec2 m_tileCounts = UVec2(0u);
 	U32 m_zSplitCount = 0;
 

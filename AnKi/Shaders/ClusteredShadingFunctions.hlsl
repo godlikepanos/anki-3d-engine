@@ -56,9 +56,9 @@ U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
 }
 
 /// Return the tile index.
-U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileSize, U32 tileCountX)
+U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileCountX)
 {
-	const UVec2 tileXY = UVec2(fragCoord / F32(tileSize));
+	const UVec2 tileXY = UVec2(fragCoord / F32(kClusteredShadingTileSize));
 	return tileXY.y * tileCountX + tileXY.x;
 }
 
@@ -82,15 +82,14 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 }
 
 /// Get the final cluster after ORing and ANDing the masks.
-Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, Vec3 fragCoord, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
 {
-	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileSize, tileCounts.x)];
+	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileCounts.x)];
 	const Cluster zCluster = clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
 	return mergeClusters(tileCluster, zCluster);
 }
 
 Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClusteredShadingUniforms unis, Vec3 fragCoord)
 {
-	return getClusterFragCoord(clusters, fragCoord, unis.m_tileSize, unis.m_tileCounts, unis.m_zSplitCount, unis.m_zSplitMagic.x,
-							   unis.m_zSplitMagic.y);
+	return getClusterFragCoord(clusters, fragCoord, unis.m_tileCounts, unis.m_zSplitCount, unis.m_zSplitMagic.x, unis.m_zSplitMagic.y);
 }

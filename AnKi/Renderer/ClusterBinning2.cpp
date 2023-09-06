@@ -35,7 +35,6 @@ Error ClusterBinning2::init()
 	{
 		ShaderProgramResourceVariantInitInfo inf(m_binningProg);
 		inf.addMutation("OBJECT_TYPE", MutatorValue(type));
-		inf.addConstant("kTileSize", getRenderer().getTileSize());
 		inf.addConstant("kZSplitCount", getRenderer().getZSplitCount());
 		const ShaderProgramResourceVariant* variant;
 		m_binningProg->getOrCreateVariant(inf, variant);
@@ -307,7 +306,6 @@ void ClusterBinning2::writeClusterUniformsInternal()
 	unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
 	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
 	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
-	unis.m_tileSize = getRenderer().getTileSize();
 	unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
 
 	unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
