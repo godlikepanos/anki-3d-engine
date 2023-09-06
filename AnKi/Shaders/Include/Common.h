@@ -58,6 +58,8 @@ ANKI_END_NAMESPACE
 
 #	define constexpr static const
 
+#	define ANKI_ASSERT(x)
+
 template<typename T>
 void maybeUnused(T a)
 {

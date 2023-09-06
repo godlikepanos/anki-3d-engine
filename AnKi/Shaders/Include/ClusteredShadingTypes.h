@@ -7,18 +7,11 @@
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#define ANKI_CLUSTERED_SHADING_USE_64BIT ANKI_SUPPORTS_64BIT_TYPES
-
 ANKI_BEGIN_NAMESPACE
 
 // Limits
-#if ANKI_CLUSTERED_SHADING_USE_64BIT
-constexpr U32 kMaxVisibleLights = 64u;
-constexpr U32 kMaxVisibleDecals = 64u;
-#else
-constexpr U32 kMaxVisibleLights = 32u;
-constexpr U32 kMaxVisibleDecals = 32u;
-#endif
+constexpr U32 kMaxVisibleLights = 32u * 4u;
+constexpr U32 kMaxVisibleDecals = 32u * 4u;
 constexpr U32 kMaxVisibleFogDensityVolumes = 16u;
 constexpr U32 kMaxVisibleReflectionProbes = 16u;
 constexpr U32 kMaxVisibleGlobalIlluminationProbes = 8u;
@@ -189,49 +182,16 @@ struct ClusteredShadingUniforms
 	CommonMatrices m_previousMatrices;
 };
 
-// Define the type of some cluster object masks
-#if ANKI_GLSL
-#	if ANKI_CLUSTERED_SHADING_USE_64BIT
-#		define ExtendedClusterObjectMask U64
-#	else
-#		define ExtendedClusterObjectMask U32
-#	endif
-#else
-#	if ANKI_CLUSTERED_SHADING_USE_64BIT
-typedef U64 ExtendedClusterObjectMask;
-#	else
-typedef U32 ExtendedClusterObjectMask;
-#	endif
-#endif
-
 /// Information that a tile or a Z-split will contain.
 struct Cluster
 {
-	ExtendedClusterObjectMask m_pointLightsMask;
-	ExtendedClusterObjectMask m_spotLightsMask;
-	ExtendedClusterObjectMask m_decalsMask;
+	U32 m_pointLightsMask[kMaxVisibleLights / 32];
+	U32 m_spotLightsMask[kMaxVisibleLights / 32];
+	U32 m_decalsMask[kMaxVisibleDecals / 32];
 	U32 m_fogDensityVolumesMask;
 	U32 m_reflectionProbesMask;
 	U32 m_giProbesMask;
-
-	// Pad to 16byte
-#if ANKI_CLUSTERED_SHADING_USE_64BIT
-	U32 m_padding0;
-	U32 m_padding1;
-	U32 m_padding2;
-#else
-	U32 m_padding0;
-	U32 m_padding1;
-#endif
 };
-
-#if ANKI_CLUSTERED_SHADING_USE_64BIT
-constexpr U32 kSizeof_Cluster = 3u * sizeof(Vec4);
-static_assert(sizeof(Cluster) == kSizeof_Cluster);
-#else
-constexpr U32 kSizeof_Cluster = 2u * sizeof(Vec4);
-static_assert(sizeof(Cluster) == kSizeof_Cluster);
-#endif
 
 constexpr ANKI_ARRAY(U32, GpuSceneNonRenderableObjectType::kCount, kClusteredObjectSizes2) = {
 	sizeof(LightUnion), sizeof(Decal), sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};

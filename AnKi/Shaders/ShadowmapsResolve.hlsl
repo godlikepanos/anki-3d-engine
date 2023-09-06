@@ -167,10 +167,9 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif // DIRECTIONAL_LIGHT_SHADOW_RESOLVED
 
 	// Point lights
-	[loop] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	U32 idx = 0;
+	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = g_pointLights[idx];
 
 		[branch] if(light.m_shadowAtlasTileScale >= 0.0)
@@ -188,10 +187,8 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	}
 
 	// Spot lights
-	[loop] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = g_spotLights[idx];
 
 		[branch] if(light.m_shadow)

@@ -115,10 +115,9 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Point lights
-	[loop] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	U32 idx = 0;
+	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = g_pointLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
@@ -137,10 +136,8 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Spot lights
-	[loop] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = g_spotLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
@@ -265,10 +262,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	const U32 zSplitIdx = U32(uvw.z * F32(g_clusteredShading.m_zSplitCount));
 	const Cluster split = g_clusters[g_clusteredShading.m_tileCounts.x * g_clusteredShading.m_tileCounts.y + zSplitIdx];
 
-	cluster.m_pointLightsMask |= split.m_pointLightsMask;
-	cluster.m_spotLightsMask |= split.m_spotLightsMask;
-	cluster.m_giProbesMask |= split.m_giProbesMask;
-	cluster.m_fogDensityVolumesMask |= split.m_fogDensityVolumesMask;
+	cluster = mergeClusters(cluster, split);
 
 	// Get lighting
 	Vec4 lightAndFog = accumulateLightsAndFog(cluster, worldPos, negativeZViewSpace);

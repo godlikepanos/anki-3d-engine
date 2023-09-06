@@ -18,7 +18,7 @@
 #define SET 2u
 
 [[vk::binding(0, SET)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
-[[vk::binding(1, SET)]] StructuredBuffer<Cluster> g_clusters;
+[[vk::binding(1, SET)]] StructuredBuffer<Cluster> g_clusters; // TODO: rm
 
 [[vk::binding(2, SET)]] SamplerState g_trilinearRepeatSampler;
 

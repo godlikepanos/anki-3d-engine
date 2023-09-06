@@ -8,7 +8,7 @@
 #include <AnKi/Shaders/LightFunctions.hlsl>
 
 // Debugging function
-Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
+Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask, U32 maxObjectOverride = 0)
 {
 	U32 maxObjects = 0u;
 	I32 count = 0;
@@ -16,13 +16,19 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kLight)) != 0u)
 	{
 		maxObjects += kMaxVisibleLights;
-		count += I32(countbits(cluster.m_pointLightsMask | cluster.m_spotLightsMask));
+		for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
+		{
+			count += I32(countbits(cluster.m_pointLightsMask[i] | cluster.m_spotLightsMask[i]));
+		}
 	}
 
 	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kDecal)) != 0u)
 	{
 		maxObjects += kMaxVisibleDecals;
-		count += I32(countbits(cluster.m_decalsMask));
+		for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
+		{
+			count += I32(countbits(cluster.m_decalsMask[i]));
+		}
 	}
 
 	if((objectTypeMask & (1u << (U32)GpuSceneNonRenderableObjectType::kFogDensityVolume)) != 0u)
@@ -43,7 +49,7 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 		count += countbits(cluster.m_giProbesMask);
 	}
 
-	const F32 factor = min(1.0, F32(count) / F32(maxObjects));
+	const F32 factor = min(1.0, F32(count) / F32((maxObjectOverride > 0) ? maxObjectOverride : maxObjects));
 	return heatmap(factor);
 }
 
@@ -65,13 +71,22 @@ U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileCountX)
 /// Merge the tiles with z splits into a single cluster.
 Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 {
-// #define ANKI_OR_MASKS(x) subgroupOr(x)
+// #define ANKI_OR_MASKS(x) WaveActiveBitOr(x)
 #define ANKI_OR_MASKS(x) (x)
 
 	Cluster outCluster;
-	outCluster.m_pointLightsMask = ANKI_OR_MASKS(tileCluster.m_pointLightsMask & zCluster.m_pointLightsMask);
-	outCluster.m_spotLightsMask = ANKI_OR_MASKS(tileCluster.m_spotLightsMask & zCluster.m_spotLightsMask);
-	outCluster.m_decalsMask = ANKI_OR_MASKS(tileCluster.m_decalsMask & zCluster.m_decalsMask);
+
+	[unroll] for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
+	{
+		outCluster.m_pointLightsMask[i] = ANKI_OR_MASKS(tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
+		outCluster.m_spotLightsMask[i] = ANKI_OR_MASKS(tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
+	}
+
+	[unroll] for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
+	{
+		outCluster.m_decalsMask[i] = ANKI_OR_MASKS(tileCluster.m_decalsMask[i] & zCluster.m_decalsMask[i]);
+	}
+
 	outCluster.m_fogDensityVolumesMask = ANKI_OR_MASKS(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
 	outCluster.m_reflectionProbesMask = ANKI_OR_MASKS(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
 	outCluster.m_giProbesMask = ANKI_OR_MASKS(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
@@ -92,4 +107,49 @@ Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, Vec3 fragCoord, 
 Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClusteredShadingUniforms unis, Vec3 fragCoord)
 {
 	return getClusterFragCoord(clusters, fragCoord, unis.m_tileCounts, unis.m_zSplitCount, unis.m_zSplitMagic.x, unis.m_zSplitMagic.y);
+}
+
+U32 iteratePointLights(inout Cluster cluster)
+{
+	for(U32 block = 0; block < kMaxVisibleLights / 32; ++block)
+	{
+		if(cluster.m_pointLightsMask[block] != 0)
+		{
+			const U32 idx = (U32)firstbitlow2(cluster.m_pointLightsMask[block]);
+			cluster.m_pointLightsMask[block] ^= 1u << idx;
+			return idx + block * 32;
+		}
+	}
+
+	return kMaxU32;
+}
+
+U32 iterateSpotLights(inout Cluster cluster)
+{
+	for(U32 block = 0; block < kMaxVisibleLights / 32; ++block)
+	{
+		if(cluster.m_spotLightsMask[block] != 0)
+		{
+			const U32 idx = (U32)firstbitlow2(cluster.m_spotLightsMask[block]);
+			cluster.m_spotLightsMask[block] ^= 1u << idx;
+			return idx + block * 32;
+		}
+	}
+
+	return kMaxU32;
+}
+
+U32 iterateDecals(inout Cluster cluster)
+{
+	for(U32 block = 0; block < kMaxVisibleDecals / 32; ++block)
+	{
+		if(cluster.m_decalsMask[block] != 0)
+		{
+			const U32 idx = (U32)firstbitlow2(cluster.m_decalsMask[block]);
+			cluster.m_decalsMask[block] ^= 1u << idx;
+			return idx + block * 32;
+		}
+	}
+
+	return kMaxU32;
 }

@@ -64,6 +64,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	const U32 tileIdx = dispatchThreadIdX / kSampleCount;
 	const U32 sampleIdx = dispatchThreadIdX % kSampleCount;
 	const U32 visibleObjectIdx = svDispatchThreadId.y;
+	ANKI_ASSERT(visibleObjectIdx < kMaxVisibleClusteredObjects2[OBJECT_TYPE]);
 
 	const UVec2 tileXY = UVec2(tileIdx % g_unis.m_tileCountX, tileIdx / g_unis.m_tileCountX);
 
@@ -149,25 +150,28 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	// Update the masks
 	if(collides)
 	{
+		const U32 mask = 1u << (visibleObjectIdx % 32);
+		const U32 maskArrayIdx = visibleObjectIdx / 32;
+		ANKI_MAYBE_UNUSED(maskArrayIdx);
+
 		// Set the tile
-		const ExtendedClusterObjectMask mask = ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(visibleObjectIdx);
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 		if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 		{
-			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask, mask);
+			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask[maskArrayIdx], mask);
 		}
 		else
 		{
-			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask, mask);
+			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask[maskArrayIdx], mask);
 		}
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-		InterlockedOr(g_clusters[tileIdx].m_decalsMask, mask);
+		InterlockedOr(g_clusters[tileIdx].m_decalsMask[maskArrayIdx], mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-		InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, U32(mask));
+		InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-		InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, U32(mask));
+		InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-		InterlockedOr(g_clusters[tileIdx].m_giProbesMask, U32(mask));
+		InterlockedOr(g_clusters[tileIdx].m_giProbesMask, mask);
 #else
 #	error See file
 #endif
@@ -198,20 +202,20 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 			if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 			{
-				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_pointLightsMask, mask);
+				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_pointLightsMask[maskArrayIdx], mask);
 			}
 			else
 			{
-				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_spotLightsMask, mask);
+				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_spotLightsMask[maskArrayIdx], mask);
 			}
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_decalsMask, mask);
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_decalsMask[maskArrayIdx], mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_fogDensityVolumesMask, U32(mask));
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_fogDensityVolumesMask, mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_reflectionProbesMask, U32(mask));
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_reflectionProbesMask, mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_giProbesMask, U32(mask));
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_giProbesMask, mask);
 #else
 #	error See file
 #endif

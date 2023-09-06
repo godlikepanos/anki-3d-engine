@@ -50,20 +50,24 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	const Cluster cluster = getClusterFragCoord(g_clusters, Vec3(svPosition.xy, depth), kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
-												g_clusteredShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(svPosition.xy, depth), kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
+										  g_clusteredShading.m_zSplitMagic.y);
 
 	// Make the decalsMask uniform across the wave because we are accessing bindless textures later on
-	ExtendedClusterObjectMask decalsMask = WaveActiveBitAnd(cluster.m_decalsMask);
-	if(decalsMask == 0)
+	U32 decalsMask = cluster.m_decalsMask[0];
+	for(U32 i = 1; i < kMaxVisibleDecals / 32; ++i)
+	{
+		decalsMask |= cluster.m_decalsMask[i];
+	}
+
+	if(WaveActiveAllTrue(decalsMask == 0))
 	{
 		discard;
 	}
 
-	[loop] while(decalsMask != 0)
+	U32 idx;
+	[loop] while((idx = iterateDecals(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(decalsMask);
-		decalsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const Decal decal = g_decals[idx];
 
 		// Project pos to decal space
