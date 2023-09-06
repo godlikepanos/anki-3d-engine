@@ -13,12 +13,12 @@ namespace anki {
 /// @{
 
 /// Bins clusterer objects to the clusterer.
-class ClusterBinning2 : public RendererObject
+class ClusterBinning : public RendererObject
 {
 public:
-	ClusterBinning2();
+	ClusterBinning();
 
-	~ClusterBinning2();
+	~ClusterBinning();
 
 	Error init();
 

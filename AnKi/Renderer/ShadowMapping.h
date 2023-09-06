@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Renderer/Utils/TileAllocator2.h>
+#include <AnKi/Renderer/Utils/TileAllocator.h>
 
 namespace anki {
 
@@ -36,7 +36,7 @@ public:
 private:
 	class ViewportWorkItem;
 
-	TileAllocator2 m_tileAlloc;
+	TileAllocator m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
 	static constexpr U32 kPointLightMaxTileAllocHierarchy = 1;
 	static constexpr U32 kSpotLightMaxTileAllocHierarchy = 1;

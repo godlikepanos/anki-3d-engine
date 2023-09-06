@@ -11,7 +11,7 @@
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -160,9 +160,9 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getHistoryLengthRt(), readUsage);
 
-		ppass->newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kReflectionProbe),
+		ppass->newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kReflectionProbe),
 								   readBufferUsage);
-		ppass->newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), readBufferUsage);
+		ppass->newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), readBufferUsage);
 
 		ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(ctx, rgraphCtx);
@@ -211,13 +211,13 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_trilinearRepeat.get());
 	cmdb.bindTexture(0, 10, &m_noiseImage->getTextureView());
 
-	BufferOffsetRange buff = getRenderer().getClusterBinning2().getClusteredShadingUniforms();
+	BufferOffsetRange buff = getRenderer().getClusterBinning().getClusteredShadingUniforms();
 	cmdb.bindUniformBuffer(0, 11, buff.m_buffer, buff.m_offset, buff.m_range);
 
-	buff = getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe);
+	buff = getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe);
 	cmdb.bindStorageBuffer(0, 12, buff.m_buffer, buff.m_offset, buff.m_range);
 
-	buff = getRenderer().getClusterBinning2().getClustersBuffer();
+	buff = getRenderer().getClusterBinning().getClustersBuffer();
 	cmdb.bindStorageBuffer(0, 13, buff.m_buffer, buff.m_offset, buff.m_range);
 
 	cmdb.bindAllBindless(1);

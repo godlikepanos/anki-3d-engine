@@ -10,7 +10,7 @@
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -265,21 +265,21 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		prpass->newTextureDependency(m_runCtx.m_mainRtHandles[kRead], readUsage);
 
 		prpass->newBufferDependency(
-			getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe),
+			getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe),
 			readBufferUsage);
-		prpass->newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), readBufferUsage);
+		prpass->newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), readBufferUsage);
 
 		prpass->setWork([this, &ctx, enableVrs](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.bindShaderProgram(m_main.m_grProg.get());
 
-			BufferOffsetRange buff = getRenderer().getClusterBinning2().getClusteredShadingUniforms();
+			BufferOffsetRange buff = getRenderer().getClusterBinning().getClusteredShadingUniforms();
 			cmdb.bindUniformBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range);
 
-			buff = getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe);
+			buff = getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe);
 			cmdb.bindStorageBuffer(0, 1, buff.m_buffer, buff.m_offset, buff.m_range);
 
-			buff = getRenderer().getClusterBinning2().getClustersBuffer();
+			buff = getRenderer().getClusterBinning().getClustersBuffer();
 			cmdb.bindStorageBuffer(0, 2, buff.m_buffer, buff.m_offset, buff.m_range);
 
 			cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());

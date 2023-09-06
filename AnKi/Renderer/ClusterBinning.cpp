@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/ProbeReflections.h>
@@ -17,19 +17,19 @@
 
 namespace anki {
 
-ClusterBinning2::ClusterBinning2()
+ClusterBinning::ClusterBinning()
 {
 }
 
-ClusterBinning2::~ClusterBinning2()
+ClusterBinning::~ClusterBinning()
 {
 }
 
-Error ClusterBinning2::init()
+Error ClusterBinning::init()
 {
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning2Setup.ankiprogbin", m_jobSetupProg, m_jobSetupGrProg));
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning2.ankiprogbin", m_binningProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_binningProg));
 
 	for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 	{
@@ -47,7 +47,7 @@ Error ClusterBinning2::init()
 	return Error::kNone;
 }
 
-void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
+void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ClusterBinning);
 
@@ -62,7 +62,7 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 		CoreThreadHive::getSingleton().submitTask(
 			[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
 			   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-				static_cast<ClusterBinning2*>(userData)->writeClusterUniformsInternal();
+				static_cast<ClusterBinning*>(userData)->writeClusterUniformsInternal();
 			},
 			this);
 	}
@@ -214,7 +214,7 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
 			m_runCtx.m_packedObjectsBuffers[type] =
-				GpuVisibleTransientMemoryPool::getSingleton().allocate(kClusteredObjectSizes2[type] * kMaxVisibleClusteredObjects2[type]);
+				GpuVisibleTransientMemoryPool::getSingleton().allocate(kClusteredObjectSizes[type] * kMaxVisibleClusteredObjects[type]);
 			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_packedObjectsBuffers[type]);
 		}
 
@@ -282,7 +282,7 @@ void ClusterBinning2::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void ClusterBinning2::writeClusterUniformsInternal()
+void ClusterBinning::writeClusterUniformsInternal()
 {
 	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
 

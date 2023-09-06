@@ -9,7 +9,7 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/ForwardShading.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Scene.h>
 #include <AnKi/Util/Logger.h>
@@ -143,7 +143,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	unis.m_camTrf = ctx.m_matrices.m_cameraTransform;
 	cmdb.setPushConstants(&unis, sizeof(unis));
 
-	cmdb.bindStorageBuffer(0, 2, getRenderer().getClusterBinning2().getPackedObjectsBuffer(type));
+	cmdb.bindStorageBuffer(0, 2, getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
 	cmdb.bindStorageBuffer(0, 3, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
 
 	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearRepeat.get());

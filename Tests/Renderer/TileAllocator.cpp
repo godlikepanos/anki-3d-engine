@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/Renderer/Utils/TileAllocator2.h>
+#include <AnKi/Renderer/Utils/TileAllocator.h>
 
 ANKI_TEST(Renderer, TileAllocator)
 {
@@ -14,9 +14,9 @@ ANKI_TEST(Renderer, TileAllocator)
 		StackMemoryPool pool;
 		pool.init(allocAligned, nullptr, 1024);
 
-		TileAllocator2::ArrayOfLightUuids kickedOutUuids(&pool);
+		TileAllocator::ArrayOfLightUuids kickedOutUuids(&pool);
 
-		TileAllocator2 talloc;
+		TileAllocator talloc;
 		talloc.init(8, 8, 3, true);
 
 		Array<U32, 4> viewport;
@@ -82,7 +82,7 @@ ANKI_TEST(Renderer, TileAllocator)
 		++crntTimestamp;
 
 		// Allocate 16 small
-		TileAllocator2::ArrayOfLightUuids allKicked(&pool);
+		TileAllocator::ArrayOfLightUuids allKicked(&pool);
 		for(U i = 0; i < 16; ++i)
 		{
 			res = talloc.allocate(crntTimestamp, lightUuid + 10 + i, kSmallTile, viewport, kickedOutUuids);

@@ -7,7 +7,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -83,13 +83,13 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kImageComputeWrite);
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-	pass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
+	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 							 BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(
-		getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe),
+		getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe),
 		BufferUsageBit::kStorageComputeRead);
-	pass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kFogDensityVolume),
+	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kFogDensityVolume),
 							 BufferUsageBit::kStorageComputeRead);
 
 	if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
@@ -114,13 +114,13 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
-		cmdb.bindUniformBuffer(0, 6, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
-		cmdb.bindStorageBuffer(0, 7, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindUniformBuffer(0, 6, getRenderer().getClusterBinning().getClusteredShadingUniforms());
+		cmdb.bindStorageBuffer(0, 7, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getShadowMapping().getShadowmapRt());
 		cmdb.bindStorageBuffer(0, 9,
-							   getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-		cmdb.bindStorageBuffer(0, 10, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
-		cmdb.bindStorageBuffer(0, 11, getRenderer().getClusterBinning2().getClustersBuffer());
+							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		cmdb.bindStorageBuffer(0, 10, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
+		cmdb.bindStorageBuffer(0, 11, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindAllBindless(1);
 

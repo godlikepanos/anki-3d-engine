@@ -64,7 +64,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	const U32 tileIdx = dispatchThreadIdX / kSampleCount;
 	const U32 sampleIdx = dispatchThreadIdX % kSampleCount;
 	const U32 visibleObjectIdx = svDispatchThreadId.y;
-	ANKI_ASSERT(visibleObjectIdx < kMaxVisibleClusteredObjects2[OBJECT_TYPE]);
+	ANKI_ASSERT(visibleObjectIdx < kMaxVisibleClusteredObjects[OBJECT_TYPE]);
 
 	const UVec2 tileXY = UVec2(tileIdx % g_unis.m_tileCountX, tileIdx / g_unis.m_tileCountX);
 

@@ -22,18 +22,18 @@ enum class TileAllocatorResult2 : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TileAllocatorResult2)
 
 /// Allocates tiles out of a tilemap suitable for shadow mapping.
-class TileAllocator2
+class TileAllocator
 {
 public:
 	using ArrayOfLightUuids = DynamicArray<U64, MemoryPoolPtrWrapper<StackMemoryPool>>;
 
-	TileAllocator2();
+	TileAllocator();
 
-	TileAllocator2(const TileAllocator2&) = delete; // Non-copyable
+	TileAllocator(const TileAllocator&) = delete; // Non-copyable
 
-	~TileAllocator2();
+	~TileAllocator();
 
-	TileAllocator2& operator=(const TileAllocator2&) = delete; // Non-copyable
+	TileAllocator& operator=(const TileAllocator&) = delete; // Non-copyable
 
 	/// Initialize the allocator.
 	/// @param tileCountX The size of the smallest tile (0 hierarchy level).

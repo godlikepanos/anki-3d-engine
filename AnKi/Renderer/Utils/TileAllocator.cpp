@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/Utils/TileAllocator2.h>
+#include <AnKi/Renderer/Utils/TileAllocator.h>
 
 namespace anki {
 
-class TileAllocator2::Tile
+class TileAllocator::Tile
 {
 public:
 	Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used.
@@ -18,15 +18,15 @@ public:
 	U8 m_lightHierarchy = 0;
 };
 
-TileAllocator2::TileAllocator2()
+TileAllocator::TileAllocator()
 {
 }
 
-TileAllocator2::~TileAllocator2()
+TileAllocator::~TileAllocator()
 {
 }
 
-void TileAllocator2::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bool enableCaching)
+void TileAllocator::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bool enableCaching)
 {
 	// Preconditions
 	ANKI_ASSERT(tileCountX > 0);
@@ -101,7 +101,7 @@ void TileAllocator2::init(U32 tileCountX, U32 tileCountY, U32 hierarchyCount, Bo
 	}
 }
 
-void TileAllocator2::updateSubTiles(const Tile& updateFrom, U64 crntLightUuid, ArrayOfLightUuids& kickedOutLights)
+void TileAllocator::updateSubTiles(const Tile& updateFrom, U64 crntLightUuid, ArrayOfLightUuids& kickedOutLights)
 {
 	if(updateFrom.m_subTiles[0] == kMaxU32)
 	{
@@ -123,7 +123,7 @@ void TileAllocator2::updateSubTiles(const Tile& updateFrom, U64 crntLightUuid, A
 	}
 }
 
-void TileAllocator2::updateSuperTiles(const Tile& updateFrom, U64 crntLightUuid, ArrayOfLightUuids& kickedOutLights)
+void TileAllocator::updateSuperTiles(const Tile& updateFrom, U64 crntLightUuid, ArrayOfLightUuids& kickedOutLights)
 {
 	if(updateFrom.m_superTile != kMaxU32)
 	{
@@ -138,8 +138,8 @@ void TileAllocator2::updateSuperTiles(const Tile& updateFrom, U64 crntLightUuid,
 	}
 }
 
-Bool TileAllocator2::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy, U32 allocationHierarchy, Timestamp crntTimestamp,
-										   U32& emptyTileIdx, U32& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const
+Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarchy, U32 allocationHierarchy, Timestamp crntTimestamp, U32& emptyTileIdx,
+										  U32& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[crntTileIdx];
 
@@ -175,8 +175,8 @@ Bool TileAllocator2::searchTileRecursively(U32 crntTileIdx, U32 crntTileHierarch
 	return false;
 }
 
-Bool TileAllocator2::evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32& emptyTileIdx, U32& toKickTileIdx,
-									   Timestamp& tileToKickMinTimestamp) const
+Bool TileAllocator::evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32& emptyTileIdx, U32& toKickTileIdx,
+									  Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[tileIdx];
 
@@ -207,8 +207,8 @@ Bool TileAllocator2::evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32
 	return false;
 }
 
-TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 lightUuid, U32 hierarchy, Array<U32, 4>& tileViewport,
-											  ArrayOfLightUuids& kickedOutLightUuids)
+TileAllocatorResult2 TileAllocator::allocate(Timestamp crntTimestamp, U64 lightUuid, U32 hierarchy, Array<U32, 4>& tileViewport,
+											 ArrayOfLightUuids& kickedOutLightUuids)
 {
 	// Preconditions
 	ANKI_ASSERT(crntTimestamp > 0);
@@ -322,7 +322,7 @@ TileAllocatorResult2 TileAllocator2::allocate(Timestamp crntTimestamp, U64 light
 	return TileAllocatorResult2::kAllocationSucceded;
 }
 
-void TileAllocator2::invalidateCache(U64 lightUuid)
+void TileAllocator::invalidateCache(U64 lightUuid)
 {
 	ANKI_ASSERT(m_cachingEnabled);
 	ANKI_ASSERT(lightUuid > 0);

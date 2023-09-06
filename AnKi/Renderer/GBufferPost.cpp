@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/GBufferPost.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -76,9 +76,9 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		cmdb.bindUniformBuffer(0, 3, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
-		cmdb.bindStorageBuffer(0, 4, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
-		cmdb.bindStorageBuffer(0, 5, getRenderer().getClusterBinning2().getClustersBuffer());
+		cmdb.bindUniformBuffer(0, 3, getRenderer().getClusterBinning().getClusteredShadingUniforms());
+		cmdb.bindStorageBuffer(0, 4, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
+		cmdb.bindStorageBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindAllBindless(1);
 
@@ -97,8 +97,8 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
-	rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kDecal),
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kDecal),
 							  BufferUsageBit::kStorageFragmentRead);
 }
 

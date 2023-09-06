@@ -43,7 +43,7 @@
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 
 namespace anki {
 
@@ -263,7 +263,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_motionVectors.reset(newInstance<MotionVectors>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_motionVectors->init());
 
-	m_clusterBinning2.reset(newInstance<ClusterBinning2>(RendererMemoryPool::getSingleton()));
+	m_clusterBinning2.reset(newInstance<ClusterBinning>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_clusterBinning2->init());
 
 	m_primaryNonRenderableVisibility.reset(newInstance<PrimaryNonRenderableVisibility>(RendererMemoryPool::getSingleton()));

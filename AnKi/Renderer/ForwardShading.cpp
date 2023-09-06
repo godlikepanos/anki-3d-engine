@@ -10,7 +10,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
@@ -58,14 +58,14 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume), getRenderer().getVolumetricLightingAccumulation().getRt());
 
-	cmdb.bindUniformBuffer(set, U32(MaterialBinding::kClusterShadingUniforms), getRenderer().getClusterBinning2().getClusteredShadingUniforms());
+	cmdb.bindUniformBuffer(set, U32(MaterialBinding::kClusterShadingUniforms), getRenderer().getClusterBinning().getClusteredShadingUniforms());
 
 	cmdb.bindStorageBuffer(set, U32(MaterialBinding::kClusterShadingLights),
-						   getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+						   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
 	rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 1, getRenderer().getShadowMapping().getShadowmapRt());
 
-	cmdb.bindStorageBuffer(set, U32(MaterialBinding::kClusters), getRenderer().getClusterBinning2().getClustersBuffer());
+	cmdb.bindStorageBuffer(set, U32(MaterialBinding::kClusters), getRenderer().getClusterBinning().getClustersBuffer());
 
 	// Draw
 	RenderableDrawerArguments args;

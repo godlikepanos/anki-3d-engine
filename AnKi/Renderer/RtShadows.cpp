@@ -10,7 +10,7 @@
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
@@ -305,7 +305,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSampledTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kImageTraceRaysWrite);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageTraceRaysRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageTraceRaysRead);
 
 		rpass.setWork([this, sbtBuffer](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
@@ -337,8 +337,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			constexpr U32 kSet = 2;
 
-			cmdb.bindUniformBuffer(kSet, 0, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
-			cmdb.bindStorageBuffer(kSet, 1, getRenderer().getClusterBinning2().getClustersBuffer());
+			cmdb.bindUniformBuffer(kSet, 0, getRenderer().getClusterBinning().getClusteredShadingUniforms());
+			cmdb.bindStorageBuffer(kSet, 1, getRenderer().getClusterBinning().getClustersBuffer());
 
 			cmdb.bindSampler(kSet, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 

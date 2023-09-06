@@ -261,7 +261,7 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 	for(U32 i = 0; i < faceCount; ++i)
 	{
-		TileAllocator2::ArrayOfLightUuids kickedOutLights(&getRenderer().getFrameMemoryPool());
+		TileAllocator::ArrayOfLightUuids kickedOutLights(&getRenderer().getFrameMemoryPool());
 
 		Array<U32, 4> tileViewport;
 		const TileAllocatorResult2 result = m_tileAlloc.allocate(

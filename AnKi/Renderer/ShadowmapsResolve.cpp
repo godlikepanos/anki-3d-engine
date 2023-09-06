@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/ClusterBinning2.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
@@ -82,8 +82,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
-		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 								  BufferUsageBit::kStorageComputeRead);
 
 		if(getRenderer().getRtShadowsEnabled())
@@ -105,8 +105,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning2().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
-		rpass.newBufferDependency(getRenderer().getClusterBinning2().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 								  BufferUsageBit::kStorageFragmentRead);
 
 		if(getRenderer().getRtShadowsEnabled())
@@ -123,10 +123,10 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb.bindUniformBuffer(0, 0, getRenderer().getClusterBinning2().getClusteredShadingUniforms());
-	cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning2().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	cmdb.bindUniformBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingUniforms());
+	cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 	rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
-	cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning2().getClustersBuffer());
+	cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
 
 	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
 	cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClampShadow.get());

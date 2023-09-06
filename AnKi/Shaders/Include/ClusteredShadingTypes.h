@@ -193,10 +193,10 @@ struct Cluster
 	U32 m_giProbesMask;
 };
 
-constexpr ANKI_ARRAY(U32, GpuSceneNonRenderableObjectType::kCount, kClusteredObjectSizes2) = {
+constexpr ANKI_ARRAY(U32, GpuSceneNonRenderableObjectType::kCount, kClusteredObjectSizes) = {
 	sizeof(LightUnion), sizeof(Decal), sizeof(FogDensityVolume), sizeof(ReflectionProbe), sizeof(GlobalIlluminationProbe)};
 
-constexpr ANKI_ARRAY(U32, GpuSceneNonRenderableObjectType::kCount, kMaxVisibleClusteredObjects2) = {
+constexpr ANKI_ARRAY(U32, GpuSceneNonRenderableObjectType::kCount, kMaxVisibleClusteredObjects) = {
 	kMaxVisibleLights, kMaxVisibleDecals, kMaxVisibleFogDensityVolumes, kMaxVisibleReflectionProbes, kMaxVisibleGlobalIlluminationProbes};
 
 ANKI_END_NAMESPACE
