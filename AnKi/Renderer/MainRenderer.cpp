@@ -170,7 +170,8 @@ Error MainRenderer::render(Texture* presentTex)
 
 		if(rgraphStats.m_gpuTime > 0.0)
 		{
-			ANKI_TRACE_CUSTOM_EVENT(Gpu, rgraphStats.m_cpuStartTime, rgraphStats.m_gpuTime);
+			// WARNING: The name of the event is somewhat special. Search it to see why
+			ANKI_TRACE_CUSTOM_EVENT(GpuFrameTime, rgraphStats.m_cpuStartTime, rgraphStats.m_gpuTime);
 		}
 	}
 

@@ -51,7 +51,7 @@ Error MyApp::init(int argc, char* argv[])
 	{
 		m_profile = true;
 		g_targetFpsCVar.set(240);
-		Tracer::getSingleton().setEnabled(true);
+		g_tracingEnabledCVar.set(true);
 	}
 
 	// Load scene
@@ -156,7 +156,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
-		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
+		g_tracingEnabledCVar.set(!g_tracingEnabledCVar.get());
 	}
 
 #if !PLAYER
@@ -165,11 +165,6 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	{
 		// Re-init mouse pos
 		mousePosOn1stClick = in.getMousePosition();
-	}
-
-	if(in.getKey(KeyCode::kF12) == 1 && ANKI_TRACING_ENABLED)
-	{
-		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
 	}
 
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())

@@ -10,6 +10,8 @@
 
 namespace anki {
 
+#if ANKI_TRACING_ENABLED
+
 class Tracer::Chunk : public IntrusiveListEnabled<Chunk>
 {
 public:
@@ -189,5 +191,7 @@ void Tracer::flush(TracerFlushCallback callback, void* callbackUserData)
 		tlocal->m_currentChunk = nullptr;
 	}
 }
+
+#endif
 
 } // end namespace anki

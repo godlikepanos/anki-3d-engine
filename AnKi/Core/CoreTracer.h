@@ -9,11 +9,16 @@
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/File.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 
 /// @addtogroup core
 /// @{
+
+extern BoolCVar g_tracingEnabledCVar;
+
+#if ANKI_TRACING_ENABLED
 
 /// A system that sits on top of the tracer and processes the counters and events.
 class CoreTracer : public MakeSingleton<CoreTracer>
@@ -40,8 +45,9 @@ private:
 	IntrusiveList<PerFrameCounters> m_frameCounters;
 
 	IntrusiveList<ThreadWorkItem> m_workItems; ///< Items for the thread to process.
+	CoreString m_traceJsonFilename;
+	CoreString m_countersCsvFilename;
 	File m_traceJsonFile;
-	File m_countersCsvFile;
 	Bool m_quit = false;
 
 	CoreTracer();
@@ -52,8 +58,10 @@ private:
 
 	Error writeEvents(ThreadWorkItem& item);
 	void gatherCounters(ThreadWorkItem& item);
-	Error writeCountersForReal();
+	Error writeCountersOnShutdown();
 };
+
+#endif
 /// @}
 
 } // end namespace anki

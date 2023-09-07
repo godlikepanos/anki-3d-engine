@@ -169,9 +169,9 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		}
 	}
 
-	if(in.getKey(KeyCode::kF12) == 1 && ANKI_TRACING_ENABLED)
+	if(in.getKey(KeyCode::kF11) == 1 && ANKI_TRACING_ENABLED)
 	{
-		Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
+		g_tracingEnabledCVar.set(!g_tracingEnabledCVar.get());
 	}
 
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
