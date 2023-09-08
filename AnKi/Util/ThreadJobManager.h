@@ -53,6 +53,11 @@ public:
 		}
 	}
 
+	U32 getThreadCount() const
+	{
+		return m_threads.getSize();
+	}
+
 private:
 	class WorkerThread;
 

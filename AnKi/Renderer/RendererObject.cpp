@@ -16,22 +16,6 @@ Renderer& RendererObject::getRenderer()
 	return MainRenderer::getSingleton().getOffscreenRenderer();
 }
 
-U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
-{
-	const U32 drawcallsPerThread = drawcallCount / CoreThreadHive::getSingleton().getThreadCount();
-	U32 secondLevelCmdbCount;
-	if(drawcallsPerThread < kMinDrawcallsPerSecondaryCommandBuffer)
-	{
-		secondLevelCmdbCount = max(1u, drawcallCount / kMinDrawcallsPerSecondaryCommandBuffer);
-	}
-	else
-	{
-		secondLevelCmdbCount = CoreThreadHive::getSingleton().getThreadCount();
-	}
-
-	return secondLevelCmdbCount;
-}
-
 void RendererObject::registerDebugRenderTarget(CString rtName)
 {
 	getRenderer().registerDebugRenderTarget(this, rtName);

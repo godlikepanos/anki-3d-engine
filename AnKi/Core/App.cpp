@@ -156,6 +156,7 @@ void App::cleanup()
 	GpuSceneBuffer::freeSingleton();
 	GpuReadbackMemoryPool::freeSingleton();
 	CoreThreadHive::freeSingleton();
+	CoreThreadJobManager::freeSingleton();
 	MaliHwCounters::freeSingleton();
 	GrManager::freeSingleton();
 	Input::freeSingleton();
@@ -282,6 +283,7 @@ Error App::initInternal()
 	//
 	const Bool pinThreads = !ANKI_OS_ANDROID;
 	CoreThreadHive::allocateSingleton(g_jobThreadCountCVar.get(), pinThreads);
+	CoreThreadJobManager::allocateSingleton(g_jobThreadCountCVar.get(), pinThreads);
 
 	//
 	// Graphics API

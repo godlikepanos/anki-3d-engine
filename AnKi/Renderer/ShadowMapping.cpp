@@ -577,33 +577,34 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+	// Clear the depth buffer
+	cmdb.bindShaderProgram(m_clearDepthGrProg.get());
+	cmdb.setDepthCompareOperation(CompareOperation::kAlways);
 
+	for(ViewportWorkItem& work : m_runCtx.m_workItems)
+	{
+		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
+
+		if(work.m_clearTileIndirectArgs.m_buffer)
+		{
+			cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, work.m_clearTileIndirectArgs.m_offset, work.m_clearTileIndirectArgs.m_buffer);
+		}
+		else
+		{
+			cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
+		}
+	}
+
+	// Restore state
+	cmdb.setDepthCompareOperation(CompareOperation::kLess);
+
+	// Draw to tiles
+	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 	for(ViewportWorkItem& work : m_runCtx.m_workItems)
 	{
 		// Set state
 		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		cmdb.setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-
-		// Clear the depth buffer
-		{
-			cmdb.bindShaderProgram(m_clearDepthGrProg.get());
-			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-			cmdb.setPolygonOffset(0.0f, 0.0f);
-
-			if(work.m_clearTileIndirectArgs.m_buffer)
-			{
-				cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, work.m_clearTileIndirectArgs.m_offset, work.m_clearTileIndirectArgs.m_buffer);
-			}
-			else
-			{
-				cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
-			}
-
-			// Restore state
-			cmdb.setDepthCompareOperation(CompareOperation::kLess);
-			cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
-		}
 
 		RenderableDrawerArguments args;
 		args.m_renderingTechinuqe = RenderingTechnique::kDepth;

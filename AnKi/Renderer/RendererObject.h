@@ -38,8 +38,6 @@ public:
 protected:
 	static ANKI_PURE Renderer& getRenderer();
 
-	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
-
 	/// Used in fullscreen quad draws.
 	static void drawQuad(CommandBuffer& cmdb)
 	{

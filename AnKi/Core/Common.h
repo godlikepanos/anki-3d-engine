@@ -10,6 +10,7 @@
 #include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/ThreadHive.h>
+#include <AnKi/Util/ThreadJobManager.h>
 
 namespace anki {
 
@@ -40,6 +41,18 @@ class CoreThreadHive : public ThreadHive, public MakeSingleton<CoreThreadHive>
 public:
 	CoreThreadHive(U32 threadCount, Bool pinToCores = false)
 		: ThreadHive(threadCount, pinToCores)
+	{
+	}
+};
+
+class CoreThreadJobManager : public ThreadJobManager, public MakeSingleton<CoreThreadJobManager>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+public:
+	CoreThreadJobManager(U32 threadCount, Bool pinToCores = false)
+		: ThreadJobManager(threadCount, pinToCores)
 	{
 	}
 };

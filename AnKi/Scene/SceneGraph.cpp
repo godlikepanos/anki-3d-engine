@@ -75,8 +75,6 @@ constexpr U32 kUpdateNodeBatchSize = 10;
 class SceneGraph::UpdateSceneNodesCtx
 {
 public:
-	SceneGraph* m_scene = nullptr;
-
 	IntrusiveList<SceneNode>::Iterator m_crntNode;
 	SpinLock m_crntNodeLock;
 
@@ -250,28 +248,22 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		ANKI_TRACE_SCOPED_EVENT(SceneNodesUpdate);
 		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
-		// Then the rest
-		Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
 		UpdateSceneNodesCtx updateCtx;
-		updateCtx.m_scene = this;
 		updateCtx.m_crntNode = m_nodes.getBegin();
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
 
-		for(U i = 0; i < CoreThreadHive::getSingleton().getThreadCount(); i++)
+		for(U i = 0; i < CoreThreadJobManager::getSingleton().getThreadCount(); i++)
 		{
-			tasks[i] = ANKI_THREAD_HIVE_TASK(
+			CoreThreadJobManager::getSingleton().dispatchTask([this, &updateCtx]([[maybe_unused]] U32 tid) {
+				if(updateNodes(updateCtx))
 				{
-					if(self->m_scene->updateNodes(*self))
-					{
-						ANKI_SCENE_LOGF("Will not recover");
-					}
-				},
-				&updateCtx, nullptr, nullptr);
+					ANKI_SCENE_LOGF("Will not recover");
+				}
+			});
 		}
 
-		CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
-		CoreThreadHive::getSingleton().waitAllTasks();
+		CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
 	}
 
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::getSingleton().flush();

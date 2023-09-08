@@ -1251,28 +1251,6 @@ void RenderGraph::runSecondLevel()
 	ANKI_ASSERT(m_ctx);
 
 	StackMemoryPool& pool = *m_ctx->m_rts.getMemoryPool().m_pool;
-	DynamicArray<ThreadHiveTask, MemoryPoolPtrWrapper<StackMemoryPool>> tasks(&pool);
-
-	auto callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-					   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-		RenderPassWorkContext& self = *static_cast<RenderPassWorkContext*>(userData);
-
-		ANKI_TRACE_SCOPED_EVENT(GrExecuteSecondaryCmdb);
-
-		// Create the command buffer in the thread
-		Pass& pass = self.m_rgraph->m_ctx->m_passes[self.m_passIdx];
-		ANKI_ASSERT(!pass.m_secondLevelCmdbs[self.m_currentSecondLevelCommandBufferIndex].isCreated());
-		pass.m_secondLevelCmdbs[self.m_currentSecondLevelCommandBufferIndex] =
-			GrManager::getSingleton().newCommandBuffer(pass.m_secondLevelCmdbInitInfo);
-		self.m_commandBuffer = pass.m_secondLevelCmdbs[self.m_currentSecondLevelCommandBufferIndex].get();
-
-		{
-			ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);
-			pass.m_callback(self);
-		}
-
-		self.m_commandBuffer->flush();
-	};
 
 	// Gather the tasks
 	for(Pass& pass : m_ctx->m_passes)
@@ -1286,14 +1264,27 @@ void RenderGraph::runSecondLevel()
 			ctx->m_passIdx = U32(&pass - &m_ctx->m_passes[0]);
 			ctx->m_batchIdx = pass.m_batchIdx;
 
-			ThreadHiveTask& task = *tasks.emplaceBack();
-			task.m_callback = callback;
-			task.m_argument = ctx;
+			CoreThreadJobManager::getSingleton().dispatchTask([ctx]([[maybe_unused]] U32 tid) {
+				ANKI_TRACE_SCOPED_EVENT(GrExecuteSecondaryCmdb);
+
+				// Create the command buffer in the thread
+				Pass& pass = ctx->m_rgraph->m_ctx->m_passes[ctx->m_passIdx];
+				ANKI_ASSERT(!pass.m_secondLevelCmdbs[ctx->m_currentSecondLevelCommandBufferIndex].isCreated());
+				pass.m_secondLevelCmdbs[ctx->m_currentSecondLevelCommandBufferIndex] =
+					GrManager::getSingleton().newCommandBuffer(pass.m_secondLevelCmdbInitInfo);
+				ctx->m_commandBuffer = pass.m_secondLevelCmdbs[ctx->m_currentSecondLevelCommandBufferIndex].get();
+
+				{
+					ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);
+					pass.m_callback(*ctx);
+				}
+
+				ctx->m_commandBuffer->flush();
+			});
 		}
 	}
 
-	CoreThreadHive::getSingleton().submitTasks(tasks.getBegin(), tasks.getSize());
-	CoreThreadHive::getSingleton().waitAllTasks();
+	CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
 }
 
 void RenderGraph::run() const
