@@ -27,7 +27,7 @@ ClusterBinning::~ClusterBinning()
 
 Error ClusterBinning::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning2Setup.ankiprogbin", m_jobSetupProg, m_jobSetupGrProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningSetup.ankiprogbin", m_jobSetupProg, m_jobSetupGrProg));
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_binningProg));
 
@@ -40,7 +40,7 @@ Error ClusterBinning::init()
 		m_binningProg->getOrCreateVariant(inf, variant);
 		m_binningGrProgs[type].reset(&variant->getProgram());
 
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning2PackVisibles.ankiprogbin",
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningPackVisibles.ankiprogbin",
 									 Array<SubMutation, 1>{{{"OBJECT_TYPE", MutatorValue(type)}}}, m_packingProg, m_packingGrProgs[type]));
 	}
 
@@ -56,15 +56,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	// Fire an async job to fill the general uniforms
 	{
 		m_runCtx.m_rctx = &ctx;
-
 		m_runCtx.m_clusterUniformsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, m_runCtx.m_uniformsCpu);
-
-		CoreThreadHive::getSingleton().submitTask(
-			[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-			   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-				static_cast<ClusterBinning*>(userData)->writeClusterUniformsInternal();
-			},
-			this);
+		writeClusterUniformsInternal();
 	}
 
 	// Allocate the clusters buffer
