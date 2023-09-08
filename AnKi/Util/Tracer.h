@@ -135,14 +135,13 @@ class TracerScopedEvent
 public:
 	TracerScopedEvent(const char* name)
 		: m_name(name)
-		, m_tracer(&Tracer::getSingleton())
 	{
-		m_handle = m_tracer->beginEvent();
+		m_handle = Tracer::getSingleton().beginEvent();
 	}
 
 	~TracerScopedEvent()
 	{
-		m_tracer->endEvent(m_name, m_handle);
+		Tracer::getSingleton().endEvent(m_name, m_handle);
 	}
 
 private:
