@@ -161,7 +161,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	}
 
 	// Gather the keys
-	ImporterDynamicArray<GltfAnimChannel> tempChannels;
+	ImporterDynamicArray<GltfAnimChannel> tempChannels(m_pool);
 	tempChannels.resize(channelCount, m_pool);
 	channelCount = 0;
 	for(auto it = channelMap.getBegin(); it != channelMap.getEnd(); ++it)
