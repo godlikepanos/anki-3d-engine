@@ -61,14 +61,14 @@ BoolCVar g_vrsLimitTo2x2CVar(CVarSubsystem::kRenderer, "VrsLimitTo2x2", false, "
 BoolCVar g_vrsCVar(CVarSubsystem::kRenderer, "Vrs", true, "Enable VRS in multiple passes");
 BoolCVar g_rayTracedShadowsCVar(CVarSubsystem::kRenderer, "RayTracedShadows", true,
 								"Enable or not ray traced shadows. Ignored if RT is not supported");
-NumericCVar<U8> g_shadowCascadeCountCVar(CVarSubsystem::kRenderer, "ShadowCascadeCount", (ANKI_PLATFORM_MOBILE) ? 2 : kMaxShadowCascades, 1,
+NumericCVar<U8> g_shadowCascadeCountCVar(CVarSubsystem::kRenderer, "ShadowCascadeCount", (ANKI_PLATFORM_MOBILE) ? 3 : kMaxShadowCascades, 1,
 										 kMaxShadowCascades, "Max number of shadow cascades for directional lights");
 NumericCVar<F32> g_shadowCascade0DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade0Distance", 18.0, 1.0, kMaxF32,
 											  "The distance of the 1st cascade");
-NumericCVar<F32> g_shadowCascade1DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade1Distance", (ANKI_PLATFORM_MOBILE) ? 100.0f : 40.0, 1.0,
-											  kMaxF32, "The distance of the 2nd cascade");
-NumericCVar<F32> g_shadowCascade2DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade2Distance", 80.0, 1.0, kMaxF32,
-											  "The distance of the 3rd cascade");
+NumericCVar<F32> g_shadowCascade1DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade1Distance", (ANKI_PLATFORM_MOBILE) ? 80.0f : 40.0, 1.0, kMaxF32,
+											  "The distance of the 2nd cascade");
+NumericCVar<F32> g_shadowCascade2DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade2Distance", (ANKI_PLATFORM_MOBILE) ? 150.0f : 80.0, 1.0,
+											  kMaxF32, "The distance of the 3rd cascade");
 NumericCVar<F32> g_shadowCascade3DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade3Distance", 200.0, 1.0, kMaxF32,
 											  "The distance of the 4th cascade");
 NumericCVar<F32> g_lod0MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod0MaxDistance", 20.0f, 1.0f, kMaxF32,

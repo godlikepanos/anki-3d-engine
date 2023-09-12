@@ -166,8 +166,7 @@ public:
 	/// Get C-string.
 	const Char* cstr() const
 	{
-		checkInit();
-		return m_ptr;
+		return (m_ptr) ? m_ptr : "";
 	}
 
 	const Char* getBegin() const
@@ -457,8 +456,7 @@ public:
 	/// Get a C string.
 	const Char* cstr() const
 	{
-		ANKI_ASSERT(!isEmpty());
-		return &m_data[0];
+		return toCString().cstr();
 	}
 
 	/// Append using a range. Copies the range of [first, oneAfterLast)

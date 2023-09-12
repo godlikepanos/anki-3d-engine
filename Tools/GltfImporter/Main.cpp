@@ -7,7 +7,7 @@
 
 using namespace anki;
 
-static constexpr char* kUsage = R"(Usage: %s in_file out_dir [options]
+static const char* kUsage = R"(Usage: %s in_file out_dir [options]
 Options:
 -rpath <string>            : Replace all absolute paths of assets with that path
 -texrpath <string>         : Same as rpath but for textures

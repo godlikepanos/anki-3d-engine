@@ -76,7 +76,7 @@ public:
 		m_pool = b.m_pool;
 		m_size = b.m_size;
 		m_capacity = b.m_size;
-		m_data = static_cast<T*>(m_pool.allocate(sizeof(T) * m_size, alignof(T)));
+		m_data = (m_size) ? static_cast<T*>(m_pool.allocate(sizeof(T) * m_size, alignof(T))) : nullptr;
 		for(TSize i = 0; i < m_size; ++i)
 		{
 			::new(&m_data[i]) T(b.m_data[i]);
