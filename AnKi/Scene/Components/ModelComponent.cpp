@@ -289,9 +289,9 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			for(RenderingTechnique t :
 				EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(m_patchInfos[i].m_techniques & ~RenderingTechniqueBit::kAllRt))
 			{
-				const GpuSceneRenderableAabb gpuVolume =
-					initGpuSceneRenderableAabb(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_patchInfos[i].m_gpuSceneRenderable.getIndex(),
-											   m_patchInfos[i].m_renderStateBucketIndices[t].get());
+				const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
+					aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_patchInfos[i].m_gpuSceneRenderable.getIndex(),
+					m_patchInfos[i].m_renderStateBucketIndices[t].get());
 
 				switch(t)
 				{
@@ -313,8 +313,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			if(!!(m_patchInfos[i].m_techniques & RenderingTechniqueBit::kAllRt))
 			{
 				const U32 bucket = 0;
-				const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(),
-																					m_patchInfos[i].m_gpuSceneRenderable.getIndex(), bucket);
+				const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
+					aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_patchInfos[i].m_gpuSceneRenderable.getIndex(), bucket);
 
 				m_patchInfos[i].m_gpuSceneRenderableAabbRt.uploadToGpuScene(gpuVolume);
 			}

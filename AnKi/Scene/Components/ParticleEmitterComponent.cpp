@@ -427,13 +427,13 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		m_gpuSceneParticleEmitter.uploadToGpuScene(particles);
 	}
 
-	// Upload the GpuSceneRenderableAabb always
+	// Upload the GpuSceneRenderableBoundingVolume always
 	for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
 	{
 		if(!!(RenderingTechniqueBit(1 << t) & m_particleEmitterResource->getMaterial()->getRenderingTechniques()))
 		{
-			const GpuSceneRenderableAabb gpuVolume = initGpuSceneRenderableAabb(aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(),
-																				m_gpuSceneRenderable.getIndex(), m_renderStateBuckets[t].get());
+			const GpuSceneRenderableBoundingVolume gpuVolume = initGpuSceneRenderableBoundingVolume(
+				aabbWorld.getMin().xyz(), aabbWorld.getMax().xyz(), m_gpuSceneRenderable.getIndex(), m_renderStateBuckets[t].get());
 			switch(t)
 			{
 			case RenderingTechnique::kGBuffer:

@@ -232,7 +232,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_setupBuildSbtGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableAabbRt::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
 			cmdb.bindStorageBuffer(0, 1, sbtBuildIndirectArgsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);
@@ -246,7 +246,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		// Allocate SBT
 		U8* sbtMem;
 		sbtBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(
-			(GpuSceneArrays::RenderableAabbRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize, sbtMem);
+			(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize, sbtMem);
 		sbtHandle = rgraph.importBuffer(BufferUsageBit::kStorageComputeWrite, sbtBuffer);
 
 		// Write the first 2 entries of the SBT
@@ -271,7 +271,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_buildSbtGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableAabbRt::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
 			cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 			cmdb.bindStorageBuffer(0, 2, visibleRenderableIndicesBuff);
 			cmdb.bindStorageBuffer(0, 3, &m_rtLibraryGrProg->getShaderGroupHandlesGpuBuffer(), 0, kMaxPtrSize);
@@ -355,8 +355,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindTexture(kSet, 13, &m_blueNoiseImage->getTextureView());
 
 			cmdb.traceRays(sbtBuffer.m_buffer, sbtBuffer.m_offset, m_sbtRecordSize,
-						   GpuSceneArrays::RenderableAabbRt::getSingleton().getElementCount(), 1, getRenderer().getInternalResolution().x() / 2,
-						   getRenderer().getInternalResolution().y() / 2, 1);
+						   GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+						   getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, 1);
 		});
 	}
 

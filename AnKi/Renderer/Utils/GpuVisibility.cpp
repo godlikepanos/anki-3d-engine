@@ -85,13 +85,13 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	switch(in.m_technique)
 	{
 	case RenderingTechnique::kGBuffer:
-		aabbCount = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount();
+		aabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
 		break;
 	case RenderingTechnique::kDepth:
-		aabbCount = GpuSceneArrays::RenderableAabbDepth::getSingleton().getElementCount();
+		aabbCount = GpuSceneArrays::RenderableBoundingVolumeDepth::getSingleton().getElementCount();
 		break;
 	case RenderingTechnique::kForward:
-		aabbCount = GpuSceneArrays::RenderableAabbForward::getSingleton().getElementCount();
+		aabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -205,13 +205,13 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		switch(technique)
 		{
 		case RenderingTechnique::kGBuffer:
-			aabbsBuffer = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getBufferOffsetRange();
+			aabbsBuffer = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferOffsetRange();
 			break;
 		case RenderingTechnique::kDepth:
-			aabbsBuffer = GpuSceneArrays::RenderableAabbDepth::getSingleton().getBufferOffsetRange();
+			aabbsBuffer = GpuSceneArrays::RenderableBoundingVolumeDepth::getSingleton().getBufferOffsetRange();
 			break;
 		case RenderingTechnique::kForward:
-			aabbsBuffer = GpuSceneArrays::RenderableAabbForward::getSingleton().getBufferOffsetRange();
+			aabbsBuffer = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange();
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -525,7 +525,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	}
 
 	// Allocate the transient buffers
-	const U32 aabbCount = GpuSceneArrays::RenderableAabbRt::getSingleton().getElementCount();
+	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 
 	out.m_instancesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(aabbCount * sizeof(AccelerationStructureInstance));
 	out.m_someBufferHandle = rgraph.importBuffer(BufferUsageBit::kStorageComputeWrite, out.m_instancesBuffer);
@@ -570,7 +570,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
-		cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableAabbRt::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
 		cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
 		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 		cmdb.bindStorageBuffer(0, 3, instancesBuff);
@@ -578,7 +578,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		cmdb.bindStorageBuffer(0, 5, rangeBuff);
 		cmdb.bindStorageBuffer(0, 6, m_counterBuffer.get(), counterBufferOffset, sizeof(U32) * 2);
 
-		const U32 aabbCount = GpuSceneArrays::RenderableAabbRt::getSingleton().getElementCount();
+		const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});
 

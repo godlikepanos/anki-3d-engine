@@ -39,7 +39,7 @@ struct GpuSceneRenderableVertex
 static_assert(sizeof(GpuSceneRenderableVertex) == sizeof(UVec4));
 
 /// Used in visibility testing.
-struct GpuSceneRenderableAabb
+struct GpuSceneRenderableBoundingVolume
 {
 	Vec3 m_sphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
@@ -47,7 +47,7 @@ struct GpuSceneRenderableAabb
 	Vec3 m_aabbExtend ANKI_CPP_CODE(= Vec3(0.0f));
 	U32 m_renderableIndexAndRenderStateBucket; ///< High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx.
 };
-static_assert(sizeof(GpuSceneRenderableAabb) == sizeof(Vec4) * 2);
+static_assert(sizeof(GpuSceneRenderableBoundingVolume) == sizeof(Vec4) * 2);
 
 /// Represents the geometry data of a single LOD of an indexed mesh.
 struct GpuSceneMeshLod

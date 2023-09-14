@@ -16,8 +16,8 @@ struct Uniforms
 
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
 
-[[vk::binding(2)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
-[[vk::binding(3)]] StructuredBuffer<U32> g_visibleAabbIndices;
+[[vk::binding(2)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
+[[vk::binding(3)]] StructuredBuffer<U32> g_visibleRenderableBoundingVolumeIndices;
 
 struct VertOut
 {
@@ -35,12 +35,12 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const U32 aabbCount = g_visibleAabbIndices[0];
+	const U32 bvolumeCount = g_visibleRenderableBoundingVolumeIndices[0];
 
-	if(input.m_svInstanceId < aabbCount)
+	if(input.m_svInstanceId < bvolumeCount)
 	{
-		const GpuSceneRenderableAabb aabb = g_aabbs[g_visibleAabbIndices[input.m_svInstanceId + 1]];
-		Vec3 localPos = input.m_position * aabb.m_aabbExtend + aabb.m_sphereCenter;
+		const GpuSceneRenderableBoundingVolume bvol = g_renderableBoundingVolumes[g_visibleRenderableBoundingVolumeIndices[input.m_svInstanceId + 1]];
+		Vec3 localPos = input.m_position * bvol.m_aabbExtend + bvol.m_sphereCenter;
 		output.m_svPosition = mul(g_uniforms.m_viewProjMat, Vec4(localPos, 1.0));
 	}
 	else

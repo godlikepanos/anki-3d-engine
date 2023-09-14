@@ -52,10 +52,10 @@ private:
 
 		GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
 		GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
-		GpuSceneArrays::RenderableAabbGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
-		GpuSceneArrays::RenderableAabbDepth::Allocation m_gpuSceneRenderableAabbDepth;
-		GpuSceneArrays::RenderableAabbForward::Allocation m_gpuSceneRenderableAabbForward;
-		GpuSceneArrays::RenderableAabbRt::Allocation m_gpuSceneRenderableAabbRt;
+		GpuSceneArrays::RenderableBoundingVolumeGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
+		GpuSceneArrays::RenderableBoundingVolumeDepth::Allocation m_gpuSceneRenderableAabbDepth;
+		GpuSceneArrays::RenderableBoundingVolumeForward::Allocation m_gpuSceneRenderableAabbForward;
+		GpuSceneArrays::RenderableBoundingVolumeRt::Allocation m_gpuSceneRenderableAabbRt;
 
 		Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBucketIndices;
 		RenderingTechniqueBit m_techniques;

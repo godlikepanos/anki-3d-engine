@@ -11,7 +11,7 @@
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
 // Buffers that point to the GPU scene
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
+[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
 
@@ -28,18 +28,18 @@
 [numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	// Skip remaining threads
-	const U32 aabbIdx = svDispatchThreadId;
-	U32 aabbCount;
+	const U32 bvolumeIdx = svDispatchThreadId;
+	U32 bvolumeCount;
 	U32 unused;
-	g_aabbs.GetDimensions(aabbCount, unused);
-	Bool visible = (aabbIdx < aabbCount);
+	g_renderableBoundingVolumes.GetDimensions(bvolumeCount, unused);
+	Bool visible = (bvolumeIdx < bvolumeCount);
 
 	// Sphere test
-	GpuSceneRenderableAabb aabb;
+	GpuSceneRenderableBoundingVolume bvolume;
 	if(visible)
 	{
-		aabb = g_aabbs[aabbIdx];
-		visible = testSphereSphereCollision(aabb.m_sphereCenter, aabb.m_sphereRadius, g_unis.m_pointOfTest, aabb.m_sphereRadius);
+		bvolume = g_renderableBoundingVolumes[bvolumeIdx];
+		visible = testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_unis.m_pointOfTest, bvolume.m_sphereRadius);
 	}
 
 	// All good, write the instance
@@ -47,11 +47,11 @@
 	{
 		// LOD selection
 		U32 lod;
-		const Bool insideCameraFrustum = frustumTest(g_unis.m_clipPlanes, aabb.m_sphereCenter, aabb.m_sphereRadius);
+		const Bool insideCameraFrustum = frustumTest(g_unis.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius);
 		if(insideCameraFrustum)
 		{
 			// Visible by the camera, need to match the camera LODs
-			const F32 distFromLodPoint = length(aabb.m_sphereCenter - g_unis.m_pointOfTest) - aabb.m_sphereRadius;
+			const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_unis.m_pointOfTest) - bvolume.m_sphereRadius;
 			if(distFromLodPoint < g_unis.m_maxLodDistances[0])
 			{
 				lod = 0u;
@@ -71,7 +71,7 @@
 			lod = 2u;
 		}
 
-		const U32 renderableIdx = aabb.m_renderableIndexAndRenderStateBucket >> 12u;
+		const U32 renderableIdx = bvolume.m_renderableIndexAndRenderStateBucket >> 12u;
 		const GpuSceneRenderable renderable = g_renderables[renderableIdx];
 
 		const U32 meshLodOffset = renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
@@ -103,7 +103,7 @@
 		{
 			U32 threadgroupIdx;
 			InterlockedAdd(g_counterBuffer[1], 1, threadgroupIdx);
-			const U32 threadgroupCount = (aabbCount + NUMTHREADS - 1) / NUMTHREADS;
+			const U32 threadgroupCount = (bvolumeCount + NUMTHREADS - 1) / NUMTHREADS;
 			lastThreadgroupExecuting = (threadgroupIdx + 1 == threadgroupCount);
 		}
 

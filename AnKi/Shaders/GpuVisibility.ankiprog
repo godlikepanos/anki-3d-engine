@@ -27,7 +27,7 @@ struct DrawIndirectArgsWithPadding
 };
 
 // Buffers that point to the GPU scene
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableAabb> g_aabbs;
+[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
 
@@ -62,29 +62,29 @@ struct DrawIndirectArgsWithPadding
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	const U32 aabbIdx = svDispatchThreadId.x;
-	U32 aabbCount;
+	const U32 bvolumeIdx = svDispatchThreadId.x;
+	U32 bvolumeCount;
 	U32 unused;
-	g_aabbs.GetDimensions(aabbCount, unused);
-	if(aabbIdx >= aabbCount)
+	g_renderableBoundingVolumes.GetDimensions(bvolumeCount, unused);
+	if(bvolumeIdx >= bvolumeCount)
 	{
 		return;
 	}
 
-	const GpuSceneRenderableAabb aabb = g_aabbs[aabbIdx];
+	const GpuSceneRenderableBoundingVolume bvolume = g_renderableBoundingVolumes[bvolumeIdx];
 
 #if DISTANCE_TEST == 0
 	// Frustum test
 	//
-	if(!frustumTest(g_unis.m_clipPlanes, aabb.m_sphereCenter, aabb.m_sphereRadius))
+	if(!frustumTest(g_unis.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius))
 	{
 		return;
 	}
 
 	// Screen-space AABB calculation and checking
 	//
-	const Vec3 A = aabb.m_sphereCenter - aabb.m_aabbExtend;
-	const Vec3 B = aabb.m_sphereCenter + aabb.m_aabbExtend;
+	const Vec3 A = bvolume.m_sphereCenter - bvolume.m_aabbExtend;
+	const Vec3 B = bvolume.m_sphereCenter + bvolume.m_aabbExtend;
 	const Vec3 aabbEdges[8u] = {Vec3(A.x, A.y, A.z), Vec3(B.x, A.y, A.z), Vec3(A.x, B.y, A.z), Vec3(A.x, A.y, B.z),
 								Vec3(B.x, B.y, A.z), Vec3(B.x, A.y, B.z), Vec3(A.x, B.y, B.z), Vec3(B.x, B.y, B.z)};
 
@@ -150,7 +150,7 @@ struct DrawIndirectArgsWithPadding
 	}
 #	endif // HZB_TEST
 #else // DISTANCE_TEST == 1
-	if(!testSphereSphereCollision(aabb.m_sphereCenter, aabb.m_sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius))
+	if(!testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius))
 	{
 		return;
 	}
@@ -158,7 +158,7 @@ struct DrawIndirectArgsWithPadding
 
 	// Compute the LOD
 	//
-	const F32 distFromLodPoint = length(aabb.m_sphereCenter - g_unis.m_lodReferencePoint) - aabb.m_sphereRadius;
+	const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_unis.m_lodReferencePoint) - bvolume.m_sphereRadius;
 
 	U32 lod;
 	if(distFromLodPoint < g_unis.m_maxLodDistances[0])
@@ -176,8 +176,8 @@ struct DrawIndirectArgsWithPadding
 
 	// Add the drawcall
 	//
-	const U32 renderStateBucket = aabb.m_renderableIndexAndRenderStateBucket & ((1u << 12u) - 1u);
-	const U32 renderableIdx = aabb.m_renderableIndexAndRenderStateBucket >> 12u;
+	const U32 renderStateBucket = bvolume.m_renderableIndexAndRenderStateBucket & ((1u << 12u) - 1u);
+	const U32 renderableIdx = bvolume.m_renderableIndexAndRenderStateBucket >> 12u;
 
 	U32 indirectIdx;
 	InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, indirectIdx);
@@ -252,7 +252,7 @@ struct DrawIndirectArgsWithPadding
 #if GATHER_AABBS
 	U32 index;
 	InterlockedAdd(g_visibleAabbIndices[0], 1, index);
-	g_visibleAabbIndices[index + 1] = aabbIdx;
+	g_visibleAabbIndices[index + 1] = bvolumeIdx;
 #endif
 }
 

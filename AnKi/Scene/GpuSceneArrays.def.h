@@ -33,13 +33,13 @@ ANKI_CAT_TYPE(FogDensityVolume, GpuSceneFogDensityVolume, 0, g_minGpuSceneFogDen
 ANKI_CAT_SEPARATOR
 ANKI_CAT_TYPE(Renderable, GpuSceneRenderable, 0, g_minGpuSceneRenderablesCVar)
 ANKI_CAT_SEPARATOR
-ANKI_CAT_TYPE(RenderableAabbGBuffer, GpuSceneRenderableAabb, 0, g_minGpuSceneRenderablesCVar)
+ANKI_CAT_TYPE(RenderableBoundingVolumeGBuffer, GpuSceneRenderableBoundingVolume, 0, g_minGpuSceneRenderablesCVar)
 ANKI_CAT_SEPARATOR
-ANKI_CAT_TYPE(RenderableAabbForward, GpuSceneRenderableAabb, 1, g_minGpuSceneRenderablesCVar)
+ANKI_CAT_TYPE(RenderableBoundingVolumeForward, GpuSceneRenderableBoundingVolume, 1, g_minGpuSceneRenderablesCVar)
 ANKI_CAT_SEPARATOR
-ANKI_CAT_TYPE(RenderableAabbDepth, GpuSceneRenderableAabb, 2, g_minGpuSceneRenderablesCVar)
+ANKI_CAT_TYPE(RenderableBoundingVolumeDepth, GpuSceneRenderableBoundingVolume, 2, g_minGpuSceneRenderablesCVar)
 ANKI_CAT_SEPARATOR
-ANKI_CAT_TYPE(RenderableAabbRt, GpuSceneRenderableAabb, 3, g_minGpuSceneRenderablesCVar)
+ANKI_CAT_TYPE(RenderableBoundingVolumeRt, GpuSceneRenderableBoundingVolume, 3, g_minGpuSceneRenderablesCVar)
 
 #undef ANKI_TRF_ARR
 #undef ANKI_MESH_ARR

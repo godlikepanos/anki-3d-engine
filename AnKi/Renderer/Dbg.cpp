@@ -173,7 +173,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 	// GBuffer renderables
 	{
-		const U32 allAabbCount = GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getElementCount();
+		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_renderablesProg);
 		variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(m_ditheredDepthTestOn != 0));
@@ -195,7 +195,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		cmdb.setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
 		cmdb.bindIndexBuffer(m_cubeIndicesBuffer.get(), 0, IndexType::kU16);
 
-		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableAabbGBuffer::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferOffsetRange());
 		cmdb.bindStorageBuffer(0, 3, getRenderer().getGBuffer().getVisibleAabbsBuffer());
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
@@ -203,9 +203,9 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 	// Forward shading renderables
 	{
-		const U32 allAabbCount = GpuSceneArrays::RenderableAabbForward::getSingleton().getElementCount();
+		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
 
-		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableAabbForward::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
 		cmdb.bindStorageBuffer(0, 3, getRenderer().getForwardShading().getVisibleAabbsBuffer());
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);

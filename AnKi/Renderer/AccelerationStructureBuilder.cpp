@@ -42,7 +42,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	// Create the TLAS
 	AccelerationStructureInitInfo initInf("Main TLAS");
 	initInf.m_type = AccelerationStructureType::kTopLevel;
-	initInf.m_topLevel.m_indirectArgs.m_maxInstanceCount = GpuSceneArrays::RenderableAabbRt::getSingleton().getElementCount();
+	initInf.m_topLevel.m_indirectArgs.m_maxInstanceCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 	initInf.m_topLevel.m_indirectArgs.m_instancesBuffer = visOut.m_instancesBuffer.m_buffer;
 	initInf.m_topLevel.m_indirectArgs.m_instancesBufferOffset = visOut.m_instancesBuffer.m_offset;
 	m_runCtx.m_tlas = GrManager::getSingleton().newAccelerationStructure(initInf);

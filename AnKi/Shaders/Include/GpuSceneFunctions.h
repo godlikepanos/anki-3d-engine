@@ -19,9 +19,9 @@ inline GpuSceneRenderableVertex unpackGpuSceneRenderableVertex(UVec4 x)
 	return o;
 }
 
-inline GpuSceneRenderableAabb initGpuSceneRenderableAabb(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex, U32 renderStateBucket)
+inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex, U32 renderStateBucket)
 {
-	GpuSceneRenderableAabb gpuVolume;
+	GpuSceneRenderableBoundingVolume gpuVolume;
 
 	gpuVolume.m_sphereCenter = (aabbMin + aabbMax) * 0.5f;
 	gpuVolume.m_aabbExtend = aabbMax - gpuVolume.m_sphereCenter;
