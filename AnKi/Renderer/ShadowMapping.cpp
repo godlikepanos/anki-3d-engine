@@ -354,23 +354,29 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
 		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
-		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeViewProjMats[0], cascadeCount},
+		Array<Mat4, kMaxShadowCascades> cascadeProjMats;
+		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeProjMats[0], cascadeCount},
 										 {&cascadeViewMats[0], cascadeCount});
-
-		// HZB generation
-		Array<RenderTargetHandle, kMaxShadowCascades> hzbRts;
-		Array<UVec2, kMaxShadowCascades> hzbSizes;
-		Array<Mat4, kMaxShadowCascades> dstViewProjectionMats;
 		for(U cascade = 0; cascade < cascadeCount; ++cascade)
 		{
-			hzbRts[cascade] = rgraph.newRenderTarget(m_cascadeHzbRtDescrs[cascade]);
-			hzbSizes[cascade] = UVec2(m_cascadeHzbRtDescrs[cascade].m_width, m_cascadeHzbRtDescrs[cascade].m_height);
-			dstViewProjectionMats[cascade] = cascadeViewProjMats[cascade];
+			cascadeViewProjMats[cascade] = cascadeProjMats[cascade] * Mat4(cascadeViewMats[cascade], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		}
 
-		getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(
-			getRenderer().getGBuffer().getDepthRt(), getRenderer().getInternalResolution(), {hzbRts.getBegin(), cascadeCount},
-			{dstViewProjectionMats.getBegin(), cascadeCount}, {hzbSizes.getBegin(), cascadeCount}, ctx.m_matrices.m_invertedViewProjection, rgraph);
+		// HZB generation
+		HzbDirectionalLightInput hzbGenIn;
+		hzbGenIn.m_cascadeCount = cascadeCount;
+		hzbGenIn.m_depthBufferRt = getRenderer().getGBuffer().getDepthRt();
+		hzbGenIn.m_depthBufferRtSize = getRenderer().getInternalResolution();
+		hzbGenIn.m_cameraInverseViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;
+		for(U cascade = 0; cascade < cascadeCount; ++cascade)
+		{
+			hzbGenIn.m_cascades[cascade].m_hzbRt = rgraph.newRenderTarget(m_cascadeHzbRtDescrs[cascade]);
+			hzbGenIn.m_cascades[cascade].m_hzbRtSize = UVec2(m_cascadeHzbRtDescrs[cascade].m_width, m_cascadeHzbRtDescrs[cascade].m_height);
+			hzbGenIn.m_cascades[cascade].m_viewMatrix = cascadeViewMats[cascade];
+			hzbGenIn.m_cascades[cascade].m_projectionMatrix = cascadeProjMats[cascade];
+		}
+
+		getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(hzbGenIn, rgraph);
 
 		// Vis testing
 		for(U cascade = 0; cascade < cascadeCount; ++cascade)
@@ -388,7 +394,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			visIn.m_lodDistances = lodDistances;
-			visIn.m_hzbRt = &hzbRts[cascade];
+			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
 			visIn.m_rgraph = &rgraph;
 
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, work.m_visOut);

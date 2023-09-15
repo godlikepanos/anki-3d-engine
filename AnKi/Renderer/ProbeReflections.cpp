@@ -417,14 +417,17 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	Array<GpuVisibilityOutput, 6> shadowVisOuts;
 	Array<Mat4, 6> cascadeViewProjMats;
 	Array<Mat3x4, 6> cascadeViewMats;
+	Array<Mat4, 6> cascadeProjMats;
 	if(doShadows)
 	{
 		for(U i = 0; i < 6; ++i)
 		{
 			constexpr U32 kCascadeCount = 1;
 			dirLightc->computeCascadeFrustums(frustums[i], Array<F32, kCascadeCount>{probeToRefresh->getShadowsRenderRadius()},
-											  WeakArray<Mat4>(&cascadeViewProjMats[i], kCascadeCount),
+											  WeakArray<Mat4>(&cascadeProjMats[i], kCascadeCount),
 											  WeakArray<Mat3x4>(&cascadeViewMats[i], kCascadeCount));
+
+			cascadeViewProjMats[i] = cascadeProjMats[i] * Mat4(cascadeViewMats[i], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
 

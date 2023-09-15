@@ -204,15 +204,15 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
-void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeViewProjMats,
+void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeProjMats,
 											WeakArray<Mat3x4> cascadeViewMats) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
 	ANKI_ASSERT(m_shadow);
-	ANKI_ASSERT(cascadeViewProjMats.getSize() <= kMaxShadowCascades && cascadeViewProjMats.getSize() > 0);
-	ANKI_ASSERT(cascadeDistances.getSize() == cascadeViewProjMats.getSize());
+	ANKI_ASSERT(cascadeProjMats.getSize() <= kMaxShadowCascades && cascadeProjMats.getSize() > 0);
+	ANKI_ASSERT(cascadeDistances.getSize() == cascadeProjMats.getSize());
 
-	const U32 shadowCascadeCount = cascadeViewProjMats.getSize();
+	const U32 shadowCascadeCount = cascadeProjMats.getSize();
 
 	// Compute the texture matrices
 	if(primaryFrustum.getFrustumType() == FrustumType::kPerspective)
@@ -324,12 +324,8 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			}
 
 			// Write the results
-			cascadeViewProjMats[cascade] = cascadeProjMat * cascadeViewMat;
-
-			if(cascade < cascadeViewMats.getSize())
-			{
-				cascadeViewMats[cascade] = Mat3x4(cascadeViewMat);
-			}
+			cascadeProjMats[cascade] = cascadeProjMat;
+			cascadeViewMats[cascade] = Mat3x4(cascadeViewMat);
 		}
 	}
 	else

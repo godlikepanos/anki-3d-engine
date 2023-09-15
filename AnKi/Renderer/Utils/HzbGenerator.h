@@ -12,6 +12,28 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+/// @memberof HzbGenerator
+class HzbDirectionalLightInput
+{
+public:
+	class Cascade
+	{
+	public:
+		RenderTargetHandle m_hzbRt;
+		UVec2 m_hzbRtSize;
+		Mat3x4 m_viewMatrix;
+		Mat4 m_projectionMatrix;
+	};
+
+	RenderTargetHandle m_depthBufferRt;
+	UVec2 m_depthBufferRtSize;
+
+	Mat4 m_cameraInverseViewProjectionMatrix;
+
+	Array<Cascade, kMaxShadowCascades> m_cascades;
+	U32 m_cascadeCount = 0;
+};
+
 /// Hierarchical depth generator.
 class HzbGenerator : public RendererObject
 {
@@ -21,9 +43,7 @@ public:
 	void populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
 							 RenderGraphDescription& rgraph, CString customName = {}) const;
 
-	void populateRenderGraphDirectionalLight(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, ConstWeakArray<RenderTargetHandle> dstHzbRts,
-											 ConstWeakArray<Mat4> dstViewProjectionMats, ConstWeakArray<UVec2> dstHzbSizes,
-											 const Mat4& invViewProjMat, RenderGraphDescription& rgraph) const;
+	void populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphDescription& rgraph) const;
 
 private:
 	class DispatchInput

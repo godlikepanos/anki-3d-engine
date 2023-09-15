@@ -195,18 +195,15 @@ void HzbGenerator::populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcD
 	populateRenderGraphInternal({&in, 1}, 0, customName, rgraph);
 }
 
-void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize,
-													   ConstWeakArray<RenderTargetHandle> dstHzbRts, ConstWeakArray<Mat4> dstViewProjectionMats,
-													   ConstWeakArray<UVec2> dstHzbSizes, const Mat4& invViewProjMat,
-													   RenderGraphDescription& rgraph) const
+void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphDescription& rgraph) const
 {
-	RenderTargetHandle maxDepthRt;
-	constexpr U32 kTileSize = 64;
-	const UVec2 maxDepthRtSize((srcDepthRtSize.x() + kTileSize - 1) / kTileSize, (srcDepthRtSize.y() + kTileSize - 1) / kTileSize);
-	const U32 cascadeCount = dstHzbRts.getSize();
+	const U32 cascadeCount = in.m_cascadeCount;
 	ANKI_ASSERT(cascadeCount > 0);
 
 	// Generate a temp RT with the max depth of each 64x64 tile of the depth buffer
+	RenderTargetHandle maxDepthRt;
+	constexpr U32 kTileSize = 64;
+	const UVec2 maxDepthRtSize = (in.m_depthBufferRtSize + kTileSize - 1) / kTileSize;
 	{
 		RenderTargetDescription maxDepthRtDescr("HZB max tile depth");
 		maxDepthRtDescr.m_width = maxDepthRtSize.x();
@@ -217,13 +214,13 @@ void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDep
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB max tile depth");
 
-		pass.newTextureDependency(srcDepthRt, TextureUsageBit::kSampledCompute, DepthStencilAspectBit::kDepth);
+		pass.newTextureDependency(in.m_depthBufferRt, TextureUsageBit::kSampledCompute, DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kImageComputeWrite);
 
-		pass.setWork([this, srcDepthRt, maxDepthRt, maxDepthRtSize, srcDepthRtSize](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, depthBufferRt = in.m_depthBufferRt, maxDepthRt, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			rgraphCtx.bindTexture(0, 0, srcDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(0, 0, depthBufferRt, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindImage(0, 2, maxDepthRt);
 
@@ -237,9 +234,11 @@ void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDep
 	Array<RenderTargetHandle, kMaxShadowCascades> depthRts;
 	for(U32 i = 0; i < cascadeCount; ++i)
 	{
+		const HzbDirectionalLightInput::Cascade& cascade = in.m_cascades[i];
+
 		RenderTargetDescription depthRtDescr("HZB boxes depth");
-		depthRtDescr.m_width = dstHzbSizes[i].x() * 2;
-		depthRtDescr.m_height = dstHzbSizes[i].y() * 2;
+		depthRtDescr.m_width = cascade.m_hzbRtSize.x() * 2;
+		depthRtDescr.m_height = cascade.m_hzbRtSize.y() * 2;
 		depthRtDescr.m_format = Format::kD16_Unorm;
 		depthRtDescr.bake();
 		depthRts[i] = rgraph.newRenderTarget(depthRtDescr);
@@ -251,8 +250,9 @@ void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDep
 		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(depthRts[i], TextureUsageBit::kFramebufferWrite, DepthStencilAspectBit::kDepth);
 
-		pass.setWork([this, maxDepthRt, invViewProjMat, lightViewProjMat = dstViewProjectionMats[i], viewport = dstHzbSizes[i] * 2,
-					  maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this, maxDepthRt, invViewProjMat = in.m_cameraInverseViewProjectionMatrix,
+					  lightViewProjMat = cascade.m_projectionMatrix * Mat4(cascade.m_viewMatrix, Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
+					  viewport = cascade.m_hzbRtSize * 2, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.setDepthCompareOperation(CompareOperation::kGreater);
@@ -285,10 +285,12 @@ void HzbGenerator::populateRenderGraphDirectionalLight(RenderTargetHandle srcDep
 	Array<DispatchInput, kMaxShadowCascades> inputs;
 	for(U32 i = 0; i < cascadeCount; ++i)
 	{
-		inputs[i].m_dstHzbRt = dstHzbRts[i];
-		inputs[i].m_dstHzbRtSize = dstHzbSizes[i];
+		const HzbDirectionalLightInput::Cascade& cascade = in.m_cascades[i];
+
+		inputs[i].m_dstHzbRt = cascade.m_hzbRt;
+		inputs[i].m_dstHzbRtSize = cascade.m_hzbRtSize;
 		inputs[i].m_srcDepthRt = depthRts[i];
-		inputs[i].m_srcDepthRtSize = dstHzbSizes[i] * 2;
+		inputs[i].m_srcDepthRtSize = cascade.m_hzbRtSize * 2;
 	}
 	populateRenderGraphInternal({&inputs[0], cascadeCount}, 1, "HZB generation shadow cascades", rgraph);
 }
