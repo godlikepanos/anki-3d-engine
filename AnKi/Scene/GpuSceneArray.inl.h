@@ -60,6 +60,11 @@ GpuSceneArrayAllocation<TGpuSceneObject, kId> GpuSceneArray<TGpuSceneObject, kId
 		}
 	}
 
+	if(idx == kMaxU32)
+	{
+		ANKI_SCENE_LOGF("Reached the limit of GPU scene objects");
+	}
+
 	ANKI_ASSERT(idx < m_inUseIndicesMask.getSize() * 64);
 
 	ANKI_ASSERT(m_inUseIndicesMask[idx / 64].get(idx % 64) == false);
