@@ -286,8 +286,8 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 
 			// View
 			const Vec3 zAxis = m_worldTransform.getRotation().getZAxis();
-			const Vec3 xAxis = Vec3(0.0f, 1.0f, 0.0f).cross(zAxis);
-			const Vec3 yAxis = zAxis.cross(xAxis);
+			const Vec3 xAxis = Vec3(0.0f, 1.0f, 0.0f).cross(zAxis).getNormalized();
+			const Vec3 yAxis = zAxis.cross(xAxis).getNormalized();
 			Mat3x4 rot;
 			rot.setXAxis(xAxis);
 			rot.setYAxis(yAxis);

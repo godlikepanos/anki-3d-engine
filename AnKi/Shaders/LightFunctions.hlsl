@@ -528,7 +528,7 @@ UVec2 computeShadowCascadeIndex2(F32 distance, Vec4 cascadeDistances, U32 shadow
 	const F32 maxDist = cascadeDistances[cascade];
 
 	factor = (distance - minDist) / max(kEpsilonF32, maxDist - minDist);
-	factor = pow(factor, 16.0f);
+	factor = pow(factor, 16.0f); // WARNING: Need to change the C++ code if you change this
 
 	return UVec2(cascade, nextCascade);
 }

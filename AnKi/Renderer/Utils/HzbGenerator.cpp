@@ -236,6 +236,35 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 	{
 		const HzbDirectionalLightInput::Cascade& cascade = in.m_cascades[i];
 
+		// Compute the cascade's min and max depth as seen by the camera
+		F32 cascadeMinDepth, cascadeMaxDepth;
+		{
+			if(i > 0)
+			{
+				// Do the reverse of computeShadowCascadeIndex2 to find the actual distance of this cascade. computeShadowCascadeIndex2 makes the min
+				// distance of a cascade to become even less. See https://www.desmos.com/calculator/g1ibye6ebg
+				// F = ((x-m)/(M-m))^16 and solving for x we have the new minDist
+				const F32 m = (i >= 2) ? in.m_cascades[i - 2].m_cascadeMaxDistance : 0.0f; // Prev cascade min dist
+				const F32 M = in.m_cascades[i - 1].m_cascadeMaxDistance; // Prev cascade max dist
+				constexpr F32 F = 0.01f; // Desired factor
+				const F32 minDist = pow(F, 1.0f / 16.0f) * (M - m) + m;
+				ANKI_ASSERT(minDist < M);
+
+				Vec4 v4 = in.m_cameraProjectionMatrix * Vec4(0.0f, 0.0f, -minDist, 1.0f);
+				cascadeMinDepth = saturate(v4.z() / v4.w());
+			}
+			else
+			{
+				cascadeMinDepth = 0.0f;
+			}
+
+			const F32 maxDist = cascade.m_cascadeMaxDistance;
+			const Vec4 v4 = in.m_cameraProjectionMatrix * Vec4(0.0f, 0.0f, -maxDist, 1.0f);
+			cascadeMaxDepth = saturate(v4.z() / v4.w());
+
+			ANKI_ASSERT(cascadeMinDepth <= cascadeMaxDepth);
+		}
+
 		RenderTargetDescription depthRtDescr("HZB boxes depth");
 		depthRtDescr.m_width = cascade.m_hzbRtSize.x() * 2;
 		depthRtDescr.m_height = cascade.m_hzbRtSize.y() * 2;
@@ -252,7 +281,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 		pass.setWork([this, maxDepthRt, invViewProjMat = in.m_cameraInverseViewProjectionMatrix,
 					  lightViewProjMat = cascade.m_projectionMatrix * Mat4(cascade.m_viewMatrix, Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
-					  viewport = cascade.m_hzbRtSize * 2, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
+					  viewport = cascade.m_hzbRtSize * 2, maxDepthRtSize, cascadeMinDepth, cascadeMaxDepth](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.setDepthCompareOperation(CompareOperation::kGreater);
@@ -266,9 +295,16 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 			struct Uniforms
 			{
 				Mat4 m_reprojectionMat;
+
+				F32 m_cascadeMinDepth;
+				F32 m_cascadeMaxDepth;
+				F32 m_padding0;
+				F32 m_padding1;
 			} unis;
 
 			unis.m_reprojectionMat = lightViewProjMat * invViewProjMat;
+			unis.m_cascadeMinDepth = cascadeMinDepth;
+			unis.m_cascadeMaxDepth = cascadeMaxDepth;
 
 			cmdb.setPushConstants(&unis, sizeof(unis));
 

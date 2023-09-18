@@ -14,6 +14,11 @@
 struct Uniforms
 {
 	Mat4 m_reprojectionMat;
+
+	F32 m_cascadeMinDepth;
+	F32 m_cascadeMaxDepth;
+	F32 m_padding0;
+	F32 m_padding1;
 };
 
 [[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
@@ -26,11 +31,18 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 	const U32 tileX = svInstanceId % maxDepthRtSize.x;
 	const U32 tileY = svInstanceId / maxDepthRtSize.x;
 
-	const F32 maxDepth = g_maxDepthRt[UVec2(tileX, tileY)].x;
+	const F32 maxDepth = min(g_maxDepthRt[UVec2(tileX, tileY)].x, g_unis.m_cascadeMaxDepth);
+	const F32 minDepth = g_unis.m_cascadeMinDepth;
+
+	if(maxDepth <= minDepth)
+	{
+		// Tile's depth is outside the cascade, make the box digenerate
+		return 0.0f;
+	}
 
 	// Z
 	Vec3 ndc;
-	ndc.z = (svVertexId <= 3) ? 0.0 : maxDepth;
+	ndc.z = (svVertexId <= 3) ? minDepth : maxDepth;
 
 	// X
 	ndc.x = F32(tileX);

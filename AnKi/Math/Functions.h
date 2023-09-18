@@ -154,6 +154,12 @@ inline constexpr T clamp(T v, T minv, T maxv)
 	return min<T>(max<T>(minv, v), maxv);
 }
 
+template<typename T>
+inline constexpr T saturate(T v)
+{
+	return clamp<T>(v, T(0), T(1));
+}
+
 /// Returns 1 or -1 based on the sign
 template<typename T>
 inline constexpr T sign(T v)

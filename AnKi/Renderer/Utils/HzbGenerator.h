@@ -23,11 +23,14 @@ public:
 		UVec2 m_hzbRtSize;
 		Mat3x4 m_viewMatrix;
 		Mat4 m_projectionMatrix;
+
+		F32 m_cascadeMaxDistance = -1.0f;
 	};
 
 	RenderTargetHandle m_depthBufferRt;
 	UVec2 m_depthBufferRtSize;
 
+	Mat4 m_cameraProjectionMatrix;
 	Mat4 m_cameraInverseViewProjectionMatrix;
 
 	Array<Cascade, kMaxShadowCascades> m_cascades;
