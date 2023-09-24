@@ -359,6 +359,36 @@ Vec4 mul(Mat4 m, Vec4 v)
 	return Vec4(a, b, c, d);
 }
 
+Mat4 mul(Mat4 a_, Mat4 b_)
+{
+	const Vec4 a[4] = {a_.m_row0, a_.m_row1, a_.m_row2, a_.m_row3};
+	const Vec4 b[4] = {b_.m_row0, b_.m_row1, b_.m_row2, b_.m_row3};
+	Vec4 c[4];
+
+	[unroll] for(U32 i = 0; i < 4; i++)
+	{
+		Vec4 t1, t2;
+
+		t1 = a[i][0];
+		t2 = b[0] * t1;
+		t1 = a[i][1];
+		t2 += b[1] * t1;
+		t1 = a[i][2];
+		t2 += b[2] * t1;
+		t1 = a[i][3];
+		t2 += b[3] * t1;
+
+		c[i] = t2;
+	}
+
+	Mat4 o;
+	o.m_row0 = c[0];
+	o.m_row1 = c[1];
+	o.m_row2 = c[2];
+	o.m_row3 = c[3];
+	return o;
+}
+
 Vec3 mul(Mat3x4 m, Vec4 v)
 {
 	const F32 a = dot(m.m_row0, v);

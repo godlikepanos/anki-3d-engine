@@ -1240,6 +1240,7 @@ public:
 #endif
 
 	/// Calculate a perspective projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
+	/// Same as D3DXMatrixPerspectiveFovRH
 	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	[[nodiscard]] static TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
 	{
@@ -1269,6 +1270,7 @@ public:
 	}
 
 	/// Calculate an orthographic projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
+	/// Same as D3DXMatrixOrthoOffCenterRH.
 	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	[[nodiscard]] static TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
 	{

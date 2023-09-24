@@ -161,7 +161,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
 		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
 
-		Array<Vec4, 4> points;
+		Array<Vec3, 4> points;
 		computeEdgesOfFrustum(m_spot.m_distance, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
 		for(U32 i = 0; i < 4; ++i)
 		{
@@ -223,40 +223,33 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 
 		// Compute a sphere per cascade
 		Array<Sphere, kMaxShadowCascades> boundingSpheres;
+		Array<Vec3, 4> prevFarPlaneEdges;
 		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
-			// Compute the center of the sphere
-			//           ^ z
-			//           |
-			// ----------|---------- A(a, -f)
-			//  \        |        /
-			//   \       |       /
-			//    \    C(0,z)   /
-			//     \     |     /
-			//      \    |    /
-			//       \---|---/ B(b, -n)
-			//        \  |  /
-			//         \ | /
-			//           v
-			// --------------------------> x
-			//           |
-			// The square distance of A-C is equal to B-C. Solve the equation to find the z.
-			const F32 f = cascadeDistances[cascade]; // Cascade far
-			const F32 n = (cascade == 0) ? primaryFrustum.getNear() : cascadeDistances[cascade - 1]; // Cascade near
-			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
-			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
-			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
-			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength()) <= kEpsilonf * 100.0f);
+			if(cascade == 0)
+			{
+				Array<Vec3, 5> edgePoints;
+				edgePoints[0] = Vec3(0.0f);
 
-			Vec3 C(0.0f, 0.0f, z); // Sphere center
+				computeEdgesOfFrustum(cascadeDistances[cascade], fovX, fovY, &edgePoints[1]);
 
-			// Compute the radius of the sphere
-			const Vec3 A(a, tan(fovY / 2.0f) * f, -f);
-			const F32 r = (A - C).getLength();
+				boundingSpheres[cascade] = computeBoundingSphere(edgePoints);
 
-			// Set the sphere
-			boundingSpheres[cascade].setRadius(r);
-			boundingSpheres[cascade].setCenter(primaryFrustum.getWorldTransform().transform(C));
+				memcpy(&prevFarPlaneEdges[0], &edgePoints[1], sizeof(prevFarPlaneEdges));
+			}
+			else
+			{
+				Array<Vec3, 8> edgePoints;
+
+				computeEdgesOfFrustum(cascadeDistances[cascade], fovX, fovY, &edgePoints[0]);
+				memcpy(&edgePoints[4], &prevFarPlaneEdges[0], sizeof(prevFarPlaneEdges));
+
+				boundingSpheres[cascade] = computeBoundingSphere(edgePoints);
+
+				memcpy(&prevFarPlaneEdges[0], &edgePoints[0], sizeof(prevFarPlaneEdges));
+			}
+
+			boundingSpheres[cascade].setCenter(primaryFrustum.getWorldTransform().transform(boundingSpheres[cascade].getCenter()));
 		}
 
 		// Compute the matrices

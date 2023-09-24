@@ -239,7 +239,7 @@ private:
 		F32 m_fovX;
 		F32 m_fovY;
 		Array<Vec4, 5> m_edgesW;
-		Array<Vec4, 4> m_edgesL; ///< Don't need the eye point.
+		Array<Vec3, 4> m_edgesL; ///< Don't need the eye point.
 		ConvexHullShape m_hull;
 	};
 

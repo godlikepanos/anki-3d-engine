@@ -147,7 +147,6 @@ public:
 private:
 	const char* m_name;
 	TracerEventHandle m_handle;
-	Tracer* m_tracer;
 };
 
 #	define ANKI_TRACE_SCOPED_EVENT(name_) TracerScopedEvent _tse##name_(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)))

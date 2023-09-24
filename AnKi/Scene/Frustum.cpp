@@ -122,10 +122,10 @@ Bool Frustum::update()
 		if(m_frustumType == FrustumType::kPerspective)
 		{
 			m_perspective.m_edgesW[0] = m_worldTransform.getOrigin();
-			m_perspective.m_edgesW[1] = m_worldTransform.transform(m_perspective.m_edgesL[0]);
-			m_perspective.m_edgesW[2] = m_worldTransform.transform(m_perspective.m_edgesL[1]);
-			m_perspective.m_edgesW[3] = m_worldTransform.transform(m_perspective.m_edgesL[2]);
-			m_perspective.m_edgesW[4] = m_worldTransform.transform(m_perspective.m_edgesL[3]);
+			m_perspective.m_edgesW[1] = m_worldTransform.transform(m_perspective.m_edgesL[0].xyz0());
+			m_perspective.m_edgesW[2] = m_worldTransform.transform(m_perspective.m_edgesL[1].xyz0());
+			m_perspective.m_edgesW[3] = m_worldTransform.transform(m_perspective.m_edgesL[2].xyz0());
+			m_perspective.m_edgesW[4] = m_worldTransform.transform(m_perspective.m_edgesL[3].xyz0());
 
 			m_perspective.m_hull = ConvexHullShape(&m_perspective.m_edgesW[0], m_perspective.m_edgesW.getSize());
 		}

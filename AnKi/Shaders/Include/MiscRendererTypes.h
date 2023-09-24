@@ -124,12 +124,4 @@ struct VolumetricLightingUniforms
 	F32 m_maxZSplitsToProcessf;
 };
 
-struct HzbUniforms
-{
-	Mat4 m_reprojectionMatrix; ///< For the main camera.
-	Mat4 m_invertedViewProjectionMatrix; ///< NDC to world for the main camera.
-	Mat4 m_projectionMatrix;
-	Mat4 m_shadowCascadeViewProjectionMatrices[kMaxShadowCascades];
-};
-
 ANKI_END_NAMESPACE

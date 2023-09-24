@@ -133,11 +133,23 @@ template<typename T>
 using RWTexture2D = Texture2D<T>;
 
 template<typename T>
+using Texture3D = Texture2D<T>;
+
+template<typename T>
+using RWTexture3D = Texture2D<T>;
+
+template<typename T>
 struct StructuredBuffer
 {
 	T& operator[](U32 index);
 
 	void GetDimensions(U32& length, U32& stride);
+};
+
+template<typename T>
+struct Buffer
+{
+	T& operator[](U32 index);
 };
 
 template<typename T>
@@ -181,6 +193,12 @@ T saturate(T a);
 template<typename T>
 float dot(T a, T b);
 
+U32 asuint(float f);
+
+F32 asfloat(U32 u);
+
+U32 NonUniformResourceIndex(U32 x);
+
 // Atomics
 
 template<typename T>
@@ -188,6 +206,18 @@ void InterlockedAdd(T dest, T value, T& originalValue);
 
 template<typename T>
 void InterlockedAdd(T dest, T value);
+
+template<typename T>
+void InterlockedMin(T dest, T value, T& originalValue);
+
+template<typename T>
+void InterlockedMin(T dest, T value);
+
+template<typename T>
+void InterlockedMax(T dest, T value, T& originalValue);
+
+template<typename T>
+void InterlockedMax(T dest, T value);
 
 template<typename T>
 void InterlockedExchange(T dest, T value, T& originalValue);
