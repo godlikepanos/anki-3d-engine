@@ -121,6 +121,12 @@ void StatsUiNode::draw(CanvasPtr& canvas)
 					{
 						category = c;
 						ImGui::Text("-- %s --", kStatCategoryTexts[c].cstr());
+
+						// Hack
+						if(c == StatCategory::kMisc)
+						{
+							ImGui::Text("Frame: %zu", GlobalFrameIndex::getSingleton().m_value);
+						}
 					}
 
 					if(!!(flags & StatFlag::kBytes))

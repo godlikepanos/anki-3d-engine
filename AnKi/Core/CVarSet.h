@@ -147,14 +147,21 @@ public:
 
 	void set(CString name)
 	{
-		ANKI_ASSERT(name.getLength() > 0);
 		if(m_str)
 		{
 			free(m_str);
 		}
 		const U len = name.getLength();
 		m_str = static_cast<Char*>(malloc(len + 1));
-		memcpy(m_str, name.cstr(), len + 1);
+
+		if(len == 0)
+		{
+			m_str[0] = '\0';
+		}
+		else
+		{
+			memcpy(m_str, name.cstr(), len + 1);
+		}
 	}
 
 	CString get() const

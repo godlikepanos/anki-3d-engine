@@ -27,6 +27,7 @@ static BoolCVar g_vrsCVar(CVarSubsystem::kGr, "Vrs", false, "Enable or not VRS")
 static BoolCVar g_asyncComputeCVar(CVarSubsystem::kGr, "AsyncCompute", true, "Enable or not async compute");
 static NumericCVar<U8> g_vkMinorCVar(CVarSubsystem::kGr, "VkMinor", 1, 1, 1, "Vulkan minor version");
 static NumericCVar<U8> g_vkMajorCVar(CVarSubsystem::kGr, "VkMajor", 1, 1, 1, "Vulkan major version");
+static StringCVar g_vkLayers(CVarSubsystem::kGr, "VkLayers", "", "VK layers to enable. Seperated by :");
 
 // DLSS related
 #define ANKI_VK_NVX_BINARY_IMPORT "VK_NVX_binary_import"
@@ -238,6 +239,7 @@ Error GrManagerImpl::initInstance()
 
 	// Instance layers
 	GrDynamicArray<const char*> layersToEnable;
+	GrList<GrString> layersToEnableStrings;
 	{
 		U32 layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -254,10 +256,13 @@ Error GrManagerImpl::initInstance()
 				ANKI_VK_LOGV("\t%s", layer.layerName);
 				CString layerName = layer.layerName;
 
-				static constexpr const Char* kValidationName = "VK_LAYER_KHRONOS_validation";
-				if((g_validationCVar.get() || g_debugMarkersCVar.get()) && layerName == kValidationName)
+				Bool enableLayer = (g_validationCVar.get() || g_debugMarkersCVar.get()) && layerName == "VK_LAYER_KHRONOS_validation";
+				enableLayer = enableLayer || (!g_vkLayers.get().isEmpty() && g_vkLayers.get().find(layerName) != CString::kNpos);
+
+				if(enableLayer)
 				{
-					layersToEnable.emplaceBack(kValidationName);
+					layersToEnableStrings.emplaceBack(layer.layerName);
+					layersToEnable.emplaceBack(layersToEnableStrings.getBack().cstr());
 				}
 			}
 		}
