@@ -226,6 +226,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows setup build SBT");
 
+		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kAccelerationStructureBuild);
+
 		rpass.setWork([this, sbtBuildIndirectArgsBuffer](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -271,7 +273,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_buildSbtGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
 			cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 			cmdb.bindStorageBuffer(0, 2, visibleRenderableIndicesBuff);
 			cmdb.bindStorageBuffer(0, 3, &m_rtLibraryGrProg->getShaderGroupHandlesGpuBuffer(), 0, kMaxPtrSize);

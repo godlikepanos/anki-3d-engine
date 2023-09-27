@@ -167,6 +167,9 @@ public:
 	/// The max combined size of shared variables (with paddings) in compute shaders.
 	PtrSize m_computeSharedMemorySize = 16_KB;
 
+	/// Alignment of the scratch buffer used in AS building.
+	U32 m_accelerationStructureBuildScratchOffsetAlignment = 0;
+
 	/// Each SBT record should be a multiple of this.
 	U32 m_sbtRecordAlignment = kMaxU32;
 

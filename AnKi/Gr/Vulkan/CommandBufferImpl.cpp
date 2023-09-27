@@ -486,57 +486,24 @@ void CommandBufferImpl::rebindDynamicState()
 	}
 }
 
-void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructure* as)
+void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset)
 {
+	ANKI_ASSERT(as && scratchBuffer);
+	ANKI_ASSERT(as->getBuildScratchBufferSize() + scratchBufferOffset <= scratchBuffer->getSize());
+
 	commandCommon();
 
 	// Get objects
 	const AccelerationStructureImpl& asImpl = static_cast<AccelerationStructureImpl&>(*as);
-
-	// Create the scrach buffer
-	BufferInitInfo bufferInit;
-	bufferInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
-	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
-	BufferPtr scratchBuff = getGrManagerImpl().newBuffer(bufferInit);
 
 	// Create the build info
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
 	VkAccelerationStructureBuildRangeInfoKHR rangeInfo;
-	asImpl.generateBuildInfo(scratchBuff->getGpuAddress(), buildInfo, rangeInfo);
+	asImpl.generateBuildInfo(scratchBuffer->getGpuAddress() + scratchBufferOffset, buildInfo, rangeInfo);
 
 	// Run the command
 	Array<const VkAccelerationStructureBuildRangeInfoKHR*, 1> pRangeInfos = {&rangeInfo};
 	vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]);
-}
-
-void CommandBufferImpl::buildAccelerationStructureIndirectInternal(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset,
-																   Buffer* rangeBuffer, PtrSize rangeBufferOffsset)
-{
-	ANKI_ASSERT(as && scratchBuffer && rangeBuffer);
-	ANKI_ASSERT(as->getBuildScratchBufferSize() + scratchBufferOffset <= scratchBuffer->getSize());
-	ANKI_ASSERT(rangeBufferOffsset + sizeof(AccelerationStructureBuildRangeInfo) <= rangeBuffer->getSize());
-
-	commandCommon();
-
-	// Get objects
-	const AccelerationStructureImpl& asImpl = static_cast<AccelerationStructureImpl&>(*as);
-
-	// Create the build info
-	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
-	[[maybe_unused]] VkAccelerationStructureBuildRangeInfoKHR rangeInfo;
-	asImpl.generateBuildInfo(scratchBuffer->getGpuAddress() + scratchBufferOffset, buildInfo, rangeInfo);
-
-	// Run the command
-	constexpr U32 kASCount = 1;
-	constexpr U32 kGeometryCount = 1;
-
-	Array<VkDeviceAddress, kASCount> rangeAddr = {rangeBuffer->getGpuAddress() + rangeBufferOffsset};
-	Array<U32, kASCount> strides = {sizeof(AccelerationStructureBuildRangeInfo)};
-
-	Array<U32, kGeometryCount> maxPrimitives = {asImpl.getMaxInstanceCount()};
-	Array<const U32*, kASCount> maxPrimitiveCountArr = {&maxPrimitives[0]};
-
-	vkCmdBuildAccelerationStructuresIndirectKHR(m_handle, kASCount, &buildInfo, &rangeAddr[0], &strides[0], &maxPrimitiveCountArr[0]);
 }
 
 #if ANKI_DLSS

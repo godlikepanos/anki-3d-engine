@@ -402,6 +402,33 @@ Mat3 transpose(Mat3 m)
 	return constructMatrixColumns(m.m_row0, m.m_row1, m.m_row2);
 }
 
+Mat3x4 combineTransformations(Mat3x4 a_, Mat3x4 b_)
+{
+	const Vec4 a[3] = {a_.m_row0, a_.m_row1, a_.m_row2};
+	const Vec4 b[3] = {b_.m_row0, b_.m_row1, b_.m_row2};
+	Vec4 c[3];
+
+	[unroll] for(U32 i = 0; i < 3; i++)
+	{
+		Vec4 t2;
+
+		t2 = b[0] * a[i][0];
+		t2 += b[1] * a[i][1];
+		t2 += b[2] * a[i][2];
+
+		const Vec4 v4 = Vec4(0.0f, 0.0f, 0.0f, a[i][3]);
+		t2 += v4;
+
+		c[i] = t2;
+	}
+
+	Mat3x4 o;
+	o.m_row0 = c[0];
+	o.m_row1 = c[1];
+	o.m_row2 = c[2];
+	return o;
+}
+
 // Common constants
 constexpr F32 kEpsilonF32 = 0.000001f;
 #	if ANKI_SUPPORTS_16BIT_TYPES
@@ -730,9 +757,6 @@ constexpr F32 kPi = 3.14159265358979323846f;
 //! == Common ==========================================================================================================
 ANKI_BEGIN_NAMESPACE
 
-/// The renderer will group drawcalls into instances up to this number.
-constexpr U32 kMaxInstanceCount = 64u;
-
 constexpr U32 kMaxLodCount = 3u;
 constexpr U32 kMaxShadowCascades = 4u;
 
@@ -827,15 +851,6 @@ struct DispatchIndirectArgs
 	U32 m_threadGroupCountX;
 	U32 m_threadGroupCountY;
 	U32 m_threadGroupCountZ;
-};
-
-/// Mirrors VkAccelerationStructureBuildRangeInfoKHR.
-struct AccelerationStructureBuildRangeInfo
-{
-	U32 m_primitiveCount; ///< For a TLAS it's the instance count.
-	U32 m_primitiveOffset;
-	U32 m_firstVertex;
-	U32 m_transformOffset;
 };
 
 /// Mirrors VkGeometryInstanceFlagBitsKHR

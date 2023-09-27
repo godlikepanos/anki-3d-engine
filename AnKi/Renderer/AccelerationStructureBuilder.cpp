@@ -59,10 +59,9 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 		rpass.newAccelerationStructureDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::kBuild);
 		rpass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kAccelerationStructureBuild);
 
-		rpass.setWork([this, scratchBuff, rangeBuff = visOut.m_rangeBuffer](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, scratchBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ASBuilder);
-			rgraphCtx.m_commandBuffer->buildAccelerationStructureIndirect(m_runCtx.m_tlas.get(), scratchBuff.m_buffer, scratchBuff.m_offset,
-																		  rangeBuff.m_buffer, rangeBuff.m_offset);
+			rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas.get(), scratchBuff.m_buffer, scratchBuff.m_offset);
 		});
 	}
 }

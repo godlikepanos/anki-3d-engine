@@ -324,6 +324,15 @@ private:
 										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
 	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, U64 hash) const;
+
+	template<typename TProps>
+	void getPhysicalDeviceProperties2(TProps& props) const
+	{
+		VkPhysicalDeviceProperties2 properties = {};
+		properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+		properties.pNext = &props;
+		vkGetPhysicalDeviceProperties2(m_physicalDevice, &properties);
+	}
 };
 /// @}
 

@@ -480,7 +480,16 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 Error GpuVisibilityAccelerationStructures::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", m_prog, m_grProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", m_visibilityProg, m_visibilityGrProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructuresZeroRemainingInstances.ankiprogbin", m_zeroRemainingInstancesProg,
+								 m_zeroRemainingInstancesGrProg));
+
+	BufferInitInfo inf("GpuVisibilityAccelerationStructuresCounters");
+	inf.m_size = sizeof(U32) * 2;
+	inf.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kTransferDestination;
+	m_counterBuffer = GrManager::getSingleton().newBuffer(inf);
+
+	zeroBuffer(m_counterBuffer.get());
 
 	return Error::kNone;
 }
@@ -491,38 +500,10 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	in.validate();
 	RenderGraphDescription& rgraph = *in.m_rgraph;
 
-	const Bool firstRunInFrame = m_lastFrameIdx != getRenderer().getFrameCount();
-	if(firstRunInFrame)
-	{
-		// 1st run in this frame, do some bookkeeping
-		m_lastFrameIdx = getRenderer().getFrameCount();
-		m_currentCounterBufferOffset = 0;
-
-		m_counterBufferHandle = {};
-	}
-
-	// Maybe create the counter buffer
-	const U32 counterBufferElementSize =
-		max<U32>(2 * sizeof(U32), GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
-	if(!m_counterBuffer.isCreated() || m_currentCounterBufferOffset + counterBufferElementSize > m_counterBuffer->getSize()) [[unlikely]]
-	{
-		BufferInitInfo inf("GpuVisibilityAccelerationStructuresCounters");
-		inf.m_size = (!m_counterBuffer.isCreated()) ? kInitialCounterBufferElementCount * counterBufferElementSize : m_counterBuffer->getSize() * 2;
-		inf.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kTransferDestination;
-		m_counterBuffer = GrManager::getSingleton().newBuffer(inf);
-
-		m_counterBufferHandle = rgraph.importBuffer(m_counterBuffer.get(), BufferUsageBit::kTransferDestination);
-
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GpuVisibilityNonRenderablesClearCounterBuffer");
-
-		pass.newBufferDependency(m_counterBufferHandle, BufferUsageBit::kTransferDestination);
-
-		pass.setWork([counterBuffer = m_counterBuffer](RenderPassWorkContext& rgraph) {
-			rgraph.m_commandBuffer->fillBuffer(counterBuffer.get(), 0, kMaxPtrSize, 0);
-		});
-
-		m_currentCounterBufferOffset = 0;
-	}
+#if ANKI_ASSERTIONS_ENABLED
+	ANKI_ASSERT(m_lastFrameIdx != getRenderer().getFrameCount());
+	m_lastFrameIdx = getRenderer().getFrameCount();
+#endif
 
 	// Allocate the transient buffers
 	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
@@ -532,57 +513,75 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 	out.m_renderableIndicesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate((aabbCount + 1) * sizeof(U32));
 
-	out.m_rangeBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(AccelerationStructureBuildRangeInfo));
+	const BufferOffsetRange zeroInstancesDispatchArgsBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs));
 
-	// Create the compute pass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
-
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
-	if(m_counterBufferHandle.isValid())
+	// Create vis pass
 	{
-		pass.newBufferDependency(m_counterBufferHandle, BufferUsageBit::kStorageComputeWrite);
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
+
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
+
+		pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
+					  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, indicesBuff = out.m_renderableIndicesBuffer,
+					  zeroInstancesDispatchArgsBuff](RenderPassWorkContext& rgraph) {
+			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_visibilityGrProg.get());
+
+			GpuVisibilityAccelerationStructuresUniforms unis;
+			Array<Plane, 6> planes;
+			extractClipPlanes(viewProjMat, planes);
+			for(U32 i = 0; i < 6; ++i)
+			{
+				unis.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+			}
+
+			unis.m_pointOfTest = pointOfTest;
+			unis.m_testRadius = testRadius;
+
+			ANKI_ASSERT(kMaxLodCount == 3);
+			unis.m_maxLodDistances[0] = lodDistances[0];
+			unis.m_maxLodDistances[1] = lodDistances[1];
+			unis.m_maxLodDistances[2] = kMaxF32;
+			unis.m_maxLodDistances[3] = kMaxF32;
+
+			cmdb.setPushConstants(&unis, sizeof(unis));
+
+			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+			cmdb.bindStorageBuffer(0, 3, instancesBuff);
+			cmdb.bindStorageBuffer(0, 4, indicesBuff);
+			cmdb.bindStorageBuffer(0, 5, m_counterBuffer.get(), 0, sizeof(U32) * 2);
+			cmdb.bindStorageBuffer(0, 6, zeroInstancesDispatchArgsBuff);
+
+			const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
+			dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
+		});
 	}
 
-	pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
-				  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, indicesBuff = out.m_renderableIndicesBuffer,
-				  rangeBuff = out.m_rangeBuffer, counterBufferOffset = m_currentCounterBufferOffset](RenderPassWorkContext& rgraph) {
-		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
+	// Zero remaining instances
+	{
+		Array<Char, 64> passName;
+		snprintf(passName.getBegin(), sizeof(passName), "%s: Zero remaining instances", in.m_passesName.cstr());
 
-		cmdb.bindShaderProgram(m_grProg.get());
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
 
-		GpuVisibilityAccelerationStructuresUniforms unis;
-		Array<Plane, 6> planes;
-		extractClipPlanes(viewProjMat, planes);
-		for(U32 i = 0; i < 6; ++i)
-		{
-			unis.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
-		}
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
 
-		unis.m_pointOfTest = pointOfTest;
-		unis.m_testRadius = testRadius;
+		pass.setWork([this, zeroInstancesDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
+					  indicesBuff = out.m_renderableIndicesBuffer](RenderPassWorkContext& rgraph) {
+			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
-		ANKI_ASSERT(kMaxLodCount == 3);
-		unis.m_maxLodDistances[0] = lodDistances[0];
-		unis.m_maxLodDistances[1] = lodDistances[1];
-		unis.m_maxLodDistances[2] = kMaxF32;
-		unis.m_maxLodDistances[3] = kMaxF32;
+			cmdb.bindShaderProgram(m_zeroRemainingInstancesGrProg.get());
 
-		cmdb.setPushConstants(&unis, sizeof(unis));
+			cmdb.bindStorageBuffer(0, 0, indicesBuff);
+			cmdb.bindStorageBuffer(0, 1, instancesBuff);
 
-		cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
-		cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-		cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
-		cmdb.bindStorageBuffer(0, 3, instancesBuff);
-		cmdb.bindStorageBuffer(0, 4, indicesBuff);
-		cmdb.bindStorageBuffer(0, 5, rangeBuff);
-		cmdb.bindStorageBuffer(0, 6, m_counterBuffer.get(), counterBufferOffset, sizeof(U32) * 2);
-
-		const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
-		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
-	});
-
-	m_currentCounterBufferOffset += counterBufferElementSize;
+			cmdb.dispatchComputeIndirect(zeroInstancesDispatchArgsBuff.m_buffer, zeroInstancesDispatchArgsBuff.m_offset);
+		});
+	}
 }
 
 } // end namespace anki

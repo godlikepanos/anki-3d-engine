@@ -359,17 +359,10 @@ void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<
 	self.copyBufferToBufferInternal(src, dst, copies);
 }
 
-void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as)
+void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.buildAccelerationStructureInternal(as);
-}
-
-void CommandBuffer::buildAccelerationStructureIndirect(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset,
-													   Buffer* rangeBuffer, PtrSize rangeBufferOffsset)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.buildAccelerationStructureIndirectInternal(as, scratchBuffer, scratchBufferOffset, rangeBuffer, rangeBufferOffsset);
+	self.buildAccelerationStructureInternal(as, scratchBuffer, scratchBufferOffset);
 }
 
 void CommandBuffer::upscale(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,

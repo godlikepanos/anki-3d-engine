@@ -424,10 +424,7 @@ public:
 
 	void copyBufferToBufferInternal(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies);
 
-	void buildAccelerationStructureInternal(AccelerationStructure* as);
-
-	void buildAccelerationStructureIndirectInternal(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset,
-													Buffer* rangeBuffer, PtrSize rangeBufferOffsset);
+	void buildAccelerationStructureInternal(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset);
 
 	void upscaleInternal(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
 						 TextureView* exposure, const Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);

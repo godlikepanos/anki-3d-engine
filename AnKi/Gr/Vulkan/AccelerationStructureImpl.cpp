@@ -185,7 +185,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		buildInfo.dstAccelerationStructure = m_handle;
 
 		// Range info
-		m_rangeInfo.primitiveCount = inf.m_topLevel.m_directArgs.m_instances.getSize();
+		m_rangeInfo.primitiveCount = instanceCount;
 	}
 
 	return Error::kNone;

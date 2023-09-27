@@ -404,16 +404,10 @@ public:
 	void copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies);
 
 	/// Build the acceleration structure.
-	void buildAccelerationStructure(AccelerationStructure* as);
-
-	/// Build an acceleration stracture indirectly. Only valid for TLASes.
 	/// @param as The AS to build.
 	/// @param scratchBuffer A scratch buffer. Ask the AS for size.
 	/// @param scratchBufferOffset Scratch buffer offset.
-	/// @param rangeBuffer Points to a single AccelerationStructureBuildRangeInfo.
-	/// @param rangeBufferOffsset Offset in rangeBuffer.
-	void buildAccelerationStructureIndirect(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset, Buffer* rangeBuffer,
-											PtrSize rangeBufferOffsset);
+	void buildAccelerationStructure(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset);
 
 	/// Do upscaling by an external upscaler
 	/// @param[in] upscaler the upscaler to use for upscaling
@@ -424,8 +418,8 @@ public:
 	/// @param[in] exposure 1x1 Texture containing exposure
 	/// @param[in] resetAccumulation Whether to clean or not any temporal history
 	/// @param[in] jitterOffset Jittering offset that was applied during the generation of sourceTexture
-	/// @param[in] motionVectorsScale Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV
-	///                               space to Pixel space conversion)
+	/// @param[in] motionVectorsScale Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV space to Pixel space
+	///                               conversion)
 	void upscale(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
 				 TextureView* exposure, Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
 	/// @}

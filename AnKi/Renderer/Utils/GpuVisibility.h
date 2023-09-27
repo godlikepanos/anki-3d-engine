@@ -163,7 +163,6 @@ class GpuVisibilityAccelerationStructuresOutput
 public:
 	BufferHandle m_someBufferHandle; ///< Some handle to track dependencies. No need to track every buffer.
 
-	BufferOffsetRange m_rangeBuffer; ///< Points to a single AccelerationStructureBuildRangeInfo. The m_primitiveCount holds the instance count.
 	BufferOffsetRange m_instancesBuffer; ///< Points to AccelerationStructureBuildRangeInfo::m_primitiveCount number of AccelerationStructureInstance.
 	BufferOffsetRange m_renderableIndicesBuffer; ///< AccelerationStructureBuildRangeInfo::m_primitiveCount number of indices to renderables.
 };
@@ -177,15 +176,17 @@ public:
 	void pupulateRenderGraph(GpuVisibilityAccelerationStructuresInput& in, GpuVisibilityAccelerationStructuresOutput& out);
 
 private:
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	ShaderProgramResourcePtr m_visibilityProg;
+	ShaderProgramPtr m_visibilityGrProg;
 
-	static constexpr U32 kInitialCounterBufferElementCount = 3;
+	ShaderProgramResourcePtr m_zeroRemainingInstancesProg;
+	ShaderProgramPtr m_zeroRemainingInstancesGrProg;
+
 	BufferPtr m_counterBuffer; ///< A buffer containing multiple counters for atomic operations.
-	U64 m_lastFrameIdx = kMaxU64;
-	U32 m_currentCounterBufferOffset = 0;
 
-	BufferHandle m_counterBufferHandle;
+#if ANKI_ASSERTIONS_ENABLED
+	U64 m_lastFrameIdx = kMaxU64;
+#endif
 };
 /// @}
 

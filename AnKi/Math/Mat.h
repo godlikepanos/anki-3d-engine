@@ -1462,7 +1462,7 @@ public:
 				{
 					fmt = "%f ";
 				}
-				str += String().sprintf(fmt, m_arr2[j][i]);
+				str += String().sprintf(fmt.cstr(), m_arr2[j][i]);
 			}
 		}
 		return str;

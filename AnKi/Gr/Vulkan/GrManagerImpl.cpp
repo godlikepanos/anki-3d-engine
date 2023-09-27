@@ -991,6 +991,12 @@ Error GrManagerImpl::initDevice()
 		ANKI_ASSERT(m_accelerationStructureFeatures.pNext == nullptr);
 		m_accelerationStructureFeatures.pNext = const_cast<void*>(ci.pNext);
 		ci.pNext = &m_rtPipelineFeatures;
+
+		// Get some more stuff
+		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};
+		props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+		getPhysicalDeviceProperties2(props);
+		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = props.minAccelerationStructureScratchOffsetAlignment;
 	}
 
 	// Pipeline features
@@ -1076,11 +1082,7 @@ Error GrManagerImpl::initDevice()
 		{
 			VkPhysicalDeviceFragmentShadingRatePropertiesKHR fragmentShadingRateProperties = {};
 			fragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-
-			VkPhysicalDeviceProperties2 properties = {};
-			properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-			properties.pNext = &fragmentShadingRateProperties;
-			vkGetPhysicalDeviceProperties2(m_physicalDevice, &properties);
+			getPhysicalDeviceProperties2(fragmentShadingRateProperties);
 
 			if(fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width > 16
 			   || fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.height > 16

@@ -289,7 +289,13 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		// Build BLASes
 		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
 		{
-			cmdb->buildAccelerationStructure(m_lods[lodIdx].m_blas.get());
+			// TODO find a temp buffer
+			BufferInitInfo buffInit("BLAS scratch");
+			buffInit.m_size = m_lods[lodIdx].m_blas->getBuildScratchBufferSize();
+			buffInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+			BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(buffInit);
+
+			cmdb->buildAccelerationStructure(m_lods[lodIdx].m_blas.get(), scratchBuff.get(), 0);
 		}
 
 		// Barriers again

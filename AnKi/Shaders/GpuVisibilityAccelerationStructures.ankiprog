@@ -17,9 +17,10 @@
 
 [[vk::binding(3)]] RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances;
 [[vk::binding(4)]] RWStructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
-[[vk::binding(5)]] RWStructuredBuffer<AccelerationStructureBuildRangeInfo> g_range;
 
-[[vk::binding(6)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch
+[[vk::binding(5)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch
+
+[[vk::binding(6)]] RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs;
 
 [[vk::push_constant]] ConstantBuffer<GpuVisibilityAccelerationStructuresUniforms> g_unis;
 
@@ -39,7 +40,7 @@
 	if(visible)
 	{
 		bvolume = g_renderableBoundingVolumes[bvolumeIdx];
-		visible = testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_unis.m_pointOfTest, bvolume.m_sphereRadius);
+		visible = testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius);
 	}
 
 	// All good, write the instance
@@ -80,11 +81,19 @@
 		if(meshLod.m_blasAddress.x != 0 || meshLod.m_blasAddress.y != 0)
 		{
 			// It has a BLAS, write what is to write
+
+			const Mat3x4 transform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+			Mat3x4 meshQuantizationTransform;
+			meshQuantizationTransform.m_row0 = Vec4(meshLod.m_positionScale, 0.0f, 0.0f, meshLod.m_positionTranslation.x);
+			meshQuantizationTransform.m_row1 = Vec4(0.0f, meshLod.m_positionScale, 0.0f, meshLod.m_positionTranslation.y);
+			meshQuantizationTransform.m_row2 = Vec4(0.0f, 0.0f, meshLod.m_positionScale, meshLod.m_positionTranslation.z);
+			const Mat3x4 finalTrf = combineTransformations(transform, meshQuantizationTransform);
+
 			U32 instanceIdx;
 			InterlockedAdd(g_counterBuffer[0], 1, instanceIdx);
 
 			AccelerationStructureInstance instance;
-			instance.m_transform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+			instance.m_transform = finalTrf;
 			instance.m_instanceCustomIndex24_mask8 = (instanceIdx << 8u) | (meshLod.m_tlasInstanceMask & 0xFFu);
 			instance.m_instanceShaderBindingTableRecordOffset24_flags8 =
 				(instanceIdx << 8u)
@@ -112,17 +121,21 @@
 
 		if(lastThreadgroupExecuting)
 		{
-			AccelerationStructureBuildRangeInfo range;
-			range.m_primitiveCount = g_counterBuffer[0];
-			range.m_primitiveOffset = 0;
-			range.m_firstVertex = 0;
-			range.m_transformOffset = 0;
-			g_range[0] = range;
-
-			g_visibleRenderableIndices[0] = g_counterBuffer[0];
+			const U32 visible = g_counterBuffer[0];
+			g_visibleRenderableIndices[0] = visible;
 
 			g_counterBuffer[0] = 0;
 			g_counterBuffer[1] = 0;
+
+			// Update indirect args of some next job
+			U32 total, unused;
+			g_visibleInstances.GetDimensions(total, unused);
+
+			const U32 remaining = total - visible;
+
+			g_nextDispatchIndirectArgs[0].m_threadGroupCountX = (remaining + NUMTHREADS - 1) / NUMTHREADS;
+			g_nextDispatchIndirectArgs[0].m_threadGroupCountY = 1;
+			g_nextDispatchIndirectArgs[0].m_threadGroupCountZ = 1;
 		}
 	}
 }

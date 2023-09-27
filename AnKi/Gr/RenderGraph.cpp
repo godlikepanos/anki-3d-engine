@@ -1335,7 +1335,10 @@ void RenderGraph::run() const
 			inf.m_nextUsage = barrier.m_usageAfter;
 			inf.m_as = m_ctx->m_as[barrier.m_idx].m_as.get();
 		}
+
+		cmdb.pushDebugMarker("Barrier", Vec3(1.0f, 0.0f, 0.0f));
 		cmdb.setPipelineBarrier(texBarriers, buffBarriers, asBarriers);
+		cmdb.popDebugMarker();
 
 		// Call the passes
 		for(U32 passIdx : batch.m_passIndices)
