@@ -243,6 +243,14 @@ class StatsSet : public MakeSingletonSimple<StatsSet>
 	friend class MakeSingletonSimple;
 
 public:
+	void initFromMainThread()
+	{
+#if ANKI_STATS_ENABLED
+		ANKI_ASSERT(m_mainThreadId == kMaxU64);
+		m_mainThreadId = Thread::getCurrentThreadId();
+#endif
+	}
+
 	/// @note Not thread-safe.
 	template<typename TFuncUint, typename TFuncFloat>
 	void iterateStats(TFuncUint funcUint, TFuncFloat funcFloat)

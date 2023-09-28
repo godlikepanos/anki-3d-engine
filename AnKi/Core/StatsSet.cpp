@@ -79,11 +79,6 @@ void StatsSet::registerCounter(StatCounter* counter)
 {
 	ANKI_ASSERT(counter);
 
-	if(m_mainThreadId == kMaxU64)
-	{
-		m_mainThreadId = Thread::getCurrentThreadId();
-	}
-
 	// Try grow the array
 	if(m_statCounterArrSize + 1 > m_statCounterArrStorageSize)
 	{

@@ -189,6 +189,7 @@ Error App::init()
 
 Error App::initInternal()
 {
+	StatsSet::getSingleton().initFromMainThread();
 	Logger::getSingleton().enableVerbosity(g_verboseLogCVar.get());
 
 	setSignalHandlers();
