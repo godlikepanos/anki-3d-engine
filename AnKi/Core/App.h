@@ -78,8 +78,6 @@ private:
 
 	Error initDirs();
 	void cleanup();
-
-	void setSignalHandlers();
 };
 
 } // end namespace anki

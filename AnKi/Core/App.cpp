@@ -192,8 +192,6 @@ Error App::initInternal()
 	StatsSet::getSingleton().initFromMainThread();
 	Logger::getSingleton().enableVerbosity(g_verboseLogCVar.get());
 
-	setSignalHandlers();
-
 	AllocAlignedCallback allocCb = m_originalAllocCallback;
 	void* allocCbUserData = m_originalAllocUserData;
 	initMemoryCallbacks(allocCb, allocCbUserData);
@@ -557,54 +555,6 @@ void App::initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserD
 	{
 		// Leave the default
 	}
-}
-
-void App::setSignalHandlers()
-{
-	auto handler = [](int signum) -> void {
-		const char* name = nullptr;
-		switch(signum)
-		{
-		case SIGABRT:
-			name = "SIGABRT";
-			break;
-		case SIGSEGV:
-			name = "SIGSEGV";
-			break;
-#if ANKI_POSIX
-		case SIGBUS:
-			name = "SIGBUS";
-			break;
-#endif
-		case SIGILL:
-			name = "SIGILL";
-			break;
-		case SIGFPE:
-			name = "SIGFPE";
-			break;
-		}
-
-		if(name)
-			printf("Caught signal %d (%s)\n", signum, name);
-		else
-			printf("Caught signal %d\n", signum);
-
-		U32 count = 0;
-		printf("Backtrace:\n");
-		backtrace([&count](CString symbol) {
-			printf("%.2u: %s\n", count++, symbol.cstr());
-		});
-
-		ANKI_DEBUG_BREAK();
-	};
-
-	signal(SIGSEGV, handler);
-	signal(SIGILL, handler);
-	signal(SIGFPE, handler);
-#if ANKI_POSIX
-	signal(SIGBUS, handler);
-#endif
-	// Ignore for now: signal(SIGABRT, handler);
 }
 
 Bool App::toggleDeveloperConsole()

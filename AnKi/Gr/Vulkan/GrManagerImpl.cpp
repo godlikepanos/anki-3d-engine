@@ -288,7 +288,7 @@ Error GrManagerImpl::initInstance()
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
 	}
 
-	if(!g_validationCVar.get())
+	if(g_debugPrintfCVar.get() && !g_validationCVar.get())
 	{
 		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
 	}
