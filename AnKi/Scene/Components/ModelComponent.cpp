@@ -178,6 +178,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				{
 					const U64 address = inf.m_blas->getGpuAddress();
 					memcpy(&meshLod.m_blasAddress, &address, sizeof(meshLod.m_blasAddress));
+					meshLod.m_tlasInstanceMask = 0xFFFFFFFF;
 				}
 			}
 

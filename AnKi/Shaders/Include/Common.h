@@ -867,8 +867,8 @@ enum AccellerationStructureFlag : U32
 struct AccelerationStructureInstance
 {
 	Mat3x4 m_transform;
-	U32 m_instanceCustomIndex24_mask8;
-	U32 m_instanceShaderBindingTableRecordOffset24_flags8; ///< flags is AccellerationStructureFlag.
+	U32 m_mask8_instanceCustomIndex24;
+	U32 m_flags8_instanceShaderBindingTableRecordOffset24; ///< flags is AccellerationStructureFlag.
 	UVec2 m_accelerationStructureAddress;
 };
 

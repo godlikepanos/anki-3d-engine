@@ -94,10 +94,11 @@
 
 			AccelerationStructureInstance instance;
 			instance.m_transform = finalTrf;
-			instance.m_instanceCustomIndex24_mask8 = (instanceIdx << 8u) | (meshLod.m_tlasInstanceMask & 0xFFu);
-			instance.m_instanceShaderBindingTableRecordOffset24_flags8 =
-				(instanceIdx << 8u)
-				| (kAccellerationStructureFlagTriangleFrontCounterlockwise | kAccellerationStructureFlagTriangleFacingCullDisable);
+			instance.m_mask8_instanceCustomIndex24 = (meshLod.m_tlasInstanceMask << 24u) | (instanceIdx & 0x00FFFFFFu);
+			instance.m_flags8_instanceShaderBindingTableRecordOffset24 =
+				((kAccellerationStructureFlagTriangleFrontCounterlockwise | kAccellerationStructureFlagTriangleFacingCullDisable)
+				 << (AccellerationStructureFlag)24u)
+				| (instanceIdx & 0x00FFFFFFu);
 			instance.m_accelerationStructureAddress = meshLod.m_blasAddress;
 			g_visibleInstances[instanceIdx] = instance;
 
