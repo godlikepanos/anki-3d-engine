@@ -11,9 +11,23 @@
 #include <AnKi/Gr/Vulkan/FenceImpl.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/StringList.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
+
+BoolCVar g_validationCVar(CVarSubsystem::kGr, "Validation", false, "Enable or not validation");
+static BoolCVar g_debugPrintfCVar(CVarSubsystem::kGr, "DebugPrintf", false, "Enable or not debug printf");
+BoolCVar g_debugMarkersCVar(CVarSubsystem::kGr, "DebugMarkers", false, "Enable or not debug markers");
+BoolCVar g_vsyncCVar(CVarSubsystem::kGr, "Vsync", false, "Enable or not vsync");
+static NumericCVar<U8> g_deviceCVar(CVarSubsystem::kGr, "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
+static BoolCVar g_rayTracingCVar(CVarSubsystem::kGr, "RayTracing", false, "Try enabling ray tracing");
+static BoolCVar g_64bitAtomicsCVar(CVarSubsystem::kGr, "64bitAtomics", true, "Enable or not 64bit atomics");
+static BoolCVar g_samplerFilterMinMaxCVar(CVarSubsystem::kGr, "SamplerFilterMinMax", true, "Enable or not min/max sample filtering");
+static BoolCVar g_vrsCVar(CVarSubsystem::kGr, "Vrs", false, "Enable or not VRS");
+static BoolCVar g_asyncComputeCVar(CVarSubsystem::kGr, "AsyncCompute", true, "Enable or not async compute");
+static NumericCVar<U8> g_vkMinorCVar(CVarSubsystem::kGr, "VkMinor", 1, 1, 1, "Vulkan minor version");
+static NumericCVar<U8> g_vkMajorCVar(CVarSubsystem::kGr, "VkMajor", 1, 1, 1, "Vulkan major version");
+static StringCVar g_vkLayers(CVarSubsystem::kGr, "VkLayers", "", "VK layers to enable. Seperated by :");
 
 // DLSS related
 #define ANKI_VK_NVX_BINARY_IMPORT "VK_NVX_binary_import"
@@ -143,7 +157,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	m_swapchainFactory.init(ConfigSet::getSingleton().getGrVsync());
+	m_swapchainFactory.init(g_vsyncCVar.get());
 
 	m_crntSwapchain = m_swapchainFactory.newInstance();
 
@@ -166,25 +180,22 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_unalignedBbpTextureFormats = true;
 
 		VkImageFormatProperties props = {};
-		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
-			m_physicalDevice, VK_FORMAT_R8G8B8_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice, VK_FORMAT_R8G8B8_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+																VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
 			m_capabilities.m_unalignedBbpTextureFormats = false;
 		}
 
-		res = vkGetPhysicalDeviceImageFormatProperties(
-			m_physicalDevice, VK_FORMAT_R16G16B16_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
+		res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice, VK_FORMAT_R16G16B16_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+													   VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
 			m_capabilities.m_unalignedBbpTextureFormats = false;
 		}
 
-		res = vkGetPhysicalDeviceImageFormatProperties(
-			m_physicalDevice, VK_FORMAT_R32G32B32_SFLOAT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
+		res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice, VK_FORMAT_R32G32B32_SFLOAT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+													   VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
 			m_capabilities.m_unalignedBbpTextureFormats = false;
@@ -192,7 +203,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		if(!m_capabilities.m_unalignedBbpTextureFormats)
 		{
-			ANKI_VK_LOGI("R8G8B8, R16G16B16 and R32G32B32 image formats are not supported");
+			ANKI_VK_LOGV("R8G8B8, R16G16B16 and R32G32B32 image formats are not supported");
 		}
 	}
 
@@ -211,8 +222,8 @@ Error GrManagerImpl::initInstance()
 
 	// Create the instance
 	//
-	const U8 vulkanMinor = ConfigSet::getSingleton().getGrVkMinor();
-	const U8 vulkanMajor = ConfigSet::getSingleton().getGrVkMajor();
+	const U8 vulkanMinor = g_vkMinorCVar.get();
+	const U8 vulkanMajor = g_vkMajorCVar.get();
 
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -228,6 +239,7 @@ Error GrManagerImpl::initInstance()
 
 	// Instance layers
 	GrDynamicArray<const char*> layersToEnable;
+	GrList<GrString> layersToEnableStrings;
 	{
 		U32 layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -244,11 +256,13 @@ Error GrManagerImpl::initInstance()
 				ANKI_VK_LOGV("\t%s", layer.layerName);
 				CString layerName = layer.layerName;
 
-				static constexpr const Char* kValidationName = "VK_LAYER_KHRONOS_validation";
-				if((ConfigSet::getSingleton().getGrValidation() || ConfigSet::getSingleton().getGrDebugPrintf())
-				   && layerName == kValidationName)
+				Bool enableLayer = (g_validationCVar.get() || g_debugMarkersCVar.get()) && layerName == "VK_LAYER_KHRONOS_validation";
+				enableLayer = enableLayer || (!g_vkLayers.get().isEmpty() && g_vkLayers.get().find(layerName) != CString::kNpos);
+
+				if(enableLayer)
 				{
-					layersToEnable.emplaceBack(kValidationName);
+					layersToEnableStrings.emplaceBack(layer.layerName);
+					layersToEnable.emplaceBack(layersToEnableStrings.getBack().cstr());
 				}
 			}
 		}
@@ -269,12 +283,12 @@ Error GrManagerImpl::initInstance()
 	// Validation features
 	GrDynamicArray<VkValidationFeatureEnableEXT> enabledValidationFeatures;
 	GrDynamicArray<VkValidationFeatureDisableEXT> disabledValidationFeatures;
-	if(ConfigSet::getSingleton().getGrDebugPrintf())
+	if(g_debugPrintfCVar.get())
 	{
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
 	}
 
-	if(!ConfigSet::getSingleton().getGrValidation())
+	if(g_debugPrintfCVar.get() && !g_validationCVar.get())
 	{
 		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
 	}
@@ -354,8 +368,7 @@ Error GrManagerImpl::initInstance()
 				instExtensions[instExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
 			}
 			else if(extensionName == VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-					&& (ConfigSet::getSingleton().getGrDebugMarkers() || ConfigSet::getSingleton().getGrValidation()
-						|| ConfigSet::getSingleton().getGrDebugPrintf()))
+					&& (g_debugMarkersCVar.get() || g_validationCVar.get() || g_debugPrintfCVar.get()))
 			{
 				m_extensions |= VulkanExtensions::kEXT_debug_utils;
 				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
@@ -363,9 +376,8 @@ Error GrManagerImpl::initInstance()
 		}
 
 		if(!(m_extensions
-			 & (VulkanExtensions::kEXT_headless_surface | VulkanExtensions::kKHR_xcb_surface
-				| VulkanExtensions::kKHR_xlib_surface | VulkanExtensions::kKHR_win32_surface
-				| VulkanExtensions::kKHR_android_surface)))
+			 & (VulkanExtensions::kEXT_headless_surface | VulkanExtensions::kKHR_xcb_surface | VulkanExtensions::kKHR_xlib_surface
+				| VulkanExtensions::kKHR_win32_surface | VulkanExtensions::kKHR_android_surface)))
 		{
 			ANKI_VK_LOGE("Couldn't find suitable surface extension");
 			return Error::kFunctionFailed;
@@ -407,11 +419,9 @@ Error GrManagerImpl::initInstance()
 	{
 		VkDebugUtilsMessengerCreateInfoEXT info = {};
 		info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
 							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-						   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+		info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
 						   | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
 		info.pfnUserCallback = debugReportCallbackEXT;
 		info.pUserData = this;
@@ -467,8 +477,7 @@ Error GrManagerImpl::initInstance()
 				};
 
 				// Put descrete GPUs first
-				return findDeviceTypeWeight(a.m_vkProps.properties.deviceType)
-					   > findDeviceTypeWeight(b.m_vkProps.properties.deviceType);
+				return findDeviceTypeWeight(a.m_vkProps.properties.deviceType) > findDeviceTypeWeight(b.m_vkProps.properties.deviceType);
 			}
 			else
 			{
@@ -476,17 +485,15 @@ Error GrManagerImpl::initInstance()
 			}
 		});
 
-		const U32 chosenPhysDevIdx = min<U32>(ConfigSet::getSingleton().getGrDevice(), devs.getSize() - 1);
+		const U32 chosenPhysDevIdx = min<U32>(g_deviceCVar.get(), devs.getSize() - 1);
 
 		ANKI_VK_LOGI("Physical devices:");
 		for(U32 devIdx = 0; devIdx < count; ++devIdx)
 		{
-			ANKI_VK_LOGI((devIdx == chosenPhysDevIdx) ? "\t(Selected) %s" : "\t%s",
-						 devs[devIdx].m_vkProps.properties.deviceName);
+			ANKI_VK_LOGI((devIdx == chosenPhysDevIdx) ? "\t(Selected) %s" : "\t%s", devs[devIdx].m_vkProps.properties.deviceName);
 		}
 
-		m_capabilities.m_discreteGpu =
-			devs[chosenPhysDevIdx].m_vkProps.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+		m_capabilities.m_discreteGpu = devs[chosenPhysDevIdx].m_vkProps.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 		m_physicalDevice = devs[chosenPhysDevIdx].m_pdev;
 	}
 
@@ -534,8 +541,7 @@ Error GrManagerImpl::initInstance()
 		m_capabilities.m_minSubgroupSize = 8;
 		m_capabilities.m_maxSubgroupSize = 8;
 	}
-	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.properties.deviceName,
-				 &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
+	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
 	// Set limits
 	m_capabilities.m_uniformBufferBindOffsetAlignment =
@@ -548,6 +554,7 @@ Error GrManagerImpl::initInstance()
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
 	m_capabilities.m_textureBufferMaxRange = kMaxU32;
 	m_capabilities.m_computeSharedMemorySize = m_devProps.properties.limits.maxComputeSharedMemorySize;
+	m_capabilities.m_maxDrawIndirectCount = m_devProps.properties.limits.maxDrawIndirectCount;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
 	m_capabilities.m_minorApiVersion = vulkanMinor;
@@ -592,8 +599,7 @@ Error GrManagerImpl::initDevice()
 			{
 				m_queueFamilyIndices[VulkanQueueType::kGeneral] = i;
 			}
-			else if((queueInfos[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
-					&& !(queueInfos[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+			else if((queueInfos[i].queueFlags & VK_QUEUE_COMPUTE_BIT) && !(queueInfos[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
 			{
 				// This must be the async compute
 				m_queueFamilyIndices[VulkanQueueType::kCompute] = i;
@@ -608,7 +614,7 @@ Error GrManagerImpl::initDevice()
 		return Error::kFunctionFailed;
 	}
 
-	if(!ConfigSet::getSingleton().getGrAsyncCompute())
+	if(!g_asyncComputeCVar.get())
 	{
 		m_queueFamilyIndices[VulkanQueueType::kCompute] = kMaxU32;
 	}
@@ -670,51 +676,39 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_swapchain;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_AMD_SHADER_INFO_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getCoreDisplayStats())
-			{
-				m_extensions |= VulkanExtensions::kAMD_shader_info;
-				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
-			}
 			else if(extensionName == VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::kAMD_rasterization_order;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGrRayTracing())
+			else if(extensionName == VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME && g_rayTracingCVar.get())
 			{
 				m_extensions |= VulkanExtensions::kKHR_ray_tracing;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 				m_capabilities.m_rayTracingEnabled = true;
 			}
-			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && ConfigSet::getSingleton().getGrRayTracing())
+			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && g_rayTracingCVar.get())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGrRayTracing())
+			else if(extensionName == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME && g_rayTracingCVar.get())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGrRayTracing())
+			else if(extensionName == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME && g_rayTracingCVar.get())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGrRayTracing())
+			else if(extensionName == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME && g_rayTracingCVar.get())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getCoreDisplayStats() > 1)
+			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME && g_displayStatsCVar.get() > 1)
 			{
 				m_extensions |= VulkanExtensions::kKHR_pipeline_executable_properties;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGrDebugPrintf())
+			else if(extensionName == VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME && g_debugPrintfCVar.get())
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
@@ -743,8 +737,7 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_shader_float16_int8;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGr64bitAtomics())
+			else if(extensionName == VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME && g_64bitAtomicsCVar.get())
 			{
 				m_extensions |= VulkanExtensions::kKHR_shader_atomic_int64;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -759,8 +752,7 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_shader_float_controls;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_EXT_SAMPLER_FILTER_MINMAX_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGrSamplerFilterMinMax())
+			else if(extensionName == VK_EXT_SAMPLER_FILTER_MINMAX_EXTENSION_NAME && g_samplerFilterMinMaxCVar.get())
 			{
 				m_extensions |= VulkanExtensions::kKHR_sampler_filter_min_max;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -770,8 +762,7 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_create_renderpass_2;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(extensionName == VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME
-					&& ConfigSet::getSingleton().getGrVrs())
+			else if(extensionName == VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME && g_vrsCVar.get())
 			{
 				m_extensions |= VulkanExtensions::kKHR_fragment_shading_rate;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
@@ -806,6 +797,11 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_maintenance_4;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_draw_indirect_count;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -824,8 +820,7 @@ Error GrManagerImpl::initDevice()
 		devFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures);
 		m_devFeatures = devFeatures.features;
-		m_devFeatures.robustBufferAccess =
-			(ConfigSet::getSingleton().getGrValidation() && m_devFeatures.robustBufferAccess) ? true : false;
+		m_devFeatures.robustBufferAccess = (g_validationCVar.get() && m_devFeatures.robustBufferAccess) ? true : false;
 		ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
 		ci.pEnabledFeatures = &m_devFeatures;
@@ -908,8 +903,7 @@ Error GrManagerImpl::initDevice()
 		features.pNext = &m_deviceBufferFeatures;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-		m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay =
-			m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay && ConfigSet::getSingleton().getGrDebugMarkers();
+		m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay = m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay && g_debugMarkersCVar.get();
 		m_deviceBufferFeatures.bufferDeviceAddressMultiDevice = false;
 
 		m_deviceBufferFeatures.pNext = const_cast<void*>(ci.pNext);
@@ -980,8 +974,7 @@ Error GrManagerImpl::initDevice()
 		m_rayQueryFeatures.pNext = &m_accelerationStructureFeatures;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-		if(!m_rtPipelineFeatures.rayTracingPipeline || !m_rayQueryFeatures.rayQuery
-		   || !m_accelerationStructureFeatures.accelerationStructure)
+		if(!m_rtPipelineFeatures.rayTracingPipeline || !m_rayQueryFeatures.rayQuery || !m_accelerationStructureFeatures.accelerationStructure)
 		{
 			ANKI_VK_LOGE("Ray tracing and ray query are both required");
 			return Error::kFunctionFailed;
@@ -998,13 +991,18 @@ Error GrManagerImpl::initDevice()
 		ANKI_ASSERT(m_accelerationStructureFeatures.pNext == nullptr);
 		m_accelerationStructureFeatures.pNext = const_cast<void*>(ci.pNext);
 		ci.pNext = &m_rtPipelineFeatures;
+
+		// Get some more stuff
+		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};
+		props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+		getPhysicalDeviceProperties2(props);
+		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = props.minAccelerationStructureScratchOffsetAlignment;
 	}
 
 	// Pipeline features
 	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
-		m_pplineExecutablePropertiesFeatures.sType =
-			VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
+		m_pplineExecutablePropertiesFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
 		m_pplineExecutablePropertiesFeatures.pipelineExecutableInfo = true;
 
 		m_pplineExecutablePropertiesFeatures.pNext = const_cast<void*>(ci.pNext);
@@ -1069,11 +1067,9 @@ Error GrManagerImpl::initDevice()
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
 		// Some checks
-		if(!m_fragmentShadingRateFeatures.attachmentFragmentShadingRate
-		   || !m_fragmentShadingRateFeatures.pipelineFragmentShadingRate)
+		if(!m_fragmentShadingRateFeatures.attachmentFragmentShadingRate || !m_fragmentShadingRateFeatures.pipelineFragmentShadingRate)
 		{
-			ANKI_VK_LOGW(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME
-						 " doesn't support attachment and/or pipeline rates. Will disable VRS");
+			ANKI_VK_LOGW(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME " doesn't support attachment and/or pipeline rates. Will disable VRS");
 			m_capabilities.m_vrs = false;
 		}
 		else
@@ -1085,13 +1081,8 @@ Error GrManagerImpl::initDevice()
 		if(m_capabilities.m_vrs)
 		{
 			VkPhysicalDeviceFragmentShadingRatePropertiesKHR fragmentShadingRateProperties = {};
-			fragmentShadingRateProperties.sType =
-				VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-
-			VkPhysicalDeviceProperties2 properties = {};
-			properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-			properties.pNext = &fragmentShadingRateProperties;
-			vkGetPhysicalDeviceProperties2(m_physicalDevice, &properties);
+			fragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+			getPhysicalDeviceProperties2(fragmentShadingRateProperties);
 
 			if(fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width > 16
 			   || fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.height > 16
@@ -1104,9 +1095,8 @@ Error GrManagerImpl::initDevice()
 			}
 			else
 			{
-				m_capabilities.m_minShadingRateImageTexelSize =
-					max(fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width,
-						fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.height);
+				m_capabilities.m_minShadingRateImageTexelSize = max(fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width,
+																	fragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.height);
 			}
 		}
 
@@ -1126,18 +1116,13 @@ Error GrManagerImpl::initDevice()
 		ci.pNext = &maintenance4Features;
 	}
 
-	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
-
-	// Get VK_AMD_shader_info entry points
-	if(!!(m_extensions & VulkanExtensions::kAMD_shader_info))
+	if(!(m_extensions & VulkanExtensions::kKHR_draw_indirect_count) || m_capabilities.m_maxDrawIndirectCount < kMaxU32)
 	{
-		m_pfnGetShaderInfoAMD =
-			reinterpret_cast<PFN_vkGetShaderInfoAMD>(vkGetDeviceProcAddr(m_device, "vkGetShaderInfoAMD"));
-		if(!m_pfnGetShaderInfoAMD)
-		{
-			ANKI_VK_LOGW("VK_AMD_shader_info is present but vkGetShaderInfoAMD is not there");
-		}
+		ANKI_VK_LOGE(VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME " not supported or too small maxDrawIndirectCount");
+		return Error::kFunctionFailed;
 	}
+
+	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
 
 	if(!(m_extensions & VulkanExtensions::kKHR_spirv_1_4))
 	{
@@ -1166,8 +1151,7 @@ Error GrManagerImpl::initMemory()
 	}
 	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; ++i)
 	{
-		ANKI_VK_LOGV("\tMem type %u points to heap %u, flags %" ANKI_PRIb32, i,
-					 m_memoryProperties.memoryTypes[i].heapIndex,
+		ANKI_VK_LOGV("\tMem type %u points to heap %u, flags %" ANKI_PRIb32, i, m_memoryProperties.memoryTypes[i].heapIndex,
 					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
 	}
 
@@ -1177,8 +1161,7 @@ Error GrManagerImpl::initMemory()
 }
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
-void* GrManagerImpl::allocateCallback(void* userData, size_t size, size_t alignment,
-									  VkSystemAllocationScope allocationScope)
+void* GrManagerImpl::allocateCallback(void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
 	if(size == 0) [[unlikely]]
 	{
@@ -1201,8 +1184,7 @@ void* GrManagerImpl::allocateCallback(void* userData, size_t size, size_t alignm
 	return static_cast<AllocHeader*>(header);
 }
 
-void* GrManagerImpl::reallocateCallback(void* userData, void* original, size_t size, size_t alignment,
-										VkSystemAllocationScope allocationScope)
+void* GrManagerImpl::reallocateCallback(void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
 	if(original && size == 0)
 	{
@@ -1254,8 +1236,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	// Get new image
 	uint32_t imageIdx;
 
-	VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX,
-										 frame.m_acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx);
+	VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
+										 fence->getHandle(), &imageIdx);
 
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -1271,8 +1253,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		m_crntSwapchain = m_swapchainFactory.newInstance();
 
 		// Can't fail a second time
-		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX,
-											 frame.m_acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx));
+		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
+											 fence->getHandle(), &imageIdx));
 	}
 	else
 	{
@@ -1340,6 +1322,7 @@ void GrManagerImpl::endFrame()
 	}
 
 	m_descrFactory.endFrame();
+	m_gpuMemManager.updateStats();
 
 	// Finalize
 	++m_frame;
@@ -1352,8 +1335,7 @@ void GrManagerImpl::resetFrame(PerFrame& frame)
 	frame.m_renderSemaphore.reset(nullptr);
 }
 
-void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain,
-									   WeakArray<MicroSemaphorePtr> userWaitSemaphores,
+void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphorePtr> userWaitSemaphores,
 									   MicroSemaphorePtr* userSignalSemaphore, Bool wait)
 {
 	constexpr U32 maxSemaphores = 8;
@@ -1372,7 +1354,7 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 
 	// Command buffer
 	const VkCommandBuffer handle = cmdb->getHandle();
-	cmdb->setFence(fence);
+	cmdb->setFence(fence.get());
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers = &handle;
 
@@ -1384,7 +1366,6 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 	timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
 	timelineInfo.waitSemaphoreValueCount = userWaitSemaphores.getSize();
 	timelineInfo.pWaitSemaphoreValues = &waitTimelineValues[0];
-	timelineInfo.signalSemaphoreValueCount = (userSignalSemaphore != nullptr);
 	timelineInfo.pSignalSemaphoreValues = &signalTimelineValues[0];
 	submit.pNext = &timelineInfo;
 
@@ -1402,18 +1383,15 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 		++submit.waitSemaphoreCount;
 
 		// Refresh the fence because the semaphore can't be recycled until the current submission is done
-		userWaitSemaphore->setFence(fence);
+		userWaitSemaphore->setFence(fence.get());
 	}
 
 	if(userSignalSemaphore)
 	{
 		*userSignalSemaphore = m_semaphoreFactory.newInstance(fence, true);
 
-		signalSemaphores[submit.signalSemaphoreCount] = (*userSignalSemaphore)->getHandle();
-
-		signalTimelineValues[submit.signalSemaphoreCount] = (*userSignalSemaphore)->getNextSemaphoreValue();
-
-		++submit.signalSemaphoreCount;
+		signalSemaphores[submit.signalSemaphoreCount++] = (*userSignalSemaphore)->getHandle();
+		signalTimelineValues[timelineInfo.signalSemaphoreValueCount++] = (*userSignalSemaphore)->getNextSemaphoreValue();
 	}
 
 	// Submit
@@ -1429,12 +1407,11 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 			waitSemaphores[submit.waitSemaphoreCount] = frame.m_acquireSemaphore->getHandle();
 
 			// That depends on how we use the swapchain img. Be a bit conservative
-			waitStages[submit.waitSemaphoreCount] =
-				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			waitStages[submit.waitSemaphoreCount] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 			++submit.waitSemaphoreCount;
 
 			// Refresh the fence because the semaphore can't be recycled until the current submission is done
-			frame.m_acquireSemaphore->setFence(fence);
+			frame.m_acquireSemaphore->setFence(fence.get());
 
 			// Create the semaphore to signal
 			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
@@ -1442,11 +1419,14 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 
 			signalSemaphores[submit.signalSemaphoreCount++] = frame.m_renderSemaphore->getHandle();
 
+			// Increment the timeline values as well because the spec wants a dummy value even for non-timeline semaphores
+			signalTimelineValues[timelineInfo.signalSemaphoreValueCount++] = 0;
+
 			// Update the frame fence
 			frame.m_presentFence = fence;
 
 			// Update the swapchain's fence
-			m_crntSwapchain->setFence(fence);
+			m_crntSwapchain->setFence(fence.get());
 
 			frame.m_queueWroteToSwapchainImage = cmdb->getVulkanQueueType();
 		}
@@ -1496,8 +1476,7 @@ void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 
 
 VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 											   [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-											   [[maybe_unused]] void* pUserData)
+											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, [[maybe_unused]] void* pUserData)
 {
 #if ANKI_PLATFORM_MOBILE
 	if(pCallbackData->messageIdNumber == 101294395)
@@ -1544,69 +1523,16 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 	return false;
 }
 
-void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const
+void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash) const
 {
-	if(printPipelineShaderInfoInternal(ppline, name, stages, hash))
+	if(printPipelineShaderInfoInternal(ppline, name, hash))
 	{
 		ANKI_VK_LOGE("Ignoring previous errors");
 	}
 }
 
-Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages,
-													 U64 hash) const
+Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString name, U64 hash) const
 {
-	if(m_pfnGetShaderInfoAMD)
-	{
-		VkShaderStatisticsInfoAMD stats = {};
-
-		LockGuard<SpinLock> lock(m_shaderStatsFileMtx);
-
-		// Open the file
-		if(!m_shaderStatsFile.isOpen())
-		{
-			ANKI_CHECK(m_shaderStatsFile.open(
-				GrString().sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(), FileOpenFlag::kWrite));
-
-			ANKI_CHECK(m_shaderStatsFile.writeText("ppline name,hash,"
-												   "stage 0 VGPR,stage 0 SGPR,"
-												   "stage 1 VGPR,stage 1 SGPR,"
-												   "stage 2 VGPR,stage 2 SGPR,"
-												   "stage 3 VGPR,stage 3 SGPR,"
-												   "stage 4 VGPR,stage 4 SGPR,"
-												   "stage 5 VGPR,stage 5 SGPR\n"));
-		}
-
-		ANKI_CHECK(m_shaderStatsFile.writeTextf("%s,0x%" PRIx64 ",", name.cstr(), hash));
-
-		GrString str;
-
-		for(ShaderType type = ShaderType::kFirst; type < ShaderType::kCount; ++type)
-		{
-			ShaderTypeBit stage = stages & ShaderTypeBit(1 << type);
-			if(!stage)
-			{
-				ANKI_CHECK(m_shaderStatsFile.writeText((type != ShaderType::kLast) ? "0,0," : "0,0\n"));
-				continue;
-			}
-
-			size_t size = sizeof(stats);
-			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, VkShaderStageFlagBits(convertShaderTypeBit(stage)),
-												VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
-
-			str += GrString().sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
-									  stats.resourceUsage.numUsedSgprs);
-
-			ANKI_CHECK(m_shaderStatsFile.writeTextf((type != ShaderType::kLast) ? "%u,%u," : "%u,%u\n",
-													stats.resourceUsage.numUsedVgprs,
-													stats.resourceUsage.numUsedSgprs));
-		}
-
-		ANKI_VK_LOGV("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());
-
-		// Flush the file just in case
-		ANKI_CHECK(m_shaderStatsFile.flush());
-	}
-
 	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
 		GrStringList log;
@@ -1623,8 +1549,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			prop = {};
 			prop.sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_PROPERTIES_KHR;
 		}
-		ANKI_VK_CHECK(
-			vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, &executableProps[0]));
+		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, &executableProps[0]));
 
 		log.pushBackSprintf("Pipeline info \"%s\" (0x%016" PRIx64 "): ", name.cstr(), hash);
 		for(U32 i = 0; i < executableCount; ++i)

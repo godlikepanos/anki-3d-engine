@@ -20,8 +20,7 @@ static MainRenderer* getMainRenderer(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-6365712250974230727, "MainRenderer",
-													   LuaUserData::computeSizeForGarbageCollected<MainRenderer>(),
-													   nullptr, nullptr};
+													   LuaUserData::computeSizeForGarbageCollected<MainRenderer>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MainRenderer>()

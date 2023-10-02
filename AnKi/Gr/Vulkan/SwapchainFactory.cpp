@@ -39,8 +39,8 @@ Error MicroSwapchain::initInternal()
 	VkSurfaceCapabilitiesKHR surfaceProperties;
 	U32 surfaceWidth = 0, surfaceHeight = 0;
 	{
-		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(getGrManagerImpl().getPhysicalDevice(),
-																getGrManagerImpl().getSurface(), &surfaceProperties));
+		ANKI_VK_CHECK(
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(getGrManagerImpl().getPhysicalDevice(), getGrManagerImpl().getSurface(), &surfaceProperties));
 
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
 		if(surfaceProperties.currentExtent.width != kMaxU32 || surfaceProperties.currentExtent.height != kMaxU32)
@@ -66,13 +66,11 @@ Error MicroSwapchain::initInternal()
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	{
 		uint32_t formatCount;
-		ANKI_VK_CHECK(
-			vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, nullptr));
+		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, nullptr));
 
 		GrDynamicArray<VkSurfaceFormatKHR> formats;
 		formats.resize(formatCount);
-		ANKI_VK_CHECK(
-			vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, &formats[0]));
+		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(pdev, getGrManagerImpl().getSurface(), &formatCount, &formats[0]));
 
 		ANKI_VK_LOGV("Supported surface formats:");
 		Format akSurfaceFormat = Format::kNone;
@@ -82,8 +80,7 @@ Error MicroSwapchain::initInternal()
 			Format akFormat;
 			switch(formats[i].format)
 			{
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
-						depthStencil) \
+#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
 	case id: \
 		akFormat = Format::k##type; \
 		break;
@@ -96,8 +93,7 @@ Error MicroSwapchain::initInternal()
 			ANKI_VK_LOGV("\t%s", (akFormat != Format::kNone) ? getFormatInfo(akFormat).m_name : "Unknown format");
 
 			if(surfaceFormat == VK_FORMAT_UNDEFINED
-			   && (vkFormat == VK_FORMAT_R8G8B8A8_UNORM || vkFormat == VK_FORMAT_B8G8R8A8_UNORM
-				   || vkFormat == VK_FORMAT_A8B8G8R8_UNORM_PACK32))
+			   && (vkFormat == VK_FORMAT_R8G8B8A8_UNORM || vkFormat == VK_FORMAT_B8G8R8A8_UNORM || vkFormat == VK_FORMAT_A8B8G8R8_UNORM_PACK32))
 			{
 				surfaceFormat = vkFormat;
 				colorspace = formats[i].colorSpace;
@@ -124,8 +120,7 @@ Error MicroSwapchain::initInternal()
 		vkGetPhysicalDeviceSurfacePresentModesKHR(pdev, getGrManagerImpl().getSurface(), &presentModeCount, nullptr);
 		presentModeCount = min(presentModeCount, 4u);
 		Array<VkPresentModeKHR, 4> presentModes;
-		vkGetPhysicalDeviceSurfacePresentModesKHR(pdev, getGrManagerImpl().getSurface(), &presentModeCount,
-												  &presentModes[0]);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(pdev, getGrManagerImpl().getSurface(), &presentModeCount, &presentModes[0]);
 
 		if(m_factory->m_vsync)
 		{
@@ -222,8 +217,8 @@ Error MicroSwapchain::initInternal()
 
 		m_textures.resize(count);
 
-		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count,
-					 presentMode, surfaceWidth, surfaceHeight, U32(m_factory->m_vsync));
+		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count, presentMode, surfaceWidth,
+					 surfaceHeight, U32(m_factory->m_vsync));
 
 		Array<VkImage, 64> images;
 		ANKI_ASSERT(count <= 64);
@@ -234,9 +229,8 @@ Error MicroSwapchain::initInternal()
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
 			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
-			init.m_usage = TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageTraceRaysWrite
-						   | TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite
-						   | TextureUsageBit::kPresent;
+			init.m_usage = TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageTraceRaysWrite | TextureUsageBit::kFramebufferRead
+						   | TextureUsageBit::kFramebufferWrite | TextureUsageBit::kPresent;
 			init.m_type = TextureType::k2D;
 
 			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());

@@ -9,7 +9,8 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -28,10 +29,8 @@ Error TemporalAA::initInternal()
 {
 	ANKI_R_LOGV("Initializing TAA");
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((ConfigSet::getSingleton().getRPreferCompute())
-																? "ShaderBinaries/TemporalAACompute.ankiprogbin"
-																: "ShaderBinaries/TemporalAARaster.ankiprogbin",
-															m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(
+		(g_preferComputeCVar.get()) ? "ShaderBinaries/TemporalAACompute.ankiprogbin" : "ShaderBinaries/TemporalAARaster.ankiprogbin", m_prog));
 
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
@@ -40,34 +39,31 @@ Error TemporalAA::initInternal()
 		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
 		variantInitInfo.addMutation("YCBCR", 0);
 
-		if(ConfigSet::getSingleton().getRPreferCompute())
+		if(g_preferComputeCVar.get())
 		{
-			variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(),
-																  getRenderer().getInternalResolution().y()));
+			variantInitInfo.addConstant("kFramebufferSize",
+										UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
 		}
 
 		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProg = variant->getProgram();
+		m_grProg.reset(&variant->getProgram());
 	}
 
 	for(U i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (ConfigSet::getSingleton().getRPreferCompute()) ? TextureUsageBit::kImageComputeWrite
-																 : TextureUsageBit::kFramebufferWrite;
+		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-			getRenderer().getHdrFormat(), usage, "TemporalAA");
+			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), usage, "TemporalAA");
 
 		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
 
 	m_tonemappedRtDescr = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																						 : Format::kR8G8B8A8_Unorm,
+		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 		"TemporalAA Tonemapped");
 	m_tonemappedRtDescr.bake();
 
@@ -79,24 +75,25 @@ Error TemporalAA::initInternal()
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(TemporalAA);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
+	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Import RTs
 	if(m_rtTexturesImportedOnce[historyRtIdx]) [[likely]]
 	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx]);
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get());
 	}
 	else
 	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx], TextureUsageBit::kSampledFragment);
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSampledFragment);
 		m_rtTexturesImportedOnce[historyRtIdx] = true;
 	}
 
-	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx], TextureUsageBit::kNone);
+	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx].get(), TextureUsageBit::kNone);
 	m_runCtx.m_tonemappedRt = rgraph.newRenderTarget(m_tonemappedRtDescr);
 
 	// Create pass
@@ -126,37 +123,35 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		prpass = &pass;
 	}
 
-	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
-								 TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	prpass->newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 	prpass->newTextureDependency(m_runCtx.m_historyRt, readUsage);
 	prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 
 	prpass->setWork([this](RenderPassWorkContext& rgraphCtx) {
-		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+		ANKI_TRACE_SCOPED_EVENT(TemporalAA);
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		cmdb->bindShaderProgram(m_grProg);
+		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp);
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
 		rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindImage(0, 4, getRenderer().getTonemapping().getRt());
 
-		if(ConfigSet::getSingleton().getRPreferCompute())
+		if(g_preferComputeCVar.get())
 		{
 			rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 			rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(),
-							  getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}
 		else
 		{
-			cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(),
-							  getRenderer().getInternalResolution().y());
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
-			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		}
 	});
 }

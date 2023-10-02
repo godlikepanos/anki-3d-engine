@@ -9,10 +9,9 @@
 
 ANKI_TEST(Gr, TextureBuffer)
 {
-	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
-	cfg.setGrValidation(true);
+	g_validationCVar.set(true);
 
-	NativeWindow* win = createWindow(cfg);
+	NativeWindow* win = createWindow();
 	GrManager* gr = createGrManager(win);
 
 	{
@@ -32,7 +31,7 @@ void main()
 		ShaderPtr shader = createShader(shaderSrc, ShaderType::kCompute, *gr);
 
 		ShaderProgramInitInfo progInit;
-		progInit.m_computeShader = shader;
+		progInit.m_computeShader = shader.get();
 		ShaderProgramPtr prog = gr->newShaderProgram(progInit);
 
 		BufferInitInfo buffInit;
@@ -59,9 +58,9 @@ void main()
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
-		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff, 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
-		cmdb->bindStorageBuffer(0, 1, storageBuff, 0, kMaxPtrSize);
-		cmdb->bindShaderProgram(prog);
+		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff.get(), 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
+		cmdb->bindStorageBuffer(0, 1, storageBuff.get(), 0, kMaxPtrSize);
+		cmdb->bindShaderProgram(prog.get());
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->flush();
 		gr->finish();

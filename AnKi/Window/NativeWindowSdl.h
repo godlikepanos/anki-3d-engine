@@ -21,8 +21,7 @@ public:
 	Error initSdl(const NativeWindowInitInfo& init);
 
 private:
-	static constexpr U32 kInitSubsystems =
-		SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER;
+	static constexpr U32 kInitSubsystems = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER;
 };
 
 } // end namespace anki

@@ -4,15 +4,16 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Util/ThreadHive.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -33,18 +34,46 @@
 #include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
-#include <AnKi/Renderer/GenericCompute.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
+#include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 
 namespace anki {
+
+static NumericCVar<F32> g_internalRenderScalingCVar(CVarSubsystem::kRenderer, "InternalRenderScaling", 1.0f, 0.5f, 1.0f,
+													"A factor over the requested swapchain resolution. Applies to all passes up to TAA");
+NumericCVar<F32> g_renderScalingCVar(CVarSubsystem::kRenderer, "RenderScaling", 1.0f, 0.5f, 8.0f,
+									 "A factor over the requested swapchain resolution. Applies to post-processing and UI");
+static NumericCVar<U32> g_zSplitCountCVar(CVarSubsystem::kRenderer, "ZSplitCount", 64, 8, kMaxZsplitCount, "Clusterer number of Z splits");
+static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 8, 1, 16,
+											   "Texture anisotropy for the main passes");
+BoolCVar g_preferComputeCVar(CVarSubsystem::kRenderer, "PreferCompute", !ANKI_PLATFORM_MOBILE, "Prefer compute shaders");
+static BoolCVar g_highQualityHdrCVar(CVarSubsystem::kRenderer, "HighQualityHdr", !ANKI_PLATFORM_MOBILE,
+									 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11");
+BoolCVar g_vrsLimitTo2x2CVar(CVarSubsystem::kRenderer, "VrsLimitTo2x2", false, "If true the max rate will be 2x2");
+BoolCVar g_vrsCVar(CVarSubsystem::kRenderer, "Vrs", true, "Enable VRS in multiple passes");
+BoolCVar g_rayTracedShadowsCVar(CVarSubsystem::kRenderer, "RayTracedShadows", true,
+								"Enable or not ray traced shadows. Ignored if RT is not supported");
+NumericCVar<U8> g_shadowCascadeCountCVar(CVarSubsystem::kRenderer, "ShadowCascadeCount", (ANKI_PLATFORM_MOBILE) ? 3 : kMaxShadowCascades, 1,
+										 kMaxShadowCascades, "Max number of shadow cascades for directional lights");
+NumericCVar<F32> g_shadowCascade0DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade0Distance", 18.0, 1.0, kMaxF32,
+											  "The distance of the 1st cascade");
+NumericCVar<F32> g_shadowCascade1DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade1Distance", (ANKI_PLATFORM_MOBILE) ? 80.0f : 40.0, 1.0, kMaxF32,
+											  "The distance of the 2nd cascade");
+NumericCVar<F32> g_shadowCascade2DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade2Distance", (ANKI_PLATFORM_MOBILE) ? 150.0f : 80.0, 1.0,
+											  kMaxF32, "The distance of the 3rd cascade");
+NumericCVar<F32> g_shadowCascade3DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade3Distance", 200.0, 1.0, kMaxF32,
+											  "The distance of the 4th cascade");
+NumericCVar<F32> g_lod0MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod0MaxDistance", 20.0f, 1.0f, kMaxF32,
+									   "Distance that will be used to calculate the LOD 0");
+NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod1MaxDistance", 40.0f, 2.0f, kMaxF32,
+									   "Distance that will be used to calculate the LOD 1");
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -87,10 +116,11 @@ Renderer::~Renderer()
 {
 }
 
-Error Renderer::init(UVec2 swapchainSize)
+Error Renderer::init(UVec2 swapchainSize, StackMemoryPool* framePool)
 {
 	ANKI_TRACE_SCOPED_EVENT(RInit);
 
+	m_framePool = framePool;
 	const Error err = initInternal(swapchainSize);
 	if(err)
 	{
@@ -105,22 +135,20 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_frameCount = 0;
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * ConfigSet::getSingleton().getRRenderScaling());
+	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * g_renderScalingCVar.get());
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * ConfigSet::getSingleton().getRInternalRenderScaling());
+	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_internalRenderScalingCVar.get());
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
-	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u",
-				m_postProcessResolution.x(), m_postProcessResolution.y(), m_internalResolution.x(),
-				m_internalResolution.y());
+	ANKI_R_LOGI("Initializing offscreen renderer. Resolution %ux%u. Internal resolution %ux%u", m_postProcessResolution.x(),
+				m_postProcessResolution.y(), m_internalResolution.x(), m_internalResolution.y());
 
-	m_tileSize = ConfigSet::getSingleton().getRTileSize();
-	m_tileCounts.x() = (m_internalResolution.x() + m_tileSize - 1) / m_tileSize;
-	m_tileCounts.y() = (m_internalResolution.y() + m_tileSize - 1) / m_tileSize;
-	m_zSplitCount = ConfigSet::getSingleton().getRZSplitCount();
+	m_tileCounts.x() = (m_internalResolution.x() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+	m_tileCounts.y() = (m_internalResolution.y() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
+	m_zSplitCount = g_zSplitCountCVar.get();
 
 	// A few sanity checks
 	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
@@ -129,8 +157,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		return Error::kUserData;
 	}
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
-															m_clearTexComputeProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTexComputeProg));
 
 	// Dummy resources
 	{
@@ -140,25 +167,21 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
-		TextureViewInitInfo viewinit(tex);
+		TextureViewInitInfo viewinit(tex.get());
 		m_dummyTexView2d = GrManager::getSingleton().newTextureView(viewinit);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
 		tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
-		viewinit = TextureViewInitInfo(tex);
+		viewinit = TextureViewInitInfo(tex.get());
 		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
 
-		m_dummyBuff = GrManager::getSingleton().newBuffer(BufferInitInfo(
-			1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
+		m_dummyBuff = GrManager::getSingleton().newBuffer(
+			BufferInitInfo(1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	m_genericCompute.reset(newInstance<GenericCompute>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_genericCompute->init());
-
-	m_volumetricLightingAccumulation.reset(
-		newInstance<VolumetricLightingAccumulation>(RendererMemoryPool::getSingleton()));
+	m_volumetricLightingAccumulation.reset(newInstance<VolumetricLightingAccumulation>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_volumetricLightingAccumulation->init());
 
 	m_indirectDiffuseProbes.reset(newInstance<IndirectDiffuseProbes>(RendererMemoryPool::getSingleton()));
@@ -224,30 +247,26 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_indirectDiffuse->init());
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
-	   && ConfigSet::getSingleton().getSceneRayTracedShadows())
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get())
 	{
-		m_accelerationStructureBuilder.reset(
-			newInstance<AccelerationStructureBuilder>(RendererMemoryPool::getSingleton()));
+		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_accelerationStructureBuilder->init());
 
 		m_rtShadows.reset(newInstance<RtShadows>(RendererMemoryPool::getSingleton()));
 		ANKI_CHECK(m_rtShadows->init());
 	}
-	else
-	{
-		m_shadowmapsResolve.reset(newInstance<ShadowmapsResolve>(RendererMemoryPool::getSingleton()));
-		ANKI_CHECK(m_shadowmapsResolve->init());
-	}
+
+	m_shadowmapsResolve.reset(newInstance<ShadowmapsResolve>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_shadowmapsResolve->init());
 
 	m_motionVectors.reset(newInstance<MotionVectors>(RendererMemoryPool::getSingleton()));
 	ANKI_CHECK(m_motionVectors->init());
 
-	m_clusterBinning.reset(newInstance<ClusterBinning>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_clusterBinning->init());
+	m_clusterBinning2.reset(newInstance<ClusterBinning>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_clusterBinning2->init());
 
-	m_packVisibleClustererObjects.reset(newInstance<PackVisibleClusteredObjects>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_packVisibleClustererObjects->init());
+	m_primaryNonRenderableVisibility.reset(newInstance<PrimaryNonRenderableVisibility>(RendererMemoryPool::getSingleton()));
+	ANKI_CHECK(m_primaryNonRenderableVisibility->init());
 
 	// Init samplers
 	{
@@ -267,7 +286,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAniso");
-		sinit.m_anisotropyLevel = ConfigSet::getSingleton().getRTextureAnisotropy();
+		sinit.m_anisotropyLevel = g_textureAnisotropyCVar.get();
 		m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
@@ -294,17 +313,25 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_jitterOffsets[i] = generateJitter(i);
 	}
 
+	ANKI_CHECK(m_visibility.init());
+	ANKI_CHECK(m_nonRenderablesVisibility.init());
+	ANKI_CHECK(m_asVisibility.init());
+	ANKI_CHECK(m_hzbGenerator.init());
+	ANKI_CHECK(m_sceneDrawer.init());
+
 	return Error::kNone;
 }
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
+	const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
+
 	ctx.m_prevMatrices = m_prevMatrices;
 
-	ctx.m_matrices.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
-	ctx.m_matrices.m_view = ctx.m_renderQueue->m_viewMatrix;
-	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
-	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
+	ctx.m_matrices.m_cameraTransform = Mat3x4(cam.getFrustum().getWorldTransform());
+	ctx.m_matrices.m_view = cam.getFrustum().getViewMatrix();
+	ctx.m_matrices.m_projection = cam.getFrustum().getProjectionMatrix();
+	ctx.m_matrices.m_viewProjection = cam.getFrustum().getViewProjectionMatrix();
 
 	Vec2 jitter = m_jitterOffsets[m_frameCount & (m_jitterOffsets.getSize() - 1)]; // In [-0.5, 0.5]
 	const Vec2 ndcPixelSize = 2.0f / Vec2(m_internalResolution);
@@ -313,47 +340,35 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_jitter.setTranslationPart(Vec4(jitter, 0.0f, 1.0f));
 
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
-	ctx.m_matrices.m_viewProjectionJitter =
-		ctx.m_matrices.m_projectionJitter * Mat4(ctx.m_matrices.m_view, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * Mat4(ctx.m_matrices.m_view, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
 	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
 
-	ctx.m_matrices.m_reprojection =
-		ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
+	ctx.m_matrices.m_reprojection = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
-	// Check if resources got loaded
-	if(m_prevLoadRequestCount != ResourceManager::getSingleton().getLoadingRequestCount()
-	   || m_prevAsyncTasksCompleted != ResourceManager::getSingleton().getAsyncTaskCompletedCount())
-	{
-		m_prevLoadRequestCount = ResourceManager::getSingleton().getLoadingRequestCount();
-		m_prevAsyncTasksCompleted = ResourceManager::getSingleton().getAsyncTaskCompletedCount();
-		m_resourcesDirty = true;
-	}
-	else
-	{
-		m_resourcesDirty = false;
-	}
+	ctx.m_cameraNear = cam.getNear();
+	ctx.m_cameraFar = cam.getFar();
 
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
-	m_depthDownscale->importRenderTargets(ctx);
 	m_vrsSriGeneration->importRenderTargets(ctx);
+	m_gbuffer->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
 	gpuSceneCopy(ctx);
-	m_packVisibleClustererObjects->populateRenderGraph(ctx);
-	m_genericCompute->populateRenderGraph(ctx);
-	m_clusterBinning->populateRenderGraph(ctx);
+	m_primaryNonRenderableVisibility->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
+	m_forwardShading->populateRenderGraph(ctx); // This may feel out of place but it's only visibility
 	m_gbuffer->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
+	m_clusterBinning2->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
@@ -364,10 +379,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
 	}
-	else
-	{
-		m_shadowmapsResolve->populateRenderGraph(ctx);
-	}
+	m_shadowmapsResolve->populateRenderGraph(ctx);
 	m_volumetricFog->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_indirectSpecular->populateRenderGraph(ctx);
@@ -386,28 +398,15 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
-	// Populate the uniforms
-	m_clusterBinning->writeClusterBuffersAsync();
-
 	return Error::kNone;
 }
 
-void Renderer::finalize(const RenderingContext& ctx)
+void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
 {
 	++m_frameCount;
 
 	m_prevMatrices = ctx.m_matrices;
-
-	// Inform about the HiZ map. Do it as late as possible
-	if(ctx.m_renderQueue->m_fillCoverageBufferCallback)
-	{
-		F32* depthValues;
-		U32 width;
-		U32 height;
-		m_depthDownscale->getClientDepthMapInfo(depthValues, width, height);
-		ctx.m_renderQueue->m_fillCoverageBufferCallback(ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData,
-														depthValues, width, height);
-	}
+	m_readbaks.endFrame(fence);
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
@@ -445,11 +444,9 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 	return init;
 }
 
-TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
-												const ClearValue& clearVal)
+TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage, const ClearValue& clearVal)
 {
-	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite)
-				|| !!(inf.m_usage & TextureUsageBit::kImageComputeWrite));
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kImageComputeWrite));
 
 	const U faceCount = (inf.m_type == TextureType::kCube || inf.m_type == TextureType::kCubeArray) ? 6 : 1;
 
@@ -506,8 +503,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						TextureViewPtr view =
-							GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf, aspect));
 
 						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
 						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
@@ -518,7 +514,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					}
 					else
 					{
-						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf));
+						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
 
 						fbInit.m_colorAttachmentCount = 1;
 						fbInit.m_colorAttachments[0].m_textureView = view;
@@ -529,12 +525,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					}
 					FramebufferPtr fb = GrManager::getSingleton().newFramebuffer(fbInit);
 
-					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite,
-												  surf};
+					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, surf};
 					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-					cmdb->beginRenderPass(fb, colUsage, dsUsage);
+					cmdb->beginRenderPass(fb.get(), colUsage, dsUsage);
 					cmdb->endRenderPass();
 
 					if(!!initialUsage)
@@ -569,15 +564,14 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					const ShaderProgramResourceVariant* variant;
 					m_clearTexComputeProg->getOrCreateVariant(variantInitInfo, variant);
 
-					cmdb->bindShaderProgram(variant->getProgram());
+					cmdb->bindShaderProgram(&variant->getProgram());
 
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
-					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex, surf));
-					cmdb->bindImage(0, 0, view);
+					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
+					cmdb->bindImage(0, 0, view.get());
 
-					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone,
-														TextureUsageBit::kImageComputeWrite, surf};
+					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite, surf};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
@@ -589,8 +583,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kImageComputeWrite,
-															initialUsage, surf};
+						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kImageComputeWrite, initialUsage, surf};
 
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
@@ -606,7 +599,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 {
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	for(const DebugRtInfo& inf : m_debugRts)
 	{
 		ANKI_ASSERT(inf.m_rtName != rtName && "Choose different name");
@@ -621,8 +614,7 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(std::move(inf));
 }
 
-Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-										   ShaderProgramPtr& optionalShaderProgram)
+Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram)
 {
 	if(m_currentDebugRtName.isEmpty()) [[likely]]
 	{
@@ -656,7 +648,7 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 Format Renderer::getHdrFormat() const
 {
 	Format out;
-	if(!ConfigSet::getSingleton().getRHighQualityHdr())
+	if(!g_highQualityHdrCVar.get())
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}
@@ -687,8 +679,8 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_runCtx.m_gpuSceneHandle = rgraph.importBuffer(GpuSceneMemoryPool::getSingleton().getBuffer(),
-													GpuSceneMemoryPool::getSingleton().getBuffer()->getBufferUsage());
+	m_runCtx.m_gpuSceneHandle =
+		rgraph.importBuffer(&GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneBuffer::getSingleton().getBuffer().getBufferUsage());
 
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{
@@ -696,7 +688,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {
-			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer.get());
+			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer);
 		});
 	}
 }

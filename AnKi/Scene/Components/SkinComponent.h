@@ -11,6 +11,7 @@
 #include <AnKi/Util/Forward.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 
@@ -78,7 +79,7 @@ public:
 
 	U32 getBoneTransformsGpuSceneOffset() const
 	{
-		return U32(m_boneTransformsGpuSceneOffset.m_offset);
+		return m_gpuSceneBoneTransforms.getOffset();
 	}
 
 private:
@@ -112,12 +113,11 @@ private:
 
 	Bool m_forceFullUpdate = true;
 
-	SegregatedListsGpuMemoryPoolToken m_boneTransformsGpuSceneOffset;
+	GpuSceneBufferAllocation m_gpuSceneBoneTransforms;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
-	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend,
-					Vec4& maxExtend);
+	void visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128, U8>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend);
 };
 /// @}
 

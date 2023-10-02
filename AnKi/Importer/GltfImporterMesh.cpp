@@ -138,8 +138,8 @@ static void reindexSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 	ImporterDynamicArray<U32> remap(pool);
 	remap.resize(submesh.m_verts.getSize(), 0);
 
-	const U32 vertCount = U32(meshopt_generateVertexRemap(&remap[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
-														  &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize));
+	const U32 vertCount = U32(meshopt_generateVertexRemap(&remap[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0],
+														  submesh.m_verts.getSize(), vertSize));
 
 	ImporterDynamicArray<U32> newIdxArray(pool);
 	newIdxArray.resize(submesh.m_indices.getSize(), 0);
@@ -163,8 +163,7 @@ static void optimizeSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 		ImporterDynamicArray<U32> newIdxArray(pool);
 		newIdxArray.resize(submesh.m_indices.getSize(), 0);
 
-		meshopt_optimizeVertexCache(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
-									submesh.m_verts.getSize());
+		meshopt_optimizeVertexCache(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), submesh.m_verts.getSize());
 
 		submesh.m_indices = std::move(newIdxArray);
 	}
@@ -174,8 +173,8 @@ static void optimizeSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 		ImporterDynamicArray<U32> newIdxArray(pool);
 		newIdxArray.resize(submesh.m_indices.getSize(), 0);
 
-		meshopt_optimizeOverdraw(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
-								 &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), vertSize, 1.05f);
+		meshopt_optimizeOverdraw(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(),
+								 submesh.m_verts.getSize(), vertSize, 1.05f);
 
 		submesh.m_indices = std::move(newIdxArray);
 	}
@@ -185,10 +184,10 @@ static void optimizeSubmesh(SubMesh& submesh, BaseMemoryPool* pool)
 		ImporterDynamicArray<TempVertex> newVertArray(pool);
 		newVertArray.resize(submesh.m_verts.getSize());
 
-		const U32 newVertCount = U32(meshopt_optimizeVertexFetch(&newVertArray[0],
-																 &submesh.m_indices[0], // Inplace
-																 submesh.m_indices.getSize(), &submesh.m_verts[0],
-																 submesh.m_verts.getSize(), vertSize));
+		const U32 newVertCount =
+			U32(meshopt_optimizeVertexFetch(&newVertArray[0],
+											&submesh.m_indices[0], // Inplace
+											submesh.m_indices.getSize(), &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize));
 
 		if(newVertCount != submesh.m_verts.getSize())
 		{
@@ -212,9 +211,8 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, BaseMemoryPool* pool)
 
 	// Decimate
 	ImporterDynamicArray<U32> newIndices(pool);
-	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
-										   &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(),
-										   sizeof(TempVertex), targetIndexCount, 1e-2f)));
+	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(),
+										   submesh.m_verts.getSize(), sizeof(TempVertex), targetIndexCount, 1e-2f)));
 
 	// Re-pack
 	ImporterDynamicArray<U32> reindexedIndices(pool);
@@ -415,8 +413,8 @@ static Bool isConvex(const ImporterList<SubMesh>& submeshes)
 	return convex;
 }
 
-static void writeVertexAttribAndBufferInfoToHeader(VertexStreamId stream, MeshBinaryHeader& header,
-												   const Vec4& scale = Vec4(1.0f), const Vec4& translation = Vec4(0.0f))
+static void writeVertexAttribAndBufferInfoToHeader(VertexStreamId stream, MeshBinaryHeader& header, const Vec4& scale = Vec4(1.0f),
+												   const Vec4& translation = Vec4(0.0f))
 {
 	MeshBinaryVertexAttribute& attrib = header.m_vertexAttributes[stream];
 	attrib.m_bufferIndex = U32(stream);
@@ -433,8 +431,7 @@ U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 {
 	U32 totalVertexCount = 0;
 
-	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count;
-		++primitive)
+	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count; ++primitive)
 	{
 		totalVertexCount += U32(primitive->attributes[0].data->count);
 	}
@@ -455,8 +452,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	Bool hasBoneWeights = false;
 
 	// Iterate primitives. Every primitive is a submesh
-	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count;
-		++primitive)
+	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count; ++primitive)
 	{
 		if(primitive->type != cgltf_primitive_type_triangles)
 		{
@@ -468,8 +464,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 
 		U minVertCount = kMaxU;
 		U maxVertCount = kMinU;
-		for(const cgltf_attribute* attrib = primitive->attributes;
-			attrib < primitive->attributes + primitive->attributes_count; ++attrib)
+		for(const cgltf_attribute* attrib = primitive->attributes; attrib < primitive->attributes + primitive->attributes_count; ++attrib)
 		{
 			minVertCount = min(minVertCount, U(attrib->data->count));
 			maxVertCount = max(maxVertCount, U(attrib->data->count));
@@ -487,8 +482,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		//
 		// Gather positions + normals + UVs
 		//
-		for(const cgltf_attribute* attrib = primitive->attributes;
-			attrib < primitive->attributes + primitive->attributes_count; ++attrib)
+		for(const cgltf_attribute* attrib = primitive->attributes; attrib < primitive->attributes + primitive->attributes_count; ++attrib)
 		{
 			if(attrib->type == cgltf_attribute_type_position)
 			{
@@ -568,8 +562,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 				return Error::kUserData;
 			}
 			submesh.m_indices.resize(U32(primitive->indices->count));
-			const U8* base = static_cast<const U8*>(primitive->indices->buffer_view->buffer->data)
-							 + primitive->indices->offset + primitive->indices->buffer_view->offset;
+			const U8* base = static_cast<const U8*>(primitive->indices->buffer_view->buffer->data) + primitive->indices->offset
+							 + primitive->indices->buffer_view->offset;
 			for(U32 i = 0; i < primitive->indices->count; ++i)
 			{
 				U32 idx;
@@ -667,8 +661,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	posScale = (posScale < 1.0f) ? 1.0f : (1.0f / posScale);
 	const Vec3 posTranslation = -aabbMin;
 
-	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header, Vec4(1.0f / posScale),
-										   (-posTranslation).xyz1());
+	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header, Vec4(1.0f / posScale), (-posTranslation).xyz1());
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kNormal, header);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kTangent, header);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kUv, header);

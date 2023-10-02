@@ -21,7 +21,8 @@
 #define ANKI_DEBUG_SYMBOLS ${ANKI_DEBUG_SYMBOLS}
 #define ANKI_OPTIMIZE ${ANKI_OPTIMIZE}
 #define ANKI_TESTS ${ANKI_TESTS}
-#define ANKI_ENABLE_TRACE ${_ANKI_ENABLE_TRACE}
+#define ANKI_TRACING_ENABLED ${_ANKI_TRACING_ENABLED}
+#define ANKI_STATS_ENABLED ${_ANKI_STATS_ENABLED}
 #define ANKI_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 #define ANKI_DLSS ${_ANKI_DLSS_ENABLED}
 
@@ -166,7 +167,7 @@
 // Some compiler attributes
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	define ANKI_RESTRICT __restrict
-#	define ANKI_FORCE_INLINE __attribute__((always_inline))
+#	define ANKI_FORCE_INLINE inline __attribute__((always_inline))
 #	define ANKI_DONT_INLINE __attribute__((noinline))
 #	define ANKI_UNUSED __attribute__((__unused__))
 #	define ANKI_COLD __attribute__((cold, optimize("Os")))

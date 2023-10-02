@@ -128,8 +128,7 @@ public:
 	Bool m_alphaToCoverageEnabled = false;
 	Array<ColorAttachmentState, kMaxColorRenderTargets> m_attachments;
 };
-static_assert(sizeof(ColorPipelineState) == sizeof(ColorAttachmentState) * kMaxColorRenderTargets + sizeof(U8),
-			  "Packed because it will be hashed");
+static_assert(sizeof(ColorPipelineState) == sizeof(ColorAttachmentState) * kMaxColorRenderTargets + sizeof(U8), "Packed because it will be hashed");
 
 class AllPipelineState
 {
@@ -237,8 +236,8 @@ public:
 		}
 	}
 
-	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
-							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
+	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
+							  StencilOperation stencilPassDepthPass)
 	{
 		if(!!(face & FaceSelectionBit::kFront)
 		   && (m_state.m_stencil.m_face[0].m_stencilFailOperation != stencilFail
@@ -317,8 +316,7 @@ public:
 	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 	{
 		ColorAttachmentState& c = m_state.m_color.m_attachments[attachment];
-		if(c.m_srcBlendFactorRgb != srcRgb || c.m_dstBlendFactorRgb != dstRgb || c.m_srcBlendFactorA != srcA
-		   || c.m_dstBlendFactorA != dstA)
+		if(c.m_srcBlendFactorRgb != srcRgb || c.m_dstBlendFactorRgb != dstRgb || c.m_srcBlendFactorA != srcA || c.m_dstBlendFactorA != dstA)
 		{
 			c.m_srcBlendFactorRgb = srcRgb;
 			c.m_dstBlendFactorRgb = dstRgb;

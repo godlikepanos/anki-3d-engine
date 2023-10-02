@@ -7,28 +7,36 @@
 
 #include <AnKi/Scene/Common.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/ContiguousArrayAllocator.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/HashMap.h>
+#include <AnKi/Util/BlockArray.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 
 // Forward
-class Octree;
 class RenderQueue;
+extern NumericCVar<F32> g_probeEffectiveDistanceCVar;
+extern NumericCVar<F32> g_probeShadowEffectiveDistanceCVar;
 
 /// @addtogroup scene
 /// @{
 
-/// SceneGraph statistics.
-class SceneGraphStats
+class SceneComponentArrays
 {
 public:
-	Second m_updateTime ANKI_DEBUG_CODE(= 0.0);
-	Second m_visibilityTestsTime ANKI_DEBUG_CODE(= 0.0);
-	Second m_physicsUpdate ANKI_DEBUG_CODE(= 0.0);
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+	SceneBlockArray<name##Component>& get##name##s() \
+	{ \
+		return m_##name##Array; \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+
+private:
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) SceneBlockArray<name##Component> m_##name##Array;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 
 /// The scene graph that  all the scene entities
@@ -40,7 +48,6 @@ class SceneGraph : public MakeSingleton<SceneGraph>
 	friend class SceneNode;
 	friend class UpdateSceneNodesTask;
 	friend class Event;
-	friend class AllGpuSceneContiguousArrays;
 
 public:
 	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
@@ -85,8 +92,6 @@ public:
 
 	Error update(Second prevUpdateTime, Second crntTime);
 
-	void doVisibilityTests(RenderQueue& rqueue);
-
 	SceneNode& findSceneNode(const CString& name);
 	SceneNode* tryFindSceneNode(const CString& name);
 
@@ -125,11 +130,6 @@ public:
 		m_objectsMarkedForDeletionCount.fetchAdd(1);
 	}
 
-	const SceneGraphStats& getStats() const
-	{
-		return m_stats;
-	}
-
 	const Vec3& getSceneMin() const
 	{
 		return m_sceneMin;
@@ -142,20 +142,71 @@ public:
 
 	/// Get a unique UUID.
 	/// @note It's thread-safe.
-	U64 getNewUuid()
+	U32 getNewUuid()
 	{
 		return m_nodesUuid.fetchAdd(1);
 	}
 
-	Octree& getOctree()
+	SceneComponentArrays& getComponentArrays()
 	{
-		ANKI_ASSERT(m_octree);
-		return *m_octree;
+		return m_componentArrays;
 	}
 
-	ANKI_INTERNAL AllGpuSceneContiguousArrays& getAllGpuSceneContiguousArrays()
+	void addDirectionalLight(LightComponent* comp)
 	{
-		return m_gpuSceneAllocators;
+		ANKI_ASSERT(m_dirLights.find(comp) == m_dirLights.getEnd());
+		m_dirLights.emplaceBack(comp);
+		if(m_dirLights.getSize() > 1)
+		{
+			ANKI_SCENE_LOGW("More than one directional lights detected");
+		}
+	}
+
+	void removeDirectionalLight(LightComponent* comp)
+	{
+		auto it = m_dirLights.find(comp);
+		ANKI_ASSERT(it != m_dirLights.getEnd());
+		m_dirLights.erase(it);
+	}
+
+	LightComponent* getDirectionalLight() const;
+
+	void addSkybox(SkyboxComponent* comp)
+	{
+		ANKI_ASSERT(m_skyboxes.find(comp) == m_skyboxes.getEnd());
+		m_skyboxes.emplaceBack(comp);
+		if(m_skyboxes.getSize() > 1)
+		{
+			ANKI_SCENE_LOGW("More than one skyboxes detected");
+		}
+	}
+
+	void removeSkybox(SkyboxComponent* comp)
+	{
+		auto it = m_skyboxes.find(comp);
+		ANKI_ASSERT(it != m_skyboxes.getEnd());
+		m_skyboxes.erase(it);
+	}
+
+	SkyboxComponent* getSkybox() const
+	{
+		return (m_skyboxes.getSize()) ? m_skyboxes[0] : nullptr;
+	}
+
+	/// @note It's thread-safe.
+	void updateSceneBounds(const Vec3& min, const Vec3& max)
+	{
+		LockGuard lock(m_sceneBoundsMtx);
+		m_sceneMin = m_sceneMin.min(min);
+		m_sceneMax = m_sceneMax.max(max);
+	}
+
+	/// @note It's thread-safe.
+	Array<Vec3, 2> getSceneBounds() const
+	{
+		LockGuard lock(m_sceneBoundsMtx);
+		ANKI_ASSERT(m_sceneMin < m_sceneMax);
+		return {m_sceneMin, m_sceneMax};
 	}
 
 private:
@@ -182,18 +233,18 @@ private:
 
 	EventManager m_events;
 
-	Octree* m_octree = nullptr;
-
-	Vec3 m_sceneMin = Vec3(-1000.0f, -200.0f, -1000.0f);
-	Vec3 m_sceneMax = Vec3(1000.0f, 200.0f, 1000.0f);
+	Vec3 m_sceneMin = Vec3(kMaxF32);
+	Vec3 m_sceneMax = Vec3(kMinF32);
+	mutable SpinLock m_sceneBoundsMtx;
 
 	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 
-	Atomic<U64> m_nodesUuid = {1};
+	Atomic<U32> m_nodesUuid = {1};
 
-	SceneGraphStats m_stats;
+	SceneComponentArrays m_componentArrays;
 
-	AllGpuSceneContiguousArrays m_gpuSceneAllocators;
+	SceneDynamicArray<LightComponent*> m_dirLights;
+	SceneDynamicArray<SkyboxComponent*> m_skyboxes;
 
 	SceneGraph();
 
@@ -208,9 +259,6 @@ private:
 
 	Error updateNodes(UpdateSceneNodesCtx& ctx);
 	Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
-
-	/// Do visibility tests.
-	static void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, RenderQueue& rqueue);
 };
 
 template<typename Node, typename... Args>

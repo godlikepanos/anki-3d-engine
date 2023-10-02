@@ -217,8 +217,7 @@ public:
 
 	/// Read an array. Can't call this directly.
 	template<typename T>
-	void doArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] T* arr,
-				 [[maybe_unused]] PtrSize size)
+	void doArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] T* arr, [[maybe_unused]] PtrSize size)
 	{
 		// Do nothing
 	}
@@ -232,8 +231,8 @@ public:
 
 	/// Read a dynamic array of complex types. Can't call this directly.
 	template<typename T>
-	void doDynamicArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset,
-						[[maybe_unused]] T* arr, [[maybe_unused]] PtrSize size)
+	void doDynamicArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] T* arr,
+						[[maybe_unused]] PtrSize size)
 	{
 		// Do nothing
 	}

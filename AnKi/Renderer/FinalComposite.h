@@ -44,7 +44,7 @@ private:
 
 	Error initInternal();
 
-	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

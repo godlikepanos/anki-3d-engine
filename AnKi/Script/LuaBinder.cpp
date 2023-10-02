@@ -205,8 +205,7 @@ Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataType
 		if(out->getSig() == typeInfo.m_signature)
 		{
 			// Check using a LUA method again
-			ANKI_ASSERT(luaL_testudata(l, stackIdx, typeInfo.m_typeName) != nullptr
-						&& "ANKI type check passes but LUA's type check failed");
+			ANKI_ASSERT(luaL_testudata(l, stackIdx, typeInfo.m_typeName) != nullptr && "ANKI type check passes but LUA's type check failed");
 		}
 		else
 		{

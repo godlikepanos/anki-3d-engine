@@ -140,8 +140,7 @@ public:
 
 	static Bool classof(const PhysicsObject* obj)
 	{
-		return obj->getType() >= PhysicsObjectType::kFirstFiltered
-			   && obj->getType() <= PhysicsObjectType::kLastFiltered;
+		return obj->getType() >= PhysicsObjectType::kFirstFiltered && obj->getType() <= PhysicsObjectType::kLastFiltered;
 	}
 
 	/// Get the material(s) this object belongs.

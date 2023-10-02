@@ -28,8 +28,6 @@ private:
 	FramebufferDescription m_fbDescr;
 
 	Error initInternal();
-
-	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

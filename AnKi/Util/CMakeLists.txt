@@ -18,7 +18,8 @@ set(sources
 	F16.cpp
 	Process.cpp
 	Thread.cpp
-	Singleton.cpp)
+	Singleton.cpp
+	ThreadJobManager.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
 	set(sources ${sources}

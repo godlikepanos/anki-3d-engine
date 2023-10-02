@@ -9,24 +9,55 @@
 
 ANKI_BEGIN_NAMESPACE
 
-ANKI_SHADER_FUNC_INLINE GpuSceneRenderablePacked packGpuSceneRenderable(GpuSceneRenderable x)
+inline GpuSceneRenderableVertex unpackGpuSceneRenderableVertex(UVec4 x)
 {
-	GpuSceneRenderablePacked o;
-	o[0] = x.m_worldTransformsOffset;
-	o[1] = x.m_uniformsOffset;
-	o[2] = x.m_geometryOffset;
-	o[3] = x.m_boneTransformsOffset;
+	GpuSceneRenderableVertex o;
+	o.m_worldTransformsOffset = x[0];
+	o.m_uniformsOffset = x[1];
+	o.m_meshLodOffset = x[2];
+	o.m_boneTransformsOrParticleEmitterOffset = x[3];
 	return o;
 }
 
-ANKI_SHADER_FUNC_INLINE GpuSceneRenderable unpackGpuSceneRenderable(GpuSceneRenderablePacked x)
+inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex, U32 renderStateBucket)
 {
-	GpuSceneRenderable o;
-	o.m_worldTransformsOffset = x[0];
-	o.m_uniformsOffset = x[1];
-	o.m_geometryOffset = x[2];
-	o.m_boneTransformsOffset = x[3];
-	return o;
+	GpuSceneRenderableBoundingVolume gpuVolume;
+
+	gpuVolume.m_sphereCenter = (aabbMin + aabbMax) * 0.5f;
+	gpuVolume.m_aabbExtend = aabbMax - gpuVolume.m_sphereCenter;
+#if defined(__cplusplus)
+	gpuVolume.m_sphereRadius = gpuVolume.m_aabbExtend.getLength();
+#else
+	gpuVolume.m_sphereRadius = length(gpuVolume.m_aabbExtend);
+#endif
+
+	ANKI_ASSERT(renderableIndex <= (1u << 20u) - 1u);
+	gpuVolume.m_renderableIndexAndRenderStateBucket = renderableIndex << 12u;
+
+	ANKI_ASSERT(renderStateBucket <= (1u << 12u) - 1u);
+	gpuVolume.m_renderableIndexAndRenderStateBucket |= renderStateBucket;
+
+	return gpuVolume;
+}
+
+inline GpuSceneNonRenderableObjectTypeWithFeedback toGpuSceneNonRenderableObjectTypeWithFeedback(GpuSceneNonRenderableObjectType type)
+{
+	GpuSceneNonRenderableObjectTypeWithFeedback ret;
+	switch(type)
+	{
+	case GpuSceneNonRenderableObjectType::kLight:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kLight;
+		break;
+	case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kGlobalIlluminationProbe;
+		break;
+	case GpuSceneNonRenderableObjectType::kReflectionProbe:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kReflectionProbe;
+		break;
+	default:
+		ret = GpuSceneNonRenderableObjectTypeWithFeedback::kCount;
+	}
+	return ret;
 }
 
 ANKI_END_NAMESPACE

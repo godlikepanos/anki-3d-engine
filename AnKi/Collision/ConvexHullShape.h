@@ -92,13 +92,13 @@ private:
 	Transform m_invTrf;
 
 	const Vec4* m_points
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		= nullptr
 #endif
 		;
 
 	U32 m_pointCount
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		= 0
 #endif
 		;

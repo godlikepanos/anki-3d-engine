@@ -29,7 +29,7 @@ GrManager& MakeSingletonPtr<GrManager>::allocateSingleton<>()
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new GrManagerImpl;
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	++g_singletonsAllocated;
 #endif
 
@@ -43,7 +43,7 @@ void MakeSingletonPtr<GrManager>::freeSingleton()
 	{
 		delete static_cast<GrManagerImpl*>(m_global);
 		m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		--g_singletonsAllocated;
 #endif
 	}
@@ -79,26 +79,6 @@ void GrManager::finish()
 {
 	ANKI_VK_SELF(GrManagerImpl);
 	self.finish();
-}
-
-GrManagerStats GrManager::getStats() const
-{
-	ANKI_VK_SELF_CONST(GrManagerImpl);
-	GrManagerStats out;
-
-	GpuMemoryManagerStats memStats;
-	self.getGpuMemoryManager().getStats(memStats);
-
-	out.m_deviceMemoryAllocated = memStats.m_deviceMemoryAllocated;
-	out.m_deviceMemoryInUse = memStats.m_deviceMemoryInUse;
-	out.m_deviceMemoryAllocationCount = memStats.m_deviceMemoryAllocationCount;
-	out.m_hostMemoryAllocated = memStats.m_hostMemoryAllocated;
-	out.m_hostMemoryInUse = memStats.m_hostMemoryInUse;
-	out.m_hostMemoryAllocationCount = memStats.m_hostMemoryAllocationCount;
-
-	out.m_commandBufferCount = self.getCommandBufferFactory().getCreatedCommandBufferCount();
-
-	return out;
 }
 
 #define ANKI_NEW_GR_OBJECT(type) \

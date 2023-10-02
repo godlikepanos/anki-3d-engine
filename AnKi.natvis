@@ -34,17 +34,6 @@
 		</Expand>
 	</Type>
 
-	<Type Name="anki::DynamicArrayRaii&lt;*&gt;">
-		<Intrinsic Name="size" Expression="m_size" />
-		<DisplayString>{{ size={m_size} capacity={m_capacity} }}</DisplayString>
-		<Expand>
-			<ArrayItems>
-				<Size>m_size</Size>
-				<ValuePointer>m_data</ValuePointer>
-			</ArrayItems>
-		</Expand>
-	</Type>
-
 	<Type Name="anki::Array&lt;*,*&gt;">
 		<DisplayString>{{ size={$T2} }}</DisplayString>
 		<Expand>
@@ -62,7 +51,7 @@
 		<DisplayString>{m_data.m_data,s}</DisplayString>
 	</Type>
 
-	<Type Name="anki::BaseStringRaii&lt;*&gt;">
+	<Type Name="anki::BaseString&lt;*&gt;">
 		<DisplayString Condition="(bool)(m_data.m_data==0)">*Empty*</DisplayString>
 		<DisplayString>{m_data.m_data,s}</DisplayString>
 	</Type>

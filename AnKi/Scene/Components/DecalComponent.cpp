@@ -7,23 +7,18 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 
 DecalComponent::DecalComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
-	, m_spatial(this)
+	: SceneComponent(node, kClassType)
 {
-	m_gpuSceneIndex =
-		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(GpuSceneContiguousArrayType::kDecals);
+	m_gpuSceneDecal.allocate();
 }
 
 DecalComponent::~DecalComponent()
 {
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
-
-	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(GpuSceneContiguousArrayType::kDecals,
-																			 m_gpuSceneIndex);
 }
 
 void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
@@ -42,7 +37,7 @@ void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
 	m_dirty = true;
 
 	l.m_image = std::move(rsrc);
-	l.m_bindlessTextureIndex = l.m_image->getTextureView()->getOrCreateBindlessTextureIndex();
+	l.m_bindlessTextureIndex = l.m_image->getTextureView().getOrCreateBindlessTextureIndex();
 	l.m_blendFactor = blendFactor;
 }
 
@@ -61,12 +56,10 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		const Mat4 viewMat = worldTransform.getInverse();
 
-		const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(),
-																		 halfBoxSize.y(), -halfBoxSize.y(),
+		const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(), halfBoxSize.y(), -halfBoxSize.y(),
 																		 kClusterObjectFrustumNearPlane, m_boxSize.z());
 
-		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-							1.0f);
+		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 		m_biasProjViewMat = biasMat4 * projMat * viewMat;
 
@@ -74,8 +67,7 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		const Vec4 center(0.0f, 0.0f, -halfBoxSize.z(), 0.0f);
 		const Vec4 extend(halfBoxSize.x(), halfBoxSize.y(), halfBoxSize.z(), 0.0f);
 		const Obb obbL(center, Mat3x4::getIdentity(), extend);
-		m_obb = obbL.getTransformed(info.m_node->getWorldTransform());
-		m_spatial.setBoundingShape(m_obb);
+		const Obb obbW = obbL.getTransformed(info.m_node->getWorldTransform());
 
 		// Upload to the GPU scene
 		GpuSceneDecal gpuDecal;
@@ -84,20 +76,11 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuDecal.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
 		gpuDecal.m_roughnessMetalnessFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
 		gpuDecal.m_textureMatrix = m_biasProjViewMat;
+		gpuDecal.m_sphereCenter = obbW.getCenter().xyz();
+		gpuDecal.m_sphereRadius = obbW.getExtend().getLength();
 
-		const Mat4 trf(m_obb.getCenter().xyz1(), m_obb.getRotation().getRotationPart(), 1.0f);
-		gpuDecal.m_invertedTransform = trf.getInverse();
-
-		gpuDecal.m_obbExtend = m_obb.getExtend().xyz();
-
-		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneDecal)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kDecals);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuDecal), &gpuDecal);
+		m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 	}
-
-	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
-	updated = updated || spatialUpdated;
 
 	return Error::kNone;
 }

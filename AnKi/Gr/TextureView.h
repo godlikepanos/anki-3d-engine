@@ -17,9 +17,9 @@ namespace anki {
 class TextureViewInitInfo : public GrBaseInitInfo, public TextureSubresourceInfo
 {
 public:
-	TexturePtr m_texture;
+	Texture* m_texture = nullptr;
 
-	TextureViewInitInfo(TexturePtr tex, CString name = {})
+	TextureViewInitInfo(Texture* tex, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -28,8 +28,7 @@ public:
 		m_firstLayer = 0;
 		m_layerCount = tex->getLayerCount();
 		m_firstFace = 0;
-		m_faceCount =
-			(tex->getTextureType() == TextureType::kCubeArray || tex->getTextureType() == TextureType::kCube) ? 6 : 1;
+		m_faceCount = (tex->getTextureType() == TextureType::kCubeArray || tex->getTextureType() == TextureType::kCube) ? 6 : 1;
 
 		m_depthStencilAspect = getFormatInfo(tex->getFormat()).m_depthStencil;
 	}
@@ -39,8 +38,7 @@ public:
 	{
 	}
 
-	TextureViewInitInfo(TexturePtr tex, const TextureSurfaceInfo& surf,
-						DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone, CString name = {})
+	TextureViewInitInfo(Texture* tex, const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -54,7 +52,7 @@ public:
 		ANKI_ASSERT(isValid());
 	}
 
-	TextureViewInitInfo(TexturePtr tex, const TextureSubresourceInfo& subresource, CString name = {})
+	TextureViewInitInfo(Texture* tex, const TextureSubresourceInfo& subresource, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
@@ -64,7 +62,7 @@ public:
 
 	Bool isValid() const
 	{
-		return m_texture.isCreated() && m_texture->isSubresourceValid(*this);
+		return m_texture != nullptr && m_texture->isSubresourceValid(*this);
 	}
 };
 
@@ -119,9 +117,8 @@ protected:
 
 	Bool initialized() const
 	{
-		return m_texType != TextureType::kCount && m_subresource.m_firstMipmap < kMaxU32
-			   && m_subresource.m_mipmapCount < kMaxU32 && m_subresource.m_firstLayer < kMaxU32
-			   && m_subresource.m_layerCount < kMaxU32 && m_subresource.m_firstFace < kMaxU8
+		return m_texType != TextureType::kCount && m_subresource.m_firstMipmap < kMaxU32 && m_subresource.m_mipmapCount < kMaxU32
+			   && m_subresource.m_firstLayer < kMaxU32 && m_subresource.m_layerCount < kMaxU32 && m_subresource.m_firstFace < kMaxU8
 			   && m_subresource.m_faceCount < kMaxU8;
 	}
 

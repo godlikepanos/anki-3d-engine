@@ -31,8 +31,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	return Sphere((ca + cb) / 2.0f, (ca - cb).getLength() / 2.0f);
 }
 
-void Sphere::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride,
-							   [[maybe_unused]] PtrSize buffSize)
+void Sphere::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, [[maybe_unused]] PtrSize buffSize)
 {
 	// Calc center
 	{

@@ -104,7 +104,7 @@ void MicroObjectRecycler<T>::checkDoneFences()
 
 		if(!obj.m_fenceDone && mobj.getFence() && mobj.getFence()->done())
 		{
-			mobj.getFence().reset(nullptr);
+			mobj.setFence(nullptr);
 			mobj.onFenceDone();
 			obj.m_fenceDone = true;
 		}

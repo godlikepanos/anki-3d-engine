@@ -10,14 +10,10 @@ namespace anki {
 // Components
 class SceneComponent;
 #define ANKI_DEFINE_SCENE_COMPONENT(name, updateOrder) class name##Component;
-#include <AnKi/Scene/Components/SceneComponentClasses.defs.h>
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 // Nodes
 class SceneNode;
-class LightNode;
-class PointLightNode;
-class SpotLightNode;
-class CameraNode;
 
 // Events
 class EventManager;

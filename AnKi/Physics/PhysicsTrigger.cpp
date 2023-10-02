@@ -66,8 +66,7 @@ void PhysicsTrigger::processContacts()
 	}
 
 	// Gather the new pairs
-	DynamicArray<PhysicsTriggerFilteredPair*, MemoryPoolPtrWrapper<StackMemoryPool>> newPairs(
-		&PhysicsWorld::getSingleton().getTempMemoryPool());
+	DynamicArray<PhysicsTriggerFilteredPair*, MemoryPoolPtrWrapper<StackMemoryPool>> newPairs(&PhysicsWorld::getSingleton().getTempMemoryPool());
 	newPairs.resizeStorage(m_ghostShape->getOverlappingPairs().size());
 	for(U32 i = 0; i < U32(m_ghostShape->getOverlappingPairs().size()); ++i)
 	{
@@ -78,8 +77,7 @@ void PhysicsTrigger::processContacts()
 		PhysicsFilteredObject* obj = dcast<PhysicsFilteredObject*>(aobj);
 
 		Bool isNew;
-		PhysicsTriggerFilteredPair* pair =
-			PhysicsWorld::getSingleton().getOrCreatePhysicsTriggerFilteredPair(this, obj, isNew);
+		PhysicsTriggerFilteredPair* pair = PhysicsWorld::getSingleton().getOrCreatePhysicsTriggerFilteredPair(this, obj, isNew);
 		if(pair)
 		{
 			ANKI_ASSERT(pair->isAlive());

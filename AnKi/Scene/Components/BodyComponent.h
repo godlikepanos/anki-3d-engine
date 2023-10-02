@@ -56,9 +56,9 @@ private:
 	PhysicsBodyPtr m_body;
 	Bool m_dirty = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
-	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 };
 /// @}
 

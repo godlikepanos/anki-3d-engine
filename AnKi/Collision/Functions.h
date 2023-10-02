@@ -9,6 +9,7 @@
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Ray.h>
 #include <AnKi/Collision/Aabb.h>
+#include <AnKi/Util/WeakArray.h>
 
 namespace anki {
 
@@ -225,7 +226,10 @@ void extractClipPlanes(const Mat4& mvp, Array<Plane, 6>& planes);
 void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane);
 
 /// Compute the edges of the far plane of a frustum
-void computeEdgesOfFrustum(F32 far, F32 fovX, F32 fovY, Vec4 points[4]);
+void computeEdgesOfFrustum(F32 far, F32 fovX, F32 fovY, Vec3 points[4]);
+
+/// Welzl's algorithm that computes a compact bounding sphere given a point cloud.
+Sphere computeBoundingSphere(ConstWeakArray<Vec3> points);
 
 /// @}
 

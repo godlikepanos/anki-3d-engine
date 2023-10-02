@@ -45,19 +45,18 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	Vec3 outColor = Vec3(0.0, 0.0, 0.0);
 
 	// Find the cluster and then the light counts
-	Cluster cluster = getClusterFragCoord(svPosition.xyz);
+	Cluster cluster = getClusterFragCoord(g_clusters, g_clusteredShading, svPosition.xyz);
 
 	// Point lights
-	[loop] while(cluster.m_pointLightsMask != 0)
+	U32 idx = 0;
+	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = g_pointLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
 
 #	if defined(ANKI_LOD) && ANKI_LOD > 1
 		const F32 shadow = 1.0;
@@ -73,16 +72,14 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	}
 
 	// Spot lights
-	[loop] while(cluster.m_spotLightsMask != 0)
+	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = g_spotLights[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
 
 		const Vec3 l = normalize(frag2Light);
 
@@ -92,7 +89,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const F32 shadow = 1.0;
 #	else
 		F32 shadow = 1.0;
-		[branch] if(light.m_shadowLayer != kMaxU32)
+		[branch] if(light.m_shadow != 0u)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}
@@ -111,8 +108,7 @@ RVec3 computeLightColorLow(RVec3 diffCol, RVec3 worldPos, Vec4 svPosition)
 
 	const Vec2 uv = svPosition.xy / g_clusteredShading.m_renderingSize;
 	const F32 linearDepth = linearizeDepth(svPosition.z, g_clusteredShading.m_near, g_clusteredShading.m_far);
-	const F32 w =
-		linearDepth * (F32(g_clusteredShading.m_zSplitCount) / F32(g_clusteredShading.m_lightVolumeLastZSplit + 1u));
+	const F32 w = linearDepth * (F32(g_clusteredShading.m_zSplitCount) / F32(g_clusteredShading.m_lightVolumeLastZSplit + 1u));
 	const Vec3 uvw = Vec3(uv, w);
 
 	const RVec3 light = g_lightVol.SampleLevel(g_linearAnyClampSampler, uvw, 0.0).rgb;
@@ -124,8 +120,7 @@ void particleAlpha(RVec4 color, RVec4 scaleColor, RVec4 biasColor, out FragOut o
 	packGBuffer(color * scaleColor + biasColor, output);
 }
 
-void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition,
-		 out FragOut output)
+void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out FragOut output)
 {
 	const Vec2 screenSize = 1.0 / g_clusteredShading.m_renderingSize;
 
@@ -133,8 +128,7 @@ void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVS
 	const F32 depth = g_gbufferDepthTex.Sample(g_linearAnyClampSampler, texCoords, 0.0).r;
 	F32 zFeatherFactor;
 
-	const Vec4 fragPosVspace4 =
-		mul(g_clusteredShading.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
+	const Vec4 fragPosVspace4 = mul(g_clusteredShading.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
 	const F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
 	const F32 diff = max(0.0, zVSpace - sceneZVspace);

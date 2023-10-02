@@ -10,6 +10,7 @@
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 #define ENABLE_SSGI true
 #define ENABLE_PROBES true
@@ -19,19 +20,16 @@
 
 ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
-#define CLUSTERED_SHADING_GI_BINDING 1u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 2u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
-
+[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(1)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
+[[vk::binding(2)]] StructuredBuffer<Cluster> g_clusters;
 [[vk::binding(3)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(4)]] Texture2D<RVec4> g_gbufferRt2;
-[[vk::binding(5)]] Texture2D g_depthTex;
+[[vk::binding(4)]] Texture2D<Vec4> g_gbufferRt2;
+[[vk::binding(5)]] Texture2D<Vec4> g_depthTex;
 [[vk::binding(6)]] Texture2D<RVec4> g_lightBufferRt;
 [[vk::binding(7)]] Texture2D<RVec4> g_historyTex;
-[[vk::binding(8)]] Texture2D g_motionVectorsTex;
-[[vk::binding(9)]] Texture2D g_historyLengthTex;
+[[vk::binding(8)]] Texture2D<Vec4> g_motionVectorsTex;
+[[vk::binding(9)]] Texture2D<Vec4> g_historyLengthTex;
 
 #if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
@@ -43,8 +41,8 @@ ANKI_BINDLESS_SET(1)
 
 Vec4 cheapProject(Vec4 point_)
 {
-	return projectPerspective(point_, g_uniforms.m_projectionMat.x, g_uniforms.m_projectionMat.y,
-							  g_uniforms.m_projectionMat.z, g_uniforms.m_projectionMat.w);
+	return projectPerspective(point_, g_uniforms.m_projectionMat.x, g_uniforms.m_projectionMat.y, g_uniforms.m_projectionMat.z,
+							  g_uniforms.m_projectionMat.w);
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
@@ -99,14 +97,12 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 		const F32 aspectRatio = g_uniforms.m_viewportSizef.x / g_uniforms.m_viewportSizef.y;
 		for(U32 i = 0u; i < g_uniforms.m_sampleCount; ++i)
 		{
-			const Vec2 point_ =
-				uvToNdc(hammersleyRandom16(i, g_uniforms.m_sampleCount, random)) * Vec2(1.0, aspectRatio);
+			const Vec2 point_ = uvToNdc(hammersleyRandom16(i, g_uniforms.m_sampleCount, random)) * Vec2(1.0, aspectRatio);
 			const Vec2 finalDiskPoint = ndc + point_ * projRadius;
 
 			// Do a cheap unproject in view space
 			const F32 d = g_depthTex.SampleLevel(g_linearAnyClampSampler, ndcToUv(finalDiskPoint), 0.0).r;
-			const F32 z = g_clusteredShading.m_matrices.m_unprojectionParameters.z
-						  / (g_clusteredShading.m_matrices.m_unprojectionParameters.w + d);
+			const F32 z = g_clusteredShading.m_matrices.m_unprojectionParameters.z / (g_clusteredShading.m_matrices.m_unprojectionParameters.w + d);
 			const Vec2 xy = finalDiskPoint * g_clusteredShading.m_matrices.m_unprojectionParameters.xy * z;
 			const Vec3 s = Vec3(xy, z);
 
@@ -123,8 +119,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 			Vec2 lastFrameUv;
 			if(REPROJECT_LIGHTBUFFER)
 			{
-				lastFrameUv =
-					crntFrameUv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, crntFrameUv, 0.0).xy;
+				lastFrameUv = crntFrameUv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, crntFrameUv, 0.0).xy;
 			}
 			else
 			{
@@ -154,7 +149,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 		RVec3 probeColor = Vec3(0.0, 0.0, 0.0);
 
 		// Get the cluster
-		Cluster cluster = getClusterFragCoord(Vec3(fragCoord * 2.0, depth));
+		Cluster cluster = getClusterFragCoord(g_clusters, g_clusteredShading, Vec3(fragCoord * 2.0, depth));
 
 		const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_giProbesMask) == 1);
 		if(oneProbe)
@@ -164,8 +159,8 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 			const GlobalIlluminationProbe probe = g_giProbes[firstbitlow2(cluster.m_giProbesMask)];
 
 			// Sample
-			probeColor = sampleGlobalIllumination(
-				worldPos, worldNormal, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_linearAnyClampSampler);
+			probeColor =
+				sampleGlobalIllumination(worldPos, worldNormal, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_linearAnyClampSampler);
 		}
 		else
 		{
@@ -181,14 +176,12 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 				const GlobalIlluminationProbe probe = g_giProbes[idx];
 
 				// Compute blend weight
-				const F32 blendWeight =
-					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
 				totalBlendWeight += blendWeight;
 
 				// Sample
 				const RVec3 c = sampleGlobalIllumination(
-					worldPos, worldNormal, probe,
-					g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)], g_linearAnyClampSampler);
+					worldPos, worldNormal, probe, g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)], g_linearAnyClampSampler);
 				probeColor += c * blendWeight;
 			}
 

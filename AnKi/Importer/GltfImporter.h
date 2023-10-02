@@ -62,7 +62,7 @@ private:
 
 	F32 m_normalsMergeAngle = toRad(30.0f);
 
-	ThreadHive* m_hive = nullptr;
+	ThreadJobManager* m_jobManager = nullptr;
 
 	File m_sceneFile;
 
@@ -183,8 +183,7 @@ private:
 
 	// Scene
 	Error writeTransform(const Transform& trf);
-	Error visitNode(const cgltf_node& node, const Transform& parentTrf,
-					const ImporterHashMap<CString, ImporterString>& parentExtras);
+	Error visitNode(const cgltf_node& node, const Transform& parentTrf, const ImporterHashMap<CString, ImporterString>& parentExtras);
 	Error writeLight(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
 	Error writeCamera(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
 	Error writeModelNode(const cgltf_node& node, const ImporterHashMap<CString, ImporterString>& parentExtras);
@@ -194,8 +193,7 @@ private:
 template<typename T, typename TFunc>
 void GltfImporter::visitAccessor(const cgltf_accessor& accessor, TFunc func)
 {
-	const U8* base =
-		static_cast<const U8*>(accessor.buffer_view->buffer->data) + accessor.offset + accessor.buffer_view->offset;
+	const U8* base = static_cast<const U8*>(accessor.buffer_view->buffer->data) + accessor.offset + accessor.buffer_view->offset;
 
 	PtrSize stride = accessor.buffer_view->stride;
 	if(stride == 0)

@@ -11,6 +11,10 @@
 
 namespace anki {
 
+BoolCVar g_tracingEnabledCVar(CVarSubsystem::kCore, "Tracing", false, "Enable or disable tracing");
+
+#if ANKI_TRACING_ENABLED
+
 static void getSpreadsheetColumnName(U32 column, Array<char, 3>& arr)
 {
 	U32 major = column / 26;
@@ -68,7 +72,7 @@ CoreTracer::~CoreTracer()
 	}
 
 	// Write counter file
-	err = writeCountersForReal();
+	err = writeCountersOnShutdown();
 
 	// Cleanup
 	while(!m_frameCounters.isEmpty())
@@ -90,7 +94,7 @@ CoreTracer::~CoreTracer()
 Error CoreTracer::init(CString directory)
 {
 	Tracer::allocateSingleton();
-	const Bool enableTracer = getenv("ANKI_CORE_TRACER_ENABLED") && getenv("ANKI_CORE_TRACER_ENABLED")[0] == '1';
+	const Bool enableTracer = g_tracingEnabledCVar.get();
 	Tracer::getSingleton().setEnabled(enableTracer);
 	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
 
@@ -100,13 +104,10 @@ Error CoreTracer::init(CString directory)
 
 	std::tm tm = getLocalTime();
 	CoreString fname;
-	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
-				  tm.tm_min);
+	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min);
 
-	ANKI_CHECK(m_traceJsonFile.open(CoreString().sprintf("%strace.json", fname.cstr()), FileOpenFlag::kWrite));
-	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
-
-	ANKI_CHECK(m_countersCsvFile.open(CoreString().sprintf("%scounters.csv", fname.cstr()), FileOpenFlag::kWrite));
+	m_traceJsonFilename.sprintf("%strace.json", fname.cstr());
+	m_countersCsvFilename.sprintf("%scounters.csv", fname.cstr());
 
 	return Error::kNone;
 }
@@ -159,6 +160,18 @@ Error CoreTracer::threadWorker()
 
 Error CoreTracer::writeEvents(ThreadWorkItem& item)
 {
+	if(item.m_events.getSize() == 0)
+	{
+		return Error::kNone;
+	}
+
+	if(!m_traceJsonFile.isOpen())
+	{
+		ANKI_CHECK(m_traceJsonFile.open(m_traceJsonFilename, FileOpenFlag::kWrite));
+		ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
+		ANKI_CORE_LOGI("Trace file created: %s", m_traceJsonFilename.cstr());
+	}
+
 	// First sort them to fix overlaping in chrome
 	std::sort(item.m_events.getBegin(), item.m_events.getEnd(), [](const TracerEvent& a, TracerEvent& b) {
 		return (a.m_start != b.m_start) ? a.m_start < b.m_start : a.m_duration > b.m_duration;
@@ -171,11 +184,10 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 		const I64 durMicroSec = I64(event.m_duration * 1000000.0);
 
 		// Do a hack
-		const ThreadId tid = (event.m_name == "GPU_TIME") ? 1 : item.m_tid;
+		const ThreadId tid = (event.m_name == "tGpuFrameTime") ? 1 : item.m_tid;
 
 		ANKI_CHECK(m_traceJsonFile.writeTextf("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
-											  "\"pid\": 1, \"tid\": %" PRIu64 ", \"ts\": %" PRIi64 ", \"dur\": %" PRIi64
-											  "},\n",
+											  "\"pid\": 1, \"tid\": %" PRIu64 ", \"ts\": %" PRIi64 ", \"dur\": %" PRIi64 "},\n",
 											  event.m_name.cstr(), tid, startMicroSec, durMicroSec));
 	}
 
@@ -310,27 +322,37 @@ void CoreTracer::flushFrame(U64 frame)
 			self.m_cvar.notifyOne();
 		},
 		&ctx);
+
+	if(Tracer::getSingleton().getEnabled() != g_tracingEnabledCVar.get())
+	{
+		Tracer::getSingleton().setEnabled(g_tracingEnabledCVar.get());
+		ANKI_CORE_LOGI("%s tracing", (g_tracingEnabledCVar.get()) ? "Enabling" : "Disabling");
+	}
 }
 
-Error CoreTracer::writeCountersForReal()
+Error CoreTracer::writeCountersOnShutdown()
 {
-	if(!m_countersCsvFile.isOpen() || m_frameCounters.getSize() == 0)
+	if(m_frameCounters.getSize() == 0)
 	{
 		return Error::kNone;
 	}
 
+	File countersCsvFile;
+	ANKI_CHECK(countersCsvFile.open(m_countersCsvFilename, FileOpenFlag::kWrite));
+	ANKI_CORE_LOGI("Counter file created: %s", m_countersCsvFilename.cstr());
+
 	// Write the header
-	ANKI_CHECK(m_countersCsvFile.writeText("Frame"));
+	ANKI_CHECK(countersCsvFile.writeText("Frame"));
 	for(U32 i = 0; i < m_counterNames.getSize(); ++i)
 	{
-		ANKI_CHECK(m_countersCsvFile.writeTextf(",%s", m_counterNames[i].cstr()));
+		ANKI_CHECK(countersCsvFile.writeTextf(",%s", m_counterNames[i].cstr()));
 	}
-	ANKI_CHECK(m_countersCsvFile.writeText("\n"));
+	ANKI_CHECK(countersCsvFile.writeText("\n"));
 
 	// Write each frame
 	for(const PerFrameCounters& frame : m_frameCounters)
 	{
-		ANKI_CHECK(m_countersCsvFile.writeTextf("%" PRIu64, frame.m_frame));
+		ANKI_CHECK(countersCsvFile.writeTextf("%" PRIu64, frame.m_frame));
 
 		for(U32 j = 0; j < m_counterNames.getSize(); ++j)
 		{
@@ -345,29 +367,30 @@ Error CoreTracer::writeCountersForReal()
 				}
 			}
 
-			ANKI_CHECK(m_countersCsvFile.writeTextf(",%" PRIu64, value));
+			ANKI_CHECK(countersCsvFile.writeTextf(",%" PRIu64, value));
 		}
 
-		ANKI_CHECK(m_countersCsvFile.writeText("\n"));
+		ANKI_CHECK(countersCsvFile.writeText("\n"));
 	}
 
 	// Write some statistics
 	Array<const char*, 2> funcs = {"SUM", "AVERAGE"};
 	for(const char* func : funcs)
 	{
-		ANKI_CHECK(m_countersCsvFile.writeText(func));
+		ANKI_CHECK(countersCsvFile.writeText(func));
 		for(U32 i = 0; i < m_frameCounters.getSize(); ++i)
 		{
 			Array<char, 3> columnName;
 			getSpreadsheetColumnName(i + 1, columnName);
-			ANKI_CHECK(m_countersCsvFile.writeTextf(",=%s(%s2:%s%zu)", func, &columnName[0], &columnName[0],
-													m_frameCounters.getSize() + 1));
+			ANKI_CHECK(countersCsvFile.writeTextf(",=%s(%s2:%s%zu)", func, &columnName[0], &columnName[0], m_frameCounters.getSize() + 1));
 		}
 
-		ANKI_CHECK(m_countersCsvFile.writeText("\n"));
+		ANKI_CHECK(countersCsvFile.writeText("\n"));
 	}
 
 	return Error::kNone;
 }
+
+#endif
 
 } // end namespace anki

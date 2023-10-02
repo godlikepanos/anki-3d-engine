@@ -113,8 +113,7 @@ public:
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
 		s.doValue("m_index", offsetof(ShaderProgramBinaryBlockInstance, m_index), self.m_index);
-		s.doValue("m_variableInstances", offsetof(ShaderProgramBinaryBlockInstance, m_variableInstances),
-				  self.m_variableInstances);
+		s.doValue("m_variableInstances", offsetof(ShaderProgramBinaryBlockInstance, m_variableInstances), self.m_variableInstances);
 		s.doValue("m_size", offsetof(ShaderProgramBinaryBlockInstance, m_size), self.m_size);
 	}
 
@@ -270,10 +269,8 @@ public:
 		s.doArray("m_name", offsetof(ShaderProgramBinaryStructMember, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_type", offsetof(ShaderProgramBinaryStructMember, m_type), self.m_type);
 		s.doValue("m_structIndex", offsetof(ShaderProgramBinaryStructMember, m_structIndex), self.m_structIndex);
-		s.doValue("m_dependentMutator", offsetof(ShaderProgramBinaryStructMember, m_dependentMutator),
-				  self.m_dependentMutator);
-		s.doValue("m_dependentMutatorValue", offsetof(ShaderProgramBinaryStructMember, m_dependentMutatorValue),
-				  self.m_dependentMutatorValue);
+		s.doValue("m_dependentMutator", offsetof(ShaderProgramBinaryStructMember, m_dependentMutator), self.m_dependentMutator);
+		s.doValue("m_dependentMutatorValue", offsetof(ShaderProgramBinaryStructMember, m_dependentMutatorValue), self.m_dependentMutatorValue);
 	}
 
 	template<typename TDeserializer>
@@ -363,8 +360,7 @@ public:
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
 		s.doValue("m_index", offsetof(ShaderProgramBinaryStructInstance, m_index), self.m_index);
-		s.doValue("m_memberInstances", offsetof(ShaderProgramBinaryStructInstance, m_memberInstances),
-				  self.m_memberInstances);
+		s.doValue("m_memberInstances", offsetof(ShaderProgramBinaryStructInstance, m_memberInstances), self.m_memberInstances);
 		s.doValue("m_size", offsetof(ShaderProgramBinaryStructInstance, m_size), self.m_size);
 	}
 
@@ -402,19 +398,18 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray("m_codeBlockIndices", offsetof(ShaderProgramBinaryVariant, m_codeBlockIndices),
-				  &self.m_codeBlockIndices[0], self.m_codeBlockIndices.getSize());
+		s.doArray("m_codeBlockIndices", offsetof(ShaderProgramBinaryVariant, m_codeBlockIndices), &self.m_codeBlockIndices[0],
+				  self.m_codeBlockIndices.getSize());
 		s.doValue("m_uniformBlocks", offsetof(ShaderProgramBinaryVariant, m_uniformBlocks), self.m_uniformBlocks);
 		s.doValue("m_storageBlocks", offsetof(ShaderProgramBinaryVariant, m_storageBlocks), self.m_storageBlocks);
-		s.doPointer("m_pushConstantBlock", offsetof(ShaderProgramBinaryVariant, m_pushConstantBlock),
-					self.m_pushConstantBlock);
+		s.doPointer("m_pushConstantBlock", offsetof(ShaderProgramBinaryVariant, m_pushConstantBlock), self.m_pushConstantBlock);
 		s.doValue("m_opaques", offsetof(ShaderProgramBinaryVariant, m_opaques), self.m_opaques);
 		s.doValue("m_constants", offsetof(ShaderProgramBinaryVariant, m_constants), self.m_constants);
 		s.doValue("m_structs", offsetof(ShaderProgramBinaryVariant, m_structs), self.m_structs);
 		s.doArray("m_workgroupSizes", offsetof(ShaderProgramBinaryVariant, m_workgroupSizes), &self.m_workgroupSizes[0],
 				  self.m_workgroupSizes.getSize());
-		s.doArray("m_workgroupSizesConstants", offsetof(ShaderProgramBinaryVariant, m_workgroupSizesConstants),
-				  &self.m_workgroupSizesConstants[0], self.m_workgroupSizesConstants.getSize());
+		s.doArray("m_workgroupSizesConstants", offsetof(ShaderProgramBinaryVariant, m_workgroupSizesConstants), &self.m_workgroupSizesConstants[0],
+				  self.m_workgroupSizesConstants.getSize());
 	}
 
 	template<typename TDeserializer>
@@ -553,15 +548,12 @@ public:
 		s.doValue("m_mutations", offsetof(ShaderProgramBinary, m_mutations), self.m_mutations);
 		s.doValue("m_uniformBlocks", offsetof(ShaderProgramBinary, m_uniformBlocks), self.m_uniformBlocks);
 		s.doValue("m_storageBlocks", offsetof(ShaderProgramBinary, m_storageBlocks), self.m_storageBlocks);
-		s.doPointer("m_pushConstantBlock", offsetof(ShaderProgramBinary, m_pushConstantBlock),
-					self.m_pushConstantBlock);
+		s.doPointer("m_pushConstantBlock", offsetof(ShaderProgramBinary, m_pushConstantBlock), self.m_pushConstantBlock);
 		s.doValue("m_opaques", offsetof(ShaderProgramBinary, m_opaques), self.m_opaques);
 		s.doValue("m_constants", offsetof(ShaderProgramBinary, m_constants), self.m_constants);
 		s.doValue("m_structs", offsetof(ShaderProgramBinary, m_structs), self.m_structs);
-		s.doValue("m_presentShaderTypes", offsetof(ShaderProgramBinary, m_presentShaderTypes),
-				  self.m_presentShaderTypes);
-		s.doArray("m_libraryName", offsetof(ShaderProgramBinary, m_libraryName), &self.m_libraryName[0],
-				  self.m_libraryName.getSize());
+		s.doValue("m_presentShaderTypes", offsetof(ShaderProgramBinary, m_presentShaderTypes), self.m_presentShaderTypes);
+		s.doArray("m_libraryName", offsetof(ShaderProgramBinary, m_libraryName), &self.m_libraryName[0], self.m_libraryName.getSize());
 		s.doValue("m_rayType", offsetof(ShaderProgramBinary, m_rayType), self.m_rayType);
 	}
 

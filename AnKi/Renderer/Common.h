@@ -6,16 +6,17 @@
 #pragma once
 
 #include <AnKi/Gr.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Util/Ptr.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 
 namespace anki {
 
 // Forward
 #define ANKI_RENDERER_OBJECT_DEF(a, b) class a;
-#include <AnKi/Renderer/RendererObject.defs.h>
+#include <AnKi/Renderer/RendererObject.def.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 
 class Renderer;
@@ -53,12 +54,6 @@ constexpr U32 kMinDrawcallsPerSecondaryCommandBuffer = 16;
 /// Bloom size is rendererSize/kBloomFraction.
 constexpr U32 kBloomFraction = 4;
 
-/// Used to calculate the mipmap count of the HiZ map.
-constexpr U32 hHierachicalZMinHeight = 80;
-
-constexpr TextureSubresourceInfo kHiZHalfSurface(TextureSurfaceInfo(0, 0, 0, 0));
-constexpr TextureSubresourceInfo kHiZQuarterSurface(TextureSurfaceInfo(1, 0, 0, 0));
-
 constexpr U32 kMaxDebugRenderTargets = 2;
 
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal (see shaders)
@@ -80,20 +75,21 @@ inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRend
 class RenderingContext
 {
 public:
-	StackMemoryPool* m_tempPool = nullptr;
-	RenderQueue* m_renderQueue = nullptr;
-
 	RenderGraphDescription m_renderGraphDescr;
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_prevMatrices;
 
+	F32 m_cameraNear = 0.0f;
+	F32 m_cameraFar = 0.0f;
+
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_outRenderTarget;
 
+	Array<Mat4, kMaxShadowCascades> m_dirLightTextureMatrices;
+
 	RenderingContext(StackMemoryPool* pool)
-		: m_tempPool(pool)
-		, m_renderGraphDescr(pool)
+		: m_renderGraphDescr(pool)
 	{
 	}
 
@@ -102,67 +98,10 @@ public:
 	RenderingContext& operator=(const RenderingContext&) = delete;
 };
 
-/// A convenience function to find empty cache entries. Used for various probes.
-template<typename THashMap, typename TCacheEntryArray, typename TMemPool>
-U32 findBestCacheEntry(U64 uuid, Timestamp crntTimestamp, const TCacheEntryArray& entries, THashMap& map,
-					   TMemPool& pool)
+/// Choose the detail of a shadow cascade. 0 means high detail and >0 is progressively lower.
+inline U32 chooseDirectionalLightShadowCascadeDetail(U32 cascade)
 {
-	ANKI_ASSERT(uuid > 0);
-
-	// First, try to see if the UUID is in the cache
-	auto it = map.find(uuid);
-	if(it != map.getEnd()) [[likely]]
-	{
-		const U32 cacheEntryIdx = *it;
-		if(entries[cacheEntryIdx].m_uuid == uuid)
-		{
-			// Found it
-			return cacheEntryIdx;
-		}
-		else
-		{
-			// Cache entry is wrong, remove it
-			map.erase(pool, it);
-		}
-	}
-
-	// 2nd and 3rd choice, find an empty entry or some entry to re-use
-	U32 emptyCacheEntryIdx = kMaxU32;
-	U32 cacheEntryIdxToKick = kMaxU32;
-	Timestamp cacheEntryIdxToKickMinTimestamp = kMaxTimestamp;
-	for(U32 cacheEntryIdx = 0; cacheEntryIdx < entries.getSize(); ++cacheEntryIdx)
-	{
-		if(entries[cacheEntryIdx].m_uuid == 0) [[likely]]
-		{
-			// Found an empty
-			emptyCacheEntryIdx = cacheEntryIdx;
-			break;
-		}
-		else if(entries[cacheEntryIdx].m_lastUsedTimestamp != crntTimestamp
-				&& entries[cacheEntryIdx].m_lastUsedTimestamp < cacheEntryIdxToKickMinTimestamp)
-		{
-			// Found some with low timestamp
-			cacheEntryIdxToKick = cacheEntryIdx;
-			cacheEntryIdxToKickMinTimestamp = entries[cacheEntryIdx].m_lastUsedTimestamp;
-		}
-	}
-
-	U32 outCacheEntryIdx;
-	if(emptyCacheEntryIdx != kMaxU32)
-	{
-		outCacheEntryIdx = emptyCacheEntryIdx;
-	}
-	else if(cacheEntryIdxToKick != kMaxU32)
-	{
-		outCacheEntryIdx = cacheEntryIdxToKick;
-	}
-	else
-	{
-		// We are out of cache entries. Return OOM
-		outCacheEntryIdx = kMaxU32;
-	}
-
-	return outCacheEntryIdx;
+	return (cascade <= 1) ? 0 : 1;
 }
 /// @}
 

@@ -97,8 +97,7 @@ private:
 class ShaderProgramParser
 {
 public:
-	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
-						const ShaderCompilerOptions& compilerOptions);
+	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, const ShaderCompilerOptions& compilerOptions);
 
 	ShaderProgramParser(const ShaderProgramParser&) = delete; // Non-copyable
 
@@ -157,8 +156,7 @@ public:
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
-	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions,
-										 String& header);
+	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions, String& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;

@@ -64,7 +64,7 @@ U32 MicroImageView::getOrCreateBindlessIndex(GrManagerImpl& gr) const
 
 TextureImpl::~TextureImpl()
 {
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	if(m_usage != m_usedFor)
 	{
 		ANKI_VK_LOGW("Texture %s hasn't been used in all types of usages", getName().cstr());
@@ -118,8 +118,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		ANKI_ASSERT(!!(init.m_usage & TextureUsageBit::kPresent));
 	}
 
-	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs
-				|| !(init.m_usage & TextureUsageBit::kFramebufferShadingRate));
+	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs || !(init.m_usage & TextureUsageBit::kFramebufferShadingRate));
 
 	// Set some stuff
 	m_width = init.m_width;
@@ -188,8 +187,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		ANKI_ASSERT(m_singleSurfaceImageView.m_derivedTextureType == m_texType);
 
 		ANKI_VK_CHECKF(vkCreateImageView(getVkDevice(), &viewCi, nullptr, &m_singleSurfaceImageView.m_handle));
-		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW,
-												  ptrToNumber(m_singleSurfaceImageView.m_handle));
+		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW, ptrToNumber(m_singleSurfaceImageView.m_handle));
 	}
 
 	return Error::kNone;
@@ -210,9 +208,9 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 {
 	VkImageFormatProperties props = {};
 
-	const VkResult res = vkGetPhysicalDeviceImageFormatProperties(
-		getGrManagerImpl().getPhysicalDevice(), m_vkFormat, convertTextureType(init.m_type), VK_IMAGE_TILING_OPTIMAL,
-		convertTextureUsage(init.m_usage, init.m_format), calcCreateFlags(init), &props);
+	const VkResult res = vkGetPhysicalDeviceImageFormatProperties(getGrManagerImpl().getPhysicalDevice(), m_vkFormat, convertTextureType(init.m_type),
+																  VK_IMAGE_TILING_OPTIMAL, convertTextureUsage(init.m_usage, init.m_format),
+																  calcCreateFlags(init), &props);
 
 	if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 	{
@@ -306,8 +304,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	vkGetImageMemoryRequirements2(getVkDevice(), &imageRequirementsInfo, &requirements);
 
 	U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(requirements.memoryRequirements.memoryTypeBits,
-																		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-																		 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+																		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
 	if(memIdx == kMaxU32)
@@ -321,13 +318,12 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	// Allocate
 	if(!dedicatedRequirements.prefersDedicatedAllocation)
 	{
-		getGrManagerImpl().getGpuMemoryManager().allocateMemory(
-			memIdx, requirements.memoryRequirements.size, U32(requirements.memoryRequirements.alignment), m_memHandle);
+		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, requirements.memoryRequirements.size,
+																U32(requirements.memoryRequirements.alignment), m_memHandle);
 	}
 	else
 	{
-		getGrManagerImpl().getGpuMemoryManager().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size,
-																		 m_imageHandle, m_memHandle);
+		getGrManagerImpl().getGpuMemoryManager().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size, m_imageHandle, m_memHandle);
 	}
 
 	// Bind
@@ -336,8 +332,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	return Error::kNone;
 }
 
-void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,
-									 VkAccessFlags& accesses) const
+void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages, VkAccessFlags& accesses) const
 {
 	ANKI_ASSERT(level < m_mipCount);
 	ANKI_ASSERT(usageValid(usage));
@@ -466,9 +461,8 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 	}
 }
 
-void TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U32 level,
-									 VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
-									 VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const
+void TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U32 level, VkPipelineStageFlags& srcStages,
+									 VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const
 {
 	computeBarrierInfo(before, true, level, srcStages, srcAccesses);
 	computeBarrierInfo(after, false, level, dstStages, dstAccesses);

@@ -54,7 +54,7 @@ private:
 	SceneDynamicArray<BodyComponent*> m_bodiesExit;
 	MyPhysicsTriggerProcessContactCallback* m_callbacks = nullptr;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

@@ -14,13 +14,12 @@
 namespace anki {
 
 SkinComponent::SkinComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 {
 }
 
 SkinComponent::~SkinComponent()
 {
-	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
 }
 
 void SkinComponent::loadSkeletonResource(CString fname)
@@ -41,7 +40,7 @@ void SkinComponent::loadSkeletonResource(CString fname)
 	m_boneTrfs[0].destroy();
 	m_boneTrfs[1].destroy();
 	m_animationTrfs.destroy();
-	GpuSceneMemoryPool::getSingleton().deferredFree(m_boneTransformsGpuSceneOffset);
+	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneBoneTransforms);
 
 	// Create
 	const U32 boneCount = m_skeleton->getBones().getSize();
@@ -49,7 +48,7 @@ void SkinComponent::loadSkeletonResource(CString fname)
 	m_boneTrfs[1].resize(boneCount, Mat3x4::getIdentity());
 	m_animationTrfs.resize(boneCount, Trf{Vec3(0.0f), Quat::getIdentity(), 1.0f});
 
-	GpuSceneMemoryPool::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4, m_boneTransformsGpuSceneOffset);
+	m_gpuSceneBoneTransforms = GpuSceneBuffer::getSingleton().allocate(sizeof(Mat4) * boneCount * 2, 4);
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
@@ -198,8 +197,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			trfs[i * 2 + 0] = getBoneTransforms()[i];
 			trfs[i * 2 + 1] = getPreviousFrameBoneTransforms()[i];
 		}
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_boneTransformsGpuSceneOffset.m_offset,
-													 trfs.getSizeInBytes(), trfs.getBegin());
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneBoneTransforms, trfs.getSizeInBytes(), trfs.getBegin());
 	}
 	else
 	{
@@ -211,8 +209,7 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	return Error::kNone;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated,
-							   Vec4& minExtend, Vec4& maxExtend)
+void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)
 {
 	Mat3x4 outMat;
 

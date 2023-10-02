@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
 
 namespace anki {
 
@@ -25,9 +26,25 @@ public:
 		return Error::kNone;
 	}
 
-	void setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass);
+	void populateRenderGraph(RenderingContext& ctx);
+
+	void setDependencies(GraphicsRenderPassDescription& pass);
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
+	const BufferOffsetRange& getVisibleAabbsBuffer() const
+	{
+		ANKI_ASSERT(m_runCtx.m_visOut.m_visibleAaabbIndicesBuffer.m_buffer != nullptr);
+		return m_runCtx.m_visOut.m_visibleAaabbIndicesBuffer;
+	}
+
+private:
+	class
+	{
+	public:
+		GpuVisibilityOutput m_visOut;
+	} m_runCtx;
 };
 /// @}
 

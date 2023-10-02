@@ -65,8 +65,8 @@ void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callb
 	}
 }
 
-void Logger::write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
-				   const Char* threadName, const Char* msg)
+void Logger::write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
+				   const Char* msg)
 {
 	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
 	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled) [[likely]]
@@ -95,8 +95,8 @@ void Logger::write(const Char* file, int line, const Char* func, const Char* sub
 	}
 }
 
-void Logger::writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type,
-						   const Char* threadName, const Char* fmt, ...)
+void Logger::writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
+						   const Char* fmt, ...)
 {
 	Array<Char, 256> buffer;
 	va_list args;
@@ -181,8 +181,8 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	}
 
 	fprintf(out, "%s[%s][%-4s]%s%s %s [%s:%d][%s][%s]%s\n", terminalColorBg, kMessageTypeTxt[U(info.m_type)],
-			info.m_subsystem ? info.m_subsystem : "N/A ", endTerminalColor, terminalColor, info.m_msg, info.m_file,
-			info.m_line, info.m_func, info.m_threadName, endTerminalColor);
+			info.m_subsystem ? info.m_subsystem : "N/A ", endTerminalColor, terminalColor, info.m_msg, info.m_file, info.m_line, info.m_func,
+			info.m_threadName, endTerminalColor);
 #elif ANKI_OS_WINDOWS
 	WORD attribs = 0;
 	FILE* out = nullptr;
@@ -227,9 +227,8 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		SetConsoleTextAttribute(consoleHandle, attribs);
 
 		// Print
-		fprintf(out, "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type],
-				info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg, info.m_file, info.m_line, info.m_func,
-				info.m_threadName);
+		fprintf(out, "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type], info.m_subsystem ? info.m_subsystem : "N/A", info.m_msg,
+				info.m_file, info.m_line, info.m_func, info.m_threadName);
 
 		// Restore state
 		SetConsoleTextAttribute(consoleHandle, savedAttribs);
@@ -258,8 +257,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 
 	static_assert(Thread::kThreadNameMaxLength == 15, "See file");
 	__android_log_print(andMsgType, "AnKi", "[%s][%-4s] %s [%s:%d][%s][%s]\n", kMessageTypeTxt[info.m_type],
-						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line, info.m_func,
-						info.m_threadName);
+						info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line, info.m_func, info.m_threadName);
 #else
 #	error "Not implemented"
 #endif
@@ -269,8 +267,7 @@ void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
-	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type], info.m_msg, info.m_file,
-								 info.m_line, info.m_func);
+	Error err = file->writeTextf("[%s] %s (%s:%d %s)\n", kMessageTypeTxt[info.m_type], info.m_msg, info.m_file, info.m_line, info.m_func);
 
 	if(!err)
 	{

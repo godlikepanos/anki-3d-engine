@@ -1,0 +1,51 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <AnKi/Shaders/RtShadows.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+
+#pragma anki start comp
+
+[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
+[[vk::binding(1)]] ByteAddressBuffer g_gpuScene;
+
+[[vk::binding(2)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+
+[[vk::binding(3)]] StructuredBuffer<U32> g_shaderHandles;
+
+[[vk::binding(4)]] RWStructuredBuffer<U32> g_sbtBuffer;
+
+[[vk::push_constant]] ConstantBuffer<RtShadowsSbtBuildUniforms> g_unis;
+
+#define NUMTHREADS 64
+
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 renderableCount = g_visibleRenderableIndices[0];
+	if(svDispatchThreadId >= renderableCount)
+	{
+		return;
+	}
+
+	const GpuSceneRenderable renderable = g_renderables[g_visibleRenderableIndices[svDispatchThreadId + 1]];
+
+	U32 sbtDwordOffset = g_unis.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
+	sbtDwordOffset += g_unis.m_sbtRecordDwordSize * svDispatchThreadId;
+
+	// Copy the handle
+	for(U32 i = 0; i < g_unis.m_shaderHandleDwordSize; ++i)
+	{
+		g_sbtBuffer[sbtDwordOffset] = g_shaderHandles[renderable.m_rtShadowsShaderHandleIndex * g_unis.m_shaderHandleDwordSize + i];
+		++sbtDwordOffset;
+	}
+
+	// Copy the GpuSceneRenderableVertex
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_worldTransformsOffset;
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_uniformsOffset;
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsOffset;
+	g_sbtBuffer[sbtDwordOffset] = 0;
+}
+
+#pragma anki end

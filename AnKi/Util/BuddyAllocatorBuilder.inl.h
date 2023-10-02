@@ -30,8 +30,7 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::destroy()
 }
 
 template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
-Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::allocate(PtrSize size, PtrSize alignment,
-																			  Address& outAddress)
+Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::allocate(PtrSize size, PtrSize alignment, Address& outAddress)
 {
 	ANKI_ASSERT(size > 0 && size <= m_maxMemoryRange);
 
@@ -108,8 +107,7 @@ Bool BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::allocate(Pt
 }
 
 template<U32 kMaxMemoryRangeLog2, typename TLock, typename TMemoryPool>
-void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::free(Address address, PtrSize size,
-																		  PtrSize alignment)
+void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::free(Address address, PtrSize size, PtrSize alignment)
 {
 	PtrSize alignedSize = nextPowerOfTwo(size);
 	U32 order = log2(alignedSize);
@@ -248,8 +246,7 @@ void BuddyAllocatorBuilder<kMaxMemoryRangeLog2, TLock, TMemoryPool>::getStats(Bu
 		}
 		++order;
 	}
-	const PtrSize biggestBlockSize =
-		(orderWithTheBiggestBlock == kMaxU32) ? m_maxMemoryRange : pow2<PtrSize>(orderWithTheBiggestBlock);
+	const PtrSize biggestBlockSize = (orderWithTheBiggestBlock == kMaxU32) ? m_maxMemoryRange : pow2<PtrSize>(orderWithTheBiggestBlock);
 	const PtrSize realFreeMemory = m_maxMemoryRange - m_realAllocatedSize;
 	stats.m_externalFragmentation = F32(1.0 - F64(biggestBlockSize) / F64(realFreeMemory));
 

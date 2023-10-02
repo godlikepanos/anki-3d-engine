@@ -88,6 +88,14 @@ void FrameGarbageCollector::collectGarbage()
 			deleteInstance(GrMemoryPool::getSingleton(), bufferGarbage);
 		}
 
+		// Dispose AS garbage
+		while(!frame.m_asGarbage.isEmpty())
+		{
+			ASGarbage* garbage = frame.m_asGarbage.popBack();
+			vkDestroyAccelerationStructureKHR(getGrManagerImpl().getDevice(), garbage->m_asHandle, nullptr);
+			deleteInstance(GrMemoryPool::getSingleton(), garbage);
+		}
+
 		deleteInstance(GrMemoryPool::getSingleton(), &frame);
 	}
 
@@ -141,6 +149,15 @@ void FrameGarbageCollector::newBufferGarbage(BufferGarbage* bufferGarbage)
 	ANKI_ASSERT(m_initialized);
 	FrameGarbage& frame = getFrame();
 	frame.m_bufferGarbage.pushBack(bufferGarbage);
+}
+
+void FrameGarbageCollector::newASGarbage(ASGarbage* garbage)
+{
+	ANKI_ASSERT(garbage);
+	LockGuard<Mutex> lock(m_mtx);
+	ANKI_ASSERT(m_initialized);
+	FrameGarbage& frame = getFrame();
+	frame.m_asGarbage.pushBack(garbage);
 }
 
 void FrameGarbageCollector::destroy()

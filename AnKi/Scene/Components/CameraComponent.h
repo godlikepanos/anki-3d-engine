@@ -7,6 +7,7 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Frustum.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 
@@ -80,26 +81,6 @@ public:
 		m_frustum.setPerspective(near, far, fovx, fovy);
 	}
 
-	void setShadowCascadeDistance(U32 cascade, F32 distance)
-	{
-		if(ANKI_SCENE_ASSERT(cascade < m_frustum.getShadowCascadeCount()))
-		{
-			m_frustum.setShadowCascadeDistance(cascade, distance);
-		}
-	}
-
-	F32 getShadowCascadeDistance(U32 cascade) const
-	{
-		if(ANKI_SCENE_ASSERT(cascade < m_frustum.getShadowCascadeCount()))
-		{
-			return m_frustum.getShadowCascadeDistance(cascade);
-		}
-		else
-		{
-			return 0.0f;
-		}
-	}
-
 	ANKI_INTERNAL const Frustum& getFrustum() const
 	{
 		return m_frustum;
@@ -110,32 +91,10 @@ public:
 		return m_frustum;
 	}
 
-	ANKI_INTERNAL Bool getHasExtendedFrustum() const
-	{
-		return m_usesExtendedFrustum;
-	}
-
-	ANKI_INTERNAL const Frustum& getExtendedFrustum() const
-	{
-		ANKI_ASSERT(m_usesExtendedFrustum);
-		return m_extendedFrustum;
-	}
-
-	ANKI_INTERNAL Frustum& getExtendedFrustum()
-	{
-		ANKI_ASSERT(m_usesExtendedFrustum);
-		return m_extendedFrustum;
-	}
-
 private:
 	Frustum m_frustum;
-	Frustum m_extendedFrustum; ///< For ray tracing.
 
-	Bool m_usesExtendedFrustum : 1 = false;
-
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
-
-	Transform computeExtendedFrustumTransform(const Transform& cameraTransform) const;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

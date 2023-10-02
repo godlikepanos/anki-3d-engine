@@ -235,18 +235,11 @@ void deleteTesterSingleton()
 	delete g_testerInstance;
 }
 
-void initConfig(ConfigSet& cfg)
-{
-	cfg.setWidth(1920);
-	cfg.setHeight(1080);
-	cfg.setRsrcDataPaths(".:..");
-}
-
-NativeWindow* createWindow(ConfigSet& cfg)
+NativeWindow* createWindow()
 {
 	NativeWindowInitInfo inf;
-	inf.m_width = cfg.getWidth();
-	inf.m_height = cfg.getHeight();
+	inf.m_width = g_windowWidthCVar.get();
+	inf.m_height = g_windowHeightCVar.get();
 	inf.m_title = "AnKi unit tests";
 	NativeWindow* win = &NativeWindow::allocateSingleton();
 	const Error err = NativeWindow::getSingleton().init(inf);

@@ -7,30 +7,19 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Gr/Texture.h>
+#include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {
 
 GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
-	, m_spatial(this)
+	: SceneComponent(node, kClassType)
 {
-	for(U32 i = 0; i < 6; ++i)
-	{
-		m_frustums[i].init(FrustumType::kPerspective);
-		m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, 100.0f, kPi / 2.0f, kPi / 2.0f);
-		m_frustums[i].setWorldTransform(
-			Transform(node->getWorldTransform().getOrigin(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-		m_frustums[i].setShadowCascadeCount(1);
-		m_frustums[i].update();
-	}
+	m_gpuSceneProbe.allocate();
 
-	m_gpuSceneIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-		GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
-
-	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin",
-																   m_clearTextureProg);
+	const Error err = ResourceManager::getSingleton().loadResource("ShaderBinaries/ClearTextureCompute.ankiprogbin", m_clearTextureProg);
 	if(err)
 	{
 		ANKI_LOGF("Failed to load shader");
@@ -39,32 +28,33 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 
 GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
 {
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
-
-	SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-		GpuSceneContiguousArrayType::kGlobalIlluminationProbes, m_gpuSceneIndex);
 }
 
 Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = info.m_node->movedThisFrame() || m_shapeDirty;
+	const Bool moved = info.m_node->movedThisFrame();
+	updated = moved || m_shapeDirty || m_refreshDirty;
 
+	if(moved || m_shapeDirty)
+	{
+		m_cellsRefreshedCount = 0;
+	}
+
+	// (re-)create the volume texture
 	if(m_shapeDirty) [[unlikely]]
 	{
 		TextureInitInfo texInit("GiProbe");
-		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats)
-							   ? Format::kR16G16B16_Sfloat
-							   : Format::kR16G16B16A16_Sfloat;
+		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat
+																											: Format::kR16G16B16A16_Sfloat;
 		texInit.m_width = m_cellCounts.x() * 6;
 		texInit.m_height = m_cellCounts.y();
 		texInit.m_depth = m_cellCounts.z();
 		texInit.m_type = TextureType::k3D;
-		texInit.m_usage =
-			TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead;
+		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kImageComputeRead;
 
 		m_volTex = GrManager::getSingleton().newTexture(texInit);
 
-		TextureViewInitInfo viewInit(m_volTex, "GiProbe");
+		TextureViewInitInfo viewInit(m_volTex.get(), "GiProbe");
 		m_volView = GrManager::getSingleton().newTextureView(viewInit);
 
 		m_volTexBindlessIdx = m_volView->getOrCreateBindlessTextureIndex();
@@ -86,8 +76,8 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texBarrier.m_texture = m_volTex.get();
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
-		cmdb->bindShaderProgram(variant->getProgram());
-		cmdb->bindImage(0, 0, m_volView);
+		cmdb->bindShaderProgram(&variant->getProgram());
+		cmdb->bindImage(0, 0, m_volView.get());
 
 		const Vec4 clearColor(0.0f);
 		cmdb->setPushConstants(&clearColor, sizeof(clearColor));
@@ -105,74 +95,60 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		cmdb->flush();
 	}
 
+	// Any update
 	if(updated) [[unlikely]]
 	{
-		m_shapeDirty = false;
-		m_cellIdxToRefresh = 0;
-
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
 
-		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
-		m_spatial.setBoundingShape(aabb);
+		// Change the UUID
+		if(m_cellsRefreshedCount == 0)
+		{
+			// Refresh starts over, get a new UUID
+			m_uuid = SceneGraph::getSingleton().getNewUuid();
+		}
+		else if(m_cellsRefreshedCount < m_totalCellCount)
+		{
+			// In the middle of the refresh process
+			ANKI_ASSERT(m_uuid != 0);
+		}
+		else
+		{
+			// Refresh it done
+			m_uuid = 0;
+		}
 
 		// Upload to the GPU scene
-		GpuSceneGlobalIlluminationProbe gpuProbe;
+		GpuSceneGlobalIlluminationProbe gpuProbe = {};
+
+		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 		gpuProbe.m_aabbMin = aabb.getMin().xyz();
 		gpuProbe.m_aabbMax = aabb.getMax().xyz();
+
 		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
-
-		const PtrSize offset = m_gpuSceneIndex * sizeof(GpuSceneGlobalIlluminationProbe)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kGlobalIlluminationProbes);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuProbe), &gpuProbe);
+		gpuProbe.m_uuid = m_uuid;
+		gpuProbe.m_componentArrayIndex = getArrayIndex();
+		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 
-	if(needsRefresh()) [[unlikely]]
-	{
-		updated = true;
-
-		// Compute the position of the cell
-		const Aabb aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
-		U32 x, y, z;
-		unflatten3dArrayIndex(m_cellCounts.x(), m_cellCounts.y(), m_cellCounts.z(), m_cellIdxToRefresh, x, y, z);
-		const Vec3 cellSize = ((m_halfSize * 2.0f) / Vec3(m_cellCounts));
-		const Vec3 halfCellSize = cellSize / 2.0f;
-		const Vec3 cellCenter = aabb.getMin().xyz() + halfCellSize + cellSize * Vec3(UVec3(x, y, z));
-
-		F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
-		effectiveDistance = max(effectiveDistance, m_halfSize.z());
-		effectiveDistance = max(effectiveDistance, ConfigSet::getSingleton().getSceneProbeEffectiveDistance());
-
-		const F32 shadowCascadeDistance =
-			min(effectiveDistance, ConfigSet::getSingleton().getSceneProbeShadowEffectiveDistance());
-
-		for(U32 i = 0; i < 6; ++i)
-		{
-			m_frustums[i].setWorldTransform(
-				Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-
-			m_frustums[i].setFar(effectiveDistance);
-			m_frustums[i].setShadowCascadeDistance(0, shadowCascadeDistance);
-
-			// Add something really far to force LOD 0 to be used. The importing tools create LODs with holes some times
-			// and that causes the sky to bleed to GI rendering
-			m_frustums[i].setLodDistances({effectiveDistance - 3.0f * kEpsilonf, effectiveDistance - 2.0f * kEpsilonf,
-										   effectiveDistance - 1.0f * kEpsilonf});
-		}
-	}
-
-	for(U32 i = 0; i < 6; ++i)
-	{
-		const Bool frustumUpdated = m_frustums[i].update();
-		updated = updated || frustumUpdated;
-	}
-
-	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
-	updated = updated || spatialUpdated;
+	m_shapeDirty = false;
+	m_refreshDirty = false;
 
 	return Error::kNone;
+}
+
+F32 GlobalIlluminationProbeComponent::getRenderRadius() const
+{
+	F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
+	effectiveDistance = max(effectiveDistance, m_halfSize.z());
+	effectiveDistance = max(effectiveDistance, g_probeEffectiveDistanceCVar.get());
+	return effectiveDistance;
+}
+
+F32 GlobalIlluminationProbeComponent::getShadowsRenderRadius() const
+{
+	return min(getRenderRadius(), g_probeShadowEffectiveDistanceCVar.get());
 }
 
 } // end namespace anki

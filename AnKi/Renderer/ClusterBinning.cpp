@@ -4,17 +4,16 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
-#include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/ProbeReflections.h>
-#include <AnKi/Core/ConfigSet.h>
-#include <AnKi/Util/Tracer.h>
-#include <AnKi/Util/ThreadHive.h>
-#include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Collision/Plane.h>
+#include <AnKi/Renderer/VolumetricLightingAccumulation.h>
+#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Collision/Functions.h>
+#include <AnKi/Util/Tracer.h>
+#include <AnKi/Util/HighRezTimer.h>
 
 namespace anki {
 
@@ -28,229 +27,308 @@ ClusterBinning::~ClusterBinning()
 
 Error ClusterBinning::init()
 {
-	ANKI_R_LOGV("Initializing clusterer binning");
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningSetup.ankiprogbin", m_jobSetupProg, m_jobSetupGrProg));
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_binningProg));
 
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
-	variantInitInfo.addConstant("kTileCountX", getRenderer().getTileCounts().x());
-	variantInitInfo.addConstant("kTileCountY", getRenderer().getTileCounts().y());
-	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	variantInitInfo.addConstant(
-		"kRenderingSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
+	for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
+	{
+		ShaderProgramResourceVariantInitInfo inf(m_binningProg);
+		inf.addMutation("OBJECT_TYPE", MutatorValue(type));
+		inf.addConstant("kZSplitCount", getRenderer().getZSplitCount());
+		const ShaderProgramResourceVariant* variant;
+		m_binningProg->getOrCreateVariant(inf, variant);
+		m_binningGrProgs[type].reset(&variant->getProgram());
 
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
-
-	m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
-	m_clusterCount = m_tileCount + getRenderer().getZSplitCount();
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningPackVisibles.ankiprogbin",
+									 Array<SubMutation, 1>{{{"OBJECT_TYPE", MutatorValue(type)}}}, m_packingProg, m_packingGrProgs[type]));
+	}
 
 	return Error::kNone;
 }
 
 void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 {
-	m_runCtx.m_ctx = &ctx;
-	writeClustererBuffers(ctx);
-
-	m_runCtx.m_rebarHandle = ctx.m_renderGraphDescr.importBuffer(
-		RebarStagingGpuMemoryPool::getSingleton().getBuffer(), BufferUsageBit::kNone, m_runCtx.m_clustersToken.m_offset,
-		m_runCtx.m_clustersToken.m_range);
-
-	const RenderQueue& rqueue = *ctx.m_renderQueue;
-	if(rqueue.m_pointLights.getSize() == 0 && rqueue.m_spotLights.getSize() == 0 && rqueue.m_decals.getSize() == 0
-	   && rqueue.m_reflectionProbes.getSize() == 0 && rqueue.m_fogDensityVolumes.getSize() == 0
-	   && rqueue.m_giProbes.getSize() == 0) [[unlikely]]
-	{
-		return;
-	}
+	ANKI_TRACE_SCOPED_EVENT(ClusterBinning);
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
 
-	pass.newBufferDependency(getRenderer().getPackVisibleClusteredObjects().getClusteredObjectsRenderGraphHandle(),
-							 BufferUsageBit::kStorageComputeRead);
+	// Fire an async job to fill the general uniforms
+	{
+		m_runCtx.m_rctx = &ctx;
+		m_runCtx.m_clusterUniformsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, m_runCtx.m_uniformsCpu);
+		writeClusterUniformsInternal();
+	}
 
-	pass.newBufferDependency(m_runCtx.m_rebarHandle, BufferUsageBit::kStorageComputeWrite);
+	// Allocate the clusters buffer
+	{
+		const U32 clusterCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y() + getRenderer().getZSplitCount();
+		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(Cluster) * clusterCount);
+		m_runCtx.m_clustersHandle = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_clustersBuffer);
+	}
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	// Setup the indirect dispatches and zero the clusters buffer
+	BufferOffsetRange indirectArgsBuff;
+	BufferHandle indirectArgsHandle;
+	{
+		// Allocate memory for the indirect args
+		constexpr U32 dispatchCount = U32(GpuSceneNonRenderableObjectType::kCount) * 2;
+		indirectArgsBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * dispatchCount);
+		indirectArgsHandle = rgraph.importBuffer(BufferUsageBit::kNone, indirectArgsBuff);
 
-		cmdb->bindShaderProgram(m_grProg);
+		// Create the pass
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning setup");
 
-		bindUniforms(cmdb, 0, 0, m_runCtx.m_clusteredShadingUniformsToken);
-		bindStorage(cmdb, 0, 1, m_runCtx.m_clustersToken);
-
-		for(ClusteredObjectType type : EnumIterable<ClusteredObjectType>())
+		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, U32(type) + 2, type);
+			rpass.newBufferDependency(getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBufferHandle(type),
+									  BufferUsageBit::kStorageComputeRead);
+		}
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kStorageComputeWrite);
+		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kTransferDestination);
+
+		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_jobSetupGrProg.get());
+
+			const UVec4 uniforms(getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y());
+			cmdb.setPushConstants(&uniforms, sizeof(uniforms));
+
+			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
+			{
+				const BufferOffsetRange& buff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
+				cmdb.bindStorageBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range, U32(type));
+			}
+
+			cmdb.bindStorageBuffer(0, 1, indirectArgsBuff.m_buffer, indirectArgsBuff.m_offset, indirectArgsBuff.m_range);
+
+			cmdb.dispatchCompute(1, 1, 1);
+
+			// Now zero the clusters buffer
+			cmdb.fillBuffer(m_runCtx.m_clustersBuffer.m_buffer, m_runCtx.m_clustersBuffer.m_offset, m_runCtx.m_clustersBuffer.m_range, 0);
+		});
+	}
+
+	// Cluster binning
+	{
+		// Create the pass
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning");
+
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
+		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kStorageComputeWrite);
+
+		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			PtrSize indirectArgsBuffOffset = indirectArgsBuff.m_offset;
+			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
+			{
+				cmdb.bindShaderProgram(m_binningGrProgs[type].get());
+
+				const BufferOffsetRange& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
+				cmdb.bindStorageBuffer(0, 0, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
+
+				PtrSize objBufferOffset = 0;
+				PtrSize objBufferRange = 0;
+				switch(type)
+				{
+				case GpuSceneNonRenderableObjectType::kLight:
+					objBufferOffset = GpuSceneArrays::Light::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::Light::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kDecal:
+					objBufferOffset = GpuSceneArrays::Decal::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::Decal::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kFogDensityVolume:
+					objBufferOffset = GpuSceneArrays::FogDensityVolume::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::FogDensityVolume::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+					objBufferOffset = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kReflectionProbe:
+					objBufferOffset = GpuSceneArrays::ReflectionProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::ReflectionProbe::getSingleton().getBufferRange();
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
+
+				if(objBufferRange == 0)
+				{
+					objBufferOffset = 0;
+					objBufferRange = kMaxPtrSize;
+				}
+
+				cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
+				cmdb.bindStorageBuffer(0, 2, m_runCtx.m_clustersBuffer.m_buffer, m_runCtx.m_clustersBuffer.m_offset,
+									   m_runCtx.m_clustersBuffer.m_range);
+
+				struct ClusterBinningUniforms
+				{
+					Vec3 m_cameraOrigin;
+					F32 m_zSplitCountOverFrustumLength;
+
+					Vec2 m_renderingSize;
+					U32 m_tileCountX;
+					U32 m_tileCount;
+
+					Vec4 m_nearPlaneWorld;
+
+					Mat4 m_invertedViewProjMat;
+				} uniforms;
+
+				uniforms.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+				uniforms.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
+				uniforms.m_renderingSize = Vec2(getRenderer().getInternalResolution());
+				uniforms.m_tileCountX = getRenderer().getTileCounts().x();
+				uniforms.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
+
+				Plane nearPlane;
+				extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
+				uniforms.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+
+				uniforms.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+
+				cmdb.setPushConstants(&uniforms, sizeof(uniforms));
+
+				cmdb.dispatchComputeIndirect(indirectArgsBuff.m_buffer, indirectArgsBuffOffset);
+				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);
+			}
+		});
+	}
+
+	// Object packing
+	{
+		// Allocations
+		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
+		{
+			m_runCtx.m_packedObjectsBuffers[type] =
+				GpuVisibleTransientMemoryPool::getSingleton().allocate(kClusteredObjectSizes[type] * kMaxVisibleClusteredObjects[type]);
+			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_packedObjectsBuffers[type]);
 		}
 
-		const U32 sampleCount = 4;
-		const U32 sizex = m_tileCount * sampleCount;
-		const RenderQueue& rqueue = *ctx.m_renderQueue;
-		U32 clusterObjectCounts = rqueue.m_pointLights.getSize();
-		clusterObjectCounts += rqueue.m_spotLights.getSize();
-		clusterObjectCounts += rqueue.m_reflectionProbes.getSize();
-		clusterObjectCounts += rqueue.m_giProbes.getSize();
-		clusterObjectCounts += rqueue.m_fogDensityVolumes.getSize();
-		clusterObjectCounts += rqueue.m_decals.getSize();
-		cmdb->dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
-	});
+		// Create the pass
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster object packing");
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
+		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
+		{
+			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kStorageComputeWrite);
+		}
+
+		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			PtrSize indirectArgsBuffOffset = indirectArgsBuff.m_offset + sizeof(DispatchIndirectArgs) * U32(GpuSceneNonRenderableObjectType::kCount);
+			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
+			{
+				cmdb.bindShaderProgram(m_packingGrProgs[type].get());
+
+				PtrSize objBufferOffset = 0;
+				PtrSize objBufferRange = 0;
+				switch(type)
+				{
+				case GpuSceneNonRenderableObjectType::kLight:
+					objBufferOffset = GpuSceneArrays::Light::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::Light::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kDecal:
+					objBufferOffset = GpuSceneArrays::Decal::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::Decal::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kFogDensityVolume:
+					objBufferOffset = GpuSceneArrays::FogDensityVolume::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::FogDensityVolume::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
+					objBufferOffset = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferRange();
+					break;
+				case GpuSceneNonRenderableObjectType::kReflectionProbe:
+					objBufferOffset = GpuSceneArrays::ReflectionProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
+					objBufferRange = GpuSceneArrays::ReflectionProbe::getSingleton().getBufferRange();
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
+
+				if(objBufferRange == 0)
+				{
+					objBufferOffset = 0;
+					objBufferRange = kMaxPtrSize;
+				}
+
+				cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
+				cmdb.bindStorageBuffer(0, 1, m_runCtx.m_packedObjectsBuffers[type].m_buffer, m_runCtx.m_packedObjectsBuffers[type].m_offset,
+									   m_runCtx.m_packedObjectsBuffers[type].m_range);
+
+				const BufferOffsetRange& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
+				cmdb.bindStorageBuffer(0, 2, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
+
+				cmdb.dispatchComputeIndirect(indirectArgsBuff.m_buffer, indirectArgsBuffOffset);
+				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);
+			}
+		});
+	}
 }
 
-void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
+void ClusterBinning::writeClusterUniformsInternal()
 {
 	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
 
-	// Check limits
-	RenderQueue& rqueue = *ctx.m_renderQueue;
-	if(rqueue.m_pointLights.getSize() > kMaxVisiblePointLights) [[unlikely]]
+	RenderingContext& ctx = *m_runCtx.m_rctx;
+	ClusteredShadingUniforms& unis = *m_runCtx.m_uniformsCpu;
+
+	unis.m_renderingSize = Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
+
+	unis.m_time = F32(HighRezTimer::getCurrentTime());
+	unis.m_frame = getRenderer().getFrameCount() & kMaxU32;
+
+	Plane nearPlane;
+	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
+	unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+	unis.m_near = ctx.m_cameraNear;
+	unis.m_far = ctx.m_cameraFar;
+	unis.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+
+	unis.m_tileCounts = getRenderer().getTileCounts();
+	unis.m_zSplitCount = getRenderer().getZSplitCount();
+	unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
+	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
+	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
+	unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
+
+	unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
+
+	unis.m_matrices = ctx.m_matrices;
+	unis.m_previousMatrices = ctx.m_prevMatrices;
+
+	// Directional light
+	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+	if(dirLight)
 	{
-		ANKI_R_LOGW("Visible point lights exceed the max value by %u",
-					rqueue.m_pointLights.getSize() - kMaxVisiblePointLights);
-		rqueue.m_pointLights.setArray(rqueue.m_pointLights.getBegin(), kMaxVisiblePointLights);
-	}
+		DirectionalLight& out = unis.m_directionalLight;
 
-	if(rqueue.m_spotLights.getSize() > kMaxVisibleSpotLights) [[unlikely]]
-	{
-		ANKI_R_LOGW("Visible spot lights exceed the max value by %u",
-					rqueue.m_spotLights.getSize() - kMaxVisibleSpotLights);
-		rqueue.m_spotLights.setArray(rqueue.m_spotLights.getBegin(), kMaxVisibleSpotLights);
-	}
+		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
+		out.m_shadowCascadeCount = dirLight->getShadowEnabled() ? g_shadowCascadeCountCVar.get() : 0;
+		out.m_direction = dirLight->getDirection();
+		out.m_active = 1;
+		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
+											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
 
-	if(rqueue.m_decals.getSize() > kMaxVisibleDecals) [[unlikely]]
-	{
-		ANKI_R_LOGW("Visible decals exceed the max value by %u", rqueue.m_decals.getSize() - kMaxVisibleDecals);
-		rqueue.m_decals.setArray(rqueue.m_decals.getBegin(), kMaxVisibleDecals);
-	}
-
-	if(rqueue.m_fogDensityVolumes.getSize() > kMaxVisibleFogDensityVolumes) [[unlikely]]
-	{
-		ANKI_R_LOGW("Visible fog volumes exceed the max value by %u",
-					rqueue.m_fogDensityVolumes.getSize() - kMaxVisibleFogDensityVolumes);
-		rqueue.m_fogDensityVolumes.setArray(rqueue.m_fogDensityVolumes.getBegin(), kMaxVisibleFogDensityVolumes);
-	}
-
-	if(rqueue.m_reflectionProbes.getSize() > kMaxVisibleReflectionProbes) [[unlikely]]
-	{
-		ANKI_R_LOGW("Visible reflection probes exceed the max value by %u",
-					rqueue.m_reflectionProbes.getSize() - kMaxVisibleReflectionProbes);
-		rqueue.m_reflectionProbes.setArray(rqueue.m_reflectionProbes.getBegin(), kMaxVisibleReflectionProbes);
-	}
-
-	if(rqueue.m_giProbes.getSize() > kMaxVisibleGlobalIlluminationProbes) [[unlikely]]
-	{
-		ANKI_R_LOGW("Visible GI probes exceed the max value by %u",
-					rqueue.m_giProbes.getSize() - kMaxVisibleGlobalIlluminationProbes);
-		rqueue.m_giProbes.setArray(rqueue.m_giProbes.getBegin(), kMaxVisibleGlobalIlluminationProbes);
-	}
-
-	// Allocate buffers
-	RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(ClusteredShadingUniforms),
-															m_runCtx.m_clusteredShadingUniformsToken);
-	RebarStagingGpuMemoryPool::getSingleton().allocateFrame(sizeof(Cluster) * m_clusterCount, m_runCtx.m_clustersToken);
-}
-
-void ClusterBinning::writeClusterBuffersAsync()
-{
-	CoreThreadHive::getSingleton().submitTask(
-		[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-		   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-			static_cast<ClusterBinning*>(userData)->writeClustererBuffersTask();
-		},
-		this);
-}
-
-void ClusterBinning::writeClustererBuffersTask()
-{
-	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
-
-	RenderingContext& ctx = *m_runCtx.m_ctx;
-	const RenderQueue& rqueue = *ctx.m_renderQueue;
-
-	// General uniforms
-	{
-		ClusteredShadingUniforms& unis = *reinterpret_cast<ClusteredShadingUniforms*>(
-			RebarStagingGpuMemoryPool::getSingleton().getBufferMappedAddress()
-			+ m_runCtx.m_clusteredShadingUniformsToken.m_offset);
-
-		unis.m_renderingSize =
-			Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
-
-		unis.m_time = F32(HighRezTimer::getCurrentTime());
-		unis.m_frame = getRenderer().getFrameCount() & kMaxU32;
-
-		Plane nearPlane;
-		extractClipPlane(rqueue.m_viewProjectionMatrix, FrustumPlaneType::kNear, nearPlane);
-		unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
-		unis.m_near = rqueue.m_cameraNear;
-		unis.m_far = rqueue.m_cameraFar;
-		unis.m_cameraPosition = rqueue.m_cameraTransform.getTranslationPart().xyz();
-
-		unis.m_tileCounts = getRenderer().getTileCounts();
-		unis.m_zSplitCount = getRenderer().getZSplitCount();
-		unis.m_zSplitCountOverFrustumLength =
-			F32(getRenderer().getZSplitCount()) / (rqueue.m_cameraFar - rqueue.m_cameraNear);
-		unis.m_zSplitMagic.x() =
-			(rqueue.m_cameraNear - rqueue.m_cameraFar) / (rqueue.m_cameraNear * F32(getRenderer().getZSplitCount()));
-		unis.m_zSplitMagic.y() = rqueue.m_cameraFar / (rqueue.m_cameraNear * F32(getRenderer().getZSplitCount()));
-		unis.m_tileSize = getRenderer().getTileSize();
-		unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
-
-		unis.m_objectCountsUpTo[ClusteredObjectType::kPointLight].x() = rqueue.m_pointLights.getSize();
-		unis.m_objectCountsUpTo[ClusteredObjectType::kSpotLight].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kSpotLight - 1].x() + rqueue.m_spotLights.getSize();
-		unis.m_objectCountsUpTo[ClusteredObjectType::kDecal].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kDecal - 1].x() + rqueue.m_decals.getSize();
-		unis.m_objectCountsUpTo[ClusteredObjectType::kFogDensityVolume].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kFogDensityVolume - 1].x()
-			+ rqueue.m_fogDensityVolumes.getSize();
-		unis.m_objectCountsUpTo[ClusteredObjectType::kReflectionProbe].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kReflectionProbe - 1].x()
-			+ rqueue.m_reflectionProbes.getSize();
-		unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe].x() =
-			unis.m_objectCountsUpTo[ClusteredObjectType::kGlobalIlluminationProbe - 1].x()
-			+ rqueue.m_giProbes.getSize();
-
-		unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
-
-		unis.m_matrices = ctx.m_matrices;
-		unis.m_previousMatrices = ctx.m_prevMatrices;
-
-		// Directional light
-		if(rqueue.m_directionalLight.m_uuid != 0)
+		for(U cascade = 0; cascade < out.m_shadowCascadeCount; ++cascade)
 		{
-			DirectionalLight& out = unis.m_directionalLight;
-			const DirectionalLightQueueElement& in = rqueue.m_directionalLight;
-
-			out.m_diffuseColor = in.m_diffuseColor;
-			out.m_shadowCascadeCount = in.m_shadowCascadeCount;
-			out.m_direction = in.m_direction;
-			out.m_active = 1;
-			for(U32 i = 0; i < kMaxShadowCascades; ++i)
-			{
-				out.m_shadowCascadeDistances[i] = in.m_shadowCascadesDistances[i];
-			}
-			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : kMaxU32;
-
-			for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
-			{
-				out.m_textureMatrices[cascade] = in.m_textureMatrices[cascade];
-			}
-		}
-		else
-		{
-			unis.m_directionalLight.m_active = 0;
+			ANKI_ASSERT(m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade] != Mat4::getZero());
+			out.m_textureMatrices[cascade] = m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade];
 		}
 	}
-
-	// Zero the memory because atomics will happen
-	U8* clustersAddress =
-		RebarStagingGpuMemoryPool::getSingleton().getBufferMappedAddress() + m_runCtx.m_clustersToken.m_offset;
-	memset(clustersAddress, 0, sizeof(Cluster) * m_clusterCount);
+	else
+	{
+		unis.m_directionalLight.m_active = 0;
+	}
 }
 
 } // end namespace anki

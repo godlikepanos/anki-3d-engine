@@ -67,8 +67,8 @@ static PtrSize calcS3tcBlockSize(const ImageBinaryColorFormat cf)
 }
 
 /// Get the size in bytes of a single surface
-static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageBinaryDataCompression comp,
-							   const ImageBinaryColorFormat cf, UVec2 astcBlockSize)
+static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageBinaryDataCompression comp, const ImageBinaryColorFormat cf,
+							   UVec2 astcBlockSize)
 {
 	const PtrSize width = width32;
 	const PtrSize height = height32;
@@ -100,8 +100,7 @@ static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const Imag
 }
 
 /// Get the size in bytes of a single volume
-static PtrSize calcVolumeSize(const U width, const U height, const U depth, const ImageBinaryDataCompression comp,
-							  const ImageBinaryColorFormat cf)
+static PtrSize calcVolumeSize(const U width, const U height, const U depth, const ImageBinaryDataCompression comp, const ImageBinaryColorFormat cf)
 {
 	PtrSize out = 0;
 
@@ -152,9 +151,8 @@ static PtrSize calcSizeOfSegment(const ImageBinaryHeader& header, ImageBinaryDat
 
 		while(mips-- != 0)
 		{
-			out += calcSurfaceSize(width, height, comp, header.m_colorFormat,
-								   UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY))
-				   * surfCountPerMip;
+			out +=
+				calcSurfaceSize(width, height, comp, header.m_colorFormat, UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY)) * surfCountPerMip;
 
 			width /= 2;
 			height /= 2;
@@ -388,12 +386,11 @@ Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
 	return Error::kNone;
 }
 
-Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
-								 ImageBinaryDataCompression& preferredCompression,
+Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
 								 DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>>& surfaces,
-								 DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes,
-								 U32& width, U32& height, U32& depth, U32& layerCount, U32& mipCount,
-								 ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat, UVec2& astcBlockSize)
+								 DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes, U32& width, U32& height, U32& depth,
+								 U32& layerCount, U32& mipCount, ImageBinaryType& imageType, ImageBinaryColorFormat& colorFormat,
+								 UVec2& astcBlockSize)
 {
 	//
 	// Read and check the header
@@ -407,8 +404,8 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		return Error::kUserData;
 	}
 
-	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0
-	   || !isPowerOfTwo(header.m_height) || header.m_height > 4096)
+	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0 || !isPowerOfTwo(header.m_height)
+	   || header.m_height > 4096)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect width/height value");
 		return Error::kUserData;
@@ -426,8 +423,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		return Error::kUserData;
 	}
 
-	if(header.m_colorFormat < ImageBinaryColorFormat::kRgb8
-	   || header.m_colorFormat > ImageBinaryColorFormat::kRgbaFloat)
+	if(header.m_colorFormat < ImageBinaryColorFormat::kRgb8 || header.m_colorFormat > ImageBinaryColorFormat::kRgbaFloat)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: color format");
 		return Error::kUserData;
@@ -435,8 +431,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 
 	if(!!(header.m_compressionMask & ImageBinaryDataCompression::kAstc))
 	{
-		if((header.m_astcBlockSizeX != 8 && header.m_astcBlockSizeX != 4)
-		   || (header.m_astcBlockSizeY != 8 && header.m_astcBlockSizeY != 4))
+		if((header.m_astcBlockSizeX != 8 && header.m_astcBlockSizeX != 4) || (header.m_astcBlockSizeY != 8 && header.m_astcBlockSizeY != 4))
 		{
 			ANKI_RESOURCE_LOGE("Incorrect header: ASTC block size");
 			return Error::kUserData;
@@ -564,9 +559,8 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 			{
 				for(U32 f = 0; f < faceCount; ++f)
 				{
-					const PtrSize dataSize =
-						calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat,
-										UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY));
+					const PtrSize dataSize = calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat,
+															 UVec2(header.m_astcBlockSizeX, header.m_astcBlockSizeY));
 
 					// Check if this mipmap can be skipped because of size
 					if(max(mipWidth, mipHeight) <= maxImageSize || mip == header.m_mipmapCount - 1)
@@ -602,8 +596,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize,
 		U32 mipDepth = header.m_depthOrLayerCount;
 		for(U32 mip = 0; mip < header.m_mipmapCount; mip++)
 		{
-			const U32 dataSize =
-				U32(calcVolumeSize(mipWidth, mipHeight, mipDepth, preferredCompression, header.m_colorFormat));
+			const U32 dataSize = U32(calcVolumeSize(mipWidth, mipHeight, mipDepth, preferredCompression, header.m_colorFormat));
 
 			// Check if this mipmap can be skipped because of size
 			if(max(max(mipWidth, mipHeight), mipDepth) <= maxImageSize || mip == header.m_mipmapCount - 1)
@@ -757,8 +750,8 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 		m_compression = ImageBinaryDataCompression::kS3tc;
 #endif
 
-		ANKI_CHECK(loadAnkiImage(file, maxImageSize, m_compression, m_surfaces, m_volumes, m_width, m_height, m_depth,
-								 m_layerCount, m_mipmapCount, m_imageType, m_colorFormat, m_astcBlockSize));
+		ANKI_CHECK(loadAnkiImage(file, maxImageSize, m_compression, m_surfaces, m_volumes, m_width, m_height, m_depth, m_layerCount, m_mipmapCount,
+								 m_imageType, m_colorFormat, m_astcBlockSize));
 	}
 	else if(ext == "png" || ext == "jpg")
 	{

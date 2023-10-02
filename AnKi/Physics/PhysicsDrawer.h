@@ -44,8 +44,7 @@ private:
 		}
 
 		void drawContactPoint([[maybe_unused]] const btVector3& PointOnB, [[maybe_unused]] const btVector3& normalOnB,
-							  [[maybe_unused]] btScalar distance, [[maybe_unused]] int lifeTime,
-							  [[maybe_unused]] const btVector3& color) override
+							  [[maybe_unused]] btScalar distance, [[maybe_unused]] int lifeTime, [[maybe_unused]] const btVector3& color) override
 		{
 			// TODO
 		}

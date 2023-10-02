@@ -19,8 +19,7 @@ void PipelineLayoutFactory::destroy()
 	}
 }
 
-Error PipelineLayoutFactory::newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize,
-											   PipelineLayout& layout)
+Error PipelineLayoutFactory::newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize, PipelineLayout& layout)
 {
 	U64 hash = computeHash(&pushConstantsSize, sizeof(pushConstantsSize));
 	Array<VkDescriptorSetLayout, kMaxDescriptorSets> vkDsetLayouts;

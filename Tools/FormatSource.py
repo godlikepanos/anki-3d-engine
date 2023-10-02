@@ -59,7 +59,7 @@ def thread_callback(tid):
                 file_txt = file_txt.replace(hlsl_attribs[i], hlsl_attribs_fake[i])
 
             # Write the new file
-            tmp_filefd, tmp_filename = tempfile.mkstemp()
+            tmp_filefd, tmp_filename = tempfile.mkstemp(suffix=".txt")
             with open(tmp_filename, "w", newline="\n") as f:
                 f.write(file_txt)
                 os.close(tmp_filefd)

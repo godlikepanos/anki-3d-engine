@@ -13,7 +13,7 @@ NativeWindow& MakeSingletonPtr<NativeWindow>::allocateSingleton<>()
 {
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new NativeWindowAndroid();
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	++g_singletonsAllocated;
 #endif
 	return *m_global;
@@ -26,7 +26,7 @@ void MakeSingletonPtr<NativeWindow>::freeSingleton()
 	{
 		delete static_cast<NativeWindowAndroid*>(m_global);
 		m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		--g_singletonsAllocated;
 #endif
 	}
@@ -91,8 +91,7 @@ Error NativeWindowAndroid::initInternal([[maybe_unused]] const NativeWindowInitI
 
 	if(init.m_targetFps)
 	{
-		ANativeWindow_setFrameRate(m_nativeWindowAndroid, F32(init.m_targetFps),
-								   ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT);
+		ANativeWindow_setFrameRate(m_nativeWindowAndroid, F32(init.m_targetFps), ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT);
 	}
 
 	// Set some stuff

@@ -31,10 +31,11 @@
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/ThreadPool.h>
-#include <AnKi/Util/ThreadHive.h>
+#include <AnKi/Util/ThreadJobManager.h>
 #include <AnKi/Util/Visitor.h>
 #include <AnKi/Util/INotify.h>
 #include <AnKi/Util/SparseArray.h>
+#include <AnKi/Util/BlockArray.h>
 #include <AnKi/Util/ObjectAllocator.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Serializer.h>

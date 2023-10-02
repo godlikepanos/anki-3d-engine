@@ -20,7 +20,7 @@ class JointComponent : public SceneComponent
 
 public:
 	JointComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, kClassType)
 		, m_node(node)
 	{
 	}
@@ -51,9 +51,9 @@ private:
 	template<typename TJoint, typename... TArgs>
 	void newJoint(const Vec3& relPosFactor, F32 brakingImpulse, TArgs&&... args);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
-	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 };
 /// @}
 

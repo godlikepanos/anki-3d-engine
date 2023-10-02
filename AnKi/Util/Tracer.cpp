@@ -10,6 +10,8 @@
 
 namespace anki {
 
+#if ANKI_TRACING_ENABLED
+
 class Tracer::Chunk : public IntrusiveListEnabled<Chunk>
 {
 public:
@@ -62,8 +64,7 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 {
 	Chunk* out;
 
-	if(tlocal.m_currentChunk && tlocal.m_currentChunk->m_eventCount < kEventsPerChunk
-	   && tlocal.m_currentChunk->m_counterCount < kCountersPerChunk)
+	if(tlocal.m_currentChunk && tlocal.m_currentChunk->m_eventCount < kEventsPerChunk && tlocal.m_currentChunk->m_counterCount < kCountersPerChunk)
 	{
 		// There is a chunk and it has enough space
 		out = tlocal.m_currentChunk;
@@ -190,5 +191,7 @@ void Tracer::flush(TracerFlushCallback callback, void* callbackUserData)
 		tlocal->m_currentChunk = nullptr;
 	}
 }
+
+#endif
 
 } // end namespace anki

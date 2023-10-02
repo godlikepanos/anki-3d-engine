@@ -77,13 +77,12 @@ String MaliOfflineCompilerOut::toString() const
 	str.sprintf("Regs %u Spilling %u "
 				"FMA %f CVT %f SFU %f LS %f VAR %f TEX %f Bound %s "
 				"FP16 %f%%",
-				m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture,
-				hwUnitToStr(m_boundUnit).cstr(), m_fp16ArithmeticPercentage);
+				m_workRegisters, m_spilling, m_fma, m_cvt, m_sfu, m_loadStore, m_varying, m_texture, hwUnitToStr(m_boundUnit).cstr(),
+				m_fp16ArithmeticPercentage);
 	return str;
 }
 
-Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType,
-							 MaliOfflineCompilerOut& out)
+Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType, MaliOfflineCompilerOut& out)
 {
 	out = {};
 	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
@@ -175,9 +174,8 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 
 		U32 count2 = 0;
 		while(std::regex_search(stdoutstl2, match,
-								std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										   "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										   "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
+								std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										   "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
 			ANKI_ASSERT(match.size() == 8);
 			U32 count = 2;
@@ -205,9 +203,9 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	else if(shaderType == ShaderType::kFragment)
 	{
 		if(std::regex_search(analysisTextStl, match,
-							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
+							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										"\\s*([A-Z]+)")))
 		{
 			ANKI_ASSERT(match.size() == 9);
 
@@ -234,9 +232,8 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 		ANKI_ASSERT(shaderType == ShaderType::kCompute);
 
 		if(std::regex_search(analysisTextStl, match,
-							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
-										"\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
+							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX
+										"\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*([A-Z]+)")))
 		{
 			ANKI_ASSERT(match.size() == 8);
 

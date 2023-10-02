@@ -11,14 +11,14 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInDepthMapSize, 0u);
 
 [[vk::push_constant]] ConstantBuffer<Mat4> g_mvp;
 [[vk::binding(0)]] StructuredBuffer<Vec4> g_flarePositions;
-[[vk::binding(1)]] RWStructuredBuffer<DrawIndirectInfo> g_indirectInfo;
+[[vk::binding(1)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectInfo;
 [[vk::binding(2)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(3)]] Texture2D g_depthMap;
 
 groupshared U32 s_maxDepth;
 
-[numthreads(THREAD_COUNT_SQRT, THREAD_COUNT_SQRT, 1)] void
-main(U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupThreadId : SV_GROUPTHREADID, UVec3 svGroupId : SV_GROUPID)
+[numthreads(THREAD_COUNT_SQRT, THREAD_COUNT_SQRT, 1)] void main(U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupThreadId : SV_GROUPTHREADID,
+																UVec3 svGroupId : SV_GROUPID)
 {
 	// Init the s_maxDepth
 	if(svGroupIndex == 0u)

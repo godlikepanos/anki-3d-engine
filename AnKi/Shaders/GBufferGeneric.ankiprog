@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator ANKI_VELOCITY 0 1
-#pragma anki mutator ANKI_TECHNIQUE 0 1 2
+#pragma anki mutator ANKI_TECHNIQUE 0 1
 #pragma anki mutator ANKI_BONES 0 1
 #pragma anki mutator DIFFUSE_TEX 0 1
 #pragma anki mutator SPECULAR_TEX 0 1
@@ -17,7 +17,6 @@
 
 #pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
 #pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 1
-#pragma anki skip_mutation ANKI_VELOCITY 1 ANKI_TECHNIQUE 2
 
 // Some defines the clear up things
 #define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
@@ -61,7 +60,7 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
+	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
 };
 
 struct VertOut
@@ -90,7 +89,7 @@ struct VertOut
 	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
 };
 
-#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER || ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 struct FragOut
 {
 	Vec4 m_color0 : SV_TARGET0;
@@ -108,17 +107,17 @@ struct Mat3x4_2
 	Mat3x4 m_b;
 };
 
-Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, GpuSceneRenderable renderable, U32 index)
+Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, GpuSceneRenderableVertex renderable, U32 index)
 {
 	const U32 boneIdx = vert.m_boneIndices[index];
-	U32 byteOffset = renderable.m_boneTransformsOffset;
+	U32 byteOffset = renderable.m_boneTransformsOrParticleEmitterOffset;
 	byteOffset += boneIdx * sizeof(Mat3x4) * 2;
 	return g_gpuScene.Load<Mat3x4_2>(byteOffset);
 }
 
 #if ANKI_BONES
-void skinning(UnpackedMeshVertex vert, GpuSceneRenderable renderable, inout Vec3 pos, inout Vec3 prevPos,
-			  inout RVec3 normal, inout RVec4 tangent)
+void skinning(UnpackedMeshVertex vert, GpuSceneRenderableVertex renderable, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal,
+			  inout RVec4 tangent)
 {
 	Mat3x4_2 mats = loadBoneTransforms(vert, renderable, 0);
 
@@ -172,8 +171,8 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset);
+	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
 
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
@@ -220,7 +219,7 @@ void doAlphaTest(RF32 alpha)
 	}
 }
 
-#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_SHADOWS
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_DEPTH
 void main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
@@ -229,17 +228,6 @@ void main(VertOut input)
 	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
 	doAlphaTest(diffColorA.a);
 #	endif
-}
-#elif ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER_EZ
-FragOut main(VertOut input)
-{
-	ANKI_MAYBE_UNUSED(input);
-#	if REALLY_ALPHA_TEST
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
-	doAlphaTest(diffColorA.a);
-#	endif
-	return (FragOut)0;
 }
 #elif ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 // Do normal mapping
@@ -300,8 +288,7 @@ FragOut main(VertOut input)
 #	endif
 
 #	if NORMAL_TEX
-	const RVec3 normal =
-		readNormalFromTexture(input, g_bindlessTextures2dF32[localUniforms.m_normalTex], g_globalSampler, uv);
+	const RVec3 normal = readNormalFromTexture(input, g_bindlessTextures2dF32[localUniforms.m_normalTex], g_globalSampler, uv);
 #	else
 	const RVec3 normal = normalize(input.m_normal);
 #	endif

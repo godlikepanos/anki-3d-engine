@@ -6,13 +6,10 @@
 #include <Tests/Framework/Framework.h>
 #include <AnKi/Resource/DummyResource.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Core/ConfigSet.h>
 
 ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
-	ConfigSet::allocateSingleton(allocAligned, nullptr);
-
 	ResourceManager* resources = &ResourceManager::allocateSingleton();
 	ANKI_TEST_EXPECT_NO_ERR(resources->init(allocAligned, nullptr));
 

@@ -9,6 +9,7 @@
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/Atomic.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Util/Tracer.h>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -175,8 +176,7 @@ void HeapMemoryPool::destroy()
 	const U32 count = m_allocationCount.load();
 	if(count != 0)
 	{
-		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count,
-					   getName());
+		ANKI_UTIL_LOGE("Memory pool destroyed before all memory being released (%u deallocations missed): %s", count, getName());
 	}
 	BaseMemoryPool::destroy();
 }
@@ -269,14 +269,14 @@ void StackMemoryPool::StackAllocatorBuilderInterface::freeChunk(Chunk* chunk)
 void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk([[maybe_unused]] Chunk& chunk)
 {
 	ANKI_ASSERT(chunk.m_chunkSize > 0);
+
 #if ANKI_MEM_EXTRA_CHECKS
 	invalidateMemory(&chunk.m_memoryStart[0], chunk.m_chunkSize);
 #endif
 }
 
-void StackMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-						   F64 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors, U32 alignmentBytes,
-						   const Char* name)
+void StackMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale, PtrSize nextChunkBias,
+						   Bool ignoreDeallocationErrors, U32 alignmentBytes, const Char* name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);
@@ -309,7 +309,6 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 		return nullptr;
 	}
 
-	m_allocationCount.fetchAdd(1);
 	const PtrSize address = ptrToNumber(&chunk->m_memoryStart[0]) + offset;
 	return numberToPtr<void*>(address);
 }
@@ -321,8 +320,6 @@ void StackMemoryPool::free(void* ptr)
 		return;
 	}
 
-	[[maybe_unused]] const U32 count = m_allocationCount.fetchSub(1);
-	ANKI_ASSERT(count > 0);
 	m_builder.free();
 }
 

@@ -11,11 +11,9 @@
 
 #define ANKI_T_STRUCT(type) \
 	static_assert(sizeof(::type) == sizeof(anki::type), "Sizeof mismatch of the Windows.h type and AnKi's fake one"); \
-	static_assert(alignof(::type) == alignof(anki::type), \
-				  "Alignment mismatch of the Windows.h type and AnKi's fake one");
+	static_assert(alignof(::type) == alignof(anki::type), "Alignment mismatch of the Windows.h type and AnKi's fake one");
 
-#define ANKI_T_OFFSETOF(type, member) \
-	static_assert(offsetof(::type, member) == offsetof(anki::type, member), "See file");
+#define ANKI_T_OFFSETOF(type, member) static_assert(offsetof(::type, member) == offsetof(anki::type, member), "See file");
 
 ANKI_T_STRUCT(CRITICAL_SECTION)
 ANKI_T_STRUCT(SRWLOCK)

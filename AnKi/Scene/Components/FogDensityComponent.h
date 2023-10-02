@@ -6,8 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
-#include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Sphere.h>
 
@@ -78,24 +77,6 @@ public:
 		return m_density;
 	}
 
-	void setupFogDensityQueueElement(FogDensityQueueElement& el) const
-	{
-		el.m_density = m_density;
-		el.m_isBox = m_isBox;
-		if(m_isBox)
-		{
-			el.m_aabbMin = (m_aabbMin + m_worldPos).xyz();
-			el.m_aabbMax = (m_aabbMax + m_worldPos).xyz();
-		}
-		else
-		{
-			el.m_sphereCenter = m_worldPos.xyz();
-			el.m_sphereRadius = m_sphereRadius;
-		}
-		ANKI_ASSERT(m_gpuSceneIndex != kMaxU32);
-		el.m_index = m_gpuSceneIndex;
-	}
-
 private:
 	Vec3 m_aabbMin = Vec3(0.0f); ///< In local space.
 
@@ -105,17 +86,15 @@ private:
 		F32 m_sphereRadius;
 	};
 
-	Spatial m_spatial;
-
 	Vec3 m_worldPos = Vec3(0.0f);
 	F32 m_density = 1.0f;
 
-	U32 m_gpuSceneIndex = kMaxU32;
+	GpuSceneArrays::FogDensityVolume::Allocation m_gpuSceneVolume;
 
 	Bool m_isBox = true;
 	Bool m_dirty = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 
 } // end namespace anki

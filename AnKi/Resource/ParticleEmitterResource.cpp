@@ -32,8 +32,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 	ANKI_CHECK(doc.getChildElement("particleEmitter", rootEl));
 
 #define ANKI_XML(varName, VarName) \
-	ANKI_CHECK( \
-		readVar(rootEl, #varName, m_particle.m_min##VarName, m_particle.m_max##VarName, &m_particle.m_min##VarName))
+	ANKI_CHECK(readVar(rootEl, #varName, m_particle.m_min##VarName, m_particle.m_max##VarName, &m_particle.m_min##VarName))
 
 	ANKI_XML(life, Life);
 	ANKI_XML(mass, Mass);
@@ -80,8 +79,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 }
 
 template<typename T>
-Error ParticleEmitterResource::readVar(const XmlElement& rootEl, CString varName, T& minVal, T& maxVal,
-									   const T* defaultVal)
+Error ParticleEmitterResource::readVar(const XmlElement& rootEl, CString varName, T& minVal, T& maxVal, const T* defaultVal)
 {
 	XmlElement el;
 

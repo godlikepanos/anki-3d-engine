@@ -42,7 +42,7 @@ ANKI_TEST(Util, StackMemoryPool)
 
 	// Allocate
 	{
-		StackMemoryPool pool(allocAligned, nullptr, 100, 1.0, 0, true);
+		StackMemoryPool pool(allocAligned, nullptr, 100, 2.0, 0, true);
 
 		void* a = pool.allocate(25, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
@@ -52,14 +52,14 @@ ANKI_TEST(Util, StackMemoryPool)
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 0);
 
 		// Allocate a few
-		const U SIZE = 75;
-		a = pool.allocate(SIZE, 1);
+		constexpr U kSize = 75;
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(SIZE, 1);
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(SIZE, 1);
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(SIZE, 1);
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 4);
 
@@ -68,13 +68,13 @@ ANKI_TEST(Util, StackMemoryPool)
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 0);
 
 		// Allocate again
-		a = pool.allocate(SIZE, 1);
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(SIZE, 1);
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(SIZE, 1);
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(SIZE, 1);
+		a = pool.allocate(kSize, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationCount(), 4);
 	}

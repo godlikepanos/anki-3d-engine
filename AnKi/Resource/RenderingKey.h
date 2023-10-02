@@ -14,10 +14,9 @@ namespace anki {
 enum class RenderingTechnique : U8
 {
 	kGBuffer = 0,
-	kGBufferEarlyZ = 1,
-	kShadow = 2,
-	kForward = 3,
-	kRtShadow = 4,
+	kDepth = 1,
+	kForward = 2,
+	kRtShadow = 3,
 
 	kCount,
 	kFirst = 0
@@ -28,10 +27,9 @@ enum class RenderingTechniqueBit : U8
 {
 	kNone = 0,
 	kGBuffer = 1 << 0,
-	kGBufferEarlyZ = 1 << 1,
-	kShadow = 1 << 2,
-	kForward = 1 << 3,
-	kRtShadow = 1 << 4,
+	kDepth = 1 << 1,
+	kForward = 1 << 2,
+	kRtShadow = 1 << 3,
 
 	kAllRt = kRtShadow
 };
@@ -68,8 +66,7 @@ public:
 
 	Bool operator==(const RenderingKey& b) const
 	{
-		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned
-			   && m_velocity == b.m_velocity;
+		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
 	}
 
 	RenderingTechnique getRenderingTechnique() const

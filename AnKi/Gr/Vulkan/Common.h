@@ -74,7 +74,6 @@ enum class VulkanExtensions : U32
 	kKHR_swapchain = 1 << 6,
 	kKHR_surface = 1 << 7,
 	kEXT_debug_utils = 1 << 8,
-	kAMD_shader_info = 1 << 9,
 	kAMD_rasterization_order = 1 << 10,
 	kKHR_ray_tracing = 1 << 11,
 	kKHR_pipeline_executable_properties = 1 << 12,
@@ -95,6 +94,7 @@ enum class VulkanExtensions : U32
 	kNVX_image_view_handle = 1 << 27,
 	kKHR_push_descriptor = 1 << 28,
 	kKHR_maintenance_4 = 1 << 29,
+	kKHR_draw_indirect_count = 1 << 30
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
@@ -125,12 +125,10 @@ constexpr Second kMaxFenceOrSemaphoreWaitTime = 10.0;
 class PrivateBufferUsageBit
 {
 public:
-	static constexpr BufferUsageBit kAccelerationStructureBuildScratch = BufferUsageBit(1ull << 29ull);
-
 	/// Buffer that holds the memory for the actual AS.
-	static constexpr BufferUsageBit kAccelerationStructure = static_cast<BufferUsageBit>(1ull << 30ull);
+	static constexpr BufferUsageBit kAccelerationStructure = BufferUsageBit(1ull << 30ull);
 
-	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructureBuildScratch | kAccelerationStructure;
+	static constexpr BufferUsageBit kAllPrivate = kAccelerationStructure;
 };
 static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Update the bits in PrivateBufferUsageBit");
 

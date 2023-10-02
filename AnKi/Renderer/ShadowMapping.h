@@ -8,13 +8,13 @@
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Renderer/TileAllocator.h>
+#include <AnKi/Renderer/Utils/TileAllocator.h>
 
 namespace anki {
 
 // Forward
-class PointLightQueueElement;
-class SpotLightQueueElement;
+class GpuVisibilityOutput;
+extern NumericCVar<U32> g_shadowMappingPcfCVar;
 
 /// @addtogroup renderer
 /// @{
@@ -34,8 +34,7 @@ public:
 	}
 
 private:
-	class LightToRenderTempInfo;
-	class ThreadWorkItem;
+	class ViewportWorkItem;
 
 	TileAllocator m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
@@ -53,36 +52,35 @@ private:
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
 
+	ShaderProgramResourcePtr m_vetVisibilityProg;
+	ShaderProgramPtr m_vetVisibilityGrProg;
+
+	Array<RenderTargetDescription, kMaxShadowCascades> m_cascadeHzbRtDescrs;
+
 	class
 	{
 	public:
 		RenderTargetHandle m_rt;
-		WeakArray<ThreadWorkItem> m_workItems;
-		UVec4 m_fullViewport; ///< Calculate the viewport that contains all of the work items. Mobile optimization.
+		WeakArray<ViewportWorkItem> m_workItems;
+
+		UVec2 m_renderAreaMin; ///< Calculate the viewport that contains all of the work items. Mobile optimization.
+		UVec2 m_renderAreaMax;
 	} m_runCtx;
 
 	Error initInternal();
 
-	void processLights(RenderingContext& ctx, U32& threadCountForScratchPass);
+	void processLights(RenderingContext& ctx);
 
-	Bool allocateAtlasTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps, const U32* faceIndices,
-							const U32* drawcallsCount, const U32* hierarchies, UVec4* atlasTileViewports,
-							TileAllocatorResult* subResults);
+	TileAllocatorResult2 allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies, UVec4* atlasTileViewports);
 
 	Mat4 createSpotLightTextureMatrix(const UVec4& viewport) const;
 
-	/// Find the detail of the light
-	void chooseDetail(const Vec4& cameraOrigin, const PointLightQueueElement& light, U32& tileAllocatorHierarchy,
-					  U32& renderQueueElementsLod) const;
-	/// Find the detail of the light
-	void chooseDetail(const Vec4& cameraOrigin, const SpotLightQueueElement& light, U32& tileAllocatorHierarchy,
-					  U32& renderQueueElementsLod) const;
-
-	template<typename TMemoryPool>
-	void newWorkItems(const UVec4& atlasViewport, RenderQueue* lightRenderQueue, U32 renderQueueElementsLod,
-					  DynamicArray<LightToRenderTempInfo, TMemoryPool>& workItems, U32& drawcallCount) const;
+	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const;
 
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
+
+	BufferOffsetRange vetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+										RenderGraphDescription& rgraph) const;
 };
 /// @}
 

@@ -61,7 +61,7 @@ constexpr U32 kMaxColorRenderTargets = 4;
 constexpr U32 kMaxDescriptorSets = 3; ///< Groups that can be bound at the same time.
 constexpr U32 kMaxBindingsPerDescriptorSet = 32;
 constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
-constexpr U32 kMaxGrObjectNameLength = 31;
+constexpr U32 kMaxGrObjectNameLength = 61;
 constexpr U32 kMaxBindlessTextures = 512;
 constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
 
@@ -136,8 +136,7 @@ enum class GpuVendor : U8
 	kCount
 };
 
-inline constexpr Array<CString, U(GpuVendor::kCount)> kGPUVendorStrings = {"unknown", "ARM",   "nVidia",
-																		   "AMD",     "Intel", "Qualcomm"};
+inline constexpr Array<CString, U(GpuVendor::kCount)> kGPUVendorStrings = {"unknown", "ARM", "nVidia", "AMD", "Intel", "Qualcomm"};
 
 /// Device capabilities.
 ANKI_BEGIN_PACKED_STRUCT
@@ -168,6 +167,9 @@ public:
 	/// The max combined size of shared variables (with paddings) in compute shaders.
 	PtrSize m_computeSharedMemorySize = 16_KB;
 
+	/// Alignment of the scratch buffer used in AS building.
+	U32 m_accelerationStructureBuildScratchOffsetAlignment = 0;
+
 	/// Each SBT record should be a multiple of this.
 	U32 m_sbtRecordAlignment = kMaxU32;
 
@@ -182,6 +184,9 @@ public:
 
 	/// Min size of a texel in the shading rate image.
 	U32 m_minShadingRateImageTexelSize = 0;
+
+	/// The max number of drawcalls in draw indirect count calls.
+	U32 m_maxDrawIndirectCount = 0;
 
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::kUnknown;
@@ -389,9 +394,7 @@ enum class Format : U32
 {
 	kNone = 0,
 
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, \
-						depthStencil) \
-	k##type = id,
+#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = id,
 #include <AnKi/Gr/Format.defs.h>
 #undef ANKI_FORMAT_DEF
 };
@@ -487,19 +490,19 @@ enum class TextureUsageBit : U32
 
 	// Derived
 	kAllSampled = kSampledGeometry | kSampledFragment | kSampledCompute | kSampledTraceRays,
-	kAllImage = kImageGeometryRead | kImageGeometryWrite | kImageFragmentRead | kImageFragmentWrite | kImageComputeRead
-				| kImageComputeWrite | kImageTraceRaysRead | kImageTraceRaysWrite,
+	kAllImage = kImageGeometryRead | kImageGeometryWrite | kImageFragmentRead | kImageFragmentWrite | kImageComputeRead | kImageComputeWrite
+				| kImageTraceRaysRead | kImageTraceRaysWrite,
 	kAllFramebuffer = kFramebufferRead | kFramebufferWrite,
 
-	kAllGraphics = kSampledGeometry | kSampledFragment | kImageGeometryRead | kImageGeometryWrite | kImageFragmentRead
-				   | kImageFragmentWrite | kFramebufferRead | kFramebufferWrite | kFramebufferShadingRate,
+	kAllGraphics = kSampledGeometry | kSampledFragment | kImageGeometryRead | kImageGeometryWrite | kImageFragmentRead | kImageFragmentWrite
+				   | kFramebufferRead | kFramebufferWrite | kFramebufferShadingRate,
 	kAllCompute = kSampledCompute | kImageComputeRead | kImageComputeWrite,
 	kAllTransfer = kTransferDestination | kGenerateMipmaps,
 
-	kAllRead = kAllSampled | kImageGeometryRead | kImageFragmentRead | kImageComputeRead | kImageTraceRaysRead
-			   | kFramebufferRead | kFramebufferShadingRate | kPresent | kGenerateMipmaps,
-	kAllWrite = kImageGeometryWrite | kImageFragmentWrite | kImageComputeWrite | kImageTraceRaysWrite
-				| kFramebufferWrite | kTransferDestination | kGenerateMipmaps,
+	kAllRead = kAllSampled | kImageGeometryRead | kImageFragmentRead | kImageComputeRead | kImageTraceRaysRead | kFramebufferRead
+			   | kFramebufferShadingRate | kPresent | kGenerateMipmaps,
+	kAllWrite = kImageGeometryWrite | kImageFragmentWrite | kImageComputeWrite | kImageTraceRaysWrite | kFramebufferWrite | kTransferDestination
+				| kGenerateMipmaps,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
@@ -658,8 +661,7 @@ enum class AttachmentStoreOperation : U8
 };
 
 /// Buffer usage modes.
-/// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry
-/// stages) and finaly fragment.
+/// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry stages) and finaly fragment.
 /// The compute from the consists of the following: indirect and compute.
 /// The trace rays from the: indirect and trace_rays
 /// !!WARNING!! If you change this remember to change PrivateBufferUsageBit.
@@ -702,34 +704,30 @@ enum class BufferUsageBit : U64
 
 	kAccelerationStructureBuild = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
 	kShaderBindingTable = 1ull << 28ull, ///< Will be used as SBT in a traceRays() command.
+	kAccelerationStructureBuildScratch = 1ull << 29ull, ///< Used in buildAccelerationStructureXXX commands.
 
 	// Derived
 	kAllUniform = kUniformGeometry | kUniformFragment | kUniformCompute | kUniformTraceRays,
-	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite
-				  | kStorageComputeRead | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
-	kAllTexture = kTextureGeometryRead | kTextureGeometryWrite | kTextureFragmentRead | kTextureFragmentWrite
-				  | kTextureComputeRead | kTextureComputeWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite,
+	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite | kStorageComputeRead
+				  | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
+	kAllTexture = kTextureGeometryRead | kTextureGeometryWrite | kTextureFragmentRead | kTextureFragmentWrite | kTextureComputeRead
+				  | kTextureComputeWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite,
 	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
 	kAllTransfer = kTransferSource | kTransferDestination,
 
-	kAllGeometry = kUniformGeometry | kStorageGeometryRead | kStorageGeometryWrite | kTextureGeometryRead
-				   | kTextureGeometryWrite | kIndex | kVertex,
-	kAllFragment =
-		kUniformFragment | kStorageFragmentRead | kStorageFragmentWrite | kTextureFragmentRead | kTextureFragmentWrite,
+	kAllGeometry = kUniformGeometry | kStorageGeometryRead | kStorageGeometryWrite | kTextureGeometryRead | kTextureGeometryWrite | kIndex | kVertex,
+	kAllFragment = kUniformFragment | kStorageFragmentRead | kStorageFragmentWrite | kTextureFragmentRead | kTextureFragmentWrite,
 	kAllGraphics = kAllGeometry | kAllFragment | kIndirectDraw,
-	kAllCompute = kUniformCompute | kStorageComputeRead | kStorageComputeWrite | kTextureComputeRead
-				  | kTextureComputeWrite | kIndirectCompute,
-	kAllTraceRays = kUniformTraceRays | kStorageTraceRaysRead | kStorageTraceRaysWrite | kTextureTraceRaysRead
-					| kTextureTraceRaysWrite | kIndirectTraceRays | kShaderBindingTable,
+	kAllCompute = kUniformCompute | kStorageComputeRead | kStorageComputeWrite | kTextureComputeRead | kTextureComputeWrite | kIndirectCompute,
+	kAllTraceRays = kUniformTraceRays | kStorageTraceRaysRead | kStorageTraceRaysWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite
+					| kIndirectTraceRays | kShaderBindingTable,
 
-	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild,
-	kAllRead = kAllUniform | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead
-			   | kTextureGeometryRead | kTextureFragmentRead | kTextureComputeRead | kTextureTraceRaysRead | kIndex
-			   | kVertex | kIndirectCompute | kIndirectDraw | kIndirectTraceRays | kTransferSource
-			   | kAccelerationStructureBuild | kShaderBindingTable,
-	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite
-				| kTextureGeometryWrite | kTextureFragmentWrite | kTextureComputeWrite | kTextureTraceRaysWrite
-				| kTransferDestination,
+	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch,
+	kAllRead = kAllUniform | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead | kTextureGeometryRead
+			   | kTextureFragmentRead | kTextureComputeRead | kTextureTraceRaysRead | kIndex | kVertex | kIndirectCompute | kIndirectDraw
+			   | kIndirectTraceRays | kTransferSource | kAccelerationStructureBuild | kShaderBindingTable,
+	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kTextureGeometryWrite
+				| kTextureFragmentWrite | kTextureComputeWrite | kTextureTraceRaysWrite | kTransferDestination | kAccelerationStructureBuildScratch,
 	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
@@ -929,8 +927,7 @@ public:
 
 	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
 
-	constexpr TextureSubresourceInfo(const TextureSurfaceInfo& surf,
-									 DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	constexpr TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_firstMipmap(surf.m_level)
 		, m_mipmapCount(1)
 		, m_firstLayer(surf.m_layer)
@@ -941,8 +938,7 @@ public:
 	{
 	}
 
-	constexpr TextureSubresourceInfo(const TextureVolumeInfo& vol,
-									 DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	constexpr TextureSubresourceInfo(const TextureVolumeInfo& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_firstMipmap(vol.m_level)
 		, m_mipmapCount(1)
 		, m_firstLayer(0)
@@ -979,14 +975,22 @@ public:
 			return (beginA < beginB) ? (beginA + countA > beginB) : (beginB + countB > beginA);
 		};
 
-		const Bool depthStencilOverlaps = (m_depthStencilAspect == DepthStencilAspectBit::kNone
-										   && b.m_depthStencilAspect == DepthStencilAspectBit::kNone)
-										  || !!(m_depthStencilAspect & b.m_depthStencilAspect);
+		const Bool depthStencilOverlaps =
+			(m_depthStencilAspect == DepthStencilAspectBit::kNone && b.m_depthStencilAspect == DepthStencilAspectBit::kNone)
+			|| !!(m_depthStencilAspect & b.m_depthStencilAspect);
 
 		return overlaps(m_firstMipmap, m_mipmapCount, b.m_firstMipmap, b.m_mipmapCount)
 			   && overlaps(m_firstLayer, m_layerCount, b.m_firstLayer, b.m_layerCount)
 			   && overlaps(m_firstFace, m_faceCount, b.m_firstFace, b.m_faceCount) && depthStencilOverlaps;
 	}
+};
+
+class BufferOffsetRange
+{
+public:
+	Buffer* m_buffer = nullptr;
+	PtrSize m_offset = kMaxPtrSize;
+	PtrSize m_range = 0;
 };
 
 /// Compute max number of mipmaps for a 2D texture.

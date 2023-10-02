@@ -45,8 +45,8 @@ public:
 		const U8* last = reinterpret_cast<const U8*>(&m_samples) + sizeof(m_samples);
 		const U size = U(last - first);
 		ANKI_ASSERT(size
-					== sizeof(m_width) + sizeof(m_height) + sizeof(m_depth) + sizeof(m_layerCount) + sizeof(m_format)
-						   + sizeof(m_usage) + sizeof(m_type) + sizeof(m_mipmapCount) + sizeof(m_samples));
+					== sizeof(m_width) + sizeof(m_height) + sizeof(m_depth) + sizeof(m_layerCount) + sizeof(m_format) + sizeof(m_usage)
+						   + sizeof(m_type) + sizeof(m_mipmapCount) + sizeof(m_samples));
 		return anki::computeHash(first, size);
 	}
 
@@ -198,9 +198,8 @@ public:
 		ANKI_ASSERT(isSubresourceValid(subresource));
 		if(m_texType != TextureType::k3D)
 		{
-			return subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == m_mipCount
-				   && subresource.m_faceCount == 1 && subresource.m_layerCount == 1
-				   && subresource.m_depthStencilAspect == m_aspect;
+			return subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == m_mipCount && subresource.m_faceCount == 1
+				   && subresource.m_layerCount == 1 && subresource.m_depthStencilAspect == m_aspect;
 		}
 		else
 		{

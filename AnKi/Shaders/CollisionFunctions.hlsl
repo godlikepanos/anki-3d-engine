@@ -8,13 +8,16 @@
 #include <AnKi/Shaders/Common.hlsl>
 
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u,
-					 out F32 v)
+Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u, out F32 v)
 {
 	const Vec3 v0v1 = v1 - v0;
 	const Vec3 v0v2 = v2 - v0;
 	const Vec3 pvec = cross(rayDir, v0v2);
 	const F32 det = dot(v0v1, pvec);
+
+	t = 0.0f;
+	u = 0.0f;
+	v = 0.0f;
 
 	if((backfaceCulling && det < kEpsilonF32) || abs(det) < kEpsilonF32)
 	{
@@ -52,6 +55,14 @@ Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Boo
 Bool testAabbAabb(Vec3 aMin, Vec3 aMax, Vec3 bMin, Vec3 bMax)
 {
 	return all(aMin < bMax) && all(bMin < aMax);
+}
+
+Bool testSphereSphereCollision(Vec3 sphereCenterA, F32 sphereRadiusA, Vec3 sphereCenterB, F32 sphereRadiusB)
+{
+	const Vec3 vec = sphereCenterA - sphereCenterB;
+	const F32 distSquared = dot(vec, vec);
+	const F32 maxDist = sphereRadiusA + sphereRadiusB;
+	return (distSquared < maxDist * maxDist);
 }
 
 /// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
@@ -95,6 +106,9 @@ Bool testRayObb(Vec3 rayOrigin, Vec3 rayDir, Vec3 obbExtend, Mat4 obbTransformIn
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRadius, out F32 t0, out F32 t1)
 {
+	t0 = 0.0f;
+	t1 = 0.0f;
+
 	const Vec3 L = sphereCenter - rayOrigin;
 	const F32 tca = dot(L, rayDir);
 	const F32 d2 = dot(L, L) - tca * tca;
@@ -129,4 +143,45 @@ Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRad
 F32 testPlanePoint(Vec3 planeNormal, F32 planeOffset, Vec3 point3d)
 {
 	return dot(planeNormal, point3d) - planeOffset;
+}
+
+F32 testPlaneAabb(Vec3 planeNormal, F32 planeOffset, Vec3 aabbMin, Vec3 aabbMax)
+{
+	const bool3 ge = planeNormal >= 0.0;
+	const Vec3 diagMin = select(aabbMin, aabbMax, ge);
+	const Vec3 diagMax = select(aabbMax, aabbMin, ge);
+
+	F32 test = testPlanePoint(planeNormal, planeOffset, diagMin);
+	if(test > 0.0)
+	{
+		return test;
+	}
+
+	test = testPlanePoint(planeNormal, planeOffset, diagMax);
+	return (test >= 0.0) ? 0.0 : test;
+}
+
+F32 testPlaneSphere(Vec3 planeNormal, F32 planeOffset, Vec3 sphereCenter, F32 sphereRadius)
+{
+	const F32 centerDist = testPlanePoint(planeNormal, planeOffset, sphereCenter);
+	F32 dist = centerDist - sphereRadius;
+	if(dist >= 0.0f)
+	{
+		return dist;
+	}
+
+	dist = centerDist + sphereRadius;
+	return (dist < 0.0f) ? dist : 0.0f;
+}
+
+Bool frustumTest(Vec4 frustumPlanes[6], Vec3 sphereCenter, F32 sphereRadius)
+{
+	F32 minPlaneDistance = testPlanePoint(frustumPlanes[0].xyz, frustumPlanes[0].w, sphereCenter);
+	[unroll] for(U32 i = 1; i < 6; ++i)
+	{
+		const F32 d = testPlanePoint(frustumPlanes[i].xyz, frustumPlanes[i].w, sphereCenter);
+		minPlaneDistance = min(minPlaneDistance, d);
+	}
+
+	return minPlaneDistance > -sphereRadius;
 }

@@ -7,10 +7,12 @@
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Filesystem.h>
 
 namespace anki {
+
+static NumericCVar<U32> g_maxImageSizeCVar(CVarSubsystem::kResource, "MaxImageSize", 1024u * 1024u, 4u, kMaxU32, "Max image size to load");
 
 class ImageResource::LoadingContext
 {
@@ -66,7 +68,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, ConfigSet::getSingleton().getRsrcMaxImageSize()));
+	ANKI_CHECK(loader.load(file, filename, g_maxImageSizeCVar.get()));
 
 	// Various sizes
 	init.m_width = loader.getWidth();
@@ -205,8 +207,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		subresource.m_layerCount = init.m_layerCount;
 		subresource.m_mipmapCount = init.m_mipmapCount;
 
-		const TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kAllSampled,
-											subresource};
+		const TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kAllSampled, subresource};
 		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 		FencePtr outFence;
@@ -234,7 +235,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	m_layerCount = init.m_layerCount;
 
 	// Create the texture view
-	TextureViewInitInfo viewInit(m_tex, "Rsrc");
+	TextureViewInitInfo viewInit(m_tex.get(), "Rsrc");
 	m_texView = GrManager::getSingleton().newTextureView(viewInit);
 
 	return Error::kNone;
@@ -262,8 +263,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			TextureBarrierInfo& barrier = barriers[barrierCount++];
-			barrier = {ctx.m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-					   TextureSubresourceInfo()};
+			barrier = {ctx.m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSubresourceInfo()};
 
 			if(ctx.m_texType == TextureType::k3D)
 			{
@@ -295,8 +295,8 @@ Error ImageResource::load(LoadingContext& ctx)
 				surfOrVolSize = vol.m_data.getSize();
 				surfOrVolData = &vol.m_data[0];
 
-				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip,
-												   ctx.m_tex->getDepth() >> mip, ctx.m_tex->getFormat());
+				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getDepth() >> mip,
+												   ctx.m_tex->getFormat());
 			}
 			else
 			{
@@ -304,8 +304,7 @@ Error ImageResource::load(LoadingContext& ctx)
 				surfOrVolSize = surf.m_data.getSize();
 				surfOrVolData = &surf.m_data[0];
 
-				allocationSize = computeSurfaceSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip,
-													ctx.m_tex->getFormat());
+				allocationSize = computeSurfaceSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getFormat());
 			}
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);
@@ -327,10 +326,9 @@ Error ImageResource::load(LoadingContext& ctx)
 				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, 0, face, layer));
 			}
 
-			TextureViewPtr tmpView =
-				GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex, subresource, "RsrcTmp"));
+			TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex.get(), subresource, "RsrcTmp"));
 
-			cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView);
+			cmdb->copyBufferToTextureView(&handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView.get());
 		}
 
 		// Set the barriers of the batch

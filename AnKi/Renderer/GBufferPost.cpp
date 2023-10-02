@@ -6,9 +6,8 @@
 #include <AnKi/Renderer/GBufferPost.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Renderer/PackVisibleClusteredObjects.h>
 #include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -32,11 +31,10 @@ Error GBufferPost::initInternal()
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
 	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	variantInitInfo.addConstant("kTileSize", getRenderer().getTileSize());
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg = variant->getProgram();
+	m_grProg.reset(&variant->getProgram());
 
 	// Create FB descr
 	m_fbDescr.m_colorAttachmentCount = 2;
@@ -49,7 +47,9 @@ Error GBufferPost::initInternal()
 
 void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 {
-	if(ctx.m_renderQueue->m_decals.getSize() == 0)
+	ANKI_TRACE_SCOPED_EVENT(GBufferPost);
+
+	if(GpuSceneArrays::Decal::getSingleton().getElementCount() == 0)
 	{
 		// If there are no decals don't bother
 		return;
@@ -61,52 +61,45 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
 
 	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-		run(rgraphCtx);
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		cmdb.bindShaderProgram(m_grProg.get());
+
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
+		cmdb.setBlendFactors(1, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
+
+		// Bind all
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+
+		rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+
+		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
+
+		cmdb.bindUniformBuffer(0, 3, getRenderer().getClusterBinning().getClusteredShadingUniforms());
+		cmdb.bindStorageBuffer(0, 4, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
+		cmdb.bindStorageBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
+
+		cmdb.bindAllBindless(1);
+
+		// Draw
+		cmdb.draw(PrimitiveTopology::kTriangles, 3);
+
+		// Restore state
+		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+		cmdb.setBlendFactors(1, BlendFactor::kOne, BlendFactor::kZero);
 	});
 
-	rpass.setFramebufferInfo(m_fbDescr,
-							 {getRenderer().getGBuffer().getColorRt(0), getRenderer().getGBuffer().getColorRt(1)});
+	rpass.setFramebufferInfo(m_fbDescr, {getRenderer().getGBuffer().getColorRt(0), getRenderer().getGBuffer().getColorRt(1)});
 
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer);
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);
 	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersRenderGraphHandle(),
+
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kDecal),
 							  BufferUsageBit::kStorageFragmentRead);
-}
-
-void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-	cmdb->bindShaderProgram(m_grProg);
-
-	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
-	cmdb->setBlendFactors(1, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
-
-	// Bind all
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
-
-	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(),
-						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
-	cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat);
-
-	bindUniforms(cmdb, 0, 3, getRenderer().getClusterBinning().getClusteredUniformsRebarToken());
-
-	getRenderer().getPackVisibleClusteredObjects().bindClusteredObjectBuffer(cmdb, 0, 4, ClusteredObjectType::kDecal);
-
-	bindStorage(cmdb, 0, 5, getRenderer().getClusterBinning().getClustersRebarToken());
-
-	cmdb->bindAllBindless(1);
-
-	// Draw
-	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
-
-	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-	cmdb->setBlendFactors(1, BlendFactor::kOne, BlendFactor::kZero);
 }
 
 } // end namespace anki

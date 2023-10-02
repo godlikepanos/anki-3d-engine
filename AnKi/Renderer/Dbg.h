@@ -6,12 +6,13 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/DebugDrawer.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
+
+// Forward
+extern BoolCVar g_dbgCVar;
 
 /// @addtogroup renderer
 /// @{
@@ -68,14 +69,17 @@ private:
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
 
-	DebugDrawer2 m_drawer;
-	PhysicsDebugDrawer m_physicsDrawer{&m_drawer};
-
 	ImageResourcePtr m_giProbeImage;
 	ImageResourcePtr m_pointLightImage;
 	ImageResourcePtr m_spotLightImage;
 	ImageResourcePtr m_decalImage;
 	ImageResourcePtr m_reflectionImage;
+
+	BufferPtr m_cubeVertsBuffer;
+	BufferPtr m_cubeIndicesBuffer;
+
+	ShaderProgramResourcePtr m_renderablesProg;
+	ShaderProgramResourcePtr m_nonRenderablesProg;
 
 	Bool m_depthTestOn : 1 = false;
 	Bool m_ditheredDepthTestOn : 1 = false;
@@ -87,6 +91,9 @@ private:
 	} m_runCtx;
 
 	void run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx);
+
+	void drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
+						   CommandBuffer& cmdb);
 };
 /// @}
 

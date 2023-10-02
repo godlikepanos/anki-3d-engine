@@ -5,11 +5,13 @@
 
 #include <AnKi/Gr/Vulkan/CommandBufferFactory.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
-static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags,
-														  const VulkanQueueFamilies& queueFamilies)
+static StatCounter g_commandBufferCountStatVar(StatCategory::kMisc, "CommandBufferCount", StatFlag::kNone);
+
+static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags, const VulkanQueueFamilies& queueFamilies)
 {
 	ANKI_ASSERT(!!(flags & CommandBufferFlag::kGeneralWork) ^ !!(flags & CommandBufferFlag::kComputeWork));
 	if(!(flags & CommandBufferFlag::kGeneralWork) && queueFamilies[VulkanQueueType::kCompute] != kMaxU32)
@@ -38,8 +40,7 @@ MicroCommandBuffer::~MicroCommandBuffer()
 		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[m_queue], 1, &m_handle);
 		m_handle = {};
 
-		[[maybe_unused]] const U32 count = m_threadAlloc->m_factory->m_createdCmdBufferCount.fetchSub(1);
-		ANKI_ASSERT(count > 0);
+		g_commandBufferCountStatVar.decrement(1_U64);
 	}
 }
 
@@ -124,13 +125,14 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		ci.commandBufferCount = 1;
 
 		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
+		g_commandBufferCountStatVar.increment(1_U64);
 		VkCommandBuffer cmdb;
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(getVkDevice(), &ci, &cmdb));
 
 		MicroCommandBuffer* newCmdb = newInstance<MicroCommandBuffer>(GrMemoryPool::getSingleton(), this);
 
-		newCmdb->m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(),
-								 GrMemoryPool::getSingleton().getAllocationCallbackUserData(), 256_KB, 2.0f);
+		newCmdb->m_fastPool.init(GrMemoryPool::getSingleton().getAllocationCallback(), GrMemoryPool::getSingleton().getAllocationCallbackUserData(),
+								 256_KB, 2.0f);
 
 		for(DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>& arr : newCmdb->m_objectRefs)
 		{
@@ -142,8 +144,6 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		newCmdb->m_queue = queue;
 
 		out = newCmdb;
-
-		m_factory->m_createdCmdBufferCount.fetchAdd(1);
 	}
 	else
 	{

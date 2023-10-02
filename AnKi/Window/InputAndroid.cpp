@@ -16,7 +16,7 @@ Input& MakeSingletonPtr<Input>::allocateSingleton<>()
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new InputAndroid;
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	++g_singletonsAllocated;
 #endif
 
@@ -30,7 +30,7 @@ void MakeSingletonPtr<Input>::freeSingleton()
 	{
 		delete static_cast<InputAndroid*>(m_global);
 		m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		--g_singletonsAllocated;
 #endif
 	}
@@ -69,9 +69,7 @@ Error Input::handleEvents()
 void Input::moveCursor(const Vec2& posNdc)
 {
 	m_mousePosNdc = posNdc;
-	m_mousePosWin =
-		UVec2((posNdc * 0.5f + 0.5f)
-			  * Vec2(F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight())));
+	m_mousePosWin = UVec2((posNdc * 0.5f + 0.5f) * Vec2(F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight())));
 }
 
 void Input::hideCursor([[maybe_unused]] Bool hide)
@@ -128,8 +126,7 @@ int InputAndroid::handleAndroidInput([[maybe_unused]] android_app* app, AInputEv
 	{
 		const I32 pointer = AMotionEvent_getAction(event);
 		const I32 action = pointer & AMOTION_EVENT_ACTION_MASK;
-		const I32 index =
-			(pointer & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+		const I32 index = (pointer & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
 
 		if(source & AINPUT_SOURCE_JOYSTICK)
 		{

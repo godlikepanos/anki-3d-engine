@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator REDUCTION_SAMPLER 0 1
-
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki end
@@ -12,34 +10,11 @@
 #pragma anki start frag
 #include <AnKi/Shaders/Common.hlsl>
 
-[[vk::binding(0)]] Texture2D g_inputTex;
-[[vk::binding(1)]] SamplerState g_sampler;
-[[vk::binding(2)]] RWStructuredBuffer<F32> g_clientBuff;
+[[vk::binding(0)]] Texture2D<Vec4> g_inputTex;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
 
-struct Uniforms
+F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
-	Vec3 m_padding;
-	U32 m_lastMipWidth;
-};
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
-
-F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
-{
-	F32 output;
-#if REDUCTION_SAMPLER
-	output = g_inputTex.SampleLevel(g_sampler, uv, 0.0).x;
-#else
-	const Vec4 depths = g_inputTex.GatherRed(g_sampler, uv);
-	output = max(depths.x, max(depths.y, max(depths.z, depths.w)));
-#endif
-
-	if(g_uniforms.m_lastMipWidth != 0u)
-	{
-		const UVec2 p = UVec2(svPosition.xy);
-		const U32 idx = p.y * g_uniforms.m_lastMipWidth + p.x;
-		g_clientBuff[idx] = output;
-	}
-
-	return output;
+	return g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x;
 }
 #pragma anki end

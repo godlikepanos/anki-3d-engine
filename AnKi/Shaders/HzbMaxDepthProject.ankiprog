@@ -1,0 +1,78 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader draws tile aligned boxes in order to fill the HZB buffer for cascaded shadows
+
+#include <AnKi/Shaders/Functions.hlsl>
+
+#pragma anki start vert
+
+[[vk::binding(0)]] Texture2D<Vec4> g_maxDepthRt;
+
+struct Uniforms
+{
+	Mat4 m_reprojectionMat;
+
+	F32 m_cascadeMinDepth;
+	F32 m_cascadeMaxDepth;
+	F32 m_padding0;
+	F32 m_padding1;
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+
+Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_POSITION
+{
+	UVec2 maxDepthRtSize;
+	g_maxDepthRt.GetDimensions(maxDepthRtSize.x, maxDepthRtSize.y);
+
+	const U32 tileX = svInstanceId % maxDepthRtSize.x;
+	const U32 tileY = svInstanceId / maxDepthRtSize.x;
+
+	const F32 maxDepth = min(g_maxDepthRt[UVec2(tileX, tileY)].x, g_unis.m_cascadeMaxDepth);
+	const F32 minDepth = g_unis.m_cascadeMinDepth;
+
+	if(maxDepth <= minDepth)
+	{
+		// Tile's depth is outside the cascade, make the box digenerate
+		return 0.0f;
+	}
+
+	// Z
+	Vec3 ndc;
+	ndc.z = (svVertexId <= 3) ? minDepth : maxDepth;
+
+	// X
+	ndc.x = F32(tileX);
+	if(svVertexId == 1 || svVertexId == 2 || svVertexId == 5 || svVertexId == 6)
+	{
+		// Right side, move the point
+		ndc.x += 1.0f;
+	}
+
+	// Y
+	ndc.y = F32(tileY);
+	if(svVertexId == 3 || svVertexId == 2 || svVertexId == 7 || svVertexId == 6)
+	{
+		// Top side, move the point
+		ndc.y += 1.0f;
+	}
+
+	ndc.xy /= Vec2(maxDepthRtSize);
+	ndc.xy = uvToNdc(saturate(ndc.xy));
+
+	// Unproject and project
+	return mul(g_unis.m_reprojectionMat, Vec4(ndc, 1.0));
+}
+
+#pragma anki end
+
+#pragma anki start frag
+
+void main()
+{
+}
+
+#pragma anki end

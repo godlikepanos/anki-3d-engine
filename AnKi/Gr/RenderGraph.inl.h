@@ -12,21 +12,19 @@ inline void RenderPassWorkContext::bindAccelerationStructure(U32 set, U32 bindin
 	m_commandBuffer->bindAccelerationStructure(set, binding, m_rgraph->getAs(handle));
 }
 
-inline void RenderPassWorkContext::getBufferState(BufferHandle handle, BufferPtr& buff) const
+inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const
 {
-	buff = m_rgraph->getBuffer(handle);
+	m_rgraph->getCachedBuffer(handle, buff, offset, range);
 }
 
-inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle,
-														const TextureSubresourceInfo& subresource,
-														TexturePtr& tex) const
+inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Texture*& tex) const
 {
 	TextureUsageBit usage;
 	m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
-	tex = m_rgraph->getTexture(handle);
+	tex = &m_rgraph->getTexture(handle);
 }
 
-inline TexturePtr RenderPassWorkContext::getTexture(RenderTargetHandle handle) const
+inline Texture& RenderPassWorkContext::getTexture(RenderTargetHandle handle) const
 {
 	return m_rgraph->getTexture(handle);
 }
@@ -145,7 +143,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx].m_usageDerivedByDeps |= dep.m_texture.m_usage;
 
 		// Checks
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 		if((!rt.m_importedTex.isCreated() && !!getFormatInfo(rt.m_initInfo.m_format).m_depthStencil)
 		   || (rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect()))
@@ -157,6 +155,8 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 	else if(kType == RenderPassDependency::Type::kBuffer)
 	{
+		ANKI_ASSERT(!!(m_descr->m_buffers[dep.m_buffer.m_handle.m_idx].m_importedBuff->getBufferUsage() & dep.m_buffer.m_usage));
+
 		m_buffDeps.emplaceBack(dep);
 
 		if(!!(dep.m_buffer.m_usage & BufferUsageBit::kAllRead))
@@ -186,10 +186,11 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(
-	const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
-	U32 miny, U32 maxx, U32 maxy)
+inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
+															  std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
+															  RenderTargetHandle depthStencilRenderTargetHandle,
+															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
+															  U32 maxy)
 {
 	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
 	U32 count = 0;
@@ -197,16 +198,17 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	{
 		rts[count++] = h;
 	}
-	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle,
-					   shadingRateRenderTargetHandle, minx, miny, maxx, maxy);
+	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle, shadingRateRenderTargetHandle,
+					   minx, miny, maxx, maxy);
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(
-	const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle, RenderTargetHandle shadingRateRenderTargetHandle, U32 minx,
-	U32 miny, U32 maxx, U32 maxy)
+inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
+															  ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
+															  RenderTargetHandle depthStencilRenderTargetHandle,
+															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
+															  U32 maxy)
 {
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
 	for(U32 i = 0; i < colorRenderTargetHandles.getSize(); ++i)
 	{
@@ -270,15 +272,15 @@ inline ComputeRenderPassDescription& RenderGraphDescription::newComputeRenderPas
 	return *pass;
 }
 
-inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr tex, TextureUsageBit usage)
+inline RenderTargetHandle RenderGraphDescription::importRenderTarget(Texture* tex, TextureUsageBit usage)
 {
 	for([[maybe_unused]] const RT& rt : m_renderTargets)
 	{
-		ANKI_ASSERT(rt.m_importedTex != tex && "Already imported");
+		ANKI_ASSERT(rt.m_importedTex.tryGet() != tex && "Already imported");
 	}
 
 	RT& rt = *m_renderTargets.emplaceBack();
-	rt.m_importedTex = tex;
+	rt.m_importedTex.reset(tex);
 	rt.m_importedLastKnownUsage = usage;
 	rt.m_usageDerivedByDeps = TextureUsageBit::kNone;
 	rt.setName(tex->getName());
@@ -288,7 +290,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 	return out;
 }
 
-inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr tex)
+inline RenderTargetHandle RenderGraphDescription::importRenderTarget(Texture* tex)
 {
 	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::kNone);
 	m_renderTargets.getBack().m_importedAndUndefinedUsage = true;
@@ -298,8 +300,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTargetDescription& initInf)
 {
 	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
-	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone
-				&& "Don't need to supply the usage. Render grap will find it");
+	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone && "Don't need to supply the usage. Render grap will find it");
 	RT& rt = *m_renderTargets.emplaceBack();
 	rt.m_initInfo = initInf;
 	rt.m_hash = initInf.m_hash;
@@ -312,10 +313,10 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	return out;
 }
 
-inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset,
-														 PtrSize range)
+inline BufferHandle RenderGraphDescription::importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset, PtrSize range)
 {
 	// Checks
+	ANKI_ASSERT(buff);
 	if(range == kMaxPtrSize)
 	{
 		ANKI_ASSERT(offset < buff->getSize());
@@ -327,16 +328,15 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 
 	ANKI_ASSERT(range > 0);
 
-	for([[maybe_unused]] const Buffer& bb : m_buffers)
+	for([[maybe_unused]] const BufferRsrc& bb : m_buffers)
 	{
-		ANKI_ASSERT((bb.m_importedBuff != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range))
-					&& "Range already imported");
+		ANKI_ASSERT((bb.m_importedBuff.get() != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range)) && "Range already imported");
 	}
 
-	Buffer& b = *m_buffers.emplaceBack();
+	BufferRsrc& b = *m_buffers.emplaceBack();
 	b.setName(buff->getName());
 	b.m_usage = usage;
-	b.m_importedBuff = std::move(buff);
+	b.m_importedBuff.reset(buff);
 	b.m_offset = offset;
 	b.m_range = range;
 
@@ -345,17 +345,16 @@ inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferU
 	return out;
 }
 
-inline AccelerationStructureHandle
-RenderGraphDescription::importAccelerationStructure(AccelerationStructurePtr as, AccelerationStructureUsageBit usage)
+inline AccelerationStructureHandle RenderGraphDescription::importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage)
 {
 	for([[maybe_unused]] const AS& a : m_as)
 	{
-		ANKI_ASSERT(a.m_importedAs != as && "Already imported");
+		ANKI_ASSERT(a.m_importedAs.get() != as && "Already imported");
 	}
 
 	AS& a = *m_as.emplaceBack();
 	a.setName(as->getName());
-	a.m_importedAs = std::move(as);
+	a.m_importedAs.reset(as);
 	a.m_usage = usage;
 
 	AccelerationStructureHandle handle;

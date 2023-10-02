@@ -8,11 +8,15 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 
 // Forward
 class NativeWindow;
+extern BoolCVar g_vsyncCVar;
+extern BoolCVar g_validationCVar;
+extern BoolCVar g_debugMarkersCVar;
 
 /// @addtogroup graphics
 /// @{
@@ -25,20 +29,6 @@ public:
 	void* m_allocCallbackUserData = nullptr;
 
 	CString m_cacheDirectory;
-};
-
-/// Graphics statistics.
-class GrManagerStats
-{
-public:
-	PtrSize m_deviceMemoryAllocated = 0;
-	PtrSize m_deviceMemoryInUse = 0;
-	U32 m_deviceMemoryAllocationCount = 0;
-	PtrSize m_hostMemoryAllocated = 0;
-	PtrSize m_hostMemoryInUse = 0;
-	U32 m_hostMemoryAllocationCount = 0;
-
-	U32 m_commandBufferCount = 0;
 };
 
 /// The graphics manager, owner of all graphics objects.
@@ -81,8 +71,6 @@ public:
 	[[nodiscard]] GrUpscalerPtr newGrUpscaler(const GrUpscalerInitInfo& init);
 	[[nodiscard]] AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);
 	/// @}
-
-	GrManagerStats getStats() const;
 
 	ANKI_INTERNAL CString getCacheDirectory() const
 	{

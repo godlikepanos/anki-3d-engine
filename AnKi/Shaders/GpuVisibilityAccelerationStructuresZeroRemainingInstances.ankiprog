@@ -1,0 +1,32 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+
+[[vk::binding(0)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+[[vk::binding(1)]] RWStructuredBuffer<AccelerationStructureInstance> g_instances;
+
+#define NUMTHREADS 64
+
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 visibleInstances = g_visibleRenderableIndices[0];
+
+	U32 totalInstances, unused;
+	g_instances.GetDimensions(totalInstances, unused);
+
+	ANKI_ASSERT(totalInstances >= visibleInstances);
+	const U32 remainingInstances = totalInstances - visibleInstances;
+
+	if(svDispatchThreadId < remainingInstances)
+	{
+		g_instances[visibleInstances + svDispatchThreadId] = (AccelerationStructureInstance)0;
+	}
+}
+
+#pragma anki end

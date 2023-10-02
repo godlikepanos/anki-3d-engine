@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_TECHNIQUE 3
+#pragma anki mutator ANKI_TECHNIQUE 2
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
@@ -17,7 +17,7 @@
 
 struct VertIn
 {
-	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
+	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -34,8 +34,8 @@ VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_geometryOffset);
+	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
 	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
 
@@ -59,8 +59,8 @@ FragOut main(VertOut input)
 	FragOut output = (FragOut)0;
 	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
 
-	fog(localUniforms.m_fogColor, localUniforms.m_fogAlphaScale, localUniforms.m_fogDistanceOfMaxThikness,
-		input.m_svPosition, input.m_zVSpace, output);
+	fog(localUniforms.m_fogColor, localUniforms.m_fogAlphaScale, localUniforms.m_fogDistanceOfMaxThikness, input.m_svPosition, input.m_zVSpace,
+		output);
 
 	return output;
 }

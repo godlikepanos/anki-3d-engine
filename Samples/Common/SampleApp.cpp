@@ -10,7 +10,7 @@ using namespace anki;
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
 	// Init the super class
-	ConfigSet::getSingleton().setWindowFullscreen(true);
+	g_windowFullscreenCVar.set(1);
 
 #if !ANKI_OS_ANDROID
 	CString mainDataPath = ANKI_SOURCE_DIRECTORY;
@@ -26,12 +26,11 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		ConfigSet::getSingleton().setRsrcDataPaths(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf(
-			"%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		g_dataPathsCVar.set(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	}
 #endif
 
-	ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
+	ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 1, argv + 1));
 	ANKI_CHECK(App::init());
 
 	ANKI_CHECK(sampleExtraInit());
@@ -57,19 +56,22 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kBackquote) == 1)
 	{
-		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
+		toggleDeveloperConsole();
+	}
+
+	if(getDeveloperConsoleEnabled())
+	{
+		return Error::kNone;
 	}
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
 	}
 
 	if(in.getKey(KeyCode::kI) == 1)
@@ -79,8 +81,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kO) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "ResolvedShadows") ? "" : "ResolvedShadows");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "ResolvedShadows") ? "" : "ResolvedShadows");
 	}
 
 	if(in.getKey(KeyCode::kP) == 1)
@@ -108,8 +109,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kL) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
 	}
 
 	if(in.getKey(KeyCode::kH) == 1)
@@ -137,7 +137,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
+		g_vrsCVar.set(!g_vrsCVar.get());
 	}
 
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
@@ -153,20 +153,25 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			ConfigSet::getSingleton().setRDbg(false);
+			g_dbgCVar.set(false);
 		}
 		else if(mode == 1)
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
+	}
+
+	if(in.getKey(KeyCode::kF11) == 1 && ANKI_TRACING_ENABLED)
+	{
+		g_tracingEnabledCVar.set(!g_tracingEnabledCVar.get());
 	}
 
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
@@ -244,11 +249,6 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover->moveLocalZ(moveDistance);
 		}
 
-		if(in.getKey(KeyCode::kF12) == 1 && ANKI_ENABLE_TRACE)
-		{
-			Tracer::getSingleton().setEnabled(!Tracer::getSingleton().getEnabled());
-		}
-
 		const Vec2 velocity = in.getMousePosition() - mousePosOn1stClick;
 		in.moveCursor(mousePosOn1stClick);
 		if(velocity != Vec2(0.0))
@@ -265,12 +265,10 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 rotateEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
+			if(rotateCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() > 0.1f)
 			{
 				rotateCameraTouch = touch;
-				rotateEventInitialPos =
-					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
+				rotateEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -282,9 +280,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(rotateCameraTouch != TouchPointer::kCount && in.getTouchPointer(rotateCameraTouch) > 1)
 		{
-			Vec2 velocity =
-				in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
-				- rotateEventInitialPos;
+			Vec2 velocity = in.getTouchPointerNdcPosition(rotateCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - rotateEventInitialPos;
 			velocity *= 0.3f;
 
 			Euler angles(mover->getLocalRotation().getRotationPart());
@@ -299,12 +295,10 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		static Vec2 moveEventInitialPos = Vec2(0.0f);
 		for(TouchPointer touch : EnumIterable<TouchPointer>())
 		{
-			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1
-			   && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
+			if(moveCameraTouch == TouchPointer::kCount && in.getTouchPointer(touch) == 1 && in.getTouchPointerNdcPosition(touch).x() < -0.1f)
 			{
 				moveCameraTouch = touch;
-				moveEventInitialPos =
-					in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
+				moveEventInitialPos = in.getTouchPointerNdcPosition(touch) * NativeWindow::getSingleton().getAspectRatio();
 				break;
 			}
 		}
@@ -316,9 +310,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
-			Vec2 velocity =
-				in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio()
-				- moveEventInitialPos;
+			Vec2 velocity = in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - moveEventInitialPos;
 			velocity *= 2.0f;
 
 			mover->moveLocalX(moveDistance * velocity.x());

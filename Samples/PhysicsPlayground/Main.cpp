@@ -151,10 +151,8 @@ Error MyApp::sampleExtraInit()
 		for(U32 i = 0; i < LINKS; ++i)
 		{
 			SceneNode* monkey;
-			ANKI_CHECK(
-				SceneGraph::getSingleton().newSceneNode(String().sprintf("monkey_chain%u", i).toCString(), monkey));
-			monkey->newComponent<ModelComponent>()->loadModelResource(
-				"Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
+			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("monkey_chain%u", i).toCString(), monkey));
+			monkey->newComponent<ModelComponent>()->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
 			trf.getOrigin().y() -= F32(i) * 1.25f;
@@ -211,8 +209,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kH) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? ""
-																									 : "RtShadows");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? "" : "RtShadows");
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kP) == 1)
@@ -245,7 +242,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kJ) == 1)
 	{
-		ConfigSet::getSingleton().setRVrs(!ConfigSet::getSingleton().getRVrs());
+		g_vrsCVar.set(!g_vrsCVar.get());
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)
@@ -254,17 +251,17 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			ConfigSet::getSingleton().setRDbg(false);
+			g_dbgCVar.set(false);
 		}
 		else if(mode == 1)
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(true);
 			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			ConfigSet::getSingleton().setRDbg(true);
+			g_dbgCVar.set(true);
 			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(false);
 			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -343,8 +340,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
 
 		SceneNode* monkey;
-		ANKI_CHECK(
-			SceneGraph::getSingleton().newSceneNode(String().sprintf("FireMonkey%u", instance++).toCString(), monkey));
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("FireMonkey%u", instance++).toCString(), monkey));
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);

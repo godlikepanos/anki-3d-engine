@@ -8,89 +8,46 @@
 #include <AnKi/Scene/Common.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/BitMask.h>
+#include <AnKi/Util/Enum.h>
 
 namespace anki {
-
-// Forward
-class SceneComponentUpdateInfo;
 
 /// @addtogroup scene
 /// @{
 
-constexpr U32 kMaxSceneComponentClasses = 64;
-static_assert(kMaxSceneComponentClasses < 128, "It can oly be 7 bits because of SceneComponent::m_classId");
+/// @memberof SceneComponent
+enum class SceneComponentType : U8
+{
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) k##name,
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
-#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) using SceneComponentCallback_##name = type;
-#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentType)
 
-class SceneComponentVtable
+/// @memberof SceneComponent
+enum class SceneComponentTypeMask : U32
+{
+	kNone = 0,
+
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) k##name = 1 << U32(SceneComponentType::k##name),
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SceneComponentTypeMask)
+
+class SceneComponentType2
 {
 public:
-#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) SceneComponentCallback_##name m_##name;
-#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) static constexpr SceneComponentType k##name##Component = SceneComponentType::k##name;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 };
 
-/// Callbacks live in their own arrays for better caching.
-class SceneComponentCallbacks
-{
-public:
-#define ANKI_SCENE_COMPONENT_VIRTUAL(name, type) SceneComponentCallback_##name m_##name[kMaxSceneComponentClasses];
-#include <AnKi/Scene/Components/SceneComponentVirtuals.defs.h>
-};
-
-extern SceneComponentCallbacks g_sceneComponentCallbacks;
-
-/// Scene component class info.
-class SceneComponentRtti
-{
-public:
-	const char* m_className;
-	F32 m_updateWeight; ///< It give the order it will get updated compared to other components.
-	U16 m_classSize;
-	U8 m_classAlignment;
-	U8 m_classId;
-
-	SceneComponentRtti(const char* name, F32 updateWeight, U32 size, U32 alignment, SceneComponentVtable vtable);
-};
-
-/// Define a scene component.
 #define ANKI_SCENE_COMPONENT(className) \
-	static SceneComponentRtti _m_rtti; \
-	static void _construct(SceneComponent& self, SceneNode& node) \
-	{ \
-		callConstructor(static_cast<className&>(self), &node); \
-	} \
-	static void _destruct(SceneComponent& self) \
-	{ \
-		callDestructor(static_cast<className&>(self)); \
-	} \
-	static void _onDestroy(SceneComponent& self, SceneNode& node) \
-	{ \
-		static_cast<className&>(self).onDestroy(node); \
-	} \
-	static Error _update(SceneComponent& self, SceneComponentUpdateInfo& info, Bool& updated) \
-	{ \
-		return static_cast<className&>(self).update(info, updated); \
-	} \
-	static void _onOtherComponentRemovedOrAdded(SceneComponent& self, SceneComponent* other, Bool added) \
-	{ \
-		static_cast<className&>(self).onOtherComponentRemovedOrAdded(other, added); \
-	} \
-\
 public: \
-	static U8 getStaticClassId() \
-	{ \
-		return _m_rtti.m_classId; \
-	} \
+	static constexpr SceneComponentType kClassType = SceneComponentType2::k##className; \
 \
 private:
-
-/// Define the statics of a scene component.
-#define ANKI_SCENE_COMPONENT_STATICS(className, updateWeight) \
-	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), updateWeight, sizeof(className), \
-										  alignof(className), \
-										  {className::_construct, className::_destruct, className::_onDestroy, \
-										   className::_update, className::_onOtherComponentRemovedOrAdded});
 
 /// Passed to SceneComponent::update.
 /// @memberof SceneComponent
@@ -117,11 +74,16 @@ class SceneComponent
 {
 public:
 	/// Construct the scene component.
-	SceneComponent(SceneNode* node, U8 classId);
-
-	U8 getClassId() const
+	SceneComponent([[maybe_unused]] SceneNode* node, SceneComponentType type)
+		: m_type(type)
 	{
-		return m_classId;
+	}
+
+	virtual ~SceneComponent() = default;
+
+	SceneComponentType getType() const
+	{
+		return m_type;
 	}
 
 	Timestamp getTimestamp() const
@@ -129,29 +91,25 @@ public:
 		return m_timestamp;
 	}
 
-	static const SceneComponentRtti& findClassRtti(CString className);
-
-	static const SceneComponentRtti& getClassRtti(U8 classId);
-
-	const SceneComponentRtti& getClassRtti() const
+	ANKI_INTERNAL U32 getArrayIndex() const
 	{
-		return getClassRtti(m_classId);
+		ANKI_ASSERT(m_arrayIdx != kMaxU32);
+		return m_arrayIdx;
 	}
 
-	ANKI_INTERNAL void onDestroyReal(SceneNode& node)
+	ANKI_INTERNAL void setArrayIndex(U32 idx)
 	{
-		g_sceneComponentCallbacks.m_onDestroy[m_classId](*this, node);
+		m_arrayIdx = idx;
 	}
 
-	ANKI_INTERNAL Error updateReal(SceneComponentUpdateInfo& info, Bool& updated)
+	ANKI_INTERNAL virtual void onDestroy([[maybe_unused]] SceneNode& node)
 	{
-		return g_sceneComponentCallbacks.m_update[m_classId](*this, info, updated);
 	}
 
-	ANKI_INTERNAL void onOtherComponentRemovedOrAddedReal(SceneComponent* other, Bool added)
+	ANKI_INTERNAL virtual Error update(SceneComponentUpdateInfo& info, Bool& updated) = 0;
+
+	ANKI_INTERNAL virtual void onOtherComponentRemovedOrAdded([[maybe_unused]] SceneComponent* other, [[maybe_unused]] Bool added)
 	{
-		ANKI_ASSERT(other);
-		g_sceneComponentCallbacks.m_onOtherComponentRemovedOrAdded[m_classId](*this, other, added);
 	}
 
 	/// Don't call it directly.
@@ -162,32 +120,21 @@ public:
 		m_timestamp = timestamp;
 	}
 
-protected:
-	/// Pseudo-virtual
-	void onDestroy([[maybe_unused]] SceneNode& node)
+	static constexpr F32 getUpdateOrderWeight(SceneComponentType type)
 	{
-		// Do nothing
-	}
-
-	/// Pseudo-virtual to update the component.
-	/// @param[in,out] info Update info.
-	/// @param[out] updated true if an update happened.
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
-	{
-		updated = false;
-		return Error::kNone;
-	}
-
-	/// Pseudo-virtual. Called when a component is added or removed in the SceneNode.
-	/// @param other The component that was inserted.
-	/// @param added Was it inserted or removed?
-	void onOtherComponentRemovedOrAdded([[maybe_unused]] SceneComponent* other, [[maybe_unused]] Bool added)
-	{
+		return m_updateOrderWeights[type];
 	}
 
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
-	U8 m_classId; ///< Cache the type ID.
+	U32 m_arrayIdx = kMaxU32;
+	SceneComponentType m_type; ///< Cache the type ID.
+
+	static constexpr Array<F32, U32(SceneComponentType::kCount)> m_updateOrderWeights = {
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) weight
+#define ANKI_SCENE_COMPONENT_SEPARATOR ,
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+	};
 };
 /// @}
 

@@ -107,8 +107,7 @@ sleep 1
 )");
 
 		Process proc;
-		ANKI_TEST_EXPECT_NO_ERR(
-			proc.start("bash", Array<CString, 1>{{"process_test.sh"}}, Array<CString, 1>{{"ENV_VAR=Lala"}}));
+		ANKI_TEST_EXPECT_NO_ERR(proc.start("bash", Array<CString, 1>{{"process_test.sh"}}, Array<CString, 1>{{"ENV_VAR=Lala"}}));
 
 		ANKI_TEST_EXPECT_NO_ERR(proc.wait());
 

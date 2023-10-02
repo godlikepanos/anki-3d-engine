@@ -11,8 +11,7 @@ namespace anki {
 
 AccelerationStructure* AccelerationStructure::newInstance(const AccelerationStructureInitInfo& init)
 {
-	AccelerationStructureImpl* impl =
-		anki::newInstance<AccelerationStructureImpl>(GrMemoryPool::getSingleton(), init.getName());
+	AccelerationStructureImpl* impl = anki::newInstance<AccelerationStructureImpl>(GrMemoryPool::getSingleton(), init.getName());
 	const Error err = impl->init(init);
 	if(err)
 	{
@@ -20,6 +19,12 @@ AccelerationStructure* AccelerationStructure::newInstance(const AccelerationStru
 		impl = nullptr;
 	}
 	return impl;
+}
+
+U64 AccelerationStructure::getGpuAddress() const
+{
+	ANKI_VK_SELF_CONST(AccelerationStructureImpl);
+	return self.getAsDeviceAddress();
 }
 
 } // end namespace anki

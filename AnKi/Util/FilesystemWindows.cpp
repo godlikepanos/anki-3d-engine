@@ -40,8 +40,7 @@ Error removeDirectory(const CString& dirname)
 	dirname2[dirname.getLength() + 1] = '\0';
 
 	Error err = Error::kNone;
-	SHFILEOPSTRUCTA fileOperation = {
-		NULL, FO_DELETE, &dirname2[0], "", FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT, false, 0, ""};
+	SHFILEOPSTRUCTA fileOperation = {NULL, FO_DELETE, &dirname2[0], "", FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT, false, 0, ""};
 
 	I result = SHFileOperationA(&fileOperation);
 	if(result != 0)
@@ -93,9 +92,9 @@ Error getTempDirectory(String& out)
 	return Error::kNone;
 }
 
-static Error walkDirectoryTreeRecursive(
-	const CString& dir,
-	const Function<Error(const CString&, Bool), SingletonMemoryPoolWrapper<DefaultMemoryPool>>& callback, U baseDirLen)
+static Error walkDirectoryTreeRecursive(const CString& dir,
+										const Function<Error(const CString&, Bool), SingletonMemoryPoolWrapper<DefaultMemoryPool>>& callback,
+										U baseDirLen)
 {
 	// Append something to the path
 	if(dir.getLength() > kMaxPathLen - 2)
@@ -205,8 +204,7 @@ Error getApplicationPath(String& out)
 
 	const DWORD result = GetModuleFileNameA(nullptr, &buff[0], buff.getSize());
 	DWORD lastError = GetLastError();
-	if(result == 0
-	   || (result == buff.getSize() && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS)))
+	if(result == 0 || (result == buff.getSize() && (lastError == ERROR_INSUFFICIENT_BUFFER || lastError == ERROR_SUCCESS)))
 	{
 		ANKI_UTIL_LOGE("GetModuleFileNameA() failed");
 		return Error::kFunctionFailed;

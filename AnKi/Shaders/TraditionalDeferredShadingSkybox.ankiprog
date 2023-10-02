@@ -14,7 +14,7 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 
-[[vk::push_constant]] ConstantBuffer<DeferredSkyboxUniforms> g_unis;
+[[vk::push_constant]] ConstantBuffer<TraditionalDeferredSkyboxUniforms> g_unis;
 
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] Texture2D g_depthTex;
@@ -29,7 +29,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	const Vec2 uvToRead = mad(svPosition.xy, g_unis.m_inputTexUvScale, g_unis.m_inputTexUvBias);
 
 	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uvToRead, 0.0).r;
-	if(depth != 1.0)
+	if(depth != 1.0f)
 	{
 		discard;
 	}

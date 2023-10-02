@@ -29,15 +29,13 @@ Vec3 unproject(Vec2 ndc, F32 depth)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-[numthreads(THREAD_GROUP_SIZE_SQRT, THREAD_GROUP_SIZE_SQRT, 1)] void
-main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(THREAD_GROUP_SIZE_SQRT, THREAD_GROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
 RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(THREAD_GROUP_SIZE_SQRT, THREAD_GROUP_SIZE_SQRT), g_uniforms.m_viewportSize,
-								  svDispatchThreadId))
+	if(skipOutOfBoundsInvocations(UVec2(THREAD_GROUP_SIZE_SQRT, THREAD_GROUP_SIZE_SQRT), g_uniforms.m_viewportSize, svDispatchThreadId))
 	{
 		return;
 	}

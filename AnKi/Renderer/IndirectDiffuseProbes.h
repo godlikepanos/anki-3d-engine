@@ -6,8 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/TraditionalDeferredShading.h>
-#include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Renderer/Utils/TraditionalDeferredShading.h>
 #include <AnKi/Collision/Forward.h>
 
 namespace anki {
@@ -26,13 +25,18 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getCurrentlyRefreshedVolumeRt() const;
+	RenderTargetHandle getCurrentlyRefreshedVolumeRt() const
+	{
+		ANKI_ASSERT(m_runCtx.m_probeVolumeHandle.isValid());
+		return m_runCtx.m_probeVolumeHandle;
+	}
 
-	Bool hasCurrentlyRefreshedVolumeRt() const;
+	Bool hasCurrentlyRefreshedVolumeRt() const
+	{
+		return m_runCtx.m_probeVolumeHandle.isValid();
+	}
 
 private:
-	class InternalContext;
-
 	class
 	{
 	public:
@@ -63,19 +67,21 @@ private:
 		ShaderProgramPtr m_grProg;
 	} m_irradiance; ///< Irradiance.
 
-	InternalContext* m_giCtx = nullptr;
+	static constexpr U32 kProbeCellRefreshesPerFrame = 2;
+
 	U32 m_tileSize = 0;
+
+	class
+	{
+	public:
+		RenderTargetHandle m_probeVolumeHandle;
+	} m_runCtx;
 
 	Error initInternal();
 	Error initGBuffer();
 	Error initShadowMapping();
 	Error initLightShading();
 	Error initIrradiance();
-
-	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
-	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
-	void runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
-	void runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
 };
 /// @}
 

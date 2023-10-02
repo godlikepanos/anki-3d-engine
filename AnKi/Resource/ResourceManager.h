@@ -21,7 +21,6 @@ class AsyncLoader;
 class ResourceManagerModel;
 class ShaderCompilerCache;
 class ShaderProgramResourceSystem;
-class UnifiedGeometryMemoryPool;
 
 /// @addtogroup resource
 /// @{
@@ -139,12 +138,6 @@ public:
 		return *m_asyncLoader;
 	}
 
-	/// Get the number of times loadResource() was called.
-	ANKI_INTERNAL U64 getLoadingRequestCount() const
-	{
-		return m_loadRequestCount;
-	}
-
 	/// Get the total number of completed async tasks.
 	ANKI_INTERNAL U64 getAsyncTaskCompletedCount() const;
 
@@ -166,7 +159,6 @@ private:
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
 
 	U64 m_uuid = 0;
-	U64 m_loadRequestCount = 0;
 
 	ResourceManager();
 

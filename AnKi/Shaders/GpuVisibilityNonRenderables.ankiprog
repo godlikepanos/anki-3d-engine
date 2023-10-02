@@ -1,0 +1,150 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator HZB_TEST 0 1
+#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
+#pragma anki mutator CPU_FEEDBACK 0 1
+
+#pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 1
+#pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 2
+
+#pragma anki start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/CollisionFunctions.hlsl>
+
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+typedef GpuSceneLight ObjectType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+typedef GpuSceneDecal ObjectType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+typedef GpuSceneFogDensityVolume ObjectType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+typedef GpuSceneReflectionProbe ObjectType;
+#else
+typedef GpuSceneGlobalIlluminationProbe ObjectType;
+#endif
+
+[[vk::binding(0)]] StructuredBuffer<ObjectType> g_objects;
+[[vk::push_constant]] ConstantBuffer<GpuVisibilityNonRenderableUniforms> g_unis;
+[[vk::binding(1)]] RWStructuredBuffer<U32> g_visibleIndices; // 1st element is the count. What follows is indices
+
+constexpr U32 kVisibleObjCounterIdx = 1;
+constexpr U32 kThreadgroupCounterIdx = 0;
+constexpr U32 kFeedbackCounterIdx = 2;
+[[vk::binding(2)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch with an optional 3rd for feedback
+
+#if CPU_FEEDBACK
+// 1st element is a count. What follows is an array pairs of UUIDs and array index.
+[[vk::binding(3)]] RWStructuredBuffer<U32> g_cpuFeedbackBuffer;
+#endif
+
+Vec4 getSphere(GpuSceneLight l)
+{
+	return Vec4(l.m_position, l.m_radius);
+}
+
+Vec4 getSphere(GpuSceneDecal l)
+{
+	return Vec4(l.m_sphereCenter, l.m_sphereRadius);
+}
+
+Vec4 getSphere(GpuSceneFogDensityVolume l)
+{
+	if(l.m_isBox)
+	{
+		const Vec3 center = (l.m_aabbMinOrSphereCenter + l.m_aabbMaxOrSphereRadius) / 2.0f;
+		const F32 radius = length(l.m_aabbMaxOrSphereRadius - center);
+		return Vec4(center, radius);
+	}
+	else
+	{
+		return Vec4(l.m_aabbMinOrSphereCenter, l.m_aabbMaxOrSphereRadius.x);
+	}
+}
+
+Vec4 getSphere(GpuSceneReflectionProbe l)
+{
+	const Vec3 center = (l.m_aabbMin + l.m_aabbMax) / 2.0f;
+	const F32 radius = length(center - l.m_aabbMax);
+	return Vec4(center, radius);
+}
+
+Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
+{
+	const Vec3 center = (l.m_aabbMin + l.m_aabbMax) / 2.0f;
+	const F32 radius = length(center - l.m_aabbMax);
+	return Vec4(center, radius);
+}
+
+#define NUMTHREADS 64
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	Bool skip = false;
+
+	U32 objectCount, unused;
+	g_objects.GetDimensions(objectCount, unused);
+	skip = (svDispatchThreadId >= objectCount);
+
+	// Frustum test
+	//
+	if(!skip)
+	{
+		const Vec4 sphere = getSphere(g_objects[svDispatchThreadId]);
+		skip = !frustumTest(g_unis.m_clipPlanes, sphere.xyz, sphere.w);
+	}
+
+	// Add the object
+	//
+	if(!skip)
+	{
+		U32 idx;
+		InterlockedAdd(g_counterBuffer[kVisibleObjCounterIdx], 1, idx);
+
+		g_visibleIndices[idx + 1] = svDispatchThreadId;
+	}
+
+	// Give feedback to the CPU
+	//
+#if CPU_FEEDBACK
+	if(!skip && g_objects[svDispatchThreadId].m_uuid != 0)
+	{
+		U32 idx;
+		InterlockedAdd(g_counterBuffer[kFeedbackCounterIdx], 1, idx);
+
+		g_cpuFeedbackBuffer[idx * 2 + 1] = g_objects[svDispatchThreadId].m_uuid;
+		g_cpuFeedbackBuffer[idx * 2 + 2] = g_objects[svDispatchThreadId].m_componentArrayIndex;
+	}
+#endif
+
+	// Store the counters to the actual buffers
+	//
+	Bool lastThreadgroupExecuting = false;
+	if(svGroupIndex == 0)
+	{
+		U32 threadgroupIdx;
+		InterlockedAdd(g_counterBuffer[kThreadgroupCounterIdx], 1, threadgroupIdx);
+		const U32 threadgroupCount = (objectCount + NUMTHREADS - 1) / NUMTHREADS;
+		lastThreadgroupExecuting = (threadgroupIdx + 1 == threadgroupCount);
+	}
+
+	// Sync to make sure all the atomic ops have finished before the following code reads them
+	AllMemoryBarrierWithGroupSync();
+
+	if(lastThreadgroupExecuting)
+	{
+		g_visibleIndices[0] = g_counterBuffer[kVisibleObjCounterIdx];
+		g_counterBuffer[kVisibleObjCounterIdx] = 0;
+#if CPU_FEEDBACK
+		g_cpuFeedbackBuffer[0] = g_counterBuffer[kFeedbackCounterIdx];
+		g_counterBuffer[kFeedbackCounterIdx] = 0;
+#endif
+		g_counterBuffer[kThreadgroupCounterIdx] = 0;
+	}
+}
+
+#pragma anki end

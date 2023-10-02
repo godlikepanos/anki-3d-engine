@@ -6,10 +6,13 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/TraditionalDeferredShading.h>
+#include <AnKi/Renderer/Utils/TraditionalDeferredShading.h>
 #include <AnKi/Resource/ImageResource.h>
 
 namespace anki {
+
+// Forward
+class GpuVisibilityOutput;
 
 /// @addtogroup renderer
 /// @{
@@ -30,7 +33,7 @@ public:
 		return m_lightShading.m_mipCount;
 	}
 
-	TextureViewPtr getIntegrationLut() const
+	TextureView& getIntegrationLut() const
 	{
 		return m_integrationLut->getTextureView();
 	}
@@ -100,16 +103,11 @@ private:
 	class
 	{
 	public:
-		const ReflectionProbeQueueElementForRefresh* m_probe = nullptr;
-
 		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
 		RenderTargetHandle m_gbufferDepthRt;
 		RenderTargetHandle m_lightShadingRt;
 		BufferHandle m_irradianceDiceValuesBuffHandle;
 		RenderTargetHandle m_shadowMapRt;
-
-		U32 m_gbufferRenderableCount = 0;
-		U32 m_shadowRenderableCount = 0;
 	} m_ctx; ///< Runtime context.
 
 	Error initInternal();
@@ -119,9 +117,12 @@ private:
 	Error initIrradianceToRefl();
 	Error initShadowMapping();
 
-	void runGBuffer(RenderPassWorkContext& rgraphCtx);
-	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
-	void runLightShading(U32 faceIdx, const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMatx, const Array<Mat3x4, 6> viewMats,
+					RenderPassWorkContext& rgraphCtx);
+	void runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMats, const Array<Mat3x4, 6>& viewMats,
+						  RenderPassWorkContext& rgraphCtx);
+	void runLightShading(U32 faceIdx, const BufferOffsetRange& visResult, const Mat4& viewProjMat, const Mat4& cascadeViewProjMat,
+						 const ReflectionProbeComponent& probe, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);
 	void runIrradianceToRefl(RenderPassWorkContext& rgraphCtx);

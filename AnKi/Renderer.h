@@ -18,18 +18,16 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/TemporalAA.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/Dbg.h>
-#include <AnKi/Renderer/Drawer.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
-#include <AnKi/Renderer/GenericCompute.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
 

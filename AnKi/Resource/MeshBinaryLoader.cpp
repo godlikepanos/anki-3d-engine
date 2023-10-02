@@ -76,15 +76,13 @@ Error MeshBinaryLoader::checkFormat(VertexStreamId stream, Bool isOptional, Bool
 
 	if(attrib.m_format != kMeshRelatedVertexStreamFormats[stream])
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u has unsupported format %s", vertexAttribIdx,
-						   getFormatInfo(attrib.m_format).m_name);
+		ANKI_RESOURCE_LOGE("Vertex attribute %u has unsupported format %s", vertexAttribIdx, getFormatInfo(attrib.m_format).m_name);
 		return Error::kUserData;
 	}
 
 	if(attrib.m_bufferIndex != vertexBufferIdx)
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should belong to the %u vertex buffer", vertexAttribIdx,
-						   vertexBufferIdx);
+		ANKI_RESOURCE_LOGE("Vertex attribute %u should belong to the %u vertex buffer", vertexAttribIdx, vertexBufferIdx);
 		return Error::kUserData;
 	}
 
@@ -107,8 +105,7 @@ Error MeshBinaryLoader::checkFormat(VertexStreamId stream, Bool isOptional, Bool
 	}
 
 	if(canBeTransformed
-	   && (attrib.m_scale[0] != attrib.m_scale[1] || attrib.m_scale[0] != attrib.m_scale[2]
-		   || attrib.m_scale[0] != attrib.m_scale[3]))
+	   && (attrib.m_scale[0] != attrib.m_scale[1] || attrib.m_scale[0] != attrib.m_scale[2] || attrib.m_scale[0] != attrib.m_scale[3]))
 	{
 		ANKI_RESOURCE_LOGE("Vertex attribute %u should have uniform scale", vertexAttribIdx);
 		return Error::kUserData;
@@ -123,8 +120,7 @@ Error MeshBinaryLoader::checkFormat(VertexStreamId stream, Bool isOptional, Bool
 	const U32 vertexBufferStride = getFormatInfo(attrib.m_format).m_texelSize;
 	if(m_header.m_vertexBuffers[vertexBufferIdx].m_vertexStride != vertexBufferStride)
 	{
-		ANKI_RESOURCE_LOGE("Vertex buffer %u doesn't have the expected stride of %u", vertexBufferIdx,
-						   vertexBufferStride);
+		ANKI_RESOURCE_LOGE("Vertex buffer %u doesn't have the expected stride of %u", vertexBufferIdx, vertexBufferStride);
 		return Error::kUserData;
 	}
 
@@ -283,8 +279,7 @@ Error MeshBinaryLoader::storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, Ptr
 	return Error::kNone;
 }
 
-Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices,
-												ResourceDynamicArray<Vec3>& positions)
+Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices, ResourceDynamicArray<Vec3>& positions)
 {
 	ANKI_ASSERT(isLoaded());
 	ANKI_ASSERT(lod < m_header.m_lodCount);
@@ -311,8 +306,7 @@ Error MeshBinaryLoader::storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U3
 		const MeshBinaryVertexAttribute& attrib = m_header.m_vertexAttributes[VertexStreamId::kPosition];
 		DynamicArray<U16Vec4, MemoryPoolPtrWrapper<BaseMemoryPool>> tempPositions(m_subMeshes.getMemoryPool());
 		tempPositions.resize(m_header.m_totalVertexCounts[lod]);
-		static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16A16_Unorm,
-					  "Incorrect format");
+		static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16A16_Unorm, "Incorrect format");
 		ANKI_CHECK(storeVertexBuffer(lod, attrib.m_bufferIndex, &tempPositions[0], tempPositions.getSizeInBytes()));
 
 		positions.resize(m_header.m_totalVertexCounts[lod]);

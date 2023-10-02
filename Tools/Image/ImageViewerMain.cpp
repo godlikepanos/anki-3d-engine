@@ -22,18 +22,16 @@ public:
 			},
 			this);
 
-		ANKI_CHECK_AND_IGNORE(
-			UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
+		ANKI_CHECK_AND_IGNORE(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 
-		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource(
-			"ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
+		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource("ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
 	Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
 	{
 		if(!m_textureView.isCreated())
 		{
-			m_textureView = m_imageResource->getTextureView();
+			m_textureView.reset(&m_imageResource->getTextureView());
 		}
 
 		return Error::kNone;
@@ -55,7 +53,7 @@ private:
 
 	void draw(CanvasPtr& canvas)
 	{
-		const Texture& grTex = *m_imageResource->getTexture().get();
+		const Texture& grTex = m_imageResource->getTexture();
 		const U32 colorComponentCount = getFormatInfo(grTex.getFormat()).m_componentCount;
 		ANKI_ASSERT(grTex.getTextureType() == TextureType::k2D || grTex.getTextureType() == TextureType::k3D);
 
@@ -66,11 +64,10 @@ private:
 
 			const ShaderProgramResourceVariant* variant;
 			m_imageProgram->getOrCreateVariant(variantInit, variant);
-			m_imageGrProgram = variant->getProgram();
+			m_imageGrProgram.reset(&variant->getProgram());
 		}
 
-		ImGui::Begin("Console", nullptr,
-					 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+		ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
 		canvas->pushFont(m_font, 16);
 
@@ -146,7 +143,7 @@ private:
 			if(lastCrntMip != m_crntMip)
 			{
 				// Re-create the image view
-				TextureViewInitInfo viewInitInf(m_imageResource->getTexture());
+				TextureViewInitInfo viewInitInf(&m_imageResource->getTexture());
 				viewInitInf.m_firstMipmap = m_crntMip;
 				viewInitInf.m_mipmapCount = 1;
 				m_textureView = GrManager::getSingleton().newTextureView(viewInitInf);
@@ -191,8 +188,7 @@ private:
 
 		// Next
 		ImGui::EndChild();
-		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), false,
-						  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
+		ImGui::BeginChild("Image", Vec2(-1.0f, -1.0f), false, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
 
 		// Image
 		{
@@ -217,8 +213,8 @@ private:
 			m_imageIdExtra.m_extraPushConstantsSize = U8(sizeof(pc));
 			m_imageIdExtra.setExtraPushConstants(&pc, sizeof(pc));
 
-			ImGui::Image(UiImageId(&m_imageIdExtra, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f),
-						 Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImGui::Image(UiImageId(&m_imageIdExtra, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f), Vec4(1.0f),
+						 Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 			if(ImGui::IsItemHovered())
 			{
@@ -277,11 +273,9 @@ public:
 			return Error::kUserData;
 		}
 
-		ConfigSet::getSingleton().setWindowFullscreen(false);
-		ConfigSet::getSingleton().setRsrcDataPaths(ANKI_SOURCE_DIRECTORY);
-		ConfigSet::getSingleton().setGrValidation(false);
-		ConfigSet::getSingleton().setGrDebugMarkers(false);
-		ANKI_CHECK(ConfigSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
+		g_windowFullscreenCVar.set(0);
+		g_dataPathsCVar.set(ANKI_SOURCE_DIRECTORY);
+		ANKI_CHECK(CVarSet::getSingleton().setFromCommandLineArguments(argc - 2, argv + 2));
 
 		ANKI_CHECK(App::init());
 
@@ -291,8 +285,8 @@ public:
 
 		// Change window name
 		String title;
-		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(),
-					  image->getTexture()->getMipmapCount(), getFormatInfo(image->getTexture()->getFormat()).m_name);
+		title.sprintf("%s %u x %u Mips %u Format %s", argv[1], image->getWidth(), image->getHeight(), image->getTexture().getMipmapCount(),
+					  getFormatInfo(image->getTexture().getFormat()).m_name);
 		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node

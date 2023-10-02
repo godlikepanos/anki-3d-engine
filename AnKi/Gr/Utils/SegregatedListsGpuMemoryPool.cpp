@@ -9,8 +9,7 @@
 
 namespace anki {
 
-class SegregatedListsGpuMemoryPool::Chunk :
-	public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<GrMemoryPool>>
+class SegregatedListsGpuMemoryPool::Chunk : public SegregatedListsAllocatorBuilderChunkBase<SingletonMemoryPoolWrapper<GrMemoryPool>>
 {
 public:
 	PtrSize m_offsetInGpuBuffer;
@@ -50,8 +49,8 @@ public:
 	/// @}
 };
 
-void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes,
-										PtrSize initialGpuBufferSize, CString bufferName, Bool allowCoWs)
+void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeakArray<PtrSize> classUpperSizes, PtrSize initialGpuBufferSize,
+										CString bufferName, Bool allowCoWs, BufferMapAccessBit map)
 {
 	ANKI_ASSERT(!isInitialized());
 
@@ -76,6 +75,7 @@ void SegregatedListsGpuMemoryPool::init(BufferUsageBit gpuBufferUsage, ConstWeak
 	m_frame = 0;
 	m_allocatedSize = 0;
 	m_allowCoWs = allowCoWs;
+	m_mapAccess = map;
 }
 
 void SegregatedListsGpuMemoryPool::destroy()
@@ -86,6 +86,11 @@ void SegregatedListsGpuMemoryPool::destroy()
 	}
 
 	GrManager::getSingleton().finish();
+
+	if(m_mappedGpuBufferMemory)
+	{
+		m_gpuBuffer->unmap();
+	}
 
 	for(GrDynamicArray<SegregatedListsGpuMemoryPoolToken>& arr : m_garbage)
 	{
@@ -115,7 +120,13 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_initialBufferSize;
 		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
+		buffInit.m_mapAccess = m_mapAccess;
 		m_gpuBuffer = GrManager::getSingleton().newBuffer(buffInit);
+
+		if(!!m_mapAccess)
+		{
+			m_mappedGpuBufferMemory = m_gpuBuffer->map(0, kMaxPtrSize, m_mapAccess);
+		}
 
 		newChunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
 		newChunk->m_offsetInGpuBuffer = 0;
@@ -137,6 +148,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_gpuBuffer->getSize() * 2;
 		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
+		buffInit.m_mapAccess = m_mapAccess;
 		BufferPtr newBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		// Do the copy
@@ -153,7 +165,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		barriers[1].m_nextUsage = BufferUsageBit::kTransferDestination;
 		cmdb->setPipelineBarrier({}, barriers, {});
 
-		cmdb->copyBufferToBuffer(m_gpuBuffer, 0, newBuffer, 0, m_gpuBuffer->getSize());
+		cmdb->copyBufferToBuffer(m_gpuBuffer.get(), 0, newBuffer.get(), 0, m_gpuBuffer->getSize());
 
 		barriers[1].m_previousUsage = BufferUsageBit::kTransferDestination;
 		barriers[1].m_nextUsage = m_bufferUsage;
@@ -167,6 +179,11 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 
 		// Switch the buffers
 		m_gpuBuffer = newBuffer;
+
+		if(!!m_mapAccess)
+		{
+			m_mappedGpuBufferMemory = m_gpuBuffer->map(0, kMaxPtrSize, m_mapAccess);
+		}
 	}
 	else
 	{
@@ -245,8 +262,7 @@ void SegregatedListsGpuMemoryPool::endFrame()
 	m_garbage[m_frame].destroy();
 }
 
-void SegregatedListsGpuMemoryPool::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize,
-											PtrSize& totalSize) const
+void SegregatedListsGpuMemoryPool::getStats(F32& externalFragmentation, PtrSize& userAllocatedSize, PtrSize& totalSize) const
 {
 	ANKI_ASSERT(isInitialized());
 

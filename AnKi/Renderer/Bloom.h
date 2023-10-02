@@ -11,6 +11,9 @@
 
 namespace anki {
 
+// Forward
+extern NumericCVar<F32> g_bloomThresholdCVar;
+
 /// @addtogroup renderer
 /// @{
 

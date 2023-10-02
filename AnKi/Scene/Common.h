@@ -7,9 +7,7 @@
 
 #include <AnKi/Util/String.h>
 #include <AnKi/Scene/Forward.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <functional>
 
 namespace anki {
 
@@ -17,8 +15,6 @@ namespace anki {
 class ResourceManager;
 class Input;
 class UiManager;
-class UnifiedGeometryMemoryPool;
-class GpuSceneMemoryPool;
 class GpuSceneMicroPatcher;
 class ScriptManager;
 class GrManager;

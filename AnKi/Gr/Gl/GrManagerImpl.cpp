@@ -82,8 +82,7 @@ void GrManagerImpl::initFakeDefaultFb(GrManagerInitInfo& init)
 	texinit.m_width = defaultFbWidth;
 	texinit.m_height = defaultFbHeight;
 	texinit.m_format = Format::kR8G8B8A8_Unorm;
-	texinit.m_usage =
-		TextureUsageBit::kFramebufferWrite | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kPresent;
+	texinit.m_usage = TextureUsageBit::kFramebufferWrite | TextureUsageBit::kImageComputeWrite | TextureUsageBit::kPresent;
 	m_fakeFbTex = newTexture(texinit);
 
 	TextureViewPtr view = newTextureView(TextureViewInitInfo(m_fakeFbTex, "FB view"));

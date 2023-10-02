@@ -20,7 +20,7 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	// Store some stuff
 	m_subresource = inf;
 
-	m_tex = inf.m_texture;
+	m_tex.reset(inf.m_texture);
 	const TextureImpl& tex = static_cast<const TextureImpl&>(*m_tex);
 	ANKI_ASSERT(tex.isSubresourceValid(inf));
 

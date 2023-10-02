@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_TECHNIQUE 3
+#pragma anki mutator ANKI_TECHNIQUE 2
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
@@ -11,7 +11,7 @@
 
 struct VertIn
 {
-	[[vk::location(0)]] GpuSceneRenderablePacked m_gpuSceneRenderable : RENDERABLE;
+	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -36,29 +36,34 @@ struct VertOut
 
 VertOut main(VertIn input)
 {
-	const U32 particleId = input.m_svVertexId / 6u;
-	const U32 vertexId = input.m_svVertexId % 6u;
+	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_boneTransformsOrParticleEmitterOffset);
+	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
 
-	const GpuSceneRenderable renderable = unpackGpuSceneRenderable(input.m_gpuSceneRenderable);
-	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_geometryOffset);
+	const U32 particleId = input.m_svVertexId / meshLod.m_indexCount;
+	const U32 vertexId = g_unifiedGeom_R16_Uint[meshLod.m_firstIndex + input.m_svVertexId % meshLod.m_indexCount];
 
 	U32 idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticlePosition] + particleId * sizeof(Vec3);
-	const Vec3 vertPos = g_gpuScene.Load<Vec3>(idx);
+	const Vec3 particlePos = g_gpuScene.Load<Vec3>(idx);
 	idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticleScale] + particleId * sizeof(F32);
-	const F32 vertScale = g_gpuScene.Load<F32>(idx);
+	const F32 particleScale = g_gpuScene.Load<F32>(idx);
 	idx = particles.m_vertexOffsets[(U32)VertexStreamId::kParticleColor] + particleId * sizeof(F32);
-	const F32 vertAlpha = g_gpuScene.Load<F32>(idx);
+	const F32 particleAlpha = g_gpuScene.Load<F32>(idx);
 
 	VertOut output;
 
-	output.m_uv = Vec2(vertexId & 1u, ((vertexId + 1u) / 3u) & 1u);
+	output.m_uv = g_unifiedGeom_R32G32_Sfloat[meshLod.m_vertexOffsets[(U32)VertexStreamId::kUv] + vertexId];
 
-	output.m_worldPos =
-		mul(g_globalUniforms.m_cameraTransform, Vec4((output.m_uv - 0.5) * vertScale, 0.0, 0.0)) + vertPos;
+	const Vec3 localPos =
+		g_unifiedGeom_R16G16B16A16_Unorm[meshLod.m_vertexOffsets[(U32)VertexStreamId::kPosition] + vertexId] * meshLod.m_positionScale
+		+ meshLod.m_positionTranslation;
+
+	// Apply the particle scale, rotate the mesh to face the camera (billboard) and finally apply the particle position
+	output.m_worldPos = mul(g_globalUniforms.m_cameraTransform, Vec4(localPos * particleScale, 0.0)) + particlePos;
 
 	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
 
-	output.m_alpha = vertAlpha;
+	output.m_alpha = particleAlpha;
 	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
@@ -70,12 +75,11 @@ VertOut main(VertIn input)
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalUniforms localUniforms =
-		loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 #if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler,
-										   localUniforms.m_animationPeriod, input.m_uv, g_clusteredShading.m_time);
+	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler, localUniforms.m_animationPeriod,
+										   input.m_uv, g_clusteredShading.m_time);
 #else
 	RVec4 texCol = g_bindlessTextures2dF32[localUniforms.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
 #endif

@@ -55,8 +55,7 @@ Error XmlElement::getNumbers(TArray& out) const
 }
 
 template<typename T, typename TMemoryPool>
-Error XmlElement::getAttributeNumbersOptional(CString name, DynamicArray<T, TMemoryPool>& out,
-											  Bool& attribPresent) const
+Error XmlElement::getAttributeNumbersOptional(CString name, DynamicArray<T, TMemoryPool>& out, Bool& attribPresent) const
 {
 	CString txtVal;
 	ANKI_CHECK(getAttributeTextOptional(name, txtVal, attribPresent));

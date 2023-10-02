@@ -56,21 +56,18 @@ RF32 computeLuma(RVec3 color)
 	return l / (1.0f + l);
 }
 
-#define sampleLuma(offsetX, offsetY) \
-	computeLuma(g_inputTex.SampleLevel(g_nearestClampSampler, uv, 0.0, IVec2(offsetX, offsetY)).xyz)
+#define sampleLuma(offsetX, offsetY) computeLuma(g_inputTex.SampleLevel(g_nearestClampSampler, uv, 0.0, IVec2(offsetX, offsetY)).xyz)
 
-[numthreads(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1)] void
-main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX, UVec3 svGroupID : SV_GROUPID)
+[numthreads(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX,
+																  UVec3 svGroupID : SV_GROUPID)
 {
 #if SHARED_MEMORY
 	U32 wavesPerThreadGroup;
 	U32 waveIndexInsideThreadGroup;
-	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup,
-											   wavesPerThreadGroup);
+	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup, wavesPerThreadGroup);
 #endif
 
-	const Vec2 uv =
-		(Vec2(svDispatchThreadId.xy) * Vec2(REGION_SIZE_X, REGION_SIZE_Y) + 0.5) * g_unis.m_oneOverViewportSize;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) * Vec2(REGION_SIZE_X, REGION_SIZE_Y) + 0.5) * g_unis.m_oneOverViewportSize;
 
 #if SRI_TEXEL_DIMENSION == 8
 	// Get luminance.

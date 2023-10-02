@@ -24,8 +24,7 @@ public:
 	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
 	BitSet<kMaxVertexAttributes, U8> m_attributeMask = {false};
 	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
-	Array<BitSet<kMaxBindingsPerDescriptorSet, U8>, kMaxDescriptorSets> m_activeBindingMask = {
-		{{false}, {false}, {false}}};
+	Array<BitSet<kMaxBindingsPerDescriptorSet, U8>, kMaxDescriptorSets> m_activeBindingMask = {{{false}, {false}, {false}}};
 	U32 m_pushConstantsSize = 0;
 
 	ShaderImpl(CString name)

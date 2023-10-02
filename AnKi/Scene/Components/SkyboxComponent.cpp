@@ -8,21 +8,18 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ImageResource.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
 SkyboxComponent::SkyboxComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
-	, m_spatial(this)
+	: SceneComponent(node, kClassType)
 {
-	m_spatial.setAlwaysVisible(true);
-	m_spatial.setUpdatesOctreeBounds(false);
+	SceneGraph::getSingleton().addSkybox(this);
 }
 
 SkyboxComponent::~SkyboxComponent()
 {
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
+	SceneGraph::getSingleton().removeSkybox(this);
 }
 
 void SkyboxComponent::loadImageResource(CString filename)
@@ -41,29 +38,8 @@ void SkyboxComponent::loadImageResource(CString filename)
 
 Error SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = m_spatial.update(SceneGraph::getSingleton().getOctree());
+	updated = false;
 	return Error::kNone;
-}
-
-void SkyboxComponent::setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const
-{
-	if(m_type == SkyboxType::kImage2D)
-	{
-		queueElement.m_skyboxTexture = m_image->getTextureView().get();
-	}
-	else
-	{
-		queueElement.m_skyboxTexture = nullptr;
-		queueElement.m_solidColor = m_color;
-	}
-
-	queueElement.m_fog.m_minDensity = m_fog.m_minDensity;
-	queueElement.m_fog.m_maxDensity = m_fog.m_maxDensity;
-	queueElement.m_fog.m_heightOfMinDensity = m_fog.m_heightOfMinDensity;
-	queueElement.m_fog.m_heightOfMaxDensity = m_fog.m_heightOfMaxDensity;
-	queueElement.m_fog.m_scatteringCoeff = m_fog.m_scatteringCoeff;
-	queueElement.m_fog.m_absorptionCoeff = m_fog.m_absorptionCoeff;
-	queueElement.m_fog.m_diffuseColor = m_fog.m_diffuseColor;
 }
 
 } // end namespace anki

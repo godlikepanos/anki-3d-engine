@@ -7,7 +7,7 @@
 #include <AnKi/Ui/Font.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Core/GpuMemoryPools.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Window/Input.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/GrManager.h>
@@ -37,7 +37,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("TEXTURE_TYPE", i);
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProgs[i] = variant->getProgram();
+		m_grProgs[i].reset(&variant->getProgram());
 	}
 
 	// Sampler
@@ -173,7 +173,7 @@ void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
 	ImGui::PushFont(&font->getImFont(fontHeight));
 }
 
-void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
+void Canvas::appendToCommandBuffer(CommandBuffer& cmdb)
 {
 	appendToCommandBufferInternal(cmdb);
 
@@ -183,27 +183,24 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	m_references.destroy();
 }
 
-void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
+void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 {
 	ImGui::PopFont();
 	ImGui::Render();
 	ImDrawData& drawData = *ImGui::GetDrawData();
 
 	// Allocate index and vertex buffers
-	RebarGpuMemoryToken vertsToken, indicesToken;
+	RebarAllocation vertsToken, indicesToken;
 	{
-		const U32 verticesSize = U32(drawData.TotalVtxCount) * sizeof(ImDrawVert);
-		const U32 indicesSize = U32(drawData.TotalIdxCount) * sizeof(ImDrawIdx);
-
-		if(verticesSize == 0 || indicesSize == 0)
+		if(drawData.TotalVtxCount == 0 || drawData.TotalIdxCount == 0)
 		{
 			return;
 		}
 
-		ImDrawVert* verts =
-			static_cast<ImDrawVert*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(verticesSize, vertsToken));
-		ImDrawIdx* indices =
-			static_cast<ImDrawIdx*>(RebarStagingGpuMemoryPool::getSingleton().allocateFrame(indicesSize, indicesToken));
+		ImDrawVert* verts;
+		vertsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(drawData.TotalVtxCount, verts);
+		ImDrawIdx* indices;
+		indicesToken = RebarTransientMemoryPool::getSingleton().allocateFrame(drawData.TotalIdxCount, indices);
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{
@@ -215,21 +212,19 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		}
 	}
 
-	cmdb->setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
-	cmdb->setCullMode(FaceSelectionBit::kNone);
+	cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
+	cmdb.setCullMode(FaceSelectionBit::kNone);
 
 	const F32 fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
-	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
+	cmdb.setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb->bindVertexBuffer(0, RebarStagingGpuMemoryPool::getSingleton().getBuffer(), vertsToken.m_offset,
-						   sizeof(ImDrawVert));
-	cmdb->setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
-	cmdb->setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
-	cmdb->setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
+	cmdb.bindVertexBuffer(0, &vertsToken.getBuffer(), vertsToken.getOffset(), sizeof(ImDrawVert));
+	cmdb.setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
+	cmdb.setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
+	cmdb.setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb->bindIndexBuffer(RebarStagingGpuMemoryPool::getSingleton().getBuffer(), indicesToken.m_offset,
-						  IndexType::kU16);
+	cmdb.bindIndexBuffer(&indicesToken.getBuffer(), indicesToken.getOffset(), IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports
@@ -271,8 +266,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 
 					// Apply scissor/clipping rectangle
-					cmdb->setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()),
-									 U32(clipRect.w() - clipRect.y()));
+					cmdb.setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()), U32(clipRect.w() - clipRect.y()));
 
 					UiImageId id(pcmd.TextureId);
 					const UiImageIdExtra* idExtra = nullptr;
@@ -290,24 +284,22 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					// Bind program
 					if(idExtra && idExtra->m_customProgram.isCreated())
 					{
-						cmdb->bindShaderProgram(idExtra->m_customProgram);
+						cmdb.bindShaderProgram(idExtra->m_customProgram.get());
 					}
 					else if(textureView.isCreated())
 					{
-						cmdb->bindShaderProgram(m_grProgs[kRgbaTex]);
+						cmdb.bindShaderProgram(m_grProgs[kRgbaTex].get());
 					}
 					else
 					{
-						cmdb->bindShaderProgram(m_grProgs[kNoTex]);
+						cmdb.bindShaderProgram(m_grProgs[kNoTex].get());
 					}
 
 					// Bindings
 					if(textureView.isCreated())
 					{
-						cmdb->bindSampler(0, 0,
-										  (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler
-																	  : m_linearLinearRepeatSampler);
-						cmdb->bindTexture(0, 1, textureView);
+						cmdb.bindSampler(0, 0, (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
+						cmdb.bindTexture(0, 1, textureView.get());
 					}
 
 					// Push constants
@@ -325,15 +317,14 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					if(idExtra && idExtra->m_extraPushConstantsSize)
 					{
 						ANKI_ASSERT(idExtra->m_extraPushConstantsSize <= sizeof(idExtra->m_extraPushConstants));
-						memcpy(&pc.m_extra[0], idExtra->m_extraPushConstants.getBegin(),
-							   idExtra->m_extraPushConstantsSize);
+						memcpy(&pc.m_extra[0], idExtra->m_extraPushConstants.getBegin(), idExtra->m_extraPushConstantsSize);
 
 						extraPushConstantsSize = idExtra->m_extraPushConstantsSize;
 					}
-					cmdb->setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
+					cmdb.setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
 
 					// Draw
-					cmdb->drawElements(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
+					cmdb.drawIndexed(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);
 				}
 			}
 			idxOffset += pcmd.ElemCount;
@@ -342,8 +333,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	}
 
 	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-	cmdb->setCullMode(FaceSelectionBit::kBack);
+	cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
+	cmdb.setCullMode(FaceSelectionBit::kBack);
 }
 
 } // end namespace anki

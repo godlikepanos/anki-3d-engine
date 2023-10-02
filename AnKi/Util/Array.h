@@ -47,16 +47,16 @@ public:
 		return m_data[n];
 	}
 
-	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts
-	/// integer. This to avoid any short of arbitrary integer type casting.
+	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts integer. This to avoid any short of
+	/// arbitrary integer type casting.
 	template<typename TEnum, ANKI_ENABLE(std::is_enum<TEnum>::value)>
 	constexpr Reference operator[](const TEnum n)
 	{
 		return operator[](typename std::underlying_type<TEnum>::type(n));
 	}
 
-	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts
-	/// integer. This to avoid any short of arbitrary integer type casting.
+	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts integer. This to avoid any short of
+	/// arbitrary integer type casting.
 	template<typename TEnum, ANKI_ENABLE(std::is_enum<TEnum>::value)>
 	constexpr ConstReference operator[](const TEnum n) const
 	{
@@ -205,11 +205,9 @@ public:
 #undef ANKI_ARRAY_SIZE_IN_BYTES_METHOD
 };
 
-// Some trick stolen from GCC's std::array. It allows deduction of Array's template params. For example you can write:
-// Array a{1, 2, 3};
+// Some trick stolen from GCC's std::array. It allows deduction of Array's template params. For example you can write: Array a{1, 2, 3};
 template<typename TFirst, typename... TRest>
-Array(TFirst, TRest...)
-	-> Array<std::enable_if_t<(std::is_same_v<TFirst, TRest> && ...), TFirst>, 1 + sizeof...(TRest)>;
+Array(TFirst, TRest...) -> Array<std::enable_if_t<(std::is_same_v<TFirst, TRest> && ...), TFirst>, 1 + sizeof...(TRest)>;
 
 /// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to @code X a[10][2]; @endcode
 template<typename T, PtrSize I, PtrSize J>

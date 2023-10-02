@@ -3,137 +3,112 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// Performs cluster binning. The dispatch's threadcount X is the tileCount*sampleCount/numthreads and the Y is the number of visible objects
+
+#pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
+
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/CollisionFunctions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountX, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileCountY, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 3u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kRenderingSize, 4u);
+ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 1u);
 
-[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_unis;
-[[vk::binding(1)]] RWStructuredBuffer<Cluster> g_clusters;
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+typedef GpuSceneLight GpuSceneType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+typedef GpuSceneDecal GpuSceneType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+typedef GpuSceneFogDensityVolume GpuSceneType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+typedef GpuSceneReflectionProbe GpuSceneType;
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
+#else
+#	error See file
+#endif
 
-[[vk::binding(2)]] StructuredBuffer<PointLight> g_pointLights;
-[[vk::binding(3)]] StructuredBuffer<SpotLightBinning> g_spotLights;
-[[vk::binding(4)]] StructuredBuffer<Decal> g_decals;
-[[vk::binding(5)]] StructuredBuffer<FogDensityVolume> g_fogVolumes;
-[[vk::binding(6)]] StructuredBuffer<ReflectionProbe> g_reflectionProbes;
-[[vk::binding(7)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
+struct ClusterBinningUniforms
+{
+	Vec3 m_cameraOrigin;
+	F32 m_zSplitCountOverFrustumLength;
+
+	Vec2 m_renderingSize;
+	U32 m_tileCountX;
+	U32 m_tileCount;
+
+	Vec4 m_nearPlaneWorld;
+
+	Mat4 m_invertedViewProjMat;
+};
+
+[[vk::push_constant]] ConstantBuffer<ClusterBinningUniforms> g_unis;
+
+[[vk::binding(0)]] StructuredBuffer<U32> g_visibleObjectIds; // 1st index is the count and then the indices to the g_objects
+[[vk::binding(1)]] StructuredBuffer<GpuSceneType> g_objects;
+
+[[vk::binding(2)]] RWStructuredBuffer<Cluster> g_clusters;
 
 #define THREADGROUP_SIZE 64
-constexpr U32 kTileCount = kTileCountX * kTileCountY;
 
-// DX Sample locations
-constexpr U32 kSampleCount = 4u;
-#define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(kTileSize))
-constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(-2, -6), LOCATION(6, -2), LOCATION(-6, 2), LOCATION(2, 6)};
+// ALMOST like DX Sample locations (https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels)
+constexpr U32 kSampleCount = 8u;
+#define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(kClusteredShadingTileSize))
+constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 3),  LOCATION(5, 1), LOCATION(-6, -6),
+												  LOCATION(-6, 6), LOCATION(-7, -1), LOCATION(6, 7), LOCATION(7, -7)};
 #undef LOCATION
 
-// A mask per tile of this workgroup for the clusterer object being processed by this workgroup
-constexpr U32 kTilesPerThreadgroup = THREADGROUP_SIZE / kSampleCount;
-groupshared ExtendedClusterObjectMask s_tileMasks[kTilesPerThreadgroup];
-
-// A mask for each Z split for a specific clusterer object
-groupshared ExtendedClusterObjectMask s_zSplitMasks[kMaxZsplitCount];
-
-Bool isPointLight(U32 objectIdx)
+[numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kPointLight].x;
-}
-
-Bool isSpotLight(U32 objectIdx)
-{
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kSpotLight].x;
-}
-
-Bool isDecal(U32 objectIdx)
-{
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kDecal].x;
-}
-
-Bool isFogVolume(U32 objectIdx)
-{
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kFogDensityVolume].x;
-}
-
-Bool isReflectionProbe(U32 objectIdx)
-{
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kReflectionProbe].x;
-}
-
-Bool isGiProbe(U32 objectIdx)
-{
-	return objectIdx < g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kGlobalIlluminationProbe].x;
-}
-
-[numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID,
-											   U32 svGroupIdx : SV_GROUPINDEX)
-{
-	const U32 dispatchThreadIdX = min(svDispatchThreadId.x, kTileCount * kSampleCount);
+	const U32 dispatchThreadIdX = min(svDispatchThreadId.x, g_unis.m_tileCount * kSampleCount);
 	const U32 tileIdx = dispatchThreadIdX / kSampleCount;
 	const U32 sampleIdx = dispatchThreadIdX % kSampleCount;
-	const U32 localTileIdx = svGroupIdx / kSampleCount;
-	const U32 clustererObjectIdx = svDispatchThreadId.y;
+	const U32 visibleObjectIdx = svDispatchThreadId.y;
+	ANKI_ASSERT(visibleObjectIdx < kMaxVisibleClusteredObjects[OBJECT_TYPE]);
 
-	const UVec2 tileXY = UVec2(tileIdx % kTileCountX, tileIdx / kTileCountX);
+	const UVec2 tileXY = UVec2(tileIdx % g_unis.m_tileCountX, tileIdx / g_unis.m_tileCountX);
 
 	// This is a pixel in one of the main framebuffers of the renderer, eg the gbuffer's framebuffers
-	const UVec2 pixel = tileXY * kTileSize + kSampleLocations[sampleIdx];
-
-	const Vec2 uv = Vec2(pixel) / Vec2(kRenderingSize);
+	const UVec2 pixel = tileXY * kClusteredShadingTileSize + kSampleLocations[sampleIdx];
+	const Vec2 uv = Vec2(pixel) / g_unis.m_renderingSize;
 	const Vec2 ndc = uvToNdc(uv);
 
-	// Unproject the sample in view space
-	const Vec4 farWorldPos4 = mul(g_unis.m_matrices.m_invertedViewProjection, Vec4(ndc, 1.0, 1.0));
+	// Unproject the sample in world space
+	const Vec4 farWorldPos4 = mul(g_unis.m_invertedViewProjMat, Vec4(ndc, 1.0, 1.0));
 	const Vec3 farWorldPos = farWorldPos4.xyz / farWorldPos4.w;
 
 	// Create the ray that will test the clusterer objects
-	const Vec3 rayOrigin = g_unis.m_cameraPosition;
+	const Vec3 rayOrigin = g_unis.m_cameraOrigin;
 	const Vec3 rayDir = normalize(farWorldPos - rayOrigin);
-
-	// Zero shared memory
-	s_tileMasks[localTileIdx] = 0;
-	const U32 splitsPerInvocation = max(1u, kZSplitCount / THREADGROUP_SIZE);
-	for(U32 i = svGroupIdx * splitsPerInvocation; i < (svGroupIdx + 1u) * splitsPerInvocation && i < kZSplitCount; ++i)
-	{
-		s_zSplitMasks[i] = 0;
-	}
-
-	GroupMemoryBarrierWithGroupSync();
 
 	// Do collision
 	F32 t0, t1;
-	U32 objectArrayIdx;
 	Bool collides;
-	// Point light
-	if(isPointLight(clustererObjectIdx))
+	const GpuSceneType obj = g_objects[g_visibleObjectIds[visibleObjectIdx + 1]];
+
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+	if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 	{
-		objectArrayIdx = clustererObjectIdx;
-		const PointLight light = g_pointLights[objectArrayIdx];
-		collides = testRaySphere(rayOrigin, rayDir, light.m_position, light.m_radius, t0, t1);
+		collides = testRaySphere(rayOrigin, rayDir, obj.m_position, obj.m_radius, t0, t1);
 	}
-	// Spot light
-	else if(isSpotLight(clustererObjectIdx))
+	else
 	{
-		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kSpotLight - 1u].x;
-		const SpotLightBinning light = g_spotLights[objectArrayIdx];
+		// Spot light
 
 		t0 = 10000.0;
 		t1 = -10000.0;
 
 		// Iterate all triangles
 		const U32 indices[6u * 3u] = {0u, 1u, 2u, 0u, 2u, 3u, 0u, 3u, 4u, 0u, 1u, 4u, 1u, 2u, 3u, 3u, 4u, 1u};
+		const Vec3 edgePoints[5u] = {obj.m_position, obj.m_edgePoints[0].xyz, obj.m_edgePoints[1].xyz, obj.m_edgePoints[2].xyz,
+									 obj.m_edgePoints[3].xyz};
 		U32 hits = 0u;
 		U32 idx = 0u;
 		do
 		{
-			const Vec3 v0 = light.m_edgePoints[indices[idx + 0u]].xyz;
-			const Vec3 v1 = light.m_edgePoints[indices[idx + 1u]].xyz;
-			const Vec3 v2 = light.m_edgePoints[indices[idx + 2u]].xyz;
+			const Vec3 v0 = edgePoints[indices[idx + 0u]];
+			const Vec3 v1 = edgePoints[indices[idx + 1u]];
+			const Vec3 v2 = edgePoints[indices[idx + 2u]];
 
 			F32 t, u, v;
 			const Bool localCollides = testRayTriangle(rayOrigin, rayDir, v0, v1, v2, false, t, u, v);
@@ -154,66 +129,58 @@ Bool isGiProbe(U32 objectIdx)
 
 		collides = (hits != 0u);
 	}
-	// Decal
-	else if(isDecal(clustererObjectIdx))
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+	collides = testRaySphere(rayOrigin, rayDir, obj.m_sphereCenter, obj.m_sphereRadius, t0, t1);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+	if(obj.m_isBox != 0u)
 	{
-		objectArrayIdx = clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kDecal - 1u].x;
-		const Decal decal = g_decals[objectArrayIdx];
-
-		collides = testRayObb(rayOrigin, rayDir, decal.m_obbExtend, decal.m_invertedTransform, t0, t1);
+		collides = testRayAabb(rayOrigin, rayDir, obj.m_aabbMinOrSphereCenter, obj.m_aabbMaxOrSphereRadius, t0, t1);
 	}
-	// Fog volume
-	else if(isFogVolume(clustererObjectIdx))
-	{
-		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kFogDensityVolume - 1u].x;
-		const FogDensityVolume vol = g_fogVolumes[objectArrayIdx];
-
-		if(vol.m_isBox != 0u)
-		{
-			collides =
-				testRayAabb(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, t0, t1);
-		}
-		else
-		{
-			collides = testRaySphere(rayOrigin, rayDir, vol.m_aabbMinOrSphereCenter,
-									 sqrt(vol.m_aabbMaxOrSphereRadiusSquared.x), t0, t1);
-		}
-	}
-	// Reflection probe
-	else if(isReflectionProbe(clustererObjectIdx))
-	{
-		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kReflectionProbe - 1u].x;
-		const ReflectionProbe probe = g_reflectionProbes[objectArrayIdx];
-
-		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
-	}
-	// GI probe
 	else
 	{
-		objectArrayIdx =
-			clustererObjectIdx - g_unis.m_objectCountsUpTo[(U32)ClusteredObjectType::kGlobalIlluminationProbe - 1u].x;
-		const GlobalIlluminationProbe probe = g_giProbes[objectArrayIdx];
-
-		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
+		collides = testRaySphere(rayOrigin, rayDir, obj.m_aabbMinOrSphereCenter, obj.m_aabbMaxOrSphereRadius.x, t0, t1);
 	}
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE \
+	|| OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+	collides = testRayAabb(rayOrigin, rayDir, obj.m_aabbMin, obj.m_aabbMax, t0, t1);
+#else
+#	error See file
+#endif
 
 	// Update the masks
 	if(collides)
 	{
+		const U32 mask = 1u << (visibleObjectIdx % 32);
+		const U32 maskArrayIdx = visibleObjectIdx / 32;
+		ANKI_MAYBE_UNUSED(maskArrayIdx);
+
 		// Set the tile
-		const ExtendedClusterObjectMask mask = ExtendedClusterObjectMask(1)
-											   << ExtendedClusterObjectMask(objectArrayIdx);
-		InterlockedOr(s_tileMasks[localTileIdx], mask);
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+		if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
+		{
+			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask[maskArrayIdx], mask);
+		}
+		else
+		{
+			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask[maskArrayIdx], mask);
+		}
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+		InterlockedOr(g_clusters[tileIdx].m_decalsMask[maskArrayIdx], mask);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+		InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, mask);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+		InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, mask);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+		InterlockedOr(g_clusters[tileIdx].m_giProbesMask, mask);
+#else
+#	error See file
+#endif
 
 		// Compute and set the Z splits
 		const Vec3 hitpointA = rayDir * t0 + rayOrigin;
 		const Vec3 hitpointB = rayDir * t1 + rayOrigin;
-		const F32 distFromNearPlaneA =
-			testPlanePoint(g_unis.m_nearPlaneWSpace.xyz, g_unis.m_nearPlaneWSpace.w, hitpointA);
-		const F32 distFromNearPlaneB =
-			testPlanePoint(g_unis.m_nearPlaneWSpace.xyz, g_unis.m_nearPlaneWSpace.w, hitpointB);
+		const F32 distFromNearPlaneA = testPlanePoint(g_unis.m_nearPlaneWorld.xyz, g_unis.m_nearPlaneWorld.w, hitpointA);
+		const F32 distFromNearPlaneB = testPlanePoint(g_unis.m_nearPlaneWorld.xyz, g_unis.m_nearPlaneWorld.w, hitpointB);
 
 		F32 minDistFromNearPlane;
 		F32 maxDistFromNearPlane;
@@ -229,75 +196,29 @@ Bool isGiProbe(U32 objectIdx)
 		}
 
 		const I32 startZSplit = max(I32(minDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0);
-		const I32 endZSplit =
-			clamp(I32(maxDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0, I32(kZSplitCount) - 1);
+		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0, I32(kZSplitCount) - 1);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
-			InterlockedOr(s_zSplitMasks[i], mask);
-		}
-	}
-
-	// Sync
-	GroupMemoryBarrierWithGroupSync();
-
-	// First sample writes the tile
-	if(sampleIdx == 0u && s_tileMasks[localTileIdx] != 0)
-	{
-		if(isPointLight(clustererObjectIdx))
-		{
-			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask, s_tileMasks[localTileIdx]);
-		}
-		else if(isSpotLight(clustererObjectIdx))
-		{
-			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask, s_tileMasks[localTileIdx]);
-		}
-		else if(isDecal(clustererObjectIdx))
-		{
-			InterlockedOr(g_clusters[tileIdx].m_decalsMask, s_tileMasks[localTileIdx]);
-		}
-		else if(isFogVolume(clustererObjectIdx))
-		{
-			InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, U32(s_tileMasks[localTileIdx]));
-		}
-		else if(isReflectionProbe(clustererObjectIdx))
-		{
-			InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, U32(s_tileMasks[localTileIdx]));
-		}
-		else
-		{
-			InterlockedOr(g_clusters[tileIdx].m_giProbesMask, U32(s_tileMasks[localTileIdx]));
-		}
-	}
-
-	// All invocations write at least one Z split
-	for(U32 i = svGroupIdx * splitsPerInvocation; i < (svGroupIdx + 1u) * splitsPerInvocation && i < kZSplitCount; ++i)
-	{
-		if(s_zSplitMasks[i] != 0)
-		{
-			if(isPointLight(clustererObjectIdx))
+#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+			if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 			{
-				InterlockedOr(g_clusters[kTileCount + i].m_pointLightsMask, s_zSplitMasks[i]);
-			}
-			else if(isSpotLight(clustererObjectIdx))
-			{
-				InterlockedOr(g_clusters[kTileCount + i].m_spotLightsMask, s_zSplitMasks[i]);
-			}
-			else if(isDecal(clustererObjectIdx))
-			{
-				InterlockedOr(g_clusters[kTileCount + i].m_decalsMask, s_zSplitMasks[i]);
-			}
-			else if(isFogVolume(clustererObjectIdx))
-			{
-				InterlockedOr(g_clusters[kTileCount + i].m_fogDensityVolumesMask, U32(s_zSplitMasks[i]));
-			}
-			else if(isReflectionProbe(clustererObjectIdx))
-			{
-				InterlockedOr(g_clusters[kTileCount + i].m_reflectionProbesMask, U32(s_zSplitMasks[i]));
+				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_pointLightsMask[maskArrayIdx], mask);
 			}
 			else
 			{
-				InterlockedOr(g_clusters[kTileCount + i].m_giProbesMask, U32(s_zSplitMasks[i]));
+				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_spotLightsMask[maskArrayIdx], mask);
 			}
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_decalsMask[maskArrayIdx], mask);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_fogDensityVolumesMask, mask);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_reflectionProbesMask, mask);
+#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_giProbesMask, mask);
+#else
+#	error See file
+#endif
 		}
 	}
 }

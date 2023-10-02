@@ -13,7 +13,7 @@
 namespace anki {
 
 ScriptComponent::ScriptComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 {
 	ANKI_ASSERT(node);
 }

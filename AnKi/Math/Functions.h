@@ -105,8 +105,7 @@ inline T modf(T x, T& intPart)
 }
 
 /// The same as abs/fabs. For ints and floats.
-template<typename T,
-		 ANKI_ENABLE(std::is_floating_point<T>::value || (std::is_integral<T>::value && std::is_signed<T>::value))>
+template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value || (std::is_integral<T>::value && std::is_signed<T>::value))>
 inline constexpr T absolute(const T f)
 {
 	return (f < T(0)) ? -f : f;
@@ -153,6 +152,12 @@ inline constexpr T clamp(T v, T minv, T maxv)
 {
 	ANKI_ASSERT(minv <= maxv);
 	return min<T>(max<T>(minv, v), maxv);
+}
+
+template<typename T>
+inline constexpr T saturate(T v)
+{
+	return clamp<T>(v, T(0), T(1));
 }
 
 /// Returns 1 or -1 based on the sign

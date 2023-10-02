@@ -10,21 +10,22 @@
 ANKI_BEGIN_NAMESPACE
 
 // RT shadows
-constexpr U32 kMaxRtShadowLayers = 8u;
-
-struct RtShadowsUniforms
-{
-	F32 historyRejectFactor[kMaxRtShadowLayers]; // 1.0 means reject, 0.0 not reject
-};
-
 struct RtShadowsDenoiseUniforms
 {
-	Mat4 invViewProjMat;
+	Mat4 m_invViewProjMat;
 
-	F32 time;
-	F32 padding0;
-	F32 padding1;
-	F32 padding2;
+	F32 m_time;
+	F32 m_padding0;
+	F32 m_padding1;
+	F32 m_padding2;
+};
+
+struct RtShadowsSbtBuildUniforms
+{
+	U32 m_shaderHandleDwordSize;
+	U32 m_sbtRecordDwordSize;
+	U32 m_padding0;
+	U32 m_padding1;
 };
 
 // Indirect diffuse
@@ -71,13 +72,8 @@ struct LensFlareSprite
 struct DepthDownscaleUniforms
 {
 	Vec2 m_srcTexSizeOverOne;
-	U32 m_workgroupCount;
+	U32 m_threadgroupCount;
 	U32 m_mipmapCount;
-
-	U32 m_lastMipWidth;
-	F32 m_padding0;
-	F32 m_padding1;
-	F32 m_padding2;
 };
 
 // Screen space reflections uniforms
@@ -126,25 +122,6 @@ struct VolumetricLightingUniforms
 
 	UVec3 m_volumeSize;
 	F32 m_maxZSplitsToProcessf;
-};
-
-// Pack visible clusterer objects
-struct PointLightExtra
-{
-	Vec2 m_padding0;
-	U32 m_shadowLayer;
-	F32 m_shadowAtlasTileScale;
-
-	Vec4 m_shadowAtlasTileOffsets[6u];
-};
-
-// Pack visible clusterer objects
-struct SpotLightExtra
-{
-	Vec3 m_padding;
-	U32 m_shadowLayer;
-
-	Mat4 m_textureMatrix;
 };
 
 ANKI_END_NAMESPACE

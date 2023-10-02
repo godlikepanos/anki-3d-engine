@@ -6,7 +6,8 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -29,112 +30,58 @@ namespace anki {
 
 DepthDownscale::~DepthDownscale()
 {
-	if(m_clientBufferAddr)
-	{
-		m_clientBuffer->unmap();
-	}
 }
 
 Error DepthDownscale::initInternal()
 {
-	const U32 width = getRenderer().getInternalResolution().x() >> 1;
-	const U32 height = getRenderer().getInternalResolution().y() >> 1;
+	const U32 width = getRenderer().getInternalResolution().x() / 2;
+	const U32 height = getRenderer().getInternalResolution().y() / 2;
 
-	m_mipCount = computeMaxMipmapCount2d(width, height, hHierachicalZMinHeight);
+	m_mipCount = 2;
 
-	m_lastMipSize.x() = width >> (m_mipCount - 1);
-	m_lastMipSize.y() = height >> (m_mipCount - 1);
+	const UVec2 lastMipSize = UVec2(width, height) >> (m_mipCount - 1);
 
-	ANKI_R_LOGV("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, m_lastMipSize.x(),
-				m_lastMipSize.y());
+	ANKI_R_LOGV("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, lastMipSize.x(), lastMipSize.y());
 
-	const Bool preferCompute = ConfigSet::getSingleton().getRPreferCompute();
-	const Bool supportsReductionSampler = GrManager::getSingleton().getDeviceCapabilities().m_samplingFilterMinMax;
+	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Create RT descr
 	{
-		TextureUsageBit usage = TextureUsageBit::kAllSampled;
-		if(preferCompute)
-		{
-			usage |= TextureUsageBit::kImageComputeWrite;
-		}
-		else
-		{
-			usage |= TextureUsageBit::kFramebufferWrite;
-		}
-
-		TextureInitInfo texInit =
-			getRenderer().create2DRenderTargetInitInfo(width, height, Format::kR32_Sfloat, usage, "HiZ");
-		texInit.m_mipmapCount = U8(m_mipCount);
-		m_hizTex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSampledFragment);
+		m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR32_Sfloat, "Downscaled depth");
+		m_rtDescr.m_mipmapCount = U8(m_mipCount);
+		m_rtDescr.bake();
 	}
 
 	// Progs
 	if(preferCompute)
 	{
 		ANKI_CHECK(
-			ResourceManager::getSingleton().loadResource("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", m_prog));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-		variantInitInfo.addMutation("WAVE_OPERATIONS", 0);
-
-		const ShaderProgramResourceVariant* variant;
-		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProg = variant->getProgram();
+			loadShaderProgram("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", Array<SubMutation, 1>{{{"WAVE_OPERATIONS", 0}}}, m_prog, m_grProg));
 	}
 	else
 	{
-		ANKI_CHECK(
-			ResourceManager::getSingleton().loadResource("ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-		variantInitInfo.addMutation("REDUCTION_SAMPLER", supportsReductionSampler);
-
-		const ShaderProgramResourceVariant* variant;
-		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProg = variant->getProgram();
-
-		// 1st mip prog
-		variantInitInfo.addMutation("REDUCTION_SAMPLER", 1);
-		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_firstMipGrProg = variant->getProgram();
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog, m_grProg));
 	}
 
 	// Counter buffer
 	if(preferCompute)
 	{
-		BufferInitInfo buffInit("HiZCounterBuffer");
+		BufferInitInfo buffInit("Depth downscale counter buffer");
 		buffInit.m_size = sizeof(U32);
 		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
 		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
-	}
 
-	// Client buffer
-	{
-		// Create buffer
-		BufferInitInfo buffInit("HiZ Client");
-		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
-		buffInit.m_size = PtrSize(m_lastMipSize.y()) * PtrSize(m_lastMipSize.x()) * sizeof(F32);
-		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageFragmentWrite;
-		m_clientBuffer = GrManager::getSingleton().newBuffer(buffInit);
+		// Zero it
+		CommandBufferInitInfo cmdbInit;
+		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-		m_clientBufferAddr = m_clientBuffer->map(0, buffInit.m_size, BufferMapAccessBit::kRead);
+		cmdb->fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
 
-		// Fill the buffer with 1.0f
-		for(U32 i = 0; i < m_lastMipSize.x() * m_lastMipSize.y(); ++i)
-		{
-			static_cast<F32*>(m_clientBufferAddr)[i] = 1.0f;
-		}
-	}
+		FencePtr fence;
+		cmdb->flush({}, &fence);
 
-	// Reduction sampler
-	if(!preferCompute && supportsReductionSampler)
-	{
-		SamplerInitInfo sinit("HiZReductionMax");
-		sinit.m_addressing = SamplingAddressing::kClamp;
-		sinit.m_mipmapFilter = SamplingFilter::kMax;
-		sinit.m_minMagFilter = SamplingFilter::kMax;
-		m_reductionSampler = GrManager::getSingleton().newSampler(sinit);
+		fence->clientWait(6.0_sec);
 	}
 
 	if(!preferCompute)
@@ -163,31 +110,18 @@ Error DepthDownscale::init()
 	return err;
 }
 
-void DepthDownscale::importRenderTargets(RenderingContext& ctx)
-{
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-
-	// Import RT
-	if(m_hizTexImportedOnce)
-	{
-		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex);
-	}
-	else
-	{
-		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex, TextureUsageBit::kSampledFragment);
-		m_hizTexImportedOnce = true;
-	}
-}
-
 void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	if(ConfigSet::getSingleton().getRPreferCompute())
+	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+
+	if(g_preferComputeCVar.get())
 	{
 		// Do it with compute
 
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HiZ");
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Depth downscale");
 
 		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute,
 								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
@@ -196,11 +130,48 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		{
 			TextureSubresourceInfo subresource;
 			subresource.m_firstMipmap = mip;
-			pass.newTextureDependency(m_runCtx.m_hizRt, TextureUsageBit::kImageComputeWrite, subresource);
+			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, subresource);
 		}
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			runCompute(rgraphCtx);
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_grProg.get());
+
+			varAU2(dispatchThreadGroupCountXY);
+			varAU2(workGroupOffset); // needed if Left and Top are not 0,0
+			varAU2(numWorkGroupsAndMips);
+			varAU4(rectInfo) = initAU4(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
+
+			DepthDownscaleUniforms pc;
+			pc.m_threadgroupCount = numWorkGroupsAndMips[0];
+			pc.m_mipmapCount = numWorkGroupsAndMips[1];
+			pc.m_srcTexSizeOverOne = 1.0f / Vec2(getRenderer().getInternalResolution());
+
+			cmdb.setPushConstants(&pc, sizeof(pc));
+
+			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
+			{
+				TextureSubresourceInfo subresource;
+				if(mip < m_mipCount)
+				{
+					subresource.m_firstMipmap = mip;
+				}
+				else
+				{
+					subresource.m_firstMipmap = 0; // Put something random
+				}
+
+				rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, subresource, mip);
+			}
+
+			cmdb.bindStorageBuffer(0, 1, m_counterBuffer.get(), 0, sizeof(U32));
+
+			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+
+			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
 	}
 	else
@@ -209,10 +180,9 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
 		{
-			static constexpr Array<CString, 8> passNames = {"HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4",
-															"HiZ #5", "HiZ #6", "HiZ #7", "HiZ #8"};
+			static constexpr Array<CString, 4> passNames = {"Depth downscale #1", "Depth downscale #2", "Depth downscale #3", "Depth downscale #4"};
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
-			pass.setFramebufferInfo(m_fbDescrs[mip], {m_runCtx.m_hizRt});
+			pass.setFramebufferInfo(m_fbDescrs[mip], {m_runCtx.m_rt});
 
 			if(mip == 0)
 			{
@@ -223,133 +193,36 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			{
 				TextureSurfaceInfo subresource;
 				subresource.m_level = mip - 1;
-				pass.newTextureDependency(m_runCtx.m_hizRt, TextureUsageBit::kSampledFragment, subresource);
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, subresource);
 			}
 
 			TextureSurfaceInfo subresource;
 			subresource.m_level = mip;
-			pass.newTextureDependency(m_runCtx.m_hizRt, TextureUsageBit::kFramebufferWrite, subresource);
+			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, subresource);
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
-				runGraphics(mip, rgraphCtx);
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+				cmdb.bindShaderProgram(m_grProg.get());
+				cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+
+				if(mip == 0)
+				{
+					rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				}
+				else
+				{
+					TextureSubresourceInfo subresource;
+					subresource.m_firstMipmap = mip - 1;
+					rgraphCtx.bindTexture(0, 0, m_runCtx.m_rt, subresource);
+				}
+
+				const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;
+				cmdb.setViewport(0, 0, size.x(), size.y());
+				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			});
 		}
 	}
-}
-
-void DepthDownscale::runCompute(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	// Zero the counter buffer before everything else
-	if(!m_counterBufferZeroed) [[unlikely]]
-	{
-		m_counterBufferZeroed = true;
-
-		cmdb->fillBuffer(m_counterBuffer, 0, kMaxPtrSize, 0);
-
-		const BufferBarrierInfo barrier = {m_counterBuffer.get(), BufferUsageBit::kTransferDestination,
-										   BufferUsageBit::kStorageComputeWrite, 0, kMaxPtrSize};
-		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
-	}
-
-	cmdb->bindShaderProgram(m_grProg);
-
-	varAU2(dispatchThreadGroupCountXY);
-	varAU2(workGroupOffset); // needed if Left and Top are not 0,0
-	varAU2(numWorkGroupsAndMips);
-	varAU4(rectInfo) =
-		initAU4(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo);
-	SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
-
-	DepthDownscaleUniforms pc;
-	pc.m_workgroupCount = numWorkGroupsAndMips[0];
-	pc.m_mipmapCount = numWorkGroupsAndMips[1];
-	pc.m_srcTexSizeOverOne = 1.0f / Vec2(getRenderer().getInternalResolution());
-	pc.m_lastMipWidth = m_lastMipSize.x();
-
-	cmdb->setPushConstants(&pc, sizeof(pc));
-
-	constexpr U32 maxMipsSpdCanProduce = 12;
-	for(U32 mip = 0; mip < maxMipsSpdCanProduce; ++mip)
-	{
-		TextureSubresourceInfo subresource;
-		if(mip < m_mipCount)
-		{
-			subresource.m_firstMipmap = mip;
-		}
-		else
-		{
-			subresource.m_firstMipmap = 0;
-		}
-
-		rgraphCtx.bindImage(0, 0, m_runCtx.m_hizRt, subresource, mip);
-	}
-
-	if(m_mipCount >= 5)
-	{
-		TextureSubresourceInfo subresource;
-		subresource.m_firstMipmap = 4;
-		rgraphCtx.bindImage(0, 1, m_runCtx.m_hizRt, subresource);
-	}
-	else
-	{
-		// Bind something random
-		TextureSubresourceInfo subresource;
-		subresource.m_firstMipmap = 0;
-		rgraphCtx.bindImage(0, 1, m_runCtx.m_hizRt, subresource);
-	}
-
-	cmdb->bindStorageBuffer(0, 2, m_counterBuffer, 0, kMaxPtrSize);
-	cmdb->bindStorageBuffer(0, 3, m_clientBuffer, 0, kMaxPtrSize);
-
-	cmdb->bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(),
-						  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
-	cmdb->dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
-}
-
-void DepthDownscale::runGraphics(U32 mip, RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	if(mip == 0)
-	{
-		rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
-
-		cmdb->bindShaderProgram(m_firstMipGrProg);
-	}
-	else
-	{
-		TextureSubresourceInfo subresource;
-		subresource.m_firstMipmap = mip - 1;
-		rgraphCtx.bindTexture(0, 0, m_runCtx.m_hizRt, subresource);
-
-		if(m_reductionSampler.isCreated())
-		{
-			cmdb->bindSampler(0, 1, m_reductionSampler);
-		}
-		else
-		{
-			cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
-		}
-
-		cmdb->bindShaderProgram(m_grProg);
-	}
-
-	cmdb->bindStorageBuffer(0, 2, m_clientBuffer, 0, kMaxPtrSize);
-
-	const UVec4 pc((mip != m_mipCount - 1) ? 0 : m_lastMipSize.x());
-	cmdb->setPushConstants(&pc, sizeof(pc));
-
-	const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;
-	cmdb->setViewport(0, 0, size.x(), size.y());
-	cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
 }
 
 } // end namespace anki

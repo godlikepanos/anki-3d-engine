@@ -10,11 +10,14 @@
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/Singleton.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/Logger.h>
 
 namespace anki {
 
 /// @addtogroup util_other
 /// @{
+
+#if ANKI_TRACING_ENABLED
 
 /// @memberof Tracer
 class TracerEventHandle
@@ -54,8 +57,7 @@ public:
 
 /// Tracer flush callback.
 /// @memberof Tracer
-using TracerFlushCallback = void (*)(void* userData, ThreadId tid, ConstWeakArray<TracerEvent> events,
-									 ConstWeakArray<TracerCounter> counters);
+using TracerFlushCallback = void (*)(void* userData, ThreadId tid, ConstWeakArray<TracerEvent> events, ConstWeakArray<TracerCounter> counters);
 
 /// Tracer.
 class Tracer : public MakeSingleton<Tracer>
@@ -95,6 +97,7 @@ public:
 
 	void setEnabled(Bool enabled)
 	{
+		ANKI_UTIL_LOGV("Tracing %s", (enabled) ? "enabled" : "disable");
 		m_enabled = enabled;
 	}
 
@@ -132,28 +135,24 @@ class TracerScopedEvent
 public:
 	TracerScopedEvent(const char* name)
 		: m_name(name)
-		, m_tracer(&Tracer::getSingleton())
 	{
-		m_handle = m_tracer->beginEvent();
+		m_handle = Tracer::getSingleton().beginEvent();
 	}
 
 	~TracerScopedEvent()
 	{
-		m_tracer->endEvent(m_name, m_handle);
+		Tracer::getSingleton().endEvent(m_name, m_handle);
 	}
 
 private:
 	const char* m_name;
 	TracerEventHandle m_handle;
-	Tracer* m_tracer;
 };
 
-#if ANKI_ENABLE_TRACE
 #	define ANKI_TRACE_SCOPED_EVENT(name_) TracerScopedEvent _tse##name_(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)))
 #	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) \
 		Tracer::getSingleton().addCustomEvent(ANKI_STRINGIZE(ANKI_CONCATENATE(t, name_)), start_, duration_)
-#	define ANKI_TRACE_INC_COUNTER(name_, val_) \
-		Tracer::getSingleton().incrementCounter(ANKI_STRINGIZE(ANKI_CONCATENATE(c, name_)), val_)
+#	define ANKI_TRACE_INC_COUNTER(name_, val_) Tracer::getSingleton().incrementCounter(ANKI_STRINGIZE(ANKI_CONCATENATE(c, name_)), val_)
 #else
 #	define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
 #	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) ((void)0)

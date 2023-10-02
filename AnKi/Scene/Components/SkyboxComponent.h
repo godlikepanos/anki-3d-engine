@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Math.h>
 
@@ -35,13 +34,30 @@ public:
 
 	~SkyboxComponent();
 
+	SkyboxType getSkyboxType() const
+	{
+		return m_type;
+	}
+
 	void setSolidColor(const Vec3& color)
 	{
 		m_type = SkyboxType::kSolidColor;
 		m_color = color.max(Vec3(0.0f));
 	}
 
+	Vec3 getSolidColor() const
+	{
+		ANKI_ASSERT(m_type == SkyboxType::kSolidColor);
+		return m_color;
+	}
+
 	void loadImageResource(CString filename);
+
+	ImageResource& getImageResource() const
+	{
+		ANKI_ASSERT(m_type == SkyboxType::kImage2D);
+		return *m_image;
+	}
 
 	void setMinFogDensity(F32 density)
 	{
@@ -115,10 +131,7 @@ public:
 		return m_fog.m_diffuseColor;
 	}
 
-	void setupSkyboxQueueElement(SkyboxQueueElement& queueElement) const;
-
 private:
-	Spatial m_spatial;
 	SkyboxType m_type = SkyboxType::kSolidColor;
 	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
 	ImageResourcePtr m_image;
@@ -136,7 +149,7 @@ private:
 		Vec3 m_diffuseColor = Vec3(1.0f);
 	} m_fog;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

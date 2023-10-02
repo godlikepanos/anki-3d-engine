@@ -15,9 +15,13 @@
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
+
+static NumericCVar<U32> g_motionBlurSamplesCVar(CVarSubsystem::kRenderer, "MotionBlurSamples", 32, 0, 2048, "Max motion blur samples");
+static NumericCVar<F32> g_filmGrainStrengthCVar(CVarSubsystem::kRenderer, "FilmGrainStrength", 16.0f, 0.0f, 250.0f, "Film grain strength");
 
 Error FinalComposite::initInternal()
 {
@@ -32,25 +36,24 @@ Error FinalComposite::initInternal()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("FILM_GRAIN", (ConfigSet::getSingleton().getRFilmGrainStrength() > 0.0) ? 1 : 0);
+	variantInitInfo.addMutation("FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addConstant("kLutSize", U32(kLutSize));
 	variantInitInfo.addConstant("kFramebufferSize", getRenderer().getPostProcessResolution());
-	variantInitInfo.addConstant("kMotionBlurSamples", ConfigSet::getSingleton().getRMotionBlurSamples());
+	variantInitInfo.addConstant("kMotionBlurSamples", g_motionBlurSamplesCVar.get());
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
 		const ShaderProgramResourceVariant* variant;
 		variantInitInfo.addMutation("DBG_ENABLED", dbg);
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProgs[dbg] = variant->getProgram();
+		m_grProgs[dbg].reset(&variant->getProgram());
 	}
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin",
-															m_defaultVisualizeRenderTargetProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg));
 	const ShaderProgramResourceVariant* variant;
 	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
-	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
+	m_defaultVisualizeRenderTargetGrProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
@@ -79,19 +82,21 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 {
+	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
-		run(ctx, rgraphCtx);
+	pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
+		run(rgraphCtx);
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
-	if(ConfigSet::getSingleton().getRDbg())
+	if(g_dbgCVar.get())
 	{
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSampledFragment);
 	}
@@ -116,10 +121,12 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = ConfigSet::getSingleton().getRDbg();
+	ANKI_TRACE_SCOPED_EVENT(FinalComposite);
+
+	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+	const Bool dbgEnabled = g_dbgCVar.get();
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr optionalDebugProgram;
@@ -128,44 +135,45 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	// Bind program
 	if(hasDebugRt && optionalDebugProgram.isCreated())
 	{
-		cmdb->bindShaderProgram(optionalDebugProgram);
+		cmdb.bindShaderProgram(optionalDebugProgram.get());
 	}
 	else if(hasDebugRt)
 	{
-		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg);
+		cmdb.bindShaderProgram(m_defaultVisualizeRenderTargetGrProg.get());
 	}
 	else
 	{
-		cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
+		cmdb.bindShaderProgram(m_grProgs[dbgEnabled].get());
 	}
 
 	// Bind stuff
 	if(!hasDebugRt)
 	{
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp);
-		cmdb->bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat);
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getScale().getTonemappedRt());
 
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getBloom().getRt());
-		cmdb->bindTexture(0, 5, m_lut->getTextureView());
+		cmdb.bindTexture(0, 5, &m_lut->getTextureView());
 		rgraphCtx.bindColorTexture(0, 6, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(),
-							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 		if(dbgEnabled)
 		{
 			rgraphCtx.bindColorTexture(0, 8, getRenderer().getDbg().getRt());
 		}
 
-		const UVec4 pc(0, 0, floatBitsToUint(ConfigSet::getSingleton().getRFilmGrainStrength()),
-					   getRenderer().getFrameCount() & kMaxU32);
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		if(g_filmGrainStrengthCVar.get() > 0.0f)
+		{
+			const UVec4 pc(0, 0, floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32);
+			cmdb.setPushConstants(&pc, sizeof(pc));
+		}
 	}
 	else
 	{
-		cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		U32 count = 1;
 		for(const RenderTargetHandle& handle : dbgRts)
@@ -177,12 +185,11 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		}
 	}
 
-	cmdb->setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+	cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	drawQuad(cmdb);
 
 	// Draw UI
-	getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(),
-									getRenderer().getPostProcessResolution().y(), ctx, cmdb);
+	getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), cmdb);
 }
 
 } // end namespace anki

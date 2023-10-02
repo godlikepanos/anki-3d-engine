@@ -19,9 +19,10 @@
 
 #	define ANKI_BEGIN_NAMESPACE namespace anki {
 #	define ANKI_END_NAMESPACE }
-#	define ANKI_SHADER_FUNC_INLINE inline
 
 #	define ANKI_ARRAY(type, size, name) Array<type, U32(size)> name
+
+#	define ANKI_CPP_CODE(...) __VA_ARGS__
 
 ANKI_BEGIN_NAMESPACE
 using Address = U64;
@@ -46,13 +47,18 @@ ANKI_END_NAMESPACE
 
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
-#	define ANKI_SHADER_FUNC_INLINE
+#	define inline
+#	define ANKI_ASSERT(x)
 
 #	define ANKI_ARRAY(type, size, name) type name[(U32)size]
+
+#	define ANKI_CPP_CODE(...)
 
 #	define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enum_)
 
 #	define constexpr static const
+
+#	define ANKI_ASSERT(x)
 
 template<typename T>
 void maybeUnused(T a)
@@ -86,8 +92,8 @@ void maybeUnused(T a)
 		[[vk::constant_id(id + 0u)]] const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = (componentType)1; \
 		[[vk::constant_id(id + 1u)]] const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = (componentType)1; \
 		[[vk::constant_id(id + 2u)]] const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = (componentType)1; \
-		static const type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
-								   ANKI_CONCATENATE(_anki_const_2_3_, n))
+		static const type n = \
+			type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), ANKI_CONCATENATE(_anki_const_2_3_, n))
 
 #	define _ANKI_SCONST_X4(type, componentType, n, id) \
 		[[vk::constant_id(id + 0u)]] const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = (componentType)1; \
@@ -276,6 +282,11 @@ struct Mat3x4
 	Vec4 m_row2;
 
 	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(Mat3x4, F32)
+
+	Vec3 getTranslationPart()
+	{
+		return Vec3(m_row0.w, m_row1.w, m_row2.w);
+	}
 };
 
 #	if ANKI_FORCE_FULL_FP_PRECISION
@@ -348,6 +359,36 @@ Vec4 mul(Mat4 m, Vec4 v)
 	return Vec4(a, b, c, d);
 }
 
+Mat4 mul(Mat4 a_, Mat4 b_)
+{
+	const Vec4 a[4] = {a_.m_row0, a_.m_row1, a_.m_row2, a_.m_row3};
+	const Vec4 b[4] = {b_.m_row0, b_.m_row1, b_.m_row2, b_.m_row3};
+	Vec4 c[4];
+
+	[unroll] for(U32 i = 0; i < 4; i++)
+	{
+		Vec4 t1, t2;
+
+		t1 = a[i][0];
+		t2 = b[0] * t1;
+		t1 = a[i][1];
+		t2 += b[1] * t1;
+		t1 = a[i][2];
+		t2 += b[2] * t1;
+		t1 = a[i][3];
+		t2 += b[3] * t1;
+
+		c[i] = t2;
+	}
+
+	Mat4 o;
+	o.m_row0 = c[0];
+	o.m_row1 = c[1];
+	o.m_row2 = c[2];
+	o.m_row3 = c[3];
+	return o;
+}
+
 Vec3 mul(Mat3x4 m, Vec4 v)
 {
 	const F32 a = dot(m.m_row0, v);
@@ -359,6 +400,33 @@ Vec3 mul(Mat3x4 m, Vec4 v)
 Mat3 transpose(Mat3 m)
 {
 	return constructMatrixColumns(m.m_row0, m.m_row1, m.m_row2);
+}
+
+Mat3x4 combineTransformations(Mat3x4 a_, Mat3x4 b_)
+{
+	const Vec4 a[3] = {a_.m_row0, a_.m_row1, a_.m_row2};
+	const Vec4 b[3] = {b_.m_row0, b_.m_row1, b_.m_row2};
+	Vec4 c[3];
+
+	[unroll] for(U32 i = 0; i < 3; i++)
+	{
+		Vec4 t2;
+
+		t2 = b[0] * a[i][0];
+		t2 += b[1] * a[i][1];
+		t2 += b[2] * a[i][2];
+
+		const Vec4 v4 = Vec4(0.0f, 0.0f, 0.0f, a[i][3]);
+		t2 += v4;
+
+		c[i] = t2;
+	}
+
+	Mat3x4 o;
+	o.m_row0 = c[0];
+	o.m_row1 = c[1];
+	o.m_row2 = c[2];
+	return o;
 }
 
 // Common constants
@@ -386,7 +454,7 @@ constexpr F32 kPi = 3.14159265358979323846f;
 
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
-#	define ANKI_SHADER_FUNC_INLINE
+#	define inline
 
 #	define ANKI_SHADER_STATIC_ASSERT(cond_)
 
@@ -428,8 +496,8 @@ constexpr F32 kPi = 3.14159265358979323846f;
 #	extension GL_EXT_nonuniform_qualifier : enable
 #	extension GL_EXT_scalar_block_layout : enable
 
-#	if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) \
-		|| defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
+#	if defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) \
+		|| defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #		extension GL_EXT_ray_tracing : enable
 #	endif
 
@@ -576,8 +644,8 @@ const uint kSizeof_mat4x3 = 48u;
 		layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = componentType(1); \
 		layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = componentType(1); \
 		layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = componentType(1); \
-		constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
-									  ANKI_CONCATENATE(_anki_const_2_3_, n))
+		constWorkaround type n = \
+			type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), ANKI_CONCATENATE(_anki_const_2_3_, n))
 
 #	define _ANKI_SCONST_X4(type, componentType, n, id, constWorkaround) \
 		layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = componentType(1); \
@@ -689,16 +757,15 @@ constexpr F32 kPi = 3.14159265358979323846f;
 //! == Common ==========================================================================================================
 ANKI_BEGIN_NAMESPACE
 
-/// The renderer will group drawcalls into instances up to this number.
-constexpr U32 kMaxInstanceCount = 64u;
-
 constexpr U32 kMaxLodCount = 3u;
 constexpr U32 kMaxShadowCascades = 4u;
 
 constexpr F32 kShadowsPolygonOffsetFactor = 1.25f;
 constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
 
-struct DrawIndirectInfo
+constexpr U32 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
+
+struct DrawIndirectArgs
 {
 	U32 m_vertexCount;
 	U32 m_instanceCount;
@@ -706,7 +773,7 @@ struct DrawIndirectInfo
 	U32 m_firstInstance;
 
 #if defined(__cplusplus)
-	DrawIndirectInfo()
+	DrawIndirectArgs()
 		: m_vertexCount(kMaxU32)
 		, m_instanceCount(1)
 		, m_firstVertex(0)
@@ -714,9 +781,9 @@ struct DrawIndirectInfo
 	{
 	}
 
-	DrawIndirectInfo(const DrawIndirectInfo&) = default;
+	DrawIndirectArgs(const DrawIndirectArgs&) = default;
 
-	DrawIndirectInfo(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+	DrawIndirectArgs(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 		: m_vertexCount(count)
 		, m_instanceCount(instanceCount)
 		, m_firstVertex(first)
@@ -724,20 +791,20 @@ struct DrawIndirectInfo
 	{
 	}
 
-	Bool operator==(const DrawIndirectInfo& b) const
+	Bool operator==(const DrawIndirectArgs& b) const
 	{
-		return m_vertexCount == b.m_vertexCount && m_instanceCount == b.m_instanceCount
-			   && m_firstVertex == b.m_firstVertex && m_firstInstance == b.m_firstInstance;
+		return m_vertexCount == b.m_vertexCount && m_instanceCount == b.m_instanceCount && m_firstVertex == b.m_firstVertex
+			   && m_firstInstance == b.m_firstInstance;
 	}
 
-	Bool operator!=(const DrawIndirectInfo& b) const
+	Bool operator!=(const DrawIndirectArgs& b) const
 	{
 		return !(operator==(b));
 	}
 #endif
 };
 
-struct DrawIndexedIndirectInfo
+struct DrawIndexedIndirectArgs
 {
 	U32 m_indexCount;
 	U32 m_instanceCount;
@@ -746,7 +813,7 @@ struct DrawIndexedIndirectInfo
 	U32 m_firstInstance;
 
 #if defined(__cplusplus)
-	DrawIndexedIndirectInfo()
+	DrawIndexedIndirectArgs()
 		: m_indexCount(kMaxU32)
 		, m_instanceCount(1)
 		, m_firstIndex(0)
@@ -755,9 +822,9 @@ struct DrawIndexedIndirectInfo
 	{
 	}
 
-	DrawIndexedIndirectInfo(const DrawIndexedIndirectInfo&) = default;
+	DrawIndexedIndirectArgs(const DrawIndexedIndirectArgs&) = default;
 
-	DrawIndexedIndirectInfo(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+	DrawIndexedIndirectArgs(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 		: m_indexCount(count)
 		, m_instanceCount(instanceCount)
 		, m_firstIndex(firstIndex)
@@ -766,17 +833,43 @@ struct DrawIndexedIndirectInfo
 	{
 	}
 
-	Bool operator==(const DrawIndexedIndirectInfo& b) const
+	Bool operator==(const DrawIndexedIndirectArgs& b) const
 	{
 		return m_indexCount == b.m_indexCount && m_instanceCount == b.m_instanceCount && m_firstIndex == b.m_firstIndex
 			   && m_vertexOffset == b.m_vertexOffset && m_firstInstance == b.m_firstInstance;
 	}
 
-	Bool operator!=(const DrawIndexedIndirectInfo& b) const
+	Bool operator!=(const DrawIndexedIndirectArgs& b) const
 	{
 		return !(operator==(b));
 	}
 #endif
+};
+
+struct DispatchIndirectArgs
+{
+	U32 m_threadGroupCountX;
+	U32 m_threadGroupCountY;
+	U32 m_threadGroupCountZ;
+};
+
+/// Mirrors VkGeometryInstanceFlagBitsKHR
+enum AccellerationStructureFlag : U32
+{
+	kAccellerationStructureFlagTriangleFacingCullDisable = 1 << 0,
+	kAccellerationStructureFlagFlipFacing = 1 << 1,
+	kAccellerationStructureFlagForceOpaque = 1 << 2,
+	kAccellerationStructureFlagForceNoOpaque = 1 << 3,
+	kAccellerationStructureFlagTriangleFrontCounterlockwise = kAccellerationStructureFlagFlipFacing
+};
+
+/// Mirrors VkAccelerationStructureInstanceKHR.
+struct AccelerationStructureInstance
+{
+	Mat3x4 m_transform;
+	U32 m_mask8_instanceCustomIndex24;
+	U32 m_flags8_instanceShaderBindingTableRecordOffset24; ///< flags is AccellerationStructureFlag.
+	UVec2 m_accelerationStructureAddress;
 };
 
 ANKI_END_NAMESPACE

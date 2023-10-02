@@ -111,8 +111,7 @@ public:
 	Bool compareExchange(Value& expected, Value desired, AtomicMemoryOrder successMemOrd = kDefaultMemoryOrder,
 						 AtomicMemoryOrder failMemOrd = kDefaultMemoryOrder)
 	{
-		return m_att.compare_exchange_weak(expected, desired, std::memory_order(successMemOrd),
-										   std::memory_order(failMemOrd));
+		return m_att.compare_exchange_weak(expected, desired, std::memory_order(successMemOrd), std::memory_order(failMemOrd));
 	}
 
 	/// Set @a a to the atomic and return the previous value.

@@ -1,0 +1,88 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator DITHERED_DEPTH_TEST 0 1
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+
+struct Uniforms
+{
+	Vec4 m_color;
+	Mat4 m_viewProjMat;
+};
+
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+
+[[vk::binding(2)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
+[[vk::binding(3)]] StructuredBuffer<U32> g_visibleRenderableBoundingVolumeIndices;
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+};
+
+#pragma anki start vert
+struct VertIn
+{
+	[[vk::location(0)]] Vec3 m_position : POSITION;
+	U32 m_svInstanceId : SV_INSTANCEID;
+};
+
+VertOut main(VertIn input)
+{
+	VertOut output;
+
+	const U32 bvolumeCount = g_visibleRenderableBoundingVolumeIndices[0];
+
+	if(input.m_svInstanceId < bvolumeCount)
+	{
+		const GpuSceneRenderableBoundingVolume bvol = g_renderableBoundingVolumes[g_visibleRenderableBoundingVolumeIndices[input.m_svInstanceId + 1]];
+		Vec3 localPos = input.m_position * bvol.m_aabbExtend + bvol.m_sphereCenter;
+		output.m_svPosition = mul(g_uniforms.m_viewProjMat, Vec4(localPos, 1.0));
+	}
+	else
+	{
+		// Skip this instance by making the vertex degenerate
+		output.m_svPosition = 0.0f;
+	}
+
+	return output;
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <AnKi/Shaders/ImportanceSampling.hlsl>
+
+// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
+#if DITHERED_DEPTH_TEST == 1
+[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(1)]] Texture2D g_depthRt;
+#endif
+
+Vec4 main(VertOut input) : SV_TARGET0
+{
+	ANKI_MAYBE_UNUSED(input);
+
+	// Check if we should skip the frag
+#if DITHERED_DEPTH_TEST == 1
+	const UVec2 random = rand3DPCG16(UVec3(UVec2(input.m_svPosition.xy), 1)).xy;
+	const Vec2 noise = Vec2(random) / 65536.0;
+	const F32 factor = noise.x * noise.y;
+	Vec2 texSize;
+	g_depthRt.GetDimensions(texSize.x, texSize.y);
+	const Vec2 uv = input.m_svPosition.xy / texSize;
+	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
+	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
+	if(depthTestFailed && factor < 0.5)
+	{
+		discard;
+	}
+#endif
+
+	// Write the color
+	return g_uniforms.m_color;
+}
+#pragma anki end

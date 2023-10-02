@@ -45,8 +45,7 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(ConstWeakArray<Vec3> positions, ConstWe
 
 		for(U32 i = 0; i < indices.getSize(); i += 3)
 		{
-			m_mesh->addTriangle(toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]),
-								toBt(positions[indices[i + 2]]));
+			m_mesh->addTriangle(toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]), toBt(positions[indices[i + 2]]));
 		}
 
 		// Create the dynamic shape

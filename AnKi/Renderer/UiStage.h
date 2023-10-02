@@ -20,7 +20,7 @@ class UiStage : public RendererObject
 public:
 	Error init();
 
-	void draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb);
+	void draw(U32 width, U32 height, CommandBuffer& cmdb);
 
 private:
 	FontPtr m_font;

@@ -24,7 +24,12 @@ ShaderProgram* ShaderProgram::newInstance(const ShaderProgramInitInfo& init)
 
 ConstWeakArray<U8> ShaderProgram::getShaderGroupHandles() const
 {
-	return static_cast<const ShaderProgramImpl&>(*this).getShaderGroupHandles();
+	return static_cast<const ShaderProgramImpl&>(*this).getShaderGroupHandlesInternal();
+}
+
+Buffer& ShaderProgram::getShaderGroupHandlesGpuBuffer() const
+{
+	return static_cast<const ShaderProgramImpl&>(*this).getShaderGroupHandlesGpuBufferInternal();
 }
 
 } // end namespace anki

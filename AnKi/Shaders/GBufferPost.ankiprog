@@ -10,20 +10,18 @@
 #pragma anki start frag
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 3u);
 
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] Texture2D g_depthTex;
 [[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
 
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 3u
-#define CLUSTERED_SHADING_DECALS_BINDING 4u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 5u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+[[vk::binding(3)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(4)]] StructuredBuffer<Decal> g_decals;
+[[vk::binding(5)]] StructuredBuffer<Cluster> g_clusters;
 
 ANKI_BINDLESS_SET(1)
 
@@ -52,20 +50,24 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	const Cluster cluster = getClusterFragCoord(Vec3(svPosition.xy, depth), kTileSize, kTileCount, kZSplitCount,
-												g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(svPosition.xy, depth), kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
+										  g_clusteredShading.m_zSplitMagic.y);
 
 	// Make the decalsMask uniform across the wave because we are accessing bindless textures later on
-	ExtendedClusterObjectMask decalsMask = WaveActiveBitAnd(cluster.m_decalsMask);
-	if(decalsMask == 0)
+	U32 decalsMask = cluster.m_decalsMask[0];
+	for(U32 i = 1; i < kMaxVisibleDecals / 32; ++i)
+	{
+		decalsMask |= cluster.m_decalsMask[i];
+	}
+
+	if(WaveActiveAllTrue(decalsMask == 0))
 	{
 		discard;
 	}
 
-	[loop] while(decalsMask != 0)
+	U32 idx;
+	[loop] while((idx = iterateDecals(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(decalsMask);
-		decalsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const Decal decal = g_decals[idx];
 
 		// Project pos to decal space
@@ -93,8 +95,7 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 		RF32 roughnessMetalnessFactor;
 		if(decal.m_roughnessMetalnessTexture != kMaxU32)
 		{
-			roughnessMetalness =
-				g_bindlessTextures2dF32[decal.m_roughnessMetalnessTexture].Sample(g_trilinearRepeatSampler, uv).gb;
+			roughnessMetalness = g_bindlessTextures2dF32[decal.m_roughnessMetalnessTexture].Sample(g_trilinearRepeatSampler, uv).gb;
 			roughnessMetalnessFactor = diff.a;
 		}
 		else

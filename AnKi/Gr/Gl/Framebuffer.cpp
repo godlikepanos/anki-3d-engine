@@ -29,8 +29,7 @@ Framebuffer* Framebuffer::newInstance(GrManager* manager, const FramebufferInitI
 			FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_fb);
 			Error err = impl.init(m_init);
 
-			GlObject::State oldState =
-				impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+			GlObject::State oldState = impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 			(void)oldState;
 

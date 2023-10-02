@@ -29,9 +29,9 @@ class RenderGraphDescription;
 
 /// @name RenderGraph constants
 /// @{
-constexpr U32 kMaxRenderGraphPasses = 128;
+constexpr U32 kMaxRenderGraphPasses = 256;
 constexpr U32 kMaxRenderGraphRenderTargets = 64; ///< Max imported or not render targets in RenderGraph.
-constexpr U32 kMaxRenderGraphBuffers = 64;
+constexpr U32 kMaxRenderGraphBuffers = 256;
 constexpr U32 kMaxRenderGraphAccelerationStructures = 32;
 /// @}
 
@@ -117,106 +117,104 @@ class RenderPassWorkContext
 	friend class RenderGraph;
 
 public:
-	CommandBufferPtr m_commandBuffer;
-	U32 m_currentSecondLevelCommandBufferIndex ANKI_DEBUG_CODE(= 0);
-	U32 m_secondLevelCommandBufferCount ANKI_DEBUG_CODE(= 0);
+	CommandBuffer* m_commandBuffer = nullptr;
+	U32 m_currentSecondLevelCommandBufferIndex = 0;
+	U32 m_secondLevelCommandBufferCount = 0;
 
-	void getBufferState(BufferHandle handle, BufferPtr& buff) const;
+	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 
-	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
-							  TexturePtr& tex) const;
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Texture*& tex) const;
 
 	/// Create a whole texture view from a handle
 	TextureViewPtr createTextureView(RenderTargetHandle handle)
 	{
-		TexturePtr tex = getTexture(handle);
+		Texture* tex = &getTexture(handle);
 		TextureViewInitInfo viewInit(tex, "TmpRenderGraph"); // Use the whole texture
 		getRenderTargetState(handle, viewInit, tex);
 		return GrManager::getSingleton().newTextureView(viewInit);
 	}
 
 	/// Convenience method.
-	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle,
-							   const TextureSubresourceInfo& subresource, const SamplerPtr& sampler)
+	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Sampler* sampler)
 	{
-		TexturePtr tex;
+		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view.get(), sampler);
 	}
 
 	/// Convenience method.
 	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource)
 	{
-		TexturePtr tex;
+		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view);
+		m_commandBuffer->bindTexture(set, binding, view.get());
 	}
 
 	/// Convenience method to bind the whole texture as color.
-	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, const SamplerPtr& sampler)
+	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, Sampler* sampler)
 	{
-		TexturePtr tex = getTexture(handle);
+		Texture* tex = &getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
 		getRenderTargetState(handle, viewInit, tex);
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view.get(), sampler);
 	}
 
 	/// Convenience method to bind the whole texture as color.
 	void bindColorTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
 	{
-		TexturePtr tex = getTexture(handle);
+		Texture* tex = &getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
 		getRenderTargetState(handle, viewInit, tex);
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view, arrayIdx);
+		m_commandBuffer->bindTexture(set, binding, view.get(), arrayIdx);
 	}
 
 	/// Convenience method.
-	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
-				   U32 arrayIdx = 0)
+	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
 	{
-		TexturePtr tex;
+		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
+		m_commandBuffer->bindImage(set, binding, view.get(), arrayIdx);
 	}
 
 	/// Convenience method to bind the whole image.
 	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
 	{
-		TexturePtr tex;
-#if ANKI_ENABLE_ASSERTIONS
-		tex = getTexture(handle);
-		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1
-					&& tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
+		Texture* tex;
+#if ANKI_ASSERTIONS_ENABLED
+		tex = &getTexture(handle);
+		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1 && tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
 #endif
 		const TextureSubresourceInfo subresource;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
+		m_commandBuffer->bindImage(set, binding, view.get(), arrayIdx);
 	}
 
 	/// Convenience method.
 	void bindStorageBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
-		BufferPtr buff;
-		getBufferState(handle, buff);
-		m_commandBuffer->bindStorageBuffer(set, binding, buff, 0, kMaxPtrSize);
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindStorageBuffer(set, binding, buff, offset, range);
 	}
 
 	/// Convenience method.
 	void bindUniformBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
-		BufferPtr buff;
-		getBufferState(handle, buff);
-		m_commandBuffer->bindUniformBuffer(set, binding, buff, 0, kMaxPtrSize);
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindUniformBuffer(set, binding, buff, offset, range);
 	}
 
 	/// Convenience method.
@@ -227,7 +225,7 @@ private:
 	U32 m_passIdx ANKI_DEBUG_CODE(= kMaxU32);
 	U32 m_batchIdx ANKI_DEBUG_CODE(= kMaxU32);
 
-	TexturePtr getTexture(RenderTargetHandle handle) const;
+	Texture& getTexture(RenderTargetHandle handle) const;
 };
 
 /// RenderGraph pass dependency.
@@ -247,8 +245,7 @@ public:
 	}
 
 	/// Dependency to the whole texture.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage,
-						 DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_texture({handle, usage, TextureSubresourceInfo()})
 		, m_type(Type::kTexture)
 	{
@@ -333,14 +330,12 @@ public:
 		setWork(0, func);
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage,
-							  const TextureSubresourceInfo& subresource)
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
 	{
 		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, subresource));
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage,
-							  DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
 		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, aspect));
 	}
@@ -463,17 +458,13 @@ public:
 		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
 	}
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo,
-							ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {},
-							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
-							U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setFramebufferInfo(const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
+							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
+							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo,
-							std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {},
-							RenderTargetHandle shadingRateRenderTargetHandle = {}, U32 minx = 0, U32 miny = 0,
-							U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setFramebufferInfo(const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
+							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
+							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
 
 private:
 	Array<RenderTargetHandle, kMaxColorRenderTargets + 2> m_rtHandles;
@@ -521,21 +512,25 @@ public:
 	ComputeRenderPassDescription& newComputeRenderPass(CString name);
 
 	/// Import an existing render target and let the render graph know about it's up-to-date usage.
-	RenderTargetHandle importRenderTarget(TexturePtr tex, TextureUsageBit usage);
+	RenderTargetHandle importRenderTarget(Texture* tex, TextureUsageBit usage);
 
-	/// Import an existing render target and let the render graph find it's current usage by looking at the previous
-	/// frame.
-	RenderTargetHandle importRenderTarget(TexturePtr tex);
+	/// Import an existing render target and let the render graph find it's current usage by looking at the previous frame.
+	RenderTargetHandle importRenderTarget(Texture* tex);
 
 	/// Get or create a new render target.
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
 
 	/// Import a buffer.
-	BufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = kMaxPtrSize);
+	BufferHandle importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = kMaxPtrSize);
+
+	/// Import a buffer.
+	BufferHandle importBuffer(BufferUsageBit usage, const BufferOffsetRange& buff)
+	{
+		return importBuffer(buff.m_buffer, usage, buff.m_offset, buff.m_range);
+	}
 
 	/// Import an AS.
-	AccelerationStructureHandle importAccelerationStructure(AccelerationStructurePtr as,
-															AccelerationStructureUsageBit usage);
+	AccelerationStructureHandle importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage);
 
 	/// Gather statistics.
 	void setStatisticsEnabled(Bool gather)
@@ -569,7 +564,7 @@ private:
 		Bool m_importedAndUndefinedUsage = false;
 	};
 
-	class Buffer : public Resource
+	class BufferRsrc : public Resource
 	{
 	public:
 		BufferUsageBit m_usage;
@@ -588,7 +583,7 @@ private:
 	StackMemoryPool* m_pool = nullptr;
 	DynamicArray<RenderPassDescriptionBase*, MemoryPoolPtrWrapper<StackMemoryPool>> m_passes{m_pool};
 	DynamicArray<RT, MemoryPoolPtrWrapper<StackMemoryPool>> m_renderTargets{m_pool};
-	DynamicArray<Buffer, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers{m_pool};
+	DynamicArray<BufferRsrc, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers{m_pool};
 	DynamicArray<AS, MemoryPoolPtrWrapper<StackMemoryPool>> m_as{m_pool};
 	Bool m_gatherStatistics = false;
 
@@ -602,11 +597,11 @@ private:
 		}
 		else if(offsetA <= offsetB)
 		{
-			return offsetA + rangeA >= offsetB;
+			return offsetA + rangeA > offsetB;
 		}
 		else
 		{
-			return offsetB + rangeB >= offsetA;
+			return offsetB + rangeB > offsetA;
 		}
 	}
 };
@@ -648,7 +643,7 @@ public:
 	/// @{
 
 	/// Will call a number of RenderPassWorkCallback that populate 2nd level command buffers.
-	void runSecondLevel(U32 threadIdx);
+	void runSecondLevel();
 	/// @}
 
 	/// @name 3rd step methods
@@ -660,7 +655,7 @@ public:
 
 	/// @name 3rd step methods
 	/// @{
-	void flush();
+	void flush(FencePtr* optionalFence = nullptr);
 	/// @}
 
 	/// @name 4th step methods
@@ -685,7 +680,7 @@ private:
 	class Pass;
 	class Batch;
 	class RT;
-	class Buffer;
+	class BufferRange;
 	class AS;
 	class TextureBarrier;
 	class BufferBarrier;
@@ -735,8 +730,8 @@ private:
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles,
-										  CString name, Bool& drawsToPresentableTex);
+	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name,
+										  Bool& drawsToPresentableTex);
 
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();
@@ -750,10 +745,9 @@ private:
 	void setTextureBarrier(Batch& batch, const RenderPassDependency& consumer);
 
 	template<typename TFunc>
-	static void iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func);
+	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceInfo& subresource, TFunc func);
 
-	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource,
-					  TextureUsageBit& usage) const;
+	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{
@@ -763,9 +757,9 @@ private:
 	static GrString asUsageToStr(StackMemoryPool& pool, AccelerationStructureUsageBit usage);
 	/// @}
 
-	TexturePtr getTexture(RenderTargetHandle handle) const;
-	BufferPtr getBuffer(BufferHandle handle) const;
-	AccelerationStructurePtr getAs(AccelerationStructureHandle handle) const;
+	Texture& getTexture(RenderTargetHandle handle) const;
+	void getCachedBuffer(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
+	AccelerationStructure* getAs(AccelerationStructureHandle handle) const;
 };
 /// @}
 

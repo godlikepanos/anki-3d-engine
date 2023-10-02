@@ -8,7 +8,6 @@
 #include <AnKi/Scene/Frustum.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Octree.h>
 #include <AnKi/Collision.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ImageResource.h>
@@ -17,12 +16,9 @@
 namespace anki {
 
 LightComponent::LightComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
-	, m_uuid(SceneGraph::getSingleton().getNewUuid())
-	, m_spatial(this)
+	: SceneComponent(node, kClassType)
 	, m_type(LightComponentType::kPoint)
 {
-	ANKI_ASSERT(m_uuid > 0);
 	m_point.m_radius = 1.0f;
 
 	setLightComponentType(LightComponentType::kPoint);
@@ -31,76 +27,43 @@ LightComponent::LightComponent(SceneNode* node)
 
 LightComponent::~LightComponent()
 {
-	deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
-	m_spatial.removeFromOctree(SceneGraph::getSingleton().getOctree());
-
-	if(m_gpuSceneLightIndex != kMaxU32)
+	if(m_type == LightComponentType::kDirectional)
 	{
-		if(m_type == LightComponentType::kPoint)
-		{
-			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-				GpuSceneContiguousArrayType::kPointLights, m_gpuSceneLightIndex);
-		}
-		else if(m_type == LightComponentType::kSpot)
-		{
-			SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-				GpuSceneContiguousArrayType::kSpotLights, m_gpuSceneLightIndex);
-		}
-		else
-		{
-			ANKI_ASSERT(0);
-		}
+		SceneGraph::getSingleton().removeDirectionalLight(this);
 	}
 }
 
-void LightComponent::setLightComponentType(LightComponentType type)
+void LightComponent::setLightComponentType(LightComponentType newType)
 {
-	ANKI_ASSERT(type >= LightComponentType::kFirst && type < LightComponentType::kCount);
-	m_shapeUpdated = true;
-	m_typeChanged = type != m_type;
+	ANKI_ASSERT(newType >= LightComponentType::kFirst && newType < LightComponentType::kCount);
+	const LightComponentType oldType = m_type;
+	const Bool typeChanged = newType != oldType;
 
-	if(type == LightComponentType::kDirectional)
+	if(typeChanged)
 	{
-		m_spatial.setAlwaysVisible(true);
-		m_spatial.setUpdatesOctreeBounds(false);
-	}
-	else
-	{
-		m_spatial.setAlwaysVisible(false);
-		m_spatial.setUpdatesOctreeBounds(true);
-	}
+		m_type = newType;
+		m_shadowAtlasUvViewportCount = 0;
+		m_shapeDirty = true;
+		m_otherDirty = true;
+		m_uuid = 0;
 
-	if(m_typeChanged && m_gpuSceneLightIndex != kMaxU32)
-	{
-		SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().deferredFree(
-			(m_type == LightComponentType::kPoint) ? GpuSceneContiguousArrayType::kPointLights
-												   : GpuSceneContiguousArrayType::kSpotLights,
-			m_gpuSceneLightIndex);
-		m_gpuSceneLightIndex = kMaxU32;
+		if(newType == LightComponentType::kDirectional)
+		{
+			// Now it's directional, inform the scene
+			SceneGraph::getSingleton().addDirectionalLight(this);
+		}
+		else if(oldType == LightComponentType::kDirectional)
+		{
+			// It was directional, inform the scene
+			SceneGraph::getSingleton().removeDirectionalLight(this);
+		}
 	}
-
-	if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kPoint)
-	{
-		m_gpuSceneLightIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-			GpuSceneContiguousArrayType::kPointLights);
-	}
-	else if(m_gpuSceneLightIndex == kMaxU32 && type == LightComponentType::kSpot)
-	{
-		m_gpuSceneLightIndex = SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().allocate(
-			GpuSceneContiguousArrayType::kSpotLights);
-	}
-
-	m_type = type;
 }
 
 Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	const Bool typeChanged = m_typeChanged;
-	const Bool moveUpdated = info.m_node->movedThisFrame() || typeChanged;
-	const Bool shapeUpdated = m_shapeUpdated || typeChanged;
-	updated = moveUpdated || shapeUpdated || typeChanged;
-	m_shapeUpdated = false;
-	m_typeChanged = false;
+	const Bool moveUpdated = info.m_node->movedThisFrame();
+	updated = moveUpdated || m_shapeDirty || m_otherDirty;
 
 	if(moveUpdated)
 	{
@@ -109,171 +72,149 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	if(updated && m_type == LightComponentType::kPoint)
 	{
-		const Sphere sphere(m_worldTransform.getOrigin(), m_point.m_radius);
-		m_spatial.setBoundingShape(sphere);
-
-		if(m_shadow)
+		if(!m_shadow)
 		{
-			if(m_frustums == nullptr || m_frustumCount != 6) [[unlikely]]
-			{
-				// Allocate, initialize and update the frustums, just do everything to avoid bugs
-				deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
-				m_frustums = newArray<Frustum>(SceneMemoryPool::getSingleton(), 6);
-				m_frustumCount = 6;
+			m_uuid = 0;
+		}
+		else if(m_uuid == 0)
+		{
+			m_uuid = SceneGraph::getSingleton().getNewUuid();
+		}
 
-				for(U32 i = 0; i < 6; i++)
-				{
-					m_frustums[i].init(FrustumType::kPerspective);
-					m_frustums[i].setPerspective(kClusterObjectFrustumNearPlane, m_point.m_radius, kPi / 2.0f,
-												 kPi / 2.0f);
-					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(),
-															  Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-				}
+		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 6;
+
+		// Upload the hash
+		if(reallyShadow)
+		{
+			if(!m_hash.isValid())
+			{
+				m_hash.allocate();
 			}
 
-			// Update the frustums
-			for(U32 i = 0; i < 6; i++)
+			if(m_shapeDirty || moveUpdated)
 			{
-				if(shapeUpdated)
-				{
-					m_frustums[i].setFar(m_point.m_radius);
-				}
-
-				if(moveUpdated || shapeUpdated)
-				{
-					m_frustums[i].setWorldTransform(Transform(m_worldTransform.getOrigin(),
-															  Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-				}
+				GpuSceneLightVisibleRenderablesHash hash = {};
+				m_hash.uploadToGpuScene(hash);
 			}
 		}
 
 		// Upload to the GPU scene
-		GpuScenePointLight gpuLight;
+		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
 		gpuLight.m_radius = m_point.m_radius;
 		gpuLight.m_diffuseColor = m_diffColor.xyz();
-		gpuLight.m_squareRadiusOverOne = 1.0f / (m_point.m_radius * m_point.m_radius);
-		gpuLight.m_shadow = m_shadow;
-		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuScenePointLight)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kPointLights);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
+		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
+		gpuLight.m_flags = GpuSceneLightFlag::kPointLight;
+		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
+		gpuLight.m_componentArrayIndex = getArrayIndex();
+		gpuLight.m_uuid = m_uuid;
+		for(U32 f = 0; f < m_shadowAtlasUvViewportCount; ++f)
+		{
+			gpuLight.m_spotLightMatrixOrPointLightUvViewports[f] = m_shadowAtlasUvViewports[f];
+		}
+
+		if(!m_gpuSceneLight.isValid())
+		{
+			m_gpuSceneLight.allocate();
+		}
+		m_gpuSceneLight.uploadToGpuScene(gpuLight);
 	}
 	else if(updated && m_type == LightComponentType::kSpot)
 	{
-		// Update texture matrix
-		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-							1.0f);
-		const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
-																	 kClusterObjectFrustumNearPlane, m_spot.m_distance);
-		m_spot.m_textureMat = biasMat4 * proj * Mat4(m_worldTransform.getInverse());
-
-		// Update the spatial
-		Array<Vec4, 4> points;
-		computeEdgesOfFrustum(m_spot.m_distance, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
-		Array<Vec3, 5> worldPoints;
-		for(U32 i = 0; i < 4; ++i)
+		if(!m_shadow)
 		{
-			m_spot.m_edgePointsWspace[i] = m_worldTransform.transform(points[i].xyz());
-			worldPoints[i] = m_spot.m_edgePointsWspace[i].xyz();
+			m_uuid = 0;
 		}
-		worldPoints[4] = m_worldTransform.getOrigin().xyz();
-		m_spatial.setBoundingShape(ConstWeakArray<Vec3>(worldPoints));
-
-		if(m_shadow)
+		else if(m_uuid == 0)
 		{
-			if(m_frustums == nullptr || m_frustumCount != 1) [[unlikely]]
-			{
-				// Allocate, initialize and update the frustums, just do everything to avoid bugs
-				deleteArray(SceneMemoryPool::getSingleton(), m_frustums, m_frustumCount);
-				m_frustums = newArray<Frustum>(SceneMemoryPool::getSingleton(), 1);
-				m_frustumCount = 1;
+			m_uuid = SceneGraph::getSingleton().getNewUuid();
+		}
 
-				m_frustums[0].init(FrustumType::kPerspective);
-				m_frustums[0].setPerspective(kClusterObjectFrustumNearPlane, m_spot.m_distance, m_spot.m_outerAngle,
-											 m_spot.m_outerAngle);
-				m_frustums[0].setWorldTransform(m_worldTransform);
+		const Bool reallyShadow = m_shadow && m_shadowAtlasUvViewportCount == 1;
+
+		// Upload the hash
+		if(reallyShadow)
+		{
+			if(!m_hash.isValid())
+			{
+				m_hash.allocate();
 			}
 
-			// Update the frustum
-			if(shapeUpdated)
+			if(m_shapeDirty || moveUpdated)
 			{
-				m_frustums[0].setFar(m_spot.m_distance);
-				m_frustums[0].setFovX(m_spot.m_outerAngle);
-				m_frustums[0].setFovY(m_spot.m_outerAngle);
-			}
-
-			if(moveUpdated)
-			{
-				m_frustums[0].setWorldTransform(m_worldTransform);
+				GpuSceneLightVisibleRenderablesHash hash = {};
+				m_hash.uploadToGpuScene(hash);
 			}
 		}
 
 		// Upload to the GPU scene
-		GpuSceneSpotLight gpuLight;
+		GpuSceneLight gpuLight = {};
 		gpuLight.m_position = m_worldTransform.getOrigin().xyz();
+		gpuLight.m_radius = m_spot.m_distance;
+		gpuLight.m_diffuseColor = m_diffColor.xyz();
+		gpuLight.m_visibleRenderablesHashIndex = (reallyShadow) ? m_hash.getIndex() : 0;
+		gpuLight.m_flags = GpuSceneLightFlag::kSpotLight;
+		gpuLight.m_flags |= (reallyShadow) ? GpuSceneLightFlag::kShadow : GpuSceneLightFlag::kNone;
+		gpuLight.m_componentArrayIndex = getArrayIndex();
+		gpuLight.m_uuid = m_uuid;
+		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
+		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
+		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
+
+		Array<Vec3, 4> points;
+		computeEdgesOfFrustum(m_spot.m_distance, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
 		for(U32 i = 0; i < 4; ++i)
 		{
-			gpuLight.m_edgePoints[i] = m_spot.m_edgePointsWspace[i].xyz0();
+			points[i] = m_worldTransform.transform(points[i]);
+			gpuLight.m_edgePoints[i] = points[i].xyz0();
 		}
-		gpuLight.m_diffuseColor = m_diffColor.xyz();
-		gpuLight.m_radius = m_spot.m_distance;
-		gpuLight.m_direction = -m_worldTransform.getRotation().getZAxis();
-		gpuLight.m_squareRadiusOverOne = 1.0f / (m_spot.m_distance * m_spot.m_distance);
-		gpuLight.m_shadow = m_shadow;
-		gpuLight.m_outerCos = cos(m_spot.m_outerAngle / 2.0f);
-		gpuLight.m_innerCos = cos(m_spot.m_innerAngle / 2.0f);
-		const PtrSize offset = m_gpuSceneLightIndex * sizeof(GpuSceneSpotLight)
-							   + SceneGraph::getSingleton().getAllGpuSceneContiguousArrays().getArrayBase(
-								   GpuSceneContiguousArrayType::kSpotLights);
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, offset, sizeof(gpuLight), &gpuLight);
+
+		if(reallyShadow)
+		{
+			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+			const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle, kClusterObjectFrustumNearPlane,
+																		 m_spot.m_distance);
+			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z(), 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x(), 0.0f, m_shadowAtlasUvViewports[0].w(),
+								 0.0f, m_shadowAtlasUvViewports[0].y(), 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+			m_spot.m_viewMat = Mat3x4(m_worldTransform.getInverse());
+			m_spot.m_viewProjMat = proj * Mat4(m_spot.m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			const Mat4 texMat = uvToAtlas * biasMat4 * m_spot.m_viewProjMat;
+
+			gpuLight.m_spotLightMatrixOrPointLightUvViewports[0] = texMat.getRow(0);
+			gpuLight.m_spotLightMatrixOrPointLightUvViewports[1] = texMat.getRow(1);
+			gpuLight.m_spotLightMatrixOrPointLightUvViewports[2] = texMat.getRow(2);
+			gpuLight.m_spotLightMatrixOrPointLightUvViewports[3] = texMat.getRow(3);
+		}
+
+		if(!m_gpuSceneLight.isValid())
+		{
+			m_gpuSceneLight.allocate();
+		}
+		m_gpuSceneLight.uploadToGpuScene(gpuLight);
 	}
 	else if(m_type == LightComponentType::kDirectional)
 	{
-		// Update the scene bounds always
-		SceneGraph::getSingleton().getOctree().getActualSceneBounds(m_dir.m_sceneMin, m_dir.m_sceneMax);
+		m_gpuSceneLight.free();
 	}
 
-	const Bool spatialUpdated = m_spatial.update(SceneGraph::getSingleton().getOctree());
-	updated = updated || spatialUpdated;
-
-	if(m_shadow)
-	{
-		for(U32 i = 0; i < m_frustumCount; ++i)
-		{
-			const Bool frustumUpdated = m_frustums[i].update();
-			updated = updated || frustumUpdated;
-		}
-	}
+	m_shapeDirty = false;
+	m_otherDirty = false;
 
 	return Error::kNone;
 }
 
-void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFrustum, DirectionalLightQueueElement& el,
-													   WeakArray<Frustum> cascadeFrustums) const
+void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeProjMats,
+											WeakArray<Mat3x4> cascadeViewMats) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
-	ANKI_ASSERT(cascadeFrustums.getSize() <= kMaxShadowCascades);
+	ANKI_ASSERT(m_shadow);
+	ANKI_ASSERT(cascadeProjMats.getSize() <= kMaxShadowCascades && cascadeProjMats.getSize() > 0);
+	ANKI_ASSERT(cascadeDistances.getSize() == cascadeProjMats.getSize());
 
-	const U32 shadowCascadeCount = cascadeFrustums.getSize();
-
-	el.m_uuid = m_uuid;
-	el.m_diffuseColor = m_diffColor.xyz();
-	el.m_direction = -m_worldTransform.getRotation().getZAxis().xyz();
-	for(U32 i = 0; i < shadowCascadeCount; ++i)
-	{
-		el.m_shadowCascadesDistances[i] = primaryFrustum.getShadowCascadeDistance(i);
-	}
-	el.m_shadowCascadeCount = U8(shadowCascadeCount);
-	el.m_shadowLayer = kMaxU8;
-
-	if(shadowCascadeCount == 0)
-	{
-		return;
-	}
+	const U32 shadowCascadeCount = cascadeProjMats.getSize();
 
 	// Compute the texture matrices
-	const Mat4 lightTrf(m_worldTransform);
 	if(primaryFrustum.getFrustumType() == FrustumType::kPerspective)
 	{
 		// Get some stuff
@@ -282,53 +223,45 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 
 		// Compute a sphere per cascade
 		Array<Sphere, kMaxShadowCascades> boundingSpheres;
-		for(U32 i = 0; i < shadowCascadeCount; ++i)
+		Array<Vec3, 4> prevFarPlaneEdges;
+		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
-			// Compute the center of the sphere
-			//           ^ z
-			//           |
-			// ----------|---------- A(a, -f)
-			//  \        |        /
-			//   \       |       /
-			//    \    C(0,z)   /
-			//     \     |     /
-			//      \    |    /
-			//       \---|---/ B(b, -n)
-			//        \  |  /
-			//         \ | /
-			//           v
-			// --------------------------> x
-			//           |
-			// The square distance of A-C is equal to B-C. Solve the equation to find the z.
-			const F32 f = primaryFrustum.getShadowCascadeDistance(i); // Cascade far
-			const F32 n =
-				(i == 0) ? primaryFrustum.getNear() : primaryFrustum.getShadowCascadeDistance(i - 1); // Cascade near
-			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
-			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
-			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
-			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength())
-						<= kEpsilonf * 100.0f);
+			if(cascade == 0)
+			{
+				Array<Vec3, 5> edgePoints;
+				edgePoints[0] = Vec3(0.0f);
 
-			Vec3 C(0.0f, 0.0f, z); // Sphere center
+				computeEdgesOfFrustum(cascadeDistances[cascade], fovX, fovY, &edgePoints[1]);
 
-			// Compute the radius of the sphere
-			const Vec3 A(a, tan(fovY / 2.0f) * f, -f);
-			const F32 r = (A - C).getLength();
+				boundingSpheres[cascade] = computeBoundingSphere(edgePoints);
 
-			// Set the sphere
-			boundingSpheres[i].setRadius(r);
-			boundingSpheres[i].setCenter(primaryFrustum.getWorldTransform().transform(C));
+				memcpy(&prevFarPlaneEdges[0], &edgePoints[1], sizeof(prevFarPlaneEdges));
+			}
+			else
+			{
+				Array<Vec3, 8> edgePoints;
+
+				computeEdgesOfFrustum(cascadeDistances[cascade], fovX, fovY, &edgePoints[0]);
+				memcpy(&edgePoints[4], &prevFarPlaneEdges[0], sizeof(prevFarPlaneEdges));
+
+				boundingSpheres[cascade] = computeBoundingSphere(edgePoints);
+
+				memcpy(&prevFarPlaneEdges[0], &edgePoints[0], sizeof(prevFarPlaneEdges));
+			}
+
+			boundingSpheres[cascade].setCenter(primaryFrustum.getWorldTransform().transform(boundingSpheres[cascade].getCenter()));
 		}
 
 		// Compute the matrices
-		for(U32 i = 0; i < shadowCascadeCount; ++i)
+		for(U32 cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
-			const Sphere& sphere = boundingSpheres[i];
+			const Sphere& sphere = boundingSpheres[cascade];
 			const Vec3 sphereCenter = sphere.getCenter().xyz();
 			const F32 sphereRadius = sphere.getRadius();
-			const Vec3& lightDir = el.m_direction;
-			const Vec3 sceneMin = m_dir.m_sceneMin - Vec3(sphereRadius); // Push the bounds a bit
-			const Vec3 sceneMax = m_dir.m_sceneMax + Vec3(sphereRadius);
+			const Vec3& lightDir = getDirection();
+			Array<Vec3, 2> sceneBounds = SceneGraph::getSingleton().getSceneBounds();
+			const Vec3 sceneMin = sceneBounds[0] - Vec3(sphereRadius); // Push the bounds a bit
+			const Vec3 sceneMax = sceneBounds[1] + Vec3(sphereRadius);
 
 			// Compute the intersections with the scene bounds
 			Vec3 eye;
@@ -344,15 +277,23 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 				eye = sphereCenter + sphereRadius * (-lightDir);
 			}
 
+			// View
+			const Vec3 zAxis = m_worldTransform.getRotation().getZAxis();
+			const Vec3 xAxis = Vec3(0.0f, 1.0f, 0.0f).cross(zAxis).getNormalized();
+			const Vec3 yAxis = zAxis.cross(xAxis).getNormalized();
+			Mat3x4 rot;
+			rot.setXAxis(xAxis);
+			rot.setYAxis(yAxis);
+			rot.setZAxis(zAxis);
+			rot.setTranslationPart(Vec3(0.0f));
+
+			const Transform cascadeTransform(eye.xyz0(), rot, 1.0f);
+			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
+
 			// Projection
 			const F32 far = (eye - sphereCenter).getLength() + sphereRadius;
-			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(
-				sphereRadius, -sphereRadius, sphereRadius, -sphereRadius, kClusterObjectFrustumNearPlane, far);
-
-			// View
-			Transform cascadeTransform = m_worldTransform;
-			cascadeTransform.setOrigin(eye.xyz0());
-			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
+			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(sphereRadius, -sphereRadius, sphereRadius, -sphereRadius,
+																			  kClusterObjectFrustumNearPlane, far);
 
 			// Now it's time to stabilize the shadows by aligning the projection matrix
 			{
@@ -375,33 +316,45 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& primaryFru
 				cascadeProjMat = correctionTranslationMat * cascadeProjMat;
 			}
 
-			// Light matrix
-			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-								0.0f, 1.0f);
-			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
-
-			// Fill the frustum with the fixed projection parameters from the fixed projection matrix
-			Plane plane;
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::kLeft, plane);
-			const F32 left = plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::kRight, plane);
-			const F32 right = -plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::kTop, plane);
-			const F32 top = -plane.getOffset();
-			extractClipPlane(cascadeProjMat, FrustumPlaneType::kBottom, plane);
-			const F32 bottom = plane.getOffset();
-
-			Frustum& cascadeFrustum = cascadeFrustums[i];
-			cascadeFrustum.init(FrustumType::kOrthographic);
-			cascadeFrustum.setOrthographic(kClusterObjectFrustumNearPlane, far, right, left, top, bottom);
-			cascadeFrustum.setWorldTransform(cascadeTransform);
-			[[maybe_unused]] const Bool updated = cascadeFrustum.update();
-			ANKI_ASSERT(updated);
+			// Write the results
+			cascadeProjMats[cascade] = cascadeProjMat;
+			cascadeViewMats[cascade] = Mat3x4(cascadeViewMat);
 		}
 	}
 	else
 	{
 		ANKI_ASSERT(!"TODO");
+	}
+}
+
+void LightComponent::setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports)
+{
+	ANKI_ASSERT(viewports.getSize() <= 6);
+	if(m_type == LightComponentType::kPoint)
+	{
+		ANKI_ASSERT(viewports.getSize() == 0 || viewports.getSize() == 6);
+	}
+	else if(m_type == LightComponentType::kSpot)
+	{
+		ANKI_ASSERT(viewports.getSize() == 0 || viewports.getSize() == 1);
+	}
+	else
+	{
+		ANKI_ASSERT(viewports.getSize() == 0);
+	}
+
+	const Bool dirty = m_shadowAtlasUvViewportCount != viewports.getSize()
+					   || memcmp(m_shadowAtlasUvViewports.getBegin(), viewports.getBegin(), viewports.getSizeInBytes()) != 0;
+
+	if(dirty)
+	{
+		m_shadowAtlasUvViewportCount = U8(viewports.getSize());
+		for(U32 i = 0; i < viewports.getSize(); ++i)
+		{
+			m_shadowAtlasUvViewports[i] = viewports[i];
+		}
+
+		m_shapeDirty = true;
 	}
 }
 

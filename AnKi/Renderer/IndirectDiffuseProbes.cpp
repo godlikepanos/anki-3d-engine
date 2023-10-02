@@ -5,46 +5,39 @@
 
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/RenderQueue.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Scene/SceneGraph.h>
+#include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
+#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Functions.h>
+#include <AnKi/Resource/AsyncLoader.h>
 
 namespace anki {
 
-class IndirectDiffuseProbes::InternalContext
+static NumericCVar<U32> g_indirectDiffuseProbeTileResolutionCVar(CVarSubsystem::kRenderer, "IndirectDiffuseProbeTileResolution",
+																 (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32, "GI tile resolution");
+static NumericCVar<U32> g_indirectDiffuseProbeShadowMapResolutionCVar(CVarSubsystem::kRenderer, "IndirectDiffuseProbeShadowMapResolution", 128, 4,
+																	  2048, "GI shadowmap resolution");
+
+static StatCounter g_giProbeRenderCountStatVar(StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates);
+static StatCounter g_giProbeCellsRenderCountStatVar(StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates);
+
+static Vec3 computeCellCenter(U32 cellIdx, const GlobalIlluminationProbeComponent& probe)
 {
-public:
-	IndirectDiffuseProbes* m_gi = nullptr;
-	RenderingContext* m_ctx = nullptr;
+	const Vec3 halfAabbSize = probe.getBoxVolumeSize() / 2.0f;
+	const Vec3 aabbMin = -halfAabbSize + probe.getWorldPosition();
+	U32 x, y, z;
+	unflatten3dArrayIndex(probe.getCellCountsPerDimension().x(), probe.getCellCountsPerDimension().y(), probe.getCellCountsPerDimension().z(),
+						  cellIdx, x, y, z);
+	const Vec3 cellSize = probe.getBoxVolumeSize() / Vec3(probe.getCellCountsPerDimension());
+	const Vec3 halfCellSize = cellSize / 2.0f;
+	const Vec3 cellCenter = aabbMin + halfCellSize + cellSize * Vec3(UVec3(x, y, z));
 
-	GlobalIlluminationProbeQueueElementForRefresh* m_probeToUpdateThisFrame = nullptr;
-
-	Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
-	RenderTargetHandle m_gbufferDepthRt;
-	RenderTargetHandle m_shadowsRt;
-	RenderTargetHandle m_lightShadingRt;
-	RenderTargetHandle m_irradianceVolume;
-
-	U32 m_gbufferDrawcallCount = kMaxU32;
-	U32 m_smDrawcallCount = kMaxU32;
-
-	static void foo()
-	{
-		static_assert(std::is_trivially_destructible<InternalContext>::value, "See file");
-	}
-};
-
-RenderTargetHandle IndirectDiffuseProbes::getCurrentlyRefreshedVolumeRt() const
-{
-	ANKI_ASSERT(m_giCtx && m_giCtx->m_irradianceVolume.isValid());
-	return m_giCtx->m_irradianceVolume;
-}
-
-Bool IndirectDiffuseProbes::hasCurrentlyRefreshedVolumeRt() const
-{
-	return m_giCtx != nullptr;
+	return cellCenter;
 }
 
 Error IndirectDiffuseProbes::init()
@@ -60,7 +53,7 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = ConfigSet::getSingleton().getRIndirectDiffuseProbeTileResolution();
+	m_tileSize = g_indirectDiffuseProbeTileResolutionCVar.get();
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -74,8 +67,8 @@ Error IndirectDiffuseProbes::initGBuffer()
 {
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = getRenderer().create2DRenderTargetDescription(
-			m_tileSize * 6, m_tileSize, kGBufferColorRenderTargetFormats[0], "GI GBuffer");
+		RenderTargetDescription texinit =
+			getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, kGBufferColorRenderTargetFormats[0], "GI GBuffer");
 
 		// Create color RT descriptions
 		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -114,12 +107,12 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = ConfigSet::getSingleton().getRIndirectDiffuseProbeShadowMapResolution();
+	const U32 resolution = g_indirectDiffuseProbeShadowMapResolutionCVar.get();
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
-	m_shadowMapping.m_rtDescr = getRenderer().create2DRenderTargetDescription(
-		resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
+	m_shadowMapping.m_rtDescr =
+		getRenderer().create2DRenderTargetDescription(resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -136,8 +129,7 @@ Error IndirectDiffuseProbes::initLightShading()
 {
 	// Init RT descr
 	{
-		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize,
-																				 getRenderer().getHdrFormat(), "GI LS");
+		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, getRenderer().getHdrFormat(), "GI LS");
 		m_lightShading.m_rtDescr.bake();
 	}
 
@@ -156,8 +148,7 @@ Error IndirectDiffuseProbes::initLightShading()
 
 Error IndirectDiffuseProbes::initIrradiance()
 {
-	ANKI_CHECK(
-		ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);
@@ -167,355 +158,361 @@ Error IndirectDiffuseProbes::initIrradiance()
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_irradiance.m_grProg = variant->getProgram();
+	m_irradiance.m_grProg.reset(&variant->getProgram());
 
 	return Error::kNone;
 }
 
 void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+	ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
 
-	if(rctx.m_renderQueue->m_giProbeForRefresh == nullptr) [[likely]]
+	// Iterate the visible probes to find a candidate for update
+	WeakArray<GlobalIlluminationProbeComponent*> visibleProbes =
+		getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_globalIlluminationProbes;
+	GlobalIlluminationProbeComponent* bestCandidateProbe = nullptr;
+	GlobalIlluminationProbeComponent* secondBestCandidateProbe = nullptr;
+	for(GlobalIlluminationProbeComponent* probe : visibleProbes)
 	{
-		m_giCtx = nullptr;
+		if(probe->getCellsNeedsRefresh())
+		{
+			if(probe->getNextCellForRefresh() != 0)
+			{
+				bestCandidateProbe = probe;
+				break;
+			}
+			else
+			{
+				secondBestCandidateProbe = probe;
+			}
+		}
+	}
+
+	GlobalIlluminationProbeComponent* probeToRefresh = (bestCandidateProbe) ? bestCandidateProbe : secondBestCandidateProbe;
+	if(probeToRefresh == nullptr || ResourceManager::getSingleton().getAsyncLoader().getTasksInFlightCount() != 0) [[likely]]
+	{
+		// Nothing to update or can't update right now, early exit
+		m_runCtx = {};
 		return;
 	}
 
-	InternalContext* giCtx = newInstance<InternalContext>(*rctx.m_tempPool);
-	m_giCtx = giCtx;
-	giCtx->m_gi = this;
-	giCtx->m_ctx = &rctx;
-	giCtx->m_probeToUpdateThisFrame = rctx.m_renderQueue->m_giProbeForRefresh;
+	const Bool probeTouchedFirstTime = probeToRefresh->getNextCellForRefresh() == 0;
+	if(probeTouchedFirstTime)
+	{
+		g_giProbeRenderCountStatVar.increment(1);
+	}
+
 	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
 
-	// Compute task counts for some of the passes
-	U32 gbufferTaskCount, smTaskCount;
+	// Create some common resources to save on memory
+	Array<RenderTargetHandle, kMaxColorRenderTargets> gbufferColorRts;
+	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
-		giCtx->m_gbufferDrawcallCount = 0;
-		giCtx->m_smDrawcallCount = 0;
-		for(const RenderQueue* rq : giCtx->m_probeToUpdateThisFrame->m_renderQueues)
-		{
-			ANKI_ASSERT(rq);
-			giCtx->m_gbufferDrawcallCount += rq->m_renderables.getSize();
+		gbufferColorRts[i] = rgraph.newRenderTarget(m_gbuffer.m_colorRtDescrs[i]);
+	}
+	const RenderTargetHandle gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 
-			if(rq->m_directionalLight.hasShadow())
+	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
+	const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
+	const RenderTargetHandle shadowsRt = (doShadows) ? rgraph.newRenderTarget(m_shadowMapping.m_rtDescr) : RenderTargetHandle();
+	const RenderTargetHandle lightShadingRt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);
+	const RenderTargetHandle irradianceVolume = rgraph.importRenderTarget(&probeToRefresh->getVolumeTexture(), TextureUsageBit::kNone);
+
+	m_runCtx.m_probeVolumeHandle = irradianceVolume;
+
+	const U32 beginCellIdx = probeToRefresh->getNextCellForRefresh();
+	for(U32 cellIdx = beginCellIdx; cellIdx < min(beginCellIdx + kProbeCellRefreshesPerFrame, probeToRefresh->getCellCount()); ++cellIdx)
+	{
+		const Vec3 cellCenter = computeCellCenter(cellIdx, *probeToRefresh);
+
+		// GBuffer visibility
+		Array<GpuVisibilityOutput, 6> visOuts;
+		Array<Frustum, 6> frustums;
+		for(U32 i = 0; i < 6; ++i)
+		{
+			Frustum& frustum = frustums[i];
+			frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
+			frustum.setWorldTransform(Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
+			frustum.update();
+
+			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+
+			FrustumGpuVisibilityInput visIn;
+			visIn.m_passesName = "GI GBuffer visibility";
+			visIn.m_technique = RenderingTechnique::kGBuffer;
+			visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
+			visIn.m_lodReferencePoint = cellCenter;
+			visIn.m_lodDistances = lodDistances;
+			visIn.m_rgraph = &rgraph;
+
+			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOuts[i]);
+		}
+
+		// GBuffer
+		Array<Mat4, 6> viewProjMats;
+		Array<Mat3x4, 6> viewMats;
+		{
+			// Prepare the matrices
+			for(U32 f = 0; f < 6; ++f)
 			{
-				giCtx->m_smDrawcallCount += rq->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
+				viewProjMats[f] = frustums[f].getViewProjectionMatrix();
+				viewMats[f] = frustums[f].getViewMatrix();
+			}
+
+			// Create the pass
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI GBuffer");
+			pass.setFramebufferInfo(m_gbuffer.m_fbDescr, gbufferColorRts, gbufferDepthRt);
+
+			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
+			{
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite);
+			}
+			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+
+			for(U32 i = 0; i < 6; ++i)
+			{
+				pass.newBufferDependency(visOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+			}
+
+			pass.setWork(6, [this, visOuts, viewProjMats, viewMats](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+				const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
+
+				const U32 viewportX = faceIdx * m_tileSize;
+				cmdb.setViewport(viewportX, 0, m_tileSize, m_tileSize);
+				cmdb.setScissor(viewportX, 0, m_tileSize, m_tileSize);
+
+				RenderableDrawerArguments args;
+				args.m_viewMatrix = viewMats[faceIdx];
+				args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+				args.m_viewProjectionMatrix = viewProjMats[faceIdx];
+				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+				args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
+				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+				args.fillMdi(visOuts[faceIdx]);
+
+				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+
+				// It's secondary, no need to restore any state
+			});
+		}
+
+		// Shadow visibility. Optional
+		Array<GpuVisibilityOutput, 6> shadowVisOuts;
+		Array<Mat4, 6> cascadeProjMats;
+		Array<Mat3x4, 6> cascadeViewMats;
+		Array<Mat4, 6> cascadeViewProjMats;
+		if(doShadows)
+		{
+			for(U32 i = 0; i < 6; ++i)
+			{
+				constexpr U32 kCascadeCount = 1;
+				dirLightc->computeCascadeFrustums(frustums[i], Array<F32, kCascadeCount>{probeToRefresh->getShadowsRenderRadius()},
+												  WeakArray<Mat4>(&cascadeProjMats[i], kCascadeCount),
+												  WeakArray<Mat3x4>(&cascadeViewMats[i], kCascadeCount));
+
+				cascadeViewProjMats[i] = cascadeProjMats[i] * Mat4(cascadeViewMats[i], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+				Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+
+				FrustumGpuVisibilityInput visIn;
+				visIn.m_passesName = "GI shadows visibility";
+				visIn.m_technique = RenderingTechnique::kDepth;
+				visIn.m_viewProjectionMatrix = cascadeViewProjMats[i];
+				visIn.m_lodReferencePoint = cellCenter;
+				visIn.m_lodDistances = lodDistances;
+				visIn.m_rgraph = &rgraph;
+
+				getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOuts[i]);
 			}
 		}
 
-		gbufferTaskCount = computeNumberOfSecondLevelCommandBuffers(giCtx->m_gbufferDrawcallCount);
-		smTaskCount = computeNumberOfSecondLevelCommandBuffers(giCtx->m_smDrawcallCount);
-	}
-
-	// GBuffer
-	{
-		// RTs
-		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
+		// Shadow pass. Optional
+		if(doShadows)
 		{
-			giCtx->m_gbufferColorRts[i] = rgraph.newRenderTarget(m_gbuffer.m_colorRtDescrs[i]);
-		}
-		giCtx->m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI shadows");
+			pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowsRt);
 
-		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
-		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, giCtx->m_gbufferColorRts, giCtx->m_gbufferDepthRt);
-		pass.setWork(gbufferTaskCount, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runGBufferInThread(rgraphCtx, *giCtx);
-		});
+			pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			for(U32 i = 0; i < 6; ++i)
+			{
+				pass.newBufferDependency(shadowVisOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+			}
 
-		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
-		{
-			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kFramebufferWrite);
-		}
+			pass.setWork(6, [this, shadowVisOuts, cascadeViewProjMats, cascadeViewMats](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-		pass.newTextureDependency(giCtx->m_gbufferDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
+				cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
-								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
-	}
+				const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 
-	// Shadow pass. Optional
-	if(giCtx->m_probeToUpdateThisFrame->m_renderQueues[0]->m_directionalLight.m_uuid
-	   && giCtx->m_probeToUpdateThisFrame->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
-	{
-		// Update light matrices
-		for(U i = 0; i < 6; ++i)
-		{
-			ANKI_ASSERT(giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_uuid
-						&& giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_shadowCascadeCount
-							   == 1);
+				const U32 rez = m_shadowMapping.m_rtDescr.m_height;
+				cmdb.setViewport(rez * faceIdx, 0, rez, rez);
+				cmdb.setScissor(rez * faceIdx, 0, rez, rez);
 
-			const F32 xScale = 1.0f / 6.0f;
-			const F32 yScale = 1.0f;
-			const F32 xOffset = F32(i) * (1.0f / 6.0f);
-			const F32 yOffset = 0.0f;
-			const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-								0.0f, 0.0f, 1.0f);
+				RenderableDrawerArguments args;
+				args.m_viewMatrix = cascadeViewMats[faceIdx];
+				args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+				args.m_viewProjectionMatrix = cascadeViewProjMats[faceIdx];
+				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+				args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+				args.fillMdi(shadowVisOuts[faceIdx]);
 
-			Mat4& lightMat =
-				giCtx->m_probeToUpdateThisFrame->m_renderQueues[i]->m_directionalLight.m_textureMatrices[0];
-			lightMat = atlasMtx * lightMat;
+				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+
+				// It's secondary, no need to restore the state
+			});
 		}
 
-		// RT
-		giCtx->m_shadowsRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
-
-		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
-		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, giCtx->m_shadowsRt);
-		pass.setWork(smTaskCount, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runShadowmappingInThread(rgraphCtx, *giCtx);
-		});
-
-		TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-		pass.newTextureDependency(giCtx->m_shadowsRt, TextureUsageBit::kAllFramebuffer, subresource);
-
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
-								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
-	}
-	else
-	{
-		giCtx->m_shadowsRt = {};
-	}
-
-	// Light shading pass
-	{
-		// RT
-		giCtx->m_lightShadingRt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);
-
-		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI LS");
-		pass.setFramebufferInfo(m_lightShading.m_fbDescr, {giCtx->m_lightShadingRt});
-		pass.setWork(1, [this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runLightShading(rgraphCtx, *giCtx);
-		});
-
-		pass.newTextureDependency(giCtx->m_lightShadingRt, TextureUsageBit::kFramebufferWrite);
-
-		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
+		// Light visibility
+		Array<GpuVisibilityNonRenderablesOutput, 6> lightVis;
+		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
-			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledFragment);
-		}
-		pass.newTextureDependency(giCtx->m_gbufferDepthRt, TextureUsageBit::kSampledFragment,
-								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
-		if(giCtx->m_shadowsRt.isValid())
-		{
-			pass.newTextureDependency(giCtx->m_shadowsRt, TextureUsageBit::kSampledFragment);
-		}
-	}
-
-	// Irradiance pass. First & 2nd bounce
-	{
-		m_giCtx->m_irradianceVolume = rgraph.importRenderTarget(
-			TexturePtr(m_giCtx->m_probeToUpdateThisFrame->m_volumeTexture), TextureUsageBit::kNone);
-
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI IR");
-
-		pass.setWork([this, giCtx](RenderPassWorkContext& rgraphCtx) {
-			runIrradiance(rgraphCtx, *giCtx);
-		});
-
-		pass.newTextureDependency(giCtx->m_lightShadingRt, TextureUsageBit::kSampledCompute);
-
-		for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
-		{
-			pass.newTextureDependency(giCtx->m_gbufferColorRts[i], TextureUsageBit::kSampledCompute);
+			GpuVisibilityNonRenderablesInput in;
+			in.m_passesName = "GI light visibility";
+			in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
+			in.m_viewProjectionMat = frustums[faceIdx].getViewProjectionMatrix();
+			in.m_rgraph = &rgraph;
+			getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, lightVis[faceIdx]);
 		}
 
-		pass.newTextureDependency(m_giCtx->m_irradianceVolume, TextureUsageBit::kImageComputeWrite);
-	}
-}
-
-void IndirectDiffuseProbes::runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
-{
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
-
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
-
-	I32 start, end;
-	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
-						 giCtx.m_gbufferDrawcallCount, startu, endu);
-	start = I32(startu);
-	end = I32(endu);
-
-	I32 drawcallCount = 0;
-	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		const I32 faceDrawcallCount = I32(probe.m_renderQueues[faceIdx]->m_renderables.getSize());
-		const I32 localStart = max(I32(0), start - drawcallCount);
-		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
-
-		if(localStart < localEnd)
+		// Light shading pass
 		{
-			const U32 viewportX = faceIdx * m_tileSize;
-			cmdb->setViewport(viewportX, 0, m_tileSize, m_tileSize);
-			cmdb->setScissor(viewportX, 0, m_tileSize, m_tileSize);
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI light shading");
+			pass.setFramebufferInfo(m_lightShading.m_fbDescr, {lightShadingRt});
 
-			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
+			Array<BufferOffsetRange, 6> visibleLightsBuffers;
+			for(U32 f = 0; f < 6; ++f)
+			{
+				visibleLightsBuffers[f] = lightVis[f].m_visiblesBuffer;
+				pass.newBufferDependency(lightVis[f].m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
+			}
 
-			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
+			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite);
 
-			RenderableDrawerArguments args;
-			args.m_viewMatrix = rqueue.m_viewMatrix;
-			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
-			args.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
-			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat;
+			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
+			{
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment);
+			}
+			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-			getRenderer().getSceneDrawer().drawRange(args, rqueue.m_renderables.getBegin() + localStart,
-													 rqueue.m_renderables.getBegin() + localEnd, cmdb);
+			if(shadowsRt.isValid())
+			{
+				pass.newTextureDependency(shadowsRt, TextureUsageBit::kSampledFragment);
+			}
+
+			pass.setWork(1, [this, visibleLightsBuffers, viewProjMats, cellCenter, gbufferColorRts, gbufferDepthRt, probeToRefresh,
+							 cascadeViewProjMats, shadowsRt](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+
+				const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
+				const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
+
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+				for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
+				{
+					const U32 rez = m_tileSize;
+					cmdb.setScissor(rez * faceIdx, 0, rez, rez);
+					cmdb.setViewport(rez * faceIdx, 0, rez, rez);
+
+					// Draw light shading
+					TraditionalDeferredLightShadingDrawInfo dsInfo;
+					dsInfo.m_viewProjectionMatrix = viewProjMats[faceIdx];
+					dsInfo.m_invViewProjectionMatrix = viewProjMats[faceIdx].getInverse();
+					dsInfo.m_cameraPosWSpace = cellCenter.xyz1();
+					dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
+					dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
+					dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);
+					dsInfo.m_lightbufferTexCoordsBias = Vec2(-F32(faceIdx), 0.0f);
+					dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
+
+					dsInfo.m_effectiveShadowDistance = (doShadows) ? probeToRefresh->getShadowsRenderRadius() : -1.0f;
+
+					if(doShadows)
+					{
+						const F32 xScale = 1.0f / 6.0f;
+						const F32 yScale = 1.0f;
+						const F32 xOffset = F32(faceIdx) * (1.0f / 6.0f);
+						const F32 yOffset = 0.0f;
+						const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+						const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+						dsInfo.m_dirLightMatrix = atlasMtx * biasMat4 * cascadeViewProjMats[faceIdx];
+					}
+					else
+					{
+						dsInfo.m_dirLightMatrix = Mat4::getIdentity();
+					}
+
+					dsInfo.m_visibleLightsBuffer = visibleLightsBuffers[faceIdx];
+
+					dsInfo.m_gbufferRenderTargets[0] = gbufferColorRts[0];
+					dsInfo.m_gbufferRenderTargets[1] = gbufferColorRts[1];
+					dsInfo.m_gbufferRenderTargets[2] = gbufferColorRts[2];
+					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
+					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
+					dsInfo.m_renderpassContext = &rgraphCtx;
+
+					m_lightShading.m_deferred.drawLights(dsInfo);
+				}
+			});
 		}
 
-		drawcallCount += faceDrawcallCount;
-	}
-	ANKI_ASSERT(giCtx.m_gbufferDrawcallCount == U32(drawcallCount));
-
-	// It's secondary, no need to restore the state
-}
-
-void IndirectDiffuseProbes::runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
-{
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
-
-	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
-
-	I32 start, end;
-	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
-						 giCtx.m_smDrawcallCount, startu, endu);
-	start = I32(startu);
-	end = I32(endu);
-
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
-
-	I32 drawcallCount = 0;
-	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
-		const RenderQueue& faceRenderQueue = *probe.m_renderQueues[faceIdx];
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.hasShadow());
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
-		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
-
-		const I32 faceDrawcallCount = I32(cascadeRenderQueue.m_renderables.getSize());
-		const I32 localStart = max(I32(0), start - drawcallCount);
-		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
-
-		if(localStart < localEnd)
+		// Irradiance pass. First & 2nd bounce
 		{
-			const U32 rez = m_shadowMapping.m_rtDescr.m_height;
-			cmdb->setViewport(rez * faceIdx, 0, rez, rez);
-			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI irradiance");
 
-			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
+			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSampledCompute);
+			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kImageComputeWrite);
+			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
+			{
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledCompute);
+			}
 
-			RenderableDrawerArguments args;
-			args.m_viewMatrix = cascadeRenderQueue.m_viewMatrix;
-			args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
-			args.m_viewProjectionMatrix = cascadeRenderQueue.m_viewProjectionMatrix;
-			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso;
+			pass.setWork([this, lightShadingRt, gbufferColorRts, irradianceVolume, cellIdx, probeToRefresh](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
-			getRenderer().getSceneDrawer().drawRange(args, cascadeRenderQueue.m_renderables.getBegin() + localStart,
-													 cascadeRenderQueue.m_renderables.getBegin() + localEnd, cmdb);
+				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+				cmdb.bindShaderProgram(m_irradiance.m_grProg.get());
+
+				// Bind resources
+				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+				rgraphCtx.bindColorTexture(0, 1, lightShadingRt);
+
+				for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
+				{
+					rgraphCtx.bindColorTexture(0, 2, gbufferColorRts[i], i);
+				}
+
+				rgraphCtx.bindImage(0, 3, irradianceVolume, TextureSubresourceInfo());
+
+				class
+				{
+				public:
+					IVec3 m_volumeTexel;
+					I32 m_nextTexelOffsetInU;
+				} unis;
+
+				U32 x, y, z;
+				unflatten3dArrayIndex(probeToRefresh->getCellCountsPerDimension().x(), probeToRefresh->getCellCountsPerDimension().y(),
+									  probeToRefresh->getCellCountsPerDimension().z(), cellIdx, x, y, z);
+				unis.m_volumeTexel = IVec3(x, y, z);
+
+				unis.m_nextTexelOffsetInU = probeToRefresh->getCellCountsPerDimension().x();
+				cmdb.setPushConstants(&unis, sizeof(unis));
+
+				// Dispatch
+				cmdb.dispatchCompute(1, 1, 1);
+			});
 		}
+
+		probeToRefresh->incrementRefreshedCells(1);
+		g_giProbeCellsRenderCountStatVar.increment(1);
 	}
-
-	// It's secondary, no need to restore the state
-}
-
-void IndirectDiffuseProbes::runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
-{
-	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
-
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
-
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
-		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
-
-		const U32 rez = m_tileSize;
-		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
-		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
-
-		// Draw light shading
-		TraditionalDeferredLightShadingDrawInfo dsInfo;
-		dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
-		dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
-		dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart().xyz1();
-		dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
-		dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
-		dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);
-		dsInfo.m_lightbufferTexCoordsBias = Vec2(-F32(faceIdx), 0.0f);
-		dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
-		dsInfo.m_cameraNear = rqueue.m_cameraNear;
-		dsInfo.m_cameraFar = rqueue.m_cameraFar;
-		dsInfo.m_directionalLight = (rqueue.m_directionalLight.isEnabled()) ? &rqueue.m_directionalLight : nullptr;
-		dsInfo.m_pointLights = rqueue.m_pointLights;
-		dsInfo.m_spotLights = rqueue.m_spotLights;
-		dsInfo.m_commandBuffer = cmdb;
-		dsInfo.m_gbufferRenderTargets[0] = giCtx.m_gbufferColorRts[0];
-		dsInfo.m_gbufferRenderTargets[1] = giCtx.m_gbufferColorRts[1];
-		dsInfo.m_gbufferRenderTargets[2] = giCtx.m_gbufferColorRts[2];
-		dsInfo.m_gbufferDepthRenderTarget = giCtx.m_gbufferDepthRt;
-		if(dsInfo.m_directionalLight && dsInfo.m_directionalLight->hasShadow())
-		{
-			dsInfo.m_directionalLightShadowmapRenderTarget = giCtx.m_shadowsRt;
-		}
-		dsInfo.m_renderpassContext = &rgraphCtx;
-		dsInfo.m_skybox = &giCtx.m_ctx->m_renderQueue->m_skybox;
-
-		m_lightShading.m_deferred.drawLights(dsInfo);
-	}
-}
-
-void IndirectDiffuseProbes::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
-{
-	ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
-
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	const GlobalIlluminationProbeQueueElementForRefresh& probe = *giCtx.m_probeToUpdateThisFrame;
-
-	cmdb->bindShaderProgram(m_irradiance.m_grProg);
-
-	// Bind resources
-	cmdb->bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindColorTexture(0, 1, giCtx.m_lightShadingRt);
-
-	for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
-	{
-		rgraphCtx.bindColorTexture(0, 2, giCtx.m_gbufferColorRts[i], i);
-	}
-
-	rgraphCtx.bindImage(0, 3, giCtx.m_irradianceVolume, TextureSubresourceInfo());
-
-	class
-	{
-	public:
-		IVec3 m_volumeTexel;
-		I32 m_nextTexelOffsetInU;
-	} unis;
-
-	unis.m_volumeTexel = IVec3(probe.m_cellToRefresh.x(), probe.m_cellToRefresh.y(), probe.m_cellToRefresh.z());
-	unis.m_nextTexelOffsetInU = probe.m_cellCounts.x();
-	cmdb->setPushConstants(&unis, sizeof(unis));
-
-	// Dispatch
-	cmdb->dispatchCompute(1, 1, 1);
 }
 
 } // end namespace anki

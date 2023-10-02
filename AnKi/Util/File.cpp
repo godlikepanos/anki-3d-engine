@@ -52,8 +52,8 @@ Error File::open(const CString& filename, FileOpenFlag flags)
 
 	// Only these flags are accepted
 	ANKI_ASSERT((flags
-				 & (FileOpenFlag::kRead | FileOpenFlag::kWrite | FileOpenFlag::kAppend | FileOpenFlag::kBinary
-					| FileOpenFlag::kLittleEndian | FileOpenFlag::kBigEndian | FileOpenFlag::kSpecial))
+				 & (FileOpenFlag::kRead | FileOpenFlag::kWrite | FileOpenFlag::kAppend | FileOpenFlag::kBinary | FileOpenFlag::kLittleEndian
+					| FileOpenFlag::kBigEndian | FileOpenFlag::kSpecial))
 				!= FileOpenFlag::kNone);
 
 	// Cannot be both
@@ -275,17 +275,15 @@ Error File::readU32(U32& out)
 	ANKI_ASSERT(m_flags != FileOpenFlag::kNone);
 	ANKI_ASSERT((m_flags & FileOpenFlag::kRead) != FileOpenFlag::kNone);
 	ANKI_ASSERT((m_flags & FileOpenFlag::kBinary) != FileOpenFlag::kNone && "Should be binary file");
-	ANKI_ASSERT((m_flags & FileOpenFlag::kBigEndian) != (m_flags & FileOpenFlag::kLittleEndian)
-				&& "One of those 2 should be active");
+	ANKI_ASSERT((m_flags & FileOpenFlag::kBigEndian) != (m_flags & FileOpenFlag::kLittleEndian) && "One of those 2 should be active");
 
 	Error err = read(&out, sizeof(out));
 	if(!err)
 	{
 		// Copy it
 		FileOpenFlag machineEndianness = getMachineEndianness();
-		FileOpenFlag fileEndianness = ((m_flags & FileOpenFlag::kBigEndian) != FileOpenFlag::kNone)
-										  ? FileOpenFlag::kBigEndian
-										  : FileOpenFlag::kLittleEndian;
+		FileOpenFlag fileEndianness =
+			((m_flags & FileOpenFlag::kBigEndian) != FileOpenFlag::kNone) ? FileOpenFlag::kBigEndian : FileOpenFlag::kLittleEndian;
 
 		if(machineEndianness == fileEndianness)
 		{

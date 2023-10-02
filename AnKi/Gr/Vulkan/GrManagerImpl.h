@@ -105,9 +105,8 @@ public:
 	}
 	/// @}
 
-	void flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain,
-							WeakArray<MicroSemaphorePtr> waitSemaphores, MicroSemaphorePtr* signalSemaphore,
-							Bool wait = false);
+	void flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphorePtr> waitSemaphores,
+							MicroSemaphorePtr* signalSemaphore, Bool wait = false);
 
 	/// @name Memory
 	/// @{
@@ -180,31 +179,6 @@ public:
 
 	/// @name Debug report
 	/// @{
-	void beginMarker(VkCommandBuffer cmdb, CString name, Vec3 color = Vec3(1.0f, 0.0f, 0.0f)) const
-	{
-		ANKI_ASSERT(cmdb);
-		if(!!(m_extensions & VulkanExtensions::kEXT_debug_utils))
-		{
-			VkDebugUtilsLabelEXT label = {};
-			label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-			label.pLabelName = name.cstr();
-			label.color[0] = color[0];
-			label.color[1] = color[1];
-			label.color[2] = color[2];
-			label.color[3] = 1.0f;
-			vkCmdBeginDebugUtilsLabelEXT(cmdb, &label);
-		}
-	}
-
-	void endMarker(VkCommandBuffer cmdb) const
-	{
-		ANKI_ASSERT(cmdb);
-		if(!!(m_extensions & VulkanExtensions::kEXT_debug_utils))
-		{
-			vkCmdEndDebugUtilsLabelEXT(cmdb);
-		}
-	}
-
 	void trySetVulkanHandleName(CString name, VkObjectType type, U64 handle) const;
 
 	void trySetVulkanHandleName(CString name, VkObjectType type, void* handle) const
@@ -214,7 +188,7 @@ public:
 	/// @}
 
 	/// @note It's thread-safe.
-	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash = 0) const;
+	void printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash = 0) const;
 
 	FrameGarbageCollector& getFrameGarbageCollector()
 	{
@@ -269,7 +243,6 @@ private:
 
 	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;
 
-	PFN_vkGetShaderInfoAMD m_pfnGetShaderInfoAMD = nullptr;
 	mutable File m_shaderStatsFile;
 	mutable SpinLock m_shaderStatsFileMtx;
 
@@ -338,22 +311,28 @@ private:
 	Error initMemory();
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
-	static void* allocateCallback(void* userData, size_t size, size_t alignment,
-								  VkSystemAllocationScope allocationScope);
+	static void* allocateCallback(void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
-	static void* reallocateCallback(void* userData, void* original, size_t size, size_t alignment,
-									VkSystemAllocationScope allocationScope);
+	static void* reallocateCallback(void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
 	static void freeCallback(void* userData, void* ptr);
 #endif
 
 	void resetFrame(PerFrame& frame);
 
-	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-										   VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+	static VkBool32 debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 										   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
-	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const;
+	Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, U64 hash) const;
+
+	template<typename TProps>
+	void getPhysicalDeviceProperties2(TProps& props) const
+	{
+		VkPhysicalDeviceProperties2 properties = {};
+		properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+		properties.pNext = &props;
+		vkGetPhysicalDeviceProperties2(m_physicalDevice, &properties);
+	}
 };
 /// @}
 

@@ -7,7 +7,6 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/MeshBinaryLoader.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 
@@ -56,11 +55,11 @@ MeshResource::~MeshResource()
 {
 	for(Lod& lod : m_lods)
 	{
-		UnifiedGeometryMemoryPool::getSingleton().deferredFree(lod.m_indexBufferAllocationToken);
+		UnifiedGeometryBuffer::getSingleton().deferredFree(lod.m_indexBufferAllocationToken);
 
 		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
-			UnifiedGeometryMemoryPool::getSingleton().deferredFree(lod.m_vertexBuffersAllocationToken[stream]);
+			UnifiedGeometryBuffer::getSingleton().deferredFree(lod.m_vertexBuffersAllocationToken[stream]);
 		}
 	}
 }
@@ -119,8 +118,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		lod.m_indexCount = header.m_totalIndexCounts[l];
 		ANKI_ASSERT((lod.m_indexCount % 3) == 0 && "Expecting triangles");
 		const PtrSize indexBufferSize = PtrSize(lod.m_indexCount) * getIndexSize(m_indexType);
-		UnifiedGeometryMemoryPool::getSingleton().allocate(indexBufferSize, getIndexSize(m_indexType),
-														   lod.m_indexBufferAllocationToken);
+		lod.m_indexBufferAllocationToken = UnifiedGeometryBuffer::getSingleton().allocate(indexBufferSize, getIndexSize(m_indexType));
 
 		// Vertex stuff
 		lod.m_vertexCount = header.m_totalVertexCounts[l];
@@ -133,23 +131,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 			m_presentVertStreams |= VertexStreamMask(1 << stream);
 
-			const U32 texelSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
-			const U32 alignment = max(4u, nextPowerOfTwo(texelSize));
-			const PtrSize vertexBufferSize = PtrSize(lod.m_vertexCount) * texelSize + alignment;
-
-			UnifiedGeometryMemoryPool::getSingleton().allocate(vertexBufferSize, alignment,
-															   lod.m_vertexBuffersAllocationToken[stream]);
-
-			// We need to align the actual offset to the texel size
-			const PtrSize remainder = lod.m_vertexBuffersAllocationToken[stream].m_offset % texelSize;
-			lod.m_fixedUnifiedGeometryBufferOffset[stream] = U8(texelSize - remainder);
-
-			ANKI_ASSERT(
-				(lod.m_vertexBuffersAllocationToken[stream].m_offset + lod.m_fixedUnifiedGeometryBufferOffset[stream])
-					% texelSize
-				== 0);
-			ANKI_ASSERT(lod.m_fixedUnifiedGeometryBufferOffset[stream] + PtrSize(lod.m_vertexCount) * texelSize
-						<= lod.m_vertexBuffersAllocationToken[stream].m_size);
+			lod.m_vertexBuffersAllocationToken[stream] =
+				UnifiedGeometryBuffer::getSingleton().allocateFormat(kMeshRelatedVertexStreamFormats[stream], lod.m_vertexCount);
 		}
 
 		// BLAS
@@ -158,16 +141,13 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			AccelerationStructureInitInfo inf(ResourceString().sprintf("%s_%s", "Blas", basename.cstr()));
 			inf.m_type = AccelerationStructureType::kBottomLevel;
 
-			inf.m_bottomLevel.m_indexBuffer = UnifiedGeometryMemoryPool::getSingleton().getBuffer();
-			inf.m_bottomLevel.m_indexBufferOffset = lod.m_indexBufferAllocationToken.m_offset;
+			inf.m_bottomLevel.m_indexBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
+			inf.m_bottomLevel.m_indexBufferOffset = lod.m_indexBufferAllocationToken.getOffset();
 			inf.m_bottomLevel.m_indexCount = lod.m_indexCount;
 			inf.m_bottomLevel.m_indexType = m_indexType;
-			inf.m_bottomLevel.m_positionBuffer = UnifiedGeometryMemoryPool::getSingleton().getBuffer();
-			inf.m_bottomLevel.m_positionBufferOffset =
-				lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition].m_offset
-				+ lod.m_fixedUnifiedGeometryBufferOffset[VertexStreamId::kPosition];
-			inf.m_bottomLevel.m_positionStride =
-				getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
+			inf.m_bottomLevel.m_positionBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
+			inf.m_bottomLevel.m_positionBufferOffset = lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition].getOffset();
+			inf.m_bottomLevel.m_positionStride = getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
 			inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
 			inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
 
@@ -184,25 +164,21 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 		for(const Lod& lod : m_lods)
 		{
-			cmdb->fillBuffer(UnifiedGeometryMemoryPool::getSingleton().getBuffer(),
-							 lod.m_indexBufferAllocationToken.m_offset,
+			cmdb->fillBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), lod.m_indexBufferAllocationToken.getOffset(),
 							 PtrSize(lod.m_indexCount) * getIndexSize(m_indexType), 0);
 
-			for(VertexStreamId stream :
-				EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
+			for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 			{
 				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
 				{
-					cmdb->fillBuffer(UnifiedGeometryMemoryPool::getSingleton().getBuffer(),
-									 lod.m_vertexBuffersAllocationToken[stream].m_offset,
-									 lod.m_vertexBuffersAllocationToken[stream].m_size, 0);
+					cmdb->fillBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), lod.m_vertexBuffersAllocationToken[stream].getOffset(),
+									 lod.m_vertexBuffersAllocationToken[stream].getAllocatedSize(), 0);
 				}
 			}
 		}
 
-		const BufferBarrierInfo barrier = {UnifiedGeometryMemoryPool::getSingleton().getBuffer().get(),
-										   BufferUsageBit::kTransferDestination, BufferUsageBit::kVertex, 0,
-										   kMaxPtrSize};
+		const BufferBarrierInfo barrier = {&UnifiedGeometryBuffer::getSingleton().getBuffer(), BufferUsageBit::kTransferDestination,
+										   BufferUsageBit::kVertex, 0, kMaxPtrSize};
 
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
@@ -232,17 +208,16 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1)> handles;
 	U32 handleCount = 0;
 
-	BufferPtr unifiedGeometryBuffer = UnifiedGeometryMemoryPool::getSingleton().getBuffer();
-	const BufferUsageBit unifiedGeometryBufferNonTransferUsage =
-		unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kTransferDestination;
+	Buffer* unifiedGeometryBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
+	const BufferUsageBit unifiedGeometryBufferNonTransferUsage = unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kTransferDestination;
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	// Set transfer to transfer barrier because of the clear that happened while sync loading
-	const BufferBarrierInfo barrier = {unifiedGeometryBuffer.get(), unifiedGeometryBufferNonTransferUsage,
-									   BufferUsageBit::kTransferDestination, 0, kMaxPtrSize};
+	const BufferBarrierInfo barrier = {unifiedGeometryBuffer, unifiedGeometryBufferNonTransferUsage, BufferUsageBit::kTransferDestination, 0,
+									   kMaxPtrSize};
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
 	// Upload index and vertex buffers
@@ -261,8 +236,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 			ANKI_CHECK(loader.storeIndexBuffer(lodIdx, data, indexBufferSize));
 
-			cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
-									 lod.m_indexBufferAllocationToken.m_offset, handle.getRange());
+			cmdb->copyBufferToBuffer(&handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer, lod.m_indexBufferAllocationToken.getOffset(),
+									 handle.getRange());
 		}
 
 		// Upload vert buffers
@@ -274,8 +249,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			}
 
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
-			const PtrSize vertexBufferSize =
-				PtrSize(lod.m_vertexCount) * getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+			const PtrSize vertexBufferSize = PtrSize(lod.m_vertexCount) * getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
 
 			ANKI_CHECK(transferAlloc.allocate(vertexBufferSize, handle));
 			U8* data = static_cast<U8*>(handle.getMappedMemory());
@@ -285,10 +259,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			ANKI_CHECK(loader.storeVertexBuffer(lodIdx, U32(stream), data, vertexBufferSize));
 
 			// Copy
-			cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
-									 lod.m_vertexBuffersAllocationToken[stream].m_offset
-										 + lod.m_fixedUnifiedGeometryBufferOffset[stream],
-									 handle.getRange());
+			cmdb->copyBufferToBuffer(&handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
+									 lod.m_vertexBuffersAllocationToken[stream].getOffset(), handle.getRange());
 		}
 	}
 
@@ -298,9 +270,9 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 		// Set the barriers
 		BufferBarrierInfo bufferBarrier;
-		bufferBarrier.m_buffer = unifiedGeometryBuffer.get();
+		bufferBarrier.m_buffer = unifiedGeometryBuffer;
 		bufferBarrier.m_offset = 0;
-		bufferBarrier.m_size = kMaxPtrSize;
+		bufferBarrier.m_range = kMaxPtrSize;
 		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
 		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
@@ -317,7 +289,13 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		// Build BLASes
 		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
 		{
-			cmdb->buildAccelerationStructure(m_lods[lodIdx].m_blas);
+			// TODO find a temp buffer
+			BufferInitInfo buffInit("BLAS scratch");
+			buffInit.m_size = m_lods[lodIdx].m_blas->getBuildScratchBufferSize();
+			buffInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+			BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(buffInit);
+
+			cmdb->buildAccelerationStructure(m_lods[lodIdx].m_blas.get(), scratchBuff.get(), 0);
 		}
 
 		// Barriers again
@@ -334,9 +312,9 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	{
 		// Only set a barrier
 		BufferBarrierInfo bufferBarrier;
-		bufferBarrier.m_buffer = unifiedGeometryBuffer.get();
+		bufferBarrier.m_buffer = unifiedGeometryBuffer;
 		bufferBarrier.m_offset = 0;
-		bufferBarrier.m_size = kMaxPtrSize;
+		bufferBarrier.m_range = kMaxPtrSize;
 		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
 		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 

@@ -6,14 +6,30 @@
 #pragma once
 
 #include <AnKi/Renderer/Common.h>
-#include <AnKi/Renderer/Drawer.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
+#include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 #include <AnKi/Collision/Forward.h>
+#include <AnKi/Renderer/Utils/Readback.h>
 
 namespace anki {
+
+// Forward
+extern BoolCVar g_vrsCVar;
+extern BoolCVar g_vrsLimitTo2x2CVar;
+extern BoolCVar g_preferComputeCVar;
+extern NumericCVar<F32> g_renderScalingCVar;
+extern BoolCVar g_rayTracedShadowsCVar;
+extern NumericCVar<U8> g_shadowCascadeCountCVar;
+extern NumericCVar<F32> g_shadowCascade0DistanceCVar;
+extern NumericCVar<F32> g_shadowCascade1DistanceCVar;
+extern NumericCVar<F32> g_shadowCascade2DistanceCVar;
+extern NumericCVar<F32> g_shadowCascade3DistanceCVar;
+extern NumericCVar<F32> g_lod0MaxDistanceCVar;
+extern NumericCVar<F32> g_lod1MaxDistanceCVar;
 
 /// @addtogroup renderer
 /// @{
@@ -43,7 +59,7 @@ public:
 	{ \
 		return *m_##b; \
 	}
-#include <AnKi/Renderer/RendererObject.defs.h>
+#include <AnKi/Renderer/RendererObject.def.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 
 	Bool getRtShadowsEnabled() const
@@ -67,12 +83,12 @@ public:
 	}
 
 	/// Init the renderer.
-	Error init(UVec2 swapchainSize);
+	Error init(UVec2 swapchainSize, StackMemoryPool* framePool);
 
 	/// This function does all the rendering stages and produces a final result.
 	Error populateRenderGraph(RenderingContext& ctx);
 
-	void finalize(const RenderingContext& ctx);
+	void finalize(const RenderingContext& ctx, Fence* fence);
 
 	U64 getFrameCount() const
 	{
@@ -89,46 +105,58 @@ public:
 		return m_sceneDrawer;
 	}
 
-	/// Create the init info for a 2D texture that will be used as a render target.
-	[[nodiscard]] TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage,
-															   CString name = {});
+	GpuVisibility& getGpuVisibility()
+	{
+		return m_visibility;
+	}
+
+	GpuVisibilityNonRenderables& getGpuVisibilityNonRenderables()
+	{
+		return m_nonRenderablesVisibility;
+	}
+
+	GpuVisibilityAccelerationStructures& getGpuVisibilityAccelerationStructures()
+	{
+		return m_asVisibility;
+	}
+
+	const HzbGenerator& getHzbGenerator() const
+	{
+		return m_hzbGenerator;
+	}
+
+	ReadbackManager& getReadbackManager()
+	{
+		return m_readbaks;
+	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	[[nodiscard]] RenderTargetDescription create2DRenderTargetDescription(U32 w, U32 h, Format format,
-																		  CString name = {});
+	[[nodiscard]] TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name = {});
+
+	/// Create the init info for a 2D texture that will be used as a render target.
+	[[nodiscard]] RenderTargetDescription create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name = {});
 
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());
 
-	/// Returns true if there were resources loaded or loading async tasks that got completed.
-	Bool resourcesLoaded() const
+	TextureView& getDummyTextureView2d() const
 	{
-		return m_resourcesDirty;
+		return *m_dummyTexView2d;
 	}
 
-	TextureViewPtr getDummyTextureView2d() const
+	TextureView& getDummyTextureView3d() const
 	{
-		return m_dummyTexView2d;
+		return *m_dummyTexView3d;
 	}
 
-	TextureViewPtr getDummyTextureView3d() const
+	Buffer& getDummyBuffer() const
 	{
-		return m_dummyTexView3d;
-	}
-
-	BufferPtr getDummyBuffer() const
-	{
-		return m_dummyBuff;
+		return *m_dummyBuff;
 	}
 
 	const RendererPrecreatedSamplers& getSamplers() const
 	{
 		return m_samplers;
-	}
-
-	U32 getTileSize() const
-	{
-		return m_tileSize;
 	}
 
 	const UVec2& getTileCounts() const
@@ -165,19 +193,23 @@ public:
 	}
 
 	// Need to call it after the handle is set by the RenderGraph.
-	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-									 ShaderProgramPtr& optionalShaderProgram);
+	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram);
 	/// @}
+
+	StackMemoryPool& getFrameMemoryPool() const
+	{
+		ANKI_ASSERT(m_framePool);
+		return *m_framePool;
+	}
 
 private:
 	/// @name Rendering stages
 	/// @{
 #define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##b;
-#include <AnKi/Renderer/RendererObject.defs.h>
+#include <AnKi/Renderer/RendererObject.def.h>
 #undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
 
-	U32 m_tileSize = 0;
 	UVec2 m_tileCounts = UVec2(0u);
 	U32 m_zSplitCount = 0;
 
@@ -185,12 +217,13 @@ private:
 	UVec2 m_postProcessResolution = UVec2(0u); ///< The resolution of post processing and following passes.
 
 	RenderableDrawer m_sceneDrawer;
+	GpuVisibility m_visibility;
+	GpuVisibilityNonRenderables m_nonRenderablesVisibility;
+	GpuVisibilityAccelerationStructures m_asVisibility;
+	HzbGenerator m_hzbGenerator;
+	ReadbackManager m_readbaks;
 
 	U64 m_frameCount; ///< Frame number
-
-	U64 m_prevLoadRequestCount = 0;
-	U64 m_prevAsyncTasksCompleted = 0;
-	Bool m_resourcesDirty = true;
 
 	CommonMatrices m_prevMatrices;
 
@@ -203,6 +236,8 @@ private:
 	RendererPrecreatedSamplers m_samplers;
 
 	ShaderProgramResourcePtr m_clearTexComputeProg;
+
+	StackMemoryPool* m_framePool = nullptr;
 
 	class DebugRtInfo
 	{

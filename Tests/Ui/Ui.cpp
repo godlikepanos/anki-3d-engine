@@ -4,11 +4,10 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
 #include <AnKi/Window.h>
-#include <AnKi/Core/GpuMemoryPools.h>
 
 using namespace anki;
 
@@ -57,21 +56,19 @@ public:
 
 ANKI_TEST(Ui, Ui)
 {
-	ConfigSet& cfg = ConfigSet::allocateSingleton(allocAligned, nullptr);
-	initConfig(cfg);
-	cfg.setGrVsync(true);
-	cfg.setGrValidation(false);
-	cfg.setWidth(1024);
-	cfg.setHeight(760);
-	cfg.setRsrcDataPaths("EngineAssets");
+	g_vsyncCVar.set(true);
+	g_validationCVar.set(true);
+	g_windowWidthCVar.set(1024);
+	g_windowHeightCVar.set(760);
+	g_dataPathsCVar.set("EngineAssets");
 
-	NativeWindow* win = createWindow(cfg);
+	NativeWindow* win = createWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
 	GrManager* gr = createGrManager(win);
 	createResourceManager(gr);
 	UiManager* ui = &UiManager::allocateSingleton();
 
-	RebarStagingGpuMemoryPool::allocateSingleton().init();
+	RebarTransientMemoryPool::allocateSingleton().init();
 
 	ANKI_TEST_EXPECT_NO_ERR(ui->init(allocAligned, nullptr));
 
@@ -105,7 +102,7 @@ ANKI_TEST(Ui, Ui)
 			FramebufferPtr fb;
 			{
 				TextureViewInitInfo init;
-				init.m_texture = presentTex;
+				init.m_texture = presentTex.get();
 				TextureViewPtr view = gr->newTextureView(init);
 
 				FramebufferInitInfo fbinit;
@@ -126,8 +123,8 @@ ANKI_TEST(Ui, Ui)
 			barrier.m_texture = presentTex.get();
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->beginRenderPass(fb, {{TextureUsageBit::kFramebufferWrite}}, {});
-			canvas->appendToCommandBuffer(cmdb);
+			cmdb->beginRenderPass(fb.get(), {{TextureUsageBit::kFramebufferWrite}}, {});
+			canvas->appendToCommandBuffer(*cmdb);
 			cmdb->endRenderPass();
 
 			barrier.m_previousUsage = TextureUsageBit::kFramebufferWrite;
@@ -137,7 +134,7 @@ ANKI_TEST(Ui, Ui)
 			cmdb->flush();
 
 			gr->swapBuffers();
-			RebarStagingGpuMemoryPool::getSingleton().endFrame();
+			RebarTransientMemoryPool::getSingleton().endFrame();
 
 			timer.stop();
 			const F32 TICK = 1.0f / 30.0f;
@@ -149,7 +146,7 @@ ANKI_TEST(Ui, Ui)
 	}
 
 	UiManager::freeSingleton();
-	RebarStagingGpuMemoryPool::freeSingleton();
+	RebarTransientMemoryPool::freeSingleton();
 	ResourceManager::freeSingleton();
 	GrManager::freeSingleton();
 	Input::freeSingleton();

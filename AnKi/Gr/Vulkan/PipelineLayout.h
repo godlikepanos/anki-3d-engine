@@ -38,8 +38,7 @@ public:
 	void destroy();
 
 	/// @note It's thread-safe.
-	Error newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize,
-							PipelineLayout& layout);
+	Error newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize, PipelineLayout& layout);
 
 private:
 	GrHashMap<U64, VkPipelineLayout> m_layouts;

@@ -159,38 +159,23 @@ static Error work(const CmdLineArgs& info)
 	class TaskManager : public ShaderProgramAsyncTaskInterface
 	{
 	public:
-		UniquePtr<ThreadHive, SingletonMemoryPoolDeleter<DefaultMemoryPool>> m_hive;
+		UniquePtr<ThreadJobManager, SingletonMemoryPoolDeleter<DefaultMemoryPool>> m_jobManager;
 
-		void enqueueTask(void (*callback)(void* userData), void* userData)
+		void enqueueTask(void (*callback)(void* userData), void* userData) final
 		{
-			struct Ctx
-			{
-				void (*m_callback)(void* userData);
-				void* m_userData;
-			};
-			Ctx* ctx = newInstance<Ctx>(DefaultMemoryPool::getSingleton());
-			ctx->m_callback = callback;
-			ctx->m_userData = userData;
-
-			m_hive->submitTask(
-				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-					Ctx* ctx = static_cast<Ctx*>(userData);
-					ctx->m_callback(ctx->m_userData);
-					deleteInstance(DefaultMemoryPool::getSingleton(), ctx);
-				},
-				ctx);
+			m_jobManager->dispatchTask([callback, userData]([[maybe_unused]] U32 threadIdx) {
+				callback(userData);
+			});
 		}
 
 		Error joinTasks()
 		{
-			m_hive->waitAllTasks();
+			m_jobManager->waitForAllTasksToFinish();
 			return Error::kNone;
 		}
 	} taskManager;
-	taskManager.m_hive.reset((info.m_threadCount)
-								 ? newInstance<ThreadHive>(DefaultMemoryPool::getSingleton(), info.m_threadCount, true)
-								 : nullptr);
+	taskManager.m_jobManager.reset((info.m_threadCount) ? newInstance<ThreadJobManager>(DefaultMemoryPool::getSingleton(), info.m_threadCount, true)
+														: nullptr);
 
 	// Compiler options
 	ShaderCompilerOptions compilerOptions;
@@ -199,8 +184,7 @@ static Error work(const CmdLineArgs& info)
 
 	// Compile
 	ShaderProgramBinaryWrapper binary(&pool);
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr,
-									compilerOptions, binary));
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, compilerOptions, binary));
 
 	// Store the binary
 	ANKI_CHECK(binary.serializeToFile(info.m_outFname));

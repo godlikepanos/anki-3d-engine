@@ -8,11 +8,11 @@
 #include <AnKi/Core/CoreTracer.h>
 #include <AnKi/Util/HighRezTimer.h>
 
-#if ANKI_ENABLE_TRACE
+#if ANKI_TRACING_ENABLED
 ANKI_TEST(Util, Tracer)
 {
 	HeapMemoryPool alloc(allocAligned, nullptr);
-	CoreTracer::allocateSingleton().init("./");
+	ANKI_TEST_EXPECT_NO_ERR(CoreTracer::allocateSingleton().init("./"));
 	Tracer::getSingleton().setEnabled(true);
 
 	// 1st frame

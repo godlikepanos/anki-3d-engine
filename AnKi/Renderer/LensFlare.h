@@ -20,7 +20,7 @@ class LensFlare : public RendererObject
 public:
 	Error init();
 
-	void runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb);
+	void runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb);
 
 	void populateRenderGraph(RenderingContext& ctx);
 
@@ -32,7 +32,6 @@ public:
 
 private:
 	// Occlusion test
-	BufferPtr m_indirectBuff;
 	ShaderProgramResourcePtr m_updateIndirectBuffProg;
 	ShaderProgramPtr m_updateIndirectBuffGrProg;
 
@@ -40,12 +39,11 @@ private:
 	ShaderProgramResourcePtr m_realProg;
 	ShaderProgramPtr m_realGrProg;
 	U8 m_maxSpritesPerFlare;
-	U8 m_maxFlares;
-	U16 m_maxSprites;
 
 	class
 	{
 	public:
+		BufferOffsetRange m_indirectBuff;
 		BufferHandle m_indirectBuffHandle;
 	} m_runCtx;
 
@@ -53,8 +51,6 @@ private:
 	Error initOcclusion();
 
 	Error initInternal();
-
-	void updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

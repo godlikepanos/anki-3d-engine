@@ -6,9 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Scene/Spatial.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -67,12 +65,14 @@ public:
 		return m_colorMul;
 	}
 
-	void setupLensFlareQueueElement(LensFlareQueueElement& el) const
+	const Vec3& getWorldPosition() const
 	{
-		el.m_worldPosition = m_worldPosition;
-		el.m_firstFlareSize = m_firstFlareSize;
-		el.m_colorMultiplier = m_colorMul;
-		el.m_textureView = m_image->getTextureView().get();
+		return m_worldPosition;
+	}
+
+	const ImageResource& getImage() const
+	{
+		return *m_image;
 	}
 
 private:
@@ -82,8 +82,6 @@ private:
 
 	ImageResourcePtr m_image; ///< Array of textures.
 
-	Spatial m_spatial;
-
 	Vec2 m_firstFlareSize = Vec2(1.0f);
 	Vec2 m_otherFlareSize = Vec2(1.0f);
 
@@ -91,9 +89,7 @@ private:
 
 	Bool m_dirty = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
-
-	void onDestroy(SceneNode& node);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

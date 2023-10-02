@@ -25,43 +25,56 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	/// It will populate the clusters and the rest of the objects (lights, probes etc) in an async job. Needs to be
-	/// called after the render queue is finalized.
-	void writeClusterBuffersAsync();
-
-	const RebarGpuMemoryToken& getClusteredUniformsRebarToken() const
+	const BufferOffsetRange& getClusteredShadingUniforms() const
 	{
-		return m_runCtx.m_clusteredShadingUniformsToken;
+		return m_runCtx.m_clusterUniformsBuffer;
 	}
 
-	const RebarGpuMemoryToken& getClustersRebarToken() const
+	const BufferOffsetRange& getPackedObjectsBuffer(GpuSceneNonRenderableObjectType type) const
 	{
-		return m_runCtx.m_clustersToken;
+		return m_runCtx.m_packedObjectsBuffers[type];
 	}
 
-	const BufferHandle& getClustersRenderGraphHandle() const
+	BufferHandle getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType type) const
 	{
-		return m_runCtx.m_rebarHandle;
+		return m_runCtx.m_packedObjectsHandles[type];
+	}
+
+	const BufferOffsetRange& getClustersBuffer() const
+	{
+		return m_runCtx.m_clustersBuffer;
+	}
+
+	BufferHandle getClustersBufferHandle() const
+	{
+		return m_runCtx.m_clustersHandle;
 	}
 
 private:
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	ShaderProgramResourcePtr m_jobSetupProg;
+	ShaderProgramPtr m_jobSetupGrProg;
 
-	U32 m_tileCount = 0;
-	U32 m_clusterCount = 0;
+	ShaderProgramResourcePtr m_binningProg;
+	Array<ShaderProgramPtr, U32(GpuSceneNonRenderableObjectType::kCount)> m_binningGrProgs;
+
+	ShaderProgramResourcePtr m_packingProg;
+	Array<ShaderProgramPtr, U32(GpuSceneNonRenderableObjectType::kCount)> m_packingGrProgs;
 
 	class
 	{
 	public:
-		RenderingContext* m_ctx = nullptr;
-		RebarGpuMemoryToken m_clusteredShadingUniformsToken;
-		RebarGpuMemoryToken m_clustersToken;
-		BufferHandle m_rebarHandle; ///< For dependency tracking.
+		BufferHandle m_clustersHandle;
+		BufferOffsetRange m_clustersBuffer;
+
+		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsHandles;
+		Array<BufferOffsetRange, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsBuffers;
+
+		BufferOffsetRange m_clusterUniformsBuffer;
+		ClusteredShadingUniforms* m_uniformsCpu = nullptr;
+		RenderingContext* m_rctx = nullptr;
 	} m_runCtx;
 
-	void writeClustererBuffers(RenderingContext& ctx);
-	void writeClustererBuffersTask();
+	void writeClusterUniformsInternal();
 };
 /// @}
 

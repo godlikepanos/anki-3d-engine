@@ -6,8 +6,10 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
+#include <AnKi/Scene/RenderStateBucket.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Util/WeakArray.h>
 
@@ -36,9 +38,6 @@ public:
 		return m_particleEmitterResource.isCreated();
 	}
 
-	void setupRenderableQueueElements(RenderingTechnique technique,
-									  WeakArray<RenderableQueueElement>& outRenderables) const;
-
 private:
 	class ParticleBase;
 	class SimpleParticle;
@@ -51,11 +50,7 @@ private:
 		kPhysicsEngine
 	};
 
-	SceneNode* m_node = nullptr;
-
 	ParticleEmitterProperties m_props;
-
-	Spatial m_spatial;
 
 	ParticleEmitterResourcePtr m_particleEmitterResource;
 	SceneDynamicArray<SimpleParticle> m_simpleParticles;
@@ -63,19 +58,30 @@ private:
 	Second m_timeLeftForNextEmission = 0.0;
 	U32 m_aliveParticleCount = 0;
 
-	SegregatedListsGpuMemoryPoolToken m_gpuScenePositions;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneAlphas;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneScales;
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	U32 m_gpuSceneIndex = kMaxU32;
+	UnifiedGeometryBufferAllocation m_quadPositions;
+	UnifiedGeometryBufferAllocation m_quadUvs;
+	UnifiedGeometryBufferAllocation m_quadIndices;
+
+	GpuSceneBufferAllocation m_gpuScenePositions;
+	GpuSceneBufferAllocation m_gpuSceneAlphas;
+	GpuSceneBufferAllocation m_gpuSceneScales;
+	GpuSceneBufferAllocation m_gpuSceneUniforms;
+	GpuSceneArrays::ParticleEmitter::Allocation m_gpuSceneParticleEmitter;
+	GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
+	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
+	GpuSceneArrays::RenderableBoundingVolumeGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
+	GpuSceneArrays::RenderableBoundingVolumeDepth::Allocation m_gpuSceneRenderableAabbDepth;
+	GpuSceneArrays::RenderableBoundingVolumeForward::Allocation m_gpuSceneRenderableAabbForward;
+
+	Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBuckets;
 
 	Bool m_resourceUpdated = true;
 	SimulationType m_simulationType = SimulationType::kUndefined;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	template<typename TParticle>
-	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles, Vec3*& positions,
+	void simulate(Second prevUpdateTime, Second crntTime, const Transform& worldTransform, WeakArray<TParticle> particles, Vec3*& positions,
 				  F32*& scales, F32*& alphas, Aabb& aabbWorld);
 };
 /// @}

@@ -10,7 +10,7 @@
 /// Assertion. Print an error and stop the debugger (if it runs through a debugger) and then abort.
 #if !ANKI_EXTRA_CHECKS
 #	define ANKI_ASSERT(x) ((void)0)
-#	define ANKI_ENABLE_ASSERTIONS 0
+#	define ANKI_ASSERTIONS_ENABLED 0
 #else
 
 namespace anki {
@@ -28,6 +28,6 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 				ANKI_UNREACHABLE(); \
 			} \
 		} while(0)
-#	define ANKI_ENABLE_ASSERTIONS 1
+#	define ANKI_ASSERTIONS_ENABLED 1
 
 #endif

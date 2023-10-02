@@ -33,6 +33,10 @@ CommandBufferImpl::~CommandBufferImpl()
 	{
 		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
+
+#if ANKI_EXTRA_CHECKS
+	ANKI_ASSERT(m_debugMarkersPushed == 0);
+#endif
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
@@ -51,7 +55,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		m_activeFb = init.m_framebuffer;
 		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
 		m_depthStencilAttachmentUsage = init.m_depthStencilAttachmentUsage;
-		m_state.beginRenderPass(static_cast<FramebufferImpl*>(m_activeFb.get()));
+		m_state.beginRenderPass(static_cast<FramebufferImpl*>(m_activeFb));
 		m_microCmdb->pushObjectRef(m_activeFb);
 	}
 
@@ -61,6 +65,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	}
 
 	m_state.setVrsCapable(getGrManagerImpl().getDeviceCapabilities().m_vrs);
+
+	m_debugMarkers = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_debug_utils);
 
 	return Error::kNone;
 }
@@ -118,9 +124,8 @@ void CommandBufferImpl::beginRecording()
 	}
 }
 
-void CommandBufferImpl::beginRenderPassInternal(
-	const FramebufferPtr& fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-	TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
+void CommandBufferImpl::beginRenderPassInternal(Framebuffer* fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
+												TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -206,8 +211,6 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.renderArea.extent.width = m_renderArea[2];
 	bi.renderArea.extent.height = m_renderArea[3];
 
-	getGrManagerImpl().beginMarker(m_handle, impl.getName(), Vec3(0.0f, 1.0f, 0.0f));
-
 #if !ANKI_PLATFORM_MOBILE
 	// nVidia SRI cache workaround
 	if(impl.hasSri())
@@ -247,9 +250,8 @@ void CommandBufferImpl::endRenderPassInternal()
 	subpassEndInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_END_INFO;
 
 	vkCmdEndRenderPass2KHR(m_handle, &subpassEndInfo);
-	getGrManagerImpl().endMarker(m_handle);
 
-	m_activeFb.reset(nullptr);
+	m_activeFb = nullptr;
 	m_state.endRenderPass();
 
 	// After pushing second level command buffers the state is undefined. Reset the tracker and rebind the dynamic state
@@ -305,7 +307,7 @@ void CommandBufferImpl::endRecording()
 #endif
 }
 
-void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
+void CommandBufferImpl::generateMipmaps2dInternal(TextureView* texView)
 {
 	commandCommon();
 
@@ -332,24 +334,20 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i, 0, face, layer), aspect),
-											   range);
+			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i, 0, face, layer), aspect), range);
 
-			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
-							VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-							VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
+			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+							VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
 							range);
 		}
 
 		// Transition destination
 		{
 			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(
-				TextureSubresourceInfo(TextureSurfaceInfo(i + 1, 0, face, layer), aspect), range);
+			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i + 1, 0, face, layer), aspect), range);
 
-			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, VK_IMAGE_LAYOUT_UNDEFINED,
-							VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
-							VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tex.m_imageHandle, range);
+			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TRANSFER_BIT,
+							VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tex.m_imageHandle, range);
 		}
 
 		// Setup the blit struct
@@ -393,17 +391,12 @@ void CommandBufferImpl::generateMipmaps2dInternal(const TextureViewPtr& texView)
 		blit.dstOffsets[0] = {0, 0, 0};
 		blit.dstOffsets[1] = {dstWidth, dstHeight, 1};
 
-		vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
-					   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
-					   (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+		vkCmdBlitImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+					   &blit, (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	}
-
-	// Hold the reference
-	m_microCmdb->pushObjectRef(texView);
 }
 
-void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, PtrSize offset,
-														[[maybe_unused]] PtrSize range, const TextureViewPtr& texView)
+void CommandBufferImpl::copyBufferToTextureViewInternal(Buffer* buff, PtrSize offset, [[maybe_unused]] PtrSize range, TextureView* texView)
 {
 	commandCommon();
 
@@ -415,8 +408,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 	const Bool is3D = tex.getTextureType() == TextureType::k3D;
 	const VkImageAspectFlags aspect = convertImageAspect(view.getSubresource().m_depthStencilAspect);
 
-	const TextureSurfaceInfo surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, 0,
-								  view.getSubresource().m_firstLayer);
+	const TextureSurfaceInfo surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, 0, view.getSubresource().m_firstLayer);
 	const TextureVolumeInfo vol(view.getSubresource().m_firstMipmap);
 
 	// Compute the sizes of the mip
@@ -448,11 +440,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(const BufferPtr& buff, P
 	region.bufferImageHeight = 0;
 	region.bufferRowLength = 0;
 
-	vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle, layout, 1,
-						   &region);
-
-	m_microCmdb->pushObjectRef(texView);
-	m_microCmdb->pushObjectRef(buff);
+	vkCmdCopyBufferToImage(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle, layout, 1, &region);
 }
 
 void CommandBufferImpl::rebindDynamicState()
@@ -467,8 +455,7 @@ void CommandBufferImpl::rebindDynamicState()
 	// Rebind the stencil compare mask
 	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])
 	{
-		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-								   m_stencilCompareMasks[0]);
+		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[0]);
 	}
 	else
 	{
@@ -479,8 +466,7 @@ void CommandBufferImpl::rebindDynamicState()
 	// Rebind the stencil write mask
 	if(m_stencilWriteMasks[0] == m_stencilWriteMasks[1])
 	{
-		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-								 m_stencilWriteMasks[0]);
+		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[0]);
 	}
 	else
 	{
@@ -491,8 +477,7 @@ void CommandBufferImpl::rebindDynamicState()
 	// Rebind the stencil reference
 	if(m_stencilReferenceMasks[0] == m_stencilReferenceMasks[1])
 	{
-		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT,
-								 m_stencilReferenceMasks[0]);
+		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[0]);
 	}
 	else
 	{
@@ -501,31 +486,24 @@ void CommandBufferImpl::rebindDynamicState()
 	}
 }
 
-void CommandBufferImpl::buildAccelerationStructureInternal(const AccelerationStructurePtr& as)
+void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset)
 {
+	ANKI_ASSERT(as && scratchBuffer);
+	ANKI_ASSERT(as->getBuildScratchBufferSize() + scratchBufferOffset <= scratchBuffer->getSize());
+
 	commandCommon();
 
 	// Get objects
 	const AccelerationStructureImpl& asImpl = static_cast<AccelerationStructureImpl&>(*as);
 
-	// Create the scrach buffer
-	BufferInitInfo bufferInit;
-	bufferInit.m_usage = PrivateBufferUsageBit::kAccelerationStructureBuildScratch;
-	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
-	BufferPtr scratchBuff = getGrManagerImpl().newBuffer(bufferInit);
-
 	// Create the build info
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
 	VkAccelerationStructureBuildRangeInfoKHR rangeInfo;
-	asImpl.generateBuildInfo(scratchBuff->getGpuAddress(), buildInfo, rangeInfo);
+	asImpl.generateBuildInfo(scratchBuffer->getGpuAddress() + scratchBufferOffset, buildInfo, rangeInfo);
 
-	// Do the command
+	// Run the command
 	Array<const VkAccelerationStructureBuildRangeInfoKHR*, 1> pRangeInfos = {&rangeInfo};
 	vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]);
-
-	// Push refs
-	m_microCmdb->pushObjectRef(as);
-	m_microCmdb->pushObjectRef(scratchBuff);
 }
 
 #if ANKI_DLSS
@@ -542,15 +520,12 @@ static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl
 	const Bool isUAV = !!(tex.m_vkUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT);
 
 	// TODO Not sure if I should pass the width,height of the image or the view
-	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format, tex.getWidth(),
-												  tex.getHeight(), isUAV);
+	return NVSDK_NGX_Create_ImageView_Resource_VK(imageView, image, subresourceRange, format, tex.getWidth(), tex.getHeight(), isUAV);
 }
 #endif
 
-void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const TextureViewPtr& inColor,
-										const TextureViewPtr& outUpscaledColor, const TextureViewPtr& motionVectors,
-										const TextureViewPtr& depth, const TextureViewPtr& exposure,
-										const Bool resetAccumulation, const Vec2& jitterOffset,
+void CommandBufferImpl::upscaleInternal(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors,
+										TextureView* depth, TextureView* exposure, const Bool resetAccumulation, const Vec2& jitterOffset,
 										const Vec2& motionVectorsScale)
 {
 #if ANKI_DLSS
@@ -596,17 +571,13 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 	vkDlssEvalParams.InMVSubrectBase = renderingOffset;
 	vkDlssEvalParams.InRenderSubrectDimensions = renderingSize;
 
-	getGrManagerImpl().beginMarker(m_handle, "DLSS");
 	NVSDK_NGX_Parameter* dlssParameters = &upscalerImpl.getParameters();
 	NVSDK_NGX_Handle* dlssFeature = &upscalerImpl.getFeature();
-	const NVSDK_NGX_Result result =
-		NGX_VULKAN_EVALUATE_DLSS_EXT(m_handle, dlssFeature, dlssParameters, &vkDlssEvalParams);
-	getGrManagerImpl().endMarker(m_handle);
+	const NVSDK_NGX_Result result = NGX_VULKAN_EVALUATE_DLSS_EXT(m_handle, dlssFeature, dlssParameters, &vkDlssEvalParams);
 
 	if(NVSDK_NGX_FAILED(result))
 	{
-		ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result,
-					 GetNGXResultAsString(result));
+		ANKI_VK_LOGF("Failed to NVSDK_NGX_VULKAN_EvaluateFeature for DLSS, code = 0x%08x, info: %ls", result, GetNGXResultAsString(result));
 	}
 #else
 	ANKI_ASSERT(0 && "Not supported");
@@ -622,9 +593,8 @@ void CommandBufferImpl::upscaleInternal(const GrUpscalerPtr& upscaler, const Tex
 #endif
 }
 
-void CommandBufferImpl::setPipelineBarrierInternal(
-	ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
-	ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
+void CommandBufferImpl::setPipelineBarrierInternal(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
+												   ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
 {
 	commandCommon();
 
@@ -657,8 +627,7 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		if(nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
 		{
-			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
-			// subresource
+			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the subresource
 
 			ANKI_ASSERT(subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == 1);
 		}
@@ -674,15 +643,12 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
-		impl.computeBarrierInfo(prevUsage, nextUsage, inf.subresourceRange.baseMipLevel, srcStage, inf.srcAccessMask,
-								dstStage, inf.dstAccessMask);
+		impl.computeBarrierInfo(prevUsage, nextUsage, inf.subresourceRange.baseMipLevel, srcStage, inf.srcAccessMask, dstStage, inf.dstAccessMask);
 		inf.oldLayout = impl.computeLayout(prevUsage, inf.subresourceRange.baseMipLevel);
 		inf.newLayout = impl.computeLayout(nextUsage, inf.subresourceRange.baseMipLevel);
 
 		srcStageMask |= srcStage;
 		dstStageMask |= dstStage;
-
-		m_microCmdb->pushObjectRef(barrier.m_texture);
 	}
 
 	for(const BufferBarrierInfo& barrier : buffers)
@@ -703,15 +669,15 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 		ANKI_ASSERT(barrier.m_offset < impl.getSize());
 		inf.offset = barrier.m_offset;
 
-		if(barrier.m_size == kMaxPtrSize)
+		if(barrier.m_range == kMaxPtrSize)
 		{
 			inf.size = VK_WHOLE_SIZE;
 		}
 		else
 		{
-			ANKI_ASSERT(barrier.m_size > 0);
-			ANKI_ASSERT(barrier.m_offset + barrier.m_size <= impl.getSize());
-			inf.size = barrier.m_size;
+			ANKI_ASSERT(barrier.m_range > 0);
+			ANKI_ASSERT(barrier.m_offset + barrier.m_range <= impl.getSize());
+			inf.size = barrier.m_range;
 		}
 
 		VkPipelineStageFlags srcStage;
@@ -720,8 +686,6 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		srcStageMask |= srcStage;
 		dstStageMask |= dstStage;
-
-		m_microCmdb->pushObjectRef(barrier.m_buffer);
 	}
 
 	for(const AccelerationStructureBarrierInfo& barrier : accelerationStructures)
@@ -734,8 +698,8 @@ void CommandBufferImpl::setPipelineBarrierInternal(
 
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
-		AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage,
-													  inf.srcAccessMask, dstStage, inf.dstAccessMask);
+		AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage, inf.srcAccessMask, dstStage,
+													  inf.dstAccessMask);
 
 		srcStageMask |= srcStage;
 		dstStageMask |= dstStage;

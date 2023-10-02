@@ -12,24 +12,22 @@
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kOutImageSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kMinSampleCount, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kMaxSampleCount, 3u);
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(2)]] Texture2D<UVec4> g_inTex;
-[[vk::binding(3)]] Texture2D g_depthTex;
-[[vk::binding(4)]] Texture2D g_gbuffer2Tex;
-[[vk::binding(5)]] Texture2D g_momentsTex;
-[[vk::binding(6)]] Texture2D g_historyLengthTex;
-[[vk::binding(7)]] RWTexture2D<UVec4> g_outImg;
+[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(1)]] Texture2D<Vec4> g_inTex;
+[[vk::binding(2)]] Texture2D<Vec4> g_depthTex;
+[[vk::binding(3)]] Texture2D<Vec4> g_gbuffer2Tex;
+[[vk::binding(4)]] Texture2D<Vec4> g_momentsTex;
+[[vk::binding(5)]] Texture2D<Vec4> g_historyLengthTex;
+[[vk::binding(6)]] RWTexture2D<Vec4> g_outUav;
 
 [[vk::push_constant]] ConstantBuffer<RtShadowsDenoiseUniforms> g_unis;
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {
-	const Vec4 worldPos4 = mul(g_unis.invViewProjMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_unis.m_invViewProjMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	return worldPos;
 }
@@ -59,31 +57,29 @@ F32 computeVarianceCenter(Vec2 uv)
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	if(any(svDispatchThreadId.xy >= kOutImageSize))
+	Vec2 outImageSize;
+	g_outUav.GetDimensions(outImageSize.x, outImageSize.y);
+	if(any(svDispatchThreadId.xy >= UVec2(outImageSize)))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(kOutImageSize);
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / outImageSize;
 
 	// Reference
 	const F32 depthCenter = g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
 	if(depthCenter == 1.0)
 	{
-		g_outImg[svDispatchThreadId.xy] = 0;
+		g_outUav[svDispatchThreadId.xy] = 0.0;
 		return;
 	}
 
 	const Vec3 positionCenter = unproject(uvToNdc(uv), depthCenter);
 	const Vec3 normalCenter = unpackNormalFromGBuffer(g_gbuffer2Tex.SampleLevel(g_linearAnyClampSampler, uv, 0.0));
 
-	RF32 shadowFactors[kMaxRtShadowLayers];
-	unpackRtShadows(g_inTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0), shadowFactors);
-
 	// Decide the amount of blurring
 	const F32 varianceCenter = computeVarianceCenter(uv);
-	const F32 historyLength =
-		g_historyLengthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x * kRtShadowsMaxHistoryLength;
+	const F32 historyLength = g_historyLengthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x * kRtShadowsMaxHistoryLength;
 
 	U32 sampleCount;
 	if(historyLength < 2.0)
@@ -111,45 +107,36 @@ F32 computeVarianceCenter(Vec2 uv)
 	sampleCount = sampleCount / 2u;
 
 	// Sample
-	F32 weight = 1.0; // TODO fix that
-
+	F32 weight = kEpsilonF32;
+	F32 shadowFactor = 0.0;
 	for(I32 i = -I32(sampleCount); i < I32(sampleCount); ++i)
 	{
-		const Vec2 texelSize = 1.0 / Vec2(kOutImageSize);
+		const Vec2 texelSize = 1.0 / outImageSize;
 #if BLUR_ORIENTATION == 0
 		const Vec2 sampleUv = Vec2(uv.x + F32(i) * texelSize.x, uv.y);
 #else
 		const Vec2 sampleUv = Vec2(uv.x, uv.y + F32(i) * texelSize.y);
 #endif
 
-		RF32 localShadowFactors[kMaxRtShadowLayers];
-		unpackRtShadows(g_inTex.SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0), localShadowFactors);
+		const F32 localShadowFactor = g_inTex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0).r;
 
 		const F32 depthTap = g_depthTex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0).r;
 		const Vec3 positionTap = unproject(uvToNdc(sampleUv), depthTap);
-		const Vec3 normalTap =
-			unpackNormalFromGBuffer(g_gbuffer2Tex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0));
+		const Vec3 normalTap = unpackNormalFromGBuffer(g_gbuffer2Tex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0));
 
-		// F32 w = calculateBilateralWeighPlane(depthCenter, depthTap, 1.0);
-		F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
+		// F32 localWeight = calculateBilateralWeighPlane(depthCenter, depthTap, 1.0);
+		F32 localWeight = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
 
-		w *= gaussianWeight(0.4, abs(F32(i)) / F32(sampleCount + 1u));
+		localWeight *= gaussianWeight(0.4, abs(F32(i)) / F32(sampleCount + 1u));
 
-		[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
-		{
-			shadowFactors[i] += localShadowFactors[i] * w;
-		}
+		shadowFactor += localShadowFactor * localWeight;
 
-		weight += w;
+		weight += localWeight;
 	}
 
-	// Write value
-	[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
-	{
-		shadowFactors[i] /= weight;
-	}
-
-	g_outImg[svDispatchThreadId.xy] = packRtShadows(shadowFactors);
+	// Normalize and write
+	shadowFactor /= weight;
+	g_outUav[svDispatchThreadId.xy] = shadowFactor;
 }
 
 #pragma anki end

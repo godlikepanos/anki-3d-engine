@@ -149,12 +149,12 @@ public:
 
 	Bool operator!() const
 	{
-		return !getAny();
+		return !getAnySet();
 	}
 
 	explicit operator Bool() const
 	{
-		return getAny();
+		return getAnySet();
 	}
 
 	/// Set or unset a bit at the given position.
@@ -230,14 +230,14 @@ public:
 	}
 
 	/// Any are enabled.
-	Bool getAny() const
+	Bool getAnySet() const
 	{
 		const BitSet kZero(false);
 		return *this != kZero;
 	}
 
 	/// Count bits.
-	U32 getEnabledBitCount() const
+	U32 getSetBitCount() const
 	{
 		U32 count = 0;
 		for(U i = 0; i < kChunkCount; ++i)
@@ -264,9 +264,47 @@ public:
 		return kMaxU32;
 	}
 
+	/// Get the least significant bit that is enabled. Or kMaxU32 if all is zero.
+	U32 getLeastSignificantBit() const
+	{
+		for(U32 i = 0; i < kChunkCount; ++i)
+		{
+			const U64 bits = m_chunks[i];
+			if(bits != 0)
+			{
+				const U32 lsb = U32(__builtin_ctzll(bits));
+				return lsb + (i * kChunkBitCount);
+			}
+		}
+
+		return kMaxU32;
+	}
+
 	Array<TChunkType, kChunkCount> getData() const
 	{
 		return m_chunks;
+	}
+
+	/// Unset the N least significant bits of the bitset.
+	BitSet& unsetNLeastSignificantBits(U32 n)
+	{
+		ANKI_ASSERT(n);
+		U32 high, low;
+		position(n - 1, high, low);
+		for(U32 i = 0; i < high; ++i)
+		{
+			m_chunks[i] = 0;
+		}
+
+		// This could be a simple 1<<(low+1) but that may overflow so...
+		ChunkType mask = (ChunkType(1) << ChunkType(low)) - ChunkType(1);
+		mask <<= 1;
+		mask |= 1;
+
+		mask = ~mask;
+		m_chunks[high] &= mask;
+
+		return *this;
 	}
 
 private:

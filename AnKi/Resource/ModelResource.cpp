@@ -34,6 +34,25 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 	inf.m_program = variant.getShaderProgram();
 }
 
+void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
+{
+	lod = min<U32>(lod, m_meshLodCount - 1);
+
+	inf.m_indexBufferOffset = m_lodInfos[lod].m_indexBufferOffset + m_lodInfos[lod].m_firstIndex * getIndexSize(IndexType::kU16);
+	inf.m_indexType = IndexType::kU16;
+	inf.m_indexCount = m_lodInfos[lod].m_indexCount;
+
+	for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
+	{
+		inf.m_vertexBufferOffsets[stream] = m_lodInfos[lod].m_vertexBufferOffsets[stream];
+	}
+
+	if(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
+	{
+		inf.m_blas = m_mesh->getBottomLevelAccelerationStructure(lod);
+	}
+}
+
 void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo& info) const
 {
 	ANKI_ASSERT(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit(1 << key.getRenderingTechnique())));
@@ -49,10 +68,9 @@ void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo&
 	info.m_shaderGroupHandleIndex = variant.getRtShaderGroupHandleIndex();
 }
 
-Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName, const CString& mtlFName,
-					   U32 subMeshIndex, Bool async)
+Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName, const CString& mtlFName, U32 subMeshIndex, Bool async)
 {
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	m_model = model;
 #endif
 
@@ -85,8 +103,7 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 	{
 		Lod& lod = m_lodInfos[l];
 		Aabb aabb;
-		m_mesh->getSubMeshInfo(l, (subMeshIndex == kMaxU32) ? 0 : subMeshIndex, lod.m_firstIndex, lod.m_indexCount,
-							   aabb);
+		m_mesh->getSubMeshInfo(l, (subMeshIndex == kMaxU32) ? 0 : subMeshIndex, lod.m_firstIndex, lod.m_indexCount, aabb);
 
 		U32 totalIndexCount;
 		IndexType indexType;

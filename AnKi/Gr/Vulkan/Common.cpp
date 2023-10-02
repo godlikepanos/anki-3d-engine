@@ -324,15 +324,14 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 	}
 
-	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructureBuildScratch))
+	if(!!(usageMask & BufferUsageBit::kAccelerationStructureBuildScratch))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; // Spec says that this will be enough
 	}
 
 	if(!!(usageMask & PrivateBufferUsageBit::kAccelerationStructure))
 	{
-		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR
-			   | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 	}
 
 	if(!!(usageMask & BufferUsageBit::kShaderBindingTable))

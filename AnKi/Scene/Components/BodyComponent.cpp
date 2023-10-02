@@ -15,7 +15,7 @@
 namespace anki {
 
 BodyComponent::BodyComponent(SceneNode* node)
-	: SceneComponent(node, getStaticClassId())
+	: SceneComponent(node, kClassType)
 	, m_node(node)
 {
 	node->setIgnoreParentTransform(true);
@@ -123,7 +123,7 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 void BodyComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)
 {
-	if(other->getClassId() != ModelComponent::getStaticClassId())
+	if(other->getType() != SceneComponentType::kModel)
 	{
 		return;
 	}

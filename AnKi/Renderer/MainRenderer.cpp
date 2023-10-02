@@ -8,16 +8,19 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Util/ThreadHive.h>
 
 namespace anki {
+
+static StatCounter g_rendererCpuTimeStatVar(StatCategory::kTime, "Renderer",
+											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+StatCounter g_rendererGpuTimeStatVar(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 MainRenderer::MainRenderer()
 {
@@ -40,13 +43,12 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 
 	// Init renderer and manipulate the width/height
 	m_swapchainResolution = inf.m_swapchainSize;
-	m_rDrawToDefaultFb = ConfigSet::getSingleton().getRRenderScaling() == 1.0f;
+	m_rDrawToDefaultFb = g_renderScalingCVar.get() == 1.0f;
 
-	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(),
-				m_swapchainResolution.y());
+	ANKI_R_LOGI("Initializing main renderer. Swapchain resolution %ux%u", m_swapchainResolution.x(), m_swapchainResolution.y());
 
 	m_r = newInstance<Renderer>(RendererMemoryPool::getSingleton());
-	ANKI_CHECK(m_r->init(m_swapchainResolution));
+	ANKI_CHECK(m_r->init(m_swapchainResolution, &m_framePool));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)
@@ -54,16 +56,15 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/BlitRaster.ankiprogbin", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
-		m_blitGrProg = variant->getProgram();
+		m_blitGrProg.reset(&variant->getProgram());
 
 		// The RT desc
-		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * ConfigSet::getSingleton().getRRenderScaling());
+		UVec2 resolution = UVec2(Vec2(m_swapchainResolution) * g_renderScalingCVar.get());
 		alignRoundDown(2, resolution.x());
 		alignRoundDown(2, resolution.y());
 		m_tmpRtDesc = m_r->create2DRenderTargetDescription(
 			resolution.x(), resolution.y(),
-			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm
-																							 : Format::kR8G8B8A8_Unorm,
+			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
 
@@ -79,11 +80,11 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	return Error::kNone;
 }
 
-Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
+Error MainRenderer::render(Texture* presentTex)
 {
 	ANKI_TRACE_SCOPED_EVENT(Render);
 
-	m_stats.m_renderingCpuTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
+	const Second startTime = HighRezTimer::getCurrentTime();
 
 	// First thing, reset the temp mem pool
 	m_framePool.reset();
@@ -92,7 +93,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	RenderingContext ctx(&m_framePool);
 	m_runCtx.m_ctx = &ctx;
 	m_runCtx.m_secondaryTaskId.setNonAtomically(0);
-	ctx.m_renderGraphDescr.setStatisticsEnabled(m_statsEnabled);
+	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
 
 	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::kNone);
 
@@ -107,7 +108,6 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		ctx.m_outRenderTarget = ctx.m_renderGraphDescr.newRenderTarget(m_tmpRtDesc);
 	}
 
-	ctx.m_renderQueue = &rqueue;
 	ANKI_CHECK(m_r->populateRenderGraph(ctx));
 
 	// Blit renderer's result to default FB if needed
@@ -117,14 +117,14 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 
 		pass.setFramebufferInfo(m_fbDescr, {presentRt});
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-			cmdb->setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 
-			cmdb->bindShaderProgram(m_blitGrProg);
-			cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+			cmdb.bindShaderProgram(m_blitGrProg.get());
+			cmdb.bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
 
-			cmdb->drawArrays(PrimitiveTopology::kTriangles, 3);
+			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		});
 
 		pass.newTextureDependency(presentRt, TextureUsageBit::kFramebufferWrite);
@@ -145,40 +145,33 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
 
 	// Populate the 2nd level command buffers
-	Array<ThreadHiveTask, ThreadHive::kMaxThreads> tasks;
-	for(U i = 0; i < CoreThreadHive::getSingleton().getThreadCount(); ++i)
-	{
-		tasks[i].m_argument = this;
-		tasks[i].m_callback = [](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-								 [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-			MainRenderer& self = *static_cast<MainRenderer*>(userData);
-
-			const U32 taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);
-			self.m_rgraph->runSecondLevel(taskId);
-		};
-	}
-	CoreThreadHive::getSingleton().submitTasks(&tasks[0], CoreThreadHive::getSingleton().getThreadCount());
-	CoreThreadHive::getSingleton().waitAllTasks();
+	m_rgraph->runSecondLevel();
 
 	// Populate 1st level command buffers
 	m_rgraph->run();
 
 	// Flush
-	m_rgraph->flush();
+	FencePtr fence;
+	m_rgraph->flush(&fence);
 
 	// Reset for the next frame
 	m_rgraph->reset();
-	m_r->finalize(ctx);
+	m_r->finalize(ctx, fence.get());
 
 	// Stats
-	if(m_statsEnabled)
+	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
 	{
-		m_stats.m_renderingCpuTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingCpuTime;
+		g_rendererCpuTimeStatVar.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
-		m_stats.m_renderingGpuTime = rgraphStats.m_gpuTime;
-		m_stats.m_renderingGpuSubmitTimestamp = rgraphStats.m_cpuStartTime;
+		g_rendererGpuTimeStatVar.set(rgraphStats.m_gpuTime * 1000.0);
+
+		if(rgraphStats.m_gpuTime > 0.0)
+		{
+			// WARNING: The name of the event is somewhat special. Search it to see why
+			ANKI_TRACE_CUSTOM_EVENT(GpuFrameTime, rgraphStats.m_cpuStartTime, rgraphStats.m_gpuTime);
+		}
 	}
 
 	return Error::kNone;

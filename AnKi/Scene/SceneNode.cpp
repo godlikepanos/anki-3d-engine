@@ -8,7 +8,38 @@
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Components/MoveComponent.h>
 
+#include <AnKi/Scene/Components/BodyComponent.h>
+#include <AnKi/Scene/Components/CameraComponent.h>
+#include <AnKi/Scene/Components/DecalComponent.h>
+#include <AnKi/Scene/Components/FogDensityComponent.h>
+#include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Scene/Components/JointComponent.h>
+#include <AnKi/Scene/Components/LensFlareComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
+#include <AnKi/Scene/Components/ModelComponent.h>
+#include <AnKi/Scene/Components/MoveComponent.h>
+#include <AnKi/Scene/Components/ParticleEmitterComponent.h>
+#include <AnKi/Scene/Components/PlayerControllerComponent.h>
+#include <AnKi/Scene/Components/ReflectionProbeComponent.h>
+#include <AnKi/Scene/Components/ScriptComponent.h>
+#include <AnKi/Scene/Components/SkinComponent.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <AnKi/Scene/Components/TriggerComponent.h>
+#include <AnKi/Scene/Components/UiComponent.h>
+
 namespace anki {
+
+// Specialize newComponent(). Do that first
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+	template<> \
+	name##Component* SceneNode::newComponent<name##Component>() \
+	{ \
+		auto it = SceneGraph::getSingleton().getComponentArrays().get##name##s().emplace(this); \
+		it->setArrayIndex(it.getArrayIndex()); \
+		newComponentInternal(&(*it)); \
+		return &(*it); \
+	}
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
 
 SceneNode::SceneNode(CString name)
 	: m_uuid(SceneGraph::getSingleton().getNewUuid())
@@ -26,10 +57,18 @@ SceneNode::~SceneNode()
 {
 	for(SceneComponent* comp : m_components)
 	{
-		comp->onDestroyReal(*this);
-		g_sceneComponentCallbacks.m_destructor[comp->getClassId()](*comp);
+		comp->onDestroy(*this);
 
-		SceneMemoryPool::getSingleton().free(comp);
+		switch(comp->getType())
+		{
+#define ANKI_DEFINE_SCENE_COMPONENT(name, weight) \
+	case SceneComponentType::k##name: \
+		SceneGraph::getSingleton().getComponentArrays().get##name##s().erase(comp->getArrayIndex()); \
+		break;
+#include <AnKi/Scene/Components/SceneComponentClasses.def.h>
+		default:
+			ANKI_ASSERT(0);
+		}
 	}
 }
 
@@ -50,33 +89,33 @@ void SceneNode::setMarkedForDeletion()
 
 void SceneNode::newComponentInternal(SceneComponent* newc)
 {
-	m_componentTypeMask |= 1 << newc->getClassId();
+	m_componentTypeMask |= 1 << SceneComponentTypeMask(newc->getType());
 
 	// Inform all other components that some component was added
 	for(SceneComponent* other : m_components)
 	{
-		other->onOtherComponentRemovedOrAddedReal(newc, true);
+		other->onOtherComponentRemovedOrAdded(newc, true);
 	}
 
 	// Inform the current component about others
 	for(SceneComponent* other : m_components)
 	{
-		newc->onOtherComponentRemovedOrAddedReal(other, true);
+		newc->onOtherComponentRemovedOrAdded(other, true);
 	}
 
 	m_components.emplaceBack(newc);
 
 	// Sort based on update weight
 	std::sort(m_components.getBegin(), m_components.getEnd(), [](const SceneComponent* a, const SceneComponent* b) {
-		const F32 weightA = a->getClassRtti().m_updateWeight;
-		const F32 weightB = b->getClassRtti().m_updateWeight;
+		const F32 weightA = SceneComponent::getUpdateOrderWeight(a->getType());
+		const F32 weightB = SceneComponent::getUpdateOrderWeight(b->getType());
 		if(weightA != weightB)
 		{
 			return weightA < weightB;
 		}
 		else
 		{
-			return a->getClassId() < b->getClassId();
+			return a->getType() < b->getType();
 		}
 	});
 }

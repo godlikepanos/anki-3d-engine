@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
+#include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>
@@ -15,6 +15,14 @@ namespace anki {
 // Forward
 class UiQueueElement;
 class RenderQueue;
+class StatCounter;
+extern NumericCVar<U32> g_windowWidthCVar;
+extern NumericCVar<U32> g_windowHeightCVar;
+extern NumericCVar<U32> g_windowFullscreenCVar;
+extern NumericCVar<U32> g_targetFpsCVar;
+extern NumericCVar<U32> g_displayStatsCVar;
+extern StatCounter g_cpuTotalTimeStatVar;
+extern StatCounter g_rendererGpuTimeStatVar;
 
 /// The core class of the engine.
 class App
@@ -47,37 +55,22 @@ public:
 		return Error::kNone;
 	}
 
-	void setDisplayDeveloperConsole(Bool display)
-	{
-		m_consoleEnabled = display;
-	}
+	Bool toggleDeveloperConsole();
 
-	Bool getDisplayDeveloperConsole() const
+	Bool getDeveloperConsoleEnabled() const
 	{
 		return m_consoleEnabled;
 	}
 
 private:
-	// Misc
-	UiImmediateModeBuilderPtr m_statsUi;
-	UiImmediateModeBuilderPtr m_console;
 	Bool m_consoleEnabled = false;
 	CoreString m_settingsDir; ///< The path that holds the configuration
 	CoreString m_cacheDir; ///< This is used as a cache
-	U64 m_resourceCompletedAsyncTaskCount = 0;
 
 	void* m_originalAllocUserData = nullptr;
 	AllocAlignedCallback m_originalAllocCallback = nullptr;
 
-	class MemStats
-	{
-	public:
-		Atomic<PtrSize> m_allocatedMem = {0};
-		Atomic<U64> m_allocCount = {0};
-		Atomic<U64> m_freeCount = {0};
-
-		static void* allocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
-	} m_memStats;
+	static void* statsAllocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 	void initMemoryCallbacks(AllocAlignedCallback& allocCb, void*& allocCbUserData);
 
@@ -85,11 +78,6 @@ private:
 
 	Error initDirs();
 	void cleanup();
-
-	/// Inject a new UI element in the render queue for displaying various stuff.
-	void injectUiElements(CoreDynamicArray<UiQueueElement>& elements, RenderQueue& rqueue);
-
-	void setSignalHandlers();
 };
 
 } // end namespace anki

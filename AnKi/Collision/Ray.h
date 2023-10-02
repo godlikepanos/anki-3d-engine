@@ -95,21 +95,20 @@ public:
 
 private:
 	Vec4 m_origin
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		= Vec4(kMaxF32)
 #endif
 		;
 
 	Vec4 m_dir
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		= Vec4(kMaxF32)
 #endif
 		;
 
 	void check() const
 	{
-		ANKI_ASSERT(m_origin.w() == 0.0f && m_dir.w() == 0.0f
-					&& isZero(m_dir.getLengthSquared() - 1.0f, kEpsilonf * 100.0f));
+		ANKI_ASSERT(m_origin.w() == 0.0f && m_dir.w() == 0.0f && isZero(m_dir.getLengthSquared() - 1.0f, kEpsilonf * 100.0f));
 	}
 };
 /// @}

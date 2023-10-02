@@ -13,32 +13,26 @@
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 #define SET 2u
 
-#define CLUSTERED_SHADING_SET SET
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
-#define CLUSTERED_SHADING_LIGHTS_BINDING 1u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+[[vk::binding(0, SET)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(1, SET)]] StructuredBuffer<Cluster> g_clusters; // TODO: rm
 
-// Used by the hit shaders. When changing the binding you need to update other shaders
-[[vk::binding(5, SET)]] SamplerState g_trilinearRepeatSampler;
+[[vk::binding(2, SET)]] SamplerState g_trilinearRepeatSampler;
 
-[[vk::binding(6, SET)]] RWTexture2D<UVec4> g_shadowsImage;
-[[vk::binding(7, SET)]] Texture2D<UVec4> g_historyShadowsTex;
-[[vk::binding(8, SET)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(9, SET)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(10, SET)]] Texture2D g_depthRt;
-[[vk::binding(11, SET)]] Texture2D g_motionVectorsRt;
-[[vk::binding(12, SET)]] Texture2D g_historyLengthTex;
-[[vk::binding(13, SET)]] Texture2D g_normalRt;
-[[vk::binding(14, SET)]] RaytracingAccelerationStructure g_tlas;
-[[vk::binding(15, SET)]] Texture2D g_prevMomentsTex;
-[[vk::binding(16, SET)]] RWTexture2D<Vec4> g_momentsImage;
-[[vk::binding(17, SET)]] Texture2D g_blueNoiseTex;
-
-[[vk::push_constant]] ConstantBuffer<RtShadowsUniforms> g_unis;
+[[vk::binding(3, SET)]] RWTexture2D<Vec4> g_shadowsImage;
+[[vk::binding(4, SET)]] Texture2D<Vec4> g_historyShadowsTex;
+[[vk::binding(5, SET)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(6, SET)]] Texture2D<Vec4> g_depthRt;
+[[vk::binding(7, SET)]] Texture2D<Vec4> g_motionVectorsRt;
+[[vk::binding(8, SET)]] Texture2D<Vec4> g_historyLengthTex;
+[[vk::binding(9, SET)]] Texture2D<Vec4> g_normalRt;
+[[vk::binding(10, SET)]] RaytracingAccelerationStructure g_tlas;
+[[vk::binding(11, SET)]] Texture2D<Vec4> g_prevMomentsTex;
+[[vk::binding(12, SET)]] RWTexture2D<Vec4> g_momentsImage;
+[[vk::binding(13, SET)]] Texture2D<Vec4> g_blueNoiseTex;
 
 F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 {
@@ -60,6 +54,20 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 	return payload.m_shadowFactor;
 }
 
+Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
+{
+	const U32 frameIdx = g_clusteredShading.m_frame * RAYS_PER_PIXEL + rayIdx;
+
+	Vec2 noiseTexSize;
+	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
+
+	Vec3 random = g_blueNoiseTex.SampleLevel(g_trilinearRepeatSampler, Vec2(DispatchRaysDimensions().xy) / noiseTexSize * uv, 0.0).rgb;
+	random = animateBlueNoise(random, frameIdx);
+	random = random * 2.0 - 1.0; // In [-1.0, 1.0]
+
+	return random;
+}
+
 [shader("raygeneration")] void main()
 {
 	// World position
@@ -71,144 +79,55 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 
 	if(depth == 1.0)
 	{
-		g_shadowsImage[DispatchRaysIndex().xy] = UVec4(0, 0, 0, 0);
-		g_momentsImage[DispatchRaysIndex().xy] = Vec4(0.0, 0.0, 0.0, 0.0);
+		g_shadowsImage[DispatchRaysIndex().xy] = 0.0f;
+		g_momentsImage[DispatchRaysIndex().xy] = 0.0f;
 		return;
 	}
 
 	// World normal
 	const Vec3 normal = unpackNormalFromGBuffer(g_normalRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0));
 
-	// Cluster
-	Cluster cluster = getClusterFragCoord(Vec3(uv * g_clusteredShading.m_renderingSize, depth));
-
-	RF32 shadowFactors[kMaxRtShadowLayers];
-	zeroRtShadowLayers(shadowFactors);
-
-	// Get a random factor
-	Vec3 random[RAYS_PER_PIXEL];
-	for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
-	{
-		const U32 frameIdx = g_clusteredShading.m_frame * U32(RAYS_PER_PIXEL + i);
-#if 0
-		const UVec3 irandom = rand3DPCG16(UVec3(DispatchRaysIndex().xy, frameIdx));
-		random[i] = Vec3(irandom) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
-#else
-		random[i] =
-			g_blueNoiseTex
-				.SampleLevel(g_trilinearRepeatSampler, Vec2(DispatchRaysDimensions().xy) / Vec2(64.0, 64.0) * uv, 0.0)
-				.rgb;
-		random[i] = animateBlueNoise(random[i], frameIdx);
-		random[i] = random[i] * 2.0 - 1.0; // In [-1.0, 1.0]
-#endif
-	}
-
 	// Dir light
+	F32 shadowFactor = 0.0f;
 	const DirectionalLight dirLight = g_clusteredShading.m_directionalLight;
-	[branch] if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
+	for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 	{
-		for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
+		const Vec3 dirLightPos = worldPos + -dirLight.m_direction * 10.0 + genRandomDirection(i, uv);
+		const Vec3 rayDir = normalize(dirLightPos - worldPos);
+
+		const F32 lambertTerm = dot(rayDir, normal);
+		[branch] if(lambertTerm > 0.0)
 		{
-			const Vec3 dirLightPos = worldPos + -dirLight.m_direction * 10.0 + random[i];
-			const Vec3 rayDir = normalize(dirLightPos - worldPos);
-
-			const F32 lambertTerm = dot(rayDir, normal);
-			[branch] if(lambertTerm > 0.0)
-			{
-				shadowFactors[dirLight.m_shadowLayer] += trace(worldPos, rayDir, 10000.0) / F32(RAYS_PER_PIXEL);
-			}
-		}
-	}
-
-	// Point lights
-	[loop] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
-	{
-		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const PointLight light = g_pointLights[idx];
-
-		[branch] if(light.m_shadowAtlasTileScale >= 0.0)
-		{
-			for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
-			{
-				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
-				const Vec3 toLight = lightPos - worldPos;
-				const F32 distanceToLight = length(toLight);
-				const Vec3 rayDir = toLight / distanceToLight; // normalize
-
-				const Bool inside = distanceToLight < light.m_radius;
-				const F32 lambertTerm = dot(rayDir, normal);
-				[branch] if(inside && lambertTerm > 0.0)
-				{
-					shadowFactors[light.m_shadowLayer] +=
-						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
-				}
-			}
-		}
-	}
-
-	// Spot lights
-	[loop] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
-	{
-		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
-		const SpotLight light = g_spotLights[idx];
-
-		[branch] if(light.m_shadowLayer != kMaxU32)
-		{
-			for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
-			{
-				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
-				const Vec3 toLight = lightPos - worldPos;
-				const F32 distanceToLight = length(toLight);
-				const Vec3 rayDir = toLight / distanceToLight; // normalize
-
-				const F32 lambertTerm = dot(rayDir, normal);
-				[branch] if(lambertTerm > 0.0)
-				{
-					shadowFactors[light.m_shadowLayer] +=
-						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
-				}
-			}
+			shadowFactor += trace(worldPos, rayDir, 10000.0) / F32(RAYS_PER_PIXEL);
 		}
 	}
 
 	// Get history length
 	const Vec2 historyUv = uv + g_motionVectorsRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xy;
-	const F32 historyLength = g_historyLengthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x;
+	const F32 historyLength = g_historyLengthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x * kRtShadowsMaxHistoryLength;
 
-	// Compute blend fractor. Use nearest sampler because it's an integer texture
+	// Compute blend fractor
 	const F32 lowestBlendFactor = 0.1;
 	const F32 stableFrames = 4.0;
-	const F32 lerpv = min(1.0, (historyLength * kRtShadowsMaxHistoryLength - 1.0) / stableFrames);
-	const F32 blendFactor = lerp(1.0, lowestBlendFactor, lerpv);
+	const F32 historyGoodnessFactor = min(1.0, (historyLength - 1.0) / stableFrames);
+	const F32 historyBlendFactor = lerp(1.0, lowestBlendFactor, historyGoodnessFactor);
 
 	// Blend with history
-	const UVec4 packedhistory = g_historyShadowsTex.SampleLevel(g_nearestAnyClampSampler, historyUv, 0.0);
-	RF32 history[kMaxRtShadowLayers];
-	unpackRtShadows(packedhistory, history);
-	for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
-	{
-		const F32 lerpv = min(1.0, g_unis.historyRejectFactor[i] + blendFactor);
-		shadowFactors[i] = lerp(history[i], shadowFactors[i], lerpv);
-	}
+	const F32 history = g_historyShadowsTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0).r;
+	shadowFactor = lerp(history, shadowFactor, historyBlendFactor);
 
 	// Store the shadows image
-	const UVec4 packed = packRtShadows(shadowFactors);
-	g_shadowsImage[DispatchRaysIndex().xy] = packed;
+	g_shadowsImage[DispatchRaysIndex().xy] = shadowFactor;
 
 	// Compute the moments that will give temporal variance
-	Vec2 moments = 0.0;
-	[unroll] for(U32 i = 0u; i < kMaxRtShadowLayers; ++i)
-	{
-		moments.x += shadowFactors[i];
-	}
+	Vec2 moments;
+	moments.x = shadowFactor;
 	moments.y = moments.x * moments.x;
 
 	// Blend the moments
 	const Vec2 prevMoments = g_prevMomentsTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0).xy;
 	const F32 lowestMomentsBlendFactor = 0.2;
-	const F32 momentsBlendFactor = lerp(1.0, lowestMomentsBlendFactor, lerpv);
+	const F32 momentsBlendFactor = lerp(1.0, lowestMomentsBlendFactor, historyGoodnessFactor);
 	moments = lerp(prevMoments, moments, momentsBlendFactor);
 
 	// Store the moments

@@ -68,8 +68,6 @@ private:
 		RenderTargetHandle m_historyLengthWriteRtHandle;
 	} m_runCtx;
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
 	Error initInternal();
 };
 /// @}

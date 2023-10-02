@@ -14,9 +14,6 @@
 
 namespace anki {
 
-// Forward
-class SceneGraphExternalSubsystems;
-
 /// @addtogroup scene
 /// @{
 
@@ -108,11 +105,11 @@ public:
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func) const
 	{
-		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
+		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
 		{
 			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				if(m_components[i]->getClassId() == TComponent::getStaticClassId())
+				if(m_components[i]->getType() == TComponent::kClassType)
 				{
 					func(static_cast<const TComponent&>(*m_components[i]));
 				}
@@ -124,11 +121,11 @@ public:
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func)
 	{
-		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
+		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
 		{
 			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				if(m_components[i]->getClassId() == TComponent::getStaticClassId())
+				if(m_components[i]->getType() == TComponent::kClassType)
 				{
 					func(static_cast<TComponent&>(*m_components[i]));
 				}
@@ -140,11 +137,11 @@ public:
 	template<typename TComponent>
 	const TComponent* tryGetFirstComponentOfType() const
 	{
-		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
+		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
 		{
 			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				if(m_components[i]->getClassId() == TComponent::getStaticClassId())
+				if(m_components[i]->getType() == TComponent::kClassType)
 				{
 					return static_cast<const TComponent*>(m_components[i]);
 				}
@@ -182,12 +179,12 @@ public:
 	template<typename TComponent>
 	const TComponent* tryGetNthComponentOfType(U32 nth) const
 	{
-		if(m_componentTypeMask & (1 << TComponent::getStaticClassId()))
+		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
 		{
 			I32 inth = I32(nth);
 			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
-				if(m_components[i]->getClassId() == TComponent::getStaticClassId() && inth-- == 0)
+				if(m_components[i]->getType() == TComponent::kClassType && inth-- == 0)
 				{
 					return static_cast<const TComponent*>(m_components[i]);
 				}
@@ -224,7 +221,7 @@ public:
 	template<typename TComponent>
 	TComponent& getComponentAt(U32 idx)
 	{
-		ANKI_ASSERT(m_components[idx]->getClassId() == TComponent::getStaticClassId());
+		ANKI_ASSERT(m_components[idx]->getType() == TComponent::kClassType);
 		SceneComponent* c = m_components[idx];
 		return *static_cast<TComponent*>(c);
 	}
@@ -233,7 +230,7 @@ public:
 	template<typename TComponent>
 	const TComponent& getComponentAt(U32 idx) const
 	{
-		ANKI_ASSERT(m_components[idx]->getClassId() == TComponent::getStaticClassId());
+		ANKI_ASSERT(m_components[idx]->getType() == TComponent::kClassType);
 		const SceneComponent* c = m_components[idx];
 		return *static_cast<const TComponent*>(c);
 	}
@@ -370,20 +367,15 @@ public:
 
 	/// Create and append a component to the components container. The SceneNode has the ownership.
 	template<typename TComponent>
-	TComponent* newComponent()
-	{
-		TComponent* comp = newInstance<TComponent>(SceneMemoryPool::getSingleton(), this);
-		newComponentInternal(comp);
-		return comp;
-	}
+	TComponent* newComponent();
 
 private:
-	U64 m_uuid;
+	U32 m_uuid;
 	SceneString m_name; ///< A unique name.
 
 	GrDynamicArray<SceneComponent*> m_components;
 
-	U32 m_componentTypeMask = 0;
+	SceneComponentTypeMask m_componentTypeMask = SceneComponentTypeMask::kNone;
 
 	Timestamp m_maxComponentTimestamp = 0;
 

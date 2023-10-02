@@ -6,10 +6,11 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
+#include <AnKi/Scene/RenderStateBucket.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Util/WeakArray.h>
-#include <AnKi/Renderer/RenderQueue.h>
+#include <AnKi/Collision/Aabb.h>
 
 namespace anki {
 
@@ -43,41 +44,45 @@ public:
 		return m_castsShadow;
 	}
 
-	void setupRenderableQueueElements(U32 lod, RenderingTechnique technique,
-									  WeakArray<RenderableQueueElement>& outRenderables) const;
-
-	void setupRayTracingInstanceQueueElements(U32 lod, RenderingTechnique technique,
-											  WeakArray<RayTracingInstanceQueueElement>& outRenderables) const;
-
 private:
 	class PatchInfo
 	{
 	public:
 		U32 m_gpuSceneUniformsOffset = kMaxU32;
-		U32 m_gpuSceneMeshLodsIndex = kMaxU32;
+
+		GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
+		GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
+		GpuSceneArrays::RenderableBoundingVolumeGBuffer::Allocation m_gpuSceneRenderableAabbGBuffer;
+		GpuSceneArrays::RenderableBoundingVolumeDepth::Allocation m_gpuSceneRenderableAabbDepth;
+		GpuSceneArrays::RenderableBoundingVolumeForward::Allocation m_gpuSceneRenderableAabbForward;
+		GpuSceneArrays::RenderableBoundingVolumeRt::Allocation m_gpuSceneRenderableAabbRt;
+
+		Array<RenderStateBucketIndex, U32(RenderingTechnique::kCount)> m_renderStateBucketIndices;
 		RenderingTechniqueBit m_techniques;
 	};
 
-	SceneNode* m_node = nullptr;
 	SkinComponent* m_skinComponent = nullptr;
-	Spatial m_spatial;
 
 	ModelResourcePtr m_model;
 
-	SegregatedListsGpuMemoryPoolToken m_gpuSceneUniforms;
-	U32 m_gpuSceneTransformsIndex = kMaxU32;
+	GpuSceneBufferAllocation m_gpuSceneUniforms;
+	GpuSceneArrays::Transform::Allocation m_gpuSceneTransforms;
 	SceneDynamicArray<PatchInfo> m_patchInfos;
 
-	Bool m_dirty : 1 = true;
+	Bool m_resourceChanged : 1 = true;
 	Bool m_castsShadow : 1 = false;
 	Bool m_movedLastFrame : 1 = true;
 	Bool m_firstTimeUpdate : 1 = true; ///< Extra flag in case the component is added in a node that hasn't been moved.
 
 	RenderingTechniqueBit m_presentRenderingTechniques = RenderingTechniqueBit::kNone;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	void freeGpuScene();
 
-	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+
+	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
+
+	Aabb computeAabbWorldSpace(const Transform& worldTransform) const;
 };
 /// @}
 

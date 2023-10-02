@@ -14,15 +14,6 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// MainRenderer statistics.
-class MainRendererStats
-{
-public:
-	Second m_renderingCpuTime ANKI_DEBUG_CODE(= -1.0);
-	Second m_renderingGpuTime ANKI_DEBUG_CODE(= -1.0);
-	Second m_renderingGpuSubmitTimestamp ANKI_DEBUG_CODE(= -1.0);
-};
-
 class MainRendererInitInfo
 {
 public:
@@ -41,7 +32,7 @@ class MainRenderer : public MakeSingleton<MainRenderer>
 public:
 	Error init(const MainRendererInitInfo& inf);
 
-	Error render(RenderQueue& rqueue, TexturePtr presentTex);
+	Error render(Texture* presentTex);
 
 	Dbg& getDbg();
 
@@ -55,16 +46,6 @@ public:
 	Renderer& getOffscreenRenderer()
 	{
 		return *m_r;
-	}
-
-	void setStatsEnabled(Bool enabled)
-	{
-		m_statsEnabled = enabled;
-	}
-
-	const MainRendererStats& getStats() const
-	{
-		return m_stats;
 	}
 
 private:
@@ -81,9 +62,6 @@ private:
 	RenderGraphPtr m_rgraph;
 	RenderTargetDescription m_tmpRtDesc;
 	FramebufferDescription m_fbDescr;
-
-	MainRendererStats m_stats;
-	Bool m_statsEnabled = false;
 
 	class
 	{

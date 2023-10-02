@@ -17,8 +17,7 @@ MaliHwCounters::MaliHwCounters()
 {
 #if ANKI_HWCPIPE_ENABLE
 	const hwcpipe::CpuCounterSet cpuCounters;
-	const hwcpipe::GpuCounterSet gpuCounters = {hwcpipe::GpuCounter::GpuCycles,
-												hwcpipe::GpuCounter::ExternalMemoryWriteBytes,
+	const hwcpipe::GpuCounterSet gpuCounters = {hwcpipe::GpuCounter::GpuCycles, hwcpipe::GpuCounter::ExternalMemoryWriteBytes,
 												hwcpipe::GpuCounter::ExternalMemoryReadBytes};
 	hwcpipe::HWCPipe* hwc = newInstance<hwcpipe::HWCPipe>(CoreMemoryPool::getSingleton(), cpuCounters, gpuCounters);
 

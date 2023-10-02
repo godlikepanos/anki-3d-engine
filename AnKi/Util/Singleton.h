@@ -11,7 +11,7 @@
 
 namespace anki {
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 extern I32 g_singletonsAllocated;
 #endif
 
@@ -35,7 +35,7 @@ public:
 		ANKI_ASSERT(!m_initialized);
 		::new(m_global) T(args...);
 		m_initialized = true;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		++g_singletonsAllocated;
 #endif
 
@@ -48,7 +48,7 @@ public:
 		{
 			reinterpret_cast<T*>(m_global)->~T();
 			m_initialized = false;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 			--g_singletonsAllocated;
 #endif
 		}
@@ -83,7 +83,7 @@ public:
 		ANKI_ASSERT(m_global == nullptr);
 		m_global = new T(args...);
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		++g_singletonsAllocated;
 #endif
 
@@ -96,7 +96,7 @@ public:
 		{
 			delete m_global;
 			m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 			--g_singletonsAllocated;
 #endif
 		}
@@ -105,6 +105,41 @@ public:
 	static Bool isAllocated()
 	{
 		return m_global != nullptr;
+	}
+
+private:
+	static inline T* m_global = nullptr;
+};
+
+/// If class inherits that it will become a singleton. This is a simple version without a need for init.
+template<typename T>
+class MakeSingletonSimple
+{
+public:
+	ANKI_FORCE_INLINE static T& getSingleton()
+	{
+		return m_global;
+	}
+
+private:
+	static T m_global;
+};
+
+template<typename T>
+T MakeSingletonSimple<T>::m_global;
+
+/// If class inherits that it will become a singleton. This is a simple version with implicit init.
+template<typename T>
+class MakeSingletonLazyInit
+{
+public:
+	ANKI_FORCE_INLINE static T& getSingleton()
+	{
+		if(m_global == nullptr) [[unlikely]]
+		{
+			m_global = new T;
+		}
+		return *m_global;
 	}
 
 private:

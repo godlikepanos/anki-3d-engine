@@ -48,8 +48,7 @@ void SparseArray<T, TMemoryPool, TConfig>::emplaceInternal(Index idx, TArgs&&...
 
 template<typename T, typename TMemoryPool, typename TConfig>
 template<typename... TArgs>
-typename SparseArray<T, TMemoryPool, TConfig>::Iterator SparseArray<T, TMemoryPool, TConfig>::emplace(Index idx,
-																									  TArgs&&... args)
+typename SparseArray<T, TMemoryPool, TConfig>::Iterator SparseArray<T, TMemoryPool, TConfig>::emplace(Index idx, TArgs&&... args)
 {
 	emplaceInternal(idx, std::forward<TArgs>(args)...);
 
@@ -272,7 +271,7 @@ void SparseArray<T, TMemoryPool, TConfig>::validate() const
 	}
 
 	// Start iterating
-	U elementCount = 0;
+	[[maybe_unused]] U elementCount = 0;
 	Index count = m_capacity;
 	Index pos = startPos;
 	Index prevPos = ~Index(0);

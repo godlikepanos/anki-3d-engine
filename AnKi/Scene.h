@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Scene/Octree.h>
 
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>

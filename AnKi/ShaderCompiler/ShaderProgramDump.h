@@ -19,8 +19,7 @@ public:
 };
 
 /// Create a human readable representation of the shader binary.
-void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary,
-							 String& humanReadable);
+void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary, String& humanReadable);
 /// @}
 
 } // end namespace anki

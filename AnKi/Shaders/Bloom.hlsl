@@ -48,8 +48,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(-1, +1)).rgb * weight;
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(+1, -1)).rgb * weight;
 
-	color =
-		tonemap(color, readExposureAndAverageLuminance().y, g_pc.m_thresholdScalePad2.x) * g_pc.m_thresholdScalePad2.y;
+	color = tonemap(color, readExposureAndAverageLuminance().y, g_pc.m_thresholdScalePad2.x) * g_pc.m_thresholdScalePad2.y;
 
 #if defined(ANKI_COMPUTE_SHADER)
 	g_outUav[svDispatchThreadId.xy] = RVec4(color, 0.0);

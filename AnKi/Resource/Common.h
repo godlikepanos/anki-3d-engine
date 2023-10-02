@@ -19,7 +19,6 @@ template<typename Type>
 class ResourcePointer;
 class TransferGpuAllocatorHandle;
 class PhysicsWorld;
-class UnifiedGeometryMemoryPool;
 
 /// @addtogroup resource
 /// @{

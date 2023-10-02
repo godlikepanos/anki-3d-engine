@@ -71,8 +71,7 @@ ANKI_TEST(Util, WalkDir)
 	class Ctx
 	{
 	public:
-		Array<Path, 4> m_paths = {
-			{{"./data", true}, {"./data/dir", true}, {"./data/file1", false}, {"./data/dir/file2", false}}};
+		Array<Path, 4> m_paths = {{{"./data", true}, {"./data/dir", true}, {"./data/file1", false}, {"./data/dir/file2", false}}};
 		U32 m_foundMask = 0;
 	} ctx;
 
@@ -112,13 +111,12 @@ ANKI_TEST(Util, WalkDir)
 
 	// Test error
 	U32 count = 0;
-	ANKI_TEST_EXPECT_ERR(
-		walkDirectoryTree("./data///dir////",
-						  [&count]([[maybe_unused]] const CString& fname, [[maybe_unused]] Bool isDir) -> Error {
-							  ++count;
-							  return Error::kFunctionFailed;
-						  }),
-		Error::kFunctionFailed);
+	ANKI_TEST_EXPECT_ERR(walkDirectoryTree("./data///dir////",
+										   [&count]([[maybe_unused]] const CString& fname, [[maybe_unused]] Bool isDir) -> Error {
+											   ++count;
+											   return Error::kFunctionFailed;
+										   }),
+						 Error::kFunctionFailed);
 
 	ANKI_TEST_EXPECT_EQ(count, 1);
 }

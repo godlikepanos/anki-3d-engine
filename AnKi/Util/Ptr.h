@@ -40,6 +40,11 @@ public:
 		return m_ptr;
 	}
 
+	T* tryGet() const
+	{
+		return m_ptr;
+	}
+
 	Bool isCreated() const
 	{
 		return m_ptr != nullptr;

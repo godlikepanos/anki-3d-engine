@@ -7,7 +7,7 @@
 
 using namespace anki;
 
-static const char* USAGE = R"(Usage: %s in_file out_dir [options]
+static const char* kUsage = R"(Usage: %s in_file out_dir [options]
 Options:
 -rpath <string>            : Replace all absolute paths of assets with that path
 -texrpath <string>         : Same as rpath but for textures
@@ -17,7 +17,7 @@ Options:
 -lod-count <1|2|3>         : The number of geometry LODs to generate. Default is 1
 -lod-factor <float>        : The decimate factor for each LOD. Default 0.25
 -light-scale <float>       : Multiply the light intensity with this number. Default is 1.0
--import-testures <0|1>     : Import textures. Default is 0
+-import-textures <0|1>     : Import textures. Default is 0
 -v                         : Enable verbose log
 )";
 
@@ -227,14 +227,14 @@ int myMain(int argc, char** argv)
 		{
 			DefaultMemoryPool::freeSingleton();
 		}
-	};
+	} cleanup;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 
 	CmdLineArgs cmdArgs;
 	if(parseCommandLineArgs(argc, argv, cmdArgs))
 	{
-		ANKI_IMPORTER_LOGE(USAGE, argv[0]);
+		ANKI_IMPORTER_LOGE(kUsage, argv[0]);
 		return 1;
 	}
 

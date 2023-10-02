@@ -17,7 +17,7 @@ NativeWindow& MakeSingletonPtr<NativeWindow>::allocateSingleton<>()
 {
 	ANKI_ASSERT(m_global == nullptr);
 	m_global = new NativeWindowSdl();
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	++g_singletonsAllocated;
 #endif
 	return *m_global;
@@ -30,7 +30,7 @@ void MakeSingletonPtr<NativeWindow>::freeSingleton()
 	{
 		delete static_cast<NativeWindowSdl*>(m_global);
 		m_global = nullptr;
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		--g_singletonsAllocated;
 #endif
 	}
@@ -121,8 +121,7 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 		m_height = init.m_height;
 	}
 
-	m_sdlWindow =
-		SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
+	m_sdlWindow = SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_width, m_height, flags);
 
 	if(m_sdlWindow == nullptr)
 	{

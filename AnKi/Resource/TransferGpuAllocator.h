@@ -48,9 +48,9 @@ public:
 		return *this;
 	}
 
-	const BufferPtr& getBuffer() const
+	Buffer& getBuffer() const
 	{
-		return m_buffer;
+		return *m_buffer;
 	}
 
 	void* getMappedMemory() const

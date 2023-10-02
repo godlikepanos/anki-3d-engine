@@ -96,8 +96,8 @@ private:
 	/// The memory allocated by all chunks.
 	PtrSize m_memoryCapacity = 0;
 
-	/// Number of chunks allocated.
-	U32 m_chunkCount = 0;
+	/// Number of chunks currently in use.
+	U32 m_chunksInUse = 0;
 
 	/// The interface as decribed in the class docs.
 	TInterface m_interface;

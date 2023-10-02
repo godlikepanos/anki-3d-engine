@@ -7,8 +7,7 @@ namespace anki {
 namespace detail {
 
 template<typename TNodePointer, typename TValuePointer, typename TValueReference, typename TList>
-ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
-ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::operator--()
+ListIterator<TNodePointer, TValuePointer, TValueReference, TList>& ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::operator--()
 {
 	ANKI_ASSERT(m_list);
 
@@ -172,8 +171,7 @@ void ListBase<T, TNode>::sort(TCompFunc compFunc)
 			TNode* sortPtrNext = sortPtr->m_next;
 			ANKI_ASSERT(sortPtrNext != nullptr);
 
-			if(compFunc(detail::GetListNodeValueFunc<TNode, T>()(*sortPtrNext),
-						detail::GetListNodeValueFunc<TNode, T>()(*sortPtr)))
+			if(compFunc(detail::GetListNodeValueFunc<TNode, T>()(*sortPtrNext), detail::GetListNodeValueFunc<TNode, T>()(*sortPtr)))
 			{
 				sortPtr = swap(sortPtr, sortPtrNext);
 				swapped = true;

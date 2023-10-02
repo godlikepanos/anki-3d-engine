@@ -70,13 +70,11 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 #endif
 }
 
-[numthreads(WORKGROUP_SIZE_XY, WORKGROUP_SIZE_XY, 1)] void main(UVec3 svGroupThreadId : SV_GROUPTHREADID,
-																U32 svGroupIndex : SV_GROUPINDEX)
+[numthreads(WORKGROUP_SIZE_XY, WORKGROUP_SIZE_XY, 1)] void main(UVec3 svGroupThreadId : SV_GROUPTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	U32 wavesPerThreadGroup;
 	U32 waveIndexInsideThreadGroup;
-	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup,
-											   wavesPerThreadGroup);
+	ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, s_waveIndexInsideThreadGroup, waveIndexInsideThreadGroup, wavesPerThreadGroup);
 	const F32 workgroupSizeXYf = F32(WORKGROUP_SIZE_XY);
 
 	// Compute the NDC used in cubeCoordSolidAngle
@@ -153,15 +151,14 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 								g_gbufferTex[2u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0), gbuffer);
 
 		// Sample irradiance
-		RVec3 firstBounceIrradiance = sampleAmbientDice(
-			s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0],
-			s_integrationResults[3][0], s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal);
+		RVec3 firstBounceIrradiance =
+			sampleAmbientDice(s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0], s_integrationResults[3][0],
+							  s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal);
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce
 		const RVec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
-		const RVec3 irradiance =
-			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, workgroupSizeXYf);
+		const RVec3 irradiance = (firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, workgroupSizeXYf);
 
 		// Store
 		resultFaces[f] = irradiance;
@@ -213,15 +210,15 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 		g_irradianceVolume.GetDimensions(volumeSize.x, volumeSize.y, volumeSize.z);
 
 		const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
-		const U32 cellIdx = g_uniforms.m_volumeTexel.z * subvolumeSize.x * subvolumeSize.y
-							+ g_uniforms.m_volumeTexel.y * subvolumeSize.x + g_uniforms.m_volumeTexel.x;
+		const U32 cellIdx = g_uniforms.m_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + g_uniforms.m_volumeTexel.y * subvolumeSize.x
+							+ g_uniforms.m_volumeTexel.x;
 		const RF32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
 		const RVec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
 #if STORE_LOCATION == 0
-		const UVec3 storeUvw = UVec3(g_uniforms.m_volumeTexel.x + I32(f) * g_uniforms.m_nextTexelOffsetInU,
-									 g_uniforms.m_volumeTexel.y, g_uniforms.m_volumeTexel.z);
+		const UVec3 storeUvw =
+			UVec3(g_uniforms.m_volumeTexel.x + I32(f) * g_uniforms.m_nextTexelOffsetInU, g_uniforms.m_volumeTexel.y, g_uniforms.m_volumeTexel.z);
 		g_irradianceVolume[storeUvw] = Vec4(toStoreValue, 0.0);
 #else
 		g_irradianceDisceResults[0].m_val[f] = toStoreValue.xyzx;

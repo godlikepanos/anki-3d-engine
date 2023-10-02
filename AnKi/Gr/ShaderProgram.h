@@ -17,16 +17,16 @@ namespace anki {
 class RayTracingHitGroup
 {
 public:
-	ShaderPtr m_closestHitShader;
-	ShaderPtr m_anyHitShader;
+	Shader* m_closestHitShader = nullptr;
+	Shader* m_anyHitShader = nullptr;
 };
 
 /// @memberof ShaderProgramInitInfo
 class RayTracingShaders
 {
 public:
-	WeakArray<ShaderPtr> m_rayGenShaders;
-	WeakArray<ShaderPtr> m_missShaders;
+	WeakArray<Shader*> m_rayGenShaders;
+	WeakArray<Shader*> m_missShaders;
 	WeakArray<RayTracingHitGroup> m_hitGroups;
 	U32 m_maxRecursionDepth = 1;
 };
@@ -36,10 +36,10 @@ class ShaderProgramInitInfo : public GrBaseInitInfo
 {
 public:
 	/// Option 1
-	Array<ShaderPtr, U32(ShaderType::kLastGraphics + 1)> m_graphicsShaders;
+	Array<Shader*, U32(ShaderType::kLastGraphics + 1)> m_graphicsShaders = {};
 
 	/// Option 2
-	ShaderPtr m_computeShader;
+	Shader* m_computeShader = nullptr;
 
 	/// Option 3
 	RayTracingShaders m_rayTracingShaders;
@@ -60,16 +60,18 @@ class ShaderProgram : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kShaderProgram;
 
-	/// Get the shader group handles that will be used in the SBTs. The size of each handle is
-	/// GpuDeviceCapabilities::m_shaderGroupHandleSize. To access a handle use:
+	/// Get the shader group handles that will be used in the SBTs. The size of each handle is GpuDeviceCapabilities::m_shaderGroupHandleSize. To
+	/// access a handle use:
 	/// @code
 	/// const U8* handleBegin = &getShaderGroupHandles()[handleIdx * devCapabilities.m_shaderGroupHandleSize];
 	/// const U8* handleEnd = &getShaderGroupHandles()[(handleIdx + 1) * devCapabilities.m_shaderGroupHandleSize];
 	/// @endcode
-	/// The handleIdx is defined via a convention. The ray gen shaders appear first where handleIdx is in the same order
-	/// as the shader in RayTracingShaders::m_rayGenShaders. Then miss shaders follow with a similar rule. Then hit
-	/// groups follow.
+	/// The handleIdx is defined via a convention. The ray gen shaders appear first where handleIdx is in the same order as the shader in
+	/// RayTracingShaders::m_rayGenShaders. Then miss shaders follow with a similar rule. Then hit groups follow.
 	ConstWeakArray<U8> getShaderGroupHandles() const;
+
+	/// Same as getShaderGroupHandles but the data live in a GPU buffer.
+	Buffer& getShaderGroupHandlesGpuBuffer() const;
 
 protected:
 	/// Construct.

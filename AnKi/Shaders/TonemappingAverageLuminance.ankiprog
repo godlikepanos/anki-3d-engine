@@ -27,8 +27,7 @@ constexpr U32 kTonemappingBinding = 1u;
 
 groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 
-[numthreads(THREAD_COUNT_X, THREAD_COUNT_Y, 1)] void main(UVec3 svGroupThreadId : SV_GROUPTHREADID,
-														  U32 svGroupIndex : SV_GROUPINDEX)
+[numthreads(THREAD_COUNT_X, THREAD_COUNT_Y, 1)] void main(UVec3 svGroupThreadId : SV_GROUPTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
 	// Gather the log-average luminance of a tile. It will miss some pixels but not too many
 	const U32 yStart = svGroupThreadId.y * kPixelsPerTile.y;

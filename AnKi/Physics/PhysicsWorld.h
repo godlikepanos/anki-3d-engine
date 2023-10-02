@@ -54,7 +54,7 @@ public:
 			LockGuard<Mutex> lock(m_markedMtx);
 			m_markedForCreation.pushBack(obj);
 		}
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 		const U32 count = m_objectsCreatedCount.fetchAdd(1) + 1;
 		ANKI_ASSERT(count > 0);
 #endif
@@ -95,8 +95,8 @@ public:
 
 	ANKI_INTERNAL void destroyObject(PhysicsObject* obj);
 
-	ANKI_INTERNAL PhysicsTriggerFilteredPair*
-	getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger, PhysicsFilteredObject* filtered, Bool& isNew);
+	ANKI_INTERNAL PhysicsTriggerFilteredPair* getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger, PhysicsFilteredObject* filtered,
+																					Bool& isNew);
 
 private:
 	class MyOverlapFilterCallback;
@@ -118,7 +118,7 @@ private:
 	IntrusiveList<PhysicsObject> m_markedForDeletion;
 	Mutex m_markedMtx; ///< Locks the above
 
-#if ANKI_ENABLE_ASSERTIONS
+#if ANKI_ASSERTIONS_ENABLED
 	Atomic<I32> m_objectsCreatedCount = {0};
 #endif
 

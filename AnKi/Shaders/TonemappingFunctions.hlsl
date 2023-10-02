@@ -63,8 +63,7 @@ RVec3 tonemapACESFilm(RVec3 x)
 RVec3 invertTonemapACESFilm(RVec3 x)
 {
 	RVec3 res = kAcesD * x - kAcesB;
-	res += sqrt(x * x * (kAcesD * kAcesD - 4.0 * kAcesE * kAcesC) + x * (4.0 * kAcesE * kAcesA - 2.0 * kAcesB * kAcesD)
-				+ kAcesB * kAcesB);
+	res += sqrt(x * x * (kAcesD * kAcesD - 4.0 * kAcesE * kAcesC) + x * (4.0 * kAcesE * kAcesA - 2.0 * kAcesB * kAcesD) + kAcesB * kAcesB);
 	res /= 2.0 * kAcesA - 2.0 * kAcesC * x;
 
 	return res;
@@ -90,13 +89,15 @@ RVec3 tonemap(RVec3 color, RF32 avgLum, RF32 threshold)
 }
 
 // https://graphicrants.blogspot.com/2013/12/tone-mapping.html
-RVec3 reinhardTonemap(RVec3 colour)
+template<typename TVec3>
+TVec3 reinhardTonemap(TVec3 colour)
 {
 	// rgb / (1 + max(rgb))
 	return colour / (1.0 + max(max(colour.r, colour.g), colour.b));
 }
 
-RVec3 invertReinhardTonemap(RVec3 colour)
+template<typename TVec3>
+TVec3 invertReinhardTonemap(TVec3 colour)
 {
 	// rgb / (1 - max(rgb))
 	return colour / max(1.0 / 32768.0, 1.0 - max(max(colour.r, colour.g), colour.b));

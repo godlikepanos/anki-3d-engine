@@ -51,8 +51,8 @@ Vec4 textureCatmullRom4Samples(Texture2D tex, SamplerState sampl, Vec2 uv, Vec2 
 	const Vec2 sum0 = (2.0 * f - 3.5) * f + 0.5;
 	const Vec2 sum1 = (2.0 * f - 2.5) * f - 0.5;
 	Vec4 w = Vec4(f * sum0 + 1.0, f * sum1);
-	const Vec4 pos = Vec4((((-2.0 * f + 3.0) * f + 0.5) * f - 1.5) * f / (w.xy * texSize) + uv,
-						  (((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
+	const Vec4 pos =
+		Vec4((((-2.0 * f + 3.0) * f + 0.5) * f - 1.5) * f / (w.xy * texSize) + uv, (((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
 	w.xz *= halff.x * halff.y > 0.0 ? 1.0 : -1.0;
 
 	return (tex.Sample(sampl, pos.xy) * w.x + tex.Sample(sampl, pos.zy) * w.z) * w.y
@@ -89,8 +89,7 @@ Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 te
 	const Vec2 p2 = (Vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) / texSize;
 	const Vec2 p3 = (Vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) / texSize;
 
-	return g0(fuv.y) * (g0x * texSample(p0) + g1x * texSample(p1))
-		   + g1(fuv.y) * (g0x * texSample(p2) + g1x * texSample(p3));
+	return g0(fuv.y) * (g0x * texSample(p0) + g1x * texSample(p1)) + g1(fuv.y) * (g0x * texSample(p2) + g1x * texSample(p3));
 
 #undef w0
 #undef w1
@@ -107,8 +106,8 @@ F32 rand(Vec2 n)
 	return 0.5 + 0.5 * frac(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-Vec4 nearestDepthUpscale(Vec2 uv, Texture2D depthFull, Texture2D depthHalf, Texture2D colorTex,
-						 SamplerState linearAnyClampSampler, Vec2 linearDepthCf, F32 depthThreshold)
+Vec4 nearestDepthUpscale(Vec2 uv, Texture2D depthFull, Texture2D depthHalf, Texture2D colorTex, SamplerState linearAnyClampSampler,
+						 Vec2 linearDepthCf, F32 depthThreshold)
 {
 	F32 fullDepth = depthFull.SampleLevel(linearAnyClampSampler, uv, 0.0).r; // Sampler not important.
 	fullDepth = linearizeDepthOptimal(fullDepth, linearDepthCf.x, linearDepthCf.y);
@@ -165,9 +164,8 @@ F32 _calcDepthWeight(Texture2D depthLow, SamplerState nearestAnyClamp, Vec2 uv, 
 	return 1.0 / (kEpsilonF32 + abs(ref - linearD));
 }
 
-Vec4 _sampleAndWeight(Texture2D depthLow, Texture2D colorLow, SamplerState linearAnyClamp, SamplerState nearestAnyClamp,
-					  const Vec2 lowInvSize, Vec2 uv, const Vec2 offset, const F32 ref, const F32 weight,
-					  const Vec2 linearDepthCf, inout F32 normalize)
+Vec4 _sampleAndWeight(Texture2D depthLow, Texture2D colorLow, SamplerState linearAnyClamp, SamplerState nearestAnyClamp, const Vec2 lowInvSize,
+					  Vec2 uv, const Vec2 offset, const F32 ref, const F32 weight, const Vec2 linearDepthCf, inout F32 normalize)
 {
 	uv += offset * lowInvSize;
 	const F32 dw = _calcDepthWeight(depthLow, nearestAnyClamp, uv, ref, linearDepthCf);
@@ -176,32 +174,32 @@ Vec4 _sampleAndWeight(Texture2D depthLow, Texture2D colorLow, SamplerState linea
 	return v * dw * weight;
 }
 
-Vec4 bilateralUpsample(Texture2D depthHigh, Texture2D depthLow, Texture2D colorLow, SamplerState linearAnyClamp,
-					   SamplerState nearestAnyClamp, const Vec2 lowInvSize, const Vec2 uv, const Vec2 linearDepthCf)
+Vec4 bilateralUpsample(Texture2D depthHigh, Texture2D depthLow, Texture2D colorLow, SamplerState linearAnyClamp, SamplerState nearestAnyClamp,
+					   const Vec2 lowInvSize, const Vec2 uv, const Vec2 linearDepthCf)
 {
 	const Vec3 kWeights = Vec3(0.25, 0.125, 0.0625);
 	F32 depthRef = depthHigh.SampleLevel(nearestAnyClamp, uv, 0.0).r;
 	depthRef = linearizeDepthOptimal(depthRef, linearDepthCf.x, linearDepthCf.y);
 	F32 normalize = 0.0;
 
-	Vec4 sum = _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 0.0),
-								depthRef, kWeights.x, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 0.0),
-							depthRef, kWeights.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, -1.0),
-							depthRef, kWeights.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 0.0),
-							depthRef, kWeights.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 1.0),
-							depthRef, kWeights.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 1.0),
-							depthRef, kWeights.z, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, -1.0),
-							depthRef, kWeights.z, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 1.0),
-							depthRef, kWeights.z, linearDepthCf, normalize);
-	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, -1.0),
-							depthRef, kWeights.z, linearDepthCf, normalize);
+	Vec4 sum = _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 0.0), depthRef, kWeights.x,
+								linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 0.0), depthRef, kWeights.y, linearDepthCf,
+							normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, -1.0), depthRef, kWeights.y, linearDepthCf,
+							normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 0.0), depthRef, kWeights.y, linearDepthCf,
+							normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 1.0), depthRef, kWeights.y, linearDepthCf,
+							normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 1.0), depthRef, kWeights.z, linearDepthCf,
+							normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, -1.0), depthRef, kWeights.z, linearDepthCf,
+							normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 1.0), depthRef, kWeights.z, linearDepthCf,
+							normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, -1.0), depthRef, kWeights.z,
+							linearDepthCf, normalize);
 
 	return sum / normalize;
 }
@@ -210,9 +208,7 @@ Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 {
 	Vec3 zDir = Vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);
 	zDir *= (((faceIdx & 1u) == 1u) ? -1.0 : 1.0);
-	const Vec3 yDir = (faceIdx == 2u)   ? Vec3(0.0, 0.0, 1.0)
-					  : (faceIdx == 3u) ? Vec3(0.0, 0.0, -1.0)
-										: Vec3(0.0, -1.0, 0.0);
+	const Vec3 yDir = (faceIdx == 2u) ? Vec3(0.0, 0.0, 1.0) : (faceIdx == 3u) ? Vec3(0.0, 0.0, -1.0) : Vec3(0.0, -1.0, 0.0);
 	const Vec3 xDir = cross(zDir, yDir);
 	return normalize(norm.x * xDir + norm.y * yDir + zDir);
 }
@@ -510,9 +506,8 @@ UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 		localWorgroupIdXWithinCurrentTile = localWorkgroupIdWithinCurrentTile % maxTileWidth;
 	}
 
-	const U32 swizzledvThreadGroupIdFlattened = tileIdOfCurrentWorkgroup * maxTileWidth
-												+ localWorkgroupIdYWithinCurrentTile * gl_NumWorkGroups.x
-												+ localWorgroupIdXWithinCurrentTile;
+	const U32 swizzledvThreadGroupIdFlattened =
+		tileIdOfCurrentWorkgroup * maxTileWidth + localWorkgroupIdYWithinCurrentTile * gl_NumWorkGroups.x + localWorgroupIdXWithinCurrentTile;
 
 	UVec2 swizzledvThreadGroupId;
 	swizzledvThreadGroupId.y = swizzledvThreadGroupIdFlattened / gl_NumWorkGroups.x;
@@ -689,14 +684,13 @@ F32 fastCos(F32 x)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-/// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on
-/// local variables (the compiler can't see it's groupshared).
+/// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on local variables (the compiler
+/// can't see it's groupshared).
 /// @param svGroupIndex Self explanatory.
 /// @param tmpGroupsharedU32Var A U32 groupshared variable that will help with the calculation.
 /// @param waveIndexInsideThreadgroup The SubgroupID.
 /// @param wavesPerThreadGroup Also calculate that in case some GPUs manage to mess this up.
-#	define ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, tmpGroupsharedU32Var, waveIndexInsideThreadgroup, \
-													   wavesPerThreadGroup) \
+#	define ANKI_COMPUTE_WAVE_INDEX_INSIDE_THREADGROUP(svGroupIndex, tmpGroupsharedU32Var, waveIndexInsideThreadgroup, wavesPerThreadGroup) \
 		do \
 		{ \
 			if(svGroupIndex == 0) \

@@ -188,8 +188,7 @@ public:
 /// @tparam T The type of the valut it will hold.
 /// @tparam TConfig A class that has configuration required by the SparseArray. See SparseArrayDefaultConfig for
 /// details.
-template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>,
-		 typename TConfig = SparseArrayDefaultConfig>
+template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TConfig = SparseArrayDefaultConfig>
 class SparseArray
 {
 	template<typename, typename, typename>

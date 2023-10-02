@@ -35,6 +35,14 @@ public:
 	GpuMemoryHandle m_memoryHandle;
 };
 
+/// AS have more data (buffers) that build them but don't bother storing them since buffers will be automatically garbage collected as well.
+/// @memberof FrameGarbageCollector
+class ASGarbage : public IntrusiveListEnabled<ASGarbage>
+{
+public:
+	VkAccelerationStructureKHR m_asHandle = VK_NULL_HANDLE;
+};
+
 /// This class gathers various garbages and disposes them when in some later frame where it is safe to do so. This is
 /// used on bindless textures and buffers where we have to wait until the frame where they were deleted is done.
 class FrameGarbageCollector
@@ -63,12 +71,16 @@ public:
 	/// @note It's thread-safe.
 	void newBufferGarbage(BufferGarbage* bufferGarbage);
 
+	/// @note It's thread-safe.
+	void newASGarbage(ASGarbage* garbage);
+
 private:
 	class FrameGarbage : public IntrusiveListEnabled<FrameGarbage>
 	{
 	public:
 		IntrusiveList<TextureGarbage> m_textureGarbage;
 		IntrusiveList<BufferGarbage> m_bufferGarbage;
+		IntrusiveList<ASGarbage> m_asGarbage;
 		MicroFencePtr m_fence;
 	};
 

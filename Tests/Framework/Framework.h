@@ -221,10 +221,7 @@ extern void deleteTesterSingleton();
 /// Check error code.
 #define ANKI_TEST_EXPECT_ERR(x_, y_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
 
-// TODO glob: Cleanup all these
-void initConfig(ConfigSet& cfg);
-
-NativeWindow* createWindow(ConfigSet& cfg);
+NativeWindow* createWindow();
 
 GrManager* createGrManager(NativeWindow* win);
 

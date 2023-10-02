@@ -45,7 +45,7 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// Vertex
-	if(m_dirty.m_attribs.getAny() || m_dirty.m_vertBindings.getAny())
+	if(m_dirty.m_attribs.getAnySet() || m_dirty.m_vertBindings.getAnySet())
 	{
 		for(U i = 0; i < kMaxVertexAttributes; ++i)
 		{
@@ -71,11 +71,9 @@ Bool PipelineStateTracker::updateHashes()
 
 				if(dirty)
 				{
+					m_hashes.m_vertexAttribs[i] = computeHash(&m_state.m_vertex.m_attributes[i], sizeof(m_state.m_vertex.m_attributes[i]));
 					m_hashes.m_vertexAttribs[i] =
-						computeHash(&m_state.m_vertex.m_attributes[i], sizeof(m_state.m_vertex.m_attributes[i]));
-					m_hashes.m_vertexAttribs[i] =
-						appendHash(&m_state.m_vertex.m_bindings[i], sizeof(m_state.m_vertex.m_bindings[i]),
-								   m_hashes.m_vertexAttribs[i]);
+						appendHash(&m_state.m_vertex.m_bindings[i], sizeof(m_state.m_vertex.m_bindings[i]), m_hashes.m_vertexAttribs[i]);
 
 					stateDirty = true;
 				}
@@ -118,8 +116,8 @@ Bool PipelineStateTracker::updateHashes()
 	// Color
 	if(!!m_fbColorAttachmentMask)
 	{
-		ANKI_ASSERT(m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask
-					&& "Shader and fb should have same attachment mask");
+		ANKI_ASSERT((m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask || !m_shaderColorAttachmentWritemask)
+					&& "Shader and FB should have same attachment mask or shader mask should be zero");
 
 		if(m_dirty.m_color)
 		{
@@ -135,8 +133,7 @@ Bool PipelineStateTracker::updateHashes()
 				if(m_fbColorAttachmentMask.get(i) && m_dirty.m_colAttachments.get(i))
 				{
 					m_dirty.m_colAttachments.unset(i);
-					m_hashes.m_colAttachments[i] =
-						computeHash(&m_state.m_color.m_attachments[i], sizeof(m_state.m_color.m_attachments[i]));
+					m_hashes.m_colAttachments[i] = computeHash(&m_state.m_color.m_attachments[i], sizeof(m_state.m_color.m_attachments[i]));
 					stateDirty = true;
 				}
 			}
@@ -188,13 +185,13 @@ void PipelineStateTracker::updateSuperHash()
 	}
 
 	// Color
-	if(!!m_shaderColorAttachmentWritemask)
+	if(!!m_fbColorAttachmentMask)
 	{
 		buff[count++] = m_hashes.m_color;
 
 		for(U i = 0; i < kMaxColorRenderTargets; ++i)
 		{
-			if(m_shaderColorAttachmentWritemask.get(i))
+			if(m_fbColorAttachmentMask.get(i))
 			{
 				buff[count++] = m_hashes.m_colAttachments[i];
 			}
@@ -310,54 +307,50 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		if(m_fbDepth)
 		{
 			dsCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-			dsCi.depthTestEnable = m_state.m_depth.m_depthCompareFunction != CompareOperation::kAlways
-								   || m_state.m_depth.m_depthWriteEnabled;
+			dsCi.depthTestEnable = m_state.m_depth.m_depthCompareFunction != CompareOperation::kAlways || m_state.m_depth.m_depthWriteEnabled;
 			dsCi.depthWriteEnable = m_state.m_depth.m_depthWriteEnabled;
 			dsCi.depthCompareOp = convertCompareOp(m_state.m_depth.m_depthCompareFunction);
 		}
 
 		if(m_fbStencil)
 		{
-			dsCi.stencilTestEnable =
-				!stencilTestDisabled(m_state.m_stencil.m_face[0].m_stencilFailOperation,
-									 m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation,
-									 m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation,
-									 m_state.m_stencil.m_face[0].m_compareFunction)
-				|| !stencilTestDisabled(m_state.m_stencil.m_face[1].m_stencilFailOperation,
-										m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation,
-										m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation,
-										m_state.m_stencil.m_face[1].m_compareFunction);
+			const StencilPipelineState& ss = m_state.m_stencil;
 
-			dsCi.front.failOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilFailOperation);
-			dsCi.front.passOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation);
-			dsCi.front.depthFailOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation);
-			dsCi.front.compareOp = convertCompareOp(m_state.m_stencil.m_face[0].m_compareFunction);
-			dsCi.back.failOp = convertStencilOp(m_state.m_stencil.m_face[1].m_stencilFailOperation);
-			dsCi.back.passOp = convertStencilOp(m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation);
-			dsCi.back.depthFailOp = convertStencilOp(m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation);
-			dsCi.back.compareOp = convertCompareOp(m_state.m_stencil.m_face[1].m_compareFunction);
+			dsCi.stencilTestEnable = !stencilTestDisabled(ss.m_face[0].m_stencilFailOperation, ss.m_face[0].m_stencilPassDepthFailOperation,
+														  ss.m_face[0].m_stencilPassDepthPassOperation, ss.m_face[0].m_compareFunction)
+									 || !stencilTestDisabled(ss.m_face[1].m_stencilFailOperation, ss.m_face[1].m_stencilPassDepthFailOperation,
+															 ss.m_face[1].m_stencilPassDepthPassOperation, ss.m_face[1].m_compareFunction);
+
+			dsCi.front.failOp = convertStencilOp(ss.m_face[0].m_stencilFailOperation);
+			dsCi.front.passOp = convertStencilOp(ss.m_face[0].m_stencilPassDepthPassOperation);
+			dsCi.front.depthFailOp = convertStencilOp(ss.m_face[0].m_stencilPassDepthFailOperation);
+			dsCi.front.compareOp = convertCompareOp(ss.m_face[0].m_compareFunction);
+			dsCi.back.failOp = convertStencilOp(ss.m_face[1].m_stencilFailOperation);
+			dsCi.back.passOp = convertStencilOp(ss.m_face[1].m_stencilPassDepthPassOperation);
+			dsCi.back.depthFailOp = convertStencilOp(ss.m_face[1].m_stencilPassDepthFailOperation);
+			dsCi.back.compareOp = convertCompareOp(ss.m_face[1].m_compareFunction);
 		}
 
 		ci.pDepthStencilState = &dsCi;
 	}
 
 	// Color/blend
-	if(!!m_shaderColorAttachmentWritemask)
+	if(!!m_fbColorAttachmentMask)
 	{
 		VkPipelineColorBlendStateCreateInfo& colCi = m_ci.m_color;
 		colCi = {};
 		colCi.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colCi.attachmentCount = m_shaderColorAttachmentWritemask.getEnabledBitCount();
+		colCi.attachmentCount = m_fbColorAttachmentMask.getSetBitCount();
 		colCi.pAttachments = &m_ci.m_colAttachments[0];
 
 		for(U i = 0; i < colCi.attachmentCount; ++i)
 		{
-			ANKI_ASSERT(m_shaderColorAttachmentWritemask.get(i) && "No gaps are allowed");
+			ANKI_ASSERT(m_fbColorAttachmentMask.get(i) && "No gaps are allowed");
 			VkPipelineColorBlendAttachmentState& out = m_ci.m_colAttachments[i];
 			const ColorAttachmentState& in = m_state.m_color.m_attachments[i];
 
-			out.blendEnable = !blendingDisabled(in.m_srcBlendFactorRgb, in.m_dstBlendFactorRgb, in.m_srcBlendFactorA,
-												in.m_dstBlendFactorA, in.m_blendFunctionRgb, in.m_blendFunctionA);
+			out.blendEnable = !blendingDisabled(in.m_srcBlendFactorRgb, in.m_dstBlendFactorRgb, in.m_srcBlendFactorA, in.m_dstBlendFactorA,
+												in.m_blendFunctionRgb, in.m_blendFunctionA);
 			out.srcColorBlendFactor = convertBlendFactor(in.m_srcBlendFactorRgb);
 			out.dstColorBlendFactor = convertBlendFactor(in.m_dstBlendFactorRgb);
 			out.srcAlphaBlendFactor = convertBlendFactor(in.m_srcBlendFactorA);
@@ -378,10 +371,9 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 
 	// Almost all state is dynamic. Depth bias is static
 	static constexpr Array<VkDynamicState, 10> kDyn = {
-		{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS,
-		 VK_DYNAMIC_STATE_DEPTH_BOUNDS, VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK, VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
-		 VK_DYNAMIC_STATE_STENCIL_REFERENCE, VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_DEPTH_BIAS,
-		 VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR}};
+		{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS, VK_DYNAMIC_STATE_DEPTH_BOUNDS,
+		 VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK, VK_DYNAMIC_STATE_STENCIL_WRITE_MASK, VK_DYNAMIC_STATE_STENCIL_REFERENCE, VK_DYNAMIC_STATE_LINE_WIDTH,
+		 VK_DYNAMIC_STATE_DEPTH_BIAS, VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR}};
 
 	dynCi.dynamicStateCount = (m_vrsCapable) ? kDyn.getSize() : (kDyn.getSize() - 1);
 	dynCi.pDynamicStates = &kDyn[0];
@@ -498,8 +490,7 @@ void PipelineFactory::getOrCreatePipeline(PipelineStateTracker& state, Pipeline&
 	ppline.m_handle = pp.m_handle;
 
 	// Print shader info
-	getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(),
-											   state.m_state.m_prog->getStages(), hash);
+	getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, state.m_state.m_prog->getName(), hash);
 }
 
 } // end namespace anki

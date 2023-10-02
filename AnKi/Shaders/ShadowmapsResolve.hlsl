@@ -4,25 +4,31 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator PCF 0 1
+#pragma anki mutator DIRECTIONAL_LIGHT_SHADOW_RESOLVED 0 1
 
-#define CLUSTERED_SHADING_SET 0u
-#define CLUSTERED_SHADING_UNIFORMS_BINDING 0u
-#define CLUSTERED_SHADING_LIGHTS_BINDING 1u
-#define CLUSTERED_SHADING_CLUSTERS_BINDING 4u
-#include <AnKi/Shaders/ClusteredShadingCommon.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kTileSize, 5u);
 
 #define DEBUG_CASCADES 0
 
-[[vk::binding(5)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(6)]] SamplerComparisonState g_linearAnyClampShadowSampler;
-[[vk::binding(7)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(8)]] Texture2D g_depthRt;
-[[vk::binding(9)]] Texture2D g_noiseTex;
+[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(1)]] StructuredBuffer<PointLight> g_pointLights;
+[[vk::binding(1)]] StructuredBuffer<SpotLight> g_spotLights;
+[[vk::binding(2)]] Texture2D<Vec4> g_shadowAtlasTex;
+[[vk::binding(3)]] StructuredBuffer<Cluster> g_clusters;
+
+[[vk::binding(4)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(5)]] SamplerComparisonState g_linearAnyClampShadowSampler;
+[[vk::binding(6)]] SamplerState g_trilinearRepeatSampler;
+[[vk::binding(7)]] Texture2D<Vec4> g_depthRt;
+[[vk::binding(8)]] Texture2D<Vec4> g_noiseTex;
+
+#if DIRECTIONAL_LIGHT_SHADOW_RESOLVED
+[[vk::binding(9)]] Texture2D<Vec4> g_dirLightResolvedShadowsTex;
+#endif
 
 #if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
@@ -80,8 +86,8 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Cluster
 	const Vec2 fragCoord = uv * g_clusteredShading.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(Vec3(fragCoord, depth), kTileSize, kTileCount, kZSplitCount,
-										  g_clusteredShading.m_zSplitMagic.x, g_clusteredShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(fragCoord, depth), kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
+										  g_clusteredShading.m_zSplitMagic.y);
 
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;
@@ -89,12 +95,15 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	RVec4 shadowFactors = 0.0f;
 
 	// Dir light
+#if DIRECTIONAL_LIGHT_SHADOW_RESOLVED
+	shadowFactors[0] = g_dirLightResolvedShadowsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).x;
+	++shadowCasterCountPerFragment;
+#else
 	const DirectionalLight dirLight = g_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
 	{
 		const RF32 positiveZViewSpace =
-			testPlanePoint(g_clusteredShading.m_nearPlaneWSpace.xyz, g_clusteredShading.m_nearPlaneWSpace.w, worldPos)
-			+ g_clusteredShading.m_near;
+			testPlanePoint(g_clusteredShading.m_nearPlaneWSpace.xyz, g_clusteredShading.m_nearPlaneWSpace.w, worldPos) + g_clusteredShading.m_near;
 
 		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[dirLight.m_shadowCascadeCount - 1u];
 		RF32 shadowFactor;
@@ -102,28 +111,27 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 		{
 			RF32 cascadeBlendFactor;
 			const UVec2 cascadeIndices =
-				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances,
-										   dirLight.m_shadowCascadeCount, cascadeBlendFactor);
+				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances, dirLight.m_shadowCascadeCount, cascadeBlendFactor);
 
-#if DEBUG_CASCADES
+#	if DEBUG_CASCADES
 			const Vec3 debugColorA = computeDebugShadowCascadeColor(cascadeIndices[0]);
 			const Vec3 debugColorB = computeDebugShadowCascadeColor(cascadeIndices[1]);
 			const Vec3 debugColor = lerp(debugColorA, debugColorB, cascadeBlendFactor);
-#	if defined(ANKI_COMPUTE_SHADER)
+#		if defined(ANKI_COMPUTE_SHADER)
 			g_outUav[svDispatchThreadId.xy] = shadowFactors;
 			return;
-#	else
+#		else
 			return shadowFactors;
+#		endif
 #	endif
-#endif
 
-#if PCF
-			const F32 shadowFactorCascadeA = computeShadowFactorDirLightPcf(
-				dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
-#else
-			const F32 shadowFactorCascadeA = computeShadowFactorDirLight(
-				dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
-#endif
+#	if PCF
+			const F32 shadowFactorCascadeA =
+				computeShadowFactorDirLightPcf(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
+#	else
+			const F32 shadowFactorCascadeA =
+				computeShadowFactorDirLight(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+#	endif
 
 			if(cascadeBlendFactor < 0.01 || cascadeIndices.x == cascadeIndices.y)
 			{
@@ -132,15 +140,15 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 			}
 			else
 			{
-#if PCF
+#	if PCF
 				// Blend cascades
-				const F32 shadowFactorCascadeB = computeShadowFactorDirLightPcf(
-					dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
-#else
+				const F32 shadowFactorCascadeB =
+					computeShadowFactorDirLightPcf(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
+#	else
 				// Blend cascades
-				const F32 shadowFactorCascadeB = computeShadowFactorDirLight(
-					dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
-#endif
+				const F32 shadowFactorCascadeB =
+					computeShadowFactorDirLight(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+#	endif
 				shadowFactor = lerp(shadowFactorCascadeA, shadowFactorCascadeB, cascadeBlendFactor);
 			}
 
@@ -156,12 +164,12 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 		shadowFactors[0] = shadowFactor;
 		++shadowCasterCountPerFragment;
 	}
+#endif // DIRECTIONAL_LIGHT_SHADOW_RESOLVED
 
 	// Point lights
-	[loop] while(cluster.m_pointLightsMask != ExtendedClusterObjectMask(0))
+	U32 idx = 0;
+	[loop] while((idx = iteratePointLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_pointLightsMask);
-		cluster.m_pointLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const PointLight light = g_pointLights[idx];
 
 		[branch] if(light.m_shadowAtlasTileScale >= 0.0)
@@ -169,31 +177,26 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 			const Vec3 frag2Light = light.m_position - worldPos;
 
 #if PCF
-			const RF32 shadowFactor = computeShadowFactorPointLightPcf(light, frag2Light, g_shadowAtlasTex,
-																	   g_linearAnyClampShadowSampler, randFactor);
-#else
 			const RF32 shadowFactor =
-				computeShadowFactorPointLight(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+				computeShadowFactorPointLightPcf(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
+#else
+			const RF32 shadowFactor = computeShadowFactorPointLight(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 #endif
 			shadowFactors[min(kMaxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}
 	}
 
 	// Spot lights
-	[loop] while(cluster.m_spotLightsMask != ExtendedClusterObjectMask(0))
+	[loop] while((idx = iterateSpotLights(cluster)) != kMaxU32)
 	{
-		const I32 idx = firstbitlow2(cluster.m_spotLightsMask);
-		cluster.m_spotLightsMask &= ~(ExtendedClusterObjectMask(1) << ExtendedClusterObjectMask(idx));
 		const SpotLight light = g_spotLights[idx];
 
-		[branch] if(light.m_shadowLayer != kMaxU32)
+		[branch] if(light.m_shadow)
 		{
 #if PCF
-			const RF32 shadowFactor = computeShadowFactorSpotLightPcf(light, worldPos, g_shadowAtlasTex,
-																	  g_linearAnyClampShadowSampler, randFactor);
+			const RF32 shadowFactor = computeShadowFactorSpotLightPcf(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
 #else
-			const RF32 shadowFactor =
-				computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			const RF32 shadowFactor = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 #endif
 			shadowFactors[min(kMaxShadowCastersPerFragment - 1u, shadowCasterCountPerFragment++)] = shadowFactor;
 		}

@@ -6,10 +6,9 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Scene/Spatial.h>
+#include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Collision/Obb.h>
-#include <AnKi/Renderer/RenderQueue.h>
 
 namespace anki {
 
@@ -56,20 +55,6 @@ public:
 		return m_boxSize;
 	}
 
-	void setupDecalQueueElement(DecalQueueElement& el) const
-	{
-		ANKI_ASSERT(isEnabled());
-		el.m_diffuseBindlessTextureIndex = m_layers[LayerType::kDiffuse].m_bindlessTextureIndex;
-		el.m_roughnessMetalnessBindlessTextureIndex = m_layers[LayerType::kRoughnessMetalness].m_bindlessTextureIndex;
-		el.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
-		el.m_roughnessMetalnessBlendFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
-		el.m_textureMatrix = m_biasProjViewMat;
-		el.m_obbCenter = m_obb.getCenter().xyz();
-		el.m_obbExtend = m_obb.getExtend().xyz();
-		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_index = m_gpuSceneIndex;
-	}
-
 private:
 	enum class LayerType : U8
 	{
@@ -86,20 +71,17 @@ private:
 		U32 m_bindlessTextureIndex = kMaxU32;
 	};
 
-	Spatial m_spatial;
-
 	Array<Layer, U(LayerType::kCount)> m_layers;
 	Mat4 m_biasProjViewMat = Mat4::getIdentity();
 	Vec3 m_boxSize = Vec3(1.0f);
-	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
 
-	U32 m_gpuSceneIndex = kMaxU32;
+	GpuSceneArrays::Decal::Allocation m_gpuSceneDecal;
 
 	Bool m_dirty = true;
 
 	void setLayer(CString fname, F32 blendFactor, LayerType type);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated);
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

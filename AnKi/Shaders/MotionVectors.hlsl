@@ -85,8 +85,7 @@ F32 computeRejectionFactor(Vec2 uv, Vec2 historyUv)
 	const Vec3 historyWorldPos = clipToWorld(Vec4(uvToNdc(historyUv), historyDepth, 1.0), g_unis.m_prevViewProjectionInvMat);
 #else
 	// Average gives more rejection so less ghosting
-	const Vec3 historyWorldPos =
-		getAverageWorldPosition(g_historyDepthTex, historyUv, g_unis.m_prevViewProjectionInvMat);
+	const Vec3 historyWorldPos = getAverageWorldPosition(g_historyDepthTex, historyUv, g_unis.m_prevViewProjectionInvMat);
 #endif
 	const Vec3 clampedHistoryWorldPos = clamp(historyWorldPos, boxMin, boxMax);
 
