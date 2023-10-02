@@ -9,7 +9,6 @@
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/DynamicArray.h>
-#include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/ThreadJobManager.h>
 
 namespace anki {
@@ -31,18 +30,6 @@ private:
 	}
 
 	~CoreMemoryPool() = default;
-};
-
-class CoreThreadHive : public ThreadHive, public MakeSingleton<CoreThreadHive>
-{
-	template<typename>
-	friend class MakeSingleton;
-
-public:
-	CoreThreadHive(U32 threadCount, Bool pinToCores = false)
-		: ThreadHive(threadCount, pinToCores)
-	{
-	}
 };
 
 class CoreThreadJobManager : public ThreadJobManager, public MakeSingleton<CoreThreadJobManager>

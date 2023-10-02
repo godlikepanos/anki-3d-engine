@@ -10,7 +10,6 @@
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
-#include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/App.h>

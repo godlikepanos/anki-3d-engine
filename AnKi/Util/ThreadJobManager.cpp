@@ -5,7 +5,6 @@
 
 #include <AnKi/Util/ThreadJobManager.h>
 #include <AnKi/Util/String.h>
-#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -109,7 +108,6 @@ void ThreadJobManager::threadRun(U32 threadId)
 				break;
 			}
 
-			ANKI_TRACE_SCOPED_EVENT(ThreadJobManagerJob);
 			func(threadId);
 			[[maybe_unused]] const U32 count = m_tasksInFlightCount.fetchSub(1);
 			ANKI_ASSERT(count > 0);

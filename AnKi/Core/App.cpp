@@ -11,7 +11,6 @@
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/System.h>
-#include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Core/CoreTracer.h>
@@ -155,7 +154,6 @@ void App::cleanup()
 	UnifiedGeometryBuffer::freeSingleton();
 	GpuSceneBuffer::freeSingleton();
 	GpuReadbackMemoryPool::freeSingleton();
-	CoreThreadHive::freeSingleton();
 	CoreThreadJobManager::freeSingleton();
 	MaliHwCounters::freeSingleton();
 	GrManager::freeSingleton();
@@ -281,7 +279,6 @@ Error App::initInternal()
 	// ThreadPool
 	//
 	const Bool pinThreads = !ANKI_OS_ANDROID;
-	CoreThreadHive::allocateSingleton(g_jobThreadCountCVar.get(), pinThreads);
 	CoreThreadJobManager::allocateSingleton(g_jobThreadCountCVar.get(), pinThreads);
 
 	//

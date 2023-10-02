@@ -54,6 +54,7 @@ template<typename>
 class BaseStringList;
 
 class ThreadHive;
+class ThreadJobManager;
 
 template<typename TFunc, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, PtrSize kPreallocatedStorage = ANKI_SAFE_ALIGNMENT>
 class Function;

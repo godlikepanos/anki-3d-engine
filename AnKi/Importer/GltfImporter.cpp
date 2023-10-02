@@ -5,7 +5,7 @@
 
 #include <AnKi/Importer/GltfImporter.h>
 #include <AnKi/Util/System.h>
-#include <AnKi/Util/ThreadHive.h>
+#include <AnKi/Util/ThreadJobManager.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Util/Xml.h>
 
@@ -162,7 +162,7 @@ GltfImporter::~GltfImporter()
 		m_gltf = nullptr;
 	}
 
-	deleteInstance(*m_pool, m_hive);
+	deleteInstance(*m_pool, m_jobManager);
 }
 
 Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
@@ -211,7 +211,7 @@ Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 	if(initInfo.m_threadCount > 0)
 	{
 		const U32 threadCount = min(getCpuCoresCount(), initInfo.m_threadCount);
-		m_hive = newInstance<ThreadHive>(*m_pool, threadCount, true);
+		m_jobManager = newInstance<ThreadJobManager>(*m_pool, threadCount, true);
 	}
 
 	m_importTextures = initInfo.m_importTextures;
@@ -241,25 +241,21 @@ Error GltfImporter::writeAll()
 	// Fire up all requests
 	for(auto& req : m_meshImportRequests)
 	{
-		if(m_hive)
+		if(m_jobManager)
 		{
-			m_hive->submitTask(
-				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-					ImportRequest<const cgltf_mesh*>* req = static_cast<ImportRequest<const cgltf_mesh*>*>(userData);
-					Error err = req->m_importer->m_errorInThread.load();
+			m_jobManager->dispatchTask([&req]([[maybe_unused]] U32 threadId) {
+				Error err = req.m_importer->m_errorInThread.load();
 
-					if(!err)
-					{
-						err = req->m_importer->writeMesh(*req->m_value);
-					}
+				if(!err)
+				{
+					err = req.m_importer->writeMesh(*req.m_value);
+				}
 
-					if(err)
-					{
-						req->m_importer->m_errorInThread.store(err._getCode());
-					}
-				},
-				&req);
+				if(err)
+				{
+					req.m_importer->m_errorInThread.store(err._getCode());
+				}
+			});
 		}
 		else
 		{
@@ -269,25 +265,21 @@ Error GltfImporter::writeAll()
 
 	for(auto& req : m_materialImportRequests)
 	{
-		if(m_hive)
+		if(m_jobManager)
 		{
-			m_hive->submitTask(
-				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-					ImportRequest<MaterialImportRequest>* req = static_cast<ImportRequest<MaterialImportRequest>*>(userData);
-					Error err = req->m_importer->m_errorInThread.load();
+			m_jobManager->dispatchTask([&req]([[maybe_unused]] U32 threadId) {
+				Error err = req.m_importer->m_errorInThread.load();
 
-					if(!err)
-					{
-						err = req->m_importer->writeMaterial(*req->m_value.m_cgltfMaterial, req->m_value.m_writeRt);
-					}
+				if(!err)
+				{
+					err = req.m_importer->writeMaterial(*req.m_value.m_cgltfMaterial, req.m_value.m_writeRt);
+				}
 
-					if(err)
-					{
-						req->m_importer->m_errorInThread.store(err._getCode());
-					}
-				},
-				&req);
+				if(err)
+				{
+					req.m_importer->m_errorInThread.store(err._getCode());
+				}
+			});
 		}
 		else
 		{
@@ -297,25 +289,21 @@ Error GltfImporter::writeAll()
 
 	for(auto& req : m_skinImportRequests)
 	{
-		if(m_hive)
+		if(m_jobManager)
 		{
-			m_hive->submitTask(
-				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-					ImportRequest<const cgltf_skin*>* req = static_cast<ImportRequest<const cgltf_skin*>*>(userData);
-					Error err = req->m_importer->m_errorInThread.load();
+			m_jobManager->dispatchTask([&req]([[maybe_unused]] U32 threadId) {
+				Error err = req.m_importer->m_errorInThread.load();
 
-					if(!err)
-					{
-						err = req->m_importer->writeSkeleton(*req->m_value);
-					}
+				if(!err)
+				{
+					err = req.m_importer->writeSkeleton(*req.m_value);
+				}
 
-					if(err)
-					{
-						req->m_importer->m_errorInThread.store(err._getCode());
-					}
-				},
-				&req);
+				if(err)
+				{
+					req.m_importer->m_errorInThread.store(err._getCode());
+				}
+			});
 		}
 		else
 		{
@@ -325,25 +313,21 @@ Error GltfImporter::writeAll()
 
 	for(auto& req : m_modelImportRequests)
 	{
-		if(m_hive)
+		if(m_jobManager)
 		{
-			m_hive->submitTask(
-				[](void* userData, [[maybe_unused]] U32 threadId, [[maybe_unused]] ThreadHive& hive,
-				   [[maybe_unused]] ThreadHiveSemaphore* signalSemaphore) {
-					ImportRequest<const cgltf_mesh*>* req = static_cast<ImportRequest<const cgltf_mesh*>*>(userData);
-					Error err = req->m_importer->m_errorInThread.load();
+			m_jobManager->dispatchTask([&req]([[maybe_unused]] U32 threadId) {
+				Error err = req.m_importer->m_errorInThread.load();
 
-					if(!err)
-					{
-						err = req->m_importer->writeModel(*req->m_value);
-					}
+				if(!err)
+				{
+					err = req.m_importer->writeModel(*req.m_value);
+				}
 
-					if(err)
-					{
-						req->m_importer->m_errorInThread.store(err._getCode());
-					}
-				},
-				&req);
+				if(err)
+				{
+					req.m_importer->m_errorInThread.store(err._getCode());
+				}
+			});
 		}
 		else
 		{
@@ -351,9 +335,9 @@ Error GltfImporter::writeAll()
 		}
 	}
 
-	if(m_hive)
+	if(m_jobManager)
 	{
-		m_hive->waitAllTasks();
+		m_jobManager->waitForAllTasksToFinish();
 
 		const Error threadErr = m_errorInThread.load();
 		if(threadErr)

@@ -62,7 +62,7 @@ private:
 
 	F32 m_normalsMergeAngle = toRad(30.0f);
 
-	ThreadHive* m_hive = nullptr;
+	ThreadJobManager* m_jobManager = nullptr;
 
 	File m_sceneFile;
 

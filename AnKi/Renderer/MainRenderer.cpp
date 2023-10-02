@@ -15,7 +15,6 @@
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/HighRezTimer.h>
-#include <AnKi/Util/ThreadHive.h>
 
 namespace anki {
 

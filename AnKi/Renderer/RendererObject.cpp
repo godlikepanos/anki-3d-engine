@@ -7,7 +7,6 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Enum.h>
-#include <AnKi/Util/ThreadHive.h>
 
 namespace anki {
 

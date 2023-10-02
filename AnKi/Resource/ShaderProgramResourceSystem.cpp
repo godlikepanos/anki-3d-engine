@@ -10,7 +10,6 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Core/CVarSet.h>

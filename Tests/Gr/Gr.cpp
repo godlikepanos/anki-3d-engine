@@ -2595,11 +2595,17 @@ void main()
 		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		setAccelerationStructureBarrier(cmdb, blas, AccelerationStructureUsageBit::kNone, AccelerationStructureUsageBit::kBuild);
-		cmdb->buildAccelerationStructure(blas.get());
+		BufferInitInfo scratchInit;
+		scratchInit.m_size = blas->getBuildScratchBufferSize();
+		scratchInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+		BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+		cmdb->buildAccelerationStructure(blas.get(), scratchBuff.get(), 0);
 		setAccelerationStructureBarrier(cmdb, blas, AccelerationStructureUsageBit::kBuild, AccelerationStructureUsageBit::kAttach);
 
 		setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kNone, AccelerationStructureUsageBit::kBuild);
-		cmdb->buildAccelerationStructure(tlas.get());
+		scratchInit.m_size = tlas->getBuildScratchBufferSize();
+		scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+		cmdb->buildAccelerationStructure(tlas.get(), scratchBuff.get(), 0);
 		setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kBuild, AccelerationStructureUsageBit::kFragmentRead);
 
 		cmdb->flush();
@@ -3418,7 +3424,11 @@ void main()
 
 			for(const Geom& g : geometries)
 			{
-				cmdb->buildAccelerationStructure(g.m_blas.get());
+				BufferInitInfo scratchInit;
+				scratchInit.m_size = g.m_blas->getBuildScratchBufferSize();
+				scratchInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+				BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+				cmdb->buildAccelerationStructure(g.m_blas.get(), scratchBuff.get(), 0);
 			}
 
 			for(const Geom& g : geometries)
@@ -3427,7 +3437,11 @@ void main()
 			}
 
 			setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kNone, AccelerationStructureUsageBit::kBuild);
-			cmdb->buildAccelerationStructure(tlas.get());
+			BufferInitInfo scratchInit;
+			scratchInit.m_size = tlas->getBuildScratchBufferSize();
+			scratchInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+			BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+			cmdb->buildAccelerationStructure(tlas.get(), scratchBuff.get(), 0);
 			setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kBuild, AccelerationStructureUsageBit::kTraceRaysRead);
 		}
 
