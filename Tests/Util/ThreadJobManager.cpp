@@ -14,7 +14,6 @@ using namespace anki;
 ANKI_TEST(Util, ThreadJobManager)
 {
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
-	Tracer::allocateSingleton();
 
 	// Simple test
 	{
@@ -38,13 +37,11 @@ ANKI_TEST(Util, ThreadJobManager)
 	}
 
 	DefaultMemoryPool::freeSingleton();
-	Tracer::freeSingleton();
 }
 
 ANKI_TEST(Util, ThreadJobManagerBench)
 {
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
-	Tracer::allocateSingleton();
 
 	const U64 time = HighRezTimer::getCurrentTimeUs();
 
@@ -71,5 +68,4 @@ ANKI_TEST(Util, ThreadJobManagerBench)
 	ANKI_TEST_LOGI("Time spent %lu us / %lu ms", timeDiff, timeDiff / 1000);
 
 	DefaultMemoryPool::freeSingleton();
-	Tracer::freeSingleton();
 }
