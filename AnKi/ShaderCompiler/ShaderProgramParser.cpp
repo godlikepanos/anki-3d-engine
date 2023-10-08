@@ -16,8 +16,8 @@ namespace anki {
 	return Error::kUserData
 
 inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION",
-																			   "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN", "ANY_HIT", "CLOSEST_HIT",
-																			   "MISS", "INTERSECTION", "CALLABLE"}};
+																			   "GEOMETRY", "TASK", "MESH", "FRAGMENT", "COMPUTE", "RAY_GEN",
+																			   "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
 inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
 #define ANKI_PLATFORM_MOBILE %d
@@ -90,6 +90,14 @@ Error ShaderProgramParser::parsePragmaStart(const String* begin, const String* e
 	else if(*begin == "geom")
 	{
 		shaderType = ShaderType::kGeometry;
+	}
+	else if(*begin == "task")
+	{
+		shaderType = ShaderType::kTask;
+	}
+	else if(*begin == "mesh")
+	{
+		shaderType = ShaderType::kMesh;
 	}
 	else if(*begin == "frag")
 	{

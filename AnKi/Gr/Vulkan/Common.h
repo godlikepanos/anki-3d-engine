@@ -63,7 +63,7 @@ enum class DescriptorType : U8
 	kCount
 };
 
-enum class VulkanExtensions : U32
+enum class VulkanExtensions : U64
 {
 	kNone = 0,
 	kKHR_xcb_surface = 1 << 1,
@@ -94,7 +94,8 @@ enum class VulkanExtensions : U32
 	kNVX_image_view_handle = 1 << 27,
 	kKHR_push_descriptor = 1 << 28,
 	kKHR_maintenance_4 = 1 << 29,
-	kKHR_draw_indirect_count = 1 << 30
+	kKHR_draw_indirect_count = 1 << 30,
+	kEXT_mesh_shader = 1 << 31
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 

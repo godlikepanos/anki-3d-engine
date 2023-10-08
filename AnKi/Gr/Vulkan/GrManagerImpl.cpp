@@ -24,6 +24,7 @@ static BoolCVar g_rayTracingCVar(CVarSubsystem::kGr, "RayTracing", false, "Try e
 static BoolCVar g_64bitAtomicsCVar(CVarSubsystem::kGr, "64bitAtomics", true, "Enable or not 64bit atomics");
 static BoolCVar g_samplerFilterMinMaxCVar(CVarSubsystem::kGr, "SamplerFilterMinMax", true, "Enable or not min/max sample filtering");
 static BoolCVar g_vrsCVar(CVarSubsystem::kGr, "Vrs", false, "Enable or not VRS");
+BoolCVar g_meshShadersCVar(CVarSubsystem::kGr, "MeshShaders", false, "Enable or not mesh shaders");
 static BoolCVar g_asyncComputeCVar(CVarSubsystem::kGr, "AsyncCompute", true, "Enable or not async compute");
 static NumericCVar<U8> g_vkMinorCVar(CVarSubsystem::kGr, "VkMinor", 1, 1, 1, "Vulkan minor version");
 static NumericCVar<U8> g_vkMajorCVar(CVarSubsystem::kGr, "VkMajor", 1, 1, 1, "Vulkan major version");
@@ -802,6 +803,11 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_draw_indirect_count;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_EXT_MESH_SHADER_EXTENSION_NAME && g_meshShadersCVar.get())
+			{
+				m_extensions |= VulkanExtensions::kEXT_mesh_shader;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -815,15 +821,16 @@ Error GrManagerImpl::initDevice()
 	}
 
 	// Enable/disable generic features
+	VkPhysicalDeviceFeatures devFeatures = {};
 	{
-		VkPhysicalDeviceFeatures2 devFeatures = {};
-		devFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures);
-		m_devFeatures = devFeatures.features;
-		m_devFeatures.robustBufferAccess = (g_validationCVar.get() && m_devFeatures.robustBufferAccess) ? true : false;
-		ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
+		VkPhysicalDeviceFeatures2 devFeatures2 = {};
+		devFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures2);
+		devFeatures = devFeatures2.features;
+		devFeatures.robustBufferAccess = (g_validationCVar.get() && devFeatures.robustBufferAccess) ? true : false;
+		ANKI_VK_LOGI("Robust buffer access is %s", (devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
-		ci.pEnabledFeatures = &m_devFeatures;
+		ci.pEnabledFeatures = &devFeatures;
 	}
 
 #if ANKI_PLATFORM_MOBILE
@@ -851,6 +858,7 @@ Error GrManagerImpl::initDevice()
 	}
 
 	// Descriptor indexing
+	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = {};
 	if(!(m_extensions & VulkanExtensions::kEXT_descriptor_indexing))
 	{
 		ANKI_VK_LOGE(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME " is not supported");
@@ -858,59 +866,53 @@ Error GrManagerImpl::initDevice()
 	}
 	else
 	{
-		m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+		descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+		getPhysicalDevicaFeatures2(descriptorIndexingFeatures);
 
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_descriptorIndexingFeatures;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-		if(!m_descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing
-		   || !m_descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
+		if(!descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing
+		   || !descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
 		{
 			ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
 			return Error::kFunctionFailed;
 		}
 
-		if(!m_descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind
-		   || !m_descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
+		if(!descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind
+		   || !descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
 		{
 			ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
 			return Error::kFunctionFailed;
 		}
 
-		if(!m_descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending)
+		if(!descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending)
 		{
 			ANKI_VK_LOGE("Update descriptors while cmd buffer is pending is not supported by the device");
 			return Error::kFunctionFailed;
 		}
 
-		m_descriptorIndexingFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_descriptorIndexingFeatures;
+		descriptorIndexingFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &descriptorIndexingFeatures;
 	}
 
 	// Buffer address
+	VkPhysicalDeviceBufferDeviceAddressFeaturesKHR deviceBufferFeatures = {};
 	if(!(m_extensions & VulkanExtensions::kKHR_buffer_device_address))
 	{
 		ANKI_VK_LOGW(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME " is not supported");
 	}
 	else
 	{
-		m_deviceBufferFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR;
+		deviceBufferFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(deviceBufferFeatures);
 
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_deviceBufferFeatures;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+		deviceBufferFeatures.bufferDeviceAddressCaptureReplay = deviceBufferFeatures.bufferDeviceAddressCaptureReplay && g_debugMarkersCVar.get();
+		deviceBufferFeatures.bufferDeviceAddressMultiDevice = false;
 
-		m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay = m_deviceBufferFeatures.bufferDeviceAddressCaptureReplay && g_debugMarkersCVar.get();
-		m_deviceBufferFeatures.bufferDeviceAddressMultiDevice = false;
-
-		m_deviceBufferFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_deviceBufferFeatures;
+		deviceBufferFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &deviceBufferFeatures;
 	}
 
 	// Scalar block layout
+	VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockLayoutFeatures = {};
 	if(!(m_extensions & VulkanExtensions::kEXT_scalar_block_layout))
 	{
 		ANKI_VK_LOGE(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME " is not supported");
@@ -918,24 +920,21 @@ Error GrManagerImpl::initDevice()
 	}
 	else
 	{
-		m_scalarBlockLayout.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT;
+		scalarBlockLayoutFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT;
+		getPhysicalDevicaFeatures2(scalarBlockLayoutFeatures);
 
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_scalarBlockLayout;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-		if(!m_scalarBlockLayout.scalarBlockLayout)
+		if(!scalarBlockLayoutFeatures.scalarBlockLayout)
 		{
 			ANKI_VK_LOGE("Scalar block layout is not supported by the device");
 			return Error::kFunctionFailed;
 		}
 
-		m_scalarBlockLayout.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_scalarBlockLayout;
+		scalarBlockLayoutFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &scalarBlockLayoutFeatures;
 	}
 
 	// Timeline semaphore
+	VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaphoreFeatures = {};
 	if(!(m_extensions & VulkanExtensions::kKHR_timeline_semaphore))
 	{
 		ANKI_VK_LOGE(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME " is not supported");
@@ -943,54 +942,53 @@ Error GrManagerImpl::initDevice()
 	}
 	else
 	{
-		m_timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
+		timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(timelineSemaphoreFeatures);
 
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_timelineSemaphoreFeatures;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-		if(!m_timelineSemaphoreFeatures.timelineSemaphore)
+		if(!timelineSemaphoreFeatures.timelineSemaphore)
 		{
 			ANKI_VK_LOGE("Timeline semaphores are not supported by the device");
 			return Error::kFunctionFailed;
 		}
 
-		m_timelineSemaphoreFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_timelineSemaphoreFeatures;
+		timelineSemaphoreFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &timelineSemaphoreFeatures;
 	}
 
 	// Set RT features
+	VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures = {};
+	VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeatures = {};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = {};
 	if(!!(m_extensions & VulkanExtensions::kKHR_ray_tracing))
 	{
-		m_rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-		m_rayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
-		m_accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+		rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+		rayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+		accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
 
 		VkPhysicalDeviceFeatures2 features = {};
 		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_rtPipelineFeatures;
-		m_rtPipelineFeatures.pNext = &m_rayQueryFeatures;
-		m_rayQueryFeatures.pNext = &m_accelerationStructureFeatures;
+		features.pNext = &rtPipelineFeatures;
+		rtPipelineFeatures.pNext = &rayQueryFeatures;
+		rayQueryFeatures.pNext = &accelerationStructureFeatures;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-		if(!m_rtPipelineFeatures.rayTracingPipeline || !m_rayQueryFeatures.rayQuery || !m_accelerationStructureFeatures.accelerationStructure)
+		if(!rtPipelineFeatures.rayTracingPipeline || !rayQueryFeatures.rayQuery || !accelerationStructureFeatures.accelerationStructure)
 		{
 			ANKI_VK_LOGE("Ray tracing and ray query are both required");
 			return Error::kFunctionFailed;
 		}
 
 		// Only enable what's necessary
-		m_rtPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplay = false;
-		m_rtPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplayMixed = false;
-		m_rtPipelineFeatures.rayTraversalPrimitiveCulling = false;
-		m_accelerationStructureFeatures.accelerationStructureCaptureReplay = false;
-		m_accelerationStructureFeatures.accelerationStructureHostCommands = false;
-		m_accelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = false;
+		rtPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplay = false;
+		rtPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplayMixed = false;
+		rtPipelineFeatures.rayTraversalPrimitiveCulling = false;
+		accelerationStructureFeatures.accelerationStructureCaptureReplay = false;
+		accelerationStructureFeatures.accelerationStructureHostCommands = false;
+		accelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = false;
 
-		ANKI_ASSERT(m_accelerationStructureFeatures.pNext == nullptr);
-		m_accelerationStructureFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_rtPipelineFeatures;
+		ANKI_ASSERT(accelerationStructureFeatures.pNext == nullptr);
+		accelerationStructureFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &rtPipelineFeatures;
 
 		// Get some more stuff
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};
@@ -1000,16 +998,18 @@ Error GrManagerImpl::initDevice()
 	}
 
 	// Pipeline features
+	VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR pplineExecutablePropertiesFeatures = {};
 	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
-		m_pplineExecutablePropertiesFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
-		m_pplineExecutablePropertiesFeatures.pipelineExecutableInfo = true;
+		pplineExecutablePropertiesFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
+		pplineExecutablePropertiesFeatures.pipelineExecutableInfo = true;
 
-		m_pplineExecutablePropertiesFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_pplineExecutablePropertiesFeatures;
+		pplineExecutablePropertiesFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &pplineExecutablePropertiesFeatures;
 	}
 
 	// F16 I8
+	VkPhysicalDeviceShaderFloat16Int8FeaturesKHR float16Int8Features = {};
 	if(!(m_extensions & VulkanExtensions::kKHR_shader_float16_int8))
 	{
 		ANKI_VK_LOGE(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME " is not supported");
@@ -1017,18 +1017,15 @@ Error GrManagerImpl::initDevice()
 	}
 	else
 	{
-		m_float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
+		float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(float16Int8Features);
 
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_float16Int8Features;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-		m_float16Int8Features.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_float16Int8Features;
+		float16Int8Features.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &float16Int8Features;
 	}
 
 	// 64bit atomics
+	VkPhysicalDeviceShaderAtomicInt64FeaturesKHR atomicInt64Features = {};
 	if(!(m_extensions & VulkanExtensions::kKHR_shader_atomic_int64))
 	{
 		ANKI_VK_LOGW(VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME " is not supported or disabled");
@@ -1038,18 +1035,15 @@ Error GrManagerImpl::initDevice()
 	{
 		m_capabilities.m_64bitAtomics = true;
 
-		m_atomicInt64Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
+		atomicInt64Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(atomicInt64Features);
 
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_atomicInt64Features;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-		m_atomicInt64Features.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_atomicInt64Features;
+		atomicInt64Features.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &atomicInt64Features;
 	}
 
 	// VRS
+	VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRateFeatures = {};
 	if(!(m_extensions & VulkanExtensions::kKHR_fragment_shading_rate))
 	{
 		ANKI_VK_LOGI(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME " is not supported or disabled");
@@ -1059,15 +1053,11 @@ Error GrManagerImpl::initDevice()
 	{
 		m_capabilities.m_vrs = true;
 
-		m_fragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
-
-		VkPhysicalDeviceFeatures2 features = {};
-		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_fragmentShadingRateFeatures;
-		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+		fragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(fragmentShadingRateFeatures);
 
 		// Some checks
-		if(!m_fragmentShadingRateFeatures.attachmentFragmentShadingRate || !m_fragmentShadingRateFeatures.pipelineFragmentShadingRate)
+		if(!fragmentShadingRateFeatures.attachmentFragmentShadingRate || !fragmentShadingRateFeatures.pipelineFragmentShadingRate)
 		{
 			ANKI_VK_LOGW(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME " doesn't support attachment and/or pipeline rates. Will disable VRS");
 			m_capabilities.m_vrs = false;
@@ -1075,7 +1065,7 @@ Error GrManagerImpl::initDevice()
 		else
 		{
 			// Disable some things
-			m_fragmentShadingRateFeatures.primitiveFragmentShadingRate = false;
+			fragmentShadingRateFeatures.primitiveFragmentShadingRate = false;
 		}
 
 		if(m_capabilities.m_vrs)
@@ -1102,15 +1092,40 @@ Error GrManagerImpl::initDevice()
 
 		if(m_capabilities.m_vrs)
 		{
-			m_fragmentShadingRateFeatures.pNext = const_cast<void*>(ci.pNext);
-			ci.pNext = &m_fragmentShadingRateFeatures;
+			fragmentShadingRateFeatures.pNext = const_cast<void*>(ci.pNext);
+			ci.pNext = &fragmentShadingRateFeatures;
 		}
 	}
 
+	// Mesh shaders
+	VkPhysicalDeviceMeshShaderFeaturesEXT meshShadersFeatures = {};
+	if(!!(m_extensions & VulkanExtensions::kEXT_mesh_shader))
+	{
+		m_capabilities.m_meshShaders = true;
+
+		meshShadersFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+		getPhysicalDevicaFeatures2(meshShadersFeatures);
+
+		if(meshShadersFeatures.taskShader == false)
+		{
+			ANKI_LOGE(VK_EXT_MESH_SHADER_EXTENSION_NAME " doesn't support task shaders");
+			return Error::kFunctionFailed;
+		}
+
+		meshShadersFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &meshShadersFeatures;
+
+		ANKI_VK_LOGI(VK_EXT_MESH_SHADER_EXTENSION_NAME " is supported and enabled");
+	}
+	else
+	{
+		ANKI_VK_LOGI(VK_EXT_MESH_SHADER_EXTENSION_NAME " is not supported or disabled ");
+	}
+
 	VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = {};
-	maintenance4Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR;
 	if(!!(m_extensions & VulkanExtensions::kKHR_maintenance_4))
 	{
+		maintenance4Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR;
 		maintenance4Features.maintenance4 = true;
 		maintenance4Features.pNext = const_cast<void*>(ci.pNext);
 		ci.pNext = &maintenance4Features;

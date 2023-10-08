@@ -505,6 +505,16 @@ VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit)
 		out |= VK_SHADER_STAGE_GEOMETRY_BIT;
 	}
 
+	if(!!(bit & ShaderTypeBit::kTask))
+	{
+		out |= VK_SHADER_STAGE_TASK_BIT_EXT;
+	}
+
+	if(!!(bit & ShaderTypeBit::kMesh))
+	{
+		out |= VK_SHADER_STAGE_MESH_BIT_EXT;
+	}
+
 	if(!!(bit & ShaderTypeBit::kFragment))
 	{
 		out |= VK_SHADER_STAGE_FRAGMENT_BIT;

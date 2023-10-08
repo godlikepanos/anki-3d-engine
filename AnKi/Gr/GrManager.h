@@ -17,6 +17,7 @@ class NativeWindow;
 extern BoolCVar g_vsyncCVar;
 extern BoolCVar g_validationCVar;
 extern BoolCVar g_debugMarkersCVar;
+extern BoolCVar g_meshShadersCVar;
 
 /// @addtogroup graphics
 /// @{

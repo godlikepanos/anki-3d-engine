@@ -145,12 +145,9 @@ public:
 	// Vec4 specific
 
 	ANKI_ENABLE_METHOD(kTComponentCount == 4 && !kHasVec4SIMD)
-	TVec(const T x_, const T y_, const T z_, const T w_)
+	constexpr TVec(const T x_, const T y_, const T z_, const T w_)
+		: m_arr{x_, y_, z_, w_}
 	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
-		w() = w_;
 	}
 
 #if ANKI_ENABLE_SIMD

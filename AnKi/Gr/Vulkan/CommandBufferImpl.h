@@ -317,6 +317,13 @@ public:
 		vkCmdDrawIndexedIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawIndexedIndirectArgs));
 	}
 
+	ANKI_FORCE_INLINE void drawMeshTasksInternal(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
+	{
+		ANKI_ASSERT(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_mesh_shader));
+		drawcallCommon();
+		vkCmdDrawMeshTasksEXT(m_handle, groupCountX, groupCountY, groupCountZ);
+	}
+
 	ANKI_FORCE_INLINE void drawIndexedIndirectCountInternal(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset,
 															U32 argBufferStride, Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
 	{

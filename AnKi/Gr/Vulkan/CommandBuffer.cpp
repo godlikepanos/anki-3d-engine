@@ -294,6 +294,12 @@ void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, U32 drawCoun
 	self.drawIndexedIndirectInternal(topology, drawCount, offset, buff);
 }
 
+void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.drawMeshTasksInternal(groupCountX, groupCountY, groupCountZ);
+}
+
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

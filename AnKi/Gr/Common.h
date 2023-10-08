@@ -217,6 +217,9 @@ public:
 
 	/// DLSS.
 	Bool m_dlss = false;
+
+	/// Mesh shaders.
+	Bool m_meshShaders = false;
 };
 ANKI_END_PACKED_STRUCT
 
@@ -533,6 +536,8 @@ enum class ShaderType : U16
 	kTessellationControl,
 	kTessellationEvaluation,
 	kGeometry,
+	kTask,
+	kMesh,
 	kFragment,
 	kCompute,
 	kRayGen,
@@ -558,17 +563,21 @@ enum class ShaderTypeBit : U16
 	kTessellationControl = 1 << 1,
 	kTessellationEvaluation = 1 << 2,
 	kGeometry = 1 << 3,
-	kFragment = 1 << 4,
-	kCompute = 1 << 5,
-	kRayGen = 1 << 6,
-	kAnyHit = 1 << 7,
-	kClosestHit = 1 << 8,
-	kMiss = 1 << 9,
-	kIntersection = 1 << 10,
-	kCallable = 1 << 11,
+	kTask = 1 << 4,
+	kMesh = 1 << 5,
+	kFragment = 1 << 6,
+	kCompute = 1 << 7,
+	kRayGen = 1 << 8,
+	kAnyHit = 1 << 9,
+	kClosestHit = 1 << 10,
+	kMiss = 1 << 11,
+	kIntersection = 1 << 12,
+	kCallable = 1 << 13,
 
 	kNone = 0,
-	kAllGraphics = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry | kFragment,
+	kAllGraphics = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry | kTask | kMesh | kFragment,
+	kAllLegacyGeometry = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry,
+	kAllModernGeometry = kTask | kMesh,
 	kAllRayTracing = kRayGen | kAnyHit | kClosestHit | kMiss | kIntersection | kCallable,
 	kAll = kAllGraphics | kCompute | kAllRayTracing,
 };

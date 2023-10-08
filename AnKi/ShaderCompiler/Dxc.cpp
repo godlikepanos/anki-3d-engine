@@ -32,6 +32,12 @@ static CString profile(ShaderType shaderType)
 	case ShaderType::kGeometry:
 		return "gs_6_7";
 		break;
+	case ShaderType::kTask:
+		return "as_6_7";
+		break;
+	case ShaderType::kMesh:
+		return "ms_6_7";
+		break;
 	case ShaderType::kCompute:
 		return "cs_6_7";
 		break;

@@ -310,6 +310,8 @@ public:
 	void drawIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride, Buffer* countBuffer,
 						   PtrSize countBufferOffset, U32 maxDrawCount);
 
+	void drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
+
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
 	void dispatchComputeIndirect(Buffer* argBuffer, PtrSize argBufferOffset);

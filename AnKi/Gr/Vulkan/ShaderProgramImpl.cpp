@@ -41,7 +41,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		m_shaders.emplaceBack(inf.m_computeShader);
 	}
-	else if(inf.m_graphicsShaders[ShaderType::kVertex])
+	else if(inf.m_graphicsShaders[ShaderType::kFragment])
 	{
 		for(Shader* s : inf.m_graphicsShaders)
 		{
@@ -178,7 +178,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::kAllGraphics);
 	if(graphicsProg)
 	{
-		m_refl.m_attributeMask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kVertex]).m_attributeMask;
+		if(inf.m_graphicsShaders[ShaderType::kVertex])
+		{
+			m_refl.m_attributeMask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kVertex]).m_attributeMask;
+		}
 
 		m_refl.m_colorAttachmentWritemask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kFragment]).m_colorAttachmentWritemask;
 

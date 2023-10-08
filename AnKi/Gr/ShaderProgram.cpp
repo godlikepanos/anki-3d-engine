@@ -22,9 +22,25 @@ Bool ShaderProgramInitInfo::isValid() const
 		}
 	}
 
-	if(!!graphicsMask && (graphicsMask & (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment)) != (ShaderTypeBit::kVertex | ShaderTypeBit::kFragment))
+	if(!!graphicsMask)
 	{
-		return false;
+		if(!(graphicsMask & ShaderTypeBit::kFragment))
+		{
+			return false;
+		}
+
+		const Bool hasMesh = !!(graphicsMask & ShaderTypeBit::kAllModernGeometry);
+		const Bool hasVert = !!(graphicsMask & ShaderTypeBit::kAllLegacyGeometry);
+
+		if(hasMesh && !!(graphicsMask & ShaderTypeBit::kAllLegacyGeometry))
+		{
+			return false;
+		}
+
+		if(hasVert && !!(graphicsMask & ShaderTypeBit::kAllModernGeometry))
+		{
+			return false;
+		}
 	}
 
 	Bool compute = false;

@@ -228,18 +228,6 @@ private:
 	VkPhysicalDeviceProperties2 m_devProps = {};
 	VkPhysicalDeviceAccelerationStructurePropertiesKHR m_accelerationStructureProps = {};
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR m_rtPipelineProps = {};
-	VkPhysicalDeviceFeatures m_devFeatures = {};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR m_accelerationStructureFeatures = {};
-	VkPhysicalDeviceRayTracingPipelineFeaturesKHR m_rtPipelineFeatures = {};
-	VkPhysicalDeviceRayQueryFeaturesKHR m_rayQueryFeatures = {};
-	VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR m_pplineExecutablePropertiesFeatures = {};
-	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures = {};
-	VkPhysicalDeviceBufferDeviceAddressFeaturesKHR m_deviceBufferFeatures = {};
-	VkPhysicalDeviceScalarBlockLayoutFeaturesEXT m_scalarBlockLayout = {};
-	VkPhysicalDeviceTimelineSemaphoreFeaturesKHR m_timelineSemaphoreFeatures = {};
-	VkPhysicalDeviceShaderFloat16Int8FeaturesKHR m_float16Int8Features = {};
-	VkPhysicalDeviceShaderAtomicInt64FeaturesKHR m_atomicInt64Features = {};
-	VkPhysicalDeviceFragmentShadingRateFeaturesKHR m_fragmentShadingRateFeatures = {};
 
 	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;
 
@@ -332,6 +320,15 @@ private:
 		properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 		properties.pNext = &props;
 		vkGetPhysicalDeviceProperties2(m_physicalDevice, &properties);
+	}
+
+	template<typename TFeatures>
+	void getPhysicalDevicaFeatures2(TFeatures& features) const
+	{
+		VkPhysicalDeviceFeatures2 features2 = {};
+		features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features2.pNext = &features;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features2);
 	}
 };
 /// @}
