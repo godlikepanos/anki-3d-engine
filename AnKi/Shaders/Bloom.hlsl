@@ -13,12 +13,12 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(kViewport, 0u);
 [[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(1)]] Texture2D g_inTex; ///< Its the IS RT
 
-struct Uniforms
+struct Constants
 {
 	Vec4 m_thresholdScalePad2;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_pc;
+[[vk::push_constant]] ConstantBuffer<Constants> g_pc;
 
 #if defined(ANKI_COMPUTE_SHADER)
 #	define THREADGROUP_SIZE_X 8

@@ -9,7 +9,7 @@
 
 ANKI_BEGIN_NAMESPACE
 
-struct FrustumGpuVisibilityUniforms
+struct FrustumGpuVisibilityConstants
 {
 	Vec4 m_clipPlanes[6u];
 
@@ -21,7 +21,7 @@ struct FrustumGpuVisibilityUniforms
 	Mat4 m_viewProjectionMat;
 };
 
-struct DistanceGpuVisibilityUniforms
+struct DistanceGpuVisibilityConstants
 {
 	Vec3 m_pointOfTest;
 	F32 m_testRadius;
@@ -32,12 +32,12 @@ struct DistanceGpuVisibilityUniforms
 	F32 m_padding3;
 };
 
-struct GpuVisibilityNonRenderableUniforms
+struct GpuVisibilityNonRenderableConstants
 {
 	Vec4 m_clipPlanes[6u];
 };
 
-struct GpuVisibilityAccelerationStructuresUniforms
+struct GpuVisibilityAccelerationStructuresConstants
 {
 	Vec4 m_clipPlanes[6u];
 

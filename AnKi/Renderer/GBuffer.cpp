@@ -60,7 +60,7 @@ Error GBuffer::initInternal()
 	}
 
 	{
-		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kImageComputeWrite;
+		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kUavComputeWrite;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar.get(), g_hzbHeightCVar.get(), Format::kR32_Sfloat, usage, "GBuffer HZB");
@@ -237,7 +237,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(sriRt, TextureUsageBit::kFramebufferShadingRate);
 	}
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
 	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);

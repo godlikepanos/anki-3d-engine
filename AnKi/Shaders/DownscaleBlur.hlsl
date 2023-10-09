@@ -14,13 +14,13 @@
 constexpr U32 kTonemappingBinding = 2u;
 #include <AnKi/Shaders/TonemappingResources.hlsl>
 
-struct Uniforms
+struct Constants
 {
 	UVec2 m_fbSize;
 	U32 m_revertTonemapping;
 	U32 m_padding;
 };
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
 #if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
@@ -33,13 +33,13 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(svDispatchThreadId.x >= g_uniforms.m_fbSize.x || svDispatchThreadId.y >= g_uniforms.m_fbSize.y)
+	if(svDispatchThreadId.x >= g_consts.m_fbSize.x || svDispatchThreadId.y >= g_consts.m_fbSize.y)
 	{
 		// Skip pixels outside the viewport
 		return;
 	}
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(g_uniforms.m_fbSize);
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(g_consts.m_fbSize);
 #endif
 
 	RVec3 output;
@@ -50,7 +50,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	output += g_tex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(+1, -1)) * weight;
 	output += g_tex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(-1, +1)) * weight;
 
-	if(g_uniforms.m_revertTonemapping != 0u)
+	if(g_consts.m_revertTonemapping != 0u)
 	{
 		output = saturate(output);
 		output = sRgbToLinear(output);

@@ -19,11 +19,11 @@
 [[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
 #endif
 
-[[vk::push_constant]] ConstantBuffer<IndirectDiffuseDenoiseUniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<IndirectDiffuseDenoiseConstants> g_consts;
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {
-	const Vec4 worldPos4 = mul(g_uniforms.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	return worldPos;
 }
@@ -35,12 +35,12 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(THREAD_GROUP_SIZE_SQRT, THREAD_GROUP_SIZE_SQRT), g_uniforms.m_viewportSize, svDispatchThreadId))
+	if(skipOutOfBoundsInvocations(UVec2(THREAD_GROUP_SIZE_SQRT, THREAD_GROUP_SIZE_SQRT), g_consts.m_viewportSize, svDispatchThreadId))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / g_uniforms.m_viewportSizef;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / g_consts.m_viewportSizef;
 #endif
 
 	// Reference
@@ -59,9 +59,9 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	RF32 weight = kEpsilonRF32;
 	Vec3 color = Vec3(0.0, 0.0, 0.0); // Keep it full precision because it may go to inf
 
-	for(F32 i = -g_uniforms.m_sampleCountDiv2; i <= g_uniforms.m_sampleCountDiv2; i += 1.0)
+	for(F32 i = -g_consts.m_sampleCountDiv2; i <= g_consts.m_sampleCountDiv2; i += 1.0)
 	{
-		const Vec2 texelSize = 1.0 / g_uniforms.m_viewportSizef;
+		const Vec2 texelSize = 1.0 / g_consts.m_viewportSizef;
 #if BLUR_ORIENTATION == 0
 		const Vec2 sampleUv = Vec2(uv.x + i * texelSize.x, uv.y);
 #else
@@ -71,7 +71,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 		const F32 depthTap = g_depthTex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0).r;
 
 		RF32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
-		// w *= gaussianWeight(0.4, abs(F32(i)) / (g_uniforms.m_sampleCountDiv2 * 2.0 + 1.0));
+		// w *= gaussianWeight(0.4, abs(F32(i)) / (g_consts.m_sampleCountDiv2 * 2.0 + 1.0));
 		weight += w;
 
 		color += g_toDenoiseTex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0).xyz * w;

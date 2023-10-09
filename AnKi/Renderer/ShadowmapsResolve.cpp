@@ -77,14 +77,14 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 			run(rgraphCtx);
 		});
 
-		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
+		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
 								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavComputeRead);
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-								  BufferUsageBit::kStorageComputeRead);
+								  BufferUsageBit::kUavComputeRead);
 
 		if(getRenderer().getRtShadowsEnabled())
 		{
@@ -105,9 +105,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavFragmentRead);
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-								  BufferUsageBit::kStorageFragmentRead);
+								  BufferUsageBit::kUavFragmentRead);
 
 		if(getRenderer().getRtShadowsEnabled())
 		{
@@ -123,10 +123,10 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb.bindUniformBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingUniforms());
-	cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	cmdb.bindConstantBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingConstants());
+	cmdb.bindUavBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 	rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
-	cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
+	cmdb.bindUavBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
 
 	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
 	cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClampShadow.get());
@@ -149,7 +149,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 
 	if(g_preferComputeCVar.get())
 	{
-		rgraphCtx.bindImage(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindUavTexture(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
 	}
 	else

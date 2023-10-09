@@ -15,7 +15,7 @@
 [[vk::binding(2)]] RWTexture2D<Vec4> g_outUav;
 #endif
 
-struct Uniforms
+struct Constants
 {
 	UVec4 m_fsrConsts0;
 	UVec4 m_fsrConsts1;
@@ -25,7 +25,7 @@ struct Uniforms
 	UVec2 m_padding;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
 // FSR begin
 #define A_GPU 1
@@ -82,7 +82,7 @@ Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(any(svDispatchThreadId >= g_uniforms.m_viewportSize))
+	if(any(svDispatchThreadId >= g_consts.m_viewportSize))
 	{
 		return;
 	}
@@ -94,11 +94,11 @@ Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 	HVec3 color;
 #if SHARPEN
-	FsrRcasH(color.r, color.g, color.b, uv, g_uniforms.m_fsrConsts0);
+	FsrRcasH(color.r, color.g, color.b, uv, g_consts.m_fsrConsts0);
 #elif FSR_QUALITY == 0
-	FsrEasuL(color, uv, g_uniforms.m_fsrConsts0, g_uniforms.m_fsrConsts1, g_uniforms.m_fsrConsts2, g_uniforms.m_fsrConsts3);
+	FsrEasuL(color, uv, g_consts.m_fsrConsts0, g_consts.m_fsrConsts1, g_consts.m_fsrConsts2, g_consts.m_fsrConsts3);
 #else
-	FsrEasuH(color, uv, g_uniforms.m_fsrConsts0, g_uniforms.m_fsrConsts1, g_uniforms.m_fsrConsts2, g_uniforms.m_fsrConsts3);
+	FsrEasuH(color, uv, g_consts.m_fsrConsts0, g_consts.m_fsrConsts1, g_consts.m_fsrConsts2, g_consts.m_fsrConsts3);
 #endif
 
 #if defined(ANKI_COMPUTE_SHADER)

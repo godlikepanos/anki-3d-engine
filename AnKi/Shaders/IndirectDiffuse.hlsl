@@ -20,7 +20,7 @@
 
 ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 
-[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(0)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(1)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
 [[vk::binding(2)]] StructuredBuffer<Cluster> g_clusters;
 [[vk::binding(3)]] SamplerState g_linearAnyClampSampler;
@@ -37,12 +37,11 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
 
 ANKI_BINDLESS_SET(1)
 
-[[vk::push_constant]] ConstantBuffer<IndirectDiffuseUniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<IndirectDiffuseConstants> g_consts;
 
 Vec4 cheapProject(Vec4 point_)
 {
-	return projectPerspective(point_, g_uniforms.m_projectionMat.x, g_uniforms.m_projectionMat.y, g_uniforms.m_projectionMat.z,
-							  g_uniforms.m_projectionMat.w);
+	return projectPerspective(point_, g_consts.m_projectionMat.x, g_consts.m_projectionMat.y, g_consts.m_projectionMat.z, g_consts.m_projectionMat.w);
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
@@ -52,13 +51,13 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(svDispatchThreadId.x >= g_uniforms.m_viewportSize.x || svDispatchThreadId.y >= g_uniforms.m_viewportSize.y)
+	if(svDispatchThreadId.x >= g_consts.m_viewportSize.x || svDispatchThreadId.y >= g_consts.m_viewportSize.y)
 	{
 		return;
 	}
 
 	const Vec2 fragCoord = Vec2(svDispatchThreadId.xy) + 0.5;
-	const Vec2 uv = fragCoord / g_uniforms.m_viewportSizef;
+	const Vec2 uv = fragCoord / g_consts.m_viewportSizef;
 #else
 	const Vec2 fragCoord = svPosition.xy;
 #endif
@@ -82,7 +81,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 	if(ENABLE_SSGI)
 	{
 		// Find the projected radius
-		const RVec3 sphereLimit = viewPos + Vec3(g_uniforms.m_radius, 0.0, 0.0);
+		const RVec3 sphereLimit = viewPos + Vec3(g_consts.m_radius, 0.0, 0.0);
 		const RVec4 projSphereLimit = cheapProject(Vec4(sphereLimit, 1.0));
 		const RVec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
 		const RF32 projRadius = length(projSphereLimit2 - ndc);
@@ -94,10 +93,10 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 		const UVec2 globalInvocation = UVec2(svPosition.xy);
 #endif
 		const UVec2 random = rand3DPCG16(UVec3(globalInvocation, g_clusteredShading.m_frame)).xy;
-		const F32 aspectRatio = g_uniforms.m_viewportSizef.x / g_uniforms.m_viewportSizef.y;
-		for(U32 i = 0u; i < g_uniforms.m_sampleCount; ++i)
+		const F32 aspectRatio = g_consts.m_viewportSizef.x / g_consts.m_viewportSizef.y;
+		for(U32 i = 0u; i < g_consts.m_sampleCount; ++i)
 		{
-			const Vec2 point_ = uvToNdc(hammersleyRandom16(i, g_uniforms.m_sampleCount, random)) * Vec2(1.0, aspectRatio);
+			const Vec2 point_ = uvToNdc(hammersleyRandom16(i, g_consts.m_sampleCount, random)) * Vec2(1.0, aspectRatio);
 			const Vec2 finalDiskPoint = ndc + point_ * projRadius;
 
 			// Do a cheap unproject in view space
@@ -111,8 +110,8 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 			const F32 len = length(dir);
 			const Vec3 n = normalize(dir);
 			const F32 NoL = max(0.0, dot(viewNormal, n));
-			// const F32 distFactor = 1.0 - sin(min(1.0, len / g_uniforms.m_radius) * kPi / 2.0);
-			const F32 distFactor = 1.0 - min(1.0, len / g_uniforms.m_radius);
+			// const F32 distFactor = 1.0 - sin(min(1.0, len / g_consts.m_radius) * kPi / 2.0);
+			const F32 distFactor = 1.0 - min(1.0, len / g_consts.m_radius);
 
 			// Compute the UV for sampling the pyramid
 			const Vec2 crntFrameUv = ndcToUv(finalDiskPoint);
@@ -132,15 +131,15 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 			outColor += c * w;
 
 			// Compute SSAO as well
-			ssao += max(dot(viewNormal, dir) + g_uniforms.m_ssaoBias, kEpsilonF32) / max(len * len, kEpsilonF32);
+			ssao += max(dot(viewNormal, dir) + g_consts.m_ssaoBias, kEpsilonF32) / max(len * len, kEpsilonF32);
 		}
 
-		const RF32 scount = 1.0 / g_uniforms.m_sampleCountf;
+		const RF32 scount = 1.0 / g_consts.m_sampleCountf;
 		outColor *= scount * 2.0 * kPi;
 		ssao *= scount;
 	}
 
-	ssao = min(1.0, 1.0 - ssao * g_uniforms.m_ssaoStrength);
+	ssao = min(1.0, 1.0 - ssao * g_consts.m_ssaoStrength);
 
 	if(ENABLE_PROBES)
 	{

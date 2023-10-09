@@ -51,7 +51,7 @@ void main()
 
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = sizeof(F32) * 4;
-		buffInit.m_usage = BufferUsageBit::kAllStorage;
+		buffInit.m_usage = BufferUsageBit::kAllUav;
 		BufferPtr storageBuff = gr->newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit;
@@ -59,7 +59,7 @@ void main()
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
 		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff.get(), 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
-		cmdb->bindStorageBuffer(0, 1, storageBuff.get(), 0, kMaxPtrSize);
+		cmdb->bindUavBuffer(0, 1, storageBuff.get(), 0, kMaxPtrSize);
 		cmdb->bindShaderProgram(prog.get());
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->flush();

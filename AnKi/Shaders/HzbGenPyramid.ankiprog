@@ -9,14 +9,14 @@
 #pragma anki start comp
 #include <AnKi/Shaders/Common.hlsl>
 
-struct Uniforms
+struct Constants
 {
 	Vec2 m_invSrcTexSize;
 	U32 m_threadGroupCount;
 	U32 m_mipmapCount;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
 [[vk::binding(0)]] globallycoherent RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce];
 [[vk::binding(1)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
@@ -39,7 +39,7 @@ groupshared AF1 s_spdIntermediateR[16][16];
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	const AF2 uv = p * g_uniforms.m_invSrcTexSize + g_uniforms.m_invSrcTexSize;
+	const AF2 uv = p * g_consts.m_invSrcTexSize + g_consts.m_invSrcTexSize;
 
 #if MIN_MAX_SAMPLER
 	const F32 f = g_srcTex.SampleLevel(g_minMaxAnyClampSampler, uv, 0.0).r;
@@ -112,7 +112,7 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
 	const U32 slice = 0u;
 	const UVec2 offset = UVec2(0, 0);
-	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_uniforms.m_mipmapCount), AU1(g_uniforms.m_threadGroupCount), slice, offset);
+	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_consts.m_mipmapCount), AU1(g_consts.m_threadGroupCount), slice, offset);
 }
 
 #pragma anki end

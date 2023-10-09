@@ -17,14 +17,14 @@ constexpr F32 kMaxHistoryLength = 16.0;
 [[vk::binding(3)]] Texture2D g_velocityTex;
 [[vk::binding(4)]] Texture2D g_historyLengthTex;
 
-struct Uniforms
+struct Constants
 {
 	Mat4 m_reprojectionMat;
 	Mat4 m_viewProjectionInvMat;
 	Mat4 m_prevViewProjectionInvMat;
 };
 
-[[vk::binding(5)]] ConstantBuffer<Uniforms> g_unis;
+[[vk::binding(5)]] ConstantBuffer<Constants> g_consts;
 
 #if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(6)]] RWTexture2D<Vec2> g_motionVectorsUav;
@@ -78,14 +78,14 @@ F32 computeRejectionFactor(Vec2 uv, Vec2 historyUv)
 {
 	Vec3 boxMin;
 	Vec3 boxMax;
-	getMinMaxWorldPositions(g_currentDepthTex, uv, g_unis.m_viewProjectionInvMat, boxMin, boxMax);
+	getMinMaxWorldPositions(g_currentDepthTex, uv, g_consts.m_viewProjectionInvMat, boxMin, boxMax);
 
 #if 0
 	const F32 historyDepth = g_historyDepthTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0).r;
-	const Vec3 historyWorldPos = clipToWorld(Vec4(uvToNdc(historyUv), historyDepth, 1.0), g_unis.m_prevViewProjectionInvMat);
+	const Vec3 historyWorldPos = clipToWorld(Vec4(uvToNdc(historyUv), historyDepth, 1.0), g_consts.m_prevViewProjectionInvMat);
 #else
 	// Average gives more rejection so less ghosting
-	const Vec3 historyWorldPos = getAverageWorldPosition(g_historyDepthTex, historyUv, g_unis.m_prevViewProjectionInvMat);
+	const Vec3 historyWorldPos = getAverageWorldPosition(g_historyDepthTex, historyUv, g_consts.m_prevViewProjectionInvMat);
 #endif
 	const Vec3 clampedHistoryWorldPos = clamp(historyWorldPos, boxMin, boxMax);
 
@@ -137,7 +137,7 @@ FragOut main(Vec2 uv : TEXCOORD)
 	}
 	else
 	{
-		const Vec4 v4 = mul(g_unis.m_reprojectionMat, Vec4(uvToNdc(uv), depth, 1.0));
+		const Vec4 v4 = mul(g_consts.m_reprojectionMat, Vec4(uvToNdc(uv), depth, 1.0));
 		historyUv = ndcToUv(v4.xy / v4.w);
 	}
 

@@ -22,7 +22,7 @@ constexpr F32 kPhaseFunctionAnisotropy = 0.3;
 [[vk::binding(4)]] Texture2D<Vec4> g_noiseTex;
 [[vk::binding(5)]] Texture3D<Vec4> g_prevVolume;
 
-[[vk::binding(6)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(6)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(7)]] StructuredBuffer<PointLight> g_pointLights;
 [[vk::binding(7)]] StructuredBuffer<SpotLight> g_spotLights;
 [[vk::binding(8)]] Texture2D<Vec4> g_shadowAtlasTex;
@@ -30,7 +30,7 @@ constexpr F32 kPhaseFunctionAnisotropy = 0.3;
 [[vk::binding(10)]] StructuredBuffer<FogDensityVolume> g_fogDensityVolumes;
 [[vk::binding(11)]] StructuredBuffer<Cluster> g_clusters;
 
-[[vk::push_constant]] ConstantBuffer<VolumetricLightingUniforms> g_fogUnis;
+[[vk::push_constant]] ConstantBuffer<VolumetricLightingConstants> g_fogUnis;
 
 ANKI_BINDLESS_SET(1)
 

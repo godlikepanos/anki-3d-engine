@@ -23,11 +23,11 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kMaxSampleCount, 3u);
 [[vk::binding(5)]] Texture2D<Vec4> g_historyLengthTex;
 [[vk::binding(6)]] RWTexture2D<Vec4> g_outUav;
 
-[[vk::push_constant]] ConstantBuffer<RtShadowsDenoiseUniforms> g_unis;
+[[vk::push_constant]] ConstantBuffer<RtShadowsDenoiseConstants> g_consts;
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {
-	const Vec4 worldPos4 = mul(g_unis.m_invViewProjMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_consts.m_invViewProjMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	return worldPos;
 }

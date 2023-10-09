@@ -115,7 +115,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 
 			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kImageComputeWrite);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kUavComputeWrite);
 
 			prpass = &rpass;
 		}
@@ -144,11 +144,11 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 uniforms(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
 			cmdb.setPushConstants(&uniforms, sizeof(uniforms));
 
-			rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
+			rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindImage(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
+				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
 
 				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_width, m_exposure.m_height);
 			}
@@ -173,7 +173,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
 
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute);
-			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kImageComputeWrite);
+			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kUavComputeWrite);
 
 			prpass = &rpass;
 		}
@@ -199,7 +199,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
+				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 
 				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_width, m_upscale.m_height);
 			}

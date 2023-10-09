@@ -153,7 +153,7 @@ constexpr U32 kSizeof_CommonMatrices = 43u * sizeof(Vec4);
 static_assert(sizeof(CommonMatrices) == kSizeof_CommonMatrices);
 
 /// Common uniforms for light shading passes.
-struct ClusteredShadingUniforms
+struct ClusteredShadingConstants
 {
 	Vec2 m_renderingSize;
 	F32 m_time;

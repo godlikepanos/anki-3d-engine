@@ -76,9 +76,9 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		cmdb.bindUniformBuffer(0, 3, getRenderer().getClusterBinning().getClusteredShadingUniforms());
-		cmdb.bindStorageBuffer(0, 4, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
-		cmdb.bindStorageBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindConstantBuffer(0, 3, getRenderer().getClusterBinning().getClusteredShadingConstants());
+		cmdb.bindUavBuffer(0, 4, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
+		cmdb.bindUavBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindAllBindless(1);
 
@@ -97,9 +97,9 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
 							   TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavFragmentRead);
 	rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kDecal),
-							  BufferUsageBit::kStorageFragmentRead);
+							  BufferUsageBit::kUavFragmentRead);
 }
 
 } // end namespace anki

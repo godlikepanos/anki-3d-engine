@@ -56,7 +56,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
-	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite);
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite);
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -68,11 +68,11 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindUavTexture(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 
-		VolumetricFogUniforms regs;
+		VolumetricFogConstants regs;
 		regs.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
 		regs.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
 		regs.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;

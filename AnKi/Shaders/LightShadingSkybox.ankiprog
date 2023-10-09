@@ -32,39 +32,39 @@ VertOut main(U32 vertId : SV_VERTEXID)
 #include <AnKi/Shaders/Functions.hlsl>
 
 #if METHOD == 0
-struct Uniforms
+struct Constants
 {
 	RVec3 m_solidColor;
 	F32 m_padding;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 #else
 [[vk::binding(0)]] SamplerState g_trilinearAnySampler;
 [[vk::binding(1)]] Texture2D<RVec4> g_envMapTex;
 
-struct Uniforms
+struct Constants
 {
 	Mat4 m_invertedViewProjectionJitterMat;
 	Vec3 m_cameraPos;
 	F32 m_padding;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 #endif
 
 RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	return g_uniforms.m_solidColor;
+	return g_consts.m_solidColor;
 #else
 	const F32 depth = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_uniforms.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_uniforms.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
 
 	const Vec2 uv3 = equirectangularMapping(eyeToFrag);
 

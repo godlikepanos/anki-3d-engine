@@ -195,8 +195,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kAllFramebuffer, subresource);
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
-								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead);
 
 		pass.setFramebufferInfo(m_fbDescr, {}, m_runCtx.m_rt, {}, minx, miny, width, height);
 		pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
@@ -637,7 +636,7 @@ BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const Light
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName);
 
 	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
-	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kUavComputeWrite);
 
 	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_mdiDrawCountsBuffer,
 				  clearTileIndirectArgs](RenderPassWorkContext& rpass) {
@@ -648,11 +647,11 @@ BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const Light
 		const UVec4 lightIndex(lightc.getGpuSceneLightAllocation().getIndex());
 		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
 
-		cmdb.bindStorageBuffer(0, 0, hashBuff);
-		cmdb.bindStorageBuffer(0, 1, mdiBuff);
-		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
-		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
-		cmdb.bindStorageBuffer(0, 4, clearTileIndirectArgs);
+		cmdb.bindUavBuffer(0, 0, hashBuff);
+		cmdb.bindUavBuffer(0, 1, mdiBuff);
+		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
+		cmdb.bindUavBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
+		cmdb.bindUavBuffer(0, 4, clearTileIndirectArgs);
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);

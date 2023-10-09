@@ -17,13 +17,13 @@
 #if USE_COMPUTE
 [[vk::binding(2)]] RWTexture2D<RVec4> g_outUav;
 
-struct Uniforms
+struct Constants
 {
 	Vec2 m_viewportSize;
 	UVec2 m_viewportSizeU;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_pc;
+[[vk::push_constant]] ConstantBuffer<Constants> g_pc;
 #endif
 
 #if USE_COMPUTE

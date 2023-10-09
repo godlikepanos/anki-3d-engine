@@ -235,10 +235,10 @@ public:
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	ANKI_FORCE_INLINE void bindImageInternal(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindUavTextureInternal(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindImage(binding, arrayIdx, img);
+		m_dsetState[set].bindUavTexture(binding, arrayIdx, img);
 
 		const Bool isPresentable = !!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage() & TextureUsageBit::kPresent);
 		if(isPresentable)
@@ -408,16 +408,16 @@ public:
 
 	void bindShaderProgramInternal(ShaderProgram* prog);
 
-	ANKI_FORCE_INLINE void bindUniformBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindConstantBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff, offset, range);
+		m_dsetState[set].bindConstantBuffer(binding, arrayIdx, buff, offset, range);
 	}
 
-	ANKI_FORCE_INLINE void bindStorageBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+	ANKI_FORCE_INLINE void bindUavBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff, offset, range);
+		m_dsetState[set].bindUavBuffer(binding, arrayIdx, buff, offset, range);
 	}
 
 	ANKI_FORCE_INLINE void bindReadOnlyTextureBufferInternal(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt,

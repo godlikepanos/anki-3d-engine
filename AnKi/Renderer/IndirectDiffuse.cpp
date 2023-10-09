@@ -50,7 +50,7 @@ Error IndirectDiffuse::initInternal()
 	// Init textures
 	TextureUsageBit usage = TextureUsageBit::kAllSampled;
 
-	usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
+	usage |= (preferCompute) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
 	TextureInitInfo texInit =
 		getRenderer().create2DRenderTargetInitInfo(size.x(), size.y(), getRenderer().getHdrFormat(), usage, "IndirectDiffuse #1");
 	m_rts[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
@@ -174,7 +174,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("IndirectDiffuse VRS SRI gen");
 
-		pass.newTextureDependency(m_runCtx.m_sriRt, TextureUsageBit::kImageComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_sriRt, TextureUsageBit::kUavComputeWrite);
 		pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledCompute,
 								  DepthDownscale::kQuarterInternalResolution);
 
@@ -187,7 +187,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindTexture(0, 0, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
-			rgraphCtx.bindImage(0, 2, m_runCtx.m_sriRt);
+			rgraphCtx.bindUavTexture(0, 2, m_runCtx.m_sriRt);
 
 			class
 			{
@@ -231,8 +231,8 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("IndirectDiffuse");
 			readUsage = TextureUsageBit::kSampledCompute;
-			writeUsage = TextureUsageBit::kImageComputeWrite;
-			readBufferUsage = BufferUsageBit::kStorageComputeRead;
+			writeUsage = TextureUsageBit::kUavComputeWrite;
+			readBufferUsage = BufferUsageBit::kUavComputeRead;
 			prpass = &rpass;
 		}
 		else
@@ -241,7 +241,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			rpass.setFramebufferInfo(m_main.m_fbDescr, {m_runCtx.m_mainRtHandles[kWrite]}, {}, (enableVrs) ? m_runCtx.m_sriRt : RenderTargetHandle());
 			readUsage = TextureUsageBit::kSampledFragment;
 			writeUsage = TextureUsageBit::kFramebufferWrite;
-			readBufferUsage = BufferUsageBit::kStorageFragmentRead;
+			readBufferUsage = BufferUsageBit::kUavFragmentRead;
 			prpass = &rpass;
 
 			if(enableVrs)
@@ -273,14 +273,14 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.bindShaderProgram(m_main.m_grProg.get());
 
-			BufferOffsetRange buff = getRenderer().getClusterBinning().getClusteredShadingUniforms();
-			cmdb.bindUniformBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range);
+			BufferOffsetRange buff = getRenderer().getClusterBinning().getClusteredShadingConstants();
+			cmdb.bindConstantBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range);
 
 			buff = getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe);
-			cmdb.bindStorageBuffer(0, 1, buff.m_buffer, buff.m_offset, buff.m_range);
+			cmdb.bindUavBuffer(0, 1, buff.m_buffer, buff.m_offset, buff.m_range);
 
 			buff = getRenderer().getClusterBinning().getClustersBuffer();
-			cmdb.bindStorageBuffer(0, 2, buff.m_buffer, buff.m_offset, buff.m_range);
+			cmdb.bindUavBuffer(0, 2, buff.m_buffer, buff.m_offset, buff.m_range);
 
 			cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 4, getRenderer().getGBuffer().getColorRt(2));
@@ -292,13 +292,13 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindImage(0, 10, m_runCtx.m_mainRtHandles[kWrite]);
+				rgraphCtx.bindUavTexture(0, 10, m_runCtx.m_mainRtHandles[kWrite]);
 			}
 
 			cmdb.bindAllBindless(1);
 
 			// Bind uniforms
-			IndirectDiffuseUniforms unis;
+			IndirectDiffuseConstants unis;
 			unis.m_viewportSize = getRenderer().getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);
 			const Mat4& pmat = ctx.m_matrices.m_projection;
@@ -340,7 +340,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass((dir == 0) ? "IndirectDiffuseDenoiseH" : "IndirectDiffuseDenoiseV");
 			readUsage = TextureUsageBit::kSampledCompute;
-			writeUsage = TextureUsageBit::kImageComputeWrite;
+			writeUsage = TextureUsageBit::kUavComputeWrite;
 			prpass = &rpass;
 		}
 		else
@@ -366,10 +366,10 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindImage(0, 3, m_runCtx.m_mainRtHandles[!readIdx]);
+				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_mainRtHandles[!readIdx]);
 			}
 
-			IndirectDiffuseDenoiseUniforms unis;
+			IndirectDiffuseDenoiseConstants unis;
 			unis.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 			unis.m_viewportSize = getRenderer().getInternalResolution() / 2u;
 			unis.m_viewportSizef = Vec2(unis.m_viewportSize);

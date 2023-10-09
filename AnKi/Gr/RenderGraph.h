@@ -175,17 +175,17 @@ public:
 	}
 
 	/// Convenience method.
-	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
+	void bindUavTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindImage(set, binding, view.get(), arrayIdx);
+		m_commandBuffer->bindUavTexture(set, binding, view.get(), arrayIdx);
 	}
 
 	/// Convenience method to bind the whole image.
-	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
+	void bindUavTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
 	{
 		Texture* tex;
 #if ANKI_ASSERTIONS_ENABLED
@@ -196,25 +196,25 @@ public:
 		getRenderTargetState(handle, subresource, tex);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindImage(set, binding, view.get(), arrayIdx);
+		m_commandBuffer->bindUavTexture(set, binding, view.get(), arrayIdx);
 	}
 
 	/// Convenience method.
-	void bindStorageBuffer(U32 set, U32 binding, BufferHandle handle)
+	void bindUavBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindStorageBuffer(set, binding, buff, offset, range);
+		m_commandBuffer->bindUavBuffer(set, binding, buff, offset, range);
 	}
 
 	/// Convenience method.
-	void bindUniformBuffer(U32 set, U32 binding, BufferHandle handle)
+	void bindConstantBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindUniformBuffer(set, binding, buff, offset, range);
+		m_commandBuffer->bindConstantBuffer(set, binding, buff, offset, range);
 	}
 
 	/// Convenience method.

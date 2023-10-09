@@ -11,7 +11,7 @@
 #pragma anki start comp
 #include <AnKi/Shaders/Common.hlsl>
 
-struct Uniforms
+struct Constants
 {
 #if COMPONENT_TYPE == 0
 	Vec4 m_clearColor;
@@ -20,7 +20,7 @@ struct Uniforms
 #endif
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_pc;
+[[vk::push_constant]] ConstantBuffer<Constants> g_pc;
 
 #if TEXTURE_DIMENSIONS == 2
 #	if COMPONENT_TYPE == 0

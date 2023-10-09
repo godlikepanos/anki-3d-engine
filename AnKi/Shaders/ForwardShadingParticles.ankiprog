@@ -17,15 +17,15 @@ struct VertIn
 
 struct VertOut
 {
-	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
+	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
 	nointerpolation RF32 m_alpha : ALPHA;
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_worldPos : WORLD_POS;
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki reflect AnKiLocalUniforms
-#pragma anki struct AnKiLocalUniforms
+#pragma anki reflect AnKiLocalConstants
+#pragma anki struct AnKiLocalConstants
 #pragma anki member F32 m_animationPeriod if ANIMATED_TEXTURE is 1
 #pragma anki member Vec4 m_colorScale
 #pragma anki member Vec4 m_colorBias
@@ -59,12 +59,12 @@ VertOut main(VertIn input)
 		+ meshLod.m_positionTranslation;
 
 	// Apply the particle scale, rotate the mesh to face the camera (billboard) and finally apply the particle position
-	output.m_worldPos = mul(g_globalUniforms.m_cameraTransform, Vec4(localPos * particleScale, 0.0)) + particlePos;
+	output.m_worldPos = mul(g_globalConstants.m_cameraTransform, Vec4(localPos * particleScale, 0.0)) + particlePos;
 
-	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
+	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
 
 	output.m_alpha = particleAlpha;
-	output.m_uniformsOffset = renderable.m_uniformsOffset;
+	output.m_constantsOffset = renderable.m_constantsOffset;
 
 	return output;
 }
@@ -75,22 +75,22 @@ VertOut main(VertIn input)
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
 #if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler, localUniforms.m_animationPeriod,
-										   input.m_uv, g_clusteredShading.m_time);
+	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localConstants.m_diffuseMap], g_globalSampler,
+										   localConstants.m_animationPeriod, input.m_uv, g_clusteredShading.m_time);
 #else
-	RVec4 texCol = g_bindlessTextures2dF32[localUniforms.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
+	RVec4 texCol = g_bindlessTextures2dF32[localConstants.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT
 	texCol.rgb = computeLightColorLow(texCol.rgb, input.m_worldPos, input.m_svPosition);
 #endif
 
-	RVec4 colScale = localUniforms.m_colorScale;
+	RVec4 colScale = localConstants.m_colorScale;
 	colScale.a *= input.m_alpha;
-	particleAlpha(texCol, colScale, localUniforms.m_colorBias, output);
+	particleAlpha(texCol, colScale, localConstants.m_colorBias, output);
 
 	return output;
 }

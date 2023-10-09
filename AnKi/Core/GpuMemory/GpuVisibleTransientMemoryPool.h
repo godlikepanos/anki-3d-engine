@@ -82,12 +82,12 @@ private:
 
 	GpuVisibleTransientMemoryPool()
 	{
-		U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
-		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
+		U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment;
+		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_uavBufferBindOffsetAlignment);
 		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
 		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
 
-		BufferUsageBit buffUsage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kIndirectDraw
+		BufferUsageBit buffUsage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kIndirectDraw
 								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertex | BufferUsageBit::kTransferDestination;
 		if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 		{

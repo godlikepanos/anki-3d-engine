@@ -545,12 +545,11 @@ Error GrManagerImpl::initInstance()
 	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
 	// Set limits
-	m_capabilities.m_uniformBufferBindOffsetAlignment =
+	m_capabilities.m_constantBufferBindOffsetAlignment =
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minUniformBufferOffsetAlignment));
-	m_capabilities.m_uniformBufferMaxRange = m_devProps.properties.limits.maxUniformBufferRange;
-	m_capabilities.m_storageBufferBindOffsetAlignment =
-		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minStorageBufferOffsetAlignment));
-	m_capabilities.m_storageBufferMaxRange = m_devProps.properties.limits.maxStorageBufferRange;
+	m_capabilities.m_constantBufferMaxRange = m_devProps.properties.limits.maxUniformBufferRange;
+	m_capabilities.m_uavBufferBindOffsetAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minStorageBufferOffsetAlignment));
+	m_capabilities.m_uavBufferMaxRange = m_devProps.properties.limits.maxStorageBufferRange;
 	m_capabilities.m_textureBufferBindOffsetAlignment =
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
 	m_capabilities.m_textureBufferMaxRange = kMaxU32;

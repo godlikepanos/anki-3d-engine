@@ -14,7 +14,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
 
 #define DEBUG_CASCADES 0
 
-[[vk::binding(0)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(0)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(1)]] StructuredBuffer<PointLight> g_pointLights;
 [[vk::binding(1)]] StructuredBuffer<SpotLight> g_spotLights;
 [[vk::binding(2)]] Texture2D<Vec4> g_shadowAtlasTex;

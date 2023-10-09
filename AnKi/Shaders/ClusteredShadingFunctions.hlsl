@@ -104,7 +104,7 @@ Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, Vec3 fragCoord, 
 	return mergeClusters(tileCluster, zCluster);
 }
 
-Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClusteredShadingUniforms unis, Vec3 fragCoord)
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClusteredShadingConstants unis, Vec3 fragCoord)
 {
 	return getClusterFragCoord(clusters, fragCoord, unis.m_tileCounts, unis.m_zSplitCount, unis.m_zSplitMagic.x, unis.m_zSplitMagic.y);
 }

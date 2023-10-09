@@ -22,7 +22,7 @@
 
 [[vk::binding(6)]] RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs;
 
-[[vk::push_constant]] ConstantBuffer<GpuVisibilityAccelerationStructuresUniforms> g_unis;
+[[vk::push_constant]] ConstantBuffer<GpuVisibilityAccelerationStructuresConstants> g_consts;
 
 #define NUMTHREADS 64
 
@@ -40,7 +40,7 @@
 	if(visible)
 	{
 		bvolume = g_renderableBoundingVolumes[bvolumeIdx];
-		visible = testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius);
+		visible = testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius);
 	}
 
 	// All good, write the instance
@@ -48,16 +48,16 @@
 	{
 		// LOD selection
 		U32 lod;
-		const Bool insideCameraFrustum = frustumTest(g_unis.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius);
+		const Bool insideCameraFrustum = frustumTest(g_consts.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius);
 		if(insideCameraFrustum)
 		{
 			// Visible by the camera, need to match the camera LODs
-			const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_unis.m_pointOfTest) - bvolume.m_sphereRadius;
-			if(distFromLodPoint < g_unis.m_maxLodDistances[0])
+			const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_consts.m_pointOfTest) - bvolume.m_sphereRadius;
+			if(distFromLodPoint < g_consts.m_maxLodDistances[0])
 			{
 				lod = 0u;
 			}
-			else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
+			else if(distFromLodPoint < g_consts.m_maxLodDistances[1])
 			{
 				lod = 1u;
 			}

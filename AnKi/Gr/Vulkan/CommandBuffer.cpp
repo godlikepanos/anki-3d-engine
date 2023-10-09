@@ -195,22 +195,22 @@ void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arra
 	self.bindSamplerInternal(set, binding, sampler, arrayIdx);
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindConstantBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindUniformBufferInternal(set, binding, buff, offset, range, arrayIdx);
+	self.bindConstantBufferInternal(set, binding, buff, offset, range, arrayIdx);
 }
 
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindUavBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindStorageBufferInternal(set, binding, buff, offset, range, arrayIdx);
+	self.bindUavBufferInternal(set, binding, buff, offset, range, arrayIdx);
 }
 
-void CommandBuffer::bindImage(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
+void CommandBuffer::bindUavTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindImageInternal(set, binding, img, arrayIdx);
+	self.bindUavTextureInternal(set, binding, img, arrayIdx);
 }
 
 void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructure* as, U32 arrayIdx)

@@ -30,7 +30,7 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 #endif
 
 [[vk::binding(0)]] StructuredBuffer<ObjectType> g_objects;
-[[vk::push_constant]] ConstantBuffer<GpuVisibilityNonRenderableUniforms> g_unis;
+[[vk::push_constant]] ConstantBuffer<GpuVisibilityNonRenderableConstants> g_consts;
 [[vk::binding(1)]] RWStructuredBuffer<U32> g_visibleIndices; // 1st element is the count. What follows is indices
 
 constexpr U32 kVisibleObjCounterIdx = 1;
@@ -95,7 +95,7 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	if(!skip)
 	{
 		const Vec4 sphere = getSphere(g_objects[svDispatchThreadId]);
-		skip = !frustumTest(g_unis.m_clipPlanes, sphere.xyz, sphere.w);
+		skip = !frustumTest(g_consts.m_clipPlanes, sphere.xyz, sphere.w);
 	}
 
 	// Add the object

@@ -151,10 +151,10 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthWrite(false);
 
 		// Bind all
-		cmdb.bindUniformBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingUniforms());
-		cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindConstantBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingConstants());
+		cmdb.bindUavBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
-		cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindUavBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
@@ -184,7 +184,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
 		cmdb.bindTexture(0, 9, &getRenderer().getProbeReflections().getIntegrationLut());
 
-		cmdb.bindUniformBuffer(0, 10, getRenderer().getClusterBinning().getClusteredShadingUniforms());
+		cmdb.bindConstantBuffer(0, 10, getRenderer().getClusterBinning().getClusteredShadingConstants());
 
 		const Vec4 pc(ctx.m_cameraNear, ctx.m_cameraFar, 0.0f, 0.0f);
 		cmdb.setPushConstants(&pc, sizeof(pc));
@@ -348,9 +348,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavFragmentRead);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-							 BufferUsageBit::kStorageFragmentRead);
+							 BufferUsageBit::kUavFragmentRead);
 
 	// Apply indirect
 	pass.newTextureDependency(getRenderer().getIndirectDiffuse().getRt(), readUsage);

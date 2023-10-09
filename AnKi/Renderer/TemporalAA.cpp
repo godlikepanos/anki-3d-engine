@@ -53,7 +53,7 @@ Error TemporalAA::initInternal()
 	for(U i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
+		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), usage, "TemporalAA");
@@ -103,8 +103,8 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");
 
-		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kImageComputeWrite);
-		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kImageComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kUavComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kUavComputeWrite);
 
 		readUsage = TextureUsageBit::kSampledCompute;
 
@@ -138,12 +138,12 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
 		rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindImage(0, 4, getRenderer().getTonemapping().getRt());
+		rgraphCtx.bindUavTexture(0, 4, getRenderer().getTonemapping().getRt());
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
-			rgraphCtx.bindImage(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
+			rgraphCtx.bindUavTexture(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
+			rgraphCtx.bindUavTexture(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}

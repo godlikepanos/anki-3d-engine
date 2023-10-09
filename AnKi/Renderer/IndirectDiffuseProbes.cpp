@@ -388,7 +388,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			for(U32 f = 0; f < 6; ++f)
 			{
 				visibleLightsBuffers[f] = lightVis[f].m_visiblesBuffer;
-				pass.newBufferDependency(lightVis[f].m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
+				pass.newBufferDependency(lightVis[f].m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
 			}
 
 			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite);
@@ -466,7 +466,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI irradiance");
 
 			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kImageComputeWrite);
+			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kUavComputeWrite);
 			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 			{
 				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledCompute);
@@ -488,7 +488,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					rgraphCtx.bindColorTexture(0, 2, gbufferColorRts[i], i);
 				}
 
-				rgraphCtx.bindImage(0, 3, irradianceVolume, TextureSubresourceInfo());
+				rgraphCtx.bindUavTexture(0, 3, irradianceVolume, TextureSubresourceInfo());
 
 				class
 				{

@@ -43,7 +43,7 @@ Error MotionVectors::initInternal()
 	TextureUsageBit historyLengthUsage = TextureUsageBit::kAllSampled;
 	if(g_preferComputeCVar.get())
 	{
-		historyLengthUsage |= TextureUsageBit::kImageComputeWrite;
+		historyLengthUsage |= TextureUsageBit::kUavComputeWrite;
 	}
 	else
 	{
@@ -96,7 +96,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("MotionVectors");
 
 		readUsage = TextureUsageBit::kSampledCompute;
-		writeUsage = TextureUsageBit::kImageComputeWrite;
+		writeUsage = TextureUsageBit::kUavComputeWrite;
 		ppass = &pass;
 	}
 	else
@@ -121,14 +121,14 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(3));
 		rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_historyLengthReadRtHandle);
 
-		class Uniforms
+		class Constants
 		{
 		public:
 			Mat4 m_reprojectionMat;
 			Mat4 m_viewProjectionInvMat;
 			Mat4 m_prevViewProjectionInvMat;
 		} * pc;
-		pc = allocateAndBindUniforms<Uniforms>(cmdb, 0, 5);
+		pc = allocateAndBindConstants<Constants>(cmdb, 0, 5);
 
 		pc->m_reprojectionMat = ctx.m_matrices.m_reprojection;
 		pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;
@@ -136,8 +136,8 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindImage(0, 6, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
-			rgraphCtx.bindImage(0, 7, m_runCtx.m_historyLengthWriteRtHandle, TextureSubresourceInfo());
+			rgraphCtx.bindUavTexture(0, 6, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
+			rgraphCtx.bindUavTexture(0, 7, m_runCtx.m_historyLengthWriteRtHandle, TextureSubresourceInfo());
 		}
 
 		if(g_preferComputeCVar.get())

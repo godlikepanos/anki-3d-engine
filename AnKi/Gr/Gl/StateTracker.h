@@ -470,7 +470,7 @@ public:
 
 	Array2d<ShaderBufferBinding, kMaxDescriptorSets, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
 
-	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+	Bool bindConstantBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
 		ShaderBufferBinding& b = m_ubos[set][binding];
 		b.m_buff = static_cast<BufferImpl*>(buff.get());
@@ -481,7 +481,7 @@ public:
 
 	Array2d<ShaderBufferBinding, kMaxDescriptorSets, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
 
-	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+	Bool bindUavBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
 		ShaderBufferBinding& b = m_ssbos[set][binding];
 		b.m_buff = static_cast<BufferImpl*>(buff.get());
@@ -498,7 +498,7 @@ public:
 
 	Array2d<ImageBinding, kMaxDescriptorSets, MAX_IMAGE_BINDINGS> m_images;
 
-	Bool bindImage(U32 set, U32 binding, const TextureViewPtr& img)
+	Bool bindUavTexture(U32 set, U32 binding, const TextureViewPtr& img)
 	{
 		ImageBinding& b = m_images[set][binding];
 		b.m_texViewUuid = img->getUuid();

@@ -399,7 +399,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		// Upload the GpuSceneRenderable
 		GpuSceneRenderable renderable;
 		renderable.m_boneTransformsOffset = 0;
-		renderable.m_uniformsOffset = m_gpuSceneUniforms.getOffset();
+		renderable.m_constantsOffset = m_gpuSceneUniforms.getOffset();
 		renderable.m_meshLodsOffset = m_gpuSceneMeshLods.getGpuSceneOffset();
 		renderable.m_particleEmitterOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 		renderable.m_worldTransformsOffset = 0;

@@ -636,7 +636,7 @@ void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr t
 	}
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+void CommandBuffer::bindConstantBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
 	class Cmd final : public GlCommand
 	{
@@ -665,14 +665,14 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 	ANKI_ASSERT(range > 0);
 	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(self.m_state.bindUniformBuffer(set, binding, buff, offset, range))
+	if(self.m_state.bindConstantBuffer(set, binding, buff, offset, range))
 	{
 		binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
 		self.pushBackNewCommand<Cmd>(binding, buff, offset, range);
 	}
 }
 
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+void CommandBuffer::bindUavBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
 	class Cmd final : public GlCommand
 	{
@@ -701,14 +701,14 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 	ANKI_ASSERT(range > 0);
 	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(self.m_state.bindStorageBuffer(set, binding, buff, offset, range))
+	if(self.m_state.bindUavBuffer(set, binding, buff, offset, range))
 	{
 		binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
 		self.pushBackNewCommand<Cmd>(binding, buff, offset, range);
 	}
 }
 
-void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
+void CommandBuffer::bindUavTexture(U32 set, U32 binding, TextureViewPtr img)
 {
 	class Cmd final : public GlCommand
 	{
@@ -737,7 +737,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 	ANKI_ASSERT(static_cast<const TextureViewImpl&>(*img).m_tex->isSubresourceGoodForImageLoadStore(
 		static_cast<const TextureViewImpl&>(*img).getSubresource()));
 
-	if(self.m_state.bindImage(set, binding, img))
+	if(self.m_state.bindUavTexture(set, binding, img))
 	{
 		binding = binding + set * MAX_IMAGE_BINDINGS;
 		self.pushBackNewCommand<Cmd>(binding, img);

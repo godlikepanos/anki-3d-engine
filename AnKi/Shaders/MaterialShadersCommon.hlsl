@@ -14,7 +14,7 @@
 ANKI_BINDLESS_SET(MaterialSet::kBindless)
 
 [[vk::binding(MaterialBinding::kTrilinearRepeatSampler, MaterialSet::kGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(MaterialBinding::kGlobalUniforms, MaterialSet::kGlobal)]] ConstantBuffer<MaterialGlobalUniforms> g_globalUniforms;
+[[vk::binding(MaterialBinding::kGlobalConstants, MaterialSet::kGlobal)]] ConstantBuffer<MaterialGlobalConstants> g_globalConstants;
 [[vk::binding(MaterialBinding::kGpuScene, MaterialSet::kGlobal)]] ByteAddressBuffer g_gpuScene;
 
 // Unified geom:
@@ -31,7 +31,7 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 [[vk::binding(MaterialBinding::kLightVolume, MaterialSet::kGlobal)]] Texture3D<RVec4> g_lightVol;
 [[vk::binding(MaterialBinding::kShadowSampler, MaterialSet::kGlobal)]] SamplerComparisonState g_shadowSampler;
 
-[[vk::binding(MaterialBinding::kClusterShadingUniforms, MaterialSet::kGlobal)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(MaterialBinding::kClusterShadingConstants, MaterialSet::kGlobal)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(MaterialBinding::kClusters, MaterialSet::kGlobal)]] StructuredBuffer<Cluster> g_clusters;
 [[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<PointLight> g_pointLights;
 [[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<SpotLight> g_spotLights;

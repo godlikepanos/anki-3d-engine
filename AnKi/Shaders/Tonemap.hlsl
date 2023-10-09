@@ -19,13 +19,13 @@ constexpr U32 kTonemappingBinding = 2u;
 #	define THREADGROUP_SIZE_SQRT 8
 #endif
 
-struct Uniforms
+struct Constants
 {
 	Vec2 m_viewportSizeOverOne;
 	UVec2 m_viewportSize;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
 #if defined(ANKI_COMPUTE_SHADER)
 [numthreads(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -34,12 +34,12 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_uniforms.m_viewportSize, svDispatchThreadId.xy))
+	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_consts.m_viewportSize, svDispatchThreadId.xy))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) * g_uniforms.m_viewportSizeOverOne;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) * g_consts.m_viewportSizeOverOne;
 #endif
 
 	const RVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;

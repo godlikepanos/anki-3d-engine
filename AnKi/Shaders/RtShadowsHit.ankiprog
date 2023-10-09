@@ -12,8 +12,8 @@
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
-#pragma anki reflect AnKiLocalUniforms
-#pragma anki struct AnKiLocalUniforms
+#pragma anki reflect AnKiLocalConstants
+#pragma anki struct AnKiLocalConstants
 #pragma anki member U32 m_diffTex if ALPHA_TEXTURE is 1
 #pragma anki struct end
 
@@ -45,8 +45,8 @@
 
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, g_gpuSceneRenderable.m_uniformsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].SampleLevel(g_globalSampler, uv, 0.0);
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffTex].SampleLevel(g_globalSampler, uv, 0.0);
 
 	if(diffColorA.a < 1.0)
 	{

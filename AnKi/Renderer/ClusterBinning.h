@@ -25,9 +25,9 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	const BufferOffsetRange& getClusteredShadingUniforms() const
+	const BufferOffsetRange& getClusteredShadingConstants() const
 	{
-		return m_runCtx.m_clusterUniformsBuffer;
+		return m_runCtx.m_clusterConstBuffer;
 	}
 
 	const BufferOffsetRange& getPackedObjectsBuffer(GpuSceneNonRenderableObjectType type) const
@@ -69,12 +69,12 @@ private:
 		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsHandles;
 		Array<BufferOffsetRange, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsBuffers;
 
-		BufferOffsetRange m_clusterUniformsBuffer;
-		ClusteredShadingUniforms* m_uniformsCpu = nullptr;
+		BufferOffsetRange m_clusterConstBuffer;
+		ClusteredShadingConstants* m_constsCpu = nullptr;
 		RenderingContext* m_rctx = nullptr;
 	} m_runCtx;
 
-	void writeClusterUniformsInternal();
+	void writeClusterConstsInternal();
 };
 /// @}
 

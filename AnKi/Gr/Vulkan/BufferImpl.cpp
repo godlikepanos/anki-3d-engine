@@ -298,17 +298,17 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 {
 	VkAccessFlags mask = 0;
 
-	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead
-										   | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageTraceRaysRead
-										   | BufferUsageBit::kTextureGeometryRead | BufferUsageBit::kTextureFragmentRead
-										   | BufferUsageBit::kTextureComputeRead | BufferUsageBit::kTextureTraceRaysRead;
+	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead | BufferUsageBit::kUavComputeRead
+										   | BufferUsageBit::kUavTraceRaysRead | BufferUsageBit::kTextureGeometryRead
+										   | BufferUsageBit::kTextureFragmentRead | BufferUsageBit::kTextureComputeRead
+										   | BufferUsageBit::kTextureTraceRaysRead;
 
-	constexpr BufferUsageBit kShaderWrite = BufferUsageBit::kStorageGeometryWrite | BufferUsageBit::kStorageFragmentWrite
-											| BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageTraceRaysWrite
-											| BufferUsageBit::kTextureGeometryWrite | BufferUsageBit::kTextureFragmentWrite
-											| BufferUsageBit::kTextureComputeWrite | BufferUsageBit::kTextureTraceRaysWrite;
+	constexpr BufferUsageBit kShaderWrite = BufferUsageBit::kUavGeometryWrite | BufferUsageBit::kUavFragmentWrite | BufferUsageBit::kUavComputeWrite
+											| BufferUsageBit::kUavTraceRaysWrite | BufferUsageBit::kTextureGeometryWrite
+											| BufferUsageBit::kTextureFragmentWrite | BufferUsageBit::kTextureComputeWrite
+											| BufferUsageBit::kTextureTraceRaysWrite;
 
-	if(!!(usage & BufferUsageBit::kAllUniform))
+	if(!!(usage & BufferUsageBit::kAllConstant))
 	{
 		mask |= VK_ACCESS_UNIFORM_READ_BIT;
 	}

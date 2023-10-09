@@ -226,7 +226,7 @@ Error MaterialResource::createVars(Program& prog)
 	const ShaderProgramBinaryStruct* localUniformsStruct = nullptr;
 	for(const ShaderProgramBinaryStruct& strct : binary.m_structs)
 	{
-		if(CString(strct.m_name.getBegin()) == "AnKiLocalUniforms")
+		if(CString(strct.m_name.getBegin()) == "AnKiLocalConstants")
 		{
 			localUniformsStruct = &strct;
 			break;
@@ -291,7 +291,7 @@ Error MaterialResource::createVars(Program& prog)
 			else
 			{
 				// Check that there are no other vars that overlap with the current var. This could happen if
-				// different programs have different signature for AnKiLocalUniforms
+				// different programs have different signature for AnKiLocalConstants
 				for(const MaterialVariable& otherVar : m_vars)
 				{
 					if(!otherVar.isUniform())
@@ -306,7 +306,7 @@ Error MaterialResource::createVars(Program& prog)
 
 					if((aVarOffset <= bVarOffset && aVarEnd > bVarOffset) || (bVarOffset <= aVarOffset && bVarEnd > aVarOffset))
 					{
-						ANKI_RESOURCE_LOGE("Member %s in AnKiLocalUniforms overlaps with %s. Check your shaders", memberName.cstr(),
+						ANKI_RESOURCE_LOGE("Member %s in AnKiLocalConstants overlaps with %s. Check your shaders", memberName.cstr(),
 										   otherVar.m_name.cstr());
 						return Error::kUserData;
 					}

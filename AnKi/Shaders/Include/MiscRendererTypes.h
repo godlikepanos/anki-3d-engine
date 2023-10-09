@@ -10,7 +10,7 @@
 ANKI_BEGIN_NAMESPACE
 
 // RT shadows
-struct RtShadowsDenoiseUniforms
+struct RtShadowsDenoiseConstants
 {
 	Mat4 m_invViewProjMat;
 
@@ -20,7 +20,7 @@ struct RtShadowsDenoiseUniforms
 	F32 m_padding2;
 };
 
-struct RtShadowsSbtBuildUniforms
+struct RtShadowsSbtBuildConstants
 {
 	U32 m_shaderHandleDwordSize;
 	U32 m_sbtRecordDwordSize;
@@ -29,7 +29,7 @@ struct RtShadowsSbtBuildUniforms
 };
 
 // Indirect diffuse
-struct IndirectDiffuseUniforms
+struct IndirectDiffuseConstants
 {
 	UVec2 m_viewportSize;
 	Vec2 m_viewportSizef;
@@ -47,7 +47,7 @@ struct IndirectDiffuseUniforms
 	F32 m_padding2;
 };
 
-struct IndirectDiffuseDenoiseUniforms
+struct IndirectDiffuseDenoiseConstants
 {
 	Mat4 m_invertedViewProjectionJitterMat;
 
@@ -69,7 +69,7 @@ struct LensFlareSprite
 };
 
 // Depth downscale
-struct DepthDownscaleUniforms
+struct DepthDownscaleConstants
 {
 	Vec2 m_srcTexSizeOverOne;
 	U32 m_threadgroupCount;
@@ -77,7 +77,7 @@ struct DepthDownscaleUniforms
 };
 
 // Screen space reflections uniforms
-struct SsrUniforms
+struct SsrConstants
 {
 	UVec2 m_depthBufferSize;
 	UVec2 m_framebufferSize;
@@ -98,7 +98,7 @@ struct SsrUniforms
 };
 
 // Vol fog
-struct VolumetricFogUniforms
+struct VolumetricFogConstants
 {
 	RVec3 m_fogDiffuse;
 	RF32 m_fogScatteringCoeff;
@@ -113,7 +113,7 @@ struct VolumetricFogUniforms
 };
 
 // Vol lighting
-struct VolumetricLightingUniforms
+struct VolumetricLightingConstants
 {
 	RF32 m_densityAtMinHeight;
 	RF32 m_densityAtMaxHeight;

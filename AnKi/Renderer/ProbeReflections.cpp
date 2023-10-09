@@ -150,7 +150,7 @@ Error ProbeReflections::initIrradiance()
 	// Create buff
 	{
 		BufferInitInfo init;
-		init.m_usage = BufferUsageBit::kAllStorage;
+		init.m_usage = BufferUsageBit::kAllUav;
 		init.m_size = 6 * sizeof(Vec4);
 		m_irradiance.m_diceValuesBuff = GrManager::getSingleton().newBuffer(init);
 	}
@@ -280,7 +280,7 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 	subresource.m_faceCount = 6;
 	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
-	cmdb.bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb.bindUavBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	// Draw
 	cmdb.dispatchCompute(1, 1, 1);
@@ -301,14 +301,14 @@ void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[1], 1);
 	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[2], 2);
 
-	cmdb.bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+	cmdb.bindUavBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	for(U8 f = 0; f < 6; ++f)
 	{
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = 1;
 		subresource.m_firstFace = f;
-		rgraphCtx.bindImage(0, 3, m_ctx.m_lightShadingRt, subresource, f);
+		rgraphCtx.bindUavTexture(0, 3, m_ctx.m_lightShadingRt, subresource, f);
 	}
 
 	dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
@@ -499,7 +499,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				runLightShading(faceIdx, visResult, viewProjMat, cascadeViewProjMat, *probeToRefresh, rgraphCtx);
 			});
 
-			pass.newBufferDependency(lightVis[faceIdx].m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
+			pass.newBufferDependency(lightVis[faceIdx].m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 			pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kFramebufferWrite, subresource);
@@ -533,7 +533,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		readSubresource.m_faceCount = 6;
 		pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kSampledCompute, readSubresource);
 
-		pass.newBufferDependency(m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeWrite);
+		pass.newBufferDependency(m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kUavComputeWrite);
 	}
 
 	// Write irradiance back to refl
@@ -551,9 +551,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = 6;
-		pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kImageComputeRead | TextureUsageBit::kImageComputeWrite, subresource);
+		pass.newTextureDependency(m_ctx.m_lightShadingRt, TextureUsageBit::kUavComputeRead | TextureUsageBit::kUavComputeWrite, subresource);
 
-		pass.newBufferDependency(m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeRead);
+		pass.newBufferDependency(m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::kUavComputeRead);
 	}
 
 	// Mipmapping "passes"

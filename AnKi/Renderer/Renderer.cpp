@@ -163,7 +163,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	{
 		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kImageComputeWrite;
+		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kUavComputeWrite;
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
@@ -177,7 +177,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
 
 		m_dummyBuff = GrManager::getSingleton().newBuffer(
-			BufferInitInfo(1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
+			BufferInitInfo(1024, BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!
@@ -411,7 +411,7 @@ void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferWrite) || !!(usage & TextureUsageBit::kImageComputeWrite));
+	ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferWrite) || !!(usage & TextureUsageBit::kUavComputeWrite));
 	TextureInitInfo init(name);
 
 	init.m_width = w;
@@ -446,7 +446,7 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 
 TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage, const ClearValue& clearVal)
 {
-	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kImageComputeWrite));
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kUavComputeWrite));
 
 	const U faceCount = (inf.m_type == TextureType::kCube || inf.m_type == TextureType::kCubeArray) ? 6 : 1;
 
@@ -455,7 +455,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	{
 		useCompute = false;
 	}
-	else if(!!(inf.m_usage & TextureUsageBit::kImageComputeWrite))
+	else if(!!(inf.m_usage & TextureUsageBit::kUavComputeWrite))
 	{
 		useCompute = true;
 	}
@@ -569,9 +569,9 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
 					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
-					cmdb->bindImage(0, 0, view.get());
+					cmdb->bindUavTexture(0, 0, view.get());
 
-					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kImageComputeWrite, surf};
+					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kUavComputeWrite, surf};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
@@ -583,7 +583,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kImageComputeWrite, initialUsage, surf};
+						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kUavComputeWrite, initialUsage, surf};
 
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
@@ -685,7 +685,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
-		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
+		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kUavComputeWrite);
 
 		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {
 			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer);

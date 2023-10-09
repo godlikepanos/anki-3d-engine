@@ -193,7 +193,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			// Upload the GpuSceneRenderable
 			GpuSceneRenderable gpuRenderable = {};
 			gpuRenderable.m_worldTransformsOffset = m_gpuSceneTransforms.getGpuSceneOffset();
-			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
+			gpuRenderable.m_constantsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
 			gpuRenderable.m_meshLodsOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset();
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 			if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))

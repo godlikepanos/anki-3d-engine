@@ -241,7 +241,7 @@ public:
 		unbindBindlessDSet();
 	}
 
-	void bindUniformBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindConstantBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
@@ -256,7 +256,7 @@ public:
 		unbindBindlessDSet();
 	}
 
-	void bindStorageBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindUavBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
@@ -286,7 +286,7 @@ public:
 		unbindBindlessDSet();
 	}
 
-	void bindImage(U32 binding, U32 arrayIdx, const TextureView* texView)
+	void bindUavTexture(U32 binding, U32 arrayIdx, const TextureView* texView)
 	{
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);

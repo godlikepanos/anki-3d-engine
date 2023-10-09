@@ -84,7 +84,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			cmdb.bindTexture(0, 3, &skyc->getImageResource().getTextureView());
 		}
 
-		TraditionalDeferredSkyboxUniforms unis;
+		TraditionalDeferredSkyboxConstants unis;
 		unis.m_solidColor = (isSolidColor) ? skyc->getSolidColor() : Vec3(0.0f);
 		unis.m_inputTexUvBias = info.m_gbufferTexCoordsBias;
 		unis.m_inputTexUvScale = info.m_gbufferTexCoordsScale;
@@ -99,7 +99,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	{
 		const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 
-		TraditionalDeferredShadingUniforms* unis = allocateAndBindUniforms<TraditionalDeferredShadingUniforms>(cmdb, 0, 0);
+		TraditionalDeferredShadingConstants* unis = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
 
 		unis->m_inputTexUvScale = info.m_gbufferTexCoordsScale;
 		unis->m_inputTexUvBias = info.m_gbufferTexCoordsBias;
@@ -121,15 +121,15 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			unis->m_dirLight.m_active = 0;
 		}
 
-		cmdb.bindStorageBuffer(0, 1, info.m_visibleLightsBuffer.m_buffer, info.m_visibleLightsBuffer.m_offset, info.m_visibleLightsBuffer.m_range);
+		cmdb.bindUavBuffer(0, 1, info.m_visibleLightsBuffer.m_buffer, info.m_visibleLightsBuffer.m_offset, info.m_visibleLightsBuffer.m_range);
 		if(GpuSceneArrays::Light::getSingleton().getElementCount() > 0)
 		{
-			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
+			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
 		}
 		else
 		{
 			// Set something random
-			cmdb.bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
+			cmdb.bindUavBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
 		}
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles

@@ -274,12 +274,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
 
-	if(!!(usageMask & BufferUsageBit::kAllUniform))
+	if(!!(usageMask & BufferUsageBit::kAllConstant))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::kAllStorage))
+	if(!!(usageMask & BufferUsageBit::kAllUav))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
@@ -407,7 +407,7 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 		out |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::kAllImage))
+	if(!!(ak & TextureUsageBit::kAllUav))
 	{
 		out |= VK_IMAGE_USAGE_STORAGE_BIT;
 	}

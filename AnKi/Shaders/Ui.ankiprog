@@ -27,12 +27,12 @@ struct VertOut
 
 #pragma anki start vert
 
-struct Uniforms
+struct Constants
 {
 	Vec4 m_transform; // x: x scale, y: y scale, z: x transl, w: y transl
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
 VertOut main(VertIn input)
 {
@@ -43,7 +43,7 @@ VertOut main(VertIn input)
 #endif
 	output.m_color = input.m_color;
 
-	const Vec2 pos = g_uniforms.m_transform.xy * input.m_position + g_uniforms.m_transform.zw;
+	const Vec2 pos = g_consts.m_transform.xy * input.m_position + g_consts.m_transform.zw;
 	output.m_svPosition = Vec4(pos, 0.0, 1.0);
 
 	return output;

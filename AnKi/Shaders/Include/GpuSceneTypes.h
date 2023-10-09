@@ -20,7 +20,7 @@ constexpr F32 kSomeFarDistance = 100000.0f;
 struct GpuSceneRenderable
 {
 	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
-	U32 m_uniformsOffset;
+	U32 m_constantsOffset;
 	U32 m_meshLodsOffset; ///< Points to an array of GpuSceneMeshLod sized kMaxLodCount.
 	U32 m_boneTransformsOffset; ///< Array of Mat3x4 or 0 if its not a skin.
 	U32 m_particleEmitterOffset; ///< Offset to GpuSceneParticleEmitter or 0 if it's not an emitter.
@@ -32,7 +32,7 @@ struct GpuSceneRenderable
 struct GpuSceneRenderableVertex
 {
 	U32 m_worldTransformsOffset;
-	U32 m_uniformsOffset;
+	U32 m_constantsOffset;
 	U32 m_meshLodOffset; ///< Points to a single GpuSceneMeshLod and not an array
 	U32 m_boneTransformsOrParticleEmitterOffset;
 };

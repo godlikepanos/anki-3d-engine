@@ -58,14 +58,14 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume), getRenderer().getVolumetricLightingAccumulation().getRt());
 
-	cmdb.bindUniformBuffer(set, U32(MaterialBinding::kClusterShadingUniforms), getRenderer().getClusterBinning().getClusteredShadingUniforms());
+	cmdb.bindConstantBuffer(set, U32(MaterialBinding::kClusterShadingConstants), getRenderer().getClusterBinning().getClusteredShadingConstants());
 
-	cmdb.bindStorageBuffer(set, U32(MaterialBinding::kClusterShadingLights),
-						   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	cmdb.bindUavBuffer(set, U32(MaterialBinding::kClusterShadingLights),
+					   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
 	rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kClusterShadingLights) + 1, getRenderer().getShadowMapping().getShadowmapRt());
 
-	cmdb.bindStorageBuffer(set, U32(MaterialBinding::kClusters), getRenderer().getClusterBinning().getClustersBuffer());
+	cmdb.bindUavBuffer(set, U32(MaterialBinding::kClusters), getRenderer().getClusterBinning().getClustersBuffer());
 
 	// Draw
 	RenderableDrawerArguments args;

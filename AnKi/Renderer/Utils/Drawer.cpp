@@ -46,7 +46,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 {
 	// Allocate, set and bind global uniforms
 	{
-		MaterialGlobalUniforms* globalUniforms;
+		MaterialGlobalConstants* globalUniforms;
 		const RebarAllocation globalUniformsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUniforms);
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
@@ -56,13 +56,13 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 		static_assert(sizeof(globalUniforms->m_cameraTransform) == sizeof(args.m_cameraTransform));
 		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
-		cmdb.bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms), globalUniformsToken);
+		cmdb.bindConstantBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalConstants), globalUniformsToken);
 	}
 
 	// More globals
 	cmdb.bindAllBindless(U32(MaterialSet::kBindless));
 	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
-	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb.bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
@@ -125,10 +125,10 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		cmdb.pushDebugMarker("Draw stats", Vec3(0.0f, 1.0f, 0.0f));
 
 		cmdb.bindShaderProgram(m_stats.m_updateStatsGrProgs[variant].get());
-		cmdb.bindStorageBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
-		cmdb.bindStorageBuffer(0, 1, threadCountBuff);
-		cmdb.bindStorageBuffer(0, 2, args.m_mdiDrawCountsBuffer);
-		cmdb.bindStorageBuffer(0, 3, m_stats.m_passCountBuffer);
+		cmdb.bindUavBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
+		cmdb.bindUavBuffer(0, 1, threadCountBuff);
+		cmdb.bindUavBuffer(0, 2, args.m_mdiDrawCountsBuffer);
+		cmdb.bindUavBuffer(0, 3, m_stats.m_passCountBuffer);
 
 		cmdb.draw(PrimitiveTopology::kTriangles, 6);
 

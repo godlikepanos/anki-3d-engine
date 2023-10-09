@@ -1514,14 +1514,14 @@ StringRaii RenderGraph::textureUsageToStr(StackMemoryPool& pool, TextureUsageBit
 	ANKI_TEX_USAGE(kSampledFragment);
 	ANKI_TEX_USAGE(kSampledCompute);
 	ANKI_TEX_USAGE(kSampledTraceRays);
-	ANKI_TEX_USAGE(kImageGeometryRead);
-	ANKI_TEX_USAGE(kImageGeometryWrite);
-	ANKI_TEX_USAGE(kImageFragmentRead);
-	ANKI_TEX_USAGE(kImageFragmentWrite);
-	ANKI_TEX_USAGE(kImageComputeRead);
-	ANKI_TEX_USAGE(kImageComputeWrite);
-	ANKI_TEX_USAGE(kImageTraceRaysRead);
-	ANKI_TEX_USAGE(kImageTraceRaysWrite);
+	ANKI_TEX_USAGE(kUavGeometryRead);
+	ANKI_TEX_USAGE(kUavGeometryWrite);
+	ANKI_TEX_USAGE(kUavFragmentRead);
+	ANKI_TEX_USAGE(kUavFragmentWrite);
+	ANKI_TEX_USAGE(kUavComputeRead);
+	ANKI_TEX_USAGE(kUavComputeWrite);
+	ANKI_TEX_USAGE(kUavTraceRaysRead);
+	ANKI_TEX_USAGE(kUavTraceRaysWrite);
 	ANKI_TEX_USAGE(kFramebufferRead);
 	ANKI_TEX_USAGE(kFramebufferWrite);
 	ANKI_TEX_USAGE(kTransferDestination);
@@ -1552,10 +1552,10 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 			slist.pushBackSprintf("%s", #u); \
 		}
 
-	ANKI_BUFF_USAGE(kUniformGeometry);
-	ANKI_BUFF_USAGE(kUniformFragment);
-	ANKI_BUFF_USAGE(kUniformCompute);
-	ANKI_BUFF_USAGE(kUniformTraceRays);
+	ANKI_BUFF_USAGE(kConstantGeometry);
+	ANKI_BUFF_USAGE(kConstantFragment);
+	ANKI_BUFF_USAGE(kConstantCompute);
+	ANKI_BUFF_USAGE(kConstantTraceRays);
 	ANKI_BUFF_USAGE(kStorageGeometryRead);
 	ANKI_BUFF_USAGE(kStorageGeometryWrite);
 	ANKI_BUFF_USAGE(kStorageFragmentRead);

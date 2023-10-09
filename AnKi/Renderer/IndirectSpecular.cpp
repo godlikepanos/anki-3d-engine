@@ -47,7 +47,7 @@ Error IndirectSpecular::initInternal()
 	// Create RT
 	TextureUsageBit usage = TextureUsageBit::kAllSampled;
 
-	usage |= (preferCompute) ? TextureUsageBit::kImageComputeWrite : TextureUsageBit::kFramebufferWrite;
+	usage |= (preferCompute) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 	TextureInitInfo texInit = getRenderer().create2DRenderTargetInitInfo(size.x(), size.y(), getRenderer().getHdrFormat(), usage, "SSR #1");
 	m_rts[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
@@ -126,8 +126,8 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 
 			ppass = &pass;
 			readUsage = TextureUsageBit::kSampledCompute;
-			writeUsage = TextureUsageBit::kImageComputeWrite;
-			readBufferUsage = BufferUsageBit::kStorageComputeRead;
+			writeUsage = TextureUsageBit::kUavComputeWrite;
+			readBufferUsage = BufferUsageBit::kUavComputeRead;
 		}
 		else
 		{
@@ -138,7 +138,7 @@ void IndirectSpecular::populateRenderGraph(RenderingContext& ctx)
 			ppass = &pass;
 			readUsage = TextureUsageBit::kSampledFragment;
 			writeUsage = TextureUsageBit::kFramebufferWrite;
-			readBufferUsage = BufferUsageBit::kStorageFragmentRead;
+			readBufferUsage = BufferUsageBit::kUavFragmentRead;
 
 			if(enableVrs)
 			{
@@ -178,7 +178,7 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	const U32 depthLod = min(g_ssrDepthLodCVar.get(), getRenderer().getDepthDownscale().getMipmapCount() - 1);
 
 	// Bind uniforms
-	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms>(cmdb, 0, 0);
+	SsrConstants* unis = allocateAndBindConstants<SsrConstants>(cmdb, 0, 0);
 	unis->m_depthBufferSize = getRenderer().getInternalResolution() >> (depthLod + 1);
 	unis->m_framebufferSize = UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()) / 2;
 	unis->m_frameCount = getRenderer().getFrameCount() & kMaxU32;
@@ -211,20 +211,20 @@ void IndirectSpecular::run(const RenderingContext& ctx, RenderPassWorkContext& r
 	cmdb.bindSampler(0, 9, getRenderer().getSamplers().m_trilinearRepeat.get());
 	cmdb.bindTexture(0, 10, &m_noiseImage->getTextureView());
 
-	BufferOffsetRange buff = getRenderer().getClusterBinning().getClusteredShadingUniforms();
-	cmdb.bindUniformBuffer(0, 11, buff.m_buffer, buff.m_offset, buff.m_range);
+	BufferOffsetRange buff = getRenderer().getClusterBinning().getClusteredShadingConstants();
+	cmdb.bindConstantBuffer(0, 11, buff.m_buffer, buff.m_offset, buff.m_range);
 
 	buff = getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe);
-	cmdb.bindStorageBuffer(0, 12, buff.m_buffer, buff.m_offset, buff.m_range);
+	cmdb.bindUavBuffer(0, 12, buff.m_buffer, buff.m_offset, buff.m_range);
 
 	buff = getRenderer().getClusterBinning().getClustersBuffer();
-	cmdb.bindStorageBuffer(0, 13, buff.m_buffer, buff.m_offset, buff.m_range);
+	cmdb.bindUavBuffer(0, 13, buff.m_buffer, buff.m_offset, buff.m_range);
 
 	cmdb.bindAllBindless(1);
 
 	if(g_preferComputeCVar.get())
 	{
-		rgraphCtx.bindImage(0, 14, m_runCtx.m_rts[kWrite], TextureSubresourceInfo());
+		rgraphCtx.bindUavTexture(0, 14, m_runCtx.m_rts[kWrite], TextureSubresourceInfo());
 
 		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 	}

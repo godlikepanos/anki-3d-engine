@@ -136,7 +136,7 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Index");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
 			buffInit.m_size = sizeof(U32) * 6;
 			indexBuff = gr->newBuffer(buffInit);
 
@@ -150,7 +150,7 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Positions");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
 			positionsBuff = gr->newBuffer(buffInit);
 
@@ -175,7 +175,7 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Colors");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
 			colorsBuff = gr->newBuffer(buffInit);
 
@@ -204,7 +204,7 @@ float3 main(VertOut input) : SV_TARGET0
 
 			BufferInitInfo buffInit("Meshlets");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
 			buffInit.m_size = sizeof(Meshlet) * kTileCount;
 			meshletsBuff = gr->newBuffer(buffInit);
 
@@ -244,10 +244,10 @@ float3 main(VertOut input) : SV_TARGET0
 
 			cmdb->beginRenderPass(fb.get(), {TextureUsageBit::kFramebufferWrite}, TextureUsageBit::kNone);
 
-			cmdb->bindStorageBuffer(0, 0, indexBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindStorageBuffer(0, 1, positionsBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindStorageBuffer(0, 2, colorsBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindStorageBuffer(0, 3, meshletsBuff.get(), 0, kMaxPtrSize);
+			cmdb->bindUavBuffer(0, 0, indexBuff.get(), 0, kMaxPtrSize);
+			cmdb->bindUavBuffer(0, 1, positionsBuff.get(), 0, kMaxPtrSize);
+			cmdb->bindUavBuffer(0, 2, colorsBuff.get(), 0, kMaxPtrSize);
+			cmdb->bindUavBuffer(0, 3, meshletsBuff.get(), 0, kMaxPtrSize);
 
 			cmdb->bindShaderProgram(prog.get());
 

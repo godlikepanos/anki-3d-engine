@@ -38,7 +38,7 @@ Error DownscaleBlur::initInternal()
 	texinit.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
 	if(preferCompute)
 	{
-		texinit.m_usage |= TextureUsageBit::kSampledCompute | TextureUsageBit::kImageComputeWrite;
+		texinit.m_usage |= TextureUsageBit::kSampledCompute | TextureUsageBit::kUavComputeWrite;
 	}
 	else
 	{
@@ -102,14 +102,14 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				sampleSubresource.m_firstMipmap = i - 1;
 				renderSubresource.m_firstMipmap = i;
 
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource);
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite, renderSubresource);
 				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute, sampleSubresource);
 			}
 			else
 			{
 				TextureSubresourceInfo renderSubresource;
 
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kImageComputeWrite, renderSubresource);
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite, renderSubresource);
 				pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
 			}
 		}
@@ -170,7 +170,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 1, inRt);
 	}
 
-	rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
+	rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
 
 	const Bool revertTonemap = passIdx == 0 && !getRenderer().getScale().hasUpscaledHdrRt();
 	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
@@ -180,7 +180,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	{
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;
-		rgraphCtx.bindImage(0, 3, m_runCtx.m_rt, sampleSubresource);
+		rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_rt, sampleSubresource);
 
 		dispatchPPCompute(cmdb, 8, 8, vpWidth, vpHeight);
 	}

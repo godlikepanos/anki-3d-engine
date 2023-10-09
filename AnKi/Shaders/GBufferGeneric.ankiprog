@@ -30,8 +30,8 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
-#pragma anki reflect AnKiLocalUniforms
-#pragma anki struct AnKiLocalUniforms
+#pragma anki reflect AnKiLocalConstants
+#pragma anki struct AnKiLocalConstants
 
 #pragma anki member RVec3 m_diffColor if DIFFUSE_TEX is 0
 #pragma anki member U32 m_diffTex if DIFFUSE_TEX is 1
@@ -86,7 +86,7 @@ struct VertOut
 #	endif
 #endif
 
-	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
+	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
 };
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
@@ -160,7 +160,7 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 #	endif
 
 	Vec4 v4 = Vec4(mul(trf, Vec4(prevLocalPos, 1.0)), 1.0);
-	v4 = mul(g_globalUniforms.m_previousViewProjectionMatrix, v4);
+	v4 = mul(g_globalConstants.m_previousViewProjectionMatrix, v4);
 
 	output.m_prevClipXyw = v4.xyw;
 	output.m_crntClipXyw = output.m_position.xyw;
@@ -184,7 +184,7 @@ VertOut main(VertIn input)
 #endif
 	Vec3 prevPos = vert.m_position;
 	ANKI_MAYBE_UNUSED(prevPos);
-	output.m_uniformsOffset = renderable.m_uniformsOffset;
+	output.m_constantsOffset = renderable.m_constantsOffset;
 
 	// Do stuff
 #if ANKI_BONES
@@ -192,7 +192,7 @@ VertOut main(VertIn input)
 #endif
 
 	output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
-	output.m_position = mul(g_globalUniforms.m_viewProjectionMatrix, output.m_position);
+	output.m_position = mul(g_globalConstants.m_viewProjectionMatrix, output.m_position);
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 	output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
@@ -224,8 +224,8 @@ void main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
 #	if REALLY_ALPHA_TEST
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, input.m_uv);
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffTex].Sample(g_globalSampler, input.m_uv);
 	doAlphaTest(diffColorA.a);
 #	endif
 }
@@ -247,7 +247,7 @@ RVec3 readNormalFromTexture(VertOut input, Texture2D<RVec4> map, SamplerState sa
 
 FragOut main(VertOut input)
 {
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
 
 #	if REALLY_USING_PARALLAX
 	// TODO
@@ -259,44 +259,44 @@ FragOut main(VertOut input)
 
 #	if DIFFUSE_TEX
 #		if REALLY_ALPHA_TEST
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, uv);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffTex].Sample(g_globalSampler, uv);
 	doAlphaTest(diffColorA.a);
 	const RVec3 diffColor = diffColorA.rgb;
 #		else
-	const RVec3 diffColor = g_bindlessTextures2dF32[localUniforms.m_diffTex].Sample(g_globalSampler, uv).rgb;
+	const RVec3 diffColor = g_bindlessTextures2dF32[localConstants.m_diffTex].Sample(g_globalSampler, uv).rgb;
 #		endif
 #	else
-	const RVec3 diffColor = localUniforms.m_diffColor;
+	const RVec3 diffColor = localConstants.m_diffColor;
 #	endif
 
 #	if SPECULAR_TEX
-	const RVec3 specColor = g_bindlessTextures2dF32[localUniforms.m_specTex].Sample(g_globalSampler, uv).rgb;
+	const RVec3 specColor = g_bindlessTextures2dF32[localConstants.m_specTex].Sample(g_globalSampler, uv).rgb;
 #	else
-	const RVec3 specColor = localUniforms.m_specColor;
+	const RVec3 specColor = localConstants.m_specColor;
 #	endif
 
 #	if ROUGHNESS_TEX
-	const RF32 roughness = g_bindlessTextures2dF32[localUniforms.m_roughnessTex].Sample(g_globalSampler, uv).g;
+	const RF32 roughness = g_bindlessTextures2dF32[localConstants.m_roughnessTex].Sample(g_globalSampler, uv).g;
 #	else
-	const RF32 roughness = localUniforms.m_roughness;
+	const RF32 roughness = localConstants.m_roughness;
 #	endif
 
 #	if METAL_TEX
-	const RF32 metallic = g_bindlessTextures2dF32[localUniforms.m_metallicTex].Sample(g_globalSampler, uv).b;
+	const RF32 metallic = g_bindlessTextures2dF32[localConstants.m_metallicTex].Sample(g_globalSampler, uv).b;
 #	else
-	const RF32 metallic = localUniforms.m_metallic;
+	const RF32 metallic = localConstants.m_metallic;
 #	endif
 
 #	if NORMAL_TEX
-	const RVec3 normal = readNormalFromTexture(input, g_bindlessTextures2dF32[localUniforms.m_normalTex], g_globalSampler, uv);
+	const RVec3 normal = readNormalFromTexture(input, g_bindlessTextures2dF32[localConstants.m_normalTex], g_globalSampler, uv);
 #	else
 	const RVec3 normal = normalize(input.m_normal);
 #	endif
 
 #	if EMISSIVE_TEX
-	const RVec3 emission = g_bindlessTextures2dF32[localUniforms.m_emissiveTex].Sample(g_globalSampler, uv).rgb;
+	const RVec3 emission = g_bindlessTextures2dF32[localConstants.m_emissiveTex].Sample(g_globalSampler, uv).rgb;
 #	else
-	const RVec3 emission = localUniforms.m_emission;
+	const RVec3 emission = localConstants.m_emission;
 #	endif
 
 #	if ANKI_VELOCITY || ANKI_BONES
@@ -314,7 +314,7 @@ FragOut main(VertOut input)
 	g.m_normal = normal;
 	g.m_f0 = specColor;
 	g.m_roughness = roughness;
-	g.m_subsurface = localUniforms.m_subsurface;
+	g.m_subsurface = localConstants.m_subsurface;
 	g.m_emission = emission;
 	g.m_metallic = metallic;
 	g.m_velocity = velocity;

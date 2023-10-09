@@ -80,7 +80,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Lens flare indirect");
 
-	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite);
+	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kUavComputeWrite);
 	rpass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledCompute,
 							   DepthDownscale::kEighthInternalResolution);
 
@@ -96,14 +96,14 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		cmdb.setPushConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
 		// Write flare info
-		Vec4* flarePositions = allocateAndBindStorage<Vec4>(cmdb, 0, 0, flareCount);
+		Vec4* flarePositions = allocateAndBindUav<Vec4>(cmdb, 0, 0, flareCount);
 		for(const LensFlareComponent& comp : SceneGraph::getSingleton().getComponentArrays().getLensFlares())
 		{
 			*flarePositions = Vec4(comp.getWorldPosition(), 1.0f);
 			++flarePositions;
 		}
 
-		rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
+		rgraphCtx.bindUavBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 		// Bind neareset because you don't need high quality
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kEighthInternalResolution);
@@ -143,7 +143,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 		U32 spritesCount = max<U32>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
-		LensFlareSprite* tmpSprites = allocateAndBindStorage<LensFlareSprite>(cmdb, 0, 0, spritesCount);
+		LensFlareSprite* tmpSprites = allocateAndBindUav<LensFlareSprite>(cmdb, 0, 0, spritesCount);
 		WeakArray<LensFlareSprite> sprites(tmpSprites, spritesCount);
 
 		// misc

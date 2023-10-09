@@ -42,9 +42,9 @@ struct DrawIndirectArgsWithPadding
 [[vk::binding(6)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
 
 #if DISTANCE_TEST == 0
-[[vk::binding(7)]] ConstantBuffer<FrustumGpuVisibilityUniforms> g_unis;
+[[vk::binding(7)]] ConstantBuffer<FrustumGpuVisibilityConstants> g_consts;
 #else
-[[vk::push_constant]] ConstantBuffer<DistanceGpuVisibilityUniforms> g_unis;
+[[vk::push_constant]] ConstantBuffer<DistanceGpuVisibilityConstants> g_consts;
 #endif
 
 #if HZB_TEST
@@ -76,7 +76,7 @@ struct DrawIndirectArgsWithPadding
 #if DISTANCE_TEST == 0
 	// Frustum test
 	//
-	if(!frustumTest(g_unis.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius))
+	if(!frustumTest(g_consts.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius))
 	{
 		return;
 	}
@@ -93,7 +93,7 @@ struct DrawIndirectArgsWithPadding
 	Vec2 maxNdc = -1000.0f;
 	[unroll] for(U32 i = 0; i < 8; ++i)
 	{
-		Vec4 p = mul(g_unis.m_viewProjectionMat, Vec4(aabbEdges[i], 1.0f));
+		Vec4 p = mul(g_consts.m_viewProjectionMat, Vec4(aabbEdges[i], 1.0f));
 
 		p.xyz /= abs(p.w);
 
@@ -150,7 +150,7 @@ struct DrawIndirectArgsWithPadding
 	}
 #	endif // HZB_TEST
 #else // DISTANCE_TEST == 1
-	if(!testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius))
+	if(!testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius))
 	{
 		return;
 	}
@@ -158,14 +158,14 @@ struct DrawIndirectArgsWithPadding
 
 	// Compute the LOD
 	//
-	const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_unis.m_lodReferencePoint) - bvolume.m_sphereRadius;
+	const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_consts.m_lodReferencePoint) - bvolume.m_sphereRadius;
 
 	U32 lod;
-	if(distFromLodPoint < g_unis.m_maxLodDistances[0])
+	if(distFromLodPoint < g_consts.m_maxLodDistances[0])
 	{
 		lod = 0u;
 	}
-	else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
+	else if(distFromLodPoint < g_consts.m_maxLodDistances[1])
 	{
 		lod = 1u;
 	}
@@ -203,7 +203,7 @@ struct DrawIndirectArgsWithPadding
 
 		UVec4 instanceVertex;
 		instanceVertex.x = renderable.m_worldTransformsOffset;
-		instanceVertex.y = renderable.m_uniformsOffset;
+		instanceVertex.y = renderable.m_constantsOffset;
 		instanceVertex.z = meshLodOffset;
 		instanceVertex.w = renderable.m_boneTransformsOffset;
 		g_instanceRateRenderables[indirectIdx] = instanceVertex;
@@ -221,7 +221,7 @@ struct DrawIndirectArgsWithPadding
 
 		UVec4 instanceVertex;
 		instanceVertex.x = renderable.m_worldTransformsOffset;
-		instanceVertex.y = renderable.m_uniformsOffset;
+		instanceVertex.y = renderable.m_constantsOffset;
 		instanceVertex.z = meshLodOffset;
 		instanceVertex.w = renderable.m_particleEmitterOffset;
 		g_instanceRateRenderables[indirectIdx] = instanceVertex;

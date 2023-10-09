@@ -197,7 +197,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 		// DLSS says input textures in sampled state and out as storage image
 		const TextureUsageBit readUsage = TextureUsageBit::kAllSampled & TextureUsageBit::kAllCompute;
-		const TextureUsageBit writeUsage = TextureUsageBit::kAllImage & TextureUsageBit::kAllCompute;
+		const TextureUsageBit writeUsage = TextureUsageBit::kAllUav & TextureUsageBit::kAllCompute;
 
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
@@ -219,7 +219,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(outRt, TextureUsageBit::kImageComputeWrite);
+			pass.newTextureDependency(outRt, TextureUsageBit::kUavComputeWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runFsrOrBilinearScaling(rgraphCtx);
@@ -256,7 +256,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Tonemap");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(outRt, TextureUsageBit::kImageComputeWrite);
+			pass.newTextureDependency(outRt, TextureUsageBit::kUavComputeWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runTonemapping(rgraphCtx);
@@ -290,7 +290,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Sharpen");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(outRt, TextureUsageBit::kImageComputeWrite);
+			pass.newTextureDependency(outRt, TextureUsageBit::kUavComputeWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runRcasSharpening(rgraphCtx);
@@ -331,7 +331,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 
 	if(preferCompute)
 	{
-		rgraphCtx.bindImage(0, 2, outRt);
+		rgraphCtx.bindUavTexture(0, 2, outRt);
 	}
 
 	if(m_upscalingMethod == UpscalingMethod::kFsr)
@@ -396,7 +396,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 
 	if(preferCompute)
 	{
-		rgraphCtx.bindImage(0, 2, outRt);
+		rgraphCtx.bindUavTexture(0, 2, outRt);
 	}
 
 	class
@@ -464,7 +464,7 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 	rgraphCtx.bindColorTexture(0, 1, inRt);
 
-	rgraphCtx.bindImage(0, 2, getRenderer().getTonemapping().getRt());
+	rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
 
 	if(preferCompute)
 	{
@@ -477,7 +477,7 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 		pc.m_viewportSizeOverOne = 1.0f / Vec2(getRenderer().getPostProcessResolution());
 		pc.m_viewportSize = getRenderer().getPostProcessResolution();
 		cmdb.setPushConstants(&pc, sizeof(pc));
-		rgraphCtx.bindImage(0, 3, outRt);
+		rgraphCtx.bindUavTexture(0, 3, outRt);
 
 		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	}

@@ -19,7 +19,7 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 2u);
 [[vk::binding(1)]] Texture2D g_depthTex;
 [[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
 
-[[vk::binding(3)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(3)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(4)]] StructuredBuffer<Decal> g_decals;
 [[vk::binding(5)]] StructuredBuffer<Cluster> g_clusters;
 

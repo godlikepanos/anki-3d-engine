@@ -13,7 +13,7 @@
 #include <AnKi/Shaders/SsRaymarching.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-[[vk::binding(0)]] ConstantBuffer<SsrUniforms> g_unis;
+[[vk::binding(0)]] ConstantBuffer<SsrConstants> g_consts;
 
 [[vk::binding(1)]] SamplerState g_trilinearClampSampler;
 [[vk::binding(2)]] Texture2D<RVec4> g_gbufferRt1;
@@ -28,7 +28,7 @@
 [[vk::binding(9)]] SamplerState g_trilinearRepeatSampler;
 [[vk::binding(10)]] Texture2D<RVec4> g_noiseTex;
 
-[[vk::binding(11)]] ConstantBuffer<ClusteredShadingUniforms> g_clusteredShading;
+[[vk::binding(11)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(12)]] StructuredBuffer<ReflectionProbe> g_reflectionProbes;
 [[vk::binding(13)]] StructuredBuffer<Cluster> g_clusters;
 
@@ -47,11 +47,11 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(any(svDispatchThreadId.xy >= g_unis.m_framebufferSize))
+	if(any(svDispatchThreadId.xy >= g_consts.m_framebufferSize))
 	{
 		return;
 	}
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(g_unis.m_framebufferSize);
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(g_consts.m_framebufferSize);
 #endif
 
 	// Read part of the G-buffer
@@ -62,16 +62,16 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	const F32 depth = g_depthRt.SampleLevel(g_trilinearClampSampler, uv, 0.0).r;
 
 	// Rand idx
-	const Vec2 noiseUv = Vec2(g_unis.m_framebufferSize) / kNoiseTexSize * uv;
-	const Vec3 noise = animateBlueNoise(g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb, g_unis.m_frameCount % 8u);
+	const Vec2 noiseUv = Vec2(g_consts.m_framebufferSize) / kNoiseTexSize * uv;
+	const Vec3 noise = animateBlueNoise(g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb, g_consts.m_frameCount % 8u);
 
 	// Get view pos
-	const Vec4 viewPos4 = mul(g_unis.m_invProjMat, Vec4(uvToNdc(uv), depth, 1.0));
+	const Vec4 viewPos4 = mul(g_consts.m_invProjMat, Vec4(uvToNdc(uv), depth, 1.0));
 	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
 
 	// Compute refl vector
 	const Vec3 viewDir = -normalize(viewPos);
-	const Vec3 viewNormal = mul(g_unis.m_normalMat, Vec4(worldNormal, 0.0));
+	const Vec3 viewNormal = mul(g_consts.m_normalMat, Vec4(worldNormal, 0.0));
 #if STOCHASTIC
 	const Vec3 reflDir = sampleReflectionVector(viewDir, viewNormal, roughness, noise.xy);
 #else
@@ -79,19 +79,19 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif
 
 	// Is rough enough to deserve SSR?
-	F32 ssrAttenuation = saturate(1.0f - pow(roughness / g_unis.m_roughnessCutoff, 16.0f));
+	F32 ssrAttenuation = saturate(1.0f - pow(roughness / g_consts.m_roughnessCutoff, 16.0f));
 
 	// Do the heavy work
 	Vec3 hitPoint;
 	if(ssrAttenuation > kEpsilonF32)
 	{
 		const U32 lod = 8u; // Use the max LOD for ray marching
-		const U32 step = g_unis.m_firstStepPixels;
+		const U32 step = g_consts.m_firstStepPixels;
 		const F32 stepf = F32(step);
 		const F32 minStepf = stepf / 4.0;
 		F32 hitAttenuation;
-		raymarchGroundTruth(viewPos, reflDir, uv, depth, g_unis.m_projMat, g_unis.m_maxSteps, g_depthRt, g_trilinearClampSampler, F32(lod),
-							g_unis.m_depthBufferSize, step, U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
+		raymarchGroundTruth(viewPos, reflDir, uv, depth, g_consts.m_projMat, g_consts.m_maxSteps, g_depthRt, g_trilinearClampSampler, F32(lod),
+							g_consts.m_depthBufferSize, step, U32((stepf - minStepf) * noise.x + minStepf), hitPoint, hitAttenuation);
 
 		ssrAttenuation *= hitAttenuation;
 	}
@@ -105,7 +105,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	[branch] if(ssrAttenuation > 0.0)
 	{
 		const Vec3 gbufferNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0));
-		const Vec3 hitNormal = mul(g_unis.m_normalMat, Vec4(gbufferNormal, 0.0));
+		const Vec3 hitNormal = mul(g_consts.m_normalMat, Vec4(gbufferNormal, 0.0));
 		F32 backFaceAttenuation;
 		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
 
@@ -116,10 +116,10 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	[branch] if(ssrAttenuation > 0.0)
 	{
 		const F32 depth = g_depthRt.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).r;
-		Vec4 viewPos4 = mul(g_unis.m_invProjMat, Vec4(uvToNdc(hitPoint.xy), depth, 1.0));
+		Vec4 viewPos4 = mul(g_consts.m_invProjMat, Vec4(uvToNdc(hitPoint.xy), depth, 1.0));
 		const F32 actualZ = viewPos4.z / viewPos4.w;
 
-		viewPos4 = mul(g_unis.m_invProjMat, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
+		viewPos4 = mul(g_consts.m_invProjMat, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
 		const F32 hitZ = viewPos4.z / viewPos4.w;
 
 		const F32 rejectionMeters = 1.0;
@@ -134,7 +134,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	[branch] if(ssrAttenuation > 0.0)
 	{
 		// Reproject the UV because you are reading the previous frame
-		const Vec4 v4 = mul(g_unis.m_prevViewProjMatMulInvViewProjMat, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
+		const Vec4 v4 = mul(g_consts.m_prevViewProjMatMulInvViewProjMat, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
 		hitPoint.xy = ndcToUv(v4.xy / v4.w);
 
 #if STOCHASTIC
@@ -142,7 +142,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 		const F32 lod = 0.0;
 #else
 		// Compute the LOD based on the roughness
-		const F32 lod = F32(g_unis.m_lightBufferMipCount - 1u) * roughness;
+		const F32 lod = F32(g_consts.m_lightBufferMipCount - 1u) * roughness;
 #endif
 
 		// Read the light buffer

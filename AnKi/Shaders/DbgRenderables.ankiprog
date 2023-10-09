@@ -8,13 +8,13 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-struct Uniforms
+struct Constants
 {
 	Vec4 m_color;
 	Mat4 m_viewProjMat;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_uniforms;
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
 [[vk::binding(2)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
 [[vk::binding(3)]] StructuredBuffer<U32> g_visibleRenderableBoundingVolumeIndices;
@@ -41,7 +41,7 @@ VertOut main(VertIn input)
 	{
 		const GpuSceneRenderableBoundingVolume bvol = g_renderableBoundingVolumes[g_visibleRenderableBoundingVolumeIndices[input.m_svInstanceId + 1]];
 		Vec3 localPos = input.m_position * bvol.m_aabbExtend + bvol.m_sphereCenter;
-		output.m_svPosition = mul(g_uniforms.m_viewProjMat, Vec4(localPos, 1.0));
+		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(localPos, 1.0));
 	}
 	else
 	{
@@ -83,6 +83,6 @@ Vec4 main(VertOut input) : SV_TARGET0
 #endif
 
 	// Write the color
-	return g_uniforms.m_color;
+	return g_consts.m_color;
 }
 #pragma anki end
