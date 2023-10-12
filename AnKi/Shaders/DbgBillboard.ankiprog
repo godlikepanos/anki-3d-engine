@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator DITHERED_DEPTH_TEST 0 1
+#pragma anki mutator DEPTH_FAIL_VISUALIZATION 0 1
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-constexpr F32 kAlpha = 0.95f;
+constexpr F32 kAlpha = 1.0f;
 constexpr F32 kBillboardScale = 0.25f;
 
 struct Constants
@@ -103,11 +103,11 @@ VertOut main(VertIn input)
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 [[vk::binding(4)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(5)]] Texture2D g_tex;
-[[vk::binding(6)]] Texture2D g_tex2;
+[[vk::binding(5)]] Texture2D<Vec4> g_tex;
+[[vk::binding(6)]] Texture2D<Vec4> g_tex2;
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#if DITHERED_DEPTH_TEST == 1
+#if DEPTH_FAIL_VISUALIZATION == 1
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] Texture2D g_depthRt;
 #endif
@@ -117,29 +117,27 @@ Vec4 main(VertOut input) : SV_TARGET0
 	ANKI_MAYBE_UNUSED(input);
 
 	// Check if we should skip the frag
-#if DITHERED_DEPTH_TEST == 1
-	const UVec2 random = rand3DPCG16(UVec3(UVec2(input.m_svPosition.xy), 1)).xy;
-	const Vec2 noise = Vec2(random) / 65536.0;
-	const F32 factor = noise.x * noise.y;
+	F32 colorFactor = 1.0f;
+#if DEPTH_FAIL_VISUALIZATION == 1
 	Vec2 texSize;
 	g_depthRt.GetDimensions(texSize.x, texSize.y);
 	const Vec2 uv = input.m_svPosition.xy / texSize;
 	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
-	if(depthTestFailed && factor < 0.5)
+	if(depthTestFailed)
 	{
-		discard;
+		colorFactor = 0.6;
 	}
 #endif
 
 	// Write the color
 	if(input.m_textureIndex == 0)
 	{
-		return g_tex.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale;
+		return g_tex.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
 	}
 	else
 	{
-		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale;
+		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
 	}
 }
 #pragma anki end

@@ -211,6 +211,7 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, BaseMemoryPool* pool)
 
 	// Decimate
 	ImporterDynamicArray<U32> newIndices(pool);
+	newIndices.resize(submesh.m_indices.getSize());
 	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(),
 										   submesh.m_verts.getSize(), sizeof(TempVertex), targetIndexCount, 1e-2f)));
 

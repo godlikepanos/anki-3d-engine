@@ -127,7 +127,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 							CommandBuffer& cmdb)
 {
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_nonRenderablesProg);
-	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(m_ditheredDepthTestOn != 0));
+	variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", U32(m_ditheredDepthTestOn != 0));
 	variantInitInfo.addMutation("OBJECT_TYPE", U32(type));
 	const ShaderProgramResourceVariant* variant;
 	m_nonRenderablesProg->getOrCreateVariant(variantInitInfo, variant);
@@ -176,7 +176,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_renderablesProg);
-		variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(m_ditheredDepthTestOn != 0));
+		variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", U32(m_ditheredDepthTestOn != 0));
 		const ShaderProgramResourceVariant* variant;
 		m_renderablesProg->getOrCreateVariant(variantInitInfo, variant);
 		cmdb.bindShaderProgram(&variant->getProgram());

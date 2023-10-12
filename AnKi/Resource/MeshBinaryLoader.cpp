@@ -164,7 +164,7 @@ Error MeshBinaryLoader::checkHeader() const
 	}
 
 	// LOD
-	if(h.m_lodCount == 0 || h.m_lodCount >= kMaxLodCount)
+	if(h.m_lodCount == 0 || h.m_lodCount > kMaxLodCount)
 	{
 		ANKI_RESOURCE_LOGE("Wrong LOD count");
 		return Error::kUserData;

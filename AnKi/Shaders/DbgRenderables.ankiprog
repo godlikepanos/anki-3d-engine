@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator DITHERED_DEPTH_TEST 0 1
+#pragma anki mutator DEPTH_FAIL_VISUALIZATION 0 1
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -57,7 +57,7 @@ VertOut main(VertIn input)
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#if DITHERED_DEPTH_TEST == 1
+#if DEPTH_FAIL_VISUALIZATION == 1
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] Texture2D g_depthRt;
 #endif
@@ -67,18 +67,15 @@ Vec4 main(VertOut input) : SV_TARGET0
 	ANKI_MAYBE_UNUSED(input);
 
 	// Check if we should skip the frag
-#if DITHERED_DEPTH_TEST == 1
-	const UVec2 random = rand3DPCG16(UVec3(UVec2(input.m_svPosition.xy), 1)).xy;
-	const Vec2 noise = Vec2(random) / 65536.0;
-	const F32 factor = noise.x * noise.y;
+#if DEPTH_FAIL_VISUALIZATION == 1
 	Vec2 texSize;
 	g_depthRt.GetDimensions(texSize.x, texSize.y);
 	const Vec2 uv = input.m_svPosition.xy / texSize;
 	const F32 depthRef = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
-	if(depthTestFailed && factor < 0.5)
+	if(depthTestFailed)
 	{
-		discard;
+		return g_consts.m_color * 0.5;
 	}
 #endif
 
