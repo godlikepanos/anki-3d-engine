@@ -35,10 +35,12 @@ VertOut main(U32 vertId : SV_VERTEXID)
 
 #pragma anki start frag
 
-[[vk::binding(0)]] RWStructuredBuffer<U32> g_visibleObjectCount;
+[[vk::binding(0)]] RWStructuredBuffer<UVec4> g_stats;
 [[vk::binding(1)]] RWStructuredBuffer<U32> g_fragThreadCount;
 [[vk::binding(2)]] StructuredBuffer<U32> g_mdiDrawCounts;
 [[vk::binding(3)]] RWStructuredBuffer<U32> g_passCount;
+[[vk::binding(4)]] StructuredBuffer<DrawIndexedIndirectArgs> g_drawArguments;
+[[vk::binding(5)]] StructuredBuffer<U32> g_bucketFirstDrawArgIndex;
 
 #if COLOR_ATTACHMENT_COUNT > 0
 struct FragOut
@@ -68,9 +70,17 @@ main()
 		g_mdiDrawCounts.GetDimensions(bucketCount, unused);
 
 		U32 visiblesCount = 0;
+		U32 indexAndVertexCount = 0;
 		for(U32 i = 0; i < bucketCount; ++i)
 		{
 			visiblesCount += g_mdiDrawCounts[i];
+
+			const U32 begin = g_bucketFirstDrawArgIndex[i];
+			const U32 end = begin + g_mdiDrawCounts[i];
+			for(U32 j = begin; j < end; ++j)
+			{
+				indexAndVertexCount += g_drawArguments[j].m_indexCount;
+			}
 		}
 
 		U32 passIdx;
@@ -78,13 +88,15 @@ main()
 
 		if(passIdx == 0)
 		{
-			// 1st pass initializes the atomic
+			// 1st pass initializes the atomics
 			U32 origValue;
-			InterlockedExchange(g_visibleObjectCount[0], visiblesCount, origValue);
+			InterlockedExchange(g_stats[0][0], visiblesCount, origValue);
+			InterlockedExchange(g_stats[0][1], indexAndVertexCount, origValue);
 		}
 		else if(visiblesCount > 0)
 		{
-			InterlockedAdd(g_visibleObjectCount[0], visiblesCount);
+			InterlockedAdd(g_stats[0][0], visiblesCount);
+			InterlockedAdd(g_stats[0][1], indexAndVertexCount);
 		}
 	}
 

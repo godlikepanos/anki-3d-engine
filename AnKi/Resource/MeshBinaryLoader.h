@@ -21,7 +21,11 @@ namespace anki {
 /// * Header
 /// * Submeshes
 /// * Index buffer of max LOD
+/// ** Index buffer of #0 submesh
+/// ** etc ...
 /// * Vertex buffer #0 of max LOD
+/// ** Vert buffer #0 of #0 submesh
+/// ** etc ...
 /// * etc...
 class MeshBinaryLoader
 {

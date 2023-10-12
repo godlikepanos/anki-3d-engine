@@ -20,6 +20,7 @@ namespace anki {
 
 static StatCounter g_executedDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls executed", StatFlag::kZeroEveryFrame);
 static StatCounter g_maxDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls possible", StatFlag::kZeroEveryFrame);
+static StatCounter g_renderedPrimitivesStatVar(StatCategory::kRenderer, "Rendered primitives", StatFlag::kZeroEveryFrame);
 
 RenderableDrawer::~RenderableDrawer()
 {
@@ -76,6 +77,11 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 
 void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
 {
+	if(RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe) == 0) [[unlikely]]
+	{
+		return;
+	}
+
 #if ANKI_STATS_ENABLED
 	U32 variant = 0;
 	switch(args.m_renderingTechinuqe)
@@ -101,16 +107,18 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			m_stats.m_frameIdx = getRenderer().getFrameCount();
 
 			// Get previous stats
-			U32 prevFrameCount;
+			UVec4 prevFrameStats;
 			PtrSize dataRead;
-			getRenderer().getReadbackManager().readMostRecentData(m_stats.m_readback, &prevFrameCount, sizeof(prevFrameCount), dataRead);
+			getRenderer().getReadbackManager().readMostRecentData(m_stats.m_readback, &prevFrameStats, sizeof(prevFrameStats), dataRead);
 			if(dataRead > 0) [[likely]]
 			{
-				g_executedDrawcallsStatVar.set(prevFrameCount);
+				g_executedDrawcallsStatVar.set(prevFrameStats[0]);
+				g_renderedPrimitivesStatVar.set(prevFrameStats[1] / 3);
 			}
 
 			// Get place to write new stats
-			getRenderer().getReadbackManager().allocateData(m_stats.m_readback, sizeof(U32), m_stats.m_statsBuffer, m_stats.m_statsBufferOffset);
+			getRenderer().getReadbackManager().allocateData(m_stats.m_readback, sizeof(prevFrameStats), m_stats.m_statsBuffer,
+															m_stats.m_statsBufferOffset);
 
 			// Allocate another atomic to count the passes. Do that because the calls to drawMdi might not be in the same order as they run on the GPU
 			U32* counter;
@@ -125,10 +133,23 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		cmdb.pushDebugMarker("Draw stats", Vec3(0.0f, 1.0f, 0.0f));
 
 		cmdb.bindShaderProgram(m_stats.m_updateStatsGrProgs[variant].get());
-		cmdb.bindUavBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(U32));
+		cmdb.bindUavBuffer(0, 0, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(UVec4));
 		cmdb.bindUavBuffer(0, 1, threadCountBuff);
 		cmdb.bindUavBuffer(0, 2, args.m_mdiDrawCountsBuffer);
 		cmdb.bindUavBuffer(0, 3, m_stats.m_passCountBuffer);
+		cmdb.bindUavBuffer(0, 4, args.m_drawIndexedIndirectArgsBuffer);
+
+		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> offsets(&getRenderer().getFrameMemoryPool());
+		U32 allUserCount = 0;
+		RenderStateBucketContainer::getSingleton().iterateBuckets(args.m_renderingTechinuqe,
+																  [&]([[maybe_unused]] const RenderStateInfo& state, U32 userCount) {
+																	  offsets.emplaceBack(allUserCount);
+																	  allUserCount += userCount;
+																  });
+		U32* firstDrawArgIndices;
+		BufferOffsetRange firstDrawArgIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(offsets.getSize(), firstDrawArgIndices);
+		memcpy(firstDrawArgIndices, &offsets[0], offsets.getSizeInBytes());
+		cmdb.bindUavBuffer(0, 5, firstDrawArgIndicesBuffer);
 
 		cmdb.draw(PrimitiveTopology::kTriangles, 6);
 

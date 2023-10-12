@@ -56,6 +56,7 @@ RebarAllocation RebarTransientMemoryPool::allocateFrame(PtrSize size, void*& map
 
 RebarAllocation RebarTransientMemoryPool::tryAllocateFrame(PtrSize origSize, void*& mappedMem)
 {
+	ANKI_ASSERT(origSize > 0);
 	const PtrSize size = getAlignedRoundUp(m_alignment, origSize);
 
 	// Try in a loop because we may end up with an allocation its offset crosses the buffer's end
