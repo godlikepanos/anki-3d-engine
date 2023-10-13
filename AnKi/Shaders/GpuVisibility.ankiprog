@@ -122,12 +122,12 @@ struct DrawIndirectArgsWithPadding
 	const Vec2 sizeXY = (maxUv - minUv) * texSize;
 	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
 
-#		if 0
-	mip = clamp(mip, 0.0, mipCount - 1.0);
+#		if 1
+	// Try to use a more detailed mip if you can
 	const F32 levelLower = max(mip - 1.0, 0.0);
-	const Vec2 scale = exp2(-levelLower);
-	const Vec2 a = floor(minUv * scale);
-	const Vec2 b = ceil(maxUv * scale);
+	const Vec2 mipSize = texSize / pow(2.0f, levelLower);
+	const Vec2 a = floor(minUv * mipSize);
+	const Vec2 b = ceil(maxUv * mipSize);
 	const Vec2 dims = b - a;
 
 	if(dims.x <= 2.0 && dims.y <= 2.0)
