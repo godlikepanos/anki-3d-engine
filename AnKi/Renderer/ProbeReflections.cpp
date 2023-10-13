@@ -204,6 +204,7 @@ void ProbeReflections::runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, 
 	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
+	args.m_viewport = UVec4(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
 	args.fillMdi(visOuts[faceIdx]);
 
 	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
@@ -596,6 +597,7 @@ void ProbeReflections::runShadowMapping(const Array<GpuVisibilityOutput, 6>& vis
 	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+	args.m_viewport = UVec4(rez * faceIdx, 0, rez, rez);
 	args.fillMdi(visOuts[faceIdx]);
 
 	getRenderer().getSceneDrawer().drawMdi(args, cmdb);

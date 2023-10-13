@@ -290,6 +290,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 				args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+				args.m_viewport = UVec4(viewportX, 0, m_tileSize, m_tileSize);
 				args.fillMdi(visOuts[faceIdx]);
 
 				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
@@ -359,6 +360,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 				args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+				args.m_viewport = UVec4(rez * faceIdx, 0, rez, rez);
 				args.fillMdi(shadowVisOuts[faceIdx]);
 
 				getRenderer().getSceneDrawer().drawMdi(args, cmdb);

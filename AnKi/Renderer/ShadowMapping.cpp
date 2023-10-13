@@ -620,6 +620,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_viewProjectionMatrix = work.m_viewProjMat;
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
+		args.m_viewport = UVec4(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		args.fillMdi(work.m_visOut);
 
 		getRenderer().getSceneDrawer().drawMdi(args, cmdb);

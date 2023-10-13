@@ -125,6 +125,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, const GpuVisibilityOutput
 	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
+	args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
 	args.fillMdi(visOut);
 
 	cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);

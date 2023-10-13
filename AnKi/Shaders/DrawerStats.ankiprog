@@ -11,6 +11,16 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
+constexpr U32 kQuadSizeXY = 4;
+constexpr U32 kThreadCount = kQuadSizeXY * kQuadSizeXY;
+
+struct Constants
+{
+	UVec4 m_viewport;
+};
+
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+
 #pragma anki start vert
 
 struct VertOut
@@ -22,9 +32,7 @@ VertOut main(U32 vertId : SV_VERTEXID)
 {
 	Vec2 uv = Vec2(vertId & 1u, ((vertId + 1u) / 3u) & 1u);
 
-	// Limit the UV to just cover at least a 2x2 pixels if we assume that the viewport size is something like 64x64. 2x2 pixels will be enough for the
-	// fragment shader to run
-	uv *= 2.0f / 64.0f;
+	uv *= 1.0f / Vec2(g_consts.m_viewport.zw) * F32(kQuadSizeXY);
 
 	VertOut output;
 	output.m_position = Vec4(uv * 2.0 - 1.0, 0.0, 1.0);
@@ -35,12 +43,12 @@ VertOut main(U32 vertId : SV_VERTEXID)
 
 #pragma anki start frag
 
-[[vk::binding(0)]] RWStructuredBuffer<UVec4> g_stats;
-[[vk::binding(1)]] RWStructuredBuffer<U32> g_fragThreadCount;
-[[vk::binding(2)]] StructuredBuffer<U32> g_mdiDrawCounts;
-[[vk::binding(3)]] RWStructuredBuffer<U32> g_passCount;
-[[vk::binding(4)]] StructuredBuffer<DrawIndexedIndirectArgs> g_drawArguments;
-[[vk::binding(5)]] StructuredBuffer<U32> g_bucketFirstDrawArgIndex;
+[[vk::binding(0)]] StructuredBuffer<U32> g_mdiDrawCounts;
+[[vk::binding(1)]] StructuredBuffer<DrawIndexedIndirectArgs> g_drawArguments;
+[[vk::binding(2)]] StructuredBuffer<U32> g_bucketFirstDrawArgIndex;
+
+[[vk::binding(3)]] RWStructuredBuffer<U32> g_stats;
+[[vk::binding(4)]] RWStructuredBuffer<U32> g_threadExecuted;
 
 #if COLOR_ATTACHMENT_COUNT > 0
 struct FragOut
@@ -59,45 +67,51 @@ FragOut
 #else
 void
 #endif
-main()
+main(Vec4 svPosition : SV_POSITION)
 {
-	U32 threadIdx;
-	InterlockedAdd(g_fragThreadCount[0], 1, threadIdx);
+	const UVec2 pos = UVec2(svPosition.xy - Vec2(g_consts.m_viewport.xy));
+	const U32 threadIdx = pos.y * kQuadSizeXY + pos.x;
 
-	if(threadIdx == 0)
+	U32 threadsExecuted;
+	InterlockedAdd(g_threadExecuted[0], 1, threadsExecuted);
+	++threadsExecuted;
+
+	const Bool firstPass = threadsExecuted <= kThreadCount;
+
+	U32 bucketCount, unused;
+	g_mdiDrawCounts.GetDimensions(bucketCount, unused);
+
+	// Calc visible count
+	U32 visiblesCount = 0u;
+	U32 itemsPerThread = (bucketCount + (kThreadCount - 1)) / kThreadCount;
+	for(U32 bucket = threadIdx * itemsPerThread; bucket < min(bucketCount, (threadIdx + 1u) * itemsPerThread); ++bucket)
 	{
-		U32 bucketCount, unused;
-		g_mdiDrawCounts.GetDimensions(bucketCount, unused);
+		visiblesCount += g_mdiDrawCounts[bucket];
+	}
 
-		U32 visiblesCount = 0;
-		U32 indexAndVertexCount = 0;
-		for(U32 i = 0; i < bucketCount; ++i)
+	// Calc primitive count
+	U32 primitiveCount = 0u;
+	for(U32 bucket = 0; bucket < bucketCount; ++bucket)
+	{
+		const U32 drawCount = g_mdiDrawCounts[bucket];
+		itemsPerThread = (drawCount + (kThreadCount - 1)) / kThreadCount;
+
+		for(U32 draw = threadIdx * itemsPerThread; draw < min(drawCount, (threadIdx + 1u) * itemsPerThread); ++draw)
 		{
-			visiblesCount += g_mdiDrawCounts[i];
-
-			const U32 begin = g_bucketFirstDrawArgIndex[i];
-			const U32 end = begin + g_mdiDrawCounts[i];
-			for(U32 j = begin; j < end; ++j)
-			{
-				indexAndVertexCount += g_drawArguments[j].m_indexCount;
-			}
+			primitiveCount += g_drawArguments[g_bucketFirstDrawArgIndex[bucket] + draw].m_indexCount;
 		}
+	}
 
-		U32 passIdx;
-		InterlockedAdd(g_passCount[0], 1, passIdx);
-
-		if(passIdx == 0)
-		{
-			// 1st pass initializes the atomics
-			U32 origValue;
-			InterlockedExchange(g_stats[0][0], visiblesCount, origValue);
-			InterlockedExchange(g_stats[0][1], indexAndVertexCount, origValue);
-		}
-		else if(visiblesCount > 0)
-		{
-			InterlockedAdd(g_stats[0][0], visiblesCount);
-			InterlockedAdd(g_stats[0][1], indexAndVertexCount);
-		}
+	if(firstPass)
+	{
+		U32 origValue;
+		InterlockedExchange(g_stats[threadIdx], visiblesCount, origValue);
+		InterlockedExchange(g_stats[threadIdx + kThreadCount], primitiveCount, origValue);
+	}
+	else
+	{
+		InterlockedAdd(g_stats[threadIdx], visiblesCount);
+		InterlockedAdd(g_stats[threadIdx + kThreadCount], primitiveCount);
 	}
 
 	discard;

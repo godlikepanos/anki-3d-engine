@@ -75,6 +75,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kForward;
+	args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
 	args.fillMdi(m_runCtx.m_visOut);
 	getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 

@@ -24,6 +24,8 @@ public:
 	Mat4 m_viewProjectionMatrix;
 	Mat4 m_previousViewProjectionMatrix;
 
+	UVec4 m_viewport; ///< Only used for information purposes.
+
 	Sampler* m_sampler = nullptr;
 
 	// For MDI
@@ -71,7 +73,7 @@ private:
 		Buffer* m_statsBuffer = nullptr;
 		PtrSize m_statsBufferOffset = 0;
 
-		BufferOffsetRange m_passCountBuffer;
+		BufferOffsetRange m_threadCountBuffer;
 	} m_stats;
 #endif
 
