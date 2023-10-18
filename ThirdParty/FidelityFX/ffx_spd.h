@@ -439,11 +439,10 @@ AF4 SpdReduceQuad(AF4 v)
 	return SpdReduce4(v0, v1, v2, v3);
 #	elif defined(A_HLSL) && !defined(SPD_NO_WAVE_OPERATIONS)
 	// requires SM6.0
-	AU1 quad = WaveGetLaneIndex() & (~0x3);
 	AF4 v0 = v;
-	AF4 v1 = WaveReadLaneAt(v, quad | 1);
-	AF4 v2 = WaveReadLaneAt(v, quad | 2);
-	AF4 v3 = WaveReadLaneAt(v, quad | 3);
+	AF4 v1 = QuadReadAcrossX(v);
+	AF4 v2 = QuadReadAcrossY(v);
+	AF4 v3 = QuadReadAcrossDiagonal(v);
 	return SpdReduce4(v0, v1, v2, v3);
 /*
 // if SM6.0 is not available, you can use the AMD shader intrinsics
