@@ -122,7 +122,6 @@ struct DrawIndirectArgsWithPadding
 	const Vec2 sizeXY = (maxUv - minUv) * texSize;
 	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
 
-#		if 1
 	// Try to use a more detailed mip if you can
 	const F32 levelLower = max(mip - 1.0, 0.0);
 	const Vec2 mipSize = texSize / pow(2.0f, levelLower);
@@ -134,7 +133,6 @@ struct DrawIndirectArgsWithPadding
 	{
 		mip = levelLower;
 	}
-#		endif
 
 	// Sample mip
 	Vec4 depths;

@@ -110,10 +110,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kL) == 1)
 	{
-		/*Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
-		printf("%f %f %f\n", origin.x(), origin.y(), origin.z());*/
-		mover->setLocalOrigin(Vec4(81.169312f, -2.309618f, 17.088392f, 0.0f));
-		// mover->setLocalRotation(Mat3x4::getIdentity());
+		Vec4 origin = mover->getWorldTransform().getOrigin();
+		mover->setLocalOrigin(origin + Vec4(0, 15, 0, 0));
 	}
 
 	if(in.getKey(KeyCode::kF1) == 1)
@@ -330,7 +328,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		if(moveCameraTouch != TouchPointer::kCount && in.getTouchPointer(moveCameraTouch) > 0)
 		{
 			Vec2 velocity = in.getTouchPointerNdcPosition(moveCameraTouch) * NativeWindow::getSingleton().getAspectRatio() - moveEventInitialPos;
-			velocity *= 2.0f;
+			velocity *= 3.0f;
 
 			mover->moveLocalX(moveDistance * velocity.x());
 			mover->moveLocalZ(moveDistance * -velocity.y());

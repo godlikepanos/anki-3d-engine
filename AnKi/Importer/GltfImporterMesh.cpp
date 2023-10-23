@@ -7,6 +7,7 @@
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
+#include <AnKi/Collision/Sphere.h>
 #include <AnKi/Resource/MeshBinary.h>
 #include <AnKi/Shaders/Include/MeshTypes.h>
 #include <MeshOptimizer/meshoptimizer.h>
@@ -112,21 +113,42 @@ public:
 };
 static_assert(sizeof(TempVertex) == 5 * sizeof(Vec4), "Will be hashed");
 
+class Meshlet
+{
+public:
+	U32 m_firstVertex = 0;
+	U32 m_vertexCount = 0;
+	U32 m_firstLocalIndex = 0;
+	U32 m_localIndexCount = 0;
+
+	Vec3 m_coneApex;
+	Vec3 m_coneDir;
+	F32 m_coneAngle = 0.0f;
+
+	Sphere m_sphere;
+	Aabb m_aabb;
+};
+
 class SubMesh
 {
 public:
 	ImporterDynamicArray<TempVertex> m_verts;
 	ImporterDynamicArray<U32> m_indices;
 
+	ImporterDynamicArray<Meshlet> m_meshlets;
+	ImporterDynamicArray<U8> m_localIndices;
+
 	Vec3 m_aabbMin = Vec3(kMaxF32);
 	Vec3 m_aabbMax = Vec3(kMinF32);
 
-	U32 m_firstIdx = kMaxU32;
-	U32 m_idxCount = kMaxU32;
+	Vec3 m_sphereCenter;
+	F32 m_sphereRadius = 0.0f;
 
 	SubMesh(BaseMemoryPool* pool)
 		: m_verts(pool)
 		, m_indices(pool)
+		, m_meshlets(pool)
+		, m_localIndices(pool)
 	{
 	}
 };
@@ -414,6 +436,120 @@ static Bool isConvex(const ImporterList<SubMesh>& submeshes)
 	return convex;
 }
 
+static void generateMeshlets(SubMesh& submesh)
+{
+	// Allocate the arrays
+	const U32 maxMeshlets = U32(meshopt_buildMeshletsBound(submesh.m_indices.getSize(), kMaxVerticesPerMeshlet, kMaxPrimitivesPerMeshlet));
+
+	ImporterDynamicArray<U32> indicesToVertexBuffer(&submesh.m_verts.getMemoryPool());
+	indicesToVertexBuffer.resize(maxMeshlets * kMaxVerticesPerMeshlet);
+
+	ImporterDynamicArray<U8> localIndices(&submesh.m_verts.getMemoryPool());
+	localIndices.resize(maxMeshlets * kMaxPrimitivesPerMeshlet * 3);
+
+	ImporterDynamicArray<meshopt_Meshlet> meshlets(&submesh.m_verts.getMemoryPool());
+	meshlets.resize(maxMeshlets);
+
+	// Meshletize
+	constexpr F32 coneWeight = 0.7f;
+	const U32 meshletCount =
+		U32(meshopt_buildMeshlets(meshlets.getBegin(), indicesToVertexBuffer.getBegin(), localIndices.getBegin(), submesh.m_indices.getBegin(),
+								  submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), sizeof(TempVertex),
+								  kMaxVerticesPerMeshlet, kMaxPrimitivesPerMeshlet, coneWeight));
+
+	// Trim the arrays
+	const meshopt_Meshlet& last = meshlets[meshletCount - 1u];
+	indicesToVertexBuffer.resize(last.vertex_offset + last.vertex_count);
+	localIndices.resize(last.triangle_offset + ((last.triangle_count * 3u + 3u) & ~3u));
+	meshlets.resize(meshletCount);
+
+	// Create the new vertex and global index buffer
+	submesh.m_meshlets.destroy();
+	submesh.m_meshlets.resize(meshletCount);
+	submesh.m_localIndices.destroy();
+
+	ImporterDynamicArray<U32> newIndexBuffer(&submesh.m_verts.getMemoryPool());
+	ImporterDynamicArray<TempVertex> newVertexBuffer(&submesh.m_verts.getMemoryPool());
+
+	for(U32 meshletIdx = 0; meshletIdx < meshletCount; ++meshletIdx)
+	{
+		const meshopt_Meshlet& inMeshlet = meshlets[meshletIdx];
+		Meshlet& outMeshlet = submesh.m_meshlets[meshletIdx];
+
+		outMeshlet.m_firstLocalIndex = submesh.m_localIndices.getSize();
+		outMeshlet.m_localIndexCount = inMeshlet.triangle_count * 3;
+		outMeshlet.m_firstVertex = newVertexBuffer.getSize();
+		outMeshlet.m_vertexCount = inMeshlet.vertex_count;
+
+		ImporterHashMap<U8, U32> localIndexToNewGlobalIndex(&submesh.m_verts.getMemoryPool());
+
+		for(U32 tri = 0; tri < inMeshlet.triangle_count; ++tri)
+		{
+			const U8Vec3 localIdx3(localIndices[inMeshlet.triangle_offset + tri * 3], localIndices[inMeshlet.triangle_offset + tri * 3 + 1],
+								   localIndices[inMeshlet.triangle_offset + tri * 3 + 2]);
+			for(U32 j = 0; j < 3; j++)
+			{
+				const U8 localIdx = localIdx3[j];
+
+				// Search if we processed the same index before
+				auto it = localIndexToNewGlobalIndex.find(localIdx);
+				const Bool newVertex = (it == localIndexToNewGlobalIndex.getEnd());
+
+				// Add the vertex, global index
+				if(newVertex)
+				{
+					const U32 newGlobalIdx = newVertexBuffer.getSize();
+
+					newIndexBuffer.emplaceBack(newGlobalIdx);
+
+					const U32 globalIdx = indicesToVertexBuffer[inMeshlet.vertex_offset + localIdx];
+					const TempVertex vert = submesh.m_verts[globalIdx];
+					newVertexBuffer.emplaceBack(vert);
+
+					localIndexToNewGlobalIndex.emplace(localIdx, newGlobalIdx);
+				}
+				else
+				{
+					const U32 newGlobalIdx = *it;
+
+					newIndexBuffer.emplaceBack(newGlobalIdx);
+				}
+
+				// Append the local index
+				submesh.m_localIndices.emplaceBack(localIdx);
+			}
+		}
+
+		ANKI_ASSERT(localIndexToNewGlobalIndex.getSize() == outMeshlet.m_vertexCount);
+
+		// Compute bounds
+		const meshopt_Bounds bounds =
+			meshopt_computeMeshletBounds(&indicesToVertexBuffer[inMeshlet.vertex_offset], &localIndices[inMeshlet.triangle_offset],
+										 inMeshlet.triangle_count, &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), sizeof(TempVertex));
+		outMeshlet.m_coneApex = Vec3(&bounds.cone_apex[0]);
+		outMeshlet.m_coneDir = Vec3(&bounds.cone_axis[0]);
+		outMeshlet.m_coneAngle = acos(bounds.cone_cutoff) * 2.0f;
+
+		outMeshlet.m_sphere =
+			computeBoundingSphere(&newVertexBuffer[outMeshlet.m_firstVertex].m_position, outMeshlet.m_vertexCount, sizeof(TempVertex));
+
+		if(bounds.radius < outMeshlet.m_sphere.getRadius())
+		{
+			// meshopt computed smaller sphere, use that one
+			outMeshlet.m_sphere.setCenter(Vec3(&bounds.center[0]));
+			outMeshlet.m_sphere.setRadius(bounds.radius);
+		}
+
+		outMeshlet.m_aabb = computeBoundingAabb(&newVertexBuffer[outMeshlet.m_firstVertex].m_position, outMeshlet.m_vertexCount, sizeof(TempVertex));
+	}
+
+	ANKI_IMPORTER_LOGV("After meshletization the mesh has %f more vertices",
+					   (F32(newVertexBuffer.getSize()) - F32(submesh.m_verts.getSize())) / F32(submesh.m_verts.getSize()) * 100.0f);
+
+	submesh.m_indices = std::move(newIndexBuffer);
+	submesh.m_verts = std::move(newVertexBuffer);
+}
+
 static void writeVertexAttribAndBufferInfoToHeader(VertexStreamId stream, MeshBinaryHeader& header, const Vec4& scale = Vec4(1.0f),
 												   const Vec4& translation = Vec4(0.0f))
 {
@@ -442,7 +578,7 @@ U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
 
 Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 {
-	ImporterString meshName = computeMeshResourceFilename(mesh);
+	const ImporterString meshName = computeMeshResourceFilename(mesh);
 	ImporterString fname(m_pool);
 	fname.sprintf("%s%s", m_outDir.cstr(), meshName.cstr());
 	ANKI_IMPORTER_LOGV("Importing mesh (%s): %s", (m_optimizeMeshes) ? "optimize" : "WON'T optimize", fname.cstr());
@@ -451,6 +587,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	Vec3 aabbMin(kMaxF32);
 	Vec3 aabbMax(kMinF32);
 	Bool hasBoneWeights = false;
+	ImporterDynamicArray<Vec3> allPositions(m_pool); // Used to calculate the overall bounding sphere
 
 	// Iterate primitives. Every primitive is a submesh
 	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count; ++primitive)
@@ -463,6 +600,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 
 		SubMesh& submesh = *submeshes[0].emplaceBack(m_pool);
 
+		// All attributes should have the same vertex count
 		U minVertCount = kMaxU;
 		U maxVertCount = kMinU;
 		for(const cgltf_attribute* attrib = primitive->attributes; attrib < primitive->attributes + primitive->attributes_count; ++attrib)
@@ -481,7 +619,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		submesh.m_verts.resize(vertCount);
 
 		//
-		// Gather positions + normals + UVs
+		// Gather positions + normals + UVs + bone stuff
 		//
 		for(const cgltf_attribute* attrib = primitive->attributes; attrib < primitive->attributes + primitive->attributes_count; ++attrib)
 		{
@@ -493,6 +631,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 					submesh.m_aabbMin = submesh.m_aabbMin.min(pos);
 					submesh.m_aabbMax = submesh.m_aabbMax.max(pos);
 					submesh.m_verts[count++].m_position = pos;
+
+					allPositions.emplaceBack(pos);
 				});
 			}
 			else if(attrib->type == cgltf_attribute_type_normal)
@@ -545,9 +685,12 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		}
 
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
-		// Bump aabbMax a bit
-		submesh.m_aabbMax += kEpsilonf * 10.0f;
+		submesh.m_aabbMax += kEpsilonf * 10.0f; // Bump aabbMax a bit
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
+
+		const Sphere s = computeBoundingSphere(&submesh.m_verts[0].m_position, submesh.m_verts.getSize(), sizeof(submesh.m_verts[0]));
+		submesh.m_sphereCenter = s.getCenter().xyz();
+		submesh.m_sphereRadius = max(kEpsilonf * 10.0f, s.getRadius());
 
 		// Fix normals
 		fixNormals(m_normalsMergeAngle, submesh);
@@ -610,7 +753,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			ANKI_UTIL_LOGE("Mesh degenerate: %s", meshName.cstr());
 			return Error::kUserData;
 		}
-	}
+	} // for all GLTF primitives
 
 	// Generate submeshes for the other LODs
 	ANKI_ASSERT(m_lodCount <= kMaxLodCount && m_lodCount > 0);
@@ -633,6 +776,15 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 		maxLod = lod;
 	}
 
+	// Meshletize
+	for(U32 lod = 0; lod < m_lodCount; ++lod)
+	{
+		for(SubMesh& submesh : submeshes[lod])
+		{
+			generateMeshlets(submesh);
+		}
+	}
+
 	// Start writing the file
 	File file;
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::kWrite | FileOpenFlag::kBinary));
@@ -642,16 +794,18 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 	memset(&header, 0, sizeof(header));
 	memcpy(&header.m_magic[0], kMeshMagic, 8);
 
-	header.m_flags = MeshBinaryFlag::kNone;
-	if(isConvex(submeshes[0]))
-	{
-		header.m_flags |= MeshBinaryFlag::kConvex;
-	}
+	header.m_flags = (isConvex(submeshes[0])) ? MeshBinaryFlag::kConvex : MeshBinaryFlag::kNone;
 	header.m_indexType = IndexType::kU16;
+	header.m_meshletPrimitiveFormat = Format::kR8G8B8A8_Uint;
 	header.m_subMeshCount = U32(submeshes[0].getSize());
-	header.m_aabbMin = aabbMin;
-	header.m_aabbMax = aabbMax;
 	header.m_lodCount = maxLod + 1;
+	header.m_maxPrimitivesPerMeshlet = kMaxPrimitivesPerMeshlet;
+	header.m_maxVerticesPerMeshlet = kMaxVerticesPerMeshlet;
+	header.m_boundingVolume.m_aabbMin = aabbMin;
+	header.m_boundingVolume.m_aabbMax = aabbMax;
+	const Sphere s = computeBoundingSphere(&allPositions[0], allPositions.getSize(), sizeof(allPositions[0]));
+	header.m_boundingVolume.m_sphereCenter = s.getCenter().xyz();
+	header.m_boundingVolume.m_sphereRadius = s.getRadius();
 
 	// Compute the pos scale and transform. The scale is uniform because it's applied to the model matrix of the object
 	F32 posScale = kMinF32;
@@ -687,15 +841,21 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 
 			if(lod == 0)
 			{
-				out.m_aabbMin = inSubmesh.m_aabbMin;
-				out.m_aabbMax = inSubmesh.m_aabbMax;
+				out.m_boundingVolume.m_aabbMin = inSubmesh.m_aabbMin;
+				out.m_boundingVolume.m_aabbMax = inSubmesh.m_aabbMax;
+				out.m_boundingVolume.m_sphereCenter = inSubmesh.m_sphereCenter;
+				out.m_boundingVolume.m_sphereRadius = inSubmesh.m_sphereRadius;
 			}
 
-			out.m_firstIndices[lod] = header.m_totalIndexCounts[lod];
-			out.m_indexCounts[lod] = inSubmesh.m_indices.getSize();
+			out.m_lods[lod].m_firstIndex = header.m_indexCounts[lod];
+			out.m_lods[lod].m_indexCount = inSubmesh.m_indices.getSize();
+			out.m_lods[lod].m_firstMeshlet = header.m_meshletCounts[lod];
+			out.m_lods[lod].m_meshletCount = inSubmesh.m_meshlets.getSize();
 
-			header.m_totalIndexCounts[lod] += inSubmesh.m_indices.getSize();
-			header.m_totalVertexCounts[lod] += inSubmesh.m_verts.getSize();
+			header.m_indexCounts[lod] += inSubmesh.m_indices.getSize();
+			header.m_vertexCounts[lod] += inSubmesh.m_verts.getSize();
+			header.m_meshletCounts[lod] += inSubmesh.m_meshlets.getSize();
+			header.m_meshletPrimitiveCounts[lod] += inSubmesh.m_localIndices.getSize() / 3u;
 		}
 	}
 
@@ -810,6 +970,60 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 
 				ANKI_CHECK(file.write(&boneWeights[0], boneWeights.getSizeInBytes()));
 			}
+		}
+
+		// Write meshlets
+		U32 primitiveCount = 0;
+		U32 vertCount2 = 0;
+		for(const SubMesh& submesh : submeshes[lod])
+		{
+			ImporterDynamicArray<MeshBinaryMeshlet> meshlets(m_pool);
+			meshlets.resize(submesh.m_meshlets.getSize());
+
+			for(U32 v = 0; v < submesh.m_meshlets.getSize(); ++v)
+			{
+				MeshBinaryMeshlet& out = meshlets[v];
+				const Meshlet& in = submesh.m_meshlets[v];
+
+				out.m_firstPrimitive = primitiveCount;
+				out.m_primitiveCount = in.m_localIndexCount / 3;
+				primitiveCount += out.m_primitiveCount;
+
+				out.m_firstVertex = vertCount2;
+				out.m_vertexCount = in.m_vertexCount;
+				vertCount2 += in.m_vertexCount;
+
+				out.m_boundingVolume.m_sphereCenter = in.m_sphere.getCenter().xyz();
+				out.m_boundingVolume.m_sphereRadius = in.m_sphere.getRadius();
+				out.m_boundingVolume.m_aabbMin = in.m_aabb.getMin().xyz();
+				out.m_boundingVolume.m_aabbMax = in.m_aabb.getMax().xyz();
+
+				out.m_coneApex = in.m_coneApex;
+				out.m_coneDirection = in.m_coneDir;
+				out.m_coneAngle = in.m_coneAngle;
+			}
+
+			ANKI_CHECK(file.write(&meshlets[0], meshlets.getSizeInBytes()));
+		}
+		ANKI_ASSERT(vertCount2 == vertCount);
+		ANKI_ASSERT(primitiveCount == header.m_meshletPrimitiveCounts[lod]);
+
+		// Write local indices
+		for(const SubMesh& submesh : submeshes[lod])
+		{
+			ImporterDynamicArray<U8> localIndices(m_pool);
+			localIndices.resize(submesh.m_localIndices.getSize() / 3 * sizeof(U8Vec4));
+
+			U32 count = 0;
+			for(U32 v = 0; v < submesh.m_localIndices.getSize(); v += 3)
+			{
+				localIndices[count++] = submesh.m_localIndices[v];
+				localIndices[count++] = submesh.m_localIndices[v + 1];
+				localIndices[count++] = submesh.m_localIndices[v + 2];
+				localIndices[count++] = 0;
+			}
+
+			ANKI_CHECK(file.write(&localIndices[0], localIndices.getSizeInBytes()));
 		}
 	}
 

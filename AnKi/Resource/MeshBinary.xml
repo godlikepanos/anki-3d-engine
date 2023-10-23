@@ -8,15 +8,14 @@
 	<doxygen_group name="resource"/>
 
 	<prefix_code><![CDATA[
-inline constexpr const char* kMeshMagic = "ANKIMES7";
+inline constexpr const char* kMeshMagic = "ANKIMES8";
 
 enum class MeshBinaryFlag : U32
 {
 	kNone = 0,
-	kQuad = 1 << 0,
-	kConvex = 1 << 1,
+	kConvex = 1 << 0,
 
-	kAll = kQuad | kConvex,
+	kAll = kConvex,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 ]]></prefix_code>
@@ -38,16 +37,25 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 			</members>
 		</class>
 
-		<class name="MeshBinarySubMesh">
+		<class name="MeshBinaryBoundingVolume" comment="Bounding volume info">
 			<members>
-				<member name="m_firstIndices" type="U32" array_size="kMaxLodCount"/>
-				<member name="m_indexCounts" type="U32" array_size="kMaxLodCount"/>
 				<member name="m_aabbMin" type="Vec3" comment="Bounding box min"/>
 				<member name="m_aabbMax" type="Vec3" comment="Bounding box max"/>
+				<member name="m_sphereCenter" type="Vec3" comment="Bounding sphere center"/>
+				<member name="m_sphereRadius" type="F32" comment="Bounding sphere radius"/>
 			</members>
 		</class>
 
-		<class name="MeshBinaryHeader" comment="The 1st things that appears in a mesh binary">
+		<class name="MeshBinarySubMeshLod">
+			<members>
+				<member name="m_firstIndex" type="U32" comment="Offset in sizeof(indexType) to the global indices buffer of the LOD this belongs to"/>
+				<member name="m_indexCount" type="U32"/>
+				<member name="m_firstMeshlet" type="U32"/>
+				<member name="m_meshletCount" type="U32"/>
+			</members>
+		</class>
+
+		<class name="MeshBinaryHeader" comment="The 1st thing that appears in a mesh binary">
 			<members>
 				<member name="m_magic" type="U8" array_size="8"/>
 				<member name="m_flags" type="MeshBinaryFlag"/>
@@ -55,12 +63,36 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 				<member name="m_vertexAttributes" type="MeshBinaryVertexAttribute" array_size="kMaxVertexAttributes"/>
 				<member name="m_indexType" type="IndexType"/>
 				<member name="m_padding" type="U8" array_size="3"/>
-				<member name="m_totalIndexCounts" type="U32" array_size="kMaxLodCount"/>
-				<member name="m_totalVertexCounts" type="U32" array_size="kMaxLodCount"/>
+				<member name="m_meshletPrimitiveFormat" type="Format" comment="The format of the 3 indices that make a primitive"/>
+				<member name="m_indexCounts" type="U32" array_size="kMaxLodCount"/>
+				<member name="m_vertexCounts" type="U32" array_size="kMaxLodCount"/>
+				<member name="m_meshletPrimitiveCounts" type="U32" array_size="kMaxLodCount"/>
+				<member name="m_meshletCounts" type="U32" array_size="kMaxLodCount"/>
 				<member name="m_subMeshCount" type="U32"/>
 				<member name="m_lodCount" type="U32"/>
-				<member name="m_aabbMin" type="Vec3" comment="Bounding box min"/>
-				<member name="m_aabbMax" type="Vec3" comment="Bounding box max"/>
+				<member name="m_maxPrimitivesPerMeshlet" type="U32"/>
+				<member name="m_maxVerticesPerMeshlet" type="U32"/>
+				<member name="m_boundingVolume" type="MeshBinaryBoundingVolume"/>
+			</members>
+		</class>
+
+		<class name="MeshBinarySubMesh" comment="The 2nd thing that appears in a mesh binary">
+			<members>
+				<member name="m_lods" type="MeshBinarySubMeshLod" array_size="kMaxLodCount"/>
+				<member name="m_boundingVolume" type="MeshBinaryBoundingVolume"/>
+			</members>
+		</class>
+
+		<class name="MeshBinaryMeshlet" comment="The 3rd thing that appears in a mesh binary">
+			<members>
+				<member name="m_firstPrimitive" type="U32" comment="Index of the 1st primitive"/>
+				<member name="m_primitiveCount" type="U32"/>
+				<member name="m_firstVertex" type="U32" comment="Index of the first vertex"/>
+				<member name="m_vertexCount" type="U32"/>
+				<member name="m_boundingVolume" type="MeshBinaryBoundingVolume"/>
+				<member name="m_coneApex" type="Vec3"/>
+				<member name="m_coneDirection" type="Vec3"/>
+				<member name="m_coneAngle" type="F32"/>
 			</members>
 		</class>
 	</classes>

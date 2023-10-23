@@ -66,6 +66,50 @@ void computeEdgesOfFrustum(F32 far, F32 fovX, F32 fovY, Vec3 points[4])
 	points[3] = Vec3(x, -y, z); // bot right
 }
 
+static Vec4 computeBoundingSphere2(const Vec3 O, const Vec3 A)
+{
+	const Vec3 a = A - O;
+
+	const Vec3 o = 0.5f * a;
+
+	const F32 radius = o.getLength() + kEpsilonf;
+	const Vec3 center = O + o;
+
+	return Vec4(center, radius);
+}
+
+static Vec4 computeBoundingSphere3(const Vec3 O, const Vec3 A, const Vec3 B)
+{
+	const Vec3 a = A - O;
+	const Vec3 b = B - O;
+
+	const Vec3 acrossb = a.cross(b);
+	const F32 denominator = 2.0f * (acrossb.dot(acrossb));
+
+	if(denominator == 0.0f) [[unlikely]]
+	{
+		// A pair in A,B,O are the same point or they are in the same line
+
+		if(a.getLengthSquared() > b.getLengthSquared())
+		{
+			return computeBoundingSphere2(O, A);
+		}
+		else
+		{
+			return computeBoundingSphere2(O, B);
+		}
+	}
+
+	Vec3 o = b.dot(b) * acrossb.cross(a);
+	o += a.dot(a) * b.cross(acrossb);
+	o /= denominator;
+
+	const F32 radius = o.getLength() + kEpsilonf;
+	const Vec3 center = O + o;
+
+	return Vec4(center, radius);
+}
+
 Vec4 computeBoundingSphereRecursive(WeakArray<const Vec3*> pPoints, U32 begin, U32 p, U32 b)
 {
 	Vec4 sphere;
@@ -73,49 +117,18 @@ Vec4 computeBoundingSphereRecursive(WeakArray<const Vec3*> pPoints, U32 begin, U
 	switch(b)
 	{
 	case 0:
-		sphere = Vec4(0.0f, 0.0f, 0.0f, -1.0f);
+		sphere = Vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		break;
 	case 1:
 		sphere = Vec4(*pPoints[begin - 1], kEpsilonf);
 		break;
 	case 2:
-	{
-		const Vec3 O = *pPoints[begin - 1];
-		const Vec3 A = *pPoints[begin - 2];
-
-		const Vec3 a = A - O;
-
-		const Vec3 o = 0.5f * a;
-
-		const F32 radius = o.getLength() + kEpsilonf;
-		const Vec3 center = O + o;
-
-		sphere = Vec4(center, radius);
+		sphere = computeBoundingSphere2(*pPoints[begin - 1], *pPoints[begin - 2]);
 		break;
-	}
 	case 3:
-	{
-		const Vec3 O = *pPoints[begin - 1];
-		const Vec3 A = *pPoints[begin - 2];
-		const Vec3 B = *pPoints[begin - 3];
-
-		const Vec3 a = A - O;
-		const Vec3 b = B - O;
-
-		const Vec3 acrossb = a.cross(b);
-		const F32 denominator = 2.0f * (acrossb.dot(acrossb));
-
-		Vec3 o = b.dot(b) * acrossb.cross(a);
-		o += a.dot(a) * b.cross(acrossb);
-		o /= denominator;
-
-		const F32 radius = o.getLength() + kEpsilonf;
-		const Vec3 center = O + o;
-
-		sphere = Vec4(center, radius);
-
+		sphere = computeBoundingSphere3(*pPoints[begin - 1], *pPoints[begin - 2], *pPoints[begin - 3]);
 		return sphere;
-	}
+		break;
 #if 0
 	// There is this case as well but it fails if points are coplanar so avoid it
 	case 4:
@@ -173,32 +186,56 @@ Vec4 computeBoundingSphereRecursive(WeakArray<const Vec3*> pPoints, U32 begin, U
 	return sphere;
 }
 
-Sphere computeBoundingSphere(ConstWeakArray<Vec3> points)
+Sphere computeBoundingSphere(const Vec3* firstPoint, U32 pointCount, PtrSize stride)
 {
-	ANKI_ASSERT(points.getSize() >= 3);
+	ANKI_ASSERT(firstPoint);
+	ANKI_ASSERT(pointCount >= 3);
+	ANKI_ASSERT(stride >= sizeof(Vec3));
 
 	DynamicArray<const Vec3*> pPointsDyn;
 	Array<const Vec3*, 8> pPointsArr;
 	WeakArray<const Vec3*> pPoints;
 
-	if(points.getSize() > pPointsArr.getSize())
+	if(pointCount > pPointsArr.getSize())
 	{
-		pPointsDyn.resize(points.getSize());
+		pPointsDyn.resize(pointCount);
 		pPoints = pPointsDyn;
 	}
 	else
 	{
-		pPoints = {&pPointsArr[0], points.getSize()};
+		pPoints = {&pPointsArr[0], pointCount};
 	}
 
-	for(U32 i = 0; i < points.getSize(); ++i)
+	for(U32 i = 0; i < pointCount; ++i)
 	{
-		pPoints[i] = &points[i];
+		pPoints[i] = reinterpret_cast<const Vec3*>(ptrToNumber(firstPoint) + i * stride);
 	}
 
 	const Vec4 sphere = computeBoundingSphereRecursive(pPoints, 0, pPoints.getSize(), 0);
 
 	return Sphere(sphere.xyz(), sphere.w());
+}
+
+Aabb computeBoundingAabb(const Vec3* firstPoint, U32 pointCount, PtrSize stride)
+{
+	ANKI_ASSERT(firstPoint);
+	ANKI_ASSERT(pointCount >= 3);
+	ANKI_ASSERT(stride >= sizeof(Vec3));
+
+	Vec3 min(kMaxF32);
+	Vec3 max(kMinF32);
+
+	for(U32 i = 0; i < pointCount; ++i)
+	{
+		const Vec3& point = *reinterpret_cast<const Vec3*>(ptrToNumber(firstPoint) + i * stride);
+
+		min = min.min(point);
+		max = max.max(point);
+	}
+
+	max += 10.0f * kEpsilonf;
+
+	return Aabb(min, max);
 }
 
 } // end namespace anki

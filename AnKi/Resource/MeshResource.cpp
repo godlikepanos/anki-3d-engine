@@ -93,8 +93,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 	// Misc
 	m_indexType = header.m_indexType;
-	m_aabb.setMin(header.m_aabbMin);
-	m_aabb.setMax(header.m_aabbMax);
+	m_aabb.setMin(header.m_boundingVolume.m_aabbMin);
+	m_aabb.setMax(header.m_boundingVolume.m_aabbMax);
 	m_positionsScale = header.m_vertexAttributes[VertexStreamId::kPosition].m_scale[0];
 	m_positionsTranslation = Vec3(&header.m_vertexAttributes[VertexStreamId::kPosition].m_translation[0]);
 
@@ -102,10 +102,14 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_subMeshes.resize(header.m_subMeshCount);
 	for(U32 i = 0; i < m_subMeshes.getSize(); ++i)
 	{
-		m_subMeshes[i].m_firstIndices = loader.getSubMeshes()[i].m_firstIndices;
-		m_subMeshes[i].m_indexCounts = loader.getSubMeshes()[i].m_indexCounts;
-		m_subMeshes[i].m_aabb.setMin(loader.getSubMeshes()[i].m_aabbMin);
-		m_subMeshes[i].m_aabb.setMax(loader.getSubMeshes()[i].m_aabbMax);
+		for(U32 lod = 0; lod < header.m_lodCount; ++lod)
+		{
+			m_subMeshes[i].m_firstIndices[lod] = loader.getSubMeshes()[i].m_lods[lod].m_firstIndex;
+			m_subMeshes[i].m_indexCounts[lod] = loader.getSubMeshes()[i].m_lods[lod].m_indexCount;
+		}
+
+		m_subMeshes[i].m_aabb.setMin(loader.getSubMeshes()[i].m_boundingVolume.m_aabbMin);
+		m_subMeshes[i].m_aabb.setMax(loader.getSubMeshes()[i].m_boundingVolume.m_aabbMax);
 	}
 
 	// LODs
@@ -115,13 +119,13 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		Lod& lod = m_lods[l];
 
 		// Index stuff
-		lod.m_indexCount = header.m_totalIndexCounts[l];
+		lod.m_indexCount = header.m_indexCounts[l];
 		ANKI_ASSERT((lod.m_indexCount % 3) == 0 && "Expecting triangles");
 		const PtrSize indexBufferSize = PtrSize(lod.m_indexCount) * getIndexSize(m_indexType);
 		lod.m_indexBufferAllocationToken = UnifiedGeometryBuffer::getSingleton().allocate(indexBufferSize, getIndexSize(m_indexType));
 
 		// Vertex stuff
-		lod.m_vertexCount = header.m_totalVertexCounts[l];
+		lod.m_vertexCount = header.m_vertexCounts[l];
 		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
 			if(header.m_vertexAttributes[stream].m_format == Format::kNone)

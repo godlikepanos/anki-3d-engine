@@ -229,7 +229,10 @@ void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane);
 void computeEdgesOfFrustum(F32 far, F32 fovX, F32 fovY, Vec3 points[4]);
 
 /// Welzl's algorithm that computes a compact bounding sphere given a point cloud.
-Sphere computeBoundingSphere(ConstWeakArray<Vec3> points);
+ANKI_PURE Sphere computeBoundingSphere(const Vec3* firstPoint, U32 pointCount, PtrSize stride);
+
+/// Computes an AABB given a point cloud.
+ANKI_PURE Aabb computeBoundingAabb(const Vec3* firstPoint, U32 pointCount, PtrSize stride);
 
 /// @}
 

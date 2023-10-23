@@ -765,6 +765,9 @@ constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
 
 constexpr U32 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
 
+constexpr U32 kMaxPrimitivesPerMeshlet = 64;
+constexpr U32 kMaxVerticesPerMeshlet = 64;
+
 struct DrawIndirectArgs
 {
 	U32 m_vertexCount;

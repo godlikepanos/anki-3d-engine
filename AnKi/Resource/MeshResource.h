@@ -114,8 +114,8 @@ private:
 	class SubMesh
 	{
 	public:
-		Array<U32, kMaxLodCount> m_firstIndices;
-		Array<U32, kMaxLodCount> m_indexCounts;
+		Array<U32, kMaxLodCount> m_firstIndices = {};
+		Array<U32, kMaxLodCount> m_indexCounts = {};
 		Aabb m_aabb;
 	};
 
