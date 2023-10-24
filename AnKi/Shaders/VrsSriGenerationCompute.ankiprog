@@ -191,4 +191,4 @@ RF32 computeLuma(RVec3 color)
 	}
 }
 
-#pragma anki end
+#pragma anki end comp

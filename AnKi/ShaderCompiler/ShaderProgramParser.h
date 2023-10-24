@@ -80,8 +80,8 @@ private:
 /// #include {<> | ""}
 /// #pragma once
 /// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2] ...]
-/// #pragma anki start {vert | tessc | tesse | geom | frag | comp | rgen | ahit | chit | miss | int | call}
-/// #pragma anki end
+/// #pragma anki start {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call}
+/// #pragma anki end {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call}
 /// #pragma anki library "name"
 /// #pragma anki ray_type NUMBER
 /// #pragma anki reflect NAME
@@ -182,7 +182,7 @@ private:
 	DynamicArray<PartialMutationSkip> m_skipMutations;
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
-	Bool m_insideShader = false;
+	ShaderType m_insideShader = ShaderType::kCount;
 	ShaderCompilerOptions m_compilerOptions;
 
 	String m_libName;

@@ -52,7 +52,7 @@ void main()
 {
 	gl_Position = u_ankiPerInstance[gl_InstanceIndex].m_ankiMvp * u_mats[gl_InstanceIndex].m_mat * Vec4(gl_VertexID);
 }
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 layout(location = 0) out Vec3 out_color;
@@ -71,7 +71,7 @@ void main()
 
 	out_color += u_color.xyz;
 }
-#pragma anki end
+#pragma anki end frag
 	)";
 
 	// Write the file
@@ -258,7 +258,7 @@ void main()
 {
 	gl_Position = Vec4(gl_VertexIndex);
 }
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 layout(location = 0) out Vec3 out_color;
@@ -267,7 +267,7 @@ void main()
 {
 	out_color = Vec3(0.0);
 }
-#pragma anki end
+#pragma anki end frag
 	)";
 
 	// Write the file

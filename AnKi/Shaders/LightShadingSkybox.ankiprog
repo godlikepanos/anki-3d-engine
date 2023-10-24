@@ -25,7 +25,7 @@ VertOut main(U32 vertId : SV_VERTEXID)
 	return output;
 }
 
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 
@@ -80,4 +80,4 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 }
 
-#pragma anki end
+#pragma anki end frag

@@ -44,7 +44,7 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 
@@ -76,4 +76,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 	return RVec4(outColor, 1.0);
 }
 
-#pragma anki end
+#pragma anki end frag

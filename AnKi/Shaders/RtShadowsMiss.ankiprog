@@ -14,4 +14,4 @@
 {
 	payload.m_shadowFactor = 1.0;
 }
-#pragma anki end
+#pragma anki end miss

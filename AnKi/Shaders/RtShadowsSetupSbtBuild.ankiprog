@@ -25,4 +25,4 @@
 	g_args[0] = args;
 }
 
-#pragma anki end
+#pragma anki end comp

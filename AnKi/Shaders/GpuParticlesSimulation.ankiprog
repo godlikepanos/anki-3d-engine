@@ -139,4 +139,4 @@ void initParticle(UVec3 svDispatchThreadId, out GpuParticle p)
 	g_particles[particleIdx] = particle;
 }
 
-#pragma anki end
+#pragma anki end comp

@@ -139,4 +139,4 @@ F32 computeVarianceCenter(Vec2 uv)
 	g_outUav[svDispatchThreadId.xy] = shadowFactor;
 }
 
-#pragma anki end
+#pragma anki end comp

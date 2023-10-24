@@ -5,7 +5,7 @@
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -120,4 +120,4 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 	output.m_roughnessAndOther = roughnessAndOther;
 	return output;
 }
-#pragma anki end
+#pragma anki end frag

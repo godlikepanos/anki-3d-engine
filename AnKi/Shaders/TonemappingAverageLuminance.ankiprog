@@ -99,4 +99,4 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0), finalAvgLum);
 	}
 }
-#pragma anki end
+#pragma anki end comp

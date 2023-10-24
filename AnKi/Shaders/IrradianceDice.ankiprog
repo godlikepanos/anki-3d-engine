@@ -226,4 +226,4 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 	}
 }
 
-#pragma anki end
+#pragma anki end comp

@@ -67,7 +67,7 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 	return mul(g_consts.m_reprojectionMat, Vec4(ndc, 1.0));
 }
 
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 
@@ -75,4 +75,4 @@ void main()
 {
 }
 
-#pragma anki end
+#pragma anki end frag

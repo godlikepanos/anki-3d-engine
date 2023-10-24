@@ -147,4 +147,4 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	}
 }
 
-#pragma anki end
+#pragma anki end comp

@@ -7,7 +7,7 @@
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 
@@ -50,4 +50,4 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif
 }
 
-#pragma anki end
+#pragma anki end frag

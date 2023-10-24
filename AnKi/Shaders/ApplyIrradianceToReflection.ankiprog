@@ -49,4 +49,4 @@
 	// Write it back
 	g_cubeTex[faceIdx][dispatchThreadId] = RVec4(prevColorWithIndirectDiffuse, 0.0);
 }
-#pragma anki end
+#pragma anki end comp

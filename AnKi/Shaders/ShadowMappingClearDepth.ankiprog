@@ -15,10 +15,10 @@ Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
 	return Vec4(pos, 1.0, 1.0);
 }
 
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 void main()
 {
 }
-#pragma anki end
+#pragma anki end frag

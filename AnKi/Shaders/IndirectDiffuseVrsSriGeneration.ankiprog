@@ -164,4 +164,4 @@ F32 sampleViewPositionZ(Vec2 uv, I32 offsetX, I32 offsetY)
 	}
 }
 
-#pragma anki end
+#pragma anki end comp

@@ -61,4 +61,4 @@ struct Constants
 #endif
 }
 
-#pragma anki end
+#pragma anki end comp

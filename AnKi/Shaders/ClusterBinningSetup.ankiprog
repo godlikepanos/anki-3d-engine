@@ -68,4 +68,4 @@ constexpr U32 kPackVisiblesThreadgroupSize = 64;
 	}
 }
 
-#pragma anki end
+#pragma anki end comp

@@ -79,7 +79,7 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -104,4 +104,4 @@ FragOut main(VertOut input)
 	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
 	return output;
 }
-#pragma anki end
+#pragma anki end frag

@@ -29,6 +29,72 @@ inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
 
 static const U64 kShaderHeaderHash = computeHash(kShaderHeader, sizeof(kShaderHeader));
 
+static ShaderType strToShaderType(CString str)
+{
+	ShaderType shaderType = ShaderType::kCount;
+	if(str == "vert")
+	{
+		shaderType = ShaderType::kVertex;
+	}
+	else if(str == "tessc")
+	{
+		shaderType = ShaderType::kTessellationControl;
+	}
+	else if(str == "tesse")
+	{
+	}
+	else if(str == "geom")
+	{
+		shaderType = ShaderType::kGeometry;
+	}
+	else if(str == "task")
+	{
+		shaderType = ShaderType::kTask;
+	}
+	else if(str == "mesh")
+	{
+		shaderType = ShaderType::kMesh;
+	}
+	else if(str == "frag")
+	{
+		shaderType = ShaderType::kFragment;
+	}
+	else if(str == "comp")
+	{
+		shaderType = ShaderType::kCompute;
+	}
+	else if(str == "rgen")
+	{
+		shaderType = ShaderType::kRayGen;
+	}
+	else if(str == "ahit")
+	{
+		shaderType = ShaderType::kAnyHit;
+	}
+	else if(str == "chit")
+	{
+		shaderType = ShaderType::kClosestHit;
+	}
+	else if(str == "miss")
+	{
+		shaderType = ShaderType::kMiss;
+	}
+	else if(str == "int")
+	{
+		shaderType = ShaderType::kIntersection;
+	}
+	else if(str == "call")
+	{
+		shaderType = ShaderType::kCallable;
+	}
+	else
+	{
+		shaderType = ShaderType::kCount;
+	}
+
+	return shaderType;
+}
+
 ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, const ShaderCompilerOptions& compilerOptions)
 	: m_fname(fname)
 	, m_fsystem(fsystem)
@@ -75,63 +141,8 @@ Error ShaderProgramParser::parsePragmaStart(const String* begin, const String* e
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	ShaderType shaderType = ShaderType::kCount;
-	if(*begin == "vert")
-	{
-		shaderType = ShaderType::kVertex;
-	}
-	else if(*begin == "tessc")
-	{
-		shaderType = ShaderType::kTessellationControl;
-	}
-	else if(*begin == "tesse")
-	{
-	}
-	else if(*begin == "geom")
-	{
-		shaderType = ShaderType::kGeometry;
-	}
-	else if(*begin == "task")
-	{
-		shaderType = ShaderType::kTask;
-	}
-	else if(*begin == "mesh")
-	{
-		shaderType = ShaderType::kMesh;
-	}
-	else if(*begin == "frag")
-	{
-		shaderType = ShaderType::kFragment;
-	}
-	else if(*begin == "comp")
-	{
-		shaderType = ShaderType::kCompute;
-	}
-	else if(*begin == "rgen")
-	{
-		shaderType = ShaderType::kRayGen;
-	}
-	else if(*begin == "ahit")
-	{
-		shaderType = ShaderType::kAnyHit;
-	}
-	else if(*begin == "chit")
-	{
-		shaderType = ShaderType::kClosestHit;
-	}
-	else if(*begin == "miss")
-	{
-		shaderType = ShaderType::kMiss;
-	}
-	else if(*begin == "int")
-	{
-		shaderType = ShaderType::kIntersection;
-	}
-	else if(*begin == "call")
-	{
-		shaderType = ShaderType::kCallable;
-	}
-	else
+	const ShaderType shaderType = strToShaderType(*begin);
+	if(shaderType == ShaderType::kCount)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
@@ -154,11 +165,11 @@ Error ShaderProgramParser::parsePragmaStart(const String* begin, const String* e
 	m_shaderTypes |= mask;
 
 	// Check bounds
-	if(m_insideShader)
+	if(m_insideShader != ShaderType::kCount)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Can't have #pragma start before you close the previous pragma start");
 	}
-	m_insideShader = true;
+	m_insideShader = shaderType;
 
 	return Error::kNone;
 }
@@ -168,17 +179,36 @@ Error ShaderProgramParser::parsePragmaEnd(const String* begin, const String* end
 	ANKI_ASSERT(begin && end);
 
 	// Check tokens
-	if(begin != end)
+	if(begin >= end)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
+	const ShaderType shaderType = strToShaderType(*begin);
+	if(shaderType == ShaderType::kCount)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	++begin;
+	if(begin != end)
+	{
+		// Should be the last token
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
 	// Check bounds
-	if(!m_insideShader)
+	if(m_insideShader == ShaderType::kCount)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Can't have #pragma end before you open with a pragma start");
 	}
-	m_insideShader = false;
+
+	if(m_insideShader != shaderType)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Shader type in #pragma end doesn't match the one in previous #pragma start");
+	}
+
+	m_insideShader = ShaderType::kCount;
 
 	// Write code
 	m_codeLines.pushBack("#endif // Shader guard");
@@ -924,7 +954,7 @@ Error ShaderProgramParser::parse()
 			}
 		}
 
-		if(m_insideShader)
+		if(m_insideShader != ShaderType::kCount)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Forgot a \"pragma anki end\"");
 			return Error::kUserData;

@@ -48,4 +48,4 @@
 	g_sbtBuffer[sbtDwordOffset] = 0;
 }
 
-#pragma anki end
+#pragma anki end comp

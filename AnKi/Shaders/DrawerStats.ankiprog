@@ -39,7 +39,7 @@ VertOut main(U32 vertId : SV_VERTEXID)
 
 	return output;
 }
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 
@@ -120,4 +120,4 @@ main(Vec4 svPosition : SV_POSITION)
 	return (FragOut)0;
 #endif
 }
-#pragma anki end
+#pragma anki end frag

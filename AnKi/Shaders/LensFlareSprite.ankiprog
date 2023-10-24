@@ -35,7 +35,7 @@ VertOut main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID)
 
 	return output;
 }
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 
@@ -47,4 +47,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const RVec4 col = g_tex.Sample(g_trilinearRepeatSampler, input.m_uv);
 	return col * input.m_color;
 }
-#pragma anki end
+#pragma anki end frag

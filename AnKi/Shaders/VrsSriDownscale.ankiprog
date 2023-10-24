@@ -34,4 +34,4 @@ struct Constants
 	g_outUav[svDispatchThreadId.xy] = UVec4(encodeVrsRate(rate), 0, 0, 0);
 }
 
-#pragma anki end
+#pragma anki end comp

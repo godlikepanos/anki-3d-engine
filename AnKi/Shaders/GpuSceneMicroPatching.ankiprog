@@ -27,4 +27,4 @@
 	g_dstBuffer[dstDwordOffset + svGroupIndex] = g_srcBuffer[srcDwordOffset + svGroupIndex];
 }
 
-#pragma anki end
+#pragma anki end comp

@@ -57,4 +57,4 @@
 	g_fullShadowUav[svDispatchThreadId.xy] = sumShadowFactor;
 }
 
-#pragma anki end
+#pragma anki end comp

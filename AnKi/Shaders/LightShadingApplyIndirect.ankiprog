@@ -5,7 +5,7 @@
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 #include <AnKi/Shaders/BilateralFilter.hlsl>
@@ -117,4 +117,4 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	// Writeout
 	return min(diffuse + specular, RVec3(kMaxRF32, kMaxRF32, kMaxRF32));
 }
-#pragma anki end
+#pragma anki end frag

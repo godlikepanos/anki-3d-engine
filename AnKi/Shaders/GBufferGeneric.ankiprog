@@ -207,7 +207,7 @@ VertOut main(VertIn input)
 	return output;
 };
 
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 
@@ -325,4 +325,4 @@ FragOut main(VertOut input)
 }
 #endif
 
-#pragma anki end
+#pragma anki end frag

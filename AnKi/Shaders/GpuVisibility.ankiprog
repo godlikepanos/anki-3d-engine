@@ -254,4 +254,4 @@ struct DrawIndirectArgsWithPadding
 #endif
 }
 
-#pragma anki end
+#pragma anki end comp

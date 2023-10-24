@@ -133,4 +133,4 @@ Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 	// Store the moments
 	g_momentsImage[DispatchRaysIndex().xy] = Vec4(moments, 0.0, 0.0);
 }
-#pragma anki end
+#pragma anki end rgen

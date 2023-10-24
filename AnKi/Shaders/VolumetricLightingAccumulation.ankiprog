@@ -290,4 +290,4 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	g_volume[svDispatchThreadId] = lightAndFog;
 }
 
-#pragma anki end
+#pragma anki end comp

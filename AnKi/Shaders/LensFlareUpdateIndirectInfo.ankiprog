@@ -57,4 +57,4 @@ groupshared U32 s_maxDepth;
 		g_indirectInfo[flareIdx].m_firstInstance = 0u;
 	}
 }
-#pragma anki end
+#pragma anki end comp

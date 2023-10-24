@@ -9,7 +9,7 @@
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 #include <AnKi/Shaders/Functions.hlsl>
@@ -85,4 +85,4 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	return outColor;
 }
 
-#pragma anki end
+#pragma anki end frag

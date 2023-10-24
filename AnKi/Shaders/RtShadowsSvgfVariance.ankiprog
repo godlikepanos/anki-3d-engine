@@ -118,4 +118,4 @@ Vec3 toViewspace(Vec2 uv, F32 depth)
 	g_shadowUav[svDispatchThreadId] = outShadowFactor;
 	g_varianceUav[svDispatchThreadId] = Vec4(outVariance, 0.0, 0.0, 0.0);
 }
-#pragma anki end
+#pragma anki end comp

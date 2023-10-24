@@ -5,7 +5,7 @@
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 #include <AnKi/Shaders/Common.hlsl>
@@ -17,4 +17,4 @@ F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	return g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x;
 }
-#pragma anki end
+#pragma anki end frag

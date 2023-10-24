@@ -5,7 +5,7 @@
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki end vert
 
 #pragma anki start frag
 #include <AnKi/Shaders/Functions.hlsl>
@@ -19,4 +19,4 @@ Vec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	const UVec2 rate = decodeVrsRate(texel);
 	return visualizeVrsRate(rate);
 }
-#pragma anki end
+#pragma anki end frag

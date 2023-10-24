@@ -17,7 +17,7 @@ Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
 	const Vec2 pos = uv * 2.0 - 1.0;
 	return Vec4(pos, 0.0, 1.0);
 }
-#pragma anki end
+#pragma anki end vert
 
 // FRAG
 #pragma anki start frag
@@ -126,4 +126,4 @@ RVec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	return outColor;
 }
 
-#pragma anki end
+#pragma anki end frag

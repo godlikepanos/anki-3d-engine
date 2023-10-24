@@ -62,7 +62,7 @@
 	AcceptHitAndEndSearch();
 #endif
 }
-#pragma anki end
+#pragma anki end ahit
 
 #pragma anki start chit
 [shader("closesthit")] void main(inout RayPayload payload, in Barycentrics barycentrics)
@@ -70,4 +70,4 @@
 	ANKI_MAYBE_UNUSED(payload);
 	ANKI_MAYBE_UNUSED(barycentrics);
 }
-#pragma anki end
+#pragma anki end chit

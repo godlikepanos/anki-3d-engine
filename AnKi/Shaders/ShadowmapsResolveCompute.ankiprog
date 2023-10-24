@@ -5,4 +5,4 @@
 
 #pragma anki start comp
 #include <AnKi/Shaders/ShadowmapsResolve.hlsl>
-#pragma anki end
+#pragma anki end comp
