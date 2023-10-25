@@ -7,7 +7,6 @@
 
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Gr/Common.h>
-#include <AnKi/Shaders/Include/ModelTypes.h>
 
 namespace anki {
 

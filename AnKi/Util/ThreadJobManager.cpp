@@ -50,9 +50,9 @@ ThreadJobManager::~ThreadJobManager()
 	{
 		LockGuard lock(m_tasksMtx);
 		m_quit = true;
-	}
 
-	m_cvar.notifyAll();
+		m_cvar.notifyAll();
+	}
 
 	for(WorkerThread* thread : m_threads)
 	{
