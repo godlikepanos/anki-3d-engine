@@ -44,6 +44,8 @@ public:
 		return *this;
 	}
 
+	operator BufferOffsetRange() const;
+
 	Bool isValid() const
 	{
 		return m_token.m_offset != kMaxPtrSize;
@@ -141,6 +143,11 @@ private:
 inline UnifiedGeometryBufferAllocation::~UnifiedGeometryBufferAllocation()
 {
 	UnifiedGeometryBuffer::getSingleton().deferredFree(*this);
+}
+
+inline UnifiedGeometryBufferAllocation::operator BufferOffsetRange() const
+{
+	return {&UnifiedGeometryBuffer::getSingleton().getBuffer(), getOffset(), getAllocatedSize()};
 }
 /// @}
 

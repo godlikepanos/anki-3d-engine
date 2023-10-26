@@ -45,6 +45,10 @@ public:
 
 	Error storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, PtrSize size);
 
+	Error storeMeshletIndicesBuffer(U32 lod, void* ptr, PtrSize size);
+
+	Error storeMeshletBuffer(U32 lod, WeakArray<MeshBinaryMeshlet> out);
+
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
 	Error storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices, ResourceDynamicArray<Vec3>& positions);
 
@@ -96,7 +100,7 @@ private:
 	{
 		ANKI_ASSERT(isLoaded());
 		ANKI_ASSERT(lod < m_header.m_lodCount);
-		return PtrSize(m_header.m_meshletPrimitiveCounts[lod]) * sizeof(U8Vec4);
+		return PtrSize(m_header.m_meshletPrimitiveCounts[lod]) * getFormatInfo(kMeshletPrimitiveFormat).m_texelSize;
 	}
 
 	PtrSize getLodBuffersSize(U32 lod) const;

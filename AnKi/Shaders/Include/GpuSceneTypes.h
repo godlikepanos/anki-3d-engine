@@ -56,14 +56,18 @@ struct GpuSceneMeshLod
 	U32 m_indexCount;
 	U32 m_firstIndex; // In sizeof(indexType)
 
+	UVec2 m_padding1;
+	U32 m_firstMeshlet; // In sizeof(Meshlet)
+	U32 m_meshletCount;
+
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;
 
 	UVec2 m_blasAddress;
 	U32 m_tlasInstanceMask; ///< Mask that goes to AccelerationStructureInstance::m_instanceCustomIndex24_mask8
-	U32 m_padding;
+	U32 m_padding2;
 };
-static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 4);
+static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 5);
 
 struct GpuSceneParticleEmitter
 {

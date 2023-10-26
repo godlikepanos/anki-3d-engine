@@ -379,6 +379,14 @@ public:
 	/// @param value The value to fill the buffer with.
 	void fillBuffer(Buffer* buff, PtrSize offset, PtrSize size, U32 value);
 
+	/// Fill a buffer with some value.
+	/// @param[in,out] buff The buffer to fill.
+	/// @param value The value to fill the buffer with.
+	void fillBuffer(const BufferOffsetRange& buff, U32 value)
+	{
+		fillBuffer(buff.m_buffer, buff.m_offset, buff.m_range, value);
+	}
+
 	/// Write the occlusion result to buffer.
 	/// @param[in] queries The queries to write the result of.
 	/// @param offset The offset inside the buffer to write the result.

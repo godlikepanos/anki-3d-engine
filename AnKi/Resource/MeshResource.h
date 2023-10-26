@@ -68,6 +68,13 @@ public:
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
+	void getMeshletInfo(U32 lod, PtrSize& meshletOffset, U32& meshletCount)
+	{
+		meshletOffset = m_lods[lod].m_meshlets.getOffset();
+		ANKI_ASSERT(m_lods[lod].m_meshletCount);
+		meshletCount = m_lods[lod].m_meshletCount;
+	}
+
 	const AccelerationStructurePtr& getBottomLevelAccelerationStructure(U32 lod) const
 	{
 		ANKI_ASSERT(m_lods[lod].m_blas);
@@ -105,8 +112,12 @@ private:
 		UnifiedGeometryBufferAllocation m_indexBufferAllocationToken;
 		Array<UnifiedGeometryBufferAllocation, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
 
+		UnifiedGeometryBufferAllocation m_meshletIndices;
+		UnifiedGeometryBufferAllocation m_meshlets;
+
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;
+		U32 m_meshletCount = 0;
 
 		AccelerationStructurePtr m_blas;
 	};

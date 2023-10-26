@@ -201,7 +201,7 @@ Error MeshBinaryLoader::checkHeader() const
 		return Error::kUserData;
 	}
 
-	if(h.m_meshletPrimitiveFormat != Format::kR8G8B8A8_Uint)
+	if(h.m_meshletPrimitiveFormat != kMeshletPrimitiveFormat)
 	{
 		ANKI_RESOURCE_LOGE("Wrong format for meshlet primitives");
 		return Error::kUserData;
@@ -313,6 +313,57 @@ Error MeshBinaryLoader::storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, Ptr
 
 	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::kBeginning));
 	ANKI_CHECK(m_file->read(ptr, size));
+
+	return Error::kNone;
+}
+
+Error MeshBinaryLoader::storeMeshletIndicesBuffer(U32 lod, void* ptr, PtrSize size)
+{
+	ANKI_ASSERT(ptr);
+	ANKI_ASSERT(isLoaded());
+	ANKI_ASSERT(size == getMeshletPrimitivesBufferSize(lod));
+	ANKI_ASSERT(lod < m_header.m_lodCount);
+
+	PtrSize seek = sizeof(m_header) + m_subMeshes.getSizeInBytes();
+
+	for(U32 l = lod + 1; l < m_header.m_lodCount; ++l)
+	{
+		seek += getLodBuffersSize(l);
+	}
+
+	for(U32 i = 0; i < m_header.m_vertexBuffers.getSize(); ++i)
+	{
+		seek += getVertexBufferSize(lod, i);
+	}
+
+	seek += getMeshletsBufferSize(lod);
+
+	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::kBeginning));
+	ANKI_CHECK(m_file->read(ptr, size));
+
+	return Error::kNone;
+}
+
+Error MeshBinaryLoader::storeMeshletBuffer(U32 lod, WeakArray<MeshBinaryMeshlet> out)
+{
+	ANKI_ASSERT(isLoaded());
+	ANKI_ASSERT(out.getSizeInBytes() == getMeshletsBufferSize(lod));
+	ANKI_ASSERT(lod < m_header.m_lodCount);
+
+	PtrSize seek = sizeof(m_header) + m_subMeshes.getSizeInBytes();
+
+	for(U32 l = lod + 1; l < m_header.m_lodCount; ++l)
+	{
+		seek += getLodBuffersSize(l);
+	}
+
+	for(U32 i = 0; i < m_header.m_vertexBuffers.getSize(); ++i)
+	{
+		seek += getVertexBufferSize(lod, i);
+	}
+
+	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::kBeginning));
+	ANKI_CHECK(m_file->read(&out[0], out.getSizeInBytes()));
 
 	return Error::kNone;
 }

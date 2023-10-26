@@ -73,6 +73,8 @@ inline constexpr Array<Format, U32(VertexStreamId::kMeshRelatedCount)> kMeshRela
 inline constexpr Array<Format, U32(VertexStreamId::kParticleRelatedCount)> kParticleRelatedVertexStreamFormats = {
 	Format::kR32G32B32_Sfloat, Format::kR32G32B32_Sfloat, Format::kR32_Sfloat,      Format::kR32G32B32A32_Sfloat,
 	Format::kR32_Sfloat,       Format::kR32_Sfloat,       Format::kR32G32B32_Sfloat};
+
+constexpr Format kMeshletPrimitiveFormat = Format::kR8G8B8A8_Uint;
 #endif
 
 struct UnpackedMeshVertex
@@ -84,5 +86,20 @@ struct UnpackedMeshVertex
 	UVec4 m_boneIndices;
 	RVec4 m_boneWeights;
 };
+
+struct Meshlet
+{
+	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
+	U32 m_firstPrimitive; // In size of kMeshletPrimitiveFormat
+	U32 m_primitiveCount_R16_Uint_vertexCount_R16_Uint;
+
+	Vec3 m_sphereCenter;
+	F32 m_sphereRadius;
+
+	Vec3 m_coneApex;
+	U32 m_coneDirection_R8G8B8_Snorm_coneCosOfHalfAngle_R8_Snorm;
+};
+// Power of 2 because the sizeof will be used as allocation alignment and allocation alignments need to be power of 2
+static_assert(isPowerOfTwo(sizeof(Meshlet)));
 
 ANKI_END_NAMESPACE

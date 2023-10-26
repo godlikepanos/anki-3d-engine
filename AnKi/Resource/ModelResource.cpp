@@ -11,29 +11,6 @@
 
 namespace anki {
 
-void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const
-{
-	ANKI_ASSERT(!(!supportsSkinning() && key.getSkinned()));
-	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
-
-	// Vertex attributes & bindings
-	{
-		inf.m_indexBufferOffset = m_lodInfos[meshLod].m_indexBufferOffset;
-		inf.m_indexType = IndexType::kU16;
-		inf.m_firstIndex = m_lodInfos[meshLod].m_firstIndex;
-		inf.m_indexCount = m_lodInfos[meshLod].m_indexCount;
-
-		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
-		{
-			inf.m_vertexBufferOffsets[stream] = m_lodInfos[meshLod].m_vertexBufferOffsets[stream];
-		}
-	}
-
-	// Get program
-	const MaterialVariant& variant = m_mtl->getOrCreateVariant(key);
-	inf.m_program = variant.getShaderProgram();
-}
-
 void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 {
 	lod = min<U32>(lod, m_meshLodCount - 1);
@@ -50,6 +27,18 @@ void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 	if(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
 	{
 		inf.m_blas = m_mesh->getBottomLevelAccelerationStructure(lod);
+	}
+
+	if(m_lodInfos[lod].m_meshletCount != kMaxU32)
+	{
+		ANKI_ASSERT(m_lodInfos[lod].m_meshletsOffset != kMaxPtrSize);
+		inf.m_meshletCount = m_lodInfos[lod].m_meshletCount;
+		inf.m_meshletsOffset = m_lodInfos[lod].m_meshletsOffset;
+	}
+	else
+	{
+		inf.m_meshletCount = 0;
+		inf.m_meshletsOffset = kMaxPtrSize;
 	}
 }
 
@@ -120,6 +109,11 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 			{
 				lod.m_vertexBufferOffsets[stream] = kMaxPtrSize;
 			}
+		}
+
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+		{
+			m_mesh->getMeshletInfo(l, lod.m_meshletsOffset, lod.m_meshletCount);
 		}
 	}
 

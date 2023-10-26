@@ -139,6 +139,18 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 				UnifiedGeometryBuffer::getSingleton().allocateFormat(kMeshRelatedVertexStreamFormats[stream], lod.m_vertexCount);
 		}
 
+		// Meshlet
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+		{
+			const PtrSize meshletIndicesSize = header.m_meshletPrimitiveCounts[l] * sizeof(U8Vec4);
+			lod.m_meshletIndices = UnifiedGeometryBuffer::getSingleton().allocate(meshletIndicesSize, sizeof(U8Vec4));
+
+			const PtrSize meshletsSize = header.m_meshletCounts[l] * sizeof(Meshlet);
+			lod.m_meshlets = UnifiedGeometryBuffer::getSingleton().allocate(meshletsSize, sizeof(Meshlet));
+
+			lod.m_meshletCount = header.m_meshletCounts[l];
+		}
+
 		// BLAS
 		if(rayTracingEnabled)
 		{
@@ -168,16 +180,20 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 		for(const Lod& lod : m_lods)
 		{
-			cmdb->fillBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), lod.m_indexBufferAllocationToken.getOffset(),
-							 PtrSize(lod.m_indexCount) * getIndexSize(m_indexType), 0);
+			cmdb->fillBuffer(lod.m_indexBufferAllocationToken, 0);
 
 			for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 			{
 				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
 				{
-					cmdb->fillBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), lod.m_vertexBuffersAllocationToken[stream].getOffset(),
-									 lod.m_vertexBuffersAllocationToken[stream].getAllocatedSize(), 0);
+					cmdb->fillBuffer(lod.m_vertexBuffersAllocationToken[stream], 0);
 				}
+			}
+
+			if(lod.m_meshletIndices.isValid())
+			{
+				cmdb->fillBuffer(lod.m_meshletIndices, 0);
+				cmdb->fillBuffer(lod.m_meshlets, 0);
 			}
 		}
 
@@ -209,7 +225,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	GrManager& gr = GrManager::getSingleton();
 	TransferGpuAllocator& transferAlloc = ResourceManager::getSingleton().getTransferGpuAllocator();
 
-	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1)> handles;
+	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1 + 2)> handles;
 	U32 handleCount = 0;
 
 	Buffer* unifiedGeometryBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
@@ -265,6 +281,58 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			// Copy
 			cmdb->copyBufferToBuffer(&handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer,
 									 lod.m_vertexBuffersAllocationToken[stream].getOffset(), handle.getRange());
+		}
+
+		if(lod.m_meshlets.isValid())
+		{
+			// Indices
+			TransferGpuAllocatorHandle& handle = handles[handleCount++];
+			const PtrSize primitivesSize = lod.m_meshletIndices.getAllocatedSize();
+			ANKI_CHECK(transferAlloc.allocate(primitivesSize, handle));
+			ANKI_CHECK(loader.storeMeshletIndicesBuffer(lodIdx, handle.getMappedMemory(), primitivesSize));
+
+			cmdb->copyBufferToBuffer(&handle.getBuffer(), handle.getOffset(), unifiedGeometryBuffer, lod.m_meshletIndices.getOffset(),
+									 handle.getRange());
+
+			// Meshlets
+			ResourceDynamicArray<MeshBinaryMeshlet> binaryMeshlets;
+			binaryMeshlets.resize(loader.getHeader().m_meshletCounts[lodIdx]);
+			ANKI_CHECK(loader.storeMeshletBuffer(lodIdx, WeakArray(binaryMeshlets)));
+
+			TransferGpuAllocatorHandle& handle2 = handles[handleCount++];
+			ANKI_CHECK(transferAlloc.allocate(lod.m_meshlets.getAllocatedSize(), handle2));
+			WeakArray<Meshlet> outMeshlets(static_cast<Meshlet*>(handle2.getMappedMemory()), loader.getHeader().m_meshletCounts[lodIdx]);
+
+			for(U32 i = 0; i < binaryMeshlets.getSize(); ++i)
+			{
+				const MeshBinaryMeshlet& inMeshlet = binaryMeshlets[i];
+				Meshlet& outMeshlet = outMeshlets[i];
+
+				outMeshlet = {};
+				for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
+				{
+					if(!(m_presentVertStreams & VertexStreamMask(1u << stream)))
+					{
+						continue;
+					}
+
+					outMeshlet.m_vertexOffsets[U32(stream)] =
+						lod.m_vertexBuffersAllocationToken[stream].getOffset()
+						+ inMeshlet.m_firstVertex * getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+				}
+
+				outMeshlet.m_firstPrimitive =
+					lod.m_meshletIndices.getOffset() + inMeshlet.m_firstPrimitive * getFormatInfo(kMeshletPrimitiveFormat).m_texelSize;
+				outMeshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) & inMeshlet.m_vertexCount;
+				outMeshlet.m_sphereCenter = inMeshlet.m_boundingVolume.m_sphereCenter;
+				outMeshlet.m_sphereRadius = inMeshlet.m_boundingVolume.m_sphereRadius;
+				outMeshlet.m_coneApex = inMeshlet.m_coneApex;
+				outMeshlet.m_coneDirection_R8G8B8_Snorm_coneCosOfHalfAngle_R8_Snorm =
+					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)));
+			}
+
+			cmdb->copyBufferToBuffer(&handle2.getBuffer(), handle2.getOffset(), unifiedGeometryBuffer, lod.m_meshlets.getOffset(),
+									 handle2.getRange());
 		}
 	}
 

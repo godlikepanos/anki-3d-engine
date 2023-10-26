@@ -180,6 +180,13 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					memcpy(&meshLod.m_blasAddress, &address, sizeof(meshLod.m_blasAddress));
 					meshLod.m_tlasInstanceMask = 0xFFFFFFFF;
 				}
+
+				if(inf.m_meshletCount)
+				{
+					ANKI_ASSERT((inf.m_meshletsOffset % sizeof(Meshlet)) == 0);
+					meshLod.m_firstMeshlet = U32(inf.m_meshletsOffset / sizeof(Meshlet));
+					meshLod.m_meshletCount = inf.m_meshletCount;
+				}
 			}
 
 			// Copy the last LOD to the rest just in case
