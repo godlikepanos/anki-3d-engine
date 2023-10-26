@@ -50,9 +50,9 @@ ThreadJobManager::~ThreadJobManager()
 	{
 		LockGuard lock(m_mtx);
 		m_quit = true;
-
-		m_cvar.notifyAll();
 	}
+
+	m_cvar.notifyAll();
 
 	for(WorkerThread* thread : m_threads)
 	{
@@ -75,15 +75,9 @@ Bool ThreadJobManager::pushBackTask(const Func& func)
 	return false;
 }
 
-Bool ThreadJobManager::popFrontTask(Func& func, Bool& quit)
+Bool ThreadJobManager::popFrontTask(Func& func)
 {
 	LockGuard lock(m_tasksMtx);
-	quit = m_quit;
-
-	if(quit) [[unlikely]]
-	{
-		return true;
-	}
 
 	if(m_tasksBack != m_tasksFront)
 	{
@@ -99,15 +93,9 @@ void ThreadJobManager::threadRun(U32 threadId)
 {
 	while(true)
 	{
-		Bool quit;
 		Func func;
-		if(popFrontTask(func, quit))
+		if(popFrontTask(func))
 		{
-			if(quit) [[unlikely]]
-			{
-				break;
-			}
-
 			func(threadId);
 			[[maybe_unused]] const U32 count = m_tasksInFlightCount.fetchSub(1);
 			ANKI_ASSERT(count > 0);
@@ -115,6 +103,10 @@ void ThreadJobManager::threadRun(U32 threadId)
 		else
 		{
 			LockGuard lock(m_mtx);
+			if(m_quit)
+			{
+				break;
+			}
 			m_cvar.wait(m_mtx);
 		}
 	}
