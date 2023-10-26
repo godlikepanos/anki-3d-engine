@@ -48,7 +48,7 @@ ThreadJobManager::ThreadJobManager(U32 threadCount, Bool pinToCores, U32 queueSi
 ThreadJobManager::~ThreadJobManager()
 {
 	{
-		LockGuard lock(m_tasksMtx);
+		LockGuard lock(m_mtx);
 		m_quit = true;
 
 		m_cvar.notifyAll();
