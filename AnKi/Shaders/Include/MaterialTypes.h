@@ -37,6 +37,9 @@ enum class MaterialBinding : U32
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) kUnifiedGeometry_##fmt,
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
+	kMeshlets, // Pointing to the unified geom buffer
+	kTaskShaderPayloads,
+
 	// For FW shading:
 	kLinearClampSampler,
 	kShadowSampler,

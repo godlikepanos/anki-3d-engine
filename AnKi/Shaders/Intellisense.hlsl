@@ -16,6 +16,7 @@
 #define SV_POSITION
 #define SV_INSTANCEID
 #define numthreads(x, y, z) [nodiscard]
+#define outputtopology(x) [nodiscard]
 #define unroll [nodiscard]
 #define loop [nodiscard]
 #define out
@@ -235,3 +236,12 @@ bool WaveIsFirstLane();
 unsigned WaveActiveCountBits(bool bit);
 
 unsigned WaveGetLaneCount();
+
+// Other
+
+void GroupMemoryBarrierWithGroupSync();
+
+template<typename T>
+void DispatchMesh(U32 groupSizeX, U32 groupSizeY, U32 groupSizeZ, T payload);
+
+void SetMeshOutputCounts(U32 vertexCount, U32 primitiveCount);

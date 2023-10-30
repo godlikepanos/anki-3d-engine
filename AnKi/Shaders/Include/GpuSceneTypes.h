@@ -38,6 +38,19 @@ struct GpuSceneRenderableVertex
 };
 static_assert(sizeof(GpuSceneRenderableVertex) == sizeof(UVec4));
 
+/// Input to a single task shader threadgroup. Something similar to GpuSceneRenderableVertex but for mesh shading.
+struct GpuSceneTaskShaderPayload
+{
+	U32 m_firstMeshlet_26bit_meshletCountMinusOne_6bit;
+	U32 m_worldTransformsOffset;
+	U32 m_constantsOffset;
+	U32 m_boneTransformsOrParticleEmitterOffset;
+
+	Vec3 m_positionTranslation;
+	F32 m_positionScale;
+};
+static_assert(ANKI_TASK_SHADER_THREADGROUP_SIZE == 2u << (6u - 1u)); // Need to fit to 6bit
+
 /// Used in visibility testing.
 struct GpuSceneRenderableBoundingVolume
 {
@@ -58,7 +71,7 @@ struct GpuSceneMeshLod
 
 	UVec2 m_padding1;
 	U32 m_firstMeshlet; // In sizeof(Meshlet)
-	U32 m_meshletCount;
+	U32 m_meshletCount; // Can be zero if the mesh doesn't support mesh shading (or mesh shading is off)
 
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;

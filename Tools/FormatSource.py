@@ -19,9 +19,9 @@ hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_TARGET0", "SV_TARGET1", "SV_TAR
                   "SV_TARGET5", "SV_TARGET6", "SV_TARGET7", "SV_DISPATCHTHREADID", "SV_GROUPINDEX", "SV_GROUPID",
                   "SV_GROUPTHREADID"]
 hlsl_attribs = ["[shader(\"closesthit\")]", "[shader(\"anyhit\")]", "[shader(\"raygeneration\")]", "[shader(\"miss\")]",
-                "[raypayload]"]
+                "[raypayload]", "[outputtopology(\"triangle\")]"]
 hlsl_attribs_fake = ["______shaderclosesthit", "______shaderanyhit", "______shaderraygeneration", "______shadermiss",
-                     "[[raypaylo]]"]
+                     "[[raypaylo]]", "______outputtopology_triangle"]
 
 
 def thread_callback(tid):

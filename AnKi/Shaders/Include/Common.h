@@ -767,6 +767,9 @@ constexpr U32 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
 
 constexpr U32 kMaxPrimitivesPerMeshlet = 64;
 constexpr U32 kMaxVerticesPerMeshlet = 64;
+#define ANKI_TASK_SHADER_THREADGROUP_SIZE 64u
+#define ANKI_MESH_SHADER_THREADGROUP_SIZE 64u
+static_assert(ANKI_MESH_SHADER_THREADGROUP_SIZE == max(kMaxPrimitivesPerMeshlet, kMaxVerticesPerMeshlet));
 
 struct DrawIndirectArgs
 {

@@ -99,7 +99,15 @@ struct FragOut
 };
 #endif
 
-#pragma anki start vert
+struct MeshShaderPayload
+{
+	U32 m_meshletIndices[ANKI_TASK_SHADER_THREADGROUP_SIZE];
+	U32 m_worldTransformsOffset;
+	U32 m_constantsOffset;
+	U32 m_boneTransformsOrParticleEmitterOffset;
+	Vec3 m_positionTranslation;
+	F32 m_positionScale;
+};
 
 struct Mat3x4_2
 {
@@ -107,26 +115,25 @@ struct Mat3x4_2
 	Mat3x4 m_b;
 };
 
-Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, GpuSceneRenderableVertex renderable, U32 index)
+Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, U32 boneTransformsOffset, U32 index)
 {
 	const U32 boneIdx = vert.m_boneIndices[index];
-	U32 byteOffset = renderable.m_boneTransformsOrParticleEmitterOffset;
+	U32 byteOffset = boneTransformsOffset;
 	byteOffset += boneIdx * sizeof(Mat3x4) * 2;
 	return g_gpuScene.Load<Mat3x4_2>(byteOffset);
 }
 
 #if ANKI_BONES
-void skinning(UnpackedMeshVertex vert, GpuSceneRenderableVertex renderable, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal,
-			  inout RVec4 tangent)
+void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal, inout RVec4 tangent)
 {
-	Mat3x4_2 mats = loadBoneTransforms(vert, renderable, 0);
+	Mat3x4_2 mats = loadBoneTransforms(vert, boneTransformsOffset, 0);
 
 	Mat3x4 skinMat = mats.m_a * vert.m_boneWeights[0];
 	Mat3x4 prevSkinMat = mats.m_b * vert.m_boneWeights[0];
 
 	[unroll] for(U32 i = 1u; i < 4u; ++i)
 	{
-		mats = loadBoneTransforms(vert, renderable, i);
+		mats = loadBoneTransforms(vert, boneTransformsOffset, i);
 
 		skinMat = skinMat + mats.m_a * vert.m_boneWeights[i];
 		prevSkinMat = prevSkinMat + mats.m_b * vert.m_boneWeights[i];
@@ -167,6 +174,8 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 }
 #endif
 
+#pragma anki start vert
+
 VertOut main(VertIn input)
 {
 	VertOut output;
@@ -188,7 +197,7 @@ VertOut main(VertIn input)
 
 	// Do stuff
 #if ANKI_BONES
-	skinning(vert, renderable, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
+	skinning(vert, renderable.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
 #endif
 
 	output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
@@ -208,6 +217,95 @@ VertOut main(VertIn input)
 };
 
 #pragma anki end vert
+
+#pragma anki start task
+
+groupshared MeshShaderPayload s_payload;
+
+[numthreads(ANKI_TASK_SHADER_THREADGROUP_SIZE, 1, 1)] void main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[svGroupId];
+
+	const U32 meshletCount = (inPayload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit & 63u) + 1u;
+	const U32 firstMeshlet = inPayload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit >> 6u;
+
+	if(svGroupIndex < meshletCount)
+	{
+		s_payload.m_meshletIndices[svGroupIndex] = firstMeshlet + svGroupIndex;
+		s_payload.m_worldTransformsOffset = inPayload.m_worldTransformsOffset;
+		s_payload.m_constantsOffset = inPayload.m_constantsOffset;
+		s_payload.m_boneTransformsOrParticleEmitterOffset = inPayload.m_boneTransformsOrParticleEmitterOffset;
+		s_payload.m_positionScale = inPayload.m_positionScale;
+		s_payload.m_positionTranslation = inPayload.m_positionTranslation;
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+	DispatchMesh(meshletCount, 1, 1, s_payload);
+}
+
+#pragma anki end task
+
+#pragma anki start mesh
+
+constexpr U32 g_dummy = 0; // The formater is getting confused so add this
+
+[numthreads(ANKI_MESH_SHADER_THREADGROUP_SIZE, 1, 1)] [outputtopology("triangle")] void
+main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVerticesPerMeshlet], out indices UVec3 indices[kMaxPrimitivesPerMeshlet],
+	 U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	const Meshlet meshlet = g_meshlets[payload.m_meshletIndices[svGroupId]];
+	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
+	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
+
+	SetMeshOutputCounts(vertCount, primCount);
+
+	// Write the verts
+	if(svGroupIndex < vertCount)
+	{
+		VertOut output;
+
+		UnpackedMeshVertex vert = loadVertex(meshlet, svGroupIndex, ANKI_BONES, payload.m_positionScale, payload.m_positionTranslation);
+
+		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset);
+		const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset + sizeof(Mat3x4));
+		ANKI_MAYBE_UNUSED(prevWorldTransform);
+
+#if UVS
+		output.m_uv = vert.m_uv;
+#endif
+		Vec3 prevPos = vert.m_position;
+		ANKI_MAYBE_UNUSED(prevPos);
+		output.m_constantsOffset = payload.m_constantsOffset;
+
+		// Do stuff
+#if ANKI_BONES
+		skinning(vert, payload.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
+#endif
+
+		output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
+		output.m_position = mul(g_globalConstants.m_viewProjectionMatrix, output.m_position);
+
+#if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+		output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
+		output.m_tangent = mul(worldTransform, Vec4(vert.m_tangent.xyz, 0.0));
+		output.m_bitangent = cross(output.m_normal, output.m_tangent) * vert.m_tangent.w;
+#endif
+
+#if REALLY_VELOCITY
+		velocity(worldTransform, prevWorldTransform, prevPos, output);
+#endif
+
+		verts[svGroupIndex] = output;
+	}
+
+	// Write the indices
+	if(svGroupIndex < primCount)
+	{
+		indices[svGroupIndex] = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + svGroupIndex].xyz;
+	}
+}
+
+#pragma anki end mesh
 
 #pragma anki start frag
 

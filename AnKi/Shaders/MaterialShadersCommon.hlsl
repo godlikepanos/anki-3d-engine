@@ -22,6 +22,9 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 	[[vk::binding(MaterialBinding::kUnifiedGeometry_##fmt, MaterialSet::kGlobal)]] Buffer<shaderType> g_unifiedGeom_##fmt;
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
+[[vk::binding(MaterialBinding::kMeshlets, MaterialSet::kGlobal)]] StructuredBuffer<Meshlet> g_meshlets;
+[[vk::binding(MaterialBinding::kTaskShaderPayloads, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
+
 // FW shading specific
 #if defined(FORWARD_SHADING)
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
@@ -52,6 +55,25 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	{
 		v.m_boneIndices = g_unifiedGeom_R8G8B8A8_Uint[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + svVertexId];
 		v.m_boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + svVertexId];
+	}
+
+	return v;
+}
+
+UnpackedMeshVertex loadVertex(Meshlet meshlet, U32 vertexIndex, Bool bones, F32 positionScale, Vec3 positionTranslation)
+{
+	UnpackedMeshVertex v;
+	v.m_position = g_unifiedGeom_R16G16B16A16_Unorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kPosition] + vertexIndex];
+	v.m_position = v.m_position * positionScale + positionTranslation;
+
+	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kNormal] + vertexIndex].xyz;
+	v.m_tangent = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kTangent] + vertexIndex];
+	v.m_uv = g_unifiedGeom_R32G32_Sfloat[meshlet.m_vertexOffsets[(U32)VertexStreamId::kUv] + vertexIndex];
+
+	if(bones)
+	{
+		v.m_boneIndices = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + vertexIndex];
+		v.m_boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + vertexIndex];
 	}
 
 	return v;

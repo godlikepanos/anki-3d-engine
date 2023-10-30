@@ -21,6 +21,7 @@ public:
 	ShaderProgramPtr m_program;
 	PrimitiveTopology m_primitiveTopology = PrimitiveTopology::kTriangles;
 	Bool m_indexedDrawcall = true;
+	Bool m_meshShaders = false;
 };
 
 class RenderStateBucketIndex

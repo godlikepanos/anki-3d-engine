@@ -158,8 +158,8 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 		if(m_shaderStages != (ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit) && m_shaderStages != ShaderTypeBit::kMiss
 		   && m_shaderStages != ShaderTypeBit::kRayGen)
 		{
-			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages. Miss can't coexist "
-							   "with other stages. Raygen can't coexist with other stages as well");
+			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages. Miss can't coexist with other stages. Raygen can't "
+							   "coexist with other stages as well");
 			return Error::kUserData;
 		}
 	}
@@ -200,7 +200,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	ANKI_ASSERT(info.m_setConstants.getSetBitCount() == m_consts.getSize());
 
 	// Compute variant hash
-	U64 hash = 0;
+	U64 hash = info.m_meshShaders * 0xBAD;
 	if(m_mutators.getSize())
 	{
 		hash = computeHash(info.m_mutation.getBegin(), m_mutators.getSize() * sizeof(info.m_mutation[0]));
@@ -354,6 +354,9 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 	// Time to init the shaders
 	if(!!(m_shaderStages & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
+		const ShaderTypeBit stages =
+			m_shaderStages & ((info.m_meshShaders) ? ~ShaderTypeBit::kAllLegacyGeometry : ~ShaderTypeBit::kAllModernGeometry);
+
 		// Create the program name
 		String progName;
 		getFilepathFilename(getFilename(), progName);
@@ -365,7 +368,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 
 		ShaderProgramInitInfo progInf(cprogName);
 		Array<ShaderPtr, U32(ShaderType::kCount)> shaderRefs; // Just for refcounting
-		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(m_shaderStages))
+		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(stages))
 		{
 			ShaderInitInfo inf(cprogName);
 			inf.m_shaderType = shaderType;

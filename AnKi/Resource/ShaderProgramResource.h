@@ -166,6 +166,8 @@ public:
 
 	ShaderProgramResourceVariantInitInfo& addMutation(CString name, MutatorValue t);
 
+	void requestMeshShaders(Bool request);
+
 private:
 	static constexpr U32 kMaxConstants = 32;
 	static constexpr U32 kMaxMutators = 32;
@@ -177,6 +179,8 @@ private:
 
 	Array<MutatorValue, kMaxMutators> m_mutation; ///< The order of storing the values is important. It will be hashed.
 	BitSet<kMaxMutators> m_setMutators = {false};
+
+	Bool m_meshShaders = false;
 };
 
 /// Shader program resource. It loads special AnKi programs.
@@ -305,6 +309,12 @@ inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInf
 	m_mutation[mutatorIdx] = t;
 	m_setMutators.set(mutatorIdx);
 	return *this;
+}
+
+inline void ShaderProgramResourceVariantInitInfo::requestMeshShaders(Bool request)
+{
+	ANKI_ASSERT(!!(m_ptr->getStages() & ShaderTypeBit::kAllModernGeometry));
+	m_meshShaders = request;
 }
 /// @}
 
