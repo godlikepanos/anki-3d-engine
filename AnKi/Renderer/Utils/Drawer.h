@@ -35,11 +35,16 @@ public:
 	BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
 	BufferOffsetRange m_instanceRateRenderablesBuffer;
 
+	BufferOffsetRange m_taskShaderIndirectArgsBuffer;
+	BufferOffsetRange m_taskShaderPayloadsBuffer;
+
 	void fillMdi(const GpuVisibilityOutput& visOut)
 	{
 		m_mdiDrawCountsBuffer = visOut.m_mdiDrawCountsBuffer;
 		m_drawIndexedIndirectArgsBuffer = visOut.m_drawIndexedIndirectArgsBuffer;
 		m_instanceRateRenderablesBuffer = visOut.m_instanceRateRenderablesBuffer;
+		m_taskShaderIndirectArgsBuffer = visOut.m_taskShaderIndirectArgsBuffer;
+		m_taskShaderPayloadsBuffer = visOut.m_taskShaderPayloadBuffer;
 	}
 };
 

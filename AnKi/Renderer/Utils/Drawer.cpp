@@ -70,6 +70,11 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 								   &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshlets), UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTaskShaderPayloads), args.m_taskShaderPayloadsBuffer);
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables),
+					   GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+
 	// Misc
 	cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
 	cmdb.bindIndexBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, IndexType::kU16);
@@ -148,11 +153,11 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> offsets(&getRenderer().getFrameMemoryPool());
 		U32 allUserCount = 0;
-		RenderStateBucketContainer::getSingleton().iterateBuckets(args.m_renderingTechinuqe,
-																  [&]([[maybe_unused]] const RenderStateInfo& state, U32 userCount) {
-																	  offsets.emplaceBack(allUserCount);
-																	  allUserCount += userCount;
-																  });
+		RenderStateBucketContainer::getSingleton().iterateBuckets(
+			args.m_renderingTechinuqe, [&]([[maybe_unused]] const RenderStateInfo& state, U32 userCount, [[maybe_unused]] U32 meshletGroupCount) {
+				offsets.emplaceBack(allUserCount);
+				allUserCount += userCount;
+			});
 		U32* firstDrawArgIndices;
 		BufferOffsetRange firstDrawArgIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(offsets.getSize(), firstDrawArgIndices);
 		memcpy(firstDrawArgIndices, &offsets[0], offsets.getSizeInBytes());
@@ -176,7 +181,10 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 	U32 allUserCount = 0;
 	U32 bucketCount = 0;
-	RenderStateBucketContainer::getSingleton().iterateBuckets(args.m_renderingTechinuqe, [&](const RenderStateInfo& state, U32 userCount) {
+	U32 allMeshletGroupCount = 0;
+	U32 legacyGeometryFlowUserCount = 0;
+	RenderStateBucketContainer::getSingleton().iterateBuckets(args.m_renderingTechinuqe, [&](const RenderStateInfo& state, U32 userCount,
+																							 U32 meshletGroupCount) {
 		if(userCount == 0)
 		{
 			++bucketCount;
@@ -186,26 +194,43 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		ShaderProgramPtr prog = state.m_program;
 		cmdb.bindShaderProgram(prog.get());
 
-		const U32 maxDrawCount = userCount;
+		const Bool usesMeshShaders = meshletGroupCount > 0;
 
-		if(state.m_indexedDrawcall)
+		if(usesMeshShaders)
 		{
-			cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
-										  args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
-										  sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
-										  args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
+			const UVec4 firstPayload(allMeshletGroupCount);
+			cmdb.setPushConstants(&firstPayload, sizeof(firstPayload));
+
+			cmdb.drawMeshTasksIndirect(args.m_taskShaderIndirectArgsBuffer.m_buffer,
+									   args.m_taskShaderIndirectArgsBuffer.m_offset + sizeof(DispatchIndirectArgs) * bucketCount);
 		}
 		else
 		{
-			// Yes, the DrawIndexedIndirectArgs is intentional
-			cmdb.drawIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
-								   args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
-								   sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
-								   args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
+			const U32 maxDrawCount = userCount;
+
+			if(state.m_indexedDrawcall)
+			{
+				cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
+											  args.m_drawIndexedIndirectArgsBuffer.m_offset
+												  + sizeof(DrawIndexedIndirectArgs) * legacyGeometryFlowUserCount,
+											  sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
+											  args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
+			}
+			else
+			{
+				// Yes, the DrawIndexedIndirectArgs is intentional
+				cmdb.drawIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
+									   args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * legacyGeometryFlowUserCount,
+									   sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
+									   args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
+			}
+
+			legacyGeometryFlowUserCount += userCount;
 		}
 
 		++bucketCount;
 		allUserCount += userCount;
+		allMeshletGroupCount += meshletGroupCount;
 	});
 
 	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));

@@ -73,6 +73,11 @@ public:
 	/// Same as getShaderGroupHandles but the data live in a GPU buffer.
 	Buffer& getShaderGroupHandlesGpuBuffer() const;
 
+	ShaderTypeBit getShaderTypes() const
+	{
+		return m_shaderTypes;
+	}
+
 protected:
 	/// Construct.
 	ShaderProgram(CString name)
@@ -84,6 +89,8 @@ protected:
 	~ShaderProgram()
 	{
 	}
+
+	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 
 private:
 	/// Allocate and initialize a new instance.

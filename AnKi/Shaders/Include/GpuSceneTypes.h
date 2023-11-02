@@ -42,12 +42,7 @@ static_assert(sizeof(GpuSceneRenderableVertex) == sizeof(UVec4));
 struct GpuSceneTaskShaderPayload
 {
 	U32 m_firstMeshlet_26bit_meshletCountMinusOne_6bit;
-	U32 m_worldTransformsOffset;
-	U32 m_constantsOffset;
-	U32 m_boneTransformsOrParticleEmitterOffset;
-
-	Vec3 m_positionTranslation;
-	F32 m_positionScale;
+	U32 m_renderableIndex;
 };
 static_assert(ANKI_TASK_SHADER_THREADGROUP_SIZE == 2u << (6u - 1u)); // Need to fit to 6bit
 

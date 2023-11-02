@@ -324,6 +324,19 @@ public:
 		vkCmdDrawMeshTasksEXT(m_handle, groupCountX, groupCountY, groupCountZ);
 	}
 
+	ANKI_FORCE_INLINE void drawMeshTasksIndirectInternal(Buffer* argBuffer, PtrSize argBufferOffset)
+	{
+		ANKI_ASSERT(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_mesh_shader));
+		ANKI_ASSERT((argBufferOffset % 4) == 0);
+		const BufferImpl& impl = static_cast<const BufferImpl&>(*argBuffer);
+		ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
+		ANKI_ASSERT((argBufferOffset + sizeof(DispatchIndirectArgs)) <= impl.getSize());
+
+		m_state.setPrimitiveTopology(PrimitiveTopology::kTriangles); // Not sure if that's needed
+		drawcallCommon();
+		vkCmdDrawMeshTasksIndirectEXT(m_handle, impl.getHandle(), argBufferOffset, 1, sizeof(DispatchIndirectArgs));
+	}
+
 	ANKI_FORCE_INLINE void drawIndexedIndirectCountInternal(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset,
 															U32 argBufferStride, Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
 	{

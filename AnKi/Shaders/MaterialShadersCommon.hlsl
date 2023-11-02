@@ -24,6 +24,7 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 
 [[vk::binding(MaterialBinding::kMeshlets, MaterialSet::kGlobal)]] StructuredBuffer<Meshlet> g_meshlets;
 [[vk::binding(MaterialBinding::kTaskShaderPayloads, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
+[[vk::binding(MaterialBinding::kRenderables, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 
 // FW shading specific
 #if defined(FORWARD_SHADING)

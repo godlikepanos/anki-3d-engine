@@ -105,7 +105,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		for(ShaderPtr& shader : m_shaders)
 		{
-			m_stages |= ShaderTypeBit(1 << shader->getShaderType());
+			m_shaderTypes |= ShaderTypeBit(1 << shader->getShaderType());
 
 			const ShaderImpl& simpl = static_cast<const ShaderImpl&>(*shader);
 
@@ -175,7 +175,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Get some masks
 	//
-	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::kAllGraphics);
+	const Bool graphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
 	if(graphicsProg)
 	{
 		if(inf.m_graphicsShaders[ShaderType::kVertex])
@@ -225,7 +225,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the pipeline if compute
 	//
-	if(!!(m_stages & ShaderTypeBit::kCompute))
+	if(!!(m_shaderTypes & ShaderTypeBit::kCompute))
 	{
 		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[0]);
 
@@ -252,7 +252,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the RT pipeline
 	//
-	if(!!(m_stages & ShaderTypeBit::kAllRayTracing))
+	if(!!(m_shaderTypes & ShaderTypeBit::kAllRayTracing))
 	{
 		// Create shaders
 		GrDynamicArray<VkPipelineShaderStageCreateInfo> stages;

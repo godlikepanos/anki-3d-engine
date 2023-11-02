@@ -313,7 +313,7 @@ inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInf
 
 inline void ShaderProgramResourceVariantInitInfo::requestMeshShaders(Bool request)
 {
-	ANKI_ASSERT(!!(m_ptr->getStages() & ShaderTypeBit::kAllModernGeometry));
+	ANKI_ASSERT(!request || !!(m_ptr->getStages() & ShaderTypeBit::kAllModernGeometry));
 	m_meshShaders = request;
 }
 /// @}

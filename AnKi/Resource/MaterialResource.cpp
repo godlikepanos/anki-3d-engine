@@ -70,7 +70,7 @@ class MaterialResource::Program
 public:
 	ShaderProgramResourcePtr m_prog;
 
-	mutable Array3d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2> m_variantMatrix;
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
 	ResourceDynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
@@ -100,7 +100,10 @@ public:
 			{
 				for(U32 vel = 0; vel < 2; ++vel)
 				{
-					m_variantMatrix[t][skin][vel] = std::move(b.m_variantMatrix[t][skin][vel]);
+					for(U32 mesh = 0; mesh < 2; ++mesh)
+					{
+						m_variantMatrix[t][skin][vel][mesh] = std::move(b.m_variantMatrix[t][skin][vel][mesh]);
+					}
 				}
 			}
 		}
@@ -723,16 +726,22 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		key.setVelocity(false);
 	}
 
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	{
+		key.setMeshShaders(false);
+	}
+
 	ANKI_ASSERT(!key.getSkinned() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kBones)));
 	ANKI_ASSERT(!key.getVelocity() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kVelocity)));
 
-	MaterialVariant& variant = prog.m_variantMatrix[key.getRenderingTechnique()][key.getSkinned()][key.getVelocity()];
+	MaterialVariant& variant = prog.m_variantMatrix[key.getRenderingTechnique()][key.getSkinned()][key.getVelocity()][key.getMeshShaders()];
 
 	// Check if it's initialized
 	{
 		RLockGuard<RWMutex> lock(prog.m_variantMatrixMtx);
 		if(variant.m_prog.isCreated()) [[likely]]
 		{
+			ANKI_ASSERT(key.getMeshShaders() == !!(variant.m_prog->getShaderTypes() & ShaderTypeBit::kAllModernGeometry));
 			return variant;
 		}
 	}
@@ -765,6 +774,8 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		initInfo.addMutation(kBuiltinMutatorNames[BuiltinMutatorId::kVelocity], MutatorValue(key.getVelocity()));
 	}
 
+	initInfo.requestMeshShaders(key.getMeshShaders());
+
 	const ShaderProgramResourceVariant* progVariant = nullptr;
 	prog.m_prog->getOrCreateVariant(initInfo, progVariant);
 
@@ -774,6 +785,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	}
 
 	variant.m_prog.reset(&progVariant->getProgram());
+	ANKI_ASSERT(key.getMeshShaders() == !!(variant.m_prog->getShaderTypes() & ShaderTypeBit::kAllModernGeometry));
 
 	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::kAllRt))
 	{

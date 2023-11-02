@@ -39,6 +39,7 @@ enum class MaterialBinding : U32
 
 	kMeshlets, // Pointing to the unified geom buffer
 	kTaskShaderPayloads,
+	kRenderables,
 
 	// For FW shading:
 	kLinearClampSampler,

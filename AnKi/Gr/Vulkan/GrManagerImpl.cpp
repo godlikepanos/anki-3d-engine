@@ -257,7 +257,8 @@ Error GrManagerImpl::initInstance()
 				ANKI_VK_LOGV("\t%s", layer.layerName);
 				CString layerName = layer.layerName;
 
-				Bool enableLayer = (g_validationCVar.get() || g_debugMarkersCVar.get()) && layerName == "VK_LAYER_KHRONOS_validation";
+				Bool enableLayer =
+					(g_validationCVar.get() || g_debugMarkersCVar.get() || g_debugPrintfCVar.get()) && layerName == "VK_LAYER_KHRONOS_validation";
 				enableLayer = enableLayer || (!g_vkLayers.get().isEmpty() && g_vkLayers.get().find(layerName) != CString::kNpos);
 
 				if(enableLayer)

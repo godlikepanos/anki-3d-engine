@@ -205,7 +205,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 			if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
 			{
-				const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false);
+				const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false, false);
 				const MaterialVariant& variant = mtl.getOrCreateVariant(key);
 				gpuRenderable.m_rtShadowsShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
 			}
@@ -271,6 +271,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				key.setRenderingTechnique(t);
 				key.setSkinned(hasSkin);
 				key.setVelocity(moved);
+				key.setMeshShaders(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders);
 
 				const MaterialVariant& mvariant = m_model->getModelPatches()[i].getMaterial()->getOrCreateVariant(key);
 
@@ -279,7 +280,10 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				state.m_indexedDrawcall = true;
 				state.m_program = mvariant.getShaderProgram();
 
-				m_patchInfos[i].m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(state, t);
+				ModelPatchGeometryInfo inf;
+				m_model->getModelPatches()[i].getGeometryInfo(0, inf);
+				m_patchInfos[i].m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(
+					state, t, (GrManager::getSingleton().getDeviceCapabilities().m_meshShaders) ? inf.m_meshletCount : 0);
 			}
 		}
 	}

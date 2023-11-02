@@ -41,7 +41,7 @@ public:
 
 	Bool isGraphics() const
 	{
-		return !!(m_stages & ShaderTypeBit::kAllGraphics);
+		return !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
 	}
 
 	const VkPipelineShaderStageCreateInfo* getShaderCreateInfos(U32& count) const
@@ -88,8 +88,8 @@ public:
 
 	ShaderTypeBit getStages() const
 	{
-		ANKI_ASSERT(!!m_stages);
-		return m_stages;
+		ANKI_ASSERT(!!m_shaderTypes);
+		return m_shaderTypes;
 	}
 
 	U32 getMissShaderCount() const
@@ -111,7 +111,6 @@ public:
 
 private:
 	GrDynamicArray<ShaderPtr> m_shaders;
-	ShaderTypeBit m_stages = ShaderTypeBit::kNone;
 
 	PipelineLayout m_pplineLayout = {};
 	Array<DescriptorSetLayout, kMaxDescriptorSets> m_descriptorSetLayouts;

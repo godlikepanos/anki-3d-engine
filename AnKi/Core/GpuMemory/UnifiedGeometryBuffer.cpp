@@ -25,7 +25,7 @@ void UnifiedGeometryBuffer::init()
 	const Array classes = {1_KB, 8_KB, 32_KB, 128_KB, 512_KB, 4_MB, 8_MB, 16_MB, poolSize};
 
 	BufferUsageBit buffUsage = BufferUsageBit::kVertex | BufferUsageBit::kIndex | BufferUsageBit::kTransferDestination
-							   | (BufferUsageBit::kAllTexture & BufferUsageBit::kAllRead);
+							   | (BufferUsageBit::kAllTexture & BufferUsageBit::kAllRead) | (BufferUsageBit::kAllUav & BufferUsageBit::kAllRead);
 
 	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 	{

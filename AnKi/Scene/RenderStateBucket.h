@@ -21,7 +21,6 @@ public:
 	ShaderProgramPtr m_program;
 	PrimitiveTopology m_primitiveTopology = PrimitiveTopology::kTriangles;
 	Bool m_indexedDrawcall = true;
-	Bool m_meshShaders = false;
 };
 
 class RenderStateBucketIndex
@@ -47,6 +46,7 @@ public:
 		ANKI_ASSERT(!isValid() && "Forgot to delete");
 		m_index = b.m_index;
 		m_technique = b.m_technique;
+		m_lod0MeshletCount = b.m_lod0MeshletCount;
 		b.invalidate();
 		return *this;
 	}
@@ -64,11 +64,13 @@ public:
 
 private:
 	U32 m_index = kMaxU32;
+	U32 m_lod0MeshletCount = kMaxU32;
 	RenderingTechnique m_technique = RenderingTechnique::kCount;
 
 	void invalidate()
 	{
 		m_index = kMaxU32;
+		m_lod0MeshletCount = kMaxU32;
 		m_technique = RenderingTechnique::kCount;
 	}
 };
@@ -82,7 +84,7 @@ class RenderStateBucketContainer : public MakeSingleton<RenderStateBucketContain
 public:
 	/// Add a new user for a specific render state and rendering technique.
 	/// @note It's thread-safe against addUser and removeUser
-	RenderStateBucketIndex addUser(const RenderStateInfo& state, RenderingTechnique technique);
+	RenderStateBucketIndex addUser(const RenderStateInfo& state, RenderingTechnique technique, U32 lod0MeshletCount);
 
 	/// Remove the user.
 	/// @note It's thread-safe against addUser and removeUser
@@ -94,14 +96,20 @@ public:
 	{
 		for(const ExtendedBucket& b : m_buckets[technique])
 		{
-			func(static_cast<const RenderStateInfo&>(b), b.m_userCount);
+			func(static_cast<const RenderStateInfo&>(b), b.m_userCount, b.m_meshletGroupCount);
 		}
 	}
 
 	/// Get the number of renderables of all the buckets of a specific rendering technique.
-	U32 getBucketsItemCount(RenderingTechnique technique) const
+	U32 getBucketsUserCount(RenderingTechnique technique) const
 	{
-		return m_bucketItemCount[technique];
+		return m_bucketUserCount[technique];
+	}
+
+	/// Get the number of meshlet groups of a technique.
+	U32 getBucketsMeshletGroupCount(RenderingTechnique technique) const
+	{
+		return m_meshletGroupCount[technique];
 	}
 
 	/// Get number of empty and non-empty buckets.
@@ -122,10 +130,12 @@ private:
 	public:
 		U64 m_hash = 0;
 		U32 m_userCount = 0;
+		U32 m_meshletGroupCount = 0;
 	};
 
 	Array<SceneDynamicArray<ExtendedBucket>, U32(RenderingTechnique::kCount)> m_buckets;
-	Array<U32, U32(RenderingTechnique::kCount)> m_bucketItemCount = {};
+	Array<U32, U32(RenderingTechnique::kCount)> m_bucketUserCount = {};
+	Array<U32, U32(RenderingTechnique::kCount)> m_meshletGroupCount = {};
 	Array<U32, U32(RenderingTechnique::kCount)> m_activeBucketCount = {};
 
 	Mutex m_mtx;

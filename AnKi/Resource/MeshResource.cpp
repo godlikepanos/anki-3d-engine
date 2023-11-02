@@ -322,8 +322,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				}
 
 				outMeshlet.m_firstPrimitive =
-					lod.m_meshletIndices.getOffset() + inMeshlet.m_firstPrimitive * getFormatInfo(kMeshletPrimitiveFormat).m_texelSize;
-				outMeshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) & inMeshlet.m_vertexCount;
+					lod.m_meshletIndices.getOffset() / getFormatInfo(kMeshletPrimitiveFormat).m_texelSize + inMeshlet.m_firstPrimitive;
+				outMeshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) | inMeshlet.m_vertexCount;
 				outMeshlet.m_sphereCenter = inMeshlet.m_boundingVolume.m_sphereCenter;
 				outMeshlet.m_sphereRadius = inMeshlet.m_boundingVolume.m_sphereRadius;
 				outMeshlet.m_coneApex = inMeshlet.m_coneApex;

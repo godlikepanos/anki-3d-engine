@@ -198,12 +198,20 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	// Sanity checks
 	ANKI_ASSERT(info.m_setMutators.getSetBitCount() == m_mutators.getSize());
 	ANKI_ASSERT(info.m_setConstants.getSetBitCount() == m_consts.getSize());
+	if(info.m_meshShaders)
+	{
+		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::kAllModernGeometry));
+	}
+	else if(!!(m_shaderStages & ShaderTypeBit::kAllGraphics))
+	{
+		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::kAllLegacyGeometry));
+	}
 
 	// Compute variant hash
-	U64 hash = info.m_meshShaders * 0xBAD;
+	U64 hash = 0xBAD << U32(info.m_meshShaders);
 	if(m_mutators.getSize())
 	{
-		hash = computeHash(info.m_mutation.getBegin(), m_mutators.getSize() * sizeof(info.m_mutation[0]));
+		hash = appendHash(info.m_mutation.getBegin(), m_mutators.getSize() * sizeof(info.m_mutation[0]), hash);
 	}
 
 	if(m_consts.getSize())
@@ -220,6 +228,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 		{
 			// Done
 			variant = *it;
+			ANKI_ASSERT(!info.m_meshShaders || !!(variant->m_prog->getShaderTypes() & ShaderTypeBit::kAllModernGeometry));
 			return;
 		}
 	}
@@ -243,6 +252,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 		m_variants.emplace(hash, v);
 	}
 	variant = v;
+	ANKI_ASSERT(!info.m_meshShaders || !!(variant->m_prog->getShaderTypes() & ShaderTypeBit::kAllModernGeometry));
 }
 
 ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const

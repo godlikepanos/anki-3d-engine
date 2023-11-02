@@ -300,6 +300,12 @@ void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCou
 	self.drawMeshTasksInternal(groupCountX, groupCountY, groupCountZ);
 }
 
+void CommandBuffer::drawMeshTasksIndirect(Buffer* argBuffer, PtrSize argBufferOffset)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.drawMeshTasksIndirectInternal(argBuffer, argBufferOffset);
+}
+
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

@@ -321,7 +321,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		state.m_program = prog;
 		state.m_primitiveTopology = PrimitiveTopology::kTriangles;
 		state.m_indexedDrawcall = false;
-		m_renderStateBuckets[t] = RenderStateBucketContainer::getSingleton().addUser(state, t);
+		m_renderStateBuckets[t] = RenderStateBucketContainer::getSingleton().addUser(state, t, 0);
 	}
 }
 

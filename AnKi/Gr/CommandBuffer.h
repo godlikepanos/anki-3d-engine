@@ -310,6 +310,8 @@ public:
 
 	void drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
+	void drawMeshTasksIndirect(Buffer* argBuffer, PtrSize argBufferOffset);
+
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
 	void dispatchComputeIndirect(Buffer* argBuffer, PtrSize argBufferOffset);

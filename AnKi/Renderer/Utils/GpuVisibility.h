@@ -53,7 +53,11 @@ public:
 
 	BufferOffsetRange m_instanceRateRenderablesBuffer; ///< An array of GpuSceneRenderableVertex.
 	BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< An array of DrawIndexedIndirectArgs.
-	BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket.
+	BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
+
+	/// An array of DispatchIndirectArgs, one for each render state bucket (even those that use vertex flow).
+	BufferOffsetRange m_taskShaderIndirectArgsBuffer;
+	BufferOffsetRange m_taskShaderPayloadBuffer; ///< The payloads of task shaders. One for each task shader threadgroup.
 
 	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< Optional.
 

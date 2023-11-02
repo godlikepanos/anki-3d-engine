@@ -222,21 +222,35 @@ VertOut main(VertIn input)
 
 groupshared MeshShaderPayload s_payload;
 
+struct FirstPayload
+{
+	UVec4 m_val;
+};
+
+[[vk::push_constant]] ConstantBuffer<FirstPayload> g_firstPayload;
+
 [numthreads(ANKI_TASK_SHADER_THREADGROUP_SIZE, 1, 1)] void main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
-	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[svGroupId];
+	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[g_firstPayload.m_val.x + svGroupId];
 
 	const U32 meshletCount = (inPayload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit & 63u) + 1u;
 	const U32 firstMeshlet = inPayload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit >> 6u;
 
 	if(svGroupIndex < meshletCount)
 	{
+		const GpuSceneRenderable renderable = g_renderables[inPayload.m_renderableIndex];
+		const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodsOffset);
+
 		s_payload.m_meshletIndices[svGroupIndex] = firstMeshlet + svGroupIndex;
-		s_payload.m_worldTransformsOffset = inPayload.m_worldTransformsOffset;
-		s_payload.m_constantsOffset = inPayload.m_constantsOffset;
-		s_payload.m_boneTransformsOrParticleEmitterOffset = inPayload.m_boneTransformsOrParticleEmitterOffset;
-		s_payload.m_positionScale = inPayload.m_positionScale;
-		s_payload.m_positionTranslation = inPayload.m_positionTranslation;
+
+		if(svGroupIndex == 0u)
+		{
+			s_payload.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
+			s_payload.m_constantsOffset = renderable.m_constantsOffset;
+			s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
+			s_payload.m_positionScale = meshLod.m_positionScale;
+			s_payload.m_positionTranslation = meshLod.m_positionTranslation;
+		}
 	}
 
 	GroupMemoryBarrierWithGroupSync();

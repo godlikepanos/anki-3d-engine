@@ -113,7 +113,7 @@ public:
 };
 static_assert(sizeof(TempVertex) == 5 * sizeof(Vec4), "Will be hashed");
 
-class Meshlet
+class ImporterMeshlet
 {
 public:
 	U32 m_firstVertex = 0;
@@ -135,7 +135,7 @@ public:
 	ImporterDynamicArray<TempVertex> m_verts;
 	ImporterDynamicArray<U32> m_indices;
 
-	ImporterDynamicArray<Meshlet> m_meshlets;
+	ImporterDynamicArray<ImporterMeshlet> m_meshlets;
 	ImporterDynamicArray<U8> m_localIndices;
 
 	Vec3 m_aabbMin = Vec3(kMaxF32);
@@ -474,7 +474,7 @@ static void generateMeshlets(SubMesh& submesh)
 	for(U32 meshletIdx = 0; meshletIdx < meshletCount; ++meshletIdx)
 	{
 		const meshopt_Meshlet& inMeshlet = meshlets[meshletIdx];
-		Meshlet& outMeshlet = submesh.m_meshlets[meshletIdx];
+		ImporterMeshlet& outMeshlet = submesh.m_meshlets[meshletIdx];
 
 		outMeshlet.m_firstLocalIndex = submesh.m_localIndices.getSize();
 		outMeshlet.m_localIndexCount = inMeshlet.triangle_count * 3;
@@ -983,7 +983,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			for(U32 v = 0; v < submesh.m_meshlets.getSize(); ++v)
 			{
 				MeshBinaryMeshlet& out = meshlets[v];
-				const Meshlet& in = submesh.m_meshlets[v];
+				const ImporterMeshlet& in = submesh.m_meshlets[v];
 
 				out.m_firstPrimitive = primitiveCount;
 				out.m_primitiveCount = in.m_localIndexCount / 3;

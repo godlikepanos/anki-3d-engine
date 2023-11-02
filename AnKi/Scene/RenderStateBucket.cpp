@@ -13,22 +13,34 @@ RenderStateBucketContainer::~RenderStateBucketContainer()
 	{
 		for([[maybe_unused]] ExtendedBucket& b : m_buckets[t])
 		{
-			ANKI_ASSERT(!b.m_program.isCreated() && b.m_userCount == 0);
+			ANKI_ASSERT(!b.m_program.isCreated() && b.m_userCount == 0 && b.m_meshletGroupCount == 0);
 		}
 
-		ANKI_ASSERT(m_bucketItemCount[t] == 0);
+		ANKI_ASSERT(m_bucketUserCount[t] == 0);
 		ANKI_ASSERT(m_activeBucketCount[t] == 0);
+		ANKI_ASSERT(m_meshletGroupCount[t] == 0);
 	}
 }
 
-RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingTechnique technique)
+RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingTechnique technique, U32 lod0MeshletCount)
 {
+	if(!!(state.m_program->getShaderTypes() & ShaderTypeBit::kAllModernGeometry))
+	{
+		ANKI_ASSERT(lod0MeshletCount > 0);
+	}
+	else
+	{
+		ANKI_ASSERT(lod0MeshletCount == 0);
+	}
+
 	// Compute state gash
 	Array<U64, 3> toHash;
 	toHash[0] = state.m_program->getUuid();
 	toHash[1] = U64(state.m_primitiveTopology);
 	toHash[2] = state.m_indexedDrawcall;
 	const U64 hash = computeHash(toHash.getBegin(), toHash.getSizeInBytes());
+
+	const U32 meshletGroupCount = lod0MeshletCount + (kMaxMeshletsPerTaskShaderPayload - 1) / kMaxMeshletsPerTaskShaderPayload;
 
 	SceneDynamicArray<ExtendedBucket>& buckets = m_buckets[technique];
 
@@ -37,7 +49,8 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 
 	LockGuard lock(m_mtx);
 
-	++m_bucketItemCount[technique];
+	++m_bucketUserCount[technique];
+	m_meshletGroupCount[technique] += meshletGroupCount;
 
 	// Search bucket
 	for(U32 i = 0; i < buckets.getSize(); ++i)
@@ -45,10 +58,12 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 		if(buckets[i].m_hash == hash)
 		{
 			++buckets[i].m_userCount;
+			buckets[i].m_meshletGroupCount += meshletGroupCount;
 
 			if(buckets[i].m_userCount == 1)
 			{
 				ANKI_ASSERT(!buckets[i].m_program.isCreated());
+				ANKI_ASSERT(buckets[i].m_meshletGroupCount == meshletGroupCount);
 				buckets[i].m_program = state.m_program;
 				++m_activeBucketCount[technique];
 			}
@@ -58,6 +73,7 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 			}
 
 			out.m_index = i;
+			out.m_lod0MeshletCount = lod0MeshletCount;
 			return out;
 		}
 	}
@@ -69,10 +85,12 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	newBucket.m_primitiveTopology = state.m_primitiveTopology;
 	newBucket.m_program = state.m_program;
 	newBucket.m_userCount = 1;
+	newBucket.m_meshletGroupCount = meshletGroupCount;
 
 	++m_activeBucketCount[technique];
 
 	out.m_index = buckets.getSize() - 1;
+	out.m_lod0MeshletCount = lod0MeshletCount;
 	return out;
 }
 
@@ -85,18 +103,24 @@ void RenderStateBucketContainer::removeUser(RenderStateBucketIndex& bucketIndex)
 
 	const RenderingTechnique technique = bucketIndex.m_technique;
 	const U32 idx = bucketIndex.m_index;
+	const U32 meshletGroupCount = bucketIndex.m_lod0MeshletCount + (kMaxMeshletsPerTaskShaderPayload - 1) / kMaxMeshletsPerTaskShaderPayload;
 	bucketIndex.invalidate();
 
 	LockGuard lock(m_mtx);
 
 	ANKI_ASSERT(idx < m_buckets[technique].getSize());
 
-	--m_bucketItemCount[technique];
+	ANKI_ASSERT(m_bucketUserCount[technique] > 0);
+	--m_bucketUserCount[technique];
+
+	ANKI_ASSERT(m_meshletGroupCount[technique] >= meshletGroupCount);
+	m_meshletGroupCount[technique] -= meshletGroupCount;
 
 	ExtendedBucket& bucket = m_buckets[technique][idx];
-	ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated());
+	ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated() && bucket.m_meshletGroupCount >= meshletGroupCount);
 
 	--bucket.m_userCount;
+	bucket.m_meshletGroupCount -= meshletGroupCount;
 
 	if(bucket.m_userCount == 0)
 	{

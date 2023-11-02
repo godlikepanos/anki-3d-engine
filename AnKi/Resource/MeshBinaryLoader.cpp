@@ -331,6 +331,8 @@ Error MeshBinaryLoader::storeMeshletIndicesBuffer(U32 lod, void* ptr, PtrSize si
 		seek += getLodBuffersSize(l);
 	}
 
+	seek += getIndexBufferSize(lod);
+
 	for(U32 i = 0; i < m_header.m_vertexBuffers.getSize(); ++i)
 	{
 		seek += getVertexBufferSize(lod, i);
@@ -356,6 +358,8 @@ Error MeshBinaryLoader::storeMeshletBuffer(U32 lod, WeakArray<MeshBinaryMeshlet>
 	{
 		seek += getLodBuffersSize(l);
 	}
+
+	seek += getIndexBufferSize(lod);
 
 	for(U32 i = 0; i < m_header.m_vertexBuffers.getSize(); ++i)
 	{
