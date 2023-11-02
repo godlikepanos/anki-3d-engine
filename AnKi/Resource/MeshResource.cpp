@@ -317,8 +317,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 					}
 
 					outMeshlet.m_vertexOffsets[U32(stream)] =
-						lod.m_vertexBuffersAllocationToken[stream].getOffset()
-						+ inMeshlet.m_firstVertex * getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
+						lod.m_vertexBuffersAllocationToken[stream].getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize
+						+ inMeshlet.m_firstVertex;
 				}
 
 				outMeshlet.m_firstPrimitive =
