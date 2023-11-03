@@ -273,49 +273,56 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 
 	SetMeshOutputCounts(vertCount, primCount);
 
+	const U32 loopCount = max(kMaxPrimitivesPerMeshlet, kMaxVerticesPerMeshlet) / ANKI_MESH_SHADER_THREADGROUP_SIZE;
+
 	// Write the verts
-	if(svGroupIndex < vertCount)
+	[unroll] for(U32 l = 0; l < loopCount; ++l)
 	{
-		VertOut output;
+		const U32 idx = l * ANKI_MESH_SHADER_THREADGROUP_SIZE + svGroupIndex;
 
-		UnpackedMeshVertex vert = loadVertex(meshlet, svGroupIndex, ANKI_BONES, payload.m_positionScale, payload.m_positionTranslation);
+		if(idx < vertCount)
+		{
+			VertOut output;
 
-		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset);
-		const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset + sizeof(Mat3x4));
-		ANKI_MAYBE_UNUSED(prevWorldTransform);
+			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES, payload.m_positionScale, payload.m_positionTranslation);
+
+			const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset);
+			const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset + sizeof(Mat3x4));
+			ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #if UVS
-		output.m_uv = vert.m_uv;
+			output.m_uv = vert.m_uv;
 #endif
-		Vec3 prevPos = vert.m_position;
-		ANKI_MAYBE_UNUSED(prevPos);
-		output.m_constantsOffset = payload.m_constantsOffset;
+			Vec3 prevPos = vert.m_position;
+			ANKI_MAYBE_UNUSED(prevPos);
+			output.m_constantsOffset = payload.m_constantsOffset;
 
-		// Do stuff
+			// Do stuff
 #if ANKI_BONES
-		skinning(vert, payload.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
+			skinning(vert, payload.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
 #endif
 
-		output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
-		output.m_position = mul(g_globalConstants.m_viewProjectionMatrix, output.m_position);
+			output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
+			output.m_position = mul(g_globalConstants.m_viewProjectionMatrix, output.m_position);
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
-		output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
-		output.m_tangent = mul(worldTransform, Vec4(vert.m_tangent.xyz, 0.0));
-		output.m_bitangent = cross(output.m_normal, output.m_tangent) * vert.m_tangent.w;
+			output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
+			output.m_tangent = mul(worldTransform, Vec4(vert.m_tangent.xyz, 0.0));
+			output.m_bitangent = cross(output.m_normal, output.m_tangent) * vert.m_tangent.w;
 #endif
 
 #if REALLY_VELOCITY
-		velocity(worldTransform, prevWorldTransform, prevPos, output);
+			velocity(worldTransform, prevWorldTransform, prevPos, output);
 #endif
 
-		verts[svGroupIndex] = output;
-	}
+			verts[idx] = output;
+		}
 
-	// Write the indices
-	if(svGroupIndex < primCount)
-	{
-		indices[svGroupIndex] = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + svGroupIndex].xyz;
+		// Write the indices
+		if(idx < primCount)
+		{
+			indices[idx] = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + idx].xyz;
+		}
 	}
 }
 

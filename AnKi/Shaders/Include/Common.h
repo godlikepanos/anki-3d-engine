@@ -770,8 +770,8 @@ constexpr U32 kMaxVerticesPerMeshlet = 64;
 #define ANKI_TASK_SHADER_THREADGROUP_SIZE 64u
 constexpr U32 kMaxMeshletsPerTaskShaderPayload = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 
-#define ANKI_MESH_SHADER_THREADGROUP_SIZE 64u
-static_assert(ANKI_MESH_SHADER_THREADGROUP_SIZE == max(kMaxPrimitivesPerMeshlet, kMaxVerticesPerMeshlet));
+#define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
+static_assert(max(kMaxPrimitivesPerMeshlet, kMaxVerticesPerMeshlet) % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 
 struct DrawIndirectArgs
 {
