@@ -101,7 +101,7 @@ struct FragOut
 
 struct MeshShaderPayload
 {
-	U32 m_meshletIndices[ANKI_TASK_SHADER_THREADGROUP_SIZE];
+	U32 m_firstMeshletIndex;
 	U32 m_worldTransformsOffset;
 	U32 m_constantsOffset;
 	U32 m_boneTransformsOrParticleEmitterOffset;
@@ -241,10 +241,9 @@ struct FirstPayload
 		const GpuSceneRenderable renderable = g_renderables[inPayload.m_renderableIndex];
 		const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodsOffset);
 
-		s_payload.m_meshletIndices[svGroupIndex] = firstMeshlet + svGroupIndex;
-
 		if(svGroupIndex == 0u)
 		{
+			s_payload.m_firstMeshletIndex = firstMeshlet;
 			s_payload.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
 			s_payload.m_constantsOffset = renderable.m_constantsOffset;
 			s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
@@ -253,7 +252,6 @@ struct FirstPayload
 		}
 	}
 
-	GroupMemoryBarrierWithGroupSync();
 	DispatchMesh(meshletCount, 1, 1, s_payload);
 }
 
@@ -267,7 +265,7 @@ constexpr U32 g_dummy = 0; // The formater is getting confused so add this
 main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVerticesPerMeshlet], out indices UVec3 indices[kMaxPrimitivesPerMeshlet],
 	 U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
-	const Meshlet meshlet = g_meshlets[payload.m_meshletIndices[svGroupId]];
+	const Meshlet meshlet = g_meshlets[payload.m_firstMeshletIndex + svGroupId];
 	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
 	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
 

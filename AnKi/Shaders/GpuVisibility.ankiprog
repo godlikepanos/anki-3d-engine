@@ -191,7 +191,7 @@ struct DrawIndirectArgsWithPadding
 
 	if(usesMeshShaders)
 	{
-		const U32 meshletGroupCount = (meshLod.m_meshletCount + (kMaxMeshletsPerTaskShaderPayload - 1)) / kMaxMeshletsPerTaskShaderPayload;
+		const U32 meshletGroupCount = (meshLod.m_meshletCount + (kMaxMeshletsPerTaskShaderThreadgroup - 1)) / kMaxMeshletsPerTaskShaderThreadgroup;
 
 		U32 payloadIdx;
 		InterlockedAdd(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, meshletGroupCount, payloadIdx);
@@ -206,8 +206,8 @@ struct DrawIndirectArgsWithPadding
 
 		for(U32 i = 0; i < meshletGroupCount; ++i)
 		{
-			const U32 firstMeshlet = meshLod.m_firstMeshlet + kMaxMeshletsPerTaskShaderPayload * i;
-			const U32 meshletCount = min(kMaxMeshletsPerTaskShaderPayload, meshLod.m_meshletCount - i * kMaxMeshletsPerTaskShaderPayload);
+			const U32 firstMeshlet = meshLod.m_firstMeshlet + kMaxMeshletsPerTaskShaderThreadgroup * i;
+			const U32 meshletCount = min(kMaxMeshletsPerTaskShaderThreadgroup, meshLod.m_meshletCount - i * kMaxMeshletsPerTaskShaderThreadgroup);
 
 			payload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit = (firstMeshlet << 6u) | (meshletCount - 1u);
 

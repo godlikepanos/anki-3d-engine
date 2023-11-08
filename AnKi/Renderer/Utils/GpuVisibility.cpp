@@ -144,7 +144,9 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs));
 	out.m_instanceRateRenderablesBuffer =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex));
+	out.m_mdiDrawCountsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(U32) * bucketCount);
 
+	out.m_taskShaderIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * bucketCount);
 	out.m_taskShaderPayloadBuffer =
 		GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload));
 
@@ -153,43 +155,28 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		out.m_visibleAaabbIndicesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate((allUserCount + 1) * sizeof(U32));
 	}
 
-	// Allocate memory for things that will be zeroed
-	PtrSize counterMemory = 0;
 	if(in.m_hashVisibles)
 	{
-		counterMemory = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_uavBufferBindOffsetAlignment,
-										  counterMemory + sizeof(GpuVisibilityHash));
+		out.m_visiblesHashBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(GpuVisibilityHash));
 	}
 
-	const PtrSize mdiBufferOffset = counterMemory;
-	const PtrSize mdiBufferSize = sizeof(U32) * bucketCount;
-	counterMemory =
-		getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_uavBufferBindOffsetAlignment, counterMemory + mdiBufferSize);
-
-	const PtrSize taskShaderIndirectArgsOffset = counterMemory;
-	const PtrSize taskShaderIndirectArgsSize = sizeof(DispatchIndirectArgs) * bucketCount;
-	counterMemory = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_uavBufferBindOffsetAlignment,
-									  counterMemory + taskShaderIndirectArgsSize);
-
-	const BufferOffsetRange counterBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(counterMemory);
-	const BufferHandle counterBufferHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, counterBuffer);
-	out.m_someBufferHandle = counterBufferHandle;
-
-	if(in.m_hashVisibles)
-	{
-		out.m_visiblesHashBuffer = {counterBuffer.m_buffer, counterBuffer.m_offset, sizeof(GpuVisibilityHash)};
-	}
-
-	out.m_mdiDrawCountsBuffer = {counterBuffer.m_buffer, counterBuffer.m_offset + mdiBufferOffset, mdiBufferSize};
-	out.m_taskShaderIndirectArgsBuffer = {counterBuffer.m_buffer, counterBuffer.m_offset + taskShaderIndirectArgsOffset, taskShaderIndirectArgsSize};
+	out.m_someBufferHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, out.m_mdiDrawCountsBuffer);
 
 	// Zero some stuff
 	{
 		ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass("GPU visibility: Zero stuff");
-		pass.newBufferDependency(counterBufferHandle, BufferUsageBit::kTransferDestination);
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kTransferDestination);
 
-		pass.setWork([counterBuffer, visibleAaabbIndicesBuffer = out.m_visibleAaabbIndicesBuffer](RenderPassWorkContext& rpass) {
-			rpass.m_commandBuffer->fillBuffer(counterBuffer.m_buffer, counterBuffer.m_offset, counterBuffer.m_range, 0);
+		pass.setWork([mdiDrawCountsBuffer = out.m_mdiDrawCountsBuffer, taskShaderIndirectArgsBuffer = out.m_taskShaderIndirectArgsBuffer,
+					  visibleAaabbIndicesBuffer = out.m_visibleAaabbIndicesBuffer,
+					  visiblesHashBuffer = out.m_visibleAaabbIndicesBuffer](RenderPassWorkContext& rpass) {
+			rpass.m_commandBuffer->fillBuffer(mdiDrawCountsBuffer, 0);
+			rpass.m_commandBuffer->fillBuffer(taskShaderIndirectArgsBuffer, 0);
+
+			if(visiblesHashBuffer.m_buffer)
+			{
+				rpass.m_commandBuffer->fillBuffer(visiblesHashBuffer, 0);
+			}
 
 			if(visibleAaabbIndicesBuffer.m_buffer)
 			{
@@ -202,7 +189,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(in.m_passesName);
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavComputeRead);
-	pass.newBufferDependency(counterBufferHandle, BufferUsageBit::kUavComputeWrite);
+	pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavComputeWrite);
 
 	if(!distanceBased && static_cast<FrustumGpuVisibilityInput&>(in).m_hzbRt)
 	{
