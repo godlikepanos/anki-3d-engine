@@ -16,6 +16,7 @@
 [[vk::binding(2)]] RWStructuredBuffer<GpuSceneLight> g_lights;
 [[vk::binding(3)]] RWStructuredBuffer<GpuSceneLightVisibleRenderablesHash> g_lightHashes;
 [[vk::binding(4)]] RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs;
+[[vk::binding(5)]] RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs;
 
 struct Constants
 {
@@ -63,7 +64,16 @@ groupshared U32 s_renderLight;
 
 		if(svGroupIndex < renderStateBucketCount)
 		{
-			g_mdiDrawCounts[svGroupIndex] = 0;
+			g_mdiDrawCounts[svGroupIndex] = 0u;
+		}
+
+		// Do the same for the task shaders
+		g_taskShaderIndirectArgs.GetDimensions(renderStateBucketCount, unused);
+		ANKI_ASSERT(renderStateBucketCount <= 64);
+
+		if(svGroupIndex < renderStateBucketCount)
+		{
+			g_taskShaderIndirectArgs[svGroupIndex].m_threadGroupCountX = 0u;
 		}
 	}
 }

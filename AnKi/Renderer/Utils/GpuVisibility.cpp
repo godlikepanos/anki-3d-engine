@@ -164,29 +164,46 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 	// Zero some stuff
 	{
-		ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass("GPU visibility: Zero stuff");
+		Array<Char, 128> passName;
+		snprintf(passName.getBegin(), passName.getSizeInBytes(), "GPU vis zero: %s", in.m_passesName.cstr());
+
+		ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(passName.getBegin());
 		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kTransferDestination);
 
 		pass.setWork([mdiDrawCountsBuffer = out.m_mdiDrawCountsBuffer, taskShaderIndirectArgsBuffer = out.m_taskShaderIndirectArgsBuffer,
 					  visibleAaabbIndicesBuffer = out.m_visibleAaabbIndicesBuffer,
-					  visiblesHashBuffer = out.m_visibleAaabbIndicesBuffer](RenderPassWorkContext& rpass) {
-			rpass.m_commandBuffer->fillBuffer(mdiDrawCountsBuffer, 0);
-			rpass.m_commandBuffer->fillBuffer(taskShaderIndirectArgsBuffer, 0);
+					  visiblesHashBuffer = out.m_visiblesHashBuffer](RenderPassWorkContext& rpass) {
+			CommandBuffer& cmdb = *rpass.m_commandBuffer;
+
+			cmdb.pushDebugMarker("MDI counts", Vec3(1.0f, 1.0f, 1.0f));
+			cmdb.fillBuffer(mdiDrawCountsBuffer, 0);
+			cmdb.popDebugMarker();
+
+			cmdb.pushDebugMarker("Task shaders args", Vec3(1.0f, 1.0f, 1.0f));
+			cmdb.fillBuffer(taskShaderIndirectArgsBuffer, 0);
+			cmdb.popDebugMarker();
 
 			if(visiblesHashBuffer.m_buffer)
 			{
-				rpass.m_commandBuffer->fillBuffer(visiblesHashBuffer, 0);
+				cmdb.pushDebugMarker("Visibles hash", Vec3(1.0f, 1.0f, 1.0f));
+				cmdb.fillBuffer(visiblesHashBuffer, 0);
+				cmdb.popDebugMarker();
 			}
 
 			if(visibleAaabbIndicesBuffer.m_buffer)
 			{
-				rpass.m_commandBuffer->fillBuffer(visibleAaabbIndicesBuffer.m_buffer, visibleAaabbIndicesBuffer.m_offset, sizeof(U32), 0);
+				cmdb.pushDebugMarker("Visible AABB indices", Vec3(1.0f, 1.0f, 1.0f));
+				cmdb.fillBuffer(visibleAaabbIndicesBuffer.m_buffer, visibleAaabbIndicesBuffer.m_offset, sizeof(U32), 0);
+				cmdb.popDebugMarker();
 			}
 		});
 	}
 
 	// Create the renderpass
-	ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(in.m_passesName);
+	Array<Char, 128> passName;
+	snprintf(passName.getBegin(), passName.getSizeInBytes(), "GPU vis: %s", in.m_passesName.cstr());
+
+	ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(passName.getBegin());
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavComputeRead);
 	pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavComputeWrite);

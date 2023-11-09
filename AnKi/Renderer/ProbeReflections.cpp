@@ -361,7 +361,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 		FrustumGpuVisibilityInput visIn;
-		visIn.m_passesName = "Cube refl GBuffer visibility";
+		visIn.m_passesName = "Cube refl GBuffer";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
 		visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 		visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
@@ -433,7 +433,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "Cube refl shadows visibility";
+			visIn.m_passesName = "Cube refl shadows";
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[i];
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();

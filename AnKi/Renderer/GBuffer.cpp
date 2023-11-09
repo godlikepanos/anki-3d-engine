@@ -167,7 +167,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 		FrustumGpuVisibilityInput visIn;
-		visIn.m_passesName = "GBuffer visibility";
+		visIn.m_passesName = "GBuffer";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
 		visIn.m_viewProjectionMatrix = matrices.m_viewProjection;
 		visIn.m_lodReferencePoint = matrices.m_cameraTransform.getTranslationPart().xyz();

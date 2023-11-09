@@ -390,7 +390,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows visibility: Dir light";
+			visIn.m_passesName = "Shadows dir light";
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
@@ -459,7 +459,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			DistanceGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows visibility: Point light";
+			visIn.m_passesName = "Shadows point light";
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			visIn.m_lodDistances = lodDistances;
@@ -531,7 +531,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows visibility: Spot light";
+			visIn.m_passesName = "Shadows spot light";
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = cameraOrigin;
 			visIn.m_lodDistances = lodDistances;
@@ -639,8 +639,8 @@ BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const Light
 	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
 	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kUavComputeWrite);
 
-	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_mdiDrawCountsBuffer,
-				  clearTileIndirectArgs](RenderPassWorkContext& rpass) {
+	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_mdiDrawCountsBuffer, clearTileIndirectArgs,
+				  taskShadersIndirectArgs = visOut.m_taskShaderIndirectArgsBuffer](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());
@@ -653,6 +653,7 @@ BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const Light
 		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
 		cmdb.bindUavBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
 		cmdb.bindUavBuffer(0, 4, clearTileIndirectArgs);
+		cmdb.bindUavBuffer(0, 5, taskShadersIndirectArgs);
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);

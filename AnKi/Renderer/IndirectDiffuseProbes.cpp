@@ -238,7 +238,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "GI GBuffer visibility";
+			visIn.m_passesName = "GI GBuffer";
 			visIn.m_technique = RenderingTechnique::kGBuffer;
 			visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 			visIn.m_lodReferencePoint = cellCenter;
@@ -318,7 +318,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 				FrustumGpuVisibilityInput visIn;
-				visIn.m_passesName = "GI shadows visibility";
+				visIn.m_passesName = "GI shadows";
 				visIn.m_technique = RenderingTechnique::kDepth;
 				visIn.m_viewProjectionMatrix = cascadeViewProjMats[i];
 				visIn.m_lodReferencePoint = cellCenter;

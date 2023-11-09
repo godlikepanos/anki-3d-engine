@@ -543,8 +543,11 @@ static void generateMeshlets(SubMesh& submesh)
 		outMeshlet.m_aabb = computeBoundingAabb(&newVertexBuffer[outMeshlet.m_firstVertex].m_position, outMeshlet.m_vertexCount, sizeof(TempVertex));
 	}
 
-	ANKI_IMPORTER_LOGV("Meshletization stats: %f%% more vertices, %u meshlets",
-					   (F32(newVertexBuffer.getSize()) - F32(submesh.m_verts.getSize())) / F32(submesh.m_verts.getSize()) * 100.0f, meshletCount);
+	const F64 avgPrimCountPerMeshlet = F64(newIndexBuffer.getSize() / 3) / F64(meshletCount);
+	const F64 avgVertCountPerMeshlet = F64(newVertexBuffer.getSize()) / F64(meshletCount);
+	ANKI_IMPORTER_LOGV("Meshletization stats: %f%% more vertices, %u meshlets, primitive_count/meshlet %f, vert_count/meshlet %f",
+					   (F32(newVertexBuffer.getSize()) - F32(submesh.m_verts.getSize())) / F32(submesh.m_verts.getSize()) * 100.0f, meshletCount,
+					   avgPrimCountPerMeshlet, avgVertCountPerMeshlet);
 
 	submesh.m_indices = std::move(newIndexBuffer);
 	submesh.m_verts = std::move(newVertexBuffer);
