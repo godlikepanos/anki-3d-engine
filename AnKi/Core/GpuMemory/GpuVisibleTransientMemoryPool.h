@@ -66,15 +66,7 @@ public:
 		return out;
 	}
 
-	void endFrame()
-	{
-		if(m_frame == 0)
-		{
-			m_pool.reset();
-		}
-
-		m_frame = (m_frame + 1) % kMaxFramesInFlight;
-	}
+	void endFrame();
 
 private:
 	StackGpuMemoryPool m_pool;

@@ -59,6 +59,7 @@ groupshared U32 s_renderLight;
 
 		U32 renderStateBucketCount, unused;
 		g_mdiDrawCounts.GetDimensions(renderStateBucketCount, unused);
+		ANKI_ASSERT(renderStateBucketCount <= 64);
 
 		if(svGroupIndex < renderStateBucketCount)
 		{

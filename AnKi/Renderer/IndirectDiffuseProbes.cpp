@@ -235,7 +235,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			frustum.setWorldTransform(Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
 			frustum.update();
 
-			Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = "GI GBuffer visibility";
@@ -315,7 +315,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				cascadeViewProjMats[i] = cascadeProjMats[i] * Mat4(cascadeViewMats[i], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-				Array<F32, kMaxLodCount - 1> lodDistances = {1000.0f, 1001.0f}; // Something far to force detailed LODs
+				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 				FrustumGpuVisibilityInput visIn;
 				visIn.m_passesName = "GI shadows visibility";

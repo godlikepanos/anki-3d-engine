@@ -203,6 +203,8 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 			cmdb.drawMeshTasksIndirect(args.m_taskShaderIndirectArgsBuffer.m_buffer,
 									   args.m_taskShaderIndirectArgsBuffer.m_offset + sizeof(DispatchIndirectArgs) * bucketCount);
+
+			allMeshletGroupCount += min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
 		}
 		else
 		{
@@ -230,7 +232,6 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 		++bucketCount;
 		allUserCount += userCount;
-		allMeshletGroupCount += meshletGroupCount;
 	});
 
 	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));

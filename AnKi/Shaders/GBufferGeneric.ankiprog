@@ -233,8 +233,8 @@ struct FirstPayload
 {
 	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[g_firstPayload.m_val.x + svGroupId];
 
-	const U32 meshletCount = (inPayload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit & 63u) + 1u;
-	const U32 firstMeshlet = inPayload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit >> 6u;
+	const U32 meshletCount = (inPayload.m_firstMeshlet_25bit_meshletCountMinusOne_7bit & 127u) + 1u;
+	const U32 firstMeshlet = inPayload.m_firstMeshlet_25bit_meshletCountMinusOne_7bit >> 7u;
 
 	if(svGroupIndex < meshletCount)
 	{
@@ -271,10 +271,9 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 
 	SetMeshOutputCounts(vertCount, primCount);
 
-	const U32 loopCount = max(kMaxPrimitivesPerMeshlet, kMaxVerticesPerMeshlet) / ANKI_MESH_SHADER_THREADGROUP_SIZE;
-
 	// Write the verts
-	[unroll] for(U32 l = 0; l < loopCount; ++l)
+	const U32 vertLoopCount = kMaxVerticesPerMeshlet / ANKI_MESH_SHADER_THREADGROUP_SIZE;
+	[unroll] for(U32 l = 0; l < vertLoopCount; ++l)
 	{
 		const U32 idx = l * ANKI_MESH_SHADER_THREADGROUP_SIZE + svGroupIndex;
 
@@ -315,8 +314,14 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 
 			verts[idx] = output;
 		}
+	}
 
-		// Write the indices
+	// Write the indices
+	const U32 primLoopCount = kMaxPrimitivesPerMeshlet / ANKI_MESH_SHADER_THREADGROUP_SIZE;
+	[unroll] for(U32 l = 0; l < primLoopCount; ++l)
+	{
+		const U32 idx = l * ANKI_MESH_SHADER_THREADGROUP_SIZE + svGroupIndex;
+
 		if(idx < primCount)
 		{
 			indices[idx] = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + idx].xyz;

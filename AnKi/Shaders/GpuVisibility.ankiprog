@@ -195,6 +195,16 @@ struct DrawIndirectArgsWithPadding
 
 		U32 payloadIdx;
 		InterlockedAdd(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, meshletGroupCount, payloadIdx);
+
+		if(payloadIdx >= kMaxMeshletGroupCountPerRenderStateBucket)
+		{
+			// Reached a memory limit, start over to force rendering from the beginning
+			ANKI_ASSERT(0);
+			U32 dummy;
+			InterlockedExchange(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, 1, dummy);
+			payloadIdx = 0;
+		}
+
 		payloadIdx += g_drawIndirectArgsIndexOrTaskPayloadIndex[renderStateBucket];
 
 		g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 1u;
@@ -209,7 +219,7 @@ struct DrawIndirectArgsWithPadding
 			const U32 firstMeshlet = meshLod.m_firstMeshlet + kMaxMeshletsPerTaskShaderThreadgroup * i;
 			const U32 meshletCount = min(kMaxMeshletsPerTaskShaderThreadgroup, meshLod.m_meshletCount - i * kMaxMeshletsPerTaskShaderThreadgroup);
 
-			payload.m_firstMeshlet_26bit_meshletCountMinusOne_6bit = (firstMeshlet << 6u) | (meshletCount - 1u);
+			payload.m_firstMeshlet_25bit_meshletCountMinusOne_7bit = (firstMeshlet << 7u) | ((meshletCount - 1u) & 127u);
 
 			g_taskShaderPayloads[payloadIdx + i] = payload;
 		}

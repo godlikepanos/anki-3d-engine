@@ -48,7 +48,6 @@ ANKI_END_NAMESPACE
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
 #	define inline
-#	define ANKI_ASSERT(x)
 
 #	define ANKI_ARRAY(type, size, name) type name[(U32)size]
 
@@ -58,7 +57,13 @@ ANKI_END_NAMESPACE
 
 #	define constexpr static const
 
-#	define ANKI_ASSERT(x)
+#	if defined(ANKI_ASSERTIONS_ENABLED) && ANKI_ASSERTIONS_ENABLED == 1
+#		define ANKI_ASSERT(x) \
+			if(!(x)) \
+			printf("Assertion failed. Line %i", __LINE__)
+#	else
+#		define ANKI_ASSERT(x)
+#	endif
 
 template<typename T>
 void maybeUnused(T a)
@@ -765,13 +770,18 @@ constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
 
 constexpr U32 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
 
-constexpr U32 kMaxPrimitivesPerMeshlet = 64;
-constexpr U32 kMaxVerticesPerMeshlet = 64;
-#define ANKI_TASK_SHADER_THREADGROUP_SIZE 64u
+constexpr U32 kMaxPrimitivesPerMeshlet = 128;
+constexpr U32 kMaxVerticesPerMeshlet = 128;
+#define ANKI_TASK_SHADER_THREADGROUP_SIZE 128u
 constexpr U32 kMaxMeshletsPerTaskShaderThreadgroup = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 
 #define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
-static_assert(max(kMaxPrimitivesPerMeshlet, kMaxVerticesPerMeshlet) % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
+static_assert(kMaxPrimitivesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
+static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
+
+/// Assume that a render state bucket can't go beyond 100M triangles. This helps ground some memory allocations.
+constexpr U32 kMaxVisibleMeshletsPerRenderStateBucket = 100000000 / kMaxPrimitivesPerMeshlet;
+constexpr U32 kMaxMeshletGroupCountPerRenderStateBucket = kMaxVisibleMeshletsPerRenderStateBucket / kMaxMeshletsPerTaskShaderThreadgroup;
 
 struct DrawIndirectArgs
 {

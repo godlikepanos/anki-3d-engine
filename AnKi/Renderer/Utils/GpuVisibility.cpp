@@ -97,7 +97,25 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		ANKI_ASSERT(0);
 	}
 
-	if(aabbCount == 0) [[unlikely]]
+	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(in.m_technique);
+
+	U32 legacyGeometryFlowUserCount = 0;
+	U32 modernGeometryFlowUserCount = 0;
+	U32 meshletGroupCount = 0;
+	RenderStateBucketContainer::getSingleton().iterateBuckets(in.m_technique, [&](const RenderStateInfo& s, U32 userCount, U32 meshletGroupCount_) {
+		if(meshletGroupCount_)
+		{
+			modernGeometryFlowUserCount += userCount;
+			meshletGroupCount += min(meshletGroupCount_, kMaxMeshletGroupCountPerRenderStateBucket);
+		}
+		else
+		{
+			legacyGeometryFlowUserCount += userCount;
+		}
+	});
+	const U32 allUserCount = legacyGeometryFlowUserCount + modernGeometryFlowUserCount;
+
+	if(allUserCount == 0) [[unlikely]]
 	{
 		// Early exit
 
@@ -120,24 +138,6 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		return;
 	}
-
-	const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(in.m_technique);
-
-	U32 legacyGeometryFlowUserCount = 0;
-	U32 modernGeometryFlowUserCount = 0;
-	U32 meshletGroupCount = 0;
-	RenderStateBucketContainer::getSingleton().iterateBuckets(in.m_technique, [&](const RenderStateInfo&, U32 userCount, U32 meshletGroupCount_) {
-		if(meshletGroupCount_)
-		{
-			modernGeometryFlowUserCount += userCount;
-			meshletGroupCount += meshletGroupCount_;
-		}
-		else
-		{
-			legacyGeometryFlowUserCount += userCount;
-		}
-	});
-	const U32 allUserCount = aabbCount;
 
 	// Allocate memory
 	out.m_drawIndexedIndirectArgsBuffer =
@@ -199,7 +199,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 	pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
 				  technique = in.m_technique, mdiDrawCountsBuffer = out.m_mdiDrawCountsBuffer,
-				  instanceRateRenderables = out.m_instanceRateRenderablesBuffer, indirectArgs = out.m_drawIndexedIndirectArgsBuffer, allUserCount,
+				  instanceRateRenderables = out.m_instanceRateRenderablesBuffer, indirectArgs = out.m_drawIndexedIndirectArgsBuffer, aabbCount,
 				  visibleAabbsBuffer = out.m_visibleAaabbIndicesBuffer, hashBuffer = out.m_visiblesHashBuffer,
 				  taskShaderIndirectArgsBuff = out.m_taskShaderIndirectArgsBuffer,
 				  taskShaderPayloadBuffer = out.m_taskShaderPayloadBuffer](RenderPassWorkContext& rpass) {
@@ -256,7 +256,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			else if(meshletGroupCount)
 			{
 				drawIndirectArgsIndexOrTaskPayloadIndex[bucketCount] = taskPayloadCount;
-				taskPayloadCount += meshletGroupCount;
+				taskPayloadCount += min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
 			}
 			else
 			{
@@ -319,7 +319,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			cmdb.bindUavBuffer(0, 13, hashBuffer);
 		}
 
-		dispatchPPCompute(cmdb, 64, 1, allUserCount, 1);
+		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
 	});
 }
 

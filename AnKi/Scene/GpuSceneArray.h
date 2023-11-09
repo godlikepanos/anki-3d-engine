@@ -108,6 +108,7 @@ public:
 		return getElementCount() * getElementSize();
 	}
 
+	/// This count contains elements that may be innactive after a free. Frees in the middle of the array will not re-arrange other elements.
 	/// @note Thread-safe
 	U32 getElementCount() const
 	{
