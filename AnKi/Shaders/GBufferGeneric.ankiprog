@@ -233,23 +233,24 @@ struct FirstPayload
 {
 	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[g_firstPayload.m_val.x + svGroupId];
 
-	const U32 meshletCount = (inPayload.m_firstMeshlet_25bit_meshletCountMinusOne_7bit & 127u) + 1u;
-	const U32 firstMeshlet = inPayload.m_firstMeshlet_25bit_meshletCountMinusOne_7bit >> 7u;
+	const U32 lod = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 30u;
+	const U32 renderableIdx = (inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 9u) & ((1u << 21u) - 1u);
+	const U32 meshletGroup = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit & ((1u << 9u) - 1u);
 
-	if(svGroupIndex < meshletCount)
+	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
+	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod);
+	U32 firstMeshlet = meshletGroup * kMeshletGroupSize;
+	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshlet * kMeshletGroupSize);
+	firstMeshlet += meshLod.m_firstMeshlet;
+
+	if(svGroupIndex == 0u)
 	{
-		const GpuSceneRenderable renderable = g_renderables[inPayload.m_renderableIndex];
-		const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodsOffset);
-
-		if(svGroupIndex == 0u)
-		{
-			s_payload.m_firstMeshletIndex = firstMeshlet;
-			s_payload.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
-			s_payload.m_constantsOffset = renderable.m_constantsOffset;
-			s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
-			s_payload.m_positionScale = meshLod.m_positionScale;
-			s_payload.m_positionTranslation = meshLod.m_positionTranslation;
-		}
+		s_payload.m_firstMeshletIndex = firstMeshlet;
+		s_payload.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
+		s_payload.m_constantsOffset = renderable.m_constantsOffset;
+		s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
+		s_payload.m_positionScale = meshLod.m_positionScale;
+		s_payload.m_positionTranslation = meshLod.m_positionTranslation;
 	}
 
 	DispatchMesh(meshletCount, 1, 1, s_payload);

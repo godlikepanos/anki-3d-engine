@@ -191,37 +191,35 @@ struct DrawIndirectArgsWithPadding
 
 	if(usesMeshShaders)
 	{
-		const U32 meshletGroupCount = (meshLod.m_meshletCount + (kMaxMeshletsPerTaskShaderThreadgroup - 1)) / kMaxMeshletsPerTaskShaderThreadgroup;
+		const U32 meshletGroupCount = (meshLod.m_meshletCount + (kMeshletGroupSize - 1u)) / kMeshletGroupSize;
 
 		U32 payloadIdx;
 		InterlockedAdd(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, meshletGroupCount, payloadIdx);
 
-		if(payloadIdx >= kMaxMeshletGroupCountPerRenderStateBucket)
+		if(payloadIdx == 0u)
 		{
-			// Reached a memory limit, start over to force rendering from the beginning
+			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 1u;
+			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountZ = 1u;
+		}
+		else if(payloadIdx >= kMaxMeshletGroupCountPerRenderStateBucket)
+		{
+			// Reached a memory limit, cancel the job
 			ANKI_ASSERT(0);
-			U32 dummy;
-			InterlockedExchange(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, 1, dummy);
 			payloadIdx = 0;
+			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 0u;
 		}
 
 		payloadIdx += g_drawIndirectArgsIndexOrTaskPayloadIndex[renderStateBucket];
 
-		g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 1u;
-		g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountZ = 1u;
-
 		// Divide the mesh into meshlet groups and add them as task payloads
 		GpuSceneTaskShaderPayload payload;
-		payload.m_renderableIndex = renderableIdx;
+		payload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit = (lod << 30u) | (renderableIdx << 9u);
 
 		for(U32 i = 0; i < meshletGroupCount; ++i)
 		{
-			const U32 firstMeshlet = meshLod.m_firstMeshlet + kMaxMeshletsPerTaskShaderThreadgroup * i;
-			const U32 meshletCount = min(kMaxMeshletsPerTaskShaderThreadgroup, meshLod.m_meshletCount - i * kMaxMeshletsPerTaskShaderThreadgroup);
-
-			payload.m_firstMeshlet_25bit_meshletCountMinusOne_7bit = (firstMeshlet << 7u) | ((meshletCount - 1u) & 127u);
-
 			g_taskShaderPayloads[payloadIdx + i] = payload;
+
+			++payload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
 		}
 	}
 	else

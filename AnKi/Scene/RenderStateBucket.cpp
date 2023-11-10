@@ -40,7 +40,7 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	toHash[2] = state.m_indexedDrawcall;
 	const U64 hash = computeHash(toHash.getBegin(), toHash.getSizeInBytes());
 
-	const U32 meshletGroupCount = lod0MeshletCount + (kMaxMeshletsPerTaskShaderThreadgroup - 1) / kMaxMeshletsPerTaskShaderThreadgroup;
+	const U32 meshletGroupCount = lod0MeshletCount + (kMeshletGroupSize - 1) / kMeshletGroupSize;
 
 	SceneDynamicArray<ExtendedBucket>& buckets = m_buckets[technique];
 
@@ -103,7 +103,7 @@ void RenderStateBucketContainer::removeUser(RenderStateBucketIndex& bucketIndex)
 
 	const RenderingTechnique technique = bucketIndex.m_technique;
 	const U32 idx = bucketIndex.m_index;
-	const U32 meshletGroupCount = bucketIndex.m_lod0MeshletCount + (kMaxMeshletsPerTaskShaderThreadgroup - 1) / kMaxMeshletsPerTaskShaderThreadgroup;
+	const U32 meshletGroupCount = bucketIndex.m_lod0MeshletCount + (kMeshletGroupSize - 1) / kMeshletGroupSize;
 	bucketIndex.invalidate();
 
 	LockGuard lock(m_mtx);
