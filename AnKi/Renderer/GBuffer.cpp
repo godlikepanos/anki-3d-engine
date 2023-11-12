@@ -98,6 +98,8 @@ Error GBuffer::initInternal()
 
 	m_fbDescr.bake();
 
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeGBufferNormal.ankiprogbin", m_visNormalProg, m_visNormalGrProg));
+
 	return Error::kNone;
 }
 
@@ -246,6 +248,28 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	// HZB generation for the next frame
 	getRenderer().getHzbGenerator().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
 														UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), rgraph);
+}
+
+void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+								   ShaderProgramPtr& optionalShaderProgram) const
+{
+	if(rtName == "GBufferAlbedo")
+	{
+		handles[0] = m_runCtx.m_colorRts[0];
+	}
+	else if(rtName == "GBufferNormals")
+	{
+		handles[0] = m_runCtx.m_colorRts[2];
+		optionalShaderProgram = m_visNormalGrProg;
+	}
+	else if(rtName == "GBufferVelocity")
+	{
+		handles[0] = m_runCtx.m_colorRts[3];
+	}
+	else
+	{
+		ANKI_ASSERT(!"See file");
+	}
 }
 
 } // end namespace anki

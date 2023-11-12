@@ -102,7 +102,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	U32 legacyGeometryFlowUserCount = 0;
 	U32 modernGeometryFlowUserCount = 0;
 	U32 meshletGroupCount = 0;
-	RenderStateBucketContainer::getSingleton().iterateBuckets(in.m_technique, [&](const RenderStateInfo& s, U32 userCount, U32 meshletGroupCount_) {
+	RenderStateBucketContainer::getSingleton().iterateBuckets(in.m_technique, [&](const RenderStateInfo&, U32 userCount, U32 meshletGroupCount_) {
 		if(meshletGroupCount_)
 		{
 			modernGeometryFlowUserCount += userCount;

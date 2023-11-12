@@ -57,25 +57,7 @@ public:
 	}
 
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
-	{
-		if(rtName == "GBufferAlbedo")
-		{
-			handles[0] = m_runCtx.m_colorRts[0];
-		}
-		else if(rtName == "GBufferNormals")
-		{
-			handles[0] = m_runCtx.m_colorRts[2];
-		}
-		else if(rtName == "GBufferVelocity")
-		{
-			handles[0] = m_runCtx.m_colorRts[3];
-		}
-		else
-		{
-			ANKI_ASSERT(!"See file");
-		}
-	}
+							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
 
 	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
 	const BufferOffsetRange& getVisibleAabbsBuffer() const
@@ -89,6 +71,9 @@ private:
 	Array<TexturePtr, 2> m_depthRts;
 	TexturePtr m_hzbRt;
 	FramebufferDescription m_fbDescr;
+
+	ShaderProgramResourcePtr m_visNormalProg;
+	ShaderProgramPtr m_visNormalGrProg;
 
 	class
 	{

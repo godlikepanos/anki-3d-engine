@@ -172,7 +172,6 @@ Error MeshBinaryLoader::checkHeader() const
 	// Attributes
 	ANKI_CHECK(checkFormat(VertexStreamId::kPosition, false, true));
 	ANKI_CHECK(checkFormat(VertexStreamId::kNormal, false, false));
-	ANKI_CHECK(checkFormat(VertexStreamId::kTangent, false, false));
 	ANKI_CHECK(checkFormat(VertexStreamId::kUv, false, false));
 	ANKI_CHECK(checkFormat(VertexStreamId::kBoneIds, true, false));
 	ANKI_CHECK(checkFormat(VertexStreamId::kBoneWeights, true, false));

@@ -99,19 +99,21 @@ class TempVertex
 public:
 	Vec3 m_position;
 	F32 m_padding0;
-	Vec4 m_tangent;
+
 	Vec4 m_boneWeights;
+
 	Vec3 m_normal;
+	F32 m_padding1;
+
 	Vec2 m_uv;
 	U16Vec4 m_boneIds;
-	F32 m_padding1;
 
 	TempVertex()
 	{
 		zeroMemory(*this);
 	}
 };
-static_assert(sizeof(TempVertex) == 5 * sizeof(Vec4), "Will be hashed");
+static_assert(sizeof(TempVertex) == 4 * sizeof(Vec4), "Will be hashed");
 
 class ImporterMeshlet
 {
@@ -299,89 +301,6 @@ static void fixNormals(const F32 normalsMergeAngle, SubMesh& submesh)
 			normal = newNormal;
 			otherNormal = newNormal;
 		}
-	}
-}
-
-static void computeTangents(SubMesh& submesh)
-{
-	ImporterDynamicArray<Vec3> bitangents(&submesh.m_verts.getMemoryPool());
-	const U32 vertCount = submesh.m_verts.getSize();
-	bitangents.resize(vertCount, Vec3(0.0f));
-
-	for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
-	{
-		const U32 i0 = submesh.m_indices[i + 0];
-		const U32 i1 = submesh.m_indices[i + 1];
-		const U32 i2 = submesh.m_indices[i + 2];
-
-		const Vec3& v0 = submesh.m_verts[i0].m_position;
-		const Vec3& v1 = submesh.m_verts[i1].m_position;
-		const Vec3& v2 = submesh.m_verts[i2].m_position;
-		const Vec3 edge01 = v1 - v0;
-		const Vec3 edge02 = v2 - v0;
-
-		const Vec2 uvedge01 = submesh.m_verts[i1].m_uv - submesh.m_verts[i0].m_uv;
-		const Vec2 uvedge02 = submesh.m_verts[i2].m_uv - submesh.m_verts[i0].m_uv;
-
-		F32 det = (uvedge01.y() * uvedge02.x()) - (uvedge01.x() * uvedge02.y());
-		det = (isZero(det)) ? 0.0001f : (1.0f / det);
-
-		Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
-		Vec3 b = (edge02 * uvedge01.x() - edge01 * uvedge02.x()) * det;
-
-		if(t.getLengthSquared() < kEpsilonf)
-		{
-			t = Vec3(1.0f, 0.0f, 0.0f); // Something random
-		}
-		else
-		{
-			t.normalize();
-		}
-
-		if(b.getLengthSquared() < kEpsilonf)
-		{
-			b = Vec3(0.0f, 1.0f, 0.0f); // Something random
-		}
-		else
-		{
-			b.normalize();
-		}
-
-		submesh.m_verts[i0].m_tangent += Vec4(t, 0.0f);
-		submesh.m_verts[i1].m_tangent += Vec4(t, 0.0f);
-		submesh.m_verts[i2].m_tangent += Vec4(t, 0.0f);
-
-		bitangents[i0] += b;
-		bitangents[i1] += b;
-		bitangents[i2] += b;
-	}
-
-	for(U32 i = 0; i < vertCount; ++i)
-	{
-		Vec3 t = Vec3(submesh.m_verts[i].m_tangent.xyz());
-		const Vec3& n = submesh.m_verts[i].m_normal;
-		Vec3& b = bitangents[i];
-
-		if(t.getLengthSquared() < kEpsilonf)
-		{
-			t = Vec3(1.0f, 0.0f, 0.0f); // Something random
-		}
-		else
-		{
-			t.normalize();
-		}
-
-		if(b.getLengthSquared() < kEpsilonf)
-		{
-			b = Vec3(0.0f, 1.0f, 0.0f); // Something random
-		}
-		else
-		{
-			b.normalize();
-		}
-
-		const F32 w = ((n.cross(t)).dot(b) < 0.0f) ? 1.0f : -1.0f;
-		submesh.m_verts[i].m_tangent = Vec4(t, w);
 	}
 }
 
@@ -732,17 +651,12 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			}
 		}
 
-		// Re-index meshes now and
-		// - before the tanget calculation because that will create many unique verts
-		// - after normal fix because that will create verts with same attributes
+		// Re-index meshes now
 		if(m_optimizeMeshes)
 		{
 			reindexSubmesh(submesh, m_pool);
 			vertCount = submesh.m_verts.getSize();
 		}
-
-		// Compute tangent
-		computeTangents(submesh);
 
 		// Optimize
 		if(m_optimizeMeshes)
@@ -821,7 +735,6 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kPosition, header, Vec4(1.0f / posScale), (-posTranslation).xyz1());
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kNormal, header);
-	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kTangent, header);
 	writeVertexAttribAndBufferInfoToHeader(VertexStreamId::kUv, header);
 	if(hasBoneWeights)
 	{
@@ -918,19 +831,6 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh) const
 			}
 
 			ANKI_CHECK(file.write(&normals[0], normals.getSizeInBytes()));
-		}
-
-		// Write tangent
-		for(const SubMesh& submesh : submeshes[lod])
-		{
-			ImporterDynamicArray<U32> tangents(m_pool);
-			tangents.resize(submesh.m_verts.getSize());
-			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
-			{
-				tangents[v] = packSnorm4x8(submesh.m_verts[v].m_tangent);
-			}
-
-			ANKI_CHECK(file.write(&tangents[0], tangents.getSizeInBytes()));
 		}
 
 		// Write UV

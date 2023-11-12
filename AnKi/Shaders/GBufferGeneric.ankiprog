@@ -65,7 +65,7 @@ struct VertIn
 
 struct VertOut
 {
-	Vec4 m_position : SV_POSITION;
+	Vec4 m_svPosition : SV_POSITION;
 
 #if UVS
 	Vec2 m_uv : TEXCOORD;
@@ -77,13 +77,8 @@ struct VertOut
 #endif
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+	Vec3 m_worldPos : WORLD_POS;
 	RVec3 m_normal : NORMAL;
-	RVec3 m_tangent : TANGENT;
-#	if ANKI_PLATFORM_MOBILE
-	RVec3 m_bitangent : BINTANGENT;
-#	else
-	Vec3 m_bitangent : BINTANGENT; // For some reason RelaxedPrecision annoys nVidia
-#	endif
 #endif
 
 	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
@@ -124,7 +119,7 @@ Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, U32 boneTransformsOffset, U
 }
 
 #if ANKI_BONES
-void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal, inout RVec4 tangent)
+void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal)
 {
 	Mat3x4_2 mats = loadBoneTransforms(vert, boneTransformsOffset, 0);
 
@@ -141,11 +136,9 @@ void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos,
 
 #	if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 	prevPos = mul(prevSkinMat, Vec4(pos, 1.0)).xyz;
-	tangent.xyz = mul(skinMat, Vec4(tangent.xyz, 0.0)).xyz;
 	normal = mul(skinMat, Vec4(normal, 0.0)).xyz;
 #	endif
 	ANKI_MAYBE_UNUSED(prevPos);
-	ANKI_MAYBE_UNUSED(tangent);
 	ANKI_MAYBE_UNUSED(normal);
 
 	pos = mul(skinMat, Vec4(pos, 1.0)).xyz;
@@ -170,7 +163,7 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 	v4 = mul(g_globalConstants.m_previousViewProjectionMatrix, v4);
 
 	output.m_prevClipXyw = v4.xyw;
-	output.m_crntClipXyw = output.m_position.xyw;
+	output.m_crntClipXyw = output.m_svPosition.xyw;
 }
 #endif
 
@@ -197,16 +190,15 @@ VertOut main(VertIn input)
 
 	// Do stuff
 #if ANKI_BONES
-	skinning(vert, renderable.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
+	skinning(vert, renderable.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
 #endif
 
-	output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
-	output.m_position = mul(g_globalConstants.m_viewProjectionMatrix, output.m_position);
+	const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
+	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+	output.m_worldPos = worldPos;
 	output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
-	output.m_tangent = mul(worldTransform, Vec4(vert.m_tangent.xyz, 0.0));
-	output.m_bitangent = cross(output.m_normal, output.m_tangent) * vert.m_tangent.w;
 #endif
 
 #if REALLY_VELOCITY
@@ -297,16 +289,15 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 
 			// Do stuff
 #if ANKI_BONES
-			skinning(vert, payload.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal, vert.m_tangent);
+			skinning(vert, payload.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
 #endif
 
-			output.m_position = Vec4(mul(worldTransform, Vec4(vert.m_position, 1.0)), 1.0);
-			output.m_position = mul(g_globalConstants.m_viewProjectionMatrix, output.m_position);
+			const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
+			output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0f));
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
+			output.m_worldPos = worldPos;
 			output.m_normal = mul(worldTransform, Vec4(vert.m_normal, 0.0));
-			output.m_tangent = mul(worldTransform, Vec4(vert.m_tangent.xyz, 0.0));
-			output.m_bitangent = cross(output.m_normal, output.m_tangent) * vert.m_tangent.w;
 #endif
 
 #if REALLY_VELOCITY
@@ -352,21 +343,8 @@ void main(VertOut input)
 	doAlphaTest(diffColorA.a);
 #	endif
 }
+
 #elif ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
-// Do normal mapping
-RVec3 readNormalFromTexture(VertOut input, Texture2D<RVec4> map, SamplerState sampl, Vec2 texCoords)
-{
-	// First read the texture
-	const RVec3 nAtTangentspace = normalize((map.Sample(sampl, texCoords).rgb - 0.5) * 2.0);
-
-	const RVec3 n = normalize(input.m_normal);
-	const RVec3 t = normalize(input.m_tangent);
-	const RVec3 b = normalize(input.m_bitangent);
-
-	const RMat3 tbnMat = constructMatrixColumns(t, b, n);
-
-	return mul(tbnMat, nAtTangentspace);
-}
 
 FragOut main(VertOut input)
 {
@@ -411,7 +389,8 @@ FragOut main(VertOut input)
 #	endif
 
 #	if NORMAL_TEX
-	const RVec3 normal = readNormalFromTexture(input, g_bindlessTextures2dF32[localConstants.m_normalTex], g_globalSampler, uv);
+	const RVec3 nAtTangentspace = normalize((g_bindlessTextures2dF32[localConstants.m_normalTex].Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
+	const RVec3 normal = perturbNormal(nAtTangentspace, input.m_worldPos, uv, input.m_normal);
 #	else
 	const RVec3 normal = normalize(input.m_normal);
 #	endif

@@ -49,7 +49,6 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	v.m_position = v.m_position * mlod.m_positionScale + mlod.m_positionTranslation;
 
 	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kNormal] + svVertexId].xyz;
-	v.m_tangent = g_unifiedGeom_R8G8B8A8_Snorm[mlod.m_vertexOffsets[(U32)VertexStreamId::kTangent] + svVertexId];
 	v.m_uv = g_unifiedGeom_R32G32_Sfloat[mlod.m_vertexOffsets[(U32)VertexStreamId::kUv] + svVertexId];
 
 	if(bones)
@@ -68,7 +67,6 @@ UnpackedMeshVertex loadVertex(Meshlet meshlet, U32 vertexIndex, Bool bones, F32 
 	v.m_position = v.m_position * positionScale + positionTranslation;
 
 	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kNormal] + vertexIndex].xyz;
-	v.m_tangent = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kTangent] + vertexIndex];
 	v.m_uv = g_unifiedGeom_R32G32_Sfloat[meshlet.m_vertexOffsets[(U32)VertexStreamId::kUv] + vertexIndex];
 
 	if(bones)

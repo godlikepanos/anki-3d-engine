@@ -194,11 +194,23 @@ T saturate(T a);
 template<typename T>
 float dot(T a, T b);
 
+template<typename T>
+T cross(T a, T b);
+
+template<typename T>
+T ddx(T a);
+
+template<typename T>
+T ddy(T a);
+
 U32 asuint(float f);
 
 F32 asfloat(U32 u);
 
 U32 NonUniformResourceIndex(U32 x);
+
+template<typename T>
+T rsqrt(T x);
 
 // Atomics
 
