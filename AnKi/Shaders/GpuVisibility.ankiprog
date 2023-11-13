@@ -110,6 +110,15 @@ struct DrawIndirectArgsWithPadding
 	aabbMinDepth = saturate(aabbMinDepth);
 	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
 	{
+		// Outside of the screen
+		return;
+	}
+
+	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_finalRenderTargetSize;
+	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_finalRenderTargetSize;
+	if(any(round(windowCoordsMin) == round(windowCoordsMax)))
+	{
+		// Doesn't touch the sampling points
 		return;
 	}
 

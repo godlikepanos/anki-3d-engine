@@ -19,6 +19,8 @@ struct FrustumGpuVisibilityConstants
 	F32 m_padding3;
 
 	Mat4 m_viewProjectionMat;
+
+	Vec2 m_finalRenderTargetSize;
 };
 
 struct DistanceGpuVisibilityConstants

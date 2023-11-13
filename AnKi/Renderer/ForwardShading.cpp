@@ -37,6 +37,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	visIn.m_gatherAabbIndices = g_dbgCVar.get();
 	RenderTargetHandle hzb = getRenderer().getGBuffer().getHzbRt();
 	visIn.m_hzbRt = &hzb;
+	visIn.m_finalRenderTargetSize = getRenderer().getInternalResolution();
 
 	getRenderer().getGpuVisibility().populateRenderGraph(visIn, m_runCtx.m_visOut);
 }

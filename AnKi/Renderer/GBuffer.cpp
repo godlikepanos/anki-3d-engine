@@ -177,6 +177,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		visIn.m_rgraph = &rgraph;
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
 		visIn.m_gatherAabbIndices = g_dbgCVar.get();
+		visIn.m_finalRenderTargetSize = getRenderer().getInternalResolution();
 
 		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
 

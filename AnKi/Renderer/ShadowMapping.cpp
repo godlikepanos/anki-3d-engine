@@ -397,6 +397,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
 			visIn.m_rgraph = &rgraph;
+			visIn.m_finalRenderTargetSize = work.m_viewport.zw();
 
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, work.m_visOut);
 
@@ -538,6 +539,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			visIn.m_rgraph = &rgraph;
 			visIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
 			visIn.m_hashVisibles = true;
+			visIn.m_finalRenderTargetSize = atlasViewport.zw();
 
 			GpuVisibilityOutput visOut;
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);

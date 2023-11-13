@@ -367,6 +367,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
 		visIn.m_lodDistances = lodDistances;
 		visIn.m_rgraph = &rgraph;
+		visIn.m_finalRenderTargetSize = UVec2(m_gbuffer.m_tileSize);
 
 		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOuts[i]);
 	}
@@ -439,6 +440,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
+			visIn.m_finalRenderTargetSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
 
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOuts[i]);
 		}

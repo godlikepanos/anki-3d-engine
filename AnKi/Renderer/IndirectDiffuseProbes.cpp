@@ -244,6 +244,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			visIn.m_lodReferencePoint = cellCenter;
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
+			visIn.m_finalRenderTargetSize = UVec2(m_tileSize);
 
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOuts[i]);
 		}
@@ -324,6 +325,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				visIn.m_lodReferencePoint = cellCenter;
 				visIn.m_lodDistances = lodDistances;
 				visIn.m_rgraph = &rgraph;
+				visIn.m_finalRenderTargetSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
 
 				getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOuts[i]);
 			}

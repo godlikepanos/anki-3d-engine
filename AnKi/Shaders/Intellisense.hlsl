@@ -212,6 +212,12 @@ U32 NonUniformResourceIndex(U32 x);
 template<typename T>
 T rsqrt(T x);
 
+template<typename T>
+T round(T x);
+
+template<typename T>
+T ceil(T x);
+
 // Atomics
 
 template<typename T>

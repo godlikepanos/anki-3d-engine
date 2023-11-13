@@ -62,6 +62,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	public:
 		RenderTargetHandle m_hzbRt;
 		Mat4 m_viewProjMat;
+		UVec2 m_finalRenderTargetSize;
 	};
 
 	FrustumTestData* frustumTestData = nullptr;
@@ -79,6 +80,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		frustumTestData = newInstance<FrustumTestData>(getRenderer().getFrameMemoryPool());
 		const FrustumGpuVisibilityInput& fin = static_cast<FrustumGpuVisibilityInput&>(in);
 		frustumTestData->m_viewProjMat = fin.m_viewProjectionMatrix;
+		frustumTestData->m_finalRenderTargetSize = fin.m_finalRenderTargetSize;
 	}
 
 	U32 aabbCount = 0;
@@ -303,6 +305,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			unis->m_lodReferencePoint = lodReferencePoint;
 			unis->m_viewProjectionMat = frustumTestData->m_viewProjMat;
+			unis->m_finalRenderTargetSize = Vec2(frustumTestData->m_finalRenderTargetSize);
 
 			if(frustumTestData->m_hzbRt.isValid())
 			{

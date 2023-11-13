@@ -34,6 +34,10 @@ class FrustumGpuVisibilityInput : public BaseGpuVisibilityInput
 {
 public:
 	Mat4 m_viewProjectionMatrix;
+
+	/// The size of the render target the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
+	UVec2 m_finalRenderTargetSize;
+
 	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
 };
 
@@ -75,6 +79,7 @@ public:
 	void populateRenderGraph(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out)
 	{
 		ANKI_ASSERT(in.m_viewProjectionMatrix != Mat4::getZero());
+		ANKI_ASSERT(in.m_finalRenderTargetSize != UVec2(0u));
 		populateRenderGraphInternal(false, in, out);
 	}
 
