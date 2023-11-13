@@ -352,6 +352,26 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		m_rt.m_allHandlesBuff->unmap();
 	}
 
+	// Get shader sizes and a few other things
+	//
+	for(const ShaderPtr& s : m_shaders)
+	{
+		if(!s.isCreated())
+		{
+			continue;
+		}
+
+		const ShaderType type = s->getShaderType();
+		const U32 size = s->getShaderBinarySize();
+
+		m_shaderBinarySizes[type] = size;
+
+		if(type == ShaderType::kFragment)
+		{
+			m_hasDiscard = s->hasDiscard();
+		}
+	}
+
 	return Error::kNone;
 }
 

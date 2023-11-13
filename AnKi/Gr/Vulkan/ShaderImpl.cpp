@@ -17,6 +17,25 @@
 
 namespace anki {
 
+template<typename TFunc>
+static void visitSpirv(ConstWeakArray<U32> spv, TFunc func)
+{
+	ANKI_ASSERT(spv.getSize() > 5);
+
+	const U32* it = &spv[5];
+	do
+	{
+		const U32 instructionCount = *it >> 16u;
+		const U32 opcode = *it & 0xFFFFu;
+
+		func(opcode);
+
+		it += instructionCount;
+	} while(it < spv.getEnd());
+
+	ANKI_ASSERT(it == spv.getEnd());
+}
+
 class ShaderImpl::SpecConstsVector
 {
 public:
@@ -47,6 +66,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	ANKI_ASSERT(inf.m_binary.getSize() > 0);
 	ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	m_shaderType = inf.m_shaderType;
+	m_shaderBinarySize = U32(inf.m_binary.getSizeInBytes());
 
 #if ANKI_DUMP_SHADERS
 	{
@@ -235,6 +255,17 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 		ANKI_ASSERT(blockSize % 16 == 0 && "Should be aligned");
 		ANKI_ASSERT(blockSize <= getGrManagerImpl().getDeviceCapabilities().m_pushConstantsSize);
 		m_pushConstantsSize = blockSize;
+	}
+
+	// Discards?
+	if(m_shaderType == ShaderType::kFragment)
+	{
+		visitSpirv(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)), [this](U32 cmd) {
+			if(cmd == spv::OpKill)
+			{
+				m_hasDiscard = true;
+			}
+		});
 	}
 }
 

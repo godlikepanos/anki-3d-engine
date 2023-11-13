@@ -97,8 +97,25 @@ public:
 		return m_shaderType;
 	}
 
+	U32 getShaderBinarySize() const
+	{
+		ANKI_ASSERT(m_shaderBinarySize);
+		return m_shaderBinarySize;
+	}
+
+	/// Fragment shader had a discard.
+	U32 hasDiscard() const
+	{
+		ANKI_ASSERT(m_shaderType == ShaderType::kFragment);
+		return m_hasDiscard;
+	}
+
 protected:
+	U32 m_shaderBinarySize = 0;
+
 	ShaderType m_shaderType = ShaderType::kCount;
+
+	Bool m_hasDiscard = false;
 
 	/// Construct.
 	Shader(CString name)
