@@ -94,6 +94,7 @@ ANKI_GR_CLASS(Shader)
 ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
 ANKI_GR_CLASS(TimestampQuery)
+ANKI_GR_CLASS(PipelineQuery)
 ANKI_GR_CLASS(ShaderProgram)
 ANKI_GR_CLASS(Fence)
 ANKI_GR_CLASS(RenderGraph)
@@ -220,6 +221,9 @@ public:
 
 	/// Mesh shaders.
 	Bool m_meshShaders = false;
+
+	/// Can create PipelineQuery objects.
+	Bool m_pipelineQuery = false;
 };
 ANKI_END_PACKED_STRUCT
 
@@ -652,6 +656,19 @@ enum class TimestampQueryResult : U8
 {
 	kNotAvailable,
 	kAvailable
+};
+
+/// Pipeline query result.
+enum class PipelineQueryResult : U8
+{
+	kNotAvailable,
+	kAvailable
+};
+
+enum class PipelineQueryType : U8
+{
+	kPrimitivesPassedClipping,
+	kCount
 };
 
 /// Attachment load operation.

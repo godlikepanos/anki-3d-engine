@@ -50,6 +50,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 		ci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 		ci.queryType = m_poolType;
 		ci.queryCount = kMaxSuballocationsPerQueryChunk;
+		ci.pipelineStatistics = m_pplineStatisticsFlags;
 
 		ANKI_VK_CHECK(vkCreateQueryPool(getVkDevice(), &ci, nullptr, &chunk->m_pool));
 		m_chunks.pushBack(chunk);

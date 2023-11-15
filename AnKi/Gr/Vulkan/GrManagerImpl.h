@@ -136,6 +136,12 @@ public:
 		return m_timestampQueryFactory;
 	}
 
+	QueryFactory& getPipelineQueryFactory(PipelineQueryType type)
+	{
+		ANKI_ASSERT(m_capabilities.m_pipelineQuery);
+		return m_pipelineQueryFactories[type];
+	}
+
 	DescriptorSetFactory& getDescriptorSetFactory()
 	{
 		return m_descrFactory;
@@ -283,6 +289,7 @@ private:
 
 	QueryFactory m_occlusionQueryFactory;
 	QueryFactory m_timestampQueryFactory;
+	Array<QueryFactory, U32(PipelineQueryType::kCount)> m_pipelineQueryFactories;
 
 	PipelineCache m_pplineCache;
 

@@ -15,6 +15,7 @@
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/OcclusionQuery.h>
 #include <AnKi/Gr/TimestampQuery.h>
+#include <AnKi/Gr/PipelineQuery.h>
 #include <AnKi/Gr/Fence.h>
 #include <AnKi/Gr/AccelerationStructure.h>
 #include <AnKi/Gr/GrManager.h>

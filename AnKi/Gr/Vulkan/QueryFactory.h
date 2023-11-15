@@ -74,9 +74,10 @@ public:
 
 	QueryFactory& operator=(const QueryFactory&) = delete; // Non-copyable
 
-	void init(VkQueryType poolType)
+	void init(VkQueryType poolType, VkQueryPipelineStatisticFlags pplineStatisticsFlags = 0)
 	{
 		m_poolType = poolType;
+		m_pplineStatisticsFlags = pplineStatisticsFlags;
 	}
 
 	/// @note It's thread-safe.
@@ -91,6 +92,7 @@ private:
 	IntrusiveList<Chunk> m_chunks;
 	Mutex m_mtx;
 	VkQueryType m_poolType = VK_QUERY_TYPE_MAX_ENUM;
+	VkQueryPipelineStatisticFlags m_pplineStatisticsFlags = 0;
 };
 /// @}
 

@@ -21,6 +21,7 @@ enum class GrObjectType : U8
 	kFramebuffer,
 	kOcclusionQuery,
 	kTimstampQuery,
+	kPipelineQuery,
 	kSampler,
 	kShader,
 	kTexture,

@@ -175,6 +175,11 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	m_occlusionQueryFactory.init(VK_QUERY_TYPE_OCCLUSION);
 	m_timestampQueryFactory.init(VK_QUERY_TYPE_TIMESTAMP);
+	if(m_capabilities.m_pipelineQuery)
+	{
+		m_pipelineQueryFactories[PipelineQueryType::kPrimitivesPassedClipping].init(VK_QUERY_TYPE_PIPELINE_STATISTICS,
+																					VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT);
+	}
 
 	// See if unaligned formats are supported
 	{
@@ -829,6 +834,12 @@ Error GrManagerImpl::initDevice()
 		devFeatures = devFeatures2.features;
 		devFeatures.robustBufferAccess = (g_validationCVar.get() && devFeatures.robustBufferAccess) ? true : false;
 		ANKI_VK_LOGI("Robust buffer access is %s", (devFeatures.robustBufferAccess) ? "enabled" : "disabled");
+
+		if(devFeatures.pipelineStatisticsQuery)
+		{
+			m_capabilities.m_pipelineQuery = true;
+			ANKI_VK_LOGV("GPU supports pipeline statistics queries");
+		}
 
 		ci.pEnabledFeatures = &devFeatures;
 	}

@@ -27,6 +27,7 @@ set(common_headers
 	Texture.h
 	TextureView.h
 	TimestampQuery.h
+	PipelineQuery.h
 	GrUpscaler.h
 	Utils/StackGpuMemoryPool.h
 	Utils/Functions.h
@@ -71,6 +72,8 @@ if(VULKAN)
 		Vulkan/TextureViewImpl.cpp
 		Vulkan/TimestampQuery.cpp
 		Vulkan/TimestampQueryImpl.cpp
+		Vulkan/PipelineQueryImpl.cpp
+		Vulkan/PipelineQuery.cpp
 		Vulkan/FrameGarbageCollector.cpp
 		Vulkan/GrUpscaler.cpp
 		Vulkan/GrUpscalerImpl.cpp)
@@ -108,6 +111,7 @@ if(VULKAN)
 		Vulkan/TextureImpl.h
 		Vulkan/TextureViewImpl.h
 		Vulkan/TimestampQueryImpl.h
+		Vulkan/PipelineQueryImpl.h
 		Vulkan/GrUpscalerImpl.h)
 
 	if(ANKI_HEADLESS)
