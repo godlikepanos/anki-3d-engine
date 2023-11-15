@@ -452,6 +452,12 @@ public:
 	/// End query.
 	void endOcclusionQuery(OcclusionQuery* query);
 
+	/// Begin query.
+	void beginPipelineQuery(PipelineQuery* query);
+
+	/// End query.
+	void endPipelineQuery(PipelineQuery* query);
+
 	/// Reset timestamp queries before writeTimestamp.
 	void resetTimestampQueries(ConstWeakArray<TimestampQuery*> queries);
 

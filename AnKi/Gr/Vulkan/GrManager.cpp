@@ -16,6 +16,7 @@
 #include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/OcclusionQuery.h>
 #include <AnKi/Gr/TimestampQuery.h>
+#include <AnKi/Gr/PipelineQuery.h>
 #include <AnKi/Gr/RenderGraph.h>
 #include <AnKi/Gr/AccelerationStructure.h>
 #include <AnKi/Gr/GrUpscaler.h>
@@ -113,6 +114,7 @@ ANKI_NEW_GR_OBJECT(CommandBuffer)
 ANKI_NEW_GR_OBJECT(Framebuffer)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(OcclusionQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(TimestampQuery)
+ANKI_NEW_GR_OBJECT(PipelineQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(RenderGraph)
 ANKI_NEW_GR_OBJECT(AccelerationStructure)
 ANKI_NEW_GR_OBJECT(GrUpscaler)

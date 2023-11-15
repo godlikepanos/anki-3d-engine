@@ -11,6 +11,7 @@
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Shader.h>
+#include <AnKi/Gr/Vulkan/PipelineQueryImpl.h>
 #include <AnKi/Gr/Vulkan/BufferImpl.h>
 #include <AnKi/Gr/Vulkan/TextureImpl.h>
 #include <AnKi/Gr/Vulkan/Pipeline.h>
@@ -393,6 +394,26 @@ public:
 	void beginOcclusionQueryInternal(OcclusionQuery* query);
 
 	void endOcclusionQueryInternal(OcclusionQuery* query);
+
+	ANKI_FORCE_INLINE void beginPipelineQueryInternal(PipelineQuery* query)
+	{
+		commandCommon();
+		const VkQueryPool handle = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryPool();
+		const U32 idx = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryIndex();
+		ANKI_ASSERT(handle);
+		vkCmdBeginQuery(m_handle, handle, idx, 0);
+		m_microCmdb->pushObjectRef(query);
+	}
+
+	ANKI_FORCE_INLINE void endPipelineQueryInternal(PipelineQuery* query)
+	{
+		commandCommon();
+		const VkQueryPool handle = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryPool();
+		const U32 idx = static_cast<const PipelineQueryImpl&>(*query).m_handle.getQueryIndex();
+		ANKI_ASSERT(handle);
+		vkCmdEndQuery(m_handle, handle, idx);
+		m_microCmdb->pushObjectRef(query);
+	}
 
 	void resetTimestampQueriesInternal(ConstWeakArray<TimestampQuery*> queries);
 

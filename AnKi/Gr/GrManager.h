@@ -68,7 +68,7 @@ public:
 	[[nodiscard]] FramebufferPtr newFramebuffer(const FramebufferInitInfo& init);
 	[[nodiscard]] OcclusionQueryPtr newOcclusionQuery();
 	[[nodiscard]] TimestampQueryPtr newTimestampQuery();
-	[[nodiscard]] PipelineQueryPtr newPipelineQuery(PipelineQueryType type);
+	[[nodiscard]] PipelineQueryPtr newPipelineQuery(const PipelineQueryInitInfo& inf);
 	[[nodiscard]] RenderGraphPtr newRenderGraph();
 	[[nodiscard]] GrUpscalerPtr newGrUpscaler(const GrUpscalerInitInfo& init);
 	[[nodiscard]] AccelerationStructurePtr newAccelerationStructure(const AccelerationStructureInitInfo& init);

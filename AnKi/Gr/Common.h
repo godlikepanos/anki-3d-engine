@@ -29,6 +29,7 @@ class ShaderProgramInitInfo;
 class CommandBufferInitInfo;
 class AccelerationStructureInitInfo;
 class GrUpscalerInitInfo;
+class PipelineQueryInitInfo;
 
 /// @addtogroup graphics
 /// @{

@@ -202,6 +202,15 @@ public:
 		return *m_framePool;
 	}
 
+#if ANKI_STATS_ENABLED
+	void appendPipelineQuery(PipelineQuery* q)
+	{
+		ANKI_ASSERT(q);
+		LockGuard lock(m_pipelineQueriesMtx);
+		m_pipelineQueries[m_frameCount % kMaxFramesInFlight].emplaceBack(q);
+	}
+#endif
+
 private:
 	/// @name Rendering stages
 	/// @{
@@ -254,9 +263,18 @@ private:
 		BufferHandle m_gpuSceneHandle;
 	} m_runCtx;
 
+#if ANKI_STATS_ENABLED
+	Array<RendererDynamicArray<PipelineQueryPtr>, kMaxFramesInFlight> m_pipelineQueries;
+	Mutex m_pipelineQueriesMtx;
+#endif
+
 	Error initInternal(UVec2 swapchainSize);
 
 	void gpuSceneCopy(RenderingContext& ctx);
+
+#if ANKI_STATS_ENABLED
+	void updatePipelineStats();
+#endif
 };
 /// @}
 

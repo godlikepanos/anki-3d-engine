@@ -43,6 +43,7 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
@@ -74,6 +75,8 @@ NumericCVar<F32> g_lod0MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod0MaxDistanc
 									   "Distance that will be used to calculate the LOD 0");
 NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod1MaxDistance", 40.0f, 2.0f, kMaxF32,
 									   "Distance that will be used to calculate the LOD 1");
+
+static StatCounter g_primitivesDrawnStatVar(StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -324,6 +327,10 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
+#if ANKI_STATS_ENABLED
+	updatePipelineStats();
+#endif
+
 	const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
 	ctx.m_prevMatrices = m_prevMatrices;
@@ -692,5 +699,31 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 		});
 	}
 }
+
+#if ANKI_STATS_ENABLED
+void Renderer::updatePipelineStats()
+{
+	RendererDynamicArray<PipelineQueryPtr>& arr = m_pipelineQueries[m_frameCount % kMaxFramesInFlight];
+
+	U64 sum = 0;
+	for(PipelineQueryPtr& q : arr)
+	{
+		U64 value;
+		const PipelineQueryResult res = q->getResult(value);
+		if(res == PipelineQueryResult::kNotAvailable)
+		{
+			ANKI_R_LOGW("Pipeline query result is not available");
+		}
+		else
+		{
+			sum += value;
+		}
+	}
+
+	arr.destroy();
+
+	g_primitivesDrawnStatVar.set(sum);
+}
+#endif
 
 } // end namespace anki

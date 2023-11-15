@@ -409,6 +409,18 @@ void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
 	self.endOcclusionQueryInternal(query);
 }
 
+void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.beginPipelineQueryInternal(query);
+}
+
+void CommandBuffer::endPipelineQuery(PipelineQuery* query)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.endPipelineQueryInternal(query);
+}
+
 void CommandBuffer::pushSecondLevelCommandBuffers(ConstWeakArray<CommandBuffer*> cmdbs)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

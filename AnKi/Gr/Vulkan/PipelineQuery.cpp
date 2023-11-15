@@ -9,10 +9,10 @@
 
 namespace anki {
 
-PipelineQuery* PipelineQuery::newInstance(PipelineQueryType type)
+PipelineQuery* PipelineQuery::newInstance(const PipelineQueryInitInfo& inf)
 {
-	PipelineQueryImpl* impl = anki::newInstance<PipelineQueryImpl>(GrMemoryPool::getSingleton(), "N/A");
-	const Error err = impl->init(type);
+	PipelineQueryImpl* impl = anki::newInstance<PipelineQueryImpl>(GrMemoryPool::getSingleton(), inf.getName());
+	const Error err = impl->init(inf.m_type);
 	if(err)
 	{
 		deleteInstance(GrMemoryPool::getSingleton(), impl);

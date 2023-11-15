@@ -12,6 +12,15 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
+/// @memberof PipelineQuery.
+class PipelineQueryInitInfo : public GrBaseInitInfo
+{
+public:
+	PipelineQueryType m_type = PipelineQueryType::kCount;
+
+	using GrBaseInitInfo::GrBaseInitInfo;
+};
+
 /// Query of various pipeline statistics.
 class PipelineQuery : public GrObject
 {
@@ -37,7 +46,7 @@ protected:
 
 private:
 	/// Allocate and initialize a new instance.
-	[[nodiscard]] static PipelineQuery* newInstance(PipelineQueryType type);
+	[[nodiscard]] static PipelineQuery* newInstance(const PipelineQueryInitInfo& inf);
 };
 /// @}
 

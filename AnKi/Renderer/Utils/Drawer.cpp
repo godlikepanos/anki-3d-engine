@@ -174,6 +174,20 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	}
 #endif
 
+#if ANKI_STATS_ENABLED
+	PipelineQueryPtr pplineQuery;
+
+	if(GrManager::getSingleton().getDeviceCapabilities().m_pipelineQuery)
+	{
+		PipelineQueryInitInfo queryInit("Drawer");
+		queryInit.m_type = PipelineQueryType::kPrimitivesPassedClipping;
+		pplineQuery = GrManager::getSingleton().newPipelineQuery(queryInit);
+		getRenderer().appendPipelineQuery(pplineQuery.get());
+
+		cmdb.beginPipelineQuery(pplineQuery.get());
+	}
+#endif
+
 	setState(args, cmdb);
 
 	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer.m_buffer, args.m_instanceRateRenderablesBuffer.m_offset,
@@ -315,6 +329,13 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			cmdb.drawMeshTasksIndirect(it->m_modernDraw.m_taskShaderIndirectArgsBuffer, it->m_modernDraw.m_taskShaderIndirectArgsBufferOffset);
 		}
 	}
+
+#if ANKI_STATS_ENABLED
+	if(pplineQuery.isCreated())
+	{
+		cmdb.endPipelineQuery(pplineQuery.get());
+	}
+#endif
 
 	g_maxDrawcallsStatVar.increment(allUserCount);
 }
