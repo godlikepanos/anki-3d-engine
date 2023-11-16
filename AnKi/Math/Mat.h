@@ -1364,6 +1364,16 @@ public:
 		return TMat(invertedTsl.xyz0(), invertedRot);
 	}
 
+	/// If we suppose this matrix represents a transformation, return the inverted transformation
+	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
+	TMat getInverseTransformation() const
+	{
+		const TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
+		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
+		invertedTsl = -(invertedRot * invertedTsl);
+		return TMat(invertedTsl.xyz(), invertedRot);
+	}
+
 	/// @note 9 muls, 9 adds
 	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
 	TVec<T, 3> transform(const TVec<T, 3>& v) const

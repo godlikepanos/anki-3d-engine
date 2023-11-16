@@ -326,9 +326,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				outMeshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) | inMeshlet.m_vertexCount;
 				outMeshlet.m_sphereCenter = inMeshlet.m_boundingVolume.m_sphereCenter;
 				outMeshlet.m_sphereRadius = inMeshlet.m_boundingVolume.m_sphereRadius;
-				outMeshlet.m_coneApex = inMeshlet.m_coneApex;
-				outMeshlet.m_coneDirection_R8G8B8_Snorm_coneCosOfHalfAngle_R8_Snorm =
-					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)));
+				outMeshlet.m_coneDirection_R8G8B8_Snorm_minusSinAngle_R8_Snorm =
+					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, -sin(inMeshlet.m_coneAngle)));
 			}
 
 			cmdb->copyBufferToBuffer(&handle2.getBuffer(), handle2.getOffset(), unifiedGeometryBuffer, lod.m_meshlets.getOffset(),

@@ -80,6 +80,19 @@ Vec4 newUnpackUnorm4x8(const U32 u)
 	return c * (1.0 / 255.0);
 }
 
+U32 packSnorm4x8(Vec4 value)
+{
+	const IVec4 packed = IVec4(round(clamp(value, -1.0f, 1.0f) * 127.0f)) & 0xFFu;
+	return U32(packed.x | (packed.y << 8) | (packed.z << 16) | (packed.w << 24));
+}
+
+Vec4 unpackSnorm4x8(U32 value)
+{
+	const I32 signedValue = (I32)value;
+	const IVec4 packed = IVec4(signedValue << 24, signedValue << 16, signedValue << 8, signedValue) >> 24;
+	return clamp(Vec4(packed) / 127.0f, -1.0f, 1.0f);
+}
+
 // Convert from RGB to YCbCr.
 // The RGB should be in [0, 1] and the output YCbCr will be in [0, 1] as well.
 Vec3 rgbToYCbCr(const Vec3 rgb)

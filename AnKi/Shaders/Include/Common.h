@@ -268,6 +268,13 @@ struct Mat3
 	Vec3 m_row2;
 
 	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(Mat3, F32)
+
+	void setColumns(Vec3 c0, Vec3 c1, Vec3 c2)
+	{
+		m_row0 = Vec3(c0.x, c1.x, c2.x);
+		m_row1 = Vec3(c0.y, c1.y, c2.y);
+		m_row2 = Vec3(c0.z, c1.z, c2.z);
+	}
 };
 
 struct Mat4
@@ -278,6 +285,19 @@ struct Mat4
 	Vec4 m_row3;
 
 	_ANKI_DEFINE_ALL_OPERATORS_ROWS4(Mat4, F32)
+
+	Vec4 getTranslationPart()
+	{
+		return Vec4(m_row0.w, m_row1.w, m_row2.w, m_row3.w);
+	}
+
+	void setColumns(Vec4 c0, Vec4 c1, Vec4 c2, Vec4 c3)
+	{
+		m_row0 = Vec4(c0.x, c1.x, c2.x, c3.x);
+		m_row1 = Vec4(c0.y, c1.y, c2.y, c3.y);
+		m_row2 = Vec4(c0.z, c1.z, c2.z, c3.z);
+		m_row3 = Vec4(c0.w, c1.w, c2.w, c3.w);
+	}
 };
 
 struct Mat3x4
@@ -291,6 +311,13 @@ struct Mat3x4
 	Vec3 getTranslationPart()
 	{
 		return Vec3(m_row0.w, m_row1.w, m_row2.w);
+	}
+
+	void setColumns(Vec3 c0, Vec3 c1, Vec3 c2, Vec3 c3)
+	{
+		m_row0 = Vec4(c0.x, c1.x, c2.x, c3.x);
+		m_row1 = Vec4(c0.y, c1.y, c2.y, c3.y);
+		m_row2 = Vec4(c0.z, c1.z, c2.z, c3.z);
 	}
 };
 
@@ -313,30 +340,17 @@ struct RMat3
 	RVec3 m_row2;
 
 	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(RMat3, RF32)
+
+	void setColumns(RVec3 c0, RVec3 c1, RVec3 c2)
+	{
+		m_row0 = RVec3(c0.x, c1.x, c2.x);
+		m_row1 = RVec3(c0.y, c1.y, c2.y);
+		m_row2 = RVec3(c0.z, c1.z, c2.z);
+	}
 };
 #	endif
 
 // Matrix functions
-Mat3 constructMatrixColumns(Vec3 c0, Vec3 c1, Vec3 c2)
-{
-	Mat3 m;
-	m.m_row0 = Vec3(c0.x, c1.x, c2.x);
-	m.m_row1 = Vec3(c0.y, c1.y, c2.y);
-	m.m_row2 = Vec3(c0.z, c1.z, c2.z);
-	return m;
-}
-
-#	if !ANKI_FORCE_FULL_FP_PRECISION
-RMat3 constructMatrixColumns(RVec3 c0, RVec3 c1, RVec3 c2)
-{
-	RMat3 m;
-	m.m_row0 = RVec3(c0.x, c1.x, c2.x);
-	m.m_row1 = RVec3(c0.y, c1.y, c2.y);
-	m.m_row2 = RVec3(c0.z, c1.z, c2.z);
-	return m;
-}
-#	endif
-
 Vec3 mul(Mat3 m, Vec3 v)
 {
 	const F32 a = dot(m.m_row0, v);
@@ -404,7 +418,9 @@ Vec3 mul(Mat3x4 m, Vec4 v)
 
 Mat3 transpose(Mat3 m)
 {
-	return constructMatrixColumns(m.m_row0, m.m_row1, m.m_row2);
+	Mat3 o;
+	o.setColumns(m.m_row0, m.m_row1, m.m_row2);
+	return o;
 }
 
 Mat3x4 combineTransformations(Mat3x4 a_, Mat3x4 b_)

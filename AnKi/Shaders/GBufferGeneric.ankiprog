@@ -24,6 +24,8 @@
 #define REALLY_VELOCITY ((ANKI_VELOCITY || ANKI_BONES) && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER)
 #define REALLY_USING_PARALLAX (PARALLAX == 1 && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER && ALPHA_TEST == 0)
 
+#define MESHLET_BACKFACE_CULLING 0
+
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -97,6 +99,7 @@ struct FragOut
 struct MeshShaderPayload
 {
 	U32 m_firstMeshletIndex;
+	U32 m_visibleMeshletsRelativeIndices[kMeshletGroupSize / sizeof(U32)];
 	U32 m_worldTransformsOffset;
 	U32 m_constantsOffset;
 	U32 m_boneTransformsOrParticleEmitterOffset;
@@ -213,6 +216,7 @@ VertOut main(VertIn input)
 #pragma anki start task
 
 groupshared MeshShaderPayload s_payload;
+groupshared U32 s_visibleMeshletCount;
 
 struct FirstPayload
 {
@@ -243,9 +247,50 @@ struct FirstPayload
 		s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
 		s_payload.m_positionScale = meshLod.m_positionScale;
 		s_payload.m_positionTranslation = meshLod.m_positionTranslation;
+
+		s_visibleMeshletCount = 0;
+
+		[unroll] for(U32 i = 0; i < kMeshletGroupSize / sizeof(U32); ++i)
+		{
+			s_payload.m_visibleMeshletsRelativeIndices[i] = 0u;
+		}
 	}
 
-	DispatchMesh(meshletCount, 1, 1, s_payload);
+	GroupMemoryBarrierWithGroupSync();
+
+	if(svGroupIndex < meshletCount)
+	{
+		Bool cull = false;
+
+#if MESHLET_BACKFACE_CULLING
+		const Meshlet meshlet = g_meshlets[firstMeshlet + svGroupIndex];
+		const Vec4 coneData = unpackSnorm4x8(meshlet.m_coneDirection_R8G8B8_Snorm_minusSinAngle_R8_Snorm);
+
+		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+
+		const Vec3 meshletCenterWspace = mul(worldTransform, Vec4(meshlet.m_sphereCenter, 1.0f));
+		const Vec3 coneAxisWspace = normalize(mul(worldTransform, Vec4(coneData.xyz, 0.0f)));
+		const Vec3 cameraPos = Vec3(g_globalConstants.m_cameraTransform.m_row0.w, g_globalConstants.m_cameraTransform.m_row1.w,
+									g_globalConstants.m_cameraTransform.m_row2.w);
+		const Vec3 viewDir = normalize(meshletCenterWspace - cameraPos);
+
+		cull = cull || dot(coneAxisWspace, -viewDir) < coneData.w;
+#endif
+
+		if(!cull)
+		{
+			U32 idx;
+			InterlockedAdd(s_visibleMeshletCount, 1u, idx);
+
+			const U32 groupIdx = idx / 4u;
+			const U32 localIdx = idx % 4u;
+
+			const U32 mask = svGroupIndex << (localIdx * 8u);
+			InterlockedOr(s_payload.m_visibleMeshletsRelativeIndices[groupIdx], mask);
+		}
+	}
+
+	DispatchMesh(s_visibleMeshletCount, 1, 1, s_payload);
 }
 
 #pragma anki end task
@@ -258,7 +303,11 @@ constexpr U32 g_dummy = 0; // The formater is getting confused so add this
 main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVerticesPerMeshlet], out indices UVec3 indices[kMaxPrimitivesPerMeshlet],
 	 U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
-	const Meshlet meshlet = g_meshlets[payload.m_firstMeshletIndex + svGroupId];
+	const U32 groupIdx = svGroupId / 4u;
+	const U32 localIdx = svGroupId % 4u;
+	const U32 relativeMeshletIdx = (payload.m_visibleMeshletsRelativeIndices[groupIdx] >> (localIdx * 8u)) & 0xFFu;
+
+	const Meshlet meshlet = g_meshlets[payload.m_firstMeshletIndex + relativeMeshletIdx];
 	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
 	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
 
@@ -390,7 +439,8 @@ FragOut main(VertOut input)
 
 #	if NORMAL_TEX
 	const RVec3 nAtTangentspace = normalize((g_bindlessTextures2dF32[localConstants.m_normalTex].Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
-	const RVec3 normal = perturbNormal(nAtTangentspace, input.m_worldPos, uv, input.m_normal);
+	const Vec3 viewDir = normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - input.m_worldPos);
+	const RVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(input.m_normal));
 #	else
 	const RVec3 normal = normalize(input.m_normal);
 #	endif

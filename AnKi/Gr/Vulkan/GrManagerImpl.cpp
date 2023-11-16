@@ -178,7 +178,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	if(m_capabilities.m_pipelineQuery)
 	{
 		m_pipelineQueryFactories[PipelineQueryType::kPrimitivesPassedClipping].init(VK_QUERY_TYPE_PIPELINE_STATISTICS,
-																					VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT);
+																					VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT);
 	}
 
 	// See if unaligned formats are supported

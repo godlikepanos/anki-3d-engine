@@ -88,13 +88,12 @@ struct Meshlet
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_firstPrimitive; // In size of kMeshletPrimitiveFormat
 	U32 m_primitiveCount_R16_Uint_vertexCount_R16_Uint;
-	U32 m_padding;
+	U32 m_coneDirection_R8G8B8_Snorm_minusSinAngle_R8_Snorm;
 
 	Vec3 m_sphereCenter;
 	F32 m_sphereRadius;
 
-	Vec3 m_coneApex;
-	U32 m_coneDirection_R8G8B8_Snorm_coneCosOfHalfAngle_R8_Snorm;
+	Vec4 m_padding;
 };
 // Power of 2 because the sizeof will be used as allocation alignment and allocation alignments need to be power of 2
 static_assert(isPowerOfTwo(sizeof(Meshlet)));

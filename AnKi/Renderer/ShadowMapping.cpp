@@ -618,10 +618,10 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		RenderableDrawerArguments args;
 		args.m_renderingTechinuqe = RenderingTechnique::kDepth;
 		args.m_viewMatrix = work.m_viewMat;
-		args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+		args.m_cameraTransform = work.m_viewMat.getInverseTransformation();
 		args.m_viewProjectionMatrix = work.m_viewProjMat;
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
+		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 		args.m_viewport = UVec4(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		args.fillMdi(work.m_visOut);
 

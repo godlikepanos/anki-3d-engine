@@ -52,7 +52,7 @@ static NumericCVar<F32> g_internalRenderScalingCVar(CVarSubsystem::kRenderer, "I
 NumericCVar<F32> g_renderScalingCVar(CVarSubsystem::kRenderer, "RenderScaling", 1.0f, 0.5f, 8.0f,
 									 "A factor over the requested swapchain resolution. Applies to post-processing and UI");
 static NumericCVar<U32> g_zSplitCountCVar(CVarSubsystem::kRenderer, "ZSplitCount", 64, 8, kMaxZsplitCount, "Clusterer number of Z splits");
-static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 8, 1, 16,
+static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 16, 1, 16,
 											   "Texture anisotropy for the main passes");
 BoolCVar g_preferComputeCVar(CVarSubsystem::kRenderer, "PreferCompute", !ANKI_PLATFORM_MOBILE, "Prefer compute shaders");
 static BoolCVar g_highQualityHdrCVar(CVarSubsystem::kRenderer, "HighQualityHdr", !ANKI_PLATFORM_MOBILE,
@@ -288,9 +288,16 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		sinit.m_addressing = SamplingAddressing::kRepeat;
 		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
-		sinit.setName("TrilinearRepeatAniso");
-		sinit.m_anisotropyLevel = g_textureAnisotropyCVar.get();
-		m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
+		if(g_textureAnisotropyCVar.get() <= 1u)
+		{
+			m_samplers.m_trilinearRepeatAniso = m_samplers.m_trilinearRepeat;
+		}
+		else
+		{
+			sinit.setName("TrilinearRepeatAniso");
+			sinit.m_anisotropyLevel = g_textureAnisotropyCVar.get();
+			m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
+		}
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
 		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));

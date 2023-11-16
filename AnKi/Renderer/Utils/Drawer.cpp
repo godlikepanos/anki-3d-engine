@@ -18,28 +18,12 @@
 
 namespace anki {
 
-static StatCounter g_executedDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls executed", StatFlag::kZeroEveryFrame);
-static StatCounter g_maxDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls possible", StatFlag::kZeroEveryFrame);
-static StatCounter g_renderedPrimitivesStatVar(StatCategory::kRenderer, "Rendered primitives", StatFlag::kZeroEveryFrame);
-
 RenderableDrawer::~RenderableDrawer()
 {
 }
 
 Error RenderableDrawer::init()
 {
-#if ANKI_STATS_ENABLED
-	constexpr Array<MutatorValue, 3> kColorAttachmentCounts = {0, 1, 4};
-
-	U32 count = 0;
-	for(MutatorValue attachmentCount : kColorAttachmentCounts)
-	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DrawerStats.ankiprogbin", Array<SubMutation, 1>{{{"COLOR_ATTACHMENT_COUNT", attachmentCount}}},
-									 m_stats.m_statsProg, m_stats.m_updateStatsGrProgs[count]));
-		++count;
-	}
-#endif
-
 	return Error::kNone;
 }
 
@@ -88,91 +72,6 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	{
 		return;
 	}
-
-#if ANKI_STATS_ENABLED
-	U32 variant = 0;
-	switch(args.m_renderingTechinuqe)
-	{
-	case RenderingTechnique::kGBuffer:
-		variant = 2;
-		break;
-	case RenderingTechnique::kForward:
-		variant = 1;
-		break;
-	case RenderingTechnique::kDepth:
-		variant = 0;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	{
-		constexpr U32 kFragmentThreadCount = 16;
-		using StatsArray = Array<U32, kFragmentThreadCount * 2>;
-
-		LockGuard lock(m_stats.m_mtx);
-
-		if(m_stats.m_frameIdx != getRenderer().getFrameCount())
-		{
-			m_stats.m_frameIdx = getRenderer().getFrameCount();
-
-			// Get previous stats
-			StatsArray prevFrameStats;
-			PtrSize dataRead;
-			getRenderer().getReadbackManager().readMostRecentData(m_stats.m_readback, &prevFrameStats, sizeof(prevFrameStats), dataRead);
-			if(dataRead > 0) [[likely]]
-			{
-				U32 drawCount = 0;
-				U32 primitiveCount = 0;
-				for(U32 tid = 0; tid < kFragmentThreadCount; ++tid)
-				{
-					drawCount += prevFrameStats[tid];
-					primitiveCount += prevFrameStats[kFragmentThreadCount + tid] / 3;
-				}
-
-				g_executedDrawcallsStatVar.set(drawCount);
-				g_renderedPrimitivesStatVar.set(primitiveCount);
-			}
-
-			// Get place to write new stats
-			getRenderer().getReadbackManager().allocateData(m_stats.m_readback, sizeof(prevFrameStats), m_stats.m_statsBuffer,
-															m_stats.m_statsBufferOffset);
-
-			// Allocate another atomic to count the passes. Do that because the calls to drawMdi might not be in the same order as they run on the GPU
-			U32* counter;
-			m_stats.m_threadCountBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), counter);
-			*counter = 0;
-		}
-
-		cmdb.pushDebugMarker("Draw stats", Vec3(0.0f, 1.0f, 0.0f));
-
-		cmdb.bindShaderProgram(m_stats.m_updateStatsGrProgs[variant].get());
-
-		cmdb.bindUavBuffer(0, 0, args.m_mdiDrawCountsBuffer);
-		cmdb.bindUavBuffer(0, 1, args.m_drawIndexedIndirectArgsBuffer);
-
-		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> offsets(&getRenderer().getFrameMemoryPool());
-		U32 allUserCount = 0;
-		RenderStateBucketContainer::getSingleton().iterateBuckets(
-			args.m_renderingTechinuqe, [&]([[maybe_unused]] const RenderStateInfo& state, U32 userCount, [[maybe_unused]] U32 meshletGroupCount) {
-				offsets.emplaceBack(allUserCount);
-				allUserCount += userCount;
-			});
-		U32* firstDrawArgIndices;
-		BufferOffsetRange firstDrawArgIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(offsets.getSize(), firstDrawArgIndices);
-		memcpy(firstDrawArgIndices, &offsets[0], offsets.getSizeInBytes());
-		cmdb.bindUavBuffer(0, 2, firstDrawArgIndicesBuffer);
-
-		cmdb.bindUavBuffer(0, 3, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(StatsArray));
-		cmdb.bindUavBuffer(0, 4, m_stats.m_threadCountBuffer);
-
-		cmdb.setPushConstants(&args.m_viewport, sizeof(args.m_viewport));
-
-		cmdb.draw(PrimitiveTopology::kTriangles, 6);
-
-		cmdb.popDebugMarker();
-	}
-#endif
 
 #if ANKI_STATS_ENABLED
 	PipelineQueryPtr pplineQuery;
@@ -336,8 +235,6 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		cmdb.endPipelineQuery(pplineQuery.get());
 	}
 #endif
-
-	g_maxDrawcallsStatVar.increment(allUserCount);
 }
 
 } // end namespace anki

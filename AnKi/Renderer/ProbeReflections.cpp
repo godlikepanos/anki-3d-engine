@@ -199,7 +199,7 @@ void ProbeReflections::runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, 
 
 	RenderableDrawerArguments args;
 	args.m_viewMatrix = viewMats[faceIdx];
-	args.m_cameraTransform = Mat3x4(Mat4(viewMats[faceIdx], Vec4(0.0f, 0.0f, 0.0f, 1.0f)).getInverse());
+	args.m_cameraTransform = viewMats[faceIdx].getInverseTransformation();
 	args.m_viewProjectionMatrix = viewProjMatx[faceIdx];
 	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
@@ -594,7 +594,7 @@ void ProbeReflections::runShadowMapping(const Array<GpuVisibilityOutput, 6>& vis
 
 	RenderableDrawerArguments args;
 	args.m_viewMatrix = viewMats[faceIdx];
-	args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+	args.m_cameraTransform = viewMats[faceIdx].getInverseTransformation();
 	args.m_viewProjectionMatrix = viewProjMats[faceIdx];
 	args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();

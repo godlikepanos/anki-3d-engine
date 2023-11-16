@@ -445,7 +445,9 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 	const Vec3 y = Vec3(b, sign + a * pow(z.y, 2.0), -z.y);
 #endif
 
-	return constructMatrixColumns(x, y, z);
+	Mat3 o;
+	o.setColumns(x, y, z);
+	return o;
 }
 
 #if defined(ANKI_COMPUTE_SHADER) && ANKI_GLSL
@@ -710,26 +712,27 @@ F32 fastCos(F32 x)
 #endif
 
 /// Perturb normal, see http://www.thetenthplanet.de/archives/1180
-/// Does normal mapping in the fragment shader. It assumes that green is up. geometricNormal is in world space.
-RVec3 perturbNormal(RVec3 tangentNormal, Vec3 worldPosition, Vec2 uv, RVec3 geometricNormal)
+/// Does normal mapping in the fragment shader. It assumes that green is up. viewDir and geometricNormal need to be in the same space.
+RVec3 perturbNormal(RVec3 tangentNormal, Vec3 viewDir, Vec2 uv, Vec3 geometricNormal)
 {
 	tangentNormal.y = -tangentNormal.y; // Green is up
 
-	// get edge vectors of the pixel triangle
-	const Vec3 dp1 = ddx(worldPosition);
-	const Vec3 dp2 = ddy(worldPosition);
+	// Get edge vectors of the pixel triangle
+	const Vec3 dp1 = ddx(viewDir);
+	const Vec3 dp2 = ddy(viewDir);
 	const Vec2 duv1 = ddx(uv);
 	const Vec2 duv2 = ddy(uv);
 
-	// solve the linear system
-	const RVec3 dp2perp = cross(dp2, geometricNormal);
-	const RVec3 dp1perp = cross(geometricNormal, dp1);
-	const RVec3 T = normalize(dp2perp * duv1.x + dp1perp * duv2.x);
-	const RVec3 B = normalize(dp2perp * duv1.y + dp1perp * duv2.y);
+	// Solve the linear system
+	const Vec3 dp2perp = cross(dp2, geometricNormal);
+	const Vec3 dp1perp = cross(geometricNormal, dp1);
+	const Vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+	const Vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
 
-	// construct a scale-invariant frame
-	const RF32 invmax = rsqrt(max(dot(T, T), dot(B, B)));
+	// Construct a scale-invariant frame
+	const F32 invmax = rsqrt(max(dot(T, T), dot(B, B)));
 
-	const RMat3 TBN = constructMatrixColumns(T * invmax, B * invmax, geometricNormal);
+	RMat3 TBN;
+	TBN.setColumns(T * invmax, B * invmax, geometricNormal);
 	return normalize(mul(TBN, tangentNormal));
 }

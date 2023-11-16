@@ -63,25 +63,6 @@ public:
 	void drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
 
 private:
-#if ANKI_STATS_ENABLED
-	class
-	{
-	public:
-		MultiframeReadbackToken m_readback;
-
-		ShaderProgramResourcePtr m_statsProg;
-		Array<ShaderProgramPtr, 3> m_updateStatsGrProgs;
-
-		U64 m_frameIdx = kMaxU64;
-		SpinLock m_mtx;
-
-		Buffer* m_statsBuffer = nullptr;
-		PtrSize m_statsBufferOffset = 0;
-
-		BufferOffsetRange m_threadCountBuffer;
-	} m_stats;
-#endif
-
 	void setState(const RenderableDrawerArguments& args, CommandBuffer& cmdb);
 };
 /// @}

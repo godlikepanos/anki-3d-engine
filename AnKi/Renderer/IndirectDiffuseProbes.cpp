@@ -286,7 +286,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				RenderableDrawerArguments args;
 				args.m_viewMatrix = viewMats[faceIdx];
-				args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+				args.m_cameraTransform = args.m_viewMatrix.getInverseTransformation();
 				args.m_viewProjectionMatrix = viewProjMats[faceIdx];
 				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 				args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
@@ -357,7 +357,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				RenderableDrawerArguments args;
 				args.m_viewMatrix = cascadeViewMats[faceIdx];
-				args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
+				args.m_cameraTransform = cascadeViewMats[faceIdx].getInverseTransformation();
 				args.m_viewProjectionMatrix = cascadeViewProjMats[faceIdx];
 				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
