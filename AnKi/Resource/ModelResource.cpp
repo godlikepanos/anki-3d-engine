@@ -15,13 +15,13 @@ void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 {
 	lod = min<U32>(lod, m_meshLodCount - 1);
 
-	inf.m_indexBufferOffset = m_lodInfos[lod].m_indexBufferOffset + m_lodInfos[lod].m_firstIndex * getIndexSize(IndexType::kU16);
+	inf.m_indexUgbOffset = m_lodInfos[lod].m_indexUgbOffset;
 	inf.m_indexType = IndexType::kU16;
 	inf.m_indexCount = m_lodInfos[lod].m_indexCount;
 
 	for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 	{
-		inf.m_vertexBufferOffsets[stream] = m_lodInfos[lod].m_vertexBufferOffsets[stream];
+		inf.m_vertexUgbOffsets[stream] = m_lodInfos[lod].m_vertexUgbOffsets[stream];
 	}
 
 	if(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
@@ -31,14 +31,14 @@ void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 
 	if(m_lodInfos[lod].m_meshletCount != kMaxU32)
 	{
-		ANKI_ASSERT(m_lodInfos[lod].m_meshletsOffset != kMaxPtrSize);
+		ANKI_ASSERT(m_lodInfos[lod].m_meshletsUgbOffset != kMaxPtrSize);
 		inf.m_meshletCount = m_lodInfos[lod].m_meshletCount;
-		inf.m_meshletsOffset = m_lodInfos[lod].m_meshletsOffset;
+		inf.m_meshletsUgbOffset = m_lodInfos[lod].m_meshletsUgbOffset;
 	}
 	else
 	{
 		inf.m_meshletCount = 0;
-		inf.m_meshletsOffset = kMaxPtrSize;
+		inf.m_meshletsUgbOffset = kMaxPtrSize;
 	}
 }
 
@@ -50,7 +50,7 @@ void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo&
 	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
 	info.m_bottomLevelAccelerationStructure = m_mesh->getBottomLevelAccelerationStructure(meshLod);
 
-	info.m_indexBufferOffset = m_lodInfos[meshLod].m_indexBufferOffset + 2_PtrSize * m_lodInfos[meshLod].m_firstIndex;
+	info.m_indexUgbOffset = m_lodInfos[meshLod].m_indexUgbOffset;
 
 	// Material
 	const MaterialVariant& variant = m_mtl->getOrCreateVariant(key);
@@ -82,8 +82,8 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 	}
 	else
 	{
-		U32 firstIndex, indexCount;
-		m_mesh->getSubMeshInfo(0, subMeshIndex, firstIndex, indexCount, m_aabb);
+		U32 firstIndex, indexCount, firstMeshlet, meshletCount;
+		m_mesh->getSubMeshInfo(0, subMeshIndex, firstIndex, indexCount, firstMeshlet, meshletCount, m_aabb);
 	}
 
 	m_meshLodCount = m_mesh->getLodCount();
@@ -92,28 +92,34 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 	{
 		Lod& lod = m_lodInfos[l];
 		Aabb aabb;
-		m_mesh->getSubMeshInfo(l, (subMeshIndex == kMaxU32) ? 0 : subMeshIndex, lod.m_firstIndex, lod.m_indexCount, aabb);
+		U32 firstIndex, firstMeshlet, meshletCount;
+		m_mesh->getSubMeshInfo(l, (subMeshIndex == kMaxU32) ? 0 : subMeshIndex, firstIndex, lod.m_indexCount, firstMeshlet, meshletCount, aabb);
 
 		U32 totalIndexCount;
 		IndexType indexType;
-		m_mesh->getIndexBufferInfo(l, lod.m_indexBufferOffset, totalIndexCount, indexType);
+		m_mesh->getIndexBufferInfo(l, lod.m_indexUgbOffset, totalIndexCount, indexType);
+		lod.m_indexUgbOffset += firstIndex * getIndexSize(indexType);
 
 		for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 		{
 			if(m_mesh->isVertexStreamPresent(stream))
 			{
 				U32 vertCount;
-				m_mesh->getVertexStreamInfo(l, stream, lod.m_vertexBufferOffsets[stream], vertCount);
+				m_mesh->getVertexBufferInfo(l, stream, lod.m_vertexUgbOffsets[stream], vertCount);
 			}
 			else
 			{
-				lod.m_vertexBufferOffsets[stream] = kMaxPtrSize;
+				lod.m_vertexUgbOffsets[stream] = kMaxPtrSize;
 			}
 		}
 
 		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 		{
-			m_mesh->getMeshletInfo(l, lod.m_meshletsOffset, lod.m_meshletCount);
+			U32 dummy;
+			m_mesh->getMeshletBufferInfo(l, lod.m_meshletsUgbOffset, dummy);
+
+			lod.m_meshletsUgbOffset += firstMeshlet * sizeof(Meshlet);
+			lod.m_meshletCount = meshletCount;
 		}
 	}
 

@@ -25,7 +25,7 @@ public:
 	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
 	U32 m_shaderGroupHandleIndex;
 
-	PtrSize m_indexBufferOffset;
+	PtrSize m_indexUgbOffset;
 };
 
 /// @memberof ModelResource
@@ -33,14 +33,14 @@ public:
 class ModelPatchGeometryInfo
 {
 public:
-	PtrSize m_indexBufferOffset;
+	PtrSize m_indexUgbOffset;
 	U32 m_indexCount;
 	IndexType m_indexType;
 
 	/// Offset to the vertex buffer or kMaxPtrSize if stream is not present.
-	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets;
+	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexUgbOffsets;
 
-	PtrSize m_meshletsOffset;
+	PtrSize m_meshletsUgbOffset;
 	U32 m_meshletCount;
 
 	AccelerationStructurePtr m_blas;
@@ -76,13 +76,12 @@ private:
 	class Lod
 	{
 	public:
-		PtrSize m_indexBufferOffset = kMaxPtrSize;
-		U32 m_firstIndex = kMaxU32;
+		PtrSize m_indexUgbOffset = kMaxPtrSize;
 		U32 m_indexCount = kMaxU32;
 
-		Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets = {};
+		Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexUgbOffsets = {};
 
-		PtrSize m_meshletsOffset = kMaxPtrSize;
+		PtrSize m_meshletsUgbOffset = kMaxPtrSize;
 		U32 m_meshletCount = kMaxU32;
 	};
 

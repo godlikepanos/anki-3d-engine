@@ -156,8 +156,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				ModelPatchGeometryInfo inf;
 				patch.getGeometryInfo(l, inf);
 
-				ANKI_ASSERT((inf.m_indexBufferOffset % getIndexSize(inf.m_indexType)) == 0);
-				meshLod.m_firstIndex = U32(inf.m_indexBufferOffset / getIndexSize(inf.m_indexType));
+				ANKI_ASSERT((inf.m_indexUgbOffset % getIndexSize(inf.m_indexType)) == 0);
+				meshLod.m_firstIndex = U32(inf.m_indexUgbOffset / getIndexSize(inf.m_indexType));
 				meshLod.m_indexCount = inf.m_indexCount;
 
 				for(VertexStreamId stream = VertexStreamId::kMeshRelatedFirst; stream < VertexStreamId::kMeshRelatedCount; ++stream)
@@ -165,8 +165,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					if(mesh.isVertexStreamPresent(stream))
 					{
 						const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
-						ANKI_ASSERT((inf.m_vertexBufferOffsets[stream] % elementSize) == 0);
-						meshLod.m_vertexOffsets[U32(stream)] = U32(inf.m_vertexBufferOffsets[stream] / elementSize);
+						ANKI_ASSERT((inf.m_vertexUgbOffsets[stream] % elementSize) == 0);
+						meshLod.m_vertexOffsets[U32(stream)] = U32(inf.m_vertexUgbOffsets[stream] / elementSize);
 					}
 					else
 					{
@@ -183,8 +183,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 				if(inf.m_meshletCount)
 				{
-					ANKI_ASSERT((inf.m_meshletsOffset % sizeof(Meshlet)) == 0);
-					meshLod.m_firstMeshlet = U32(inf.m_meshletsOffset / sizeof(Meshlet));
+					ANKI_ASSERT((inf.m_meshletsUgbOffset % sizeof(Meshlet)) == 0);
+					meshLod.m_firstMeshlet = U32(inf.m_meshletsUgbOffset / sizeof(Meshlet));
 					meshLod.m_meshletCount = inf.m_meshletCount;
 				}
 			}

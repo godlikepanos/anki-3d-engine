@@ -236,7 +236,7 @@ struct FirstPayload
 	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
 	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod);
 	U32 firstMeshlet = meshletGroup * kMeshletGroupSize;
-	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshlet * kMeshletGroupSize);
+	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshlet);
 	firstMeshlet += meshLod.m_firstMeshlet;
 
 	if(svGroupIndex == 0u)

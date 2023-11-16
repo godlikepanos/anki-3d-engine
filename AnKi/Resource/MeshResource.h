@@ -44,11 +44,13 @@ public:
 	}
 
 	/// Get submesh info.
-	void getSubMeshInfo(U32 lod, U32 subMeshId, U32& firstIndex, U32& indexCount, Aabb& aabb) const
+	void getSubMeshInfo(U32 lod, U32 subMeshId, U32& firstIndex, U32& indexCount, U32& firstMeshlet, U32& meshletCount, Aabb& aabb) const
 	{
 		const SubMesh& sm = m_subMeshes[subMeshId];
 		firstIndex = sm.m_firstIndices[lod];
 		indexCount = sm.m_indexCounts[lod];
+		firstMeshlet = sm.m_firstMeshlet[lod];
+		meshletCount = sm.m_meshletCounts[lod];
 		aabb = sm.m_aabb;
 	}
 
@@ -62,15 +64,15 @@ public:
 	}
 
 	/// Get vertex buffer info.
-	void getVertexStreamInfo(U32 lod, VertexStreamId stream, PtrSize& bufferOffset, U32& vertexCount) const
+	void getVertexBufferInfo(U32 lod, VertexStreamId stream, PtrSize& ugbOffset, U32& vertexCount) const
 	{
-		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset();
+		ugbOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset();
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
-	void getMeshletInfo(U32 lod, PtrSize& meshletOffset, U32& meshletCount)
+	void getMeshletBufferInfo(U32 lod, PtrSize& meshletUgbOffset, U32& meshletCount)
 	{
-		meshletOffset = m_lods[lod].m_meshlets.getOffset();
+		meshletUgbOffset = m_lods[lod].m_meshlets.getOffset();
 		ANKI_ASSERT(m_lods[lod].m_meshletCount);
 		meshletCount = m_lods[lod].m_meshletCount;
 	}
@@ -127,6 +129,8 @@ private:
 	public:
 		Array<U32, kMaxLodCount> m_firstIndices = {};
 		Array<U32, kMaxLodCount> m_indexCounts = {};
+		Array<U32, kMaxLodCount> m_firstMeshlet = {};
+		Array<U32, kMaxLodCount> m_meshletCounts = {};
 		Aabb m_aabb;
 	};
 

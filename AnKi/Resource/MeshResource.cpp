@@ -106,6 +106,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		{
 			m_subMeshes[i].m_firstIndices[lod] = loader.getSubMeshes()[i].m_lods[lod].m_firstIndex;
 			m_subMeshes[i].m_indexCounts[lod] = loader.getSubMeshes()[i].m_lods[lod].m_indexCount;
+			m_subMeshes[i].m_firstMeshlet[lod] = loader.getSubMeshes()[i].m_lods[lod].m_firstMeshlet;
+			m_subMeshes[i].m_meshletCounts[lod] = loader.getSubMeshes()[i].m_lods[lod].m_meshletCount;
 		}
 
 		m_subMeshes[i].m_aabb.setMin(loader.getSubMeshes()[i].m_boundingVolume.m_aabbMin);
