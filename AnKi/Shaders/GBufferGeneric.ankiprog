@@ -24,7 +24,7 @@
 #define REALLY_VELOCITY ((ANKI_VELOCITY || ANKI_BONES) && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER)
 #define REALLY_USING_PARALLAX (PARALLAX == 1 && ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER && ALPHA_TEST == 0)
 
-#define MESHLET_BACKFACE_CULLING 0
+#define MESHLET_BACKFACE_CULLING 1
 
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
@@ -264,17 +264,9 @@ struct FirstPayload
 
 #if MESHLET_BACKFACE_CULLING
 		const Meshlet meshlet = g_meshlets[firstMeshlet + svGroupIndex];
-		const Vec4 coneData = unpackSnorm4x8(meshlet.m_coneDirection_R8G8B8_Snorm_minusSinAngle_R8_Snorm);
-
 		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
 
-		const Vec3 meshletCenterWspace = mul(worldTransform, Vec4(meshlet.m_sphereCenter, 1.0f));
-		const Vec3 coneAxisWspace = normalize(mul(worldTransform, Vec4(coneData.xyz, 0.0f)));
-		const Vec3 cameraPos = Vec3(g_globalConstants.m_cameraTransform.m_row0.w, g_globalConstants.m_cameraTransform.m_row1.w,
-									g_globalConstants.m_cameraTransform.m_row2.w);
-		const Vec3 viewDir = normalize(meshletCenterWspace - cameraPos);
-
-		cull = cull || dot(coneAxisWspace, -viewDir) < coneData.w;
+		cull = cull || cullBackfaceMeshlet(meshlet, worldTransform, g_globalConstants.m_cameraTransform.getTranslationPart());
 #endif
 
 		if(!cull)

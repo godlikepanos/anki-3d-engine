@@ -10,6 +10,7 @@
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/MeshTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/PackFunctions.hlsl>
 
 ANKI_BINDLESS_SET(MaterialSet::kBindless)
 
@@ -76,4 +77,21 @@ UnpackedMeshVertex loadVertex(Meshlet meshlet, U32 vertexIndex, Bool bones, F32 
 	}
 
 	return v;
+}
+
+Bool cullBackfaceMeshlet(Meshlet meshlet, Mat3x4 worldTransform, Vec3 cameraWorldPos)
+{
+	const Vec4 coneData = unpackSnorm4x8(meshlet.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
+
+	meshlet.m_sphereCenter = mul(worldTransform, Vec4(meshlet.m_sphereCenter, 1.0f));
+	const Vec3 coneAxisWspace = normalize(mul(worldTransform, Vec4(coneData.xyz, 0.0f)));
+
+	// Extract uniform scale
+	const Vec3 xAxis = Vec3(worldTransform.m_row0.x, worldTransform.m_row1.x, worldTransform.m_row2.x);
+	const F32 uniformScale = length(xAxis);
+
+	meshlet.m_sphereRadius *= uniformScale;
+
+	const Vec3 dir = meshlet.m_sphereCenter - cameraWorldPos;
+	return dot(dir, coneAxisWspace) >= coneData.w * length(dir) + meshlet.m_sphereRadius;
 }
