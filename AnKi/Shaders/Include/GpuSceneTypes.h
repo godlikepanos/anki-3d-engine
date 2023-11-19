@@ -48,11 +48,11 @@ static_assert(kMaxLodCount == 3);
 /// Used in visibility testing.
 struct GpuSceneRenderableBoundingVolume
 {
-	Vec3 m_sphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
+	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
 
-	Vec3 m_aabbExtend ANKI_CPP_CODE(= Vec3(0.0f));
-	U32 m_renderableIndexAndRenderStateBucket; ///< High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx.
+	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
+	U32 m_renderableIndex_20bit_renderStateBucket_12bit; ///< High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx.
 };
 static_assert(sizeof(GpuSceneRenderableBoundingVolume) == sizeof(Vec4) * 2);
 

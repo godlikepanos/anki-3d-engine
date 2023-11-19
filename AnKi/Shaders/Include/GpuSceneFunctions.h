@@ -22,21 +22,22 @@ inline GpuSceneRenderableVertex unpackGpuSceneRenderableVertex(UVec4 x)
 inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex, U32 renderStateBucket)
 {
 	GpuSceneRenderableBoundingVolume gpuVolume;
+	gpuVolume.m_aabbMin = aabbMin;
+	gpuVolume.m_aabbMax = aabbMax;
 
-	gpuVolume.m_sphereCenter = (aabbMin + aabbMax) * 0.5f;
-	gpuVolume.m_aabbExtend = aabbMax - gpuVolume.m_sphereCenter;
+	const Vec3 sphereCenter = (aabbMin + aabbMax) * 0.5f;
+	const Vec3 aabbExtend = aabbMax - sphereCenter;
 #if defined(__cplusplus)
-	gpuVolume.m_sphereRadius = gpuVolume.m_aabbExtend.getLength();
+	gpuVolume.m_sphereRadius = aabbExtend.getLength();
 #else
-	gpuVolume.m_sphereRadius = length(gpuVolume.m_aabbExtend);
+	gpuVolume.m_sphereRadius = length(aabbExtend);
 #endif
 
 	ANKI_ASSERT(renderableIndex <= (1u << 20u) - 1u);
-	gpuVolume.m_renderableIndexAndRenderStateBucket = renderableIndex << 12u;
+	gpuVolume.m_renderableIndex_20bit_renderStateBucket_12bit = renderableIndex << 12u;
 
 	ANKI_ASSERT(renderStateBucket <= (1u << 12u) - 1u);
-	gpuVolume.m_renderableIndexAndRenderStateBucket |= renderStateBucket;
-
+	gpuVolume.m_renderableIndex_20bit_renderStateBucket_12bit |= renderStateBucket;
 	return gpuVolume;
 }
 

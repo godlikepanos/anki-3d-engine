@@ -15,7 +15,7 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
-#include <AnKi/Shaders/CollisionFunctions.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 struct DrawIndirectArgsWithPadding
 {
@@ -78,36 +78,23 @@ struct DrawIndirectArgsWithPadding
 
 	const GpuSceneRenderableBoundingVolume bvolume = g_renderableBoundingVolumes[bvolumeIdx];
 
+	const Vec3 sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
+	const F32 sphereRadius = bvolume.m_sphereRadius;
+
 #if DISTANCE_TEST == 0
 	// Frustum test
 	//
-	if(!frustumTest(g_consts.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius))
+	if(!frustumTest(g_consts.m_clipPlanes, sphereCenter, sphereRadius))
 	{
 		return;
 	}
 
 	// Screen-space AABB calculation and checking
 	//
-	const Vec3 A = bvolume.m_sphereCenter - bvolume.m_aabbExtend;
-	const Vec3 B = bvolume.m_sphereCenter + bvolume.m_aabbExtend;
-	const Vec3 aabbEdges[8u] = {Vec3(A.x, A.y, A.z), Vec3(B.x, A.y, A.z), Vec3(A.x, B.y, A.z), Vec3(A.x, A.y, B.z),
-								Vec3(B.x, B.y, A.z), Vec3(B.x, A.y, B.z), Vec3(A.x, B.y, B.z), Vec3(B.x, B.y, B.z)};
+	Vec2 minNdc, maxNdc;
+	F32 aabbMinDepth;
+	projectAabb(bvolume.m_aabbMin, bvolume.m_aabbMax, g_consts.m_viewProjectionMat, minNdc, maxNdc, aabbMinDepth);
 
-	F32 aabbMinDepth = 1.0f;
-	Vec2 minNdc = 1000.0f;
-	Vec2 maxNdc = -1000.0f;
-	[unroll] for(U32 i = 0; i < 8; ++i)
-	{
-		Vec4 p = mul(g_consts.m_viewProjectionMat, Vec4(aabbEdges[i], 1.0f));
-
-		p.xyz /= abs(p.w);
-
-		minNdc = min(minNdc, p.xy);
-		maxNdc = max(maxNdc, p.xy);
-		aabbMinDepth = min(aabbMinDepth, p.z);
-	}
-
-	aabbMinDepth = saturate(aabbMinDepth);
 	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
 	{
 		// Outside of the screen
@@ -162,7 +149,7 @@ struct DrawIndirectArgsWithPadding
 	}
 #	endif // HZB_TEST
 #else // DISTANCE_TEST == 1
-	if(!testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius))
+	if(!testSphereSphereCollision(sphereCenter, sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius))
 	{
 		return;
 	}
@@ -170,7 +157,7 @@ struct DrawIndirectArgsWithPadding
 
 	// Compute the LOD
 	//
-	const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_consts.m_lodReferencePoint) - bvolume.m_sphereRadius;
+	const F32 distFromLodPoint = length(sphereCenter - g_consts.m_lodReferencePoint) - sphereRadius;
 
 	U32 lod;
 	if(distFromLodPoint < g_consts.m_maxLodDistances[0])
@@ -188,8 +175,8 @@ struct DrawIndirectArgsWithPadding
 
 	// Add the drawcall
 	//
-	const U32 renderStateBucket = bvolume.m_renderableIndexAndRenderStateBucket & ((1u << 12u) - 1u);
-	const U32 renderableIdx = bvolume.m_renderableIndexAndRenderStateBucket >> 12u;
+	const U32 renderStateBucket = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit & ((1u << 12u) - 1u);
+	const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
 
 	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
 	const U32 meshLodOffset = renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;

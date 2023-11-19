@@ -10,7 +10,7 @@
 #pragma anki start comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Shaders/CollisionFunctions.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 1u);
 

@@ -185,3 +185,36 @@ Bool frustumTest(Vec4 frustumPlanes[6], Vec3 sphereCenter, F32 sphereRadius)
 
 	return minPlaneDistance > -sphereRadius;
 }
+
+/// Modified version found in https://zeux.io/2023/01/12/approximate-projected-bounds
+void projectAabb(Vec3 aabbMin, Vec3 aabbMax, Mat4 viewProjMat, out Vec2 minNdc, out Vec2 maxNdc, out F32 aabbMinDepth)
+{
+	const Vec4 SX = mul(viewProjMat, Vec4(aabbMax.x - aabbMin.x, 0.0, 0.0, 0.0));
+	const Vec4 SY = mul(viewProjMat, Vec4(0.0, aabbMax.y - aabbMin.y, 0.0, 0.0));
+	const Vec4 SZ = mul(viewProjMat, Vec4(0.0, 0.0, aabbMax.z - aabbMin.z, 0.0));
+
+	Vec4 aabbEdgesClip[8u];
+	aabbEdgesClip[0] = mul(viewProjMat, Vec4(aabbMin.x, aabbMin.y, aabbMin.z, 1.0));
+	aabbEdgesClip[1] = aabbEdgesClip[0] + SZ;
+	aabbEdgesClip[2] = aabbEdgesClip[0] + SY;
+	aabbEdgesClip[3] = aabbEdgesClip[2] + SZ;
+	aabbEdgesClip[4] = aabbEdgesClip[0] + SX;
+	aabbEdgesClip[5] = aabbEdgesClip[4] + SZ;
+	aabbEdgesClip[6] = aabbEdgesClip[4] + SY;
+	aabbEdgesClip[7] = aabbEdgesClip[6] + SZ;
+
+	aabbMinDepth = 1.0f;
+	minNdc = 1000.0f;
+	maxNdc = -1000.0f;
+	[unroll] for(U32 i = 0; i < 8; ++i)
+	{
+		Vec4 p = aabbEdgesClip[i];
+		p.xyz /= abs(p.w);
+
+		minNdc = min(minNdc, p.xy);
+		maxNdc = max(maxNdc, p.xy);
+		aabbMinDepth = min(aabbMinDepth, p.z);
+	}
+
+	aabbMinDepth = saturate(aabbMinDepth);
+}

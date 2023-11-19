@@ -40,7 +40,8 @@ VertOut main(VertIn input)
 	if(input.m_svInstanceId < bvolumeCount)
 	{
 		const GpuSceneRenderableBoundingVolume bvol = g_renderableBoundingVolumes[g_visibleRenderableBoundingVolumeIndices[input.m_svInstanceId + 1]];
-		Vec3 localPos = input.m_position * bvol.m_aabbExtend + bvol.m_sphereCenter;
+		const Vec3 boxCenter = (bvol.m_aabbMin + bvol.m_aabbMax) * 0.5f;
+		Vec3 localPos = input.m_position * (bvol.m_aabbMax - boxCenter) + boxCenter;
 		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(localPos, 1.0));
 	}
 	else

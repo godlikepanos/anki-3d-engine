@@ -140,7 +140,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	Array<U32, kMaxDescriptorSets> counts = {};
 	Array2d<DescriptorBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> descriptors;
 
-	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, DescriptorType type) -> void {
+	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType) -> void {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
@@ -162,6 +162,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			m_activeBindingMask[set].set(set);
 
 			// Images are special, they might be texel buffers
+			DescriptorType type = origType;
 			if(type == DescriptorType::kTexture)
 			{
 				if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 1)

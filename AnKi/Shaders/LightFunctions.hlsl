@@ -8,7 +8,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/CollisionFunctions.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
