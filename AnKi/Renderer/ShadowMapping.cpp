@@ -73,6 +73,8 @@ public:
 	GpuVisibilityOutput m_visOut;
 
 	BufferOffsetRange m_clearTileIndirectArgs;
+
+	RenderTargetHandle m_hzbRt;
 };
 
 Error ShadowMapping::init()
@@ -386,6 +388,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			work.m_viewProjMat = cascadeViewProjMats[cascade];
 			work.m_viewMat = cascadeViewMats[cascade];
 			work.m_viewport = atlasViewports[cascade];
+			if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+			{
+				work.m_hzbRt = hzbGenIn.m_cascades[cascade].m_hzbRt;
+			}
 
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
@@ -624,6 +630,13 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 		args.m_viewport = UVec4(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
 		args.fillMdi(work.m_visOut);
+
+		TextureViewPtr hzbView;
+		if(work.m_hzbRt.isValid())
+		{
+			hzbView = rgraphCtx.createTextureView(work.m_hzbRt);
+			args.m_hzbTexture = hzbView.get();
+		}
 
 		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 	}

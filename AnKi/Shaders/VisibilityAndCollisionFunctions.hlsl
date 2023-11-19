@@ -218,3 +218,37 @@ void projectAabb(Vec3 aabbMin, Vec3 aabbMax, Mat4 viewProjMat, out Vec2 minNdc, 
 
 	aabbMinDepth = saturate(aabbMinDepth);
 }
+
+Bool cullHzb(Vec2 aabbMinNdc, Vec2 aabbMaxNdc, F32 aabbMinDepth, Texture2D<Vec4> hzb, SamplerState nearestAnyClampSampler)
+{
+	Vec2 texSize;
+	F32 mipCount;
+	hzb.GetDimensions(0, texSize.x, texSize.y, mipCount);
+
+	const Vec2 minUv = saturate(ndcToUv(aabbMinNdc));
+	const Vec2 maxUv = saturate(ndcToUv(aabbMaxNdc));
+	const Vec2 sizeXY = (maxUv - minUv) * texSize;
+	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
+
+	// Try to use a more detailed mip if you can
+	const F32 levelLower = max(mip - 1.0, 0.0);
+	const Vec2 mipSize = texSize / pow(2.0f, levelLower);
+	const Vec2 a = floor(minUv * mipSize);
+	const Vec2 b = ceil(maxUv * mipSize);
+	const Vec2 dims = b - a;
+
+	if(dims.x <= 2.0 && dims.y <= 2.0)
+	{
+		mip = levelLower;
+	}
+
+	// Sample mip
+	Vec4 depths;
+	depths[0] = hzb.SampleLevel(nearestAnyClampSampler, minUv, mip);
+	depths[1] = hzb.SampleLevel(nearestAnyClampSampler, maxUv, mip);
+	depths[2] = hzb.SampleLevel(nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip);
+	depths[3] = hzb.SampleLevel(nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip);
+	const F32 maxDepth = max4(depths);
+
+	return (aabbMinDepth > maxDepth);
+}

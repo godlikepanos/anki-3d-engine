@@ -60,7 +60,7 @@ Error GBuffer::initInternal()
 	}
 
 	{
-		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kUavComputeWrite;
+		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kUavComputeWrite | TextureUsageBit::kSampledGeometry;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar.get(), g_hzbHeightCVar.get(), Format::kR32_Sfloat, usage, "GBuffer HZB");
@@ -128,6 +128,14 @@ void GBuffer::runInThread(const RenderingContext& ctx, const GpuVisibilityOutput
 	args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 	args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 	args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
+
+	TextureViewPtr hzbView;
+	if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	{
+		hzbView = rgraphCtx.createTextureView(m_runCtx.m_hzbRt);
+		args.m_hzbTexture = hzbView.get();
+	}
+
 	args.fillMdi(visOut);
 
 	cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
@@ -239,6 +247,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	if(enableVrs)
 	{
 		pass.newTextureDependency(sriRt, TextureUsageBit::kFramebufferShadingRate);
+	}
+
+	if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	{
+		pass.newTextureDependency(m_runCtx.m_hzbRt, TextureUsageBit::kSampledGeometry);
 	}
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead);

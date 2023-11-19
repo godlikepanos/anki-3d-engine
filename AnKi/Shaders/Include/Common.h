@@ -788,7 +788,7 @@ constexpr U32 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
 
 constexpr U32 kMaxPrimitivesPerMeshlet = 128;
 constexpr U32 kMaxVerticesPerMeshlet = 128;
-#define ANKI_TASK_SHADER_THREADGROUP_SIZE 128u
+#define ANKI_TASK_SHADER_THREADGROUP_SIZE 64u
 constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 
 #define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u

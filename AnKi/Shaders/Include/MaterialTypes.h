@@ -16,8 +16,15 @@ struct MaterialGlobalConstants
 	Mat4 m_previousViewProjectionMatrix;
 	Mat3x4 m_viewTransform;
 	Mat3x4 m_cameraTransform;
+
+	Vec4 m_viewport;
+
+	U32 m_enableHzbTesting;
+	U32 m_padding0;
+	U32 m_padding1;
+	U32 m_padding2;
 };
-static_assert(sizeof(MaterialGlobalConstants) == 14 * sizeof(Vec4));
+static_assert(sizeof(MaterialGlobalConstants) == 16 * sizeof(Vec4));
 
 /// @brief
 enum class MaterialSet : U32
@@ -37,9 +44,12 @@ enum class MaterialBinding : U32
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) kUnifiedGeometry_##fmt,
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
-	kMeshlets, // Pointing to the unified geom buffer
+	// For mesh shading
+	kMeshlets, ///< Points to the unified geom buffer
 	kTaskShaderPayloads,
 	kRenderables,
+	kHzbTexture,
+	kNearestClampSampler,
 
 	// For FW shading:
 	kLinearClampSampler,
@@ -49,9 +59,6 @@ enum class MaterialBinding : U32
 	kClusterShadingConstants,
 	kClusterShadingLights,
 	kClusters = kClusterShadingLights + 2,
-
-	kCount,
-	kFirst = 0
 };
 
 // Techniques

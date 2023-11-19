@@ -370,7 +370,7 @@ static void generateMeshlets(SubMesh& submesh)
 	meshlets.resize(maxMeshlets);
 
 	// Meshletize
-	constexpr F32 coneWeight = 0.7f;
+	constexpr F32 coneWeight = 0.0f;
 	const U32 meshletCount =
 		U32(meshopt_buildMeshlets(meshlets.getBegin(), indicesToVertexBuffer.getBegin(), localIndices.getBegin(), submesh.m_indices.getBegin(),
 								  submesh.m_indices.getSize(), &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), sizeof(TempVertex),

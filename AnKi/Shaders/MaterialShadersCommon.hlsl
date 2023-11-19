@@ -11,6 +11,7 @@
 #include <AnKi/Shaders/Include/MeshTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 ANKI_BINDLESS_SET(MaterialSet::kBindless)
 
@@ -26,6 +27,8 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 [[vk::binding(MaterialBinding::kMeshlets, MaterialSet::kGlobal)]] StructuredBuffer<Meshlet> g_meshlets;
 [[vk::binding(MaterialBinding::kTaskShaderPayloads, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
 [[vk::binding(MaterialBinding::kRenderables, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
+[[vk::binding(MaterialBinding::kHzbTexture, MaterialSet::kGlobal)]] Texture2D<Vec4> g_hzbTexture;
+[[vk::binding(MaterialBinding::kNearestClampSampler, MaterialSet::kGlobal)]] SamplerState g_nearestClampSampler;
 
 // FW shading specific
 #if defined(FORWARD_SHADING)
@@ -83,7 +86,9 @@ Bool cullBackfaceMeshlet(Meshlet meshlet, Mat3x4 worldTransform, Vec3 cameraWorl
 {
 	const Vec4 coneData = unpackSnorm4x8(meshlet.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
 
-	meshlet.m_sphereCenter = mul(worldTransform, Vec4(meshlet.m_sphereCenter, 1.0f));
+	Vec3 center = (meshlet.m_aabbMin + meshlet.m_aabbMax) / 2.0f;
+
+	center = mul(worldTransform, Vec4(center, 1.0f));
 	const Vec3 coneAxisWspace = normalize(mul(worldTransform, Vec4(coneData.xyz, 0.0f)));
 
 	// Extract uniform scale
@@ -92,6 +97,6 @@ Bool cullBackfaceMeshlet(Meshlet meshlet, Mat3x4 worldTransform, Vec3 cameraWorl
 
 	meshlet.m_sphereRadius *= uniformScale;
 
-	const Vec3 dir = meshlet.m_sphereCenter - cameraWorldPos;
+	const Vec3 dir = center - cameraWorldPos;
 	return dot(dir, coneAxisWspace) >= coneData.w * length(dir) + meshlet.m_sphereRadius;
 }

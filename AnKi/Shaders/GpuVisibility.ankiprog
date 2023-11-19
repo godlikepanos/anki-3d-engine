@@ -111,43 +111,13 @@ struct DrawIndirectArgsWithPadding
 
 	// HiZ culling
 	//
-
 #	if HZB_TEST
-	// Compute the mip
-	Vec2 texSize;
-	F32 mipCount;
-	g_hzbTex.GetDimensions(0, texSize.x, texSize.y, mipCount);
-
-	const Vec2 minUv = saturate(ndcToUv(minNdc));
-	const Vec2 maxUv = saturate(ndcToUv(maxNdc));
-	const Vec2 sizeXY = (maxUv - minUv) * texSize;
-	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
-
-	// Try to use a more detailed mip if you can
-	const F32 levelLower = max(mip - 1.0, 0.0);
-	const Vec2 mipSize = texSize / pow(2.0f, levelLower);
-	const Vec2 a = floor(minUv * mipSize);
-	const Vec2 b = ceil(maxUv * mipSize);
-	const Vec2 dims = b - a;
-
-	if(dims.x <= 2.0 && dims.y <= 2.0)
-	{
-		mip = levelLower;
-	}
-
-	// Sample mip
-	Vec4 depths;
-	depths[0] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, minUv, mip);
-	depths[1] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, maxUv, mip);
-	depths[2] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip);
-	depths[3] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip);
-	const F32 maxDepth = max4(depths);
-
-	if(aabbMinDepth > maxDepth)
+	if(cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTex, g_nearestAnyClampSampler))
 	{
 		return;
 	}
 #	endif // HZB_TEST
+
 #else // DISTANCE_TEST == 1
 	if(!testSphereSphereCollision(sphereCenter, sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius))
 	{

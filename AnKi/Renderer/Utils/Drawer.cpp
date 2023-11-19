@@ -41,6 +41,11 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 		static_assert(sizeof(globalUniforms->m_cameraTransform) == sizeof(args.m_cameraTransform));
 		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
+		ANKI_ASSERT(args.m_viewport != UVec4(0u));
+		globalUniforms->m_viewport = Vec4(args.m_viewport);
+
+		globalUniforms->m_enableHzbTesting = args.m_hzbTexture != nullptr;
+
 		cmdb.bindConstantBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalConstants), globalUniformsToken);
 	}
 
@@ -58,6 +63,9 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTaskShaderPayloads), args.m_taskShaderPayloadsBuffer);
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables),
 					   GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+	cmdb.bindTexture(U32(MaterialSet::kGlobal), U32(MaterialBinding::kHzbTexture),
+					 (args.m_hzbTexture) ? args.m_hzbTexture : &getRenderer().getDummyTextureView2d());
+	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kNearestClampSampler), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	// Misc
 	cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);

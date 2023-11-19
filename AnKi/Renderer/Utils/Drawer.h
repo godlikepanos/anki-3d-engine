@@ -24,7 +24,9 @@ public:
 	Mat4 m_viewProjectionMatrix;
 	Mat4 m_previousViewProjectionMatrix;
 
-	UVec4 m_viewport; ///< Only used for information purposes.
+	UVec4 m_viewport;
+
+	TextureView* m_hzbTexture = nullptr; ///< Optional.
 
 	Sampler* m_sampler = nullptr;
 
