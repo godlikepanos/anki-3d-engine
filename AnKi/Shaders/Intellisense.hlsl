@@ -12,6 +12,7 @@
 #define SV_GROUPINDEX // gl_LocalInvocationIndex
 #define SV_GROUPID // gl_WorkGroupID
 #define SV_GROUPTHREADID // gl_LocalInvocationID
+#define SV_CULLPRIMITIVE
 #define SV_VERTEXID
 #define SV_POSITION
 #define SV_INSTANCEID

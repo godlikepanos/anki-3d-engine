@@ -29,6 +29,9 @@
 #define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
 #define MESHLET_NO_SAMPLING_POINT_CULLING 1
 #define MESHLET_HZB_CULLING 1
+#define PRIMITIVE_BACKFACE_CULLING 1
+#define PRIMITIVE_NO_SAMPLING_POINTS_CULLING 1
+#define PRIMITIVE_ANY_CULLING (PRIMITIVE_BACKFACE_CULLING || PRIMITIVE_NO_SAMPLING_POINTS_CULLING)
 
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
@@ -286,18 +289,18 @@ struct FirstPayload
 
 #if MESHLET_OUTSIDE_OF_SCREEN_CULLING
 		// Outside of the screen
-		cull = !cull && (any(minNdc > 1.0f) || any(maxNdc < -1.0f));
+		cull = cull || (any(minNdc > 1.0f) || any(maxNdc < -1.0f));
 #endif
 
 #if MESHLET_NO_SAMPLING_POINT_CULLING
 		// Sampling points test
 		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_globalConstants.m_viewport.zw;
 		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_globalConstants.m_viewport.zw;
-		cull = !cull && any(round(windowCoordsMin) == round(windowCoordsMax));
+		cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
 #endif
 
 #if MESHLET_HZB_CULLING
-		cull = !cull && g_globalConstants.m_enableHzbTesting == 1u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler);
+		cull = cull || (g_globalConstants.m_enableHzbTesting == 1u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
 #endif
 
 		if(!cull)
@@ -320,12 +323,24 @@ struct FirstPayload
 
 #pragma anki start mesh
 
-constexpr U32 g_dummy = 0; // The formater is getting confused so add this
+#if PRIMITIVE_ANY_CULLING
+groupshared Vec2 s_windowCoords[kMaxVerticesPerMeshlet];
+groupshared F32 s_depths[kMaxVerticesPerMeshlet];
+
+struct MeshletPrimitiveOut
+{
+	I32 m_cullPrimitive : SV_CULLPRIMITIVE; // TODO: Make it Bool when https://github.com/microsoft/DirectXShaderCompiler/issues/6042 is fixed
+};
+#endif
 
 [numthreads(ANKI_MESH_SHADER_THREADGROUP_SIZE, 1, 1)] [outputtopology("triangle")] void
 main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVerticesPerMeshlet], out indices UVec3 indices[kMaxPrimitivesPerMeshlet],
-	 U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
-{
+	 U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX
+#if PRIMITIVE_ANY_CULLING
+	 ,
+	 out primitives MeshletPrimitiveOut primitives[kMaxPrimitivesPerMeshlet]
+#endif
+) {
 	const U32 groupIdx = svGroupId / 4u;
 	const U32 localIdx = svGroupId % 4u;
 	const U32 relativeMeshletIdx = (payload.m_visibleMeshletsRelativeIndices[groupIdx] >> (localIdx * 8u)) & 0xFFu;
@@ -366,6 +381,10 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 
 			const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
 			output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0f));
+#if PRIMITIVE_ANY_CULLING
+			s_windowCoords[idx] = ndcToUv(output.m_svPosition.xy / output.m_svPosition.w) * g_globalConstants.m_viewport.zw;
+			s_depths[idx] = output.m_svPosition.z / output.m_svPosition.w;
+#endif
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
 			output.m_worldPos = worldPos;
@@ -384,6 +403,10 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 		}
 	}
 
+#if PRIMITIVE_ANY_CULLING
+	GroupMemoryBarrierWithGroupSync();
+#endif
+
 	// Write the indices
 	const U32 primLoopCount = kMaxPrimitivesPerMeshlet / ANKI_MESH_SHADER_THREADGROUP_SIZE;
 	[unroll] for(U32 l = 0; l < primLoopCount; ++l)
@@ -392,7 +415,34 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 
 		if(idx < primCount)
 		{
-			indices[idx] = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + idx].xyz;
+			const UVec3 prim = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + idx].xyz;
+			indices[idx] = prim;
+
+#if PRIMITIVE_ANY_CULLING
+			Bool cull = false;
+
+			const Vec2 a = s_windowCoords[prim.x];
+			const Vec2 b = s_windowCoords[prim.y];
+			const Vec2 c = s_windowCoords[prim.z];
+#endif
+
+#if PRIMITIVE_BACKFACE_CULLING
+			const Vec2 eb = b - a;
+			const Vec2 ec = c - a;
+
+			cull = !cull && (eb.x * ec.y >= eb.y * ec.x);
+#endif
+
+#if PRIMITIVE_NO_SAMPLING_POINTS_CULLING
+			const Vec2 windowCoordsMin = min3(a, b, c);
+			const Vec2 windowCoordsMax = max3(a, b, c);
+
+			cull = !cull && any(round(windowCoordsMin) == round(windowCoordsMax));
+#endif
+
+#if PRIMITIVE_ANY_CULLING
+			primitives[idx].m_cullPrimitive = cull;
+#endif
 		}
 	}
 }
