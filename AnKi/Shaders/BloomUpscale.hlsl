@@ -5,9 +5,6 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kViewport, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInputTextureSize, 2u);
-
 // Constants
 #define ENABLE_CHROMATIC_DISTORTION 1
 #define ENABLE_HALO 1
@@ -40,9 +37,12 @@ RVec3 textureDistorted(Texture2D<RVec4> tex, SamplerState sampl, Vec2 uv,
 
 RVec3 ssLensFlare(Vec2 uv)
 {
-	constexpr Vec2 kTexelSize = 1.0 / Vec2(kInputTextureSize);
-	constexpr Vec3 kDistortion = Vec3(-kTexelSize.x * kChromaticDistortion, 0.0, kTexelSize.x * kChromaticDistortion);
-	constexpr F32 kLensOfHalf = length(Vec2(0.5, 0.5));
+	Vec2 textureSize;
+	g_inputTex.GetDimensions(textureSize.x, textureSize.y);
+
+	const Vec2 texelSize = 1.0 / textureSize;
+	const Vec3 distortion = Vec3(-texelSize.x * kChromaticDistortion, 0.0, texelSize.x * kChromaticDistortion);
+	const F32 lensOfHalf = length(Vec2(0.5, 0.5));
 
 	const Vec2 flipUv = Vec2(1.0, 1.0) - uv;
 
@@ -56,18 +56,18 @@ RVec3 ssLensFlare(Vec2 uv)
 	{
 		const Vec2 offset = frac(flipUv + ghostVec * F32(i));
 
-		RF32 weight = length(Vec2(0.5, 0.5) - offset) / kLensOfHalf;
+		RF32 weight = length(Vec2(0.5, 0.5) - offset) / lensOfHalf;
 		weight = pow(1.0 - weight, 10.0);
 
-		result += textureDistorted(g_inputTex, g_linearAnyClampSampler, offset, direction, kDistortion) * weight;
+		result += textureDistorted(g_inputTex, g_linearAnyClampSampler, offset, direction, distortion) * weight;
 	}
 
 	// Sample halo
 #if ENABLE_HALO
 	const Vec2 haloVec = normalize(ghostVec) * kHaloWidth;
-	RF32 weight = length(Vec2(0.5, 0.5) - frac(flipUv + haloVec)) / kLensOfHalf;
+	RF32 weight = length(Vec2(0.5, 0.5) - frac(flipUv + haloVec)) / lensOfHalf;
 	weight = pow(1.0 - weight, 20.0);
-	result += textureDistorted(g_inputTex, g_linearAnyClampSampler, flipUv + haloVec, direction, kDistortion) * (weight * kHaloOpacity);
+	result += textureDistorted(g_inputTex, g_linearAnyClampSampler, flipUv + haloVec, direction, distortion) * (weight * kHaloOpacity);
 #endif
 
 	// Lens dirt
@@ -89,24 +89,22 @@ RVec3 upscale(Vec2 uv)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-[numthreads(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
 RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY), kViewport, svDispatchThreadId))
-	{
-		return;
-	}
+	Vec2 outUavTexSize;
+	g_outUav.GetDimensions(outUavTexSize.x, outUavTexSize.y);
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(kViewport);
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / outUavTexSize;
 #endif
 
 	const RVec3 outColor = ssLensFlare(uv) + upscale(uv);
 
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outUav[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
+	g_outUav[svDispatchThreadId] = RVec4(outColor, 0.0);
 #else
 	return outColor;
 #endif

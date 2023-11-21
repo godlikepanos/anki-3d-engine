@@ -38,54 +38,33 @@ Error Bloom::initInternal()
 
 Error Bloom::initExposure()
 {
-	m_exposure.m_width = getRenderer().getDownscaleBlur().getPassWidth(kMaxU32) * 2;
-	m_exposure.m_height = getRenderer().getDownscaleBlur().getPassHeight(kMaxU32) * 2;
+	const U32 width = getRenderer().getDownscaleBlur().getPassWidth(kMaxU32) * 2;
+	const U32 height = getRenderer().getDownscaleBlur().getPassHeight(kMaxU32) * 2;
 
 	// Create RT info
-	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height, kRtPixelFormat, "Bloom Exp");
+	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, kRtPixelFormat, "Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	CString progFname = (g_preferComputeCVar.get()) ? "ShaderBinaries/BloomCompute.ankiprogbin" : "ShaderBinaries/BloomRaster.ankiprogbin";
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_exposure.m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
-	if(g_preferComputeCVar.get())
-	{
-		variantInitInfo.addConstant("kViewport", UVec2(m_exposure.m_width, m_exposure.m_height));
-	}
-
-	const ShaderProgramResourceVariant* variant;
-	m_exposure.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_exposure.m_grProg.reset(&variant->getProgram());
+	const CString progFname = (g_preferComputeCVar.get()) ? "ShaderBinaries/BloomCompute.ankiprogbin" : "ShaderBinaries/BloomRaster.ankiprogbin";
+	ANKI_CHECK(loadShaderProgram(progFname, m_exposure.m_prog, m_exposure.m_grProg));
 
 	return Error::kNone;
 }
 
 Error Bloom::initUpscale()
 {
-	m_upscale.m_width = getRenderer().getPostProcessResolution().x() / kBloomFraction;
-	m_upscale.m_height = getRenderer().getPostProcessResolution().y() / kBloomFraction;
+	const U32 width = getRenderer().getPostProcessResolution().x() / kBloomFraction;
+	const U32 height = getRenderer().getPostProcessResolution().y() / kBloomFraction;
 
 	// Create RT descr
-	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height, kRtPixelFormat, "Bloom Upscale");
+	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, kRtPixelFormat, "Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	CString progFname =
+	const CString progFname =
 		(g_preferComputeCVar.get()) ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin" : "ShaderBinaries/BloomUpscaleRaster.ankiprogbin";
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_upscale.m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);
-	variantInitInfo.addConstant("kInputTextureSize", UVec2(m_exposure.m_width, m_exposure.m_height));
-	if(g_preferComputeCVar.get())
-	{
-		variantInitInfo.addConstant("kViewport", UVec2(m_upscale.m_width, m_upscale.m_height));
-	}
-
-	const ShaderProgramResourceVariant* variant;
-	m_upscale.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_upscale.m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram(progFname, m_upscale.m_prog, m_upscale.m_grProg));
 
 	// Textures
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
@@ -141,8 +120,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(0, 1, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
-			const Vec4 uniforms(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
-			cmdb.setPushConstants(&uniforms, sizeof(uniforms));
+			const Vec4 consts(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
+			cmdb.setPushConstants(&consts, sizeof(consts));
 
 			rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
 
@@ -150,11 +129,11 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			{
 				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
 
-				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_width, m_exposure.m_height);
+				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_rtDescr.m_width, m_exposure.m_rtDescr.m_height);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
+				cmdb.setViewport(0, 0, m_exposure.m_rtDescr.m_width, m_exposure.m_rtDescr.m_height);
 
 				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
@@ -201,11 +180,11 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			{
 				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 
-				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_width, m_upscale.m_height);
+				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_rtDescr.m_width, m_upscale.m_rtDescr.m_height);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
+				cmdb.setViewport(0, 0, m_upscale.m_rtDescr.m_width, m_upscale.m_rtDescr.m_height);
 
 				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
