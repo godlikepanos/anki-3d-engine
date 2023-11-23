@@ -15,10 +15,6 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MotionBlur.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kLutSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
-
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
@@ -33,21 +29,24 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
 
 struct PushConstants
 {
-	Vec2 m_padding0;
+	U32 m_motionBlurSamples;
 	F32 m_filmGrainStrength;
 	U32 m_frameCount;
+	U32 m_padding;
 };
 
 [[vk::push_constant]] ConstantBuffer<PushConstants> g_pc;
 
 RVec3 colorGrading(RVec3 color)
 {
-	constexpr RF32 kLutSizef = RF32(kLutSize);
-	constexpr RVec3 kLutScale = ((kLutSizef - 1.0) / kLutSizef).xxx;
-	constexpr RVec3 kLutOffset = (1.0 / (2.0 * kLutSize)).xxx;
+	Vec3 lutSize;
+	g_lut.GetDimensions(lutSize.x, lutSize.y, lutSize.y);
+
+	const RVec3 lutScale = ((lutSize.x - 1.0) / lutSize.x).xxx;
+	const RVec3 lutOffset = (1.0 / (2.0 * lutSize.x)).xxx;
 
 	color = min(color, RVec3(1.0, 1.0, 1.0));
-	const RVec3 lutCoords = color * kLutScale + kLutOffset;
+	const RVec3 lutCoords = color * lutScale + lutOffset;
 	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
@@ -55,10 +54,9 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	RVec3 outColor;
 
-	if(kMotionBlurSamples > 0u)
+	if(g_pc.m_motionBlurSamples > 0u)
 	{
-		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, Vec2(kFramebufferSize), g_linearAnyClampSampler, uv,
-							  kMotionBlurSamples);
+		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, g_linearAnyClampSampler, uv, g_pc.m_motionBlurSamples);
 	}
 	else
 	{

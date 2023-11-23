@@ -8,10 +8,6 @@
 
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kTileCount, 2u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
-
 #define DEBUG_CASCADES 0
 
 [[vk::binding(0)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
@@ -34,6 +30,15 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 4u);
 [[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
 #endif
 
+struct Constants
+{
+	Vec2 m_framebufferSize;
+	F32 m_padding0;
+	F32 m_padding1;
+};
+
+[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+
 Vec3 computeDebugShadowCascadeColor(U32 cascade)
 {
 	if(cascade == 0u)
@@ -55,24 +60,22 @@ Vec3 computeDebugShadowCascadeColor(U32 cascade)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-[numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
 RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(any(svDispatchThreadId.xy >= kFramebufferSize))
-	{
-		return;
-	}
-
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(kFramebufferSize);
+	svDispatchThreadId = min(svDispatchThreadId, UVec2(g_consts.m_framebufferSize - 1.0f)); // Just to be sure
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / g_consts.m_framebufferSize;
 #endif
 
 #if PCF
 	// Noise
-	const Vec2 kNoiseTexSize = 64.0f;
-	const Vec2 noiseUv = Vec2(kFramebufferSize) / kNoiseTexSize * uv;
+	Vec2 noiseTexSize;
+	g_noiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
+
+	const Vec2 noiseUv = g_consts.m_framebufferSize / noiseTexSize * uv;
 	RVec3 noise = g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb;
 	noise = animateBlueNoise(noise, g_clusteredShading.m_frame % 16u);
 	const RF32 randFactor = noise.x;
@@ -86,8 +89,7 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Cluster
 	const Vec2 fragCoord = uv * g_clusteredShading.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(g_clusters, Vec3(fragCoord, depth), kTileCount, kZSplitCount, g_clusteredShading.m_zSplitMagic.x,
-										  g_clusteredShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(g_clusters, g_clusteredShading, Vec3(fragCoord, depth));
 
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;
@@ -204,7 +206,7 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Store
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outUav[svDispatchThreadId.xy] = shadowFactors;
+	g_outUav[svDispatchThreadId] = shadowFactors;
 #else
 	return shadowFactors;
 #endif

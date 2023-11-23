@@ -33,30 +33,10 @@ Error LensFlare::initInternal()
 {
 	ANKI_R_LOGV("Initializing lens flare");
 
-	ANKI_CHECK(initSprite());
-	ANKI_CHECK(initOcclusion());
-
-	return Error::kNone;
-}
-
-Error LensFlare::initSprite()
-{
 	m_maxSpritesPerFlare = g_lensFlareMaxSpritesPerFlareCVar.get();
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg, m_realGrProg));
 
-	return Error::kNone;
-}
-
-Error LensFlare::initOcclusion()
-{
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin", m_updateIndirectBuffProg));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
-	variantInitInfo.addConstant("kInDepthMapSize",
-								UVec2(getRenderer().getInternalResolution().x() / 2 / 2, getRenderer().getInternalResolution().y() / 2 / 2));
-	const ShaderProgramResourceVariant* variant;
-	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
-	m_updateIndirectBuffGrProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin", m_updateIndirectBuffProg, m_updateIndirectBuffGrProg));
 
 	return Error::kNone;
 }

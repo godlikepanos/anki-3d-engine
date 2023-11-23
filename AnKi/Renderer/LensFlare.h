@@ -47,9 +47,6 @@ private:
 		BufferHandle m_indirectBuffHandle;
 	} m_runCtx;
 
-	Error initSprite();
-	Error initOcclusion();
-
 	Error initInternal();
 };
 /// @}

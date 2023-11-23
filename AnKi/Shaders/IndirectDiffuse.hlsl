@@ -18,8 +18,6 @@
 #define REPROJECT_LIGHTBUFFER false
 #define SSGI_PROBE_COMBINE(ssgiColor, probeColor) ((ssgiColor) + (probeColor))
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kSampleCount, 0u);
-
 [[vk::binding(0)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(1)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
 [[vk::binding(2)]] StructuredBuffer<Cluster> g_clusters;

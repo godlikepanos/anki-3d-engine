@@ -30,8 +30,6 @@ public:
 	Error loadColorGradingTextureImage(CString filename);
 
 private:
-	static constexpr U kLutSize = 16;
-
 	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_prog;

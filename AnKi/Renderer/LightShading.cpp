@@ -55,15 +55,7 @@ Error LightShading::init()
 Error LightShading::initLightShading()
 {
 	// Load shaders and programs
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
-	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
-	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	const ShaderProgramResourceVariant* variant;
-
-	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_lightShading.m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog, m_lightShading.m_grProg));
 
 	// Create RT descr
 	const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -111,15 +103,7 @@ Error LightShading::initSkybox()
 Error LightShading::initApplyFog()
 {
 	// Load shaders and programs
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
-	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	variantInitInfo.addConstant("kFinalZSplit", getRenderer().getVolumetricFog().getFinalClusterInZ());
-
-	const ShaderProgramResourceVariant* variant;
-	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_applyFog.m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog, m_applyFog.m_grProg));
 
 	return Error::kNone;
 }
@@ -253,10 +237,13 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		class PushConsts
 		{
 		public:
-			Vec2 m_padding;
+			F32 m_zSplitCount;
+			F32 m_finalZSplit;
 			F32 m_near;
 			F32 m_far;
 		} regs;
+		regs.m_zSplitCount = F32(getRenderer().getZSplitCount());
+		regs.m_finalZSplit = F32(getRenderer().getVolumetricFog().getFinalClusterInZ());
 		regs.m_near = ctx.m_cameraNear;
 		regs.m_far = ctx.m_cameraFar;
 

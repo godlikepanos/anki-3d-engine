@@ -7,7 +7,6 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 0u);
 constexpr F32 kMaxRejectionDistance = 0.1; // In meters
 constexpr F32 kMaxHistoryLength = 16.0;
 
@@ -22,6 +21,10 @@ struct Constants
 	Mat4 m_reprojectionMat;
 	Mat4 m_viewProjectionInvMat;
 	Mat4 m_prevViewProjectionInvMat;
+
+	Vec2 m_viewportSize;
+	F32 m_padding0;
+	F32 m_padding1;
 };
 
 [[vk::binding(5)]] ConstantBuffer<Constants> g_consts;
@@ -40,7 +43,7 @@ Vec3 clipToWorld(Vec4 clip, Mat4 clipToWorldMat)
 /// Average the some depth values and unproject.
 Vec3 getAverageWorldPosition(Texture2D tex, Vec2 uv, Mat4 clipToWorldMat)
 {
-	const Vec2 halfTexel = (1.0 / Vec2(kFramebufferSize)) / 2.0;
+	const Vec2 halfTexel = (1.0 / g_consts.m_viewportSize) / 2.0;
 
 	Vec4 depths = tex.GatherRed(g_linearAnyClampSampler, uv + halfTexel);
 	depths += tex.GatherRed(g_linearAnyClampSampler, uv - halfTexel);
@@ -53,7 +56,7 @@ Vec3 getAverageWorldPosition(Texture2D tex, Vec2 uv, Mat4 clipToWorldMat)
 /// Get the depths of some neighbour texels, unproject and find the AABB in world space that encloses them.
 void getMinMaxWorldPositions(Texture2D tex, Vec2 uv, Mat4 clipToWorldMat, out Vec3 aabbMin, out Vec3 aabbMax)
 {
-	const Vec2 halfTexel = (1.0 / Vec2(kFramebufferSize)) / 2.0;
+	const Vec2 halfTexel = (1.0 / g_consts.m_viewportSize) / 2.0;
 
 	const Vec4 depths1 = tex.GatherRed(g_linearAnyClampSampler, uv + halfTexel);
 	const Vec4 depths2 = tex.GatherRed(g_linearAnyClampSampler, uv - halfTexel);
@@ -107,7 +110,7 @@ F32 computeRejectionFactor(Vec2 uv, Vec2 historyUv)
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
-[numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #else
 struct FragOut
 {
@@ -119,12 +122,7 @@ FragOut main(Vec2 uv : TEXCOORD)
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(skipOutOfBoundsInvocations(UVec2(8, 8), kFramebufferSize, svDispatchThreadId.xy))
-	{
-		return;
-	}
-
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(kFramebufferSize);
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / g_consts.m_viewportSize;
 #endif
 	const F32 depth = g_currentDepthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
 
@@ -158,8 +156,8 @@ FragOut main(Vec2 uv : TEXCOORD)
 
 	// Write out
 #if defined(ANKI_COMPUTE_SHADER)
-	g_motionVectorsUav[svDispatchThreadId.xy] = historyUv - uv;
-	g_historyLengthUav[svDispatchThreadId.xy] = historyLength;
+	g_motionVectorsUav[svDispatchThreadId] = historyUv - uv;
+	g_historyLengthUav[svDispatchThreadId] = historyLength;
 #else
 	FragOut output;
 	output.m_motionVectors = historyUv - uv;

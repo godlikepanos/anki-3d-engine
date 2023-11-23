@@ -38,9 +38,6 @@ Error FinalComposite::initInternal()
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
-	variantInitInfo.addConstant("kLutSize", U32(kLutSize));
-	variantInitInfo.addConstant("kFramebufferSize", getRenderer().getPostProcessResolution());
-	variantInitInfo.addConstant("kMotionBlurSamples", g_motionBlurSamplesCVar.get());
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
@@ -73,9 +70,8 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 {
 	m_lut.reset(nullptr);
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, m_lut));
-	ANKI_ASSERT(m_lut->getWidth() == kLutSize);
-	ANKI_ASSERT(m_lut->getHeight() == kLutSize);
-	ANKI_ASSERT(m_lut->getDepth() == kLutSize);
+	ANKI_ASSERT(m_lut->getWidth() == m_lut->getHeight());
+	ANKI_ASSERT(m_lut->getWidth() == m_lut->getDepth());
 
 	return Error::kNone;
 }
@@ -167,7 +163,7 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 
 		if(g_filmGrainStrengthCVar.get() > 0.0f)
 		{
-			const UVec4 pc(0, 0, floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32);
+			const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
 			cmdb.setPushConstants(&pc, sizeof(pc));
 		}
 	}

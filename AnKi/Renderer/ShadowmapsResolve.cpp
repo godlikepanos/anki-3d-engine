@@ -48,9 +48,6 @@ Error ShadowmapsResolve::initInternal()
 																						: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
 															m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
-	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
-	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
 	variantInitInfo.addMutation("PCF", g_shadowMappingPcfCVar.get() != 0);
 	variantInitInfo.addMutation("DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled());
 	const ShaderProgramResourceVariant* variant;
@@ -146,6 +143,9 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 	{
 		rgraphCtx.bindColorTexture(0, 9, getRenderer().getRtShadows().getRt());
 	}
+
+	const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
+	cmdb.setPushConstants(&consts, sizeof(consts));
 
 	if(g_preferComputeCVar.get())
 	{

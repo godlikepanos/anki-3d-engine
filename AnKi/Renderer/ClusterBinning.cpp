@@ -35,7 +35,6 @@ Error ClusterBinning::init()
 	{
 		ShaderProgramResourceVariantInitInfo inf(m_binningProg);
 		inf.addMutation("OBJECT_TYPE", MutatorValue(type));
-		inf.addConstant("kZSplitCount", getRenderer().getZSplitCount());
 		const ShaderProgramResourceVariant* variant;
 		m_binningProg->getOrCreateVariant(inf, variant);
 		m_binningGrProgs[type].reset(&variant->getProgram());
@@ -177,6 +176,11 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 					Vec4 m_nearPlaneWorld;
 
+					I32 m_zSplitCountMinusOne;
+					I32 m_padding0;
+					I32 m_padding1;
+					I32 m_padding2;
+
 					Mat4 m_invertedViewProjMat;
 				} consts;
 
@@ -189,6 +193,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				Plane nearPlane;
 				extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
 				consts.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+
+				consts.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
 
 				consts.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 

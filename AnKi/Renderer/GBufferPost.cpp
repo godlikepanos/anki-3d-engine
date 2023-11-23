@@ -26,15 +26,7 @@ Error GBufferPost::initInternal()
 	ANKI_R_LOGV("Initializing GBufferPost pass");
 
 	// Load shaders
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GBufferPost.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
-	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GBufferPost.ankiprogbin", m_prog, m_grProg));
 
 	// Create FB descr
 	m_fbDescr.m_colorAttachmentCount = 2;

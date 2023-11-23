@@ -11,9 +11,6 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 0u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 1u);
-
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(2)]] Texture2D g_depthRt;
@@ -21,7 +18,8 @@ ANKI_SPECIALIZATION_CONSTANT_U32(kFinalZSplit, 1u);
 
 struct Constants
 {
-	Vec2 m_padding;
+	F32 m_zSplitCount;
+	F32 m_finalZSplit;
 	F32 m_near;
 	F32 m_far;
 };
@@ -35,7 +33,7 @@ RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	// Compute W coordinate
 	const F32 depth = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	const F32 linearDepth = linearizeDepth(depth, g_consts.m_near, g_consts.m_far);
-	uvw.z = linearDepth * (F32(kZSplitCount) / F32(kFinalZSplit + 1u));
+	uvw.z = linearDepth * (g_consts.m_zSplitCount / (g_consts.m_finalZSplit + 1.0f));
 
 	// Compute UV coordinates
 	uvw.xy = uv;

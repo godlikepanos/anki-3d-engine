@@ -12,8 +12,6 @@
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kZSplitCount, 1u);
-
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 typedef GpuSceneLight GpuSceneType;
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
@@ -38,6 +36,11 @@ struct ClusterBinningConstants
 	U32 m_tileCount;
 
 	Vec4 m_nearPlaneWorld;
+
+	I32 m_zSplitCountMinusOne;
+	I32 m_padding0;
+	I32 m_padding1;
+	I32 m_padding2;
 
 	Mat4 m_invertedViewProjMat;
 };
@@ -196,7 +199,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 		}
 
 		const I32 startZSplit = max(I32(minDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0);
-		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0, I32(kZSplitCount) - 1);
+		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0, g_consts.m_zSplitCountMinusOne);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT

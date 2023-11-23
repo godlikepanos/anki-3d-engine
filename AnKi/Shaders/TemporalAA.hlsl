@@ -10,9 +10,8 @@
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_F32(kVarianceClippingGamma, 0u);
-ANKI_SPECIALIZATION_CONSTANT_F32(kBlendFactor, 1u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 2u);
+constexpr F32 kVarianceClippingGamma = 2.7f; // Variance clipping paper proposes 1.0
+constexpr F32 kBlendFactor = 1.0f / 16.0f;
 
 [[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(1)]] Texture2D<RVec4> g_inputRt;
@@ -23,8 +22,8 @@ constexpr U32 kTonemappingBinding = 4u;
 #include <AnKi/Shaders/TonemappingResources.hlsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
-[[vk::binding(5)]] RWTexture2D<RVec4> g_outImg;
-[[vk::binding(6)]] RWTexture2D<RVec4> g_tonemappedImg;
+[[vk::binding(5)]] RWTexture2D<RVec4> g_uavTex;
+[[vk::binding(6)]] RWTexture2D<RVec4> g_tonemappedUavTex;
 #else
 struct FragOut
 {
@@ -48,12 +47,10 @@ FragOut main(Vec2 uv : TEXCOORD)
 #endif
 {
 #if defined(ANKI_COMPUTE_SHADER)
-	if(any(svDispatchThreadId.xy >= kFramebufferSize))
-	{
-		return;
-	}
+	Vec2 outUavSize;
+	g_uavTex.GetDimensions(outUavSize.x, outUavSize.y);
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(kFramebufferSize);
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / outUavSize;
 #endif
 
 	// Get prev uv coords
@@ -108,8 +105,8 @@ FragOut main(Vec2 uv : TEXCOORD)
 #endif
 	const Vec3 tonemapped = linearToSRgb(tonemap(outColor, readExposureAndAverageLuminance().x));
 #if defined(ANKI_COMPUTE_SHADER)
-	g_outImg[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
-	g_tonemappedImg[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
+	g_uavTex[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
+	g_tonemappedUavTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
 #else
 	FragOut output;
 	output.m_color = outColor;

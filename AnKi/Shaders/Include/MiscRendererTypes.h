@@ -15,8 +15,8 @@ struct RtShadowsDenoiseConstants
 	Mat4 m_invViewProjMat;
 
 	F32 m_time;
-	F32 m_padding0;
-	F32 m_padding1;
+	U32 m_minSampleCount;
+	U32 m_maxSampleCount;
 	F32 m_padding2;
 };
 

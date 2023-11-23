@@ -30,18 +30,10 @@ Error Tonemapping::initInternal()
 	ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", width, height);
 
 	// Create program
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kInputTexSize", UVec2(width, height));
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog, m_grProg));
 
 	// Create exposure texture.
-	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no
-	// automatic image transitions
+	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no automatic image transitions
 	const TextureUsageBit usage = TextureUsageBit::kAllUav;
 	const TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(1, 1, Format::kR16G16_Sfloat, usage, "ExposureAndAvgLum1x1");
 	ClearValue clearValue;

@@ -26,14 +26,9 @@ Error MotionVectors::initInternal()
 	ANKI_R_LOGV("Initializing motion vectors");
 
 	// Prog
-	CString progFname =
+	const CString progFname =
 		(g_preferComputeCVar.get()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin" : "ShaderBinaries/MotionVectorsRaster.ankiprogbin";
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_prog));
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kFramebufferSize", UVec2(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y()));
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram(progFname, m_prog, m_grProg));
 
 	// RTs
 	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(
@@ -127,12 +122,17 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 			Mat4 m_reprojectionMat;
 			Mat4 m_viewProjectionInvMat;
 			Mat4 m_prevViewProjectionInvMat;
+
+			Vec2 m_viewportSize;
+			F32 m_padding0;
+			F32 m_padding1;
 		} * pc;
 		pc = allocateAndBindConstants<Constants>(cmdb, 0, 5);
 
 		pc->m_reprojectionMat = ctx.m_matrices.m_reprojection;
 		pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 		pc->m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedViewProjectionJitter;
+		pc->m_viewportSize = Vec2(getRenderer().getInternalResolution());
 
 		if(g_preferComputeCVar.get())
 		{

@@ -20,6 +20,7 @@
 #define outputtopology(x) [nodiscard]
 #define unroll [nodiscard]
 #define loop [nodiscard]
+#define branch [nodiscard]
 #define out
 #define in
 #define inout

@@ -78,8 +78,6 @@ Error RtShadows::initInternal()
 	{
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
-		variantInitInfo.addConstant("kMinSampleCount", 8u);
-		variantInitInfo.addConstant("kMaxSampleCount", 32u);
 		variantInitInfo.addMutation("BLUR_ORIENTATION", 0);
 
 		const ShaderProgramResourceVariant* variant;
@@ -545,10 +543,12 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	rgraphCtx.bindUavTexture(0, 6, (horizontal) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
 
-	RtShadowsDenoiseConstants unis;
-	unis.m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-	unis.m_time = F32(GlobalFrameIndex::getSingleton().m_value % 0xFFFFu);
-	cmdb.setPushConstants(&unis, sizeof(unis));
+	RtShadowsDenoiseConstants consts;
+	consts.m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+	consts.m_time = F32(GlobalFrameIndex::getSingleton().m_value % 0xFFFFu);
+	consts.m_minSampleCount = 8;
+	consts.m_maxSampleCount = 32;
+	cmdb.setPushConstants(&consts, sizeof(consts));
 
 	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 }

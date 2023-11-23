@@ -71,7 +71,7 @@ U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileCountX)
 /// Merge the tiles with z splits into a single cluster.
 Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 {
-// #define ANKI_OR_MASKS(x) WaveActiveBitOr(x)
+//#define ANKI_OR_MASKS(x) WaveActiveBitOr(x)
 #define ANKI_OR_MASKS(x) (x)
 
 	Cluster outCluster;
@@ -97,16 +97,12 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 }
 
 /// Get the final cluster after ORing and ANDing the masks.
-Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, Vec3 fragCoord, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClusteredShadingConstants consts, Vec3 fragCoord)
 {
-	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, tileCounts.x)];
-	const Cluster zCluster = clusters[computeZSplitClusterIndex(fragCoord.z, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
+	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, consts.m_tileCounts.x)];
+	const Cluster zCluster = clusters[computeZSplitClusterIndex(fragCoord.z, consts.m_zSplitCount, consts.m_zSplitMagic.x, consts.m_zSplitMagic.y)
+									  + consts.m_tileCounts.x * consts.m_tileCounts.y];
 	return mergeClusters(tileCluster, zCluster);
-}
-
-Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, ClusteredShadingConstants unis, Vec3 fragCoord)
-{
-	return getClusterFragCoord(clusters, fragCoord, unis.m_tileCounts, unis.m_zSplitCount, unis.m_zSplitMagic.x, unis.m_zSplitMagic.y);
 }
 
 U32 iteratePointLights(inout Cluster cluster)

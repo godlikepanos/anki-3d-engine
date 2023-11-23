@@ -7,17 +7,9 @@
 
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-#define LOG_AVG 0
-
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kInputTexSize, 0u);
-
 #define THREAD_COUNT_X 32u
 #define THREAD_COUNT_Y 16u
 #define THREAD_COUNT UVec2(THREAD_COUNT_X, THREAD_COUNT_Y)
-
-// Align the tex size to workgroup size
-constexpr UVec2 kAlignedInputTexSize = THREAD_COUNT * ((kInputTexSize + THREAD_COUNT - 1u) / THREAD_COUNT);
-constexpr UVec2 kPixelsPerTile = kAlignedInputTexSize / THREAD_COUNT;
 
 [[vk::binding(0)]] Texture2D<RVec4> g_tex;
 
@@ -29,28 +21,34 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 
 [numthreads(THREAD_COUNT_X, THREAD_COUNT_Y, 1)] void main(UVec3 svGroupThreadId : SV_GROUPTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
+	UVec2 inputTexSize;
+	g_tex.GetDimensions(inputTexSize.x, inputTexSize.y);
+
+	// Align the tex size to workgroup size
+	const UVec2 alignedInputTexSize = THREAD_COUNT * ((inputTexSize + THREAD_COUNT - 1u) / THREAD_COUNT);
+	const UVec2 pixelsPerTile = alignedInputTexSize / THREAD_COUNT;
+
 	// Gather the log-average luminance of a tile. It will miss some pixels but not too many
-	const U32 yStart = svGroupThreadId.y * kPixelsPerTile.y;
-	const U32 xStart = svGroupThreadId.x * kPixelsPerTile.x;
+	const U32 yStart = svGroupThreadId.y * pixelsPerTile.y;
+	const U32 xStart = svGroupThreadId.x * pixelsPerTile.x;
+
+	const F32 weight = (1.0 / F32(inputTexSize.x * inputTexSize.y));
 
 	F32 avgLum = 0.0;
-	[unroll] for(U32 y = 0u; y < kPixelsPerTile.y; ++y)
+	for(U32 y = 0u; y < pixelsPerTile.y; ++y)
 	{
-		[unroll] for(U32 x = 0u; x < kPixelsPerTile.x; ++x)
+		for(U32 x = 0u; x < pixelsPerTile.x; ++x)
 		{
 			const UVec2 uv = UVec2(xStart, yStart) + UVec2(x, y);
-			if(uv.x >= kInputTexSize.x || uv.y >= kInputTexSize.y)
+			if(uv.x >= F32(inputTexSize.x) || uv.y >= F32(inputTexSize.y))
 			{
 				continue;
 			}
 
 			const Vec3 color = g_tex.Load(IVec3(uv, 0)).rgb;
 			const F32 lum = computeLuminance(color);
-#if LOG_AVG
-			avgLum += log(max(kEpsilonf, lum));
-#else
-			avgLum += lum;
-#endif
+
+			avgLum += lum * weight;
 		}
 	}
 
@@ -67,7 +65,7 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 		}
 
 #if ANKI_PLATFORM_MOBILE
-		if(s > 16u)
+		if(s > WaveGetLaneCount())
 		{
 			GroupMemoryBarrierWithGroupSync();
 		}
@@ -77,11 +75,7 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 	// Write the result
 	[branch] if(svGroupIndex == 0u)
 	{
-#if LOG_AVG
-		const F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(kInputTexSize.x * kInputTexSize.y)));
-#else
-		const F32 crntLum = s_avgLum[0] * (1.0 / F32(kInputTexSize.x * kInputTexSize.y));
-#endif
+		const F32 crntLum = s_avgLum[0];
 
 #if 1
 		const F32 prevLum = readExposureAndAverageLuminance().y;
