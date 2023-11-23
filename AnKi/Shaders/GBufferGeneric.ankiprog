@@ -325,7 +325,7 @@ struct FirstPayload
 
 #if PRIMITIVE_ANY_CULLING
 groupshared Vec2 s_windowCoords[kMaxVerticesPerMeshlet];
-groupshared F32 s_depths[kMaxVerticesPerMeshlet];
+groupshared F32 s_clipW[kMaxVerticesPerMeshlet];
 
 struct MeshletPrimitiveOut
 {
@@ -383,7 +383,7 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 			output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0f));
 #if PRIMITIVE_ANY_CULLING
 			s_windowCoords[idx] = ndcToUv(output.m_svPosition.xy / output.m_svPosition.w) * g_globalConstants.m_viewport.zw;
-			s_depths[idx] = output.m_svPosition.z / output.m_svPosition.w;
+			s_clipW[idx] = output.m_svPosition.w;
 #endif
 
 #if ANKI_TECHNIQUE == ANKI_RENDERING_TECHNIQUE_GBUFFER
@@ -427,20 +427,23 @@ main(in payload MeshShaderPayload payload, out vertices VertOut verts[kMaxVertic
 #endif
 
 #if PRIMITIVE_BACKFACE_CULLING
-			const Vec2 eb = b - a;
-			const Vec2 ec = c - a;
+			const Vec2 eb = c - a;
+			const Vec2 ec = b - a;
 
-			cull = !cull && (eb.x * ec.y >= eb.y * ec.x);
+			cull = cull || (eb.x * ec.y >= eb.y * ec.x);
 #endif
 
 #if PRIMITIVE_NO_SAMPLING_POINTS_CULLING
 			const Vec2 windowCoordsMin = min3(a, b, c);
 			const Vec2 windowCoordsMax = max3(a, b, c);
 
-			cull = !cull && any(round(windowCoordsMin) == round(windowCoordsMax));
+			cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
 #endif
 
 #if PRIMITIVE_ANY_CULLING
+			// The computations above are only valid if all vertices are in front of perspective plane
+			cull = cull && min3(s_clipW[prim.x], s_clipW[prim.y], s_clipW[prim.z]) > 0.0f;
+
 			primitives[idx].m_cullPrimitive = cull;
 #endif
 		}
