@@ -304,14 +304,14 @@ int myMain(int argc, char** argv)
 		~Cleanup2()
 		{
 			DefaultMemoryPool::freeSingleton();
+			ImporterMemoryPool::freeSingleton();
 		}
 	} cleanup2;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	ImporterMemoryPool::allocateSingleton(allocAligned, nullptr);
 
-	HeapMemoryPool pool(allocAligned, nullptr);
 	ImageImporterConfig config;
-	config.m_pool = &pool;
 	Cleanup cleanup;
 	if(parseCommandLineArgs(argc, argv, config, cleanup))
 	{

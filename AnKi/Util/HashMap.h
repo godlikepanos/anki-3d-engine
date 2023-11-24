@@ -204,6 +204,11 @@ public:
 		return m_sparseArr.find(hash);
 	}
 
+	SparseArrayType& getSparseArray()
+	{
+		return m_sparseArr;
+	}
+
 protected:
 	SparseArrayType m_sparseArr;
 };

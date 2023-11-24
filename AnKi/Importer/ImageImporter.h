@@ -18,7 +18,6 @@ namespace anki {
 class ImageImporterConfig
 {
 public:
-	BaseMemoryPool* m_pool = nullptr;
 	ConstWeakArray<CString> m_inputFilenames;
 	CString m_outFilename;
 	ImageBinaryType m_type = ImageBinaryType::k2D;

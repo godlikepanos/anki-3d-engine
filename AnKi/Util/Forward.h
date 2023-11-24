@@ -83,6 +83,8 @@ class XmlDocument;
 	using submoduleName##String = BaseString<submoduleName##MemPoolWrapper>; \
 	template<typename T, typename TSize = U32> \
 	using submoduleName##DynamicArray = DynamicArray<T, submoduleName##MemPoolWrapper, TSize>; \
+	template<typename T, typename TSize = PtrSize> \
+	using submoduleName##DynamicArrayLarge = DynamicArray<T, submoduleName##MemPoolWrapper, TSize>; \
 	template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>> \
 	using submoduleName##HashMap = HashMap<TKey, TValue, THasher, submoduleName##MemPoolWrapper, HashMapSparseArrayConfig>; \
 	template<typename T> \

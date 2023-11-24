@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma once
+
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Util/HashMap.h>
@@ -18,21 +20,21 @@ namespace anki {
 #define ANKI_IMPORTER_LOGW(...) ANKI_LOG("IMPR", kWarning, __VA_ARGS__)
 #define ANKI_IMPORTER_LOGF(...) ANKI_LOG("IMPR", kFatal, __VA_ARGS__)
 
-using ImporterString = BaseString<MemoryPoolPtrWrapper<BaseMemoryPool>>;
-using ImporterStringList = BaseStringList<MemoryPoolPtrWrapper<BaseMemoryPool>>;
+class ImporterMemoryPool : public HeapMemoryPool, public MakeSingleton<ImporterMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
 
-template<typename TKey, typename TValue>
-using ImporterHashMap = HashMap<TKey, TValue, DefaultHasher<TKey>, MemoryPoolPtrWrapper<BaseMemoryPool>>;
+private:
+	ImporterMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "ImporterMemPool")
+	{
+	}
 
-template<typename T>
-using ImporterDynamicArray = DynamicArray<T, MemoryPoolPtrWrapper<BaseMemoryPool>, U32>;
+	~ImporterMemoryPool() = default;
+};
 
-template<typename T>
-using ImporterDynamicArrayLarge = DynamicArray<T, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>;
-
-template<typename T>
-using ImporterList = List<T, MemoryPoolPtrWrapper<BaseMemoryPool>>;
-
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Importer, ImporterMemoryPool)
 /// @}
 
 } // end namespace anki
