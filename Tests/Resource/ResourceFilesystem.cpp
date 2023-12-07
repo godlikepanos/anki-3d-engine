@@ -14,7 +14,7 @@ ANKI_TEST(Resource, ResourceFilesystem)
 	ANKI_TEST_EXPECT_NO_ERR(fs.init());
 
 	{
-		ANKI_TEST_EXPECT_NO_ERR(fs.addNewPath("Tests/Data/Dir/../Dir/", ResourceStringList()));
+		ANKI_TEST_EXPECT_NO_ERR(fs.addNewPath("Tests/Data/Dir/../Dir/", ResourceStringList(), ResourceStringList()));
 		ResourceFilePtr file;
 		ANKI_TEST_EXPECT_NO_ERR(fs.openFile("subdir0/hello.txt", file));
 		ResourceString txt;
@@ -23,7 +23,7 @@ ANKI_TEST(Resource, ResourceFilesystem)
 	}
 
 	{
-		ANKI_TEST_EXPECT_NO_ERR(fs.addNewPath("./Tests/Data/Dir.AnKiZLibip", ResourceStringList()));
+		ANKI_TEST_EXPECT_NO_ERR(fs.addNewPath("./Tests/Data/Dir.AnKiZLibip", ResourceStringList(), ResourceStringList()));
 		ResourceFilePtr file;
 		ANKI_TEST_EXPECT_NO_ERR(fs.openFile("subdir0/hello.txt", file));
 		ResourceString txt;

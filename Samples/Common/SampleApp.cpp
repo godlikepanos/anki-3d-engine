@@ -13,20 +13,17 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	g_windowFullscreenCVar.set(1);
 
 #if !ANKI_OS_ANDROID
-	CString mainDataPath = ANKI_SOURCE_DIRECTORY;
 	HeapMemoryPool tmpPool(allocAligned, nullptr);
 	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> assetsDataPath(&tmpPool);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
 
 	if(!directoryExists(assetsDataPath))
 	{
-		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository? "
-				  "I'll continue but expect issues",
-				  assetsDataPath.cstr());
+		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository? I'll continue but expect issues", assetsDataPath.cstr());
 	}
 	else
 	{
-		g_dataPathsCVar.set(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		g_dataPathsCVar.set(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s|.anki,lua", assetsDataPath.cstr()));
 	}
 #endif
 

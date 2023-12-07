@@ -323,11 +323,13 @@ Error App::initInternal()
 	String executableFname;
 	ANKI_CHECK(getApplicationPath(executableFname));
 	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
-	String shadersPath;
-	getParentFilepath(executableFname, shadersPath);
-	shadersPath += ":";
-	shadersPath += g_dataPathsCVar.get();
-	g_dataPathsCVar.set(shadersPath);
+	String extraPaths;
+	getParentFilepath(executableFname, extraPaths);
+	extraPaths += "|ankiprogbin"; // Shaders
+	extraPaths += ":" ANKI_SOURCE_DIRECTORY "|EngineAssets,!AndroidProject"; // EngineAssets
+	extraPaths += ":";
+	extraPaths += g_dataPathsCVar.get();
+	g_dataPathsCVar.set(extraPaths);
 #endif
 
 	ANKI_CHECK(ResourceManager::allocateSingleton().init(allocCb, allocCbUserData));
