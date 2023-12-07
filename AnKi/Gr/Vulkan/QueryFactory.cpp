@@ -53,6 +53,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 		ci.pipelineStatistics = m_pplineStatisticsFlags;
 
 		ANKI_VK_CHECK(vkCreateQueryPool(getVkDevice(), &ci, nullptr, &chunk->m_pool));
+
 		m_chunks.pushBack(chunk);
 	}
 
@@ -69,6 +70,9 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 			handle.m_pool = chunk->m_pool;
 			handle.m_queryIndex = i;
 			handle.m_chunk = chunk;
+
+			vkResetQueryPoolEXT(getVkDevice(), chunk->m_pool, handle.m_queryIndex, 1);
+
 			break;
 		}
 	}

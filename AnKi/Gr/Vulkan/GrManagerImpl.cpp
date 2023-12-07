@@ -813,6 +813,11 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kEXT_mesh_shader;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kEXT_host_query_reset;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -1131,6 +1136,28 @@ Error GrManagerImpl::initDevice()
 	else
 	{
 		ANKI_VK_LOGI(VK_EXT_MESH_SHADER_EXTENSION_NAME " is not supported or disabled ");
+	}
+
+	// Host query reset
+	VkPhysicalDeviceHostQueryResetFeaturesEXT hostQueryResetFeatures = {};
+	if(!!(m_extensions & VulkanExtensions::kEXT_host_query_reset))
+	{
+		hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+		getPhysicalDevicaFeatures2(hostQueryResetFeatures);
+
+		if(hostQueryResetFeatures.hostQueryReset == false)
+		{
+			ANKI_VK_LOGE("VkPhysicalDeviceHostQueryResetFeaturesEXT::hostQueryReset is false");
+			return Error::kFunctionFailed;
+		}
+
+		hostQueryResetFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &hostQueryResetFeatures;
+	}
+	else
+	{
+		ANKI_VK_LOGE(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME " is not supported");
+		return Error::kFunctionFailed;
 	}
 
 	VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = {};

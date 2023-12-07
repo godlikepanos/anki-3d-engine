@@ -95,7 +95,8 @@ enum class VulkanExtensions : U64
 	kKHR_push_descriptor = 1u << 28u,
 	kKHR_maintenance_4 = 1u << 29u,
 	kKHR_draw_indirect_count = 1u << 30u,
-	kEXT_mesh_shader = 1u << 31u
+	kEXT_mesh_shader = 1u << 31u,
+	kEXT_host_query_reset = 32u,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
