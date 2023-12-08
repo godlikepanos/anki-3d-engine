@@ -6,7 +6,6 @@
 #include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 #include <AnKi/ShaderCompiler/Dxc.h>
-#include <AnKi/ShaderCompiler/ShaderProgramReflection.h>
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/HashMap.h>
 
