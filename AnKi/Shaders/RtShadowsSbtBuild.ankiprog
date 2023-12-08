@@ -6,7 +6,7 @@
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 [[vk::binding(0)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(1)]] ByteAddressBuffer g_gpuScene;
@@ -48,4 +48,4 @@
 	g_sbtBuffer[sbtDwordOffset] = 0;
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

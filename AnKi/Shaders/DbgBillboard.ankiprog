@@ -46,7 +46,7 @@ struct VertOut
 	nointerpolation U32 m_textureIndex : TEX_INDEX;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 struct VertIn
 {
@@ -97,9 +97,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 [[vk::binding(4)]] SamplerState g_trilinearRepeatSampler;
@@ -140,4 +140,4 @@ Vec4 main(VertOut input) : SV_TARGET0
 		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
 	}
 }
-#pragma anki end frag
+#pragma anki technique_end frag

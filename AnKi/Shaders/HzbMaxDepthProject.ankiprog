@@ -7,7 +7,7 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 [[vk::binding(0)]] Texture2D<Vec4> g_maxDepthRt;
 
@@ -67,12 +67,12 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 	return mul(g_consts.m_reprojectionMat, Vec4(ndc, 1.0));
 }
 
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
 void main()
 {
 }
 
-#pragma anki end frag
+#pragma anki technique_end frag

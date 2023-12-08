@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start vert
+#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 #include <AnKi/Shaders/Common.hlsl>
 
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
@@ -17,4 +17,4 @@ Vec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	return g_inTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).rgb;
 }
-#pragma anki end frag
+#pragma anki technique_end frag

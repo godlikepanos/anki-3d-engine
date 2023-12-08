@@ -5,7 +5,7 @@
 
 #pragma anki mutator BLUR_ORIENTATION 0 1
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -136,4 +136,4 @@ F32 computeVarianceCenter(Vec2 uv)
 	g_outUav[svDispatchThreadId.xy] = shadowFactor;
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

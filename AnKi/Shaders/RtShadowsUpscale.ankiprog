@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
@@ -57,4 +57,4 @@
 	g_fullShadowUav[svDispatchThreadId.xy] = sumShadowFactor;
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

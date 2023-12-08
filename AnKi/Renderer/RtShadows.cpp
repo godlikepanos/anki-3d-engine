@@ -58,6 +58,7 @@ Error RtShadows::initInternal()
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
 		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar.get());
+		variantInitInfo.requestTechnique("RtShadows");
 
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);
@@ -68,8 +69,12 @@ Error RtShadows::initInternal()
 	// Miss prog
 	{
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin", m_missProg));
+
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_missProg);
+		variantInitInfo.requestTechnique("RtShadows");
+
 		const ShaderProgramResourceVariant* variant;
-		m_missProg->getOrCreateVariant(variant);
+		m_missProg->getOrCreateVariant(variantInitInfo, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 	}
 

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -40,9 +40,9 @@
 	Vec3 sphereCenter;
 	if(visible)
 	{
-		sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
-
 		bvolume = g_renderableBoundingVolumes[bvolumeIdx];
+
+		sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
 		visible = testSphereSphereCollision(sphereCenter, bvolume.m_sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius);
 	}
 
@@ -144,4 +144,4 @@
 	}
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

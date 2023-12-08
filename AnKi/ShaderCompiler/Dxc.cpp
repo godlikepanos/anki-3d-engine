@@ -56,7 +56,8 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, DynamicArray<U8>& spirv, String& errorMessage)
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& spirv,
+						 ShaderCompilerString& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
 	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
@@ -65,7 +66,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	ANKI_CHECK(getTempDirectory(tmpDir));
 
 	// Store HLSL to a file
-	String hlslFilename;
+	ShaderCompilerString hlslFilename;
 	hlslFilename.sprintf("%s/%" PRIu64 ".hlsl", tmpDir.cstr(), rand);
 
 	File hlslFile;
@@ -75,10 +76,10 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	hlslFile.close();
 
 	// Call DXC
-	String spvFilename;
+	ShaderCompilerString spvFilename;
 	spvFilename.sprintf("%s/%" PRIu64 ".spv", tmpDir.cstr(), rand);
 
-	DynamicArray<String> dxcArgs;
+	ShaderCompilerDynamicArray<ShaderCompilerString> dxcArgs;
 	dxcArgs.emplaceBack("-Fo");
 	dxcArgs.emplaceBack(spvFilename);
 	dxcArgs.emplaceBack("-Wall");
@@ -105,7 +106,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 		dxcArgs.emplaceBack("-enable-16bit-types");
 	}
 
-	DynamicArray<CString> dxcArgs2;
+	ShaderCompilerDynamicArray<CString> dxcArgs2;
 	dxcArgs2.resize(dxcArgs.getSize());
 	for(U32 i = 0; i < dxcArgs.getSize(); ++i)
 	{
@@ -115,7 +116,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	while(true)
 	{
 		I32 exitCode;
-		String stdOut;
+		ShaderCompilerString stdOut;
 
 #if ANKI_OS_WINDOWS
 		CString dxcBin = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe";
@@ -131,7 +132,10 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 		if(exitCode != 0)
 		{
 			// There was an error, run again just to get the stderr
-			ANKI_CHECK(Process::callProcess(dxcBin, dxcArgs2, nullptr, &errorMessage, exitCode));
+			String errorMessageTmp;
+			const Error err = Process::callProcess(dxcBin, dxcArgs2, nullptr, &errorMessageTmp, exitCode);
+			(void)err; // Shoudn't throw an error
+			errorMessage = errorMessageTmp;
 
 			if(!errorMessage.isEmpty() && errorMessage.find("The process cannot access the file because") != CString::kNpos)
 			{

@@ -8,7 +8,7 @@
 #pragma anki mutator SPECULAR 0 1
 
 // VERT
-#pragma anki start vert
+#pragma anki technique_start vert
 #include <AnKi/Shaders/Common.hlsl>
 
 Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
@@ -17,10 +17,10 @@ Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
 	const Vec2 pos = uv * 2.0 - 1.0;
 	return Vec4(pos, 0.0, 1.0);
 }
-#pragma anki end vert
+#pragma anki technique_end vert
 
 // FRAG
-#pragma anki start frag
+#pragma anki technique_start frag
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
@@ -126,4 +126,4 @@ RVec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	return outColor;
 }
 
-#pragma anki end frag
+#pragma anki technique_end frag

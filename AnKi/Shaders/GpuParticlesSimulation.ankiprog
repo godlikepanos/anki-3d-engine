@@ -5,7 +5,7 @@
 
 // This shader does a particle simulation
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Include/ParticleTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
@@ -139,4 +139,4 @@ void initParticle(UVec3 svDispatchThreadId, out GpuParticle p)
 	g_particles[particleIdx] = particle;
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

@@ -13,12 +13,12 @@ namespace anki {
 
 inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
 {
-	String header;
+	ShaderCompilerString header;
 	ShaderCompilerOptions compilerOptions;
 	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
 	header += src;
-	DynamicArray<U8> spirv;
-	String errorLog;
+	ShaderCompilerDynamicArray<U8> spirv;
+	ShaderCompilerString errorLog;
 
 	const Error err = compileHlslToSpirv(header, type, false, spirv, errorLog);
 	if(err)

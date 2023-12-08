@@ -448,6 +448,16 @@ public:
 		return *this;
 	}
 
+	BaseString operator+(CString b) const
+	{
+		BaseString out = *this;
+		if(!b.isEmpty())
+		{
+			out.appendInternal(&b[0], b.getLength());
+		}
+		return out;
+	}
+
 	operator CString() const
 	{
 		return toCString();

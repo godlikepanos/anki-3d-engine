@@ -7,7 +7,7 @@
 
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
@@ -226,4 +226,4 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	}
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

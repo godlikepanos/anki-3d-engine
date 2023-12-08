@@ -8,7 +8,7 @@
 #pragma anki mutator TEXTURE_DIMENSIONS 2 3
 #pragma anki mutator COMPONENT_TYPE 0 1 // 0 is float, 1 is uint
 
-#pragma anki start comp
+#pragma anki technique_start comp
 #include <AnKi/Shaders/Common.hlsl>
 
 struct Constants
@@ -61,4 +61,4 @@ struct Constants
 #endif
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

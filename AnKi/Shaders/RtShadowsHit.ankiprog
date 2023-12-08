@@ -3,21 +3,17 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki library RtShadows
-#pragma anki ray_type 0
-
 #pragma anki mutator ANKI_TECHNIQUE 3
 #pragma anki mutator ALPHA_TEXTURE 0 1
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
-#pragma anki reflect AnKiLocalConstants
 #pragma anki struct AnKiLocalConstants
-#pragma anki member U32 m_diffTex if ALPHA_TEXTURE is 1
-#pragma anki struct end
+#pragma anki member U32 m_diffTex
+#pragma anki struct_end
 
-#pragma anki start ahit
+#pragma anki technique_start ahit RtShadows
 
 #if ALPHA_TEXTURE
 [[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableVertex> g_gpuSceneRenderable;
@@ -62,12 +58,12 @@
 	AcceptHitAndEndSearch();
 #endif
 }
-#pragma anki end ahit
+#pragma anki technique_end ahit RtShadows
 
-#pragma anki start chit
+#pragma anki technique_start chit RtShadows
 [shader("closesthit")] void main(inout RayPayload payload, in Barycentrics barycentrics)
 {
 	ANKI_MAYBE_UNUSED(payload);
 	ANKI_MAYBE_UNUSED(barycentrics);
 }
-#pragma anki end chit
+#pragma anki technique_end chit RtShadows

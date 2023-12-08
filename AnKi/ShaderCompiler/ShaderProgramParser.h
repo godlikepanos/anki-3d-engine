@@ -22,55 +22,34 @@ class ShaderProgramParserVariant;
 /// @memberof ShaderProgramParser
 class ShaderProgramParserMutator
 {
-	friend ShaderProgramParser;
-
 public:
-	CString getName() const
-	{
-		return m_name;
-	}
-
-	ConstWeakArray<MutatorValue> getValues() const
-	{
-		return m_values;
-	}
-
-private:
-	String m_name;
-	DynamicArray<MutatorValue> m_values;
+	ShaderCompilerString m_name;
+	ShaderCompilerDynamicArray<MutatorValue> m_values;
 };
 
 /// @memberof ShaderProgramParser
 class ShaderProgramParserMember
 {
 public:
-	String m_name;
+	ShaderCompilerString m_name;
 	ShaderVariableDataType m_type;
-	U32 m_dependentMutator = kMaxU32;
-	MutatorValue m_mutatorValue = 0;
+	U32 m_offset = kMaxU32;
 };
 
 /// @memberof ShaderProgramParser
 class ShaderProgramParserGhostStruct
 {
 public:
-	DynamicArray<ShaderProgramParserMember> m_members;
-	String m_name;
+	ShaderCompilerDynamicArray<ShaderProgramParserMember> m_members;
+	ShaderCompilerString m_name;
 };
 
 /// @memberof ShaderProgramParser
-class ShaderProgramParserVariant
+class ShaderProgramParserTechnique
 {
-	friend class ShaderProgramParser;
-
 public:
-	CString getSource(ShaderType type) const
-	{
-		return m_sources[type];
-	}
-
-private:
-	Array<String, U32(ShaderType::kCount)> m_sources;
+	ShaderCompilerString m_name;
+	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 };
 
 /// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
@@ -80,18 +59,15 @@ private:
 /// #include {<> | ""}
 /// #pragma once
 /// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2] ...]
-/// #pragma anki start {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call}
-/// #pragma anki end {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call}
-/// #pragma anki library "name"
-/// #pragma anki ray_type NUMBER
-/// #pragma anki reflect NAME
-/// #pragma anki skip_mutation MUTATOR0 VALUE0 MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]
+/// #pragma anki skip_mutation MUTATOR0 VALUE0 [MUTATOR1 VALUE1 [MUTATOR2 VALUE2] ...]
 /// #pragma anki 16bit // Works only in HLSL. Gain 16bit types but loose min16xxx types
+/// #pragma anki technique_start {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call} [NAME]
+/// #pragma anki technique_end {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call} [NAME]
 ///
 /// #pragma anki struct NAME
-/// #	pragma anki member [ANKI_RP] TYPE NAME [if MUTATOR_NAME is MUTATOR_VALUE]
+/// #	pragma anki member TYPE NAME
 /// 	...
-/// #pragma anki struct end
+/// #pragma anki struct_end
 ///
 /// None of the pragmas should be in an ifdef-like guard. It's ignored.
 class ShaderProgramParser
@@ -112,42 +88,28 @@ public:
 	Bool skipMutation(ConstWeakArray<MutatorValue> mutation) const;
 
 	/// Get the source (and a few more things) given a list of mutators.
-	Error generateVariant(ConstWeakArray<MutatorValue> mutation, ShaderProgramParserVariant& variant) const;
+	void generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParserTechnique& technique, ShaderType shaderType,
+						 ShaderCompilerString& source) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{
 		return m_mutators;
 	}
 
-	ShaderTypeBit getShaderTypes() const
-	{
-		return m_shaderTypes;
-	}
-
 	U64 getHash() const
 	{
-		ANKI_ASSERT(m_codeSourceHash != 0);
-		return m_codeSourceHash;
-	}
-
-	CString getLibraryName() const
-	{
-		return m_libName;
-	}
-
-	U32 getRayType() const
-	{
-		return m_rayType;
-	}
-
-	const StringList& getSymbolsToReflect() const
-	{
-		return m_symbolsToReflect;
+		ANKI_ASSERT(m_hash != 0);
+		return m_hash;
 	}
 
 	ConstWeakArray<ShaderProgramParserGhostStruct> getGhostStructs() const
 	{
 		return m_ghostStructs;
+	}
+
+	ConstWeakArray<ShaderProgramParserTechnique> getTechniques() const
+	{
+		return m_techniques;
 	}
 
 	Bool compileWith16bitTypes() const
@@ -156,61 +118,73 @@ public:
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
-	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions, String& header);
+	static void generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions, ShaderCompilerString& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;
 	using Member = ShaderProgramParserMember;
 	using GhostStruct = ShaderProgramParserGhostStruct;
+	using Technique = ShaderProgramParserTechnique;
 
 	class PartialMutationSkip
 	{
 	public:
-		DynamicArray<MutatorValue> m_partialMutation;
+		ShaderCompilerDynamicArray<MutatorValue> m_partialMutation;
+	};
+
+	class TechniqueExtra
+	{
+	public:
+		Array<ShaderCompilerStringList, U32(ShaderType::kCount)> m_sourceLines;
+		Array<ShaderCompilerString, U32(ShaderType::kCount)> m_sources;
 	};
 
 	static constexpr U32 kMaxIncludeDepth = 8;
 
-	String m_fname;
+	ShaderCompilerString m_fname;
 	ShaderProgramFilesystemInterface* m_fsystem = nullptr;
-
-	StringList m_codeLines; ///< The code.
-	String m_codeSource;
-	U64 m_codeSourceHash = 0;
-
-	DynamicArray<Mutator> m_mutators;
-	DynamicArray<PartialMutationSkip> m_skipMutations;
-
-	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
-	ShaderType m_insideShader = ShaderType::kCount;
 	ShaderCompilerOptions m_compilerOptions;
 
-	String m_libName;
-	U32 m_rayType = kMaxU32;
+	U64 m_hash = 0;
 
-	StringList m_symbolsToReflect;
+	ShaderCompilerStringList m_commonSourceLines; ///< Common code until now.
 
-	DynamicArray<GhostStruct> m_ghostStructs;
+	ShaderCompilerDynamicArray<Technique> m_techniques;
+	ShaderCompilerDynamicArray<TechniqueExtra> m_techniqueExtras;
+	U32 m_insideTechniqueIdx = kMaxU32;
+	ShaderType m_insideTechniqueShaderType = ShaderType::kCount;
+
+	ShaderCompilerDynamicArray<Mutator> m_mutators;
+	ShaderCompilerDynamicArray<PartialMutationSkip> m_skipMutations;
+
+	ShaderCompilerDynamicArray<GhostStruct> m_ghostStructs;
 	Bool m_insideStruct = false;
 
 	Bool m_16bitTypes = false;
 
+	ShaderCompilerStringList& getAppendSourceList()
+	{
+		return (insideTechnique()) ? m_techniqueExtras.getBack().m_sourceLines[m_insideTechniqueShaderType] : m_commonSourceLines;
+	}
+
+	Bool insideTechnique() const
+	{
+		return m_insideTechniqueIdx < kMaxU32;
+	}
+
 	Error parseFile(CString fname, U32 depth);
 	Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNumber);
-	Error parseInclude(const String* begin, const String* end, CString line, CString fname, U32 depth);
-	Error parsePragmaMutator(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaStart(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaEnd(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaSkipMutation(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaLibraryName(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaRayType(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaReflect(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaStructBegin(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaStructEnd(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragmaMember(const String* begin, const String* end, CString line, CString fname);
-	Error parsePragma16bit(const String* begin, const String* end, CString line, CString fname);
+	Error parseInclude(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname, U32 depth);
+	Error parsePragmaMutator(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragmaTechniqueStart(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragmaTechniqueEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragmaSkipMutation(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragmaStructBegin(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragmaStructEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragmaMember(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragma16bit(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 
-	void tokenizeLine(CString line, DynamicArray<String>& tokens) const;
+	void tokenizeLine(CString line, ShaderCompilerDynamicArray<ShaderCompilerString>& tokens) const;
 
 	static Bool tokenIsComment(CString token)
 	{

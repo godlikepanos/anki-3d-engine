@@ -282,8 +282,10 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 				ModelPatchGeometryInfo inf;
 				m_model->getModelPatches()[i].getGeometryInfo(0, inf);
-				m_patchInfos[i].m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(
-					state, t, (GrManager::getSingleton().getDeviceCapabilities().m_meshShaders) ? inf.m_meshletCount : 0);
+				const Bool wantsMesletCount = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders
+											  && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
+				m_patchInfos[i].m_renderStateBucketIndices[t] =
+					RenderStateBucketContainer::getSingleton().addUser(state, t, (wantsMesletCount) ? inf.m_meshletCount : 0);
 			}
 		}
 	}

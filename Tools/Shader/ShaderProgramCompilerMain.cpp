@@ -121,7 +121,7 @@ static Error work(const CmdLineArgs& info)
 		CString m_includePath;
 		U32 m_fileReadCount = 0;
 
-		Error readAllTextInternal(CString filename, String& txt)
+		Error readAllTextInternal(CString filename, ShaderCompilerString& txt)
 		{
 			String fname;
 
@@ -142,7 +142,7 @@ static Error work(const CmdLineArgs& info)
 			return Error::kNone;
 		}
 
-		Error readAllText(CString filename, String& txt) final
+		Error readAllText(CString filename, ShaderCompilerString& txt) final
 		{
 			const Error err = readAllTextInternal(filename, txt);
 			if(err)
@@ -183,11 +183,28 @@ static Error work(const CmdLineArgs& info)
 	compilerOptions.m_mobilePlatform = info.m_mobilePlatform;
 
 	// Compile
-	ShaderProgramBinaryWrapper binary(&pool);
+	ShaderProgramBinary* binary = nullptr;
 	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, compilerOptions, binary));
 
+	class Dummy
+	{
+	public:
+		ShaderProgramBinary* m_binary;
+
+		~Dummy()
+		{
+			freeShaderProgramBinary(m_binary);
+		}
+	} dummy{binary};
+
 	// Store the binary
-	ANKI_CHECK(binary.serializeToFile(info.m_outFname));
+	{
+		File file;
+		ANKI_CHECK(file.open(info.m_outFname, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
+
+		BinarySerializer serializer;
+		ANKI_CHECK(serializer.serialize(*binary, ShaderCompilerMemoryPool::getSingleton(), file));
+	}
 
 	return Error::kNone;
 }
@@ -201,10 +218,12 @@ int myMain(int argc, char** argv)
 		~Dummy()
 		{
 			DefaultMemoryPool::freeSingleton();
+			ShaderCompilerMemoryPool::freeSingleton();
 		}
 	} dummy;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
 
 	CmdLineArgs info;
 	if(parseCommandLineArgs(argc, argv, info))

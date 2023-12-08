@@ -10,7 +10,7 @@
 #pragma anki mutator STORE_LOCATION 0 1 // 0: in a 3D texture, 1: In an SSBO
 #pragma anki mutator SECOND_BOUNCE 0 1
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -226,4 +226,4 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 	}
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

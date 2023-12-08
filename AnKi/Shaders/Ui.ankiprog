@@ -25,7 +25,7 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 struct Constants
 {
@@ -48,9 +48,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
 #if TEXTURE_TYPE > 0
 [[vk::binding(0)]] SamplerState g_trilinearRepeatSampler;
@@ -66,4 +66,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 #endif
 }
 
-#pragma anki end frag
+#pragma anki technique_end frag

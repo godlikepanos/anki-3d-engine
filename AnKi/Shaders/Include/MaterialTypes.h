@@ -61,9 +61,4 @@ enum class MaterialBinding : U32
 	kClusters = kClusterShadingLights + 2,
 };
 
-// Techniques
-#define ANKI_RENDERING_TECHNIQUE_GBUFFER 0
-#define ANKI_RENDERING_TECHNIQUE_DEPTH 1
-#define ANKI_RENDERING_TECHNIQUE_FORWARD 2
-
 ANKI_END_NAMESPACE

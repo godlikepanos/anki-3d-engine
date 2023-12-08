@@ -30,6 +30,12 @@
 #define ANKI_END_NAMESPACE
 #define ANKI_HLSL 1
 
+#define ANKI_TASK_SHADER
+#define ANKI_VERTEX_SHADER
+#define ANKI_FRAGMENT_SHADER
+#define ANKI_MESH_SHADER
+#define ANKI_COMPUTE_SHADER
+
 using I8 = int;
 using I16 = int;
 using I32 = int;

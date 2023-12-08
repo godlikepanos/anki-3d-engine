@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start vert
+#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
@@ -116,4 +116,4 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 	output.m_roughnessAndOther = roughnessAndOther;
 	return output;
 }
-#pragma anki end frag
+#pragma anki technique_end frag

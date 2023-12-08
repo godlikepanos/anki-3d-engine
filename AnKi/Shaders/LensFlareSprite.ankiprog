@@ -13,7 +13,7 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 // The block contains data for all flares
 [[vk::binding(0)]] StructuredBuffer<LensFlareSprite> g_sprites;
@@ -35,9 +35,9 @@ VertOut main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID)
 
 	return output;
 }
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
 [[vk::binding(1)]] SamplerState g_trilinearRepeatSampler;
 [[vk::binding(2)]] Texture2DArray<RVec4> g_tex;
@@ -47,4 +47,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const RVec4 col = g_tex.Sample(g_trilinearRepeatSampler, input.m_uv);
 	return col * input.m_color;
 }
-#pragma anki end frag
+#pragma anki technique_end frag

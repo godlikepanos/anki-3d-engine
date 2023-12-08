@@ -5,11 +5,11 @@
 
 #pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
 
-#pragma anki start vert
+#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
@@ -50,4 +50,4 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif
 }
 
-#pragma anki end frag
+#pragma anki technique_end frag

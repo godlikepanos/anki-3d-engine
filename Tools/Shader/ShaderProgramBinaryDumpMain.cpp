@@ -156,84 +156,82 @@ Error dumpStats(const ShaderProgramBinary& bin)
 		{
 			const ShaderProgramBinaryVariant& variant = ctx.m_bin->m_variants[variantIdx];
 
-			for(ShaderType shaderType : EnumIterable<ShaderType>())
+			for(U32 t = 0; t < variant.m_techniqueCodeBlocks.getSize(); ++t)
 			{
-				const U32 codeblockIdx = variant.m_codeBlockIndices[shaderType];
-
-				if(codeblockIdx == kMaxU32)
+				for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(ctx.m_bin->m_techniques[t].m_shaderTypes))
 				{
-					continue;
-				}
+					const U32 codeblockIdx = variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[shaderType];
 
-				const Bool visited = ctx.m_spirvVisited[codeblockIdx].fetchAdd(1) != 0;
-				if(visited)
-				{
-					continue;
-				}
+					const Bool visited = ctx.m_spirvVisited[codeblockIdx].fetchAdd(1) != 0;
+					if(visited)
+					{
+						continue;
+					}
 
-				const ShaderProgramBinaryCodeBlock& codeBlock = ctx.m_bin->m_codeBlocks[codeblockIdx];
+					const ShaderProgramBinaryCodeBlock& codeBlock = ctx.m_bin->m_codeBlocks[codeblockIdx];
 
-				// Arm stats
-				MaliOfflineCompilerOut maliocOut;
-				Error err = runMaliOfflineCompiler(
+					// Arm stats
+					MaliOfflineCompilerOut maliocOut;
+					Error err = runMaliOfflineCompiler(
 #if ANKI_OS_LINUX
-					ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc",
+						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc",
 #elif ANKI_OS_WINDOWS
-					ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/MaliOfflineCompiler/malioc.exe",
+						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/MaliOfflineCompiler/malioc.exe",
 #else
 #	error "Not supported"
 #endif
-					codeBlock.m_binary, shaderType, maliocOut);
+						codeBlock.m_binary, shaderType, maliocOut);
 
-				if(err)
-				{
-					ANKI_LOGE("Mali offline compiler failed");
-					ctx.m_error.store(1);
-					break;
-				}
+					if(err)
+					{
+						ANKI_LOGE("Mali offline compiler failed");
+						ctx.m_error.store(1);
+						break;
+					}
 
-				// AMD
-				RgaOutput rgaOut = {};
+					// AMD
+					RgaOutput rgaOut = {};
 #if 1
-				err = runRadeonGpuAnalyzer(
+					err = runRadeonGpuAnalyzer(
 #	if ANKI_OS_LINUX
-					ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga",
+						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga",
 #	elif ANKI_OS_WINDOWS
-					ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonGpuAnalyzer/rga.exe",
+						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonGpuAnalyzer/rga.exe",
 #	else
 #		error "Not supported"
 #	endif
-					codeBlock.m_binary, shaderType, rgaOut);
+						codeBlock.m_binary, shaderType, rgaOut);
 
-				if(err)
-				{
-					ANKI_LOGE("Radeon GPU Analyzer compiler failed");
-					ctx.m_error.store(1);
-					break;
-				}
+					if(err)
+					{
+						ANKI_LOGE("Radeon GPU Analyzer compiler failed");
+						ctx.m_error.store(1);
+						break;
+					}
 #endif
 
-				// Write stats
-				Stats& stats = ctx.m_spirvStats[codeblockIdx];
+					// Write stats
+					Stats& stats = ctx.m_spirvStats[codeblockIdx];
 
-				stats.m_arm.m_fma = maliocOut.m_fma;
-				stats.m_arm.m_cvt = maliocOut.m_cvt;
-				stats.m_arm.m_sfu = maliocOut.m_sfu;
-				stats.m_arm.m_loadStore = maliocOut.m_loadStore;
-				stats.m_arm.m_varying = maliocOut.m_varying;
-				stats.m_arm.m_texture = maliocOut.m_texture;
-				stats.m_arm.m_workRegisters = maliocOut.m_workRegisters;
-				stats.m_arm.m_fp16ArithmeticPercentage = maliocOut.m_fp16ArithmeticPercentage;
-				stats.m_arm.m_spillingCount = (maliocOut.m_spilling) ? 1.0 : 0.0;
+					stats.m_arm.m_fma = maliocOut.m_fma;
+					stats.m_arm.m_cvt = maliocOut.m_cvt;
+					stats.m_arm.m_sfu = maliocOut.m_sfu;
+					stats.m_arm.m_loadStore = maliocOut.m_loadStore;
+					stats.m_arm.m_varying = maliocOut.m_varying;
+					stats.m_arm.m_texture = maliocOut.m_texture;
+					stats.m_arm.m_workRegisters = maliocOut.m_workRegisters;
+					stats.m_arm.m_fp16ArithmeticPercentage = maliocOut.m_fp16ArithmeticPercentage;
+					stats.m_arm.m_spillingCount = (maliocOut.m_spilling) ? 1.0 : 0.0;
 
-				stats.m_amd.m_vgprCount = F64(rgaOut.m_vgprCount);
-				stats.m_amd.m_sgprCount = F64(rgaOut.m_sgprCount);
-				stats.m_amd.m_isaSize = F64(rgaOut.m_isaSize);
-			}
+					stats.m_amd.m_vgprCount = F64(rgaOut.m_vgprCount);
+					stats.m_amd.m_sgprCount = F64(rgaOut.m_sgprCount);
+					stats.m_amd.m_isaSize = F64(rgaOut.m_isaSize);
+				}
 
-			if(variantIdx > 0 && ((variantIdx + 1) % 32) == 0)
-			{
-				printf("Processed %u out of %u variants\n", variantIdx + 1, ctx.m_bin->m_variants.getSize());
+				if(variantIdx > 0 && ((variantIdx + 1) % 32) == 0)
+				{
+					printf("Processed %u out of %u variants\n", variantIdx + 1, ctx.m_bin->m_variants.getSize());
+				}
 			}
 		} // while
 	};
@@ -254,29 +252,29 @@ Error dumpStats(const ShaderProgramBinary& bin)
 	Array<StageStats, U32(ShaderType::kCount)> allStageStats;
 	for(const ShaderProgramBinaryVariant& variant : bin.m_variants)
 	{
-		for(ShaderType stage : EnumIterable<ShaderType>())
+		for(U32 t = 0; t < variant.m_techniqueCodeBlocks.getSize(); ++t)
 		{
-			if(variant.m_codeBlockIndices[stage] == kMaxU32)
+			for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(ctx.m_bin->m_techniques[t].m_shaderTypes))
 			{
-				continue;
+				const U32 codeblockIdx = variant.m_techniqueCodeBlocks[t].m_codeBlockIndices[shaderType];
+
+				const Stats& stats = ctx.m_spirvStats[codeblockIdx];
+				StageStats& allStats = allStageStats[shaderType];
+
+				++allStats.m_count;
+
+				allStats.m_avgStats.op(stats, [](F64& a, F64 b) {
+					a += b;
+				});
+
+				allStats.m_minStats.op(stats, [](F64& a, F64 b) {
+					a = min(a, b);
+				});
+
+				allStats.m_maxStats.op(stats, [](F64& a, F64 b) {
+					a = max(a, b);
+				});
 			}
-
-			const Stats& stats = ctx.m_spirvStats[variant.m_codeBlockIndices[stage]];
-			StageStats& allStats = allStageStats[stage];
-
-			++allStats.m_count;
-
-			allStats.m_avgStats.op(stats, [](F64& a, F64 b) {
-				a += b;
-			});
-
-			allStats.m_minStats.op(stats, [](F64& a, F64 b) {
-				a = min(a, b);
-			});
-
-			allStats.m_maxStats.op(stats, [](F64& a, F64 b) {
-				a = max(a, b);
-			});
 		}
 	}
 
@@ -315,8 +313,19 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spirv)
 {
-	ShaderProgramBinaryWrapper binw(&DefaultMemoryPool::getSingleton());
-	ANKI_CHECK(binw.deserializeFromFile(fname));
+	ShaderProgramBinary* binary;
+	ANKI_CHECK(deserializeShaderProgramBinaryFromFile(fname, binary, ShaderCompilerMemoryPool::getSingleton()));
+
+	class Dummy
+	{
+	public:
+		ShaderProgramBinary* m_binary;
+
+		~Dummy()
+		{
+			ShaderCompilerMemoryPool::getSingleton().free(m_binary);
+		}
+	} dummy{binary};
 
 	if(dumpBinary)
 	{
@@ -324,15 +333,15 @@ Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spir
 		options.m_writeGlsl = glsl;
 		options.m_writeSpirv = spirv;
 
-		String txt;
-		dumpShaderProgramBinary(options, binw.getBinary(), txt);
+		ShaderCompilerString txt;
+		dumpShaderProgramBinary(options, *binary, txt);
 
 		printf("%s\n", txt.cstr());
 	}
 
 	if(bDumpStats)
 	{
-		ANKI_CHECK(dumpStats(binw.getBinary()));
+		ANKI_CHECK(dumpStats(*binary));
 	}
 
 	return Error::kNone;
@@ -347,10 +356,12 @@ int myMain(int argc, char** argv)
 		~Dummy()
 		{
 			DefaultMemoryPool::freeSingleton();
+			ShaderCompilerMemoryPool::freeSingleton();
 		}
 	} dummy;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
 
 	String filename;
 	Bool dumpStats;

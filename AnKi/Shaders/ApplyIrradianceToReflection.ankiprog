@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 
@@ -49,4 +49,4 @@
 	// Write it back
 	g_cubeTex[faceIdx][dispatchThreadId] = RVec4(prevColorWithIndirectDiffuse, 0.0);
 }
-#pragma anki end comp
+#pragma anki technique_end comp

@@ -5,7 +5,7 @@
 
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -74,4 +74,4 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 #endif
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

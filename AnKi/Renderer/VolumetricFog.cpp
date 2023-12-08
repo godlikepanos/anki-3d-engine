@@ -35,8 +35,6 @@ Error VolumetricFog::init()
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg.reset(&variant->getProgram());
-	m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
-	m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 
 	// RT descr
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");
@@ -84,7 +82,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.setPushConstants(&regs, sizeof(regs));
 
-		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_volumeSize[0], m_volumeSize[1]);
+		dispatchPPCompute(cmdb, 8, 8, m_volumeSize[0], m_volumeSize[1]);
 	});
 }
 

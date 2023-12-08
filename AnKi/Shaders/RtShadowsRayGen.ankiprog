@@ -4,10 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator RAYS_PER_PIXEL 1 2 4 8
-#pragma anki library RtShadows
-#pragma anki ray_type 0
 
-#pragma anki start rgen
+#pragma anki technique_start rgen RtShadows
 
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -133,4 +131,4 @@ Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 	// Store the moments
 	g_momentsImage[DispatchRaysIndex().xy] = Vec4(moments, 0.0, 0.0);
 }
-#pragma anki end rgen
+#pragma anki technique_end rgen RtShadows

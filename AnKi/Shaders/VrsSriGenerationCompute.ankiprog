@@ -7,7 +7,7 @@
 #pragma anki mutator SHARED_MEMORY 0 1
 #pragma anki mutator LIMIT_RATE_TO_2X2 0 1
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
@@ -191,4 +191,4 @@ RF32 computeLuma(RVec3 color)
 	}
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

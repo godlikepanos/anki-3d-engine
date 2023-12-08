@@ -3,11 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_TECHNIQUE 0 1
-
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
-#pragma anki reflect AnKiLocalConstants
 #pragma anki struct AnKiLocalConstants
 #pragma anki member RVec3 m_diffColor
 #pragma anki member RF32 m_roughness
@@ -15,7 +12,7 @@
 #pragma anki member RF32 m_metallic
 #pragma anki member RVec3 m_initialEmission
 #pragma anki member RVec3 m_finalEmission
-#pragma anki struct end
+#pragma anki struct_end
 
 struct VertIn
 {
@@ -39,7 +36,7 @@ struct FragOut
 	Vec2 m_color3 : SV_TARGET3;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert GBuffer
 
 VertOut main(VertIn input)
 {
@@ -79,9 +76,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end vert
+#pragma anki technique_end vert GBuffer
 
-#pragma anki start frag
+#pragma anki technique_start frag GBuffer
 #include <AnKi/Shaders/PackFunctions.hlsl>
 
 FragOut main(VertOut input)
@@ -104,4 +101,4 @@ FragOut main(VertOut input)
 	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
 	return output;
 }
-#pragma anki end frag
+#pragma anki technique_end frag GBuffer

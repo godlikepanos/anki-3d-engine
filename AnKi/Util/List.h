@@ -387,7 +387,7 @@ public:
 	/// Move.
 	List(List&& b)
 		: Base(std::move(static_cast<Base&>(b)))
-		, m_pool(std::move(b))
+		, m_pool(std::move(b.m_pool))
 	{
 	}
 
@@ -415,9 +415,11 @@ public:
 	List& operator=(const List& b)
 	{
 		destroy();
-		for(ConstIterator it : b)
+		ConstIterator it = b.getBegin();
+		while(it != b.getEnd())
 		{
 			pushBack(*it);
+			++it;
 		}
 
 		return *this;

@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_TECHNIQUE 2
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
@@ -24,15 +23,14 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki reflect AnKiLocalConstants
 #pragma anki struct AnKiLocalConstants
-#pragma anki member F32 m_animationPeriod if ANIMATED_TEXTURE is 1
+#pragma anki member F32 m_animationPeriod
 #pragma anki member Vec4 m_colorScale
 #pragma anki member Vec4 m_colorBias
 #pragma anki member U32 m_diffuseMap
-#pragma anki struct end
+#pragma anki struct_end
 
-#pragma anki start vert
+#pragma anki technique_start vert Forward
 
 VertOut main(VertIn input)
 {
@@ -68,9 +66,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end vert
+#pragma anki technique_end vert Forward
 
-#pragma anki start frag
+#pragma anki technique_start frag Forward
 
 FragOut main(VertOut input)
 {
@@ -94,4 +92,4 @@ FragOut main(VertOut input)
 
 	return output;
 }
-#pragma anki end frag
+#pragma anki technique_end frag Forward

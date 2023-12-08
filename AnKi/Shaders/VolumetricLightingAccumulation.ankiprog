@@ -7,7 +7,7 @@
 
 #pragma anki mutator ENABLE_SHADOWS 0 1
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
@@ -290,4 +290,4 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	g_volume[svDispatchThreadId] = lightAndFog;
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

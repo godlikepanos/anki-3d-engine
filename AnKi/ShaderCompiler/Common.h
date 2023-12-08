@@ -21,6 +21,22 @@ namespace anki {
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", kFatal, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGV(...) ANKI_LOG("SHCO", kVerbose, __VA_ARGS__)
 
+class ShaderCompilerMemoryPool : public HeapMemoryPool, public MakeSingleton<ShaderCompilerMemoryPool>
+{
+	template<typename>
+	friend class MakeSingleton;
+
+private:
+	ShaderCompilerMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+		: HeapMemoryPool(allocCb, allocCbUserData, "ShaderCompilerMemPool")
+	{
+	}
+
+	~ShaderCompilerMemoryPool() = default;
+};
+
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(ShaderCompiler, ShaderCompilerMemoryPool)
+
 constexpr U32 kMaxShaderBinaryNameLength = 127;
 
 using MutatorValue = I32; ///< The type of the mutator value
@@ -29,7 +45,7 @@ using MutatorValue = I32; ///< The type of the mutator value
 class ShaderProgramFilesystemInterface
 {
 public:
-	virtual Error readAllText(CString filename, String& txt) = 0;
+	virtual Error readAllText(CString filename, ShaderCompilerString& txt) = 0;
 };
 
 /// This controls if the compilation will continue after the parsing stage.

@@ -24,7 +24,7 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert
 struct VertIn
 {
 	[[vk::location(0)]] Vec3 m_position : POSITION;
@@ -52,9 +52,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
@@ -83,4 +83,4 @@ Vec4 main(VertOut input) : SV_TARGET0
 	// Write the color
 	return g_consts.m_color;
 }
-#pragma anki end frag
+#pragma anki technique_end frag

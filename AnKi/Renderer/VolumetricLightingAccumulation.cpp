@@ -52,7 +52,6 @@ Error VolumetricLightingAccumulation::init()
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg.reset(&variant->getProgram());
-	m_workgroupSize = variant->getWorkgroupSizes();
 
 	// Create RTs
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,
@@ -151,7 +150,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		unis.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
-		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
+		dispatchPPCompute(cmdb, 8, 8, 8, m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 	});
 }
 

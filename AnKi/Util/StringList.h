@@ -49,7 +49,7 @@ public:
 
 	BaseStringList& operator=(const BaseStringList& b)
 	{
-		static_cast<Base&>(*this) = static_cast<Base&>(b);
+		static_cast<Base&>(*this) = static_cast<const Base&>(b);
 		return *this;
 	}
 

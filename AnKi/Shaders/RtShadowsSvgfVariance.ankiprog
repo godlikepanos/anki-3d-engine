@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
@@ -118,4 +118,4 @@ Vec3 toViewspace(Vec2 uv, F32 depth)
 	g_shadowUav[svDispatchThreadId] = outShadowFactor;
 	g_varianceUav[svDispatchThreadId] = Vec4(outVariance, 0.0, 0.0, 0.0);
 }
-#pragma anki end comp
+#pragma anki technique_end comp

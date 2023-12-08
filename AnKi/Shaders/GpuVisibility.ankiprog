@@ -10,7 +10,7 @@
 
 #pragma anki skip_mutation DISTANCE_TEST 1 HZB_TEST 1
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -262,4 +262,4 @@ struct DrawIndirectArgsWithPadding
 #endif
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

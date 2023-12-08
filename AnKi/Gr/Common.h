@@ -584,6 +584,7 @@ enum class ShaderTypeBit : U16
 	kAllLegacyGeometry = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry,
 	kAllModernGeometry = kTask | kMesh,
 	kAllRayTracing = kRayGen | kAnyHit | kClosestHit | kMiss | kIntersection | kCallable,
+	kAllHit = kAnyHit | kClosestHit,
 	kAll = kAllGraphics | kCompute | kAllRayTracing,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)

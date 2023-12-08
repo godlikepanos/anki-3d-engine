@@ -5,7 +5,7 @@
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 [[vk::binding(0)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
 
@@ -25,4 +25,4 @@
 	g_args[0] = args;
 }
 
-#pragma anki end comp
+#pragma anki technique_end comp

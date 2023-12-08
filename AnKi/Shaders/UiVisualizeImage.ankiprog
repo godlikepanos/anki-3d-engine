@@ -30,7 +30,7 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 VertOut main(VertIn input)
 {
@@ -44,9 +44,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end vert
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
 [[vk::binding(0)]] SamplerState g_trilinearRepeatSampler;
 #if TEXTURE_TYPE == 0
@@ -76,4 +76,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 	return RVec4(outColor, 1.0);
 }
 
-#pragma anki end frag
+#pragma anki technique_end frag

@@ -25,7 +25,6 @@ class XmlElement;
 enum class BuiltinMutatorId : U8
 {
 	kNone = 0,
-	kTechnique,
 	kBones,
 	kVelocity,
 
@@ -58,7 +57,6 @@ public:
 	{
 		m_name = std::move(b.m_name);
 		m_offsetInLocalUniforms = b.m_offsetInLocalUniforms;
-		m_opaqueBinding = b.m_opaqueBinding;
 		m_dataType = b.m_dataType;
 		m_Mat4 = b.m_Mat4;
 		m_image = std::move(b.m_image);
@@ -73,32 +71,10 @@ public:
 	template<typename T>
 	const T& getValue() const;
 
-	Bool isBoundableTexture() const
-	{
-		return m_dataType >= ShaderVariableDataType::kTextureFirst && m_dataType <= ShaderVariableDataType::kTextureLast;
-	}
-
-	Bool isBindlessTexture() const
-	{
-		return m_dataType == ShaderVariableDataType::kU32 && m_image.get();
-	}
-
-	Bool isUniform() const
-	{
-		return !isBoundableTexture();
-	}
-
 	ShaderVariableDataType getDataType() const
 	{
 		ANKI_ASSERT(m_dataType != ShaderVariableDataType::kNone);
 		return m_dataType;
-	}
-
-	/// Get the binding of a texture or a sampler type of material variable.
-	U32 getTextureBinding() const
-	{
-		ANKI_ASSERT(m_opaqueBinding != kMaxU32 && isBoundableTexture());
-		return m_opaqueBinding;
 	}
 
 	U32 getOffsetInLocalUniforms() const
@@ -110,7 +86,6 @@ public:
 protected:
 	ResourceString m_name;
 	U32 m_offsetInLocalUniforms = kMaxU32;
-	U32 m_opaqueBinding = kMaxU32; ///< Binding for textures and samplers.
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
 
 	/// Values
@@ -193,25 +168,17 @@ private:
 /// Material XML file format:
 /// @code
 ///	<material [shadows="0|1"]>
-/// 	<shaderPrograms>
-///			<shaderProgram name="name of the shader">
-///				[<mutation>
-///					<mutator name="str" value="value"/>
-///				</mutation>]
-///			</shaderProgram>
-///
-///			[<shaderProgram ...>
-///				...
-///			</shaderProgram>]
-/// 	</shaderPrograms>
+/// 	<shaderProgram name="name of the shader" />
+///			[<mutation>
+///				<mutator name="str" value="value"/>
+///			</mutation>]
+///		</shaderProgram>
 ///
 ///		[<inputs>
-///			<input name="name in AnKiMaterialUniforms struct or opaque type" value="value(s)"/> (1)
+///			<input name="name in AnKiMaterialConstants struct" value="value(s)"/>
 ///		</inputs>]
 ///	</material>
 /// @endcode
-///
-/// (1): Only for non-builtins.
 class MaterialResource : public ResourceObject
 {
 public:
@@ -243,12 +210,6 @@ public:
 		return m_techniquesMask;
 	}
 
-	/// Get all GPU resources of this material. Will be used for GPU refcounting.
-	ConstWeakArray<TexturePtr> getAllTextures() const
-	{
-		return m_textures;
-	}
-
 	/// @note It's thread-safe.
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
@@ -262,31 +223,32 @@ private:
 	class PartialMutation
 	{
 	public:
-		const ShaderProgramResourceMutator* m_mutator;
+		const ShaderProgramBinaryMutator* m_mutator;
 		MutatorValue m_value;
 	};
 
-	class Program;
+	ShaderProgramResourcePtr m_prog;
 
-	ResourceDynamicArray<Program> m_programs;
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2, 2> m_variantMatrix; ///< [technique][skinned][vel][meshShader]
+	mutable RWMutex m_variantMatrixMtx;
 
-	Array<U8, U(RenderingTechnique::kCount)> m_techniqueToProgram;
-	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
+	ResourceDynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
 
 	ResourceDynamicArray<MaterialVariable> m_vars;
-
-	Bool m_supportsSkinning = false;
-
-	ResourceDynamicArray<TexturePtr> m_textures;
 
 	void* m_prefilledLocalUniforms = nullptr;
 	U32 m_localUniformsSize = 0;
 
-	Error parseMutators(XmlElement mutatorsEl, Program& prog);
+	U32 m_presentBuildinMutatorMask = 0;
+
+	Bool m_supportsSkinning = false;
+	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
+
+	Error parseMutators(XmlElement mutatorsEl);
 	Error parseShaderProgram(XmlElement techniqueEl, Bool async);
 	Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
-	Error findBuiltinMutators(Program& prog);
-	Error createVars(Program& prog);
+	Error findBuiltinMutators();
+	Error createVars();
 	void prefillLocalUniforms();
 
 	const MaterialVariable* tryFindVariableInternal(CString name) const;
