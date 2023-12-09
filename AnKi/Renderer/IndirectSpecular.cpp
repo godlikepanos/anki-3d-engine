@@ -57,17 +57,8 @@ Error IndirectSpecular::initInternal()
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
-	// Create shader
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((g_preferComputeCVar.get()) ? "ShaderBinaries/IndirectSpecularCompute.ankiprogbin"
-																						: "ShaderBinaries/IndirectSpecularRaster.ankiprogbin",
-															m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
-	variantInit.addMutation("EXTRA_REJECTION", false);
-	variantInit.addMutation("STOCHASTIC", g_ssrStochasticCVar.get());
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInit, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectSpecular.ankiprogbin",
+								 Array<SubMutation, 2>{{{"EXTRA_REJECTION", false}, {"STOCHASTIC", g_ssrStochasticCVar.get()}}}, m_prog, m_grProg));
 
 	return Error::kNone;
 }

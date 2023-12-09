@@ -29,17 +29,9 @@ Error TemporalAA::initInternal()
 {
 	ANKI_R_LOGV("Initializing TAA");
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(
-		(g_preferComputeCVar.get()) ? "ShaderBinaries/TemporalAACompute.ankiprogbin" : "ShaderBinaries/TemporalAARaster.ankiprogbin", m_prog));
-
 	{
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
-		variantInitInfo.addMutation("YCBCR", 0);
-
-		const ShaderProgramResourceVariant* variant;
-		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProg.reset(&variant->getProgram());
+		const Array<SubMutation, 2> mutation = {{{"VARIANCE_CLIPPING", 1}, {"YCBCR", 0}}};
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/TemporalAA.ankiprogbin", mutation, m_prog, m_grProg));
 	}
 
 	for(U i = 0; i < 2; ++i)

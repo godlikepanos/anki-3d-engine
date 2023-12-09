@@ -26,9 +26,7 @@ Error MotionVectors::initInternal()
 	ANKI_R_LOGV("Initializing motion vectors");
 
 	// Prog
-	const CString progFname =
-		(g_preferComputeCVar.get()) ? "ShaderBinaries/MotionVectorsCompute.ankiprogbin" : "ShaderBinaries/MotionVectorsRaster.ankiprogbin";
-	ANKI_CHECK(loadShaderProgram(progFname, m_prog, m_grProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/MotionVectors.ankiprogbin", m_prog, m_grProg));
 
 	// RTs
 	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(

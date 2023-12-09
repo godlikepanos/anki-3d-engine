@@ -53,15 +53,7 @@ Error DepthDownscale::initInternal()
 	}
 
 	// Progs
-	if(preferCompute)
-	{
-		ANKI_CHECK(
-			loadShaderProgram("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", Array<SubMutation, 1>{{{"WAVE_OPERATIONS", 0}}}, m_prog, m_grProg));
-	}
-	else
-	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog, m_grProg));
-	}
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/DepthDownscale.ankiprogbin", Array<SubMutation, 1>{{{"WAVE_OPERATIONS", 1}}}, m_prog, m_grProg));
 
 	// Counter buffer
 	if(preferCompute)

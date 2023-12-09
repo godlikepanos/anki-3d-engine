@@ -5,18 +5,19 @@
 
 // Does SSGI and GI probe sampling
 
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/ImportanceSampling.hlsl>
-#include <AnKi/Shaders/TonemappingFunctions.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#if defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
+#	include <AnKi/Shaders/ImportanceSampling.hlsl>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-#define ENABLE_SSGI true
-#define ENABLE_PROBES true
-#define REMOVE_FIREFLIES false
-#define REPROJECT_LIGHTBUFFER false
-#define SSGI_PROBE_COMBINE(ssgiColor, probeColor) ((ssgiColor) + (probeColor))
+#	define ENABLE_SSGI true
+#	define ENABLE_PROBES true
+#	define REMOVE_FIREFLIES false
+#	define REPROJECT_LIGHTBUFFER false
+#	define SSGI_PROBE_COMBINE(ssgiColor, probeColor) ((ssgiColor) + (probeColor))
 
 [[vk::binding(0)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
 [[vk::binding(1)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
@@ -29,9 +30,9 @@
 [[vk::binding(8)]] Texture2D<Vec4> g_motionVectorsTex;
 [[vk::binding(9)]] Texture2D<Vec4> g_historyLengthTex;
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(10)]] RWTexture2D<RVec4> g_outUav;
-#endif
+#	endif
 
 ANKI_BINDLESS_SET(1)
 
@@ -42,13 +43,13 @@ Vec4 cheapProject(Vec4 point_)
 	return projectPerspective(point_, g_consts.m_projectionMat.x, g_consts.m_projectionMat.y, g_consts.m_projectionMat.z, g_consts.m_projectionMat.w);
 }
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
-#else
+#	else
 RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
-#endif
+#	endif
 {
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	if(svDispatchThreadId.x >= g_consts.m_viewportSize.x || svDispatchThreadId.y >= g_consts.m_viewportSize.y)
 	{
 		return;
@@ -56,9 +57,9 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 
 	const Vec2 fragCoord = Vec2(svDispatchThreadId.xy) + 0.5;
 	const Vec2 uv = fragCoord / g_consts.m_viewportSizef;
-#else
+#	else
 	const Vec2 fragCoord = svPosition.xy;
-#endif
+#	endif
 
 	const Vec2 ndc = uvToNdc(uv);
 
@@ -85,11 +86,11 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 		const RF32 projRadius = length(projSphereLimit2 - ndc);
 
 		// Loop to compute
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 		const UVec2 globalInvocation = svDispatchThreadId.xy;
-#else
+#	else
 		const UVec2 globalInvocation = UVec2(svPosition.xy);
-#endif
+#	endif
 		const UVec2 random = rand3DPCG16(UVec3(globalInvocation, g_clusteredShading.m_frame)).xy;
 		const F32 aspectRatio = g_consts.m_viewportSizef.x / g_consts.m_viewportSizef.y;
 		for(U32 i = 0u; i < g_consts.m_sampleCount; ++i)
@@ -221,9 +222,20 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 	}
 
 	// Store color
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	g_outUav[svDispatchThreadId.xy] = RVec4(outColor, 0.0f);
-#else
+#	else
 	return outColor;
-#endif
+#	endif
 }
+#endif // defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#pragma anki technique_end frag
+
+#pragma anki technique_start comp
+#pragma anki technique_end comp

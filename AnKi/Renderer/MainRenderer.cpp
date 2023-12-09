@@ -53,9 +53,11 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/BlitRaster.ankiprogbin", m_blitProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Blit.ankiprogbin", m_blitProg));
+		ShaderProgramResourceVariantInitInfo varInit(m_blitProg);
+		varInit.requestShaderTypes(ShaderTypeBit::kFragment | ShaderTypeBit::kVertex);
 		const ShaderProgramResourceVariant* variant;
-		m_blitProg->getOrCreateVariant(variant);
+		m_blitProg->getOrCreateVariant(varInit, variant);
 		m_blitGrProg.reset(&variant->getProgram());
 
 		// The RT desc

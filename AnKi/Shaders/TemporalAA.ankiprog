@@ -6,9 +6,10 @@
 #pragma anki mutator VARIANCE_CLIPPING 0 1
 #pragma anki mutator YCBCR 0 1
 
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#if defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 constexpr F32 kVarianceClippingGamma = 2.7f; // Variance clipping paper proposes 1.0
 constexpr F32 kBlendFactor = 1.0f / 16.0f;
@@ -19,39 +20,39 @@ constexpr F32 kBlendFactor = 1.0f / 16.0f;
 [[vk::binding(3)]] Texture2D g_motionVectorsTex;
 
 constexpr U32 kTonemappingBinding = 4u;
-#include <AnKi/Shaders/TonemappingResources.hlsl>
+#	include <AnKi/Shaders/TonemappingResources.hlsl>
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(5)]] RWTexture2D<RVec4> g_uavTex;
 [[vk::binding(6)]] RWTexture2D<RVec4> g_tonemappedUavTex;
-#else
+#	else
 struct FragOut
 {
 	RVec3 m_color : SV_TARGET0;
 	RVec3 m_tonemappedColor : SV_TARGET1;
 };
-#endif
+#	endif
 
-#if YCBCR
-#	define sample(s, uv) rgbToYCbCr(s.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb)
-#	define sampleOffset(s, uv, x, y) rgbToYCbCr(s.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(x, y)).rgb)
-#else
-#	define sample(s, uv) s.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb
-#	define sampleOffset(s, uv, x, y) s.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(x, y)).rgb
-#endif
+#	if YCBCR
+#		define sample(s, uv) rgbToYCbCr(s.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb)
+#		define sampleOffset(s, uv, x, y) rgbToYCbCr(s.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(x, y)).rgb)
+#	else
+#		define sample(s, uv) s.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb
+#		define sampleOffset(s, uv, x, y) s.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(x, y)).rgb
+#	endif
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
-#else
+#	else
 FragOut main(Vec2 uv : TEXCOORD)
-#endif
+#	endif
 {
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	Vec2 outUavSize;
 	g_uavTex.GetDimensions(outUavSize.x, outUavSize.y);
 
 	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / outUavSize;
-#endif
+#	endif
 
 	// Get prev uv coords
 	const Vec2 oldUv = uv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rg;
@@ -66,7 +67,7 @@ FragOut main(Vec2 uv : TEXCOORD)
 	const Vec3 near2 = sampleOffset(g_inputRt, uv, -1, 0);
 	const Vec3 near3 = sampleOffset(g_inputRt, uv, 0, -1);
 
-#if VARIANCE_CLIPPING
+#	if VARIANCE_CLIPPING
 	const Vec3 m1 = crntCol + near0 + near1 + near2 + near3;
 	const Vec3 m2 = crntCol * crntCol + near0 * near0 + near1 * near1 + near2 * near2 + near3 * near3;
 
@@ -75,23 +76,23 @@ FragOut main(Vec2 uv : TEXCOORD)
 
 	const Vec3 boxMin = mu - kVarianceClippingGamma * sigma;
 	const Vec3 boxMax = mu + kVarianceClippingGamma * sigma;
-#else
+#	else
 	const Vec3 boxMin = min(crntCol, min(near0, min(near1, min(near2, near3))));
 	const Vec3 boxMax = max(crntCol, max(near0, max(near1, max(near2, near3))));
-#endif
+#	endif
 
 	historyCol = clamp(historyCol, boxMin, boxMax);
 
 	// Remove jitter (T. Lottes)
-#if YCBCR
+#	if YCBCR
 	const F32 lum0 = crntCol.r;
 	const F32 lum1 = historyCol.r;
 	const F32 maxLum = boxMax.r;
-#else
+#	else
 	const F32 lum0 = computeLuminance(reinhardTonemap(crntCol));
 	const F32 lum1 = computeLuminance(reinhardTonemap(historyCol));
 	const F32 maxLum = 1.0;
-#endif
+#	endif
 
 	F32 diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum + kEpsilonF32));
 	diff = 1.0 - diff;
@@ -100,17 +101,28 @@ FragOut main(Vec2 uv : TEXCOORD)
 
 	// Write result
 	Vec3 outColor = lerp(historyCol, crntCol, feedback);
-#if YCBCR
+#	if YCBCR
 	outColor = yCbCrToRgb(outColor);
-#endif
+#	endif
 	const Vec3 tonemapped = linearToSRgb(tonemap(outColor, readExposureAndAverageLuminance().x));
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	g_uavTex[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
 	g_tonemappedUavTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
-#else
+#	else
 	FragOut output;
 	output.m_color = outColor;
 	output.m_tonemappedColor = tonemapped;
 	return output;
-#endif
+#	endif
 }
+#endif // defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#pragma anki technique_end frag
+
+#pragma anki technique_start comp
+#pragma anki technique_end comp

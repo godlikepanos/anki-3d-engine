@@ -46,8 +46,7 @@ Error Bloom::initExposure()
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	const CString progFname = (g_preferComputeCVar.get()) ? "ShaderBinaries/BloomCompute.ankiprogbin" : "ShaderBinaries/BloomRaster.ankiprogbin";
-	ANKI_CHECK(loadShaderProgram(progFname, m_exposure.m_prog, m_exposure.m_grProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom.ankiprogbin", m_exposure.m_prog, m_exposure.m_grProg));
 
 	return Error::kNone;
 }
@@ -62,9 +61,7 @@ Error Bloom::initUpscale()
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	const CString progFname =
-		(g_preferComputeCVar.get()) ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin" : "ShaderBinaries/BloomUpscaleRaster.ankiprogbin";
-	ANKI_CHECK(loadShaderProgram(progFname, m_upscale.m_prog, m_upscale.m_grProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/BloomUpscale.ankiprogbin", m_upscale.m_prog, m_upscale.m_grProg));
 
 	// Textures
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));

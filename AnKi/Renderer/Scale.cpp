@@ -93,16 +93,8 @@ Error Scale::init()
 	}
 	else if(m_upscalingMethod == UpscalingMethod::kFsr)
 	{
-		const CString shaderFname = (preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin";
-
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_scaleProg);
-		variantInitInfo.addMutation("SHARPEN", 0);
-		variantInitInfo.addMutation("FSR_QUALITY", fsrQuality - 1);
-		const ShaderProgramResourceVariant* variant;
-		m_scaleProg->getOrCreateVariant(variantInitInfo, variant);
-		m_scaleGrProg.reset(&variant->getProgram());
+		const Array<SubMutation, 2> mutation = {{{"SHARPEN", 0}, {"FSR_QUALITY", MutatorValue(fsrQuality - 1)}}};
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Fsr.ankiprogbin", mutation, m_scaleProg, m_scaleGrProg));
 	}
 	else if(m_upscalingMethod == UpscalingMethod::kGr)
 	{
@@ -118,14 +110,8 @@ Error Scale::init()
 	// Sharpen programs
 	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
-			(preferCompute) ? "ShaderBinaries/FsrCompute.ankiprogbin" : "ShaderBinaries/FsrRaster.ankiprogbin", m_sharpenProg));
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_sharpenProg);
-		variantInitInfo.addMutation("SHARPEN", 1);
-		variantInitInfo.addMutation("FSR_QUALITY", 0);
-		const ShaderProgramResourceVariant* variant;
-		m_sharpenProg->getOrCreateVariant(variantInitInfo, variant);
-		m_sharpenGrProg.reset(&variant->getProgram());
+		const Array<SubMutation, 2> mutation = {{{"SHARPEN", 1}, {"FSR_QUALITY", 0}}};
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Fsr.ankiprogbin", mutation, m_sharpenProg, m_sharpenGrProg));
 	}
 
 	// Tonemapping programs

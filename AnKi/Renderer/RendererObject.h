@@ -83,7 +83,11 @@ protected:
 
 	void registerDebugRenderTarget(CString rtName);
 
-	static Error loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
+	static Error loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg)
+	{
+		ANKI_CHECK(loadShaderProgram(filename, {}, rsrc, grProg));
+		return Error::kNone;
+	}
 
 	class SubMutation
 	{

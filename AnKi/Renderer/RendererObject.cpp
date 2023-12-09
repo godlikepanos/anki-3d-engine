@@ -20,16 +20,6 @@ void RendererObject::registerDebugRenderTarget(CString rtName)
 	getRenderer().registerDebugRenderTarget(this, rtName);
 }
 
-Error RendererObject::loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg)
-{
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, rsrc));
-	const ShaderProgramResourceVariant* variant;
-	rsrc->getOrCreateVariant(variant);
-	grProg.reset(&variant->getProgram());
-
-	return Error::kNone;
-}
-
 Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
 										ShaderProgramPtr& grProg, ShaderTypeBit shaderTypes, CString technique)
 {
@@ -44,14 +34,25 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 		initInf.addMutation(pair.m_mutatorName, pair.m_value);
 	}
 
+	if(technique)
+	{
+		initInf.requestTechnique(technique);
+	}
+
 	if(!!shaderTypes)
 	{
 		initInf.requestShaderTypes(shaderTypes);
 	}
-
-	if(technique)
+	else if(rsrc->getBinary().m_shaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
 	{
-		initInf.requestTechnique(technique);
+		if(g_preferComputeCVar.get())
+		{
+			initInf.requestShaderTypes(ShaderTypeBit::kCompute);
+		}
+		else
+		{
+			initInf.requestShaderTypes(ShaderTypeBit::kFragment | ShaderTypeBit::kVertex);
+		}
 	}
 
 	const ShaderProgramResourceVariant* variant;

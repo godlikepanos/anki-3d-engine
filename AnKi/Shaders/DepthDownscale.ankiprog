@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// The 1st reduction is average depth. The next reductions are max depth
-
 #pragma anki mutator WAVE_OPERATIONS 0 1
 
 #pragma anki technique_start comp
@@ -95,3 +93,19 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 }
 
 #pragma anki technique_end comp
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#include <AnKi/Shaders/Common.hlsl>
+
+[[vk::binding(0)]] Texture2D<Vec4> g_inputTex;
+[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
+
+F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+{
+	return g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x;
+}
+#pragma anki technique_end frag

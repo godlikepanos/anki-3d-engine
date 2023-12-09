@@ -6,12 +6,13 @@
 #pragma anki mutator STOCHASTIC 0 1
 #pragma anki mutator EXTRA_REJECTION 0 1
 
-#include <AnKi/Shaders/LightFunctions.hlsl>
-#include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Shaders/TonemappingFunctions.hlsl>
-#include <AnKi/Shaders/SsRaymarching.hlsl>
-#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#if defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#	include <AnKi/Shaders/LightFunctions.hlsl>
+#	include <AnKi/Shaders/PackFunctions.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#	include <AnKi/Shaders/SsRaymarching.hlsl>
+#	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 [[vk::binding(0)]] ConstantBuffer<SsrConstants> g_consts;
 
@@ -34,25 +35,25 @@
 
 constexpr Vec2 kNoiseTexSize = 64.0;
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(14)]] RWTexture2D<RVec4> g_outUav;
-#endif
+#	endif
 
 ANKI_BINDLESS_SET(1)
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
-#else
+#	else
 RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
-#endif
+#	endif
 {
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	if(any(svDispatchThreadId.xy >= g_consts.m_framebufferSize))
 	{
 		return;
 	}
 	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(g_consts.m_framebufferSize);
-#endif
+#	endif
 
 	// Read part of the G-buffer
 	const F32 roughness = unpackRoughnessFromGBuffer(g_gbufferRt1.SampleLevel(g_trilinearClampSampler, uv, 0.0));
@@ -72,11 +73,11 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	// Compute refl vector
 	const Vec3 viewDir = -normalize(viewPos);
 	const Vec3 viewNormal = mul(g_consts.m_normalMat, Vec4(worldNormal, 0.0));
-#if STOCHASTIC
+#	if STOCHASTIC
 	const Vec3 reflDir = sampleReflectionVector(viewDir, viewNormal, roughness, noise.xy);
-#else
+#	else
 	const Vec3 reflDir = reflect(-viewDir, viewNormal);
-#endif
+#	endif
 
 	// Is rough enough to deserve SSR?
 	F32 ssrAttenuation = saturate(1.0f - pow(roughness / g_consts.m_roughnessCutoff, 16.0f));
@@ -100,7 +101,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 		ssrAttenuation = 0.0f;
 	}
 
-#if EXTRA_REJECTION
+#	if EXTRA_REJECTION
 	// Reject backfacing
 	[branch] if(ssrAttenuation > 0.0)
 	{
@@ -127,7 +128,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 		const F32 distAttenuation = (diff < rejectionMeters) ? 1.0 : 0.0;
 		ssrAttenuation *= distAttenuation;
 	}
-#endif
+#	endif
 
 	// Read the reflection
 	Vec3 outColor = 0.0;
@@ -137,13 +138,13 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 		const Vec4 v4 = mul(g_consts.m_prevViewProjMatMulInvViewProjMat, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
 		hitPoint.xy = ndcToUv(v4.xy / v4.w);
 
-#if STOCHASTIC
+#	if STOCHASTIC
 		// LOD stays 0
 		const F32 lod = 0.0;
-#else
+#	else
 		// Compute the LOD based on the roughness
 		const F32 lod = F32(g_consts.m_lightBufferMipCount - 1u) * roughness;
-#endif
+#	endif
 
 		// Read the light buffer
 		Vec3 ssrColor = g_lightBufferRt.SampleLevel(g_trilinearClampSampler, hitPoint.xy, lod).rgb;
@@ -174,17 +175,17 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	// Read probes
 	[branch] if(ssrAttenuation < 1.0)
 	{
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 		const Vec2 fragCoord = Vec2(svDispatchThreadId.xy) + 0.5;
-#else
+#	else
 		const Vec2 fragCoord = svPosition.xy;
-#endif
+#	endif
 
-#if STOCHASTIC
+#	if STOCHASTIC
 		const F32 reflLod = 0.0;
-#else
+#	else
 		const F32 reflLod = (g_clusteredShading.m_reflectionProbesMipCount - 1.0) * roughness;
-#endif
+#	endif
 
 		// Get cluster
 		const Vec2 ndc = uvToNdc(uv);
@@ -194,11 +195,11 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 		// Compute the refl dir in word space this time
 		const RVec3 viewDir = normalize(g_clusteredShading.m_cameraPosition - worldPos);
-#if STOCHASTIC
+#	if STOCHASTIC
 		const Vec3 reflDir = sampleReflectionVector(viewDir, worldNormal, roughness, noise.xy);
-#else
+#	else
 		const Vec3 reflDir = reflect(-viewDir, worldNormal);
-#endif
+#	endif
 
 		Vec3 probeColor = 0.0;
 
@@ -246,9 +247,20 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 	// Store
 	ssrAttenuation = saturate(ssrAttenuation);
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	g_outUav[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
-#else
+#	else
 	return outColor;
-#endif
+#	endif
 }
+#endif // defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#pragma anki technique_end frag
+
+#pragma anki technique_start comp
+#pragma anki technique_end comp

@@ -5,19 +5,20 @@
 
 // Does tonemapping
 
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#if defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] Texture2D<RVec4> g_inputRt;
 
 constexpr U32 kTonemappingBinding = 2u;
-#include <AnKi/Shaders/TonemappingResources.hlsl>
+#	include <AnKi/Shaders/TonemappingResources.hlsl>
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
-#	define THREADGROUP_SIZE_SQRT 8
-#endif
+#		define THREADGROUP_SIZE_SQRT 8
+#	endif
 
 struct Constants
 {
@@ -27,27 +28,38 @@ struct Constants
 
 [[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 [numthreads(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
-#else
+#	else
 RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
-#endif
+#	endif
 {
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_consts.m_viewportSize, svDispatchThreadId.xy))
 	{
 		return;
 	}
 
 	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) * g_consts.m_viewportSizeOverOne;
-#endif
+#	endif
 
 	const RVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;
 	const Vec3 tonemapped = linearToSRgb(tonemap(hdr, readExposureAndAverageLuminance().x));
 
-#if defined(ANKI_COMPUTE_SHADER)
+#	if defined(ANKI_COMPUTE_SHADER)
 	g_outUav[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
-#else
+#	else
 	return tonemapped;
-#endif
+#	endif
 }
+#endif // defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#pragma anki technique_end frag
+
+#pragma anki technique_start comp
+#pragma anki technique_end comp

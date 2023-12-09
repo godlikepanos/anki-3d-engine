@@ -102,40 +102,21 @@ Error IndirectDiffuse::initInternal()
 		m_vrs.m_prog->getOrCreateVariant(variantInit, variant);
 		m_vrs.m_grProg.reset(&variant->getProgram());
 
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_vrs.m_visualizeProg));
-		m_vrs.m_visualizeProg->getOrCreateVariant(variant);
-		m_vrs.m_visualizeGrProg.reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_vrs.m_visualizeProg, m_vrs.m_visualizeGrProg));
 	}
 
 	// Init SSGI+probes pass
-	{
-		CString progFname =
-			(preferCompute) ? "ShaderBinaries/IndirectDiffuseCompute.ankiprogbin" : "ShaderBinaries/IndirectDiffuseRaster.ankiprogbin";
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_main.m_prog));
-
-		const ShaderProgramResourceVariant* variant;
-		m_main.m_prog->getOrCreateVariant(variant);
-		m_main.m_grProg.reset(&variant->getProgram());
-	}
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuse.ankiprogbin", m_main.m_prog, m_main.m_grProg));
 
 	// Init denoise
 	{
 		m_denoise.m_fbDescr.m_colorAttachmentCount = 1;
 		m_denoise.m_fbDescr.bake();
 
-		CString progFname =
-			(preferCompute) ? "ShaderBinaries/IndirectDiffuseDenoiseCompute.ankiprogbin" : "ShaderBinaries/IndirectDiffuseDenoiseRaster.ankiprogbin";
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_denoise.m_prog));
-
-		ShaderProgramResourceVariantInitInfo variantInit(m_denoise.m_prog);
-		variantInit.addMutation("BLUR_ORIENTATION", 0);
-		const ShaderProgramResourceVariant* variant;
-		m_denoise.m_prog->getOrCreateVariant(variantInit, variant);
-		m_denoise.m_grProgs[0].reset(&variant->getProgram());
-
-		variantInit.addMutation("BLUR_ORIENTATION", 1);
-		m_denoise.m_prog->getOrCreateVariant(variantInit, variant);
-		m_denoise.m_grProgs[1].reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseDenoise.ankiprogbin", Array<SubMutation, 1>{{"BLUR_ORIENTATION", 0}},
+									 m_denoise.m_prog, m_denoise.m_grProgs[0]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectDiffuseDenoise.ankiprogbin", Array<SubMutation, 1>{{"BLUR_ORIENTATION", 1}},
+									 m_denoise.m_prog, m_denoise.m_grProgs[1]));
 	}
 
 	return Error::kNone;

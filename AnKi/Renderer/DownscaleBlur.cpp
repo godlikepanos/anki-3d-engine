@@ -60,11 +60,7 @@ Error DownscaleBlur::initInternal()
 	}
 
 	// Shader programs
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(
-		(preferCompute) ? "ShaderBinaries/DownscaleBlurCompute.ankiprogbin" : "ShaderBinaries/DownscaleBlurRaster.ankiprogbin", m_prog));
-	const ShaderProgramResourceVariant* variant = nullptr;
-	m_prog->getOrCreateVariant(variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/DownscaleBlur.ankiprogbin", m_prog, m_grProg));
 
 	return Error::kNone;
 }
