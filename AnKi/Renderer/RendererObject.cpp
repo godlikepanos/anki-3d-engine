@@ -31,7 +31,7 @@ Error RendererObject::loadShaderProgram(CString filename, ShaderProgramResourceP
 }
 
 Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
-										ShaderProgramPtr& grProg)
+										ShaderProgramPtr& grProg, ShaderTypeBit shaderTypes, CString technique)
 {
 	if(!rsrc.isCreated())
 	{
@@ -42,6 +42,16 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 	for(SubMutation pair : mutators)
 	{
 		initInf.addMutation(pair.m_mutatorName, pair.m_value);
+	}
+
+	if(!!shaderTypes)
+	{
+		initInf.requestShaderTypes(shaderTypes);
+	}
+
+	if(technique)
+	{
+		initInf.requestTechnique(technique);
 	}
 
 	const ShaderProgramResourceVariant* variant;

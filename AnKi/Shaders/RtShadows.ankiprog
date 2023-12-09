@@ -132,3 +132,13 @@ Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 	g_momentsImage[DispatchRaysIndex().xy] = Vec4(moments, 0.0, 0.0);
 }
 #pragma anki technique_end rgen RtShadows
+
+#pragma anki technique_start miss RtShadows
+
+#include <AnKi/Shaders/RtShadows.hlsl>
+
+[shader("miss")] void main(inout RayPayload payload)
+{
+	payload.m_shadowFactor = 1.0;
+}
+#pragma anki technique_end miss RtShadows

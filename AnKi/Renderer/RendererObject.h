@@ -92,7 +92,8 @@ protected:
 		MutatorValue m_value;
 	};
 
-	static Error loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
+	static Error loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg,
+								   ShaderTypeBit shaderTypes = ShaderTypeBit::kNone, CString technique = {});
 
 	static void zeroBuffer(Buffer* buff);
 };

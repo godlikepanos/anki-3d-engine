@@ -46,35 +46,24 @@ Error RtShadows::initInternal()
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
-	// Setup build SBT program
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtShadowsSetupSbtBuild.ankiprogbin", m_setupBuildSbtProg, m_setupBuildSbtGrProg));
-
-	// Build SBT program
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtShadowsSbtBuild.ankiprogbin", m_buildSbtProg, m_buildSbtGrProg));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadows.ankiprogbin", m_rayGenAndMissProg));
 
-	// Ray gen program
+	// Ray gen and miss
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsRayGen.ankiprogbin", m_rayGenProg));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenAndMissProg);
 		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar.get());
 		variantInitInfo.requestTechnique("RtShadows");
 
+		variantInitInfo.requestShaderTypes(ShaderTypeBit::kRayGen);
 		const ShaderProgramResourceVariant* variant;
-		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);
+		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo, variant);
 		m_rtLibraryGrProg.reset(&variant->getProgram());
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
-	}
 
-	// Miss prog
-	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsMiss.ankiprogbin", m_missProg));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_missProg);
-		variantInitInfo.requestTechnique("RtShadows");
-
-		const ShaderProgramResourceVariant* variant;
-		m_missProg->getOrCreateVariant(variantInitInfo, variant);
+		variantInitInfo.requestShaderTypes(ShaderTypeBit::kMiss);
+		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 	}
 
