@@ -95,8 +95,9 @@ static Bool spinDials(ShaderCompilerDynamicArray<U32>& dials, ConstWeakArray<Sha
 
 static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgramBinaryMutation& mutation,
 								ShaderCompilerDynamicArray<ShaderProgramBinaryVariant>& variants,
-								ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock>& codeBlocks, ShaderProgramAsyncTaskInterface& taskManager,
-								Mutex& mtx, Atomic<I32>& error)
+								ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock>& codeBlocks,
+								ShaderCompilerDynamicArray<U64>& sourceCodeHashes, ShaderProgramAsyncTaskInterface& taskManager, Mutex& mtx,
+								Atomic<I32>& error)
 {
 	class Ctx
 	{
@@ -105,6 +106,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 		ShaderProgramBinaryMutation* m_mutation;
 		ShaderCompilerDynamicArray<ShaderProgramBinaryVariant>* m_variants;
 		ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock>* m_codeBlocks;
+		ShaderCompilerDynamicArray<U64>* m_sourceCodeHashes;
 		Mutex* m_mtx;
 		Atomic<I32>* m_err;
 	};
@@ -114,6 +116,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 	ctx->m_mutation = &mutation;
 	ctx->m_variants = &variants;
 	ctx->m_codeBlocks = &codeBlocks;
+	ctx->m_sourceCodeHashes = &sourceCodeHashes;
 	ctx->m_mtx = &mtx;
 	ctx->m_err = &error;
 
@@ -157,6 +160,32 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 				ShaderCompilerString source;
 				ctx.m_parser->generateVariant(ctx.m_mutation->m_values, technique, shaderType, source);
 
+				// Check if the source code was found before
+				const U64 sourceCodeHash = source.computeHash();
+
+				if(technique.m_activeMutators[shaderType] != kMaxU64)
+				{
+					LockGuard lock(*ctx.m_mtx);
+
+					ANKI_ASSERT(ctx.m_sourceCodeHashes->getSize() == ctx.m_codeBlocks->getSize());
+
+					Bool found = false;
+					for(U32 i = 0; i < ctx.m_sourceCodeHashes->getSize(); ++i)
+					{
+						if((*ctx.m_sourceCodeHashes)[i] == sourceCodeHash)
+						{
+							codeBlockIndices[t].m_codeBlockIndices[shaderType] = i;
+							found = true;
+							break;
+						}
+					}
+
+					if(found)
+					{
+						continue;
+					}
+				}
+
 				ShaderCompilerDynamicArray<U8> spirv;
 				err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), spirv, compilerErrorLog);
 				if(err)
@@ -188,6 +217,9 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 						auto& codeBlock = *ctx.m_codeBlocks->emplaceBack();
 						spirv.moveAndReset(codeBlock.m_binary);
 						codeBlock.m_hash = newHash;
+
+						ctx.m_sourceCodeHashes->emplaceBack(sourceCodeHash);
+						ANKI_ASSERT(ctx.m_sourceCodeHashes->getSize() == ctx.m_codeBlocks->getSize());
 
 						++newCodeBlockCount;
 					}
@@ -330,6 +362,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		dials.resize(parser.getMutators().getSize(), 0);
 		ShaderCompilerDynamicArray<ShaderProgramBinaryVariant> variants;
 		ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock> codeBlocks;
+		ShaderCompilerDynamicArray<U64> sourceCodeHashes;
 		ShaderCompilerDynamicArray<ShaderProgramBinaryMutation> mutations;
 		mutations.resize(mutationCount);
 		ShaderCompilerHashMap<U64, U32> mutationHashToIdx;
@@ -365,7 +398,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 			{
 				// New and unique mutation and thus variant, add it
 
-				compileVariantAsync(parser, mutation, variants, codeBlocks, taskManager, mtx, errorAtomic);
+				compileVariantAsync(parser, mutation, variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
 
 				ANKI_ASSERT(mutationHashToIdx.find(mutation.m_hash) == mutationHashToIdx.getEnd());
 				mutationHashToIdx.emplace(mutation.m_hash, mutationCount - 1);
@@ -390,8 +423,9 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		newArray(memPool, 1, binary->m_mutations);
 		ShaderCompilerDynamicArray<ShaderProgramBinaryVariant> variants;
 		ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock> codeBlocks;
+		ShaderCompilerDynamicArray<U64> sourceCodeHashes;
 
-		compileVariantAsync(parser, binary->m_mutations[0], variants, codeBlocks, taskManager, mtx, errorAtomic);
+		compileVariantAsync(parser, binary->m_mutations[0], variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
 
 		ANKI_CHECK(taskManager.joinTasks());
 		ANKI_CHECK(Error(errorAtomic.getNonAtomically()));

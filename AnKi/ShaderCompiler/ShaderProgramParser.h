@@ -50,6 +50,7 @@ class ShaderProgramParserTechnique
 public:
 	ShaderCompilerString m_name;
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
+	Array<U64, U32(ShaderType::kCount)> m_activeMutators = {};
 };
 
 /// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
@@ -58,11 +59,11 @@ public:
 /// It supports the following expressions:
 /// #include {<> | ""}
 /// #pragma once
-/// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2] ...]
-/// #pragma anki skip_mutation MUTATOR0 VALUE0 [MUTATOR1 VALUE1 [MUTATOR2 VALUE2] ...]
+/// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2 ...]]
+/// #pragma anki skip_mutation MUTATOR0 VALUE0 [MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]]
 /// #pragma anki 16bit // Works only in HLSL. Gain 16bit types but loose min16xxx types
-/// #pragma anki technique_start {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call} [NAME]
-/// #pragma anki technique_end {vert | tessc | tesse | geom | task | mesh | frag | comp | rgen | ahit | chit | miss | int | call} [NAME]
+/// #pragma anki technique_start STAGE [NAME] [uses_mutators [USES_MUTATOR1 [USES_MUTATOR2 ...]]]
+/// #pragma anki technique_end STAGE [NAME]
 ///
 /// #pragma anki struct NAME
 /// #	pragma anki member TYPE NAME

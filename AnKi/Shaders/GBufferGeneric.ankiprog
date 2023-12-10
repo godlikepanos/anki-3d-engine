@@ -16,7 +16,37 @@
 
 #pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
 
-// Some defines the clear up things
+#include <AnKi/Shaders/Include/MaterialTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
+#include <AnKi/Shaders/RtShadows.hlsl>
+
+// Define a few things to avoid compilation errors
+#if defined(ANKI_TECHNIQUE_RtShadows) && defined(ANKI_CLOSEST_HIT_SHADER)
+#	define ALPHA_TEST 0
+#	define DIFFUSE_TEX 0
+#	define ANKI_VELOCITY 0
+#	define ANKI_BONES 0
+#	define PARALLAX 0
+#endif
+
+#if defined(ANKI_TECHNIQUE_RtShadows) && defined(ANKI_ANY_HIT_SHADER)
+#	define ANKI_VELOCITY 0
+#	define ANKI_BONES 0
+#	define PARALLAX 0
+#endif
+
+#if defined(ANKI_TASK_SHADER)
+#	define ALPHA_TEST 0
+#	define DIFFUSE_TEX 0
+#	define ANKI_VELOCITY 0
+#	define ANKI_BONES 0
+#	define PARALLAX 0
+#endif
+
+// General defines
 #define GBUFFER defined(ANKI_TECHNIQUE_GBuffer)
 #define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
 #define UVS (GBUFFER || REALLY_ALPHA_TEST)
@@ -31,13 +61,6 @@
 #define PRIMITIVE_BACKFACE_CULLING 1
 #define PRIMITIVE_NO_SAMPLING_POINTS_CULLING 1
 #define PRIMITIVE_ANY_CULLING (PRIMITIVE_BACKFACE_CULLING || PRIMITIVE_NO_SAMPLING_POINTS_CULLING)
-
-#include <AnKi/Shaders/Include/MaterialTypes.h>
-#include <AnKi/Shaders/Include/GpuSceneFunctions.h>
-#include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
-#include <AnKi/Shaders/RtShadows.hlsl>
 
 #pragma anki struct AnKiLocalConstants
 
@@ -120,6 +143,7 @@ struct Mat3x4_2
 	Mat3x4 m_b;
 };
 
+#if ANKI_BONES
 Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, U32 boneTransformsOffset, U32 index)
 {
 	const U32 boneIdx = vert.m_boneIndices[index];
@@ -128,7 +152,6 @@ Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, U32 boneTransformsOffset, U
 	return g_gpuScene.Load<Mat3x4_2>(byteOffset);
 }
 
-#if ANKI_BONES
 void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal)
 {
 	Mat3x4_2 mats = loadBoneTransforms(vert, boneTransformsOffset, 0);
@@ -155,7 +178,7 @@ void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos,
 }
 #endif
 
-#if(ANKI_VELOCITY || ANKI_BONES) && GBUFFER
+#if REALLY_VELOCITY
 void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPos, inout VertOut output)
 {
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
@@ -638,32 +661,32 @@ FragOut main(VertOut input)
 // ===========================================================================
 // Define the techniques                                                     =
 // ===========================================================================
-#pragma anki technique_start vert GBuffer
+#pragma anki technique_start vert GBuffer uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end vert GBuffer
 
-#pragma anki technique_start task GBuffer
+#pragma anki technique_start task GBuffer uses_mutators
 #pragma anki technique_end task GBuffer
 
-#pragma anki technique_start mesh GBuffer
+#pragma anki technique_start mesh GBuffer uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end mesh GBuffer
 
 #pragma anki technique_start frag GBuffer
 #pragma anki technique_end frag GBuffer
 
-#pragma anki technique_start vert Shadows
+#pragma anki technique_start vert Shadows uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end vert Shadows
 
-#pragma anki technique_start task Shadows
+#pragma anki technique_start task Shadows uses_mutators
 #pragma anki technique_end task Shadows
 
-#pragma anki technique_start mesh Shadows
+#pragma anki technique_start mesh Shadows uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end mesh Shadows
 
 #pragma anki technique_start frag Shadows
 #pragma anki technique_end frag Shadows
 
-#pragma anki technique_start ahit RtShadows
+#pragma anki technique_start ahit RtShadows uses_mutators ALPHA_TEST DIFFUSE_TEX
 #pragma anki technique_end ahit RtShadows
 
-#pragma anki technique_start chit RtShadows
+#pragma anki technique_start chit RtShadows uses_mutators
 #pragma anki technique_end chit RtShadows

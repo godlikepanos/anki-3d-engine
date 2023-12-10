@@ -137,7 +137,7 @@ Error ShaderProgramParser::parsePragmaTechniqueStart(const ShaderCompilerString*
 	ANKI_ASSERT(begin && end);
 
 	const PtrSize tokenCount = end - begin;
-	if(tokenCount != 1 && tokenCount != 2)
+	if(tokenCount == 0)
 	{
 		ANKI_PP_ERROR_MALFORMED();
 	}
@@ -152,17 +152,47 @@ Error ShaderProgramParser::parsePragmaTechniqueStart(const ShaderCompilerString*
 	++begin;
 	if(begin == end)
 	{
-		// Last token
 		techniqueName = "Unnamed";
 	}
-	else
+	else if(*begin == "uses_mutators")
+	{
+		techniqueName = "Unnamed";
+	}
+	else if(*begin != "uses_mutators")
 	{
 		techniqueName = *begin;
-
 		++begin;
-		if(begin != end)
+	}
+
+	// Mutators
+	U64 activeMutators = kMaxU64;
+	if(begin != end)
+	{
+		if(*begin != "uses_mutators")
 		{
 			ANKI_PP_ERROR_MALFORMED();
+		}
+		++begin;
+
+		activeMutators = 0;
+		for(; begin != end; ++begin)
+		{
+			// Find mutator
+			U32 count = 0;
+			for(const Mutator& mutator : m_mutators)
+			{
+				if(mutator.m_name == *begin)
+				{
+					activeMutators |= 1_U64 << U64(count);
+					break;
+				}
+				++count;
+			}
+
+			if(count == m_mutators.getSize())
+			{
+				ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
+			}
 		}
 	}
 
@@ -204,6 +234,7 @@ Error ShaderProgramParser::parsePragmaTechniqueStart(const ShaderCompilerString*
 	}
 
 	technique->m_shaderTypes |= ShaderTypeBit(1 << shaderType);
+	technique->m_activeMutators[shaderType] = activeMutators;
 
 	ANKI_ASSERT(extra->m_sourceLines[shaderType].getSize() == 0);
 	extra->m_sourceLines[shaderType] = m_commonSourceLines;
@@ -825,9 +856,16 @@ void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
 	ANKI_ASSERT(!!(technique.m_shaderTypes & ShaderTypeBit(1 << shaderType)));
 
 	source.destroy();
+
+	ANKI_ASSERT(&technique >= m_techniques.getBegin() && &technique < m_techniques.getEnd());
+	const U32 tIdx = U32(&technique - m_techniques.getBegin());
+
 	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
-		source += ShaderCompilerString().sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]);
+		if(!!(technique.m_activeMutators[shaderType] & (1_U64 << U64(i))))
+		{
+			source += ShaderCompilerString().sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]);
+		}
 	}
 
 	source += ShaderCompilerString().sprintf("#define ANKI_TECHNIQUE_%s 1\n", technique.m_name.cstr());
@@ -844,9 +882,6 @@ void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
 	{
 		source += "#define ANKI_SUPPORTS_16BIT_TYPES 0\n";
 	}
-
-	ANKI_ASSERT(&technique >= m_techniques.getBegin() && &technique < m_techniques.getEnd());
-	const U32 tIdx = U32(&technique - m_techniques.getBegin());
 
 	ANKI_ASSERT(m_techniqueExtras[tIdx].m_sources[shaderType].getLength() > 0);
 	source += m_techniqueExtras[tIdx].m_sources[shaderType];

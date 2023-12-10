@@ -51,7 +51,7 @@ static ImporterString getTextureUri(const cgltf_texture_view& view)
 	return out;
 }
 
-/// Read the texture and find out if
+/// Read the texture and find out if it has constant color. If a component is not constant return -1
 static Error findConstantColorsInImage(CString fname, Vec4& constantColor)
 {
 	ImageLoader iloader(&ImporterMemoryPool::getSingleton());

@@ -35,6 +35,7 @@
 #define ANKI_FRAGMENT_SHADER
 #define ANKI_MESH_SHADER
 #define ANKI_COMPUTE_SHADER
+#define ANKI_CLOSEST_HIT_SHADER
 
 using I8 = int;
 using I16 = int;
