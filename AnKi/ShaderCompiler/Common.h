@@ -64,15 +64,12 @@ public:
 	virtual Error joinTasks() = 0;
 };
 
-/// Options to be passed to the compiler.
-ANKI_BEGIN_PACKED_STRUCT
-class ShaderCompilerOptions
+class ShaderCompilerDefine
 {
 public:
-	Bool m_forceFullFloatingPointPrecision = false;
-	Bool m_mobilePlatform = false;
+	CString m_name;
+	I32 m_value;
 };
-ANKI_END_PACKED_STRUCT
 /// @}
 
 } // end namespace anki

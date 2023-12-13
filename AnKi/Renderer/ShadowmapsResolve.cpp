@@ -139,8 +139,11 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 9, getRenderer().getRtShadows().getRt());
 	}
 
-	const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
-	cmdb.setPushConstants(&consts, sizeof(consts));
+	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get())
+	{
+		const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
+		cmdb.setPushConstants(&consts, sizeof(consts));
+	}
 
 	if(g_preferComputeCVar.get())
 	{

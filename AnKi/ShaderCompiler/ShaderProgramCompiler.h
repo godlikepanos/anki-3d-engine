@@ -41,7 +41,7 @@ inline Error deserializeShaderProgramBinaryFromFile(CString fname, ShaderProgram
 
 /// Takes an AnKi special shader program and spits a binary.
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
-						   ShaderProgramAsyncTaskInterface* taskManager, const ShaderCompilerOptions& compilerOptions, ShaderProgramBinary*& binary);
+						   ShaderProgramAsyncTaskInterface* taskManager, ConstWeakArray<ShaderCompilerDefine> defines, ShaderProgramBinary*& binary);
 
 /// Free the binary created ONLY by compileShaderProgram.
 void freeShaderProgramBinary(ShaderProgramBinary*& binary);

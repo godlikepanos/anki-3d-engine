@@ -162,7 +162,7 @@
 #endif
 
 // Mobile or not
-#define ANKI_PLATFORM_MOBILE (ANKI_CPU_ARCH_ARM)
+#define ANKI_PLATFORM_MOBILE ${_ANKI_PLATFORM_MOBILE}
 
 // Some compiler attributes
 #if ANKI_COMPILER_GCC_COMPATIBLE

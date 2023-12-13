@@ -20,14 +20,9 @@ inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {{"
 																			   "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
 inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
-#define ANKI_PLATFORM_MOBILE %d
-#define ANKI_FORCE_FULL_FP_PRECISION %d
-
 #define kMaxBindlessTextures %uu
 #define kMaxBindlessReadonlyTextureBuffers %uu
 )";
-
-static const U64 kShaderHeaderHash = computeHash(kShaderHeader, sizeof(kShaderHeader));
 
 static ShaderType strToShaderType(CString str)
 {
@@ -95,11 +90,15 @@ static ShaderType strToShaderType(CString str)
 	return shaderType;
 }
 
-ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, const ShaderCompilerOptions& compilerOptions)
+ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, ConstWeakArray<ShaderCompilerDefine> defines)
 	: m_fname(fname)
 	, m_fsystem(fsystem)
-	, m_compilerOptions(compilerOptions)
 {
+	for(const ShaderCompilerDefine& def : defines)
+	{
+		m_defineNames.emplaceBack(def.m_name);
+		m_defineValues.emplaceBack(def.m_value);
+	}
 }
 
 ShaderProgramParser::~ShaderProgramParser()
@@ -838,10 +837,9 @@ Error ShaderProgramParser::parse()
 	return Error::kNone;
 }
 
-void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const ShaderCompilerOptions& compilerOptions, ShaderCompilerString& header)
+void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header)
 {
-	header.sprintf(kShaderHeader, kShaderStageNames[shaderType].cstr(), compilerOptions.m_mobilePlatform,
-				   compilerOptions.m_forceFullFloatingPointPrecision, kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers);
+	header.sprintf(kShaderHeader, kShaderStageNames[shaderType].cstr(), kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers);
 }
 
 void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParserTechnique& technique, ShaderType shaderType,
@@ -860,6 +858,11 @@ void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
 	ANKI_ASSERT(&technique >= m_techniques.getBegin() && &technique < m_techniques.getEnd());
 	const U32 tIdx = U32(&technique - m_techniques.getBegin());
 
+	for(U32 i = 0; i < m_defineNames.getSize(); ++i)
+	{
+		source += ShaderCompilerString().sprintf("#define %s %d\n", m_defineNames[i].cstr(), m_defineValues[i]);
+	}
+
 	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
 		if(!!(technique.m_activeMutators[shaderType] & (1_U64 << U64(i))))
@@ -871,7 +874,7 @@ void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
 	source += ShaderCompilerString().sprintf("#define ANKI_TECHNIQUE_%s 1\n", technique.m_name.cstr());
 
 	ShaderCompilerString header;
-	generateAnkiShaderHeader(shaderType, m_compilerOptions, header);
+	generateAnkiShaderHeader(shaderType, header);
 	source += header;
 
 	if(m_16bitTypes)

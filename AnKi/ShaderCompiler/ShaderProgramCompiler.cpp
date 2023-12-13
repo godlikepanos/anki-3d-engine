@@ -289,7 +289,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 }
 
 Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
-								   ShaderProgramAsyncTaskInterface* taskManager_, const ShaderCompilerOptions& compilerOptions,
+								   ShaderProgramAsyncTaskInterface* taskManager_, ConstWeakArray<ShaderCompilerDefine> defines,
 								   ShaderProgramBinary*& binary)
 {
 	ShaderCompilerMemoryPool& memPool = ShaderCompilerMemoryPool::getSingleton();
@@ -299,7 +299,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	memcpy(&binary->m_magic[0], kShaderBinaryMagic, 8);
 
 	// Parse source
-	ShaderProgramParser parser(fname, &fsystem, compilerOptions);
+	ShaderProgramParser parser(fname, &fsystem, defines);
 	ANKI_CHECK(parser.parse());
 
 	if(postParseCallback && postParseCallback->skipCompilation(parser.getHash()))
@@ -492,9 +492,9 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 }
 
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
-						   ShaderProgramAsyncTaskInterface* taskManager, const ShaderCompilerOptions& compilerOptions, ShaderProgramBinary*& binary)
+						   ShaderProgramAsyncTaskInterface* taskManager, ConstWeakArray<ShaderCompilerDefine> defines, ShaderProgramBinary*& binary)
 {
-	const Error err = compileShaderProgramInternal(fname, fsystem, postParseCallback, taskManager, compilerOptions, binary);
+	const Error err = compileShaderProgramInternal(fname, fsystem, postParseCallback, taskManager, defines, binary);
 	if(err)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());

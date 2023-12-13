@@ -281,7 +281,7 @@ Error ResourceFilesystem::init()
 
 #if ANKI_OS_ANDROID
 	// Add the external storage
-	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, excludedStrings));
+	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, {}, {}));
 #endif
 
 	return Error::kNone;

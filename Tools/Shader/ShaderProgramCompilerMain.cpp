@@ -13,8 +13,7 @@ Options:
 -o <name of output>  : The name of the output binary
 -j <thread count>    : Number of threads. Defaults to system's max
 -I <include path>    : The path of the #include files
--force-full-fp       : Force full floating point precision
--mobile-platform     : Build for mobile
+-D<define_name:val>  : Extra defines to pass to the compiler
 )";
 
 class CmdLineArgs
@@ -24,8 +23,8 @@ public:
 	String m_outFname;
 	String m_includePath;
 	U32 m_threadCount = getCpuCoresCount();
-	Bool m_fullFpPrecision = false;
-	Bool m_mobilePlatform = false;
+	DynamicArray<String> m_defineNames;
+	DynamicArray<ShaderCompilerDefine> m_defines;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -91,13 +90,33 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::kUserData;
 			}
 		}
-		else if(strcmp(argv[i], "-force-full-fp") == 0)
+		else if(CString(argv[i]).find("-D") == 0)
 		{
-			info.m_fullFpPrecision = true;
-		}
-		else if(strcmp(argv[i], "-mobile-platform") == 0)
-		{
-			info.m_mobilePlatform = true;
+			CString a = argv[i];
+			if(a.getLength() < 5)
+			{
+				return Error::kUserData;
+			}
+
+			const String arg(a.getBegin() + 2, a.getEnd());
+			StringList tokens;
+			tokens.splitString(arg, '=');
+
+			if(tokens.getSize() != 2)
+			{
+				return Error::kUserData;
+			}
+
+			info.m_defineNames.emplaceBack(tokens.getFront());
+
+			I32 val;
+			const Error err = (tokens.getBegin() + 1)->toNumber(val);
+			if(err)
+			{
+				return Error::kUserData;
+			}
+
+			info.m_defines.emplaceBack(ShaderCompilerDefine{info.m_defineNames.getBack().toCString(), val});
 		}
 		else
 		{
@@ -177,14 +196,9 @@ static Error work(const CmdLineArgs& info)
 	taskManager.m_jobManager.reset((info.m_threadCount) ? newInstance<ThreadJobManager>(DefaultMemoryPool::getSingleton(), info.m_threadCount, true)
 														: nullptr);
 
-	// Compiler options
-	ShaderCompilerOptions compilerOptions;
-	compilerOptions.m_forceFullFloatingPointPrecision = info.m_fullFpPrecision;
-	compilerOptions.m_mobilePlatform = info.m_mobilePlatform;
-
 	// Compile
 	ShaderProgramBinary* binary = nullptr;
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, compilerOptions, binary));
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, info.m_defines, binary));
 
 	class Dummy
 	{

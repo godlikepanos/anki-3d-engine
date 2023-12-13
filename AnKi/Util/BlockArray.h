@@ -323,6 +323,13 @@ private:
 	{
 	public:
 		Mask m_elementsInUseMask{false};
+
+		BlockMetadata() = default;
+
+		BlockMetadata(Bool set)
+			: m_elementsInUseMask(set)
+		{
+		}
 	};
 
 	DynamicArray<BlockStorage*, TMemoryPool> m_blockStorages;
