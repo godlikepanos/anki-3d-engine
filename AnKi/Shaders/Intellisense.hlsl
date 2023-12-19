@@ -216,6 +216,8 @@ U32 asuint(float f);
 
 F32 asfloat(U32 u);
 
+I32 asint(float u);
+
 U32 NonUniformResourceIndex(U32 x);
 
 template<typename T>

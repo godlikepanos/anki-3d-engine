@@ -665,26 +665,6 @@ RVec3 filmGrain(RVec3 color, Vec2 uv, F32 strength, F32 time)
 	return color * grain;
 }
 
-/// Sin approximation: https://www.desmos.com/calculator/svgcjfskne
-F32 fastSin(F32 x)
-{
-	const F32 k2Pi = 2.0 * kPi;
-	const F32 kPiOver2 = kPi / 2.0;
-
-	x = (x + kPiOver2) / (k2Pi) + 0.75;
-	x = frac(x);
-	x = x * 2.0 - 1.0;
-	x = x * abs(x) - x;
-	x *= 4.0;
-	return x;
-}
-
-/// Cos approximation
-F32 fastCos(F32 x)
-{
-	return fastSin(x + kPi / 2.0);
-}
-
 #if defined(ANKI_COMPUTE_SHADER)
 /// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on local variables (the compiler
 /// can't see it's groupshared).
@@ -735,4 +715,26 @@ RVec3 perturbNormal(RVec3 tangentNormal, Vec3 viewDir, Vec2 uv, Vec3 geometricNo
 	RMat3 TBN;
 	TBN.setColumns(T * invmax, B * invmax, geometricNormal);
 	return normalize(mul(TBN, tangentNormal));
+}
+
+/// Project a sphere into NDC. Sphere in view space. The sphere should be in front of the near plane (-sphereCenter.z > sphereRadius + znear)
+/// @param P00 projection matrix's [0,0]
+/// @param P11 projection matrix's [1,1]
+void projectSphereView(Vec3 sphereCenter, F32 sphereRadius, F32 P00, F32 P11, out Vec2 aabbMin, out Vec2 aabbMax)
+{
+	sphereCenter.z = abs(sphereCenter.z);
+
+	const Vec3 cr = sphereCenter * sphereRadius;
+	const F32 czr2 = sphereCenter.z * sphereCenter.z - sphereRadius * sphereRadius;
+
+	const F32 vx = sqrt(sphereCenter.x * sphereCenter.x + czr2);
+	const F32 minx = (vx * sphereCenter.x - cr.z) / (vx * sphereCenter.z + cr.x);
+	const F32 maxx = (vx * sphereCenter.x + cr.z) / (vx * sphereCenter.z - cr.x);
+
+	const F32 vy = sqrt(sphereCenter.y * sphereCenter.y + czr2);
+	const F32 miny = (vy * sphereCenter.y - cr.z) / (vy * sphereCenter.z + cr.y);
+	const F32 maxy = (vy * sphereCenter.y + cr.z) / (vy * sphereCenter.z - cr.y);
+
+	aabbMin = Vec2(minx * P00, miny * P11);
+	aabbMax = Vec2(maxx * P00, maxy * P11);
 }

@@ -347,7 +347,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kI) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Ssao") ? "" : "Ssao");
 	}
 
 	if(in.getKey(KeyCode::kO) == 1)
@@ -357,7 +357,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kH) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
 	}
 
 	/*if(in.getKey(KeyCode::J) == 1)

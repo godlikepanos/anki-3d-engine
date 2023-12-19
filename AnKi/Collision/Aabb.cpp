@@ -15,13 +15,17 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 		absM[i] = absolute(trf.getRotation()[i]);
 	}
 
-	Vec4 center = (m_min + m_max) * 0.5f;
-	Vec4 extend = (m_max - m_min) * 0.5f;
+	const Vec4 center = (m_min + m_max) * 0.5f;
+	const Vec4 extend = (m_max - m_min) * 0.5f;
 
-	Vec4 newC = trf.transform(center);
-	Vec4 newE = Vec4(absM * (extend * trf.getScale()), 0.0f);
+	const Vec4 newC = trf.transform(center);
+	const Vec4 newE = Vec4(absM * (extend * trf.getScale()), 0.0f);
 
-	return Aabb(newC - newE, newC + newE + Vec4(kEpsilonf, kEpsilonf, kEpsilonf, 0.0f));
+	const Vec4 min = newC - newE;
+	const Vec4 max = newC + newE;
+
+	const F32 epsilon = kEpsilonf * 100.0f;
+	return Aabb(min, max + Vec4(epsilon, epsilon, epsilon, 0.0f));
 }
 
 Aabb Aabb::getCompoundShape(const Aabb& b) const

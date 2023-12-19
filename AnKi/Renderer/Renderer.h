@@ -54,13 +54,12 @@ public:
 
 	~Renderer();
 
-#define ANKI_RENDERER_OBJECT_DEF(a, b) \
-	a& get##a() \
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
+	name& get##name() \
 	{ \
-		return *m_##b; \
+		return *m_##name2; \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
-#undef ANKI_RENDERER_OBJECT_DEF
 
 	Bool getRtShadowsEnabled() const
 	{
@@ -214,9 +213,8 @@ public:
 private:
 	/// @name Rendering stages
 	/// @{
-#define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##b;
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) UniquePtr<name, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##name2;
 #include <AnKi/Renderer/RendererObject.def.h>
-#undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
 
 	UVec2 m_tileCounts = UVec2(0u);

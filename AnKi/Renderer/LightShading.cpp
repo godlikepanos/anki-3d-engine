@@ -14,9 +14,9 @@
 #include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
-#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -137,16 +137,20 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		// Bind all
 		cmdb.bindConstantBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingConstants());
 		cmdb.bindUavBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
-		cmdb.bindUavBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindUavBuffer(0, 2, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		rgraphCtx.bindColorTexture(0, 3, getRenderer().getShadowMapping().getShadowmapRt());
+		cmdb.bindUavBuffer(0, 4, getRenderer().getClusterBinning().getClustersBuffer());
 
-		cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindColorTexture(0, 6, getRenderer().getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 9, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 10, getRenderer().getShadowmapsResolve().getRt());
+		cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindColorTexture(0, 7, getRenderer().getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 9, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 10, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindColorTexture(0, 11, getRenderer().getShadowmapsResolve().getRt());
+		rgraphCtx.bindColorTexture(0, 12, getRenderer().getSsao().getRt());
+
+		cmdb.bindAllBindless(1);
 
 		// Draw
 		drawQuad(cmdb);
@@ -159,7 +163,6 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindColorTexture(0, 2, getRenderer().getIndirectDiffuse().getRt());
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getIndirectSpecular().getRt());
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getDepthDownscale().getRt());
 		rgraphCtx.bindTexture(0, 5, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
@@ -338,9 +341,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavFragmentRead);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 							 BufferUsageBit::kUavFragmentRead);
+	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
 
 	// Apply indirect
-	pass.newTextureDependency(getRenderer().getIndirectDiffuse().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getIndirectSpecular().getRt(), readUsage);
 

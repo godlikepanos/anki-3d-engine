@@ -16,7 +16,6 @@
 
 [[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
 [[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(2)]] Texture2D<RVec4> g_quarterDiffuseIndirectTex;
 [[vk::binding(3)]] Texture2D<RVec4> g_quarterSpecularIndirectTex;
 [[vk::binding(4)]] Texture2D<Vec4> g_quarterDepthTex;
 [[vk::binding(5)]] Texture2D<Vec4> g_fullDepthTex;
@@ -64,20 +63,14 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	const F32 depthThreshold = 0.2 / (g_consts.m_far - g_consts.m_near);
 
 	// Do a neareset depth upscale
-	RVec3 diffuse = RVec3(0.0, 0.0, 0.0);
 	RVec3 specular = RVec3(0.0, 0.0, 0.0);
 	if(maxDiff <= depthThreshold)
 	{
-		diffuse = g_quarterDiffuseIndirectTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
 		specular = g_quarterSpecularIndirectTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
 	}
 	else
 	{
 		// Some discontinuites, need to pick the one closest to depth reference
-
-		const RVec4 diffuseR = g_quarterDiffuseIndirectTex.GatherRed(g_linearAnyClampSampler, uv);
-		const RVec4 diffuseG = g_quarterDiffuseIndirectTex.GatherGreen(g_linearAnyClampSampler, uv);
-		const RVec4 diffuseB = g_quarterDiffuseIndirectTex.GatherBlue(g_linearAnyClampSampler, uv);
 
 		const RVec4 specularR = g_quarterSpecularIndirectTex.GatherRed(g_linearAnyClampSampler, uv);
 		const RVec4 specularG = g_quarterSpecularIndirectTex.GatherGreen(g_linearAnyClampSampler, uv);
@@ -98,12 +91,8 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 			minDiff = diffs.z;
 		}
 
-		diffuse = Vec3(diffuseR[comp], diffuseG[comp], diffuseB[comp]);
 		specular = Vec3(specularR[comp], specularG[comp], specularB[comp]);
 	}
-
-	// Do diffuse
-	diffuse *= gbuffer.m_diffuse;
 
 	// Do specular
 	const Vec2 ndc = uvToNdc(uv);
@@ -115,6 +104,6 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	specular *= env;
 
 	// Writeout
-	return min(diffuse + specular, RVec3(kMaxRF32, kMaxRF32, kMaxRF32));
+	return min(specular, RVec3(kMaxRF32, kMaxRF32, kMaxRF32));
 }
 #pragma anki technique_end frag

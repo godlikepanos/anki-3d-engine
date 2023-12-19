@@ -148,9 +148,10 @@ struct CommonMatrices
 	/// pos = Vec3(xy, z);
 	/// @endcode
 	Vec4 m_unprojectionParameters;
+
+	Vec2 m_jitterOffsetNdc;
+	Vec2 m_padding;
 };
-constexpr U32 kSizeof_CommonMatrices = 43u * sizeof(Vec4);
-static_assert(sizeof(CommonMatrices) == kSizeof_CommonMatrices);
 
 /// Common uniforms for light shading passes.
 struct ClusteredShadingConstants

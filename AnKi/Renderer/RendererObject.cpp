@@ -21,7 +21,7 @@ void RendererObject::registerDebugRenderTarget(CString rtName)
 }
 
 Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
-										ShaderProgramPtr& grProg, ShaderTypeBit shaderTypes, CString technique)
+										ShaderProgramPtr& grProg, CString technique, ShaderTypeBit shaderTypes)
 {
 	if(!rsrc.isCreated())
 	{

@@ -124,4 +124,25 @@ struct VolumetricLightingConstants
 	F32 m_maxZSplitsToProcessf;
 };
 
+// SSAO
+struct SsaoConstants
+{
+	F32 m_radius; ///< In meters.
+	U32 m_sampleCount;
+	Vec2 m_viewportSizef;
+
+	Vec4 m_unprojectionParameters;
+
+	F32 m_projectionMat00;
+	F32 m_projectionMat11;
+	F32 m_projectionMat22;
+	F32 m_projectionMat23;
+
+	Vec2 m_prevJitterUv;
+	F32 m_ssaoPower;
+	U32 m_frameCount;
+
+	Mat3x4 m_viewMat;
+};
+
 ANKI_END_NAMESPACE

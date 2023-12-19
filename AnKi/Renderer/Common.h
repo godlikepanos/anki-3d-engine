@@ -15,9 +15,8 @@
 namespace anki {
 
 // Forward
-#define ANKI_RENDERER_OBJECT_DEF(a, b) class a;
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) class name;
 #include <AnKi/Renderer/RendererObject.def.h>
-#undef ANKI_RENDERER_OBJECT_DEF
 
 class Renderer;
 class RendererObject;
