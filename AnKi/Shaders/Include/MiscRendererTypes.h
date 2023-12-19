@@ -127,7 +127,7 @@ struct VolumetricLightingConstants
 // SSAO
 struct SsaoConstants
 {
-	F32 m_radius; ///< In meters.
+	RF32 m_radius; ///< In meters.
 	U32 m_sampleCount;
 	Vec2 m_viewportSizef;
 
@@ -139,7 +139,7 @@ struct SsaoConstants
 	F32 m_projectionMat23;
 
 	Vec2 m_prevJitterUv;
-	F32 m_ssaoPower;
+	RF32 m_ssaoPower;
 	U32 m_frameCount;
 
 	Mat3x4 m_viewMat;
