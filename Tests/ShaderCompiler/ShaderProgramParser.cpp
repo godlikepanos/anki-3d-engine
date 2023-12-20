@@ -41,7 +41,7 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 		}
 	} interface;
 
-	ShaderProgramParser parser("filename0", &interface, ShaderCompilerOptions());
+	ShaderProgramParser parser("filename0", &interface, {});
 	ANKI_TEST_EXPECT_NO_ERR(parser.parse());
 
 #if 0

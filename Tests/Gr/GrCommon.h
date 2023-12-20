@@ -14,8 +14,7 @@ namespace anki {
 inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
 {
 	ShaderCompilerString header;
-	ShaderCompilerOptions compilerOptions;
-	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
+	ShaderProgramParser::generateAnkiShaderHeader(type, header);
 	header += src;
 	ShaderCompilerDynamicArray<U8> spirv;
 	ShaderCompilerString errorLog;

@@ -7,8 +7,7 @@
 #pragma anki mutator ANKI_BONES 0 1
 #pragma anki mutator DIFFUSE_TEX 0 1
 #pragma anki mutator SPECULAR_TEX 0 1
-#pragma anki mutator ROUGHNESS_TEX 0 1
-#pragma anki mutator METAL_TEX 0 1
+#pragma anki mutator ROUGHNESS_METALNESS_TEX 0 1
 #pragma anki mutator NORMAL_TEX 0 1
 #pragma anki mutator PARALLAX 0 1
 #pragma anki mutator EMISSIVE_TEX 0 1
@@ -64,19 +63,18 @@
 
 #pragma anki struct AnKiLocalConstants
 
-#pragma anki member U32 m_diffTex
+#pragma anki member U32 m_diffuseTex
 #pragma anki member U32 m_normalTex
-#pragma anki member U32 m_roughnessTex
-#pragma anki member U32 m_metallicTex
-#pragma anki member U32 m_specTex
+#pragma anki member U32 m_roughnessMetalnessTex
+#pragma anki member U32 m_specularTex
 #pragma anki member U32 m_emissiveTex
 #pragma anki member U32 m_heightTex
 
-#pragma anki member RVec3 m_diffColor
-#pragma anki member RF32 m_roughness
-#pragma anki member RVec3 m_specColor
-#pragma anki member RF32 m_metallic
-#pragma anki member RVec3 m_emission
+#pragma anki member RVec4 m_diffuseScale
+#pragma anki member RF32 m_roughnessScale
+#pragma anki member RF32 m_metalnessScale
+#pragma anki member RVec3 m_specularScale
+#pragma anki member RVec3 m_emissionScale
 #pragma anki member RF32 m_heightmapScale
 #pragma anki member RF32 m_subsurface
 
@@ -479,8 +477,8 @@ void main(VertOut input)
 	ANKI_MAYBE_UNUSED(input);
 #		if REALLY_ALPHA_TEST
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffTex].Sample(g_globalSampler, input.m_uv);
-	if(diffColorA.a == 0.0f)
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, input.m_uv);
+	if(diffColorA.a * localConstants.m_diffuseScale.a == 0.0f)
 	{
 		discard;
 	}
@@ -503,35 +501,32 @@ FragOut main(VertOut input)
 
 #		if DIFFUSE_TEX
 #			if REALLY_ALPHA_TEST
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffTex].Sample(g_globalSampler, uv);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, uv) * localConstants.m_diffuseScale;
 	if(diffColorA.a == 0.0f)
 	{
 		discard;
 	}
 	const RVec3 diffColor = diffColorA.rgb;
 #			else
-	const RVec3 diffColor = g_bindlessTextures2dF32[localConstants.m_diffTex].Sample(g_globalSampler, uv).rgb;
+	const RVec3 diffColor = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, uv).rgb;
 #			endif
 #		else
-	const RVec3 diffColor = localConstants.m_diffColor;
+	const RVec3 diffColor = localConstants.m_diffuseScale;
 #		endif
 
 #		if SPECULAR_TEX
-	const RVec3 specColor = g_bindlessTextures2dF32[localConstants.m_specTex].Sample(g_globalSampler, uv).rgb;
+	const RVec3 specColor = g_bindlessTextures2dF32[localConstants.m_specularTex].Sample(g_globalSampler, uv).rgb * localConstants.m_specularScale;
 #		else
-	const RVec3 specColor = localConstants.m_specColor;
+	const RVec3 specColor = localConstants.m_specularScale;
 #		endif
 
-#		if ROUGHNESS_TEX
-	const RF32 roughness = g_bindlessTextures2dF32[localConstants.m_roughnessTex].Sample(g_globalSampler, uv).g;
+#		if ROUGHNESS_METALNESS_TEX
+	const RVec3 comp = g_bindlessTextures2dF32[localConstants.m_roughnessMetalnessTex].Sample(g_globalSampler, uv).rgb;
+	const RF32 roughness = comp.g * localConstants.m_roughnessScale;
+	const RF32 metallic = comp.b * localConstants.m_metalnessScale;
 #		else
-	const RF32 roughness = localConstants.m_roughness;
-#		endif
-
-#		if METAL_TEX
-	const RF32 metallic = g_bindlessTextures2dF32[localConstants.m_metallicTex].Sample(g_globalSampler, uv).b;
-#		else
-	const RF32 metallic = localConstants.m_metallic;
+	const RF32 roughness = localConstants.m_roughnessScale;
+	const RF32 metallic = localConstants.m_metalnessScale;
 #		endif
 
 #		if NORMAL_TEX
@@ -543,9 +538,9 @@ FragOut main(VertOut input)
 #		endif
 
 #		if EMISSIVE_TEX
-	const RVec3 emission = g_bindlessTextures2dF32[localConstants.m_emissiveTex].Sample(g_globalSampler, uv).rgb;
+	const RVec3 emission = g_bindlessTextures2dF32[localConstants.m_emissiveTex].Sample(g_globalSampler, uv).rgb * localConstants.m_emissionScale;
 #		else
-	const RVec3 emission = localConstants.m_emission;
+	const RVec3 emission = localConstants.m_emissionScale;
 #		endif
 
 #		if ANKI_VELOCITY || ANKI_BONES
@@ -632,7 +627,8 @@ FragOut main(VertOut input)
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffTex].SampleLevel(g_globalSampler, uv, 0.0);
+	const RVec4 diffColorA =
+		g_bindlessTextures2dF32[localConstants.m_diffuseTex].SampleLevel(g_globalSampler, uv, 0.0) * localConstants.m_diffuseScale;
 
 	if(diffColorA.a < 1.0)
 	{
