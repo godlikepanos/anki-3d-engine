@@ -68,8 +68,9 @@ GpuSceneMicroPatcher::~GpuSceneMicroPatcher()
 Error GpuSceneMicroPatcher::init()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuSceneMicroPatching.ankiprogbin", m_copyProgram));
+	ShaderProgramResourceVariantInitInfo varInit(m_copyProgram);
 	const ShaderProgramResourceVariant* variant;
-	m_copyProgram->getOrCreateVariant(variant);
+	m_copyProgram->getOrCreateVariant(varInit, variant);
 	m_grProgram.reset(&variant->getProgram());
 
 	return Error::kNone;

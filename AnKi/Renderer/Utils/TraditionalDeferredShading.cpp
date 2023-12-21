@@ -18,18 +18,10 @@ namespace anki {
 Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
+	for(MutatorValue specular = 0; specular <= 1; ++specular)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TraditionalDeferredShading.ankiprogbin", m_lightProg));
-
-		for(U32 specular = 0; specular <= 1; ++specular)
-		{
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightProg);
-			variantInitInfo.addMutation("SPECULAR", specular);
-
-			const ShaderProgramResourceVariant* variant;
-			m_lightProg->getOrCreateVariant(variantInitInfo, variant);
-			m_lightGrProg[specular].reset(&variant->getProgram());
-		}
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/TraditionalDeferredShading.ankiprogbin", {{"SPECULAR", specular}}, m_lightProg,
+									 m_lightGrProg[specular]));
 	}
 
 	// Shadow sampler
@@ -43,17 +35,10 @@ Error TraditionalDeferredLightShading::init()
 	}
 
 	// Skybox
+	for(MutatorValue i = 0; i < m_skyboxGrProgs.getSize(); ++i)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin", m_skyboxProg));
-
-		for(U32 i = 0; i < m_skyboxGrProgs.getSize(); ++i)
-		{
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_skyboxProg);
-			variantInitInfo.addMutation("METHOD", i);
-			const ShaderProgramResourceVariant* variant;
-			m_skyboxProg->getOrCreateVariant(variantInitInfo, variant);
-			m_skyboxGrProgs[i].reset(&variant->getProgram());
-		}
+		ANKI_CHECK(
+			loadShaderProgram("ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin", {{"METHOD", i}}, m_skyboxProg, m_skyboxGrProgs[i]));
 	}
 
 	return Error::kNone;

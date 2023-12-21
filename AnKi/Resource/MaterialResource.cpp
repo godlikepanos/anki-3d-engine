@@ -551,39 +551,35 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	case RenderingTechnique::kGBuffer:
 		if(key.getMeshShaders())
 		{
-			initInfo.requestShaderTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment);
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment, "GBuffer");
 		}
 		else
 		{
-			initInfo.requestShaderTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment);
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBuffer");
 		}
-		initInfo.requestTechnique("GBuffer");
 		break;
 	case RenderingTechnique::kDepth:
 		if(key.getMeshShaders())
 		{
-			initInfo.requestShaderTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment);
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment, "Shadows");
 		}
 		else
 		{
-			initInfo.requestShaderTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment);
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "Shadows");
 		}
-		initInfo.requestTechnique("Shadows");
 		break;
 	case RenderingTechnique::kForward:
 		if(key.getMeshShaders())
 		{
-			initInfo.requestShaderTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment);
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment, "Forward");
 		}
 		else
 		{
-			initInfo.requestShaderTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment);
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "Forward");
 		}
-		initInfo.requestTechnique("Forward");
 		break;
 	case RenderingTechnique::kRtShadow:
-		initInfo.requestShaderTypes(ShaderTypeBit::kAllHit);
-		initInfo.requestTechnique("RtShadows");
+		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");
 		break;
 	}
 

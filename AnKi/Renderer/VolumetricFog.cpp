@@ -29,12 +29,7 @@ Error VolumetricFog::init()
 	ANKI_R_LOGV("Initializing volumetric fog. Resolution %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog, m_grProg));
 
 	// RT descr
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");

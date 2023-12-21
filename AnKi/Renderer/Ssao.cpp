@@ -47,12 +47,9 @@ Error Ssao::initInternal()
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", Array<SubMutation, 1>{{{"SAMPLE_COUNT", 3}}}, m_prog, m_grProg, "Ssao"));
-
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", Array<SubMutation, 1>{{{"SAMPLE_COUNT", 5}}}, m_prog, m_denoiseGrProgs[0],
-								 "SsaoDenoiseHorizontal"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", Array<SubMutation, 1>{{{"SAMPLE_COUNT", 5}}}, m_prog, m_denoiseGrProgs[1],
-								 "SsaoDenoiseVertical"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SAMPLE_COUNT", 3}}, m_prog, m_grProg, "Ssao"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SAMPLE_COUNT", 5}}, m_prog, m_denoiseGrProgs[0], "SsaoDenoiseHorizontal"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SAMPLE_COUNT", 5}}, m_prog, m_denoiseGrProgs[1], "SsaoDenoiseVertical"));
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 

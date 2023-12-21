@@ -57,15 +57,12 @@ class ShaderProgramResourceVariantInitInfo
 
 public:
 	ShaderProgramResourceVariantInitInfo()
-		: ShaderProgramResourceVariantInitInfo(ShaderProgramResourcePtr())
 	{
 	}
 
 	ShaderProgramResourceVariantInitInfo(const ShaderProgramResourcePtr& ptr)
 		: m_ptr(ptr)
 	{
-		Char name[] = "Unnamed";
-		memcpy(m_techniqueName.getBegin(), name, sizeof(name));
 	}
 
 	~ShaderProgramResourceVariantInitInfo()
@@ -74,18 +71,19 @@ public:
 
 	ShaderProgramResourceVariantInitInfo& addMutation(CString name, MutatorValue t);
 
-	/// Request a technique. If not set it will choose the "Unnamed" technique.
-	void requestTechnique(CString technique)
+	/// Request a non default technique and specific shaders.
+	void requestTechniqueAndTypes(ShaderTypeBit types, CString technique = "Unnamed")
 	{
-		const U32 len = technique.getLength();
-		ANKI_ASSERT(len <= kMaxTechniqueNameLength);
-		memcpy(m_techniqueName.getBegin(), technique.cstr(), len + 1);
-	}
+		ANKI_ASSERT(types != ShaderTypeBit::kNone);
+		ANKI_ASSERT(!(m_shaderTypes & types) && "Shader types already requested. Possibly programmer's error");
+		m_shaderTypes |= types;
 
-	/// Request specific shader types. You can ommit it if the program only contains one group of stages.
-	void requestShaderTypes(ShaderTypeBit types)
-	{
-		m_shaderTypes = types;
+		const U32 len = technique.getLength();
+		ANKI_ASSERT(len > 0 && len <= kMaxTechniqueNameLength);
+		for(ShaderType type : EnumBitsIterable<ShaderType, ShaderTypeBit>(types))
+		{
+			memcpy(m_techniqueNames[type].getBegin(), technique.cstr(), len + 1);
+		}
 	}
 
 private:
@@ -97,7 +95,7 @@ private:
 	Array<MutatorValue, kMaxMutators> m_mutation; ///< The order of storing the values is important. It will be hashed.
 	BitSet<kMaxMutators> m_setMutators = {false};
 
-	Array<Char, kMaxTechniqueNameLength + 1> m_techniqueName;
+	Array<Array<Char, kMaxTechniqueNameLength + 1>, U32(ShaderType::kCount)> m_techniqueNames = {};
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 };
 
@@ -134,19 +132,15 @@ public:
 	/// @note It's thread-safe.
 	void getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const;
 
-	/// @copydoc getOrCreateVariant
-	void getOrCreateVariant(const ShaderProgramResourceVariant*& variant) const
-	{
-		getOrCreateVariant(ShaderProgramResourceVariantInitInfo(), variant);
-	}
-
 private:
 	ShaderProgramBinary* m_binary = nullptr;
 
 	mutable ResourceHashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable RWMutex m_mtx;
 
-	ShaderProgramResourceVariant* createNewVariant(const ShaderProgramResourceVariantInitInfo& info, U32 techniqueIdx) const;
+	ShaderProgramResourceVariant* createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const;
+
+	U32 findTechnique(CString name) const;
 };
 
 inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addMutation(CString name, MutatorValue t)

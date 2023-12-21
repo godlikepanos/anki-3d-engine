@@ -47,7 +47,6 @@ Error Scale::init()
 		return Error::kNone;
 	}
 
-	const Bool preferCompute = g_preferComputeCVar.get();
 	const U32 dlssQuality = g_dlssQualityCVar.get();
 	const U32 fsrQuality = g_fsrQualityCVar.get();
 
@@ -83,18 +82,12 @@ Error Scale::init()
 	// Scale programs
 	if(m_upscalingMethod == UpscalingMethod::kBilinear)
 	{
-		const CString shaderFname = (preferCompute) ? "ShaderBinaries/BlitCompute.ankiprogbin" : "ShaderBinaries/BlitRaster.ankiprogbin";
-
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(shaderFname, m_scaleProg));
-
-		const ShaderProgramResourceVariant* variant;
-		m_scaleProg->getOrCreateVariant(variant);
-		m_scaleGrProg.reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Blit.ankiprogbin", m_scaleProg, m_scaleGrProg));
 	}
 	else if(m_upscalingMethod == UpscalingMethod::kFsr)
 	{
-		const Array<SubMutation, 2> mutation = {{{"SHARPEN", 0}, {"FSR_QUALITY", MutatorValue(fsrQuality - 1)}}};
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Fsr.ankiprogbin", mutation, m_scaleProg, m_scaleGrProg));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Fsr.ankiprogbin", {{"SHARPEN", 0}, {"FSR_QUALITY", MutatorValue(fsrQuality - 1)}}, m_scaleProg,
+									 m_scaleGrProg));
 	}
 	else if(m_upscalingMethod == UpscalingMethod::kGr)
 	{
@@ -110,18 +103,13 @@ Error Scale::init()
 	// Sharpen programs
 	if(m_sharpenMethod == SharpenMethod::kRcas)
 	{
-		const Array<SubMutation, 2> mutation = {{{"SHARPEN", 1}, {"FSR_QUALITY", 0}}};
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Fsr.ankiprogbin", mutation, m_sharpenProg, m_sharpenGrProg));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Fsr.ankiprogbin", {{"SHARPEN", 1}, {"FSR_QUALITY", 0}}, m_sharpenProg, m_sharpenGrProg));
 	}
 
 	// Tonemapping programs
 	if(m_neeedsTonemapping)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(
-			(preferCompute) ? "ShaderBinaries/TonemapCompute.ankiprogbin" : "ShaderBinaries/TonemapRaster.ankiprogbin", m_tonemapProg));
-		const ShaderProgramResourceVariant* variant;
-		m_tonemapProg->getOrCreateVariant(variant);
-		m_tonemapGrProg.reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Tonemap.ankiprogbin", m_tonemapProg, m_tonemapGrProg));
 	}
 
 	// Descriptors

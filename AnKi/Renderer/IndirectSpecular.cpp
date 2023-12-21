@@ -58,7 +58,7 @@ Error IndirectSpecular::initInternal()
 	m_fbDescr.bake();
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IndirectSpecular.ankiprogbin",
-								 Array<SubMutation, 2>{{{"EXTRA_REJECTION", false}, {"STOCHASTIC", g_ssrStochasticCVar.get()}}}, m_prog, m_grProg));
+								 {{"EXTRA_REJECTION", false}, {"STOCHASTIC", g_ssrStochasticCVar.get()}}, m_prog, m_grProg));
 
 	return Error::kNone;
 }

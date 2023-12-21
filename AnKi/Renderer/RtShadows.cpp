@@ -54,33 +54,27 @@ Error RtShadows::initInternal()
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenAndMissProg);
 		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar.get());
-		variantInitInfo.requestTechnique("RtShadows");
-
-		variantInitInfo.requestShaderTypes(ShaderTypeBit::kRayGen);
+		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtShadows");
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo, variant);
 		m_rtLibraryGrProg.reset(&variant->getProgram());
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
-		variantInitInfo.requestShaderTypes(ShaderTypeBit::kMiss);
-		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo, variant);
+		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_rayGenAndMissProg);
+		variantInitInfo2.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar.get());
+		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtShadows");
+		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo2, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 	}
 
 	// Denoise program
 	if(!m_useSvgf)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsDenoise.ankiprogbin", m_denoiseProg));
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
-		variantInitInfo.addMutation("BLUR_ORIENTATION", 0);
+		ANKI_CHECK(
+			loadShaderProgram("ShaderBinaries/RtShadowsDenoise.ankiprogbin", {{"BLUR_ORIENTATION", 0}}, m_denoiseProg, m_grDenoiseHorizontalProg));
 
-		const ShaderProgramResourceVariant* variant;
-		m_denoiseProg->getOrCreateVariant(variantInitInfo, variant);
-		m_grDenoiseHorizontalProg.reset(&variant->getProgram());
-
-		variantInitInfo.addMutation("BLUR_ORIENTATION", 1);
-		m_denoiseProg->getOrCreateVariant(variantInitInfo, variant);
-		m_grDenoiseVerticalProg.reset(&variant->getProgram());
+		ANKI_CHECK(
+			loadShaderProgram("ShaderBinaries/RtShadowsDenoise.ankiprogbin", {{"BLUR_ORIENTATION", 1}}, m_denoiseProg, m_grDenoiseVerticalProg));
 	}
 
 	// SVGF variance program
@@ -92,17 +86,9 @@ Error RtShadows::initInternal()
 	// SVGF atrous program
 	if(m_useSvgf)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", m_svgfAtrousProg));
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
-		variantInitInfo.addMutation("LAST_PASS", 0);
-
-		const ShaderProgramResourceVariant* variant;
-		m_svgfAtrousProg->getOrCreateVariant(variantInitInfo, variant);
-		m_svgfAtrousGrProg.reset(&variant->getProgram());
-
-		variantInitInfo.addMutation("LAST_PASS", 1);
-		m_svgfAtrousProg->getOrCreateVariant(variantInitInfo, variant);
-		m_svgfAtrousLastPassGrProg.reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", {{"LAST_PASS", 0}}, m_svgfAtrousProg, m_svgfAtrousGrProg));
+		ANKI_CHECK(
+			loadShaderProgram("ShaderBinaries/RtShadowsSvgfAtrous.ankiprogbin", {{"LAST_PASS", 1}}, m_svgfAtrousProg, m_svgfAtrousLastPassGrProg));
 	}
 
 	// Upscale program

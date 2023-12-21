@@ -20,7 +20,7 @@ void RendererObject::registerDebugRenderTarget(CString rtName)
 	getRenderer().registerDebugRenderTarget(this, rtName);
 }
 
-Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
+Error RendererObject::loadShaderProgram(CString filename, std::initializer_list<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
 										ShaderProgramPtr& grProg, CString technique, ShaderTypeBit shaderTypes)
 {
 	if(!rsrc.isCreated())
@@ -34,31 +34,63 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 		initInf.addMutation(pair.m_mutatorName, pair.m_value);
 	}
 
-	if(technique)
+	if(technique.isEmpty())
 	{
-		initInf.requestTechnique(technique);
+		technique = "Unnamed";
 	}
 
-	if(!!shaderTypes)
+	if(!shaderTypes)
 	{
-		initInf.requestShaderTypes(shaderTypes);
-	}
-	else if(rsrc->getBinary().m_shaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
-	{
-		if(g_preferComputeCVar.get())
+		U32 techniqueIdx = kMaxU32;
+		for(U32 i = 0; i < rsrc->getBinary().m_techniques.getSize(); ++i)
 		{
-			initInf.requestShaderTypes(ShaderTypeBit::kCompute);
+			if(technique == rsrc->getBinary().m_techniques[i].m_name.getBegin())
+			{
+				techniqueIdx = i;
+				break;
+			}
+		}
+		ANKI_ASSERT(techniqueIdx != kMaxU32);
+		const ShaderTypeBit techniqueShaderTypes = rsrc->getBinary().m_techniques[techniqueIdx].m_shaderTypes;
+
+		if(techniqueShaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
+		{
+			if(g_preferComputeCVar.get())
+			{
+				shaderTypes = ShaderTypeBit::kCompute;
+			}
+			else
+			{
+				shaderTypes = ShaderTypeBit::kFragment | ShaderTypeBit::kVertex;
+			}
+		}
+		else if(techniqueShaderTypes == ShaderTypeBit::kCompute)
+		{
+			shaderTypes = techniqueShaderTypes;
+		}
+		else if(techniqueShaderTypes == (ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
+		{
+			shaderTypes = techniqueShaderTypes;
 		}
 		else
 		{
-			initInf.requestShaderTypes(ShaderTypeBit::kFragment | ShaderTypeBit::kVertex);
+			ANKI_ASSERT(!"Can't figure out a sensible default");
 		}
 	}
+
+	initInf.requestTechniqueAndTypes(shaderTypes, technique);
 
 	const ShaderProgramResourceVariant* variant;
 	rsrc->getOrCreateVariant(initInf, variant);
 
-	grProg.reset(&variant->getProgram());
+	if(variant)
+	{
+		grProg.reset(&variant->getProgram());
+	}
+	else
+	{
+		grProg.reset(nullptr);
+	}
 
 	return Error::kNone;
 }

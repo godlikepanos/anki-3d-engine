@@ -24,10 +24,9 @@ Error GpuVisibility::init()
 		{
 			for(MutatorValue genHash = 0; genHash < 2; ++genHash)
 			{
-				ANKI_CHECK(loadShaderProgram(
-					"ShaderBinaries/GpuVisibility.ankiprogbin",
-					Array<SubMutation, 4>{{{"HZB_TEST", hzb}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}}},
-					m_prog, m_frustumGrProgs[hzb][gatherAabbs][genHash]));
+				ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+											 {{"HZB_TEST", hzb}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}},
+											 m_prog, m_frustumGrProgs[hzb][gatherAabbs][genHash]));
 			}
 		}
 	}
@@ -36,10 +35,9 @@ Error GpuVisibility::init()
 	{
 		for(MutatorValue genHash = 0; genHash < 2; ++genHash)
 		{
-			ANKI_CHECK(loadShaderProgram(
-				"ShaderBinaries/GpuVisibility.ankiprogbin",
-				Array<SubMutation, 4>{{{"HZB_TEST", 0}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}}}, m_prog,
-				m_distGrProgs[gatherAabbs][genHash]));
+			ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+										 {{"HZB_TEST", 0}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}}, m_prog,
+										 m_distGrProgs[gatherAabbs][genHash]));
 		}
 	}
 
@@ -347,28 +345,15 @@ Error GpuVisibilityNonRenderables::init()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuVisibilityNonRenderables.ankiprogbin", m_prog));
 
-	for(U32 hzb = 0; hzb < 2; ++hzb)
+	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
 	{
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			for(U32 cpuFeedback = 0; cpuFeedback < 2; ++cpuFeedback)
+			for(MutatorValue cpuFeedback = 0; cpuFeedback < 2; ++cpuFeedback)
 			{
-				ShaderProgramResourceVariantInitInfo variantInit(m_prog);
-				variantInit.addMutation("HZB_TEST", hzb);
-				variantInit.addMutation("OBJECT_TYPE", U32(type));
-				variantInit.addMutation("CPU_FEEDBACK", cpuFeedback);
-
-				const ShaderProgramResourceVariant* variant;
-				m_prog->getOrCreateVariant(variantInit, variant);
-
-				if(variant)
-				{
-					m_grProgs[hzb][type][cpuFeedback].reset(&variant->getProgram());
-				}
-				else
-				{
-					m_grProgs[hzb][type][cpuFeedback].reset(nullptr);
-				}
+				ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityNonRenderables.ankiprogbin",
+											 {{"HZB_TEST", hzb}, {"OBJECT_TYPE", MutatorValue(type)}, {"CPU_FEEDBACK", cpuFeedback}}, m_prog,
+											 m_grProgs[hzb][type][cpuFeedback]));
 			}
 		}
 	}

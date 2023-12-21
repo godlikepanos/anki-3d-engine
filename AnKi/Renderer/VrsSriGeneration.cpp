@@ -53,14 +53,12 @@ Error VrsSriGeneration::initInternal()
 
 	if(m_sriTexelDimension == 16 && GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 32)
 	{
-		// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No need
-		// for shared mem
+		// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No need for shared mem
 		variantInit.addMutation("SHARED_MEMORY", 0);
 	}
 	else if(m_sriTexelDimension == 8 && GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 16)
 	{
-		// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No need
-		// for shared mem
+		// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No need for shared mem
 		variantInit.addMutation("SHARED_MEMORY", 0);
 	}
 	else
@@ -74,13 +72,8 @@ Error VrsSriGeneration::initInternal()
 	m_prog->getOrCreateVariant(variantInit, variant);
 	m_grProg.reset(&variant->getProgram());
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg));
-	m_visualizeProg->getOrCreateVariant(variant);
-	m_visualizeGrProg.reset(&variant->getProgram());
-
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriDownscale.ankiprogbin", m_downscaleProg));
-	m_downscaleProg->getOrCreateVariant(variant);
-	m_downscaleGrProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VrsSriVisualizeRenderTarget.ankiprogbin", m_visualizeProg, m_visualizeGrProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VrsSriDownscale.ankiprogbin", m_downscaleProg, m_downscaleGrProg));
 
 	return Error::kNone;
 }

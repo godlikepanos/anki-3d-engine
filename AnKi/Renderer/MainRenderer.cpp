@@ -55,7 +55,6 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	{
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Blit.ankiprogbin", m_blitProg));
 		ShaderProgramResourceVariantInitInfo varInit(m_blitProg);
-		varInit.requestShaderTypes(ShaderTypeBit::kFragment | ShaderTypeBit::kVertex);
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(varInit, variant);
 		m_blitGrProg.reset(&variant->getProgram());

@@ -133,18 +133,12 @@ Error ProbeReflections::initIrradiance()
 
 	// Create prog
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IrradianceDice.ankiprogbin", m_irradiance.m_prog));
-
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
-
-		variantInitInfo.addMutation("WORKGROUP_SIZE_XY", U32(m_irradiance.m_workgroupSize));
-		variantInitInfo.addMutation("LIGHT_SHADING_TEX", 1);
-		variantInitInfo.addMutation("STORE_LOCATION", 1);
-		variantInitInfo.addMutation("SECOND_BOUNCE", 0);
-
-		const ShaderProgramResourceVariant* variant;
-		m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_irradiance.m_grProg.reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/IrradianceDice.ankiprogbin",
+									 {{"WORKGROUP_SIZE_XY", MutatorValue(m_irradiance.m_workgroupSize)},
+									  {"LIGHT_SHADING_TEX", 1},
+									  {"STORE_LOCATION", 1},
+									  {"SECOND_BOUNCE", 0}},
+									 m_irradiance.m_prog, m_irradiance.m_grProg));
 	}
 
 	// Create buff

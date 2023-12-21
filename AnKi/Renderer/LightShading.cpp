@@ -87,14 +87,10 @@ Error LightShading::initSkybox()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
 
-	for(U32 method = 0; method < 2; ++method)
+	for(MutatorValue method = 0; method < 2; ++method)
 	{
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_skybox.m_prog);
-		variantInitInfo.addMutation("METHOD", method);
-		const ShaderProgramResourceVariant* variant;
-		m_skybox.m_prog->getOrCreateVariant(variantInitInfo, variant);
-
-		m_skybox.m_grProgs[method].reset(&variant->getProgram());
+		ANKI_CHECK(
+			loadShaderProgram("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}, m_skybox.m_prog, m_skybox.m_grProgs[method]));
 	}
 
 	return Error::kNone;

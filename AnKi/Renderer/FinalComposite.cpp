@@ -33,24 +33,15 @@ Error FinalComposite::initInternal()
 	m_fbDescr.bake();
 
 	// Progs
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0);
-	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
-
-	for(U32 dbg = 0; dbg < 2; ++dbg)
+	for(MutatorValue dbg = 0; dbg < 2; ++dbg)
 	{
-		const ShaderProgramResourceVariant* variant;
-		variantInitInfo.addMutation("DBG_ENABLED", dbg);
-		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProgs[dbg].reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/FinalComposite.ankiprogbin",
+									 {{"FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0}, {"BLOOM_ENABLED", 1}, {"DBG_ENABLED", dbg}},
+									 m_prog, m_grProgs[dbg]));
 	}
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg));
-	const ShaderProgramResourceVariant* variant;
-	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
-	m_defaultVisualizeRenderTargetGrProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg,
+								 m_defaultVisualizeRenderTargetGrProg));
 
 	return Error::kNone;
 }

@@ -44,14 +44,7 @@ Error VolumetricLightingAccumulation::init()
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
 	// Shaders
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VolumetricLightingAccumulation.ankiprogbin", {{"ENABLE_SHADOWS", 1}}, m_prog, m_grProg));
 
 	// Create RTs
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,

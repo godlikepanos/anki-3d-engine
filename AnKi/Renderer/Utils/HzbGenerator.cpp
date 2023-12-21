@@ -44,16 +44,8 @@ Error HzbGenerator::init()
 		m_maxSampler = GrManager::getSingleton().newSampler(sinit);
 	}
 
-	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/HzbGenPyramid.ankiprogbin", m_genPyramidProg));
-
-		ShaderProgramResourceVariantInitInfo variantInit(m_genPyramidProg);
-		variantInit.addMutation("REDUCTION_TYPE", 1);
-		variantInit.addMutation("MIN_MAX_SAMPLER", m_maxSampler.isCreated());
-		const ShaderProgramResourceVariant* variant;
-		m_genPyramidProg->getOrCreateVariant(variantInit, variant);
-		m_genPyramidGrProg.reset(&variant->getProgram());
-	}
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HzbGenPyramid.ankiprogbin", {{"REDUCTION_TYPE", 1}, {"MIN_MAX_SAMPLER", m_maxSampler.isCreated()}},
+								 m_genPyramidProg, m_genPyramidGrProg));
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HzbMaxDepth.ankiprogbin", m_maxDepthProg, m_maxDepthGrProg));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HzbMaxDepthProject.ankiprogbin", m_maxBoxProg, m_maxBoxGrProg));

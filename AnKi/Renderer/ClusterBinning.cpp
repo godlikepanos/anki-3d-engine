@@ -33,14 +33,11 @@ Error ClusterBinning::init()
 
 	for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 	{
-		ShaderProgramResourceVariantInitInfo inf(m_binningProg);
-		inf.addMutation("OBJECT_TYPE", MutatorValue(type));
-		const ShaderProgramResourceVariant* variant;
-		m_binningProg->getOrCreateVariant(inf, variant);
-		m_binningGrProgs[type].reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_binningProg,
+									 m_binningGrProgs[type]));
 
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningPackVisibles.ankiprogbin",
-									 Array<SubMutation, 1>{{{"OBJECT_TYPE", MutatorValue(type)}}}, m_packingProg, m_packingGrProgs[type]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningPackVisibles.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_packingProg,
+									 m_packingGrProgs[type]));
 	}
 
 	return Error::kNone;

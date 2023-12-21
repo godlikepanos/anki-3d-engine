@@ -54,62 +54,45 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	// Sanity checks
 	ANKI_ASSERT(info.m_setMutators.getSetBitCount() == m_binary->m_mutators.getSize());
 
-	// Find the technique
-	const CString techniqueName = info.m_techniqueName.getBegin();
-	U32 techniqueIdx = kMaxU32;
-	for(U32 i = 0; i < m_binary->m_techniques.getSize(); ++i)
+	// User didn't provided Try to guess some defaults
+	if(!info.m_shaderTypes)
 	{
-		if(m_binary->m_techniques[i].m_name.getBegin() == techniqueName)
+		U32 techniqueIdx = kMaxU32;
+		for(U32 i = 0; i < m_binary->m_techniques.getSize(); ++i)
 		{
-			techniqueIdx = i;
-			break;
+			if(CString("Unnamed") == m_binary->m_techniques[i].m_name.getBegin())
+			{
+				techniqueIdx = i;
+				break;
+			}
 		}
-	}
-	ANKI_ASSERT(techniqueIdx != kMaxU32 && "Technique not found");
-	const ShaderProgramBinaryTechnique& technique = m_binary->m_techniques[techniqueIdx];
+		ANKI_ASSERT(techniqueIdx != kMaxU32);
+		const ShaderTypeBit techniqueShaderTypes = m_binary->m_techniques[techniqueIdx].m_shaderTypes;
 
-	// Find the shader stages
-	if(info.m_shaderTypes == ShaderTypeBit::kNone)
-	{
-		// Try to guess the shader types
-
-		if(technique.m_shaderTypes == ShaderTypeBit::kCompute)
+		if(techniqueShaderTypes == (ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
 		{
-			// Only compute
+			info.requestTechniqueAndTypes(techniqueShaderTypes, "Unnamed");
 		}
-		else if((technique.m_shaderTypes & ~(ShaderTypeBit::kAllLegacyGeometry | ShaderTypeBit::kFragment)) == ShaderTypeBit::kNone)
+		else if(techniqueShaderTypes == ShaderTypeBit::kCompute)
 		{
-			// Only legacy geometry
-		}
-		else if((technique.m_shaderTypes & ~(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment)) == ShaderTypeBit::kNone)
-		{
-			// Only modern geometry
-		}
-		else if((technique.m_shaderTypes & ~ShaderTypeBit::kAllHit) == ShaderTypeBit::kNone)
-		{
-			// Only hit
-		}
-		else if(technique.m_shaderTypes == ShaderTypeBit::kMiss)
-		{
-			// Only miss
-		}
-		else if(technique.m_shaderTypes == ShaderTypeBit::kRayGen)
-		{
-			// Only ray gen
+			info.requestTechniqueAndTypes(techniqueShaderTypes, "Unnamed");
 		}
 		else
 		{
 			ANKI_ASSERT(!"Can't figure out a sensible default");
 		}
-
-		info.m_shaderTypes = technique.m_shaderTypes;
 	}
-
-	ANKI_ASSERT((info.m_shaderTypes & technique.m_shaderTypes) == info.m_shaderTypes);
 
 	// Compute variant hash
 	U64 hash = computeHash(&info.m_shaderTypes, sizeof(info.m_shaderTypes));
-	hash = appendHash(techniqueName.cstr(), techniqueName.getLength(), hash);
+
+	for(ShaderType stype : EnumBitsIterable<ShaderType, ShaderTypeBit>(info.m_shaderTypes))
+	{
+		const PtrSize len = strlen(info.m_techniqueNames[stype].getBegin());
+		ANKI_ASSERT(len > 0);
+		hash = appendHash(info.m_techniqueNames[stype].getBegin(), len, hash);
+	}
+
 	if(m_binary->m_mutators.getSize())
 	{
 		hash = appendHash(info.m_mutation.getBegin(), m_binary->m_mutators.getSize() * sizeof(info.m_mutation[0]), hash);
@@ -145,7 +128,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	}
 
 	// Create
-	ShaderProgramResourceVariant* v = createNewVariant(info, techniqueIdx);
+	ShaderProgramResourceVariant* v = createNewVariant(info);
 	if(v)
 	{
 		m_variants.emplace(hash, v);
@@ -157,7 +140,23 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	}
 }
 
-ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitInfo& info, U32 techniqueIdx) const
+U32 ShaderProgramResource::findTechnique(CString name) const
+{
+	U32 techniqueIdx = kMaxU32;
+	for(U32 i = 0; i < m_binary->m_techniques.getSize(); ++i)
+	{
+		if(m_binary->m_techniques[i].m_name.getBegin() == name)
+		{
+			techniqueIdx = i;
+			break;
+		}
+	}
+	ANKI_ASSERT(techniqueIdx != kMaxU32 && "Technique not found");
+
+	return techniqueIdx;
+}
+
+ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const
 {
 	// Get the binary program variant
 	const ShaderProgramBinaryVariant* binaryVariant = nullptr;
@@ -203,6 +202,11 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 		Array<ShaderPtr, U32(ShaderType::kCount)> shaderRefs; // Just for refcounting
 		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(info.m_shaderTypes))
 		{
+			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
+
+			const U32 techniqueIdx = findTechnique(info.m_techniqueNames[shaderType].getBegin());
+			ANKI_ASSERT(!!(m_binary->m_techniques[techniqueIdx].m_shaderTypes & shaderBit));
+
 			const ResourceString shaderName = (progName + "_" + m_binary->m_techniques[techniqueIdx].m_name.getBegin()).cstr();
 			ShaderInitInfo inf(shaderName);
 			inf.m_shaderType = shaderType;
@@ -210,7 +214,6 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 			ShaderPtr shader = GrManager::getSingleton().newShader(inf);
 			shaderRefs[shaderType] = shader;
 
-			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
 			if(!!(shaderBit & ShaderTypeBit::kAllGraphics))
 			{
 				progInf.m_graphicsShaders[shaderType] = shader.get();
@@ -231,6 +234,21 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 	else
 	{
 		ANKI_ASSERT(!!(info.m_shaderTypes & ShaderTypeBit::kAllRayTracing));
+
+		U32 techniqueIdx = kMaxU32;
+		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(info.m_shaderTypes))
+		{
+			const U32 idx = findTechnique(info.m_techniqueNames[shaderType].getBegin());
+			if(techniqueIdx == kMaxU32)
+			{
+				techniqueIdx = idx;
+			}
+			else
+			{
+				ANKI_ASSERT(idx == techniqueIdx && "Can't mix and match different techniques in ray tracing");
+			}
+		}
+		ANKI_ASSERT(techniqueIdx != kMaxU32);
 
 		// Find the library
 		const CString libName = m_binary->m_techniques[techniqueIdx].m_name.getBegin();

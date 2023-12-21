@@ -44,10 +44,9 @@ Error ShadowmapsResolve::initInternal()
 	m_fbDescr.bake();
 
 	// Prog
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowmapsResolve.ankiprogbin",
-								 Array<SubMutation, 2>{{{"PCF", g_shadowMappingPcfCVar.get() != 0},
-														{"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled()}}},
-								 m_prog, m_grProg));
+	ANKI_CHECK(loadShaderProgram(
+		"ShaderBinaries/ShadowmapsResolve.ankiprogbin",
+		{{"PCF", g_shadowMappingPcfCVar.get() != 0}, {"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled()}}, m_prog, m_grProg));
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 

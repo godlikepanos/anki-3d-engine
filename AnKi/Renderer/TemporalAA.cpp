@@ -29,10 +29,7 @@ Error TemporalAA::initInternal()
 {
 	ANKI_R_LOGV("Initializing TAA");
 
-	{
-		const Array<SubMutation, 2> mutation = {{{"VARIANCE_CLIPPING", 1}, {"YCBCR", 0}}};
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/TemporalAA.ankiprogbin", mutation, m_prog, m_grProg));
-	}
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/TemporalAA.ankiprogbin", {{"VARIANCE_CLIPPING", 1}, {"YCBCR", 0}}, m_prog, m_grProg));
 
 	for(U i = 0; i < 2; ++i)
 	{
