@@ -818,6 +818,11 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kEXT_host_query_reset;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_fragment_shader_barycentric;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -1158,6 +1163,25 @@ Error GrManagerImpl::initDevice()
 	{
 		ANKI_VK_LOGE(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME " is not supported");
 		return Error::kFunctionFailed;
+	}
+
+	// Barycentrics
+	VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR baryFeatures = {};
+	if(!!(m_extensions & VulkanExtensions::kKHR_fragment_shader_barycentric))
+	{
+		baryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(baryFeatures);
+
+		if(baryFeatures.fragmentShaderBarycentric == false)
+		{
+			ANKI_VK_LOGE("VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::fragmentShaderBarycentric is false");
+			return Error::kFunctionFailed;
+		}
+
+		baryFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &baryFeatures;
+
+		m_capabilities.m_barycentrics = true;
 	}
 
 	VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = {};

@@ -567,15 +567,13 @@ FragOut main(
 	ANKI_MAYBE_UNUSED(uv);
 
 #		if DIFFUSE_TEX
-#			if REALLY_ALPHA_TEST
 	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, uv) * localConstants.m_diffuseScale;
+	const RVec3 diffColor = diffColorA.rgb;
+#			if REALLY_ALPHA_TEST
 	if(diffColorA.a == 0.0f)
 	{
 		discard;
 	}
-	const RVec3 diffColor = diffColorA.rgb;
-#			else
-	const RVec3 diffColor = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, uv).rgb;
 #			endif
 #		else
 	const RVec3 diffColor = localConstants.m_diffuseScale;

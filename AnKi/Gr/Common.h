@@ -225,6 +225,9 @@ public:
 
 	/// Can create PipelineQuery objects.
 	Bool m_pipelineQuery = false;
+
+	/// Has access to barycentrics.
+	Bool m_barycentrics = false;
 };
 ANKI_END_PACKED_STRUCT
 
