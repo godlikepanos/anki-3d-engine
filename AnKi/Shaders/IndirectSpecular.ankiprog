@@ -6,7 +6,7 @@
 #pragma anki mutator STOCHASTIC 0 1
 #pragma anki mutator EXTRA_REJECTION 0 1
 
-#if defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/LightFunctions.hlsl>
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
@@ -35,19 +35,19 @@
 
 constexpr Vec2 kNoiseTexSize = 64.0;
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 [[vk::binding(14)]] RWTexture2D<RVec4> g_outUav;
 #	endif
 
 ANKI_BINDLESS_SET(1)
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
 RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #	endif
 {
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	if(any(svDispatchThreadId.xy >= g_consts.m_framebufferSize))
 	{
 		return;
@@ -175,7 +175,7 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	// Read probes
 	[branch] if(ssrAttenuation < 1.0)
 	{
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 		const Vec2 fragCoord = Vec2(svDispatchThreadId.xy) + 0.5;
 #	else
 		const Vec2 fragCoord = svPosition.xy;
@@ -247,13 +247,13 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 	// Store
 	ssrAttenuation = saturate(ssrAttenuation);
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	g_outUav[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
 #	else
 	return outColor;
 #	endif
 }
-#endif // defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 
 #pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>

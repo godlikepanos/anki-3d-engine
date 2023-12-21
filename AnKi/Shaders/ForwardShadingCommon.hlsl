@@ -16,7 +16,7 @@
 //
 // Frag
 //
-#if defined(ANKI_FRAGMENT_SHADER)
+#if ANKI_FRAGMENT_SHADER
 struct FragOut
 {
 	RVec4 m_color : SV_TARGET0;
@@ -58,15 +58,11 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 frag2Light = light.m_position - worldPos;
 		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
 
-#	if defined(ANKI_LOD) && ANKI_LOD > 1
-		const F32 shadow = 1.0;
-#	else
 		F32 shadow = 1.0;
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 			shadow = computeShadowFactorPointLight(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
 		}
-#	endif
 
 		outColor += diffC * (att * shadow);
 	}
@@ -85,15 +81,11 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 
 		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
-#	if defined(ANKI_LOD) && ANKI_LOD > 1
-		const F32 shadow = 1.0;
-#	else
 		F32 shadow = 1.0;
 		[branch] if(light.m_shadow != 0u)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}
-#	endif
 
 		outColor += diffC * (att * spot * shadow);
 	}
@@ -138,4 +130,4 @@ void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVS
 	packGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale), output);
 }
 
-#endif // defined(ANKI_FRAGMENT_SHADER)
+#endif // ANKI_FRAGMENT_SHADER

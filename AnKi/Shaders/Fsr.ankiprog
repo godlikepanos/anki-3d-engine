@@ -7,12 +7,12 @@
 #pragma anki mutator SHARPEN 0 1
 #pragma anki mutator FSR_QUALITY 0 1
 
-#if defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 
 [[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(1)]] Texture2D<Vec4> g_tex;
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 [[vk::binding(2)]] RWTexture2D<Vec4> g_outUav;
 #	endif
 
@@ -76,13 +76,13 @@ AH3 FsrEasuSampleH(AF2 p)
 #	include <ThirdParty/FidelityFX/ffx_fsr1.h>
 // FSR end
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
 Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #	endif
 {
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	if(any(svDispatchThreadId >= g_consts.m_viewportSize))
 	{
 		return;
@@ -102,13 +102,13 @@ Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	FsrEasuH(color, uv, g_consts.m_fsrConsts0, g_consts.m_fsrConsts1, g_consts.m_fsrConsts2, g_consts.m_fsrConsts3);
 #	endif
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	g_outUav[svDispatchThreadId.xy] = Vec4(color, 0.0);
 #	else
 	return HVec3(color);
 #	endif
 }
-#endif // defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 
 #pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>

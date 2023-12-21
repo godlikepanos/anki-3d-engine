@@ -42,7 +42,7 @@ Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
 	return o;
 }
 
-#if defined(ANKI_FRAGMENT_SHADER)
+#if ANKI_FRAGMENT_SHADER
 // Stolen from shadertoy.com/view/4tyGDD
 Vec4 textureCatmullRom4Samples(Texture2D tex, SamplerState sampl, Vec2 uv, Vec2 texSize)
 {
@@ -450,7 +450,7 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 	return o;
 }
 
-#if defined(ANKI_COMPUTE_SHADER) && ANKI_GLSL
+#if ANKI_COMPUTE_SHADER && ANKI_GLSL
 // See getOptimalGlobalInvocationId8x8Amd
 U32 _ABfiM(U32 src, U32 ins, U32 bits)
 {
@@ -553,7 +553,7 @@ Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
 	return frac(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
 }
 
-#if defined(ANKI_FRAGMENT_SHADER)
+#if ANKI_FRAGMENT_SHADER
 /// https://bgolus.medium.com/distinctive-derivative-differences-cce38d36797b
 /// normalizedUvs is uv*textureResolution
 F32 computeMipLevel(Vec2 normalizedUvs)
@@ -665,7 +665,7 @@ RVec3 filmGrain(RVec3 color, Vec2 uv, F32 strength, F32 time)
 	return color * grain;
 }
 
-#if defined(ANKI_COMPUTE_SHADER)
+#if ANKI_COMPUTE_SHADER
 /// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on local variables (the compiler
 /// can't see it's groupshared).
 /// @param svGroupIndex Self explanatory.

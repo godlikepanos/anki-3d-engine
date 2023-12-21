@@ -167,11 +167,11 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	// Find present techniques
 	for(const ShaderProgramBinaryTechnique& t : m_prog->getBinary().m_techniques)
 	{
-		if(t.m_name.getBegin() == CString("GBuffer"))
+		if(t.m_name.getBegin() == CString("GBuffer") || t.m_name.getBegin() == CString("GBufferMesh"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
 		}
-		else if(t.m_name.getBegin() == CString("Shadows"))
+		else if(t.m_name.getBegin() == CString("Shadows") || t.m_name.getBegin() == CString("ShadowsMesh"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kDepth;
 		}
@@ -185,6 +185,10 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 		else if(t.m_name.getBegin() == CString("Forward"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kForward;
+		}
+		else if(t.m_name.getBegin() == CString("CommonTask"))
+		{
+			// Ignore
 		}
 		else
 		{
@@ -551,7 +555,8 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	case RenderingTechnique::kGBuffer:
 		if(key.getMeshShaders())
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment, "GBuffer");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "GBufferMesh");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
 		}
 		else
 		{
@@ -561,7 +566,8 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	case RenderingTechnique::kDepth:
 		if(key.getMeshShaders())
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment, "Shadows");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "ShadowsMesh");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
 		}
 		else
 		{

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#if defined(ANKI_FRAGMENT_SHADER) || defined(ANKI_COMPUTE_SHADER)
+#if ANKI_FRAGMENT_SHADER || ANKI_COMPUTE_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 
 // Constants
@@ -19,7 +19,7 @@ constexpr F32 kHaloOpacity = 0.5;
 [[vk::binding(1)]] Texture2D<RVec4> g_inputTex;
 [[vk::binding(2)]] Texture2D<RVec3> g_lensDirtTex;
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 #		define THREADGROUP_SIZE_XY 8
 [[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
 #	endif
@@ -89,13 +89,13 @@ RVec3 upscale(Vec2 uv)
 	return result;
 }
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
 RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	Vec2 outUavTexSize;
 	g_outUav.GetDimensions(outUavTexSize.x, outUavTexSize.y);
 
@@ -104,13 +104,13 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	const RVec3 outColor = ssLensFlare(uv) + upscale(uv);
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	g_outUav[svDispatchThreadId] = RVec4(outColor, 0.0);
 #	else
 	return outColor;
 #	endif
 }
-#endif // defined(ANKI_FRAGMENT_SHADER) || defined(ANKI_COMPUTE_SHADER)
+#endif // ANKI_FRAGMENT_SHADER || ANKI_COMPUTE_SHADER
 
 #pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>

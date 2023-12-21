@@ -237,8 +237,6 @@ Error ShaderProgramParser::parsePragmaTechniqueStart(const ShaderCompilerString*
 
 	ANKI_ASSERT(extra->m_sourceLines[shaderType].getSize() == 0);
 	extra->m_sourceLines[shaderType] = m_commonSourceLines;
-	extra->m_sourceLines[shaderType].pushBackSprintf("#define ANKI_%s_SHADER 1", kShaderStageNames[shaderType].cstr());
-	extra->m_sourceLines[shaderType].pushBackSprintf("#define ANKI_TECHNIQUE_%s 1", techniqueName.cstr());
 
 	m_insideTechniqueIdx = U32(technique - m_techniques.getBegin());
 	m_insideTechniqueShaderType = shaderType;
@@ -286,7 +284,7 @@ Error ShaderProgramParser::parsePragmaTechniqueEnd(const ShaderCompilerString* b
 		ANKI_PP_ERROR_MALFORMED_MSG("Forgot to insert a #pragma anki technique_start");
 	}
 
-	if(m_techniques.getBack().m_name != techniqueName || m_insideTechniqueShaderType != shaderType)
+	if(m_techniques[m_insideTechniqueIdx].m_name != techniqueName || m_insideTechniqueShaderType != shaderType)
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("name or type doesn't match the one in technique_start");
 	}
@@ -839,7 +837,16 @@ Error ShaderProgramParser::parse()
 
 void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header)
 {
-	header.sprintf(kShaderHeader, kShaderStageNames[shaderType].cstr(), kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers);
+	header.destroy();
+
+	header += ShaderCompilerString().sprintf("#define kMaxBindlessTextures %uu\n"
+											 "#define kMaxBindlessReadonlyTextureBuffers %uu\n",
+											 kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers);
+
+	for(ShaderType type : EnumIterable<ShaderType>())
+	{
+		header += ShaderCompilerString().sprintf("#define ANKI_%s_SHADER %u\n", kShaderStageNames[type].cstr(), (shaderType == type) ? 1 : 0);
+	}
 }
 
 void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParserTechnique& technique, ShaderType shaderType,
@@ -871,7 +878,10 @@ void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
 		}
 	}
 
-	source += ShaderCompilerString().sprintf("#define ANKI_TECHNIQUE_%s 1\n", technique.m_name.cstr());
+	for(U32 i = 0; i < m_techniques.getSize(); ++i)
+	{
+		source += ShaderCompilerString().sprintf("#define ANKI_TECHNIQUE_%s %u\n", m_techniques[i].m_name.cstr(), U32(tIdx == i));
+	}
 
 	ShaderCompilerString header;
 	generateAnkiShaderHeader(shaderType, header);

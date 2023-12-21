@@ -5,7 +5,7 @@
 
 // Does tonemapping
 
-#if defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
@@ -15,7 +15,7 @@
 constexpr U32 kTonemappingBinding = 2u;
 #	include <AnKi/Shaders/TonemappingResources.hlsl>
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 [[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
 #		define THREADGROUP_SIZE_SQRT 8
 #	endif
@@ -28,13 +28,13 @@ struct Constants
 
 [[vk::push_constant]] ConstantBuffer<Constants> g_consts;
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
 RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_consts.m_viewportSize, svDispatchThreadId.xy))
 	{
 		return;
@@ -46,13 +46,13 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	const RVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;
 	const Vec3 tonemapped = linearToSRgb(tonemap(hdr, readExposureAndAverageLuminance().x));
 
-#	if defined(ANKI_COMPUTE_SHADER)
+#	if ANKI_COMPUTE_SHADER
 	g_outUav[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
 #	else
 	return tonemapped;
 #	endif
 }
-#endif // defined(ANKI_COMPUTE_SHADER) || defined(ANKI_FRAGMENT_SHADER)
+#endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 
 #pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>

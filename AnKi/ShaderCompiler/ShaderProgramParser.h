@@ -167,7 +167,7 @@ private:
 
 	ShaderCompilerStringList& getAppendSourceList()
 	{
-		return (insideTechnique()) ? m_techniqueExtras.getBack().m_sourceLines[m_insideTechniqueShaderType] : m_commonSourceLines;
+		return (insideTechnique()) ? m_techniqueExtras[m_insideTechniqueIdx].m_sourceLines[m_insideTechniqueShaderType] : m_commonSourceLines;
 	}
 
 	Bool insideTechnique() const
