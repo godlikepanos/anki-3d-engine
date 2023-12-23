@@ -158,13 +158,11 @@ struct FragOut
 
 struct TaskOut
 {
-	U32 m_firstMeshletIndex;
+	U32 m_firstMeshletGeometryDescriptor;
 	U32 m_visibleMeshletsRelativeIndices[kMeshletGroupSize / sizeof(U32)];
 	U32 m_worldTransformsOffset;
 	U32 m_constantsOffset;
 	U32 m_boneTransformsOrParticleEmitterOffset;
-	Vec3 m_positionTranslation;
-	F32 m_positionScale;
 };
 
 struct Mat3x4_2
@@ -302,18 +300,17 @@ struct FirstPayload
 
 	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
 	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod);
-	U32 firstMeshlet = meshletGroup * kMeshletGroupSize;
-	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshlet);
-	firstMeshlet += meshLod.m_firstMeshlet;
+	U32 firstMeshletBoundingVolume = meshletGroup * kMeshletGroupSize;
+	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshletBoundingVolume);
+	firstMeshletBoundingVolume += meshLod.m_firstMeshletBoundingVolume;
+	const U32 firstMeshletGeometryDescriptor = meshletGroup * kMeshletGroupSize + meshLod.m_firstMeshletGeometryDescriptor;
 
 	if(svGroupIndex == 0u)
 	{
-		s_payload.m_firstMeshletIndex = firstMeshlet;
+		s_payload.m_firstMeshletGeometryDescriptor = firstMeshletGeometryDescriptor;
 		s_payload.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
 		s_payload.m_constantsOffset = renderable.m_constantsOffset;
 		s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
-		s_payload.m_positionScale = meshLod.m_positionScale;
-		s_payload.m_positionTranslation = meshLod.m_positionTranslation;
 
 		s_visibleMeshletCount = 0;
 
@@ -329,11 +326,11 @@ struct FirstPayload
 	{
 		Bool cull = false;
 
-		const Meshlet meshlet = g_meshlets[firstMeshlet + svGroupIndex];
+		const MeshletBoundingVolume meshletBoundingVol = g_meshletBoundingVolumes[firstMeshletBoundingVolume + svGroupIndex];
 		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
 
 #	if MESHLET_BACKFACE_CULLING
-		cull = cullBackfaceMeshlet(meshlet, worldTransform, g_globalConstants.m_cameraTransform.getTranslationPart());
+		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_globalConstants.m_cameraTransform.getTranslationPart());
 #	endif
 
 		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
@@ -341,7 +338,7 @@ struct FirstPayload
 
 		Vec2 minNdc, maxNdc;
 		F32 aabbMinDepth;
-		projectAabb(meshlet.m_aabbMin, meshlet.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
+		projectAabb(meshletBoundingVol.m_aabbMin, meshletBoundingVol.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
 
 #	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
 		// Outside of the screen
@@ -396,7 +393,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 	const U32 localIdx = svGroupId % 4u;
 	const U32 relativeMeshletIdx = (payload.m_visibleMeshletsRelativeIndices[groupIdx] >> (localIdx * 8u)) & 0xFFu;
 
-	const Meshlet meshlet = g_meshlets[payload.m_firstMeshletIndex + relativeMeshletIdx];
+	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[payload.m_firstMeshletGeometryDescriptor + relativeMeshletIdx];
 	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
 	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
 
@@ -412,7 +409,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 		{
 			MeshPerVertOut output;
 
-			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES, payload.m_positionScale, payload.m_positionTranslation);
+			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES, meshlet.m_positionScale, meshlet.m_positionTranslation);
 
 			const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset);
 			const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset + sizeof(Mat3x4));

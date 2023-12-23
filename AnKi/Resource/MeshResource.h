@@ -70,9 +70,10 @@ public:
 		vertexCount = m_lods[lod].m_vertexCount;
 	}
 
-	void getMeshletBufferInfo(U32 lod, PtrSize& meshletUgbOffset, U32& meshletCount)
+	void getMeshletBufferInfo(U32 lod, PtrSize& meshletBoundingVolumesUgbOffset, PtrSize& meshletGeometryDescriptorsUgbOffset, U32& meshletCount)
 	{
-		meshletUgbOffset = m_lods[lod].m_meshlets.getOffset();
+		meshletBoundingVolumesUgbOffset = m_lods[lod].m_meshletBoundingVolumes.getOffset();
+		meshletGeometryDescriptorsUgbOffset = m_lods[lod].m_meshletGeometryDescriptors.getOffset();
 		ANKI_ASSERT(m_lods[lod].m_meshletCount);
 		meshletCount = m_lods[lod].m_meshletCount;
 	}
@@ -115,7 +116,8 @@ private:
 		Array<UnifiedGeometryBufferAllocation, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
 
 		UnifiedGeometryBufferAllocation m_meshletIndices;
-		UnifiedGeometryBufferAllocation m_meshlets;
+		UnifiedGeometryBufferAllocation m_meshletBoundingVolumes;
+		UnifiedGeometryBufferAllocation m_meshletGeometryDescriptors;
 
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;

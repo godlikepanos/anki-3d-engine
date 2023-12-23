@@ -147,8 +147,12 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			const PtrSize meshletIndicesSize = header.m_meshletPrimitiveCounts[l] * sizeof(U8Vec4);
 			lod.m_meshletIndices = UnifiedGeometryBuffer::getSingleton().allocate(meshletIndicesSize, sizeof(U8Vec4));
 
-			const PtrSize meshletsSize = header.m_meshletCounts[l] * sizeof(Meshlet);
-			lod.m_meshlets = UnifiedGeometryBuffer::getSingleton().allocate(meshletsSize, sizeof(Meshlet));
+			const PtrSize meshletBoundingVolumesSize = header.m_meshletCounts[l] * sizeof(MeshletBoundingVolume);
+			lod.m_meshletBoundingVolumes = UnifiedGeometryBuffer::getSingleton().allocate(meshletBoundingVolumesSize, sizeof(MeshletBoundingVolume));
+
+			const PtrSize meshletGeomDescriptorsSize = header.m_meshletCounts[l] * sizeof(MeshletGeometryDescriptor);
+			lod.m_meshletGeometryDescriptors =
+				UnifiedGeometryBuffer::getSingleton().allocate(meshletGeomDescriptorsSize, sizeof(MeshletGeometryDescriptor));
 
 			lod.m_meshletCount = header.m_meshletCounts[l];
 		}
@@ -195,7 +199,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			if(lod.m_meshletIndices.isValid())
 			{
 				cmdb->fillBuffer(lod.m_meshletIndices, 0);
-				cmdb->fillBuffer(lod.m_meshlets, 0);
+				cmdb->fillBuffer(lod.m_meshletBoundingVolumes, 0);
+				cmdb->fillBuffer(lod.m_meshletGeometryDescriptors, 0);
 			}
 		}
 
@@ -227,7 +232,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	GrManager& gr = GrManager::getSingleton();
 	TransferGpuAllocator& transferAlloc = ResourceManager::getSingleton().getTransferGpuAllocator();
 
-	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1 + 2)> handles;
+	Array<TransferGpuAllocatorHandle, kMaxLodCount*(U32(VertexStreamId::kMeshRelatedCount) + 1 + 3)> handles;
 	U32 handleCount = 0;
 
 	Buffer* unifiedGeometryBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
@@ -285,7 +290,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 									 lod.m_vertexBuffersAllocationToken[stream].getOffset(), handle.getRange());
 		}
 
-		if(lod.m_meshlets.isValid())
+		if(lod.m_meshletBoundingVolumes.isValid())
 		{
 			// Indices
 			TransferGpuAllocatorHandle& handle = handles[handleCount++];
@@ -302,15 +307,23 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 			ANKI_CHECK(loader.storeMeshletBuffer(lodIdx, WeakArray(binaryMeshlets)));
 
 			TransferGpuAllocatorHandle& handle2 = handles[handleCount++];
-			ANKI_CHECK(transferAlloc.allocate(lod.m_meshlets.getAllocatedSize(), handle2));
-			WeakArray<Meshlet> outMeshlets(static_cast<Meshlet*>(handle2.getMappedMemory()), loader.getHeader().m_meshletCounts[lodIdx]);
+			ANKI_CHECK(transferAlloc.allocate(lod.m_meshletBoundingVolumes.getAllocatedSize(), handle2));
+			WeakArray<MeshletBoundingVolume> outMeshletBoundingVolumes(static_cast<MeshletBoundingVolume*>(handle2.getMappedMemory()),
+																	   loader.getHeader().m_meshletCounts[lodIdx]);
+
+			TransferGpuAllocatorHandle& handle3 = handles[handleCount++];
+			ANKI_CHECK(transferAlloc.allocate(lod.m_meshletGeometryDescriptors.getAllocatedSize(), handle3));
+			WeakArray<MeshletGeometryDescriptor> outMeshletGeomDescriptors(static_cast<MeshletGeometryDescriptor*>(handle3.getMappedMemory()),
+																		   loader.getHeader().m_meshletCounts[lodIdx]);
 
 			for(U32 i = 0; i < binaryMeshlets.getSize(); ++i)
 			{
 				const MeshBinaryMeshlet& inMeshlet = binaryMeshlets[i];
-				Meshlet& outMeshlet = outMeshlets[i];
+				MeshletGeometryDescriptor& outMeshletGeom = outMeshletGeomDescriptors[i];
+				MeshletBoundingVolume& outMeshletBoundingVolume = outMeshletBoundingVolumes[i];
 
-				outMeshlet = {};
+				outMeshletBoundingVolume = {};
+				outMeshletGeom = {};
 				for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 				{
 					if(!(m_presentVertStreams & VertexStreamMask(1u << stream)))
@@ -318,24 +331,31 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 						continue;
 					}
 
-					outMeshlet.m_vertexOffsets[U32(stream)] =
+					outMeshletGeom.m_vertexOffsets[U32(stream)] =
 						lod.m_vertexBuffersAllocationToken[stream].getOffset() / getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize
 						+ inMeshlet.m_firstVertex;
 				}
 
-				outMeshlet.m_firstPrimitive =
+				outMeshletGeom.m_firstPrimitive =
 					lod.m_meshletIndices.getOffset() / getFormatInfo(kMeshletPrimitiveFormat).m_texelSize + inMeshlet.m_firstPrimitive;
-				outMeshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) | inMeshlet.m_vertexCount;
-				outMeshlet.m_aabbMin = inMeshlet.m_boundingVolume.m_aabbMin;
-				outMeshlet.m_aabbMax = inMeshlet.m_boundingVolume.m_aabbMax;
-				outMeshlet.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm =
+				outMeshletGeom.m_primitiveCount_R16_Uint_vertexCount_R16_Uint = (inMeshlet.m_primitiveCount << 16u) | inMeshlet.m_vertexCount;
+				outMeshletGeom.m_positionTranslation = m_positionsTranslation;
+				outMeshletGeom.m_positionScale = m_positionsScale;
+
+				outMeshletBoundingVolume.m_aabbMin = inMeshlet.m_boundingVolume.m_aabbMin;
+				outMeshletBoundingVolume.m_aabbMax = inMeshlet.m_boundingVolume.m_aabbMax;
+				outMeshletBoundingVolume.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm =
 					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)));
-				outMeshlet.m_coneApex_R8G8B8A8_Snorm = packSnorm4x8(inMeshlet.m_coneApex.xyz0());
-				outMeshlet.m_sphereRadius = ((outMeshlet.m_aabbMin + outMeshlet.m_aabbMax) / 2.0f - outMeshlet.m_aabbMax).getLength();
+				outMeshletBoundingVolume.m_coneApex_R8G8B8A8_Snorm = packSnorm4x8(inMeshlet.m_coneApex.xyz0());
+				outMeshletBoundingVolume.m_sphereRadius =
+					((outMeshletBoundingVolume.m_aabbMin + outMeshletBoundingVolume.m_aabbMax) / 2.0f - outMeshletBoundingVolume.m_aabbMax)
+						.getLength();
 			}
 
-			cmdb->copyBufferToBuffer(&handle2.getBuffer(), handle2.getOffset(), unifiedGeometryBuffer, lod.m_meshlets.getOffset(),
+			cmdb->copyBufferToBuffer(&handle2.getBuffer(), handle2.getOffset(), unifiedGeometryBuffer, lod.m_meshletBoundingVolumes.getOffset(),
 									 handle2.getRange());
+			cmdb->copyBufferToBuffer(&handle3.getBuffer(), handle3.getOffset(), unifiedGeometryBuffer, lod.m_meshletGeometryDescriptors.getOffset(),
+									 handle3.getRange());
 		}
 	}
 

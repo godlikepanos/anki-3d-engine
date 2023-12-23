@@ -74,7 +74,7 @@ static void printAllocatorBuilder(const TAlloc& sl)
 	printf("%s\n", str.cstr());
 }
 
-template<Bool kValidate, U32 kIterationCount, Bool kStats>
+template<Bool kValidate, U32 kIterationCount, Bool kStats, Bool kExtraValidation>
 static void fuzzyTest()
 {
 	class Alloc
@@ -103,7 +103,7 @@ static void fuzzyTest()
 			do
 			{
 				alloc.m_size = getRandom() % 70_MB;
-				alloc.m_alignment = nextPowerOfTwo(getRandom() % 16);
+				alloc.m_alignment = getAlignedRoundUp(4, getRandom() % 16);
 			} while(alloc.m_size == 0 || alloc.m_alignment == 0);
 
 			ANKI_TEST_EXPECT_NO_ERR(sl.allocate(alloc.m_size, alloc.m_alignment, alloc.m_chunk, alloc.m_address));
@@ -118,6 +118,38 @@ static void fuzzyTest()
 			allocs.erase(allocs.begin() + idx);
 
 			sl.free(alloc.m_chunk, alloc.m_address, alloc.m_size);
+		}
+
+		if(kExtraValidation)
+		{
+			// Make sure they don't overlap
+			for(U32 a = 0; a < allocs.size(); ++a)
+			{
+				for(U32 b = 0; b < allocs.size(); ++b)
+				{
+					if(a == b)
+					{
+						continue;
+					}
+
+					const Alloc& allocA = allocs[a];
+					const Alloc& allocB = allocs[b];
+
+					if(allocA.m_chunk != allocB.m_chunk)
+					{
+						continue;
+					}
+
+					if(allocA.m_address < allocB.m_address)
+					{
+						ANKI_TEST_EXPECT_EQ(allocA.m_address + allocA.m_size <= allocB.m_address, true);
+					}
+					else
+					{
+						ANKI_TEST_EXPECT_EQ(allocB.m_address + allocB.m_size <= allocA.m_address, true);
+					}
+				}
+			}
 		}
 
 		if(kStats)
@@ -151,6 +183,8 @@ static void fuzzyTest()
 
 ANKI_TEST(Util, SegregatedListsAllocatorBuilder)
 {
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+
 	// Simple test
 	{
 		SLAlloc sl;
@@ -186,10 +220,14 @@ ANKI_TEST(Util, SegregatedListsAllocatorBuilder)
 	}
 
 	// Fuzzy test
-	fuzzyTest<true, 1024, false>();
+	fuzzyTest<true, 1024, false, true>();
+
+	DefaultMemoryPool::freeSingleton();
 }
 
 ANKI_TEST(Util, SegregatedListsAllocatorBuilderBenchmark)
 {
-	fuzzyTest<false, 2000000, true>();
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	fuzzyTest<false, 2000000, true, false>();
+	DefaultMemoryPool::freeSingleton();
 }

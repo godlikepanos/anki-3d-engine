@@ -204,7 +204,7 @@ void SegregatedListsGpuMemoryPool::deleteChunk(Chunk* chunk)
 void SegregatedListsGpuMemoryPool::allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 {
 	ANKI_ASSERT(isInitialized());
-	ANKI_ASSERT(size > 0 && alignment > 0 && isPowerOfTwo(alignment));
+	ANKI_ASSERT(size > 0 && alignment > 0);
 	ANKI_ASSERT(token == SegregatedListsGpuMemoryPoolToken());
 
 	LockGuard lock(m_lock);

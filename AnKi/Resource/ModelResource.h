@@ -40,7 +40,8 @@ public:
 	/// Offset to the vertex buffer or kMaxPtrSize if stream is not present.
 	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexUgbOffsets;
 
-	PtrSize m_meshletsUgbOffset;
+	PtrSize m_meshletBoundingVolumesUgbOffset = kMaxPtrSize;
+	PtrSize m_meshletGometryDescriptorsUgbOffset = kMaxPtrSize;
 	U32 m_meshletCount;
 
 	AccelerationStructurePtr m_blas;
@@ -81,7 +82,8 @@ private:
 
 		Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexUgbOffsets = {};
 
-		PtrSize m_meshletsUgbOffset = kMaxPtrSize;
+		PtrSize m_meshletBoundingVolumesUgbOffset = kMaxPtrSize;
+		PtrSize m_meshletGometryDescriptorsUgbOffset = kMaxPtrSize;
 		U32 m_meshletCount = kMaxU32;
 	};
 

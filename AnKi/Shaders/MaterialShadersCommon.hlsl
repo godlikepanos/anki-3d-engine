@@ -24,7 +24,9 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 	[[vk::binding(MaterialBinding::kUnifiedGeometry_##fmt, MaterialSet::kGlobal)]] Buffer<shaderType> g_unifiedGeom_##fmt;
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
-[[vk::binding(MaterialBinding::kMeshlets, MaterialSet::kGlobal)]] StructuredBuffer<Meshlet> g_meshlets;
+[[vk::binding(MaterialBinding::kMeshletBoundingVolumes, MaterialSet::kGlobal)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
+[[vk::binding(MaterialBinding::kMeshletGeometryDescriptors, MaterialSet::kGlobal)]] StructuredBuffer<MeshletGeometryDescriptor>
+	g_meshletGeometryDescriptors;
 [[vk::binding(MaterialBinding::kTaskShaderPayloads, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
 [[vk::binding(MaterialBinding::kRenderables, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(MaterialBinding::kHzbTexture, MaterialSet::kGlobal)]] Texture2D<Vec4> g_hzbTexture;
@@ -64,7 +66,7 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	return v;
 }
 
-UnpackedMeshVertex loadVertex(Meshlet meshlet, U32 vertexIndex, Bool bones, F32 positionScale, Vec3 positionTranslation)
+UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 vertexIndex, Bool bones, F32 positionScale, Vec3 positionTranslation)
 {
 	UnpackedMeshVertex v;
 	v.m_position = g_unifiedGeom_R16G16B16A16_Unorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kPosition] + vertexIndex];
@@ -82,7 +84,7 @@ UnpackedMeshVertex loadVertex(Meshlet meshlet, U32 vertexIndex, Bool bones, F32 
 	return v;
 }
 
-Bool cullBackfaceMeshlet(Meshlet meshlet, Mat3x4 worldTransform, Vec3 cameraWorldPos)
+Bool cullBackfaceMeshlet(MeshletBoundingVolume meshlet, Mat3x4 worldTransform, Vec3 cameraWorldPos)
 {
 	const Vec4 coneData = unpackSnorm4x8(meshlet.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
 

@@ -59,7 +59,10 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 								   &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshlets), UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletBoundingVolumes),
+					   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGeometryDescriptors),
+					   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTaskShaderPayloads), args.m_taskShaderPayloadsBuffer);
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables),
 					   GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());

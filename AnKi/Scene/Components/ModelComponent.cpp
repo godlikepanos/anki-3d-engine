@@ -183,8 +183,10 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 				if(inf.m_meshletCount)
 				{
-					ANKI_ASSERT((inf.m_meshletsUgbOffset % sizeof(Meshlet)) == 0);
-					meshLod.m_firstMeshlet = U32(inf.m_meshletsUgbOffset / sizeof(Meshlet));
+					ANKI_ASSERT((inf.m_meshletBoundingVolumesUgbOffset % sizeof(MeshletBoundingVolume)) == 0);
+					meshLod.m_firstMeshletBoundingVolume = U32(inf.m_meshletBoundingVolumesUgbOffset / sizeof(MeshletBoundingVolume));
+					ANKI_ASSERT((inf.m_meshletGometryDescriptorsUgbOffset % sizeof(MeshletGeometryDescriptor)) == 0);
+					meshLod.m_firstMeshletGeometryDescriptor = U32(inf.m_meshletGometryDescriptorsUgbOffset / sizeof(MeshletGeometryDescriptor));
 					meshLod.m_meshletCount = inf.m_meshletCount;
 				}
 			}

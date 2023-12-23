@@ -87,6 +87,7 @@ public:
 	{
 		UnifiedGeometryBufferAllocation out;
 		m_pool.allocate(size, alignment, out.m_token);
+		ANKI_ASSERT(isAligned(alignment, out.m_token.m_offset));
 		out.m_realOffset = U32(out.m_token.m_offset);
 		out.m_realAllocatedSize = U32(size);
 		return out;

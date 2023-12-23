@@ -45,7 +45,8 @@ enum class MaterialBinding : U32
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
 	// For mesh shading
-	kMeshlets, ///< Points to the unified geom buffer
+	kMeshletBoundingVolumes, ///< Points to the unified geom buffer
+	kMeshletGeometryDescriptors, ///< Points to the unified geom buffer
 	kTaskShaderPayloads,
 	kRenderables,
 	kHzbTexture,

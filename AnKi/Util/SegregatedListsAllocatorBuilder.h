@@ -81,7 +81,7 @@ public:
 
 	/// Allocate memory.
 	/// @param size The size to allocate.
-	/// @param alignment The alignment of the returned address.
+	/// @param alignment The alignment of the returned address. No need to be power of 2.
 	/// @param[out] chunk The chunk that the memory belongs to.
 	/// @param[out] offset The offset inside the chunk.
 	/// @note This is thread safe.

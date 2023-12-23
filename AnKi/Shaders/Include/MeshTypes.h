@@ -83,20 +83,30 @@ struct UnpackedMeshVertex
 	RVec4 m_boneWeights;
 };
 
-struct Meshlet
+/// Contains the meshlet data accessed by the task shaders (or whomever does meshlet visibility).
+struct MeshletBoundingVolume
+{
+	Vec3 m_aabbMin;
+	F32 m_sphereRadius;
+
+	Vec3 m_aabbMax;
+	U32 m_coneApex_R8G8B8A8_Snorm;
+
+	Vec3 m_padding;
+	U32 m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm;
+};
+
+/// Contains all the geometry related info of a meshlet. Accessed by the mesh shaders.
+struct MeshletGeometryDescriptor
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_firstPrimitive; // In size of kMeshletPrimitiveFormat
 	U32 m_primitiveCount_R16_Uint_vertexCount_R16_Uint;
-	U32 m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm;
+	F32 m_positionScale;
 
-	Vec3 m_aabbMin;
-	U32 m_coneApex_R8G8B8A8_Snorm;
-
-	Vec3 m_aabbMax;
-	F32 m_sphereRadius;
+	Vec3 m_positionTranslation;
+	F32 m_padding;
 };
-// Power of 2 because the sizeof will be used as allocation alignment and allocation alignments need to be power of 2
-static_assert(isPowerOfTwo(sizeof(Meshlet)));
+static_assert(isAligned(16, sizeof(MeshletGeometryDescriptor)));
 
 ANKI_END_NAMESPACE

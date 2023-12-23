@@ -31,14 +31,16 @@ void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 
 	if(m_lodInfos[lod].m_meshletCount != kMaxU32)
 	{
-		ANKI_ASSERT(m_lodInfos[lod].m_meshletsUgbOffset != kMaxPtrSize);
+		ANKI_ASSERT(m_lodInfos[lod].m_meshletBoundingVolumesUgbOffset != kMaxPtrSize);
 		inf.m_meshletCount = m_lodInfos[lod].m_meshletCount;
-		inf.m_meshletsUgbOffset = m_lodInfos[lod].m_meshletsUgbOffset;
+		inf.m_meshletBoundingVolumesUgbOffset = m_lodInfos[lod].m_meshletBoundingVolumesUgbOffset;
+		inf.m_meshletGometryDescriptorsUgbOffset = m_lodInfos[lod].m_meshletGometryDescriptorsUgbOffset;
 	}
 	else
 	{
 		inf.m_meshletCount = 0;
-		inf.m_meshletsUgbOffset = kMaxPtrSize;
+		inf.m_meshletBoundingVolumesUgbOffset = kMaxPtrSize;
+		inf.m_meshletGometryDescriptorsUgbOffset = kMaxPtrSize;
 	}
 }
 
@@ -116,9 +118,10 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 		{
 			U32 dummy;
-			m_mesh->getMeshletBufferInfo(l, lod.m_meshletsUgbOffset, dummy);
+			m_mesh->getMeshletBufferInfo(l, lod.m_meshletBoundingVolumesUgbOffset, lod.m_meshletGometryDescriptorsUgbOffset, dummy);
 
-			lod.m_meshletsUgbOffset += firstMeshlet * sizeof(Meshlet);
+			lod.m_meshletBoundingVolumesUgbOffset += firstMeshlet * sizeof(MeshletBoundingVolume);
+			lod.m_meshletGometryDescriptorsUgbOffset += firstMeshlet * sizeof(MeshletGeometryDescriptor);
 			lod.m_meshletCount = meshletCount;
 		}
 	}
