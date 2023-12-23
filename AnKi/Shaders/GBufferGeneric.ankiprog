@@ -207,8 +207,7 @@ void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos,
 #endif
 
 #if REALLY_VELOCITY
-template<typename TOut>
-void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPos, inout TOut output)
+void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPos, Vec4 svPosition, out Vec3 prevClipXyw, out Vec3 crntClipXyw)
 {
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
 	ANKI_MAYBE_UNUSED(worldTransform);
@@ -224,8 +223,8 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 	Vec4 v4 = Vec4(mul(trf, Vec4(prevLocalPos, 1.0)), 1.0);
 	v4 = mul(g_globalConstants.m_previousViewProjectionMatrix, v4);
 
-	output.m_prevClipXyw = v4.xyw;
-	output.m_crntClipXyw = output.m_svPosition.xyw;
+	prevClipXyw = v4.xyw;
+	crntClipXyw = svPosition.xyw;
 }
 #endif
 
@@ -269,7 +268,7 @@ VertOut main(VertIn input)
 #	endif
 
 #	if REALLY_VELOCITY
-	velocity(worldTransform, prevWorldTransform, prevPos, output);
+	velocity(worldTransform, prevWorldTransform, prevPos, output.m_svPosition, output.m_prevClipXyw, output.m_crntClipXyw);
 #	endif
 
 	return output;
@@ -442,7 +441,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 #	endif
 
 #	if REALLY_VELOCITY
-			velocity(worldTransform, prevWorldTransform, prevPos, output);
+			velocity(worldTransform, prevWorldTransform, prevPos, output.m_svPosition, output.m_prevClipXyw, output.m_prevClipXyw);
 #	endif
 
 			verts[idx] = output;
