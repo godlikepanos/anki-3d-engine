@@ -66,11 +66,11 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	return v;
 }
 
-UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 vertexIndex, Bool bones, F32 positionScale, Vec3 positionTranslation)
+UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 vertexIndex, Bool bones)
 {
 	UnpackedMeshVertex v;
 	v.m_position = g_unifiedGeom_R16G16B16A16_Unorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kPosition] + vertexIndex];
-	v.m_position = v.m_position * positionScale + positionTranslation;
+	v.m_position = v.m_position * meshlet.m_positionScale + meshlet.m_positionTranslation;
 
 	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kNormal] + vertexIndex].xyz;
 	v.m_uv = g_unifiedGeom_R32G32_Sfloat[meshlet.m_vertexOffsets[(U32)VertexStreamId::kUv] + vertexIndex];

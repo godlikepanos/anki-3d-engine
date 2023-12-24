@@ -408,7 +408,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 		{
 			MeshPerVertOut output;
 
-			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES, meshlet.m_positionScale, meshlet.m_positionTranslation);
+			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES);
 
 			const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset);
 			const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset + sizeof(Mat3x4));
@@ -453,7 +453,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 #	endif
 
 	// Write the primitive data
-	const U32 primLoopCount = kMaxPrimitivesPerMeshlet / ANKI_MESH_SHADER_THREADGROUP_SIZE;
+	const U32 primLoopCount = (kMaxPrimitivesPerMeshlet + ANKI_MESH_SHADER_THREADGROUP_SIZE - 1u) / ANKI_MESH_SHADER_THREADGROUP_SIZE;
 	[unroll] for(U32 l = 0; l < primLoopCount; ++l)
 	{
 		const U32 idx = l * ANKI_MESH_SHADER_THREADGROUP_SIZE + svGroupIndex;

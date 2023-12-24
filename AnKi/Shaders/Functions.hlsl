@@ -738,3 +738,9 @@ void projectSphereView(Vec3 sphereCenter, F32 sphereRadius, F32 P00, F32 P11, ou
 	aabbMin = Vec2(minx * P00, miny * P11);
 	aabbMax = Vec2(maxx * P00, maxy * P11);
 }
+
+template<typename T>
+T barycentricInterpolation(T a, T b, T c, Vec3 barycentrics)
+{
+	return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
+}

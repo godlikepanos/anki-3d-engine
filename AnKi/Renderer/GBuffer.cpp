@@ -71,16 +71,13 @@ Error GBuffer::initInternal()
 	}
 
 	// FB descr
-	AttachmentLoadOperation loadop = AttachmentLoadOperation::kDontCare;
-#if ANKI_EXTRA_CHECKS
-	loadop = AttachmentLoadOperation::kClear;
-#endif
+	const AttachmentLoadOperation loadop = AttachmentLoadOperation::kClear;
 
 	m_fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 	{
 		m_fbDescr.m_colorAttachments[i].m_loadOperation = loadop;
-		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
+		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {0.0f, 0.0f, 0.0f, 0.0f};
 	}
 
 	m_fbDescr.m_colorAttachments[3].m_loadOperation = AttachmentLoadOperation::kClear;
