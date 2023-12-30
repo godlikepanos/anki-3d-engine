@@ -129,6 +129,8 @@ struct Texture2D
 
 	void GetDimensions(F32& width, F32& height);
 
+	void GetDimensions(U32 mipLevel, F32& width, F32& height, F32& mipCount);
+
 	T SampleLevel(SamplerState sampler, Vec2 uvs, F32 lod, IVec2 offset = {});
 
 	F32 GatherRed(SamplerState sampler, Vec2 uv);

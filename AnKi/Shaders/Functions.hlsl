@@ -61,7 +61,8 @@ Vec4 textureCatmullRom4Samples(Texture2D tex, SamplerState sampl, Vec2 uv, Vec2 
 #endif
 
 // Stolen from shadertoy.com/view/4df3Dn
-Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 texSize)
+template<typename TVec>
+TVec textureBicubic(Texture2D<TVec> tex, SamplerState sampl, Vec2 uv, F32 lod)
 {
 #define w0(a) ((1.0 / 6.0) * ((a) * ((a) * (-(a) + 3.0) - 3.0) + 1.0))
 #define w1(a) ((1.0 / 6.0) * ((a) * (a) * (3.0 * (a)-6.0) + 4.0))
@@ -72,6 +73,12 @@ Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 te
 #define h0(a) (-1.0 + w1(a) / (w0(a) + w1(a)))
 #define h1(a) (1.0 + w3(a) / (w2(a) + w3(a)))
 #define texSample(uv) tex.SampleLevel(sampl, uv, lod)
+
+	UVec2 texSize;
+	U32 mipCount;
+	tex.GetDimensions(0, texSize.x, texSize.y, mipCount);
+	const U32 lodi = min(U32(lod), mipCount - 1u);
+	texSize = texSize >> lodi;
 
 	uv = uv * texSize + 0.5;
 	const Vec2 iuv = floor(uv);

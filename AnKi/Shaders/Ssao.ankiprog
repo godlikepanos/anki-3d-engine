@@ -263,6 +263,9 @@ F32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 }
 #endif // (ANKI_TECHNIQUE_SsaoDenoiseVertical || ANKI_TECHNIQUE_SsaoDenoiseHorizontal) && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
 
+// ===========================================================================
+// Techniques                                                                =
+// ===========================================================================
 #pragma anki technique_start vert Ssao uses_mutators
 #include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert Ssao

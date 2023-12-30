@@ -31,7 +31,6 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/UiStage.h>
-#include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
@@ -43,6 +42,7 @@
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
+#include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Core/StatsSet.h>
 
 namespace anki {
@@ -311,6 +311,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_motionVectors->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depthDownscale->populateRenderGraph(ctx);
+	m_ssr->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
@@ -318,9 +319,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_shadowmapsResolve->populateRenderGraph(ctx);
 	m_volumetricFog->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
-	m_indirectSpecular->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
+	m_ssr->populateRenderGraphPostLightShading(ctx);
 	if(!getScale().getUsingGrUpscaler())
 	{
 		m_temporalAA->populateRenderGraph(ctx);

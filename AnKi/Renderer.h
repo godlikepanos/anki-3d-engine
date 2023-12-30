@@ -18,7 +18,6 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/TemporalAA.h>
-#include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/Utils/Drawer.h>

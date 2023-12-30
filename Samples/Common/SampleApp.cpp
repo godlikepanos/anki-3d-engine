@@ -68,7 +68,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kU) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Ssr") ? "" : "Ssr");
 	}
 
 	if(in.getKey(KeyCode::kI) == 1)

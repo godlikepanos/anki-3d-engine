@@ -97,6 +97,23 @@ struct SsrConstants
 	Mat3x4 m_normalMat;
 };
 
+// Screen space reflections uniforms
+struct SsrConstants2
+{
+	Vec2 m_viewportSizef;
+	U32 m_frameCount;
+	U32 m_maxIterations;
+
+	UVec2 m_padding;
+	F32 m_roughnessCutoff;
+	U32 m_stepIncrement;
+
+	Mat4 m_prevViewProjMatMulInvViewProjMat;
+	Mat4 m_projMat;
+	Mat4 m_invProjMat;
+	Mat3x4 m_normalMat;
+};
+
 // Vol fog
 struct VolumetricFogConstants
 {

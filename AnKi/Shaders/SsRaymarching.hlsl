@@ -149,13 +149,12 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 						 Vec2 uv, // UV the ray starts
 						 F32 depthRef, // Depth the ray starts
 						 Mat4 projMat, // Projection matrix
-						 U32 maxSteps, // The max iterations of the base algorithm
-						 Texture2D depthTex, // Depth tex
+						 U32 maxIterations, // The max iterations of the base algorithm
+						 Texture2D<Vec4> depthTex, // Depth tex
 						 SamplerState depthSampler, // Sampler for depthTex
 						 F32 depthLod, // LOD to pass to the textureLod
-						 UVec2 depthTexSize, // Size of the depthTex
-						 U32 initialStepIncrement, // Initial step increment
-						 U32 randInitialStep, // The initial step
+						 U32 stepIncrement_, // The step increment of each iteration
+						 U32 initialStepIncrement, // The initial step
 						 out Vec3 hitPoint, // Hit point in UV coordinates
 						 out F32 attenuation)
 {
@@ -169,6 +168,13 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 		return;
 	}
 
+	// Find the depth's mipmap size
+	UVec2 depthTexSize;
+	U32 depthTexMipCount;
+	depthTex.GetDimensions(0u, depthTexSize.x, depthTexSize.y, depthTexMipCount);
+	depthLod = min(depthLod, F32(depthTexMipCount) - 1.0f);
+	const UVec2 deptTexMipSize = depthTexSize >> U32(depthLod);
+
 	// Start point
 	const Vec3 start = Vec3(uv, depthRef);
 
@@ -180,17 +186,17 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 
 	// Compute the ray and step size
 	Vec3 dir = end - start;
-	const Vec2 texelSize = abs(dir.xy) * Vec2(depthTexSize);
+	const Vec2 texelSize = abs(dir.xy) * Vec2(deptTexMipSize);
 	const F32 stepSize = length(dir.xy) / max(texelSize.x, texelSize.y);
 	dir = normalize(dir);
 
 	// Compute step
-	I32 stepIncrement = I32(initialStepIncrement);
-	I32 crntStep = I32(randInitialStep);
+	I32 stepIncrement = I32(stepIncrement_);
+	I32 crntStep = I32(initialStepIncrement);
 
 	// Search
 	Vec3 origin;
-	[loop] while(maxSteps-- != 0u)
+	[loop] while(maxIterations-- != 0u)
 	{
 		origin = start + dir * (F32(crntStep) * stepSize);
 
