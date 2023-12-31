@@ -28,38 +28,6 @@ struct RtShadowsSbtBuildConstants
 	U32 m_padding1;
 };
 
-// Indirect diffuse
-struct IndirectDiffuseConstants
-{
-	UVec2 m_viewportSize;
-	Vec2 m_viewportSizef;
-
-	Vec4 m_projectionMat;
-
-	RF32 m_radius; ///< In meters.
-	U32 m_sampleCount;
-	RF32 m_sampleCountf;
-	RF32 m_ssaoBias;
-
-	RF32 m_ssaoStrength;
-	F32 m_padding0;
-	F32 m_padding1;
-	F32 m_padding2;
-};
-
-struct IndirectDiffuseDenoiseConstants
-{
-	Mat4 m_invertedViewProjectionJitterMat;
-
-	UVec2 m_viewportSize;
-	Vec2 m_viewportSizef;
-
-	F32 m_sampleCountDiv2;
-	F32 m_padding0;
-	F32 m_padding1;
-	F32 m_padding2;
-};
-
 // Lens flare
 struct LensFlareSprite
 {
@@ -79,27 +47,6 @@ struct DepthDownscaleConstants
 // Screen space reflections uniforms
 struct SsrConstants
 {
-	UVec2 m_depthBufferSize;
-	UVec2 m_framebufferSize;
-
-	U32 m_frameCount;
-	U32 m_depthMipCount;
-	U32 m_maxSteps;
-	U32 m_lightBufferMipCount;
-
-	UVec2 m_padding0;
-	F32 m_roughnessCutoff;
-	U32 m_firstStepPixels;
-
-	Mat4 m_prevViewProjMatMulInvViewProjMat;
-	Mat4 m_projMat;
-	Mat4 m_invProjMat;
-	Mat3x4 m_normalMat;
-};
-
-// Screen space reflections uniforms
-struct SsrConstants2
-{
 	Vec2 m_viewportSizef;
 	U32 m_frameCount;
 	U32 m_maxIterations;
@@ -108,9 +55,11 @@ struct SsrConstants2
 	F32 m_roughnessCutoff;
 	U32 m_stepIncrement;
 
+	Vec4 m_projMat00_11_22_23;
+
+	Vec4 m_unprojectionParameters;
+
 	Mat4 m_prevViewProjMatMulInvViewProjMat;
-	Mat4 m_projMat;
-	Mat4 m_invProjMat;
 	Mat3x4 m_normalMat;
 };
 

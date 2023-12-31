@@ -191,7 +191,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 					// AMD
 					RgaOutput rgaOut = {};
-#if 1
+#if 0
 					err = runRadeonGpuAnalyzer(
 #	if ANKI_OS_LINUX
 						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga",

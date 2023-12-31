@@ -139,17 +139,18 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_ssrGrProg.get());
 
-		SsrConstants2 consts = {};
+		SsrConstants consts = {};
 		consts.m_viewportSizef = Vec2(rez);
 		consts.m_frameCount = getRenderer().getFrameCount() % kMaxU32;
 		consts.m_maxIterations = g_ssrMaxIterationsCVar.get();
 		consts.m_roughnessCutoff = g_ssrRoughnessCutoffCVar.get();
 		consts.m_stepIncrement = g_ssrStepIncrementCVar.get();
+		consts.m_projMat00_11_22_23 = Vec4(ctx.m_matrices.m_projection(0, 0), ctx.m_matrices.m_projection(1, 1), ctx.m_matrices.m_projection(2, 2),
+										   ctx.m_matrices.m_projection(2, 3));
+		consts.m_unprojectionParameters = ctx.m_matrices.m_unprojectionParameters;
 		consts.m_prevViewProjMatMulInvViewProjMat = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
-		consts.m_projMat = ctx.m_matrices.m_projectionJitter;
-		consts.m_invProjMat = ctx.m_matrices.m_invertedProjectionJitter;
 		consts.m_normalMat = Mat3x4(Vec3(0.0f), ctx.m_matrices.m_view.getRotationPart());
-		*allocateAndBindConstants<SsrConstants2>(cmdb, 0, 0) = consts;
+		*allocateAndBindConstants<SsrConstants>(cmdb, 0, 0) = consts;
 
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(1));

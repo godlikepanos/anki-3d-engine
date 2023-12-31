@@ -39,14 +39,13 @@
 Vec3 unproject(Vec2 ndc)
 {
 	const F32 d = g_depthTex.SampleLevel(g_linearAnyClampSampler, ndcToUv(ndc), 0.0).r;
-	const F32 z = g_consts.m_unprojectionParameters.z / (g_consts.m_unprojectionParameters.w + d);
-	const Vec2 xy = ndc * g_consts.m_unprojectionParameters.xy * z;
-	return Vec3(xy, z);
+	return cheapPerspectiveUnprojection(g_consts.m_unprojectionParameters, ndc, d);
 }
 
 Vec4 project(Vec4 p)
 {
-	return projectPerspective(p, g_consts.m_projectionMat00, g_consts.m_projectionMat11, g_consts.m_projectionMat22, g_consts.m_projectionMat23);
+	return cheapPerspectiveProjection(g_consts.m_projectionMat00, g_consts.m_projectionMat11, g_consts.m_projectionMat22, g_consts.m_projectionMat23,
+									  p);
 }
 
 RF32 computeFalloff(RF32 len)

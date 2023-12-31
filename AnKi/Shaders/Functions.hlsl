@@ -31,8 +31,8 @@ Vec4 linearizeDepthOptimal(Vec4 depths, F32 a, F32 b)
 	return 1.0 / (a + b / depths);
 }
 
-// Project a vector by knowing only the non zero values of a perspective matrix
-Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
+/// Project a vector by knowing only the non zero values of a perspective matrix. Doesn't take into account jitter.
+Vec4 cheapPerspectiveProjection(F32 m00, F32 m11, F32 m22, F32 m23, Vec4 vec)
 {
 	Vec4 o;
 	o.x = vec.x * m00;
@@ -40,6 +40,20 @@ Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
 	o.z = vec.z * m22 + vec.w * m23;
 	o.w = -vec.z;
 	return o;
+}
+
+/// Project a vector by knowing only the non zero values of a perspective matrix. Doesn't take into account jitter.
+Vec4 cheapPerspectiveProjection(Vec4 projMat_00_11_22_23, Vec4 vec)
+{
+	return cheapPerspectiveProjection(projMat_00_11_22_23.x, projMat_00_11_22_23.y, projMat_00_11_22_23.z, projMat_00_11_22_23.w, vec);
+}
+
+/// To unproject to view space. Jitter not considered. See Mat4::extractPerspectiveUnprojectionParams in C++.
+Vec3 cheapPerspectiveUnprojection(Vec4 unprojParams, Vec2 ndc, F32 depth)
+{
+	const F32 z = unprojParams.z / (unprojParams.w + depth);
+	const Vec2 xy = ndc * unprojParams.xy * z;
+	return Vec3(xy, z);
 }
 
 #if ANKI_FRAGMENT_SHADER

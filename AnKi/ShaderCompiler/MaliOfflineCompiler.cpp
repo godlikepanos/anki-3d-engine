@@ -33,6 +33,10 @@ static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
 	{
 		out = MaliOfflineCompilerHwUnit::kTexture;
 	}
+	else if(str.find("A") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::kFma; // ????
+	}
 	else
 	{
 		ANKI_ASSERT(0);
