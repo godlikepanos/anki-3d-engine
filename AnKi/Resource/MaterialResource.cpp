@@ -587,6 +587,8 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	case RenderingTechnique::kRtShadow:
 		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");
 		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	const ShaderProgramResourceVariant* progVariant = nullptr;

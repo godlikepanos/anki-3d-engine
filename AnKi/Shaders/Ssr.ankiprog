@@ -159,101 +159,6 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif // ANKI_TECHNIQUE_Ssr && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
 
 // ===========================================================================
-// Light shading downscale                                                   =
-// ===========================================================================
-#if ANKI_TECHNIQUE_MipGeneration && ANKI_COMPUTE_SHADER
-struct Constants
-{
-	Vec2 m_invSrcTexSize;
-	U32 m_threadGroupCount;
-	U32 m_mipmapCount;
-};
-
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
-
-[[vk::binding(0)]] globallycoherent RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce];
-[[vk::binding(1)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
-[[vk::binding(2)]] Texture2D<Vec4> g_srcTex;
-
-[[vk::binding(3)]] SamplerState g_linearAnyClampSampler;
-
-// Include SPD
-#	define A_GPU 1
-#	define A_HLSL 1
-#	include <ThirdParty/FidelityFX/ffx_a.h>
-
-groupshared AU1 s_spdCounter;
-groupshared AF3 s_spdIntermediateRgb[16][16];
-
-AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
-{
-	ANKI_MAYBE_UNUSED(slice);
-	const AF2 uv = p * g_consts.m_invSrcTexSize + g_consts.m_invSrcTexSize;
-
-	const Vec3 val = g_srcTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
-	return AF4(val, 0.0f);
-}
-
-AF4 SpdLoad(AU2 p, AU1 slice)
-{
-	ANKI_MAYBE_UNUSED(slice);
-	return AF4(g_dstUavs[5][p].xyz, 0.0);
-}
-
-void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
-{
-	ANKI_MAYBE_UNUSED(slice);
-	g_dstUavs[mip][p] = Vec4(value.xyz, 0.0f);
-}
-
-void SpdIncreaseAtomicCounter(AU1 slice)
-{
-	ANKI_MAYBE_UNUSED(slice);
-	InterlockedAdd(g_spdCounter[0], 1u, s_spdCounter);
-}
-
-AU1 SpdGetAtomicCounter()
-{
-	return s_spdCounter;
-}
-
-void SpdResetAtomicCounter(AU1 slice)
-{
-	ANKI_MAYBE_UNUSED(slice);
-	g_spdCounter[0] = 0u;
-}
-
-AF4 SpdLoadIntermediate(AU1 x, AU1 y)
-{
-	return AF4(s_spdIntermediateRgb[x][y], 0.0f);
-}
-
-void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
-{
-	s_spdIntermediateRgb[x][y] = value.xyz;
-}
-
-AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
-{
-	AF4 value = v0 / 4.0f;
-	value += v1 / 4.0f;
-	value += v2 / 4.0f;
-	value += v3 / 4.0f;
-	return AF4(value.xyz, 0.0f);
-}
-
-#	define SPD_LINEAR_SAMPLER 1
-#	include <ThirdParty/FidelityFX/ffx_spd.h>
-
-[numthreads(256, 1, 1)] void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
-{
-	const U32 slice = 0u;
-	const UVec2 offset = UVec2(0, 0);
-	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_consts.m_mipmapCount), AU1(g_consts.m_threadGroupCount), slice, offset);
-}
-#endif
-
-// ===========================================================================
 // Techniques                                                                =
 // ===========================================================================
 #pragma anki technique_start vert Ssr
@@ -265,6 +170,3 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 
 #pragma anki technique_start comp Ssr
 #pragma anki technique_end comp Ssr
-
-#pragma anki technique_start comp MipGeneration
-#pragma anki technique_end comp MipGeneration

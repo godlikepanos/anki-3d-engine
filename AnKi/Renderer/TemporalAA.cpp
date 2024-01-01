@@ -31,13 +31,14 @@ Error TemporalAA::initInternal()
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/TemporalAA.ankiprogbin", {{"VARIANCE_CLIPPING", 1}, {"YCBCR", 0}}, m_prog, m_grProg));
 
-	for(U i = 0; i < 2; ++i)
+	for(U32 i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
 		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
 
-		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), usage, "TemporalAA");
+		TextureInitInfo texinit =
+			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
+													   getRenderer().getHdrFormat(), usage, String().sprintf("TemporalAA #%u", i).cstr());
 
 		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
 	}
@@ -64,14 +65,14 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Import RTs
-	if(m_rtTexturesImportedOnce[historyRtIdx]) [[likely]]
+	if(m_rtTexturesImportedOnce) [[likely]]
 	{
 		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get());
 	}
 	else
 	{
 		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSampledFragment);
-		m_rtTexturesImportedOnce[historyRtIdx] = true;
+		m_rtTexturesImportedOnce = true;
 	}
 
 	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx].get(), TextureUsageBit::kNone);

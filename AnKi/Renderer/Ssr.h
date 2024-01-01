@@ -27,8 +27,6 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void populateRenderGraphPostLightShading(RenderingContext& ctx);
-
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
@@ -43,21 +41,14 @@ public:
 
 public:
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_mipmapLightShadingGrProg;
 	ShaderProgramPtr m_ssrGrProg;
-
-	TexturePtr m_mipmappedLightShdingTex;
-	Bool m_mipmappedLightShdingTexImportedOnce = false;
 
 	RenderTargetDescription m_ssrRtDescr;
 	FramebufferDescription m_fbDescr;
 
-	BufferPtr m_counterBuffer;
-
 	class
 	{
 	public:
-		RenderTargetHandle m_mipmappedLightShadingRt;
 		RenderTargetHandle m_ssrRt;
 	} m_runCtx;
 

@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
@@ -26,9 +26,9 @@ Error DownscaleBlur::init()
 Error DownscaleBlur::initInternal()
 {
 	m_passCount =
-		computeMaxMipmapCount2d(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), kDownscaleBurDownTo) - 1;
+		computeMaxMipmapCount2d(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), kDownscaleBurDownTo) - 1;
 
-	const UVec2 rez = getRenderer().getPostProcessResolution() / 2;
+	const UVec2 rez = getRenderer().getInternalResolution() / 2;
 	ANKI_R_LOGV("Initializing downscale pyramid. Resolution %ux%u, mip count %u", rez.x(), rez.y(), m_passCount);
 
 	const Bool preferCompute = g_preferComputeCVar.get();
@@ -38,7 +38,7 @@ Error DownscaleBlur::initInternal()
 	texinit.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
 	if(preferCompute)
 	{
-		texinit.m_usage |= TextureUsageBit::kSampledCompute | TextureUsageBit::kUavComputeWrite;
+		texinit.m_usage |= TextureUsageBit::kUavComputeWrite;
 	}
 	else
 	{
@@ -77,68 +77,48 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create passes
-	static constexpr Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
+	static constexpr Array<CString, 8> passNames = {"Down/Blur #0", "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
 													"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
-	const RenderTargetHandle inRt =
-		(getRenderer().getScale().hasUpscaledHdrRt()) ? getRenderer().getScale().getUpscaledHdrRt() : getRenderer().getScale().getTonemappedRt();
-	if(g_preferComputeCVar.get())
+	const RenderTargetHandle inRt = getRenderer().getLightShading().getRt();
+
+	for(U32 i = 0; i < m_passCount; ++i)
 	{
-		for(U32 i = 0; i < m_passCount; ++i)
+		RenderPassDescriptionBase* ppass;
+		if(g_preferComputeCVar.get())
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passNames[i]);
-			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) {
-				run(i, rgraphCtx);
-			});
-
-			if(i > 0)
-			{
-				TextureSubresourceInfo sampleSubresource;
-				TextureSubresourceInfo renderSubresource;
-
-				sampleSubresource.m_firstMipmap = i - 1;
-				renderSubresource.m_firstMipmap = i;
-
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite, renderSubresource);
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute, sampleSubresource);
-			}
-			else
-			{
-				TextureSubresourceInfo renderSubresource;
-
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite, renderSubresource);
-				pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
-			}
+			ppass = &rgraph.newComputeRenderPass(passNames[i]);
 		}
-	}
-	else
-	{
-		for(U32 i = 0; i < m_passCount; ++i)
+		else
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
-			pass.setWork([this, i](RenderPassWorkContext& rgraphCtx) {
-				run(i, rgraphCtx);
-			});
 			pass.setFramebufferInfo(m_fbDescrs[i], {m_runCtx.m_rt});
-
-			if(i > 0)
-			{
-				TextureSubresourceInfo sampleSubresource;
-				TextureSubresourceInfo renderSubresource;
-
-				sampleSubresource.m_firstMipmap = i - 1;
-				renderSubresource.m_firstMipmap = i;
-
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource);
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, sampleSubresource);
-			}
-			else
-			{
-				TextureSubresourceInfo renderSubresource;
-
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, renderSubresource);
-				pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
-			}
+			ppass = &pass;
 		}
+
+		const TextureUsageBit readUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kSampledCompute : TextureUsageBit::kSampledFragment;
+		const TextureUsageBit writeUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
+
+		if(i > 0)
+		{
+			TextureSubresourceInfo sampleSubresource;
+			TextureSubresourceInfo renderSubresource;
+
+			sampleSubresource.m_firstMipmap = i - 1;
+			renderSubresource.m_firstMipmap = i;
+
+			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, renderSubresource);
+			ppass->newTextureDependency(m_runCtx.m_rt, readUsage, sampleSubresource);
+		}
+		else
+		{
+			TextureSubresourceInfo firstMip;
+			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, firstMip);
+			ppass->newTextureDependency(inRt, readUsage);
+		}
+
+		ppass->setWork([this, i](RenderPassWorkContext& rgraphCtx) {
+			run(i, rgraphCtx);
+		});
 	}
 }
 
@@ -161,19 +141,16 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		const RenderTargetHandle inRt =
-			(getRenderer().getScale().hasUpscaledHdrRt()) ? getRenderer().getScale().getUpscaledHdrRt() : getRenderer().getScale().getTonemappedRt();
-		rgraphCtx.bindColorTexture(0, 1, inRt);
+		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
 	}
 
 	rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
 
-	const Bool revertTonemap = passIdx == 0 && !getRenderer().getScale().hasUpscaledHdrRt();
-	const UVec4 fbSize(vpWidth, vpHeight, revertTonemap, 0);
-	cmdb.setPushConstants(&fbSize, sizeof(fbSize));
-
 	if(g_preferComputeCVar.get())
 	{
+		const Vec4 fbSize(F32(vpWidth), F32(vpHeight), 0.0f, 0.0f);
+		cmdb.setPushConstants(&fbSize, sizeof(fbSize));
+
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;
 		rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_rt, sampleSubresource);

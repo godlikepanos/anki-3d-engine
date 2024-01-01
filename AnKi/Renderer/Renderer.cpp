@@ -321,7 +321,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
-	m_ssr->populateRenderGraphPostLightShading(ctx);
 	if(!getScale().getUsingGrUpscaler())
 	{
 		m_temporalAA->populateRenderGraph(ctx);
@@ -566,10 +565,18 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 			obj = inf.m_obj;
 		}
 	}
-	ANKI_ASSERT(obj);
 
-	obj->getDebugRenderTarget(m_currentDebugRtName, handles, optionalShaderProgram);
-	return true;
+	if(obj)
+	{
+		obj->getDebugRenderTarget(m_currentDebugRtName, handles, optionalShaderProgram);
+		return true;
+	}
+	else
+	{
+		ANKI_R_LOGE("Debug rendertarget doesn't exist: %s", m_currentDebugRtName.cstr());
+		m_currentDebugRtName = {};
+		return false;
+	}
 }
 
 void Renderer::setCurrentDebugRenderTarget(CString rtName)

@@ -33,7 +33,7 @@ public:
 
 private:
 	Array<TexturePtr, 2> m_rtTextures;
-	Array<Bool, 2> m_rtTexturesImportedOnce = {};
+	Bool m_rtTexturesImportedOnce = false;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;

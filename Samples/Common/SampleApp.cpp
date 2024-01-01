@@ -106,7 +106,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kL) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Bloom") ? "" : "Bloom");
 	}
 
 	if(in.getKey(KeyCode::kH) == 1)
