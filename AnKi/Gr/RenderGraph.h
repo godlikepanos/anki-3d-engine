@@ -250,7 +250,7 @@ public:
 		, m_type(Type::kTexture)
 	{
 		ANKI_ASSERT(handle.isValid());
-		m_texture.m_subresource.m_mipmapCount = kMaxU32; // Mark it as "whole texture"
+		m_texture.m_subresource.m_mipmapCount = kMaxU32; // Mark it as "whole texture". Some code later on will fix that up
 		m_texture.m_subresource.m_depthStencilAspect = aspect;
 	}
 

@@ -24,11 +24,9 @@
 [[vk::binding(3)]] Texture2D<RVec4> g_envMapTex;
 #endif
 
-RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
-	const Vec2 uvToRead = mad(svPosition.xy, g_consts.m_inputTexUvScale, g_consts.m_inputTexUvBias);
-
-	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uvToRead, 0.0).r;
+	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	if(depth != 1.0f)
 	{
 		discard;

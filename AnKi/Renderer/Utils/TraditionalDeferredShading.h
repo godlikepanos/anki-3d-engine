@@ -20,10 +20,6 @@ public:
 	Mat4 m_invViewProjectionMatrix;
 	Vec4 m_cameraPosWSpace;
 	UVec4 m_viewport;
-	Vec2 m_gbufferTexCoordsScale;
-	Vec2 m_gbufferTexCoordsBias;
-	Vec2 m_lightbufferTexCoordsScale;
-	Vec2 m_lightbufferTexCoordsBias;
 	F32 m_effectiveShadowDistance = -1.0f; // TODO rm
 	Mat4 m_dirLightMatrix; // TODO rm
 
@@ -33,8 +29,13 @@ public:
 
 	// Render targets
 	Array<RenderTargetHandle, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargets;
+	Array<TextureSubresourceInfo, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargetSubresourceInfos;
+
 	RenderTargetHandle m_gbufferDepthRenderTarget;
+	TextureSubresourceInfo m_gbufferDepthRenderTargetSubresourceInfo = {DepthStencilAspectBit::kDepth};
+
 	RenderTargetHandle m_directionalLightShadowmapRenderTarget;
+	TextureSubresourceInfo m_directionalLightShadowmapRenderTargetSubresourceInfo = {DepthStencilAspectBit::kDepth};
 
 	RenderPassWorkContext* m_renderpassContext = nullptr;
 };

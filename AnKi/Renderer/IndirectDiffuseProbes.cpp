@@ -68,7 +68,8 @@ Error IndirectDiffuseProbes::initGBuffer()
 	// Create RT descriptions
 	{
 		RenderTargetDescription texinit =
-			getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, kGBufferColorRenderTargetFormats[0], "GI GBuffer");
+			getRenderer().create2DRenderTargetDescription(m_tileSize, m_tileSize, kGBufferColorRenderTargetFormats[0], "GI GBuffer");
+		texinit.m_type = TextureType::kCube;
 
 		// Create color RT descriptions
 		for(U32 i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -80,26 +81,11 @@ Error IndirectDiffuseProbes::initGBuffer()
 		}
 
 		// Create depth RT
+		texinit.m_type = TextureType::k2D;
 		texinit.m_format = getRenderer().getDepthNoStencilFormat();
 		texinit.setName("GI GBuff Depth");
 		m_gbuffer.m_depthRtDescr = texinit;
 		m_gbuffer.m_depthRtDescr.bake();
-	}
-
-	// Create FB descr
-	{
-		m_gbuffer.m_fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
-
-		for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
-		{
-			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::kClear;
-		}
-
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-
-		m_gbuffer.m_fbDescr.bake();
 	}
 
 	return Error::kNone;
@@ -112,10 +98,10 @@ Error IndirectDiffuseProbes::initShadowMapping()
 
 	// RT descr
 	m_shadowMapping.m_rtDescr =
-		getRenderer().create2DRenderTargetDescription(resolution * 6, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
+		getRenderer().create2DRenderTargetDescription(resolution, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
 	m_shadowMapping.m_rtDescr.bake();
 
-	// FB descr
+	// Create the FB descr
 	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
 	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
@@ -129,15 +115,9 @@ Error IndirectDiffuseProbes::initLightShading()
 {
 	// Init RT descr
 	{
-		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_tileSize * 6, m_tileSize, getRenderer().getHdrFormat(), "GI LS");
+		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_tileSize, m_tileSize, getRenderer().getHdrFormat(), "GI LS");
+		m_lightShading.m_rtDescr.m_type = TextureType::kCube;
 		m_lightShading.m_rtDescr.bake();
-	}
-
-	// Create FB descr
-	{
-		m_lightShading.m_fbDescr.m_colorAttachmentCount = 1;
-		m_lightShading.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
-		m_lightShading.m_fbDescr.bake();
 	}
 
 	// Init deferred
@@ -148,10 +128,9 @@ Error IndirectDiffuseProbes::initLightShading()
 
 Error IndirectDiffuseProbes::initIrradiance()
 {
-	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/IrradianceDice.ankiprogbin",
-						  {{"WORKGROUP_SIZE_XY", MutatorValue(m_tileSize)}, {"LIGHT_SHADING_TEX", 0}, {"STORE_LOCATION", 0}, {"SECOND_BOUNCE", 1}},
-						  m_irradiance.m_prog, m_irradiance.m_grProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/IrradianceDice.ankiprogbin",
+								 {{"THREDGROUP_SIZE_SQRT", MutatorValue(m_tileSize)}, {"STORE_LOCATION", 0}, {"SECOND_BOUNCE", 1}},
+								 m_irradiance.m_prog, m_irradiance.m_grProg));
 
 	return Error::kNone;
 }
@@ -218,249 +197,233 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 	{
 		const Vec3 cellCenter = computeCellCenter(cellIdx, *probeToRefresh);
 
-		// GBuffer visibility
-		Array<GpuVisibilityOutput, 6> visOuts;
-		Array<Frustum, 6> frustums;
-		for(U32 i = 0; i < 6; ++i)
+		// For each face do everything up to light shading
+		for(U8 f = 0; f < 6; ++f)
 		{
-			Frustum& frustum = frustums[i];
-			frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
-			frustum.setWorldTransform(Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[i], 1.0f));
-			frustum.update();
-
-			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
-
-			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "GI GBuffer";
-			visIn.m_technique = RenderingTechnique::kGBuffer;
-			visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
-			visIn.m_lodReferencePoint = cellCenter;
-			visIn.m_lodDistances = lodDistances;
-			visIn.m_rgraph = &rgraph;
-			visIn.m_finalRenderTargetSize = UVec2(m_tileSize);
-
-			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOuts[i]);
-		}
-
-		// GBuffer
-		Array<Mat4, 6> viewProjMats;
-		Array<Mat3x4, 6> viewMats;
-		{
-			// Prepare the matrices
-			for(U32 f = 0; f < 6; ++f)
+			// GBuffer visibility
+			GpuVisibilityOutput visOut;
+			Frustum frustum;
 			{
-				viewProjMats[f] = frustums[f].getViewProjectionMatrix();
-				viewMats[f] = frustums[f].getViewMatrix();
-			}
-
-			// Create the pass
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI GBuffer");
-			pass.setFramebufferInfo(m_gbuffer.m_fbDescr, gbufferColorRts, gbufferDepthRt);
-
-			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
-			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite);
-			}
-			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
-			for(U32 i = 0; i < 6; ++i)
-			{
-				pass.newBufferDependency(visOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
-			}
-
-			pass.setWork(6, [this, visOuts, viewProjMats, viewMats](RenderPassWorkContext& rgraphCtx) {
-				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-				const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-
-				const U32 viewportX = faceIdx * m_tileSize;
-				cmdb.setViewport(viewportX, 0, m_tileSize, m_tileSize);
-				cmdb.setScissor(viewportX, 0, m_tileSize, m_tileSize);
-
-				RenderableDrawerArguments args;
-				args.m_viewMatrix = viewMats[faceIdx];
-				args.m_cameraTransform = args.m_viewMatrix.getInverseTransformation();
-				args.m_viewProjectionMatrix = viewProjMats[faceIdx];
-				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-				args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
-				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
-				args.m_viewport = UVec4(viewportX, 0, m_tileSize, m_tileSize);
-				args.fillMdi(visOuts[faceIdx]);
-
-				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
-
-				// It's secondary, no need to restore any state
-			});
-		}
-
-		// Shadow visibility. Optional
-		Array<GpuVisibilityOutput, 6> shadowVisOuts;
-		Array<Mat4, 6> cascadeProjMats;
-		Array<Mat3x4, 6> cascadeViewMats;
-		Array<Mat4, 6> cascadeViewProjMats;
-		if(doShadows)
-		{
-			for(U32 i = 0; i < 6; ++i)
-			{
-				constexpr U32 kCascadeCount = 1;
-				dirLightc->computeCascadeFrustums(frustums[i], Array<F32, kCascadeCount>{probeToRefresh->getShadowsRenderRadius()},
-												  WeakArray<Mat4>(&cascadeProjMats[i], kCascadeCount),
-												  WeakArray<Mat3x4>(&cascadeViewMats[i], kCascadeCount));
-
-				cascadeViewProjMats[i] = cascadeProjMats[i] * Mat4(cascadeViewMats[i], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+				frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
+				frustum.setWorldTransform(Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], 1.0f));
+				frustum.update();
 
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 				FrustumGpuVisibilityInput visIn;
-				visIn.m_passesName = "GI shadows";
+				visIn.m_passesName = computeTempPassName("GI: GBuffer", cellIdx * 100 + f);
+				visIn.m_technique = RenderingTechnique::kGBuffer;
+				visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
+				visIn.m_lodReferencePoint = cellCenter;
+				visIn.m_lodDistances = lodDistances;
+				visIn.m_rgraph = &rgraph;
+				visIn.m_finalRenderTargetSize = UVec2(m_tileSize);
+
+				getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+			}
+
+			// GBuffer
+			{
+				// Create the FB descriptor
+				FramebufferDescription fbDescr;
+				fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
+				for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
+				{
+					fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::kClear;
+					fbDescr.m_colorAttachments[j].m_surface.m_face = f;
+				}
+				fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
+				fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
+				fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
+				fbDescr.bake();
+
+				// Create the pass
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: GBuffer", cellIdx * 100 + f));
+				pass.setFramebufferInfo(fbDescr, gbufferColorRts, gbufferDepthRt);
+
+				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
+				{
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, f, 0));
+				}
+				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+
+				pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+
+				pass.setWork(1, [this, visOut, viewProjMat = frustum.getViewProjectionMatrix(),
+								 viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
+					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+					cmdb.setViewport(0, 0, m_tileSize, m_tileSize);
+
+					RenderableDrawerArguments args;
+					args.m_viewMatrix = viewMat;
+					args.m_cameraTransform = args.m_viewMatrix.getInverseTransformation();
+					args.m_viewProjectionMatrix = viewProjMat;
+					args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+					args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
+					args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+					args.m_viewport = UVec4(0, 0, m_tileSize, m_tileSize);
+					args.fillMdi(visOut);
+
+					getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+
+					// It's secondary, no need to restore any state
+				});
+			}
+
+			// Shadow visibility. Optional
+			GpuVisibilityOutput shadowVisOut;
+			Mat4 cascadeProjMat;
+			Mat3x4 cascadeViewMat;
+			Mat4 cascadeViewProjMat;
+			if(doShadows)
+			{
+				constexpr U32 kCascadeCount = 1;
+				dirLightc->computeCascadeFrustums(frustum, Array<F32, kCascadeCount>{probeToRefresh->getShadowsRenderRadius()},
+												  WeakArray<Mat4>(&cascadeProjMat, kCascadeCount), WeakArray<Mat3x4>(&cascadeViewMat, kCascadeCount));
+
+				cascadeViewProjMat = cascadeProjMat * Mat4(cascadeViewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+
+				FrustumGpuVisibilityInput visIn;
+				visIn.m_passesName = computeTempPassName("GI: Shadows", cellIdx * 100 + f);
 				visIn.m_technique = RenderingTechnique::kDepth;
-				visIn.m_viewProjectionMatrix = cascadeViewProjMats[i];
+				visIn.m_viewProjectionMatrix = cascadeViewProjMat;
 				visIn.m_lodReferencePoint = cellCenter;
 				visIn.m_lodDistances = lodDistances;
 				visIn.m_rgraph = &rgraph;
 				visIn.m_finalRenderTargetSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
 
-				getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOuts[i]);
+				getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOut);
 			}
-		}
 
-		// Shadow pass. Optional
-		if(doShadows)
-		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI shadows");
-			pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowsRt);
-
-			pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-			for(U32 i = 0; i < 6; ++i)
+			// Shadow pass. Optional
+			if(doShadows)
 			{
-				pass.newBufferDependency(shadowVisOuts[i].m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+				// Create the pass
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: Shadows", cellIdx * 100 + f));
+				pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowsRt);
+
+				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				pass.newBufferDependency(shadowVisOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+
+				pass.setWork(1, [this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
+					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+					cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+
+					const U32 rez = m_shadowMapping.m_rtDescr.m_width;
+					cmdb.setViewport(0, 0, rez, rez);
+
+					RenderableDrawerArguments args;
+					args.m_viewMatrix = cascadeViewMat;
+					args.m_cameraTransform = cascadeViewMat.getInverseTransformation();
+					args.m_viewProjectionMatrix = cascadeViewProjMat;
+					args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+					args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+					args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+					args.m_viewport = UVec4(0, 0, rez, rez);
+					args.fillMdi(shadowVisOut);
+
+					getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+
+					// It's secondary, no need to restore the state
+				});
 			}
 
-			pass.setWork(6, [this, shadowVisOuts, cascadeViewProjMats, cascadeViewMats](RenderPassWorkContext& rgraphCtx) {
-				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-				cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
-
-				const U32 faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-
-				const U32 rez = m_shadowMapping.m_rtDescr.m_height;
-				cmdb.setViewport(rez * faceIdx, 0, rez, rez);
-				cmdb.setScissor(rez * faceIdx, 0, rez, rez);
-
-				RenderableDrawerArguments args;
-				args.m_viewMatrix = cascadeViewMats[faceIdx];
-				args.m_cameraTransform = cascadeViewMats[faceIdx].getInverseTransformation();
-				args.m_viewProjectionMatrix = cascadeViewProjMats[faceIdx];
-				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
-				args.m_renderingTechinuqe = RenderingTechnique::kDepth;
-				args.m_viewport = UVec4(rez * faceIdx, 0, rez, rez);
-				args.fillMdi(shadowVisOuts[faceIdx]);
-
-				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
-
-				// It's secondary, no need to restore the state
-			});
-		}
-
-		// Light visibility
-		Array<GpuVisibilityNonRenderablesOutput, 6> lightVis;
-		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			GpuVisibilityNonRenderablesInput in;
-			in.m_passesName = "GI light visibility";
-			in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
-			in.m_viewProjectionMat = frustums[faceIdx].getViewProjectionMatrix();
-			in.m_rgraph = &rgraph;
-			getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, lightVis[faceIdx]);
-		}
-
-		// Light shading pass
-		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI light shading");
-			pass.setFramebufferInfo(m_lightShading.m_fbDescr, {lightShadingRt});
-
-			Array<BufferOffsetRange, 6> visibleLightsBuffers;
-			for(U32 f = 0; f < 6; ++f)
+			// Light visibility
+			GpuVisibilityNonRenderablesOutput lightVis;
 			{
-				visibleLightsBuffers[f] = lightVis[f].m_visiblesBuffer;
-				pass.newBufferDependency(lightVis[f].m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
+				GpuVisibilityNonRenderablesInput in;
+				in.m_passesName = computeTempPassName("GI: Light visibility", cellIdx * 100 + f);
+				in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
+				in.m_viewProjectionMat = frustum.getViewProjectionMatrix();
+				in.m_rgraph = &rgraph;
+				getRenderer().getGpuVisibilityNonRenderables().populateRenderGraph(in, lightVis);
 			}
 
-			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite);
-
-			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
+			// Light shading pass
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment);
-			}
-			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				// Create FB descr
+				FramebufferDescription fbDescr;
+				fbDescr.m_colorAttachmentCount = 1;
+				fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
+				fbDescr.m_colorAttachments[0].m_surface.m_face = f;
+				fbDescr.bake();
 
-			if(shadowsRt.isValid())
-			{
-				pass.newTextureDependency(shadowsRt, TextureUsageBit::kSampledFragment);
-			}
+				// Create the pass
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: Light shading", cellIdx * 100 + f));
+				pass.setFramebufferInfo(fbDescr, {lightShadingRt});
 
-			pass.setWork(1, [this, visibleLightsBuffers, viewProjMats, cellCenter, gbufferColorRts, gbufferDepthRt, probeToRefresh,
-							 cascadeViewProjMats, shadowsRt](RenderPassWorkContext& rgraphCtx) {
-				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
 
-				const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
-				const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
+				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, f, 0));
 
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-				for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
+				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, f, 0));
+				}
+				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+
+				if(shadowsRt.isValid())
+				{
+					pass.newTextureDependency(shadowsRt, TextureUsageBit::kSampledFragment);
+				}
+
+				pass.setWork(1, [this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
+								 gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt,
+								 faceIdx = f](RenderPassWorkContext& rgraphCtx) {
+					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+
+					const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
+					const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
+
+					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
 					const U32 rez = m_tileSize;
-					cmdb.setScissor(rez * faceIdx, 0, rez, rez);
-					cmdb.setViewport(rez * faceIdx, 0, rez, rez);
+					cmdb.setViewport(0, 0, rez, rez);
 
 					// Draw light shading
 					TraditionalDeferredLightShadingDrawInfo dsInfo;
-					dsInfo.m_viewProjectionMatrix = viewProjMats[faceIdx];
-					dsInfo.m_invViewProjectionMatrix = viewProjMats[faceIdx].getInverse();
+					dsInfo.m_viewProjectionMatrix = viewProjMat;
+					dsInfo.m_invViewProjectionMatrix = viewProjMat.getInverse();
 					dsInfo.m_cameraPosWSpace = cellCenter.xyz1();
-					dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
-					dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
-					dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);
-					dsInfo.m_lightbufferTexCoordsBias = Vec2(-F32(faceIdx), 0.0f);
-					dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
-
+					dsInfo.m_viewport = UVec4(0, 0, m_tileSize, m_tileSize);
 					dsInfo.m_effectiveShadowDistance = (doShadows) ? probeToRefresh->getShadowsRenderRadius() : -1.0f;
 
 					if(doShadows)
 					{
-						const F32 xScale = 1.0f / 6.0f;
-						const F32 yScale = 1.0f;
-						const F32 xOffset = F32(faceIdx) * (1.0f / 6.0f);
-						const F32 yOffset = 0.0f;
-						const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 						const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-						dsInfo.m_dirLightMatrix = atlasMtx * biasMat4 * cascadeViewProjMats[faceIdx];
+						dsInfo.m_dirLightMatrix = biasMat4 * cascadeViewProjMat;
 					}
 					else
 					{
 						dsInfo.m_dirLightMatrix = Mat4::getIdentity();
 					}
 
-					dsInfo.m_visibleLightsBuffer = visibleLightsBuffers[faceIdx];
+					dsInfo.m_visibleLightsBuffer = visibleLightsBuffer;
 
 					dsInfo.m_gbufferRenderTargets[0] = gbufferColorRts[0];
+					dsInfo.m_gbufferRenderTargetSubresourceInfos[0].m_firstFace = faceIdx;
 					dsInfo.m_gbufferRenderTargets[1] = gbufferColorRts[1];
+					dsInfo.m_gbufferRenderTargetSubresourceInfos[1].m_firstFace = faceIdx;
 					dsInfo.m_gbufferRenderTargets[2] = gbufferColorRts[2];
+					dsInfo.m_gbufferRenderTargetSubresourceInfos[2].m_firstFace = faceIdx;
 					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
 					dsInfo.m_renderpassContext = &rgraphCtx;
 
 					m_lightShading.m_deferred.drawLights(dsInfo);
-				}
-			});
-		}
+				});
+			}
+		} // For all faces
 
 		// Irradiance pass. First & 2nd bounce
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI irradiance");
+			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(computeTempPassName("GI: Irradiance", cellIdx * 100));
 
 			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSampledCompute);
 			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kUavComputeWrite);

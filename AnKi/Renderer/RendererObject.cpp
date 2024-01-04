@@ -109,4 +109,11 @@ void RendererObject::zeroBuffer(Buffer* buff)
 	fence->clientWait(16.0_sec);
 }
 
+CString RendererObject::computeTempPassName(CString name, U32 index)
+{
+	thread_local static Char buff[128];
+	snprintf(buff, sizeof(buff), "%s #%u", name.cstr(), index);
+	return buff;
+}
+
 } // end namespace anki

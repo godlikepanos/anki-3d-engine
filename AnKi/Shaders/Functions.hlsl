@@ -225,6 +225,7 @@ Vec4 bilateralUpsample(Texture2D depthHigh, Texture2D depthLow, Texture2D colorL
 	return sum / normalize;
 }
 
+/// Compute the UV that can be passed to a cube texture. The norm is in [-1, 1].
 Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 {
 	Vec3 zDir = Vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);

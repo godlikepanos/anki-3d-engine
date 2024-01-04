@@ -26,9 +26,6 @@ struct TraditionalDeferredShadingConstants
 	Vec2 m_inputTexUvScale;
 	Vec2 m_inputTexUvBias;
 
-	Vec2 m_fbUvScale;
-	Vec2 m_fbUvBias;
-
 	Mat4 m_invViewProjMat;
 
 	Vec3 m_cameraPos;
@@ -41,9 +38,6 @@ struct TraditionalDeferredSkyboxConstants
 {
 	RVec3 m_solidColor;
 	F32 m_padding1;
-
-	Vec2 m_inputTexUvScale;
-	Vec2 m_inputTexUvBias;
 
 	Mat4 m_invertedViewProjectionMat;
 

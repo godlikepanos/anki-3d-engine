@@ -71,8 +71,6 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		TraditionalDeferredSkyboxConstants unis;
 		unis.m_solidColor = (isSolidColor) ? skyc->getSolidColor() : Vec3(0.0f);
-		unis.m_inputTexUvBias = info.m_gbufferTexCoordsBias;
-		unis.m_inputTexUvScale = info.m_gbufferTexCoordsScale;
 		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
 		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
 		cmdb.setPushConstants(&unis, sizeof(unis));
@@ -86,10 +84,6 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		TraditionalDeferredShadingConstants* unis = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
 
-		unis->m_inputTexUvScale = info.m_gbufferTexCoordsScale;
-		unis->m_inputTexUvBias = info.m_gbufferTexCoordsBias;
-		unis->m_fbUvScale = info.m_lightbufferTexCoordsScale;
-		unis->m_fbUvBias = info.m_lightbufferTexCoordsBias;
 		unis->m_invViewProjMat = info.m_invViewProjectionMatrix;
 		unis->m_cameraPos = info.m_cameraPosWSpace.xyz();
 
@@ -106,7 +100,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			unis->m_dirLight.m_active = 0;
 		}
 
-		cmdb.bindUavBuffer(0, 1, info.m_visibleLightsBuffer.m_buffer, info.m_visibleLightsBuffer.m_offset, info.m_visibleLightsBuffer.m_range);
+		cmdb.bindUavBuffer(0, 1, info.m_visibleLightsBuffer);
 		if(GpuSceneArrays::Light::getSingleton().getElementCount() > 0)
 		{
 			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
@@ -120,21 +114,21 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
 		cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-		rgraphCtx.bindColorTexture(0, 4, info.m_gbufferRenderTargets[0]);
-		rgraphCtx.bindColorTexture(0, 5, info.m_gbufferRenderTargets[1]);
-		rgraphCtx.bindColorTexture(0, 6, info.m_gbufferRenderTargets[2]);
-		rgraphCtx.bindTexture(0, 7, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(0, 4, info.m_gbufferRenderTargets[0], info.m_gbufferRenderTargetSubresourceInfos[0]);
+		rgraphCtx.bindTexture(0, 5, info.m_gbufferRenderTargets[1], info.m_gbufferRenderTargetSubresourceInfos[1]);
+		rgraphCtx.bindTexture(0, 6, info.m_gbufferRenderTargets[2], info.m_gbufferRenderTargetSubresourceInfos[2]);
+		rgraphCtx.bindTexture(0, 7, info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresourceInfo);
 
 		cmdb.bindSampler(0, 8, m_shadowSampler.get());
 		if(dirLightc && dirLightc->getShadowEnabled())
 		{
 			ANKI_ASSERT(info.m_directionalLightShadowmapRenderTarget.isValid());
-			rgraphCtx.bindTexture(0, 9, info.m_directionalLightShadowmapRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(0, 9, info.m_directionalLightShadowmapRenderTarget, info.m_directionalLightShadowmapRenderTargetSubresourceInfo);
 		}
 		else
 		{
 			// No shadows for the dir light, bind a random depth texture (need depth because validation complains)
-			rgraphCtx.bindTexture(0, 9, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(0, 9, info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresourceInfo);
 		}
 
 		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular].get());

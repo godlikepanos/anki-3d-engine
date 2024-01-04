@@ -42,7 +42,6 @@ private:
 	public:
 		Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 		RenderTargetDescription m_depthRtDescr;
-		FramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class
@@ -56,7 +55,6 @@ private:
 	{
 	public:
 		RenderTargetDescription m_rtDescr;
-		FramebufferDescription m_fbDescr;
 		TraditionalDeferredLightShading m_deferred;
 	} m_lightShading; ///< Light shading.
 

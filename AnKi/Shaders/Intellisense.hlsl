@@ -151,6 +151,11 @@ template<typename T>
 using RWTexture3D = Texture2D<T>;
 
 template<typename T>
+struct TextureCube
+{
+};
+
+template<typename T>
 struct StructuredBuffer
 {
 	T& operator[](U32 index);

@@ -100,6 +100,9 @@ protected:
 								   ShaderProgramPtr& grProg, CString technique = {}, ShaderTypeBit shaderTypes = ShaderTypeBit::kNone);
 
 	static void zeroBuffer(Buffer* buff);
+
+	/// Temp pass name. Output lives in global memory so use it before the next computeTempPassName call.
+	static CString computeTempPassName(CString name, U32 index);
 };
 /// @}
 
