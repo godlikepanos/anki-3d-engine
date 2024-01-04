@@ -110,9 +110,14 @@ Error ShadowMapping::initInternal()
 	// Tiles
 	m_tileAlloc.init(m_tileCountBothAxis, m_tileCountBothAxis, kTileAllocHierarchyCount, true);
 
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_fbDescr.bake();
+	m_loadFbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
+	m_loadFbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
+	m_loadFbDescr.bake();
+
+	m_clearFbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
+	m_clearFbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
+	m_clearFbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
+	m_clearFbDescr.bake();
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingClearDepth.ankiprogbin", m_clearDepthProg, m_clearDepthGrProg));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingVetVisibility.ankiprogbin", m_vetVisibilityProg, m_vetVisibilityGrProg));
@@ -177,32 +182,65 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	processLights(ctx);
 
 	// Build the render graph
-	if(m_runCtx.m_workItems.getSize())
+	U32 passIdx = 0;
+	for(const ViewportWorkItem& work : m_runCtx.m_workItems)
 	{
-		// Will have to create render passes
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("Shadowmapping", passIdx));
 
-		// Compute render area
-		const U32 minx = m_runCtx.m_renderAreaMin.x();
-		const U32 miny = m_runCtx.m_renderAreaMin.y();
-		const U32 width = m_runCtx.m_renderAreaMax.x() - m_runCtx.m_renderAreaMin.x();
-		const U32 height = m_runCtx.m_renderAreaMax.y() - m_runCtx.m_renderAreaMin.y();
+		const Bool loadFb = (work.m_clearTileIndirectArgs.m_buffer != nullptr);
 
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Shadowmapping");
+		pass.setFramebufferInfo((loadFb) ? m_loadFbDescr : m_clearFbDescr, {}, m_runCtx.m_rt, {}, work.m_viewport[0], work.m_viewport[1],
+								work.m_viewport[2], work.m_viewport[3]);
 
-		for(const ViewportWorkItem& work : m_runCtx.m_workItems)
-		{
-			pass.newBufferDependency(work.m_visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
-		}
-
-		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kAllFramebuffer, subresource);
-
+		pass.newBufferDependency(work.m_visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead);
 
-		pass.setFramebufferInfo(m_fbDescr, {}, m_runCtx.m_rt, {}, minx, miny, width, height);
-		pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
-			runShadowMapping(rgraphCtx);
+		pass.setWork(1, [this, passIdx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
+
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			const ViewportWorkItem& work = m_runCtx.m_workItems[passIdx];
+
+			cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
+
+			if(work.m_clearTileIndirectArgs.m_buffer)
+			{
+				// Clear the depth buffer using a quad because it needs to be conditional
+
+				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
+				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+
+				cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, work.m_clearTileIndirectArgs.m_offset, work.m_clearTileIndirectArgs.m_buffer);
+
+				cmdb.setDepthCompareOperation(CompareOperation::kLess);
+			}
+
+			// Set state
+			cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+
+			RenderableDrawerArguments args;
+			args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+			args.m_viewMatrix = work.m_viewMat;
+			args.m_cameraTransform = work.m_viewMat.getInverseTransformation();
+			args.m_viewProjectionMatrix = work.m_viewProjMat;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+			args.m_viewport = UVec4(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
+			args.fillMdi(work.m_visOut);
+
+			TextureViewPtr hzbView;
+			if(work.m_hzbRt.isValid())
+			{
+				hzbView = rgraphCtx.createTextureView(work.m_hzbRt);
+				args.m_hzbTexture = hzbView.get();
+			}
+
+			getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 		});
+
+		++passIdx;
 	}
 }
 
@@ -305,9 +343,6 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 		// Set viewport
 		const UVec4 viewport = UVec4(tileViewport) * m_tileResolution;
 		atlasTileViewports[i] = viewport;
-
-		m_runCtx.m_renderAreaMin = m_runCtx.m_renderAreaMin.min(UVec2(viewport[0], viewport[1]));
-		m_runCtx.m_renderAreaMax = m_runCtx.m_renderAreaMax.max(UVec2(viewport[0] + viewport[2], viewport[1] + viewport[3]));
 	}
 
 	return goodResult;
@@ -315,9 +350,6 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 void ShadowMapping::processLights(RenderingContext& ctx)
 {
-	m_runCtx.m_renderAreaMin = UVec2(kMaxU32, kMaxU32);
-	m_runCtx.m_renderAreaMax = UVec2(kMinU32, kMinU32);
-
 	// Vars
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 	DynamicArray<ViewportWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(&getRenderer().getFrameMemoryPool());

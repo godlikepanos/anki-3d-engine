@@ -448,7 +448,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			// Bind resources
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-			for(U i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
+			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 			{
 				rgraphCtx.bindColorTexture(0, 1, gbufferColorRts[i], i);
 			}

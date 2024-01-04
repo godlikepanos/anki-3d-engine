@@ -47,7 +47,8 @@ private:
 	U32 m_tileResolution = 0; ///< Tile resolution.
 	U32 m_tileCountBothAxis = 0;
 
-	FramebufferDescription m_fbDescr;
+	FramebufferDescription m_loadFbDescr;
+	FramebufferDescription m_clearFbDescr;
 
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
@@ -62,9 +63,6 @@ private:
 	public:
 		RenderTargetHandle m_rt;
 		WeakArray<ViewportWorkItem> m_workItems;
-
-		UVec2 m_renderAreaMin; ///< Calculate the viewport that contains all of the work items. Mobile optimization.
-		UVec2 m_renderAreaMax;
 	} m_runCtx;
 
 	Error initInternal();

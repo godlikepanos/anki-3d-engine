@@ -730,8 +730,7 @@ private:
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name,
-										  Bool& drawsToPresentableTex);
+	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, Bool& drawsToPresentableTex);
 
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();

@@ -416,7 +416,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	return tex;
 }
 
-FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name,
+FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles,
 												   Bool& drawsToPresentable)
 {
 	ANKI_ASSERT(rtHandles);
@@ -450,10 +450,6 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 	hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
 
-	// Hash the name of the pass. If you don't the code bellow may fetch an FB with some another name and that will
-	// cause problems with tools. The FB name is used as a debug marker
-	hash = appendHash(name.cstr(), name.getLength(), hash);
-
 	FramebufferPtr fb;
 	auto it = m_fbCache.find(hash);
 	if(it != m_fbCache.getEnd())
@@ -463,7 +459,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 	else
 	{
 		// Create a complete fb init info
-		FramebufferInitInfo fbInit;
+		FramebufferInitInfo fbInit("RenderGraph FB");
 		fbInit.m_colorAttachmentCount = fbDescr.m_colorAttachmentCount;
 		for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
 		{
@@ -511,9 +507,6 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 			fbInit.m_shadingRateImage.m_texelHeight = fbDescr.m_shadingRateAttachmentTexelHeight;
 			fbInit.m_shadingRateImage.m_textureView = std::move(view);
 		}
-
-		// Set FB name
-		fbInit.setName(name);
 
 		// Create
 		fb = GrManager::getSingleton().newFramebuffer(fbInit);
@@ -815,8 +808,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 			if(graphicsPass.hasFramebuffer())
 			{
 				Bool drawsToPresentable;
-				outPass.m_framebuffer =
-					getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], inPass.m_name.cstr(), drawsToPresentable);
+				outPass.m_framebuffer = getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], drawsToPresentable);
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
 				outPass.m_drawsToPresentable = drawsToPresentable;
@@ -1008,7 +1000,10 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 
 	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSurfaceInfo& surf) {
 		TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
-		if(crntUsage != depUsage)
+
+		const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & TextureUsageBit::kAllWrite);
+
+		if(!skipBarrier)
 		{
 			// Check if we can merge barriers
 			if(rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] == batchIdx)
