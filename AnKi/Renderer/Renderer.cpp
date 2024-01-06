@@ -301,7 +301,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
-	m_forwardShading->populateRenderGraph(ctx); // This may feel out of place but it's only visibility
 	m_gbuffer->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_clusterBinning2->populateRenderGraph(ctx);
@@ -320,6 +319,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_volumetricFog->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
+	m_forwardShading->populateRenderGraph(ctx); // This may feel out of place but it's only visibility. Keep it just before light shading
 	m_lightShading->populateRenderGraph(ctx);
 	if(!getScale().getUsingGrUpscaler())
 	{

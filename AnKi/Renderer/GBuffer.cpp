@@ -186,7 +186,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
 
-		m_runCtx.m_visibleAabbsBuffer = visOut.m_visibleAaabbIndicesBuffer;
+		m_runCtx.m_visibleAaabbIndicesBuffer = visOut.m_visibleAaabbIndicesBuffer;
+		m_runCtx.m_visibleAaabbIndicesBufferDepedency = visOut.m_someBufferHandle;
 	}
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();

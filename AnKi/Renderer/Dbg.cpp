@@ -196,7 +196,11 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		cmdb.bindIndexBuffer(m_cubeIndicesBuffer.get(), 0, IndexType::kU16);
 
 		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, getRenderer().getGBuffer().getVisibleAabbsBuffer());
+
+		BufferOffsetRange indicesBuff;
+		BufferHandle dep;
+		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
+		cmdb.bindUavBuffer(0, 3, indicesBuff);
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 	}
@@ -206,7 +210,11 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
 
 		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, getRenderer().getForwardShading().getVisibleAabbsBuffer());
+
+		BufferOffsetRange indicesBuff;
+		BufferHandle dep;
+		getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+		cmdb.bindUavBuffer(0, 3, indicesBuff);
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 	}
@@ -249,6 +257,13 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
+
+	BufferOffsetRange indicesBuff;
+	BufferHandle dep;
+	getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
+	pass.newBufferDependency(dep, BufferUsageBit::kUavGeometryRead);
+	getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+	pass.newBufferDependency(dep, BufferUsageBit::kUavGeometryRead);
 }
 
 } // end namespace anki

@@ -63,20 +63,6 @@ static LightHash decodeTileHash(U64 hash)
 	return c;
 }
 
-class ShadowMapping::ViewportWorkItem
-{
-public:
-	UVec4 m_viewport;
-	Mat4 m_viewProjMat;
-	Mat3x4 m_viewMat;
-
-	GpuVisibilityOutput m_visOut;
-
-	BufferOffsetRange m_clearTileIndirectArgs;
-
-	RenderTargetHandle m_hzbRt;
-};
-
 Error ShadowMapping::init()
 {
 	const Error err = initInternal();
@@ -180,68 +166,6 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 	// First process the lights
 	processLights(ctx);
-
-	// Build the render graph
-	U32 passIdx = 0;
-	for(const ViewportWorkItem& work : m_runCtx.m_workItems)
-	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("Shadowmapping", passIdx));
-
-		const Bool loadFb = (work.m_clearTileIndirectArgs.m_buffer != nullptr);
-
-		pass.setFramebufferInfo((loadFb) ? m_loadFbDescr : m_clearFbDescr, {}, m_runCtx.m_rt, {}, work.m_viewport[0], work.m_viewport[1],
-								work.m_viewport[2], work.m_viewport[3]);
-
-		pass.newBufferDependency(work.m_visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead);
-
-		pass.setWork(1, [this, passIdx](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
-
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			const ViewportWorkItem& work = m_runCtx.m_workItems[passIdx];
-
-			cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-
-			if(work.m_clearTileIndirectArgs.m_buffer)
-			{
-				// Clear the depth buffer using a quad because it needs to be conditional
-
-				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
-				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-
-				cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, work.m_clearTileIndirectArgs.m_offset, work.m_clearTileIndirectArgs.m_buffer);
-
-				cmdb.setDepthCompareOperation(CompareOperation::kLess);
-			}
-
-			// Set state
-			cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
-
-			RenderableDrawerArguments args;
-			args.m_renderingTechinuqe = RenderingTechnique::kDepth;
-			args.m_viewMatrix = work.m_viewMat;
-			args.m_cameraTransform = work.m_viewMat.getInverseTransformation();
-			args.m_viewProjectionMatrix = work.m_viewProjMat;
-			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
-			args.m_viewport = UVec4(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-			args.fillMdi(work.m_visOut);
-
-			TextureViewPtr hzbView;
-			if(work.m_hzbRt.isValid())
-			{
-				hzbView = rgraphCtx.createTextureView(work.m_hzbRt);
-				args.m_hzbTexture = hzbView.get();
-			}
-
-			getRenderer().getSceneDrawer().drawMdi(args, cmdb);
-		});
-
-		++passIdx;
-	}
 }
 
 void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const
@@ -352,7 +276,6 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 {
 	// Vars
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-	DynamicArray<ViewportWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(&getRenderer().getFrameMemoryPool());
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const CameraComponent& mainCam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
@@ -413,31 +336,27 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(hzbGenIn, rgraph);
 
-		// Vis testing
+		// Create passes per cascade
 		for(U cascade = 0; cascade < cascadeCount; ++cascade)
 		{
-			ViewportWorkItem& work = *workItems.emplaceBack();
-			work.m_viewProjMat = cascadeViewProjMats[cascade];
-			work.m_viewMat = cascadeViewMats[cascade];
-			work.m_viewport = atlasViewports[cascade];
-			if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
-			{
-				work.m_hzbRt = hzbGenIn.m_cascades[cascade].m_hzbRt;
-			}
-
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows dir light";
+			visIn.m_passesName = computeTempPassName("Shadows: Dir light cascade", cascade);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
 			visIn.m_rgraph = &rgraph;
-			visIn.m_finalRenderTargetSize = work.m_viewport.zw();
+			visIn.m_finalRenderTargetSize = atlasViewports[cascade].zw();
 
-			getRenderer().getGpuVisibility().populateRenderGraph(visIn, work.m_visOut);
+			GpuVisibilityOutput visOut;
+			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+			// Draw
+			createDrawShadowsPass(atlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, {},
+								  hzbGenIn.m_cascades[cascade].m_hzbRt, computeTempPassName("Shadows: Dir light cascade", cascade), rgraph);
 
 			// Update the texture matrix to point to the correct region in the atlas
 			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(atlasViewports[cascade]) * cascadeViewProjMats[cascade];
@@ -515,10 +434,11 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			BufferOffsetRange clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = vetVisibilityPass("Shadows visibility: Vet point light", *lightc, visOut, rgraph);
+				clearTileIndirectArgs = createVetVisibilityPass("Shadows: Vet point light", *lightc, visOut, rgraph);
 			}
 
-			// Add work
+			// Add the draw pass
+			Array<ViewportDraw, 6> dviewports;
 			for(U32 face = 0; face < 6; ++face)
 			{
 				Frustum frustum;
@@ -527,13 +447,13 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				frustum.setWorldTransform(Transform(lightc->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[face], 1.0f));
 				frustum.update();
 
-				ViewportWorkItem& work = *workItems.emplaceBack();
-				work.m_viewProjMat = frustum.getViewProjectionMatrix();
-				work.m_viewMat = frustum.getViewMatrix();
-				work.m_viewport = atlasViewports[face];
-				work.m_visOut = visOut;
-				work.m_clearTileIndirectArgs = clearTileIndirectArgs;
+				dviewports[face].m_viewport = atlasViewports[face];
+				dviewports[face].m_viewProjMat = frustum.getViewProjectionMatrix();
+				dviewports[face].m_viewMat = frustum.getViewMatrix();
+				dviewports[face].m_clearTileIndirectArgs = clearTileIndirectArgs;
 			}
+
+			createMultipleDrawShadowsPass(dviewports, visOut, "Shadows: Point light face", rgraph);
 		}
 		else
 		{
@@ -587,16 +507,12 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			BufferOffsetRange clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = vetVisibilityPass("Shadows visibility: Vet spot light", *lightc, visOut, rgraph);
+				clearTileIndirectArgs = createVetVisibilityPass("Shadows: Vet spot light", *lightc, visOut, rgraph);
 			}
 
-			// Add work
-			ViewportWorkItem& work = *workItems.emplaceBack();
-			work.m_viewProjMat = lightc->getSpotLightViewProjectionMatrix();
-			work.m_viewMat = lightc->getSpotLightViewMatrix();
-			work.m_viewport = atlasViewport;
-			work.m_visOut = visOut;
-			work.m_clearTileIndirectArgs = clearTileIndirectArgs;
+			// Add draw pass
+			createDrawShadowsPass(atlasViewport, lightc->getSpotLightViewProjectionMatrix(), lightc->getSpotLightViewMatrix(), visOut,
+								  clearTileIndirectArgs, {}, "Shadows: Spot light", rgraph);
 		}
 		else
 		{
@@ -604,78 +520,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			lightc->setShadowAtlasUvViewports({});
 		}
 	}
-
-	// Move the work to the context
-	if(workItems.getSize())
-	{
-		// All good, store the work items for the threads to pick up
-		workItems.moveAndReset(m_runCtx.m_workItems);
-	}
-	else
-	{
-		m_runCtx.m_workItems = {};
-	}
 }
 
-void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
-{
-	ANKI_ASSERT(m_runCtx.m_workItems.getSize());
-	ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
-
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-	// Clear the depth buffer
-	cmdb.bindShaderProgram(m_clearDepthGrProg.get());
-	cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-
-	for(ViewportWorkItem& work : m_runCtx.m_workItems)
-	{
-		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-
-		if(work.m_clearTileIndirectArgs.m_buffer)
-		{
-			cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, work.m_clearTileIndirectArgs.m_offset, work.m_clearTileIndirectArgs.m_buffer);
-		}
-		else
-		{
-			cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
-		}
-	}
-
-	// Restore state
-	cmdb.setDepthCompareOperation(CompareOperation::kLess);
-
-	// Draw to tiles
-	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
-	for(ViewportWorkItem& work : m_runCtx.m_workItems)
-	{
-		// Set state
-		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-		cmdb.setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-
-		RenderableDrawerArguments args;
-		args.m_renderingTechinuqe = RenderingTechnique::kDepth;
-		args.m_viewMatrix = work.m_viewMat;
-		args.m_cameraTransform = work.m_viewMat.getInverseTransformation();
-		args.m_viewProjectionMatrix = work.m_viewProjMat;
-		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
-		args.m_viewport = UVec4(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-		args.fillMdi(work.m_visOut);
-
-		TextureViewPtr hzbView;
-		if(work.m_hzbRt.isValid())
-		{
-			hzbView = rgraphCtx.createTextureView(work.m_hzbRt);
-			args.m_hzbTexture = hzbView.get();
-		}
-
-		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
-	}
-}
-
-BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-												   RenderGraphDescription& rgraph) const
+BufferOffsetRange ShadowMapping::createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+														 RenderGraphDescription& rgraph) const
 {
 	BufferOffsetRange clearTileIndirectArgs;
 
@@ -707,6 +555,108 @@ BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const Light
 	});
 
 	return clearTileIndirectArgs;
+}
+
+void ShadowMapping::createMultipleDrawShadowsPass(ConstWeakArray<ViewportDraw> viewports, const GpuVisibilityOutput visOut, CString passName,
+												  RenderGraphDescription& rgraph)
+{
+	ANKI_ASSERT(viewports.getSize() > 0);
+
+	const Bool loadFb = (viewports[0].m_clearTileIndirectArgs.m_buffer != nullptr);
+	for(const ViewportDraw& v : viewports)
+	{
+		[[maybe_unused]] const Bool loadFb2 = v.m_clearTileIndirectArgs.m_buffer != nullptr;
+		ANKI_ASSERT(loadFb == loadFb2 && "All draws should be the same for simplicity");
+	}
+
+	// Compute the agregate viewport
+	UVec2 minViewportXy = viewports[0].m_viewport.xy();
+	UVec2 maxViewportXy = viewports[0].m_viewport.xy() + viewports[0].m_viewport.zw();
+	for(U32 i = 1; i < viewports.getSize(); ++i)
+	{
+		minViewportXy = minViewportXy.min(viewports[i].m_viewport.xy());
+		maxViewportXy = maxViewportXy.max(viewports[i].m_viewport.xy() + viewports[i].m_viewport.zw());
+	}
+	const UVec4 totalViewport(minViewportXy, maxViewportXy - minViewportXy);
+
+	// Store the arguments to some permanent memory
+	DynamicArray<ViewportDraw, MemoryPoolPtrWrapper<StackMemoryPool>> dviewports(&getRenderer().getFrameMemoryPool());
+	dviewports.resize(viewports.getSize());
+	for(U32 i = 0; i < viewports.getSize(); ++i)
+	{
+		dviewports[i] = viewports[i];
+	}
+	WeakArray<ViewportDraw> dviewportsArr;
+	dviewports.moveAndReset(dviewportsArr);
+
+	// Create the pass
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passName);
+	pass.setFramebufferInfo((loadFb) ? m_loadFbDescr : m_clearFbDescr, {}, m_runCtx.m_rt, {}, totalViewport[0], totalViewport[1], totalViewport[2],
+							totalViewport[3]);
+
+	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+
+	pass.setWork(1, [this, visOut, viewports = dviewportsArr](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
+
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+		for(U32 i = 0; i < viewports.getSize(); ++i)
+		{
+			const ViewportDraw& vp = viewports[i];
+
+			cmdb.setViewport(vp.m_viewport[0], vp.m_viewport[1], vp.m_viewport[2], vp.m_viewport[3]);
+
+			if(vp.m_clearTileIndirectArgs.m_buffer)
+			{
+				// Clear the depth buffer using a quad because it needs to be conditional
+
+				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
+				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+
+				cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, vp.m_clearTileIndirectArgs.m_offset, vp.m_clearTileIndirectArgs.m_buffer);
+
+				cmdb.setDepthCompareOperation(CompareOperation::kLess);
+			}
+
+			// Set state
+			cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+
+			RenderableDrawerArguments args;
+			args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+			args.m_viewMatrix = vp.m_viewMat;
+			args.m_cameraTransform = vp.m_viewMat.getInverseTransformation();
+			args.m_viewProjectionMatrix = vp.m_viewProjMat;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+			args.m_viewport = UVec4(vp.m_viewport[0], vp.m_viewport[1], vp.m_viewport[2], vp.m_viewport[3]);
+			args.fillMdi(visOut);
+
+			TextureViewPtr hzbView;
+			if(vp.m_hzbRt.isValid())
+			{
+				hzbView = rgraphCtx.createTextureView(vp.m_hzbRt);
+				args.m_hzbTexture = hzbView.get();
+			}
+
+			getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+		}
+	});
+}
+
+void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput visOut,
+										  const BufferOffsetRange& clearTileIndirectArgs, const RenderTargetHandle hzbRt, CString passName,
+										  RenderGraphDescription& rgraph)
+{
+	ViewportDraw vp;
+	vp.m_viewport = viewport;
+	vp.m_viewProjMat = viewProjMat;
+	vp.m_viewMat = viewMat;
+	vp.m_clearTileIndirectArgs = clearTileIndirectArgs;
+	vp.m_hzbRt = hzbRt;
+
+	createMultipleDrawShadowsPass({&vp, 1}, visOut, passName, rgraph);
 }
 
 } // end namespace anki

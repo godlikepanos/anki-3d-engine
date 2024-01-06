@@ -31,7 +31,8 @@ enum class RenderingTechniqueBit : U8
 	kForward = 1 << 2,
 	kRtShadow = 1 << 3,
 
-	kAllRt = kRtShadow
+	kAllRt = kRtShadow,
+	kAllRaster = kGBuffer | kDepth | kForward
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 

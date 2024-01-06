@@ -1068,7 +1068,8 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 				const BufferUsageBit depUsage = dep.m_buffer.m_usage;
 				BufferUsageBit& crntUsage = ctx.m_buffers[buffIdx].m_usage;
 
-				if(depUsage == crntUsage)
+				const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & BufferUsageBit::kAllWrite);
+				if(skipBarrier)
 				{
 					continue;
 				}
@@ -1112,7 +1113,8 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 				const AccelerationStructureUsageBit depUsage = dep.m_as.m_usage;
 				AccelerationStructureUsageBit& crntUsage = ctx.m_as[asIdx].m_usage;
 
-				if(depUsage == crntUsage)
+				const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & AccelerationStructureUsageBit::kAllWrite);
+				if(skipBarrier)
 				{
 					continue;
 				}
@@ -1147,6 +1149,8 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 				}
 			}
 		} // For all passes
+
+		ANKI_ASSERT(batch.m_bufferBarriersBefore.getSize() || batch.m_textureBarriersBefore.getSize() || batch.m_asBarriersBefore.getSize());
 
 #if ANKI_DBG_RENDER_GRAPH
 		// Sort the barriers to ease the dumped graph

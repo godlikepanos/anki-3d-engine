@@ -63,9 +63,9 @@ public:
 	BufferOffsetRange m_taskShaderIndirectArgsBuffer;
 	BufferOffsetRange m_taskShaderPayloadBuffer; ///< The payloads of task shaders. One for each task shader threadgroup.
 
-	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< Optional.
+	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< [Optional] Indices to the AABB buffer. The 1st element is the count.
 
-	BufferOffsetRange m_visiblesHashBuffer; ///< Optional.
+	BufferOffsetRange m_visiblesHashBuffer; ///< [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
 };
 
 /// Performs GPU visibility for some pass.
@@ -94,6 +94,46 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	Array3d<ShaderProgramPtr, 2, 2, 2> m_frustumGrProgs;
 	Array2d<ShaderProgramPtr, 2, 2> m_distGrProgs;
+
+	class
+	{
+	public:
+		U64 m_frameIdx = kMaxU64;
+
+		// Buffers bellow are quite large that's why want to reuse them muptiple times in a single frame.
+		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
+		BufferOffsetRange m_instanceRateRenderablesBuffer;
+		BufferOffsetRange m_taskShaderPayloadBuffer;
+
+		BufferHandle m_bufferDepedency;
+	} m_runCtx;
+
+	class Counts
+	{
+	public:
+		U32 m_aabbCount;
+		U32 m_bucketCount;
+		U32 m_legacyGeometryFlowUserCount;
+		U32 m_modernGeometryFlowUserCount;
+		U32 m_meshletGroupCount;
+		U32 m_allUserCount;
+
+		Counts max(const Counts& b) const
+		{
+			Counts out;
+#define ANKI_MAX(member) out.member = anki::max(member, b.member)
+			ANKI_MAX(m_aabbCount);
+			ANKI_MAX(m_bucketCount);
+			ANKI_MAX(m_legacyGeometryFlowUserCount);
+			ANKI_MAX(m_modernGeometryFlowUserCount);
+			ANKI_MAX(m_meshletGroupCount);
+			ANKI_MAX(m_allUserCount);
+#undef ANKI_MAX
+			return out;
+		}
+	};
+
+	Counts countTechnique(RenderingTechnique t);
 
 	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
 };

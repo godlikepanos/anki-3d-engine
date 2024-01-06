@@ -258,6 +258,11 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 	{
 		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+
+		if(getGrManagerImpl().getDeviceCapabilities().m_meshShaders)
+		{
+			stageMask |= VK_PIPELINE_STAGE_MESH_SHADER_BIT_EXT | VK_PIPELINE_STAGE_TASK_SHADER_BIT_EXT;
+		}
 	}
 
 	if(!!(usage & BufferUsageBit::kAllFragment))

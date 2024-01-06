@@ -34,7 +34,15 @@ public:
 	}
 
 private:
-	class ViewportWorkItem;
+	class ViewportDraw
+	{
+	public:
+		UVec4 m_viewport;
+		Mat4 m_viewProjMat;
+		Mat3x4 m_viewMat;
+		RenderTargetHandle m_hzbRt;
+		BufferOffsetRange m_clearTileIndirectArgs;
+	};
 
 	TileAllocator m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
@@ -62,7 +70,6 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-		WeakArray<ViewportWorkItem> m_workItems;
 	} m_runCtx;
 
 	Error initInternal();
@@ -75,10 +82,15 @@ private:
 
 	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const;
 
-	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
+	BufferOffsetRange createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+											  RenderGraphDescription& rgraph) const;
 
-	BufferOffsetRange vetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-										RenderGraphDescription& rgraph) const;
+	void createMultipleDrawShadowsPass(ConstWeakArray<ViewportDraw> viewports, const GpuVisibilityOutput visOut, CString passName,
+									   RenderGraphDescription& rgraph);
+
+	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput visOut,
+							   const BufferOffsetRange& clearTileIndirectArgs, const RenderTargetHandle hzbRt, CString passName,
+							   RenderGraphDescription& rgraph);
 };
 /// @}
 
