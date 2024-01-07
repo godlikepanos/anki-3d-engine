@@ -69,10 +69,10 @@ public:
 		GpuSceneMicroPatcher::getSingleton().newCopy(SceneGraph::getSingleton().getFrameMemoryPool(), getGpuSceneOffset(), data);
 	}
 
-	/// Allocate an element into the appropriate array.
+	/// Allocate an element into the appropriate array. See GpuSceneArray::allocate()
 	void allocate();
 
-	/// Free the allocation.
+	/// Free the allocation. See GpuSceneArray::free()
 	void free();
 
 private:

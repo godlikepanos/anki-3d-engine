@@ -152,6 +152,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		// Allocate the big buffers once at the beginning of the frame
 
 		m_runCtx.m_frameIdx = getRenderer().getFrameCount();
+		m_runCtx.m_populateRenderGraphFrameCallCount = 0;
 
 		// Find the max counts of all techniques
 		Counts maxCounts = {};
@@ -160,22 +161,31 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			maxCounts = maxCounts.max((in.m_technique == t) ? counts : countTechnique(t));
 		}
 
-		m_runCtx.m_drawIndexedIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(
-			max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs));
-		m_runCtx.m_instanceRateRenderablesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(
-			max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex));
+		// Allocate memory
+		for(PersistentMemory& mem : m_runCtx.m_persistentMem)
+		{
+			mem = {};
 
-		m_runCtx.m_taskShaderPayloadBuffer =
-			GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, maxCounts.m_meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload));
+			mem.m_drawIndexedIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(
+				max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs));
+			mem.m_instanceRateRenderablesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(
+				max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex));
+
+			mem.m_taskShaderPayloadBuffer =
+				GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, maxCounts.m_meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload));
+		}
 	}
 
-	out.m_drawIndexedIndirectArgsBuffer = m_runCtx.m_drawIndexedIndirectArgsBuffer;
+	PersistentMemory& mem = m_runCtx.m_persistentMem[m_runCtx.m_populateRenderGraphFrameCallCount % m_runCtx.m_persistentMem.getSize()];
+	++m_runCtx.m_populateRenderGraphFrameCallCount;
+
+	out.m_drawIndexedIndirectArgsBuffer = mem.m_drawIndexedIndirectArgsBuffer;
 	out.m_drawIndexedIndirectArgsBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs);
 
-	out.m_instanceRateRenderablesBuffer = m_runCtx.m_instanceRateRenderablesBuffer;
+	out.m_instanceRateRenderablesBuffer = mem.m_instanceRateRenderablesBuffer;
 	out.m_instanceRateRenderablesBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex);
 
-	out.m_taskShaderPayloadBuffer = m_runCtx.m_taskShaderPayloadBuffer;
+	out.m_taskShaderPayloadBuffer = mem.m_taskShaderPayloadBuffer;
 	out.m_taskShaderPayloadBuffer.m_range = max(1u, counts.m_meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload);
 
 	out.m_taskShaderIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * counts.m_bucketCount);
@@ -230,11 +240,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 
 	// Set the out dependency. Use one of the big buffers.
-	if(firstFrame)
+	if(!mem.m_bufferDepedency.isValid())
 	{
-		m_runCtx.m_bufferDepedency = in.m_rgraph->importBuffer(BufferUsageBit::kNone, m_runCtx.m_drawIndexedIndirectArgsBuffer);
+		mem.m_bufferDepedency = in.m_rgraph->importBuffer(BufferUsageBit::kNone, mem.m_drawIndexedIndirectArgsBuffer);
 	}
-	out.m_someBufferHandle = m_runCtx.m_bufferDepedency;
+	out.m_someBufferHandle = mem.m_bufferDepedency;
 
 	// Create the renderpass
 	Array<Char, 128> passName;

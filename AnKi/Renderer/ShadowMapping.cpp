@@ -274,96 +274,39 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 void ShadowMapping::processLights(RenderingContext& ctx)
 {
+	// First allocate tiles for the dir light and then build passes for points and spot lights. Then passes for the dir light. The dir light has many
+	// passes and it will push the other types of lights further into the future. So do those first.
+
 	// Vars
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const CameraComponent& mainCam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
-	// Process the directional light first.
+	// Allocate tiles for the dir light first but don't build any passes
 	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-	if(dirLight && dirLight->getShadowEnabled() && g_shadowCascadeCountCVar.get())
+	if(dirLight && (!dirLight->getShadowEnabled() || !g_shadowCascadeCountCVar.get()))
+	{
+		dirLight = nullptr; // Skip dir light
+	}
+
+	Array<UVec4, kMaxShadowCascades> dirLightAtlasViewports;
+	if(dirLight)
 	{
 		const U32 cascadeCount = g_shadowCascadeCountCVar.get();
 
-		Array<U32, kMaxShadowCascades> cascadeIndices;
 		Array<U32, kMaxShadowCascades> hierarchies;
 		for(U32 cascade = 0; cascade < cascadeCount; ++cascade)
 		{
-			cascadeIndices[cascade] = cascade;
-
 			// Change the quality per cascade
 			hierarchies[cascade] = kTileAllocHierarchyCount - 1 - chooseDirectionalLightShadowCascadeDetail(cascade);
 		}
 
-		Array<UVec4, kMaxShadowCascades> atlasViewports;
-		[[maybe_unused]] const TileAllocatorResult2 res = allocateAtlasTiles(kMaxU32, 0, cascadeCount, &hierarchies[0], &atlasViewports[0]);
-
+		[[maybe_unused]] const TileAllocatorResult2 res = allocateAtlasTiles(kMaxU32, 0, cascadeCount, &hierarchies[0], &dirLightAtlasViewports[0]);
 		ANKI_ASSERT(!!(res & TileAllocatorResult2::kAllocationSucceded) && "Dir light should never fail");
-
-		// Compute the view projection matrices
-		Array<F32, kMaxShadowCascades> cascadeDistances;
-		static_assert(kMaxShadowCascades == 4);
-		cascadeDistances[0] = g_shadowCascade0DistanceCVar.get();
-		cascadeDistances[1] = g_shadowCascade1DistanceCVar.get();
-		cascadeDistances[2] = g_shadowCascade2DistanceCVar.get();
-		cascadeDistances[3] = g_shadowCascade3DistanceCVar.get();
-
-		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
-		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
-		Array<Mat4, kMaxShadowCascades> cascadeProjMats;
-		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeProjMats[0], cascadeCount},
-										 {&cascadeViewMats[0], cascadeCount});
-		for(U cascade = 0; cascade < cascadeCount; ++cascade)
-		{
-			cascadeViewProjMats[cascade] = cascadeProjMats[cascade] * Mat4(cascadeViewMats[cascade], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		}
-
-		// HZB generation
-		HzbDirectionalLightInput hzbGenIn;
-		hzbGenIn.m_cascadeCount = cascadeCount;
-		hzbGenIn.m_depthBufferRt = getRenderer().getGBuffer().getDepthRt();
-		hzbGenIn.m_depthBufferRtSize = getRenderer().getInternalResolution();
-		hzbGenIn.m_cameraProjectionMatrix = ctx.m_matrices.m_projection;
-		hzbGenIn.m_cameraInverseViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;
-		for(U cascade = 0; cascade < cascadeCount; ++cascade)
-		{
-			hzbGenIn.m_cascades[cascade].m_hzbRt = rgraph.newRenderTarget(m_cascadeHzbRtDescrs[cascade]);
-			hzbGenIn.m_cascades[cascade].m_hzbRtSize = UVec2(m_cascadeHzbRtDescrs[cascade].m_width, m_cascadeHzbRtDescrs[cascade].m_height);
-			hzbGenIn.m_cascades[cascade].m_viewMatrix = cascadeViewMats[cascade];
-			hzbGenIn.m_cascades[cascade].m_projectionMatrix = cascadeProjMats[cascade];
-			hzbGenIn.m_cascades[cascade].m_cascadeMaxDistance = cascadeDistances[cascade];
-		}
-
-		getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(hzbGenIn, rgraph);
-
-		// Create passes per cascade
-		for(U cascade = 0; cascade < cascadeCount; ++cascade)
-		{
-			// Vis testing
-			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
-			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = computeTempPassName("Shadows: Dir light cascade", cascade);
-			visIn.m_technique = RenderingTechnique::kDepth;
-			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
-			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-			visIn.m_lodDistances = lodDistances;
-			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
-			visIn.m_rgraph = &rgraph;
-			visIn.m_finalRenderTargetSize = atlasViewports[cascade].zw();
-
-			GpuVisibilityOutput visOut;
-			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
-
-			// Draw
-			createDrawShadowsPass(atlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, {},
-								  hzbGenIn.m_cascades[cascade].m_hzbRt, computeTempPassName("Shadows: Dir light cascade", cascade), rgraph);
-
-			// Update the texture matrix to point to the correct region in the atlas
-			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(atlasViewports[cascade]) * cascadeViewProjMats[cascade];
-		}
 	}
 
-	// Process the point lights.
+	// Process the point lights first
+	U32 lightIdx = 0;
 	WeakArray<LightComponent*> lights = getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_shadowLights;
 	for(LightComponent* lightc : lights)
 	{
@@ -417,7 +360,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			DistanceGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows point light";
+			visIn.m_passesName = computeTempPassName("Shadows point light", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			visIn.m_lodDistances = lodDistances;
@@ -434,7 +377,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			BufferOffsetRange clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = createVetVisibilityPass("Shadows: Vet point light", *lightc, visOut, rgraph);
+				clearTileIndirectArgs = createVetVisibilityPass(computeTempPassName("Shadows: Vet point light", lightIdx), *lightc, visOut, rgraph);
 			}
 
 			// Add the draw pass
@@ -453,16 +396,19 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				dviewports[face].m_clearTileIndirectArgs = clearTileIndirectArgs;
 			}
 
-			createMultipleDrawShadowsPass(dviewports, visOut, "Shadows: Point light face", rgraph);
+			createMultipleDrawShadowsPass(dviewports, visOut, computeTempPassName("Shadows: Point light", lightIdx), rgraph);
 		}
 		else
 		{
 			// Can't be a caster from now on
 			lightc->setShadowAtlasUvViewports({});
 		}
+
+		++lightIdx;
 	}
 
-	// Process the spot lights
+	// Process the spot lights 2nd
+	lightIdx = 0;
 	for(LightComponent* lightc : lights)
 	{
 		if(lightc->getLightComponentType() != LightComponentType::kSpot || !lightc->getShadowEnabled())
@@ -490,7 +436,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows spot light";
+			visIn.m_passesName = computeTempPassName("Shadows spot light", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = cameraOrigin;
 			visIn.m_lodDistances = lodDistances;
@@ -507,17 +453,85 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			BufferOffsetRange clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = createVetVisibilityPass("Shadows: Vet spot light", *lightc, visOut, rgraph);
+				clearTileIndirectArgs = createVetVisibilityPass(computeTempPassName("Shadows: Vet spot light", lightIdx), *lightc, visOut, rgraph);
 			}
 
 			// Add draw pass
 			createDrawShadowsPass(atlasViewport, lightc->getSpotLightViewProjectionMatrix(), lightc->getSpotLightViewMatrix(), visOut,
-								  clearTileIndirectArgs, {}, "Shadows: Spot light", rgraph);
+								  clearTileIndirectArgs, {}, computeTempPassName("Shadows: Spot light", lightIdx), rgraph);
 		}
 		else
 		{
 			// Doesn't have renderables or the allocation failed, won't be a shadow caster
 			lightc->setShadowAtlasUvViewports({});
+		}
+	}
+
+	// Process the directional light last
+	if(dirLight)
+	{
+		const U32 cascadeCount = g_shadowCascadeCountCVar.get();
+
+		// Compute the view projection matrices
+		Array<F32, kMaxShadowCascades> cascadeDistances;
+		static_assert(kMaxShadowCascades == 4);
+		cascadeDistances[0] = g_shadowCascade0DistanceCVar.get();
+		cascadeDistances[1] = g_shadowCascade1DistanceCVar.get();
+		cascadeDistances[2] = g_shadowCascade2DistanceCVar.get();
+		cascadeDistances[3] = g_shadowCascade3DistanceCVar.get();
+
+		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
+		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
+		Array<Mat4, kMaxShadowCascades> cascadeProjMats;
+		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeProjMats[0], cascadeCount},
+										 {&cascadeViewMats[0], cascadeCount});
+		for(U cascade = 0; cascade < cascadeCount; ++cascade)
+		{
+			cascadeViewProjMats[cascade] = cascadeProjMats[cascade] * Mat4(cascadeViewMats[cascade], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		}
+
+		// HZB generation
+		HzbDirectionalLightInput hzbGenIn;
+		hzbGenIn.m_cascadeCount = cascadeCount;
+		hzbGenIn.m_depthBufferRt = getRenderer().getGBuffer().getDepthRt();
+		hzbGenIn.m_depthBufferRtSize = getRenderer().getInternalResolution();
+		hzbGenIn.m_cameraProjectionMatrix = ctx.m_matrices.m_projection;
+		hzbGenIn.m_cameraInverseViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;
+		for(U cascade = 0; cascade < cascadeCount; ++cascade)
+		{
+			hzbGenIn.m_cascades[cascade].m_hzbRt = rgraph.newRenderTarget(m_cascadeHzbRtDescrs[cascade]);
+			hzbGenIn.m_cascades[cascade].m_hzbRtSize = UVec2(m_cascadeHzbRtDescrs[cascade].m_width, m_cascadeHzbRtDescrs[cascade].m_height);
+			hzbGenIn.m_cascades[cascade].m_viewMatrix = cascadeViewMats[cascade];
+			hzbGenIn.m_cascades[cascade].m_projectionMatrix = cascadeProjMats[cascade];
+			hzbGenIn.m_cascades[cascade].m_cascadeMaxDistance = cascadeDistances[cascade];
+		}
+
+		getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(hzbGenIn, rgraph);
+
+		// Create passes per cascade
+		for(U32 cascade = 0; cascade < cascadeCount; ++cascade)
+		{
+			// Vis testing
+			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+			FrustumGpuVisibilityInput visIn;
+			visIn.m_passesName = computeTempPassName("Shadows: Dir light cascade", cascade);
+			visIn.m_technique = RenderingTechnique::kDepth;
+			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
+			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			visIn.m_lodDistances = lodDistances;
+			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
+			visIn.m_rgraph = &rgraph;
+			visIn.m_finalRenderTargetSize = dirLightAtlasViewports[cascade].zw();
+
+			GpuVisibilityOutput visOut;
+			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+			// Draw
+			createDrawShadowsPass(dirLightAtlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, {},
+								  hzbGenIn.m_cascades[cascade].m_hzbRt, computeTempPassName("Shadows: Dir light cascade", cascade), rgraph);
+
+			// Update the texture matrix to point to the correct region in the atlas
+			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(dirLightAtlasViewports[cascade]) * cascadeViewProjMats[cascade];
 		}
 	}
 }

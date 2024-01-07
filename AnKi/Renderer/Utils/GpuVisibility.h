@@ -95,17 +95,25 @@ private:
 	Array3d<ShaderProgramPtr, 2, 2, 2> m_frustumGrProgs;
 	Array2d<ShaderProgramPtr, 2, 2> m_distGrProgs;
 
-	class
+	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
+	class PersistentMemory
 	{
 	public:
-		U64 m_frameIdx = kMaxU64;
-
-		// Buffers bellow are quite large that's why want to reuse them muptiple times in a single frame.
 		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
 		BufferOffsetRange m_instanceRateRenderablesBuffer;
 		BufferOffsetRange m_taskShaderPayloadBuffer;
 
 		BufferHandle m_bufferDepedency;
+	};
+
+	class
+	{
+	public:
+		U64 m_frameIdx = kMaxU64;
+		U32 m_populateRenderGraphFrameCallCount = 0;
+
+		/// The more persistent memory there is the more passes will be able to run in parallel but the more memory is used.
+		Array<PersistentMemory, 4> m_persistentMem;
 	} m_runCtx;
 
 	class Counts
