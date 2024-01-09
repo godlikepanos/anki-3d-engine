@@ -14,7 +14,7 @@ inline GpuSceneRenderableVertex unpackGpuSceneRenderableVertex(UVec4 x)
 	GpuSceneRenderableVertex o;
 	o.m_worldTransformsOffset = x[0];
 	o.m_constantsOffset = x[1];
-	o.m_meshLodOffset = x[2];
+	o.m_meshLodIndex = x[2];
 	o.m_boneTransformsOrParticleEmitterOffset = x[3];
 	return o;
 }

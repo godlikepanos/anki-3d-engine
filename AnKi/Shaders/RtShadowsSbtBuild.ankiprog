@@ -44,7 +44,7 @@
 	// Copy the GpuSceneRenderableVertex
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_worldTransformsOffset;
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_constantsOffset;
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsOffset;
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsIndex;
 	g_sbtBuffer[sbtDwordOffset] = 0;
 }
 

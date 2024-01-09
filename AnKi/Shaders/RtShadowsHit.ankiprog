@@ -29,7 +29,7 @@
 
 	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
 
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(g_gpuSceneRenderable.m_meshLodOffset);
+	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(g_gpuSceneRenderable.m_meshLodIndex);
 
 	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
 	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];

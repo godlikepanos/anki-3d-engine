@@ -400,7 +400,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		GpuSceneRenderable renderable;
 		renderable.m_boneTransformsOffset = 0;
 		renderable.m_constantsOffset = m_gpuSceneUniforms.getOffset();
-		renderable.m_meshLodsOffset = m_gpuSceneMeshLods.getGpuSceneOffset();
+		renderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 		renderable.m_particleEmitterOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
 		renderable.m_worldTransformsOffset = 0;
 		renderable.m_uuid = SceneGraph::getSingleton().getNewUuid();

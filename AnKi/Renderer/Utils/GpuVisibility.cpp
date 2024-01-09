@@ -300,15 +300,16 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		cmdb.bindUavBuffer(0, 0, aabbsBuffer);
 		cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, instanceRateRenderables);
-		cmdb.bindUavBuffer(0, 4, indirectArgs);
-		cmdb.bindUavBuffer(0, 5, mdiDrawCountsBuffer);
-		cmdb.bindUavBuffer(0, 6, taskShaderIndirectArgsBuff);
-		cmdb.bindUavBuffer(0, 7, taskShaderPayloadBuffer);
+		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
+		cmdb.bindUavBuffer(0, 3, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
+		cmdb.bindUavBuffer(0, 4, instanceRateRenderables);
+		cmdb.bindUavBuffer(0, 5, indirectArgs);
+		cmdb.bindUavBuffer(0, 6, mdiDrawCountsBuffer);
+		cmdb.bindUavBuffer(0, 7, taskShaderIndirectArgsBuff);
+		cmdb.bindUavBuffer(0, 8, taskShaderPayloadBuffer);
 
 		U32* drawIndirectArgsIndexOrTaskPayloadIndex =
-			allocateAndBindUav<U32>(cmdb, 0, 8, RenderStateBucketContainer::getSingleton().getBucketCount(technique));
+			allocateAndBindUav<U32>(cmdb, 0, 9, RenderStateBucketContainer::getSingleton().getBucketCount(technique));
 		U32 bucketCount = 0;
 		U32 legacyGeometryFlowDrawCount = 0;
 		U32 taskPayloadCount = 0;
@@ -334,7 +335,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		if(frustumTestData)
 		{
-			FrustumGpuVisibilityConstants* unis = allocateAndBindConstants<FrustumGpuVisibilityConstants>(cmdb, 0, 9);
+			FrustumGpuVisibilityConstants* unis = allocateAndBindConstants<FrustumGpuVisibilityConstants>(cmdb, 0, 10);
 
 			Array<Plane, 6> planes;
 			extractClipPlanes(frustumTestData->m_viewProjMat, planes);
@@ -355,8 +356,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			if(frustumTestData->m_hzbRt.isValid())
 			{
-				rpass.bindColorTexture(0, 10, frustumTestData->m_hzbRt);
-				cmdb.bindSampler(0, 11, getRenderer().getSamplers().m_nearestNearestClamp.get());
+				rpass.bindColorTexture(0, 11, frustumTestData->m_hzbRt);
+				cmdb.bindSampler(0, 12, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			}
 		}
 		else
@@ -377,12 +378,12 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		if(gatherAabbIndices)
 		{
-			cmdb.bindUavBuffer(0, 12, visibleAaabbIndicesBuffer);
+			cmdb.bindUavBuffer(0, 13, visibleAaabbIndicesBuffer);
 		}
 
 		if(genHash)
 		{
-			cmdb.bindUavBuffer(0, 13, hashBuffer);
+			cmdb.bindUavBuffer(0, 14, hashBuffer);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
@@ -635,11 +636,12 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 			cmdb.bindUavBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
 			cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
-			cmdb.bindUavBuffer(0, 3, instancesBuff);
-			cmdb.bindUavBuffer(0, 4, indicesBuff);
-			cmdb.bindUavBuffer(0, 5, m_counterBuffer.get(), 0, sizeof(U32) * 2);
-			cmdb.bindUavBuffer(0, 6, zeroInstancesDispatchArgsBuff);
+			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
+			cmdb.bindUavBuffer(0, 3, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+			cmdb.bindUavBuffer(0, 4, instancesBuff);
+			cmdb.bindUavBuffer(0, 5, indicesBuff);
+			cmdb.bindUavBuffer(0, 6, m_counterBuffer.get(), 0, sizeof(U32) * 2);
+			cmdb.bindUavBuffer(0, 7, zeroInstancesDispatchArgsBuff);
 
 			const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 			dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);

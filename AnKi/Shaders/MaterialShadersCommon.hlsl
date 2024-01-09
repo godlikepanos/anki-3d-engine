@@ -29,6 +29,7 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 	g_meshletGeometryDescriptors;
 [[vk::binding(MaterialBinding::kTaskShaderPayloads, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
 [[vk::binding(MaterialBinding::kRenderables, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
+[[vk::binding(MaterialBinding::kMeshLods, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
 [[vk::binding(MaterialBinding::kHzbTexture, MaterialSet::kGlobal)]] Texture2D<Vec4> g_hzbTexture;
 [[vk::binding(MaterialBinding::kNearestClampSampler, MaterialSet::kGlobal)]] SamplerState g_nearestClampSampler;
 

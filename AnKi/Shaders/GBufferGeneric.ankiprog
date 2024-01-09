@@ -237,7 +237,7 @@ VertOut main(VertIn input)
 	VertOut output;
 
 	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
+	const GpuSceneMeshLod mesh = g_meshLods[renderable.m_meshLodIndex];
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
 
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
@@ -298,7 +298,7 @@ struct FirstPayload
 	const U32 meshletGroup = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit & ((1u << 9u) - 1u);
 
 	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
-	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod);
+	const GpuSceneMeshLod meshLod = g_meshLods[renderable.m_meshLodsIndex + lod];
 	U32 firstMeshletBoundingVolume = meshletGroup * kMeshletGroupSize;
 	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshletBoundingVolume);
 	firstMeshletBoundingVolume += meshLod.m_firstMeshletBoundingVolume;
@@ -675,7 +675,7 @@ FragOut main(
 
 	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
 
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(g_gpuSceneRenderable.m_meshLodOffset);
+	const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
 
 	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
 	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];

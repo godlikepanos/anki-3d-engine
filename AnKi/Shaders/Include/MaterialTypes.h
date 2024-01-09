@@ -49,6 +49,7 @@ enum class MaterialBinding : U32
 	kMeshletGeometryDescriptors, ///< Points to the unified geom buffer
 	kTaskShaderPayloads,
 	kRenderables,
+	kMeshLods,
 	kHzbTexture,
 	kNearestClampSampler,
 

@@ -66,6 +66,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTaskShaderPayloads), args.m_taskShaderPayloadsBuffer);
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables),
 					   GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshLods), GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
 	cmdb.bindTexture(U32(MaterialSet::kGlobal), U32(MaterialBinding::kHzbTexture),
 					 (args.m_hzbTexture) ? args.m_hzbTexture : &getRenderer().getDummyTextureView2d());
 	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kNearestClampSampler), getRenderer().getSamplers().m_nearestNearestClamp.get());
