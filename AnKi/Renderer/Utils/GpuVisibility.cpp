@@ -41,6 +41,12 @@ Error GpuVisibility::init()
 		}
 	}
 
+	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
+	{
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityMeshlet.ankiprogbin", {{"HZB_TEST", hzb}}, m_meshletCullingProg,
+									 m_meshletCullingGrProgs[hzb]));
+	}
+
 	return Error::kNone;
 }
 

@@ -798,6 +798,9 @@ static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 constexpr U32 kMaxVisibleMeshletsPerRenderStateBucket = 100000000 / kMaxPrimitivesPerMeshlet;
 constexpr U32 kMaxMeshletGroupCountPerRenderStateBucket = kMaxVisibleMeshletsPerRenderStateBucket / kMeshletGroupSize;
 
+/// We want to have 17 bits to fit the index buffer of
+constexpr U32 kMaxMeshletsPerLod = (1u << 17u) / (3u * kMaxPrimitivesPerMeshlet);
+
 struct DrawIndirectArgs
 {
 	U32 m_vertexCount;

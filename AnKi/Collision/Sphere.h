@@ -84,6 +84,7 @@ public:
 
 	void setRadius(const F32 x)
 	{
+		ANKI_ASSERT(x > 0.0f);
 		m_radius = x;
 	}
 

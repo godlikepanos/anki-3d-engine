@@ -95,6 +95,9 @@ private:
 	Array3d<ShaderProgramPtr, 2, 2, 2> m_frustumGrProgs;
 	Array2d<ShaderProgramPtr, 2, 2> m_distGrProgs;
 
+	ShaderProgramResourcePtr m_meshletCullingProg;
+	Array<ShaderProgramPtr, 2> m_meshletCullingGrProgs;
+
 	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
 	class PersistentMemory
 	{
