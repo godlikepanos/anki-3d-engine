@@ -103,9 +103,6 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 	const Bool meshShaderHwSupport = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
 
-	cmdb.bindVertexBuffer(0, args.m_legacy.m_renderableInstancesBuffer.m_buffer, args.m_legacy.m_renderableInstancesBuffer.m_offset,
-						  sizeof(GpuSceneRenderableVertex), VertexStepRate::kInstance);
-
 	// Gather the drawcalls
 	class Command
 	{
@@ -117,6 +114,8 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			PtrSize m_drawIndirectArgsBufferOffset;
 			Buffer* m_mdiDrawCountsBuffer;
 			PtrSize m_mdiDrawCountsBufferOffset;
+			Buffer* m_instancesBuffer;
+			PtrSize m_instancesBufferOffset;
 			U32 m_maxDrawCount;
 			PrimitiveTopology m_primitiveTopology;
 		};
@@ -213,13 +212,16 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 				cmd.m_legacyDraw.m_maxDrawCount = maxDrawCount;
 				cmd.m_legacyDraw.m_mdiDrawCountsBuffer = args.m_legacy.m_mdiDrawCountsBuffer.m_buffer;
 				cmd.m_legacyDraw.m_mdiDrawCountsBufferOffset = args.m_legacy.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount;
+				cmd.m_legacyDraw.m_instancesBuffer = args.m_legacy.m_renderableInstancesBuffer.m_buffer;
+				cmd.m_legacyDraw.m_instancesBufferOffset =
+					args.m_legacy.m_renderableInstancesBuffer.m_offset + legacyGeometryFlowUserCount * sizeof(GpuSceneRenderableVertex);
 
 				legacyGeometryFlowUserCount += userCount;
 			}
 
 			++bucketCount;
 			allUserCount += userCount;
-			meshletInstancesBufferOffset += sizeof(UVec4) * min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
+			meshletInstancesBufferOffset += sizeof(GpuSceneMeshletInstance) * min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
 		});
 
 	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));
@@ -243,6 +245,9 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 		if(it->m_drawType == 0)
 		{
+			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableVertex),
+								  VertexStepRate::kInstance);
+
 			cmdb.drawIndexedIndirectCount(it->m_legacyDraw.m_primitiveTopology, it->m_legacyDraw.m_drawIndirectArgsBuffer,
 										  it->m_legacyDraw.m_drawIndirectArgsBufferOffset, sizeof(DrawIndexedIndirectArgs),
 										  it->m_legacyDraw.m_mdiDrawCountsBuffer, it->m_legacyDraw.m_mdiDrawCountsBufferOffset,
@@ -250,6 +255,9 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		}
 		else if(it->m_drawType == 1)
 		{
+			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableVertex),
+								  VertexStepRate::kInstance);
+
 			// Yes, the DrawIndexedIndirectArgs is intentional
 			cmdb.drawIndirectCount(it->m_legacyDraw.m_primitiveTopology, it->m_legacyDraw.m_drawIndirectArgsBuffer,
 								   it->m_legacyDraw.m_drawIndirectArgsBufferOffset, sizeof(DrawIndexedIndirectArgs),
@@ -267,7 +275,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		{
 			ANKI_ASSERT(it->m_drawType == 3);
 
-			cmdb.bindVertexBuffer(0, it->m_swMeshDraw.m_instancesBuffer, it->m_swMeshDraw.m_instancesBufferOffset, sizeof(UVec4),
+			cmdb.bindVertexBuffer(0, it->m_swMeshDraw.m_instancesBuffer, it->m_swMeshDraw.m_instancesBufferOffset, sizeof(GpuSceneMeshletInstance),
 								  VertexStepRate::kInstance);
 
 			cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, it->m_swMeshDraw.m_drawIndirectArgsBufferOffset,

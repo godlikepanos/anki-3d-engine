@@ -191,9 +191,9 @@ struct DrawIndirectArgsWithPadding
 	}
 	else
 	{
-		U32 indirectIdx;
-		InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, indirectIdx);
-		indirectIdx += g_drawIndirectArgsIndexOrTaskPayloadIndex[renderStateBucket];
+		U32 bucketDrawcallIdx;
+		InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, bucketDrawcallIdx);
+		const U32 indirectIdx = bucketDrawcallIdx + g_drawIndirectArgsIndexOrTaskPayloadIndex[renderStateBucket];
 
 		if(!isParticleEmitter)
 		{
@@ -204,7 +204,7 @@ struct DrawIndirectArgsWithPadding
 			indirect.m_instanceCount = 1;
 			indirect.m_firstIndex = meshLod.m_firstIndex;
 			indirect.m_vertexOffset = 0;
-			indirect.m_firstInstance = indirectIdx;
+			indirect.m_firstInstance = bucketDrawcallIdx;
 			g_drawIndexedIndirectArgs[indirectIdx] = indirect;
 
 			UVec4 instanceVertex;
@@ -222,7 +222,7 @@ struct DrawIndirectArgsWithPadding
 			indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
 			indirect.m_instanceCount = 1;
 			indirect.m_firstVertex = 0;
-			indirect.m_firstInstance = indirectIdx;
+			indirect.m_firstInstance = bucketDrawcallIdx;
 			g_drawIndirectArgs[indirectIdx] = indirect;
 
 			UVec4 instanceVertex;
