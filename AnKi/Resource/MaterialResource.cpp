@@ -167,11 +167,13 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	// Find present techniques
 	for(const ShaderProgramBinaryTechnique& t : m_prog->getBinary().m_techniques)
 	{
-		if(t.m_name.getBegin() == CString("GBuffer") || t.m_name.getBegin() == CString("GBufferMesh"))
+		if(t.m_name.getBegin() == CString("GBuffer") || t.m_name.getBegin() == CString("GBufferMesh")
+		   || t.m_name.getBegin() == CString("GBufferMeshlet"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
 		}
-		else if(t.m_name.getBegin() == CString("Shadows") || t.m_name.getBegin() == CString("ShadowsMesh"))
+		else if(t.m_name.getBegin() == CString("Shadows") || t.m_name.getBegin() == CString("ShadowsMesh")
+				|| t.m_name.getBegin() == CString("ShadowsMeshlet"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kDepth;
 		}

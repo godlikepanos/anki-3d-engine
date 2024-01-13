@@ -385,7 +385,6 @@ enum class VertexStepRate : U8
 {
 	kVertex,
 	kInstance,
-	kDraw,
 	kCount
 };
 

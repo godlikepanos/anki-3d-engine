@@ -88,7 +88,7 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
+	[[vk::location(0)]] UVec4 m_instanceData : INSTANCE_DATA;
 };
 
 struct VertOut
@@ -232,16 +232,33 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 // Vert                                                                      =
 // ===========================================================================
 #if ANKI_VERTEX_SHADER
+
+#	define SW_MESHLETS (ANKI_TECHNIQUE_GBufferMeshlet || ANKI_TECHNIQUE_ShadowsMeshlet)
+
 VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_meshLods[renderable.m_meshLodIndex];
-	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
+#	if SW_MESHLETS
+	const GpuSceneMeshletInstance instance = unpackGpuSceneMeshletInstance(input.m_instanceData);
+	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
+	if(input.m_svVertexId >= (meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u) * 3u)
+	{
+		// Discard the primitive
+		output = (VertOut)0;
+		output.m_constantsOffset = instance.m_constantsOffset;
+		return output;
+	}
 
-	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
-	const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset + sizeof(Mat3x4));
+	UnpackedMeshVertex vert = loadVertex(meshlet, input.m_svVertexId, ANKI_BONES);
+#	else
+	const GpuSceneRenderableVertex instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
+	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
+	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
+#	endif
+
+	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(instance.m_worldTransformsOffset);
+	const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(instance.m_worldTransformsOffset + sizeof(Mat3x4));
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #	if UVS
@@ -249,11 +266,11 @@ VertOut main(VertIn input)
 #	endif
 	Vec3 prevPos = vert.m_position;
 	ANKI_MAYBE_UNUSED(prevPos);
-	output.m_constantsOffset = renderable.m_constantsOffset;
+	output.m_constantsOffset = instance.m_constantsOffset;
 
 	// Do stuff
 #	if ANKI_BONES
-	skinning(vert, renderable.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
+	skinning(vert, instance.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
 #	endif
 
 	const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
@@ -723,6 +740,12 @@ FragOut main(
 
 #pragma anki technique_start vert Shadows uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end vert Shadows
+
+#pragma anki technique_start vert GBufferMeshlet uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end vert GBufferMeshlet
+
+#pragma anki technique_start vert ShadowsMeshlet uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end vert ShadowsMeshlet
 
 #pragma anki technique_start task CommonTask uses_mutators
 #pragma anki technique_end task CommonTask

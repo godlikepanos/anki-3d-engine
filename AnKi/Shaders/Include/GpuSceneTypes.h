@@ -45,6 +45,15 @@ struct GpuSceneTaskShaderPayload
 };
 static_assert(kMaxLodCount == 3);
 
+/// Minimal data passed to the vertex shaders in the case of meshlet rendering.
+struct GpuSceneMeshletInstance
+{
+	U32 m_worldTransformsOffset;
+	U32 m_constantsOffset;
+	U32 m_meshletGeometryDescriptorIndex; ///< Index in the UGB.
+	U32 m_boneTransformsOrParticleEmitterOffset;
+};
+
 /// Used in visibility testing.
 struct GpuSceneRenderableBoundingVolume
 {

@@ -30,23 +30,43 @@ public:
 
 	Sampler* m_sampler = nullptr;
 
-	// For MDI
 	RenderingTechnique m_renderingTechinuqe = RenderingTechnique::kCount;
 
-	BufferOffsetRange m_mdiDrawCountsBuffer;
-	BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
-	BufferOffsetRange m_instanceRateRenderablesBuffer;
+	class
+	{
+	public:
+		BufferOffsetRange m_mdiDrawCountsBuffer;
+		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
+		BufferOffsetRange m_renderableInstancesBuffer;
+	} m_legacy; ///< Legacy vertex flow
 
-	BufferOffsetRange m_taskShaderIndirectArgsBuffer;
-	BufferOffsetRange m_taskShaderPayloadsBuffer;
+	class
+	{
+	public:
+		BufferOffsetRange m_taskShaderIndirectArgsBuffer;
+		BufferOffsetRange m_taskShaderPayloadsBuffer;
+	} m_mesh;
+
+	class
+	{
+	public:
+		BufferOffsetRange m_meshletInstancesBuffer;
+		BufferOffsetRange m_drawIndirectArgsBuffer;
+	} m_softwareMesh;
 
 	void fillMdi(const GpuVisibilityOutput& visOut)
 	{
-		m_mdiDrawCountsBuffer = visOut.m_mdiDrawCountsBuffer;
-		m_drawIndexedIndirectArgsBuffer = visOut.m_drawIndexedIndirectArgsBuffer;
-		m_instanceRateRenderablesBuffer = visOut.m_instanceRateRenderablesBuffer;
-		m_taskShaderIndirectArgsBuffer = visOut.m_taskShaderIndirectArgsBuffer;
-		m_taskShaderPayloadsBuffer = visOut.m_taskShaderPayloadBuffer;
+		m_legacy.m_mdiDrawCountsBuffer = visOut.m_legacy.m_mdiDrawCountsBuffer;
+		m_legacy.m_drawIndexedIndirectArgsBuffer = visOut.m_legacy.m_drawIndexedIndirectArgsBuffer;
+		m_legacy.m_renderableInstancesBuffer = visOut.m_legacy.m_renderableInstancesBuffer;
+		m_mesh.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
+		m_mesh.m_taskShaderPayloadsBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
+	}
+
+	void fill(const GpuMeshletVisibilityOutput& visOut)
+	{
+		m_softwareMesh.m_meshletInstancesBuffer = visOut.m_meshletInstancesBuffer;
+		m_softwareMesh.m_drawIndirectArgsBuffer = visOut.m_drawIndirectArgsBuffer;
 	}
 };
 

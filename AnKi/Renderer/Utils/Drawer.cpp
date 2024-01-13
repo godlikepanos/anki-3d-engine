@@ -63,7 +63,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 					   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGeometryDescriptors),
 					   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTaskShaderPayloads), args.m_taskShaderPayloadsBuffer);
+	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTaskShaderPayloads), args.m_mesh.m_taskShaderPayloadsBuffer);
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables),
 					   GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshLods), GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
@@ -101,7 +101,9 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 	setState(args, cmdb);
 
-	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer.m_buffer, args.m_instanceRateRenderablesBuffer.m_offset,
+	const Bool meshShaderHwSupport = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
+
+	cmdb.bindVertexBuffer(0, args.m_legacy.m_renderableInstancesBuffer.m_buffer, args.m_legacy.m_renderableInstancesBuffer.m_offset,
 						  sizeof(GpuSceneRenderableVertex), VertexStepRate::kInstance);
 
 	// Gather the drawcalls
@@ -119,7 +121,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			PrimitiveTopology m_primitiveTopology;
 		};
 
-		class ModernDraw
+		class MeshDraw
 		{
 		public:
 			U32 m_firstPayload;
@@ -127,10 +129,20 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			PtrSize m_taskShaderIndirectArgsBufferOffset;
 		};
 
+		class SwMeshDraw
+		{
+		public:
+			Buffer* m_drawIndirectArgsBuffer;
+			PtrSize m_drawIndirectArgsBufferOffset;
+			Buffer* m_instancesBuffer;
+			PtrSize m_instancesBufferOffset;
+		};
+
 		union
 		{
 			LegacyDraw m_legacyDraw;
-			ModernDraw m_modernDraw;
+			MeshDraw m_meshDraw;
+			SwMeshDraw m_swMeshDraw;
 		};
 
 		ShaderProgram* m_program;
@@ -146,6 +158,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	U32 bucketCount = 0;
 	U32 allMeshletGroupCount = 0;
 	U32 legacyGeometryFlowUserCount = 0;
+	PtrSize meshletInstancesBufferOffset = 0;
 	RenderStateBucketContainer::getSingleton().iterateBuckets(
 		args.m_renderingTechinuqe, [&](const RenderStateInfo& state, U32 userCount, U32 meshletGroupCount) {
 			if(userCount == 0)
@@ -160,19 +173,31 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 			cmd.m_shaderBinarySize = U64(state.m_program->getShaderBinarySize(ShaderType::kFragment)) << 32u;
 			cmd.m_hasDiscard = state.m_program->hasDiscard();
 
-			const Bool usesMeshShaders = meshletGroupCount > 0;
+			const Bool meshlets = meshletGroupCount > 0;
 
-			if(usesMeshShaders)
+			if(meshlets && meshShaderHwSupport)
 			{
 				cmd.m_drawType = 2;
 				cmd.m_shaderBinarySize |= state.m_program->getShaderBinarySize(ShaderType::kMesh);
 
-				cmd.m_modernDraw.m_firstPayload = allMeshletGroupCount;
-				cmd.m_modernDraw.m_taskShaderIndirectArgsBuffer = args.m_taskShaderIndirectArgsBuffer.m_buffer;
-				cmd.m_modernDraw.m_taskShaderIndirectArgsBufferOffset =
-					args.m_taskShaderIndirectArgsBuffer.m_offset + sizeof(DispatchIndirectArgs) * bucketCount;
+				cmd.m_meshDraw.m_firstPayload = allMeshletGroupCount;
+				cmd.m_meshDraw.m_taskShaderIndirectArgsBuffer = args.m_mesh.m_taskShaderIndirectArgsBuffer.m_buffer;
+				cmd.m_meshDraw.m_taskShaderIndirectArgsBufferOffset =
+					args.m_mesh.m_taskShaderIndirectArgsBuffer.m_offset + sizeof(DispatchIndirectArgs) * bucketCount;
 
 				allMeshletGroupCount += min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
+			}
+			else if(meshlets)
+			{
+				cmd.m_drawType = 3;
+				cmd.m_shaderBinarySize |= state.m_program->getShaderBinarySize(ShaderType::kVertex);
+
+				cmd.m_swMeshDraw.m_drawIndirectArgsBuffer = args.m_softwareMesh.m_drawIndirectArgsBuffer.m_buffer;
+				cmd.m_swMeshDraw.m_drawIndirectArgsBufferOffset =
+					args.m_softwareMesh.m_drawIndirectArgsBuffer.m_offset + sizeof(DrawIndirectArgs) * bucketCount;
+
+				cmd.m_swMeshDraw.m_instancesBuffer = args.m_softwareMesh.m_meshletInstancesBuffer.m_buffer;
+				cmd.m_swMeshDraw.m_instancesBufferOffset = args.m_softwareMesh.m_meshletInstancesBuffer.m_offset + meshletInstancesBufferOffset;
 			}
 			else
 			{
@@ -182,18 +207,19 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 				cmd.m_shaderBinarySize |= state.m_program->getShaderBinarySize(ShaderType::kVertex);
 
 				cmd.m_legacyDraw.m_primitiveTopology = state.m_primitiveTopology;
-				cmd.m_legacyDraw.m_drawIndirectArgsBuffer = args.m_drawIndexedIndirectArgsBuffer.m_buffer;
+				cmd.m_legacyDraw.m_drawIndirectArgsBuffer = args.m_legacy.m_drawIndexedIndirectArgsBuffer.m_buffer;
 				cmd.m_legacyDraw.m_drawIndirectArgsBufferOffset =
-					args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * legacyGeometryFlowUserCount;
+					args.m_legacy.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * legacyGeometryFlowUserCount;
 				cmd.m_legacyDraw.m_maxDrawCount = maxDrawCount;
-				cmd.m_legacyDraw.m_mdiDrawCountsBuffer = args.m_mdiDrawCountsBuffer.m_buffer;
-				cmd.m_legacyDraw.m_mdiDrawCountsBufferOffset = args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount;
+				cmd.m_legacyDraw.m_mdiDrawCountsBuffer = args.m_legacy.m_mdiDrawCountsBuffer.m_buffer;
+				cmd.m_legacyDraw.m_mdiDrawCountsBufferOffset = args.m_legacy.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount;
 
 				legacyGeometryFlowUserCount += userCount;
 			}
 
 			++bucketCount;
 			allUserCount += userCount;
+			meshletInstancesBufferOffset += sizeof(UVec4) * min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
 		});
 
 	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));
@@ -230,14 +256,22 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 								   it->m_legacyDraw.m_mdiDrawCountsBuffer, it->m_legacyDraw.m_mdiDrawCountsBufferOffset,
 								   it->m_legacyDraw.m_maxDrawCount);
 		}
-		else
+		else if(it->m_drawType == 2)
 		{
-			ANKI_ASSERT(it->m_drawType == 2);
-
-			const UVec4 firstPayload(it->m_modernDraw.m_firstPayload);
+			const UVec4 firstPayload(it->m_meshDraw.m_firstPayload);
 			cmdb.setPushConstants(&firstPayload, sizeof(firstPayload));
 
-			cmdb.drawMeshTasksIndirect(it->m_modernDraw.m_taskShaderIndirectArgsBuffer, it->m_modernDraw.m_taskShaderIndirectArgsBufferOffset);
+			cmdb.drawMeshTasksIndirect(it->m_meshDraw.m_taskShaderIndirectArgsBuffer, it->m_meshDraw.m_taskShaderIndirectArgsBufferOffset);
+		}
+		else
+		{
+			ANKI_ASSERT(it->m_drawType == 3);
+
+			cmdb.bindVertexBuffer(0, it->m_swMeshDraw.m_instancesBuffer, it->m_swMeshDraw.m_instancesBufferOffset, sizeof(UVec4),
+								  VertexStepRate::kInstance);
+
+			cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, it->m_swMeshDraw.m_drawIndirectArgsBufferOffset,
+							  it->m_swMeshDraw.m_drawIndirectArgsBuffer);
 		}
 	}
 

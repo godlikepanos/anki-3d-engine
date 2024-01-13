@@ -12,45 +12,12 @@
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
-Error GpuVisibility::init()
-{
-	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
-	{
-		for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
-		{
-			for(MutatorValue genHash = 0; genHash < 2; ++genHash)
-			{
-				ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
-											 {{"HZB_TEST", hzb}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}},
-											 m_prog, m_frustumGrProgs[hzb][gatherAabbs][genHash]));
-			}
-		}
-	}
-
-	for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
-	{
-		for(MutatorValue genHash = 0; genHash < 2; ++genHash)
-		{
-			ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
-										 {{"HZB_TEST", 0}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}}, m_prog,
-										 m_distGrProgs[gatherAabbs][genHash]));
-		}
-	}
-
-	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
-	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityMeshlet.ankiprogbin", {{"HZB_TEST", hzb}}, m_meshletCullingProg,
-									 m_meshletCullingGrProgs[hzb]));
-	}
-
-	return Error::kNone;
-}
-
-GpuVisibility::Counts GpuVisibility::countTechnique(RenderingTechnique t)
+GpuVisibilityCommonBase::Counts GpuVisibilityCommonBase::countTechnique(RenderingTechnique t)
 {
 	Counts out = {};
 
@@ -88,9 +55,38 @@ GpuVisibility::Counts GpuVisibility::countTechnique(RenderingTechnique t)
 	return out;
 }
 
+Error GpuVisibility::init()
+{
+	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
+	{
+		for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
+		{
+			for(MutatorValue genHash = 0; genHash < 2; ++genHash)
+			{
+				ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+											 {{"HZB_TEST", hzb}, {"DISTANCE_TEST", 0}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}},
+											 m_prog, m_frustumGrProgs[hzb][gatherAabbs][genHash]));
+			}
+		}
+	}
+
+	for(MutatorValue gatherAabbs = 0; gatherAabbs < 2; ++gatherAabbs)
+	{
+		for(MutatorValue genHash = 0; genHash < 2; ++genHash)
+		{
+			ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibility.ankiprogbin",
+										 {{"HZB_TEST", 0}, {"DISTANCE_TEST", 1}, {"GATHER_AABBS", gatherAabbs}, {"HASH_VISIBLES", genHash}}, m_prog,
+										 m_distGrProgs[gatherAabbs][genHash]));
+		}
+	}
+
+	return Error::kNone;
+}
+
 void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out)
 {
 	ANKI_ASSERT(in.m_lodReferencePoint.x() != kMaxF32);
+	RenderGraphDescription& rgraph = *in.m_rgraph;
 
 	class DistanceTestData
 	{
@@ -130,24 +126,6 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	if(counts.m_allUserCount == 0) [[unlikely]]
 	{
 		// Early exit
-
-		out.m_instanceRateRenderablesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(1 * sizeof(GpuSceneRenderable));
-		out.m_drawIndexedIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(1 * sizeof(DrawIndexedIndirectArgs));
-		out.m_taskShaderIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(1 * sizeof(DispatchIndirectArgs));
-		out.m_taskShaderPayloadBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(1 * sizeof(GpuSceneTaskShaderPayload));
-
-		U32* atomics;
-		out.m_mdiDrawCountsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(1, atomics);
-		atomics[0] = 0;
-		out.m_someBufferHandle = in.m_rgraph->importBuffer(BufferUsageBit::kNone, out.m_mdiDrawCountsBuffer);
-
-		if(in.m_gatherAabbIndices)
-		{
-			U32* atomic;
-			out.m_visibleAaabbIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame<U32>(1, atomic);
-			atomic[0] = 0;
-		}
-
 		return;
 	}
 
@@ -174,8 +152,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			mem.m_drawIndexedIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(
 				max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs));
-			mem.m_instanceRateRenderablesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(
-				max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex));
+			mem.m_renderableInstancesBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, maxCounts.m_legacyGeometryFlowUserCount)
+																									 * sizeof(GpuSceneRenderableVertex));
 
 			mem.m_taskShaderPayloadBuffer =
 				GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, maxCounts.m_meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload));
@@ -185,17 +163,19 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	PersistentMemory& mem = m_runCtx.m_persistentMem[m_runCtx.m_populateRenderGraphFrameCallCount % m_runCtx.m_persistentMem.getSize()];
 	++m_runCtx.m_populateRenderGraphFrameCallCount;
 
-	out.m_drawIndexedIndirectArgsBuffer = mem.m_drawIndexedIndirectArgsBuffer;
-	out.m_drawIndexedIndirectArgsBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs);
+	out.m_legacy.m_drawIndexedIndirectArgsBuffer = mem.m_drawIndexedIndirectArgsBuffer;
+	out.m_legacy.m_drawIndexedIndirectArgsBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs);
 
-	out.m_instanceRateRenderablesBuffer = mem.m_instanceRateRenderablesBuffer;
-	out.m_instanceRateRenderablesBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex);
+	out.m_legacy.m_renderableInstancesBuffer = mem.m_renderableInstancesBuffer;
+	out.m_legacy.m_renderableInstancesBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex);
 
-	out.m_taskShaderPayloadBuffer = mem.m_taskShaderPayloadBuffer;
-	out.m_taskShaderPayloadBuffer.m_range = max(1u, counts.m_meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload);
+	out.m_legacy.m_mdiDrawCountsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(U32) * counts.m_bucketCount);
 
-	out.m_taskShaderIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * counts.m_bucketCount);
-	out.m_mdiDrawCountsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(U32) * counts.m_bucketCount);
+	out.m_mesh.m_taskShaderPayloadBuffer = mem.m_taskShaderPayloadBuffer;
+	out.m_mesh.m_taskShaderPayloadBuffer.m_range = max(1u, counts.m_meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload);
+
+	out.m_mesh.m_taskShaderIndirectArgsBuffer =
+		GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * counts.m_bucketCount);
 
 	if(in.m_hashVisibles)
 	{
@@ -208,38 +188,39 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 
 	// Zero some stuff
-	const BufferHandle zeroStuffDependency = in.m_rgraph->importBuffer(BufferUsageBit::kNone, out.m_mdiDrawCountsBuffer);
+	const BufferHandle zeroStuffDependency = rgraph.importBuffer(BufferUsageBit::kNone, out.m_legacy.m_mdiDrawCountsBuffer);
 	{
 		Array<Char, 128> passName;
 		snprintf(passName.getBegin(), passName.getSizeInBytes(), "GPU vis zero: %s", in.m_passesName.cstr());
 
-		ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(passName.getBegin());
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
 		pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kTransferDestination);
 
-		pass.setWork([mdiDrawCountsBuffer = out.m_mdiDrawCountsBuffer, taskShaderIndirectArgsBuffer = out.m_taskShaderIndirectArgsBuffer,
-					  visiblesHashBuffer = out.m_visiblesHashBuffer,
-					  visibleAaabbIndicesBuffer = out.m_visibleAaabbIndicesBuffer](RenderPassWorkContext& rpass) {
+		pass.setWork([out](RenderPassWorkContext& rpass) {
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 			cmdb.pushDebugMarker("MDI counts", Vec3(1.0f, 1.0f, 1.0f));
-			cmdb.fillBuffer(mdiDrawCountsBuffer, 0);
+			cmdb.fillBuffer(out.m_legacy.m_mdiDrawCountsBuffer, 0);
 			cmdb.popDebugMarker();
 
-			cmdb.pushDebugMarker("Task shader indirect args", Vec3(1.0f, 1.0f, 1.0f));
-			cmdb.fillBuffer(taskShaderIndirectArgsBuffer, 0);
-			cmdb.popDebugMarker();
-
-			if(visiblesHashBuffer.m_buffer)
+			if(out.m_mesh.m_taskShaderIndirectArgsBuffer.m_buffer)
 			{
-				cmdb.pushDebugMarker("Visibles hash", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(visiblesHashBuffer, 0);
+				cmdb.pushDebugMarker("Task shader indirect args", Vec3(1.0f, 1.0f, 1.0f));
+				cmdb.fillBuffer(out.m_mesh.m_taskShaderIndirectArgsBuffer, 0);
 				cmdb.popDebugMarker();
 			}
 
-			if(visibleAaabbIndicesBuffer.m_buffer)
+			if(out.m_visiblesHashBuffer.m_buffer)
+			{
+				cmdb.pushDebugMarker("Visibles hash", Vec3(1.0f, 1.0f, 1.0f));
+				cmdb.fillBuffer(out.m_visiblesHashBuffer, 0);
+				cmdb.popDebugMarker();
+			}
+
+			if(out.m_visibleAaabbIndicesBuffer.m_buffer)
 			{
 				cmdb.pushDebugMarker("Visible AABB indices", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(visibleAaabbIndicesBuffer.m_buffer, visibleAaabbIndicesBuffer.m_offset, sizeof(U32), 0);
+				cmdb.fillBuffer(out.m_visibleAaabbIndicesBuffer.m_buffer, out.m_visibleAaabbIndicesBuffer.m_offset, sizeof(U32), 0);
 				cmdb.popDebugMarker();
 			}
 		});
@@ -248,7 +229,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	// Set the out dependency. Use one of the big buffers.
 	if(!mem.m_bufferDepedency.isValid())
 	{
-		mem.m_bufferDepedency = in.m_rgraph->importBuffer(BufferUsageBit::kNone, mem.m_drawIndexedIndirectArgsBuffer);
+		mem.m_bufferDepedency = rgraph.importBuffer(BufferUsageBit::kNone, mem.m_drawIndexedIndirectArgsBuffer);
 	}
 	out.m_someBufferHandle = mem.m_bufferDepedency;
 
@@ -256,7 +237,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	Array<Char, 128> passName;
 	snprintf(passName.getBegin(), passName.getSizeInBytes(), "GPU vis: %s", in.m_passesName.cstr());
 
-	ComputeRenderPassDescription& pass = in.m_rgraph->newComputeRenderPass(passName.getBegin());
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavComputeRead);
 	pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kUavComputeWrite);
@@ -269,15 +250,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 
 	pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
-				  technique = in.m_technique, mdiDrawCountsBuffer = out.m_mdiDrawCountsBuffer,
-				  instanceRateRenderables = out.m_instanceRateRenderablesBuffer, indirectArgs = out.m_drawIndexedIndirectArgsBuffer,
-				  aabbCount = counts.m_aabbCount, visibleAaabbIndicesBuffer = out.m_visibleAaabbIndicesBuffer, hashBuffer = out.m_visiblesHashBuffer,
-				  taskShaderIndirectArgsBuff = out.m_taskShaderIndirectArgsBuffer,
-				  taskShaderPayloadBuffer = out.m_taskShaderPayloadBuffer](RenderPassWorkContext& rpass) {
+				  technique = in.m_technique, aabbCount = counts.m_aabbCount, out](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
-		const Bool gatherAabbIndices = visibleAaabbIndicesBuffer.m_buffer != nullptr;
-		const Bool genHash = hashBuffer.m_buffer != nullptr;
+		const Bool gatherAabbIndices = out.m_visibleAaabbIndicesBuffer.m_buffer != nullptr;
+		const Bool genHash = out.m_visiblesHashBuffer.m_buffer != nullptr;
 
 		if(frustumTestData)
 		{
@@ -308,11 +285,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
 		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
 		cmdb.bindUavBuffer(0, 3, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 4, instanceRateRenderables);
-		cmdb.bindUavBuffer(0, 5, indirectArgs);
-		cmdb.bindUavBuffer(0, 6, mdiDrawCountsBuffer);
-		cmdb.bindUavBuffer(0, 7, taskShaderIndirectArgsBuff);
-		cmdb.bindUavBuffer(0, 8, taskShaderPayloadBuffer);
+		cmdb.bindUavBuffer(0, 4, out.m_legacy.m_renderableInstancesBuffer);
+		cmdb.bindUavBuffer(0, 5, out.m_legacy.m_drawIndexedIndirectArgsBuffer);
+		cmdb.bindUavBuffer(0, 6, out.m_legacy.m_mdiDrawCountsBuffer);
+		cmdb.bindUavBuffer(0, 7, out.m_mesh.m_taskShaderIndirectArgsBuffer);
+		cmdb.bindUavBuffer(0, 8, out.m_mesh.m_taskShaderPayloadBuffer);
 
 		U32* drawIndirectArgsIndexOrTaskPayloadIndex =
 			allocateAndBindUav<U32>(cmdb, 0, 9, RenderStateBucketContainer::getSingleton().getBucketCount(technique));
@@ -384,15 +361,166 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		if(gatherAabbIndices)
 		{
-			cmdb.bindUavBuffer(0, 13, visibleAaabbIndicesBuffer);
+			cmdb.bindUavBuffer(0, 13, out.m_visibleAaabbIndicesBuffer);
 		}
 
 		if(genHash)
 		{
-			cmdb.bindUavBuffer(0, 14, hashBuffer);
+			cmdb.bindUavBuffer(0, 14, out.m_visiblesHashBuffer);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
+	});
+}
+
+Error GpuMeshletVisibility::init()
+{
+	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
+	{
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityMeshlet.ankiprogbin", {{"HZB_TEST", hzb}}, m_meshletCullingProg,
+									 m_meshletCullingGrProgs[hzb]));
+	}
+
+	return Error::kNone;
+}
+
+void GpuMeshletVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
+{
+	RenderGraphDescription& rgraph = *in.m_rgraph;
+
+	const Counts counts = countTechnique(in.m_technique);
+
+	if(counts.m_allUserCount == 0) [[unlikely]]
+	{
+		// Early exit
+		return;
+	}
+
+	// Allocate memory
+	const Bool firstFrame = m_runCtx.m_frameIdx != getRenderer().getFrameCount();
+	if(firstFrame)
+	{
+		// Allocate the big buffers once at the beginning of the frame
+
+		m_runCtx.m_frameIdx = getRenderer().getFrameCount();
+		m_runCtx.m_populateRenderGraphFrameCallCount = 0;
+
+		// Find the max counts of all techniques
+		Counts maxCounts = {};
+		for(RenderingTechnique t : EnumBitsIterable<RenderingTechnique, RenderingTechniqueBit>(RenderingTechniqueBit::kAllRaster))
+		{
+			maxCounts = maxCounts.max((in.m_technique == t) ? counts : countTechnique(t));
+		}
+
+		// Allocate memory
+		for(PersistentMemory& mem : m_runCtx.m_persistentMem)
+		{
+			mem = {};
+
+			mem.m_meshletInstancesBuffer =
+				GpuVisibleTransientMemoryPool::getSingleton().allocate(max(1u, maxCounts.m_meshletGroupCount) * sizeof(UVec4));
+		}
+	}
+
+	PersistentMemory& mem = m_runCtx.m_persistentMem[m_runCtx.m_populateRenderGraphFrameCallCount % m_runCtx.m_persistentMem.getSize()];
+	++m_runCtx.m_populateRenderGraphFrameCallCount;
+
+	out.m_drawIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs) * counts.m_bucketCount);
+
+	out.m_meshletInstancesBuffer = mem.m_meshletInstancesBuffer;
+	out.m_meshletInstancesBuffer.m_range = max(1u, counts.m_meshletGroupCount) * sizeof(UVec4);
+
+	// Zero some stuff
+	const BufferHandle zeroStuffDependency = rgraph.importBuffer(BufferUsageBit::kNone, out.m_drawIndirectArgsBuffer);
+	{
+		Array<Char, 128> passName;
+		snprintf(passName.getBegin(), passName.getSizeInBytes(), "GPU meshlet vis zero: %s", in.m_passesName.cstr());
+
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
+		pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kTransferDestination);
+
+		pass.setWork([drawIndirectArgsBuffer = out.m_drawIndirectArgsBuffer](RenderPassWorkContext& rpass) {
+			CommandBuffer& cmdb = *rpass.m_commandBuffer;
+
+			cmdb.pushDebugMarker("Draw indirect args", Vec3(1.0f, 1.0f, 1.0f));
+			cmdb.fillBuffer(drawIndirectArgsBuffer, 0);
+			cmdb.popDebugMarker();
+		});
+	}
+
+	// Set the out dependency. Use one of the big buffers.
+	if(!mem.m_bufferDepedency.isValid())
+	{
+		mem.m_bufferDepedency = rgraph.importBuffer(BufferUsageBit::kNone, mem.m_meshletInstancesBuffer);
+	}
+	out.m_dependency = mem.m_bufferDepedency;
+
+	// Create the renderpass
+	Array<Char, 128> passName;
+	snprintf(passName.getBegin(), passName.getSizeInBytes(), "GPU meshlet vis: %s", in.m_passesName.cstr());
+
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
+
+	pass.newBufferDependency(out.m_dependency, BufferUsageBit::kUavComputeWrite);
+	pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kUavComputeRead);
+
+	pass.setWork([this, technique = in.m_technique, hzbRt = in.m_hzbRt, taskShaderPayloadsBuff = in.m_taskShaderPayloadBuffer,
+				  viewProjMat = in.m_viewProjectionMatrix, camTrf = in.m_cameraTransform, viewportSize = in.m_viewportSize,
+				  out](RenderPassWorkContext& rpass) {
+		CommandBuffer& cmdb = *rpass.m_commandBuffer;
+
+		U32 bucketIdx = 0;
+		U32 firstPayload = 0;
+		RenderStateBucketContainer::getSingleton().iterateBuckets(technique, [&](const RenderStateInfo&, U32 userCount, U32 meshletGroupCount) {
+			if(!meshletGroupCount)
+			{
+				++bucketIdx;
+				return;
+			}
+
+			// Create a depedency to a part of the indirect args buffer
+			const BufferOffsetRange drawIndirectArgsBufferChunk = {out.m_drawIndirectArgsBuffer.m_buffer,
+																   out.m_drawIndirectArgsBuffer.m_offset + sizeof(DrawIndirectArgs) * bucketIdx,
+																   sizeof(DrawIndirectArgs)};
+
+			const Bool hasHzb = hzbRt.isValid();
+
+			cmdb.bindShaderProgram(m_meshletCullingGrProgs[hasHzb].get());
+
+			cmdb.bindUavBuffer(0, 0, taskShaderPayloadsBuff);
+			cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
+			cmdb.bindUavBuffer(0, 3, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
+			cmdb.bindUavBuffer(0, 4, UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
+			cmdb.bindUavBuffer(0, 5, out.m_drawIndirectArgsBuffer);
+			cmdb.bindUavBuffer(0, 6, out.m_meshletInstancesBuffer);
+			if(hasHzb)
+			{
+				rpass.bindColorTexture(0, 7, hzbRt);
+				cmdb.bindSampler(0, 8, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			}
+
+			class MaterialGlobalConstants
+			{
+			public:
+				Mat4 m_viewProjectionMatrix;
+				Mat3x4 m_cameraTransform;
+
+				Vec2 m_viewportSizef;
+				U32 m_firstPayload;
+				U32 m_padding;
+			} consts;
+			consts.m_viewProjectionMatrix = viewProjMat;
+			consts.m_cameraTransform = camTrf;
+			consts.m_viewportSizef = Vec2(viewportSize);
+			consts.m_firstPayload = firstPayload;
+			cmdb.setPushConstants(&consts, sizeof(consts));
+
+			cmdb.dispatchCompute(meshletGroupCount, 1, 1);
+
+			firstPayload += min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
+			++bucketIdx;
+		});
 	});
 }
 

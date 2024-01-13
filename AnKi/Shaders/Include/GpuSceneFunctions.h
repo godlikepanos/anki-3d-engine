@@ -19,6 +19,16 @@ inline GpuSceneRenderableVertex unpackGpuSceneRenderableVertex(UVec4 x)
 	return o;
 }
 
+inline GpuSceneMeshletInstance unpackGpuSceneMeshletInstance(UVec4 x)
+{
+	GpuSceneMeshletInstance o;
+	o.m_worldTransformsOffset = x[0];
+	o.m_constantsOffset = x[1];
+	o.m_meshletGeometryDescriptorIndex = x[2];
+	o.m_boneTransformsOrParticleEmitterOffset = x[3];
+	return o;
+}
+
 inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec3 aabbMin, Vec3 aabbMax, U32 renderableIndex, U32 renderStateBucket)
 {
 	GpuSceneRenderableBoundingVolume gpuVolume;

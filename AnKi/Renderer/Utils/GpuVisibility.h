@@ -14,6 +14,38 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+class GpuVisibilityCommonBase : public RendererObject
+{
+protected:
+	class Counts
+	{
+	public:
+		U32 m_aabbCount;
+		U32 m_bucketCount;
+		U32 m_legacyGeometryFlowUserCount;
+		U32 m_modernGeometryFlowUserCount;
+		U32 m_meshletGroupCount;
+		U32 m_allUserCount;
+
+		Counts max(const Counts& b) const
+		{
+			Counts out;
+#define ANKI_MAX(member) out.member = anki::max(member, b.member)
+			ANKI_MAX(m_aabbCount);
+			ANKI_MAX(m_bucketCount);
+			ANKI_MAX(m_legacyGeometryFlowUserCount);
+			ANKI_MAX(m_modernGeometryFlowUserCount);
+			ANKI_MAX(m_meshletGroupCount);
+			ANKI_MAX(m_allUserCount);
+#undef ANKI_MAX
+			return out;
+		}
+	};
+
+	static Counts countTechnique(RenderingTechnique t);
+};
+
+/// @memberof GpuVisibility
 class BaseGpuVisibilityInput
 {
 public:
@@ -55,21 +87,34 @@ class GpuVisibilityOutput
 public:
 	BufferHandle m_someBufferHandle; ///< Just expose one handle for depedencies. No need to track all buffers.
 
-	BufferOffsetRange m_instanceRateRenderablesBuffer; ///< An array of GpuSceneRenderableVertex.
-	BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< An array of DrawIndexedIndirectArgs.
-	BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
+	class
+	{
+	public:
+		BufferOffsetRange m_renderableInstancesBuffer; ///< An array of GpuSceneRenderableVertex.
+		BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< An array of DrawIndexedIndirectArgs.
+		BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
+	} m_legacy; ///< Legacy vertex shading.
 
-	/// An array of DispatchIndirectArgs, one for each render state bucket (even those that use vertex flow).
-	BufferOffsetRange m_taskShaderIndirectArgsBuffer;
-	BufferOffsetRange m_taskShaderPayloadBuffer; ///< The payloads of task shaders. One for each task shader threadgroup.
+	class
+	{
+	public:
+		/// An array of DispatchIndirectArgs, one for each render state bucket (even those that use legacy flow).
+		BufferOffsetRange m_taskShaderIndirectArgsBuffer;
+		BufferOffsetRange m_taskShaderPayloadBuffer; ///< The payloads of task shaders. One for each task shader threadgroup / meshlet group.
+	} m_mesh; ///< S/W meshlets or H/W mesh shading.
 
 	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< [Optional] Indices to the AABB buffer. The 1st element is the count.
 
 	BufferOffsetRange m_visiblesHashBuffer; ///< [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
+
+	Bool containsDrawcalls() const
+	{
+		return m_someBufferHandle.isValid();
+	}
 };
 
 /// Performs GPU visibility for some pass.
-class GpuVisibility : public RendererObject
+class GpuVisibility : public GpuVisibilityCommonBase
 {
 public:
 	Error init();
@@ -95,15 +140,15 @@ private:
 	Array3d<ShaderProgramPtr, 2, 2, 2> m_frustumGrProgs;
 	Array2d<ShaderProgramPtr, 2, 2> m_distGrProgs;
 
-	ShaderProgramResourcePtr m_meshletCullingProg;
-	Array<ShaderProgramPtr, 2> m_meshletCullingGrProgs;
-
 	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
 	class PersistentMemory
 	{
 	public:
+		// Legacy
 		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
-		BufferOffsetRange m_instanceRateRenderablesBuffer;
+		BufferOffsetRange m_renderableInstancesBuffer; ///< Instance rate vertex buffer.
+
+		// Mesh
 		BufferOffsetRange m_taskShaderPayloadBuffer;
 
 		BufferHandle m_bufferDepedency;
@@ -119,34 +164,75 @@ private:
 		Array<PersistentMemory, 4> m_persistentMem;
 	} m_runCtx;
 
-	class Counts
+	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
+};
+
+/// @memberof GpuMeshletVisibility
+class GpuMeshletVisibilityInput
+{
+public:
+	CString m_passesName;
+
+	Mat4 m_viewProjectionMatrix;
+	Mat3x4 m_cameraTransform;
+
+	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
+	UVec2 m_viewportSize;
+
+	BufferOffsetRange m_taskShaderIndirectArgsBuffer; ///< Taken from GpuVisibilityOutput.
+	BufferOffsetRange m_taskShaderPayloadBuffer; ///< Taken from GpuVisibilityOutput.
+
+	BufferHandle m_dependency;
+
+	RenderGraphDescription* m_rgraph = nullptr;
+
+	RenderingTechnique m_technique = RenderingTechnique::kCount;
+
+	RenderTargetHandle m_hzbRt; ///< Optional.
+};
+
+/// @memberof GpuMeshletVisibility
+class GpuMeshletVisibilityOutput
+{
+public:
+	BufferOffsetRange m_meshletInstancesBuffer; ///< Array of UVec4 (encodes GpuSceneMeshletInstance) per instance vertex. One for each meshlet.
+	BufferOffsetRange m_drawIndirectArgsBuffer; ///< Array of DrawIndirectArgs. One for every render state bucket (even those that use that flow).
+
+	BufferHandle m_dependency;
+};
+
+/// Performs meshlet GPU visibility when the GPU doesn't support mesh shaders.
+class GpuMeshletVisibility : public GpuVisibilityCommonBase
+{
+public:
+	Error init();
+
+	/// Perform meshlet GPU visibility.
+	/// @note Not thread-safe.
+	void populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out);
+
+private:
+	ShaderProgramResourcePtr m_meshletCullingProg;
+	Array<ShaderProgramPtr, 2> m_meshletCullingGrProgs;
+
+	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
+	class PersistentMemory
 	{
 	public:
-		U32 m_aabbCount;
-		U32 m_bucketCount;
-		U32 m_legacyGeometryFlowUserCount;
-		U32 m_modernGeometryFlowUserCount;
-		U32 m_meshletGroupCount;
-		U32 m_allUserCount;
+		BufferOffsetRange m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
 
-		Counts max(const Counts& b) const
-		{
-			Counts out;
-#define ANKI_MAX(member) out.member = anki::max(member, b.member)
-			ANKI_MAX(m_aabbCount);
-			ANKI_MAX(m_bucketCount);
-			ANKI_MAX(m_legacyGeometryFlowUserCount);
-			ANKI_MAX(m_modernGeometryFlowUserCount);
-			ANKI_MAX(m_meshletGroupCount);
-			ANKI_MAX(m_allUserCount);
-#undef ANKI_MAX
-			return out;
-		}
+		BufferHandle m_bufferDepedency;
 	};
 
-	Counts countTechnique(RenderingTechnique t);
+	class
+	{
+	public:
+		U64 m_frameIdx = kMaxU64;
+		U32 m_populateRenderGraphFrameCallCount = 0;
 
-	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
+		/// The more persistent memory there is the more passes will be able to run in parallel but the more memory is used.
+		Array<PersistentMemory, 4> m_persistentMem;
+	} m_runCtx;
 };
 
 /// @memberof GpuVisibilityNonRenderables

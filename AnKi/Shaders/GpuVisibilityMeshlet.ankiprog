@@ -9,56 +9,40 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Shaders/MaterialShadersCommon.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 #define MESHLET_BACKFACE_CULLING 0
 #define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
 #define MESHLET_NO_SAMPLING_POINT_CULLING 1
 #define MESHLET_HZB_CULLING HZB_TEST
-#define PRIMITIVE_BACKFACE_CULLING 1
-#define PRIMITIVE_NO_SAMPLING_POINTS_CULLING 1
-#define PRIMITIVE_ANY_CULLING (PRIMITIVE_BACKFACE_CULLING || PRIMITIVE_NO_SAMPLING_POINTS_CULLING)
 
 #define THREADGROUP_SIZE ANKI_TASK_SHADER_THREADGROUP_SIZE
 
-struct FirstPayload
+[[vk::binding(0, 0)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
+[[vk::binding(0, 1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
+[[vk::binding(0, 2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
+[[vk::binding(0, 3)]] ByteAddressBuffer g_gpuScene;
+[[vk::binding(0, 4)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
+[[vk::binding(0, 5)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArg;
+[[vk::binding(0, 6)]] RWStructuredBuffer<GpuSceneMeshletInstance> g_drawInstances;
+[[vk::binding(0, 7)]] Texture2D<Vec4> g_hzbTexture;
+[[vk::binding(0, 8)]] SamplerState g_nearestClampSampler;
+
+struct MaterialGlobalConstants
 {
-	UVec4 m_val;
+	Mat4 m_viewProjectionMatrix;
+	Mat3x4 m_cameraTransform;
+
+	Vec2 m_viewportSizef;
+	U32 m_firstPayload;
+	U32 m_padding;
 };
-
-[[vk::push_constant]] ConstantBuffer<FirstPayload> g_firstPayload;
-
-[[vk::binding(0, 2)]] RWStructuredBuffer<U32> g_indexBuffer; // 1st element is the count
-
-groupshared U32 s_visibleMeshletCount;
-groupshared U32 s_visibleMeshletIndices[kMeshletGroupSize];
-
-#if PRIMITIVE_ANY_CULLING
-groupshared Vec2 s_windowCoords[kMaxVerticesPerMeshlet];
-groupshared F32 s_clipW[kMaxVerticesPerMeshlet];
-#endif
-
-U32 encodeMetaIndex(U32 meshLodIndex, U32 meshletIndex, U32 localIndex, U32 primitiveVertex)
-{
-	U32 metaIdx = meshletIndex * kMaxPrimitivesPerMeshlet * 3 + localIndex * 3 + primitiveVertex;
-	metaIdx &= (1u << 17u) - 1u;
-	metaIdx |= meshLodIndex << 17u;
-	return metaIdx;
-}
-
-void decodeMetaIndex(U32 metaIndex, out U32 meshLodIndex, out U32 meshletIndex, out U32 localIndex, out U32 primitiveVertex)
-{
-	meshLodIndex = metaIndex >> 17u;
-	metaIndex &= (1u << 17u) - 1u;
-	primitiveVertex = metaIndex % 3u;
-	localIndex = (metaIndex / 3u) % kMaxPrimitivesPerMeshlet;
-	meshletIndex = metaIndex / (3u * kMaxPrimitivesPerMeshlet);
-}
+[[vk::push_constant]] ConstantBuffer<MaterialGlobalConstants> g_consts;
 
 [numthreads(THREADGROUP_SIZE, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupId : SV_GROUPID,
 											   U32 svGroupIndex : SV_GROUPINDEX)
 {
-	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[g_firstPayload.m_val.x + svGroupId];
+	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[g_consts.m_firstPayload + svGroupId];
 
 	const U32 lod = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 30u;
 	const U32 renderableIdx = (inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 9u) & ((1u << 21u) - 1u);
@@ -69,14 +53,6 @@ void decodeMetaIndex(U32 metaIndex, out U32 meshLodIndex, out U32 meshletIndex, 
 	U32 firstMeshletBoundingVolume = meshletGroup * kMeshletGroupSize;
 	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshletBoundingVolume);
 	firstMeshletBoundingVolume += meshLod.m_firstMeshletBoundingVolume;
-	const U32 firstMeshletGeometryDescriptor = meshletGroup * kMeshletGroupSize + meshLod.m_firstMeshletGeometryDescriptor;
-
-	if(svGroupIndex == 0u)
-	{
-		s_visibleMeshletCount = 0;
-	}
-
-	GroupMemoryBarrierWithGroupSync();
 
 	// Meshlet culling
 	if(svGroupIndex < meshletCount)
@@ -87,11 +63,11 @@ void decodeMetaIndex(U32 metaIndex, out U32 meshLodIndex, out U32 meshletIndex, 
 		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
 
 #if MESHLET_BACKFACE_CULLING
-		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_globalConstants.m_cameraTransform.getTranslationPart());
+		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_consts.m_cameraTransform.getTranslationPart());
 #endif
 
 		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
-		const Mat4 mvp = mul(g_globalConstants.m_viewProjectionMatrix, wordTransform4);
+		const Mat4 mvp = mul(g_consts.m_viewProjectionMatrix, wordTransform4);
 
 		Vec2 minNdc, maxNdc;
 		F32 aabbMinDepth;
@@ -104,107 +80,33 @@ void decodeMetaIndex(U32 metaIndex, out U32 meshLodIndex, out U32 meshletIndex, 
 
 #if MESHLET_NO_SAMPLING_POINT_CULLING
 		// Sampling points test
-		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_globalConstants.m_viewport.zw;
-		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_globalConstants.m_viewport.zw;
+		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_viewportSizef.x;
+		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_viewportSizef.y;
 		cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
 #endif
 
 #if MESHLET_HZB_CULLING
-		cull = cull
-			   || (renderable.m_boneTransformsOffset == 0u && g_globalConstants.m_enableHzbTesting == 1u
-				   && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+		cull = cull || (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
 #endif
 
 		if(!cull)
 		{
-			U32 idx;
-			InterlockedAdd(s_visibleMeshletCount, 1u, idx);
+			U32 instanceIdx;
+			InterlockedAdd(g_indirectDrawArg[0].m_instanceCount, 1u, instanceIdx);
 
-			InterlockedOr(s_visibleMeshletIndices[idx], firstMeshletGeometryDescriptor);
-		}
-	}
-
-	GroupMemoryBarrierWithGroupSync();
-
-	// Transform positions for culling
-	for(U32 visMeshletIdx = 0; visMeshletIdx < s_visibleMeshletCount; ++visMeshletIdx)
-	{
-		const U32 meshletIndex = s_visibleMeshletIndices[visMeshletIdx];
-		const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[meshletIndex];
-
-		const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
-		const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
-
-		// Compute positions
-#if PRIMITIVE_ANY_CULLING
-		const U32 vertLoopCount = kMaxVerticesPerMeshlet / THREADGROUP_SIZE;
-		[unroll] for(U32 l = 0; l < vertLoopCount; ++l)
-		{
-			const U32 idx = l * THREADGROUP_SIZE + svGroupIndex;
-
-			if(idx < vertCount)
+			if(instanceIdx == 0u)
 			{
-				const UnpackedMeshVertex vert = loadVertex(meshlet, idx, false);
-
-				const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
-
-				const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
-				const Vec4 svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0f));
-				s_windowCoords[idx] = ndcToUv(svPosition.xy / svPosition.w) * g_globalConstants.m_viewport.zw;
-				s_clipW[idx] = svPosition.w;
+				g_indirectDrawArg[0].m_vertexCount = kMaxPrimitivesPerMeshlet * 3u;
 			}
-		}
 
-		GroupMemoryBarrierWithGroupSync();
-#endif
+			GpuSceneMeshletInstance instance;
+			instance.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
+			instance.m_constantsOffset = renderable.m_constantsOffset;
+			instance.m_meshletGeometryDescriptorIndex = meshLod.m_firstMeshletGeometryDescriptor + svGroupIndex;
+			instance.m_boneTransformsOrParticleEmitterOffset =
+				(renderable.m_particleEmitterOffset) ? renderable.m_particleEmitterOffset : renderable.m_boneTransformsOffset;
 
-		// Perform primitive culling
-		const U32 primLoopCount = (kMaxPrimitivesPerMeshlet + THREADGROUP_SIZE - 1u) / THREADGROUP_SIZE;
-		[unroll] for(U32 l = 0; l < primLoopCount; ++l)
-		{
-			const U32 idx = l * THREADGROUP_SIZE + svGroupIndex;
-
-			if(idx < primCount)
-			{
-				const UVec3 prim = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + idx].xyz;
-
-#if PRIMITIVE_ANY_CULLING
-				Bool cull = false;
-
-				const Vec2 a = s_windowCoords[prim.x];
-				const Vec2 b = s_windowCoords[prim.y];
-				const Vec2 c = s_windowCoords[prim.z];
-#endif
-
-#if PRIMITIVE_BACKFACE_CULLING
-				const Vec2 eb = c - a;
-				const Vec2 ec = b - a;
-
-				cull = cull || (eb.x * ec.y >= eb.y * ec.x);
-#endif
-
-#if PRIMITIVE_NO_SAMPLING_POINTS_CULLING
-				const Vec2 windowCoordsMin = min3(a, b, c);
-				const Vec2 windowCoordsMax = max3(a, b, c);
-
-				cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
-#endif
-
-#if PRIMITIVE_ANY_CULLING
-				// The computations above are only valid if all vertices are in front of perspective plane
-				cull = cull && min3(s_clipW[prim.x], s_clipW[prim.y], s_clipW[prim.z]) > 0.0f;
-#endif
-
-				if(!cull)
-				{
-					U32 firstIndex;
-					InterlockedAdd(g_indexBuffer[0], 3u, firstIndex);
-
-					g_indexBuffer[firstIndex + 1u] = encodeMetaIndex(renderable.m_meshLodsIndex + lod, meshletIndex, prim[0], 0);
-					g_indexBuffer[firstIndex + 2u] = encodeMetaIndex(renderable.m_meshLodsIndex + lod, meshletIndex, prim[1], 1);
-					g_indexBuffer[firstIndex + 3u] = encodeMetaIndex(renderable.m_meshLodsIndex + lod, meshletIndex, prim[2], 2);
-				}
-			}
+			g_drawInstances[instanceIdx] = instance;
 		}
 	}
 }
