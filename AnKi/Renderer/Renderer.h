@@ -23,6 +23,7 @@ extern BoolCVar g_vrsLimitTo2x2CVar;
 extern BoolCVar g_preferComputeCVar;
 extern NumericCVar<F32> g_renderScalingCVar;
 extern BoolCVar g_rayTracedShadowsCVar;
+extern BoolCVar g_meshletRenderingCVar;
 extern NumericCVar<U8> g_shadowCascadeCountCVar;
 extern NumericCVar<F32> g_shadowCascade0DistanceCVar;
 extern NumericCVar<F32> g_shadowCascade1DistanceCVar;
@@ -107,6 +108,16 @@ public:
 	GpuVisibility& getGpuVisibility()
 	{
 		return m_visibility;
+	}
+
+	GpuMeshletVisibility& getGpuMeshletVisibility()
+	{
+		return m_visibilityMeshlets;
+	}
+
+	Bool runSoftwareMeshletRendering() const
+	{
+		return g_meshletRenderingCVar.get() && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
 	}
 
 	GpuVisibilityNonRenderables& getGpuVisibilityNonRenderables()
@@ -225,6 +236,7 @@ private:
 
 	RenderableDrawer m_sceneDrawer;
 	GpuVisibility m_visibility;
+	GpuMeshletVisibility m_visibilityMeshlets;
 	GpuVisibilityNonRenderables m_nonRenderablesVisibility;
 	GpuVisibilityAccelerationStructures m_asVisibility;
 	HzbGenerator m_hzbGenerator;

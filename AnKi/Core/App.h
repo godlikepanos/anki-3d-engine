@@ -21,6 +21,7 @@ extern NumericCVar<U32> g_windowHeightCVar;
 extern NumericCVar<U32> g_windowFullscreenCVar;
 extern NumericCVar<U32> g_targetFpsCVar;
 extern NumericCVar<U32> g_displayStatsCVar;
+extern BoolCVar g_meshletRenderingCVar;
 extern StatCounter g_cpuTotalTimeStatVar;
 extern StatCounter g_rendererGpuTimeStatVar;
 

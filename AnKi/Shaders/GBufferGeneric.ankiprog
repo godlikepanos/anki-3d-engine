@@ -46,7 +46,7 @@
 #endif
 
 // General defines
-#define GBUFFER (ANKI_TECHNIQUE_GBuffer || ANKI_TECHNIQUE_GBufferMesh)
+#define GBUFFER (ANKI_TECHNIQUE_GBufferLegacy || ANKI_TECHNIQUE_GBufferMeshShaders || ANKI_TECHNIQUE_GBufferSwMeshletRendering)
 #define REALLY_ALPHA_TEST (ALPHA_TEST && DIFFUSE_TEX)
 #define UVS (GBUFFER || REALLY_ALPHA_TEST)
 #define REALLY_VELOCITY ((ANKI_VELOCITY || ANKI_BONES) && GBUFFER)
@@ -233,7 +233,7 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 // ===========================================================================
 #if ANKI_VERTEX_SHADER
 
-#	define SW_MESHLETS (ANKI_TECHNIQUE_GBufferMeshlet || ANKI_TECHNIQUE_ShadowsMeshlet)
+#	define SW_MESHLETS (ANKI_TECHNIQUE_GBufferSwMeshletRendering || ANKI_TECHNIQUE_ShadowsSwMeshletRendering)
 
 VertOut main(VertIn input)
 {
@@ -246,11 +246,16 @@ VertOut main(VertIn input)
 	{
 		// Discard the primitive
 		output = (VertOut)0;
+		output.m_svPosition = kNaN;
 		output.m_constantsOffset = instance.m_constantsOffset;
 		return output;
 	}
 
-	UnpackedMeshVertex vert = loadVertex(meshlet, input.m_svVertexId, ANKI_BONES);
+	const U32 primitiveId = input.m_svVertexId / 3u;
+	const UVec3 localIndices = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + primitiveId].xyz;
+	const U32 localIdx = localIndices[input.m_svVertexId % 3u];
+
+	UnpackedMeshVertex vert = loadVertex(meshlet, localIdx, ANKI_BONES);
 #	else
 	const GpuSceneRenderableVertex instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
@@ -532,14 +537,14 @@ void main()
 #	elif !GBUFFER && REALLY_ALPHA_TEST // Shadows WITH alpha
 
 void main(
-#		if ANKI_TECHNIQUE_ShadowsMesh
+#		if ANKI_TECHNIQUE_ShadowsMeshShaders
 	MeshPerVertOut vertInput, MeshPerPrimitiveOut primInput
 #		else
 	VertOut vertInput
 #		endif
 )
 {
-#		if ANKI_TECHNIQUE_ShadowsMesh
+#		if ANKI_TECHNIQUE_ShadowsMeshShaders
 	const U32 constantsOffset = primInput.m_constantsOffset;
 #		else
 	const U32 constantsOffset = vertInput.m_constantsOffset;
@@ -556,14 +561,14 @@ void main(
 #	else // GBUFFER
 
 FragOut main(
-#		if ANKI_TECHNIQUE_GBufferMesh
+#		if ANKI_TECHNIQUE_GBufferMeshShaders
 	MeshPerVertOut vertInput, MeshPerPrimitiveOut primInput
 #		else
 	VertOut vertInput
 #		endif
 )
 {
-#		if ANKI_TECHNIQUE_GBufferMesh
+#		if ANKI_TECHNIQUE_GBufferMeshShaders
 	const U32 constantsOffset = primInput.m_constantsOffset;
 #		else
 	const U32 constantsOffset = vertInput.m_constantsOffset;
@@ -641,7 +646,7 @@ FragOut main(
 	g.m_metallic = metallic;
 	g.m_velocity = velocity;
 
-#		if VISUALIZE_MESHLETS && ANKI_TECHNIQUE_GBufferMesh
+#		if VISUALIZE_MESHLETS && ANKI_TECHNIQUE_GBufferMeshShaders
 	const U32 meshletIdx = primInput.m_meshletIndex % 6u;
 	switch(meshletIdx)
 	{
@@ -735,38 +740,44 @@ FragOut main(
 // ===========================================================================
 // Define the techniques                                                     =
 // ===========================================================================
-#pragma anki technique_start vert GBuffer uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert GBuffer
+#pragma anki technique_start vert GBufferLegacy uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end vert GBufferLegacy
 
-#pragma anki technique_start vert Shadows uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert Shadows
+#pragma anki technique_start vert ShadowsLegacy uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end vert ShadowsLegacy
 
-#pragma anki technique_start vert GBufferMeshlet uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert GBufferMeshlet
+#pragma anki technique_start vert GBufferSwMeshletRendering uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end vert GBufferSwMeshletRendering
 
-#pragma anki technique_start vert ShadowsMeshlet uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert ShadowsMeshlet
+#pragma anki technique_start vert ShadowsSwMeshletRendering uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end vert ShadowsSwMeshletRendering
 
 #pragma anki technique_start task CommonTask uses_mutators
 #pragma anki technique_end task CommonTask
 
-#pragma anki technique_start mesh GBufferMesh uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end mesh GBufferMesh
+#pragma anki technique_start mesh GBufferMeshShaders uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end mesh GBufferMeshShaders
 
-#pragma anki technique_start mesh ShadowsMesh uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end mesh ShadowsMesh
+#pragma anki technique_start mesh ShadowsMeshShaders uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique_end mesh ShadowsMeshShaders
 
-#pragma anki technique_start frag GBuffer
-#pragma anki technique_end frag GBuffer
+#pragma anki technique_start frag GBufferLegacy
+#pragma anki technique_end frag GBufferLegacy
 
-#pragma anki technique_start frag Shadows
-#pragma anki technique_end frag Shadows
+#pragma anki technique_start frag ShadowsLegacy
+#pragma anki technique_end frag ShadowsLegacy
 
-#pragma anki technique_start frag GBufferMesh
-#pragma anki technique_end frag GBufferMesh
+#pragma anki technique_start frag GBufferMeshShaders
+#pragma anki technique_end frag GBufferMeshShaders
 
-#pragma anki technique_start frag ShadowsMesh
-#pragma anki technique_end frag ShadowsMesh
+#pragma anki technique_start frag ShadowsMeshShaders
+#pragma anki technique_end frag ShadowsMeshShaders
+
+#pragma anki technique_start frag GBufferSwMeshletRendering
+#pragma anki technique_end frag GBufferSwMeshletRendering
+
+#pragma anki technique_start frag ShadowsSwMeshletRendering
+#pragma anki technique_end frag ShadowsSwMeshletRendering
 
 #pragma anki technique_start ahit RtShadows uses_mutators ALPHA_TEST DIFFUSE_TEX
 #pragma anki technique_end ahit RtShadows

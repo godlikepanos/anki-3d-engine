@@ -25,6 +25,7 @@ protected:
 		U32 m_legacyGeometryFlowUserCount;
 		U32 m_modernGeometryFlowUserCount;
 		U32 m_meshletGroupCount;
+		U32 m_meshletCount;
 		U32 m_allUserCount;
 
 		Counts max(const Counts& b) const
@@ -36,6 +37,7 @@ protected:
 			ANKI_MAX(m_legacyGeometryFlowUserCount);
 			ANKI_MAX(m_modernGeometryFlowUserCount);
 			ANKI_MAX(m_meshletGroupCount);
+			ANKI_MAX(m_meshletCount);
 			ANKI_MAX(m_allUserCount);
 #undef ANKI_MAX
 			return out;
@@ -67,8 +69,8 @@ class FrustumGpuVisibilityInput : public BaseGpuVisibilityInput
 public:
 	Mat4 m_viewProjectionMatrix;
 
-	/// The size of the render target the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
-	UVec2 m_finalRenderTargetSize;
+	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
+	UVec2 m_viewportSize;
 
 	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
 };
@@ -85,7 +87,7 @@ public:
 class GpuVisibilityOutput
 {
 public:
-	BufferHandle m_someBufferHandle; ///< Just expose one handle for depedencies. No need to track all buffers.
+	BufferHandle m_dependency; ///< Just expose one handle for depedencies. No need to track all buffers. Wait on it using indirect draw usage.
 
 	class
 	{
@@ -109,7 +111,7 @@ public:
 
 	Bool containsDrawcalls() const
 	{
-		return m_someBufferHandle.isValid();
+		return m_dependency.isValid();
 	}
 };
 
@@ -124,7 +126,7 @@ public:
 	void populateRenderGraph(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out)
 	{
 		ANKI_ASSERT(in.m_viewProjectionMatrix != Mat4::getZero());
-		ANKI_ASSERT(in.m_finalRenderTargetSize != UVec2(0u));
+		ANKI_ASSERT(in.m_viewportSize != UVec2(0u));
 		populateRenderGraphInternal(false, in, out);
 	}
 
@@ -173,6 +175,8 @@ class GpuMeshletVisibilityInput
 public:
 	CString m_passesName;
 
+	RenderingTechnique m_technique = RenderingTechnique::kCount;
+
 	Mat4 m_viewProjectionMatrix;
 	Mat3x4 m_cameraTransform;
 
@@ -186,8 +190,6 @@ public:
 
 	RenderGraphDescription* m_rgraph = nullptr;
 
-	RenderingTechnique m_technique = RenderingTechnique::kCount;
-
 	RenderTargetHandle m_hzbRt; ///< Optional.
 };
 
@@ -198,7 +200,12 @@ public:
 	BufferOffsetRange m_meshletInstancesBuffer; ///< Array of UVec4 (encodes GpuSceneMeshletInstance) per instance vertex. One for each meshlet.
 	BufferOffsetRange m_drawIndirectArgsBuffer; ///< Array of DrawIndirectArgs. One for every render state bucket (even those that use that flow).
 
-	BufferHandle m_dependency;
+	BufferHandle m_dependency; ///< Some dependency to wait on. Wait usage is indirect draw.
+
+	Bool isFilled() const
+	{
+		return m_dependency.isValid();
+	}
 };
 
 /// Performs meshlet GPU visibility when the GPU doesn't support mesh shaders.

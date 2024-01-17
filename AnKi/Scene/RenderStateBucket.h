@@ -96,7 +96,7 @@ public:
 	{
 		for(const ExtendedBucket& b : m_buckets[technique])
 		{
-			func(static_cast<const RenderStateInfo&>(b), b.m_userCount, b.m_meshletGroupCount);
+			func(static_cast<const RenderStateInfo&>(b), b.m_userCount, b.m_meshletGroupCount, b.m_lod0MeshletCount);
 		}
 	}
 
@@ -131,6 +131,7 @@ private:
 		U64 m_hash = 0;
 		U32 m_userCount = 0;
 		U32 m_meshletGroupCount = 0;
+		U32 m_lod0MeshletCount = 0;
 	};
 
 	Array<SceneDynamicArray<ExtendedBucket>, U32(RenderingTechnique::kCount)> m_buckets;

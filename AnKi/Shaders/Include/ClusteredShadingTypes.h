@@ -54,7 +54,7 @@ struct PointLight
 	RVec3 m_diffuseColor;
 	U32 m_padding1;
 
-	F32 m_shadow;
+	U32 m_shadow;
 	F32 m_padding2;
 	U32 m_padding3;
 	U32 m_padding4;

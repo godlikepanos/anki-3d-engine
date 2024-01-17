@@ -88,7 +88,7 @@ public:
 
 private:
 	static constexpr U32 kMaxMutators = 32;
-	static constexpr U32 kMaxTechniqueNameLength = 23;
+	static constexpr U32 kMaxTechniqueNameLength = 32;
 
 	ShaderProgramResourcePtr m_ptr;
 

@@ -252,3 +252,13 @@ Bool cullHzb(Vec2 aabbMinNdc, Vec2 aabbMaxNdc, F32 aabbMinDepth, Texture2D<Vec4>
 
 	return (aabbMinDepth > maxDepth);
 }
+
+/// All cone values in local space.
+Bool cullBackfaceMeshlet(Vec3 coneDirection, F32 coneCosHalfAngle, Vec3 coneApex, Mat3x4 worldTransform, Vec3 cameraWorldPos)
+{
+	const Vec3 apexWSpace = mul(worldTransform, Vec4(coneApex, 1.0f));
+	const Vec3 coneAxisWSpace = normalize(mul(worldTransform, Vec4(coneDirection, 0.0f)));
+
+	const Vec3 dir = normalize(apexWSpace - cameraWorldPos);
+	return dot(dir, coneAxisWSpace) >= coneCosHalfAngle;
+}

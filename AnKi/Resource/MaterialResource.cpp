@@ -6,6 +6,7 @@
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ImageResource.h>
+#include <AnKi/Core/App.h>
 #include <AnKi/Util/Xml.h>
 
 namespace anki {
@@ -167,15 +168,35 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	// Find present techniques
 	for(const ShaderProgramBinaryTechnique& t : m_prog->getBinary().m_techniques)
 	{
-		if(t.m_name.getBegin() == CString("GBuffer") || t.m_name.getBegin() == CString("GBufferMesh")
-		   || t.m_name.getBegin() == CString("GBufferMeshlet"))
+		if(t.m_name.getBegin() == CString("GBufferLegacy"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
+			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
 		}
-		else if(t.m_name.getBegin() == CString("Shadows") || t.m_name.getBegin() == CString("ShadowsMesh")
-				|| t.m_name.getBegin() == CString("ShadowsMeshlet"))
+		else if(t.m_name.getBegin() == CString("GBufferMeshShaders"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
+			m_shaderTechniques |= ShaderTechniqueBit::kMeshSaders;
+		}
+		else if(t.m_name.getBegin() == CString("GBufferSwMeshletRendering"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
+			m_shaderTechniques |= ShaderTechniqueBit::kSwMeshletRendering;
+		}
+		else if(t.m_name.getBegin() == CString("ShadowsLegacy"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kDepth;
+			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
+		}
+		else if(t.m_name.getBegin() == CString("ShadowsMeshShaders"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kDepth;
+			m_shaderTechniques |= ShaderTechniqueBit::kMeshSaders;
+		}
+		else if(t.m_name.getBegin() == CString("ShadowsSwMeshletRendering"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kDepth;
+			m_shaderTechniques |= ShaderTechniqueBit::kSwMeshletRendering;
 		}
 		else if(t.m_name.getBegin() == CString("RtShadows"))
 		{
@@ -187,6 +208,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 		else if(t.m_name.getBegin() == CString("Forward"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kForward;
+			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
 		}
 		else if(t.m_name.getBegin() == CString("CommonTask"))
 		{
@@ -503,25 +525,24 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		key.setVelocity(false);
 	}
 
-	if(!GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	const Bool meshShadersSupported = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
+	ANKI_ASSERT(!(key.getMeshletRendering() && (!meshShadersSupported && !g_meshletRenderingCVar.get()))
+				&& "Can't be asking for meshlet rendering if mesh shaders or SW meshlet rendering are not supported/enabled");
+	if(key.getMeshletRendering() && !(m_shaderTechniques & (ShaderTechniqueBit::kMeshSaders | ShaderTechniqueBit::kSwMeshletRendering)))
 	{
-		key.setMeshShaders(false);
+		key.setMeshletRendering(false);
 	}
 
 	ANKI_ASSERT(!key.getSkinned() || !!(m_presentBuildinMutatorMask & U32(1 << BuiltinMutatorId::kBones)));
 	ANKI_ASSERT(!key.getVelocity() || !!(m_presentBuildinMutatorMask & U32(1 << BuiltinMutatorId::kVelocity)));
 
-	MaterialVariant& variant = m_variantMatrix[key.getRenderingTechnique()][key.getSkinned()][key.getVelocity()][key.getMeshShaders()];
+	MaterialVariant& variant = m_variantMatrix[key.getRenderingTechnique()][key.getSkinned()][key.getVelocity()][key.getMeshletRendering()];
 
 	// Check if it's initialized
 	{
 		RLockGuard<RWMutex> lock(m_variantMatrixMtx);
 		if(variant.m_prog.isCreated()) [[likely]]
 		{
-			if(!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::kAllRt))
-			{
-				ANKI_ASSERT(key.getMeshShaders() == !!(variant.m_prog->getShaderTypes() & ShaderTypeBit::kAllModernGeometry));
-			}
 			return variant;
 		}
 	}
@@ -555,36 +576,37 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	switch(key.getRenderingTechnique())
 	{
 	case RenderingTechnique::kGBuffer:
-		if(key.getMeshShaders())
+		if(key.getMeshletRendering() && meshShadersSupported)
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "GBufferMesh");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "GBufferMeshShaders");
 			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
+		}
+		else if(key.getMeshletRendering())
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBufferSwMeshletRendering");
 		}
 		else
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBuffer");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBufferLegacy");
 		}
 		break;
 	case RenderingTechnique::kDepth:
-		if(key.getMeshShaders())
+		if(key.getMeshletRendering() && meshShadersSupported)
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "ShadowsMesh");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "ShadowsMeshShaders");
 			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
+		}
+		else if(key.getMeshletRendering())
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "ShadowsSwMeshletRendering");
 		}
 		else
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "Shadows");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "ShadowsLegacy");
 		}
 		break;
 	case RenderingTechnique::kForward:
-		if(key.getMeshShaders())
-		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllModernGeometry | ShaderTypeBit::kFragment, "Forward");
-		}
-		else
-		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "Forward");
-		}
+		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "Forward");
 		break;
 	case RenderingTechnique::kRtShadow:
 		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");
@@ -606,10 +628,6 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	if(!!(RenderingTechniqueBit(1 << key.getRenderingTechnique()) & RenderingTechniqueBit::kAllRt))
 	{
 		variant.m_rtShaderGroupHandleIndex = progVariant->getShaderGroupHandleIndex();
-	}
-	else
-	{
-		ANKI_ASSERT(key.getMeshShaders() == !!(variant.m_prog->getShaderTypes() & ShaderTypeBit::kAllModernGeometry));
 	}
 
 	return variant;

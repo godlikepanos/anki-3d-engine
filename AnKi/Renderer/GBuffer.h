@@ -89,8 +89,6 @@ private:
 	} m_runCtx;
 
 	Error initInternal();
-
-	void runInThread(const RenderingContext& ctx, const GpuVisibilityOutput& visOut, RenderPassWorkContext& rgraphCtx) const;
 };
 /// @}
 

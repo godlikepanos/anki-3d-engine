@@ -62,6 +62,7 @@ BoolCVar g_verboseLogCVar(CVarSubsystem::kCore, "VerboseLog", false, "Verbose lo
 BoolCVar g_benchmarkModeCVar(CVarSubsystem::kCore, "BenchmarkMode", false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS");
 NumericCVar<U32> g_benchmarkModeFrameCountCVar(CVarSubsystem::kCore, "BenchmarkModeFrameCount", 60 * 60 * 2, 1, kMaxU32,
 											   "How many frames the benchmark will run before it quits");
+BoolCVar g_meshletRenderingCVar(CVarSubsystem::kCore, "MeshletRendering", false, "Do meshlet culling and rendering");
 
 #if ANKI_PLATFORM_MOBILE
 static StatCounter g_maliGpuActiveStatVar(StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates);

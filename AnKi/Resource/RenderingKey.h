@@ -40,12 +40,12 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 class RenderingKey
 {
 public:
-	RenderingKey(RenderingTechnique technique, U32 lod, Bool skinned, Bool velocity, Bool meshShaders)
+	RenderingKey(RenderingTechnique technique, U32 lod, Bool skinned, Bool velocity, Bool meshletRendering)
 		: m_technique(technique)
 		, m_lod(lod & 0b11)
 		, m_skinned(skinned)
 		, m_velocity(velocity)
-		, m_meshShaders(meshShaders)
+		, m_meshletRendering(meshletRendering)
 	{
 		ANKI_ASSERT(lod < kMaxLodCount);
 	}
@@ -56,7 +56,7 @@ public:
 	}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_technique, b.m_lod, b.m_skinned, b.m_velocity, b.m_meshShaders)
+		: RenderingKey(b.m_technique, b.m_lod, b.m_skinned, b.m_velocity, b.m_meshletRendering)
 	{
 	}
 
@@ -69,7 +69,7 @@ public:
 	Bool operator==(const RenderingKey& b) const
 	{
 		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned && m_velocity == b.m_velocity
-			   && m_meshShaders == b.m_meshShaders;
+			   && m_meshletRendering == b.m_meshletRendering;
 	}
 
 	RenderingTechnique getRenderingTechnique() const
@@ -113,14 +113,14 @@ public:
 		m_velocity = v;
 	}
 
-	void setMeshShaders(Bool b)
+	void setMeshletRendering(Bool b)
 	{
-		m_meshShaders = b;
+		m_meshletRendering = b;
 	}
 
-	Bool getMeshShaders() const
+	Bool getMeshletRendering() const
 	{
-		return m_meshShaders;
+		return m_meshletRendering;
 	}
 
 private:
@@ -128,7 +128,7 @@ private:
 	U8 m_lod : 2;
 	Bool m_skinned : 1;
 	Bool m_velocity : 1;
-	Bool m_meshShaders : 1;
+	Bool m_meshletRendering : 1;
 
 	static_assert(kMaxLodCount <= 3, "m_lod only reserves 2 bits so make sure all LODs will fit");
 };

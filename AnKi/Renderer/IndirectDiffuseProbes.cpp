@@ -202,6 +202,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		{
 			// GBuffer visibility
 			GpuVisibilityOutput visOut;
+			GpuMeshletVisibilityOutput meshletVisOut;
 			Frustum frustum;
 			{
 				frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
@@ -211,15 +212,31 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 				FrustumGpuVisibilityInput visIn;
-				visIn.m_passesName = computeTempPassName("GI: GBuffer", cellIdx * 100 + f);
+				visIn.m_passesName = computeTempPassName("GI: GBuffer", cellIdx, "face", f);
 				visIn.m_technique = RenderingTechnique::kGBuffer;
 				visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 				visIn.m_lodReferencePoint = cellCenter;
 				visIn.m_lodDistances = lodDistances;
 				visIn.m_rgraph = &rgraph;
-				visIn.m_finalRenderTargetSize = UVec2(m_tileSize);
+				visIn.m_viewportSize = UVec2(m_tileSize);
 
 				getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+				if(getRenderer().runSoftwareMeshletRendering())
+				{
+					GpuMeshletVisibilityInput meshIn;
+					meshIn.m_passesName = visIn.m_passesName;
+					meshIn.m_technique = RenderingTechnique::kGBuffer;
+					meshIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
+					meshIn.m_cameraTransform = frustum.getViewMatrix().getInverseTransformation();
+					meshIn.m_viewportSize = UVec2(m_tileSize);
+					meshIn.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
+					meshIn.m_taskShaderPayloadBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
+					meshIn.m_dependency = visOut.m_dependency;
+					meshIn.m_rgraph = &rgraph;
+
+					getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, meshletVisOut);
+				}
 			}
 
 			// GBuffer
@@ -238,7 +255,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				fbDescr.bake();
 
 				// Create the pass
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: GBuffer", cellIdx * 100 + f));
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: GBuffer", cellIdx, "face", f));
 				pass.setFramebufferInfo(fbDescr, gbufferColorRts, gbufferDepthRt);
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -247,9 +264,10 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				}
 				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-				pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+				pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency,
+										 BufferUsageBit::kIndirectDraw);
 
-				pass.setWork(1, [this, visOut, viewProjMat = frustum.getViewProjectionMatrix(),
+				pass.setWork(1, [this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
 								 viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -266,6 +284,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					args.m_viewport = UVec4(0, 0, m_tileSize, m_tileSize);
 					args.fillMdi(visOut);
 
+					if(meshletVisOut.isFilled())
+					{
+						args.fill(meshletVisOut);
+					}
+
 					getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 
 					// It's secondary, no need to restore any state
@@ -274,6 +297,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			// Shadow visibility. Optional
 			GpuVisibilityOutput shadowVisOut;
+			GpuMeshletVisibilityOutput shadowMeshletVisOut;
 			Mat4 cascadeProjMat;
 			Mat3x4 cascadeViewMat;
 			Mat4 cascadeViewProjMat;
@@ -288,28 +312,45 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 				FrustumGpuVisibilityInput visIn;
-				visIn.m_passesName = computeTempPassName("GI: Shadows", cellIdx * 100 + f);
+				visIn.m_passesName = computeTempPassName("GI: Shadows", cellIdx, "face", f);
 				visIn.m_technique = RenderingTechnique::kDepth;
 				visIn.m_viewProjectionMatrix = cascadeViewProjMat;
 				visIn.m_lodReferencePoint = cellCenter;
 				visIn.m_lodDistances = lodDistances;
 				visIn.m_rgraph = &rgraph;
-				visIn.m_finalRenderTargetSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
+				visIn.m_viewportSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
 
 				getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOut);
+
+				if(getRenderer().runSoftwareMeshletRendering())
+				{
+					GpuMeshletVisibilityInput meshIn;
+					meshIn.m_passesName = visIn.m_passesName;
+					meshIn.m_technique = RenderingTechnique::kDepth;
+					meshIn.m_viewProjectionMatrix = cascadeViewProjMat;
+					meshIn.m_cameraTransform = cascadeViewMat.getInverseTransformation();
+					meshIn.m_viewportSize = visIn.m_viewportSize;
+					meshIn.m_taskShaderIndirectArgsBuffer = shadowVisOut.m_mesh.m_taskShaderIndirectArgsBuffer;
+					meshIn.m_taskShaderPayloadBuffer = shadowVisOut.m_mesh.m_taskShaderPayloadBuffer;
+					meshIn.m_dependency = shadowVisOut.m_dependency;
+					meshIn.m_rgraph = &rgraph;
+
+					getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, shadowMeshletVisOut);
+				}
 			}
 
 			// Shadow pass. Optional
 			if(doShadows)
 			{
 				// Create the pass
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: Shadows", cellIdx * 100 + f));
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: Shadows", cellIdx, "face", f));
 				pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowsRt);
 
 				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-				pass.newBufferDependency(shadowVisOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+				pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
+										 BufferUsageBit::kIndirectDraw);
 
-				pass.setWork(1, [this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
+				pass.setWork(1, [this, shadowVisOut, shadowMeshletVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -328,6 +369,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					args.m_viewport = UVec4(0, 0, rez, rez);
 					args.fillMdi(shadowVisOut);
 
+					if(shadowMeshletVisOut.isFilled())
+					{
+						args.fill(shadowMeshletVisOut);
+					}
+
 					getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 
 					// It's secondary, no need to restore the state
@@ -338,7 +384,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			GpuVisibilityNonRenderablesOutput lightVis;
 			{
 				GpuVisibilityNonRenderablesInput in;
-				in.m_passesName = computeTempPassName("GI: Light visibility", cellIdx * 100 + f);
+				in.m_passesName = computeTempPassName("GI: Light visibility", cellIdx, "face", f);
 				in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
 				in.m_viewProjectionMat = frustum.getViewProjectionMatrix();
 				in.m_rgraph = &rgraph;
@@ -355,7 +401,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				fbDescr.bake();
 
 				// Create the pass
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: Light shading", cellIdx * 100 + f));
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("GI: Light shading", cellIdx, "face", f));
 				pass.setFramebufferInfo(fbDescr, {lightShadingRt});
 
 				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
@@ -423,7 +469,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 		// Irradiance pass. First & 2nd bounce
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(computeTempPassName("GI: Irradiance", cellIdx * 100));
+			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(computeTempPassName("GI: Irradiance", cellIdx));
 
 			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSampledCompute);
 			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kUavComputeWrite);

@@ -11,6 +11,9 @@
 
 namespace anki {
 
+// Forward
+extern BoolCVar g_meshletRenderingCVar;
+
 void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 {
 	lod = min<U32>(lod, m_meshLodCount - 1);
@@ -115,7 +118,7 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 			}
 		}
 
-		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar.get())
 		{
 			U32 dummy;
 			m_mesh->getMeshletBufferInfo(l, lod.m_meshletBoundingVolumesUgbOffset, lod.m_meshletGometryDescriptorsUgbOffset, dummy);

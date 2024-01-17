@@ -198,6 +198,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		// GBuffer visibility
 		GpuVisibilityOutput visOut;
+		GpuMeshletVisibilityOutput meshletVisOut;
 		Frustum frustum;
 		{
 			frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
@@ -213,9 +214,25 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
-			visIn.m_finalRenderTargetSize = UVec2(m_gbuffer.m_tileSize);
+			visIn.m_viewportSize = UVec2(m_gbuffer.m_tileSize);
 
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+			if(getRenderer().runSoftwareMeshletRendering())
+			{
+				GpuMeshletVisibilityInput meshIn;
+				meshIn.m_passesName = "Cube refl: GBuffer";
+				meshIn.m_technique = RenderingTechnique::kGBuffer;
+				meshIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
+				meshIn.m_cameraTransform = frustum.getViewMatrix().getInverseTransformation();
+				meshIn.m_viewportSize = UVec2(m_gbuffer.m_tileSize);
+				meshIn.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
+				meshIn.m_taskShaderPayloadBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
+				meshIn.m_dependency = visOut.m_dependency;
+				meshIn.m_rgraph = &rgraph;
+
+				getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, meshletVisOut);
+			}
 		}
 
 		// GBuffer pass
@@ -243,9 +260,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			}
 
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-			pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+			pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
-			pass.setWork(1, [this, visOut, viewProjMat = frustum.getViewProjectionMatrix(),
+			pass.setWork(1, [this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
 							 viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -262,6 +279,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				args.m_viewport = UVec4(0, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
 				args.fillMdi(visOut);
 
+				if(meshletVisOut.isFilled())
+				{
+					args.fill(meshletVisOut);
+				}
+
 				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 			});
 		}
@@ -270,6 +292,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 		const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
 		GpuVisibilityOutput shadowVisOut;
+		GpuMeshletVisibilityOutput shadowMeshletVisOut;
 		Mat4 cascadeViewProjMat;
 		Mat3x4 cascadeViewMat;
 		Mat4 cascadeProjMat;
@@ -290,9 +313,25 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
-			visIn.m_finalRenderTargetSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
+			visIn.m_viewportSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
 
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOut);
+
+			if(getRenderer().runSoftwareMeshletRendering())
+			{
+				GpuMeshletVisibilityInput meshIn;
+				meshIn.m_passesName = "Cube refl: Shadows";
+				meshIn.m_technique = RenderingTechnique::kDepth;
+				meshIn.m_viewProjectionMatrix = cascadeViewProjMat;
+				meshIn.m_cameraTransform = cascadeViewMat.getInverseTransformation();
+				meshIn.m_viewportSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
+				meshIn.m_taskShaderIndirectArgsBuffer = shadowVisOut.m_mesh.m_taskShaderIndirectArgsBuffer;
+				meshIn.m_taskShaderPayloadBuffer = shadowVisOut.m_mesh.m_taskShaderPayloadBuffer;
+				meshIn.m_dependency = shadowVisOut.m_dependency;
+				meshIn.m_rgraph = &rgraph;
+
+				getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, shadowMeshletVisOut);
+			}
 		}
 
 		// Shadows. Optional
@@ -303,9 +342,10 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowMapRt);
 
 			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-			pass.newBufferDependency(shadowVisOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
+			pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
+									 BufferUsageBit::kIndirectDraw);
 
-			pass.setWork(1, [this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
+			pass.setWork(1, [this, shadowVisOut, shadowMeshletVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -323,6 +363,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				args.m_renderingTechinuqe = RenderingTechnique::kDepth;
 				args.m_viewport = UVec4(0, 0, rez, rez);
 				args.fillMdi(shadowVisOut);
+
+				if(shadowMeshletVisOut.isFilled())
+				{
+					args.fill(shadowMeshletVisOut);
+				}
 
 				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 			});

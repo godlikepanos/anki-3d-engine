@@ -24,15 +24,6 @@ RenderStateBucketContainer::~RenderStateBucketContainer()
 
 RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo& state, RenderingTechnique technique, U32 lod0MeshletCount)
 {
-	if(!!(state.m_program->getShaderTypes() & ShaderTypeBit::kAllModernGeometry))
-	{
-		ANKI_ASSERT(lod0MeshletCount > 0);
-	}
-	else
-	{
-		ANKI_ASSERT(lod0MeshletCount == 0);
-	}
-
 	// Compute state gash
 	Array<U64, 3> toHash;
 	toHash[0] = state.m_program->getUuid();
@@ -59,11 +50,12 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 		{
 			++buckets[i].m_userCount;
 			buckets[i].m_meshletGroupCount += meshletGroupCount;
+			buckets[i].m_lod0MeshletCount += lod0MeshletCount;
 
 			if(buckets[i].m_userCount == 1)
 			{
 				ANKI_ASSERT(!buckets[i].m_program.isCreated());
-				ANKI_ASSERT(buckets[i].m_meshletGroupCount == meshletGroupCount);
+				ANKI_ASSERT(buckets[i].m_meshletGroupCount == meshletGroupCount && buckets[i].m_meshletGroupCount == lod0MeshletCount);
 				buckets[i].m_program = state.m_program;
 				++m_activeBucketCount[technique];
 			}
@@ -86,6 +78,7 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 	newBucket.m_program = state.m_program;
 	newBucket.m_userCount = 1;
 	newBucket.m_meshletGroupCount = meshletGroupCount;
+	newBucket.m_lod0MeshletCount = lod0MeshletCount;
 
 	++m_activeBucketCount[technique];
 
@@ -104,6 +97,7 @@ void RenderStateBucketContainer::removeUser(RenderStateBucketIndex& bucketIndex)
 	const RenderingTechnique technique = bucketIndex.m_technique;
 	const U32 idx = bucketIndex.m_index;
 	const U32 meshletGroupCount = bucketIndex.m_lod0MeshletCount + (kMeshletGroupSize - 1) / kMeshletGroupSize;
+	const U32 meshletCount = bucketIndex.m_lod0MeshletCount;
 	bucketIndex.invalidate();
 
 	LockGuard lock(m_mtx);
@@ -117,10 +111,12 @@ void RenderStateBucketContainer::removeUser(RenderStateBucketIndex& bucketIndex)
 	m_meshletGroupCount[technique] -= meshletGroupCount;
 
 	ExtendedBucket& bucket = m_buckets[technique][idx];
-	ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated() && bucket.m_meshletGroupCount >= meshletGroupCount);
+	ANKI_ASSERT(bucket.m_userCount > 0 && bucket.m_program.isCreated() && bucket.m_meshletGroupCount >= meshletGroupCount
+				&& bucket.m_lod0MeshletCount >= meshletCount);
 
 	--bucket.m_userCount;
 	bucket.m_meshletGroupCount -= meshletGroupCount;
+	bucket.m_lod0MeshletCount -= meshletCount;
 
 	if(bucket.m_userCount == 0)
 	{

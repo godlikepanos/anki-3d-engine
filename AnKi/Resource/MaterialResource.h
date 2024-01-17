@@ -227,9 +227,18 @@ private:
 		MutatorValue m_value;
 	};
 
+	enum class ShaderTechniqueBit : U8
+	{
+		kNone = 0,
+		kLegacy = 1 << 0,
+		kMeshSaders = 1 << 1,
+		kSwMeshletRendering = 1 << 2
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(ShaderTechniqueBit)
+
 	ShaderProgramResourcePtr m_prog;
 
-	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2, 2> m_variantMatrix; ///< [technique][skinned][vel][meshShader]
+	mutable Array4d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2, 2> m_variantMatrix; ///< [technique][skinned][vel][meshletRendering]
 	mutable RWMutex m_variantMatrixMtx;
 
 	ResourceDynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
@@ -243,6 +252,7 @@ private:
 
 	Bool m_supportsSkinning = false;
 	RenderingTechniqueBit m_techniquesMask = RenderingTechniqueBit::kNone;
+	ShaderTechniqueBit m_shaderTechniques = ShaderTechniqueBit::kNone;
 
 	Error parseMutators(XmlElement mutatorsEl);
 	Error parseShaderProgram(XmlElement techniqueEl, Bool async);

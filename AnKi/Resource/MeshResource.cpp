@@ -12,6 +12,9 @@
 
 namespace anki {
 
+// Forward
+extern BoolCVar g_meshletRenderingCVar;
+
 class MeshResource::LoadContext
 {
 public:
@@ -142,7 +145,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		}
 
 		// Meshlet
-		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar.get())
 		{
 			const PtrSize meshletIndicesSize = header.m_meshletPrimitiveCounts[l] * sizeof(U8Vec4);
 			lod.m_meshletIndices = UnifiedGeometryBuffer::getSingleton().allocate(meshletIndicesSize, sizeof(U8Vec4));
@@ -346,7 +349,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				outMeshletBoundingVolume.m_aabbMax = inMeshlet.m_boundingVolume.m_aabbMax;
 				outMeshletBoundingVolume.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm =
 					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)));
-				outMeshletBoundingVolume.m_coneApex_R8G8B8A8_Snorm = packSnorm4x8(inMeshlet.m_coneApex.xyz0());
+				outMeshletBoundingVolume.m_coneApex = inMeshlet.m_coneApex;
 				outMeshletBoundingVolume.m_sphereRadius =
 					((outMeshletBoundingVolume.m_aabbMin + outMeshletBoundingVolume.m_aabbMax) / 2.0f - outMeshletBoundingVolume.m_aabbMax)
 						.getLength();

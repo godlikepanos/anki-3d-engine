@@ -175,7 +175,7 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	{
 		const PointLight light = g_pointLights[idx];
 
-		[branch] if(light.m_shadowAtlasTileScale >= 0.0)
+		[branch] if(light.m_shadow)
 		{
 			const Vec3 frag2Light = light.m_position - worldPos;
 

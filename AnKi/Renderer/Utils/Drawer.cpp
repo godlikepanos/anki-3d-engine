@@ -159,7 +159,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	U32 legacyGeometryFlowUserCount = 0;
 	PtrSize meshletInstancesBufferOffset = 0;
 	RenderStateBucketContainer::getSingleton().iterateBuckets(
-		args.m_renderingTechinuqe, [&](const RenderStateInfo& state, U32 userCount, U32 meshletGroupCount) {
+		args.m_renderingTechinuqe, [&](const RenderStateInfo& state, U32 userCount, U32 meshletGroupCount, U32 meshletCount) {
 			if(userCount == 0)
 			{
 				++bucketCount;
@@ -221,7 +221,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 			++bucketCount;
 			allUserCount += userCount;
-			meshletInstancesBufferOffset += sizeof(GpuSceneMeshletInstance) * min(meshletGroupCount, kMaxMeshletGroupCountPerRenderStateBucket);
+			meshletInstancesBufferOffset += sizeof(GpuSceneMeshletInstance) * min(meshletCount, kMaxVisibleMeshletsPerRenderStateBucket);
 		});
 
 	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));

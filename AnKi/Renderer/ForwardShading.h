@@ -36,7 +36,7 @@ public:
 	void getVisibleAabbsBuffer(BufferOffsetRange& visibleAaabbIndicesBuffer, BufferHandle& dep) const
 	{
 		visibleAaabbIndicesBuffer = m_runCtx.m_visOut.m_visibleAaabbIndicesBuffer;
-		dep = m_runCtx.m_visOut.m_someBufferHandle;
+		dep = m_runCtx.m_visOut.m_dependency;
 		ANKI_ASSERT(visibleAaabbIndicesBuffer.m_buffer != nullptr && dep.isValid());
 	}
 
@@ -45,6 +45,7 @@ private:
 	{
 	public:
 		GpuVisibilityOutput m_visOut;
+		GpuMeshletVisibilityOutput m_meshVisOut;
 	} m_runCtx;
 };
 /// @}

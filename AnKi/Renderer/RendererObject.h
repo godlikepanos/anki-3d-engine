@@ -101,8 +101,10 @@ protected:
 
 	static void zeroBuffer(Buffer* buff);
 
-	/// Temp pass name. Output lives in global memory so use it before the next computeTempPassName call.
+	/// Temp pass name.
 	static CString computeTempPassName(CString name, U32 index);
+
+	static CString computeTempPassName(CString name, U32 index, CString name2, U32 index2);
 };
 /// @}
 

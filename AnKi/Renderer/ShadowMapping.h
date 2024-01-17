@@ -14,6 +14,7 @@ namespace anki {
 
 // Forward
 class GpuVisibilityOutput;
+class GpuMeshletVisibilityOutput;
 extern NumericCVar<U32> g_shadowMappingPcfCVar;
 
 /// @addtogroup renderer
@@ -34,16 +35,6 @@ public:
 	}
 
 private:
-	class ViewportDraw
-	{
-	public:
-		UVec4 m_viewport;
-		Mat4 m_viewProjMat;
-		Mat3x4 m_viewMat;
-		RenderTargetHandle m_hzbRt;
-		BufferOffsetRange m_clearTileIndirectArgs;
-	};
-
 	TileAllocator m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
 	static constexpr U32 kPointLightMaxTileAllocHierarchy = 1;
@@ -85,12 +76,9 @@ private:
 	BufferOffsetRange createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
 											  RenderGraphDescription& rgraph) const;
 
-	void createMultipleDrawShadowsPass(ConstWeakArray<ViewportDraw> viewports, const GpuVisibilityOutput visOut, CString passName,
-									   RenderGraphDescription& rgraph);
-
-	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput visOut,
-							   const BufferOffsetRange& clearTileIndirectArgs, const RenderTargetHandle hzbRt, CString passName,
-							   RenderGraphDescription& rgraph);
+	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
+							   const GpuMeshletVisibilityOutput& meshletVisOut, const BufferOffsetRange& clearTileIndirectArgs,
+							   const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph);
 };
 /// @}
 

@@ -11,6 +11,7 @@
 #include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
 
@@ -273,7 +274,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				key.setRenderingTechnique(t);
 				key.setSkinned(hasSkin);
 				key.setVelocity(moved);
-				key.setMeshShaders(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders);
+				key.setMeshletRendering(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar.get());
 
 				const MaterialVariant& mvariant = m_model->getModelPatches()[i].getMaterial()->getOrCreateVariant(key);
 
@@ -284,8 +285,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 				ModelPatchGeometryInfo inf;
 				m_model->getModelPatches()[i].getGeometryInfo(0, inf);
-				const Bool wantsMesletCount = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders
-											  && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
+				const Bool wantsMesletCount = key.getMeshletRendering() && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
 				m_patchInfos[i].m_renderStateBucketIndices[t] =
 					RenderStateBucketContainer::getSingleton().addUser(state, t, (wantsMesletCount) ? inf.m_meshletCount : 0);
 			}

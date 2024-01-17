@@ -65,6 +65,7 @@ public:
 
 	void fill(const GpuMeshletVisibilityOutput& visOut)
 	{
+		ANKI_ASSERT(visOut.isFilled());
 		m_softwareMesh.m_meshletInstancesBuffer = visOut.m_meshletInstancesBuffer;
 		m_softwareMesh.m_drawIndirectArgsBuffer = visOut.m_drawIndirectArgsBuffer;
 	}

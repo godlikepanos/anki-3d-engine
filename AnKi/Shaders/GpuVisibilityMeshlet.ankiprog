@@ -10,23 +10,24 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
 
-#define MESHLET_BACKFACE_CULLING 0
+#define MESHLET_BACKFACE_CULLING 1
 #define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
 #define MESHLET_NO_SAMPLING_POINT_CULLING 1
 #define MESHLET_HZB_CULLING HZB_TEST
 
 #define THREADGROUP_SIZE ANKI_TASK_SHADER_THREADGROUP_SIZE
 
-[[vk::binding(0, 0)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
-[[vk::binding(0, 1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(0, 2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(0, 3)]] ByteAddressBuffer g_gpuScene;
-[[vk::binding(0, 4)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
-[[vk::binding(0, 5)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArg;
-[[vk::binding(0, 6)]] RWStructuredBuffer<GpuSceneMeshletInstance> g_drawInstances;
-[[vk::binding(0, 7)]] Texture2D<Vec4> g_hzbTexture;
-[[vk::binding(0, 8)]] SamplerState g_nearestClampSampler;
+[[vk::binding(0)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
+[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
+[[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
+[[vk::binding(3)]] ByteAddressBuffer g_gpuScene;
+[[vk::binding(4)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
+[[vk::binding(5)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArg;
+[[vk::binding(6)]] RWStructuredBuffer<GpuSceneMeshletInstance> g_drawInstances;
+[[vk::binding(7)]] Texture2D<Vec4> g_hzbTexture;
+[[vk::binding(8)]] SamplerState g_nearestClampSampler;
 
 struct MaterialGlobalConstants
 {
@@ -53,6 +54,7 @@ struct MaterialGlobalConstants
 	U32 firstMeshletBoundingVolume = meshletGroup * kMeshletGroupSize;
 	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshletBoundingVolume);
 	firstMeshletBoundingVolume += meshLod.m_firstMeshletBoundingVolume;
+	const U32 firstMeshletGeometryDescriptor = meshletGroup * kMeshletGroupSize + meshLod.m_firstMeshletGeometryDescriptor;
 
 	// Meshlet culling
 	if(svGroupIndex < meshletCount)
@@ -63,7 +65,9 @@ struct MaterialGlobalConstants
 		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
 
 #if MESHLET_BACKFACE_CULLING
-		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_consts.m_cameraTransform.getTranslationPart());
+		const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
+		cull = cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform,
+								   g_consts.m_cameraTransform.getTranslationPart());
 #endif
 
 		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
@@ -80,8 +84,8 @@ struct MaterialGlobalConstants
 
 #if MESHLET_NO_SAMPLING_POINT_CULLING
 		// Sampling points test
-		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_viewportSizef.x;
-		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_viewportSizef.y;
+		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_viewportSizef;
+		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_viewportSizef;
 		cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
 #endif
 
@@ -102,7 +106,7 @@ struct MaterialGlobalConstants
 			GpuSceneMeshletInstance instance;
 			instance.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
 			instance.m_constantsOffset = renderable.m_constantsOffset;
-			instance.m_meshletGeometryDescriptorIndex = meshLod.m_firstMeshletGeometryDescriptor + svGroupIndex;
+			instance.m_meshletGeometryDescriptorIndex = firstMeshletGeometryDescriptor + svGroupIndex;
 			instance.m_boneTransformsOrParticleEmitterOffset =
 				(renderable.m_particleEmitterOffset) ? renderable.m_particleEmitterOffset : renderable.m_boneTransformsOffset;
 

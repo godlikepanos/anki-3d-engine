@@ -161,6 +161,23 @@ public:
 		, m_asBarriersBefore(pool)
 	{
 	}
+
+	Batch(Batch&& b)
+	{
+		*this = std::move(b);
+	}
+
+	Batch& operator=(Batch&& b)
+	{
+		m_passIndices = std::move(b.m_passIndices);
+		m_textureBarriersBefore = std::move(b.m_textureBarriersBefore);
+		m_bufferBarriersBefore = std::move(b.m_bufferBarriersBefore);
+		m_asBarriersBefore = std::move(b.m_asBarriersBefore);
+		m_cmdb = b.m_cmdb;
+		b.m_cmdb = nullptr;
+
+		return *this;
+	}
 };
 
 /// The RenderGraph build context.
@@ -662,7 +679,7 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 
 		for(const U32 depPassIdx : ctx.m_passes[passIdx].m_dependsOn)
 		{
-			if(ctx.m_passIsInBatch.get(depPassIdx) == false)
+			if(!ctx.m_passIsInBatch.get(depPassIdx))
 			{
 				// Dependency pass is not in a batch
 				depends = true;
@@ -828,6 +845,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		while(prevPassIdx--)
 		{
 			const RenderPassDescriptionBase& prevPass = *descr.m_passes[prevPassIdx];
+
 			if(passADependsOnB(inPass, prevPass))
 			{
 				outPass.m_dependsOn.emplaceBack(prevPassIdx);
@@ -846,9 +864,7 @@ void RenderGraph::initBatches()
 	Bool setTimestamp = m_ctx->m_gatherStatistics;
 	while(passesAssignedToBatchCount < passCount)
 	{
-		m_ctx->m_batches.emplaceBack(m_ctx->m_as.getMemoryPool().m_pool);
-		Batch& batch = m_ctx->m_batches.getBack();
-
+		Batch batch(m_ctx->m_as.getMemoryPool().m_pool);
 		Bool drawsToPresentable = false;
 
 		for(U32 i = 0; i < passCount; ++i)
@@ -896,11 +912,13 @@ void RenderGraph::initBatches()
 		}
 
 		// Mark batch's passes done
-		for(U32 passIdx : m_ctx->m_batches.getBack().m_passIndices)
+		for(U32 passIdx : batch.m_passIndices)
 		{
 			m_ctx->m_passIsInBatch.set(passIdx);
-			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize() - 1;
+			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize();
 		}
+
+		m_ctx->m_batches.emplaceBack(std::move(batch));
 	}
 }
 
