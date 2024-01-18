@@ -163,7 +163,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			mem.m_drawIndexedIndirectArgsBuffer =
 				allocateTransientGpuMem(max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs));
 			mem.m_renderableInstancesBuffer =
-				allocateTransientGpuMem(max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex));
+				allocateTransientGpuMem(max(1u, maxCounts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableInstance));
 
 			mem.m_taskShaderPayloadBuffer = allocateTransientGpuMem(max(1u, maxCounts.m_meshletGroupCount) * sizeof(GpuSceneTaskShaderPayload));
 
@@ -178,7 +178,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	out.m_legacy.m_drawIndexedIndirectArgsBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(DrawIndexedIndirectArgs);
 
 	out.m_legacy.m_renderableInstancesBuffer = mem.m_renderableInstancesBuffer;
-	out.m_legacy.m_renderableInstancesBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableVertex);
+	out.m_legacy.m_renderableInstancesBuffer.m_range = max(1u, counts.m_legacyGeometryFlowUserCount) * sizeof(GpuSceneRenderableInstance);
 
 	out.m_legacy.m_mdiDrawCountsBuffer = allocateTransientGpuMem(sizeof(U32) * counts.m_bucketCount);
 

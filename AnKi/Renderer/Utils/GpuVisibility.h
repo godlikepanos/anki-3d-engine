@@ -92,7 +92,7 @@ public:
 	class
 	{
 	public:
-		BufferOffsetRange m_renderableInstancesBuffer; ///< An array of GpuSceneRenderableVertex.
+		BufferOffsetRange m_renderableInstancesBuffer; ///< An array of GpuSceneRenderableInstance.
 		BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< An array of DrawIndexedIndirectArgs.
 		BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
 	} m_legacy; ///< Legacy vertex shading.

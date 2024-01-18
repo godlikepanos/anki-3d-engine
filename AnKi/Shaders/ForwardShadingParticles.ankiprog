@@ -34,7 +34,7 @@ struct VertOut
 
 VertOut main(VertIn input)
 {
-	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
 	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_boneTransformsOrParticleEmitterOffset);
 	const GpuSceneMeshLod meshLod = g_meshLods[renderable.m_meshLodIndex];
 

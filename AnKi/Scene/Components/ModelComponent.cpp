@@ -190,6 +190,9 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					meshLod.m_firstMeshletGeometryDescriptor = U32(inf.m_meshletGometryDescriptorsUgbOffset / sizeof(MeshletGeometryDescriptor));
 					meshLod.m_meshletCount = inf.m_meshletCount;
 				}
+
+				meshLod.m_renderableIndex = m_patchInfos[i].m_gpuSceneRenderable.getIndex();
+				meshLod.m_lod = l;
 			}
 
 			// Copy the last LOD to the rest just in case

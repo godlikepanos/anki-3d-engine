@@ -56,6 +56,7 @@
 #else
 #	define NORMAL_MAPPING 0
 #endif
+#define SW_MESHLETS (ANKI_TECHNIQUE_GBufferSwMeshletRendering || ANKI_TECHNIQUE_ShadowsSwMeshletRendering)
 
 #define VISUALIZE_MESHLETS (0 && GBUFFER)
 #define MESHLET_BACKFACE_CULLING 0
@@ -88,7 +89,11 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
+#if SW_MESHLETS
+	[[vk::location(0)]] U32 m_instanceData : INSTANCE_DATA;
+#else
 	[[vk::location(0)]] UVec4 m_instanceData : INSTANCE_DATA;
+#endif
 };
 
 struct VertOut
@@ -233,21 +238,20 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 // ===========================================================================
 #if ANKI_VERTEX_SHADER
 
-#	define SW_MESHLETS (ANKI_TECHNIQUE_GBufferSwMeshletRendering || ANKI_TECHNIQUE_ShadowsSwMeshletRendering)
-
 VertOut main(VertIn input)
 {
 	VertOut output;
 
 #	if SW_MESHLETS
-	const GpuSceneMeshletInstance instance = unpackGpuSceneMeshletInstance(input.m_instanceData);
-	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
+	const GpuSceneMeshletInstance instance = {input.m_instanceData};
+	const GpuSceneMeshLod meshLod = g_meshLods[instance.m_meshLodIndex_21bit_meshletIdx_11bit >> 11u];
+	const U32 meshletGlobIndex = meshLod.m_firstMeshletGeometryDescriptor + (instance.m_meshLodIndex_21bit_meshletIdx_11bit & ((1u << 11u) - 1u));
+	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[meshletGlobIndex];
 	if(input.m_svVertexId >= (meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u) * 3u)
 	{
 		// Discard the primitive
 		output = (VertOut)0;
 		output.m_svPosition = kNaN;
-		output.m_constantsOffset = instance.m_constantsOffset;
 		return output;
 	}
 
@@ -256,14 +260,25 @@ VertOut main(VertIn input)
 	const U32 localIdx = localIndices[input.m_svVertexId % 3u];
 
 	UnpackedMeshVertex vert = loadVertex(meshlet, localIdx, ANKI_BONES);
+
+	const GpuSceneRenderable renderable = g_renderables[meshLod.m_renderableIndex];
+	const U32 constantsOffset = renderable.m_constantsOffset;
+	const U32 worldTransformsOffset = renderable.m_worldTransformsOffset;
+	const U32 boneTransformsOrParticleEmitterOffset =
+		(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
 #	else
-	const GpuSceneRenderableVertex instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
+	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
-#	endif
 
-	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(instance.m_worldTransformsOffset);
-	const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(instance.m_worldTransformsOffset + sizeof(Mat3x4));
+	const U32 constantsOffset = instance.m_constantsOffset;
+	const U32 worldTransformsOffset = instance.m_worldTransformsOffset;
+	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
+#	endif
+	ANKI_MAYBE_UNUSED(boneTransformsOrParticleEmitterOffset);
+
+	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(worldTransformsOffset);
+	const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(worldTransformsOffset + sizeof(Mat3x4));
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #	if UVS
@@ -271,11 +286,11 @@ VertOut main(VertIn input)
 #	endif
 	Vec3 prevPos = vert.m_position;
 	ANKI_MAYBE_UNUSED(prevPos);
-	output.m_constantsOffset = instance.m_constantsOffset;
+	output.m_constantsOffset = constantsOffset;
 
 	// Do stuff
 #	if ANKI_BONES
-	skinning(vert, instance.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
+	skinning(vert, boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
 #	endif
 
 	const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
@@ -684,7 +699,7 @@ FragOut main(
 #if ANKI_ANY_HIT_SHADER
 
 #	if REALLY_ALPHA_TEST
-[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableVertex> g_gpuSceneRenderable;
+[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable;
 #	endif
 
 [shader("anyhit")] void main(inout RayPayload payload, in Barycentrics barycentrics)

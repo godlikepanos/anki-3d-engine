@@ -29,16 +29,16 @@ struct GpuSceneRenderable
 };
 
 /// Almost similar to GpuSceneRenderable but with only what the material shaders need. Needs to fit in a UVec4 vertex attribute.
-struct GpuSceneRenderableVertex
+struct GpuSceneRenderableInstance
 {
 	U32 m_worldTransformsOffset;
 	U32 m_constantsOffset;
 	U32 m_meshLodIndex; ///< Points to a single GpuSceneMeshLod in the mesh lods.
 	U32 m_boneTransformsOrParticleEmitterOffset;
 };
-static_assert(sizeof(GpuSceneRenderableVertex) == sizeof(UVec4));
+static_assert(sizeof(GpuSceneRenderableInstance) == sizeof(UVec4));
 
-/// Input to a single task shader threadgroup. Something similar to GpuSceneRenderableVertex but for mesh shading.
+/// Input to a single task shader threadgroup. Something similar to GpuSceneRenderableInstance but for mesh shading.
 struct GpuSceneTaskShaderPayload
 {
 	U32 m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
@@ -48,10 +48,7 @@ static_assert(kMaxLodCount == 3);
 /// Minimal data passed to the vertex shaders in the case of meshlet rendering.
 struct GpuSceneMeshletInstance
 {
-	U32 m_worldTransformsOffset;
-	U32 m_constantsOffset;
-	U32 m_meshletGeometryDescriptorIndex; ///< Index in the UGB.
-	U32 m_boneTransformsOrParticleEmitterOffset;
+	U32 m_meshLodIndex_21bit_meshletIdx_11bit;
 };
 
 /// Used in visibility testing.
@@ -71,12 +68,12 @@ struct GpuSceneMeshLod
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_indexCount;
 	U32 m_firstIndex; ///< In sizeof(indexType)
-	U32 m_padding1;
+	U32 m_renderableIndex;
 
 	U32 m_firstMeshletBoundingVolume; ///< In sizeof(MeshletBoundingVolume)
 	U32 m_firstMeshletGeometryDescriptor; ///< In sizeof(MeshletGeometryDescriptor)
 	U32 m_meshletCount; ///< Can be zero if the mesh doesn't support mesh shading (or mesh shading is off)
-	U32 m_padding2;
+	U32 m_lod;
 
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;

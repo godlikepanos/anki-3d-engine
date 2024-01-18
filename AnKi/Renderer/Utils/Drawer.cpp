@@ -214,7 +214,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 				cmd.m_legacyDraw.m_mdiDrawCountsBufferOffset = args.m_legacy.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount;
 				cmd.m_legacyDraw.m_instancesBuffer = args.m_legacy.m_renderableInstancesBuffer.m_buffer;
 				cmd.m_legacyDraw.m_instancesBufferOffset =
-					args.m_legacy.m_renderableInstancesBuffer.m_offset + legacyGeometryFlowUserCount * sizeof(GpuSceneRenderableVertex);
+					args.m_legacy.m_renderableInstancesBuffer.m_offset + legacyGeometryFlowUserCount * sizeof(GpuSceneRenderableInstance);
 
 				legacyGeometryFlowUserCount += userCount;
 			}
@@ -245,7 +245,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 		if(it->m_drawType == 0)
 		{
-			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableVertex),
+			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableInstance),
 								  VertexStepRate::kInstance);
 
 			cmdb.drawIndexedIndirectCount(it->m_legacyDraw.m_primitiveTopology, it->m_legacyDraw.m_drawIndirectArgsBuffer,
@@ -255,7 +255,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		}
 		else if(it->m_drawType == 1)
 		{
-			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableVertex),
+			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableInstance),
 								  VertexStepRate::kInstance);
 
 			// Yes, the DrawIndexedIndirectArgs is intentional
