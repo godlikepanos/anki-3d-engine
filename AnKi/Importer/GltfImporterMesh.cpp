@@ -696,6 +696,8 @@ Error GltfImporter::writeMeshInternal(const cgltf_mesh& mesh) const
 		maxLod = lod;
 	}
 
+	ANKI_IMPORTER_LOGV("Mesh lod count: %s %u", fname.cstr(), maxLod + 1);
+
 	// Meshletize
 	for(U32 lod = 0; lod < m_lodCount; ++lod)
 	{

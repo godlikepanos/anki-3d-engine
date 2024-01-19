@@ -39,11 +39,6 @@ Error LightShading::init()
 		err = initApplyFog();
 	}
 
-	if(!err)
-	{
-		err = initApplyIndirect();
-	}
-
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to init light stage");
@@ -101,12 +96,6 @@ Error LightShading::initApplyFog()
 	// Load shaders and programs
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog, m_applyFog.m_grProg));
 
-	return Error::kNone;
-}
-
-Error LightShading::initApplyIndirect()
-{
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingApplyIndirect.ankiprogbin", m_applyIndirect.m_prog, m_applyIndirect.m_grProg));
 	return Error::kNone;
 }
 

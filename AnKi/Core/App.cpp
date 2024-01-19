@@ -223,13 +223,11 @@ Error App::initInternal()
 		"NOT built with tracing";
 #endif
 
-	ANKI_CORE_LOGI("Initializing application ("
-				   "version %u.%u, "
-				   "%s, "
-				   "compiler %s, "
-				   "build date %s, "
-				   "commit %s)",
-				   ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR, buildType, ANKI_COMPILER_STR, __DATE__, ANKI_REVISION);
+	ANKI_CORE_LOGI("Initializing application");
+	ANKI_CORE_LOGI("\tBuild type %s", buildType);
+	ANKI_CORE_LOGI("\tBuild time %s %s", __DATE__, __TIME__);
+	ANKI_CORE_LOGI("\tCompiler %s", ANKI_COMPILER_STR);
+	ANKI_CORE_LOGI("\tCommit %s", ANKI_REVISION);
 
 // Check SIMD support
 #if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE

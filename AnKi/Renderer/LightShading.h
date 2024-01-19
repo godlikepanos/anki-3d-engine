@@ -55,13 +55,6 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-	} m_applyIndirect;
-
-	class
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
 	} m_applyFog;
 
 	class
@@ -76,7 +69,6 @@ private:
 	Error initLightShading();
 	Error initSkybox();
 	Error initApplyFog();
-	Error initApplyIndirect();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
