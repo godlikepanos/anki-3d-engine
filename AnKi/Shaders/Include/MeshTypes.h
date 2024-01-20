@@ -90,7 +90,7 @@ struct MeshletBoundingVolume
 	F32 m_sphereRadius;
 
 	Vec3 m_aabbMax;
-	U32 m_padding;
+	U32 m_primitiveCount;
 
 	Vec3 m_coneApex;
 	U32 m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm;

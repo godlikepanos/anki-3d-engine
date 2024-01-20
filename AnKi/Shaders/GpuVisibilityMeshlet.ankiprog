@@ -54,6 +54,7 @@ struct MaterialGlobalConstants
 	U32 firstMeshletBoundingVolume = meshletGroup * kMeshletGroupSize;
 	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshletBoundingVolume);
 	firstMeshletBoundingVolume += meshLod.m_firstMeshletBoundingVolume;
+	const U32 firstMeshletGeometryDescriptor = meshletGroup * kMeshletGroupSize + meshLod.m_firstMeshletGeometryDescriptor;
 
 	// Meshlet culling
 	if(svGroupIndex < meshletCount)
@@ -103,8 +104,12 @@ struct MaterialGlobalConstants
 			}
 
 			GpuSceneMeshletInstance instance;
-			instance.m_meshLodIndex_21bit_meshletIdx_11bit = (renderable.m_meshLodsIndex + lod) << 11u;
-			instance.m_meshLodIndex_21bit_meshletIdx_11bit |= meshletGroup * kMeshletGroupSize + svGroupIndex;
+			instance.m_meshletGeometryDescriptorIndex = firstMeshletGeometryDescriptor + svGroupIndex;
+			instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsOffset << 7u;
+			instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
+			instance.m_constantsOffset = renderable.m_constantsOffset;
+			instance.m_boneTransformsOrParticleEmitterOffset =
+				(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
 
 			g_drawInstances[instanceIdx] = instance;
 		}

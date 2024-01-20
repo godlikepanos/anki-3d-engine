@@ -353,6 +353,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 				outMeshletBoundingVolume.m_sphereRadius =
 					((outMeshletBoundingVolume.m_aabbMin + outMeshletBoundingVolume.m_aabbMax) / 2.0f - outMeshletBoundingVolume.m_aabbMax)
 						.getLength();
+				outMeshletBoundingVolume.m_primitiveCount = inMeshlet.m_primitiveCount;
 			}
 
 			cmdb->copyBufferToBuffer(&handle2.getBuffer(), handle2.getOffset(), unifiedGeometryBuffer, lod.m_meshletBoundingVolumes.getOffset(),

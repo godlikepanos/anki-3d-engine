@@ -237,6 +237,8 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		}
 	});
 
+	cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
+
 	// Now draw
 	for(const Command* it = commands.getBegin(); it < commands.getBegin() + commandCount; ++it)
 	{
@@ -244,7 +246,6 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 		if(it->m_drawType == 0)
 		{
-			cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
 			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableInstance),
 								  VertexStepRate::kInstance);
 
@@ -255,7 +256,6 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		}
 		else if(it->m_drawType == 1)
 		{
-			cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
 			cmdb.bindVertexBuffer(0, it->m_legacyDraw.m_instancesBuffer, it->m_legacyDraw.m_instancesBufferOffset, sizeof(GpuSceneRenderableInstance),
 								  VertexStepRate::kInstance);
 
@@ -276,7 +276,6 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		{
 			ANKI_ASSERT(it->m_drawType == 3);
 
-			cmdb.setVertexAttribute(0, 0, Format::kR32_Uint, 0);
 			cmdb.bindVertexBuffer(0, it->m_swMeshDraw.m_instancesBuffer, it->m_swMeshDraw.m_instancesBufferOffset, sizeof(GpuSceneMeshletInstance),
 								  VertexStepRate::kInstance);
 

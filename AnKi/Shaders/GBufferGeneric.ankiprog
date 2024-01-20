@@ -89,11 +89,7 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-#if SW_MESHLETS
-	[[vk::location(0)]] U32 m_instanceData : INSTANCE_DATA;
-#else
 	[[vk::location(0)]] UVec4 m_instanceData : INSTANCE_DATA;
-#endif
 };
 
 struct VertOut
@@ -243,11 +239,9 @@ VertOut main(VertIn input)
 	VertOut output;
 
 #	if SW_MESHLETS
-	const GpuSceneMeshletInstance instance = {input.m_instanceData};
-	const GpuSceneMeshLod meshLod = g_meshLods[instance.m_meshLodIndex_21bit_meshletIdx_11bit >> 11u];
-	const U32 meshletGlobIndex = meshLod.m_firstMeshletGeometryDescriptor + (instance.m_meshLodIndex_21bit_meshletIdx_11bit & ((1u << 11u) - 1u));
-	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[meshletGlobIndex];
-	if(input.m_svVertexId >= (meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u) * 3u)
+	const GpuSceneMeshletInstance instance = unpackGpuSceneMeshletInstance(input.m_instanceData);
+
+	if(input.m_svVertexId >= (instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit & ((1u << 7u) - 1u)) * 3u)
 	{
 		// Discard the primitive
 		output = (VertOut)0;
@@ -255,17 +249,17 @@ VertOut main(VertIn input)
 		return output;
 	}
 
+	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
+
 	const U32 primitiveId = input.m_svVertexId / 3u;
 	const UVec3 localIndices = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + primitiveId].xyz;
 	const U32 localIdx = localIndices[input.m_svVertexId % 3u];
 
 	UnpackedMeshVertex vert = loadVertex(meshlet, localIdx, ANKI_BONES);
 
-	const GpuSceneRenderable renderable = g_renderables[meshLod.m_renderableIndex];
-	const U32 constantsOffset = renderable.m_constantsOffset;
-	const U32 worldTransformsOffset = renderable.m_worldTransformsOffset;
-	const U32 boneTransformsOrParticleEmitterOffset =
-		(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
+	const U32 constantsOffset = instance.m_constantsOffset;
+	const U32 worldTransformsOffset = instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit >> 7u;
+	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
 #	else
 	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];

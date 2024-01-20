@@ -48,8 +48,12 @@ static_assert(kMaxLodCount == 3);
 /// Minimal data passed to the vertex shaders in the case of meshlet rendering.
 struct GpuSceneMeshletInstance
 {
-	U32 m_meshLodIndex_21bit_meshletIdx_11bit;
+	U32 m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit;
+	U32 m_constantsOffset;
+	U32 m_meshletGeometryDescriptorIndex; ///< Index in the UGB.
+	U32 m_boneTransformsOrParticleEmitterOffset;
 };
+static_assert(kMaxPrimitivesPerMeshlet < ((1u << 7u) - 1));
 
 /// Used in visibility testing.
 struct GpuSceneRenderableBoundingVolume
