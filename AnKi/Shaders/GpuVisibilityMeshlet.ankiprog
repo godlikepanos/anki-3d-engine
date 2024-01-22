@@ -98,10 +98,7 @@ struct MaterialGlobalConstants
 			U32 instanceIdx;
 			InterlockedAdd(g_indirectDrawArg[0].m_instanceCount, 1u, instanceIdx);
 
-			if(instanceIdx == 0u)
-			{
-				g_indirectDrawArg[0].m_vertexCount = kMaxPrimitivesPerMeshlet * 3u;
-			}
+			InterlockedMax(g_indirectDrawArg[0].m_vertexCount, meshletBoundingVol.m_primitiveCount * 3u);
 
 			GpuSceneMeshletInstance instance;
 			instance.m_meshletGeometryDescriptorIndex = firstMeshletGeometryDescriptor + svGroupIndex;
