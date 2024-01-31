@@ -7,8 +7,12 @@
 #pragma anki mutator DISTANCE_TEST 0 1
 #pragma anki mutator GATHER_AABBS 0 1
 #pragma anki mutator HASH_VISIBLES 0 1
+#pragma anki mutator GATHER_TYPE 1 2 3
 
 #pragma anki skip_mutation DISTANCE_TEST 1 HZB_TEST 1
+
+#define GATHER_MDI (GATHER_TYPE & 1u)
+#define GATHER_MESHLET_GROUPS (GATHER_TYPE & 2u)
 
 #pragma anki technique_start comp
 
@@ -32,6 +36,7 @@ struct DrawIndirectArgsWithPadding
 [[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
 [[vk::binding(3)]] ByteAddressBuffer g_gpuScene;
 
+#if GATHER_MDI
 // These 3 have the same size
 [[vk::binding(4)]] RWStructuredBuffer<UVec4> g_instanceRateRenderables;
 [[vk::binding(5)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
@@ -39,13 +44,16 @@ struct DrawIndirectArgsWithPadding
 
 // The MDI counts. One for each render state bucket
 [[vk::binding(6)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+#endif
 
+#if GATHER_MESHLET_GROUPS
 // For mesh shading
 [[vk::binding(7)]] RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs;
-[[vk::binding(8)]] RWStructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
+[[vk::binding(8)]] RWStructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances;
+#endif
 
 // One for each render state bucket. It's either the index of the next indirect args or the index to the next task payload
-[[vk::binding(9)]] StructuredBuffer<U32> g_drawIndirectArgsIndexOrTaskPayloadIndex;
+[[vk::binding(9)]] StructuredBuffer<UVec2> g_instanceRanges;
 
 #if DISTANCE_TEST == 0
 [[vk::binding(10)]] ConstantBuffer<FrustumGpuVisibilityConstants> g_consts;
@@ -154,84 +162,99 @@ struct DrawIndirectArgsWithPadding
 	const GpuSceneMeshLod meshLod = g_meshLods[meshLodIndex];
 
 	const Bool isParticleEmitter = renderable.m_particleEmitterOffset != 0;
-	const Bool usesMeshShaders = meshLod.m_meshletCount != 0u;
+	ANKI_MAYBE_UNUSED(isParticleEmitter);
 
+	const Bool usesMeshShaders = meshLod.m_meshletCount != 0u;
 	if(usesMeshShaders)
 	{
+#if GATHER_MESHLET_GROUPS
 		const U32 meshletGroupCount = (meshLod.m_meshletCount + (kMeshletGroupSize - 1u)) / kMeshletGroupSize;
 
-		U32 payloadIdx;
-		InterlockedAdd(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, meshletGroupCount, payloadIdx);
+		U32 instanceIdx;
+		InterlockedAdd(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, meshletGroupCount, instanceIdx);
 
-		if(payloadIdx == 0u)
+		if(instanceIdx == 0u)
 		{
 			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 1u;
 			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountZ = 1u;
 		}
-		else if(payloadIdx >= kMaxMeshletGroupCountPerRenderStateBucket)
+		else if(instanceIdx >= g_instanceRanges[renderStateBucket].y)
 		{
 			// Reached a memory limit, cancel the job
 			ANKI_ASSERT(0);
-			payloadIdx = 0;
+			instanceIdx = 0;
 			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 0u;
 		}
 
-		payloadIdx += g_drawIndirectArgsIndexOrTaskPayloadIndex[renderStateBucket];
+		instanceIdx += g_instanceRanges[renderStateBucket].x;
 
 		// Divide the mesh into meshlet groups and add them as task payloads
-		GpuSceneTaskShaderPayload payload;
-		payload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit = (lod << 30u) | (renderableIdx << 9u);
+		GpuSceneMeshletGroupInstance instance;
+		instance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit = (lod << 30u) | (renderableIdx << 9u);
 
 		for(U32 i = 0; i < meshletGroupCount; ++i)
 		{
-			g_taskShaderPayloads[payloadIdx + i] = payload;
+			g_meshletGroupInstances[instanceIdx + i] = instance;
 
-			++payload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
+			++instance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
 		}
+#endif
 	}
 	else
 	{
+#if GATHER_MDI
 		U32 bucketDrawcallIdx;
 		InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, bucketDrawcallIdx);
-		const U32 indirectIdx = bucketDrawcallIdx + g_drawIndirectArgsIndexOrTaskPayloadIndex[renderStateBucket];
 
-		if(!isParticleEmitter)
+		if(bucketDrawcallIdx >= g_instanceRanges[renderStateBucket].y)
 		{
-			// Regular renderables are always indexed
-
-			DrawIndexedIndirectArgs indirect;
-			indirect.m_indexCount = meshLod.m_indexCount;
-			indirect.m_instanceCount = 1;
-			indirect.m_firstIndex = meshLod.m_firstIndex;
-			indirect.m_vertexOffset = 0;
-			indirect.m_firstInstance = bucketDrawcallIdx;
-			g_drawIndexedIndirectArgs[indirectIdx] = indirect;
-
-			UVec4 instanceVertex;
-			instanceVertex.x = renderable.m_worldTransformsOffset;
-			instanceVertex.y = renderable.m_constantsOffset;
-			instanceVertex.z = meshLodIndex;
-			instanceVertex.w = renderable.m_boneTransformsOffset;
-			g_instanceRateRenderables[indirectIdx] = instanceVertex;
+			// OoM, ignore
+			ANKI_ASSERT(0);
+			U32 orig;
+			InterlockedExchange(g_mdiDrawCounts[renderStateBucket], g_instanceRanges[renderStateBucket].y, orig);
 		}
 		else
 		{
-			const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_particleEmitterOffset);
+			const U32 indirectIdx = bucketDrawcallIdx + g_instanceRanges[renderStateBucket].x;
+			if(!isParticleEmitter)
+			{
+				// Regular renderables are always indexed
 
-			DrawIndirectArgsWithPadding indirect;
-			indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
-			indirect.m_instanceCount = 1;
-			indirect.m_firstVertex = 0;
-			indirect.m_firstInstance = bucketDrawcallIdx;
-			g_drawIndirectArgs[indirectIdx] = indirect;
+				DrawIndexedIndirectArgs indirect;
+				indirect.m_indexCount = meshLod.m_indexCount;
+				indirect.m_instanceCount = 1;
+				indirect.m_firstIndex = meshLod.m_firstIndex;
+				indirect.m_vertexOffset = 0;
+				indirect.m_firstInstance = bucketDrawcallIdx;
+				g_drawIndexedIndirectArgs[indirectIdx] = indirect;
 
-			UVec4 instanceVertex;
-			instanceVertex.x = renderable.m_worldTransformsOffset;
-			instanceVertex.y = renderable.m_constantsOffset;
-			instanceVertex.z = meshLodIndex;
-			instanceVertex.w = renderable.m_particleEmitterOffset;
-			g_instanceRateRenderables[indirectIdx] = instanceVertex;
+				UVec4 instanceVertex;
+				instanceVertex.x = renderable.m_worldTransformsOffset;
+				instanceVertex.y = renderable.m_constantsOffset;
+				instanceVertex.z = meshLodIndex;
+				instanceVertex.w = renderable.m_boneTransformsOffset;
+				g_instanceRateRenderables[indirectIdx] = instanceVertex;
+			}
+			else
+			{
+				const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_particleEmitterOffset);
+
+				DrawIndirectArgsWithPadding indirect;
+				indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
+				indirect.m_instanceCount = 1;
+				indirect.m_firstVertex = 0;
+				indirect.m_firstInstance = bucketDrawcallIdx;
+				g_drawIndirectArgs[indirectIdx] = indirect;
+
+				UVec4 instanceVertex;
+				instanceVertex.x = renderable.m_worldTransformsOffset;
+				instanceVertex.y = renderable.m_constantsOffset;
+				instanceVertex.z = meshLodIndex;
+				instanceVertex.w = renderable.m_particleEmitterOffset;
+				g_instanceRateRenderables[indirectIdx] = instanceVertex;
+			}
 		}
+#endif
 	}
 
 #if HASH_VISIBLES

@@ -300,6 +300,11 @@ Error GrManagerImpl::initInstance()
 		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
 	}
 
+	if(g_validationCVar.get())
+	{
+		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
+	}
+
 	VkValidationFeaturesEXT validationFeatures = {};
 	if(enabledValidationFeatures.getSize() || disabledValidationFeatures.getSize())
 	{

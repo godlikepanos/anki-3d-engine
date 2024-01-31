@@ -36,15 +36,19 @@ public:
 	{
 	public:
 		BufferOffsetRange m_mdiDrawCountsBuffer;
-		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
 		BufferOffsetRange m_renderableInstancesBuffer;
+		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
+
+		ConstWeakArray<InstanceRange> m_bucketRenderableInstanceRanges;
 	} m_legacy; ///< Legacy vertex flow
 
 	class
 	{
 	public:
 		BufferOffsetRange m_taskShaderIndirectArgsBuffer;
-		BufferOffsetRange m_taskShaderPayloadsBuffer;
+		BufferOffsetRange m_meshletGroupInstancesBuffer;
+
+		ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges;
 	} m_mesh;
 
 	class
@@ -52,21 +56,26 @@ public:
 	public:
 		BufferOffsetRange m_meshletInstancesBuffer;
 		BufferOffsetRange m_drawIndirectArgsBuffer;
+
+		ConstWeakArray<InstanceRange> m_bucketMeshletInstanceRanges;
 	} m_softwareMesh;
 
-	void fillMdi(const GpuVisibilityOutput& visOut)
+	void fill(const GpuVisibilityOutput& visOut)
 	{
 		m_legacy.m_mdiDrawCountsBuffer = visOut.m_legacy.m_mdiDrawCountsBuffer;
-		m_legacy.m_drawIndexedIndirectArgsBuffer = visOut.m_legacy.m_drawIndexedIndirectArgsBuffer;
 		m_legacy.m_renderableInstancesBuffer = visOut.m_legacy.m_renderableInstancesBuffer;
+		m_legacy.m_drawIndexedIndirectArgsBuffer = visOut.m_legacy.m_drawIndexedIndirectArgsBuffer;
+		m_legacy.m_bucketRenderableInstanceRanges = visOut.m_legacy.m_bucketRenderableInstanceRanges;
 		m_mesh.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-		m_mesh.m_taskShaderPayloadsBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
+		m_mesh.m_meshletGroupInstancesBuffer = visOut.m_mesh.m_meshletGroupInstancesBuffer;
+		m_mesh.m_bucketMeshletGroupInstanceRanges = visOut.m_mesh.m_bucketMeshletGroupInstanceRanges;
 	}
 
 	void fill(const GpuMeshletVisibilityOutput& visOut)
 	{
 		ANKI_ASSERT(visOut.isFilled());
 		m_softwareMesh.m_meshletInstancesBuffer = visOut.m_meshletInstancesBuffer;
+		m_softwareMesh.m_bucketMeshletInstanceRanges = visOut.m_bucketMeshletInstanceRanges;
 		m_softwareMesh.m_drawIndirectArgsBuffer = visOut.m_drawIndirectArgsBuffer;
 	}
 };

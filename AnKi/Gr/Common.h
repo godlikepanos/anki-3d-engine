@@ -1021,6 +1021,11 @@ public:
 	Buffer* m_buffer = nullptr;
 	PtrSize m_offset = kMaxPtrSize;
 	PtrSize m_range = 0;
+
+	Bool isValid() const
+	{
+		return m_buffer != nullptr && m_offset < kMaxPtrSize && m_range > 0;
+	}
 };
 
 /// Compute max number of mipmaps for a 2D texture.

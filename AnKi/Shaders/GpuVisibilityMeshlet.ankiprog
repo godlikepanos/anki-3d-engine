@@ -19,35 +19,42 @@
 
 #define THREADGROUP_SIZE ANKI_TASK_SHADER_THREADGROUP_SIZE
 
-[[vk::binding(0)]] StructuredBuffer<GpuSceneTaskShaderPayload> g_taskShaderPayloads;
+[[vk::binding(0)]] StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
 [[vk::binding(3)]] ByteAddressBuffer g_gpuScene;
 [[vk::binding(4)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
-[[vk::binding(5)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArg;
-[[vk::binding(6)]] RWStructuredBuffer<GpuSceneMeshletInstance> g_drawInstances;
+[[vk::binding(5)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs;
+[[vk::binding(6)]] RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances;
 [[vk::binding(7)]] Texture2D<Vec4> g_hzbTexture;
 [[vk::binding(8)]] SamplerState g_nearestClampSampler;
 
-struct MaterialGlobalConstants
+struct Consts
 {
 	Mat4 m_viewProjectionMatrix;
-	Mat3x4 m_cameraTransform;
+
+	Vec3 m_cameraPos;
+	U32 m_firstDrawArg;
 
 	Vec2 m_viewportSizef;
-	U32 m_firstPayload;
-	U32 m_padding;
+	U32 m_firstMeshletGroup;
+	U32 m_firstMeshlet;
+
+	U32 m_maxMeshlets;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
 };
-[[vk::push_constant]] ConstantBuffer<MaterialGlobalConstants> g_consts;
+[[vk::push_constant]] ConstantBuffer<Consts> g_consts;
 
 [numthreads(THREADGROUP_SIZE, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupId : SV_GROUPID,
 											   U32 svGroupIndex : SV_GROUPINDEX)
 {
-	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[g_consts.m_firstPayload + svGroupId];
+	const GpuSceneMeshletGroupInstance groupInstance = g_meshletGroupInstances[g_consts.m_firstMeshletGroup + svGroupId];
 
-	const U32 lod = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 30u;
-	const U32 renderableIdx = (inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 9u) & ((1u << 21u) - 1u);
-	const U32 meshletGroup = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit & ((1u << 9u) - 1u);
+	const U32 lod = groupInstance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 30u;
+	const U32 renderableIdx = (groupInstance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 9u) & ((1u << 21u) - 1u);
+	const U32 meshletGroup = groupInstance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit & ((1u << 9u) - 1u);
 
 	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
 	const GpuSceneMeshLod meshLod = g_meshLods[renderable.m_meshLodsIndex + lod];
@@ -66,8 +73,7 @@ struct MaterialGlobalConstants
 
 #if MESHLET_BACKFACE_CULLING
 		const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
-		cull = cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform,
-								   g_consts.m_cameraTransform.getTranslationPart());
+		cull = cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_consts.m_cameraPos);
 #endif
 
 		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
@@ -96,19 +102,28 @@ struct MaterialGlobalConstants
 		if(!cull)
 		{
 			U32 instanceIdx;
-			InterlockedAdd(g_indirectDrawArg[0].m_instanceCount, 1u, instanceIdx);
+			InterlockedAdd(g_indirectDrawArgs[g_consts.m_firstDrawArg].m_instanceCount, 1u, instanceIdx);
 
-			InterlockedMax(g_indirectDrawArg[0].m_vertexCount, meshletBoundingVol.m_primitiveCount * 3u);
+			if(instanceIdx >= g_consts.m_maxMeshlets)
+			{
+				// OoM, ignore
+				U32 orig;
+				InterlockedExchange(g_indirectDrawArgs[g_consts.m_firstDrawArg].m_instanceCount, g_consts.m_maxMeshlets, orig);
+			}
+			else
+			{
+				InterlockedMax(g_indirectDrawArgs[g_consts.m_firstDrawArg].m_vertexCount, meshletBoundingVol.m_primitiveCount * 3u);
 
-			GpuSceneMeshletInstance instance;
-			instance.m_meshletGeometryDescriptorIndex = firstMeshletGeometryDescriptor + svGroupIndex;
-			instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsOffset << 7u;
-			instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
-			instance.m_constantsOffset = renderable.m_constantsOffset;
-			instance.m_boneTransformsOrParticleEmitterOffset =
-				(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
+				GpuSceneMeshletInstance instance;
+				instance.m_meshletGeometryDescriptorIndex = firstMeshletGeometryDescriptor + svGroupIndex;
+				instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsOffset << 7u;
+				instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
+				instance.m_constantsOffset = renderable.m_constantsOffset;
+				instance.m_boneTransformsOrParticleEmitterOffset =
+					(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
 
-			g_drawInstances[instanceIdx] = instance;
+				g_meshletInstances[g_consts.m_firstMeshlet + instanceIdx] = instance;
+			}
 		}
 	}
 }

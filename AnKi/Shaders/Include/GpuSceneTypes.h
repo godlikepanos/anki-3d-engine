@@ -39,7 +39,7 @@ struct GpuSceneRenderableInstance
 static_assert(sizeof(GpuSceneRenderableInstance) == sizeof(UVec4));
 
 /// Input to a single task shader threadgroup. Something similar to GpuSceneRenderableInstance but for mesh shading.
-struct GpuSceneTaskShaderPayload
+struct GpuSceneMeshletGroupInstance
 {
 	U32 m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
 };

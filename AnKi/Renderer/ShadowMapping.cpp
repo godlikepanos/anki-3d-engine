@@ -398,12 +398,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 					meshIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 					meshIn.m_cameraTransform = frustum.getViewMatrix().getInverseTransformation();
 					meshIn.m_viewportSize = atlasViewports[face].zw();
-					meshIn.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-					meshIn.m_taskShaderPayloadBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
-					meshIn.m_dependency = visOut.m_dependency;
 					meshIn.m_rgraph = &rgraph;
+					meshIn.fillBuffers(visOut);
 
-					getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, meshletVisOut);
+					getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
 				}
 
 				createDrawShadowsPass(atlasViewports[face], frustum.getViewProjectionMatrix(), frustum.getViewMatrix(), visOut, meshletVisOut,
@@ -478,12 +476,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				meshIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
 				meshIn.m_cameraTransform = lightc->getSpotLightViewMatrix().getInverseTransformation();
 				meshIn.m_viewportSize = atlasViewport.zw();
-				meshIn.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-				meshIn.m_taskShaderPayloadBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
-				meshIn.m_dependency = visOut.m_dependency;
 				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(visOut);
 
-				getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, meshletVisOut);
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
 			}
 
 			// Add draw pass
@@ -566,12 +562,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				meshIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
 				meshIn.m_cameraTransform = cascadeViewMats[cascade].getInverseTransformation();
 				meshIn.m_viewportSize = dirLightAtlasViewports[cascade].zw();
-				meshIn.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-				meshIn.m_taskShaderPayloadBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
-				meshIn.m_dependency = visOut.m_dependency;
 				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(visOut);
 
-				getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, meshletVisOut);
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
 			}
 
 			// Draw
@@ -662,7 +656,7 @@ void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& vie
 		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 		args.m_viewport = UVec4(viewport[0], viewport[1], viewport[2], viewport[3]);
-		args.fillMdi(visOut);
+		args.fill(visOut);
 
 		TextureViewPtr hzbView;
 		if(hzbRt.isValid())

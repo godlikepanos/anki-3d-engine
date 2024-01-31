@@ -226,12 +226,10 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				meshIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 				meshIn.m_cameraTransform = frustum.getViewMatrix().getInverseTransformation();
 				meshIn.m_viewportSize = UVec2(m_gbuffer.m_tileSize);
-				meshIn.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-				meshIn.m_taskShaderPayloadBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
-				meshIn.m_dependency = visOut.m_dependency;
 				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(visOut);
 
-				getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, meshletVisOut);
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
 			}
 		}
 
@@ -277,7 +275,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
 				args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 				args.m_viewport = UVec4(0, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
-				args.fillMdi(visOut);
+				args.fill(visOut);
 
 				if(meshletVisOut.isFilled())
 				{
@@ -325,12 +323,10 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				meshIn.m_viewProjectionMatrix = cascadeViewProjMat;
 				meshIn.m_cameraTransform = cascadeViewMat.getInverseTransformation();
 				meshIn.m_viewportSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
-				meshIn.m_taskShaderIndirectArgsBuffer = shadowVisOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-				meshIn.m_taskShaderPayloadBuffer = shadowVisOut.m_mesh.m_taskShaderPayloadBuffer;
-				meshIn.m_dependency = shadowVisOut.m_dependency;
 				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(shadowVisOut);
 
-				getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, shadowMeshletVisOut);
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, shadowMeshletVisOut);
 			}
 		}
 
@@ -362,7 +358,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
 				args.m_renderingTechinuqe = RenderingTechnique::kDepth;
 				args.m_viewport = UVec4(0, 0, rez, rez);
-				args.fillMdi(shadowVisOut);
+				args.fill(shadowVisOut);
 
 				if(shadowMeshletVisOut.isFilled())
 				{

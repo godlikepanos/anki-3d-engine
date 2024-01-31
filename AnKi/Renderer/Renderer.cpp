@@ -245,7 +245,6 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	}
 
 	ANKI_CHECK(m_visibility.init());
-	ANKI_CHECK(m_visibilityMeshlets.init());
 	ANKI_CHECK(m_nonRenderablesVisibility.init());
 	ANKI_CHECK(m_asVisibility.init());
 	ANKI_CHECK(m_hzbGenerator.init());

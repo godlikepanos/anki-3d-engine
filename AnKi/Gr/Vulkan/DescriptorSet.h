@@ -243,6 +243,7 @@ public:
 
 	void bindConstantBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
+		ANKI_ASSERT(range > 0);
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::kUniformBuffer;
@@ -258,6 +259,7 @@ public:
 
 	void bindUavBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
+		ANKI_ASSERT(range > 0);
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::kStorageBuffer;
@@ -273,6 +275,7 @@ public:
 
 	void bindReadOnlyTextureBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range, Format fmt)
 	{
+		ANKI_ASSERT(range > 0);
 		const VkBufferView view = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};

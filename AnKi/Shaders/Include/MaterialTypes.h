@@ -47,7 +47,7 @@ enum class MaterialBinding : U32
 	// For mesh shading
 	kMeshletBoundingVolumes, ///< Points to the unified geom buffer
 	kMeshletGeometryDescriptors, ///< Points to the unified geom buffer
-	kTaskShaderPayloads,
+	kMeshletGroups,
 	kRenderables,
 	kMeshLods,
 	kHzbTexture,

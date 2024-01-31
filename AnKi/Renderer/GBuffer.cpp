@@ -159,13 +159,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			meshIn.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
 			meshIn.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 			meshIn.m_viewportSize = getRenderer().getInternalResolution();
-			meshIn.m_taskShaderIndirectArgsBuffer = visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-			meshIn.m_taskShaderPayloadBuffer = visOut.m_mesh.m_taskShaderPayloadBuffer;
-			meshIn.m_dependency = visOut.m_dependency;
 			meshIn.m_rgraph = &rgraph;
 			meshIn.m_hzbRt = getRenderer().getGBuffer().getHzbRt();
+			meshIn.fillBuffers(visOut);
 
-			getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, meshletVisOut);
+			getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
 		}
 	}
 
@@ -241,7 +239,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			args.m_hzbTexture = hzbView.get();
 		}
 
-		args.fillMdi(visOut);
+		args.fill(visOut);
 		if(meshletVisOut.isFilled())
 		{
 			args.fill(meshletVisOut);

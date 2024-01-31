@@ -795,10 +795,6 @@ constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 #define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
 static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 
-/// Assume that a render state bucket can't go beyond 100M triangles. This helps ground some memory allocations.
-constexpr U32 kMaxVisibleMeshletsPerRenderStateBucket = 100000000 / kMaxPrimitivesPerMeshlet;
-constexpr U32 kMaxMeshletGroupCountPerRenderStateBucket = kMaxVisibleMeshletsPerRenderStateBucket / kMeshletGroupSize;
-
 struct DrawIndirectArgs
 {
 	U32 m_vertexCount;

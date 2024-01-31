@@ -322,7 +322,7 @@ struct FirstPayload
 
 [numthreads(ANKI_TASK_SHADER_THREADGROUP_SIZE, 1, 1)] void main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
-	const GpuSceneTaskShaderPayload inPayload = g_taskShaderPayloads[g_firstPayload.m_val.x + svGroupId];
+	const GpuSceneMeshletGroupInstance inPayload = g_meshletGroups[g_firstPayload.m_val.x + svGroupId];
 
 	const U32 lod = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 30u;
 	const U32 renderableIdx = (inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 9u) & ((1u << 21u) - 1u);

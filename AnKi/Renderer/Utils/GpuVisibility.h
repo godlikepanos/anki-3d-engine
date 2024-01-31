@@ -14,37 +14,32 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-class GpuVisibilityCommonBase : public RendererObject
+/// @memberof GpuVisibility
+class InstanceRange
 {
-protected:
-	class Counts
+	friend class GpuVisibility;
+
+public:
+	U32 getFirstInstance() const
 	{
-	public:
-		U32 m_aabbCount;
-		U32 m_bucketCount;
-		U32 m_legacyGeometryFlowUserCount;
-		U32 m_modernGeometryFlowUserCount;
-		U32 m_meshletGroupCount;
-		U32 m_meshletCount;
-		U32 m_allUserCount;
+		ANKI_ASSERT(isValid());
+		return m_firstInstance;
+	}
 
-		Counts max(const Counts& b) const
-		{
-			Counts out;
-#define ANKI_MAX(member) out.member = anki::max(member, b.member)
-			ANKI_MAX(m_aabbCount);
-			ANKI_MAX(m_bucketCount);
-			ANKI_MAX(m_legacyGeometryFlowUserCount);
-			ANKI_MAX(m_modernGeometryFlowUserCount);
-			ANKI_MAX(m_meshletGroupCount);
-			ANKI_MAX(m_meshletCount);
-			ANKI_MAX(m_allUserCount);
-#undef ANKI_MAX
-			return out;
-		}
-	};
+	U32 getInstanceCount() const
+	{
+		ANKI_ASSERT(isValid());
+		return m_instanceCount;
+	}
 
-	static Counts countTechnique(RenderingTechnique t);
+	Bool isValid() const
+	{
+		return m_instanceCount > 0;
+	}
+
+private:
+	U32 m_firstInstance = 0;
+	U32 m_instanceCount = 0;
 };
 
 /// @memberof GpuVisibility
@@ -93,16 +88,21 @@ public:
 	{
 	public:
 		BufferOffsetRange m_renderableInstancesBuffer; ///< An array of GpuSceneRenderableInstance.
-		BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< An array of DrawIndexedIndirectArgs.
 		BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
+		BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< Array of DrawIndexedIndirectArgs or DrawIndirectArgs.
+
+		/// Defines the element sub-ranges in the m_renderableInstancesBuffer an m_drawIndexedIndirectArgsBuffer per render state bucket.
+		ConstWeakArray<InstanceRange> m_bucketRenderableInstanceRanges;
 	} m_legacy; ///< Legacy vertex shading.
 
 	class
 	{
 	public:
-		/// An array of DispatchIndirectArgs, one for each render state bucket (even those that use legacy flow).
-		BufferOffsetRange m_taskShaderIndirectArgsBuffer;
-		BufferOffsetRange m_taskShaderPayloadBuffer; ///< The payloads of task shaders. One for each task shader threadgroup / meshlet group.
+		BufferOffsetRange m_taskShaderIndirectArgsBuffer; ///< An array of DispatchIndirectArgs, one for each render state bucket.
+		BufferOffsetRange m_meshletGroupInstancesBuffer; ///< Array with GpuSceneMeshletGroupInstance.
+
+		/// Defines the element sub-ranges in the m_meshletGroupInstancesBuffer per render state bucket.
+		ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges;
 	} m_mesh; ///< S/W meshlets or H/W mesh shading.
 
 	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< [Optional] Indices to the AABB buffer. The 1st element is the count.
@@ -115,8 +115,59 @@ public:
 	}
 };
 
+/// @memberof GpuVisibility
+class GpuMeshletVisibilityInput
+{
+public:
+	CString m_passesName;
+
+	RenderingTechnique m_technique = RenderingTechnique::kCount;
+
+	Mat4 m_viewProjectionMatrix;
+	Mat3x4 m_cameraTransform;
+
+	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
+	UVec2 m_viewportSize;
+
+	BufferOffsetRange m_taskShaderIndirectArgsBuffer; ///< Taken from GpuVisibilityOutput.
+	BufferOffsetRange m_meshletGroupInstancesBuffer; ///< Taken from GpuVisibilityOutput.
+	ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges; ///< Taken from GpuVisibilityOutput.
+
+	BufferHandle m_dependency;
+
+	RenderGraphDescription* m_rgraph = nullptr;
+
+	RenderTargetHandle m_hzbRt; ///< Optional.
+
+	void fillBuffers(const GpuVisibilityOutput& perObjVisOut)
+	{
+		m_taskShaderIndirectArgsBuffer = perObjVisOut.m_mesh.m_taskShaderIndirectArgsBuffer;
+		m_meshletGroupInstancesBuffer = perObjVisOut.m_mesh.m_meshletGroupInstancesBuffer;
+		m_bucketMeshletGroupInstanceRanges = perObjVisOut.m_mesh.m_bucketMeshletGroupInstanceRanges;
+		m_dependency = perObjVisOut.m_dependency;
+	}
+};
+
+/// @memberof GpuVisibility
+class GpuMeshletVisibilityOutput
+{
+public:
+	BufferOffsetRange m_drawIndirectArgsBuffer; ///< Array of DrawIndirectArgs. One for every render state bucket (even those that use that flow).
+	BufferOffsetRange m_meshletInstancesBuffer; ///< Array of GpuSceneMeshletInstance.
+
+	/// Defines the element sub-ranges in the m_meshletInstancesBuffer per render state bucket.
+	ConstWeakArray<InstanceRange> m_bucketMeshletInstanceRanges;
+
+	BufferHandle m_dependency; ///< Some dependency to wait on. Wait usage is indirect draw.
+
+	Bool isFilled() const
+	{
+		return m_dependency.isValid();
+	}
+};
+
 /// Performs GPU visibility for some pass.
-class GpuVisibility : public GpuVisibilityCommonBase
+class GpuVisibility : public RendererObject
 {
 public:
 	Error init();
@@ -137,10 +188,17 @@ public:
 		populateRenderGraphInternal(true, in, out);
 	}
 
+	/// Perform meshlet GPU visibility.
+	/// @note Not thread-safe.
+	void populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out);
+
 private:
 	ShaderProgramResourcePtr m_prog;
-	Array3d<ShaderProgramPtr, 2, 2, 2> m_frustumGrProgs;
-	Array2d<ShaderProgramPtr, 2, 2> m_distGrProgs;
+	Array4d<ShaderProgramPtr, 2, 2, 2, 3> m_frustumGrProgs;
+	Array3d<ShaderProgramPtr, 2, 2, 3> m_distGrProgs;
+
+	ShaderProgramResourcePtr m_meshletCullingProg;
+	Array<ShaderProgramPtr, 2> m_meshletCullingGrProgs;
 
 	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
 	class PersistentMemory
@@ -150,96 +208,64 @@ private:
 		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
 		BufferOffsetRange m_renderableInstancesBuffer; ///< Instance rate vertex buffer.
 
-		// Mesh
-		BufferOffsetRange m_taskShaderPayloadBuffer;
+		// HW & SW Meshlet rendering
+		BufferOffsetRange m_meshletGroupsInstancesBuffer;
 
-		BufferHandle m_bufferDepedency;
-	};
-
-	class
-	{
-	public:
-		U64 m_frameIdx = kMaxU64;
-		U32 m_populateRenderGraphFrameCallCount = 0;
-
-		/// The more persistent memory there is the more passes will be able to run in parallel but the more memory is used.
-		Array<PersistentMemory, 4> m_persistentMem;
-	} m_runCtx;
-
-	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
-};
-
-/// @memberof GpuMeshletVisibility
-class GpuMeshletVisibilityInput
-{
-public:
-	CString m_passesName;
-
-	RenderingTechnique m_technique = RenderingTechnique::kCount;
-
-	Mat4 m_viewProjectionMatrix;
-	Mat3x4 m_cameraTransform;
-
-	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
-	UVec2 m_viewportSize;
-
-	BufferOffsetRange m_taskShaderIndirectArgsBuffer; ///< Taken from GpuVisibilityOutput.
-	BufferOffsetRange m_taskShaderPayloadBuffer; ///< Taken from GpuVisibilityOutput.
-
-	BufferHandle m_dependency;
-
-	RenderGraphDescription* m_rgraph = nullptr;
-
-	RenderTargetHandle m_hzbRt; ///< Optional.
-};
-
-/// @memberof GpuMeshletVisibility
-class GpuMeshletVisibilityOutput
-{
-public:
-	BufferOffsetRange m_meshletInstancesBuffer; ///< Array of UVec4 (encodes GpuSceneMeshletInstance) per instance vertex. One for each meshlet.
-	BufferOffsetRange m_drawIndirectArgsBuffer; ///< Array of DrawIndirectArgs. One for every render state bucket (even those that use that flow).
-
-	BufferHandle m_dependency; ///< Some dependency to wait on. Wait usage is indirect draw.
-
-	Bool isFilled() const
-	{
-		return m_dependency.isValid();
-	}
-};
-
-/// Performs meshlet GPU visibility when the GPU doesn't support mesh shaders.
-class GpuMeshletVisibility : public GpuVisibilityCommonBase
-{
-public:
-	Error init();
-
-	/// Perform meshlet GPU visibility.
-	/// @note Not thread-safe.
-	void populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out);
-
-private:
-	ShaderProgramResourcePtr m_meshletCullingProg;
-	Array<ShaderProgramPtr, 2> m_meshletCullingGrProgs;
-
-	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
-	class PersistentMemory
-	{
-	public:
+		// SW meshlet rendering
 		BufferOffsetRange m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
 
 		BufferHandle m_bufferDepedency;
 	};
 
+	class PersistentMemoryMeshletRendering
+	{
+	public:
+		// SW meshlet rendering
+		BufferOffsetRange m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
+
+		BufferHandle m_bufferDepedency;
+	};
+
+	class MemoryRequirements
+	{
+	public:
+		U32 m_renderableInstanceCount = 0; ///< Count of GpuSceneRenderableInstance and a few other things
+		U32 m_meshletGroupInstanceCount = 0; ///< Count of GpuSceneMeshletGroupInstance
+		U32 m_meshletInstanceCount = 0; ///< Count of GpuSceneMeshletInstance
+
+		MemoryRequirements max(const MemoryRequirements& b)
+		{
+			MemoryRequirements out;
+#define ANKI_MAX(member) out.member = anki::max(member, b.member)
+			ANKI_MAX(m_renderableInstanceCount);
+			ANKI_MAX(m_meshletGroupInstanceCount);
+			ANKI_MAX(m_meshletInstanceCount);
+#undef ANKI_MAX
+			return out;
+		}
+	};
+
 	class
 	{
 	public:
 		U64 m_frameIdx = kMaxU64;
-		U32 m_populateRenderGraphFrameCallCount = 0;
+		U32 m_populateRenderGraphCallCount = 0;
+		U32 m_populateRenderGraphMeshletRenderingCallCount = 0;
 
 		/// The more persistent memory there is the more passes will be able to run in parallel but the more memory is used.
 		Array<PersistentMemory, 4> m_persistentMem;
+		Array<PersistentMemoryMeshletRendering, 4> m_persistentMeshletRenderingMem; ///< See m_persistentMem.
+
+		Array<MemoryRequirements, U32(RenderingTechnique::kCount)> m_totalMemRequirements;
+
+		Array<WeakArray<InstanceRange>, U32(RenderingTechnique::kCount)> m_renderableInstanceRanges;
+		Array<WeakArray<InstanceRange>, U32(RenderingTechnique::kCount)> m_meshletGroupInstanceRanges;
+		Array<WeakArray<InstanceRange>, U32(RenderingTechnique::kCount)> m_meshletInstanceRanges;
 	} m_runCtx;
+
+	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
+
+	static void computeGpuVisibilityMemoryRequirements(RenderingTechnique t, MemoryRequirements& total, WeakArray<MemoryRequirements> perBucket);
 };
 
 /// @memberof GpuVisibilityNonRenderables

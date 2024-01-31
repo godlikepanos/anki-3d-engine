@@ -49,13 +49,11 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 		meshIn.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
 		meshIn.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
 		meshIn.m_viewportSize = getRenderer().getInternalResolution();
-		meshIn.m_taskShaderIndirectArgsBuffer = m_runCtx.m_visOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-		meshIn.m_taskShaderPayloadBuffer = m_runCtx.m_visOut.m_mesh.m_taskShaderPayloadBuffer;
-		meshIn.m_dependency = m_runCtx.m_visOut.m_dependency;
 		meshIn.m_rgraph = &rgraph;
 		meshIn.m_hzbRt = getRenderer().getGBuffer().getHzbRt();
+		meshIn.fillBuffers(m_runCtx.m_visOut);
 
-		getRenderer().getGpuMeshletVisibility().populateRenderGraph(meshIn, m_runCtx.m_meshVisOut);
+		getRenderer().getGpuVisibility().populateRenderGraph(meshIn, m_runCtx.m_meshVisOut);
 	}
 }
 
@@ -99,7 +97,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
 		args.m_renderingTechinuqe = RenderingTechnique::kForward;
 		args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
-		args.fillMdi(m_runCtx.m_visOut);
+		args.fill(m_runCtx.m_visOut);
 
 		if(m_runCtx.m_meshVisOut.isFilled())
 		{

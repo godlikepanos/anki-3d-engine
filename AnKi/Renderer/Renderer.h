@@ -110,11 +110,6 @@ public:
 		return m_visibility;
 	}
 
-	GpuMeshletVisibility& getGpuMeshletVisibility()
-	{
-		return m_visibilityMeshlets;
-	}
-
 	Bool runSoftwareMeshletRendering() const
 	{
 		return g_meshletRenderingCVar.get() && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
@@ -236,7 +231,6 @@ private:
 
 	RenderableDrawer m_sceneDrawer;
 	GpuVisibility m_visibility;
-	GpuMeshletVisibility m_visibilityMeshlets;
 	GpuVisibilityNonRenderables m_nonRenderablesVisibility;
 	GpuVisibilityAccelerationStructures m_asVisibility;
 	HzbGenerator m_hzbGenerator;
