@@ -17,6 +17,9 @@ namespace anki {
 /// @{
 
 extern BoolCVar g_tracingEnabledCVar;
+#if ANKI_OS_ANDROID
+extern BoolCVar g_streamlineEnabledCVar;
+#endif
 
 #if ANKI_TRACING_ENABLED
 

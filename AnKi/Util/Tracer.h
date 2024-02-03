@@ -72,7 +72,7 @@ public:
 
 	/// Begin a new event.
 	/// @note It's thread-safe.
-	[[nodiscard]] TracerEventHandle beginEvent();
+	[[nodiscard]] TracerEventHandle beginEvent(const char* eventName);
 
 	/// End the event that got started with beginEvent().
 	/// @note It's thread-safe.
@@ -97,9 +97,22 @@ public:
 
 	void setEnabled(Bool enabled)
 	{
-		ANKI_UTIL_LOGV("Tracing %s", (enabled) ? "enabled" : "disable");
+		ANKI_UTIL_LOGI("Tracing %s", (enabled) ? "enabled" : "disabled");
 		m_enabled = enabled;
 	}
+
+#	if ANKI_OS_ANDROID
+	Bool getStreamlineEnabled() const
+	{
+		return m_streamlineEnabled;
+	}
+
+	void setStreamlineEnabled(Bool enabled)
+	{
+		ANKI_UTIL_LOGI("Streamline annotations %s", (enabled) ? "enabled" : "disabled");
+		m_streamlineEnabled = enabled;
+	}
+#	endif
 
 private:
 	static constexpr U32 kEventsPerChunk = 256;
@@ -116,8 +129,9 @@ private:
 	Mutex m_allThreadLocalMtx;
 
 	Bool m_enabled = false;
+	Bool m_streamlineEnabled = false;
 
-	Tracer() = default;
+	Tracer();
 
 	~Tracer();
 
@@ -136,7 +150,7 @@ public:
 	TracerScopedEvent(const char* name)
 		: m_name(name)
 	{
-		m_handle = Tracer::getSingleton().beginEvent();
+		m_handle = Tracer::getSingleton().beginEvent(name);
 	}
 
 	~TracerScopedEvent()

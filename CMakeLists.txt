@@ -329,6 +329,7 @@ if(ANDROID)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
 	add_subdirectory(ThirdParty/HwcPipe)
+	add_subdirectory(ThirdParty/StreamlineAnnotate)
 endif()
 
 # DLSS

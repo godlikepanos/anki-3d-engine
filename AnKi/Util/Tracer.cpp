@@ -7,6 +7,9 @@
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/List.h>
+#if ANKI_OS_ANDROID
+#	include <ThirdParty/StreamlineAnnotate/streamline_annotate.h>
+#endif
 
 namespace anki {
 
@@ -33,6 +36,15 @@ public:
 };
 
 thread_local Tracer::ThreadLocal* Tracer::m_threadLocal = nullptr;
+
+Tracer::Tracer()
+{
+	setEnabled(false);
+#	if ANKI_OS_ANDROID
+	ANNOTATE_SETUP;
+	setStreamlineEnabled(false);
+#	endif
+}
 
 Tracer::~Tracer()
 {
@@ -80,13 +92,20 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 	return *out;
 }
 
-TracerEventHandle Tracer::beginEvent()
+TracerEventHandle Tracer::beginEvent(const char* eventName)
 {
 	TracerEventHandle out;
 
 	if(m_enabled)
 	{
 		out.m_start = HighRezTimer::getCurrentTime();
+
+#	if ANKI_OS_ANDROID
+		if(m_streamlineEnabled)
+		{
+			ANNOTATE_COLOR(ANNOTATE_RED, eventName);
+		}
+#	endif
 	}
 	else
 	{
@@ -98,7 +117,19 @@ TracerEventHandle Tracer::beginEvent()
 
 void Tracer::endEvent(const char* eventName, TracerEventHandle event)
 {
-	if(!m_enabled || event.m_start == 0.0)
+	if(!m_enabled)
+	{
+		return;
+	}
+
+#	if ANKI_OS_ANDROID
+	if(m_streamlineEnabled)
+	{
+		ANNOTATE_END();
+	}
+#	endif
+
+	if(event.m_start == 0.0)
 	{
 		return;
 	}
