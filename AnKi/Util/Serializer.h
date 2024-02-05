@@ -104,8 +104,8 @@ public:
 	}
 
 	/// Write an array of complex values. Can't call this directly.
-	template<typename T, ANKI_ENABLE(!_ANKI_SIMPLE_TYPE)>
-	void doArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	template<typename T>
+	void doArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size) requires(!_ANKI_SIMPLE_TYPE)
 	{
 		if(!m_err)
 		{
@@ -114,9 +114,9 @@ public:
 	}
 
 	/// Write an array of int or float types. Can't call this directly.
-	template<typename T, ANKI_ENABLE(_ANKI_SIMPLE_TYPE)>
+	template<typename T>
 	void doArray([[maybe_unused]] CString varName, [[maybe_unused]] PtrSize memberOffset, [[maybe_unused]] const T* arr,
-				 [[maybe_unused]] PtrSize size)
+				 [[maybe_unused]] PtrSize size) requires(_ANKI_SIMPLE_TYPE)
 	{
 		// Do nothing, it's already copied
 	}
@@ -129,8 +129,8 @@ public:
 	}
 
 	/// Write a dynamic array of complex types. Can't call this directly.
-	template<typename T, ANKI_ENABLE(!_ANKI_SIMPLE_TYPE)>
-	void doDynamicArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	template<typename T>
+	void doDynamicArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size) requires(!_ANKI_SIMPLE_TYPE)
 	{
 		if(!m_err)
 		{
@@ -139,8 +139,8 @@ public:
 	}
 
 	/// Write a dynamic array of int and float values. Can't call this directly.
-	template<typename T, ANKI_ENABLE(_ANKI_SIMPLE_TYPE)>
-	void doDynamicArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	template<typename T>
+	void doDynamicArray([[maybe_unused]] CString varName, PtrSize memberOffset, const T* arr, PtrSize size) requires(_ANKI_SIMPLE_TYPE)
 	{
 		if(!m_err)
 		{

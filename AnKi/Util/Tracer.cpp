@@ -92,7 +92,7 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 	return *out;
 }
 
-TracerEventHandle Tracer::beginEvent(const char* eventName)
+TracerEventHandle Tracer::beginEvent([[maybe_unused]] const char* eventName)
 {
 	TracerEventHandle out;
 

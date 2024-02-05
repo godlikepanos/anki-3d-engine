@@ -39,9 +39,11 @@ public:
 	static constexpr U kRowCount = kTRowCount; ///< Number of rows
 	static constexpr U kColumnCount = kTColumnCount; ///< Number of columns
 	static constexpr U kSize = kTRowCount * kTColumnCount; ///< Number of total elements
+
+	static constexpr Bool kIsSquare = kTColumnCount == kTRowCount;
 	static constexpr Bool kHasSimd = kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat4Simd = kTRowCount == 4 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
-	static constexpr Bool kHasMat3x4Simd = kTRowCount == 3 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kIs4x4Simd = kTRowCount == 4 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kIs3x4Simd = kTRowCount == 3 && kTColumnCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
 	/// @{
@@ -77,8 +79,7 @@ public:
 
 	// 3x3 specific constructors
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
-	constexpr TMat(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
+	constexpr TMat(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22) requires(kSize == 9)
 	{
 		auto& m = *this;
 		m(0, 0) = m00;
@@ -92,28 +93,25 @@ public:
 		m(2, 2) = m22;
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
-	explicit constexpr TMat(const TQuat<T>& q)
+	explicit constexpr TMat(const TQuat<T>& q) requires(kSize == 9)
 	{
 		setRotationPart(q);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
-	explicit constexpr TMat(const TEuler<T>& e)
+	explicit constexpr TMat(const TEuler<T>& e) requires(kSize == 9)
 	{
 		setRotationPart(e);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 3)
-	explicit constexpr TMat(const TAxisang<T>& axisang)
+	explicit constexpr TMat(const TAxisang<T>& axisang) requires(kSize == 9)
 	{
 		setRotationPart(axisang);
 	}
 
 	// 4x4 specific constructors
 
-	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
-	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33)
+	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31, T m32,
+				   T m33) requires(kSize == 16)
 	{
 		auto& m = *this;
 		m(0, 0) = m00;
@@ -134,8 +132,7 @@ public:
 		m(3, 3) = m33;
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
-	constexpr TMat(const TVec<T, 4>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
+	constexpr TMat(const TVec<T, 4>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1)) requires(kSize == 16)
 	{
 		if(isZero<T>(scale - T(1)))
 		{
@@ -152,15 +149,13 @@ public:
 		m(3, 0) = m(3, 1) = m(3, 2) = T(0);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
-	explicit constexpr TMat(const TTransform<T>& t)
+	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 16)
 		: TMat(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}
 
 	/// Set a 4x4 matrix using a 3x4 for the first 3 rows and a vec4 for the 4rth row.
-	ANKI_ENABLE_METHOD(kTRowCount == 4 && kTColumnCount == 4)
-	explicit constexpr TMat(const TMat<T, 3, 4>& m3, const TVec<T, 4>& row3)
+	explicit constexpr TMat(const TMat<T, 3, 4>& m3, const TVec<T, 4>& row3) requires(kSize == 16)
 	{
 		setRow(0, m3.getRow(0));
 		setRow(1, m3.getRow(1));
@@ -170,8 +165,7 @@ public:
 
 	// 3x4 specific constructors
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23)
+	constexpr TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23) requires(kSize == 12)
 	{
 		auto& m = *this;
 		m(0, 0) = m00;
@@ -188,8 +182,7 @@ public:
 		m(2, 3) = m23;
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	explicit constexpr TMat(const TMat<T, 4, 4>& m4)
+	explicit constexpr TMat(const TMat<T, 4, 4>& m4) requires(kSize == 12)
 	{
 		ANKI_ASSERT(m4(3, 0) == T(0) && m4(3, 1) == T(0) && m4(3, 2) == T(0) && m4(3, 3) == T(1));
 		m_rows[0] = m4.getRow(0);
@@ -197,8 +190,7 @@ public:
 		m_rows[2] = m4.getRow(2);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1)) requires(kSize == 12)
 	{
 		if(isZero<T>(scale - T(1)))
 		{
@@ -212,26 +204,22 @@ public:
 		setTranslationPart(translation);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const T scale = T(1)) requires(kSize == 12)
 		: TMat(translation, TMat<T, 3, 3>(q), scale)
 	{
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const T scale = T(1)) requires(kSize == 12)
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const T scale = T(1))
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const T scale = T(1)) requires(kSize == 12)
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	explicit constexpr TMat(const TTransform<T>& t)
+	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 12)
 		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}
@@ -311,8 +299,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasMat4Simd)
-	TMat operator*(const TMat& b) const
+	TMat operator*(const TMat& b) const requires(kIsSquare && !kIs4x4Simd)
 	{
 		TMat out;
 		const TMat& a = *this;
@@ -331,8 +318,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasMat4Simd)
-	TMat operator*(const TMat& b) const
+	TMat operator*(const TMat& b) const requires(kIs4x4Simd)
 	{
 		TMat out;
 		const auto& m = *this;
@@ -485,8 +471,7 @@ public:
 
 	/// @name Operators with other types
 	/// @{
-	ANKI_ENABLE_METHOD(!kHasSimd)
-	ColumnVec operator*(const RowVec& v) const
+	ColumnVec operator*(const RowVec& v) const requires(!kHasSimd)
 	{
 		const TMat& m = *this;
 		ColumnVec out;
@@ -503,8 +488,7 @@ public:
 	}
 
 #if ANKI_SIMD_SSE
-	ANKI_ENABLE_METHOD(kHasMat4Simd)
-	ColumnVec operator*(const RowVec& v) const
+	ColumnVec operator*(const RowVec& v) const requires(kIs4x4Simd)
 	{
 		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
 		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
@@ -517,8 +501,7 @@ public:
 		return RowVec(_mm_hadd_ps(a, c));
 	}
 
-	ANKI_ENABLE_METHOD(kHasMat3x4Simd)
-	ColumnVec operator*(const RowVec& v) const
+	ColumnVec operator*(const RowVec& v) const requires(kIs3x4Simd)
 	{
 		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
 		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
@@ -532,8 +515,7 @@ public:
 
 #else
 
-	ANKI_ENABLE_METHOD(kHasSimd)
-	ColumnVec operator*(const RowVec& v) const
+	ColumnVec operator*(const RowVec& v) const requires(kHasSimd)
 	{
 		ColumnVec out;
 		for(U i = 0; i < kTRowCount; i++)
@@ -559,8 +541,7 @@ public:
 		setRow(2, c);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount > 3)
-	void setRows(const RowVec& a, const RowVec& b, const RowVec& c, const RowVec& d)
+	void setRows(const RowVec& a, const RowVec& b, const RowVec& c, const RowVec& d) requires(kTRowCount > 3)
 	{
 		setRows(a, b, c);
 		setRow(3, d);
@@ -578,8 +559,7 @@ public:
 		c = getRow(2);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount > 3)
-	void getRows(RowVec& a, RowVec& b, RowVec& c, RowVec& d) const
+	void getRows(RowVec& a, RowVec& b, RowVec& c, RowVec& d) const requires(kTRowCount > 3)
 	{
 		getRows(a, b, c);
 		d = getRow(3);
@@ -600,8 +580,7 @@ public:
 		setColumn(2, c);
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount > 3)
-	void setColumns(const ColumnVec& a, const ColumnVec& b, const ColumnVec& c, const ColumnVec& d)
+	void setColumns(const ColumnVec& a, const ColumnVec& b, const ColumnVec& c, const ColumnVec& d) requires(kTColumnCount > 3)
 	{
 		setColumns(a, b, c);
 		setColumn(3, d);
@@ -624,8 +603,7 @@ public:
 		c = getColumn(2);
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount > 3)
-	void getColumns(ColumnVec& a, ColumnVec& b, ColumnVec& c, ColumnVec& d) const
+	void getColumns(ColumnVec& a, ColumnVec& b, ColumnVec& c, ColumnVec& d) const requires(kTColumnCount > 3)
 	{
 		getColumns(a, b, c);
 		d = getColumn(3);
@@ -938,8 +916,7 @@ public:
 		setColumns(xAxis, yAxis, zAxis);
 	}
 
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && !kHasSimd)
-	void transpose()
+	void transpose() requires(kIsSquare && !kHasSimd)
 	{
 		for(U j = 0; j < kTRowCount; j++)
 		{
@@ -953,8 +930,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kTRowCount == kTColumnCount && kHasSimd)
-	void transpose()
+	void transpose() requires(kIsSquare&& kHasSimd)
 	{
 #	if ANKI_SIMD_SSE
 		_MM_TRANSPOSE4_PS(m_simd[0], m_simd[1], m_simd[2], m_simd[3]);
@@ -982,8 +958,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount == kTRowCount)
-	TMat getTransposed() const
+	TMat getTransposed() const requires(kIsSquare)
 	{
 		TMat out;
 		for(U j = 0; j < kTRowCount; j++)
@@ -996,8 +971,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount == 3 && kTRowCount == 3)
-	T getDet() const
+	T getDet() const requires(kSize == 9)
 	{
 		const auto& m = *this;
 		// For the accurate method see < r664
@@ -1005,8 +979,7 @@ public:
 			   + m(0, 2) * (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	T getDet() const
+	T getDet() const requires(kSize == 16)
 	{
 		const auto& t = *this;
 		return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0) - t(0, 2) * t(1, 3) * t(2, 1) * t(3, 0) - t(0, 3) * t(1, 1) * t(2, 2) * t(3, 0)
@@ -1019,8 +992,7 @@ public:
 			   - t(0, 0) * t(1, 2) * t(2, 1) * t(3, 3) - t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) + t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount == 3 && kTRowCount == 3)
-	TMat getInverse() const
+	TMat getInverse() const requires(kSize == 9)
 	{
 		// Using Gramer's method Inv(A) = (1 / getDet(A)) * Adj(A)
 		const TMat& m = *this;
@@ -1052,8 +1024,7 @@ public:
 	}
 
 	/// Invert using Cramer's rule
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	TMat getInverse() const
+	TMat getInverse() const requires(kSize == 16)
 	{
 		Array<T, 12> tmp;
 		const auto& in = (*this);
@@ -1128,15 +1099,13 @@ public:
 	}
 
 	/// See getInverse
-	ANKI_ENABLE_METHOD((kTColumnCount == 4 && kTRowCount == 4) || (kTColumnCount == 3 && kTRowCount == 3))
-	void invert()
+	void invert() requires(kSize == 16 || kSize == 9)
 	{
 		(*this) = getInverse();
 	}
 
 	/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching the 4rth row and allot faster
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	static TMat combineTransformations(const TMat& m0, const TMat& m1)
+	static TMat combineTransformations(const TMat& m0, const TMat& m1) requires(kSize == 16)
 	{
 		// See the clean code in < r664
 
@@ -1168,8 +1137,7 @@ public:
 	}
 
 	/// Create a new matrix that is equivalent to Mat4(this)*Mat4(b)
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && !kHasSimd)
-	TMat combineTransformations(const TMat& b) const
+	[[nodiscard]] TMat combineTransformations(const TMat& b) const requires(kSize == 12 && !kHasSimd)
 	{
 		const auto& a = *this;
 		TMat c;
@@ -1194,8 +1162,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4 && kHasSimd)
-	TMat combineTransformations(const TMat& b) const
+	[[nodiscard]] TMat combineTransformations(const TMat& b) const requires(kSize == 12 && kHasSimd)
 	{
 		TMat c;
 		const auto& a = *this;
@@ -1241,8 +1208,7 @@ public:
 
 	/// Calculate a perspective projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	/// Same as D3DXMatrixPerspectiveFovRH
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	[[nodiscard]] static TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
+	[[nodiscard]] static TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far) requires(kSize == 16)
 	{
 		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
 		const T g = near - far;
@@ -1271,8 +1237,7 @@ public:
 
 	/// Calculate an orthographic projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	/// Same as D3DXMatrixOrthoOffCenterRH.
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	[[nodiscard]] static TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
+	[[nodiscard]] static TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far) requires(kSize == 16)
 	{
 		ANKI_ASSERT(right != T(0) && left != T(0) && top != T(0) && bottom != T(0) && near != T(0) && far != T(0));
 		const T difx = right - left;
@@ -1310,8 +1275,7 @@ public:
 	/// Vec2 xy = ndc.xy() * unprojParams.xy() * z;
 	/// Vec3 posViewSpace(xy, z);
 	/// @endcode
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	static TVec<T, 4> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far)
+	static TVec<T, 4> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far) requires(kSize == 16)
 	{
 		TVec<T, 4> out;
 		const T g = near - far;
@@ -1342,8 +1306,7 @@ public:
 	}
 
 	/// Assuming this is a projection matrix extract the unprojection parameters. See calculatePerspectiveUnprojectionParams for more info.
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	TVec<T, 4> extractPerspectiveUnprojectionParams() const
+	TVec<T, 4> extractPerspectiveUnprojectionParams() const requires(kSize == 16)
 	{
 		TVec<T, 4> out;
 		const auto& m = *this;
@@ -1355,8 +1318,7 @@ public:
 	}
 
 	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	TMat getInverseTransformation() const
+	TMat getInverseTransformation() const requires(kSize == 16)
 	{
 		const TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
 		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
@@ -1365,8 +1327,7 @@ public:
 	}
 
 	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	ANKI_ENABLE_METHOD(kTRowCount == 3 && kTColumnCount == 4)
-	TMat getInverseTransformation() const
+	TMat getInverseTransformation() const requires(kSize == 12)
 	{
 		const TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
 		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
@@ -1375,8 +1336,7 @@ public:
 	}
 
 	/// @note 9 muls, 9 adds
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	TVec<T, 3> transform(const TVec<T, 3>& v) const
+	TVec<T, 3> transform(const TVec<T, 3>& v) const requires(kSize == 16)
 	{
 		const auto& m = *this;
 		return TVec<T, 3>(m(0, 0) * v.x() + m(0, 1) * v.y() + m(0, 2) * v.z() + m(0, 3),
@@ -1385,8 +1345,9 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)>
-	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint, const TVec<T, kVecDimensions>& up)
+	template<U kVecDimensions>
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+					   const TVec<T, kVecDimensions>& up) requires(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)
 	{
 		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).getNormalized();
 		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).getNormalized();
@@ -1397,8 +1358,9 @@ public:
 	}
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
-	template<U kVecDimensions, ANKI_ENABLE(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)>
-	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint, const TVec<T, kVecDimensions>& up)
+	template<U kVecDimensions>
+	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+					   const TVec<T, kVecDimensions>& up) requires(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)
 	{
 		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).getNormalized();
 		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).getNormalized();
@@ -1423,20 +1385,17 @@ public:
 		*this = getZero();
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount == 3 && kTRowCount == 3)
-	static TMat getIdentity()
+	static TMat getIdentity() requires(kSize == 9)
 	{
 		return TMat(T(1), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(1));
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 4)
-	static TMat getIdentity()
+	static TMat getIdentity() requires(kSize == 16)
 	{
 		return TMat(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1));
 	}
 
-	ANKI_ENABLE_METHOD(kTColumnCount == 4 && kTRowCount == 3)
-	static TMat getIdentity()
+	static TMat getIdentity() requires(kSize == 12)
 	{
 		return TMat(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1), T(0));
 	}
@@ -1451,8 +1410,7 @@ public:
 		return U8(kTColumnCount * kTRowCount);
 	}
 
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	String toString() const
+	String toString() const requires(std::is_floating_point<T>::value)
 	{
 		String str;
 		for(U j = 0; j < kTRowCount; ++j)

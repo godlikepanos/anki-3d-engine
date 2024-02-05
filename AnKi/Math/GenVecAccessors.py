@@ -27,13 +27,10 @@ def gen_accessors():
 				for c in range(0, 4 if vec_components > 2 else 1):
 					for d in range(0, 4 if vec_components > 3 else 1):
 						arr = [a, b, c, d]
-
-						# Enable it
 						max_comp = max(max(max(a, b), c), d)
-						h += "\n\tANKI_ENABLE_IF_EXPRESSION(N > " + str(max_comp) + ")\n"
 
 						# Return value
-						h += "\t"
+						h += "\n\t"
 						if vec_components == 1:
 							h += scalar + " "
 						else:
@@ -45,9 +42,12 @@ def gen_accessors():
 						for i in range(0, vec_components):
 							method_name += index_to_component(arr[i])
 						h += method_name
+						h += "() const"
+
+						# requires
+						h += " requires(kTComponentCount > " + str(max_comp) + ")\n"
 
 						# Write the body
-						h += "() const\n"
 						h += "\t{\n"
 						h += "\t\treturn " + gen_vec_class_name(vec_components) + "("
 						for i in range(0, vec_components):

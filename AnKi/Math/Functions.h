@@ -66,14 +66,14 @@ inline T atan2(const T x, const T y)
 void sinCos(const F32 a, F32& sina, F32& cosa);
 void sinCos(const F64 a, F64& sina, F64& cosa);
 
-template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-inline T sqrt(const T x)
+template<typename T>
+inline T sqrt(const T x) requires(std::is_floating_point<T>::value)
 {
 	return std::sqrt(x);
 }
 
-template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
-inline T sqrt(const T x)
+template<typename T>
+inline T sqrt(const T x) requires(std::is_integral<T>::value)
 {
 	return T(std::sqrt(F64(x)));
 }
@@ -105,15 +105,15 @@ inline T modf(T x, T& intPart)
 }
 
 /// The same as abs/fabs. For ints.
-template<typename T, ANKI_ENABLE(std::is_integral<T>::value&& std::is_signed<T>::value)>
-inline constexpr T absolute(const T f)
+template<typename T>
+inline constexpr T absolute(const T f) requires(std::is_integral<T>::value&& std::is_signed<T>::value)
 {
 	return (f < T(0)) ? -f : f;
 }
 
 /// The same as abs/fabs. For floats.
-template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-inline constexpr T absolute(const T f)
+template<typename T>
+inline constexpr T absolute(const T f) requires(std::is_floating_point<T>::value)
 {
 	return fabs(f);
 }
@@ -130,20 +130,20 @@ inline constexpr T log2(const T x)
 	return T(std::log2(x));
 }
 
-template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-inline constexpr Bool isZero(const T f, const T e = kEpsilonf)
+template<typename T>
+inline constexpr Bool isZero(const T f, const T e = kEpsilonf) requires(std::is_floating_point<T>::value)
 {
 	return absolute<T>(f) < e;
 }
 
-template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
-inline constexpr Bool isZero(const T f)
+template<typename T>
+inline constexpr Bool isZero(const T f) requires(std::is_integral<T>::value)
 {
 	return f == 0;
 }
 
-template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-inline constexpr T toRad(const T degrees)
+template<typename T>
+inline constexpr T toRad(const T degrees) requires(std::is_floating_point<T>::value)
 {
 	return degrees * (kPi / T(180));
 }

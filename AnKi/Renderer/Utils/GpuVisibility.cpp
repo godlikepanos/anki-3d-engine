@@ -560,9 +560,8 @@ void GpuVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshle
 	pass.newBufferDependency(mem.m_bufferDepedency, BufferUsageBit::kUavComputeWrite);
 	pass.newBufferDependency(in.m_dependency, BufferUsageBit::kIndirectCompute);
 
-	pass.setWork([this, technique = in.m_technique, hzbRt = in.m_hzbRt, viewProjMat = in.m_viewProjectionMatrix, camTrf = in.m_cameraTransform,
-				  viewportSize = in.m_viewportSize, computeIndirectArgs = in.m_taskShaderIndirectArgsBuffer, out,
-				  meshletGroupInstancesBuffer = in.m_meshletGroupInstancesBuffer,
+	pass.setWork([this, hzbRt = in.m_hzbRt, viewProjMat = in.m_viewProjectionMatrix, camTrf = in.m_cameraTransform, viewportSize = in.m_viewportSize,
+				  computeIndirectArgs = in.m_taskShaderIndirectArgsBuffer, out, meshletGroupInstancesBuffer = in.m_meshletGroupInstancesBuffer,
 				  bucketMeshletGroupInstanceRanges = in.m_bucketMeshletGroupInstanceRanges](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 

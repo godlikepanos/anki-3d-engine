@@ -32,16 +32,16 @@ public:
 	Value m_data[kSize];
 
 	/// Access an element using an integer.
-	template<typename TInt, ANKI_ENABLE(!std::is_enum<TInt>::value)>
-	constexpr Reference operator[](const TInt n)
+	template<typename TInt>
+	constexpr Reference operator[](const TInt n) requires(!std::is_enum<TInt>::value)
 	{
 		ANKI_ASSERT(PtrSize(n) < kSize);
 		return m_data[n];
 	}
 
 	/// Access an element using an integer.
-	template<typename TInt, ANKI_ENABLE(!std::is_enum<TInt>::value)>
-	constexpr ConstReference operator[](const TInt n) const
+	template<typename TInt>
+	constexpr ConstReference operator[](const TInt n) const requires(!std::is_enum<TInt>::value)
 	{
 		ANKI_ASSERT(PtrSize(n) < kSize);
 		return m_data[n];
@@ -49,16 +49,16 @@ public:
 
 	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts integer. This to avoid any short of
 	/// arbitrary integer type casting.
-	template<typename TEnum, ANKI_ENABLE(std::is_enum<TEnum>::value)>
-	constexpr Reference operator[](const TEnum n)
+	template<typename TEnum>
+	constexpr Reference operator[](const TEnum n) requires(std::is_enum<TEnum>::value)
 	{
 		return operator[](typename std::underlying_type<TEnum>::type(n));
 	}
 
 	/// Access an element using an enumerant. It's a little bit special and separate from operator[] that accepts integer. This to avoid any short of
 	/// arbitrary integer type casting.
-	template<typename TEnum, ANKI_ENABLE(std::is_enum<TEnum>::value)>
-	constexpr ConstReference operator[](const TEnum n) const
+	template<typename TEnum>
+	constexpr ConstReference operator[](const TEnum n) const requires(std::is_enum<TEnum>::value)
 	{
 		return operator[](typename std::underlying_type<TEnum>::type(n));
 	}
@@ -153,8 +153,7 @@ public:
 
 	// Get size
 #define ANKI_ARRAY_SIZE_METHOD(type, condition) \
-	ANKI_ENABLE_METHOD(condition) \
-	static constexpr type getSize() \
+	static constexpr type getSize() requires(condition) \
 	{ \
 		return type(kSize); \
 	}
@@ -193,8 +192,7 @@ public:
 
 	// Get size in bytes
 #define ANKI_ARRAY_SIZE_IN_BYTES_METHOD(type, condition) \
-	ANKI_ENABLE_METHOD(condition) \
-	static constexpr type getSizeInBytes() \
+	static constexpr type getSizeInBytes() requires(condition) \
 	{ \
 		return type(kSize * sizeof(Value)); \
 	}

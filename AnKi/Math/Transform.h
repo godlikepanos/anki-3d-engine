@@ -226,8 +226,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	[[nodiscard]] String toString() const
+	[[nodiscard]] String toString() const requires(std::is_floating_point<T>::value)
 	{
 		String str;
 		String b = m_origin.toString();
