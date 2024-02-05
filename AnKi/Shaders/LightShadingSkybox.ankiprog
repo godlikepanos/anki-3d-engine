@@ -46,8 +46,15 @@ struct Constants
 struct Constants
 {
 	Mat4 m_invertedViewProjectionJitterMat;
+
 	Vec3 m_cameraPos;
 	F32 m_padding;
+
+	Vec3 m_scale;
+	F32 m_padding1;
+
+	Vec3 m_bias;
+	F32 m_padding2;
 };
 
 [[vk::push_constant]] ConstantBuffer<Constants> g_consts;
@@ -76,7 +83,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	const F32 bias = (maxD > 0.9) ? -100.0f : 0.0f;
 
-	return g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb;
+	return g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb * g_consts.m_scale + g_consts.m_bias;
 #endif
 }
 

@@ -367,6 +367,16 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>F32</arg>
 					</args>
 				</method>
+				<method name="setImageBias">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="setImageScale">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
 			</methods>
 		</class>
 

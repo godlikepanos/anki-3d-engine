@@ -167,12 +167,21 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			{
 			public:
 				Mat4 m_invertedViewProjectionJitter;
+
 				Vec3 m_cameraPos;
 				F32 m_padding = 0.0;
+
+				Vec3 m_scale;
+				F32 m_padding1;
+
+				Vec3 m_bias;
+				F32 m_padding2;
 			} pc;
 
 			pc.m_invertedViewProjectionJitter = ctx.m_matrices.m_invertedViewProjectionJitter;
 			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			pc.m_scale = sky->getImageScale();
+			pc.m_bias = sky->getImageBias();
 
 			cmdb.setPushConstants(&pc, sizeof(pc));
 

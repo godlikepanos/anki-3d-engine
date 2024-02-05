@@ -73,6 +73,8 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		unis.m_solidColor = (isSolidColor) ? skyc->getSolidColor() : Vec3(0.0f);
 		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
 		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
+		unis.m_scale = skyc->getImageScale();
+		unis.m_bias = skyc->getImageBias();
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
 		drawQuad(cmdb);

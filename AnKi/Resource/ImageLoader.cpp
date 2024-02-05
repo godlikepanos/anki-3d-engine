@@ -404,8 +404,7 @@ Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBin
 		return Error::kUserData;
 	}
 
-	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0 || !isPowerOfTwo(header.m_height)
-	   || header.m_height > 4096)
+	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_height == 0 || !isPowerOfTwo(header.m_height))
 	{
 		ANKI_RESOURCE_LOGE("Incorrect width/height value");
 		return Error::kUserData;

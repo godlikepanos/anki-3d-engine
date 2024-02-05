@@ -44,7 +44,7 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
 
 	const Vec2 uv2 = equirectangularMapping(eyeToFrag);
-	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb;
+	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_consts.m_scale + g_consts.m_bias;
 #endif
 }
 

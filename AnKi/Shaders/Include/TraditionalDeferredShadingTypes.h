@@ -43,6 +43,12 @@ struct TraditionalDeferredSkyboxConstants
 
 	Vec3 m_cameraPos;
 	F32 m_padding2;
+
+	Vec3 m_scale;
+	F32 m_padding3;
+
+	Vec3 m_bias;
+	F32 m_padding4;
 };
 
 ANKI_END_NAMESPACE
