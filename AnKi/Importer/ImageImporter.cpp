@@ -1072,7 +1072,7 @@ Error importImage(const ImageImporterConfig& config)
 	const Error err = importImageInternal(config);
 	if(err)
 	{
-		ANKI_IMPORTER_LOGE("Image importing failed");
+		ANKI_IMPORTER_LOGE("Image importing failed: %s", config.m_inputFilenames[0].cstr());
 		return err;
 	}
 

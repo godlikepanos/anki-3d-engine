@@ -149,6 +149,109 @@ static Bool stringsExist(const ImporterHashMap<CString, ImporterString>& map, co
 	return false;
 }
 
+static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CString name, F32& val, Bool& found)
+{
+	found = false;
+	ImporterHashMap<CString, ImporterString>::ConstIterator it = extras.find(name);
+
+	if(it != extras.getEnd())
+	{
+		const Error err = it->toNumber(val);
+		if(err)
+		{
+			ANKI_IMPORTER_LOGE("Failed to parse %s with value: %s", name.cstr(), it->cstr());
+			return err;
+		}
+
+		found = true;
+	}
+
+	return Error::kNone;
+}
+
+static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CString name, ImporterString& val, Bool& found)
+{
+	found = false;
+	ImporterHashMap<CString, ImporterString>::ConstIterator it = extras.find(name);
+
+	if(it != extras.getEnd())
+	{
+		val = *it;
+		found = true;
+	}
+
+	return Error::kNone;
+}
+
+static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CString name, Bool& val, Bool& found)
+{
+	found = false;
+	ImporterHashMap<CString, ImporterString>::ConstIterator it = extras.find(name);
+
+	if(it != extras.getEnd())
+	{
+		if(*it == "true")
+		{
+			val = true;
+		}
+		else if(*it == "false")
+		{
+			val = false;
+		}
+		else
+		{
+			U32 valu;
+			const Error err = it->toNumber(valu);
+			if(err || valu != 0 || valu != 1)
+			{
+				ANKI_IMPORTER_LOGE("Failed to parse %s with value: %s", name.cstr(), it->cstr());
+				return err;
+			}
+
+			val = valu != 0;
+		}
+
+		found = true;
+	}
+
+	return Error::kNone;
+}
+
+static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CString name, Vec3& val, Bool& found)
+{
+	found = false;
+	ImporterHashMap<CString, ImporterString>::ConstIterator it = extras.find(name);
+
+	if(it != extras.getEnd())
+	{
+		ImporterStringList tokens;
+		tokens.splitString(*it, ' ');
+		if(tokens.getSize() != 3)
+		{
+			ANKI_IMPORTER_LOGE("Error parsing %s with value: %s", name.cstr(), it->cstr());
+			return Error::kUserData;
+		}
+
+		U count = 0;
+		for(auto& token : tokens)
+		{
+			F32 f;
+			const Error err = token.toNumber(f);
+			if(err)
+			{
+				ANKI_IMPORTER_LOGE("Error parsing %s with value: %s", name.cstr(), it->cstr());
+				return Error::kUserData;
+			}
+
+			val[count++] = f;
+		}
+
+		found = true;
+	}
+
+	return Error::kNone;
+}
+
 GltfImporter::GltfImporter()
 {
 }
@@ -553,16 +656,20 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		ANKI_CHECK(appendExtras(node.extras, extras));
 		appendExtrasMap(parentExtras, extras);
 
-		ImporterHashMap<CString, ImporterString>::Iterator it;
+		ImporterString extraValueStr;
+		Bool extraValueBool = false;
+		Vec3 extraValueVec3;
+		F32 extraValuef = 0.0f;
+		Bool extraFound = false;
 
-		if((it = extras.find("particles")) != extras.getEnd())
+		ANKI_CHECK(getExtra(extras, "particles", extraValueStr, extraFound));
+		if(extraFound)
 		{
-			const ImporterString& fname = *it;
-
 			Bool gpuParticles = false;
-			if((it = extras.find("gpu_particles")) != extras.getEnd() && *it == "true")
+			ANKI_CHECK(getExtra(extras, "particles", extraValueBool, extraFound));
+			if(extraFound)
 			{
-				gpuParticles = true;
+				gpuParticles = extraValueBool;
 			}
 
 			if(!gpuParticles) // TODO Re-enable GPU particles
@@ -570,7 +677,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
 				ANKI_CHECK(m_sceneFile.writeTextf("comp = node:newParticleEmitterComponent()\n"));
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadParticleEmitterResource(\"%s\")\n", fname.cstr()));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadParticleEmitterResource(\"%s\")\n", extraValueStr.cstr()));
 
 				Transform localTrf;
 				ANKI_CHECK(getNodeTransform(node, localTrf));
@@ -578,78 +685,69 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			}
 		}
 		else if(stringsExist(extras, {"skybox_solid_color", "skybox_image", "fog_min_density", "fog_max_density", "fog_height_of_min_density",
-									  "fog_height_of_max_density"}))
+									  "fog_height_of_max_density", "fog_diffuse_color"}))
 		{
 			// Atmosphere
 
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newSkyboxComponent()\n"));
 
-			if((it = extras.find("skybox_solid_color")) != extras.getEnd())
+			ANKI_CHECK(getExtra(extras, "skybox_solid_color", extraValueVec3, extraFound));
+			if(extraFound)
 			{
-				ImporterStringList tokens;
-				tokens.splitString(*it, ' ');
-				if(tokens.getSize() != 3)
-				{
-					ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
-					return Error::kUserData;
-				}
-
-				U count = 0;
-				Vec3 solidColor(0.0f);
-				for(auto& it : tokens)
-				{
-					F32 f;
-					const Error err = it.toNumber(f);
-					if(err)
-					{
-						ANKI_IMPORTER_LOGE("Error parsing \"skybox_solid_color\" of node %s", getNodeName(node).cstr());
-						return Error::kUserData;
-					}
-
-					solidColor[count++] = f;
-				}
-
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", solidColor.x(), solidColor.y(), solidColor.z()));
-			}
-			else if((it = extras.find("skybox_image")) != extras.getEnd())
-			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadImageResource(\"%s\")\n", it->cstr()));
+				ANKI_CHECK(
+					m_sceneFile.writeTextf("comp:setSolidColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x(), extraValueVec3.y(), extraValueVec3.z()));
 			}
 
-			if((it = extras.find("fog_min_density")) != extras.getEnd())
+			ANKI_CHECK(getExtra(extras, "skybox_image", extraValueStr, extraFound));
+			if(extraFound)
 			{
-				F32 val;
-				ANKI_CHECK(it->toNumber(val));
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setMinFogDensity(\"%f\")\n", val));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadImageResource(\"%s\")\n", extraValueStr.cstr()));
 			}
 
-			if((it = extras.find("fog_max_density")) != extras.getEnd())
+			ANKI_CHECK(getExtra(extras, "skybox_image_scale", extraValueVec3, extraFound));
+			if(extraFound)
 			{
-				F32 val;
-				ANKI_CHECK(it->toNumber(val));
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setMaxFogDensity(\"%f\")\n", val));
+				ANKI_CHECK(
+					m_sceneFile.writeTextf("comp:setImageScale(Vec3.new(%f, %f, %f))\n", extraValueVec3.x(), extraValueVec3.y(), extraValueVec3.z()));
 			}
 
-			if((it = extras.find("fog_height_of_min_density")) != extras.getEnd())
+			ANKI_CHECK(getExtra(extras, "fog_min_density", extraValuef, extraFound));
+			if(extraFound)
 			{
-				F32 val;
-				ANKI_CHECK(it->toNumber(val));
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setHeightOfMinFogDensity(\"%f\")\n", val));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setMinFogDensity(%f)\n", extraValuef));
 			}
 
-			if((it = extras.find("fog_height_of_max_density")) != extras.getEnd())
+			ANKI_CHECK(getExtra(extras, "fog_max_density", extraValuef, extraFound));
+			if(extraFound)
 			{
-				F32 val;
-				ANKI_CHECK(it->toNumber(val));
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setHeightOfMaxFogDensity(\"%f\")\n", val));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setMaxFogDensity(%f)\n", extraValuef));
+			}
+
+			ANKI_CHECK(getExtra(extras, "fog_height_of_min_density", extraValuef, extraFound));
+			if(extraFound)
+			{
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setHeightOfMinFogDensity(%f)\n", extraValuef));
+			}
+
+			ANKI_CHECK(getExtra(extras, "fog_height_of_max_density", extraValuef, extraFound));
+			if(extraFound)
+			{
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setHeightOfMaxFogDensity(%f)\n", extraValuef));
+			}
+
+			ANKI_CHECK(getExtra(extras, "fog_diffuse_color", extraValueVec3, extraFound));
+			if(extraFound)
+			{
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setFogDiffuseColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x(), extraValueVec3.y(),
+												  extraValueVec3.z()));
 			}
 
 			Transform localTrf;
 			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("collision")) != extras.getEnd() && (*it == "true" || *it == "1"))
+		else if(stringsExist(extras, {"collision"}))
 		{
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
@@ -661,7 +759,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("reflection_probe")) != extras.getEnd() && (*it == "true" || *it == "1"))
+		else if(stringsExist(extras, {"reflection_probe"}))
 		{
 			Vec3 tsl;
 			Mat3 rot;
@@ -678,7 +776,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("gi_probe")) != extras.getEnd() && (*it == "true" || *it == "1"))
+		else if(stringsExist(extras, {"gi_probe"}))
 		{
 			Vec3 tsl;
 			Mat3 rot;
@@ -687,84 +785,46 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			const Vec3 boxSize = scale * 2.0f;
 
-			F32 fadeDistance = -1.0f;
-			if((it = extras.find("gi_probe_fade_distance")) != extras.getEnd())
-			{
-				ANKI_CHECK(it->toNumber(fadeDistance));
-			}
-
-			F32 cellSize = -1.0f;
-			if((it = extras.find("gi_probe_cell_size")) != extras.getEnd())
-			{
-				ANKI_CHECK(it->toNumber(cellSize));
-			}
-
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newGlobalIlluminationProbeComponent()\n"));
 			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(), boxSize.z()));
 
-			if(fadeDistance > 0.0f)
+			ANKI_CHECK(getExtra(extras, "gi_probe_fade_distance", extraValuef, extraFound));
+			if(extraFound && extraValuef > 0.0f)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setFadeDistance(%f)\n", fadeDistance));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setFadeDistance(%f)\n", extraValuef));
 			}
 
-			if(cellSize > 0.0f)
+			ANKI_CHECK(getExtra(extras, "gi_probe_cell_size", extraValuef, extraFound));
+			if(extraFound && extraValuef > 0.0f)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:setCellSize(%f)\n", cellSize));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setCellSize(%f)\n", extraValuef));
 			}
 
 			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
-		else if((it = extras.find("decal")) != extras.getEnd() && (*it == "true" || *it == "1"))
+		else if(stringsExist(extras, {"decal"}))
 		{
-			ImporterString diffuseAtlas;
-			if((it = extras.find("decal_diffuse_atlas")) != extras.getEnd())
-			{
-				diffuseAtlas = *it;
-			}
-
-			ImporterString diffuseSubtexture;
-			if((it = extras.find("decal_diffuse_sub_texture")) != extras.getEnd())
-			{
-				diffuseSubtexture = *it;
-			}
-
-			F32 diffuseFactor = -1.0f;
-			if((it = extras.find("decal_diffuse_factor")) != extras.getEnd())
-			{
-				ANKI_CHECK(it->toNumber(diffuseFactor));
-			}
-
-			ImporterString specularRougnessMetallicAtlas;
-			if((it = extras.find("decal_specular_roughness_metallic_atlas")) != extras.getEnd())
-			{
-				specularRougnessMetallicAtlas = *it;
-			}
-
-			ImporterString specularRougnessMetallicSubtexture;
-			if((it = extras.find("decal_specular_roughness_metallic_sub_texture")) != extras.getEnd())
-			{
-				specularRougnessMetallicSubtexture = *it;
-			}
-
-			F32 specularRougnessMetallicFactor = -1.0f;
-			if((it = extras.find("decal_specular_roughness_metallic_factor")) != extras.getEnd())
-			{
-				ANKI_CHECK(it->toNumber(specularRougnessMetallicFactor));
-			}
-
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newDecalComponent()\n"));
-			if(diffuseAtlas)
+
+			ANKI_CHECK(getExtra(extras, "decal_diffuse_atlas", extraValueStr, extraFound));
+			if(extraFound)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", diffuseAtlas.cstr(), diffuseFactor));
+				ANKI_CHECK(getExtra(extras, "decal_diffuse_factor", extraValuef, extraFound));
+
+				ANKI_CHECK(
+					m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", extraValueStr.cstr(), (extraFound) ? extraValuef : -1.0f));
 			}
 
-			if(specularRougnessMetallicAtlas)
+			ANKI_CHECK(getExtra(extras, "decal_diffuse_sub_texture", extraValueStr, extraFound));
+			if(extraFound)
 			{
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadRoughnessMetallnessTexture(\"%s\", %f)\n", specularRougnessMetallicAtlas.cstr(),
-												  specularRougnessMetallicFactor));
+				ANKI_CHECK(getExtra(extras, "decal_specular_roughness_metallic_factor", extraValuef, extraFound));
+
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadRoughnessMetallnessTexture(\"%s\", %f)\n", extraValueStr.cstr(),
+												  (extraFound) ? extraValuef : -1.0f));
 			}
 
 			Vec3 tsl;
@@ -778,7 +838,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		{
 			// Model node
 
-			const Bool skipRt = (it = extras.find("no_rt")) != extras.getEnd() && (*it == "true" || *it == "1");
+			ANKI_CHECK(getExtra(extras, "no_rt", extraValueBool, extraFound));
+			const Bool skipRt = (extraFound) ? extraValueBool : false;
 
 			Transform localTrf;
 			const Error err = getNodeTransform(node, localTrf);
