@@ -113,6 +113,10 @@ struct VertOut
 	RVec3 m_normal : NORMAL;
 #endif
 
+#if VISUALIZE_MESHLETS
+	nointerpolation U32 m_meshletIndex : MESHLET_INDEX;
+#endif
+
 	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
 };
 
@@ -260,6 +264,11 @@ VertOut main(VertIn input)
 	const U32 constantsOffset = instance.m_constantsOffset;
 	const U32 worldTransformsOffset = instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit >> 7u;
 	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
+
+#		if VISUALIZE_MESHLETS
+	output.m_meshletIndex = instance.m_meshletGeometryDescriptorIndex;
+#		endif
+
 #	else
 	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
@@ -655,8 +664,12 @@ FragOut main(
 	g.m_metallic = metallic;
 	g.m_velocity = velocity;
 
-#		if VISUALIZE_MESHLETS && ANKI_TECHNIQUE_GBufferMeshShaders
+#		if VISUALIZE_MESHLETS && (ANKI_TECHNIQUE_GBufferMeshShaders || ANKI_TECHNIQUE_GBufferSwMeshletRendering)
+#			if ANKI_TECHNIQUE_GBufferMeshShaders
 	const U32 meshletIdx = primInput.m_meshletIndex % 6u;
+#			else
+	const U32 meshletIdx = vertInput.m_meshletIndex % 6u;
+#			endif
 	switch(meshletIdx)
 	{
 	case 0:
