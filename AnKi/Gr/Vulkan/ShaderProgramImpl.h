@@ -7,6 +7,7 @@
 
 #include <AnKi/Gr/ShaderProgram.h>
 #include <AnKi/Gr/Vulkan/PipelineLayout.h>
+#include <AnKi/Gr/Vulkan/DescriptorSet.h>
 
 namespace anki {
 
@@ -56,10 +57,10 @@ public:
 		return m_pplineLayout;
 	}
 
-	const DescriptorSetLayout& getDescriptorSetLayout(U32 set) const
+	const DSLayout& getDescriptorSetLayout(U32 set) const
 	{
-		ANKI_ASSERT(m_descriptorSetLayouts[set].isCreated());
-		return m_descriptorSetLayouts[set];
+		ANKI_ASSERT(m_descriptorSetLayouts[set]);
+		return *m_descriptorSetLayouts[set];
 	}
 
 	const ShaderProgramReflectionInfo& getReflectionInfo() const
@@ -113,7 +114,7 @@ private:
 	GrDynamicArray<ShaderPtr> m_shaders;
 
 	PipelineLayout m_pplineLayout = {};
-	Array<DescriptorSetLayout, kMaxDescriptorSets> m_descriptorSetLayouts;
+	Array<const DSLayout*, kMaxDescriptorSets> m_descriptorSetLayouts = {};
 
 	ShaderProgramReflectionInfo m_refl;
 

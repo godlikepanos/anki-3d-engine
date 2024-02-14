@@ -26,7 +26,7 @@ public:
 
 	Error init(const AccelerationStructureInitInfo& inf);
 
-	VkAccelerationStructureKHR getHandle() const
+	const VkAccelerationStructureKHR& getHandle() const
 	{
 		ANKI_ASSERT(m_handle);
 		return m_handle;

@@ -59,7 +59,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		m_microCmdb->pushObjectRef(m_activeFb);
 	}
 
-	for(DescriptorSetState& state : m_dsetState)
+	for(DSStateTracker& state : m_dsetState)
 	{
 		state.init(m_pool);
 	}

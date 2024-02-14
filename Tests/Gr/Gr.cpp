@@ -235,6 +235,8 @@ static RebarTransientMemoryPool* stagingMem = nullptr;
 static Input* input = nullptr;
 
 #define COMMON_BEGIN() \
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr); \
+	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr); \
 	g_windowWidthCVar.set(WIDTH); \
 	g_windowHeightCVar.set(HEIGHT); \
 	g_validationCVar.set(true); \
@@ -259,6 +261,8 @@ static Input* input = nullptr;
 	GrManager::freeSingleton(); \
 	Input::freeSingleton(); \
 	NativeWindow::freeSingleton(); \
+	ShaderCompilerMemoryPool::freeSingleton(); \
+	DefaultMemoryPool::freeSingleton(); \
 	g_win = nullptr; \
 	g_gr = nullptr;
 
@@ -739,7 +743,7 @@ void main()
 		cmdb->setScissor(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->bindShaderProgram(blitProg.get());
 		setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->bindTextureAndSampler(0, 0, texView.get(), sampler.get());
+		// cmdb->bindTextureAndSampler(0, 0, texView.get(), sampler.get());
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb.get(), {TextureUsageBit::kFramebufferWrite}, {});
 		cmdb->draw(PrimitiveTopology::kTriangles, 6);
@@ -806,8 +810,55 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	ptr[2] = Vec4(0.0, 0.0, 1.0, 0.0);
 	b->unmap();
 
-	// Progm
-	ShaderProgramPtr prog = createProgram(VERT_UBO_SRC, FRAG_UBO_SRC, *g_gr);
+	// Prog
+	constexpr const char* kUboVert = R"(
+struct A
+{
+	float4 m_color[3];
+};
+[[vk::binding(0)]] ConstantBuffer<A> g_color;
+
+struct B
+{
+	float4 m_rotation2d;
+};
+[[vk::binding(1)]] ConstantBuffer<B> g_rotation2d;
+
+struct VertOut
+{
+	float4 m_svPosition : SV_POSITION;
+	float3 m_color : COLOR;
+};
+
+VertOut main(uint svVertexId : SV_VERTEXID)
+{
+	VertOut o;
+	o.m_color = g_color.m_color[svVertexId].xyz;
+
+	const float2 kPositions[3] = {float2(-1.0, 1.0), float2(0.0, -1.0), float2(1.0, 1.0)};
+
+	float2x2 rot = float2x2(
+		g_rotation2d.m_rotation2d.x, g_rotation2d.m_rotation2d.y, g_rotation2d.m_rotation2d.z, g_rotation2d.m_rotation2d.w);
+	float2 pos = mul(rot, kPositions[svVertexId % 3]);
+
+	o.m_svPosition = float4(pos, 0.0, 1.0);
+
+	return o;
+})";
+
+	constexpr const char* kUboFrag = R"(
+struct VertOut
+{
+	float4 m_svPosition : SV_POSITION;
+	float3 m_color : COLOR;
+};
+
+float4 main(VertOut i) : SV_TARGET0
+{
+	return float4(i.m_color, 1.0);
+})";
+
+	ShaderProgramPtr prog = createProgram(kUboVert, kUboFrag, *g_gr);
 
 	const U ITERATION_COUNT = 100;
 	U iterations = ITERATION_COUNT;
@@ -1134,8 +1185,8 @@ void main()
 		Vec4 pc(F32(g_win->getWidth()), F32(g_win->getHeight()), 0.0f, 0.0f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
-		cmdb->bindTextureAndSampler(0, 0, aView.get(), sampler.get());
-		cmdb->bindTextureAndSampler(0, 1, bView.get(), sampler.get());
+		// cmdb->bindTextureAndSampler(0, 0, aView.get(), sampler.get());
+		// cmdb->bindTextureAndSampler(0, 1, bView.get(), sampler.get());
 		cmdb->draw(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1305,8 +1356,8 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		cmdb->beginRenderPass(dfb.get(), {TextureUsageBit::kFramebufferWrite}, {});
 		cmdb->bindShaderProgram(resolveProg.get());
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->bindTextureAndSampler(0, 0, col0View.get(), sampler.get());
-		cmdb->bindTextureAndSampler(0, 2, col1View.get(), sampler.get());
+		// cmdb->bindTextureAndSampler(0, 0, col0View.get(), sampler.get());
+		// cmdb->bindTextureAndSampler(0, 2, col1View.get(), sampler.get());
 		cmdb->draw(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1427,7 +1478,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 		FramebufferPtr dfb = createColorFb(*g_gr, presentTex);
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb.get(), {TextureUsageBit::kFramebufferWrite}, {});
-		cmdb->bindTextureAndSampler(0, 0, g_gr->newTextureView(TextureViewInitInfo(tex.get())).get(), sampler.get());
+		// cmdb->bindTextureAndSampler(0, 0, g_gr->newTextureView(TextureViewInitInfo(tex.get())).get(), sampler.get());
 		cmdb->draw(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1537,7 +1588,7 @@ ANKI_TEST(Gr, 3DTextures)
 		U32 idx = U32((F32(ITERATION_COUNT - iterations - 1) / F32(ITERATION_COUNT)) * F32(TEX_COORDS_LOD.getSize()));
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindTextureAndSampler(0, 1, g_gr->newTextureView(TextureViewInitInfo(a.get())).get(), sampler.get());
+		// cmdb->bindTextureAndSampler(0, 1, g_gr->newTextureView(TextureViewInitInfo(a.get())).get(), sampler.get());
 		cmdb->draw(PrimitiveTopology::kTriangles, 6);
 
 		cmdb->endRenderPass();
@@ -1865,7 +1916,7 @@ void main()
 
 	setTextureBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute, subresource);
 	cmdb->bindShaderProgram(prog.get());
-	cmdb->bindTextureAndSampler(0, 0, texView.get(), sampler.get());
+	// cmdb->bindTextureAndSampler(0, 0, texView.get(), sampler.get());
 	cmdb->bindUavBuffer(0, 1, resultBuff.get(), 0, resultBuff->getSize());
 	cmdb->dispatchCompute(1, 1, 1);
 

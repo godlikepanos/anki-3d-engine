@@ -19,14 +19,14 @@ void PipelineLayoutFactory::destroy()
 	}
 }
 
-Error PipelineLayoutFactory::newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize, PipelineLayout& layout)
+Error PipelineLayoutFactory::newPipelineLayout(const WeakArray<const DSLayout*>& dsetLayouts, U32 pushConstantsSize, PipelineLayout& layout)
 {
 	U64 hash = computeHash(&pushConstantsSize, sizeof(pushConstantsSize));
 	Array<VkDescriptorSetLayout, kMaxDescriptorSets> vkDsetLayouts;
 	U32 dsetLayoutCount = 0;
-	for(const DescriptorSetLayout& dl : dsetLayouts)
+	for(const DSLayout* dl : dsetLayouts)
 	{
-		vkDsetLayouts[dsetLayoutCount++] = dl.getHandle();
+		vkDsetLayouts[dsetLayoutCount++] = dl->getHandle();
 	}
 
 	if(dsetLayoutCount > 0)

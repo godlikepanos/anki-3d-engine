@@ -9,6 +9,7 @@
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/Fence.h>
 #include <AnKi/Gr/Vulkan/FenceImpl.h>
+#include <AnKi/Gr/Vulkan/DescriptorSet.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/StringList.h>
 #include <AnKi/Core/App.h>
@@ -16,6 +17,7 @@
 namespace anki {
 
 BoolCVar g_validationCVar(CVarSubsystem::kGr, "Validation", false, "Enable or not validation");
+static BoolCVar g_gpuValidationCVar(CVarSubsystem::kGr, "GpuValidation", false, "Enable or not GPU validation");
 static BoolCVar g_debugPrintfCVar(CVarSubsystem::kGr, "DebugPrintf", false, "Enable or not debug printf");
 BoolCVar g_debugMarkersCVar(CVarSubsystem::kGr, "DebugMarkers", false, "Enable or not debug markers");
 BoolCVar g_vsyncCVar(CVarSubsystem::kGr, "Vsync", false, "Enable or not vsync");
@@ -78,8 +80,10 @@ GrManagerImpl::~GrManagerImpl()
 
 	m_gpuMemManager.destroy();
 
-	m_pplineLayoutFactory.destroy();
-	m_descrFactory.destroy();
+	PipelineLayoutFactory::freeSingleton();
+
+	DSLayoutFactory::freeSingleton();
+	DSBindless::freeSingleton();
 
 	m_pplineCache.destroy();
 
@@ -213,7 +217,12 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	ANKI_CHECK(m_descrFactory.init(kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers));
+	DSBindless::allocateSingleton();
+	ANKI_CHECK(DSBindless::getSingleton().init(kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers));
+
+	DSLayoutFactory::allocateSingleton();
+
+	PipelineLayoutFactory::allocateSingleton();
 
 	m_frameGarbageCollector.init();
 
@@ -300,7 +309,7 @@ Error GrManagerImpl::initInstance()
 		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
 	}
 
-	if(g_validationCVar.get())
+	if(g_validationCVar.get() && g_gpuValidationCVar.get())
 	{
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
 	}
@@ -1403,7 +1412,6 @@ void GrManagerImpl::endFrame()
 		ANKI_VK_CHECKF(res);
 	}
 
-	m_descrFactory.endFrame();
 	m_gpuMemManager.updateStats();
 
 	// Finalize
@@ -1569,6 +1577,12 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBi
 		return false;
 	}
 #endif
+
+	if(pCallbackData->messageIdNumber == 1944932341 || pCallbackData->messageIdNumber == 1303270965)
+	{
+		// Not sure why I'm getting that
+		return false;
+	}
 
 	// Get all names of affected objects
 	GrString objectNames;

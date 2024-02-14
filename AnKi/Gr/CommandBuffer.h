@@ -185,14 +185,6 @@ public:
 	/// Set the line width. By default it's undefined.
 	void setLineWidth(F32 lineWidth);
 
-	/// Bind texture and sample.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param texView The texture view to bind.
-	/// @param sampler The sampler to override the default sampler of the tex.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindTextureAndSampler(U32 set, U32 binding, TextureView* texView, Sampler* sampler, U32 arrayIdx = 0);
-
 	/// Bind sampler.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.

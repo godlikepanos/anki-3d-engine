@@ -42,7 +42,7 @@ static Bool isAstcSrgbFormat(const VkFormat format)
 	}
 }
 
-U32 MicroImageView::getOrCreateBindlessIndex(GrManagerImpl& gr) const
+U32 MicroImageView::getOrCreateBindlessIndex() const
 {
 	LockGuard<SpinLock> lock(m_bindlessIndexLock);
 
@@ -55,7 +55,7 @@ U32 MicroImageView::getOrCreateBindlessIndex(GrManagerImpl& gr) const
 	{
 		// Needs binding to the bindless descriptor set
 
-		outIdx = gr.getDescriptorSetFactory().bindBindlessTexture(m_handle, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		outIdx = DSBindless::getSingleton().bindTexture(m_handle, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		m_bindlessIndex = outIdx;
 	}
 
@@ -339,6 +339,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 	stages = 0;
 	accesses = 0;
 	const Bool depthStencil = !!m_aspect;
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
 
 	if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kUavGeometryRead)))
 	{
@@ -378,13 +379,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kUavTraceRaysRead)))
+	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kUavTraceRaysRead)) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavTraceRaysWrite))
+	if(!!(usage & TextureUsageBit::kUavTraceRaysWrite) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;

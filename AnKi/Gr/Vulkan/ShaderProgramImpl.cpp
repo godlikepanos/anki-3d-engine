@@ -98,7 +98,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Merge bindings
 	//
-	Array2d<DescriptorBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> bindings;
+	Array2d<DSBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> bindings;
 	Array<U32, kMaxDescriptorSets> counts = {};
 	U32 descriptorSetCount = 0;
 	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
@@ -159,10 +159,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	for(U32 set = 0; set < descriptorSetCount; ++set)
 	{
-		DescriptorSetLayoutInitInfo dsinf;
-		dsinf.m_bindings = WeakArray<DescriptorBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]);
-
-		ANKI_CHECK(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(dsinf, m_descriptorSetLayouts[set]));
+		ANKI_CHECK(DSLayoutFactory::getSingleton().getOrCreateDescriptorSetLayout(
+			WeakArray<DSBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]), m_descriptorSetLayouts[set]));
 
 		// Even if the dslayout is empty we will have to list it because we'll have to bind a DS for it.
 		m_refl.m_descriptorSetMask.set(set);
@@ -170,8 +168,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the ppline layout
 	//
-	WeakArray<DescriptorSetLayout> dsetLayouts((descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr, descriptorSetCount);
-	ANKI_CHECK(getGrManagerImpl().getPipelineLayoutFactory().newPipelineLayout(dsetLayouts, m_refl.m_pushConstantsSize, m_pplineLayout));
+	WeakArray<const DSLayout*> dsetLayouts((descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr, descriptorSetCount);
+	ANKI_CHECK(PipelineLayoutFactory::getSingleton().newPipelineLayout(dsetLayouts, m_refl.m_pushConstantsSize, m_pplineLayout));
 
 	// Get some masks
 	//

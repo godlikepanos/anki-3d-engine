@@ -177,12 +177,6 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	self.setBlendOperationInternal(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, TextureView* texView, Sampler* sampler, U32 arrayIdx)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, arrayIdx);
-}
-
 void CommandBuffer::bindTexture(U32 set, U32 binding, TextureView* texView, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

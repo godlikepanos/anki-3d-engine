@@ -205,19 +205,6 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	ANKI_FORCE_INLINE void bindTextureAndSamplerInternal(U32 set, U32 binding, TextureView* texView, Sampler* sampler, U32 arrayIdx)
-	{
-		commandCommon();
-		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-		const TextureImpl& tex = view.getTextureImpl();
-		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
-
-		m_dsetState[set].bindTextureAndSampler(binding, arrayIdx, &view, sampler, lay);
-
-		m_microCmdb->pushObjectRef(sampler);
-	}
-
 	ANKI_FORCE_INLINE void bindTextureInternal(U32 set, U32 binding, TextureView* texView, U32 arrayIdx)
 	{
 		commandCommon();
@@ -554,7 +541,7 @@ private:
 
 	PipelineStateTracker m_state;
 
-	Array<DescriptorSetState, kMaxDescriptorSets> m_dsetState;
+	Array<DSStateTracker, kMaxDescriptorSets> m_dsetState;
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
 	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);

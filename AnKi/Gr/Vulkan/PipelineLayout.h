@@ -29,20 +29,24 @@ private:
 };
 
 /// Creator of pipeline layouts.
-class PipelineLayoutFactory
+class PipelineLayoutFactory : public MakeSingleton<PipelineLayoutFactory>
 {
 public:
 	PipelineLayoutFactory() = default;
-	~PipelineLayoutFactory() = default;
 
-	void destroy();
+	~PipelineLayoutFactory()
+	{
+		destroy();
+	}
 
 	/// @note It's thread-safe.
-	Error newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, U32 pushConstantsSize, PipelineLayout& layout);
+	Error newPipelineLayout(const WeakArray<const DSLayout*>& dsetLayouts, U32 pushConstantsSize, PipelineLayout& layout);
 
 private:
 	GrHashMap<U64, VkPipelineLayout> m_layouts;
 	Mutex m_layoutsMtx;
+
+	void destroy();
 };
 /// @}
 

@@ -35,6 +35,8 @@ MicroCommandBuffer::~MicroCommandBuffer()
 {
 	reset();
 
+	m_dsAllocator.destroy();
+
 	if(m_handle)
 	{
 		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[m_queue], 1, &m_handle);
@@ -55,6 +57,8 @@ void MicroCommandBuffer::reset()
 	{
 		m_objectRefs[type].destroy();
 	}
+
+	m_dsAllocator.reset();
 
 	m_fastPool.reset();
 }

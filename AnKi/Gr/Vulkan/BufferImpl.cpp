@@ -242,6 +242,7 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapA
 
 VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 {
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
 	VkPipelineStageFlags stageMask = 0;
 
 	if(!!(usage & BufferUsageBit::kAllIndirect))
@@ -275,12 +276,12 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructureBuildScratch)))
+	if(!!(usage & (BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructureBuildScratch)) && rt)
 	{
 		stageMask |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
 	}
 
-	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)))
+	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)) && rt)
 	{
 		stageMask |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 	}

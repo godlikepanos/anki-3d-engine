@@ -147,29 +147,11 @@ ANKI_FORCE_INLINE void CommandBufferImpl::traceRaysInternal(Buffer* sbtBuffer, P
 	{
 		if(sprog.getReflectionInfo().m_descriptorSetMask.get(i))
 		{
-			DescriptorSet dset;
-			Bool dirty;
-			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
-			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize,
-																			 dynamicOffsetCount))
+			VkDescriptorSet dset;
+			if(m_dsetState[i].flush(m_microCmdb->getDSAllocator(), dset))
 			{
-				ANKI_VK_LOGF("Cannot recover");
-			}
-
-			if(dirty)
-			{
-				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
-				Array<U32, kMaxBindingsPerDescriptorSet> dynamicOffsets;
-				for(U32 i = 0; i < dynamicOffsetCount; ++i)
-				{
-					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
-				}
-
-				VkDescriptorSet dsHandle = dset.getHandle();
-
-				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, sprog.getPipelineLayout().getHandle(), i, 1, &dsHandle,
-										dynamicOffsetCount, &dynamicOffsets[0]);
+				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, sprog.getPipelineLayout().getHandle(), i, 1, &dset, 0,
+										nullptr);
 			}
 		}
 	}
@@ -260,29 +242,11 @@ ANKI_FORCE_INLINE void CommandBufferImpl::drawcallCommon()
 	{
 		if(m_graphicsProg->getReflectionInfo().m_descriptorSetMask.get(i))
 		{
-			DescriptorSet dset;
-			Bool dirty;
-			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
-			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize,
-																			 dynamicOffsetCount))
+			VkDescriptorSet dset;
+			if(m_dsetState[i].flush(m_microCmdb->getDSAllocator(), dset))
 			{
-				ANKI_VK_LOGF("Cannot recover");
-			}
-
-			if(dirty)
-			{
-				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
-				Array<U32, kMaxBindingsPerDescriptorSet> dynamicOffsets;
-				for(U32 i = 0; i < dynamicOffsetCount; ++i)
-				{
-					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
-				}
-
-				VkDescriptorSet dsHandle = dset.getHandle();
-
-				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsProg->getPipelineLayout().getHandle(), i, 1, &dsHandle,
-										dynamicOffsetCount, &dynamicOffsets[0]);
+				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsProg->getPipelineLayout().getHandle(), i, 1, &dset, 0,
+										nullptr);
 			}
 		}
 	}
@@ -362,29 +326,11 @@ ANKI_FORCE_INLINE void CommandBufferImpl::dispatchCommon()
 	{
 		if(m_computeProg->getReflectionInfo().m_descriptorSetMask.get(i))
 		{
-			DescriptorSet dset;
-			Bool dirty;
-			Array<PtrSize, kMaxBindingsPerDescriptorSet> dynamicOffsetsPtrSize;
-			U32 dynamicOffsetCount;
-			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(*m_pool, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize,
-																			 dynamicOffsetCount))
+			VkDescriptorSet dset;
+			if(m_dsetState[i].flush(m_microCmdb->getDSAllocator(), dset))
 			{
-				ANKI_VK_LOGF("Cannot recover");
-			}
-
-			if(dirty)
-			{
-				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
-				Array<U32, kMaxBindingsPerDescriptorSet> dynamicOffsets;
-				for(U32 i = 0; i < dynamicOffsetCount; ++i)
-				{
-					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
-				}
-
-				VkDescriptorSet dsHandle = dset.getHandle();
-
-				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, m_computeProg->getPipelineLayout().getHandle(), i, 1, &dsHandle,
-										dynamicOffsetCount, &dynamicOffsets[0]);
+				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, m_computeProg->getPipelineLayout().getHandle(), i, 1, &dset, 0,
+										nullptr);
 			}
 		}
 	}
@@ -453,13 +399,13 @@ ANKI_FORCE_INLINE void CommandBufferImpl::bindShaderProgramInternal(ShaderProgra
 	{
 		if(impl.getReflectionInfo().m_descriptorSetMask.get(i))
 		{
-			m_dsetState[i].setLayout(impl.getDescriptorSetLayout(i));
+			m_dsetState[i].setLayout(&impl.getDescriptorSetLayout(i));
 		}
 		else
 		{
-			// According to the spec the bound DS may be disturbed if the ppline layout is not compatible. Play it safe
-			// and dirty the slot. That will force rebind of the DS at drawcall time.
-			m_dsetState[i].setLayout(DescriptorSetLayout());
+			// According to the spec the bound DS may be disturbed if the ppline layout is not compatible. Play it safe and dirty the slot. That will
+			// force rebind of the DS at drawcall time.
+			m_dsetState[i].setLayoutDirty();
 		}
 	}
 

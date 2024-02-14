@@ -135,16 +135,6 @@ public:
 	}
 
 	/// Convenience method.
-	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Sampler* sampler)
-	{
-		Texture* tex;
-		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view.get(), sampler);
-	}
-
-	/// Convenience method.
 	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource)
 	{
 		Texture* tex;
@@ -152,16 +142,6 @@ public:
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
 		m_commandBuffer->bindTexture(set, binding, view.get());
-	}
-
-	/// Convenience method to bind the whole texture as color.
-	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, Sampler* sampler)
-	{
-		Texture* tex = &getTexture(handle);
-		TextureViewInitInfo viewInit(tex); // Use the whole texture
-		getRenderTargetState(handle, viewInit, tex);
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view.get(), sampler);
 	}
 
 	/// Convenience method to bind the whole texture as color.

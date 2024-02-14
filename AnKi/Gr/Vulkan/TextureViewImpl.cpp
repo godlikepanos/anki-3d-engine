@@ -40,7 +40,7 @@ U32 TextureViewImpl::getOrCreateBindlessIndex()
 {
 	if(m_bindlessIndex == kMaxU32)
 	{
-		m_bindlessIndex = m_microImageView->getOrCreateBindlessIndex(getGrManagerImpl());
+		m_bindlessIndex = m_microImageView->getOrCreateBindlessIndex();
 	}
 
 	return m_bindlessIndex;

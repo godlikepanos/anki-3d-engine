@@ -50,7 +50,6 @@ ANKI_PURE VkDevice getVkDevice();
 
 enum class DescriptorType : U8
 {
-	kCombinedTextureSampler,
 	kTexture,
 	kSampler,
 	kUniformBuffer,
@@ -60,8 +59,10 @@ enum class DescriptorType : U8
 	kReadWriteTextureBuffer,
 	kAccelerationStructure,
 
-	kCount
+	kCount,
+	kFirst = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorType)
 
 enum class VulkanExtensions : U64
 {
@@ -271,9 +272,6 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	VkDescriptorType out;
 	switch(ak)
 	{
-	case DescriptorType::kCombinedTextureSampler:
-		out = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		break;
 	case DescriptorType::kTexture:
 		out = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		break;
@@ -281,7 +279,7 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 		out = VK_DESCRIPTOR_TYPE_SAMPLER;
 		break;
 	case DescriptorType::kUniformBuffer:
-		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		break;
 	case DescriptorType::kReadTextureBuffer:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
@@ -290,7 +288,7 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 		out = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
 		break;
 	case DescriptorType::kStorageBuffer:
-		out = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+		out = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		break;
 	case DescriptorType::kImage:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;

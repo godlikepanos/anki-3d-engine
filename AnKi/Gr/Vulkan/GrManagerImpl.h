@@ -18,7 +18,6 @@
 #include <AnKi/Gr/Vulkan/SwapchainFactory.h>
 #include <AnKi/Gr/Vulkan/PipelineLayout.h>
 #include <AnKi/Gr/Vulkan/PipelineCache.h>
-#include <AnKi/Gr/Vulkan/DescriptorSet.h>
 #include <AnKi/Gr/Vulkan/FrameGarbageCollector.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/File.h>
@@ -142,20 +141,10 @@ public:
 		return m_pipelineQueryFactories[type];
 	}
 
-	DescriptorSetFactory& getDescriptorSetFactory()
-	{
-		return m_descrFactory;
-	}
-
 	VkPipelineCache getPipelineCache() const
 	{
 		ANKI_ASSERT(m_pplineCache.m_cacheHandle);
 		return m_pplineCache.m_cacheHandle;
-	}
-
-	PipelineLayoutFactory& getPipelineLayoutFactory()
-	{
-		return m_pplineLayoutFactory;
 	}
 
 	VulkanExtensions getExtensions() const
@@ -282,10 +271,6 @@ private:
 	/// @}
 
 	SwapchainFactory m_swapchainFactory;
-
-	PipelineLayoutFactory m_pplineLayoutFactory;
-
-	DescriptorSetFactory m_descrFactory;
 
 	QueryFactory m_occlusionQueryFactory;
 	QueryFactory m_timestampQueryFactory;

@@ -20,7 +20,7 @@ class ShaderImpl final : public Shader
 public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
 
-	Array<GrDynamicArray<DescriptorBinding>, kMaxDescriptorSets> m_bindings;
+	Array<GrDynamicArray<DSBinding>, kMaxDescriptorSets> m_bindings;
 	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
 	BitSet<kMaxVertexAttributes, U8> m_attributeMask = {false};
 	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};

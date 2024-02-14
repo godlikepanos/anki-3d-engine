@@ -16,277 +16,211 @@
 
 namespace anki {
 
-// Forward
-class DSLayoutCacheEntry;
-
-/// @addtogroup vulkan
-/// @{
-
-class alignas(8) DescriptorBinding
+class DSLayout
 {
-public:
-	U32 m_arraySize = 0;
-	ShaderTypeBit m_stageMask = ShaderTypeBit::kNone;
-	DescriptorType m_type = DescriptorType::kCount;
-	U8 m_binding = kMaxU8;
-};
-static_assert(sizeof(DescriptorBinding) == 8, "Should be packed because it will be hashed");
-
-class DescriptorSetLayoutInitInfo
-{
-public:
-	WeakArray<DescriptorBinding> m_bindings;
-};
-
-class DescriptorSetLayout
-{
-	friend class DescriptorSetFactory;
-	friend class DescriptorSetState;
+	friend class DSStateTracker;
+	friend class DSLayoutFactory;
+	friend class DSAllocator;
 
 public:
-	VkDescriptorSetLayout getHandle() const
+	const VkDescriptorSetLayout& getHandle() const
 	{
 		ANKI_ASSERT(m_handle);
 		return m_handle;
-	}
-
-	Bool isCreated() const
-	{
-		return m_handle != VK_NULL_HANDLE;
-	}
-
-	Bool operator==(const DescriptorSetLayout& b) const
-	{
-		return m_entry == b.m_entry;
-	}
-
-	Bool operator!=(const DescriptorSetLayout& b) const
-	{
-		return !operator==(b);
 	}
 
 private:
 	VkDescriptorSetLayout m_handle = VK_NULL_HANDLE;
-	DSLayoutCacheEntry* m_entry = nullptr;
+
+	U64 m_hash = 0;
+	BitSet<kMaxBindingsPerDescriptorSet, U32> m_activeBindings = {false};
+	Array<U32, kMaxBindingsPerDescriptorSet> m_bindingArraySize = {};
+	Array<DescriptorType, kMaxBindingsPerDescriptorSet> m_bindingType = {};
+	U32 m_minBinding = kMaxU32;
+	U32 m_maxBinding = 0;
+	U32 m_descriptorCount = 0;
 };
 
-class TextureSamplerBinding
+/// Allocates descriptor sets.
+class DSAllocator
 {
-public:
-	VkImageView m_imgViewHandle;
-	VkSampler m_samplerHandle;
-	VkImageLayout m_layout;
-};
+	friend class DSStateTracker;
 
-class TextureBinding
-{
 public:
-	VkImageView m_imgViewHandle;
-	VkImageLayout m_layout;
-};
+	DSAllocator() = default;
 
-class SamplerBinding
-{
-public:
-	VkSampler m_samplerHandle;
-};
+	~DSAllocator();
 
-class BufferBinding
-{
-public:
-	VkBuffer m_buffHandle;
-	PtrSize m_offset;
-	PtrSize m_range;
-};
-
-class ImageBinding
-{
-public:
-	VkImageView m_imgViewHandle;
-};
-
-class AsBinding
-{
-public:
-	VkAccelerationStructureKHR m_accelerationStructureHandle;
-};
-
-class TextureBufferBinding
-{
-public:
-	VkBufferView m_buffView;
-};
-
-class AnyBinding
-{
-public:
-	Array<U64, 2> m_uuids;
-
-	union
+	void destroy()
 	{
-		TextureSamplerBinding m_texAndSampler;
-		TextureBinding m_tex;
-		SamplerBinding m_sampler;
-		BufferBinding m_buff;
-		ImageBinding m_image;
-		AsBinding m_accelerationStructure;
-		TextureBufferBinding m_textureBuffer;
+		for(Block& b : m_blocks)
+		{
+			ANKI_ASSERT(b.m_pool != VK_NULL_HANDLE);
+			vkDestroyDescriptorPool(getVkDevice(), b.m_pool, nullptr);
+		}
+
+		m_blocks.destroy();
+		m_activeBlock = 0;
+	}
+
+	/// Reset for reuse.
+	void reset();
+
+private:
+	class Block
+	{
+	public:
+		VkDescriptorPool m_pool = VK_NULL_HANDLE;
+		U32 m_dsetsAllocatedCount = 0;
 	};
 
-	DescriptorType m_type;
+	static constexpr U32 kDescriptorSetGrowScale = 2;
+
+	GrDynamicArray<Block> m_blocks;
+
+	U32 m_activeBlock = 0;
+
+	void allocate(const DSLayout& layout, VkDescriptorSet& set);
+
+	void createNewBlock();
 };
-static_assert(std::is_trivial<AnyBinding>::value, "Shouldn't have constructor for perf reasons");
 
-class AnyBindingExtended
+/// The bindless descriptor set.
+class DSBindless : public MakeSingleton<DSBindless>
 {
-public:
-	union
-	{
-		AnyBinding m_single;
-		AnyBinding* m_array;
-	};
-
-	U32 m_arraySize;
-};
-static_assert(std::is_trivial<AnyBindingExtended>::value, "Shouldn't have constructor for perf reasons");
-
-/// Descriptor set thin wraper.
-class DescriptorSet
-{
-	friend class DescriptorSetFactory;
-	friend class BindlessDescriptorSet;
-	friend class DescriptorSetState;
+	friend class DSStateTracker;
+	friend class DSLayoutFactory;
 
 public:
-	VkDescriptorSet getHandle() const
+	~DSBindless();
+
+	Error init(U32 bindlessTextureCount, U32 bindlessTextureBuffers);
+
+	/// Bind a sampled image.
+	/// @note It's thread-safe.
+	U32 bindTexture(const VkImageView view, const VkImageLayout layout);
+
+	/// Bind a uniform texel buffer.
+	/// @note It's thread-safe.
+	U32 bindUniformTexelBuffer(VkBufferView view);
+
+	/// @note It's thread-safe.
+	void unbindTexture(U32 idx)
 	{
-		ANKI_ASSERT(m_handle);
-		return m_handle;
+		unbindCommon(idx, m_freeTexIndices, m_freeTexIndexCount);
+	}
+
+	/// @note It's thread-safe.
+	void unbindUniformTexelBuffer(U32 idx)
+	{
+		unbindCommon(idx, m_freeTexelBufferIndices, m_freeTexelBufferIndexCount);
+	}
+
+	U32 getMaxTextureCount() const
+	{
+		return m_freeTexIndices.getSize();
+	}
+
+	U32 getMaxTexelBufferCount() const
+	{
+		return m_freeTexelBufferIndices.getSize();
 	}
 
 private:
-	VkDescriptorSet m_handle = VK_NULL_HANDLE;
+	VkDescriptorSetLayout m_layout = VK_NULL_HANDLE;
+	VkDescriptorPool m_dsPool = VK_NULL_HANDLE;
+	VkDescriptorSet m_dset = VK_NULL_HANDLE;
+	Mutex m_mtx;
+
+	GrDynamicArray<U16> m_freeTexIndices;
+	GrDynamicArray<U16> m_freeTexelBufferIndices;
+
+	U16 m_freeTexIndexCount = kMaxU16;
+	U16 m_freeTexelBufferIndexCount = kMaxU16;
+
+	void unbindCommon(U32 idx, GrDynamicArray<U16>& freeIndices, U16& freeIndexCount);
 };
 
-/// A state tracker of descriptors.
-class DescriptorSetState
+/// A state tracker that creates descriptors at will.
+class DSStateTracker
 {
-	friend class DescriptorSetFactory;
-
 public:
 	void init(StackMemoryPool* pool)
 	{
-		m_pool = pool;
+		m_writeInfos = {pool};
 	}
 
-	void setLayout(const DescriptorSetLayout& layout)
+	void setLayout(const DSLayout* layout)
 	{
-		if(layout.isCreated())
-		{
-			m_layoutDirty = m_layout != layout;
-		}
-		else
+		ANKI_ASSERT(layout);
+		if(layout != m_layout)
 		{
 			m_layoutDirty = true;
+			m_layout = layout;
 		}
-
-		m_layout = layout;
 	}
 
-	void bindTextureAndSampler(U32 binding, U32 arrayIdx, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
+	void setLayoutDirty()
 	{
-		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
-		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
-
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
-		b.m_type = DescriptorType::kCombinedTextureSampler;
-		b.m_uuids[0] = viewImpl.getHash();
-		b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
-
-		b.m_texAndSampler.m_imgViewHandle = viewImpl.getHandle();
-		b.m_texAndSampler.m_samplerHandle = static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle();
-		b.m_texAndSampler.m_layout = layout;
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		m_layoutDirty = true;
 	}
 
 	void bindTexture(U32 binding, U32 arrayIdx, const TextureView* texView, VkImageLayout layout)
 	{
+		ANKI_ASSERT(texView);
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
 		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
-
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
+		Binding b;
+		zeroMemory(b);
 		b.m_type = DescriptorType::kTexture;
-		b.m_uuids[0] = b.m_uuids[1] = viewImpl.getHash();
-
-		b.m_tex.m_imgViewHandle = viewImpl.getHandle();
-		b.m_tex.m_layout = layout;
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		b.m_image.imageView = viewImpl.getHandle();
+		b.m_image.imageLayout = layout;
+		b.m_image.sampler = VK_NULL_HANDLE;
+		setBinding(binding, arrayIdx, b);
 	}
 
 	void bindSampler(U32 binding, U32 arrayIdx, const Sampler* sampler)
 	{
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
+		ANKI_ASSERT(sampler);
+		Binding b;
+		zeroMemory(b);
 		b.m_type = DescriptorType::kSampler;
-		b.m_uuids[0] = b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
-		b.m_sampler.m_samplerHandle = static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle();
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		b.m_image.sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle();
+		setBinding(binding, arrayIdx, b);
 	}
 
 	void bindConstantBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
-		ANKI_ASSERT(range > 0);
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
+		ANKI_ASSERT(buff && range > 0);
+		Binding b;
+		zeroMemory(b);
 		b.m_type = DescriptorType::kUniformBuffer;
-		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
-
-		b.m_buff.m_buffHandle = static_cast<const BufferImpl*>(buff)->getHandle();
-		b.m_buff.m_offset = offset;
-		b.m_buff.m_range = range;
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		b.m_buffer.buffer = static_cast<const BufferImpl*>(buff)->getHandle();
+		b.m_buffer.offset = offset;
+		b.m_buffer.range = (range == kMaxPtrSize) ? VK_WHOLE_SIZE : range;
+		setBinding(binding, arrayIdx, b);
 	}
 
 	void bindUavBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
-		ANKI_ASSERT(range > 0);
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
+		ANKI_ASSERT(buff && range > 0);
+		Binding b;
+		zeroMemory(b);
 		b.m_type = DescriptorType::kStorageBuffer;
-		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
-
-		b.m_buff.m_buffHandle = static_cast<const BufferImpl*>(buff)->getHandle();
-		b.m_buff.m_offset = offset;
-		b.m_buff.m_range = range;
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		b.m_buffer.buffer = static_cast<const BufferImpl*>(buff)->getHandle();
+		b.m_buffer.offset = offset;
+		b.m_buffer.range = (range == kMaxPtrSize) ? VK_WHOLE_SIZE : range;
+		setBinding(binding, arrayIdx, b);
 	}
 
 	void bindReadOnlyTextureBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range, Format fmt)
 	{
-		ANKI_ASSERT(range > 0);
-		const VkBufferView view = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
+		ANKI_ASSERT(buff && range > 0);
+		Binding b;
+		zeroMemory(b);
 		b.m_type = DescriptorType::kReadTextureBuffer;
-		b.m_uuids[0] = ptrToNumber(view);
-		b.m_uuids[1] = buff->getUuid();
-
-		b.m_textureBuffer.m_buffView = view;
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		b.m_bufferView = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
+		setBinding(binding, arrayIdx, b);
 	}
 
 	void bindUavTexture(U32 binding, U32 arrayIdx, const TextureView* texView)
@@ -294,120 +228,120 @@ public:
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
 		ANKI_ASSERT(impl->getTextureImpl().isSubresourceGoodForImageLoadStore(impl->getSubresource()));
-
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
+		Binding b;
+		zeroMemory(b);
 		b.m_type = DescriptorType::kImage;
-		ANKI_ASSERT(impl->getHash());
-		b.m_uuids[0] = b.m_uuids[1] = impl->getHash();
-		b.m_image.m_imgViewHandle = impl->getHandle();
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		b.m_image.imageView = impl->getHandle();
+		b.m_image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		setBinding(binding, arrayIdx, b);
 	}
 
 	void bindAccelerationStructure(U32 binding, U32 arrayIdx, const AccelerationStructure* as)
 	{
-		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
-		b = {};
+		ANKI_ASSERT(as);
+		Binding b;
+		zeroMemory(b);
 		b.m_type = DescriptorType::kAccelerationStructure;
-		b.m_uuids[0] = b.m_uuids[1] = as->getUuid();
-		b.m_accelerationStructure.m_accelerationStructureHandle = static_cast<const AccelerationStructureImpl*>(as)->getHandle();
-
-		m_dirtyBindings.set(binding);
-		unbindBindlessDSet();
+		b.m_as.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+		b.m_as.accelerationStructureCount = 1;
+		b.m_as.pAccelerationStructures = &static_cast<const AccelerationStructureImpl*>(as)->getHandle();
+		setBinding(binding, arrayIdx, b);
 	}
 
 	/// Forget all the rest of the bindings and bind the whole bindless descriptor set.
 	void bindBindlessDescriptorSet()
 	{
-		m_bindlessDSetBound = true;
-		m_bindlessDSetDirty = true;
+		if(!m_bindlessDSBound)
+		{
+			m_bindlessDSBound = true;
+			m_bindlessDSDirty = true;
+		}
 	}
 
+	/// Get all the state and create a descriptor set.
+	/// @param[out] dsHandle It can be VK_NULL_HANDLE if there is no need to re-bind the descriptor set.
+	Bool flush(DSAllocator& allocator, VkDescriptorSet& dsHandle);
+
 private:
-	StackMemoryPool* m_pool = nullptr;
-	DescriptorSetLayout m_layout;
+	class Binding
+	{
+	public:
+		union
+		{
+			VkDescriptorImageInfo m_image;
+			VkDescriptorBufferInfo m_buffer;
+			VkWriteDescriptorSetAccelerationStructureKHR m_as;
+			VkBufferView m_bufferView;
+		};
 
-	Array<AnyBindingExtended, kMaxBindingsPerDescriptorSet> m_bindings;
+		DescriptorType m_type;
 
-	U64 m_lastHash = 0;
+		Binding()
+		{
+			// No init for perf reasons
+		}
+	};
 
-	BitSet<kMaxBindingsPerDescriptorSet, U32> m_dirtyBindings = {true};
-	BitSet<kMaxBindingsPerDescriptorSet, U32> m_bindingSet = {false};
+	class BindingExtended
+	{
+	public:
+		union
+		{
+			Binding m_single;
+			Binding* m_array;
+		};
+
+		U32 m_count;
+
+		BindingExtended()
+		{
+			// No init for perf reasons
+		}
+	};
+
+	const DSLayout* m_layout = nullptr;
+
+	Array<BindingExtended, kMaxBindingsPerDescriptorSet> m_bindings;
+
+	BitSet<kMaxBindingsPerDescriptorSet, U32> m_bindingIsSetMask = {false};
+	BitSet<kMaxBindingsPerDescriptorSet, U32> m_bindingDirtyMask = {true};
+	Bool m_bindlessDSDirty = true;
+	Bool m_bindlessDSBound = false;
 	Bool m_layoutDirty = true;
-	Bool m_bindlessDSetDirty = true;
-	Bool m_bindlessDSetBound = false;
 
-	/// Only DescriptorSetFactory should call this.
-	/// @param hash If hash is zero then the DS doesn't need rebind.
-	void flush(U64& hash, Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets, U32& dynamicOffsetCount, Bool& bindlessDSet);
+	DynamicArray<VkWriteDescriptorSet, MemoryPoolPtrWrapper<StackMemoryPool>> m_writeInfos;
 
 	void unbindBindlessDSet()
 	{
-		m_bindlessDSetBound = false;
+		m_bindlessDSBound = false;
 	}
 
-	AnyBinding& getBindingToPopulate(U32 bindingIdx, U32 arrayIdx);
+	void setBinding(U32 bindingIdx, U32 arrayIdx, const Binding& b);
 };
 
-/// Creates new descriptor set layouts and descriptor sets.
-class DescriptorSetFactory
+class alignas(8) DSBinding
 {
-	friend class DSLayoutCacheEntry;
-
 public:
-	DescriptorSetFactory() = default;
-	~DescriptorSetFactory();
+	U32 m_arraySize = 0;
+	ShaderTypeBit m_stageMask = ShaderTypeBit::kNone;
+	DescriptorType m_type = DescriptorType::kCount;
+	U8 m_binding = kMaxU8;
+};
+static_assert(sizeof(DSBinding) == 8, "Should be packed because it will be hashed");
 
-	Error init(U32 bindlessTextureCount, U32 bindlessTextureBuffers);
+class DSLayoutFactory : public MakeSingleton<DSLayoutFactory>
+{
+public:
+	DSLayoutFactory();
 
-	void destroy();
-
-	/// @note It's thread-safe.
-	Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
-
-	/// @note It's thread-safe.
-	Error newDescriptorSet(StackMemoryPool& tmpPool, DescriptorSetState& state, DescriptorSet& set, Bool& dirty,
-						   Array<PtrSize, kMaxBindingsPerDescriptorSet>& dynamicOffsets, U32& dynamicOffsetCount);
-
-	void endFrame()
-	{
-		++m_frameCount;
-	}
-
-	/// Bind a sampled image.
-	/// @note It's thread-safe.
-	U32 bindBindlessTexture(const VkImageView view, const VkImageLayout layout);
-
-	/// Bind a uniform texel buffer.
-	/// @note It's thread-safe.
-	U32 bindBindlessUniformTexelBuffer(const VkBufferView view);
+	~DSLayoutFactory();
 
 	/// @note It's thread-safe.
-	void unbindBindlessTexture(U32 idx);
-
-	/// @note It's thread-safe.
-	void unbindBindlessUniformTexelBuffer(U32 idx);
+	Error getOrCreateDescriptorSetLayout(const WeakArray<DSBinding>& bindings, const DSLayout*& layout);
 
 private:
-	class BindlessDescriptorSet;
-	class DSAllocator;
-	class ThreadLocal;
-
-	static thread_local ThreadLocal* m_threadLocal;
-	GrDynamicArray<ThreadLocal*> m_allThreadLocals;
-	Mutex m_allThreadLocalsMtx;
-
-	U64 m_frameCount = 0;
-
-	GrDynamicArray<DSLayoutCacheEntry*> m_caches;
-	SpinLock m_cachesMtx; ///< Not a mutex because after a while there will be no reason to lock
-
-	BindlessDescriptorSet* m_bindless = nullptr;
-	U32 m_bindlessTextureCount = kMaxU32;
-	U32 m_bindlessUniformTexelBufferCount = kMaxU32;
+	GrDynamicArray<DSLayout*> m_layouts;
+	Mutex m_mtx;
 };
-/// @}
 
 } // end namespace anki

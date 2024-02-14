@@ -56,7 +56,7 @@ public:
 	}
 
 	/// @note It's thread-safe.
-	U32 getOrCreateBindlessIndex(GrManagerImpl& gr) const;
+	U32 getOrCreateBindlessIndex() const;
 
 	TextureType getDerivedTextureType() const
 	{

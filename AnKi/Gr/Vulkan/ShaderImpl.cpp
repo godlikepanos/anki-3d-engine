@@ -138,7 +138,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	spirv_cross::ShaderResources rsrcActive = spvc.get_shader_resources(spvc.get_active_interface_variables());
 
 	Array<U32, kMaxDescriptorSets> counts = {};
-	Array2d<DescriptorBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> descriptors;
+	Array2d<DSBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> descriptors;
 
 	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType) -> void {
 		for(const spirv_cross::Resource& r : resources)
@@ -189,7 +189,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			if(foundIdx == kMaxU32)
 			{
 				// New binding, init it
-				DescriptorBinding& descriptor = descriptors[set][counts[set]++];
+				DSBinding& descriptor = descriptors[set][counts[set]++];
 				descriptor.m_binding = U8(binding);
 				descriptor.m_type = type;
 				descriptor.m_stageMask = ShaderTypeBit(1 << m_shaderType);
@@ -205,7 +205,6 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	};
 
 	func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer);
-	func(rsrc.sampled_images, DescriptorType::kCombinedTextureSampler);
 	func(rsrc.separate_images, DescriptorType::kTexture); // This also handles texture buffers
 	func(rsrc.separate_samplers, DescriptorType::kSampler);
 	func(rsrc.storage_buffers, DescriptorType::kStorageBuffer);
@@ -217,7 +216,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 		if(counts[set])
 		{
 			m_bindings[set].resize(counts[set]);
-			memcpy(&m_bindings[set][0], &descriptors[set][0], counts[set] * sizeof(DescriptorBinding));
+			memcpy(&m_bindings[set][0], &descriptors[set][0], counts[set] * sizeof(DSBinding));
 		}
 	}
 
