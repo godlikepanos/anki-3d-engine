@@ -46,6 +46,9 @@ public:
 	Array<TexturePtr, 2> m_momentsRts;
 
 	RenderTargetDescription m_varianceRtDescr;
+
+	TexturePtr m_dummyHistoryLenTex;
+	TextureViewPtr m_dummyHistoryLenTexView;
 	/// @}
 
 	/// @name Programs

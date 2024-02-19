@@ -444,7 +444,7 @@ static void generateMeshlets(SubMesh& submesh)
 		outMeshlet.m_sphere =
 			computeBoundingSphere(&newVertexBuffer[outMeshlet.m_firstVertex].m_position, outMeshlet.m_vertexCount, sizeof(TempVertex));
 
-		if(bounds.radius < outMeshlet.m_sphere.getRadius())
+		if(bounds.radius < outMeshlet.m_sphere.getRadius() && bounds.radius > 0.0f)
 		{
 			// meshopt computed smaller sphere, use that one
 			outMeshlet.m_sphere.setCenter(Vec3(&bounds.center[0]));

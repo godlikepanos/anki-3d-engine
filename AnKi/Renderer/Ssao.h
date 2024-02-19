@@ -31,29 +31,33 @@ public:
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		ANKI_ASSERT(rtName == "Ssao");
-		handles[0] = m_runCtx.m_ssaoRts[1];
+		handles[0] = m_runCtx.m_finalRt;
 	}
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_ssaoRts[1];
+		return m_runCtx.m_finalRt;
 	}
 
 public:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	Array<ShaderProgramPtr, 2> m_denoiseGrProgs;
+	ShaderProgramPtr m_spatialDenoiseGrProg;
+	ShaderProgramPtr m_tempralDenoiseGrProg;
 
 	FramebufferDescription m_fbDescr;
-	ImageResourcePtr m_noiseImage;
+	RenderTargetDescription m_ssaoWithDepthRtDescr;
+	RenderTargetDescription m_ssaoRtDescr;
 
-	Array<TexturePtr, 2> m_rts;
-	Bool m_rtsImportedOnce = false;
+	Array<TexturePtr, 2> m_tex;
+	Bool m_texImportedOnce = false;
+
+	ImageResourcePtr m_noiseImage;
 
 	class
 	{
 	public:
-		Array<RenderTargetHandle, 2> m_ssaoRts;
+		RenderTargetHandle m_finalRt;
 	} m_runCtx;
 
 	Error initInternal();

@@ -104,7 +104,7 @@ struct SsaoConstants
 	F32 m_projectionMat22;
 	F32 m_projectionMat23;
 
-	Vec2 m_prevJitterUv;
+	Vec2 m_linearizeDepthParams;
 	RF32 m_ssaoPower;
 	U32 m_frameCount;
 

@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Window/Input.h>
 
 namespace anki {
 
@@ -33,24 +34,7 @@ Error MotionVectors::initInternal()
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16_Sfloat, "MotionVectors");
 	m_motionVectorsRtDescr.bake();
 
-	TextureUsageBit historyLengthUsage = TextureUsageBit::kAllSampled;
-	if(g_preferComputeCVar.get())
-	{
-		historyLengthUsage |= TextureUsageBit::kUavComputeWrite;
-	}
-	else
-	{
-		historyLengthUsage |= TextureUsageBit::kFramebufferWrite;
-	}
-
-	TextureInitInfo historyLengthTexInit =
-		getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-												   Format::kR8_Unorm, historyLengthUsage, "MotionVectorsHistoryLen#1");
-	m_historyLengthTextures[0] = getRenderer().createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);
-	historyLengthTexInit.setName("MotionVectorsHistoryLen#2");
-	m_historyLengthTextures[1] = getRenderer().createAndClearRenderTarget(historyLengthTexInit, TextureUsageBit::kAllSampled);
-
-	m_fbDescr.m_colorAttachmentCount = 2;
+	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.bake();
 
 	return Error::kNone;
@@ -62,24 +46,6 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDescr);
-
-	const U32 writeHistoryLenTexIdx = getRenderer().getFrameCount() & 1;
-	const U32 readHistoryLenTexIdx = !writeHistoryLenTexIdx;
-
-	if(m_historyLengthTexturesImportedOnce) [[likely]]
-	{
-		m_runCtx.m_historyLengthWriteRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx].get());
-		m_runCtx.m_historyLengthReadRtHandle = rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx].get());
-	}
-	else
-	{
-		m_runCtx.m_historyLengthWriteRtHandle =
-			rgraph.importRenderTarget(m_historyLengthTextures[writeHistoryLenTexIdx].get(), TextureUsageBit::kAllSampled);
-		m_runCtx.m_historyLengthReadRtHandle =
-			rgraph.importRenderTarget(m_historyLengthTextures[readHistoryLenTexIdx].get(), TextureUsageBit::kAllSampled);
-
-		m_historyLengthTexturesImportedOnce = true;
-	}
 
 	RenderPassDescriptionBase* ppass;
 	TextureUsageBit readUsage;
@@ -95,7 +61,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("MotionVectors");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_motionVectorsRtHandle, m_runCtx.m_historyLengthWriteRtHandle});
+		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_motionVectorsRtHandle});
 
 		readUsage = TextureUsageBit::kSampledFragment;
 		writeUsage = TextureUsageBit::kFramebufferWrite;
@@ -108,34 +74,26 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getPreviousFrameDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(3));
-		rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_historyLengthReadRtHandle);
+		rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(3));
 
 		class Constants
 		{
 		public:
-			Mat4 m_reprojectionMat;
-			Mat4 m_viewProjectionInvMat;
-			Mat4 m_prevViewProjectionInvMat;
-
-			Vec2 m_viewportSize;
-			F32 m_padding0;
-			F32 m_padding1;
+			Mat4 m_currentViewProjMat;
+			Mat4 m_currentInvViewProjMat;
+			Mat4 m_prevViewProjMat;
 		} * pc;
-		pc = allocateAndBindConstants<Constants>(cmdb, 0, 5);
+		pc = allocateAndBindConstants<Constants>(cmdb, 0, 3);
 
-		pc->m_reprojectionMat = ctx.m_matrices.m_reprojection;
-		pc->m_viewProjectionInvMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-		pc->m_prevViewProjectionInvMat = ctx.m_prevMatrices.m_invertedViewProjectionJitter;
-		pc->m_viewportSize = Vec2(getRenderer().getInternalResolution());
+		pc->m_currentViewProjMat = ctx.m_matrices.m_viewProjection;
+		pc->m_currentInvViewProjMat = ctx.m_matrices.m_invertedViewProjection;
+		pc->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjection;
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindUavTexture(0, 6, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
-			rgraphCtx.bindUavTexture(0, 7, m_runCtx.m_historyLengthWriteRtHandle, TextureSubresourceInfo());
+			rgraphCtx.bindUavTexture(0, 4, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
 		}
 
 		if(g_preferComputeCVar.get())
@@ -151,8 +109,6 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	});
 
 	ppass->newTextureDependency(m_runCtx.m_motionVectorsRtHandle, writeUsage);
-	ppass->newTextureDependency(m_runCtx.m_historyLengthWriteRtHandle, writeUsage);
-	ppass->newTextureDependency(m_runCtx.m_historyLengthReadRtHandle, readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(3), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getPreviousFrameDepthRt(), readUsage);

@@ -570,7 +570,7 @@ void main(
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
 	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, vertInput.m_uv);
-	if(diffColorA.a * localConstants.m_diffuseScale.a == 0.0f)
+	if(diffColorA.a * localConstants.m_diffuseScale.a < 0.5f)
 	{
 		discard;
 	}
@@ -606,7 +606,7 @@ FragOut main(
 	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, uv) * localConstants.m_diffuseScale;
 	const RVec3 diffColor = diffColorA.rgb;
 #			if REALLY_ALPHA_TEST
-	if(diffColorA.a == 0.0f)
+	if(diffColorA.a < 0.5f)
 	{
 		discard;
 	}

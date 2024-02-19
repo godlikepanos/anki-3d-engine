@@ -269,7 +269,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_viewProjection = cam.getFrustum().getViewProjectionMatrix();
 
 	Vec2 jitter = m_jitterOffsets[m_frameCount & (m_jitterOffsets.getSize() - 1)]; // In [-0.5, 0.5]
-	const Vec2 ndcPixelSize = 2.0f / Vec2(m_internalResolution);
+	jitter *= 2.0f; // In [-1, 1]
+	const Vec2 ndcPixelSize = 1.0f / Vec2(m_internalResolution);
 	jitter *= ndcPixelSize;
 	ctx.m_matrices.m_jitter = Mat4::getIdentity();
 	ctx.m_matrices.m_jitter.setTranslationPart(Vec4(jitter, 0.0f, 1.0f));
@@ -281,7 +282,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
 	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
 
-	ctx.m_matrices.m_reprojection = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
+	ctx.m_matrices.m_reprojection = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjection;
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 

@@ -16,6 +16,6 @@
 Vec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	const Vec4 rgba = g_inTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
-	return rgba.xyz;
+	return rgba.xxx;
 }
 #pragma anki technique_end frag
