@@ -171,7 +171,6 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	xml += kMaterialTemplate;
 
 	// Diffuse
-	Bool alphaTested = false;
 	if(mtl.pbr_metallic_roughness.base_color_texture.texture)
 	{
 		const ImporterString fname = getTextureUri(mtl.pbr_metallic_roughness.base_color_texture);
@@ -191,7 +190,6 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 
 		const Bool constantAlpha = constantColor.w() >= 0.0f;
 		xml.replaceAll("%alphaTestMutator%", (constantAlpha) ? "0" : "1");
-		alphaTested = !constantAlpha;
 
 		if(m_importTextures)
 		{

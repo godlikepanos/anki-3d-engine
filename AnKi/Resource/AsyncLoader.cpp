@@ -94,7 +94,7 @@ Error AsyncLoader::threadWorker()
 			{
 				ANKI_TRACE_SCOPED_EVENT(RsrcAsyncTask);
 				err = (*task)(ctx);
-				g_asyncTasksInFlightStatVar.decrement(1);
+				g_asyncTasksInFlightStatVar.decrement(1u);
 			}
 
 			if(!err)
