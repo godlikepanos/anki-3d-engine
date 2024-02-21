@@ -311,7 +311,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 
 				// Fix the projection matrix by applying an offset
 				Mat4 correctionTranslationMat = Mat4::getIdentity();
-				correctionTranslationMat.setTranslationPart(Vec4(dx, dy, 0, 1.0f));
+				correctionTranslationMat.setTranslationPart(Vec3(dx, dy, 0.0f));
 
 				cascadeProjMat = correctionTranslationMat * cascadeProjMat;
 			}

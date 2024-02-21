@@ -273,7 +273,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	const Vec2 ndcPixelSize = 1.0f / Vec2(m_internalResolution);
 	jitter *= ndcPixelSize;
 	ctx.m_matrices.m_jitter = Mat4::getIdentity();
-	ctx.m_matrices.m_jitter.setTranslationPart(Vec4(jitter, 0.0f, 1.0f));
+	ctx.m_matrices.m_jitter.setTranslationPart(Vec3(jitter, 0.0f));
 	ctx.m_matrices.m_jitterOffsetNdc = jitter;
 
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;

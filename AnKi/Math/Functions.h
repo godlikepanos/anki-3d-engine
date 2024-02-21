@@ -113,14 +113,14 @@ inline constexpr T absolute(const T f) requires(std::is_integral<T>::value&& std
 
 /// The same as abs/fabs. For floats.
 template<typename T>
-inline constexpr T absolute(const T f) requires(std::is_floating_point<T>::value && std::is_same_v<T, double>)
+inline constexpr T absolute(const T f) requires(std::is_floating_point<T>::value&& std::is_same_v<T, double>)
 {
 	return fabs(f);
 }
 
 /// The same as abs/fabs. For floats.
 template<typename T>
-inline constexpr T absolute(const T f) requires(std::is_floating_point<T>::value && std::is_same_v<T, float>)
+inline constexpr T absolute(const T f) requires(std::is_floating_point<T>::value&& std::is_same_v<T, float>)
 {
 	return fabsf(f);
 }

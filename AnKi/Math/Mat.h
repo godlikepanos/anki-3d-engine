@@ -132,7 +132,7 @@ public:
 		m(3, 3) = m33;
 	}
 
-	constexpr TMat(const TVec<T, 4>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1)) requires(kSize == 16)
+	constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1)) requires(kSize == 16)
 	{
 		if(isZero<T>(scale - T(1)))
 		{
@@ -147,10 +147,11 @@ public:
 
 		auto& m = *this;
 		m(3, 0) = m(3, 1) = m(3, 2) = T(0);
+		m(3, 3) = T(1);
 	}
 
 	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 16)
-		: TMat(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
+		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}
 
@@ -886,13 +887,13 @@ public:
 		return m3;
 	}
 
-	void setTranslationPart(const ColumnVec& v)
+	void setTranslationPart(const TVec<T, 3>& v)
 	{
-		if(kRowCount == 4)
-		{
-			ANKI_ASSERT(isZero<T>(v[3] - T(1)) && "w should be 1");
-		}
-		setColumn(3, v);
+		auto c = getColumn(3);
+		c.x() = v.x();
+		c.y() = v.y();
+		c.z() = v.z();
+		setColumn(3, c);
 	}
 
 	ColumnVec getTranslationPart() const
