@@ -314,40 +314,52 @@ public:
 	/// @{
 	void rotateLocalX(F32 angleRad)
 	{
-		m_ltrf.getRotation().rotateXAxis(angleRad);
+		Mat3x4 r = m_ltrf.getRotation();
+		r.rotateXAxis(angleRad);
+		m_ltrf.setRotation(r);
 		m_localTransformDirty = true;
 	}
+
 	void rotateLocalY(F32 angleRad)
 	{
-		m_ltrf.getRotation().rotateYAxis(angleRad);
+		Mat3x4 r = m_ltrf.getRotation();
+		r.rotateYAxis(angleRad);
+		m_ltrf.setRotation(r);
 		m_localTransformDirty = true;
 	}
+
 	void rotateLocalZ(F32 angleRad)
 	{
-		m_ltrf.getRotation().rotateZAxis(angleRad);
+		Mat3x4 r = m_ltrf.getRotation();
+		r.rotateZAxis(angleRad);
+		m_ltrf.setRotation(r);
 		m_localTransformDirty = true;
 	}
+
 	void moveLocalX(F32 distance)
 	{
 		Vec3 x_axis = m_ltrf.getRotation().getColumn(0);
-		m_ltrf.getOrigin() += Vec4(x_axis, 0.0) * distance;
+		m_ltrf.setOrigin(m_ltrf.getOrigin() + Vec4(x_axis, 0.0f) * distance);
 		m_localTransformDirty = true;
 	}
+
 	void moveLocalY(F32 distance)
 	{
 		Vec3 y_axis = m_ltrf.getRotation().getColumn(1);
-		m_ltrf.getOrigin() += Vec4(y_axis, 0.0) * distance;
+		m_ltrf.setOrigin(m_ltrf.getOrigin() + Vec4(y_axis, 0.0) * distance);
 		m_localTransformDirty = true;
 	}
+
 	void moveLocalZ(F32 distance)
 	{
 		Vec3 z_axis = m_ltrf.getRotation().getColumn(2);
-		m_ltrf.getOrigin() += Vec4(z_axis, 0.0) * distance;
+		m_ltrf.setOrigin(m_ltrf.getOrigin() + Vec4(z_axis, 0.0) * distance);
 		m_localTransformDirty = true;
 	}
+
 	void scale(F32 s)
 	{
-		m_ltrf.getScale() *= s;
+		m_ltrf.setScale(m_ltrf.getScale() * s);
 		m_localTransformDirty = true;
 	}
 

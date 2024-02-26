@@ -155,7 +155,7 @@ Error MyApp::sampleExtraInit()
 			monkey->newComponent<ModelComponent>()->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
-			trf.getOrigin().y() -= F32(i) * 1.25f;
+			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, F32(i) * 1.25f, 0.0f, 0.0f));
 			// trf.getOrigin().x() -= i * 0.25f;
 
 			// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);

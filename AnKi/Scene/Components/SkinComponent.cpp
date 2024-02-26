@@ -216,7 +216,7 @@ void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const 
 	if(bonesAnimated.get(bone.getIndex()))
 	{
 		const Trf& t = m_animationTrfs[bone.getIndex()];
-		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz(), Mat3(t.m_rotation), t.m_scale));
+		outMat = parentTrf.combineTransformations(Mat3x4(t.m_translation.xyz(), Mat3(t.m_rotation), Vec3(t.m_scale)));
 	}
 	else
 	{

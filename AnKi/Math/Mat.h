@@ -132,15 +132,20 @@ public:
 		m(3, 3) = m33;
 	}
 
-	constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1)) requires(kSize == 16)
+	constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const TVec<T, 3>& scale = TVec<T, 3>(T(1))) requires(kSize == 16)
 	{
-		if(isZero<T>(scale - T(1)))
+		if(scale == TVec<T, 3>(T(1)))
 		{
 			setRotationPart(rotation);
 		}
 		else
 		{
-			setRotationPart(rotation * scale);
+			const auto a = rotation.getColumn(0) * scale.x();
+			const auto b = rotation.getColumn(1) * scale.y();
+			const auto c = rotation.getColumn(2) * scale.z();
+			TMat<T, 3, 3> rot;
+			rot.setColumns(a, b, c);
+			setRotationPart(rot);
 		}
 
 		setTranslationPart(translation);
@@ -151,7 +156,7 @@ public:
 	}
 
 	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 16)
-		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale())
+		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), TVec<T, 3>(t.getScale()))
 	{
 	}
 
@@ -191,37 +196,41 @@ public:
 		m_rows[2] = m4.getRow(2);
 	}
 
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1)) requires(kSize == 12)
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation,
+							const TVec<T, 3>& scale = TVec<T, 3>(T(1))) requires(kSize == 12)
 	{
-		if(isZero<T>(scale - T(1)))
+		if(scale == TVec<T, 3>(T(1)))
 		{
 			setRotationPart(rotation);
 		}
 		else
 		{
-			setRotationPart(rotation * scale);
+			const auto a = rotation.getColumn(0) * scale.x();
+			const auto b = rotation.getColumn(1) * scale.y();
+			const auto c = rotation.getColumn(2) * scale.z();
+			setColumns(a, b, c);
 		}
 
 		setTranslationPart(translation);
 	}
 
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const T scale = T(1)) requires(kSize == 12)
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const TVec<T, 3>& scale = TVec<T, 3>(T(1))) requires(kSize == 12)
 		: TMat(translation, TMat<T, 3, 3>(q), scale)
 	{
 	}
 
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const T scale = T(1)) requires(kSize == 12)
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const TVec<T, 3>& scale = TVec<T, 3>(T(1))) requires(kSize == 12)
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
-	explicit constexpr TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const T scale = T(1)) requires(kSize == 12)
+	explicit constexpr TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const TVec<T, 3>& scale = TVec<T, 3>(T(1))) requires(kSize == 12)
 		: TMat(translation, TMat<T, 3, 3>(b), scale)
 	{
 	}
 
 	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 12)
-		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale())
+		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), TVec<T, 3>(t.getScale()))
 	{
 	}
 	/// @}

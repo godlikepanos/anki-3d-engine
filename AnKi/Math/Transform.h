@@ -22,7 +22,7 @@ public:
 	constexpr TTransform()
 		: m_origin(T(0))
 		, m_rotation(TMat<T, 3, 4>::getIdentity())
-		, m_scale(1.0)
+		, m_scale(T(1))
 	{
 	}
 
@@ -31,7 +31,7 @@ public:
 		, m_rotation(b.m_rotation)
 		, m_scale(b.m_scale)
 	{
-		checkW();
+		check();
 	}
 
 	explicit TTransform(const TMat<T, 4, 4>& m4)
@@ -47,7 +47,7 @@ public:
 		m_rotation.setColumns(s0 / scales.x(), s1 / scales.x(), s2 / scales.x(), TVec<T, 3>(T(0)));
 		m_origin = m4.getTranslationPart().xyz0();
 		m_scale = scales.x();
-		checkW();
+		check();
 	}
 
 	TTransform(const TVec<T, 4>& origin, const TMat<T, 3, 4>& rotation, const T scale)
@@ -55,31 +55,7 @@ public:
 		, m_rotation(rotation)
 		, m_scale(scale)
 	{
-		checkW();
-	}
-
-	explicit TTransform(const TVec<T, 4>& origin)
-		: m_origin(origin)
-		, m_rotation(TMat<T, 3, 4>::getIdentity())
-		, m_scale(T(1))
-	{
-		checkW();
-	}
-
-	explicit TTransform(const TMat<T, 3, 4>& rotation)
-		: m_origin(TVec<T, 4>(T(0)))
-		, m_rotation(rotation)
-		, m_scale(T(1))
-	{
-		checkW();
-	}
-
-	TTransform(const T scale)
-		: m_origin(TVec<T, 4>(T(0)))
-		, m_rotation(TMat<T, 3, 4>::getIdentity())
-		, m_scale(scale)
-	{
-		checkW();
+		check();
 	}
 	/// @}
 
@@ -90,23 +66,18 @@ public:
 		return m_origin;
 	}
 
-	[[nodiscard]] TVec<T, 4>& getOrigin()
-	{
-		return m_origin;
-	}
-
 	void setOrigin(const TVec<T, 4>& o)
 	{
 		m_origin = o;
-		checkW();
+		check();
+	}
+
+	void setOrigin(const TVec<T, 3>& o)
+	{
+		m_origin = o.xyz0();
 	}
 
 	[[nodiscard]] const TMat<T, 3, 4>& getRotation() const
-	{
-		return m_rotation;
-	}
-
-	[[nodiscard]] TMat<T, 3, 4>& getRotation()
 	{
 		return m_rotation;
 	}
@@ -116,12 +87,13 @@ public:
 		m_rotation = r;
 	}
 
-	[[nodiscard]] T getScale() const
+	void setRotation(const TMat<T, 3, 3>& r)
 	{
-		return m_scale;
+		m_rotation.setRotationPart(r);
+		m_rotation.setTranslationPart(TVec<T, 3>(T(0)));
 	}
 
-	[[nodiscard]] T& getScale()
+	[[nodiscard]] T getScale() const
 	{
 		return m_scale;
 	}
@@ -129,6 +101,7 @@ public:
 	void setScale(const T s)
 	{
 		m_scale = s;
+		check();
 	}
 	/// @}
 
@@ -139,7 +112,7 @@ public:
 		m_origin = b.m_origin;
 		m_rotation = b.m_rotation;
 		m_scale = b.m_scale;
-		checkW();
+		check();
 		return *this;
 	}
 
@@ -169,7 +142,7 @@ public:
 	/// @copybrief combineTTransformations
 	[[nodiscard]] TTransform combineTransformations(const TTransform& b) const
 	{
-		checkW();
+		check();
 		const TTransform& a = *this;
 		TTransform out;
 
@@ -184,7 +157,7 @@ public:
 	/// Get the inverse transformation. Its faster that inverting a Mat4
 	[[nodiscard]] TTransform getInverse() const
 	{
-		checkW();
+		check();
 		TTransform o;
 		o.m_rotation = m_rotation;
 		o.m_rotation.transposeRotationPart();
@@ -203,14 +176,14 @@ public:
 	/// Transform a TVec3
 	[[nodiscard]] TVec<T, 3> transform(const TVec<T, 3>& b) const
 	{
-		checkW();
+		check();
 		return (m_rotation.getRotationPart() * (b * m_scale)) + m_origin.xyz();
 	}
 
 	/// Transform a TVec4. SIMD optimized
 	[[nodiscard]] TVec<T, 4> transform(const TVec<T, 4>& b) const
 	{
-		checkW();
+		check();
 		TVec<T, 4> out = TVec<T, 4>(m_rotation * (b * m_scale), T(0)) + m_origin;
 		return out;
 	}
@@ -252,9 +225,10 @@ private:
 	T m_scale; ///< The uniform scaling
 	/// @}
 
-	void checkW() const
+	void check() const
 	{
 		ANKI_ASSERT(m_origin.w() == T(0));
+		ANKI_ASSERT(m_scale > T(0));
 	}
 };
 
