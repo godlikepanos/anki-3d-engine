@@ -1211,12 +1211,12 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	static F32 ang = -2.5f;
 	ang += toRad(2.5f);
 
-	Mat4 viewMat(Vec4(0.0, 0.0, 5.0, 1.0), Mat3::getIdentity(), 1.0f);
+	Mat4 viewMat(Vec3(0.0, 0.0, 5.0), Mat3::getIdentity(), Vec3(1.0f));
 	viewMat.invert();
 
 	Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(60.0f), toRad(60.0f), 0.1f, 100.0f);
 
-	Mat4 modelMat(Vec4(-0.5, -0.5, 0.0, 1.0), Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)), 1.0f);
+	Mat4 modelMat(Vec3(-0.5, -0.5, 0.0), Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)), Vec3(1.0f));
 
 	Mat4* mvp = SET_UNIFORMS(Mat4*, sizeof(*mvp), cmdb, 0, 0);
 	*mvp = projMat * viewMat * modelMat;
@@ -1233,7 +1233,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	cmdb->drawIndexed(PrimitiveTopology::kTriangles, 6 * 2 * 3);
 
 	// 2nd draw
-	modelMat = Mat4(Vec4(0.5, 0.5, 0.0, 1.0), Mat3(Euler(ang * 2.0f, ang, ang / 3.0f * 2.0f)), 1.0f);
+	modelMat = Mat4(Vec3(0.5, 0.5, 0.0), Mat3(Euler(ang * 2.0f, ang, ang / 3.0f * 2.0f)), Vec3(1.0f));
 
 	mvp = SET_UNIFORMS(Mat4*, sizeof(*mvp), cmdb, 0, 0);
 	*mvp = projMat * viewMat * modelMat;

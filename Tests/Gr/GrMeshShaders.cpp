@@ -20,6 +20,7 @@ ANKI_TEST(Gr, MeshShaders)
 	g_meshShadersCVar.set(true);
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
 	NativeWindow* win = createWindow();
 	GrManager* gr = createGrManager(win);
 
@@ -182,7 +183,7 @@ float3 main(VertOut input) : SV_TARGET0
 			Vec4* mapped = static_cast<Vec4*>(colorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 			const Array<Vec4, kTileCount> colors = {Vec4(1.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 1.0f, 0.0f, 0.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
-													Vec4(1.0f, 0.0f, 1.0f, 0.0f)};
+													Vec4(1.0f, 1.0f, 0.0f, 0.0f)};
 			for(U32 t = 0; t < kTileCount; t++)
 			{
 				mapped[0] = mapped[1] = mapped[2] = mapped[3] = colors[t];
@@ -269,5 +270,6 @@ float3 main(VertOut input) : SV_TARGET0
 
 	GrManager::freeSingleton();
 	NativeWindow::freeSingleton();
+	ShaderCompilerMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 }
