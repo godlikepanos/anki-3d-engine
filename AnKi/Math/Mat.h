@@ -156,7 +156,7 @@ public:
 	}
 
 	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 16)
-		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), TVec<T, 3>(t.getScale()))
+		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale().xyz())
 	{
 	}
 
@@ -230,7 +230,7 @@ public:
 	}
 
 	explicit constexpr TMat(const TTransform<T>& t) requires(kSize == 12)
-		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), TVec<T, 3>(t.getScale()))
+		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale().xyz())
 	{
 	}
 	/// @}

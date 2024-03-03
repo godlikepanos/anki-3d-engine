@@ -2669,8 +2669,8 @@ void main()
 		HighRezTimer timer;
 		timer.start();
 
-		const Vec4 cameraPos = {0.0f, 0.0f, 3.0f, 0.0f};
-		const Mat4 viewMat = Mat4{Transform{cameraPos, Mat3x4::getIdentity(), 1.0f}}.getInverse();
+		const Vec4 cameraPos(0.0f, 0.0f, 3.0f, 0.0f);
+		const Mat4 viewMat = Mat4(cameraPos.xyz(), Mat3::getIdentity(), Vec3(1.0f)).getInverse();
 		const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
 
 		CommandBufferInitInfo cinit;

@@ -206,7 +206,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			Frustum frustum;
 			{
 				frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
-				frustum.setWorldTransform(Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], 1.0f));
+				frustum.setWorldTransform(
+					Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};

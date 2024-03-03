@@ -1147,6 +1147,8 @@ Error GrManagerImpl::initDevice()
 			return Error::kFunctionFailed;
 		}
 
+		meshShadersFeatures.multiviewMeshShader = false;
+		meshShadersFeatures.primitiveFragmentShadingRateMeshShader = false;
 		meshShadersFeatures.pNext = const_cast<void*>(ci.pNext);
 		ci.pNext = &meshShadersFeatures;
 

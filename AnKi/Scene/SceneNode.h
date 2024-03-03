@@ -289,13 +289,13 @@ public:
 		return m_ltrf.getRotation();
 	}
 
-	void setLocalScale(F32 x)
+	void setLocalScale(const Vec4& x)
 	{
 		m_ltrf.setScale(x);
 		m_localTransformDirty = true;
 	}
 
-	F32 getLocalScale() const
+	const Vec4& getLocalScale() const
 	{
 		return m_ltrf.getScale();
 	}

@@ -96,7 +96,8 @@ public:
 		check();
 		Sphere out;
 		out.m_center = transform.transform(m_center);
-		out.m_radius = m_radius * transform.getScale();
+		ANKI_ASSERT(transform.hasUniformScale());
+		out.m_radius = m_radius * transform.getScale().x();
 		return out;
 	}
 

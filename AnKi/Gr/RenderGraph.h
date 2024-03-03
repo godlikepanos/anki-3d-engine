@@ -104,6 +104,10 @@ public:
 		ANKI_ASSERT(m_hash == 0);
 		ANKI_ASSERT(m_usage == TextureUsageBit::kNone && "No need to supply the usage. RenderGraph will find out");
 		m_hash = computeHash();
+		// Append the name to the hash because there might be RTs with the same properties and thus the same hash. We can't have different Rt
+		// descriptors with the same hash
+		ANKI_ASSERT(getName().getLength() > 0);
+		m_hash = appendHash(getName().cstr(), getName().getLength(), m_hash);
 	}
 
 private:

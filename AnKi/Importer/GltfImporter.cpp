@@ -122,16 +122,9 @@ static Error getNodeTransform(const cgltf_node& node, Transform& trf)
 	Vec3 scale;
 	getNodeTransform(node, tsl, rot, scale);
 
-	const F32 scaleEpsilon = 0.01f;
-	if(absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon)
-	{
-		ANKI_IMPORTER_LOGE("Expecting uniform scale");
-		return Error::kUserData;
-	}
-
 	trf.setOrigin(tsl.xyz0());
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
-	trf.setScale(scale[0]);
+	trf.setScale(scale);
 
 	return Error::kNone;
 }
@@ -631,7 +624,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 		Transform localTrf;
 		ANKI_CHECK(getNodeTransform(node, localTrf));
-		localTrf.setScale(1.0f); // Remove scale
+		localTrf.setScale(Vec4(1.0f, 1.0f, 1.0f, 0.0f)); // Remove scale
 		ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 	}
 	else if(node.camera)
@@ -645,7 +638,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 		Transform localTrf;
 		ANKI_CHECK(getNodeTransform(node, localTrf));
-		localTrf.setScale(1.0f); // Remove scale
+		localTrf.setScale(Vec4(1.0f, 1.0f, 1.0f, 0.0f)); // Remove scale
 		ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 	}
 	else if(node.mesh)
@@ -666,7 +659,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		if(extraFound)
 		{
 			Bool gpuParticles = false;
-			ANKI_CHECK(getExtra(extras, "particles", extraValueBool, extraFound));
+			ANKI_CHECK(getExtra(extras, "gpu_particles", extraValueBool, extraFound));
 			if(extraFound)
 			{
 				gpuParticles = extraValueBool;
@@ -773,7 +766,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newReflectionProbeComponent()\n"));
 			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(), boxSize.z()));
 
-			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
+			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if(stringsExist(extras, {"gi_probe"}))
@@ -801,7 +794,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(m_sceneFile.writeTextf("comp:setCellSize(%f)\n", extraValuef));
 			}
 
-			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
+			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if(stringsExist(extras, {"decal"}))
@@ -831,7 +824,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			Mat3 rot;
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
-			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
+			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else
@@ -896,7 +889,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		Mat3 rot;
 		Vec3 scale;
 		getNodeTransform(node, tsl, rot, scale);
-		nodeTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), scale.x());
+		nodeTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), scale.xyz0());
 	}
 	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
 	{
@@ -919,7 +912,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 	}
 	ANKI_CHECK(m_sceneFile.writeText("trf:setRotation(rot)\n"));
 
-	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(%f)\n", trf.getScale()));
+	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(Vec4.new(%f, %f, %f, 0))\n", trf.getScale().x(), trf.getScale().y(), trf.getScale().z()));
 
 	ANKI_CHECK(m_sceneFile.writeText("node:setLocalTransform(trf)\n"));
 

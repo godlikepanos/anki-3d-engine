@@ -301,6 +301,12 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 {
 	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
 	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone && "Don't need to supply the usage. Render grap will find it");
+
+	for([[maybe_unused]] auto it : m_renderTargets)
+	{
+		ANKI_ASSERT(it.m_hash != initInf.m_hash && "There is another RT descriptor with the same hash. Rendergraph's RT recycler will get confused");
+	}
+
 	RT& rt = *m_renderTargets.emplaceBack();
 	rt.m_initInfo = initInf;
 	rt.m_hash = initInf.m_hash;

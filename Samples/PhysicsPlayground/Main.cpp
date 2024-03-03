@@ -116,7 +116,7 @@ Error MyApp::sampleExtraInit()
 	if(1)
 	{
 		SceneNode& cam = SceneGraph::getSingleton().getActiveCameraNode();
-		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
+		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 5.0, 0.0), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 
 		SceneNode* player;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("player", player));
@@ -136,7 +136,7 @@ Error MyApp::sampleExtraInit()
 
 		BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
 		bodyc->loadMeshResource("Assets/Suzanne_e3526e1428c0763c.ankimesh");
-		bodyc->teleportTo(Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+		bodyc->teleportTo(Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 		bodyc->setMass(2.0f);
 
 		JointComponent* jointc = monkey->newComponent<JointComponent>();
@@ -154,7 +154,7 @@ Error MyApp::sampleExtraInit()
 			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("monkey_chain%u", i).toCString(), monkey));
 			monkey->newComponent<ModelComponent>()->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
-			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
+			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0, 1.0, 1.0, 0.0));
 			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, F32(i) * 1.25f, 0.0f, 0.0f));
 			// trf.getOrigin().x() -= i * 0.25f;
 
@@ -187,7 +187,7 @@ Error MyApp::sampleExtraInit()
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("trigger", node));
 		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
 		triggerc->setSphereVolumeRadius(1.8f);
-		node->setLocalTransform(Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+		node->setLocalTransform(Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 	}
 
 	Input::getSingleton().lockCursor(true);
@@ -299,7 +299,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			rot.reorthogonalize();
 
 			// Update move
-			player.setLocalTransform(Transform(origin, rot, 1.0));
+			player.setLocalTransform(Transform(origin, rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 		}
 
 		const F32 speed = 0.5;
@@ -381,7 +381,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			rot.setYAxis(yAxis);
 			rot.setZAxis(zAxis);
 
-			Transform trf(ray.m_hitPosition.xyz0(), rot, 1.0f);
+			Transform trf(ray.m_hitPosition.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 
 			// Create an obj
 			static U32 id = 0;

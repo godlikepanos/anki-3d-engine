@@ -23,6 +23,7 @@ namespace anki {
 
 void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 {
+	m_runCtx = {};
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};

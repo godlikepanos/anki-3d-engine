@@ -22,7 +22,7 @@ public:
 	constexpr TTransform()
 		: m_origin(T(0))
 		, m_rotation(TMat<T, 3, 4>::getIdentity())
-		, m_scale(T(1))
+		, m_scale(T(1), T(1), T(1), T(0))
 	{
 	}
 
@@ -40,20 +40,23 @@ public:
 		const TVec<T, 3> s1 = m4.getColumn(1).xyz();
 		const TVec<T, 3> s2 = m4.getColumn(2).xyz();
 
-		const TVec<T, 3> scales(s0.getLength(), s1.getLength(), s2.getLength());
-		[[maybe_unused]] const T E = T(0.001);
-		ANKI_ASSERT(isZero(scales.x() - scales.y(), E) && isZero(scales.y() - scales.z(), E) && "Expecting uniform scale");
+		m_scale = TVec<T, 4>(s0.getLength(), s1.getLength(), s2.getLength(), T(0));
 
-		m_rotation.setColumns(s0 / scales.x(), s1 / scales.x(), s2 / scales.x(), TVec<T, 3>(T(0)));
+		m_rotation.setColumns(s0 / m_scale.x(), s1 / m_scale.x(), s2 / m_scale.x(), TVec<T, 3>(T(0)));
 		m_origin = m4.getTranslationPart().xyz0();
-		m_scale = scales.x();
 		check();
 	}
 
-	TTransform(const TVec<T, 4>& origin, const TMat<T, 3, 4>& rotation, const T scale)
+	TTransform(const TVec<T, 4>& origin, const TMat<T, 3, 4>& rotation, const TVec<T, 4>& scale)
 		: m_origin(origin)
 		, m_rotation(rotation)
 		, m_scale(scale)
+	{
+		check();
+	}
+
+	TTransform(const TVec<T, 3>& origin, const TMat<T, 3, 3>& rotation, const TVec<T, 3>& scale)
+		: TTransform(origin.xyz0(), TMat<T, 3, 4>(TVec<T, 3>(T(0)), rotation), scale.xyz0())
 	{
 		check();
 	}
@@ -93,14 +96,20 @@ public:
 		m_rotation.setTranslationPart(TVec<T, 3>(T(0)));
 	}
 
-	[[nodiscard]] T getScale() const
+	[[nodiscard]] const TVec<T, 4>& getScale() const
 	{
 		return m_scale;
 	}
 
-	void setScale(const T s)
+	void setScale(const TVec<T, 4>& s)
 	{
 		m_scale = s;
+		check();
+	}
+
+	void setScale(const TVec<T, 3>& s)
+	{
+		m_scale = s.xyz0();
 		check();
 	}
 	/// @}
@@ -136,7 +145,7 @@ public:
 
 	[[nodiscard]] static TTransform getIdentity()
 	{
-		return TTransform(TVec<T, 4>(T(0)), TMat<T, 3, 4>::getIdentity(), T(1));
+		return TTransform(TVec<T, 4>(T(0)), TMat<T, 3, 4>::getIdentity(), TVec<T, 4>(T(1), T(1), T(1), T(0)));
 	}
 
 	/// @copybrief combineTTransformations
@@ -157,12 +166,12 @@ public:
 	/// Get the inverse transformation. Its faster that inverting a Mat4
 	[[nodiscard]] TTransform getInverse() const
 	{
-		check();
 		TTransform o;
 		o.m_rotation = m_rotation;
 		o.m_rotation.transposeRotationPart();
-		o.m_scale = T(1) / m_scale;
+		o.m_scale = T(1) / m_scale.xyz1();
 		o.m_origin = -(o.m_rotation * (o.m_scale * m_origin)).xyz0();
+		check();
 		return o;
 	}
 
@@ -177,7 +186,7 @@ public:
 	[[nodiscard]] TVec<T, 3> transform(const TVec<T, 3>& b) const
 	{
 		check();
-		return (m_rotation.getRotationPart() * (b * m_scale)) + m_origin.xyz();
+		return (m_rotation.getRotationPart() * (b * m_scale.xyz())) + m_origin.xyz();
 	}
 
 	/// Transform a TVec4. SIMD optimized
@@ -202,18 +211,23 @@ public:
 	[[nodiscard]] String toString() const requires(std::is_floating_point<T>::value)
 	{
 		String str;
-		String b = m_origin.toString();
+		String b = String("origin: ") + m_origin.toString();
 		str += b;
-		str += "\n";
+		str += "\nrotation:\n";
 
 		b = m_rotation.toString();
 		str += b;
 		str += "\n";
 
-		b = String().sprintf("%f", m_scale);
+		b = String().sprintf("scale: %f %f %f", m_scale.x(), m_scale.y(), m_scale.z());
 		str += b;
 
 		return str;
+	}
+
+	Bool hasUniformScale() const
+	{
+		return m_scale.x() == m_scale.y() && m_scale.x() == m_scale.z();
 	}
 	/// @}
 
@@ -222,13 +236,14 @@ private:
 	/// @{
 	TVec<T, 4> m_origin; ///< The rotation
 	TMat<T, 3, 4> m_rotation; ///< The translation
-	T m_scale; ///< The uniform scaling
+	TVec<T, 4> m_scale; ///< The scaling
 	/// @}
 
 	void check() const
 	{
 		ANKI_ASSERT(m_origin.w() == T(0));
-		ANKI_ASSERT(m_scale > T(0));
+		using TT = TVec<T, 3>;
+		ANKI_ASSERT(m_scale.w() == T(0) && m_scale.xyz() > TT(T(0)));
 	}
 };
 

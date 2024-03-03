@@ -386,7 +386,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				Frustum frustum;
 				frustum.init(FrustumType::kPerspective);
 				frustum.setPerspective(kClusterObjectFrustumNearPlane, lightc->getRadius(), kPi / 2.0f, kPi / 2.0f);
-				frustum.setWorldTransform(Transform(lightc->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[face], 1.0f));
+				frustum.setWorldTransform(
+					Transform(lightc->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[face], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
 				GpuMeshletVisibilityOutput meshletVisOut;

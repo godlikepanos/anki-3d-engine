@@ -209,14 +209,17 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
 
-		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
+		if(allAabbCount)
+		{
+			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
 
-		BufferOffsetRange indicesBuff;
-		BufferHandle dep;
-		getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-		cmdb.bindUavBuffer(0, 3, indicesBuff);
+			BufferOffsetRange indicesBuff;
+			BufferHandle dep;
+			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+			cmdb.bindUavBuffer(0, 3, indicesBuff);
 
-		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
+			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
+		}
 	}
 
 	// Draw non-renderables
@@ -262,8 +265,12 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	BufferHandle dep;
 	getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
 	pass.newBufferDependency(dep, BufferUsageBit::kUavGeometryRead);
-	getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-	pass.newBufferDependency(dep, BufferUsageBit::kUavGeometryRead);
+
+	if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())
+	{
+		getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+		pass.newBufferDependency(dep, BufferUsageBit::kUavGeometryRead);
+	}
 }
 
 } // end namespace anki

@@ -181,12 +181,15 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
 
+	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
+	const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
+
 	// Create render targets now to save memory
-	RenderTargetHandle probeTexture = rgraph.importRenderTarget(&probeToRefresh->getReflectionTexture(), TextureUsageBit::kNone);
+	const RenderTargetHandle probeTexture = rgraph.importRenderTarget(&probeToRefresh->getReflectionTexture(), TextureUsageBit::kNone);
 	m_runCtx.m_probeTex = probeTexture;
-	BufferHandle irradianceDiceValuesBuffHandle = rgraph.importBuffer(m_irradiance.m_diceValuesBuff.get(), BufferUsageBit::kNone);
-	RenderTargetHandle gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
-	RenderTargetHandle shadowMapRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
+	const BufferHandle irradianceDiceValuesBuffHandle = rgraph.importBuffer(m_irradiance.m_diceValuesBuff.get(), BufferUsageBit::kNone);
+	const RenderTargetHandle gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
+	const RenderTargetHandle shadowMapRt = (doShadows) ? rgraph.newRenderTarget(m_shadowMapping.m_rtDescr) : RenderTargetHandle();
 
 	Array<RenderTargetHandle, kGBufferColorRenderTargetCount> gbufferColorRts;
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -202,7 +205,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		Frustum frustum;
 		{
 			frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
-			frustum.setWorldTransform(Transform(probeToRefresh->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], 1.0f));
+			frustum.setWorldTransform(
+				Transform(probeToRefresh->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 			frustum.update();
 
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
@@ -287,8 +291,6 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		}
 
 		// Shadow visibility. Optional
-		const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
-		const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
 		GpuVisibilityOutput shadowVisOut;
 		GpuMeshletVisibilityOutput shadowMeshletVisOut;
 		Mat4 cascadeViewProjMat;

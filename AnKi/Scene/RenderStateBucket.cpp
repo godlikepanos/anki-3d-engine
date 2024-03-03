@@ -56,7 +56,7 @@ RenderStateBucketIndex RenderStateBucketContainer::addUser(const RenderStateInfo
 			if(buckets[i].m_userCount == 1)
 			{
 				ANKI_ASSERT(!buckets[i].m_program.isCreated());
-				ANKI_ASSERT(buckets[i].m_lod0MeshletGroupCount == meshletGroupCount && buckets[i].m_lod0MeshletGroupCount == lod0MeshletCount);
+				ANKI_ASSERT(buckets[i].m_lod0MeshletGroupCount == meshletGroupCount && buckets[i].m_lod0MeshletCount == lod0MeshletCount);
 				buckets[i].m_program = state.m_program;
 				++m_activeBucketCount[technique];
 

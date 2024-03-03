@@ -302,7 +302,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	if(in.m_gatherAabbIndices)
 	{
 		out.m_visibleAaabbIndicesBuffer =
-			allocateTransientGpuMem(RenderStateBucketContainer::getSingleton().getBucketsActiveUserCount(in.m_technique) * sizeof(U32));
+			allocateTransientGpuMem((RenderStateBucketContainer::getSingleton().getBucketsActiveUserCount(in.m_technique) + 1) * sizeof(U32));
 	}
 
 	// Set instance sub-ranges

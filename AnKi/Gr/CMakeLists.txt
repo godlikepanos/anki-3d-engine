@@ -1,4 +1,6 @@
-set(common_sources
+set(common_sources Common.cpp)
+
+set(backend_sources
 	Common.cpp
 	GrObject.cpp
 	RenderGraph.cpp
@@ -7,7 +9,7 @@ set(common_sources
 	Utils/Functions.cpp
 	Utils/SegregatedListsGpuMemoryPool.cpp)
 
-set(common_headers
+set(backend_headers
 	AccelerationStructure.h
 	Buffer.h
 	CommandBuffer.h
@@ -35,7 +37,7 @@ set(common_headers
 	Utils/SegregatedListsGpuMemoryPool.h)
 
 if(VULKAN)
-	set(backend_sources
+	set(backend_sources  ${backend_sources}
 		Vulkan/AccelerationStructure.cpp
 		Vulkan/AccelerationStructureImpl.cpp
 		Vulkan/Buffer.cpp
@@ -78,7 +80,7 @@ if(VULKAN)
 		Vulkan/GrUpscaler.cpp
 		Vulkan/GrUpscalerImpl.cpp)
 
-	set(backend_headers
+	set(backend_headers ${backend_headers}
 		Vulkan/AccelerationStructureImpl.h
 		Vulkan/BufferImpl.h
 		Vulkan/CommandBufferFactory.h

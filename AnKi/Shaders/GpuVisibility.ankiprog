@@ -260,13 +260,14 @@ struct DrawIndirectArgsWithPadding
 #if HASH_VISIBLES
 	// Update the renderables hash
 	{
+		// Transform a random point as a way to get a feel for the transform
 		const Mat3x4 trf = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
-		const Vec3 pos = trf.getTranslationPart();
-		const UVec3 posu = UVec3(asuint(pos.x), asuint(pos.y), asuint(pos.z));
+		const Vec3 pt = mul(trf, Vec4(1503.98f, 2006.8f, -1400.16f, 1.0f));
+		const UVec3 ptu = UVec3(asuint(pt.x), asuint(pt.y), asuint(pt.z));
 
-		U32 hash = posu.x;
-		hash ^= posu.y;
-		hash ^= posu.z;
+		U32 hash = ptu.x;
+		hash ^= ptu.y;
+		hash ^= ptu.z;
 		hash ^= renderable.m_uuid;
 
 		InterlockedXor(g_hash[0].m_renderablesHash, hash);
