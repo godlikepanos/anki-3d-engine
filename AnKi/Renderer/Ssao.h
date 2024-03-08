@@ -46,8 +46,7 @@ public:
 	ShaderProgramPtr m_tempralDenoiseGrProg;
 
 	FramebufferDescription m_fbDescr;
-	RenderTargetDescription m_ssaoWithDepthRtDescr;
-	RenderTargetDescription m_ssaoRtDescr;
+	RenderTargetDescription m_bentNormalsAndSsaoRtDescr;
 
 	Array<TexturePtr, 2> m_tex;
 	Bool m_texImportedOnce = false;

@@ -243,6 +243,7 @@ private:
 	{
 		ANKI_ASSERT(m_origin.w() == T(0));
 		using TT = TVec<T, 3>;
+		[[maybe_unused]] TT t; // Shut up the compiler regarding TT
 		ANKI_ASSERT(m_scale.w() == T(0) && m_scale.xyz() > TT(T(0)));
 	}
 };

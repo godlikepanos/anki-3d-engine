@@ -104,11 +104,19 @@ struct SsaoConstants
 	F32 m_projectionMat22;
 	F32 m_projectionMat23;
 
-	Vec2 m_linearizeDepthParams;
+	Vec2 m_padding;
 	RF32 m_ssaoPower;
 	U32 m_frameCount;
 
 	Mat3x4 m_viewMat;
+};
+
+struct SsaoSpatialDenoiseConstants
+{
+	Mat3x4 m_viewToWorldMat;
+
+	Vec2 m_linearizeDepthParams;
+	Vec2 m_padding;
 };
 
 ANKI_END_NAMESPACE

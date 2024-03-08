@@ -109,14 +109,14 @@ void RendererObject::zeroBuffer(Buffer* buff)
 	fence->clientWait(16.0_sec);
 }
 
-CString RendererObject::computeTempPassName(CString name, U32 index)
+CString RendererObject::generateTempPassName(CString name, U32 index)
 {
 	Char* str = static_cast<Char*>(getRenderer().getFrameMemoryPool().allocate(128, 1));
 	snprintf(str, 128, "%s #%u", name.cstr(), index);
 	return str;
 }
 
-CString RendererObject::computeTempPassName(CString name, U32 index, CString name2, U32 index2)
+CString RendererObject::generateTempPassName(CString name, U32 index, CString name2, U32 index2)
 {
 	Char* str = static_cast<Char*>(getRenderer().getFrameMemoryPool().allocate(128, 1));
 	snprintf(str, 128, "%s #%u %s #%u", name.cstr(), index, name2.cstr(), index2);

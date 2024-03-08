@@ -27,7 +27,7 @@
 [[vk::binding(4)]] SamplerState g_linearAnyClampSampler;
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(5)]] RWTexture2D<Vec4> g_outUav;
+[[vk::binding(5)]] RWTexture2D<RVec4> g_bentNormalsAndSsaoUav;
 #	endif
 
 [[vk::push_constant]] ConstantBuffer<SsaoConstants> g_consts;
@@ -52,7 +52,7 @@ RF32 computeFalloff(RF32 len)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-Vec2 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
+RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -148,12 +148,18 @@ Vec2 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION)
 	// Apply power
 	Vd = pow(Vd, g_consts.m_ssaoPower);
 
-	const F32 linearDepth = linearizeDepthOptimal(depth, g_consts.m_linearizeDepthParams.x, g_consts.m_linearizeDepthParams.y);
+	// Compute bent normal: see "Algorithm 2 Extension that computes bent normals b."
+	const RF32 t0 =
+		(6.0f * sin(h1 - n) - sin(3.0f * h1 - n) + 6.0f * sin(h2 - n) - sin(3.0f * h2 - n) + 16.0f * sin(n) - 3.0f * (sin(h1 + n) + sin(h2 + n)))
+		/ 12.0f;
+	const RF32 t1 = (-cos(3.0f * h1 - n) - cos(3.0f * h2 - n) + 8.0f * cos(n) - 3.0f * (cos(h1 + n) + cos(h2 + n))) / 12.0f;
+	RVec3 bentNormal = RVec3(-dir2d.x * t0, -dir2d.y * t0, t1);
+	bentNormal = normalize(bentNormal);
 
 #	if ANKI_COMPUTE_SHADER
-	g_outUav[svDispatchThreadId] = Vec4(Vd, linearDepth, 0.0f, 0.0f);
+	g_bentNormalsAndSsaoUav[svDispatchThreadId] = RVec4(bentNormal, Vd);
 #	else
-	return Vec2(Vd, linearDepth);
+	return RVec4(bentNormal, Vd);
 #	endif
 }
 #endif // ANKI_TECHNIQUE_Ssao && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
@@ -163,13 +169,18 @@ Vec2 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION)
 // ===========================================================================
 #if ANKI_TECHNIQUE_SsaoSpatialDenoise && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
 #	include <AnKi/Shaders/BilateralFilter.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/Functions.hlsl>
 
 [[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<Vec4> g_inTex;
+[[vk::binding(1)]] Texture2D<RVec4> g_bentNormalsAndSsaoTex;
+[[vk::binding(2)]] Texture2D<Vec4> g_depthTex;
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(2)]] RWTexture2D<RVec4> g_outImg;
+[[vk::binding(3)]] RWTexture2D<RVec4> g_bentNormalsAndSsaoUav;
 #	endif
+
+[[vk::push_constant]] ConstantBuffer<SsaoSpatialDenoiseConstants> g_consts;
 
 F32 computeWeight(F32 depth, F32 refDepth)
 {
@@ -177,62 +188,72 @@ F32 computeWeight(F32 depth, F32 refDepth)
 	return sqrt(1.0 / (0.0003 + diff));
 }
 
-void sampleTex(Vec2 uv, IVec2 offset, F32 refDepth, inout RF32 col, inout F32 weight)
+void sampleTex(Vec2 uv, IVec2 offset, F32 refDepth, inout RF32 ssao, inout RVec3 bentNormal, inout F32 weight)
 {
-	const Vec2 ssaoWithDepth = g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, offset).xy;
-	const F32 w = computeWeight(refDepth, ssaoWithDepth.y);
-	col += ssaoWithDepth.x * w;
+	const F32 linearDepth = linearizeDepthOptimal(g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, offset).x,
+												  g_consts.m_linearizeDepthParams.x, g_consts.m_linearizeDepthParams.y);
+	const RVec4 bentNormalAndSsao = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, offset);
+	const F32 w = computeWeight(refDepth, linearDepth);
+	ssao += bentNormalAndSsao.w * w;
+	bentNormal += bentNormalAndSsao.xyz * w;
 	weight += w;
 }
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RF32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 // Set UVs
 #	if ANKI_COMPUTE_SHADER
 	Vec2 textureSize;
 	U32 mipCount;
-	g_inTex.GetDimensions(0, textureSize.x, textureSize.y, mipCount);
+	g_bentNormalsAndSsaoTex.GetDimensions(0, textureSize.x, textureSize.y, mipCount);
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / textureSize;
 #	endif
 
 	// Sample ref
-	const Vec2 refSsaoAndDepth = g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xy;
-	RF32 color = refSsaoAndDepth.x;
-	const F32 refDepth = refSsaoAndDepth.y;
+	const RVec4 refBentNormalAndSsao = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0);
+	RF32 ssao = refBentNormalAndSsao.w;
+	RVec3 bentNormal = refBentNormalAndSsao.xyz;
+	const F32 refDepth = linearizeDepthOptimal(g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x, g_consts.m_linearizeDepthParams.x,
+											   g_consts.m_linearizeDepthParams.y);
 	F32 weight = computeWeight(0.0f, 0.0f); // Highest weight that this function can give
 
 	// Sample taps
-	sampleTex(uv, IVec2(1, 1), refDepth, color, weight);
-	sampleTex(uv, IVec2(0, 1), refDepth, color, weight);
-	sampleTex(uv, IVec2(-1, 1), refDepth, color, weight);
-	sampleTex(uv, IVec2(-1, 0), refDepth, color, weight);
-	sampleTex(uv, IVec2(-1, -1), refDepth, color, weight);
-	sampleTex(uv, IVec2(0, -1), refDepth, color, weight);
-	sampleTex(uv, IVec2(1, -1), refDepth, color, weight);
-	sampleTex(uv, IVec2(1, 0), refDepth, color, weight);
+	sampleTex(uv, IVec2(1, 1), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(0, 1), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(-1, 1), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(-1, 0), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(-1, -1), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(0, -1), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(1, -1), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(1, 0), refDepth, ssao, bentNormal, weight);
 
 #	if SPATIAL_DENOISE_QUALITY == 1
-	sampleTex(uv, IVec2(2, 2), refDepth, color, weight);
-	sampleTex(uv, IVec2(0, 2), refDepth, color, weight);
-	sampleTex(uv, IVec2(-2, 2), refDepth, color, weight);
-	sampleTex(uv, IVec2(-2, 0), refDepth, color, weight);
-	sampleTex(uv, IVec2(-2, -2), refDepth, color, weight);
-	sampleTex(uv, IVec2(0, -2), refDepth, color, weight);
-	sampleTex(uv, IVec2(2, -2), refDepth, color, weight);
-	sampleTex(uv, IVec2(2, 0), refDepth, color, weight);
+	sampleTex(uv, IVec2(2, 2), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(0, 2), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(-2, 2), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(-2, 0), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(-2, -2), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(0, -2), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(2, -2), refDepth, ssao, bentNormal, weight);
+	sampleTex(uv, IVec2(2, 0), refDepth, ssao, bentNormal, weight);
 #	endif
 
-	color /= weight;
+	ssao /= weight;
+	ssao = saturate(ssao);
+
+	bentNormal /= weight;
+	bentNormal = normalize(bentNormal);
+	bentNormal = mul(g_consts.m_viewToWorldMat, Vec4(bentNormal, 0.0f));
 
 	// Write value
 #	if ANKI_COMPUTE_SHADER
-	g_outImg[svDispatchThreadId] = color;
+	g_bentNormalsAndSsaoUav[svDispatchThreadId] = RVec4(bentNormal, ssao);
 #	else
-	return color;
+	return RVec4(bentNormal, ssao);
 #	endif
 }
 #endif
@@ -242,54 +263,55 @@ RF32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 // ===========================================================================
 #if ANKI_TECHNIQUE_SsaoTemporalDenoise && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
 #	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 [[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_ssaoTex;
-[[vk::binding(2)]] Texture2D<RVec4> g_historySsaoTex;
+[[vk::binding(1)]] Texture2D<RVec4> g_bentNormalsAndSsaoTex;
+[[vk::binding(2)]] Texture2D<RVec4> g_historyBentNormalsAndSsaoTex;
 [[vk::binding(3)]] Texture2D<Vec4> g_motionVectorsTex;
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(4)]] RWTexture2D<RVec4> g_outImg;
+[[vk::binding(4)]] RWTexture2D<RVec4> g_bentNormalsAndSsaoUav;
 #	endif
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RF32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
 	Vec2 textureSize;
 	U32 mipCount;
-	g_ssaoTex.GetDimensions(0, textureSize.x, textureSize.y, mipCount);
+	g_bentNormalsAndSsaoTex.GetDimensions(0, textureSize.x, textureSize.y, mipCount);
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / textureSize;
 #	endif
 
 	const Vec2 historyUv = uv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).xy;
 
 	// Read textures
-	RF32 history = g_historySsaoTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f).x;
-	RF32 current = g_ssaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).x;
+	RVec4 history = g_historyBentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
+	RVec4 current = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f);
 
 	// Remove ghosting by clamping the history color to neighbour's AABB
-	const RF32 near0 = g_ssaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(1, 0)).x;
-	const RF32 near1 = g_ssaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(0, 1)).x;
-	const RF32 near2 = g_ssaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(-1, 0)).x;
-	const RF32 near3 = g_ssaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(0, -1)).x;
+	const RVec4 near0 = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(1, 0));
+	const RVec4 near1 = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(0, 1));
+	const RVec4 near2 = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(-1, 0));
+	const RVec4 near3 = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0, IVec2(0, -1));
 
 #	if 0
-	const RF32 boxMin = min(current, min4(near0, near1, near2, near3));
-	const RF32 boxMax = max(current, max4(near0, near1, near2, near3));
+	const RVec4 boxMin = min(current, min4(near0, near1, near2, near3));
+	const RVec4 boxMax = max(current, max4(near0, near1, near2, near3));
 #	else
-	const RF32 m1 = current + near0 + near1 + near2 + near3;
-	const RF32 m2 = current * current + near0 * near0 + near1 * near1 + near2 * near2 + near3 * near3;
+	const RVec4 m1 = current + near0 + near1 + near2 + near3;
+	const RVec4 m2 = current * current + near0 * near0 + near1 * near1 + near2 * near2 + near3 * near3;
 
-	const RF32 mu = m1 / 5.0;
-	const RF32 sigma = sqrt(m2 / 5.0 - mu * mu);
+	const RVec4 mu = m1 / 5.0;
+	const RVec4 sigma = sqrt(m2 / 5.0 - mu * mu);
 
 	const F32 varianceClippingGamma = 1.2f;
-	const RF32 boxMin = mu - varianceClippingGamma * sigma;
-	const RF32 boxMax = mu + varianceClippingGamma * sigma;
+	const RVec4 boxMin = mu - varianceClippingGamma * sigma;
+	const RVec4 boxMax = mu + varianceClippingGamma * sigma;
 #	endif
 
 	history = clamp(history, boxMin, boxMax);
@@ -297,8 +319,8 @@ RF32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	// Final
 	const RF32 kBlendFactor = 0.1f;
 
-	const F32 lum0 = current;
-	const F32 lum1 = history;
+	const F32 lum0 = computeLuminance(current.xyz) * current.w;
+	const F32 lum1 = computeLuminance(history.xyz) * history.w;
 	const F32 maxLum = 1.0;
 
 	RF32 diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum + kEpsilonF32));
@@ -306,13 +328,14 @@ RF32 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	diff = diff * diff;
 	const RF32 feedback = lerp(0.0, kBlendFactor, diff);
 
-	const RF32 ssao = lerp(history, current, feedback);
+	RVec4 finalVal = lerp(history, current, feedback);
+	finalVal.xyz = normalize(finalVal.xyz);
 
 	// Write value
 #	if ANKI_COMPUTE_SHADER
-	g_outImg[svDispatchThreadId] = ssao;
+	g_bentNormalsAndSsaoUav[svDispatchThreadId] = finalVal;
 #	else
-	return ssao;
+	return finalVal;
 #	endif
 }
 #endif

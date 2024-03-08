@@ -257,7 +257,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 			ANKI_ASSERT(cascadeMinDepth <= cascadeMaxDepth);
 		}
 
-		RenderTargetDescription depthRtDescr("HZB boxes depth");
+		RenderTargetDescription depthRtDescr(generateTempPassName("HZB boxes depth", i));
 		depthRtDescr.m_width = cascade.m_hzbRtSize.x() * 2;
 		depthRtDescr.m_height = cascade.m_hzbRtSize.y() * 2;
 		depthRtDescr.m_format = Format::kD16_Unorm;

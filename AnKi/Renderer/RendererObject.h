@@ -102,9 +102,9 @@ protected:
 	static void zeroBuffer(Buffer* buff);
 
 	/// Temp pass name.
-	static CString computeTempPassName(CString name, U32 index);
+	static CString generateTempPassName(CString name, U32 index);
 
-	static CString computeTempPassName(CString name, U32 index, CString name2, U32 index2);
+	static CString generateTempPassName(CString name, U32 index, CString name2, U32 index2);
 };
 /// @}
 

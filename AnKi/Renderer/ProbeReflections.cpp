@@ -212,7 +212,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = computeTempPassName("Cube refl: GBuffer", f);
+			visIn.m_passesName = generateTempPassName("Cube refl: GBuffer", f);
 			visIn.m_technique = RenderingTechnique::kGBuffer;
 			visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
@@ -253,7 +253,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			fbDescr.bake();
 
 			// Create pass
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("Cube refl: GBuffer", f));
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: GBuffer", f));
 			pass.setFramebufferInfo(fbDescr, gbufferColorRts, gbufferDepthRt);
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -307,7 +307,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = computeTempPassName("Cube refl: Shadows", f);
+			visIn.m_passesName = generateTempPassName("Cube refl: Shadows", f);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMat;
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
@@ -336,7 +336,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		if(doShadows)
 		{
 			// Pass
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("Cube refl: Shadows", f));
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Shadows", f));
 			pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowMapRt);
 
 			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
@@ -375,7 +375,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		GpuVisibilityNonRenderablesOutput lightVis;
 		{
 			GpuVisibilityNonRenderablesInput in;
-			in.m_passesName = computeTempPassName("Cube refl: Light visibility", f);
+			in.m_passesName = generateTempPassName("Cube refl: Light visibility", f);
 			in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
 			in.m_viewProjectionMat = frustum.getViewProjectionMatrix();
 			in.m_rgraph = &rgraph;
@@ -392,7 +392,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			fbDescr.bake();
 
 			// Pass
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("Cube refl: light shading", f));
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: light shading", f));
 			pass.setFramebufferInfo(fbDescr, {probeTexture});
 
 			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
@@ -514,7 +514,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(computeTempPassName("Cube refl: Gen mips", faceIdx));
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Gen mips", faceIdx));
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 			subresource.m_mipmapCount = m_lightShading.m_mipCount;

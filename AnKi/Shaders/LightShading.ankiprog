@@ -73,7 +73,9 @@ RVec3 main(Vec4 svPosition : SV_POSITION, Vec2 uv : TEXCOORD) : SV_TARGET0
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 	// Apply SSAO
-	const RF32 ssao = g_ssaoTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).x;
+	const RVec4 ssaoAndBentNormals = g_ssaoTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f);
+	const RF32 ssao = ssaoAndBentNormals.w;
+	const RVec3 bentNormal = ssaoAndBentNormals.xyz;
 	gbuffer.m_diffuse *= ssao;
 
 	// Ambient and emissive color
@@ -92,7 +94,7 @@ RVec3 main(Vec4 svPosition : SV_POSITION, Vec2 uv : TEXCOORD) : SV_TARGET0
 
 			// Sample
 			probeColor =
-				sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_trilinearClampSampler);
+				sampleGlobalIllumination(worldPos, bentNormal, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_trilinearClampSampler);
 		}
 		else
 		{
@@ -112,9 +114,8 @@ RVec3 main(Vec4 svPosition : SV_POSITION, Vec2 uv : TEXCOORD) : SV_TARGET0
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const RVec3 c =
-					sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe,
-											 g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)], g_trilinearClampSampler);
+				const RVec3 c = sampleGlobalIllumination(
+					worldPos, bentNormal, probe, g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)], g_trilinearClampSampler);
 				probeColor += c * blendWeight;
 			}
 
