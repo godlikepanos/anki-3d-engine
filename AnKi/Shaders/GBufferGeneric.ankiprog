@@ -255,9 +255,11 @@ VertOut main(VertIn input)
 
 	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
 
-	const U32 primitiveId = input.m_svVertexId / 3u;
-	const UVec3 localIndices = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + primitiveId].xyz;
-	const U32 localIdx = localIndices[input.m_svVertexId % 3u];
+	// Indices are stored in R8G8B8A8_Uint per primitive. Last component is not used. Instead of reading 4 bytes use the code bellow to read just 1.
+	// Find prev version in an older commit
+	const U32 componentsPerPrimitive = 4u;
+	const F32 offset = floor(F32(input.m_svVertexId) / 3.0f) * F32(componentsPerPrimitive) + fmod(F32(input.m_svVertexId), 3.0f);
+	const U32 localIdx = g_unifiedGeom_R8_Uint[meshlet.m_firstPrimitive * componentsPerPrimitive + U32(offset)];
 
 	UnpackedMeshVertex vert = loadVertex(meshlet, localIdx, ANKI_BONES);
 
@@ -277,7 +279,7 @@ VertOut main(VertIn input)
 	const U32 constantsOffset = instance.m_constantsOffset;
 	const U32 worldTransformsOffset = instance.m_worldTransformsOffset;
 	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
-#	endif
+#	endif // SW_MESHLETS
 	ANKI_MAYBE_UNUSED(boneTransformsOrParticleEmitterOffset);
 
 	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(worldTransformsOffset);
