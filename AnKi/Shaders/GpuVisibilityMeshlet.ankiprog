@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator HZB_TEST 0 1
+#pragma anki mutator PASSTHROUGH 0 1
 
 #pragma anki technique_start comp
 
@@ -69,12 +70,15 @@ struct Consts
 		Bool cull = false;
 
 		const MeshletBoundingVolume meshletBoundingVol = g_meshletBoundingVolumes[firstMeshletBoundingVolume + svGroupIndex];
+
+#if !PASSTHROUGH
+
 		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
 
-#if MESHLET_BACKFACE_CULLING
+#	if MESHLET_BACKFACE_CULLING
 		const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
 		cull = cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_consts.m_cameraPos);
-#endif
+#	endif
 
 		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
 		const Mat4 mvp = mul(g_consts.m_viewProjectionMatrix, wordTransform4);
@@ -83,21 +87,23 @@ struct Consts
 		F32 aabbMinDepth;
 		projectAabb(meshletBoundingVol.m_aabbMin, meshletBoundingVol.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
 
-#if MESHLET_OUTSIDE_OF_SCREEN_CULLING
+#	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
 		// Outside of the screen
 		cull = cull || (any(minNdc > 1.0f) || any(maxNdc < -1.0f));
-#endif
+#	endif
 
-#if MESHLET_NO_SAMPLING_POINT_CULLING
+#	if MESHLET_NO_SAMPLING_POINT_CULLING
 		// Sampling points test
 		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_viewportSizef;
 		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_viewportSizef;
 		cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
-#endif
+#	endif
 
-#if MESHLET_HZB_CULLING
+#	if MESHLET_HZB_CULLING
 		cull = cull || (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
-#endif
+#	endif
+
+#endif // !PASSTHROUGH
 
 		if(!cull)
 		{

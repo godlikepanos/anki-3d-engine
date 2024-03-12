@@ -34,7 +34,7 @@ static CString getPipelineStageString(ShaderType shaderType)
 	return out;
 }
 
-Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out)
+Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out)
 {
 	ANKI_ASSERT(spirv.getSize() > 0);
 	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
@@ -64,6 +64,14 @@ Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, Shad
 	args[6] = spvFilename;
 
 	I32 exitCode;
+#if ANKI_OS_LINUX
+	CString rgaExecutable = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga";
+#elif ANKI_OS_WINDOWS
+	CString rgaExecutable = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonGpuAnalyzer/rga.exe";
+#else
+	CString rgaExecutable = "nothing";
+	ANKI_ASSERT(0);
+#endif
 	ANKI_CHECK(Process::callProcess(rgaExecutable, args, nullptr, nullptr, exitCode));
 
 	if(exitCode != 0)

@@ -116,18 +116,12 @@ public:
 };
 
 /// @memberof GpuVisibility
-class GpuMeshletVisibilityInput
+class BaseGpuMeshletVisibilityInput
 {
 public:
 	CString m_passesName;
 
 	RenderingTechnique m_technique = RenderingTechnique::kCount;
-
-	Mat4 m_viewProjectionMatrix;
-	Mat3x4 m_cameraTransform;
-
-	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
-	UVec2 m_viewportSize;
 
 	BufferOffsetRange m_taskShaderIndirectArgsBuffer; ///< Taken from GpuVisibilityOutput.
 	BufferOffsetRange m_meshletGroupInstancesBuffer; ///< Taken from GpuVisibilityOutput.
@@ -137,8 +131,6 @@ public:
 
 	RenderGraphDescription* m_rgraph = nullptr;
 
-	RenderTargetHandle m_hzbRt; ///< Optional.
-
 	void fillBuffers(const GpuVisibilityOutput& perObjVisOut)
 	{
 		m_taskShaderIndirectArgsBuffer = perObjVisOut.m_mesh.m_taskShaderIndirectArgsBuffer;
@@ -146,6 +138,24 @@ public:
 		m_bucketMeshletGroupInstanceRanges = perObjVisOut.m_mesh.m_bucketMeshletGroupInstanceRanges;
 		m_dependency = perObjVisOut.m_dependency;
 	}
+};
+
+/// @memberof GpuVisibility
+class GpuMeshletVisibilityInput : public BaseGpuMeshletVisibilityInput
+{
+public:
+	Mat4 m_viewProjectionMatrix;
+	Mat3x4 m_cameraTransform;
+
+	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
+	UVec2 m_viewportSize;
+
+	RenderTargetHandle m_hzbRt; ///< Optional.
+};
+
+/// @memberof GpuVisibility
+class PassthroughGpuMeshletVisibilityInput : public BaseGpuMeshletVisibilityInput
+{
 };
 
 /// @memberof GpuVisibility
@@ -190,7 +200,17 @@ public:
 
 	/// Perform meshlet GPU visibility.
 	/// @note Not thread-safe.
-	void populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out);
+	void populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
+	{
+		populateRenderGraphMeshletInternal(false, in, out);
+	}
+
+	/// Perform meshlet GPU visibility.
+	/// @note Not thread-safe.
+	void populateRenderGraph(PassthroughGpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
+	{
+		populateRenderGraphMeshletInternal(true, in, out);
+	}
 
 private:
 	ShaderProgramResourcePtr m_prog;
@@ -198,7 +218,7 @@ private:
 	Array3d<ShaderProgramPtr, 2, 2, 3> m_distGrProgs;
 
 	ShaderProgramResourcePtr m_meshletCullingProg;
-	Array<ShaderProgramPtr, 2> m_meshletCullingGrProgs;
+	Array2d<ShaderProgramPtr, 2, 2> m_meshletCullingGrProgs;
 
 	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
 	class PersistentMemory
@@ -264,6 +284,8 @@ private:
 	} m_runCtx;
 
 	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
+
+	void populateRenderGraphMeshletInternal(Bool passthrough, BaseGpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out);
 
 	static void computeGpuVisibilityMemoryRequirements(RenderingTechnique t, MemoryRequirements& total, WeakArray<MemoryRequirements> perBucket);
 };

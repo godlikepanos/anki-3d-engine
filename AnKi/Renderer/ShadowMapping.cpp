@@ -380,7 +380,21 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet point light", lightIdx), *lightc, visOut, rgraph);
 			}
 
-			// Add additional visibility and draw passes
+			// Additional visibility
+			GpuMeshletVisibilityOutput meshletVisOut;
+			if(getRenderer().runSoftwareMeshletRendering())
+			{
+				PassthroughGpuMeshletVisibilityInput meshIn;
+				meshIn.m_passesName = generateTempPassName("Shadows point light", lightIdx);
+				meshIn.m_technique = RenderingTechnique::kDepth;
+				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(visOut);
+
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
+			}
+
+			// Draw
+			Array<ShadowSubpassInfo, 6> subpasses;
 			for(U32 face = 0; face < 6; ++face)
 			{
 				Frustum frustum;
@@ -390,24 +404,13 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 					Transform(lightc->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[face], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
-				GpuMeshletVisibilityOutput meshletVisOut;
-				if(getRenderer().runSoftwareMeshletRendering())
-				{
-					GpuMeshletVisibilityInput meshIn;
-					meshIn.m_passesName = generateTempPassName("Shadows point light", lightIdx, "face", face);
-					meshIn.m_technique = RenderingTechnique::kDepth;
-					meshIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
-					meshIn.m_cameraTransform = frustum.getViewMatrix().getInverseTransformation();
-					meshIn.m_viewportSize = atlasViewports[face].zw();
-					meshIn.m_rgraph = &rgraph;
-					meshIn.fillBuffers(visOut);
-
-					getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
-				}
-
-				createDrawShadowsPass(atlasViewports[face], frustum.getViewProjectionMatrix(), frustum.getViewMatrix(), visOut, meshletVisOut,
-									  clearTileIndirectArgs, {}, generateTempPassName("Shadows: Point light", lightIdx, "face", face), rgraph);
+				subpasses[face].m_clearTileIndirectArgs = clearTileIndirectArgs;
+				subpasses[face].m_viewMat = frustum.getViewMatrix();
+				subpasses[face].m_viewport = atlasViewports[face];
+				subpasses[face].m_viewProjMat = frustum.getViewProjectionMatrix();
 			}
+
+			createDrawShadowsPass(subpasses, visOut, meshletVisOut, generateTempPassName("Shadows: Point light", lightIdx), rgraph);
 		}
 		else
 		{
@@ -618,60 +621,110 @@ void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& vie
 										  const GpuMeshletVisibilityOutput& meshletVisOut, const BufferOffsetRange& clearTileIndirectArgs,
 										  const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph)
 {
-	const Bool loadFb = (clearTileIndirectArgs.m_buffer != nullptr);
+	ShadowSubpassInfo spass;
+	spass.m_clearTileIndirectArgs = clearTileIndirectArgs;
+	spass.m_hzbRt = hzbRt;
+	spass.m_viewMat = viewMat;
+	spass.m_viewport = viewport;
+	spass.m_viewProjMat = viewProjMat;
+
+	createDrawShadowsPass({&spass, 1}, visOut, meshletVisOut, passName, rgraph);
+}
+
+void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subpasses_, const GpuVisibilityOutput& visOut,
+										  const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphDescription& rgraph)
+{
+	WeakArray<ShadowSubpassInfo> subpasses;
+	newArray<ShadowSubpassInfo>(getRenderer().getFrameMemoryPool(), subpasses_.getSize(), subpasses);
+	memcpy(subpasses.getBegin(), subpasses_.getBegin(), subpasses.getSizeInBytes());
+
+	// Compute the whole viewport
+	UVec4 viewport;
+	if(subpasses.getSize() == 1)
+	{
+		viewport = subpasses[0].m_viewport;
+	}
+	else
+	{
+		viewport = UVec4(kMaxU32, kMaxU32, 0, 0);
+		for(const ShadowSubpassInfo& s : subpasses)
+		{
+			viewport.x() = min(viewport.x(), s.m_viewport.x());
+			viewport.y() = min(viewport.y(), s.m_viewport.y());
+			viewport.z() = max(viewport.z(), s.m_viewport.x() + s.m_viewport.z());
+			viewport.w() = max(viewport.w(), s.m_viewport.y() + s.m_viewport.w());
+		}
+		viewport.z() -= viewport.x();
+		viewport.w() -= viewport.y();
+	}
 
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passName);
+
+	const Bool loadFb = !(subpasses.getSize() == 1 && subpasses[0].m_clearTileIndirectArgs.m_buffer == nullptr);
+
 	pass.setFramebufferInfo((loadFb) ? m_loadFbDescr : m_clearFbDescr, {}, m_runCtx.m_rt, {}, viewport[0], viewport[1], viewport[2], viewport[3]);
 
 	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	pass.setWork(1, [this, visOut, meshletVisOut, viewport, clearTileIndirectArgs, viewMat, viewProjMat, hzbRt](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork(1 /*TODO*/, [this, visOut, meshletVisOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		cmdb.setViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-		if(clearTileIndirectArgs.m_buffer)
+		for(U32 i = 0; i < subpasses.getSize(); ++i)
 		{
-			// Clear the depth buffer using a quad because it needs to be conditional
+			const ShadowSubpassInfo& spass = subpasses[i];
 
-			cmdb.bindShaderProgram(m_clearDepthGrProg.get());
-			cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+			cmdb.setViewport(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
 
-			cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, clearTileIndirectArgs.m_offset, clearTileIndirectArgs.m_buffer);
+			if(loadFb)
+			{
+				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
+				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
 
-			cmdb.setDepthCompareOperation(CompareOperation::kLess);
+				if(spass.m_clearTileIndirectArgs.m_buffer)
+				{
+
+					cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, spass.m_clearTileIndirectArgs.m_offset,
+									  spass.m_clearTileIndirectArgs.m_buffer);
+				}
+				else
+				{
+					cmdb.draw(PrimitiveTopology::kTriangles, 3);
+				}
+
+				cmdb.setDepthCompareOperation(CompareOperation::kLess);
+			}
+
+			// Set state
+			cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+
+			RenderableDrawerArguments args;
+			args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+			args.m_viewMatrix = spass.m_viewMat;
+			args.m_cameraTransform = spass.m_viewMat.getInverseTransformation();
+			args.m_viewProjectionMatrix = spass.m_viewProjMat;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+			args.m_viewport = UVec4(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
+			args.fill(visOut);
+
+			TextureViewPtr hzbView;
+			if(spass.m_hzbRt.isValid())
+			{
+				hzbView = rgraphCtx.createTextureView(spass.m_hzbRt);
+				args.m_hzbTexture = hzbView.get();
+			}
+
+			if(meshletVisOut.isFilled())
+			{
+				args.fill(meshletVisOut);
+			}
+
+			getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 		}
-
-		// Set state
-		cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
-
-		RenderableDrawerArguments args;
-		args.m_renderingTechinuqe = RenderingTechnique::kDepth;
-		args.m_viewMatrix = viewMat;
-		args.m_cameraTransform = viewMat.getInverseTransformation();
-		args.m_viewProjectionMatrix = viewProjMat;
-		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
-		args.m_viewport = UVec4(viewport[0], viewport[1], viewport[2], viewport[3]);
-		args.fill(visOut);
-
-		TextureViewPtr hzbView;
-		if(hzbRt.isValid())
-		{
-			hzbView = rgraphCtx.createTextureView(hzbRt);
-			args.m_hzbTexture = hzbView.get();
-		}
-
-		if(meshletVisOut.isFilled())
-		{
-			args.fill(meshletVisOut);
-		}
-
-		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
 	});
 }
 

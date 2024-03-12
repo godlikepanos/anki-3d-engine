@@ -35,6 +35,16 @@ public:
 	}
 
 private:
+	class ShadowSubpassInfo
+	{
+	public:
+		UVec4 m_viewport;
+		Mat4 m_viewProjMat;
+		Mat3x4 m_viewMat;
+		BufferOffsetRange m_clearTileIndirectArgs;
+		RenderTargetHandle m_hzbRt;
+	};
+
 	TileAllocator m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
 	static constexpr U32 kPointLightMaxTileAllocHierarchy = 1;
@@ -79,6 +89,9 @@ private:
 	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
 							   const GpuMeshletVisibilityOutput& meshletVisOut, const BufferOffsetRange& clearTileIndirectArgs,
 							   const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph);
+
+	void createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subPasses, const GpuVisibilityOutput& visOut,
+							   const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphDescription& rgraph);
 };
 /// @}
 

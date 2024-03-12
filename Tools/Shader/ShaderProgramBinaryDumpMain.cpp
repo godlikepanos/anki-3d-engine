@@ -172,36 +172,24 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 					// Arm stats
 					MaliOfflineCompilerOut maliocOut;
-					Error err = runMaliOfflineCompiler(
-#if ANKI_OS_LINUX
-						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc",
-#elif ANKI_OS_WINDOWS
-						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/MaliOfflineCompiler/malioc.exe",
-#else
-#	error "Not supported"
-#endif
-						codeBlock.m_binary, shaderType, maliocOut);
+					Error err = Error::kNone;
 
-					if(err)
+					if(shaderType == ShaderType::kVertex || shaderType == ShaderType::kFragment || shaderType == ShaderType::kCompute)
 					{
-						ANKI_LOGE("Mali offline compiler failed");
-						ctx.m_error.store(1);
-						break;
+						err = runMaliOfflineCompiler(codeBlock.m_binary, shaderType, maliocOut);
+
+						if(err)
+						{
+							ANKI_LOGE("Mali offline compiler failed");
+							ctx.m_error.store(1);
+							break;
+						}
 					}
 
 					// AMD
 					RgaOutput rgaOut = {};
 #if 0
-					err = runRadeonGpuAnalyzer(
-#	if ANKI_OS_LINUX
-						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/RadeonGpuAnalyzer/rga",
-#	elif ANKI_OS_WINDOWS
-						ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/RadeonGpuAnalyzer/rga.exe",
-#	else
-#		error "Not supported"
-#	endif
-						codeBlock.m_binary, shaderType, rgaOut);
-
+					err = runRadeonGpuAnalyzer(codeBlock.m_binary, shaderType, rgaOut);
 					if(err)
 					{
 						ANKI_LOGE("Radeon GPU Analyzer compiler failed");

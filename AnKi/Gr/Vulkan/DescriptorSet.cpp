@@ -434,10 +434,11 @@ Bool DSStateTracker::flush(DSAllocator& allocator, VkDescriptorSet& dsHandle)
 	const Bool reallyBindless = m_bindlessDSBound && m_layout->m_hash == 0;
 	if(reallyBindless)
 	{
-		if(m_bindlessDSDirty)
+		if(m_bindlessDSDirty || m_layoutDirty)
 		{
 			dsHandle = DSBindless::getSingleton().m_dset;
 			m_bindlessDSDirty = false;
+			m_layoutDirty = false;
 		}
 		return dsHandle != VK_NULL_HANDLE;
 	}

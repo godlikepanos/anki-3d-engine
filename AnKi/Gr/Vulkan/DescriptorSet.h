@@ -150,14 +150,17 @@ public:
 		m_writeInfos = {pool};
 	}
 
-	void setLayout(const DSLayout* layout)
+	Bool setLayout(const DSLayout* layout)
 	{
 		ANKI_ASSERT(layout);
 		if(layout != m_layout)
 		{
 			m_layoutDirty = true;
 			m_layout = layout;
+			return true;
 		}
+
+		return false;
 	}
 
 	void setLayoutDirty()

@@ -90,8 +90,11 @@ Error GpuVisibility::init()
 
 	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityMeshlet.ankiprogbin", {{"HZB_TEST", hzb}}, m_meshletCullingProg,
-									 m_meshletCullingGrProgs[hzb]));
+		for(MutatorValue passthrough = 0; passthrough < 2; ++passthrough)
+		{
+			ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityMeshlet.ankiprogbin", {{"HZB_TEST", hzb}, {"PASSTHROUGH", passthrough}},
+										 m_meshletCullingProg, m_meshletCullingGrProgs[hzb][passthrough]));
+		}
 	}
 
 	return Error::kNone;
@@ -506,7 +509,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	});
 }
 
-void GpuVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
+void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
 {
 	RenderGraphDescription& rgraph = *in.m_rgraph;
 
@@ -514,6 +517,28 @@ void GpuVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshle
 	{
 		// Early exit
 		return;
+	}
+
+	class NonPassthrough
+	{
+	public:
+		Mat4 m_viewProjectionMatrix;
+		Mat3x4 m_cameraTransform;
+
+		UVec2 m_viewportSize;
+
+		RenderTargetHandle m_hzbRt;
+	}* nonPassthroughData = nullptr;
+
+	if(!passthrough)
+	{
+		GpuMeshletVisibilityInput& nonPassthroughIn = static_cast<GpuMeshletVisibilityInput&>(in);
+
+		nonPassthroughData = newInstance<NonPassthrough>(getRenderer().getFrameMemoryPool());
+		nonPassthroughData->m_viewProjectionMatrix = nonPassthroughIn.m_viewProjectionMatrix;
+		nonPassthroughData->m_cameraTransform = nonPassthroughIn.m_cameraTransform;
+		nonPassthroughData->m_viewportSize = nonPassthroughIn.m_viewportSize;
+		nonPassthroughData->m_hzbRt = nonPassthroughIn.m_hzbRt;
 	}
 
 	// Allocate memory
@@ -560,8 +585,8 @@ void GpuVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshle
 	pass.newBufferDependency(mem.m_bufferDepedency, BufferUsageBit::kUavComputeWrite);
 	pass.newBufferDependency(in.m_dependency, BufferUsageBit::kIndirectCompute);
 
-	pass.setWork([this, hzbRt = in.m_hzbRt, viewProjMat = in.m_viewProjectionMatrix, camTrf = in.m_cameraTransform, viewportSize = in.m_viewportSize,
-				  computeIndirectArgs = in.m_taskShaderIndirectArgsBuffer, out, meshletGroupInstancesBuffer = in.m_meshletGroupInstancesBuffer,
+	pass.setWork([this, nonPassthroughData, computeIndirectArgs = in.m_taskShaderIndirectArgsBuffer, out,
+				  meshletGroupInstancesBuffer = in.m_meshletGroupInstancesBuffer,
 				  bucketMeshletGroupInstanceRanges = in.m_bucketMeshletGroupInstanceRanges](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
@@ -574,9 +599,10 @@ void GpuVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshle
 				continue;
 			}
 
-			const Bool hasHzb = hzbRt.isValid();
+			const Bool hasHzb = (nonPassthroughData) ? nonPassthroughData->m_hzbRt.isValid() : false;
+			const Bool isPassthrough = (nonPassthroughData == nullptr);
 
-			cmdb.bindShaderProgram(m_meshletCullingGrProgs[hasHzb].get());
+			cmdb.bindShaderProgram(m_meshletCullingGrProgs[hasHzb][isPassthrough].get());
 
 			cmdb.bindUavBuffer(0, 0, meshletGroupInstancesBuffer);
 			cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
@@ -587,7 +613,7 @@ void GpuVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshle
 			cmdb.bindUavBuffer(0, 6, out.m_meshletInstancesBuffer);
 			if(hasHzb)
 			{
-				rpass.bindColorTexture(0, 7, hzbRt);
+				rpass.bindColorTexture(0, 7, nonPassthroughData->m_hzbRt);
 				cmdb.bindSampler(0, 8, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			}
 
@@ -608,10 +634,10 @@ void GpuVisibility::populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshle
 				U32 m_padding2;
 				U32 m_padding3;
 			} consts;
-			consts.m_viewProjectionMatrix = viewProjMat;
-			consts.m_cameraPos = camTrf.getTranslationPart().xyz();
+			consts.m_viewProjectionMatrix = (!isPassthrough) ? nonPassthroughData->m_viewProjectionMatrix : Mat4::getIdentity();
+			consts.m_cameraPos = (!isPassthrough) ? nonPassthroughData->m_cameraTransform.getTranslationPart().xyz() : Vec3(0.0f);
 			consts.m_firstDrawArg = i;
-			consts.m_viewportSizef = Vec2(viewportSize);
+			consts.m_viewportSizef = (!isPassthrough) ? Vec2(nonPassthroughData->m_viewportSize) : Vec2(0.0f);
 			consts.m_firstMeshletGroup = bucketMeshletGroupInstanceRanges[i].getFirstInstance();
 			consts.m_firstMeshlet = out.m_bucketMeshletInstanceRanges[i].getFirstInstance();
 			consts.m_meshletCount = out.m_bucketMeshletInstanceRanges[i].getInstanceCount();
