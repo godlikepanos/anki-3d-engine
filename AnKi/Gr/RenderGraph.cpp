@@ -1214,6 +1214,66 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 	} // For all batches
 }
 
+void RenderGraph::minimizeSubchannelSwitches()
+{
+	BakeContext& ctx = *m_ctx;
+
+	Bool computeFirst = true;
+	for(Batch& batch : ctx.m_batches)
+	{
+		U32 graphicsPasses = 0;
+		U32 computePasses = 0;
+
+		std::sort(batch.m_passIndices.getBegin(), batch.m_passIndices.getEnd(), [&](U32 a, U32 b) {
+			const Bool aIsCompute = !ctx.m_passes[a].m_framebuffer.isCreated();
+			const Bool bIsCompute = !ctx.m_passes[b].m_framebuffer.isCreated();
+
+			graphicsPasses += !aIsCompute + !bIsCompute;
+			computePasses += aIsCompute + bIsCompute;
+
+			if(computeFirst)
+			{
+				return !aIsCompute < !bIsCompute;
+			}
+			else
+			{
+				return aIsCompute < bIsCompute;
+			}
+		});
+
+		if(graphicsPasses && !computePasses)
+		{
+			// Only graphics passes in this batch, start next batch from graphics
+			computeFirst = false;
+		}
+		else if(computePasses && !graphicsPasses)
+		{
+			// Only compute passes in this batch, start next batch from compute
+			computeFirst = true;
+		}
+		else
+		{
+			// This batch ends in compute start next batch in compute and if it ends with graphics start next in graphics
+			computeFirst = !computeFirst;
+		}
+	}
+}
+
+void RenderGraph::sortBatchPasses()
+{
+	BakeContext& ctx = *m_ctx;
+
+	for(Batch& batch : ctx.m_batches)
+	{
+		std::sort(batch.m_passIndices.getBegin(), batch.m_passIndices.getEnd(), [&](U32 a, U32 b) {
+			const Bool aIsCompute = !ctx.m_passes[a].m_framebuffer.isCreated();
+			const Bool bIsCompute = !ctx.m_passes[b].m_framebuffer.isCreated();
+
+			return aIsCompute < bIsCompute;
+		});
+	}
+}
+
 void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool)
 {
 	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCompile);
@@ -1233,6 +1293,16 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackMemo
 
 	// Create barriers between batches
 	setBatchBarriers(descr);
+
+	// Sort passes in batches
+	if(GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kNvidia)
+	{
+		minimizeSubchannelSwitches();
+	}
+	else
+	{
+		sortBatchPasses();
+	}
 
 #if ANKI_DBG_RENDER_GRAPH
 	if(dumpDependencyDotFile(descr, ctx, "./"))

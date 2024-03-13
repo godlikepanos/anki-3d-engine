@@ -548,6 +548,12 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 // ===========================================================================
 #if ANKI_FRAGMENT_SHADER
 
+#	if SW_MESHLETS
+#		define TEX_IDX(x) NonUniformResourceIndex(x)
+#	else
+#		define TEX_IDX(x) x
+#	endif
+
 #	if !GBUFFER && !REALLY_ALPHA_TEST // Shadows without alpha
 
 void main()
@@ -571,7 +577,7 @@ void main(
 #		endif
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, vertInput.m_uv);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[TEX_IDX(localConstants.m_diffuseTex)].Sample(g_globalSampler, vertInput.m_uv);
 	if(diffColorA.a * localConstants.m_diffuseScale.a < 0.5f)
 	{
 		discard;
@@ -605,7 +611,8 @@ FragOut main(
 	ANKI_MAYBE_UNUSED(uv);
 
 #		if DIFFUSE_TEX
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localConstants.m_diffuseTex].Sample(g_globalSampler, uv) * localConstants.m_diffuseScale;
+	const RVec4 diffColorA =
+		g_bindlessTextures2dF32[TEX_IDX(localConstants.m_diffuseTex)].Sample(g_globalSampler, uv) * localConstants.m_diffuseScale;
 	const RVec3 diffColor = diffColorA.rgb;
 #			if REALLY_ALPHA_TEST
 	if(diffColorA.a < 0.5f)
@@ -618,13 +625,14 @@ FragOut main(
 #		endif
 
 #		if SPECULAR_TEX
-	const RVec3 specColor = g_bindlessTextures2dF32[localConstants.m_specularTex].Sample(g_globalSampler, uv).rgb * localConstants.m_specularScale;
+	const RVec3 specColor =
+		g_bindlessTextures2dF32[TEX_IDX(localConstants.m_specularTex)].Sample(g_globalSampler, uv).rgb * localConstants.m_specularScale;
 #		else
 	const RVec3 specColor = localConstants.m_specularScale;
 #		endif
 
 #		if ROUGHNESS_METALNESS_TEX
-	const RVec3 comp = g_bindlessTextures2dF32[localConstants.m_roughnessMetalnessTex].Sample(g_globalSampler, uv).rgb;
+	const RVec3 comp = g_bindlessTextures2dF32[TEX_IDX(localConstants.m_roughnessMetalnessTex)].Sample(g_globalSampler, uv).rgb;
 	const RF32 roughness = comp.g * localConstants.m_roughnessScale;
 	const RF32 metallic = comp.b * localConstants.m_metalnessScale;
 #		else
@@ -633,7 +641,8 @@ FragOut main(
 #		endif
 
 #		if NORMAL_TEX
-	const RVec3 nAtTangentspace = normalize((g_bindlessTextures2dF32[localConstants.m_normalTex].Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
+	const RVec3 nAtTangentspace =
+		normalize((g_bindlessTextures2dF32[TEX_IDX(localConstants.m_normalTex)].Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
 	const Vec3 viewDir = normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
 	const RVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertInput.m_normal));
 #		else
@@ -641,7 +650,8 @@ FragOut main(
 #		endif
 
 #		if EMISSIVE_TEX
-	const RVec3 emission = g_bindlessTextures2dF32[localConstants.m_emissiveTex].Sample(g_globalSampler, uv).rgb * localConstants.m_emissionScale;
+	const RVec3 emission =
+		g_bindlessTextures2dF32[TEX_IDX(localConstants.m_emissiveTex)].Sample(g_globalSampler, uv).rgb * localConstants.m_emissionScale;
 #		else
 	const RVec3 emission = localConstants.m_emissionScale;
 #		endif

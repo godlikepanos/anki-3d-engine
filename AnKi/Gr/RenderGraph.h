@@ -712,6 +712,9 @@ private:
 	void initBatches();
 	void initGraphicsPasses(const RenderGraphDescription& descr);
 	void setBatchBarriers(const RenderGraphDescription& descr);
+	/// Switching from compute to graphics and the opposite in the same queue is not great for some GPUs (nVidia)
+	void minimizeSubchannelSwitches();
+	void sortBatchPasses();
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
 	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, Bool& drawsToPresentableTex);
