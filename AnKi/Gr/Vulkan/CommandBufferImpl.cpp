@@ -656,36 +656,36 @@ void CommandBufferImpl::setPipelineBarrierInternal(ConstWeakArray<TextureBarrier
 		ANKI_ASSERT(barrier.m_buffer);
 		const BufferImpl& impl = static_cast<const BufferImpl&>(*barrier.m_buffer);
 
-		const BufferUsageBit prevUsage = barrier.m_previousUsage;
-		const BufferUsageBit nextUsage = barrier.m_nextUsage;
-
-		VkBufferMemoryBarrier& inf = *bufferBarriers.emplaceBack();
-		inf = {};
-		inf.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.buffer = impl.getHandle();
-
-		ANKI_ASSERT(barrier.m_offset < impl.getSize());
-		inf.offset = barrier.m_offset;
-
-		if(barrier.m_range == kMaxPtrSize)
-		{
-			inf.size = VK_WHOLE_SIZE;
-		}
-		else
-		{
-			ANKI_ASSERT(barrier.m_range > 0);
-			ANKI_ASSERT(barrier.m_offset + barrier.m_range <= impl.getSize());
-			inf.size = barrier.m_range;
-		}
-
+		const VkBuffer handle = impl.getHandle();
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
-		impl.computeBarrierInfo(prevUsage, nextUsage, srcStage, inf.srcAccessMask, dstStage, inf.dstAccessMask);
+		VkAccessFlags srcAccessMask;
+		VkAccessFlags dstAccessMask;
+		impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage, srcAccessMask, dstStage, dstAccessMask);
 
 		srcStageMask |= srcStage;
 		dstStageMask |= dstStage;
+
+		if(bufferBarriers.getSize() && bufferBarriers.getBack().buffer == handle)
+		{
+			// Merge barriers
+			bufferBarriers.getBack().srcAccessMask |= srcAccessMask;
+			bufferBarriers.getBack().dstAccessMask |= dstAccessMask;
+		}
+		else
+		{
+			// Create a new buffer barrier
+			VkBufferMemoryBarrier& inf = *bufferBarriers.emplaceBack();
+			inf = {};
+			inf.buffer = handle;
+			inf.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+			inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			inf.srcAccessMask = srcAccessMask;
+			inf.dstAccessMask = dstAccessMask;
+			inf.offset = 0;
+			inf.size = VK_WHOLE_SIZE; // All size because we don't care
+		}
 	}
 
 	for(const AccelerationStructureBarrierInfo& barrier : accelerationStructures)
