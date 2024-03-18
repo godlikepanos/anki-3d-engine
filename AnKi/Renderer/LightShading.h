@@ -47,7 +47,7 @@ private:
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
-		Array<ShaderProgramPtr, 2> m_grProgs;
+		Array<ShaderProgramPtr, 3> m_grProgs;
 	} m_skybox;
 
 	class

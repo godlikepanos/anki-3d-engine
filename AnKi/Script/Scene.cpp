@@ -61,7 +61,7 @@ static EventManager* getEventManager(lua_State* l)
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
-LuaUserDataTypeInfo luaUserDataTypeInfoLightComponentType = {1918372895594684481, "LightComponentType", 0, nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoLightComponentType = {4219517956328838712, "LightComponentType", 0, nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightComponentType>()
@@ -97,7 +97,7 @@ static inline void wrapLightComponentType(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArraySceneNodePtr = {
-	-8393853726430350519, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(), nullptr, nullptr};
+	-89195344190135263, "WeakArraySceneNodePtr", LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<WeakArraySceneNodePtr>()
@@ -216,7 +216,7 @@ static inline void wrapWeakArraySceneNodePtr(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoWeakArrayBodyComponentPtr = {
-	-1025709696283503968, "WeakArrayBodyComponentPtr", LuaUserData::computeSizeForGarbageCollected<WeakArrayBodyComponentPtr>(), nullptr, nullptr};
+	8690829719095736348, "WeakArrayBodyComponentPtr", LuaUserData::computeSizeForGarbageCollected<WeakArrayBodyComponentPtr>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<WeakArrayBodyComponentPtr>()
@@ -334,7 +334,7 @@ static inline void wrapWeakArrayBodyComponentPtr(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {-3675274546931224198, "LightComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {-5271648520904895104, "LightComponent",
 														 LuaUserData::computeSizeForGarbageCollected<LightComponent>(), nullptr, nullptr};
 
 template<>
@@ -945,7 +945,7 @@ static inline void wrapLightComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {-2073814368319048649, "DecalComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {5995036315092354567, "DecalComponent",
 														 LuaUserData::computeSizeForGarbageCollected<DecalComponent>(), nullptr, nullptr};
 
 template<>
@@ -1117,7 +1117,7 @@ static inline void wrapDecalComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent = {5474230361879199779, "LensFlareComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent = {3035215901600321039, "LensFlareComponent",
 															 LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(), nullptr, nullptr};
 
 template<>
@@ -1280,7 +1280,7 @@ static inline void wrapLensFlareComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {-2846863010728672642, "BodyComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoBodyComponent = {-9159963251664499177, "BodyComponent",
 														LuaUserData::computeSizeForGarbageCollected<BodyComponent>(), nullptr, nullptr};
 
 template<>
@@ -1433,7 +1433,7 @@ static inline void wrapBodyComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent = {4126023717417036406, "TriggerComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent = {-7425360375740373469, "TriggerComponent",
 														   LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(), nullptr, nullptr};
 
 template<>
@@ -1596,7 +1596,7 @@ static inline void wrapTriggerComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent = {-8065432833529453691, "FogDensityComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent = {-449397768782810738, "FogDensityComponent",
 															  LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(), nullptr, nullptr};
 
 template<>
@@ -1799,7 +1799,7 @@ static inline void wrapFogDensityComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoCameraComponent = {-1108575505958935399, "CameraComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoCameraComponent = {8960080176973402871, "CameraComponent",
 														  LuaUserData::computeSizeForGarbageCollected<CameraComponent>(), nullptr, nullptr};
 
 template<>
@@ -1881,7 +1881,7 @@ static inline void wrapCameraComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoGlobalIlluminationProbeComponent = {
-	8571128079366460170, "GlobalIlluminationProbeComponent", LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeComponent>(), nullptr,
+	3424589126774403182, "GlobalIlluminationProbeComponent", LuaUserData::computeSizeForGarbageCollected<GlobalIlluminationProbeComponent>(), nullptr,
 	nullptr};
 
 template<>
@@ -2128,7 +2128,7 @@ static inline void wrapGlobalIlluminationProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeComponent = {
-	2942902628021820888, "ReflectionProbeComponent", LuaUserData::computeSizeForGarbageCollected<ReflectionProbeComponent>(), nullptr, nullptr};
+	-6758135295013264798, "ReflectionProbeComponent", LuaUserData::computeSizeForGarbageCollected<ReflectionProbeComponent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ReflectionProbeComponent>()
@@ -2243,7 +2243,7 @@ static inline void wrapReflectionProbeComponent(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterComponent = {
-	1295664338858625731, "ParticleEmitterComponent", LuaUserData::computeSizeForGarbageCollected<ParticleEmitterComponent>(), nullptr, nullptr};
+	5706885704346443564, "ParticleEmitterComponent", LuaUserData::computeSizeForGarbageCollected<ParticleEmitterComponent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ParticleEmitterComponent>()
@@ -2305,7 +2305,7 @@ static inline void wrapParticleEmitterComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {-3217880167307335193, "ModelComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoModelComponent = {97249979289646973, "ModelComponent",
 														 LuaUserData::computeSizeForGarbageCollected<ModelComponent>(), nullptr, nullptr};
 
 template<>
@@ -2368,7 +2368,7 @@ static inline void wrapModelComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {-1893988325997574862, "SkinComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoSkinComponent = {-7585993549028037320, "SkinComponent",
 														LuaUserData::computeSizeForGarbageCollected<SkinComponent>(), nullptr, nullptr};
 
 template<>
@@ -2431,7 +2431,7 @@ static inline void wrapSkinComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSkyboxComponent = {-4950185802732061592, "SkyboxComponent",
+LuaUserDataTypeInfo luaUserDataTypeInfoSkyboxComponent = {-6878543670401624158, "SkyboxComponent",
 														  LuaUserData::computeSizeForGarbageCollected<SkyboxComponent>(), nullptr, nullptr};
 
 template<>
@@ -2526,6 +2526,45 @@ static inline int pwrapSkyboxComponentloadImageResource(lua_State* l)
 static int wrapSkyboxComponentloadImageResource(lua_State* l)
 {
 	int res = pwrapSkyboxComponentloadImageResource(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Pre-wrap method SkyboxComponent::setGeneratedSky.
+static inline int pwrapSkyboxComponentsetGeneratedSky(lua_State* l)
+{
+	[[maybe_unused]] LuaUserData* ud;
+	[[maybe_unused]] void* voidp;
+	[[maybe_unused]] PtrSize size;
+
+	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSkyboxComponent, ud))
+	{
+		return -1;
+	}
+
+	SkyboxComponent* self = ud->getData<SkyboxComponent>();
+
+	// Call the method
+	self->setGeneratedSky();
+
+	return 0;
+}
+
+/// Wrap method SkyboxComponent::setGeneratedSky.
+static int wrapSkyboxComponentsetGeneratedSky(lua_State* l)
+{
+	int res = pwrapSkyboxComponentsetGeneratedSky(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2872,6 +2911,7 @@ static inline void wrapSkyboxComponent(lua_State* l)
 	LuaBinder::createClass(l, &luaUserDataTypeInfoSkyboxComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setSolidColor", wrapSkyboxComponentsetSolidColor);
 	LuaBinder::pushLuaCFuncMethod(l, "loadImageResource", wrapSkyboxComponentloadImageResource);
+	LuaBinder::pushLuaCFuncMethod(l, "setGeneratedSky", wrapSkyboxComponentsetGeneratedSky);
 	LuaBinder::pushLuaCFuncMethod(l, "setMinFogDensity", wrapSkyboxComponentsetMinFogDensity);
 	LuaBinder::pushLuaCFuncMethod(l, "setMaxFogDensity", wrapSkyboxComponentsetMaxFogDensity);
 	LuaBinder::pushLuaCFuncMethod(l, "setHeightOfMinFogDensity", wrapSkyboxComponentsetHeightOfMinFogDensity);
@@ -2882,7 +2922,7 @@ static inline void wrapSkyboxComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {-8850241204806571619, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(),
+LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {-1295485195147561206, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(),
 													nullptr, nullptr};
 
 template<>
@@ -4719,7 +4759,7 @@ static inline void wrapSceneNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph = {-4636742016121079003, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(),
+LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph = {-7805560184770748431, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(),
 													 nullptr, nullptr};
 
 template<>
@@ -4905,7 +4945,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {-1645267055986152358, "Event", LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr,
+LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {-6825970229082400759, "Event", LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr,
 												nullptr};
 
 template<>
@@ -4970,7 +5010,7 @@ static inline void wrapEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent = {6526760604254386170, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(),
+LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent = {-2438111026101797635, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(),
 													 nullptr, nullptr};
 
 template<>
@@ -5089,7 +5129,7 @@ static inline void wrapLightEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoScriptEvent = {-6276976464258063819, "ScriptEvent", LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(),
+LuaUserDataTypeInfo luaUserDataTypeInfoScriptEvent = {5136611228223914887, "ScriptEvent", LuaUserData::computeSizeForGarbageCollected<ScriptEvent>(),
 													  nullptr, nullptr};
 
 template<>
@@ -5105,7 +5145,7 @@ static inline void wrapScriptEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoJitterMoveEvent = {-5524576077885319542, "JitterMoveEvent",
+LuaUserDataTypeInfo luaUserDataTypeInfoJitterMoveEvent = {-4365713583592201088, "JitterMoveEvent",
 														  LuaUserData::computeSizeForGarbageCollected<JitterMoveEvent>(), nullptr, nullptr};
 
 template<>
@@ -5180,7 +5220,7 @@ static inline void wrapJitterMoveEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoAnimationEvent = {-3440619397170119690, "AnimationEvent",
+LuaUserDataTypeInfo luaUserDataTypeInfoAnimationEvent = {4765740095150022724, "AnimationEvent",
 														 LuaUserData::computeSizeForGarbageCollected<AnimationEvent>(), nullptr, nullptr};
 
 template<>
@@ -5196,7 +5236,7 @@ static inline void wrapAnimationEvent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {-3352184178300328573, "EventManager",
+LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {8040133071572423967, "EventManager",
 													   LuaUserData::computeSizeForGarbageCollected<EventManager>(), nullptr, nullptr};
 
 template<>

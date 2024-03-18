@@ -54,27 +54,38 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Skybox first
 	const SkyboxComponent* skyc = SceneGraph::getSingleton().getSkybox();
-	if(skyc)
+	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
+	if(skyc && !(skyc->getSkyboxType() == SkyboxType::kGenerated && !dirLightc))
 	{
-		const Bool isSolidColor = (skyc->getSkyboxType() == SkyboxType::kSolidColor);
-
-		cmdb.bindShaderProgram(m_skyboxGrProgs[!isSolidColor].get());
+		cmdb.bindShaderProgram(m_skyboxGrProgs[skyc->getSkyboxType()].get());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-		if(!isSolidColor)
-		{
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
-			cmdb.bindTexture(0, 3, &skyc->getImageResource().getTextureView());
-		}
-
-		TraditionalDeferredSkyboxConstants unis;
-		unis.m_solidColor = (isSolidColor) ? skyc->getSolidColor() : Vec3(0.0f);
+		TraditionalDeferredSkyboxConstants unis = {};
 		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
 		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
 		unis.m_scale = skyc->getImageScale();
 		unis.m_bias = skyc->getImageBias();
+
+		if(skyc->getSkyboxType() == SkyboxType::kSolidColor)
+		{
+			unis.m_solidColorOrDirToLight = skyc->getSolidColor();
+		}
+		else if(skyc->getSkyboxType() == SkyboxType::kImage2D)
+		{
+			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
+			cmdb.bindTexture(0, 3, &skyc->getImageResource().getTextureView());
+		}
+		else
+		{
+			unis.m_solidColorOrDirToLight = -dirLightc->getDirection().xyz();
+			unis.m_dirLightPower = dirLightc->getDiffuseColor().xyz().dot(Vec3(0.30f, 0.59f, 0.11f));
+
+			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindColorTexture(0, 3, info.m_skyLutRenderTarget);
+		}
+
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
 		drawQuad(cmdb);
@@ -82,8 +93,6 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Light shading
 	{
-		const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
-
 		TraditionalDeferredShadingConstants* unis = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
 
 		unis->m_invViewProjMat = info.m_invViewProjectionMatrix;

@@ -37,6 +37,8 @@ public:
 	RenderTargetHandle m_directionalLightShadowmapRenderTarget;
 	TextureSubresourceInfo m_directionalLightShadowmapRenderTargetSubresourceInfo = {DepthStencilAspectBit::kDepth};
 
+	RenderTargetHandle m_skyLutRenderTarget;
+
 	RenderPassWorkContext* m_renderpassContext = nullptr;
 };
 
@@ -54,7 +56,7 @@ private:
 	Array<ShaderProgramPtr, 2> m_lightGrProg;
 
 	ShaderProgramResourcePtr m_skyboxProg;
-	Array<ShaderProgramPtr, 2> m_skyboxGrProgs;
+	Array<ShaderProgramPtr, 3> m_skyboxGrProgs;
 
 	SamplerPtr m_shadowSampler;
 };

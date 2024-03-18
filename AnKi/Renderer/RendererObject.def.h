@@ -34,5 +34,6 @@ ANKI_RENDERER_OBJECT_DEF(PrimaryNonRenderableVisibility, primaryNonRenderableVis
 ANKI_RENDERER_OBJECT_DEF(ClusterBinning, clusterBinning2, 1)
 ANKI_RENDERER_OBJECT_DEF(Ssao, ssao, 1)
 ANKI_RENDERER_OBJECT_DEF(Ssr, ssr, 1)
+ANKI_RENDERER_OBJECT_DEF(Sky, sky, 1)
 
 #undef ANKI_RENDERER_OBJECT_DEF

@@ -105,10 +105,9 @@ public:
 		m_simd = simd;
 	}
 
-	TVec(const T x_, const T y_) requires(kTComponentCount == 2)
+	constexpr TVec(const T x_, const T y_) requires(kTComponentCount == 2)
+		: m_arr{x_, y_}
 	{
-		x() = x_;
-		y() = y_;
 	}
 
 	// Vec3 specific

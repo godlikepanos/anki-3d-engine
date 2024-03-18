@@ -13,6 +13,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
 #include <AnKi/Renderer/RtShadows.h>
+#include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
@@ -20,6 +21,7 @@
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
+#include <AnKi/Scene/Components/LightComponent.h>
 
 namespace anki {
 
@@ -82,7 +84,7 @@ Error LightShading::initSkybox()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
 
-	for(MutatorValue method = 0; method < 2; ++method)
+	for(MutatorValue method = 0; method < 3; ++method)
 	{
 		ANKI_CHECK(
 			loadShaderProgram("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}, m_skybox.m_prog, m_skybox.m_grProgs[method]));
@@ -149,8 +151,10 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthCompareOperation(CompareOperation::kEqual);
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+		const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 
-		const Bool isSolidColor = (sky) ? sky->getSkyboxType() == SkyboxType::kSolidColor : true;
+		const Bool isSolidColor =
+			(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
 
 		if(isSolidColor)
 		{
@@ -159,17 +163,17 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			const Vec4 color((sky) ? sky->getSolidColor() : Vec3(0.0f), 0.0);
 			cmdb.setPushConstants(&color, sizeof(color));
 		}
-		else
+		else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 		{
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[1].get());
 
 			class
 			{
 			public:
-				Mat4 m_invertedViewProjectionJitter;
+				Mat4 m_invertedViewProjectionJitterMat;
 
 				Vec3 m_cameraPos;
-				F32 m_padding = 0.0;
+				F32 m_padding;
 
 				Vec3 m_scale;
 				F32 m_padding1;
@@ -178,7 +182,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 				F32 m_padding2;
 			} pc;
 
-			pc.m_invertedViewProjectionJitter = ctx.m_matrices.m_invertedViewProjectionJitter;
+			pc.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			pc.m_scale = sky->getImageScale();
 			pc.m_bias = sky->getImageBias();
@@ -187,6 +191,32 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
 			cmdb.bindTexture(0, 1, &sky->getImageResource().getTextureView());
+		}
+		else
+		{
+			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
+
+			class
+			{
+			public:
+				Mat4 m_invertedViewProjectionJitterMat;
+
+				Vec3 m_cameraPos;
+				F32 m_padding1;
+
+				Vec3 m_dirToSun;
+				F32 m_sunPower;
+			} pc;
+
+			pc.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			pc.m_dirToSun = -dirLight->getDirection();
+			pc.m_sunPower = dirLight->getDiffuseColor().xyz().dot(Vec3(0.30f, 0.59f, 0.11f));
+
+			cmdb.setPushConstants(&pc, sizeof(pc));
+
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindColorTexture(0, 1, getRenderer().getSky().getSkyLutRt());
 		}
 
 		drawQuad(cmdb);
@@ -315,6 +345,12 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// Fog
 	pass.newTextureDependency(getRenderer().getVolumetricFog().getRt(), readUsage);
+
+	// Sky
+	if(getRenderer().getSky().isEnabled())
+	{
+		pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), readUsage);
+	}
 
 	// For forward shading
 	getRenderer().getForwardShading().setDependencies(pass);

@@ -183,11 +183,11 @@ static Error getExtra(const ImporterHashMap<CString, ImporterString>& extras, CS
 
 	if(it != extras.getEnd())
 	{
-		if(*it == "true")
+		if(*it == "true" || *it == "1")
 		{
 			val = true;
 		}
-		else if(*it == "false")
+		else if(*it == "false" || *it == "0")
 		{
 			val = false;
 		}
@@ -678,7 +678,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			}
 		}
 		else if(stringsExist(extras, {"skybox_solid_color", "skybox_image", "fog_min_density", "fog_max_density", "fog_height_of_min_density",
-									  "fog_height_of_max_density", "fog_diffuse_color"}))
+									  "fog_height_of_max_density", "fog_diffuse_color", "skybox_generated"}))
 		{
 			// Atmosphere
 
@@ -734,6 +734,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			{
 				ANKI_CHECK(m_sceneFile.writeTextf("comp:setFogDiffuseColor(Vec3.new(%f, %f, %f))\n", extraValueVec3.x(), extraValueVec3.y(),
 												  extraValueVec3.z()));
+			}
+
+			ANKI_CHECK(getExtra(extras, "skybox_generated", extraValueBool, extraFound));
+			if(extraFound && extraValueBool)
+			{
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:setGeneratedSky()\n"));
 			}
 
 			Transform localTrf;

@@ -21,7 +21,8 @@ class SkyboxQueueElement;
 enum class SkyboxType : U8
 {
 	kSolidColor,
-	kImage2D
+	kImage2D,
+	kGenerated
 };
 
 /// Skybox config.
@@ -77,6 +78,11 @@ public:
 	const Vec3& getImageBias() const
 	{
 		return m_imageBias;
+	}
+
+	void setGeneratedSky()
+	{
+		m_type = SkyboxType::kGenerated;
 	}
 
 	void setMinFogDensity(F32 density)

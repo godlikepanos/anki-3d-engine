@@ -8,6 +8,7 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
@@ -409,6 +410,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				pass.newTextureDependency(shadowMapRt, TextureUsageBit::kSampledFragment);
 			}
 
+			if(getRenderer().getSky().isEnabled())
+			{
+				pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSampledFragment);
+			}
+
 			pass.setWork([this, visResult = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(),
 						  cascadeViewProjMat = cascadeViewProjMat, probeToRefresh, gbufferColorRts, gbufferDepthRt, shadowMapRt,
 						  faceIdx = f](RenderPassWorkContext& rgraphCtx) {
@@ -436,6 +442,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				{
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowMapRt;
 				}
+				dsInfo.m_skyLutRenderTarget = getRenderer().getSky().getSkyLutRt();
 				dsInfo.m_renderpassContext = &rgraphCtx;
 
 				m_lightShading.m_deferred.drawLights(dsInfo);

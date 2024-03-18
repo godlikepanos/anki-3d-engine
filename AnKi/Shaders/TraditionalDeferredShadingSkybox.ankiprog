@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
+#pragma anki mutator METHOD 0 1 2 // 0: solid colod, 1: 2D image, 2: Generated
 
 #pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
@@ -12,6 +12,7 @@
 #pragma anki technique_start frag
 
 #include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/Sky.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 
 [[vk::push_constant]] ConstantBuffer<TraditionalDeferredSkyboxConstants> g_consts;
@@ -22,6 +23,9 @@
 #if METHOD == 1
 [[vk::binding(2)]] SamplerState g_trilinearAnySampler;
 [[vk::binding(3)]] Texture2D<RVec4> g_envMapTex;
+#elif METHOD == 2
+[[vk::binding(2)]] SamplerState g_linearAnyClampSampler;
+[[vk::binding(3)]] Texture2D<Vec4> g_skyLut;
 #endif
 
 RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
@@ -34,8 +38,8 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	return g_consts.m_solidColor;
-#else
+	return g_consts.m_solidColorOrDirToLight;
+#elif METHOD == 1
 	const F32 depthFar = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depthFar, 1.0));
@@ -45,6 +49,14 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	const Vec2 uv2 = equirectangularMapping(eyeToFrag);
 	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_consts.m_scale + g_consts.m_bias;
+#else
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
+
+	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, g_consts.m_solidColorOrDirToLight, g_consts.m_dirLightPower, false);
 #endif
 }
 

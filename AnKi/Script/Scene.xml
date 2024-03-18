@@ -347,6 +347,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>CString</arg>
 					</args>
 				</method>
+				<method name="setGeneratedSky" />
 				<method name="setMinFogDensity">
 					<args>
 						<arg>F32</arg>

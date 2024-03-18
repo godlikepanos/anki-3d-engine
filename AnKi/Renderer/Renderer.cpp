@@ -43,6 +43,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Ssr.h>
+#include <AnKi/Renderer/Sky.h>
 #include <AnKi/Core/StatsSet.h>
 
 namespace anki {
@@ -305,6 +306,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbuffer->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_clusterBinning2->populateRenderGraph(ctx);
+	m_sky->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
