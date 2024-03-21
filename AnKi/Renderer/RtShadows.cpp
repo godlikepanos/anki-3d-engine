@@ -298,7 +298,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavTraceRaysRead);
 
-		rpass.setWork([this, sbtBuffer](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -328,7 +328,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			constexpr U32 kSet = 2;
 
-			cmdb.bindConstantBuffer(kSet, 0, getRenderer().getClusterBinning().getClusteredShadingConstants());
+			cmdb.bindConstantBuffer(kSet, 0, ctx.m_globalRenderingConstsBuffer);
 			cmdb.bindUavBuffer(kSet, 1, getRenderer().getClusterBinning().getClustersBuffer());
 
 			cmdb.bindSampler(kSet, 2, getRenderer().getSamplers().m_trilinearRepeat.get());

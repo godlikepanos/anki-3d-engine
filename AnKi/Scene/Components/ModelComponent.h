@@ -65,16 +65,20 @@ private:
 
 	ModelResourcePtr m_model;
 
+	// GPU scene part 1
 	GpuSceneBufferAllocation m_gpuSceneUniforms;
 	GpuSceneArrays::Transform::Allocation m_gpuSceneTransforms;
-	SceneDynamicArray<PatchInfo> m_patchInfos;
 
+	// Other stuff
 	Bool m_resourceChanged : 1 = true;
 	Bool m_castsShadow : 1 = false;
 	Bool m_movedLastFrame : 1 = true;
 	Bool m_firstTimeUpdate : 1 = true; ///< Extra flag in case the component is added in a node that hasn't been moved.
 
 	RenderingTechniqueBit m_presentRenderingTechniques = RenderingTechniqueBit::kNone;
+
+	// GPU scene part 2
+	SceneDynamicArray<PatchInfo> m_patchInfos;
 
 	void freeGpuScene();
 

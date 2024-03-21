@@ -55,6 +55,11 @@ public:
 		m_otherDirty = true;
 	}
 
+	F32 getLightPower() const
+	{
+		return m_diffColor.xyz().dot(Vec3(0.30f, 0.59f, 0.11f));
+	}
+
 	void setRadius(F32 x)
 	{
 		m_point.m_radius = x;

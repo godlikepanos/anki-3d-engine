@@ -184,7 +184,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 			BufferInitInfo(1024, BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
-	// Init the stages. Careful with the order!!!!!!!!!!
+	// Init the stages
 #define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
 	if(initCondition) \
 	{ \
@@ -290,6 +290,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_cameraNear = cam.getNear();
 	ctx.m_cameraFar = cam.getFar();
 
+	// Allocate global constants
+	GlobalRendererConstants* globalConsts;
+	ctx.m_globalRenderingConstsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalConsts);
+
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
@@ -337,7 +341,64 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
+	writeGlobalRendererConstants(ctx, *globalConsts);
+
 	return Error::kNone;
+}
+
+void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& unis)
+{
+	ANKI_TRACE_SCOPED_EVENT(RWriteGlobalRendererConstants);
+
+	unis.m_renderingSize = Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()));
+
+	unis.m_time = F32(HighRezTimer::getCurrentTime());
+	unis.m_frame = m_frameCount & kMaxU32;
+
+	Plane nearPlane;
+	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
+	unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+	unis.m_near = ctx.m_cameraNear;
+	unis.m_far = ctx.m_cameraFar;
+	unis.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+
+	unis.m_tileCounts = m_tileCounts;
+	unis.m_zSplitCount = m_zSplitCount;
+	unis.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_cameraFar - ctx.m_cameraNear);
+	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(m_zSplitCount));
+	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(m_zSplitCount));
+	unis.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar.get() - 1, m_zSplitCount);
+
+	unis.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
+
+	unis.m_matrices = ctx.m_matrices;
+	unis.m_previousMatrices = ctx.m_prevMatrices;
+
+	// Directional light
+	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+	if(dirLight)
+	{
+		DirectionalLight& out = unis.m_directionalLight;
+		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_shadowCascadeCountCVar.get() : 0;
+
+		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
+		out.m_power = dirLight->getLightPower();
+		out.m_shadowCascadeCount_31bit_active_1bit = shadowCascadeCount << 1u;
+		out.m_shadowCascadeCount_31bit_active_1bit |= 1;
+		out.m_direction = dirLight->getDirection();
+		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
+											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
+
+		for(U cascade = 0; cascade < shadowCascadeCount; ++cascade)
+		{
+			ANKI_ASSERT(ctx.m_dirLightTextureMatrices[cascade] != Mat4::getZero());
+			out.m_textureMatrices[cascade] = ctx.m_dirLightTextureMatrices[cascade];
+		}
+	}
+	else
+	{
+		unis.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
+	}
 }
 
 void Renderer::finalize(const RenderingContext& ctx, Fence* fence)

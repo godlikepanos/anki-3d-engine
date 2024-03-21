@@ -90,23 +90,6 @@ struct SpotLight
 };
 static_assert(sizeof(SpotLight) == sizeof(LightUnion));
 
-/// Directional light (sun).
-struct DirectionalLight
-{
-	RVec3 m_diffuseColor;
-	U32 m_shadowCascadeCount; ///< If it's zero then it doesn't cast shadow.
-
-	RVec3 m_direction;
-	U32 m_active;
-
-	Vec4 m_shadowCascadeDistances;
-
-	Mat4 m_textureMatrices[kMaxShadowCascades];
-};
-constexpr U32 kSizeof_DirectionalLight = 3u * sizeof(Vec4) + kMaxShadowCascades * sizeof(Mat4);
-static_assert(sizeof(DirectionalLight) == kSizeof_DirectionalLight);
-static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances is a Vec4
-
 /// Representation of a reflection probe.
 typedef GpuSceneReflectionProbe ReflectionProbe;
 
@@ -118,70 +101,6 @@ typedef GpuSceneFogDensityVolume FogDensityVolume;
 
 /// Global illumination probe
 typedef GpuSceneGlobalIlluminationProbe GlobalIlluminationProbe;
-
-/// Common matrices.
-struct CommonMatrices
-{
-	Mat3x4 m_cameraTransform;
-	Mat3x4 m_view;
-	Mat4 m_projection;
-	Mat4 m_viewProjection;
-
-	Mat4 m_jitter;
-	Mat4 m_projectionJitter;
-	Mat4 m_viewProjectionJitter;
-
-	Mat4 m_invertedViewProjectionJitter; ///< To unproject in world space.
-	Mat4 m_invertedViewProjection;
-	Mat4 m_invertedProjectionJitter; ///< To unproject in view space.
-
-	/// It's being used to reproject a clip space position of the current frame to the previous frame. Its value should
-	/// be m_jitter * m_prevFrame.m_viewProjection * m_invertedViewProjectionJitter. At first it unprojects the current
-	/// position to world space, all fine here. Then it projects to the previous frame as if the previous frame was
-	/// using the current frame's jitter matrix.
-	Mat4 m_reprojection;
-
-	/// To unproject to view space. Jitter not considered.
-	/// @code
-	/// F32 z = m_unprojectionParameters.z / (m_unprojectionParameters.w + depth);
-	/// Vec2 xy = ndc * m_unprojectionParameters.xy * z;
-	/// pos = Vec3(xy, z);
-	/// @endcode
-	Vec4 m_unprojectionParameters;
-
-	Vec2 m_jitterOffsetNdc;
-	Vec2 m_padding;
-};
-
-/// Common uniforms for light shading passes.
-struct ClusteredShadingConstants
-{
-	Vec2 m_renderingSize;
-	F32 m_time;
-	U32 m_frame;
-
-	Vec4 m_nearPlaneWSpace;
-
-	Vec3 m_cameraPosition;
-	F32 m_reflectionProbesMipCount;
-
-	UVec2 m_tileCounts;
-	U32 m_zSplitCount;
-	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
-
-	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
-	U32 m_lightVolumeLastZSplit;
-	U32 m_padding1;
-
-	UVec2 m_padding0;
-	F32 m_near;
-	F32 m_far;
-
-	DirectionalLight m_directionalLight;
-
-	CommonMatrices m_matrices;
-	CommonMatrices m_previousMatrices;
-};
 
 /// Information that a tile or a Z-split will contain.
 struct Cluster

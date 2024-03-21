@@ -11,7 +11,7 @@
 
 #	define DEBUG_CASCADES 0
 
-[[vk::binding(0)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
+[[vk::binding(0)]] ConstantBuffer<GlobalRendererConstants> g_globalConsts;
 [[vk::binding(1)]] StructuredBuffer<PointLight> g_pointLights;
 [[vk::binding(1)]] StructuredBuffer<SpotLight> g_spotLights;
 [[vk::binding(2)]] Texture2D<Vec4> g_shadowAtlasTex;
@@ -78,19 +78,19 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	const Vec2 noiseUv = g_consts.m_framebufferSize / noiseTexSize * uv;
 	RVec3 noise = g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb;
-	noise = animateBlueNoise(noise, g_clusteredShading.m_frame % 16u);
+	noise = animateBlueNoise(noise, g_globalConsts.m_frame % 16u);
 	const RF32 randFactor = noise.x;
 #	endif
 
 	// World position
 	const Vec2 ndc = uvToNdc(uv);
 	const F32 depth = g_depthRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
-	const Vec4 worldPos4 = mul(g_clusteredShading.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Cluster
-	const Vec2 fragCoord = uv * g_clusteredShading.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(g_clusters, g_clusteredShading, Vec3(fragCoord, depth));
+	const Vec2 fragCoord = uv * g_globalConsts.m_renderingSize;
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConsts, Vec3(fragCoord, depth));
 
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;
@@ -102,19 +102,21 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	shadowFactors[0] = g_dirLightResolvedShadowsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).x;
 	++shadowCasterCountPerFragment;
 #	else
-	const DirectionalLight dirLight = g_clusteredShading.m_directionalLight;
-	if(dirLight.m_active != 0u && dirLight.m_shadowCascadeCount > 0u)
+	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
+	if(dirLight.m_shadowCascadeCount_31bit_active_1bit != 0u)
 	{
-		const RF32 positiveZViewSpace =
-			testPlanePoint(g_clusteredShading.m_nearPlaneWSpace.xyz, g_clusteredShading.m_nearPlaneWSpace.w, worldPos) + g_clusteredShading.m_near;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
 
-		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[dirLight.m_shadowCascadeCount - 1u];
+		const RF32 positiveZViewSpace =
+			testPlanePoint(g_globalConsts.m_nearPlaneWSpace.xyz, g_globalConsts.m_nearPlaneWSpace.w, worldPos) + g_globalConsts.m_near;
+
+		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[shadowCascadeCount - 1u];
 		RF32 shadowFactor;
 		if(positiveZViewSpace < lastCascadeDistance)
 		{
 			RF32 cascadeBlendFactor;
 			const UVec2 cascadeIndices =
-				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances, dirLight.m_shadowCascadeCount, cascadeBlendFactor);
+				computeShadowCascadeIndex2(positiveZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount, cascadeBlendFactor);
 
 #		if DEBUG_CASCADES
 			const Vec3 debugColorA = computeDebugShadowCascadeColor(cascadeIndices[0]);

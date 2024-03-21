@@ -15,7 +15,7 @@
 
 #define SET 2u
 
-[[vk::binding(0, SET)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
+[[vk::binding(0, SET)]] ConstantBuffer<GlobalRendererConstants> g_globalConsts;
 [[vk::binding(1, SET)]] StructuredBuffer<Cluster> g_clusters; // TODO: rm
 
 [[vk::binding(2, SET)]] SamplerState g_trilinearRepeatSampler;
@@ -54,7 +54,7 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 
 Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 {
-	const U32 frameIdx = g_clusteredShading.m_frame * RAYS_PER_PIXEL + rayIdx;
+	const U32 frameIdx = g_globalConsts.m_frame * RAYS_PER_PIXEL + rayIdx;
 
 	Vec2 noiseTexSize;
 	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
@@ -72,7 +72,7 @@ Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 	const Vec2 uv = (Vec2(DispatchRaysIndex().xy) + 0.5) / Vec2(DispatchRaysDimensions().xy);
 	const Vec2 ndc = uvToNdc(uv);
 	const F32 depth = g_depthRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
-	const Vec4 worldPos4 = mul(g_clusteredShading.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_globalConsts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	if(depth == 1.0)
@@ -87,7 +87,7 @@ Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 
 	// Dir light
 	F32 shadowFactor = 0.0f;
-	const DirectionalLight dirLight = g_clusteredShading.m_directionalLight;
+	const DirectionalLight dirLight = g_globalConsts.m_directionalLight;
 	for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 	{
 		const Vec3 dirLightPos = worldPos + -dirLight.m_direction * 10.0 + genRandomDirection(i, uv);

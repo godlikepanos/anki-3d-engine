@@ -29,6 +29,7 @@ VertOut main(U32 vertId : SV_VERTEXID)
 
 #pragma anki technique_start frag
 
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/Sky.hlsl>
@@ -63,19 +64,7 @@ struct Constants
 #else
 [[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(1)]] Texture2D<Vec4> g_skyLut;
-
-struct Constants
-{
-	Mat4 m_invertedViewProjectionJitterMat;
-
-	Vec3 m_cameraPos;
-	F32 m_padding1;
-
-	Vec3 m_dirToSun;
-	F32 m_sunPower;
-};
-
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+[[vk::binding(2)]] ConstantBuffer<GlobalRendererConstants> g_consts;
 #endif
 
 RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
@@ -105,12 +94,13 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #else
 	const F32 depth = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_consts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPosition);
 
-	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, g_consts.m_dirToSun, g_consts.m_sunPower, true);
+	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_consts.m_directionalLight.m_direction,
+						   g_consts.m_directionalLight.m_power, true);
 #endif
 }
 

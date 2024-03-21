@@ -475,6 +475,7 @@ Bool DSStateTracker::flush(DSAllocator& allocator, VkDescriptorSet& dsHandle)
 			for(U32 arrIdx = 0; arrIdx < m_layout->m_bindingArraySize[bindingIdx]; ++arrIdx)
 			{
 				VkWriteDescriptorSet& writeInfo = m_writeInfos[writeInfoIdx++];
+				ANKI_ASSERT(m_bindings[bindingIdx].m_count < kMaxU32);
 				const Binding& b = (m_bindings[bindingIdx].m_count == 1) ? m_bindings[bindingIdx].m_single : m_bindings[bindingIdx].m_array[arrIdx];
 
 				ANKI_ASSERT(b.m_type == m_layout->m_bindingType[bindingIdx] && "Bound the wrong type");

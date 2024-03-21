@@ -70,7 +70,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		if(skyc->getSkyboxType() == SkyboxType::kSolidColor)
 		{
-			unis.m_solidColorOrDirToLight = skyc->getSolidColor();
+			unis.m_solidColor = skyc->getSolidColor();
 		}
 		else if(skyc->getSkyboxType() == SkyboxType::kImage2D)
 		{
@@ -79,12 +79,11 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		}
 		else
 		{
-			unis.m_solidColorOrDirToLight = -dirLightc->getDirection().xyz();
-			unis.m_dirLightPower = dirLightc->getDiffuseColor().xyz().dot(Vec3(0.30f, 0.59f, 0.11f));
-
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 3, info.m_skyLutRenderTarget);
 		}
+
+		cmdb.bindConstantBuffer(0, 4, info.m_globalRendererConsts);
 
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
@@ -100,15 +99,8 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		if(dirLightc)
 		{
-			unis->m_dirLight.m_diffuseColor = dirLightc->getDiffuseColor().xyz();
-			unis->m_dirLight.m_active = 1;
-			unis->m_dirLight.m_direction = dirLightc->getDirection();
 			unis->m_dirLight.m_effectiveShadowDistance = info.m_effectiveShadowDistance;
 			unis->m_dirLight.m_lightMatrix = info.m_dirLightMatrix;
-		}
-		else
-		{
-			unis->m_dirLight.m_active = 0;
 		}
 
 		cmdb.bindUavBuffer(0, 1, info.m_visibleLightsBuffer);
@@ -141,6 +133,8 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			// No shadows for the dir light, bind a random depth texture (need depth because validation complains)
 			rgraphCtx.bindTexture(0, 9, info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresourceInfo);
 		}
+
+		cmdb.bindConstantBuffer(0, 10, info.m_globalRendererConsts);
 
 		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular].get());
 

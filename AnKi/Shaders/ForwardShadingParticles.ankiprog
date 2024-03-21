@@ -77,7 +77,7 @@ FragOut main(VertOut input)
 
 #if ANIMATED_TEXTURE == 1
 	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localConstants.m_diffuseMap], g_globalSampler,
-										   localConstants.m_animationPeriod, input.m_uv, g_clusteredShading.m_time);
+										   localConstants.m_animationPeriod, input.m_uv, g_globalRendererConstants.m_time);
 #else
 	RVec4 texCol = g_bindlessTextures2dF32[localConstants.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
 #endif

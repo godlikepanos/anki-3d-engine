@@ -13,7 +13,9 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/Sky.hlsl>
+#include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 [[vk::push_constant]] ConstantBuffer<TraditionalDeferredSkyboxConstants> g_consts;
 
@@ -28,6 +30,8 @@
 [[vk::binding(3)]] Texture2D<Vec4> g_skyLut;
 #endif
 
+[[vk::binding(4)]] ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts;
+
 RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
@@ -38,7 +42,7 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	return g_consts.m_solidColorOrDirToLight;
+	return g_consts.m_solidColor;
 #elif METHOD == 1
 	const F32 depthFar = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
@@ -56,7 +60,9 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
 
-	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, g_consts.m_solidColorOrDirToLight, g_consts.m_dirLightPower, false);
+	const F32 sunPower = computeLuminance(g_globalRendererConsts.m_directionalLight.m_diffuseColor);
+
+	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_globalRendererConsts.m_directionalLight.m_direction, sunPower, false);
 #endif
 }
 

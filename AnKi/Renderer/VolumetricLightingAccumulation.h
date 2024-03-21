@@ -31,20 +31,12 @@ public:
 		return m_runCtx.m_rts[1];
 	}
 
-	/// Get the last cluster split in Z axis that will be affected by lighting.
-	U32 getFinalZSplit() const
-	{
-		return m_finalZSplit;
-	}
-
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
 	Array<TexturePtr, 2> m_rtTextures;
 	ImageResourcePtr m_noiseImage;
-
-	U32 m_finalZSplit = 0;
 
 	Array<U32, 3> m_volumeSize;
 

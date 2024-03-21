@@ -49,13 +49,6 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	// Fire an async job to fill the general consts
-	{
-		m_runCtx.m_rctx = &ctx;
-		m_runCtx.m_clusterConstBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, m_runCtx.m_constsCpu);
-		writeClusterConstsInternal();
-	}
-
 	// Allocate the clusters buffer
 	{
 		const U32 clusterCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y() + getRenderer().getZSplitCount();
@@ -274,62 +267,6 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);
 			}
 		});
-	}
-}
-
-void ClusterBinning::writeClusterConstsInternal()
-{
-	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
-
-	RenderingContext& ctx = *m_runCtx.m_rctx;
-	ClusteredShadingConstants& unis = *m_runCtx.m_constsCpu;
-
-	unis.m_renderingSize = Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
-
-	unis.m_time = F32(HighRezTimer::getCurrentTime());
-	unis.m_frame = getRenderer().getFrameCount() & kMaxU32;
-
-	Plane nearPlane;
-	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-	unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
-	unis.m_near = ctx.m_cameraNear;
-	unis.m_far = ctx.m_cameraFar;
-	unis.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-
-	unis.m_tileCounts = getRenderer().getTileCounts();
-	unis.m_zSplitCount = getRenderer().getZSplitCount();
-	unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
-	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
-	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
-	unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
-
-	unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
-
-	unis.m_matrices = ctx.m_matrices;
-	unis.m_previousMatrices = ctx.m_prevMatrices;
-
-	// Directional light
-	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-	if(dirLight)
-	{
-		DirectionalLight& out = unis.m_directionalLight;
-
-		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
-		out.m_shadowCascadeCount = dirLight->getShadowEnabled() ? g_shadowCascadeCountCVar.get() : 0;
-		out.m_direction = dirLight->getDirection();
-		out.m_active = 1;
-		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
-											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
-
-		for(U cascade = 0; cascade < out.m_shadowCascadeCount; ++cascade)
-		{
-			ANKI_ASSERT(m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade] != Mat4::getZero());
-			out.m_textureMatrices[cascade] = m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade];
-		}
-	}
-	else
-	{
-		unis.m_directionalLight.m_active = 0;
 	}
 }
 

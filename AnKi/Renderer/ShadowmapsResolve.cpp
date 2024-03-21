@@ -64,8 +64,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ResolveShadows");
 
-		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			run(rgraphCtx);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx, ctx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite);
@@ -87,8 +87,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("ResolveShadows");
 		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
 
-		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			run(rgraphCtx);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx, ctx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
@@ -107,14 +107,14 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
+void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb.bindConstantBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingConstants());
+	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstsBuffer);
 	cmdb.bindUavBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 	rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
 	cmdb.bindUavBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());

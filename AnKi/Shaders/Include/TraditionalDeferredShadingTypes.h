@@ -11,10 +11,7 @@ ANKI_BEGIN_NAMESPACE
 
 struct TraditionalDeferredShadingDirectionalLight
 {
-	Vec3 m_diffuseColor;
-	U32 m_active;
-
-	Vec3 m_direction;
+	Vec3 m_padding;
 	F32 m_effectiveShadowDistance;
 
 	Mat4 m_lightMatrix;
@@ -36,13 +33,13 @@ struct TraditionalDeferredShadingConstants
 
 struct TraditionalDeferredSkyboxConstants
 {
-	RVec3 m_solidColorOrDirToLight;
+	RVec3 m_solidColor;
 	F32 m_padding1;
 
 	Mat4 m_invertedViewProjectionMat;
 
 	Vec3 m_cameraPos;
-	F32 m_dirLightPower;
+	F32 m_padding2;
 
 	Vec3 m_scale;
 	F32 m_padding3;

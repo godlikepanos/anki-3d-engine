@@ -79,8 +79,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 							  DepthDownscale::kQuarterInternalResolution);
 		rgraphCtx.bindColorTexture(set, U32(MaterialBinding::kLightVolume), getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		cmdb.bindConstantBuffer(set, U32(MaterialBinding::kClusterShadingConstants),
-								getRenderer().getClusterBinning().getClusteredShadingConstants());
+		cmdb.bindConstantBuffer(set, U32(MaterialBinding::kClusterShadingConstants), ctx.m_globalRenderingConstsBuffer);
 
 		cmdb.bindUavBuffer(set, U32(MaterialBinding::kClusterShadingLights),
 						   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));

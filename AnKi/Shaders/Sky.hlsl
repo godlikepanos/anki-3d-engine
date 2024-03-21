@@ -5,7 +5,9 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
+// These are per megameter
 constexpr F32 kGroundRadiusMM = 6.360f;
+constexpr F32 kAtmosphereRadiusMM = 6.460f;
 
 constexpr Vec3 kViewPos = Vec3(0.0f, kGroundRadiusMM + 0.0002f, 0.0f); // 200M above the ground.
 

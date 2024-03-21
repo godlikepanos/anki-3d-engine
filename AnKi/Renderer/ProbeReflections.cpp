@@ -416,8 +416,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			}
 
 			pass.setWork([this, visResult = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(),
-						  cascadeViewProjMat = cascadeViewProjMat, probeToRefresh, gbufferColorRts, gbufferDepthRt, shadowMapRt,
-						  faceIdx = f](RenderPassWorkContext& rgraphCtx) {
+						  cascadeViewProjMat = cascadeViewProjMat, probeToRefresh, gbufferColorRts, gbufferDepthRt, shadowMapRt, faceIdx = f,
+						  &rctx](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 				TraditionalDeferredLightShadingDrawInfo dsInfo;
@@ -443,6 +443,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowMapRt;
 				}
 				dsInfo.m_skyLutRenderTarget = getRenderer().getSky().getSkyLutRt();
+				dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstsBuffer;
 				dsInfo.m_renderpassContext = &rgraphCtx;
 
 				m_lightShading.m_deferred.drawLights(dsInfo);

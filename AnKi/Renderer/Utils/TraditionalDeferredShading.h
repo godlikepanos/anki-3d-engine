@@ -38,6 +38,7 @@ public:
 	TextureSubresourceInfo m_directionalLightShadowmapRenderTargetSubresourceInfo = {DepthStencilAspectBit::kDepth};
 
 	RenderTargetHandle m_skyLutRenderTarget;
+	BufferOffsetRange m_globalRendererConsts;
 
 	RenderPassWorkContext* m_renderpassContext = nullptr;
 };

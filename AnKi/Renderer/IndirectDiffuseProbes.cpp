@@ -423,8 +423,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				}
 
 				pass.setWork(1, [this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
-								 gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt,
-								 faceIdx = f](RenderPassWorkContext& rgraphCtx) {
+								 gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt, faceIdx = f,
+								 &rctx](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 					const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
@@ -464,6 +464,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
 					dsInfo.m_skyLutRenderTarget = getRenderer().getSky().getSkyLutRt();
+					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstsBuffer;
 					dsInfo.m_renderpassContext = &rgraphCtx;
 
 					m_lightShading.m_deferred.drawLights(dsInfo);

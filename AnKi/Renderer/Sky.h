@@ -46,6 +46,7 @@ public:
 	ShaderProgramPtr m_transmittanceLutGrProg;
 	ShaderProgramPtr m_multipleScatteringLutGrProg;
 	ShaderProgramPtr m_skyLutGrProg;
+	ShaderProgramPtr m_computeSunColorGrProg;
 
 	static constexpr UVec2 kTransmittanceLutSize{256, 64};
 	static constexpr UVec2 kMultipleScatteringLutSize{32, 32};
@@ -56,6 +57,7 @@ public:
 	TexturePtr m_skyLut;
 
 	Vec3 m_sunDir = Vec3(0.0f);
+	F32 m_sunPower = -100.0f;
 
 	Bool m_transmittanceAndMultiScatterLutsGenerated = false;
 	Bool m_skyLutImportedOnce = false;

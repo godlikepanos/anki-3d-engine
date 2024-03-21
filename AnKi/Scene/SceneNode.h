@@ -382,12 +382,12 @@ public:
 	TComponent* newComponent();
 
 private:
-	U32 m_uuid;
 	SceneString m_name; ///< A unique name.
-
-	GrDynamicArray<SceneComponent*> m_components;
+	U32 m_uuid;
 
 	SceneComponentTypeMask m_componentTypeMask = SceneComponentTypeMask::kNone;
+
+	GrDynamicArray<SceneComponent*> m_components;
 
 	Timestamp m_maxComponentTimestamp = 0;
 

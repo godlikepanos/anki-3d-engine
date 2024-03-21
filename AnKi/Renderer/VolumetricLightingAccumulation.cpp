@@ -27,11 +27,11 @@ Error VolumetricLightingAccumulation::init()
 	// Misc
 	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar.get();
 	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar.get();
-	m_finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
+	const U32 finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
 
 	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);
-	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
+	m_volumeSize[2] = U32(F32(finalZSplit + 1) * qualityZ);
 	ANKI_R_LOGV("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	if(!isAligned(getRenderer().getTileCounts().x(), m_volumeSize[0]) || !isAligned(getRenderer().getTileCounts().y(), m_volumeSize[1])
@@ -89,7 +89,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), TextureUsageBit::kSampledCompute);
 	}
 
-	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(VolumetricLightingAccumulation);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -106,7 +106,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
-		cmdb.bindConstantBuffer(0, 6, getRenderer().getClusterBinning().getClusteredShadingConstants());
+		cmdb.bindConstantBuffer(0, 6, ctx.m_globalRenderingConstsBuffer);
 		cmdb.bindUavBuffer(0, 7, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getShadowMapping().getShadowmapRt());
 		cmdb.bindUavBuffer(0, 9, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
@@ -140,7 +140,10 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 			unis.m_densityAtMaxHeight = sky->getMinFogDensity();
 		}
 		unis.m_volumeSize = UVec3(m_volumeSize);
-		unis.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
+
+		const U32 finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
+		unis.m_maxZSplitsToProcessf = F32(finalZSplit + 1);
+
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
 		dispatchPPCompute(cmdb, 8, 8, 8, m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);

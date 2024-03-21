@@ -299,6 +299,9 @@ private:
 		BindingExtended()
 		{
 			// No init for perf reasons
+#if ANKI_ASSERTIONS_ENABLED
+			m_count = kMaxU32;
+#endif
 		}
 	};
 

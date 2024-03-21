@@ -42,7 +42,7 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 [[vk::binding(MaterialBinding::kLightVolume, MaterialSet::kGlobal)]] Texture3D<RVec4> g_lightVol;
 [[vk::binding(MaterialBinding::kShadowSampler, MaterialSet::kGlobal)]] SamplerComparisonState g_shadowSampler;
 
-[[vk::binding(MaterialBinding::kClusterShadingConstants, MaterialSet::kGlobal)]] ConstantBuffer<ClusteredShadingConstants> g_clusteredShading;
+[[vk::binding(MaterialBinding::kClusterShadingConstants, MaterialSet::kGlobal)]] ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants;
 [[vk::binding(MaterialBinding::kClusters, MaterialSet::kGlobal)]] StructuredBuffer<Cluster> g_clusters;
 [[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<PointLight> g_pointLights;
 [[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<SpotLight> g_spotLights;

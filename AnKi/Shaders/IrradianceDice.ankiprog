@@ -188,7 +188,7 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 
 #if DEBUG_MODE == 0
 		RVec3 irradiance = s_integrationResults[f][0];
-		const RVec3 toStoreValue = irradiance / kPi;
+		const RVec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1
 		const RVec3 toStoreValue = colorPerCubeFace(f);
 #else

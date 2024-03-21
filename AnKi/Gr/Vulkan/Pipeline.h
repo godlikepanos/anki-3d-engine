@@ -20,9 +20,8 @@ namespace anki {
 class VertexBufferBindingPipelineState
 {
 public:
-	U32 m_stride = kMaxU32; ///< Vertex stride.
+	U8 m_stride = kMaxU8; ///< Vertex stride.
 	VertexStepRate m_stepRate = VertexStepRate::kVertex;
-	Array<U8, 3> m_padding = {};
 
 	Bool operator==(const VertexBufferBindingPipelineState& b) const
 	{
@@ -34,7 +33,7 @@ public:
 		return !(*this == b);
 	}
 };
-static_assert(sizeof(VertexBufferBindingPipelineState) == 2 * sizeof(U32), "Packed because it will be hashed");
+static_assert(sizeof(VertexBufferBindingPipelineState) == sizeof(U16), "Packed because it will be hashed");
 
 class VertexAttributeBindingPipelineState
 {
@@ -166,7 +165,8 @@ public:
 	void bindVertexBuffer(U32 binding, PtrSize stride, VertexStepRate stepRate)
 	{
 		VertexBufferBindingPipelineState b;
-		b.m_stride = U32(stride);
+		ANKI_ASSERT(stride <= kMaxU8);
+		b.m_stride = U8(stride);
 		b.m_stepRate = stepRate;
 		if(m_state.m_vertex.m_bindings[binding] != b)
 		{

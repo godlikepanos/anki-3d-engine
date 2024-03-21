@@ -279,6 +279,8 @@ private:
 #if ANKI_STATS_ENABLED
 	void updatePipelineStats();
 #endif
+
+	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& unis);
 };
 /// @}
 

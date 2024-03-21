@@ -55,7 +55,7 @@ public:
 
 	Error initInternal();
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx, RenderingContext& ctx);
 };
 /// @}
 

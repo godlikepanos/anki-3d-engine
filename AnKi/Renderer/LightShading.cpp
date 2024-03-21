@@ -122,7 +122,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthWrite(false);
 
 		// Bind all
-		cmdb.bindConstantBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingConstants());
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstsBuffer);
 		cmdb.bindUavBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		cmdb.bindUavBuffer(0, 2, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
 		cmdb.bindUavBuffer(0, 3, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
@@ -196,27 +196,9 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		{
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
 
-			class
-			{
-			public:
-				Mat4 m_invertedViewProjectionJitterMat;
-
-				Vec3 m_cameraPos;
-				F32 m_padding1;
-
-				Vec3 m_dirToSun;
-				F32 m_sunPower;
-			} pc;
-
-			pc.m_invertedViewProjectionJitterMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-			pc.m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-			pc.m_dirToSun = -dirLight->getDirection();
-			pc.m_sunPower = dirLight->getDiffuseColor().xyz().dot(Vec3(0.30f, 0.59f, 0.11f));
-
-			cmdb.setPushConstants(&pc, sizeof(pc));
-
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, getRenderer().getSky().getSkyLutRt());
+			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstsBuffer);
 		}
 
 		drawQuad(cmdb);

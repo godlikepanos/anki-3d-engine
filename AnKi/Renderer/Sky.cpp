@@ -29,6 +29,7 @@ Error Sky::initInternal()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_transmittanceLutGrProg, "SkyTransmittanceLut"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_multipleScatteringLutGrProg, "SkyMultipleScatteringLut"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_skyLutGrProg, "SkyLut"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_computeSunColorGrProg, "ComputeSunColor"));
 
 	const TextureUsageBit usage = TextureUsageBit::kAllCompute;
 	const TextureUsageBit initialUsage = TextureUsageBit::kAllCompute;
@@ -39,7 +40,6 @@ Error Sky::initInternal()
 		getRenderer().create2DRenderTargetInitInfo(kTransmittanceLutSize.x(), kTransmittanceLutSize.y(), formatB, usage, "SkyTransmittanceLut"),
 		initialUsage);
 
-	// TODO check formats
 	m_multipleScatteringLut = getRenderer().createAndClearRenderTarget(
 		getRenderer().create2DRenderTargetInitInfo(kMultipleScatteringLutSize.x(), kMultipleScatteringLutSize.y(), formatB, usage,
 												   "SkyMultipleScatteringLut"),
@@ -66,19 +66,17 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 	ANKI_ASSERT(dirLightc);
-	if(dirLightc->getDirection() == m_sunDir)
-	{
-		// Same light dir, no need to generate the sky LUT
+	const F32 sunPower = dirLightc->getLightPower();
+	const Bool renderSkyLut = dirLightc->getDirection() != m_sunDir || m_sunPower != sunPower;
+	const Bool renderTransAndMultiScatLuts = !m_transmittanceAndMultiScatterLutsGenerated;
 
-		m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get());
-		return;
-	}
+	m_sunDir = dirLightc->getDirection();
+	m_sunPower = sunPower;
 
 	// Create render targets
-	const Bool generateLuts = !m_transmittanceAndMultiScatterLutsGenerated;
 	RenderTargetHandle transmittanceLutRt;
 	RenderTargetHandle multipleScatteringLutRt;
-	if(generateLuts)
+	if(renderTransAndMultiScatLuts)
 	{
 		transmittanceLutRt = rgraph.importRenderTarget(m_transmittanceLut.get(), TextureUsageBit::kAllCompute);
 		multipleScatteringLutRt = rgraph.importRenderTarget(m_multipleScatteringLut.get(), TextureUsageBit::kAllCompute);
@@ -101,7 +99,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Transmittance LUT
-	if(generateLuts)
+	if(renderTransAndMultiScatLuts)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyTransmittanceLut");
 
@@ -120,8 +118,8 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 		});
 	}
 
-	//  Multiple scattering LUT
-	if(generateLuts)
+	// Multiple scattering LUT
+	if(renderTransAndMultiScatLuts)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyMultipleScatteringLut");
 
@@ -144,6 +142,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Sky LUT
+	if(renderSkyLut)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyLut");
 
@@ -151,10 +150,8 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(multipleScatteringLutRt, TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(m_runCtx.m_skyLutRt, TextureUsageBit::kUavComputeWrite);
 
-		rpass.setWork([this, transmittanceLutRt, multipleScatteringLutRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, transmittanceLutRt, multipleScatteringLutRt, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SkyLut);
-
-			const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -164,11 +161,30 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 1, multipleScatteringLutRt);
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_skyLutRt);
-
-			const Vec4 dir = -dirLightc->getDirection().xyz0();
-			cmdb.setPushConstants(&dir, sizeof(dir));
+			cmdb.bindConstantBuffer(0, 4, ctx.m_globalRenderingConstsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x(), kSkyLutSize.y());
+		});
+	}
+
+	// Compute sun color always
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ComputeSunColor");
+
+		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kSampledCompute);
+
+		rpass.setWork([this, transmittanceLutRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ComputeSunColor);
+
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_computeSunColorGrProg.get());
+
+			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
+			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindUavBuffer(0, 2, ctx.m_globalRenderingConstsBuffer);
+
+			cmdb.dispatchCompute(1, 1, 1);
 		});
 	}
 }

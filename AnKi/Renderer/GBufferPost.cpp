@@ -52,7 +52,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
 
-	rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
@@ -68,7 +68,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		cmdb.bindConstantBuffer(0, 3, getRenderer().getClusterBinning().getClusteredShadingConstants());
+		cmdb.bindConstantBuffer(0, 3, ctx.m_globalRenderingConstsBuffer);
 		cmdb.bindUavBuffer(0, 4, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
 		cmdb.bindUavBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
 
