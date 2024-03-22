@@ -12,7 +12,7 @@ ANKI_BEGIN_NAMESPACE
 inline GpuSceneRenderableInstance unpackGpuSceneRenderableVertex(UVec4 x)
 {
 	GpuSceneRenderableInstance o;
-	o.m_worldTransformsOffset = x[0];
+	o.m_worldTransformsIndex = x[0];
 	o.m_constantsOffset = x[1];
 	o.m_meshLodIndex = x[2];
 	o.m_boneTransformsOrParticleEmitterOffset = x[3];
@@ -22,7 +22,7 @@ inline GpuSceneRenderableInstance unpackGpuSceneRenderableVertex(UVec4 x)
 inline GpuSceneMeshletInstance unpackGpuSceneMeshletInstance(UVec4 x)
 {
 	GpuSceneMeshletInstance o;
-	o.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit = x[0];
+	o.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = x[0];
 	o.m_constantsOffset = x[1];
 	o.m_meshletGeometryDescriptorIndex = x[2];
 	o.m_boneTransformsOrParticleEmitterOffset = x[3];

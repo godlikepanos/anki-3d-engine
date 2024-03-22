@@ -44,12 +44,12 @@ enum class MaterialBinding : U32
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) kUnifiedGeometry_##fmt,
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
 
-	// For mesh shading
 	kMeshletBoundingVolumes, ///< Points to the unified geom buffer
 	kMeshletGeometryDescriptors, ///< Points to the unified geom buffer
 	kMeshletGroups,
 	kRenderables,
 	kMeshLods,
+	kTransforms,
 	kHzbTexture,
 	kNearestClampSampler,
 

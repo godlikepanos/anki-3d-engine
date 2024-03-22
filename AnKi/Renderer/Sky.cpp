@@ -181,8 +181,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_computeSunColorGrProg.get());
 
 			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
-			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindUavBuffer(0, 2, ctx.m_globalRenderingConstsBuffer);
+			cmdb.bindUavBuffer(0, 1, ctx.m_globalRenderingConstsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});

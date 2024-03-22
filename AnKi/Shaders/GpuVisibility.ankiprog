@@ -34,44 +34,45 @@ struct DrawIndirectArgsWithPadding
 [[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(3)]] ByteAddressBuffer g_gpuScene;
+[[vk::binding(3)]] StructuredBuffer<Mat3x4> g_transforms;
+[[vk::binding(4)]] ByteAddressBuffer g_gpuScene;
 
 #if GATHER_MDI
 // These 3 have the same size
-[[vk::binding(4)]] RWStructuredBuffer<UVec4> g_instanceRateRenderables;
-[[vk::binding(5)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
-[[vk::binding(5)]] RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs;
+[[vk::binding(5)]] RWStructuredBuffer<UVec4> g_instanceRateRenderables;
+[[vk::binding(6)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
+[[vk::binding(6)]] RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs;
 
 // The MDI counts. One for each render state bucket
-[[vk::binding(6)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+[[vk::binding(7)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
 #endif
 
 #if GATHER_MESHLET_GROUPS
 // For mesh shading
-[[vk::binding(7)]] RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs;
-[[vk::binding(8)]] RWStructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances;
+[[vk::binding(8)]] RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs;
+[[vk::binding(9)]] RWStructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances;
 #endif
 
 // One for each render state bucket. It's either the index of the next indirect args or the index to the next task payload
-[[vk::binding(9)]] StructuredBuffer<UVec2> g_instanceRanges;
+[[vk::binding(10)]] StructuredBuffer<UVec2> g_instanceRanges;
 
 #if DISTANCE_TEST == 0
-[[vk::binding(10)]] ConstantBuffer<FrustumGpuVisibilityConstants> g_consts;
+[[vk::binding(11)]] ConstantBuffer<FrustumGpuVisibilityConstants> g_consts;
 #else
 [[vk::push_constant]] ConstantBuffer<DistanceGpuVisibilityConstants> g_consts;
 #endif
 
 #if HZB_TEST
-[[vk::binding(11)]] Texture2D<Vec4> g_hzbTex;
-[[vk::binding(12)]] SamplerState g_nearestAnyClampSampler;
+[[vk::binding(12)]] Texture2D<Vec4> g_hzbTex;
+[[vk::binding(13)]] SamplerState g_nearestAnyClampSampler;
 #endif
 
 #if GATHER_AABBS
-[[vk::binding(13)]] RWStructuredBuffer<U32> g_visibleAabbIndices; ///< Indices of the visible AABBs. The 1st element is the count.
+[[vk::binding(14)]] RWStructuredBuffer<U32> g_visibleAabbIndices; ///< Indices of the visible AABBs. The 1st element is the count.
 #endif
 
 #if HASH_VISIBLES
-[[vk::binding(14)]] RWStructuredBuffer<GpuVisibilityHash> g_hash;
+[[vk::binding(15)]] RWStructuredBuffer<GpuVisibilityHash> g_hash;
 #endif
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -229,7 +230,7 @@ struct DrawIndirectArgsWithPadding
 				g_drawIndexedIndirectArgs[indirectIdx] = indirect;
 
 				UVec4 instanceVertex;
-				instanceVertex.x = renderable.m_worldTransformsOffset;
+				instanceVertex.x = renderable.m_worldTransformsIndex;
 				instanceVertex.y = renderable.m_constantsOffset;
 				instanceVertex.z = meshLodIndex;
 				instanceVertex.w = renderable.m_boneTransformsOffset;
@@ -247,7 +248,7 @@ struct DrawIndirectArgsWithPadding
 				g_drawIndirectArgs[indirectIdx] = indirect;
 
 				UVec4 instanceVertex;
-				instanceVertex.x = renderable.m_worldTransformsOffset;
+				instanceVertex.x = renderable.m_worldTransformsIndex;
 				instanceVertex.y = renderable.m_constantsOffset;
 				instanceVertex.z = meshLodIndex;
 				instanceVertex.w = renderable.m_particleEmitterOffset;
@@ -261,7 +262,7 @@ struct DrawIndirectArgsWithPadding
 	// Update the renderables hash
 	{
 		// Transform a random point as a way to get a feel for the transform
-		const Mat3x4 trf = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+		const Mat3x4 trf = g_transforms[renderable.m_worldTransformsIndex];
 		const Vec3 pt = mul(trf, Vec4(1503.98f, 2006.8f, -1400.16f, 1.0f));
 		const UVec3 ptu = UVec3(asuint(pt.x), asuint(pt.y), asuint(pt.z));
 

@@ -165,7 +165,7 @@ struct TaskOut
 {
 	U32 m_firstMeshletGeometryDescriptor;
 	U32 m_visibleMeshletsRelativeIndices[kMeshletGroupSize / sizeof(U32)];
-	U32 m_worldTransformsOffset;
+	U32 m_worldTransformsIndex;
 	U32 m_constantsOffset;
 	U32 m_boneTransformsOrParticleEmitterOffset;
 };
@@ -245,7 +245,7 @@ VertOut main(VertIn input)
 #	if SW_MESHLETS
 	const GpuSceneMeshletInstance instance = unpackGpuSceneMeshletInstance(input.m_instanceData);
 
-	if(input.m_svVertexId >= (instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit & ((1u << 7u) - 1u)) * 3u)
+	if(input.m_svVertexId >= (instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit & ((1u << 7u) - 1u)) * 3u)
 	{
 		// Discard the primitive
 		output = (VertOut)0;
@@ -264,7 +264,7 @@ VertOut main(VertIn input)
 	UnpackedMeshVertex vert = loadVertex(meshlet, localIdx, ANKI_BONES);
 
 	const U32 constantsOffset = instance.m_constantsOffset;
-	const U32 worldTransformsOffset = instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit >> 7u;
+	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
 	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
 
 #		if VISUALIZE_MESHLETS
@@ -277,13 +277,13 @@ VertOut main(VertIn input)
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
 
 	const U32 constantsOffset = instance.m_constantsOffset;
-	const U32 worldTransformsOffset = instance.m_worldTransformsOffset;
+	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
 	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
 #	endif // SW_MESHLETS
 	ANKI_MAYBE_UNUSED(boneTransformsOrParticleEmitterOffset);
 
-	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(worldTransformsOffset);
-	const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(worldTransformsOffset + sizeof(Mat3x4));
+	const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
+	const Mat3x4 prevWorldTransform = g_transforms[worldTransformsIndex + 1u];
 	ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #	if UVS
@@ -349,7 +349,7 @@ struct FirstPayload
 	if(svGroupIndex == 0u)
 	{
 		s_payload.m_firstMeshletGeometryDescriptor = firstMeshletGeometryDescriptor;
-		s_payload.m_worldTransformsOffset = renderable.m_worldTransformsOffset;
+		s_payload.m_worldTransformsIndex = renderable.m_worldTransformsIndex;
 		s_payload.m_constantsOffset = renderable.m_constantsOffset;
 		s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
 
@@ -368,7 +368,7 @@ struct FirstPayload
 		Bool cull = false;
 
 		const MeshletBoundingVolume meshletBoundingVol = g_meshletBoundingVolumes[firstMeshletBoundingVolume + svGroupIndex];
-		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+		const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
 
 #	if MESHLET_BACKFACE_CULLING
 		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_globalConstants.m_cameraTransform.getTranslationPart());
@@ -452,8 +452,8 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 
 			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES);
 
-			const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset);
-			const Mat3x4 prevWorldTransform = g_gpuScene.Load<Mat3x4>(payload.m_worldTransformsOffset + sizeof(Mat3x4));
+			const Mat3x4 worldTransform = g_transforms[payload.m_worldTransformsIndex];
+			const Mat3x4 prevWorldTransform = g_transforms[payload.m_worldTransformsIndex];
 			ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #	if UVS

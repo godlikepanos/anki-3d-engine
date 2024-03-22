@@ -78,7 +78,6 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 	RenderTargetHandle historyRt;
 	RenderTargetHandle finalRt;
-	RenderTargetHandle bentNormalsFinalRt;
 
 	if(m_texImportedOnce) [[likely]]
 	{

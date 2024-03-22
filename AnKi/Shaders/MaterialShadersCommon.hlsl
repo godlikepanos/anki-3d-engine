@@ -30,6 +30,7 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 [[vk::binding(MaterialBinding::kMeshletGroups, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroups;
 [[vk::binding(MaterialBinding::kRenderables, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(MaterialBinding::kMeshLods, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
+[[vk::binding(MaterialBinding::kTransforms, MaterialSet::kGlobal)]] StructuredBuffer<Mat3x4> g_transforms;
 [[vk::binding(MaterialBinding::kHzbTexture, MaterialSet::kGlobal)]] Texture2D<Vec4> g_hzbTexture;
 [[vk::binding(MaterialBinding::kNearestClampSampler, MaterialSet::kGlobal)]] SamplerState g_nearestClampSampler;
 

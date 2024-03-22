@@ -19,7 +19,7 @@ constexpr F32 kSomeFarDistance = 100000.0f;
 /// @note All offsets in bytes
 struct GpuSceneRenderable
 {
-	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
+	U32 m_worldTransformsIndex; ///< First index points to the crnt transform and the 2nd to the previous.
 	U32 m_constantsOffset;
 	U32 m_meshLodsIndex; ///< Points to the array of GpuSceneMeshLod. kMaxLodCount are reserved for each renderable.
 	U32 m_boneTransformsOffset; ///< Array of Mat3x4 or 0 if its not a skin.
@@ -31,7 +31,7 @@ struct GpuSceneRenderable
 /// Almost similar to GpuSceneRenderable but with only what the material shaders need. Needs to fit in a UVec4 vertex attribute.
 struct GpuSceneRenderableInstance
 {
-	U32 m_worldTransformsOffset;
+	U32 m_worldTransformsIndex;
 	U32 m_constantsOffset;
 	U32 m_meshLodIndex; ///< Points to a single GpuSceneMeshLod in the mesh lods.
 	U32 m_boneTransformsOrParticleEmitterOffset;
@@ -48,7 +48,7 @@ static_assert(kMaxLodCount == 3);
 /// Minimal data passed to the vertex shaders in the case of meshlet rendering.
 struct GpuSceneMeshletInstance
 {
-	U32 m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit;
+	U32 m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit;
 	U32 m_constantsOffset;
 	U32 m_meshletGeometryDescriptorIndex; ///< Index in the UGB.
 	U32 m_boneTransformsOrParticleEmitterOffset;

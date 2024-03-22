@@ -14,7 +14,7 @@
 [[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(3)]] ByteAddressBuffer g_gpuScene;
+[[vk::binding(3)]] StructuredBuffer<Mat3x4> g_transforms;
 
 [[vk::binding(4)]] RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances;
 [[vk::binding(5)]] RWStructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
@@ -86,7 +86,7 @@
 		{
 			// It has a BLAS, write what is to write
 
-			const Mat3x4 transform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+			const Mat3x4 transform = g_transforms[renderable.m_worldTransformsIndex];
 			Mat3x4 meshQuantizationTransform;
 			meshQuantizationTransform.m_row0 = Vec4(meshLod.m_positionScale, 0.0f, 0.0f, meshLod.m_positionTranslation.x);
 			meshQuantizationTransform.m_row1 = Vec4(0.0f, meshLod.m_positionScale, 0.0f, meshLod.m_positionTranslation.y);

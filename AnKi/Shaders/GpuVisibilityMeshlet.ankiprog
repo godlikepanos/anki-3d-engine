@@ -23,7 +23,7 @@
 [[vk::binding(0)]] StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances;
 [[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
 [[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(3)]] ByteAddressBuffer g_gpuScene;
+[[vk::binding(3)]] StructuredBuffer<Mat3x4> g_transforms;
 [[vk::binding(4)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
 [[vk::binding(5)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs;
 [[vk::binding(6)]] RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances;
@@ -73,7 +73,7 @@ struct Consts
 
 #if !PASSTHROUGH
 
-		const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+		const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
 
 #	if MESHLET_BACKFACE_CULLING
 		const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
@@ -122,8 +122,8 @@ struct Consts
 
 				GpuSceneMeshletInstance instance;
 				instance.m_meshletGeometryDescriptorIndex = firstMeshletGeometryDescriptor + svGroupIndex;
-				instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsOffset << 7u;
-				instance.m_worldTransformsOffset_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
+				instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsIndex << 7u;
+				instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
 				instance.m_constantsOffset = renderable.m_constantsOffset;
 				instance.m_boneTransformsOrParticleEmitterOffset =
 					(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
