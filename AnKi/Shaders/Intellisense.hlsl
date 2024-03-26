@@ -46,6 +46,11 @@ using U32 = unsigned int;
 using F32 = float;
 using Bool = bool;
 
+template<typename T, unsigned kC>
+struct vector
+{
+};
+
 struct UVec2
 {
 	U32 x;

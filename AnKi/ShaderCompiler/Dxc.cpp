@@ -90,6 +90,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.emplaceBack("-Wundef");
 	dxcArgs.emplaceBack("-Wno-unused-const-variable");
 	dxcArgs.emplaceBack("-Wno-unused-parameter");
+	dxcArgs.emplaceBack("-Wno-unneeded-internal-declaration");
 	dxcArgs.emplaceBack("-HV");
 	dxcArgs.emplaceBack("2021");
 	dxcArgs.emplaceBack("-E");

@@ -127,7 +127,7 @@ F32 rand(Vec2 n)
 	return 0.5 + 0.5 * frac(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-Vec4 nearestDepthUpscale(Vec2 uv, Texture2D depthFull, Texture2D depthHalf, Texture2D colorTex, SamplerState linearAnyClampSampler,
+Vec4 nearestDepthUpscale(Vec2 uv, Texture2D<Vec4> depthFull, Texture2D<Vec4> depthHalf, Texture2D<Vec4> colorTex, SamplerState linearAnyClampSampler,
 						 Vec2 linearDepthCf, F32 depthThreshold)
 {
 	F32 fullDepth = depthFull.SampleLevel(linearAnyClampSampler, uv, 0.0).r; // Sampler not important.
@@ -293,36 +293,40 @@ Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
 	return 0.5 / mag * uv + 0.5;
 }
 
-RVec3 grayScale(const RVec3 col)
+template<typename T>
+vector<T, 3> grayScale(const vector<T, 3> col)
 {
-	const F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
-	return RVec3(grey, grey, grey);
+	const T grey = (col.r + col.g + col.b) * T(1.0 / 3.0);
+	return vector<T, 3>(grey, grey, grey);
 }
 
-Vec3 saturateColor(const Vec3 col, const F32 factor)
+template<typename T>
+vector<T, 3> saturateColor(const vector<T, 3> col, const T factor)
 {
-	const Vec3 lumCoeff = Vec3(0.2125, 0.7154, 0.0721);
-	const F32 d = dot(col, lumCoeff);
-	const Vec3 intensity = Vec3(d, d, d);
+	const vector<T, 3> lumCoeff = vector<T, 3>(0.2125, 0.7154, 0.0721);
+	const T d = dot(col, lumCoeff);
+	const vector<T, 3> intensity = vector<T, 3>(d, d, d);
 	return lerp(intensity, col, factor);
 }
 
-Vec3 gammaCorrection(Vec3 gamma, Vec3 col)
+template<typename T>
+vector<T, 3> gammaCorrection(vector<T, 3> gamma, vector<T, 3> col)
 {
-	return pow(col, 1.0 / gamma);
+	return pow(col, T(1.0) / gamma);
 }
 
 // Can use 0.15 for sharpenFactor
-Vec3 readSharpen(Texture2D tex, SamplerState sampl, Vec2 uv, F32 sharpenFactor, Bool detailed)
+template<typename T>
+vector<T, 3> readSharpen(Texture2D<vector<T, 4>> tex, SamplerState sampl, Vec2 uv, T sharpenFactor, Bool detailed)
 {
-	Vec3 col = tex.SampleLevel(sampl, uv, 0.0).rgb;
+	vector<T, 3> col = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
-	Vec3 col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(1, 1)).rgb;
+	vector<T, 3> col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(1, 1)).rgb;
 	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(-1, -1)).rgb;
 	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(1, -1)).rgb;
 	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(-1, 1)).rgb;
 
-	F32 f = 4.0;
+	T f = 4.0;
 	if(detailed)
 	{
 		col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(0, 1)).rgb;
@@ -333,19 +337,20 @@ Vec3 readSharpen(Texture2D tex, SamplerState sampl, Vec2 uv, F32 sharpenFactor, 
 		f = 8.0;
 	}
 
-	col = col * (f * sharpenFactor + 1.0) - sharpenFactor * col2;
-	return max(Vec3(0.0, 0.0, 0.0), col);
+	col = col * (f * sharpenFactor + T(1.0)) - sharpenFactor * col2;
+	return max(vector<T, 3>(0.0, 0.0, 0.0), col);
 }
 
-Vec3 readErosion(Texture2D tex, SamplerState sampl, const Vec2 uv)
+template<typename T>
+vector<T, 3> readErosion(Texture2D<vector<T, 4>> tex, SamplerState sampl, const Vec2 uv)
 {
-	Vec3 minValue = tex.SampleLevel(sampl, uv, 0.0).rgb;
+	vector<T, 3> minValue = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
 #define ANKI_EROSION(x, y) \
 	col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(x, y)).rgb; \
 	minValue = min(col2, minValue);
 
-	Vec3 col2;
+	vector<T, 3> col2;
 	ANKI_EROSION(1, 1);
 	ANKI_EROSION(-1, -1);
 	ANKI_EROSION(1, -1);
@@ -546,18 +551,20 @@ UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 #endif
 
 // Gaussian distrubution function
-F32 gaussianWeight(F32 s, F32 x)
+template<typename T>
+T gaussianWeight(T s, T x)
 {
-	F32 p = 1.0 / (s * sqrt(2.0 * kPi));
-	p *= exp((x * x) / (-2.0 * s * s));
+	T p = T(1.0) / (s * sqrt(T(2.0) * kPi));
+	p *= exp((x * x) / (T(-2.0) * s * s));
 	return p;
 }
 
 // https://www.shadertoy.com/view/WsfBDf
-Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
+template<typename T>
+vector<T, 3> animateBlueNoise(vector<T, 3> inputBlueNoise, U32 frameIdx)
 {
-	const F32 goldenRatioConjugate = 0.61803398875;
-	return frac(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
+	const T goldenRatioConjugate = 0.61803398875;
+	return frac(inputBlueNoise + T(frameIdx % 64u) * goldenRatioConjugate);
 }
 
 #if ANKI_FRAGMENT_SHADER
@@ -642,33 +649,29 @@ Vec2 equirectangularMapping(Vec3 v)
 	return uv;
 }
 
-Vec3 linearToSRgb(Vec3 linearRgb)
+template<typename T>
+vector<T, 3> linearToSRgb(vector<T, 3> linearRgb)
 {
-	const F32 a = 6.10352e-5;
-	const F32 b = 1.0 / 2.4;
-	linearRgb = max(Vec3(a, a, a), linearRgb);
-	return min(linearRgb * 12.92, pow(max(linearRgb, 0.00313067), Vec3(b, b, b)) * 1.055 - 0.055);
+	constexpr T a = 6.10352e-5;
+	constexpr T b = 1.0 / 2.4;
+	linearRgb = max(vector<T, 3>(a, a, a), linearRgb);
+	return min(linearRgb * T(12.92), pow(max(linearRgb, T(0.00313067)), Vec3(b, b, b)) * T(1.055) - T(0.055));
 }
 
-Vec3 sRgbToLinear(Vec3 sRgb)
+template<typename T>
+vector<T, 3> sRgbToLinear(vector<T, 3> sRgb)
 {
-#if ANKI_GLSL
-	const bvec3 cutoff = lessThan(sRgb, Vec3(0.04045));
-	const Vec3 higher = pow((sRgb + 0.055) / 1.055, Vec3(2.4));
-	const Vec3 lower = sRgb / 12.92;
-	return mix(higher, lower, cutoff);
-#else
-	const bool3 cutoff = sRgb < Vec3(0.04045, 0.04045, 0.04045);
-	const Vec3 higher = pow((sRgb + 0.055) / 1.055, Vec3(2.4, 2.4, 2.4));
-	const Vec3 lower = sRgb / 12.92;
+	const bool3 cutoff = sRgb < vector<T, 3>(0.04045, 0.04045, 0.04045);
+	const vector<T, 3> higher = pow((sRgb + T(0.055)) / T(1.055), vector<T, 3>(2.4, 2.4, 2.4));
+	const vector<T, 3> lower = sRgb / T(12.92);
 	return lerp(higher, lower, cutoff);
-#endif
 }
 
-RVec3 filmGrain(RVec3 color, Vec2 uv, F32 strength, F32 time)
+template<typename T>
+vector<T, 3> filmGrain(vector<T, 3> color, Vec2 uv, T strength, F32 time)
 {
-	const F32 x = (uv.x + 4.0) * (uv.y + 4.0) * time;
-	const F32 grain = 1.0 - (fmod((fmod(x, 13.0) + 1.0) * (fmod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
+	const T x = (uv.x + 4.0) * (uv.y + 4.0) * time;
+	const T grain = T(1.0) - (fmod((fmod(x, T(13.0)) + T(1.0)) * (fmod(x, T(123.0)) + T(1.0)), T(0.01)) - T(0.005)) * strength;
 	return color * grain;
 }
 

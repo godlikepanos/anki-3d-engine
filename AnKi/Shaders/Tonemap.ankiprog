@@ -44,7 +44,7 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 
 	const RVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;
-	const Vec3 tonemapped = linearToSRgb(tonemap(hdr, readExposureAndAverageLuminance().x));
+	const Vec3 tonemapped = linearToSRgb(tonemap<RF32>(hdr, readExposureAndAverageLuminance().x));
 
 #	if ANKI_COMPUTE_SHADER
 	g_outUav[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);

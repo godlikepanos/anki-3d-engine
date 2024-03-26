@@ -104,7 +104,7 @@ FragOut main(Vec2 uv : TEXCOORD)
 #	if YCBCR
 	outColor = yCbCrToRgb(outColor);
 #	endif
-	const Vec3 tonemapped = linearToSRgb(tonemap(outColor, readExposureAndAverageLuminance().x));
+	const Vec3 tonemapped = linearToSRgb(tonemap<F32>(outColor, readExposureAndAverageLuminance().x));
 #	if ANKI_COMPUTE_SHADER
 	g_uavTex[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
 	g_tonemappedUavTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);

@@ -14,7 +14,7 @@ constexpr U32 kTonemappingBinding = 2u;
 
 struct Constants
 {
-	F32 m_threshold;
+	RF32 m_threshold;
 	F32 m_scale;
 	F32 m_padding0;
 	F32 m_padding1;

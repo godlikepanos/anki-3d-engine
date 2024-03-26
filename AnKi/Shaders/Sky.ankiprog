@@ -25,6 +25,7 @@ constexpr F32 kScatteringSteps = 32.0f;
 constexpr Vec3 kGroundAlbedo = 0.3f;
 
 // From https://gamedev.stackexchange.com/questions/96459/fast-ray-sphere-collision-code.
+// Sphere center is the (0,0,0), aka earth's core
 F32 rayIntersectSphere(Vec3 ro, Vec3 rd, F32 rad)
 {
 	const F32 b = dot(ro, rd);
@@ -357,9 +358,10 @@ Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numS
 		const Vec3 sunTransmittance = getValFromTLut(g_tLutTex, g_linearAnyClampSampler, newPos, dirToSun);
 		const Vec3 psiMS = getValFromMultiScattLut(g_mLutTex, g_linearAnyClampSampler, newPos, dirToSun);
 
-		const Vec3 rayleighInScattering = rayleighScattering * (rayleighPhaseValue * sunTransmittance + psiMS);
-		const Vec3 mieInScattering = mieScattering * (miePhaseValue * sunTransmittance + psiMS);
-		const Vec3 inScattering = (rayleighInScattering + mieInScattering);
+		const Vec3 phaseTimesScattering = rayleighScattering * rayleighPhaseValue + mieScattering * miePhaseValue;
+
+		// inScattering is the 'S' in the sebh code sample
+		const Vec3 inScattering = phaseTimesScattering * sunTransmittance + (rayleighScattering + mieScattering) * psiMS;
 
 		// Integrated scattering within path segment.
 		const Vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;

@@ -72,7 +72,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 #if FILM_GRAIN
 	const F32 dt = 1.0;
-	outColor = filmGrain(outColor, uv, g_pc.m_filmGrainStrength, F32(g_pc.m_frameCount % 0xFFFFu) * dt);
+	outColor = filmGrain<F32>(outColor, uv, g_pc.m_filmGrainStrength, F32(g_pc.m_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED

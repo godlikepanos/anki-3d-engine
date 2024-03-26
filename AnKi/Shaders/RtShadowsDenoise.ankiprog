@@ -124,7 +124,7 @@ F32 computeVarianceCenter(Vec2 uv)
 		// F32 localWeight = calculateBilateralWeighPlane(depthCenter, depthTap, 1.0);
 		F32 localWeight = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
 
-		localWeight *= gaussianWeight(0.4, abs(F32(i)) / F32(sampleCount + 1u));
+		localWeight *= gaussianWeight(0.4f, abs(F32(i)) / F32(sampleCount + 1u));
 
 		shadowFactor += localShadowFactor * localWeight;
 

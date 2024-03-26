@@ -90,7 +90,7 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 		// This is a workaround because sometimes the avg lum becomes nan
 		finalAvgLum = clamp(finalAvgLum, kEpsilonF32, kMaxF32);
 
-		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0), finalAvgLum);
+		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0f), finalAvgLum);
 	}
 }
 #pragma anki technique_end comp
