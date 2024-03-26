@@ -123,6 +123,27 @@ if(VULKAN)
 	elseif(ANDROID)
 		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplAndroid.cpp")
 	endif()
+elseif(DIRECTX)
+	set(backend_sources  ${backend_sources}
+		D3D/D3DGrManager.cpp
+		D3D/D3DBuffer.cpp
+		D3D/D3DCommandBuffer.cpp
+		D3D/D3DShader.cpp
+		D3D/D3DShaderProgram.cpp
+		D3D/D3DFence.cpp
+		D3D/D3DTexture.cpp
+		D3D/D3DTextureView.cpp
+		D3D/D3DPipelineQuery.cpp
+		D3D/D3DSampler.cpp
+		D3D/D3DFramebuffer.cpp
+		D3D/D3DGrUpscaler.cpp
+		D3D/D3DAccelerationStructure.cpp
+		D3D/D3DTimestampQuery.cpp)
+
+	set(backend_headers ${backend_headers}
+		D3D/D3DGrManager.h
+		D3D/D3DGrUpscaler.h
+		D3D/D3DCommon.h)
 endif()
 
 # Have 2 libraries. The AnKiGrCommon is the bare minimum for the AnKiShaderCompiler to work. Don't have

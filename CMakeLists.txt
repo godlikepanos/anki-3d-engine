@@ -171,15 +171,17 @@ else()
 	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually.")
 endif()
 
-set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API to use (VULKAN or GL)")
+set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API to use (VULKAN or DIRECTX)")
 
-if(${ANKI_GR_BACKEND} STREQUAL "GL")
-	set(GL TRUE)
+if(${ANKI_GR_BACKEND} STREQUAL "DIRECTX")
+	set(DIRECTX TRUE)
 	set(VULKAN FALSE)
 	set(VIDEO_VULKAN TRUE) # Set for the SDL2 to pick up
-else()
-	set(GL FALSE)
+elseif(${ANKI_GR_BACKEND} STREQUAL "VULKAN")
+	set(DIRECTX FALSE)
 	set(VULKAN TRUE)
+else()
+	message(FATAL_ERROR "Wrong ANKI_GR_BACKEND")
 endif()
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)

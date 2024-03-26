@@ -317,7 +317,7 @@ vector<T, 3> gammaCorrection(vector<T, 3> gamma, vector<T, 3> col)
 
 // Can use 0.15 for sharpenFactor
 template<typename T>
-vector<T, 3> readSharpen(Texture2D<vector<T, 4>> tex, SamplerState sampl, Vec2 uv, T sharpenFactor, Bool detailed)
+vector<T, 3> readSharpen(Texture2D<vector<T, 4> > tex, SamplerState sampl, Vec2 uv, T sharpenFactor, Bool detailed)
 {
 	vector<T, 3> col = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
@@ -342,7 +342,7 @@ vector<T, 3> readSharpen(Texture2D<vector<T, 4>> tex, SamplerState sampl, Vec2 u
 }
 
 template<typename T>
-vector<T, 3> readErosion(Texture2D<vector<T, 4>> tex, SamplerState sampl, const Vec2 uv)
+vector<T, 3> readErosion(Texture2D<vector<T, 4> > tex, SamplerState sampl, const Vec2 uv)
 {
 	vector<T, 3> minValue = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
