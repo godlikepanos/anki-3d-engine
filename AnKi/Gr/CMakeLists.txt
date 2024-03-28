@@ -37,113 +37,17 @@ set(backend_headers
 	Utils/SegregatedListsGpuMemoryPool.h)
 
 if(VULKAN)
-	set(backend_sources  ${backend_sources}
-		Vulkan/AccelerationStructure.cpp
-		Vulkan/AccelerationStructureImpl.cpp
-		Vulkan/Buffer.cpp
-		Vulkan/BufferImpl.cpp
-		Vulkan/CommandBuffer.cpp
-		Vulkan/CommandBufferFactory.cpp
-		Vulkan/CommandBufferImpl.cpp
-		Vulkan/Common.cpp
-		Vulkan/DescriptorSet.cpp
-		Vulkan/Fence.cpp
-		Vulkan/FenceFactory.cpp
-		Vulkan/Framebuffer.cpp
-		Vulkan/FramebufferImpl.cpp
-		Vulkan/GpuMemoryManager.cpp
-		Vulkan/GrManager.cpp
-		Vulkan/GrManagerImpl.cpp
-		Vulkan/OcclusionQuery.cpp
-		Vulkan/OcclusionQueryImpl.cpp
-		Vulkan/PipelineCache.cpp
-		Vulkan/Pipeline.cpp
-		Vulkan/PipelineLayout.cpp
-		Vulkan/QueryFactory.cpp
-		Vulkan/Sampler.cpp
-		Vulkan/SamplerFactory.cpp
-		Vulkan/SamplerImpl.cpp
-		Vulkan/Shader.cpp
-		Vulkan/ShaderImpl.cpp
-		Vulkan/ShaderProgram.cpp
-		Vulkan/ShaderProgramImpl.cpp
-		Vulkan/SwapchainFactory.cpp
-		Vulkan/Texture.cpp
-		Vulkan/TextureImpl.cpp
-		Vulkan/TextureView.cpp
-		Vulkan/TextureViewImpl.cpp
-		Vulkan/TimestampQuery.cpp
-		Vulkan/TimestampQueryImpl.cpp
-		Vulkan/PipelineQueryImpl.cpp
-		Vulkan/PipelineQuery.cpp
-		Vulkan/FrameGarbageCollector.cpp
-		Vulkan/GrUpscaler.cpp
-		Vulkan/GrUpscalerImpl.cpp)
+	file(GLOB_RECURSE vksources Vulkan/*.cpp)
+	file(GLOB_RECURSE vkseaders Vulkan/*.h)
 
-	set(backend_headers ${backend_headers}
-		Vulkan/AccelerationStructureImpl.h
-		Vulkan/BufferImpl.h
-		Vulkan/CommandBufferFactory.h
-		Vulkan/CommandBufferImpl.h
-		Vulkan/CommandBufferImpl.inl.h
-		Vulkan/Common.h
-		Vulkan/DeferredBarrierFactory.h
-		Vulkan/DescriptorSet.h
-		Vulkan/FenceFactory.h
-		Vulkan/FenceFactory.inl.h
-		Vulkan/FenceImpl.h
-		Vulkan/FramebufferImpl.h
-		Vulkan/FrameGarbageCollector.h
-		Vulkan/GpuMemoryManager.h
-		Vulkan/GrManagerImpl.h
-		Vulkan/MicroObjectRecycler.h
-		Vulkan/MicroObjectRecycler.inl.h
-		Vulkan/OcclusionQueryImpl.h
-		Vulkan/Pipeline.h
-		Vulkan/PipelineCache.h
-		Vulkan/PipelineLayout.h
-		Vulkan/QueryFactory.h
-		Vulkan/SamplerFactory.h
-		Vulkan/SamplerImpl.h
-		Vulkan/SemaphoreFactory.h
-		Vulkan/SemaphoreFactory.inl.h
-		Vulkan/ShaderImpl.h
-		Vulkan/ShaderProgramImpl.h
-		Vulkan/SwapchainFactory.h
-		Vulkan/TextureImpl.h
-		Vulkan/TextureViewImpl.h
-		Vulkan/TimestampQueryImpl.h
-		Vulkan/PipelineQueryImpl.h
-		Vulkan/GrUpscalerImpl.h)
-
-	if(ANKI_HEADLESS)
-		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplHeadless.cpp")
-	elseif(SDL)
-		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplSdl.cpp")
-	elseif(ANDROID)
-		set(backend_sources ${backend_sources} "Vulkan/GrManagerImplAndroid.cpp")
-	endif()
+	set(backend_sources  ${backend_sources} ${vksources})
+	set(backend_headers ${backend_headers} ${vkheaders})
 elseif(DIRECTX)
-	set(backend_sources  ${backend_sources}
-		D3D/D3DGrManager.cpp
-		D3D/D3DBuffer.cpp
-		D3D/D3DCommandBuffer.cpp
-		D3D/D3DShader.cpp
-		D3D/D3DShaderProgram.cpp
-		D3D/D3DFence.cpp
-		D3D/D3DTexture.cpp
-		D3D/D3DTextureView.cpp
-		D3D/D3DPipelineQuery.cpp
-		D3D/D3DSampler.cpp
-		D3D/D3DFramebuffer.cpp
-		D3D/D3DGrUpscaler.cpp
-		D3D/D3DAccelerationStructure.cpp
-		D3D/D3DTimestampQuery.cpp)
+	file(GLOB_RECURSE dxsources D3D/*.cpp)
+	file(GLOB_RECURSE dxseaders D3D/*.h)
 
-	set(backend_headers ${backend_headers}
-		D3D/D3DGrManager.h
-		D3D/D3DGrUpscaler.h
-		D3D/D3DCommon.h)
+	set(backend_sources  ${backend_sources} ${dxsources})
+	set(backend_headers ${backend_headers} ${dxheaders})
 endif()
 
 # Have 2 libraries. The AnKiGrCommon is the bare minimum for the AnKiShaderCompiler to work. Don't have

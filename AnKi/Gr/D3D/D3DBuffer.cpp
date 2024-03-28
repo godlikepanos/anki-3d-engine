@@ -3,9 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Buffer.h>
-#include <AnKi/Gr/Vulkan/BufferImpl.h>
-#include <AnKi/Gr/GrManager.h>
+#include <AnKi/Gr/D3D/D3DBuffer.h>
 
 namespace anki {
 
