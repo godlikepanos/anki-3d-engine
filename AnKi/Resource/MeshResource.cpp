@@ -212,7 +212,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 	}
 
 	// Submit the loading task
@@ -422,7 +423,8 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 	// Finalize
 	FencePtr fence;
-	cmdb->flush({}, &fence);
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 
 	for(U32 i = 0; i < handleCount; ++i)
 	{

@@ -131,7 +131,8 @@ ANKI_TEST(Ui, Ui)
 			barrier.m_nextUsage = TextureUsageBit::kPresent;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->flush();
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
 
 			gr->swapBuffers();
 			RebarTransientMemoryPool::getSingleton().endFrame();

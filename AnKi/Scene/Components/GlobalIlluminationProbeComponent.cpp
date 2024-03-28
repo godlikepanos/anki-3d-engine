@@ -92,7 +92,8 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texBarrier.m_nextUsage = m_volTex->getTextureUsage();
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 	}
 
 	// Any update

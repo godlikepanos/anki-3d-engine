@@ -1366,7 +1366,11 @@ void RenderGraph::runSecondLevel()
 					pass.m_callback(*ctx);
 				}
 
-				ctx->m_commandBuffer->flush();
+				ctx->m_commandBuffer->endRecording();
+				if(!(ctx->m_commandBuffer->getFlags() & CommandBufferFlag::kSecondLevel))
+				{
+					GrManager::getSingleton().submit(ctx->m_commandBuffer);
+				}
 			});
 		}
 	}
@@ -1497,7 +1501,8 @@ void RenderGraph::flush(FencePtr* optionalFence)
 		}
 
 		// Flush
-		m_ctx->m_graphicsCmdbs[i]->flush({}, (i == m_ctx->m_graphicsCmdbs.getSize() - 1) ? optionalFence : nullptr);
+		m_ctx->m_graphicsCmdbs[i]->endRecording();
+		GrManager::getSingleton().submit(m_ctx->m_graphicsCmdbs[i].get(), {}, (i == m_ctx->m_graphicsCmdbs.getSize() - 1) ? optionalFence : nullptr);
 	}
 }
 

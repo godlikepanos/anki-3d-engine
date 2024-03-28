@@ -260,7 +260,8 @@ float3 main(VertOut input) : SV_TARGET0
 			barrier.m_nextUsage = TextureUsageBit::kPresent;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->flush();
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
 
 			gr->swapBuffers();
 

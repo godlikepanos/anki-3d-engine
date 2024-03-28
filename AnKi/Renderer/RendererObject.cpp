@@ -104,7 +104,8 @@ void RendererObject::zeroBuffer(Buffer* buff)
 	cmdb->fillBuffer(buff, 0, kMaxPtrSize, 0);
 
 	FencePtr fence;
-	cmdb->flush({}, &fence);
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 
 	fence->clientWait(16.0_sec);
 }

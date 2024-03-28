@@ -21,6 +21,7 @@
 #include <AnKi/Gr/RenderGraph.h>
 #include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
 #include <AnKi/Gr/Vulkan/VkGrUpscaler.h>
+#include <AnKi/Gr/Vulkan/VkFence.h>
 
 #include <AnKi/Window/NativeWindow.h>
 #if ANKI_WINDOWING_SYSTEM_SDL
@@ -154,6 +155,41 @@ ANKI_NEW_GR_OBJECT(GrUpscaler)
 
 #undef ANKI_NEW_GR_OBJECT
 #undef ANKI_NEW_GR_OBJECT_NO_INIT_INFO
+
+void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
+{
+	Bool renderedToDefaultFb = false;
+	Array<MicroCommandBuffer*, 16> mcmdbs;
+	for(U32 i = 0; i < cmdbs.getSize(); ++i)
+	{
+		CommandBufferImpl& cmdb = *static_cast<CommandBufferImpl*>(cmdbs[i]);
+		ANKI_ASSERT(cmdb.isFinalized());
+
+		mcmdbs[i] = cmdb.getMicroCommandBuffer().get();
+		renderedToDefaultFb = renderedToDefaultFb || cmdb.renderedToDefaultFramebuffer();
+
+#if ANKI_ASSERTIONS_ENABLED
+		cmdb.setSubmitted();
+#endif
+	}
+
+	Array<MicroSemaphore*, 8> waitSemaphores;
+	for(U32 i = 0; i < waitFences.getSize(); ++i)
+	{
+		waitSemaphores[i] = static_cast<const FenceImpl&>(*waitFences[i]).m_semaphore.get();
+	}
+
+	MicroSemaphorePtr signalSemaphore;
+	getGrManagerImpl().flushCommandBuffers({mcmdbs.getBegin(), cmdbs.getSize()}, renderedToDefaultFb,
+										   {waitSemaphores.getBegin(), waitFences.getSize()}, (signalFence) ? &signalSemaphore : nullptr, false);
+
+	if(signalFence)
+	{
+		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
+		fenceImpl->m_semaphore = signalSemaphore;
+		signalFence->reset(fenceImpl);
+	}
+}
 
 GrManagerImpl::~GrManagerImpl()
 {
@@ -1547,8 +1583,8 @@ void GrManagerImpl::resetFrame(PerFrame& frame)
 	frame.m_renderSemaphore.reset(nullptr);
 }
 
-void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphorePtr> userWaitSemaphores,
-									   MicroSemaphorePtr* userSignalSemaphore, Bool wait)
+void GrManagerImpl::flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bool cmdbRenderedToSwapchain,
+										WeakArray<MicroSemaphore*> userWaitSemaphores, MicroSemaphorePtr* userSignalSemaphore, Bool wait)
 {
 	constexpr U32 maxSemaphores = 8;
 
@@ -1564,11 +1600,18 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 	// First thing, create a fence
 	MicroFencePtr fence = m_fenceFactory.newInstance();
 
-	// Command buffer
-	const VkCommandBuffer handle = cmdb->getHandle();
-	cmdb->setFence(fence.get());
-	submit.commandBufferCount = 1;
-	submit.pCommandBuffers = &handle;
+	// Command buffers
+	Array<VkCommandBuffer, 16> handles;
+	submit.pCommandBuffers = handles.getBegin();
+	VulkanQueueType queueType = cmdbs[0]->getVulkanQueueType();
+	for(MicroCommandBuffer* cmdb : cmdbs)
+	{
+		handles[submit.commandBufferCount] = cmdb->getHandle();
+		cmdb->setFence(fence.get());
+		++submit.commandBufferCount;
+		ANKI_ASSERT(cmdb->getVulkanQueueType() == queueType);
+		queueType = cmdb->getVulkanQueueType();
+	}
 
 	// Handle user semaphores
 	Array<U64, maxSemaphores> waitTimelineValues;
@@ -1581,9 +1624,8 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 	timelineInfo.pSignalSemaphoreValues = &signalTimelineValues[0];
 	submit.pNext = &timelineInfo;
 
-	for(MicroSemaphorePtr& userWaitSemaphore : userWaitSemaphores)
+	for(MicroSemaphore* userWaitSemaphore : userWaitSemaphores)
 	{
-		ANKI_ASSERT(userWaitSemaphore.isCreated());
 		ANKI_ASSERT(userWaitSemaphore->isTimeline());
 		waitSemaphores[submit.waitSemaphoreCount] = userWaitSemaphore->getHandle();
 
@@ -1640,16 +1682,16 @@ void GrManagerImpl::flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRend
 			// Update the swapchain's fence
 			m_crntSwapchain->setFence(fence.get());
 
-			frame.m_queueWroteToSwapchainImage = cmdb->getVulkanQueueType();
+			frame.m_queueWroteToSwapchainImage = queueType;
 		}
 
 		// Submit
 		ANKI_TRACE_SCOPED_EVENT(VkQueueSubmit);
-		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[cmdb->getVulkanQueueType()], 1, &submit, fence->getHandle()));
+		ANKI_VK_CHECKF(vkQueueSubmit(m_queues[queueType], 1, &submit, fence->getHandle()));
 
 		if(wait)
 		{
-			vkQueueWaitIdle(m_queues[cmdb->getVulkanQueueType()]);
+			vkQueueWaitIdle(m_queues[queueType]);
 		}
 	}
 

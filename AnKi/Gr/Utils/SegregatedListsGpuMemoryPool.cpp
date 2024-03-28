@@ -171,7 +171,8 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		barriers[1].m_nextUsage = m_bufferUsage;
 		cmdb->setPipelineBarrier({}, ConstWeakArray<BufferBarrierInfo>{&barriers[1], 1}, {});
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		// Create the new chunk
 		newChunk = newInstance<Chunk>(GrMemoryPool::getSingleton());

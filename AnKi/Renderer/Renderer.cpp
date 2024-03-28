@@ -592,7 +592,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 		}
 	}
 
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 
 	return tex;
 }

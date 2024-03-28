@@ -8,6 +8,7 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/WeakArray.h>
 #include <AnKi/Core/CVarSet.h>
 
 namespace anki {
@@ -55,6 +56,16 @@ public:
 
 	/// Wait for all work to finish.
 	void finish();
+
+	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
+	/// @param[in]  waitFences Optionally wait for some fences.
+	/// @param[out] signalFence Optionaly create fence that will be signaled when the submission is done.
+	void submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences = {}, FencePtr* signalFence = nullptr);
+
+	void submit(CommandBuffer* cmdb, WeakArray<Fence*> waitFences = {}, FencePtr* signalFence = nullptr)
+	{
+		submit(WeakArray<CommandBuffer*>(&cmdb, 1), waitFences, signalFence);
+	}
 
 	/// @name Object creation methods. They are thread-safe.
 	/// @{

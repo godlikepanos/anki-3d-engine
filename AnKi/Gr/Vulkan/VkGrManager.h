@@ -103,8 +103,8 @@ public:
 	}
 	/// @}
 
-	void flushCommandBuffer(MicroCommandBufferPtr cmdb, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphorePtr> waitSemaphores,
-							MicroSemaphorePtr* signalSemaphore, Bool wait = false);
+	void flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphore*> waitSemaphores,
+							 MicroSemaphorePtr* signalSemaphore, Bool wait);
 
 	/// @name Memory
 	/// @{

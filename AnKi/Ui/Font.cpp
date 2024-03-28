@@ -107,7 +107,8 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	barrier.m_nextUsage = TextureUsageBit::kSampledFragment;
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 }
 
 } // end namespace anki

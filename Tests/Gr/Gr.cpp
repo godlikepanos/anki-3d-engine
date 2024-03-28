@@ -15,6 +15,7 @@
 #include <AnKi/Resource/TransferGpuAllocator.h>
 #include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 #include <AnKi/Collision/Aabb.h>
+#include <AnKi/Util/WeakArray.h>
 #include <ctime>
 
 using namespace anki;
@@ -489,7 +490,8 @@ ANKI_TEST(Gr, ClearScreen)
 		cmdb->beginRenderPass(fb.get(), {TextureUsageBit::kFramebufferWrite}, {});
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -551,7 +553,8 @@ void main()
 		cmdb->draw(PrimitiveTopology::kTriangles, 3);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -720,7 +723,8 @@ void main()
 			cmdb->beginRenderPass(fb[0].get(), {{TextureUsageBit::kFramebufferWrite}}, {});
 			cmdb->endRenderPass();
 			setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
-			cmdb->flush();
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
 		}
 
 		CommandBufferInitInfo cinit;
@@ -750,7 +754,8 @@ void main()
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -891,7 +896,8 @@ float4 main(VertOut i) : SV_TARGET0
 		cmdb->draw(PrimitiveTopology::kTriangles, 3);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -971,7 +977,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 		cmdb->draw(PrimitiveTopology::kTriangles, 3);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -1109,7 +1116,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 	}
 
 	FencePtr fence;
-	cmdb->flush({}, &fence);
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 	transfAlloc->release(handle0, fence);
 	transfAlloc->release(handle1, fence);
 	transfAlloc->release(handle2, fence);
@@ -1190,7 +1198,8 @@ void main()
 		cmdb->draw(PrimitiveTopology::kTriangles, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -1336,7 +1345,8 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 			drawOffscreenDrawcalls(gr, prog, cmdb2, TEX_SIZE, indices, verts);
 
-			cmdb2->flush();
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
 
 			CommandBuffer* pCmdb = cmdb2.get();
 			cmdb->pushSecondLevelCommandBuffers({&pCmdb, 1});
@@ -1362,7 +1372,8 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		// End
 		gr.swapBuffers();
@@ -1447,7 +1458,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kUavComputeWrite, TextureSurfaceInfo(1, 0, 0, 0));
 
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 
 	const U ITERATION_COUNT = 100;
 	U iterations = ITERATION_COUNT;
@@ -1483,7 +1495,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		// End
 		g_gr->swapBuffers();
@@ -1552,7 +1565,8 @@ ANKI_TEST(Gr, 3DTextures)
 	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureVolumeInfo(1));
 
 	FencePtr fence;
-	cmdb->flush({}, &fence);
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 	transfAlloc->release(handle0, fence);
 	transfAlloc->release(handle1, fence);
 
@@ -1594,7 +1608,8 @@ ANKI_TEST(Gr, 3DTextures)
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		// End
 		g_gr->swapBuffers();
@@ -1922,7 +1937,8 @@ void main()
 
 	setBufferBarrier(cmdb, resultBuff, BufferUsageBit::kUavComputeWrite, BufferUsageBit::kUavComputeWrite, 0, resultBuff->getSize());
 
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 	g_gr->finish();
 
 	// Get the result
@@ -2027,7 +2043,8 @@ void main()
 	cmdb->draw(PrimitiveTopology::kTriangles, 3);
 	cmdb->endRenderPass();
 	presentBarrierB(cmdb, presentTex);
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 
 	g_gr->swapBuffers();
 	g_gr->finish();
@@ -2153,7 +2170,8 @@ void main()
 	cmdb->draw(PrimitiveTopology::kTriangles, 3);
 	cmdb->endRenderPass();
 	presentBarrierB(cmdb, presentTex);
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 
 	g_gr->swapBuffers();
 	g_gr->finish();
@@ -2227,7 +2245,8 @@ void main()
 	cmdb->bindShaderProgram(prog.get());
 	cmdb->dispatchCompute(1, 1, 1);
 
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 	g_gr->finish();
 
 	// Check result
@@ -2438,7 +2457,8 @@ void main()
 
 	cmdb->dispatchCompute(1, 1, 1);
 
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 	g_gr->finish();
 
 	// Check
@@ -2659,7 +2679,8 @@ void main()
 		cmdb->buildAccelerationStructure(tlas.get(), scratchBuff.get(), 0);
 		setAccelerationStructureBarrier(cmdb, tlas, AccelerationStructureUsageBit::kBuild, AccelerationStructureUsageBit::kFragmentRead);
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 	}
 
 	// Draw
@@ -2705,7 +2726,8 @@ void main()
 
 		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent, TextureSubresourceInfo{});
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -3553,7 +3575,8 @@ void main()
 
 		setTextureBarrier(cmdb, presentTex, TextureUsageBit::kUavComputeWrite, TextureUsageBit::kPresent, TextureSubresourceInfo());
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		g_gr->swapBuffers();
 
@@ -3674,9 +3697,14 @@ void main()
 	// Submit
 #if 1
 	FencePtr fence;
-	incrementCmdb->flush({}, &fence);
-	checkCmdb->flush(Array<FencePtr, 1>{fence}, &fence);
-	incrementCmdb2->flush(Array<FencePtr, 1>{fence}, &fence);
+	incrementCmdb->endRecording();
+	GrManager::getSingleton().submit(incrementCmdb.get(), {}, &fence);
+	checkCmdb->endRecording();
+	Fence* pFence = fence.get();
+	GrManager::getSingleton().submit(checkCmdb.get(), {&pFence, 1}, &fence);
+	incrementCmdb2->endRecording();
+	pFence = fence.get();
+	GrManager::getSingleton().submit(incrementCmdb2.get(), {&pFence, 1}, &fence);
 	fence->clientWait(kMaxSecond);
 #else
 	incrementCmdb->flush();

@@ -93,10 +93,13 @@ class CommandBuffer : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kCommandBuffer;
 
-	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
-	/// @param[in]  waitFences Optionally wait for some fences.
-	/// @param[out] signalFence Optionaly create fence that will be signaled when the submission is done.
-	void flush(ConstWeakArray<FencePtr> waitFences = {}, FencePtr* signalFence = nullptr);
+	CommandBufferFlag getFlags() const
+	{
+		return m_flags;
+	}
+
+	/// Finalize the command buffer.
+	void endRecording();
 
 	/// @name State manipulation
 	/// @{
@@ -467,6 +470,8 @@ public:
 	/// @}
 
 protected:
+	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
+
 	/// Construct.
 	CommandBuffer(CString name)
 		: GrObject(kClassType, name)

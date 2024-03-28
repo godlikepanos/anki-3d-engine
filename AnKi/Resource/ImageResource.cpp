@@ -211,7 +211,8 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 		FencePtr outFence;
-		cmdb->flush({}, &outFence);
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get(), {}, &outFence);
 		outFence->clientWait(60.0_sec);
 	}
 
@@ -355,7 +356,8 @@ Error ImageResource::load(LoadingContext& ctx)
 
 		// Flush batch
 		FencePtr fence;
-		cmdb->flush({}, &fence);
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 
 		for(U i = 0; i < handleCount; ++i)
 		{

@@ -85,13 +85,25 @@ public:
 
 	void endRecording();
 
+	Bool isFinalized() const
+	{
+		return m_finalized;
+	}
+
+#if ANKI_EXTRA_CHECKS
+	void setSubmitted()
+	{
+		ANKI_ASSERT(!m_submitted);
+		m_submitted = true;
+	}
+#endif
+
 private:
 	StackMemoryPool* m_pool = nullptr;
 
 	MicroCommandBufferPtr m_microCmdb;
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
 	ThreadId m_tid = ~ThreadId(0);
-	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
 	Bool m_renderedToDefaultFb : 1 = false;
 	Bool m_finalized : 1 = false;
 	Bool m_empty : 1 = true;
@@ -101,6 +113,7 @@ private:
 	U32 m_commandCount = 0;
 	U32 m_setPushConstantsSize = 0;
 	U32 m_debugMarkersPushed = 0;
+	Bool m_submitted = false;
 #endif
 
 	Framebuffer* m_activeFb = nullptr;

@@ -62,7 +62,8 @@ void main()
 		cmdb->bindUavBuffer(0, 1, storageBuff.get(), 0, kMaxPtrSize);
 		cmdb->bindShaderProgram(prog.get());
 		cmdb->dispatchCompute(1, 1, 1);
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 		gr->finish();
 
 		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));

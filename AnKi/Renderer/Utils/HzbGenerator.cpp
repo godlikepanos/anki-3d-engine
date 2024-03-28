@@ -65,7 +65,8 @@ Error HzbGenerator::init()
 		cmdb->fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
 
 		FencePtr fence;
-		cmdb->flush({}, &fence);
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 
 		fence->clientWait(6.0_sec);
 	}

@@ -244,7 +244,9 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 	barrier.m_previousUsage = BufferUsageBit::kTransferDestination;
 	barrier.m_nextUsage = dstBuff->getBufferUsage();
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
-	cmdb->flush();
+	cmdb->endRecording();
+
+	GrManager::getSingleton().submit(cmdb.get());
 }
 
 ParticleEmitterComponent::~ParticleEmitterComponent()

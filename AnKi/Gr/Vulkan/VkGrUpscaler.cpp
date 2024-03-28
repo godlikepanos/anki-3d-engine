@@ -154,7 +154,8 @@ Error GrUpscalerImpl::createDlssFeature(const UVec2& srcRes, const UVec2& dstRes
 	ANKI_NGX_CHECK(
 		NGX_VULKAN_CREATE_DLSS_EXT(cmdbImpl.getHandle(), creationNodeMask, visibilityNodeMask, &m_dlssFeature, m_ngxParameters, &dlssCreateParams));
 	FencePtr fence;
-	cmdb->flush({}, &fence);
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 	fence->clientWait(60.0_sec);
 
 	return Error::kNone;

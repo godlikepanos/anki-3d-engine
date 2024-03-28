@@ -33,36 +33,10 @@ CommandBuffer* CommandBuffer::newInstance(const CommandBufferInitInfo& init)
 	return impl;
 }
 
-void CommandBuffer::flush(ConstWeakArray<FencePtr> waitFences, FencePtr* signalFence)
+void CommandBuffer::endRecording()
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.endRecording();
-
-	if(!self.isSecondLevel())
-	{
-		Array<MicroSemaphorePtr, 8> waitSemaphores;
-		for(U32 i = 0; i < waitFences.getSize(); ++i)
-		{
-			waitSemaphores[i] = static_cast<const FenceImpl&>(*waitFences[i]).m_semaphore;
-		}
-
-		MicroSemaphorePtr signalSemaphore;
-		getGrManagerImpl().flushCommandBuffer(self.getMicroCommandBuffer(), self.renderedToDefaultFramebuffer(),
-											  WeakArray<MicroSemaphorePtr>(waitSemaphores.getBegin(), waitFences.getSize()),
-											  (signalFence) ? &signalSemaphore : nullptr);
-
-		if(signalFence)
-		{
-			FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
-			fenceImpl->m_semaphore = signalSemaphore;
-			signalFence->reset(fenceImpl);
-		}
-	}
-	else
-	{
-		ANKI_ASSERT(signalFence == nullptr);
-		ANKI_ASSERT(waitFences.getSize() == 0);
-	}
 }
 
 void CommandBuffer::bindVertexBuffer(U32 binding, Buffer* buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
@@ -1369,6 +1343,11 @@ CommandBufferImpl::~CommandBufferImpl()
 
 #if ANKI_EXTRA_CHECKS
 	ANKI_ASSERT(m_debugMarkersPushed == 0);
+
+	if(!m_submitted && !(m_flags & CommandBufferFlag::kSecondLevel))
+	{
+		ANKI_VK_LOGW("Command buffer not submitted");
+	}
 #endif
 }
 
