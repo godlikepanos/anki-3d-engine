@@ -267,8 +267,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency,
 										 BufferUsageBit::kIndirectDraw);
 
-				pass.setWork(1, [this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
-								 viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
+				pass.setWork([this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
+							  viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -348,7 +348,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
 										 BufferUsageBit::kIndirectDraw);
 
-				pass.setWork(1, [this, shadowVisOut, shadowMeshletVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
+				pass.setWork([this, shadowVisOut, shadowMeshletVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -422,9 +422,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSampledFragment);
 				}
 
-				pass.setWork(1, [this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
-								 gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt, faceIdx = f,
-								 &rctx](RenderPassWorkContext& rgraphCtx) {
+				pass.setWork([this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
+							  gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt, faceIdx = f,
+							  &rctx](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 
 					const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();

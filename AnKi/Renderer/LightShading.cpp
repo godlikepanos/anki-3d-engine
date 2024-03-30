@@ -297,7 +297,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad");
 
-	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(ctx, rgraphCtx);
 	});
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt(), sriRt);

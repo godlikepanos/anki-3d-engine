@@ -158,6 +158,8 @@ ANKI_NEW_GR_OBJECT(GrUpscaler)
 
 void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFences, FencePtr* signalFence)
 {
+	ANKI_VK_SELF(GrManagerImpl);
+
 	Bool renderedToDefaultFb = false;
 	Array<MicroCommandBuffer*, 16> mcmdbs;
 	for(U32 i = 0; i < cmdbs.getSize(); ++i)
@@ -180,8 +182,8 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 	}
 
 	MicroSemaphorePtr signalSemaphore;
-	getGrManagerImpl().flushCommandBuffers({mcmdbs.getBegin(), cmdbs.getSize()}, renderedToDefaultFb,
-										   {waitSemaphores.getBegin(), waitFences.getSize()}, (signalFence) ? &signalSemaphore : nullptr, false);
+	self.flushCommandBuffers({mcmdbs.getBegin(), cmdbs.getSize()}, renderedToDefaultFb, {waitSemaphores.getBegin(), waitFences.getSize()},
+							 (signalFence) ? &signalSemaphore : nullptr, false);
 
 	if(signalFence)
 	{

@@ -265,8 +265,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
-			pass.setWork(1, [this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
-							 viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
+			pass.setWork([this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
+						  viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -344,7 +344,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
 									 BufferUsageBit::kIndirectDraw);
 
-			pass.setWork(1, [this, shadowVisOut, shadowMeshletVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
+			pass.setWork([this, shadowVisOut, shadowMeshletVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

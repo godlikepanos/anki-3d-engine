@@ -145,15 +145,9 @@ Error MainRenderer::render(Texture* presentTex)
 	// Bake the render graph
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
 
-	// Populate the 2nd level command buffers
-	m_rgraph->runSecondLevel();
-
-	// Populate 1st level command buffers
-	m_rgraph->run();
-
 	// Flush
 	FencePtr fence;
-	m_rgraph->flush(&fence);
+	m_rgraph->recordAndSubmitCommandBuffers(&fence);
 
 	// Reset for the next frame
 	m_rgraph->reset();

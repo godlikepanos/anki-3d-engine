@@ -668,7 +668,7 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-	pass.setWork(1 /*TODO*/, [this, visOut, meshletVisOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, visOut, meshletVisOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

@@ -1254,7 +1254,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	cmdb->drawIndexed(PrimitiveTopology::kTriangles, 6 * 2 * 3);
 }
 
-static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
+static void drawOffscreen(GrManager& gr)
 {
 	//
 	// Create textures
@@ -1332,25 +1332,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		setTextureSurfaceBarrier(cmdb, dp, TextureUsageBit::kNone, TextureUsageBit::kAllFramebuffer, TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->beginRenderPass(fb.get(), {{TextureUsageBit::kFramebufferWrite, TextureUsageBit::kFramebufferWrite}}, TextureUsageBit::kAllFramebuffer);
 
-		if(!useSecondLevel)
-		{
-			drawOffscreenDrawcalls(gr, prog, cmdb, TEX_SIZE, indices, verts);
-		}
-		else
-		{
-			CommandBufferInitInfo cinit;
-			cinit.m_flags = CommandBufferFlag::kSecondLevel | CommandBufferFlag::kGeneralWork;
-			cinit.m_framebuffer = fb.get();
-			CommandBufferPtr cmdb2 = gr.newCommandBuffer(cinit);
-
-			drawOffscreenDrawcalls(gr, prog, cmdb2, TEX_SIZE, indices, verts);
-
-			cmdb->endRecording();
-			GrManager::getSingleton().submit(cmdb.get());
-
-			CommandBuffer* pCmdb = cmdb2.get();
-			cmdb->pushSecondLevelCommandBuffers({&pCmdb, 1});
-		}
+		drawOffscreenDrawcalls(gr, prog, cmdb, TEX_SIZE, indices, verts);
 
 		cmdb->endRenderPass();
 
@@ -1391,16 +1373,7 @@ ANKI_TEST(Gr, DrawOffscreen)
 {
 	COMMON_BEGIN()
 
-	drawOffscreen(*g_gr, false);
-
-	COMMON_END()
-}
-
-ANKI_TEST(Gr, DrawWithSecondLevel)
-{
-	COMMON_BEGIN()
-
-	drawOffscreen(*g_gr, true);
+	drawOffscreen(*g_gr);
 
 	COMMON_END()
 }

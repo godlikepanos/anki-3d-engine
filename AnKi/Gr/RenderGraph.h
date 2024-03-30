@@ -122,8 +122,6 @@ class RenderPassWorkContext
 
 public:
 	CommandBuffer* m_commandBuffer = nullptr;
-	U32 m_currentSecondLevelCommandBufferIndex = 0;
-	U32 m_secondLevelCommandBufferCount = 0;
 
 	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 
@@ -301,17 +299,9 @@ class RenderPassDescriptionBase
 
 public:
 	template<typename TFunc>
-	void setWork(U32 secondLeveCmdbCount, TFunc func)
-	{
-		ANKI_ASSERT(m_type == Type::kGraphics || secondLeveCmdbCount == 0);
-		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
-		m_secondLevelCmdbsCount = secondLeveCmdbCount;
-	}
-
-	template<typename TFunc>
 	void setWork(TFunc func)
 	{
-		setWork(0, func);
+		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
 	}
 
 	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
@@ -346,7 +336,6 @@ protected:
 	RenderGraphDescription* m_descr;
 
 	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
-	U32 m_secondLevelCmdbsCount = 0;
 
 	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_rtDeps;
 	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffDeps;
@@ -603,7 +592,7 @@ public:
 ///
 /// The idea for the RenderGraph is to automate:
 /// - Synchronization (barriers, events etc) between passes.
-/// - Command buffer creation for primary and secondary command buffers.
+/// - Command buffer creation .
 /// - Framebuffer creation.
 /// - Render target creation (optional since textures can be imported as well).
 ///
@@ -618,43 +607,17 @@ class RenderGraph final : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kRenderGraph;
 
-	/// @name 1st step methods
-	/// @{
+	/// 1st step.
 	void compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool);
-	/// @}
 
-	/// @name 2nd step methods
-	/// @{
+	/// 2nd step. Will call a number of RenderPassWorkCallback that populate command buffers and submit work.
+	void recordAndSubmitCommandBuffers(FencePtr* optionalFence = nullptr);
 
-	/// Will call a number of RenderPassWorkCallback that populate 2nd level command buffers.
-	void runSecondLevel();
-	/// @}
-
-	/// @name 3rd step methods
-	/// @{
-
-	/// Will call a number of RenderPassWorkCallback that populate 1st level command buffers.
-	void run() const;
-	/// @}
-
-	/// @name 3rd step methods
-	/// @{
-	void flush(FencePtr* optionalFence = nullptr);
-	/// @}
-
-	/// @name 4th step methods
-	/// @{
-
-	/// Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
+	/// 3rd step. Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
 	void reset();
-	/// @}
 
-	/// @name 5th step methods [OPTIONAL]
-	/// @{
-
-	/// Get some statistics.
+	/// [OPTIONAL] 4th step. Get some statistics.
 	void getStatistics(RenderGraphStatistics& statistics) const;
-	/// @}
 
 private:
 	static constexpr U kPeriodicCleanupEvery = 60; ///< How many frames between cleanups.

@@ -55,7 +55,6 @@ public:
 
 	void setFence(MicroFence* fence)
 	{
-		ANKI_ASSERT(!(m_flags & CommandBufferFlag::kSecondLevel));
 		m_fence.reset(fence);
 	}
 
@@ -191,7 +190,7 @@ private:
 	Atomic<U32> m_createdCmdbs = {0};
 #endif
 
-	Array3d<MicroObjectRecycler<MicroCommandBuffer>, 2, 2, U(VulkanQueueType::kCount)> m_recyclers;
+	Array2d<MicroObjectRecycler<MicroCommandBuffer>, 2, U(VulkanQueueType::kCount)> m_recyclers;
 };
 
 /// Command bufffer object recycler.

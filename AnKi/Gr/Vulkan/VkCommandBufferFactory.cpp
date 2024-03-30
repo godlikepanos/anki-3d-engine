@@ -85,14 +85,11 @@ Error CommandBufferThreadAllocator::init()
 
 void CommandBufferThreadAllocator::destroy()
 {
-	for(U32 secondLevel = 0; secondLevel < 2; ++secondLevel)
+	for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
 	{
-		for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
+		for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
 		{
-			for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
-			{
-				m_recyclers[secondLevel][smallBatch][queue].destroy();
-			}
+			m_recyclers[smallBatch][queue].destroy();
 		}
 	}
 
@@ -110,11 +107,10 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 {
 	ANKI_ASSERT(!!(cmdbFlags & CommandBufferFlag::kComputeWork) ^ !!(cmdbFlags & CommandBufferFlag::kGeneralWork));
 
-	const Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::kSecondLevel);
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::kSmallBatch);
 	const VulkanQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, m_factory->m_queueFamilies);
 
-	MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[secondLevel][smallBatch][queue];
+	MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[smallBatch][queue];
 
 	MicroCommandBuffer* out = recycler.findToReuse();
 
@@ -125,7 +121,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		VkCommandBufferAllocateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		ci.commandPool = m_pools[queue];
-		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		ci.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
 		ANKI_TRACE_INC_COUNTER(VkCommandBufferCreate, 1);
@@ -167,26 +163,21 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 {
 	ANKI_ASSERT(ptr);
 
-	const Bool secondLevel = !!(ptr->m_flags & CommandBufferFlag::kSecondLevel);
 	const Bool smallBatch = !!(ptr->m_flags & CommandBufferFlag::kSmallBatch);
 
-	m_recyclers[secondLevel][smallBatch][ptr->m_queue].recycle(ptr);
+	m_recyclers[smallBatch][ptr->m_queue].recycle(ptr);
 }
 
 void CommandBufferFactory::destroy()
 {
-	// First trim the caches for all recyclers. This will release the primaries and populate the recyclers of
-	// secondaries
+	// First trim the caches for all recyclers.
 	for(CommandBufferThreadAllocator* talloc : m_threadAllocs)
 	{
-		for(U32 secondLevel = 0; secondLevel < 2; ++secondLevel)
+		for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
 		{
-			for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
+			for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
 			{
-				for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
-				{
-					talloc->m_recyclers[secondLevel][smallBatch][queue].trimCache();
-				}
+				talloc->m_recyclers[smallBatch][queue].trimCache();
 			}
 		}
 	}

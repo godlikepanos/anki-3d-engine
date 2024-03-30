@@ -207,7 +207,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], kGBufferColorRenderTargetCount), m_runCtx.m_crntFrameDepthRt,
 							sriRt);
-	pass.setWork(1, [this, &ctx, visOut, meshletVisOut](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, &ctx, visOut, meshletVisOut](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

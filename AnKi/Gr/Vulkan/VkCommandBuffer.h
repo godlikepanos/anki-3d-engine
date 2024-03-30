@@ -70,11 +70,6 @@ public:
 		return m_empty;
 	}
 
-	Bool isSecondLevel() const
-	{
-		return !!(m_flags & CommandBufferFlag::kSecondLevel);
-	}
-
 	void writeTimestampInternal(TimestampQuery* query);
 
 	// To enable using Anki's commandbuffers for external workloads
@@ -90,7 +85,7 @@ public:
 		return m_finalized;
 	}
 
-#if ANKI_EXTRA_CHECKS
+#if ANKI_ASSERTIONS_ENABLED
 	void setSubmitted()
 	{
 		ANKI_ASSERT(!m_submitted);
@@ -109,7 +104,7 @@ private:
 	Bool m_empty : 1 = true;
 	Bool m_beganRecording : 1 = false;
 	Bool m_debugMarkers : 1 = false;
-#if ANKI_EXTRA_CHECKS
+#if ANKI_ASSERTIONS_ENABLED
 	U32 m_commandCount = 0;
 	U32 m_setPushConstantsSize = 0;
 	U32 m_debugMarkersPushed = 0;
@@ -117,11 +112,6 @@ private:
 #endif
 
 	Framebuffer* m_activeFb = nullptr;
-	Array<U32, 4> m_renderArea = {0, 0, kMaxU32, kMaxU32};
-	Array<U32, 2> m_fbSize = {0, 0};
-	U32 m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
-	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorAttachmentUsages = {};
-	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
 
 	PipelineStateTracker m_state;
 
@@ -130,8 +120,6 @@ private:
 	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
 	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);
 	ShaderProgramImpl* m_rtProg ANKI_DEBUG_CODE(= nullptr);
-
-	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 
 	/// @name state_opts
 	/// @{
@@ -149,9 +137,6 @@ private:
 #endif
 	Bool m_vrsRateDirty = true;
 	VrsRate m_vrsRate = VrsRate::k1x1;
-
-	/// Rebind the above dynamic state. Needed after pushing secondary command buffers (they dirty the state).
-	void rebindDynamicState();
 	/// @}
 
 	/// Some common operations per command.
@@ -180,13 +165,6 @@ private:
 	Bool insideRenderPass() const
 	{
 		return m_activeFb != nullptr;
-	}
-
-	void beginRenderPassInternal();
-
-	Bool secondLevel() const
-	{
-		return !!(m_flags & CommandBufferFlag::kSecondLevel);
 	}
 
 	void setImageBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkImageLayout prevLayout, VkPipelineStageFlags dstStage,

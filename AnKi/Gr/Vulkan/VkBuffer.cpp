@@ -21,7 +21,7 @@ Buffer* Buffer::newInstance(const BufferInitInfo& init)
 	return impl;
 }
 
-void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
+void* Buffer::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAccessBit access)
 {
 	ANKI_VK_SELF(BufferImpl);
 

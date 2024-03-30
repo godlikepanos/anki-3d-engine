@@ -56,16 +56,14 @@ enum class CommandBufferFlag : U8
 {
 	kNone = 0,
 
-	kSecondLevel = 1 << 0,
-
 	/// It will contain a handfull of commands.
-	kSmallBatch = 1 << 3,
+	kSmallBatch = 1 << 0,
 
 	/// Will contain graphics, compute and transfer work.
-	kGeneralWork = 1 << 4,
+	kGeneralWork = 1 << 1,
 
 	/// Will contain only compute work. It binds to async compute queues.
-	kComputeWork = 1 << 5,
+	kComputeWork = 1 << 2,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag)
 
@@ -73,10 +71,6 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag)
 class CommandBufferInitInfo : public GrBaseInitInfo
 {
 public:
-	Framebuffer* m_framebuffer = nullptr; ///< For second level command buffers.
-	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorAttachmentUsages = {};
-	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
-
 	CommandBufferFlag m_flags = CommandBufferFlag::kGeneralWork;
 
 	CommandBufferInitInfo(CString name = {})
@@ -458,9 +452,6 @@ public:
 
 	/// Write a timestamp.
 	void writeTimestamp(TimestampQuery* query);
-
-	/// Append second level command buffers.
-	void pushSecondLevelCommandBuffers(ConstWeakArray<CommandBuffer*> cmdbs);
 
 	Bool isEmpty() const;
 

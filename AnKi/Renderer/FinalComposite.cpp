@@ -76,7 +76,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		run(rgraphCtx);
 	});
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});

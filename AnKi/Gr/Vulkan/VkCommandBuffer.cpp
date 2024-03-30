@@ -390,15 +390,44 @@ void CommandBuffer::beginRenderPass(Framebuffer* fb, const Array<TextureUsageBit
 	self.commandCommon();
 	ANKI_ASSERT(!self.insideRenderPass());
 
-	self.m_rpCommandCount = 0;
+	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*fb);
 	self.m_activeFb = fb;
 
-	FramebufferImpl& fbimpl = static_cast<FramebufferImpl&>(*fb);
+	self.m_state.beginRenderPass(&impl);
 
+	VkRenderPassBeginInfo bi = {};
+	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	bi.clearValueCount = impl.getAttachmentCount();
+	bi.pClearValues = impl.getClearValues();
+	bi.framebuffer = impl.getFramebufferHandle();
+
+	// Calc the layouts
+	Array<VkImageLayout, kMaxColorRenderTargets> colAttLayouts;
+	for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
+	{
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
+		colAttLayouts[i] = view.getTextureImpl().computeLayout(colorAttachmentUsages[i], 0);
+	}
+
+	VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+	if(impl.hasDepthStencil())
+	{
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
+		dsAttLayout = view.getTextureImpl().computeLayout(depthStencilAttachmentUsage, 0);
+	}
+
+	VkImageLayout sriAttachmentLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+	if(impl.hasSri())
+	{
+		// Technically it's possible for SRI to be in other layout. Don't bother though
+		sriAttachmentLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+	}
+
+	bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout, sriAttachmentLayout);
+
+	// Set the render area
 	U32 fbWidth, fbHeight;
-	fbimpl.getAttachmentsSize(fbWidth, fbHeight);
-	self.m_fbSize[0] = fbWidth;
-	self.m_fbSize[1] = fbHeight;
+	impl.getAttachmentsSize(fbWidth, fbHeight);
 
 	ANKI_ASSERT(minx < fbWidth && miny < fbHeight);
 
@@ -408,21 +437,28 @@ void CommandBuffer::beginRenderPass(Framebuffer* fb, const Array<TextureUsageBit
 	height = maxy - miny;
 	ANKI_ASSERT(minx + width <= fbWidth && miny + height <= fbHeight);
 
-	self.m_renderArea[0] = minx;
-	self.m_renderArea[1] = miny;
-	self.m_renderArea[2] = width;
-	self.m_renderArea[3] = height;
+	const Bool flipvp = self.flipViewport();
+	bi.renderArea.offset.x = minx;
+	if(flipvp)
+	{
+		ANKI_ASSERT(height <= fbHeight);
+	}
+	bi.renderArea.offset.y = (flipvp) ? fbHeight - (miny + height) : miny;
+	bi.renderArea.extent.width = width;
+	bi.renderArea.extent.height = height;
 
-	self.m_colorAttachmentUsages = colorAttachmentUsages;
-	self.m_depthStencilAttachmentUsage = depthStencilAttachmentUsage;
+	VkSubpassBeginInfo subpassBeginInfo = {};
+	subpassBeginInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO;
+	subpassBeginInfo.contents = VK_SUBPASS_CONTENTS_INLINE;
 
-	self.m_microCmdb->pushObjectRef(fb);
-
-	self.m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
+	vkCmdBeginRenderPass2KHR(self.m_handle, &bi, &subpassBeginInfo);
 
 	// Re-set the viewport and scissor because sometimes they are set clamped
 	self.m_viewportDirty = true;
 	self.m_scissorDirty = true;
+
+	self.m_renderedToDefaultFb = self.m_renderedToDefaultFb || impl.hasPresentableTexture();
+	self.m_microCmdb->pushObjectRef(fb);
 }
 
 void CommandBuffer::endRenderPass()
@@ -430,12 +466,6 @@ void CommandBuffer::endRenderPass()
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	ANKI_ASSERT(self.insideRenderPass());
-	if(self.m_rpCommandCount == 0)
-	{
-		// Empty pass
-		self.m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
-		self.beginRenderPassInternal();
-	}
 
 	VkSubpassEndInfo subpassEndInfo = {};
 	subpassEndInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_END_INFO;
@@ -444,13 +474,6 @@ void CommandBuffer::endRenderPass()
 
 	self.m_activeFb = nullptr;
 	self.m_state.endRenderPass();
-
-	// After pushing second level command buffers the state is undefined. Reset the tracker and rebind the dynamic state
-	if(self.m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS)
-	{
-		self.m_state.reset();
-		self.rebindDynamicState();
-	}
 }
 
 void CommandBuffer::setVrsRate(VrsRate rate)
@@ -1186,35 +1209,6 @@ void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 	self.m_microCmdb->pushObjectRef(query);
 }
 
-void CommandBuffer::pushSecondLevelCommandBuffers(ConstWeakArray<CommandBuffer*> cmdbs)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	ANKI_ASSERT(cmdbs.getSize() > 0);
-	self.commandCommon();
-	ANKI_ASSERT(self.insideRenderPass());
-	ANKI_ASSERT(self.m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM || self.m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-
-	self.m_subpassContents = VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
-
-	if(self.m_rpCommandCount == 0) [[unlikely]]
-	{
-		self.beginRenderPassInternal();
-	}
-
-	DynamicArray<VkCommandBuffer, MemoryPoolPtrWrapper<StackMemoryPool>> handles(self.m_pool);
-	handles.resize(cmdbs.getSize());
-	for(U32 i = 0; i < cmdbs.getSize(); ++i)
-	{
-		ANKI_ASSERT(static_cast<const CommandBufferImpl&>(*cmdbs[i]).m_finalized);
-		handles[i] = static_cast<const CommandBufferImpl&>(*cmdbs[i]).m_handle;
-		self.m_microCmdb->pushObjectRef(cmdbs[i]);
-	}
-
-	vkCmdExecuteCommands(self.m_handle, handles.getSize(), handles.getBegin());
-
-	++self.m_rpCommandCount;
-}
-
 void CommandBuffer::resetTimestampQueries(ConstWeakArray<TimestampQuery*> queries)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -1344,7 +1338,7 @@ CommandBufferImpl::~CommandBufferImpl()
 #if ANKI_EXTRA_CHECKS
 	ANKI_ASSERT(m_debugMarkersPushed == 0);
 
-	if(!m_submitted && !(m_flags & CommandBufferFlag::kSecondLevel))
+	if(!m_submitted)
 	{
 		ANKI_VK_LOGW("Command buffer not submitted");
 	}
@@ -1360,16 +1354,6 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_handle = m_microCmdb->getHandle();
 
 	m_pool = &m_microCmdb->getFastMemoryPool();
-
-	// Store some of the init info for later
-	if(!!(m_flags & CommandBufferFlag::kSecondLevel))
-	{
-		m_activeFb = init.m_framebuffer;
-		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
-		m_depthStencilAttachmentUsage = init.m_depthStencilAttachmentUsage;
-		m_state.beginRenderPass(static_cast<FramebufferImpl*>(m_activeFb));
-		m_microCmdb->pushObjectRef(m_activeFb);
-	}
 
 	for(DSStateTracker& state : m_dsetState)
 	{
@@ -1416,39 +1400,6 @@ void CommandBufferImpl::beginRecording()
 	begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	begin.pInheritanceInfo = &inheritance;
 
-	if(!!(m_flags & CommandBufferFlag::kSecondLevel))
-	{
-		FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
-
-		// Calc the layouts
-		Array<VkImageLayout, kMaxColorRenderTargets> colAttLayouts;
-		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
-		{
-			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
-			colAttLayouts[i] = view.getTextureImpl().computeLayout(m_colorAttachmentUsages[i], 0);
-		}
-
-		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
-		if(impl.hasDepthStencil())
-		{
-			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
-			dsAttLayout = view.getTextureImpl().computeLayout(m_depthStencilAttachmentUsage, 0);
-		}
-
-		VkImageLayout sriAttachmentLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
-		if(impl.hasSri())
-		{
-			// Technically it's possible for SRI to be in other layout. Don't bother though
-			sriAttachmentLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-		}
-
-		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout, sriAttachmentLayout);
-		inheritance.subpass = 0;
-		inheritance.framebuffer = impl.getFramebufferHandle();
-
-		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-	}
-
 	vkBeginCommandBuffer(m_handle, &begin);
 
 	// Stats
@@ -1456,76 +1407,6 @@ void CommandBufferImpl::beginRecording()
 	{
 		m_state.setEnablePipelineStatistics(true);
 	}
-}
-
-void CommandBufferImpl::beginRenderPassInternal()
-{
-	FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
-
-	m_state.beginRenderPass(&impl);
-
-	VkRenderPassBeginInfo bi = {};
-	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	bi.clearValueCount = impl.getAttachmentCount();
-	bi.pClearValues = impl.getClearValues();
-	bi.framebuffer = impl.getFramebufferHandle();
-
-	// Calc the layouts
-	Array<VkImageLayout, kMaxColorRenderTargets> colAttLayouts;
-	for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
-	{
-		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
-		colAttLayouts[i] = view.getTextureImpl().computeLayout(m_colorAttachmentUsages[i], 0);
-	}
-
-	VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
-	if(impl.hasDepthStencil())
-	{
-		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
-		dsAttLayout = view.getTextureImpl().computeLayout(m_depthStencilAttachmentUsage, 0);
-	}
-
-	VkImageLayout sriAttachmentLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
-	if(impl.hasSri())
-	{
-		// Technically it's possible for SRI to be in other layout. Don't bother though
-		sriAttachmentLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-	}
-
-	bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout, sriAttachmentLayout);
-
-	const Bool flipvp = flipViewport();
-	bi.renderArea.offset.x = m_renderArea[0];
-	if(flipvp)
-	{
-		ANKI_ASSERT(m_renderArea[3] <= m_fbSize[1]);
-	}
-	bi.renderArea.offset.y = (flipvp) ? m_fbSize[1] - (m_renderArea[1] + m_renderArea[3]) : m_renderArea[1];
-	bi.renderArea.extent.width = m_renderArea[2];
-	bi.renderArea.extent.height = m_renderArea[3];
-
-#if !ANKI_PLATFORM_MOBILE
-	// nVidia SRI cache workaround
-	if(impl.hasSri())
-	{
-		VkMemoryBarrier memBarrier = {};
-		memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memBarrier.dstAccessMask = VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
-
-		const VkPipelineStageFlags srcStages = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
-		const VkPipelineStageFlags dstStages = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
-
-		vkCmdPipelineBarrier(m_handle, srcStages, dstStages, 0, 1, &memBarrier, 0, nullptr, 0, nullptr);
-	}
-#endif
-
-	VkSubpassBeginInfo subpassBeginInfo = {};
-	subpassBeginInfo.sType = VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO;
-	subpassBeginInfo.contents = m_subpassContents;
-
-	vkCmdBeginRenderPass2KHR(m_handle, &bi, &subpassBeginInfo);
-
-	m_renderedToDefaultFb = m_renderedToDefaultFb || impl.hasPresentableTexture();
 }
 
 void CommandBufferImpl::endRecording()
@@ -1573,66 +1454,13 @@ void CommandBufferImpl::endRecording()
 #endif
 }
 
-void CommandBufferImpl::rebindDynamicState()
-{
-	m_viewportDirty = true;
-	m_lastViewport = {};
-	m_scissorDirty = true;
-	m_lastScissor = {};
-	m_vrsRateDirty = true;
-	m_vrsRate = VrsRate::k1x1;
-
-	// Rebind the stencil compare mask
-	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])
-	{
-		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[0]);
-	}
-	else
-	{
-		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilCompareMasks[0]);
-		vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[1]);
-	}
-
-	// Rebind the stencil write mask
-	if(m_stencilWriteMasks[0] == m_stencilWriteMasks[1])
-	{
-		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[0]);
-	}
-	else
-	{
-		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilWriteMasks[0]);
-		vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[1]);
-	}
-
-	// Rebind the stencil reference
-	if(m_stencilReferenceMasks[0] == m_stencilReferenceMasks[1])
-	{
-		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[0]);
-	}
-	else
-	{
-		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilReferenceMasks[0]);
-		vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]);
-	}
-}
-
 void CommandBufferImpl::drawcallCommon()
 {
 	// Preconditions
 	commandCommon();
 	ANKI_ASSERT(m_graphicsProg);
-	ANKI_ASSERT(insideRenderPass() || secondLevel());
-	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM || m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
+	ANKI_ASSERT(insideRenderPass());
 	ANKI_ASSERT(m_graphicsProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
-
-	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
-
-	if(m_rpCommandCount == 0 && !secondLevel())
-	{
-		beginRenderPassInternal();
-	}
-
-	++m_rpCommandCount;
 
 	// Get or create ppline
 	Pipeline ppline;

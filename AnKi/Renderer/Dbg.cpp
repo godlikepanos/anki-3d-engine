@@ -252,7 +252,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Debug");
 
-	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(rgraphCtx, ctx);
 	});
 
