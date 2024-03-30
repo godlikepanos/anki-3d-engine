@@ -93,9 +93,9 @@ public:
 		return m_flags;
 	}
 
-	VulkanQueueType getVulkanQueueType() const
+	GpuQueueType getVulkanQueueType() const
 	{
-		ANKI_ASSERT(m_queue != VulkanQueueType::kCount);
+		ANKI_ASSERT(m_queue != GpuQueueType::kCount);
 		return m_queue;
 	}
 
@@ -118,7 +118,7 @@ private:
 	CommandBufferThreadAllocator* m_threadAlloc;
 	mutable Atomic<I32> m_refcount = {0};
 	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
-	VulkanQueueType m_queue = VulkanQueueType::kCount;
+	GpuQueueType m_queue = GpuQueueType::kCount;
 
 	void reset();
 
@@ -184,13 +184,13 @@ public:
 private:
 	CommandBufferFactory* m_factory;
 	ThreadId m_tid;
-	Array<VkCommandPool, U(VulkanQueueType::kCount)> m_pools = {};
+	Array<VkCommandPool, U(GpuQueueType::kCount)> m_pools = {};
 
 #if ANKI_EXTRA_CHECKS
 	Atomic<U32> m_createdCmdbs = {0};
 #endif
 
-	Array2d<MicroObjectRecycler<MicroCommandBuffer>, 2, U(VulkanQueueType::kCount)> m_recyclers;
+	Array2d<MicroObjectRecycler<MicroCommandBuffer>, 2, U(GpuQueueType::kCount)> m_recyclers;
 };
 
 /// Command bufffer object recycler.

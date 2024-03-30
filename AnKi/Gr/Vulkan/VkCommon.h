@@ -102,17 +102,7 @@ enum class VulkanExtensions : U64
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
-enum class VulkanQueueType : U8
-{
-	kGeneral,
-	kCompute,
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanQueueType)
-
-using VulkanQueueFamilies = Array<U32, U32(VulkanQueueType::kCount)>;
+using VulkanQueueFamilies = Array<U32, U32(GpuQueueType::kCount)>;
 
 /// @name Constants
 /// @{

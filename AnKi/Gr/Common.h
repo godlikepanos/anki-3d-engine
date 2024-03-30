@@ -834,6 +834,16 @@ enum class VrsRate : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
 
+enum class GpuQueueType : U8
+{
+	kGeneral,
+	kCompute,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuQueueType)
+
 /// Clear values for textures or attachments.
 class ClearValue
 {

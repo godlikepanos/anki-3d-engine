@@ -21,7 +21,7 @@ CommandBuffer* CommandBuffer::newInstance(const CommandBufferInitInfo& init)
 	return impl;
 }
 
-void CommandBuffer::flush(ConstWeakArray<FencePtr> waitFences, FencePtr* signalFence)
+void CommandBuffer::endRecording()
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -324,11 +324,6 @@ void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
 }
 
 void CommandBuffer::endPipelineQuery(PipelineQuery* query)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::pushSecondLevelCommandBuffers(ConstWeakArray<CommandBuffer*> cmdbs)
 {
 	ANKI_ASSERT(!"TODO");
 }

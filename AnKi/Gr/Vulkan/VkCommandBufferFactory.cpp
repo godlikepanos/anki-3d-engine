@@ -11,17 +11,17 @@ namespace anki {
 
 static StatCounter g_commandBufferCountStatVar(StatCategory::kMisc, "CommandBufferCount", StatFlag::kNone);
 
-static VulkanQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags, const VulkanQueueFamilies& queueFamilies)
+static GpuQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags, const VulkanQueueFamilies& queueFamilies)
 {
 	ANKI_ASSERT(!!(flags & CommandBufferFlag::kGeneralWork) ^ !!(flags & CommandBufferFlag::kComputeWork));
-	if(!(flags & CommandBufferFlag::kGeneralWork) && queueFamilies[VulkanQueueType::kCompute] != kMaxU32)
+	if(!(flags & CommandBufferFlag::kGeneralWork) && queueFamilies[GpuQueueType::kCompute] != kMaxU32)
 	{
-		return VulkanQueueType::kCompute;
+		return GpuQueueType::kCompute;
 	}
 	else
 	{
-		ANKI_ASSERT(queueFamilies[VulkanQueueType::kGeneral] != kMaxU32);
-		return VulkanQueueType::kGeneral;
+		ANKI_ASSERT(queueFamilies[GpuQueueType::kGeneral] != kMaxU32);
+		return GpuQueueType::kGeneral;
 	}
 }
 
@@ -65,7 +65,7 @@ void MicroCommandBuffer::reset()
 
 Error CommandBufferThreadAllocator::init()
 {
-	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
+	for(GpuQueueType qtype : EnumIterable<GpuQueueType>())
 	{
 		if(m_factory->m_queueFamilies[qtype] == kMaxU32)
 		{
@@ -87,7 +87,7 @@ void CommandBufferThreadAllocator::destroy()
 {
 	for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
 	{
-		for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
+		for(GpuQueueType queue : EnumIterable<GpuQueueType>())
 		{
 			m_recyclers[smallBatch][queue].destroy();
 		}
@@ -108,7 +108,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	ANKI_ASSERT(!!(cmdbFlags & CommandBufferFlag::kComputeWork) ^ !!(cmdbFlags & CommandBufferFlag::kGeneralWork));
 
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::kSmallBatch);
-	const VulkanQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, m_factory->m_queueFamilies);
+	const GpuQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, m_factory->m_queueFamilies);
 
 	MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[smallBatch][queue];
 
@@ -175,7 +175,7 @@ void CommandBufferFactory::destroy()
 	{
 		for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
 		{
-			for(VulkanQueueType queue : EnumIterable<VulkanQueueType>())
+			for(GpuQueueType queue : EnumIterable<GpuQueueType>())
 			{
 				talloc->m_recyclers[smallBatch][queue].trimCache();
 			}

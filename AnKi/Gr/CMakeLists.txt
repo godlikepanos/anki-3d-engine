@@ -48,6 +48,8 @@ elseif(DIRECTX)
 
 	set(backend_sources  ${backend_sources} ${dxsources})
 	set(backend_headers ${backend_headers} ${dxheaders})
+
+	set(extra_libs ${extra_libs} d3d12 dxgi)
 endif()
 
 # Have 2 libraries. The AnKiGrCommon is the bare minimum for the AnKiShaderCompiler to work. Don't have
@@ -58,7 +60,7 @@ target_compile_definitions(AnKiGrCommon PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGrCommon AnKiUtil) # Only depend on Util
 
 if(ANKI_DLSS)
-	set(extra_libs AnKiNgx)
+	set(extra_libs ${extra_libs} AnKiNgx)
 endif()
 
 add_library(AnKiGr ${backend_sources} ${backend_headers})

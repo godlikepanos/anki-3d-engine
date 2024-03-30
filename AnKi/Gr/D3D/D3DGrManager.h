@@ -21,17 +21,18 @@ public:
 	{
 	}
 
-	~GrManagerImpl()
-	{
-	}
+	~GrManagerImpl();
 
-	Error init(const GrManagerInitInfo& cfg)
-	{
-		ANKI_ASSERT(0);
-		return Error::kNone;
-	}
+	Error initInternal(const GrManagerInitInfo& cfg);
 
 private:
+	ID3D12Device* m_device = nullptr;
+	Array<ID3D12CommandQueue*, U32(GpuQueueType::kCount)> m_queues = {};
+	IDXGISwapChain3* m_swapchain = nullptr;
+
+	U32 m_backbufferIdx = 0;
+
+	void destroy();
 };
 /// @}
 

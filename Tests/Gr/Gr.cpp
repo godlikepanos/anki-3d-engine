@@ -428,7 +428,20 @@ static void setAccelerationStructureBarrier(CommandBufferPtr cmdb, AccelerationS
 	cmdb->setPipelineBarrier({}, {}, {&barrier, 1});
 }
 
-ANKI_TEST(Gr, GrManager){COMMON_BEGIN() COMMON_END()}
+ANKI_TEST(Gr, GrManager)
+{
+	g_validationCVar.set(true);
+
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	g_win = createWindow();
+	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
+	g_gr = createGrManager(g_win);
+
+	GrManager::freeSingleton();
+	Input::freeSingleton();
+	NativeWindow::freeSingleton();
+	DefaultMemoryPool::freeSingleton();
+}
 
 ANKI_TEST(Gr, Shader)
 {

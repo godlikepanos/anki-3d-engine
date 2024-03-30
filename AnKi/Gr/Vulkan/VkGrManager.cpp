@@ -308,7 +308,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initSurface());
 	ANKI_CHECK(initDevice());
 
-	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
+	for(GpuQueueType qtype : EnumIterable<GpuQueueType>())
 	{
 		if(m_queueFamilyIndices[qtype] != kMaxU32)
 		{
@@ -775,17 +775,17 @@ Error GrManagerImpl::initDevice()
 		{
 			if((queueInfos[i].queueFlags & GENERAL_QUEUE_FLAGS) == GENERAL_QUEUE_FLAGS)
 			{
-				m_queueFamilyIndices[VulkanQueueType::kGeneral] = i;
+				m_queueFamilyIndices[GpuQueueType::kGeneral] = i;
 			}
 			else if((queueInfos[i].queueFlags & VK_QUEUE_COMPUTE_BIT) && !(queueInfos[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
 			{
 				// This must be the async compute
-				m_queueFamilyIndices[VulkanQueueType::kCompute] = i;
+				m_queueFamilyIndices[GpuQueueType::kCompute] = i;
 			}
 		}
 	}
 
-	if(m_queueFamilyIndices[VulkanQueueType::kGeneral] == kMaxU32)
+	if(m_queueFamilyIndices[GpuQueueType::kGeneral] == kMaxU32)
 	{
 		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present. "
 					 "Something is wrong");
@@ -794,10 +794,10 @@ Error GrManagerImpl::initDevice()
 
 	if(!g_asyncComputeCVar.get())
 	{
-		m_queueFamilyIndices[VulkanQueueType::kCompute] = kMaxU32;
+		m_queueFamilyIndices[GpuQueueType::kCompute] = kMaxU32;
 	}
 
-	if(m_queueFamilyIndices[VulkanQueueType::kCompute] == kMaxU32)
+	if(m_queueFamilyIndices[GpuQueueType::kCompute] == kMaxU32)
 	{
 		ANKI_VK_LOGW("Couldn't find an async compute queue. Will try to use the general queue instead");
 	}
@@ -807,13 +807,13 @@ Error GrManagerImpl::initDevice()
 	}
 
 	const F32 priority = 1.0f;
-	Array<VkDeviceQueueCreateInfo, U32(VulkanQueueType::kCount)> q = {};
+	Array<VkDeviceQueueCreateInfo, U32(GpuQueueType::kCount)> q = {};
 
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	ci.pQueueCreateInfos = &q[0];
 
-	for(VulkanQueueType qtype : EnumIterable<VulkanQueueType>())
+	for(GpuQueueType qtype : EnumIterable<GpuQueueType>())
 	{
 		if(m_queueFamilyIndices[qtype] != kMaxU32)
 		{
@@ -1605,7 +1605,7 @@ void GrManagerImpl::flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bo
 	// Command buffers
 	Array<VkCommandBuffer, 16> handles;
 	submit.pCommandBuffers = handles.getBegin();
-	VulkanQueueType queueType = cmdbs[0]->getVulkanQueueType();
+	GpuQueueType queueType = cmdbs[0]->getVulkanQueueType();
 	for(MicroCommandBuffer* cmdb : cmdbs)
 	{
 		handles[submit.commandBufferCount] = cmdb->getHandle();

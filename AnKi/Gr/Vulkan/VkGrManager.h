@@ -46,7 +46,7 @@ public:
 
 	ConstWeakArray<U32> getQueueFamilies() const
 	{
-		const Bool hasAsyncCompute = m_queueFamilyIndices[VulkanQueueType::kCompute] != kMaxU32;
+		const Bool hasAsyncCompute = m_queueFamilyIndices[GpuQueueType::kCompute] != kMaxU32;
 		return (hasAsyncCompute) ? m_queueFamilyIndices : ConstWeakArray<U32>(&m_queueFamilyIndices[0], 1);
 	}
 
@@ -216,7 +216,7 @@ private:
 	VulkanExtensions m_extensions = VulkanExtensions::kNone;
 	VkDevice m_device = VK_NULL_HANDLE;
 	VulkanQueueFamilies m_queueFamilyIndices = {kMaxU32, kMaxU32};
-	Array<VkQueue, U32(VulkanQueueType::kCount)> m_queues = {};
+	Array<VkQueue, U32(GpuQueueType::kCount)> m_queues = {};
 	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties2 m_devProps = {};
@@ -239,7 +239,7 @@ private:
 		/// Signaled by the submit that renders to the default FB. Present waits for it.
 		MicroSemaphorePtr m_renderSemaphore;
 
-		VulkanQueueType m_queueWroteToSwapchainImage = VulkanQueueType::kCount;
+		GpuQueueType m_queueWroteToSwapchainImage = GpuQueueType::kCount;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
