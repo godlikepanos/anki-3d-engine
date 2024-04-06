@@ -17,16 +17,6 @@ class PipelineFactory;
 /// @addtogroup vulkan
 /// @{
 
-class ShaderProgramReflectionInfo
-{
-public:
-	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
-	BitSet<kMaxVertexAttributes, U8> m_attributeMask = {false};
-	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
-	Array<BitSet<kMaxBindingsPerDescriptorSet, U8>, kMaxDescriptorSets> m_activeBindingMask = {{{false}, {false}, {false}}};
-	U32 m_pushConstantsSize = 0;
-};
-
 /// Shader program implementation.
 class ShaderProgramImpl final : public ShaderProgram
 {
@@ -63,7 +53,7 @@ public:
 		return *m_descriptorSetLayouts[set];
 	}
 
-	const ShaderProgramReflectionInfo& getReflectionInfo() const
+	const ShaderReflection& getReflectionInfo() const
 	{
 		return m_refl;
 	}
@@ -116,7 +106,7 @@ private:
 	PipelineLayout m_pplineLayout = {};
 	Array<const DSLayout*, kMaxDescriptorSets> m_descriptorSetLayouts = {};
 
-	ShaderProgramReflectionInfo m_refl;
+	ShaderReflection m_refl;
 
 	class
 	{

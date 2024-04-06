@@ -19,13 +19,7 @@ class ShaderImpl final : public Shader
 {
 public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
-
-	Array<GrDynamicArray<DSBinding>, kMaxDescriptorSets> m_bindings;
-	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
-	BitSet<kMaxVertexAttributes, U8> m_attributeMask = {false};
-	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
-	Array<BitSet<kMaxBindingsPerDescriptorSet, U8>, kMaxDescriptorSets> m_activeBindingMask = {{{false}, {false}, {false}}};
-	U32 m_pushConstantsSize = 0;
+	ShaderReflection m_reflection;
 
 	ShaderImpl(CString name)
 		: Shader(name)
@@ -35,18 +29,6 @@ public:
 	~ShaderImpl();
 
 	Error init(const ShaderInitInfo& init);
-
-	const VkSpecializationInfo* getSpecConstInfo() const
-	{
-		return (m_specConstInfo.mapEntryCount) ? &m_specConstInfo : nullptr;
-	}
-
-private:
-	VkSpecializationInfo m_specConstInfo = {};
-
-	class SpecConstsVector; ///< Wrap this into a class to avoid forward declarations of std::vector and spirv_cross.
-
-	void doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specConstIds);
 };
 /// @}
 

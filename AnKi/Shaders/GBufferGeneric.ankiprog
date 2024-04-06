@@ -89,7 +89,7 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-	[[vk::location(0)]] UVec4 m_instanceData : INSTANCE_DATA;
+	[[vk::location(0)]] UVec4 m_instanceData : MISC0;
 };
 
 struct VertOut

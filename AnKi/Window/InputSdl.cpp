@@ -40,7 +40,7 @@ static KeyCode sdlKeytoAnKi(SDL_Keycode sdlk)
 	case SDLK_##sdl: \
 		akk = KeyCode::k##ak; \
 		break;
-#include <AnKi/Window/KeyCode.defs.h>
+#include <AnKi/Window/KeyCode.def.h>
 #undef ANKI_KEY_CODE
 	}
 

@@ -48,11 +48,11 @@ void CommandBuffer::bindVertexBuffer(U32 binding, Buffer* buff, PtrSize offset, 
 	vkCmdBindVertexBuffers(self.m_handle, binding, 1, &vkbuff, &offset);
 }
 
-void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset)
+void CommandBuffer::setVertexAttribute(VertexAttribute attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset);
+	self.m_state.setVertexAttribute(attribute, buffBinding, fmt, relativeOffset);
 }
 
 void CommandBuffer::bindIndexBuffer(Buffer* buff, PtrSize offset, IndexType type)

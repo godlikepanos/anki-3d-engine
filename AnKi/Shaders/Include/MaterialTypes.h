@@ -42,7 +42,7 @@ enum class MaterialBinding : U32
 
 	// Texture buffer bindings pointing to unified geom buffer:
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) kUnifiedGeometry_##fmt,
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
 	kMeshletBoundingVolumes, ///< Points to the unified geom buffer
 	kMeshletGeometryDescriptors, ///< Points to the unified geom buffer

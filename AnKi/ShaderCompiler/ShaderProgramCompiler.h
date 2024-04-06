@@ -14,8 +14,8 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
-inline constexpr const char* kShaderBinaryMagic = "ANKISP0"; // WARNING: If changed change kShaderBinaryVersion
-constexpr U32 kShaderBinaryVersion = 0;
+inline constexpr const char* kShaderBinaryMagic = "ANKISP1"; // WARNING: If changed change kShaderBinaryVersion
+constexpr U32 kShaderBinaryVersion = 1;
 
 template<typename TFile>
 Error deserializeShaderProgramBinaryFromAnyFile(TFile& file, ShaderProgramBinary*& binary, BaseMemoryPool& pool)

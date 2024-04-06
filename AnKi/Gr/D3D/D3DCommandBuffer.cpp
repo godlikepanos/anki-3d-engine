@@ -31,7 +31,7 @@ void CommandBuffer::bindVertexBuffer(U32 binding, Buffer* buff, PtrSize offset, 
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset)
+void CommandBuffer::setVertexAttribute(VertexAttribute attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 {
 	ANKI_ASSERT(!"TODO");
 }

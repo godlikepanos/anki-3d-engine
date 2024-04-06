@@ -421,8 +421,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		cmdb.bindUavBuffer(0, 0, aabbsBuffer);
 		cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
 		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 4, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
+		cmdb.bindUavBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
+		cmdb.bindUavBuffer(0, 4, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
 		if(gatherType & 1u)
 		{
 			cmdb.bindUavBuffer(0, 5, out.m_legacy.m_renderableInstancesBuffer);

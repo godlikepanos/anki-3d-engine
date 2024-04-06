@@ -8,6 +8,7 @@
 #include <AnKi/ShaderCompiler/Dxc.h>
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/HashMap.h>
+#include <SpirvCross/spirv_cross.hpp>
 
 namespace anki {
 
@@ -91,6 +92,214 @@ static Bool spinDials(ShaderCompilerDynamicArray<U32>& dials, ConstWeakArray<Sha
 	}
 
 	return done;
+}
+
+template<typename TFunc>
+static void visitSpirv(ConstWeakArray<U32> spv, TFunc func)
+{
+	ANKI_ASSERT(spv.getSize() > 5);
+
+	const U32* it = &spv[5];
+	do
+	{
+		const U32 instructionCount = *it >> 16u;
+		const U32 opcode = *it & 0xFFFFu;
+
+		func(opcode);
+
+		it += instructionCount;
+	} while(it < spv.getEnd());
+
+	ANKI_ASSERT(it == spv.getEnd());
+}
+
+static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr)
+{
+	spirv_cross::Compiler spvc(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32));
+	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
+	spirv_cross::ShaderResources rsrcActive = spvc.get_shader_resources(spvc.get_active_interface_variables());
+
+	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType) -> Error {
+		for(const spirv_cross::Resource& r : resources)
+		{
+			const U32 id = r.id;
+
+			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
+			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
+			if(set >= kMaxDescriptorSets || binding >= kMaxBindingsPerDescriptorSet)
+			{
+				errorStr.sprintf("Exceeded set or binding for: %s", r.name.c_str());
+				return Error::kUserData;
+			}
+
+			const spirv_cross::SPIRType& typeInfo = spvc.get_type(r.type_id);
+			U32 arraySize = 1;
+			if(typeInfo.array.size() != 0)
+			{
+				if(typeInfo.array.size() != 1 || (arraySize = typeInfo.array[0]) == 0)
+				{
+					errorStr.sprintf("Only 1D arrays are supported: %s", r.name.c_str());
+					return Error::kUserData;
+				}
+			}
+
+			refl.m_descriptorSetMask.set(set);
+
+			// Images are special, they might be texel buffers
+			DescriptorType type = origType;
+			if(type == DescriptorType::kTexture)
+			{
+				if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 1)
+				{
+					type = DescriptorType::kReadTexelBuffer;
+				}
+				else if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 2)
+				{
+					type = DescriptorType::kReadWriteTexelBuffer;
+				}
+			}
+
+			// Check that there are no other descriptors with the same binding
+			if(refl.m_descriptorTypes[set][binding] == DescriptorType::kCount)
+			{
+				// New binding, init it
+				refl.m_descriptorTypes[set][binding] = type;
+				refl.m_descriptorArraySizes[set][binding] = U16(arraySize);
+			}
+			else
+			{
+				// Same binding, make sure the type is compatible
+				if(refl.m_descriptorTypes[set][binding] != type || refl.m_descriptorArraySizes[set][binding] != arraySize)
+				{
+					errorStr.sprintf("Descriptor with same binding but different type or array size: %s", r.name.c_str());
+					return Error::kUserData;
+				}
+			}
+		}
+
+		return Error::kNone;
+	};
+
+	Error err = Error::kNone;
+	err = func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer);
+	if(!err)
+	{
+		err = func(rsrc.separate_images, DescriptorType::kTexture); // This also handles texture buffers
+	}
+	if(!err)
+	{
+		err = func(rsrc.separate_samplers, DescriptorType::kSampler);
+	}
+	if(!err)
+	{
+		err = func(rsrc.storage_buffers, DescriptorType::kStorageBuffer);
+	}
+	if(!err)
+	{
+		err = func(rsrc.storage_images, DescriptorType::kStorageImage);
+	}
+	if(!err)
+	{
+		err = func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure);
+	}
+
+	// Color attachments
+	if(type == ShaderType::kFragment)
+	{
+		for(const spirv_cross::Resource& r : rsrc.stage_outputs)
+		{
+			const U32 id = r.id;
+			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
+
+			refl.m_colorAttachmentWritemask.set(location);
+		}
+	}
+
+	// Push consts
+	if(rsrc.push_constant_buffers.size() == 1)
+	{
+		const U32 blockSize = U32(spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id)));
+		if(blockSize == 0 || (blockSize % 16) != 0 || blockSize > kMaxU8)
+		{
+			errorStr.sprintf("Incorrect push constants size");
+			return Error::kUserData;
+		}
+
+		refl.m_pushConstantsSize = U8(blockSize);
+	}
+
+	// Attribs
+	if(type == ShaderType::kVertex)
+	{
+		for(const spirv_cross::Resource& r : rsrcActive.stage_inputs)
+		{
+			VertexAttribute a = VertexAttribute::kCount;
+#define ANKI_ATTRIB_NAME(x) "in.var." #x
+			if(r.name == ANKI_ATTRIB_NAME(POSITION))
+			{
+				a = VertexAttribute::kPosition;
+			}
+			else if(r.name == ANKI_ATTRIB_NAME(NORMAL))
+			{
+				a = VertexAttribute::kNormal;
+			}
+			else if(r.name == ANKI_ATTRIB_NAME(TEXCOORD0) || r.name == ANKI_ATTRIB_NAME(TEXCOORD))
+			{
+				a = VertexAttribute::kTexCoord;
+			}
+			else if(r.name == ANKI_ATTRIB_NAME(COLOR))
+			{
+				a = VertexAttribute::kColor;
+			}
+			else if(r.name == ANKI_ATTRIB_NAME(MISC0) || r.name == ANKI_ATTRIB_NAME(MISC))
+			{
+				a = VertexAttribute::kMisc0;
+			}
+			else if(r.name == ANKI_ATTRIB_NAME(MISC1))
+			{
+				a = VertexAttribute::kMisc1;
+			}
+			else if(r.name == ANKI_ATTRIB_NAME(MISC2))
+			{
+				a = VertexAttribute::kMisc2;
+			}
+			else if(r.name == ANKI_ATTRIB_NAME(MISC3))
+			{
+				a = VertexAttribute::kMisc3;
+			}
+			else
+			{
+				errorStr.sprintf("Unexpected attribute name: %s", r.name.c_str());
+				return Error::kUserData;
+			}
+#undef ANKI_ATTRIB_NAME
+
+			refl.m_vertexAttributeMask.set(a);
+
+			const U32 id = r.id;
+			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
+			if(location > kMaxU8)
+			{
+				errorStr.sprintf("Too high location value for attribute: %s", r.name.c_str());
+				return Error::kUserData;
+			}
+
+			refl.m_vertexAttributeLocations[a] = U8(location);
+		}
+	}
+
+	// Discards?
+	if(type == ShaderType::kFragment)
+	{
+		visitSpirv(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)), [&](U32 cmd) {
+			if(cmd == spv::OpKill)
+			{
+				refl.m_discards = true;
+			}
+		});
+	}
+
+	return Error::kNone;
 }
 
 static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgramBinaryMutation& mutation,
@@ -195,6 +404,13 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 
 				const U64 newHash = computeHash(spirv.getBegin(), spirv.getSizeInBytes());
 
+				ShaderReflection refl;
+				err = doReflectionSpirv(spirv, shaderType, refl, compilerErrorLog);
+				if(err)
+				{
+					break;
+				}
+
 				// Add the binary if not already there
 				{
 					LockGuard lock(*ctx.m_mtx);
@@ -217,6 +433,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 						auto& codeBlock = *ctx.m_codeBlocks->emplaceBack();
 						spirv.moveAndReset(codeBlock.m_binary);
 						codeBlock.m_hash = newHash;
+						codeBlock.m_reflection = refl;
 
 						ctx.m_sourceCodeHashes->emplaceBack(sourceCodeHash);
 						ANKI_ASSERT(ctx.m_sourceCodeHashes->getSize() == ctx.m_codeBlocks->getSize());

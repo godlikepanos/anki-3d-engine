@@ -71,18 +71,20 @@ public:
 	}
 };
 
-/// Contains the IR (SPIR-V).
+/// Contains the IR (SPIR-V or DXIL).
 class ShaderProgramBinaryCodeBlock
 {
 public:
 	WeakArray<U8> m_binary;
 	U64 m_hash = 0;
+	ShaderReflection m_reflection;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
 		s.doValue("m_binary", offsetof(ShaderProgramBinaryCodeBlock, m_binary), self.m_binary);
 		s.doValue("m_hash", offsetof(ShaderProgramBinaryCodeBlock, m_hash), self.m_hash);
+		s.doValue("m_reflection", offsetof(ShaderProgramBinaryCodeBlock, m_reflection), self.m_reflection);
 	}
 
 	template<typename TDeserializer>

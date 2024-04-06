@@ -57,7 +57,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb.bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
 								   &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
 	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletBoundingVolumes),
 					   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
@@ -107,7 +107,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 	const Bool meshShaderHwSupport = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
 
-	cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
+	cmdb.setVertexAttribute(VertexAttribute::kMisc0, 0, Format::kR32G32B32A32_Uint, 0);
 
 	RenderStateBucketContainer::getSingleton().iterateBucketsPerformanceOrder(
 		args.m_renderingTechinuqe,

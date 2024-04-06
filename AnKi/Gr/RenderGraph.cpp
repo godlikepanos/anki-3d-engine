@@ -1377,20 +1377,14 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 					{
 						const Pass& pass = m_ctx->m_passes[passIdx];
 
-						Vec3 passColor;
+						const Vec3 passColor = (pass.m_framebuffer) ? Vec3(0.0f, 1.0f, 0.0f) : Vec3(1.0f, 1.0f, 0.0f);
+						cmdb->pushDebugMarker(pass.m_name, passColor);
+
 						if(pass.m_framebuffer)
 						{
 							cmdb->beginRenderPass(pass.m_framebuffer.get(), pass.m_colorUsages, pass.m_dsUsage, pass.m_fbRenderArea[0],
 												  pass.m_fbRenderArea[1], pass.m_fbRenderArea[2], pass.m_fbRenderArea[3]);
-
-							passColor = Vec3(0.0f, 1.0f, 0.0f);
 						}
-						else
-						{
-							passColor = Vec3(1.0f, 1.0f, 0.0f);
-						}
-
-						cmdb->pushDebugMarker(pass.m_name, passColor);
 
 						{
 							ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCallback);

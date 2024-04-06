@@ -978,9 +978,9 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 		cmdb->bindVertexBuffer(0, b.get(), 0, sizeof(Vert));
 		cmdb->bindVertexBuffer(1, c.get(), 0, sizeof(Vec3));
-		cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
-		cmdb->setVertexAttribute(1, 0, Format::kR8G8B8_Unorm, sizeof(Vec3));
-		cmdb->setVertexAttribute(2, 1, Format::kR32G32B32_Sfloat, 0);
+		cmdb->setVertexAttribute(VertexAttribute::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
+		cmdb->setVertexAttribute(VertexAttribute::kColor, 0, Format::kR8G8B8_Unorm, sizeof(Vec3));
+		cmdb->setVertexAttribute(VertexAttribute::kMisc0, 1, Format::kR32G32B32_Sfloat, 0);
 
 		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->setPolygonOffset(0.0, 0.0);
@@ -1248,7 +1248,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 	*color = Vec4(0.0, 1.0, 0.0, 0.0);
 
 	cmdb->bindVertexBuffer(0, vertBuff.get(), 0, sizeof(Vec3));
-	cmdb->setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
+	cmdb->setVertexAttribute(VertexAttribute::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
 	cmdb->bindShaderProgram(prog.get());
 	cmdb->bindIndexBuffer(indexBuff.get(), 0, IndexType::kU16);
 	cmdb->setViewport(0, 0, viewPortSize, viewPortSize);

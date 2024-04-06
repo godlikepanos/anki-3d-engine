@@ -221,7 +221,7 @@ public:
 		ANKI_ASSERT(buff && range > 0);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kReadTextureBuffer;
+		b.m_type = DescriptorType::kReadTexelBuffer;
 		b.m_bufferView = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
 		setBinding(binding, arrayIdx, b);
 	}
@@ -233,7 +233,7 @@ public:
 		ANKI_ASSERT(impl->getTextureImpl().isSubresourceGoodForImageLoadStore(impl->getSubresource()));
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kImage;
+		b.m_type = DescriptorType::kStorageImage;
 		b.m_image.imageView = impl->getHandle();
 		b.m_image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		setBinding(binding, arrayIdx, b);
@@ -325,15 +325,14 @@ private:
 	void setBinding(U32 bindingIdx, U32 arrayIdx, const Binding& b);
 };
 
-class alignas(8) DSBinding
+class alignas(4) DSBinding
 {
 public:
-	U32 m_arraySize = 0;
-	ShaderTypeBit m_stageMask = ShaderTypeBit::kNone;
+	U16 m_arraySize = 0;
 	DescriptorType m_type = DescriptorType::kCount;
 	U8 m_binding = kMaxU8;
 };
-static_assert(sizeof(DSBinding) == 8, "Should be packed because it will be hashed");
+static_assert(sizeof(DSBinding) == 4, "Should be packed because it will be hashed");
 
 class DSLayoutFactory : public MakeSingleton<DSLayoutFactory>
 {

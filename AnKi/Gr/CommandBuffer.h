@@ -102,7 +102,7 @@ public:
 	void bindVertexBuffer(U32 binding, Buffer* buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate = VertexStepRate::kVertex);
 
 	/// Setup a vertex attribute.
-	void setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset);
+	void setVertexAttribute(VertexAttribute attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset);
 
 	/// Bind index buffer.
 	void bindIndexBuffer(Buffer* buff, PtrSize offset, IndexType type);

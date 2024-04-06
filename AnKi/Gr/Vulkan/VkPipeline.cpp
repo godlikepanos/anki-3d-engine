@@ -5,7 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/VkPipeline.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Utils/Functions.h>
+#include <AnKi/Gr/Common/Functions.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -16,7 +16,7 @@ void PipelineStateTracker::reset()
 	m_hashes = {};
 	m_dirty = {};
 	m_set = {};
-	m_shaderAttributeMask.unsetAll();
+	m_shaderVertexAttributeMask.unsetAll();
 	m_shaderColorAttachmentWritemask.unsetAll();
 	m_fbDepth = false;
 	m_fbStencil = false;
@@ -47,9 +47,9 @@ Bool PipelineStateTracker::updateHashes()
 	// Vertex
 	if(m_dirty.m_attribs.getAnySet() || m_dirty.m_vertBindings.getAnySet())
 	{
-		for(U i = 0; i < kMaxVertexAttributes; ++i)
+		for(VertexAttribute i : EnumIterable<VertexAttribute>())
 		{
-			if(m_shaderAttributeMask.get(i))
+			if(m_shaderVertexAttributeMask.get(i))
 			{
 				ANKI_ASSERT(m_set.m_attribs.get(i) && "Forgot to set the attribute");
 
@@ -155,11 +155,11 @@ void PipelineStateTracker::updateSuperHash()
 	buff[count++] = m_hashes.m_rpass;
 
 	// Vertex
-	if(!!m_shaderAttributeMask)
+	if(!!m_shaderVertexAttributeMask)
 	{
-		for(U i = 0; i < kMaxVertexAttributes; ++i)
+		for(VertexAttribute i : EnumIterable<VertexAttribute>())
 		{
-			if(m_shaderAttributeMask.get(i))
+			if(m_shaderVertexAttributeMask.get(i))
 			{
 				buff[count++] = m_hashes.m_vertexAttribs[i];
 			}
@@ -224,16 +224,16 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	vertCi.pVertexAttributeDescriptions = &m_ci.m_attribs[0];
 	vertCi.pVertexBindingDescriptions = &m_ci.m_vertBindings[0];
 
-	BitSet<kMaxVertexAttributes, U8> bindingSet = {false};
-	for(U32 i = 0; i < kMaxVertexAttributes; ++i)
+	BitSet<U32(VertexAttribute::kCount), U8> bindingSet = {false};
+	for(VertexAttribute semantic : EnumIterable<VertexAttribute>())
 	{
-		if(m_shaderAttributeMask.get(i))
+		if(m_shaderVertexAttributeMask.get(semantic))
 		{
 			VkVertexInputAttributeDescription& attrib = m_ci.m_attribs[vertCi.vertexAttributeDescriptionCount++];
-			attrib.binding = m_state.m_vertex.m_attributes[i].m_binding;
-			attrib.format = convertFormat(m_state.m_vertex.m_attributes[i].m_format);
-			attrib.location = i;
-			attrib.offset = U32(m_state.m_vertex.m_attributes[i].m_offset);
+			attrib.binding = m_state.m_vertex.m_attributes[semantic].m_binding;
+			attrib.format = convertFormat(m_state.m_vertex.m_attributes[semantic].m_format);
+			attrib.location = m_semanticToVertexAttributeLocation[semantic];
+			attrib.offset = U32(m_state.m_vertex.m_attributes[semantic].m_offset);
 
 			if(!bindingSet.get(attrib.binding))
 			{

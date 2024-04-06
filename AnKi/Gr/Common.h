@@ -57,7 +57,6 @@ private:
 ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Gr, GrMemoryPool)
 
 // Some constants
-constexpr U32 kMaxVertexAttributes = 8;
 constexpr U32 kMaxColorRenderTargets = 4;
 constexpr U32 kMaxDescriptorSets = 3; ///< Groups that can be bound at the same time.
 constexpr U32 kMaxBindingsPerDescriptorSet = 32;
@@ -405,7 +404,7 @@ enum class Format : U32
 	kNone = 0,
 
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = id,
-#include <AnKi/Gr/Format.defs.h>
+#include <AnKi/Gr/Common/Format.def.h>
 #undef ANKI_FORMAT_DEF
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
@@ -597,7 +596,7 @@ enum class ShaderVariableDataType : U8
 
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) k##type,
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) k##constant,
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 
@@ -843,6 +842,77 @@ enum class GpuQueueType : U8
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuQueueType)
+
+enum class VertexAttribute : U8
+{
+	kPosition,
+	kNormal,
+	kTexCoord,
+	kColor,
+	kMisc0,
+	kMisc1,
+	kMisc2,
+	kMisc3,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttribute)
+
+enum class DescriptorType : U8
+{
+	kTexture,
+	kSampler,
+	kUniformBuffer,
+	kStorageBuffer,
+	kStorageImage,
+	kReadTexelBuffer,
+	kReadWriteTexelBuffer,
+	kAccelerationStructure,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorType)
+
+class ShaderReflection
+{
+public:
+	Array2d<U16, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorArraySizes;
+	Array2d<DescriptorType, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorTypes;
+	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
+
+	Array<U8, U32(VertexAttribute::kCount)> m_vertexAttributeLocations; ///< Only for Vulkan.
+	BitSet<U32(VertexAttribute::kCount), U8> m_vertexAttributeMask = {false};
+
+	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
+
+	U8 m_pushConstantsSize = 0;
+	Bool m_discards = false;
+
+	ShaderReflection()
+	{
+		for(auto& it : m_descriptorArraySizes)
+		{
+			it.fill(0);
+		}
+
+		for(auto& it : m_descriptorTypes)
+		{
+			it.fill(DescriptorType::kCount);
+		}
+
+		m_vertexAttributeLocations.fill(kMaxU8);
+	}
+
+#if ANKI_ASSERTIONS_ENABLED
+	void validate() const;
+#else
+	void validate() const
+	{
+	}
+#endif
+};
 
 /// Clear values for textures or attachments.
 class ClearValue

@@ -463,7 +463,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_gbufferRenderTargetSubresourceInfos[2].m_firstFace = faceIdx;
 					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
-					dsInfo.m_skyLutRenderTarget = getRenderer().getSky().getSkyLutRt();
+					dsInfo.m_skyLutRenderTarget = (getRenderer().getSky().isEnabled()) ? getRenderer().getSky().getSkyLutRt() : RenderTargetHandle();
 					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstsBuffer;
 					dsInfo.m_renderpassContext = &rgraphCtx;
 

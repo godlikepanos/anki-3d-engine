@@ -16,7 +16,7 @@
 
 struct VertIn
 {
-	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
+	UVec4 m_gpuSceneRenderable : MISC0;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 

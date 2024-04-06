@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Utils/Functions.h>
+#include <AnKi/Gr/Common/Functions.h>
 
 namespace anki {
 
@@ -94,7 +94,7 @@ public:
 	public: \
 		static constexpr Bool kValue = rowCount * columnCount > 4; \
 	};
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 
 template<typename T, Bool isMatrix = IsShaderVarDataTypeAMatrix<T>::kValue>
@@ -129,12 +129,76 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 	case ShaderVariableDataType::k##type: \
 		WriteShaderBlockMemory<type>()(varBlkInfo, elements, elementsCount, buffBegin, buffEnd); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 
 	default:
 		ANKI_ASSERT(0);
 	}
+}
+
+Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c_)
+{
+	ShaderReflection c;
+	c.m_descriptorSetMask = a.m_descriptorSetMask | b.m_descriptorSetMask;
+
+	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
+	{
+		if(!c.m_descriptorSetMask.get(set))
+		{
+			continue;
+		}
+
+		for(U32 binding = 0; binding < kMaxBindingsPerDescriptorSet; ++binding)
+		{
+			const Bool bindingExists = a.m_descriptorArraySizes[set][binding] > 0 || b.m_descriptorArraySizes[set][binding] > 0;
+			if(!bindingExists)
+			{
+				continue;
+			}
+
+			const Bool sizeCorrect = a.m_descriptorArraySizes[set][binding] == 0 || b.m_descriptorArraySizes[set][binding] == 0
+									 || a.m_descriptorArraySizes[set][binding] == b.m_descriptorArraySizes[set][binding];
+
+			if(!sizeCorrect)
+			{
+				ANKI_GR_LOGE("Can't link shader reflection because of different array size. Set %u binding %u", set, binding);
+				return Error::kFunctionFailed;
+			}
+
+			const Bool typeCorrect = a.m_descriptorTypes[set][binding] == DescriptorType::kCount
+									 || b.m_descriptorTypes[set][binding] == DescriptorType::kCount
+									 || a.m_descriptorTypes[set][binding] == b.m_descriptorTypes[set][binding];
+
+			if(!typeCorrect)
+			{
+				ANKI_GR_LOGE("Can't link shader reflection because of different array size. Set %u binding %u", set, binding);
+				return Error::kFunctionFailed;
+			}
+
+			c.m_descriptorArraySizes[set][binding] = max(a.m_descriptorArraySizes[set][binding], b.m_descriptorArraySizes[set][binding]);
+			c.m_descriptorTypes[set][binding] = min(a.m_descriptorTypes[set][binding], b.m_descriptorTypes[set][binding]);
+		}
+	}
+
+	c.m_vertexAttributeLocations = (a.m_vertexAttributeMask.getAnySet()) ? a.m_vertexAttributeLocations : b.m_vertexAttributeLocations;
+	c.m_vertexAttributeMask = a.m_vertexAttributeMask | b.m_vertexAttributeMask;
+
+	c.m_colorAttachmentWritemask = a.m_colorAttachmentWritemask | b.m_colorAttachmentWritemask;
+
+	const Bool pushConstantsCorrect = a.m_pushConstantsSize == 0 || b.m_pushConstantsSize == 0 || a.m_pushConstantsSize == b.m_pushConstantsSize;
+	if(!pushConstantsCorrect)
+	{
+		ANKI_GR_LOGE("Can't link shader reflection because of different push constants size");
+		return Error::kFunctionFailed;
+	}
+
+	c.m_pushConstantsSize = max(a.m_pushConstantsSize, b.m_pushConstantsSize);
+
+	c.m_discards = a.m_discards || b.m_discards;
+
+	c_ = c;
+	return Error::kNone;
 }
 
 } // end namespace anki

@@ -32,7 +32,7 @@ public:
 	public: \
 		static constexpr Bool kValue = rowCount * columnCount > 1; \
 	};
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 
 template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::kValue>
@@ -469,7 +469,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	case ShaderVariableDataType::k##type: \
 		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 		default:
 			ANKI_ASSERT(0);
@@ -499,7 +499,7 @@ void MaterialResource::prefillLocalUniforms()
 		ANKI_ASSERT(var.m_offsetInLocalUniforms + sizeof(type) <= m_localUniformsSize); \
 		memcpy(static_cast<U8*>(m_prefilledLocalUniforms) + var.m_offsetInLocalUniforms, &var.m_##type, sizeof(type)); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 		default:
 			ANKI_ASSERT(0);

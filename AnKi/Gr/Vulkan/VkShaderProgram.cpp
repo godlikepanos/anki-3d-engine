@@ -7,6 +7,7 @@
 #include <AnKi/Gr/Vulkan/VkShader.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Gr/Vulkan/VkPipeline.h>
+#include <AnKi/Gr/Common/Functions.h>
 
 namespace anki {
 
@@ -117,55 +118,44 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	ANKI_ASSERT(m_shaders.getSize() > 0);
 
-	// Merge bindings
+	// Link reflection
+	//
+	Bool firstLink = true;
+	for(ShaderPtr& shader : m_shaders)
+	{
+		m_shaderTypes |= ShaderTypeBit(1 << shader->getShaderType());
+
+		const ShaderImpl& simpl = static_cast<const ShaderImpl&>(*shader);
+		if(firstLink)
+		{
+			m_refl = simpl.m_reflection;
+			firstLink = false;
+		}
+		else
+		{
+			ANKI_CHECK(linkShaderReflection(m_refl, simpl.m_reflection, m_refl));
+		}
+
+		m_refl.validate();
+	}
+
+	// Get bindings
 	//
 	Array2d<DSBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> bindings;
 	Array<U32, kMaxDescriptorSets> counts = {};
 	U32 descriptorSetCount = 0;
 	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
 	{
-		for(ShaderPtr& shader : m_shaders)
+		for(U8 binding = 0; m_refl.m_descriptorSetMask.get(set) && binding < kMaxBindingsPerDescriptorSet; ++binding)
 		{
-			m_shaderTypes |= ShaderTypeBit(1 << shader->getShaderType());
-
-			const ShaderImpl& simpl = static_cast<const ShaderImpl&>(*shader);
-
-			m_refl.m_activeBindingMask[set] |= simpl.m_activeBindingMask[set];
-
-			for(U32 i = 0; i < simpl.m_bindings[set].getSize(); ++i)
+			if(m_refl.m_descriptorArraySizes[set][binding])
 			{
-				Bool bindingFound = false;
-				for(U32 j = 0; j < counts[set]; ++j)
-				{
-					if(bindings[set][j].m_binding == simpl.m_bindings[set][i].m_binding)
-					{
-						// Found the binding
+				DSBinding b;
+				b.m_arraySize = m_refl.m_descriptorArraySizes[set][binding];
+				b.m_binding = binding;
+				b.m_type = m_refl.m_descriptorTypes[set][binding];
 
-						ANKI_ASSERT(bindings[set][j].m_type == simpl.m_bindings[set][i].m_type);
-
-						bindings[set][j].m_stageMask |= simpl.m_bindings[set][i].m_stageMask;
-
-						bindingFound = true;
-						break;
-					}
-				}
-
-				if(!bindingFound)
-				{
-					// New binding
-
-					bindings[set][counts[set]++] = simpl.m_bindings[set][i];
-				}
-			}
-
-			if(simpl.m_pushConstantsSize > 0)
-			{
-				if(m_refl.m_pushConstantsSize > 0)
-				{
-					ANKI_ASSERT(m_refl.m_pushConstantsSize == simpl.m_pushConstantsSize);
-				}
-
-				m_refl.m_pushConstantsSize = max(m_refl.m_pushConstantsSize, simpl.m_pushConstantsSize);
+				bindings[set][counts[set]++] = b;
 			}
 		}
 
@@ -197,13 +187,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	const Bool graphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
 	if(graphicsProg)
 	{
-		if(inf.m_graphicsShaders[ShaderType::kVertex])
-		{
-			m_refl.m_attributeMask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kVertex]).m_attributeMask;
-		}
-
-		m_refl.m_colorAttachmentWritemask = static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::kFragment]).m_colorAttachmentWritemask;
-
 		const U32 attachmentCount = m_refl.m_colorAttachmentWritemask.getSetBitCount();
 		for(U32 i = 0; i < attachmentCount; ++i)
 		{
@@ -225,7 +208,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			createInf.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType())));
 			createInf.pName = "main";
 			createInf.module = shaderImpl.m_handle;
-			createInf.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 		}
 	}
 
@@ -262,7 +244,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 		ci.stage.pName = "main";
 		ci.stage.module = shaderImpl.m_handle;
-		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
 		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_compute.m_ppline));
@@ -286,7 +267,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			stage.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << impl.getShaderType())));
 			stage.pName = "main";
 			stage.module = impl.m_handle;
-			stage.pSpecializationInfo = impl.getSpecConstInfo();
 		}
 
 		// Create groups

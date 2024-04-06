@@ -220,9 +220,9 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 	cmdb.setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
 	cmdb.bindVertexBuffer(0, &vertsToken.getBuffer(), vertsToken.getOffset(), sizeof(ImDrawVert));
-	cmdb.setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
-	cmdb.setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
-	cmdb.setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
+	cmdb.setVertexAttribute(VertexAttribute::kPosition, 0, Format::kR32G32_Sfloat, 0);
+	cmdb.setVertexAttribute(VertexAttribute::kColor, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
+	cmdb.setVertexAttribute(VertexAttribute::kTexCoord, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
 	cmdb.bindIndexBuffer(&indicesToken.getBuffer(), indicesToken.getOffset(), IndexType::kU16);
 

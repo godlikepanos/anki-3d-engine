@@ -210,7 +210,10 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 			const ResourceString shaderName = (progName + "_" + m_binary->m_techniques[techniqueIdx].m_name.getBegin()).cstr();
 			ShaderInitInfo inf(shaderName);
 			inf.m_shaderType = shaderType;
-			inf.m_binary = m_binary->m_codeBlocks[binaryVariant->m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[shaderType]].m_binary;
+			const ShaderProgramBinaryCodeBlock& binBlock =
+				m_binary->m_codeBlocks[binaryVariant->m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[shaderType]];
+			inf.m_binary = binBlock.m_binary;
+			inf.m_reflection = binBlock.m_reflection;
 			ShaderPtr shader = GrManager::getSingleton().newShader(inf);
 			shaderRefs[shaderType] = shader;
 

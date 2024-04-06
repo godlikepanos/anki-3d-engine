@@ -26,9 +26,9 @@ public:
 		m_descriptorCount[DescriptorType::kSampler] = 8;
 		m_descriptorCount[DescriptorType::kUniformBuffer] = 8;
 		m_descriptorCount[DescriptorType::kStorageBuffer] = 64;
-		m_descriptorCount[DescriptorType::kImage] = 8;
-		m_descriptorCount[DescriptorType::kReadTextureBuffer] = 32;
-		m_descriptorCount[DescriptorType::kReadWriteTextureBuffer] = 8;
+		m_descriptorCount[DescriptorType::kStorageImage] = 8;
+		m_descriptorCount[DescriptorType::kReadTexelBuffer] = 32;
+		m_descriptorCount[DescriptorType::kReadWriteTexelBuffer] = 8;
 		m_descriptorCount[DescriptorType::kAccelerationStructure] = 8;
 		static_assert(decltype(m_descriptorCount)::getSize() == 8);
 
@@ -489,7 +489,7 @@ Bool DSStateTracker::flush(DSAllocator& allocator, VkDescriptorSet& dsHandle)
 				{
 				case DescriptorType::kTexture:
 				case DescriptorType::kSampler:
-				case DescriptorType::kImage:
+				case DescriptorType::kStorageImage:
 				{
 					writeInfo.pImageInfo = &b.m_image;
 					break;
@@ -500,8 +500,8 @@ Bool DSStateTracker::flush(DSAllocator& allocator, VkDescriptorSet& dsHandle)
 					writeInfo.pBufferInfo = &b.m_buffer;
 					break;
 				}
-				case DescriptorType::kReadTextureBuffer:
-				case DescriptorType::kReadWriteTextureBuffer:
+				case DescriptorType::kReadTexelBuffer:
+				case DescriptorType::kReadWriteTexelBuffer:
 				{
 					writeInfo.pTexelBufferView = &b.m_bufferView;
 					break;
@@ -589,7 +589,7 @@ Error DSLayoutFactory::getOrCreateDescriptorSetLayout(const WeakArray<DSBinding>
 			{
 				// All good
 			}
-			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::kReadTextureBuffer
+			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::kReadTexelBuffer
 					&& binding.m_arraySize == DSBindless::getSingleton().getMaxTexelBufferCount())
 			{
 				// All good
@@ -642,7 +642,7 @@ Error DSLayoutFactory::getOrCreateDescriptorSetLayout(const WeakArray<DSBinding>
 				vk.descriptorCount = ak.m_arraySize;
 				vk.descriptorType = convertDescriptorType(ak.m_type);
 				vk.pImmutableSamplers = nullptr;
-				vk.stageFlags = convertShaderTypeBit(ak.m_stageMask);
+				vk.stageFlags = VK_SHADER_STAGE_ALL;
 
 				ANKI_ASSERT(layout->m_activeBindings.get(ak.m_binding) == false);
 				layout->m_activeBindings.set(ak.m_binding);

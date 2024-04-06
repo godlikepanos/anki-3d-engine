@@ -6,7 +6,7 @@ set(backend_sources
 	RenderGraph.cpp
 	ShaderProgram.cpp
 	Utils/StackGpuMemoryPool.cpp
-	Utils/Functions.cpp
+	Common/Functions.cpp
 	Utils/SegregatedListsGpuMemoryPool.cpp)
 
 set(backend_headers
@@ -15,7 +15,6 @@ set(backend_headers
 	CommandBuffer.h
 	Common.h
 	Fence.h
-	Format.defs.h
 	Framebuffer.h
 	GrManager.h
 	GrObject.h
@@ -25,15 +24,16 @@ set(backend_headers
 	Sampler.h
 	Shader.h
 	ShaderProgram.h
-	ShaderVariableDataType.defs.h
+	ShaderVariableDataType.def.h
 	Texture.h
 	TextureView.h
 	TimestampQuery.h
 	PipelineQuery.h
 	GrUpscaler.h
 	Utils/StackGpuMemoryPool.h
-	Utils/Functions.h
-	Utils/InstantiationMacros.h
+	Common/Functions.h
+	Common/InstantiationMacros.def.h
+	Common/Format.def.h
 	Utils/SegregatedListsGpuMemoryPool.h)
 
 if(VULKAN)

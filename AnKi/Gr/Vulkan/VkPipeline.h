@@ -58,12 +58,12 @@ static_assert(sizeof(VertexAttributeBindingPipelineState) == 2 * sizeof(PtrSize)
 class VertexPipelineState
 {
 public:
-	Array<VertexBufferBindingPipelineState, kMaxVertexAttributes> m_bindings;
-	Array<VertexAttributeBindingPipelineState, kMaxVertexAttributes> m_attributes;
+	Array<VertexBufferBindingPipelineState, U32(VertexAttribute::kCount)> m_bindings;
+	Array<VertexAttributeBindingPipelineState, U32(VertexAttribute::kCount)> m_attributes;
 };
 static_assert(sizeof(VertexPipelineState)
-				  == sizeof(VertexBufferBindingPipelineState) * kMaxVertexAttributes
-						 + sizeof(VertexAttributeBindingPipelineState) * kMaxVertexAttributes,
+				  == sizeof(VertexBufferBindingPipelineState) * U32(VertexAttribute::kCount)
+						 + sizeof(VertexAttributeBindingPipelineState) * U32(VertexAttribute::kCount),
 			  "Packed because it will be hashed");
 
 class InputAssemblerPipelineState
@@ -176,18 +176,18 @@ public:
 		m_set.m_vertBindings.set(binding);
 	}
 
-	void setVertexAttribute(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
+	void setVertexAttribute(VertexAttribute semantic, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
 	{
 		VertexAttributeBindingPipelineState b;
 		b.m_binding = U8(buffBinding);
 		b.m_format = fmt;
 		b.m_offset = relativeOffset;
-		if(m_state.m_vertex.m_attributes[location] != b)
+		if(m_state.m_vertex.m_attributes[semantic] != b)
 		{
-			m_state.m_vertex.m_attributes[location] = b;
-			m_dirty.m_attribs.set(location);
+			m_state.m_vertex.m_attributes[semantic] = b;
+			m_dirty.m_attribs.set(semantic);
 		}
-		m_set.m_attribs.set(location);
+		m_set.m_attribs.set(semantic);
 	}
 
 	void setPrimitiveRestart(Bool enable)
@@ -342,7 +342,13 @@ public:
 		if(prog != m_state.m_prog)
 		{
 			m_shaderColorAttachmentWritemask = prog->getReflectionInfo().m_colorAttachmentWritemask;
-			m_shaderAttributeMask = prog->getReflectionInfo().m_attributeMask;
+
+			if(!!(prog->getShaderTypes() & ShaderTypeBit::kVertex))
+			{
+				m_shaderVertexAttributeMask = prog->getReflectionInfo().m_vertexAttributeMask;
+				m_semanticToVertexAttributeLocation = prog->getReflectionInfo().m_vertexAttributeLocations;
+			}
+
 			m_state.m_prog = prog;
 			m_dirty.m_prog = true;
 		}
@@ -439,8 +445,8 @@ private:
 		Bool m_color : 1 = true;
 
 		// Vertex
-		BitSet<kMaxVertexAttributes, U8> m_attribs = {true};
-		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {true};
+		BitSet<U32(VertexAttribute::kCount), U8> m_attribs = {true};
+		BitSet<U32(VertexAttribute::kCount), U8> m_vertBindings = {true};
 
 		BitSet<kMaxColorRenderTargets, U8> m_colAttachments = {true};
 	} m_dirty;
@@ -448,13 +454,14 @@ private:
 	class SetBits
 	{
 	public:
-		BitSet<kMaxVertexAttributes, U8> m_attribs = {false};
-		BitSet<kMaxVertexAttributes, U8> m_vertBindings = {false};
+		BitSet<U32(VertexAttribute::kCount), U8> m_attribs = {false};
+		BitSet<U32(VertexAttribute::kCount), U8> m_vertBindings = {false};
 	} m_set;
 
 	// Shader info
-	BitSet<kMaxVertexAttributes, U8> m_shaderAttributeMask = {false};
+	BitSet<U32(VertexAttribute::kCount), U8> m_shaderVertexAttributeMask = {false};
 	BitSet<kMaxColorRenderTargets, U8> m_shaderColorAttachmentWritemask = {false};
+	Array<U8, U32(VertexAttribute::kCount)> m_semanticToVertexAttributeLocation;
 
 	// Renderpass info
 	Bool m_fbDepth : 1 = false;
@@ -467,7 +474,7 @@ private:
 	public:
 		U64 m_prog;
 		U64 m_rpass;
-		Array<U64, kMaxVertexAttributes> m_vertexAttribs;
+		Array<U64, U32(VertexAttribute::kCount)> m_vertexAttribs;
 		U64 m_ia;
 		U64 m_raster;
 		U64 m_depth;
@@ -488,8 +495,8 @@ private:
 	class CreateInfo
 	{
 	public:
-		Array<VkVertexInputBindingDescription, kMaxVertexAttributes> m_vertBindings;
-		Array<VkVertexInputAttributeDescription, kMaxVertexAttributes> m_attribs;
+		Array<VkVertexInputBindingDescription, U32(VertexAttribute::kCount)> m_vertBindings;
+		Array<VkVertexInputAttributeDescription, U32(VertexAttribute::kCount)> m_attribs;
 		VkPipelineVertexInputStateCreateInfo m_vert;
 		VkPipelineInputAssemblyStateCreateInfo m_ia;
 		VkPipelineViewportStateCreateInfo m_vp;

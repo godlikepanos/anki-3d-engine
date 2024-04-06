@@ -8,37 +8,29 @@
 
 namespace anki {
 
-/// Serialize/deserialize ShaderVariableBlockInfo
-template<typename TSerializer, typename TShaderVariableBlockInfo>
-void serializeShaderVariableBlockInfo(TShaderVariableBlockInfo x, TSerializer& s)
-{
-	s.doValue("m_offset", offsetof(ShaderVariableBlockInfo, m_offset), x.m_offset);
-	s.doValue("m_arraySize", offsetof(ShaderVariableBlockInfo, m_arraySize), x.m_arraySize);
-	s.doValue("m_arrayStride", offsetof(ShaderVariableBlockInfo, m_arrayStride), x.m_arrayStride);
-	s.doValue("m_matrixStride", offsetof(ShaderVariableBlockInfo, m_matrixStride), x.m_matrixStride);
-}
-
-/// Serialize ShaderVariableBlockInfo
+/// Serialize ShaderReflection
 template<>
-class SerializeFunctor<ShaderVariableBlockInfo>
+class SerializeFunctor<ShaderReflection>
 {
 public:
 	template<typename TSerializer>
-	void operator()(const ShaderVariableBlockInfo& x, TSerializer& serializer)
+	void operator()(const ShaderReflection& x, TSerializer& serializer)
 	{
-		serializeShaderVariableBlockInfo<TSerializer, const ShaderVariableBlockInfo&>(x, serializer);
+		const U8* arr = reinterpret_cast<const U8*>(&x);
+		serializer.doArray("binblob", 0, arr, sizeof(ShaderReflection));
 	}
 };
 
-/// Deserialize ShaderVariableBlockInfo
+/// Deserialize ShaderReflection
 template<>
-class DeserializeFunctor<ShaderVariableBlockInfo>
+class DeserializeFunctor<ShaderReflection>
 {
 public:
 	template<typename TDeserializer>
-	void operator()(ShaderVariableBlockInfo& x, TDeserializer& deserialize)
+	void operator()(ShaderReflection& x, TDeserializer& deserializer)
 	{
-		serializeShaderVariableBlockInfo<TDeserializer, ShaderVariableBlockInfo&>(x, deserialize);
+		U8* arr = reinterpret_cast<U8*>(&x);
+		deserializer.doArray("binblob", 0, arr, sizeof(ShaderReflection));
 	}
 };
 

@@ -48,22 +48,6 @@ class GrManagerImpl;
 ANKI_PURE GrManagerImpl& getGrManagerImpl();
 ANKI_PURE VkDevice getVkDevice();
 
-enum class DescriptorType : U8
-{
-	kTexture,
-	kSampler,
-	kUniformBuffer,
-	kStorageBuffer,
-	kImage,
-	kReadTextureBuffer,
-	kReadWriteTextureBuffer,
-	kAccelerationStructure,
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorType)
-
 enum class VulkanExtensions : U64
 {
 	kNone = 0,
@@ -271,16 +255,16 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	case DescriptorType::kUniformBuffer:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		break;
-	case DescriptorType::kReadTextureBuffer:
+	case DescriptorType::kReadTexelBuffer:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
 		break;
-	case DescriptorType::kReadWriteTextureBuffer:
+	case DescriptorType::kReadWriteTexelBuffer:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
 		break;
 	case DescriptorType::kStorageBuffer:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		break;
-	case DescriptorType::kImage:
+	case DescriptorType::kStorageImage:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		break;
 	case DescriptorType::kAccelerationStructure:

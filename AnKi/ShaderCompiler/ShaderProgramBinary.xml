@@ -21,11 +21,12 @@
 				<member name="m_size" type="U32" />
 			</members>
 		</class>
-
-		<class name="ShaderProgramBinaryCodeBlock" comment="Contains the IR (SPIR-V)">
+		
+		<class name="ShaderProgramBinaryCodeBlock" comment="Contains the IR (SPIR-V or DXIL)">
 			<members>
 				<member name="m_binary" type="WeakArray&lt;U8&gt;" />
 				<member name="m_hash" type="U64" constructor="= 0" />
+				<member name="m_reflection" type="ShaderReflection" />
 			</members>
 		</class>
 

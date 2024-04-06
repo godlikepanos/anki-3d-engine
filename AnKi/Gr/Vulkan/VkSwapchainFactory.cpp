@@ -84,7 +84,7 @@ Error MicroSwapchain::initInternal()
 	case id: \
 		akFormat = Format::k##type; \
 		break;
-#include <AnKi/Gr/Format.defs.h>
+#include <AnKi/Gr/Common/Format.def.h>
 #undef ANKI_FORMAT_DEF
 			default:
 				akFormat = Format::kNone;

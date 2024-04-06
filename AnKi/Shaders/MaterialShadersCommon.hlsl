@@ -22,7 +22,7 @@ ANKI_BINDLESS_SET(MaterialSet::kBindless)
 // Unified geom:
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	[[vk::binding(MaterialBinding::kUnifiedGeometry_##fmt, MaterialSet::kGlobal)]] Buffer<shaderType> g_unifiedGeom_##fmt;
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
 [[vk::binding(MaterialBinding::kMeshletBoundingVolumes, MaterialSet::kGlobal)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
 [[vk::binding(MaterialBinding::kMeshletGeometryDescriptors, MaterialSet::kGlobal)]] StructuredBuffer<MeshletGeometryDescriptor>

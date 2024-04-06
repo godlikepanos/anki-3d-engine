@@ -7,7 +7,7 @@
 
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
-#include <AnKi/Gr/Utils/Functions.h>
+#include <AnKi/Gr/Common/Functions.h>
 #include <AnKi/Gr/ShaderProgram.h>
 #include <AnKi/Util/BitSet.h>
 #include <AnKi/Util/String.h>

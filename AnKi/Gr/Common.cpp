@@ -13,7 +13,7 @@ namespace anki {
 inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) {ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 };
@@ -39,7 +39,7 @@ FormatInfo getFormatInfo(Format fmt)
 		out = {componentCount,      texelSize, blockWidth, blockHeight, blockSize, shaderType, DepthStencilAspectBit::k##depthStencil, \
 			   ANKI_STRINGIZE(type)}; \
 		break;
-#include <AnKi/Gr/Format.defs.h>
+#include <AnKi/Gr/Common/Format.def.h>
 #undef ANKI_FORMAT_DEF
 
 	default:
@@ -122,5 +122,38 @@ U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
 
 	return count;
 }
+
+#if ANKI_ASSERTIONS_ENABLED
+void ShaderReflection::validate() const
+{
+	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
+	{
+		const Bool setExists = m_descriptorSetMask.get(set);
+		for(U32 binding = 0; binding < kMaxBindingsPerDescriptorSet; ++binding)
+		{
+			const U32 arraySize = m_descriptorArraySizes[set][binding];
+			const DescriptorType type = m_descriptorTypes[set][binding];
+
+			if(!setExists)
+			{
+				ANKI_ASSERT(arraySize == 0 && type == DescriptorType::kCount);
+			}
+			else if(arraySize != 0)
+			{
+				ANKI_ASSERT(type != DescriptorType::kCount);
+			}
+			else if(type != DescriptorType::kCount)
+			{
+				ANKI_ASSERT(arraySize > 0);
+			}
+		}
+	}
+
+	for(VertexAttribute semantic : EnumIterable<VertexAttribute>())
+	{
+		ANKI_ASSERT(!m_vertexAttributeMask.get(semantic) || m_vertexAttributeLocations[semantic] != kMaxU8);
+	}
+}
+#endif
 
 } // end namespace anki

@@ -37,11 +37,14 @@ ShaderVariableDataType getShaderVariableTypeFromTypename();
 		return ShaderVariableDataType::k##type; \
 	}
 
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 
 /// Populate the memory of a variable that is inside a shader block.
 void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount,
 							void* buffBegin, const void* buffEnd);
+
+/// Combine shader reflection.
+Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c);
 
 } // end namespace anki

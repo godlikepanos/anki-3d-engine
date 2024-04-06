@@ -324,7 +324,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
 	cmdb.bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
 								   &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
 			constexpr U32 kSet = 2;
 
