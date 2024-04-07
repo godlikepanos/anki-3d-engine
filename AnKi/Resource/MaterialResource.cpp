@@ -382,7 +382,7 @@ Error MaterialResource::createVars()
 	const ShaderProgramBinaryStruct* localUniformsStruct = nullptr;
 	for(const ShaderProgramBinaryStruct& strct : binary.m_structs)
 	{
-		if(CString(strct.m_name.getBegin()) == "AnKiLocalConstants")
+		if(CString(strct.m_name.getBegin()) == "AnKiLocalUniforms")
 		{
 			localUniformsStruct = &strct;
 			break;

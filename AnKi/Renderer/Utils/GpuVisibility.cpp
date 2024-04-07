@@ -360,9 +360,9 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavComputeRead);
-	pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kUavComputeWrite);
-	pass.newBufferDependency(out.m_dependency, BufferUsageBit::kUavComputeWrite);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
+	pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(out.m_dependency, BufferUsageBit::kStorageComputeWrite);
 
 	if(!distanceBased && static_cast<FrustumGpuVisibilityInput&>(in).m_hzbRt)
 	{
@@ -418,25 +418,25 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			ANKI_ASSERT(0);
 		}
 
-		cmdb.bindUavBuffer(0, 0, aabbsBuffer);
-		cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 4, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 0, aabbsBuffer);
+		cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 4, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
 		if(gatherType & 1u)
 		{
-			cmdb.bindUavBuffer(0, 5, out.m_legacy.m_renderableInstancesBuffer);
-			cmdb.bindUavBuffer(0, 6, out.m_legacy.m_drawIndexedIndirectArgsBuffer);
-			cmdb.bindUavBuffer(0, 7, out.m_legacy.m_mdiDrawCountsBuffer);
+			cmdb.bindStorageBuffer(0, 5, out.m_legacy.m_renderableInstancesBuffer);
+			cmdb.bindStorageBuffer(0, 6, out.m_legacy.m_drawIndexedIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(0, 7, out.m_legacy.m_mdiDrawCountsBuffer);
 		}
 		if(gatherType & 2u)
 		{
-			cmdb.bindUavBuffer(0, 8, out.m_mesh.m_taskShaderIndirectArgsBuffer);
-			cmdb.bindUavBuffer(0, 9, out.m_mesh.m_meshletGroupInstancesBuffer);
+			cmdb.bindStorageBuffer(0, 8, out.m_mesh.m_taskShaderIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(0, 9, out.m_mesh.m_meshletGroupInstancesBuffer);
 		}
 
 		const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);
-		UVec2* instanceRanges = allocateAndBindUav<UVec2>(cmdb, 0, 10, bucketCount);
+		UVec2* instanceRanges = allocateAndBindStorageBuffer<UVec2>(cmdb, 0, 10, bucketCount);
 		for(U32 i = 0; i < bucketCount; ++i)
 		{
 			const Bool legacyBucket = m_runCtx.m_renderableInstanceRanges[technique][i].m_instanceCount > 0;
@@ -455,7 +455,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		if(frustumTestData)
 		{
-			FrustumGpuVisibilityConstants* unis = allocateAndBindConstants<FrustumGpuVisibilityConstants>(cmdb, 0, 11);
+			FrustumGpuVisibilityUniforms* unis = allocateAndBindConstants<FrustumGpuVisibilityUniforms>(cmdb, 0, 11);
 
 			Array<Plane, 6> planes;
 			extractClipPlanes(frustumTestData->m_viewProjMat, planes);
@@ -482,7 +482,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		}
 		else
 		{
-			DistanceGpuVisibilityConstants unis;
+			DistanceGpuVisibilityUniforms unis;
 			unis.m_pointOfTest = distTestData->m_pointOfTest;
 			unis.m_testRadius = distTestData->m_testRadius;
 
@@ -498,12 +498,12 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		if(gatherAabbIndices)
 		{
-			cmdb.bindUavBuffer(0, 14, out.m_visibleAaabbIndicesBuffer);
+			cmdb.bindStorageBuffer(0, 14, out.m_visibleAaabbIndicesBuffer);
 		}
 
 		if(genHash)
 		{
-			cmdb.bindUavBuffer(0, 15, out.m_visiblesHashBuffer);
+			cmdb.bindStorageBuffer(0, 15, out.m_visiblesHashBuffer);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
@@ -582,8 +582,8 @@ void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpu
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
 
-	pass.newBufferDependency(indirectArgsDep, BufferUsageBit::kUavComputeWrite);
-	pass.newBufferDependency(mem.m_bufferDepedency, BufferUsageBit::kUavComputeWrite);
+	pass.newBufferDependency(indirectArgsDep, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(mem.m_bufferDepedency, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(in.m_dependency, BufferUsageBit::kIndirectCompute);
 
 	pass.setWork([this, nonPassthroughData, computeIndirectArgs = in.m_taskShaderIndirectArgsBuffer, out,
@@ -605,13 +605,13 @@ void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpu
 
 			cmdb.bindShaderProgram(m_meshletCullingGrProgs[hasHzb][isPassthrough].get());
 
-			cmdb.bindUavBuffer(0, 0, meshletGroupInstancesBuffer);
-			cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 4, UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 5, out.m_drawIndirectArgsBuffer);
-			cmdb.bindUavBuffer(0, 6, out.m_meshletInstancesBuffer);
+			cmdb.bindStorageBuffer(0, 0, meshletGroupInstancesBuffer);
+			cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 4, UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 5, out.m_drawIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(0, 6, out.m_meshletInstancesBuffer);
 			if(hasHzb)
 			{
 				rpass.bindColorTexture(0, 7, nonPassthroughData->m_hzbRt);
@@ -721,8 +721,8 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	}
 
 	constexpr U32 kCountersPerDispatch = 3; // 1 for the threadgroup, 1 for the visbile object count and 1 for objects with feedback
-	const U32 counterBufferElementSize =
-		getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_uavBufferBindOffsetAlignment, U32(kCountersPerDispatch * sizeof(U32)));
+	const U32 counterBufferElementSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
+														   U32(kCountersPerDispatch * sizeof(U32)));
 	if(!m_counterBuffer.isCreated() || m_counterBufferOffset + counterBufferElementSize > m_counterBuffer->getSize()) [[unlikely]]
 	{
 		// Counter buffer not created or not big enough, create a new one
@@ -730,7 +730,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		BufferInitInfo buffInit("GpuVisibilityNonRenderablesCounters");
 		buffInit.m_size = (m_counterBuffer.isCreated()) ? m_counterBuffer->getSize() * 2
 														: kCountersPerDispatch * counterBufferElementSize * kInitialCounterArraySize;
-		buffInit.m_usage = BufferUsageBit::kUavComputeWrite | BufferUsageBit::kUavComputeRead | BufferUsageBit::kTransferDestination;
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kTransferDestination;
 		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		m_counterBufferZeroingHandle = rgraph.importBuffer(m_counterBuffer.get(), buffInit.m_usage, 0, kMaxPtrSize);
@@ -757,8 +757,8 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	// Create the renderpass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavComputeRead);
-	pass.newBufferDependency(out.m_visiblesBufferHandle, BufferUsageBit::kUavComputeWrite);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
+	pass.newBufferDependency(out.m_visiblesBufferHandle, BufferUsageBit::kStorageComputeWrite);
 
 	if(in.m_hzbRt)
 	{
@@ -767,7 +767,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	if(m_counterBufferZeroingHandle.isValid()) [[unlikely]]
 	{
-		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kUavComputeRead | BufferUsageBit::kUavComputeWrite);
+		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageComputeWrite);
 	}
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
@@ -800,9 +800,9 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		default:
 			ANKI_ASSERT(0);
 		}
-		cmdb.bindUavBuffer(0, 0, objBuffer);
+		cmdb.bindStorageBuffer(0, 0, objBuffer);
 
-		GpuVisibilityNonRenderableConstants unis;
+		GpuVisibilityNonRenderableUniforms unis;
 		Array<Plane, 6> planes;
 		extractClipPlanes(viewProjectionMat, planes);
 		for(U32 i = 0; i < 6; ++i)
@@ -811,12 +811,12 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		}
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
-		rgraph.bindUavBuffer(0, 1, visibleIndicesBuffHandle);
-		cmdb.bindUavBuffer(0, 2, counterBuffer.get(), counterBufferOffset, sizeof(U32) * kCountersPerDispatch);
+		rgraph.bindStorageBuffer(0, 1, visibleIndicesBuffHandle);
+		cmdb.bindStorageBuffer(0, 2, counterBuffer.get(), counterBufferOffset, sizeof(U32) * kCountersPerDispatch);
 
 		if(needsFeedback)
 		{
-			cmdb.bindUavBuffer(0, 3, feedbackBuffer.m_buffer, feedbackBuffer.m_offset, feedbackBuffer.m_range);
+			cmdb.bindStorageBuffer(0, 3, feedbackBuffer.m_buffer, feedbackBuffer.m_offset, feedbackBuffer.m_range);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, objCount, 1);
@@ -831,7 +831,7 @@ Error GpuVisibilityAccelerationStructures::init()
 
 	BufferInitInfo inf("GpuVisibilityAccelerationStructuresCounters");
 	inf.m_size = sizeof(U32) * 2;
-	inf.m_usage = BufferUsageBit::kUavComputeWrite | BufferUsageBit::kUavComputeRead | BufferUsageBit::kTransferDestination;
+	inf.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kTransferDestination;
 	m_counterBuffer = GrManager::getSingleton().newBuffer(inf);
 
 	zeroBuffer(m_counterBuffer.get());
@@ -854,7 +854,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 
 	out.m_instancesBuffer = allocateTransientGpuMem(aabbCount * sizeof(AccelerationStructureInstance));
-	out.m_someBufferHandle = rgraph.importBuffer(BufferUsageBit::kUavComputeWrite, out.m_instancesBuffer);
+	out.m_someBufferHandle = rgraph.importBuffer(BufferUsageBit::kStorageComputeWrite, out.m_instancesBuffer);
 
 	out.m_renderableIndicesBuffer = allocateTransientGpuMem((aabbCount + 1) * sizeof(U32));
 
@@ -864,8 +864,8 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(in.m_passesName);
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavComputeRead);
-		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavComputeWrite);
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
 
 		pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
 					  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, indicesBuff = out.m_renderableIndicesBuffer,
@@ -874,7 +874,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 			cmdb.bindShaderProgram(m_visibilityGrProg.get());
 
-			GpuVisibilityAccelerationStructuresConstants unis;
+			GpuVisibilityAccelerationStructuresUniforms unis;
 			Array<Plane, 6> planes;
 			extractClipPlanes(viewProjMat, planes);
 			for(U32 i = 0; i < 6; ++i)
@@ -893,14 +893,14 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 			cmdb.setPushConstants(&unis, sizeof(unis));
 
-			cmdb.bindUavBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
-			cmdb.bindUavBuffer(0, 4, instancesBuff);
-			cmdb.bindUavBuffer(0, 5, indicesBuff);
-			cmdb.bindUavBuffer(0, 6, m_counterBuffer.get(), 0, sizeof(U32) * 2);
-			cmdb.bindUavBuffer(0, 7, zeroInstancesDispatchArgsBuff);
+			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 4, instancesBuff);
+			cmdb.bindStorageBuffer(0, 5, indicesBuff);
+			cmdb.bindStorageBuffer(0, 6, m_counterBuffer.get(), 0, sizeof(U32) * 2);
+			cmdb.bindStorageBuffer(0, 7, zeroInstancesDispatchArgsBuff);
 
 			const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 			dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
@@ -914,7 +914,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
 
-		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavComputeWrite);
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
 
 		pass.setWork([this, zeroInstancesDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
 					  indicesBuff = out.m_renderableIndicesBuffer](RenderPassWorkContext& rgraph) {
@@ -922,8 +922,8 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 			cmdb.bindShaderProgram(m_zeroRemainingInstancesGrProg.get());
 
-			cmdb.bindUavBuffer(0, 0, indicesBuff);
-			cmdb.bindUavBuffer(0, 1, instancesBuff);
+			cmdb.bindStorageBuffer(0, 0, indicesBuff);
+			cmdb.bindStorageBuffer(0, 1, instancesBuff);
 
 			cmdb.dispatchComputeIndirect(zeroInstancesDispatchArgsBuff.m_buffer, zeroInstancesDispatchArgsBuff.m_offset);
 		});

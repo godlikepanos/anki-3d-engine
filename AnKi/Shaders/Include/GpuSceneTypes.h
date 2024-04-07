@@ -20,7 +20,7 @@ constexpr F32 kSomeFarDistance = 100000.0f;
 struct GpuSceneRenderable
 {
 	U32 m_worldTransformsIndex; ///< First index points to the crnt transform and the 2nd to the previous.
-	U32 m_constantsOffset;
+	U32 m_uniformsOffset;
 	U32 m_meshLodsIndex; ///< Points to the array of GpuSceneMeshLod. kMaxLodCount are reserved for each renderable.
 	U32 m_boneTransformsOffset; ///< Array of Mat3x4 or 0 if its not a skin.
 	U32 m_particleEmitterOffset; ///< Offset to GpuSceneParticleEmitter or 0 if it's not an emitter.
@@ -32,7 +32,7 @@ struct GpuSceneRenderable
 struct GpuSceneRenderableInstance
 {
 	U32 m_worldTransformsIndex;
-	U32 m_constantsOffset;
+	U32 m_uniformsOffset;
 	U32 m_meshLodIndex; ///< Points to a single GpuSceneMeshLod in the mesh lods.
 	U32 m_boneTransformsOrParticleEmitterOffset;
 };
@@ -49,7 +49,7 @@ static_assert(kMaxLodCount == 3);
 struct GpuSceneMeshletInstance
 {
 	U32 m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit;
-	U32 m_constantsOffset;
+	U32 m_uniformsOffset;
 	U32 m_meshletGeometryDescriptorIndex; ///< Index in the UGB.
 	U32 m_boneTransformsOrParticleEmitterOffset;
 };

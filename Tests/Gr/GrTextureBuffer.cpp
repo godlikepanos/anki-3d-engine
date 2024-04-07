@@ -37,7 +37,7 @@ void main()
 		BufferInitInfo buffInit;
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_size = sizeof(U8) * 4;
-		buffInit.m_usage = BufferUsageBit::kAllTexture;
+		buffInit.m_usage = BufferUsageBit::kAllTexel;
 		BufferPtr texBuff = gr->newBuffer(buffInit);
 
 		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
@@ -51,15 +51,15 @@ void main()
 
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = sizeof(F32) * 4;
-		buffInit.m_usage = BufferUsageBit::kAllUav;
+		buffInit.m_usage = BufferUsageBit::kAllStorage;
 		BufferPtr storageBuff = gr->newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit;
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
-		cmdb->bindReadOnlyTextureBuffer(0, 0, texBuff.get(), 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
-		cmdb->bindUavBuffer(0, 1, storageBuff.get(), 0, kMaxPtrSize);
+		cmdb->bindReadOnlyTexelBuffer(0, 0, texBuff.get(), 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
+		cmdb->bindStorageBuffer(0, 1, storageBuff.get(), 0, kMaxPtrSize);
 		cmdb->bindShaderProgram(prog.get());
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->endRecording();

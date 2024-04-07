@@ -133,7 +133,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	m_nonRenderablesProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());
 
-	class Constants
+	class Uniforms
 	{
 	public:
 		Mat4 m_viewProjMat;
@@ -143,8 +143,8 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	unis.m_camTrf = ctx.m_matrices.m_cameraTransform;
 	cmdb.setPushConstants(&unis, sizeof(unis));
 
-	cmdb.bindUavBuffer(0, 2, getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
-	cmdb.bindUavBuffer(0, 3, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
+	cmdb.bindStorageBuffer(0, 2, getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
+	cmdb.bindStorageBuffer(0, 3, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
 
 	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearRepeat.get());
 	cmdb.bindTexture(0, 5, &image.getTextureView());
@@ -181,7 +181,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		m_renderablesProg->getOrCreateVariant(variantInitInfo, variant);
 		cmdb.bindShaderProgram(&variant->getProgram());
 
-		class Constants
+		class Uniforms
 		{
 		public:
 			Vec4 m_color;
@@ -195,12 +195,12 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		cmdb.setVertexAttribute(VertexAttribute::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
 		cmdb.bindIndexBuffer(m_cubeIndicesBuffer.get(), 0, IndexType::kU16);
 
-		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferOffsetRange());
 
 		BufferOffsetRange indicesBuff;
 		BufferHandle dep;
 		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
-		cmdb.bindUavBuffer(0, 3, indicesBuff);
+		cmdb.bindStorageBuffer(0, 3, indicesBuff);
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 	}
@@ -211,12 +211,12 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 		if(allAabbCount)
 		{
-			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
 
 			BufferOffsetRange indicesBuff;
 			BufferHandle dep;
 			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-			cmdb.bindUavBuffer(0, 3, indicesBuff);
+			cmdb.bindStorageBuffer(0, 3, indicesBuff);
 
 			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 		}
@@ -264,12 +264,12 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	BufferOffsetRange indicesBuff;
 	BufferHandle dep;
 	getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
-	pass.newBufferDependency(dep, BufferUsageBit::kUavGeometryRead);
+	pass.newBufferDependency(dep, BufferUsageBit::kStorageGeometryRead);
 
 	if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())
 	{
 		getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-		pass.newBufferDependency(dep, BufferUsageBit::kUavGeometryRead);
+		pass.newBufferDependency(dep, BufferUsageBit::kStorageGeometryRead);
 	}
 }
 

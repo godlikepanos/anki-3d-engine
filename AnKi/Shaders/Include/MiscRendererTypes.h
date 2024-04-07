@@ -59,7 +59,7 @@ struct CommonMatrices
 };
 
 /// Common constants for all passes.
-struct GlobalRendererConstants
+struct GlobalRendererUniforms
 {
 	Vec2 m_renderingSize;
 	F32 m_time;
@@ -89,7 +89,7 @@ struct GlobalRendererConstants
 };
 
 // RT shadows
-struct RtShadowsDenoiseConstants
+struct RtShadowsDenoiseUniforms
 {
 	Mat4 m_invViewProjMat;
 
@@ -99,7 +99,7 @@ struct RtShadowsDenoiseConstants
 	F32 m_padding2;
 };
 
-struct RtShadowsSbtBuildConstants
+struct RtShadowsSbtBuildUniforms
 {
 	U32 m_shaderHandleDwordSize;
 	U32 m_sbtRecordDwordSize;
@@ -116,7 +116,7 @@ struct LensFlareSprite
 };
 
 // Depth downscale
-struct DepthDownscaleConstants
+struct DepthDownscaleUniforms
 {
 	Vec2 m_srcTexSizeOverOne;
 	U32 m_threadgroupCount;
@@ -124,7 +124,7 @@ struct DepthDownscaleConstants
 };
 
 // Screen space reflections uniforms
-struct SsrConstants
+struct SsrUniforms
 {
 	Vec2 m_viewportSizef;
 	U32 m_frameCount;
@@ -143,7 +143,7 @@ struct SsrConstants
 };
 
 // Vol fog
-struct VolumetricFogConstants
+struct VolumetricFogUniforms
 {
 	RVec3 m_fogDiffuse;
 	RF32 m_fogScatteringCoeff;
@@ -158,7 +158,7 @@ struct VolumetricFogConstants
 };
 
 // Vol lighting
-struct VolumetricLightingConstants
+struct VolumetricLightingUniforms
 {
 	RF32 m_densityAtMinHeight;
 	RF32 m_densityAtMaxHeight;
@@ -170,7 +170,7 @@ struct VolumetricLightingConstants
 };
 
 // SSAO
-struct SsaoConstants
+struct SsaoUniforms
 {
 	RF32 m_radius; ///< In meters.
 	U32 m_sampleCount;
@@ -190,7 +190,7 @@ struct SsaoConstants
 	Mat3x4 m_viewMat;
 };
 
-struct SsaoSpatialDenoiseConstants
+struct SsaoSpatialDenoiseUniforms
 {
 	Mat3x4 m_viewToWorldMat;
 

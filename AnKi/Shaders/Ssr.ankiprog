@@ -24,7 +24,7 @@
 
 #	define EXTRA_REJECTION 1
 
-[[vk::binding(0)]] ConstantBuffer<SsrConstants> g_consts;
+[[vk::binding(0)]] ConstantBuffer<SsrUniforms> g_unis;
 
 [[vk::binding(1)]] SamplerState g_trilinearClampSampler;
 [[vk::binding(2)]] Texture2D<RVec4> g_gbufferRt1;
@@ -33,7 +33,7 @@
 [[vk::binding(5)]] Texture2D<RVec4> g_lightBufferRt;
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(6)]] RWTexture2D<RVec4> g_outUav;
+[[vk::binding(6)]] RWTexture2D<RVec4> g_storageTex;
 #	endif
 
 ANKI_BINDLESS_SET(1)
@@ -45,7 +45,7 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / g_consts.m_viewportSizef;
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / g_unis.m_viewportSizef;
 #	else
 	const UVec2 svDispatchThreadId = UVec2(svPosition.xy);
 #	endif
@@ -58,18 +58,18 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	const F32 depth = g_depthRt.SampleLevel(g_trilinearClampSampler, uv, 0.0).r;
 
 	// Rand idx
-	const RVec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_consts.m_frameCount);
+	const RVec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_unis.m_frameCount);
 
 	// Get view pos
-	const Vec3 viewPos = cheapPerspectiveUnprojection(g_consts.m_unprojectionParameters, uvToNdc(uv), depth);
+	const Vec3 viewPos = cheapPerspectiveUnprojection(g_unis.m_unprojectionParameters, uvToNdc(uv), depth);
 
 	// Compute refl vector
 	const Vec3 viewDir = -normalize(viewPos);
-	const Vec3 viewNormal = mul(g_consts.m_normalMat, Vec4(worldNormal, 0.0));
+	const Vec3 viewNormal = mul(g_unis.m_normalMat, Vec4(worldNormal, 0.0));
 	const Vec3 reflDir = reflect(-viewDir, viewNormal);
 
 	// Is rough enough to deserve SSR?
-	RF32 ssrAttenuation = saturate(1.0f - pow(roughness / g_consts.m_roughnessCutoff, 16.0f));
+	RF32 ssrAttenuation = saturate(1.0f - pow(roughness / g_unis.m_roughnessCutoff, 16.0f));
 
 	// Do the heavy work
 	Vec3 hitPoint;
@@ -77,19 +77,19 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	if(ssrAttenuation > kEpsilonF32)
 	{
 		const U32 lod = 8u; // Use the max LOD for ray marching
-		const U32 stepIncrement = g_consts.m_stepIncrement;
+		const U32 stepIncrement = g_unis.m_stepIncrement;
 		const F32 stepIncrementf = F32(stepIncrement);
 		const F32 minStepf = min(4.0f, stepIncrementf);
 		const U32 initialStepIncrement = U32(lerp(minStepf, stepIncrementf, noise2.x));
 		RF32 hitAttenuation;
-		raymarchGroundTruth(viewPos, reflDir, uv, depth, g_consts.m_projMat00_11_22_23, g_consts.m_maxIterations, g_depthRt, g_trilinearClampSampler,
+		raymarchGroundTruth(viewPos, reflDir, uv, depth, g_unis.m_projMat00_11_22_23, g_unis.m_maxIterations, g_depthRt, g_trilinearClampSampler,
 							F32(lod), stepIncrement, initialStepIncrement, hitPoint, hitAttenuation);
 
 		ssrAttenuation *= hitAttenuation;
 
 		// Compute the hit point in viewspace
 		const F32 depth = g_depthRt.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).r;
-		hitPointViewSpace = cheapPerspectiveUnprojection(g_consts.m_unprojectionParameters, uvToNdc(hitPoint.xy), depth);
+		hitPointViewSpace = cheapPerspectiveUnprojection(g_unis.m_unprojectionParameters, uvToNdc(hitPoint.xy), depth);
 	}
 	else
 	{
@@ -101,7 +101,7 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	[branch] if(ssrAttenuation > 0.0)
 	{
 		const Vec3 gbufferNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0));
-		const Vec3 hitNormal = mul(g_consts.m_normalMat, Vec4(gbufferNormal, 0.0));
+		const Vec3 hitNormal = mul(g_unis.m_normalMat, Vec4(gbufferNormal, 0.0));
 		RF32 backFaceAttenuation;
 		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
 
@@ -111,7 +111,7 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	// Reject far from hit point
 	[branch] if(ssrAttenuation > 0.0)
 	{
-		const Vec3 reflRayHitPointVSpace = cheapPerspectiveUnprojection(g_consts.m_unprojectionParameters, uvToNdc(hitPoint.xy), hitPoint.z);
+		const Vec3 reflRayHitPointVSpace = cheapPerspectiveUnprojection(g_unis.m_unprojectionParameters, uvToNdc(hitPoint.xy), hitPoint.z);
 
 		const RF32 rejectionMeters = 0.5f;
 		const RF32 diff = length(reflRayHitPointVSpace - hitPointViewSpace);
@@ -132,12 +132,12 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 		const RF32 coneAngle = pow(roughness - kMinRoughness, 4.0) * kPi / 4.0f; // Not physically correct
 		const RF32 oppositeLen = tan(coneAngle / 2.0f) * adjacentLen;
 		const Vec3 projectedOpposite =
-			cheapPerspectiveProjection(g_consts.m_projMat00_11_22_23, Vec4(hitPointViewSpace + Vec3(oppositeLen, 0.0f, 0.0f), 1.0f));
+			cheapPerspectiveProjection(g_unis.m_projMat00_11_22_23, Vec4(hitPointViewSpace + Vec3(oppositeLen, 0.0f, 0.0f), 1.0f));
 		const F32 uvDistance = abs(ndcToUv(projectedOpposite.x) - hitPoint.x);
 		const RF32 mip = max(0.0f, log2(uvDistance * lightShadingTexSize.x + kEpsilonF32));
 
 		// Reproject the hit point because you are reading the previous frame
-		const Vec4 v4 = mul(g_consts.m_prevViewProjMatMulInvViewProjMat, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
+		const Vec4 v4 = mul(g_unis.m_prevViewProjMatMulInvViewProjMat, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
 		hitPoint.xy = ndcToUv(v4.xy / v4.w);
 
 		// Read the light buffer
@@ -150,7 +150,7 @@ RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 	// Store
 	ssrAttenuation = saturate(ssrAttenuation);
 #	if ANKI_COMPUTE_SHADER
-	g_outUav[svDispatchThreadId] = RVec4(outColor, ssrAttenuation);
+	g_storageTex[svDispatchThreadId] = RVec4(outColor, ssrAttenuation);
 #	else
 	return RVec4(outColor, ssrAttenuation);
 #	endif

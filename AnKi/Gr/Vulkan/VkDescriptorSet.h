@@ -192,7 +192,7 @@ public:
 		setBinding(binding, arrayIdx, b);
 	}
 
-	void bindConstantBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindUniformBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		ANKI_ASSERT(buff && range > 0);
 		Binding b;
@@ -204,7 +204,7 @@ public:
 		setBinding(binding, arrayIdx, b);
 	}
 
-	void bindUavBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindStorageBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		ANKI_ASSERT(buff && range > 0);
 		Binding b;
@@ -216,7 +216,7 @@ public:
 		setBinding(binding, arrayIdx, b);
 	}
 
-	void bindReadOnlyTextureBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range, Format fmt)
+	void bindReadOnlyTexelBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range, Format fmt)
 	{
 		ANKI_ASSERT(buff && range > 0);
 		Binding b;
@@ -226,7 +226,7 @@ public:
 		setBinding(binding, arrayIdx, b);
 	}
 
-	void bindUavTexture(U32 binding, U32 arrayIdx, const TextureView* texView)
+	void bindStorageTexture(U32 binding, U32 arrayIdx, const TextureView* texView)
 	{
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);

@@ -118,7 +118,7 @@ Error ProbeReflections::initIrradiance()
 	// Create buff
 	{
 		BufferInitInfo init;
-		init.m_usage = BufferUsageBit::kAllUav;
+		init.m_usage = BufferUsageBit::kAllStorage;
 		init.m_size = 6 * sizeof(Vec4);
 		m_irradiance.m_diceValuesBuff = GrManager::getSingleton().newBuffer(init);
 	}
@@ -396,7 +396,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: light shading", f));
 			pass.setFramebufferInfo(fbDescr, {probeTexture});
 
-			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
+			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
 			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(TextureSurfaceInfo(0, 0, f, 0)));
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
@@ -443,7 +443,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowMapRt;
 				}
 				dsInfo.m_skyLutRenderTarget = getRenderer().getSky().getSkyLutRt();
-				dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstsBuffer;
+				dsInfo.m_globalRendererConsts = rctx.m_globalRenderingUniformsBuffer;
 				dsInfo.m_renderpassContext = &rgraphCtx;
 
 				m_lightShading.m_deferred.drawLights(dsInfo);
@@ -457,7 +457,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		pass.newTextureDependency(probeTexture, TextureUsageBit::kSampledCompute);
 
-		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kUavComputeWrite);
+		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeWrite);
 
 		pass.setWork([this, probeTexture](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
@@ -470,7 +470,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			rgraphCtx.bindColorTexture(0, 1, probeTexture);
 
-			cmdb.bindUavBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+			cmdb.bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});
@@ -485,9 +485,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledCompute);
 		}
 
-		pass.newTextureDependency(probeTexture, TextureUsageBit::kUavComputeRead | TextureUsageBit::kUavComputeWrite);
+		pass.newTextureDependency(probeTexture, TextureUsageBit::kStorageComputeRead | TextureUsageBit::kStorageComputeWrite);
 
-		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kUavComputeRead);
+		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeRead);
 
 		pass.setWork([this, gbufferColorRts, probeTexture](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
@@ -504,14 +504,14 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				rgraphCtx.bindColorTexture(0, 1, gbufferColorRts[i], i);
 			}
 
-			cmdb.bindUavBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+			cmdb.bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
 
 			for(U8 f = 0; f < 6; ++f)
 			{
 				TextureSubresourceInfo subresource;
 				subresource.m_faceCount = 1;
 				subresource.m_firstFace = f;
-				rgraphCtx.bindUavTexture(0, 3, probeTexture, subresource, f);
+				rgraphCtx.bindStorageTexture(0, 3, probeTexture, subresource, f);
 			}
 
 			dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);

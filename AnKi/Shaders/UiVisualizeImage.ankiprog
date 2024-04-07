@@ -7,14 +7,14 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-struct Constants
+struct Uniforms
 {
 	Vec4 m_transform; // x: x scale, y: y scale, z: x transl, w: y transl
 	Vec4 m_colorScale;
 	Vec4 m_depth; // Used in 3D textures.
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 
 struct VertIn
 {
@@ -39,7 +39,7 @@ VertOut main(VertIn input)
 	output.m_uv = input.m_uv;
 	output.m_color = input.m_color;
 
-	const Vec2 pos = g_consts.m_transform.xy * input.m_position + g_consts.m_transform.zw;
+	const Vec2 pos = g_unis.m_transform.xy * input.m_position + g_unis.m_transform.zw;
 	output.m_svPosition = Vec4(pos, 0.0, 1.0);
 
 	return output;
@@ -60,11 +60,11 @@ RVec4 main(VertOut input) : SV_TARGET0
 #if TEXTURE_TYPE == 0
 	const RVec4 rgba = g_tex2d.Sample(g_trilinearRepeatSampler, input.m_uv);
 #else
-	const RVec4 rgba = g_tex3d.Sample(g_trilinearRepeatSampler, Vec3(input.m_uv, g_consts.m_depth.x));
+	const RVec4 rgba = g_tex3d.Sample(g_trilinearRepeatSampler, Vec3(input.m_uv, g_unis.m_depth.x));
 #endif
-	RVec3 outColor = input.m_color.rgb * rgba.rgb * g_consts.m_colorScale.rgb;
+	RVec3 outColor = input.m_color.rgb * rgba.rgb * g_unis.m_colorScale.rgb;
 
-	if(g_consts.m_colorScale.a == 1.0)
+	if(g_unis.m_colorScale.a == 1.0)
 	{
 		// Draw a pattern to visualize alpha
 		F32 alphaPattern = ((U32(input.m_svPosition.x) / 16u) & 1u) == 1u ? 1.0 : 0.75;

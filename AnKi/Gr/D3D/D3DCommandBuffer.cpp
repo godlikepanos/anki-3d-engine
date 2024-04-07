@@ -137,17 +137,17 @@ void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arra
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindConstantBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindUavBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindUavTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
+void CommandBuffer::bindStorageTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -157,7 +157,7 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, Acceleration
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindReadOnlyTextureBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
+void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }

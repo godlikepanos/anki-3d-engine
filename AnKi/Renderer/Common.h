@@ -87,7 +87,7 @@ public:
 
 	Array<Mat4, kMaxShadowCascades> m_dirLightTextureMatrices;
 
-	BufferOffsetRange m_globalRenderingConstsBuffer;
+	BufferOffsetRange m_globalRenderingUniformsBuffer;
 
 	RenderingContext(StackMemoryPool* pool)
 		: m_renderGraphDescr(pool)

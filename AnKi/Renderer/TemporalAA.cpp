@@ -34,7 +34,7 @@ Error TemporalAA::initInternal()
 	for(U32 i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
+		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kStorageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
@@ -85,8 +85,8 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");
 
-		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kUavComputeWrite);
-		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kUavComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kStorageComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kStorageComputeWrite);
 
 		readUsage = TextureUsageBit::kSampledCompute;
 
@@ -120,12 +120,12 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
 		rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
 		rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindUavTexture(0, 4, getRenderer().getTonemapping().getRt());
+		rgraphCtx.bindStorageTexture(0, 4, getRenderer().getTonemapping().getRt());
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindUavTexture(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
-			rgraphCtx.bindUavTexture(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
+			rgraphCtx.bindStorageTexture(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
+			rgraphCtx.bindStorageTexture(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}

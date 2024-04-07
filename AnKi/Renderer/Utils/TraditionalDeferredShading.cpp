@@ -62,7 +62,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
-		TraditionalDeferredSkyboxConstants unis = {};
+		TraditionalDeferredSkyboxUniforms unis = {};
 		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
 		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
 		unis.m_scale = skyc->getImageScale();
@@ -83,7 +83,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			rgraphCtx.bindColorTexture(0, 3, info.m_skyLutRenderTarget);
 		}
 
-		cmdb.bindConstantBuffer(0, 4, info.m_globalRendererConsts);
+		cmdb.bindUniformBuffer(0, 4, info.m_globalRendererConsts);
 
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
@@ -92,7 +92,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Light shading
 	{
-		TraditionalDeferredShadingConstants* unis = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
+		TraditionalDeferredShadingUniforms* unis = allocateAndBindConstants<TraditionalDeferredShadingUniforms>(cmdb, 0, 0);
 
 		unis->m_invViewProjMat = info.m_invViewProjectionMatrix;
 		unis->m_cameraPos = info.m_cameraPosWSpace.xyz();
@@ -103,15 +103,15 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			unis->m_dirLight.m_lightMatrix = info.m_dirLightMatrix;
 		}
 
-		cmdb.bindUavBuffer(0, 1, info.m_visibleLightsBuffer);
+		cmdb.bindStorageBuffer(0, 1, info.m_visibleLightsBuffer);
 		if(GpuSceneArrays::Light::getSingleton().getElementCount() > 0)
 		{
-			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
 		}
 		else
 		{
 			// Set something random
-			cmdb.bindUavBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
 		}
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
@@ -134,7 +134,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 			rgraphCtx.bindTexture(0, 9, info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresourceInfo);
 		}
 
-		cmdb.bindConstantBuffer(0, 10, info.m_globalRendererConsts);
+		cmdb.bindUniformBuffer(0, 10, info.m_globalRendererConsts);
 
 		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular].get());
 

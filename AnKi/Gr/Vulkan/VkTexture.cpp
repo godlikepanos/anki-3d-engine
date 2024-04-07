@@ -348,51 +348,51 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 	const Bool depthStencil = !!m_aspect;
 	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
 
-	if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kUavGeometryRead)))
+	if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kStorageGeometryRead)))
 	{
 		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavGeometryWrite))
+	if(!!(usage & TextureUsageBit::kStorageGeometryWrite))
 	{
 		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kUavFragmentRead)))
+	if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kStorageFragmentRead)))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavFragmentWrite))
+	if(!!(usage & TextureUsageBit::kStorageFragmentWrite))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kUavComputeRead)))
+	if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeRead)))
 	{
 		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavComputeWrite))
+	if(!!(usage & TextureUsageBit::kStorageComputeWrite))
 	{
 		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kUavTraceRaysRead)) && rt)
+	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kStorageTraceRaysRead)) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavTraceRaysWrite) && rt)
+	if(!!(usage & TextureUsageBit::kStorageTraceRaysWrite) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
@@ -520,7 +520,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 		// SRI
 		out = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 	}
-	else if(!(usage & ~TextureUsageBit::kAllUav))
+	else if(!(usage & ~TextureUsageBit::kAllStorage))
 	{
 		// Only image load/store
 		out = VK_IMAGE_LAYOUT_GENERAL;

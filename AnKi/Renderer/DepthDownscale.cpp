@@ -60,7 +60,7 @@ Error DepthDownscale::initInternal()
 	{
 		BufferInitInfo buffInit("Depth downscale counter buffer");
 		buffInit.m_size = sizeof(U32);
-		buffInit.m_usage = BufferUsageBit::kUavComputeWrite | BufferUsageBit::kTransferDestination;
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
 		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		// Zero it
@@ -123,7 +123,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		{
 			TextureSubresourceInfo subresource;
 			subresource.m_firstMipmap = mip;
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite, subresource);
+			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite, subresource);
 		}
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
@@ -137,7 +137,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			varAU4(rectInfo) = initAU4(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
 
-			DepthDownscaleConstants pc;
+			DepthDownscaleUniforms pc;
 			pc.m_threadgroupCount = numWorkGroupsAndMips[0];
 			pc.m_mipmapCount = numWorkGroupsAndMips[1];
 			pc.m_srcTexSizeOverOne = 1.0f / Vec2(getRenderer().getInternalResolution());
@@ -156,10 +156,10 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 					subresource.m_firstMipmap = 0; // Put something random
 				}
 
-				rgraphCtx.bindUavTexture(0, 0, m_runCtx.m_rt, subresource, mip);
+				rgraphCtx.bindStorageTexture(0, 0, m_runCtx.m_rt, subresource, mip);
 			}
 
-			cmdb.bindUavBuffer(0, 1, m_counterBuffer.get(), 0, sizeof(U32));
+			cmdb.bindStorageBuffer(0, 1, m_counterBuffer.get(), 0, sizeof(U32));
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));

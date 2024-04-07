@@ -103,7 +103,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyTransmittanceLut");
 
-		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kUavComputeWrite);
+		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([this, transmittanceLutRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SkyTransmittanceLut);
@@ -112,7 +112,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_transmittanceLutGrProg.get());
 
-			rgraphCtx.bindUavTexture(0, 0, transmittanceLutRt);
+			rgraphCtx.bindStorageTexture(0, 0, transmittanceLutRt);
 
 			dispatchPPCompute(cmdb, 8, 8, kTransmittanceLutSize.x(), kTransmittanceLutSize.y());
 		});
@@ -124,7 +124,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyMultipleScatteringLut");
 
 		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(multipleScatteringLutRt, TextureUsageBit::kUavComputeWrite);
+		rpass.newTextureDependency(multipleScatteringLutRt, TextureUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([this, transmittanceLutRt, multipleScatteringLutRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SkyMultipleScatteringLut);
@@ -135,7 +135,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindUavTexture(0, 2, multipleScatteringLutRt);
+			rgraphCtx.bindStorageTexture(0, 2, multipleScatteringLutRt);
 
 			dispatchPPCompute(cmdb, 8, 8, kMultipleScatteringLutSize.x(), kMultipleScatteringLutSize.y());
 		});
@@ -148,7 +148,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(multipleScatteringLutRt, TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_runCtx.m_skyLutRt, TextureUsageBit::kUavComputeWrite);
+		rpass.newTextureDependency(m_runCtx.m_skyLutRt, TextureUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([this, transmittanceLutRt, multipleScatteringLutRt, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(SkyLut);
@@ -160,8 +160,8 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
 			rgraphCtx.bindColorTexture(0, 1, multipleScatteringLutRt);
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_skyLutRt);
-			cmdb.bindConstantBuffer(0, 4, ctx.m_globalRenderingConstsBuffer);
+			rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_skyLutRt);
+			cmdb.bindUniformBuffer(0, 4, ctx.m_globalRenderingUniformsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x(), kSkyLutSize.y());
 		});
@@ -181,7 +181,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_computeSunColorGrProg.get());
 
 			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
-			cmdb.bindUavBuffer(0, 1, ctx.m_globalRenderingConstsBuffer);
+			cmdb.bindStorageBuffer(0, 1, ctx.m_globalRenderingUniformsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});

@@ -18,13 +18,13 @@
 [[vk::binding(3)]] Texture2D<Vec4> g_gbuffer2Tex;
 [[vk::binding(4)]] Texture2D<Vec4> g_momentsTex;
 [[vk::binding(5)]] Texture2D<Vec4> g_historyLengthTex;
-[[vk::binding(6)]] RWTexture2D<Vec4> g_outUav;
+[[vk::binding(6)]] RWTexture2D<Vec4> g_storageTex;
 
-[[vk::push_constant]] ConstantBuffer<RtShadowsDenoiseConstants> g_consts;
+[[vk::push_constant]] ConstantBuffer<RtShadowsDenoiseUniforms> g_unis;
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {
-	const Vec4 worldPos4 = mul(g_consts.m_invViewProjMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_unis.m_invViewProjMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	return worldPos;
 }
@@ -55,7 +55,7 @@ F32 computeVarianceCenter(Vec2 uv)
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	Vec2 outImageSize;
-	g_outUav.GetDimensions(outImageSize.x, outImageSize.y);
+	g_storageTex.GetDimensions(outImageSize.x, outImageSize.y);
 	if(any(svDispatchThreadId.xy >= UVec2(outImageSize)))
 	{
 		return;
@@ -67,7 +67,7 @@ F32 computeVarianceCenter(Vec2 uv)
 	const F32 depthCenter = g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
 	if(depthCenter == 1.0)
 	{
-		g_outUav[svDispatchThreadId.xy] = 0.0;
+		g_storageTex[svDispatchThreadId.xy] = 0.0;
 		return;
 	}
 
@@ -82,12 +82,12 @@ F32 computeVarianceCenter(Vec2 uv)
 	if(historyLength < 2.0)
 	{
 		// Worst case
-		sampleCount = g_consts.m_maxSampleCount;
+		sampleCount = g_unis.m_maxSampleCount;
 	}
 	else if(historyLength > 4.0 && varianceCenter < 0.0001)
 	{
 		// Best case
-		sampleCount = g_consts.m_minSampleCount;
+		sampleCount = g_unis.m_minSampleCount;
 	}
 	else
 	{
@@ -96,7 +96,7 @@ F32 computeVarianceCenter(Vec2 uv)
 		F32 blur = varianceCenter * 100.0;
 		blur = min(1.0, blur);
 
-		const F32 sampleCountf = lerp(F32(g_consts.m_minSampleCount), F32(g_consts.m_maxSampleCount), blur);
+		const F32 sampleCountf = lerp(F32(g_unis.m_minSampleCount), F32(g_unis.m_maxSampleCount), blur);
 
 		sampleCount = U32(sampleCountf);
 	}
@@ -133,7 +133,7 @@ F32 computeVarianceCenter(Vec2 uv)
 
 	// Normalize and write
 	shadowFactor /= weight;
-	g_outUav[svDispatchThreadId.xy] = shadowFactor;
+	g_storageTex[svDispatchThreadId.xy] = shadowFactor;
 }
 
 #pragma anki technique_end comp

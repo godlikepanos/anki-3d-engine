@@ -276,12 +276,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 
 	const Bool rt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
 
-	if(!!(usageMask & BufferUsageBit::kAllConstant))
+	if(!!(usageMask & BufferUsageBit::kAllUniform))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::kAllUav))
+	if(!!(usageMask & BufferUsageBit::kAllStorage))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
@@ -311,12 +311,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::kAllTexture & BufferUsageBit::kAllRead)))
+	if(!!(usageMask & (BufferUsageBit::kAllTexel & BufferUsageBit::kAllRead)))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::kAllTexture & BufferUsageBit::kAllWrite)))
+	if(!!(usageMask & (BufferUsageBit::kAllTexel & BufferUsageBit::kAllWrite)))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
 	}
@@ -409,7 +409,7 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 		out |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::kAllUav))
+	if(!!(ak & TextureUsageBit::kAllStorage))
 	{
 		out |= VK_IMAGE_USAGE_STORAGE_BIT;
 	}

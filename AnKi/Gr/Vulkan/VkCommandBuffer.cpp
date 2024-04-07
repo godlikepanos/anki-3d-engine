@@ -279,25 +279,25 @@ void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arra
 	self.m_microCmdb->pushObjectRef(sampler);
 }
 
-void CommandBuffer::bindConstantBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindConstantBuffer(binding, arrayIdx, buff, offset, range);
+	self.m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff, offset, range);
 }
 
-void CommandBuffer::bindUavBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindUavBuffer(binding, arrayIdx, buff, offset, range);
+	self.m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff, offset, range);
 }
 
-void CommandBuffer::bindUavTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
+void CommandBuffer::bindStorageTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindUavTexture(binding, arrayIdx, img);
+	self.m_dsetState[set].bindStorageTexture(binding, arrayIdx, img);
 
 	const Bool isPresentable = !!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage() & TextureUsageBit::kPresent);
 	if(isPresentable)
@@ -314,11 +314,11 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, Acceleration
 	self.m_microCmdb->pushObjectRef(as);
 }
 
-void CommandBuffer::bindReadOnlyTextureBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
+void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindReadOnlyTextureBuffer(binding, arrayIdx, buff, offset, range, fmt);
+	self.m_dsetState[set].bindReadOnlyTexelBuffer(binding, arrayIdx, buff, offset, range, fmt);
 }
 
 void CommandBuffer::bindAllBindless(U32 set)

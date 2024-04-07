@@ -16,9 +16,9 @@
 [[vk::binding(2)]] Texture2D<Vec4> g_shadowsTex;
 [[vk::binding(3)]] Texture2D<Vec4> g_varianceTex;
 
-[[vk::binding(4)]] RWTexture2D<UVec4> g_shadowUav;
+[[vk::binding(4)]] RWTexture2D<UVec4> g_shadowStorageTex;
 #if !LAST_PASS
-[[vk::binding(5)]] RWTexture2D<Vec4> g_varianceUav;
+[[vk::binding(5)]] RWTexture2D<Vec4> g_varianceStorageTex;
 #endif
 
 [[vk::push_constant]] ConstantBuffer<Mat4> g_invProjMat;
@@ -64,7 +64,7 @@ F32 computeVarianceCenter(Vec2 uv)
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	Vec2 outUavSize;
-	g_shadowUav.GetDimensions(outUavSize.x, outUavSize.y);
+	g_shadowStorageTex.GetDimensions(outUavSize.x, outUavSize.y);
 
 	if(any(Vec2(svDispatchThreadId.xy) >= outUavSize))
 	{
@@ -77,9 +77,9 @@ F32 computeVarianceCenter(Vec2 uv)
 	if(depth == 1.0)
 	{
 		// Sky
-		g_shadowUav[svDispatchThreadId.xy] = 0.0f;
+		g_shadowStorageTex[svDispatchThreadId.xy] = 0.0f;
 #if !LAST_PASS
-		g_varianceUav[svDispatchThreadId.xy] = 0.0f;
+		g_varianceStorageTex[svDispatchThreadId.xy] = 0.0f;
 #endif
 		return;
 	}
@@ -143,9 +143,9 @@ F32 computeVarianceCenter(Vec2 uv)
 	sumVariance /= (sumWeight * sumWeight);
 
 	// Store
-	g_shadowUav[svDispatchThreadId.xy] = sumShadowFactor;
+	g_shadowStorageTex[svDispatchThreadId.xy] = sumShadowFactor;
 #if !LAST_PASS
-	g_varianceUav[svDispatchThreadId.xy] = Vec4(sumVariance, 0.0, 0.0, 0.0);
+	g_varianceStorageTex[svDispatchThreadId.xy] = Vec4(sumVariance, 0.0, 0.0, 0.0);
 #endif
 }
 #pragma anki technique_end comp

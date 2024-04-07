@@ -27,7 +27,7 @@
 [[vk::binding(8)]] Texture2D<RVec4> g_dbgOutlineRt;
 #endif
 
-struct PushConstants
+struct Uniforms
 {
 	U32 m_motionBlurSamples;
 	F32 m_filmGrainStrength;
@@ -35,7 +35,7 @@ struct PushConstants
 	U32 m_padding;
 };
 
-[[vk::push_constant]] ConstantBuffer<PushConstants> g_pc;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 
 RVec3 colorGrading(RVec3 color)
 {
@@ -54,9 +54,9 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	RVec3 outColor;
 
-	if(g_pc.m_motionBlurSamples > 0u)
+	if(g_unis.m_motionBlurSamples > 0u)
 	{
-		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, g_linearAnyClampSampler, uv, g_pc.m_motionBlurSamples);
+		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, g_linearAnyClampSampler, uv, g_unis.m_motionBlurSamples);
 	}
 	else
 	{
@@ -72,7 +72,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 #if FILM_GRAIN
 	const F32 dt = 1.0;
-	outColor = filmGrain<F32>(outColor, uv, g_pc.m_filmGrainStrength, F32(g_pc.m_frameCount % 0xFFFFu) * dt);
+	outColor = filmGrain<F32>(outColor, uv, g_unis.m_filmGrainStrength, F32(g_unis.m_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED

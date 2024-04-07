@@ -50,7 +50,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texInit.m_height = m_cellCounts.y();
 		texInit.m_depth = m_cellCounts.z();
 		texInit.m_type = TextureType::k3D;
-		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kUavComputeWrite | TextureUsageBit::kUavComputeRead;
+		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kStorageComputeRead;
 
 		m_volTex = GrManager::getSingleton().newTexture(texInit);
 
@@ -72,12 +72,12 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		TextureBarrierInfo texBarrier;
 		texBarrier.m_previousUsage = TextureUsageBit::kNone;
-		texBarrier.m_nextUsage = TextureUsageBit::kUavComputeWrite;
+		texBarrier.m_nextUsage = TextureUsageBit::kStorageComputeWrite;
 		texBarrier.m_texture = m_volTex.get();
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
 		cmdb->bindShaderProgram(&variant->getProgram());
-		cmdb->bindUavTexture(0, 0, m_volView.get());
+		cmdb->bindStorageTexture(0, 0, m_volView.get());
 
 		const Vec4 clearColor(0.0f);
 		cmdb->setPushConstants(&clearColor, sizeof(clearColor));
@@ -88,7 +88,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		wgSize.z() = (8 - 1 + m_volTex->getDepth()) / 8;
 		cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
-		texBarrier.m_previousUsage = TextureUsageBit::kUavComputeWrite;
+		texBarrier.m_previousUsage = TextureUsageBit::kStorageComputeWrite;
 		texBarrier.m_nextUsage = m_volTex->getTextureUsage();
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 

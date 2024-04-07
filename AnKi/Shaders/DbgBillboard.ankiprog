@@ -13,13 +13,13 @@
 constexpr F32 kAlpha = 1.0f;
 constexpr F32 kBillboardScale = 0.25f;
 
-struct Constants
+struct Uniforms
 {
 	Mat4 m_viewProjMat;
 	Mat3x4 m_camTrf;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 typedef LightUnion ClusteredType;
@@ -85,9 +85,9 @@ VertOut main(VertIn input)
 #endif
 
 		// Rotate towards the camera and apply translation
-		const Vec3 worldPos = mul(g_consts.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + localPos;
+		const Vec3 worldPos = mul(g_unis.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + localPos;
 
-		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(worldPos, 1.0));
+		output.m_svPosition = mul(g_unis.m_viewProjMat, Vec4(worldPos, 1.0));
 	}
 	else
 	{

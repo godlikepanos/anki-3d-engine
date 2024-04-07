@@ -18,7 +18,7 @@
 [[vk::binding(4)]] RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs;
 [[vk::binding(5)]] RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs;
 
-struct Constants
+struct Uniforms
 {
 	U32 m_lightIndex;
 	U32 m_padding0;
@@ -26,7 +26,7 @@ struct Constants
 	U32 m_padding2;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 
 groupshared U32 s_renderLight;
 
@@ -34,7 +34,7 @@ groupshared U32 s_renderLight;
 {
 	if(svGroupIndex == 0)
 	{
-		const GpuSceneLight light = g_lights[g_consts.m_lightIndex];
+		const GpuSceneLight light = g_lights[g_unis.m_lightIndex];
 		const U32 crntHash = g_lightHashes[light.m_visibleRenderablesHashIndex].m_hash;
 		s_renderLight = crntHash != g_hash[0].m_renderablesHash || g_hash[0].m_containsDeformable == 1;
 

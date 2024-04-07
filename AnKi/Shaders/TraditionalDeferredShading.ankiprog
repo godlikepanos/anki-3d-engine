@@ -19,7 +19,7 @@
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-[[vk::binding(0)]] ConstantBuffer<TraditionalDeferredShadingConstants> g_consts;
+[[vk::binding(0)]] ConstantBuffer<TraditionalDeferredShadingUniforms> g_unis;
 
 [[vk::binding(1)]] StructuredBuffer<U32> g_visibleLightIds;
 [[vk::binding(2)]] StructuredBuffer<GpuSceneLight> g_lights;
@@ -34,7 +34,7 @@
 [[vk::binding(8)]] SamplerComparisonState g_shadowMapSampler;
 [[vk::binding(9)]] Texture2D<RVec4> g_shadowMap;
 
-[[vk::binding(10)]] ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts;
+[[vk::binding(10)]] ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts;
 
 RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
@@ -50,26 +50,26 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 							g_gbufferTex2.SampleLevel(g_gbufferSampler, uv, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin * 8.0);
 
-	const Vec4 worldPos4 = mul(g_consts.m_invViewProjMat, Vec4(uvToNdc(uv), depth, 1.0));
+	const Vec4 worldPos4 = mul(g_unis.m_invViewProjMat, Vec4(uvToNdc(uv), depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Compute diff
 	const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
 
 	Vec3 outColor = gbuffer.m_emission;
-	const Vec3 viewDir = normalize(g_consts.m_cameraPos - worldPos);
+	const Vec3 viewDir = normalize(g_unis.m_cameraPos - worldPos);
 	ANKI_MAYBE_UNUSED(viewDir);
 
 	// Dir light
 	if(g_globalRendererConsts.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
 	{
-		const F32 dist = length(g_consts.m_cameraPos - worldPos);
+		const F32 dist = length(g_unis.m_cameraPos - worldPos);
 		RF32 shadowFactor;
-		if(dist < g_consts.m_dirLight.m_effectiveShadowDistance)
+		if(dist < g_unis.m_dirLight.m_effectiveShadowDistance)
 		{
 			// Acceptable distance
 
-			shadowFactor = computeShadowFactorDirLight(g_consts.m_dirLight.m_lightMatrix, worldPos, g_shadowMap, g_shadowMapSampler);
+			shadowFactor = computeShadowFactorDirLight(g_unis.m_dirLight.m_lightMatrix, worldPos, g_shadowMap, g_shadowMapSampler);
 		}
 		else
 		{

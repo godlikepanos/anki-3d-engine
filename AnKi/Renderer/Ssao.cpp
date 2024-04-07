@@ -39,7 +39,7 @@ Error Ssao::initInternal()
 
 	{
 		TextureUsageBit usage = TextureUsageBit::kAllSampled;
-		usage |= (preferCompute) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
+		usage |= (preferCompute) ? TextureUsageBit::kStorageComputeWrite : TextureUsageBit::kFramebufferWrite;
 		TextureInitInfo texInit =
 			getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8G8B8A8_Snorm, usage, "Bent normals + SSAO #1");
 		m_tex[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
@@ -100,7 +100,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 	if(preferCompute)
 	{
 		readUsage = TextureUsageBit::kSampledCompute;
-		writeUsage = TextureUsageBit::kUavComputeWrite;
+		writeUsage = TextureUsageBit::kStorageComputeWrite;
 	}
 	else
 	{
@@ -141,7 +141,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			SsaoConstants consts;
+			SsaoUniforms consts;
 			consts.m_radius = g_ssaoRadiusCVar.get();
 			consts.m_sampleCount = g_ssaoSampleCountCVar.get();
 			consts.m_viewportSizef = Vec2(rez);
@@ -157,7 +157,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindUavTexture(0, 5, finalRt);
+				rgraphCtx.bindStorageTexture(0, 5, finalRt);
 
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 			}
@@ -201,14 +201,14 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			SsaoSpatialDenoiseConstants consts;
+			SsaoSpatialDenoiseUniforms consts;
 			computeLinearizeDepthOptimal(ctx.m_cameraNear, ctx.m_cameraFar, consts.m_linearizeDepthParams.x(), consts.m_linearizeDepthParams.y());
 			consts.m_viewToWorldMat = ctx.m_matrices.m_cameraTransform;
 			cmdb.setPushConstants(&consts, sizeof(consts));
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindUavTexture(0, 3, bentNormalsAndSsaoTempRt);
+				rgraphCtx.bindStorageTexture(0, 3, bentNormalsAndSsaoTempRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 			}
 			else
@@ -254,7 +254,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindUavTexture(0, 4, finalRt);
+				rgraphCtx.bindStorageTexture(0, 4, finalRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 			}
 			else

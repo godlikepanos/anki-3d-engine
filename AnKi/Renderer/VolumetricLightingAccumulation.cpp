@@ -48,7 +48,7 @@ Error VolumetricLightingAccumulation::init()
 
 	// Create RTs
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,
-																		 TextureUsageBit::kUavComputeRead | TextureUsageBit::kUavComputeWrite
+																		 TextureUsageBit::kStorageComputeRead | TextureUsageBit::kStorageComputeWrite
 																			 | TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute,
 																		 "VolLight");
 	texinit.m_depth = m_volumeSize[2];
@@ -72,17 +72,17 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 
 	pass.newTextureDependency(m_runCtx.m_rts[0], TextureUsageBit::kSampledCompute);
-	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kUavComputeWrite);
+	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kStorageComputeWrite);
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavComputeRead);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-							 BufferUsageBit::kUavComputeRead);
+							 BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(
 		getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe),
-		BufferUsageBit::kUavComputeRead);
+		BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kFogDensityVolume),
-							 BufferUsageBit::kUavComputeRead);
+							 BufferUsageBit::kStorageComputeRead);
 
 	if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
 	{
@@ -100,24 +100,25 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-		rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
+		rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
 		cmdb.bindTexture(0, 4, &m_noiseImage->getTextureView());
 
 		rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
 
-		cmdb.bindConstantBuffer(0, 6, ctx.m_globalRenderingConstsBuffer);
-		cmdb.bindUavBuffer(0, 7, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindUniformBuffer(0, 6, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindStorageBuffer(0, 7, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		rgraphCtx.bindColorTexture(0, 8, getRenderer().getShadowMapping().getShadowmapRt());
-		cmdb.bindUavBuffer(0, 9, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-		cmdb.bindUavBuffer(0, 10, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
-		cmdb.bindUavBuffer(0, 11, getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindStorageBuffer(0, 9,
+							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		cmdb.bindStorageBuffer(0, 10, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
+		cmdb.bindStorageBuffer(0, 11, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindAllBindless(1);
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 
-		VolumetricLightingConstants unis;
+		VolumetricLightingUniforms unis;
 		if(!sky)
 		{
 			unis.m_minHeight = 0.0f;

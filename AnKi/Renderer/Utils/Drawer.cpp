@@ -31,7 +31,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 {
 	// Allocate, set and bind global uniforms
 	{
-		MaterialGlobalConstants* globalUniforms;
+		MaterialGlobalUniforms* globalUniforms;
 		const RebarAllocation globalUniformsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUniforms);
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
@@ -46,32 +46,33 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 
 		globalUniforms->m_enableHzbTesting = args.m_hzbTexture != nullptr;
 
-		cmdb.bindConstantBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalConstants), globalUniformsToken);
+		cmdb.bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms), globalUniformsToken);
 	}
 
 	// More globals
 	cmdb.bindAllBindless(U32(MaterialSet::kBindless));
 	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	cmdb.bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-								   &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
+	cmdb.bindReadOnlyTexelBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+								 &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletBoundingVolumes),
-					   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGeometryDescriptors),
-					   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
+	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletBoundingVolumes),
+						   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
+	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGeometryDescriptors),
+						   UnifiedGeometryBuffer::getSingleton().getBufferOffsetRange());
 	if(args.m_mesh.m_meshletGroupInstancesBuffer.m_range)
 	{
-		cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGroups), args.m_mesh.m_meshletGroupInstancesBuffer);
+		cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGroups), args.m_mesh.m_meshletGroupInstancesBuffer);
 	}
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables),
-					   GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshLods), GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTransforms),
-					   GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
+	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables),
+						   GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
+	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshLods),
+						   GpuSceneArrays::MeshLod::getSingleton().getBufferOffsetRange());
+	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTransforms),
+						   GpuSceneArrays::Transform::getSingleton().getBufferOffsetRange());
 	cmdb.bindTexture(U32(MaterialSet::kGlobal), U32(MaterialBinding::kHzbTexture),
 					 (args.m_hzbTexture) ? args.m_hzbTexture : &getRenderer().getDummyTextureView2d());
 	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kNearestClampSampler), getRenderer().getSamplers().m_nearestNearestClamp.get());

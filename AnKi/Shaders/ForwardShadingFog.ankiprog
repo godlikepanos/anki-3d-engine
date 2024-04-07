@@ -6,7 +6,7 @@
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 
-#pragma anki struct AnKiLocalConstants
+#pragma anki struct AnKiLocalUniforms
 #pragma anki member RVec3 m_fogColor
 #pragma anki member RF32 m_fogAlphaScale
 #pragma anki member RF32 m_fogDistanceOfMaxThikness
@@ -22,7 +22,7 @@ struct VertOut
 {
 	Vec4 m_svPosition : SV_POSITION;
 	F32 m_zVSpace : ZVSPACE;
-	nointerpolation U32 m_constantsOffset : UNIFORMS;
+	nointerpolation U32 m_uniformsOffset : UNIFORMS;
 };
 
 #pragma anki technique_start vert Forward
@@ -37,12 +37,12 @@ VertOut main(VertIn input)
 	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
 
 	const Vec3 worldPos = mul(worldTransform, Vec4(vertex.m_position, 1.0));
-	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
+	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
 
-	const Vec3 viewPos = mul(g_globalConstants.m_viewTransform, Vec4(worldPos, 1.0));
+	const Vec3 viewPos = mul(g_globalUniforms.m_viewTransform, Vec4(worldPos, 1.0));
 	output.m_zVSpace = viewPos.z;
 
-	output.m_constantsOffset = renderable.m_constantsOffset;
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
 }
@@ -54,9 +54,9 @@ VertOut main(VertIn input)
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, input.m_uniformsOffset);
 
-	fog(localConstants.m_fogColor, localConstants.m_fogAlphaScale, localConstants.m_fogDistanceOfMaxThikness, input.m_svPosition, input.m_zVSpace,
+	fog(localUniforms.m_fogColor, localUniforms.m_fogAlphaScale, localUniforms.m_fogDistanceOfMaxThikness, input.m_svPosition, input.m_zVSpace,
 		output);
 
 	return output;

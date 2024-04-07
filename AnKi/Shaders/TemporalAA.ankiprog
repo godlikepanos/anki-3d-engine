@@ -23,8 +23,8 @@ constexpr U32 kTonemappingBinding = 4u;
 #	include <AnKi/Shaders/TonemappingResources.hlsl>
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(5)]] RWTexture2D<RVec4> g_uavTex;
-[[vk::binding(6)]] RWTexture2D<RVec4> g_tonemappedUavTex;
+[[vk::binding(5)]] RWTexture2D<RVec4> g_storageTex;
+[[vk::binding(6)]] RWTexture2D<RVec4> g_tonemappedStorageTex;
 #	else
 struct FragOut
 {
@@ -48,10 +48,10 @@ FragOut main(Vec2 uv : TEXCOORD)
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	Vec2 outUavSize;
-	g_uavTex.GetDimensions(outUavSize.x, outUavSize.y);
+	Vec2 outStorageTexSize;
+	g_storageTex.GetDimensions(outStorageTexSize.x, outStorageTexSize.y);
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / outUavSize;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / outStorageTexSize;
 #	endif
 
 	// Get prev uv coords
@@ -106,8 +106,8 @@ FragOut main(Vec2 uv : TEXCOORD)
 #	endif
 	const Vec3 tonemapped = linearToSRgb(tonemap<F32>(outColor, readExposureAndAverageLuminance().x));
 #	if ANKI_COMPUTE_SHADER
-	g_uavTex[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
-	g_tonemappedUavTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
+	g_storageTex[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
+	g_tonemappedStorageTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
 #	else
 	FragOut output;
 	output.m_color = outColor;

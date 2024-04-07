@@ -91,7 +91,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 
 			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kUavComputeWrite);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kStorageComputeWrite);
 
 			prpass = &rpass;
 		}
@@ -120,11 +120,11 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 consts(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
 			cmdb.setPushConstants(&consts, sizeof(consts));
 
-			rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
+			rgraphCtx.bindStorageTexture(0, 2, getRenderer().getTonemapping().getRt());
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
+				rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
 
 				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_rtDescr.m_width, m_exposure.m_rtDescr.m_height);
 			}
@@ -149,7 +149,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
 
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute);
-			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kUavComputeWrite);
+			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kStorageComputeWrite);
 
 			prpass = &rpass;
 		}
@@ -175,7 +175,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
+				rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 
 				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_rtDescr.m_width, m_upscale.m_rtDescr.m_height);
 			}

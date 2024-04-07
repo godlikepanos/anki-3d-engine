@@ -60,7 +60,7 @@ Error GBuffer::initInternal()
 	}
 
 	{
-		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kUavComputeWrite | TextureUsageBit::kSampledGeometry;
+		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kSampledGeometry;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar.get(), g_hzbHeightCVar.get(), Format::kR32_Sfloat, usage, "GBuffer HZB");
@@ -267,7 +267,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(m_runCtx.m_hzbRt, TextureUsageBit::kSampledGeometry);
 	}
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
 	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);

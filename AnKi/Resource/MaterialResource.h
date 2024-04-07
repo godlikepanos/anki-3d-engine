@@ -175,7 +175,7 @@ private:
 ///		</shaderProgram>
 ///
 ///		[<inputs>
-///			<input name="name in AnKiMaterialConstants struct" value="value(s)"/>
+///			<input name="name in AnKiMaterialUniforms struct" value="value(s)"/>
 ///		</inputs>]
 ///	</material>
 /// @endcode

@@ -38,7 +38,7 @@ Error DownscaleBlur::initInternal()
 	texinit.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
 	if(preferCompute)
 	{
-		texinit.m_usage |= TextureUsageBit::kUavComputeWrite;
+		texinit.m_usage |= TextureUsageBit::kStorageComputeWrite;
 	}
 	else
 	{
@@ -96,7 +96,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		const TextureUsageBit readUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kSampledCompute : TextureUsageBit::kSampledFragment;
-		const TextureUsageBit writeUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kUavComputeWrite : TextureUsageBit::kFramebufferWrite;
+		const TextureUsageBit writeUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kStorageComputeWrite : TextureUsageBit::kFramebufferWrite;
 
 		if(i > 0)
 		{
@@ -144,7 +144,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
 	}
 
-	rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
+	rgraphCtx.bindStorageTexture(0, 2, getRenderer().getTonemapping().getRt());
 
 	if(g_preferComputeCVar.get())
 	{
@@ -153,7 +153,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;
-		rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_rt, sampleSubresource);
+		rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_rt, sampleSubresource);
 
 		dispatchPPCompute(cmdb, 8, 8, vpWidth, vpHeight);
 	}

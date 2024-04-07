@@ -280,7 +280,7 @@ private:
 	void updatePipelineStats();
 #endif
 
-	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& unis);
+	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererUniforms& unis);
 };
 /// @}
 

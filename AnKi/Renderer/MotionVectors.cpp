@@ -55,7 +55,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("MotionVectors");
 
 		readUsage = TextureUsageBit::kSampledCompute;
-		writeUsage = TextureUsageBit::kUavComputeWrite;
+		writeUsage = TextureUsageBit::kStorageComputeWrite;
 		ppass = &pass;
 	}
 	else
@@ -78,14 +78,14 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 		rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(3));
 
-		class Constants
+		class Uniforms
 		{
 		public:
 			Mat4 m_currentViewProjMat;
 			Mat4 m_currentInvViewProjMat;
 			Mat4 m_prevViewProjMat;
 		} * pc;
-		pc = allocateAndBindConstants<Constants>(cmdb, 0, 3);
+		pc = allocateAndBindConstants<Uniforms>(cmdb, 0, 3);
 
 		pc->m_currentViewProjMat = ctx.m_matrices.m_viewProjection;
 		pc->m_currentInvViewProjMat = ctx.m_matrices.m_invertedViewProjection;
@@ -93,7 +93,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindUavTexture(0, 4, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
+			rgraphCtx.bindStorageTexture(0, 4, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
 		}
 
 		if(g_preferComputeCVar.get())

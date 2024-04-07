@@ -45,7 +45,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 	Vec3 outColor = Vec3(0.0, 0.0, 0.0);
 
 	// Find the cluster and then the light counts
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, svPosition.xyz);
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererUniforms, svPosition.xyz);
 
 	// Point lights
 	U32 idx = 0;
@@ -98,9 +98,9 @@ RVec3 computeLightColorLow(RVec3 diffCol, RVec3 worldPos, Vec4 svPosition)
 {
 	ANKI_MAYBE_UNUSED(worldPos);
 
-	const Vec2 uv = svPosition.xy / g_globalRendererConstants.m_renderingSize;
-	const F32 linearDepth = linearizeDepth(svPosition.z, g_globalRendererConstants.m_near, g_globalRendererConstants.m_far);
-	const F32 w = linearDepth * (F32(g_globalRendererConstants.m_zSplitCount) / F32(g_globalRendererConstants.m_lightVolumeLastZSplit + 1u));
+	const Vec2 uv = svPosition.xy / g_globalRendererUniforms.m_renderingSize;
+	const F32 linearDepth = linearizeDepth(svPosition.z, g_globalRendererUniforms.m_near, g_globalRendererUniforms.m_far);
+	const F32 w = linearDepth * (F32(g_globalRendererUniforms.m_zSplitCount) / F32(g_globalRendererUniforms.m_lightVolumeLastZSplit + 1u));
 	const Vec3 uvw = Vec3(uv, w);
 
 	const RVec3 light = g_lightVol.SampleLevel(g_linearAnyClampSampler, uvw, 0.0).rgb;
@@ -114,13 +114,13 @@ void particleAlpha(RVec4 color, RVec4 scaleColor, RVec4 biasColor, out FragOut o
 
 void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out FragOut output)
 {
-	const Vec2 screenSize = 1.0 / g_globalRendererConstants.m_renderingSize;
+	const Vec2 screenSize = 1.0 / g_globalRendererUniforms.m_renderingSize;
 
 	const Vec2 texCoords = svPosition * screenSize;
 	const F32 depth = g_gbufferDepthTex.Sample(g_linearAnyClampSampler, texCoords, 0.0).r;
 	F32 zFeatherFactor;
 
-	const Vec4 fragPosVspace4 = mul(g_globalRendererConstants.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
+	const Vec4 fragPosVspace4 = mul(g_globalRendererUniforms.m_matrices.m_invertedProjectionJitter, Vec4(Vec3(uvToNdc(texCoords), depth), 1.0));
 	const F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
 	const F32 diff = max(0.0, zVSpace - sceneZVspace);

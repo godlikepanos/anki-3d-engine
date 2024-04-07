@@ -203,16 +203,16 @@ public:
 	/// @param offset The base of the binding.
 	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindConstantBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
+	void bindUniformBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
 
 	/// Bind uniform buffer.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.
 	/// @param[in,out] buff The buffer to bind.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindConstantBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
+	void bindUniformBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
 	{
-		bindConstantBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
+		bindUniformBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
 	}
 
 	/// Bind storage buffer.
@@ -223,16 +223,16 @@ public:
 	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end
 	///              of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindUavBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
+	void bindStorageBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
 
 	/// Bind storage buffer.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.
 	/// @param[in,out] buff The buffer to bind.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindUavBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
+	void bindStorageBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
 	{
-		bindUavBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
+		bindStorageBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
 	}
 
 	/// Bind load/store image.
@@ -240,7 +240,7 @@ public:
 	/// @param binding The binding to bind to.
 	/// @param img The view to bind.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindUavTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx = 0);
+	void bindStorageTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx = 0);
 
 	/// Bind texture buffer.
 	/// @param set The set to bind to.
@@ -250,7 +250,7 @@ public:
 	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end of the buffer.
 	/// @param fmt The format of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindReadOnlyTextureBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx = 0);
+	void bindReadOnlyTexelBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx = 0);
 
 	/// Bind an acceleration structure.
 	/// @param set The set to bind to.

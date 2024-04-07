@@ -17,7 +17,7 @@ struct TraditionalDeferredShadingDirectionalLight
 	Mat4 m_lightMatrix;
 };
 
-struct TraditionalDeferredShadingConstants
+struct TraditionalDeferredShadingUniforms
 {
 	// Use these to get the correct face UVs
 	Vec2 m_inputTexUvScale;
@@ -31,7 +31,7 @@ struct TraditionalDeferredShadingConstants
 	TraditionalDeferredShadingDirectionalLight m_dirLight;
 };
 
-struct TraditionalDeferredSkyboxConstants
+struct TraditionalDeferredSkyboxUniforms
 {
 	RVec3 m_solidColor;
 	F32 m_padding1;

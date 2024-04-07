@@ -167,7 +167,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	{
 		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kUavComputeWrite;
+		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite;
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
 		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
@@ -181,7 +181,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
 
 		m_dummyBuff = GrManager::getSingleton().newBuffer(
-			BufferInitInfo(1024, BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav, BufferMapAccessBit::kNone, "Dummy"));
+			BufferInitInfo(1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
 	// Init the stages
@@ -291,8 +291,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_cameraFar = cam.getFar();
 
 	// Allocate global constants
-	GlobalRendererConstants* globalConsts;
-	ctx.m_globalRenderingConstsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalConsts);
+	GlobalRendererUniforms* globalUnis;
+	ctx.m_globalRenderingUniformsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUnis);
 
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
@@ -341,12 +341,12 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
-	writeGlobalRendererConstants(ctx, *globalConsts);
+	writeGlobalRendererConstants(ctx, *globalUnis);
 
 	return Error::kNone;
 }
 
-void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& unis)
+void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererUniforms& unis)
 {
 	ANKI_TRACE_SCOPED_EVENT(RWriteGlobalRendererConstants);
 
@@ -411,7 +411,7 @@ void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferWrite) || !!(usage & TextureUsageBit::kUavComputeWrite));
+	ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferWrite) || !!(usage & TextureUsageBit::kStorageComputeWrite));
 	TextureInitInfo init(name);
 
 	init.m_width = w;
@@ -446,7 +446,7 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 
 TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage, const ClearValue& clearVal)
 {
-	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kUavComputeWrite));
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kStorageComputeWrite));
 
 	const U faceCount = (inf.m_type == TextureType::kCube || inf.m_type == TextureType::kCubeArray) ? 6 : 1;
 
@@ -455,7 +455,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	{
 		useCompute = false;
 	}
-	else if(!!(inf.m_usage & TextureUsageBit::kUavComputeWrite))
+	else if(!!(inf.m_usage & TextureUsageBit::kStorageComputeWrite))
 	{
 		useCompute = true;
 	}
@@ -569,9 +569,9 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
 					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
-					cmdb->bindUavTexture(0, 0, view.get());
+					cmdb->bindStorageTexture(0, 0, view.get());
 
-					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kUavComputeWrite, surf};
+					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kStorageComputeWrite, surf};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
@@ -583,7 +583,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kUavComputeWrite, initialUsage, surf};
+						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kStorageComputeWrite, initialUsage, surf};
 
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
@@ -694,7 +694,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
-		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kUavComputeWrite);
+		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {
 			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer);

@@ -35,18 +35,18 @@ VertOut main(U32 vertId : SV_VERTEXID)
 #include <AnKi/Shaders/Sky.hlsl>
 
 #if METHOD == 0
-struct Constants
+struct Uniforms
 {
 	RVec3 m_solidColor;
 	F32 m_padding;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 #elif METHOD == 1
 [[vk::binding(0)]] SamplerState g_trilinearAnySampler;
 [[vk::binding(1)]] Texture2D<RVec4> g_envMapTex;
 
-struct Constants
+struct Uniforms
 {
 	Mat4 m_invertedViewProjectionJitterMat;
 
@@ -60,25 +60,25 @@ struct Constants
 	F32 m_padding2;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 #else
 [[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
 [[vk::binding(1)]] Texture2D<Vec4> g_skyLut;
-[[vk::binding(2)]] ConstantBuffer<GlobalRendererConstants> g_consts;
+[[vk::binding(2)]] ConstantBuffer<GlobalRendererUniforms> g_unis;
 #endif
 
 RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	return g_consts.m_solidColor;
+	return g_unis.m_solidColor;
 #elif METHOD == 1
 	const F32 depth = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_unis.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPos);
 
 	const Vec2 uv3 = equirectangularMapping(eyeToFrag);
 
@@ -90,17 +90,17 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	const F32 bias = (maxD > 0.9) ? -100.0f : 0.0f;
 
-	return g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb * g_consts.m_scale + g_consts.m_bias;
+	return g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb * g_unis.m_scale + g_unis.m_bias;
 #else
 	const F32 depth = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_consts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_unis.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPosition);
+	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPosition);
 
-	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_consts.m_directionalLight.m_direction,
-						   g_consts.m_directionalLight.m_power, true);
+	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_unis.m_directionalLight.m_direction, g_unis.m_directionalLight.m_power,
+						   true);
 #endif
 }
 

@@ -71,9 +71,9 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
 			rpass.newBufferDependency(getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBufferHandle(type),
-									  BufferUsageBit::kUavComputeRead);
+									  BufferUsageBit::kStorageComputeRead);
 		}
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavComputeWrite);
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kStorageComputeWrite);
 		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kTransferDestination);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
@@ -87,10 +87,10 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 			{
 				const BufferOffsetRange& buff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindUavBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range, U32(type));
+				cmdb.bindStorageBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range, U32(type));
 			}
 
-			cmdb.bindUavBuffer(0, 1, indirectArgsBuff.m_buffer, indirectArgsBuff.m_offset, indirectArgsBuff.m_range);
+			cmdb.bindStorageBuffer(0, 1, indirectArgsBuff.m_buffer, indirectArgsBuff.m_offset, indirectArgsBuff.m_range);
 
 			cmdb.dispatchCompute(1, 1, 1);
 
@@ -105,7 +105,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning");
 
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
-		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kUavComputeWrite);
+		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -116,7 +116,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				cmdb.bindShaderProgram(m_binningGrProgs[type].get());
 
 				const BufferOffsetRange& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindUavBuffer(0, 0, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
+				cmdb.bindStorageBuffer(0, 0, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
 
 				PtrSize objBufferOffset = 0;
 				PtrSize objBufferRange = 0;
@@ -152,10 +152,11 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					objBufferRange = kMaxPtrSize;
 				}
 
-				cmdb.bindUavBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
-				cmdb.bindUavBuffer(0, 2, m_runCtx.m_clustersBuffer.m_buffer, m_runCtx.m_clustersBuffer.m_offset, m_runCtx.m_clustersBuffer.m_range);
+				cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
+				cmdb.bindStorageBuffer(0, 2, m_runCtx.m_clustersBuffer.m_buffer, m_runCtx.m_clustersBuffer.m_offset,
+									   m_runCtx.m_clustersBuffer.m_range);
 
-				struct ClusterBinningConstants
+				struct ClusterBinningUniforms
 				{
 					Vec3 m_cameraOrigin;
 					F32 m_zSplitCountOverFrustumLength;
@@ -172,23 +173,23 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					I32 m_padding2;
 
 					Mat4 m_invertedViewProjMat;
-				} consts;
+				} unis;
 
-				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
-				consts.m_renderingSize = Vec2(getRenderer().getInternalResolution());
-				consts.m_tileCountX = getRenderer().getTileCounts().x();
-				consts.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
+				unis.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+				unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
+				unis.m_renderingSize = Vec2(getRenderer().getInternalResolution());
+				unis.m_tileCountX = getRenderer().getTileCounts().x();
+				unis.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
 
 				Plane nearPlane;
 				extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-				consts.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+				unis.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
 
-				consts.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
+				unis.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
 
-				consts.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+				unis.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 
-				cmdb.setPushConstants(&consts, sizeof(consts));
+				cmdb.setPushConstants(&unis, sizeof(unis));
 
 				cmdb.dispatchComputeIndirect(indirectArgsBuff.m_buffer, indirectArgsBuffOffset);
 				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);
@@ -211,7 +212,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kUavComputeWrite);
+			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kStorageComputeWrite);
 		}
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
@@ -256,12 +257,12 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					objBufferRange = kMaxPtrSize;
 				}
 
-				cmdb.bindUavBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
-				cmdb.bindUavBuffer(0, 1, m_runCtx.m_packedObjectsBuffers[type].m_buffer, m_runCtx.m_packedObjectsBuffers[type].m_offset,
-								   m_runCtx.m_packedObjectsBuffers[type].m_range);
+				cmdb.bindStorageBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
+				cmdb.bindStorageBuffer(0, 1, m_runCtx.m_packedObjectsBuffers[type].m_buffer, m_runCtx.m_packedObjectsBuffers[type].m_offset,
+									   m_runCtx.m_packedObjectsBuffers[type].m_range);
 
 				const BufferOffsetRange& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindUavBuffer(0, 2, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
+				cmdb.bindStorageBuffer(0, 2, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
 
 				cmdb.dispatchComputeIndirect(indirectArgsBuff.m_buffer, indirectArgsBuffOffset);
 				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);

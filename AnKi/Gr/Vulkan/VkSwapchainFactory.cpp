@@ -229,7 +229,7 @@ Error MicroSwapchain::initInternal()
 			init.m_width = surfaceWidth;
 			init.m_height = surfaceHeight;
 			init.m_format = Format(surfaceFormat); // anki::Format is compatible with VkFormat
-			init.m_usage = TextureUsageBit::kUavComputeWrite | TextureUsageBit::kUavTraceRaysWrite | TextureUsageBit::kFramebufferRead
+			init.m_usage = TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kStorageTraceRaysWrite | TextureUsageBit::kFramebufferRead
 						   | TextureUsageBit::kFramebufferWrite | TextureUsageBit::kPresent;
 			init.m_type = TextureType::k2D;
 

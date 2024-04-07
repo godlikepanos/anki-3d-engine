@@ -16,7 +16,7 @@
 [[vk::binding(2)]] Texture2D g_depthRt;
 [[vk::binding(3)]] Texture3D<RVec4> g_fogVolume;
 
-struct Constants
+struct Uniforms
 {
 	F32 m_zSplitCount;
 	F32 m_finalZSplit;
@@ -24,7 +24,7 @@ struct Constants
 	F32 m_far;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
 
 RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 {
@@ -32,8 +32,8 @@ RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	// Compute W coordinate
 	const F32 depth = g_depthRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
-	const F32 linearDepth = linearizeDepth(depth, g_consts.m_near, g_consts.m_far);
-	uvw.z = linearDepth * (g_consts.m_zSplitCount / (g_consts.m_finalZSplit + 1.0f));
+	const F32 linearDepth = linearizeDepth(depth, g_unis.m_near, g_unis.m_far);
+	uvw.z = linearDepth * (g_unis.m_zSplitCount / (g_unis.m_finalZSplit + 1.0f));
 
 	// Compute UV coordinates
 	uvw.xy = uv;

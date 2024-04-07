@@ -14,17 +14,17 @@ constexpr F32 kMaxRejectionDistance = 0.1; // In meters
 [[vk::binding(1)]] Texture2D g_currentDepthTex;
 [[vk::binding(2)]] Texture2D g_velocityTex;
 
-struct Constants
+struct Uniforms
 {
 	Mat4 m_currentViewProjMat;
 	Mat4 m_currentInvViewProjMat;
 	Mat4 m_prevViewProjMat;
 };
 
-[[vk::binding(3)]] ConstantBuffer<Constants> g_consts;
+[[vk::binding(3)]] ConstantBuffer<Uniforms> g_unis;
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(4)]] RWTexture2D<Vec2> g_motionVectorsUav;
+[[vk::binding(4)]] RWTexture2D<Vec2> g_motionVectorsStorageTex;
 #	endif
 
 #	if ANKI_COMPUTE_SHADER
@@ -39,9 +39,9 @@ FragOut main(Vec2 uv : TEXCOORD)
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	Vec2 uavSize;
-	g_motionVectorsUav.GetDimensions(uavSize.x, uavSize.y);
-	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / uavSize;
+	Vec2 texSize;
+	g_motionVectorsStorageTex.GetDimensions(texSize.x, texSize.y);
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / texSize;
 #	endif
 
 	const Vec2 velocity = g_velocityTex.SampleLevel(g_nearesetAnyClampSampler, uv, 0.0).rg;
@@ -56,13 +56,13 @@ FragOut main(Vec2 uv : TEXCOORD)
 		// Don't use a reprojection matrix or other kind of optimizations. Due to numerical precision it produces slightly off result. Big enough to
 		// create slight visual issues. Do it the hard way.
 		const F32 depth = g_currentDepthTex.SampleLevel(g_nearesetAnyClampSampler, uv, 0.0).r;
-		const Vec4 v4 = mul(g_consts.m_currentInvViewProjMat, Vec4(uvToNdc(uv), depth, 1.0));
+		const Vec4 v4 = mul(g_unis.m_currentInvViewProjMat, Vec4(uvToNdc(uv), depth, 1.0));
 		const Vec3 worldPos = v4.xyz / v4.w;
 
-		Vec4 clipPos = mul(g_consts.m_currentViewProjMat, Vec4(worldPos, 1.0));
+		Vec4 clipPos = mul(g_unis.m_currentViewProjMat, Vec4(worldPos, 1.0));
 		clipPos.xy /= clipPos.w;
 
-		Vec4 prevClipPos = mul(g_consts.m_prevViewProjMat, Vec4(worldPos, 1.0));
+		Vec4 prevClipPos = mul(g_unis.m_prevViewProjMat, Vec4(worldPos, 1.0));
 		prevClipPos.xy /= prevClipPos.w;
 
 		const Vec2 diff = (prevClipPos.xy - clipPos.xy) * 0.5f; // aka uvToNdc(prevClipPos.xy) - uvToNdc(clipPos.xy)
@@ -71,7 +71,7 @@ FragOut main(Vec2 uv : TEXCOORD)
 
 	// Write out
 #	if ANKI_COMPUTE_SHADER
-	g_motionVectorsUav[svDispatchThreadId] = historyUv - uv;
+	g_motionVectorsStorageTex[svDispatchThreadId] = historyUv - uv;
 #	else
 	FragOut output;
 	output.m_motionVectors = historyUv - uv;

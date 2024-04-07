@@ -592,7 +592,7 @@ BufferOffsetRange ShadowMapping::createVetVisibilityPass(CString passName, const
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName);
 
 	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
-	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kUavComputeWrite);
+	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kStorageComputeWrite);
 
 	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_legacy.m_mdiDrawCountsBuffer, clearTileIndirectArgs,
 				  taskShadersIndirectArgs = visOut.m_mesh.m_taskShaderIndirectArgsBuffer](RenderPassWorkContext& rpass) {
@@ -603,12 +603,12 @@ BufferOffsetRange ShadowMapping::createVetVisibilityPass(CString passName, const
 		const UVec4 lightIndex(lightc.getGpuSceneLightAllocation().getIndex());
 		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
 
-		cmdb.bindUavBuffer(0, 0, hashBuff);
-		cmdb.bindUavBuffer(0, 1, mdiBuff);
-		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 4, clearTileIndirectArgs);
-		cmdb.bindUavBuffer(0, 5, taskShadersIndirectArgs);
+		cmdb.bindStorageBuffer(0, 0, hashBuff);
+		cmdb.bindStorageBuffer(0, 1, mdiBuff);
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 4, clearTileIndirectArgs);
+		cmdb.bindStorageBuffer(0, 5, taskShadersIndirectArgs);
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);

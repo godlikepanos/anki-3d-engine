@@ -67,7 +67,7 @@
 #define PRIMITIVE_NO_SAMPLING_POINTS_CULLING 1
 #define PRIMITIVE_ANY_CULLING (PRIMITIVE_BACKFACE_CULLING || PRIMITIVE_NO_SAMPLING_POINTS_CULLING)
 
-#pragma anki struct AnKiLocalConstants
+#pragma anki struct AnKiLocalUniforms
 
 #pragma anki member U32 m_diffuseTex
 #pragma anki member U32 m_normalTex
@@ -117,7 +117,7 @@ struct VertOut
 	nointerpolation U32 m_meshletIndex : MESHLET_INDEX;
 #endif
 
-	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
+	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
 };
 
 struct MeshPerVertOut
@@ -144,7 +144,7 @@ struct MeshPerVertOut
 
 struct MeshPerPrimitiveOut
 {
-	U32 m_constantsOffset : UNIS_OFFSET;
+	U32 m_uniformsOffset : UNIS_OFFSET;
 
 #if VISUALIZE_MESHLETS
 	U32 m_meshletIndex : MESHLET_INDEX;
@@ -166,7 +166,7 @@ struct TaskOut
 	U32 m_firstMeshletGeometryDescriptor;
 	U32 m_visibleMeshletsRelativeIndices[kMeshletGroupSize / sizeof(U32)];
 	U32 m_worldTransformsIndex;
-	U32 m_constantsOffset;
+	U32 m_uniformsOffset;
 	U32 m_boneTransformsOrParticleEmitterOffset;
 };
 
@@ -226,7 +226,7 @@ void velocity(Mat3x4 worldTransform, Mat3x4 prevWorldTransform, Vec3 prevLocalPo
 #	endif
 
 	Vec4 v4 = Vec4(mul(trf, Vec4(prevLocalPos, 1.0)), 1.0);
-	v4 = mul(g_globalConstants.m_previousViewProjectionMatrix, v4);
+	v4 = mul(g_globalUniforms.m_previousViewProjectionMatrix, v4);
 
 	prevClipXyw = v4.xyw;
 	crntClipXyw = svPosition.xyw;
@@ -263,7 +263,7 @@ VertOut main(VertIn input)
 
 	UnpackedMeshVertex vert = loadVertex(meshlet, localIdx, ANKI_BONES);
 
-	const U32 constantsOffset = instance.m_constantsOffset;
+	const U32 uniformsOffset = instance.m_uniformsOffset;
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
 	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
 
@@ -276,7 +276,7 @@ VertOut main(VertIn input)
 	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
 	UnpackedMeshVertex vert = loadVertex(mesh, input.m_svVertexId, ANKI_BONES);
 
-	const U32 constantsOffset = instance.m_constantsOffset;
+	const U32 uniformsOffset = instance.m_uniformsOffset;
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
 	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
 #	endif // SW_MESHLETS
@@ -291,7 +291,7 @@ VertOut main(VertIn input)
 #	endif
 	Vec3 prevPos = vert.m_position;
 	ANKI_MAYBE_UNUSED(prevPos);
-	output.m_constantsOffset = constantsOffset;
+	output.m_uniformsOffset = uniformsOffset;
 
 	// Do stuff
 #	if ANKI_BONES
@@ -299,7 +299,7 @@ VertOut main(VertIn input)
 #	endif
 
 	const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
-	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
+	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(worldPos, 1.0));
 
 #	if NORMAL_MAPPING
 	output.m_worldPos = worldPos;
@@ -350,7 +350,7 @@ struct FirstPayload
 	{
 		s_payload.m_firstMeshletGeometryDescriptor = firstMeshletGeometryDescriptor;
 		s_payload.m_worldTransformsIndex = renderable.m_worldTransformsIndex;
-		s_payload.m_constantsOffset = renderable.m_constantsOffset;
+		s_payload.m_uniformsOffset = renderable.m_uniformsOffset;
 		s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
 
 		s_visibleMeshletCount = 0;
@@ -371,11 +371,11 @@ struct FirstPayload
 		const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
 
 #	if MESHLET_BACKFACE_CULLING
-		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_globalConstants.m_cameraTransform.getTranslationPart());
+		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_globalUniforms.m_cameraTransform.getTranslationPart());
 #	endif
 
 		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
-		const Mat4 mvp = mul(g_globalConstants.m_viewProjectionMatrix, wordTransform4);
+		const Mat4 mvp = mul(g_globalUniforms.m_viewProjectionMatrix, wordTransform4);
 
 		Vec2 minNdc, maxNdc;
 		F32 aabbMinDepth;
@@ -388,13 +388,13 @@ struct FirstPayload
 
 #	if MESHLET_NO_SAMPLING_POINT_CULLING
 		// Sampling points test
-		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_globalConstants.m_viewport.zw;
-		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_globalConstants.m_viewport.zw;
+		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_globalUniforms.m_viewport.zw;
+		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_globalUniforms.m_viewport.zw;
 		cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
 #	endif
 
 #	if MESHLET_HZB_CULLING
-		cull = cull || (g_globalConstants.m_enableHzbTesting == 1u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+		cull = cull || (g_globalUniforms.m_enableHzbTesting == 1u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
 #	endif
 
 		if(!cull)
@@ -468,9 +468,9 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 #	endif
 
 			const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
-			output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0f));
+			output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(worldPos, 1.0f));
 #	if PRIMITIVE_ANY_CULLING
-			s_windowCoords[idx] = ndcToUv(output.m_svPosition.xy / output.m_svPosition.w) * g_globalConstants.m_viewport.zw;
+			s_windowCoords[idx] = ndcToUv(output.m_svPosition.xy / output.m_svPosition.w) * g_globalUniforms.m_viewport.zw;
 			s_clipW[idx] = output.m_svPosition.w;
 #	endif
 
@@ -534,7 +534,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 			primitives[idx].m_cullPrimitive = cull;
 #	endif
 
-			primitives[idx].m_constantsOffset = payload.m_constantsOffset;
+			primitives[idx].m_uniformsOffset = payload.m_uniformsOffset;
 #	if VISUALIZE_MESHLETS
 			primitives[idx].m_meshletIndex = relativeMeshletIdx;
 #	endif
@@ -571,14 +571,14 @@ void main(
 )
 {
 #		if ANKI_TECHNIQUE_ShadowsMeshShaders
-	const U32 constantsOffset = primInput.m_constantsOffset;
+	const U32 uniformsOffset = primInput.m_uniformsOffset;
 #		else
-	const U32 constantsOffset = vertInput.m_constantsOffset;
+	const U32 uniformsOffset = vertInput.m_uniformsOffset;
 #		endif
 
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[TEX_IDX(localConstants.m_diffuseTex)].Sample(g_globalSampler, vertInput.m_uv);
-	if(diffColorA.a * localConstants.m_diffuseScale.a < 0.5f)
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, uniformsOffset);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_diffuseTex)].Sample(g_globalSampler, vertInput.m_uv);
+	if(diffColorA.a * localUniforms.m_diffuseScale.a < 0.5f)
 	{
 		discard;
 	}
@@ -595,12 +595,12 @@ FragOut main(
 )
 {
 #		if ANKI_TECHNIQUE_GBufferMeshShaders
-	const U32 constantsOffset = primInput.m_constantsOffset;
+	const U32 uniformsOffset = primInput.m_uniformsOffset;
 #		else
-	const U32 constantsOffset = vertInput.m_constantsOffset;
+	const U32 uniformsOffset = vertInput.m_uniformsOffset;
 #		endif
 
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, uniformsOffset);
 
 #		if REALLY_USING_PARALLAX
 	// TODO
@@ -611,8 +611,7 @@ FragOut main(
 	ANKI_MAYBE_UNUSED(uv);
 
 #		if DIFFUSE_TEX
-	const RVec4 diffColorA =
-		g_bindlessTextures2dF32[TEX_IDX(localConstants.m_diffuseTex)].Sample(g_globalSampler, uv) * localConstants.m_diffuseScale;
+	const RVec4 diffColorA = g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_diffuseTex)].Sample(g_globalSampler, uv) * localUniforms.m_diffuseScale;
 	const RVec3 diffColor = diffColorA.rgb;
 #			if REALLY_ALPHA_TEST
 	if(diffColorA.a < 0.5f)
@@ -621,29 +620,29 @@ FragOut main(
 	}
 #			endif
 #		else
-	const RVec3 diffColor = localConstants.m_diffuseScale;
+	const RVec3 diffColor = localUniforms.m_diffuseScale;
 #		endif
 
 #		if SPECULAR_TEX
 	const RVec3 specColor =
-		g_bindlessTextures2dF32[TEX_IDX(localConstants.m_specularTex)].Sample(g_globalSampler, uv).rgb * localConstants.m_specularScale;
+		g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_specularTex)].Sample(g_globalSampler, uv).rgb * localUniforms.m_specularScale;
 #		else
-	const RVec3 specColor = localConstants.m_specularScale;
+	const RVec3 specColor = localUniforms.m_specularScale;
 #		endif
 
 #		if ROUGHNESS_METALNESS_TEX
-	const RVec3 comp = g_bindlessTextures2dF32[TEX_IDX(localConstants.m_roughnessMetalnessTex)].Sample(g_globalSampler, uv).rgb;
-	const RF32 roughness = comp.g * localConstants.m_roughnessScale;
-	const RF32 metallic = comp.b * localConstants.m_metalnessScale;
+	const RVec3 comp = g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_roughnessMetalnessTex)].Sample(g_globalSampler, uv).rgb;
+	const RF32 roughness = comp.g * localUniforms.m_roughnessScale;
+	const RF32 metallic = comp.b * localUniforms.m_metalnessScale;
 #		else
-	const RF32 roughness = localConstants.m_roughnessScale;
-	const RF32 metallic = localConstants.m_metalnessScale;
+	const RF32 roughness = localUniforms.m_roughnessScale;
+	const RF32 metallic = localUniforms.m_metalnessScale;
 #		endif
 
 #		if NORMAL_TEX
 	const RVec3 nAtTangentspace =
-		normalize((g_bindlessTextures2dF32[TEX_IDX(localConstants.m_normalTex)].Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
-	const Vec3 viewDir = normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
+		normalize((g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_normalTex)].Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
+	const Vec3 viewDir = normalize(g_globalUniforms.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
 	const RVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertInput.m_normal));
 #		else
 	const RVec3 normal = normalize(vertInput.m_normal);
@@ -651,9 +650,9 @@ FragOut main(
 
 #		if EMISSIVE_TEX
 	const RVec3 emission =
-		g_bindlessTextures2dF32[TEX_IDX(localConstants.m_emissiveTex)].Sample(g_globalSampler, uv).rgb * localConstants.m_emissionScale;
+		g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_emissiveTex)].Sample(g_globalSampler, uv).rgb * localUniforms.m_emissionScale;
 #		else
-	const RVec3 emission = localConstants.m_emissionScale;
+	const RVec3 emission = localUniforms.m_emissionScale;
 #		endif
 
 #		if ANKI_VELOCITY || ANKI_BONES
@@ -671,7 +670,7 @@ FragOut main(
 	g.m_normal = normal;
 	g.m_f0 = specColor;
 	g.m_roughness = roughness;
-	g.m_subsurface = localConstants.m_subsurface;
+	g.m_subsurface = localUniforms.m_subsurface;
 	g.m_emission = emission;
 	g.m_metallic = metallic;
 	g.m_velocity = velocity;
@@ -743,9 +742,8 @@ FragOut main(
 
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
-	const RVec4 diffColorA =
-		g_bindlessTextures2dF32[localConstants.m_diffuseTex].SampleLevel(g_globalSampler, uv, 0.0) * localConstants.m_diffuseScale;
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, g_gpuSceneRenderable.m_uniformsOffset);
+	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffuseTex].SampleLevel(g_globalSampler, uv, 0.0) * localUniforms.m_diffuseScale;
 
 	if(diffColorA.a < 1.0)
 	{

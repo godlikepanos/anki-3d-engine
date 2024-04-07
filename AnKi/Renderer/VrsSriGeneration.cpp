@@ -38,7 +38,7 @@ Error VrsSriGeneration::initInternal()
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
 
 	// Create textures
-	const TextureUsageBit texUsage = TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kUavComputeWrite | TextureUsageBit::kAllSampled;
+	const TextureUsageBit texUsage = TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kAllSampled;
 	TextureInitInfo sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
 	m_sriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
 
@@ -131,7 +131,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
 
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), TextureUsageBit::kSampledCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
@@ -142,7 +142,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindColorTexture(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
-			rgraphCtx.bindUavTexture(0, 2, m_runCtx.m_rt);
+			rgraphCtx.bindStorageTexture(0, 2, m_runCtx.m_rt);
 			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar.get(), 0.0f);
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
@@ -157,7 +157,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI downscale");
 
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute);
-		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kUavComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kStorageComputeWrite);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
@@ -169,7 +169,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindColorTexture(0, 0, m_runCtx.m_rt);
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
-			rgraphCtx.bindUavTexture(0, 2, m_runCtx.m_downscaledRt);
+			rgraphCtx.bindStorageTexture(0, 2, m_runCtx.m_downscaledRt);
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
 			cmdb.setPushConstants(&pc, sizeof(pc));
 

@@ -21,7 +21,7 @@ constexpr F32 kHaloOpacity = 0.5;
 
 #	if ANKI_COMPUTE_SHADER
 #		define THREADGROUP_SIZE_XY 8
-[[vk::binding(3)]] RWTexture2D<RVec4> g_outUav;
+[[vk::binding(3)]] RWTexture2D<RVec4> g_storageTex;
 #	endif
 
 RVec3 textureDistorted(Texture2D<RVec4> tex, SamplerState sampl, Vec2 uv,
@@ -96,16 +96,16 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	Vec2 outUavTexSize;
-	g_outUav.GetDimensions(outUavTexSize.x, outUavTexSize.y);
+	Vec2 storageTexSize;
+	g_storageTex.GetDimensions(storageTexSize.x, storageTexSize.y);
 
-	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / outUavTexSize;
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / storageTexSize;
 #	endif
 
 	const RVec3 outColor = ssLensFlare(uv) + upscale(uv);
 
 #	if ANKI_COMPUTE_SHADER
-	g_outUav[svDispatchThreadId] = RVec4(outColor, 0.0);
+	g_storageTex[svDispatchThreadId] = RVec4(outColor, 0.0);
 #	else
 	return outColor;
 #	endif

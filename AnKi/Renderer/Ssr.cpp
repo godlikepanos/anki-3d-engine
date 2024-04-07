@@ -54,7 +54,7 @@ Error Ssr::initInternal()
 	TextureUsageBit mipTexUsage = TextureUsageBit::kAllSampled;
 	if(g_preferComputeCVar.get())
 	{
-		mipTexUsage |= TextureUsageBit::kUavComputeWrite;
+		mipTexUsage |= TextureUsageBit::kStorageComputeWrite;
 	}
 	else
 	{
@@ -90,7 +90,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		ppass = &pass;
 
 		readUsage = TextureUsageBit::kSampledCompute;
-		writeUsage = TextureUsageBit::kUavComputeWrite;
+		writeUsage = TextureUsageBit::kStorageComputeWrite;
 	}
 	else
 	{
@@ -117,7 +117,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_ssrGrProg.get());
 
-		SsrConstants consts = {};
+		SsrUniforms consts = {};
 		consts.m_viewportSizef = Vec2(rez);
 		consts.m_frameCount = getRenderer().getFrameCount() % kMaxU32;
 		consts.m_maxIterations = g_ssrMaxIterationsCVar.get();
@@ -128,7 +128,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		consts.m_unprojectionParameters = ctx.m_matrices.m_unprojectionParameters;
 		consts.m_prevViewProjMatMulInvViewProjMat = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 		consts.m_normalMat = Mat3x4(Vec3(0.0f), ctx.m_matrices.m_view.getRotationPart());
-		*allocateAndBindConstants<SsrConstants>(cmdb, 0, 0) = consts;
+		*allocateAndBindConstants<SsrUniforms>(cmdb, 0, 0) = consts;
 
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(1));
@@ -138,7 +138,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindUavTexture(0, 6, m_runCtx.m_ssrRt);
+			rgraphCtx.bindStorageTexture(0, 6, m_runCtx.m_ssrRt);
 			dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 		}
 		else

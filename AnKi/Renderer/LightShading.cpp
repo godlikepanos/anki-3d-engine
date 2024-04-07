@@ -122,12 +122,13 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthWrite(false);
 
 		// Bind all
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstsBuffer);
-		cmdb.bindUavBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindUavBuffer(0, 2, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-		cmdb.bindUavBuffer(0, 3, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
+		cmdb.bindUniformBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindStorageBuffer(0, 2,
+							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
 		rgraphCtx.bindColorTexture(0, 4, getRenderer().getShadowMapping().getShadowmapRt());
-		cmdb.bindUavBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindStorageBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(0, 7, getRenderer().getSamplers().m_trilinearClamp.get());
@@ -198,7 +199,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindColorTexture(0, 1, getRenderer().getSky().getSkyLutRt());
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstsBuffer);
+			cmdb.bindUniformBuffer(0, 2, ctx.m_globalRenderingUniformsBuffer);
 		}
 
 		drawQuad(cmdb);
@@ -319,9 +320,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavFragmentRead);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-							 BufferUsageBit::kUavFragmentRead);
+							 BufferUsageBit::kStorageFragmentRead);
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getSsr().getRt(), readUsage);
 

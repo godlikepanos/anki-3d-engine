@@ -9,9 +9,9 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-[[vk::push_constant]] ConstantBuffer<DepthDownscaleConstants> g_consts;
+[[vk::push_constant]] ConstantBuffer<DepthDownscaleUniforms> g_unis;
 
-[[vk::binding(0)]] RWTexture2D<Vec4> g_dstUavs[kMaxMipsSinglePassDownsamplerCanProduce];
+[[vk::binding(0)]] RWTexture2D<Vec4> g_dstStorageTextures[kMaxMipsSinglePassDownsamplerCanProduce];
 [[vk::binding(1)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
 
 [[vk::binding(2)]] SamplerState u_linearAnyClampSampler;
@@ -28,20 +28,20 @@ groupshared AF1 s_spdIntermediateR[16][16];
 AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	const AF2 textureCoord = Vec2(p) * g_consts.m_srcTexSizeOverOne + g_consts.m_srcTexSizeOverOne;
+	const AF2 textureCoord = Vec2(p) * g_unis.m_srcTexSizeOverOne + g_unis.m_srcTexSizeOverOne;
 	return AF4(g_srcTex.SampleLevel(u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
 }
 
 AF4 SpdLoad(AU2 p, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	return AF4(g_dstUavs[5][p].r, 0.0, 0.0, 0.0);
+	return AF4(g_dstStorageTextures[5][p].r, 0.0, 0.0, 0.0);
 }
 
 void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
 {
 	ANKI_MAYBE_UNUSED(slice);
-	g_dstUavs[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
+	g_dstStorageTextures[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
 }
 
 void SpdIncreaseAtomicCounter(AU1 slice)
@@ -89,7 +89,7 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 {
 	const U32 slice = 0u;
 	const UVec2 offset = UVec2(0, 0);
-	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_consts.m_mipmapCount), AU1(g_consts.m_threadgroupCount), slice, offset);
+	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_unis.m_mipmapCount), AU1(g_unis.m_threadgroupCount), slice, offset);
 }
 
 #pragma anki technique_end comp

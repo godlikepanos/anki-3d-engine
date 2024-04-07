@@ -10,7 +10,7 @@
 ANKI_BEGIN_NAMESPACE
 
 /// Common data for all materials.
-struct MaterialGlobalConstants
+struct MaterialGlobalUniforms
 {
 	Mat4 m_viewProjectionMatrix;
 	Mat4 m_previousViewProjectionMatrix;
@@ -24,7 +24,7 @@ struct MaterialGlobalConstants
 	U32 m_padding1;
 	U32 m_padding2;
 };
-static_assert(sizeof(MaterialGlobalConstants) == 16 * sizeof(Vec4));
+static_assert(sizeof(MaterialGlobalUniforms) == 16 * sizeof(Vec4));
 
 /// @brief
 enum class MaterialSet : U32
@@ -37,7 +37,7 @@ enum class MaterialSet : U32
 enum class MaterialBinding : U32
 {
 	kTrilinearRepeatSampler,
-	kGlobalConstants,
+	kGlobalUniforms,
 	kGpuScene,
 
 	// Texture buffer bindings pointing to unified geom buffer:
@@ -58,7 +58,7 @@ enum class MaterialBinding : U32
 	kShadowSampler,
 	kDepthRt,
 	kLightVolume,
-	kClusterShadingConstants,
+	kClusterShadingUniforms,
 	kClusterShadingLights,
 	kClusters = kClusterShadingLights + 2,
 };

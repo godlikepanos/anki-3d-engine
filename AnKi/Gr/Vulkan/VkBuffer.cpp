@@ -361,17 +361,17 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 {
 	VkAccessFlags mask = 0;
 
-	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead | BufferUsageBit::kUavComputeRead
-										   | BufferUsageBit::kUavTraceRaysRead | BufferUsageBit::kTextureGeometryRead
-										   | BufferUsageBit::kTextureFragmentRead | BufferUsageBit::kTextureComputeRead
-										   | BufferUsageBit::kTextureTraceRaysRead;
+	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead
+										   | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageTraceRaysRead
+										   | BufferUsageBit::kTexelGeometryRead | BufferUsageBit::kTexelFragmentRead
+										   | BufferUsageBit::kTexelComputeRead | BufferUsageBit::kTexelTraceRaysRead;
 
-	constexpr BufferUsageBit kShaderWrite = BufferUsageBit::kUavGeometryWrite | BufferUsageBit::kUavFragmentWrite | BufferUsageBit::kUavComputeWrite
-											| BufferUsageBit::kUavTraceRaysWrite | BufferUsageBit::kTextureGeometryWrite
-											| BufferUsageBit::kTextureFragmentWrite | BufferUsageBit::kTextureComputeWrite
-											| BufferUsageBit::kTextureTraceRaysWrite;
+	constexpr BufferUsageBit kShaderWrite = BufferUsageBit::kStorageGeometryWrite | BufferUsageBit::kStorageFragmentWrite
+											| BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageTraceRaysWrite
+											| BufferUsageBit::kTexelGeometryWrite | BufferUsageBit::kTexelFragmentWrite
+											| BufferUsageBit::kTexelComputeWrite | BufferUsageBit::kTexelTraceRaysWrite;
 
-	if(!!(usage & BufferUsageBit::kAllConstant))
+	if(!!(usage & BufferUsageBit::kAllUniform))
 	{
 		mask |= VK_ACCESS_UNIFORM_READ_BIT;
 	}
@@ -446,10 +446,10 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	}
 
 	// Checks
-	ANKI_ASSERT(!!(m_usage & BufferUsageBit::kAllTexture));
+	ANKI_ASSERT(!!(m_usage & BufferUsageBit::kAllTexel));
 	ANKI_ASSERT(offset + range <= m_size);
 
-	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_textureBufferBindOffsetAlignment, offset) && "Offset not aligned");
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_texelBufferBindOffsetAlignment, offset) && "Offset not aligned");
 
 	ANKI_ASSERT((range % getFormatInfo(fmt).m_texelSize) == 0 && "Range doesn't align with the number of texel elements");
 

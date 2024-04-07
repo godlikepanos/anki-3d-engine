@@ -402,7 +402,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: Light shading", cellIdx, "face", f));
 				pass.setFramebufferInfo(fbDescr, {lightShadingRt});
 
-				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kUavFragmentRead);
+				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
 
 				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, f, 0));
 
@@ -464,7 +464,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
 					dsInfo.m_skyLutRenderTarget = (getRenderer().getSky().isEnabled()) ? getRenderer().getSky().getSkyLutRt() : RenderTargetHandle();
-					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstsBuffer;
+					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingUniformsBuffer;
 					dsInfo.m_renderpassContext = &rgraphCtx;
 
 					m_lightShading.m_deferred.drawLights(dsInfo);
@@ -477,7 +477,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("GI: Irradiance", cellIdx));
 
 			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kUavComputeWrite);
+			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kStorageComputeWrite);
 			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 			{
 				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledCompute);
@@ -499,7 +499,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					rgraphCtx.bindColorTexture(0, 2, gbufferColorRts[i], i);
 				}
 
-				rgraphCtx.bindUavTexture(0, 3, irradianceVolume, TextureSubresourceInfo());
+				rgraphCtx.bindStorageTexture(0, 3, irradianceVolume, TextureSubresourceInfo());
 
 				class
 				{
