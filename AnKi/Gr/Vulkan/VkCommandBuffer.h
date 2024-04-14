@@ -104,14 +104,16 @@ private:
 	Bool m_empty : 1 = true;
 	Bool m_beganRecording : 1 = false;
 	Bool m_debugMarkers : 1 = false;
+	Bool m_renderpassDrawsToDefaultFb : 1 = false;
+	U32 m_renderpassWidth = 0;
+	U32 m_renderpassHeight = 0;
 #if ANKI_ASSERTIONS_ENABLED
 	U32 m_commandCount = 0;
 	U32 m_setPushConstantsSize = 0;
 	U32 m_debugMarkersPushed = 0;
 	Bool m_submitted = false;
+	Bool m_insideRenderpass = false;
 #endif
-
-	Framebuffer* m_activeFb = nullptr;
 
 	PipelineStateTracker m_state;
 
@@ -162,20 +164,10 @@ private:
 
 	void dispatchCommon();
 
-	Bool insideRenderPass() const
-	{
-		return m_activeFb != nullptr;
-	}
-
 	void setImageBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkImageLayout prevLayout, VkPipelineStageFlags dstStage,
 						 VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img, const VkImageSubresourceRange& range);
 
 	void beginRecording();
-
-	Bool flipViewport() const
-	{
-		return static_cast<const FramebufferImpl&>(*m_activeFb).hasPresentableTexture();
-	}
 
 	static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight, Bool flipvp)
 	{

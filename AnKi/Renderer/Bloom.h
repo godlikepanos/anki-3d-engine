@@ -46,8 +46,6 @@ public:
 private:
 	static constexpr Format kRtPixelFormat = Format::kA2B10G10R10_Unorm_Pack32;
 
-	FramebufferDescription m_fbDescr;
-
 	class
 	{
 	public:

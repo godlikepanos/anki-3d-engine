@@ -44,7 +44,6 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	RenderTargetDescription m_motionVectorsRtDescr;
-	FramebufferDescription m_fbDescr;
 
 	class
 	{

@@ -20,8 +20,8 @@ void PipelineStateTracker::reset()
 	m_shaderColorAttachmentWritemask.unsetAll();
 	m_fbDepth = false;
 	m_fbStencil = false;
-	m_defaultFb = false;
-	m_fbColorAttachmentMask.unsetAll();
+	m_rendersToSwapchain = false;
+	m_fbColorAttachmentCount = 0;
 }
 
 Bool PipelineStateTracker::updateHashes()
@@ -34,14 +34,6 @@ Bool PipelineStateTracker::updateHashes()
 		m_dirty.m_prog = false;
 		stateDirty = true;
 		m_hashes.m_prog = m_state.m_prog->getUuid();
-	}
-
-	// Rpass
-	if(m_dirty.m_rpass)
-	{
-		m_dirty.m_rpass = false;
-		stateDirty = true;
-		m_hashes.m_rpass = ptrToNumber(m_state.m_rpass);
 	}
 
 	// Vertex
@@ -114,9 +106,9 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// Color
-	if(!!m_fbColorAttachmentMask)
+	if(m_fbColorAttachmentCount)
 	{
-		ANKI_ASSERT((m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask || !m_shaderColorAttachmentWritemask)
+		ANKI_ASSERT((m_fbColorAttachmentCount == m_shaderColorAttachmentWritemask.getSetBitCount() || !m_shaderColorAttachmentWritemask)
 					&& "Shader and FB should have same attachment mask or shader mask should be zero");
 
 		if(m_dirty.m_color)
@@ -126,18 +118,23 @@ Bool PipelineStateTracker::updateHashes()
 			stateDirty = true;
 		}
 
-		if(!!(m_dirty.m_colAttachments & m_fbColorAttachmentMask))
+		for(U32 i = 0; i < m_fbColorAttachmentCount; ++i)
 		{
-			for(U i = 0; i < kMaxColorRenderTargets; ++i)
+			if(m_dirty.m_colAttachments.get(i))
 			{
-				if(m_fbColorAttachmentMask.get(i) && m_dirty.m_colAttachments.get(i))
-				{
-					m_dirty.m_colAttachments.unset(i);
-					m_hashes.m_colAttachments[i] = computeHash(&m_state.m_color.m_attachments[i], sizeof(m_state.m_color.m_attachments[i]));
-					stateDirty = true;
-				}
+				m_dirty.m_colAttachments.unset(i);
+				m_hashes.m_colAttachments[i] = computeHash(&m_state.m_color.m_attachments[i], sizeof(m_state.m_color.m_attachments[i]));
+				stateDirty = true;
 			}
 		}
+	}
+
+	// Rpass
+	if(m_dirty.m_rpass)
+	{
+		m_dirty.m_rpass = false;
+		stateDirty = true;
+		m_hashes.m_rpass = computeHash(m_state.m_attachmentFormats.getBegin(), m_state.m_attachmentFormats.getSizeInBytes());
 	}
 
 	return stateDirty;
@@ -185,16 +182,13 @@ void PipelineStateTracker::updateSuperHash()
 	}
 
 	// Color
-	if(!!m_fbColorAttachmentMask)
+	if(m_fbColorAttachmentCount)
 	{
 		buff[count++] = m_hashes.m_color;
 
-		for(U i = 0; i < kMaxColorRenderTargets; ++i)
+		for(U i = 0; i < m_fbColorAttachmentCount; ++i)
 		{
-			if(m_fbColorAttachmentMask.get(i))
-			{
-				buff[count++] = m_hashes.m_colAttachments[i];
-			}
+			buff[count++] = m_hashes.m_colAttachments[i];
 		}
 	}
 
@@ -274,7 +268,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	rastCi.rasterizerDiscardEnable = false;
 	rastCi.polygonMode = convertFillMode(m_state.m_rasterizer.m_fillMode);
 	rastCi.cullMode = convertCullMode(m_state.m_rasterizer.m_cullMode);
-	rastCi.frontFace = (!m_defaultFb) ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE; // For viewport flip
+	rastCi.frontFace = (!m_rendersToSwapchain) ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE; // For viewport flip
 	rastCi.depthBiasEnable = m_state.m_rasterizer.m_depthBiasEnabled;
 	rastCi.lineWidth = 1.0;
 	ci.pRasterizationState = &rastCi;
@@ -286,8 +280,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		rastOrderCi.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
 		rastOrderCi.rasterizationOrder = convertRasterizationOrder(m_state.m_rasterizer.m_rasterizationOrder);
 
-		ANKI_ASSERT(rastCi.pNext == nullptr);
-		rastCi.pNext = &rastOrderCi;
+		appendPNextList(rastCi, &rastOrderCi);
 	}
 
 	// MS
@@ -335,17 +328,16 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	}
 
 	// Color/blend
-	if(!!m_fbColorAttachmentMask)
+	if(m_fbColorAttachmentCount)
 	{
 		VkPipelineColorBlendStateCreateInfo& colCi = m_ci.m_color;
 		colCi = {};
 		colCi.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colCi.attachmentCount = m_fbColorAttachmentMask.getSetBitCount();
+		colCi.attachmentCount = m_fbColorAttachmentCount;
 		colCi.pAttachments = &m_ci.m_colAttachments[0];
 
 		for(U i = 0; i < colCi.attachmentCount; ++i)
 		{
-			ANKI_ASSERT(m_fbColorAttachmentMask.get(i) && "No gaps are allowed");
 			VkPipelineColorBlendAttachmentState& out = m_ci.m_colAttachments[i];
 			const ColorAttachmentState& in = m_state.m_color.m_attachments[i];
 
@@ -369,6 +361,29 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	dynCi = {};
 	dynCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
+	// Renderpass related (Dynamic rendering)
+	VkPipelineRenderingCreateInfoKHR& dynRendering = m_ci.m_dynamicRendering;
+	dynRendering = {};
+	dynRendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+	dynRendering.colorAttachmentCount = m_fbColorAttachmentCount;
+	dynRendering.pColorAttachmentFormats = m_ci.m_dynamicRenderingAttachmentFormats.getBegin();
+	for(U i = 0; i < m_fbColorAttachmentCount; ++i)
+	{
+		m_ci.m_dynamicRenderingAttachmentFormats[i] = convertFormat(m_state.m_attachmentFormats[i]);
+	}
+
+	if(m_fbDepth)
+	{
+		dynRendering.depthAttachmentFormat = convertFormat(m_state.m_attachmentFormats[kMaxColorRenderTargets]);
+	}
+
+	if(m_fbStencil)
+	{
+		dynRendering.stencilAttachmentFormat = convertFormat(m_state.m_attachmentFormats[kMaxColorRenderTargets]);
+	}
+
+	appendPNextList(ci, &m_ci.m_dynamicRendering);
+
 	// Almost all state is dynamic. Depth bias is static
 	static constexpr Array<VkDynamicState, 10> kDyn = {
 		{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS, VK_DYNAMIC_STATE_DEPTH_BOUNDS,
@@ -381,7 +396,6 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 
 	// The rest
 	ci.layout = static_cast<const ShaderProgramImpl&>(*m_state.m_prog).getPipelineLayout().getHandle();
-	ci.renderPass = m_state.m_rpass;
 	ci.subpass = 0;
 
 	return ci;

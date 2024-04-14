@@ -47,18 +47,6 @@ Error DownscaleBlur::initInternal()
 	texinit.m_mipmapCount = U8(m_passCount);
 	m_rtTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute);
 
-	// FB descr
-	if(!preferCompute)
-	{
-		m_fbDescrs.resize(m_passCount);
-		for(U32 pass = 0; pass < m_passCount; ++pass)
-		{
-			m_fbDescrs[pass].m_colorAttachmentCount = 1;
-			m_fbDescrs[pass].m_colorAttachments[0].m_surface.m_level = pass;
-			m_fbDescrs[pass].bake();
-		}
-	}
-
 	// Shader programs
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/DownscaleBlur.ankiprogbin", m_prog, m_grProg));
 
@@ -91,7 +79,11 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
-			pass.setFramebufferInfo(m_fbDescrs[i], {m_runCtx.m_rt});
+
+			RenderTargetInfo rtInf(m_runCtx.m_rt);
+			rtInf.m_surface.m_level = i;
+			pass.setRenderpassInfo({rtInf});
+
 			ppass = &pass;
 		}
 

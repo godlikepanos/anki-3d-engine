@@ -67,7 +67,6 @@ public:
 
 private:
 	RenderTargetDescription m_rtDescr;
-	FramebufferDescription m_fbDescr;
 
 	ImageResourcePtr m_giProbeImage;
 	ImageResourcePtr m_pointLightImage;

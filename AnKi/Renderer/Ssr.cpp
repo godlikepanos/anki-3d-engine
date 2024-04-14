@@ -64,9 +64,6 @@ Error Ssr::initInternal()
 	m_ssrRtDescr = getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR16G16B16A16_Sfloat, "SSR");
 	m_ssrRtDescr.bake();
 
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssr.ankiprogbin", {}, m_prog, m_ssrGrProg, "Ssr"));
 
 	return Error::kNone;
@@ -96,7 +93,8 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	{
 		// TODO
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSR");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_ssrRt}, {});
+
+		pass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_ssrRt)});
 
 		ppass = &pass;
 

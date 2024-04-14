@@ -77,18 +77,6 @@ Error DepthDownscale::initInternal()
 		fence->clientWait(6.0_sec);
 	}
 
-	if(!preferCompute)
-	{
-		m_fbDescrs.resize(m_mipCount);
-		for(U32 mip = 0; mip < m_mipCount; ++mip)
-		{
-			FramebufferDescription& fbDescr = m_fbDescrs[mip];
-			fbDescr.m_colorAttachmentCount = 1;
-			fbDescr.m_colorAttachments[0].m_surface.m_level = mip;
-			fbDescr.bake();
-		}
-	}
-
 	return Error::kNone;
 }
 
@@ -175,7 +163,10 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		{
 			static constexpr Array<CString, 4> passNames = {"Depth downscale #1", "Depth downscale #2", "Depth downscale #3", "Depth downscale #4"};
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
-			pass.setFramebufferInfo(m_fbDescrs[mip], {m_runCtx.m_rt});
+
+			RenderTargetInfo rti(m_runCtx.m_rt);
+			rti.m_surface.m_level = mip;
+			pass.setRenderpassInfo({rti});
 
 			if(mip == 0)
 			{

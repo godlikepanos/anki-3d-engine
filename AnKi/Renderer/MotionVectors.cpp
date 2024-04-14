@@ -34,9 +34,6 @@ Error MotionVectors::initInternal()
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16_Sfloat, "MotionVectors");
 	m_motionVectorsRtDescr.bake();
 
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -61,7 +58,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("MotionVectors");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_motionVectorsRtHandle});
+		pass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_motionVectorsRtHandle)});
 
 		readUsage = TextureUsageBit::kSampledFragment;
 		writeUsage = TextureUsageBit::kFramebufferWrite;

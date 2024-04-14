@@ -140,9 +140,6 @@ Error Scale::init()
 		m_tonemapedRtDescr.bake();
 	}
 
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -202,7 +199,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
-			pass.setFramebufferInfo(m_fbDescr, {outRt});
+			pass.setRenderpassInfo({RenderTargetInfo(outRt)});
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
 			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
@@ -239,7 +236,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
-			pass.setFramebufferInfo(m_fbDescr, {outRt});
+			pass.setRenderpassInfo({RenderTargetInfo(outRt)});
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
 			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
@@ -273,7 +270,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
-			pass.setFramebufferInfo(m_fbDescr, {outRt});
+			pass.setRenderpassInfo({RenderTargetInfo(outRt)});
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
 			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 

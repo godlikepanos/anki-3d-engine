@@ -28,12 +28,6 @@ Error GBufferPost::initInternal()
 	// Load shaders
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GBufferPost.ankiprogbin", m_prog, m_grProg));
 
-	// Create FB descr
-	m_fbDescr.m_colorAttachmentCount = 2;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_fbDescr.m_colorAttachments[1].m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_fbDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -82,7 +76,11 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		cmdb.setBlendFactors(1, BlendFactor::kOne, BlendFactor::kZero);
 	});
 
-	rpass.setFramebufferInfo(m_fbDescr, {getRenderer().getGBuffer().getColorRt(0), getRenderer().getGBuffer().getColorRt(1)});
+	RenderTargetInfo rt0(getRenderer().getGBuffer().getColorRt(0));
+	rt0.m_loadOperation = RenderTargetLoadOperation::kLoad;
+	RenderTargetInfo rt1(getRenderer().getGBuffer().getColorRt(1));
+	rt1.m_loadOperation = RenderTargetLoadOperation::kLoad;
+	rpass.setRenderpassInfo({rt0, rt1});
 
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kAllFramebuffer);
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kAllFramebuffer);

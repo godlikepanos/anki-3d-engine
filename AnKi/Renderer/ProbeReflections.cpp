@@ -143,13 +143,6 @@ Error ProbeReflections::initShadowMapping()
 		getRenderer().create2DRenderTargetDescription(resolution, resolution, getRenderer().getDepthNoStencilFormat(), "CubeRefl SM");
 	m_shadowMapping.m_rtDescr.bake();
 
-	// FB descr
-	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-	m_shadowMapping.m_fbDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -240,26 +233,26 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		// GBuffer pass
 		{
-			// Create the FB descr
-			FramebufferDescription fbDescr;
-			fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
-			for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
-			{
-				fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::kClear;
-				fbDescr.m_colorAttachments[j].m_surface.m_face = f;
-			}
-			fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-			fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-			fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-			fbDescr.bake();
-
 			// Create pass
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: GBuffer", f));
-			pass.setFramebufferInfo(fbDescr, gbufferColorRts, gbufferDepthRt);
+
+			Array<RenderTargetInfo, kGBufferColorRenderTargetCount> colorRtis;
+			for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
+			{
+				colorRtis[j].m_loadOperation = RenderTargetLoadOperation::kClear;
+				colorRtis[j].m_surface.m_face = f;
+				colorRtis[j].m_handle = gbufferColorRts[j];
+			}
+			RenderTargetInfo depthRti(gbufferDepthRt);
+			depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+			depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+			depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
+
+			pass.setRenderpassInfo(colorRtis, &depthRti);
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, f, 0));
 			}
 
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
@@ -338,7 +331,13 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		{
 			// Pass
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Shadows", f));
-			pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowMapRt);
+
+			RenderTargetInfo depthRti(shadowMapRt);
+			depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+			depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
+			depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+
+			pass.setRenderpassInfo({}, &depthRti);
 
 			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 			pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
@@ -385,23 +384,19 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		// Light shading pass
 		{
-			// FB descr
-			FramebufferDescription fbDescr;
-			fbDescr.m_colorAttachmentCount = 1;
-			fbDescr.m_colorAttachments[0].m_surface.m_face = f;
-			fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
-			fbDescr.bake();
-
-			// Pass
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: light shading", f));
-			pass.setFramebufferInfo(fbDescr, {probeTexture});
+
+			RenderTargetInfo colorRti(probeTexture);
+			colorRti.m_surface.m_face = f;
+			colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+			pass.setRenderpassInfo({colorRti});
 
 			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
-			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(TextureSurfaceInfo(0, 0, f, 0)));
+			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(TextureSurfaceInfo(0, f, 0)));
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, f, 0));
 			}
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
@@ -524,14 +519,14 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Gen mips", faceIdx));
 
-			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
+			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, faceIdx, 0));
 			subresource.m_mipmapCount = m_lightShading.m_mipCount;
 			pass.newTextureDependency(probeTexture, TextureUsageBit::kGenerateMipmaps, subresource);
 
 			pass.setWork([this, faceIdx, probeTexture](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
-				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
+				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, faceIdx, 0));
 				subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
 				Texture* texToBind;

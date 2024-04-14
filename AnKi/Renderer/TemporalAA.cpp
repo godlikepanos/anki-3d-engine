@@ -49,9 +49,6 @@ Error TemporalAA::initInternal()
 		"TemporalAA Tonemapped");
 	m_tonemappedRtDescr.bake();
 
-	m_fbDescr.m_colorAttachmentCount = 2;
-	m_fbDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -95,7 +92,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("TemporalAA");
-		pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_renderRt, m_runCtx.m_tonemappedRt});
+		pass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_renderRt), RenderTargetInfo(m_runCtx.m_tonemappedRt)});
 
 		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kFramebufferWrite);

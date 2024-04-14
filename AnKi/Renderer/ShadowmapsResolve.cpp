@@ -39,10 +39,6 @@ Error ShadowmapsResolve::initInternal()
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR8G8B8A8_Unorm, "SM resolve");
 	m_rtDescr.bake();
 
-	// Create FB descr
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	// Prog
 	ANKI_CHECK(loadShaderProgram(
 		"ShaderBinaries/ShadowmapsResolve.ankiprogbin",
@@ -70,7 +66,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
+								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
@@ -85,7 +81,8 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("ResolveShadows");
-		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
+
+		rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_rt)});
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(rgraphCtx, ctx);
@@ -93,7 +90,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0));
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);

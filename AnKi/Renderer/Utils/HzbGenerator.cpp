@@ -81,11 +81,6 @@ Error HzbGenerator::init()
 	memcpy(mappedMem, kBoxIndices, sizeof(kBoxIndices));
 	m_boxIndexBuffer->unmap();
 
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 0.0f;
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-	m_fbDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -267,7 +262,11 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("HZB boxes");
 
-		pass.setFramebufferInfo(m_fbDescr, {}, depthRts[i]);
+		RenderTargetInfo depthRt(depthRts[i]);
+		depthRt.m_aspect = DepthStencilAspectBit::kDepth;
+		depthRt.m_clearValue.m_depthStencil.m_depth = 0.0f;
+		depthRt.m_loadOperation = RenderTargetLoadOperation::kClear;
+		pass.setRenderpassInfo({}, &depthRt);
 
 		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(depthRts[i], TextureUsageBit::kFramebufferWrite, DepthStencilAspectBit::kDepth);

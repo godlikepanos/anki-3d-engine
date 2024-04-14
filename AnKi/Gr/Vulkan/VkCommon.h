@@ -83,6 +83,7 @@ enum class VulkanExtensions : U64
 	kEXT_mesh_shader = 1u << 31u,
 	kEXT_host_query_reset = 1_U64 << 32_U64,
 	kKHR_fragment_shader_barycentric = 1_U64 << 33_U64,
+	kKHR_dynamic_rendering = 1_U64 << 34_U64,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
@@ -205,10 +206,10 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 }
 
 /// Convert load op.
-[[nodiscard]] VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak);
+[[nodiscard]] VkAttachmentLoadOp convertLoadOp(RenderTargetLoadOperation ak);
 
 /// Convert store op.
-[[nodiscard]] VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak);
+[[nodiscard]] VkAttachmentStoreOp convertStoreOp(RenderTargetStoreOperation ak);
 
 /// Convert buffer usage bitmask.
 [[nodiscard]] VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask);
@@ -368,6 +369,13 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	}
 
 	return out;
+}
+
+template<typename TMain, typename TPnext>
+void appendPNextList(TMain& struc, TPnext* pNext)
+{
+	pNext->pNext = const_cast<void*>(struc.pNext);
+	struc.pNext = pNext;
 }
 /// @}
 

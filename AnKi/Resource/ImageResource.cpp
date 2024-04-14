@@ -273,7 +273,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			}
 			else
 			{
-				barrier.m_subresource = TextureSurfaceInfo(mip, 0, face, layer);
+				barrier.m_subresource = TextureSurfaceInfo(mip, face, layer);
 			}
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
@@ -324,7 +324,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			}
 			else
 			{
-				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, 0, face, layer));
+				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, face, layer));
 			}
 
 			TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex.get(), subresource, "RsrcTmp"));
@@ -349,7 +349,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			}
 			else
 			{
-				barrier.m_subresource = TextureSurfaceInfo(mip, 0, face, layer);
+				barrier.m_subresource = TextureSurfaceInfo(mip, face, layer);
 			}
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});

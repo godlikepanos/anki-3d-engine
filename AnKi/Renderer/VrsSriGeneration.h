@@ -39,7 +39,7 @@ public:
 		return m_runCtx.m_downscaledRt;
 	}
 
-	U32 getSriTexelDimension() const
+	U8 getSriTexelDimension() const
 	{
 		return m_sriTexelDimension;
 	}
@@ -58,7 +58,7 @@ public:
 	TexturePtr m_downscaledSriTex;
 	Bool m_sriTexImportedOnce = false;
 
-	U32 m_sriTexelDimension = 16;
+	U8 m_sriTexelDimension = 16;
 
 	class
 	{

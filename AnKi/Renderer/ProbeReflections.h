@@ -91,7 +91,6 @@ private:
 	{
 	public:
 		RenderTargetDescription m_rtDescr;
-		FramebufferDescription m_fbDescr;
 	} m_shadowMapping;
 
 	class

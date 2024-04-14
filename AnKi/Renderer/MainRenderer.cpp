@@ -69,10 +69,6 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 			"Final Composite");
 		m_tmpRtDesc.bake();
 
-		// FB descr
-		m_fbDescr.m_colorAttachmentCount = 1;
-		m_fbDescr.bake();
-
 		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
 	}
 
@@ -116,7 +112,7 @@ Error MainRenderer::render(Texture* presentTex)
 	{
 		GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 
-		pass.setFramebufferInfo(m_fbDescr, {presentRt});
+		pass.setRenderpassInfo({RenderTargetInfo(presentRt)});
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());

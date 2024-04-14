@@ -31,7 +31,7 @@ Error VrsSriGeneration::initInternal()
 		return Error::kNone;
 	}
 
-	m_sriTexelDimension = GrManager::getSingleton().getDeviceCapabilities().m_minShadingRateImageTexelSize;
+	m_sriTexelDimension = U8(GrManager::getSingleton().getDeviceCapabilities().m_minShadingRateImageTexelSize);
 	ANKI_ASSERT(m_sriTexelDimension == 8 || m_sriTexelDimension == 16);
 	const UVec2 rez = (getRenderer().getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
 

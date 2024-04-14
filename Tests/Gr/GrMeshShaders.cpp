@@ -226,12 +226,6 @@ float3 main(VertOut input) : SV_TARGET0
 			TextureViewInitInfo viewInit(swapchainTex.get(), "RTView");
 			TextureViewPtr swapchainView = gr->newTextureView(viewInit);
 
-			FramebufferInitInfo fbInit("FB");
-			fbInit.m_colorAttachmentCount = 1;
-			fbInit.m_colorAttachments[0].m_textureView = swapchainView;
-			fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
-			FramebufferPtr fb = gr->newFramebuffer(fbInit);
-
 			CommandBufferInitInfo cmdbinit;
 			CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
@@ -243,7 +237,10 @@ float3 main(VertOut input) : SV_TARGET0
 			barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->beginRenderPass(fb.get(), {TextureUsageBit::kFramebufferWrite}, TextureUsageBit::kNone);
+			RenderTarget rt;
+			rt.m_view = swapchainView.get();
+			rt.m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
+			cmdb->beginRenderPass({rt});
 
 			cmdb->bindStorageBuffer(0, 0, indexBuff.get(), 0, kMaxPtrSize);
 			cmdb->bindStorageBuffer(0, 1, positionsBuff.get(), 0, kMaxPtrSize);

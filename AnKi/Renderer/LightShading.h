@@ -36,7 +36,6 @@ private:
 	{
 	public:
 		RenderTargetDescription m_rtDescr;
-		FramebufferDescription m_fbDescr;
 
 		// Light shaders
 		ShaderProgramResourcePtr m_prog;

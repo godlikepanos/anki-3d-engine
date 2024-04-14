@@ -9,7 +9,6 @@
 #include <AnKi/Gr/TextureView.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/TimestampQuery.h>
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/AccelerationStructure.h>
@@ -375,46 +374,29 @@ protected:
 	void newDependency(const RenderPassDependency& dep);
 };
 
-/// Framebuffer attachment info.
-class FramebufferDescriptionAttachment
+/// Renderpass attachment info. Used in GraphicsRenderPassDescription::setRenderpassInfo. It mirrors the RenderPass.
+/// @memberof GraphicsRenderPassDescription
+class RenderTargetInfo
 {
 public:
+	RenderTargetHandle m_handle;
 	TextureSurfaceInfo m_surface;
-	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::kDontCare;
-	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::kStore;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone; ///< Relevant only for depth stencil textures.
+
+	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kDontCare;
+	RenderTargetStoreOperation m_storeOperation = RenderTargetStoreOperation::kStore;
+
+	RenderTargetLoadOperation m_stencilLoadOperation = RenderTargetLoadOperation::kDontCare;
+	RenderTargetStoreOperation m_stencilStoreOperation = RenderTargetStoreOperation::kStore;
+
 	ClearValue m_clearValue;
 
-	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
-	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::kStore;
+	RenderTargetInfo() = default;
 
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone; ///< Relevant only for depth stencil textures.
-};
-
-/// Describes a framebuffer.
-/// @memberof RenderGraphDescription
-class FramebufferDescription
-{
-	friend class GraphicsRenderPassDescription;
-	friend class RenderGraph;
-
-public:
-	Array<FramebufferDescriptionAttachment, kMaxColorRenderTargets> m_colorAttachments;
-	U32 m_colorAttachmentCount = 0;
-	FramebufferDescriptionAttachment m_depthStencilAttachment;
-	U32 m_shadingRateAttachmentTexelWidth = 0;
-	U32 m_shadingRateAttachmentTexelHeight = 0;
-	TextureSurfaceInfo m_shadingRateAttachmentSurface;
-
-	/// Calculate the hash for the framebuffer.
-	void bake();
-
-	Bool isBacked() const
+	RenderTargetInfo(RenderTargetHandle handle)
+		: m_handle(handle)
 	{
-		return m_hash != 0;
 	}
-
-private:
-	U64 m_hash = 0;
 };
 
 /// A graphics render pass for RenderGraph.
@@ -428,25 +410,30 @@ public:
 	GraphicsRenderPassDescription(RenderGraphDescription* descr, StackMemoryPool* pool)
 		: RenderPassDescriptionBase(Type::kGraphics, descr, pool)
 	{
-		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
 	}
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
-							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setRenderpassInfo(ConstWeakArray<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt = nullptr, U32 minx = 0, U32 miny = 0,
+						   U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0,
+						   U8 vrsRtTexelSizeY = 0);
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
-							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setRenderpassInfo(std::initializer_list<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt = nullptr, U32 minx = 0,
+						   U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0,
+						   U8 vrsRtTexelSizeY = 0)
+	{
+		ConstWeakArray<RenderTargetInfo> colorRtsArr(colorRts.begin(), U32(colorRts.size()));
+		setRenderpassInfo(colorRtsArr, depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX, vrsRtTexelSizeY);
+	}
 
 private:
-	Array<RenderTargetHandle, kMaxColorRenderTargets + 2> m_rtHandles;
-	FramebufferDescription m_fbDescr;
-	Array<U32, 4> m_fbRenderArea = {};
+	Array<RenderTargetInfo, kMaxColorRenderTargets + 2> m_rts;
+	Array<U32, 4> m_rpassRenderArea = {};
+	U8 m_colorRtCount = 0;
+	U8 m_vrsRtTexelSizeX = 0;
+	U8 m_vrsRtTexelSizeY = 0;
 
-	Bool hasFramebuffer() const
+	Bool hasRenderpass() const
 	{
-		return m_fbDescr.m_hash != 0;
+		return m_rpassRenderArea[3] != 0;
 	}
 };
 
@@ -593,7 +580,6 @@ public:
 /// The idea for the RenderGraph is to automate:
 /// - Synchronization (barriers, events etc) between passes.
 /// - Command buffer creation .
-/// - Framebuffer creation.
 /// - Render target creation (optional since textures can be imported as well).
 ///
 /// It accepts a description of the frame's render passes (compute and graphics), compiles that description to calculate
@@ -649,7 +635,6 @@ private:
 	};
 
 	GrHashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
-	GrHashMap<U64, FramebufferPtr> m_fbCache; ///< Framebuffer cache.
 	GrHashMap<U64, ImportedRenderTargetInfo> m_importedRenderTargets;
 
 	BakeContext* m_ctx = nullptr;
@@ -680,7 +665,6 @@ private:
 	void sortBatchPasses();
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, Bool& drawsToPresentableTex);
 
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();

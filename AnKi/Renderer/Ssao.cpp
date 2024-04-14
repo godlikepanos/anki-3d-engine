@@ -52,9 +52,6 @@ Error Ssao::initInternal()
 		getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR8G8B8A8_Snorm, "Bent normals + SSAO temp");
 	m_bentNormalsAndSsaoRtDescr.bake();
 
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	ANKI_CHECK(
 		loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQuality.get()}}, m_prog, m_grProg, "Ssao"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQuality.get()}}, m_prog,
@@ -119,7 +116,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO");
-			pass.setFramebufferInfo(m_fbDescr, {finalRt}, {});
+			pass.setRenderpassInfo({RenderTargetInfo(finalRt)});
 			ppass = &pass;
 		}
 
@@ -182,7 +179,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO spatial denoise");
-			pass.setFramebufferInfo(m_fbDescr, {bentNormalsAndSsaoTempRt}, {});
+			pass.setRenderpassInfo({RenderTargetInfo(bentNormalsAndSsaoTempRt)});
 			ppass = &pass;
 		}
 
@@ -231,7 +228,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO temporal denoise");
-			pass.setFramebufferInfo(m_fbDescr, {finalRt}, {});
+			pass.setRenderpassInfo({RenderTargetInfo(finalRt)});
 			ppass = &pass;
 		}
 

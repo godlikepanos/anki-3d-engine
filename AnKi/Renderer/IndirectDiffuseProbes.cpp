@@ -102,13 +102,6 @@ Error IndirectDiffuseProbes::initShadowMapping()
 		getRenderer().create2DRenderTargetDescription(resolution, resolution, getRenderer().getDepthNoStencilFormat(), "GI SM");
 	m_shadowMapping.m_rtDescr.bake();
 
-	// Create the FB descr
-	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-	m_shadowMapping.m_fbDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -241,26 +234,25 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			// GBuffer
 			{
-				// Create the FB descriptor
-				FramebufferDescription fbDescr;
-				fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: GBuffer", cellIdx, "face", f));
+
+				Array<RenderTargetInfo, kGBufferColorRenderTargetCount> colorRtis;
 				for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
 				{
-					fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::kClear;
-					fbDescr.m_colorAttachments[j].m_surface.m_face = f;
+					colorRtis[j].m_loadOperation = RenderTargetLoadOperation::kClear;
+					colorRtis[j].m_surface.m_face = f;
+					colorRtis[j].m_handle = gbufferColorRts[j];
 				}
-				fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-				fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-				fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-				fbDescr.bake();
+				RenderTargetInfo depthRti(gbufferDepthRt);
+				depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+				depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+				depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
-				// Create the pass
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: GBuffer", cellIdx, "face", f));
-				pass.setFramebufferInfo(fbDescr, gbufferColorRts, gbufferDepthRt);
+				pass.setRenderpassInfo(colorRtis, &depthRti);
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
-					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, f, 0));
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, f, 0));
 				}
 				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
@@ -342,7 +334,12 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			{
 				// Create the pass
 				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: Shadows", cellIdx, "face", f));
-				pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, shadowsRt);
+
+				RenderTargetInfo depthRti(shadowsRt);
+				depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+				depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+				depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
+				pass.setRenderpassInfo({}, &depthRti);
 
 				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 				pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
@@ -391,24 +388,20 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			// Light shading pass
 			{
-				// Create FB descr
-				FramebufferDescription fbDescr;
-				fbDescr.m_colorAttachmentCount = 1;
-				fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
-				fbDescr.m_colorAttachments[0].m_surface.m_face = f;
-				fbDescr.bake();
-
-				// Create the pass
 				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: Light shading", cellIdx, "face", f));
-				pass.setFramebufferInfo(fbDescr, {lightShadingRt});
+
+				RenderTargetInfo colorRti(lightShadingRt);
+				colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+				colorRti.m_surface.m_face = f;
+				pass.setRenderpassInfo({colorRti});
 
 				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
 
-				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, f, 0));
+				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, f, 0));
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
-					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, f, 0));
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, f, 0));
 				}
 				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 

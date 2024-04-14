@@ -229,19 +229,19 @@ VkBlendOp convertBlendOperation(BlendOperation ak)
 	return out;
 }
 
-VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak)
+VkAttachmentLoadOp convertLoadOp(RenderTargetLoadOperation ak)
 {
 	VkAttachmentLoadOp out = VK_ATTACHMENT_LOAD_OP_MAX_ENUM;
 
 	switch(ak)
 	{
-	case AttachmentLoadOperation::kLoad:
+	case RenderTargetLoadOperation::kLoad:
 		out = VK_ATTACHMENT_LOAD_OP_LOAD;
 		break;
-	case AttachmentLoadOperation::kClear:
+	case RenderTargetLoadOperation::kClear:
 		out = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		break;
-	case AttachmentLoadOperation::kDontCare:
+	case RenderTargetLoadOperation::kDontCare:
 		out = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		break;
 	default:
@@ -251,16 +251,16 @@ VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak)
 	return out;
 }
 
-VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak)
+VkAttachmentStoreOp convertStoreOp(RenderTargetStoreOperation ak)
 {
 	VkAttachmentStoreOp out = VK_ATTACHMENT_STORE_OP_MAX_ENUM;
 
 	switch(ak)
 	{
-	case AttachmentStoreOperation::kStore:
+	case RenderTargetStoreOperation::kStore:
 		out = VK_ATTACHMENT_STORE_OP_STORE;
 		break;
-	case AttachmentStoreOperation::kDontCare:
+	case RenderTargetStoreOperation::kDontCare:
 		out = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		break;
 	default:

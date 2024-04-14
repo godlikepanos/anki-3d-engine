@@ -48,12 +48,12 @@ void* Buffer::map(PtrSize offset, PtrSize range, [[maybe_unused]] BufferMapAcces
 
 void Buffer::unmap()
 {
+#if ANKI_ASSERTIONS_ENABLED
 	ANKI_VK_SELF(BufferImpl);
 
 	ANKI_ASSERT(self.isCreated());
 	ANKI_ASSERT(self.m_mapped);
 
-#if ANKI_ASSERTIONS_ENABLED
 	self.m_mapped = false;
 #endif
 }

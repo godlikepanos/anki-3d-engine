@@ -44,7 +44,6 @@ public:
 	ShaderProgramPtr m_ssrGrProg;
 
 	RenderTargetDescription m_ssrRtDescr;
-	FramebufferDescription m_fbDescr;
 
 	class
 	{

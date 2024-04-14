@@ -52,8 +52,6 @@ public:
 		return static_cast<const TextureImpl&>(*m_tex);
 	}
 
-	U32 getOrCreateBindlessIndex();
-
 private:
 	VkImageView m_handle = {}; ///< Cache the handle.
 	U32 m_bindlessIndex = kMaxU32; ///< Cache it.

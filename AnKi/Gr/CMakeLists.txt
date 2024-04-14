@@ -15,7 +15,6 @@ set(backend_headers
 	CommandBuffer.h
 	Common.h
 	Fence.h
-	Framebuffer.h
 	GrManager.h
 	GrObject.h
 	OcclusionQuery.h

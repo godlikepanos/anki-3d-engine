@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/GrObject.h>
-#include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
@@ -49,6 +48,23 @@ public:
 	PtrSize m_sourceOffset = 0;
 	PtrSize m_destinationOffset = 0;
 	PtrSize m_range = 0;
+};
+
+class RenderTarget
+{
+public:
+	TextureView* m_view = nullptr;
+
+	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kClear;
+	RenderTargetStoreOperation m_storeOperation = RenderTargetStoreOperation::kStore;
+
+	RenderTargetLoadOperation m_stencilLoadOperation = RenderTargetLoadOperation::kClear;
+	RenderTargetStoreOperation m_stencilStoreOperation = RenderTargetStoreOperation::kStore;
+
+	ClearValue m_clearValue;
+
+	TextureUsageBit m_usage = TextureUsageBit::kFramebufferWrite;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 };
 
 /// Command buffer initialization flags.
@@ -268,11 +284,19 @@ public:
 	/// Bind a program.
 	void bindShaderProgram(ShaderProgram* prog);
 
-	/// Begin renderpass.
+	/// Begin a renderpass.
 	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is bigger than the render area
 	/// the results are undefined.
-	void beginRenderPass(Framebuffer* fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32);
+	void beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32,
+						 U32 height = kMaxU32, TextureView* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
+
+	/// See beginRenderPass.
+	void beginRenderPass(std::initializer_list<RenderTarget> colorRts, RenderTarget* depthStencilRt = nullptr, U32 minx = 0, U32 miny = 0,
+						 U32 width = kMaxU32, U32 height = kMaxU32, TextureView* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0)
+	{
+		beginRenderPass(ConstWeakArray(colorRts.begin(), U32(colorRts.size())), depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX,
+						vrsRtTexelSizeY);
+	}
 
 	/// End renderpass.
 	void endRenderPass();

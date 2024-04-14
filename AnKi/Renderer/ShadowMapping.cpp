@@ -96,15 +96,6 @@ Error ShadowMapping::initInternal()
 	// Tiles
 	m_tileAlloc.init(m_tileCountBothAxis, m_tileCountBothAxis, kTileAllocHierarchyCount, true);
 
-	m_loadFbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_loadFbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_loadFbDescr.bake();
-
-	m_clearFbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_clearFbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-	m_clearFbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	m_clearFbDescr.bake();
-
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingClearDepth.ankiprogbin", m_clearDepthProg, m_clearDepthGrProg));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingVetVisibility.ankiprogbin", m_vetVisibilityProg, m_vetVisibilityGrProg));
 
@@ -663,7 +654,11 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 
 	const Bool loadFb = !(subpasses.getSize() == 1 && subpasses[0].m_clearTileIndirectArgs.m_buffer == nullptr);
 
-	pass.setFramebufferInfo((loadFb) ? m_loadFbDescr : m_clearFbDescr, {}, m_runCtx.m_rt, {}, viewport[0], viewport[1], viewport[2], viewport[3]);
+	RenderTargetInfo smRti(m_runCtx.m_rt);
+	smRti.m_loadOperation = (loadFb) ? RenderTargetLoadOperation::kLoad : RenderTargetLoadOperation::kClear;
+	smRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
+	smRti.m_aspect = DepthStencilAspectBit::kDepth;
+	pass.setRenderpassInfo({}, &smRti, viewport[0], viewport[1], viewport[2], viewport[3]);
 
 	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));

@@ -71,7 +71,6 @@ private:
 	Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	TexturePtr m_hzbRt;
-	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_visNormalProg;
 	ShaderProgramPtr m_visNormalGrProg;

@@ -30,8 +30,6 @@ public:
 	Error loadColorGradingTextureImage(CString filename);
 
 private:
-	FramebufferDescription m_fbDescr;
-
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs; ///< [Debug on or off]
 

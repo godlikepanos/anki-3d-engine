@@ -41,14 +41,6 @@ Error Dbg::init()
 															  Format::kR8G8B8A8_Unorm, "Dbg");
 	m_rtDescr.bake();
 
-	// Create FB descr
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_fbDescr.bake();
-
 	ResourceManager& rsrcManager = ResourceManager::getSingleton();
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GiProbe.ankitex", m_giProbeImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/LightBulb.ankitex", m_pointLightImage));
@@ -256,7 +248,11 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 		run(rgraphCtx, ctx);
 	});
 
-	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt());
+	RenderTargetInfo colorRti(m_runCtx.m_rt);
+	colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+	RenderTargetInfo depthRti(getRenderer().getGBuffer().getDepthRt());
+	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
+	pass.setRenderpassInfo({colorRti}, &depthRti);
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);

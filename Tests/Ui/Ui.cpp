@@ -99,19 +99,6 @@ ANKI_TEST(Ui, Ui)
 			label->build(canvas);
 
 			TexturePtr presentTex = gr->acquireNextPresentableTexture();
-			FramebufferPtr fb;
-			{
-				TextureViewInitInfo init;
-				init.m_texture = presentTex.get();
-				TextureViewPtr view = gr->newTextureView(init);
-
-				FramebufferInitInfo fbinit;
-				fbinit.m_colorAttachmentCount = 1;
-				fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
-				fbinit.m_colorAttachments[0].m_textureView = view;
-
-				fb = gr->newFramebuffer(fbinit);
-			}
 
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
@@ -123,7 +110,15 @@ ANKI_TEST(Ui, Ui)
 			barrier.m_texture = presentTex.get();
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->beginRenderPass(fb.get(), {{TextureUsageBit::kFramebufferWrite}}, {});
+			TextureViewInitInfo init;
+			init.m_texture = presentTex.get();
+			TextureViewPtr view = gr->newTextureView(init);
+
+			RenderTarget rt;
+			rt.m_view = view.get();
+			rt.m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
+			cmdb->beginRenderPass({rt});
+
 			canvas->appendToCommandBuffer(*cmdb);
 			cmdb->endRenderPass();
 

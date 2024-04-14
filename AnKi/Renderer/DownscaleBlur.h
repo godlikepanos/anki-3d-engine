@@ -53,8 +53,6 @@ private:
 
 	TexturePtr m_rtTex;
 
-	RendererDynamicArray<FramebufferDescription> m_fbDescrs;
-
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 

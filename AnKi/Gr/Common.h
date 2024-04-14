@@ -675,7 +675,7 @@ enum class PipelineQueryType : U8
 };
 
 /// Attachment load operation.
-enum class AttachmentLoadOperation : U8
+enum class RenderTargetLoadOperation : U8
 {
 	kLoad,
 	kClear,
@@ -683,7 +683,7 @@ enum class AttachmentLoadOperation : U8
 };
 
 /// Attachment store operation.
-enum class AttachmentStoreOperation : U8
+enum class RenderTargetStoreOperation : U8
 {
 	kStore,
 	kDontCare
@@ -956,7 +956,6 @@ class TextureSurfaceInfo
 {
 public:
 	U32 m_level = 0;
-	U32 m_depth = 0;
 	U32 m_face = 0;
 	U32 m_layer = 0;
 
@@ -964,9 +963,8 @@ public:
 
 	constexpr TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
 
-	constexpr TextureSurfaceInfo(U32 level, U32 depth, U32 face, U32 layer)
+	constexpr TextureSurfaceInfo(U32 level, U32 face, U32 layer)
 		: m_level(level)
-		, m_depth(depth)
 		, m_face(face)
 		, m_layer(layer)
 	{
@@ -976,7 +974,7 @@ public:
 
 	Bool operator==(const TextureSurfaceInfo& b) const
 	{
-		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
+		return m_level == b.m_level && m_face == b.m_face && m_layer == b.m_layer;
 	}
 
 	Bool operator!=(const TextureSurfaceInfo& b) const

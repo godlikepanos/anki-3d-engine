@@ -60,20 +60,6 @@ Error LightShading::initLightShading()
 		getRenderer().create2DRenderTargetDescription(internalResolution.x(), internalResolution.y(), getRenderer().getHdrFormat(), "Light Shading");
 	m_lightShading.m_rtDescr.bake();
 
-	// Create FB descr
-	m_lightShading.m_fbDescr.m_colorAttachmentCount = 1;
-	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
-	m_lightShading.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-
-	if(GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get())
-	{
-		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-		m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-	}
-
-	m_lightShading.m_fbDescr.bake();
-
 	// Debug visualization
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg, m_visualizeRtGrProg));
 
@@ -266,25 +252,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get();
-	const Bool fbDescrHasVrs = m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
-
-	if(enableVrs != fbDescrHasVrs)
-	{
-		// Re-bake the FB descriptor if the VRS state has changed
-
-		if(enableVrs)
-		{
-			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-		}
-		else
-		{
-			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelWidth = 0;
-			m_lightShading.m_fbDescr.m_shadingRateAttachmentTexelHeight = 0;
-		}
-
-		m_lightShading.m_fbDescr.bake();
-	}
 
 	// Create RT
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_lightShading.m_rtDescr);
@@ -301,7 +268,14 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(ctx, rgraphCtx);
 	});
-	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt(), sriRt);
+
+	RenderTargetInfo colorRt(m_runCtx.m_rt);
+	RenderTargetInfo depthRt(getRenderer().getGBuffer().getDepthRt());
+	depthRt.m_loadOperation = RenderTargetLoadOperation::kLoad;
+	depthRt.m_aspect = DepthStencilAspectBit::kDepth;
+	pass.setRenderpassInfo({colorRt}, &depthRt, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,
+						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
+						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0);
 
 	const TextureUsageBit readUsage = TextureUsageBit::kSampledFragment;
 

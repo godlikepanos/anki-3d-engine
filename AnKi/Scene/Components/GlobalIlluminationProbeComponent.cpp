@@ -10,6 +10,7 @@
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Gr/Texture.h>
+#include <AnKi/Gr/TextureView.h>
 #include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {

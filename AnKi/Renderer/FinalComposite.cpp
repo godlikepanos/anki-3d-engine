@@ -29,9 +29,6 @@ Error FinalComposite::initInternal()
 
 	ANKI_CHECK(loadColorGradingTextureImage("EngineAssets/DefaultLut.ankitex"));
 
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	// Progs
 	for(MutatorValue dbg = 0; dbg < 2; ++dbg)
 	{
@@ -79,7 +76,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		run(rgraphCtx);
 	});
-	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
+	pass.setRenderpassInfo({RenderTargetInfo(ctx.m_outRenderTarget)});
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 

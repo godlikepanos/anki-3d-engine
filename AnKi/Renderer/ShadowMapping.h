@@ -56,9 +56,6 @@ private:
 	U32 m_tileResolution = 0; ///< Tile resolution.
 	U32 m_tileCountBothAxis = 0;
 
-	FramebufferDescription m_loadFbDescr;
-	FramebufferDescription m_clearFbDescr;
-
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
 

@@ -8,8 +8,6 @@
 #include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
 #include <AnKi/Gr/ShaderProgram.h>
 #include <AnKi/Gr/Vulkan/VkShaderProgram.h>
-#include <AnKi/Gr/Framebuffer.h>
-#include <AnKi/Gr/Vulkan/VkFramebuffer.h>
 #include <AnKi/Util/HashMap.h>
 
 namespace anki {
@@ -133,7 +131,7 @@ class AllPipelineState
 {
 public:
 	const ShaderProgramImpl* m_prog = nullptr;
-	VkRenderPass m_rpass = VK_NULL_HANDLE;
+	Array<Format, kMaxColorRenderTargets + 1> m_attachmentFormats = {};
 
 	VertexPipelineState m_vertex;
 	InputAssemblerPipelineState m_inputAssembler;
@@ -354,23 +352,37 @@ public:
 		}
 	}
 
-	void beginRenderPass(const FramebufferImpl* fb)
+	void beginRenderPass(ConstWeakArray<Format> colorFormats, Format depthStencilFormat, Bool rendersToSwapchain)
 	{
-		ANKI_ASSERT(m_state.m_rpass == VK_NULL_HANDLE);
-		Bool d, s;
-		fb->getAttachmentInfo(m_fbColorAttachmentMask, d, s);
-		m_fbDepth = d;
-		m_fbStencil = s;
-		m_defaultFb = fb->hasPresentableTexture();
+		zeroMemory(m_state.m_attachmentFormats);
+		m_fbColorAttachmentCount = U8(colorFormats.getSize());
 
-		m_state.m_rpass = fb->getCompatibleRenderPass();
+		for(U32 i = 0; i < colorFormats.getSize(); ++i)
+		{
+			m_state.m_attachmentFormats[i] = colorFormats[i];
+		}
+
+		m_state.m_attachmentFormats[kMaxColorRenderTargets] = depthStencilFormat;
+
+		if(depthStencilFormat != Format::kNone)
+		{
+			const FormatInfo& inf = getFormatInfo(depthStencilFormat);
+			ANKI_ASSERT(!!inf.m_depthStencil);
+			m_fbDepth = !!(inf.m_depthStencil & DepthStencilAspectBit::kDepth);
+			m_fbStencil = !!(inf.m_depthStencil & DepthStencilAspectBit::kStencil);
+		}
+		else
+		{
+			m_fbDepth = false;
+			m_fbStencil = false;
+		}
+
+		m_rendersToSwapchain = rendersToSwapchain;
 		m_dirty.m_rpass = true;
 	}
 
 	void endRenderPass()
 	{
-		ANKI_ASSERT(m_state.m_rpass);
-		m_state.m_rpass = VK_NULL_HANDLE;
 	}
 
 	void setPrimitiveTopology(PrimitiveTopology topology)
@@ -466,8 +478,11 @@ private:
 	// Renderpass info
 	Bool m_fbDepth : 1 = false;
 	Bool m_fbStencil : 1 = false;
-	Bool m_defaultFb : 1 = false;
-	BitSet<kMaxColorRenderTargets, U8> m_fbColorAttachmentMask = {false};
+	Bool m_rendersToSwapchain : 1 = false;
+	U8 m_fbColorAttachmentCount : 4 = 0;
+
+	Bool m_pipelineStatisticsEnabled : 1 = false;
+	Bool m_vrsCapable : 1 = false;
 
 	class Hashes
 	{
@@ -509,10 +524,14 @@ private:
 		VkPipelineDynamicStateCreateInfo m_dyn;
 		VkGraphicsPipelineCreateInfo m_ppline;
 		VkPipelineRasterizationStateRasterizationOrderAMD m_rasterOrder;
-	} m_ci;
+		VkPipelineRenderingCreateInfoKHR m_dynamicRendering;
+		Array<VkFormat, kMaxColorRenderTargets> m_dynamicRenderingAttachmentFormats; ///< Because we can have them living on the stack.
 
-	Bool m_pipelineStatisticsEnabled : 1 = false;
-	Bool m_vrsCapable : 1 = false;
+		CreateInfo()
+		{
+			// Do nothing
+		}
+	} m_ci;
 
 	Bool updateHashes();
 	void updateSuperHash();

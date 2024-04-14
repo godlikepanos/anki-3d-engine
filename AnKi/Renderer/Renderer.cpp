@@ -482,13 +482,14 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 		{
 			for(U32 layer = 0; layer < inf.m_layerCount; ++layer)
 			{
-				TextureSurfaceInfo surf(mip, 0, face, layer);
+				TextureSurfaceInfo surf(mip, face, layer);
 
 				if(!useCompute)
 				{
-					FramebufferInitInfo fbInit("RendererClearRT");
-					Array<TextureUsageBit, kMaxColorRenderTargets> colUsage = {};
-					TextureUsageBit dsUsage = TextureUsageBit::kNone;
+					RenderTarget rt;
+					rt.m_clearValue = clearVal;
+
+					TextureViewPtr view;
 
 					if(getFormatInfo(inf.m_format).isDepthStencil())
 					{
@@ -503,33 +504,28 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf, aspect));
-
-						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
-						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-						fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kClear;
-						fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
-
-						dsUsage = TextureUsageBit::kFramebufferWrite;
+						view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf, aspect));
+						rt.m_aspect = aspect;
+						rt.m_view = view.get();
 					}
 					else
 					{
-						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
-
-						fbInit.m_colorAttachmentCount = 1;
-						fbInit.m_colorAttachments[0].m_textureView = view;
-						fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
-						fbInit.m_colorAttachments[0].m_clearValue = clearVal;
-
-						colUsage[0] = TextureUsageBit::kFramebufferWrite;
+						view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
+						rt.m_view = view.get();
 					}
-					FramebufferPtr fb = GrManager::getSingleton().newFramebuffer(fbInit);
 
 					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, surf};
 					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-					cmdb->beginRenderPass(fb.get(), colUsage, dsUsage);
+					if(getFormatInfo(inf.m_format).isDepthStencil())
+					{
+						cmdb->beginRenderPass({}, &rt);
+					}
+					else
+					{
+						cmdb->beginRenderPass({rt});
+					}
 					cmdb->endRenderPass();
 
 					if(!!initialUsage)
@@ -593,7 +589,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 	}
 
 	cmdb->endRecording();
-	GrManager::getSingleton().submit(cmdb.get());
+
+	FencePtr fence;
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+	fence->clientWait(10.0_sec);
 
 	return tex;
 }

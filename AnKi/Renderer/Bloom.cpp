@@ -31,8 +31,6 @@ Error Bloom::initInternal()
 
 	ANKI_CHECK(initExposure());
 	ANKI_CHECK(initUpscale());
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
 	return Error::kNone;
 }
 
@@ -98,7 +96,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_exposureRt});
+			rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_exposureRt)});
 
 			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment, inputTexSubresource);
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite);
@@ -156,7 +154,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_upscaleRt});
+			rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_upscaleRt)});
 
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledFragment);
 			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kFramebufferWrite);

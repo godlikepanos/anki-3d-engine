@@ -11,7 +11,6 @@
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/Shader.h>
 #include <AnKi/Gr/ShaderProgram.h>
-#include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/OcclusionQuery.h>
 #include <AnKi/Gr/TimestampQuery.h>

@@ -45,7 +45,6 @@ public:
 	ShaderProgramPtr m_spatialDenoiseGrProg;
 	ShaderProgramPtr m_tempralDenoiseGrProg;
 
-	FramebufferDescription m_fbDescr;
 	RenderTargetDescription m_bentNormalsAndSsaoRtDescr;
 
 	Array<TexturePtr, 2> m_tex;

@@ -186,66 +186,41 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
-															  std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-															  RenderTargetHandle depthStencilRenderTargetHandle,
-															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
-															  U32 maxy)
+inline void GraphicsRenderPassDescription::setRenderpassInfo(ConstWeakArray<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt,
+															 U32 minx, U32 miny, U32 width, U32 height, const RenderTargetHandle* vrsRt,
+															 U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
-	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
-	U32 count = 0;
-	for(const RenderTargetHandle& h : colorRenderTargetHandles)
+	m_colorRtCount = U8(colorRts.getSize());
+	for(U32 i = 0; i < m_colorRtCount; ++i)
 	{
-		rts[count++] = h;
-	}
-	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle, shadingRateRenderTargetHandle,
-					   minx, miny, maxx, maxy);
-}
-
-inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
-															  ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-															  RenderTargetHandle depthStencilRenderTargetHandle,
-															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
-															  U32 maxy)
-{
-#if ANKI_ASSERTIONS_ENABLED
-	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
-	for(U32 i = 0; i < colorRenderTargetHandles.getSize(); ++i)
-	{
-		if(i >= fbInfo.m_colorAttachmentCount)
-		{
-			ANKI_ASSERT(!colorRenderTargetHandles[i].isValid());
-		}
-		else
-		{
-			ANKI_ASSERT(colorRenderTargetHandles[i].isValid());
-		}
+		m_rts[i].m_handle = colorRts[i].m_handle;
+		m_rts[i].m_surface = colorRts[i].m_surface;
+		m_rts[i].m_loadOperation = colorRts[i].m_loadOperation;
+		m_rts[i].m_storeOperation = colorRts[i].m_storeOperation;
+		m_rts[i].m_clearValue = colorRts[i].m_clearValue;
 	}
 
-	if(!fbInfo.m_depthStencilAttachment.m_aspect)
+	if(depthStencilRt)
 	{
-		ANKI_ASSERT(!depthStencilRenderTargetHandle.isValid());
-	}
-	else
-	{
-		ANKI_ASSERT(depthStencilRenderTargetHandle.isValid());
+		m_rts[kMaxColorRenderTargets].m_handle = depthStencilRt->m_handle;
+		m_rts[kMaxColorRenderTargets].m_surface = depthStencilRt->m_surface;
+		ANKI_ASSERT(!!depthStencilRt->m_aspect);
+		m_rts[kMaxColorRenderTargets].m_aspect = depthStencilRt->m_aspect;
+		m_rts[kMaxColorRenderTargets].m_loadOperation = depthStencilRt->m_loadOperation;
+		m_rts[kMaxColorRenderTargets].m_storeOperation = depthStencilRt->m_storeOperation;
+		m_rts[kMaxColorRenderTargets].m_stencilLoadOperation = depthStencilRt->m_stencilLoadOperation;
+		m_rts[kMaxColorRenderTargets].m_stencilStoreOperation = depthStencilRt->m_stencilStoreOperation;
+		m_rts[kMaxColorRenderTargets].m_clearValue = depthStencilRt->m_clearValue;
 	}
 
-	if(fbInfo.m_shadingRateAttachmentTexelWidth > 0 && fbInfo.m_shadingRateAttachmentTexelHeight > 0)
+	if(vrsRt)
 	{
-		ANKI_ASSERT(shadingRateRenderTargetHandle.isValid());
+		m_rts[kMaxColorRenderTargets + 1].m_handle = *vrsRt;
+		m_vrsRtTexelSizeX = vrsRtTexelSizeX;
+		m_vrsRtTexelSizeY = vrsRtTexelSizeY;
 	}
-	else
-	{
-		ANKI_ASSERT(!shadingRateRenderTargetHandle.isValid());
-	}
-#endif
 
-	m_fbDescr = fbInfo;
-	memcpy(m_rtHandles.getBegin(), colorRenderTargetHandles.getBegin(), colorRenderTargetHandles.getSizeInBytes());
-	m_rtHandles[kMaxColorRenderTargets] = depthStencilRenderTargetHandle;
-	m_rtHandles[kMaxColorRenderTargets + 1] = shadingRateRenderTargetHandle;
-	m_fbRenderArea = {minx, miny, maxx, maxy};
+	m_rpassRenderArea = {minx, miny, width, height};
 }
 
 inline RenderGraphDescription::~RenderGraphDescription()

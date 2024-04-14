@@ -61,7 +61,6 @@ private:
 
 	RenderGraphPtr m_rgraph;
 	RenderTargetDescription m_tmpRtDesc;
-	FramebufferDescription m_fbDescr;
 
 	class
 	{

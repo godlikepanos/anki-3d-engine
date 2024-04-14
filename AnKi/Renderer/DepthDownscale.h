@@ -18,8 +18,8 @@ namespace anki {
 class DepthDownscale : public RendererObject
 {
 public:
-	static constexpr TextureSubresourceInfo kQuarterInternalResolution = TextureSurfaceInfo(0, 0, 0, 0);
-	static constexpr TextureSubresourceInfo kEighthInternalResolution = TextureSurfaceInfo(1, 0, 0, 0);
+	static constexpr TextureSubresourceInfo kQuarterInternalResolution = TextureSurfaceInfo(0, 0, 0);
+	static constexpr TextureSubresourceInfo kEighthInternalResolution = TextureSurfaceInfo(1, 0, 0);
 
 	DepthDownscale() = default;
 
@@ -48,8 +48,6 @@ private:
 	ShaderProgramPtr m_grProg;
 
 	BufferPtr m_counterBuffer;
-
-	RendererDynamicArray<FramebufferDescription> m_fbDescrs;
 
 	U32 m_mipCount = 0;
 

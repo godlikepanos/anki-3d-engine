@@ -70,31 +70,6 @@ Error GBuffer::initInternal()
 		m_hzbRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute, clear);
 	}
 
-	// FB descr
-	const AttachmentLoadOperation loadop = AttachmentLoadOperation::kClear;
-
-	m_fbDescr.m_colorAttachmentCount = kGBufferColorRenderTargetCount;
-	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
-	{
-		m_fbDescr.m_colorAttachments[i].m_loadOperation = loadop;
-		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {0.0f, 0.0f, 0.0f, 0.0f};
-	}
-
-	m_fbDescr.m_colorAttachments[3].m_loadOperation = AttachmentLoadOperation::kClear;
-	m_fbDescr.m_colorAttachments[3].m_clearValue.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
-
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-
-	if(GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get())
-	{
-		m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-		m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-	}
-
-	m_fbDescr.bake();
-
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeGBufferNormal.ankiprogbin", m_visNormalProg, m_visNormalGrProg));
 
 	return Error::kNone;
@@ -168,25 +143,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
-	const Bool fbDescrHasVrs = m_fbDescr.m_shadingRateAttachmentTexelWidth > 0;
-
-	if(enableVrs != fbDescrHasVrs)
-	{
-		// Re-bake the FB descriptor if the VRS state has changed
-
-		if(enableVrs)
-		{
-			m_fbDescr.m_shadingRateAttachmentTexelWidth = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-			m_fbDescr.m_shadingRateAttachmentTexelHeight = getRenderer().getVrsSriGeneration().getSriTexelDimension();
-		}
-		else
-		{
-			m_fbDescr.m_shadingRateAttachmentTexelWidth = 0;
-			m_fbDescr.m_shadingRateAttachmentTexelHeight = 0;
-		}
-
-		m_fbDescr.bake();
-	}
 
 	// Create RTs
 	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
@@ -205,8 +161,24 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
-	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], kGBufferColorRenderTargetCount), m_runCtx.m_crntFrameDepthRt,
-							sriRt);
+	Array<RenderTargetInfo, kGBufferColorRenderTargetCount> colorRti;
+	colorRti[0].m_handle = rts[0];
+	colorRti[0].m_loadOperation = RenderTargetLoadOperation::kClear;
+	colorRti[1].m_handle = rts[1];
+	colorRti[1].m_loadOperation = RenderTargetLoadOperation::kClear;
+	colorRti[2].m_handle = rts[2];
+	colorRti[2].m_loadOperation = RenderTargetLoadOperation::kClear;
+	colorRti[3].m_handle = rts[3];
+	colorRti[3].m_loadOperation = RenderTargetLoadOperation::kClear;
+	colorRti[3].m_clearValue.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
+	RenderTargetInfo depthRti(m_runCtx.m_crntFrameDepthRt);
+	depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+	depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
+	depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+
+	pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,
+						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
+						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0);
 	pass.setWork([this, &ctx, visOut, meshletVisOut](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(GBuffer);
 

@@ -14,7 +14,6 @@
 #include <AnKi/Gr/Vulkan/VkShader.h>
 #include <AnKi/Gr/Vulkan/VkShaderProgram.h>
 #include <AnKi/Gr/Vulkan/VkCommandBuffer.h>
-#include <AnKi/Gr/Vulkan/VkFramebuffer.h>
 #include <AnKi/Gr/Vulkan/VkOcclusionQuery.h>
 #include <AnKi/Gr/Vulkan/VkTimestampQuery.h>
 #include <AnKi/Gr/Vulkan/VkPipelineQuery.h>
@@ -145,7 +144,6 @@ ANKI_NEW_GR_OBJECT(Sampler)
 ANKI_NEW_GR_OBJECT(Shader)
 ANKI_NEW_GR_OBJECT(ShaderProgram)
 ANKI_NEW_GR_OBJECT(CommandBuffer)
-ANKI_NEW_GR_OBJECT(Framebuffer)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(OcclusionQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(TimestampQuery)
 ANKI_NEW_GR_OBJECT(PipelineQuery)
@@ -995,6 +993,16 @@ Error GrManagerImpl::initDevice()
 				m_extensions |= VulkanExtensions::kKHR_fragment_shader_barycentric;
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::kKHR_dynamic_rendering;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME)
+			{
+				// Want it because of dynamic_rendering
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -1082,8 +1090,7 @@ Error GrManagerImpl::initDevice()
 			return Error::kFunctionFailed;
 		}
 
-		descriptorIndexingFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &descriptorIndexingFeatures;
+		appendPNextList(ci, &descriptorIndexingFeatures);
 	}
 
 	// Buffer address
@@ -1100,8 +1107,7 @@ Error GrManagerImpl::initDevice()
 		deviceBufferFeatures.bufferDeviceAddressCaptureReplay = deviceBufferFeatures.bufferDeviceAddressCaptureReplay && g_debugMarkersCVar.get();
 		deviceBufferFeatures.bufferDeviceAddressMultiDevice = false;
 
-		deviceBufferFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &deviceBufferFeatures;
+		appendPNextList(ci, &deviceBufferFeatures);
 	}
 
 	// Scalar block layout
@@ -1122,8 +1128,7 @@ Error GrManagerImpl::initDevice()
 			return Error::kFunctionFailed;
 		}
 
-		scalarBlockLayoutFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &scalarBlockLayoutFeatures;
+		appendPNextList(ci, &scalarBlockLayoutFeatures);
 	}
 
 	// Timeline semaphore
@@ -1144,8 +1149,7 @@ Error GrManagerImpl::initDevice()
 			return Error::kFunctionFailed;
 		}
 
-		timelineSemaphoreFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &timelineSemaphoreFeatures;
+		appendPNextList(ci, &timelineSemaphoreFeatures);
 	}
 
 	// Set RT features
@@ -1180,8 +1184,7 @@ Error GrManagerImpl::initDevice()
 		accelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = false;
 
 		ANKI_ASSERT(accelerationStructureFeatures.pNext == nullptr);
-		accelerationStructureFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &rtPipelineFeatures;
+		appendPNextList(ci, &accelerationStructureFeatures);
 
 		// Get some more stuff
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};
@@ -1197,8 +1200,7 @@ Error GrManagerImpl::initDevice()
 		pplineExecutablePropertiesFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
 		pplineExecutablePropertiesFeatures.pipelineExecutableInfo = true;
 
-		pplineExecutablePropertiesFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &pplineExecutablePropertiesFeatures;
+		appendPNextList(ci, &pplineExecutablePropertiesFeatures);
 	}
 
 	// F16 I8
@@ -1213,8 +1215,7 @@ Error GrManagerImpl::initDevice()
 		float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
 		getPhysicalDevicaFeatures2(float16Int8Features);
 
-		float16Int8Features.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &float16Int8Features;
+		appendPNextList(ci, &float16Int8Features);
 	}
 
 	// 64bit atomics
@@ -1231,8 +1232,7 @@ Error GrManagerImpl::initDevice()
 		atomicInt64Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
 		getPhysicalDevicaFeatures2(atomicInt64Features);
 
-		atomicInt64Features.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &atomicInt64Features;
+		appendPNextList(ci, &atomicInt64Features);
 	}
 
 	// VRS
@@ -1285,8 +1285,7 @@ Error GrManagerImpl::initDevice()
 
 		if(m_capabilities.m_vrs)
 		{
-			fragmentShadingRateFeatures.pNext = const_cast<void*>(ci.pNext);
-			ci.pNext = &fragmentShadingRateFeatures;
+			appendPNextList(ci, &fragmentShadingRateFeatures);
 		}
 	}
 
@@ -1307,8 +1306,7 @@ Error GrManagerImpl::initDevice()
 
 		meshShadersFeatures.multiviewMeshShader = false;
 		meshShadersFeatures.primitiveFragmentShadingRateMeshShader = false;
-		meshShadersFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &meshShadersFeatures;
+		appendPNextList(ci, &meshShadersFeatures);
 
 		ANKI_VK_LOGI(VK_EXT_MESH_SHADER_EXTENSION_NAME " is supported and enabled");
 	}
@@ -1330,8 +1328,7 @@ Error GrManagerImpl::initDevice()
 			return Error::kFunctionFailed;
 		}
 
-		hostQueryResetFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &hostQueryResetFeatures;
+		appendPNextList(ci, &hostQueryResetFeatures);
 	}
 	else
 	{
@@ -1352,8 +1349,7 @@ Error GrManagerImpl::initDevice()
 			return Error::kFunctionFailed;
 		}
 
-		baryFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &baryFeatures;
+		appendPNextList(ci, &baryFeatures);
 
 		m_capabilities.m_barycentrics = true;
 	}
@@ -1363,8 +1359,7 @@ Error GrManagerImpl::initDevice()
 	{
 		maintenance4Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR;
 		maintenance4Features.maintenance4 = true;
-		maintenance4Features.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &maintenance4Features;
+		appendPNextList(ci, &maintenance4Features);
 	}
 
 	if(!(m_extensions & VulkanExtensions::kKHR_draw_indirect_count) || m_capabilities.m_maxDrawIndirectCount < kMaxU32)
@@ -1372,8 +1367,6 @@ Error GrManagerImpl::initDevice()
 		ANKI_VK_LOGE(VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME " not supported or too small maxDrawIndirectCount");
 		return Error::kFunctionFailed;
 	}
-
-	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
 
 	if(!(m_extensions & VulkanExtensions::kKHR_spirv_1_4))
 	{
@@ -1386,6 +1379,28 @@ Error GrManagerImpl::initDevice()
 		ANKI_VK_LOGE(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME " is not supported");
 		return Error::kFunctionFailed;
 	}
+
+	VkPhysicalDeviceDynamicRenderingFeatures dynRenderingFeatures = {};
+	if(!(m_extensions & VulkanExtensions::kKHR_dynamic_rendering))
+	{
+		ANKI_VK_LOGE(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME " is not supported");
+		return Error::kFunctionFailed;
+	}
+	else
+	{
+		dynRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+		getPhysicalDevicaFeatures2(dynRenderingFeatures);
+
+		if(!dynRenderingFeatures.dynamicRendering)
+		{
+			ANKI_VK_LOGE("VkPhysicalDeviceDynamicRenderingFeatures::dynamicRendering is false");
+			return Error::kFunctionFailed;
+		}
+
+		appendPNextList(ci, &dynRenderingFeatures);
+	}
+
+	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
 
 	return Error::kNone;
 }
