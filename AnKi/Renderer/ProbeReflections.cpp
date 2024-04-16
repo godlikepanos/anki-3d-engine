@@ -437,7 +437,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				{
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowMapRt;
 				}
-				dsInfo.m_skyLutRenderTarget = getRenderer().getSky().getSkyLutRt();
+				dsInfo.m_skyLutRenderTarget = (getRenderer().getSky().isEnabled()) ? getRenderer().getSky().getSkyLutRt() : RenderTargetHandle();
 				dsInfo.m_globalRendererConsts = rctx.m_globalRenderingUniformsBuffer;
 				dsInfo.m_renderpassContext = &rgraphCtx;
 
