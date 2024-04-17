@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Gr/D3D/D3DCommon.h>
 
 namespace anki {
 
@@ -21,11 +22,13 @@ public:
 	{
 	}
 
-	~CommandBufferImpl()
-	{
-	}
+	~CommandBufferImpl();
 
 	Error init(const CommandBufferInitInfo& init);
+
+private:
+	ID3D12CommandAllocator* m_cmdAllocator = nullptr;
+	ID3D12GraphicsCommandList7* m_cmdList = nullptr;
 };
 /// @}
 

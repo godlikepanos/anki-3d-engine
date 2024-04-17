@@ -1,0 +1,15 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma once
+
+#include <AnKi/Util/StdTypes.h>
+
+namespace anki {
+
+/// There is no need to ask for a fence or a semaphore to be waited for more than 10 seconds. The GPU will timeout anyway.
+constexpr Second kMaxFenceOrSemaphoreWaitTime = 10.0;
+
+} // end namespace anki

@@ -48,13 +48,13 @@ elseif(DIRECTX)
 	set(backend_sources  ${backend_sources} ${dxsources})
 	set(backend_headers ${backend_headers} ${dxheaders})
 
-	set(extra_libs ${extra_libs} d3d12 dxgi)
+	set(extra_libs ${extra_libs} d3d12 dxgi dxguid) # dxguid for some debug layer stuff
 endif()
 
 # Have 2 libraries. The AnKiGrCommon is the bare minimum for the AnKiShaderCompiler to work. Don't have
 # AnKiShaderCompiler depend on what AnKiGr depends on
 
-add_library(AnKiGrCommon ${common_sources} ${common_headers})
+add_library(AnKiGrCommon ${common_sources})
 target_compile_definitions(AnKiGrCommon PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGrCommon AnKiUtil) # Only depend on Util
 

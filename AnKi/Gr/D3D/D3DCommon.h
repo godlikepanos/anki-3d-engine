@@ -7,6 +7,7 @@
 
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Gr/Common/BackendCommon.h>
 #include <string>
 #include <locale>
 #include <codecvt>
@@ -18,6 +19,7 @@
 #include <windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <dxgidebug.h>
 #include <D3Dcompiler.h>
 #include <DirectXMath.h>
 #include <wrl.h>
@@ -26,6 +28,9 @@
 using Microsoft::WRL::ComPtr;
 
 namespace anki {
+
+/// @addtogroup directx
+/// @{
 
 #define ANKI_D3D_LOGI(...) ANKI_LOG("D3D", kNormal, __VA_ARGS__)
 #define ANKI_D3D_LOGE(...) ANKI_LOG("D3D", kError, __VA_ARGS__)
@@ -42,7 +47,7 @@ namespace anki {
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGF("D3D function failed (HRESULT: %l): %s", rez, #x); \
+			ANKI_D3D_LOGF("D3D function failed (HRESULT: %d): %s", rez, #x); \
 		} \
 	} while(0)
 
@@ -52,17 +57,21 @@ namespace anki {
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGE("D3D function failed (HRESULT: %l): %s", rez, #x); \
+			ANKI_D3D_LOGE("D3D function failed (HRESULT: %d): %s", rez, #x); \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)
 
+/// Backend specific constants
+constexpr U32 kMaxRtvDescriptors = 128;
+
 inline std::string ws2s(const std::wstring& wstr)
 {
-	using convert_typeX = std::codecvt_utf8<wchar_t>;
-	std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-	return converterX.to_bytes(wstr);
+	const int slength = int(wstr.length());
+	int len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), slength, 0, 0, 0, 0);
+	std::string r(len, '\0');
+	WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), slength, &r[0], len, 0, 0);
+	return r;
 }
 
 template<typename T>
@@ -74,5 +83,10 @@ void safeRelease(T*& p)
 		p = nullptr;
 	}
 }
+
+ID3D12Device& getDevice();
+
+GrManagerImpl& getGrManagerImpl();
+/// @}
 
 } // end namespace anki

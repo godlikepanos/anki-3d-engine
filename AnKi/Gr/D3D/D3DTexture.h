@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Texture.h>
+#include <AnKi/Gr/D3D/D3DDescriptorHeap.h>
 
 namespace anki {
 
@@ -23,7 +24,18 @@ public:
 
 	~TextureImpl();
 
-	Error init(const TextureInitInfo& inf);
+	Error init(const TextureInitInfo& inf)
+	{
+		return initInternal(nullptr, inf);
+	}
+
+	Error initExternal(ID3D12Resource* image, const TextureInitInfo& init)
+	{
+		return initInternal(image, init);
+	}
+
+private:
+	Error initInternal(ID3D12Resource* image, const TextureInitInfo& init);
 };
 /// @}
 

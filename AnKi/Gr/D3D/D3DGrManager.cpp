@@ -4,6 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DGrManager.h>
+#include <AnKi/Gr/D3D/D3DDescriptorHeap.h>
+
 #include <AnKi/Gr/D3D/D3DAccelerationStructure.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
 #include <AnKi/Gr/D3D/D3DCommandBuffer.h>
@@ -13,12 +15,12 @@
 #include <AnKi/Gr/D3D/D3DTextureView.h>
 #include <AnKi/Gr/D3D/D3DPipelineQuery.h>
 #include <AnKi/Gr/D3D/D3DSampler.h>
-#include <AnKi/Gr/D3D/D3DFramebuffer.h>
 #include <AnKi/Gr/RenderGraph.h>
 #include <AnKi/Gr/D3D/D3DGrUpscaler.h>
 #include <AnKi/Gr/D3D/D3DTimestampQuery.h>
 
 #include <AnKi/ShaderCompiler/Common.h>
+#include <AnKi/Util/Tracer.h>
 
 #if ANKI_WINDOWING_SYSTEM_SDL
 #	include <AnKi/Window/NativeWindowSdl.h>
@@ -33,6 +35,95 @@ BoolCVar g_vsyncCVar(CVarSubsystem::kGr, "Vsync", false, "Enable or not vsync");
 BoolCVar g_debugMarkersCVar(CVarSubsystem::kGr, "DebugMarkers", false, "Enable or not debug markers");
 BoolCVar g_meshShadersCVar(CVarSubsystem::kGr, "MeshShaders", false, "Enable or not mesh shaders");
 static NumericCVar<U8> g_deviceCVar(CVarSubsystem::kGr, "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
+
+static LONG NTAPI vexHandler(PEXCEPTION_POINTERS exceptionInfo)
+{
+	PEXCEPTION_RECORD exceptionRecord = exceptionInfo->ExceptionRecord;
+
+	switch(exceptionRecord->ExceptionCode)
+	{
+	case DBG_PRINTEXCEPTION_WIDE_C:
+	case DBG_PRINTEXCEPTION_C:
+
+		if(exceptionRecord->NumberParameters >= 2)
+		{
+			ULONG len = exceptionRecord->ExceptionInformation[0];
+
+			union
+			{
+				ULONG_PTR up;
+				PCWSTR pwz;
+				PCSTR psz;
+			};
+
+			up = exceptionRecord->ExceptionInformation[1];
+
+			if(exceptionRecord->ExceptionCode == DBG_PRINTEXCEPTION_C)
+			{
+				ULONG n;
+				if(n = MultiByteToWideChar(CP_ACP, 0, psz, len, 0, 0))
+				{
+					WCHAR* wz = static_cast<WCHAR*>(_malloca(n * sizeof(WCHAR)));
+
+					if(len = MultiByteToWideChar(CP_ACP, 0, psz, len, wz, n))
+					{
+						pwz = wz;
+					}
+				}
+			}
+
+			if(len)
+			{
+				const std::wstring wstring(pwz, len - 1);
+				std::string str = ws2s(wstring);
+				str.erase(std::remove(str.begin(), str.end(), '\n'), str.cend());
+				str.erase(std::remove(str.begin(), str.end(), '\r'), str.cend());
+
+				if(str.find("D3D12 INFO") == std::string::npos)
+				{
+					if(GrMemoryPool::isAllocated())
+					{
+						ANKI_D3D_LOGE("%s", str.c_str());
+					}
+					else
+					{
+						printf("D3D12 validation error: %s", str.c_str());
+					}
+				}
+			}
+		}
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void NTAPI d3dDebugMessageCallback(D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID id, LPCSTR pDescription,
+										  void* pContext)
+{
+	if(!Logger::isAllocated())
+	{
+		printf("d3dDebugMessageCallback : %s", pDescription);
+		return;
+	}
+	else
+	{
+		switch(severity)
+		{
+		case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+		case D3D12_MESSAGE_SEVERITY_ERROR:
+			ANKI_D3D_LOGE("%s", pDescription);
+			break;
+		case D3D12_MESSAGE_SEVERITY_WARNING:
+			ANKI_D3D_LOGW("%s", pDescription);
+			break;
+		case D3D12_MESSAGE_SEVERITY_INFO:
+		case D3D12_MESSAGE_SEVERITY_MESSAGE:
+			ANKI_D3D_LOGI("%s", pDescription);
+			break;
+		}
+	}
+}
 
 template<>
 template<>
@@ -77,13 +168,37 @@ Error GrManager::init(GrManagerInitInfo& inf)
 
 TexturePtr GrManager::acquireNextPresentableTexture()
 {
-	ANKI_ASSERT(!"TODO");
-	return TexturePtr(nullptr);
+	ANKI_D3D_SELF(GrManagerImpl);
+
+	self.m_swapchain.m_backbufferIdx = self.m_swapchain.m_swapchain->GetCurrentBackBufferIndex();
+	return self.m_swapchain.m_textures[self.m_swapchain.m_backbufferIdx];
 }
 
 void GrManager::swapBuffers()
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_TRACE_SCOPED_EVENT(D3DSwapBuffers);
+	ANKI_D3D_SELF(GrManagerImpl);
+
+	self.m_swapchain.m_swapchain->Present((g_vsyncCVar.get()) ? 1 : 0, (g_vsyncCVar.get()) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+
+	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance();
+	presentFence->signal(GpuQueueType::kGeneral);
+
+	auto& crntFrame = self.m_frames[self.m_crntFrame];
+
+	if(crntFrame.m_presentFence) [[likely]]
+	{
+		// Wait prev fence
+		const Bool signaled = crntFrame.m_presentFence->clientWait(kMaxSecond);
+		if(!signaled)
+		{
+			ANKI_D3D_LOGF("Frame fence didn't signal");
+		}
+	}
+
+	crntFrame.m_presentFence = presentFence;
+
+	self.m_crntFrame = (self.m_crntFrame + 1) % self.m_frames.getSize();
 }
 
 void GrManager::finish()
@@ -120,7 +235,6 @@ ANKI_NEW_GR_OBJECT(Sampler)
 ANKI_NEW_GR_OBJECT(Shader)
 ANKI_NEW_GR_OBJECT(ShaderProgram)
 ANKI_NEW_GR_OBJECT(CommandBuffer)
-ANKI_NEW_GR_OBJECT(Framebuffer)
 // ANKI_NEW_GR_OBJECT_NO_INIT_INFO(OcclusionQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(TimestampQuery)
 ANKI_NEW_GR_OBJECT(PipelineQuery)
@@ -154,15 +268,19 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ComPtr<ID3D12Debug> debugInterface;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
 
+		debugInterface->EnableDebugLayer();
+
 		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 
 		if(g_gpuValidationCVar.get())
 		{
-			ComPtr<ID3D12Debug1> debugInterface1;
-			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
+			ComPtr<ID3D12Debug4> debugInterface4;
+			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface4)));
 
-			debugInterface1->SetEnableGPUBasedValidation(true);
+			debugInterface4->SetEnableGPUBasedValidation(true);
 		}
+
+		AddVectoredExceptionHandler(true, vexHandler);
 	}
 
 	ComPtr<IDXGIFactory4> factory2;
@@ -237,6 +355,15 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	// Create device
 	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&m_device)));
 
+	if(g_validationCVar.get())
+	{
+		ComPtr<ID3D12InfoQueue1> infoq;
+		m_device->QueryInterface(IID_PPV_ARGS(&infoq));
+
+		ANKI_D3D_CHECK(
+			infoq->RegisterMessageCallback(d3dDebugMessageCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_debugMessageCallbackCookie));
+	}
+
 	// Create queues
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -246,6 +373,14 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
 		ANKI_D3D_CHECK(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_queues[GpuQueueType::kCompute])));
 	}
+
+	// Limits
+	m_limits.m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	// Other systems
+	RtvDescriptorHeap::allocateSingleton();
+	ANKI_CHECK(RtvDescriptorHeap::getSingleton().init(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, kMaxRtvDescriptors,
+													  m_limits.m_rtvDescriptorSize));
 
 	// Create swapchain
 	{
@@ -270,13 +405,33 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		// Swap chain needs the queue so that it can force a flush on it.
 		ANKI_D3D_CHECK(factory2->CreateSwapChainForHwnd(m_queues[GpuQueueType::kGeneral], hwnd, &swapChainDesc, nullptr, nullptr, &swapChain));
 
-		swapChain->QueryInterface(IID_PPV_ARGS(&m_swapchain));
+		swapChain->QueryInterface(IID_PPV_ARGS(&m_swapchain.m_swapchain));
 
 		// Does not support fullscreen transitions.
 		factory2->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
-		m_backbufferIdx = m_swapchain->GetCurrentBackBufferIndex();
+		m_swapchain.m_backbufferIdx = m_swapchain.m_swapchain->GetCurrentBackBufferIndex();
+
+		// Store swapchain RTVs
+		for(U32 i = 0; i < kMaxFramesInFlight; ++i)
+		{
+			m_swapchain.m_rtvHandles[i] = RtvDescriptorHeap::getSingleton().allocate();
+			ANKI_D3D_CHECK(m_swapchain.m_swapchain->GetBuffer(i, IID_PPV_ARGS(&m_swapchain.m_rtvResources[i])));
+			m_device->CreateRenderTargetView(m_swapchain.m_rtvResources[i], nullptr, m_swapchain.m_rtvHandles[i]);
+
+			TextureInitInfo init("SwapchainImg");
+			init.m_width = window.getWidth();
+			init.m_height = window.getHeight();
+			init.m_format = Format::kR8G8B8A8_Unorm;
+			init.m_usage = TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite | TextureUsageBit::kPresent;
+			init.m_type = TextureType::k2D;
+
+			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
+			m_swapchain.m_textures[i].reset(tex);
+		}
 	}
+
+	FenceFactory::allocateSingleton();
 
 	return Error::kNone;
 }
@@ -285,10 +440,37 @@ void GrManagerImpl::destroy()
 {
 	ANKI_D3D_LOGI("Destroying D3D backend");
 
-	safeRelease(m_swapchain);
+	FenceFactory::freeSingleton();
+
+	for(D3D12_CPU_DESCRIPTOR_HANDLE handle : m_swapchain.m_rtvHandles)
+	{
+		RtvDescriptorHeap::getSingleton().free(handle);
+	}
+
+	for(ID3D12Resource* rsrc : m_swapchain.m_rtvResources)
+	{
+		safeRelease(rsrc);
+	}
+
+	safeRelease(m_swapchain.m_swapchain);
+	m_swapchain = {};
+
+	RtvDescriptorHeap::freeSingleton();
+
 	safeRelease(m_queues[GpuQueueType::kGeneral]);
 	safeRelease(m_queues[GpuQueueType::kCompute]);
 	safeRelease(m_device);
+
+	// Report objects that didn't cleaned up
+	{
+		ComPtr<IDXGIDebug1> dxgiDebug;
+		if(SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+		{
+			dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+		}
+	}
+
+	ANKI_D3D_LOGI("Destroying D3D backend completed");
 
 	GrMemoryPool::freeSingleton();
 }

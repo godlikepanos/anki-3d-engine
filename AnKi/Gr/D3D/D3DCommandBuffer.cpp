@@ -172,8 +172,8 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::beginRenderPass(Framebuffer* fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-									TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height)
+void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
+									TextureView* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -368,9 +368,20 @@ void CommandBuffer::popDebugMarker()
 	ANKI_ASSERT(!"TODO");
 }
 
+CommandBufferImpl::~CommandBufferImpl()
+{
+	safeRelease(m_cmdList);
+	safeRelease(m_cmdAllocator);
+}
+
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_CHECK(getDevice().CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_cmdAllocator)));
+
+	ANKI_D3D_CHECK(getDevice().CreateCommandList(
+		0, !!(init.m_flags & CommandBufferFlag::kGeneralWork) ? D3D12_COMMAND_LIST_TYPE_DIRECT : D3D12_COMMAND_LIST_TYPE_COMPUTE, m_cmdAllocator,
+		nullptr, IID_PPV_ARGS(&m_cmdList)));
+
 	return Error::kNone;
 }
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Common.h>
+#include <AnKi/Gr/Common/BackendCommon.h>
 
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
 // Do nothing
@@ -94,10 +95,6 @@ using VulkanQueueFamilies = Array<U32, U32(GpuQueueType::kCount)>;
 constexpr U32 kDescriptorPoolInitialSize = 64;
 constexpr F32 kDescriptorPoolSizeScale = 2.0f;
 constexpr U32 kDescriptorBufferedFrameCount = 60 * 5; ///< How many frames worth of descriptors to buffer.
-
-/// There is no need to ask for a fence or a semaphore to be waited for more than 10 seconds. The GPU will timeout
-/// anyway.
-constexpr Second kMaxFenceOrSemaphoreWaitTime = 10.0;
 /// @}
 
 /// Some internal buffer usage flags.

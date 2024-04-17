@@ -24,9 +24,8 @@ TextureImpl::~TextureImpl()
 {
 }
 
-Error TextureImpl::init(const TextureInitInfo& inf)
+Error TextureImpl::initInternal(ID3D12Resource* image, const TextureInitInfo& init)
 {
-	ANKI_ASSERT(!"TODO");
 	return Error::kNone;
 }
 
