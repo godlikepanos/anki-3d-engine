@@ -63,6 +63,14 @@ void MicroFencePtrDeleter::operator()(MicroFence* f)
 	FenceFactory::getSingleton().deleteFence(f);
 }
 
+FenceFactory::~FenceFactory()
+{
+	trimSignaledFences(true);
+
+	ANKI_ASSERT(m_fences.getSize() == 0);
+	ANKI_ASSERT(m_aliveFenceCount == 0);
+}
+
 MicroFence* FenceFactory::newFence()
 {
 	MicroFence* out = nullptr;
@@ -114,7 +122,7 @@ MicroFence* FenceFactory::newFence()
 	return out;
 }
 
-void FenceFactory::trimAliveFences(Bool wait)
+void FenceFactory::trimSignaledFences(Bool wait)
 {
 	LockGuard<Mutex> lock(m_mtx);
 
@@ -147,14 +155,6 @@ void FenceFactory::trimAliveFences(Bool wait)
 	{
 		m_fences = std::move(unsignaledFences);
 	}
-}
-
-FenceFactory::~FenceFactory()
-{
-	trimAliveFences(true);
-
-	ANKI_ASSERT(m_fences.getSize() == 0);
-	ANKI_ASSERT(m_aliveFenceCount == 0);
 }
 
 void FenceFactory::deleteFence(MicroFence* fence)

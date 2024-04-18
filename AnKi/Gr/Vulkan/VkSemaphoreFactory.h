@@ -10,9 +10,6 @@
 
 namespace anki {
 
-// Forward
-class SemaphoreFactory;
-
 /// @addtogroup vulkan
 /// @{
 
@@ -91,7 +88,6 @@ public:
 private:
 	VkSemaphore m_handle = VK_NULL_HANDLE;
 	mutable Atomic<I32> m_refcount = {0};
-	SemaphoreFactory* m_factory = nullptr;
 
 	/// Fence to find out when it's safe to reuse this semaphore.
 	MicroFencePtr m_fence;
@@ -99,7 +95,7 @@ private:
 	Atomic<U64> m_timelineValue = {0};
 	Bool m_isTimeline = false;
 
-	MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence, Bool isTimeline);
+	MicroSemaphore(MicroFencePtr fence, Bool isTimeline);
 
 	~MicroSemaphore();
 };
@@ -115,13 +111,13 @@ public:
 using MicroSemaphorePtr = IntrusivePtr<MicroSemaphore, MicroSemaphorePtrDeleter>;
 
 /// Factory of semaphores.
-class SemaphoreFactory
+class SemaphoreFactory : public MakeSingleton<SemaphoreFactory>
 {
 	friend class MicroSemaphore;
 	friend class MicroSemaphorePtrDeleter;
 
 public:
-	void destroy()
+	~SemaphoreFactory()
 	{
 		m_binaryRecycler.destroy();
 		m_timelineRecycler.destroy();
@@ -136,5 +132,3 @@ private:
 /// @}
 
 } // end namespace anki
-
-#include <AnKi/Gr/Vulkan/VkSemaphoreFactory.inl.h>

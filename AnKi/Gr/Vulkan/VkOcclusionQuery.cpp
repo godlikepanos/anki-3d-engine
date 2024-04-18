@@ -29,13 +29,13 @@ OcclusionQueryImpl::~OcclusionQueryImpl()
 {
 	if(m_handle)
 	{
-		getGrManagerImpl().getOcclusionQueryFactory().deleteQuery(m_handle);
+		OcclusionQueryFactory::getSingleton().deleteQuery(m_handle);
 	}
 }
 
 Error OcclusionQueryImpl::init()
 {
-	ANKI_CHECK(getGrManagerImpl().getOcclusionQueryFactory().newQuery(m_handle));
+	ANKI_CHECK(OcclusionQueryFactory::getSingleton().newQuery(m_handle));
 	return Error::kNone;
 }
 

@@ -21,6 +21,7 @@
 #include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
 #include <AnKi/Gr/Vulkan/VkGrUpscaler.h>
 #include <AnKi/Gr/Vulkan/VkFence.h>
+#include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 
 #include <AnKi/Window/NativeWindow.h>
 #if ANKI_WINDOWING_SYSTEM_SDL
@@ -216,7 +217,7 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	// 3rd THING: The destroy everything that has a reference to GrObjects.
-	m_cmdbFactory.destroy();
+	CommandBufferFactory::freeSingleton();
 
 	for(PerFrame& frame : m_perFrame)
 	{
@@ -229,23 +230,20 @@ GrManagerImpl::~GrManagerImpl()
 
 	// 4th THING: Continue with the rest
 
-	m_barrierFactory.destroy(); // Destroy before fences
-	m_semaphoreFactory.destroy(); // Destroy before fences
-	m_swapchainFactory.destroy(); // Destroy before fences
+	OcclusionQueryFactory::freeSingleton();
+	TimestampQueryFactory::freeSingleton();
+	PrimitivesPassedClippingFactory::freeSingleton();
+	SemaphoreFactory::freeSingleton(); // Destroy before fences
+	SamplerFactory::freeSingleton();
+	SwapchainFactory::freeSingleton(); // Destroy before fences
 	m_frameGarbageCollector.destroy();
 
-	m_gpuMemManager.destroy();
-
+	GpuMemoryManager::freeSingleton();
 	PipelineLayoutFactory::freeSingleton();
-
 	DSLayoutFactory::freeSingleton();
 	DSBindless::freeSingleton();
-
-	m_pplineCache.destroy();
-
-	m_fenceFactory.destroy();
-
-	m_samplerFactory.destroy();
+	PipelineCache::freeSingleton();
+	FenceFactory::freeSingleton();
 
 	if(m_device)
 	{
@@ -272,10 +270,6 @@ GrManagerImpl::~GrManagerImpl()
 
 		vkDestroyInstance(m_instance, pallocCbs);
 	}
-
-#if ANKI_PLATFORM_MOBILE
-	anki::deleteInstance(GrMemoryPool::getSingleton(), m_globalCreatePipelineMtx);
-#endif
 
 	m_cacheDir.destroy();
 
@@ -318,27 +312,25 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	m_swapchainFactory.init(g_vsyncCVar.get());
+	SwapchainFactory::allocateSingleton(g_vsyncCVar.get());
+	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
-	m_crntSwapchain = m_swapchainFactory.newInstance();
-
-	ANKI_CHECK(m_pplineCache.init(init.m_cacheDirectory));
+	PipelineCache::allocateSingleton();
+	ANKI_CHECK(PipelineCache::getSingleton().init(init.m_cacheDirectory));
 
 	ANKI_CHECK(initMemory());
 
-	m_cmdbFactory.init(m_queueFamilyIndices);
+	CommandBufferFactory::allocateSingleton(m_queueFamilyIndices);
+	FenceFactory::allocateSingleton();
+	SemaphoreFactory::allocateSingleton();
+	OcclusionQueryFactory::allocateSingleton();
+	TimestampQueryFactory::allocateSingleton();
+	PrimitivesPassedClippingFactory::allocateSingleton();
+	SamplerFactory::allocateSingleton();
 
 	for(PerFrame& f : m_perFrame)
 	{
 		resetFrame(f);
-	}
-
-	m_occlusionQueryFactory.init(VK_QUERY_TYPE_OCCLUSION);
-	m_timestampQueryFactory.init(VK_QUERY_TYPE_TIMESTAMP);
-	if(m_capabilities.m_pipelineQuery)
-	{
-		m_pipelineQueryFactories[PipelineQueryType::kPrimitivesPassedClipping].init(VK_QUERY_TYPE_PIPELINE_STATISTICS,
-																					VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT);
 	}
 
 	// See if unaligned formats are supported
@@ -737,15 +729,6 @@ Error GrManagerImpl::initInstance()
 
 	m_capabilities.m_shaderGroupHandleSize = m_rtPipelineProps.shaderGroupHandleSize;
 	m_capabilities.m_sbtRecordAlignment = m_rtPipelineProps.shaderGroupBaseAlignment;
-
-#if ANKI_PLATFORM_MOBILE
-	if(m_capabilities.m_gpuVendor == GpuVendor::kQualcomm)
-	{
-		// Calling vkCreateGraphicsPipeline from multiple threads crashes qualcomm's compiler
-		ANKI_VK_LOGI("Enabling workaround for vkCreateGraphicsPipeline crashing when called from multiple threads");
-		m_globalCreatePipelineMtx = anki::newInstance<Mutex>(GrMemoryPool::getSingleton());
-	}
-#endif
 
 	// DLSS checks
 	m_capabilities.m_dlss = ANKI_DLSS && m_capabilities.m_gpuVendor == GpuVendor::kNvidia;
@@ -1421,7 +1404,7 @@ Error GrManagerImpl::initMemory()
 					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
 	}
 
-	m_gpuMemManager.init(!!(m_extensions & VulkanExtensions::kKHR_buffer_device_address));
+	GpuMemoryManager::allocateSingleton(!!(m_extensions & VulkanExtensions::kKHR_buffer_device_address));
 
 	return Error::kNone;
 }
@@ -1496,8 +1479,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	PerFrame& frame = m_perFrame[m_frame % kMaxFramesInFlight];
 
 	// Create sync objects
-	MicroFencePtr fence = m_fenceFactory.newInstance();
-	frame.m_acquireSemaphore = m_semaphoreFactory.newInstance(fence, false);
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+	frame.m_acquireSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false);
 
 	// Get new image
 	uint32_t imageIdx;
@@ -1516,7 +1499,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 			}
 		}
 		m_crntSwapchain.reset(nullptr);
-		m_crntSwapchain = m_swapchainFactory.newInstance();
+		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
 		// Can't fail a second time
 		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(),
@@ -1579,7 +1562,7 @@ void GrManagerImpl::endFrame()
 		}
 		vkDeviceWaitIdle(m_device);
 		m_crntSwapchain.reset(nullptr);
-		m_crntSwapchain = m_swapchainFactory.newInstance();
+		m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 	}
 	else
 	{
@@ -1587,7 +1570,7 @@ void GrManagerImpl::endFrame()
 		ANKI_VK_CHECKF(res);
 	}
 
-	m_gpuMemManager.updateStats();
+	GpuMemoryManager::getSingleton().updateStats();
 
 	// Finalize
 	++m_frame;
@@ -1615,7 +1598,7 @@ void GrManagerImpl::flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bo
 	submit.pWaitDstStageMask = &waitStages[0];
 
 	// First thing, create a fence
-	MicroFencePtr fence = m_fenceFactory.newInstance();
+	MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
 
 	// Command buffers
 	Array<VkCommandBuffer, 16> handles;
@@ -1659,7 +1642,7 @@ void GrManagerImpl::flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bo
 
 	if(userSignalSemaphore)
 	{
-		*userSignalSemaphore = m_semaphoreFactory.newInstance(fence, true);
+		*userSignalSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, true);
 
 		signalSemaphores[submit.signalSemaphoreCount++] = (*userSignalSemaphore)->getHandle();
 		signalTimelineValues[timelineInfo.signalSemaphoreValueCount++] = (*userSignalSemaphore)->getNextSemaphoreValue();
@@ -1686,7 +1669,7 @@ void GrManagerImpl::flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bo
 
 			// Create the semaphore to signal
 			ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
-			frame.m_renderSemaphore = m_semaphoreFactory.newInstance(fence, false);
+			frame.m_renderSemaphore = SemaphoreFactory::getSingleton().newInstance(fence, false);
 
 			signalSemaphores[submit.signalSemaphoreCount++] = frame.m_renderSemaphore->getHandle();
 

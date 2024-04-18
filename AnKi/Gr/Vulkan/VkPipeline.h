@@ -561,19 +561,6 @@ public:
 
 	~PipelineFactory();
 
-	void init(VkPipelineCache pplineCache
-#if ANKI_PLATFORM_MOBILE
-			  ,
-			  Mutex* globalCreatePipelineMtx
-#endif
-	)
-	{
-		m_pplineCache = pplineCache;
-#if ANKI_PLATFORM_MOBILE
-		m_globalCreatePipelineMtx = globalCreatePipelineMtx;
-#endif
-	}
-
 	void destroy();
 
 	/// @note Thread-safe.
@@ -583,13 +570,33 @@ private:
 	class PipelineInternal;
 	class Hasher;
 
-	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
-
 	GrHashMap<U64, PipelineInternal, Hasher> m_pplines;
 	RWMutex m_pplinesMtx;
+};
+
+/// On disk pipeline cache.
+class PipelineCache : public MakeSingleton<PipelineCache>
+{
+public:
+	VkPipelineCache m_cacheHandle = VK_NULL_HANDLE;
 #if ANKI_PLATFORM_MOBILE
+	/// Workaround a bug in Qualcomm
 	Mutex* m_globalCreatePipelineMtx = nullptr;
 #endif
+
+	~PipelineCache()
+	{
+		destroy();
+	}
+
+	Error init(CString cacheDir);
+
+private:
+	GrString m_dumpFilename;
+	PtrSize m_dumpSize = 0;
+
+	void destroy();
+	Error destroyInternal();
 };
 /// @}
 

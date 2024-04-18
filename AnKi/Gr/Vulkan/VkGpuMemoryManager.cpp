@@ -70,14 +70,6 @@ void GpuMemoryManagerInterface::freeChunk(GpuMemoryManagerChunk* chunk)
 	deleteInstance(GrMemoryPool::getSingleton(), chunk);
 }
 
-GpuMemoryManager::GpuMemoryManager()
-{
-}
-
-GpuMemoryManager::~GpuMemoryManager()
-{
-}
-
 void GpuMemoryManager::destroy()
 {
 	ANKI_VK_LOGV("Destroying memory manager");

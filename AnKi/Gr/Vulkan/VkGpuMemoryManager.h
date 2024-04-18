@@ -105,22 +105,24 @@ private:
 };
 
 /// Dynamic GPU memory allocator for all types.
-class GpuMemoryManager
+class GpuMemoryManager : public MakeSingleton<GpuMemoryManager>
 {
 	friend class GpuMemoryManagerInterface;
 
 public:
-	GpuMemoryManager();
+	GpuMemoryManager(Bool exposeBufferGpuAddress)
+	{
+		init(exposeBufferGpuAddress);
+	}
 
 	GpuMemoryManager(const GpuMemoryManager&) = delete; // Non-copyable
 
-	~GpuMemoryManager();
+	~GpuMemoryManager()
+	{
+		destroy();
+	}
 
 	GpuMemoryManager& operator=(const GpuMemoryManager&) = delete; // Non-copyable
-
-	void init(Bool exposeBufferGpuAddress);
-
-	void destroy();
 
 	/// Allocate memory.
 	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, GpuMemoryHandle& handle);
@@ -149,6 +151,10 @@ private:
 	// Dedicated allocation stats
 	Atomic<PtrSize> m_dedicatedAllocatedMemory = {0};
 	Atomic<U32> m_dedicatedAllocationCount = {0};
+
+	void init(Bool exposeBufferGpuAddress);
+
+	void destroy();
 };
 /// @}
 

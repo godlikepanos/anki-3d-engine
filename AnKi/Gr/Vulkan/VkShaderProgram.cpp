@@ -216,12 +216,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	if(graphicsProg)
 	{
 		m_graphics.m_pplineFactory = anki::newInstance<PipelineFactory>(GrMemoryPool::getSingleton());
-		m_graphics.m_pplineFactory->init(getGrManagerImpl().getPipelineCache()
-#if ANKI_PLATFORM_MOBILE
-											 ,
-										 getGrManagerImpl().getGlobalCreatePipelineMutex()
-#endif
-		);
 	}
 
 	// Create the pipeline if compute
@@ -246,7 +240,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.module = shaderImpl.m_handle;
 
 		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
-		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_compute.m_ppline));
+		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), PipelineCache::getSingleton().m_cacheHandle, 1, &ci, nullptr, &m_compute.m_ppline));
 		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName());
 	}
 
@@ -330,7 +324,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		{
 			ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
-			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getVkDevice(), VK_NULL_HANDLE, getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
+			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getVkDevice(), VK_NULL_HANDLE, PipelineCache::getSingleton().m_cacheHandle, 1, &ci, nullptr,
 														 &m_rt.m_ppline));
 		}
 

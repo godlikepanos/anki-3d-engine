@@ -1430,7 +1430,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_tid = Thread::getCurrentThreadId();
 	m_flags = init.m_flags;
 
-	ANKI_CHECK(getGrManagerImpl().getCommandBufferFactory().newCommandBuffer(m_tid, m_flags, m_microCmdb));
+	ANKI_CHECK(CommandBufferFactory::getSingleton().newCommandBuffer(m_tid, m_flags, m_microCmdb));
 	m_handle = m_microCmdb->getHandle();
 
 	m_pool = &m_microCmdb->getFastMemoryPool();

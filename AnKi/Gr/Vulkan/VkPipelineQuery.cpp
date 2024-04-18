@@ -53,7 +53,7 @@ PipelineQueryImpl::~PipelineQueryImpl()
 {
 	if(m_handle)
 	{
-		getGrManagerImpl().getPipelineQueryFactory(m_type).deleteQuery(m_handle);
+		PrimitivesPassedClippingFactory::getSingleton().deleteQuery(m_handle);
 	}
 }
 
@@ -61,7 +61,7 @@ Error PipelineQueryImpl::init(PipelineQueryType type)
 {
 	ANKI_ASSERT(type < PipelineQueryType::kCount);
 	m_type = type;
-	ANKI_CHECK(getGrManagerImpl().getPipelineQueryFactory(type).newQuery(m_handle));
+	ANKI_CHECK(PrimitivesPassedClippingFactory::getSingleton().newQuery(m_handle));
 	return Error::kNone;
 }
 

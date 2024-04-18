@@ -55,13 +55,13 @@ TimestampQueryImpl::~TimestampQueryImpl()
 {
 	if(m_handle)
 	{
-		getGrManagerImpl().getTimestampQueryFactory().deleteQuery(m_handle);
+		TimestampQueryFactory::getSingleton().deleteQuery(m_handle);
 	}
 }
 
 Error TimestampQueryImpl::init()
 {
-	ANKI_CHECK(getGrManagerImpl().getTimestampQueryFactory().newQuery(m_handle));
+	ANKI_CHECK(TimestampQueryFactory::getSingleton().newQuery(m_handle));
 
 	m_timestampPeriod = U64(getGrManagerImpl().getPhysicalDeviceProperties().limits.timestampPeriod);
 

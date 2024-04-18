@@ -5,6 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/VkTexture.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
+#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
 
 namespace anki {
 
@@ -310,14 +311,14 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 	vkGetImageMemoryRequirements2(getVkDevice(), &imageRequirementsInfo, &requirements);
 
-	U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(requirements.memoryRequirements.memoryTypeBits,
-																		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	U32 memIdx = GpuMemoryManager::getSingleton().findMemoryType(requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+																 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
 	if(memIdx == kMaxU32)
 	{
-		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(requirements.memoryRequirements.memoryTypeBits,
-																		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+		memIdx =
+			GpuMemoryManager::getSingleton().findMemoryType(requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 	}
 
 	ANKI_ASSERT(memIdx != kMaxU32);
@@ -325,12 +326,12 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	// Allocate
 	if(!dedicatedRequirements.prefersDedicatedAllocation)
 	{
-		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, requirements.memoryRequirements.size,
-																U32(requirements.memoryRequirements.alignment), m_memHandle);
+		GpuMemoryManager::getSingleton().allocateMemory(memIdx, requirements.memoryRequirements.size, U32(requirements.memoryRequirements.alignment),
+														m_memHandle);
 	}
 	else
 	{
-		getGrManagerImpl().getGpuMemoryManager().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size, m_imageHandle, m_memHandle);
+		GpuMemoryManager::getSingleton().allocateMemoryDedicated(memIdx, requirements.memoryRequirements.size, m_imageHandle, m_memHandle);
 	}
 
 	// Bind

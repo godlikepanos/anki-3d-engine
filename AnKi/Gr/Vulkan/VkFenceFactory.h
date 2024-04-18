@@ -6,11 +6,9 @@
 #pragma once
 
 #include <AnKi/Gr/Vulkan/VkCommon.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
-
-// Forward
-class FenceFactory;
 
 /// @addtogroup vulkan
 /// @{
@@ -22,11 +20,25 @@ class MicroFence
 	friend class MicroFencePtrDeleter;
 
 public:
-	MicroFence(FenceFactory* f);
+	MicroFence()
+	{
+		VkFenceCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+		ANKI_TRACE_INC_COUNTER(VkFenceCreate, 1);
+		ANKI_VK_CHECKF(vkCreateFence(getVkDevice(), &ci, nullptr, &m_handle));
+	}
 
 	MicroFence(const MicroFence&) = delete; // Non-copyable
 
-	~MicroFence();
+	~MicroFence()
+	{
+		if(m_handle)
+		{
+			ANKI_ASSERT(done());
+			vkDestroyFence(getVkDevice(), m_handle, nullptr);
+		}
+	}
 
 	MicroFence& operator=(const MicroFence&) = delete; // Non-copyable
 
@@ -55,14 +67,38 @@ public:
 		}
 	}
 
-	Bool clientWait(Second seconds);
+	Bool clientWait(Second seconds)
+	{
+		ANKI_ASSERT(m_handle);
 
-	Bool done() const;
+		if(seconds == 0.0)
+		{
+			return done();
+		}
+		else
+		{
+			seconds = min(seconds, kMaxFenceOrSemaphoreWaitTime);
+			const F64 nsf = 1e+9 * seconds;
+			const U64 ns = U64(nsf);
+			VkResult res;
+			ANKI_VK_CHECKF(res = vkWaitForFences(getVkDevice(), 1, &m_handle, true, ns));
+
+			return res != VK_TIMEOUT;
+		}
+	}
+
+	Bool done() const
+	{
+		ANKI_ASSERT(m_handle);
+
+		VkResult status;
+		ANKI_VK_CHECKF(status = vkGetFenceStatus(getVkDevice(), m_handle));
+		return status == VK_SUCCESS;
+	}
 
 private:
 	VkFence m_handle = VK_NULL_HANDLE;
 	mutable Atomic<I32> m_refcount = {0};
-	FenceFactory* m_factory = nullptr;
 };
 
 /// Deleter for FencePtr.
@@ -76,7 +112,7 @@ public:
 using MicroFencePtr = IntrusivePtr<MicroFence, MicroFencePtrDeleter>;
 
 /// A factory of fences.
-class FenceFactory
+class FenceFactory : public MakeSingleton<FenceFactory>
 {
 	friend class MicroFence;
 	friend class MicroFencePtrDeleter;
@@ -87,18 +123,15 @@ public:
 
 	FenceFactory() = default;
 
-	~FenceFactory()
-	{
-		ANKI_ASSERT(m_fences.getSize() == 0);
-	}
-
-	void destroy();
+	~FenceFactory();
 
 	/// Create a new fence pointer.
 	MicroFencePtr newInstance()
 	{
 		return MicroFencePtr(newFence());
 	}
+
+	void trimSignaledFences(Bool wait);
 
 private:
 	GrDynamicArray<MicroFence*> m_fences;
@@ -111,5 +144,3 @@ private:
 /// @}
 
 } // end namespace anki
-
-#include <AnKi/Gr/Vulkan/VkFenceFactory.inl.h>

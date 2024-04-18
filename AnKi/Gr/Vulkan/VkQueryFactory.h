@@ -64,8 +64,10 @@ private:
 class QueryFactory
 {
 public:
-	QueryFactory()
+	QueryFactory(VkQueryType poolType, VkQueryPipelineStatisticFlags pplineStatisticsFlags = 0)
 	{
+		m_poolType = poolType;
+		m_pplineStatisticsFlags = pplineStatisticsFlags;
 	}
 
 	QueryFactory(const QueryFactory&) = delete; // Non-copyable
@@ -73,12 +75,6 @@ public:
 	~QueryFactory();
 
 	QueryFactory& operator=(const QueryFactory&) = delete; // Non-copyable
-
-	void init(VkQueryType poolType, VkQueryPipelineStatisticFlags pplineStatisticsFlags = 0)
-	{
-		m_poolType = poolType;
-		m_pplineStatisticsFlags = pplineStatisticsFlags;
-	}
 
 	/// @note It's thread-safe.
 	Error newQuery(MicroQuery& handle);
@@ -93,6 +89,33 @@ private:
 	Mutex m_mtx;
 	VkQueryType m_poolType = VK_QUERY_TYPE_MAX_ENUM;
 	VkQueryPipelineStatisticFlags m_pplineStatisticsFlags = 0;
+};
+
+class OcclusionQueryFactory : public QueryFactory, public MakeSingleton<OcclusionQueryFactory>
+{
+public:
+	OcclusionQueryFactory()
+		: QueryFactory(VK_QUERY_TYPE_OCCLUSION)
+	{
+	}
+};
+
+class TimestampQueryFactory : public QueryFactory, public MakeSingleton<TimestampQueryFactory>
+{
+public:
+	TimestampQueryFactory()
+		: QueryFactory(VK_QUERY_TYPE_TIMESTAMP)
+	{
+	}
+};
+
+class PrimitivesPassedClippingFactory : public QueryFactory, public MakeSingleton<PrimitivesPassedClippingFactory>
+{
+public:
+	PrimitivesPassedClippingFactory()
+		: QueryFactory(VK_QUERY_TYPE_PIPELINE_STATISTICS, VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT)
+	{
+	}
 };
 /// @}
 

@@ -5,14 +5,12 @@
 
 #include <AnKi/Gr/Vulkan/VkSwapchainFactory.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
+#include <AnKi/Gr/Vulkan/VkTexture.h>
 
 namespace anki {
 
-MicroSwapchain::MicroSwapchain(SwapchainFactory* factory)
-	: m_factory(factory)
+MicroSwapchain::MicroSwapchain()
 {
-	ANKI_ASSERT(factory);
-
 	if(initInternal())
 	{
 		ANKI_VK_LOGF("Error creating the swapchain. Will not try to recover");
@@ -122,7 +120,7 @@ Error MicroSwapchain::initInternal()
 		Array<VkPresentModeKHR, 4> presentModes;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(pdev, getGrManagerImpl().getSurface(), &presentModeCount, &presentModes[0]);
 
-		if(m_factory->m_vsync)
+		if(SwapchainFactory::getSingleton().m_vsync)
 		{
 			for(U i = 0; i < presentModeCount; ++i)
 			{
@@ -218,7 +216,7 @@ Error MicroSwapchain::initInternal()
 		m_textures.resize(count);
 
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count, presentMode, surfaceWidth,
-					 surfaceHeight, U32(m_factory->m_vsync));
+					 surfaceHeight, U32(SwapchainFactory::getSingleton().m_vsync));
 
 		Array<VkImage, 64> images;
 		ANKI_ASSERT(count <= 64);
@@ -251,7 +249,7 @@ MicroSwapchainPtr SwapchainFactory::newInstance()
 	[[maybe_unused]] MicroSwapchain* dummy = m_recycler.findToReuse();
 	ANKI_ASSERT(dummy == nullptr);
 
-	return MicroSwapchainPtr(anki::newInstance<MicroSwapchain>(GrMemoryPool::getSingleton(), this));
+	return MicroSwapchainPtr(anki::newInstance<MicroSwapchain>(GrMemoryPool::getSingleton()));
 }
 
 } // end namespace anki

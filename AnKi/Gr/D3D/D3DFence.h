@@ -90,7 +90,7 @@ public:
 		return MicroFencePtr(newFence());
 	}
 
-	void trimAliveFences(Bool wait);
+	void trimSignaledFences(Bool wait);
 
 private:
 	GrDynamicArray<MicroFence*> m_fences;

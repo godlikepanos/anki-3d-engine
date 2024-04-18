@@ -14,7 +14,6 @@
 namespace anki {
 
 // Forward
-class CommandBufferFactory;
 class CommandBufferThreadAllocator;
 
 /// @addtogroup vulkan
@@ -160,11 +159,9 @@ class alignas(ANKI_CACHE_LINE_SIZE) CommandBufferThreadAllocator
 	friend class MicroCommandBuffer;
 
 public:
-	CommandBufferThreadAllocator(CommandBufferFactory* factory, ThreadId tid)
-		: m_factory(factory)
-		, m_tid(tid)
+	CommandBufferThreadAllocator(ThreadId tid)
+		: m_tid(tid)
 	{
-		ANKI_ASSERT(factory);
 	}
 
 	~CommandBufferThreadAllocator()
@@ -182,7 +179,6 @@ public:
 	void deleteCommandBuffer(MicroCommandBuffer* ptr);
 
 private:
-	CommandBufferFactory* m_factory;
 	ThreadId m_tid;
 	Array<VkCommandPool, U(GpuQueueType::kCount)> m_pools = {};
 
@@ -194,26 +190,25 @@ private:
 };
 
 /// Command bufffer object recycler.
-class CommandBufferFactory
+class CommandBufferFactory : public MakeSingleton<CommandBufferFactory>
 {
 	friend class CommandBufferThreadAllocator;
 	friend class MicroCommandBuffer;
 
 public:
-	CommandBufferFactory() = default;
+	CommandBufferFactory(const VulkanQueueFamilies& queueFamilies)
+		: m_queueFamilies(queueFamilies)
+	{
+	}
 
 	CommandBufferFactory(const CommandBufferFactory&) = delete; // Non-copyable
 
-	~CommandBufferFactory() = default;
-
-	CommandBufferFactory& operator=(const CommandBufferFactory&) = delete; // Non-copyable
-
-	void init(const VulkanQueueFamilies& queueFamilies)
+	~CommandBufferFactory()
 	{
-		m_queueFamilies = queueFamilies;
+		destroy();
 	}
 
-	void destroy();
+	CommandBufferFactory& operator=(const CommandBufferFactory&) = delete; // Non-copyable
 
 	/// Request a new command buffer.
 	Error newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
@@ -223,6 +218,8 @@ private:
 
 	GrDynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
 	RWMutex m_threadAllocMtx;
+
+	void destroy();
 };
 /// @}
 

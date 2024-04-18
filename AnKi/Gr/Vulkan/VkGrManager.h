@@ -7,17 +7,9 @@
 
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Vulkan/VkCommon.h>
-#include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
 #include <AnKi/Gr/Vulkan/VkSemaphoreFactory.h>
-#include <AnKi/Gr/Vulkan/VkDeferredBarrierFactory.h>
 #include <AnKi/Gr/Vulkan/VkFenceFactory.h>
-#include <AnKi/Gr/Vulkan/VkSamplerFactory.h>
-#include <AnKi/Gr/Vulkan/VkQueryFactory.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
-#include <AnKi/Gr/Vulkan/VkCommandBufferFactory.h>
 #include <AnKi/Gr/Vulkan/VkSwapchainFactory.h>
-#include <AnKi/Gr/Vulkan/VkPipelineLayout.h>
-#include <AnKi/Gr/Vulkan/VkPipelineCache.h>
 #include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 #include <AnKi/Util/File.h>
 
@@ -28,6 +20,7 @@ namespace anki {
 
 // Forward
 class TextureFallbackUploader;
+class MicroCommandBuffer;
 
 /// @addtogroup vulkan
 /// @{
@@ -84,66 +77,12 @@ public:
 		return m_instance;
 	}
 
-	/// @name object_creation
-	/// @{
-
-	CommandBufferFactory& getCommandBufferFactory()
-	{
-		return m_cmdbFactory;
-	}
-
-	const CommandBufferFactory& getCommandBufferFactory() const
-	{
-		return m_cmdbFactory;
-	}
-
-	SamplerFactory& getSamplerFactory()
-	{
-		return m_samplerFactory;
-	}
-	/// @}
-
 	void flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphore*> waitSemaphores,
 							 MicroSemaphorePtr* signalSemaphore, Bool wait);
-
-	/// @name Memory
-	/// @{
-	GpuMemoryManager& getGpuMemoryManager()
-	{
-		return m_gpuMemManager;
-	}
-
-	const GpuMemoryManager& getGpuMemoryManager() const
-	{
-		return m_gpuMemManager;
-	}
 
 	const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const
 	{
 		return m_memoryProperties;
-	}
-	/// @}
-
-	QueryFactory& getOcclusionQueryFactory()
-	{
-		return m_occlusionQueryFactory;
-	}
-
-	QueryFactory& getTimestampQueryFactory()
-	{
-		return m_timestampQueryFactory;
-	}
-
-	QueryFactory& getPipelineQueryFactory(PipelineQueryType type)
-	{
-		ANKI_ASSERT(m_capabilities.m_pipelineQuery);
-		return m_pipelineQueryFactories[type];
-	}
-
-	VkPipelineCache getPipelineCache() const
-	{
-		ANKI_ASSERT(m_pplineCache.m_cacheHandle);
-		return m_pplineCache.m_cacheHandle;
 	}
 
 	VulkanExtensions getExtensions() const
@@ -188,13 +127,6 @@ public:
 	{
 		return m_frameGarbageCollector;
 	}
-
-#if ANKI_PLATFORM_MOBILE
-	Mutex* getGlobalCreatePipelineMutex() const
-	{
-		return m_globalCreatePipelineMtx;
-	}
-#endif
 
 private:
 	U64 m_frame = 0;
@@ -253,35 +185,9 @@ private:
 	Array<PerFrame, kMaxFramesInFlight> m_perFrame;
 	/// @}
 
-	/// @name Memory
-	/// @{
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
-	/// The main allocator.
-	GpuMemoryManager m_gpuMemManager;
-	/// @}
-
-	CommandBufferFactory m_cmdbFactory;
-
-	FenceFactory m_fenceFactory;
-	SemaphoreFactory m_semaphoreFactory;
-	DeferredBarrierFactory m_barrierFactory;
-	SamplerFactory m_samplerFactory;
-	/// @}
-
-	SwapchainFactory m_swapchainFactory;
-
-	QueryFactory m_occlusionQueryFactory;
-	QueryFactory m_timestampQueryFactory;
-	Array<QueryFactory, U32(PipelineQueryType::kCount)> m_pipelineQueryFactories;
-
-	PipelineCache m_pplineCache;
-
 	FrameGarbageCollector m_frameGarbageCollector;
-
-#if ANKI_PLATFORM_MOBILE
-	Mutex* m_globalCreatePipelineMtx = nullptr;
-#endif
 
 	Error initInternal(const GrManagerInitInfo& init);
 	Error initInstance();

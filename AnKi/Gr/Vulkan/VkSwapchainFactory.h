@@ -28,7 +28,7 @@ public:
 
 	GrDynamicArray<TexturePtr> m_textures;
 
-	MicroSwapchain(SwapchainFactory* factory);
+	MicroSwapchain();
 
 	~MicroSwapchain();
 
@@ -63,26 +63,9 @@ public:
 		// Do nothing
 	}
 
-	VkRenderPass getRenderPass(VkAttachmentLoadOp loadOp) const
-	{
-		const U idx = (loadOp == VK_ATTACHMENT_LOAD_OP_DONT_CARE) ? kLoadOpDontCare : kLoadOpClear;
-		return m_rpasses[idx];
-	}
-
 private:
-	mutable Atomic<I32> m_refcount = {0};
-	SwapchainFactory* m_factory = nullptr;
-
-	enum
-	{
-		kLoadOpClear,
-		kLoadOpDontCare,
-		kLoadOpCount
-	};
-
-	Array<VkRenderPass, kLoadOpCount> m_rpasses = {};
-
 	MicroFencePtr m_fence;
+	mutable Atomic<I32> m_refcount = {0};
 
 	Error initInternal();
 };
@@ -98,18 +81,18 @@ public:
 using MicroSwapchainPtr = IntrusivePtr<MicroSwapchain, MicroSwapchainPtrDeleter>;
 
 /// Swapchain factory.
-class SwapchainFactory
+class SwapchainFactory : public MakeSingleton<SwapchainFactory>
 {
 	friend class MicroSwapchainPtrDeleter;
 	friend class MicroSwapchain;
 
 public:
-	void init(Bool vsync)
+	SwapchainFactory(Bool vsync)
 	{
 		m_vsync = vsync;
 	}
 
-	void destroy()
+	~SwapchainFactory()
 	{
 		m_recycler.destroy();
 	}
@@ -125,7 +108,7 @@ private:
 inline void MicroSwapchainPtrDeleter::operator()(MicroSwapchain* s)
 {
 	ANKI_ASSERT(s);
-	s->m_factory->m_recycler.recycle(s);
+	SwapchainFactory::getSingleton().m_recycler.recycle(s);
 }
 
 } // end namespace anki

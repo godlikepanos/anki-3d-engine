@@ -7,16 +7,18 @@
 
 namespace anki {
 
-void FenceFactory::destroy()
+void MicroFencePtrDeleter::operator()(MicroFence* f)
 {
-	LockGuard<Mutex> lock(m_mtx);
+	ANKI_ASSERT(f);
+	FenceFactory::getSingleton().deleteFence(f);
+}
 
-	for(MicroFence* fence : m_fences)
-	{
-		deleteInstance(GrMemoryPool::getSingleton(), fence);
-	}
+FenceFactory::~FenceFactory()
+{
+	trimSignaledFences(true);
 
-	m_fences.destroy();
+	ANKI_ASSERT(m_fences.getSize() == 0);
+	ANKI_ASSERT(m_aliveFenceCount == 0);
 }
 
 MicroFence* FenceFactory::newFence()
@@ -64,7 +66,7 @@ MicroFence* FenceFactory::newFence()
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = anki::newInstance<MicroFence>(GrMemoryPool::getSingleton(), this);
+		out = anki::newInstance<MicroFence>(GrMemoryPool::getSingleton());
 	}
 	else
 	{
@@ -82,6 +84,34 @@ void FenceFactory::deleteFence(MicroFence* fence)
 
 	LockGuard<Mutex> lock(m_mtx);
 	m_fences.emplaceBack(fence);
+}
+
+void FenceFactory::trimSignaledFences(Bool wait)
+{
+	LockGuard<Mutex> lock(m_mtx);
+
+	GrDynamicArray<MicroFence*> unsignaledFences;
+	for(MicroFence* fence : m_fences)
+	{
+		const Bool signaled = fence->clientWait((wait) ? kMaxFenceOrSemaphoreWaitTime : 0.0f);
+		if(signaled)
+		{
+			deleteInstance(GrMemoryPool::getSingleton(), fence);
+
+			ANKI_ASSERT(m_aliveFenceCount > 0);
+			--m_aliveFenceCount;
+		}
+		else
+		{
+			unsignaledFences.emplaceBack(fence);
+		}
+	}
+
+	m_fences.destroy();
+	if(unsignaledFences.getSize())
+	{
+		m_fences = std::move(unsignaledFences);
+	}
 }
 
 } // end namespace anki

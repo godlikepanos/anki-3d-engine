@@ -67,7 +67,7 @@ Error CommandBufferThreadAllocator::init()
 {
 	for(GpuQueueType qtype : EnumIterable<GpuQueueType>())
 	{
-		if(m_factory->m_queueFamilies[qtype] == kMaxU32)
+		if(CommandBufferFactory::getSingleton().m_queueFamilies[qtype] == kMaxU32)
 		{
 			continue;
 		}
@@ -75,7 +75,7 @@ Error CommandBufferThreadAllocator::init()
 		VkCommandPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		ci.queueFamilyIndex = m_factory->m_queueFamilies[qtype];
+		ci.queueFamilyIndex = CommandBufferFactory::getSingleton().m_queueFamilies[qtype];
 
 		ANKI_VK_CHECK(vkCreateCommandPool(getVkDevice(), &ci, nullptr, &m_pools[qtype]));
 	}
@@ -108,7 +108,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	ANKI_ASSERT(!!(cmdbFlags & CommandBufferFlag::kComputeWork) ^ !!(cmdbFlags & CommandBufferFlag::kGeneralWork));
 
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::kSmallBatch);
-	const GpuQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, m_factory->m_queueFamilies);
+	const GpuQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, CommandBufferFactory::getSingleton().m_queueFamilies);
 
 	MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[smallBatch][queue];
 
@@ -228,7 +228,7 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 
 			if(alloc == nullptr)
 			{
-				alloc = newInstance<CommandBufferThreadAllocator>(GrMemoryPool::getSingleton(), this, tid);
+				alloc = newInstance<CommandBufferThreadAllocator>(GrMemoryPool::getSingleton(), tid);
 
 				m_threadAllocs.resize(m_threadAllocs.getSize() + 1);
 				m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;

@@ -60,7 +60,7 @@ void FrameGarbageCollector::collectGarbage()
 
 			if(textureGarbage->m_memoryHandle)
 			{
-				getGrManagerImpl().getGpuMemoryManager().freeMemory(textureGarbage->m_memoryHandle);
+				GpuMemoryManager::getSingleton().freeMemory(textureGarbage->m_memoryHandle);
 			}
 
 			deleteInstance(GrMemoryPool::getSingleton(), textureGarbage);
@@ -83,7 +83,7 @@ void FrameGarbageCollector::collectGarbage()
 
 			if(bufferGarbage->m_memoryHandle)
 			{
-				getGrManagerImpl().getGpuMemoryManager().freeMemory(bufferGarbage->m_memoryHandle);
+				GpuMemoryManager::getSingleton().freeMemory(bufferGarbage->m_memoryHandle);
 			}
 
 			deleteInstance(GrMemoryPool::getSingleton(), bufferGarbage);

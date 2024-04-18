@@ -6,6 +6,7 @@
 #include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
+#include <AnKi/Gr/Vulkan/VkBuffer.h>
 
 namespace anki {
 
