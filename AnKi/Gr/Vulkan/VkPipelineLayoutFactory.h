@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
+#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
 #include <AnKi/Util/HashMap.h>
 
 namespace anki {

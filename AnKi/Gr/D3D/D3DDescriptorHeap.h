@@ -9,8 +9,21 @@
 
 namespace anki {
 
+// Forward
+class DescriptorHeap;
+
 /// @addtogroup directx
 /// @{
+
+/// @memberof DescriptorHeap.
+class DescriptorHeapHandle
+{
+public:
+	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle = {};
+#if ANKI_ASSERTIONS_ENABLED
+	DescriptorHeap* m_father = nullptr;
+#endif
+};
 
 class DescriptorHeap
 {
@@ -44,7 +57,7 @@ public:
 	}
 
 	/// @note Thread-safe.
-	D3D12_CPU_DESCRIPTOR_HANDLE allocate()
+	DescriptorHeapHandle allocate()
 	{
 		ANKI_ASSERT(m_heap);
 		U16 idx;
@@ -59,29 +72,34 @@ public:
 		}
 
 		idx = m_freeDescriptors[idx];
-		D3D12_CPU_DESCRIPTOR_HANDLE out;
-		out.ptr = m_heapStart.ptr + PtrSize(idx) * m_descriptorSize;
+		DescriptorHeapHandle out;
+		out.m_cpuHandle.ptr = m_heapStart.ptr + PtrSize(idx) * m_descriptorSize;
+#if ANKI_ASSERTIONS_ENABLED
+		out.m_father = this;
+#endif
 		return out;
 	}
 
 	/// @note Thread-safe.
-	void free(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+	void free(DescriptorHeapHandle& handle)
 	{
 		ANKI_ASSERT(m_heap);
-		if(handle.ptr == 0)
+		if(handle.m_cpuHandle.ptr == 0)
 		{
 			return;
 		}
 
-		ANKI_ASSERT(handle.ptr != 0 && handle.ptr >= m_heapStart.ptr
-					&& handle.ptr < m_heapStart.ptr + PtrSize(m_descriptorSize) + m_freeDescriptors.getSize());
+		ANKI_ASSERT(handle.m_father == this);
+		ANKI_ASSERT(handle.m_cpuHandle.ptr != 0 && handle.m_cpuHandle.ptr >= m_heapStart.ptr
+					&& handle.m_cpuHandle.ptr < m_heapStart.ptr + PtrSize(m_descriptorSize) + m_freeDescriptors.getSize());
 
-		const U16 idx = U16((handle.ptr - m_heapStart.ptr) / m_descriptorSize);
+		const U16 idx = U16((handle.m_cpuHandle.ptr - m_heapStart.ptr) / m_descriptorSize);
 
 		LockGuard lock(m_mtx);
 		ANKI_ASSERT(m_freeDescriptorsHead > 0);
 		--m_freeDescriptorsHead;
 		m_freeDescriptors[m_freeDescriptorsHead] = idx;
+		handle = {};
 	}
 
 private:

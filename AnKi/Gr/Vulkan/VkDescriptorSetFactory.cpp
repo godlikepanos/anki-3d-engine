@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
+#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>

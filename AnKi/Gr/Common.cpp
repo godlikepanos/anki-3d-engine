@@ -39,7 +39,7 @@ FormatInfo getFormatInfo(Format fmt)
 		out = {componentCount,      texelSize, blockWidth, blockHeight, blockSize, shaderType, DepthStencilAspectBit::k##depthStencil, \
 			   ANKI_STRINGIZE(type)}; \
 		break;
-#include <AnKi/Gr/Common/Format.def.h>
+#include <AnKi/Gr/BackendCommon/Format.def.h>
 #undef ANKI_FORMAT_DEF
 
 	default:

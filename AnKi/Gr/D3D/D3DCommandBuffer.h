@@ -16,6 +16,8 @@ namespace anki {
 /// Command buffer implementation.
 class CommandBufferImpl final : public CommandBuffer
 {
+	friend class CommandBuffer;
+
 public:
 	CommandBufferImpl(CString name)
 		: CommandBuffer(name)

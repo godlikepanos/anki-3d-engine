@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Vulkan/VkFenceFactory.h>
-#include <AnKi/Gr/Vulkan/VkMicroObjectRecycler.h>
+#include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
 
 namespace anki {
 

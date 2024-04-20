@@ -8,7 +8,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/D3D/D3DCommon.h>
 #include <AnKi/Gr/D3D/D3DFence.h>
-#include <AnKi/Gr/D3D/D3DTexture.h>
+#include <AnKi/Gr/D3D/D3DSwapchainFactory.h>
 
 namespace anki {
 
@@ -59,15 +59,7 @@ private:
 
 	Mutex m_globalMtx;
 
-	class
-	{
-	public:
-		IDXGISwapChain3* m_swapchain = nullptr;
-		Array<D3D12_CPU_DESCRIPTOR_HANDLE, kMaxFramesInFlight> m_rtvHandles = {};
-		Array<ID3D12Resource*, kMaxFramesInFlight> m_rtvResources = {};
-		Array<TexturePtr, kMaxFramesInFlight> m_textures;
-		U32 m_backbufferIdx = 0;
-	} m_swapchain;
+	MicroSwapchainPtr m_crntSwapchain;
 
 	class PerFrame
 	{

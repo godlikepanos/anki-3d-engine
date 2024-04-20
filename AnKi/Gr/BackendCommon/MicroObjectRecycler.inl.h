@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Vulkan/VkMicroObjectRecycler.h>
+#include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
 
 namespace anki {
 

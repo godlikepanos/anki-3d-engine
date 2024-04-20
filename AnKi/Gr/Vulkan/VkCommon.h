@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Common.h>
-#include <AnKi/Gr/Common/BackendCommon.h>
+#include <AnKi/Gr/BackendCommon/Common.h>
 
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
 // Do nothing

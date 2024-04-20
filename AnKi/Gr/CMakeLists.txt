@@ -6,7 +6,7 @@ set(backend_sources
 	RenderGraph.cpp
 	ShaderProgram.cpp
 	Utils/StackGpuMemoryPool.cpp
-	Common/Functions.cpp
+	BackendCommon/Functions.cpp
 	Utils/SegregatedListsGpuMemoryPool.cpp)
 
 set(backend_headers
@@ -30,9 +30,9 @@ set(backend_headers
 	PipelineQuery.h
 	GrUpscaler.h
 	Utils/StackGpuMemoryPool.h
-	Common/Functions.h
-	Common/InstantiationMacros.def.h
-	Common/Format.def.h
+	BackendCommon/Functions.h
+	BackendCommon/InstantiationMacros.def.h
+	BackendCommon/Format.def.h
 	Utils/SegregatedListsGpuMemoryPool.h)
 
 if(VULKAN)

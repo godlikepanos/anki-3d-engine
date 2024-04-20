@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Shader.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
+#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
 #include <AnKi/Util/BitSet.h>
 
 namespace anki {

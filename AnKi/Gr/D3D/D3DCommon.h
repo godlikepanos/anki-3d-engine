@@ -7,7 +7,7 @@
 
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Gr/Common/BackendCommon.h>
+#include <AnKi/Gr/BackendCommon/Common.h>
 #include <string>
 #include <locale>
 #include <codecvt>
@@ -87,6 +87,41 @@ void safeRelease(T*& p)
 ID3D12Device& getDevice();
 
 GrManagerImpl& getGrManagerImpl();
+
+inline [[nodiscard]] D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE convertLoadOp(RenderTargetLoadOperation ak)
+{
+	D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE out;
+	switch(ak)
+	{
+	case RenderTargetLoadOperation::kClear:
+		out = D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR;
+		break;
+	case RenderTargetLoadOperation::kDontCare:
+		out = D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_DISCARD;
+		break;
+	default:
+		ANKI_ASSERT(ak == RenderTargetLoadOperation::kLoad);
+		out = D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE;
+		break;
+	}
+	return out;
+}
+
+inline [[nodiscard]] D3D12_RENDER_PASS_ENDING_ACCESS_TYPE convertStoreOp(RenderTargetStoreOperation ak)
+{
+	D3D12_RENDER_PASS_ENDING_ACCESS_TYPE out;
+	switch(ak)
+	{
+	case RenderTargetStoreOperation::kDontCare:
+		out = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_DISCARD;
+		break;
+	default:
+		ANKI_ASSERT(ak == RenderTargetStoreOperation::kStore);
+		out = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE;
+		break;
+	}
+	return out;
+}
 /// @}
 
 } // end namespace anki

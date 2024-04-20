@@ -7,8 +7,8 @@
 
 #include <AnKi/Gr/Vulkan/VkFenceFactory.h>
 #include <AnKi/Gr/CommandBuffer.h>
-#include <AnKi/Gr/Vulkan/VkMicroObjectRecycler.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
+#include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
+#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
 #include <AnKi/Util/List.h>
 
 namespace anki {

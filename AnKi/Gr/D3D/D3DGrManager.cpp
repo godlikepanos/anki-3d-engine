@@ -170,8 +170,8 @@ TexturePtr GrManager::acquireNextPresentableTexture()
 {
 	ANKI_D3D_SELF(GrManagerImpl);
 
-	self.m_swapchain.m_backbufferIdx = self.m_swapchain.m_swapchain->GetCurrentBackBufferIndex();
-	return self.m_swapchain.m_textures[self.m_swapchain.m_backbufferIdx];
+	self.m_crntSwapchain->m_backbufferIdx = self.m_crntSwapchain->m_swapchain->GetCurrentBackBufferIndex();
+	return self.m_crntSwapchain->m_textures[self.m_crntSwapchain->m_backbufferIdx];
 }
 
 void GrManager::swapBuffers()
@@ -179,7 +179,7 @@ void GrManager::swapBuffers()
 	ANKI_TRACE_SCOPED_EVENT(D3DSwapBuffers);
 	ANKI_D3D_SELF(GrManagerImpl);
 
-	self.m_swapchain.m_swapchain->Present((g_vsyncCVar.get()) ? 1 : 0, (g_vsyncCVar.get()) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+	self.m_crntSwapchain->m_swapchain->Present((g_vsyncCVar.get()) ? 1 : 0, (g_vsyncCVar.get()) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
 
 	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance();
 	presentFence->signal(GpuQueueType::kGeneral);
@@ -235,7 +235,6 @@ ANKI_NEW_GR_OBJECT(Sampler)
 ANKI_NEW_GR_OBJECT(Shader)
 ANKI_NEW_GR_OBJECT(ShaderProgram)
 ANKI_NEW_GR_OBJECT(CommandBuffer)
-// ANKI_NEW_GR_OBJECT_NO_INIT_INFO(OcclusionQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(TimestampQuery)
 ANKI_NEW_GR_OBJECT(PipelineQuery)
 ANKI_NEW_GR_OBJECT_NO_INIT_INFO(RenderGraph)
@@ -283,7 +282,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		AddVectoredExceptionHandler(true, vexHandler);
 	}
 
-	ComPtr<IDXGIFactory4> factory2;
+	ComPtr<IDXGIFactory2> factory2;
 	ANKI_D3D_CHECK(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory2)));
 	ComPtr<IDXGIFactory6> factory6;
 	ANKI_D3D_CHECK(factory2->QueryInterface(IID_PPV_ARGS(&factory6)));
@@ -382,55 +381,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(RtvDescriptorHeap::getSingleton().init(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, kMaxRtvDescriptors,
 													  m_limits.m_rtvDescriptorSize));
 
-	// Create swapchain
-	{
-		const NativeWindowSdl& window = static_cast<NativeWindowSdl&>(NativeWindow::getSingleton());
-
-		SDL_SysWMinfo wmInfo;
-		SDL_VERSION(&wmInfo.version);
-		SDL_GetWindowWMInfo(window.m_sdlWindow, &wmInfo);
-		const HWND hwnd = wmInfo.info.win.window;
-
-		// Describe and create the swap chain.
-		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-		swapChainDesc.BufferCount = kMaxFramesInFlight;
-		swapChainDesc.Width = window.getWidth();
-		swapChainDesc.Height = window.getHeight();
-		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		swapChainDesc.SampleDesc.Count = 1;
-
-		ComPtr<IDXGISwapChain1> swapChain;
-		// Swap chain needs the queue so that it can force a flush on it.
-		ANKI_D3D_CHECK(factory2->CreateSwapChainForHwnd(m_queues[GpuQueueType::kGeneral], hwnd, &swapChainDesc, nullptr, nullptr, &swapChain));
-
-		swapChain->QueryInterface(IID_PPV_ARGS(&m_swapchain.m_swapchain));
-
-		// Does not support fullscreen transitions.
-		factory2->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-
-		m_swapchain.m_backbufferIdx = m_swapchain.m_swapchain->GetCurrentBackBufferIndex();
-
-		// Store swapchain RTVs
-		for(U32 i = 0; i < kMaxFramesInFlight; ++i)
-		{
-			m_swapchain.m_rtvHandles[i] = RtvDescriptorHeap::getSingleton().allocate();
-			ANKI_D3D_CHECK(m_swapchain.m_swapchain->GetBuffer(i, IID_PPV_ARGS(&m_swapchain.m_rtvResources[i])));
-			m_device->CreateRenderTargetView(m_swapchain.m_rtvResources[i], nullptr, m_swapchain.m_rtvHandles[i]);
-
-			TextureInitInfo init("SwapchainImg");
-			init.m_width = window.getWidth();
-			init.m_height = window.getHeight();
-			init.m_format = Format::kR8G8B8A8_Unorm;
-			init.m_usage = TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite | TextureUsageBit::kPresent;
-			init.m_type = TextureType::k2D;
-
-			TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());
-			m_swapchain.m_textures[i].reset(tex);
-		}
-	}
-
+	SwapchainFactory::allocateSingleton();
 	FenceFactory::allocateSingleton();
 
 	return Error::kNone;
@@ -440,22 +391,9 @@ void GrManagerImpl::destroy()
 {
 	ANKI_D3D_LOGI("Destroying D3D backend");
 
-	FenceFactory::freeSingleton();
-
-	for(D3D12_CPU_DESCRIPTOR_HANDLE handle : m_swapchain.m_rtvHandles)
-	{
-		RtvDescriptorHeap::getSingleton().free(handle);
-	}
-
-	for(ID3D12Resource* rsrc : m_swapchain.m_rtvResources)
-	{
-		safeRelease(rsrc);
-	}
-
-	safeRelease(m_swapchain.m_swapchain);
-	m_swapchain = {};
-
+	SwapchainFactory::freeSingleton();
 	RtvDescriptorHeap::freeSingleton();
+	FenceFactory::freeSingleton();
 
 	safeRelease(m_queues[GpuQueueType::kGeneral]);
 	safeRelease(m_queues[GpuQueueType::kCompute]);
@@ -469,8 +407,6 @@ void GrManagerImpl::destroy()
 			dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
 		}
 	}
-
-	ANKI_D3D_LOGI("Destroying D3D backend completed");
 
 	GrMemoryPool::freeSingleton();
 }

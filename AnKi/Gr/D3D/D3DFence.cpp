@@ -132,13 +132,6 @@ void FenceFactory::trimSignaledFences(Bool wait)
 		const Bool signaled = fence->clientWait((wait) ? kMaxFenceOrSemaphoreWaitTime : 0.0f);
 		if(signaled)
 		{
-			if(!CloseHandle(fence->m_event))
-			{
-				ANKI_D3D_LOGE("CloseHandle() failed");
-			}
-
-			safeRelease(fence->m_fence);
-
 			deleteInstance(GrMemoryPool::getSingleton(), fence);
 
 			ANKI_ASSERT(m_aliveFenceCount > 0);

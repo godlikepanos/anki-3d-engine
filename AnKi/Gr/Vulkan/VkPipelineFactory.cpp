@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Gr/Vulkan/VkPipeline.h>
+#include <AnKi/Gr/Vulkan/VkPipelineFactory.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Common/Functions.h>
+#include <AnKi/Gr/BackendCommon/Functions.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/Filesystem.h>
 

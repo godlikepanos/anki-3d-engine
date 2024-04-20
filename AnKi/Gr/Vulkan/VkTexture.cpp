@@ -5,7 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/VkTexture.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
+#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
 
 namespace anki {
 

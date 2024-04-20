@@ -7,7 +7,7 @@
 
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
-#include <AnKi/Gr/Common/Functions.h>
+#include <AnKi/Gr/BackendCommon/Functions.h>
 #include <AnKi/Util/HashMap.h>
 
 namespace anki {

@@ -6,8 +6,8 @@
 #pragma once
 
 #include <AnKi/Gr/ShaderProgram.h>
-#include <AnKi/Gr/Vulkan/VkPipelineLayout.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSet.h>
+#include <AnKi/Gr/Vulkan/VkPipelineLayoutFactory.h>
+#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
 
 namespace anki {
 

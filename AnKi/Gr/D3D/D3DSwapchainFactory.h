@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include <AnKi/Gr/Vulkan/VkFenceFactory.h>
+#include <AnKi/Gr/D3D/D3DFence.h>
+#include <AnKi/Gr/D3D/D3DTexture.h>
 #include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
-#include <AnKi/Util/Ptr.h>
 
 namespace anki {
 
-/// @addtogroup vulkan
+/// @addtogroup directx
 /// @{
 
 /// A wrapper for the swapchain.
@@ -21,9 +21,13 @@ class MicroSwapchain
 	friend class SwapchainFactory;
 
 public:
-	VkSwapchainKHR m_swapchain = {};
+	IDXGISwapChain3* m_swapchain = nullptr;
 
-	GrDynamicArray<TexturePtr> m_textures;
+	Array<ID3D12Resource*, kMaxFramesInFlight> m_rtvResources = {};
+
+	Array<TexturePtr, kMaxFramesInFlight> m_textures;
+
+	U32 m_backbufferIdx = 0;
 
 	MicroSwapchain();
 
@@ -84,10 +88,7 @@ class SwapchainFactory : public MakeSingleton<SwapchainFactory>
 	friend class MicroSwapchain;
 
 public:
-	SwapchainFactory(Bool vsync)
-	{
-		m_vsync = vsync;
-	}
+	SwapchainFactory() = default;
 
 	~SwapchainFactory()
 	{
@@ -97,7 +98,6 @@ public:
 	MicroSwapchainPtr newInstance();
 
 private:
-	Bool m_vsync = false;
 	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };
 /// @}
@@ -107,5 +107,6 @@ inline void MicroSwapchainPtrDeleter::operator()(MicroSwapchain* s)
 	ANKI_ASSERT(s);
 	SwapchainFactory::getSingleton().m_recycler.recycle(s);
 }
+/// @}
 
 } // end namespace anki

@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <AnKi/Gr/Vulkan/VkCommon.h>
+#include <AnKi/Gr/BackendCommon/Common.h>
 #include <AnKi/Util/DynamicArray.h>
 
 namespace anki {
 
-/// @addtogroup vulkan
+/// @addtogroup graphics
 /// @{
 
 /// Helper class for MicroXXX objects. It expects a specific interface for the T.
@@ -82,4 +82,4 @@ private:
 
 } // end namespace anki
 
-#include <AnKi/Gr/Vulkan/VkMicroObjectRecycler.inl.h>
+#include <AnKi/Gr/BackendCommon/MicroObjectRecycler.inl.h>

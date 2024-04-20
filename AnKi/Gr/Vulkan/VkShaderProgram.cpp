@@ -6,8 +6,8 @@
 #include <AnKi/Gr/Vulkan/VkShaderProgram.h>
 #include <AnKi/Gr/Vulkan/VkShader.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Vulkan/VkPipeline.h>
-#include <AnKi/Gr/Common/Functions.h>
+#include <AnKi/Gr/Vulkan/VkPipelineFactory.h>
+#include <AnKi/Gr/BackendCommon/Functions.h>
 
 namespace anki {
 

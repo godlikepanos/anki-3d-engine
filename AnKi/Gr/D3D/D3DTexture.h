@@ -16,6 +16,8 @@ namespace anki {
 /// Texture container.
 class TextureImpl final : public Texture
 {
+	friend class Texture;
+
 public:
 	TextureImpl(CString name)
 		: Texture(name)
@@ -29,13 +31,16 @@ public:
 		return initInternal(nullptr, inf);
 	}
 
-	Error initExternal(ID3D12Resource* image, const TextureInitInfo& init)
+	Error initExternal(ID3D12Resource* external, const TextureInitInfo& init)
 	{
-		return initInternal(image, init);
+		return initInternal(external, init);
 	}
 
 private:
-	Error initInternal(ID3D12Resource* image, const TextureInitInfo& init);
+	ID3D12Resource* m_resource = nullptr;
+	GrDynamicArray<DescriptorHeapHandle> m_rtvHandles;
+
+	Error initInternal(ID3D12Resource* external, const TextureInitInfo& init);
 };
 /// @}
 

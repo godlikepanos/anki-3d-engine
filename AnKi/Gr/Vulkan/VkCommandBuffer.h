@@ -14,7 +14,7 @@
 #include <AnKi/Gr/Vulkan/VkPipelineQuery.h>
 #include <AnKi/Gr/Vulkan/VkBuffer.h>
 #include <AnKi/Gr/Vulkan/VkTexture.h>
-#include <AnKi/Gr/Vulkan/VkPipeline.h>
+#include <AnKi/Gr/Vulkan/VkPipelineFactory.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/List.h>
 

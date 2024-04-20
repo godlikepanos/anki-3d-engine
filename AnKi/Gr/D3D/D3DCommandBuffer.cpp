@@ -175,7 +175,22 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
 									TextureView* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	Array<D3D12_RENDER_PASS_RENDER_TARGET_DESC, kMaxColorRenderTargets> colorRtDescs;
+	for(U32 i = 0; i < colorRts.getSize(); ++i)
+	{
+		const RenderTarget& rt = colorRts[i];
+		D3D12_RENDER_PASS_RENDER_TARGET_DESC& desc = colorRtDescs[i];
+
+		desc = {};
+		// desc.cpuDescriptor = rt.m_view->
+		desc.BeginningAccess.Type = convertLoadOp(rt.m_loadOperation);
+		memcpy(&desc.BeginningAccess.Clear.ClearValue.Color, &rt.m_clearValue.m_colorf[0], sizeof(F32) * 4);
+		desc.EndingAccess.Type = convertStoreOp(rt.m_storeOperation);
+	}
+
+	// self.m_cmdList->BeginRenderPass(colorRts.getSize(), )
 }
 
 void CommandBuffer::endRenderPass()

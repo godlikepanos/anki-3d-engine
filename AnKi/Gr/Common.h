@@ -404,7 +404,7 @@ enum class Format : U32
 	kNone = 0,
 
 #define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = id,
-#include <AnKi/Gr/Common/Format.def.h>
+#include <AnKi/Gr/BackendCommon/Format.def.h>
 #undef ANKI_FORMAT_DEF
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
