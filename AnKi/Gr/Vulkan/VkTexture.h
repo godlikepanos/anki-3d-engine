@@ -109,7 +109,7 @@ public:
 	}
 
 	/// Compute the layer as defined by Vulkan.
-	U32 computeVkArrayLayer(const TextureSurfaceInfo& surf) const
+	U32 computeVkArrayLayer(const TextureSurfaceDescriptor& surf) const
 	{
 		U32 layer = 0;
 		switch(m_texType)
@@ -133,7 +133,7 @@ public:
 		return layer;
 	}
 
-	U32 computeVkArrayLayer([[maybe_unused]] const TextureVolumeInfo& vol) const
+	U32 computeVkArrayLayer([[maybe_unused]] const TextureVolumeDescriptor& vol) const
 	{
 		ANKI_ASSERT(m_texType == TextureType::k3D);
 		return 0;

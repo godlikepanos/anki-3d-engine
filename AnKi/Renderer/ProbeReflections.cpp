@@ -252,7 +252,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, f, 0));
 			}
 
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
@@ -392,11 +392,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			pass.setRenderpassInfo({colorRti});
 
 			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
-			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(TextureSurfaceInfo(0, f, 0)));
+			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(TextureSurfaceDescriptor(0, f, 0)));
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, f, 0));
 			}
 			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
@@ -519,14 +519,14 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Gen mips", faceIdx));
 
-			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, faceIdx, 0));
+			TextureSubresourceInfo subresource(TextureSurfaceDescriptor(0, faceIdx, 0));
 			subresource.m_mipmapCount = m_lightShading.m_mipCount;
 			pass.newTextureDependency(probeTexture, TextureUsageBit::kGenerateMipmaps, subresource);
 
 			pass.setWork([this, faceIdx, probeTexture](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
-				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, faceIdx, 0));
+				TextureSubresourceInfo subresource(TextureSurfaceDescriptor(0, faceIdx, 0));
 				subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
 				Texture* texToBind;

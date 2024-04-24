@@ -38,7 +38,7 @@ public:
 	{
 	}
 
-	TextureViewInitInfo(Texture* tex, const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone, CString name = {})
+	TextureViewInitInfo(Texture* tex, const TextureSurfaceDescriptor& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{

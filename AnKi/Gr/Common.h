@@ -952,32 +952,32 @@ public:
 };
 
 /// A way to identify a surface in a texture.
-class TextureSurfaceInfo
+class TextureSurfaceDescriptor
 {
 public:
 	U32 m_level = 0;
 	U32 m_face = 0;
 	U32 m_layer = 0;
 
-	constexpr TextureSurfaceInfo() = default;
+	constexpr TextureSurfaceDescriptor() = default;
 
-	constexpr TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
+	constexpr TextureSurfaceDescriptor(const TextureSurfaceDescriptor&) = default;
 
-	constexpr TextureSurfaceInfo(U32 level, U32 face, U32 layer)
+	constexpr TextureSurfaceDescriptor(U32 level, U32 face, U32 layer)
 		: m_level(level)
 		, m_face(face)
 		, m_layer(layer)
 	{
 	}
 
-	TextureSurfaceInfo& operator=(const TextureSurfaceInfo&) = default;
+	TextureSurfaceDescriptor& operator=(const TextureSurfaceDescriptor&) = default;
 
-	Bool operator==(const TextureSurfaceInfo& b) const
+	Bool operator==(const TextureSurfaceDescriptor& b) const
 	{
 		return m_level == b.m_level && m_face == b.m_face && m_layer == b.m_layer;
 	}
 
-	Bool operator!=(const TextureSurfaceInfo& b) const
+	Bool operator!=(const TextureSurfaceDescriptor& b) const
 	{
 		return !(*this == b);
 	}
@@ -987,28 +987,28 @@ public:
 		return anki::computeHash(this, sizeof(*this), 0x1234567);
 	}
 
-	static TextureSurfaceInfo newZero()
+	static TextureSurfaceDescriptor newZero()
 	{
-		return TextureSurfaceInfo();
+		return TextureSurfaceDescriptor();
 	}
 };
 
 /// A way to identify a volume in 3D textures.
-class TextureVolumeInfo
+class TextureVolumeDescriptor
 {
 public:
 	U32 m_level = 0;
 
-	TextureVolumeInfo() = default;
+	TextureVolumeDescriptor() = default;
 
-	TextureVolumeInfo(const TextureVolumeInfo&) = default;
+	TextureVolumeDescriptor(const TextureVolumeDescriptor&) = default;
 
-	TextureVolumeInfo(U32 level)
+	TextureVolumeDescriptor(U32 level)
 		: m_level(level)
 	{
 	}
 
-	TextureVolumeInfo& operator=(const TextureVolumeInfo&) = default;
+	TextureVolumeDescriptor& operator=(const TextureVolumeDescriptor&) = default;
 };
 
 /// Defines a subset of a texture.
@@ -1035,7 +1035,7 @@ public:
 
 	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
 
-	constexpr TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	constexpr TextureSubresourceInfo(const TextureSurfaceDescriptor& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_firstMipmap(surf.m_level)
 		, m_mipmapCount(1)
 		, m_firstLayer(surf.m_layer)
@@ -1046,7 +1046,7 @@ public:
 	{
 	}
 
-	constexpr TextureSubresourceInfo(const TextureVolumeInfo& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	constexpr TextureSubresourceInfo(const TextureVolumeDescriptor& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 		: m_firstMipmap(vol.m_level)
 		, m_mipmapCount(1)
 		, m_firstLayer(0)

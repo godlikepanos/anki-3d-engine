@@ -356,7 +356,7 @@ static void presentBarrierB(CommandBufferPtr cmdb, TexturePtr presentTex)
 }
 
 static void setTextureSurfaceBarrier(CommandBufferPtr& cmdb, TexturePtr tex, TextureUsageBit before, TextureUsageBit after,
-									 const TextureSurfaceInfo& surf)
+									 const TextureSurfaceDescriptor& surf)
 {
 	TextureBarrierInfo barrier;
 	barrier.m_previousUsage = before;
@@ -380,7 +380,7 @@ static void setTextureBarrier(CommandBufferPtr& cmdb, TexturePtr tex, TextureUsa
 }
 
 static void setTextureVolumeBarrier(CommandBufferPtr& cmdb, TexturePtr tex, TextureUsageBit before, TextureUsageBit after,
-									const TextureVolumeInfo& vol)
+									const TextureVolumeDescriptor& vol)
 {
 	TextureBarrierInfo barrier;
 	barrier.m_previousUsage = before;
@@ -737,10 +737,10 @@ void main()
 			CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 			cmdb->setViewport(0, 0, RT_WIDTH, RT_HEIGHT);
-			setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, 0, 0));
+			setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, 0, 0, 0));
 			cmdb->beginRenderPass(fb[0].get(), {{TextureUsageBit::kFramebufferWrite}}, {});
 			cmdb->endRenderPass();
-			setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+			setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0, 0));
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 		}
@@ -750,7 +750,7 @@ void main()
 		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
 
 		// Draw offscreen
-		setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kSampledFragment, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kSampledFragment, TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, 0, 0, 0));
 		auto vp = VIEWPORTS[(i / 30) % 4];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->setScissor(vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2, vp[3] - SCISSOR_MARGIN * 2);
@@ -764,7 +764,7 @@ void main()
 		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->setScissor(0, 0, g_win->getWidth(), g_win->getHeight());
 		cmdb->bindShaderProgram(blitProg.get());
-		setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, rt, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0, 0));
 		// cmdb->bindTextureAndSampler(0, 0, texView.get(), sampler.get());
 		presentBarrierA(cmdb, presentTex);
 		cmdb->beginRenderPass(dfb.get(), {TextureUsageBit::kFramebufferWrite}, {});
@@ -1111,32 +1111,32 @@ ANKI_TEST(Gr, DrawWithTexture)
 	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cmdbinit);
 
 	// Set barriers
-	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination, TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination, TextureSurfaceDescriptor(0, 0, 0, 0));
 
-	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination, TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kSampledFragment, TextureUsageBit::kTransferDestination, TextureSurfaceDescriptor(1, 0, 0, 0));
 
-	setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSurfaceDescriptor(0, 0, 0, 0));
 
 	TransferGpuAllocatorHandle handle0, handle1, handle2;
-	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
+	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceDescriptor(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
 
-	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1), handle1);
+	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceDescriptor(1, 0, 0, 0), &mip1[0], sizeof(mip1), handle1);
 
-	UPLOAD_TEX_SURFACE(cmdb, b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0), handle2);
+	UPLOAD_TEX_SURFACE(cmdb, b, TextureSurfaceDescriptor(0, 0, 0, 0), &bmip0[0], sizeof(bmip0), handle2);
 
 	// Gen mips
-	setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kTransferDestination, TextureUsageBit::kGenerateMipmaps, TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kTransferDestination, TextureUsageBit::kGenerateMipmaps, TextureSurfaceDescriptor(0, 0, 0, 0));
 
 	cmdb->generateMipmaps2d(g_gr->newTextureView(TextureViewInitInfo(b.get())).get());
 
 	// Set barriers
-	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0, 0));
 
-	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(1, 0, 0, 0));
 
 	for(U32 i = 0; i < 3; ++i)
 	{
-		setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kGenerateMipmaps, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(i, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, b, TextureUsageBit::kGenerateMipmaps, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(i, 0, 0, 0));
 	}
 
 	FencePtr fence;
@@ -1353,18 +1353,18 @@ static void drawOffscreen(GrManager& gr)
 
 		cmdb->setPolygonOffset(0.0, 0.0);
 
-		setTextureSurfaceBarrier(cmdb, col0, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, 0, 0));
-		setTextureSurfaceBarrier(cmdb, col1, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, TextureSurfaceInfo(0, 0, 0, 0));
-		setTextureSurfaceBarrier(cmdb, dp, TextureUsageBit::kNone, TextureUsageBit::kAllFramebuffer, TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col0, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col1, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, dp, TextureUsageBit::kNone, TextureUsageBit::kAllFramebuffer, TextureSurfaceDescriptor(0, 0, 0, 0));
 		cmdb->beginRenderPass(fb.get(), {{TextureUsageBit::kFramebufferWrite, TextureUsageBit::kFramebufferWrite}}, TextureUsageBit::kAllFramebuffer);
 
 		drawOffscreenDrawcalls(gr, prog, cmdb, TEX_SIZE, indices, verts);
 
 		cmdb->endRenderPass();
 
-		setTextureSurfaceBarrier(cmdb, col0, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
-		setTextureSurfaceBarrier(cmdb, col1, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
-		setTextureSurfaceBarrier(cmdb, dp, TextureUsageBit::kAllFramebuffer, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col0, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, col1, TextureUsageBit::kFramebufferWrite, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, dp, TextureUsageBit::kAllFramebuffer, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0, 0));
 
 		// Draw quad
 		TexturePtr presentTex = gr.acquireNextPresentableTexture();
@@ -1442,22 +1442,22 @@ ANKI_TEST(Gr, ImageLoadStore)
 	CommandBufferInitInfo cmdbinit;
 	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cmdbinit);
 
-	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSurfaceDescriptor(0, 0, 0, 0));
 
 	ClearValue clear;
 	clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
-	TextureViewInitInfo viewInit2(tex.get(), TextureSurfaceInfo(0, 0, 0, 0));
+	TextureViewInitInfo viewInit2(tex.get(), TextureSurfaceDescriptor(0, 0, 0, 0));
 	cmdb->clearTextureView(g_gr->newTextureView(viewInit2).get(), clear);
 
-	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0, 0));
 
-	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSurfaceDescriptor(1, 0, 0, 0));
 
 	clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
-	TextureViewInitInfo viewInit3(tex.get(), TextureSurfaceInfo(1, 0, 0, 0));
+	TextureViewInitInfo viewInit3(tex.get(), TextureSurfaceDescriptor(1, 0, 0, 0));
 	cmdb->clearTextureView(g_gr->newTextureView(viewInit3).get(), clear);
 
-	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kStorageComputeWrite, TextureSurfaceInfo(1, 0, 0, 0));
+	setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kStorageComputeWrite, TextureSurfaceDescriptor(1, 0, 0, 0));
 
 	cmdb->endRecording();
 	GrManager::getSingleton().submit(cmdb.get());
@@ -1477,11 +1477,11 @@ ANKI_TEST(Gr, ImageLoadStore)
 		Vec4* col = SET_STORAGE(Vec4*, sizeof(*col), cmdb, 1, 0);
 		*col = Vec4(F32(iterations) / F32(ITERATION_COUNT));
 
-		setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kStorageComputeWrite, TextureSurfaceInfo(1, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kStorageComputeWrite, TextureSurfaceDescriptor(1, 0, 0, 0));
 		cmdb->bindShaderProgram(compProg.get());
 		cmdb->bindStorageTexture(0, 0, view.get());
 		cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
-		setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kStorageComputeWrite, TextureUsageBit::kSampledFragment, TextureSurfaceInfo(1, 0, 0, 0));
+		setTextureSurfaceBarrier(cmdb, tex, TextureUsageBit::kStorageComputeWrite, TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(1, 0, 0, 0));
 
 		// Present image
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -1554,18 +1554,18 @@ ANKI_TEST(Gr, 3DTextures)
 	cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cmdbinit);
 
-	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureVolumeInfo(0));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureVolumeDescriptor(0));
 
-	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureVolumeInfo(1));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureVolumeDescriptor(1));
 
 	TransferGpuAllocatorHandle handle0, handle1;
-	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0), handle0);
+	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeDescriptor(0), &mip0[0], sizeof(mip0), handle0);
 
-	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1), handle1);
+	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeDescriptor(1), &mip1[0], sizeof(mip1), handle1);
 
-	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureVolumeInfo(0));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureVolumeDescriptor(0));
 
-	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureVolumeInfo(1));
+	setTextureVolumeBarrier(cmdb, a, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment, TextureVolumeDescriptor(1));
 
 	FencePtr fence;
 	cmdb->endRecording();
@@ -1685,7 +1685,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle giGiLightRt = descr.importRenderTarget(dummyTex.get(), TextureUsageBit::kSampledFragment);
 	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, faceIdx, 0));
+		TextureSubresourceInfo subresource(TextureSurfaceDescriptor(0, faceIdx, 0));
 
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass(String().sprintf("GI lp%u", faceIdx).toCString());
 		pass.newTextureDependency(giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource);
@@ -1702,7 +1702,7 @@ ANKI_TEST(Gr, RenderGraph)
 
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
-				TextureSurfaceInfo surf(mip, faceIdx, 0);
+				TextureSurfaceDescriptor surf(mip, faceIdx, 0);
 				pass.newTextureDependency(giGiLightRt, TextureUsageBit::kGenerateMipmaps, surf);
 			}
 		}
@@ -1928,8 +1928,8 @@ void main()
 	TextureSubresourceInfo subresource;
 	subresource.m_mipmapCount = texInit.m_mipmapCount;
 	setTextureBarrier(cmdb, tex, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, subresource);
-	cmdb->copyBufferToTexture(BufferView(uploadBuff.get()), g_gr->newTextureView(TextureViewInitInfo(tex.get(), TextureSurfaceInfo(0, 0, 0))).get());
-	cmdb->copyBufferToTexture(BufferView(uploadBuff2.get()), g_gr->newTextureView(TextureViewInitInfo(tex.get(), TextureSurfaceInfo(1, 0, 0))).get());
+	cmdb->copyBufferToTexture(BufferView(uploadBuff.get()), g_gr->newTextureView(TextureViewInitInfo(tex.get(), TextureSurfaceDescriptor(0, 0, 0))).get());
+	cmdb->copyBufferToTexture(BufferView(uploadBuff2.get()), g_gr->newTextureView(TextureViewInitInfo(tex.get(), TextureSurfaceDescriptor(1, 0, 0))).get());
 
 	setTextureBarrier(cmdb, tex, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute, subresource);
 	cmdb->bindShaderProgram(prog.get());
@@ -2185,9 +2185,9 @@ ANKI_TEST(Gr, Bindless)
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	// Create views
-	TextureViewPtr viewA = gr->newTextureView(TextureViewInitInfo(texA, TextureSurfaceInfo()));
-	TextureViewPtr viewB = gr->newTextureView(TextureViewInitInfo(texB, TextureSurfaceInfo()));
-	TextureViewPtr viewC = gr->newTextureView(TextureViewInitInfo(texC, TextureSurfaceInfo()));
+	TextureViewPtr viewA = gr->newTextureView(TextureViewInitInfo(texA, TextureSurfaceDescriptor()));
+	TextureViewPtr viewB = gr->newTextureView(TextureViewInitInfo(texB, TextureSurfaceDescriptor()));
+	TextureViewPtr viewC = gr->newTextureView(TextureViewInitInfo(texC, TextureSurfaceDescriptor()));
 
 	// Create result buffer
 	BufferPtr resBuff =
@@ -2231,26 +2231,26 @@ void main()
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	setTextureSurfaceBarrier(cmdb, texA, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo());
+								   TextureSurfaceDescriptor());
 	setTextureSurfaceBarrier(cmdb, texB, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo());
+								   TextureSurfaceDescriptor());
 	setTextureSurfaceBarrier(cmdb, texC, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination,
-								   TextureSurfaceInfo());
+								   TextureSurfaceDescriptor());
 
 	TransferGpuAllocatorHandle handle0, handle1, handle2;
 	const UVec4 mip0 = UVec4(1, 2, 3, 4);
-	UPLOAD_TEX_SURFACE(cmdb, texA, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
+	UPLOAD_TEX_SURFACE(cmdb, texA, TextureSurfaceDescriptor(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
 	const UVec4 mip1 = UVec4(10, 20, 30, 40);
-	UPLOAD_TEX_SURFACE(cmdb, texB, TextureSurfaceInfo(0, 0, 0, 0), &mip1[0], sizeof(mip1), handle1);
+	UPLOAD_TEX_SURFACE(cmdb, texB, TextureSurfaceDescriptor(0, 0, 0, 0), &mip1[0], sizeof(mip1), handle1);
 	const Vec4 mip2 = Vec4(2.2f, 3.3f, 4.4f, 5.5f);
-	UPLOAD_TEX_SURFACE(cmdb, texC, TextureSurfaceInfo(0, 0, 0, 0), &mip2[0], sizeof(mip2), handle2);
+	UPLOAD_TEX_SURFACE(cmdb, texC, TextureSurfaceDescriptor(0, 0, 0, 0), &mip2[0], sizeof(mip2), handle2);
 
 	setTextureSurfaceBarrier(cmdb, texA, TextureUsageBit::kTransferDestination, TextureUsageBit::kStorageComputeRead,
-								   TextureSurfaceInfo());
+								   TextureSurfaceDescriptor());
 	setTextureSurfaceBarrier(cmdb, texB, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
-								   TextureSurfaceInfo());
+								   TextureSurfaceDescriptor());
 	setTextureSurfaceBarrier(cmdb, texC, TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledCompute,
-								   TextureSurfaceInfo());
+								   TextureSurfaceDescriptor());
 
 	cmdb->bindStorageBuffer(1, 0, resBuff, 0, kMaxPtrSize);
 	cmdb->bindSampler(1, 1, sampler);

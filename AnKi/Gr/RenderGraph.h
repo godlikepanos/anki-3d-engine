@@ -380,7 +380,7 @@ class RenderTargetInfo
 {
 public:
 	RenderTargetHandle m_handle;
-	TextureSurfaceInfo m_surface;
+	TextureSurfaceDescriptor m_surface;
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone; ///< Relevant only for depth stencil textures.
 
 	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kDontCare;

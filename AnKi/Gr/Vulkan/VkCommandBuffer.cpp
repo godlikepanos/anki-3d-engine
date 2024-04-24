@@ -823,7 +823,7 @@ void CommandBuffer::generateMipmaps2d(TextureView* texView)
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i, face, layer), aspect), range);
+			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceDescriptor(i, face, layer), aspect), range);
 
 			self.setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 								 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
@@ -833,7 +833,7 @@ void CommandBuffer::generateMipmaps2d(TextureView* texView)
 		// Transition destination
 		{
 			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceInfo(i + 1, face, layer), aspect), range);
+			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceDescriptor(i + 1, face, layer), aspect), range);
 
 			self.setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TRANSFER_BIT,
 								 VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tex.m_imageHandle, range);
@@ -928,8 +928,8 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, TextureView* tex
 	const Bool is3D = tex.getTextureType() == TextureType::k3D;
 	const VkImageAspectFlags aspect = convertImageAspect(view.getSubresource().m_depthStencilAspect);
 
-	const TextureSurfaceInfo surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, view.getSubresource().m_firstLayer);
-	const TextureVolumeInfo vol(view.getSubresource().m_firstMipmap);
+	const TextureSurfaceDescriptor surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, view.getSubresource().m_firstLayer);
+	const TextureVolumeDescriptor vol(view.getSubresource().m_firstMipmap);
 
 	// Compute the sizes of the mip
 	const U32 width = tex.getWidth() >> surf.m_level;

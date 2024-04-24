@@ -482,7 +482,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 		{
 			for(U32 layer = 0; layer < inf.m_layerCount; ++layer)
 			{
-				TextureSurfaceInfo surf(mip, face, layer);
+				TextureSurfaceDescriptor surf(mip, face, layer);
 
 				if(!useCompute)
 				{

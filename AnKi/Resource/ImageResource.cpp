@@ -268,12 +268,12 @@ Error ImageResource::load(LoadingContext& ctx)
 
 			if(ctx.m_texType == TextureType::k3D)
 			{
-				barrier.m_subresource = TextureVolumeInfo(mip);
-				TextureVolumeInfo vol(mip);
+				barrier.m_subresource = TextureVolumeDescriptor(mip);
+				TextureVolumeDescriptor vol(mip);
 			}
 			else
 			{
-				barrier.m_subresource = TextureSurfaceInfo(mip, face, layer);
+				barrier.m_subresource = TextureSurfaceDescriptor(mip, face, layer);
 			}
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
@@ -320,11 +320,11 @@ Error ImageResource::load(LoadingContext& ctx)
 			TextureSubresourceInfo subresource;
 			if(ctx.m_texType == TextureType::k3D)
 			{
-				subresource = TextureSubresourceInfo(TextureVolumeInfo(mip));
+				subresource = TextureSubresourceInfo(TextureVolumeDescriptor(mip));
 			}
 			else
 			{
-				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, face, layer));
+				subresource = TextureSubresourceInfo(TextureSurfaceDescriptor(mip, face, layer));
 			}
 
 			TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex.get(), subresource, "RsrcTmp"));
@@ -345,11 +345,11 @@ Error ImageResource::load(LoadingContext& ctx)
 
 			if(ctx.m_texType == TextureType::k3D)
 			{
-				barrier.m_subresource = TextureVolumeInfo(mip);
+				barrier.m_subresource = TextureVolumeDescriptor(mip);
 			}
 			else
 			{
-				barrier.m_subresource = TextureSurfaceInfo(mip, face, layer);
+				barrier.m_subresource = TextureSurfaceDescriptor(mip, face, layer);
 			}
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});

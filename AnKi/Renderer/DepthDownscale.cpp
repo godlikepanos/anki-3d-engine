@@ -175,12 +175,12 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				TextureSurfaceInfo subresource;
+				TextureSurfaceDescriptor subresource;
 				subresource.m_level = mip - 1;
 				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, subresource);
 			}
 
-			TextureSurfaceInfo subresource;
+			TextureSurfaceDescriptor subresource;
 			subresource.m_level = mip;
 			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, subresource);
 

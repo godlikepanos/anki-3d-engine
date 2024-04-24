@@ -64,10 +64,10 @@ public:
 	U32 m_idx;
 	TextureUsageBit m_usageBefore;
 	TextureUsageBit m_usageAfter;
-	TextureSurfaceInfo m_surface;
+	TextureSurfaceDescriptor m_surface;
 	DepthStencilAspectBit m_dsAspect;
 
-	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf, DepthStencilAspectBit dsAspect)
+	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceDescriptor& surf, DepthStencilAspectBit dsAspect)
 		: m_idx(rtIdx)
 		, m_usageBefore(usageBefore)
 		, m_usageAfter(usageAfter)
@@ -766,7 +766,7 @@ void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubreso
 				// Compute surf or vol idx
 				const U32 faceCount = textureTypeIsCube(tex.getTextureType()) ? 6 : 1;
 				const U32 idx = (faceCount * tex.getLayerCount()) * mip + faceCount * layer + face;
-				const TextureSurfaceInfo surf(mip, face, layer);
+				const TextureSurfaceDescriptor surf(mip, face, layer);
 
 				if(!func(idx, surf))
 				{
@@ -787,7 +787,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 	const TextureUsageBit depUsage = dep.m_texture.m_usage;
 	RT& rt = ctx.m_rts[rtIdx];
 
-	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSurfaceInfo& surf) {
+	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSurfaceDescriptor& surf) {
 		TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
 
 		const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & TextureUsageBit::kAllWrite);
