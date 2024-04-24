@@ -36,15 +36,18 @@ public:
 	{
 		ANKI_ASSERT(!isValid() && "Forgot to delete");
 		m_token = b.m_token;
-		m_realOffset = b.m_realOffset;
-		m_realAllocatedSize = b.m_realAllocatedSize;
+		m_fakeOffset = b.m_fakeOffset;
+		m_fakeAllocatedSize = b.m_fakeAllocatedSize;
 		b.m_token = {};
-		b.m_realAllocatedSize = 0;
-		b.m_realOffset = kMaxU32;
+		b.m_fakeAllocatedSize = 0;
+		b.m_fakeOffset = kMaxU32;
 		return *this;
 	}
 
-	operator BufferOffsetRange() const;
+	operator BufferView() const;
+
+	/// This will return an exaggerated view compared to the above that it's properly aligned.
+	BufferView getCompleteBufferView() const;
 
 	Bool isValid() const
 	{
@@ -55,19 +58,19 @@ public:
 	U32 getOffset() const
 	{
 		ANKI_ASSERT(isValid());
-		return m_realOffset;
+		return m_fakeOffset;
 	}
 
 	U32 getAllocatedSize() const
 	{
 		ANKI_ASSERT(isValid());
-		return m_realAllocatedSize;
+		return m_fakeAllocatedSize;
 	}
 
 private:
 	SegregatedListsGpuMemoryPoolToken m_token;
-	U32 m_realOffset = kMaxU32; ///< In some allocations with weird alignments we need a different offset.
-	U32 m_realAllocatedSize = 0;
+	U32 m_fakeOffset = kMaxU32; ///< In some allocations with weird alignments we need a different offset.
+	U32 m_fakeAllocatedSize = 0;
 };
 
 /// Manages vertex and index memory for the WHOLE application.
@@ -83,13 +86,25 @@ public:
 
 	void init();
 
+	/// The alignment doesn't need to be power of 2 unlike other allocators.
 	UnifiedGeometryBufferAllocation allocate(PtrSize size, U32 alignment)
 	{
+		ANKI_ASSERT(size && alignment);
+
+		const U32 fixedAlignment = max(4u, nextPowerOfTwo(alignment)); // Fix the alignment and make sure it's at least 4
+		const U32 fixedSize = getAlignedRoundUp(4u, U32(size) + alignment); // Over-allocate and align to 4 because some cmd buffer ops need it
+		ANKI_ASSERT(fixedSize >= size);
+
 		UnifiedGeometryBufferAllocation out;
-		m_pool.allocate(size, alignment, out.m_token);
-		ANKI_ASSERT(isAligned(alignment, out.m_token.m_offset));
-		out.m_realOffset = U32(out.m_token.m_offset);
-		out.m_realAllocatedSize = U32(size);
+		m_pool.allocate(fixedSize, fixedAlignment, out.m_token);
+
+		const U32 remainder = out.m_token.m_offset % alignment;
+		out.m_fakeOffset = U32(out.m_token.m_offset + (alignment - remainder));
+		ANKI_ASSERT(isAligned(alignment, out.m_fakeOffset));
+
+		out.m_fakeAllocatedSize = U32(size);
+		ANKI_ASSERT(PtrSize(out.m_fakeOffset) + out.m_fakeAllocatedSize <= out.m_token.m_offset + out.m_token.m_size);
+
 		return out;
 	}
 
@@ -97,25 +112,14 @@ public:
 	UnifiedGeometryBufferAllocation allocateFormat(Format format, U32 count)
 	{
 		const U32 texelSize = getFormatInfo(format).m_texelSize;
-		const U32 alignment = max(4u, nextPowerOfTwo(texelSize));
-		const U32 size = count * texelSize + alignment; // Over-allocate
-
-		UnifiedGeometryBufferAllocation out;
-		m_pool.allocate(size, alignment, out.m_token);
-
-		const U32 remainder = out.m_token.m_offset % texelSize;
-		out.m_realOffset = U32(out.m_token.m_offset + (texelSize - remainder));
-		out.m_realAllocatedSize = count * texelSize;
-		ANKI_ASSERT(isAligned(texelSize, out.m_realOffset));
-		ANKI_ASSERT(out.m_realOffset + out.m_realAllocatedSize <= out.m_token.m_offset + out.m_token.m_size);
-		return out;
+		return allocate(texelSize * count, texelSize);
 	}
 
 	void deferredFree(UnifiedGeometryBufferAllocation& alloc)
 	{
 		m_pool.deferredFree(alloc.m_token);
-		alloc.m_realAllocatedSize = 0;
-		alloc.m_realOffset = kMaxU32;
+		alloc.m_fakeAllocatedSize = 0;
+		alloc.m_fakeOffset = kMaxU32;
 	}
 
 	void endFrame()
@@ -131,9 +135,9 @@ public:
 		return m_pool.getGpuBuffer();
 	}
 
-	BufferOffsetRange getBufferOffsetRange() const
+	BufferView getBufferView() const
 	{
-		return {&m_pool.getGpuBuffer(), 0, kMaxPtrSize};
+		return BufferView(&m_pool.getGpuBuffer());
 	}
 
 private:
@@ -151,9 +155,14 @@ inline UnifiedGeometryBufferAllocation::~UnifiedGeometryBufferAllocation()
 	UnifiedGeometryBuffer::getSingleton().deferredFree(*this);
 }
 
-inline UnifiedGeometryBufferAllocation::operator BufferOffsetRange() const
+inline UnifiedGeometryBufferAllocation::operator BufferView() const
 {
 	return {&UnifiedGeometryBuffer::getSingleton().getBuffer(), getOffset(), getAllocatedSize()};
+}
+
+inline BufferView UnifiedGeometryBufferAllocation::getCompleteBufferView() const
+{
+	return {&UnifiedGeometryBuffer::getSingleton().getBuffer(), m_token.m_offset, m_token.m_size};
 }
 /// @}
 

@@ -242,10 +242,10 @@ float3 main(VertOut input) : SV_TARGET0
 			rt.m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
 			cmdb->beginRenderPass({rt});
 
-			cmdb->bindStorageBuffer(0, 0, indexBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindStorageBuffer(0, 1, positionsBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindStorageBuffer(0, 2, colorsBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindStorageBuffer(0, 3, meshletsBuff.get(), 0, kMaxPtrSize);
+			cmdb->bindStorageBuffer(0, 0, BufferView(indexBuff.get()));
+			cmdb->bindStorageBuffer(0, 1, BufferView(positionsBuff.get()));
+			cmdb->bindStorageBuffer(0, 2, BufferView(colorsBuff.get()));
+			cmdb->bindStorageBuffer(0, 3, BufferView(meshletsBuff.get()));
 
 			cmdb->bindShaderProgram(prog.get());
 

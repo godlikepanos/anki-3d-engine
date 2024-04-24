@@ -183,13 +183,13 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		unis.m_viewProjMat = ctx.m_matrices.m_viewProjection;
 
 		cmdb.setPushConstants(&unis, sizeof(unis));
-		cmdb.bindVertexBuffer(0, m_cubeVertsBuffer.get(), 0, sizeof(Vec3));
+		cmdb.bindVertexBuffer(0, BufferView(m_cubeVertsBuffer.get()), sizeof(Vec3));
 		cmdb.setVertexAttribute(VertexAttribute::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
-		cmdb.bindIndexBuffer(m_cubeIndicesBuffer.get(), 0, IndexType::kU16);
+		cmdb.bindIndexBuffer(BufferView(m_cubeIndicesBuffer.get()), IndexType::kU16);
 
-		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
 
-		BufferOffsetRange indicesBuff;
+		BufferView indicesBuff;
 		BufferHandle dep;
 		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
 		cmdb.bindStorageBuffer(0, 3, indicesBuff);
@@ -203,9 +203,9 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 		if(allAabbCount)
 		{
-			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
 
-			BufferOffsetRange indicesBuff;
+			BufferView indicesBuff;
 			BufferHandle dep;
 			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
 			cmdb.bindStorageBuffer(0, 3, indicesBuff);
@@ -257,7 +257,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
 
-	BufferOffsetRange indicesBuff;
+	BufferView indicesBuff;
 	BufferHandle dep;
 	getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
 	pass.newBufferDependency(dep, BufferUsageBit::kStorageGeometryRead);

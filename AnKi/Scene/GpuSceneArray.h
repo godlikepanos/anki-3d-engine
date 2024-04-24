@@ -122,7 +122,7 @@ public:
 	}
 
 	/// @note Thread-safe
-	BufferOffsetRange getBufferOffsetRange() const
+	BufferView getBufferView() const
 	{
 		return {&GpuSceneBuffer::getSingleton().getBuffer(), getGpuSceneOffsetOfArrayBase(), getBufferRange()};
 	}

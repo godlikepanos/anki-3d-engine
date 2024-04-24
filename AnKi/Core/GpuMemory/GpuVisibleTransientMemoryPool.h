@@ -8,6 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
 #include <AnKi/Gr/GrManager.h>
+#include <AnKi/Gr/Buffer.h>
 
 namespace anki {
 
@@ -43,7 +44,7 @@ public:
 		return m_buffer != nullptr;
 	}
 
-	operator BufferOffsetRange() const;
+	operator BufferView() const;
 
 private:
 	Buffer* m_buffer = nullptr;
@@ -91,7 +92,7 @@ private:
 	~GpuVisibleTransientMemoryPool() = default;
 };
 
-inline GpuVisibleTransientMemoryAllocation::operator BufferOffsetRange() const
+inline GpuVisibleTransientMemoryAllocation::operator BufferView() const
 {
 	ANKI_ASSERT(isValid());
 	return {m_buffer, m_offset, m_size};

@@ -62,7 +62,7 @@ Error HzbGenerator::init()
 		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-		cmdb->fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
+		cmdb->fillBuffer(BufferView(m_counterBuffer.get()), 0);
 
 		FencePtr fence;
 		cmdb->endRecording();
@@ -164,7 +164,8 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 				rgraphCtx.bindStorageTexture(0, 0, in.m_dstHzbRt, subresource, mip);
 			}
 
-			cmdb.bindStorageBuffer(0, 1, m_counterBuffer.get(), (firstCounterBufferElement + dispatch) * m_counterBufferElementSize, sizeof(U32));
+			cmdb.bindStorageBuffer(
+				0, 1, BufferView(m_counterBuffer.get(), (firstCounterBufferElement + dispatch) * m_counterBufferElementSize, sizeof(U32)));
 			rgraphCtx.bindTexture(0, 2, in.m_srcDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
@@ -300,7 +301,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			cmdb.setPushConstants(&unis, sizeof(unis));
 
-			cmdb.bindIndexBuffer(m_boxIndexBuffer.get(), 0, IndexType::kU16);
+			cmdb.bindIndexBuffer(BufferView(m_boxIndexBuffer.get()), IndexType::kU16);
 
 			cmdb.drawIndexed(PrimitiveTopology::kTriangles, sizeof(kBoxIndices) / sizeof(kBoxIndices[0]), maxDepthRtSize.x() * maxDepthRtSize.y());
 

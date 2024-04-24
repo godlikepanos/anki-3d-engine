@@ -329,7 +329,7 @@ Error ImageResource::load(LoadingContext& ctx)
 
 			TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex.get(), subresource, "RsrcTmp"));
 
-			cmdb->copyBufferToTextureView(&handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView.get());
+			cmdb->copyBufferToTexture(handle, tmpView.get());
 		}
 
 		// Set the barriers of the batch

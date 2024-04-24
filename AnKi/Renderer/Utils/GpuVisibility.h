@@ -87,9 +87,9 @@ public:
 	class
 	{
 	public:
-		BufferOffsetRange m_renderableInstancesBuffer; ///< An array of GpuSceneRenderableInstance.
-		BufferOffsetRange m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
-		BufferOffsetRange m_drawIndexedIndirectArgsBuffer; ///< Array of DrawIndexedIndirectArgs or DrawIndirectArgs.
+		BufferView m_renderableInstancesBuffer; ///< An array of GpuSceneRenderableInstance.
+		BufferView m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
+		BufferView m_drawIndexedIndirectArgsBuffer; ///< Array of DrawIndexedIndirectArgs or DrawIndirectArgs.
 
 		/// Defines the element sub-ranges in the m_renderableInstancesBuffer an m_drawIndexedIndirectArgsBuffer per render state bucket.
 		ConstWeakArray<InstanceRange> m_bucketRenderableInstanceRanges;
@@ -98,16 +98,16 @@ public:
 	class
 	{
 	public:
-		BufferOffsetRange m_taskShaderIndirectArgsBuffer; ///< An array of DispatchIndirectArgs, one for each render state bucket.
-		BufferOffsetRange m_meshletGroupInstancesBuffer; ///< Array with GpuSceneMeshletGroupInstance.
+		BufferView m_taskShaderIndirectArgsBuffer; ///< An array of DispatchIndirectArgs, one for each render state bucket.
+		BufferView m_meshletGroupInstancesBuffer; ///< Array with GpuSceneMeshletGroupInstance.
 
 		/// Defines the element sub-ranges in the m_meshletGroupInstancesBuffer per render state bucket.
 		ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges;
 	} m_mesh; ///< S/W meshlets or H/W mesh shading.
 
-	BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< [Optional] Indices to the AABB buffer. The 1st element is the count.
+	BufferView m_visibleAaabbIndicesBuffer; ///< [Optional] Indices to the AABB buffer. The 1st element is the count.
 
-	BufferOffsetRange m_visiblesHashBuffer; ///< [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
+	BufferView m_visiblesHashBuffer; ///< [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
 
 	Bool containsDrawcalls() const
 	{
@@ -123,8 +123,8 @@ public:
 
 	RenderingTechnique m_technique = RenderingTechnique::kCount;
 
-	BufferOffsetRange m_taskShaderIndirectArgsBuffer; ///< Taken from GpuVisibilityOutput.
-	BufferOffsetRange m_meshletGroupInstancesBuffer; ///< Taken from GpuVisibilityOutput.
+	BufferView m_taskShaderIndirectArgsBuffer; ///< Taken from GpuVisibilityOutput.
+	BufferView m_meshletGroupInstancesBuffer; ///< Taken from GpuVisibilityOutput.
 	ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges; ///< Taken from GpuVisibilityOutput.
 
 	BufferHandle m_dependency;
@@ -162,8 +162,8 @@ class PassthroughGpuMeshletVisibilityInput : public BaseGpuMeshletVisibilityInpu
 class GpuMeshletVisibilityOutput
 {
 public:
-	BufferOffsetRange m_drawIndirectArgsBuffer; ///< Array of DrawIndirectArgs. One for every render state bucket (even those that use that flow).
-	BufferOffsetRange m_meshletInstancesBuffer; ///< Array of GpuSceneMeshletInstance.
+	BufferView m_drawIndirectArgsBuffer; ///< Array of DrawIndirectArgs. One for every render state bucket (even those that use that flow).
+	BufferView m_meshletInstancesBuffer; ///< Array of GpuSceneMeshletInstance.
 
 	/// Defines the element sub-ranges in the m_meshletInstancesBuffer per render state bucket.
 	ConstWeakArray<InstanceRange> m_bucketMeshletInstanceRanges;
@@ -225,14 +225,14 @@ private:
 	{
 	public:
 		// Legacy
-		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
-		BufferOffsetRange m_renderableInstancesBuffer; ///< Instance rate vertex buffer.
+		BufferView m_drawIndexedIndirectArgsBuffer;
+		BufferView m_renderableInstancesBuffer; ///< Instance rate vertex buffer.
 
 		// HW & SW Meshlet rendering
-		BufferOffsetRange m_meshletGroupsInstancesBuffer;
+		BufferView m_meshletGroupsInstancesBuffer;
 
 		// SW meshlet rendering
-		BufferOffsetRange m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
+		BufferView m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
 
 		BufferHandle m_bufferDepedency;
 	};
@@ -241,7 +241,7 @@ private:
 	{
 	public:
 		// SW meshlet rendering
-		BufferOffsetRange m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
+		BufferView m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
 
 		BufferHandle m_bufferDepedency;
 	};
@@ -300,7 +300,7 @@ public:
 	RenderGraphDescription* m_rgraph = nullptr;
 
 	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
-	BufferOffsetRange m_cpuFeedbackBuffer; ///< Optional.
+	BufferView m_cpuFeedbackBuffer; ///< Optional.
 };
 
 /// @memberof GpuVisibilityNonRenderables
@@ -308,7 +308,7 @@ class GpuVisibilityNonRenderablesOutput
 {
 public:
 	BufferHandle m_visiblesBufferHandle; ///< Buffer handle holding the visible objects. Used for tracking. No need to track all buffers.
-	BufferOffsetRange m_visiblesBuffer;
+	BufferView m_visiblesBuffer;
 };
 
 /// GPU visibility of lights, probes etc.
@@ -364,8 +364,8 @@ class GpuVisibilityAccelerationStructuresOutput
 public:
 	BufferHandle m_someBufferHandle; ///< Some handle to track dependencies. No need to track every buffer.
 
-	BufferOffsetRange m_instancesBuffer; ///< Points to AccelerationStructureBuildRangeInfo::m_primitiveCount number of AccelerationStructureInstance.
-	BufferOffsetRange m_renderableIndicesBuffer; ///< AccelerationStructureBuildRangeInfo::m_primitiveCount number of indices to renderables.
+	BufferView m_instancesBuffer; ///< Points to AccelerationStructureBuildRangeInfo::m_primitiveCount number of AccelerationStructureInstance.
+	BufferView m_renderableIndicesBuffer; ///< AccelerationStructureBuildRangeInfo::m_primitiveCount number of indices to renderables.
 };
 
 /// Performs visibility to gather bottom-level acceleration structures in a buffer that can be used to build a TLAS.

@@ -219,12 +219,12 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb.setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb.bindVertexBuffer(0, &vertsToken.getBuffer(), vertsToken.getOffset(), sizeof(ImDrawVert));
+	cmdb.bindVertexBuffer(0, vertsToken, sizeof(ImDrawVert));
 	cmdb.setVertexAttribute(VertexAttribute::kPosition, 0, Format::kR32G32_Sfloat, 0);
 	cmdb.setVertexAttribute(VertexAttribute::kColor, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
 	cmdb.setVertexAttribute(VertexAttribute::kTexCoord, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb.bindIndexBuffer(&indicesToken.getBuffer(), indicesToken.getOffset(), IndexType::kU16);
+	cmdb.bindIndexBuffer(indicesToken, IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports

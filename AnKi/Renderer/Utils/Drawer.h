@@ -35,9 +35,9 @@ public:
 	class
 	{
 	public:
-		BufferOffsetRange m_mdiDrawCountsBuffer;
-		BufferOffsetRange m_renderableInstancesBuffer;
-		BufferOffsetRange m_drawIndexedIndirectArgsBuffer;
+		BufferView m_mdiDrawCountsBuffer;
+		BufferView m_renderableInstancesBuffer;
+		BufferView m_drawIndexedIndirectArgsBuffer;
 
 		ConstWeakArray<InstanceRange> m_bucketRenderableInstanceRanges;
 	} m_legacy; ///< Legacy vertex flow
@@ -45,8 +45,8 @@ public:
 	class
 	{
 	public:
-		BufferOffsetRange m_taskShaderIndirectArgsBuffer;
-		BufferOffsetRange m_meshletGroupInstancesBuffer;
+		BufferView m_taskShaderIndirectArgsBuffer;
+		BufferView m_meshletGroupInstancesBuffer;
 
 		ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges;
 	} m_mesh;
@@ -54,8 +54,8 @@ public:
 	class
 	{
 	public:
-		BufferOffsetRange m_meshletInstancesBuffer;
-		BufferOffsetRange m_drawIndirectArgsBuffer;
+		BufferView m_meshletInstancesBuffer;
+		BufferView m_drawIndirectArgsBuffer;
 
 		ConstWeakArray<InstanceRange> m_bucketMeshletInstanceRanges;
 	} m_softwareMesh;

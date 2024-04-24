@@ -101,7 +101,7 @@ void RendererObject::zeroBuffer(Buffer* buff)
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-	cmdb->fillBuffer(buff, 0, kMaxPtrSize, 0);
+	cmdb->fillBuffer(BufferView(buff), 0);
 
 	FencePtr fence;
 	cmdb->endRecording();

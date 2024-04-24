@@ -18,44 +18,26 @@ namespace anki {
 class BottomLevelAccelerationStructureInitInfo
 {
 public:
-	const Buffer* m_indexBuffer = nullptr;
-	PtrSize m_indexBufferOffset = 0;
+	BufferView m_indexBuffer;
 	U32 m_indexCount = 0;
 	IndexType m_indexType = IndexType::kCount;
 
-	const Buffer* m_positionBuffer = nullptr;
-	PtrSize m_positionBufferOffset = 0;
+	BufferView m_positionBuffer;
 	U32 m_positionStride = 0;
 	Format m_positionsFormat = Format::kNone;
 	U32 m_positionCount = 0;
 
 	Bool isValid() const
 	{
-		if(m_indexBuffer == nullptr || m_indexCount == 0 || m_indexType == IndexType::kCount || m_positionBuffer == nullptr || m_positionStride == 0
-		   || m_positionsFormat == Format::kNone || m_positionCount == 0)
-		{
-			return false;
-		}
+		Bool valid = true;
 
-		const PtrSize posRange = m_positionBufferOffset + PtrSize(m_positionStride) * m_positionCount;
-		const PtrSize formatSize = getFormatInfo(m_positionsFormat).m_texelSize;
-		if(m_positionStride < formatSize)
-		{
-			return false;
-		}
+		valid = valid && (m_indexBuffer.isValid() && m_indexCount * getIndexSize(m_indexType) == m_indexBuffer.getRange());
 
-		if(posRange > m_positionBuffer->getSize())
-		{
-			return false;
-		}
+		const U32 vertSize = getFormatInfo(m_positionsFormat).m_texelSize;
+		valid = valid
+				&& (m_positionBuffer.isValid() && m_positionStride >= vertSize && m_positionStride * m_positionCount == m_positionBuffer.getRange());
 
-		const PtrSize idxStride = (m_indexType == IndexType::kU16) ? 2 : 4;
-		if(m_indexBufferOffset + idxStride * m_indexCount > m_indexBuffer->getSize())
-		{
-			return false;
-		}
-
-		return true;
+		return valid;
 	}
 };
 
@@ -83,14 +65,14 @@ public:
 	{
 	public:
 		U32 m_maxInstanceCount = 0;
-		Buffer* m_instancesBuffer = nullptr;
-		PtrSize m_instancesBufferOffset = kMaxPtrSize;
+		BufferView m_instancesBuffer; ///< Filled with AccelerationStructureInstance structs.
 	} m_indirectArgs; ///< Pass the instances GPU buffer directly.
 
 	Bool isValid() const
 	{
 		return m_directArgs.m_instances.getSize() > 0
-			   || (m_indirectArgs.m_maxInstanceCount > 0 && m_indirectArgs.m_instancesBuffer && m_indirectArgs.m_instancesBufferOffset < kMaxPtrSize);
+			   || (m_indirectArgs.m_maxInstanceCount > 0 && m_indirectArgs.m_instancesBuffer.isValid()
+				   && m_indirectArgs.m_instancesBuffer.getRange() == sizeof(AccelerationStructureInstance) * m_indirectArgs.m_maxInstanceCount);
 	}
 };
 

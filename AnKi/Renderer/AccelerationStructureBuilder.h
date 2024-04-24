@@ -28,7 +28,7 @@ public:
 		return m_runCtx.m_tlasHandle;
 	}
 
-	void getVisibilityInfo(BufferHandle& handle, BufferOffsetRange& buffer) const
+	void getVisibilityInfo(BufferHandle& handle, BufferView& buffer) const
 	{
 		handle = m_runCtx.m_visibilityHandle;
 		buffer = m_runCtx.m_visibleRenderableIndicesBuff;
@@ -42,7 +42,7 @@ public:
 		AccelerationStructureHandle m_tlasHandle;
 
 		BufferHandle m_visibilityHandle;
-		BufferOffsetRange m_visibleRenderableIndicesBuff;
+		BufferView m_visibleRenderableIndicesBuff;
 	} m_runCtx;
 };
 /// @}

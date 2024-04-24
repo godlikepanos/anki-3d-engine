@@ -39,13 +39,15 @@ void CommandBuffer::endRecording()
 	self.endRecording();
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, Buffer* buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
+void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, PtrSize stride, VertexStepRate stepRate)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_state.bindVertexBuffer(binding, stride, stepRate);
-	const VkBuffer vkbuff = static_cast<const BufferImpl&>(*buff).getHandle();
-	vkCmdBindVertexBuffers(self.m_handle, binding, 1, &vkbuff, &offset);
+	const VkBuffer vkbuff = static_cast<const BufferImpl&>(buff.getBuffer()).getHandle();
+	vkCmdBindVertexBuffers(self.m_handle, binding, 1, &vkbuff, &buff.getOffset());
 }
 
 void CommandBuffer::setVertexAttribute(VertexAttribute attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset)
@@ -55,13 +57,15 @@ void CommandBuffer::setVertexAttribute(VertexAttribute attribute, U32 buffBindin
 	self.m_state.setVertexAttribute(attribute, buffBinding, fmt, relativeOffset);
 }
 
-void CommandBuffer::bindIndexBuffer(Buffer* buff, PtrSize offset, IndexType type)
+void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	const BufferImpl& buffi = static_cast<const BufferImpl&>(*buff);
+	const BufferImpl& buffi = static_cast<const BufferImpl&>(buff.getBuffer());
 	ANKI_ASSERT(!!(buffi.getBufferUsage() & BufferUsageBit::kIndex));
-	vkCmdBindIndexBuffer(self.m_handle, buffi.getHandle(), offset, convertIndexType(type));
+	vkCmdBindIndexBuffer(self.m_handle, buffi.getHandle(), buff.getOffset(), convertIndexType(type));
 }
 
 void CommandBuffer::setPrimitiveRestart(Bool enable)
@@ -279,18 +283,22 @@ void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arra
 	self.m_microCmdb->pushObjectRef(sampler);
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff, offset, range);
+	self.m_dsetState[set].bindUniformBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange());
 }
 
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff, offset, range);
+	self.m_dsetState[set].bindStorageBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange());
 }
 
 void CommandBuffer::bindStorageTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
@@ -314,11 +322,13 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, Acceleration
 	self.m_microCmdb->pushObjectRef(as);
 }
 
-void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
+void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferView& buff, Format fmt, U32 arrayIdx)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindReadOnlyTexelBuffer(binding, arrayIdx, buff, offset, range, fmt);
+	self.m_dsetState[set].bindReadOnlyTexelBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange(), fmt);
 }
 
 void CommandBuffer::bindAllBindless(U32 set)
@@ -586,76 +596,96 @@ void CommandBuffer::draw(PrimitiveTopology topology, U32 count, U32 instanceCoun
 	vkCmdDraw(self.m_handle, count, instanceCount, first, baseInstance);
 }
 
-void CommandBuffer::drawIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* buff)
+void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
+	ANKI_ASSERT(buff.isValid());
+	ANKI_ASSERT(drawCount > 0);
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.m_state.setPrimitiveTopology(topology);
 	self.drawcallCommon();
-	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
-	ANKI_ASSERT((offset % 4) == 0);
-	ANKI_ASSERT((offset + sizeof(DrawIndirectArgs) * drawCount) <= impl.getSize());
 
-	vkCmdDrawIndirect(self.m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawIndirectArgs));
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((buff.getOffset() % 4) == 0);
+	ANKI_ASSERT((buff.getRange() % sizeof(DrawIndirectArgs)) == 0);
+	ANKI_ASSERT(sizeof(DrawIndirectArgs) * drawCount == buff.getRange());
+
+	vkCmdDrawIndirect(self.m_handle, impl.getHandle(), buff.getOffset(), drawCount, sizeof(DrawIndirectArgs));
 }
 
-void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride,
-											 Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
+void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
+	ANKI_ASSERT(buff.isValid());
+	ANKI_ASSERT(drawCount > 0);
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.m_state.setPrimitiveTopology(topology);
 	self.drawcallCommon();
-	const BufferImpl& argBufferImpl = static_cast<const BufferImpl&>(*argBuffer);
-	ANKI_ASSERT(argBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
-	ANKI_ASSERT((argBufferOffset % 4) == 0);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((buff.getOffset() % 4) == 0);
+	ANKI_ASSERT(sizeof(DrawIndexedIndirectArgs) * drawCount == buff.getRange());
+
+	vkCmdDrawIndexedIndirect(self.m_handle, impl.getHandle(), buff.getOffset(), drawCount, sizeof(DrawIndexedIndirectArgs));
+}
+
+void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride,
+											 const BufferView& countBuffer, U32 maxDrawCount)
+{
+	ANKI_ASSERT(argBuffer.isValid());
+	ANKI_ASSERT(countBuffer.isValid());
+
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.m_state.setPrimitiveTopology(topology);
+	self.drawcallCommon();
+
 	ANKI_ASSERT(argBufferStride >= sizeof(DrawIndexedIndirectArgs));
-	ANKI_ASSERT(argBufferOffset + maxDrawCount * argBufferStride <= argBuffer->getSize());
 
-	const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(*countBuffer);
-	ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
-	ANKI_ASSERT((countBufferOffset % 4) == 0);
-	ANKI_ASSERT(countBufferOffset + sizeof(U32) <= countBuffer->getSize());
-
-	ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
-
-	vkCmdDrawIndexedIndirectCountKHR(self.m_handle, argBufferImpl.getHandle(), argBufferOffset, countBufferImpl.getHandle(), countBufferOffset,
-									 maxDrawCount, argBufferStride);
-}
-
-void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride,
-									  Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.m_state.setPrimitiveTopology(topology);
-	self.drawcallCommon();
-	const BufferImpl& argBufferImpl = static_cast<const BufferImpl&>(*argBuffer);
+	const BufferImpl& argBufferImpl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
 	ANKI_ASSERT(argBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
-	ANKI_ASSERT((argBufferOffset % 4) == 0);
-	ANKI_ASSERT(argBufferStride >= sizeof(DrawIndirectArgs));
-	ANKI_ASSERT(argBufferOffset + maxDrawCount * argBufferStride <= argBuffer->getSize());
+	ANKI_ASSERT((argBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT((argBuffer.getRange() % argBufferStride) == 0);
+	ANKI_ASSERT(argBufferStride * maxDrawCount == argBuffer.getRange());
 
-	const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(*countBuffer);
+	const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(countBuffer.getBuffer());
 	ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
-	ANKI_ASSERT((countBufferOffset % 4) == 0);
-	ANKI_ASSERT(countBufferOffset + maxDrawCount * sizeof(U32) <= countBuffer->getSize());
+	ANKI_ASSERT((countBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT(countBuffer.getRange() == sizeof(U32));
 
 	ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
 
-	vkCmdDrawIndirectCountKHR(self.m_handle, argBufferImpl.getHandle(), argBufferOffset, countBufferImpl.getHandle(), countBufferOffset, maxDrawCount,
-							  argBufferStride);
+	vkCmdDrawIndexedIndirectCountKHR(self.m_handle, argBufferImpl.getHandle(), argBuffer.getOffset(), countBufferImpl.getHandle(),
+									 countBuffer.getOffset(), maxDrawCount, argBufferStride);
 }
 
-void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* buff)
+void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride, const BufferView& countBuffer,
+									  U32 maxDrawCount)
 {
+	ANKI_ASSERT(argBuffer.isValid());
+	ANKI_ASSERT(countBuffer.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.m_state.setPrimitiveTopology(topology);
 	self.drawcallCommon();
-	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
-	ANKI_ASSERT((offset % 4) == 0);
-	ANKI_ASSERT((offset + sizeof(DrawIndexedIndirectArgs) * drawCount) <= impl.getSize());
 
-	vkCmdDrawIndexedIndirect(self.m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawIndexedIndirectArgs));
+	ANKI_ASSERT(argBufferStride >= sizeof(DrawIndirectArgs));
+
+	const BufferImpl& argBufferImpl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
+	ANKI_ASSERT(argBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((argBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT(maxDrawCount * argBufferStride == argBuffer.getRange());
+
+	const BufferImpl& countBufferImpl = static_cast<const BufferImpl&>(countBuffer.getBuffer());
+	ANKI_ASSERT(countBufferImpl.usageValid(BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((countBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT(countBuffer.getRange() == sizeof(U32));
+
+	ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
+
+	vkCmdDrawIndirectCountKHR(self.m_handle, argBufferImpl.getHandle(), argBuffer.getOffset(), countBufferImpl.getHandle(), countBuffer.getOffset(),
+							  maxDrawCount, argBufferStride);
 }
 
 void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
@@ -666,18 +696,22 @@ void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCou
 	vkCmdDrawMeshTasksEXT(self.m_handle, groupCountX, groupCountY, groupCountZ);
 }
 
-void CommandBuffer::drawMeshTasksIndirect(Buffer* argBuffer, PtrSize argBufferOffset)
+void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawCount)
 {
-	ANKI_VK_SELF(CommandBufferImpl);
+	ANKI_ASSERT(argBuffer.isValid());
+	ANKI_ASSERT(drawCount > 0);
 	ANKI_ASSERT(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_mesh_shader));
-	ANKI_ASSERT((argBufferOffset % 4) == 0);
-	const BufferImpl& impl = static_cast<const BufferImpl&>(*argBuffer);
+
+	ANKI_ASSERT((argBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT(drawCount * sizeof(DispatchIndirectArgs) == argBuffer.getRange());
+	const BufferImpl& impl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kIndirectDraw));
-	ANKI_ASSERT((argBufferOffset + sizeof(DispatchIndirectArgs)) <= impl.getSize());
+
+	ANKI_VK_SELF(CommandBufferImpl);
 
 	self.m_state.setPrimitiveTopology(PrimitiveTopology::kTriangles); // Not sure if that's needed
 	self.drawcallCommon();
-	vkCmdDrawMeshTasksIndirectEXT(self.m_handle, impl.getHandle(), argBufferOffset, 1, sizeof(DispatchIndirectArgs));
+	vkCmdDrawMeshTasksIndirectEXT(self.m_handle, impl.getHandle(), argBuffer.getOffset(), drawCount, sizeof(DispatchIndirectArgs));
 }
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
@@ -688,19 +722,23 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 	vkCmdDispatch(self.m_handle, groupCountX, groupCountY, groupCountZ);
 }
 
-void CommandBuffer::dispatchComputeIndirect(Buffer* argBuffer, PtrSize argBufferOffset)
+void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 {
+	ANKI_ASSERT(argBuffer.isValid());
+
+	ANKI_ASSERT(sizeof(DispatchIndirectArgs) == argBuffer.getRange());
+	ANKI_ASSERT(argBuffer.getOffset() % 4 == 0);
+
 	ANKI_VK_SELF(CommandBufferImpl);
-	ANKI_ASSERT(argBuffer);
-	ANKI_ASSERT(argBufferOffset + sizeof(U32) * 2 < argBuffer->getSize());
-	ANKI_ASSERT(argBufferOffset % 4 == 0);
 	self.dispatchCommon();
-	vkCmdDispatchIndirect(self.m_handle, static_cast<BufferImpl*>(argBuffer)->getHandle(), argBufferOffset);
+	vkCmdDispatchIndirect(self.m_handle, static_cast<BufferImpl&>(argBuffer.getBuffer()).getHandle(), argBuffer.getOffset());
 }
 
-void CommandBuffer::traceRays(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
-							  U32 width, U32 height, U32 depth)
+void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
+							  U32 depth)
 {
+	ANKI_ASSERT(sbtBuffer.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	const PtrSize sbtRecordSize = sbtRecordSize32;
 	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
@@ -713,8 +751,8 @@ void CommandBuffer::traceRays(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sb
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
 	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
 	[[maybe_unused]] const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
-	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());
-	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBufferOffset));
+	ANKI_ASSERT(sbtBufferSize <= sbtBuffer.getRange());
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBuffer.getOffset()));
 
 	self.commandCommon();
 
@@ -733,7 +771,7 @@ void CommandBuffer::traceRays(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sb
 	}
 
 	Array<VkStridedDeviceAddressRegionKHR, 4> regions;
-	const U64 stbBufferAddress = sbtBuffer->getGpuAddress() + sbtBufferOffset;
+	const U64 stbBufferAddress = sbtBuffer.getBuffer().getGpuAddress() + sbtBuffer.getOffset();
 	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, stbBufferAddress));
 
 	// Rgen
@@ -847,11 +885,6 @@ void CommandBuffer::generateMipmaps2d(TextureView* texView)
 	}
 }
 
-void CommandBuffer::generateMipmaps3d([[maybe_unused]] TextureView* texView)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
 void CommandBuffer::blitTextureViews([[maybe_unused]] TextureView* srcView, [[maybe_unused]] TextureView* destView)
 {
 	ANKI_ASSERT(!"TODO");
@@ -880,8 +913,10 @@ void CommandBuffer::clearTextureView(TextureView* texView, const ClearValue& cle
 	}
 }
 
-void CommandBuffer::copyBufferToTextureView(Buffer* buff, PtrSize offset, [[maybe_unused]] PtrSize range, TextureView* texView)
+void CommandBuffer::copyBufferToTexture(const BufferView& buff, TextureView* texView)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
@@ -904,11 +939,11 @@ void CommandBuffer::copyBufferToTextureView(Buffer* buff, PtrSize offset, [[mayb
 
 	if(!is3D)
 	{
-		ANKI_ASSERT(range == computeSurfaceSize(width, height, tex.getFormat()));
+		ANKI_ASSERT(buff.getRange() == computeSurfaceSize(width, height, tex.getFormat()));
 	}
 	else
 	{
-		ANKI_ASSERT(range == computeVolumeSize(width, height, depth, tex.getFormat()));
+		ANKI_ASSERT(buff.getRange() == computeVolumeSize(width, height, depth, tex.getFormat()));
 	}
 
 	// Copy
@@ -921,54 +956,53 @@ void CommandBuffer::copyBufferToTextureView(Buffer* buff, PtrSize offset, [[mayb
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
 	region.imageExtent.depth = depth;
-	region.bufferOffset = offset;
+	region.bufferOffset = buff.getOffset();
 	region.bufferImageHeight = 0;
 	region.bufferRowLength = 0;
 
-	vkCmdCopyBufferToImage(self.m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), tex.m_imageHandle, layout, 1, &region);
+	vkCmdCopyBufferToImage(self.m_handle, static_cast<const BufferImpl&>(buff.getBuffer()).getHandle(), tex.m_imageHandle, layout, 1, &region);
 }
 
-void CommandBuffer::fillBuffer(Buffer* buff, PtrSize offset, PtrSize size, U32 value)
+void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	ANKI_ASSERT(!self.m_insideRenderpass);
-	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kTransferDestination));
 
-	ANKI_ASSERT(offset < impl.getSize());
-	ANKI_ASSERT((offset % 4) == 0 && "Should be multiple of 4");
+	ANKI_ASSERT((buff.getOffset() % 4) == 0 && "Should be multiple of 4");
+	ANKI_ASSERT((buff.getRange() % 4) == 0 && "Should be multiple of 4");
 
-	size = (size == kMaxPtrSize) ? (impl.getActualSize() - offset) : size;
-	alignRoundUp(4, size); // Needs to be multiple of 4
-	ANKI_ASSERT(offset + size <= impl.getActualSize());
-	ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
-
-	vkCmdFillBuffer(self.m_handle, impl.getHandle(), offset, size, value);
+	vkCmdFillBuffer(self.m_handle, impl.getHandle(), buff.getOffset(), buff.getRange(), value);
 }
 
-void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, Buffer* buff)
+void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff)
 {
+	ANKI_ASSERT(buff.isValid());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(queries.getSize() > 0);
 	self.commandCommon();
 	ANKI_ASSERT(!self.m_insideRenderpass);
 
-	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
+	ANKI_ASSERT(sizeof(U32) * queries.getSize() <= buff.getRange());
+	ANKI_ASSERT((buff.getOffset() % 4) == 0);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kTransferDestination));
 
 	for(U32 i = 0; i < queries.getSize(); ++i)
 	{
 		ANKI_ASSERT(queries[i]);
-		ANKI_ASSERT((offset % 4) == 0);
-		ANKI_ASSERT((offset + sizeof(U32)) <= impl.getSize());
 
 		OcclusionQueryImpl* q = static_cast<OcclusionQueryImpl*>(queries[i]);
 
-		vkCmdCopyQueryPoolResults(self.m_handle, q->m_handle.getQueryPool(), q->m_handle.getQueryIndex(), 1, impl.getHandle(), offset, sizeof(U32),
-								  VK_QUERY_RESULT_PARTIAL_BIT);
+		vkCmdCopyQueryPoolResults(self.m_handle, q->m_handle.getQueryPool(), q->m_handle.getQueryIndex(), 1, impl.getHandle(),
+								  buff.getOffset() * sizeof(U32) * i, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
 
-		offset += sizeof(U32);
 		self.m_microCmdb->pushObjectRef(q);
 	}
 }
@@ -989,12 +1023,13 @@ void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<
 					copies.getSize(), &vkCopies[0]);
 }
 
-void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset)
+void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
 {
-	ANKI_VK_SELF(CommandBufferImpl);
-	ANKI_ASSERT(as && scratchBuffer);
-	ANKI_ASSERT(as->getBuildScratchBufferSize() + scratchBufferOffset <= scratchBuffer->getSize());
+	ANKI_ASSERT(scratchBuffer.isValid());
+	ANKI_ASSERT(as);
+	ANKI_ASSERT(as->getBuildScratchBufferSize() <= scratchBuffer.getRange());
 
+	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
 	// Get objects
@@ -1003,7 +1038,7 @@ void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, Buffer
 	// Create the build info
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
 	VkAccelerationStructureBuildRangeInfoKHR rangeInfo;
-	asImpl.generateBuildInfo(scratchBuffer->getGpuAddress() + scratchBufferOffset, buildInfo, rangeInfo);
+	asImpl.generateBuildInfo(scratchBuffer.getBuffer().getGpuAddress() + scratchBuffer.getOffset(), buildInfo, rangeInfo);
 
 	// Run the command
 	Array<const VkAccelerationStructureBuildRangeInfoKHR*, 1> pRangeInfos = {&rangeInfo};
@@ -1158,8 +1193,8 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 
 	for(const BufferBarrierInfo& barrier : buffers)
 	{
-		ANKI_ASSERT(barrier.m_buffer);
-		const BufferImpl& impl = static_cast<const BufferImpl&>(*barrier.m_buffer);
+		ANKI_ASSERT(barrier.m_bufferView.isValid());
+		const BufferImpl& impl = static_cast<const BufferImpl&>(barrier.m_bufferView.getBuffer());
 
 		const VkBuffer handle = impl.getHandle();
 		VkPipelineStageFlags srcStage;

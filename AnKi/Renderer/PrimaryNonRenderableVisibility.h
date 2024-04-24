@@ -46,7 +46,7 @@ public:
 		return m_runCtx.m_visibleIndicesHandles[type];
 	}
 
-	const BufferOffsetRange& getVisibleIndicesBuffer(GpuSceneNonRenderableObjectType type) const
+	const BufferView& getVisibleIndicesBuffer(GpuSceneNonRenderableObjectType type) const
 	{
 		return m_runCtx.m_visibleIndicesBuffers[type];
 	}
@@ -58,7 +58,7 @@ private:
 	{
 	public:
 		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_visibleIndicesHandles;
-		Array<BufferOffsetRange, U32(GpuSceneNonRenderableObjectType::kCount)> m_visibleIndicesBuffers;
+		Array<BufferView, U32(GpuSceneNonRenderableObjectType::kCount)> m_visibleIndicesBuffers;
 
 		/// Feedback from the GPU
 		InterestingVisibleComponents m_interestingComponents;

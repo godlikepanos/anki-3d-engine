@@ -41,7 +41,7 @@ private:
 		UVec4 m_viewport;
 		Mat4 m_viewProjMat;
 		Mat3x4 m_viewMat;
-		BufferOffsetRange m_clearTileIndirectArgs;
+		BufferView m_clearTileIndirectArgs;
 		RenderTargetHandle m_hzbRt;
 	};
 
@@ -80,11 +80,11 @@ private:
 
 	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const;
 
-	BufferOffsetRange createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-											  RenderGraphDescription& rgraph) const;
+	BufferView createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+									   RenderGraphDescription& rgraph) const;
 
 	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
-							   const GpuMeshletVisibilityOutput& meshletVisOut, const BufferOffsetRange& clearTileIndirectArgs,
+							   const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
 							   const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph);
 
 	void createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subPasses, const GpuVisibilityOutput& visOut,

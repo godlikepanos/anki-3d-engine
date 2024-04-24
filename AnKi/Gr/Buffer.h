@@ -127,6 +127,119 @@ private:
 	/// Allocate and initialize a new instance.
 	[[nodiscard]] static Buffer* newInstance(const BufferInitInfo& init);
 };
+
+/// A part of a buffer.
+class BufferView
+{
+public:
+	BufferView() = default;
+
+	BufferView(const BufferView&) = default;
+
+	explicit BufferView(Buffer* buffer)
+		: m_buffer(buffer)
+		, m_offset(0)
+		, m_range(buffer->getSize())
+	{
+		check();
+	}
+
+	BufferView(Buffer* buffer, PtrSize offset, PtrSize range)
+		: m_buffer(buffer)
+		, m_offset(offset)
+		, m_range(range)
+	{
+		check();
+	}
+
+	BufferView& operator=(const BufferView&) = default;
+
+	[[nodiscard]] Buffer& getBuffer() const
+	{
+		check();
+		return *m_buffer;
+	}
+
+	[[nodiscard]] const PtrSize& getOffset() const
+	{
+		check();
+		return m_offset;
+	}
+
+	BufferView& setOffset(PtrSize offset)
+	{
+		check();
+		m_offset = offset;
+		check();
+		return *this;
+	}
+
+	BufferView& incrementOffset(PtrSize bytes)
+	{
+		check();
+		ANKI_ASSERT(m_range >= bytes);
+		m_range -= bytes;
+		m_offset += bytes;
+		if(m_range == 0)
+		{
+			*this = {};
+		}
+		else
+		{
+			check();
+		}
+		return *this;
+	}
+
+	[[nodiscard]] const PtrSize& getRange() const
+	{
+		check();
+		return m_range;
+	}
+
+	BufferView& setRange(PtrSize range)
+	{
+		check();
+		ANKI_ASSERT(range <= m_range);
+		m_range = range;
+		check();
+		return *this;
+	}
+
+	[[nodiscard]] Bool isValid() const
+	{
+		return m_buffer != nullptr;
+	}
+
+	[[nodiscard]] Bool overlaps(const BufferView& b) const
+	{
+		check();
+		b.check();
+		Bool overlaps = m_buffer == b.m_buffer;
+		if(m_offset <= b.m_offset)
+		{
+			overlaps = overlaps && (m_offset + m_range > b.m_offset);
+		}
+		else
+		{
+			overlaps = overlaps && (b.m_offset + b.m_range > m_offset);
+		}
+
+		return overlaps;
+	}
+
+private:
+	Buffer* m_buffer = nullptr;
+	PtrSize m_offset = kMaxPtrSize;
+	PtrSize m_range = 0;
+
+	void check() const
+	{
+		ANKI_ASSERT(m_buffer && m_range > 0);
+		ANKI_ASSERT(m_range <= m_buffer->getSize() && m_offset < m_buffer->getSize()); // Do that to ensure the next line won't overflow
+		ANKI_ASSERT(m_offset + m_range <= m_buffer->getSize());
+	}
+};
 /// @}
 
 } // end namespace anki

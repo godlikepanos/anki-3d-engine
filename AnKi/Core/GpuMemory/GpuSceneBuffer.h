@@ -101,9 +101,9 @@ public:
 		return m_pool.getGpuBuffer();
 	}
 
-	BufferOffsetRange getBufferOffsetRange() const
+	BufferView getBufferView() const
 	{
-		return {&m_pool.getGpuBuffer(), 0, kMaxPtrSize};
+		return BufferView(&m_pool.getGpuBuffer());
 	}
 
 private:

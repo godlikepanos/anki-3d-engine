@@ -186,7 +186,7 @@ public:
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindStorageBuffer(set, binding, buff, offset, range);
+		m_commandBuffer->bindStorageBuffer(set, binding, BufferView(buff, offset, range));
 	}
 
 	/// Convenience method.
@@ -195,7 +195,7 @@ public:
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindUniformBuffer(set, binding, buff, offset, range);
+		m_commandBuffer->bindUniformBuffer(set, binding, BufferView(buff, offset, range));
 	}
 
 	/// Convenience method.
@@ -481,13 +481,7 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
 
 	/// Import a buffer.
-	BufferHandle importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = kMaxPtrSize);
-
-	/// Import a buffer.
-	BufferHandle importBuffer(BufferUsageBit usage, const BufferOffsetRange& buff)
-	{
-		return importBuffer(buff.m_buffer, usage, buff.m_offset, buff.m_range);
-	}
+	BufferHandle importBuffer(const BufferView& buff, BufferUsageBit usage);
 
 	/// Import an AS.
 	AccelerationStructureHandle importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage);
@@ -546,24 +540,6 @@ private:
 	DynamicArray<BufferRsrc, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers{m_pool};
 	DynamicArray<AS, MemoryPoolPtrWrapper<StackMemoryPool>> m_as{m_pool};
 	Bool m_gatherStatistics = false;
-
-	/// Return true if 2 buffer ranges overlap.
-	static Bool bufferRangeOverlaps(PtrSize offsetA, PtrSize rangeA, PtrSize offsetB, PtrSize rangeB)
-	{
-		ANKI_ASSERT(rangeA > 0 && rangeB > 0);
-		if(rangeA == kMaxPtrSize || rangeB == kMaxPtrSize)
-		{
-			return true;
-		}
-		else if(offsetA <= offsetB)
-		{
-			return offsetA + rangeA > offsetB;
-		}
-		else
-		{
-			return offsetB + rangeB > offsetA;
-		}
-	}
 };
 
 /// Statistics.

@@ -106,12 +106,12 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		cmdb.bindStorageBuffer(0, 1, info.m_visibleLightsBuffer);
 		if(GpuSceneArrays::Light::getSingleton().getElementCount() > 0)
 		{
-			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferView());
 		}
 		else
 		{
 			// Set something random
-			cmdb.bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferView());
 		}
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles

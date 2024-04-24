@@ -365,7 +365,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Vet visibility
 			const Bool renderAllways = !(result & TileAllocatorResult2::kTileCached);
-			BufferOffsetRange clearTileIndirectArgs;
+			BufferView clearTileIndirectArgs;
 			if(!renderAllways)
 			{
 				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet point light", lightIdx), *lightc, visOut, rgraph);
@@ -455,7 +455,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Vet visibility
 			const Bool renderAllways = !(result & TileAllocatorResult2::kTileCached);
-			BufferOffsetRange clearTileIndirectArgs;
+			BufferView clearTileIndirectArgs;
 			if(!renderAllways)
 			{
 				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet spot light", lightIdx), *lightc, visOut, rgraph);
@@ -573,10 +573,10 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 	}
 }
 
-BufferOffsetRange ShadowMapping::createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-														 RenderGraphDescription& rgraph) const
+BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+												  RenderGraphDescription& rgraph) const
 {
-	BufferOffsetRange clearTileIndirectArgs;
+	BufferView clearTileIndirectArgs;
 
 	clearTileIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs));
 
@@ -596,8 +596,8 @@ BufferOffsetRange ShadowMapping::createVetVisibilityPass(CString passName, const
 
 		cmdb.bindStorageBuffer(0, 0, hashBuff);
 		cmdb.bindStorageBuffer(0, 1, mdiBuff);
-		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
-		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
+		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferView());
 		cmdb.bindStorageBuffer(0, 4, clearTileIndirectArgs);
 		cmdb.bindStorageBuffer(0, 5, taskShadersIndirectArgs);
 
@@ -609,7 +609,7 @@ BufferOffsetRange ShadowMapping::createVetVisibilityPass(CString passName, const
 }
 
 void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
-										  const GpuMeshletVisibilityOutput& meshletVisOut, const BufferOffsetRange& clearTileIndirectArgs,
+										  const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
 										  const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph)
 {
 	ShadowSubpassInfo spass;
@@ -652,7 +652,7 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passName);
 
-	const Bool loadFb = !(subpasses.getSize() == 1 && subpasses[0].m_clearTileIndirectArgs.m_buffer == nullptr);
+	const Bool loadFb = !(subpasses.getSize() == 1 && subpasses[0].m_clearTileIndirectArgs.isValid());
 
 	RenderTargetInfo smRti(m_runCtx.m_rt);
 	smRti.m_loadOperation = (loadFb) ? RenderTargetLoadOperation::kLoad : RenderTargetLoadOperation::kClear;
@@ -679,11 +679,10 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
 				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
 
-				if(spass.m_clearTileIndirectArgs.m_buffer)
+				if(spass.m_clearTileIndirectArgs.isValid())
 				{
 
-					cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, spass.m_clearTileIndirectArgs.m_offset,
-									  spass.m_clearTileIndirectArgs.m_buffer);
+					cmdb.drawIndirect(PrimitiveTopology::kTriangles, spass.m_clearTileIndirectArgs);
 				}
 				else
 				{

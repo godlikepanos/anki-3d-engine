@@ -294,32 +294,21 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	return out;
 }
 
-inline BufferHandle RenderGraphDescription::importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset, PtrSize range)
+inline BufferHandle RenderGraphDescription::importBuffer(const BufferView& buff, BufferUsageBit usage)
 {
-	// Checks
-	ANKI_ASSERT(buff);
-	if(range == kMaxPtrSize)
-	{
-		ANKI_ASSERT(offset < buff->getSize());
-	}
-	else
-	{
-		ANKI_ASSERT((offset + range) <= buff->getSize());
-	}
-
-	ANKI_ASSERT(range > 0);
+	ANKI_ASSERT(buff.isValid());
 
 	for([[maybe_unused]] const BufferRsrc& bb : m_buffers)
 	{
-		ANKI_ASSERT((bb.m_importedBuff.get() != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range)) && "Range already imported");
+		ANKI_ASSERT(!buff.overlaps(BufferView(bb.m_importedBuff.get(), bb.m_offset, bb.m_range)) && "Range already imported");
 	}
 
 	BufferRsrc& b = *m_buffers.emplaceBack();
-	b.setName(buff->getName());
+	b.setName(buff.getBuffer().getName());
 	b.m_usage = usage;
-	b.m_importedBuff.reset(buff);
-	b.m_offset = offset;
-	b.m_range = range;
+	b.m_importedBuff.reset(&buff.getBuffer());
+	b.m_offset = buff.getOffset();
+	b.m_range = buff.getRange();
 
 	BufferHandle out;
 	out.m_idx = m_buffers.getSize() - 1;

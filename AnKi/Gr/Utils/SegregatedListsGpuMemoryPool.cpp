@@ -157,15 +157,15 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		Array<BufferBarrierInfo, 2> barriers;
-		barriers[0].m_buffer = m_gpuBuffer.get();
+		barriers[0].m_bufferView = BufferView(m_gpuBuffer.get());
 		barriers[0].m_previousUsage = m_bufferUsage;
 		barriers[0].m_nextUsage = BufferUsageBit::kTransferSource;
-		barriers[1].m_buffer = newBuffer.get();
+		barriers[1].m_bufferView = BufferView(newBuffer.get());
 		barriers[1].m_previousUsage = BufferUsageBit::kNone;
 		barriers[1].m_nextUsage = BufferUsageBit::kTransferDestination;
 		cmdb->setPipelineBarrier({}, barriers, {});
 
-		cmdb->copyBufferToBuffer(m_gpuBuffer.get(), 0, newBuffer.get(), 0, m_gpuBuffer->getSize());
+		cmdb->copyBufferToBuffer(BufferView(m_gpuBuffer.get()), BufferView(newBuffer.get(), 0, m_gpuBuffer->getSize()));
 
 		barriers[1].m_previousUsage = BufferUsageBit::kTransferDestination;
 		barriers[1].m_nextUsage = m_bufferUsage;

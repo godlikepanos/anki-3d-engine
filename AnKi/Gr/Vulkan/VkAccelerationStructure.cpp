@@ -55,11 +55,12 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		geom.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
 		geom.geometry.triangles.vertexFormat = convertFormat(inf.m_bottomLevel.m_positionsFormat);
 		geom.geometry.triangles.vertexData.deviceAddress =
-			inf.m_bottomLevel.m_positionBuffer->getGpuAddress() + inf.m_bottomLevel.m_positionBufferOffset;
+			inf.m_bottomLevel.m_positionBuffer.getBuffer().getGpuAddress() + inf.m_bottomLevel.m_positionBuffer.getOffset();
 		geom.geometry.triangles.vertexStride = inf.m_bottomLevel.m_positionStride;
 		geom.geometry.triangles.maxVertex = inf.m_bottomLevel.m_positionCount - 1;
 		geom.geometry.triangles.indexType = convertIndexType(inf.m_bottomLevel.m_indexType);
-		geom.geometry.triangles.indexData.deviceAddress = inf.m_bottomLevel.m_indexBuffer->getGpuAddress() + inf.m_bottomLevel.m_indexBufferOffset;
+		geom.geometry.triangles.indexData.deviceAddress =
+			inf.m_bottomLevel.m_indexBuffer.getBuffer().getGpuAddress() + inf.m_bottomLevel.m_indexBuffer.getOffset();
 		geom.flags = 0; // VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO
 
 		// Geom build info
@@ -147,10 +148,10 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		else
 		{
 			// Instances buffer already created
-			ANKI_ASSERT(inf.m_topLevel.m_indirectArgs.m_instancesBufferOffset
+			ANKI_ASSERT(inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getOffset()
 							+ sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_indirectArgs.m_maxInstanceCount
-						<= inf.m_topLevel.m_indirectArgs.m_instancesBuffer->getSize());
-			m_topLevelInfo.m_instancesBuffer.reset(inf.m_topLevel.m_indirectArgs.m_instancesBuffer);
+						<= inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getRange());
+			m_topLevelInfo.m_instancesBuffer.reset(&inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getBuffer());
 
 			m_topLevelInfo.m_maxInstanceCount = inf.m_topLevel.m_indirectArgs.m_maxInstanceCount;
 		}
@@ -163,7 +164,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		geom.geometry.instances.data.deviceAddress = m_topLevelInfo.m_instancesBuffer->getGpuAddress();
 		if(isIndirect)
 		{
-			geom.geometry.instances.data.deviceAddress += inf.m_topLevel.m_indirectArgs.m_instancesBufferOffset;
+			geom.geometry.instances.data.deviceAddress += inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getRange();
 		}
 		geom.geometry.instances.arrayOfPointers = false;
 		geom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO

@@ -181,7 +181,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	// Create render targets now to save memory
 	const RenderTargetHandle probeTexture = rgraph.importRenderTarget(&probeToRefresh->getReflectionTexture(), TextureUsageBit::kNone);
 	m_runCtx.m_probeTex = probeTexture;
-	const BufferHandle irradianceDiceValuesBuffHandle = rgraph.importBuffer(m_irradiance.m_diceValuesBuff.get(), BufferUsageBit::kNone);
+	const BufferHandle irradianceDiceValuesBuffHandle = rgraph.importBuffer(BufferView(m_irradiance.m_diceValuesBuff.get()), BufferUsageBit::kNone);
 	const RenderTargetHandle gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 	const RenderTargetHandle shadowMapRt = (doShadows) ? rgraph.newRenderTarget(m_shadowMapping.m_rtDescr) : RenderTargetHandle();
 
@@ -465,7 +465,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			rgraphCtx.bindColorTexture(0, 1, probeTexture);
 
-			cmdb.bindStorageBuffer(0, 3, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+			cmdb.bindStorageBuffer(0, 3, BufferView(m_irradiance.m_diceValuesBuff.get()));
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});
@@ -499,7 +499,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				rgraphCtx.bindColorTexture(0, 1, gbufferColorRts[i], i);
 			}
 
-			cmdb.bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff.get(), 0, m_irradiance.m_diceValuesBuff->getSize());
+			cmdb.bindStorageBuffer(0, 2, BufferView(m_irradiance.m_diceValuesBuff.get()));
 
 			for(U8 f = 0; f < 6; ++f)
 			{

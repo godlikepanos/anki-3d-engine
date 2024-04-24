@@ -139,7 +139,7 @@ void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 
 	cmdb.bindStorageBuffer(0, 0, headersToken);
 	cmdb.bindStorageBuffer(0, 1, dataToken);
-	cmdb.bindStorageBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(0, 2, BufferView(&GpuSceneBuffer::getSingleton().getBuffer()));
 
 	cmdb.bindShaderProgram(m_grProgram.get());
 

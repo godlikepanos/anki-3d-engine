@@ -60,11 +60,11 @@ public:
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
 
 	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
-	void getVisibleAabbsBuffer(BufferOffsetRange& visibleAaabbIndicesBuffer, BufferHandle& dep) const
+	void getVisibleAabbsBuffer(BufferView& visibleAaabbIndicesBuffer, BufferHandle& dep) const
 	{
 		visibleAaabbIndicesBuffer = m_runCtx.m_visibleAaabbIndicesBuffer;
 		dep = m_runCtx.m_visibleAaabbIndicesBufferDepedency;
-		ANKI_ASSERT(visibleAaabbIndicesBuffer.m_buffer != nullptr && dep.isValid());
+		ANKI_ASSERT(visibleAaabbIndicesBuffer.isValid() && dep.isValid());
 	}
 
 private:
@@ -83,7 +83,7 @@ private:
 		RenderTargetHandle m_prevFrameDepthRt;
 		RenderTargetHandle m_hzbRt;
 
-		BufferOffsetRange m_visibleAaabbIndicesBuffer; ///< Optional
+		BufferView m_visibleAaabbIndicesBuffer; ///< Optional
 		BufferHandle m_visibleAaabbIndicesBufferDepedency;
 	} m_runCtx;
 

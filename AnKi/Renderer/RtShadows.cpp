@@ -209,10 +209,10 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	// Setup build SBT dispatch
 	BufferHandle sbtBuildIndirectArgsHandle;
-	BufferOffsetRange sbtBuildIndirectArgsBuffer;
+	BufferView sbtBuildIndirectArgsBuffer;
 	{
 		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs));
-		sbtBuildIndirectArgsHandle = rgraph.importBuffer(BufferUsageBit::kStorageComputeWrite, sbtBuildIndirectArgsBuffer);
+		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kStorageComputeWrite);
 
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows setup build SBT");
 
@@ -224,7 +224,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_setupBuildSbtGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferView());
 			cmdb.bindStorageBuffer(0, 1, sbtBuildIndirectArgsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);
@@ -233,13 +233,13 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	// Build the SBT
 	BufferHandle sbtHandle;
-	BufferOffsetRange sbtBuffer;
+	BufferView sbtBuffer;
 	{
 		// Allocate SBT
 		U8* sbtMem;
 		sbtBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(
 			(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize, sbtMem);
-		sbtHandle = rgraph.importBuffer(BufferUsageBit::kStorageComputeWrite, sbtBuffer);
+		sbtHandle = rgraph.importBuffer(sbtBuffer, BufferUsageBit::kStorageComputeWrite);
 
 		// Write the first 2 entries of the SBT
 		ConstWeakArray<U8> shaderGroupHandles = m_rtLibraryGrProg->getShaderGroupHandles();
@@ -251,7 +251,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows build SBT");
 
 		BufferHandle visibilityHandle;
-		BufferOffsetRange visibleRenderableIndicesBuff;
+		BufferView visibleRenderableIndicesBuff;
 		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityHandle, visibleRenderableIndicesBuff);
 
 		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kStorageComputeRead);
@@ -263,10 +263,10 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_buildSbtGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferOffsetRange());
-			cmdb.bindStorageBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(0, 1, BufferView(&GpuSceneBuffer::getSingleton().getBuffer()));
 			cmdb.bindStorageBuffer(0, 2, visibleRenderableIndicesBuff);
-			cmdb.bindStorageBuffer(0, 3, &m_rtLibraryGrProg->getShaderGroupHandlesGpuBuffer(), 0, kMaxPtrSize);
+			cmdb.bindStorageBuffer(0, 3, BufferView(&m_rtLibraryGrProg->getShaderGroupHandlesGpuBuffer()));
 			cmdb.bindStorageBuffer(0, 4, sbtBuffer);
 
 			RtShadowsSbtBuildUniforms unis = {};
@@ -277,7 +277,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			unis.m_shaderHandleDwordSize = shaderHandleSize / 4;
 			cmdb.setPushConstants(&unis, sizeof(unis));
 
-			cmdb.dispatchComputeIndirect(sbtBuildIndirectArgsBuffer.m_buffer, sbtBuildIndirectArgsBuffer.m_offset);
+			cmdb.dispatchComputeIndirect(sbtBuildIndirectArgsBuffer);
 		});
 	}
 
@@ -318,12 +318,14 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindAllBindless(U32(MaterialSet::kBindless));
 			cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler),
 							 getRenderer().getSamplers().m_trilinearRepeat.get());
-			cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0,
-								   kMaxPtrSize);
+			cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), GpuSceneBuffer::getSingleton().getBufferView());
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	cmdb.bindReadOnlyTexelBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-								 &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
+	cmdb.bindReadOnlyTexelBuffer( \
+		U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
+				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
+		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
 			constexpr U32 kSet = 2;
@@ -345,8 +347,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindStorageTexture(kSet, 12, m_runCtx.m_currentMomentsRt);
 			cmdb.bindTexture(kSet, 13, &m_blueNoiseImage->getTextureView());
 
-			cmdb.traceRays(sbtBuffer.m_buffer, sbtBuffer.m_offset, m_sbtRecordSize,
-						   GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 						   getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, 1);
 		});
 	}

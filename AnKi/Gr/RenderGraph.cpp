@@ -1192,9 +1192,8 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 						BufferBarrierInfo& inf = *buffBarriers.emplaceBack();
 						inf.m_previousUsage = barrier.m_usageBefore;
 						inf.m_nextUsage = barrier.m_usageAfter;
-						inf.m_offset = m_ctx->m_buffers[barrier.m_idx].m_offset;
-						inf.m_range = m_ctx->m_buffers[barrier.m_idx].m_range;
-						inf.m_buffer = m_ctx->m_buffers[barrier.m_idx].m_buffer.get();
+						inf.m_bufferView = BufferView(m_ctx->m_buffers[barrier.m_idx].m_buffer.get(), m_ctx->m_buffers[barrier.m_idx].m_offset,
+													  m_ctx->m_buffers[barrier.m_idx].m_range);
 					}
 					DynamicArray<AccelerationStructureBarrierInfo, MemoryPoolPtrWrapper<StackMemoryPool>> asBarriers(pool);
 					for(const ASBarrier& barrier : batch.m_asBarriersBefore)

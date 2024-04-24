@@ -85,7 +85,7 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 			memset(mem, 0, sizeof(U32));
 
 			m_runCtx.m_visibleIndicesBuffers[type] = alloc;
-			m_runCtx.m_visibleIndicesHandles[type] = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_visibleIndicesBuffers[type]);
+			m_runCtx.m_visibleIndicesHandles[type] = rgraph.importBuffer(m_runCtx.m_visibleIndicesBuffers[type], BufferUsageBit::kNone);
 		}
 		else
 		{
@@ -134,9 +134,7 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				// Allocate feedback buffer for this frame
-				in.m_cpuFeedbackBuffer.m_range = (objCount * 2 + 1) * sizeof(U32);
-				getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], in.m_cpuFeedbackBuffer.m_range,
-																in.m_cpuFeedbackBuffer.m_buffer, in.m_cpuFeedbackBuffer.m_offset);
+				getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], (objCount * 2 + 1) * sizeof(U32), in.m_cpuFeedbackBuffer);
 			}
 
 			GpuVisibilityNonRenderablesOutput out;

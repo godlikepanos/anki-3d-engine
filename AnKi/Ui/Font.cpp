@@ -94,7 +94,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, surf};
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-	cmdb->copyBufferToTextureView(buff.get(), 0, buffSize, tmpView.get());
+	cmdb->copyBufferToTexture(BufferView(buff.get()), tmpView.get());
 
 	barrier.m_previousUsage = TextureUsageBit::kTransferDestination;
 	barrier.m_nextUsage = TextureUsageBit::kGenerateMipmaps;

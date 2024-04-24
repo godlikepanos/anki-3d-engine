@@ -43,7 +43,7 @@ private:
 	class
 	{
 	public:
-		BufferOffsetRange m_indirectBuff;
+		BufferView m_indirectBuff;
 		BufferHandle m_indirectBuffHandle;
 	} m_runCtx;
 

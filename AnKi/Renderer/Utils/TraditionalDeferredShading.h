@@ -23,7 +23,7 @@ public:
 	F32 m_effectiveShadowDistance = -1.0f; // TODO rm
 	Mat4 m_dirLightMatrix; // TODO rm
 
-	BufferOffsetRange m_visibleLightsBuffer;
+	BufferView m_visibleLightsBuffer;
 
 	Bool m_computeSpecular = false;
 
@@ -38,7 +38,7 @@ public:
 	TextureSubresourceInfo m_directionalLightShadowmapRenderTargetSubresourceInfo = {DepthStencilAspectBit::kDepth};
 
 	RenderTargetHandle m_skyLutRenderTarget;
-	BufferOffsetRange m_globalRendererConsts;
+	BufferView m_globalRendererConsts;
 
 	RenderPassWorkContext* m_renderpassContext = nullptr;
 };

@@ -25,7 +25,7 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	const BufferOffsetRange& getPackedObjectsBuffer(GpuSceneNonRenderableObjectType type) const
+	const BufferView& getPackedObjectsBuffer(GpuSceneNonRenderableObjectType type) const
 	{
 		return m_runCtx.m_packedObjectsBuffers[type];
 	}
@@ -35,7 +35,7 @@ public:
 		return m_runCtx.m_packedObjectsHandles[type];
 	}
 
-	const BufferOffsetRange& getClustersBuffer() const
+	const BufferView& getClustersBuffer() const
 	{
 		return m_runCtx.m_clustersBuffer;
 	}
@@ -59,10 +59,10 @@ private:
 	{
 	public:
 		BufferHandle m_clustersHandle;
-		BufferOffsetRange m_clustersBuffer;
+		BufferView m_clustersBuffer;
 
 		Array<BufferHandle, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsHandles;
-		Array<BufferOffsetRange, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsBuffers;
+		Array<BufferView, U32(GpuSceneNonRenderableObjectType::kCount)> m_packedObjectsBuffers;
 
 		RenderingContext* m_rctx = nullptr;
 	} m_runCtx;

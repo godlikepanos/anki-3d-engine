@@ -68,7 +68,7 @@ Error DepthDownscale::initInternal()
 		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-		cmdb->fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
+		cmdb->fillBuffer(BufferView(m_counterBuffer.get()), 0);
 
 		FencePtr fence;
 		cmdb->endRecording();
@@ -147,7 +147,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindStorageTexture(0, 0, m_runCtx.m_rt, subresource, mip);
 			}
 
-			cmdb.bindStorageBuffer(0, 1, m_counterBuffer.get(), 0, sizeof(U32));
+			cmdb.bindStorageBuffer(0, 1, BufferView(m_counterBuffer.get(), 0, sizeof(U32)));
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));

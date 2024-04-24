@@ -58,8 +58,8 @@ void main()
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
-		cmdb->bindReadOnlyTexelBuffer(0, 0, texBuff.get(), 0, kMaxPtrSize, Format::kR8G8B8A8_Snorm);
-		cmdb->bindStorageBuffer(0, 1, storageBuff.get(), 0, kMaxPtrSize);
+		cmdb->bindReadOnlyTexelBuffer(0, 0, BufferView(texBuff.get()), Format::kR8G8B8A8_Snorm);
+		cmdb->bindStorageBuffer(0, 1, BufferView(storageBuff.get()));
 		cmdb->bindShaderProgram(prog.get());
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->endRecording();
