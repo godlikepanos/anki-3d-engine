@@ -558,7 +558,7 @@ public:
 	void reset();
 
 	/// [OPTIONAL] 4th step. Get some statistics.
-	void getStatistics(RenderGraphStatistics& statistics) const;
+	void getStatistics(RenderGraphStatistics& statistics);
 
 private:
 	static constexpr U kPeriodicCleanupEvery = 60; ///< How many frames between cleanups.
@@ -599,7 +599,7 @@ private:
 	class
 	{
 	public:
-		Array<TimestampQueryPtr, kMaxBufferedTimestamps * 2> m_timestamps;
+		Array2d<TimestampQueryPtr, kMaxBufferedTimestamps, 2> m_timestamps;
 		Array<Second, kMaxBufferedTimestamps> m_cpuStartTimes;
 		U8 m_nextTimestamp = 0;
 	} m_statistics;

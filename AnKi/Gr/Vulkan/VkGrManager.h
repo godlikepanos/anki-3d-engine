@@ -28,6 +28,8 @@ class MicroCommandBuffer;
 /// Vulkan implementation of GrManager.
 class GrManagerImpl : public GrManager
 {
+	friend class GrManager;
+
 public:
 	GrManagerImpl()
 	{
@@ -76,9 +78,6 @@ public:
 		ANKI_ASSERT(m_instance);
 		return m_instance;
 	}
-
-	void flushCommandBuffers(WeakArray<MicroCommandBuffer*> cmdbs, Bool cmdbRenderedToSwapchain, WeakArray<MicroSemaphore*> waitSemaphores,
-							 MicroSemaphorePtr* signalSemaphore, Bool wait);
 
 	const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const
 	{

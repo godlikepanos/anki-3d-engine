@@ -1141,13 +1141,12 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 
 					if(preQuery.isCreated())
 					{
-						m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
-						m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2] = preQuery;
+						m_statistics.m_timestamps[m_statistics.m_nextTimestamp][0] = preQuery;
 					}
 
 					if(postQuery.isCreated())
 					{
-						m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2 + 1] = postQuery;
+						m_statistics.m_timestamps[m_statistics.m_nextTimestamp][1] = postQuery;
 						m_statistics.m_cpuStartTimes[m_statistics.m_nextTimestamp] = HighRezTimer::getCurrentTime();
 					}
 				}
@@ -1320,18 +1319,21 @@ void RenderGraph::periodicCleanup()
 	}
 }
 
-void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
+void RenderGraph::getStatistics(RenderGraphStatistics& statistics)
 {
-	const U32 oldFrame = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
+	m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % kMaxBufferedTimestamps;
+	const U32 oldFrame = m_statistics.m_nextTimestamp;
 
-	if(m_statistics.m_timestamps[oldFrame * 2] && m_statistics.m_timestamps[oldFrame * 2 + 1])
+	if(m_statistics.m_timestamps[oldFrame][0].isCreated() && m_statistics.m_timestamps[oldFrame][1].isCreated())
 	{
 		Second start, end;
-		[[maybe_unused]] TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
+		[[maybe_unused]] TimestampQueryResult res = m_statistics.m_timestamps[oldFrame][0]->getResult(start);
 		ANKI_ASSERT(res == TimestampQueryResult::kAvailable);
+		m_statistics.m_timestamps[oldFrame][0].reset(nullptr);
 
-		res = m_statistics.m_timestamps[oldFrame * 2 + 1]->getResult(end);
+		res = m_statistics.m_timestamps[oldFrame][1]->getResult(end);
 		ANKI_ASSERT(res == TimestampQueryResult::kAvailable);
+		m_statistics.m_timestamps[oldFrame][1].reset(nullptr);
 
 		const Second diff = end - start;
 		statistics.m_gpuTime = diff;
