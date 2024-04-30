@@ -12,7 +12,6 @@
 #include <AnKi/Gr/D3D/D3DShader.h>
 #include <AnKi/Gr/D3D/D3DShaderProgram.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
-#include <AnKi/Gr/D3D/D3DTextureView.h>
 #include <AnKi/Gr/D3D/D3DPipelineQuery.h>
 #include <AnKi/Gr/D3D/D3DSampler.h>
 #include <AnKi/Gr/RenderGraph.h>
@@ -230,7 +229,6 @@ void GrManager::finish()
 
 ANKI_NEW_GR_OBJECT(Buffer)
 ANKI_NEW_GR_OBJECT(Texture)
-ANKI_NEW_GR_OBJECT(TextureView)
 ANKI_NEW_GR_OBJECT(Sampler)
 ANKI_NEW_GR_OBJECT(Shader)
 ANKI_NEW_GR_OBJECT(ShaderProgram)

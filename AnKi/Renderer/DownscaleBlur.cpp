@@ -81,7 +81,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
 
 			RenderTargetInfo rtInf(m_runCtx.m_rt);
-			rtInf.m_surface.m_level = i;
+			rtInf.m_subresource.m_mipmap = i;
 			pass.setRenderpassInfo({rtInf});
 
 			ppass = &pass;
@@ -92,19 +92,15 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 
 		if(i > 0)
 		{
-			TextureSubresourceInfo sampleSubresource;
-			TextureSubresourceInfo renderSubresource;
-
-			sampleSubresource.m_firstMipmap = i - 1;
-			renderSubresource.m_firstMipmap = i;
+			const TextureSubresourceDescriptor sampleSubresource = TextureSubresourceDescriptor::surface(i - 1, 0, 0);
+			const TextureSubresourceDescriptor renderSubresource = TextureSubresourceDescriptor::surface(i, 0, 0);
 
 			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, renderSubresource);
 			ppass->newTextureDependency(m_runCtx.m_rt, readUsage, sampleSubresource);
 		}
 		else
 		{
-			TextureSubresourceInfo firstMip;
-			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, firstMip);
+			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, TextureSubresourceDescriptor::firstSurface());
 			ppass->newTextureDependency(inRt, readUsage);
 		}
 
@@ -127,13 +123,11 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 
 	if(passIdx > 0)
 	{
-		TextureSubresourceInfo sampleSubresource;
-		sampleSubresource.m_firstMipmap = passIdx - 1;
-		rgraphCtx.bindTexture(0, 1, m_runCtx.m_rt, sampleSubresource);
+		rgraphCtx.bindTexture(0, 1, m_runCtx.m_rt, TextureSubresourceDescriptor::surface(passIdx - 1, 0, 0));
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
+		rgraphCtx.bindTexture(0, 1, getRenderer().getLightShading().getRt());
 	}
 
 	rgraphCtx.bindStorageTexture(0, 2, getRenderer().getTonemapping().getRt());
@@ -143,9 +137,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 		const Vec4 fbSize(F32(vpWidth), F32(vpHeight), 0.0f, 0.0f);
 		cmdb.setPushConstants(&fbSize, sizeof(fbSize));
 
-		TextureSubresourceInfo sampleSubresource;
-		sampleSubresource.m_firstMipmap = passIdx;
-		rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_rt, sampleSubresource);
+		rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_rt, TextureSubresourceDescriptor::surface(passIdx, 0, 0));
 
 		dispatchPPCompute(cmdb, 8, 8, vpWidth, vpHeight);
 	}

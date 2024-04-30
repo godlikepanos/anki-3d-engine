@@ -104,15 +104,9 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Depth downscale");
 
-		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute,
-								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
 
-		for(U32 mip = 0; mip < m_mipCount; ++mip)
-		{
-			TextureSubresourceInfo subresource;
-			subresource.m_firstMipmap = mip;
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite, subresource);
-		}
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -134,23 +128,23 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
-				TextureSubresourceInfo subresource;
+				TextureSubresourceDescriptor surface = TextureSubresourceDescriptor::firstSurface();
 				if(mip < m_mipCount)
 				{
-					subresource.m_firstMipmap = mip;
+					surface.m_mipmap = mip;
 				}
 				else
 				{
-					subresource.m_firstMipmap = 0; // Put something random
+					surface.m_mipmap = 0; // Put something random
 				}
 
-				rgraphCtx.bindStorageTexture(0, 0, m_runCtx.m_rt, subresource, mip);
+				rgraphCtx.bindStorageTexture(0, 0, m_runCtx.m_rt, surface, mip);
 			}
 
 			cmdb.bindStorageBuffer(0, 1, BufferView(m_counterBuffer.get(), 0, sizeof(U32)));
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getDepthRt());
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
@@ -165,24 +159,19 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
 
 			RenderTargetInfo rti(m_runCtx.m_rt);
-			rti.m_surface.m_level = mip;
+			rti.m_subresource.m_mipmap = mip;
 			pass.setRenderpassInfo({rti});
 
 			if(mip == 0)
 			{
-				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
-										  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment);
 			}
 			else
 			{
-				TextureSurfaceDescriptor subresource;
-				subresource.m_level = mip - 1;
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, subresource);
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, TextureSubresourceDescriptor::surface(mip - 1, 0, 0));
 			}
 
-			TextureSurfaceDescriptor subresource;
-			subresource.m_level = mip;
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, subresource);
+			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceDescriptor::surface(mip, 0, 0));
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -192,13 +181,11 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 				if(mip == 0)
 				{
-					rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+					rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt());
 				}
 				else
 				{
-					TextureSubresourceInfo subresource;
-					subresource.m_firstMipmap = mip - 1;
-					rgraphCtx.bindTexture(0, 0, m_runCtx.m_rt, subresource);
+					rgraphCtx.bindTexture(0, 0, m_runCtx.m_rt, TextureSubresourceDescriptor::surface(mip - 1, 0, 0));
 				}
 
 				const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;

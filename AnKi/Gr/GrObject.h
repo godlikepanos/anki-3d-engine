@@ -25,7 +25,6 @@ enum class GrObjectType : U8
 	kSampler,
 	kShader,
 	kTexture,
-	kTextureView,
 	kShaderProgram,
 	kFence,
 	kRenderGraph,

@@ -141,7 +141,7 @@ public:
 		, m_offset(0)
 		, m_range(buffer->getSize())
 	{
-		check();
+		validate();
 	}
 
 	BufferView(Buffer* buffer, PtrSize offset, PtrSize range)
@@ -149,34 +149,34 @@ public:
 		, m_offset(offset)
 		, m_range(range)
 	{
-		check();
+		validate();
 	}
 
 	BufferView& operator=(const BufferView&) = default;
 
 	[[nodiscard]] Buffer& getBuffer() const
 	{
-		check();
+		validate();
 		return *m_buffer;
 	}
 
 	[[nodiscard]] const PtrSize& getOffset() const
 	{
-		check();
+		validate();
 		return m_offset;
 	}
 
 	BufferView& setOffset(PtrSize offset)
 	{
-		check();
+		validate();
 		m_offset = offset;
-		check();
+		validate();
 		return *this;
 	}
 
 	BufferView& incrementOffset(PtrSize bytes)
 	{
-		check();
+		validate();
 		ANKI_ASSERT(m_range >= bytes);
 		m_range -= bytes;
 		m_offset += bytes;
@@ -186,23 +186,29 @@ public:
 		}
 		else
 		{
-			check();
+			validate();
 		}
 		return *this;
 	}
 
 	[[nodiscard]] const PtrSize& getRange() const
 	{
-		check();
+		validate();
 		return m_range;
 	}
 
 	BufferView& setRange(PtrSize range)
 	{
-		check();
-		ANKI_ASSERT(range <= m_range);
-		m_range = range;
-		check();
+		validate();
+		if(range != 0)
+		{
+			m_range = range;
+			validate();
+		}
+		else
+		{
+			*this = {};
+		}
 		return *this;
 	}
 
@@ -213,8 +219,8 @@ public:
 
 	[[nodiscard]] Bool overlaps(const BufferView& b) const
 	{
-		check();
-		b.check();
+		validate();
+		b.validate();
 		Bool overlaps = m_buffer == b.m_buffer;
 		if(m_offset <= b.m_offset)
 		{
@@ -233,7 +239,7 @@ private:
 	PtrSize m_offset = kMaxPtrSize;
 	PtrSize m_range = 0;
 
-	void check() const
+	void validate() const
 	{
 		ANKI_ASSERT(m_buffer && m_range > 0);
 		ANKI_ASSERT(m_range <= m_buffer->getSize() && m_offset < m_buffer->getSize()); // Do that to ensure the next line won't overflow

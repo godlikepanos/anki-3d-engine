@@ -129,10 +129,10 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		*allocateAndBindConstants<SsrUniforms>(cmdb, 0, 0) = consts;
 
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 3, getRenderer().getGBuffer().getColorRt(2));
-		rgraphCtx.bindColorTexture(0, 4, getRenderer().getDepthDownscale().getRt());
-		rgraphCtx.bindColorTexture(0, 5, getRenderer().getDownscaleBlur().getRt());
+		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 4, getRenderer().getDepthDownscale().getRt());
+		rgraphCtx.bindTexture(0, 5, getRenderer().getDownscaleBlur().getRt());
 
 		if(g_preferComputeCVar.get())
 		{

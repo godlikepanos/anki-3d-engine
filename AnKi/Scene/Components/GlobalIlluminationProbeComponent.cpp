@@ -10,7 +10,6 @@
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/TextureView.h>
 #include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {
@@ -54,11 +53,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kStorageComputeRead;
 
 		m_volTex = GrManager::getSingleton().newTexture(texInit);
-
-		TextureViewInitInfo viewInit(m_volTex.get(), "GiProbe");
-		m_volView = GrManager::getSingleton().newTextureView(viewInit);
-
-		m_volTexBindlessIdx = m_volView->getOrCreateBindlessTextureIndex();
+		m_volTexBindlessIdx = m_volTex->getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
 
 		// Zero the texture
 		const ShaderProgramResourceVariant* variant;
@@ -74,11 +69,11 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		TextureBarrierInfo texBarrier;
 		texBarrier.m_previousUsage = TextureUsageBit::kNone;
 		texBarrier.m_nextUsage = TextureUsageBit::kStorageComputeWrite;
-		texBarrier.m_texture = m_volTex.get();
+		texBarrier.m_textureView = TextureView(m_volTex.get(), TextureSubresourceDescriptor::all());
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
 		cmdb->bindShaderProgram(&variant->getProgram());
-		cmdb->bindStorageTexture(0, 0, m_volView.get());
+		cmdb->bindStorageTexture(0, 0, TextureView(m_volTex.get(), TextureSubresourceDescriptor::all()));
 
 		const Vec4 clearColor(0.0f);
 		cmdb->setPushConstants(&clearColor, sizeof(clearColor));

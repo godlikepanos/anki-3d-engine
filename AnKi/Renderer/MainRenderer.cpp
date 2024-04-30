@@ -119,7 +119,7 @@ Error MainRenderer::render(Texture* presentTex)
 
 			cmdb.bindShaderProgram(m_blitGrProg.get());
 			cmdb.bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
+			rgraphCtx.bindTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
 
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		});

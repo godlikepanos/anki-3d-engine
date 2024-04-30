@@ -82,7 +82,7 @@ public:
 	template<typename T>
 	void pushObjectRef(T* x)
 	{
-		ANKI_ASSERT(T::kClassType != GrObjectType::kTexture && T::kClassType != GrObjectType::kTextureView && T::kClassType != GrObjectType::kBuffer
+		ANKI_ASSERT(T::kClassType != GrObjectType::kTexture && T::kClassType != GrObjectType::kBuffer
 					&& "No need to push references of buffers and textures");
 		pushToArray(m_objectRefs[T::kClassType], x);
 	}

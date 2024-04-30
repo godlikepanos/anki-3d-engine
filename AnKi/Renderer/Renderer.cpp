@@ -169,16 +169,11 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite;
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
-		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
-
-		TextureViewInitInfo viewinit(tex.get());
-		m_dummyTexView2d = GrManager::getSingleton().newTextureView(viewinit);
+		m_dummyTex2d = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
-		tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
-		viewinit = TextureViewInitInfo(tex.get());
-		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
+		m_dummyTex3d = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		m_dummyBuff = GrManager::getSingleton().newBuffer(
 			BufferInitInfo(1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
@@ -448,7 +443,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 {
 	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kStorageComputeWrite));
 
-	const U faceCount = (inf.m_type == TextureType::kCube || inf.m_type == TextureType::kCubeArray) ? 6 : 1;
+	const U faceCount = textureTypeIsCube(inf.m_type) ? 6 : 1;
 
 	Bool useCompute = false;
 	if(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite))
@@ -482,14 +477,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 		{
 			for(U32 layer = 0; layer < inf.m_layerCount; ++layer)
 			{
-				TextureSurfaceDescriptor surf(mip, face, layer);
-
 				if(!useCompute)
 				{
 					RenderTarget rt;
 					rt.m_clearValue = clearVal;
-
-					TextureViewPtr view;
 
 					if(getFormatInfo(inf.m_format).isDepthStencil())
 					{
@@ -504,18 +495,14 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf, aspect));
-						rt.m_aspect = aspect;
-						rt.m_view = view.get();
+						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer, aspect));
 					}
 					else
 					{
-						view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
-						rt.m_view = view.get();
+						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer));
 					}
 
-					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, surf};
-					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
+					TextureBarrierInfo barrier = {rt.m_textureView, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					if(getFormatInfo(inf.m_format).isDepthStencil())
@@ -564,10 +551,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
-					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
-					cmdb->bindStorageTexture(0, 0, view.get());
+					const TextureView view(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer));
 
-					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kStorageComputeWrite, surf};
+					cmdb->bindStorageTexture(0, 0, view);
+
+					const TextureBarrierInfo barrier = {view, TextureUsageBit::kNone, TextureUsageBit::kStorageComputeWrite};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
@@ -579,7 +567,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kStorageComputeWrite, initialUsage, surf};
+						const TextureBarrierInfo barrier = {view, TextureUsageBit::kStorageComputeWrite, initialUsage};
 
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}

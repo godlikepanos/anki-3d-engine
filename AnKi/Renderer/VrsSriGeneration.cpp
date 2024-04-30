@@ -140,7 +140,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_grProg.get());
 
-			rgraphCtx.bindColorTexture(0, 0, getRenderer().getLightShading().getRt());
+			rgraphCtx.bindTexture(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindStorageTexture(0, 2, m_runCtx.m_rt);
 			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar.get(), 0.0f);
@@ -167,7 +167,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_downscaleGrProg.get());
 
-			rgraphCtx.bindColorTexture(0, 0, m_runCtx.m_rt);
+			rgraphCtx.bindTexture(0, 0, m_runCtx.m_rt);
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindStorageTexture(0, 2, m_runCtx.m_downscaledRt);
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);

@@ -7,7 +7,6 @@
 
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/TextureView.h>
 #include <AnKi/Gr/Sampler.h>
 #include <AnKi/Gr/Shader.h>
 #include <AnKi/Gr/ShaderProgram.h>

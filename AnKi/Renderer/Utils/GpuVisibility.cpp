@@ -482,7 +482,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			if(frustumTestData->m_hzbRt.isValid())
 			{
-				rpass.bindColorTexture(0, 12, frustumTestData->m_hzbRt);
+				rpass.bindTexture(0, 12, frustumTestData->m_hzbRt);
 				cmdb.bindSampler(0, 13, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			}
 		}
@@ -621,7 +621,7 @@ void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpu
 			cmdb.bindStorageBuffer(0, 6, out.m_meshletInstancesBuffer);
 			if(hasHzb)
 			{
-				rpass.bindColorTexture(0, 7, nonPassthroughData->m_hzbRt);
+				rpass.bindTexture(0, 7, nonPassthroughData->m_hzbRt);
 				cmdb.bindSampler(0, 8, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			}
 

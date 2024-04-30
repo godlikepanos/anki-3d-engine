@@ -174,7 +174,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	RenderTargetInfo depthRti(m_runCtx.m_crntFrameDepthRt);
 	depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 	depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+	depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 
 	pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
@@ -204,11 +204,12 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
 		args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
 
-		TextureViewPtr hzbView;
 		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 		{
-			hzbView = rgraphCtx.createTextureView(m_runCtx.m_hzbRt);
-			args.m_hzbTexture = hzbView.get();
+			const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
+			Texture* tex;
+			rgraphCtx.getRenderTargetState(m_runCtx.m_hzbRt, subresource, tex);
+			args.m_hzbTexture = TextureView(tex, subresource);
 		}
 
 		args.fill(visOut);
@@ -226,8 +227,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(m_runCtx.m_colorRts[i], TextureUsageBit::kFramebufferWrite);
 	}
 
-	TextureSubresourceInfo subresource(DepthStencilAspectBit::kDepth);
-	pass.newTextureDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::kAllFramebuffer, subresource);
+	pass.newTextureDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::kAllFramebuffer);
 
 	if(enableVrs)
 	{
@@ -242,7 +242,19 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
-	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
+	if(meshletVisOut.isFilled())
+	{
+		pass.newBufferDependency(meshletVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
+	}
+	else if(visOut.containsDrawcalls())
+	{
+		pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
+	}
+	else
+	{
+		// Weird, make a check
+		ANKI_ASSERT(GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount() == 0);
+	}
 
 	// HZB generation for the next frame
 	getRenderer().getHzbGenerator().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,

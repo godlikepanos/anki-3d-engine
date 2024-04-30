@@ -21,6 +21,24 @@ Texture* Texture::newInstance(const TextureInitInfo& init)
 	return impl;
 }
 
+U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor& subresource)
+{
+	ANKI_VK_SELF(TextureImpl);
+
+	ANKI_ASSERT(TextureView(this, subresource).isGoodForSampling());
+
+	const TextureImpl::TextureViewEntry& entry = self.getTextureViewEntry(subresource);
+
+	LockGuard lock(entry.m_bindlessIndexLock);
+
+	if(entry.m_bindlessIndex == kMaxU32) [[unlikely]]
+	{
+		entry.m_bindlessIndex = DSBindless::getSingleton().bindTexture(entry.m_handle, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
+
+	return entry.m_bindlessIndex;
+}
+
 static Bool isAstcLdrFormat(const VkFormat format)
 {
 	return format >= VK_FORMAT_ASTC_4x4_UNORM_BLOCK && format <= VK_FORMAT_ASTC_12x12_SRGB_BLOCK;
@@ -50,26 +68,6 @@ static Bool isAstcSrgbFormat(const VkFormat format)
 	}
 }
 
-U32 MicroImageView::getOrCreateBindlessIndex() const
-{
-	LockGuard<SpinLock> lock(m_bindlessIndexLock);
-
-	U32 outIdx;
-	if(m_bindlessIndex != kMaxU32)
-	{
-		outIdx = m_bindlessIndex;
-	}
-	else
-	{
-		// Needs binding to the bindless descriptor set
-
-		outIdx = DSBindless::getSingleton().bindTexture(m_handle, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		m_bindlessIndex = outIdx;
-	}
-
-	return outIdx;
-}
-
 TextureImpl::~TextureImpl()
 {
 #if ANKI_ASSERTIONS_ENABLED
@@ -81,30 +79,26 @@ TextureImpl::~TextureImpl()
 
 	TextureGarbage* garbage = anki::newInstance<TextureGarbage>(GrMemoryPool::getSingleton());
 
-	for(MicroImageView& it : m_viewsMap)
-	{
-		garbage->m_viewHandles.emplaceBack(it.m_handle);
-		it.m_handle = VK_NULL_HANDLE;
-
-		if(it.m_bindlessIndex != kMaxU32)
+	auto destroyTextureView = [&](TextureViewEntry& entry) {
+		if(entry.m_handle)
 		{
-			garbage->m_bindlessIndices.emplaceBack(it.m_bindlessIndex);
-			it.m_bindlessIndex = kMaxU32;
+			garbage->m_viewHandles.emplaceBack(entry.m_handle);
 		}
-	}
 
-	m_viewsMap.destroy();
-
-	if(m_singleSurfaceImageView.m_handle != VK_NULL_HANDLE)
-	{
-		garbage->m_viewHandles.emplaceBack(m_singleSurfaceImageView.m_handle);
-		m_singleSurfaceImageView.m_handle = VK_NULL_HANDLE;
-
-		if(m_singleSurfaceImageView.m_bindlessIndex != kMaxU32)
+		if(entry.m_bindlessIndex != kMaxU32)
 		{
-			garbage->m_bindlessIndices.emplaceBack(m_singleSurfaceImageView.m_bindlessIndex);
-			m_singleSurfaceImageView.m_bindlessIndex = kMaxU32;
+			garbage->m_bindlessIndices.emplaceBack(entry.m_bindlessIndex);
 		}
+	};
+
+	for(ViewClass c : EnumIterable<ViewClass>())
+	{
+		for(TextureViewEntry& entry : m_textureViews[c])
+		{
+			destroyTextureView(entry);
+		}
+
+		destroyTextureView(m_wholeTextureViews[c]);
 	}
 
 	if(m_imageHandle && !(m_usage & TextureUsageBit::kPresent))
@@ -160,43 +154,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		ANKI_CHECK(initImage(init));
 	}
 
-	// Init the template
-	zeroMemory(m_viewCreateInfoTemplate); // zero it, it will be used for hashing
-	m_viewCreateInfoTemplate.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	m_viewCreateInfoTemplate.image = m_imageHandle;
-	m_viewCreateInfoTemplate.viewType = convertTextureViewType(init.m_type);
-	m_viewCreateInfoTemplate.format = m_vkFormat;
-	m_viewCreateInfoTemplate.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-	m_viewCreateInfoTemplate.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-	m_viewCreateInfoTemplate.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	m_viewCreateInfoTemplate.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	m_viewCreateInfoTemplate.subresourceRange.aspectMask = convertImageAspect(m_aspect);
-	m_viewCreateInfoTemplate.subresourceRange.baseArrayLayer = 0;
-	m_viewCreateInfoTemplate.subresourceRange.baseMipLevel = 0;
-	m_viewCreateInfoTemplate.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
-	m_viewCreateInfoTemplate.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
-
-	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_astc_decode_mode) && isAstcLdrFormat(m_vkFormat)
-	   && !isAstcSrgbFormat(m_vkFormat))
-	{
-		m_astcDecodeMode = {};
-		m_astcDecodeMode.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_ASTC_DECODE_MODE_EXT;
-		m_astcDecodeMode.decodeMode = VK_FORMAT_R8G8B8A8_UNORM;
-
-		m_viewCreateInfoTemplate.pNext = &m_astcDecodeMode;
-	}
-
-	// Create a view if the texture is a single surface
-	if(m_texType == TextureType::k2D && m_mipCount == 1 && m_aspect == DepthStencilAspectBit::kNone)
-	{
-		VkImageViewCreateInfo viewCi;
-		TextureSubresourceInfo subresource;
-		computeVkImageViewCreateInfo(subresource, viewCi, m_singleSurfaceImageView.m_derivedTextureType);
-		ANKI_ASSERT(m_singleSurfaceImageView.m_derivedTextureType == m_texType);
-
-		ANKI_VK_CHECKF(vkCreateImageView(getVkDevice(), &viewCi, nullptr, &m_singleSurfaceImageView.m_handle));
-		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW, ptrToNumber(m_singleSurfaceImageView.m_handle));
-	}
+	ANKI_CHECK(initViews());
 
 	return Error::kNone;
 }
@@ -559,75 +517,135 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
-const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource) const
+Error TextureImpl::initViews()
 {
-	if(m_singleSurfaceImageView.m_handle != VK_NULL_HANDLE)
+	const VkImageAspectFlags vkaspect = convertImageAspect(m_aspect);
+
+	VkImageViewCreateInfo ci = {};
+	ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	ci.image = m_imageHandle;
+	ci.viewType = convertTextureViewType(m_texType);
+	ci.format = m_vkFormat;
+	ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+	ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+	ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+	ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+	ci.subresourceRange.aspectMask = vkaspect;
+	ci.subresourceRange.baseArrayLayer = 0;
+	ci.subresourceRange.baseMipLevel = 0;
+	ci.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+	ci.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+
+	VkImageViewASTCDecodeModeEXT astcDecodeMode;
+	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_astc_decode_mode) && isAstcLdrFormat(m_vkFormat)
+	   && !isAstcSrgbFormat(m_vkFormat))
 	{
-		return m_singleSurfaceImageView;
+		astcDecodeMode = {};
+		astcDecodeMode.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_ASTC_DECODE_MODE_EXT;
+		astcDecodeMode.decodeMode = VK_FORMAT_R8G8B8A8_UNORM;
+
+		appendPNextList(ci, &astcDecodeMode);
 	}
 
+	auto createImageView = [&](VkImageView& view) -> Error {
+		ANKI_VK_CHECK(vkCreateImageView(getVkDevice(), &ci, nullptr, &view));
+		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW, view);
+		return Error::kNone;
+	};
+
+	ANKI_CHECK(createImageView(m_wholeTextureViews[ViewClass::kDefault].m_handle));
+	if(m_aspect == DepthStencilAspectBit::kDepthStencil)
 	{
-		RLockGuard<RWMutex> lock(m_viewsMapMtx);
-		auto it = m_viewsMap.find(subresource);
-		if(it != m_viewsMap.getEnd())
+		ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		ANKI_CHECK(createImageView(m_wholeTextureViews[ViewClass::kDepth].m_handle));
+
+		ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_STENCIL_BIT;
+		ANKI_CHECK(createImageView(m_wholeTextureViews[ViewClass::kStencil].m_handle));
+	}
+
+	// Create the rest of the views
+	const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+	const Bool needsMoreViews = m_layerCount > 1 || m_mipCount > 1 || faceCount > 1;
+
+	if(needsMoreViews)
+	{
+		m_textureViews[ViewClass::kDefault].resize(m_layerCount * faceCount * m_mipCount);
+
+		if(m_aspect == DepthStencilAspectBit::kDepthStencil)
 		{
-			return *it;
+			m_textureViews[ViewClass::kDefault].resize(m_layerCount * faceCount * m_mipCount);
+			m_textureViews[ViewClass::kStencil].resize(m_layerCount * faceCount * m_mipCount);
+		}
+
+		const TextureType surfaceOrVolumeTexType = (m_texType == TextureType::k3D) ? TextureType::k3D : TextureType::k2D;
+		ci.viewType = convertTextureViewType(surfaceOrVolumeTexType);
+		ci.subresourceRange.layerCount = 1;
+		ci.subresourceRange.levelCount = 1;
+
+		for(U32 layer = 0; layer < m_layerCount; ++layer)
+		{
+			for(U32 face = 0; face < faceCount; ++face)
+			{
+				for(U32 mip = 0; mip < m_mipCount; ++mip)
+				{
+					const U32 idx = translateSurfaceOrVolume(layer, face, mip);
+					TextureViewEntry& entry = m_textureViews[ViewClass::kDefault][idx];
+
+					ci.subresourceRange.baseArrayLayer = layer * faceCount + face;
+					ci.subresourceRange.baseMipLevel = mip;
+					ci.subresourceRange.aspectMask = vkaspect;
+
+					ANKI_CHECK(createImageView(entry.m_handle));
+
+					if(m_textureViews[ViewClass::kDepth].getSize())
+					{
+						ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+						ANKI_CHECK(createImageView(m_textureViews[ViewClass::kDepth][idx].m_handle));
+					}
+
+					if(m_textureViews[ViewClass::kStencil].getSize())
+					{
+						ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_STENCIL_BIT;
+						ANKI_CHECK(createImageView(m_textureViews[ViewClass::kStencil][idx].m_handle));
+					}
+				}
+			}
 		}
 	}
 
-	// Not found need to create it
-
-	WLockGuard<RWMutex> lock(m_viewsMapMtx);
-
-	// Search again
-	auto it = m_viewsMap.find(subresource);
-	if(it != m_viewsMap.getEnd())
-	{
-		return *it;
-	}
-
-	// Not found in the 2nd search, create it
-
-	VkImageView handle = VK_NULL_HANDLE;
-	TextureType viewTexType = TextureType::kCount;
-
-	// Compute the VkImageViewCreateInfo
-	VkImageViewCreateInfo viewCi;
-	computeVkImageViewCreateInfo(subresource, viewCi, viewTexType);
-	ANKI_ASSERT(viewTexType != TextureType::kCount);
-
-	ANKI_VK_CHECKF(vkCreateImageView(getVkDevice(), &viewCi, nullptr, &handle));
-	getGrManagerImpl().trySetVulkanHandleName(getName(), VK_OBJECT_TYPE_IMAGE_VIEW, ptrToNumber(handle));
-
-	it = m_viewsMap.emplace(subresource);
-	it->m_handle = handle;
-	it->m_derivedTextureType = viewTexType;
-
-#if 0
-	printf("Creating image view %p. Texture %p %s\n", static_cast<void*>(handle), static_cast<void*>(m_imageHandle),
-		   getName() ? getName().cstr() : "Unnamed");
-#endif
-
-	ANKI_ASSERT(&(*m_viewsMap.find(subresource)) == &(*it));
-	return *it;
+	return Error::kNone;
 }
 
-TextureType TextureImpl::computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const
+const TextureImpl::TextureViewEntry& TextureImpl::getTextureViewEntry(const TextureSubresourceDescriptor& subresource) const
 {
-	ANKI_ASSERT(isSubresourceValid(subresource));
-	if(textureTypeIsCube(m_texType))
+	const TextureView view(this, subresource);
+
+	// Find class
+	ViewClass c;
+	if(view.getDepthStencilAspect() == m_aspect)
 	{
-		if(subresource.m_faceCount != 6)
-		{
-			ANKI_ASSERT(subresource.m_faceCount == 1);
-			return (subresource.m_layerCount > 1) ? TextureType::k2DArray : TextureType::k2D;
-		}
-		else if(subresource.m_layerCount == 1)
-		{
-			return TextureType::kCube;
-		}
+		c = ViewClass::kDefault;
 	}
-	return m_texType;
+	else if(view.getDepthStencilAspect() == DepthStencilAspectBit::kDepth)
+	{
+		c = ViewClass::kDepth;
+	}
+	else
+	{
+		ANKI_ASSERT(view.getDepthStencilAspect() == DepthStencilAspectBit::kStencil);
+		c = ViewClass::kStencil;
+	}
+
+	// Get
+	if(view.isAllSurfacesOrVolumes())
+	{
+		return m_wholeTextureViews[c];
+	}
+	else
+	{
+		const U32 idx = translateSurfaceOrVolume(view.getFirstLayer(), view.getFirstFace(), view.getFirstMipmap());
+		return m_textureViews[c][idx];
+	}
 }
 
 } // end namespace anki

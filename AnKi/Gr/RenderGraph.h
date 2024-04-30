@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/GrObject.h>
-#include <AnKi/Gr/TextureView.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/TimestampQuery.h>
@@ -124,45 +123,38 @@ public:
 
 	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 
-	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Texture*& tex) const;
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource, Texture*& tex) const;
 
-	/// Create a whole texture view from a handle
-	TextureViewPtr createTextureView(RenderTargetHandle handle)
-	{
-		Texture* tex = &getTexture(handle);
-		TextureViewInitInfo viewInit(tex, "TmpRenderGraph"); // Use the whole texture
-		getRenderTargetState(handle, viewInit, tex);
-		return GrManager::getSingleton().newTextureView(viewInit);
-	}
-
-	/// Convenience method.
-	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource)
+	TextureView createTextureView(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource) const
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view.get());
-	}
-
-	/// Convenience method to bind the whole texture as color.
-	void bindColorTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
-	{
-		Texture* tex = &getTexture(handle);
-		TextureViewInitInfo viewInit(tex); // Use the whole texture
-		getRenderTargetState(handle, viewInit, tex);
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view.get(), arrayIdx);
+		return TextureView(tex, subresource);
 	}
 
 	/// Convenience method.
-	void bindStorageTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
+	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource)
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindStorageTexture(set, binding, view.get(), arrayIdx);
+		m_commandBuffer->bindTexture(set, binding, TextureView(tex, subresource));
+	}
+
+	/// Convenience method to bind the whole texture.
+	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
+	{
+		const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
+		Texture* tex;
+		getRenderTargetState(handle, subresource, tex); // Doesn't care about the aspect so it's OK
+		m_commandBuffer->bindTexture(set, binding, TextureView(tex, subresource), arrayIdx);
+	}
+
+	/// Convenience method.
+	void bindStorageTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource, U32 arrayIdx = 0)
+	{
+		Texture* tex;
+		getRenderTargetState(handle, subresource, tex);
+		m_commandBuffer->bindStorageTexture(set, binding, TextureView(tex, subresource), arrayIdx);
 	}
 
 	/// Convenience method to bind the whole image.
@@ -173,11 +165,9 @@ public:
 		tex = &getTexture(handle);
 		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1 && tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
 #endif
-		const TextureSubresourceInfo subresource;
+		const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
 		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindStorageTexture(set, binding, view.get(), arrayIdx);
+		m_commandBuffer->bindStorageTexture(set, binding, TextureView(tex, subresource), arrayIdx);
 	}
 
 	/// Convenience method.
@@ -218,21 +208,11 @@ class RenderPassDependency
 
 public:
 	/// Dependency to a texture subresource.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDescriptor& subresource)
 		: m_texture({handle, usage, subresource})
 		, m_type(Type::kTexture)
 	{
 		ANKI_ASSERT(handle.isValid());
-	}
-
-	/// Dependency to the whole texture.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
-		: m_texture({handle, usage, TextureSubresourceInfo()})
-		, m_type(Type::kTexture)
-	{
-		ANKI_ASSERT(handle.isValid());
-		m_texture.m_subresource.m_mipmapCount = kMaxU32; // Mark it as "whole texture". Some code later on will fix that up
-		m_texture.m_subresource.m_depthStencilAspect = aspect;
 	}
 
 	RenderPassDependency(BufferHandle handle, BufferUsageBit usage)
@@ -255,7 +235,7 @@ private:
 	public:
 		RenderTargetHandle m_handle;
 		TextureUsageBit m_usage;
-		TextureSubresourceInfo m_subresource;
+		TextureSubresourceDescriptor m_subresource = TextureSubresourceDescriptor::all();
 	};
 
 	class BufferInfo
@@ -303,14 +283,14 @@ public:
 		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDescriptor& subresource)
 	{
 		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, subresource));
 	}
 
 	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
-		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, aspect));
+		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, TextureSubresourceDescriptor::all(aspect)));
 	}
 
 	void newBufferDependency(BufferHandle handle, BufferUsageBit usage)
@@ -380,8 +360,7 @@ class RenderTargetInfo
 {
 public:
 	RenderTargetHandle m_handle;
-	TextureSurfaceDescriptor m_surface;
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone; ///< Relevant only for depth stencil textures.
+	TextureSubresourceDescriptor m_subresource = TextureSubresourceDescriptor::firstSurface();
 
 	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kDontCare;
 	RenderTargetStoreOperation m_storeOperation = RenderTargetStoreOperation::kStore;
@@ -647,16 +626,14 @@ private:
 
 	ANKI_HOT static Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
 
-	static Bool overlappingTextureSubresource(const TextureSubresourceInfo& suba, const TextureSubresourceInfo& subb);
-
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
 	void setTextureBarrier(Batch& batch, const RenderPassDependency& consumer);
 
 	template<typename TFunc>
-	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceInfo& subresource, TFunc func);
+	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDescriptor& subresource, TFunc func);
 
-	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const;
+	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDescriptor& subresource, TextureUsageBit& usage) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{

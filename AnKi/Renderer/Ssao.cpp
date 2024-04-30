@@ -121,7 +121,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-		ppass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
+		ppass->newTextureDependency((g_ssaoQuarterRez.get()) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
+									readUsage);
 		ppass->newTextureDependency(finalRt, writeUsage);
 
 		ppass->setWork([this, &ctx, finalRt](RenderPassWorkContext& rgraphCtx) {
@@ -129,10 +130,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_grProg.get());
 
-			rgraphCtx.bindColorTexture(0, 0, getRenderer().getGBuffer().getColorRt(2));
-			rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindTexture(0, 1,
+								  (g_ssaoQuarterRez.get()) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt());
 
-			cmdb.bindTexture(0, 2, &m_noiseImage->getTextureView());
+			cmdb.bindTexture(0, 2, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDescriptor::all()));
 			cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_trilinearRepeat.get());
 			cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
 
@@ -193,8 +195,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_spatialDenoiseGrProg.get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindColorTexture(0, 1, finalRt);
-			rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindTexture(0, 1, finalRt);
+			rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt());
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
@@ -243,9 +245,9 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_tempralDenoiseGrProg.get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindColorTexture(0, 1, bentNormalsAndSsaoTempRt);
-			rgraphCtx.bindColorTexture(0, 2, historyRt);
-			rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindTexture(0, 1, bentNormalsAndSsaoTempRt);
+			rgraphCtx.bindTexture(0, 2, historyRt);
+			rgraphCtx.bindTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 

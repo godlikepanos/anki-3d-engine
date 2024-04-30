@@ -29,13 +29,15 @@ public:
 
 	// Render targets
 	Array<RenderTargetHandle, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargets;
-	Array<TextureSubresourceInfo, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargetSubresourceInfos;
+	Array<TextureSubresourceDescriptor, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargetSubresource{
+		TextureSubresourceDescriptor::firstSurface(), TextureSubresourceDescriptor::firstSurface(), TextureSubresourceDescriptor::firstSurface()};
 
 	RenderTargetHandle m_gbufferDepthRenderTarget;
-	TextureSubresourceInfo m_gbufferDepthRenderTargetSubresourceInfo = {DepthStencilAspectBit::kDepth};
+	TextureSubresourceDescriptor m_gbufferDepthRenderTargetSubresource = TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth);
 
 	RenderTargetHandle m_directionalLightShadowmapRenderTarget;
-	TextureSubresourceInfo m_directionalLightShadowmapRenderTargetSubresourceInfo = {DepthStencilAspectBit::kDepth};
+	TextureSubresourceDescriptor m_directionalLightShadowmapRenderTargetSubresource =
+		TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth);
 
 	RenderTargetHandle m_skyLutRenderTarget;
 	BufferView m_globalRendererConsts;

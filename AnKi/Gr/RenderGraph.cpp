@@ -64,15 +64,13 @@ public:
 	U32 m_idx;
 	TextureUsageBit m_usageBefore;
 	TextureUsageBit m_usageAfter;
-	TextureSurfaceDescriptor m_surface;
-	DepthStencilAspectBit m_dsAspect;
+	TextureSubresourceDescriptor m_subresource;
 
-	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceDescriptor& surf, DepthStencilAspectBit dsAspect)
+	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSubresourceDescriptor& sub)
 		: m_idx(rtIdx)
 		, m_usageBefore(usageBefore)
 		, m_usageAfter(usageAfter)
-		, m_surface(surf)
-		, m_dsAspect(dsAspect)
+		, m_subresource(sub)
 	{
 	}
 };
@@ -125,13 +123,13 @@ public:
 	public:
 		Array<RenderTarget, kMaxColorRenderTargets> m_colorRts;
 		RenderTarget m_dsRt;
-		TextureView* m_vrsRt = nullptr;
+		TextureView m_vrsRt;
 		Array<U32, 4> m_renderArea = {};
 		U8 m_colorRtCount = 0;
 		U8 m_vrsTexelSizeX = 0;
 		U8 m_vrsTexelSizeY = 0;
 
-		Array<TextureViewPtr, kMaxColorRenderTargets + 2> m_refs;
+		Array<TexturePtr, kMaxColorRenderTargets + 2> m_refs;
 
 		Bool hasRenderpass() const
 		{
@@ -291,7 +289,7 @@ void RenderGraph::reset()
 
 	for(Pass& p : m_ctx->m_passes)
 	{
-		p.m_beginRenderpassInfo.m_refs.fill(TextureViewPtr(nullptr));
+		p.m_beginRenderpassInfo.m_refs.fill(TexturePtr(nullptr));
 		p.m_callback.destroy();
 		p.m_name.destroy();
 	}
@@ -344,18 +342,6 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	return tex;
 }
 
-Bool RenderGraph::overlappingTextureSubresource(const TextureSubresourceInfo& suba, const TextureSubresourceInfo& subb)
-{
-#define ANKI_OVERLAPPING(first, count) ((suba.first < subb.first + subb.count) && (subb.first < suba.first + suba.count))
-
-	const Bool overlappingFaces = ANKI_OVERLAPPING(m_firstFace, m_faceCount);
-	const Bool overlappingMips = ANKI_OVERLAPPING(m_firstMipmap, m_mipmapCount);
-	const Bool overlappingLayers = ANKI_OVERLAPPING(m_firstLayer, m_layerCount);
-#undef ANKI_OVERLAPPING
-
-	return overlappingFaces && overlappingLayers && overlappingMips;
-}
-
 Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b)
 {
 	// Render targets
@@ -391,7 +377,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 						continue;
 					}
 
-					if(overlappingTextureSubresource(aDep.m_texture.m_subresource, bDep.m_texture.m_subresource))
+					if(aDep.m_texture.m_subresource.overlapsWith(bDep.m_texture.m_subresource))
 					{
 						return true;
 					}
@@ -701,50 +687,40 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 					const RenderTargetInfo& inAttachment = inPass.m_rts[i];
 					RenderTarget& outAttachment = outPass.m_beginRenderpassInfo.m_colorRts[i];
 
-					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, TextureSubresourceInfo(inAttachment.m_surface), outAttachment.m_usage);
+					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, inAttachment.m_subresource, outAttachment.m_usage);
 
-					const TextureViewInitInfo viewInit(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(),
-													   TextureSubresourceInfo(inAttachment.m_surface), "RenderGraph");
-					TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-					outAttachment.m_view = view.get();
-					outPass.m_beginRenderpassInfo.m_refs[i] = view;
+					outAttachment.m_textureView = TextureView(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(), inAttachment.m_subresource);
+					outPass.m_beginRenderpassInfo.m_refs[i] = m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture;
 
 					outAttachment.m_loadOperation = inAttachment.m_loadOperation;
 					outAttachment.m_storeOperation = inAttachment.m_storeOperation;
 					outAttachment.m_clearValue = inAttachment.m_clearValue;
 				}
 
-				if(!!inPass.m_rts[kMaxColorRenderTargets].m_aspect)
+				if(!!inPass.m_rts[kMaxColorRenderTargets].m_subresource.m_depthStencilAspect)
 				{
 					const RenderTargetInfo& inAttachment = inPass.m_rts[kMaxColorRenderTargets];
 					RenderTarget& outAttachment = outPass.m_beginRenderpassInfo.m_dsRt;
 
-					const TextureSubresourceInfo subresource = TextureSubresourceInfo(inAttachment.m_surface, inAttachment.m_aspect);
-					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, subresource, outAttachment.m_usage);
+					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, inAttachment.m_subresource, outAttachment.m_usage);
 
-					const TextureViewInitInfo viewInit(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(),
-													   TextureSubresourceInfo(inAttachment.m_surface, inAttachment.m_aspect), "RenderGraph");
-					TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-					outAttachment.m_view = view.get();
-					outPass.m_beginRenderpassInfo.m_refs[kMaxColorRenderTargets] = view;
+					outAttachment.m_textureView = TextureView(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(), inAttachment.m_subresource);
+					outPass.m_beginRenderpassInfo.m_refs[kMaxColorRenderTargets] = m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture;
 
 					outAttachment.m_loadOperation = inAttachment.m_loadOperation;
 					outAttachment.m_storeOperation = inAttachment.m_storeOperation;
 					outAttachment.m_stencilLoadOperation = inAttachment.m_stencilLoadOperation;
 					outAttachment.m_stencilStoreOperation = inAttachment.m_stencilStoreOperation;
 					outAttachment.m_clearValue = inAttachment.m_clearValue;
-					outAttachment.m_aspect = inAttachment.m_aspect;
 				}
 
 				if(inPass.m_vrsRtTexelSizeX > 0)
 				{
 					const RenderTargetInfo& inAttachment = inPass.m_rts[kMaxColorRenderTargets + 1];
 
-					const TextureViewInitInfo viewInit(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(), inAttachment.m_surface,
-													   "RenderGraph SRI");
-					TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-					outPass.m_beginRenderpassInfo.m_vrsRt = view.get();
-					outPass.m_beginRenderpassInfo.m_refs[kMaxColorRenderTargets + 1] = view;
+					outPass.m_beginRenderpassInfo.m_vrsRt =
+						TextureView(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(), inAttachment.m_subresource);
+					outPass.m_beginRenderpassInfo.m_refs[kMaxColorRenderTargets + 1] = m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture;
 
 					outPass.m_beginRenderpassInfo.m_vrsTexelSizeX = inPass.m_vrsRtTexelSizeX;
 					outPass.m_beginRenderpassInfo.m_vrsTexelSizeY = inPass.m_vrsRtTexelSizeY;
@@ -755,25 +731,35 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 }
 
 template<typename TFunc>
-void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceInfo& subresource, TFunc func)
+void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDescriptor& subresource, TFunc func)
 {
-	for(U32 mip = subresource.m_firstMipmap; mip < subresource.m_firstMipmap + subresource.m_mipmapCount; ++mip)
-	{
-		for(U32 layer = subresource.m_firstLayer; layer < subresource.m_firstLayer + subresource.m_layerCount; ++layer)
-		{
-			for(U32 face = subresource.m_firstFace; face < U32(subresource.m_firstFace + subresource.m_faceCount); ++face)
-			{
-				// Compute surf or vol idx
-				const U32 faceCount = textureTypeIsCube(tex.getTextureType()) ? 6 : 1;
-				const U32 idx = (faceCount * tex.getLayerCount()) * mip + faceCount * layer + face;
-				const TextureSurfaceDescriptor surf(mip, face, layer);
+	subresource.validate(tex);
+	const U32 faceCount = textureTypeIsCube(tex.getTextureType()) ? 6 : 1;
 
-				if(!func(idx, surf))
+	if(subresource.m_allSurfacesOrVolumes)
+	{
+		for(U32 mip = 0; mip < tex.getMipmapCount(); ++mip)
+		{
+			for(U32 layer = 0; layer < tex.getLayerCount(); ++layer)
+			{
+				for(U32 face = 0; face < faceCount; ++face)
 				{
-					return;
+					// Compute surf or vol idx
+					const U32 idx = (faceCount * tex.getLayerCount()) * mip + faceCount * layer + face;
+
+					if(!func(idx, TextureSubresourceDescriptor::surface(mip, face, layer, subresource.m_depthStencilAspect)))
+					{
+						return;
+					}
 				}
 			}
 		}
+	}
+	else
+	{
+		const U32 idx = (faceCount * tex.getLayerCount()) * subresource.m_mipmap + faceCount * subresource.m_layer + subresource.m_face;
+
+		func(idx, subresource);
 	}
 }
 
@@ -787,7 +773,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 	const TextureUsageBit depUsage = dep.m_texture.m_usage;
 	RT& rt = ctx.m_rts[rtIdx];
 
-	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSurfaceDescriptor& surf) {
+	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSubresourceDescriptor& subresource) {
 		TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
 
 		const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & TextureUsageBit::kAllWrite);
@@ -804,7 +790,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 				[[maybe_unused]] Bool found = false;
 				for(TextureBarrier& b : batch.m_textureBarriersBefore)
 				{
-					if(b.m_idx == rtIdx && b.m_surface == surf)
+					if(b.m_idx == rtIdx && b.m_subresource == subresource)
 					{
 						b.m_usageAfter |= depUsage;
 						found = true;
@@ -818,7 +804,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 			{
 				// Create a new barrier for this surface
 
-				batch.m_textureBarriersBefore.emplaceBack(rtIdx, crntUsage, depUsage, surf, dep.m_texture.m_subresource.m_depthStencilAspect);
+				batch.m_textureBarriersBefore.emplaceBack(rtIdx, crntUsage, depUsage, subresource);
 
 				crntUsage = depUsage;
 				rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] = U16(batchIdx);
@@ -1178,12 +1164,11 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 					texBarriers.resizeStorage(batch.m_textureBarriersBefore.getSize());
 					for(const TextureBarrier& barrier : batch.m_textureBarriersBefore)
 					{
+						const Texture& tex = *m_ctx->m_rts[barrier.m_idx].m_texture;
 						TextureBarrierInfo& inf = *texBarriers.emplaceBack();
 						inf.m_previousUsage = barrier.m_usageBefore;
 						inf.m_nextUsage = barrier.m_usageAfter;
-						inf.m_subresource = barrier.m_surface;
-						inf.m_subresource.m_depthStencilAspect = barrier.m_dsAspect;
-						inf.m_texture = m_ctx->m_rts[barrier.m_idx].m_texture.get();
+						inf.m_textureView = TextureView(&tex, barrier.m_subresource);
 					}
 					DynamicArray<BufferBarrierInfo, MemoryPoolPtrWrapper<StackMemoryPool>> buffBarriers(pool);
 					buffBarriers.resizeStorage(batch.m_bufferBarriersBefore.getSize());
@@ -1222,7 +1207,8 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 						if(pass.m_beginRenderpassInfo.hasRenderpass())
 						{
 							cmdb->beginRenderPass({pass.m_beginRenderpassInfo.m_colorRts.getBegin(), U32(pass.m_beginRenderpassInfo.m_colorRtCount)},
-												  pass.m_beginRenderpassInfo.m_dsRt.m_view ? &pass.m_beginRenderpassInfo.m_dsRt : nullptr,
+												  pass.m_beginRenderpassInfo.m_dsRt.m_textureView.isValid() ? &pass.m_beginRenderpassInfo.m_dsRt
+																											: nullptr,
 												  pass.m_beginRenderpassInfo.m_renderArea[0], pass.m_beginRenderpassInfo.m_renderArea[1],
 												  pass.m_beginRenderpassInfo.m_renderArea[2], pass.m_beginRenderpassInfo.m_renderArea[3],
 												  pass.m_beginRenderpassInfo.m_vrsRt, pass.m_beginRenderpassInfo.m_vrsTexelSizeX,
@@ -1278,7 +1264,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	}
 }
 
-void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const
+void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDescriptor& subresource, TextureUsageBit& usage) const
 {
 	usage = TextureUsageBit::kNone;
 	const Batch& batch = m_ctx->m_batches[batchIdx];
@@ -1287,7 +1273,7 @@ void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const Te
 	{
 		for(const RenderPassDependency::TextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
 		{
-			if(consumer.m_handle == handle && overlappingTextureSubresource(subresource, consumer.m_subresource))
+			if(consumer.m_handle == handle && subresource.overlapsWith(consumer.m_subresource))
 			{
 				usage |= consumer.m_usage;
 				break;

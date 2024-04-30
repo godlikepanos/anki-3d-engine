@@ -144,14 +144,14 @@ public:
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());
 
-	TextureView& getDummyTextureView2d() const
+	Texture& getDummyTexture2d() const
 	{
-		return *m_dummyTexView2d;
+		return *m_dummyTex2d;
 	}
 
-	TextureView& getDummyTextureView3d() const
+	Texture& getDummyTexture3d() const
 	{
-		return *m_dummyTexView3d;
+		return *m_dummyTex3d;
 	}
 
 	Buffer& getDummyBuffer() const
@@ -242,8 +242,8 @@ private:
 
 	Array<Vec2, 64> m_jitterOffsets;
 
-	TextureViewPtr m_dummyTexView2d;
-	TextureViewPtr m_dummyTexView3d;
+	TexturePtr m_dummyTex2d;
+	TexturePtr m_dummyTex3d;
 	BufferPtr m_dummyBuff;
 
 	RendererPrecreatedSamplers m_samplers;

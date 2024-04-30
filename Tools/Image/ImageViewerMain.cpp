@@ -29,9 +29,9 @@ public:
 
 	Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
 	{
-		if(!m_textureView.isCreated())
+		if(!m_imageIdExtra.m_textureView.isValid())
 		{
-			m_textureView.reset(&m_imageResource->getTextureView());
+			m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDescriptor::all());
 		}
 
 		return Error::kNone;
@@ -41,8 +41,7 @@ private:
 	FontPtr m_font;
 	ShaderProgramResourcePtr m_imageProgram;
 	ShaderProgramPtr m_imageGrProgram;
-	TextureViewPtr m_textureView;
-	UiImageIdExtra m_imageIdExtra;
+	UiImageIdData m_imageIdExtra;
 
 	U32 m_crntMip = 0;
 	F32 m_zoom = 1.0f;
@@ -143,10 +142,7 @@ private:
 			if(lastCrntMip != m_crntMip)
 			{
 				// Re-create the image view
-				TextureViewInitInfo viewInitInf(&m_imageResource->getTexture());
-				viewInitInf.m_firstMipmap = m_crntMip;
-				viewInitInf.m_mipmapCount = 1;
-				m_textureView = GrManager::getSingleton().newTextureView(viewInitInf);
+				m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDescriptor::surface(m_crntMip, 0, 0));
 			}
 
 			ImGui::SameLine();
@@ -209,12 +205,11 @@ private:
 			pc.m_depth = Vec4((m_depth + 0.5f) / F32(grTex.getDepth()));
 
 			m_imageIdExtra.m_customProgram = m_imageGrProgram;
-			m_imageIdExtra.m_textureView = m_textureView;
 			m_imageIdExtra.m_extraPushConstantsSize = U8(sizeof(pc));
 			m_imageIdExtra.setExtraPushConstants(&pc, sizeof(pc));
+			m_imageIdExtra.m_pointSampling = m_pointSampling;
 
-			ImGui::Image(UiImageId(&m_imageIdExtra, m_pointSampling), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f), Vec4(1.0f),
-						 Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImGui::Image(UiImageId(&m_imageIdExtra), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f), Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 			if(ImGui::IsItemHovered())
 			{

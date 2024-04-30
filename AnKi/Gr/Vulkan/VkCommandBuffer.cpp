@@ -263,16 +263,17 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	self.m_state.setBlendOperation(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, TextureView* texView, U32 arrayIdx)
+void CommandBuffer::bindTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx)
 {
+	ANKI_ASSERT(texView.isGoodForSampling());
+
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-	const TextureImpl& tex = view.getTextureImpl();
-	ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
+
+	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
 	const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
 
-	self.m_dsetState[set].bindTexture(binding, arrayIdx, texView, lay);
+	self.m_dsetState[set].bindTexture(binding, arrayIdx, tex.getImageView(texView.getSubresource()), lay);
 }
 
 void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx)
@@ -301,13 +302,16 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& bu
 	self.m_dsetState[set].bindStorageBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange());
 }
 
-void CommandBuffer::bindStorageTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
+void CommandBuffer::bindStorageTexture(U32 set, U32 binding, const TextureView& view, U32 arrayIdx)
 {
+	ANKI_ASSERT(view.isGoodForStorage());
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindStorageTexture(binding, arrayIdx, img);
 
-	const Bool isPresentable = !!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage() & TextureUsageBit::kPresent);
+	const TextureImpl& tex = static_cast<const TextureImpl&>(view.getTexture());
+	self.m_dsetState[set].bindStorageTexture(binding, arrayIdx, tex.getImageView(view.getSubresource()));
+
+	const Bool isPresentable = !!(tex.getTextureUsage() & TextureUsageBit::kPresent);
 	if(isPresentable)
 	{
 		self.m_renderedToDefaultFb = true;
@@ -394,7 +398,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
-									TextureView* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
+									const TextureView& vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 
@@ -420,13 +424,14 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	// Do color targets
 	for(U32 i = 0; i < colorRts.getSize(); ++i)
 	{
-		ANKI_ASSERT(!colorRts[i].m_aspect);
-		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*colorRts[i].m_view);
+		const TextureView& view = colorRts[i].m_textureView;
+		ANKI_ASSERT(!view.getDepthStencilAspect());
+		const TextureImpl& tex = static_cast<const TextureImpl&>(view.getTexture());
 
 		vkColorAttachments[i] = {};
 		vkColorAttachments[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-		vkColorAttachments[i].imageView = view.getHandle();
-		vkColorAttachments[i].imageLayout = view.getTextureImpl().computeLayout(colorRts[i].m_usage, 0);
+		vkColorAttachments[i].imageView = tex.getImageView(view.getSubresource());
+		vkColorAttachments[i].imageLayout = tex.computeLayout(colorRts[i].m_usage, 0);
 		vkColorAttachments[i].loadOp = convertLoadOp(colorRts[i].m_loadOperation);
 		vkColorAttachments[i].storeOp = convertStoreOp(colorRts[i].m_storeOperation);
 		vkColorAttachments[i].clearValue.color.float32[0] = colorRts[i].m_clearValue.m_colorf[0];
@@ -434,17 +439,17 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		vkColorAttachments[i].clearValue.color.float32[2] = colorRts[i].m_clearValue.m_colorf[2];
 		vkColorAttachments[i].clearValue.color.float32[3] = colorRts[i].m_clearValue.m_colorf[3];
 
-		if(!!(view.getTextureImpl().getTextureUsage() & TextureUsageBit::kPresent))
+		if(!!(tex.getTextureUsage() & TextureUsageBit::kPresent))
 		{
 			drawsToSwapchain = true;
 		}
 
-		ANKI_ASSERT(fbWidth == 0 || (fbWidth == view.getTextureImpl().getWidth() >> view.getSubresource().m_firstMipmap));
-		ANKI_ASSERT(fbHeight == 0 || (fbHeight == view.getTextureImpl().getHeight() >> view.getSubresource().m_firstMipmap));
-		fbWidth = view.getTextureImpl().getWidth() >> view.getSubresource().m_firstMipmap;
-		fbHeight = view.getTextureImpl().getHeight() >> view.getSubresource().m_firstMipmap;
+		ANKI_ASSERT(fbWidth == 0 || (fbWidth == tex.getWidth() >> view.getFirstMipmap()));
+		ANKI_ASSERT(fbHeight == 0 || (fbHeight == tex.getHeight() >> view.getFirstMipmap()));
+		fbWidth = tex.getWidth() >> view.getFirstMipmap();
+		fbHeight = tex.getHeight() >> view.getFirstMipmap();
 
-		colorFormats[i] = view.getTextureImpl().getFormat();
+		colorFormats[i] = tex.getFormat();
 	}
 
 	if(colorRts.getSize())
@@ -458,15 +463,16 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	// DS
 	if(depthStencilRt)
 	{
-		ANKI_ASSERT(!!depthStencilRt->m_aspect);
-		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*depthStencilRt->m_view);
+		const TextureView& view = depthStencilRt->m_textureView;
+		ANKI_ASSERT(!!view.getDepthStencilAspect());
+		const TextureImpl& tex = static_cast<const TextureImpl&>(view.getTexture());
 
-		if(!!(depthStencilRt->m_aspect & DepthStencilAspectBit::kDepth))
+		if(!!(view.getDepthStencilAspect() & DepthStencilAspectBit::kDepth))
 		{
 			vkDepthAttachment = {};
 			vkDepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-			vkDepthAttachment.imageView = view.getHandle();
-			vkDepthAttachment.imageLayout = view.getTextureImpl().computeLayout(depthStencilRt->m_usage, 0);
+			vkDepthAttachment.imageView = tex.getImageView(view.getSubresource());
+			vkDepthAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage, 0);
 			vkDepthAttachment.loadOp = convertLoadOp(depthStencilRt->m_loadOperation);
 			vkDepthAttachment.storeOp = convertStoreOp(depthStencilRt->m_storeOperation);
 			vkDepthAttachment.clearValue.depthStencil.depth = depthStencilRt->m_clearValue.m_depthStencil.m_depth;
@@ -475,12 +481,12 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 			info.pDepthAttachment = &vkDepthAttachment;
 		}
 
-		if(!!(depthStencilRt->m_aspect & DepthStencilAspectBit::kStencil) && getFormatInfo(view.getTextureImpl().getFormat()).isStencil())
+		if(!!(view.getDepthStencilAspect() & DepthStencilAspectBit::kStencil) && getFormatInfo(tex.getFormat()).isStencil())
 		{
 			vkStencilAttachment = {};
 			vkStencilAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-			vkStencilAttachment.imageView = view.getHandle();
-			vkStencilAttachment.imageLayout = view.getTextureImpl().computeLayout(depthStencilRt->m_usage, 0);
+			vkStencilAttachment.imageView = tex.getImageView(view.getSubresource());
+			vkStencilAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage, 0);
 			vkStencilAttachment.loadOp = convertLoadOp(depthStencilRt->m_stencilLoadOperation);
 			vkStencilAttachment.storeOp = convertStoreOp(depthStencilRt->m_stencilStoreOperation);
 			vkStencilAttachment.clearValue.depthStencil.depth = depthStencilRt->m_clearValue.m_depthStencil.m_depth;
@@ -489,19 +495,21 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 			info.pStencilAttachment = &vkStencilAttachment;
 		}
 
-		ANKI_ASSERT(fbWidth == 0 || (fbWidth == view.getTextureImpl().getWidth() >> view.getSubresource().m_firstMipmap));
-		ANKI_ASSERT(fbHeight == 0 || (fbHeight == view.getTextureImpl().getHeight() >> view.getSubresource().m_firstMipmap));
-		fbWidth = view.getTextureImpl().getWidth() >> view.getSubresource().m_firstMipmap;
-		fbHeight = view.getTextureImpl().getHeight() >> view.getSubresource().m_firstMipmap;
+		ANKI_ASSERT(fbWidth == 0 || (fbWidth == tex.getWidth() >> view.getFirstMipmap()));
+		ANKI_ASSERT(fbHeight == 0 || (fbHeight == tex.getHeight() >> view.getFirstMipmap()));
+		fbWidth = tex.getWidth() >> view.getFirstMipmap();
+		fbHeight = tex.getHeight() >> view.getFirstMipmap();
 
-		dsFormat = view.getTextureImpl().getFormat();
+		dsFormat = tex.getFormat();
 	}
 
-	if(vrsRt)
+	if(vrsRt.isValid())
 	{
+		const TextureImpl& tex = static_cast<const TextureImpl&>(vrsRt.getTexture());
+
 		vkVrsAttachment = {};
 		vkVrsAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
-		vkVrsAttachment.imageView = static_cast<const TextureViewImpl&>(*vrsRt).getHandle();
+		vkVrsAttachment.imageView = tex.getImageView(vrsRt.getSubresource());
 		// Technically it's possible for SRI to be in other layout. Don't bother though
 		vkVrsAttachment.imageLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 		vkVrsAttachment.shadingRateAttachmentTexelSize.width = vrsRtTexelSizeX;
@@ -795,15 +803,14 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 	vkCmdTraceRaysKHR(self.m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth);
 }
 
-void CommandBuffer::generateMipmaps2d(TextureView* texView)
+void CommandBuffer::generateMipmaps2d(const TextureView& texView)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
-	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-	const TextureImpl& tex = view.getTextureImpl();
+	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
 	ANKI_ASSERT(tex.getTextureType() != TextureType::k3D && "Not for 3D");
-	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
+	ANKI_ASSERT(texView.getFirstMipmap() == 0 && texView.getMipmapCount() == 1);
 
 	const U32 blitCount = tex.getMipmapCount() - 1u;
 	if(blitCount == 0)
@@ -812,9 +819,9 @@ void CommandBuffer::generateMipmaps2d(TextureView* texView)
 		return;
 	}
 
-	const DepthStencilAspectBit aspect = view.getSubresource().m_depthStencilAspect;
-	const U32 face = view.getSubresource().m_firstFace;
-	const U32 layer = view.getSubresource().m_firstLayer;
+	const DepthStencilAspectBit aspect = texView.getDepthStencilAspect();
+	const U32 face = texView.getFirstFace();
+	const U32 layer = texView.getFirstLayer();
 
 	for(U32 i = 0; i < blitCount; ++i)
 	{
@@ -822,8 +829,7 @@ void CommandBuffer::generateMipmaps2d(TextureView* texView)
 		// OPT: Combine the 2 barriers
 		if(i > 0)
 		{
-			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceDescriptor(i, face, layer), aspect), range);
+			const VkImageSubresourceRange range = tex.computeVkImageSubresourceRange(TextureSubresourceDescriptor::surface(i, face, layer, aspect));
 
 			self.setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 								 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
@@ -832,8 +838,8 @@ void CommandBuffer::generateMipmaps2d(TextureView* texView)
 
 		// Transition destination
 		{
-			VkImageSubresourceRange range;
-			tex.computeVkImageSubresourceRange(TextureSubresourceInfo(TextureSurfaceDescriptor(i + 1, face, layer), aspect), range);
+			const VkImageSubresourceRange range =
+				tex.computeVkImageSubresourceRange(TextureSubresourceDescriptor::surface(i + 1, face, layer, aspect));
 
 			self.setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TRANSFER_BIT,
 								 VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tex.m_imageHandle, range);
@@ -885,26 +891,25 @@ void CommandBuffer::generateMipmaps2d(TextureView* texView)
 	}
 }
 
-void CommandBuffer::blitTextureViews([[maybe_unused]] TextureView* srcView, [[maybe_unused]] TextureView* destView)
+void CommandBuffer::blitTexture([[maybe_unused]] const TextureView& srcView, [[maybe_unused]] const TextureView& destView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::clearTextureView(TextureView* texView, const ClearValue& clearValue)
+void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& clearValue)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
-	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-	const TextureImpl& tex = view.getTextureImpl();
+	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
 
 	VkClearColorValue vclear;
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
 	memcpy(&vclear, &clearValue, sizeof(clearValue));
 
-	if(!view.getSubresource().m_depthStencilAspect)
+	if(!texView.getDepthStencilAspect())
 	{
-		VkImageSubresourceRange vkRange = view.getVkImageSubresourceRange();
+		const VkImageSubresourceRange vkRange = tex.computeVkImageSubresourceRange(texView.getSubresource());
 		vkCmdClearColorImage(self.m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &vkRange);
 	}
 	else
@@ -913,31 +918,26 @@ void CommandBuffer::clearTextureView(TextureView* texView, const ClearValue& cle
 	}
 }
 
-void CommandBuffer::copyBufferToTexture(const BufferView& buff, TextureView* texView)
+void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView)
 {
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
-	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-	const TextureImpl& tex = view.getTextureImpl();
+	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
 	ANKI_ASSERT(tex.usageValid(TextureUsageBit::kTransferDestination));
-	ANKI_ASSERT(tex.isSubresourceGoodForCopyFromBuffer(view.getSubresource()));
+	ANKI_ASSERT(texView.isGoodForCopyFromBuffer());
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	const Bool is3D = tex.getTextureType() == TextureType::k3D;
-	const VkImageAspectFlags aspect = convertImageAspect(view.getSubresource().m_depthStencilAspect);
-
-	const TextureSurfaceDescriptor surf(view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, view.getSubresource().m_firstLayer);
-	const TextureVolumeDescriptor vol(view.getSubresource().m_firstMipmap);
+	const VkImageSubresourceRange range = tex.computeVkImageSubresourceRange(texView.getSubresource());
 
 	// Compute the sizes of the mip
-	const U32 width = tex.getWidth() >> surf.m_level;
-	const U32 height = tex.getHeight() >> surf.m_level;
+	const U32 width = tex.getWidth() >> range.baseMipLevel;
+	const U32 height = tex.getHeight() >> range.baseMipLevel;
 	ANKI_ASSERT(width && height);
-	const U32 depth = (is3D) ? (tex.getDepth() >> surf.m_level) : 1u;
+	const U32 depth = (tex.getTextureType() == TextureType::k3D) ? (tex.getDepth() >> range.baseMipLevel) : 1u;
 
-	if(!is3D)
+	if(tex.getTextureType() != TextureType::k3D)
 	{
 		ANKI_ASSERT(buff.getRange() == computeSurfaceSize(width, height, tex.getFormat()));
 	}
@@ -948,10 +948,10 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, TextureView* tex
 
 	// Copy
 	VkBufferImageCopy region;
-	region.imageSubresource.aspectMask = aspect;
-	region.imageSubresource.baseArrayLayer = (is3D) ? tex.computeVkArrayLayer(vol) : tex.computeVkArrayLayer(surf);
+	region.imageSubresource.aspectMask = range.aspectMask;
+	region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
 	region.imageSubresource.layerCount = 1;
-	region.imageSubresource.mipLevel = surf.m_level;
+	region.imageSubresource.mipLevel = range.baseMipLevel;
 	region.imageOffset = {0, 0, 0};
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
@@ -1048,14 +1048,14 @@ void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, const 
 #if ANKI_DLSS
 /// Utility function to get the NGX's resource structure for a texture
 /// @param[in] tex the texture to generate the NVSDK_NGX_Resource_VK from
-static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl& view)
+static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureView& view)
 {
-	const TextureImpl& tex = view.getTextureImpl();
+	const TextureImpl& tex = static_cast<const TextureImpl&>(view.getTexture());
 
-	const VkImageView imageView = view.getHandle();
+	const VkImageView imageView = tex.getImageView(view.getSubresource());
 	const VkFormat format = tex.m_vkFormat;
 	const VkImage image = tex.m_imageHandle;
-	const VkImageSubresourceRange subresourceRange = view.getVkImageSubresourceRange();
+	const VkImageSubresourceRange subresourceRange = tex.computeVkImageSubresourceRange(view.getSubresource());
 	const Bool isUAV = !!(tex.m_vkUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT);
 
 	// TODO Not sure if I should pass the width,height of the image or the view
@@ -1063,8 +1063,9 @@ static NVSDK_NGX_Resource_VK getNGXResourceFromAnkiTexture(const TextureViewImpl
 }
 #endif
 
-void CommandBuffer::upscale(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
-							TextureView* exposure, Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale)
+void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, const TextureView& outUpscaledColor, const TextureView& motionVectors,
+							const TextureView& depth, const TextureView& exposure, Bool resetAccumulation, const Vec2& jitterOffset,
+							const Vec2& motionVectorsScale)
 {
 #if ANKI_DLSS
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -1075,22 +1076,15 @@ void CommandBuffer::upscale(GrUpscaler* upscaler, TextureView* inColor, TextureV
 
 	const GrUpscalerImpl& upscalerImpl = static_cast<const GrUpscalerImpl&>(*upscaler);
 
-	const TextureViewImpl& srcViewImpl = static_cast<const TextureViewImpl&>(*inColor);
-	const TextureViewImpl& dstViewImpl = static_cast<const TextureViewImpl&>(*outUpscaledColor);
-	const TextureViewImpl& mvViewImpl = static_cast<const TextureViewImpl&>(*motionVectors);
-	const TextureViewImpl& depthViewImpl = static_cast<const TextureViewImpl&>(*depth);
-	const TextureViewImpl& exposureViewImpl = static_cast<const TextureViewImpl&>(*exposure);
+	NVSDK_NGX_Resource_VK srcResVk = getNGXResourceFromAnkiTexture(inColor);
+	NVSDK_NGX_Resource_VK dstResVk = getNGXResourceFromAnkiTexture(outUpscaledColor);
+	NVSDK_NGX_Resource_VK mvResVk = getNGXResourceFromAnkiTexture(motionVectors);
+	NVSDK_NGX_Resource_VK depthResVk = getNGXResourceFromAnkiTexture(depth);
+	NVSDK_NGX_Resource_VK exposureResVk = getNGXResourceFromAnkiTexture(exposure);
 
-	NVSDK_NGX_Resource_VK srcResVk = getNGXResourceFromAnkiTexture(srcViewImpl);
-	NVSDK_NGX_Resource_VK dstResVk = getNGXResourceFromAnkiTexture(dstViewImpl);
-	NVSDK_NGX_Resource_VK mvResVk = getNGXResourceFromAnkiTexture(mvViewImpl);
-	NVSDK_NGX_Resource_VK depthResVk = getNGXResourceFromAnkiTexture(depthViewImpl);
-	NVSDK_NGX_Resource_VK exposureResVk = getNGXResourceFromAnkiTexture(exposureViewImpl);
-
-	const U32 mipLevel = srcViewImpl.getSubresource().m_firstMipmap;
+	const U32 mipLevel = inColor.getFirstMipmap();
 	const NVSDK_NGX_Coordinates renderingOffset = {0, 0};
-	const NVSDK_NGX_Dimensions renderingSize = {srcViewImpl.getTextureImpl().getWidth() >> mipLevel,
-												srcViewImpl.getTextureImpl().getHeight() >> mipLevel};
+	const NVSDK_NGX_Dimensions renderingSize = {inColor.getTexture().getWidth() >> mipLevel, inColor.getTexture().getHeight() >> mipLevel};
 
 	NVSDK_NGX_VK_DLSS_Eval_Params vkDlssEvalParams;
 	memset(&vkDlssEvalParams, 0, sizeof(vkDlssEvalParams));
@@ -1146,20 +1140,17 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 
 	for(const TextureBarrierInfo& barrier : textures)
 	{
-		ANKI_ASSERT(barrier.m_texture);
-		const TextureImpl& impl = static_cast<const TextureImpl&>(*barrier.m_texture);
+		const TextureImpl& impl = static_cast<const TextureImpl&>(barrier.m_textureView.getTexture());
 		const TextureUsageBit nextUsage = barrier.m_nextUsage;
 		const TextureUsageBit prevUsage = barrier.m_previousUsage;
-		TextureSubresourceInfo subresource = barrier.m_subresource;
 
 		ANKI_ASSERT(impl.usageValid(prevUsage));
 		ANKI_ASSERT(impl.usageValid(nextUsage));
 		ANKI_ASSERT(((nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kGenerateMipmaps
 					 || (nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kNone)
 					&& "GENERATE_MIPMAPS should be alone");
-		ANKI_ASSERT(impl.isSubresourceValid(subresource));
 
-		if(subresource.m_firstMipmap > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
+		if(barrier.m_textureView.getFirstMipmap() > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
 		{
 			// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
 			continue;
@@ -1169,7 +1160,7 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		{
 			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the subresource
 
-			ANKI_ASSERT(subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == 1);
+			ANKI_ASSERT(barrier.m_textureView.getFirstMipmap() == 0 && barrier.m_textureView.getMipmapCount() == 1);
 		}
 
 		VkImageMemoryBarrier& inf = *imageBarriers.emplaceBack();
@@ -1178,8 +1169,7 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		inf.image = impl.m_imageHandle;
-
-		impl.computeVkImageSubresourceRange(subresource, inf.subresourceRange);
+		inf.subresourceRange = impl.computeVkImageSubresourceRange(barrier.m_textureView.getSubresource());
 
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;

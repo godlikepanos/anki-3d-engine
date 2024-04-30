@@ -26,7 +26,7 @@ void CommandBuffer::endRecording()
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, Buffer* buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
+void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, PtrSize stride, VertexStepRate stepRate)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -36,7 +36,7 @@ void CommandBuffer::setVertexAttribute(VertexAttribute attribute, U32 buffBindin
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindIndexBuffer(Buffer* buff, PtrSize offset, IndexType type)
+void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -127,7 +127,7 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, TextureView* texView, U32 arrayIdx)
+void CommandBuffer::bindTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -137,17 +137,17 @@ void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arra
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx)
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindStorageTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx)
+void CommandBuffer::bindStorageTexture(U32 set, U32 binding, const TextureView& tex, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -157,7 +157,7 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, Acceleration
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
+void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferView& buff, Format fmt, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -173,7 +173,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
-									TextureView* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
+									const TextureView& vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
 
@@ -213,24 +213,24 @@ void CommandBuffer::draw(PrimitiveTopology topology, U32 count, U32 instanceCoun
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::drawIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* buff)
+void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride,
-											 Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
+void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride,
+											 const BufferView& countBuffer, U32 maxDrawCount)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride,
-									  Buffer* countBuffer, PtrSize countBufferOffset, U32 maxDrawCount)
+void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride, const BufferView& countBuffer,
+									  U32 maxDrawCount)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* buff)
+void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -240,7 +240,7 @@ void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCou
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::drawMeshTasksIndirect(Buffer* argBuffer, PtrSize argBufferOffset)
+void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawCount)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -250,48 +250,43 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::dispatchComputeIndirect(Buffer* argBuffer, PtrSize argBufferOffset)
+void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::traceRays(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
-							  U32 height, U32 depth)
+void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
+							  U32 depth)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::generateMipmaps2d(TextureView* texView)
+void CommandBuffer::generateMipmaps2d(const TextureView& texView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::generateMipmaps3d([[maybe_unused]] TextureView* texView)
+void CommandBuffer::blitTexture(const TextureView& srcView, const TextureView& destView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::blitTextureViews([[maybe_unused]] TextureView* srcView, [[maybe_unused]] TextureView* destView)
+void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& clearValue)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::clearTextureView(TextureView* texView, const ClearValue& clearValue)
+void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::copyBufferToTextureView(Buffer* buff, PtrSize offset, PtrSize range, TextureView* texView)
+void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::fillBuffer(Buffer* buff, PtrSize offset, PtrSize size, U32 value)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, Buffer* buff)
+void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -301,13 +296,14 @@ void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset)
+void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::upscale(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
-							TextureView* exposure, Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale)
+void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, const TextureView& outUpscaledColor, const TextureView& motionVectors,
+							const TextureView& depth, const TextureView& exposure, Bool resetAccumulation, const Vec2& jitterOffset,
+							const Vec2& motionVectorsScale)
 {
 	ANKI_ASSERT(!"TODO");
 }

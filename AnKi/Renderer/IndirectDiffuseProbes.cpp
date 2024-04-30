@@ -240,11 +240,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
 				{
 					colorRtis[j].m_loadOperation = RenderTargetLoadOperation::kClear;
-					colorRtis[j].m_surface.m_face = f;
+					colorRtis[j].m_subresource.m_face = f;
 					colorRtis[j].m_handle = gbufferColorRts[j];
 				}
 				RenderTargetInfo depthRti(gbufferDepthRt);
-				depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+				depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 				depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 				depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
@@ -252,9 +252,10 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
-					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, f, 0));
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSubresourceDescriptor::surface(0, f, 0));
 				}
-				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer,
+										  TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
 
 				pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency,
 										 BufferUsageBit::kIndirectDraw);
@@ -337,11 +338,12 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				RenderTargetInfo depthRti(shadowsRt);
 				depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-				depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+				depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 				depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 				pass.setRenderpassInfo({}, &depthRti);
 
-				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer,
+										  TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
 				pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
 										 BufferUsageBit::kIndirectDraw);
 
@@ -392,18 +394,19 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				RenderTargetInfo colorRti(lightShadingRt);
 				colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-				colorRti.m_surface.m_face = f;
+				colorRti.m_subresource.m_face = f;
 				pass.setRenderpassInfo({colorRti});
 
 				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
 
-				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, f, 0));
+				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite, TextureSubresourceDescriptor::surface(0, f, 0));
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
-					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, f, 0));
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSubresourceDescriptor::surface(0, f, 0));
 				}
-				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment,
+										  TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
 
 				if(shadowsRt.isValid())
 				{
@@ -449,11 +452,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_visibleLightsBuffer = visibleLightsBuffer;
 
 					dsInfo.m_gbufferRenderTargets[0] = gbufferColorRts[0];
-					dsInfo.m_gbufferRenderTargetSubresourceInfos[0].m_firstFace = faceIdx;
+					dsInfo.m_gbufferRenderTargetSubresource[0].m_face = faceIdx;
 					dsInfo.m_gbufferRenderTargets[1] = gbufferColorRts[1];
-					dsInfo.m_gbufferRenderTargetSubresourceInfos[1].m_firstFace = faceIdx;
+					dsInfo.m_gbufferRenderTargetSubresource[1].m_face = faceIdx;
 					dsInfo.m_gbufferRenderTargets[2] = gbufferColorRts[2];
-					dsInfo.m_gbufferRenderTargetSubresourceInfos[2].m_firstFace = faceIdx;
+					dsInfo.m_gbufferRenderTargetSubresource[2].m_face = faceIdx;
 					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
 					dsInfo.m_skyLutRenderTarget = (getRenderer().getSky().isEnabled()) ? getRenderer().getSky().getSkyLutRt() : RenderTargetHandle();
@@ -485,14 +488,14 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				// Bind resources
 				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-				rgraphCtx.bindColorTexture(0, 1, lightShadingRt);
+				rgraphCtx.bindTexture(0, 1, lightShadingRt);
 
 				for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 				{
-					rgraphCtx.bindColorTexture(0, 2, gbufferColorRts[i], i);
+					rgraphCtx.bindTexture(0, 2, gbufferColorRts[i], i);
 				}
 
-				rgraphCtx.bindStorageTexture(0, 3, irradianceVolume, TextureSubresourceInfo());
+				rgraphCtx.bindStorageTexture(0, 3, irradianceVolume);
 
 				class
 				{

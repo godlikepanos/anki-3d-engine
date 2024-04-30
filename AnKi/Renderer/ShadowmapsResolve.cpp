@@ -66,7 +66,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-								   TextureUsageBit::kSampledCompute, TextureSurfaceDescriptor(0, 0, 0));
+								   TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
@@ -90,7 +90,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-								   TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, 0, 0));
+								   TextureUsageBit::kSampledFragment);
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
@@ -113,7 +113,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 
 	cmdb.bindUniformBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
 	cmdb.bindStorageBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-	rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
+	rgraphCtx.bindTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
 	cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
 
 	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
@@ -126,13 +126,13 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 	}
 	else
 	{
-		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt());
 	}
-	cmdb.bindTexture(0, 8, &m_noiseImage->getTextureView());
+	cmdb.bindTexture(0, 8, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDescriptor::all()));
 
 	if(getRenderer().getRtShadowsEnabled())
 	{
-		rgraphCtx.bindColorTexture(0, 9, getRenderer().getRtShadows().getRt());
+		rgraphCtx.bindTexture(0, 9, getRenderer().getRtShadows().getRt());
 	}
 
 	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get())
@@ -143,7 +143,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 
 	if(g_preferComputeCVar.get())
 	{
-		rgraphCtx.bindStorageTexture(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindStorageTexture(0, 10, m_runCtx.m_rt);
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
 	}
 	else

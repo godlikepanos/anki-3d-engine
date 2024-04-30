@@ -18,7 +18,6 @@
 [[vk::binding(1)]] StructuredBuffer<SpotLight> g_spotLights;
 [[vk::binding(2)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
 [[vk::binding(3)]] StructuredBuffer<ReflectionProbe> g_reflectionProbes;
-[[vk::binding(4)]] Texture2D<Vec4> g_shadowAtlasTex;
 [[vk::binding(5)]] StructuredBuffer<Cluster> g_clusters;
 
 [[vk::binding(6)]] SamplerState g_nearestAnyClampSampler;

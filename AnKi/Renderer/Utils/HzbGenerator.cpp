@@ -108,7 +108,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 	Array<DispatchInput, kMaxShadowCascades> dispatchInputsCopy;
 	for(U32 i = 0; i < dispatchCount; ++i)
 	{
-		TextureSubresourceInfo firstMipSubresource;
+		const TextureSubresourceDescriptor firstMipSubresource = TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(dispatchInputs[i].m_srcDepthRt, TextureUsageBit::kSampledCompute, firstMipSubresource);
 		pass.newTextureDependency(dispatchInputs[i].m_dstHzbRt, TextureUsageBit::kStorageComputeWrite);
 
@@ -151,14 +151,14 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
-				TextureSubresourceInfo subresource;
+				TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::firstSurface();
 				if(mip < mipsToCompute)
 				{
-					subresource.m_firstMipmap = mip;
+					subresource.m_mipmap = mip;
 				}
 				else
 				{
-					subresource.m_firstMipmap = 0; // Put something random
+					subresource.m_mipmap = 0; // Put something random
 				}
 
 				rgraphCtx.bindStorageTexture(0, 0, in.m_dstHzbRt, subresource, mip);
@@ -166,7 +166,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 
 			cmdb.bindStorageBuffer(
 				0, 1, BufferView(m_counterBuffer.get(), (firstCounterBufferElement + dispatch) * m_counterBufferElementSize, sizeof(U32)));
-			rgraphCtx.bindTexture(0, 2, in.m_srcDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(0, 2, in.m_srcDepthRt, TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		}
@@ -209,7 +209,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		pass.setWork([this, depthBufferRt = in.m_depthBufferRt, maxDepthRt, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			rgraphCtx.bindTexture(0, 0, depthBufferRt, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(0, 0, depthBufferRt, TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindStorageTexture(0, 2, maxDepthRt);
 
@@ -264,7 +264,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("HZB boxes");
 
 		RenderTargetInfo depthRt(depthRts[i]);
-		depthRt.m_aspect = DepthStencilAspectBit::kDepth;
+		depthRt.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 		depthRt.m_clearValue.m_depthStencil.m_depth = 0.0f;
 		depthRt.m_loadOperation = RenderTargetLoadOperation::kClear;
 		pass.setRenderpassInfo({}, &depthRt);
@@ -283,7 +283,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			cmdb.bindShaderProgram(m_maxBoxGrProg.get());
 
-			rgraphCtx.bindColorTexture(0, 0, maxDepthRt);
+			rgraphCtx.bindTexture(0, 0, maxDepthRt);
 
 			struct Uniforms
 			{

@@ -71,7 +71,6 @@ public:
 	/// @{
 	[[nodiscard]] BufferPtr newBuffer(const BufferInitInfo& init);
 	[[nodiscard]] TexturePtr newTexture(const TextureInitInfo& init);
-	[[nodiscard]] TextureViewPtr newTextureView(const TextureViewInitInfo& init);
 	[[nodiscard]] SamplerPtr newSampler(const SamplerInitInfo& init);
 	[[nodiscard]] ShaderPtr newShader(const ShaderInitInfo& init);
 	[[nodiscard]] ShaderProgramPtr newShaderProgram(const ShaderProgramInitInfo& init);

@@ -72,8 +72,8 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindShaderProgram(m_grProg.get());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 2, getRenderer().getGBuffer().getColorRt(3));
+		rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getColorRt(3));
 
 		class Uniforms
 		{
@@ -90,7 +90,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindStorageTexture(0, 4, m_runCtx.m_motionVectorsRtHandle, TextureSubresourceInfo());
+			rgraphCtx.bindStorageTexture(0, 4, m_runCtx.m_motionVectorsRtHandle);
 		}
 
 		if(g_preferComputeCVar.get())

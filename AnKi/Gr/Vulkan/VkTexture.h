@@ -12,70 +12,14 @@
 
 namespace anki {
 
-// Forward
-class TextureUsageState;
-
 /// @addtogroup vulkan
 /// @{
-
-/// A Vulkan image view with some extra data.
-class MicroImageView
-{
-	friend class TextureImpl;
-
-public:
-	MicroImageView() = default;
-
-	MicroImageView(MicroImageView&& b)
-	{
-		*this = std::move(b);
-	}
-
-	~MicroImageView()
-	{
-		ANKI_ASSERT(m_bindlessIndex == kMaxU32 && "Forgot to unbind the bindless");
-		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
-	}
-
-	MicroImageView& operator=(MicroImageView&& b)
-	{
-		m_handle = b.m_handle;
-		b.m_handle = VK_NULL_HANDLE;
-		m_bindlessIndex = b.m_bindlessIndex;
-		b.m_bindlessIndex = kMaxU32;
-		m_derivedTextureType = b.m_derivedTextureType;
-		b.m_derivedTextureType = TextureType::kCount;
-		return *this;
-	}
-
-	VkImageView getHandle() const
-	{
-		ANKI_ASSERT(m_handle);
-		return m_handle;
-	}
-
-	/// @note It's thread-safe.
-	U32 getOrCreateBindlessIndex() const;
-
-	TextureType getDerivedTextureType() const
-	{
-		ANKI_ASSERT(m_derivedTextureType != TextureType::kCount);
-		return m_derivedTextureType;
-	}
-
-private:
-	VkImageView m_handle = VK_NULL_HANDLE;
-
-	mutable U32 m_bindlessIndex = kMaxU32;
-	mutable SpinLock m_bindlessIndexLock;
-
-	/// Because for example a single surface view of a cube texture will be a 2D view.
-	TextureType m_derivedTextureType = TextureType::kCount;
-};
 
 /// Texture container.
 class TextureImpl final : public Texture
 {
+	friend class Texture;
+
 public:
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 
@@ -83,8 +27,6 @@ public:
 
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
 	VkImageUsageFlags m_vkUsageFlags = 0;
-	VkImageViewCreateInfo m_viewCreateInfoTemplate;
-	VkImageViewASTCDecodeModeEXT m_astcDecodeMode;
 
 	TextureImpl(CString name)
 		: Texture(name)
@@ -108,37 +50,6 @@ public:
 		return m_aspect == aspect || !!(aspect & m_aspect);
 	}
 
-	/// Compute the layer as defined by Vulkan.
-	U32 computeVkArrayLayer(const TextureSurfaceDescriptor& surf) const
-	{
-		U32 layer = 0;
-		switch(m_texType)
-		{
-		case TextureType::k2D:
-			layer = 0;
-			break;
-		case TextureType::kCube:
-			layer = surf.m_face;
-			break;
-		case TextureType::k2DArray:
-			layer = surf.m_layer;
-			break;
-		case TextureType::kCubeArray:
-			layer = surf.m_layer * 6 + surf.m_face;
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
-
-		return layer;
-	}
-
-	U32 computeVkArrayLayer([[maybe_unused]] const TextureVolumeDescriptor& vol) const
-	{
-		ANKI_ASSERT(m_texType == TextureType::k3D);
-		return 0;
-	}
-
 	Bool usageValid(TextureUsageBit usage) const
 	{
 #if ANKI_ASSERTIONS_ENABLED
@@ -155,40 +66,48 @@ public:
 	/// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
 
-	void computeVkImageSubresourceRange(const TextureSubresourceInfo& in, VkImageSubresourceRange& range) const
+	VkImageSubresourceRange computeVkImageSubresourceRange(const TextureSubresourceDescriptor& subresource) const
 	{
-		ANKI_ASSERT(isSubresourceValid(in));
+		const TextureView in(this, subresource);
+		VkImageSubresourceRange range = {};
+		range.aspectMask = convertImageAspect(in.getDepthStencilAspect());
+		range.baseMipLevel = in.getFirstMipmap();
+		range.levelCount = in.getMipmapCount();
 
-		range.aspectMask = convertImageAspect(in.m_depthStencilAspect);
-		range.baseMipLevel = in.m_firstMipmap;
-		range.levelCount = in.m_mipmapCount;
-
-		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
-		range.baseArrayLayer = in.m_firstLayer * faceCount + in.m_firstFace;
-		range.layerCount = in.m_layerCount * in.m_faceCount;
+		const U32 faceCount = textureTypeIsCube(in.getTexture().getTextureType()) ? 6 : 1;
+		range.baseArrayLayer = in.getFirstLayer() * faceCount + in.getFirstFace();
+		range.layerCount = in.getLayerCount() * in.getFaceCount();
+		return range;
 	}
 
-	void computeVkImageViewCreateInfo(const TextureSubresourceInfo& subresource, VkImageViewCreateInfo& viewCi, TextureType& newTextureType) const
+	VkImageView getImageView(const TextureSubresourceDescriptor& subresource) const
 	{
-		ANKI_ASSERT(isSubresourceValid(subresource));
-
-		viewCi = m_viewCreateInfoTemplate;
-		computeVkImageSubresourceRange(subresource, viewCi.subresourceRange);
-
-		// Fixup the image view type
-		newTextureType = computeNewTexTypeOfSubresource(subresource);
-		viewCi.viewType = convertTextureViewType(newTextureType);
+		return getTextureViewEntry(subresource).m_handle;
 	}
-
-	const MicroImageView& getOrCreateView(const TextureSubresourceInfo& subresource) const;
 
 private:
-	mutable GrHashMap<TextureSubresourceInfo, MicroImageView> m_viewsMap;
-	mutable RWMutex m_viewsMapMtx;
+	class TextureViewEntry
+	{
+	public:
+		VkImageView m_handle = VK_NULL_HANDLE;
 
-	/// This is a special optimization for textures that have only one surface. In this case we don't need to go through
-	/// the hashmap above.
-	MicroImageView m_singleSurfaceImageView;
+		mutable U32 m_bindlessIndex = kMaxU32;
+		mutable SpinLock m_bindlessIndexLock;
+	};
+
+	enum class ViewClass
+	{
+		kDefault,
+		kDepth,
+		kStencil,
+
+		kCount,
+		kFirst = 0
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(ViewClass)
+
+	Array<GrDynamicArray<TextureViewEntry>, U32(ViewClass::kCount)> m_textureViews;
+	Array<TextureViewEntry, U32(ViewClass::kCount)> m_wholeTextureViews;
 
 #if ANKI_ASSERTIONS_ENABLED
 	mutable TextureUsageBit m_usedFor = TextureUsageBit::kNone;
@@ -201,12 +120,20 @@ private:
 
 	Error initImage(const TextureInitInfo& init);
 
-	/// Compute the new type of a texture view.
-	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const;
+	Error initViews();
 
 	Error initInternal(VkImage externalImage, const TextureInitInfo& init);
 
 	void computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages, VkAccessFlags& accesses) const;
+
+	U32 translateSurfaceOrVolume(U32 layer, U32 face, U32 mip) const
+	{
+		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+		ANKI_ASSERT(layer < m_layerCount && face < faceCount && mip < m_mipCount);
+		return layer * faceCount * m_mipCount + face * m_mipCount + mip;
+	}
+
+	const TextureViewEntry& getTextureViewEntry(const TextureSubresourceDescriptor& subresource) const;
 };
 /// @}
 

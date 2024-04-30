@@ -17,7 +17,8 @@ inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& 
 	m_rgraph->getCachedBuffer(handle, buff, offset, range);
 }
 
-inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Texture*& tex) const
+inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource,
+														Texture*& tex) const
 {
 	TextureUsageBit usage;
 	m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
@@ -27,50 +28,6 @@ inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handl
 inline Texture& RenderPassWorkContext::getTexture(RenderTargetHandle handle) const
 {
 	return m_rgraph->getTexture(handle);
-}
-
-inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep) const
-{
-	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kTexture);
-
-	TextureSubresourceInfo& subresource = dep.m_texture.m_subresource;
-	const Bool wholeTexture = subresource.m_mipmapCount == kMaxU32;
-	const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
-	if(wholeTexture)
-	{
-		ANKI_ASSERT(subresource.m_firstFace == 0);
-		ANKI_ASSERT(subresource.m_firstMipmap == 0);
-		ANKI_ASSERT(subresource.m_firstLayer == 0);
-
-		if(rt.m_importedTex)
-		{
-			subresource.m_faceCount = textureTypeIsCube(rt.m_importedTex->getTextureType()) ? 6 : 1;
-			subresource.m_mipmapCount = rt.m_importedTex->getMipmapCount();
-			subresource.m_layerCount = rt.m_importedTex->getLayerCount();
-		}
-		else
-		{
-			subresource.m_faceCount = textureTypeIsCube(rt.m_initInfo.m_type) ? 6 : 1;
-			subresource.m_mipmapCount = rt.m_initInfo.m_mipmapCount;
-			subresource.m_layerCount = rt.m_initInfo.m_layerCount;
-		}
-	}
-
-	if(subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
-	{
-		const Bool imported = rt.m_importedTex.isCreated();
-		if(imported)
-		{
-			subresource.m_depthStencilAspect = rt.m_importedTex->getDepthStencilAspect();
-		}
-		else if(!imported && getFormatInfo(rt.m_initInfo.m_format).isDepthStencil())
-		{
-			subresource.m_depthStencilAspect = getFormatInfo(rt.m_initInfo.m_format).m_depthStencil;
-		}
-	}
-
-	ANKI_ASSERT(dep.m_texture.m_subresource.m_firstMipmap + dep.m_texture.m_subresource.m_mipmapCount
-				<= ((rt.m_importedTex) ? rt.m_importedTex->getMipmapCount() : rt.m_initInfo.m_mipmapCount));
 }
 
 inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)
@@ -126,8 +83,21 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 
 	if(kType == RenderPassDependency::Type::kTexture)
 	{
-		m_rtDeps.emplaceBack(dep);
-		fixSubresource(m_rtDeps.getBack());
+		RenderPassDependency& newDep = *m_rtDeps.emplaceBack(dep);
+
+		// Sanitize a bit
+		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
+		if(newDep.m_texture.m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
+		{
+			if(rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect())
+			{
+				newDep.m_texture.m_subresource.m_depthStencilAspect = rt.m_importedTex->getDepthStencilAspect();
+			}
+			else if(!rt.m_importedTex.isCreated() && getFormatInfo(rt.m_initInfo.m_format).isDepthStencil())
+			{
+				newDep.m_texture.m_subresource.m_depthStencilAspect = getFormatInfo(rt.m_initInfo.m_format).m_depthStencil;
+			}
+		}
 
 		if(!!(dep.m_texture.m_usage & TextureUsageBit::kAllRead))
 		{
@@ -144,7 +114,6 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 
 		// Checks
 #if ANKI_ASSERTIONS_ENABLED
-		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 		if((!rt.m_importedTex.isCreated() && !!getFormatInfo(rt.m_initInfo.m_format).m_depthStencil)
 		   || (rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect()))
 		{
@@ -194,7 +163,8 @@ inline void GraphicsRenderPassDescription::setRenderpassInfo(ConstWeakArray<Rend
 	for(U32 i = 0; i < m_colorRtCount; ++i)
 	{
 		m_rts[i].m_handle = colorRts[i].m_handle;
-		m_rts[i].m_surface = colorRts[i].m_surface;
+		ANKI_ASSERT(!colorRts[i].m_subresource.m_depthStencilAspect);
+		m_rts[i].m_subresource = colorRts[i].m_subresource;
 		m_rts[i].m_loadOperation = colorRts[i].m_loadOperation;
 		m_rts[i].m_storeOperation = colorRts[i].m_storeOperation;
 		m_rts[i].m_clearValue = colorRts[i].m_clearValue;
@@ -203,9 +173,8 @@ inline void GraphicsRenderPassDescription::setRenderpassInfo(ConstWeakArray<Rend
 	if(depthStencilRt)
 	{
 		m_rts[kMaxColorRenderTargets].m_handle = depthStencilRt->m_handle;
-		m_rts[kMaxColorRenderTargets].m_surface = depthStencilRt->m_surface;
-		ANKI_ASSERT(!!depthStencilRt->m_aspect);
-		m_rts[kMaxColorRenderTargets].m_aspect = depthStencilRt->m_aspect;
+		ANKI_ASSERT(!!depthStencilRt->m_subresource.m_depthStencilAspect);
+		m_rts[kMaxColorRenderTargets].m_subresource = depthStencilRt->m_subresource;
 		m_rts[kMaxColorRenderTargets].m_loadOperation = depthStencilRt->m_loadOperation;
 		m_rts[kMaxColorRenderTargets].m_storeOperation = depthStencilRt->m_storeOperation;
 		m_rts[kMaxColorRenderTargets].m_stencilLoadOperation = depthStencilRt->m_stencilLoadOperation;

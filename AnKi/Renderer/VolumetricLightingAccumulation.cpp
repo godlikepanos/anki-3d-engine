@@ -100,15 +100,15 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-		rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_rts[1], TextureSubresourceInfo());
+		rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_rts[1]);
 
-		cmdb.bindTexture(0, 4, &m_noiseImage->getTextureView());
+		cmdb.bindTexture(0, 4, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDescriptor::all()));
 
-		rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_rts[0]);
+		rgraphCtx.bindTexture(0, 5, m_runCtx.m_rts[0]);
 
 		cmdb.bindUniformBuffer(0, 6, ctx.m_globalRenderingUniformsBuffer);
 		cmdb.bindStorageBuffer(0, 7, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		rgraphCtx.bindColorTexture(0, 8, getRenderer().getShadowMapping().getShadowmapRt());
+		rgraphCtx.bindTexture(0, 8, getRenderer().getShadowMapping().getShadowmapRt());
 		cmdb.bindStorageBuffer(0, 9,
 							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
 		cmdb.bindStorageBuffer(0, 10, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));

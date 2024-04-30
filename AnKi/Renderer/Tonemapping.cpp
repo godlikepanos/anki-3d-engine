@@ -63,17 +63,13 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 		rgraphCtx.bindStorageTexture(0, 1, m_runCtx.m_exposureLuminanceHandle);
-
-		TextureSubresourceInfo inputTexSubresource;
-		inputTexSubresource.m_firstMipmap = m_inputTexMip;
-		rgraphCtx.bindTexture(0, 0, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
+		rgraphCtx.bindTexture(0, 0, getRenderer().getDownscaleBlur().getRt(), TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
 
 		cmdb.dispatchCompute(1, 1, 1);
 	});
 
-	TextureSubresourceInfo inputTexSubresource;
-	inputTexSubresource.m_firstMipmap = m_inputTexMip;
-	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
+	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
+							  TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
 }
 
 } // end namespace anki

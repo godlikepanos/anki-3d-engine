@@ -80,8 +80,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_exposureRt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
 
 		// Set the render pass
-		TextureSubresourceInfo inputTexSubresource;
-		inputTexSubresource.m_firstMipmap = getRenderer().getDownscaleBlur().getMipmapCount() - 1;
+		const TextureSubresourceDescriptor inputTexSubresource =
+			TextureSubresourceDescriptor::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
 
 		RenderPassDescriptionBase* prpass;
 		if(preferCompute)
@@ -109,8 +109,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_exposure.m_grProg.get());
 
-			TextureSubresourceInfo inputTexSubresource;
-			inputTexSubresource.m_firstMipmap = getRenderer().getDownscaleBlur().getMipmapCount() - 1;
+			const TextureSubresourceDescriptor inputTexSubresource =
+				TextureSubresourceDescriptor::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(0, 1, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
@@ -122,7 +122,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
+				rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_exposureRt);
 
 				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_rtDescr.m_width, m_exposure.m_rtDescr.m_height);
 			}
@@ -168,12 +168,12 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_upscale.m_grProg.get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
-			cmdb.bindTexture(0, 2, &m_upscale.m_lensDirtImage->getTextureView());
+			rgraphCtx.bindTexture(0, 1, m_runCtx.m_exposureRt);
+			cmdb.bindTexture(0, 2, TextureView(&m_upscale.m_lensDirtImage->getTexture(), TextureSubresourceDescriptor::all()));
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
+				rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_upscaleRt);
 
 				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_rtDescr.m_width, m_upscale.m_rtDescr.m_height);
 			}

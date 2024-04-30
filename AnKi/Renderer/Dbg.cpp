@@ -139,8 +139,8 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	cmdb.bindStorageBuffer(0, 3, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
 
 	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearRepeat.get());
-	cmdb.bindTexture(0, 5, &image.getTextureView());
-	cmdb.bindTexture(0, 6, &m_spotLightImage->getTextureView());
+	cmdb.bindTexture(0, 5, TextureView(&image.getTexture(), TextureSubresourceDescriptor::all()));
+	cmdb.bindTexture(0, 6, TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDescriptor::all()));
 
 	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
 }
@@ -161,7 +161,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb.setLineWidth(2.0f);
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt());
 
 	// GBuffer renderables
 	{

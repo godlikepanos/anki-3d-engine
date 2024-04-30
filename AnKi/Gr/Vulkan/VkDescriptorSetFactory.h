@@ -8,7 +8,6 @@
 #include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Gr/Vulkan/VkBuffer.h>
 #include <AnKi/Gr/Vulkan/VkTexture.h>
-#include <AnKi/Gr/Vulkan/VkTextureView.h>
 #include <AnKi/Gr/Vulkan/VkSampler.h>
 #include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
 #include <AnKi/Util/WeakArray.h>
@@ -168,15 +167,13 @@ public:
 		m_layoutDirty = true;
 	}
 
-	void bindTexture(U32 binding, U32 arrayIdx, const TextureView* texView, VkImageLayout layout)
+	void bindTexture(U32 binding, U32 arrayIdx, VkImageView handle, VkImageLayout layout)
 	{
-		ANKI_ASSERT(texView);
-		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
-		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
+		ANKI_ASSERT(handle);
 		Binding b;
 		zeroMemory(b);
 		b.m_type = DescriptorType::kTexture;
-		b.m_image.imageView = viewImpl.getHandle();
+		b.m_image.imageView = handle;
 		b.m_image.imageLayout = layout;
 		b.m_image.sampler = VK_NULL_HANDLE;
 		setBinding(binding, arrayIdx, b);
@@ -226,15 +223,13 @@ public:
 		setBinding(binding, arrayIdx, b);
 	}
 
-	void bindStorageTexture(U32 binding, U32 arrayIdx, const TextureView* texView)
+	void bindStorageTexture(U32 binding, U32 arrayIdx, VkImageView handle)
 	{
-		ANKI_ASSERT(texView);
-		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
-		ANKI_ASSERT(impl->getTextureImpl().isSubresourceGoodForImageLoadStore(impl->getSubresource()));
+		ANKI_ASSERT(handle);
 		Binding b;
 		zeroMemory(b);
 		b.m_type = DescriptorType::kStorageImage;
-		b.m_image.imageView = impl->getHandle();
+		b.m_image.imageView = handle;
 		b.m_image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		setBinding(binding, arrayIdx, b);
 	}

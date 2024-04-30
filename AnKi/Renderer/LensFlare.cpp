@@ -139,7 +139,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 
 		// Render
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearRepeat.get());
-		cmdb.bindTexture(0, 2, &comp.getImage().getTextureView());
+		cmdb.bindTexture(0, 2, TextureView(&comp.getImage().getTexture(), TextureSubresourceDescriptor::all()));
 
 		cmdb.drawIndirect(PrimitiveTopology::kTriangleStrip, BufferView(m_runCtx.m_indirectBuff).incrementOffset(count * sizeof(DrawIndirectArgs)));
 

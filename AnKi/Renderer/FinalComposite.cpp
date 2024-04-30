@@ -137,16 +137,16 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		rgraphCtx.bindColorTexture(0, 3, getRenderer().getScale().getTonemappedRt());
+		rgraphCtx.bindTexture(0, 3, getRenderer().getScale().getTonemappedRt());
 
-		rgraphCtx.bindColorTexture(0, 4, getRenderer().getBloom().getRt());
-		cmdb.bindTexture(0, 5, &m_lut->getTextureView());
-		rgraphCtx.bindColorTexture(0, 6, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(0, 4, getRenderer().getBloom().getRt());
+		cmdb.bindTexture(0, 5, TextureView(&m_lut->getTexture(), TextureSubresourceDescriptor::all()));
+		rgraphCtx.bindTexture(0, 6, getRenderer().getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt());
 
 		if(dbgEnabled)
 		{
-			rgraphCtx.bindColorTexture(0, 8, getRenderer().getDbg().getRt());
+			rgraphCtx.bindTexture(0, 8, getRenderer().getDbg().getRt());
 		}
 
 		const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
@@ -161,7 +161,7 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 		{
 			if(handle.isValid())
 			{
-				rgraphCtx.bindColorTexture(0, count++, handle);
+				rgraphCtx.bindTexture(0, count++, handle);
 			}
 		}
 	}

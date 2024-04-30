@@ -9,7 +9,6 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/TextureView.h>
 
 namespace anki {
 
@@ -34,10 +33,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 
 	m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
 
-	TextureViewInitInfo viewInit(m_reflectionTex.get(), "ReflectionProbe");
-	m_reflectionView = GrManager::getSingleton().newTextureView(viewInit);
-
-	m_reflectionTexBindlessIndex = m_reflectionView->getOrCreateBindlessTextureIndex();
+	m_reflectionTexBindlessIndex = m_reflectionTex->getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()

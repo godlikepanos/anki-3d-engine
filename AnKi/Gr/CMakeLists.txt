@@ -25,7 +25,6 @@ set(backend_headers
 	ShaderProgram.h
 	ShaderVariableDataType.def.h
 	Texture.h
-	TextureView.h
 	TimestampQuery.h
 	PipelineQuery.h
 	GrUpscaler.h

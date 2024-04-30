@@ -113,19 +113,18 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.bindStorageBuffer(0, 2,
 							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
 		cmdb.bindStorageBuffer(0, 3, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
-		rgraphCtx.bindColorTexture(0, 4, getRenderer().getShadowMapping().getShadowmapRt());
 		cmdb.bindStorageBuffer(0, 5, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(0, 7, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindColorTexture(0, 8, getRenderer().getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 9, getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 10, getRenderer().getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(0, 11, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 12, getRenderer().getShadowmapsResolve().getRt());
-		rgraphCtx.bindColorTexture(0, 13, getRenderer().getSsao().getRt());
-		rgraphCtx.bindColorTexture(0, 14, getRenderer().getSsr().getRt());
-		cmdb.bindTexture(0, 15, &getRenderer().getProbeReflections().getIntegrationLut());
+		rgraphCtx.bindTexture(0, 8, getRenderer().getGBuffer().getColorRt(0));
+		rgraphCtx.bindTexture(0, 9, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindTexture(0, 10, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(0, 11, getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindTexture(0, 12, getRenderer().getShadowmapsResolve().getRt());
+		rgraphCtx.bindTexture(0, 13, getRenderer().getSsao().getRt());
+		rgraphCtx.bindTexture(0, 14, getRenderer().getSsr().getRt());
+		cmdb.bindTexture(0, 15, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDescriptor::all()));
 
 		cmdb.bindAllBindless(1);
 
@@ -177,14 +176,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
-			cmdb.bindTexture(0, 1, &sky->getImageResource().getTextureView());
+			cmdb.bindTexture(0, 1, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDescriptor::all()));
 		}
 		else
 		{
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindColorTexture(0, 1, getRenderer().getSky().getSkyLutRt());
+			rgraphCtx.bindTexture(0, 1, getRenderer().getSky().getSkyLutRt());
 			cmdb.bindUniformBuffer(0, 2, ctx.m_globalRenderingUniformsBuffer);
 		}
 
@@ -202,8 +201,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 
-		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-		rgraphCtx.bindColorTexture(0, 3, getRenderer().getVolumetricFog().getRt());
+		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindTexture(0, 3, getRenderer().getVolumetricFog().getRt());
 
 		class PushConsts
 		{
@@ -272,7 +271,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	RenderTargetInfo colorRt(m_runCtx.m_rt);
 	RenderTargetInfo depthRt(getRenderer().getGBuffer().getDepthRt());
 	depthRt.m_loadOperation = RenderTargetLoadOperation::kLoad;
-	depthRt.m_aspect = DepthStencilAspectBit::kDepth;
+	depthRt.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({colorRt}, &depthRt, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0);
@@ -290,9 +289,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), readUsage);
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead,
-							  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), readUsage);
+	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
 	pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),

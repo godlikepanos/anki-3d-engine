@@ -133,7 +133,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_multipleScatteringLutGrProg.get());
 
-			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
+			rgraphCtx.bindTexture(0, 0, transmittanceLutRt);
 			cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindStorageTexture(0, 2, multipleScatteringLutRt);
 
@@ -157,8 +157,8 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_skyLutGrProg.get());
 
-			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
-			rgraphCtx.bindColorTexture(0, 1, multipleScatteringLutRt);
+			rgraphCtx.bindTexture(0, 0, transmittanceLutRt);
+			rgraphCtx.bindTexture(0, 1, multipleScatteringLutRt);
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindStorageTexture(0, 3, m_runCtx.m_skyLutRt);
 			cmdb.bindUniformBuffer(0, 4, ctx.m_globalRenderingUniformsBuffer);
@@ -180,7 +180,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_computeSunColorGrProg.get());
 
-			rgraphCtx.bindColorTexture(0, 0, transmittanceLutRt);
+			rgraphCtx.bindTexture(0, 0, transmittanceLutRt);
 			cmdb.bindStorageBuffer(0, 1, ctx.m_globalRenderingUniformsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);

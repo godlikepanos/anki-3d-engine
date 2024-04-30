@@ -657,11 +657,11 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	RenderTargetInfo smRti(m_runCtx.m_rt);
 	smRti.m_loadOperation = (loadFb) ? RenderTargetLoadOperation::kLoad : RenderTargetLoadOperation::kClear;
 	smRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	smRti.m_aspect = DepthStencilAspectBit::kDepth;
+	smRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({}, &smRti, viewport[0], viewport[1], viewport[2], viewport[3]);
 
 	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
-	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 
 	pass.setWork([this, visOut, meshletVisOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
@@ -705,11 +705,9 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 			args.m_viewport = UVec4(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
 			args.fill(visOut);
 
-			TextureViewPtr hzbView;
 			if(spass.m_hzbRt.isValid())
 			{
-				hzbView = rgraphCtx.createTextureView(spass.m_hzbRt);
-				args.m_hzbTexture = hzbView.get();
+				args.m_hzbTexture = rgraphCtx.createTextureView(spass.m_hzbRt, TextureSubresourceDescriptor::all());
 			}
 
 			if(meshletVisOut.isFilled())

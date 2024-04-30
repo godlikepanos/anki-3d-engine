@@ -102,7 +102,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		prpass = &pass;
 	}
 
-	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	prpass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
 	prpass->newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 	prpass->newTextureDependency(m_runCtx.m_historyRt, readUsage);
 	prpass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
@@ -114,15 +114,15 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindShaderProgram(m_grProg.get());
 
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindColorTexture(0, 1, getRenderer().getLightShading().getRt());
-		rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
-		rgraphCtx.bindColorTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindTexture(0, 1, getRenderer().getLightShading().getRt());
+		rgraphCtx.bindTexture(0, 2, m_runCtx.m_historyRt);
+		rgraphCtx.bindTexture(0, 3, getRenderer().getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindStorageTexture(0, 4, getRenderer().getTonemapping().getRt());
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindStorageTexture(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
-			rgraphCtx.bindStorageTexture(0, 6, m_runCtx.m_tonemappedRt, TextureSubresourceInfo());
+			rgraphCtx.bindStorageTexture(0, 5, m_runCtx.m_renderRt);
+			rgraphCtx.bindStorageTexture(0, 6, m_runCtx.m_tonemappedRt);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}

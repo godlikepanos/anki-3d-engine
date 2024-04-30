@@ -240,11 +240,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
 			{
 				colorRtis[j].m_loadOperation = RenderTargetLoadOperation::kClear;
-				colorRtis[j].m_surface.m_face = f;
+				colorRtis[j].m_subresource.m_face = f;
 				colorRtis[j].m_handle = gbufferColorRts[j];
 			}
 			RenderTargetInfo depthRti(gbufferDepthRt);
-			depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+			depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 			depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 			depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
@@ -252,10 +252,10 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSurfaceDescriptor(0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSubresourceDescriptor::surface(0, f, 0));
 			}
 
-			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
 			pass.setWork([this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
@@ -335,11 +335,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			RenderTargetInfo depthRti(shadowMapRt);
 			depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 			depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
-			depthRti.m_aspect = DepthStencilAspectBit::kDepth;
+			depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 
 			pass.setRenderpassInfo({}, &depthRti);
 
-			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllFramebuffer, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllFramebuffer, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
 									 BufferUsageBit::kIndirectDraw);
 
@@ -387,18 +387,18 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: light shading", f));
 
 			RenderTargetInfo colorRti(probeTexture);
-			colorRti.m_surface.m_face = f;
+			colorRti.m_subresource.m_face = f;
 			colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 			pass.setRenderpassInfo({colorRti});
 
 			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
-			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceInfo(TextureSurfaceDescriptor(0, f, 0)));
+			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceDescriptor::surface(0, f, 0));
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSurfaceDescriptor(0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSubresourceDescriptor::surface(0, f, 0));
 			}
-			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, DepthStencilAspectBit::kDepth);
 
 			if(shadowMapRt.isValid())
 			{
@@ -427,11 +427,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 				dsInfo.m_visibleLightsBuffer = visResult;
 				dsInfo.m_gbufferRenderTargets[0] = gbufferColorRts[0];
-				dsInfo.m_gbufferRenderTargetSubresourceInfos[0].m_firstFace = faceIdx;
+				dsInfo.m_gbufferRenderTargetSubresource[0].m_face = faceIdx;
 				dsInfo.m_gbufferRenderTargets[1] = gbufferColorRts[1];
-				dsInfo.m_gbufferRenderTargetSubresourceInfos[1].m_firstFace = faceIdx;
+				dsInfo.m_gbufferRenderTargetSubresource[1].m_face = faceIdx;
 				dsInfo.m_gbufferRenderTargets[2] = gbufferColorRts[2];
-				dsInfo.m_gbufferRenderTargetSubresourceInfos[2].m_firstFace = faceIdx;
+				dsInfo.m_gbufferRenderTargetSubresource[2].m_face = faceIdx;
 				dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 				if(shadowMapRt.isValid())
 				{
@@ -463,7 +463,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-			rgraphCtx.bindColorTexture(0, 1, probeTexture);
+			rgraphCtx.bindTexture(0, 1, probeTexture);
 
 			cmdb.bindStorageBuffer(0, 3, BufferView(m_irradiance.m_diceValuesBuff.get()));
 
@@ -496,17 +496,14 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 			{
-				rgraphCtx.bindColorTexture(0, 1, gbufferColorRts[i], i);
+				rgraphCtx.bindTexture(0, 1, gbufferColorRts[i], i);
 			}
 
 			cmdb.bindStorageBuffer(0, 2, BufferView(m_irradiance.m_diceValuesBuff.get()));
 
 			for(U8 f = 0; f < 6; ++f)
 			{
-				TextureSubresourceInfo subresource;
-				subresource.m_faceCount = 1;
-				subresource.m_firstFace = f;
-				rgraphCtx.bindStorageTexture(0, 3, probeTexture, subresource, f);
+				rgraphCtx.bindStorageTexture(0, 3, probeTexture, TextureSubresourceDescriptor::surface(0, f, 0), f);
 			}
 
 			dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
@@ -519,22 +516,17 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Gen mips", faceIdx));
 
-			TextureSubresourceInfo subresource(TextureSurfaceDescriptor(0, faceIdx, 0));
-			subresource.m_mipmapCount = m_lightShading.m_mipCount;
-			pass.newTextureDependency(probeTexture, TextureUsageBit::kGenerateMipmaps, subresource);
+			for(U32 mip = 0; mip < m_lightShading.m_mipCount; ++mip)
+			{
+				const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::surface(mip, faceIdx, 0);
+				pass.newTextureDependency(probeTexture, TextureUsageBit::kGenerateMipmaps, subresource);
+			}
 
 			pass.setWork([this, faceIdx, probeTexture](RenderPassWorkContext& rgraphCtx) {
 				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
-				TextureSubresourceInfo subresource(TextureSurfaceDescriptor(0, faceIdx, 0));
-				subresource.m_mipmapCount = m_lightShading.m_mipCount;
-
-				Texture* texToBind;
-				rgraphCtx.getRenderTargetState(probeTexture, subresource, texToBind);
-
-				TextureViewInitInfo viewInit(texToBind, subresource);
-				TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-				rgraphCtx.m_commandBuffer->generateMipmaps2d(view.get());
+				const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::surface(0, faceIdx, 0);
+				rgraphCtx.m_commandBuffer->generateMipmaps2d(rgraphCtx.createTextureView(probeTexture, subresource));
 			});
 		}
 	}

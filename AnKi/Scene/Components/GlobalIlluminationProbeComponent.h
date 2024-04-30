@@ -123,7 +123,6 @@ private:
 	F32 m_fadeDistance = 0.2f;
 
 	TexturePtr m_volTex;
-	TextureViewPtr m_volView;
 	U32 m_volTexBindlessIdx = 0;
 
 	GpuSceneArrays::GlobalIlluminationProbe::Allocation m_gpuSceneProbe;

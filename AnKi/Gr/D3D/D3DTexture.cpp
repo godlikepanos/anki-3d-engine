@@ -20,6 +20,12 @@ Texture* Texture::newInstance(const TextureInitInfo& init)
 	return impl;
 }
 
+U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor& subresource)
+{
+	ANKI_ASSERT(!"TODO");
+	return 0;
+}
+
 TextureImpl::~TextureImpl()
 {
 	for(DescriptorHeapHandle& handle : m_rtvHandles)

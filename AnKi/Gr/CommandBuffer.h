@@ -7,6 +7,7 @@
 
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Gr/Buffer.h>
+#include <AnKi/Gr/Texture.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
@@ -19,10 +20,9 @@ namespace anki {
 class TextureBarrierInfo
 {
 public:
-	Texture* m_texture = nullptr;
+	TextureView m_textureView;
 	TextureUsageBit m_previousUsage = TextureUsageBit::kNone;
 	TextureUsageBit m_nextUsage = TextureUsageBit::kNone;
-	TextureSubresourceInfo m_subresource;
 };
 
 class BufferBarrierInfo
@@ -52,7 +52,7 @@ public:
 class RenderTarget
 {
 public:
-	TextureView* m_view = nullptr;
+	TextureView m_textureView;
 
 	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kClear;
 	RenderTargetStoreOperation m_storeOperation = RenderTargetStoreOperation::kStore;
@@ -63,7 +63,6 @@ public:
 	ClearValue m_clearValue;
 
 	TextureUsageBit m_usage = TextureUsageBit::kFramebufferWrite;
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone;
 };
 
 /// Command buffer initialization flags.
@@ -201,7 +200,7 @@ public:
 	void bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx = 0);
 
 	/// Bind a texture.
-	void bindTexture(U32 set, U32 binding, TextureView* texView, U32 arrayIdx = 0);
+	void bindTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx = 0);
 
 	/// Bind uniform buffer.
 	void bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx = 0);
@@ -210,7 +209,7 @@ public:
 	void bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx = 0);
 
 	/// Bind load/store image.
-	void bindStorageTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx = 0);
+	void bindStorageTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx = 0);
 
 	/// Bind texture buffer.
 	void bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferView& buff, Format fmt, U32 arrayIdx = 0);
@@ -235,11 +234,12 @@ public:
 	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is bigger than the render area
 	/// the results are undefined.
 	void beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32,
-						 U32 height = kMaxU32, TextureView* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
+						 U32 height = kMaxU32, const TextureView& vrsRt = TextureView(), U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
 
 	/// See beginRenderPass.
 	void beginRenderPass(std::initializer_list<RenderTarget> colorRts, RenderTarget* depthStencilRt = nullptr, U32 minx = 0, U32 miny = 0,
-						 U32 width = kMaxU32, U32 height = kMaxU32, TextureView* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0)
+						 U32 width = kMaxU32, U32 height = kMaxU32, const TextureView& vrsRt = TextureView(), U8 vrsRtTexelSizeX = 0,
+						 U8 vrsRtTexelSizeY = 0)
 	{
 		beginRenderPass(ConstWeakArray(colorRts.begin(), U32(colorRts.size())), depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX,
 						vrsRtTexelSizeY);
@@ -307,18 +307,17 @@ public:
 
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
 	/// TextureUsageBit::kGenerateMipmaps before calling this method.
-	/// @param texView The texture view to generate mips. It should point to a subresource that contains the whole
-	///                mip chain and only one face and one layer.
-	void generateMipmaps2d(TextureView* texView);
+	/// @param texView The texture view to generate mips. It should point to a texture view that contains the 1st mip.
+	void generateMipmaps2d(const TextureView& texView);
 
 	/// Blit from surface to surface.
-	void blitTextureViews(TextureView* srcView, TextureView* destView);
+	void blitTexture(const TextureView& srcView, const TextureView& destView);
 
 	/// Clear a single texture surface. Can be used for all textures except 3D.
-	void clearTextureView(TextureView* texView, const ClearValue& clearValue);
+	void clearTexture(const TextureView& texView, const ClearValue& clearValue);
 
 	/// Copy a buffer to a texture surface or volume.
-	void copyBufferToTexture(const BufferView& buff, TextureView* texView);
+	void copyBufferToTexture(const BufferView& buff, const TextureView& texView);
 
 	/// Fill a buffer with some value.
 	void fillBuffer(const BufferView& buff, U32 value);
@@ -351,8 +350,9 @@ public:
 	/// @param[in] jitterOffset Jittering offset that was applied during the generation of sourceTexture
 	/// @param[in] motionVectorsScale Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV space to Pixel space
 	///                               conversion)
-	void upscale(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
-				 TextureView* exposure, Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
+	void upscale(GrUpscaler* upscaler, const TextureView& inColor, const TextureView& outUpscaledColor, const TextureView& motionVectors,
+				 const TextureView& depth, const TextureView& exposure, Bool resetAccumulation, const Vec2& jitterOffset,
+				 const Vec2& motionVectorsScale);
 	/// @}
 
 	/// @name Sync

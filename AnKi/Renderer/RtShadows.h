@@ -48,7 +48,6 @@ public:
 	RenderTargetDescription m_varianceRtDescr;
 
 	TexturePtr m_dummyHistoryLenTex;
-	TextureViewPtr m_dummyHistoryLenTexView;
 	/// @}
 
 	/// @name Programs

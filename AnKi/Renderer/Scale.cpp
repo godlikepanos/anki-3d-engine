@@ -172,7 +172,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
-		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
+								  TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
 		pass.newTextureDependency(m_runCtx.m_upscaledHdrRt, writeUsage);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -298,7 +299,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 	cmdb.bindShaderProgram(m_scaleGrProg.get());
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-	rgraphCtx.bindColorTexture(0, 1, inRt);
+	rgraphCtx.bindTexture(0, 1, inRt);
 
 	if(preferCompute)
 	{
@@ -363,7 +364,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 	cmdb.bindShaderProgram(m_sharpenGrProg.get());
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-	rgraphCtx.bindColorTexture(0, 1, inRt);
+	rgraphCtx.bindTexture(0, 1, inRt);
 
 	if(preferCompute)
 	{
@@ -412,14 +413,16 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	TextureViewPtr srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt());
-	TextureViewPtr motionVectorsView = rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt());
-	TextureViewPtr depthView = rgraphCtx.createTextureView(getRenderer().getGBuffer().getDepthRt());
-	TextureViewPtr exposureView = rgraphCtx.createTextureView(getRenderer().getTonemapping().getRt());
-	TextureViewPtr dstView = rgraphCtx.createTextureView(m_runCtx.m_upscaledHdrRt);
+	const TextureView srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt(), TextureSubresourceDescriptor::firstSurface());
+	const TextureView motionVectorsView =
+		rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureSubresourceDescriptor::firstSurface());
+	const TextureView depthView = rgraphCtx.createTextureView(getRenderer().getGBuffer().getDepthRt(),
+															  TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
+	const TextureView exposureView =
+		rgraphCtx.createTextureView(getRenderer().getTonemapping().getRt(), TextureSubresourceDescriptor::firstSurface());
+	const TextureView dstView = rgraphCtx.createTextureView(m_runCtx.m_upscaledHdrRt, TextureSubresourceDescriptor::firstSurface());
 
-	cmdb.upscale(m_grUpscaler.get(), srcView.get(), dstView.get(), motionVectorsView.get(), depthView.get(), exposureView.get(), reset, jitterOffset,
-				 mvScale);
+	cmdb.upscale(m_grUpscaler.get(), srcView, dstView, motionVectorsView, depthView, exposureView, reset, jitterOffset, mvScale);
 }
 
 void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
@@ -433,7 +436,7 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 	cmdb.bindShaderProgram(m_tonemapGrProg.get());
 
 	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindColorTexture(0, 1, inRt);
+	rgraphCtx.bindTexture(0, 1, inRt);
 
 	rgraphCtx.bindStorageTexture(0, 2, getRenderer().getTonemapping().getRt());
 

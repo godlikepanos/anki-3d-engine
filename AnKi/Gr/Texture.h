@@ -9,6 +9,9 @@
 
 namespace anki {
 
+// Forward
+class TextureSubresourceDescriptor;
+
 /// @addtogroup graphics
 /// @{
 
@@ -155,91 +158,9 @@ public:
 		return m_aspect;
 	}
 
-	Bool isSubresourceValid(const TextureSubresourceInfo& subresource) const
-	{
-#define ANKI_TEX_SUBRESOURCE_ASSERT(x_) \
-	if(!(x_)) \
-	{ \
-		return false; \
-	}
-		const TextureType type = m_texType;
-		const Bool cube = textureTypeIsCube(type);
-
-		// Mips
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_mipmapCount > 0);
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstMipmap + subresource.m_mipmapCount <= m_mipCount);
-
-		// Layers
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_layerCount > 0);
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstLayer + subresource.m_layerCount <= m_layerCount);
-
-		// Faces
-		const U8 faceCount = (cube) ? 6 : 1;
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 1 || subresource.m_faceCount == 6);
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstFace + subresource.m_faceCount <= faceCount);
-
-		// Aspect
-		ANKI_TEX_SUBRESOURCE_ASSERT((m_aspect & subresource.m_depthStencilAspect) == subresource.m_depthStencilAspect);
-
-		// Misc
-		if(type == TextureType::kCubeArray && subresource.m_layerCount > 1)
-		{
-			// Because of the way surfaces are arranged in cube arrays
-			ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 6);
-		}
-
-#undef ANKI_TEX_SUBRESOURCE_ASSERT
-		return true;
-	}
-
-	/// Mipmap generation requires a specific subresource range.
-	Bool isSubresourceGoodForMipmapGeneration(const TextureSubresourceInfo& subresource) const
-	{
-		ANKI_ASSERT(isSubresourceValid(subresource));
-		if(m_texType != TextureType::k3D)
-		{
-			return subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == m_mipCount && subresource.m_faceCount == 1
-				   && subresource.m_layerCount == 1 && subresource.m_depthStencilAspect == m_aspect;
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
-			return false;
-		}
-	}
-
-	/// Return true if the subresource is good to be bound for image load store.
-	Bool isSubresourceGoodForImageLoadStore(const TextureSubresourceInfo& subresource) const
-	{
-		ANKI_ASSERT(isSubresourceValid(subresource));
-		// One mip and no depth stencil
-		return subresource.m_mipmapCount == 1 && !subresource.m_depthStencilAspect;
-	}
-
-	/// Return true if the subresource can be bound for sampling.
-	Bool isSubresourceGoodForSampling(const TextureSubresourceInfo& subresource) const
-	{
-		ANKI_ASSERT(isSubresourceValid(subresource));
-		/// Can bound only one aspect at a time.
-		return subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepth
-			   || subresource.m_depthStencilAspect == DepthStencilAspectBit::kStencil
-			   || subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
-	}
-
-	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTextureView.
-	Bool isSubresourceGoodForCopyFromBuffer(const TextureSubresourceInfo& subresource) const
-	{
-		ANKI_ASSERT(isSubresourceValid(subresource));
-		return subresource.m_faceCount == 1 && subresource.m_mipmapCount == 1 && subresource.m_layerCount == 1
-			   && subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
-	}
-
-	/// Return true if the subresource can be used as Framebuffer attachment.
-	Bool isSubresourceGoodForFramebufferAttachment(const TextureSubresourceInfo& subresource) const
-	{
-		ANKI_ASSERT(isSubresourceValid(subresource));
-		return subresource.m_faceCount == 1 && subresource.m_mipmapCount == 1 && subresource.m_layerCount == 1;
-	}
+	/// Returns an index to be used for bindless access. Only for sampling.
+	/// @note It's thread-safe
+	U32 getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor& subresource);
 
 protected:
 	U32 m_width = 0;
@@ -266,6 +187,260 @@ protected:
 private:
 	/// Allocate and initialize a new instance.
 	[[nodiscard]] static Texture* newInstance(const TextureInitInfo& init);
+};
+
+/// Defines a part of a texture. This part can be a single surface or volume or the whole texture.
+class TextureSubresourceDescriptor
+{
+public:
+	U32 m_mipmap : 5 = 0;
+	U32 m_face : 3 = 0;
+	U32 m_layer : 24 = 0;
+
+	/// This flag doesn't mean the whole texture unless the m_aspect is equal to the aspect of the Texture.
+	Bool m_allSurfacesOrVolumes = true;
+
+	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::kNone;
+
+	constexpr TextureSubresourceDescriptor(const TextureSubresourceDescriptor&) = default;
+
+	constexpr TextureSubresourceDescriptor& operator=(const TextureSubresourceDescriptor&) = default;
+
+	constexpr Bool operator==(const TextureSubresourceDescriptor& b) const
+	{
+		return m_mipmap == b.m_mipmap && m_face == b.m_face && m_layer == b.m_layer && m_allSurfacesOrVolumes == b.m_allSurfacesOrVolumes
+			   && m_depthStencilAspect == b.m_depthStencilAspect;
+	}
+
+	static constexpr TextureSubresourceDescriptor all(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	{
+		return TextureSubresourceDescriptor(0, 0, 0, true, aspect);
+	}
+
+	static constexpr TextureSubresourceDescriptor surface(U32 mip, U32 face, U32 layer, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	{
+		return TextureSubresourceDescriptor(mip, face, layer, false, aspect);
+	}
+
+	static constexpr TextureSubresourceDescriptor firstSurface(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	{
+		return TextureSubresourceDescriptor(0, 0, 0, false, aspect);
+	}
+
+	static constexpr TextureSubresourceDescriptor volume(U32 mip)
+	{
+		return TextureSubresourceDescriptor(mip, 0, 0, false, DepthStencilAspectBit::kNone);
+	}
+
+	/// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.
+	Bool overlapsWith(const TextureSubresourceDescriptor& b) const
+	{
+		return m_allSurfacesOrVolumes || b.m_allSurfacesOrVolumes || (m_mipmap == b.m_mipmap && m_face == b.m_face && m_layer == b.m_layer);
+	}
+
+	void validate(const Texture& tex) const
+	{
+		if(!m_allSurfacesOrVolumes)
+		{
+			ANKI_ASSERT(m_mipmap <= tex.getMipmapCount());
+			[[maybe_unused]] const U8 faceCount = textureTypeIsCube(tex.getTextureType()) ? 6 : 1;
+			ANKI_ASSERT(m_face < faceCount);
+			ANKI_ASSERT(m_layer < tex.getLayerCount());
+		}
+		else
+		{
+			ANKI_ASSERT(m_mipmap == 0 && m_face == 0 && m_layer == 0);
+		}
+
+		if(getFormatInfo(tex.getFormat()).m_depthStencil == DepthStencilAspectBit::kDepthStencil)
+		{
+			ANKI_ASSERT(!!m_depthStencilAspect);
+		}
+		else if(getFormatInfo(tex.getFormat()).m_depthStencil == DepthStencilAspectBit::kDepth)
+		{
+			ANKI_ASSERT(m_depthStencilAspect == DepthStencilAspectBit::kDepth);
+		}
+		else if(getFormatInfo(tex.getFormat()).m_depthStencil == DepthStencilAspectBit::kStencil)
+		{
+			ANKI_ASSERT(m_depthStencilAspect == DepthStencilAspectBit::kStencil);
+		}
+		else
+		{
+			ANKI_ASSERT(m_depthStencilAspect == DepthStencilAspectBit::kNone);
+		}
+	}
+
+private:
+	constexpr TextureSubresourceDescriptor(U32 mip, U32 face, U32 layer, Bool allSurfs, DepthStencilAspectBit aspect)
+		: m_mipmap(mip)
+		, m_face(face)
+		, m_layer(layer)
+		, m_allSurfacesOrVolumes(allSurfs)
+		, m_depthStencilAspect(aspect)
+	{
+	}
+};
+
+/// Defines a part of a texture. This part can be a single surface or volume or the whole texture.
+class TextureView
+{
+public:
+	TextureView()
+		: m_subresource(TextureSubresourceDescriptor::all())
+	{
+	}
+
+	explicit TextureView(const Texture* tex, const TextureSubresourceDescriptor& subresource)
+		: m_tex(tex)
+		, m_subresource(subresource)
+	{
+		ANKI_ASSERT(tex);
+		if(textureTypeIsCube(m_tex->getTextureType()))
+		{
+			m_subresource.m_allSurfacesOrVolumes = subresource.m_allSurfacesOrVolumes;
+		}
+		else
+		{
+			m_subresource.m_allSurfacesOrVolumes =
+				(m_tex->getMipmapCount() == 1 && m_tex->getLayerCount() == 1) || subresource.m_allSurfacesOrVolumes;
+		}
+
+		// Sanitize a bit
+		if(subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone && tex->getDepthStencilAspect() != DepthStencilAspectBit::kNone)
+		{
+			m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
+		}
+
+		validate();
+	}
+
+	TextureView(const TextureView&) = default;
+
+	TextureView& operator=(const TextureView&) = default;
+
+	[[nodiscard]] Bool isValid() const
+	{
+		return m_tex != nullptr;
+	}
+
+	[[nodiscard]] const Texture& getTexture() const
+	{
+		validate();
+		return *m_tex;
+	}
+
+	/// Returns true if the view contains all surfaces or volumes. It's orthogonal to depth stencil aspect.
+	[[nodiscard]] Bool isAllSurfacesOrVolumes() const
+	{
+		validate();
+		return m_subresource.m_allSurfacesOrVolumes;
+	}
+
+	[[nodiscard]] DepthStencilAspectBit getDepthStencilAspect() const
+	{
+		validate();
+		return m_subresource.m_depthStencilAspect;
+	}
+
+	[[nodiscard]] U32 getFirstMipmap() const
+	{
+		validate();
+		return (m_subresource.m_allSurfacesOrVolumes) ? 0 : m_subresource.m_mipmap;
+	}
+
+	[[nodiscard]] U32 getMipmapCount() const
+	{
+		validate();
+		return (m_subresource.m_allSurfacesOrVolumes) ? m_tex->getMipmapCount() : 1;
+	}
+
+	[[nodiscard]] U32 getFirstLayer() const
+	{
+		validate();
+		return (m_subresource.m_allSurfacesOrVolumes) ? 0 : m_subresource.m_layer;
+	}
+
+	[[nodiscard]] U32 getLayerCount() const
+	{
+		validate();
+		return (m_subresource.m_allSurfacesOrVolumes) ? m_tex->getLayerCount() : 1;
+	}
+
+	[[nodiscard]] U32 getFirstFace() const
+	{
+		validate();
+		return (m_subresource.m_allSurfacesOrVolumes) ? 0 : m_subresource.m_face;
+	}
+
+	[[nodiscard]] U32 getFaceCount() const
+	{
+		validate();
+		return (m_subresource.m_allSurfacesOrVolumes) ? (textureTypeIsCube(m_tex->getTextureType()) ? 6 : 1) : 1;
+	}
+
+	[[nodiscard]] Bool isGoodForSampling() const
+	{
+		validate();
+		/// Can bound only one aspect at a time.
+		return m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepth
+			   || m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kStencil
+			   || m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
+	}
+
+	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTextureView.
+	[[nodiscard]] Bool isGoodForCopyFromBuffer() const
+	{
+		validate();
+		return isSingleSurfaceOrVolume() && m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
+	}
+
+	[[nodiscard]] Bool isGoodForStorage() const
+	{
+		validate();
+		return isSingleSurfaceOrVolume() && m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
+	}
+
+	/// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.
+	[[nodiscard]] Bool overlapsWith(const TextureView& b) const
+	{
+		validate();
+		b.validate();
+		ANKI_ASSERT(m_tex == b.m_tex);
+		return m_subresource.overlapsWith(b.m_subresource);
+	}
+
+	const TextureSubresourceDescriptor& getSubresource() const
+	{
+		validate();
+		return m_subresource;
+	}
+
+private:
+	const Texture* m_tex = nullptr;
+	TextureSubresourceDescriptor m_subresource;
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_tex);
+		m_subresource.validate(*m_tex);
+	}
+
+	Bool isSingleSurfaceOrVolume() const
+	{
+		validate();
+
+		Bool singleSurfaceOrVolume;
+		if(textureTypeIsCube(m_tex->getTextureType()))
+		{
+			singleSurfaceOrVolume = !m_subresource.m_allSurfacesOrVolumes;
+		}
+		else
+		{
+			singleSurfaceOrVolume = (m_tex->getMipmapCount() == 1 && m_tex->getLayerCount() == 1) || !m_subresource.m_allSurfacesOrVolumes;
+		}
+
+		return singleSurfaceOrVolume;
+	}
 };
 /// @}
 

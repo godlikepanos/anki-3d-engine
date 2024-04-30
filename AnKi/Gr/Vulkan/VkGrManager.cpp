@@ -9,7 +9,6 @@
 
 #include <AnKi/Gr/Vulkan/VkBuffer.h>
 #include <AnKi/Gr/Vulkan/VkTexture.h>
-#include <AnKi/Gr/Vulkan/VkTextureView.h>
 #include <AnKi/Gr/Vulkan/VkSampler.h>
 #include <AnKi/Gr/Vulkan/VkShader.h>
 #include <AnKi/Gr/Vulkan/VkShaderProgram.h>
@@ -140,7 +139,6 @@ void GrManager::finish()
 
 ANKI_NEW_GR_OBJECT(Buffer)
 ANKI_NEW_GR_OBJECT(Texture)
-ANKI_NEW_GR_OBJECT(TextureView)
 ANKI_NEW_GR_OBJECT(Sampler)
 ANKI_NEW_GR_OBJECT(Shader)
 ANKI_NEW_GR_OBJECT(ShaderProgram)

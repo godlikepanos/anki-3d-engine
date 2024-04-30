@@ -26,7 +26,7 @@ public:
 
 	UVec4 m_viewport;
 
-	TextureView* m_hzbTexture = nullptr; ///< Optional.
+	TextureView m_hzbTexture; ///< Optional.
 
 	Sampler* m_sampler = nullptr;
 
