@@ -21,8 +21,8 @@ ANKI_TEST(Gr, MeshShaders)
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
-	NativeWindow* win = createWindow();
-	GrManager* gr = createGrManager(win);
+	initWindow();
+	initGrManager();
 
 	{
 		const CString taskShaderSrc = R"(
@@ -122,15 +122,15 @@ float3 main(VertOut input) : SV_TARGET0
 
 		ShaderProgramPtr prog;
 		{
-			ShaderPtr taskShader = createShader(taskShaderSrc, ShaderType::kTask, *gr);
-			ShaderPtr meshShader = createShader(meshShaderSrc, ShaderType::kMesh, *gr);
-			ShaderPtr fragShader = createShader(fragShaderSrc, ShaderType::kFragment, *gr);
+			ShaderPtr taskShader = createShader(taskShaderSrc, ShaderType::kTask);
+			ShaderPtr meshShader = createShader(meshShaderSrc, ShaderType::kMesh);
+			ShaderPtr fragShader = createShader(fragShaderSrc, ShaderType::kFragment);
 
 			ShaderProgramInitInfo progInit("Program");
 			progInit.m_graphicsShaders[ShaderType::kTask] = taskShader.get();
 			progInit.m_graphicsShaders[ShaderType::kMesh] = meshShader.get();
 			progInit.m_graphicsShaders[ShaderType::kFragment] = fragShader.get();
-			prog = gr->newShaderProgram(progInit);
+			prog = GrManager::getSingleton().newShaderProgram(progInit);
 		}
 
 		BufferPtr indexBuff;
@@ -139,7 +139,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = sizeof(U32) * 6;
-			indexBuff = gr->newBuffer(buffInit);
+			indexBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			void* mapped = indexBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 			const U32 indices[] = {0, 1, 2, 2, 1, 3};
@@ -153,7 +153,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
-			positionsBuff = gr->newBuffer(buffInit);
+			positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			Vec4* mapped = static_cast<Vec4*>(positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -178,7 +178,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
-			colorsBuff = gr->newBuffer(buffInit);
+			colorsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			Vec4* mapped = static_cast<Vec4*>(colorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -207,7 +207,7 @@ float3 main(VertOut input) : SV_TARGET0
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = sizeof(Meshlet) * kTileCount;
-			meshletsBuff = gr->newBuffer(buffInit);
+			meshletsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			Meshlet* mapped = static_cast<Meshlet*>(meshletsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -222,10 +222,10 @@ float3 main(VertOut input) : SV_TARGET0
 
 		for(U32 i = 0; i < 100; ++i)
 		{
-			TexturePtr swapchainTex = gr->acquireNextPresentableTexture();
+			TexturePtr swapchainTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cmdbinit;
-			CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
 			cmdb->setViewport(0, 0, g_windowWidthCVar.get(), g_windowHeightCVar.get());
 
@@ -258,7 +258,7 @@ float3 main(VertOut input) : SV_TARGET0
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			gr->swapBuffers();
+			GrManager::getSingleton().swapBuffers();
 
 			HighRezTimer::sleep(1.0_sec / 60.0);
 		}

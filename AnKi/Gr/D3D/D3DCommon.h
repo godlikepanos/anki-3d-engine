@@ -62,8 +62,28 @@ namespace anki {
 		} \
 	} while(0)
 
-/// Backend specific constants
-constexpr U32 kMaxRtvDescriptors = 128;
+enum class D3DTextureViewType
+{
+	kSrv,
+	kRtv,
+	kDsv,
+	kUav,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(D3DTextureViewType)
+
+enum class D3DTextureBufferType
+{
+	kCbv,
+	kSrv,
+	kUav,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(D3DTextureBufferType)
 
 inline std::string ws2s(const std::wstring& wstr)
 {

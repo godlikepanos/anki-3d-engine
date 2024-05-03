@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DCommandBuffer.h>
+#include <AnKi/Gr/D3D/D3DTexture.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -23,7 +24,9 @@ CommandBuffer* CommandBuffer::newInstance(const CommandBufferInitInfo& init)
 
 void CommandBuffer::endRecording()
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.m_cmdList->Close();
 }
 
 void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, PtrSize stride, VertexStepRate stepRate)
@@ -176,6 +179,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 									const TextureView& vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
 
 	Array<D3D12_RENDER_PASS_RENDER_TARGET_DESC, kMaxColorRenderTargets> colorRtDescs;
 	for(U32 i = 0; i < colorRts.getSize(); ++i)
@@ -184,18 +188,40 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		D3D12_RENDER_PASS_RENDER_TARGET_DESC& desc = colorRtDescs[i];
 
 		desc = {};
-		// desc.cpuDescriptor = rt.m_view->
+		desc.cpuDescriptor = static_cast<const TextureImpl&>(rt.m_textureView.getTexture())
+								 .getView(rt.m_textureView.getSubresource(), D3DTextureViewType::kRtv)
+								 .m_cpuHandle;
 		desc.BeginningAccess.Type = convertLoadOp(rt.m_loadOperation);
 		memcpy(&desc.BeginningAccess.Clear.ClearValue.Color, &rt.m_clearValue.m_colorf[0], sizeof(F32) * 4);
 		desc.EndingAccess.Type = convertStoreOp(rt.m_storeOperation);
 	}
 
-	// self.m_cmdList->BeginRenderPass(colorRts.getSize(), )
+	D3D12_RENDER_PASS_DEPTH_STENCIL_DESC dsDesc;
+	if(depthStencilRt)
+	{
+		dsDesc = {};
+		dsDesc.cpuDescriptor = static_cast<const TextureImpl&>(depthStencilRt->m_textureView.getTexture())
+								   .getView(depthStencilRt->m_textureView.getSubresource(), D3DTextureViewType::kDsv)
+								   .m_cpuHandle;
+
+		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
+		dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth, depthStencilRt->m_clearValue.m_depthStencil.m_depth;
+		dsDesc.DepthEndingAccess.Type = convertStoreOp(depthStencilRt->m_storeOperation);
+
+		dsDesc.StencilBeginningAccess.Type = convertLoadOp(depthStencilRt->m_stencilLoadOperation);
+		dsDesc.StencilBeginningAccess.Clear.ClearValue.DepthStencil.Stencil = depthStencilRt->m_clearValue.m_depthStencil.m_stencil;
+		dsDesc.StencilEndingAccess.Type = convertStoreOp(depthStencilRt->m_stencilStoreOperation);
+	}
+
+	self.m_cmdList->BeginRenderPass(colorRts.getSize(), colorRtDescs.getBegin(), (depthStencilRt) ? &dsDesc : nullptr,
+									D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES);
 }
 
 void CommandBuffer::endRenderPass()
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.m_cmdList->EndRenderPass();
 }
 
 void CommandBuffer::setVrsRate(VrsRate rate)
@@ -311,7 +337,35 @@ void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, co
 void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textures, ConstWeakArray<BufferBarrierInfo> buffers,
 									   ConstWeakArray<AccelerationStructureBarrierInfo> accelerationStructures)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+
+	DynamicArray<D3D12_RESOURCE_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> resourceBarriers(self.m_fastPool);
+
+	for(const TextureBarrierInfo& barrier : textures)
+	{
+		const TextureImpl& impl = static_cast<const TextureImpl&>(barrier.m_textureView.getTexture());
+
+		D3D12_RESOURCE_BARRIER& d3dBarrier = *resourceBarriers.emplaceBack();
+		d3dBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		d3dBarrier.Transition.pResource = &impl.getD3DResource();
+		d3dBarrier.Transition.Subresource = impl.calcD3DSubresourceIndex(barrier.m_textureView.getSubresource());
+		impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, d3dBarrier.Transition.StateBefore, d3dBarrier.Transition.StateAfter);
+
+		if(d3dBarrier.Transition.StateBefore & D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+		   && d3dBarrier.Transition.StateAfter & D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+		{
+			D3D12_RESOURCE_BARRIER& d3dBarrier = *resourceBarriers.emplaceBack();
+			d3dBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+			d3dBarrier.UAV.pResource = &impl.getD3DResource();
+		}
+	}
+
+	ANKI_ASSERT(buffers.getSize() == 0 && "TODO");
+	ANKI_ASSERT(accelerationStructures.getSize() == 0 && "TODO");
+
+	ANKI_ASSERT(resourceBarriers.getSize() > 0);
+	self.m_cmdList->ResourceBarrier(resourceBarriers.getSize(), resourceBarriers.getBegin());
 }
 
 void CommandBuffer::resetOcclusionQueries(ConstWeakArray<OcclusionQuery*> queries)
@@ -381,19 +435,28 @@ void CommandBuffer::popDebugMarker()
 
 CommandBufferImpl::~CommandBufferImpl()
 {
-	safeRelease(m_cmdList);
-	safeRelease(m_cmdAllocator);
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
-	ANKI_D3D_CHECK(getDevice().CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_cmdAllocator)));
+	ANKI_CHECK(CommandBufferFactory::getSingleton().newCommandBuffer(init.m_flags, m_mcmdb));
 
-	ANKI_D3D_CHECK(getDevice().CreateCommandList(
-		0, !!(init.m_flags & CommandBufferFlag::kGeneralWork) ? D3D12_COMMAND_LIST_TYPE_DIRECT : D3D12_COMMAND_LIST_TYPE_COMPUTE, m_cmdAllocator,
-		nullptr, IID_PPV_ARGS(&m_cmdList)));
+	m_cmdList = &m_mcmdb->getCmdList();
+	m_fastPool = &m_mcmdb->getFastMemoryPool();
 
 	return Error::kNone;
+}
+
+void CommandBufferImpl::commandCommon()
+{
+	++m_commandCount;
+	if(m_commandCount >= kCommandBufferSmallBatchMaxCommands)
+	{
+		if((m_commandCount % 10) == 0) // Change the batch every 10 commands as an optimization
+		{
+			m_mcmdb->setBigBatch();
+		}
+	}
 }
 
 } // end namespace anki

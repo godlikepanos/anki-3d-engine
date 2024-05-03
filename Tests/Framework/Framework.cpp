@@ -235,44 +235,25 @@ void deleteTesterSingleton()
 	delete g_testerInstance;
 }
 
-NativeWindow* createWindow()
+void initWindow()
 {
 	NativeWindowInitInfo inf;
 	inf.m_width = g_windowWidthCVar.get();
 	inf.m_height = g_windowHeightCVar.get();
 	inf.m_title = "AnKi unit tests";
 	NativeWindow* win = &NativeWindow::allocateSingleton();
-	const Error err = NativeWindow::getSingleton().init(inf);
-	if(err)
-	{
-		NativeWindow::freeSingleton();
-		return nullptr;
-	}
-
-	return win;
+	ANKI_TEST_EXPECT_NO_ERR(NativeWindow::getSingleton().init(inf));
 }
 
-GrManager* createGrManager(NativeWindow* win)
+void initGrManager()
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
 	String home;
-	const Error err = getTempDirectory(home);
-	if(err)
-	{
-		return nullptr;
-	}
+	ANKI_TEST_EXPECT_NO_ERR(getTempDirectory(home));
 	inf.m_cacheDirectory = home;
-	GrManager* gr = &GrManager::allocateSingleton();
-	ANKI_TEST_EXPECT_NO_ERR(gr->init(inf));
-
-	return gr;
-}
-
-ResourceManager* createResourceManager(GrManager* gr)
-{
-	ANKI_TEST_EXPECT_NO_ERR(ResourceManager::allocateSingleton().init(allocAligned, nullptr));
-	return &ResourceManager::getSingleton();
+	GrManager::allocateSingleton();
+	ANKI_TEST_EXPECT_NO_ERR(GrManager::getSingleton().init(inf));
 }
 
 } // end namespace anki

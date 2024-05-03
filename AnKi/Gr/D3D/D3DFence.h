@@ -53,7 +53,9 @@ public:
 		return cval == val;
 	}
 
-	void signal(GpuQueueType queue);
+	void gpuSignal(GpuQueueType queue);
+
+	void gpuWait(GpuQueueType queue);
 
 	Bool clientWait(Second seconds);
 

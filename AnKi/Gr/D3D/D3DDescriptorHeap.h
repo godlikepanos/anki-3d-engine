@@ -23,6 +23,11 @@ public:
 #if ANKI_ASSERTIONS_ENABLED
 	DescriptorHeap* m_father = nullptr;
 #endif
+
+	[[nodiscard]] Bool isCreated() const
+	{
+		return m_cpuHandle.ptr != 0;
+	}
 };
 
 class DescriptorHeap
@@ -114,6 +119,10 @@ private:
 };
 
 class RtvDescriptorHeap : public DescriptorHeap, public MakeSingleton<RtvDescriptorHeap>
+{
+};
+
+class CbvSrvUavDescriptorHeap : public DescriptorHeap, public MakeSingleton<CbvSrvUavDescriptorHeap>
 {
 };
 /// @}

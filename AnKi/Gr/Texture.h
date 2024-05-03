@@ -382,22 +382,31 @@ public:
 	{
 		validate();
 		/// Can bound only one aspect at a time.
-		return m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepth
-			   || m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kStencil
-			   || m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
+		return (m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepth
+				|| m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kStencil
+				|| m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
+			   && !!(m_tex->getTextureUsage() & TextureUsageBit::kAllSampled);
 	}
 
-	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTextureView.
-	[[nodiscard]] Bool isGoodForCopyFromBuffer() const
+	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTexture.
+	[[nodiscard]] Bool isGoodForCopyBufferToTexture() const
 	{
 		validate();
-		return isSingleSurfaceOrVolume() && m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
+		return isSingleSurfaceOrVolume() && m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone
+			   && !!(m_tex->getTextureUsage() & TextureUsageBit::kTransferDestination);
 	}
 
 	[[nodiscard]] Bool isGoodForStorage() const
 	{
 		validate();
-		return isSingleSurfaceOrVolume() && m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone;
+		return isSingleSurfaceOrVolume() && m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone
+			   && !!(m_tex->getTextureUsage() & TextureUsageBit::kAllStorage);
+	}
+
+	[[nodiscard]] Bool isGoodForRenderTarget() const
+	{
+		validate();
+		return isSingleSurfaceOrVolume() && !!(m_tex->getTextureUsage() & TextureUsageBit::kAllFramebuffer);
 	}
 
 	/// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.

@@ -19,9 +19,14 @@ MicroFence::MicroFence()
 	}
 }
 
-void MicroFence::signal(GpuQueueType queue)
+void MicroFence::gpuSignal(GpuQueueType queue)
 {
 	ANKI_D3D_CHECKF(getGrManagerImpl().getCommandQueue(queue).Signal(m_fence, m_value.fetchAdd(1) + 1));
+}
+
+void MicroFence::gpuWait(GpuQueueType queue)
+{
+	ANKI_D3D_CHECKF(getGrManagerImpl().getCommandQueue(queue).Wait(m_fence, m_value.load()));
 }
 
 Bool MicroFence::clientWait(Second seconds)

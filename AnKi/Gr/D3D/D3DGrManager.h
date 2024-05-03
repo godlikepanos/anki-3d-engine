@@ -15,12 +15,6 @@ namespace anki {
 /// @addtogroup directx
 /// @{
 
-class Limits
-{
-public:
-	U32 m_rtvDescriptorSize = 0;
-};
-
 /// DX implementation of GrManager.
 class GrManagerImpl : public GrManager
 {
@@ -38,11 +32,6 @@ public:
 	ID3D12Device& getDevice()
 	{
 		return *m_device;
-	}
-
-	const Limits& getLimits() const
-	{
-		return m_limits;
 	}
 
 	ID3D12CommandQueue& getCommandQueue(GpuQueueType q)
@@ -71,8 +60,6 @@ private:
 
 	Array<PerFrame, kMaxFramesInFlight> m_frames;
 	U8 m_crntFrame = 0;
-
-	Limits m_limits;
 
 	void destroy();
 };

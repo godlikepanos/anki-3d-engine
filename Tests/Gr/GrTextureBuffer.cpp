@@ -11,8 +11,8 @@ ANKI_TEST(Gr, TextureBuffer)
 {
 	g_validationCVar.set(true);
 
-	NativeWindow* win = createWindow();
-	GrManager* gr = createGrManager(win);
+	initWindow();
+	initGrManager();
 
 	{
 		const CString shaderSrc = R"(
@@ -28,17 +28,17 @@ void main()
 }
 	)";
 
-		ShaderPtr shader = createShader(shaderSrc, ShaderType::kCompute, *gr);
+		ShaderPtr shader = createShader(shaderSrc, ShaderType::kCompute);
 
 		ShaderProgramInitInfo progInit;
 		progInit.m_computeShader = shader.get();
-		ShaderProgramPtr prog = gr->newShaderProgram(progInit);
+		ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(progInit);
 
 		BufferInitInfo buffInit;
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_size = sizeof(U8) * 4;
 		buffInit.m_usage = BufferUsageBit::kAllTexel;
-		BufferPtr texBuff = gr->newBuffer(buffInit);
+		BufferPtr texBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 		const Vec4 values(-1.0f, -0.25f, 0.1345f, 0.8952f);
@@ -52,11 +52,11 @@ void main()
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = sizeof(F32) * 4;
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
-		BufferPtr storageBuff = gr->newBuffer(buffInit);
+		BufferPtr storageBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit;
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		cmdb->bindReadOnlyTexelBuffer(0, 0, BufferView(texBuff.get()), Format::kR8G8B8A8_Snorm);
 		cmdb->bindStorageBuffer(0, 1, BufferView(storageBuff.get()));
@@ -64,7 +64,7 @@ void main()
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->endRecording();
 		GrManager::getSingleton().submit(cmdb.get());
-		gr->finish();
+		GrManager::getSingleton().finish();
 
 		const Vec4* inData = static_cast<const Vec4*>(storageBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
 		for(U i = 0; i < 4; ++i)

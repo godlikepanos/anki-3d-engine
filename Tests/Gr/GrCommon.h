@@ -11,7 +11,7 @@
 
 namespace anki {
 
-inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
+inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
 {
 	ShaderCompilerString header;
 	ShaderProgramParser::generateAnkiShaderHeader(type, header);
@@ -29,7 +29,7 @@ inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr, Const
 	ShaderInitInfo initInf(type, spirv);
 	initInf.m_constValues = specVals;
 
-	return gr.newShader(initInf);
+	return GrManager::getSingleton().newShader(initInf);
 }
 
 } // end namespace anki

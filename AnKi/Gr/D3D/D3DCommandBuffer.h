@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/CommandBuffer.h>
-#include <AnKi/Gr/D3D/D3DCommon.h>
+#include <AnKi/Gr/D3D/D3DCommandBufferFactory.h>
 
 namespace anki {
 
@@ -28,9 +28,19 @@ public:
 
 	Error init(const CommandBufferInitInfo& init);
 
+	MicroCommandBuffer& getMicroCommandBuffer()
+	{
+		return *m_mcmdb;
+	}
+
 private:
-	ID3D12CommandAllocator* m_cmdAllocator = nullptr;
-	ID3D12GraphicsCommandList7* m_cmdList = nullptr;
+	ID3D12GraphicsCommandList7* m_cmdList = nullptr; // Cache it.
+	U32 m_commandCount = 0;
+
+	StackMemoryPool* m_fastPool = nullptr; // Cache it.
+	MicroCommandBufferPtr m_mcmdb;
+
+	void commandCommon();
 };
 /// @}
 

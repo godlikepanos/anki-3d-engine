@@ -62,10 +62,10 @@ ANKI_TEST(Ui, Ui)
 	g_windowHeightCVar.set(760);
 	g_dataPathsCVar.set("EngineAssets");
 
-	NativeWindow* win = createWindow();
+	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
-	GrManager* gr = createGrManager(win);
-	createResourceManager(gr);
+	initGrManager();
+	ANKI_TEST_EXPECT_NO_ERR(ResourceManager::allocateSingleton().init(allocAligned, nullptr));
 	UiManager* ui = &UiManager::allocateSingleton();
 
 	RebarTransientMemoryPool::allocateSingleton().init();
@@ -77,7 +77,7 @@ ANKI_TEST(Ui, Ui)
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "UbuntuRegular.ttf", Array<U32, 4>{10, 20, 30, 60}));
 
 		CanvasPtr canvas;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, win->getWidth(), win->getHeight()));
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight()));
 
 		IntrusivePtr<Label, UiObjectDeleter> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
@@ -98,11 +98,11 @@ ANKI_TEST(Ui, Ui)
 			canvas->beginBuilding();
 			label->build(canvas);
 
-			TexturePtr presentTex = gr->acquireNextPresentableTexture();
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
 			TextureBarrierInfo barrier;
 			barrier.m_previousUsage = TextureUsageBit::kNone;
@@ -125,7 +125,7 @@ ANKI_TEST(Ui, Ui)
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());
 
-			gr->swapBuffers();
+			GrManager::getSingleton().swapBuffers();
 			RebarTransientMemoryPool::getSingleton().endFrame();
 
 			timer.stop();

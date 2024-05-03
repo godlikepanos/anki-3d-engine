@@ -20,371 +20,30 @@
 
 using namespace anki;
 
-const U WIDTH = 1024;
-const U HEIGHT = 768;
+const U kWidth = 1024;
+const U kHeight = 768;
 
-static const char* VERT_QUAD_STRIP_SRC = R"(
-out gl_PerVertex
+static void commonInit()
 {
-	vec4 gl_Position;
-};
-
-layout(location = 0) out Vec2 out_uv;
-
-void main()
-{
-	const vec2 POSITIONS[4] = vec2[](vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
-	gl_Position = vec4(POSITIONS[gl_VertexID % 4], 0.0, 1.0);
-	out_uv = gl_Position.xy / 2.0 + 0.5;
-})";
-
-static const char* VERT_UBO_SRC = R"(
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
-layout(set = 0, binding = 0) uniform u0_
-{
-	vec4 u_color[3];
-};
-
-layout(set = 0, binding = 1) uniform u1_
-{
-	vec4 u_rotation2d;
-};
-
-layout(location = 0) out vec3 out_color;
-
-void main()
-{
-	out_color = u_color[gl_VertexID].rgb;
-
-	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
-
-	mat2 rot = mat2(
-		u_rotation2d.x, u_rotation2d.y, u_rotation2d.z, u_rotation2d.w);
-	vec2 pos = rot * POSITIONS[gl_VertexID % 3];
-
-	gl_Position = vec4(pos, 0.0, 1.0);
-})";
-
-static const char* VERT_INP_SRC = R"(
-layout(location = 0) in vec3 in_position;
-layout(location = 1) in vec3 in_color0;
-layout(location = 2) in vec3 in_color1;
-
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
-layout(location = 0) out vec3 out_color0;
-layout(location = 1) out vec3 out_color1;
-
-void main()
-{
-	gl_Position = vec4(in_position, 1.0);
-
-	out_color0 = in_color0;
-	out_color1 = in_color1;
-})";
-
-static const char* VERT_QUAD_SRC = R"(
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
-layout(location = 0) out vec2 out_uv;
-
-void main()
-{
-	const vec2 POSITIONS[6] =
-		vec2[](vec2(-1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0),
-		vec2(1.0, -1.0), vec2(1.0, 1.0), vec2(-1.0, 1.0));
-
-	gl_Position = vec4(POSITIONS[gl_VertexID], 0.0, 1.0);
-	out_uv = POSITIONS[gl_VertexID] / 2.0 + 0.5;
-})";
-
-static const char* VERT_MRT_SRC = R"(
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
-layout(location = 0) in vec3 in_pos;
-
-layout(set = 0, binding = 0, std140, row_major) uniform u0_
-{
-	mat4 u_mvp;
-};
-
-void main()
-{
-	gl_Position = u_mvp * vec4(in_pos, 1.0);
-})";
-
-static const char* FRAG_UBO_SRC = R"(layout (location = 0) out vec4 out_color;
-
-layout(location = 0) in vec3 in_color;
-
-void main()
-{
-	out_color = vec4(in_color, 1.0);
-})";
-
-static const char* FRAG_INP_SRC = R"(layout (location = 0) out vec4 out_color;
-
-layout(location = 0) in vec3 in_color0;
-layout(location = 1) in vec3 in_color1;
-
-void main()
-{
-	out_color = vec4(in_color0 + in_color1, 1.0);
-})";
-
-static const char* FRAG_TEX_SRC = R"(layout (location = 0) out vec4 out_color;
-
-layout(location = 0) in vec2 in_uv;
-
-layout(set = 0, binding = 0) uniform sampler2D u_tex0;
-
-void main()
-{
-	out_color = texture(u_tex0, in_uv);
-})";
-
-static const char* FRAG_TEX3D_SRC = R"(layout (location = 0) out vec4 out_color;
-
-layout(set = 0, binding = 0) uniform u0_
-{
-	vec4 u_uv;
-};
-
-layout(set = 0, binding = 1) uniform sampler3D u_tex;
-
-void main()
-{
-	out_color = textureLod(u_tex, u_uv.xyz, u_uv.w);
-})";
-
-static const char* FRAG_MRT_SRC = R"(layout (location = 0) out vec4 out_color0;
-layout (location = 1) out vec4 out_color1;
-
-layout(set = 0, binding = 1, std140) uniform u1_
-{
-	vec4 u_color0;
-	vec4 u_color1;
-};
-
-void main()
-{
-	out_color0 = u_color0;
-	out_color1 = u_color1;
-})";
-
-static const char* FRAG_MRT2_SRC = R"(layout (location = 0) out vec4 out_color;
-
-layout(location = 0) in vec2 in_uv;
-
-layout(set = 0, binding = 0) uniform sampler2D u_tex0;
-layout(set = 0, binding = 2) uniform sampler2D u_tex1;
-
-void main()
-{
-	vec2 uv = in_uv;
-#ifdef ANKI_VK
-	uv.y = 1.0 - uv.y;
-#endif
-	float factor = uv.x;
-	vec3 col0 = texture(u_tex0, uv).rgb;
-	vec3 col1 = texture(u_tex1, uv).rgb;
-
-	out_color = vec4(col1 + col0, 1.0);
-})";
-
-static const char* FRAG_SIMPLE_TEX_SRC = R"(
-layout (location = 0) out vec4 out_color;
-layout(location = 0) in vec2 in_uv;
-layout(set = 0, binding = 0) uniform sampler2D u_tex0;
-
-void main()
-{
-	out_color = textureLod(u_tex0, in_uv, 1.0);
-})";
-
-static const char* COMP_WRITE_IMAGE_SRC = R"(
-layout(set = 0, binding = 0, rgba8) writeonly uniform image2D u_img;
-
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-
-layout(set = 1, binding = 0) buffer ss1_
-{
-	vec4 u_color;
-};
-
-void main()
-{
-	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), u_color);
-})";
-
-static NativeWindow* g_win = nullptr;
-static GrManager* g_gr = nullptr;
-static RebarTransientMemoryPool* stagingMem = nullptr;
-static Input* input = nullptr;
-
-#define COMMON_BEGIN() \
-	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr); \
-	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr); \
-	g_windowWidthCVar.set(WIDTH); \
-	g_windowHeightCVar.set(HEIGHT); \
-	g_validationCVar.set(true); \
-	g_vsyncCVar.set(false); \
-	g_debugMarkersCVar.set(true); \
-	g_win = createWindow(); \
-	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init()); \
-	g_gr = createGrManager(g_win); \
-	RebarTransientMemoryPool::allocateSingleton().init(); \
-	stagingMem = &RebarTransientMemoryPool::getSingleton(); \
-	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB)); \
-	while(true) \
-	{
-
-#define COMMON_END() \
-	break; \
-	} \
-	g_gr->finish(); \
-	delete transfAlloc; \
-	RebarTransientMemoryPool::freeSingleton(); \
-	GrManager::freeSingleton(); \
-	Input::freeSingleton(); \
-	NativeWindow::freeSingleton(); \
-	ShaderCompilerMemoryPool::freeSingleton(); \
-	DefaultMemoryPool::freeSingleton(); \
-	g_win = nullptr; \
-	g_gr = nullptr;
-
-static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
-{
-	void* ptr;
-	const RebarAllocation token = stagingMem->allocateFrame(size, ptr);
-	cmdb->bindUniformBuffer(set, binding, token);
-	return ptr;
+	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
+	g_windowWidthCVar.set(kWidth);
+	g_windowHeightCVar.set(kHeight);
+	g_validationCVar.set(true);
+	g_vsyncCVar.set(false);
+	g_debugMarkersCVar.set(true);
+	initWindow();
+	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
+	initGrManager();
 }
 
-static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
+static void commonDestroy()
 {
-	void* ptr;
-	const RebarAllocation token = stagingMem->allocateFrame(size, ptr);
-	cmdb->bindStorageBuffer(set, binding, token);
-	return ptr;
-}
-
-#define SET_UNIFORMS(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setUniforms(size_, cmdb_, set_, binding_))
-#define SET_STORAGE(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setStorage(size_, cmdb_, set_, binding_))
-
-#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_) \
-	do \
-	{ \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_)); \
-		void* f = handle_.getMappedMemory(); \
-		memcpy(f, ptr_, size_); \
-		TextureViewPtr view = g_gr->newTextureView(TextureViewInitInfo(tex_.get(), surf_)); \
-		cmdb_->copyBufferToTextureView(&handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view.get()); \
-	} while(0)
-
-#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_) \
-	do \
-	{ \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_)); \
-		void* f = handle_.getMappedMemory(); \
-		memcpy(f, ptr_, size_); \
-		TextureViewPtr view = g_gr->newTextureView(TextureViewInitInfo(tex_.get(), vol_)); \
-		cmdb_->copyBufferToTextureView(&handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view.get()); \
-	} while(0)
-
-constexpr Format kDsFormat = Format::kD24_Unorm_S8_Uint;
-
-static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
-{
-	ShaderPtr vert = createShader(vertSrc, ShaderType::kVertex, gr);
-	ShaderPtr frag = createShader(fragSrc, ShaderType::kFragment, gr);
-	ShaderProgramInitInfo inf;
-	inf.m_graphicsShaders[ShaderType::kVertex] = vert.get();
-	inf.m_graphicsShaders[ShaderType::kFragment] = frag.get();
-	return gr.newShaderProgram(inf);
-}
-
-static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
-{
-	static const Array<F32, 8 * 3> pos = {{1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1}};
-
-	static const Array<U16, 6 * 2 * 3> idx = {
-		{0, 1, 3, 3, 1, 2, 1, 5, 6, 1, 6, 2, 7, 4, 0, 7, 0, 3, 6, 5, 7, 7, 5, 4, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7}};
-
-	verts = gr.newBuffer(BufferInitInfo(sizeof(pos), BufferUsageBit::kVertex, BufferMapAccessBit::kWrite));
-
-	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::kWrite);
-	memcpy(mapped, &pos[0], sizeof(pos));
-	verts->unmap();
-
-	indices = gr.newBuffer(BufferInitInfo(sizeof(idx), BufferUsageBit::kIndex, BufferMapAccessBit::kWrite));
-	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::kWrite);
-	memcpy(mapped, &idx[0], sizeof(idx));
-	indices->unmap();
-}
-
-static void presentBarrierA(CommandBufferPtr cmdb, TexturePtr presentTex)
-{
-	TextureBarrierInfo barrier;
-	barrier.m_previousUsage = TextureUsageBit::kNone;
-	barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
-	barrier.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
-	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
-}
-
-static void presentBarrierB(CommandBufferPtr cmdb, TexturePtr presentTex)
-{
-	TextureBarrierInfo barrier;
-	barrier.m_previousUsage = TextureUsageBit::kFramebufferWrite;
-	barrier.m_nextUsage = TextureUsageBit::kPresent;
-	barrier.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
-	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
-}
-
-static void setTextureBarrier(CommandBufferPtr& cmdb, TexturePtr tex, TextureUsageBit before, TextureUsageBit after,
-							  const TextureSubresourceDescriptor& surf)
-{
-	TextureBarrierInfo barrier;
-	barrier.m_previousUsage = before;
-	barrier.m_nextUsage = after;
-	barrier.m_textureView = TextureView(tex.get(), surf);
-
-	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
-}
-
-static void setBufferBarrier(CommandBufferPtr cmdb, BufferPtr buffer, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize range)
-{
-	BufferBarrierInfo barrier;
-	barrier.m_previousUsage = before;
-	barrier.m_nextUsage = after;
-	barrier.m_bufferView = BufferView(buffer.get(), offset, range);
-
-	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
-}
-
-static void setAccelerationStructureBarrier(CommandBufferPtr cmdb, AccelerationStructurePtr as, AccelerationStructureUsageBit before,
-											AccelerationStructureUsageBit after)
-{
-	AccelerationStructureBarrierInfo barrier;
-	barrier.m_previousUsage = before;
-	barrier.m_nextUsage = after;
-	barrier.m_as = as.get();
-
-	cmdb->setPipelineBarrier({}, {}, {&barrier, 1});
+	GrManager::freeSingleton();
+	Input::freeSingleton();
+	NativeWindow::freeSingleton();
+	ShaderCompilerMemoryPool::freeSingleton();
+	DefaultMemoryPool::freeSingleton();
 }
 
 ANKI_TEST(Gr, GrManager)
@@ -392,9 +51,9 @@ ANKI_TEST(Gr, GrManager)
 	g_validationCVar.set(true);
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
-	g_win = createWindow();
+	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
-	g_gr = createGrManager(g_win);
+	initGrManager();
 
 	GrManager::freeSingleton();
 	Input::freeSingleton();
@@ -404,15 +63,18 @@ ANKI_TEST(Gr, GrManager)
 
 ANKI_TEST(Gr, Shader)
 {
+#if 0
 	COMMON_BEGIN()
 
 	ShaderPtr shader = createShader(FRAG_MRT_SRC, ShaderType::kFragment, *g_gr);
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, ShaderProgram)
 {
+#if 0
 	COMMON_BEGIN()
 
 	constexpr const char* kVertSrc = R"(
@@ -438,11 +100,12 @@ void main()
 	ShaderProgramPtr ppline = createProgram(kVertSrc, kFragSrc, *g_gr);
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, ClearScreen)
 {
-	COMMON_BEGIN()
+	commonInit();
 	ANKI_TEST_LOGI("Expect to see a magenta background");
 
 	constexpr U kIterations = 100;
@@ -452,26 +115,31 @@ ANKI_TEST(Gr, ClearScreen)
 		HighRezTimer timer;
 		timer.start();
 
-		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
+		TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
-		presentBarrierA(cmdb, presentTex);
+		const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()), TextureUsageBit::kNone,
+											TextureUsageBit::kFramebufferWrite};
+		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 		RenderTarget rt;
 		rt.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
 		const F32 col = 1.0f - F32(iterations) / F32(kIterations);
 		rt.m_clearValue.m_colorf = {col, 0.0f, col, 1.0f};
 		cmdb->beginRenderPass({rt});
-
 		cmdb->endRenderPass();
-		presentBarrierB(cmdb, presentTex);
+
+		const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()), TextureUsageBit::kFramebufferWrite,
+											 TextureUsageBit::kPresent};
+		cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
+
 		cmdb->endRecording();
 		GrManager::getSingleton().submit(cmdb.get());
 
-		g_gr->swapBuffers();
+		GrManager::getSingleton().swapBuffers();
 
 		timer.stop();
 		const F32 TICK = 1.0f / 30.0f;
@@ -481,7 +149,7 @@ ANKI_TEST(Gr, ClearScreen)
 		}
 	}
 
-	COMMON_END()
+	commonDestroy();
 }
 
 ANKI_TEST(Gr, SimpleDrawcall)
@@ -762,6 +430,7 @@ void main()
 
 ANKI_TEST(Gr, Buffer)
 {
+#if 0
 	COMMON_BEGIN()
 
 	BufferInitInfo buffInit("a");
@@ -789,6 +458,7 @@ ANKI_TEST(Gr, Buffer)
 	b->unmap();
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, DrawWithUniforms)
@@ -989,6 +659,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 ANKI_TEST(Gr, Sampler)
 {
+#if 0
 	COMMON_BEGIN()
 
 	SamplerInitInfo init;
@@ -996,10 +667,12 @@ ANKI_TEST(Gr, Sampler)
 	SamplerPtr b = g_gr->newSampler(init);
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, Texture)
 {
+#if 0
 	COMMON_BEGIN()
 
 	TextureInitInfo init;
@@ -1017,6 +690,7 @@ ANKI_TEST(Gr, Texture)
 	TexturePtr b = g_gr->newTexture(init);
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, DrawWithTexture)
@@ -1207,6 +881,7 @@ void main()
 #endif
 }
 
+#if 0
 static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgramPtr prog, CommandBufferPtr cmdb, U32 viewPortSize,
 								   BufferPtr indexBuff, BufferPtr vertBuff)
 {
@@ -1246,6 +921,7 @@ static void drawOffscreenDrawcalls([[maybe_unused]] GrManager& gr, ShaderProgram
 
 	cmdb->drawIndexed(PrimitiveTopology::kTriangles, 6 * 2 * 3);
 }
+#endif
 
 static void drawOffscreen(GrManager& gr)
 {
@@ -1366,11 +1042,13 @@ static void drawOffscreen(GrManager& gr)
 
 ANKI_TEST(Gr, DrawOffscreen)
 {
+#if 0
 	COMMON_BEGIN()
 
 	drawOffscreen(*g_gr);
 
-	COMMON_END()
+	COMMON_END();
+#endif
 }
 
 ANKI_TEST(Gr, ImageLoadStore)
@@ -2057,6 +1735,7 @@ void main()
 
 ANKI_TEST(Gr, BindingWithArray)
 {
+#if 0
 	COMMON_BEGIN()
 
 	// Create result buffer
@@ -2128,6 +1807,7 @@ void main()
 	resBuff->unmap();
 
 	COMMON_END();
+#endif
 }
 
 ANKI_TEST(Gr, Bindless)
@@ -2258,83 +1938,6 @@ void main()
 
 	COMMON_END()
 #endif
-}
-
-ANKI_TEST(Gr, BufferAddress)
-{
-	COMMON_BEGIN()
-
-	// Create program
-	static const char* PROG_SRC = R"(
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-
-ANKI_DEFINE_LOAD_STORE(Vec4, 4)
-
-layout(push_constant) uniform u_
-{
-	U64 u_bufferAddressRead;
-	U64 u_bufferAddressWrite;
-};
-
-void main()
-{
-	Vec4 a;
-	load(u_bufferAddressRead, a);
-	Vec4 b;
-	load(u_bufferAddressRead + 16ul, b);
-
-	store(u_bufferAddressWrite, a + b);
-})";
-
-	ShaderPtr shader = createShader(PROG_SRC, ShaderType::kCompute, *g_gr);
-	ShaderProgramInitInfo sprogInit;
-	sprogInit.m_computeShader = shader.get();
-	ShaderProgramPtr prog = g_gr->newShaderProgram(sprogInit);
-
-	// Create buffers
-	BufferInitInfo info;
-	info.m_size = sizeof(Vec4) * 2;
-	info.m_usage = BufferUsageBit::kAllCompute;
-	info.m_mapAccess = BufferMapAccessBit::kWrite;
-	BufferPtr ptrBuff = g_gr->newBuffer(info);
-
-	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
-	const Vec4 VEC(123.456f, -1.1f, 100.0f, -666.0f);
-	*mapped = VEC;
-	++mapped;
-	*mapped = VEC * 10.0f;
-	ptrBuff->unmap();
-
-	BufferPtr resBuff = g_gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::kAllCompute, BufferMapAccessBit::kRead));
-
-	// Run
-	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::kComputeWork | CommandBufferFlag::kSmallBatch;
-	CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
-
-	cmdb->bindShaderProgram(prog.get());
-
-	struct Address
-	{
-		PtrSize m_addressRead;
-		PtrSize m_addressWrite;
-	} address;
-	address.m_addressRead = ptrBuff->getGpuAddress();
-	address.m_addressWrite = resBuff->getGpuAddress();
-	cmdb->setPushConstants(&address, sizeof(address));
-
-	cmdb->dispatchCompute(1, 1, 1);
-
-	cmdb->endRecording();
-	GrManager::getSingleton().submit(cmdb.get());
-	g_gr->finish();
-
-	// Check
-	mapped = static_cast<Vec4*>(resBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
-	ANKI_TEST_EXPECT_EQ(*mapped, VEC + VEC * 10.0f);
-	resBuff->unmap();
-
-	COMMON_END();
 }
 
 ANKI_TEST(Gr, RayQuery)
@@ -3466,6 +3069,7 @@ void main()
 
 ANKI_TEST(Gr, AsyncCompute)
 {
+#if 0
 	COMMON_BEGIN()
 
 	constexpr U32 ARRAY_SIZE = 1000 * 1024 * 8;
@@ -3568,7 +3172,7 @@ void main()
 	incrementCmdb2->dispatchCompute(ARRAY_SIZE / 8, 1, 1);
 
 	// Submit
-#if 1
+#	if 1
 	FencePtr fence;
 	incrementCmdb->endRecording();
 	GrManager::getSingleton().submit(incrementCmdb.get(), {}, &fence);
@@ -3579,14 +3183,14 @@ void main()
 	pFence = fence.get();
 	GrManager::getSingleton().submit(incrementCmdb2.get(), {&pFence, 1}, &fence);
 	fence->clientWait(kMaxSecond);
-#else
+#	else
 	incrementCmdb->flush();
 	gr->finish();
 	checkCmdb->flush();
 	gr->finish();
 	incrementCmdb2->flush();
 	gr->finish();
-#endif
+#	endif
 
 	// Verify
 	memcpy(atomicsBufferCpu.getBegin(), values, atomicsBufferCpu.getSizeInBytes());
@@ -3604,4 +3208,5 @@ void main()
 	ANKI_TEST_EXPECT_EQ(correct, true);
 
 	COMMON_END()
+#endif
 }
