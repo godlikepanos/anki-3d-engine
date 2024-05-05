@@ -47,6 +47,7 @@ void MicroCommandBuffer::reset()
 	// Command list should already be reset on submit
 
 	m_cmdAllocator->Reset();
+	m_cmdList->Reset(m_cmdAllocator, nullptr);
 
 	m_isSmallBatch = true;
 }

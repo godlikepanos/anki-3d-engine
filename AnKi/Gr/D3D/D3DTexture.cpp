@@ -5,6 +5,7 @@
 
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
+#include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 
 namespace anki {
 
@@ -28,42 +29,29 @@ U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor&
 
 TextureImpl::~TextureImpl()
 {
-	auto deleteView = [](TextureViewEntry& entry, D3DTextureViewType type) {
-		DescriptorHeap* heap = nullptr;
-		switch(type)
-		{
-		case D3DTextureViewType::kSrv:
-		case D3DTextureViewType::kUav:
-			heap = &CbvSrvUavDescriptorHeap::getSingleton();
-			break;
-		case D3DTextureViewType::kRtv:
-			heap = &RtvDescriptorHeap::getSingleton();
-			break;
-		case D3DTextureViewType::kDsv:
-			heap = nullptr;
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
+	TextureGarbage* garbage = anki::newInstance<TextureGarbage>(GrMemoryPool::getSingleton());
 
-		heap->free(entry.m_handle);
-	};
-
-	for(D3DTextureViewType c : EnumIterable<D3DTextureViewType>())
+	for(auto it : m_viewsMap)
 	{
-		for(TextureViewEntry& entry : m_singleSurfaceOrVolumeViews[c])
-		{
-			deleteView(entry, c);
-		}
-
-		deleteView(m_wholeTextureViews[c], c);
+		garbage->m_viewHandles.emplaceBack(it.m_handle);
 	}
 
-	const Bool external = !!(m_usage & TextureUsageBit::kPresent);
-	if(!external)
+	if(m_wholeTextureSrv.m_handle.isCreated())
 	{
-		safeRelease(m_resource);
+		garbage->m_viewHandles.emplaceBack(m_wholeTextureSrv.m_handle);
 	}
+
+	if(m_firstSurfaceRtvOrDsv.m_handle.isCreated())
+	{
+		garbage->m_viewHandles.emplaceBack(m_firstSurfaceRtvOrDsv.m_handle);
+	}
+
+	if(!isExternal())
+	{
+		garbage->m_resource = m_resource;
+	}
+
+	FrameGarbageCollector::getSingleton().newTextureGarbage(garbage);
 }
 
 Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo& init)
@@ -97,73 +85,170 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		ANKI_ASSERT(!"TODO");
 	}
 
-	const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
-	U32 surfaceCount = 0;
-	if(m_texType != TextureType::k3D)
-	{
-		surfaceCount = m_layerCount * m_mipCount * faceCount;
-	}
-
-	// Create RTVs
+	// Create the default views
 	if(!!(m_usage & TextureUsageBit::kAllFramebuffer))
 	{
-		ANKI_ASSERT(m_texType != TextureType::k3D && m_texType != TextureType::k1D);
-		ANKI_ASSERT(!getFormatInfo(m_format).isDepthStencil() && "TODO");
+		const TextureView tview(this, TextureSubresourceDescriptor::firstSurface());
 
-		m_singleSurfaceOrVolumeViews[D3DTextureViewType::kRtv].resize(surfaceCount);
-
-		for(U32 layer = 0; layer < m_layerCount; ++layer)
+		if(m_aspect == DepthStencilAspectBit::kNone)
 		{
-			for(U32 face = 0; face < faceCount; ++face)
-			{
-				for(U32 mip = 0; mip < m_mipCount; ++mip)
-				{
-					D3D12_RENDER_TARGET_VIEW_DESC desc = {};
-
-					if(m_texType == TextureType::k2D)
-					{
-						desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-						desc.Texture2D.MipSlice = mip;
-						desc.Texture2D.PlaneSlice = 0;
-					}
-					else
-					{
-						desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-						desc.Texture2DArray.ArraySize = 1;
-						desc.Texture2DArray.FirstArraySlice = layer * m_layerCount + face;
-					}
-
-					DescriptorHeapHandle& handle =
-						m_singleSurfaceOrVolumeViews[D3DTextureViewType::kRtv][layer * faceCount * m_mipCount + face * m_mipCount + mip].m_handle;
-					handle = RtvDescriptorHeap::getSingleton().allocate();
-					getDevice().CreateRenderTargetView(m_resource, (external) ? nullptr : &desc, handle.m_cpuHandle);
-				}
-			}
+			m_firstSurfaceRtvOrDsv.m_viewType = D3DTextureViewType::kRtv;
 		}
+		else
+		{
+			m_firstSurfaceRtvOrDsv.m_viewType = D3DTextureViewType::kDsv;
+			m_firstSurfaceRtvOrDsv.m_dsvReadOnly = false;
+		}
+
+		m_firstSurfaceRtvOrDsv.m_handle =
+			createDescriptorHeapHandle(tview.getSubresource(), m_firstSurfaceRtvOrDsv.m_viewType, m_firstSurfaceRtvOrDsv.m_dsvReadOnly);
+		m_firstSurfaceRtvOrDsvSubresource = tview.getSubresource();
+	}
+
+	if(!!(m_usage & TextureUsageBit::kAllSampled))
+	{
+		const TextureView tview(this, TextureSubresourceDescriptor::all());
+
+		m_wholeTextureSrv.m_viewType = D3DTextureViewType::kSrv;
+		m_wholeTextureSrv.m_handle = createDescriptorHeapHandle(tview.getSubresource(), m_firstSurfaceRtvOrDsv.m_viewType, false);
+
+		m_wholeTextureSrvSubresource = tview.getSubresource();
 	}
 
 	return Error::kNone;
 }
 
-const TextureImpl::TextureViewEntry& TextureImpl::getViewEntry(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType) const
+const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType,
+													  TextureUsageBit usage) const
 {
-	const TextureView view(this, subresource);
-	const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
 
-	const TextureViewEntry* entry;
+	const Bool readOnlyDsv =
+		m_aspect != DepthStencilAspectBit::kNone && (usage & TextureUsageBit::kAllFramebuffer) == TextureUsageBit::kFramebufferRead;
+
+	if(viewType == D3DTextureViewType::kSrv && subresource == m_wholeTextureSrvSubresource)
+	{
+		return m_wholeTextureSrv;
+	}
+	else if((viewType == D3DTextureViewType::kRtv || viewType == D3DTextureViewType::kDsv) && subresource == m_firstSurfaceRtvOrDsvSubresource
+			&& m_firstSurfaceRtvOrDsv.m_dsvReadOnly == readOnlyDsv)
+	{
+		return m_firstSurfaceRtvOrDsv;
+	}
+
+	// Slow path
+
+	ANKI_BEGIN_PACKED_STRUCT
+	class
+	{
+	public:
+		TextureSubresourceDescriptor m_subresource;
+		D3DTextureViewType m_type;
+		Bool m_readOnlyDsv;
+	} toHash = {subresource, viewType, readOnlyDsv};
+	ANKI_END_PACKED_STRUCT
+
+	const U64 hash = computeHash(&toHash, sizeof(toHash));
+
+	View* view = nullptr;
+	{
+		RLockGuard lock(m_viewsMapMtx);
+
+		auto it = m_viewsMap.find(hash);
+		if(it != m_viewsMap.getEnd())
+		{
+			view = &(*it);
+		}
+	}
+
+	if(view)
+	{
+		// Found, return it
+		return *view;
+	}
+
+	WLockGuard lock(m_viewsMapMtx);
+
+	// Search again
+	auto it = m_viewsMap.find(hash);
+	if(it != m_viewsMap.getEnd())
+	{
+		return *it;
+	}
+
+	// Need to create it
+	View& nview = *m_viewsMap.emplace(hash, *view);
+	nview.m_viewType = viewType;
+	nview.m_handle = createDescriptorHeapHandle(subresource, viewType, readOnlyDsv);
+	nview.m_dsvReadOnly = readOnlyDsv;
+
+	return nview;
+}
+
+DescriptorHeapHandle TextureImpl::createDescriptorHeapHandle(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType,
+															 Bool readOnlyDsv) const
+{
+	DescriptorHeapHandle handle;
+
 	if(viewType == D3DTextureViewType::kRtv)
 	{
-		ANKI_ASSERT(view.isGoodForRenderTarget());
-		const U32 idx = subresource.m_layer * faceCount * m_mipCount + subresource.m_face * m_mipCount + subresource.m_mipmap;
-		entry = &m_singleSurfaceOrVolumeViews[D3DTextureViewType::kRtv][idx];
+		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect == DepthStencilAspectBit::kNone);
+
+		D3D12_RENDER_TARGET_VIEW_DESC desc = {};
+
+		if(m_texType == TextureType::k2D)
+		{
+			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+			desc.Texture2D.MipSlice = subresource.m_mipmap;
+			desc.Texture2D.PlaneSlice = 0;
+		}
+		else
+		{
+			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+			desc.Texture2DArray.ArraySize = 1;
+			desc.Texture2DArray.FirstArraySlice = subresource.m_layer * m_layerCount + subresource.m_face;
+			desc.Texture2DArray.MipSlice = subresource.m_mipmap;
+		}
+
+		handle = DescriptorHeaps::getSingleton().allocate(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		getDevice().CreateRenderTargetView(m_resource, (isExternal()) ? nullptr : &desc, handle.m_cpuHandle);
+	}
+	else if(viewType == D3DTextureViewType::kDsv)
+	{
+		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect != DepthStencilAspectBit::kNone);
+
+		D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
+
+		desc.Format = DXGI_FORMAT_UNKNOWN; // TODO
+
+		if(readOnlyDsv)
+		{
+			desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_DEPTH;
+			desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_STENCIL;
+		}
+
+		if(m_texType == TextureType::k2D)
+		{
+			desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+			desc.Texture2D.MipSlice = subresource.m_mipmap;
+		}
+		else
+		{
+			desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+			desc.Texture2DArray.ArraySize = 1;
+			desc.Texture2DArray.FirstArraySlice = subresource.m_layer * m_layerCount + subresource.m_face;
+			desc.Texture2DArray.MipSlice = subresource.m_mipmap;
+		}
+
+		handle = DescriptorHeaps::getSingleton().allocate(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+		getDevice().CreateDepthStencilView(m_resource, &desc, handle.m_cpuHandle);
 	}
 	else
 	{
 		ANKI_ASSERT(!"TODO");
 	}
 
-	ANKI_ASSERT(entry);
-	return *entry;
+	return handle;
 }
 
 void TextureImpl::computeResourceStates(TextureUsageBit usage, D3D12_RESOURCE_STATES& states) const

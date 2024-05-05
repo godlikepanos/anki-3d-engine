@@ -5,6 +5,7 @@
 
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 #include <AnKi/Gr/D3D/D3DDescriptorHeap.h>
+#include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 
 #include <AnKi/Gr/D3D/D3DAccelerationStructure.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
@@ -202,6 +203,8 @@ void GrManager::swapBuffers()
 	crntFrame.m_presentFence = presentFence;
 
 	self.m_crntFrame = (self.m_crntFrame + 1) % self.m_frames.getSize();
+
+	FrameGarbageCollector::getSingleton().endFrame(presentFence.get());
 }
 
 void GrManager::finish()
@@ -290,12 +293,6 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 	// Submit command lists
 	self.m_queues[queueType]->ExecuteCommandLists(d3dCmdLists.getSize(), d3dCmdLists.getBegin());
 
-	// Rest command lists
-	for(CommandBuffer* cmdb : cmdbs)
-	{
-		static_cast<CommandBufferImpl&>(*cmdb).getMicroCommandBuffer().resetCmdList();
-	}
-
 	// Signal fence
 	fence->gpuSignal(queueType);
 
@@ -325,10 +322,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		if(g_gpuValidationCVar.get())
 		{
-			ComPtr<ID3D12Debug4> debugInterface4;
-			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface4)));
+			ComPtr<ID3D12Debug1> debugInterface1;
+			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
 
-			debugInterface4->SetEnableGPUBasedValidation(true);
+			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
 
 		AddVectoredExceptionHandler(true, vexHandler);
@@ -404,15 +401,22 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_D3D_LOGI("Vendor identified as %s", &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
 	// Create device
-	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&m_device)));
+	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
 
 	if(g_validationCVar.get())
 	{
 		ComPtr<ID3D12InfoQueue1> infoq;
-		m_device->QueryInterface(IID_PPV_ARGS(&infoq));
+		const HRESULT res = m_device->QueryInterface(IID_PPV_ARGS(&infoq));
 
-		ANKI_D3D_CHECK(
-			infoq->RegisterMessageCallback(d3dDebugMessageCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_debugMessageCallbackCookie));
+		if(res == S_OK)
+		{
+			ANKI_D3D_CHECK(
+				infoq->RegisterMessageCallback(d3dDebugMessageCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &m_debugMessageCallbackCookie));
+		}
+		else
+		{
+			ANKI_D3D_LOGW("ID3D12InfoQueue1 not supported");
+		}
 	}
 
 	// Create queues
@@ -425,24 +429,17 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ANKI_D3D_CHECK(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_queues[GpuQueueType::kCompute])));
 	}
 
-	// Limits
-	const U32 rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	const U32 cbvSrvUavDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 	// Other systems
-	RtvDescriptorHeap::allocateSingleton();
-	ANKI_CHECK(RtvDescriptorHeap::getSingleton().init(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxRtvDescriptors.get(),
-													  rtvDescriptorSize));
-
-	CbvSrvUavDescriptorHeap::allocateSingleton();
-	ANKI_CHECK(CbvSrvUavDescriptorHeap::getSingleton().init(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-															g_maxCbvSrvUavDescriptors.get(), cbvSrvUavDescriptorSize));
+	const Array<U16, D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES> descrCounts = {g_maxCbvSrvUavDescriptors.get(), 0, g_maxRtvDescriptors.get(), 0};
+	DescriptorHeaps::allocateSingleton();
+	ANKI_CHECK(DescriptorHeaps::getSingleton().init(descrCounts, *m_device));
 
 	SwapchainFactory::allocateSingleton();
 	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
 	FenceFactory::allocateSingleton();
 	CommandBufferFactory::allocateSingleton();
+	FrameGarbageCollector::allocateSingleton();
 
 	return Error::kNone;
 }
@@ -451,10 +448,17 @@ void GrManagerImpl::destroy()
 {
 	ANKI_D3D_LOGI("Destroying D3D backend");
 
+	waitAllQueues();
+
+	// Cleanup self
+	m_crntSwapchain.reset(nullptr);
+	m_frames = {};
+
+	// Destroy systems
 	CommandBufferFactory::freeSingleton();
-	RtvDescriptorHeap::freeSingleton();
-	CbvSrvUavDescriptorHeap::freeSingleton();
 	SwapchainFactory::freeSingleton();
+	FrameGarbageCollector::freeSingleton();
+	DescriptorHeaps::freeSingleton();
 	FenceFactory::freeSingleton();
 
 	safeRelease(m_queues[GpuQueueType::kGeneral]);
@@ -471,6 +475,16 @@ void GrManagerImpl::destroy()
 	}
 
 	GrMemoryPool::freeSingleton();
+}
+
+void GrManagerImpl::waitAllQueues()
+{
+	for(GpuQueueType queueType : EnumIterable<GpuQueueType>())
+	{
+		MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+		fence->gpuSignal(queueType);
+		fence->clientWait(kMaxSecond);
+	}
 }
 
 } // end namespace anki

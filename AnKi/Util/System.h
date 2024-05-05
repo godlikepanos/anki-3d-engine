@@ -51,6 +51,11 @@ void cleanupGetAndroidCommandLineArguments(void* ptr);
 
 /// Some common code to be called before main.
 void preMainInit();
+
+#if ANKI_OS_WINDOWS
+/// Convert windows errors (from GetLastError) to strings.
+String errorMessageToString(DWORD errorMessageID);
+#endif
 /// @}
 
 } // end namespace anki

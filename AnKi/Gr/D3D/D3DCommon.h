@@ -8,6 +8,7 @@
 #include <AnKi/Gr/Common.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Gr/BackendCommon/Common.h>
+#include <AnKi/Util/System.h>
 #include <string>
 #include <locale>
 #include <codecvt>
@@ -47,7 +48,7 @@ namespace anki {
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGF("D3D function failed (HRESULT: %d): %s", rez, #x); \
+			ANKI_D3D_LOGF("D3D function failed (HRESULT: %d message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
 		} \
 	} while(0)
 
@@ -57,12 +58,12 @@ namespace anki {
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGE("D3D function failed (HRESULT: %d): %s", rez, #x); \
+			ANKI_D3D_LOGE("D3D function failed (HRESULT: %d message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)
 
-enum class D3DTextureViewType
+enum class D3DTextureViewType : U8
 {
 	kSrv,
 	kRtv,
@@ -74,7 +75,7 @@ enum class D3DTextureViewType
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(D3DTextureViewType)
 
-enum class D3DTextureBufferType
+enum class D3DBufferViewType : U8
 {
 	kCbv,
 	kSrv,
@@ -83,7 +84,7 @@ enum class D3DTextureBufferType
 	kCount,
 	kFirst = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(D3DTextureBufferType)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(D3DBufferViewType)
 
 inline std::string ws2s(const std::wstring& wstr)
 {

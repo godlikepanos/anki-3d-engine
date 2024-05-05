@@ -7,6 +7,7 @@
 
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/D3D/D3DDescriptorHeap.h>
+#include <AnKi/Util/HashMap.h>
 
 namespace anki {
 
@@ -36,9 +37,16 @@ public:
 		return initInternal(external, init);
 	}
 
-	const DescriptorHeapHandle& getView(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType) const
+	DescriptorHeapHandle getOrCreateRtv(const TextureSubresourceDescriptor& subresource) const
 	{
-		const TextureViewEntry& e = getViewEntry(subresource, viewType);
+		const View& e = getOrCreateView(subresource, D3DTextureViewType::kRtv, TextureUsageBit::kNone);
+		ANKI_ASSERT(e.m_handle.isCreated());
+		return e.m_handle;
+	}
+
+	DescriptorHeapHandle getOrCreateDsv(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage) const
+	{
+		const View& e = getOrCreateView(subresource, D3DTextureViewType::kDsv, usage);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
@@ -71,25 +79,39 @@ public:
 	}
 
 private:
-	class TextureViewEntry
+	class View
 	{
 	public:
 		DescriptorHeapHandle m_handle;
-
-		mutable U32 m_bindlessIndex = kMaxU32;
-		mutable SpinLock m_bindlessIndexLock;
+		U32 m_bindlessIndex = kMaxU32;
+		D3DTextureViewType m_viewType;
+		Bool m_dsvReadOnly = false;
 	};
 
 	ID3D12Resource* m_resource = nullptr;
 
-	Array<GrDynamicArray<TextureViewEntry>, U32(D3DTextureViewType::kCount)> m_singleSurfaceOrVolumeViews;
-	Array<TextureViewEntry, U32(D3DTextureViewType::kCount)> m_wholeTextureViews;
+	mutable GrHashMap<U64, View> m_viewsMap;
+	mutable RWMutex m_viewsMapMtx;
+
+	// Cache a few common views
+	View m_wholeTextureSrv;
+	View m_firstSurfaceRtvOrDsv;
+	TextureSubresourceDescriptor m_wholeTextureSrvSubresource = TextureSubresourceDescriptor::all();
+	TextureSubresourceDescriptor m_firstSurfaceRtvOrDsvSubresource = TextureSubresourceDescriptor::all();
 
 	Error initInternal(ID3D12Resource* external, const TextureInitInfo& init);
 
-	const TextureViewEntry& getViewEntry(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType) const;
+	const View& getOrCreateView(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType, TextureUsageBit usage) const;
 
 	void computeResourceStates(TextureUsageBit usage, D3D12_RESOURCE_STATES& states) const;
+
+	DescriptorHeapHandle createDescriptorHeapHandle(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType,
+													Bool readOnlyDsv) const;
+
+	Bool isExternal() const
+	{
+		return !!(m_usage & TextureUsageBit::kPresent);
+	}
 };
 /// @}
 

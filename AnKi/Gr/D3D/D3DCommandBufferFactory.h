@@ -81,7 +81,7 @@ public:
 		m_isSmallBatch = false;
 	}
 
-	ID3D12GraphicsCommandList7& getCmdList() const
+	ID3D12GraphicsCommandList6& getCmdList() const
 	{
 		ANKI_ASSERT(m_cmdList);
 		return *m_cmdList;
@@ -97,11 +97,6 @@ public:
 		return (m_cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE) ? GpuQueueType::kCompute : GpuQueueType::kGeneral;
 	}
 
-	void resetCmdList()
-	{
-		m_cmdList->Reset(m_cmdAllocator, nullptr);
-	}
-
 private:
 	static constexpr U32 kMaxRefObjectSearch = 16;
 
@@ -114,7 +109,7 @@ private:
 	StackMemoryPool m_fastPool;
 
 	ID3D12CommandAllocator* m_cmdAllocator = nullptr;
-	ID3D12GraphicsCommandList7* m_cmdList = nullptr;
+	ID3D12GraphicsCommandList6* m_cmdList = nullptr;
 
 	void reset();
 

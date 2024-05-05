@@ -202,6 +202,8 @@ public:
 
 	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::kNone;
 
+	U8 _m_padding[2] = {0, 0};
+
 	constexpr TextureSubresourceDescriptor(const TextureSubresourceDescriptor&) = default;
 
 	constexpr TextureSubresourceDescriptor& operator=(const TextureSubresourceDescriptor&) = default;
@@ -278,6 +280,7 @@ private:
 		, m_allSurfacesOrVolumes(allSurfs)
 		, m_depthStencilAspect(aspect)
 	{
+		static_assert(sizeof(TextureSubresourceDescriptor) == 8, "Because it may get hashed");
 	}
 };
 

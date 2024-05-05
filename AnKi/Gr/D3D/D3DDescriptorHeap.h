@@ -20,9 +20,7 @@ class DescriptorHeapHandle
 {
 public:
 	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle = {};
-#if ANKI_ASSERTIONS_ENABLED
-	DescriptorHeap* m_father = nullptr;
-#endif
+	D3D12_DESCRIPTOR_HEAP_TYPE m_heapType = D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
 
 	[[nodiscard]] Bool isCreated() const
 	{
@@ -58,6 +56,7 @@ public:
 
 		m_freeDescriptorsHead = 0;
 		m_descriptorSize = descriptorSize;
+		m_type = type;
 		return Error::kNone;
 	}
 
@@ -79,9 +78,8 @@ public:
 		idx = m_freeDescriptors[idx];
 		DescriptorHeapHandle out;
 		out.m_cpuHandle.ptr = m_heapStart.ptr + PtrSize(idx) * m_descriptorSize;
-#if ANKI_ASSERTIONS_ENABLED
-		out.m_father = this;
-#endif
+		out.m_heapType = m_type;
+
 		return out;
 	}
 
@@ -89,14 +87,14 @@ public:
 	void free(DescriptorHeapHandle& handle)
 	{
 		ANKI_ASSERT(m_heap);
-		if(handle.m_cpuHandle.ptr == 0)
+		if(!handle.isCreated())
 		{
 			return;
 		}
 
-		ANKI_ASSERT(handle.m_father == this);
+		ANKI_ASSERT(handle.m_heapType == m_type);
 		ANKI_ASSERT(handle.m_cpuHandle.ptr != 0 && handle.m_cpuHandle.ptr >= m_heapStart.ptr
-					&& handle.m_cpuHandle.ptr < m_heapStart.ptr + PtrSize(m_descriptorSize) + m_freeDescriptors.getSize());
+					&& handle.m_cpuHandle.ptr < m_heapStart.ptr + m_descriptorSize * m_freeDescriptors.getSize());
 
 		const U16 idx = U16((handle.m_cpuHandle.ptr - m_heapStart.ptr) / m_descriptorSize);
 
@@ -110,6 +108,7 @@ public:
 private:
 	ID3D12DescriptorHeap* m_heap = nullptr;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_heapStart = {};
+	D3D12_DESCRIPTOR_HEAP_TYPE m_type = {};
 	U32 m_descriptorSize = 0;
 
 	GrDynamicArray<U16> m_freeDescriptors;
@@ -118,12 +117,45 @@ private:
 	Mutex m_mtx;
 };
 
-class RtvDescriptorHeap : public DescriptorHeap, public MakeSingleton<RtvDescriptorHeap>
+/// An array of all descriptor heaps.
+class DescriptorHeaps : public MakeSingleton<DescriptorHeaps>
 {
-};
+public:
+	Error init(const Array<U16, D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES>& descriptorCounts, ID3D12Device& dev)
+	{
+		const Array<D3D12_DESCRIPTOR_HEAP_FLAGS, D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES> flags = {
+			D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+			D3D12_DESCRIPTOR_HEAP_FLAG_NONE};
 
-class CbvSrvUavDescriptorHeap : public DescriptorHeap, public MakeSingleton<CbvSrvUavDescriptorHeap>
-{
+		for(D3D12_DESCRIPTOR_HEAP_TYPE type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; type < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
+			type = D3D12_DESCRIPTOR_HEAP_TYPE(U32(type) + 1))
+		{
+			if(descriptorCounts[type])
+			{
+				ANKI_CHECK(m_heaps[type].init(type, flags[type], descriptorCounts[type], dev.GetDescriptorHandleIncrementSize(type)));
+			}
+		}
+
+		return Error::kNone;
+	}
+
+	/// @note Thread-safe.
+	DescriptorHeapHandle allocate(D3D12_DESCRIPTOR_HEAP_TYPE type)
+	{
+		return m_heaps[type].allocate();
+	}
+
+	/// @note Thread-safe.
+	void free(DescriptorHeapHandle& handle)
+	{
+		if(handle.isCreated())
+		{
+			m_heaps[handle.m_heapType].free(handle);
+		}
+	}
+
+private:
+	Array<DescriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES> m_heaps;
 };
 /// @}
 

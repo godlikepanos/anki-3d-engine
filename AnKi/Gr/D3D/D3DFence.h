@@ -25,7 +25,7 @@ public:
 
 	~MicroFence()
 	{
-		ANKI_ASSERT(!done());
+		ANKI_ASSERT(done());
 		if(!CloseHandle(m_event))
 		{
 			ANKI_D3D_LOGE("CloseHandle() failed");

@@ -34,7 +34,7 @@ public:
 	}
 
 private:
-	ID3D12GraphicsCommandList7* m_cmdList = nullptr; // Cache it.
+	ID3D12GraphicsCommandList6* m_cmdList = nullptr; // Cache it.
 	U32 m_commandCount = 0;
 
 	StackMemoryPool* m_fastPool = nullptr; // Cache it.

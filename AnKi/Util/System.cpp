@@ -227,4 +227,24 @@ void postMain()
 	Logger::freeSingleton();
 }
 
+#if ANKI_OS_WINDOWS
+String errorMessageToString(DWORD errorMessageID)
+{
+	if(errorMessageID == 0)
+	{
+		return "No error";
+	}
+
+	LPSTR messageBuffer = nullptr;
+
+	const PtrSize size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
+										errorMessageID, ANKI_MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
+
+	String message(messageBuffer, messageBuffer + size);
+	LocalFree(messageBuffer);
+
+	return message;
+}
+#endif
+
 } // end namespace anki

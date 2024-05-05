@@ -43,8 +43,8 @@ public:
 	VkAccelerationStructureKHR m_asHandle = VK_NULL_HANDLE;
 };
 
-/// This class gathers various garbages and disposes them when in some later frame where it is safe to do so. This is
-/// used on bindless textures and buffers where we have to wait until the frame where they were deleted is done.
+/// This class gathers various garbages and disposes them when in some later frame where it is safe to do so. This is used on bindless textures and
+/// buffers where we have to wait until the frame where they were deleted is done.
 class FrameGarbageCollector
 {
 public:

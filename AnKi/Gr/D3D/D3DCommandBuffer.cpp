@@ -188,9 +188,8 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		D3D12_RENDER_PASS_RENDER_TARGET_DESC& desc = colorRtDescs[i];
 
 		desc = {};
-		desc.cpuDescriptor = static_cast<const TextureImpl&>(rt.m_textureView.getTexture())
-								 .getView(rt.m_textureView.getSubresource(), D3DTextureViewType::kRtv)
-								 .m_cpuHandle;
+		desc.cpuDescriptor =
+			static_cast<const TextureImpl&>(rt.m_textureView.getTexture()).getOrCreateRtv(rt.m_textureView.getSubresource()).m_cpuHandle;
 		desc.BeginningAccess.Type = convertLoadOp(rt.m_loadOperation);
 		memcpy(&desc.BeginningAccess.Clear.ClearValue.Color, &rt.m_clearValue.m_colorf[0], sizeof(F32) * 4);
 		desc.EndingAccess.Type = convertStoreOp(rt.m_storeOperation);
@@ -201,7 +200,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	{
 		dsDesc = {};
 		dsDesc.cpuDescriptor = static_cast<const TextureImpl&>(depthStencilRt->m_textureView.getTexture())
-								   .getView(depthStencilRt->m_textureView.getSubresource(), D3DTextureViewType::kDsv)
+								   .getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), depthStencilRt->m_usage)
 								   .m_cpuHandle;
 
 		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);

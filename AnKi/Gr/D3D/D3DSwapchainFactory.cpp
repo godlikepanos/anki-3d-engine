@@ -58,6 +58,7 @@ Error MicroSwapchain::initInternal()
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapChainDesc.SampleDesc.Count = 1;
+	swapChainDesc.Flags |= (!g_vsyncCVar.get()) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	ComPtr<IDXGISwapChain1> swapChain;
 	// Swap chain needs the queue so that it can force a flush on it.

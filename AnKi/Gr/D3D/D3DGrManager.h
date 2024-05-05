@@ -62,6 +62,8 @@ private:
 	U8 m_crntFrame = 0;
 
 	void destroy();
+
+	void waitAllQueues();
 };
 /// @}
 
