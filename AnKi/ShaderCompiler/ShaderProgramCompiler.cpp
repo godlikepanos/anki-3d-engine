@@ -10,6 +10,19 @@
 #include <AnKi/Util/HashMap.h>
 #include <SpirvCross/spirv_cross.hpp>
 
+#define ANKI_DIXL_REFLECTION (ANKI_OS_WINDOWS)
+
+#if ANKI_DIXL_REFLECTION
+#	include <windows.h>
+#	include <ThirdParty/Dxc/dxcapi.h>
+#	include <ThirdParty/Dxc/d3d12shader.h>
+#	include <wrl.h>
+#	include <AnKi/Util/CleanupWindows.h>
+
+static HMODULE g_dxcLib = 0;
+static DxcCreateInstanceProc g_DxcCreateInstance = nullptr;
+#endif
+
 namespace anki {
 
 void freeShaderProgramBinary(ShaderProgramBinary*& binary)
@@ -119,7 +132,8 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
 	spirv_cross::ShaderResources rsrcActive = spvc.get_shader_resources(spvc.get_active_interface_variables());
 
-	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType) -> Error {
+	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType,
+					const DescriptorFlag origFlags) -> Error {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
@@ -147,15 +161,22 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 
 			// Images are special, they might be texel buffers
 			DescriptorType type = origType;
+			DescriptorFlag flags = origFlags;
 			if(type == DescriptorType::kTexture)
 			{
-				if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 1)
+				if(typeInfo.image.dim == spv::DimBuffer)
 				{
-					type = DescriptorType::kReadTexelBuffer;
-				}
-				else if(typeInfo.image.dim == spv::DimBuffer && typeInfo.image.sampled == 2)
-				{
-					type = DescriptorType::kReadWriteTexelBuffer;
+					type = DescriptorType::kTexelBuffer;
+
+					if(typeInfo.image.sampled == 1)
+					{
+						flags = DescriptorFlag::kRead;
+					}
+					else
+					{
+						ANKI_ASSERT(typeInfo.image.sampled == 2);
+						flags = DescriptorFlag::kReadWrite;
+					}
 				}
 			}
 
@@ -165,11 +186,13 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 				// New binding, init it
 				refl.m_descriptorTypes[set][binding] = type;
 				refl.m_descriptorArraySizes[set][binding] = U16(arraySize);
+				refl.m_descriptorFlags[set][binding] = flags;
 			}
 			else
 			{
 				// Same binding, make sure the type is compatible
-				if(refl.m_descriptorTypes[set][binding] != type || refl.m_descriptorArraySizes[set][binding] != arraySize)
+				if(refl.m_descriptorTypes[set][binding] != type || refl.m_descriptorArraySizes[set][binding] != arraySize
+				   || refl.m_descriptorFlags[set][binding] != flags)
 				{
 					errorStr.sprintf("Descriptor with same binding but different type or array size: %s", r.name.c_str());
 					return Error::kUserData;
@@ -181,26 +204,26 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 	};
 
 	Error err = Error::kNone;
-	err = func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer);
+	err = func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer, DescriptorFlag::kRead);
 	if(!err)
 	{
-		err = func(rsrc.separate_images, DescriptorType::kTexture); // This also handles texture buffers
+		err = func(rsrc.separate_images, DescriptorType::kTexture, DescriptorFlag::kRead); // This also handles texel buffers
 	}
 	if(!err)
 	{
-		err = func(rsrc.separate_samplers, DescriptorType::kSampler);
+		err = func(rsrc.separate_samplers, DescriptorType::kSampler, DescriptorFlag::kRead);
 	}
 	if(!err)
 	{
-		err = func(rsrc.storage_buffers, DescriptorType::kStorageBuffer);
+		err = func(rsrc.storage_buffers, DescriptorType::kStorageBuffer, DescriptorFlag::kReadWrite);
 	}
 	if(!err)
 	{
-		err = func(rsrc.storage_images, DescriptorType::kStorageImage);
+		err = func(rsrc.storage_images, DescriptorType::kTexture, DescriptorFlag::kReadWrite);
 	}
 	if(!err)
 	{
-		err = func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure);
+		err = func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure, DescriptorFlag::kRead);
 	}
 
 	// Color attachments
@@ -233,39 +256,39 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 	{
 		for(const spirv_cross::Resource& r : rsrcActive.stage_inputs)
 		{
-			VertexAttribute a = VertexAttribute::kCount;
+			VertexAttributeSemantic a = VertexAttributeSemantic::kCount;
 #define ANKI_ATTRIB_NAME(x) "in.var." #x
 			if(r.name == ANKI_ATTRIB_NAME(POSITION))
 			{
-				a = VertexAttribute::kPosition;
+				a = VertexAttributeSemantic::kPosition;
 			}
 			else if(r.name == ANKI_ATTRIB_NAME(NORMAL))
 			{
-				a = VertexAttribute::kNormal;
+				a = VertexAttributeSemantic::kNormal;
 			}
 			else if(r.name == ANKI_ATTRIB_NAME(TEXCOORD0) || r.name == ANKI_ATTRIB_NAME(TEXCOORD))
 			{
-				a = VertexAttribute::kTexCoord;
+				a = VertexAttributeSemantic::kTexCoord;
 			}
 			else if(r.name == ANKI_ATTRIB_NAME(COLOR))
 			{
-				a = VertexAttribute::kColor;
+				a = VertexAttributeSemantic::kColor;
 			}
 			else if(r.name == ANKI_ATTRIB_NAME(MISC0) || r.name == ANKI_ATTRIB_NAME(MISC))
 			{
-				a = VertexAttribute::kMisc0;
+				a = VertexAttributeSemantic::kMisc0;
 			}
 			else if(r.name == ANKI_ATTRIB_NAME(MISC1))
 			{
-				a = VertexAttribute::kMisc1;
+				a = VertexAttributeSemantic::kMisc1;
 			}
 			else if(r.name == ANKI_ATTRIB_NAME(MISC2))
 			{
-				a = VertexAttribute::kMisc2;
+				a = VertexAttributeSemantic::kMisc2;
 			}
 			else if(r.name == ANKI_ATTRIB_NAME(MISC3))
 			{
-				a = VertexAttribute::kMisc3;
+				a = VertexAttributeSemantic::kMisc3;
 			}
 			else
 			{
@@ -302,7 +325,191 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 	return Error::kNone;
 }
 
-static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgramBinaryMutation& mutation,
+#if ANKI_DIXL_REFLECTION
+#	define ANKI_REFL_CHECK(x) \
+		do \
+		{ \
+			HRESULT rez; \
+			if((rez = (x)) < 0) [[unlikely]] \
+			{ \
+				errorStr.sprintf("DXC function failed (HRESULT: %d): %s", rez, #x); \
+				return Error::kFunctionFailed; \
+			} \
+		} while(0)
+
+static Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr)
+{
+	using Microsoft::WRL::ComPtr;
+
+	ComPtr<IDxcUtils> utils;
+	ANKI_REFL_CHECK(g_DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
+
+	const DxcBuffer buff = {dxil.getBegin(), dxil.getSizeInBytes(), 0};
+	ComPtr<ID3D12ShaderReflection> dxRefl;
+	ANKI_REFL_CHECK(utils->CreateReflection(&buff, IID_PPV_ARGS(&dxRefl)));
+
+	D3D12_SHADER_DESC shaderDesc = {};
+	dxRefl->GetDesc(&shaderDesc);
+
+	for(U32 i = 0; i < shaderDesc.BoundResources; ++i)
+	{
+		D3D12_SHADER_INPUT_BIND_DESC bind;
+		ANKI_REFL_CHECK(dxRefl->GetResourceBindingDesc(i, &bind));
+
+		ShaderReflectionBinding akBinding;
+
+		akBinding.m_type = DescriptorType::kCount;
+		akBinding.m_flags = DescriptorFlag::kNone;
+		akBinding.m_arraySize = U16(bind.BindCount);
+
+		if(bind.Type == D3D_SIT_CBUFFER)
+		{
+			// ConstantBuffer
+			akBinding.m_type = DescriptorType::kUniformBuffer;
+			akBinding.m_flags = DescriptorFlag::kRead;
+			akBinding.m_semantic = BindingSemantic('b', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_TEXTURE && bind.Dimension != D3D_SRV_DIMENSION_BUFFER)
+		{
+			// Texture2D etc
+			akBinding.m_type = DescriptorType::kTexture;
+			akBinding.m_flags = DescriptorFlag::kRead;
+			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_TEXTURE && bind.Dimension == D3D_SRV_DIMENSION_BUFFER)
+		{
+			// Buffer
+			akBinding.m_type = DescriptorType::kTexelBuffer;
+			akBinding.m_flags = DescriptorFlag::kRead;
+			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_SAMPLER)
+		{
+			// SamplerState
+			akBinding.m_type = DescriptorType::kSampler;
+			akBinding.m_flags = DescriptorFlag::kRead;
+			akBinding.m_semantic = BindingSemantic('s', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_UAV_RWTYPED && bind.Dimension == D3D_SRV_DIMENSION_BUFFER)
+		{
+			// RWBuffer
+			akBinding.m_type = DescriptorType::kTexelBuffer;
+			akBinding.m_flags = DescriptorFlag::kReadWrite;
+			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_UAV_RWTYPED && bind.Dimension != D3D_SRV_DIMENSION_BUFFER)
+		{
+			// RWTexture2D etc
+			akBinding.m_type = DescriptorType::kTexture;
+			akBinding.m_flags = DescriptorFlag::kReadWrite;
+			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_BYTEADDRESS)
+		{
+			// ByteAddressBuffer
+			akBinding.m_type = DescriptorType::kStorageBuffer;
+			akBinding.m_flags = DescriptorFlag::kRead | DescriptorFlag::kByteAddressBuffer;
+			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_UAV_RWBYTEADDRESS)
+		{
+			// RWByteAddressBuffer
+			akBinding.m_type = DescriptorType::kStorageBuffer;
+			akBinding.m_flags = DescriptorFlag::kReadWrite | DescriptorFlag::kByteAddressBuffer;
+			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_RTACCELERATIONSTRUCTURE)
+		{
+			// RaytracingAccelerationStructure
+			akBinding.m_type = DescriptorType::kAccelerationStructure;
+			akBinding.m_flags = DescriptorFlag::kRead;
+			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
+		}
+		else
+		{
+			ANKI_SHADER_COMPILER_LOGE("Unrecognized type for binding: %s", bind.Name);
+			return Error::kUserData;
+		}
+
+		refl.m_bindings[bind.Space][refl.m_bindingCounts[bind.Space++]] = akBinding;
+	}
+
+	if(type == ShaderType::kVertex)
+	{
+		for(U32 i = 0; i < shaderDesc.InputParameters; ++i)
+		{
+			D3D12_SIGNATURE_PARAMETER_DESC in;
+			ANKI_REFL_CHECK(dxRefl->GetInputParameterDesc(i, &in));
+
+			VertexAttributeSemantic a = VertexAttributeSemantic::kCount;
+#	define ANKI_ATTRIB_NAME(x, idx) CString(in.SemanticName) == #    x&& in.SemanticIndex == idx
+			if(ANKI_ATTRIB_NAME(POSITION, 0))
+			{
+				a = VertexAttributeSemantic::kPosition;
+			}
+			else if(ANKI_ATTRIB_NAME(NORMAL, 0))
+			{
+				a = VertexAttributeSemantic::kNormal;
+			}
+			else if(ANKI_ATTRIB_NAME(TEXCOORD, 0))
+			{
+				a = VertexAttributeSemantic::kTexCoord;
+			}
+			else if(ANKI_ATTRIB_NAME(COLOR, 0))
+			{
+				a = VertexAttributeSemantic::kColor;
+			}
+			else if(ANKI_ATTRIB_NAME(MISC, 0))
+			{
+				a = VertexAttributeSemantic::kMisc0;
+			}
+			else if(ANKI_ATTRIB_NAME(MISC, 1))
+			{
+				a = VertexAttributeSemantic::kMisc1;
+			}
+			else if(ANKI_ATTRIB_NAME(MISC, 2))
+			{
+				a = VertexAttributeSemantic::kMisc2;
+			}
+			else if(ANKI_ATTRIB_NAME(MISC, 3))
+			{
+				a = VertexAttributeSemantic::kMisc3;
+			}
+			else if(ANKI_ATTRIB_NAME(SV_VERTEXID, 0))
+			{
+				// Ignore
+			}
+			else
+			{
+				errorStr.sprintf("Unexpected attribute name: %s", in.SemanticName);
+				return Error::kUserData;
+			}
+#	undef ANKI_ATTRIB_NAME
+
+			refl.m_vertexAttributeMask.set(a);
+			refl.m_vertexAttributeLocations[a] = U8(i);
+		}
+	}
+
+	if(type == ShaderType::kFragment)
+	{
+		for(U32 i = 0; i < shaderDesc.OutputParameters; ++i)
+		{
+			D3D12_SIGNATURE_PARAMETER_DESC desc;
+			ANKI_REFL_CHECK(dxRefl->GetOutputParameterDesc(i, &desc));
+
+			if(CString(desc.SemanticName) == "SV_TARGET")
+			{
+				refl.m_colorAttachmentWritemask.set(desc.SemanticIndex);
+			}
+		}
+	}
+
+	return Error::kNone;
+}
+#endif // #if ANKI_DIXL_REFLECTION
+
+static void compileVariantAsync(const ShaderProgramParser& parser, Bool spirv, ShaderProgramBinaryMutation& mutation,
 								ShaderCompilerDynamicArray<ShaderProgramBinaryVariant>& variants,
 								ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock>& codeBlocks,
 								ShaderCompilerDynamicArray<U64>& sourceCodeHashes, ShaderProgramAsyncTaskInterface& taskManager, Mutex& mtx,
@@ -318,6 +525,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 		ShaderCompilerDynamicArray<U64>* m_sourceCodeHashes;
 		Mutex* m_mtx;
 		Atomic<I32>* m_err;
+		Bool m_spirv;
 	};
 
 	Ctx* ctx = newInstance<Ctx>(ShaderCompilerMemoryPool::getSingleton());
@@ -328,6 +536,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 	ctx->m_sourceCodeHashes = &sourceCodeHashes;
 	ctx->m_mtx = &mtx;
 	ctx->m_err = &error;
+	ctx->m_spirv = spirv;
 
 	auto callback = [](void* userData) {
 		Ctx& ctx = *static_cast<Ctx*>(userData);
@@ -395,17 +604,38 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 					}
 				}
 
-				ShaderCompilerDynamicArray<U8> spirv;
-				err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), spirv, compilerErrorLog);
+				ShaderCompilerDynamicArray<U8> il;
+				if(ctx.m_spirv)
+				{
+					err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), il, compilerErrorLog);
+				}
+				else
+				{
+					err = compileHlslToDxil(source, shaderType, ctx.m_parser->compileWith16bitTypes(), il, compilerErrorLog);
+				}
+
 				if(err)
 				{
 					break;
 				}
 
-				const U64 newHash = computeHash(spirv.getBegin(), spirv.getSizeInBytes());
+				const U64 newHash = computeHash(il.getBegin(), il.getSizeInBytes());
 
 				ShaderReflection refl;
-				err = doReflectionSpirv(spirv, shaderType, refl, compilerErrorLog);
+				if(ctx.m_spirv)
+				{
+					err = doReflectionSpirv(il, shaderType, refl, compilerErrorLog);
+				}
+				else
+				{
+#if ANKI_DIXL_REFLECTION
+					err = doReflectionDxil(il, shaderType, refl, compilerErrorLog);
+#else
+					ANKI_SHADER_COMPILER_LOGE("Can't generate shader compilation on non-windows platforms");
+					err = Error::kFunctionFailed;
+#endif
+				}
+
 				if(err)
 				{
 					break;
@@ -431,7 +661,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 						codeBlockIndices[t].m_codeBlockIndices[shaderType] = ctx.m_codeBlocks->getSize();
 
 						auto& codeBlock = *ctx.m_codeBlocks->emplaceBack();
-						spirv.moveAndReset(codeBlock.m_binary);
+						il.moveAndReset(codeBlock.m_binary);
 						codeBlock.m_hash = newHash;
 						codeBlock.m_reflection = refl;
 
@@ -505,11 +735,39 @@ static void compileVariantAsync(const ShaderProgramParser& parser, ShaderProgram
 	taskManager.enqueueTask(callback, ctx);
 }
 
-Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
-								   ShaderProgramAsyncTaskInterface* taskManager_, ConstWeakArray<ShaderCompilerDefine> defines,
-								   ShaderProgramBinary*& binary)
+static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgramFilesystemInterface& fsystem,
+										  ShaderProgramPostParseInterface* postParseCallback, ShaderProgramAsyncTaskInterface* taskManager_,
+										  ConstWeakArray<ShaderCompilerDefine> defines_, ShaderProgramBinary*& binary)
 {
+#if ANKI_DIXL_REFLECTION
+	if(!spirv)
+	{
+		// Init DXC
+		g_dxcLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxcompiler.dll");
+		if(g_dxcLib == 0)
+		{
+			ANKI_SHADER_COMPILER_LOGE("dxcompiler.dll missing or wrong architecture");
+			return Error::kFunctionFailed;
+		}
+
+		g_DxcCreateInstance = reinterpret_cast<DxcCreateInstanceProc>(GetProcAddress(g_dxcLib, "DxcCreateInstance"));
+		if(g_DxcCreateInstance == nullptr)
+		{
+			ANKI_SHADER_COMPILER_LOGE("DxcCreateInstance was not found in the dxcompiler.dll");
+			return Error::kFunctionFailed;
+		}
+	}
+#endif
+
 	ShaderCompilerMemoryPool& memPool = ShaderCompilerMemoryPool::getSingleton();
+
+	ShaderCompilerDynamicArray<ShaderCompilerDefine> defines;
+	for(const ShaderCompilerDefine& d : defines_)
+	{
+		defines.emplaceBack(d);
+	}
+	defines.emplaceBack(ShaderCompilerDefine{"ANKI_TARGET_SPIRV", spirv});
+	defines.emplaceBack(ShaderCompilerDefine{"ANKI_TARGET_DXIL", !spirv});
 
 	// Initialize the binary
 	binary = newInstance<ShaderProgramBinary>(memPool);
@@ -615,7 +873,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 			{
 				// New and unique mutation and thus variant, add it
 
-				compileVariantAsync(parser, mutation, variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
+				compileVariantAsync(parser, spirv, mutation, variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
 
 				ANKI_ASSERT(mutationHashToIdx.find(mutation.m_hash) == mutationHashToIdx.getEnd());
 				mutationHashToIdx.emplace(mutation.m_hash, mutationCount - 1);
@@ -642,7 +900,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock> codeBlocks;
 		ShaderCompilerDynamicArray<U64> sourceCodeHashes;
 
-		compileVariantAsync(parser, binary->m_mutations[0], variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
+		compileVariantAsync(parser, spirv, binary->m_mutations[0], variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
 
 		ANKI_CHECK(taskManager.joinTasks());
 		ANKI_CHECK(Error(errorAtomic.getNonAtomically()));
@@ -708,10 +966,10 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	return Error::kNone;
 }
 
-Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
+Error compileShaderProgram(CString fname, Bool spirv, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
 						   ShaderProgramAsyncTaskInterface* taskManager, ConstWeakArray<ShaderCompilerDefine> defines, ShaderProgramBinary*& binary)
 {
-	const Error err = compileShaderProgramInternal(fname, fsystem, postParseCallback, taskManager, defines, binary);
+	const Error err = compileShaderProgramInternal(fname, spirv, fsystem, postParseCallback, taskManager, defines, binary);
 	if(err)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());

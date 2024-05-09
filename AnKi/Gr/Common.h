@@ -842,7 +842,7 @@ enum class GpuQueueType : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuQueueType)
 
-enum class VertexAttribute : U8
+enum class VertexAttributeSemantic : U8
 {
 	kPosition,
 	kNormal,
@@ -856,17 +856,16 @@ enum class VertexAttribute : U8
 	kCount,
 	kFirst = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttribute)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemantic)
 
+/// This doesn't match Vulkan or D3D.
 enum class DescriptorType : U8
 {
-	kTexture,
+	kTexture, ///< Vulkan: Image (sampled or storage). D3D: Textures
 	kSampler,
 	kUniformBuffer,
-	kStorageBuffer,
-	kStorageImage,
-	kReadTexelBuffer,
-	kReadWriteTexelBuffer,
+	kStorageBuffer, ///< Vulkan: Storage buffers. D3D: Structured, ByteAddressBuffer
+	kTexelBuffer,
 	kAccelerationStructure,
 
 	kCount,
@@ -874,15 +873,74 @@ enum class DescriptorType : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorType)
 
+enum class DescriptorFlag : U8
+{
+	kNone,
+	kRead = 1 << 0,
+	kWrite = 1 << 1,
+	kReadWrite = kRead | kWrite,
+	kByteAddressBuffer = 1 << 2
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorFlag)
+
+/// HLSL binding semantic
+class BindingSemantic
+{
+public:
+	U16 m_number = kMaxU16;
+	Char m_class = '\0'; // It can be 'c', 'u', 's', 't'
+	U8 m_padding = 0;
+
+	BindingSemantic(Char c, U32 n)
+		: m_class(c)
+		, m_number(U16(n))
+	{
+		ANKI_ASSERT(c == 'c' || c == 'b' || c == 'u' || c == 's');
+		ANKI_ASSERT(n < kMaxU16);
+	}
+
+	/// Construct using a string like "t0" "c99" "s3"
+	BindingSemantic(const Char* str)
+	{
+		ANKI_ASSERT(str);
+		ANKI_ASSERT(str[0] == 'c' || str[0] == 'b' || str[0] == 'u' || str[0] == 's');
+		m_class = str[0];
+		m_number = 0;
+		while(*str != '\0')
+		{
+			ANKI_ASSERT(*str >= '0' && *str <= '9');
+			m_number *= 10;
+			m_number += *str - '0';
+			++str;
+		}
+	}
+};
+
+class ShaderReflectionBinding
+{
+public:
+	BindingSemantic m_semantic = {'c', 1};
+	DescriptorType m_type = DescriptorType::kCount;
+	DescriptorFlag m_flags = DescriptorFlag::kNone;
+	U16 m_arraySize = 0;
+	U16 m_vkBinding = kMaxU8;
+};
+
 class ShaderReflection
 {
 public:
+	// !!OLD!!
 	Array2d<U16, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorArraySizes;
 	Array2d<DescriptorType, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorTypes;
+	Array2d<DescriptorFlag, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorFlags;
 	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
 
-	Array<U8, U32(VertexAttribute::kCount)> m_vertexAttributeLocations; ///< Only for Vulkan.
-	BitSet<U32(VertexAttribute::kCount), U8> m_vertexAttributeMask = {false};
+	// !!NEW!!
+	Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
+	Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
+
+	Array<U8, U32(VertexAttributeSemantic::kCount)> m_vertexAttributeLocations; ///< Only for Vulkan.
+	BitSet<U32(VertexAttributeSemantic::kCount), U8> m_vertexAttributeMask = {false};
 
 	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
 
@@ -899,6 +957,11 @@ public:
 		for(auto& it : m_descriptorTypes)
 		{
 			it.fill(DescriptorType::kCount);
+		}
+
+		for(auto& it : m_descriptorFlags)
+		{
+			it.fill(DescriptorFlag::kNone);
 		}
 
 		m_vertexAttributeLocations.fill(kMaxU8);

@@ -245,6 +245,7 @@ struct DrawIndirectArgsWithPadding
 				indirect.m_instanceCount = 1;
 				indirect.m_firstVertex = 0;
 				indirect.m_firstInstance = bucketDrawcallIdx;
+				indirect.m_padding = 0;
 				g_drawIndirectArgs[indirectIdx] = indirect;
 
 				UVec4 instanceVertex;

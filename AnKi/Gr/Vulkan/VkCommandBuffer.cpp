@@ -50,7 +50,7 @@ void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, PtrSiz
 	vkCmdBindVertexBuffers(self.m_handle, binding, 1, &vkbuff, &buff.getOffset());
 }
 
-void CommandBuffer::setVertexAttribute(VertexAttribute attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset)
+void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
@@ -927,7 +927,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 
 	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
 	ANKI_ASSERT(tex.usageValid(TextureUsageBit::kTransferDestination));
-	ANKI_ASSERT(texView.isGoodForCopyFromBuffer());
+	ANKI_ASSERT(texView.isGoodForCopyBufferToTexture());
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	const VkImageSubresourceRange range = tex.computeVkImageSubresourceRange(texView.getSubresource());
 

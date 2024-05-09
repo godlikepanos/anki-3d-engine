@@ -16,6 +16,10 @@ namespace anki {
 /// Compile HLSL to SPIR-V.
 Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& spirv,
 						 ShaderCompilerString& errorMessage);
+
+/// Compile HLSL to DXIL.
+Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& dxil,
+						ShaderCompilerString& errorMessage);
 /// @}
 
 } // end namespace anki

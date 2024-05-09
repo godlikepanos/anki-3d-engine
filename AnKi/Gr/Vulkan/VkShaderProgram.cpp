@@ -153,7 +153,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				DSBinding b;
 				b.m_arraySize = m_refl.m_descriptorArraySizes[set][binding];
 				b.m_binding = binding;
-				b.m_type = m_refl.m_descriptorTypes[set][binding];
+				b.m_type = convertDescriptorType(m_refl.m_descriptorTypes[set][binding], m_refl.m_descriptorFlags[set][binding]);
 
 				bindings[set][counts[set]++] = b;
 			}

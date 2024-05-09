@@ -34,6 +34,14 @@ else()
 	set(extra_compiler_args ${extra_compiler_args} "-DANKI_FORCE_FULL_FP_PRECISION=0")
 endif()
 
+if(VULKAN)
+	message("++ Compiling shaders in SPIR-V")
+	set(extra_compiler_args ${extra_compiler_args} "-spirv")
+else()
+	message("++ Compiling shaders in DXIL")
+	set(extra_compiler_args ${extra_compiler_args} "-dxil")
+endif()
+
 include(FindPythonInterp)
 
 foreach(prog_fname ${prog_fnames})

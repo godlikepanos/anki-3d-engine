@@ -170,8 +170,8 @@ class MeshBinaryHeader
 public:
 	Array<U8, 8> m_magic;
 	MeshBinaryFlag m_flags;
-	Array<MeshBinaryVertexBuffer, U32(VertexAttribute::kCount)> m_vertexBuffers;
-	Array<MeshBinaryVertexAttribute, U32(VertexAttribute::kCount)> m_vertexAttributes;
+	Array<MeshBinaryVertexBuffer, U32(VertexAttributeSemantic::kCount)> m_vertexBuffers;
+	Array<MeshBinaryVertexAttribute, U32(VertexAttributeSemantic::kCount)> m_vertexAttributes;
 	IndexType m_indexType;
 	Array<U8, 3> m_padding;
 

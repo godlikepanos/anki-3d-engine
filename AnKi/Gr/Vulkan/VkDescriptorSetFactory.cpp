@@ -16,21 +16,20 @@ static StatCounter g_descriptorSetsAllocated(StatCategory::kMisc, "DescriptorSet
 class DSAllocatorConstants
 {
 public:
-	Array<U32, U32(DescriptorType::kCount)> m_descriptorCount;
+	Array<std::pair<VkDescriptorType, U32>, 8> m_descriptorCount;
 
 	U32 m_maxSets;
 
 	DSAllocatorConstants()
 	{
-		m_descriptorCount[DescriptorType::kTexture] = 64;
-		m_descriptorCount[DescriptorType::kSampler] = 8;
-		m_descriptorCount[DescriptorType::kUniformBuffer] = 8;
-		m_descriptorCount[DescriptorType::kStorageBuffer] = 64;
-		m_descriptorCount[DescriptorType::kStorageImage] = 8;
-		m_descriptorCount[DescriptorType::kReadTexelBuffer] = 32;
-		m_descriptorCount[DescriptorType::kReadWriteTexelBuffer] = 8;
-		m_descriptorCount[DescriptorType::kAccelerationStructure] = 8;
-		static_assert(decltype(m_descriptorCount)::getSize() == 8);
+		m_descriptorCount[0] = {VK_DESCRIPTOR_TYPE_SAMPLER, 8};
+		m_descriptorCount[1] = {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64};
+		m_descriptorCount[2] = {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 8};
+		m_descriptorCount[3] = {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 32};
+		m_descriptorCount[4] = {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 8};
+		m_descriptorCount[5] = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8};
+		m_descriptorCount[6] = {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 64};
+		m_descriptorCount[7] = {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 4};
 
 		m_maxSets = 64;
 	}
@@ -59,14 +58,14 @@ void DSAllocator::createNewBlock()
 
 	const Bool rtEnabled = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
 
-	Array<VkDescriptorPoolSize, U32(DescriptorType::kCount)> poolSizes;
+	Array<VkDescriptorPoolSize, g_dsAllocatorConsts.m_descriptorCount.getSize()> poolSizes;
 
-	for(DescriptorType type = DescriptorType::kFirst; type < DescriptorType::kCount; ++type)
+	for(U32 i = 0; i < g_dsAllocatorConsts.m_descriptorCount.getSize(); ++i)
 	{
-		VkDescriptorPoolSize& size = poolSizes[type];
+		VkDescriptorPoolSize& size = poolSizes[i];
 
-		size.descriptorCount = g_dsAllocatorConsts.m_descriptorCount[type] * powu(kDescriptorSetGrowScale, m_blocks.getSize());
-		size.type = convertDescriptorType(type);
+		size.descriptorCount = g_dsAllocatorConsts.m_descriptorCount[i].second * powu(kDescriptorSetGrowScale, m_blocks.getSize());
+		size.type = g_dsAllocatorConsts.m_descriptorCount[i].first;
 	}
 
 	VkDescriptorPoolCreateInfo inf = {};
@@ -478,35 +477,35 @@ Bool DSStateTracker::flush(DSAllocator& allocator, VkDescriptorSet& dsHandle)
 				ANKI_ASSERT(m_bindings[bindingIdx].m_count < kMaxU32);
 				const Binding& b = (m_bindings[bindingIdx].m_count == 1) ? m_bindings[bindingIdx].m_single : m_bindings[bindingIdx].m_array[arrIdx];
 
-				ANKI_ASSERT(b.m_type == m_layout->m_bindingType[bindingIdx] && "Bound the wrong type");
+				ANKI_ASSERT(b.m_type == m_layout->m_bindingDsType[bindingIdx] && "Bound the wrong type");
 
 				writeInfo = writeTemplate;
-				writeInfo.descriptorType = convertDescriptorType(b.m_type);
+				writeInfo.descriptorType = b.m_type;
 				writeInfo.dstArrayElement = arrIdx;
 				writeInfo.dstBinding = bindingIdx;
 
 				switch(b.m_type)
 				{
-				case DescriptorType::kTexture:
-				case DescriptorType::kSampler:
-				case DescriptorType::kStorageImage:
+				case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+				case VK_DESCRIPTOR_TYPE_SAMPLER:
+				case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
 				{
 					writeInfo.pImageInfo = &b.m_image;
 					break;
 				}
-				case DescriptorType::kUniformBuffer:
-				case DescriptorType::kStorageBuffer:
+				case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+				case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
 				{
 					writeInfo.pBufferInfo = &b.m_buffer;
 					break;
 				}
-				case DescriptorType::kReadTexelBuffer:
-				case DescriptorType::kReadWriteTexelBuffer:
+				case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+				case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
 				{
 					writeInfo.pTexelBufferView = &b.m_bufferView;
 					break;
 				}
-				case DescriptorType::kAccelerationStructure:
+				case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
 				{
 					writeInfo.pNext = &b.m_as;
 					break;
@@ -584,12 +583,12 @@ Error DSLayoutFactory::getOrCreateDescriptorSetLayout(const WeakArray<DSBinding>
 		for(U32 i = 0; i < bindingCount; ++i)
 		{
 			const DSBinding& binding = bindings[i];
-			if(binding.m_binding == 0 && binding.m_type == DescriptorType::kTexture
+			if(binding.m_binding == 0 && binding.m_type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
 			   && binding.m_arraySize == DSBindless::getSingleton().getMaxTextureCount())
 			{
 				// All good
 			}
-			else if(binding.m_binding == 1 && binding.m_type == DescriptorType::kReadTexelBuffer
+			else if(binding.m_binding == 1 && binding.m_type == VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER
 					&& binding.m_arraySize == DSBindless::getSingleton().getMaxTexelBufferCount())
 			{
 				// All good
@@ -640,13 +639,13 @@ Error DSLayoutFactory::getOrCreateDescriptorSetLayout(const WeakArray<DSBinding>
 
 				vk.binding = ak.m_binding;
 				vk.descriptorCount = ak.m_arraySize;
-				vk.descriptorType = convertDescriptorType(ak.m_type);
+				vk.descriptorType = ak.m_type;
 				vk.pImmutableSamplers = nullptr;
 				vk.stageFlags = VK_SHADER_STAGE_ALL;
 
 				ANKI_ASSERT(layout->m_activeBindings.get(ak.m_binding) == false);
 				layout->m_activeBindings.set(ak.m_binding);
-				layout->m_bindingType[ak.m_binding] = ak.m_type;
+				layout->m_bindingDsType[ak.m_binding] = ak.m_type;
 				layout->m_bindingArraySize[ak.m_binding] = ak.m_arraySize;
 				layout->m_minBinding = min<U32>(layout->m_minBinding, ak.m_binding);
 				layout->m_maxBinding = max<U32>(layout->m_maxBinding, ak.m_binding);

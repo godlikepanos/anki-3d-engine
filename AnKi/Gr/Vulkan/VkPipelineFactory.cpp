@@ -43,7 +43,7 @@ Bool PipelineStateTracker::updateHashes()
 	// Vertex
 	if(m_dirty.m_attribs.getAnySet() || m_dirty.m_vertBindings.getAnySet())
 	{
-		for(VertexAttribute i : EnumIterable<VertexAttribute>())
+		for(VertexAttributeSemantic i : EnumIterable<VertexAttributeSemantic>())
 		{
 			if(m_shaderVertexAttributeMask.get(i))
 			{
@@ -158,7 +158,7 @@ void PipelineStateTracker::updateSuperHash()
 	// Vertex
 	if(!!m_shaderVertexAttributeMask)
 	{
-		for(VertexAttribute i : EnumIterable<VertexAttribute>())
+		for(VertexAttributeSemantic i : EnumIterable<VertexAttributeSemantic>())
 		{
 			if(m_shaderVertexAttributeMask.get(i))
 			{
@@ -222,8 +222,8 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	vertCi.pVertexAttributeDescriptions = &m_ci.m_attribs[0];
 	vertCi.pVertexBindingDescriptions = &m_ci.m_vertBindings[0];
 
-	BitSet<U32(VertexAttribute::kCount), U8> bindingSet = {false};
-	for(VertexAttribute semantic : EnumIterable<VertexAttribute>())
+	BitSet<U32(VertexAttributeSemantic::kCount), U8> bindingSet = {false};
+	for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 	{
 		if(m_shaderVertexAttributeMask.get(semantic))
 		{

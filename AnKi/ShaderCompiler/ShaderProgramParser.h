@@ -196,6 +196,13 @@ private:
 
 	static Bool mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value);
 
+	static ShaderCompilerString sanitizeFilename(CString fname)
+	{
+		ShaderCompilerString s = fname;
+		s.replaceAll("\\", "\\\\");
+		return s;
+	}
+
 	Error checkNoActiveStruct() const
 	{
 		if(m_insideStruct)

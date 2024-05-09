@@ -492,7 +492,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 		// We _must_ have an #include
 		ANKI_CHECK(parseInclude(token + 1, end, line, fname, depth));
 
-		getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, fname.cstr());
+		getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
 	}
 	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
 	{
@@ -520,7 +520,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 												  "#define _ANKI_INCL_GUARD_%" PRIu64,
 												  hash, hash);
 
-			getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, fname.cstr());
+			getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
 		}
 		else if(*token == "anki")
 		{
@@ -573,7 +573,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			}
 
 			// For good measure
-			getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, fname.cstr());
+			getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
 		}
 		else
 		{
@@ -748,7 +748,7 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 		ANKI_SHADER_COMPILER_LOGE("Source is empty");
 	}
 
-	getAppendSourceList().pushBackSprintf("#line 0 \"%s\"", fname.cstr());
+	getAppendSourceList().pushBackSprintf("#line 0 \"%s\"", sanitizeFilename(fname).cstr());
 
 	// Parse lines
 	U32 lineNo = 1;

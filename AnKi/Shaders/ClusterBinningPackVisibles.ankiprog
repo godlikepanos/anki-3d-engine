@@ -49,7 +49,7 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 
 	const Bool isPoint = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kPointLight) ? true : false;
 
-	LightUnion output;
+	LightUnion output = (LightUnion)0;
 	output.m_position = input.m_position;
 	output.m_radius = input.m_radius;
 

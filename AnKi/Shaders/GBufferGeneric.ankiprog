@@ -150,7 +150,7 @@ struct MeshPerPrimitiveOut
 	U32 m_meshletIndex : MESHLET_INDEX;
 #endif
 
-	I32 m_cullPrimitive : SV_CULLPRIMITIVE; // TODO: Make it Bool when https://github.com/microsoft/DirectXShaderCompiler/issues/6042 is fixed
+	Bool m_cullPrimitive : SV_CULLPRIMITIVE;
 };
 
 struct FragOut

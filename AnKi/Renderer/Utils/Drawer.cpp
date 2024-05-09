@@ -109,7 +109,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 
 	const Bool meshShaderHwSupport = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
 
-	cmdb.setVertexAttribute(VertexAttribute::kMisc0, 0, Format::kR32G32B32A32_Uint, 0);
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kMisc0, 0, Format::kR32G32B32A32_Uint, 0);
 
 	RenderStateBucketContainer::getSingleton().iterateBucketsPerformanceOrder(
 		args.m_renderingTechinuqe,

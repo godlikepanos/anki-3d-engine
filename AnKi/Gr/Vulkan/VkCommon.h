@@ -239,13 +239,13 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	return out;
 }
 
-[[nodiscard]] inline VkDescriptorType convertDescriptorType(DescriptorType ak)
+[[nodiscard]] inline VkDescriptorType convertDescriptorType(DescriptorType ak, DescriptorFlag flags)
 {
 	VkDescriptorType out;
 	switch(ak)
 	{
 	case DescriptorType::kTexture:
-		out = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		out = !!(flags & DescriptorFlag::kWrite) ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		break;
 	case DescriptorType::kSampler:
 		out = VK_DESCRIPTOR_TYPE_SAMPLER;
@@ -253,17 +253,11 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	case DescriptorType::kUniformBuffer:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		break;
-	case DescriptorType::kReadTexelBuffer:
-		out = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
-		break;
-	case DescriptorType::kReadWriteTexelBuffer:
-		out = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+	case DescriptorType::kTexelBuffer:
+		out = !!(flags & DescriptorFlag::kWrite) ? VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER : VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
 		break;
 	case DescriptorType::kStorageBuffer:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		break;
-	case DescriptorType::kStorageImage:
-		out = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		break;
 	case DescriptorType::kAccelerationStructure:
 		out = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;

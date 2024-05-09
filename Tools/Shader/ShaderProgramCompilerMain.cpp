@@ -14,6 +14,8 @@ Options:
 -j <thread count>    : Number of threads. Defaults to system's max
 -I <include path>    : The path of the #include files
 -D<define_name:val>  : Extra defines to pass to the compiler
+-spirv               : Compile SPIR-V
+-dxil                : Compile DXIL
 )";
 
 class CmdLineArgs
@@ -25,6 +27,8 @@ public:
 	U32 m_threadCount = getCpuCoresCount();
 	DynamicArray<String> m_defineNames;
 	DynamicArray<ShaderCompilerDefine> m_defines;
+	Bool m_spirv = false;
+	Bool m_dxil = false;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -118,6 +122,14 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 
 			info.m_defines.emplaceBack(ShaderCompilerDefine{info.m_defineNames.getBack().toCString(), val});
 		}
+		else if(strcmp(argv[i], "-spirv") == 0)
+		{
+			info.m_spirv = true;
+		}
+		else if(strcmp(argv[i], "-dxil") == 0)
+		{
+			info.m_dxil = true;
+		}
 		else
 		{
 			return Error::kUserData;
@@ -198,7 +210,8 @@ static Error work(const CmdLineArgs& info)
 
 	// Compile
 	ShaderProgramBinary* binary = nullptr;
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, info.m_defines, binary));
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, info.m_spirv, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, info.m_defines,
+									binary));
 
 	class Dummy
 	{
@@ -241,6 +254,12 @@ int myMain(int argc, char** argv)
 
 	CmdLineArgs info;
 	if(parseCommandLineArgs(argc, argv, info))
+	{
+		ANKI_LOGE(kUsage, argv[0]);
+		return 1;
+	}
+
+	if(info.m_spirv == info.m_dxil)
 	{
 		ANKI_LOGE(kUsage, argv[0]);
 		return 1;

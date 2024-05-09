@@ -56,7 +56,7 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& spirv,
+static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool spirv, ShaderCompilerDynamicArray<U8>& bin,
 						 ShaderCompilerString& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
@@ -76,12 +76,12 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	hlslFile.close();
 
 	// Call DXC
-	ShaderCompilerString spvFilename;
-	spvFilename.sprintf("%s/%" PRIu64 ".spv", tmpDir.cstr(), rand);
+	ShaderCompilerString binFilename;
+	binFilename.sprintf("%s/%" PRIu64 ".spvdxil", tmpDir.cstr(), rand);
 
 	ShaderCompilerDynamicArray<ShaderCompilerString> dxcArgs;
 	dxcArgs.emplaceBack("-Fo");
-	dxcArgs.emplaceBack(spvFilename);
+	dxcArgs.emplaceBack(binFilename);
 	dxcArgs.emplaceBack("-Wall");
 	dxcArgs.emplaceBack("-Wextra");
 	dxcArgs.emplaceBack("-Wno-conversion");
@@ -97,9 +97,17 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.emplaceBack("main");
 	dxcArgs.emplaceBack("-T");
 	dxcArgs.emplaceBack(profile(shaderType));
-	dxcArgs.emplaceBack("-spirv");
-	dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4");
-	// dxcArgs.emplaceBack("-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
+	if(spirv)
+	{
+		dxcArgs.emplaceBack("-spirv");
+		dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4");
+		// dxcArgs.emplaceBack("-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
+	}
+	else
+	{
+		dxcArgs.emplaceBack("-Wno-ignored-attributes"); // TODO rm that eventually
+		dxcArgs.emplaceBack("-Wno-inline-asm"); // TODO rm that eventually
+	}
 	// dxcArgs.emplaceBack("-Zi"); // Debug info
 	dxcArgs.emplaceBack(hlslFilename);
 
@@ -162,16 +170,28 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 		}
 	}
 
-	CleanupFile spvFileCleanup(spvFilename);
+	CleanupFile binFileCleanup(binFilename);
 
 	// Read the spirv back
-	File spvFile;
-	ANKI_CHECK(spvFile.open(spvFilename, FileOpenFlag::kRead));
-	spirv.resize(U32(spvFile.getSize()));
-	ANKI_CHECK(spvFile.read(&spirv[0], spirv.getSizeInBytes()));
-	spvFile.close();
+	File binFile;
+	ANKI_CHECK(binFile.open(binFilename, FileOpenFlag::kRead));
+	bin.resize(U32(binFile.getSize()));
+	ANKI_CHECK(binFile.read(&bin[0], bin.getSizeInBytes()));
+	binFile.close();
 
 	return Error::kNone;
+}
+
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& spirv,
+						 ShaderCompilerString& errorMessage)
+{
+	return compileHlsl(src, shaderType, compileWith16bitTypes, true, spirv, errorMessage);
+}
+
+Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& dxil,
+						ShaderCompilerString& errorMessage)
+{
+	return compileHlsl(src, shaderType, compileWith16bitTypes, false, dxil, errorMessage);
 }
 
 } // end namespace anki

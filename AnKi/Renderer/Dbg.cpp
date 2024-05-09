@@ -184,7 +184,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 		cmdb.setPushConstants(&unis, sizeof(unis));
 		cmdb.bindVertexBuffer(0, BufferView(m_cubeVertsBuffer.get()), sizeof(Vec3));
-		cmdb.setVertexAttribute(VertexAttribute::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
+		cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
 		cmdb.bindIndexBuffer(BufferView(m_cubeIndicesBuffer.get()), IndexType::kU16);
 
 		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());

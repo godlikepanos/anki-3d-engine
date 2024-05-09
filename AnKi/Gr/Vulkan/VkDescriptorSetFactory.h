@@ -34,7 +34,7 @@ private:
 	U64 m_hash = 0;
 	BitSet<kMaxBindingsPerDescriptorSet, U32> m_activeBindings = {false};
 	Array<U32, kMaxBindingsPerDescriptorSet> m_bindingArraySize = {};
-	Array<DescriptorType, kMaxBindingsPerDescriptorSet> m_bindingType = {};
+	Array<VkDescriptorType, kMaxBindingsPerDescriptorSet> m_bindingDsType = {};
 	U32 m_minBinding = kMaxU32;
 	U32 m_maxBinding = 0;
 	U32 m_descriptorCount = 0;
@@ -172,7 +172,7 @@ public:
 		ANKI_ASSERT(handle);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kTexture;
+		b.m_type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		b.m_image.imageView = handle;
 		b.m_image.imageLayout = layout;
 		b.m_image.sampler = VK_NULL_HANDLE;
@@ -184,7 +184,7 @@ public:
 		ANKI_ASSERT(sampler);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kSampler;
+		b.m_type = VK_DESCRIPTOR_TYPE_SAMPLER;
 		b.m_image.sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle();
 		setBinding(binding, arrayIdx, b);
 	}
@@ -194,7 +194,7 @@ public:
 		ANKI_ASSERT(buff && range > 0);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kUniformBuffer;
+		b.m_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		b.m_buffer.buffer = static_cast<const BufferImpl*>(buff)->getHandle();
 		b.m_buffer.offset = offset;
 		b.m_buffer.range = (range == kMaxPtrSize) ? VK_WHOLE_SIZE : range;
@@ -206,7 +206,7 @@ public:
 		ANKI_ASSERT(buff && range > 0);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kStorageBuffer;
+		b.m_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		b.m_buffer.buffer = static_cast<const BufferImpl*>(buff)->getHandle();
 		b.m_buffer.offset = offset;
 		b.m_buffer.range = (range == kMaxPtrSize) ? VK_WHOLE_SIZE : range;
@@ -218,7 +218,7 @@ public:
 		ANKI_ASSERT(buff && range > 0);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kReadTexelBuffer;
+		b.m_type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
 		b.m_bufferView = static_cast<const BufferImpl*>(buff)->getOrCreateBufferView(fmt, offset, range);
 		setBinding(binding, arrayIdx, b);
 	}
@@ -228,7 +228,7 @@ public:
 		ANKI_ASSERT(handle);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kStorageImage;
+		b.m_type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		b.m_image.imageView = handle;
 		b.m_image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		setBinding(binding, arrayIdx, b);
@@ -239,7 +239,7 @@ public:
 		ANKI_ASSERT(as);
 		Binding b;
 		zeroMemory(b);
-		b.m_type = DescriptorType::kAccelerationStructure;
+		b.m_type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 		b.m_as.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 		b.m_as.accelerationStructureCount = 1;
 		b.m_as.pAccelerationStructures = &static_cast<const AccelerationStructureImpl*>(as)->getHandle();
@@ -272,7 +272,7 @@ private:
 			VkBufferView m_bufferView;
 		};
 
-		DescriptorType m_type;
+		VkDescriptorType m_type;
 
 		Binding()
 		{
@@ -320,14 +320,15 @@ private:
 	void setBinding(U32 bindingIdx, U32 arrayIdx, const Binding& b);
 };
 
-class alignas(4) DSBinding
+class DSBinding
 {
 public:
+	VkDescriptorType m_type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 	U16 m_arraySize = 0;
-	DescriptorType m_type = DescriptorType::kCount;
 	U8 m_binding = kMaxU8;
+	U8 m_padding = 0;
 };
-static_assert(sizeof(DSBinding) == 4, "Should be packed because it will be hashed");
+static_assert(sizeof(DSBinding) == 8, "Should be packed because it will be hashed");
 
 class DSLayoutFactory : public MakeSingleton<DSLayoutFactory>
 {

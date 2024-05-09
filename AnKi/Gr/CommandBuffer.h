@@ -116,7 +116,7 @@ public:
 	void bindVertexBuffer(U32 binding, const BufferView& buff, PtrSize stride, VertexStepRate stepRate = VertexStepRate::kVertex);
 
 	/// Setup a vertex attribute.
-	void setVertexAttribute(VertexAttribute attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset);
+	void setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset);
 
 	/// Bind index buffer.
 	void bindIndexBuffer(const BufferView& buff, IndexType type);

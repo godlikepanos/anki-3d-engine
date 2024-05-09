@@ -176,8 +176,18 @@ Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b,
 				return Error::kFunctionFailed;
 			}
 
+			const Bool flagsCorrect = a.m_descriptorFlags[set][binding] == DescriptorFlag::kNone
+									  || b.m_descriptorFlags[set][binding] == DescriptorFlag::kNone
+									  || a.m_descriptorFlags[set][binding] == b.m_descriptorFlags[set][binding];
+			if(!flagsCorrect)
+			{
+				ANKI_GR_LOGE("Can't link shader reflection because of different discriptor flags. Set %u binding %u", set, binding);
+				return Error::kFunctionFailed;
+			}
+
 			c.m_descriptorArraySizes[set][binding] = max(a.m_descriptorArraySizes[set][binding], b.m_descriptorArraySizes[set][binding]);
 			c.m_descriptorTypes[set][binding] = min(a.m_descriptorTypes[set][binding], b.m_descriptorTypes[set][binding]);
+			c.m_descriptorFlags[set][binding] = max(a.m_descriptorFlags[set][binding], b.m_descriptorFlags[set][binding]);
 		}
 	}
 

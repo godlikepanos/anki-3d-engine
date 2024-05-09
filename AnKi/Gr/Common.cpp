@@ -149,7 +149,7 @@ void ShaderReflection::validate() const
 		}
 	}
 
-	for(VertexAttribute semantic : EnumIterable<VertexAttribute>())
+	for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 	{
 		ANKI_ASSERT(!m_vertexAttributeMask.get(semantic) || m_vertexAttributeLocations[semantic] != kMaxU8);
 	}
