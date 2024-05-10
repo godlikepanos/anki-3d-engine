@@ -895,7 +895,7 @@ public:
 		: m_class(c)
 		, m_number(U16(n))
 	{
-		ANKI_ASSERT(c == 'c' || c == 'b' || c == 'u' || c == 's');
+		ANKI_ASSERT(c == 't' || c == 'b' || c == 'u' || c == 's');
 		ANKI_ASSERT(n < kMaxU16);
 	}
 
@@ -903,7 +903,7 @@ public:
 	BindingSemantic(const Char* str)
 	{
 		ANKI_ASSERT(str);
-		ANKI_ASSERT(str[0] == 'c' || str[0] == 'b' || str[0] == 'u' || str[0] == 's');
+		ANKI_ASSERT(str[0] == 't' || str[0] == 'b' || str[0] == 'u' || str[0] == 's');
 		m_class = str[0];
 		m_number = 0;
 		while(*str != '\0')
@@ -914,16 +914,51 @@ public:
 			++str;
 		}
 	}
+
+	Bool operator<(const BindingSemantic& b) const
+	{
+		return (m_class == b.m_class) ? m_number < b.m_number : m_class < b.m_class;
+	}
+
+	Bool operator==(const BindingSemantic& b) const
+	{
+		return m_class == b.m_class && m_number == b.m_number;
+	}
 };
 
 class ShaderReflectionBinding
 {
 public:
-	BindingSemantic m_semantic = {'c', 1};
+	BindingSemantic m_semantic = {'t', 1};
 	DescriptorType m_type = DescriptorType::kCount;
 	DescriptorFlag m_flags = DescriptorFlag::kNone;
 	U16 m_arraySize = 0;
 	U16 m_vkBinding = kMaxU8;
+
+	Bool operator<(const ShaderReflectionBinding& b) const
+	{
+#define ANKI_LESS(member) \
+	if(member != b.member) \
+	{ \
+		return member < b.member; \
+	}
+
+		ANKI_LESS(m_semantic)
+		ANKI_LESS(m_type)
+		ANKI_LESS(m_flags)
+		ANKI_LESS(m_arraySize)
+		ANKI_LESS(m_vkBinding)
+#undef ANKI_LESS
+		return false;
+	}
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_type < DescriptorType::kCount);
+		ANKI_ASSERT(m_flags != DescriptorFlag::kNone);
+		ANKI_ASSERT(m_arraySize > 0);
+		ANKI_ASSERT(ANKI_GR_BACKEND_DIRECT3D || m_vkBinding != kMaxU8);
+	}
 };
 
 class ShaderReflection
@@ -945,6 +980,7 @@ public:
 	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
 
 	U8 m_pushConstantsSize = 0;
+
 	Bool m_discards = false;
 
 	ShaderReflection()

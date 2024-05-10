@@ -326,6 +326,7 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 }
 
 #if ANKI_DIXL_REFLECTION
+
 #	define ANKI_REFL_CHECK(x) \
 		do \
 		{ \
@@ -341,20 +342,64 @@ static Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderRe
 {
 	using Microsoft::WRL::ComPtr;
 
+	const Bool isRayTracing = type >= ShaderType::kFirstRayTracing && type <= ShaderType::kLastRayTracing;
+	if(isRayTracing)
+	{
+		// TODO: Skip for now. RT shaders require explicity register()
+		return Error::kNone;
+	}
+
 	ComPtr<IDxcUtils> utils;
 	ANKI_REFL_CHECK(g_DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
 
-	const DxcBuffer buff = {dxil.getBegin(), dxil.getSizeInBytes(), 0};
 	ComPtr<ID3D12ShaderReflection> dxRefl;
-	ANKI_REFL_CHECK(utils->CreateReflection(&buff, IID_PPV_ARGS(&dxRefl)));
-
+	ComPtr<ID3D12LibraryReflection> libRefl;
+	ID3D12FunctionReflection* funcRefl = nullptr;
 	D3D12_SHADER_DESC shaderDesc = {};
-	dxRefl->GetDesc(&shaderDesc);
+	U32 bindingCount = 0;
 
-	for(U32 i = 0; i < shaderDesc.BoundResources; ++i)
+	if(!isRayTracing)
+	{
+		const DxcBuffer buff = {dxil.getBegin(), dxil.getSizeInBytes(), 0};
+		ANKI_REFL_CHECK(utils->CreateReflection(&buff, IID_PPV_ARGS(&dxRefl)));
+
+		ANKI_REFL_CHECK(dxRefl->GetDesc(&shaderDesc));
+
+		bindingCount = shaderDesc.BoundResources;
+	}
+	else
+	{
+		const DxcBuffer buff = {dxil.getBegin(), dxil.getSizeInBytes(), 0};
+		ANKI_REFL_CHECK(utils->CreateReflection(&buff, IID_PPV_ARGS(&libRefl)));
+
+		D3D12_LIBRARY_DESC libDesc = {};
+		libRefl->GetDesc(&libDesc);
+
+		if(libDesc.FunctionCount != 1)
+		{
+			errorStr.sprintf("Expecting 1 in D3D12_LIBRARY_DESC::FunctionCount");
+			return Error::kUserData;
+		}
+
+		funcRefl = libRefl->GetFunctionByIndex(0);
+
+		D3D12_FUNCTION_DESC funcDesc;
+		ANKI_REFL_CHECK(funcRefl->GetDesc(&funcDesc));
+
+		bindingCount = funcDesc.BoundResources;
+	}
+
+	for(U32 i = 0; i < bindingCount; ++i)
 	{
 		D3D12_SHADER_INPUT_BIND_DESC bind;
-		ANKI_REFL_CHECK(dxRefl->GetResourceBindingDesc(i, &bind));
+		if(dxRefl.Get() != nullptr)
+		{
+			ANKI_REFL_CHECK(dxRefl->GetResourceBindingDesc(i, &bind));
+		}
+		else
+		{
+			ANKI_REFL_CHECK(funcRefl->GetResourceBindingDesc(i, &bind));
+		}
 
 		ShaderReflectionBinding akBinding;
 
@@ -365,6 +410,14 @@ static Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderRe
 		if(bind.Type == D3D_SIT_CBUFFER)
 		{
 			// ConstantBuffer
+
+			if(bind.BindPoint == ANKI_PUSH_CONSTANTS_D3D_BINDING && bind.Space == ANKI_PUSH_CONSTANTS_D3D_SPACE)
+			{
+				// It's push/root constants
+				ANKI_ASSERT(!"TODO");
+				continue;
+			}
+
 			akBinding.m_type = DescriptorType::kUniformBuffer;
 			akBinding.m_flags = DescriptorFlag::kRead;
 			akBinding.m_semantic = BindingSemantic('b', bind.BindPoint);
@@ -425,13 +478,32 @@ static Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderRe
 			akBinding.m_flags = DescriptorFlag::kRead;
 			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
 		}
+		else if(bind.Type == D3D_SIT_STRUCTURED)
+		{
+			// StructuredBuffer
+			akBinding.m_type = DescriptorType::kStorageBuffer;
+			akBinding.m_flags = DescriptorFlag::kRead;
+			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
+		}
+		else if(bind.Type == D3D_SIT_UAV_RWSTRUCTURED)
+		{
+			// RWStructuredBuffer
+			akBinding.m_type = DescriptorType::kStorageBuffer;
+			akBinding.m_flags = DescriptorFlag::kReadWrite;
+			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
+		}
 		else
 		{
-			ANKI_SHADER_COMPILER_LOGE("Unrecognized type for binding: %s", bind.Name);
+			errorStr.sprintf("Unrecognized type for binding: %s", bind.Name);
 			return Error::kUserData;
 		}
 
 		refl.m_bindings[bind.Space][refl.m_bindingCounts[bind.Space++]] = akBinding;
+	}
+
+	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
+	{
+		std::sort(refl.m_bindings[i].getBegin(), refl.m_bindings[i].getBegin() + refl.m_bindingCounts[i]);
 	}
 
 	if(type == ShaderType::kVertex)
@@ -475,9 +547,10 @@ static Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderRe
 			{
 				a = VertexAttributeSemantic::kMisc3;
 			}
-			else if(ANKI_ATTRIB_NAME(SV_VERTEXID, 0))
+			else if(ANKI_ATTRIB_NAME(SV_VERTEXID, 0) || ANKI_ATTRIB_NAME(SV_INSTANCEID, 0))
 			{
 				// Ignore
+				continue;
 			}
 			else
 			{
@@ -766,8 +839,8 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 	{
 		defines.emplaceBack(d);
 	}
-	defines.emplaceBack(ShaderCompilerDefine{"ANKI_TARGET_SPIRV", spirv});
-	defines.emplaceBack(ShaderCompilerDefine{"ANKI_TARGET_DXIL", !spirv});
+	defines.emplaceBack(ShaderCompilerDefine{"ANKI_GR_BACKEND_VULKAN", spirv});
+	defines.emplaceBack(ShaderCompilerDefine{"ANKI_GR_BACKEND_DIRECT3D", !spirv});
 
 	// Initialize the binary
 	binary = newInstance<ShaderProgramBinary>(memPool);

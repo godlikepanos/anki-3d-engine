@@ -4,3 +4,5 @@ out/*
 CMakeSettings.json
 *.TMP
 AndroidProject_*
+*.diff
+*.patch

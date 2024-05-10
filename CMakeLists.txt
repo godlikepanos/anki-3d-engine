@@ -176,10 +176,10 @@ set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API to use (VULKAN or DI
 if(${ANKI_GR_BACKEND} STREQUAL "DIRECTX")
 	set(DIRECTX TRUE)
 	set(VULKAN FALSE)
-	set(VIDEO_VULKAN TRUE) # Set for the SDL2 to pick up
 elseif(${ANKI_GR_BACKEND} STREQUAL "VULKAN")
 	set(DIRECTX FALSE)
 	set(VULKAN TRUE)
+	set(VIDEO_VULKAN TRUE) # Set for the SDL2 to pick up
 else()
 	message(FATAL_ERROR "Wrong ANKI_GR_BACKEND")
 endif()
@@ -424,6 +424,12 @@ if(ANKI_PLATFORM_MOBILE)
 else()
 	message("++ NOT compiling for a mobile platform")
 	set(_ANKI_PLATFORM_MOBILE 0)
+endif()
+
+if(VULKAN)
+	set(_ANKI_GR_BACKEND 0)
+else()
+	set(_ANKI_GR_BACKEND 1)
 endif()
 
 configure_file("AnKi/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/AnKi/Config.h")

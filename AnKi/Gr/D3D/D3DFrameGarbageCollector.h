@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Gr/D3D/D3DDescriptorHeap.h>
+#include <AnKi/Gr/D3D/D3DDescriptor.h>
 #include <AnKi/Gr/D3D/D3DFence.h>
 #include <AnKi/Util/List.h>
 

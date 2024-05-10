@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DGrManager.h>
-#include <AnKi/Gr/D3D/D3DDescriptorHeap.h>
+#include <AnKi/Gr/D3D/D3DDescriptor.h>
 #include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
 
 #include <AnKi/Gr/D3D/D3DAccelerationStructure.h>

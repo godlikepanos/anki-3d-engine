@@ -9,9 +9,6 @@
 
 namespace anki {
 
-// Forward
-class DescriptorHeap;
-
 /// @addtogroup directx
 /// @{
 
@@ -156,6 +153,26 @@ public:
 
 private:
 	Array<DescriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES> m_heaps;
+};
+
+/// @memberof RootSignatureFactory
+class RootSignature
+{
+	friend class RootSignatureFactory;
+
+public:
+	ID3D12RootSignature* m_rootSignature = nullptr;
+	U64 m_hash = 0;
+};
+
+class RootSignatureFactory : public MakeSingleton<RootSignatureFactory>
+{
+public:
+	Error getOrCreateRootSignature(const ShaderReflection& refl, RootSignature*& signature);
+
+private:
+	GrDynamicArray<RootSignature*> m_signatures;
+	Mutex m_mtx;
 };
 /// @}
 

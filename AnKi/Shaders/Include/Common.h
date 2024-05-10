@@ -756,6 +756,17 @@ constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 #define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
 static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 
+// Push constant stuff. In VK is simply defined but in D3D it's a special register() used to identify it
+#define ANKI_PUSH_CONSTANTS_D3D_BINDING 2000
+#define ANKI_PUSH_CONSTANTS_D3D_SPACE 100
+#if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_PUSH_CONSTANTS_BEGIN [[vk::push_constants]]
+#	define ANKI_PUSH_CONSTANTS_END
+#else
+#	define ANKI_PUSH_CONSTANTS_BEGIN
+	#define ANKI_PUSH_CONSTANTS_END register(b2000, space100)
+#endif
+
 struct DrawIndirectArgs
 {
 	U32 m_vertexCount;

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/D3D/D3DDescriptorHeap.h>
+#include <AnKi/Gr/D3D/D3DDescriptor.h>
 #include <AnKi/Util/HashMap.h>
 
 namespace anki {

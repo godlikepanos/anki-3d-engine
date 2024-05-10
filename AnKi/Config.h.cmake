@@ -143,8 +143,13 @@
 #endif
 
 // Graphics backend
-#define ANKI_GR_BACKEND_GL 0
-#define ANKI_GR_BACKEND_VULKAN 1
+#if ${_ANKI_GR_BACKEND} == 0
+#	define ANKI_GR_BACKEND_VULKAN 1
+#	define ANKI_GR_BACKEND_DIRECT3D 0
+#else
+#	define ANKI_GR_BACKEND_VULKAN 0
+#	define ANKI_GR_BACKEND_DIRECT3D 1
+#endif
 
 // Windowing system
 #if ${_ANKI_WINDOWING_SYSTEM} == 0

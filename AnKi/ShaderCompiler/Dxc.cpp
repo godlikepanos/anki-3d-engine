@@ -97,6 +97,10 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.emplaceBack("main");
 	dxcArgs.emplaceBack("-T");
 	dxcArgs.emplaceBack(profile(shaderType));
+	if(ANKI_COMPILER_MSVC)
+	{
+		dxcArgs.emplaceBack("-fdiagnostics-format=msvc"); // Make errors clickable in visual studio
+	}
 	if(spirv)
 	{
 		dxcArgs.emplaceBack("-spirv");
