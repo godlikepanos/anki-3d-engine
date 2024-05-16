@@ -102,6 +102,7 @@ Error CVarSet::setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineAr
 				break;
 			}
 				ANKI_CVAR_NUMERIC_SET(U8)
+				ANKI_CVAR_NUMERIC_SET(U16)
 				ANKI_CVAR_NUMERIC_SET(U32)
 				ANKI_CVAR_NUMERIC_SET(PtrSize)
 				ANKI_CVAR_NUMERIC_SET(F32)

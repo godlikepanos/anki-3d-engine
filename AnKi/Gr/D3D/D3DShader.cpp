@@ -23,9 +23,17 @@ ShaderImpl::~ShaderImpl()
 {
 }
 
-Error ShaderImpl::init(const ShaderInitInfo& init)
+Error ShaderImpl::init(const ShaderInitInfo& inf)
 {
-	ANKI_ASSERT(!"TODO");
+	m_shaderType = inf.m_shaderType;
+	m_shaderBinarySize = U32(inf.m_binary.getSizeInBytes());
+	m_hasDiscard = inf.m_reflection.m_discards;
+	m_reflection = inf.m_reflection;
+	m_reflection.validate();
+
+	m_binary.resize(m_shaderBinarySize);
+	memcpy(m_binary.getBegin(), inf.m_binary.getBegin(), inf.m_binary.getSizeInBytes());
+
 	return Error::kNone;
 }
 

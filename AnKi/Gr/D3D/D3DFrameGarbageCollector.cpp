@@ -48,6 +48,13 @@ void FrameGarbageCollector::newTextureGarbage(TextureGarbage* textureGarbage)
 	frame.m_textureGarbage.pushBack(textureGarbage);
 }
 
+void FrameGarbageCollector::newBufferGarbage(BufferGarbage* garbage)
+{
+	LockGuard<Mutex> lock(m_mtx);
+	FrameGarbage& frame = getFrame();
+	frame.m_bufferGarbage.pushBack(garbage);
+}
+
 void FrameGarbageCollector::collectGarbage()
 {
 	if(m_frames.isEmpty()) [[likely]]
@@ -74,14 +81,24 @@ void FrameGarbageCollector::collectGarbage()
 		{
 			TextureGarbage* textureGarbage = frame.m_textureGarbage.popBack();
 
-			for(DescriptorHeapHandle& handle : textureGarbage->m_viewHandles)
+			for(U32 i = 0; i < textureGarbage->m_descriptorHeapHandles.getSize(); ++i)
 			{
-				DescriptorHeaps::getSingleton().free(handle);
+				DescriptorFactory::getSingleton().free(textureGarbage->m_descriptorHeapHandleTypes[i], textureGarbage->m_descriptorHeapHandles[i]);
 			}
 
 			safeRelease(textureGarbage->m_resource);
 
 			deleteInstance(GrMemoryPool::getSingleton(), textureGarbage);
+		}
+
+		// Dispose buffer garbage
+		while(!frame.m_bufferGarbage.isEmpty())
+		{
+			BufferGarbage* garbage = frame.m_bufferGarbage.popBack();
+
+			safeRelease(garbage->m_resource);
+
+			deleteInstance(GrMemoryPool::getSingleton(), garbage);
 		}
 
 		deleteInstance(GrMemoryPool::getSingleton(), &frame);

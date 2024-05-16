@@ -33,17 +33,20 @@ TextureImpl::~TextureImpl()
 
 	for(auto it : m_viewsMap)
 	{
-		garbage->m_viewHandles.emplaceBack(it.m_handle);
+		garbage->m_descriptorHeapHandles.emplaceBack(it.m_handle);
+		garbage->m_descriptorHeapHandleTypes.emplaceBack(it.m_heapType);
 	}
 
 	if(m_wholeTextureSrv.m_handle.isCreated())
 	{
-		garbage->m_viewHandles.emplaceBack(m_wholeTextureSrv.m_handle);
+		garbage->m_descriptorHeapHandles.emplaceBack(m_wholeTextureSrv.m_handle);
+		garbage->m_descriptorHeapHandleTypes.emplaceBack(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
 	if(m_firstSurfaceRtvOrDsv.m_handle.isCreated())
 	{
-		garbage->m_viewHandles.emplaceBack(m_firstSurfaceRtvOrDsv.m_handle);
+		garbage->m_descriptorHeapHandles.emplaceBack(m_firstSurfaceRtvOrDsv.m_handle);
+		garbage->m_descriptorHeapHandleTypes.emplaceBack((!!m_aspect) ? D3D12_DESCRIPTOR_HEAP_TYPE_DSV : D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
 
 	if(!isExternal())
@@ -92,16 +95,16 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 
 		if(m_aspect == DepthStencilAspectBit::kNone)
 		{
-			m_firstSurfaceRtvOrDsv.m_viewType = D3DTextureViewType::kRtv;
+			m_firstSurfaceRtvOrDsv.m_heapType = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		}
 		else
 		{
-			m_firstSurfaceRtvOrDsv.m_viewType = D3DTextureViewType::kDsv;
+			m_firstSurfaceRtvOrDsv.m_heapType = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 			m_firstSurfaceRtvOrDsv.m_dsvReadOnly = false;
 		}
 
 		m_firstSurfaceRtvOrDsv.m_handle =
-			createDescriptorHeapHandle(tview.getSubresource(), m_firstSurfaceRtvOrDsv.m_viewType, m_firstSurfaceRtvOrDsv.m_dsvReadOnly);
+			createDescriptorHeapHandle(tview.getSubresource(), m_firstSurfaceRtvOrDsv.m_heapType, m_firstSurfaceRtvOrDsv.m_dsvReadOnly);
 		m_firstSurfaceRtvOrDsvSubresource = tview.getSubresource();
 	}
 
@@ -109,8 +112,8 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 	{
 		const TextureView tview(this, TextureSubresourceDescriptor::all());
 
-		m_wholeTextureSrv.m_viewType = D3DTextureViewType::kSrv;
-		m_wholeTextureSrv.m_handle = createDescriptorHeapHandle(tview.getSubresource(), m_firstSurfaceRtvOrDsv.m_viewType, false);
+		m_wholeTextureSrv.m_heapType = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		m_wholeTextureSrv.m_handle = createDescriptorHeapHandle(tview.getSubresource(), m_firstSurfaceRtvOrDsv.m_heapType, false);
 
 		m_wholeTextureSrvSubresource = tview.getSubresource();
 	}
@@ -118,7 +121,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 	return Error::kNone;
 }
 
-const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType,
+const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDescriptor& subresource, D3D12_DESCRIPTOR_HEAP_TYPE heapType,
 													  TextureUsageBit usage) const
 {
 	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
@@ -126,12 +129,12 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 	const Bool readOnlyDsv =
 		m_aspect != DepthStencilAspectBit::kNone && (usage & TextureUsageBit::kAllFramebuffer) == TextureUsageBit::kFramebufferRead;
 
-	if(viewType == D3DTextureViewType::kSrv && subresource == m_wholeTextureSrvSubresource)
+	if(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV && subresource == m_wholeTextureSrvSubresource)
 	{
 		return m_wholeTextureSrv;
 	}
-	else if((viewType == D3DTextureViewType::kRtv || viewType == D3DTextureViewType::kDsv) && subresource == m_firstSurfaceRtvOrDsvSubresource
-			&& m_firstSurfaceRtvOrDsv.m_dsvReadOnly == readOnlyDsv)
+	else if((heapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV || heapType == D3D12_DESCRIPTOR_HEAP_TYPE_DSV)
+			&& subresource == m_firstSurfaceRtvOrDsvSubresource && m_firstSurfaceRtvOrDsv.m_dsvReadOnly == readOnlyDsv)
 	{
 		return m_firstSurfaceRtvOrDsv;
 	}
@@ -143,9 +146,9 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 	{
 	public:
 		TextureSubresourceDescriptor m_subresource;
-		D3DTextureViewType m_type;
+		D3D12_DESCRIPTOR_HEAP_TYPE m_type;
 		Bool m_readOnlyDsv;
-	} toHash = {subresource, viewType, readOnlyDsv};
+	} toHash = {subresource, heapType, readOnlyDsv};
 	ANKI_END_PACKED_STRUCT
 
 	const U64 hash = computeHash(&toHash, sizeof(toHash));
@@ -178,19 +181,19 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 
 	// Need to create it
 	View& nview = *m_viewsMap.emplace(hash, *view);
-	nview.m_viewType = viewType;
-	nview.m_handle = createDescriptorHeapHandle(subresource, viewType, readOnlyDsv);
+	nview.m_heapType = heapType;
+	nview.m_handle = createDescriptorHeapHandle(subresource, heapType, readOnlyDsv);
 	nview.m_dsvReadOnly = readOnlyDsv;
 
 	return nview;
 }
 
-DescriptorHeapHandle TextureImpl::createDescriptorHeapHandle(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType,
+DescriptorHeapHandle TextureImpl::createDescriptorHeapHandle(const TextureSubresourceDescriptor& subresource, D3D12_DESCRIPTOR_HEAP_TYPE heapType,
 															 Bool readOnlyDsv) const
 {
 	DescriptorHeapHandle handle;
 
-	if(viewType == D3DTextureViewType::kRtv)
+	if(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV)
 	{
 		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect == DepthStencilAspectBit::kNone);
 
@@ -210,10 +213,10 @@ DescriptorHeapHandle TextureImpl::createDescriptorHeapHandle(const TextureSubres
 			desc.Texture2DArray.MipSlice = subresource.m_mipmap;
 		}
 
-		handle = DescriptorHeaps::getSingleton().allocate(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		handle = DescriptorFactory::getSingleton().allocateCpuVisiblePersistent(heapType);
 		getDevice().CreateRenderTargetView(m_resource, (isExternal()) ? nullptr : &desc, handle.m_cpuHandle);
 	}
-	else if(viewType == D3DTextureViewType::kDsv)
+	else if(heapType == D3D12_DESCRIPTOR_HEAP_TYPE_DSV)
 	{
 		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect != DepthStencilAspectBit::kNone);
 
@@ -240,7 +243,7 @@ DescriptorHeapHandle TextureImpl::createDescriptorHeapHandle(const TextureSubres
 			desc.Texture2DArray.MipSlice = subresource.m_mipmap;
 		}
 
-		handle = DescriptorHeaps::getSingleton().allocate(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+		handle = DescriptorFactory::getSingleton().allocateCpuVisiblePersistent(heapType);
 		getDevice().CreateDepthStencilView(m_resource, &desc, handle.m_cpuHandle);
 	}
 	else

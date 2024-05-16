@@ -152,6 +152,71 @@ ANKI_TEST(Gr, ClearScreen)
 	commonDestroy();
 }
 
+ANKI_TEST(Gr, SimpleCompute)
+{
+	constexpr const char* kSrc = R"(
+StructuredBuffer<float4> g_in : register(t0);
+RWStructuredBuffer<float4> g_out : register(u0);
+
+[numthreads(1, 1, 1)]
+void main()
+{
+	g_out[0] = g_in[0];
+}
+)";
+
+	commonInit();
+
+	{
+		BufferInitInfo buffInit;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+		buffInit.m_size = sizeof(Vec4);
+		buffInit.m_usage = BufferUsageBit::kStorageComputeRead;
+
+		BufferPtr readBuff = GrManager::getSingleton().newBuffer(buffInit);
+
+		Vec4* inData = static_cast<Vec4*>(readBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+		const Vec4 kValue(123.456f, -666.666f, 172.2f, -16.0f);
+		*inData = kValue;
+		readBuff->unmap();
+
+		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite;
+
+		BufferPtr writeBuff = GrManager::getSingleton().newBuffer(buffInit);
+
+		ShaderPtr compShader = createShader(kSrc, ShaderType::kCompute);
+
+		ShaderProgramInitInfo progInit("Program");
+		progInit.m_computeShader = compShader.get();
+		ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(progInit);
+
+		CommandBufferInitInfo cmdbInit;
+		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
+
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+		// Record
+		cmdb->bindShaderProgram(prog.get());
+		cmdb->bindStorageBuffer(register(t0), BufferView(readBuff.get()));
+		cmdb->bindStorageBuffer(register(u0), BufferView(writeBuff.get()));
+		cmdb->dispatchCompute(1, 1, 1);
+		cmdb->endRecording();
+
+		FencePtr signalFence;
+		GrManager::getSingleton().submit(cmdb.get(), {}, &signalFence);
+
+		signalFence->clientWait(kMaxSecond);
+
+		// Check results
+		Vec4* outData = static_cast<Vec4*>(writeBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
+		ANKI_TEST_EXPECT_EQ(*outData, kValue);
+		writeBuff->unmap();
+	}
+
+	commonDestroy();
+}
+
 ANKI_TEST(Gr, SimpleDrawcall)
 {
 #if 0

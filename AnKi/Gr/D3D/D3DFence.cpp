@@ -170,8 +170,8 @@ Fence* Fence::newInstance()
 
 Bool Fence::clientWait(Second seconds)
 {
-	ANKI_ASSERT(!"TODO");
-	return false;
+	ANKI_D3D_SELF(FenceImpl);
+	return self.m_fence->clientWait(seconds);
 }
 
 } // end namespace anki

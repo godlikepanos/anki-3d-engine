@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Buffer.h>
+#include <AnKi/Gr/D3D/D3DCommon.h>
 
 namespace anki {
 
@@ -15,6 +16,8 @@ namespace anki {
 /// Buffer implementation
 class BufferImpl final : public Buffer
 {
+	friend class Buffer;
+
 public:
 	BufferImpl(CString name)
 		: Buffer(name)
@@ -24,6 +27,18 @@ public:
 	~BufferImpl();
 
 	Error init(const BufferInitInfo& inf);
+
+	ID3D12Resource& getD3DResource() const
+	{
+		return *m_resource;
+	}
+
+private:
+	ID3D12Resource* m_resource = nullptr;
+
+#if ANKI_ASSERTIONS_ENABLED
+	Bool m_mapped = false;
+#endif
 };
 /// @}
 

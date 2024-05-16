@@ -45,6 +45,14 @@ ANKI_END_NAMESPACE
 #	define ANKI_GLSL 0
 #	define ANKI_CPP 0
 
+#	if defined(__spirv__)
+#		define ANKI_GR_BACKEND_VULKAN 1
+#		define ANKI_GR_BACKEND_DIRECT3D 0
+#	else
+#		define ANKI_GR_BACKEND_VULKAN 0
+#		define ANKI_GR_BACKEND_DIRECT3D 1
+#	endif
+
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
 #	define inline
@@ -122,6 +130,13 @@ void maybeUnused(T a)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id) _ANKI_SCONST_X2(Vec2, F32, n, id)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id) _ANKI_SCONST_X3(Vec3, F32, n, id)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id) _ANKI_SCONST_X4(Vec4, F32, n, id)
+
+#	if ANKI_GR_BACKEND_VULKAN
+#		define ANKI_PUSH_CONSTANTS(type, var) [[vk::push_constants]] ConstantBuffer<type> var;
+#	else
+#		define ANKI_PUSH_CONSTANTS_BEGIN
+#		define ANKI_PUSH_CONSTANTS(type, var) ConstantBuffer<type> var : register(b2000, space100);
+#	endif
 
 #	pragma pack_matrix(row_major)
 
@@ -757,15 +772,9 @@ constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 
 // Push constant stuff. In VK is simply defined but in D3D it's a special register() used to identify it
-#define ANKI_PUSH_CONSTANTS_D3D_BINDING 2000
-#define ANKI_PUSH_CONSTANTS_D3D_SPACE 100
-#if ANKI_GR_BACKEND_VULKAN
-#	define ANKI_PUSH_CONSTANTS_BEGIN [[vk::push_constants]]
-#	define ANKI_PUSH_CONSTANTS_END
-#else
-#	define ANKI_PUSH_CONSTANTS_BEGIN
-	#define ANKI_PUSH_CONSTANTS_END register(b2000, space100)
-#endif
+// !!!!WARNING!!!!: Need to change the ANKI_PUSH_CONSTANTS if you change the values bellow
+constexpr U32 kPushConstantsRegisterBindPoint = 2000;
+constexpr U32 kPushConstantsRegisterSpace = 100;
 
 struct DrawIndirectArgs
 {

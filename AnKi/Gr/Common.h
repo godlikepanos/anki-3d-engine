@@ -765,7 +765,8 @@ enum class BufferMapAccessBit : U8
 {
 	kNone = 0,
 	kRead = 1 << 0,
-	kWrite = 1 << 1
+	kWrite = 1 << 1,
+	kReadWrite = kRead | kWrite
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit)
 
@@ -842,6 +843,18 @@ enum class GpuQueueType : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuQueueType)
 
+enum class HlslResourceType : U8
+{
+	kCbv,
+	kSrv,
+	kUav,
+	kSampler, // !!!!WARNING!!! Keep it last
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(HlslResourceType)
+
 enum class VertexAttributeSemantic : U8
 {
 	kPosition,
@@ -883,57 +896,39 @@ enum class DescriptorFlag : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorFlag)
 
-/// HLSL binding semantic
-class BindingSemantic
+inline HlslResourceType descriptorTypeToHlslResourceType(DescriptorType type, DescriptorFlag flag)
 {
-public:
-	U16 m_number = kMaxU16;
-	Char m_class = '\0'; // It can be 'c', 'u', 's', 't'
-	U8 m_padding = 0;
-
-	BindingSemantic(Char c, U32 n)
-		: m_class(c)
-		, m_number(U16(n))
+	ANKI_ASSERT(type < DescriptorType::kCount && flag != DescriptorFlag::kNone);
+	if(type == DescriptorType::kSampler)
 	{
-		ANKI_ASSERT(c == 't' || c == 'b' || c == 'u' || c == 's');
-		ANKI_ASSERT(n < kMaxU16);
+		return HlslResourceType::kSampler;
 	}
-
-	/// Construct using a string like "t0" "c99" "s3"
-	BindingSemantic(const Char* str)
+	else if(type == DescriptorType::kUniformBuffer)
 	{
-		ANKI_ASSERT(str);
-		ANKI_ASSERT(str[0] == 't' || str[0] == 'b' || str[0] == 'u' || str[0] == 's');
-		m_class = str[0];
-		m_number = 0;
-		while(*str != '\0')
-		{
-			ANKI_ASSERT(*str >= '0' && *str <= '9');
-			m_number *= 10;
-			m_number += *str - '0';
-			++str;
-		}
+		return HlslResourceType::kCbv;
 	}
-
-	Bool operator<(const BindingSemantic& b) const
+	else if(!!(flag & DescriptorFlag::kWrite))
 	{
-		return (m_class == b.m_class) ? m_number < b.m_number : m_class < b.m_class;
+		return HlslResourceType::kUav;
 	}
-
-	Bool operator==(const BindingSemantic& b) const
+	else
 	{
-		return m_class == b.m_class && m_number == b.m_number;
+		return HlslResourceType::kSrv;
 	}
-};
+}
 
 class ShaderReflectionBinding
 {
 public:
-	BindingSemantic m_semantic = {'t', 1};
+	U32 m_registerBindingPoint = kMaxU32;
 	DescriptorType m_type = DescriptorType::kCount;
 	DescriptorFlag m_flags = DescriptorFlag::kNone;
 	U16 m_arraySize = 0;
-	U16 m_vkBinding = kMaxU8;
+	union
+	{
+		U16 m_vkBinding = kMaxU8;
+		U16 m_d3dStructuredBufferStride;
+	};
 
 	Bool operator<(const ShaderReflectionBinding& b) const
 	{
@@ -943,7 +938,7 @@ public:
 		return member < b.member; \
 	}
 
-		ANKI_LESS(m_semantic)
+		ANKI_LESS(m_registerBindingPoint)
 		ANKI_LESS(m_type)
 		ANKI_LESS(m_flags)
 		ANKI_LESS(m_arraySize)
@@ -954,6 +949,7 @@ public:
 
 	void validate() const
 	{
+		ANKI_ASSERT(m_registerBindingPoint < kMaxU32);
 		ANKI_ASSERT(m_type < DescriptorType::kCount);
 		ANKI_ASSERT(m_flags != DescriptorFlag::kNone);
 		ANKI_ASSERT(m_arraySize > 0);
@@ -974,12 +970,12 @@ public:
 	Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
 	Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
 
+	U32 m_pushConstantsSize = 0;
+
 	Array<U8, U32(VertexAttributeSemantic::kCount)> m_vertexAttributeLocations; ///< Only for Vulkan.
 	BitSet<U32(VertexAttributeSemantic::kCount), U8> m_vertexAttributeMask = {false};
 
 	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
-
-	U8 m_pushConstantsSize = 0;
 
 	Bool m_discards = false;
 

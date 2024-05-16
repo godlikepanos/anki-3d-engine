@@ -39,14 +39,14 @@ public:
 
 	DescriptorHeapHandle getOrCreateRtv(const TextureSubresourceDescriptor& subresource) const
 	{
-		const View& e = getOrCreateView(subresource, D3DTextureViewType::kRtv, TextureUsageBit::kNone);
+		const View& e = getOrCreateView(subresource, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, TextureUsageBit::kNone);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
 
 	DescriptorHeapHandle getOrCreateDsv(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage) const
 	{
-		const View& e = getOrCreateView(subresource, D3DTextureViewType::kDsv, usage);
+		const View& e = getOrCreateView(subresource, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, usage);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
@@ -83,8 +83,8 @@ private:
 	{
 	public:
 		DescriptorHeapHandle m_handle;
+		D3D12_DESCRIPTOR_HEAP_TYPE m_heapType = {};
 		U32 m_bindlessIndex = kMaxU32;
-		D3DTextureViewType m_viewType;
 		Bool m_dsvReadOnly = false;
 	};
 
@@ -101,11 +101,11 @@ private:
 
 	Error initInternal(ID3D12Resource* external, const TextureInitInfo& init);
 
-	const View& getOrCreateView(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType, TextureUsageBit usage) const;
+	const View& getOrCreateView(const TextureSubresourceDescriptor& subresource, D3D12_DESCRIPTOR_HEAP_TYPE viewType, TextureUsageBit usage) const;
 
 	void computeResourceStates(TextureUsageBit usage, D3D12_RESOURCE_STATES& states) const;
 
-	DescriptorHeapHandle createDescriptorHeapHandle(const TextureSubresourceDescriptor& subresource, D3DTextureViewType viewType,
+	DescriptorHeapHandle createDescriptorHeapHandle(const TextureSubresourceDescriptor& subresource, D3D12_DESCRIPTOR_HEAP_TYPE viewType,
 													Bool readOnlyDsv) const;
 
 	Bool isExternal() const

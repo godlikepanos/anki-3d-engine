@@ -18,12 +18,15 @@
 #	include <ThirdParty/Dxc/d3d12shader.h>
 #	include <wrl.h>
 #	include <AnKi/Util/CleanupWindows.h>
-
-static HMODULE g_dxcLib = 0;
-static DxcCreateInstanceProc g_DxcCreateInstance = nullptr;
 #endif
 
 namespace anki {
+
+#if ANKI_DIXL_REFLECTION
+static HMODULE g_dxcLib = 0;
+static DxcCreateInstanceProc g_DxcCreateInstance = nullptr;
+static Mutex g_dxcLibMtx;
+#endif
 
 void freeShaderProgramBinary(ShaderProgramBinary*& binary)
 {
@@ -126,7 +129,7 @@ static void visitSpirv(ConstWeakArray<U32> spv, TFunc func)
 	ANKI_ASSERT(it == spv.getEnd());
 }
 
-static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr)
+Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr)
 {
 	spirv_cross::Compiler spvc(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32));
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
@@ -338,9 +341,32 @@ static Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, Shader
 			} \
 		} while(0)
 
-static Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr)
+Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr)
 {
 	using Microsoft::WRL::ComPtr;
+
+	// Lazyly load the DXC DLL
+	{
+		LockGuard lock(g_dxcLibMtx);
+
+		if(g_dxcLib == 0)
+		{
+			// Init DXC
+			g_dxcLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxcompiler.dll");
+			if(g_dxcLib == 0)
+			{
+				ANKI_SHADER_COMPILER_LOGE("dxcompiler.dll missing or wrong architecture");
+				return Error::kFunctionFailed;
+			}
+
+			g_DxcCreateInstance = reinterpret_cast<DxcCreateInstanceProc>(GetProcAddress(g_dxcLib, "DxcCreateInstance"));
+			if(g_DxcCreateInstance == nullptr)
+			{
+				ANKI_SHADER_COMPILER_LOGE("DxcCreateInstance was not found in the dxcompiler.dll");
+				return Error::kFunctionFailed;
+			}
+		}
+	}
 
 	const Bool isRayTracing = type >= ShaderType::kFirstRayTracing && type <= ShaderType::kLastRayTracing;
 	if(isRayTracing)
@@ -391,114 +417,115 @@ static Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderRe
 
 	for(U32 i = 0; i < bindingCount; ++i)
 	{
-		D3D12_SHADER_INPUT_BIND_DESC bind;
+		D3D12_SHADER_INPUT_BIND_DESC bindDesc;
 		if(dxRefl.Get() != nullptr)
 		{
-			ANKI_REFL_CHECK(dxRefl->GetResourceBindingDesc(i, &bind));
+			ANKI_REFL_CHECK(dxRefl->GetResourceBindingDesc(i, &bindDesc));
 		}
 		else
 		{
-			ANKI_REFL_CHECK(funcRefl->GetResourceBindingDesc(i, &bind));
+			ANKI_REFL_CHECK(funcRefl->GetResourceBindingDesc(i, &bindDesc));
 		}
 
 		ShaderReflectionBinding akBinding;
 
 		akBinding.m_type = DescriptorType::kCount;
 		akBinding.m_flags = DescriptorFlag::kNone;
-		akBinding.m_arraySize = U16(bind.BindCount);
+		akBinding.m_arraySize = U16(bindDesc.BindCount);
+		akBinding.m_registerBindingPoint = bindDesc.BindPoint;
 
-		if(bind.Type == D3D_SIT_CBUFFER)
+		if(bindDesc.Type == D3D_SIT_CBUFFER)
 		{
 			// ConstantBuffer
 
-			if(bind.BindPoint == ANKI_PUSH_CONSTANTS_D3D_BINDING && bind.Space == ANKI_PUSH_CONSTANTS_D3D_SPACE)
+			if(bindDesc.BindPoint == kPushConstantsRegisterBindPoint && bindDesc.Space == kPushConstantsRegisterSpace)
 			{
 				// It's push/root constants
-				ANKI_ASSERT(!"TODO");
+
+				ID3D12ShaderReflectionConstantBuffer* cbuffer =
+					(dxRefl.Get()) ? dxRefl->GetConstantBufferByName(bindDesc.Name) : funcRefl->GetConstantBufferByName(bindDesc.Name);
+				D3D12_SHADER_BUFFER_DESC desc;
+				ANKI_REFL_CHECK(cbuffer->GetDesc(&desc));
+				refl.m_pushConstantsSize = U8(desc.Size);
+
 				continue;
 			}
 
 			akBinding.m_type = DescriptorType::kUniformBuffer;
 			akBinding.m_flags = DescriptorFlag::kRead;
-			akBinding.m_semantic = BindingSemantic('b', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_TEXTURE && bind.Dimension != D3D_SRV_DIMENSION_BUFFER)
+		else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
 		{
 			// Texture2D etc
 			akBinding.m_type = DescriptorType::kTexture;
 			akBinding.m_flags = DescriptorFlag::kRead;
-			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_TEXTURE && bind.Dimension == D3D_SRV_DIMENSION_BUFFER)
+		else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
 		{
 			// Buffer
 			akBinding.m_type = DescriptorType::kTexelBuffer;
 			akBinding.m_flags = DescriptorFlag::kRead;
-			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_SAMPLER)
+		else if(bindDesc.Type == D3D_SIT_SAMPLER)
 		{
 			// SamplerState
 			akBinding.m_type = DescriptorType::kSampler;
 			akBinding.m_flags = DescriptorFlag::kRead;
-			akBinding.m_semantic = BindingSemantic('s', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_UAV_RWTYPED && bind.Dimension == D3D_SRV_DIMENSION_BUFFER)
+		else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
 		{
 			// RWBuffer
 			akBinding.m_type = DescriptorType::kTexelBuffer;
 			akBinding.m_flags = DescriptorFlag::kReadWrite;
-			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_UAV_RWTYPED && bind.Dimension != D3D_SRV_DIMENSION_BUFFER)
+		else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
 		{
 			// RWTexture2D etc
 			akBinding.m_type = DescriptorType::kTexture;
 			akBinding.m_flags = DescriptorFlag::kReadWrite;
-			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_BYTEADDRESS)
+		else if(bindDesc.Type == D3D_SIT_BYTEADDRESS)
 		{
 			// ByteAddressBuffer
 			akBinding.m_type = DescriptorType::kStorageBuffer;
 			akBinding.m_flags = DescriptorFlag::kRead | DescriptorFlag::kByteAddressBuffer;
-			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_UAV_RWBYTEADDRESS)
+		else if(bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS)
 		{
 			// RWByteAddressBuffer
 			akBinding.m_type = DescriptorType::kStorageBuffer;
 			akBinding.m_flags = DescriptorFlag::kReadWrite | DescriptorFlag::kByteAddressBuffer;
-			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_RTACCELERATIONSTRUCTURE)
+		else if(bindDesc.Type == D3D_SIT_RTACCELERATIONSTRUCTURE)
 		{
 			// RaytracingAccelerationStructure
 			akBinding.m_type = DescriptorType::kAccelerationStructure;
 			akBinding.m_flags = DescriptorFlag::kRead;
-			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
 		}
-		else if(bind.Type == D3D_SIT_STRUCTURED)
+		else if(bindDesc.Type == D3D_SIT_STRUCTURED)
 		{
 			// StructuredBuffer
 			akBinding.m_type = DescriptorType::kStorageBuffer;
 			akBinding.m_flags = DescriptorFlag::kRead;
-			akBinding.m_semantic = BindingSemantic('t', bind.BindPoint);
+			akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
 		}
-		else if(bind.Type == D3D_SIT_UAV_RWSTRUCTURED)
+		else if(bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED)
 		{
 			// RWStructuredBuffer
 			akBinding.m_type = DescriptorType::kStorageBuffer;
 			akBinding.m_flags = DescriptorFlag::kReadWrite;
-			akBinding.m_semantic = BindingSemantic('u', bind.BindPoint);
+			akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
 		}
 		else
 		{
-			errorStr.sprintf("Unrecognized type for binding: %s", bind.Name);
+			errorStr.sprintf("Unrecognized type for binding: %s", bindDesc.Name);
 			return Error::kUserData;
 		}
 
-		refl.m_bindings[bind.Space][refl.m_bindingCounts[bind.Space++]] = akBinding;
+		refl.m_bindings[bindDesc.Space][refl.m_bindingCounts[bindDesc.Space]] = akBinding;
+		++refl.m_bindingCounts[bindDesc.Space];
+
+		refl.m_descriptorSetMask.set(bindDesc.Space);
 	}
 
 	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
@@ -812,26 +839,6 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 										  ShaderProgramPostParseInterface* postParseCallback, ShaderProgramAsyncTaskInterface* taskManager_,
 										  ConstWeakArray<ShaderCompilerDefine> defines_, ShaderProgramBinary*& binary)
 {
-#if ANKI_DIXL_REFLECTION
-	if(!spirv)
-	{
-		// Init DXC
-		g_dxcLib = LoadLibraryA(ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxcompiler.dll");
-		if(g_dxcLib == 0)
-		{
-			ANKI_SHADER_COMPILER_LOGE("dxcompiler.dll missing or wrong architecture");
-			return Error::kFunctionFailed;
-		}
-
-		g_DxcCreateInstance = reinterpret_cast<DxcCreateInstanceProc>(GetProcAddress(g_dxcLib, "DxcCreateInstance"));
-		if(g_DxcCreateInstance == nullptr)
-		{
-			ANKI_SHADER_COMPILER_LOGE("DxcCreateInstance was not found in the dxcompiler.dll");
-			return Error::kFunctionFailed;
-		}
-	}
-#endif
-
 	ShaderCompilerMemoryPool& memPool = ShaderCompilerMemoryPool::getSingleton();
 
 	ShaderCompilerDynamicArray<ShaderCompilerDefine> defines;
@@ -839,8 +846,6 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 	{
 		defines.emplaceBack(d);
 	}
-	defines.emplaceBack(ShaderCompilerDefine{"ANKI_GR_BACKEND_VULKAN", spirv});
-	defines.emplaceBack(ShaderCompilerDefine{"ANKI_GR_BACKEND_DIRECT3D", !spirv});
 
 	// Initialize the binary
 	binary = newInstance<ShaderProgramBinary>(memPool);

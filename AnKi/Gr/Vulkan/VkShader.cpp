@@ -40,6 +40,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	ANKI_ASSERT(inf.m_binary.getSize() > 0);
 	ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	m_shaderType = inf.m_shaderType;
+	m_hasDiscard = inf.m_reflection.m_discards;
 	m_shaderBinarySize = U32(inf.m_binary.getSizeInBytes());
 	m_reflection = inf.m_reflection;
 	m_reflection.validate();

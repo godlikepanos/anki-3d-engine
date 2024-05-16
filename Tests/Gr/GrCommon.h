@@ -11,23 +11,35 @@
 
 namespace anki {
 
-inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
+inline ShaderPtr createShader(CString src, ShaderType type)
 {
 	ShaderCompilerString header;
 	ShaderProgramParser::generateAnkiShaderHeader(type, header);
 	header += src;
-	ShaderCompilerDynamicArray<U8> spirv;
+	ShaderCompilerDynamicArray<U8> bin;
 	ShaderCompilerString errorLog;
 
-	const Error err = compileHlslToSpirv(header, type, false, spirv, errorLog);
+#if ANKI_GR_BACKEND_VULKAN
+	const Error err = compileHlslToSpirv(header, type, false, bin, errorLog);
+#else
+	const Error err = compileHlslToDxil(header, type, false, bin, errorLog);
+#endif
 	if(err)
 	{
 		ANKI_TEST_LOGE("Compile error:\n%s", errorLog.cstr());
 	}
 	ANKI_TEST_EXPECT_NO_ERR(err);
 
-	ShaderInitInfo initInf(type, spirv);
-	initInf.m_constValues = specVals;
+	ShaderReflection refl;
+	ShaderCompilerString errorStr;
+#if ANKI_GR_BACKEND_VULKAN
+	ANKI_TEST_EXPECT_NO_ERR(doReflectionSpirv(bin, type, refl, errorStr));
+#else
+	ANKI_TEST_EXPECT_NO_ERR(doReflectionDxil(bin, type, refl, errorStr));
+#endif
+
+	ShaderInitInfo initInf(type, bin);
+	initInf.m_reflection = refl;
 
 	return GrManager::getSingleton().newShader(initInf);
 }

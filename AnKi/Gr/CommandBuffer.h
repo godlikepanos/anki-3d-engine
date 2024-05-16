@@ -93,6 +93,63 @@ public:
 	}
 };
 
+/// Maps to HLSL register(X#, S)
+class Register
+{
+public:
+	U32 m_bindPoint = kMaxU32;
+	HlslResourceType m_resourceType = HlslResourceType::kCount;
+	U8 m_space = kMaxU8;
+
+	/// Construct using a couple of strings like ("t0", "space10")
+	Register(const Char* reg, const Char* space = "space0")
+	{
+		ANKI_ASSERT(reg && space);
+		m_resourceType = toResourceType(reg[0]);
+		++reg;
+		m_bindPoint = 0;
+		do
+		{
+			ANKI_ASSERT(*reg >= '0' && *reg <= '9');
+			m_bindPoint *= 10;
+			m_bindPoint += *reg - '0';
+			++reg;
+		} while(*reg != '\0');
+		ANKI_ASSERT(strlen(space) == 6);
+		ANKI_ASSERT(space[5] >= '0' && space[5] <= '9');
+		m_space = U8(space[5] - '0');
+	}
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_bindPoint != kMaxU32);
+		ANKI_ASSERT(m_resourceType < HlslResourceType::kCount);
+		ANKI_ASSERT(m_space < kMaxDescriptorSets);
+	}
+
+private:
+	static HlslResourceType toResourceType(Char c)
+	{
+		switch(c)
+		{
+		case 'b':
+			return HlslResourceType::kCbv;
+		case 'u':
+			return HlslResourceType::kUav;
+		case 't':
+			return HlslResourceType::kSrv;
+		case 's':
+			return HlslResourceType::kSampler;
+		default:
+			ANKI_ASSERT(0);
+			return HlslResourceType::kCount;
+		}
+	}
+};
+
+/// Break the code style to define something HLSL like
+#define register(...) Register(ANKI_FOREACH(ANKI_STRINGIZE, (__VA_ARGS__)))
+
 /// Command buffer.
 class CommandBuffer : public GrObject
 {
@@ -207,6 +264,9 @@ public:
 
 	/// Bind storage buffer.
 	void bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx = 0);
+
+	/// Bind storage buffer.
+	void bindStorageBuffer(Register reg, const BufferView& buff);
 
 	/// Bind load/store image.
 	void bindStorageTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx = 0);

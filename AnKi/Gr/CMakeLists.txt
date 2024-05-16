@@ -61,6 +61,11 @@ if(ANKI_DLSS)
 	set(extra_libs ${extra_libs} AnKiNgx)
 endif()
 
+# Add Agility SDK includes
+if(DIRECTX)
+	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/include")
+endif()
+
 add_library(AnKiGr ${backend_sources} ${backend_headers})
 target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon ${extra_libs})
@@ -86,4 +91,15 @@ if(ANKI_DLSS)
 			endforeach()
 		endforeach()
 	endif()
+endif()
+
+# Copy Agility SDK files to Binaries
+if(DIRECTX)
+	file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.dll")
+
+	foreach(FILE_TO_COPY IN LISTS FILES_TO_COPY)
+		add_custom_command(TARGET AnKiGr POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Binaries
+			COMMAND ${CMAKE_COMMAND} -E copy ${FILE_TO_COPY} ${CMAKE_BINARY_DIR}/Binaries)
+	endforeach()
 endif()

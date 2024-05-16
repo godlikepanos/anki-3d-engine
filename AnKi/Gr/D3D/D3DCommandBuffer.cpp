@@ -5,6 +5,7 @@
 
 #include <AnKi/Gr/D3D/D3DCommandBuffer.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
+#include <AnKi/Gr/D3D/D3DShaderProgram.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -150,6 +151,23 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& bu
 	ANKI_ASSERT(!"TODO");
 }
 
+void CommandBuffer::bindStorageBuffer(Register reg, const BufferView& buff)
+{
+	reg.validate();
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
+	if(reg.m_resourceType == HlslResourceType::kUav)
+	{
+		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
+	}
+	else
+	{
+		ANKI_ASSERT(reg.m_resourceType == HlslResourceType::kSrv);
+		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
+	}
+}
+
 void CommandBuffer::bindStorageTexture(U32 set, U32 binding, const TextureView& tex, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
@@ -172,7 +190,35 @@ void CommandBuffer::bindAllBindless(U32 set)
 
 void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(prog);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+
+	const ShaderProgramImpl& progImpl = static_cast<const ShaderProgramImpl&>(*prog);
+	const Bool isCompute = !(progImpl.getShaderTypes() & ShaderTypeBit::kAllGraphics);
+
+	self.m_descriptors.bindRootSignature(&progImpl.getRootSignature(), isCompute);
+
+	self.m_mcmdb->pushObjectRef(prog);
+
+	if(isCompute)
+	{
+		self.m_cmdList->SetPipelineState(&progImpl.getComputePipelineState());
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
+
+	// Shader program means descriptors so bind the descriptor heaps
+	if(!self.m_descriptorHeapsBound)
+	{
+		self.m_descriptorHeapsBound = true;
+
+		const Array<ID3D12DescriptorHeap*, 2> heaps = DescriptorFactory::getSingleton().getCpuGpuVisibleTransientHeaps();
+		self.m_cmdList->SetDescriptorHeaps(2, heaps.getBegin());
+	}
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
@@ -272,7 +318,12 @@ void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawC
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+
+	self.m_descriptors.flush(*self.m_cmdList);
+
+	self.m_cmdList->Dispatch(groupCountX, groupCountY, groupCountZ);
 }
 
 void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
@@ -442,6 +493,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	m_cmdList = &m_mcmdb->getCmdList();
 	m_fastPool = &m_mcmdb->getFastMemoryPool();
+
+	m_descriptors.init(m_fastPool);
 
 	return Error::kNone;
 }

@@ -302,6 +302,11 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& bu
 	self.m_dsetState[set].bindStorageBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange());
 }
 
+void CommandBuffer::bindStorageBuffer([[maybe_unused]] Register reg, [[maybe_unused]] const BufferView& buff)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
 void CommandBuffer::bindStorageTexture(U32 set, U32 binding, const TextureView& view, U32 arrayIdx)
 {
 	ANKI_ASSERT(view.isGoodForStorage());

@@ -52,6 +52,7 @@ protected:
 		kString,
 		kBool,
 		kNumericU8,
+		kNumericU16,
 		kNumericU32,
 		kNumericPtrSize,
 		kNumericF32
@@ -122,6 +123,7 @@ private:
 	}
 
 ANKI_CVAR_NUMERIC_TYPE(U8)
+ANKI_CVAR_NUMERIC_TYPE(U16)
 ANKI_CVAR_NUMERIC_TYPE(U32)
 ANKI_CVAR_NUMERIC_TYPE(PtrSize)
 ANKI_CVAR_NUMERIC_TYPE(F32)

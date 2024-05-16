@@ -16,6 +16,9 @@ namespace anki {
 class ShaderImpl final : public Shader
 {
 public:
+	GrDynamicArray<U8> m_binary;
+	ShaderReflection m_reflection;
+
 	ShaderImpl(CString name)
 		: Shader(name)
 	{

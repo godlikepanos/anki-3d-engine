@@ -14,10 +14,19 @@ namespace anki {
 /// @addtogroup directx
 /// @{
 
+/// @memberof FrameGarbageCollector
 class TextureGarbage : public IntrusiveListEnabled<TextureGarbage>
 {
 public:
-	GrDynamicArray<DescriptorHeapHandle> m_viewHandles;
+	GrDynamicArray<DescriptorHeapHandle> m_descriptorHeapHandles;
+	GrDynamicArray<D3D12_DESCRIPTOR_HEAP_TYPE> m_descriptorHeapHandleTypes;
+	ID3D12Resource* m_resource = nullptr;
+};
+
+/// @memberof FrameGarbageCollector
+class BufferGarbage : public IntrusiveListEnabled<BufferGarbage>
+{
+public:
 	ID3D12Resource* m_resource = nullptr;
 };
 
@@ -37,6 +46,9 @@ public:
 	/// @note It's thread-safe.
 	void newTextureGarbage(TextureGarbage* textureGarbage);
 
+	/// @note It's thread-safe.
+	void newBufferGarbage(BufferGarbage* garbage);
+
 	/// Finalizes a frame.
 	/// @note It's thread-safe.
 	void endFrame(MicroFence* frameFence);
@@ -46,6 +58,7 @@ private:
 	{
 	public:
 		IntrusiveList<TextureGarbage> m_textureGarbage;
+		IntrusiveList<BufferGarbage> m_bufferGarbage;
 		MicroFencePtr m_fence;
 	};
 

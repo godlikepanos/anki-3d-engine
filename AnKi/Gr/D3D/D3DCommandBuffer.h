@@ -7,6 +7,7 @@
 
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/D3D/D3DCommandBufferFactory.h>
+#include <AnKi/Gr/D3D/D3DDescriptor.h>
 
 namespace anki {
 
@@ -37,8 +38,13 @@ private:
 	ID3D12GraphicsCommandList6* m_cmdList = nullptr; // Cache it.
 	U32 m_commandCount = 0;
 
-	StackMemoryPool* m_fastPool = nullptr; // Cache it.
 	MicroCommandBufferPtr m_mcmdb;
+
+	DescriptorState m_descriptors;
+
+	StackMemoryPool* m_fastPool = nullptr; // Cache it.
+
+	Bool m_descriptorHeapsBound = false;
 
 	void commandCommon();
 };

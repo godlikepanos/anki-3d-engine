@@ -27,6 +27,12 @@
 #	include <SDL_syswm.h>
 #endif
 
+// Use the Agility SDK
+extern "C" {
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 613; // Number taken from the download page
+__declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; // The D3D12Core.dll should be in the same dir as the .exe
+}
+
 namespace anki {
 
 BoolCVar g_validationCVar(CVarSubsystem::kGr, "Validation", false, "Enable or not validation");
@@ -35,10 +41,6 @@ BoolCVar g_vsyncCVar(CVarSubsystem::kGr, "Vsync", false, "Enable or not vsync");
 BoolCVar g_debugMarkersCVar(CVarSubsystem::kGr, "DebugMarkers", false, "Enable or not debug markers");
 BoolCVar g_meshShadersCVar(CVarSubsystem::kGr, "MeshShaders", false, "Enable or not mesh shaders");
 static NumericCVar<U8> g_deviceCVar(CVarSubsystem::kGr, "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
-
-static NumericCVar<U32> g_maxRtvDescriptors(CVarSubsystem::kGr, "MaxRvtDescriptors", 128, 8, 1024, "Max number of RTVs");
-static NumericCVar<U32> g_maxCbvSrvUavDescriptors(CVarSubsystem::kGr, "MaxCbvSrvUavDescriptors", 1024, 8, 1 * 1024 * 1024,
-												  "Max number of CBV/SRV/UAV descriptors");
 
 static LONG NTAPI vexHandler(PEXCEPTION_POINTERS exceptionInfo)
 {
@@ -64,12 +66,13 @@ static LONG NTAPI vexHandler(PEXCEPTION_POINTERS exceptionInfo)
 
 			if(exceptionRecord->ExceptionCode == DBG_PRINTEXCEPTION_C)
 			{
-				ULONG n;
-				if(n = MultiByteToWideChar(CP_ACP, 0, psz, len, 0, 0))
+				const ULONG n = MultiByteToWideChar(CP_ACP, 0, psz, len, 0, 0);
+				if(n)
 				{
 					WCHAR* wz = static_cast<WCHAR*>(_malloca(n * sizeof(WCHAR)));
 
-					if(len = MultiByteToWideChar(CP_ACP, 0, psz, len, wz, n))
+					len = MultiByteToWideChar(CP_ACP, 0, psz, len, wz, n);
+					if(len)
 					{
 						pwz = wz;
 					}
@@ -102,8 +105,8 @@ static LONG NTAPI vexHandler(PEXCEPTION_POINTERS exceptionInfo)
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
-static void NTAPI d3dDebugMessageCallback(D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID id, LPCSTR pDescription,
-										  void* pContext)
+static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
+										  [[maybe_unused]] D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext)
 {
 	if(!Logger::isAllocated())
 	{
@@ -300,6 +303,7 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 	{
 		FenceImpl* fenceImpl = anki::newInstance<FenceImpl>(GrMemoryPool::getSingleton(), "SignalFence");
 		fenceImpl->m_fence = fence;
+		signalFence->reset(fenceImpl);
 	}
 }
 
@@ -430,13 +434,13 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	}
 
 	// Other systems
-	const Array<U16, D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES> descrCounts = {g_maxCbvSrvUavDescriptors.get(), 0, g_maxRtvDescriptors.get(), 0};
-	DescriptorHeaps::allocateSingleton();
-	ANKI_CHECK(DescriptorHeaps::getSingleton().init(descrCounts, *m_device));
+	DescriptorFactory::allocateSingleton();
+	ANKI_CHECK(DescriptorFactory::getSingleton().init());
 
 	SwapchainFactory::allocateSingleton();
 	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
+	RootSignatureFactory::allocateSingleton();
 	FenceFactory::allocateSingleton();
 	CommandBufferFactory::allocateSingleton();
 	FrameGarbageCollector::allocateSingleton();
@@ -458,7 +462,8 @@ void GrManagerImpl::destroy()
 	CommandBufferFactory::freeSingleton();
 	SwapchainFactory::freeSingleton();
 	FrameGarbageCollector::freeSingleton();
-	DescriptorHeaps::freeSingleton();
+	RootSignatureFactory::freeSingleton();
+	DescriptorFactory::freeSingleton();
 	FenceFactory::freeSingleton();
 
 	safeRelease(m_queues[GpuQueueType::kGeneral]);

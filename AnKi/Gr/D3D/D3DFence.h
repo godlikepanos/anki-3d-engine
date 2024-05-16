@@ -81,6 +81,7 @@ class FenceFactory : public MakeSingleton<FenceFactory>
 {
 	friend class MicroFence;
 	friend class MicroFencePtrDeleter;
+	friend class Fence;
 
 public:
 	/// Limit the alive fences to avoid having too many file descriptors.
