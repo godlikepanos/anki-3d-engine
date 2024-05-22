@@ -15,19 +15,65 @@ namespace anki {
 
 class DescriptorHeapHandle
 {
-public:
-	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle = {};
-	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle = {};
+	friend class PersistentDescriptorAllocator;
+	friend class RingDescriptorAllocator;
+	friend class DescriptorFactory;
 
+public:
 	[[nodiscard]] Bool isCreated() const
 	{
 		return m_cpuHandle.ptr != 0 || m_gpuHandle.ptr != 0;
+	}
+
+	[[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE getCpuOffset() const
+	{
+		validate();
+		return m_cpuHandle;
+	}
+
+	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE getGpuOffset() const
+	{
+		validate();
+		ANKI_ASSERT(m_gpuHandle.ptr);
+		return m_gpuHandle;
+	}
+
+	void increment(U32 descriptorCount);
+
+private:
+	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle = {};
+	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle = {};
+
+	D3D12_DESCRIPTOR_HEAP_TYPE m_heapType = D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
+
+#if ANKI_ASSERTIONS_ENABLED
+	D3D12_CPU_DESCRIPTOR_HANDLE m_heapCpuStart = {};
+	D3D12_GPU_DESCRIPTOR_HANDLE m_heapGpuStart = {};
+	PtrSize m_heapSize = 0;
+#endif
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_cpuHandle.ptr);
+		ANKI_ASSERT(m_heapType != D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES);
+		ANKI_ASSERT(m_heapCpuStart.ptr);
+		ANKI_ASSERT(m_heapSize);
+
+		ANKI_ASSERT(m_cpuHandle.ptr >= m_heapCpuStart.ptr
+					&& m_cpuHandle.ptr + getDevice().GetDescriptorHandleIncrementSize(m_heapType) <= m_heapCpuStart.ptr + m_heapSize);
+		if(m_gpuHandle.ptr)
+		{
+			ANKI_ASSERT(m_gpuHandle.ptr >= m_heapGpuStart.ptr
+						&& m_gpuHandle.ptr + getDevice().GetDescriptorHandleIncrementSize(m_heapType) <= m_heapGpuStart.ptr + m_heapSize);
+		}
 	}
 };
 
 /// Descriptor allocator with persistent allocations.
 class PersistentDescriptorAllocator
 {
+	friend class DescriptorFactory;
+
 public:
 	PersistentDescriptorAllocator() = default;
 
@@ -90,23 +136,46 @@ public:
 	Error init();
 
 	/// @note Thread-safe.
-	DescriptorHeapHandle allocateCpuVisiblePersistent(D3D12_DESCRIPTOR_HEAP_TYPE type)
+	DescriptorHeapHandle allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE type, Bool gpuVisible)
 	{
-		return getCpuPersistentAllocator(type).allocate();
+		DescriptorHeapHandle out;
+		if(!gpuVisible)
+		{
+			out = getCpuPersistentAllocator(type).allocate();
+		}
+		else
+		{
+			ANKI_ASSERT(type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			out = m_gpuPersistent.m_cbvSrvUav.allocate();
+		}
+		out.m_heapType = type;
+		return out;
 	}
 
 	/// @note Thread-safe.
-	void free(D3D12_DESCRIPTOR_HEAP_TYPE type, DescriptorHeapHandle& handle)
+	void freePersistent(DescriptorHeapHandle& handle)
 	{
-		getCpuPersistentAllocator(type).free(handle);
+		const Bool gpuVisible = handle.m_gpuHandle.ptr != 0;
+		if(gpuVisible)
+		{
+			ANKI_ASSERT(handle.m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			m_gpuPersistent.m_cbvSrvUav.free(handle);
+		}
+		else
+		{
+			getCpuPersistentAllocator(handle.m_heapType).free(handle);
+		}
 	}
 
 	/// @note Thread-safe.
-	DescriptorHeapHandle allocateCpuGpuVisibleTransient(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 descriptorCount)
+	DescriptorHeapHandle allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE type, U32 descriptorCount, Bool gpuVisible)
 	{
 		ANKI_ASSERT(type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV || type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+		ANKI_ASSERT(gpuVisible);
 		RingDescriptorAllocator& alloc = (type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) ? m_gpuRing.m_cbvSrvUav : m_gpuRing.m_sampler;
-		return alloc.allocate(descriptorCount);
+		DescriptorHeapHandle out = alloc.allocate(descriptorCount);
+		out.m_heapType = type;
+		return out;
 	}
 
 	U32 getDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const
@@ -115,9 +184,18 @@ public:
 		return m_descriptorHandleIncrementSizes[type];
 	}
 
-	Array<ID3D12DescriptorHeap*, 2> getCpuGpuVisibleTransientHeaps() const
+	Array<ID3D12DescriptorHeap*, 2> getCpuGpuVisibleHeaps() const
 	{
+		ANKI_ASSERT(m_descriptorHeaps.getSize() == 6);
 		return {m_descriptorHeaps[4], m_descriptorHeaps[5]};
+	}
+
+	U32 getBindlessIndex(const DescriptorHeapHandle& handle) const
+	{
+		handle.validate();
+		ANKI_ASSERT(handle.m_cpuHandle.ptr == m_gpuPersistent.m_cbvSrvUav.m_cpuHeapStart.ptr);
+		const PtrSize idx = (handle.m_cpuHandle.ptr - m_gpuPersistent.m_cbvSrvUav.m_cpuHeapStart.ptr) / m_gpuPersistent.m_cbvSrvUav.m_descriptorSize;
+		return U32(idx);
 	}
 
 private:
@@ -129,6 +207,12 @@ private:
 		PersistentDescriptorAllocator m_rtv; ///< Holds RTVs that the application needs.
 		PersistentDescriptorAllocator m_dsv; ///< Holds DSVs that the application needs.
 	} m_cpuPersistent;
+
+	class
+	{
+	public:
+		PersistentDescriptorAllocator m_cbvSrvUav; ///< For bindless resources.
+	} m_gpuPersistent;
 
 	class
 	{
@@ -189,12 +273,18 @@ private:
 	class Space
 	{
 	public:
-		U32 m_cbvSrvUavCount = 0;
+		U32 m_cbvSrvUavCount = 0; ///< Doesn't count holes.
+		U32 m_samplerCount = 0; ///< Doesn't count holes.
 
 		U8 m_cbvSrvUavDescriptorTableRootParameterIdx = kMaxU8; ///< The index of the root parameter of the CBV/SRV/UAV table.
 		U8 m_samplersDescriptorTableRootParameterIdx = kMaxU8; ///< The index of the root parameter of the sampler table.
 
-		Array<GrDynamicArray<Descriptor>, U32(HlslResourceType::kCount)> m_descriptors; ///< Arrays are unrolled.
+		Array<GrDynamicArray<Descriptor>, U32(HlslResourceType::kCount)> m_descriptors; ///< Arrays are unrolled. May have holes.
+
+		Bool isEmpty() const
+		{
+			return m_cbvSrvUavCount == 0 && m_samplerCount == 0;
+		}
 	};
 
 	ID3D12RootSignature* m_rootSignature = nullptr;
@@ -228,36 +318,115 @@ public:
 
 	void bindRootSignature(const RootSignature* rootSignature, Bool isCompute);
 
-	void bindUav(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range)
+	void bindUav(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range, DXGI_FORMAT fmt = DXGI_FORMAT_UNKNOWN)
 	{
 		Descriptor& descriptor = getDescriptor(HlslResourceType::kUav, space, registerBinding);
 		descriptor.m_bufferView.m_resource = resource;
 		descriptor.m_bufferView.m_offset = offset;
 		descriptor.m_bufferView.m_range = range;
-		descriptor.m_bufferView.m_format = DXGI_FORMAT_UNKNOWN;
+		descriptor.m_bufferView.m_format = fmt;
 		descriptor.m_isHandle = false;
 #if ANKI_ASSERTIONS_ENABLED
-		descriptor.m_type = DescriptorType::kStorageBuffer;
+		if(fmt == DXGI_FORMAT_UNKNOWN)
+		{
+			descriptor.m_type = DescriptorType::kStorageBuffer;
+			descriptor.m_flags = DescriptorFlag::kReadWrite;
+		}
+		else
+		{
+			descriptor.m_type = DescriptorType::kTexelBuffer;
+			descriptor.m_flags = DescriptorFlag::kReadWrite;
+		}
+#endif
+
+		m_spaces[space].m_cbvSrvUavDirty = true;
+	}
+
+	void bindUav(U32 space, U32 registerBinding, DescriptorHeapHandle handle)
+	{
+		Descriptor& descriptor = getDescriptor(HlslResourceType::kUav, space, registerBinding);
+		descriptor.m_heapOffset = handle.getCpuOffset();
+		descriptor.m_isHandle = true;
+#if ANKI_ASSERTIONS_ENABLED
+		descriptor.m_type = DescriptorType::kTexture;
 		descriptor.m_flags = DescriptorFlag::kReadWrite;
 #endif
 
 		m_spaces[space].m_cbvSrvUavDirty = true;
 	}
 
-	void bindSrv(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range)
+	void bindSrv(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range, DXGI_FORMAT fmt = DXGI_FORMAT_UNKNOWN)
 	{
 		Descriptor& descriptor = getDescriptor(HlslResourceType::kSrv, space, registerBinding);
+		descriptor.m_bufferView.m_resource = resource;
+		descriptor.m_bufferView.m_offset = offset;
+		descriptor.m_bufferView.m_range = range;
+		descriptor.m_bufferView.m_format = fmt;
+		descriptor.m_isHandle = false;
+#if ANKI_ASSERTIONS_ENABLED
+		if(fmt == DXGI_FORMAT_UNKNOWN)
+		{
+			descriptor.m_type = DescriptorType::kStorageBuffer;
+			descriptor.m_flags = DescriptorFlag::kRead;
+		}
+		else
+		{
+			descriptor.m_type = DescriptorType::kTexelBuffer;
+			descriptor.m_flags = DescriptorFlag::kRead;
+		}
+#endif
+
+		m_spaces[space].m_cbvSrvUavDirty = true;
+	}
+
+	void bindSrv(U32 space, U32 registerBinding, DescriptorHeapHandle handle)
+	{
+		Descriptor& descriptor = getDescriptor(HlslResourceType::kSrv, space, registerBinding);
+		descriptor.m_heapOffset = handle.getCpuOffset();
+		descriptor.m_isHandle = true;
+#if ANKI_ASSERTIONS_ENABLED
+		descriptor.m_type = DescriptorType::kTexture;
+		descriptor.m_flags = DescriptorFlag::kRead;
+#endif
+
+		m_spaces[space].m_cbvSrvUavDirty = true;
+	}
+
+	void bindCbv(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range)
+	{
+		Descriptor& descriptor = getDescriptor(HlslResourceType::kCbv, space, registerBinding);
 		descriptor.m_bufferView.m_resource = resource;
 		descriptor.m_bufferView.m_offset = offset;
 		descriptor.m_bufferView.m_range = range;
 		descriptor.m_bufferView.m_format = DXGI_FORMAT_UNKNOWN;
 		descriptor.m_isHandle = false;
 #if ANKI_ASSERTIONS_ENABLED
-		descriptor.m_type = DescriptorType::kStorageBuffer;
+		descriptor.m_type = DescriptorType::kUniformBuffer;
 		descriptor.m_flags = DescriptorFlag::kRead;
 #endif
 
 		m_spaces[space].m_cbvSrvUavDirty = true;
+	}
+
+	void bindSampler(U32 space, U32 registerBinding, DescriptorHeapHandle handle)
+	{
+		Descriptor& descriptor = getDescriptor(HlslResourceType::kSampler, space, registerBinding);
+		descriptor.m_heapOffset = handle.getCpuOffset();
+		descriptor.m_isHandle = true;
+#if ANKI_ASSERTIONS_ENABLED
+		descriptor.m_type = DescriptorType::kSampler;
+		descriptor.m_flags = DescriptorFlag::kRead;
+#endif
+
+		m_spaces[space].m_samplersDirty = true;
+	}
+
+	void setRootConstants(const void* data, U32 dataSize)
+	{
+		ANKI_ASSERT(data && dataSize && dataSize <= kMaxPushConstantSize);
+		memcpy(m_rootConsts.getBegin(), data, dataSize);
+		m_rootConstSize = dataSize;
+		m_rootConstsDirty = true;
 	}
 
 	void flush(ID3D12GraphicsCommandList& cmdList);
@@ -325,8 +494,12 @@ private:
 	const RootSignature* m_rootSignature = nullptr;
 	Array<Space, kMaxDescriptorSets> m_spaces;
 
+	Array<U8, kMaxPushConstantSize> m_rootConsts;
+	U32 m_rootConstSize = 0;
+
 	Bool m_rootSignatureNeedsRebinding = true;
 	Bool m_rootSignatureIsCompute = false;
+	Bool m_rootConstsDirty = true;
 
 	Descriptor& getDescriptor(HlslResourceType svv, U32 space, U32 registerBinding)
 	{
@@ -337,6 +510,12 @@ private:
 		return m_spaces[space].m_descriptors[svv][registerBinding];
 	}
 };
+
+inline void DescriptorHeapHandle::increment(U32 descriptorCount)
+{
+	m_cpuHandle.ptr += DescriptorFactory::getSingleton().getDescriptorHandleIncrementSize(m_heapType) * descriptorCount;
+	validate();
+}
 /// @}
 
 } // end namespace anki

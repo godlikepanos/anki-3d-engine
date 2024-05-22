@@ -148,7 +148,8 @@ private:
 };
 
 /// Break the code style to define something HLSL like
-#define register(...) Register(ANKI_FOREACH(ANKI_STRINGIZE, (__VA_ARGS__)))
+#define ANKI_REG(reg) Register(ANKI_STRINGIZE(reg))
+#define ANKI_REG2(reg, space) Register(ANKI_STRINGIZE(reg), ANKI_STRINGIZE(space))
 
 /// Command buffer.
 class CommandBuffer : public GrObject
@@ -256,11 +257,20 @@ public:
 	/// Bind sampler.
 	void bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx = 0);
 
+	/// Bind sampler.
+	void bindSampler(Register reg, Sampler* sampler);
+
 	/// Bind a texture.
 	void bindTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx = 0);
 
+	/// Bind a texture.
+	void bindTexture(Register reg, const TextureView& texView);
+
 	/// Bind uniform buffer.
 	void bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx = 0);
+
+	/// Bind uniform buffer.
+	void bindUniformBuffer(Register reg, const BufferView& buff);
 
 	/// Bind storage buffer.
 	void bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx = 0);
@@ -273,6 +283,9 @@ public:
 
 	/// Bind texture buffer.
 	void bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferView& buff, Format fmt, U32 arrayIdx = 0);
+
+	/// Bind texel buffer.
+	void bindTexelBuffer(Register reg, const BufferView& buff, Format fmt);
 
 	/// Bind an acceleration structure.
 	/// @param set The set to bind to.

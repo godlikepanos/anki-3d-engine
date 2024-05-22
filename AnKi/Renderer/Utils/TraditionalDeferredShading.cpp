@@ -29,7 +29,7 @@ Error TraditionalDeferredLightShading::init()
 		SamplerInitInfo inf;
 		inf.m_compareOperation = CompareOperation::kLessEqual;
 		inf.m_addressing = SamplingAddressing::kClamp;
-		inf.m_mipmapFilter = SamplingFilter::kBase;
+		inf.m_mipmapFilter = SamplingFilter::kNearest;
 		inf.m_minMagFilter = SamplingFilter::kLinear;
 		m_shadowSampler = GrManager::getSingleton().newSampler(inf);
 	}

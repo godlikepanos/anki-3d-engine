@@ -140,6 +140,8 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c_)
 {
 	ShaderReflection c;
+
+#if ANKI_GR_BACKEND_VULKAN
 	c.m_descriptorSetMask = a.m_descriptorSetMask | b.m_descriptorSetMask;
 
 	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
@@ -190,22 +192,25 @@ Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b,
 			c.m_descriptorFlags[set][binding] = max(a.m_descriptorFlags[set][binding], b.m_descriptorFlags[set][binding]);
 		}
 	}
+#endif
 
-	c.m_vertexAttributeLocations = (a.m_vertexAttributeMask.getAnySet()) ? a.m_vertexAttributeLocations : b.m_vertexAttributeLocations;
-	c.m_vertexAttributeMask = a.m_vertexAttributeMask | b.m_vertexAttributeMask;
+	c.m_vertex.m_vertexAttributeLocations =
+		(a.m_vertex.m_vertexAttributeMask.getAnySet()) ? a.m_vertex.m_vertexAttributeLocations : b.m_vertex.m_vertexAttributeLocations;
+	c.m_vertex.m_vertexAttributeMask = a.m_vertex.m_vertexAttributeMask | b.m_vertex.m_vertexAttributeMask;
 
-	c.m_colorAttachmentWritemask = a.m_colorAttachmentWritemask | b.m_colorAttachmentWritemask;
+	c.m_fragment.m_colorAttachmentWritemask = a.m_fragment.m_colorAttachmentWritemask | b.m_fragment.m_colorAttachmentWritemask;
 
-	const Bool pushConstantsCorrect = a.m_pushConstantsSize == 0 || b.m_pushConstantsSize == 0 || a.m_pushConstantsSize == b.m_pushConstantsSize;
+	const Bool pushConstantsCorrect = a.m_descriptor.m_pushConstantsSize == 0 || b.m_descriptor.m_pushConstantsSize == 0
+									  || a.m_descriptor.m_pushConstantsSize == b.m_descriptor.m_pushConstantsSize;
 	if(!pushConstantsCorrect)
 	{
 		ANKI_GR_LOGE("Can't link shader reflection because of different push constants size");
 		return Error::kFunctionFailed;
 	}
 
-	c.m_pushConstantsSize = max(a.m_pushConstantsSize, b.m_pushConstantsSize);
+	c.m_descriptor.m_pushConstantsSize = max(a.m_descriptor.m_pushConstantsSize, b.m_descriptor.m_pushConstantsSize);
 
-	c.m_discards = a.m_discards || b.m_discards;
+	c.m_fragment.m_discards = a.m_fragment.m_discards || b.m_fragment.m_discards;
 
 	c_ = c;
 	return Error::kNone;

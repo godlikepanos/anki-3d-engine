@@ -39,14 +39,28 @@ public:
 
 	DescriptorHeapHandle getOrCreateRtv(const TextureSubresourceDescriptor& subresource) const
 	{
-		const View& e = getOrCreateView(subresource, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, TextureUsageBit::kNone);
+		const View& e = getOrCreateView(subresource, TextureUsageBit::kAllFramebuffer);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
 
 	DescriptorHeapHandle getOrCreateDsv(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage) const
 	{
-		const View& e = getOrCreateView(subresource, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, usage);
+		const View& e = getOrCreateView(subresource, usage);
+		ANKI_ASSERT(e.m_handle.isCreated());
+		return e.m_handle;
+	}
+
+	DescriptorHeapHandle getOrCreateSrv(const TextureSubresourceDescriptor& subresource) const
+	{
+		const View& e = getOrCreateView(subresource, TextureUsageBit::kAllSampled);
+		ANKI_ASSERT(e.m_handle.isCreated());
+		return e.m_handle;
+	}
+
+	DescriptorHeapHandle getOrCreateUav(const TextureSubresourceDescriptor& subresource) const
+	{
+		const View& e = getOrCreateView(subresource, TextureUsageBit::kAllStorage);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
@@ -54,19 +68,13 @@ public:
 	U32 calcD3DSubresourceIndex(const TextureSubresourceDescriptor& subresource) const
 	{
 		const TextureView view(this, subresource);
-		if(view.isAllSurfacesOrVolumes() && view.getDepthStencilAspect() == m_aspect)
-		{
-			return D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		}
-		else
-		{
-			const U32 faceCount = textureTypeIsCube(m_texType);
-			const U32 arraySize = faceCount * m_layerCount;
-			const U32 arraySlice = view.getFirstLayer() * faceCount + view.getFirstFace();
-			const U32 planeSlice =
-				(m_aspect == DepthStencilAspectBit::kDepthStencil && view.getDepthStencilAspect() == DepthStencilAspectBit::kStencil) ? 1 : 0;
-			return view.getFirstMipmap() + (arraySlice * m_mipCount) + (planeSlice * m_mipCount * arraySize);
-		}
+
+		const U32 faceCount = textureTypeIsCube(m_texType);
+		const U32 arraySize = faceCount * m_layerCount;
+		const U32 arraySlice = view.getFirstLayer() * faceCount + view.getFirstFace();
+		const U32 planeSlice =
+			(m_aspect == DepthStencilAspectBit::kDepthStencil && view.getDepthStencilAspect() == DepthStencilAspectBit::kStencil) ? 1 : 0;
+		return view.getFirstMipmap() + (arraySlice * m_mipCount) + (planeSlice * m_mipCount * arraySize);
 	}
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
@@ -78,14 +86,38 @@ public:
 		return *m_resource;
 	}
 
+	DXGI_FORMAT getDxgiFormat() const
+	{
+		return DXGI_FORMAT(m_format);
+	}
+
 private:
 	class View
 	{
 	public:
 		DescriptorHeapHandle m_handle;
-		D3D12_DESCRIPTOR_HEAP_TYPE m_heapType = {};
-		U32 m_bindlessIndex = kMaxU32;
-		Bool m_dsvReadOnly = false;
+
+		mutable DescriptorHeapHandle m_bindlessHandle;
+		mutable U32 m_bindlessIndex = kMaxU32;
+		mutable SpinLock m_bindlessLock;
+
+		TextureUsageBit m_usage = TextureUsageBit::kNone;
+
+		View() = default;
+
+		View(const View& b)
+		{
+			*this = b;
+		}
+
+		View& operator=(const View& b)
+		{
+			m_handle = b.m_handle;
+			m_bindlessHandle = b.m_bindlessHandle;
+			m_bindlessIndex = b.m_bindlessIndex;
+			m_usage = b.m_usage;
+			return *this;
+		}
 	};
 
 	ID3D12Resource* m_resource = nullptr;
@@ -101,12 +133,11 @@ private:
 
 	Error initInternal(ID3D12Resource* external, const TextureInitInfo& init);
 
-	const View& getOrCreateView(const TextureSubresourceDescriptor& subresource, D3D12_DESCRIPTOR_HEAP_TYPE viewType, TextureUsageBit usage) const;
+	const View& getOrCreateView(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage) const;
+
+	void initView(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage, View& view) const;
 
 	void computeResourceStates(TextureUsageBit usage, D3D12_RESOURCE_STATES& states) const;
-
-	DescriptorHeapHandle createDescriptorHeapHandle(const TextureSubresourceDescriptor& subresource, D3D12_DESCRIPTOR_HEAP_TYPE viewType,
-													Bool readOnlyDsv) const;
 
 	Bool isExternal() const
 	{

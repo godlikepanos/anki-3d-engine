@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Include/Common.h>
+#include <AnKi/Gr/Common.h>
 
 ANKI_BEGIN_NAMESPACE
 

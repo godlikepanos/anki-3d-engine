@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Sampler.h>
+#include <AnKi/Gr/D3D/D3DDescriptor.h>
 
 namespace anki {
 
@@ -16,6 +17,8 @@ namespace anki {
 class SamplerImpl final : public Sampler
 {
 public:
+	DescriptorHeapHandle m_handle;
+
 	SamplerImpl(CString name)
 		: Sampler(name)
 	{

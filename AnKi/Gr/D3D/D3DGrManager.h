@@ -15,6 +15,12 @@ namespace anki {
 /// @addtogroup directx
 /// @{
 
+class D3DCapabilities
+{
+public:
+	Bool m_rebar = false;
+};
+
 /// DX implementation of GrManager.
 class GrManagerImpl : public GrManager
 {
@@ -40,6 +46,11 @@ public:
 		return *m_queues[q];
 	}
 
+	const D3DCapabilities& getD3DCapabilities() const
+	{
+		return m_d3dCapabilities;
+	}
+
 private:
 	ID3D12Device* m_device = nullptr;
 	Array<ID3D12CommandQueue*, U32(GpuQueueType::kCount)> m_queues = {};
@@ -60,6 +71,8 @@ private:
 
 	Array<PerFrame, kMaxFramesInFlight> m_frames;
 	U8 m_crntFrame = 0;
+
+	D3DCapabilities m_d3dCapabilities;
 
 	void destroy();
 

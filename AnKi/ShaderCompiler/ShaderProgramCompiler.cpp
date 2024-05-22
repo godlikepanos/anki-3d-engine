@@ -137,6 +137,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 
 	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType,
 					const DescriptorFlag origFlags) -> Error {
+#if ANKI_GR_BACKEND_VULKAN
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
@@ -202,6 +203,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 				}
 			}
 		}
+#endif
 
 		return Error::kNone;
 	};
@@ -237,7 +239,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			const U32 id = r.id;
 			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
 
-			refl.m_colorAttachmentWritemask.set(location);
+			refl.m_fragment.m_colorAttachmentWritemask.set(location);
 		}
 	}
 
@@ -251,7 +253,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			return Error::kUserData;
 		}
 
-		refl.m_pushConstantsSize = U8(blockSize);
+		refl.m_descriptor.m_pushConstantsSize = blockSize;
 	}
 
 	// Attribs
@@ -300,7 +302,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			}
 #undef ANKI_ATTRIB_NAME
 
-			refl.m_vertexAttributeMask.set(a);
+			refl.m_vertex.m_vertexAttributeMask.set(a);
 
 			const U32 id = r.id;
 			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
@@ -310,7 +312,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 				return Error::kUserData;
 			}
 
-			refl.m_vertexAttributeLocations[a] = U8(location);
+			refl.m_vertex.m_vertexAttributeLocations[a] = U8(location);
 		}
 	}
 
@@ -320,7 +322,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 		visitSpirv(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)), [&](U32 cmd) {
 			if(cmd == spv::OpKill)
 			{
-				refl.m_discards = true;
+				refl.m_fragment.m_discards = true;
 			}
 		});
 	}
@@ -438,7 +440,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 		{
 			// ConstantBuffer
 
-			if(bindDesc.BindPoint == kPushConstantsRegisterBindPoint && bindDesc.Space == kPushConstantsRegisterSpace)
+			if(bindDesc.Space == 3000 && bindDesc.BindPoint == 0)
 			{
 				// It's push/root constants
 
@@ -446,7 +448,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 					(dxRefl.Get()) ? dxRefl->GetConstantBufferByName(bindDesc.Name) : funcRefl->GetConstantBufferByName(bindDesc.Name);
 				D3D12_SHADER_BUFFER_DESC desc;
 				ANKI_REFL_CHECK(cbuffer->GetDesc(&desc));
-				refl.m_pushConstantsSize = U8(desc.Size);
+				refl.m_descriptor.m_pushConstantsSize = desc.Size;
 
 				continue;
 			}
@@ -522,15 +524,13 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			return Error::kUserData;
 		}
 
-		refl.m_bindings[bindDesc.Space][refl.m_bindingCounts[bindDesc.Space]] = akBinding;
-		++refl.m_bindingCounts[bindDesc.Space];
-
-		refl.m_descriptorSetMask.set(bindDesc.Space);
+		refl.m_descriptor.m_bindings[bindDesc.Space][refl.m_descriptor.m_bindingCounts[bindDesc.Space]] = akBinding;
+		++refl.m_descriptor.m_bindingCounts[bindDesc.Space];
 	}
 
 	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
 	{
-		std::sort(refl.m_bindings[i].getBegin(), refl.m_bindings[i].getBegin() + refl.m_bindingCounts[i]);
+		std::sort(refl.m_descriptor.m_bindings[i].getBegin(), refl.m_descriptor.m_bindings[i].getBegin() + refl.m_descriptor.m_bindingCounts[i]);
 	}
 
 	if(type == ShaderType::kVertex)
@@ -586,8 +586,8 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			}
 #	undef ANKI_ATTRIB_NAME
 
-			refl.m_vertexAttributeMask.set(a);
-			refl.m_vertexAttributeLocations[a] = U8(i);
+			refl.m_vertex.m_vertexAttributeMask.set(a);
+			refl.m_vertex.m_vertexAttributeLocations[a] = U8(i);
 		}
 	}
 
@@ -600,7 +600,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 
 			if(CString(desc.SemanticName) == "SV_TARGET")
 			{
-				refl.m_colorAttachmentWritemask.set(desc.SemanticIndex);
+				refl.m_fragment.m_colorAttachmentWritemask.set(desc.SemanticIndex);
 			}
 		}
 	}

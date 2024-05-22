@@ -11,7 +11,6 @@
 #if defined(__cplusplus)
 
 #	include <AnKi/Math.h>
-#	include <AnKi/Gr/Common.h>
 
 #	define ANKI_HLSL 0
 #	define ANKI_GLSL 0
@@ -25,6 +24,7 @@
 #	define ANKI_CPP_CODE(...) __VA_ARGS__
 
 ANKI_BEGIN_NAMESPACE
+
 using Address = U64;
 using ScalarVec4 = Array<F32, 4>;
 using ScalarMat3x4 = Array<F32, 12>;
@@ -135,7 +135,7 @@ void maybeUnused(T a)
 #		define ANKI_PUSH_CONSTANTS(type, var) [[vk::push_constants]] ConstantBuffer<type> var;
 #	else
 #		define ANKI_PUSH_CONSTANTS_BEGIN
-#		define ANKI_PUSH_CONSTANTS(type, var) ConstantBuffer<type> var : register(b2000, space100);
+#		define ANKI_PUSH_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3000);
 #	endif
 
 #	pragma pack_matrix(row_major)
@@ -770,11 +770,6 @@ constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 
 #define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
 static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
-
-// Push constant stuff. In VK is simply defined but in D3D it's a special register() used to identify it
-// !!!!WARNING!!!!: Need to change the ANKI_PUSH_CONSTANTS if you change the values bellow
-constexpr U32 kPushConstantsRegisterBindPoint = 2000;
-constexpr U32 kPushConstantsRegisterSpace = 100;
 
 struct DrawIndirectArgs
 {

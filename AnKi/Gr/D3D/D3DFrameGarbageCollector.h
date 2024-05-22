@@ -19,7 +19,6 @@ class TextureGarbage : public IntrusiveListEnabled<TextureGarbage>
 {
 public:
 	GrDynamicArray<DescriptorHeapHandle> m_descriptorHeapHandles;
-	GrDynamicArray<D3D12_DESCRIPTOR_HEAP_TYPE> m_descriptorHeapHandleTypes;
 	ID3D12Resource* m_resource = nullptr;
 };
 

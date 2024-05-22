@@ -423,6 +423,17 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
+	// Capabilities
+	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16)));
+		m_d3dCapabilities.m_rebar = options16.GPUUploadHeapSupported;
+		if(!m_d3dCapabilities.m_rebar)
+		{
+			ANKI_D3D_LOGW("ReBAR not supported");
+		}
+	}
+
 	// Create queues
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};

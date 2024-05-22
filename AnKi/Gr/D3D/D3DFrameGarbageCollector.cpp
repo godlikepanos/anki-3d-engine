@@ -83,7 +83,7 @@ void FrameGarbageCollector::collectGarbage()
 
 			for(U32 i = 0; i < textureGarbage->m_descriptorHeapHandles.getSize(); ++i)
 			{
-				DescriptorFactory::getSingleton().free(textureGarbage->m_descriptorHeapHandleTypes[i], textureGarbage->m_descriptorHeapHandles[i]);
+				DescriptorFactory::getSingleton().freePersistent(textureGarbage->m_descriptorHeapHandles[i]);
 			}
 
 			safeRelease(textureGarbage->m_resource);

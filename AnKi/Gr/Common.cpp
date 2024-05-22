@@ -34,7 +34,7 @@ FormatInfo getFormatInfo(Format fmt)
 	FormatInfo out = {};
 	switch(fmt)
 	{
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
+#define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
 	case Format::k##type: \
 		out = {componentCount,      texelSize, blockWidth, blockHeight, blockSize, shaderType, DepthStencilAspectBit::k##depthStencil, \
 			   ANKI_STRINGIZE(type)}; \
@@ -126,6 +126,7 @@ U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
 #if ANKI_ASSERTIONS_ENABLED
 void ShaderReflection::validate() const
 {
+#	if ANKI_GR_BACKEND_VULKAN
 	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
 	{
 		const Bool setExists = m_descriptorSetMask.get(set);
@@ -148,10 +149,11 @@ void ShaderReflection::validate() const
 			}
 		}
 	}
+#	endif
 
 	for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 	{
-		ANKI_ASSERT(!m_vertexAttributeMask.get(semantic) || m_vertexAttributeLocations[semantic] != kMaxU8);
+		ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vertexAttributeLocations[semantic] != kMaxU8);
 	}
 }
 #endif

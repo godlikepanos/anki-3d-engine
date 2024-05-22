@@ -180,17 +180,17 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	// Create the ppline layout
 	//
 	WeakArray<const DSLayout*> dsetLayouts((descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr, descriptorSetCount);
-	ANKI_CHECK(PipelineLayoutFactory::getSingleton().newPipelineLayout(dsetLayouts, m_refl.m_pushConstantsSize, m_pplineLayout));
+	ANKI_CHECK(PipelineLayoutFactory::getSingleton().newPipelineLayout(dsetLayouts, m_refl.m_descriptor.m_pushConstantsSize, m_pplineLayout));
 
 	// Get some masks
 	//
 	const Bool graphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
 	if(graphicsProg)
 	{
-		const U32 attachmentCount = m_refl.m_colorAttachmentWritemask.getSetBitCount();
+		const U32 attachmentCount = m_refl.m_fragment.m_colorAttachmentWritemask.getSetBitCount();
 		for(U32 i = 0; i < attachmentCount; ++i)
 		{
-			ANKI_ASSERT(m_refl.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
+			ANKI_ASSERT(m_refl.m_fragment.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
 		}
 	}
 

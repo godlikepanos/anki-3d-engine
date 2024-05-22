@@ -95,6 +95,15 @@ inline std::string ws2s(const std::wstring& wstr)
 	return r;
 }
 
+inline std::wstring s2ws(const std::string& str)
+{
+	std::wstring wstr;
+	size_t size;
+	wstr.resize(str.length());
+	mbstowcs_s(&size, &wstr[0], wstr.size() + 1, str.c_str(), str.size());
+	return wstr;
+}
+
 template<typename T>
 void safeRelease(T*& p)
 {
@@ -142,6 +151,64 @@ inline [[nodiscard]] D3D12_RENDER_PASS_ENDING_ACCESS_TYPE convertStoreOp(RenderT
 		break;
 	}
 	return out;
+}
+
+[[nodiscard]] D3D12_FILTER convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, CompareOperation compareOp, U32 anisotropy);
+
+inline [[nodiscard]] D3D12_TEXTURE_ADDRESS_MODE convertSamplingAddressing(SamplingAddressing addr)
+{
+	D3D12_TEXTURE_ADDRESS_MODE out = {};
+	switch(addr)
+	{
+	case SamplingAddressing::kClamp:
+		out = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		break;
+	case SamplingAddressing::kRepeat:
+		out = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		break;
+	case SamplingAddressing::kBlack:
+	case SamplingAddressing::kWhite:
+		out = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_COMPARISON_FUNC convertComparisonFunc(CompareOperation comp)
+{
+	D3D12_COMPARISON_FUNC out = {};
+	switch(comp)
+	{
+	case CompareOperation::kAlways:
+		out = D3D12_COMPARISON_FUNC_ALWAYS;
+		break;
+	case CompareOperation::kLess:
+		out = D3D12_COMPARISON_FUNC_LESS;
+		break;
+	case CompareOperation::kEqual:
+		out = D3D12_COMPARISON_FUNC_EQUAL;
+		break;
+	case CompareOperation::kLessEqual:
+		out = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		break;
+	case CompareOperation::kGreater:
+		out = D3D12_COMPARISON_FUNC_GREATER;
+		break;
+	case CompareOperation::kGreaterEqual:
+		out = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+		break;
+	case CompareOperation::kNotEqual:
+		out = D3D12_COMPARISON_FUNC_NOT_EQUAL;
+		break;
+	case CompareOperation::kNever:
+		out = D3D12_COMPARISON_FUNC_NEVER;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
 }
 /// @}
 

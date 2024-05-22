@@ -96,6 +96,9 @@ endif()
 # Copy Agility SDK files to Binaries
 if(DIRECTX)
 	file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.dll")
+	file(GLOB FILES_TO_COPY2 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.pdb")
+
+	list(APPEND FILES_TO_COPY ${FILES_TO_COPY2})
 
 	foreach(FILE_TO_COPY IN LISTS FILES_TO_COPY)
 		add_custom_command(TARGET AnKiGr POST_BUILD

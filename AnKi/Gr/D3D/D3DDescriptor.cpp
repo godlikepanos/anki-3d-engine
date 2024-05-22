@@ -86,6 +86,11 @@ DescriptorHeapHandle PersistentDescriptorAllocator::allocate()
 	DescriptorHeapHandle out;
 	out.m_cpuHandle.ptr = (m_cpuHeapStart.ptr) ? (m_cpuHeapStart.ptr + PtrSize(idx) * m_descriptorSize) : 0;
 	out.m_gpuHandle.ptr = (m_gpuHeapStart.ptr) ? (m_gpuHeapStart.ptr + PtrSize(idx) * m_descriptorSize) : 0;
+#if ANKI_ASSERTIONS_ENABLED
+	out.m_heapCpuStart = m_cpuHeapStart;
+	out.m_heapGpuStart = m_gpuHeapStart;
+	out.m_heapSize = m_descriptorSize * m_freeDescriptors.getSize();
+#endif
 
 	return out;
 }
@@ -99,20 +104,10 @@ void PersistentDescriptorAllocator::free(DescriptorHeapHandle& handle)
 		return;
 	}
 
-	PtrSize descriptorOffsetFromStart;
-	if(handle.m_cpuHandle.ptr)
-	{
-		ANKI_ASSERT(handle.m_cpuHandle.ptr >= m_cpuHeapStart.ptr
-					&& handle.m_cpuHandle.ptr < m_cpuHeapStart.ptr + m_descriptorSize * m_freeDescriptors.getSize());
-		descriptorOffsetFromStart = handle.m_cpuHandle.ptr - m_cpuHeapStart.ptr;
-	}
-	else
-	{
-		ANKI_ASSERT(handle.m_gpuHandle.ptr >= m_gpuHeapStart.ptr
-					&& handle.m_gpuHandle.ptr < m_gpuHeapStart.ptr + m_descriptorSize * m_freeDescriptors.getSize());
-		descriptorOffsetFromStart = handle.m_gpuHandle.ptr - m_gpuHeapStart.ptr;
-	}
+	handle.validate();
+	ANKI_ASSERT(handle.m_heapCpuStart.ptr == m_cpuHeapStart.ptr);
 
+	const PtrSize descriptorOffsetFromStart = handle.m_cpuHandle.ptr - m_cpuHeapStart.ptr;
 	const U16 idx = U16(descriptorOffsetFromStart / m_descriptorSize);
 
 	LockGuard lock(m_mtx);
@@ -149,8 +144,13 @@ DescriptorHeapHandle RingDescriptorAllocator::allocate(U32 descriptorCount)
 	} while(allocationPassesEnd);
 
 	DescriptorHeapHandle out;
-	out.m_cpuHandle.ptr = (m_cpuHeapStart.ptr) ? (m_cpuHeapStart.ptr + PtrSize(firstDescriptor) * m_descriptorSize) : 0;
-	out.m_gpuHandle.ptr = (m_gpuHeapStart.ptr) ? (m_gpuHeapStart.ptr + PtrSize(firstDescriptor) * m_descriptorSize) : 0;
+	out.m_cpuHandle.ptr = (m_cpuHeapStart.ptr) ? (m_cpuHeapStart.ptr + firstDescriptor * m_descriptorSize) : 0;
+	out.m_gpuHandle.ptr = (m_gpuHeapStart.ptr) ? (m_gpuHeapStart.ptr + firstDescriptor * m_descriptorSize) : 0;
+#if ANKI_ASSERTIONS_ENABLED
+	out.m_heapCpuStart = m_cpuHeapStart;
+	out.m_heapGpuStart = m_gpuHeapStart;
+	out.m_heapSize = m_descriptorSize * m_descriptorCount;
+#endif
 
 	return out;
 }
@@ -202,24 +202,27 @@ Error DescriptorFactory::init()
 	ANKI_CHECK(
 		createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxDsvDescriptors.get(), m_cpuPersistent.m_dsv));
 
-	// Init GPU descriptors
-	auto createHeapAndAllocator2 = [this](D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, U16 descriptorCount,
-										  RingDescriptorAllocator& alloc) -> Error {
-		ID3D12DescriptorHeap* heap;
-		D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart;
-		D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart;
-		U32 descriptorSize;
-		ANKI_CHECK(createDescriptorHeap(type, flags, descriptorCount, heap, cpuHeapStart, gpuHeapStart, descriptorSize));
-		alloc.init(cpuHeapStart, gpuHeapStart, descriptorSize, descriptorCount);
-		m_descriptorHeaps.emplaceBack(heap);
-		return Error::kNone;
-	};
+	// Init GPU visible heaps
+	ID3D12DescriptorHeap* heap;
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart;
+	U32 descriptorSize;
+	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+									g_maxGpuCbvSrvUavDescriptors.get() + kMaxBindlessTextures, heap, cpuHeapStart, gpuHeapStart, descriptorSize));
+	m_descriptorHeaps.emplaceBack(heap);
 
-	ANKI_CHECK(createHeapAndAllocator2(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-									   g_maxGpuCbvSrvUavDescriptors.get(), m_gpuRing.m_cbvSrvUav));
-	ANKI_CHECK(createHeapAndAllocator2(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-									   g_maxGpuSamplerDescriptors.get(), m_gpuRing.m_sampler));
+	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, kMaxBindlessTextures);
 
+	cpuHeapStart.ptr += descriptorSize * kMaxBindlessTextures;
+	gpuHeapStart.ptr += descriptorSize * kMaxBindlessTextures;
+	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuCbvSrvUavDescriptors.get());
+
+	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, g_maxGpuSamplerDescriptors.get(),
+									heap, cpuHeapStart, gpuHeapStart, descriptorSize));
+	m_descriptorHeaps.emplaceBack(heap);
+	m_gpuRing.m_sampler.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuSamplerDescriptors.get());
+
+	// Misc
 	for(D3D12_DESCRIPTOR_HEAP_TYPE type = D3D12_DESCRIPTOR_HEAP_TYPE(0); type < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
 		type = D3D12_DESCRIPTOR_HEAP_TYPE(type + 1))
 	{
@@ -241,8 +244,7 @@ RootSignatureFactory::~RootSignatureFactory()
 Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& refl, RootSignature*& signature)
 {
 	// Compute the hash
-	// TODO
-	U64 hash = 0;
+	const U64 hash = computeHash(&refl.m_descriptor, sizeof(refl.m_descriptor));
 
 	// Search if exists
 	LockGuard lock(m_mtx);
@@ -265,7 +267,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	U32 tableRangesCount = 0;
 	for(U32 space = 0; space < kMaxDescriptorSets; ++space)
 	{
-		if(!refl.m_descriptorSetMask.get(space))
+		if(refl.m_descriptor.m_bindingCounts[space] == 0)
 		{
 			continue;
 		}
@@ -274,34 +276,41 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 		GrDynamicArray<D3D12_DESCRIPTOR_RANGE1>& samplerRanges = tableRanges[tableRangesCount++];
 
 		// Create the ranges
-		for(U32 bindingIdx = 0; bindingIdx < refl.m_bindingCounts[space]; ++bindingIdx)
+		for(U32 bindingIdx = 0; bindingIdx < refl.m_descriptor.m_bindingCounts[space]; ++bindingIdx)
 		{
-			const ShaderReflectionBinding& akBinding = refl.m_bindings[space][bindingIdx];
+			const ShaderReflectionBinding& akBinding = refl.m_descriptor.m_bindings[space][bindingIdx];
+			const Bool isSampler = (akBinding.m_type == DescriptorType::kSampler);
 			akBinding.validate();
-			D3D12_DESCRIPTOR_RANGE1& range =
-				(akBinding.m_type == DescriptorType::kSampler) ? *samplerRanges.emplaceBack() : *nonSamplerRanges.emplaceBack();
+			D3D12_DESCRIPTOR_RANGE1& range = (isSampler) ? *samplerRanges.emplaceBack() : *nonSamplerRanges.emplaceBack();
+			const HlslResourceType hlslRsrcType = descriptorTypeToHlslResourceType(akBinding.m_type, akBinding.m_flags);
 
 			range = {};
 			range.NumDescriptors = akBinding.m_arraySize;
 			range.BaseShaderRegister = akBinding.m_registerBindingPoint;
 			range.RegisterSpace = space;
 			range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-			range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
+			range.Flags = {};
 
-			if(akBinding.m_type == DescriptorType::kUniformBuffer)
+			if(!isSampler)
+			{
+				range.Flags |= D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
+			}
+
+			if(hlslRsrcType == HlslResourceType::kCbv)
 			{
 				range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 			}
-			else if(akBinding.m_type == DescriptorType::kSampler)
+			else if(hlslRsrcType == HlslResourceType::kSampler)
 			{
 				range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
 			}
-			else if(!(akBinding.m_flags & DescriptorFlag::kWrite))
+			else if(hlslRsrcType == HlslResourceType::kSrv)
 			{
 				range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 			}
 			else
 			{
+				ANKI_ASSERT(hlslRsrcType == HlslResourceType::kUav);
 				range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 			}
 		}
@@ -328,15 +337,15 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	}
 
 	// Root constants
-	if(refl.m_pushConstantsSize)
+	if(refl.m_descriptor.m_pushConstantsSize)
 	{
 		D3D12_ROOT_PARAMETER1& rootParam = *rootParameters.emplaceBack();
 		rootParam = {};
 		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-		ANKI_ASSERT((refl.m_pushConstantsSize % 4) == 0);
-		rootParam.Constants.Num32BitValues = refl.m_pushConstantsSize / 4;
-		rootParam.Constants.RegisterSpace = kPushConstantsRegisterSpace;
-		rootParam.Constants.ShaderRegister = kPushConstantsRegisterBindPoint;
+		ANKI_ASSERT((refl.m_descriptor.m_pushConstantsSize % 4) == 0);
+		rootParam.Constants.Num32BitValues = refl.m_descriptor.m_pushConstantsSize / 4;
+		rootParam.Constants.RegisterSpace = 3000;
+		rootParam.Constants.ShaderRegister = 0;
 		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	}
 
@@ -346,10 +355,16 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	D3D12_ROOT_SIGNATURE_DESC1& sigDesc = verSigDesc.Desc_1_1;
 	sigDesc.NumParameters = rootParameters.getSize();
 	sigDesc.pParameters = rootParameters.getBegin();
+	sigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 
 	ComPtr<ID3DBlob> signatureBlob;
 	ComPtr<ID3DBlob> errorBlob;
-	ANKI_D3D_CHECK(D3D12SerializeVersionedRootSignature(&verSigDesc, &signatureBlob, &errorBlob));
+	const HRESULT ret = D3D12SerializeVersionedRootSignature(&verSigDesc, &signatureBlob, &errorBlob);
+	if(ret != S_OK)
+	{
+		const Char* errc = reinterpret_cast<const Char*>(errorBlob->GetBufferPointer());
+		ANKI_D3D_LOGE("D3D12SerializeVersionedRootSignature() failed: %s", errc);
+	}
 
 	ID3D12RootSignature* dxRootSig;
 	ANKI_D3D_CHECK(getDevice().CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&dxRootSig)));
@@ -362,27 +377,34 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	U8 rootParameterIdx = 0;
 	for(U32 spaceIdx = 0; spaceIdx < kMaxDescriptorSets; ++spaceIdx)
 	{
-		if(!refl.m_descriptorSetMask.get(spaceIdx))
+		if(refl.m_descriptor.m_bindingCounts[spaceIdx] == 0)
 		{
 			continue;
 		}
 
 		RootSignature::Space& outSpace = signature->m_spaces[spaceIdx];
 
-		for(U32 bindingIdx = 0; bindingIdx < refl.m_bindingCounts[spaceIdx]; ++bindingIdx)
+		for(U32 bindingIdx = 0; bindingIdx < refl.m_descriptor.m_bindingCounts[spaceIdx]; ++bindingIdx)
 		{
-			const ShaderReflectionBinding& inBinding = refl.m_bindings[spaceIdx][bindingIdx];
+			const ShaderReflectionBinding& inBinding = refl.m_descriptor.m_bindings[spaceIdx][bindingIdx];
 			inBinding.validate();
 			const HlslResourceType hlslResourceType = descriptorTypeToHlslResourceType(inBinding.m_type, inBinding.m_flags);
 
 			if(hlslResourceType < HlslResourceType::kSampler)
 			{
-				++outSpace.m_cbvSrvUavCount;
+				outSpace.m_cbvSrvUavCount += inBinding.m_arraySize;
+			}
+			else
+			{
+				outSpace.m_samplerCount += inBinding.m_arraySize;
 			}
 
 			for(U32 arrayIdx = 0; arrayIdx < inBinding.m_arraySize; ++arrayIdx)
 			{
-				RootSignature::Descriptor& outDescriptor = *signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType].emplaceBack();
+				const U32 idxInDescriptorsArr = inBinding.m_registerBindingPoint + arrayIdx;
+				signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType].resize(idxInDescriptorsArr + 1); // Account for holes
+
+				RootSignature::Descriptor& outDescriptor = signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType][idxInDescriptorsArr];
 				outDescriptor.m_flags = inBinding.m_flags;
 				outDescriptor.m_type = inBinding.m_type;
 				if(outDescriptor.m_type == DescriptorType::kStorageBuffer)
@@ -397,13 +419,13 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 			outSpace.m_cbvSrvUavDescriptorTableRootParameterIdx = rootParameterIdx++;
 		}
 
-		if(outSpace.m_descriptors[HlslResourceType::kSampler].getSize())
+		if(outSpace.m_samplerCount)
 		{
 			outSpace.m_samplersDescriptorTableRootParameterIdx = rootParameterIdx++;
 		}
 	}
 
-	signature->m_rootConstantsSize = refl.m_pushConstantsSize;
+	signature->m_rootConstantsSize = refl.m_descriptor.m_pushConstantsSize;
 	if(signature->m_rootConstantsSize)
 	{
 		signature->m_rootConstantsParameterIdx = rootParameterIdx++;
@@ -437,7 +459,7 @@ void DescriptorState::bindRootSignature(const RootSignature* rootSignature, Bool
 
 	for(U32 space = 0; space < kMaxDescriptorSets; ++space)
 	{
-		if(rootSignature->m_spaces[space].m_descriptors.getSize())
+		if(!rootSignature->m_spaces[space].isEmpty())
 		{
 			m_spaces[space].m_cbvSrvUavDirty = true;
 			m_spaces[space].m_samplersDirty = true;
@@ -472,85 +494,174 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 	for(U32 spaceIdx = 0; spaceIdx < kMaxDescriptorSets; ++spaceIdx)
 	{
 		const RootSignature::Space& rootSignatureSpace = m_rootSignature->m_spaces[spaceIdx];
-		if(rootSignatureSpace.m_descriptors.getSize() == 0)
+		if(rootSignatureSpace.isEmpty())
 		{
 			continue;
 		}
 
 		Space& stateSpace = m_spaces[spaceIdx];
+		Bool skip = true;
 
-		// Allocate descriptor memory
-		if(stateSpace.m_cbvSrvUavDirty && rootSignatureSpace.m_cbvSrvUavDescriptorTableRootParameterIdx != kMaxU8)
+		// Allocate descriptor memory (doesn't include holes)
+		if(stateSpace.m_cbvSrvUavDirty && rootSignatureSpace.m_cbvSrvUavCount)
 		{
-			stateSpace.m_cbvSrvUavHeapHandle = DescriptorFactory::getSingleton().allocateCpuGpuVisibleTransient(
-				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, rootSignatureSpace.m_cbvSrvUavCount);
+			stateSpace.m_cbvSrvUavHeapHandle = DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+																								   rootSignatureSpace.m_cbvSrvUavCount, true);
+			skip = false;
 		}
 
-		if(stateSpace.m_samplersDirty && rootSignatureSpace.m_descriptors[HlslResourceType::kSampler].getSize())
+		if(stateSpace.m_samplersDirty && rootSignatureSpace.m_samplerCount)
 		{
-			stateSpace.m_samplerHeapHandle = DescriptorFactory::getSingleton().allocateCpuGpuVisibleTransient(
-				D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, rootSignatureSpace.m_descriptors[HlslResourceType::kSampler].getSize());
+			stateSpace.m_samplerHeapHandle =
+				DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, rootSignatureSpace.m_samplerCount, true);
+			skip = false;
+		}
+
+		if(skip)
+		{
+			continue;
 		}
 
 		// Populate descriptors
-		if(stateSpace.m_cbvSrvUavDirty && rootSignatureSpace.m_cbvSrvUavCount)
+
+		DescriptorHeapHandle cbvSrvUavHeapOffset = stateSpace.m_cbvSrvUavHeapHandle;
+		DescriptorHeapHandle samplerHeapOffset = stateSpace.m_samplerHeapHandle;
+
+		for(HlslResourceType hlslResourceType : EnumIterable<HlslResourceType>())
 		{
-			D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapOffset = stateSpace.m_cbvSrvUavHeapHandle.m_cpuHandle;
-
-			for(HlslResourceType hlslResourceType : EnumIterable<HlslResourceType>())
+			for(U32 registerBinding = 0; registerBinding < rootSignatureSpace.m_descriptors[hlslResourceType].getSize(); ++registerBinding)
 			{
-				for(U32 registerBinding = 0; registerBinding < rootSignatureSpace.m_descriptors[hlslResourceType].getSize(); ++registerBinding)
+				const RootSignature::Descriptor& inDescriptor = rootSignatureSpace.m_descriptors[hlslResourceType][registerBinding];
+
+				if(inDescriptor.m_type == DescriptorType::kCount)
 				{
-					const RootSignature::Descriptor& inDescriptor = rootSignatureSpace.m_descriptors[hlslResourceType][registerBinding];
-					const Descriptor& outDescriptor = stateSpace.m_descriptors[hlslResourceType][registerBinding];
-					ANKI_ASSERT(inDescriptor.m_flags == outDescriptor.m_flags && inDescriptor.m_type == outDescriptor.m_type
-								&& "Have bound the wront thing");
+					// Skip a hole
+					continue;
+				}
 
-					if(outDescriptor.m_isHandle)
-					{
-						ANKI_ASSERT(!"TODO");
-					}
-					else
-					{
-						const BufferView& view = outDescriptor.m_bufferView;
+				const Descriptor& outDescriptor = stateSpace.m_descriptors[hlslResourceType][registerBinding];
+				ANKI_ASSERT(inDescriptor.m_flags == outDescriptor.m_flags && inDescriptor.m_type == outDescriptor.m_type
+							&& "Have bound the wrong thing");
 
-						if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
-						{
-							// RWStructuredBuffer
-							D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-							uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-							ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
-							uavDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
-							ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
-							uavDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
-							uavDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
+				if(inDescriptor.m_type == DescriptorType::kUniformBuffer)
+				{
+					// ConstantBuffer
 
-							getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cpuHeapOffset);
-						}
-						else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && inDescriptor.m_flags == DescriptorFlag::kRead)
-						{
-							// StructuredBuffer
-							D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-							srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-							srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-							srvDesc.Shader4ComponentMapping = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(
-								D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_0, D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_1,
-								D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_2, D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_3);
-							ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
-							srvDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
-							ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
-							srvDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
-							srvDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					const BufferView& view = outDescriptor.m_bufferView;
+					D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
+					desc.BufferLocation = view.m_resource->GetGPUVirtualAddress() + view.m_offset;
+					desc.SizeInBytes = getAlignedRoundUp(view.m_range, 256);
 
-							getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cpuHeapOffset);
-						}
-						else
-						{
-							ANKI_ASSERT(!"TODO");
-						}
-					}
+					getDevice().CreateConstantBufferView(&desc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else if(inDescriptor.m_type == DescriptorType::kTexture)
+				{
+					// Texture2D or RWTexture2D
 
-					cpuHeapOffset.ptr += DescriptorFactory::getSingleton().getDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+					ANKI_ASSERT(outDescriptor.m_isHandle);
+					getDevice().CopyDescriptorsSimple(1, cbvSrvUavHeapOffset.getCpuOffset(), outDescriptor.m_heapOffset,
+													  D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+				}
+				else if(inDescriptor.m_type == DescriptorType::kSampler)
+				{
+					// SamplerState
+
+					ANKI_ASSERT(outDescriptor.m_isHandle);
+					getDevice().CopyDescriptorsSimple(1, samplerHeapOffset.getCpuOffset(), outDescriptor.m_heapOffset,
+													  D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+				}
+				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				{
+					// RWStructuredBuffer
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					const BufferView& view = outDescriptor.m_bufferView;
+					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+
+					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
+					uavDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
+
+					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
+					uavDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
+
+					uavDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
+
+					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				{
+					// StructuredBuffer
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					const BufferView& view = outDescriptor.m_bufferView;
+					D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+					srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+					srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+					srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
+					srvDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
+
+					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
+					srvDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
+					srvDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
+
+					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else if(inDescriptor.m_type == DescriptorType::kTexelBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				{
+					// RWBuffer
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					const BufferView& view = outDescriptor.m_bufferView;
+					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+					uavDesc.Format = view.m_format;
+					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+
+					const U32 texelSize = getFormatInfo(Format(view.m_format)).m_texelSize;
+					ANKI_ASSERT((view.m_offset % texelSize) == 0);
+					uavDesc.Buffer.FirstElement = view.m_offset / texelSize;
+
+					ANKI_ASSERT((view.m_range % texelSize) == 0);
+					uavDesc.Buffer.NumElements = U32(view.m_range / texelSize);
+
+					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else if(inDescriptor.m_type == DescriptorType::kTexelBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				{
+					// Buffer
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					const BufferView& view = outDescriptor.m_bufferView;
+					D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+
+					srvDesc.Format = view.m_format;
+					srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+					srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+					const U32 texelSize = getFormatInfo(Format(view.m_format)).m_texelSize;
+					ANKI_ASSERT((view.m_offset % texelSize) == 0);
+					srvDesc.Buffer.FirstElement = view.m_offset / texelSize;
+
+					ANKI_ASSERT((view.m_range % texelSize) == 0);
+					srvDesc.Buffer.NumElements = U32(view.m_range / texelSize);
+
+					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else
+				{
+					ANKI_ASSERT(!"TODO");
+				}
+
+				if(hlslResourceType == HlslResourceType::kSampler)
+				{
+					samplerHeapOffset.increment(1);
+				}
+				else
+				{
+					cbvSrvUavHeapOffset.increment(1);
 				}
 			}
 		}
@@ -560,7 +671,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 	for(U32 spaceIdx = 0; spaceIdx < kMaxDescriptorSets; ++spaceIdx)
 	{
 		const RootSignature::Space& rootSignatureSpace = m_rootSignature->m_spaces[spaceIdx];
-		if(rootSignatureSpace.m_descriptors.getSize() == 0)
+		if(rootSignatureSpace.isEmpty())
 		{
 			continue;
 		}
@@ -574,12 +685,12 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 			if(m_rootSignatureIsCompute)
 			{
 				cmdList.SetComputeRootDescriptorTable(rootSignatureSpace.m_cbvSrvUavDescriptorTableRootParameterIdx,
-													  stateSpace.m_cbvSrvUavHeapHandle.m_gpuHandle);
+													  stateSpace.m_cbvSrvUavHeapHandle.getGpuOffset());
 			}
 			else
 			{
 				cmdList.SetGraphicsRootDescriptorTable(rootSignatureSpace.m_cbvSrvUavDescriptorTableRootParameterIdx,
-													   stateSpace.m_cbvSrvUavHeapHandle.m_gpuHandle);
+													   stateSpace.m_cbvSrvUavHeapHandle.getGpuOffset());
 			}
 			stateSpace.m_cbvSrvUavDirty = false;
 		}
@@ -591,19 +702,35 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 			if(m_rootSignatureIsCompute)
 			{
 				cmdList.SetComputeRootDescriptorTable(rootSignatureSpace.m_samplersDescriptorTableRootParameterIdx,
-													  stateSpace.m_samplerHeapHandle.m_gpuHandle);
+													  stateSpace.m_samplerHeapHandle.getGpuOffset());
 			}
 			else
 			{
 				cmdList.SetGraphicsRootDescriptorTable(rootSignatureSpace.m_samplersDescriptorTableRootParameterIdx,
-													   stateSpace.m_samplerHeapHandle.m_gpuHandle);
+													   stateSpace.m_samplerHeapHandle.getGpuOffset());
 			}
 			stateSpace.m_samplersDirty = false;
 		}
 	}
 
 	// Set root constants
-	ANKI_ASSERT(m_rootSignature->m_rootConstantsSize == 0 && "TODO");
+	if(m_rootSignature->m_rootConstantsSize && (m_rootConstsDirty || rootSignatureNeedsRebinding))
+	{
+		ANKI_ASSERT(m_rootSignature->m_rootConstantsParameterIdx != kMaxU8);
+
+		if(m_rootSignatureIsCompute)
+		{
+			cmdList.SetComputeRoot32BitConstants(m_rootSignature->m_rootConstantsParameterIdx, m_rootConstSize / sizeof(U32), m_rootConsts.getBegin(),
+												 0);
+		}
+		else
+		{
+			cmdList.SetGraphicsRoot32BitConstants(m_rootSignature->m_rootConstantsParameterIdx, m_rootConstSize / sizeof(U32),
+												  m_rootConsts.getBegin(), 0);
+		}
+
+		m_rootConstsDirty = false;
+	}
 }
 
 } // end namespace anki

@@ -5,6 +5,7 @@
 
 #include <AnKi/Gr/D3D/D3DBuffer.h>
 #include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
+#include <AnKi/Gr/D3D/D3DGrManager.h>
 
 namespace anki {
 
@@ -88,14 +89,34 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	// D3D12_HEAP_PROPERTIES
 	D3D12_HEAP_PROPERTIES heapProperties = {};
-	if(m_access == BufferMapAccessBit::kWrite)
+	if(m_access == BufferMapAccessBit::kWrite && !!(m_usage & ~BufferUsageBit::kAllTransfer))
 	{
+		// Not only transfer, choose ReBAR
+
+		heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;
+		heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
+
+		if(getGrManagerImpl().getD3DCapabilities().m_rebar)
+		{
+			heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+		}
+		else
+		{
+			heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+		}
+	}
+	else if(m_access == BufferMapAccessBit::kWrite)
+	{
+		// Only transfer, choose system RAM
+
 		heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;
 		heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
 		heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
 	}
 	else if(!!(m_access & BufferMapAccessBit::kReadWrite))
 	{
+		// Reaback, use system RAM
+
 		heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;
 		heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
 		heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
@@ -116,7 +137,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	D3D12_RESOURCE_DESC resourceDesc = {};
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	resourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-	resourceDesc.Width = m_size;
+	resourceDesc.Width = getAlignedRoundUp(m_size, 256) + 256; // Align to 256 and add padding because of CBV requirements
 	resourceDesc.Height = 1;
 	resourceDesc.DepthOrArraySize = 1;
 	resourceDesc.MipLevels = 1;
@@ -134,24 +155,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 	}
 
-	// D3D12_RESOURCE_STATES (No need for setting D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-	D3D12_RESOURCE_STATES states = {};
-	auto appendState = [&](BufferUsageBit usage, D3D12_RESOURCE_STATES addStates) {
-		if(!!(m_usage & usage))
-		{
-			states |= addStates;
-		}
-	};
-	appendState(BufferUsageBit::kAllUniform | BufferUsageBit::kAllGeometry, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	appendState(BufferUsageBit::kIndex, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	appendState(BufferUsageBit::kAllGeometry, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	appendState(BufferUsageBit::kAllFragment, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	appendState(BufferUsageBit::kAllIndirect, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	appendState(BufferUsageBit::kTransferDestination, D3D12_RESOURCE_STATE_COPY_DEST);
-	appendState(BufferUsageBit::kTransferSource, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
 	// Create resource
-	ANKI_D3D_CHECK(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &resourceDesc, states, nullptr, IID_PPV_ARGS(&m_resource)));
+	const D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+	ANKI_D3D_CHECK(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &resourceDesc, initialState, nullptr, IID_PPV_ARGS(&m_resource)));
+
+	ANKI_D3D_CHECK(m_resource->SetName(s2ws(inf.getName().cstr()).c_str()));
 
 	return Error::kNone;
 }

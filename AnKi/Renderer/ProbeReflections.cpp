@@ -53,7 +53,7 @@ Error ProbeReflections::initInternal()
 
 	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::kLinear;
-	sinit.m_mipmapFilter = SamplingFilter::kBase;
+	sinit.m_mipmapFilter = SamplingFilter::kNearest;
 	sinit.m_minLod = 0.0;
 	sinit.m_maxLod = 1.0;
 	sinit.m_addressing = SamplingAddressing::kClamp;

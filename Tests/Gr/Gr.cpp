@@ -46,6 +46,75 @@ static void commonDestroy()
 	DefaultMemoryPool::freeSingleton();
 }
 
+template<typename T>
+static BufferPtr createBuffer(const BufferInitInfo& buffInit_, T initialValue, CString name = {})
+{
+	BufferInitInfo buffInit = buffInit_;
+	if(!name.isEmpty())
+	{
+		buffInit.setName(name);
+	}
+
+	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
+
+	T* inData = static_cast<T*>(buff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+	const T* endData = inData + (buffInit.m_size / sizeof(T));
+	for(; inData < endData; ++inData)
+	{
+		*inData = initialValue;
+	}
+	buff->unmap();
+
+	return buff;
+};
+
+template<typename T>
+TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue)
+{
+	BufferInitInfo buffInit;
+	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+	buffInit.m_size = texInit.m_height * texInit.m_width * getFormatInfo(texInit.m_format).m_texelSize;
+	buffInit.m_usage = BufferUsageBit::kTransferSource;
+
+	BufferPtr staging = GrManager::getSingleton().newBuffer(buffInit);
+
+	T* inData = static_cast<T*>(staging->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
+	const T* endData = inData + (buffInit.m_size / sizeof(T));
+	for(; inData < endData; ++inData)
+	{
+		*inData = initialValue;
+	}
+	staging->unmap();
+
+	TexturePtr tex = GrManager::getSingleton().newTexture(texInit);
+
+	CommandBufferInitInfo cmdbInit;
+	cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
+
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+	cmdb->copyBufferToTexture(BufferView(staging.get()), TextureView(tex.get(), TextureSubresourceDescriptor::all()));
+	cmdb->endRecording();
+
+	FencePtr fence;
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+	fence->clientWait(kMaxSecond);
+
+	return tex;
+};
+
+template<typename T>
+void validateBuffer(BufferPtr buff, T value)
+{
+	const T* inData = static_cast<T*>(buff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
+	const T* endData = inData + (buff->getSize() / sizeof(T));
+	for(; inData < endData; ++inData)
+	{
+		ANKI_TEST_EXPECT_EQ(*inData, value);
+	}
+	buff->unmap();
+}
+
 ANKI_TEST(Gr, GrManager)
 {
 	g_validationCVar.set(true);
@@ -154,17 +223,6 @@ ANKI_TEST(Gr, ClearScreen)
 
 ANKI_TEST(Gr, SimpleCompute)
 {
-	constexpr const char* kSrc = R"(
-StructuredBuffer<float4> g_in : register(t0);
-RWStructuredBuffer<float4> g_out : register(u0);
-
-[numthreads(1, 1, 1)]
-void main()
-{
-	g_out[0] = g_in[0];
-}
-)";
-
 	commonInit();
 
 	{
@@ -185,6 +243,16 @@ void main()
 
 		BufferPtr writeBuff = GrManager::getSingleton().newBuffer(buffInit);
 
+		constexpr const char* kSrc = R"(
+StructuredBuffer<float4> g_in : ANKI_REG(t0);
+RWStructuredBuffer<float4> g_out : ANKI_REG(u0);
+
+[numthreads(1, 1, 1)]
+void main()
+{
+	g_out[0] = g_in[0];
+}
+)";
 		ShaderPtr compShader = createShader(kSrc, ShaderType::kCompute);
 
 		ShaderProgramInitInfo progInit("Program");
@@ -198,8 +266,8 @@ void main()
 
 		// Record
 		cmdb->bindShaderProgram(prog.get());
-		cmdb->bindStorageBuffer(register(t0), BufferView(readBuff.get()));
-		cmdb->bindStorageBuffer(register(u0), BufferView(writeBuff.get()));
+		cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(readBuff.get()));
+		cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(writeBuff.get()));
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->endRecording();
 
@@ -212,6 +280,137 @@ void main()
 		Vec4* outData = static_cast<Vec4*>(writeBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
 		ANKI_TEST_EXPECT_EQ(*outData, kValue);
 		writeBuff->unmap();
+	}
+
+	commonDestroy();
+}
+
+ANKI_TEST(Gr, Bindings)
+{
+	commonInit();
+
+	{
+		constexpr const char* kSrc = R"(
+StructuredBuffer<float4> g_structured : register(t0);
+Texture2D g_tex : register(t2);
+Buffer<float4> g_buff : register(t3);
+
+RWStructuredBuffer<float4> g_rwstructured : register(u0, space2);
+RWTexture2D<float4> g_rwtex[3] : register(u2);
+RWBuffer<float4> g_rwbuff : register(u7);
+
+struct Foo
+{
+	float4 m_val;
+};
+ConstantBuffer<Foo> g_consts : register(b0);
+
+
+struct Foo2
+{
+	uint4 m_val;
+};
+#if defined(__spirv__)
+[[vk::push_constants] ConstantBuffer<Foo2> g_pushConsts;
+#else
+ConstantBuffer<Foo2> g_pushConsts : register(b0, space3000);
+#endif
+
+SamplerState g_sampler : register(s2);
+
+[numthreads(1, 1, 1)]
+void main()
+{
+	g_rwstructured[0] = g_structured[0];
+
+	g_rwtex[0][uint2(0, 0)] = g_consts.m_val;
+
+	Texture2D tex = ResourceDescriptorHeap[g_pushConsts.m_val.x];
+	g_rwtex[1][uint2(0, 0)] = tex.SampleLevel(g_sampler, 0.0f, 0.0f);
+
+	g_rwtex[2][uint2(0, 0)] = g_tex.SampleLevel(g_sampler, 0.0f, 0.0f);
+
+	g_rwbuff[0] = g_buff[0];
+}
+)";
+
+		TextureInitInfo texInit;
+		texInit.m_width = texInit.m_height = 1;
+		texInit.m_format = Format::kR32G32B32A32_Sfloat;
+
+		BufferInitInfo buffInit;
+		buffInit.m_mapAccess = BufferMapAccessBit::kReadWrite;
+		buffInit.m_size = sizeof(Vec4);
+
+		ShaderPtr compShader = createShader(kSrc, ShaderType::kCompute);
+
+		ShaderProgramInitInfo progInit("Program");
+		progInit.m_computeShader = compShader.get();
+		ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(progInit);
+
+		const Vec4 kMagicVec(1.0f, 2.0f, 3.0f, 4.0f);
+		const Vec4 kInvalidVec(1.0f, 2.0f, 3.0f, 4.0f);
+
+		buffInit.m_usage = BufferUsageBit::kAllStorage;
+		BufferPtr structured = createBuffer(buffInit, kMagicVec, "structured");
+
+		texInit.m_usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kTransferDestination;
+		TexturePtr tex = createTexture2d(texInit, kMagicVec * 2.0f);
+
+		buffInit.m_usage = BufferUsageBit::kAllTexel;
+		BufferPtr buff = createBuffer(buffInit, kMagicVec * 2.0f, "buff");
+
+		buffInit.m_usage = BufferUsageBit::kAllStorage;
+		BufferPtr rwstructured = createBuffer(buffInit, kInvalidVec, "rwstructured");
+
+		buffInit.m_usage = BufferUsageBit::kAllTexel;
+		BufferPtr rwbuff = createBuffer(buffInit, kInvalidVec, "rwbuff");
+
+		Array<TexturePtr, 3> rwtex;
+
+		texInit.m_usage = TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kTransferDestination;
+		rwtex[0] = createTexture2d(texInit, kInvalidVec);
+		rwtex[1] = createTexture2d(texInit, kInvalidVec);
+		rwtex[2] = createTexture2d(texInit, kInvalidVec);
+
+		buffInit.m_usage = BufferUsageBit::kUniformCompute;
+		BufferPtr consts = createBuffer(buffInit, kMagicVec * 3.0f, "consts");
+
+		SamplerInitInfo samplInit;
+		SamplerPtr sampler = GrManager::getSingleton().newSampler(samplInit);
+
+		const U32 bindlessIdx = tex->getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
+
+		// Record
+		CommandBufferInitInfo cmdbInit;
+		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+		cmdb->bindShaderProgram(prog.get());
+		cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(structured.get()));
+		cmdb->bindTexture(ANKI_REG(t2), TextureView(tex.get(), TextureSubresourceDescriptor::all()));
+		cmdb->bindTexelBuffer(ANKI_REG(t3), BufferView(buff.get()), Format::kR32G32B32A32_Sfloat);
+		cmdb->bindStorageBuffer(ANKI_REG2(u0, space2), BufferView(rwstructured.get()));
+		cmdb->bindTexture(ANKI_REG(u2), TextureView(rwtex[0].get(), TextureSubresourceDescriptor::firstSurface()));
+		cmdb->bindTexture(ANKI_REG(u3), TextureView(rwtex[1].get(), TextureSubresourceDescriptor::firstSurface()));
+		cmdb->bindTexture(ANKI_REG(u4), TextureView(rwtex[2].get(), TextureSubresourceDescriptor::firstSurface()));
+		cmdb->bindTexelBuffer(ANKI_REG(u7), BufferView(rwbuff.get()), Format::kR32G32B32A32_Sfloat);
+		cmdb->bindUniformBuffer(ANKI_REG(b0), BufferView(consts.get()));
+		cmdb->bindSampler(ANKI_REG(s2), sampler.get());
+
+		const UVec4 pc(bindlessIdx);
+		cmdb->setPushConstants(&pc, sizeof(pc));
+
+		cmdb->dispatchCompute(1, 1, 1);
+		cmdb->endRecording();
+
+		FencePtr signalFence;
+		GrManager::getSingleton().submit(cmdb.get(), {}, &signalFence);
+		signalFence->clientWait(kMaxSecond);
+
+		// Check
+		validateBuffer(rwstructured, kMagicVec);
+		validateBuffer(rwbuff, kMagicVec * 2.0f);
 	}
 
 	commonDestroy();

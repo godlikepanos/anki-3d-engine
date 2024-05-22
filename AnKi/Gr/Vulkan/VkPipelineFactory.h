@@ -339,12 +339,12 @@ public:
 	{
 		if(prog != m_state.m_prog)
 		{
-			m_shaderColorAttachmentWritemask = prog->getReflectionInfo().m_colorAttachmentWritemask;
+			m_shaderColorAttachmentWritemask = prog->getReflectionInfo().m_fragment.m_colorAttachmentWritemask;
 
 			if(!!(prog->getShaderTypes() & ShaderTypeBit::kVertex))
 			{
-				m_shaderVertexAttributeMask = prog->getReflectionInfo().m_vertexAttributeMask;
-				m_semanticToVertexAttributeLocation = prog->getReflectionInfo().m_vertexAttributeLocations;
+				m_shaderVertexAttributeMask = prog->getReflectionInfo().m_vertex.m_vertexAttributeMask;
+				m_semanticToVertexAttributeLocation = prog->getReflectionInfo().m_vertex.m_vertexAttributeLocations;
 			}
 
 			m_state.m_prog = prog;

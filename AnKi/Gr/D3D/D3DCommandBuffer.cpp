@@ -5,6 +5,7 @@
 
 #include <AnKi/Gr/D3D/D3DCommandBuffer.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
+#include <AnKi/Gr/D3D/D3DSampler.h>
 #include <AnKi/Gr/D3D/D3DShaderProgram.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -136,14 +137,54 @@ void CommandBuffer::bindTexture(U32 set, U32 binding, const TextureView& texView
 	ANKI_ASSERT(!"TODO");
 }
 
+void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
+{
+	reg.validate();
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	const TextureImpl& impl = static_cast<const TextureImpl&>(texView.getTexture());
+
+	if(reg.m_resourceType == HlslResourceType::kSrv)
+	{
+		const DescriptorHeapHandle handle = impl.getOrCreateSrv(texView.getSubresource());
+		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, handle);
+	}
+	else
+	{
+		const DescriptorHeapHandle handle = impl.getOrCreateUav(texView.getSubresource());
+		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, handle);
+	}
+}
+
 void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
+void CommandBuffer::bindSampler(Register reg, Sampler* sampler)
+{
+	reg.validate();
+	ANKI_ASSERT(sampler);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	const SamplerImpl& impl = static_cast<const SamplerImpl&>(*sampler);
+	self.m_descriptors.bindSampler(reg.m_space, reg.m_bindPoint, impl.m_handle);
+
+	self.m_mcmdb->pushObjectRef(sampler);
+}
+
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
+}
+
+void CommandBuffer::bindUniformBuffer(Register reg, const BufferView& buff)
+{
+	reg.validate();
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
+	self.m_descriptors.bindCbv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
 }
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
@@ -183,6 +224,23 @@ void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferVi
 	ANKI_ASSERT(!"TODO");
 }
 
+void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format fmt)
+{
+	reg.validate();
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
+	if(reg.m_resourceType == HlslResourceType::kUav)
+	{
+		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), DXGI_FORMAT(fmt));
+	}
+	else
+	{
+		ANKI_ASSERT(reg.m_resourceType == HlslResourceType::kSrv);
+		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), DXGI_FORMAT(fmt));
+	}
+}
+
 void CommandBuffer::bindAllBindless(U32 set)
 {
 	ANKI_ASSERT(!"TODO");
@@ -216,7 +274,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	{
 		self.m_descriptorHeapsBound = true;
 
-		const Array<ID3D12DescriptorHeap*, 2> heaps = DescriptorFactory::getSingleton().getCpuGpuVisibleTransientHeaps();
+		const Array<ID3D12DescriptorHeap*, 2> heaps = DescriptorFactory::getSingleton().getCpuGpuVisibleHeaps();
 		self.m_cmdList->SetDescriptorHeaps(2, heaps.getBegin());
 	}
 }
@@ -235,7 +293,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 
 		desc = {};
 		desc.cpuDescriptor =
-			static_cast<const TextureImpl&>(rt.m_textureView.getTexture()).getOrCreateRtv(rt.m_textureView.getSubresource()).m_cpuHandle;
+			static_cast<const TextureImpl&>(rt.m_textureView.getTexture()).getOrCreateRtv(rt.m_textureView.getSubresource()).getCpuOffset();
 		desc.BeginningAccess.Type = convertLoadOp(rt.m_loadOperation);
 		memcpy(&desc.BeginningAccess.Clear.ClearValue.Color, &rt.m_clearValue.m_colorf[0], sizeof(F32) * 4);
 		desc.EndingAccess.Type = convertStoreOp(rt.m_storeOperation);
@@ -247,7 +305,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		dsDesc = {};
 		dsDesc.cpuDescriptor = static_cast<const TextureImpl&>(depthStencilRt->m_textureView.getTexture())
 								   .getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), depthStencilRt->m_usage)
-								   .m_cpuHandle;
+								   .getCpuOffset();
 
 		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
 		dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth, depthStencilRt->m_clearValue.m_depthStencil.m_depth;
@@ -354,7 +412,33 @@ void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& c
 
 void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureView& texView)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+
+	const BufferImpl& buffImpl = static_cast<const BufferImpl&>(buff.getBuffer());
+	const TextureImpl& texImpl = static_cast<const TextureImpl&>(texView.getTexture());
+
+	const U32 width = texImpl.getWidth() >> texView.getFirstMipmap();
+	const U32 height = texImpl.getHeight() >> texView.getFirstMipmap();
+	const U32 depth = (texImpl.getTextureType() == TextureType::k3D) ? (texImpl.getDepth() >> texView.getFirstMipmap()) : 1u;
+	ANKI_ASSERT(width && height && depth);
+
+	D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
+	srcLocation.pResource = &buffImpl.getD3DResource();
+	srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+	srcLocation.PlacedFootprint.Offset = buff.getOffset();
+	srcLocation.PlacedFootprint.Footprint.Format = texImpl.getDxgiFormat();
+	srcLocation.PlacedFootprint.Footprint.Width = width;
+	srcLocation.PlacedFootprint.Footprint.Height = height;
+	srcLocation.PlacedFootprint.Footprint.Depth = depth;
+	srcLocation.PlacedFootprint.Footprint.RowPitch = width * getFormatInfo(texImpl.getFormat()).m_texelSize;
+
+	D3D12_TEXTURE_COPY_LOCATION dstLocation = {};
+	dstLocation.pResource = &texImpl.getD3DResource();
+	dstLocation.SubresourceIndex = texImpl.calcD3DSubresourceIndex(texView.getSubresource());
+
+	self.m_cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
 }
 
 void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
@@ -399,7 +483,16 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		D3D12_RESOURCE_BARRIER& d3dBarrier = *resourceBarriers.emplaceBack();
 		d3dBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		d3dBarrier.Transition.pResource = &impl.getD3DResource();
-		d3dBarrier.Transition.Subresource = impl.calcD3DSubresourceIndex(barrier.m_textureView.getSubresource());
+
+		if(barrier.m_textureView.isAllSurfacesOrVolumes() && barrier.m_textureView.getDepthStencilAspect() == impl.getDepthStencilAspect())
+		{
+			d3dBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		}
+		else
+		{
+			d3dBarrier.Transition.Subresource = impl.calcD3DSubresourceIndex(barrier.m_textureView.getSubresource());
+		}
+
 		impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, d3dBarrier.Transition.StateBefore, d3dBarrier.Transition.StateAfter);
 
 		if(d3dBarrier.Transition.StateBefore & D3D12_RESOURCE_STATE_UNORDERED_ACCESS
@@ -455,12 +548,15 @@ void CommandBuffer::writeTimestamp(TimestampQuery* query)
 
 Bool CommandBuffer::isEmpty() const
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF_CONST(CommandBufferImpl);
+	return self.m_commandCount == 0;
 }
 
 void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.m_descriptors.setRootConstants(data, dataSize);
 }
 
 void CommandBuffer::setRasterizationOrder(RasterizationOrder order)

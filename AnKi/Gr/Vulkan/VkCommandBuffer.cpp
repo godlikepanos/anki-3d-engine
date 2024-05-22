@@ -276,12 +276,22 @@ void CommandBuffer::bindTexture(U32 set, U32 binding, const TextureView& texView
 	self.m_dsetState[set].bindTexture(binding, arrayIdx, tex.getImageView(texView.getSubresource()), lay);
 }
 
+void CommandBuffer::bindTexture([[maybe_unused]] Register reg, [[maybe_unused]] const TextureView& texView)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
 void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_dsetState[set].bindSampler(binding, arrayIdx, sampler);
 	self.m_microCmdb->pushObjectRef(sampler);
+}
+
+void CommandBuffer::bindSampler([[maybe_unused]] Register reg, [[maybe_unused]] Sampler* sampler)
+{
+	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
@@ -291,6 +301,11 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferView& bu
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_dsetState[set].bindUniformBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange());
+}
+
+void CommandBuffer::bindUniformBuffer([[maybe_unused]] Register reg, [[maybe_unused]] const BufferView& buff)
+{
+	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
@@ -338,6 +353,11 @@ void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferVi
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	self.m_dsetState[set].bindReadOnlyTexelBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange(), fmt);
+}
+
+void CommandBuffer::bindTexelBuffer([[maybe_unused]] Register reg, [[maybe_unused]] const BufferView& buff, [[maybe_unused]] Format fmt)
+{
+	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::bindAllBindless(U32 set)
@@ -758,7 +778,7 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
 	ANKI_ASSERT(self.m_rtProg);
 	const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*self.m_rtProg);
-	ANKI_ASSERT(sprog.getReflectionInfo().m_pushConstantsSize == self.m_setPushConstantsSize && "Forgot to set pushConstants");
+	ANKI_ASSERT(sprog.getReflectionInfo().m_descriptor.m_pushConstantsSize == self.m_setPushConstantsSize && "Forgot to set pushConstants");
 
 	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
@@ -1362,7 +1382,7 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
 	const ShaderProgramImpl& prog = self.getBoundProgram();
-	ANKI_ASSERT(prog.getReflectionInfo().m_pushConstantsSize == dataSize
+	ANKI_ASSERT(prog.getReflectionInfo().m_descriptor.m_pushConstantsSize == dataSize
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
 	self.commandCommon();
@@ -1570,7 +1590,7 @@ void CommandBufferImpl::drawcallCommon()
 	commandCommon();
 	ANKI_ASSERT(m_graphicsProg);
 	ANKI_ASSERT(m_insideRenderpass);
-	ANKI_ASSERT(m_graphicsProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
+	ANKI_ASSERT(m_graphicsProg->getReflectionInfo().m_descriptor.m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
 
 	// Get or create ppline
 	Pipeline ppline;
@@ -1654,7 +1674,7 @@ void CommandBufferImpl::drawcallCommon()
 ANKI_FORCE_INLINE void CommandBufferImpl::dispatchCommon()
 {
 	ANKI_ASSERT(m_computeProg);
-	ANKI_ASSERT(m_computeProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
+	ANKI_ASSERT(m_computeProg->getReflectionInfo().m_descriptor.m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
 
 	commandCommon();
 

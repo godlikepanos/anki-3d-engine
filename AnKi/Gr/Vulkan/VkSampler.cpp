@@ -39,7 +39,7 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 
 	ci.magFilter = ci.minFilter;
 
-	if(inf.m_mipmapFilter == SamplingFilter::kBase || inf.m_mipmapFilter == SamplingFilter::kNearest)
+	if(inf.m_mipmapFilter == SamplingFilter::kNearest)
 	{
 		ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	}

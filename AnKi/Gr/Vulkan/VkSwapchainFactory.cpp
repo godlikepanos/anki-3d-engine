@@ -78,8 +78,8 @@ Error MicroSwapchain::initInternal()
 			Format akFormat;
 			switch(formats[i].format)
 			{
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
-	case id: \
+#define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
+	case vk: \
 		akFormat = Format::k##type; \
 		break;
 #include <AnKi/Gr/BackendCommon/Format.def.h>

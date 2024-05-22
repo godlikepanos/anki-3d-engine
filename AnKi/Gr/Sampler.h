@@ -20,7 +20,7 @@ public:
 	F32 m_maxLod = 1000.0f;
 	F32 m_lodBias = 0.0f;
 	SamplingFilter m_minMagFilter = SamplingFilter::kNearest;
-	SamplingFilter m_mipmapFilter = SamplingFilter::kBase;
+	SamplingFilter m_mipmapFilter = SamplingFilter::kNearest;
 	CompareOperation m_compareOperation = CompareOperation::kAlways;
 	U8 m_anisotropyLevel = 0;
 	SamplingAddressing m_addressing = SamplingAddressing::kRepeat;

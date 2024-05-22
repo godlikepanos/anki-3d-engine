@@ -64,6 +64,7 @@ constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
 constexpr U32 kMaxBindlessTextures = 512;
 constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
+constexpr U32 kMaxPushConstantSize = 128; ///< Thanks AMD!!
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
@@ -402,7 +403,11 @@ enum class Format : U32
 {
 	kNone = 0,
 
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = id,
+#if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = vk,
+#else
+#	define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = d3d,
+#endif
 #include <AnKi/Gr/BackendCommon/Format.def.h>
 #undef ANKI_FORMAT_DEF
 };
@@ -502,6 +507,8 @@ enum class TextureUsageBit : U32
 				  | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
 	kAllFramebuffer = kFramebufferRead | kFramebufferWrite,
 
+	kAllGeometry = kSampledGeometry | kStorageGeometryRead | kStorageGeometryWrite,
+	kAllFragment = kSampledFragment | kStorageFragmentRead | kStorageFragmentWrite,
 	kAllGraphics = kSampledGeometry | kSampledFragment | kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite
 				   | kFramebufferRead | kFramebufferWrite | kFramebufferShadingRate,
 	kAllCompute = kSampledCompute | kStorageComputeRead | kStorageComputeWrite,
@@ -511,6 +518,8 @@ enum class TextureUsageBit : U32
 			   | kFramebufferShadingRate | kPresent | kGenerateMipmaps,
 	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kFramebufferWrite
 				| kTransferDestination | kGenerateMipmaps,
+	kAll = kAllRead | kAllWrite,
+	kAllShaderResource = kAllSampled | kAllStorage,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
@@ -520,7 +529,6 @@ enum class SamplingFilter : U8
 	kLinear,
 	kMin, ///< It calculates the min of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
 	kMax, ///< It calculates the max of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
-	kBase ///< Only for mipmaps.
 };
 
 enum class SamplingAddressing : U8
@@ -917,18 +925,19 @@ inline HlslResourceType descriptorTypeToHlslResourceType(DescriptorType type, De
 	}
 }
 
+ANKI_BEGIN_PACKED_STRUCT
 class ShaderReflectionBinding
 {
 public:
 	U32 m_registerBindingPoint = kMaxU32;
-	DescriptorType m_type = DescriptorType::kCount;
-	DescriptorFlag m_flags = DescriptorFlag::kNone;
 	U16 m_arraySize = 0;
 	union
 	{
-		U16 m_vkBinding = kMaxU8;
+		U16 m_vkBinding = kMaxU16;
 		U16 m_d3dStructuredBufferStride;
 	};
+	DescriptorType m_type = DescriptorType::kCount;
+	DescriptorFlag m_flags = DescriptorFlag::kNone;
 
 	Bool operator<(const ShaderReflectionBinding& b) const
 	{
@@ -937,10 +946,14 @@ public:
 	{ \
 		return member < b.member; \
 	}
+		const HlslResourceType hlslType = descriptorTypeToHlslResourceType(m_type, m_flags);
+		const HlslResourceType bhlslType = descriptorTypeToHlslResourceType(b.m_type, b.m_flags);
+		if(hlslType != bhlslType)
+		{
+			return hlslType < bhlslType;
+		}
 
 		ANKI_LESS(m_registerBindingPoint)
-		ANKI_LESS(m_type)
-		ANKI_LESS(m_flags)
 		ANKI_LESS(m_arraySize)
 		ANKI_LESS(m_vkBinding)
 #undef ANKI_LESS
@@ -953,34 +966,56 @@ public:
 		ANKI_ASSERT(m_type < DescriptorType::kCount);
 		ANKI_ASSERT(m_flags != DescriptorFlag::kNone);
 		ANKI_ASSERT(m_arraySize > 0);
-		ANKI_ASSERT(ANKI_GR_BACKEND_DIRECT3D || m_vkBinding != kMaxU8);
+		ANKI_ASSERT(ANKI_GR_BACKEND_DIRECT3D || m_vkBinding != kMaxU16);
 	}
 };
+ANKI_END_PACKED_STRUCT
 
 class ShaderReflection
 {
 public:
+#if ANKI_GR_BACKEND_VULKAN
 	// !!OLD!!
 	Array2d<U16, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorArraySizes;
 	Array2d<DescriptorType, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorTypes;
 	Array2d<DescriptorFlag, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorFlags;
 	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
+#endif
 
 	// !!NEW!!
-	Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
-	Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
+	ANKI_BEGIN_PACKED_STRUCT
+	class DescriptorRelated
+	{
+	public:
+		Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
+		Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
 
-	U32 m_pushConstantsSize = 0;
+		U32 m_pushConstantsSize = 0;
 
-	Array<U8, U32(VertexAttributeSemantic::kCount)> m_vertexAttributeLocations; ///< Only for Vulkan.
-	BitSet<U32(VertexAttributeSemantic::kCount), U8> m_vertexAttributeMask = {false};
+		U8 m_vkBindlessDescriptorSet = kMaxDescriptorSets;
+	};
+	ANKI_END_PACKED_STRUCT
 
-	BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
+	DescriptorRelated m_descriptor;
 
-	Bool m_discards = false;
+	class
+	{
+	public:
+		Array<U8, U32(VertexAttributeSemantic::kCount)> m_vertexAttributeLocations;
+		BitSet<U32(VertexAttributeSemantic::kCount), U8> m_vertexAttributeMask = {false};
+	} m_vertex;
+
+	class
+	{
+	public:
+		BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
+
+		Bool m_discards = false;
+	} m_fragment;
 
 	ShaderReflection()
 	{
+#if ANKI_GR_BACKEND_VULKAN
 		for(auto& it : m_descriptorArraySizes)
 		{
 			it.fill(0);
@@ -995,8 +1030,9 @@ public:
 		{
 			it.fill(DescriptorFlag::kNone);
 		}
+#endif
 
-		m_vertexAttributeLocations.fill(kMaxU8);
+		m_vertex.m_vertexAttributeLocations.fill(kMaxU8);
 	}
 
 #if ANKI_ASSERTIONS_ENABLED

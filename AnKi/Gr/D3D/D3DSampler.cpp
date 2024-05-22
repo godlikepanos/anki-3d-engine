@@ -21,11 +21,36 @@ Sampler* Sampler::newInstance(const SamplerInitInfo& init)
 
 SamplerImpl::~SamplerImpl()
 {
+	DescriptorFactory::getSingleton().freePersistent(m_handle);
 }
 
 Error SamplerImpl::init(const SamplerInitInfo& inf)
 {
-	ANKI_ASSERT(!"TODO");
+	m_handle = DescriptorFactory::getSingleton().allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, false);
+
+	D3D12_SAMPLER_DESC desc = {};
+	desc.Filter = convertFilter(inf.m_minMagFilter, inf.m_mipmapFilter, inf.m_compareOperation, inf.m_anisotropyLevel);
+	desc.AddressU = convertSamplingAddressing(inf.m_addressing);
+	desc.AddressV = desc.AddressU;
+	desc.AddressW = desc.AddressU;
+	desc.MipLODBias = inf.m_lodBias;
+	desc.MaxAnisotropy = inf.m_anisotropyLevel;
+	desc.ComparisonFunc = convertComparisonFunc(inf.m_compareOperation);
+
+	if(inf.m_addressing == SamplingAddressing::kBlack)
+	{
+		zeroMemory(desc.BorderColor);
+	}
+	else
+	{
+		desc.BorderColor[0] = desc.BorderColor[1] = desc.BorderColor[2] = desc.BorderColor[3] = 1.0f;
+	}
+
+	desc.MinLOD = inf.m_minLod;
+	desc.MaxLOD = inf.m_maxLod;
+
+	getDevice().CreateSampler(&desc, m_handle.getCpuOffset());
+
 	return Error::kNone;
 }
 
