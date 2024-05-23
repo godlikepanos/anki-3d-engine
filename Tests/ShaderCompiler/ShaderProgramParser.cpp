@@ -4,11 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
+#include <AnKi/ShaderCompiler/ShaderParser.h>
 
 ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 {
-	class FilesystemInterface : public ShaderProgramFilesystemInterface
+	class FilesystemInterface : public ShaderCompilerFilesystemInterface
 	{
 	public:
 		U32 count = 0;
@@ -41,7 +41,7 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 		}
 	} interface;
 
-	ShaderProgramParser parser("filename0", &interface, {});
+	ShaderParser parser("filename0", &interface, {});
 	ANKI_TEST_EXPECT_NO_ERR(parser.parse());
 
 #if 0

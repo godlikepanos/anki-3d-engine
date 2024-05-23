@@ -223,7 +223,7 @@ private:
 	class PartialMutation
 	{
 	public:
-		const ShaderProgramBinaryMutator* m_mutator;
+		const ShaderBinaryMutator* m_mutator;
 		MutatorValue m_value;
 	};
 

@@ -42,7 +42,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, [[maybe_unus
 	// Load the binary
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
-	ANKI_CHECK(deserializeShaderProgramBinaryFromAnyFile(*file, m_binary, ResourceMemoryPool::getSingleton()));
+	ANKI_CHECK(deserializeShaderBinaryFromAnyFile(*file, m_binary, ResourceMemoryPool::getSingleton()));
 
 	return Error::kNone;
 }
@@ -159,7 +159,7 @@ U32 ShaderProgramResource::findTechnique(CString name) const
 ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const ShaderProgramResourceVariantInitInfo& info) const
 {
 	// Get the binary program variant
-	const ShaderProgramBinaryVariant* binaryVariant = nullptr;
+	const ShaderBinaryVariant* binaryVariant = nullptr;
 	U64 mutationHash = 0;
 	if(m_binary->m_mutators.getSize())
 	{
@@ -168,7 +168,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 
 		// Search for the mutation in the binary
 		// TODO optimize the search
-		for(const ShaderProgramBinaryMutation& mutation : m_binary->m_mutations)
+		for(const ShaderBinaryMutation& mutation : m_binary->m_mutations)
 		{
 			if(mutation.m_hash == mutationHash)
 			{
@@ -210,7 +210,7 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 			const ResourceString shaderName = (progName + "_" + m_binary->m_techniques[techniqueIdx].m_name.getBegin()).cstr();
 			ShaderInitInfo inf(shaderName);
 			inf.m_shaderType = shaderType;
-			const ShaderProgramBinaryCodeBlock& binBlock =
+			const ShaderBinaryCodeBlock& binBlock =
 				m_binary->m_codeBlocks[binaryVariant->m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[shaderType]];
 			inf.m_binary = binBlock.m_binary;
 			inf.m_reflection = binBlock.m_reflection;

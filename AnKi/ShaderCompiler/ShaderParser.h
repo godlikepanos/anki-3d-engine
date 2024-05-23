@@ -13,22 +13,21 @@
 namespace anki {
 
 // Forward
-class ShaderProgramParser;
-class ShaderProgramParserVariant;
+class ShaderParser;
 
 /// @addtogroup shader_compiler
 /// @{
 
-/// @memberof ShaderProgramParser
-class ShaderProgramParserMutator
+/// @memberof ShaderParser
+class ShaderParserMutator
 {
 public:
 	ShaderCompilerString m_name;
 	ShaderCompilerDynamicArray<MutatorValue> m_values;
 };
 
-/// @memberof ShaderProgramParser
-class ShaderProgramParserMember
+/// @memberof ShaderParser
+class ShaderParserGhostStructMember
 {
 public:
 	ShaderCompilerString m_name;
@@ -36,16 +35,16 @@ public:
 	U32 m_offset = kMaxU32;
 };
 
-/// @memberof ShaderProgramParser
-class ShaderProgramParserGhostStruct
+/// @memberof ShaderParser
+class ShaderParserGhostStruct
 {
 public:
-	ShaderCompilerDynamicArray<ShaderProgramParserMember> m_members;
+	ShaderCompilerDynamicArray<ShaderParserGhostStructMember> m_members;
 	ShaderCompilerString m_name;
 };
 
-/// @memberof ShaderProgramParser
-class ShaderProgramParserTechnique
+/// @memberof ShaderParser
+class ShaderParserTechnique
 {
 public:
 	ShaderCompilerString m_name;
@@ -71,16 +70,16 @@ public:
 /// #pragma anki struct_end
 ///
 /// None of the pragmas should be in an ifdef-like guard. It's ignored.
-class ShaderProgramParser
+class ShaderParser
 {
 public:
-	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, ConstWeakArray<ShaderCompilerDefine> defines);
+	ShaderParser(CString fname, ShaderCompilerFilesystemInterface* fsystem, ConstWeakArray<ShaderCompilerDefine> defines);
 
-	ShaderProgramParser(const ShaderProgramParser&) = delete; // Non-copyable
+	ShaderParser(const ShaderParser&) = delete; // Non-copyable
 
-	~ShaderProgramParser();
+	~ShaderParser();
 
-	ShaderProgramParser& operator=(const ShaderProgramParser&) = delete; // Non-copyable
+	ShaderParser& operator=(const ShaderParser&) = delete; // Non-copyable
 
 	/// Parse the file and its includes.
 	Error parse();
@@ -89,10 +88,10 @@ public:
 	Bool skipMutation(ConstWeakArray<MutatorValue> mutation) const;
 
 	/// Get the source (and a few more things) given a list of mutators.
-	void generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParserTechnique& technique, ShaderType shaderType,
+	void generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderParserTechnique& technique, ShaderType shaderType,
 						 ShaderCompilerString& source) const;
 
-	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
+	ConstWeakArray<ShaderParserMutator> getMutators() const
 	{
 		return m_mutators;
 	}
@@ -103,12 +102,12 @@ public:
 		return m_hash;
 	}
 
-	ConstWeakArray<ShaderProgramParserGhostStruct> getGhostStructs() const
+	ConstWeakArray<ShaderParserGhostStruct> getGhostStructs() const
 	{
 		return m_ghostStructs;
 	}
 
-	ConstWeakArray<ShaderProgramParserTechnique> getTechniques() const
+	ConstWeakArray<ShaderParserTechnique> getTechniques() const
 	{
 		return m_techniques;
 	}
@@ -122,10 +121,10 @@ public:
 	static void generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header);
 
 private:
-	using Mutator = ShaderProgramParserMutator;
-	using Member = ShaderProgramParserMember;
-	using GhostStruct = ShaderProgramParserGhostStruct;
-	using Technique = ShaderProgramParserTechnique;
+	using Mutator = ShaderParserMutator;
+	using Member = ShaderParserGhostStructMember;
+	using GhostStruct = ShaderParserGhostStruct;
+	using Technique = ShaderParserTechnique;
 
 	class PartialMutationSkip
 	{
@@ -143,7 +142,7 @@ private:
 	static constexpr U32 kMaxIncludeDepth = 8;
 
 	ShaderCompilerString m_fname;
-	ShaderProgramFilesystemInterface* m_fsystem = nullptr;
+	ShaderCompilerFilesystemInterface* m_fsystem = nullptr;
 
 	ShaderCompilerDynamicArray<ShaderCompilerString> m_defineNames;
 	ShaderCompilerDynamicArray<I32> m_defineValues;
@@ -194,7 +193,7 @@ private:
 		return token.getLength() >= 2 && token[0] == '/' && (token[1] == '/' || token[1] == '*');
 	}
 
-	static Bool mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value);
+	static Bool mutatorHasValue(const ShaderParserMutator& mutator, MutatorValue value);
 
 	static ShaderCompilerString sanitizeFilename(CString fname)
 	{

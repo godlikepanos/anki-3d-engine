@@ -9,7 +9,7 @@
 #include <AnKi/Gr/ShaderProgram.h>
 #include <AnKi/Util/HashMap.h>
 #include <AnKi/Util/StringList.h>
-#include <AnKi/ShaderCompiler/ShaderProgramBinary.h>
+#include <AnKi/ShaderCompiler/ShaderBinary.h>
 
 namespace anki {
 

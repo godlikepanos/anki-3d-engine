@@ -57,7 +57,7 @@ public:
 
 } // namespace
 
-static Bool mutatorValueExists(const ShaderProgramBinaryMutator& m, MutatorValue val)
+static Bool mutatorValueExists(const ShaderBinaryMutator& m, MutatorValue val)
 {
 	for(MutatorValue v : m.m_values)
 	{
@@ -166,7 +166,7 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(fname, m_prog, async));
 
 	// Find present techniques
-	for(const ShaderProgramBinaryTechnique& t : m_prog->getBinary().m_techniques)
+	for(const ShaderBinaryTechnique& t : m_prog->getBinary().m_techniques)
 	{
 		if(t.m_name.getBegin() == CString("GBufferLegacy"))
 		{
@@ -317,7 +317,7 @@ Error MaterialResource::findBuiltinMutators()
 
 	// ANKI_BONES
 	CString bonesMutatorName = kBuiltinMutatorNames[BuiltinMutatorId::kBones];
-	const ShaderProgramBinaryMutator* bonesMutator = m_prog->tryFindMutator(bonesMutatorName);
+	const ShaderBinaryMutator* bonesMutator = m_prog->tryFindMutator(bonesMutatorName);
 	if(bonesMutator)
 	{
 		if(bonesMutator->m_values.getSize() != 2)
@@ -343,7 +343,7 @@ Error MaterialResource::findBuiltinMutators()
 
 	// VELOCITY
 	CString velocityMutatorName = kBuiltinMutatorNames[BuiltinMutatorId::kVelocity];
-	const ShaderProgramBinaryMutator* velocityMutator = m_prog->tryFindMutator(velocityMutatorName);
+	const ShaderBinaryMutator* velocityMutator = m_prog->tryFindMutator(velocityMutatorName);
 	if(velocityMutator)
 	{
 		if(velocityMutator->m_values.getSize() != 2)
@@ -376,11 +376,11 @@ Error MaterialResource::findBuiltinMutators()
 
 Error MaterialResource::createVars()
 {
-	const ShaderProgramBinary& binary = m_prog->getBinary();
+	const ShaderBinary& binary = m_prog->getBinary();
 
 	// Find struct
-	const ShaderProgramBinaryStruct* localUniformsStruct = nullptr;
-	for(const ShaderProgramBinaryStruct& strct : binary.m_structs)
+	const ShaderBinaryStruct* localUniformsStruct = nullptr;
+	for(const ShaderBinaryStruct& strct : binary.m_structs)
 	{
 		if(CString(strct.m_name.getBegin()) == "AnKiLocalUniforms")
 		{
@@ -392,7 +392,7 @@ Error MaterialResource::createVars()
 	// Create vars
 	for(U32 i = 0; localUniformsStruct && i < localUniformsStruct->m_members.getSize(); ++i)
 	{
-		const ShaderProgramBinaryStructMember& member = localUniformsStruct->m_members[i];
+		const ShaderBinaryStructMember& member = localUniformsStruct->m_members[i];
 		const CString memberName = member.m_name.getBegin();
 
 		MaterialVariable& var = *m_vars.emplaceBack();

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/ShaderCompiler/ShaderProgramDump.h>
+#include <AnKi/ShaderCompiler/ShaderDump.h>
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/StringList.h>
 #include <SpirvCross/spirv_glsl.hpp>
@@ -13,13 +13,13 @@ namespace anki {
 
 #define ANKI_TAB "    "
 
-void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary, ShaderCompilerString& humanReadable)
+void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& binary, ShaderCompilerString& humanReadable)
 {
 	ShaderCompilerStringList lines;
 
 	lines.pushBackSprintf("\n**BINARIES (%u)**\n", binary.m_codeBlocks.getSize());
 	U32 count = 0;
-	for(const ShaderProgramBinaryCodeBlock& code : binary.m_codeBlocks)
+	for(const ShaderBinaryCodeBlock& code : binary.m_codeBlocks)
 	{
 		lines.pushBackSprintf(ANKI_TAB "bin%05u \n", count++);
 
@@ -80,7 +80,7 @@ void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgr
 	lines.pushBackSprintf("\n**MUTATORS (%u)**\n", binary.m_mutators.getSize());
 	if(binary.m_mutators.getSize() > 0)
 	{
-		for(const ShaderProgramBinaryMutator& mutator : binary.m_mutators)
+		for(const ShaderBinaryMutator& mutator : binary.m_mutators)
 		{
 			lines.pushBackSprintf(ANKI_TAB "%-32s values (", &mutator.m_name[0]);
 			for(U32 i = 0; i < mutator.m_values.getSize(); ++i)
@@ -94,21 +94,21 @@ void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgr
 	// Techniques
 	lines.pushBackSprintf("\n**TECHNIQUES (%u)**\n", binary.m_techniques.getSize());
 	count = 0;
-	for(const ShaderProgramBinaryTechnique& t : binary.m_techniques)
+	for(const ShaderBinaryTechnique& t : binary.m_techniques)
 	{
 		lines.pushBackSprintf(ANKI_TAB "%-32s shaderTypes 0x%02x\n", t.m_name.getBegin(), U32(t.m_shaderTypes));
 	}
 
 	// Mutations
 	U32 skippedMutations = 0;
-	for(const ShaderProgramBinaryMutation& mutation : binary.m_mutations)
+	for(const ShaderBinaryMutation& mutation : binary.m_mutations)
 	{
 		skippedMutations += mutation.m_variantIndex == kMaxU32;
 	}
 
 	lines.pushBackSprintf("\n**MUTATIONS (%u skipped %u)**\n", binary.m_mutations.getSize(), skippedMutations);
 	count = 0;
-	for(const ShaderProgramBinaryMutation& mutation : binary.m_mutations)
+	for(const ShaderBinaryMutation& mutation : binary.m_mutations)
 	{
 		if(mutation.m_variantIndex != kMaxU32)
 		{
@@ -141,7 +141,7 @@ void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgr
 	// Variants
 	lines.pushBackSprintf("\n**SHADER VARIANTS (%u)**\n", binary.m_variants.getSize());
 	count = 0;
-	for(const ShaderProgramBinaryVariant& variant : binary.m_variants)
+	for(const ShaderBinaryVariant& variant : binary.m_variants)
 	{
 		lines.pushBackSprintf(ANKI_TAB "var%05u\n", count++);
 
@@ -170,11 +170,11 @@ void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgr
 	lines.pushBackSprintf("\n**STRUCTS (%u)**\n", binary.m_structs.getSize());
 	if(binary.m_structs.getSize() > 0)
 	{
-		for(const ShaderProgramBinaryStruct& s : binary.m_structs)
+		for(const ShaderBinaryStruct& s : binary.m_structs)
 		{
 			lines.pushBackSprintf(ANKI_TAB "%-32s size %4u\n", s.m_name.getBegin(), s.m_size);
 
-			for(const ShaderProgramBinaryStructMember& member : s.m_members)
+			for(const ShaderBinaryStructMember& member : s.m_members)
 			{
 				const CString typeStr = getShaderVariableDataTypeInfo(member.m_type).m_name;
 				lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-32s type %5s offset %4d\n", member.m_name.getBegin(), typeStr.cstr(), member.m_offset);

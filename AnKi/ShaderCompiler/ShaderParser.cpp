@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
+#include <AnKi/ShaderCompiler/ShaderParser.h>
 
 namespace anki {
 
@@ -90,7 +90,7 @@ static ShaderType strToShaderType(CString str)
 	return shaderType;
 }
 
-ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, ConstWeakArray<ShaderCompilerDefine> defines)
+ShaderParser::ShaderParser(CString fname, ShaderCompilerFilesystemInterface* fsystem, ConstWeakArray<ShaderCompilerDefine> defines)
 	: m_fname(fname)
 	, m_fsystem(fsystem)
 {
@@ -101,11 +101,11 @@ ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemI
 	}
 }
 
-ShaderProgramParser::~ShaderProgramParser()
+ShaderParser::~ShaderParser()
 {
 }
 
-void ShaderProgramParser::tokenizeLine(CString line, ShaderCompilerDynamicArray<ShaderCompilerString>& tokens) const
+void ShaderParser::tokenizeLine(CString line, ShaderCompilerDynamicArray<ShaderCompilerString>& tokens) const
 {
 	ANKI_ASSERT(line.getLength() > 0);
 
@@ -131,7 +131,7 @@ void ShaderProgramParser::tokenizeLine(CString line, ShaderCompilerDynamicArray<
 	}
 }
 
-Error ShaderProgramParser::parsePragmaTechniqueStart(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaTechniqueStart(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -244,7 +244,7 @@ Error ShaderProgramParser::parsePragmaTechniqueStart(const ShaderCompilerString*
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaTechniqueEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaTechniqueEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -296,7 +296,7 @@ Error ShaderProgramParser::parsePragmaTechniqueEnd(const ShaderCompilerString* b
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaMutator(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaMutator(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -369,7 +369,7 @@ Error ShaderProgramParser::parsePragmaMutator(const ShaderCompilerString* begin,
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaSkipMutation(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaSkipMutation(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -426,7 +426,7 @@ Error ShaderProgramParser::parsePragmaSkipMutation(const ShaderCompilerString* b
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parseInclude(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname, U32 depth)
+Error ShaderParser::parseInclude(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname, U32 depth)
 {
 	// Gather the path
 	ShaderCompilerString path;
@@ -469,7 +469,7 @@ Error ShaderProgramParser::parseInclude(const ShaderCompilerString* begin, const
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNo)
+Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNo)
 {
 	// Tokenize
 	ShaderCompilerDynamicArray<ShaderCompilerString> tokens;
@@ -590,7 +590,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaStructBegin(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaStructBegin(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	const U tokenCount = U(end - begin);
 	if(tokenCount != 1)
@@ -609,7 +609,7 @@ Error ShaderProgramParser::parsePragmaStructBegin(const ShaderCompilerString* be
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaMember(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(m_insideStruct);
 	const U tokenCount = U(end - begin);
@@ -667,7 +667,7 @@ Error ShaderProgramParser::parsePragmaMember(const ShaderCompilerString* begin, 
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragmaStructEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaStructEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(m_insideStruct);
 
@@ -710,7 +710,7 @@ Error ShaderProgramParser::parsePragmaStructEnd(const ShaderCompilerString* begi
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parsePragma16bit(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragma16bit(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -725,7 +725,7 @@ Error ShaderProgramParser::parsePragma16bit(const ShaderCompilerString* begin, c
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parseFile(CString fname, U32 depth)
+Error ShaderParser::parseFile(CString fname, U32 depth)
 {
 	// First check the depth
 	if(depth > kMaxIncludeDepth)
@@ -781,7 +781,7 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 	return Error::kNone;
 }
 
-Error ShaderProgramParser::parse()
+Error ShaderParser::parse()
 {
 	ANKI_ASSERT(!m_fname.isEmpty());
 	ANKI_ASSERT(m_commonSourceLines.isEmpty());
@@ -835,7 +835,7 @@ Error ShaderProgramParser::parse()
 	return Error::kNone;
 }
 
-void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header)
+void ShaderParser::generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header)
 {
 	header.destroy();
 
@@ -849,8 +849,8 @@ void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, Shader
 	}
 }
 
-void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderProgramParserTechnique& technique, ShaderType shaderType,
-										  ShaderCompilerString& source) const
+void ShaderParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const ShaderParserTechnique& technique, ShaderType shaderType,
+								   ShaderCompilerString& source) const
 {
 	// Sanity checks
 	ANKI_ASSERT(mutation.getSize() == m_mutators.getSize());
@@ -900,7 +900,7 @@ void ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
 	source += m_techniqueExtras[tIdx].m_sources[shaderType];
 }
 
-Bool ShaderProgramParser::mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value)
+Bool ShaderParser::mutatorHasValue(const ShaderParserMutator& mutator, MutatorValue value)
 {
 	for(MutatorValue v : mutator.m_values)
 	{
@@ -913,7 +913,7 @@ Bool ShaderProgramParser::mutatorHasValue(const ShaderProgramParserMutator& muta
 	return false;
 }
 
-Bool ShaderProgramParser::skipMutation(ConstWeakArray<MutatorValue> mutation) const
+Bool ShaderParser::skipMutation(ConstWeakArray<MutatorValue> mutation) const
 {
 	ANKI_ASSERT(mutation.getSize() == m_mutators.getSize());
 

@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/BitSet.h>
@@ -44,7 +44,7 @@ public:
 	ResourceDynamicArray<ShaderGroup> m_hitGroups;
 	ShaderTypeBit m_presentStages = ShaderTypeBit::kNone;
 
-	U32 addShader(const ShaderProgramBinaryCodeBlock& codeBlock, CString progName, ShaderType shaderType)
+	U32 addShader(const ShaderBinaryCodeBlock& codeBlock, CString progName, ShaderType shaderType)
 	{
 		ShaderH* shader = nullptr;
 		for(ShaderH& s : m_shaders)
@@ -172,13 +172,13 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 		// Get the binary
 		ResourceFilePtr file;
 		ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
-		ShaderProgramBinary* binary;
-		ANKI_CHECK(deserializeShaderProgramBinaryFromAnyFile(*file, binary, ResourceMemoryPool::getSingleton()));
+		ShaderBinary* binary;
+		ANKI_CHECK(deserializeShaderBinaryFromAnyFile(*file, binary, ResourceMemoryPool::getSingleton()));
 
 		class Dummy
 		{
 		public:
-			ShaderProgramBinary* m_binary;
+			ShaderBinary* m_binary;
 
 			~Dummy()
 			{
@@ -195,7 +195,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 		String progName;
 		getFilepathFilename(filename, progName);
 
-		for(const ShaderProgramBinaryTechnique& technique : binary->m_techniques)
+		for(const ShaderBinaryTechnique& technique : binary->m_techniques)
 		{
 			if(!(technique.m_shaderTypes & ShaderTypeBit::kAllRayTracing))
 			{
@@ -228,8 +228,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			if(!!(technique.m_shaderTypes & ShaderTypeBit::kRayGen))
 			{
 				// Iterate all mutations
-				ConstWeakArray<ShaderProgramBinaryMutation> mutations;
-				ShaderProgramBinaryMutation dummyMutation;
+				ConstWeakArray<ShaderBinaryMutation> mutations;
+				ShaderBinaryMutation dummyMutation;
 				if(binary->m_mutations.getSize() > 1)
 				{
 					mutations = binary->m_mutations;
@@ -238,12 +238,12 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 				{
 					dummyMutation.m_hash = 0;
 					dummyMutation.m_variantIndex = 0;
-					mutations = ConstWeakArray<ShaderProgramBinaryMutation>(&dummyMutation, 1);
+					mutations = ConstWeakArray<ShaderBinaryMutation>(&dummyMutation, 1);
 				}
 
-				for(const ShaderProgramBinaryMutation& mutation : mutations)
+				for(const ShaderBinaryMutation& mutation : mutations)
 				{
-					const ShaderProgramBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
+					const ShaderBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
 					const U32 codeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kRayGen];
 					const U32 shaderIdx = lib->addShader(binary->m_codeBlocks[codeBlockIndex], progName, ShaderType::kRayGen);
 
@@ -255,8 +255,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			if(!!(technique.m_shaderTypes & ShaderTypeBit::kMiss))
 			{
 				// Iterate all mutations
-				ConstWeakArray<ShaderProgramBinaryMutation> mutations;
-				ShaderProgramBinaryMutation dummyMutation;
+				ConstWeakArray<ShaderBinaryMutation> mutations;
+				ShaderBinaryMutation dummyMutation;
 				if(binary->m_mutations.getSize() > 1)
 				{
 					mutations = binary->m_mutations;
@@ -265,12 +265,12 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 				{
 					dummyMutation.m_hash = 0;
 					dummyMutation.m_variantIndex = 0;
-					mutations = ConstWeakArray<ShaderProgramBinaryMutation>(&dummyMutation, 1);
+					mutations = ConstWeakArray<ShaderBinaryMutation>(&dummyMutation, 1);
 				}
 
-				for(const ShaderProgramBinaryMutation& mutation : mutations)
+				for(const ShaderBinaryMutation& mutation : mutations)
 				{
-					const ShaderProgramBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
+					const ShaderBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
 					const U32 codeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kMiss];
 					ANKI_ASSERT(codeBlockIndex < kMaxU32);
 					const U32 shaderIdx = lib->addShader(binary->m_codeBlocks[codeBlockIndex], progName, ShaderType::kMiss);
@@ -283,8 +283,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			if(!!(technique.m_shaderTypes & ShaderTypeBit::kAllHit))
 			{
 				// Before you iterate the mutations do some work if there are none
-				ConstWeakArray<ShaderProgramBinaryMutation> mutations;
-				ShaderProgramBinaryMutation dummyMutation;
+				ConstWeakArray<ShaderBinaryMutation> mutations;
+				ShaderBinaryMutation dummyMutation;
 				if(binary->m_mutations.getSize() > 1)
 				{
 					mutations = binary->m_mutations;
@@ -293,18 +293,18 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 				{
 					dummyMutation.m_hash = 0;
 					dummyMutation.m_variantIndex = 0;
-					mutations = ConstWeakArray<ShaderProgramBinaryMutation>(&dummyMutation, 1);
+					mutations = ConstWeakArray<ShaderBinaryMutation>(&dummyMutation, 1);
 				}
 
 				// Iterate all mutations
-				for(const ShaderProgramBinaryMutation& mutation : mutations)
+				for(const ShaderBinaryMutation& mutation : mutations)
 				{
 					if(mutation.m_variantIndex == kMaxU32)
 					{
 						continue;
 					}
 
-					const ShaderProgramBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
+					const ShaderBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
 					const U32 ahitCodeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kAnyHit];
 					const U32 chitCodeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kClosestHit];
 					ANKI_ASSERT(ahitCodeBlockIndex != kMaxU32 || chitCodeBlockIndex != kMaxU32);

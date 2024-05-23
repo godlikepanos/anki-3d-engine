@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
-#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderParser.h>
 #include <AnKi/ShaderCompiler/Dxc.h>
 #include <AnKi/Util/Serializer.h>
 #include <AnKi/Util/HashMap.h>
@@ -28,7 +28,7 @@ static DxcCreateInstanceProc g_DxcCreateInstance = nullptr;
 static Mutex g_dxcLibMtx;
 #endif
 
-void freeShaderProgramBinary(ShaderProgramBinary*& binary)
+void freeShaderBinary(ShaderBinary*& binary)
 {
 	if(binary == nullptr)
 	{
@@ -37,25 +37,25 @@ void freeShaderProgramBinary(ShaderProgramBinary*& binary)
 
 	BaseMemoryPool& mempool = ShaderCompilerMemoryPool::getSingleton();
 
-	for(ShaderProgramBinaryCodeBlock& code : binary->m_codeBlocks)
+	for(ShaderBinaryCodeBlock& code : binary->m_codeBlocks)
 	{
 		mempool.free(code.m_binary.getBegin());
 	}
 	mempool.free(binary->m_codeBlocks.getBegin());
 
-	for(ShaderProgramBinaryMutator& mutator : binary->m_mutators)
+	for(ShaderBinaryMutator& mutator : binary->m_mutators)
 	{
 		mempool.free(mutator.m_values.getBegin());
 	}
 	mempool.free(binary->m_mutators.getBegin());
 
-	for(ShaderProgramBinaryMutation& m : binary->m_mutations)
+	for(ShaderBinaryMutation& m : binary->m_mutations)
 	{
 		mempool.free(m.m_values.getBegin());
 	}
 	mempool.free(binary->m_mutations.getBegin());
 
-	for(ShaderProgramBinaryVariant& variant : binary->m_variants)
+	for(ShaderBinaryVariant& variant : binary->m_variants)
 	{
 		mempool.free(variant.m_techniqueCodeBlocks.getBegin());
 	}
@@ -63,7 +63,7 @@ void freeShaderProgramBinary(ShaderProgramBinary*& binary)
 
 	mempool.free(binary->m_techniques.getBegin());
 
-	for(ShaderProgramBinaryStruct& s : binary->m_structs)
+	for(ShaderBinaryStruct& s : binary->m_structs)
 	{
 		mempool.free(s.m_members.getBegin());
 	}
@@ -75,7 +75,7 @@ void freeShaderProgramBinary(ShaderProgramBinary*& binary)
 }
 
 /// Spin the dials. Used to compute all mutator combinations.
-static Bool spinDials(ShaderCompilerDynamicArray<U32>& dials, ConstWeakArray<ShaderProgramParserMutator> mutators)
+static Bool spinDials(ShaderCompilerDynamicArray<U32>& dials, ConstWeakArray<ShaderParserMutator> mutators)
 {
 	ANKI_ASSERT(dials.getSize() == mutators.getSize() && dials.getSize() > 0);
 	Bool done = true;
@@ -609,19 +609,18 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 }
 #endif // #if ANKI_DIXL_REFLECTION
 
-static void compileVariantAsync(const ShaderProgramParser& parser, Bool spirv, ShaderProgramBinaryMutation& mutation,
-								ShaderCompilerDynamicArray<ShaderProgramBinaryVariant>& variants,
-								ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock>& codeBlocks,
-								ShaderCompilerDynamicArray<U64>& sourceCodeHashes, ShaderProgramAsyncTaskInterface& taskManager, Mutex& mtx,
-								Atomic<I32>& error)
+static void compileVariantAsync(const ShaderParser& parser, Bool spirv, ShaderBinaryMutation& mutation,
+								ShaderCompilerDynamicArray<ShaderBinaryVariant>& variants,
+								ShaderCompilerDynamicArray<ShaderBinaryCodeBlock>& codeBlocks, ShaderCompilerDynamicArray<U64>& sourceCodeHashes,
+								ShaderCompilerAsyncTaskInterface& taskManager, Mutex& mtx, Atomic<I32>& error)
 {
 	class Ctx
 	{
 	public:
-		const ShaderProgramParser* m_parser;
-		ShaderProgramBinaryMutation* m_mutation;
-		ShaderCompilerDynamicArray<ShaderProgramBinaryVariant>* m_variants;
-		ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock>* m_codeBlocks;
+		const ShaderParser* m_parser;
+		ShaderBinaryMutation* m_mutation;
+		ShaderCompilerDynamicArray<ShaderBinaryVariant>* m_variants;
+		ShaderCompilerDynamicArray<ShaderBinaryCodeBlock>* m_codeBlocks;
 		ShaderCompilerDynamicArray<U64>* m_sourceCodeHashes;
 		Mutex* m_mtx;
 		Atomic<I32>* m_err;
@@ -660,7 +659,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, Bool spirv, S
 		const U32 techniqueCount = ctx.m_parser->getTechniques().getSize();
 
 		// Compile the sources
-		ShaderCompilerDynamicArray<ShaderProgramBinaryTechniqueCodeBlocks> codeBlockIndices;
+		ShaderCompilerDynamicArray<ShaderBinaryTechniqueCodeBlocks> codeBlockIndices;
 		codeBlockIndices.resize(techniqueCount);
 		for(auto& it : codeBlockIndices)
 		{
@@ -672,7 +671,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, Bool spirv, S
 		U newCodeBlockCount = 0;
 		for(U32 t = 0; t < techniqueCount && !err; ++t)
 		{
-			const ShaderProgramParserTechnique& technique = ctx.m_parser->getTechniques()[t];
+			const ShaderParserTechnique& technique = ctx.m_parser->getTechniques()[t];
 			for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(technique.m_shaderTypes))
 			{
 				ShaderCompilerString source;
@@ -800,8 +799,8 @@ static void compileVariantAsync(const ShaderProgramParser& parser, Bool spirv, S
 					Bool same = true;
 					for(U32 t = 0; t < techniqueCount; ++t)
 					{
-						const ShaderProgramBinaryTechniqueCodeBlocks& a = (*ctx.m_variants)[i].m_techniqueCodeBlocks[t];
-						const ShaderProgramBinaryTechniqueCodeBlocks& b = codeBlockIndices[t];
+						const ShaderBinaryTechniqueCodeBlocks& a = (*ctx.m_variants)[i].m_techniqueCodeBlocks[t];
+						const ShaderBinaryTechniqueCodeBlocks& b = codeBlockIndices[t];
 
 						if(memcmp(&a, &b, sizeof(a)) != 0)
 						{
@@ -825,7 +824,7 @@ static void compileVariantAsync(const ShaderProgramParser& parser, Bool spirv, S
 			{
 				ctx.m_mutation->m_variantIndex = ctx.m_variants->getSize();
 
-				ShaderProgramBinaryVariant* variant = ctx.m_variants->emplaceBack();
+				ShaderBinaryVariant* variant = ctx.m_variants->emplaceBack();
 
 				codeBlockIndices.moveAndReset(variant->m_techniqueCodeBlocks);
 			}
@@ -835,9 +834,9 @@ static void compileVariantAsync(const ShaderProgramParser& parser, Bool spirv, S
 	taskManager.enqueueTask(callback, ctx);
 }
 
-static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgramFilesystemInterface& fsystem,
-										  ShaderProgramPostParseInterface* postParseCallback, ShaderProgramAsyncTaskInterface* taskManager_,
-										  ConstWeakArray<ShaderCompilerDefine> defines_, ShaderProgramBinary*& binary)
+static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderCompilerFilesystemInterface& fsystem,
+										  ShaderCompilerPostParseInterface* postParseCallback, ShaderCompilerAsyncTaskInterface* taskManager_,
+										  ConstWeakArray<ShaderCompilerDefine> defines_, ShaderBinary*& binary)
 {
 	ShaderCompilerMemoryPool& memPool = ShaderCompilerMemoryPool::getSingleton();
 
@@ -848,11 +847,11 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 	}
 
 	// Initialize the binary
-	binary = newInstance<ShaderProgramBinary>(memPool);
+	binary = newInstance<ShaderBinary>(memPool);
 	memcpy(&binary->m_magic[0], kShaderBinaryMagic, 8);
 
 	// Parse source
-	ShaderProgramParser parser(fname, &fsystem, defines);
+	ShaderParser parser(fname, &fsystem, defines);
 	ANKI_CHECK(parser.parse());
 
 	if(postParseCallback && postParseCallback->skipCompilation(parser.getHash()))
@@ -868,8 +867,8 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 
 		for(U32 i = 0; i < binary->m_mutators.getSize(); ++i)
 		{
-			ShaderProgramBinaryMutator& out = binary->m_mutators[i];
-			const ShaderProgramParserMutator& in = parser.getMutators()[i];
+			ShaderBinaryMutator& out = binary->m_mutators[i];
+			const ShaderParserMutator& in = parser.getMutators()[i];
 
 			zeroMemory(out);
 
@@ -890,7 +889,7 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 	// Create all variants
 	Mutex mtx;
 	Atomic<I32> errorAtomic(0);
-	class SyncronousShaderProgramAsyncTaskInterface : public ShaderProgramAsyncTaskInterface
+	class SyncronousShaderCompilerAsyncTaskInterface : public ShaderCompilerAsyncTaskInterface
 	{
 	public:
 		void enqueueTask(void (*callback)(void* userData), void* userData) final
@@ -904,7 +903,7 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 			return Error::kNone;
 		}
 	} syncTaskManager;
-	ShaderProgramAsyncTaskInterface& taskManager = (taskManager_) ? *taskManager_ : syncTaskManager;
+	ShaderCompilerAsyncTaskInterface& taskManager = (taskManager_) ? *taskManager_ : syncTaskManager;
 
 	if(parser.getMutators().getSize() > 0)
 	{
@@ -913,10 +912,10 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 		mutationValues.resize(parser.getMutators().getSize());
 		ShaderCompilerDynamicArray<U32> dials;
 		dials.resize(parser.getMutators().getSize(), 0);
-		ShaderCompilerDynamicArray<ShaderProgramBinaryVariant> variants;
-		ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock> codeBlocks;
+		ShaderCompilerDynamicArray<ShaderBinaryVariant> variants;
+		ShaderCompilerDynamicArray<ShaderBinaryCodeBlock> codeBlocks;
 		ShaderCompilerDynamicArray<U64> sourceCodeHashes;
-		ShaderCompilerDynamicArray<ShaderProgramBinaryMutation> mutations;
+		ShaderCompilerDynamicArray<ShaderBinaryMutation> mutations;
 		mutations.resize(mutationCount);
 		ShaderCompilerHashMap<U64, U32> mutationHashToIdx;
 
@@ -936,7 +935,7 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 				mutationValues[i] = parser.getMutators()[i].m_values[dials[i]];
 			}
 
-			ShaderProgramBinaryMutation& mutation = mutations[mutationCount++];
+			ShaderBinaryMutation& mutation = mutations[mutationCount++];
 			newArray(memPool, mutationValues.getSize(), mutation.m_values);
 			memcpy(mutation.m_values.getBegin(), mutationValues.getBegin(), mutationValues.getSizeInBytes());
 
@@ -974,8 +973,8 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 	else
 	{
 		newArray(memPool, 1, binary->m_mutations);
-		ShaderCompilerDynamicArray<ShaderProgramBinaryVariant> variants;
-		ShaderCompilerDynamicArray<ShaderProgramBinaryCodeBlock> codeBlocks;
+		ShaderCompilerDynamicArray<ShaderBinaryVariant> variants;
+		ShaderCompilerDynamicArray<ShaderBinaryCodeBlock> codeBlocks;
 		ShaderCompilerDynamicArray<U64> sourceCodeHashes;
 
 		compileVariantAsync(parser, spirv, binary->m_mutations[0], variants, codeBlocks, sourceCodeHashes, taskManager, mtx, errorAtomic);
@@ -993,10 +992,9 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 	}
 
 	// Sort the mutations
-	std::sort(binary->m_mutations.getBegin(), binary->m_mutations.getEnd(),
-			  [](const ShaderProgramBinaryMutation& a, const ShaderProgramBinaryMutation& b) {
-				  return a.m_hash < b.m_hash;
-			  });
+	std::sort(binary->m_mutations.getBegin(), binary->m_mutations.getEnd(), [](const ShaderBinaryMutation& a, const ShaderBinaryMutation& b) {
+		return a.m_hash < b.m_hash;
+	});
 
 	// Techniques
 	newArray(memPool, parser.getTechniques().getSize(), binary->m_techniques);
@@ -1018,8 +1016,8 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 
 	for(U32 i = 0; i < parser.getGhostStructs().getSize(); ++i)
 	{
-		const ShaderProgramParserGhostStruct& in = parser.getGhostStructs()[i];
-		ShaderProgramBinaryStruct& out = binary->m_structs[i];
+		const ShaderParserGhostStruct& in = parser.getGhostStructs()[i];
+		ShaderBinaryStruct& out = binary->m_structs[i];
 
 		zeroMemory(out);
 		memcpy(out.m_name.getBegin(), in.m_name.cstr(), in.m_name.getLength() + 1);
@@ -1029,8 +1027,8 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 
 		for(U32 j = 0; j < in.m_members.getSize(); ++j)
 		{
-			const ShaderProgramParserMember& inm = in.m_members[j];
-			ShaderProgramBinaryStructMember& outm = out.m_members[j];
+			const ShaderParserGhostStructMember& inm = in.m_members[j];
+			ShaderBinaryStructMember& outm = out.m_members[j];
 
 			zeroMemory(outm.m_name);
 			memcpy(outm.m_name.getBegin(), inm.m_name.cstr(), inm.m_name.getLength() + 1);
@@ -1044,14 +1042,14 @@ static Error compileShaderProgramInternal(CString fname, Bool spirv, ShaderProgr
 	return Error::kNone;
 }
 
-Error compileShaderProgram(CString fname, Bool spirv, ShaderProgramFilesystemInterface& fsystem, ShaderProgramPostParseInterface* postParseCallback,
-						   ShaderProgramAsyncTaskInterface* taskManager, ConstWeakArray<ShaderCompilerDefine> defines, ShaderProgramBinary*& binary)
+Error compileShaderProgram(CString fname, Bool spirv, ShaderCompilerFilesystemInterface& fsystem, ShaderCompilerPostParseInterface* postParseCallback,
+						   ShaderCompilerAsyncTaskInterface* taskManager, ConstWeakArray<ShaderCompilerDefine> defines, ShaderBinary*& binary)
 {
 	const Error err = compileShaderProgramInternal(fname, spirv, fsystem, postParseCallback, taskManager, defines, binary);
 	if(err)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());
-		freeShaderProgramBinary(binary);
+		freeShaderBinary(binary);
 	}
 
 	return err;

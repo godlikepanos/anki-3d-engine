@@ -4,7 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderDump.h>
 #include <AnKi/Util/ThreadHive.h>
 
 ANKI_TEST(ShaderCompiler, ShaderProgramCompilerSimple)
@@ -81,7 +82,7 @@ void main()
 		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
 	}
 
-	class Fsystem : public ShaderProgramFilesystemInterface
+	class Fsystem : public ShaderCompilerFilesystemInterface
 	{
 	public:
 		Error readAllText(CString filename, ShaderCompilerString& txt) final
@@ -98,7 +99,7 @@ void main()
 	const U32 threadCount = 8;
 	ThreadHive hive(threadCount, &pool);
 
-	class TaskManager : public ShaderProgramAsyncTaskInterface
+	class TaskManager : public ShaderCompilerAsyncTaskInterface
 	{
 	public:
 		ThreadHive* m_hive = nullptr;
@@ -136,13 +137,13 @@ void main()
 	taskManager.m_hive = &hive;
 	taskManager.m_pool = &pool;
 
-	ShaderProgramBinary* binary;
+	ShaderBinary* binary;
 	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", true, fsystem, nullptr, &taskManager, {}, binary));
 
 #if 1
 	ShaderCompilerString dis;
 	ShaderDumpOptions options;
-	dumpShaderProgramBinary(options, *binary, dis);
+	dumpShaderBinary(options, *binary, dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
 }
@@ -276,7 +277,7 @@ void main()
 		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
 	}
 
-	class Fsystem : public ShaderProgramFilesystemInterface
+	class Fsystem : public ShaderCompilerFilesystemInterface
 	{
 	public:
 		Error readAllText(CString filename, ShaderCompilerString& txt) final
@@ -293,7 +294,7 @@ void main()
 	const U32 threadCount = 24;
 	ThreadHive hive(threadCount, &pool);
 
-	class TaskManager : public ShaderProgramAsyncTaskInterface
+	class TaskManager : public ShaderCompilerAsyncTaskInterface
 	{
 	public:
 		ThreadHive* m_hive = nullptr;
@@ -331,13 +332,13 @@ void main()
 	taskManager.m_hive = &hive;
 	taskManager.m_pool = &pool;
 
-	ShaderProgramBinary* binary;
+	ShaderBinary* binary;
 	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", true, fsystem, nullptr, &taskManager, {}, binary));
 
 #if 1
 	ShaderCompilerString dis;
 	ShaderDumpOptions options;
-	dumpShaderProgramBinary(options, *binary, dis);
+	dumpShaderBinary(options, *binary, dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
 }

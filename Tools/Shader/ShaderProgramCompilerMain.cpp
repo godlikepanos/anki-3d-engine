@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
 #include <AnKi/Util.h>
 using namespace anki;
 
@@ -146,7 +146,7 @@ static Error work(const CmdLineArgs& info)
 	HeapMemoryPool pool(allocAligned, nullptr, "ProgramPool");
 
 	// Load interface
-	class FSystem : public ShaderProgramFilesystemInterface
+	class FSystem : public ShaderCompilerFilesystemInterface
 	{
 	public:
 		CString m_includePath;
@@ -187,7 +187,7 @@ static Error work(const CmdLineArgs& info)
 	fsystem.m_includePath = info.m_includePath;
 
 	// Threading interface
-	class TaskManager : public ShaderProgramAsyncTaskInterface
+	class TaskManager : public ShaderCompilerAsyncTaskInterface
 	{
 	public:
 		UniquePtr<ThreadJobManager, SingletonMemoryPoolDeleter<DefaultMemoryPool>> m_jobManager;
@@ -209,18 +209,18 @@ static Error work(const CmdLineArgs& info)
 														: nullptr);
 
 	// Compile
-	ShaderProgramBinary* binary = nullptr;
+	ShaderBinary* binary = nullptr;
 	ANKI_CHECK(compileShaderProgram(info.m_inputFname, info.m_spirv, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, info.m_defines,
 									binary));
 
 	class Dummy
 	{
 	public:
-		ShaderProgramBinary* m_binary;
+		ShaderBinary* m_binary;
 
 		~Dummy()
 		{
-			freeShaderProgramBinary(m_binary);
+			freeShaderBinary(m_binary);
 		}
 	} dummy{binary};
 

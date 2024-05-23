@@ -1,0 +1,80 @@
+<serializer>
+	<includes>
+		<include file="&lt;AnKi/ShaderCompiler/Common.h&gt;"/>
+		<include file="&lt;AnKi/ShaderCompiler/ShaderBinaryExtra.h&gt;"/>
+		<include file="&lt;AnKi/Gr/Common.h&gt;"/>
+	</includes>
+
+	<classes>
+		<class name="ShaderBinaryStructMember" comment="A member of a ShaderBinaryStruct">
+			<members>
+				<member name="m_name" type="Char" array_size="kMaxShaderBinaryNameLength + 1" constructor="= {}" />
+				<member name="m_offset" type="U32" constructor="= kMaxU32" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::kNone" />
+			</members>
+		</class>
+
+		<class name="ShaderBinaryStruct" comment="A type that is a structure">
+			<members>
+				<member name="m_name" type="Char" array_size="kMaxShaderBinaryNameLength + 1" constructor="= {}" />
+				<member name="m_members" type="WeakArray&lt;ShaderBinaryStructMember&gt;" />
+				<member name="m_size" type="U32" />
+			</members>
+		</class>
+		
+		<class name="ShaderBinaryCodeBlock" comment="Contains the IR (SPIR-V or DXIL)">
+			<members>
+				<member name="m_binary" type="WeakArray&lt;U8&gt;" />
+				<member name="m_hash" type="U64" constructor="= 0" />
+				<member name="m_reflection" type="ShaderReflection" />
+			</members>
+		</class>
+
+		<class name="ShaderBinaryTechnique">
+			<members>
+				<member name="m_name" type="Char" array_size="kMaxShaderBinaryNameLength + 1" />
+				<member name="m_shaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::kNone" />
+			</members>
+		</class>
+
+		<class name="ShaderBinaryMutator" comment="Shader program mutator">
+			<members>
+				<member name="m_name" type="Char" array_size="kMaxShaderBinaryNameLength + 1" constructor="= {}" />
+				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
+			</members>
+		</class>
+
+		<class name="ShaderBinaryTechniqueCodeBlocks">
+			<members>
+				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::kCount)" constructor="= {}" comment="Points to ShaderBinary::m_codeBlocks. If the shader type is not present the value is kMaxU32" />
+			</members>
+		</class>
+		
+		<class name="ShaderBinaryVariant">
+			<members>
+				<member name="m_techniqueCodeBlocks" type="WeakArray&lt;ShaderBinaryTechniqueCodeBlocks&gt;" comment="One entry per technique" />
+			</members>
+		</class>
+
+		<class name="ShaderBinaryMutation" comment="A mutation is a unique combination of mutator values">
+			<members>
+				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
+				<member name="m_hash" type="U64" constructor="= 0" comment="Mutation hash" />
+				<member name="m_variantIndex" type="U32" constructor="= kMaxU32" comment="Points to ShaderBinary::m_variants" />
+			</members>
+		</class>
+
+		<class name="ShaderBinary">
+			<members>
+				<member name="m_magic" type="U8" array_size="8" constructor="= {}" />
+				<member name="m_shaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::kNone" />
+				<member name="m_codeBlocks" type="WeakArray&lt;ShaderBinaryCodeBlock&gt;" />
+				<member name="m_mutators" type="WeakArray&lt;ShaderBinaryMutator&gt;" />
+				<member name="m_mutations" type="WeakArray&lt;ShaderBinaryMutation&gt;" comment="It's sorted using the mutation's hash" />
+				<member name="m_variants" type="WeakArray&lt;ShaderBinaryVariant&gt;" />
+				<member name="m_techniques" type="WeakArray&lt;ShaderBinaryTechnique&gt;" />
+				<member name="m_structs" type="WeakArray&lt;ShaderBinaryStruct&gt;" />
+			</members>
+		</class>
+	</classes>
+</serializer>

@@ -5,7 +5,7 @@
 
 #include <AnKi/Gr.h>
 #include <AnKi/ShaderCompiler.h>
-#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
+#include <AnKi/ShaderCompiler/ShaderParser.h>
 #include <AnKi/ShaderCompiler/Dxc.h>
 #include <Tests/Framework/Framework.h>
 
@@ -14,7 +14,7 @@ namespace anki {
 inline ShaderPtr createShader(CString src, ShaderType type)
 {
 	ShaderCompilerString header;
-	ShaderProgramParser::generateAnkiShaderHeader(type, header);
+	ShaderParser::generateAnkiShaderHeader(type, header);
 	header += src;
 	ShaderCompilerDynamicArray<U8> bin;
 	ShaderCompilerString errorLog;

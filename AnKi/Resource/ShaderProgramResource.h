@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Resource/ResourceObject.h>
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
 #include <AnKi/Gr/BackendCommon/Functions.h>
 #include <AnKi/Gr/ShaderProgram.h>
 #include <AnKi/Util/BitSet.h>
@@ -111,9 +111,9 @@ public:
 	Error load(const ResourceFilename& filename, Bool async);
 
 	/// Try to find a mutator.
-	const ShaderProgramBinaryMutator* tryFindMutator(CString name) const
+	const ShaderBinaryMutator* tryFindMutator(CString name) const
 	{
-		for(const ShaderProgramBinaryMutator& m : m_binary->m_mutators)
+		for(const ShaderBinaryMutator& m : m_binary->m_mutators)
 		{
 			if(m.m_name.getBegin() == name)
 			{
@@ -123,7 +123,7 @@ public:
 		return nullptr;
 	}
 
-	const ShaderProgramBinary& getBinary() const
+	const ShaderBinary& getBinary() const
 	{
 		return *m_binary;
 	}
@@ -133,7 +133,7 @@ public:
 	void getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const;
 
 private:
-	ShaderProgramBinary* m_binary = nullptr;
+	ShaderBinary* m_binary = nullptr;
 
 	mutable ResourceHashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable RWMutex m_mtx;
@@ -145,7 +145,7 @@ private:
 
 inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addMutation(CString name, MutatorValue t)
 {
-	const ShaderProgramBinaryMutator* m = m_ptr->tryFindMutator(name);
+	const ShaderBinaryMutator* m = m_ptr->tryFindMutator(name);
 	ANKI_ASSERT(m);
 	[[maybe_unused]] Bool valueExits = false;
 	for(auto v : m->m_values)

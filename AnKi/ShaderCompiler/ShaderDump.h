@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/ShaderCompiler/ShaderProgramBinary.h>
+#include <AnKi/ShaderCompiler/ShaderBinary.h>
 #include <AnKi/Util/String.h>
 
 namespace anki {
@@ -19,7 +19,7 @@ public:
 };
 
 /// Create a human readable representation of the shader binary.
-void dumpShaderProgramBinary(const ShaderDumpOptions& options, const ShaderProgramBinary& binary, ShaderCompilerString& humanReadable);
+void dumpShaderBinary(const ShaderDumpOptions& options, const ShaderBinary& binary, ShaderCompilerString& humanReadable);
 /// @}
 
 } // end namespace anki

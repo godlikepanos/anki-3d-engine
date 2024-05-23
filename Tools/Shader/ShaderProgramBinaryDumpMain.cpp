@@ -3,7 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderDump.h>
 #include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
 #include <AnKi/ShaderCompiler/RadeonGpuAnalyzer.h>
 #include <AnKi/Util/ThreadHive.h>
@@ -58,7 +59,7 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 	return Error::kNone;
 }
 
-Error dumpStats(const ShaderProgramBinary& bin)
+Error dumpStats(const ShaderBinary& bin)
 {
 	printf("\nOffline compilers stats:\n");
 	fflush(stdout);
@@ -135,7 +136,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 		DynamicArray<Stats> m_spirvStats;
 		DynamicArray<Atomic<U32>> m_spirvVisited;
 		Atomic<U32> m_variantCount = {0};
-		const ShaderProgramBinary* m_bin = nullptr;
+		const ShaderBinary* m_bin = nullptr;
 		Atomic<I32> m_error = {0};
 	};
 
@@ -154,7 +155,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 		while((variantIdx = ctx.m_variantCount.fetchAdd(1)) < ctx.m_bin->m_variants.getSize() && ctx.m_error.load() == 0)
 		{
-			const ShaderProgramBinaryVariant& variant = ctx.m_bin->m_variants[variantIdx];
+			const ShaderBinaryVariant& variant = ctx.m_bin->m_variants[variantIdx];
 
 			for(U32 t = 0; t < variant.m_techniqueCodeBlocks.getSize(); ++t)
 			{
@@ -168,7 +169,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 						continue;
 					}
 
-					const ShaderProgramBinaryCodeBlock& codeBlock = ctx.m_bin->m_codeBlocks[codeblockIdx];
+					const ShaderBinaryCodeBlock& codeBlock = ctx.m_bin->m_codeBlocks[codeblockIdx];
 
 					// Arm stats
 					MaliOfflineCompilerOut maliocOut;
@@ -238,7 +239,7 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 	// Cather the results
 	Array<StageStats, U32(ShaderType::kCount)> allStageStats;
-	for(const ShaderProgramBinaryVariant& variant : bin.m_variants)
+	for(const ShaderBinaryVariant& variant : bin.m_variants)
 	{
 		for(U32 t = 0; t < variant.m_techniqueCodeBlocks.getSize(); ++t)
 		{
@@ -301,13 +302,13 @@ Error dumpStats(const ShaderProgramBinary& bin)
 
 Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spirv)
 {
-	ShaderProgramBinary* binary;
-	ANKI_CHECK(deserializeShaderProgramBinaryFromFile(fname, binary, ShaderCompilerMemoryPool::getSingleton()));
+	ShaderBinary* binary;
+	ANKI_CHECK(deserializeShaderBinaryFromFile(fname, binary, ShaderCompilerMemoryPool::getSingleton()));
 
 	class Dummy
 	{
 	public:
-		ShaderProgramBinary* m_binary;
+		ShaderBinary* m_binary;
 
 		~Dummy()
 		{
@@ -322,7 +323,7 @@ Error dump(CString fname, Bool bDumpStats, Bool dumpBinary, Bool glsl, Bool spir
 		options.m_writeSpirv = spirv;
 
 		ShaderCompilerString txt;
-		dumpShaderProgramBinary(options, *binary, txt);
+		dumpShaderBinary(options, *binary, txt);
 
 		printf("%s\n", txt.cstr());
 	}

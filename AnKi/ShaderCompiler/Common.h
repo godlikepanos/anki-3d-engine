@@ -41,22 +41,22 @@ constexpr U32 kMaxShaderBinaryNameLength = 127;
 
 using MutatorValue = I32; ///< The type of the mutator value
 
-/// An interface used by the ShaderProgramParser and ShaderProgramCompiler to abstract file loading.
-class ShaderProgramFilesystemInterface
+/// An interface used by the ShaderParser and compileShaderProgram to abstract file loading.
+class ShaderCompilerFilesystemInterface
 {
 public:
 	virtual Error readAllText(CString filename, ShaderCompilerString& txt) = 0;
 };
 
 /// This controls if the compilation will continue after the parsing stage.
-class ShaderProgramPostParseInterface
+class ShaderCompilerPostParseInterface
 {
 public:
 	virtual Bool skipCompilation(U64 programHash) = 0;
 };
 
 /// An interface for asynchronous shader compilation.
-class ShaderProgramAsyncTaskInterface
+class ShaderCompilerAsyncTaskInterface
 {
 public:
 	virtual void enqueueTask(void (*callback)(void* userData), void* userData) = 0;
