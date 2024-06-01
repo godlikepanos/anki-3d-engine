@@ -10,8 +10,8 @@
 #pragma anki technique_start frag
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_inTex;
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_inTex : register(t0);
 
 Vec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {

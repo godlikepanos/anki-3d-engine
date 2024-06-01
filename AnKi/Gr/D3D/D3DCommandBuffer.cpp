@@ -132,11 +132,6 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
 void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
 {
 	reg.validate();
@@ -156,11 +151,6 @@ void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
 	}
 }
 
-void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
 void CommandBuffer::bindSampler(Register reg, Sampler* sampler)
 {
 	reg.validate();
@@ -173,11 +163,6 @@ void CommandBuffer::bindSampler(Register reg, Sampler* sampler)
 	self.m_mcmdb->pushObjectRef(sampler);
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
 void CommandBuffer::bindUniformBuffer(Register reg, const BufferView& buff)
 {
 	reg.validate();
@@ -185,11 +170,6 @@ void CommandBuffer::bindUniformBuffer(Register reg, const BufferView& buff)
 
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
 	self.m_descriptors.bindCbv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
-}
-
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
-{
-	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::bindStorageBuffer(Register reg, const BufferView& buff)
@@ -209,21 +189,6 @@ void CommandBuffer::bindStorageBuffer(Register reg, const BufferView& buff)
 	}
 }
 
-void CommandBuffer::bindStorageTexture(U32 set, U32 binding, const TextureView& tex, U32 arrayIdx)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructure* as, U32 arrayIdx)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferView& buff, Format fmt, U32 arrayIdx)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
 void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format fmt)
 {
 	reg.validate();
@@ -241,7 +206,7 @@ void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format
 	}
 }
 
-void CommandBuffer::bindAllBindless(U32 set)
+void CommandBuffer::bindAccelerationStructure(Register reg, AccelerationStructure* as)
 {
 	ANKI_ASSERT(!"TODO");
 }

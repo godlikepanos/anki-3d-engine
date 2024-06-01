@@ -6,8 +6,8 @@
 #pragma once
 
 #include <AnKi/Gr/ShaderProgram.h>
-#include <AnKi/Gr/Vulkan/VkPipelineLayoutFactory.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
+#include <AnKi/Gr/Vulkan/VkDescriptor.h>
+#include <AnKi/Gr/Vulkan/VkBuffer.h>
 
 namespace anki {
 
@@ -42,15 +42,9 @@ public:
 		return &m_graphics.m_shaderCreateInfos[0];
 	}
 
-	const PipelineLayout& getPipelineLayout() const
+	const PipelineLayout2& getPipelineLayout() const
 	{
-		return m_pplineLayout;
-	}
-
-	const DSLayout& getDescriptorSetLayout(U32 set) const
-	{
-		ANKI_ASSERT(m_descriptorSetLayouts[set]);
-		return *m_descriptorSetLayouts[set];
+		return *m_pplineLayout;
 	}
 
 	const ShaderReflection& getReflectionInfo() const
@@ -103,8 +97,7 @@ public:
 private:
 	GrDynamicArray<ShaderPtr> m_shaders;
 
-	PipelineLayout m_pplineLayout = {};
-	Array<const DSLayout*, kMaxDescriptorSets> m_descriptorSetLayouts = {};
+	PipelineLayout2* m_pplineLayout = nullptr;
 
 	ShaderReflection m_refl;
 
@@ -130,6 +123,8 @@ private:
 		U32 m_missShaderCount = 0;
 		BufferPtr m_allHandlesBuff;
 	} m_rt;
+
+	void rewriteSpirv(ShaderReflectionDescriptorRelated& refl, GrDynamicArray<GrDynamicArray<U32>>& rewrittenSpirvs);
 };
 /// @}
 

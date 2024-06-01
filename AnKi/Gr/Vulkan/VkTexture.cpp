@@ -5,7 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/VkTexture.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
+#include <AnKi/Gr/Vulkan/VkDescriptor.h>
 
 namespace anki {
 
@@ -33,7 +33,7 @@ U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor&
 
 	if(entry.m_bindlessIndex == kMaxU32) [[unlikely]]
 	{
-		entry.m_bindlessIndex = DSBindless::getSingleton().bindTexture(entry.m_handle, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		entry.m_bindlessIndex = BindlessDescriptorSet::getSingleton().bindTexture(entry.m_handle, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	return entry.m_bindlessIndex;

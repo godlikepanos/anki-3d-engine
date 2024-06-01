@@ -6,8 +6,8 @@
 #if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_inputTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<RVec4> g_inputTex : register(t0);
 
 #	if ANKI_COMPUTE_SHADER
 #		define USE_COMPUTE 1
@@ -16,21 +16,20 @@
 #	endif
 
 #	if USE_COMPUTE
-[[vk::binding(2)]] RWTexture2D<RVec4> g_storageTex;
+RWTexture2D<RVec4> g_storageTex : register(u0);
 
 struct Uniforms
 {
 	Vec2 m_viewportSize;
 	UVec2 m_viewportSizeU;
 };
-
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 #	endif
 
 #	if USE_COMPUTE
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 #	if USE_COMPUTE

@@ -20,15 +20,15 @@
 
 #define THREADGROUP_SIZE ANKI_TASK_SHADER_THREADGROUP_SIZE
 
-[[vk::binding(0)]] StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances;
-[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(3)]] StructuredBuffer<Mat3x4> g_transforms;
-[[vk::binding(4)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
-[[vk::binding(5)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs;
-[[vk::binding(6)]] RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances;
-[[vk::binding(7)]] Texture2D<Vec4> g_hzbTexture;
-[[vk::binding(8)]] SamplerState g_nearestClampSampler;
+StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
+StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes : register(t4);
+RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs : register(u0);
+RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(u1);
+Texture2D<Vec4> g_hzbTexture : register(t5);
+SamplerState g_nearestClampSampler : register(s0);
 
 struct Consts
 {
@@ -46,7 +46,7 @@ struct Consts
 	U32 m_padding2;
 	U32 m_padding3;
 };
-[[vk::push_constant]] ConstantBuffer<Consts> g_unis;
+ANKI_PUSH_CONSTANTS(Consts, g_unis)
 
 [numthreads(THREADGROUP_SIZE, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupId : SV_GROUPID,
 											   U32 svGroupIndex : SV_GROUPINDEX)

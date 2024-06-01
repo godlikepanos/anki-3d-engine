@@ -62,8 +62,8 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());
-		rgraphCtx.bindStorageTexture(0, 1, m_runCtx.m_exposureLuminanceHandle);
-		rgraphCtx.bindTexture(0, 0, getRenderer().getDownscaleBlur().getRt(), TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
+		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_exposureLuminanceHandle);
+		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDownscaleBlur().getRt(), TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
 
 		cmdb.dispatchCompute(1, 1, 1);
 	});

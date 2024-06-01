@@ -29,21 +29,20 @@ Shader* Shader::newInstance(const ShaderInitInfo& init)
 
 ShaderImpl::~ShaderImpl()
 {
-	if(m_handle)
-	{
-		vkDestroyShaderModule(getVkDevice(), m_handle, nullptr);
-	}
 }
 
 Error ShaderImpl::init(const ShaderInitInfo& inf)
 {
-	ANKI_ASSERT(inf.m_binary.getSize() > 0);
-	ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
+	inf.validate();
+	ANKI_ASSERT((inf.m_binary.getSize() % sizeof(U32)) == 0);
 	m_shaderType = inf.m_shaderType;
 	m_hasDiscard = inf.m_reflection.m_fragment.m_discards;
 	m_shaderBinarySize = U32(inf.m_binary.getSizeInBytes());
 	m_reflection = inf.m_reflection;
 	m_reflection.validate();
+
+	m_spirvBin.resize(inf.m_binary.getSize() / sizeof(U32));
+	memcpy(m_spirvBin.getBegin(), inf.m_binary.getBegin(), inf.m_binary.getSizeInBytes());
 
 #if ANKI_DUMP_SHADERS
 	{
@@ -55,11 +54,6 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 		ANKI_CHECK(fileSpirv.write(&inf.m_binary[0], inf.m_binary.getSize()));
 	}
 #endif
-
-	VkShaderModuleCreateInfo ci = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, inf.m_binary.getSize(),
-								   reinterpret_cast<const uint32_t*>(&inf.m_binary[0])};
-
-	ANKI_VK_CHECK(vkCreateShaderModule(getVkDevice(), &ci, nullptr, &m_handle));
 
 	return Error::kNone;
 }

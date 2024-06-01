@@ -11,17 +11,17 @@
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<Vec4> g_depthTex;
-[[vk::binding(2)]] Texture2D<Vec4> g_shadowsTex;
-[[vk::binding(3)]] Texture2D<Vec4> g_varianceTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<Vec4> g_depthTex : register(t0);
+Texture2D<Vec4> g_shadowsTex : register(t1);
+Texture2D<Vec4> g_varianceTex : register(t2);
 
-[[vk::binding(4)]] RWTexture2D<UVec4> g_shadowStorageTex;
+RWTexture2D<UVec4> g_shadowStorageTex : register(u0);
 #if !LAST_PASS
-[[vk::binding(5)]] RWTexture2D<Vec4> g_varianceStorageTex;
+RWTexture2D<Vec4> g_varianceStorageTex : register(u1);
 #endif
 
-[[vk::push_constant]] ConstantBuffer<Mat4> g_invProjMat;
+ANKI_PUSH_CONSTANTS(Mat4, g_invProjMat)
 
 constexpr I32 kConvolutionRadius = 2;
 constexpr F32 kKernelWeights[kConvolutionRadius + 1] = {1.0, 2.0 / 3.0, 1.0 / 6.0};

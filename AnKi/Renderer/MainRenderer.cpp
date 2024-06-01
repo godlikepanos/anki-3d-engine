@@ -118,8 +118,8 @@ Error MainRenderer::render(Texture* presentTex)
 			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 
 			cmdb.bindShaderProgram(m_blitGrProg.get());
-			cmdb.bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
+			cmdb.bindSampler(ANKI_REG(s0), m_r->getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_ctx->m_outRenderTarget);
 
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		});

@@ -6,11 +6,12 @@
 #if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #	include <AnKi/Shaders/Functions.hlsl>
-constexpr U32 kTonemappingBinding = 2u;
-#	include <AnKi/Shaders/TonemappingResources.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_inTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<RVec4> g_inTex : register(t0);
+
+#	define TONEMAPPING_REGISTER u0
+#	include <AnKi/Shaders/TonemappingResources.hlsl>
 
 struct Uniforms
 {
@@ -19,19 +20,18 @@ struct Uniforms
 	F32 m_padding0;
 	F32 m_padding1;
 };
-
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 #	if ANKI_COMPUTE_SHADER
 #		define THREADGROUP_SIZE_X 8
 #		define THREADGROUP_SIZE_Y 8
-[[vk::binding(3)]] RWTexture2D<RVec4> g_storageTex;
+RWTexture2D<RVec4> g_storageTex : register(u1);
 #	endif
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER

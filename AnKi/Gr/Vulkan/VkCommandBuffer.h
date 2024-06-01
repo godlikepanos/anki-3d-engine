@@ -109,15 +109,13 @@ private:
 	U32 m_renderpassHeight = 0;
 #if ANKI_ASSERTIONS_ENABLED
 	U32 m_commandCount = 0;
-	U32 m_setPushConstantsSize = 0;
 	U32 m_debugMarkersPushed = 0;
 	Bool m_submitted = false;
 	Bool m_insideRenderpass = false;
 #endif
 
 	PipelineStateTracker m_state;
-
-	Array<DSStateTracker, kMaxDescriptorSets> m_dsetState;
+	DescriptorState m_descriptorState;
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
 	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);

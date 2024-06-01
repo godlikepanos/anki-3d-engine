@@ -13,6 +13,64 @@
 #	include <AnKi/Shaders/Include/Common.h>
 #endif
 
+#if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_PUSH_CONSTANTS(type, var) [[vk::push_constant]] ConstantBuffer<type> var;
+#else
+#	define ANKI_PUSH_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3000);
+#endif
+
+#if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_BINDLESS(texType, compType) \
+		[[vk::binding(0, 1000000)]] Texture##texType<compType> g_bindlessTextures##texType##compType[]; \
+		Texture##texType<compType> getBindlessTexture##texType##compType(U32 idx) \
+		{ \
+			return g_bindlessTextures##texType##compType[idx]; \
+		} \
+		Texture##texType<compType> getBindlessTextureNonUniformIndex##texType##compType(U32 idx) \
+		{ \
+			return g_bindlessTextures##texType##compType[NonUniformResourceIndex(idx)]; \
+		}
+#else
+#	define ANKI_BINDLESS(texType, compType) \
+		Texture##texType<compType> getBindlessTexture##texType##compType(U32 idx) \
+		{ \
+			Texture##texType<compType> tex = ResourceDescriptorHeap[idx]; \
+			return tex; \
+		} \
+		Texture##texType<compType> getBindlessTextureNonUniformIndex##texType##compType(U32 idx) \
+		{ \
+			Texture##texType<compType> tex = ResourceDescriptorHeap[NonUniformResourceIndex(idx)]; \
+			return tex; \
+		}
+#endif
+
+#if ANKI_SUPPORTS_16BIT_TYPES
+#	define ANKI_BINDLESS2(texType) \
+		ANKI_BINDLESS(texType, UVec4) \
+		ANKI_BINDLESS(texType, IVec4) \
+		ANKI_BINDLESS(texType, Vec4)
+
+#	define ANKI_BINDLESS3() \
+		ANKI_BINDLESS2(2D) \
+		ANKI_BINDLESS2(Cube) \
+		ANKI_BINDLESS2(2DArray) \
+		ANKI_BINDLESS2(3D)
+#else
+#	define ANKI_BINDLESS2(texType) \
+		ANKI_BINDLESS(texType, UVec4) \
+		ANKI_BINDLESS(texType, IVec4) \
+		ANKI_BINDLESS(texType, Vec4) \
+		ANKI_BINDLESS(texType, RVec4)
+
+#	define ANKI_BINDLESS3() \
+		ANKI_BINDLESS2(2D) \
+		ANKI_BINDLESS2(Cube) \
+		ANKI_BINDLESS2(2DArray) \
+		ANKI_BINDLESS2(3D)
+#endif
+
+ANKI_BINDLESS3()
+
 template<typename T>
 T uvToNdc(T x)
 {

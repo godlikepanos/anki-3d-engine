@@ -9,11 +9,11 @@
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<Vec4> g_quarterShadowsTex;
-[[vk::binding(2)]] RWTexture2D<Vec4> g_fullShadowStorageTex;
-[[vk::binding(3)]] Texture2D<Vec4> g_quarterDepthTex;
-[[vk::binding(4)]] Texture2D<Vec4> g_fullDepthTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<Vec4> g_quarterShadowsTex : register(t0);
+RWTexture2D<Vec4> g_fullShadowStorageTex : register(u0);
+Texture2D<Vec4> g_quarterDepthTex : register(t1);
+Texture2D<Vec4> g_fullDepthTex : register(t2);
 
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {

@@ -14,25 +14,23 @@
 
 constexpr F32 kPhaseFunctionAnisotropy = 0.3;
 
-[[vk::binding(0)]] SamplerState g_linearAnyRepeatSampler;
-[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(2)]] SamplerComparisonState g_linearAnyClampShadowSampler;
+SamplerState g_linearAnyRepeatSampler : register(s0);
+SamplerState g_linearAnyClampSampler : register(s1);
+SamplerComparisonState g_linearAnyClampShadowSampler : register(s2);
 
-[[vk::binding(3)]] RWTexture3D<Vec4> g_volume;
-[[vk::binding(4)]] Texture2D<Vec4> g_noiseTex;
-[[vk::binding(5)]] Texture3D<Vec4> g_prevVolume;
+RWTexture3D<Vec4> g_volume : register(u0);
+Texture2D<Vec4> g_noiseTex : register(t0);
+Texture3D<Vec4> g_prevVolume : register(t1);
 
-[[vk::binding(6)]] ConstantBuffer<GlobalRendererUniforms> g_globalUniforms;
-[[vk::binding(7)]] StructuredBuffer<PointLight> g_pointLights;
-[[vk::binding(7)]] StructuredBuffer<SpotLight> g_spotLights;
-[[vk::binding(8)]] Texture2D<Vec4> g_shadowAtlasTex;
-[[vk::binding(9)]] StructuredBuffer<GlobalIlluminationProbe> g_giProbes;
-[[vk::binding(10)]] StructuredBuffer<FogDensityVolume> g_fogDensityVolumes;
-[[vk::binding(11)]] StructuredBuffer<Cluster> g_clusters;
+ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
+StructuredBuffer<PointLight> g_pointLights : register(t2);
+StructuredBuffer<SpotLight> g_spotLights : register(t3);
+Texture2D<Vec4> g_shadowAtlasTex : register(t4);
+StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t5);
+StructuredBuffer<FogDensityVolume> g_fogDensityVolumes : register(t6);
+StructuredBuffer<Cluster> g_clusters : register(t7);
 
-[[vk::push_constant]] ConstantBuffer<VolumetricLightingUniforms> g_fogUnis;
-
-ANKI_BINDLESS_SET(1)
+ANKI_PUSH_CONSTANTS(VolumetricLightingUniforms, g_fogUnis)
 
 static Vec3 g_svDispatchThreadId;
 
@@ -174,7 +172,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 
 			// Sample
 			diffIndirect =
-				sampleGlobalIllumination(worldPos, viewDir, probe, g_bindlessTextures3dF32[probe.m_volumeTexture], g_linearAnyClampSampler);
+				sampleGlobalIllumination(worldPos, viewDir, probe, getBindlessTexture3DRVec4(probe.m_volumeTexture), g_linearAnyClampSampler);
 		}
 		else
 		{
@@ -195,8 +193,8 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const Vec3 c = sampleGlobalIllumination(
-					worldPos, viewDir, probe, g_bindlessTextures3dF32[NonUniformResourceIndex(probe.m_volumeTexture)], g_linearAnyClampSampler);
+				const Vec3 c = sampleGlobalIllumination(worldPos, viewDir, probe, getBindlessTextureNonUniformIndex3DRVec4(probe.m_volumeTexture),
+														g_linearAnyClampSampler);
 				diffIndirect += c * blendWeight;
 			}
 

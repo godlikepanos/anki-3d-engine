@@ -19,22 +19,22 @@
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-[[vk::binding(0)]] ConstantBuffer<TraditionalDeferredShadingUniforms> g_unis;
+ConstantBuffer<TraditionalDeferredShadingUniforms> g_unis : register(b0);
 
-[[vk::binding(1)]] StructuredBuffer<U32> g_visibleLightIds;
-[[vk::binding(2)]] StructuredBuffer<GpuSceneLight> g_lights;
+StructuredBuffer<U32> g_visibleLightIds : register(t0);
+StructuredBuffer<GpuSceneLight> g_lights : register(t1);
 
-[[vk::binding(3)]] SamplerState g_gbufferSampler;
-[[vk::binding(4)]] Texture2D<Vec4> g_gbufferTex0;
-[[vk::binding(5)]] Texture2D<Vec4> g_gbufferTex1;
-[[vk::binding(6)]] Texture2D<Vec4> g_gbufferTex2;
-[[vk::binding(7)]] Texture2D<Vec4> g_depthTex;
+SamplerState g_gbufferSampler : register(s0);
+Texture2D<Vec4> g_gbufferTex0 : register(t2);
+Texture2D<Vec4> g_gbufferTex1 : register(t3);
+Texture2D<Vec4> g_gbufferTex2 : register(t4);
+Texture2D<Vec4> g_depthTex : register(t5);
 
 // For directional light:
-[[vk::binding(8)]] SamplerComparisonState g_shadowMapSampler;
-[[vk::binding(9)]] Texture2D<RVec4> g_shadowMap;
+SamplerComparisonState g_shadowMapSampler : register(s1);
+Texture2D<RVec4> g_shadowMap : register(t6);
 
-[[vk::binding(10)]] ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts;
+ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts : register(b1);
 
 RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {

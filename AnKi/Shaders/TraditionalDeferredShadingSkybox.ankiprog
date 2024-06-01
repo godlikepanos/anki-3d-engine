@@ -17,20 +17,20 @@
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-[[vk::push_constant]] ConstantBuffer<TraditionalDeferredSkyboxUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(TraditionalDeferredSkyboxUniforms, g_unis)
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_depthTex;
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_depthTex : register(t0);
 
 #if METHOD == 1
-[[vk::binding(2)]] SamplerState g_trilinearAnySampler;
-[[vk::binding(3)]] Texture2D<RVec4> g_envMapTex;
+SamplerState g_trilinearAnySampler : register(s1);
+Texture2D<RVec4> g_envMapTex : register(t1);
 #elif METHOD == 2
-[[vk::binding(2)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(3)]] Texture2D<Vec4> g_skyLut;
+SamplerState g_linearAnyClampSampler : register(s1);
+Texture2D<Vec4> g_skyLut : register(t1);
 #endif
 
-[[vk::binding(4)]] ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts;
+ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts : register(b0);
 
 RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {

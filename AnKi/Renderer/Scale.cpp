@@ -298,12 +298,12 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_scaleGrProg.get());
 
-	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-	rgraphCtx.bindTexture(0, 1, inRt);
+	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+	rgraphCtx.bindTexture(ANKI_REG(t0), inRt);
 
 	if(preferCompute)
 	{
-		rgraphCtx.bindStorageTexture(0, 2, outRt);
+		rgraphCtx.bindTexture(ANKI_REG(u0), outRt);
 	}
 
 	if(m_upscalingMethod == UpscalingMethod::kFsr)
@@ -363,12 +363,12 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_sharpenGrProg.get());
 
-	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-	rgraphCtx.bindTexture(0, 1, inRt);
+	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+	rgraphCtx.bindTexture(ANKI_REG(t0), inRt);
 
 	if(preferCompute)
 	{
-		rgraphCtx.bindStorageTexture(0, 2, outRt);
+		rgraphCtx.bindTexture(ANKI_REG(u0), outRt);
 	}
 
 	class
@@ -435,10 +435,10 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_tonemapGrProg.get());
 
-	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindTexture(0, 1, inRt);
+	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+	rgraphCtx.bindTexture(ANKI_REG(t0), inRt);
 
-	rgraphCtx.bindStorageTexture(0, 2, getRenderer().getTonemapping().getRt());
+	rgraphCtx.bindTexture(ANKI_REG(u0), getRenderer().getTonemapping().getRt());
 
 	if(preferCompute)
 	{
@@ -451,7 +451,7 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 		pc.m_viewportSizeOverOne = 1.0f / Vec2(getRenderer().getPostProcessResolution());
 		pc.m_viewportSize = getRenderer().getPostProcessResolution();
 		cmdb.setPushConstants(&pc, sizeof(pc));
-		rgraphCtx.bindStorageTexture(0, 3, outRt);
+		rgraphCtx.bindTexture(ANKI_REG(u1), outRt);
 
 		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	}

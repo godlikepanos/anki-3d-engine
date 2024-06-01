@@ -7,9 +7,9 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-[[vk::binding(0)]] StructuredBuffer<UVec2> g_patchHeaders;
-[[vk::binding(1)]] StructuredBuffer<U32> g_srcBuffer;
-[[vk::binding(2)]] RWStructuredBuffer<U32> g_dstBuffer;
+StructuredBuffer<UVec2> g_patchHeaders : register(t0);
+StructuredBuffer<U32> g_srcBuffer : register(t1);
+RWStructuredBuffer<U32> g_dstBuffer : register(u0);
 
 [numthreads(64, 1, 1)] void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {

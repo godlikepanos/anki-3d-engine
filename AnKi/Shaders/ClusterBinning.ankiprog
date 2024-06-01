@@ -44,13 +44,12 @@ struct ClusterBinningUniforms
 
 	Mat4 m_invertedViewProjMat;
 };
+ANKI_PUSH_CONSTANTS(ClusterBinningUniforms, g_unis)
 
-[[vk::push_constant]] ConstantBuffer<ClusterBinningUniforms> g_unis;
+StructuredBuffer<U32> g_visibleObjectIds : register(t0); // 1st index is the count and then the indices to the g_objects
+StructuredBuffer<GpuSceneType> g_objects : register(t1);
 
-[[vk::binding(0)]] StructuredBuffer<U32> g_visibleObjectIds; // 1st index is the count and then the indices to the g_objects
-[[vk::binding(1)]] StructuredBuffer<GpuSceneType> g_objects;
-
-[[vk::binding(2)]] RWStructuredBuffer<Cluster> g_clusters;
+RWStructuredBuffer<Cluster> g_clusters : register(u0);
 
 #define THREADGROUP_SIZE 64
 

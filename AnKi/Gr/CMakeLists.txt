@@ -7,6 +7,7 @@ set(backend_sources
 	ShaderProgram.cpp
 	Utils/StackGpuMemoryPool.cpp
 	BackendCommon/Functions.cpp
+	BackendCommon/Common.cpp
 	Utils/SegregatedListsGpuMemoryPool.cpp)
 
 set(backend_headers

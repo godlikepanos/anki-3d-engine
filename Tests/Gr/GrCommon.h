@@ -33,7 +33,7 @@ inline ShaderPtr createShader(CString src, ShaderType type)
 	ShaderReflection refl;
 	ShaderCompilerString errorStr;
 #if ANKI_GR_BACKEND_VULKAN
-	ANKI_TEST_EXPECT_NO_ERR(doReflectionSpirv(bin, type, refl, errorStr));
+	ANKI_TEST_EXPECT_NO_ERR(doReflectionSpirv(WeakArray(bin.getBegin(), bin.getSize()), type, refl, errorStr));
 #else
 	ANKI_TEST_EXPECT_NO_ERR(doReflectionDxil(bin, type, refl, errorStr));
 #endif

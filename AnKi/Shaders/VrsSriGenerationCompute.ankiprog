@@ -15,8 +15,8 @@
 // Find the maximum luma derivative in x and y, relative to the average luma of the block.
 // Each thread handles a 2x2 region when using 8x8 VRS tiles and a 2x4 region when using 16x16 VRS tiles.
 
-[[vk::binding(0)]] Texture2D<RVec4> g_inputTex;
-[[vk::binding(1)]] SamplerState g_nearestClampSampler;
+Texture2D<RVec4> g_inputTex : register(t0);
+SamplerState g_nearestClampSampler : register(s0);
 
 #if SRI_TEXEL_DIMENSION == 8
 #	define REGION_SIZE_X 2
@@ -29,7 +29,7 @@
 #define THREADGROUP_SIZE_X (SRI_TEXEL_DIMENSION / REGION_SIZE_X)
 #define THREADGROUP_SIZE_Y (SRI_TEXEL_DIMENSION / REGION_SIZE_Y)
 
-[[vk::binding(2)]] RWTexture2D<U32> g_sriStorageTex;
+RWTexture2D<U32> g_sriStorageTex : register(u0);
 
 struct Uniforms
 {
@@ -38,7 +38,7 @@ struct Uniforms
 	F32 m_padding0;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 #if SHARED_MEMORY
 // Ideally, we'd be able to calculate the min/max/average using subgroup operations, but there's no guarantee

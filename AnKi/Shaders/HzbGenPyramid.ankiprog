@@ -15,17 +15,16 @@ struct Uniforms
 	U32 m_threadGroupCount;
 	U32 m_mipmapCount;
 };
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
-
-[[vk::binding(0)]] globallycoherent RWTexture2D<Vec4> g_dstStorageTextures[kMaxMipsSinglePassDownsamplerCanProduce];
-[[vk::binding(1)]] globallycoherent RWStructuredBuffer<U32> g_spdCounter;
-[[vk::binding(2)]] Texture2D<Vec4> g_srcTex;
+globallycoherent RWStructuredBuffer<U32> g_spdCounter : register(u0);
+globallycoherent RWTexture2D<Vec4> g_dstStorageTextures[kMaxMipsSinglePassDownsamplerCanProduce] : register(u1);
+Texture2D<Vec4> g_srcTex : register(t0);
 
 #if MIN_MAX_SAMPLER
-[[vk::binding(3)]] SamplerState g_minMaxAnyClampSampler;
+SamplerState g_minMaxAnyClampSampler : register(s0);
 #else
-[[vk::binding(3)]] SamplerState g_linearAnyClampSampler;
+SamplerState g_linearAnyClampSampler : register(s0);
 #endif
 
 // Include SPD

@@ -8,16 +8,16 @@
 
 #pragma anki technique_start comp
 
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(1)]] ByteAddressBuffer g_gpuScene;
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
+ByteAddressBuffer g_gpuScene : register(t1);
 
-[[vk::binding(2)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+StructuredBuffer<U32> g_visibleRenderableIndices : register(t2); // 1st element is the count
 
-[[vk::binding(3)]] StructuredBuffer<U32> g_shaderHandles;
+StructuredBuffer<U32> g_shaderHandles : register(t3);
 
-[[vk::binding(4)]] RWStructuredBuffer<U32> g_sbtBuffer;
+RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
 
-[[vk::push_constant]] ConstantBuffer<RtShadowsSbtBuildUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(RtShadowsSbtBuildUniforms, g_unis)
 
 #define NUMTHREADS 64
 

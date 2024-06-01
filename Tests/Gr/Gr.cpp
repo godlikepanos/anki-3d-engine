@@ -89,7 +89,7 @@ TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue)
 	TexturePtr tex = GrManager::getSingleton().newTexture(texInit);
 
 	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
+	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
@@ -311,7 +311,9 @@ struct Foo2
 	uint4 m_val;
 };
 #if defined(__spirv__)
-[[vk::push_constants] ConstantBuffer<Foo2> g_pushConsts;
+[[vk::push_constant]] ConstantBuffer<Foo2> g_pushConsts;
+
+[[vk::binding(0, 1000000)]] Texture2D g_bindless[];
 #else
 ConstantBuffer<Foo2> g_pushConsts : register(b0, space3000);
 #endif
@@ -325,7 +327,11 @@ void main()
 
 	g_rwtex[0][uint2(0, 0)] = g_consts.m_val;
 
+#if defined(__spirv__)
+	Texture2D tex = g_bindless[g_pushConsts.m_val.x];
+#else
 	Texture2D tex = ResourceDescriptorHeap[g_pushConsts.m_val.x];
+#endif
 	g_rwtex[1][uint2(0, 0)] = tex.SampleLevel(g_sampler, 0.0f, 0.0f);
 
 	g_rwtex[2][uint2(0, 0)] = g_tex.SampleLevel(g_sampler, 0.0f, 0.0f);
@@ -383,7 +389,7 @@ void main()
 
 		// Record
 		CommandBufferInitInfo cmdbInit;
-		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch;
+		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		cmdb->bindShaderProgram(prog.get());

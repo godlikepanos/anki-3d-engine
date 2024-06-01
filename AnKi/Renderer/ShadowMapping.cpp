@@ -594,12 +594,12 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 		const UVec4 lightIndex(lightc.getGpuSceneLightAllocation().getIndex());
 		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
 
-		cmdb.bindStorageBuffer(0, 0, hashBuff);
-		cmdb.bindStorageBuffer(0, 1, mdiBuff);
-		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferView());
-		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferView());
-		cmdb.bindStorageBuffer(0, 4, clearTileIndirectArgs);
-		cmdb.bindStorageBuffer(0, 5, taskShadersIndirectArgs);
+		cmdb.bindStorageBuffer(ANKI_REG(t0), hashBuff);
+		cmdb.bindStorageBuffer(ANKI_REG(u0), mdiBuff);
+		cmdb.bindStorageBuffer(ANKI_REG(u1), GpuSceneArrays::Light::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(u2), GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(u3), clearTileIndirectArgs);
+		cmdb.bindStorageBuffer(ANKI_REG(u4), taskShadersIndirectArgs);
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);

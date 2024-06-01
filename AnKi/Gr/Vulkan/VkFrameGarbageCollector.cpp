@@ -5,7 +5,7 @@
 
 #include <AnKi/Gr/Vulkan/VkFrameGarbageCollector.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
+#include <AnKi/Gr/Vulkan/VkDescriptor.h>
 #include <AnKi/Gr/Fence.h>
 
 namespace anki {
@@ -50,7 +50,7 @@ void FrameGarbageCollector::collectGarbage()
 
 			for(U32 bindlessIndex : textureGarbage->m_bindlessIndices)
 			{
-				DSBindless::getSingleton().unbindTexture(bindlessIndex);
+				BindlessDescriptorSet::getSingleton().unbindTexture(bindlessIndex);
 			}
 
 			if(textureGarbage->m_imageHandle)

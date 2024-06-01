@@ -65,9 +65,6 @@ public:
 
 	ShaderReflection m_reflection;
 
-	/// @note It's OK to have entries in that array with consts that do not appear in the shader.
-	ConstWeakArray<ShaderSpecializationConstValue> m_constValues;
-
 	ShaderInitInfo()
 	{
 	}
@@ -82,6 +79,13 @@ public:
 		, m_shaderType(type)
 		, m_binary(bin)
 	{
+	}
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_shaderType != ShaderType::kCount);
+		ANKI_ASSERT(m_binary.getSize() > 0);
+		m_reflection.validate();
 	}
 };
 

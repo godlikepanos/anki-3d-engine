@@ -30,13 +30,13 @@ typedef F32 ColorType;
 #		error See file
 #	endif
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<ColorType> g_inTex;
-[[vk::binding(2)]] Texture2D<Vec4> g_depthTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<ColorType> g_inTex : register(t0);
+Texture2D<Vec4> g_depthTex : register(t1);
 
 #	if ANKI_COMPUTE_SHADER
 #		define THREADGROUP_SQRT_SIZE 8
-[[vk::binding(3)]] RWTexture2D<ColorType> g_outImg;
+RWTexture2D<ColorType> g_outImg : register(u0);
 #	endif
 
 F32 computeDepthWeight(F32 refDepth, F32 depth)
@@ -62,7 +62,7 @@ void sampleTex(Vec2 uv, F32 refDepth, inout ColorType col, inout F32 weight)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SQRT_SIZE, THREADGROUP_SQRT_SIZE, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-ColorType main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+ColorType main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 	UVec2 textureSize;

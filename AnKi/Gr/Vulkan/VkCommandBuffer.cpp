@@ -10,6 +10,8 @@
 #include <AnKi/Gr/Vulkan/VkGrUpscaler.h>
 #include <AnKi/Gr/Vulkan/VkOcclusionQuery.h>
 #include <AnKi/Gr/Vulkan/VkTimestampQuery.h>
+#include <AnKi/Gr/Vulkan/VkSampler.h>
+#include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
 
 #if ANKI_DLSS
 #	include <ThirdParty/DlssSdk/sdk/include/nvsdk_ngx.h>
@@ -263,108 +265,106 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	self.m_state.setBlendOperation(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx)
+void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
 {
-	ANKI_ASSERT(texView.isGoodForSampling());
-
+	reg.validate();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
 	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
-	const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
 
-	self.m_dsetState[set].bindTexture(binding, arrayIdx, tex.getImageView(texView.getSubresource()), lay);
-}
-
-void CommandBuffer::bindTexture([[maybe_unused]] Register reg, [[maybe_unused]] const TextureView& texView)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.commandCommon();
-	self.m_dsetState[set].bindSampler(binding, arrayIdx, sampler);
-	self.m_microCmdb->pushObjectRef(sampler);
-}
-
-void CommandBuffer::bindSampler([[maybe_unused]] Register reg, [[maybe_unused]] Sampler* sampler)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
-{
-	ANKI_ASSERT(buff.isValid());
-
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.commandCommon();
-	self.m_dsetState[set].bindUniformBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange());
-}
-
-void CommandBuffer::bindUniformBuffer([[maybe_unused]] Register reg, [[maybe_unused]] const BufferView& buff)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx)
-{
-	ANKI_ASSERT(buff.isValid());
-
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.commandCommon();
-	self.m_dsetState[set].bindStorageBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange());
-}
-
-void CommandBuffer::bindStorageBuffer([[maybe_unused]] Register reg, [[maybe_unused]] const BufferView& buff)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::bindStorageTexture(U32 set, U32 binding, const TextureView& view, U32 arrayIdx)
-{
-	ANKI_ASSERT(view.isGoodForStorage());
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.commandCommon();
-
-	const TextureImpl& tex = static_cast<const TextureImpl&>(view.getTexture());
-	self.m_dsetState[set].bindStorageTexture(binding, arrayIdx, tex.getImageView(view.getSubresource()));
-
-	const Bool isPresentable = !!(tex.getTextureUsage() & TextureUsageBit::kPresent);
-	if(isPresentable)
+	if(reg.m_resourceType == HlslResourceType::kSrv)
 	{
-		self.m_renderedToDefaultFb = true;
+		ANKI_ASSERT(texView.isGoodForSampling());
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
+		self.m_descriptorState.bindSampledTexture(reg.m_space, reg.m_bindPoint, tex.getImageView(texView.getSubresource()), lay);
+	}
+	else
+	{
+		ANKI_ASSERT(texView.isGoodForStorage());
+		self.m_descriptorState.bindStorageTexture(reg.m_space, reg.m_bindPoint, tex.getImageView(texView.getSubresource()));
+
+		const Bool isPresentable = !!(tex.getTextureUsage() & TextureUsageBit::kPresent);
+		if(isPresentable)
+		{
+			self.m_renderedToDefaultFb = true;
+		}
 	}
 }
 
-void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructure* as, U32 arrayIdx)
+void CommandBuffer::bindSampler(Register reg, Sampler* sampler)
 {
+	reg.validate();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindAccelerationStructure(binding, arrayIdx, as);
-	self.m_microCmdb->pushObjectRef(as);
+
+	const VkSampler handle = static_cast<const SamplerImpl&>(*sampler).m_sampler->getHandle();
+	self.m_descriptorState.bindSampler(reg.m_space, reg.m_bindPoint, handle);
+	self.m_microCmdb->pushObjectRef(sampler);
 }
 
-void CommandBuffer::bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferView& buff, Format fmt, U32 arrayIdx)
+void CommandBuffer::bindUniformBuffer(Register reg, const BufferView& buff)
 {
+	reg.validate();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindReadOnlyTexelBuffer(binding, arrayIdx, &buff.getBuffer(), buff.getOffset(), buff.getRange(), fmt);
+
+	const VkBuffer handle = static_cast<const BufferImpl&>(buff.getBuffer()).getHandle();
+	self.m_descriptorState.bindUniformBuffer(reg.m_space, reg.m_bindPoint, handle, buff.getOffset(), buff.getRange());
 }
 
-void CommandBuffer::bindTexelBuffer([[maybe_unused]] Register reg, [[maybe_unused]] const BufferView& buff, [[maybe_unused]] Format fmt)
+void CommandBuffer::bindStorageBuffer(Register reg, const BufferView& buff)
 {
-	ANKI_ASSERT(!"TODO");
-}
+	reg.validate();
+	ANKI_ASSERT(buff.isValid());
 
-void CommandBuffer::bindAllBindless(U32 set)
-{
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_dsetState[set].bindBindlessDescriptorSet();
+
+	const VkBuffer handle = static_cast<const BufferImpl&>(buff.getBuffer()).getHandle();
+	if(reg.m_resourceType == HlslResourceType::kSrv)
+	{
+		self.m_descriptorState.bindReadStorageBuffer(reg.m_space, reg.m_bindPoint, handle, buff.getOffset(), buff.getRange());
+	}
+	else
+	{
+		self.m_descriptorState.bindReadWriteStorageBuffer(reg.m_space, reg.m_bindPoint, handle, buff.getOffset(), buff.getRange());
+	}
+}
+
+void CommandBuffer::bindAccelerationStructure(Register reg, AccelerationStructure* as)
+{
+	reg.validate();
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.commandCommon();
+
+	const VkAccelerationStructureKHR& handle = static_cast<const AccelerationStructureImpl&>(*as).getHandle();
+	self.m_descriptorState.bindAccelerationStructure(reg.m_space, reg.m_bindPoint, &handle);
+	self.m_microCmdb->pushObjectRef(as);
+}
+
+void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format fmt)
+{
+	reg.validate();
+	ANKI_ASSERT(fmt != Format::kNone);
+	reg.validate();
+
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.commandCommon();
+
+	const VkBufferView view = static_cast<const BufferImpl&>(buff.getBuffer()).getOrCreateBufferView(fmt, buff.getOffset(), buff.getRange());
+
+	if(reg.m_resourceType == HlslResourceType::kSrv)
+	{
+		self.m_descriptorState.bindReadTexelBuffer(reg.m_space, reg.m_bindPoint, view);
+	}
+	else
+	{
+		ANKI_ASSERT(reg.m_resourceType == HlslResourceType::kUav);
+		self.m_descriptorState.bindReadWriteTexelBuffer(reg.m_space, reg.m_bindPoint, view);
+	}
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
@@ -373,6 +373,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	self.commandCommon();
 
 	ShaderProgramImpl& impl = static_cast<ShaderProgramImpl&>(*prog);
+	VkPipelineBindPoint bindPoint;
 
 	if(impl.isGraphics())
 	{
@@ -380,6 +381,8 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 		self.m_computeProg = nullptr; // Unbind the compute prog. Doesn't work like vulkan
 		self.m_rtProg = nullptr; // See above
 		self.m_state.bindShaderProgram(&impl);
+
+		bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	}
 	else if(!!(impl.getStages() & ShaderTypeBit::kCompute))
 	{
@@ -389,6 +392,8 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 
 		// Bind the pipeline now
 		vkCmdBindPipeline(self.m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, impl.getComputePipelineHandle());
+
+		bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
 	}
 	else
 	{
@@ -399,27 +404,13 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 
 		// Bind now
 		vkCmdBindPipeline(self.m_handle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, impl.getRayTracingPipelineHandle());
+
+		bindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;
 	}
 
-	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
-	{
-		if(impl.getReflectionInfo().m_descriptorSetMask.get(i))
-		{
-			self.m_dsetState[i].setLayout(&impl.getDescriptorSetLayout(i));
-		}
-		else
-		{
-			// According to the spec the bound DS may be disturbed if the ppline layout is not compatible. Play it safe and dirty the slot. That will
-			// force rebind of the DS at drawcall time.
-			self.m_dsetState[i].setLayoutDirty();
-		}
-	}
+	self.m_descriptorState.setPipelineLayout(&impl.getPipelineLayout(), bindPoint);
 
 	self.m_microCmdb->pushObjectRef(prog);
-
-#if ANKI_EXTRA_CHECKS
-	self.m_setPushConstantsSize = 0;
-#endif
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
@@ -778,7 +769,6 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
 	ANKI_ASSERT(self.m_rtProg);
 	const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*self.m_rtProg);
-	ANKI_ASSERT(sprog.getReflectionInfo().m_descriptor.m_pushConstantsSize == self.m_setPushConstantsSize && "Forgot to set pushConstants");
 
 	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
@@ -790,18 +780,7 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 	self.commandCommon();
 
 	// Bind descriptors
-	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
-	{
-		if(sprog.getReflectionInfo().m_descriptorSetMask.get(i))
-		{
-			VkDescriptorSet dset;
-			if(self.m_dsetState[i].flush(self.m_microCmdb->getDSAllocator(), dset))
-			{
-				vkCmdBindDescriptorSets(self.m_handle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, sprog.getPipelineLayout().getHandle(), i, 1, &dset, 0,
-										nullptr);
-			}
-		}
-	}
+	self.m_descriptorState.flush(self.m_handle, self.m_microCmdb->getDSAllocator());
 
 	Array<VkStridedDeviceAddressRegionKHR, 4> regions;
 	const U64 stbBufferAddress = sbtBuffer.getBuffer().getGpuAddress() + sbtBuffer.getOffset();
@@ -1386,12 +1365,7 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
 	self.commandCommon();
-
-	vkCmdPushConstants(self.m_handle, prog.getPipelineLayout().getHandle(), VK_SHADER_STAGE_ALL, 0, dataSize, data);
-
-#if ANKI_EXTRA_CHECKS
-	self.m_setPushConstantsSize = dataSize;
-#endif
+	self.m_descriptorState.setPushConstants(data, dataSize);
 }
 
 void CommandBuffer::setRasterizationOrder(RasterizationOrder order)
@@ -1485,10 +1459,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	m_pool = &m_microCmdb->getFastMemoryPool();
 
-	for(DSStateTracker& state : m_dsetState)
-	{
-		state.init(m_pool);
-	}
+	m_descriptorState.init(m_pool);
 
 	m_state.setVrsCapable(getGrManagerImpl().getDeviceCapabilities().m_vrs);
 
@@ -1590,7 +1561,6 @@ void CommandBufferImpl::drawcallCommon()
 	commandCommon();
 	ANKI_ASSERT(m_graphicsProg);
 	ANKI_ASSERT(m_insideRenderpass);
-	ANKI_ASSERT(m_graphicsProg->getReflectionInfo().m_descriptor.m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
 
 	// Get or create ppline
 	Pipeline ppline;
@@ -1603,18 +1573,7 @@ void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Bind dsets
-	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
-	{
-		if(m_graphicsProg->getReflectionInfo().m_descriptorSetMask.get(i))
-		{
-			VkDescriptorSet dset;
-			if(m_dsetState[i].flush(m_microCmdb->getDSAllocator(), dset))
-			{
-				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsProg->getPipelineLayout().getHandle(), i, 1, &dset, 0,
-										nullptr);
-			}
-		}
-	}
+	m_descriptorState.flush(m_handle, m_microCmdb->getDSAllocator());
 
 	// Flush viewport
 	if(m_viewportDirty) [[unlikely]]
@@ -1674,23 +1633,11 @@ void CommandBufferImpl::drawcallCommon()
 ANKI_FORCE_INLINE void CommandBufferImpl::dispatchCommon()
 {
 	ANKI_ASSERT(m_computeProg);
-	ANKI_ASSERT(m_computeProg->getReflectionInfo().m_descriptor.m_pushConstantsSize == m_setPushConstantsSize && "Forgot to set pushConstants");
 
 	commandCommon();
 
 	// Bind descriptors
-	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
-	{
-		if(m_computeProg->getReflectionInfo().m_descriptorSetMask.get(i))
-		{
-			VkDescriptorSet dset;
-			if(m_dsetState[i].flush(m_microCmdb->getDSAllocator(), dset))
-			{
-				vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, m_computeProg->getPipelineLayout().getHandle(), i, 1, &dset, 0,
-										nullptr);
-			}
-		}
-	}
+	m_descriptorState.flush(m_handle, m_microCmdb->getDSAllocator());
 }
 
 } // end namespace anki

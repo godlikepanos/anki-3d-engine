@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/Shader.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
+#include <AnKi/Gr/Vulkan/VkCommon.h>
 #include <AnKi/Util/BitSet.h>
 
 namespace anki {
@@ -18,8 +18,8 @@ namespace anki {
 class ShaderImpl final : public Shader
 {
 public:
-	VkShaderModule m_handle = VK_NULL_HANDLE;
 	ShaderReflection m_reflection;
+	GrDynamicArray<U32> m_spirvBin;
 
 	ShaderImpl(CString name)
 		: Shader(name)

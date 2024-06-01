@@ -40,7 +40,7 @@ struct Meshlet
 	uint m_firstVertex;
 };
 
-[[vk::binding(3)]] StructuredBuffer<Meshlet> g_meshlets;
+StructuredBuffer<Meshlet> g_meshlets : register(t3);
 
 [numthreads(64, 1, 1)] void main(uint svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -82,10 +82,10 @@ struct Meshlet
 	uint m_firstVertex;
 };
 
-[[vk::binding(0)]] StructuredBuffer<uint> g_indices;
-[[vk::binding(1)]] StructuredBuffer<float4> g_positions;
-[[vk::binding(2)]] StructuredBuffer<float4> g_colors;
-[[vk::binding(3)]] StructuredBuffer<Meshlet> g_meshlets;
+StructuredBuffer<uint> g_indices : register(t0);
+StructuredBuffer<float4> g_positions : register(t1);
+StructuredBuffer<float4> g_colors : register(t2);
+StructuredBuffer<Meshlet> g_meshlets : register(t3);
 
 [numthreads(6, 1, 1)] [outputtopology("triangle")] void main(in payload Payload payload, out vertices VertOut verts[4],
                                                              out indices uint3 indices[6], uint svGroupId : SV_GROUPID,
@@ -240,10 +240,10 @@ float3 main(VertOut input) : SV_TARGET0
 			rt.m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
 			cmdb->beginRenderPass({rt});
 
-			cmdb->bindStorageBuffer(0, 0, BufferView(indexBuff.get()));
-			cmdb->bindStorageBuffer(0, 1, BufferView(positionsBuff.get()));
-			cmdb->bindStorageBuffer(0, 2, BufferView(colorsBuff.get()));
-			cmdb->bindStorageBuffer(0, 3, BufferView(meshletsBuff.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(indexBuff.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(t1), BufferView(positionsBuff.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(t2), BufferView(colorsBuff.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(t3), BufferView(meshletsBuff.get()));
 
 			cmdb->bindShaderProgram(prog.get());
 

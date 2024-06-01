@@ -21,6 +21,7 @@
 #include <AnKi/Gr/Vulkan/VkGrUpscaler.h>
 #include <AnKi/Gr/Vulkan/VkFence.h>
 #include <AnKi/Gr/Vulkan/VkGpuMemoryManager.h>
+#include <AnKi/Gr/Vulkan/VkDescriptor.h>
 
 #include <AnKi/Window/NativeWindow.h>
 #if ANKI_WINDOWING_SYSTEM_SDL
@@ -337,9 +338,8 @@ GrManagerImpl::~GrManagerImpl()
 	m_frameGarbageCollector.destroy();
 
 	GpuMemoryManager::freeSingleton();
-	PipelineLayoutFactory::freeSingleton();
-	DSLayoutFactory::freeSingleton();
-	DSBindless::freeSingleton();
+	PipelineLayoutFactory2::freeSingleton();
+	BindlessDescriptorSet::freeSingleton();
 	PipelineCache::freeSingleton();
 	FenceFactory::freeSingleton();
 
@@ -463,12 +463,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	DSBindless::allocateSingleton();
-	ANKI_CHECK(DSBindless::getSingleton().init(kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers));
+	BindlessDescriptorSet::allocateSingleton();
+	ANKI_CHECK(BindlessDescriptorSet::getSingleton().init());
 
-	DSLayoutFactory::allocateSingleton();
-
-	PipelineLayoutFactory::allocateSingleton();
+	PipelineLayoutFactory2::allocateSingleton();
 
 	m_frameGarbageCollector.init();
 
@@ -1707,61 +1705,6 @@ void GrManagerImpl::trySetVulkanHandleName(CString name, VkObjectType type, U64 
 	}
 }
 
-VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-											   [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, [[maybe_unused]] void* pUserData)
-{
-#if ANKI_PLATFORM_MOBILE
-	if(pCallbackData->messageIdNumber == 101294395)
-	{
-		// Interface mismatch error. Eg vert shader is writing to varying that is not consumed by frag. Ignore this
-		// stupid error because I'm not going to create more shader variants to fix it. Especially when mobile drivers
-		// do linking anyway. On desktop just enable the maintenance4 extension
-		return false;
-	}
-#endif
-
-	if(pCallbackData->messageIdNumber == 1944932341 || pCallbackData->messageIdNumber == 1303270965)
-	{
-		// Not sure why I'm getting that
-		return false;
-	}
-
-	// Get all names of affected objects
-	GrString objectNames;
-	if(pCallbackData->objectCount)
-	{
-		for(U32 i = 0; i < pCallbackData->objectCount; ++i)
-		{
-			const Char* name = pCallbackData->pObjects[i].pObjectName;
-			objectNames += (name) ? name : "?";
-			if(i < pCallbackData->objectCount - 1)
-			{
-				objectNames += ", ";
-			}
-		}
-	}
-	else
-	{
-		objectNames = "N/A";
-	}
-
-	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-	{
-		ANKI_VK_LOGE("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
-	}
-	else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-	{
-		ANKI_VK_LOGW("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
-	}
-	else
-	{
-		ANKI_VK_LOGI("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
-	}
-
-	return false;
-}
-
 void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, U64 hash) const
 {
 	if(printPipelineShaderInfoInternal(ppline, name, hash))
@@ -1878,6 +1821,61 @@ Error GrManagerImpl::initSurface()
 #endif
 
 	return Error::kNone;
+}
+
+VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+											   [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+											   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, [[maybe_unused]] void* pUserData)
+{
+#if ANKI_PLATFORM_MOBILE
+	if(pCallbackData->messageIdNumber == 101294395)
+	{
+		// Interface mismatch error. Eg vert shader is writing to varying that is not consumed by frag. Ignore this
+		// stupid error because I'm not going to create more shader variants to fix it. Especially when mobile drivers
+		// do linking anyway. On desktop just enable the maintenance4 extension
+		return false;
+	}
+#endif
+
+	if(pCallbackData->messageIdNumber == 1944932341 || pCallbackData->messageIdNumber == 1303270965)
+	{
+		// Not sure why I'm getting that
+		return false;
+	}
+
+	// Get all names of affected objects
+	GrString objectNames;
+	if(pCallbackData->objectCount)
+	{
+		for(U32 i = 0; i < pCallbackData->objectCount; ++i)
+		{
+			const Char* name = pCallbackData->pObjects[i].pObjectName;
+			objectNames += (name) ? name : "?";
+			if(i < pCallbackData->objectCount - 1)
+			{
+				objectNames += ", ";
+			}
+		}
+	}
+	else
+	{
+		objectNames = "N/A";
+	}
+
+	if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		ANKI_VK_LOGE("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+	}
+	else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		ANKI_VK_LOGW("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+	}
+	else
+	{
+		ANKI_VK_LOGI("VK debug report: %s. Affected objects: %s", pCallbackData->pMessage, objectNames.cstr());
+	}
+
+	return false;
 }
 
 } // end namespace anki

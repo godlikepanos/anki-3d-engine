@@ -11,10 +11,9 @@
 #define THREAD_COUNT_Y 16u
 #define THREAD_COUNT UVec2(THREAD_COUNT_X, THREAD_COUNT_Y)
 
-[[vk::binding(0)]] Texture2D<RVec4> g_tex;
+Texture2D<RVec4> g_tex : register(t0);
 
-#define TONEMAPPING_RESOURCE_AS_WRITE_IMAGE 1
-constexpr U32 kTonemappingBinding = 1u;
+#define TONEMAPPING_REGISTER u0
 #include <AnKi/Shaders/TonemappingResources.hlsl>
 
 groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];

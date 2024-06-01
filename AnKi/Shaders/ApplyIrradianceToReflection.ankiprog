@@ -7,10 +7,10 @@
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] TextureCube<Vec4> g_gbufferTex[3u];
-[[vk::binding(2)]] StructuredBuffer<RVec4> g_irradianceDice;
-[[vk::binding(3)]] RWTexture2D<RVec4> g_cubeTex[6u]; // RWTexture2D because there is no RWTextureCube
+SamplerState g_nearestAnyClampSampler : register(s0);
+TextureCube<Vec4> g_gbufferTex[3u] : register(t0);
+StructuredBuffer<RVec4> g_irradianceDice : register(t3);
+RWTexture2D<RVec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is no RWTextureCube
 
 [numthreads(8, 8, 6)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, UVec3 svGroupThreadId : SV_GROUPTHREADID)
 {

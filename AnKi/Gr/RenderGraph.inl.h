@@ -7,9 +7,9 @@
 
 namespace anki {
 
-inline void RenderPassWorkContext::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle)
+inline void RenderPassWorkContext::bindAccelerationStructure(Register reg, AccelerationStructureHandle handle)
 {
-	m_commandBuffer->bindAccelerationStructure(set, binding, m_rgraph->getAs(handle));
+	m_commandBuffer->bindAccelerationStructure(reg, m_rgraph->getAs(handle));
 }
 
 inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const

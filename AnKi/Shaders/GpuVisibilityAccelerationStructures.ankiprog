@@ -11,19 +11,19 @@
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 // Buffers that point to the GPU scene
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
-[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(3)]] StructuredBuffer<Mat3x4> g_transforms;
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
 
-[[vk::binding(4)]] RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances;
-[[vk::binding(5)]] RWStructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances : register(u0);
+RWStructuredBuffer<U32> g_visibleRenderableIndices : register(u1); // 1st element is the count
 
-[[vk::binding(6)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch
+globallycoherent RWStructuredBuffer<U32> g_counterBuffer : register(u2); // 2 counters per dispatch
 
-[[vk::binding(7)]] RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs;
+RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs : register(u3);
 
-[[vk::push_constant]] ConstantBuffer<GpuVisibilityAccelerationStructuresUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(GpuVisibilityAccelerationStructuresUniforms, g_unis)
 
 #define NUMTHREADS 64
 

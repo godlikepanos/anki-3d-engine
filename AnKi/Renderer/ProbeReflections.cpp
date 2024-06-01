@@ -461,11 +461,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			cmdb.bindShaderProgram(m_irradiance.m_grProg.get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-			rgraphCtx.bindTexture(0, 1, probeTexture);
+			rgraphCtx.bindTexture(ANKI_REG(t0), probeTexture);
 
-			cmdb.bindStorageBuffer(0, 3, BufferView(m_irradiance.m_diceValuesBuff.get()));
+			cmdb.bindStorageBuffer(ANKI_REG(u0), BufferView(m_irradiance.m_diceValuesBuff.get()));
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});
@@ -492,18 +492,18 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			cmdb.bindShaderProgram(m_irradianceToRefl.m_grProg.get());
 
 			// Bind resources
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 			{
-				rgraphCtx.bindTexture(0, 1, gbufferColorRts[i], i);
+				rgraphCtx.bindTexture(Register(HlslResourceType::kSrv, i), gbufferColorRts[i]);
 			}
 
-			cmdb.bindStorageBuffer(0, 2, BufferView(m_irradiance.m_diceValuesBuff.get()));
+			cmdb.bindStorageBuffer(ANKI_REG(t3), BufferView(m_irradiance.m_diceValuesBuff.get()));
 
 			for(U8 f = 0; f < 6; ++f)
 			{
-				rgraphCtx.bindStorageTexture(0, 3, probeTexture, TextureSubresourceDescriptor::surface(0, f, 0), f);
+				rgraphCtx.bindTexture(Register(HlslResourceType::kUav, f), probeTexture, TextureSubresourceDescriptor::surface(0, f, 0));
 			}
 
 			dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);

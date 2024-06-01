@@ -14,17 +14,17 @@
 constexpr F32 kVarianceClippingGamma = 2.7f; // Variance clipping paper proposes 1.0
 constexpr F32 kBlendFactor = 1.0f / 16.0f;
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_inputRt;
-[[vk::binding(2)]] Texture2D<RVec4> g_historyRt;
-[[vk::binding(3)]] Texture2D g_motionVectorsTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<RVec4> g_inputRt : register(t0);
+Texture2D<RVec4> g_historyRt : register(t1);
+Texture2D g_motionVectorsTex : register(t2);
 
-constexpr U32 kTonemappingBinding = 4u;
+#	define TONEMAPPING_REGISTER u0
 #	include <AnKi/Shaders/TonemappingResources.hlsl>
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(5)]] RWTexture2D<RVec4> g_storageTex;
-[[vk::binding(6)]] RWTexture2D<RVec4> g_tonemappedStorageTex;
+RWTexture2D<RVec4> g_storageTex : register(u1);
+RWTexture2D<RVec4> g_tonemappedStorageTex : register(u2);
 #	else
 struct FragOut
 {

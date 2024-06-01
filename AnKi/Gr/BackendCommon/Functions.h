@@ -44,7 +44,4 @@ ShaderVariableDataType getShaderVariableTypeFromTypename();
 void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount,
 							void* buffBegin, const void* buffEnd);
 
-/// Combine shader reflection.
-Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c);
-
 } // end namespace anki

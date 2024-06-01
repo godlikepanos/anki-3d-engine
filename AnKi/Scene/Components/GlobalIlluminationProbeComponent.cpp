@@ -73,7 +73,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
 		cmdb->bindShaderProgram(&variant->getProgram());
-		cmdb->bindStorageTexture(0, 0, TextureView(m_volTex.get(), TextureSubresourceDescriptor::all()));
+		cmdb->bindTexture(ANKI_REG(u0), TextureView(m_volTex.get(), TextureSubresourceDescriptor::all()));
 
 		const Vec4 clearColor(0.0f);
 		cmdb->setPushConstants(&clearColor, sizeof(clearColor));

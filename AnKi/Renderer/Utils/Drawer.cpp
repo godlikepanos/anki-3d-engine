@@ -46,37 +46,34 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 
 		globalUniforms->m_enableHzbTesting = args.m_hzbTexture.isValid();
 
-		cmdb.bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms), globalUniformsToken);
+		cmdb.bindUniformBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS), globalUniformsToken);
 	}
 
 	// More globals
-	cmdb.bindAllBindless(U32(MaterialSet::kBindless));
-	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
-	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), GpuSceneBuffer::getSingleton().getBufferView());
+	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER), args.m_sampler);
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GPU_SCENE), GpuSceneBuffer::getSingleton().getBufferView());
 
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	cmdb.bindReadOnlyTexelBuffer( \
-		U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
+	cmdb.bindTexelBuffer( \
+		ANKI_REG(reg), \
 		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
 				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletBoundingVolumes),
-						   UnifiedGeometryBuffer::getSingleton().getBufferView());
-	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGeometryDescriptors),
-						   UnifiedGeometryBuffer::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES), UnifiedGeometryBuffer::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS), UnifiedGeometryBuffer::getSingleton().getBufferView());
 	if(args.m_mesh.m_meshletGroupInstancesBuffer.isValid())
 	{
-		cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshletGroups), args.m_mesh.m_meshletGroupInstancesBuffer);
+		cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_GROUPS), args.m_mesh.m_meshletGroupInstancesBuffer);
 	}
-	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kRenderables), GpuSceneArrays::Renderable::getSingleton().getBufferView());
-	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kMeshLods), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-	cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTransforms), GpuSceneArrays::Transform::getSingleton().getBufferView());
-	cmdb.bindTexture(U32(MaterialSet::kGlobal), U32(MaterialBinding::kHzbTexture),
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_RENDERABLES), GpuSceneArrays::Renderable::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESH_LODS), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_TRANSFORMS), GpuSceneArrays::Transform::getSingleton().getBufferView());
+	cmdb.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_HZB_TEXTURE),
 					 (args.m_hzbTexture.isValid()) ? args.m_hzbTexture
 												   : TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDescriptor::all()));
-	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kNearestClampSampler), getRenderer().getSamplers().m_nearestNearestClamp.get());
+	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	// Misc
 	cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);

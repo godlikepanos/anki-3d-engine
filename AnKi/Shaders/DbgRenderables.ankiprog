@@ -14,10 +14,10 @@ struct Uniforms
 	Mat4 m_viewProjMat;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
-[[vk::binding(2)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
-[[vk::binding(3)]] StructuredBuffer<U32> g_visibleRenderableBoundingVolumeIndices;
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t1);
+StructuredBuffer<U32> g_visibleRenderableBoundingVolumeIndices : register(t2);
 
 struct VertOut
 {
@@ -27,7 +27,7 @@ struct VertOut
 #pragma anki technique_start vert
 struct VertIn
 {
-	[[vk::location(0)]] Vec3 m_position : POSITION;
+	Vec3 m_position : POSITION;
 	U32 m_svInstanceId : SV_INSTANCEID;
 };
 
@@ -59,8 +59,8 @@ VertOut main(VertIn input)
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
 #if DEPTH_FAIL_VISUALIZATION == 1
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_depthRt;
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_depthRt : register(t0);
 #endif
 
 Vec4 main(VertOut input) : SV_TARGET0

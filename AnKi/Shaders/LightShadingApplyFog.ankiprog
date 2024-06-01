@@ -11,10 +11,10 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(2)]] Texture2D g_depthRt;
-[[vk::binding(3)]] Texture3D<RVec4> g_fogVolume;
+SamplerState g_nearestAnyClampSampler : register(s0);
+SamplerState g_linearAnyClampSampler : register(s1);
+Texture2D g_depthRt : register(t0);
+Texture3D<RVec4> g_fogVolume : register(t1);
 
 struct Uniforms
 {
@@ -23,10 +23,9 @@ struct Uniforms
 	F32 m_near;
 	F32 m_far;
 };
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
-
-RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	Vec3 uvw;
 

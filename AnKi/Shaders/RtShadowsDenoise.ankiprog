@@ -12,15 +12,15 @@
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<Vec4> g_inTex;
-[[vk::binding(2)]] Texture2D<Vec4> g_depthTex;
-[[vk::binding(3)]] Texture2D<Vec4> g_gbuffer2Tex;
-[[vk::binding(4)]] Texture2D<Vec4> g_momentsTex;
-[[vk::binding(5)]] Texture2D<Vec4> g_historyLengthTex;
-[[vk::binding(6)]] RWTexture2D<Vec4> g_storageTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<Vec4> g_inTex : register(t0);
+Texture2D<Vec4> g_depthTex : register(t1);
+Texture2D<Vec4> g_gbuffer2Tex : register(t2);
+Texture2D<Vec4> g_momentsTex : register(t3);
+Texture2D<Vec4> g_historyLengthTex : register(t4);
+RWTexture2D<Vec4> g_storageTex : register(u0);
 
-[[vk::push_constant]] ConstantBuffer<RtShadowsDenoiseUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(RtShadowsDenoiseUniforms, g_unis)
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {

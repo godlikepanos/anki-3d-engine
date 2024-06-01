@@ -931,11 +931,13 @@ class ShaderReflectionBinding
 public:
 	U32 m_registerBindingPoint = kMaxU32;
 	U16 m_arraySize = 0;
+
 	union
 	{
-		U16 m_vkBinding = kMaxU16;
+		U16 m_vkBinding = kMaxU16; ///< Filled by the VK backend.
 		U16 m_d3dStructuredBufferStride;
 	};
+
 	DescriptorType m_type = DescriptorType::kCount;
 	DescriptorFlag m_flags = DescriptorFlag::kNone;
 
@@ -955,9 +957,14 @@ public:
 
 		ANKI_LESS(m_registerBindingPoint)
 		ANKI_LESS(m_arraySize)
-		ANKI_LESS(m_vkBinding)
+		ANKI_LESS(m_d3dStructuredBufferStride)
 #undef ANKI_LESS
 		return false;
+	}
+
+	Bool operator==(const ShaderReflectionBinding& b) const
+	{
+		return memcmp(this, &b, sizeof(*this)) == 0;
 	}
 
 	void validate() const
@@ -966,7 +973,42 @@ public:
 		ANKI_ASSERT(m_type < DescriptorType::kCount);
 		ANKI_ASSERT(m_flags != DescriptorFlag::kNone);
 		ANKI_ASSERT(m_arraySize > 0);
-		ANKI_ASSERT(ANKI_GR_BACKEND_DIRECT3D || m_vkBinding != kMaxU16);
+		ANKI_ASSERT(ANKI_GR_BACKEND_VULKAN || m_type != DescriptorType::kStorageBuffer || m_d3dStructuredBufferStride != 0);
+	}
+};
+ANKI_END_PACKED_STRUCT
+
+ANKI_BEGIN_PACKED_STRUCT
+class ShaderReflectionDescriptorRelated
+{
+public:
+	Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
+	Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
+
+	U32 m_pushConstantsSize = 0;
+
+	Bool m_hasVkBindlessDescriptorSet = false; ///< Filled by the shader compiler.
+	U8 m_vkBindlessDescriptorSet = kMaxU8; ///< Filled by the VK backend.
+
+	void validate() const
+	{
+		for(U32 set = 0; set < kMaxDescriptorSets; ++set)
+		{
+			for(U32 ibinding = 0; ibinding < kMaxBindingsPerDescriptorSet; ++ibinding)
+			{
+				const ShaderReflectionBinding& binding = m_bindings[set][ibinding];
+
+				if(binding.m_type != DescriptorType::kCount)
+				{
+					ANKI_ASSERT(ibinding < m_bindingCounts[set]);
+					binding.validate();
+				}
+				else
+				{
+					ANKI_ASSERT(ibinding >= m_bindingCounts[set]);
+				}
+			}
+		}
 	}
 };
 ANKI_END_PACKED_STRUCT
@@ -974,29 +1016,7 @@ ANKI_END_PACKED_STRUCT
 class ShaderReflection
 {
 public:
-#if ANKI_GR_BACKEND_VULKAN
-	// !!OLD!!
-	Array2d<U16, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorArraySizes;
-	Array2d<DescriptorType, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorTypes;
-	Array2d<DescriptorFlag, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_descriptorFlags;
-	BitSet<kMaxDescriptorSets, U8> m_descriptorSetMask = {false};
-#endif
-
-	// !!NEW!!
-	ANKI_BEGIN_PACKED_STRUCT
-	class DescriptorRelated
-	{
-	public:
-		Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
-		Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
-
-		U32 m_pushConstantsSize = 0;
-
-		U8 m_vkBindlessDescriptorSet = kMaxDescriptorSets;
-	};
-	ANKI_END_PACKED_STRUCT
-
-	DescriptorRelated m_descriptor;
+	ShaderReflectionDescriptorRelated m_descriptor;
 
 	class
 	{
@@ -1015,33 +1035,20 @@ public:
 
 	ShaderReflection()
 	{
-#if ANKI_GR_BACKEND_VULKAN
-		for(auto& it : m_descriptorArraySizes)
-		{
-			it.fill(0);
-		}
-
-		for(auto& it : m_descriptorTypes)
-		{
-			it.fill(DescriptorType::kCount);
-		}
-
-		for(auto& it : m_descriptorFlags)
-		{
-			it.fill(DescriptorFlag::kNone);
-		}
-#endif
-
 		m_vertex.m_vertexAttributeLocations.fill(kMaxU8);
 	}
 
-#if ANKI_ASSERTIONS_ENABLED
-	void validate() const;
-#else
 	void validate() const
 	{
+		m_descriptor.validate();
+		for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
+		{
+			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vertexAttributeLocations[semantic] != kMaxU8);
+		}
 	}
-#endif
+
+	/// Combine shader reflection.
+	static Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c);
 };
 
 /// Clear values for textures or attachments.
@@ -1086,6 +1093,28 @@ U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1);
 
 /// Compute max number of mipmaps for a 3D texture.
 U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip = 1);
+
+/// Visit a SPIR-V binary.
+template<template<typename> typename TArray, typename TFunc>
+static void visitSpirv(TArray<U32> spv, TFunc func)
+{
+	ANKI_ASSERT(spv.getSize() > 5);
+
+	auto it = &spv[5];
+	do
+	{
+		const U32 instructionCount = *it >> 16u;
+		const U32 opcode = *it & 0xFFFFu;
+
+		TArray<U32> instructions(it + 1, instructionCount - 1);
+
+		func(opcode, instructions);
+
+		it += instructionCount;
+	} while(it < spv.getEnd());
+
+	ANKI_ASSERT(it == spv.getEnd());
+}
 /// @}
 
 } // end namespace anki

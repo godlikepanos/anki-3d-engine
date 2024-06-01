@@ -123,39 +123,62 @@ U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
 	return count;
 }
 
-#if ANKI_ASSERTIONS_ENABLED
-void ShaderReflection::validate() const
+Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c_)
 {
-#	if ANKI_GR_BACKEND_VULKAN
+	ShaderReflection c;
+
+	memcpy(&c.m_descriptor, &a.m_descriptor, sizeof(a.m_descriptor));
 	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
 	{
-		const Bool setExists = m_descriptorSetMask.get(set);
-		for(U32 binding = 0; binding < kMaxBindingsPerDescriptorSet; ++binding)
+		for(U32 binding = 0; binding < b.m_descriptor.m_bindingCounts[set]; ++binding)
 		{
-			const U32 arraySize = m_descriptorArraySizes[set][binding];
-			const DescriptorType type = m_descriptorTypes[set][binding];
+			// Search for the binding in a
+			const ShaderReflectionBinding& bbinding = b.m_descriptor.m_bindings[set][binding];
+			Bool bindingFoundOnA = false;
+			for(U32 binding2 = 0; binding2 < a.m_descriptor.m_bindingCounts[set]; ++binding2)
+			{
+				const ShaderReflectionBinding& abinding = a.m_descriptor.m_bindings[set][binding2];
 
-			if(!setExists)
-			{
-				ANKI_ASSERT(arraySize == 0 && type == DescriptorType::kCount);
+				if(abinding.m_registerBindingPoint == bbinding.m_registerBindingPoint
+				   && descriptorTypeToHlslResourceType(abinding.m_type, abinding.m_flags)
+						  == descriptorTypeToHlslResourceType(bbinding.m_type, bbinding.m_flags))
+				{
+					if(abinding != bbinding)
+					{
+						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Set %u binding %u", set, binding);
+						return Error::kFunctionFailed;
+					}
+					bindingFoundOnA = true;
+					break;
+				}
 			}
-			else if(arraySize != 0)
+
+			if(!bindingFoundOnA)
 			{
-				ANKI_ASSERT(type != DescriptorType::kCount);
-			}
-			else if(type != DescriptorType::kCount)
-			{
-				ANKI_ASSERT(arraySize > 0);
+				c.m_descriptor.m_bindings[set][c.m_descriptor.m_bindingCounts[set]++] = bbinding;
 			}
 		}
 	}
-#	endif
 
-	for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
+	if(a.m_descriptor.m_pushConstantsSize != 0 && b.m_descriptor.m_pushConstantsSize != 0
+	   && a.m_descriptor.m_pushConstantsSize != b.m_descriptor.m_pushConstantsSize)
 	{
-		ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vertexAttributeLocations[semantic] != kMaxU8);
+		ANKI_GR_LOGE("Can't link shader reflection because push constant size doesn't match");
+		return Error::kFunctionFailed;
 	}
+	c.m_descriptor.m_pushConstantsSize = max(a.m_descriptor.m_pushConstantsSize, b.m_descriptor.m_pushConstantsSize);
+
+	c.m_descriptor.m_hasVkBindlessDescriptorSet = a.m_descriptor.m_hasVkBindlessDescriptorSet || b.m_descriptor.m_hasVkBindlessDescriptorSet;
+
+	c.m_vertex.m_vertexAttributeLocations =
+		(a.m_vertex.m_vertexAttributeMask.getAnySet()) ? a.m_vertex.m_vertexAttributeLocations : b.m_vertex.m_vertexAttributeLocations;
+	c.m_vertex.m_vertexAttributeMask = a.m_vertex.m_vertexAttributeMask | b.m_vertex.m_vertexAttributeMask;
+
+	c.m_fragment.m_colorAttachmentWritemask = a.m_fragment.m_colorAttachmentWritemask | b.m_fragment.m_colorAttachmentWritemask;
+	c.m_fragment.m_discards = a.m_fragment.m_discards || b.m_fragment.m_discards;
+
+	c_ = c;
+	return Error::kNone;
 }
-#endif
 
 } // end namespace anki

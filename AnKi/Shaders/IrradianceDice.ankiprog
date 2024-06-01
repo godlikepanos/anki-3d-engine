@@ -19,15 +19,15 @@
 
 constexpr U32 kThreadgroupSize = U32(THREDGROUP_SIZE_SQRT) * U32(THREDGROUP_SIZE_SQRT);
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] TextureCube<RVec4> g_lightShadingTexCube;
+SamplerState g_nearestAnyClampSampler : register(s0);
+TextureCube<RVec4> g_lightShadingTexCube : register(t0);
 
 #if SECOND_BOUNCE == 1
-[[vk::binding(2)]] TextureCube<Vec4> g_gbufferTex[3u];
+TextureCube<Vec4> g_gbufferTex[3u] : register(t1);
 #endif
 
 #if STORE_LOCATION == 0
-[[vk::binding(3)]] RWTexture3D<Vec4> g_irradianceVolume;
+RWTexture3D<Vec4> g_irradianceVolume : register(u0);
 
 struct Uniforms
 {
@@ -35,14 +35,14 @@ struct Uniforms
 	I32 m_nextTexelOffsetInU;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 #else
 struct BufferOut
 {
 	RVec4 m_val[6u];
 };
 
-[[vk::binding(3)]] RWStructuredBuffer<BufferOut> g_irradianceDisceResults;
+RWStructuredBuffer<BufferOut> g_irradianceDisceResults : register(u0);
 #endif
 
 constexpr U32 kMinWaveSize = 8u;

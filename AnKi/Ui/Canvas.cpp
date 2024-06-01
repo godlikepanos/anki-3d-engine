@@ -288,8 +288,9 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					// Bindings
 					if(data && data->m_textureView.isValid())
 					{
-						cmdb.bindSampler(0, 0, (data->m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
-						cmdb.bindTexture(0, 1, data->m_textureView);
+						cmdb.bindSampler(ANKI_REG(s0),
+										 (data->m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
+						cmdb.bindTexture(ANKI_REG(t0), data->m_textureView);
 					}
 
 					// Push constants

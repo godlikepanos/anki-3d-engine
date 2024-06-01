@@ -16,7 +16,7 @@ struct VertOut
 #pragma anki technique_start vert
 
 // The block contains data for all flares
-[[vk::binding(0)]] StructuredBuffer<LensFlareSprite> g_sprites;
+StructuredBuffer<LensFlareSprite> g_sprites : register(t0);
 
 VertOut main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID)
 {
@@ -39,8 +39,8 @@ VertOut main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID)
 
 #pragma anki technique_start frag
 
-[[vk::binding(1)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(2)]] Texture2DArray<RVec4> g_tex;
+SamplerState g_trilinearRepeatSampler : register(s0);
+Texture2DArray<RVec4> g_tex : register(t1);
 
 RVec4 main(VertOut input) : SV_TARGET0
 {

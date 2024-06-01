@@ -424,25 +424,26 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			ANKI_ASSERT(0);
 		}
 
-		cmdb.bindStorageBuffer(0, 0, aabbsBuffer);
-		cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-		cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-		cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferView());
-		cmdb.bindStorageBuffer(0, 4, GpuSceneBuffer::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(t0), aabbsBuffer);
+		cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::Renderable::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(t2), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(t3), GpuSceneArrays::Transform::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(t4), GpuSceneBuffer::getSingleton().getBufferView());
 		if(gatherType & 1u)
 		{
-			cmdb.bindStorageBuffer(0, 5, out.m_legacy.m_renderableInstancesBuffer);
-			cmdb.bindStorageBuffer(0, 6, out.m_legacy.m_drawIndexedIndirectArgsBuffer);
-			cmdb.bindStorageBuffer(0, 7, out.m_legacy.m_mdiDrawCountsBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u0), out.m_legacy.m_renderableInstancesBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u1), out.m_legacy.m_drawIndexedIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u2), out.m_legacy.m_drawIndexedIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u3), out.m_legacy.m_mdiDrawCountsBuffer);
 		}
 		if(gatherType & 2u)
 		{
-			cmdb.bindStorageBuffer(0, 8, out.m_mesh.m_taskShaderIndirectArgsBuffer);
-			cmdb.bindStorageBuffer(0, 9, out.m_mesh.m_meshletGroupInstancesBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u4), out.m_mesh.m_taskShaderIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u5), out.m_mesh.m_meshletGroupInstancesBuffer);
 		}
 
 		const U32 bucketCount = RenderStateBucketContainer::getSingleton().getBucketCount(technique);
-		UVec2* instanceRanges = allocateAndBindStorageBuffer<UVec2>(cmdb, 0, 10, bucketCount);
+		UVec2* instanceRanges = allocateAndBindStorageBuffer<UVec2>(cmdb, ANKI_REG(t5), bucketCount);
 		for(U32 i = 0; i < bucketCount; ++i)
 		{
 			const Bool legacyBucket = m_runCtx.m_renderableInstanceRanges[technique][i].m_instanceCount > 0;
@@ -461,7 +462,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		if(frustumTestData)
 		{
-			FrustumGpuVisibilityUniforms* unis = allocateAndBindConstants<FrustumGpuVisibilityUniforms>(cmdb, 0, 11);
+			FrustumGpuVisibilityUniforms* unis = allocateAndBindConstants<FrustumGpuVisibilityUniforms>(cmdb, ANKI_REG(b0));
 
 			Array<Plane, 6> planes;
 			extractClipPlanes(frustumTestData->m_viewProjMat, planes);
@@ -482,8 +483,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			if(frustumTestData->m_hzbRt.isValid())
 			{
-				rpass.bindTexture(0, 12, frustumTestData->m_hzbRt);
-				cmdb.bindSampler(0, 13, getRenderer().getSamplers().m_nearestNearestClamp.get());
+				rpass.bindTexture(ANKI_REG(t6), frustumTestData->m_hzbRt);
+				cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 			}
 		}
 		else
@@ -504,12 +505,12 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		if(gatherAabbIndices)
 		{
-			cmdb.bindStorageBuffer(0, 14, out.m_visibleAaabbIndicesBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u6), out.m_visibleAaabbIndicesBuffer);
 		}
 
 		if(genHash)
 		{
-			cmdb.bindStorageBuffer(0, 15, out.m_visiblesHashBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u7), out.m_visiblesHashBuffer);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
@@ -612,17 +613,17 @@ void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpu
 
 			cmdb.bindShaderProgram(m_meshletCullingGrProgs[hasHzb][isPassthrough].get());
 
-			cmdb.bindStorageBuffer(0, 0, meshletGroupInstancesBuffer);
-			cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 4, UnifiedGeometryBuffer::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 5, out.m_drawIndirectArgsBuffer);
-			cmdb.bindStorageBuffer(0, 6, out.m_meshletInstancesBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(t0), meshletGroupInstancesBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::Renderable::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(t2), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(t3), GpuSceneArrays::Transform::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(t4), UnifiedGeometryBuffer::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(u0), out.m_drawIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u1), out.m_meshletInstancesBuffer);
 			if(hasHzb)
 			{
-				rpass.bindTexture(0, 7, nonPassthroughData->m_hzbRt);
-				cmdb.bindSampler(0, 8, getRenderer().getSamplers().m_nearestNearestClamp.get());
+				rpass.bindTexture(ANKI_REG(t5), nonPassthroughData->m_hzbRt);
+				cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 			}
 
 			class Consts
@@ -808,7 +809,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		default:
 			ANKI_ASSERT(0);
 		}
-		cmdb.bindStorageBuffer(0, 0, objBuffer);
+		cmdb.bindStorageBuffer(ANKI_REG(t0), objBuffer);
 
 		GpuVisibilityNonRenderableUniforms unis;
 		Array<Plane, 6> planes;
@@ -819,12 +820,12 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		}
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
-		rgraph.bindStorageBuffer(0, 1, visibleIndicesBuffHandle);
-		cmdb.bindStorageBuffer(0, 2, BufferView(counterBuffer.get(), counterBufferOffset, sizeof(U32) * kCountersPerDispatch));
+		rgraph.bindStorageBuffer(ANKI_REG(u0), visibleIndicesBuffHandle);
+		cmdb.bindStorageBuffer(ANKI_REG(u1), BufferView(counterBuffer.get(), counterBufferOffset, sizeof(U32) * kCountersPerDispatch));
 
 		if(needsFeedback)
 		{
-			cmdb.bindStorageBuffer(0, 3, feedbackBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(u2), feedbackBuffer);
 		}
 
 		dispatchPPCompute(cmdb, 64, 1, objCount, 1);
@@ -901,14 +902,14 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 			cmdb.setPushConstants(&unis, sizeof(unis));
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 1, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 2, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 3, GpuSceneArrays::Transform::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 4, instancesBuff);
-			cmdb.bindStorageBuffer(0, 5, indicesBuff);
-			cmdb.bindStorageBuffer(0, 6, BufferView(m_counterBuffer.get(), 0, sizeof(U32) * 2));
-			cmdb.bindStorageBuffer(0, 7, zeroInstancesDispatchArgsBuff);
+			cmdb.bindStorageBuffer(ANKI_REG(t0), GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::Renderable::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(t2), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(t3), GpuSceneArrays::Transform::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(u0), instancesBuff);
+			cmdb.bindStorageBuffer(ANKI_REG(u1), indicesBuff);
+			cmdb.bindStorageBuffer(ANKI_REG(u2), BufferView(m_counterBuffer.get(), 0, sizeof(U32) * 2));
+			cmdb.bindStorageBuffer(ANKI_REG(u3), zeroInstancesDispatchArgsBuff);
 
 			const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 			dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
@@ -930,8 +931,8 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 			cmdb.bindShaderProgram(m_zeroRemainingInstancesGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, indicesBuff);
-			cmdb.bindStorageBuffer(0, 1, instancesBuff);
+			cmdb.bindStorageBuffer(ANKI_REG(t0), indicesBuff);
+			cmdb.bindStorageBuffer(ANKI_REG(U0), instancesBuff);
 
 			cmdb.dispatchComputeIndirect(zeroInstancesDispatchArgsBuff);
 		});

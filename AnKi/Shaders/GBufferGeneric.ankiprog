@@ -89,7 +89,7 @@
 struct VertIn
 {
 	U32 m_svVertexId : SV_VERTEXID;
-	[[vk::location(0)]] UVec4 m_instanceData : MISC0;
+	UVec4 m_instanceData : MISC0;
 };
 
 struct VertOut
@@ -329,7 +329,7 @@ struct FirstPayload
 	UVec4 m_val;
 };
 
-[[vk::push_constant]] ConstantBuffer<FirstPayload> g_firstPayload;
+ANKI_PUSH_CONSTANTS(FirstPayload, g_firstPayload)
 
 [numthreads(ANKI_TASK_SHADER_THREADGROUP_SIZE, 1, 1)] void main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
 {
@@ -549,9 +549,9 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 #if ANKI_FRAGMENT_SHADER
 
 #	if SW_MESHLETS
-#		define TEX_IDX(x) NonUniformResourceIndex(x)
+#		define BINDLESS(x) getBindlessTextureNonUniformIndex2DRVec4(x)
 #	else
-#		define TEX_IDX(x) x
+#		define BINDLESS(x) getBindlessTexture2DRVec4(x)
 #	endif
 
 #	if !GBUFFER && !REALLY_ALPHA_TEST // Shadows without alpha
@@ -577,7 +577,7 @@ void main(
 #		endif
 
 	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, uniformsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_diffuseTex)].Sample(g_globalSampler, vertInput.m_uv);
+	const RVec4 diffColorA = BINDLESS(localUniforms.m_diffuseTex).Sample(g_globalSampler, vertInput.m_uv);
 	if(diffColorA.a * localUniforms.m_diffuseScale.a < 0.5f)
 	{
 		discard;
@@ -611,7 +611,7 @@ FragOut main(
 	ANKI_MAYBE_UNUSED(uv);
 
 #		if DIFFUSE_TEX
-	const RVec4 diffColorA = g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_diffuseTex)].Sample(g_globalSampler, uv) * localUniforms.m_diffuseScale;
+	const RVec4 diffColorA = BINDLESS(localUniforms.m_diffuseTex).Sample(g_globalSampler, uv) * localUniforms.m_diffuseScale;
 	const RVec3 diffColor = diffColorA.rgb;
 #			if REALLY_ALPHA_TEST
 	if(diffColorA.a < 0.5f)
@@ -624,14 +624,13 @@ FragOut main(
 #		endif
 
 #		if SPECULAR_TEX
-	const RVec3 specColor =
-		g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_specularTex)].Sample(g_globalSampler, uv).rgb * localUniforms.m_specularScale;
+	const RVec3 specColor = BINDLESS(localUniforms.m_specularTex).Sample(g_globalSampler, uv).rgb * localUniforms.m_specularScale;
 #		else
 	const RVec3 specColor = localUniforms.m_specularScale;
 #		endif
 
 #		if ROUGHNESS_METALNESS_TEX
-	const RVec3 comp = g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_roughnessMetalnessTex)].Sample(g_globalSampler, uv).rgb;
+	const RVec3 comp = BINDLESS(localUniforms.m_roughnessMetalnessTex).Sample(g_globalSampler, uv).rgb;
 	const RF32 roughness = comp.g * localUniforms.m_roughnessScale;
 	const RF32 metallic = comp.b * localUniforms.m_metalnessScale;
 #		else
@@ -640,8 +639,7 @@ FragOut main(
 #		endif
 
 #		if NORMAL_TEX
-	const RVec3 nAtTangentspace =
-		normalize((g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_normalTex)].Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
+	const RVec3 nAtTangentspace = normalize((BINDLESS(localUniforms.m_normalTex).Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
 	const Vec3 viewDir = normalize(g_globalUniforms.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
 	const RVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertInput.m_normal));
 #		else
@@ -649,8 +647,7 @@ FragOut main(
 #		endif
 
 #		if EMISSIVE_TEX
-	const RVec3 emission =
-		g_bindlessTextures2dF32[TEX_IDX(localUniforms.m_emissiveTex)].Sample(g_globalSampler, uv).rgb * localUniforms.m_emissionScale;
+	const RVec3 emission = BINDLESS(localUniforms.m_emissiveTex).Sample(g_globalSampler, uv).rgb * localUniforms.m_emissionScale;
 #		else
 	const RVec3 emission = localUniforms.m_emissionScale;
 #		endif
@@ -743,7 +740,8 @@ FragOut main(
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 
 	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, g_gpuSceneRenderable.m_uniformsOffset);
-	const RVec4 diffColorA = g_bindlessTextures2dF32[localUniforms.m_diffuseTex].SampleLevel(g_globalSampler, uv, 0.0) * localUniforms.m_diffuseScale;
+	const RVec4 diffColorA =
+		getBindlessTexture2DRVec4(localUniforms.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0) * localUniforms.m_diffuseScale;
 
 	if(diffColorA.a < 1.0)
 	{

@@ -9,7 +9,7 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-[[vk::binding(kTonemappingBinding)]] RWTexture2D<RVec4> g_tonemappingStorageTex;
+RWTexture2D<RVec4> g_tonemappingStorageTex : register(TONEMAPPING_REGISTER);
 
 void writeExposureAndAverageLuminance(RF32 exposure, RF32 avgLuminance)
 {

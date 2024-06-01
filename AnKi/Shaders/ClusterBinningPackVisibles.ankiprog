@@ -29,9 +29,9 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 #	error See file
 #endif
 
-[[vk::binding(0)]] StructuredBuffer<GpuSceneType> g_inBuffer;
-[[vk::binding(1)]] RWStructuredBuffer<ClusteredType> g_outBuffer;
-[[vk::binding(2)]] StructuredBuffer<U32> g_visibles;
+StructuredBuffer<GpuSceneType> g_inBuffer : register(t0);
+RWStructuredBuffer<ClusteredType> g_outBuffer : register(u0);
+StructuredBuffer<U32> g_visibles : register(t1);
 
 #define THREAD_GROUP_SIZE 64
 

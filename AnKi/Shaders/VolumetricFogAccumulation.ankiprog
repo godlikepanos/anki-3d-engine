@@ -8,11 +8,11 @@
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture3D<RVec4> g_lightVolume;
-[[vk::binding(2)]] RWTexture3D<RVec4> g_fogVolume;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture3D<RVec4> g_lightVolume : register(t0);
+RWTexture3D<RVec4> g_fogVolume : register(u0);
 
-[[vk::push_constant]] ConstantBuffer<VolumetricFogUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(VolumetricFogUniforms, g_unis)
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {

@@ -19,18 +19,18 @@
 #	include <AnKi/Shaders/FastMathFunctions.hlsl>
 #	include <AnKi/Shaders/ImportanceSampling.hlsl>
 
-[[vk::binding(0)]] Texture2D<Vec4> g_gbufferRt2;
-[[vk::binding(1)]] Texture2D<Vec4> g_depthTex;
+Texture2D<Vec4> g_gbufferRt2 : register(t0);
+Texture2D<Vec4> g_depthTex : register(t1);
 
-[[vk::binding(2)]] Texture2D<RVec4> g_noiseTex;
-[[vk::binding(3)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(4)]] SamplerState g_linearAnyClampSampler;
+Texture2D<RVec4> g_noiseTex : register(t2);
+SamplerState g_trilinearRepeatSampler : register(s0);
+SamplerState g_linearAnyClampSampler : register(s1);
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(5)]] RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex;
+RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex : register(u0);
 #	endif
 
-[[vk::push_constant]] ConstantBuffer<SsaoUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(SsaoUniforms, g_unis)
 
 Vec3 unproject(Vec2 ndc)
 {
@@ -51,7 +51,7 @@ RF32 computeFalloff(RF32 len)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
+RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -171,15 +171,15 @@ RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_bentNormalsAndSsaoTex;
-[[vk::binding(2)]] Texture2D<Vec4> g_depthTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<RVec4> g_bentNormalsAndSsaoTex : register(t0);
+Texture2D<Vec4> g_depthTex : register(t1);
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(3)]] RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex;
+RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex : register(u0);
 #	endif
 
-[[vk::push_constant]] ConstantBuffer<SsaoSpatialDenoiseUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(SsaoSpatialDenoiseUniforms, g_unis)
 
 F32 computeWeight(F32 depth, F32 refDepth)
 {
@@ -201,7 +201,7 @@ void sampleTex(Vec2 uv, IVec2 offset, F32 refDepth, inout RF32 ssao, inout RVec3
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 // Set UVs
@@ -264,19 +264,19 @@ RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_bentNormalsAndSsaoTex;
-[[vk::binding(2)]] Texture2D<RVec4> g_historyBentNormalsAndSsaoTex;
-[[vk::binding(3)]] Texture2D<Vec4> g_motionVectorsTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<RVec4> g_bentNormalsAndSsaoTex : register(t0);
+Texture2D<RVec4> g_historyBentNormalsAndSsaoTex : register(t1);
+Texture2D<Vec4> g_motionVectorsTex : register(t2);
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(4)]] RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex;
+RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex : register(u0);
 #	endif
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec4 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER

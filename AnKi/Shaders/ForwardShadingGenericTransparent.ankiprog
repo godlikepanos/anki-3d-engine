@@ -62,7 +62,7 @@ FragOut main(VertOut input)
 	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
 
 #if TEXTURE == 1
-	output.m_color = g_bindlessTextures2dF32[localUniforms.m_texture].Sample(g_globalSampler, input.m_uv);
+	output.m_color = getBindlessTexture2DRVec4(localUniforms.m_texture).Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT == 1

@@ -13,41 +13,37 @@
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 
-ANKI_BINDLESS_SET(MaterialSet::kBindless)
-
-[[vk::binding(MaterialBinding::kTrilinearRepeatSampler, MaterialSet::kGlobal)]] SamplerState g_globalSampler;
-[[vk::binding(MaterialBinding::kGlobalUniforms, MaterialSet::kGlobal)]] ConstantBuffer<MaterialGlobalUniforms> g_globalUniforms;
-[[vk::binding(MaterialBinding::kGpuScene, MaterialSet::kGlobal)]] ByteAddressBuffer g_gpuScene;
+SamplerState g_globalSampler : register(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER);
+ConstantBuffer<MaterialGlobalUniforms> g_globalUniforms : register(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS);
+ByteAddressBuffer g_gpuScene : register(ANKI_MATERIAL_REGISTER_GPU_SCENE);
 
 // Unified geom:
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	[[vk::binding(MaterialBinding::kUnifiedGeometry_##fmt, MaterialSet::kGlobal)]] Buffer<shaderType> g_unifiedGeom_##fmt;
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) Buffer<shaderType> g_unifiedGeom_##fmt : register(reg);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-[[vk::binding(MaterialBinding::kMeshletBoundingVolumes, MaterialSet::kGlobal)]] StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes;
-[[vk::binding(MaterialBinding::kMeshletGeometryDescriptors, MaterialSet::kGlobal)]] StructuredBuffer<MeshletGeometryDescriptor>
-	g_meshletGeometryDescriptors;
-[[vk::binding(MaterialBinding::kMeshletGroups, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroups;
-[[vk::binding(MaterialBinding::kRenderables, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(MaterialBinding::kMeshLods, MaterialSet::kGlobal)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(MaterialBinding::kTransforms, MaterialSet::kGlobal)]] StructuredBuffer<Mat3x4> g_transforms;
-[[vk::binding(MaterialBinding::kHzbTexture, MaterialSet::kGlobal)]] Texture2D<Vec4> g_hzbTexture;
-[[vk::binding(MaterialBinding::kNearestClampSampler, MaterialSet::kGlobal)]] SamplerState g_nearestClampSampler;
+StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes : register(ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES);
+StructuredBuffer<MeshletGeometryDescriptor> g_meshletGeometryDescriptors : register(ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS);
+StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroups : register(ANKI_MATERIAL_REGISTER_MESHLET_GROUPS);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(ANKI_MATERIAL_REGISTER_RENDERABLES);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(ANKI_MATERIAL_REGISTER_MESH_LODS);
+StructuredBuffer<Mat3x4> g_transforms : register(ANKI_MATERIAL_REGISTER_TRANSFORMS);
+Texture2D<Vec4> g_hzbTexture : register(ANKI_MATERIAL_REGISTER_HZB_TEXTURE);
+SamplerState g_nearestClampSampler : register(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER);
 
 // FW shading specific
 #if defined(FORWARD_SHADING)
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-[[vk::binding(MaterialBinding::kLinearClampSampler, MaterialSet::kGlobal)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(MaterialBinding::kDepthRt, MaterialSet::kGlobal)]] Texture2D g_gbufferDepthTex;
-[[vk::binding(MaterialBinding::kLightVolume, MaterialSet::kGlobal)]] Texture3D<RVec4> g_lightVol;
-[[vk::binding(MaterialBinding::kShadowSampler, MaterialSet::kGlobal)]] SamplerComparisonState g_shadowSampler;
+SamplerState g_linearAnyClampSampler : register(ANKI_MATERIAL_REGISTER_LINEAR_CLAMP_SAMPLER);
+Texture2D g_gbufferDepthTex : register(ANKI_MATERIAL_REGISTER_SCENE_DEPTH);
+Texture3D<RVec4> g_lightVol : register(ANKI_MATERIAL_REGISTER_LIGHT_VOLUME);
+SamplerComparisonState g_shadowSampler : register(ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER);
 
-[[vk::binding(MaterialBinding::kClusterShadingUniforms, MaterialSet::kGlobal)]] ConstantBuffer<GlobalRendererUniforms> g_globalRendererUniforms;
-[[vk::binding(MaterialBinding::kClusters, MaterialSet::kGlobal)]] StructuredBuffer<Cluster> g_clusters;
-[[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<PointLight> g_pointLights;
-[[vk::binding(MaterialBinding::kClusterShadingLights, MaterialSet::kGlobal)]] StructuredBuffer<SpotLight> g_spotLights;
-[[vk::binding((U32)MaterialBinding::kClusterShadingLights + 1u, MaterialSet::kGlobal)]] Texture2D<Vec4> g_shadowAtlasTex;
+ConstantBuffer<GlobalRendererUniforms> g_globalRendererUniforms : register(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_UNIFORMS);
+StructuredBuffer<Cluster> g_clusters : register(ANKI_MATERIAL_REGISTER_CLUSTERS);
+StructuredBuffer<PointLight> g_pointLights : register(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS);
+StructuredBuffer<SpotLight> g_spotLights : register(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_SPOT_LIGHTS);
+Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_MATERIAL_REGISTER_SHADOW_ATLAS);
 #endif
 
 UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)

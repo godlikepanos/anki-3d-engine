@@ -13,24 +13,23 @@
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-#define SET 2u
+#define SPACE space2
 
-[[vk::binding(0, SET)]] ConstantBuffer<GlobalRendererUniforms> g_globalRendererUniforms;
-[[vk::binding(1, SET)]] StructuredBuffer<Cluster> g_clusters; // TODO: rm
+ConstantBuffer<GlobalRendererUniforms> g_globalRendererUniforms : register(b0, SPACE);
 
-[[vk::binding(2, SET)]] SamplerState g_trilinearRepeatSampler;
+SamplerState g_trilinearRepeatSampler : register(s0, SPACE);
 
-[[vk::binding(3, SET)]] RWTexture2D<Vec4> g_shadowsImage;
-[[vk::binding(4, SET)]] Texture2D<Vec4> g_historyShadowsTex;
-[[vk::binding(5, SET)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(6, SET)]] Texture2D<Vec4> g_depthRt;
-[[vk::binding(7, SET)]] Texture2D<Vec4> g_motionVectorsRt;
-[[vk::binding(8, SET)]] Texture2D<Vec4> g_historyLengthTex;
-[[vk::binding(9, SET)]] Texture2D<Vec4> g_normalRt;
-[[vk::binding(10, SET)]] RaytracingAccelerationStructure g_tlas;
-[[vk::binding(11, SET)]] Texture2D<Vec4> g_prevMomentsTex;
-[[vk::binding(12, SET)]] RWTexture2D<Vec4> g_momentsImage;
-[[vk::binding(13, SET)]] Texture2D<Vec4> g_blueNoiseTex;
+RWTexture2D<Vec4> g_shadowsImage : register(u0, SPACE);
+Texture2D<Vec4> g_historyShadowsTex : register(t0, SPACE);
+SamplerState g_linearAnyClampSampler : register(s1, SPACE);
+Texture2D<Vec4> g_depthRt : register(t1, SPACE);
+Texture2D<Vec4> g_motionVectorsRt : register(t2, SPACE);
+Texture2D<Vec4> g_historyLengthTex : register(t3, SPACE);
+Texture2D<Vec4> g_normalRt : register(t4, SPACE);
+RaytracingAccelerationStructure g_tlas : register(t5, SPACE);
+Texture2D<Vec4> g_prevMomentsTex : register(t6, SPACE);
+RWTexture2D<Vec4> g_momentsImage : register(u1, SPACE);
+Texture2D<Vec4> g_blueNoiseTex : register(t7, SPACE);
 
 F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 {

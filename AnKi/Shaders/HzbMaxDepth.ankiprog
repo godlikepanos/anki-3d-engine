@@ -7,9 +7,9 @@
 
 #pragma anki technique_start comp
 
-[[vk::binding(0)]] Texture2D<Vec4> g_depthRt;
-[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(2)]] RWTexture2D<Vec4> g_maxDepthStorageTex;
+Texture2D<Vec4> g_depthRt : register(t0);
+SamplerState g_linearAnyClampSampler : register(s0);
+RWTexture2D<Vec4> g_maxDepthStorageTex : register(u0);
 
 #define TILE_SIZE 64
 #define THREADGROUP_SIZE_XY 32

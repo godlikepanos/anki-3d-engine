@@ -487,15 +487,15 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				cmdb.bindShaderProgram(m_irradiance.m_grProg.get());
 
 				// Bind resources
-				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-				rgraphCtx.bindTexture(0, 1, lightShadingRt);
+				cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+				rgraphCtx.bindTexture(ANKI_REG(t0), lightShadingRt);
 
 				for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 				{
-					rgraphCtx.bindTexture(0, 2, gbufferColorRts[i], i);
+					rgraphCtx.bindTexture(Register(HlslResourceType::kSrv, i + 1), gbufferColorRts[i]);
 				}
 
-				rgraphCtx.bindStorageTexture(0, 3, irradianceVolume);
+				rgraphCtx.bindTexture(ANKI_REG(u0), irradianceVolume);
 
 				class
 				{

@@ -110,25 +110,7 @@ static Bool spinDials(ShaderCompilerDynamicArray<U32>& dials, ConstWeakArray<Sha
 	return done;
 }
 
-template<typename TFunc>
-static void visitSpirv(ConstWeakArray<U32> spv, TFunc func)
-{
-	ANKI_ASSERT(spv.getSize() > 5);
-
-	const U32* it = &spv[5];
-	do
-	{
-		const U32 instructionCount = *it >> 16u;
-		const U32 opcode = *it & 0xFFFFu;
-
-		func(opcode);
-
-		it += instructionCount;
-	} while(it < spv.getEnd());
-
-	ANKI_ASSERT(it == spv.getEnd());
-}
-
+/// Does SPIR-V reflection and re-writes the SPIR-V binary's bindings
 Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr)
 {
 	spirv_cross::Compiler spvc(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32));
@@ -137,16 +119,15 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 
 	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType,
 					const DescriptorFlag origFlags) -> Error {
-#if ANKI_GR_BACKEND_VULKAN
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
 
 			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
-			if(set >= kMaxDescriptorSets || binding >= kMaxBindingsPerDescriptorSet)
+			if(set >= kMaxDescriptorSets && set != kDxcVkBindlessRegisterSpace)
 			{
-				errorStr.sprintf("Exceeded set or binding for: %s", r.name.c_str());
+				errorStr.sprintf("Exceeded set for: %s", r.name.c_str());
 				return Error::kUserData;
 			}
 
@@ -154,81 +135,127 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			U32 arraySize = 1;
 			if(typeInfo.array.size() != 0)
 			{
-				if(typeInfo.array.size() != 1 || (arraySize = typeInfo.array[0]) == 0)
+				if(typeInfo.array.size() != 1)
 				{
 					errorStr.sprintf("Only 1D arrays are supported: %s", r.name.c_str());
 					return Error::kUserData;
 				}
-			}
 
-			refl.m_descriptorSetMask.set(set);
+				if(set == kDxcVkBindlessRegisterSpace && typeInfo.array[0] != 0)
+				{
+					errorStr.sprintf("Only the bindless descriptor set can be an unbound array: %s", r.name.c_str());
+					return Error::kUserData;
+				}
+
+				arraySize = typeInfo.array[0];
+			}
 
 			// Images are special, they might be texel buffers
 			DescriptorType type = origType;
 			DescriptorFlag flags = origFlags;
-			if(type == DescriptorType::kTexture)
+			if(type == DescriptorType::kTexture && typeInfo.image.dim == spv::DimBuffer)
 			{
-				if(typeInfo.image.dim == spv::DimBuffer)
-				{
-					type = DescriptorType::kTexelBuffer;
+				type = DescriptorType::kTexelBuffer;
 
-					if(typeInfo.image.sampled == 1)
-					{
-						flags = DescriptorFlag::kRead;
-					}
-					else
-					{
-						ANKI_ASSERT(typeInfo.image.sampled == 2);
-						flags = DescriptorFlag::kReadWrite;
-					}
+				if(typeInfo.image.sampled == 1)
+				{
+					flags = DescriptorFlag::kRead;
+				}
+				else
+				{
+					ANKI_ASSERT(typeInfo.image.sampled == 2);
+					flags = DescriptorFlag::kReadWrite;
 				}
 			}
 
-			// Check that there are no other descriptors with the same binding
-			if(refl.m_descriptorTypes[set][binding] == DescriptorType::kCount)
+			if(set == kDxcVkBindlessRegisterSpace)
 			{
-				// New binding, init it
-				refl.m_descriptorTypes[set][binding] = type;
-				refl.m_descriptorArraySizes[set][binding] = U16(arraySize);
-				refl.m_descriptorFlags[set][binding] = flags;
+				// Bindless dset
+
+				if(arraySize != 0)
+				{
+					errorStr.sprintf("Unexpected unbound array for bindless: %s", r.name.c_str());
+				}
+
+				if(type != DescriptorType::kTexture || flags != DescriptorFlag::kRead)
+				{
+					errorStr.sprintf("Unexpected bindless binding: %s", r.name.c_str());
+					return Error::kUserData;
+				}
+
+				refl.m_descriptor.m_hasVkBindlessDescriptorSet = true;
 			}
 			else
 			{
-				// Same binding, make sure the type is compatible
-				if(refl.m_descriptorTypes[set][binding] != type || refl.m_descriptorArraySizes[set][binding] != arraySize
-				   || refl.m_descriptorFlags[set][binding] != flags)
+				// Regular binding
+
+				if(origType == DescriptorType::kStorageBuffer && binding >= kDxcVkBindingShifts[set][HlslResourceType::kSrv]
+				   && binding < kDxcVkBindingShifts[set][HlslResourceType::kSrv] + 1000)
 				{
-					errorStr.sprintf("Descriptor with same binding but different type or array size: %s", r.name.c_str());
+					// Storage buffer is read only
+					flags = DescriptorFlag::kRead;
+				}
+
+				const HlslResourceType hlslResourceType = descriptorTypeToHlslResourceType(type, flags);
+				if(binding < kDxcVkBindingShifts[set][hlslResourceType] || binding >= kDxcVkBindingShifts[set][hlslResourceType] + 1000)
+				{
+					errorStr.sprintf("Unexpected binding: %s", r.name.c_str());
 					return Error::kUserData;
 				}
+
+				ShaderReflectionBinding akBinding;
+				akBinding.m_registerBindingPoint = binding - kDxcVkBindingShifts[set][hlslResourceType];
+				akBinding.m_arraySize = U16(arraySize);
+				akBinding.m_type = type;
+				akBinding.m_flags = flags;
+
+				refl.m_descriptor.m_bindings[set][refl.m_descriptor.m_bindingCounts[set]] = akBinding;
+				++refl.m_descriptor.m_bindingCounts[set];
 			}
 		}
-#endif
 
 		return Error::kNone;
 	};
 
-	Error err = Error::kNone;
-	err = func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer, DescriptorFlag::kRead);
-	if(!err)
+	Error err = func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer, DescriptorFlag::kRead);
+	if(err)
 	{
-		err = func(rsrc.separate_images, DescriptorType::kTexture, DescriptorFlag::kRead); // This also handles texel buffers
+		return err;
 	}
-	if(!err)
+
+	err = func(rsrc.separate_images, DescriptorType::kTexture, DescriptorFlag::kRead); // This also handles texel buffers
+	if(err)
 	{
-		err = func(rsrc.separate_samplers, DescriptorType::kSampler, DescriptorFlag::kRead);
+		return err;
 	}
-	if(!err)
+
+	err = func(rsrc.separate_samplers, DescriptorType::kSampler, DescriptorFlag::kRead);
+	if(err)
 	{
-		err = func(rsrc.storage_buffers, DescriptorType::kStorageBuffer, DescriptorFlag::kReadWrite);
+		return err;
 	}
-	if(!err)
+
+	err = func(rsrc.storage_buffers, DescriptorType::kStorageBuffer, DescriptorFlag::kReadWrite);
+	if(err)
 	{
-		err = func(rsrc.storage_images, DescriptorType::kTexture, DescriptorFlag::kReadWrite);
+		return err;
 	}
-	if(!err)
+
+	err = func(rsrc.storage_images, DescriptorType::kTexture, DescriptorFlag::kReadWrite);
+	if(err)
 	{
-		err = func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure, DescriptorFlag::kRead);
+		return err;
+	}
+
+	err = func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure, DescriptorFlag::kRead);
+	if(err)
+	{
+		return err;
+	}
+
+	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
+	{
+		std::sort(refl.m_descriptor.m_bindings[i].getBegin(), refl.m_descriptor.m_bindings[i].getBegin() + refl.m_descriptor.m_bindingCounts[i]);
 	}
 
 	// Color attachments
@@ -319,12 +346,13 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 	// Discards?
 	if(type == ShaderType::kFragment)
 	{
-		visitSpirv(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)), [&](U32 cmd) {
-			if(cmd == spv::OpKill)
-			{
-				refl.m_fragment.m_discards = true;
-			}
-		});
+		visitSpirv<ConstWeakArray>(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)),
+								   [&](U32 cmd, [[maybe_unused]] ConstWeakArray<U32> instructions) {
+									   if(cmd == spv::OpKill)
+									   {
+										   refl.m_fragment.m_discards = true;
+									   }
+								   });
 	}
 
 	return Error::kNone;

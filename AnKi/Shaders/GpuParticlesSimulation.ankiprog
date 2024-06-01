@@ -10,12 +10,12 @@
 #include <AnKi/Shaders/Include/ParticleTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
 
-[[vk::binding(0, 0)]] Texture2D g_depthTex;
-[[vk::binding(0, 1)]] RWStructuredBuffer<GpuParticle> g_particles;
-[[vk::binding(1, 1)]] ConstantBuffer<GpuParticleEmitterProperties> g_props;
-[[vk::binding(2, 1)]] StructuredBuffer<F32> g_randomFactors; // The 1st element is a uint with the count of the numbers
-[[vk::binding(3, 1)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(4, 1)]] ConstantBuffer<GpuParticleSimulationState> g_state;
+Texture2D g_depthTex : register(t0);
+RWStructuredBuffer<GpuParticle> g_particles : register(u0);
+ConstantBuffer<GpuParticleEmitterProperties> g_props : register(b0);
+StructuredBuffer<F32> g_randomFactors : register(t1); // The 1st element is a uint with the count of the numbers
+SamplerState g_nearestAnyClampSampler : register(s0);
+ConstantBuffer<GpuParticleSimulationState> g_state : register(b1);
 
 F32 smallerDelta(F32 left, F32 mid, F32 right)
 {

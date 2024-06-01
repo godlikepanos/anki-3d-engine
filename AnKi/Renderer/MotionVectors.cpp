@@ -71,9 +71,9 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt());
-		rgraphCtx.bindTexture(0, 2, getRenderer().getGBuffer().getColorRt(3));
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getGBuffer().getColorRt(3));
 
 		class Uniforms
 		{
@@ -82,7 +82,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 			Mat4 m_currentInvViewProjMat;
 			Mat4 m_prevViewProjMat;
 		} * pc;
-		pc = allocateAndBindConstants<Uniforms>(cmdb, 0, 3);
+		pc = allocateAndBindConstants<Uniforms>(cmdb, ANKI_REG(b0));
 
 		pc->m_currentViewProjMat = ctx.m_matrices.m_viewProjection;
 		pc->m_currentInvViewProjMat = ctx.m_matrices.m_invertedViewProjection;
@@ -90,7 +90,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindStorageTexture(0, 4, m_runCtx.m_motionVectorsRtHandle);
+			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_motionVectorsRtHandle);
 		}
 
 		if(g_preferComputeCVar.get())

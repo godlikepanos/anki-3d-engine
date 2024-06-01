@@ -8,7 +8,7 @@
 #include <AnKi/Gr/Vulkan/VkFenceFactory.h>
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/BackendCommon/MicroObjectRecycler.h>
-#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
+#include <AnKi/Gr/Vulkan/VkDescriptor.h>
 #include <AnKi/Util/List.h>
 
 namespace anki {
@@ -98,7 +98,7 @@ public:
 		return m_queue;
 	}
 
-	DSAllocator& getDSAllocator()
+	DescriptorAllocator& getDSAllocator()
 	{
 		return m_dsAllocator;
 	}
@@ -112,7 +112,7 @@ private:
 	MicroFencePtr m_fence;
 	Array<DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>, U(GrObjectType::kCount)> m_objectRefs;
 
-	DSAllocator m_dsAllocator;
+	DescriptorAllocator m_dsAllocator;
 
 	CommandBufferThreadAllocator* m_threadAlloc;
 	mutable Atomic<I32> m_refcount = {0};

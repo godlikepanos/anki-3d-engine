@@ -101,6 +101,14 @@ public:
 	HlslResourceType m_resourceType = HlslResourceType::kCount;
 	U8 m_space = kMaxU8;
 
+	Register(HlslResourceType type, U32 bindingPoint, U8 space = 0)
+		: m_bindPoint(bindingPoint)
+		, m_resourceType(type)
+		, m_space(space)
+	{
+		validate();
+	}
+
 	/// Construct using a couple of strings like ("t0", "space10")
 	Register(const Char* reg, const Char* space = "space0")
 	{
@@ -255,47 +263,22 @@ public:
 	void setLineWidth(F32 lineWidth);
 
 	/// Bind sampler.
-	void bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx = 0);
-
-	/// Bind sampler.
 	void bindSampler(Register reg, Sampler* sampler);
-
-	/// Bind a texture.
-	void bindTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx = 0);
 
 	/// Bind a texture.
 	void bindTexture(Register reg, const TextureView& texView);
 
 	/// Bind uniform buffer.
-	void bindUniformBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx = 0);
-
-	/// Bind uniform buffer.
 	void bindUniformBuffer(Register reg, const BufferView& buff);
-
-	/// Bind storage buffer.
-	void bindStorageBuffer(U32 set, U32 binding, const BufferView& buff, U32 arrayIdx = 0);
 
 	/// Bind storage buffer.
 	void bindStorageBuffer(Register reg, const BufferView& buff);
 
-	/// Bind load/store image.
-	void bindStorageTexture(U32 set, U32 binding, const TextureView& texView, U32 arrayIdx = 0);
-
-	/// Bind texture buffer.
-	void bindReadOnlyTexelBuffer(U32 set, U32 binding, const BufferView& buff, Format fmt, U32 arrayIdx = 0);
-
 	/// Bind texel buffer.
 	void bindTexelBuffer(Register reg, const BufferView& buff, Format fmt);
 
-	/// Bind an acceleration structure.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param[in,out] as The AS to bind.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindAccelerationStructure(U32 set, U32 binding, AccelerationStructure* as, U32 arrayIdx = 0);
-
-	/// Bind the bindless descriptor set into a slot.
-	void bindAllBindless(U32 set);
+	/// Bind AS.
+	void bindAccelerationStructure(Register reg, AccelerationStructure* as);
 
 	/// Set push constants.
 	void setPushConstants(const void* data, U32 dataSize);

@@ -8,8 +8,99 @@
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Gr/Vulkan/VkPipelineFactory.h>
 #include <AnKi/Gr/BackendCommon/Functions.h>
+#include <AnKi/Gr/Vulkan/VkBuffer.h>
+
+#include <AnKi/ShaderCompiler/Dxc.h>
+#include <ThirdParty/SpirvCross/spirv.hpp>
 
 namespace anki {
+
+/// Used to avoid keeping alive many shader modules that are essentially the same code. Mainly used to save memory because graphics ShaderPrograms
+/// need to keep alive the shader modules for later when the pipeline is created.
+class ShaderModuleFactory : public MakeSingletonSimple<ShaderModuleFactory>
+{
+public:
+	~ShaderModuleFactory()
+	{
+		ANKI_ASSERT(m_entries.getSize() == 0 && "Forgot to release shader modules");
+	}
+
+	/// @note Thread-safe
+	VkShaderModule getOrCreateShaderModule(ConstWeakArray<U32> spirv)
+	{
+		const U64 hash = computeHash(spirv.getBegin(), spirv.getSizeInBytes());
+
+		LockGuard lock(m_mtx);
+
+		Entry* entry = nullptr;
+		for(Entry& e : m_entries)
+		{
+			if(e.m_hash == hash)
+			{
+				entry = &e;
+				break;
+			}
+		}
+
+		if(entry)
+		{
+			++entry->m_refcount;
+			return entry->m_module;
+		}
+		else
+		{
+			VkShaderModuleCreateInfo ci = {};
+			ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			ci.codeSize = spirv.getSizeInBytes();
+			ci.pCode = spirv.getBegin();
+
+			Entry entry;
+			ANKI_VK_CHECKF(vkCreateShaderModule(getVkDevice(), &ci, nullptr, &entry.m_module));
+
+			entry.m_hash = hash;
+			m_entries.emplaceBack(entry);
+
+			return entry.m_module;
+		}
+	}
+
+	/// @note Thread-safe
+	void releaseShaderModule(VkShaderModule smodule)
+	{
+		LockGuard lock(m_mtx);
+
+		U32 idx = kMaxU32;
+		for(U32 i = 0; i < m_entries.getSize(); ++i)
+		{
+			if(m_entries[i].m_module == smodule)
+			{
+				idx = i;
+				break;
+			}
+		}
+
+		ANKI_ASSERT(idx != kMaxU32);
+		ANKI_ASSERT(m_entries[idx].m_refcount > 0);
+		--m_entries[idx].m_refcount;
+		if(m_entries[idx].m_refcount == 0)
+		{
+			vkDestroyShaderModule(getVkDevice(), m_entries[idx].m_module, nullptr);
+			m_entries.erase(m_entries.getBegin() + idx);
+		}
+	}
+
+private:
+	class Entry
+	{
+	public:
+		U64 m_hash = 0;
+		VkShaderModule m_module = 0;
+		U32 m_refcount = 1;
+	};
+
+	GrDynamicArray<Entry> m_entries;
+	Mutex m_mtx;
+};
 
 ShaderProgram* ShaderProgram::newInstance(const ShaderProgramInitInfo& init)
 {
@@ -35,6 +126,18 @@ Buffer& ShaderProgram::getShaderGroupHandlesGpuBuffer() const
 
 ShaderProgramImpl::~ShaderProgramImpl()
 {
+	const Bool graphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
+	if(graphicsProg)
+	{
+		for(const VkPipelineShaderStageCreateInfo& ci : m_graphics.m_shaderCreateInfos)
+		{
+			if(ci.module != 0)
+			{
+				ShaderModuleFactory::getSingleton().releaseShaderModule(ci.module);
+			}
+		}
+	}
+
 	if(m_graphics.m_pplineFactory)
 	{
 		m_graphics.m_pplineFactory->destroy();
@@ -133,58 +236,46 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		}
 		else
 		{
-			ANKI_CHECK(linkShaderReflection(m_refl, simpl.m_reflection, m_refl));
+			ANKI_CHECK(ShaderReflection::linkShaderReflection(m_refl, simpl.m_reflection, m_refl));
 		}
 
 		m_refl.validate();
 	}
 
-	// Get bindings
+	// Rewite SPIR-V to fix the bindings
 	//
-	Array2d<DSBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> bindings;
-	Array<U32, kMaxDescriptorSets> counts = {};
-	U32 descriptorSetCount = 0;
-	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
-	{
-		for(U8 binding = 0; m_refl.m_descriptorSetMask.get(set) && binding < kMaxBindingsPerDescriptorSet; ++binding)
-		{
-			if(m_refl.m_descriptorArraySizes[set][binding])
-			{
-				DSBinding b;
-				b.m_arraySize = m_refl.m_descriptorArraySizes[set][binding];
-				b.m_binding = binding;
-				b.m_type = convertDescriptorType(m_refl.m_descriptorTypes[set][binding], m_refl.m_descriptorFlags[set][binding]);
+	GrDynamicArray<GrDynamicArray<U32>> rewrittenSpirvs;
+	rewriteSpirv(m_refl.m_descriptor, rewrittenSpirvs);
 
-				bindings[set][counts[set]++] = b;
-			}
-		}
-
-		// We may end up with ppline layouts with "empty" dslayouts. That's fine, we want it.
-		if(counts[set])
-		{
-			descriptorSetCount = set + 1;
-		}
-	}
-
-	// Create the descriptor set layouts
+	// Create the shader modules
 	//
-	for(U32 set = 0; set < descriptorSetCount; ++set)
+	const Bool graphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
+	GrDynamicArray<VkShaderModule> shaderModules;
+	shaderModules.resize(m_shaders.getSize());
+	for(U32 ishader = 0; ishader < shaderModules.getSize(); ++ishader)
 	{
-		ANKI_CHECK(DSLayoutFactory::getSingleton().getOrCreateDescriptorSetLayout(
-			WeakArray<DSBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]), m_descriptorSetLayouts[set]));
+		if(graphicsProg)
+		{
+			// Graphics prog, need to keep the modules alive for later
+			shaderModules[ishader] = ShaderModuleFactory::getSingleton().getOrCreateShaderModule(rewrittenSpirvs[ishader]);
+		}
+		else
+		{
+			VkShaderModuleCreateInfo ci = {};
+			ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			ci.codeSize = rewrittenSpirvs[ishader].getSizeInBytes();
+			ci.pCode = rewrittenSpirvs[ishader].getBegin();
 
-		// Even if the dslayout is empty we will have to list it because we'll have to bind a DS for it.
-		m_refl.m_descriptorSetMask.set(set);
+			ANKI_VK_CHECK(vkCreateShaderModule(getVkDevice(), &ci, nullptr, &shaderModules[ishader]));
+		}
 	}
 
 	// Create the ppline layout
 	//
-	WeakArray<const DSLayout*> dsetLayouts((descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr, descriptorSetCount);
-	ANKI_CHECK(PipelineLayoutFactory::getSingleton().newPipelineLayout(dsetLayouts, m_refl.m_descriptor.m_pushConstantsSize, m_pplineLayout));
+	ANKI_CHECK(PipelineLayoutFactory2::getSingleton().getOrCreatePipelineLayout(m_refl.m_descriptor, m_pplineLayout));
 
 	// Get some masks
 	//
-	const Bool graphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
 	if(graphicsProg)
 	{
 		const U32 attachmentCount = m_refl.m_fragment.m_colorAttachmentWritemask.getSetBitCount();
@@ -198,16 +289,16 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(graphicsProg)
 	{
-		for(const ShaderPtr& shader : m_shaders)
+		for(U32 ishader = 0; ishader < m_shaders.getSize(); ++ishader)
 		{
-			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*shader);
+			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[ishader]);
 
 			VkPipelineShaderStageCreateInfo& createInf = m_graphics.m_shaderCreateInfos[m_graphics.m_shaderCreateInfoCount++];
 			createInf = {};
 			createInf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			createInf.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType())));
+			createInf.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << shaderImpl.getShaderType())));
 			createInf.pName = "main";
-			createInf.module = shaderImpl.m_handle;
+			createInf.module = shaderModules[ishader];
 		}
 	}
 
@@ -222,8 +313,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(!!(m_shaderTypes & ShaderTypeBit::kCompute))
 	{
-		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[0]);
-
 		VkComputePipelineCreateInfo ci = {};
 
 		if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_pipeline_executable_properties))
@@ -232,12 +321,12 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		}
 
 		ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-		ci.layout = m_pplineLayout.getHandle();
+		ci.layout = m_pplineLayout->getHandle();
 
 		ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 		ci.stage.pName = "main";
-		ci.stage.module = shaderImpl.m_handle;
+		ci.stage.module = shaderModules[0];
 
 		ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
 		ANKI_VK_CHECK(vkCreateComputePipelines(getVkDevice(), PipelineCache::getSingleton().m_cacheHandle, 1, &ci, nullptr, &m_compute.m_ppline));
@@ -260,7 +349,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			stage.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << impl.getShaderType())));
 			stage.pName = "main";
-			stage.module = impl.m_handle;
+			stage.module = shaderModules[i];
 		}
 
 		// Create groups
@@ -320,7 +409,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.groupCount = groups.getSize();
 		ci.pGroups = &groups[0];
 		ci.maxPipelineRayRecursionDepth = inf.m_rayTracingShaders.m_maxRecursionDepth;
-		ci.layout = m_pplineLayout.getHandle();
+		ci.layout = m_pplineLayout->getHandle();
 
 		{
 			ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
@@ -365,7 +454,114 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		}
 	}
 
+	// Non graphics programs have created their pipeline, destroy the shader modules
+	//
+	if(!graphicsProg)
+	{
+		for(VkShaderModule smodule : shaderModules)
+		{
+			vkDestroyShaderModule(getVkDevice(), smodule, nullptr);
+		}
+	}
+
 	return Error::kNone;
+}
+
+void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, GrDynamicArray<GrDynamicArray<U32>>& rewrittenSpirvs)
+{
+	// Find a binding for the bindless DS
+	if(refl.m_hasVkBindlessDescriptorSet)
+	{
+		for(U8 iset = 0; iset < kMaxDescriptorSets; ++iset)
+		{
+			if(refl.m_bindingCounts[iset] == 0)
+			{
+				refl.m_vkBindlessDescriptorSet = iset;
+				break;
+			}
+		}
+	}
+
+	// Re-write all SPIRVs and compute the new bindings
+	rewrittenSpirvs.resize(m_shaders.getSize());
+	Bool hasBindless = false;
+	Array<U16, kMaxDescriptorSets> vkBindingCount = {};
+	for(U32 ishader = 0; ishader < m_shaders.getSize(); ++ishader)
+	{
+		ConstWeakArray<U32> inSpirv = static_cast<const ShaderImpl&>(*m_shaders[ishader]).m_spirvBin;
+		GrDynamicArray<U32>& outSpv = rewrittenSpirvs[ishader];
+
+		outSpv.resize(inSpirv.getSize());
+		memcpy(outSpv.getBegin(), inSpirv.getBegin(), inSpirv.getSizeInBytes());
+
+		visitSpirv<WeakArray>(WeakArray<U32>(outSpv), [&](U32 cmd, WeakArray<U32> instructions) {
+			if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationBinding
+			   && instructions[2] >= kDxcVkBindingShifts[0][HlslResourceType::kFirst]
+			   && instructions[2] < kDxcVkBindingShifts[kMaxDescriptorSets - 1][HlslResourceType::kCount - 1])
+			{
+				const U32 binding = instructions[2];
+
+				// Look at the binding and derive a few things. See the DXC compilation on what they mean
+				U32 set = kMaxDescriptorSets;
+				HlslResourceType hlslResourceType = HlslResourceType::kCount;
+				for(set = 0; set < kMaxDescriptorSets; ++set)
+				{
+					for(HlslResourceType hlslResourceType_ : EnumIterable<HlslResourceType>())
+					{
+						if(binding >= kDxcVkBindingShifts[set][hlslResourceType_] && binding < kDxcVkBindingShifts[set][hlslResourceType_] + 1000)
+						{
+							hlslResourceType = hlslResourceType_;
+							break;
+						}
+					}
+
+					if(hlslResourceType != HlslResourceType::kCount)
+					{
+						break;
+					}
+				}
+
+				ANKI_ASSERT(set < kMaxDescriptorSets);
+				ANKI_ASSERT(hlslResourceType < HlslResourceType::kCount);
+				const U32 registerBindingPoint = binding - kDxcVkBindingShifts[set][hlslResourceType];
+
+				// Find the binding
+				U32 foundBindingIdx = kMaxU32;
+				for(U32 i = 0; i < refl.m_bindingCounts[set]; ++i)
+				{
+					const ShaderReflectionBinding& x = refl.m_bindings[set][i];
+					if(x.m_registerBindingPoint == registerBindingPoint && hlslResourceType == descriptorTypeToHlslResourceType(x.m_type, x.m_flags))
+					{
+						ANKI_ASSERT(foundBindingIdx == kMaxU32);
+						foundBindingIdx = i;
+					}
+				}
+
+				// Rewrite it
+				ANKI_ASSERT(foundBindingIdx != kMaxU32);
+				if(refl.m_bindings[set][foundBindingIdx].m_vkBinding != kMaxU16)
+				{
+					// Binding was set in another shader, just rewrite the SPIR-V
+					instructions[2] = refl.m_bindings[set][foundBindingIdx].m_vkBinding;
+				}
+				else
+				{
+					// Binding is new
+					refl.m_bindings[set][foundBindingIdx].m_vkBinding = vkBindingCount[set];
+					instructions[2] = vkBindingCount[set];
+					++vkBindingCount[set];
+				}
+			}
+			else if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet && instructions[2] == kDxcVkBindlessRegisterSpace)
+			{
+				// Bindless set, rewrite its set
+				instructions[2] = refl.m_vkBindlessDescriptorSet;
+				hasBindless = true;
+			}
+		});
+	}
+
+	ANKI_ASSERT(hasBindless == refl.m_hasVkBindlessDescriptorSet);
 }
 
 } // end namespace anki

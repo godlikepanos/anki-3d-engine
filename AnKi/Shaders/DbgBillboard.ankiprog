@@ -19,7 +19,7 @@ struct Uniforms
 	Mat3x4 m_camTrf;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 typedef LightUnion ClusteredType;
@@ -35,8 +35,8 @@ typedef GlobalIlluminationProbe ClusteredType;
 #	error See file
 #endif
 
-[[vk::binding(2)]] StructuredBuffer<ClusteredType> g_visibleObjects;
-[[vk::binding(3)]] StructuredBuffer<U32> g_visibleObjectCount;
+StructuredBuffer<ClusteredType> g_visibleObjects : register(t1);
+StructuredBuffer<U32> g_visibleObjectCount : register(t2);
 
 struct VertOut
 {
@@ -102,14 +102,14 @@ VertOut main(VertIn input)
 #pragma anki technique_start frag
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
-[[vk::binding(4)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(5)]] Texture2D<Vec4> g_tex;
-[[vk::binding(6)]] Texture2D<Vec4> g_tex2;
+SamplerState g_trilinearRepeatSampler : register(s1);
+Texture2D<Vec4> g_tex : register(t3);
+Texture2D<Vec4> g_tex2 : register(t4);
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
 #if DEPTH_FAIL_VISUALIZATION == 1
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_depthRt;
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_depthRt : register(t0);
 #endif
 
 Vec4 main(VertOut input) : SV_TARGET0

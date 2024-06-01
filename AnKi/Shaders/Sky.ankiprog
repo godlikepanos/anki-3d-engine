@@ -142,7 +142,7 @@ F32 getRayleighPhase(F32 cosTheta)
 // ===========================================================================
 #pragma anki technique_start comp SkyTransmittanceLut
 
-[[vk::binding(0)]] RWTexture2D<Vec4> g_tLutStorageTex;
+RWTexture2D<Vec4> g_tLutStorageTex : register(u0);
 
 Vec3 getSunTransmittance(Vec3 pos, Vec3 dirToSun)
 {
@@ -196,9 +196,9 @@ Vec3 getSunTransmittance(Vec3 pos, Vec3 dirToSun)
 // ===========================================================================
 #pragma anki technique_start comp SkyMultipleScatteringLut
 
-[[vk::binding(0)]] Texture2D<Vec4> g_tLutTex;
-[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(2)]] RWTexture2D<Vec4> g_mLutStorageTex;
+Texture2D<Vec4> g_tLutTex : register(t0);
+SamplerState g_linearAnyClampSampler : register(s0);
+RWTexture2D<Vec4> g_mLutStorageTex : register(u0);
 
 Vec3 getSphericalDir(F32 theta, F32 phi)
 {
@@ -325,11 +325,11 @@ void getMulScattValues(Vec3 pos, Vec3 dirToSun, out Vec3 lumTotal, out Vec3 fms)
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-[[vk::binding(0)]] Texture2D<Vec4> g_tLutTex;
-[[vk::binding(1)]] Texture2D<Vec4> g_mLutTex;
-[[vk::binding(2)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(3)]] RWTexture2D<Vec4> g_skyLutStorageTex;
-[[vk::binding(4)]] ConstantBuffer<GlobalRendererUniforms> g_globalUniforms;
+Texture2D<Vec4> g_tLutTex : register(t0);
+Texture2D<Vec4> g_mLutTex : register(t1);
+SamplerState g_linearAnyClampSampler : register(s0);
+RWTexture2D<Vec4> g_skyLutStorageTex : register(u0);
+ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
 
 Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numSteps)
 {
@@ -423,8 +423,8 @@ Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numS
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-[[vk::binding(0)]] Texture2D<Vec4> g_tLutTex;
-[[vk::binding(1)]] globallycoherent RWStructuredBuffer<GlobalRendererUniforms> g_globalUniforms;
+Texture2D<Vec4> g_tLutTex : register(t0);
+globallycoherent RWStructuredBuffer<GlobalRendererUniforms> g_globalUniforms : register(u0);
 
 [numthreads(1, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {

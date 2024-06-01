@@ -76,17 +76,17 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		cmdb.setPushConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
 		// Write flare info
-		Vec4* flarePositions = allocateAndBindStorageBuffer<Vec4>(cmdb, 0, 0, flareCount);
+		Vec4* flarePositions = allocateAndBindStorageBuffer<Vec4>(cmdb, ANKI_REG(t0), flareCount);
 		for(const LensFlareComponent& comp : SceneGraph::getSingleton().getComponentArrays().getLensFlares())
 		{
 			*flarePositions = Vec4(comp.getWorldPosition(), 1.0f);
 			++flarePositions;
 		}
 
-		rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
+		rgraphCtx.bindStorageBuffer(ANKI_REG(u0), m_runCtx.m_indirectBuffHandle);
 		// Bind neareset because you don't need high quality
-		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kEighthInternalResolution);
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+		rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kEighthInternalResolution);
 
 		cmdb.dispatchCompute(flareCount, 1, 1);
 	});
@@ -123,7 +123,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 		U32 spritesCount = max<U32>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
-		LensFlareSprite* tmpSprites = allocateAndBindStorageBuffer<LensFlareSprite>(cmdb, 0, 0, spritesCount);
+		LensFlareSprite* tmpSprites = allocateAndBindStorageBuffer<LensFlareSprite>(cmdb, ANKI_REG(t0), spritesCount);
 		WeakArray<LensFlareSprite> sprites(tmpSprites, spritesCount);
 
 		// misc
@@ -138,8 +138,8 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 		++c;
 
 		// Render
-		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearRepeat.get());
-		cmdb.bindTexture(0, 2, TextureView(&comp.getImage().getTexture(), TextureSubresourceDescriptor::all()));
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindTexture(ANKI_REG(t1), TextureView(&comp.getImage().getTexture(), TextureSubresourceDescriptor::all()));
 
 		cmdb.drawIndirect(PrimitiveTopology::kTriangleStrip, BufferView(m_runCtx.m_indirectBuff).incrementOffset(count * sizeof(DrawIndirectArgs)));
 

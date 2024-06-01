@@ -76,10 +76,10 @@ FragOut main(VertOut input)
 	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 #if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localUniforms.m_diffuseMap], g_globalSampler, localUniforms.m_animationPeriod,
-										   input.m_uv, g_globalRendererUniforms.m_time);
+	RVec4 texCol = readAnimatedTextureRgba(getBindlessTexture2DArrayRVec4(localUniforms.m_diffuseMap), g_globalSampler,
+										   localUniforms.m_animationPeriod, input.m_uv, g_globalRendererUniforms.m_time);
 #else
-	RVec4 texCol = g_bindlessTextures2dF32[localUniforms.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
+	RVec4 texCol = getBindlessTexture2DRVec4(localUniforms.m_diffuseMap).Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT

@@ -71,22 +71,23 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb.setBlendFactors(0, BlendFactor::kSrcAlpha, BlendFactor::kOneMinusSrcAlpha);
 
 		// Bind stuff
-		const U32 set = U32(MaterialSet::kGlobal);
-		cmdb.bindSampler(set, U32(MaterialBinding::kLinearClampSampler), getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb.bindSampler(set, U32(MaterialBinding::kShadowSampler), getRenderer().getSamplers().m_trilinearClampShadow.get());
+		cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_LINEAR_CLAMP_SAMPLER), getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER), getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-		rgraphCtx.bindTexture(set, U32(MaterialBinding::kDepthRt), getRenderer().getDepthDownscale().getRt(),
+		rgraphCtx.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_SCENE_DEPTH), getRenderer().getDepthDownscale().getRt(),
 							  DepthDownscale::kQuarterInternalResolution);
-		rgraphCtx.bindTexture(set, U32(MaterialBinding::kLightVolume), getRenderer().getVolumetricLightingAccumulation().getRt());
+		rgraphCtx.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_LIGHT_VOLUME), getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		cmdb.bindUniformBuffer(set, U32(MaterialBinding::kClusterShadingUniforms), ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindUniformBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_UNIFORMS), ctx.m_globalRenderingUniformsBuffer);
 
-		cmdb.bindStorageBuffer(set, U32(MaterialBinding::kClusterShadingLights),
+		cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS),
+							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_SPOT_LIGHTS),
 							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 
-		rgraphCtx.bindTexture(set, U32(MaterialBinding::kClusterShadingLights) + 1, getRenderer().getShadowMapping().getShadowmapRt());
+		rgraphCtx.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_SHADOW_ATLAS), getRenderer().getShadowMapping().getShadowmapRt());
 
-		cmdb.bindStorageBuffer(set, U32(MaterialBinding::kClusters), getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_CLUSTERS), getRenderer().getClusterBinning().getClustersBuffer());
 
 		// Draw
 		RenderableDrawerArguments args;

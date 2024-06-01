@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <AnKi/Gr/Vulkan/VkDescriptorSetFactory.h>
 #include <AnKi/Gr/ShaderProgram.h>
 #include <AnKi/Gr/Vulkan/VkShaderProgram.h>
 #include <AnKi/Util/HashMap.h>

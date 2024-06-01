@@ -8,11 +8,11 @@
 
 #define THREAD_COUNT_SQRT 8
 
-[[vk::push_constant]] ConstantBuffer<Mat4> g_mvp;
-[[vk::binding(0)]] StructuredBuffer<Vec4> g_flarePositions;
-[[vk::binding(1)]] RWStructuredBuffer<DrawIndirectArgs> g_indirectInfo;
-[[vk::binding(2)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(3)]] Texture2D g_depthMap;
+ANKI_PUSH_CONSTANTS(Mat4, g_mvp)
+StructuredBuffer<Vec4> g_flarePositions : register(t0);
+RWStructuredBuffer<DrawIndirectArgs> g_indirectInfo : register(u0);
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_depthMap : register(t1);
 
 groupshared U32 s_maxDepth;
 

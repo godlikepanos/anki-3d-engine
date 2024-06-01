@@ -11,12 +11,12 @@
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-[[vk::binding(0)]] StructuredBuffer<GpuVisibilityHash> g_hash;
-[[vk::binding(1)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
-[[vk::binding(2)]] RWStructuredBuffer<GpuSceneLight> g_lights;
-[[vk::binding(3)]] RWStructuredBuffer<GpuSceneLightVisibleRenderablesHash> g_lightHashes;
-[[vk::binding(4)]] RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs;
-[[vk::binding(5)]] RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs;
+StructuredBuffer<GpuVisibilityHash> g_hash : register(t0);
+RWStructuredBuffer<U32> g_mdiDrawCounts : register(u0);
+RWStructuredBuffer<GpuSceneLight> g_lights : register(u1);
+RWStructuredBuffer<GpuSceneLightVisibleRenderablesHash> g_lightHashes : register(u2);
+RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs : register(u3);
+RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs : register(u4);
 
 struct Uniforms
 {
@@ -26,7 +26,7 @@ struct Uniforms
 	U32 m_padding2;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 groupshared U32 s_renderLight;
 

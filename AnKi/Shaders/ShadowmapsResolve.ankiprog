@@ -11,24 +11,24 @@
 
 #	define DEBUG_CASCADES 0
 
-[[vk::binding(0)]] ConstantBuffer<GlobalRendererUniforms> g_globalUniforms;
-[[vk::binding(1)]] StructuredBuffer<PointLight> g_pointLights;
-[[vk::binding(1)]] StructuredBuffer<SpotLight> g_spotLights;
-[[vk::binding(2)]] Texture2D<Vec4> g_shadowAtlasTex;
-[[vk::binding(3)]] StructuredBuffer<Cluster> g_clusters;
+ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
+StructuredBuffer<PointLight> g_pointLights : register(t0);
+StructuredBuffer<SpotLight> g_spotLights : register(t1);
+Texture2D<Vec4> g_shadowAtlasTex : register(t2);
+StructuredBuffer<Cluster> g_clusters : register(t3);
 
-[[vk::binding(4)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(5)]] SamplerComparisonState g_linearAnyClampShadowSampler;
-[[vk::binding(6)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(7)]] Texture2D<Vec4> g_depthRt;
-[[vk::binding(8)]] Texture2D<Vec4> g_noiseTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+SamplerComparisonState g_linearAnyClampShadowSampler : register(s1);
+SamplerState g_trilinearRepeatSampler : register(s2);
+Texture2D<Vec4> g_depthRt : register(t4);
+Texture2D<Vec4> g_noiseTex : register(t5);
 
 #	if DIRECTIONAL_LIGHT_SHADOW_RESOLVED
-[[vk::binding(9)]] Texture2D<Vec4> g_dirLightResolvedShadowsTex;
+Texture2D<Vec4> g_dirLightResolvedShadowsTex : register(t6);
 #	endif
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(10)]] RWTexture2D<RVec4> g_storageTex;
+RWTexture2D<RVec4> g_storageTex : register(u0);
 #	endif
 
 struct Uniforms
@@ -38,7 +38,7 @@ struct Uniforms
 	F32 m_padding1;
 };
 
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 Vec3 computeDebugShadowCascadeColor(U32 cascade)
 {

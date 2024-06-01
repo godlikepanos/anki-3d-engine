@@ -31,48 +31,48 @@ struct DrawIndirectArgsWithPadding
 };
 
 // Buffers that point to the GPU scene
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
-[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(2)]] StructuredBuffer<GpuSceneMeshLod> g_meshLods;
-[[vk::binding(3)]] StructuredBuffer<Mat3x4> g_transforms;
-[[vk::binding(4)]] ByteAddressBuffer g_gpuScene;
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
+ByteAddressBuffer g_gpuScene : register(t4);
 
 #if GATHER_MDI
 // These 3 have the same size
-[[vk::binding(5)]] RWStructuredBuffer<UVec4> g_instanceRateRenderables;
-[[vk::binding(6)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
-[[vk::binding(6)]] RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs;
+RWStructuredBuffer<UVec4> g_instanceRateRenderables : register(u0);
+RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs : register(u1);
+RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs : register(u2);
 
 // The MDI counts. One for each render state bucket
-[[vk::binding(7)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+RWStructuredBuffer<U32> g_mdiDrawCounts : register(u3);
 #endif
 
 #if GATHER_MESHLET_GROUPS
 // For mesh shading
-[[vk::binding(8)]] RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs;
-[[vk::binding(9)]] RWStructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances;
+RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs : register(u4);
+RWStructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances : register(u5);
 #endif
 
 // One for each render state bucket. It's either the index of the next indirect args or the index to the next task payload
-[[vk::binding(10)]] StructuredBuffer<UVec2> g_instanceRanges;
+StructuredBuffer<UVec2> g_instanceRanges : register(t5);
 
 #if DISTANCE_TEST == 0
-[[vk::binding(11)]] ConstantBuffer<FrustumGpuVisibilityUniforms> g_unis;
+ConstantBuffer<FrustumGpuVisibilityUniforms> g_unis : register(b0);
 #else
-[[vk::push_constant]] ConstantBuffer<DistanceGpuVisibilityUniforms> g_unis;
+ANKI_PUSH_CONSTANTS(DistanceGpuVisibilityUniforms, g_unis)
 #endif
 
 #if HZB_TEST
-[[vk::binding(12)]] Texture2D<Vec4> g_hzbTex;
-[[vk::binding(13)]] SamplerState g_nearestAnyClampSampler;
+Texture2D<Vec4> g_hzbTex : register(t6);
+SamplerState g_nearestAnyClampSampler : register(s0);
 #endif
 
 #if GATHER_AABBS
-[[vk::binding(14)]] RWStructuredBuffer<U32> g_visibleAabbIndices; ///< Indices of the visible AABBs. The 1st element is the count.
+RWStructuredBuffer<U32> g_visibleAabbIndices : register(u6); ///< Indices of the visible AABBs. The 1st element is the count.
 #endif
 
 #if HASH_VISIBLES
-[[vk::binding(15)]] RWStructuredBuffer<GpuVisibilityHash> g_hash;
+RWStructuredBuffer<GpuVisibilityHash> g_hash : register(u7);
 #endif
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)

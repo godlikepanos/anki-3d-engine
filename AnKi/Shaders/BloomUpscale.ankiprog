@@ -15,13 +15,13 @@ constexpr F32 kHaloWidth = 0.4;
 constexpr F32 kChromaticDistortion = 3.0;
 constexpr F32 kHaloOpacity = 0.5;
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_inputTex;
-[[vk::binding(2)]] Texture2D<RVec3> g_lensDirtTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<RVec4> g_inputTex : register(t0);
+Texture2D<RVec3> g_lensDirtTex : register(t1);
 
 #	if ANKI_COMPUTE_SHADER
 #		define THREADGROUP_SIZE_XY 8
-[[vk::binding(3)]] RWTexture2D<RVec4> g_storageTex;
+RWTexture2D<RVec4> g_storageTex : register(u0);
 #	endif
 
 RVec3 textureDistorted(Texture2D<RVec4> tex, SamplerState sampl, Vec2 uv,
@@ -92,7 +92,7 @@ RVec3 upscale(Vec2 uv)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SIZE_XY, THREADGROUP_SIZE_XY, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER

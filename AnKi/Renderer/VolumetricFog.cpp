@@ -58,10 +58,10 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindTexture(0, 1, getRenderer().getVolumetricLightingAccumulation().getRt());
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		rgraphCtx.bindStorageTexture(0, 2, m_runCtx.m_rt);
+		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_rt);
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 

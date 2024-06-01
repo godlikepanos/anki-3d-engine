@@ -133,63 +133,42 @@ public:
 	}
 
 	/// Convenience method.
-	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource)
+	void bindTexture(Register reg, RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource)
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
-		m_commandBuffer->bindTexture(set, binding, TextureView(tex, subresource));
+		m_commandBuffer->bindTexture(reg, TextureView(tex, subresource));
 	}
 
 	/// Convenience method to bind the whole texture.
-	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
+	void bindTexture(Register reg, RenderTargetHandle handle)
 	{
 		const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex); // Doesn't care about the aspect so it's OK
-		m_commandBuffer->bindTexture(set, binding, TextureView(tex, subresource), arrayIdx);
+		m_commandBuffer->bindTexture(reg, TextureView(tex, subresource));
 	}
 
 	/// Convenience method.
-	void bindStorageTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource, U32 arrayIdx = 0)
-	{
-		Texture* tex;
-		getRenderTargetState(handle, subresource, tex);
-		m_commandBuffer->bindStorageTexture(set, binding, TextureView(tex, subresource), arrayIdx);
-	}
-
-	/// Convenience method to bind the whole image.
-	void bindStorageTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
-	{
-		Texture* tex;
-#if ANKI_ASSERTIONS_ENABLED
-		tex = &getTexture(handle);
-		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1 && tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
-#endif
-		const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
-		getRenderTargetState(handle, subresource, tex);
-		m_commandBuffer->bindStorageTexture(set, binding, TextureView(tex, subresource), arrayIdx);
-	}
-
-	/// Convenience method.
-	void bindStorageBuffer(U32 set, U32 binding, BufferHandle handle)
+	void bindStorageBuffer(Register reg, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindStorageBuffer(set, binding, BufferView(buff, offset, range));
+		m_commandBuffer->bindStorageBuffer(reg, BufferView(buff, offset, range));
 	}
 
 	/// Convenience method.
-	void bindUniformBuffer(U32 set, U32 binding, BufferHandle handle)
+	void bindUniformBuffer(Register reg, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindUniformBuffer(set, binding, BufferView(buff, offset, range));
+		m_commandBuffer->bindUniformBuffer(reg, BufferView(buff, offset, range));
 	}
 
 	/// Convenience method.
-	void bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle);
+	void bindAccelerationStructure(Register reg, AccelerationStructureHandle handle);
 
 private:
 	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);

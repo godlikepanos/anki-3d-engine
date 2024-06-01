@@ -13,15 +13,13 @@
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_depthTex;
-[[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_depthTex : register(t0);
+SamplerState g_trilinearRepeatSampler : register(s1);
 
-[[vk::binding(3)]] ConstantBuffer<GlobalRendererUniforms> g_globalUniforms;
-[[vk::binding(4)]] StructuredBuffer<Decal> g_decals;
-[[vk::binding(5)]] StructuredBuffer<Cluster> g_clusters;
-
-ANKI_BINDLESS_SET(1)
+ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
+StructuredBuffer<Decal> g_decals : register(t1);
+StructuredBuffer<Cluster> g_clusters : register(t2);
 
 struct FragOut
 {
@@ -29,7 +27,7 @@ struct FragOut
 	RVec4 m_roughnessAndOther : SV_TARGET1;
 };
 
-FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION)
+FragOut main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION)
 {
 	// This code blends the diffuse and the specular+rougness of the decals with GBuffer render targets.
 	// Normaly the blending is being done ('D' is the decal diffuse and 'f' is decal blend factor):
@@ -81,7 +79,7 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 		RVec4 diff;
 		if(decal.m_diffuseTexture != kMaxU32)
 		{
-			diff = g_bindlessTextures2dF32[decal.m_diffuseTexture].Sample(g_trilinearRepeatSampler, uv);
+			diff = getBindlessTexture2DVec4(decal.m_diffuseTexture).Sample(g_trilinearRepeatSampler, uv);
 		}
 		else
 		{
@@ -92,7 +90,7 @@ FragOut main([[vk::location(0)]] Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITI
 		RF32 roughnessMetalnessFactor;
 		if(decal.m_roughnessMetalnessTexture != kMaxU32)
 		{
-			roughnessMetalness = g_bindlessTextures2dF32[decal.m_roughnessMetalnessTexture].Sample(g_trilinearRepeatSampler, uv).gb;
+			roughnessMetalness = getBindlessTexture2DVec4(decal.m_roughnessMetalnessTexture).Sample(g_trilinearRepeatSampler, uv).gb;
 			roughnessMetalnessFactor = diff.a;
 		}
 		else

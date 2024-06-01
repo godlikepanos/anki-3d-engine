@@ -24,19 +24,17 @@
 
 #	define EXTRA_REJECTION 1
 
-[[vk::binding(0)]] ConstantBuffer<SsrUniforms> g_unis;
+ConstantBuffer<SsrUniforms> g_unis : register(b0);
 
-[[vk::binding(1)]] SamplerState g_trilinearClampSampler;
-[[vk::binding(2)]] Texture2D<RVec4> g_gbufferRt1;
-[[vk::binding(3)]] Texture2D<RVec4> g_gbufferRt2;
-[[vk::binding(4)]] Texture2D<Vec4> g_depthRt;
-[[vk::binding(5)]] Texture2D<RVec4> g_lightBufferRt;
+SamplerState g_trilinearClampSampler : register(s0);
+Texture2D<RVec4> g_gbufferRt1 : register(t0);
+Texture2D<RVec4> g_gbufferRt2 : register(t1);
+Texture2D<Vec4> g_depthRt : register(t2);
+Texture2D<RVec4> g_lightBufferRt : register(t3);
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(6)]] RWTexture2D<RVec4> g_storageTex;
+RWTexture2D<RVec4> g_storageTex : register(u0);
 #	endif
-
-ANKI_BINDLESS_SET(1)
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)

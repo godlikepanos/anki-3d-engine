@@ -106,6 +106,26 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 		dxcArgs.emplaceBack("-spirv");
 		dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4");
 		// dxcArgs.emplaceBack("-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
+
+		// Shift the bindings in order to identify the registers when doing reflection
+		for(U32 ds = 0; ds < kMaxDescriptorSets; ++ds)
+		{
+			dxcArgs.emplaceBack("-fvk-b-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kCbv]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+
+			dxcArgs.emplaceBack("-fvk-t-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kSrv]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+
+			dxcArgs.emplaceBack("-fvk-u-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kUav]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+
+			dxcArgs.emplaceBack("-fvk-s-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kSampler]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+		}
 	}
 	else
 	{

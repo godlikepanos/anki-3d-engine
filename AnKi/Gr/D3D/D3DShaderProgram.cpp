@@ -73,7 +73,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		}
 		else
 		{
-			ANKI_CHECK(linkShaderReflection(refl, simpl.m_reflection, refl));
+			ANKI_CHECK(ShaderReflection::linkShaderReflection(refl, simpl.m_reflection, refl));
 		}
 
 		refl.validate();

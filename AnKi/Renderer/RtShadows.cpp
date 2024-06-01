@@ -221,8 +221,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_setupBuildSbtGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 1, sbtBuildIndirectArgsBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(t0), GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(u0), sbtBuildIndirectArgsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});
@@ -260,11 +260,11 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_buildSbtGrProg.get());
 
-			cmdb.bindStorageBuffer(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
-			cmdb.bindStorageBuffer(0, 1, BufferView(&GpuSceneBuffer::getSingleton().getBuffer()));
-			cmdb.bindStorageBuffer(0, 2, visibleRenderableIndicesBuff);
-			cmdb.bindStorageBuffer(0, 3, BufferView(&m_rtLibraryGrProg->getShaderGroupHandlesGpuBuffer()));
-			cmdb.bindStorageBuffer(0, 4, sbtBuffer);
+			cmdb.bindStorageBuffer(ANKI_REG(t0), GpuSceneArrays::Renderable::getSingleton().getBufferView());
+			cmdb.bindStorageBuffer(ANKI_REG(t1), BufferView(&GpuSceneBuffer::getSingleton().getBuffer()));
+			cmdb.bindStorageBuffer(ANKI_REG(t2), visibleRenderableIndicesBuff);
+			cmdb.bindStorageBuffer(ANKI_REG(t3), BufferView(&m_rtLibraryGrProg->getShaderGroupHandlesGpuBuffer()));
+			cmdb.bindStorageBuffer(ANKI_REG(u0), sbtBuffer);
 
 			RtShadowsSbtBuildUniforms unis = {};
 			ANKI_ASSERT(m_sbtRecordSize % 4 == 0);
@@ -308,41 +308,37 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 				memset(globalUniforms, 0, sizeof(*globalUniforms)); // Don't care for now
 
-				cmdb.bindUniformBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalUniforms), globalUniformsToken);
+				cmdb.bindUniformBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS), globalUniformsToken);
 			}
 
 			// More globals
-			cmdb.bindAllBindless(U32(MaterialSet::kBindless));
-			cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler),
-							 getRenderer().getSamplers().m_trilinearRepeat.get());
-			cmdb.bindStorageBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), GpuSceneBuffer::getSingleton().getBufferView());
+			cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER), getRenderer().getSamplers().m_trilinearRepeat.get());
+			cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GPU_SCENE), GpuSceneBuffer::getSingleton().getBufferView());
 
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	cmdb.bindReadOnlyTexelBuffer( \
-		U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
+	cmdb.bindTexelBuffer( \
+		ANKI_REG(reg), \
 		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
 				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			constexpr U32 kSet = 2;
+			cmdb.bindUniformBuffer(ANKI_REG2(b0, space2), ctx.m_globalRenderingUniformsBuffer);
 
-			cmdb.bindUniformBuffer(kSet, 0, ctx.m_globalRenderingUniformsBuffer);
-			cmdb.bindStorageBuffer(kSet, 1, getRenderer().getClusterBinning().getClustersBuffer());
+			cmdb.bindSampler(ANKI_REG2(s0, space2), getRenderer().getSamplers().m_trilinearRepeat.get());
 
-			cmdb.bindSampler(kSet, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
-
-			rgraphCtx.bindStorageTexture(kSet, 3, m_runCtx.m_intermediateShadowsRts[0]);
-			rgraphCtx.bindTexture(kSet, 4, m_runCtx.m_historyRt);
-			cmdb.bindSampler(kSet, 5, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(kSet, 6, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
-			rgraphCtx.bindTexture(kSet, 7, getRenderer().getMotionVectors().getMotionVectorsRt());
-			cmdb.bindTexture(kSet, 8, TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
-			rgraphCtx.bindTexture(kSet, 9, getRenderer().getGBuffer().getColorRt(2));
-			rgraphCtx.bindAccelerationStructure(kSet, 10, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-			rgraphCtx.bindTexture(kSet, 11, m_runCtx.m_prevMomentsRt);
-			rgraphCtx.bindStorageTexture(kSet, 12, m_runCtx.m_currentMomentsRt);
-			cmdb.bindTexture(kSet, 13, TextureView(&m_blueNoiseImage->getTexture(), TextureSubresourceDescriptor::all()));
+			rgraphCtx.bindTexture(ANKI_REG2(u0, space2), m_runCtx.m_intermediateShadowsRts[0]);
+			rgraphCtx.bindTexture(ANKI_REG2(t0, space2), m_runCtx.m_historyRt);
+			cmdb.bindSampler(ANKI_REG2(s1, space2), getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(ANKI_REG2(t1, space2), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+			rgraphCtx.bindTexture(ANKI_REG2(t2, space2), getRenderer().getMotionVectors().getMotionVectorsRt());
+			cmdb.bindTexture(ANKI_REG2(t3, space2), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
+			rgraphCtx.bindTexture(ANKI_REG2(t4, space2), getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindAccelerationStructure(ANKI_REG2(t5, space2),
+												getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
+			rgraphCtx.bindTexture(ANKI_REG2(t6, space2), m_runCtx.m_prevMomentsRt);
+			rgraphCtx.bindTexture(ANKI_REG2(u1, space2), m_runCtx.m_currentMomentsRt);
+			cmdb.bindTexture(ANKI_REG2(t7, space2), TextureView(&m_blueNoiseImage->getTexture(), TextureSubresourceDescriptor::all()));
 
 			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 						   getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, 1);
@@ -401,15 +397,15 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_svgfVarianceGrProg.get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
 
-			rgraphCtx.bindTexture(0, 1, m_runCtx.m_intermediateShadowsRts[0]);
-			rgraphCtx.bindTexture(0, 2, m_runCtx.m_currentMomentsRt);
-			cmdb.bindTexture(0, 3, TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
-			rgraphCtx.bindTexture(0, 4, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_intermediateShadowsRts[0]);
+			rgraphCtx.bindTexture(ANKI_REG(t1), m_runCtx.m_currentMomentsRt);
+			cmdb.bindTexture(ANKI_REG(t2), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
+			rgraphCtx.bindTexture(ANKI_REG(t3), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 
-			rgraphCtx.bindStorageTexture(0, 5, m_runCtx.m_intermediateShadowsRts[1]);
-			rgraphCtx.bindStorageTexture(0, 6, m_runCtx.m_varianceRts[1]);
+			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_intermediateShadowsRts[1]);
+			rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_varianceRts[1]);
 
 			const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 			cmdb.setPushConstants(&invProjMat, sizeof(invProjMat));
@@ -460,21 +456,20 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 					cmdb.bindShaderProgram(m_svgfAtrousGrProg.get());
 				}
 
-				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-				cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+				cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-				rgraphCtx.bindTexture(0, 2, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
-				rgraphCtx.bindTexture(0, 3, m_runCtx.m_intermediateShadowsRts[readRtIdx]);
-				rgraphCtx.bindTexture(0, 4, m_runCtx.m_varianceRts[readRtIdx]);
+				rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+				rgraphCtx.bindTexture(ANKI_REG(t1), m_runCtx.m_intermediateShadowsRts[readRtIdx]);
+				rgraphCtx.bindTexture(ANKI_REG(t2), m_runCtx.m_varianceRts[readRtIdx]);
 
 				if(!lastPass)
 				{
-					rgraphCtx.bindStorageTexture(0, 5, m_runCtx.m_intermediateShadowsRts[!readRtIdx]);
-					rgraphCtx.bindStorageTexture(0, 6, m_runCtx.m_varianceRts[!readRtIdx]);
+					rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_intermediateShadowsRts[!readRtIdx]);
+					rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_varianceRts[!readRtIdx]);
 				}
 				else
 				{
-					rgraphCtx.bindStorageTexture(0, 5, m_runCtx.m_historyRt);
+					rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_historyRt);
 				}
 
 				const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
@@ -501,12 +496,12 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_upscaleGrProg.get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
 
-			rgraphCtx.bindTexture(0, 1, m_runCtx.m_historyRt);
-			rgraphCtx.bindStorageTexture(0, 2, m_runCtx.m_upscaledRt);
-			rgraphCtx.bindTexture(0, 3, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
-			rgraphCtx.bindTexture(0, 4, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_historyRt);
+			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_upscaledRt);
+			rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+			rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getGBuffer().getDepthRt());
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});
@@ -520,14 +515,14 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	cmdb.bindShaderProgram((horizontal) ? m_grDenoiseHorizontalProg.get() : m_grDenoiseVerticalProg.get());
 
-	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindTexture(0, 1, m_runCtx.m_intermediateShadowsRts[(horizontal) ? 0 : 1]);
-	rgraphCtx.bindTexture(0, 2, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
-	rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getColorRt(2));
-	rgraphCtx.bindTexture(0, 4, m_runCtx.m_currentMomentsRt);
-	cmdb.bindTexture(0, 5, TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
+	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+	rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_intermediateShadowsRts[(horizontal) ? 0 : 1]);
+	rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+	rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getGBuffer().getColorRt(2));
+	rgraphCtx.bindTexture(ANKI_REG(t3), m_runCtx.m_currentMomentsRt);
+	cmdb.bindTexture(ANKI_REG(t4), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
 
-	rgraphCtx.bindStorageTexture(0, 6, (horizontal) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
+	rgraphCtx.bindTexture(ANKI_REG(u0), (horizontal) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
 
 	RtShadowsDenoiseUniforms consts;
 	consts.m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;

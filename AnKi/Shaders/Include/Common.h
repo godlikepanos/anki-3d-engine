@@ -85,15 +85,6 @@ void maybeUnused(T a)
 
 #	define static_assert(x)
 
-#	define ANKI_BINDLESS_SET(s) \
-		[[vk::binding(0, s)]] Texture2D<uint4> g_bindlessTextures2dU32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2D<int4> g_bindlessTextures2dI32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2D<RVec4> g_bindlessTextures2dF32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2DArray<RVec4> g_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] TextureCube<RVec4> g_bindlessTexturesCubeF32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture3D<RVec4> g_bindlessTextures3dF32[kMaxBindlessTextures]; \
-		[[vk::binding(1, s)]] Buffer<float4> g_bindlessTextureBuffersF32[kMaxBindlessReadonlyTextureBuffers];
-
 #	define _ANKI_SCONST_X(type, n, id) [[vk::constant_id(id)]] const type n = (type)1;
 
 #	define _ANKI_SCONST_X2(type, componentType, n, id) \
@@ -130,13 +121,6 @@ void maybeUnused(T a)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id) _ANKI_SCONST_X2(Vec2, F32, n, id)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id) _ANKI_SCONST_X3(Vec3, F32, n, id)
 #	define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id) _ANKI_SCONST_X4(Vec4, F32, n, id)
-
-#	if ANKI_GR_BACKEND_VULKAN
-#		define ANKI_PUSH_CONSTANTS(type, var) [[vk::push_constants]] ConstantBuffer<type> var;
-#	else
-#		define ANKI_PUSH_CONSTANTS_BEGIN
-#		define ANKI_PUSH_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3000);
-#	endif
 
 #	pragma pack_matrix(row_major)
 

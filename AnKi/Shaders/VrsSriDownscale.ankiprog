@@ -7,9 +7,9 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] Texture2D<UVec4> g_inputTex;
-[[vk::binding(1)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(2)]] RWTexture2D<UVec4> g_storageTex;
+Texture2D<UVec4> g_inputTex : register(t0);
+SamplerState g_nearestAnyClampSampler : register(s0);
+RWTexture2D<UVec4> g_storageTex : register(u0);
 
 struct Uniforms
 {
@@ -17,8 +17,7 @@ struct Uniforms
 	F32 m_padding0;
 	F32 m_padding1;
 };
-
-[[vk::push_constant]] ConstantBuffer<Uniforms> g_unis;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {

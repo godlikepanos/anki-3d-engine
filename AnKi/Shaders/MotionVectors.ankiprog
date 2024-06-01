@@ -10,9 +10,9 @@
 
 constexpr F32 kMaxRejectionDistance = 0.1; // In meters
 
-[[vk::binding(0)]] SamplerState g_nearesetAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_currentDepthTex;
-[[vk::binding(2)]] Texture2D g_velocityTex;
+SamplerState g_nearesetAnyClampSampler : register(s0);
+Texture2D g_currentDepthTex : register(t0);
+Texture2D g_velocityTex : register(t1);
 
 struct Uniforms
 {
@@ -21,10 +21,10 @@ struct Uniforms
 	Mat4 m_prevViewProjMat;
 };
 
-[[vk::binding(3)]] ConstantBuffer<Uniforms> g_unis;
+ConstantBuffer<Uniforms> g_unis : register(b0);
 
 #	if ANKI_COMPUTE_SHADER
-[[vk::binding(4)]] RWTexture2D<Vec2> g_motionVectorsStorageTex;
+RWTexture2D<Vec2> g_motionVectorsStorageTex : register(u0);
 #	endif
 
 #	if ANKI_COMPUTE_SHADER

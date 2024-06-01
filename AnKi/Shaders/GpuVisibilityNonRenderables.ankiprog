@@ -29,18 +29,19 @@ typedef GpuSceneReflectionProbe ObjectType;
 typedef GpuSceneGlobalIlluminationProbe ObjectType;
 #endif
 
-[[vk::binding(0)]] StructuredBuffer<ObjectType> g_objects;
-[[vk::push_constant]] ConstantBuffer<GpuVisibilityNonRenderableUniforms> g_unis;
-[[vk::binding(1)]] RWStructuredBuffer<U32> g_visibleIndices; // 1st element is the count. What follows is indices
+StructuredBuffer<ObjectType> g_objects : register(t0);
+RWStructuredBuffer<U32> g_visibleIndices : register(u0); // 1st element is the count. What follows is indices
+
+ANKI_PUSH_CONSTANTS(GpuVisibilityNonRenderableUniforms, g_unis)
 
 constexpr U32 kVisibleObjCounterIdx = 1;
 constexpr U32 kThreadgroupCounterIdx = 0;
 constexpr U32 kFeedbackCounterIdx = 2;
-[[vk::binding(2)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch with an optional 3rd for feedback
+globallycoherent RWStructuredBuffer<U32> g_counterBuffer : register(u1); // 2 counters per dispatch with an optional 3rd for feedback
 
 #if CPU_FEEDBACK
 // 1st element is a count. What follows is an array pairs of UUIDs and array index.
-[[vk::binding(3)]] RWStructuredBuffer<U32> g_cpuFeedbackBuffer;
+RWStructuredBuffer<U32> g_cpuFeedbackBuffer : register(u2);
 #endif
 
 Vec4 getSphere(GpuSceneLight l)
