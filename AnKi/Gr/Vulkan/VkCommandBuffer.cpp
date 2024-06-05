@@ -41,7 +41,7 @@ void CommandBuffer::endRecording()
 	self.endRecording();
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, PtrSize stride, VertexStepRate stepRate)
+void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, U32 stride, VertexStepRate stepRate)
 {
 	ANKI_ASSERT(buff.isValid());
 
@@ -52,7 +52,7 @@ void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, PtrSiz
 	vkCmdBindVertexBuffers(self.m_handle, binding, 1, &vkbuff, &buff.getOffset());
 }
 
-void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset)
+void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, U32 relativeOffset)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();

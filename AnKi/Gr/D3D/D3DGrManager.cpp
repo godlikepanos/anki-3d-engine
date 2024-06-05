@@ -405,7 +405,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_D3D_LOGI("Vendor identified as %s", &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
 	// Create device
-	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
+	ComPtr<ID3D12Device> dev;
+	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dev)));
+	ANKI_D3D_CHECK(dev->QueryInterface(IID_PPV_ARGS(&m_device)));
 
 	if(g_validationCVar.get())
 	{

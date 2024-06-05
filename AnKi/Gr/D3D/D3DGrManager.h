@@ -35,7 +35,7 @@ public:
 
 	Error initInternal(const GrManagerInitInfo& cfg);
 
-	ID3D12Device& getDevice()
+	ID3D12DeviceX& getDevice()
 	{
 		return *m_device;
 	}
@@ -52,7 +52,7 @@ public:
 	}
 
 private:
-	ID3D12Device* m_device = nullptr;
+	ID3D12DeviceX* m_device = nullptr;
 	Array<ID3D12CommandQueue*, U32(GpuQueueType::kCount)> m_queues = {};
 
 	DWORD m_debugMessageCallbackCookie = 0;

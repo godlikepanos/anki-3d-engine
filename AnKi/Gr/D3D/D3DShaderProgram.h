@@ -10,6 +10,9 @@
 
 namespace anki {
 
+// Forward
+class GraphicsPipelineFactory;
+
 /// @addtogroup directx
 /// @{
 
@@ -17,6 +20,23 @@ namespace anki {
 class ShaderProgramImpl final : public ShaderProgram
 {
 public:
+	RootSignature* m_rootSignature = nullptr;
+
+	ShaderReflection m_refl;
+
+	class
+	{
+	public:
+		GraphicsPipelineFactory* m_pipelineFactory = nullptr;
+		Array<D3D12_SHADER_BYTECODE, U32(ShaderType::kFragment - ShaderType::kVertex) + 1> m_shaderCreateInfos = {};
+	} m_graphics;
+
+	class
+	{
+	public:
+		ID3D12PipelineState* m_pipelineState = nullptr;
+	} m_compute;
+
 	ShaderProgramImpl(CString name)
 		: ShaderProgram(name)
 	{
@@ -26,28 +46,8 @@ public:
 
 	Error init(const ShaderProgramInitInfo& inf);
 
-	RootSignature& getRootSignature() const
-	{
-		ANKI_ASSERT(m_rootSignature);
-		return *m_rootSignature;
-	}
-
-	ID3D12PipelineState& getComputePipelineState() const
-	{
-		ANKI_ASSERT(m_compute.m_pipelineState);
-		return *m_compute.m_pipelineState;
-	}
-
 private:
 	GrDynamicArray<ShaderPtr> m_shaders;
-
-	RootSignature* m_rootSignature = nullptr;
-
-	class
-	{
-	public:
-		ID3D12PipelineState* m_pipelineState = nullptr;
-	} m_compute;
 };
 /// @}
 

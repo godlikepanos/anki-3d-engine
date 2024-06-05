@@ -159,7 +159,7 @@ public:
 
 	PipelineStateTracker& operator=(const PipelineStateTracker&) = delete; // Non-copyable
 
-	void bindVertexBuffer(U32 binding, PtrSize stride, VertexStepRate stepRate)
+	void bindVertexBuffer(U32 binding, U32 stride, VertexStepRate stepRate)
 	{
 		VertexBufferBindingPipelineState b;
 		ANKI_ASSERT(stride <= kMaxU8);
@@ -173,7 +173,7 @@ public:
 		m_set.m_vertBindings.set(binding);
 	}
 
-	void setVertexAttribute(VertexAttributeSemantic semantic, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
+	void setVertexAttribute(VertexAttributeSemantic semantic, U32 buffBinding, const Format fmt, U32 relativeOffset)
 	{
 		VertexAttributeBindingPipelineState b;
 		b.m_binding = U8(buffBinding);

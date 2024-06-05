@@ -274,17 +274,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	ANKI_CHECK(PipelineLayoutFactory2::getSingleton().getOrCreatePipelineLayout(m_refl.m_descriptor, m_pplineLayout));
 
-	// Get some masks
-	//
-	if(graphicsProg)
-	{
-		const U32 attachmentCount = m_refl.m_fragment.m_colorAttachmentWritemask.getSetBitCount();
-		for(U32 i = 0; i < attachmentCount; ++i)
-		{
-			ANKI_ASSERT(m_refl.m_fragment.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
-		}
-	}
-
 	// Init the create infos
 	//
 	if(graphicsProg)

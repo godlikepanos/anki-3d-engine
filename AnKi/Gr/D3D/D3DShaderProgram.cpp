@@ -7,6 +7,7 @@
 #include <AnKi/Gr/D3D/D3DShader.h>
 #include <AnKi/Gr/BackendCommon/Functions.h>
 #include <AnKi/Gr/D3D/D3DDescriptor.h>
+#include <AnKi/Gr/D3D/D3DGraphicsState.h>
 
 namespace anki {
 
@@ -38,6 +39,8 @@ Buffer& ShaderProgram::getShaderGroupHandlesGpuBuffer() const
 ShaderProgramImpl::~ShaderProgramImpl()
 {
 	safeRelease(m_compute.m_pipelineState);
+
+	deleteInstance(GrMemoryPool::getSingleton(), m_graphics.m_pipelineFactory);
 }
 
 Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
@@ -45,10 +48,19 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	ANKI_ASSERT(inf.isValid());
 
 	// Create the shader references
-	//
 	if(inf.m_computeShader)
 	{
 		m_shaders.emplaceBack(inf.m_computeShader);
+	}
+	else if(inf.m_graphicsShaders[ShaderType::kFragment])
+	{
+		for(Shader* s : inf.m_graphicsShaders)
+		{
+			if(s)
+			{
+				m_shaders.emplaceBack(s);
+			}
+		}
 	}
 	else
 	{
@@ -57,14 +69,20 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	ANKI_ASSERT(m_shaders.getSize() > 0);
 
+	for(ShaderPtr& shader : m_shaders)
+	{
+		m_shaderTypes |= ShaderTypeBit(1 << shader->getShaderType());
+	}
+
+	const Bool isGraphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
+	const Bool isComputeProg = !!(m_shaderTypes & ShaderTypeBit::kCompute);
+	const Bool isRtProg = !!(m_shaderTypes & ShaderTypeBit::kAllRayTracing);
+
 	// Link reflection
-	//
 	ShaderReflection refl;
 	Bool firstLink = true;
 	for(ShaderPtr& shader : m_shaders)
 	{
-		m_shaderTypes |= ShaderTypeBit(1 << shader->getShaderType());
-
 		const ShaderImpl& simpl = static_cast<const ShaderImpl&>(*shader);
 		if(firstLink)
 		{
@@ -80,12 +98,22 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	}
 
 	// Create root signature
-	//
 	ANKI_CHECK(RootSignatureFactory::getSingleton().getOrCreateRootSignature(refl, m_rootSignature));
 
+	// Init the create infos
+	if(isGraphicsProg)
+	{
+		for(U32 ishader = 0; ishader < m_shaders.getSize(); ++ishader)
+		{
+			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[ishader]);
+
+			m_graphics.m_shaderCreateInfos[shaderImpl.getShaderType()] = {.pShaderBytecode = shaderImpl.m_binary.getBegin(),
+																		  .BytecodeLength = shaderImpl.m_binary.getSizeInBytes()};
+		}
+	}
+
 	// Create the pipeline if compute
-	//
-	if(!!(m_shaderTypes & ShaderTypeBit::kCompute))
+	if(isComputeProg)
 	{
 		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[0]);
 
@@ -98,7 +126,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	}
 
 	// Get shader sizes and a few other things
-	//
 	for(const ShaderPtr& s : m_shaders)
 	{
 		if(!s.isCreated())
@@ -115,6 +142,12 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			m_hasDiscard = s->hasDiscard();
 		}
+	}
+
+	// Misc
+	if(isGraphicsProg)
+	{
+		m_graphics.m_pipelineFactory = anki::newInstance<GraphicsPipelineFactory>(GrMemoryPool::getSingleton());
 	}
 
 	return Error::kNone;

@@ -44,4 +44,18 @@ inline ShaderPtr createShader(CString src, ShaderType type)
 	return GrManager::getSingleton().newShader(initInf);
 }
 
+inline ShaderProgramPtr createVertFragProg(CString vert, CString frag)
+{
+	ShaderPtr vertS = createShader(vert, ShaderType::kVertex);
+	ShaderPtr fragS = createShader(frag, ShaderType::kFragment);
+
+	ShaderProgramInitInfo init;
+	init.m_graphicsShaders[ShaderType::kVertex] = vertS.get();
+	init.m_graphicsShaders[ShaderType::kFragment] = fragS.get();
+
+	ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(init);
+
+	return prog;
+}
+
 } // end namespace anki

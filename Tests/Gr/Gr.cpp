@@ -422,79 +422,6 @@ void main()
 	commonDestroy();
 }
 
-ANKI_TEST(Gr, SimpleDrawcall)
-{
-#if 0
-	COMMON_BEGIN()
-
-	constexpr const char* kVertSrc = R"(
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
-void main()
-{
-	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
-
-	gl_Position = vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0);
-})";
-
-	constexpr const char* kFragSrc = R"(layout (location = 0) out vec4 out_color;
-
-void main()
-{
-	out_color = vec4(0.5);
-})";
-
-	ANKI_TEST_LOGI("Expect to see a grey triangle");
-	ShaderProgramPtr prog = createProgram(kVertSrc, kFragSrc, *g_gr);
-
-	const U ITERATIONS = 200;
-	for(U i = 0; i < ITERATIONS; ++i)
-	{
-		HighRezTimer timer;
-		timer.start();
-
-		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
-
-		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
-
-		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
-		cmdb->bindShaderProgram(prog.get());
-		presentBarrierA(cmdb, presentTex);
-
-		TextureViewInitInfo init;
-		init.m_texture = presentTex.get();
-		TextureViewPtr view = g_gr->newTextureView(init);
-
-		RenderTarget rt;
-		rt.m_view = view.get();
-		cmdb->beginRenderPass({rt});
-
-		cmdb->draw(PrimitiveTopology::kTriangles, 3);
-		cmdb->endRenderPass();
-		presentBarrierB(cmdb, presentTex);
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get());
-
-		g_gr->swapBuffers();
-
-		timer.stop();
-		const F32 TICK = 1.0f / 30.0f;
-		if(timer.getElapsedTime() < TICK)
-		{
-			HighRezTimer::sleep(TICK - timer.getElapsedTime());
-		}
-	}
-
-	COMMON_END()
-#endif
-}
-
 ANKI_TEST(Gr, ViewportAndScissor)
 {
 #if 0
@@ -731,34 +658,24 @@ ANKI_TEST(Gr, Buffer)
 #endif
 }
 
-ANKI_TEST(Gr, DrawWithUniforms)
+ANKI_TEST(Gr, SimpleDrawcall)
 {
-#if 0
-	COMMON_BEGIN()
+	commonInit();
 
-	// A non-uploaded buffer
-	BufferPtr b = g_gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::kAllUniform, BufferMapAccessBit::kWrite));
-
-	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::kWrite));
-	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-	ptr[0] = Vec4(1.0, 0.0, 0.0, 0.0);
-	ptr[1] = Vec4(0.0, 1.0, 0.0, 0.0);
-	ptr[2] = Vec4(0.0, 0.0, 1.0, 0.0);
-	b->unmap();
-
-	// Prog
-	constexpr const char* kUboVert = R"(
+	{
+		// Prog
+		constexpr const char* kUboVert = R"(
 struct A
 {
 	float4 m_color[3];
-};
-[[vk::binding(0)]] ConstantBuffer<A> g_color;
-
-struct B
-{
 	float4 m_rotation2d;
 };
-[[vk::binding(1)]] ConstantBuffer<B> g_rotation2d;
+
+#if defined(__spirv__)
+[[vk::push_constant]] ConstantBuffer<A> g_pushConsts;
+#else
+ConstantBuffer<A> g_pushConsts : register(b0, space3000);
+#endif
 
 struct VertOut
 {
@@ -769,12 +686,27 @@ struct VertOut
 VertOut main(uint svVertexId : SV_VERTEXID)
 {
 	VertOut o;
-	o.m_color = g_color.m_color[svVertexId].xyz;
+
+	// No dynamic branching with push constants
+	float4 color;
+	switch(svVertexId)
+	{
+	case 0:
+		color = g_pushConsts.m_color[0];
+		break;
+	case 1:
+		color = g_pushConsts.m_color[1];
+		break;
+	default:
+		color = g_pushConsts.m_color[2];
+	};
+
+	o.m_color = color.xyz;
 
 	const float2 kPositions[3] = {float2(-1.0, 1.0), float2(0.0, -1.0), float2(1.0, 1.0)};
 
 	float2x2 rot = float2x2(
-		g_rotation2d.m_rotation2d.x, g_rotation2d.m_rotation2d.y, g_rotation2d.m_rotation2d.z, g_rotation2d.m_rotation2d.w);
+		g_pushConsts.m_rotation2d.x, g_pushConsts.m_rotation2d.y, g_pushConsts.m_rotation2d.z, g_pushConsts.m_rotation2d.w);
 	float2 pos = mul(rot, kPositions[svVertexId % 3]);
 
 	o.m_svPosition = float4(pos, 0.0, 1.0);
@@ -782,7 +714,7 @@ VertOut main(uint svVertexId : SV_VERTEXID)
 	return o;
 })";
 
-	constexpr const char* kUboFrag = R"(
+		constexpr const char* kUboFrag = R"(
 struct VertOut
 {
 	float4 m_svPosition : SV_POSITION;
@@ -794,54 +726,72 @@ float4 main(VertOut i) : SV_TARGET0
 	return float4(i.m_color, 1.0);
 })";
 
-	ShaderProgramPtr prog = createProgram(kUboVert, kUboFrag, *g_gr);
+		ShaderProgramPtr prog = createVertFragProg(kUboVert, kUboFrag);
 
-	const U ITERATION_COUNT = 100;
-	U iterations = ITERATION_COUNT;
-	while(iterations--)
-	{
-		HighRezTimer timer;
-		timer.start();
-		TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*g_gr, presentTex);
-
-		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::kGeneralWork;
-		CommandBufferPtr cmdb = g_gr->newCommandBuffer(cinit);
-
-		cmdb->setViewport(0, 0, g_win->getWidth(), g_win->getHeight());
-		cmdb->bindShaderProgram(prog.get());
-		presentBarrierA(cmdb, presentTex);
-		cmdb->beginRenderPass(fb.get(), {TextureUsageBit::kFramebufferWrite}, {});
-
-		cmdb->bindUniformBuffer(0, 0, b.get(), 0, kMaxPtrSize);
-
-		// Uploaded buffer
-		Vec4* rotMat = SET_UNIFORMS(Vec4*, sizeof(Vec4), cmdb, 0, 1);
-		F32 angle = toRad(360.0f / F32(ITERATION_COUNT) * F32(iterations));
-		(*rotMat)[0] = cos(angle);
-		(*rotMat)[1] = -sin(angle);
-		(*rotMat)[2] = sin(angle);
-		(*rotMat)[3] = cos(angle);
-
-		cmdb->draw(PrimitiveTopology::kTriangles, 3);
-		cmdb->endRenderPass();
-		presentBarrierB(cmdb, presentTex);
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get());
-
-		g_gr->swapBuffers();
-
-		timer.stop();
-		const F32 TICK = 1.0f / 30.0f;
-		if(timer.getElapsedTime() < TICK)
+		const U kIterationCount = 100;
+		U iterations = kIterationCount;
+		while(iterations--)
 		{
-			HighRezTimer::sleep(TICK - timer.getElapsedTime());
+			HighRezTimer timer;
+			timer.start();
+
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			cmdb->setViewport(0, 0, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
+			cmdb->bindShaderProgram(prog.get());
+
+			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()), TextureUsageBit::kNone,
+												TextureUsageBit::kFramebufferWrite};
+			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+
+			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDescriptor::firstSurface())});
+
+			// Set uniforms
+			class A
+			{
+			public:
+				Array<Vec4, 3> m_color;
+				Vec4 m_rotation2d;
+			} pc;
+
+			const F32 angle = toRad(360.0f / F32(kIterationCount) * F32(iterations)) / 2.0f;
+			pc.m_rotation2d[0] = cos(angle);
+			pc.m_rotation2d[1] = -sin(angle);
+			pc.m_rotation2d[2] = sin(angle);
+			pc.m_rotation2d[3] = cos(angle);
+
+			pc.m_color[0] = Vec4(1.0, 0.0, 0.0, 0.0);
+			pc.m_color[1] = Vec4(0.0, 1.0, 0.0, 0.0);
+			pc.m_color[2] = Vec4(0.0, 0.0, 1.0, 0.0);
+
+			cmdb->setPushConstants(&pc, sizeof(pc));
+
+			cmdb->draw(PrimitiveTopology::kTriangles, 3);
+			cmdb->endRenderPass();
+
+			const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()),
+												 TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent};
+			cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+
+			GrManager::getSingleton().swapBuffers();
+
+			timer.stop();
+			const Second kTick = 1.0f / 30.0f;
+			if(timer.getElapsedTime() < kTick)
+			{
+				HighRezTimer::sleep(kTick - timer.getElapsedTime());
+			}
 		}
 	}
 
-	COMMON_END()
-#endif
+	commonDestroy();
 }
 
 ANKI_TEST(Gr, DrawWithVertex)

@@ -9,7 +9,7 @@
 
 namespace anki {
 
-/// @addtogroup vulkan
+/// @addtogroup d3d
 /// @{
 
 /// Pipeline query.

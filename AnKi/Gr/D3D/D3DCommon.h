@@ -19,6 +19,7 @@
 
 #include <windows.h>
 #include <d3d12.h>
+#include <d3dx12/d3dx12_pipeline_state_stream.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
 #include <D3Dcompiler.h>
@@ -62,6 +63,10 @@ namespace anki {
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)
+
+// Globaly define the versions of some D3D objects
+using D3D12GraphicsCommandListX = ID3D12GraphicsCommandList9;
+using ID3D12DeviceX = ID3D12Device2;
 
 enum class D3DTextureViewType : U8
 {
@@ -114,7 +119,7 @@ void safeRelease(T*& p)
 	}
 }
 
-ID3D12Device& getDevice();
+ID3D12DeviceX& getDevice();
 
 GrManagerImpl& getGrManagerImpl();
 
@@ -180,6 +185,7 @@ inline [[nodiscard]] D3D12_TEXTURE_ADDRESS_MODE convertSamplingAddressing(Sampli
 inline [[nodiscard]] D3D12_COMPARISON_FUNC convertComparisonFunc(CompareOperation comp)
 {
 	D3D12_COMPARISON_FUNC out = {};
+
 	switch(comp)
 	{
 	case CompareOperation::kAlways:
@@ -209,6 +215,273 @@ inline [[nodiscard]] D3D12_COMPARISON_FUNC convertComparisonFunc(CompareOperatio
 	default:
 		ANKI_ASSERT(0);
 	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_PRIMITIVE_TOPOLOGY_TYPE convertPrimitiveTopology(PrimitiveTopology top)
+{
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE out = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+
+	switch(top)
+	{
+	case PrimitiveTopology::kPoints:
+		out = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+		break;
+	case PrimitiveTopology::kLines:
+		out = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+		break;
+	case PrimitiveTopology::kTriangles:
+		out = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D_PRIMITIVE_TOPOLOGY convertPrimitiveTopology2(PrimitiveTopology top)
+{
+	D3D_PRIMITIVE_TOPOLOGY out = {};
+
+	switch(top)
+	{
+	case PrimitiveTopology::kPoints:
+		out = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+		break;
+	case PrimitiveTopology::kLines:
+		out = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+		break;
+	case PrimitiveTopology::kLineStip:
+		out = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+		break;
+	case PrimitiveTopology::kTriangles:
+		out = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		break;
+	case PrimitiveTopology::kTriangleStrip:
+		out = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+		break;
+	case PrimitiveTopology::kPatches:
+		ANKI_ASSERT(!"TODO");
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_BLEND convertBlendFactor(BlendFactor f)
+{
+	D3D12_BLEND out = {};
+
+	switch(f)
+	{
+	case BlendFactor::kZero:
+		out = D3D12_BLEND_ZERO;
+		break;
+	case BlendFactor::kOne:
+		out = D3D12_BLEND_ONE;
+		break;
+	case BlendFactor::kSrcColor:
+		out = D3D12_BLEND_SRC_COLOR;
+		break;
+	case BlendFactor::kOneMinusSrcColor:
+		out = D3D12_BLEND_INV_SRC_COLOR;
+		break;
+	case BlendFactor::kDstColor:
+		out = D3D12_BLEND_DEST_COLOR;
+		break;
+	case BlendFactor::kOneMinusDstColor:
+		out = D3D12_BLEND_INV_DEST_COLOR;
+		break;
+	case BlendFactor::kSrcAlpha:
+		out = D3D12_BLEND_SRC_ALPHA;
+		break;
+	case BlendFactor::kOneMinusSrcAlpha:
+		out = D3D12_BLEND_INV_SRC_ALPHA;
+		break;
+	case BlendFactor::kDstAlpha:
+		out = D3D12_BLEND_DEST_ALPHA;
+		break;
+	case BlendFactor::kOneMinusDstAlpha:
+		out = D3D12_BLEND_INV_DEST_ALPHA;
+		break;
+	case BlendFactor::kConstantColor:
+		out = D3D12_BLEND_BLEND_FACTOR;
+		break;
+	case BlendFactor::kOneMinusConstantColor:
+		out = D3D12_BLEND_INV_BLEND_FACTOR;
+		break;
+	case BlendFactor::kConstantAlpha:
+		out = D3D12_BLEND_ALPHA_FACTOR;
+		break;
+	case BlendFactor::kOneMinusConstantAlpha:
+		out = D3D12_BLEND_INV_ALPHA_FACTOR;
+		break;
+	case BlendFactor::kSrcAlphaSaturate:
+		out = D3D12_BLEND_SRC_ALPHA_SAT;
+		break;
+	case BlendFactor::kSrc1Color:
+		out = D3D12_BLEND_SRC1_COLOR;
+		break;
+	case BlendFactor::kOneMinusSrc1Color:
+		out = D3D12_BLEND_INV_SRC1_COLOR;
+		break;
+	case BlendFactor::kSrc1Alpha:
+		out = D3D12_BLEND_SRC1_ALPHA;
+		break;
+	case BlendFactor::kOneMinusSrc1Alpha:
+		out = D3D12_BLEND_INV_SRC1_ALPHA;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_BLEND_OP convertBlendOperation(BlendOperation b)
+{
+	D3D12_BLEND_OP out = {};
+
+	switch(b)
+	{
+	case BlendOperation::kAdd:
+		out = D3D12_BLEND_OP_ADD;
+		break;
+	case BlendOperation::kSubtract:
+		out = D3D12_BLEND_OP_SUBTRACT;
+		break;
+	case BlendOperation::kReverseSubtract:
+		out = D3D12_BLEND_OP_REV_SUBTRACT;
+		break;
+	case BlendOperation::kMin:
+		out = D3D12_BLEND_OP_MIN;
+		break;
+	case BlendOperation::kMax:
+		out = D3D12_BLEND_OP_MAX;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_COMPARISON_FUNC convertCompareOperation(CompareOperation c)
+{
+	D3D12_COMPARISON_FUNC out = {};
+
+	switch(c)
+	{
+	case CompareOperation::kAlways:
+		out = D3D12_COMPARISON_FUNC_ALWAYS;
+		break;
+	case CompareOperation::kLess:
+		out = D3D12_COMPARISON_FUNC_LESS;
+		break;
+	case CompareOperation::kEqual:
+		out = D3D12_COMPARISON_FUNC_EQUAL;
+		break;
+	case CompareOperation::kLessEqual:
+		out = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		break;
+	case CompareOperation::kGreater:
+		out = D3D12_COMPARISON_FUNC_GREATER;
+		break;
+	case CompareOperation::kGreaterEqual:
+		out = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+		break;
+	case CompareOperation::kNotEqual:
+		out = D3D12_COMPARISON_FUNC_NOT_EQUAL;
+		break;
+	case CompareOperation::kNever:
+		out = D3D12_COMPARISON_FUNC_NEVER;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_STENCIL_OP convertStencilOperation(StencilOperation o)
+{
+	D3D12_STENCIL_OP out = {};
+
+	switch(o)
+	{
+	case StencilOperation::kKeep:
+		out = D3D12_STENCIL_OP_KEEP;
+		break;
+	case StencilOperation::kZero:
+		out = D3D12_STENCIL_OP_ZERO;
+		break;
+	case StencilOperation::kReplace:
+		out = D3D12_STENCIL_OP_REPLACE;
+		break;
+	case StencilOperation::kIncrementAndClamp:
+		out = D3D12_STENCIL_OP_INCR_SAT;
+		break;
+	case StencilOperation::kDecrementAndClamp:
+		out = D3D12_STENCIL_OP_DECR_SAT;
+		break;
+	case StencilOperation::kInvert:
+		out = D3D12_STENCIL_OP_INVERT;
+		break;
+	case StencilOperation::kIncrementAndWrap:
+		out = D3D12_STENCIL_OP_INCR;
+		break;
+	case StencilOperation::kDecrementAndWrap:
+		out = D3D12_STENCIL_OP_DECR;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_FILL_MODE convertFillMode(FillMode f)
+{
+	D3D12_FILL_MODE out = {};
+
+	switch(f)
+	{
+	case FillMode::kWireframe:
+		out = D3D12_FILL_MODE_WIREFRAME;
+		break;
+	case FillMode::kSolid:
+		out = D3D12_FILL_MODE_SOLID;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+inline [[nodiscard]] D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
+{
+	ANKI_ASSERT(c != FaceSelectionBit::kFrontAndBack);
+	D3D12_CULL_MODE out = {};
+
+	if(!!(c & FaceSelectionBit::kFront))
+	{
+		out = D3D12_CULL_MODE_FRONT;
+	}
+	else if(!!(c & FaceSelectionBit::kBack))
+	{
+		out = D3D12_CULL_MODE_BACK;
+	}
+	else
+	{
+		out = D3D12_CULL_MODE_NONE;
+	}
+
+	return out;
 }
 /// @}
 

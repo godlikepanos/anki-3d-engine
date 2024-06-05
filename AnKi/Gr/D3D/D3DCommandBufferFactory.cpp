@@ -5,8 +5,11 @@
 
 #include <AnKi/Gr/D3D/D3DCommandBufferFactory.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
+
+static StatCounter g_commandBufferCountStatVar(StatCategory::kMisc, "CommandBufferCount", StatFlag::kNone);
 
 MicroCommandBuffer::~MicroCommandBuffer()
 {
@@ -14,6 +17,8 @@ MicroCommandBuffer::~MicroCommandBuffer()
 
 	safeRelease(m_cmdList);
 	safeRelease(m_cmdAllocator);
+
+	g_commandBufferCountStatVar.decrement(1);
 }
 
 Error MicroCommandBuffer::init(CommandBufferFlag flags)
@@ -26,6 +31,8 @@ Error MicroCommandBuffer::init(CommandBufferFlag flags)
 	ComPtr<ID3D12GraphicsCommandList> cmdList;
 	ANKI_D3D_CHECK(getDevice().CreateCommandList(0, cmdListType, m_cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList)));
 	ANKI_D3D_CHECK(cmdList->QueryInterface(IID_PPV_ARGS(&m_cmdList)));
+
+	g_commandBufferCountStatVar.increment(1);
 
 	return Error::kNone;
 }
@@ -48,8 +55,6 @@ void MicroCommandBuffer::reset()
 
 	m_cmdAllocator->Reset();
 	m_cmdList->Reset(m_cmdAllocator, nullptr);
-
-	m_isSmallBatch = true;
 }
 
 void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* cmdb)
@@ -62,12 +67,9 @@ void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* cmdb)
 
 CommandBufferFactory::~CommandBufferFactory()
 {
-	for(U32 smallBatch = 0; smallBatch < 2; ++smallBatch)
+	for(GpuQueueType queue : EnumIterable<GpuQueueType>())
 	{
-		for(GpuQueueType queue : EnumIterable<GpuQueueType>())
-		{
-			m_recyclers[smallBatch][queue].destroy();
-		}
+		m_recyclers[queue].destroy();
 	}
 }
 
@@ -75,18 +77,16 @@ void CommandBufferFactory::deleteCommandBuffer(MicroCommandBuffer* cmdb)
 {
 	ANKI_ASSERT(cmdb);
 
-	const Bool smallBatch = cmdb->m_isSmallBatch;
-	const GpuQueueType queue = (cmdb->m_cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_DIRECT) ? GpuQueueType::kCompute : GpuQueueType::kCompute;
+	const GpuQueueType queue = (cmdb->m_cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_DIRECT) ? GpuQueueType::kGeneral : GpuQueueType::kCompute;
 
-	m_recyclers[smallBatch][queue].recycle(cmdb);
+	m_recyclers[queue].recycle(cmdb);
 }
 
 Error CommandBufferFactory::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr)
 {
-	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::kSmallBatch);
-	const GpuQueueType queue = !!(cmdbFlags & CommandBufferFlag::kGeneralWork) ? GpuQueueType::kCompute : GpuQueueType::kCompute;
+	const GpuQueueType queue = !!(cmdbFlags & CommandBufferFlag::kGeneralWork) ? GpuQueueType::kGeneral : GpuQueueType::kCompute;
 
-	MicroCommandBuffer* cmdb = m_recyclers[smallBatch][queue].findToReuse();
+	MicroCommandBuffer* cmdb = m_recyclers[queue].findToReuse();
 
 	if(cmdb == nullptr)
 	{

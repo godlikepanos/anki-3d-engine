@@ -8,7 +8,7 @@
 
 namespace anki {
 
-ID3D12Device& getDevice()
+ID3D12DeviceX& getDevice()
 {
 	return static_cast<GrManagerImpl&>(GrManager::getSingleton()).getDevice();
 }

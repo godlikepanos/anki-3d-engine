@@ -300,7 +300,7 @@ enum class PrimitiveTopology : U8
 	kLineStip,
 	kTriangles,
 	kTriangleStrip,
-	kPatchs
+	kPatches
 };
 
 enum class FillMode : U8
@@ -1044,6 +1044,12 @@ public:
 		for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 		{
 			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vertexAttributeLocations[semantic] != kMaxU8);
+		}
+
+		const U32 attachmentCount = m_fragment.m_colorAttachmentWritemask.getSetBitCount();
+		for(U32 i = 0; i < attachmentCount; ++i)
+		{
+			ANKI_ASSERT(m_fragment.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
 		}
 	}
 

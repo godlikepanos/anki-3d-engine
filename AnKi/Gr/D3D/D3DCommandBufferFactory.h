@@ -76,12 +76,7 @@ public:
 		pushToArray(m_objectRefs[T::kClassType], x);
 	}
 
-	void setBigBatch()
-	{
-		m_isSmallBatch = false;
-	}
-
-	ID3D12GraphicsCommandList6& getCmdList() const
+	D3D12GraphicsCommandListX& getCmdList() const
 	{
 		ANKI_ASSERT(m_cmdList);
 		return *m_cmdList;
@@ -101,7 +96,6 @@ private:
 	static constexpr U32 kMaxRefObjectSearch = 16;
 
 	mutable Atomic<I32> m_refcount = {0};
-	Bool m_isSmallBatch = true;
 
 	MicroFencePtr m_fence;
 	Array<DynamicArray<GrObjectPtr, MemoryPoolPtrWrapper<StackMemoryPool>>, U(GrObjectType::kCount)> m_objectRefs;
@@ -109,7 +103,7 @@ private:
 	StackMemoryPool m_fastPool;
 
 	ID3D12CommandAllocator* m_cmdAllocator = nullptr;
-	ID3D12GraphicsCommandList6* m_cmdList = nullptr;
+	D3D12GraphicsCommandListX* m_cmdList = nullptr;
 
 	void reset();
 
@@ -165,7 +159,7 @@ public:
 	Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
 private:
-	Array2d<MicroObjectRecycler<MicroCommandBuffer>, 2, U(GpuQueueType::kCount)> m_recyclers;
+	Array<MicroObjectRecycler<MicroCommandBuffer>, U(GpuQueueType::kCount)> m_recyclers;
 
 	void deleteCommandBuffer(MicroCommandBuffer* cmdb);
 };

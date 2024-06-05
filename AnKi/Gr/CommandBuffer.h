@@ -63,6 +63,13 @@ public:
 	ClearValue m_clearValue;
 
 	TextureUsageBit m_usage = TextureUsageBit::kFramebufferWrite;
+
+	RenderTarget() = default;
+
+	RenderTarget(const TextureView& view)
+		: m_textureView(view)
+	{
+	}
 };
 
 /// Command buffer initialization flags.
@@ -179,10 +186,10 @@ public:
 	/// @{
 
 	/// Bind vertex buffer.
-	void bindVertexBuffer(U32 binding, const BufferView& buff, PtrSize stride, VertexStepRate stepRate = VertexStepRate::kVertex);
+	void bindVertexBuffer(U32 binding, const BufferView& buff, U32 stride, VertexStepRate stepRate = VertexStepRate::kVertex);
 
 	/// Setup a vertex attribute.
-	void setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset);
+	void setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, U32 relativeOffset);
 
 	/// Bind index buffer.
 	void bindIndexBuffer(const BufferView& buff, IndexType type);

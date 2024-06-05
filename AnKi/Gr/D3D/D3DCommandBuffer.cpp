@@ -31,19 +31,45 @@ void CommandBuffer::endRecording()
 	self.m_cmdList->Close();
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, PtrSize stride, VertexStepRate stepRate)
+void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, U32 stride, VertexStepRate stepRate)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(stride > 0);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+
+	self.m_graphicsState.bindVertexBuffer(binding, stepRate);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
+
+	const D3D12_VERTEX_BUFFER_VIEW d3dView = {.BufferLocation = impl.getGpuAddress() + buff.getOffset(),
+											  .SizeInBytes = U32(buff.getRange()),
+											  .StrideInBytes = stride};
+
+	self.m_cmdList->IASetVertexBuffers(binding, 1, &d3dView);
 }
 
-void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, PtrSize relativeOffset)
+void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, U32 relativeOffset)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(attribute < VertexAttributeSemantic::kCount && fmt != Format::kNone);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+	self.m_graphicsState.setVertexAttribute(attribute, buffBinding, fmt, relativeOffset);
 }
 
 void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(type != IndexType::kCount);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
+
+	const D3D12_INDEX_BUFFER_VIEW view = {.BufferLocation = impl.getGpuAddress() + buff.getOffset(),
+										  .SizeInBytes = U32(buff.getRange()),
+										  .Format = (type == IndexType::kU16) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT};
+
+	self.m_cmdList->IASetIndexBuffer(&view);
 }
 
 void CommandBuffer::setPrimitiveRestart(Bool enable)
@@ -53,83 +79,115 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 
 void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setViewport(minx, miny, width, height);
 }
 
 void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setScissor(minx, miny, width, height);
 }
 
 void CommandBuffer::setFillMode(FillMode mode)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setFillMode(mode);
 }
 
 void CommandBuffer::setCullMode(FaceSelectionBit mode)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setCullMode(mode);
 }
 
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setPolygonOffset(factor, units);
 }
 
 void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
 										 StencilOperation stencilPassDepthPass)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
 }
 
 void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setStencilCompareOperation(face, comp);
 }
 
 void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setStencilCompareMask(face, mask);
 }
 
 void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setStencilWriteMask(face, mask);
 }
 
 void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setStencilReference(face, ref);
 }
 
 void CommandBuffer::setDepthWrite(Bool enable)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setDepthWrite(enable);
 }
 
 void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setDepthCompareOperation(op);
 }
 
 void CommandBuffer::setAlphaToCoverage(Bool enable)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setAlphaToCoverage(enable);
 }
 
 void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setColorChannelWriteMask(attachment, mask);
 }
 
 void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
 }
 
 void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.commandCommon();
+	self.m_graphicsState.setBlendOperation(attachment, funcRgb, funcA);
 }
 
 void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
@@ -221,17 +279,17 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	const ShaderProgramImpl& progImpl = static_cast<const ShaderProgramImpl&>(*prog);
 	const Bool isCompute = !(progImpl.getShaderTypes() & ShaderTypeBit::kAllGraphics);
 
-	self.m_descriptors.bindRootSignature(&progImpl.getRootSignature(), isCompute);
+	self.m_descriptors.bindRootSignature(progImpl.m_rootSignature, isCompute);
 
 	self.m_mcmdb->pushObjectRef(prog);
 
 	if(isCompute)
 	{
-		self.m_cmdList->SetPipelineState(&progImpl.getComputePipelineState());
+		self.m_cmdList->SetPipelineState(progImpl.m_compute.m_pipelineState);
 	}
 	else
 	{
-		ANKI_ASSERT(!"TODO");
+		self.m_graphicsState.bindShaderProgram(&progImpl);
 	}
 
 	// Shader program means descriptors so bind the descriptor heaps
@@ -250,36 +308,53 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	ANKI_D3D_SELF(CommandBufferImpl);
 	self.commandCommon();
 
+	U32 rtWidth = 0;
+	U32 rtHeight = 0;
+
 	Array<D3D12_RENDER_PASS_RENDER_TARGET_DESC, kMaxColorRenderTargets> colorRtDescs;
+	Array<Format, kMaxColorRenderTargets> colorRtFormats;
 	for(U32 i = 0; i < colorRts.getSize(); ++i)
 	{
 		const RenderTarget& rt = colorRts[i];
 		D3D12_RENDER_PASS_RENDER_TARGET_DESC& desc = colorRtDescs[i];
+		const TextureImpl& tex = static_cast<const TextureImpl&>(rt.m_textureView.getTexture());
 
 		desc = {};
-		desc.cpuDescriptor =
-			static_cast<const TextureImpl&>(rt.m_textureView.getTexture()).getOrCreateRtv(rt.m_textureView.getSubresource()).getCpuOffset();
+		desc.cpuDescriptor = tex.getOrCreateRtv(rt.m_textureView.getSubresource()).getCpuOffset();
 		desc.BeginningAccess.Type = convertLoadOp(rt.m_loadOperation);
 		memcpy(&desc.BeginningAccess.Clear.ClearValue.Color, &rt.m_clearValue.m_colorf[0], sizeof(F32) * 4);
 		desc.EndingAccess.Type = convertStoreOp(rt.m_storeOperation);
+
+		colorRtFormats[i] = tex.getFormat();
+
+		rtWidth = tex.getWidth() >> rt.m_textureView.getFirstMipmap();
+		rtHeight = tex.getHeight() >> rt.m_textureView.getFirstMipmap();
 	}
 
 	D3D12_RENDER_PASS_DEPTH_STENCIL_DESC dsDesc;
+	Format dsFormat = Format::kNone;
 	if(depthStencilRt)
 	{
+		const TextureImpl& tex = static_cast<const TextureImpl&>(depthStencilRt->m_textureView.getTexture());
+
 		dsDesc = {};
-		dsDesc.cpuDescriptor = static_cast<const TextureImpl&>(depthStencilRt->m_textureView.getTexture())
-								   .getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), depthStencilRt->m_usage)
-								   .getCpuOffset();
+		dsDesc.cpuDescriptor = tex.getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), depthStencilRt->m_usage).getCpuOffset();
 
 		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
 		dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth, depthStencilRt->m_clearValue.m_depthStencil.m_depth;
 		dsDesc.DepthEndingAccess.Type = convertStoreOp(depthStencilRt->m_storeOperation);
 
 		dsDesc.StencilBeginningAccess.Type = convertLoadOp(depthStencilRt->m_stencilLoadOperation);
-		dsDesc.StencilBeginningAccess.Clear.ClearValue.DepthStencil.Stencil = depthStencilRt->m_clearValue.m_depthStencil.m_stencil;
+		dsDesc.StencilBeginningAccess.Clear.ClearValue.DepthStencil.Stencil = U8(depthStencilRt->m_clearValue.m_depthStencil.m_stencil);
 		dsDesc.StencilEndingAccess.Type = convertStoreOp(depthStencilRt->m_stencilStoreOperation);
+
+		dsFormat = tex.getFormat();
+
+		rtWidth = tex.getWidth() >> depthStencilRt->m_textureView.getFirstMipmap();
+		rtHeight = tex.getHeight() >> depthStencilRt->m_textureView.getFirstMipmap();
 	}
+
+	self.m_graphicsState.beginRenderPass(ConstWeakArray(colorRtFormats.getBegin(), colorRts.getSize()), dsFormat, rtWidth, rtHeight);
 
 	self.m_cmdList->BeginRenderPass(colorRts.getSize(), colorRtDescs.getBegin(), (depthStencilRt) ? &dsDesc : nullptr,
 									D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES);
@@ -299,12 +374,20 @@ void CommandBuffer::setVrsRate(VrsRate rate)
 
 void CommandBuffer::drawIndexed(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(topology);
+	self.drawcallCommon();
+
+	self.m_cmdList->DrawIndexedInstanced(count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
 void CommandBuffer::draw(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(topology);
+	self.drawcallCommon();
+
+	self.m_cmdList->DrawInstanced(count, instanceCount, first, baseInstance);
 }
 
 void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
@@ -560,16 +643,12 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	return Error::kNone;
 }
 
-void CommandBufferImpl::commandCommon()
+void CommandBufferImpl::drawcallCommon()
 {
-	++m_commandCount;
-	if(m_commandCount >= kCommandBufferSmallBatchMaxCommands)
-	{
-		if((m_commandCount % 10) == 0) // Change the batch every 10 commands as an optimization
-		{
-			m_mcmdb->setBigBatch();
-		}
-	}
+	commandCommon();
+
+	m_graphicsState.getShaderProgram().m_graphics.m_pipelineFactory->flushState(m_graphicsState, *m_cmdList);
+	m_descriptors.flush(*m_cmdList);
 }
 
 } // end namespace anki
