@@ -458,6 +458,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	CommandBufferFactory::allocateSingleton();
 	FrameGarbageCollector::allocateSingleton();
 
+	IndirectCommandSignatureFactory::allocateSingleton();
+	ANKI_CHECK(IndirectCommandSignatureFactory::getSingleton().init());
+
 	return Error::kNone;
 }
 
@@ -477,6 +480,7 @@ void GrManagerImpl::destroy()
 	FrameGarbageCollector::freeSingleton();
 	RootSignatureFactory::freeSingleton();
 	DescriptorFactory::freeSingleton();
+	IndirectCommandSignatureFactory::freeSingleton();
 	FenceFactory::freeSingleton();
 
 	safeRelease(m_queues[GpuQueueType::kGeneral]);

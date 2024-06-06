@@ -392,49 +392,149 @@ void CommandBuffer::draw(PrimitiveTopology topology, U32 count, U32 instanceCoun
 
 void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
-	ANKI_ASSERT(!"TODO");
-}
+	ANKI_ASSERT(drawCount > 0);
 
-void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride,
-											 const BufferView& countBuffer, U32 maxDrawCount)
-{
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(topology);
+	self.drawcallCommon();
+
+	ID3D12CommandSignature* signature;
+	ANKI_CHECKF(
+		IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, sizeof(DrawIndirectArgs), signature));
+
+	const BufferImpl& buffImpl = static_cast<const BufferImpl&>(buff.getBuffer());
+	ANKI_ASSERT(!!(buffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((buff.getOffset() % 4) == 0);
+	ANKI_ASSERT((buff.getRange() % sizeof(DrawIndirectArgs)) == 0);
+	ANKI_ASSERT(sizeof(DrawIndirectArgs) * drawCount == buff.getRange());
+
+	self.m_cmdList->ExecuteIndirect(signature, drawCount, &buffImpl.getD3DResource(), buff.getOffset(), nullptr, 0);
 }
 
 void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride, const BufferView& countBuffer,
 									  U32 maxDrawCount)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(topology);
+	self.drawcallCommon();
+
+	ID3D12CommandSignature* signature;
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, argBufferStride, signature));
+
+	const BufferImpl& argBuffImpl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
+	ANKI_ASSERT(!!(argBuffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((argBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT((argBuffer.getRange() % argBufferStride) == 0);
+	ANKI_ASSERT(argBufferStride * maxDrawCount == argBuffer.getRange());
+
+	const BufferImpl& countBuffImpl = static_cast<const BufferImpl&>(countBuffer.getBuffer());
+	ANKI_ASSERT(countBuffer.getRange() == sizeof(U32));
+	ANKI_ASSERT(!!(countBuffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+
+	self.m_cmdList->ExecuteIndirect(signature, maxDrawCount, &argBuffImpl.getD3DResource(), argBuffer.getOffset(), &countBuffImpl.getD3DResource(),
+									countBuffer.getOffset());
 }
 
 void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, const BufferView& buff, U32 drawCount)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(drawCount > 0);
+
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(topology);
+	self.drawcallCommon();
+
+	ID3D12CommandSignature* signature;
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,
+																					 sizeof(DrawIndexedIndirectArgs), signature));
+
+	const BufferImpl& buffImpl = static_cast<const BufferImpl&>(buff.getBuffer());
+	ANKI_ASSERT(!!(buffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((buff.getOffset() % 4) == 0);
+	ANKI_ASSERT((buff.getRange() % sizeof(DrawIndexedIndirectArgs)) == 0);
+	ANKI_ASSERT(sizeof(DrawIndexedIndirectArgs) * drawCount == buff.getRange());
+
+	self.m_cmdList->ExecuteIndirect(signature, drawCount, &buffImpl.getD3DResource(), buff.getOffset(), nullptr, 0);
+}
+
+void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride,
+											 const BufferView& countBuffer, U32 maxDrawCount)
+{
+	ANKI_ASSERT(maxDrawCount > 0);
+
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(topology);
+	self.drawcallCommon();
+
+	ID3D12CommandSignature* signature;
+	ANKI_CHECKF(
+		IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, argBufferStride, signature));
+
+	const BufferImpl& argBuffImpl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
+	ANKI_ASSERT(!!(argBuffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+	ANKI_ASSERT((argBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT((argBuffer.getRange() % argBufferStride) == 0);
+	ANKI_ASSERT(argBufferStride * maxDrawCount == argBuffer.getRange());
+
+	const BufferImpl& countBuffImpl = static_cast<const BufferImpl&>(countBuffer.getBuffer());
+	ANKI_ASSERT(countBuffer.getRange() == sizeof(U32));
+	ANKI_ASSERT(!!(countBuffImpl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+
+	self.m_cmdList->ExecuteIndirect(signature, maxDrawCount, &argBuffImpl.getD3DResource(), argBuffer.getOffset(), &countBuffImpl.getD3DResource(),
+									countBuffer.getOffset());
 }
 
 void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(PrimitiveTopology::kTriangles);
+	self.drawcallCommon();
+
+	self.m_cmdList->DispatchMesh(groupCountX, groupCountY, groupCountZ);
 }
 
 void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawCount)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(drawCount > 0);
+
+	ANKI_ASSERT((argBuffer.getOffset() % 4) == 0);
+	ANKI_ASSERT(drawCount * sizeof(DispatchIndirectArgs) == argBuffer.getRange());
+	const BufferImpl& impl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
+	ANKI_ASSERT(!!(impl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.m_graphicsState.setPrimitiveTopology(PrimitiveTopology::kTriangles);
+	self.drawcallCommon();
+
+	ID3D12CommandSignature* signature;
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH,
+																					 sizeof(DispatchIndirectArgs), signature));
+
+	self.m_cmdList->ExecuteIndirect(signature, drawCount, &impl.getD3DResource(), argBuffer.getOffset(), nullptr, 0);
 }
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
-	self.commandCommon();
-
-	self.m_descriptors.flush(*self.m_cmdList);
-
+	self.dispatchCommon();
 	self.m_cmdList->Dispatch(groupCountX, groupCountY, groupCountZ);
 }
 
 void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(sizeof(DispatchIndirectArgs) == argBuffer.getRange());
+	ANKI_ASSERT(argBuffer.getOffset() % 4 == 0);
+
+	const BufferImpl& impl = static_cast<const BufferImpl&>(argBuffer.getBuffer());
+	ANKI_ASSERT(!!(impl.getBufferUsage() & BufferUsageBit::kIndirectDraw));
+
+	ANKI_D3D_SELF(CommandBufferImpl);
+	self.dispatchCommon();
+
+	ID3D12CommandSignature* signature;
+	ANKI_CHECKF(IndirectCommandSignatureFactory::getSingleton().getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
+																					 sizeof(DispatchIndirectArgs), signature));
+
+	self.m_cmdList->ExecuteIndirect(signature, 1, &impl.getD3DResource(), argBuffer.getOffset(), nullptr, 0);
 }
 
 void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
@@ -641,14 +741,6 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_descriptors.init(m_fastPool);
 
 	return Error::kNone;
-}
-
-void CommandBufferImpl::drawcallCommon()
-{
-	commandCommon();
-
-	m_graphicsState.getShaderProgram().m_graphics.m_pipelineFactory->flushState(m_graphicsState, *m_cmdList);
-	m_descriptors.flush(*m_cmdList);
 }
 
 } // end namespace anki

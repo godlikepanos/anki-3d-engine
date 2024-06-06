@@ -163,6 +163,53 @@ private:
 
 	void deleteCommandBuffer(MicroCommandBuffer* cmdb);
 };
+
+/// Creates command signatures.
+class IndirectCommandSignatureFactory : public MakeSingleton<IndirectCommandSignatureFactory>
+{
+public:
+	~IndirectCommandSignatureFactory();
+
+	Error init();
+
+	/// @note Thread-safe.
+	Error getOrCreateSignature(D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride, ID3D12CommandSignature*& signature)
+	{
+		return getOrCreateSignatureInternal(true, type, stride, signature);
+	}
+
+private:
+	enum class IndirectCommandSignatureType
+	{
+		kDraw,
+		kDrawIndexed,
+		kDispatch,
+		kDispatchMesh,
+
+		kCount,
+		kFirst = 0
+	};
+
+	class Signature
+	{
+	public:
+		ID3D12CommandSignature* m_d3dSignature;
+		U32 m_stride;
+	};
+
+	static constexpr Array<U32, U32(IndirectCommandSignatureType::kCount)> kCommonStrides = {
+		sizeof(DrawIndirectArgs), sizeof(DrawIndexedIndirectArgs), sizeof(DispatchIndirectArgs), sizeof(DispatchIndirectArgs)};
+
+	static constexpr Array<D3D12_INDIRECT_ARGUMENT_TYPE, U32(IndirectCommandSignatureType::kCount)> kAnkiToD3D = {
+		D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
+		D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH};
+
+	Array<GrDynamicArray<Signature>, U32(IndirectCommandSignatureType::kCount)> m_arrays;
+
+	Array<RWMutex, U32(IndirectCommandSignatureType::kCount)> m_mutexes;
+
+	Error getOrCreateSignatureInternal(Bool takeFastPath, D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride, ID3D12CommandSignature*& signature);
+};
 /// @}
 
 } // end namespace anki

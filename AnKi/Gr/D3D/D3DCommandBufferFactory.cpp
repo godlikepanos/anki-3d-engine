@@ -104,4 +104,114 @@ Error CommandBufferFactory::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroC
 	return Error::kNone;
 }
 
+IndirectCommandSignatureFactory::~IndirectCommandSignatureFactory()
+{
+	for(IndirectCommandSignatureType i : EnumIterable<IndirectCommandSignatureType>())
+	{
+		for(Signature& sig : m_arrays[i])
+		{
+			safeRelease(sig.m_d3dSignature);
+		}
+	}
+}
+
+Error IndirectCommandSignatureFactory::init()
+{
+	// Initialize some common strides
+	for(IndirectCommandSignatureType i : EnumIterable<IndirectCommandSignatureType>())
+	{
+		ID3D12CommandSignature* sig;
+		ANKI_CHECK(getOrCreateSignatureInternal(false, kAnkiToD3D[i], kCommonStrides[i], sig));
+	}
+	return Error::kNone;
+}
+
+Error IndirectCommandSignatureFactory::getOrCreateSignatureInternal(Bool takeFastPath, D3D12_INDIRECT_ARGUMENT_TYPE type, U32 stride,
+																	ID3D12CommandSignature*& signature)
+{
+	signature = nullptr;
+
+	IndirectCommandSignatureType akType = IndirectCommandSignatureType::kCount;
+	switch(type)
+	{
+	case D3D12_INDIRECT_ARGUMENT_TYPE_DRAW:
+		akType = IndirectCommandSignatureType::kDraw;
+		break;
+	case D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED:
+		akType = IndirectCommandSignatureType::kDrawIndexed;
+		break;
+	case D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH:
+		akType = IndirectCommandSignatureType::kDispatch;
+		break;
+	case D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH:
+		akType = IndirectCommandSignatureType::kDispatchMesh;
+		break;
+	default:
+		ANKI_ASSERT(!"Unsupported");
+	}
+
+	// Check if it's a common stride
+	if(takeFastPath && stride == kCommonStrides[akType])
+	{
+		signature = m_arrays[akType][0].m_d3dSignature;
+		return Error::kNone;
+	}
+
+	{
+		RLockGuard lock(m_mutexes[akType]);
+
+		for(const Signature& sig : m_arrays[akType])
+		{
+			if(sig.m_stride == stride)
+			{
+				signature = sig.m_d3dSignature;
+				break;
+			}
+		}
+	}
+
+	if(signature == nullptr) [[unlikely]]
+	{
+		// Proactively create it without locking
+
+		const D3D12_INDIRECT_ARGUMENT_DESC arg = {.Type = type};
+		const D3D12_COMMAND_SIGNATURE_DESC desc = {.ByteStride = stride, .NumArgumentDescs = 1, .pArgumentDescs = &arg, .NodeMask = 0};
+
+		ANKI_D3D_CHECK(getDevice().CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&signature)));
+
+		// Try to do bookkeeping
+
+		{
+			WLockGuard lock(m_mutexes[akType]);
+
+			ID3D12CommandSignature* oldSignature = nullptr;
+			for(const Signature& sig : m_arrays[akType])
+			{
+				if(sig.m_stride == stride)
+				{
+					oldSignature = sig.m_d3dSignature;
+					break;
+				}
+			}
+
+			if(oldSignature)
+			{
+				// Someone else created the signature, remove what we proactively created
+				safeRelease(signature);
+				signature = oldSignature;
+			}
+			else
+			{
+				// New signature, do bookkeeping
+				const Signature sig = {.m_d3dSignature = signature, .m_stride = stride};
+				m_arrays[akType].emplaceBack(sig);
+			}
+		}
+	}
+
+	ANKI_ASSERT(signature);
+
+	return Error::kNone;
+}
+
 } // end namespace anki

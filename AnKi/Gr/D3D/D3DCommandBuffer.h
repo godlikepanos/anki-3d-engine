@@ -53,7 +53,19 @@ private:
 		++m_commandCount;
 	}
 
-	void drawcallCommon();
+	ANKI_FORCE_INLINE void drawcallCommon()
+	{
+		commandCommon();
+
+		m_graphicsState.getShaderProgram().m_graphics.m_pipelineFactory->flushState(m_graphicsState, *m_cmdList);
+		m_descriptors.flush(*m_cmdList);
+	}
+
+	ANKI_FORCE_INLINE void dispatchCommon()
+	{
+		commandCommon();
+		m_descriptors.flush(*m_cmdList);
+	}
 };
 /// @}
 
