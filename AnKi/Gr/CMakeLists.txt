@@ -48,7 +48,12 @@ elseif(DIRECTX)
 	set(backend_sources  ${backend_sources} ${dxsources})
 	set(backend_headers ${backend_headers} ${dxheaders})
 
-	set(extra_libs ${extra_libs} d3d12 dxgi dxguid) # dxguid for some debug layer stuff
+	find_library(PIX_LIB WinPixEventRuntime HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/x64")
+
+	set(extra_libs ${extra_libs} d3d12 dxgi dxguid ${PIX_LIB}) # dxguid for some debug layer stuff
+
+	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/include")
+	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/include/WinPixEventRuntime")
 endif()
 
 # Have 2 libraries. The AnKiGrCommon is the bare minimum for the AnKiShaderCompiler to work. Don't have
@@ -62,13 +67,14 @@ if(ANKI_DLSS)
 	set(extra_libs ${extra_libs} AnKiNgx)
 endif()
 
-# Add Agility SDK includes
-if(DIRECTX)
-	include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/include")
-endif()
-
 add_library(AnKiGr ${backend_sources} ${backend_headers})
-target_compile_definitions(AnKiGr PRIVATE -DANKI_SOURCE_FILE)
+
+set(COMPILE_DEFS "-DANKI_SOURCE_FILE")
+if(DIRECTX)
+	set(COMPILE_DEFS ${COMPILE_DEFS} "-DUSE_PIX")	
+endif()
+target_compile_definitions(AnKiGr PRIVATE ${COMPILE_DEFS})
+
 target_link_libraries(AnKiGr AnKiCore AnKiSpirvCross AnKiGrCommon ${extra_libs})
 
 # Copy DLSS files to Binaries
@@ -98,8 +104,9 @@ endif()
 if(DIRECTX)
 	file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.dll")
 	file(GLOB FILES_TO_COPY2 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.pdb")
+	file(GLOB FILES_TO_COPY3 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/x64/*.dll")
 
-	list(APPEND FILES_TO_COPY ${FILES_TO_COPY2})
+	list(APPEND FILES_TO_COPY ${FILES_TO_COPY2} ${FILES_TO_COPY3})
 
 	foreach(FILE_TO_COPY IN LISTS FILES_TO_COPY)
 		add_custom_command(TARGET AnKiGr POST_BUILD

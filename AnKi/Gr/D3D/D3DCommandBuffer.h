@@ -52,6 +52,7 @@ private:
 	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_timestampQueries;
 
 	Bool m_descriptorHeapsBound = false;
+	Bool m_debugMarkersEnabled = false;
 
 	void commandCommon()
 	{

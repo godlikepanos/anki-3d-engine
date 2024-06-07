@@ -772,7 +772,6 @@ Bool CommandBuffer::isEmpty() const
 void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
-
 	self.m_descriptors.setRootConstants(data, dataSize);
 }
 
@@ -788,12 +787,25 @@ void CommandBuffer::setLineWidth(F32 width)
 
 void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	if(self.m_debugMarkersEnabled)
+	{
+		const UVec3 coloru(color * 255.0f);
+		const U64 val = (U64(coloru.x()) << 48) | (U64(coloru.x()) << 32) | (U64(coloru.x()) << 16);
+
+		PIXBeginEvent(self.m_cmdList, val, "%s", name.cstr());
+	}
 }
 
 void CommandBuffer::popDebugMarker()
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	if(self.m_debugMarkersEnabled)
+	{
+		PIXEndEvent(self.m_cmdList);
+	}
 }
 
 CommandBufferImpl::~CommandBufferImpl()
@@ -808,6 +820,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_fastPool = &m_mcmdb->getFastMemoryPool();
 
 	m_descriptors.init(m_fastPool);
+
+	m_debugMarkersEnabled = g_debugMarkersCVar.get();
 
 	return Error::kNone;
 }

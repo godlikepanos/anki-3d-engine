@@ -748,6 +748,8 @@ float4 main(VertOut i) : SV_TARGET0
 												TextureUsageBit::kFramebufferWrite};
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
+			cmdb->pushDebugMarker("AnKi", Vec3(1.0f, 0.0f, 0.0f));
+
 			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDescriptor::firstSurface())});
 
 			// Set uniforms
@@ -776,6 +778,8 @@ float4 main(VertOut i) : SV_TARGET0
 			const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()),
 												 TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent};
 			cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
+
+			cmdb->popDebugMarker();
 
 			cmdb->endRecording();
 			GrManager::getSingleton().submit(cmdb.get());

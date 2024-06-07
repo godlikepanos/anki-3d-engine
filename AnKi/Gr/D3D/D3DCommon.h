@@ -25,6 +25,7 @@
 #include <D3Dcompiler.h>
 #include <DirectXMath.h>
 #include <wrl.h>
+#include <pix3.h>
 #include <AnKi/Util/CleanupWindows.h>
 
 using Microsoft::WRL::ComPtr;
