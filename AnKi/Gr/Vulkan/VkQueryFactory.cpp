@@ -25,7 +25,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	Chunk* chunk = nullptr;
 	for(Chunk& c : m_chunks)
 	{
-		if(c.m_subAllocationCount < kMaxSuballocationsPerQueryChunk)
+		if(c.m_subAllocationCount < kMaxQueriesPerQueryChunk)
 		{
 			// Found one
 
@@ -49,7 +49,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 		VkQueryPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 		ci.queryType = m_poolType;
-		ci.queryCount = kMaxSuballocationsPerQueryChunk;
+		ci.queryCount = kMaxQueriesPerQueryChunk;
 		ci.pipelineStatistics = m_pplineStatisticsFlags;
 
 		ANKI_VK_CHECK(vkCreateQueryPool(getVkDevice(), &ci, nullptr, &chunk->m_pool));
@@ -60,7 +60,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	ANKI_ASSERT(chunk);
 
 	// Allocate from chunk
-	for(U32 i = 0; i < kMaxSuballocationsPerQueryChunk; ++i)
+	for(U32 i = 0; i < kMaxQueriesPerQueryChunk; ++i)
 	{
 		if(chunk->m_allocatedMask.get(i) == 0)
 		{

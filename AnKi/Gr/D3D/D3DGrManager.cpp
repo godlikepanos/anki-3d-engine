@@ -284,6 +284,7 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 		}
 
 		mcmdb.setFence(fence.get());
+		impl.postSubmitWork(fence.get());
 	}
 
 	// Wait for fences
@@ -444,6 +445,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ANKI_D3D_CHECK(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_queues[GpuQueueType::kGeneral])));
 		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
 		ANKI_D3D_CHECK(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_queues[GpuQueueType::kCompute])));
+
+		ANKI_D3D_CHECK(m_queues[GpuQueueType::kGeneral]->GetTimestampFrequency(&m_timestampFrequency));
 	}
 
 	// Other systems

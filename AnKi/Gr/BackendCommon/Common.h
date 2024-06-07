@@ -13,6 +13,8 @@ namespace anki {
 /// There is no need to ask for a fence or a semaphore to be waited for more than 10 seconds. The GPU will timeout anyway.
 constexpr Second kMaxFenceOrSemaphoreWaitTime = 10.0;
 
+constexpr U32 kMaxQueriesPerQueryChunk = 64;
+
 extern NumericCVar<U32> g_maxBindlessSampledTextureCountCVar;
 
 } // end namespace anki

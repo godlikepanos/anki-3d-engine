@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DTimestampQuery.h>
+#include <AnKi/Gr/D3D/D3DGrManager.h>
 
 namespace anki {
 
@@ -21,17 +22,28 @@ TimestampQuery* TimestampQuery::newInstance()
 
 TimestampQueryResult TimestampQuery::getResult(Second& timestamp) const
 {
-	ANKI_ASSERT(!"TODO");
-	return TimestampQueryResult::kNotAvailable;
+	ANKI_D3D_SELF_CONST(TimestampQueryImpl);
+
+	U64 result;
+	const Bool resultAvailable = TimestampQueryFactory::getSingleton().getResult(self.m_handle, result);
+
+	if(resultAvailable)
+	{
+		timestamp = F64(result) / F64(getGrManagerImpl().getTimestampFrequency());
+	}
+
+	return (resultAvailable) ? TimestampQueryResult::kAvailable : TimestampQueryResult::kNotAvailable;
 }
 
 TimestampQueryImpl::~TimestampQueryImpl()
 {
+	TimestampQueryFactory::getSingleton().deleteQuery(m_handle);
 }
 
 Error TimestampQueryImpl::init()
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_CHECK(TimestampQueryFactory::getSingleton().newQuery(m_handle));
+
 	return Error::kNone;
 }
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/TimestampQuery.h>
+#include <AnKi/Gr/D3D/D3DQueryFactory.h>
 
 namespace anki {
 
@@ -16,6 +17,8 @@ namespace anki {
 class TimestampQueryImpl final : public TimestampQuery
 {
 public:
+	QueryHandle m_handle;
+
 	TimestampQueryImpl(CString name)
 		: TimestampQuery(name)
 	{

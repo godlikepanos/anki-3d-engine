@@ -7,6 +7,8 @@
 #include <AnKi/Gr/D3D/D3DTexture.h>
 #include <AnKi/Gr/D3D/D3DSampler.h>
 #include <AnKi/Gr/D3D/D3DShaderProgram.h>
+#include <AnKi/Gr/D3D/D3DTimestampQuery.h>
+#include <AnKi/Gr/D3D/D3DGrManager.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -27,6 +29,16 @@ CommandBuffer* CommandBuffer::newInstance(const CommandBufferInitInfo& init)
 void CommandBuffer::endRecording()
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
+
+	// Write the queries to their result buffers
+	for(QueryHandle handle : self.m_timestampQueries)
+	{
+		QueryInfo qinfo;
+		TimestampQueryFactory::getSingleton().getQueryInfo(handle, qinfo);
+
+		self.m_cmdList->ResolveQueryData(qinfo.m_queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, qinfo.m_indexInHeap, 1, qinfo.m_resultsBuffer,
+										 qinfo.m_resultsBufferOffset / sizeof(U64));
+	}
 
 	self.m_cmdList->Close();
 }
@@ -591,7 +603,27 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 
 void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT((buff.getRange() % sizeof(U32)) == 0);
+	ANKI_ASSERT(!!(buff.getBuffer().getBufferUsage() & BufferUsageBit::kTransferDestination));
+
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	BufferInitInfo srcBufferInit("FillBufferTmp");
+	srcBufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
+	srcBufferInit.m_usage = BufferUsageBit::kTransferSource;
+	srcBufferInit.m_size = buff.getRange();
+
+	BufferPtr srcBuffer = GrManager::getSingleton().newBuffer(srcBufferInit);
+
+	U32* array = static_cast<U32*>(srcBuffer->map(0, buff.getRange(), BufferMapAccessBit::kWrite));
+	for(U32 i = 0; i < buff.getRange() / sizeof(U32); ++i)
+	{
+		array[i] = value;
+	}
+
+	srcBuffer->unmap();
+
+	copyBufferToBuffer(BufferView(srcBuffer.get()), buff);
 }
 
 void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff)
@@ -601,7 +633,22 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<Occlusion
 
 void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(src && dst);
+	ANKI_ASSERT(!!(src->getBufferUsage() & BufferUsageBit::kTransferSource));
+	ANKI_ASSERT(!!(dst->getBufferUsage() & BufferUsageBit::kTransferDestination));
+
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+
+	const BufferImpl& srcImpl = static_cast<const BufferImpl&>(*src);
+	const BufferImpl& dstImpl = static_cast<const BufferImpl&>(*dst);
+
+	for(const CopyBufferToBufferInfo& region : copies)
+	{
+		self.m_cmdList->CopyBufferRegion(&dstImpl.getD3DResource(), region.m_destinationOffset, &srcImpl.getD3DResource(), region.m_sourceOffset,
+										 region.m_range);
+	}
 }
 
 void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
@@ -691,7 +738,29 @@ void CommandBuffer::resetTimestampQueries(ConstWeakArray<TimestampQuery*> querie
 
 void CommandBuffer::writeTimestamp(TimestampQuery* query)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(query);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+
+	self.m_mcmdb->pushObjectRef(query);
+
+	const TimestampQueryImpl& impl = static_cast<const TimestampQueryImpl&>(*query);
+	self.m_timestampQueries.emplaceBack(impl.m_handle);
+
+	QueryInfo qinfo;
+	TimestampQueryFactory::getSingleton().getQueryInfo(impl.m_handle, qinfo);
+
+	// Make sure all the work has finished (mesa's dozen does that)
+	const D3D12_GLOBAL_BARRIER barrier = {.SyncBefore = D3D12_BARRIER_SYNC_ALL,
+										  .SyncAfter = D3D12_BARRIER_SYNC_NONE,
+										  .AccessBefore = D3D12_BARRIER_ACCESS_COMMON,
+										  .AccessAfter = D3D12_BARRIER_ACCESS_NO_ACCESS};
+
+	const D3D12_BARRIER_GROUP barrierGroup = {.Type = D3D12_BARRIER_TYPE_GLOBAL, .NumBarriers = 1, .pGlobalBarriers = &barrier};
+	self.m_cmdList->Barrier(1, &barrierGroup);
+
+	self.m_cmdList->EndQuery(qinfo.m_queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, qinfo.m_indexInHeap);
 }
 
 Bool CommandBuffer::isEmpty() const
@@ -741,6 +810,14 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_descriptors.init(m_fastPool);
 
 	return Error::kNone;
+}
+
+void CommandBufferImpl::postSubmitWork(MicroFence* fence)
+{
+	for(QueryHandle handle : m_timestampQueries)
+	{
+		TimestampQueryFactory::getSingleton().postSubmitWork(handle, fence);
+	}
 }
 
 } // end namespace anki

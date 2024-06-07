@@ -129,10 +129,7 @@ private:
 	}
 };
 
-/// XXX
-/// @tparam T
-/// @tparam TMemoryPool
-/// @tparam TConfig
+/// It's a type of dynamic array that unlike DynamicArray doesn't move elements around when it shrinks or grows the storage.
 template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TConfig = BlockArrayDefaultConfig<T>>
 class BlockArray
 {

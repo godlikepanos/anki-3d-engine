@@ -17,8 +17,6 @@ class QueryFactoryChunk;
 /// @addtogroup vulkan
 /// @{
 
-constexpr U kMaxSuballocationsPerQueryChunk = 64;
-
 /// The return handle of a query allocation.
 class MicroQuery
 {
@@ -56,7 +54,7 @@ class QueryFactoryChunk : public IntrusiveListEnabled<QueryFactoryChunk>
 
 private:
 	VkQueryPool m_pool = VK_NULL_HANDLE;
-	BitSet<kMaxSuballocationsPerQueryChunk> m_allocatedMask = {false};
+	BitSet<kMaxQueriesPerQueryChunk> m_allocatedMask = {false};
 	U32 m_subAllocationCount = 0;
 };
 
