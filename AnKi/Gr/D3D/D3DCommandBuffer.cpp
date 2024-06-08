@@ -8,6 +8,7 @@
 #include <AnKi/Gr/D3D/D3DSampler.h>
 #include <AnKi/Gr/D3D/D3DShaderProgram.h>
 #include <AnKi/Gr/D3D/D3DTimestampQuery.h>
+#include <AnKi/Gr/D3D/D3DPipelineQuery.h>
 #include <AnKi/Gr/D3D/D3DGrManager.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -33,10 +34,17 @@ void CommandBuffer::endRecording()
 	// Write the queries to their result buffers
 	for(QueryHandle handle : self.m_timestampQueries)
 	{
-		QueryInfo qinfo;
-		TimestampQueryFactory::getSingleton().getQueryInfo(handle, qinfo);
+		const QueryInfo qinfo = TimestampQueryFactory::getSingleton().getQueryInfo(handle);
 
 		self.m_cmdList->ResolveQueryData(qinfo.m_queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, qinfo.m_indexInHeap, 1, qinfo.m_resultsBuffer,
+										 qinfo.m_resultsBufferOffset / sizeof(U64));
+	}
+
+	for(QueryHandle handle : self.m_pipelineQueries)
+	{
+		const QueryInfo qinfo = PrimitivesPassedClippingFactory::getSingleton().getQueryInfo(handle);
+
+		self.m_cmdList->ResolveQueryData(qinfo.m_queryHeap, D3D12_QUERY_TYPE_PIPELINE_STATISTICS, qinfo.m_indexInHeap, 1, qinfo.m_resultsBuffer,
 										 qinfo.m_resultsBufferOffset / sizeof(U64));
 	}
 
@@ -84,7 +92,7 @@ void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 	self.m_cmdList->IASetIndexBuffer(&view);
 }
 
-void CommandBuffer::setPrimitiveRestart(Bool enable)
+void CommandBuffer::setPrimitiveRestart([[maybe_unused]] Bool enable)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -276,7 +284,7 @@ void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format
 	}
 }
 
-void CommandBuffer::bindAccelerationStructure(Register reg, AccelerationStructure* as)
+void CommandBuffer::bindAccelerationStructure([[maybe_unused]] Register reg, [[maybe_unused]] AccelerationStructure* as)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -315,7 +323,8 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 }
 
 void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
-									const TextureView& vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
+									[[maybe_unused]] const TextureView& vrsRt, [[maybe_unused]] U8 vrsRtTexelSizeX,
+									[[maybe_unused]] U8 vrsRtTexelSizeY)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
 	self.commandCommon();
@@ -379,7 +388,7 @@ void CommandBuffer::endRenderPass()
 	self.m_cmdList->EndRenderPass();
 }
 
-void CommandBuffer::setVrsRate(VrsRate rate)
+void CommandBuffer::setVrsRate([[maybe_unused]] VrsRate rate)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -549,8 +558,9 @@ void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 	self.m_cmdList->ExecuteIndirect(signature, 1, &impl.getD3DResource(), argBuffer.getOffset(), nullptr, 0);
 }
 
-void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
-							  U32 depth)
+void CommandBuffer::traceRays([[maybe_unused]] const BufferView& sbtBuffer, [[maybe_unused]] U32 sbtRecordSize,
+							  [[maybe_unused]] U32 hitGroupSbtRecordCount, [[maybe_unused]] U32 rayTypeCount, [[maybe_unused]] U32 width,
+							  [[maybe_unused]] U32 height, [[maybe_unused]] U32 depth)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -560,12 +570,12 @@ void CommandBuffer::generateMipmaps2d(const TextureView& texView)
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::blitTexture(const TextureView& srcView, const TextureView& destView)
+void CommandBuffer::blitTexture([[maybe_unused]] const TextureView& srcView, [[maybe_unused]] const TextureView& destView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::clearTexture(const TextureView& texView, const ClearValue& clearValue)
+void CommandBuffer::clearTexture([[maybe_unused]] const TextureView& texView, [[maybe_unused]] const ClearValue& clearValue)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -606,8 +616,6 @@ void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 	ANKI_ASSERT((buff.getRange() % sizeof(U32)) == 0);
 	ANKI_ASSERT(!!(buff.getBuffer().getBufferUsage() & BufferUsageBit::kTransferDestination));
 
-	ANKI_D3D_SELF(CommandBufferImpl);
-
 	BufferInitInfo srcBufferInit("FillBufferTmp");
 	srcBufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	srcBufferInit.m_usage = BufferUsageBit::kTransferSource;
@@ -626,7 +634,8 @@ void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 	copyBufferToBuffer(BufferView(srcBuffer.get()), buff);
 }
 
-void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff)
+void CommandBuffer::writeOcclusionQueriesResultToBuffer([[maybe_unused]] ConstWeakArray<OcclusionQuery*> queries,
+														[[maybe_unused]] const BufferView& buff)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -651,14 +660,16 @@ void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<
 	}
 }
 
-void CommandBuffer::buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer)
+void CommandBuffer::buildAccelerationStructure([[maybe_unused]] AccelerationStructure* as, [[maybe_unused]] const BufferView& scratchBuffer)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::upscale(GrUpscaler* upscaler, const TextureView& inColor, const TextureView& outUpscaledColor, const TextureView& motionVectors,
-							const TextureView& depth, const TextureView& exposure, Bool resetAccumulation, const Vec2& jitterOffset,
-							const Vec2& motionVectorsScale)
+void CommandBuffer::upscale([[maybe_unused]] GrUpscaler* upscaler, [[maybe_unused]] const TextureView& inColor,
+							[[maybe_unused]] const TextureView& outUpscaledColor, [[maybe_unused]] const TextureView& motionVectors,
+							[[maybe_unused]] const TextureView& depth, [[maybe_unused]] const TextureView& exposure,
+							[[maybe_unused]] Bool resetAccumulation, [[maybe_unused]] const Vec2& jitterOffset,
+							[[maybe_unused]] const Vec2& motionVectorsScale)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -706,34 +717,45 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	self.m_cmdList->ResourceBarrier(resourceBarriers.getSize(), resourceBarriers.getBegin());
 }
 
-void CommandBuffer::resetOcclusionQueries(ConstWeakArray<OcclusionQuery*> queries)
+void CommandBuffer::beginOcclusionQuery([[maybe_unused]] OcclusionQuery* query)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::beginOcclusionQuery(OcclusionQuery* query)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::endOcclusionQuery(OcclusionQuery* query)
+void CommandBuffer::endOcclusionQuery([[maybe_unused]] OcclusionQuery* query)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::beginPipelineQuery(PipelineQuery* query)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(query);
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	self.commandCommon();
+	self.m_mcmdb->pushObjectRef(query);
+
+	const PipelineQueryImpl& impl = static_cast<const PipelineQueryImpl&>(*query);
+
+	const QueryInfo qinfo = PrimitivesPassedClippingFactory::getSingleton().getQueryInfo(impl.m_handle);
+
+	self.m_cmdList->BeginQuery(qinfo.m_queryHeap, D3D12_QUERY_TYPE_PIPELINE_STATISTICS, qinfo.m_indexInHeap);
 }
 
 void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 {
-	ANKI_ASSERT(!"TODO");
-}
+	ANKI_ASSERT(query);
+	ANKI_D3D_SELF(CommandBufferImpl);
 
-void CommandBuffer::resetTimestampQueries(ConstWeakArray<TimestampQuery*> queries)
-{
-	ANKI_ASSERT(!"TODO");
+	self.commandCommon();
+	self.m_mcmdb->pushObjectRef(query);
+
+	const PipelineQueryImpl& impl = static_cast<const PipelineQueryImpl&>(*query);
+	self.m_pipelineQueries.emplaceBack(impl.m_handle);
+
+	const QueryInfo qinfo = PrimitivesPassedClippingFactory::getSingleton().getQueryInfo(impl.m_handle);
+
+	self.m_cmdList->EndQuery(qinfo.m_queryHeap, D3D12_QUERY_TYPE_PIPELINE_STATISTICS, qinfo.m_indexInHeap);
 }
 
 void CommandBuffer::writeTimestamp(TimestampQuery* query)
@@ -742,14 +764,12 @@ void CommandBuffer::writeTimestamp(TimestampQuery* query)
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	self.commandCommon();
-
 	self.m_mcmdb->pushObjectRef(query);
 
 	const TimestampQueryImpl& impl = static_cast<const TimestampQueryImpl&>(*query);
 	self.m_timestampQueries.emplaceBack(impl.m_handle);
 
-	QueryInfo qinfo;
-	TimestampQueryFactory::getSingleton().getQueryInfo(impl.m_handle, qinfo);
+	const QueryInfo qinfo = TimestampQueryFactory::getSingleton().getQueryInfo(impl.m_handle);
 
 	// Make sure all the work has finished (mesa's dozen does that)
 	const D3D12_GLOBAL_BARRIER barrier = {.SyncBefore = D3D12_BARRIER_SYNC_ALL,
@@ -775,14 +795,19 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 	self.m_descriptors.setRootConstants(data, dataSize);
 }
 
-void CommandBuffer::setRasterizationOrder(RasterizationOrder order)
+void CommandBuffer::setRasterizationOrder([[maybe_unused]] RasterizationOrder order)
 {
-	ANKI_ASSERT(!"TODO");
+	// Only a Vulkan/AMD thing, skip
 }
 
 void CommandBuffer::setLineWidth(F32 width)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_D3D_SELF(CommandBufferImpl);
+	if(width != 1.0f && !self.m_lineWidthWarningAlreadyShown)
+	{
+		ANKI_D3D_LOGW("D3D doesn't support line widths other than 1.0. This warning will not show up again");
+		self.m_lineWidthWarningAlreadyShown = true;
+	}
 }
 
 void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
@@ -831,6 +856,11 @@ void CommandBufferImpl::postSubmitWork(MicroFence* fence)
 	for(QueryHandle handle : m_timestampQueries)
 	{
 		TimestampQueryFactory::getSingleton().postSubmitWork(handle, fence);
+	}
+
+	for(QueryHandle handle : m_pipelineQueries)
+	{
+		PrimitivesPassedClippingFactory::getSingleton().postSubmitWork(handle, fence);
 	}
 }
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Gr/PipelineQuery.h>
+#include <AnKi/Gr/D3D/D3DQueryFactory.h>
 
 namespace anki {
 
@@ -16,6 +17,8 @@ namespace anki {
 class PipelineQueryImpl final : public PipelineQuery
 {
 public:
+	QueryHandle m_handle;
+
 	PipelineQueryImpl(CString name)
 		: PipelineQuery(name)
 	{

@@ -23,6 +23,9 @@ class QueryHandle
 private:
 	U16 m_chunkIndex = kMaxU16;
 	U16 m_queryIndex = kMaxU16;
+#if ANKI_ASSERTIONS_ENABLED
+	D3D12_QUERY_HEAP_TYPE m_type = {};
+#endif
 
 	Bool isValid() const
 	{
@@ -69,15 +72,17 @@ public:
 
 	Bool getResult(QueryHandle handle, U64& result);
 
-	void getQueryInfo(QueryHandle handle, QueryInfo& info) const
+	QueryInfo getQueryInfo(QueryHandle handle) const
 	{
-		ANKI_ASSERT(handle.isValid());
+		QueryInfo info;
+		ANKI_ASSERT(handle.isValid() && handle.m_type == m_type);
 		auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 
 		info.m_resultsBuffer = &static_cast<const BufferImpl&>(*it->m_resultsBuffer).getD3DResource();
 		info.m_resultsBufferOffset = (handle.m_queryIndex * m_resultStructSize64 + m_resultMemberOffset64) / sizeof(U64);
 		info.m_queryHeap = it->m_heap;
 		info.m_indexInHeap = handle.m_queryIndex;
+		return info;
 	}
 
 	/// Call this on submit if the query was written.

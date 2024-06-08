@@ -427,9 +427,6 @@ public:
 	/// @name Other
 	/// @{
 
-	/// Reset queries before beginOcclusionQuery.
-	void resetOcclusionQueries(ConstWeakArray<OcclusionQuery*> queries);
-
 	/// Begin query.
 	void beginOcclusionQuery(OcclusionQuery* query);
 
@@ -441,9 +438,6 @@ public:
 
 	/// End query.
 	void endPipelineQuery(PipelineQuery* query);
-
-	/// Reset timestamp queries before writeTimestamp.
-	void resetTimestampQueries(ConstWeakArray<TimestampQuery*> queries);
 
 	/// Write a timestamp.
 	void writeTimestamp(TimestampQuery* query);

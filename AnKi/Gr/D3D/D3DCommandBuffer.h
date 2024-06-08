@@ -50,9 +50,11 @@ private:
 	StackMemoryPool* m_fastPool = nullptr; // Cache it.
 
 	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_timestampQueries;
+	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_pipelineQueries;
 
 	Bool m_descriptorHeapsBound = false;
 	Bool m_debugMarkersEnabled = false;
+	Bool m_lineWidthWarningAlreadyShown = false;
 
 	void commandCommon()
 	{

@@ -1249,25 +1249,6 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	ANKI_TRACE_INC_COUNTER(VkBarrier, 1);
 }
 
-void CommandBuffer::resetOcclusionQueries(ConstWeakArray<OcclusionQuery*> queries)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	ANKI_ASSERT(queries.getSize() > 0);
-
-	self.commandCommon();
-
-	for(U32 i = 0; i < queries.getSize(); ++i)
-	{
-		OcclusionQuery* query = queries[i];
-		ANKI_ASSERT(query);
-		const VkQueryPool poolHandle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryPool();
-		const U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryIndex();
-
-		vkCmdResetQueryPool(self.m_handle, poolHandle, idx, 1);
-		self.m_microCmdb->pushObjectRef(query);
-	}
-}
-
 void CommandBuffer::beginOcclusionQuery(OcclusionQuery* query)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -1316,25 +1297,6 @@ void CommandBuffer::endPipelineQuery(PipelineQuery* query)
 	ANKI_ASSERT(handle);
 	vkCmdEndQuery(self.m_handle, handle, idx);
 	self.m_microCmdb->pushObjectRef(query);
-}
-
-void CommandBuffer::resetTimestampQueries(ConstWeakArray<TimestampQuery*> queries)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	ANKI_ASSERT(queries.getSize() > 0);
-
-	self.commandCommon();
-
-	for(U32 i = 0; i < queries.getSize(); ++i)
-	{
-		TimestampQuery* query = queries[i];
-		ANKI_ASSERT(query);
-		const VkQueryPool poolHandle = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryPool();
-		const U32 idx = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryIndex();
-
-		vkCmdResetQueryPool(self.m_handle, poolHandle, idx, 1);
-		self.m_microCmdb->pushObjectRef(query);
-	}
 }
 
 void CommandBuffer::writeTimestamp(TimestampQuery* query)

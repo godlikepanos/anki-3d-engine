@@ -21,17 +21,23 @@ PipelineQuery* PipelineQuery::newInstance(const PipelineQueryInitInfo& inf)
 
 PipelineQueryResult PipelineQuery::getResult(U64& value) const
 {
-	ANKI_ASSERT(!"TODO");
-	return PipelineQueryResult::kNotAvailable;
+	ANKI_D3D_SELF_CONST(PipelineQueryImpl);
+
+	const Bool resultAvailable = PrimitivesPassedClippingFactory::getSingleton().getResult(self.m_handle, value);
+
+	return (resultAvailable) ? PipelineQueryResult::kAvailable : PipelineQueryResult::kNotAvailable;
 }
 
 PipelineQueryImpl::~PipelineQueryImpl()
 {
+	PrimitivesPassedClippingFactory::getSingleton().deleteQuery(m_handle);
 }
 
-Error PipelineQueryImpl::init(PipelineQueryType type)
+Error PipelineQueryImpl::init([[maybe_unused]] PipelineQueryType type)
 {
-	ANKI_ASSERT(!"TODO");
+	ANKI_ASSERT(type == PipelineQueryType::kPrimitivesPassedClipping);
+	ANKI_CHECK(PrimitivesPassedClippingFactory::getSingleton().newQuery(m_handle));
+
 	return Error::kNone;
 }
 

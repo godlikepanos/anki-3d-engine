@@ -64,13 +64,16 @@ Error QueryFactory::newQuery(QueryHandle& handle)
 
 	handle.m_chunkIndex = U16(chunkIt.getArrayIndex());
 	handle.m_queryIndex = U16(freeIndex);
+#if ANKI_ASSERTIONS_ENABLED
+	handle.m_type = m_type;
+#endif
 
 	return Error::kNone;
 }
 
 void QueryFactory::deleteQuery(QueryHandle& handle)
 {
-	ANKI_ASSERT(handle.isValid());
+	ANKI_ASSERT(handle.isValid() && handle.m_type == m_type);
 
 	LockGuard lock(m_mtx);
 
@@ -100,7 +103,7 @@ void QueryFactory::deleteQuery(QueryHandle& handle)
 
 Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 {
-	ANKI_ASSERT(handle.isValid());
+	ANKI_ASSERT(handle.isValid() && handle.m_type == m_type);
 
 	auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 	ANKI_ASSERT(it->m_queryWritten.get(handle.m_queryIndex) && "Trying to get the result of a query that wasn't written");
@@ -121,7 +124,7 @@ Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 
 void QueryFactory::postSubmitWork(QueryHandle handle, MicroFence* fence)
 {
-	ANKI_ASSERT(handle.isValid() && fence);
+	ANKI_ASSERT(handle.isValid() && handle.m_type == m_type && fence);
 
 	auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 
