@@ -680,41 +680,44 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	ANKI_D3D_SELF(CommandBufferImpl);
 	self.commandCommon();
 
-	DynamicArray<D3D12_RESOURCE_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> resourceBarriers(self.m_fastPool);
+	DynamicArray<D3D12_TEXTURE_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> texBarriers(self.m_fastPool);
+	DynamicArray<D3D12_BUFFER_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(self.m_fastPool);
 
 	for(const TextureBarrierInfo& barrier : textures)
 	{
 		const TextureImpl& impl = static_cast<const TextureImpl&>(barrier.m_textureView.getTexture());
-
-		D3D12_RESOURCE_BARRIER& d3dBarrier = *resourceBarriers.emplaceBack();
-		d3dBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		d3dBarrier.Transition.pResource = &impl.getD3DResource();
-
-		if(barrier.m_textureView.isAllSurfacesOrVolumes() && barrier.m_textureView.getDepthStencilAspect() == impl.getDepthStencilAspect())
-		{
-			d3dBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		}
-		else
-		{
-			d3dBarrier.Transition.Subresource = impl.calcD3DSubresourceIndex(barrier.m_textureView.getSubresource());
-		}
-
-		impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, d3dBarrier.Transition.StateBefore, d3dBarrier.Transition.StateAfter);
-
-		if(d3dBarrier.Transition.StateBefore & D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-		   && d3dBarrier.Transition.StateAfter & D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-		{
-			D3D12_RESOURCE_BARRIER& d3dBarrier = *resourceBarriers.emplaceBack();
-			d3dBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-			d3dBarrier.UAV.pResource = &impl.getD3DResource();
-		}
+		D3D12_TEXTURE_BARRIER& d3dBarrier = *texBarriers.emplaceBack();
+		d3dBarrier = impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, barrier.m_textureView.getSubresource());
 	}
 
-	ANKI_ASSERT(buffers.getSize() == 0 && "TODO");
+	for(const BufferBarrierInfo& barrier : buffers)
+	{
+		const BufferImpl& impl = static_cast<const BufferImpl&>(barrier.m_bufferView.getBuffer());
+		D3D12_BUFFER_BARRIER& d3dBarrier = *bufferBarriers.emplaceBack();
+		d3dBarrier = impl.computeBarrier(barrier.m_previousUsage, barrier.m_nextUsage);
+	}
+
 	ANKI_ASSERT(accelerationStructures.getSize() == 0 && "TODO");
 
-	ANKI_ASSERT(resourceBarriers.getSize() > 0);
-	self.m_cmdList->ResourceBarrier(resourceBarriers.getSize(), resourceBarriers.getBegin());
+	Array<D3D12_BARRIER_GROUP, 3> barrierGroups;
+	U32 barrierGroupCount = 0;
+
+	if(texBarriers.getSize())
+	{
+		barrierGroups[barrierGroupCount++] = {.Type = D3D12_BARRIER_TYPE_TEXTURE,
+											  .NumBarriers = texBarriers.getSize(),
+											  .pTextureBarriers = texBarriers.getBegin()};
+	}
+
+	if(bufferBarriers.getSize())
+	{
+		barrierGroups[barrierGroupCount++] = {.Type = D3D12_BARRIER_TYPE_BUFFER,
+											  .NumBarriers = bufferBarriers.getSize(),
+											  .pBufferBarriers = bufferBarriers.getBegin()};
+	}
+
+	ANKI_ASSERT(barrierGroupCount > 0);
+	self.m_cmdList->Barrier(barrierGroupCount, barrierGroups.getBegin());
 }
 
 void CommandBuffer::beginOcclusionQuery([[maybe_unused]] OcclusionQuery* query)

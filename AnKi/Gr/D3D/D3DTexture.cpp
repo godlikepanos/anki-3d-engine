@@ -6,6 +6,7 @@
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/D3D/D3DTexture.h>
 #include <AnKi/Gr/D3D/D3DFrameGarbageCollector.h>
+#include <AnKi/Gr/D3D/D3DGrManager.h>
 
 namespace anki {
 
@@ -472,71 +473,222 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 	return nview;
 }
 
-void TextureImpl::computeResourceStates(TextureUsageBit usage, D3D12_RESOURCE_STATES& states) const
+D3D12_TEXTURE_BARRIER TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after,
+													  const TextureSubresourceDescriptor& subresource) const
 {
-	ANKI_ASSERT((usage & m_usage) == usage);
+	ANKI_ASSERT((m_usage & before) == before);
+	ANKI_ASSERT((m_usage & after) == after);
+	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
 
-	if(usage == TextureUsageBit::kNone)
+	D3D12_TEXTURE_BARRIER barrier;
+
+	computeBarrierInfo(before, barrier.SyncBefore, barrier.AccessBefore);
+	computeBarrierInfo(after, barrier.SyncAfter, barrier.AccessAfter);
+	barrier.LayoutBefore = computeLayout(before);
+	barrier.LayoutAfter = computeLayout(after);
+	barrier.pResource = m_resource;
+
+	barrier.Subresources = {};
+	if(subresource.m_allSurfacesOrVolumes)
 	{
-		// D3D doesn't have a clean slade, figure something out
-
-		states |= D3D12_RESOURCE_STATE_COMMON;
+		barrier.Subresources.IndexOrFirstMipLevel = kMaxU32;
 	}
 	else
 	{
-		states = D3D12_RESOURCE_STATES(0);
-		if(!!(usage & TextureUsageBit::kAllFramebuffer))
+		const U8 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+
+		barrier.Subresources.IndexOrFirstMipLevel = subresource.m_mipmap;
+		barrier.Subresources.NumMipLevels = 1;
+		barrier.Subresources.FirstArraySlice = subresource.m_layer * faceCount + subresource.m_face;
+		barrier.Subresources.NumArraySlices = 1;
+		barrier.Subresources.FirstPlane = !!(subresource.m_depthStencilAspect & DepthStencilAspectBit::kDepth) ? 0 : 1;
+		barrier.Subresources.NumPlanes = (subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepthStencil) ? 2 : 1;
+	}
+
+	if(before == TextureUsageBit::kNone)
+	{
+		barrier.Flags = D3D12_TEXTURE_BARRIER_FLAG_DISCARD;
+	}
+
+	return barrier;
+}
+
+void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& stages, D3D12_BARRIER_ACCESS& accesses) const
+{
+	if(usage == TextureUsageBit::kNone)
+	{
+		stages = D3D12_BARRIER_SYNC_NONE;
+		accesses = D3D12_BARRIER_ACCESS_NO_ACCESS;
+		return;
+	}
+
+	stages = {};
+	accesses = {};
+	const Bool depthStencil = !!m_aspect;
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
+
+	if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kStorageGeometryRead)))
+	{
+		stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+	}
+
+	if(!!(usage & TextureUsageBit::kStorageGeometryWrite))
+	{
+		stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+	}
+
+	if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kStorageFragmentRead)))
+	{
+		stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+	}
+
+	if(!!(usage & TextureUsageBit::kStorageFragmentWrite))
+	{
+		stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+	}
+
+	if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeRead)))
+	{
+		stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+	}
+
+	if(!!(usage & TextureUsageBit::kStorageComputeWrite))
+	{
+		stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+	}
+
+	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kStorageTraceRaysRead)) && rt)
+	{
+		stages |= D3D12_BARRIER_SYNC_RAYTRACING;
+		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+	}
+
+	if(!!(usage & TextureUsageBit::kStorageTraceRaysWrite) && rt)
+	{
+		stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+	}
+
+	if(!!(usage & TextureUsageBit::kFramebufferRead))
+	{
+		if(depthStencil)
 		{
-			states |= D3D12_RESOURCE_STATE_RENDER_TARGET;
-
-			if(!!(usage & TextureUsageBit::kFramebufferWrite) && !!(m_aspect & DepthStencilAspectBit::kDepth))
-			{
-				states |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			}
-
-			if(!!(usage & TextureUsageBit::kFramebufferRead) && !!(m_aspect & DepthStencilAspectBit::kDepth))
-			{
-				states |= D3D12_RESOURCE_STATE_DEPTH_READ;
-			}
+			stages |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
+			accesses |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ;
 		}
-
-		if(!!(usage & TextureUsageBit::kAllStorage))
+		else
 		{
-			states |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			stages |= D3D12_BARRIER_SYNC_RENDER_TARGET;
+			accesses |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
 		}
+	}
 
-		if(!!(usage & TextureUsageBit::kSampledFragment))
+	if(!!(usage & TextureUsageBit::kFramebufferWrite))
+	{
+		if(depthStencil)
 		{
-			states |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			stages |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
+			accesses |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE;
 		}
+		else
+		{
+			stages |= D3D12_BARRIER_SYNC_RENDER_TARGET;
+			accesses |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
+		}
+	}
 
-		if(!!(usage & (TextureUsageBit::kAllSampled & ~TextureUsageBit::kSampledFragment)))
-		{
-			states |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-		}
+	if(!!(usage & TextureUsageBit::kFramebufferShadingRate))
+	{
+		stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+		accesses |= D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE;
+	}
 
-		if(!!(usage & TextureUsageBit::kTransferDestination))
-		{
-			states |= D3D12_RESOURCE_STATE_COPY_DEST;
-		}
+	if(!!(usage & TextureUsageBit::kGenerateMipmaps))
+	{
+		ANKI_ASSERT(!"TODO rm");
+	}
 
-		if(!!(usage & TextureUsageBit::kFramebufferShadingRate))
-		{
-			states |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-		}
+	if(!!(usage & TextureUsageBit::kTransferDestination))
+	{
+		stages |= D3D12_BARRIER_SYNC_COPY;
+		accesses |= D3D12_BARRIER_ACCESS_COPY_DEST;
+	}
 
-		if(!!(usage & TextureUsageBit::kPresent))
-		{
-			states |= D3D12_RESOURCE_STATE_PRESENT;
-		}
+	if(!!(usage & TextureUsageBit::kPresent))
+	{
+		stages |= D3D12_BARRIER_SYNC_COPY;
+		accesses |= D3D12_BARRIER_ACCESS_COPY_SOURCE;
 	}
 }
 
-void TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, D3D12_RESOURCE_STATES& statesBefore,
-									 D3D12_RESOURCE_STATES& statesAfter) const
+D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 {
-	computeResourceStates(before, statesBefore);
-	computeResourceStates(after, statesAfter);
+	const Bool depthStencil = !!m_aspect;
+	D3D12_BARRIER_LAYOUT out = {};
+
+	if(usage == TextureUsageBit::kNone)
+	{
+		out = D3D12_BARRIER_LAYOUT_UNDEFINED;
+	}
+	else if(depthStencil)
+	{
+		if(!(usage & ~(TextureUsageBit::kAllSampled | TextureUsageBit::kFramebufferRead)))
+		{
+			// Only depth tests and sampled
+			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ;
+		}
+		else
+		{
+			// Only attachment write, the rest (eg transfer) are not supported for now
+			ANKI_ASSERT(usage == TextureUsageBit::kFramebufferWrite || usage == TextureUsageBit::kAllFramebuffer);
+			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE;
+		}
+	}
+	else if(!(usage & ~TextureUsageBit::kAllFramebuffer))
+	{
+		// Color attachment
+		out = D3D12_BARRIER_LAYOUT_RENDER_TARGET;
+	}
+	else if(!(usage & ~TextureUsageBit::kFramebufferShadingRate))
+	{
+		// SRI
+		out = D3D12_BARRIER_LAYOUT_SHADING_RATE_SOURCE;
+	}
+	else if(!(usage & ~TextureUsageBit::kAllStorage))
+	{
+		// Only image load/store
+		out = D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS;
+	}
+	else if(!(usage & ~TextureUsageBit::kAllSampled))
+	{
+		// Only sampled
+		out = D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
+	}
+	else if(usage == TextureUsageBit::kGenerateMipmaps)
+	{
+		ANKI_ASSERT(!"TODO rm");
+	}
+	else if(usage == TextureUsageBit::kTransferDestination)
+	{
+		out = D3D12_BARRIER_LAYOUT_COPY_DEST;
+	}
+	else if(usage == TextureUsageBit::kPresent)
+	{
+		out = D3D12_BARRIER_LAYOUT_PRESENT;
+	}
+	else
+	{
+		// No idea so play it safe
+		out = D3D12_BARRIER_LAYOUT_COMMON;
+	}
+
+	return out;
 }
 
 } // end namespace anki

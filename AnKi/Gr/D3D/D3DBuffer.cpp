@@ -164,4 +164,137 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	return Error::kNone;
 }
 
+D3D12_BUFFER_BARRIER BufferImpl::computeBarrier(BufferUsageBit before, BufferUsageBit after) const
+{
+	ANKI_ASSERT((m_usage & before) == before);
+	ANKI_ASSERT((m_usage & after) == after);
+
+	const D3D12_BUFFER_BARRIER out = {.SyncBefore = computeSync(before),
+									  .SyncAfter = computeSync(after),
+									  .AccessBefore = computeAccess(before),
+									  .AccessAfter = computeAccess(after),
+									  .pResource = m_resource,
+									  .Offset = 0,
+									  .Size = kMaxU64};
+
+	return out;
+}
+
+D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
+{
+	if(usage == BufferUsageBit::kNone)
+	{
+		return D3D12_BARRIER_SYNC_NONE;
+	}
+
+	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
+	D3D12_BARRIER_SYNC sync = {};
+
+	if(!!(usage & BufferUsageBit::kAllIndirect))
+	{
+		sync |= D3D12_BARRIER_SYNC_EXECUTE_INDIRECT;
+	}
+
+	if(!!(usage & (BufferUsageBit::kIndex | BufferUsageBit::kVertex)))
+	{
+		sync |= D3D12_BARRIER_SYNC_INDEX_INPUT | D3D12_BARRIER_SYNC_VERTEX_SHADING;
+	}
+
+	if(!!(usage & BufferUsageBit::kAllGeometry))
+	{
+		sync |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+	}
+
+	if(!!(usage & BufferUsageBit::kAllFragment))
+	{
+		sync |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+	}
+
+	if(!!(usage & (BufferUsageBit::kAllCompute & ~BufferUsageBit::kIndirectCompute)))
+	{
+		sync |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+	}
+
+	if(!!(usage & (BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructureBuildScratch)) && rt)
+	{
+		sync |= D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE;
+	}
+
+	if(!!(usage & (BufferUsageBit::kAllTraceRays & ~BufferUsageBit::kIndirectTraceRays)) && rt)
+	{
+		sync |= D3D12_BARRIER_SYNC_RAYTRACING;
+	}
+
+	if(!!(usage & BufferUsageBit::kAllTransfer))
+	{
+		sync |= D3D12_BARRIER_SYNC_COPY;
+	}
+
+	ANKI_ASSERT(sync);
+	return sync;
+}
+
+D3D12_BARRIER_ACCESS BufferImpl::computeAccess(BufferUsageBit usage) const
+{
+	if(usage == BufferUsageBit::kNone)
+	{
+		return D3D12_BARRIER_ACCESS_NO_ACCESS;
+	}
+
+	D3D12_BARRIER_ACCESS out = {};
+
+	if(!!(usage & BufferUsageBit::kVertex))
+	{
+		out |= D3D12_BARRIER_ACCESS_VERTEX_BUFFER;
+	}
+
+	if(!!(usage & BufferUsageBit::kAllUniform))
+	{
+		out |= D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
+	}
+
+	if(!!(usage & BufferUsageBit::kIndex))
+	{
+		out |= D3D12_BARRIER_ACCESS_INDEX_BUFFER;
+	}
+
+	if(!!(usage & ((BufferUsageBit::kAllStorage | BufferUsageBit::kAllTexel) & BufferUsageBit::kAllWrite)))
+	{
+		out |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+	}
+
+	if(!!(usage & ((BufferUsageBit::kAllStorage | BufferUsageBit::kAllTexel) & BufferUsageBit::kAllRead)))
+	{
+		out |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+	}
+
+	if(!!(usage & BufferUsageBit::kAllIndirect))
+	{
+		out |= D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT;
+	}
+
+	if(!!(usage & BufferUsageBit::kTransferDestination))
+	{
+		out |= D3D12_BARRIER_ACCESS_COPY_DEST;
+	}
+
+	if(!!(usage & BufferUsageBit::kTransferSource))
+	{
+		out |= D3D12_BARRIER_ACCESS_COPY_SOURCE;
+	}
+
+	if(!!(usage & (BufferUsageBit::kAccelerationStructureBuild | BufferUsageBit::kAccelerationStructureBuildScratch)))
+	{
+		out |= D3D12_BARRIER_ACCESS_COMMON;
+	}
+
+	if(!!(usage & BufferUsageBit::kShaderBindingTable))
+	{
+		out |= D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ;
+	}
+
+	ANKI_ASSERT(out);
+	return out;
+}
+
 } // end namespace anki

@@ -77,9 +77,7 @@ public:
 		return view.getFirstMipmap() + (arraySlice * m_mipCount) + (planeSlice * m_mipCount * arraySize);
 	}
 
-	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
-	void computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, D3D12_RESOURCE_STATES& statesBefore,
-							D3D12_RESOURCE_STATES& statesAfter) const;
+	D3D12_TEXTURE_BARRIER computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDescriptor& subresource) const;
 
 	ID3D12Resource& getD3DResource() const
 	{
@@ -137,7 +135,9 @@ private:
 
 	void initView(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage, View& view) const;
 
-	void computeResourceStates(TextureUsageBit usage, D3D12_RESOURCE_STATES& states) const;
+	void computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& stages, D3D12_BARRIER_ACCESS& accesses) const;
+
+	D3D12_BARRIER_LAYOUT computeLayout(TextureUsageBit usage) const;
 
 	Bool isExternal() const
 	{

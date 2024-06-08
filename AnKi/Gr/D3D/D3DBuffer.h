@@ -33,12 +33,18 @@ public:
 		return *m_resource;
 	}
 
+	D3D12_BUFFER_BARRIER computeBarrier(BufferUsageBit before, BufferUsageBit after) const;
+
 private:
 	ID3D12Resource* m_resource = nullptr;
 
 #if ANKI_ASSERTIONS_ENABLED
 	Bool m_mapped = false;
 #endif
+
+	D3D12_BARRIER_SYNC computeSync(BufferUsageBit usage) const;
+
+	D3D12_BARRIER_ACCESS computeAccess(BufferUsageBit usage) const;
 };
 /// @}
 

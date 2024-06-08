@@ -764,6 +764,7 @@ enum class BufferUsageBit : U64
 			   | kIndirectTraceRays | kTransferSource | kAccelerationStructureBuild | kShaderBindingTable,
 	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kTexelGeometryWrite
 				| kTexelFragmentWrite | kTexelComputeWrite | kTexelTraceRaysWrite | kTransferDestination | kAccelerationStructureBuildScratch,
+
 	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
