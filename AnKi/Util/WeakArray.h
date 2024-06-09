@@ -211,6 +211,27 @@ public:
 		return m_size * sizeof(Value);
 	}
 
+	/// Fill the array.
+	static void fill(Iterator begin, Iterator end, const T& val)
+	{
+		while(begin != end)
+		{
+			*begin = val;
+			++begin;
+		}
+	}
+
+	void fill(const T& val)
+	{
+		auto begin = getBegin();
+		auto end = getEnd();
+		while(begin != end)
+		{
+			*begin = val;
+			++begin;
+		}
+	}
+
 private:
 	Value* m_data;
 	Size m_size;

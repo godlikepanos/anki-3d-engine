@@ -11,6 +11,7 @@
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/CommandBuffer.h>
+#include <AnKi/Gr/ShaderProgram.h>
 
 namespace anki {
 
@@ -79,35 +80,34 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	m_tex = GrManager::getSingleton().newTexture(texInit);
 
 	// Create the whole texture view
-	m_texView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(m_tex.get(), "Font"));
-	m_imFontAtlas->SetTexID(UiImageId(m_texView));
+	m_imgData.m_textureView = TextureView(m_tex.get(), TextureSubresourceDescriptor::all());
+	m_imFontAtlas->SetTexID(UiImageId(&m_imgData));
 
 	// Do the copy
-	constexpr TextureSurfaceInfo surf(0, 0, 0, 0);
+	const TextureView firstMipView(m_tex.get(), TextureSubresourceDescriptor::firstSurface());
+
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-	TextureViewInitInfo viewInit(m_tex.get(), surf, DepthStencilAspectBit::kNone, "TempFont");
-	TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(viewInit);
-
-	TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, surf};
+	TextureBarrierInfo barrier = {firstMipView, TextureUsageBit::kNone, TextureUsageBit::kTransferDestination};
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-	cmdb->copyBufferToTextureView(buff.get(), 0, buffSize, tmpView.get());
+	cmdb->copyBufferToTexture(BufferView(buff.get()), firstMipView);
 
 	barrier.m_previousUsage = TextureUsageBit::kTransferDestination;
 	barrier.m_nextUsage = TextureUsageBit::kGenerateMipmaps;
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 	// Gen mips
-	cmdb->generateMipmaps2d(m_texView.get());
+	cmdb->generateMipmaps2d(firstMipView);
 
 	barrier.m_previousUsage = TextureUsageBit::kGenerateMipmaps;
 	barrier.m_nextUsage = TextureUsageBit::kSampledFragment;
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-	cmdb->flush();
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get());
 }
 
 } // end namespace anki

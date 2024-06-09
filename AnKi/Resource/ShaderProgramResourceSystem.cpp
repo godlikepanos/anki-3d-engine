@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Util/BitSet.h>
@@ -16,12 +16,122 @@
 
 namespace anki {
 
-U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourceFilename, U64 mutationHash)
+class ShaderProgramResourceSystem::ShaderH
+{
+public:
+	ShaderPtr m_shader;
+	U64 m_hash = 0; ///< Hash of the binary.
+};
+
+class ShaderProgramResourceSystem::ShaderGroup
+{
+public:
+	U32 m_rayGen = kMaxU32;
+	U32 m_miss = kMaxU32;
+	U32 m_chit = kMaxU32;
+	U32 m_ahit = kMaxU32;
+
+	ResourceDynamicArray<U64> m_groupHashes;
+};
+
+class ShaderProgramResourceSystem::Lib
+{
+public:
+	ResourceString m_name;
+	ResourceDynamicArray<ShaderH> m_shaders;
+	ResourceDynamicArray<ShaderGroup> m_rayGenGroups;
+	ResourceDynamicArray<ShaderGroup> m_missGroups;
+	ResourceDynamicArray<ShaderGroup> m_hitGroups;
+	ShaderTypeBit m_presentStages = ShaderTypeBit::kNone;
+
+	U32 addShader(const ShaderBinaryCodeBlock& codeBlock, CString progName, ShaderType shaderType)
+	{
+		ShaderH* shader = nullptr;
+		for(ShaderH& s : m_shaders)
+		{
+			if(s.m_hash == codeBlock.m_hash)
+			{
+				shader = &s;
+				break;
+			}
+		}
+
+		if(shader == nullptr)
+		{
+			shader = m_shaders.emplaceBack();
+
+			ShaderInitInfo inf(progName);
+			inf.m_shaderType = shaderType;
+			inf.m_binary = codeBlock.m_binary;
+			shader->m_shader = GrManager::getSingleton().newShader(inf);
+			shader->m_hash = codeBlock.m_hash;
+
+			m_presentStages |= ShaderTypeBit(1 << shaderType);
+		}
+
+		return U32(shader - m_shaders.getBegin());
+	}
+
+	void addGroup(CString filename, U64 mutationHash, U32 rayGen, U32 miss, U32 chit, U32 ahit)
+	{
+		ResourceDynamicArray<ShaderGroup>* groupArray = nullptr;
+		RayTracingShaderGroupType groupType;
+		if(rayGen < kMaxU32)
+		{
+			groupType = RayTracingShaderGroupType::kRayGen;
+			groupArray = &m_rayGenGroups;
+		}
+		else if(miss < kMaxU32)
+		{
+			groupType = RayTracingShaderGroupType::kMiss;
+			groupArray = &m_missGroups;
+		}
+		else
+		{
+			ANKI_ASSERT(chit < kMaxU32 || ahit < kMaxU32);
+			groupType = RayTracingShaderGroupType::kHit;
+			groupArray = &m_hitGroups;
+		}
+
+		ShaderGroup* pgroup = nullptr;
+		for(ShaderGroup& s : *groupArray)
+		{
+			if(s.m_rayGen == rayGen && s.m_miss == miss && s.m_ahit == ahit && s.m_chit == chit)
+			{
+				pgroup = &s;
+				break;
+			}
+		}
+
+		if(!pgroup)
+		{
+			pgroup = groupArray->emplaceBack();
+			pgroup->m_rayGen = rayGen;
+			pgroup->m_miss = miss;
+			pgroup->m_chit = chit;
+			pgroup->m_ahit = ahit;
+		}
+
+		const U64 groupHash = ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash, groupType);
+#if ANKI_ASSERTIONS_ENABLED
+		for(U64 hash : pgroup->m_groupHashes)
+		{
+			ANKI_ASSERT(hash != groupHash && "Shouldn't find group with the same hash");
+		}
+#endif
+
+		pgroup->m_groupHashes.emplaceBack(groupHash);
+	}
+};
+
+U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourceFilename, U64 mutationHash, RayTracingShaderGroupType groupType)
 {
 	ANKI_ASSERT(resourceFilename.getLength() > 0);
+	ANKI_ASSERT(groupType < RayTracingShaderGroupType::kCount);
 	String basename;
 	getFilepathFilename(resourceFilename, basename);
-	const U64 hash = appendHash(basename.cstr(), basename.getLength(), mutationHash);
+	U64 hash = appendHash(basename.cstr(), basename.getLength(), mutationHash);
+	hash = appendHash(&groupType, sizeof(groupType), hash);
 	return hash;
 }
 
@@ -47,101 +157,9 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
 	U32 rtProgramCount = 0;
 
-	class ShaderH
-	{
-	public:
-		ShaderPtr m_shader;
-		U64 m_hash = 0; ///< Hash of the binary.
-	};
-
-	class ShaderGroup
-	{
-	public:
-		U32 m_rayGen = kMaxU32;
-		U32 m_miss = kMaxU32;
-		U32 m_chit = kMaxU32;
-		U32 m_ahit = kMaxU32;
-		U64 m_hitGroupHash = 0;
-	};
-
-	class Lib
-	{
-	public:
-		ResourceString m_name;
-		ResourceDynamicArray<ShaderH> m_shaders;
-		ResourceDynamicArray<ShaderGroup> m_shaderGroups;
-		ShaderTypeBit m_presentStages = ShaderTypeBit::kNone;
-		U32 m_rayTypeCount = 0;
-		BitSet<64> m_rayTypeMask = {false};
-		U32 m_rayGenShaderGroupCount = 0;
-		U32 m_missShaderGroupCount = 0;
-		U32 m_hitShaderGroupCount = 0;
-
-		U32 addShader(const ShaderProgramBinaryCodeBlock& codeBlock, CString progName, ShaderType shaderType)
-		{
-			ShaderH* shader = nullptr;
-			for(ShaderH& s : m_shaders)
-			{
-				if(s.m_hash == codeBlock.m_hash)
-				{
-					shader = &s;
-					break;
-				}
-			}
-
-			if(shader == nullptr)
-			{
-				shader = m_shaders.emplaceBack();
-
-				ShaderInitInfo inf(progName);
-				inf.m_shaderType = shaderType;
-				inf.m_binary = codeBlock.m_binary;
-				shader->m_shader = GrManager::getSingleton().newShader(inf);
-				shader->m_hash = codeBlock.m_hash;
-
-				m_presentStages |= ShaderTypeBit(1 << shaderType);
-			}
-
-			return U32(shader - m_shaders.getBegin());
-		}
-
-		void addGroup(CString filename, U64 mutationHash, U32 rayGen, U32 miss, U32 chit, U32 ahit)
-		{
-			const U64 groupHash = ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash);
-#if ANKI_ASSERTIONS_ENABLED
-			for(const ShaderGroup& group : m_shaderGroups)
-			{
-				ANKI_ASSERT(group.m_hitGroupHash != groupHash && "Shouldn't find group with the same hash");
-			}
-#endif
-
-			ShaderGroup group;
-			group.m_rayGen = rayGen;
-			group.m_miss = miss;
-			group.m_chit = chit;
-			group.m_ahit = ahit;
-			group.m_hitGroupHash = groupHash;
-			m_shaderGroups.emplaceBack(group);
-
-			if(rayGen < kMaxU32)
-			{
-				++m_rayGenShaderGroupCount;
-			}
-			else if(miss < kMaxU32)
-			{
-				++m_missShaderGroupCount;
-			}
-			else
-			{
-				ANKI_ASSERT(chit < kMaxU32 || ahit < kMaxU32);
-				++m_hitShaderGroupCount;
-			}
-		}
-	};
-
 	ResourceDynamicArray<Lib> libs;
 
-	ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().iterateAllFilenames([&](CString filename) -> Error {
+	const Error err = ResourceManager::getSingleton().getFilesystem().iterateAllFilenames([&](CString filename) -> Error {
 		// Check file extension
 		String extension;
 		getFilepathExtension(filename, extension);
@@ -151,204 +169,166 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			return Error::kNone;
 		}
 
-		if(filename.find("ShaderBinaries/Rt") != 0)
-		{
-			// Doesn't start with the expected path, skip it
-			return Error::kNone;
-		}
-
 		// Get the binary
 		ResourceFilePtr file;
 		ANKI_CHECK(ResourceManager::getSingleton().getFilesystem().openFile(filename, file));
-		ShaderProgramBinaryWrapper binaryw(&ResourceMemoryPool::getSingleton());
-		ANKI_CHECK(binaryw.deserializeFromAnyFile(*file));
-		const ShaderProgramBinary& binary = binaryw.getBinary();
+		ShaderBinary* binary;
+		ANKI_CHECK(deserializeShaderBinaryFromAnyFile(*file, binary, ResourceMemoryPool::getSingleton()));
 
-		if(!(binary.m_presentShaderTypes & ShaderTypeBit::kAllRayTracing))
+		class Dummy
+		{
+		public:
+			ShaderBinary* m_binary;
+
+			~Dummy()
+			{
+				ResourceMemoryPool::getSingleton().free(m_binary);
+			}
+		} dummy{binary};
+
+		if(!(binary->m_shaderTypes & ShaderTypeBit::kAllRayTracing))
 		{
 			return Error::kNone;
-		}
-
-		// Checks
-		if(binary.m_libraryName[0] == '\0')
-		{
-			ANKI_RESOURCE_LOGE("Library is missing from program: %s", filename.cstr());
-			return Error::kUserData;
 		}
 
 		// Create the program name
 		String progName;
 		getFilepathFilename(filename, progName);
 
-		// Find or create the lib
-		Lib* lib = nullptr;
+		for(const ShaderBinaryTechnique& technique : binary->m_techniques)
 		{
-			for(Lib& l : libs)
+			if(!(technique.m_shaderTypes & ShaderTypeBit::kAllRayTracing))
 			{
-				if(l.m_name == CString(&binary.m_libraryName[0]))
+				continue;
+			}
+
+			const U32 techniqueIdx = U32(&technique - binary->m_techniques.getBegin());
+
+			// Find or create the lib
+			Lib* lib = nullptr;
+			{
+				for(Lib& l : libs)
 				{
-					lib = &l;
-					break;
+					if(l.m_name == technique.m_name.getBegin())
+					{
+						lib = &l;
+						break;
+					}
+				}
+
+				if(lib == nullptr)
+				{
+					libs.emplaceBack();
+					lib = &libs.getBack();
+					lib->m_name = technique.m_name.getBegin();
 				}
 			}
 
-			if(lib == nullptr)
+			// Ray gen
+			if(!!(technique.m_shaderTypes & ShaderTypeBit::kRayGen))
 			{
-				libs.emplaceBack();
-				lib = &libs.getBack();
-				lib->m_name = CString(&binary.m_libraryName[0]);
-			}
-		}
+				// Iterate all mutations
+				ConstWeakArray<ShaderBinaryMutation> mutations;
+				ShaderBinaryMutation dummyMutation;
+				if(binary->m_mutations.getSize() > 1)
+				{
+					mutations = binary->m_mutations;
+				}
+				else
+				{
+					dummyMutation.m_hash = 0;
+					dummyMutation.m_variantIndex = 0;
+					mutations = ConstWeakArray<ShaderBinaryMutation>(&dummyMutation, 1);
+				}
 
-		// Update the ray type
-		const U32 rayTypeNumber = binary.m_rayType;
-		if(rayTypeNumber != kMaxU32)
-		{
-			lib->m_rayTypeCount = max(lib->m_rayTypeCount, rayTypeNumber + 1);
-			lib->m_rayTypeMask.set(rayTypeNumber);
-		}
+				for(const ShaderBinaryMutation& mutation : mutations)
+				{
+					const ShaderBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
+					const U32 codeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kRayGen];
+					const U32 shaderIdx = lib->addShader(binary->m_codeBlocks[codeBlockIndex], progName, ShaderType::kRayGen);
 
-		// Ray gen
-		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::kRayGen))
-		{
-			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::kRayGen))
-			{
-				ANKI_RESOURCE_LOGE("Ray gen can't co-exist with other types: %s", filename.cstr());
-				return Error::kUserData;
-			}
-
-			if(binary.m_constants.getSize())
-			{
-				ANKI_RESOURCE_LOGE("Ray gen can't have spec constants ATM: %s", filename.cstr());
-				return Error::kUserData;
+					lib->addGroup(filename, mutation.m_hash, shaderIdx, kMaxU32, kMaxU32, kMaxU32);
+				}
 			}
 
-			// Iterate all mutations
-			ConstWeakArray<ShaderProgramBinaryMutation> mutations;
-			ShaderProgramBinaryMutation dummyMutation;
-			if(binary.m_mutations.getSize() > 1)
+			// Miss
+			if(!!(technique.m_shaderTypes & ShaderTypeBit::kMiss))
 			{
-				mutations = binary.m_mutations;
-			}
-			else
-			{
-				dummyMutation.m_hash = 0;
-				dummyMutation.m_variantIndex = 0;
-				mutations = ConstWeakArray<ShaderProgramBinaryMutation>(&dummyMutation, 1);
-			}
+				// Iterate all mutations
+				ConstWeakArray<ShaderBinaryMutation> mutations;
+				ShaderBinaryMutation dummyMutation;
+				if(binary->m_mutations.getSize() > 1)
+				{
+					mutations = binary->m_mutations;
+				}
+				else
+				{
+					dummyMutation.m_hash = 0;
+					dummyMutation.m_variantIndex = 0;
+					mutations = ConstWeakArray<ShaderBinaryMutation>(&dummyMutation, 1);
+				}
 
-			for(const ShaderProgramBinaryMutation& mutation : mutations)
-			{
-				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
-				const U32 codeBlockIndex = variant.m_codeBlockIndices[ShaderType::kRayGen];
-				ANKI_ASSERT(codeBlockIndex != kMaxU32);
-				const U32 shaderIdx = lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::kRayGen);
+				for(const ShaderBinaryMutation& mutation : mutations)
+				{
+					const ShaderBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
+					const U32 codeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kMiss];
+					ANKI_ASSERT(codeBlockIndex < kMaxU32);
+					const U32 shaderIdx = lib->addShader(binary->m_codeBlocks[codeBlockIndex], progName, ShaderType::kMiss);
 
-				lib->addGroup(filename, mutation.m_hash, shaderIdx, kMaxU32, kMaxU32, kMaxU32);
-			}
-		}
-
-		// Miss shaders
-		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::kMiss))
-		{
-			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::kMiss))
-			{
-				ANKI_RESOURCE_LOGE("Miss shaders can't co-exist with other types: %s", filename.cstr());
-				return Error::kUserData;
+					lib->addGroup(filename, mutation.m_hash, kMaxU32, shaderIdx, kMaxU32, kMaxU32);
+				}
 			}
 
-			if(binary.m_constants.getSize())
+			// Hit shaders
+			if(!!(technique.m_shaderTypes & ShaderTypeBit::kAllHit))
 			{
-				ANKI_RESOURCE_LOGE("Miss can't have spec constants ATM: %s", filename.cstr());
-				return Error::kUserData;
+				// Before you iterate the mutations do some work if there are none
+				ConstWeakArray<ShaderBinaryMutation> mutations;
+				ShaderBinaryMutation dummyMutation;
+				if(binary->m_mutations.getSize() > 1)
+				{
+					mutations = binary->m_mutations;
+				}
+				else
+				{
+					dummyMutation.m_hash = 0;
+					dummyMutation.m_variantIndex = 0;
+					mutations = ConstWeakArray<ShaderBinaryMutation>(&dummyMutation, 1);
+				}
+
+				// Iterate all mutations
+				for(const ShaderBinaryMutation& mutation : mutations)
+				{
+					if(mutation.m_variantIndex == kMaxU32)
+					{
+						continue;
+					}
+
+					const ShaderBinaryVariant& variant = binary->m_variants[mutation.m_variantIndex];
+					const U32 ahitCodeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kAnyHit];
+					const U32 chitCodeBlockIndex = variant.m_techniqueCodeBlocks[techniqueIdx].m_codeBlockIndices[ShaderType::kClosestHit];
+					ANKI_ASSERT(ahitCodeBlockIndex != kMaxU32 || chitCodeBlockIndex != kMaxU32);
+
+					const U32 ahitShaderIdx = (ahitCodeBlockIndex != kMaxU32)
+												  ? lib->addShader(binary->m_codeBlocks[ahitCodeBlockIndex], progName, ShaderType::kAnyHit)
+												  : kMaxU32;
+
+					const U32 chitShaderIdx = (chitCodeBlockIndex != kMaxU32)
+												  ? lib->addShader(binary->m_codeBlocks[chitCodeBlockIndex], progName, ShaderType::kClosestHit)
+												  : kMaxU32;
+
+					lib->addGroup(filename, mutation.m_hash, kMaxU32, kMaxU32, chitShaderIdx, ahitShaderIdx);
+				}
 			}
-
-			if(rayTypeNumber == kMaxU32)
-			{
-				ANKI_RESOURCE_LOGE("Miss shader should have set the ray type: %s", filename.cstr());
-				return Error::kUserData;
-			}
-
-			// Iterate all mutations
-			ConstWeakArray<ShaderProgramBinaryMutation> mutations;
-			ShaderProgramBinaryMutation dummyMutation;
-			if(binary.m_mutations.getSize() > 1)
-			{
-				mutations = binary.m_mutations;
-			}
-			else
-			{
-				dummyMutation.m_hash = 0;
-				dummyMutation.m_variantIndex = 0;
-				mutations = ConstWeakArray<ShaderProgramBinaryMutation>(&dummyMutation, 1);
-			}
-
-			for(const ShaderProgramBinaryMutation& mutation : mutations)
-			{
-				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
-				const U32 codeBlockIndex = variant.m_codeBlockIndices[ShaderType::kMiss];
-				ANKI_ASSERT(codeBlockIndex != kMaxU32);
-				const U32 shaderIdx = lib->addShader(binary.m_codeBlocks[codeBlockIndex], progName, ShaderType::kMiss);
-
-				lib->addGroup(filename, mutation.m_hash, kMaxU32, shaderIdx, kMaxU32, kMaxU32);
-			}
-		}
-
-		// Hit shaders
-		if(!!(binary.m_presentShaderTypes & (ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit)))
-		{
-			if(!!(binary.m_presentShaderTypes & ~(ShaderTypeBit::kAnyHit | ShaderTypeBit::kClosestHit)))
-			{
-				ANKI_RESOURCE_LOGE("Hit shaders can't co-exist with other types: %s", filename.cstr());
-				return Error::kUserData;
-			}
-
-			if(rayTypeNumber == kMaxU32)
-			{
-				ANKI_RESOURCE_LOGE("Hit shaders should have set the ray type: %s", filename.cstr());
-				return Error::kUserData;
-			}
-
-			// Before you iterate the mutations do some work if there are none
-			ConstWeakArray<ShaderProgramBinaryMutation> mutations;
-			ShaderProgramBinaryMutation dummyMutation;
-			if(binary.m_mutations.getSize() > 1)
-			{
-				mutations = binary.m_mutations;
-			}
-			else
-			{
-				dummyMutation.m_hash = 0;
-				dummyMutation.m_variantIndex = 0;
-				mutations = ConstWeakArray<ShaderProgramBinaryMutation>(&dummyMutation, 1);
-			}
-
-			// Iterate all mutations
-			for(const ShaderProgramBinaryMutation& mutation : mutations)
-			{
-				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
-				const U32 ahitCodeBlockIndex = variant.m_codeBlockIndices[ShaderType::kAnyHit];
-				const U32 chitCodeBlockIndex = variant.m_codeBlockIndices[ShaderType::kClosestHit];
-				ANKI_ASSERT(ahitCodeBlockIndex != kMaxU32 || chitCodeBlockIndex != kMaxU32);
-
-				const U32 ahitShaderIdx = (ahitCodeBlockIndex != kMaxU32)
-											  ? lib->addShader(binary.m_codeBlocks[ahitCodeBlockIndex], progName, ShaderType::kAnyHit)
-											  : kMaxU32;
-
-				const U32 chitShaderIdx = (chitCodeBlockIndex != kMaxU32)
-											  ? lib->addShader(binary.m_codeBlocks[chitCodeBlockIndex], progName, ShaderType::kClosestHit)
-											  : kMaxU32;
-
-				lib->addGroup(filename, mutation.m_hash, kMaxU32, kMaxU32, chitShaderIdx, ahitShaderIdx);
-			}
-		}
+		} // iterate techniques
 
 		return Error::kNone;
-	})); // For all RT filenames
+	}); // For all RT filenames
+	ANKI_CHECK(err);
 
-	// Create the libraries the value that goes to the m_resourceHashToShaderGroupHandleIndex hashmap is the index of
-	// the shader handle inside the program. Leverage the fact that there is a predefined order between shader types.
-	// See the ShaderProgram class for info.
+	// Create the libraries. The value that goes to the m_resourceHashToShaderGroupHandleIndex hashmap is the index of the shader handle inside the
+	// program. Leverage the fact that there is a predefined order between group types (ray gen first, miss and hit follows). See the ShaderProgram
+	// class for info.
 	if(libs.getSize() != 0)
 	{
 		outLibs.resize(libs.getSize());
@@ -364,72 +344,61 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 				return Error::kUserData;
 			}
 
-			if(inLib.m_rayTypeCount != inLib.m_rayTypeMask.getSetBitCount())
-			{
-				ANKI_RESOURCE_LOGE("Ray types are not contiguous for library: %s", inLib.m_name.cstr());
-				return Error::kUserData;
-			}
-
 			outLib.m_libraryName = inLib.m_name;
-			outLib.m_rayTypeCount = inLib.m_rayTypeCount;
 
 			ResourceDynamicArray<RayTracingHitGroup> initInfoHitGroups;
 			ResourceDynamicArray<Shader*> missShaders;
 			ResourceDynamicArray<Shader*> rayGenShaders;
+			U32 groupCount = 0;
 
-			// Add the hitgroups to the init info
-			for(U32 shaderGroupIdx = 0; shaderGroupIdx < inLib.m_shaderGroups.getSize(); ++shaderGroupIdx)
+			// Ray gen
+			for(const ShaderGroup& group : inLib.m_rayGenGroups)
 			{
-				const ShaderGroup& inShaderGroup = inLib.m_shaderGroups[shaderGroupIdx];
-				ANKI_ASSERT(inShaderGroup.m_hitGroupHash != 0);
+				rayGenShaders.emplaceBack(inLib.m_shaders[group.m_rayGen].m_shader.get());
 
-				if(inShaderGroup.m_ahit < kMaxU32 || inShaderGroup.m_chit < kMaxU32)
+				for(U64 hash : group.m_groupHashes)
 				{
-					// Hit shaders
-
-					ANKI_ASSERT(inShaderGroup.m_miss == kMaxU32 && inShaderGroup.m_rayGen == kMaxU32);
-					RayTracingHitGroup* infoHitGroup = initInfoHitGroups.emplaceBack();
-
-					if(inShaderGroup.m_ahit < kMaxU32)
-					{
-						infoHitGroup->m_anyHitShader = inLib.m_shaders[inShaderGroup.m_ahit].m_shader.get();
-					}
-
-					if(inShaderGroup.m_chit < kMaxU32)
-					{
-						infoHitGroup->m_closestHitShader = inLib.m_shaders[inShaderGroup.m_chit].m_shader.get();
-					}
-
-					// The hit shaders are after ray gen and miss shaders
-					const U32 idx = inLib.m_rayGenShaderGroupCount + inLib.m_missShaderGroupCount + initInfoHitGroups.getSize() - 1;
-					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(inShaderGroup.m_hitGroupHash, idx);
+					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(hash, groupCount);
 				}
-				else if(inShaderGroup.m_miss < kMaxU32)
+
+				++groupCount;
+			}
+
+			// Miss
+			for(const ShaderGroup& group : inLib.m_missGroups)
+			{
+				missShaders.emplaceBack(inLib.m_shaders[group.m_miss].m_shader.get());
+
+				for(U64 hash : group.m_groupHashes)
 				{
-					// Miss shader
-
-					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32 && inShaderGroup.m_rayGen == kMaxU32);
-
-					missShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_miss].m_shader.get());
-
-					// The miss shaders are after ray gen
-					const U32 idx = inLib.m_rayGenShaderGroupCount + missShaders.getSize() - 1;
-					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(inShaderGroup.m_hitGroupHash, idx);
+					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(hash, groupCount);
 				}
-				else
+
+				++groupCount;
+			}
+
+			// Hit
+			for(const ShaderGroup& group : inLib.m_hitGroups)
+			{
+				RayTracingHitGroup* infoHitGroup = initInfoHitGroups.emplaceBack();
+
+				if(group.m_ahit < kMaxU32)
 				{
-					// Ray gen shader
-
-					ANKI_ASSERT(inShaderGroup.m_ahit == kMaxU32 && inShaderGroup.m_chit == kMaxU32 && inShaderGroup.m_miss == kMaxU32
-								&& inShaderGroup.m_rayGen < kMaxU32);
-
-					rayGenShaders.emplaceBack(inLib.m_shaders[inShaderGroup.m_rayGen].m_shader.get());
-
-					// Ray gen shaders are first
-					const U32 idx = rayGenShaders.getSize() - 1;
-					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(inShaderGroup.m_hitGroupHash, idx);
+					infoHitGroup->m_anyHitShader = inLib.m_shaders[group.m_ahit].m_shader.get();
 				}
-			} // end for all groups
+
+				if(group.m_chit < kMaxU32)
+				{
+					infoHitGroup->m_closestHitShader = inLib.m_shaders[group.m_chit].m_shader.get();
+				}
+
+				for(U64 hash : group.m_groupHashes)
+				{
+					outLib.m_resourceHashToShaderGroupHandleIndex.emplace(hash, groupCount);
+				}
+
+				++groupCount;
+			}
 
 			// Create the program
 			ShaderProgramInitInfo inf(inLib.m_name);

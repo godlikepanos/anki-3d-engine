@@ -8,6 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Utils/StackGpuMemoryPool.h>
 #include <AnKi/Gr/GrManager.h>
+#include <AnKi/Gr/Buffer.h>
 
 namespace anki {
 
@@ -43,7 +44,7 @@ public:
 		return m_buffer != nullptr;
 	}
 
-	operator BufferOffsetRange() const;
+	operator BufferView() const;
 
 private:
 	Buffer* m_buffer = nullptr;
@@ -66,15 +67,7 @@ public:
 		return out;
 	}
 
-	void endFrame()
-	{
-		if(m_frame == 0)
-		{
-			m_pool.reset();
-		}
-
-		m_frame = (m_frame + 1) % kMaxFramesInFlight;
-	}
+	void endFrame();
 
 private:
 	StackGpuMemoryPool m_pool;
@@ -82,12 +75,12 @@ private:
 
 	GpuVisibleTransientMemoryPool()
 	{
-		U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment;
-		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_uavBufferBindOffsetAlignment);
+		U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
+		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
 		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
 		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
 
-		BufferUsageBit buffUsage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kIndirectDraw
+		BufferUsageBit buffUsage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kIndirectDraw
 								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertex | BufferUsageBit::kTransferDestination;
 		if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
 		{
@@ -99,7 +92,7 @@ private:
 	~GpuVisibleTransientMemoryPool() = default;
 };
 
-inline GpuVisibleTransientMemoryAllocation::operator BufferOffsetRange() const
+inline GpuVisibleTransientMemoryAllocation::operator BufferView() const
 {
 	ANKI_ASSERT(isValid());
 	return {m_buffer, m_offset, m_size};

@@ -53,22 +53,14 @@ Error DepthDownscale::initInternal()
 	}
 
 	// Progs
-	if(preferCompute)
-	{
-		ANKI_CHECK(
-			loadShaderProgram("ShaderBinaries/DepthDownscaleCompute.ankiprogbin", Array<SubMutation, 1>{{{"WAVE_OPERATIONS", 0}}}, m_prog, m_grProg));
-	}
-	else
-	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DepthDownscaleRaster.ankiprogbin", m_prog, m_grProg));
-	}
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/DepthDownscale.ankiprogbin", {{"WAVE_OPERATIONS", 1}}, m_prog, m_grProg));
 
 	// Counter buffer
 	if(preferCompute)
 	{
 		BufferInitInfo buffInit("Depth downscale counter buffer");
 		buffInit.m_size = sizeof(U32);
-		buffInit.m_usage = BufferUsageBit::kUavComputeWrite | BufferUsageBit::kTransferDestination;
+		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
 		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		// Zero it
@@ -76,24 +68,13 @@ Error DepthDownscale::initInternal()
 		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-		cmdb->fillBuffer(m_counterBuffer.get(), 0, kMaxPtrSize, 0);
+		cmdb->fillBuffer(BufferView(m_counterBuffer.get()), 0);
 
 		FencePtr fence;
-		cmdb->flush({}, &fence);
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 
 		fence->clientWait(6.0_sec);
-	}
-
-	if(!preferCompute)
-	{
-		m_fbDescrs.resize(m_mipCount);
-		for(U32 mip = 0; mip < m_mipCount; ++mip)
-		{
-			FramebufferDescription& fbDescr = m_fbDescrs[mip];
-			fbDescr.m_colorAttachmentCount = 1;
-			fbDescr.m_colorAttachments[0].m_surface.m_level = mip;
-			fbDescr.bake();
-		}
 	}
 
 	return Error::kNone;
@@ -123,15 +104,9 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Depth downscale");
 
-		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute,
-								  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
 
-		for(U32 mip = 0; mip < m_mipCount; ++mip)
-		{
-			TextureSubresourceInfo subresource;
-			subresource.m_firstMipmap = mip;
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite, subresource);
-		}
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -144,7 +119,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			varAU4(rectInfo) = initAU4(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
 
-			DepthDownscaleConstants pc;
+			DepthDownscaleUniforms pc;
 			pc.m_threadgroupCount = numWorkGroupsAndMips[0];
 			pc.m_mipmapCount = numWorkGroupsAndMips[1];
 			pc.m_srcTexSizeOverOne = 1.0f / Vec2(getRenderer().getInternalResolution());
@@ -153,23 +128,23 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
-				TextureSubresourceInfo subresource;
+				TextureSubresourceDescriptor surface = TextureSubresourceDescriptor::firstSurface();
 				if(mip < m_mipCount)
 				{
-					subresource.m_firstMipmap = mip;
+					surface.m_mipmap = mip;
 				}
 				else
 				{
-					subresource.m_firstMipmap = 0; // Put something random
+					surface.m_mipmap = 0; // Put something random
 				}
 
-				rgraphCtx.bindUavTexture(0, 0, m_runCtx.m_rt, subresource, mip);
+				rgraphCtx.bindTexture(Register(HlslResourceType::kUav, mip + 1), m_runCtx.m_rt, surface);
 			}
 
-			cmdb.bindUavBuffer(0, 1, m_counterBuffer.get(), 0, sizeof(U32));
+			cmdb.bindStorageBuffer(ANKI_REG(u0), BufferView(m_counterBuffer.get(), 0, sizeof(U32)));
 
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(0, 3, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
@@ -182,39 +157,35 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		{
 			static constexpr Array<CString, 4> passNames = {"Depth downscale #1", "Depth downscale #2", "Depth downscale #3", "Depth downscale #4"};
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
-			pass.setFramebufferInfo(m_fbDescrs[mip], {m_runCtx.m_rt});
+
+			RenderTargetInfo rti(m_runCtx.m_rt);
+			rti.m_subresource.m_mipmap = mip;
+			pass.setRenderpassInfo({rti});
 
 			if(mip == 0)
 			{
-				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment,
-										  TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment);
 			}
 			else
 			{
-				TextureSurfaceInfo subresource;
-				subresource.m_level = mip - 1;
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, subresource);
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, TextureSubresourceDescriptor::surface(mip - 1, 0, 0));
 			}
 
-			TextureSurfaceInfo subresource;
-			subresource.m_level = mip;
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, subresource);
+			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceDescriptor::surface(mip, 0, 0));
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 				cmdb.bindShaderProgram(m_grProg.get());
-				cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
+				cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
 
 				if(mip == 0)
 				{
-					rgraphCtx.bindTexture(0, 0, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+					rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
 				}
 				else
 				{
-					TextureSubresourceInfo subresource;
-					subresource.m_firstMipmap = mip - 1;
-					rgraphCtx.bindTexture(0, 0, m_runCtx.m_rt, subresource);
+					rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt, TextureSubresourceDescriptor::surface(mip - 1, 0, 0));
 				}
 
 				const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;

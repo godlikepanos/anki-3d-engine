@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderCompiler.h>
 #include <AnKi/Util.h>
 using namespace anki;
 
@@ -13,8 +13,9 @@ Options:
 -o <name of output>  : The name of the output binary
 -j <thread count>    : Number of threads. Defaults to system's max
 -I <include path>    : The path of the #include files
--force-full-fp       : Force full floating point precision
--mobile-platform     : Build for mobile
+-D<define_name:val>  : Extra defines to pass to the compiler
+-spirv               : Compile SPIR-V
+-dxil                : Compile DXIL
 )";
 
 class CmdLineArgs
@@ -24,8 +25,10 @@ public:
 	String m_outFname;
 	String m_includePath;
 	U32 m_threadCount = getCpuCoresCount();
-	Bool m_fullFpPrecision = false;
-	Bool m_mobilePlatform = false;
+	DynamicArray<String> m_defineNames;
+	DynamicArray<ShaderCompilerDefine> m_defines;
+	Bool m_spirv = false;
+	Bool m_dxil = false;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -91,13 +94,41 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::kUserData;
 			}
 		}
-		else if(strcmp(argv[i], "-force-full-fp") == 0)
+		else if(CString(argv[i]).find("-D") == 0)
 		{
-			info.m_fullFpPrecision = true;
+			CString a = argv[i];
+			if(a.getLength() < 5)
+			{
+				return Error::kUserData;
+			}
+
+			const String arg(a.getBegin() + 2, a.getEnd());
+			StringList tokens;
+			tokens.splitString(arg, '=');
+
+			if(tokens.getSize() != 2)
+			{
+				return Error::kUserData;
+			}
+
+			info.m_defineNames.emplaceBack(tokens.getFront());
+
+			I32 val;
+			const Error err = (tokens.getBegin() + 1)->toNumber(val);
+			if(err)
+			{
+				return Error::kUserData;
+			}
+
+			info.m_defines.emplaceBack(ShaderCompilerDefine{info.m_defineNames.getBack().toCString(), val});
 		}
-		else if(strcmp(argv[i], "-mobile-platform") == 0)
+		else if(strcmp(argv[i], "-spirv") == 0)
 		{
-			info.m_mobilePlatform = true;
+			info.m_spirv = true;
+		}
+		else if(strcmp(argv[i], "-dxil") == 0)
+		{
+			info.m_dxil = true;
 		}
 		else
 		{
@@ -115,13 +146,13 @@ static Error work(const CmdLineArgs& info)
 	HeapMemoryPool pool(allocAligned, nullptr, "ProgramPool");
 
 	// Load interface
-	class FSystem : public ShaderProgramFilesystemInterface
+	class FSystem : public ShaderCompilerFilesystemInterface
 	{
 	public:
 		CString m_includePath;
 		U32 m_fileReadCount = 0;
 
-		Error readAllTextInternal(CString filename, String& txt)
+		Error readAllTextInternal(CString filename, ShaderCompilerString& txt)
 		{
 			String fname;
 
@@ -142,7 +173,7 @@ static Error work(const CmdLineArgs& info)
 			return Error::kNone;
 		}
 
-		Error readAllText(CString filename, String& txt) final
+		Error readAllText(CString filename, ShaderCompilerString& txt) final
 		{
 			const Error err = readAllTextInternal(filename, txt);
 			if(err)
@@ -156,7 +187,7 @@ static Error work(const CmdLineArgs& info)
 	fsystem.m_includePath = info.m_includePath;
 
 	// Threading interface
-	class TaskManager : public ShaderProgramAsyncTaskInterface
+	class TaskManager : public ShaderCompilerAsyncTaskInterface
 	{
 	public:
 		UniquePtr<ThreadJobManager, SingletonMemoryPoolDeleter<DefaultMemoryPool>> m_jobManager;
@@ -177,17 +208,30 @@ static Error work(const CmdLineArgs& info)
 	taskManager.m_jobManager.reset((info.m_threadCount) ? newInstance<ThreadJobManager>(DefaultMemoryPool::getSingleton(), info.m_threadCount, true)
 														: nullptr);
 
-	// Compiler options
-	ShaderCompilerOptions compilerOptions;
-	compilerOptions.m_forceFullFloatingPointPrecision = info.m_fullFpPrecision;
-	compilerOptions.m_mobilePlatform = info.m_mobilePlatform;
-
 	// Compile
-	ShaderProgramBinaryWrapper binary(&pool);
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, compilerOptions, binary));
+	ShaderBinary* binary = nullptr;
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, info.m_spirv, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, info.m_defines,
+									binary));
+
+	class Dummy
+	{
+	public:
+		ShaderBinary* m_binary;
+
+		~Dummy()
+		{
+			freeShaderBinary(m_binary);
+		}
+	} dummy{binary};
 
 	// Store the binary
-	ANKI_CHECK(binary.serializeToFile(info.m_outFname));
+	{
+		File file;
+		ANKI_CHECK(file.open(info.m_outFname, FileOpenFlag::kWrite | FileOpenFlag::kBinary));
+
+		BinarySerializer serializer;
+		ANKI_CHECK(serializer.serialize(*binary, ShaderCompilerMemoryPool::getSingleton(), file));
+	}
 
 	return Error::kNone;
 }
@@ -201,13 +245,21 @@ int myMain(int argc, char** argv)
 		~Dummy()
 		{
 			DefaultMemoryPool::freeSingleton();
+			ShaderCompilerMemoryPool::freeSingleton();
 		}
 	} dummy;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
 
 	CmdLineArgs info;
 	if(parseCommandLineArgs(argc, argv, info))
+	{
+		ANKI_LOGE(kUsage, argv[0]);
+		return 1;
+	}
+
+	if(info.m_spirv == info.m_dxil)
 	{
 		ANKI_LOGE(kUsage, argv[0]);
 		return 1;

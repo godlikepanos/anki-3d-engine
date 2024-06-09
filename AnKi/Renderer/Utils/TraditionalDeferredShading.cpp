@@ -18,18 +18,10 @@ namespace anki {
 Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
+	for(MutatorValue specular = 0; specular <= 1; ++specular)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TraditionalDeferredShading.ankiprogbin", m_lightProg));
-
-		for(U32 specular = 0; specular <= 1; ++specular)
-		{
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightProg);
-			variantInitInfo.addMutation("SPECULAR", specular);
-
-			const ShaderProgramResourceVariant* variant;
-			m_lightProg->getOrCreateVariant(variantInitInfo, variant);
-			m_lightGrProg[specular].reset(&variant->getProgram());
-		}
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/TraditionalDeferredShading.ankiprogbin", {{"SPECULAR", specular}}, m_lightProg,
+									 m_lightGrProg[specular]));
 	}
 
 	// Shadow sampler
@@ -37,23 +29,16 @@ Error TraditionalDeferredLightShading::init()
 		SamplerInitInfo inf;
 		inf.m_compareOperation = CompareOperation::kLessEqual;
 		inf.m_addressing = SamplingAddressing::kClamp;
-		inf.m_mipmapFilter = SamplingFilter::kBase;
+		inf.m_mipmapFilter = SamplingFilter::kNearest;
 		inf.m_minMagFilter = SamplingFilter::kLinear;
 		m_shadowSampler = GrManager::getSingleton().newSampler(inf);
 	}
 
 	// Skybox
+	for(MutatorValue i = 0; i < m_skyboxGrProgs.getSize(); ++i)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin", m_skyboxProg));
-
-		for(U32 i = 0; i < m_skyboxGrProgs.getSize(); ++i)
-		{
-			ShaderProgramResourceVariantInitInfo variantInitInfo(m_skyboxProg);
-			variantInitInfo.addMutation("METHOD", i);
-			const ShaderProgramResourceVariant* variant;
-			m_skyboxProg->getOrCreateVariant(variantInitInfo, variant);
-			m_skyboxGrProgs[i].reset(&variant->getProgram());
-		}
+		ANKI_CHECK(
+			loadShaderProgram("ShaderBinaries/TraditionalDeferredShadingSkybox.ankiprogbin", {{"METHOD", i}}, m_skyboxProg, m_skyboxGrProgs[i]));
 	}
 
 	return Error::kNone;
@@ -69,27 +54,37 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Skybox first
 	const SkyboxComponent* skyc = SceneGraph::getSingleton().getSkybox();
-	if(skyc)
+	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
+	if(skyc && !(skyc->getSkyboxType() == SkyboxType::kGenerated && !dirLightc))
 	{
-		const Bool isSolidColor = (skyc->getSkyboxType() == SkyboxType::kSolidColor);
+		cmdb.bindShaderProgram(m_skyboxGrProgs[skyc->getSkyboxType()].get());
 
-		cmdb.bindShaderProgram(m_skyboxGrProgs[!isSolidColor].get());
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+		rgraphCtx.bindTexture(ANKI_REG(t0), info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresource);
 
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		rgraphCtx.bindTexture(0, 1, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
-
-		if(!isSolidColor)
-		{
-			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeatAniso.get());
-			cmdb.bindTexture(0, 3, &skyc->getImageResource().getTextureView());
-		}
-
-		TraditionalDeferredSkyboxConstants unis;
-		unis.m_solidColor = (isSolidColor) ? skyc->getSolidColor() : Vec3(0.0f);
-		unis.m_inputTexUvBias = info.m_gbufferTexCoordsBias;
-		unis.m_inputTexUvScale = info.m_gbufferTexCoordsScale;
+		TraditionalDeferredSkyboxUniforms unis = {};
 		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
 		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
+		unis.m_scale = skyc->getImageScale();
+		unis.m_bias = skyc->getImageBias();
+
+		if(skyc->getSkyboxType() == SkyboxType::kSolidColor)
+		{
+			unis.m_solidColor = skyc->getSolidColor();
+		}
+		else if(skyc->getSkyboxType() == SkyboxType::kImage2D)
+		{
+			cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearRepeatAniso.get());
+			cmdb.bindTexture(ANKI_REG(t1), TextureView(&skyc->getImageResource().getTexture(), TextureSubresourceDescriptor::all()));
+		}
+		else
+		{
+			cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(ANKI_REG(t1), info.m_skyLutRenderTarget);
+		}
+
+		cmdb.bindUniformBuffer(ANKI_REG(b0), info.m_globalRendererConsts);
+
 		cmdb.setPushConstants(&unis, sizeof(unis));
 
 		drawQuad(cmdb);
@@ -97,60 +92,50 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 	// Light shading
 	{
-		const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
+		TraditionalDeferredShadingUniforms* unis = allocateAndBindConstants<TraditionalDeferredShadingUniforms>(cmdb, ANKI_REG(b0));
 
-		TraditionalDeferredShadingConstants* unis = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
-
-		unis->m_inputTexUvScale = info.m_gbufferTexCoordsScale;
-		unis->m_inputTexUvBias = info.m_gbufferTexCoordsBias;
-		unis->m_fbUvScale = info.m_lightbufferTexCoordsScale;
-		unis->m_fbUvBias = info.m_lightbufferTexCoordsBias;
 		unis->m_invViewProjMat = info.m_invViewProjectionMatrix;
 		unis->m_cameraPos = info.m_cameraPosWSpace.xyz();
 
 		if(dirLightc)
 		{
-			unis->m_dirLight.m_diffuseColor = dirLightc->getDiffuseColor().xyz();
-			unis->m_dirLight.m_active = 1;
-			unis->m_dirLight.m_direction = dirLightc->getDirection();
 			unis->m_dirLight.m_effectiveShadowDistance = info.m_effectiveShadowDistance;
 			unis->m_dirLight.m_lightMatrix = info.m_dirLightMatrix;
 		}
-		else
-		{
-			unis->m_dirLight.m_active = 0;
-		}
 
-		cmdb.bindUavBuffer(0, 1, info.m_visibleLightsBuffer.m_buffer, info.m_visibleLightsBuffer.m_offset, info.m_visibleLightsBuffer.m_range);
+		cmdb.bindStorageBuffer(ANKI_REG(t0), info.m_visibleLightsBuffer);
 		if(GpuSceneArrays::Light::getSingleton().getElementCount() > 0)
 		{
-			cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::Light::getSingleton().getBufferView());
 		}
 		else
 		{
 			// Set something random
-			cmdb.bindUavBuffer(0, 2, GpuSceneBuffer::getSingleton().getBufferOffsetRange());
+			cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneBuffer::getSingleton().getBufferView());
 		}
 
 		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-		cmdb.bindSampler(0, 3, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-		rgraphCtx.bindColorTexture(0, 4, info.m_gbufferRenderTargets[0]);
-		rgraphCtx.bindColorTexture(0, 5, info.m_gbufferRenderTargets[1]);
-		rgraphCtx.bindColorTexture(0, 6, info.m_gbufferRenderTargets[2]);
-		rgraphCtx.bindTexture(0, 7, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(ANKI_REG(t2), info.m_gbufferRenderTargets[0], info.m_gbufferRenderTargetSubresource[0]);
+		rgraphCtx.bindTexture(ANKI_REG(t3), info.m_gbufferRenderTargets[1], info.m_gbufferRenderTargetSubresource[1]);
+		rgraphCtx.bindTexture(ANKI_REG(t4), info.m_gbufferRenderTargets[2], info.m_gbufferRenderTargetSubresource[2]);
+		rgraphCtx.bindTexture(ANKI_REG(t5), info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresource);
 
-		cmdb.bindSampler(0, 8, m_shadowSampler.get());
+		cmdb.bindSampler(ANKI_REG(s1), m_shadowSampler.get());
 		if(dirLightc && dirLightc->getShadowEnabled())
 		{
 			ANKI_ASSERT(info.m_directionalLightShadowmapRenderTarget.isValid());
-			rgraphCtx.bindTexture(0, 9, info.m_directionalLightShadowmapRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(ANKI_REG(t6), info.m_directionalLightShadowmapRenderTarget,
+								  info.m_directionalLightShadowmapRenderTargetSubresource);
 		}
 		else
 		{
 			// No shadows for the dir light, bind a random depth texture (need depth because validation complains)
-			rgraphCtx.bindTexture(0, 9, info.m_gbufferDepthRenderTarget, TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(ANKI_REG(t6), info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresource);
 		}
+
+		cmdb.bindUniformBuffer(ANKI_REG(b1), info.m_globalRendererConsts);
 
 		cmdb.bindShaderProgram(m_lightGrProg[info.m_computeSpecular].get());
 

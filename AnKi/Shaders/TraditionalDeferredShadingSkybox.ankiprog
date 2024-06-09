@@ -3,32 +3,38 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
+#pragma anki mutator METHOD 0 1 2 // 0: solid colod, 1: 2D image, 2: Generated
 
-#pragma anki start vert
+#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
 #include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/Sky.hlsl>
+#include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-[[vk::push_constant]] ConstantBuffer<TraditionalDeferredSkyboxConstants> g_consts;
+ANKI_PUSH_CONSTANTS(TraditionalDeferredSkyboxUniforms, g_unis)
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_depthTex;
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_depthTex : register(t0);
 
 #if METHOD == 1
-[[vk::binding(2)]] SamplerState g_trilinearAnySampler;
-[[vk::binding(3)]] Texture2D<RVec4> g_envMapTex;
+SamplerState g_trilinearAnySampler : register(s1);
+Texture2D<RVec4> g_envMapTex : register(t1);
+#elif METHOD == 2
+SamplerState g_linearAnyClampSampler : register(s1);
+Texture2D<Vec4> g_skyLut : register(t1);
 #endif
 
-RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
-{
-	const Vec2 uvToRead = mad(svPosition.xy, g_consts.m_inputTexUvScale, g_consts.m_inputTexUvBias);
+ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts : register(b0);
 
-	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uvToRead, 0.0).r;
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+{
+	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	if(depth != 1.0f)
 	{
 		discard;
@@ -36,18 +42,28 @@ RVec3 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	return g_consts.m_solidColor;
-#else
+	return g_unis.m_solidColor;
+#elif METHOD == 1
 	const F32 depthFar = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depthFar, 1.0));
+	const Vec4 worldPos4 = mul(g_unis.m_invertedViewProjectionMat, Vec4(ndc, depthFar, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPos);
 
 	const Vec2 uv2 = equirectangularMapping(eyeToFrag);
-	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb;
+	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_unis.m_scale + g_unis.m_bias;
+#else
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 = mul(g_unis.m_invertedViewProjectionMat, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPos);
+
+	const F32 sunPower = computeLuminance(g_globalRendererConsts.m_directionalLight.m_diffuseColor);
+
+	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_globalRendererConsts.m_directionalLight.m_direction, sunPower, false);
 #endif
 }
 
-#pragma anki end
+#pragma anki technique_end frag

@@ -49,70 +49,6 @@ namespace anki {
 #define ANKI_FORMAT_U32(u32) ANKI_FORMAT_U16(u32 >> 16), ANKI_FORMAT_U16(u32)
 #define ANKI_FORMAT_U64(u64) ANKI_FORMAT_U32(u64 >> 32), ANKI_FORMAT_U32(u64)
 
-// ANKI_ENABLE_METHOD & ANKI_ENABLE_ARG trickery copied from Tick library
-template<typename T, int N>
-struct DummyType
-{
-};
-
-#if defined(_MSC_VER)
-template<bool B>
-struct RequiresBool
-{
-	static constexpr bool kValue = B;
-};
-
-template<typename T, int N>
-struct RequiresUnwrap : T
-{
-};
-
-template<int N>
-struct PrivateEnum
-{
-	enum class Type
-	{
-		kNA
-	};
-};
-
-#	define ANKI_REQUIRES_BOOL(line, ...) RequiresUnwrap<decltype(RequiresBool<(__VA_ARGS__)>{}), line>::kValue
-
-#	define ANKI_ENABLE_INTERNAL(line, ...) \
-		typename PrivateEnum<line>::Type ANKI_CONCATENATE( \
-			privateEnum, line) = PrivateEnum<line>::Type::kNA, \
-						 bool ANKI_CONCATENATE(privateBool, line) = true, \
-						 typename = typename std::enable_if_t<(ANKI_CONCATENATE(privateBool, line) && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>
-#else
-
-#	define ANKI_ENABLE_INTERNAL(line, ...) bool privateBool##line = true, typename std::enable_if_t<(privateBool##line && __VA_ARGS__), int> = 0
-
-#endif
-
-/// Use it to enable a method based on a constant expression.
-/// @code
-/// template<int N> class Foo {
-/// 	ANKI_ENABLE_METHOD(N == 10)
-/// 	void foo() {}
-///	};
-/// @endcode
-#define ANKI_ENABLE_METHOD(...) template<ANKI_ENABLE_INTERNAL(__LINE__, __VA_ARGS__)>
-
-/// Use it to enable a method based on a constant expression.
-/// @code
-/// class Foo {
-/// 	void foo(ANKI_ENABLE_ARG(Boo, expr) b) {}
-///	};
-/// @endcode
-#define ANKI_ENABLE_ARG(type_, expression) typename std::conditional<(expression), type_, DummyType<type_, __LINE__>>::type
-
-/// Use it to enable a method based on a constant expression.
-/// @code
-/// template<typename T, ANKI_ENABLE(std::is_whatever<T>::value)>
-/// void foo(T x) {}
-/// @endcode
-#define ANKI_ENABLE(...) ANKI_ENABLE_INTERNAL(__LINE__, __VA_ARGS__)
-
 /// OS specific debug breakpoint
 #if ANKI_OS_WINDOWS
 #	define ANKI_DEBUG_BREAK() __debugbreak()
@@ -120,20 +56,45 @@ struct PrivateEnum
 #	define ANKI_DEBUG_BREAK() abort()
 #endif
 
+// ANKI_FOREACH
+// Stolen from here https://stackoverflow.com/questions/5957679/is-there-a-way-to-use-c-preprocessor-stringification-on-variadic-macro-argumen
+#define _ANKI_NUM_ARGS(X100, X99, X98, X97, X96, X95, X94, X93, X92, X91, X90, X89, X88, X87, X86, X85, X84, X83, X82, X81, X80, X79, X78, X77, X76, \
+					   X75, X74, X73, X72, X71, X70, X69, X68, X67, X66, X65, X64, X63, X62, X61, X60, X59, X58, X57, X56, X55, X54, X53, X52, X51, \
+					   X50, X49, X48, X47, X46, X45, X44, X43, X42, X41, X40, X39, X38, X37, X36, X35, X34, X33, X32, X31, X30, X29, X28, X27, X26, \
+					   X25, X24, X23, X22, X21, X20, X19, X18, X17, X16, X15, X14, X13, X12, X11, X10, X9, X8, X7, X6, X5, X4, X3, X2, X1, n, ...) \
+	n
+#define _ANKI_NUM_ARGS2(...) \
+	_ANKI_NUM_ARGS(__VA_ARGS__, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, \
+				   71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, \
+				   39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, \
+				   6, 5, 4, 3, 2, 1)
+#define _ANKI_EXPAND(x) x
+#define _ANKI_FIRSTARG(x, ...) (x)
+#define _ANKI_RESTARGS(x, ...) (__VA_ARGS__)
+#define ANKI_FOREACH(macro, list) _ANKI_FOREACH_(_ANKI_NUM_ARGS2 list, macro, list)
+#define _ANKI_FOREACH_(n, m, list) _ANKI_FOREACH__(n, m, list)
+#define _ANKI_FOREACH__(n, m, list) _ANKI_FOREACH_##n(m, list)
+#define _ANKI_FOREACH_1(m, list) m list
+#define _ANKI_FOREACH_2(m, list) _ANKI_EXPAND(m _ANKI_FIRSTARG list), _ANKI_FOREACH_1(m, _ANKI_RESTARGS list)
+#define _ANKI_FOREACH_3(m, list) _ANKI_EXPAND(m _ANKI_FIRSTARG list), _ANKI_FOREACH_2(m, _ANKI_RESTARGS list)
+#define _ANKI_FOREACH_4(m, list) _ANKI_EXPAND(m _ANKI_FIRSTARG list), _ANKI_FOREACH_3(m, _ANKI_RESTARGS list)
+#define _ANKI_FOREACH_5(m, list) _ANKI_EXPAND(m _ANKI_FIRSTARG list), _ANKI_FOREACH_4(m, _ANKI_RESTARGS list)
+#define _ANKI_FOREACH_6(m, list) _ANKI_EXPAND(m _ANKI_FIRSTARG list), _ANKI_FOREACH_5(m, _ANKI_RESTARGS list)
+
 /// Get a pseudo random number.
 U64 getRandom();
 
 /// Pick a random number from min to max
-template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
-T getRandomRange(T min, T max)
+template<typename T>
+T getRandomRange(T min, T max) requires(std::is_floating_point<T>::value)
 {
 	ANKI_ASSERT(min <= max);
 	const F64 r = F64(getRandom()) / F64(kMaxU64);
 	return T(min + r * (max - min));
 }
 
-template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
-T getRandomRange(T min, T max)
+template<typename T>
+T getRandomRange(T min, T max) requires(std::is_integral<T>::value)
 {
 	ANKI_ASSERT(min <= max);
 	const U64 r = getRandom();
@@ -155,15 +116,15 @@ inline constexpr T max(T a, T b)
 }
 
 /// Check if a number is a power of 2
-template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
-inline constexpr Bool isPowerOfTwo(Int x)
+template<typename Int>
+inline constexpr Bool isPowerOfTwo(Int x) requires(std::is_integral<Int>::value)
 {
 	return !(x == 0) && !(x & (x - 1));
 }
 
 /// Get the next power of two number. For example if x is 130 this will return 256.
-template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
-inline constexpr Int nextPowerOfTwo(Int x)
+template<typename Int>
+inline constexpr Int nextPowerOfTwo(Int x) requires(std::is_integral<Int>::value)
 {
 	const F64 d = F64(x);
 	const F64 res = pow(2.0, ceil(log(d) / log(2.0)));
@@ -171,8 +132,8 @@ inline constexpr Int nextPowerOfTwo(Int x)
 }
 
 /// Get the previous power of two number. For example if x is 130 this will return 128.
-template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
-inline constexpr Int previousPowerOfTwo(Int x)
+template<typename Int>
+inline constexpr Int previousPowerOfTwo(Int x) requires(std::is_integral<Int>::value)
 {
 	const U64 out = (x != 0) ? (1_U64 << ((sizeof(U64) * 8 - 1) - __builtin_clzll(x))) : 0;
 	return Int(out);
@@ -181,8 +142,8 @@ inline constexpr Int previousPowerOfTwo(Int x)
 /// Get the aligned number rounded up.
 /// @param alignment The bytes of alignment
 /// @param value The value to align
-template<typename TInt, ANKI_ENABLE(std::is_integral<TInt>::value)>
-inline constexpr TInt getAlignedRoundUp(PtrSize alignment, TInt value)
+template<typename TInt>
+inline constexpr TInt getAlignedRoundUp(PtrSize alignment, TInt value) requires(std::is_integral<TInt>::value)
 {
 	ANKI_ASSERT(alignment > 0);
 	PtrSize v = PtrSize(value);
@@ -193,8 +154,8 @@ inline constexpr TInt getAlignedRoundUp(PtrSize alignment, TInt value)
 /// Get the aligned number rounded up.
 /// @param alignment The bytes of alignment
 /// @param value The value to align
-template<typename TFloat, ANKI_ENABLE(std::is_floating_point<TFloat>::value)>
-inline constexpr TFloat getAlignedRoundUp(TFloat alignment, TFloat value)
+template<typename TFloat>
+inline constexpr TFloat getAlignedRoundUp(TFloat alignment, TFloat value) requires(std::is_floating_point<TFloat>::value)
 {
 	ANKI_ASSERT(alignment > TFloat(0.0));
 	return ceil(value / alignment) * alignment;
@@ -212,8 +173,8 @@ inline void alignRoundUp(TAlignment alignment, TValue& value)
 /// Get the aligned number rounded down.
 /// @param alignment The bytes of alignment
 /// @param value The value to align
-template<typename TInt, ANKI_ENABLE(std::is_integral<TInt>::value)>
-inline constexpr TInt getAlignedRoundDown(PtrSize alignment, TInt value)
+template<typename TInt>
+inline constexpr TInt getAlignedRoundDown(PtrSize alignment, TInt value) requires(std::is_integral<TInt>::value)
 {
 	ANKI_ASSERT(alignment > 0);
 	PtrSize v = PtrSize(value);
@@ -224,8 +185,8 @@ inline constexpr TInt getAlignedRoundDown(PtrSize alignment, TInt value)
 /// Get the aligned number rounded down.
 /// @param alignment The bytes of alignment
 /// @param value The value to align
-template<typename TFloat, ANKI_ENABLE(std::is_floating_point<TFloat>::value)>
-inline constexpr TFloat getAlignedRoundDown(TFloat alignment, TFloat value)
+template<typename TFloat>
+inline constexpr TFloat getAlignedRoundDown(TFloat alignment, TFloat value) requires(std::is_floating_point<TFloat>::value)
 {
 	ANKI_ASSERT(alignment > TFloat(0.0));
 	return floor(value / alignment) * alignment;

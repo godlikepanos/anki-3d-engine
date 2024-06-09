@@ -5,25 +5,25 @@
 
 // This shader prepares the indirect args of future dispatches
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
-[[vk::binding(0)]] StructuredBuffer<U32> g_visibleIndices[(U32)GpuSceneNonRenderableObjectType::kCount];
+StructuredBuffer<U32> g_visibleIndices[(U32)GpuSceneNonRenderableObjectType::kCount] : register(t0);
 
 // This has a size of 2*GpuSceneNonRenderableObjectType::kCount. The first GpuSceneNonRenderableObjectType::kCount elements are for the cluster
 // binning dispatches and the rest GpuSceneNonRenderableObjectType::kCount for the packing dispatches
-[[vk::binding(1)]] RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs;
+RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u0);
 
-struct Constants
+struct Uniforms
 {
 	U32 m_tileCount;
 	U32 m_padding1;
 	U32 m_padding2;
 	U32 m_padding3;
 };
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 constexpr U32 kSampleCount = 8;
 constexpr U32 kClusterBinningThreadgroupSize = 64;
@@ -41,7 +41,7 @@ constexpr U32 kPackVisiblesThreadgroupSize = 64;
 		const U32 objCount = min(kMaxVisibleClusteredObjects[(U32)type], g_visibleIndices[(U32)type][0]);
 
 		DispatchIndirectArgs args;
-		args.m_threadGroupCountX = (g_consts.m_tileCount * kSampleCount + kClusterBinningThreadgroupSize - 1) / kClusterBinningThreadgroupSize;
+		args.m_threadGroupCountX = (g_unis.m_tileCount * kSampleCount + kClusterBinningThreadgroupSize - 1) / kClusterBinningThreadgroupSize;
 		args.m_threadGroupCountY = objCount;
 		args.m_threadGroupCountZ = 1;
 
@@ -68,4 +68,4 @@ constexpr U32 kPackVisiblesThreadgroupSize = 64;
 	}
 }
 
-#pragma anki end
+#pragma anki technique_end comp

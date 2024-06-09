@@ -73,7 +73,33 @@ public:
 	/// Same as getShaderGroupHandles but the data live in a GPU buffer.
 	Buffer& getShaderGroupHandlesGpuBuffer() const;
 
+	ShaderTypeBit getShaderTypes() const
+	{
+		return m_shaderTypes;
+	}
+
+	/// Get the size of the shader. Can be an indication of the complexity of the shader.
+	U32 getShaderBinarySize(ShaderType type) const
+	{
+		ANKI_ASSERT(!!(ShaderTypeBit(1u << type) & m_shaderTypes));
+		ANKI_ASSERT(m_shaderBinarySizes[type] > 0);
+		return m_shaderBinarySizes[type];
+	}
+
+	/// The fragment shader of the program has a discard.
+	Bool hasDiscard() const
+	{
+		ANKI_ASSERT(!!(m_shaderTypes & ShaderTypeBit::kFragment));
+		return m_hasDiscard;
+	}
+
 protected:
+	Array<U32, U32(ShaderType::kCount)> m_shaderBinarySizes = {};
+
+	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
+
+	Bool m_hasDiscard = false;
+
 	/// Construct.
 	ShaderProgram(CString name)
 		: GrObject(kClassType, name)

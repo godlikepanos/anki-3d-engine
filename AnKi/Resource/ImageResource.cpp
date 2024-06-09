@@ -196,22 +196,20 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	// Create the texture
 	m_tex = GrManager::getSingleton().newTexture(init);
 
-	// Transition it. TODO remove that eventually
+	// Transition it. TODO remove this
 	{
+		const TextureView view(m_tex.get(), TextureSubresourceDescriptor::all());
+
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
-		TextureSubresourceInfo subresource;
-		subresource.m_faceCount = textureTypeIsCube(init.m_type) ? 6 : 1;
-		subresource.m_layerCount = init.m_layerCount;
-		subresource.m_mipmapCount = init.m_mipmapCount;
-
-		const TextureBarrierInfo barrier = {m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kAllSampled, subresource};
+		const TextureBarrierInfo barrier = {view, TextureUsageBit::kNone, TextureUsageBit::kAllSampled};
 		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 		FencePtr outFence;
-		cmdb->flush({}, &outFence);
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get(), {}, &outFence);
 		outFence->clientWait(60.0_sec);
 	}
 
@@ -233,10 +231,6 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 	m_layerCount = init.m_layerCount;
-
-	// Create the texture view
-	TextureViewInitInfo viewInit(m_tex.get(), "Rsrc");
-	m_texView = GrManager::getSingleton().newTextureView(viewInit);
 
 	return Error::kNone;
 }
@@ -262,18 +256,8 @@ Error ImageResource::load(LoadingContext& ctx)
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			TextureBarrierInfo& barrier = barriers[barrierCount++];
-			barrier = {ctx.m_tex.get(), TextureUsageBit::kNone, TextureUsageBit::kTransferDestination, TextureSubresourceInfo()};
-
-			if(ctx.m_texType == TextureType::k3D)
-			{
-				barrier.m_subresource = TextureVolumeInfo(mip);
-				TextureVolumeInfo vol(mip);
-			}
-			else
-			{
-				barrier.m_subresource = TextureSurfaceInfo(mip, 0, face, layer);
-			}
+			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer)),
+										TextureUsageBit::kAllSampled, TextureUsageBit::kTransferDestination};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
@@ -316,19 +300,8 @@ Error ImageResource::load(LoadingContext& ctx)
 			memcpy(data, surfOrVolData, surfOrVolSize);
 
 			// Create temp tex view
-			TextureSubresourceInfo subresource;
-			if(ctx.m_texType == TextureType::k3D)
-			{
-				subresource = TextureSubresourceInfo(TextureVolumeInfo(mip));
-			}
-			else
-			{
-				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, 0, face, layer));
-			}
-
-			TextureViewPtr tmpView = GrManager::getSingleton().newTextureView(TextureViewInitInfo(ctx.m_tex.get(), subresource, "RsrcTmp"));
-
-			cmdb->copyBufferToTextureView(&handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView.get());
+			const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::surface(mip, face, layer);
+			cmdb->copyBufferToTexture(handle, TextureView(ctx.m_tex.get(), subresource));
 		}
 
 		// Set the barriers of the batch
@@ -338,24 +311,15 @@ Error ImageResource::load(LoadingContext& ctx)
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			TextureBarrierInfo& barrier = barriers[barrierCount++];
-			barrier.m_previousUsage = TextureUsageBit::kTransferDestination;
-			barrier.m_nextUsage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledGeometry;
-
-			if(ctx.m_texType == TextureType::k3D)
-			{
-				barrier.m_subresource = TextureVolumeInfo(mip);
-			}
-			else
-			{
-				barrier.m_subresource = TextureSurfaceInfo(mip, 0, face, layer);
-			}
+			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer)),
+										TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledGeometry};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
 		// Flush batch
 		FencePtr fence;
-		cmdb->flush({}, &fence);
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 
 		for(U i = 0; i < handleCount; ++i)
 		{

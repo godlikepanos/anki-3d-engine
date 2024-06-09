@@ -182,7 +182,7 @@ public:
 		Vec3 pos = getRandom(props.m_particle.m_minStartingPosition, props.m_particle.m_maxStartingPosition);
 		pos = trf.transform(pos);
 
-		m_body->setTransform(Transform(pos.xyz0(), trf.getRotation(), 1.0f));
+		m_body->setTransform(Transform(pos.xyz0(), trf.getRotation(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 		m_crntPosition = pos;
 	}
 
@@ -232,19 +232,18 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 	CommandBufferInitInfo cmdbInit("Particle quad upload");
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
-	Buffer* srcBuff = &RebarTransientMemoryPool::getSingleton().getBuffer();
 	Buffer* dstBuff = &UnifiedGeometryBuffer::getSingleton().getBuffer();
-	cmdb->copyBufferToBuffer(srcBuff, positionsAlloc.getOffset(), dstBuff, m_quadPositions.getOffset(), positionsAlloc.getRange());
-	cmdb->copyBufferToBuffer(srcBuff, uvsAlloc.getOffset(), dstBuff, m_quadUvs.getOffset(), uvsAlloc.getRange());
-	cmdb->copyBufferToBuffer(srcBuff, indicesAlloc.getOffset(), dstBuff, m_quadIndices.getOffset(), indicesAlloc.getRange());
+	cmdb->copyBufferToBuffer(positionsAlloc, m_quadPositions);
+	cmdb->copyBufferToBuffer(uvsAlloc, m_quadUvs);
+	cmdb->copyBufferToBuffer(indicesAlloc, m_quadIndices);
 	BufferBarrierInfo barrier;
-	barrier.m_buffer = dstBuff;
-	barrier.m_offset = 0;
-	barrier.m_range = kMaxPtrSize;
+	barrier.m_bufferView = BufferView(dstBuff);
 	barrier.m_previousUsage = BufferUsageBit::kTransferDestination;
 	barrier.m_nextUsage = dstBuff->getBufferUsage();
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
-	cmdb->flush();
+	cmdb->endRecording();
+
+	GrManager::getSingleton().submit(cmdb.get());
 }
 
 ParticleEmitterComponent::~ParticleEmitterComponent()
@@ -321,7 +320,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 		state.m_program = prog;
 		state.m_primitiveTopology = PrimitiveTopology::kTriangles;
 		state.m_indexedDrawcall = false;
-		m_renderStateBuckets[t] = RenderStateBucketContainer::getSingleton().addUser(state, t);
+		m_renderStateBuckets[t] = RenderStateBucketContainer::getSingleton().addUser(state, t, 0);
 	}
 }
 
@@ -399,10 +398,10 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		// Upload the GpuSceneRenderable
 		GpuSceneRenderable renderable;
 		renderable.m_boneTransformsOffset = 0;
-		renderable.m_constantsOffset = m_gpuSceneUniforms.getOffset();
-		renderable.m_meshLodsOffset = m_gpuSceneMeshLods.getGpuSceneOffset();
+		renderable.m_uniformsOffset = m_gpuSceneUniforms.getOffset();
+		renderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 		renderable.m_particleEmitterOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
-		renderable.m_worldTransformsOffset = 0;
+		renderable.m_worldTransformsIndex = 0;
 		renderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
 		if(!m_gpuSceneRenderable.isValid())
 		{

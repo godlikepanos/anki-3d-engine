@@ -62,28 +62,32 @@ protected:
 	}
 
 	template<typename T>
-	static T* allocateAndBindConstants(CommandBuffer& cmdb, U32 set, U32 binding)
+	static T* allocateAndBindConstants(CommandBuffer& cmdb, Register reg)
 	{
 		T* ptr;
 		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(1, ptr);
 		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
-		cmdb.bindConstantBuffer(set, binding, alloc);
+		cmdb.bindUniformBuffer(reg, alloc);
 		return ptr;
 	}
 
 	template<typename T>
-	static T* allocateAndBindUav(CommandBuffer& cmdb, U32 set, U32 binding, U32 count = 1)
+	static T* allocateAndBindStorageBuffer(CommandBuffer& cmdb, Register reg, U32 count = 1)
 	{
 		T* ptr;
 		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(count, ptr);
 		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
-		cmdb.bindUavBuffer(set, binding, alloc);
+		cmdb.bindStorageBuffer(reg, alloc);
 		return ptr;
 	}
 
 	void registerDebugRenderTarget(CString rtName);
 
-	static Error loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
+	static Error loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg)
+	{
+		ANKI_CHECK(loadShaderProgram(filename, {}, rsrc, grProg));
+		return Error::kNone;
+	}
 
 	class SubMutation
 	{
@@ -92,9 +96,15 @@ protected:
 		MutatorValue m_value;
 	};
 
-	static Error loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg);
+	static Error loadShaderProgram(CString filename, std::initializer_list<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
+								   ShaderProgramPtr& grProg, CString technique = {}, ShaderTypeBit shaderTypes = ShaderTypeBit::kNone);
 
 	static void zeroBuffer(Buffer* buff);
+
+	/// Temp pass name.
+	static CString generateTempPassName(CString name, U32 index);
+
+	static CString generateTempPassName(CString name, U32 index, CString name2, U32 index2);
 };
 /// @}
 

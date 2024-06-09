@@ -45,7 +45,6 @@ private:
 
 	U32 m_finalZSplit = 0;
 
-	Array<U32, 2> m_workgroupSize = {};
 	Array<U32, 3> m_volumeSize;
 
 	class

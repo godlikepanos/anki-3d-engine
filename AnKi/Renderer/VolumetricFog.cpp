@@ -29,14 +29,7 @@ Error VolumetricFog::init()
 	ANKI_R_LOGV("Initializing volumetric fog. Resolution %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
-	m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
-	m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VolumetricFogAccumulation.ankiprogbin", m_prog, m_grProg));
 
 	// RT descr
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat, "Fog");
@@ -56,7 +49,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
 
-	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite);
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -65,14 +58,14 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindColorTexture(0, 1, getRenderer().getVolumetricLightingAccumulation().getRt());
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		rgraphCtx.bindUavTexture(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_rt);
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 
-		VolumetricFogConstants regs;
+		VolumetricFogUniforms regs;
 		regs.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
 		regs.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
 		regs.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;
@@ -84,7 +77,7 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.setPushConstants(&regs, sizeof(regs));
 
-		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_volumeSize[0], m_volumeSize[1]);
+		dispatchPPCompute(cmdb, 8, 8, m_volumeSize[0], m_volumeSize[1]);
 	});
 }
 

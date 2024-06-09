@@ -41,14 +41,6 @@ Error Dbg::init()
 															  Format::kR8G8B8A8_Unorm, "Dbg");
 	m_rtDescr.bake();
 
-	// Create FB descr
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_fbDescr.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_fbDescr.bake();
-
 	ResourceManager& rsrcManager = ResourceManager::getSingleton();
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GiProbe.ankitex", m_giProbeImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/LightBulb.ankitex", m_pointLightImage));
@@ -133,7 +125,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	m_nonRenderablesProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());
 
-	class Constants
+	class Uniforms
 	{
 	public:
 		Mat4 m_viewProjMat;
@@ -143,12 +135,12 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	unis.m_camTrf = ctx.m_matrices.m_cameraTransform;
 	cmdb.setPushConstants(&unis, sizeof(unis));
 
-	cmdb.bindUavBuffer(0, 2, getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
-	cmdb.bindUavBuffer(0, 3, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
+	cmdb.bindStorageBuffer(ANKI_REG(t1), getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
+	cmdb.bindStorageBuffer(ANKI_REG(t2), getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
 
-	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearRepeat.get());
-	cmdb.bindTexture(0, 5, &image.getTextureView());
-	cmdb.bindTexture(0, 6, &m_spotLightImage->getTextureView());
+	cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindTexture(ANKI_REG(t3), TextureView(&image.getTexture(), TextureSubresourceDescriptor::all()));
+	cmdb.bindTexture(ANKI_REG(t4), TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDescriptor::all()));
 
 	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
 }
@@ -168,8 +160,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb.setDepthCompareOperation((m_depthTestOn) ? CompareOperation::kLess : CompareOperation::kAlways);
 	cmdb.setLineWidth(2.0f);
 
-	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindTexture(0, 1, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+	rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
 
 	// GBuffer renderables
 	{
@@ -181,7 +173,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		m_renderablesProg->getOrCreateVariant(variantInitInfo, variant);
 		cmdb.bindShaderProgram(&variant->getProgram());
 
-		class Constants
+		class Uniforms
 		{
 		public:
 			Vec4 m_color;
@@ -191,12 +183,16 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		unis.m_viewProjMat = ctx.m_matrices.m_viewProjection;
 
 		cmdb.setPushConstants(&unis, sizeof(unis));
-		cmdb.bindVertexBuffer(0, m_cubeVertsBuffer.get(), 0, sizeof(Vec3));
-		cmdb.setVertexAttribute(0, 0, Format::kR32G32B32_Sfloat, 0);
-		cmdb.bindIndexBuffer(m_cubeIndicesBuffer.get(), 0, IndexType::kU16);
+		cmdb.bindVertexBuffer(0, BufferView(m_cubeVertsBuffer.get()), sizeof(Vec3));
+		cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
+		cmdb.bindIndexBuffer(BufferView(m_cubeIndicesBuffer.get()), IndexType::kU16);
 
-		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, getRenderer().getGBuffer().getVisibleAabbsBuffer());
+		cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
+
+		BufferView indicesBuff;
+		BufferHandle dep;
+		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
+		cmdb.bindStorageBuffer(ANKI_REG(t2), indicesBuff);
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 	}
@@ -205,10 +201,17 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
 
-		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, getRenderer().getForwardShading().getVisibleAabbsBuffer());
+		if(allAabbCount)
+		{
+			cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
 
-		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
+			BufferView indicesBuff;
+			BufferHandle dep;
+			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+			cmdb.bindStorageBuffer(ANKI_REG(t2), indicesBuff);
+
+			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
+		}
 	}
 
 	// Draw non-renderables
@@ -241,14 +244,29 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Debug");
 
-	pass.setWork(1, [this, &ctx](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(rgraphCtx, ctx);
 	});
 
-	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, getRenderer().getGBuffer().getDepthRt());
+	RenderTargetInfo colorRti(m_runCtx.m_rt);
+	colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
+	RenderTargetInfo depthRti(getRenderer().getGBuffer().getDepthRt());
+	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
+	pass.setRenderpassInfo({colorRti}, &depthRti);
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
+
+	BufferView indicesBuff;
+	BufferHandle dep;
+	getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
+	pass.newBufferDependency(dep, BufferUsageBit::kStorageGeometryRead);
+
+	if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())
+	{
+		getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+		pass.newBufferDependency(dep, BufferUsageBit::kStorageGeometryRead);
+	}
 }
 
 } // end namespace anki

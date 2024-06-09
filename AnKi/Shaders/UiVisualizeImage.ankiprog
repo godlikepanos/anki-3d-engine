@@ -7,20 +7,20 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-struct Constants
+struct Uniforms
 {
 	Vec4 m_transform; // x: x scale, y: y scale, z: x transl, w: y transl
 	Vec4 m_colorScale;
 	Vec4 m_depth; // Used in 3D textures.
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 struct VertIn
 {
-	[[vk::location(0)]] Vec2 m_position : POSITION;
-	[[vk::location(1)]] RVec4 m_color : COLOR;
-	[[vk::location(2)]] Vec2 m_uv : TEXCOORD;
+	Vec2 m_position : POSITION;
+	RVec4 m_color : COLOR;
+	Vec2 m_uv : TEXCOORD;
 };
 
 struct VertOut
@@ -30,7 +30,7 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 VertOut main(VertIn input)
 {
@@ -39,20 +39,20 @@ VertOut main(VertIn input)
 	output.m_uv = input.m_uv;
 	output.m_color = input.m_color;
 
-	const Vec2 pos = g_consts.m_transform.xy * input.m_position + g_consts.m_transform.zw;
+	const Vec2 pos = g_unis.m_transform.xy * input.m_position + g_unis.m_transform.zw;
 	output.m_svPosition = Vec4(pos, 0.0, 1.0);
 
 	return output;
 }
-#pragma anki end
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
-[[vk::binding(0)]] SamplerState g_trilinearRepeatSampler;
+SamplerState g_trilinearRepeatSampler : register(s0);
 #if TEXTURE_TYPE == 0
-[[vk::binding(1)]] Texture2D<RVec4> g_tex2d;
+Texture2D<RVec4> g_tex2d : register(t0);
 #else
-[[vk::binding(1)]] Texture3D<RVec4> g_tex3d;
+Texture3D<RVec4> g_tex3d : register(t0);
 #endif
 
 RVec4 main(VertOut input) : SV_TARGET0
@@ -60,11 +60,11 @@ RVec4 main(VertOut input) : SV_TARGET0
 #if TEXTURE_TYPE == 0
 	const RVec4 rgba = g_tex2d.Sample(g_trilinearRepeatSampler, input.m_uv);
 #else
-	const RVec4 rgba = g_tex3d.Sample(g_trilinearRepeatSampler, Vec3(input.m_uv, g_consts.m_depth.x));
+	const RVec4 rgba = g_tex3d.Sample(g_trilinearRepeatSampler, Vec3(input.m_uv, g_unis.m_depth.x));
 #endif
-	RVec3 outColor = input.m_color.rgb * rgba.rgb * g_consts.m_colorScale.rgb;
+	RVec3 outColor = input.m_color.rgb * rgba.rgb * g_unis.m_colorScale.rgb;
 
-	if(g_consts.m_colorScale.a == 1.0)
+	if(g_unis.m_colorScale.a == 1.0)
 	{
 		// Draw a pattern to visualize alpha
 		F32 alphaPattern = ((U32(input.m_svPosition.x) / 16u) & 1u) == 1u ? 1.0 : 0.75;
@@ -76,4 +76,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 	return RVec4(outColor, 1.0);
 }
 
-#pragma anki end
+#pragma anki technique_end frag

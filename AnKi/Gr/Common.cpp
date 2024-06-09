@@ -13,7 +13,7 @@ namespace anki {
 inline constexpr ShaderVariableDataTypeInfo kShaderVariableDataTypeInfos[] = {
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) {ANKI_STRINGIZE(type), sizeof(type), false, isIntagralType},
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) {ANKI_STRINGIZE(type), kMaxU32, true, false},
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 };
@@ -34,12 +34,12 @@ FormatInfo getFormatInfo(Format fmt)
 	FormatInfo out = {};
 	switch(fmt)
 	{
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
+#define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
 	case Format::k##type: \
 		out = {componentCount,      texelSize, blockWidth, blockHeight, blockSize, shaderType, DepthStencilAspectBit::k##depthStencil, \
 			   ANKI_STRINGIZE(type)}; \
 		break;
-#include <AnKi/Gr/Format.defs.h>
+#include <AnKi/Gr/BackendCommon/Format.def.h>
 #undef ANKI_FORMAT_DEF
 
 	default:
@@ -121,6 +121,64 @@ U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
 	}
 
 	return count;
+}
+
+Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c_)
+{
+	ShaderReflection c;
+
+	memcpy(&c.m_descriptor, &a.m_descriptor, sizeof(a.m_descriptor));
+	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
+	{
+		for(U32 binding = 0; binding < b.m_descriptor.m_bindingCounts[set]; ++binding)
+		{
+			// Search for the binding in a
+			const ShaderReflectionBinding& bbinding = b.m_descriptor.m_bindings[set][binding];
+			Bool bindingFoundOnA = false;
+			for(U32 binding2 = 0; binding2 < a.m_descriptor.m_bindingCounts[set]; ++binding2)
+			{
+				const ShaderReflectionBinding& abinding = a.m_descriptor.m_bindings[set][binding2];
+
+				if(abinding.m_registerBindingPoint == bbinding.m_registerBindingPoint
+				   && descriptorTypeToHlslResourceType(abinding.m_type, abinding.m_flags)
+						  == descriptorTypeToHlslResourceType(bbinding.m_type, bbinding.m_flags))
+				{
+					if(abinding != bbinding)
+					{
+						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Set %u binding %u", set, binding);
+						return Error::kFunctionFailed;
+					}
+					bindingFoundOnA = true;
+					break;
+				}
+			}
+
+			if(!bindingFoundOnA)
+			{
+				c.m_descriptor.m_bindings[set][c.m_descriptor.m_bindingCounts[set]++] = bbinding;
+			}
+		}
+	}
+
+	if(a.m_descriptor.m_pushConstantsSize != 0 && b.m_descriptor.m_pushConstantsSize != 0
+	   && a.m_descriptor.m_pushConstantsSize != b.m_descriptor.m_pushConstantsSize)
+	{
+		ANKI_GR_LOGE("Can't link shader reflection because push constant size doesn't match");
+		return Error::kFunctionFailed;
+	}
+	c.m_descriptor.m_pushConstantsSize = max(a.m_descriptor.m_pushConstantsSize, b.m_descriptor.m_pushConstantsSize);
+
+	c.m_descriptor.m_hasVkBindlessDescriptorSet = a.m_descriptor.m_hasVkBindlessDescriptorSet || b.m_descriptor.m_hasVkBindlessDescriptorSet;
+
+	c.m_vertex.m_vertexAttributeLocations =
+		(a.m_vertex.m_vertexAttributeMask.getAnySet()) ? a.m_vertex.m_vertexAttributeLocations : b.m_vertex.m_vertexAttributeLocations;
+	c.m_vertex.m_vertexAttributeMask = a.m_vertex.m_vertexAttributeMask | b.m_vertex.m_vertexAttributeMask;
+
+	c.m_fragment.m_colorAttachmentWritemask = a.m_fragment.m_colorAttachmentWritemask | b.m_fragment.m_colorAttachmentWritemask;
+	c.m_fragment.m_discards = a.m_fragment.m_discards || b.m_fragment.m_discards;
+
+	c_ = c;
+	return Error::kNone;
 }
 
 } // end namespace anki

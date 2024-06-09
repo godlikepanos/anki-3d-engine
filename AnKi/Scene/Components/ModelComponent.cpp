@@ -11,6 +11,7 @@
 #include <AnKi/Resource/ModelResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
 
@@ -156,8 +157,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				ModelPatchGeometryInfo inf;
 				patch.getGeometryInfo(l, inf);
 
-				ANKI_ASSERT((inf.m_indexBufferOffset % getIndexSize(inf.m_indexType)) == 0);
-				meshLod.m_firstIndex = U32(inf.m_indexBufferOffset / getIndexSize(inf.m_indexType));
+				ANKI_ASSERT((inf.m_indexUgbOffset % getIndexSize(inf.m_indexType)) == 0);
+				meshLod.m_firstIndex = U32(inf.m_indexUgbOffset / getIndexSize(inf.m_indexType));
 				meshLod.m_indexCount = inf.m_indexCount;
 
 				for(VertexStreamId stream = VertexStreamId::kMeshRelatedFirst; stream < VertexStreamId::kMeshRelatedCount; ++stream)
@@ -165,8 +166,8 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					if(mesh.isVertexStreamPresent(stream))
 					{
 						const PtrSize elementSize = getFormatInfo(kMeshRelatedVertexStreamFormats[stream]).m_texelSize;
-						ANKI_ASSERT((inf.m_vertexBufferOffsets[stream] % elementSize) == 0);
-						meshLod.m_vertexOffsets[U32(stream)] = U32(inf.m_vertexBufferOffsets[stream] / elementSize);
+						ANKI_ASSERT((inf.m_vertexUgbOffsets[stream] % elementSize) == 0);
+						meshLod.m_vertexOffsets[U32(stream)] = U32(inf.m_vertexUgbOffsets[stream] / elementSize);
 					}
 					else
 					{
@@ -180,6 +181,18 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 					memcpy(&meshLod.m_blasAddress, &address, sizeof(meshLod.m_blasAddress));
 					meshLod.m_tlasInstanceMask = 0xFFFFFFFF;
 				}
+
+				if(inf.m_meshletCount)
+				{
+					ANKI_ASSERT((inf.m_meshletBoundingVolumesUgbOffset % sizeof(MeshletBoundingVolume)) == 0);
+					meshLod.m_firstMeshletBoundingVolume = U32(inf.m_meshletBoundingVolumesUgbOffset / sizeof(MeshletBoundingVolume));
+					ANKI_ASSERT((inf.m_meshletGometryDescriptorsUgbOffset % sizeof(MeshletGeometryDescriptor)) == 0);
+					meshLod.m_firstMeshletGeometryDescriptor = U32(inf.m_meshletGometryDescriptorsUgbOffset / sizeof(MeshletGeometryDescriptor));
+					meshLod.m_meshletCount = inf.m_meshletCount;
+				}
+
+				meshLod.m_renderableIndex = m_patchInfos[i].m_gpuSceneRenderable.getIndex();
+				meshLod.m_lod = l;
 			}
 
 			// Copy the last LOD to the rest just in case
@@ -192,13 +205,13 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 			// Upload the GpuSceneRenderable
 			GpuSceneRenderable gpuRenderable = {};
-			gpuRenderable.m_worldTransformsOffset = m_gpuSceneTransforms.getGpuSceneOffset();
-			gpuRenderable.m_constantsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
-			gpuRenderable.m_meshLodsOffset = m_patchInfos[i].m_gpuSceneMeshLods.getGpuSceneOffset();
+			gpuRenderable.m_worldTransformsIndex = m_gpuSceneTransforms.getIndex() * 2;
+			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
+			gpuRenderable.m_meshLodsIndex = m_patchInfos[i].m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 			if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
 			{
-				const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false);
+				const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false, false);
 				const MaterialVariant& variant = mtl.getOrCreateVariant(key);
 				gpuRenderable.m_rtShadowsShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
 			}
@@ -264,6 +277,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				key.setRenderingTechnique(t);
 				key.setSkinned(hasSkin);
 				key.setVelocity(moved);
+				key.setMeshletRendering(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar.get());
 
 				const MaterialVariant& mvariant = m_model->getModelPatches()[i].getMaterial()->getOrCreateVariant(key);
 
@@ -272,7 +286,11 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				state.m_indexedDrawcall = true;
 				state.m_program = mvariant.getShaderProgram();
 
-				m_patchInfos[i].m_renderStateBucketIndices[t] = RenderStateBucketContainer::getSingleton().addUser(state, t);
+				ModelPatchGeometryInfo inf;
+				m_model->getModelPatches()[i].getGeometryInfo(0, inf);
+				const Bool wantsMesletCount = key.getMeshletRendering() && !(RenderingTechniqueBit(1 << t) & RenderingTechniqueBit::kAllRt);
+				m_patchInfos[i].m_renderStateBucketIndices[t] =
+					RenderStateBucketContainer::getSingleton().addUser(state, t, (wantsMesletCount) ? inf.m_meshletCount : 0);
 			}
 		}
 	}

@@ -61,10 +61,9 @@ class ShaderInitInfo : public GrBaseInitInfo
 {
 public:
 	ShaderType m_shaderType = ShaderType::kCount;
-	ConstWeakArray<U8> m_binary = {};
+	ConstWeakArray<U8> m_binary;
 
-	/// @note It's OK to have entries in that array with consts that do not appear in the shader.
-	ConstWeakArray<ShaderSpecializationConstValue> m_constValues;
+	ShaderReflection m_reflection;
 
 	ShaderInitInfo()
 	{
@@ -80,6 +79,13 @@ public:
 		, m_shaderType(type)
 		, m_binary(bin)
 	{
+	}
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_shaderType != ShaderType::kCount);
+		ANKI_ASSERT(m_binary.getSize() > 0);
+		m_reflection.validate();
 	}
 };
 
@@ -97,8 +103,25 @@ public:
 		return m_shaderType;
 	}
 
+	U32 getShaderBinarySize() const
+	{
+		ANKI_ASSERT(m_shaderBinarySize);
+		return m_shaderBinarySize;
+	}
+
+	/// Fragment shader had a discard.
+	U32 hasDiscard() const
+	{
+		ANKI_ASSERT(m_shaderType == ShaderType::kFragment);
+		return m_hasDiscard;
+	}
+
 protected:
+	U32 m_shaderBinarySize = 0;
+
 	ShaderType m_shaderType = ShaderType::kCount;
+
+	Bool m_hasDiscard = false;
 
 	/// Construct.
 	Shader(CString name)

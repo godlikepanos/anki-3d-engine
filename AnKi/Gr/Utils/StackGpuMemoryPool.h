@@ -40,6 +40,8 @@ public:
 
 	void reset();
 
+	PtrSize getAllocatedMemory() const;
+
 private:
 	class Chunk;
 	class BuilderInterface;

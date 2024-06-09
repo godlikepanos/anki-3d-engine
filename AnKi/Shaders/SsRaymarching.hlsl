@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
 
 // Find the intersection of a ray and a AABB when the ray is inside the AABB
 void rayAabbIntersectionInside2d(Vec2 rayOrigin, Vec2 rayDir, Vec2 aabbMin, Vec2 aabbMax, out F32 t)
@@ -148,16 +148,15 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 						 Vec3 rayDir, // Ray dir in view space
 						 Vec2 uv, // UV the ray starts
 						 F32 depthRef, // Depth the ray starts
-						 Mat4 projMat, // Projection matrix
-						 U32 maxSteps, // The max iterations of the base algorithm
-						 Texture2D depthTex, // Depth tex
+						 Vec4 projMat00_11_22_23, // Projection matrix
+						 U32 maxIterations, // The max iterations of the base algorithm
+						 Texture2D<Vec4> depthTex, // Depth tex
 						 SamplerState depthSampler, // Sampler for depthTex
 						 F32 depthLod, // LOD to pass to the textureLod
-						 UVec2 depthTexSize, // Size of the depthTex
-						 U32 initialStepIncrement, // Initial step increment
-						 U32 randInitialStep, // The initial step
+						 U32 stepIncrement_, // The step increment of each iteration
+						 U32 initialStepIncrement, // The initial step
 						 out Vec3 hitPoint, // Hit point in UV coordinates
-						 out F32 attenuation)
+						 out RF32 attenuation)
 {
 	attenuation = 0.0;
 
@@ -169,28 +168,35 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 		return;
 	}
 
+	// Find the depth's mipmap size
+	UVec2 depthTexSize;
+	U32 depthTexMipCount;
+	depthTex.GetDimensions(0u, depthTexSize.x, depthTexSize.y, depthTexMipCount);
+	depthLod = min(depthLod, F32(depthTexMipCount) - 1.0f);
+	const UVec2 deptTexMipSize = depthTexSize >> U32(depthLod);
+
 	// Start point
 	const Vec3 start = Vec3(uv, depthRef);
 
 	// Project end point
 	const Vec3 p1 = rayOrigin + rayDir * 0.1;
-	const Vec4 end4 = mul(projMat, Vec4(p1, 1.0));
+	const Vec4 end4 = cheapPerspectiveProjection(projMat00_11_22_23, Vec4(p1, 1.0));
 	Vec3 end = end4.xyz / end4.w;
 	end.xy = ndcToUv(end.xy);
 
 	// Compute the ray and step size
 	Vec3 dir = end - start;
-	const Vec2 texelSize = abs(dir.xy) * Vec2(depthTexSize);
+	const Vec2 texelSize = abs(dir.xy) * Vec2(deptTexMipSize);
 	const F32 stepSize = length(dir.xy) / max(texelSize.x, texelSize.y);
 	dir = normalize(dir);
 
 	// Compute step
-	I32 stepIncrement = I32(initialStepIncrement);
-	I32 crntStep = I32(randInitialStep);
+	I32 stepIncrement = I32(stepIncrement_);
+	I32 crntStep = I32(initialStepIncrement);
 
 	// Search
 	Vec3 origin;
-	[loop] while(maxSteps-- != 0u)
+	[loop] while(maxIterations-- != 0u)
 	{
 		origin = start + dir * (F32(crntStep) * stepSize);
 
@@ -218,11 +224,11 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 			// Found it
 
 			// Compute attenuation
-			const F32 blackMargin = 0.05 / 4.0;
-			const F32 whiteMargin = 0.1 / 2.0;
-			const Vec2 marginAttenuation2d =
+			const RF32 blackMargin = 0.05 / 4.0;
+			const RF32 whiteMargin = 0.1 / 2.0;
+			const RVec2 marginAttenuation2d =
 				smoothstep(blackMargin, whiteMargin, origin.xy) * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
-			const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
+			const RF32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
 			attenuation = marginAttenuation * cameraContribution;
 
 			// ...and hit point
@@ -232,7 +238,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	}
 }
 
-void rejectBackFaces(Vec3 reflection, Vec3 normalAtHitPoint, out F32 attenuation)
+void rejectBackFaces(Vec3 reflection, Vec3 normalAtHitPoint, out RF32 attenuation)
 {
 	attenuation = smoothstep(-0.17, 0.0, dot(normalAtHitPoint, -reflection));
 }

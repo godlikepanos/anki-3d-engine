@@ -1,0 +1,62 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+#	include <AnKi/Shaders/Functions.hlsl>
+
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<RVec4> g_inputTex : register(t0);
+
+#	if ANKI_COMPUTE_SHADER
+#		define USE_COMPUTE 1
+#	else
+#		define USE_COMPUTE 0
+#	endif
+
+#	if USE_COMPUTE
+RWTexture2D<RVec4> g_storageTex : register(u0);
+
+struct Uniforms
+{
+	Vec2 m_viewportSize;
+	UVec2 m_viewportSizeU;
+};
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+#	endif
+
+#	if USE_COMPUTE
+[numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+#	else
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+#	endif
+{
+#	if USE_COMPUTE
+	if(skipOutOfBoundsInvocations(UVec2(8, 8), g_unis.m_viewportSizeU, svDispatchThreadId.xy))
+	{
+		return;
+	}
+
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / g_unis.m_viewportSize;
+#	endif
+
+	const RVec3 color = g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
+
+#	if USE_COMPUTE
+	g_storageTex[svDispatchThreadId.xy] = RVec4(color, 0.0);
+#	else
+	return color;
+#	endif
+}
+#endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#pragma anki technique_end frag
+
+#pragma anki technique_start comp
+#pragma anki technique_end comp

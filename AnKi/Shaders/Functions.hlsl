@@ -31,8 +31,8 @@ Vec4 linearizeDepthOptimal(Vec4 depths, F32 a, F32 b)
 	return 1.0 / (a + b / depths);
 }
 
-// Project a vector by knowing only the non zero values of a perspective matrix
-Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
+/// Project a vector by knowing only the non zero values of a perspective matrix. Doesn't take into account jitter.
+Vec4 cheapPerspectiveProjection(F32 m00, F32 m11, F32 m22, F32 m23, Vec4 vec)
 {
 	Vec4 o;
 	o.x = vec.x * m00;
@@ -42,7 +42,21 @@ Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
 	return o;
 }
 
-#if defined(ANKI_FRAGMENT_SHADER)
+/// Project a vector by knowing only the non zero values of a perspective matrix. Doesn't take into account jitter.
+Vec4 cheapPerspectiveProjection(Vec4 projMat_00_11_22_23, Vec4 vec)
+{
+	return cheapPerspectiveProjection(projMat_00_11_22_23.x, projMat_00_11_22_23.y, projMat_00_11_22_23.z, projMat_00_11_22_23.w, vec);
+}
+
+/// To unproject to view space. Jitter not considered. See Mat4::extractPerspectiveUnprojectionParams in C++.
+Vec3 cheapPerspectiveUnprojection(Vec4 unprojParams, Vec2 ndc, F32 depth)
+{
+	const F32 z = unprojParams.z / (unprojParams.w + depth);
+	const Vec2 xy = ndc * unprojParams.xy * z;
+	return Vec3(xy, z);
+}
+
+#if ANKI_FRAGMENT_SHADER
 // Stolen from shadertoy.com/view/4tyGDD
 Vec4 textureCatmullRom4Samples(Texture2D tex, SamplerState sampl, Vec2 uv, Vec2 texSize)
 {
@@ -61,7 +75,8 @@ Vec4 textureCatmullRom4Samples(Texture2D tex, SamplerState sampl, Vec2 uv, Vec2 
 #endif
 
 // Stolen from shadertoy.com/view/4df3Dn
-Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 texSize)
+template<typename TVec>
+TVec textureBicubic(Texture2D<TVec> tex, SamplerState sampl, Vec2 uv, F32 lod)
 {
 #define w0(a) ((1.0 / 6.0) * ((a) * ((a) * (-(a) + 3.0) - 3.0) + 1.0))
 #define w1(a) ((1.0 / 6.0) * ((a) * (a) * (3.0 * (a)-6.0) + 4.0))
@@ -72,6 +87,12 @@ Vec4 textureBicubic(Texture2D tex, SamplerState sampl, Vec2 uv, F32 lod, Vec2 te
 #define h0(a) (-1.0 + w1(a) / (w0(a) + w1(a)))
 #define h1(a) (1.0 + w3(a) / (w2(a) + w3(a)))
 #define texSample(uv) tex.SampleLevel(sampl, uv, lod)
+
+	UVec2 texSize;
+	U32 mipCount;
+	tex.GetDimensions(0, texSize.x, texSize.y, mipCount);
+	const U32 lodi = min(U32(lod), mipCount - 1u);
+	texSize = texSize >> lodi;
 
 	uv = uv * texSize + 0.5;
 	const Vec2 iuv = floor(uv);
@@ -106,7 +127,7 @@ F32 rand(Vec2 n)
 	return 0.5 + 0.5 * frac(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-Vec4 nearestDepthUpscale(Vec2 uv, Texture2D depthFull, Texture2D depthHalf, Texture2D colorTex, SamplerState linearAnyClampSampler,
+Vec4 nearestDepthUpscale(Vec2 uv, Texture2D<Vec4> depthFull, Texture2D<Vec4> depthHalf, Texture2D<Vec4> colorTex, SamplerState linearAnyClampSampler,
 						 Vec2 linearDepthCf, F32 depthThreshold)
 {
 	F32 fullDepth = depthFull.SampleLevel(linearAnyClampSampler, uv, 0.0).r; // Sampler not important.
@@ -204,6 +225,7 @@ Vec4 bilateralUpsample(Texture2D depthHigh, Texture2D depthLow, Texture2D colorL
 	return sum / normalize;
 }
 
+/// Compute the UV that can be passed to a cube texture. The norm is in [-1, 1].
 Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 {
 	Vec3 zDir = Vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);
@@ -271,36 +293,40 @@ Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
 	return 0.5 / mag * uv + 0.5;
 }
 
-RVec3 grayScale(const RVec3 col)
+template<typename T>
+vector<T, 3> grayScale(const vector<T, 3> col)
 {
-	const F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
-	return RVec3(grey, grey, grey);
+	const T grey = (col.r + col.g + col.b) * T(1.0 / 3.0);
+	return vector<T, 3>(grey, grey, grey);
 }
 
-Vec3 saturateColor(const Vec3 col, const F32 factor)
+template<typename T>
+vector<T, 3> saturateColor(const vector<T, 3> col, const T factor)
 {
-	const Vec3 lumCoeff = Vec3(0.2125, 0.7154, 0.0721);
-	const F32 d = dot(col, lumCoeff);
-	const Vec3 intensity = Vec3(d, d, d);
+	const vector<T, 3> lumCoeff = vector<T, 3>(0.2125, 0.7154, 0.0721);
+	const T d = dot(col, lumCoeff);
+	const vector<T, 3> intensity = vector<T, 3>(d, d, d);
 	return lerp(intensity, col, factor);
 }
 
-Vec3 gammaCorrection(Vec3 gamma, Vec3 col)
+template<typename T>
+vector<T, 3> gammaCorrection(vector<T, 3> gamma, vector<T, 3> col)
 {
-	return pow(col, 1.0 / gamma);
+	return pow(col, T(1.0) / gamma);
 }
 
 // Can use 0.15 for sharpenFactor
-Vec3 readSharpen(Texture2D tex, SamplerState sampl, Vec2 uv, F32 sharpenFactor, Bool detailed)
+template<typename T>
+vector<T, 3> readSharpen(Texture2D<vector<T, 4> > tex, SamplerState sampl, Vec2 uv, T sharpenFactor, Bool detailed)
 {
-	Vec3 col = tex.SampleLevel(sampl, uv, 0.0).rgb;
+	vector<T, 3> col = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
-	Vec3 col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(1, 1)).rgb;
+	vector<T, 3> col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(1, 1)).rgb;
 	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(-1, -1)).rgb;
 	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(1, -1)).rgb;
 	col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(-1, 1)).rgb;
 
-	F32 f = 4.0;
+	T f = 4.0;
 	if(detailed)
 	{
 		col2 += tex.SampleLevel(sampl, uv, 0.0, IVec2(0, 1)).rgb;
@@ -311,19 +337,20 @@ Vec3 readSharpen(Texture2D tex, SamplerState sampl, Vec2 uv, F32 sharpenFactor, 
 		f = 8.0;
 	}
 
-	col = col * (f * sharpenFactor + 1.0) - sharpenFactor * col2;
-	return max(Vec3(0.0, 0.0, 0.0), col);
+	col = col * (f * sharpenFactor + T(1.0)) - sharpenFactor * col2;
+	return max(vector<T, 3>(0.0, 0.0, 0.0), col);
 }
 
-Vec3 readErosion(Texture2D tex, SamplerState sampl, const Vec2 uv)
+template<typename T>
+vector<T, 3> readErosion(Texture2D<vector<T, 4> > tex, SamplerState sampl, const Vec2 uv)
 {
-	Vec3 minValue = tex.SampleLevel(sampl, uv, 0.0).rgb;
+	vector<T, 3> minValue = tex.SampleLevel(sampl, uv, 0.0).rgb;
 
 #define ANKI_EROSION(x, y) \
 	col2 = tex.SampleLevel(sampl, uv, 0.0, IVec2(x, y)).rgb; \
 	minValue = min(col2, minValue);
 
-	Vec3 col2;
+	vector<T, 3> col2;
 	ANKI_EROSION(1, 1);
 	ANKI_EROSION(-1, -1);
 	ANKI_EROSION(1, -1);
@@ -445,10 +472,12 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 	const Vec3 y = Vec3(b, sign + a * pow(z.y, 2.0), -z.y);
 #endif
 
-	return constructMatrixColumns(x, y, z);
+	Mat3 o;
+	o.setColumns(x, y, z);
+	return o;
 }
 
-#if defined(ANKI_COMPUTE_SHADER) && ANKI_GLSL
+#if ANKI_COMPUTE_SHADER && ANKI_GLSL
 // See getOptimalGlobalInvocationId8x8Amd
 U32 _ABfiM(U32 src, U32 ins, U32 bits)
 {
@@ -522,36 +551,23 @@ UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 #endif
 
 // Gaussian distrubution function
-F32 gaussianWeight(F32 s, F32 x)
+template<typename T>
+T gaussianWeight(T s, T x)
 {
-	F32 p = 1.0 / (s * sqrt(2.0 * kPi));
-	p *= exp((x * x) / (-2.0 * s * s));
+	T p = T(1.0) / (s * sqrt(T(2.0) * kPi));
+	p *= exp((x * x) / (T(-2.0) * s * s));
 	return p;
 }
 
-#if ANKI_GLSL
-Vec4 bilinearFiltering(Texture2D tex, SamplerState nearestSampler, Vec2 uv, F32 lod, Vec2 textureSize)
-{
-	const Vec2 texelSize = 1.0 / textureSize;
-	const Vec2 unnormTexCoord = (uv * textureSize) - 0.5;
-	const Vec2 f = frac(unnormTexCoord);
-	const Vec2 snapTexCoord = (floor(unnormTexCoord) + 0.5) / textureSize;
-	const Vec4 s1 = textureLod(tex, nearestSampler, uv, lod);
-	const Vec4 s2 = textureLod(tex, nearestSampler, uv + Vec2(texelSize.x, 0.0), lod);
-	const Vec4 s3 = textureLod(tex, nearestSampler, uv + Vec2(0.0, texelSize.y), lod);
-	const Vec4 s4 = textureLod(tex, nearestSampler, uv + texelSize, lod);
-	return mix(mix(s1, s2, f.x), mix(s3, s4, f.x), f.y);
-}
-#endif
-
 // https://www.shadertoy.com/view/WsfBDf
-Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
+template<typename T>
+vector<T, 3> animateBlueNoise(vector<T, 3> inputBlueNoise, U32 frameIdx)
 {
-	const F32 goldenRatioConjugate = 0.61803398875;
-	return frac(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
+	const T goldenRatioConjugate = 0.61803398875;
+	return frac(inputBlueNoise + T(frameIdx % 64u) * goldenRatioConjugate);
 }
 
-#if defined(ANKI_FRAGMENT_SHADER)
+#if ANKI_FRAGMENT_SHADER
 /// https://bgolus.medium.com/distinctive-derivative-differences-cce38d36797b
 /// normalizedUvs is uv*textureResolution
 F32 computeMipLevel(Vec2 normalizedUvs)
@@ -633,57 +649,33 @@ Vec2 equirectangularMapping(Vec3 v)
 	return uv;
 }
 
-Vec3 linearToSRgb(Vec3 linearRgb)
+template<typename T>
+vector<T, 3> linearToSRgb(vector<T, 3> linearRgb)
 {
-	const F32 a = 6.10352e-5;
-	const F32 b = 1.0 / 2.4;
-	linearRgb = max(Vec3(a, a, a), linearRgb);
-	return min(linearRgb * 12.92, pow(max(linearRgb, 0.00313067), Vec3(b, b, b)) * 1.055 - 0.055);
+	constexpr T a = 6.10352e-5;
+	constexpr T b = 1.0 / 2.4;
+	linearRgb = max(vector<T, 3>(a, a, a), linearRgb);
+	return min(linearRgb * T(12.92), pow(max(linearRgb, T(0.00313067)), Vec3(b, b, b)) * T(1.055) - T(0.055));
 }
 
-Vec3 sRgbToLinear(Vec3 sRgb)
+template<typename T>
+vector<T, 3> sRgbToLinear(vector<T, 3> sRgb)
 {
-#if ANKI_GLSL
-	const bvec3 cutoff = lessThan(sRgb, Vec3(0.04045));
-	const Vec3 higher = pow((sRgb + 0.055) / 1.055, Vec3(2.4));
-	const Vec3 lower = sRgb / 12.92;
-	return mix(higher, lower, cutoff);
-#else
-	const bool3 cutoff = sRgb < Vec3(0.04045, 0.04045, 0.04045);
-	const Vec3 higher = pow((sRgb + 0.055) / 1.055, Vec3(2.4, 2.4, 2.4));
-	const Vec3 lower = sRgb / 12.92;
+	const bool3 cutoff = sRgb < vector<T, 3>(0.04045, 0.04045, 0.04045);
+	const vector<T, 3> higher = pow((sRgb + T(0.055)) / T(1.055), vector<T, 3>(2.4, 2.4, 2.4));
+	const vector<T, 3> lower = sRgb / T(12.92);
 	return lerp(higher, lower, cutoff);
-#endif
 }
 
-RVec3 filmGrain(RVec3 color, Vec2 uv, F32 strength, F32 time)
+template<typename T>
+vector<T, 3> filmGrain(vector<T, 3> color, Vec2 uv, T strength, F32 time)
 {
-	const F32 x = (uv.x + 4.0) * (uv.y + 4.0) * time;
-	const F32 grain = 1.0 - (fmod((fmod(x, 13.0) + 1.0) * (fmod(x, 123.0) + 1.0), 0.01) - 0.005) * strength;
+	const T x = (uv.x + 4.0) * (uv.y + 4.0) * time;
+	const T grain = T(1.0) - (fmod((fmod(x, T(13.0)) + T(1.0)) * (fmod(x, T(123.0)) + T(1.0)), T(0.01)) - T(0.005)) * strength;
 	return color * grain;
 }
 
-/// Sin approximation: https://www.desmos.com/calculator/svgcjfskne
-F32 fastSin(F32 x)
-{
-	const F32 k2Pi = 2.0 * kPi;
-	const F32 kPiOver2 = kPi / 2.0;
-
-	x = (x + kPiOver2) / (k2Pi) + 0.75;
-	x = frac(x);
-	x = x * 2.0 - 1.0;
-	x = x * abs(x) - x;
-	x *= 4.0;
-	return x;
-}
-
-/// Cos approximation
-F32 fastCos(F32 x)
-{
-	return fastSin(x + kPi / 2.0);
-}
-
-#if defined(ANKI_COMPUTE_SHADER)
+#if ANKI_COMPUTE_SHADER
 /// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on local variables (the compiler
 /// can't see it's groupshared).
 /// @param svGroupIndex Self explanatory.
@@ -708,3 +700,57 @@ F32 fastCos(F32 x)
 			waveIndexInsideThreadgroup = WaveReadLaneFirst(waveIndexInsideThreadgroup); \
 		} while(false)
 #endif
+
+/// Perturb normal, see http://www.thetenthplanet.de/archives/1180
+/// Does normal mapping in the fragment shader. It assumes that green is up. viewDir and geometricNormal need to be in the same space.
+RVec3 perturbNormal(RVec3 tangentNormal, Vec3 viewDir, Vec2 uv, Vec3 geometricNormal)
+{
+	tangentNormal.y = -tangentNormal.y; // Green is up
+
+	// Get edge vectors of the pixel triangle
+	const Vec3 dp1 = ddx(viewDir);
+	const Vec3 dp2 = ddy(viewDir);
+	const Vec2 duv1 = ddx(uv);
+	const Vec2 duv2 = ddy(uv);
+
+	// Solve the linear system
+	const Vec3 dp2perp = cross(dp2, geometricNormal);
+	const Vec3 dp1perp = cross(geometricNormal, dp1);
+	const Vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+	const Vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+	// Construct a scale-invariant frame
+	const F32 invmax = rsqrt(max(dot(T, T), dot(B, B)));
+
+	RMat3 TBN;
+	TBN.setColumns(T * invmax, B * invmax, geometricNormal);
+	return normalize(mul(TBN, tangentNormal));
+}
+
+/// Project a sphere into NDC. Sphere in view space. The sphere should be in front of the near plane (-sphereCenter.z > sphereRadius + znear)
+/// @param P00 projection matrix's [0,0]
+/// @param P11 projection matrix's [1,1]
+void projectSphereView(Vec3 sphereCenter, F32 sphereRadius, F32 P00, F32 P11, out Vec2 aabbMin, out Vec2 aabbMax)
+{
+	sphereCenter.z = abs(sphereCenter.z);
+
+	const Vec3 cr = sphereCenter * sphereRadius;
+	const F32 czr2 = sphereCenter.z * sphereCenter.z - sphereRadius * sphereRadius;
+
+	const F32 vx = sqrt(sphereCenter.x * sphereCenter.x + czr2);
+	const F32 minx = (vx * sphereCenter.x - cr.z) / (vx * sphereCenter.z + cr.x);
+	const F32 maxx = (vx * sphereCenter.x + cr.z) / (vx * sphereCenter.z - cr.x);
+
+	const F32 vy = sqrt(sphereCenter.y * sphereCenter.y + czr2);
+	const F32 miny = (vy * sphereCenter.y - cr.z) / (vy * sphereCenter.z + cr.y);
+	const F32 maxy = (vy * sphereCenter.y + cr.z) / (vy * sphereCenter.z - cr.y);
+
+	aabbMin = Vec2(minx * P00, miny * P11);
+	aabbMax = Vec2(maxx * P00, maxy * P11);
+}
+
+template<typename T>
+T barycentricInterpolation(T a, T b, T c, Vec3 barycentrics)
+{
+	return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
+}

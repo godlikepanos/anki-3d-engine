@@ -46,7 +46,8 @@ Plane Plane::getTransformed(const Transform& trf) const
 	Mat3x4 rot = trf.getRotation();
 	rot.transposeRotationPart();
 	Vec4 newTrans(rot * trf.getOrigin(), 0.0f);
-	plane.m_offset = m_offset * trf.getScale() + newTrans.dot(m_normal);
+	ANKI_ASSERT(trf.hasUniformScale());
+	plane.m_offset = m_offset * trf.getScale().x() + newTrans.dot(m_normal);
 
 	return plane;
 }

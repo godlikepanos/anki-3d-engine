@@ -41,7 +41,7 @@ public:
 class GltfImporter
 {
 public:
-	GltfImporter(BaseMemoryPool* pool);
+	GltfImporter();
 
 	~GltfImporter();
 
@@ -51,12 +51,10 @@ public:
 
 private:
 	// Data
-	mutable BaseMemoryPool* m_pool = nullptr;
-
-	ImporterString m_inputFname = {m_pool};
-	ImporterString m_outDir = {m_pool};
-	ImporterString m_rpath = {m_pool};
-	ImporterString m_texrpath = {m_pool};
+	ImporterString m_inputFname;
+	ImporterString m_outDir;
+	ImporterString m_rpath;
+	ImporterString m_texrpath;
 
 	cgltf_data* m_gltf = nullptr;
 
@@ -68,14 +66,14 @@ private:
 
 	mutable Atomic<I32> m_errorInThread = {0};
 
-	ImporterHashMap<const void*, U32> m_nodePtrToIdx = {m_pool}; ///< Need an index for the unnamed nodes.
+	ImporterHashMap<const void*, U32> m_nodePtrToIdx; ///< Need an index for the unnamed nodes.
 
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
 	F32 m_lightIntensityScale = 1.0f;
 	Bool m_optimizeMeshes = false;
 	Bool m_optimizeAnimations = false;
-	ImporterString m_comment = {m_pool};
+	ImporterString m_comment;
 
 	/// Don't generate LODs for meshes with less vertices than this number.
 	U32 m_skipLodVertexCountThreshold = 256;
@@ -102,10 +100,10 @@ private:
 		}
 	};
 
-	ImporterDynamicArray<ImportRequest<const cgltf_mesh*>> m_meshImportRequests = {m_pool};
-	ImporterDynamicArray<ImportRequest<MaterialImportRequest>> m_materialImportRequests = {m_pool};
-	ImporterDynamicArray<ImportRequest<const cgltf_skin*>> m_skinImportRequests = {m_pool};
-	ImporterDynamicArray<ImportRequest<const cgltf_mesh*>> m_modelImportRequests = {m_pool};
+	ImporterDynamicArray<ImportRequest<const cgltf_mesh*>> m_meshImportRequests;
+	ImporterDynamicArray<ImportRequest<MaterialImportRequest>> m_materialImportRequests;
+	ImporterDynamicArray<ImportRequest<const cgltf_skin*>> m_skinImportRequests;
+	ImporterDynamicArray<ImportRequest<const cgltf_mesh*>> m_modelImportRequests;
 
 	// Misc
 	template<typename T>
@@ -129,7 +127,7 @@ private:
 		}
 	}
 
-	Error getExtras(const cgltf_extras& extras, ImporterHashMap<CString, ImporterString>& out) const;
+	Error appendExtras(const cgltf_extras& extras, ImporterHashMap<CString, ImporterString>& out) const;
 	Error parseArrayOfNumbers(CString str, ImporterDynamicArray<F64>& out, const U32* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
 	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
@@ -148,7 +146,7 @@ private:
 
 	ImporterString fixFilename(CString in) const
 	{
-		ImporterString out(in, m_pool);
+		ImporterString out = in;
 		out.replaceAll("|", "_");
 		out.replaceAll(" ", "_");
 		return out;
@@ -176,7 +174,9 @@ private:
 
 	// Resources
 	Error writeMesh(const cgltf_mesh& mesh) const;
+	Error writeMeshInternal(const cgltf_mesh& mesh) const;
 	Error writeMaterial(const cgltf_material& mtl, Bool writeRayTracing) const;
+	Error writeMaterialInternal(const cgltf_material& mtl, Bool writeRayTracing) const;
 	Error writeModel(const cgltf_mesh& mesh) const;
 	Error writeAnimation(const cgltf_animation& anim);
 	Error writeSkeleton(const cgltf_skin& skin) const;

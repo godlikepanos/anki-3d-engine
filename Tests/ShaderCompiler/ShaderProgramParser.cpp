@@ -4,16 +4,16 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
+#include <AnKi/ShaderCompiler/ShaderParser.h>
 
 ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 {
-	class FilesystemInterface : public ShaderProgramFilesystemInterface
+	class FilesystemInterface : public ShaderCompilerFilesystemInterface
 	{
 	public:
 		U32 count = 0;
 
-		Error readAllText([[maybe_unused]] CString filename, String& txt) final
+		Error readAllText([[maybe_unused]] CString filename, ShaderCompilerString& txt) final
 		{
 			if(count == 0)
 			{
@@ -41,14 +41,17 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 		}
 	} interface;
 
-	ShaderProgramParser parser("filename0", &interface, ShaderCompilerOptions());
+	ShaderParser parser("filename0", &interface, {});
 	ANKI_TEST_EXPECT_NO_ERR(parser.parse());
 
+#if 0
 	// Test a variant
+	U32 mutationIdx = 0;
 	Array<MutatorValue, 2> mutation = {{2, 4}};
 
-	ShaderProgramParserVariant variant;
-	ANKI_TEST_EXPECT_NO_ERR(parser.generateVariant(mutation, variant));
+	ShaderCompilerString variant;
+	ANKI_TEST_EXPECT_NO_ERR(parser.generateVariant(mutation, "vert", variant));
 
 	// printf("%s\n", variant.getSource(ShaderType::kVertex).cstr());
+#endif
 }

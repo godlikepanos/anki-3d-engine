@@ -29,31 +29,16 @@ Error FinalComposite::initInternal()
 
 	ANKI_CHECK(loadColorGradingTextureImage("EngineAssets/DefaultLut.ankitex"));
 
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	// Progs
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/FinalComposite.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addMutation("FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0);
-	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
-	variantInitInfo.addConstant("kLutSize", U32(kLutSize));
-	variantInitInfo.addConstant("kFramebufferSize", getRenderer().getPostProcessResolution());
-	variantInitInfo.addConstant("kMotionBlurSamples", g_motionBlurSamplesCVar.get());
-
-	for(U32 dbg = 0; dbg < 2; ++dbg)
+	for(MutatorValue dbg = 0; dbg < 2; ++dbg)
 	{
-		const ShaderProgramResourceVariant* variant;
-		variantInitInfo.addMutation("DBG_ENABLED", dbg);
-		m_prog->getOrCreateVariant(variantInitInfo, variant);
-		m_grProgs[dbg].reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/FinalComposite.ankiprogbin",
+									 {{"FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0}, {"BLOOM_ENABLED", 1}, {"DBG_ENABLED", dbg}},
+									 m_prog, m_grProgs[dbg]));
 	}
 
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg));
-	const ShaderProgramResourceVariant* variant;
-	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
-	m_defaultVisualizeRenderTargetGrProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg,
+								 m_defaultVisualizeRenderTargetGrProg));
 
 	return Error::kNone;
 }
@@ -73,9 +58,8 @@ Error FinalComposite::loadColorGradingTextureImage(CString filename)
 {
 	m_lut.reset(nullptr);
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, m_lut));
-	ANKI_ASSERT(m_lut->getWidth() == kLutSize);
-	ANKI_ASSERT(m_lut->getHeight() == kLutSize);
-	ANKI_ASSERT(m_lut->getDepth() == kLutSize);
+	ANKI_ASSERT(m_lut->getWidth() == m_lut->getHeight());
+	ANKI_ASSERT(m_lut->getWidth() == m_lut->getDepth());
 
 	return Error::kNone;
 }
@@ -89,10 +73,10 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		run(rgraphCtx);
 	});
-	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget});
+	pass.setRenderpassInfo({RenderTargetInfo(ctx.m_outRenderTarget)});
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
@@ -149,38 +133,35 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 	// Bind stuff
 	if(!hasDebugRt)
 	{
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(0, 1, getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(ANKI_REG(s2), getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		rgraphCtx.bindColorTexture(0, 3, getRenderer().getScale().getTonemappedRt());
+		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getScale().getTonemappedRt());
 
-		rgraphCtx.bindColorTexture(0, 4, getRenderer().getBloom().getRt());
-		cmdb.bindTexture(0, 5, &m_lut->getTextureView());
-		rgraphCtx.bindColorTexture(0, 6, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getBloom().getRt());
+		cmdb.bindTexture(ANKI_REG(t2), TextureView(&m_lut->getTexture(), TextureSubresourceDescriptor::all()));
+		rgraphCtx.bindTexture(ANKI_REG(t3), getRenderer().getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getGBuffer().getDepthRt());
 
 		if(dbgEnabled)
 		{
-			rgraphCtx.bindColorTexture(0, 8, getRenderer().getDbg().getRt());
+			rgraphCtx.bindTexture(ANKI_REG(t5), getRenderer().getDbg().getRt());
 		}
 
-		if(g_filmGrainStrengthCVar.get() > 0.0f)
-		{
-			const UVec4 pc(0, 0, floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32);
-			cmdb.setPushConstants(&pc, sizeof(pc));
-		}
+		const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
+		cmdb.setPushConstants(&pc, sizeof(pc));
 	}
 	else
 	{
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		U32 count = 1;
 		for(const RenderTargetHandle& handle : dbgRts)
 		{
 			if(handle.isValid())
 			{
-				rgraphCtx.bindColorTexture(0, count++, handle);
+				rgraphCtx.bindTexture(Register(HlslResourceType::kSrv, count++), handle);
 			}
 		}
 	}

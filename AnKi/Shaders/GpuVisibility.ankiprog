@@ -7,15 +7,19 @@
 #pragma anki mutator DISTANCE_TEST 0 1
 #pragma anki mutator GATHER_AABBS 0 1
 #pragma anki mutator HASH_VISIBLES 0 1
+#pragma anki mutator GATHER_TYPE 1 2 3
 
 #pragma anki skip_mutation DISTANCE_TEST 1 HZB_TEST 1
 
-#pragma anki start comp
+#define GATHER_MDI (GATHER_TYPE & 1u)
+#define GATHER_MESHLET_GROUPS (GATHER_TYPE & 2u)
+
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
-#include <AnKi/Shaders/CollisionFunctions.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 struct DrawIndirectArgsWithPadding
 {
@@ -27,37 +31,48 @@ struct DrawIndirectArgsWithPadding
 };
 
 // Buffers that point to the GPU scene
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
-[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
+ByteAddressBuffer g_gpuScene : register(t4);
 
-// These 2 have the same size
-[[vk::binding(3)]] RWStructuredBuffer<UVec4> g_instanceRateRenderables;
-[[vk::binding(4)]] RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs;
-[[vk::binding(4)]] RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs;
+#if GATHER_MDI
+// These 3 have the same size
+RWStructuredBuffer<UVec4> g_instanceRateRenderables : register(u0);
+RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs : register(u1);
+RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs : register(u2);
 
-// Index pointing to the above arrays. One for each render state bucket
-[[vk::binding(5)]] StructuredBuffer<U32> g_drawIndirectArgsOffsets;
 // The MDI counts. One for each render state bucket
-[[vk::binding(6)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
+RWStructuredBuffer<U32> g_mdiDrawCounts : register(u3);
+#endif
+
+#if GATHER_MESHLET_GROUPS
+// For mesh shading
+RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs : register(u4);
+RWStructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances : register(u5);
+#endif
+
+// One for each render state bucket. It's either the index of the next indirect args or the index to the next task payload
+StructuredBuffer<UVec2> g_instanceRanges : register(t5);
 
 #if DISTANCE_TEST == 0
-[[vk::binding(7)]] ConstantBuffer<FrustumGpuVisibilityConstants> g_consts;
+ConstantBuffer<FrustumGpuVisibilityUniforms> g_unis : register(b0);
 #else
-[[vk::push_constant]] ConstantBuffer<DistanceGpuVisibilityConstants> g_consts;
+ANKI_PUSH_CONSTANTS(DistanceGpuVisibilityUniforms, g_unis)
 #endif
 
 #if HZB_TEST
-[[vk::binding(8)]] Texture2D<Vec4> g_hzbTex;
-[[vk::binding(9)]] SamplerState g_nearestAnyClampSampler;
+Texture2D<Vec4> g_hzbTex : register(t6);
+SamplerState g_nearestAnyClampSampler : register(s0);
 #endif
 
 #if GATHER_AABBS
-[[vk::binding(12)]] RWStructuredBuffer<U32> g_visibleAabbIndices; ///< Indices of the visible AABBs. The 1st element is the count.
+RWStructuredBuffer<U32> g_visibleAabbIndices : register(u6); ///< Indices of the visible AABBs. The 1st element is the count.
 #endif
 
 #if HASH_VISIBLES
-[[vk::binding(13)]] RWStructuredBuffer<GpuVisibilityHash> g_hash;
+RWStructuredBuffer<GpuVisibilityHash> g_hash : register(u7);
 #endif
 
 [numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -73,84 +88,48 @@ struct DrawIndirectArgsWithPadding
 
 	const GpuSceneRenderableBoundingVolume bvolume = g_renderableBoundingVolumes[bvolumeIdx];
 
+	const Vec3 sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
+	const F32 sphereRadius = bvolume.m_sphereRadius;
+
 #if DISTANCE_TEST == 0
 	// Frustum test
 	//
-	if(!frustumTest(g_consts.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius))
+	if(!frustumTest(g_unis.m_clipPlanes, sphereCenter, sphereRadius))
 	{
 		return;
 	}
 
 	// Screen-space AABB calculation and checking
 	//
-	const Vec3 A = bvolume.m_sphereCenter - bvolume.m_aabbExtend;
-	const Vec3 B = bvolume.m_sphereCenter + bvolume.m_aabbExtend;
-	const Vec3 aabbEdges[8u] = {Vec3(A.x, A.y, A.z), Vec3(B.x, A.y, A.z), Vec3(A.x, B.y, A.z), Vec3(A.x, A.y, B.z),
-								Vec3(B.x, B.y, A.z), Vec3(B.x, A.y, B.z), Vec3(A.x, B.y, B.z), Vec3(B.x, B.y, B.z)};
+	Vec2 minNdc, maxNdc;
+	F32 aabbMinDepth;
+	projectAabb(bvolume.m_aabbMin, bvolume.m_aabbMax, g_unis.m_viewProjectionMat, minNdc, maxNdc, aabbMinDepth);
 
-	F32 aabbMinDepth = 1.0f;
-	Vec2 minNdc = 1000.0f;
-	Vec2 maxNdc = -1000.0f;
-	[unroll] for(U32 i = 0; i < 8; ++i)
-	{
-		Vec4 p = mul(g_consts.m_viewProjectionMat, Vec4(aabbEdges[i], 1.0f));
-
-		p.xyz /= abs(p.w);
-
-		minNdc = min(minNdc, p.xy);
-		maxNdc = max(maxNdc, p.xy);
-		aabbMinDepth = min(aabbMinDepth, p.z);
-	}
-
-	aabbMinDepth = saturate(aabbMinDepth);
 	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
 	{
+		// Outside of the screen
+		return;
+	}
+
+	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_unis.m_finalRenderTargetSize;
+	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_unis.m_finalRenderTargetSize;
+	if(any(round(windowCoordsMin) == round(windowCoordsMax)))
+	{
+		// Doesn't touch the sampling points
 		return;
 	}
 
 	// HiZ culling
 	//
-
 #	if HZB_TEST
-	// Compute the mip
-	Vec2 texSize;
-	F32 mipCount;
-	g_hzbTex.GetDimensions(0, texSize.x, texSize.y, mipCount);
-
-	const Vec2 minUv = saturate(ndcToUv(minNdc));
-	const Vec2 maxUv = saturate(ndcToUv(maxNdc));
-	const Vec2 sizeXY = (maxUv - minUv) * texSize;
-	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
-
-#		if 1
-	// Try to use a more detailed mip if you can
-	const F32 levelLower = max(mip - 1.0, 0.0);
-	const Vec2 mipSize = texSize / pow(2.0f, levelLower);
-	const Vec2 a = floor(minUv * mipSize);
-	const Vec2 b = ceil(maxUv * mipSize);
-	const Vec2 dims = b - a;
-
-	if(dims.x <= 2.0 && dims.y <= 2.0)
-	{
-		mip = levelLower;
-	}
-#		endif
-
-	// Sample mip
-	Vec4 depths;
-	depths[0] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, minUv, mip);
-	depths[1] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, maxUv, mip);
-	depths[2] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(minUv.x, maxUv.y), mip);
-	depths[3] = g_hzbTex.SampleLevel(g_nearestAnyClampSampler, Vec2(maxUv.x, minUv.y), mip);
-	const F32 maxDepth = max4(depths);
-
-	if(aabbMinDepth > maxDepth)
+	if(cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTex, g_nearestAnyClampSampler))
 	{
 		return;
 	}
 #	endif // HZB_TEST
+
 #else // DISTANCE_TEST == 1
-	if(!testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius))
+	if(!testSphereSphereCollision(sphereCenter, sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius))
 	{
 		return;
 	}
@@ -158,14 +137,14 @@ struct DrawIndirectArgsWithPadding
 
 	// Compute the LOD
 	//
-	const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_consts.m_lodReferencePoint) - bvolume.m_sphereRadius;
+	const F32 distFromLodPoint = length(sphereCenter - g_unis.m_lodReferencePoint) - sphereRadius;
 
 	U32 lod;
-	if(distFromLodPoint < g_consts.m_maxLodDistances[0])
+	if(distFromLodPoint < g_unis.m_maxLodDistances[0])
 	{
 		lod = 0u;
 	}
-	else if(distFromLodPoint < g_consts.m_maxLodDistances[1])
+	else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
 	{
 		lod = 1u;
 	}
@@ -176,67 +155,121 @@ struct DrawIndirectArgsWithPadding
 
 	// Add the drawcall
 	//
-	const U32 renderStateBucket = bvolume.m_renderableIndexAndRenderStateBucket & ((1u << 12u) - 1u);
-	const U32 renderableIdx = bvolume.m_renderableIndexAndRenderStateBucket >> 12u;
-
-	U32 indirectIdx;
-	InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, indirectIdx);
-	indirectIdx += g_drawIndirectArgsOffsets[renderStateBucket];
+	const U32 renderStateBucket = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit & ((1u << 12u) - 1u);
+	const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
 
 	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
-	const U32 meshLodOffset = renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
-	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
+	const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
+	const GpuSceneMeshLod meshLod = g_meshLods[meshLodIndex];
 
 	const Bool isParticleEmitter = renderable.m_particleEmitterOffset != 0;
+	ANKI_MAYBE_UNUSED(isParticleEmitter);
 
-	if(!isParticleEmitter)
+	const Bool usesMeshShaders = meshLod.m_meshletCount != 0u;
+	if(usesMeshShaders)
 	{
-		// Regular renderables are always indexed
+#if GATHER_MESHLET_GROUPS
+		const U32 meshletGroupCount = (meshLod.m_meshletCount + (kMeshletGroupSize - 1u)) / kMeshletGroupSize;
 
-		DrawIndexedIndirectArgs indirect;
-		indirect.m_indexCount = meshLod.m_indexCount;
-		indirect.m_instanceCount = 1;
-		indirect.m_firstIndex = meshLod.m_firstIndex;
-		indirect.m_vertexOffset = 0;
-		indirect.m_firstInstance = indirectIdx;
-		g_drawIndexedIndirectArgs[indirectIdx] = indirect;
+		U32 instanceIdx;
+		InterlockedAdd(g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountX, meshletGroupCount, instanceIdx);
 
-		UVec4 instanceVertex;
-		instanceVertex.x = renderable.m_worldTransformsOffset;
-		instanceVertex.y = renderable.m_constantsOffset;
-		instanceVertex.z = meshLodOffset;
-		instanceVertex.w = renderable.m_boneTransformsOffset;
-		g_instanceRateRenderables[indirectIdx] = instanceVertex;
+		if(instanceIdx == 0u)
+		{
+			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 1u;
+			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountZ = 1u;
+		}
+		else if(instanceIdx >= g_instanceRanges[renderStateBucket].y)
+		{
+			// Reached a memory limit, cancel the job
+			ANKI_ASSERT(0);
+			instanceIdx = 0;
+			g_taskShaderIndirectArgs[renderStateBucket].m_threadGroupCountY = 0u;
+		}
+
+		instanceIdx += g_instanceRanges[renderStateBucket].x;
+
+		// Divide the mesh into meshlet groups and add them as task payloads
+		GpuSceneMeshletGroupInstance instance;
+		instance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit = (lod << 30u) | (renderableIdx << 9u);
+
+		for(U32 i = 0; i < meshletGroupCount; ++i)
+		{
+			g_meshletGroupInstances[instanceIdx + i] = instance;
+
+			++instance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
+		}
+#endif
 	}
 	else
 	{
-		const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_particleEmitterOffset);
+#if GATHER_MDI
+		U32 bucketDrawcallIdx;
+		InterlockedAdd(g_mdiDrawCounts[renderStateBucket], 1, bucketDrawcallIdx);
 
-		DrawIndirectArgsWithPadding indirect;
-		indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
-		indirect.m_instanceCount = 1;
-		indirect.m_firstVertex = 0;
-		indirect.m_firstInstance = indirectIdx;
-		g_drawIndirectArgs[indirectIdx] = indirect;
+		if(bucketDrawcallIdx >= g_instanceRanges[renderStateBucket].y)
+		{
+			// OoM, ignore
+			ANKI_ASSERT(0);
+			U32 orig;
+			InterlockedExchange(g_mdiDrawCounts[renderStateBucket], g_instanceRanges[renderStateBucket].y, orig);
+		}
+		else
+		{
+			const U32 indirectIdx = bucketDrawcallIdx + g_instanceRanges[renderStateBucket].x;
+			if(!isParticleEmitter)
+			{
+				// Regular renderables are always indexed
 
-		UVec4 instanceVertex;
-		instanceVertex.x = renderable.m_worldTransformsOffset;
-		instanceVertex.y = renderable.m_constantsOffset;
-		instanceVertex.z = meshLodOffset;
-		instanceVertex.w = renderable.m_particleEmitterOffset;
-		g_instanceRateRenderables[indirectIdx] = instanceVertex;
+				DrawIndexedIndirectArgs indirect;
+				indirect.m_indexCount = meshLod.m_indexCount;
+				indirect.m_instanceCount = 1;
+				indirect.m_firstIndex = meshLod.m_firstIndex;
+				indirect.m_vertexOffset = 0;
+				indirect.m_firstInstance = bucketDrawcallIdx;
+				g_drawIndexedIndirectArgs[indirectIdx] = indirect;
+
+				UVec4 instanceVertex;
+				instanceVertex.x = renderable.m_worldTransformsIndex;
+				instanceVertex.y = renderable.m_uniformsOffset;
+				instanceVertex.z = meshLodIndex;
+				instanceVertex.w = renderable.m_boneTransformsOffset;
+				g_instanceRateRenderables[indirectIdx] = instanceVertex;
+			}
+			else
+			{
+				const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_particleEmitterOffset);
+
+				DrawIndirectArgsWithPadding indirect;
+				indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
+				indirect.m_instanceCount = 1;
+				indirect.m_firstVertex = 0;
+				indirect.m_firstInstance = bucketDrawcallIdx;
+				indirect.m_padding = 0;
+				g_drawIndirectArgs[indirectIdx] = indirect;
+
+				UVec4 instanceVertex;
+				instanceVertex.x = renderable.m_worldTransformsIndex;
+				instanceVertex.y = renderable.m_uniformsOffset;
+				instanceVertex.z = meshLodIndex;
+				instanceVertex.w = renderable.m_particleEmitterOffset;
+				g_instanceRateRenderables[indirectIdx] = instanceVertex;
+			}
+		}
+#endif
 	}
 
 #if HASH_VISIBLES
 	// Update the renderables hash
 	{
-		const Mat3x4 trf = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
-		const Vec3 pos = trf.getTranslationPart();
-		const UVec3 posu = UVec3(asuint(pos.x), asuint(pos.y), asuint(pos.z));
+		// Transform a random point as a way to get a feel for the transform
+		const Mat3x4 trf = g_transforms[renderable.m_worldTransformsIndex];
+		const Vec3 pt = mul(trf, Vec4(1503.98f, 2006.8f, -1400.16f, 1.0f));
+		const UVec3 ptu = UVec3(asuint(pt.x), asuint(pt.y), asuint(pt.z));
 
-		U32 hash = posu.x;
-		hash ^= posu.y;
-		hash ^= posu.z;
+		U32 hash = ptu.x;
+		hash ^= ptu.y;
+		hash ^= ptu.z;
 		hash ^= renderable.m_uuid;
 
 		InterlockedXor(g_hash[0].m_renderablesHash, hash);
@@ -256,4 +289,4 @@ struct DrawIndirectArgsWithPadding
 #endif
 }
 
-#pragma anki end
+#pragma anki technique_end comp

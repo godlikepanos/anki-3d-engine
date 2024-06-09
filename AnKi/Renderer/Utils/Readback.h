@@ -50,7 +50,7 @@ public:
 	}
 
 	/// Allocate new data for the following frame. 2nd thing to call in a frame.
-	void allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset) const;
+	void allocateData(MultiframeReadbackToken& token, PtrSize size, BufferView& buffer) const;
 
 	/// Last thing to call in a frame.
 	void endFrame(Fence* fence);

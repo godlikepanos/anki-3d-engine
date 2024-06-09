@@ -75,3 +75,39 @@ U32 hashPcg(U32 u)
 	const U32 word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
 	return (word >> 22u) ^ word;
 }
+
+U32 hilbertIndex(U32 posX, U32 posY)
+{
+	const U32 level = 3u;
+	const U32 width = 1u << level;
+
+	U32 index = 0u;
+	for(U32 curLevel = width / 2u; curLevel > 0u; curLevel /= 2u)
+	{
+		const U32 regionX = (posX & curLevel) > 0u;
+		const U32 regionY = (posY & curLevel) > 0u;
+		index += curLevel * curLevel * ((3u * regionX) ^ regionY);
+		if(regionY == 0U)
+		{
+			if(regionX == 1U)
+			{
+				posX = U32(width - 1u) - posX;
+				posY = U32(width - 1U) - posY;
+			}
+
+			const U32 temp = posX;
+			posX = posY;
+			posY = temp;
+		}
+	}
+
+	return index;
+}
+
+/// Taken from XeGTAO code
+Vec2 spatioTemporalNoise(UVec2 fragCoord, U32 temporalIdx)
+{
+	U32 index = hilbertIndex(fragCoord.x, fragCoord.y);
+	index += 288u * (temporalIdx % 64u);
+	return Vec2(frac(0.5f + index * Vec2(0.75487766624669276005f, 0.5698402909980532659114f)));
+}

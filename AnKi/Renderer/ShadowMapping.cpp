@@ -63,18 +63,6 @@ static LightHash decodeTileHash(U64 hash)
 	return c;
 }
 
-class ShadowMapping::ViewportWorkItem
-{
-public:
-	UVec4 m_viewport;
-	Mat4 m_viewProjMat;
-	Mat3x4 m_viewMat;
-
-	GpuVisibilityOutput m_visOut;
-
-	BufferOffsetRange m_clearTileIndirectArgs;
-};
-
 Error ShadowMapping::init()
 {
 	const Error err = initInternal();
@@ -107,10 +95,6 @@ Error ShadowMapping::initInternal()
 
 	// Tiles
 	m_tileAlloc.init(m_tileCountBothAxis, m_tileCountBothAxis, kTileAllocHierarchyCount, true);
-
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::kDepth;
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kLoad;
-	m_fbDescr.bake();
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingClearDepth.ankiprogbin", m_clearDepthProg, m_clearDepthGrProg));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowMappingVetVisibility.ankiprogbin", m_vetVisibilityProg, m_vetVisibilityGrProg));
@@ -173,35 +157,6 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 	// First process the lights
 	processLights(ctx);
-
-	// Build the render graph
-	if(m_runCtx.m_workItems.getSize())
-	{
-		// Will have to create render passes
-
-		// Compute render area
-		const U32 minx = m_runCtx.m_renderAreaMin.x();
-		const U32 miny = m_runCtx.m_renderAreaMin.y();
-		const U32 width = m_runCtx.m_renderAreaMax.x() - m_runCtx.m_renderAreaMin.x();
-		const U32 height = m_runCtx.m_renderAreaMax.y() - m_runCtx.m_renderAreaMin.y();
-
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Shadowmapping");
-
-		for(const ViewportWorkItem& work : m_runCtx.m_workItems)
-		{
-			pass.newBufferDependency(work.m_visOut.m_someBufferHandle, BufferUsageBit::kIndirectDraw);
-		}
-
-		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::kDepth);
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kAllFramebuffer, subresource);
-
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kUavGeometryRead | BufferUsageBit::kUavFragmentRead);
-
-		pass.setFramebufferInfo(m_fbDescr, {}, m_runCtx.m_rt, {}, minx, miny, width, height);
-		pass.setWork(1, [this](RenderPassWorkContext& rgraphCtx) {
-			runShadowMapping(rgraphCtx);
-		});
-	}
 }
 
 void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const
@@ -303,9 +258,6 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 		// Set viewport
 		const UVec4 viewport = UVec4(tileViewport) * m_tileResolution;
 		atlasTileViewports[i] = viewport;
-
-		m_runCtx.m_renderAreaMin = m_runCtx.m_renderAreaMin.min(UVec2(viewport[0], viewport[1]));
-		m_runCtx.m_renderAreaMax = m_runCtx.m_renderAreaMax.max(UVec2(viewport[0] + viewport[2], viewport[1] + viewport[3]));
 	}
 
 	return goodResult;
@@ -313,99 +265,39 @@ TileAllocatorResult2 ShadowMapping::allocateAtlasTiles(U32 lightUuid, U32 compon
 
 void ShadowMapping::processLights(RenderingContext& ctx)
 {
-	m_runCtx.m_renderAreaMin = UVec2(kMaxU32, kMaxU32);
-	m_runCtx.m_renderAreaMax = UVec2(kMinU32, kMinU32);
+	// First allocate tiles for the dir light and then build passes for points and spot lights. Then passes for the dir light. The dir light has many
+	// passes and it will push the other types of lights further into the future. So do those first.
 
 	// Vars
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-	DynamicArray<ViewportWorkItem, MemoryPoolPtrWrapper<StackMemoryPool>> workItems(&getRenderer().getFrameMemoryPool());
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	const CameraComponent& mainCam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
-	// Process the directional light first.
+	// Allocate tiles for the dir light first but don't build any passes
 	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-	if(dirLight && dirLight->getShadowEnabled() && g_shadowCascadeCountCVar.get())
+	if(dirLight && (!dirLight->getShadowEnabled() || !g_shadowCascadeCountCVar.get()))
+	{
+		dirLight = nullptr; // Skip dir light
+	}
+
+	Array<UVec4, kMaxShadowCascades> dirLightAtlasViewports;
+	if(dirLight)
 	{
 		const U32 cascadeCount = g_shadowCascadeCountCVar.get();
 
-		Array<U32, kMaxShadowCascades> cascadeIndices;
 		Array<U32, kMaxShadowCascades> hierarchies;
 		for(U32 cascade = 0; cascade < cascadeCount; ++cascade)
 		{
-			cascadeIndices[cascade] = cascade;
-
 			// Change the quality per cascade
 			hierarchies[cascade] = kTileAllocHierarchyCount - 1 - chooseDirectionalLightShadowCascadeDetail(cascade);
 		}
 
-		Array<UVec4, kMaxShadowCascades> atlasViewports;
-		[[maybe_unused]] const TileAllocatorResult2 res = allocateAtlasTiles(kMaxU32, 0, cascadeCount, &hierarchies[0], &atlasViewports[0]);
-
+		[[maybe_unused]] const TileAllocatorResult2 res = allocateAtlasTiles(kMaxU32, 0, cascadeCount, &hierarchies[0], &dirLightAtlasViewports[0]);
 		ANKI_ASSERT(!!(res & TileAllocatorResult2::kAllocationSucceded) && "Dir light should never fail");
-
-		// Compute the view projection matrices
-		Array<F32, kMaxShadowCascades> cascadeDistances;
-		static_assert(kMaxShadowCascades == 4);
-		cascadeDistances[0] = g_shadowCascade0DistanceCVar.get();
-		cascadeDistances[1] = g_shadowCascade1DistanceCVar.get();
-		cascadeDistances[2] = g_shadowCascade2DistanceCVar.get();
-		cascadeDistances[3] = g_shadowCascade3DistanceCVar.get();
-
-		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
-		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
-		Array<Mat4, kMaxShadowCascades> cascadeProjMats;
-		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeProjMats[0], cascadeCount},
-										 {&cascadeViewMats[0], cascadeCount});
-		for(U cascade = 0; cascade < cascadeCount; ++cascade)
-		{
-			cascadeViewProjMats[cascade] = cascadeProjMats[cascade] * Mat4(cascadeViewMats[cascade], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		}
-
-		// HZB generation
-		HzbDirectionalLightInput hzbGenIn;
-		hzbGenIn.m_cascadeCount = cascadeCount;
-		hzbGenIn.m_depthBufferRt = getRenderer().getGBuffer().getDepthRt();
-		hzbGenIn.m_depthBufferRtSize = getRenderer().getInternalResolution();
-		hzbGenIn.m_cameraProjectionMatrix = ctx.m_matrices.m_projection;
-		hzbGenIn.m_cameraInverseViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;
-		for(U cascade = 0; cascade < cascadeCount; ++cascade)
-		{
-			hzbGenIn.m_cascades[cascade].m_hzbRt = rgraph.newRenderTarget(m_cascadeHzbRtDescrs[cascade]);
-			hzbGenIn.m_cascades[cascade].m_hzbRtSize = UVec2(m_cascadeHzbRtDescrs[cascade].m_width, m_cascadeHzbRtDescrs[cascade].m_height);
-			hzbGenIn.m_cascades[cascade].m_viewMatrix = cascadeViewMats[cascade];
-			hzbGenIn.m_cascades[cascade].m_projectionMatrix = cascadeProjMats[cascade];
-			hzbGenIn.m_cascades[cascade].m_cascadeMaxDistance = cascadeDistances[cascade];
-		}
-
-		getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(hzbGenIn, rgraph);
-
-		// Vis testing
-		for(U cascade = 0; cascade < cascadeCount; ++cascade)
-		{
-			ViewportWorkItem& work = *workItems.emplaceBack();
-			work.m_viewProjMat = cascadeViewProjMats[cascade];
-			work.m_viewMat = cascadeViewMats[cascade];
-			work.m_viewport = atlasViewports[cascade];
-
-			// Vis testing
-			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
-			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows visibility: Dir light";
-			visIn.m_technique = RenderingTechnique::kDepth;
-			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
-			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-			visIn.m_lodDistances = lodDistances;
-			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
-			visIn.m_rgraph = &rgraph;
-
-			getRenderer().getGpuVisibility().populateRenderGraph(visIn, work.m_visOut);
-
-			// Update the texture matrix to point to the correct region in the atlas
-			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(atlasViewports[cascade]) * cascadeViewProjMats[cascade];
-		}
 	}
 
-	// Process the point lights.
+	// Process the point lights first
+	U32 lightIdx = 0;
 	WeakArray<LightComponent*> lights = getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_shadowLights;
 	for(LightComponent* lightc : lights)
 	{
@@ -459,7 +351,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			DistanceGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows visibility: Point light";
+			visIn.m_passesName = generateTempPassName("Shadows point light", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			visIn.m_lodDistances = lodDistances;
@@ -473,37 +365,55 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Vet visibility
 			const Bool renderAllways = !(result & TileAllocatorResult2::kTileCached);
-			BufferOffsetRange clearTileIndirectArgs;
+			BufferView clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = vetVisibilityPass("Shadows visibility: Vet point light", *lightc, visOut, rgraph);
+				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet point light", lightIdx), *lightc, visOut, rgraph);
 			}
 
-			// Add work
+			// Additional visibility
+			GpuMeshletVisibilityOutput meshletVisOut;
+			if(getRenderer().runSoftwareMeshletRendering())
+			{
+				PassthroughGpuMeshletVisibilityInput meshIn;
+				meshIn.m_passesName = generateTempPassName("Shadows point light", lightIdx);
+				meshIn.m_technique = RenderingTechnique::kDepth;
+				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(visOut);
+
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
+			}
+
+			// Draw
+			Array<ShadowSubpassInfo, 6> subpasses;
 			for(U32 face = 0; face < 6; ++face)
 			{
 				Frustum frustum;
 				frustum.init(FrustumType::kPerspective);
 				frustum.setPerspective(kClusterObjectFrustumNearPlane, lightc->getRadius(), kPi / 2.0f, kPi / 2.0f);
-				frustum.setWorldTransform(Transform(lightc->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[face], 1.0f));
+				frustum.setWorldTransform(
+					Transform(lightc->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[face], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
-				ViewportWorkItem& work = *workItems.emplaceBack();
-				work.m_viewProjMat = frustum.getViewProjectionMatrix();
-				work.m_viewMat = frustum.getViewMatrix();
-				work.m_viewport = atlasViewports[face];
-				work.m_visOut = visOut;
-				work.m_clearTileIndirectArgs = clearTileIndirectArgs;
+				subpasses[face].m_clearTileIndirectArgs = clearTileIndirectArgs;
+				subpasses[face].m_viewMat = frustum.getViewMatrix();
+				subpasses[face].m_viewport = atlasViewports[face];
+				subpasses[face].m_viewProjMat = frustum.getViewProjectionMatrix();
 			}
+
+			createDrawShadowsPass(subpasses, visOut, meshletVisOut, generateTempPassName("Shadows: Point light", lightIdx), rgraph);
 		}
 		else
 		{
 			// Can't be a caster from now on
 			lightc->setShadowAtlasUvViewports({});
 		}
+
+		++lightIdx;
 	}
 
-	// Process the spot lights
+	// Process the spot lights 2nd
+	lightIdx = 0;
 	for(LightComponent* lightc : lights)
 	{
 		if(lightc->getLightComponentType() != LightComponentType::kSpot || !lightc->getShadowEnabled())
@@ -531,32 +441,45 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = "Shadows visibility: Spot light";
+			visIn.m_passesName = generateTempPassName("Shadows spot light", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = cameraOrigin;
 			visIn.m_lodDistances = lodDistances;
 			visIn.m_rgraph = &rgraph;
 			visIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
 			visIn.m_hashVisibles = true;
+			visIn.m_viewportSize = atlasViewport.zw();
 
 			GpuVisibilityOutput visOut;
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
 
 			// Vet visibility
 			const Bool renderAllways = !(result & TileAllocatorResult2::kTileCached);
-			BufferOffsetRange clearTileIndirectArgs;
+			BufferView clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = vetVisibilityPass("Shadows visibility: Vet spot light", *lightc, visOut, rgraph);
+				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet spot light", lightIdx), *lightc, visOut, rgraph);
 			}
 
-			// Add work
-			ViewportWorkItem& work = *workItems.emplaceBack();
-			work.m_viewProjMat = lightc->getSpotLightViewProjectionMatrix();
-			work.m_viewMat = lightc->getSpotLightViewMatrix();
-			work.m_viewport = atlasViewport;
-			work.m_visOut = visOut;
-			work.m_clearTileIndirectArgs = clearTileIndirectArgs;
+			// Additional visibility
+			GpuMeshletVisibilityOutput meshletVisOut;
+			if(getRenderer().runSoftwareMeshletRendering())
+			{
+				GpuMeshletVisibilityInput meshIn;
+				meshIn.m_passesName = generateTempPassName("Shadows spot light", lightIdx);
+				meshIn.m_technique = RenderingTechnique::kDepth;
+				meshIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
+				meshIn.m_cameraTransform = lightc->getSpotLightViewMatrix().getInverseTransformation();
+				meshIn.m_viewportSize = atlasViewport.zw();
+				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(visOut);
+
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
+			}
+
+			// Add draw pass
+			createDrawShadowsPass(atlasViewport, lightc->getSpotLightViewProjectionMatrix(), lightc->getSpotLightViewMatrix(), visOut, meshletVisOut,
+								  clearTileIndirectArgs, {}, generateTempPassName("Shadows: Spot light", lightIdx), rgraph);
 		}
 		else
 		{
@@ -565,82 +488,105 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		}
 	}
 
-	// Move the work to the context
-	if(workItems.getSize())
+	// Process the directional light last
+	if(dirLight)
 	{
-		// All good, store the work items for the threads to pick up
-		workItems.moveAndReset(m_runCtx.m_workItems);
-	}
-	else
-	{
-		m_runCtx.m_workItems = {};
+		const U32 cascadeCount = g_shadowCascadeCountCVar.get();
+
+		// Compute the view projection matrices
+		Array<F32, kMaxShadowCascades> cascadeDistances;
+		static_assert(kMaxShadowCascades == 4);
+		cascadeDistances[0] = g_shadowCascade0DistanceCVar.get();
+		cascadeDistances[1] = g_shadowCascade1DistanceCVar.get();
+		cascadeDistances[2] = g_shadowCascade2DistanceCVar.get();
+		cascadeDistances[3] = g_shadowCascade3DistanceCVar.get();
+
+		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
+		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
+		Array<Mat4, kMaxShadowCascades> cascadeProjMats;
+		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeProjMats[0], cascadeCount},
+										 {&cascadeViewMats[0], cascadeCount});
+		for(U cascade = 0; cascade < cascadeCount; ++cascade)
+		{
+			cascadeViewProjMats[cascade] = cascadeProjMats[cascade] * Mat4(cascadeViewMats[cascade], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		}
+
+		// HZB generation
+		HzbDirectionalLightInput hzbGenIn;
+		hzbGenIn.m_cascadeCount = cascadeCount;
+		hzbGenIn.m_depthBufferRt = getRenderer().getGBuffer().getDepthRt();
+		hzbGenIn.m_depthBufferRtSize = getRenderer().getInternalResolution();
+		hzbGenIn.m_cameraProjectionMatrix = ctx.m_matrices.m_projection;
+		hzbGenIn.m_cameraInverseViewProjectionMatrix = ctx.m_matrices.m_invertedViewProjection;
+		for(U cascade = 0; cascade < cascadeCount; ++cascade)
+		{
+			hzbGenIn.m_cascades[cascade].m_hzbRt = rgraph.newRenderTarget(m_cascadeHzbRtDescrs[cascade]);
+			hzbGenIn.m_cascades[cascade].m_hzbRtSize = UVec2(m_cascadeHzbRtDescrs[cascade].m_width, m_cascadeHzbRtDescrs[cascade].m_height);
+			hzbGenIn.m_cascades[cascade].m_viewMatrix = cascadeViewMats[cascade];
+			hzbGenIn.m_cascades[cascade].m_projectionMatrix = cascadeProjMats[cascade];
+			hzbGenIn.m_cascades[cascade].m_cascadeMaxDistance = cascadeDistances[cascade];
+		}
+
+		getRenderer().getHzbGenerator().populateRenderGraphDirectionalLight(hzbGenIn, rgraph);
+
+		// Create passes per cascade
+		for(U32 cascade = 0; cascade < cascadeCount; ++cascade)
+		{
+			// Vis testing
+			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+			FrustumGpuVisibilityInput visIn;
+			visIn.m_passesName = generateTempPassName("Shadows: Dir light cascade", cascade);
+			visIn.m_technique = RenderingTechnique::kDepth;
+			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
+			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+			visIn.m_lodDistances = lodDistances;
+			visIn.m_hzbRt = &hzbGenIn.m_cascades[cascade].m_hzbRt;
+			visIn.m_rgraph = &rgraph;
+			visIn.m_viewportSize = dirLightAtlasViewports[cascade].zw();
+
+			GpuVisibilityOutput visOut;
+			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
+
+			// Additional visibility
+			GpuMeshletVisibilityOutput meshletVisOut;
+			if(getRenderer().runSoftwareMeshletRendering())
+			{
+				GpuMeshletVisibilityInput meshIn;
+				meshIn.m_passesName = generateTempPassName("Shadows: Dir light cascade", lightIdx);
+				meshIn.m_technique = RenderingTechnique::kDepth;
+				meshIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
+				meshIn.m_cameraTransform = cascadeViewMats[cascade].getInverseTransformation();
+				meshIn.m_viewportSize = dirLightAtlasViewports[cascade].zw();
+				meshIn.m_rgraph = &rgraph;
+				meshIn.fillBuffers(visOut);
+
+				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
+			}
+
+			// Draw
+			createDrawShadowsPass(dirLightAtlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, meshletVisOut, {},
+								  hzbGenIn.m_cascades[cascade].m_hzbRt, generateTempPassName("Shadows: Dir light cascade", cascade), rgraph);
+
+			// Update the texture matrix to point to the correct region in the atlas
+			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(dirLightAtlasViewports[cascade]) * cascadeViewProjMats[cascade];
+		}
 	}
 }
 
-void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
+BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+												  RenderGraphDescription& rgraph) const
 {
-	ANKI_ASSERT(m_runCtx.m_workItems.getSize());
-	ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
-
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-	// Clear the depth buffer
-	cmdb.bindShaderProgram(m_clearDepthGrProg.get());
-	cmdb.setDepthCompareOperation(CompareOperation::kAlways);
-
-	for(ViewportWorkItem& work : m_runCtx.m_workItems)
-	{
-		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-
-		if(work.m_clearTileIndirectArgs.m_buffer)
-		{
-			cmdb.drawIndirect(PrimitiveTopology::kTriangles, 1, work.m_clearTileIndirectArgs.m_offset, work.m_clearTileIndirectArgs.m_buffer);
-		}
-		else
-		{
-			cmdb.draw(PrimitiveTopology::kTriangles, 3, 1);
-		}
-	}
-
-	// Restore state
-	cmdb.setDepthCompareOperation(CompareOperation::kLess);
-
-	// Draw to tiles
-	cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
-	for(ViewportWorkItem& work : m_runCtx.m_workItems)
-	{
-		// Set state
-		cmdb.setViewport(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-		cmdb.setScissor(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-
-		RenderableDrawerArguments args;
-		args.m_renderingTechinuqe = RenderingTechnique::kDepth;
-		args.m_viewMatrix = work.m_viewMat;
-		args.m_cameraTransform = Mat3x4::getIdentity(); // Don't care
-		args.m_viewProjectionMatrix = work.m_viewProjMat;
-		args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
-		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
-		args.m_viewport = UVec4(work.m_viewport[0], work.m_viewport[1], work.m_viewport[2], work.m_viewport[3]);
-		args.fillMdi(work.m_visOut);
-
-		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
-	}
-}
-
-BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-												   RenderGraphDescription& rgraph) const
-{
-	BufferOffsetRange clearTileIndirectArgs;
+	BufferView clearTileIndirectArgs;
 
 	clearTileIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs));
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName);
 
 	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
-	pass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kUavComputeWrite);
+	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kStorageComputeWrite);
 
-	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_mdiDrawCountsBuffer,
-				  clearTileIndirectArgs](RenderPassWorkContext& rpass) {
+	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_legacy.m_mdiDrawCountsBuffer, clearTileIndirectArgs,
+				  taskShadersIndirectArgs = visOut.m_mesh.m_taskShaderIndirectArgsBuffer](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());
@@ -648,17 +594,130 @@ BufferOffsetRange ShadowMapping::vetVisibilityPass(CString passName, const Light
 		const UVec4 lightIndex(lightc.getGpuSceneLightAllocation().getIndex());
 		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
 
-		cmdb.bindUavBuffer(0, 0, hashBuff);
-		cmdb.bindUavBuffer(0, 1, mdiBuff);
-		cmdb.bindUavBuffer(0, 2, GpuSceneArrays::Light::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 3, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferOffsetRange());
-		cmdb.bindUavBuffer(0, 4, clearTileIndirectArgs);
+		cmdb.bindStorageBuffer(ANKI_REG(t0), hashBuff);
+		cmdb.bindStorageBuffer(ANKI_REG(u0), mdiBuff);
+		cmdb.bindStorageBuffer(ANKI_REG(u1), GpuSceneArrays::Light::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(u2), GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(u3), clearTileIndirectArgs);
+		cmdb.bindStorageBuffer(ANKI_REG(u4), taskShadersIndirectArgs);
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);
 	});
 
 	return clearTileIndirectArgs;
+}
+
+void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
+										  const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
+										  const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph)
+{
+	ShadowSubpassInfo spass;
+	spass.m_clearTileIndirectArgs = clearTileIndirectArgs;
+	spass.m_hzbRt = hzbRt;
+	spass.m_viewMat = viewMat;
+	spass.m_viewport = viewport;
+	spass.m_viewProjMat = viewProjMat;
+
+	createDrawShadowsPass({&spass, 1}, visOut, meshletVisOut, passName, rgraph);
+}
+
+void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subpasses_, const GpuVisibilityOutput& visOut,
+										  const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphDescription& rgraph)
+{
+	WeakArray<ShadowSubpassInfo> subpasses;
+	newArray<ShadowSubpassInfo>(getRenderer().getFrameMemoryPool(), subpasses_.getSize(), subpasses);
+	memcpy(subpasses.getBegin(), subpasses_.getBegin(), subpasses.getSizeInBytes());
+
+	// Compute the whole viewport
+	UVec4 viewport;
+	if(subpasses.getSize() == 1)
+	{
+		viewport = subpasses[0].m_viewport;
+	}
+	else
+	{
+		viewport = UVec4(kMaxU32, kMaxU32, 0, 0);
+		for(const ShadowSubpassInfo& s : subpasses)
+		{
+			viewport.x() = min(viewport.x(), s.m_viewport.x());
+			viewport.y() = min(viewport.y(), s.m_viewport.y());
+			viewport.z() = max(viewport.z(), s.m_viewport.x() + s.m_viewport.z());
+			viewport.w() = max(viewport.w(), s.m_viewport.y() + s.m_viewport.w());
+		}
+		viewport.z() -= viewport.x();
+		viewport.w() -= viewport.y();
+	}
+
+	// Create the pass
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passName);
+
+	const Bool loadFb = !(subpasses.getSize() == 1 && subpasses[0].m_clearTileIndirectArgs.isValid());
+
+	RenderTargetInfo smRti(m_runCtx.m_rt);
+	smRti.m_loadOperation = (loadFb) ? RenderTargetLoadOperation::kLoad : RenderTargetLoadOperation::kClear;
+	smRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
+	smRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
+	pass.setRenderpassInfo({}, &smRti, viewport[0], viewport[1], viewport[2], viewport[3]);
+
+	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
+
+	pass.setWork([this, visOut, meshletVisOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
+
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+		for(U32 i = 0; i < subpasses.getSize(); ++i)
+		{
+			const ShadowSubpassInfo& spass = subpasses[i];
+
+			cmdb.setViewport(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
+
+			if(loadFb)
+			{
+				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
+				cmdb.setDepthCompareOperation(CompareOperation::kAlways);
+
+				if(spass.m_clearTileIndirectArgs.isValid())
+				{
+
+					cmdb.drawIndirect(PrimitiveTopology::kTriangles, spass.m_clearTileIndirectArgs);
+				}
+				else
+				{
+					cmdb.draw(PrimitiveTopology::kTriangles, 3);
+				}
+
+				cmdb.setDepthCompareOperation(CompareOperation::kLess);
+			}
+
+			// Set state
+			cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
+
+			RenderableDrawerArguments args;
+			args.m_renderingTechinuqe = RenderingTechnique::kDepth;
+			args.m_viewMatrix = spass.m_viewMat;
+			args.m_cameraTransform = spass.m_viewMat.getInverseTransformation();
+			args.m_viewProjectionMatrix = spass.m_viewProjMat;
+			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
+			args.m_viewport = UVec4(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
+			args.fill(visOut);
+
+			if(spass.m_hzbRt.isValid())
+			{
+				args.m_hzbTexture = rgraphCtx.createTextureView(spass.m_hzbRt, TextureSubresourceDescriptor::all());
+			}
+
+			if(meshletVisOut.isFilled())
+			{
+				args.fill(meshletVisOut);
+			}
+
+			getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+		}
+	});
 }
 
 } // end namespace anki

@@ -24,7 +24,7 @@ public:
 	using Simd = typename MathSimd<T, kTComponentCount>::Type;
 	static constexpr U kComponentCount = kTComponentCount;
 	static constexpr Bool kIsInteger = std::is_integral<T>::value;
-	static constexpr Bool kHasVec4SIMD = kTComponentCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kVec4Simd = kTComponentCount == 4 && std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
 
 	/// @name Constructors
 	/// @{
@@ -36,7 +36,7 @@ public:
 	}
 
 	/// Copy.
-	TVec(ANKI_ENABLE_ARG(const TVec&, !kHasVec4SIMD) b)
+	TVec(const TVec& b) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -45,14 +45,14 @@ public:
 	}
 
 	/// Copy.
-	TVec(ANKI_ENABLE_ARG(const TVec&, kHasVec4SIMD) b)
+	TVec(const TVec& b) requires(kVec4Simd)
 	{
 		m_simd = b.m_simd;
 	}
 
 	/// Convert from another type. From int to float vectors and the opposite.
-	template<typename Y, ANKI_ENABLE(!std::is_same<Y, T>::value)>
-	explicit TVec(const TVec<Y, kTComponentCount>& b)
+	template<typename Y>
+	explicit TVec(const TVec<Y, kTComponentCount>& b) requires(!std::is_same<Y, T>::value)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -60,8 +60,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	explicit TVec(const T f)
+	explicit TVec(const T f) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; ++i)
 		{
@@ -70,8 +69,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	explicit TVec(const T f)
+	explicit TVec(const T f) requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_set1_ps(f);
@@ -81,8 +79,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	explicit TVec(const T arr[])
+	explicit TVec(const T arr[]) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; ++i)
 		{
@@ -90,8 +87,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	explicit TVec(const T arr[])
+	explicit TVec(const T arr[]) requires(kVec4Simd)
 	{
 		m_simd = _mm_load_ps(arr);
 	}
@@ -109,33 +105,28 @@ public:
 		m_simd = simd;
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 2)
-	TVec(const T x_, const T y_)
+	constexpr TVec(const T x_, const T y_) requires(kTComponentCount == 2)
+		: m_arr{x_, y_}
 	{
-		x() = x_;
-		y() = y_;
 	}
 
 	// Vec3 specific
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 3)
-	TVec(const T x_, const T y_, const T z_)
+	TVec(const T x_, const T y_, const T z_) requires(kTComponentCount == 3)
 	{
 		x() = x_;
 		y() = y_;
 		z() = z_;
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 3)
-	TVec(const TVec<T, 2>& a, const T z_)
+	TVec(const TVec<T, 2>& a, const T z_) requires(kTComponentCount == 3)
 	{
 		x() = a.x();
 		y() = a.y();
 		z() = z_;
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 3)
-	TVec(const T x_, const TVec<T, 2>& a)
+	TVec(const T x_, const TVec<T, 2>& a) requires(kTComponentCount == 3)
 	{
 		x() = x_;
 		y() = a.x();
@@ -144,15 +135,13 @@ public:
 
 	// Vec4 specific
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4 && !kHasVec4SIMD)
-	constexpr TVec(const T x_, const T y_, const T z_, const T w_)
+	constexpr TVec(const T x_, const T y_, const T z_, const T w_) requires(kTComponentCount == 4 && !kVec4Simd)
 		: m_arr{x_, y_, z_, w_}
 	{
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec(const T x_, const T y_, const T z_, const T w_)
+	TVec(const T x_, const T y_, const T z_, const T w_) requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_set_ps(w_, z_, y_, x_);
@@ -162,8 +151,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec(const TVec<T, 3>& a, const T w_)
+	TVec(const TVec<T, 3>& a, const T w_) requires(kTComponentCount == 4)
 	{
 		x() = a.x();
 		y() = a.y();
@@ -171,8 +159,7 @@ public:
 		w() = w_;
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec(const T x_, const TVec<T, 3>& a)
+	TVec(const T x_, const TVec<T, 3>& a) requires(kTComponentCount == 4)
 	{
 		x() = x_;
 		y() = a.x();
@@ -180,8 +167,7 @@ public:
 		w() = a.z();
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec(const TVec<T, 2>& a, const T z_, const T w_)
+	TVec(const TVec<T, 2>& a, const T z_, const T w_) requires(kTComponentCount == 4)
 	{
 		x() = a.x();
 		y() = a.y();
@@ -189,8 +175,7 @@ public:
 		w() = w_;
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec(const T x_, const TVec<T, 2>& a, const T w_)
+	TVec(const T x_, const TVec<T, 2>& a, const T w_) requires(kTComponentCount == 4)
 	{
 		x() = x_;
 		y() = a.x();
@@ -198,8 +183,7 @@ public:
 		w() = w_;
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec(const T x_, const T y_, const TVec<T, 2>& a)
+	TVec(const T x_, const T y_, const TVec<T, 2>& a) requires(kTComponentCount == 4)
 	{
 		x() = x_;
 		y() = y_;
@@ -207,8 +191,7 @@ public:
 		w() = a.y();
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec(const TVec<T, 2>& a, const TVec<T, 2>& b)
+	TVec(const TVec<T, 2>& a, const TVec<T, 2>& b) requires(kTComponentCount == 4)
 	{
 		x() = a.x();
 		y() = a.y();
@@ -239,38 +222,32 @@ public:
 		return m_arr[1];
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	T& z()
+	T& z() requires(kTComponentCount > 2)
 	{
 		return m_arr[2];
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	T z() const
+	T z() const requires(kTComponentCount > 2)
 	{
 		return m_arr[2];
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	T& w()
+	T& w() requires(kTComponentCount > 3)
 	{
 		return m_arr[3];
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	T w() const
+	T w() const requires(kTComponentCount > 3)
 	{
 		return m_arr[3];
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xyz1() const
+	TVec<T, 4> xyz1() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(x(), y(), z(), T(1));
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xyz0() const
+	TVec<T, 4> xyz0() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(x(), y(), z(), T(0));
 	}
@@ -297,2018 +274,1682 @@ public:
 
 	// Swizzled accessors
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 0)
-	TVec<T, 2> xx() const
+	TVec<T, 2> xx() const requires(kTComponentCount > 0)
 	{
 		return TVec<T, 2>(m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 2> xy() const
+	TVec<T, 2> xy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 2>(m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 2> xz() const
+	TVec<T, 2> xz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 2>(m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 2> xw() const
+	TVec<T, 2> xw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 2>(m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 2> yx() const
+	TVec<T, 2> yx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 2>(m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 2> yy() const
+	TVec<T, 2> yy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 2>(m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 2> yz() const
+	TVec<T, 2> yz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 2>(m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 2> yw() const
+	TVec<T, 2> yw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 2>(m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 2> zx() const
+	TVec<T, 2> zx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 2>(m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 2> zy() const
+	TVec<T, 2> zy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 2>(m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 2> zz() const
+	TVec<T, 2> zz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 2>(m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 2> zw() const
+	TVec<T, 2> zw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 2>(m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 2> wx() const
+	TVec<T, 2> wx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 2>(m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 2> wy() const
+	TVec<T, 2> wy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 2>(m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 2> wz() const
+	TVec<T, 2> wz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 2>(m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 2> ww() const
+	TVec<T, 2> ww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 2>(m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 0)
-	TVec<T, 3> xxx() const
+	TVec<T, 3> xxx() const requires(kTComponentCount > 0)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 3> xxy() const
+	TVec<T, 3> xxy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> xxz() const
+	TVec<T, 3> xxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> xxw() const
+	TVec<T, 3> xxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 3> xyx() const
+	TVec<T, 3> xyx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 3> xyy() const
+	TVec<T, 3> xyy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> xyz() const
+	TVec<T, 3> xyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> xyw() const
+	TVec<T, 3> xyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> xzx() const
+	TVec<T, 3> xzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> xzy() const
+	TVec<T, 3> xzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> xzz() const
+	TVec<T, 3> xzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> xzw() const
+	TVec<T, 3> xzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> xwx() const
+	TVec<T, 3> xwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> xwy() const
+	TVec<T, 3> xwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> xwz() const
+	TVec<T, 3> xwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> xww() const
+	TVec<T, 3> xww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 3> yxx() const
+	TVec<T, 3> yxx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 3> yxy() const
+	TVec<T, 3> yxy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> yxz() const
+	TVec<T, 3> yxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> yxw() const
+	TVec<T, 3> yxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 3> yyx() const
+	TVec<T, 3> yyx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 3> yyy() const
+	TVec<T, 3> yyy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> yyz() const
+	TVec<T, 3> yyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> yyw() const
+	TVec<T, 3> yyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> yzx() const
+	TVec<T, 3> yzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> yzy() const
+	TVec<T, 3> yzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> yzz() const
+	TVec<T, 3> yzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> yzw() const
+	TVec<T, 3> yzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> ywx() const
+	TVec<T, 3> ywx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> ywy() const
+	TVec<T, 3> ywy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> ywz() const
+	TVec<T, 3> ywz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> yww() const
+	TVec<T, 3> yww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zxx() const
+	TVec<T, 3> zxx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zxy() const
+	TVec<T, 3> zxy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zxz() const
+	TVec<T, 3> zxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> zxw() const
+	TVec<T, 3> zxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zyx() const
+	TVec<T, 3> zyx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zyy() const
+	TVec<T, 3> zyy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zyz() const
+	TVec<T, 3> zyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> zyw() const
+	TVec<T, 3> zyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zzx() const
+	TVec<T, 3> zzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zzy() const
+	TVec<T, 3> zzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 3> zzz() const
+	TVec<T, 3> zzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> zzw() const
+	TVec<T, 3> zzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> zwx() const
+	TVec<T, 3> zwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> zwy() const
+	TVec<T, 3> zwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> zwz() const
+	TVec<T, 3> zwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> zww() const
+	TVec<T, 3> zww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wxx() const
+	TVec<T, 3> wxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wxy() const
+	TVec<T, 3> wxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wxz() const
+	TVec<T, 3> wxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wxw() const
+	TVec<T, 3> wxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wyx() const
+	TVec<T, 3> wyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wyy() const
+	TVec<T, 3> wyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wyz() const
+	TVec<T, 3> wyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wyw() const
+	TVec<T, 3> wyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wzx() const
+	TVec<T, 3> wzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wzy() const
+	TVec<T, 3> wzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wzz() const
+	TVec<T, 3> wzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wzw() const
+	TVec<T, 3> wzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wwx() const
+	TVec<T, 3> wwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wwy() const
+	TVec<T, 3> wwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> wwz() const
+	TVec<T, 3> wwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 3> www() const
+	TVec<T, 3> www() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 0)
-	TVec<T, 4> xxxx() const
+	TVec<T, 4> xxxx() const requires(kTComponentCount > 0)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> xxxy() const
+	TVec<T, 4> xxxy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xxxz() const
+	TVec<T, 4> xxxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xxxw() const
+	TVec<T, 4> xxxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> xxyx() const
+	TVec<T, 4> xxyx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> xxyy() const
+	TVec<T, 4> xxyy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xxyz() const
+	TVec<T, 4> xxyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xxyw() const
+	TVec<T, 4> xxyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xxzx() const
+	TVec<T, 4> xxzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xxzy() const
+	TVec<T, 4> xxzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xxzz() const
+	TVec<T, 4> xxzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xxzw() const
+	TVec<T, 4> xxzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xxwx() const
+	TVec<T, 4> xxwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xxwy() const
+	TVec<T, 4> xxwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xxwz() const
+	TVec<T, 4> xxwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xxww() const
+	TVec<T, 4> xxww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> xyxx() const
+	TVec<T, 4> xyxx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> xyxy() const
+	TVec<T, 4> xyxy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xyxz() const
+	TVec<T, 4> xyxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xyxw() const
+	TVec<T, 4> xyxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> xyyx() const
+	TVec<T, 4> xyyx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> xyyy() const
+	TVec<T, 4> xyyy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xyyz() const
+	TVec<T, 4> xyyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xyyw() const
+	TVec<T, 4> xyyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xyzx() const
+	TVec<T, 4> xyzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xyzy() const
+	TVec<T, 4> xyzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xyzz() const
+	TVec<T, 4> xyzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xyzw() const
+	TVec<T, 4> xyzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xywx() const
+	TVec<T, 4> xywx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xywy() const
+	TVec<T, 4> xywy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xywz() const
+	TVec<T, 4> xywz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xyww() const
+	TVec<T, 4> xyww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzxx() const
+	TVec<T, 4> xzxx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzxy() const
+	TVec<T, 4> xzxy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzxz() const
+	TVec<T, 4> xzxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xzxw() const
+	TVec<T, 4> xzxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzyx() const
+	TVec<T, 4> xzyx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzyy() const
+	TVec<T, 4> xzyy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzyz() const
+	TVec<T, 4> xzyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xzyw() const
+	TVec<T, 4> xzyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzzx() const
+	TVec<T, 4> xzzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzzy() const
+	TVec<T, 4> xzzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> xzzz() const
+	TVec<T, 4> xzzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xzzw() const
+	TVec<T, 4> xzzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xzwx() const
+	TVec<T, 4> xzwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xzwy() const
+	TVec<T, 4> xzwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xzwz() const
+	TVec<T, 4> xzwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xzww() const
+	TVec<T, 4> xzww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwxx() const
+	TVec<T, 4> xwxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwxy() const
+	TVec<T, 4> xwxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwxz() const
+	TVec<T, 4> xwxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwxw() const
+	TVec<T, 4> xwxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwyx() const
+	TVec<T, 4> xwyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwyy() const
+	TVec<T, 4> xwyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwyz() const
+	TVec<T, 4> xwyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwyw() const
+	TVec<T, 4> xwyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwzx() const
+	TVec<T, 4> xwzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwzy() const
+	TVec<T, 4> xwzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwzz() const
+	TVec<T, 4> xwzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwzw() const
+	TVec<T, 4> xwzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwwx() const
+	TVec<T, 4> xwwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwwy() const
+	TVec<T, 4> xwwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwwz() const
+	TVec<T, 4> xwwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> xwww() const
+	TVec<T, 4> xwww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yxxx() const
+	TVec<T, 4> yxxx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yxxy() const
+	TVec<T, 4> yxxy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yxxz() const
+	TVec<T, 4> yxxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yxxw() const
+	TVec<T, 4> yxxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yxyx() const
+	TVec<T, 4> yxyx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yxyy() const
+	TVec<T, 4> yxyy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yxyz() const
+	TVec<T, 4> yxyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yxyw() const
+	TVec<T, 4> yxyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yxzx() const
+	TVec<T, 4> yxzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yxzy() const
+	TVec<T, 4> yxzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yxzz() const
+	TVec<T, 4> yxzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yxzw() const
+	TVec<T, 4> yxzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yxwx() const
+	TVec<T, 4> yxwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yxwy() const
+	TVec<T, 4> yxwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yxwz() const
+	TVec<T, 4> yxwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yxww() const
+	TVec<T, 4> yxww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yyxx() const
+	TVec<T, 4> yyxx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yyxy() const
+	TVec<T, 4> yyxy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yyxz() const
+	TVec<T, 4> yyxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yyxw() const
+	TVec<T, 4> yyxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yyyx() const
+	TVec<T, 4> yyyx() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 1)
-	TVec<T, 4> yyyy() const
+	TVec<T, 4> yyyy() const requires(kTComponentCount > 1)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yyyz() const
+	TVec<T, 4> yyyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yyyw() const
+	TVec<T, 4> yyyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yyzx() const
+	TVec<T, 4> yyzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yyzy() const
+	TVec<T, 4> yyzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yyzz() const
+	TVec<T, 4> yyzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yyzw() const
+	TVec<T, 4> yyzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yywx() const
+	TVec<T, 4> yywx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yywy() const
+	TVec<T, 4> yywy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yywz() const
+	TVec<T, 4> yywz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yyww() const
+	TVec<T, 4> yyww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzxx() const
+	TVec<T, 4> yzxx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzxy() const
+	TVec<T, 4> yzxy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzxz() const
+	TVec<T, 4> yzxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yzxw() const
+	TVec<T, 4> yzxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzyx() const
+	TVec<T, 4> yzyx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzyy() const
+	TVec<T, 4> yzyy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzyz() const
+	TVec<T, 4> yzyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yzyw() const
+	TVec<T, 4> yzyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzzx() const
+	TVec<T, 4> yzzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzzy() const
+	TVec<T, 4> yzzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> yzzz() const
+	TVec<T, 4> yzzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yzzw() const
+	TVec<T, 4> yzzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yzwx() const
+	TVec<T, 4> yzwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yzwy() const
+	TVec<T, 4> yzwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yzwz() const
+	TVec<T, 4> yzwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> yzww() const
+	TVec<T, 4> yzww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywxx() const
+	TVec<T, 4> ywxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywxy() const
+	TVec<T, 4> ywxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywxz() const
+	TVec<T, 4> ywxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywxw() const
+	TVec<T, 4> ywxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywyx() const
+	TVec<T, 4> ywyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywyy() const
+	TVec<T, 4> ywyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywyz() const
+	TVec<T, 4> ywyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywyw() const
+	TVec<T, 4> ywyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywzx() const
+	TVec<T, 4> ywzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywzy() const
+	TVec<T, 4> ywzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywzz() const
+	TVec<T, 4> ywzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywzw() const
+	TVec<T, 4> ywzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywwx() const
+	TVec<T, 4> ywwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywwy() const
+	TVec<T, 4> ywwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywwz() const
+	TVec<T, 4> ywwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> ywww() const
+	TVec<T, 4> ywww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxxx() const
+	TVec<T, 4> zxxx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxxy() const
+	TVec<T, 4> zxxy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxxz() const
+	TVec<T, 4> zxxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zxxw() const
+	TVec<T, 4> zxxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxyx() const
+	TVec<T, 4> zxyx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxyy() const
+	TVec<T, 4> zxyy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxyz() const
+	TVec<T, 4> zxyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zxyw() const
+	TVec<T, 4> zxyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxzx() const
+	TVec<T, 4> zxzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxzy() const
+	TVec<T, 4> zxzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zxzz() const
+	TVec<T, 4> zxzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zxzw() const
+	TVec<T, 4> zxzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zxwx() const
+	TVec<T, 4> zxwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zxwy() const
+	TVec<T, 4> zxwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zxwz() const
+	TVec<T, 4> zxwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zxww() const
+	TVec<T, 4> zxww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyxx() const
+	TVec<T, 4> zyxx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyxy() const
+	TVec<T, 4> zyxy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyxz() const
+	TVec<T, 4> zyxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zyxw() const
+	TVec<T, 4> zyxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyyx() const
+	TVec<T, 4> zyyx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyyy() const
+	TVec<T, 4> zyyy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyyz() const
+	TVec<T, 4> zyyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zyyw() const
+	TVec<T, 4> zyyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyzx() const
+	TVec<T, 4> zyzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyzy() const
+	TVec<T, 4> zyzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zyzz() const
+	TVec<T, 4> zyzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zyzw() const
+	TVec<T, 4> zyzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zywx() const
+	TVec<T, 4> zywx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zywy() const
+	TVec<T, 4> zywy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zywz() const
+	TVec<T, 4> zywz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zyww() const
+	TVec<T, 4> zyww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzxx() const
+	TVec<T, 4> zzxx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzxy() const
+	TVec<T, 4> zzxy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzxz() const
+	TVec<T, 4> zzxz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zzxw() const
+	TVec<T, 4> zzxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzyx() const
+	TVec<T, 4> zzyx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzyy() const
+	TVec<T, 4> zzyy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzyz() const
+	TVec<T, 4> zzyz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zzyw() const
+	TVec<T, 4> zzyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzzx() const
+	TVec<T, 4> zzzx() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzzy() const
+	TVec<T, 4> zzzy() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 2)
-	TVec<T, 4> zzzz() const
+	TVec<T, 4> zzzz() const requires(kTComponentCount > 2)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zzzw() const
+	TVec<T, 4> zzzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zzwx() const
+	TVec<T, 4> zzwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zzwy() const
+	TVec<T, 4> zzwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zzwz() const
+	TVec<T, 4> zzwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zzww() const
+	TVec<T, 4> zzww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwxx() const
+	TVec<T, 4> zwxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwxy() const
+	TVec<T, 4> zwxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwxz() const
+	TVec<T, 4> zwxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwxw() const
+	TVec<T, 4> zwxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwyx() const
+	TVec<T, 4> zwyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwyy() const
+	TVec<T, 4> zwyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwyz() const
+	TVec<T, 4> zwyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwyw() const
+	TVec<T, 4> zwyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwzx() const
+	TVec<T, 4> zwzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwzy() const
+	TVec<T, 4> zwzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwzz() const
+	TVec<T, 4> zwzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwzw() const
+	TVec<T, 4> zwzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwwx() const
+	TVec<T, 4> zwwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwwy() const
+	TVec<T, 4> zwwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwwz() const
+	TVec<T, 4> zwwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> zwww() const
+	TVec<T, 4> zwww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxxx() const
+	TVec<T, 4> wxxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxxy() const
+	TVec<T, 4> wxxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxxz() const
+	TVec<T, 4> wxxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxxw() const
+	TVec<T, 4> wxxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxyx() const
+	TVec<T, 4> wxyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxyy() const
+	TVec<T, 4> wxyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxyz() const
+	TVec<T, 4> wxyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxyw() const
+	TVec<T, 4> wxyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxzx() const
+	TVec<T, 4> wxzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxzy() const
+	TVec<T, 4> wxzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxzz() const
+	TVec<T, 4> wxzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxzw() const
+	TVec<T, 4> wxzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxwx() const
+	TVec<T, 4> wxwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxwy() const
+	TVec<T, 4> wxwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxwz() const
+	TVec<T, 4> wxwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wxww() const
+	TVec<T, 4> wxww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyxx() const
+	TVec<T, 4> wyxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyxy() const
+	TVec<T, 4> wyxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyxz() const
+	TVec<T, 4> wyxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyxw() const
+	TVec<T, 4> wyxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyyx() const
+	TVec<T, 4> wyyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyyy() const
+	TVec<T, 4> wyyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyyz() const
+	TVec<T, 4> wyyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyyw() const
+	TVec<T, 4> wyyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyzx() const
+	TVec<T, 4> wyzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyzy() const
+	TVec<T, 4> wyzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyzz() const
+	TVec<T, 4> wyzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyzw() const
+	TVec<T, 4> wyzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wywx() const
+	TVec<T, 4> wywx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wywy() const
+	TVec<T, 4> wywy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wywz() const
+	TVec<T, 4> wywz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wyww() const
+	TVec<T, 4> wyww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzxx() const
+	TVec<T, 4> wzxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzxy() const
+	TVec<T, 4> wzxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzxz() const
+	TVec<T, 4> wzxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzxw() const
+	TVec<T, 4> wzxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzyx() const
+	TVec<T, 4> wzyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzyy() const
+	TVec<T, 4> wzyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzyz() const
+	TVec<T, 4> wzyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzyw() const
+	TVec<T, 4> wzyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzzx() const
+	TVec<T, 4> wzzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzzy() const
+	TVec<T, 4> wzzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzzz() const
+	TVec<T, 4> wzzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzzw() const
+	TVec<T, 4> wzzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzwx() const
+	TVec<T, 4> wzwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzwy() const
+	TVec<T, 4> wzwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzwz() const
+	TVec<T, 4> wzwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wzww() const
+	TVec<T, 4> wzww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwxx() const
+	TVec<T, 4> wwxx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwxy() const
+	TVec<T, 4> wwxy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwxz() const
+	TVec<T, 4> wwxz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwxw() const
+	TVec<T, 4> wwxw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwyx() const
+	TVec<T, 4> wwyx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwyy() const
+	TVec<T, 4> wwyy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwyz() const
+	TVec<T, 4> wwyz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwyw() const
+	TVec<T, 4> wwyw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwzx() const
+	TVec<T, 4> wwzx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwzy() const
+	TVec<T, 4> wwzy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwzz() const
+	TVec<T, 4> wwzz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwzw() const
+	TVec<T, 4> wwzw() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[3]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwwx() const
+	TVec<T, 4> wwwx() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[0]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwwy() const
+	TVec<T, 4> wwwy() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[1]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwwz() const
+	TVec<T, 4> wwwz() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[2]);
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount > 3)
-	TVec<T, 4> wwww() const
+	TVec<T, 4> wwww() const requires(kTComponentCount > 3)
 	{
 		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[3]);
 	}
@@ -2318,7 +1959,7 @@ public:
 	/// @{
 
 	// Copy
-	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, !kHasVec4SIMD) b)
+	TVec& operator=(const TVec& b) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2328,14 +1969,13 @@ public:
 	}
 
 	// Copy
-	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, kHasVec4SIMD) b)
+	TVec& operator=(const TVec& b) requires(kVec4Simd)
 	{
 		m_simd = b.m_simd;
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec operator+(const TVec& b) const
+	TVec operator+(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2346,8 +1986,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec operator+(const TVec& b) const
+	TVec operator+(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_add_ps(m_simd, b.m_simd));
@@ -2357,8 +1996,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec& operator+=(const TVec& b)
+	TVec& operator+=(const TVec& b) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2368,8 +2006,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec& operator+=(const TVec& b)
+	TVec& operator+=(const TVec& b) requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_add_ps(m_simd, b.m_simd);
@@ -2380,8 +2017,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec operator-(const TVec& b) const
+	TVec operator-(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2392,8 +2028,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec operator-(const TVec& b) const
+	TVec operator-(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_sub_ps(m_simd, b.m_simd));
@@ -2403,8 +2038,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec& operator-=(const TVec& b)
+	TVec& operator-=(const TVec& b) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2414,8 +2048,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec& operator-=(const TVec& b)
+	TVec& operator-=(const TVec& b) requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_sub_ps(m_simd, b.m_simd);
@@ -2426,8 +2059,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec operator*(const TVec& b) const
+	TVec operator*(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2438,8 +2070,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec operator*(const TVec& b) const
+	TVec operator*(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_mul_ps(m_simd, b.m_simd));
@@ -2449,8 +2080,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec& operator*=(const TVec& b)
+	TVec& operator*=(const TVec& b) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2460,8 +2090,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec& operator*=(const TVec& b)
+	TVec& operator*=(const TVec& b) requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_mul_ps(m_simd, b.m_simd);
@@ -2472,8 +2101,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec operator/(const TVec& b) const
+	TVec operator/(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2485,8 +2113,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec operator/(const TVec& b) const
+	TVec operator/(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_div_ps(m_simd, b.m_simd));
@@ -2496,8 +2123,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec& operator/=(const TVec& b)
+	TVec& operator/=(const TVec& b) requires(!kVec4Simd)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2508,8 +2134,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec& operator/=(const TVec& b)
+	TVec& operator/=(const TVec& b) requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		m_simd = _mm_div_ps(m_simd, b.m_simd);
@@ -2520,8 +2145,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec operator-() const
+	TVec operator-() const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2532,8 +2156,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec operator-() const
+	TVec operator-() const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
@@ -2543,8 +2166,7 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator<<(const TVec& b) const
+	TVec operator<<(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2554,8 +2176,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator<<=(const TVec& b)
+	TVec& operator<<=(const TVec& b) requires(kIsInteger)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2564,8 +2185,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator>>(const TVec& b) const
+	TVec operator>>(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2575,8 +2195,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator>>=(const TVec& b)
+	TVec& operator>>=(const TVec& b) requires(kIsInteger)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2585,8 +2204,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator&(const TVec& b) const
+	TVec operator&(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2596,8 +2214,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator&=(const TVec& b)
+	TVec& operator&=(const TVec& b) requires(kIsInteger)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2606,8 +2223,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator|(const TVec& b) const
+	TVec operator|(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2617,8 +2233,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator|=(const TVec& b)
+	TVec& operator|=(const TVec& b) requires(kIsInteger)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2627,8 +2242,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator^(const TVec& b) const
+	TVec operator^(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2638,8 +2252,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator^=(const TVec& b)
+	TVec& operator^=(const TVec& b) requires(kIsInteger)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2648,8 +2261,7 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator%(const TVec& b) const
+	TVec operator%(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2659,8 +2271,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator%=(const TVec& b)
+	TVec& operator%=(const TVec& b) requires(kIsInteger)
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2781,79 +2392,67 @@ public:
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator<<(const T f) const
+	TVec operator<<(const T f) const requires(kIsInteger)
 	{
 		return (*this) << TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator<<=(const T f)
+	TVec& operator<<=(const T f) requires(kIsInteger)
 	{
 		(*this) <<= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator>>(const T f) const
+	TVec operator>>(const T f) const requires(kIsInteger)
 	{
 		return (*this) >> TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator>>=(const T f)
+	TVec& operator>>=(const T f) requires(kIsInteger)
 	{
 		(*this) >>= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator&(const T f) const
+	TVec operator&(const T f) const requires(kIsInteger)
 	{
 		return (*this) & TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator&=(const T f)
+	TVec& operator&=(const T f) requires(kIsInteger)
 	{
 		(*this) &= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator|(const T f) const
+	TVec operator|(const T f) const requires(kIsInteger)
 	{
 		return (*this) | TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator|=(const T f)
+	TVec& operator|=(const T f) requires(kIsInteger)
 	{
 		(*this) |= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator^(const T f) const
+	TVec operator^(const T f) const requires(kIsInteger)
 	{
 		return (*this) ^ TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator^=(const T f)
+	TVec& operator^=(const T f) requires(kIsInteger)
 	{
 		(*this) ^= TVec(f);
 		return *this;
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec operator%(const T f) const
+	TVec operator%(const T f) const requires(kIsInteger)
 	{
 		return (*this) % TVec(f);
 	}
 
-	ANKI_ENABLE_METHOD(kIsInteger)
-	TVec& operator%=(const T f)
+	TVec& operator%=(const T f) requires(kIsInteger)
 	{
 		(*this) %= TVec(f);
 		return *this;
@@ -2894,8 +2493,7 @@ public:
 	/// @{
 
 	/// @note 16 muls 12 adds
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec operator*(const TMat<T, 4, 4>& m4) const
+	TVec operator*(const TMat<T, 4, 4>& m4) const requires(kTComponentCount == 4)
 	{
 		TVec out;
 		out.x() = x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0);
@@ -2908,8 +2506,7 @@ public:
 
 	/// @name Other
 	/// @{
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	T dot(const TVec& b) const
+	T dot(const TVec& b) const requires(!kVec4Simd)
 	{
 		T out = T(0);
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2920,8 +2517,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	T dot(const TVec& b) const
+	T dot(const TVec& b) const requires(kVec4Simd)
 	{
 		T o;
 #	if ANKI_SIMD_SSE
@@ -2937,15 +2533,13 @@ public:
 #endif
 
 	/// 6 muls, 3 adds
-	ANKI_ENABLE_METHOD(kTComponentCount == 3)
-	TVec cross(const TVec& b) const
+	TVec cross(const TVec& b) const requires(kTComponentCount == 3)
 	{
 		return TVec(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
 	}
 
 	/// It's like calculating the cross of a 3 component TVec.
-	ANKI_ENABLE_METHOD(kTComponentCount == 4 && !kHasVec4SIMD)
-	TVec cross(const TVec& b) const
+	TVec cross(const TVec& b) const requires(kTComponentCount == 4 && !kVec4Simd)
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
@@ -2953,8 +2547,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kTComponentCount == 4 && kHasVec4SIMD)
-	TVec cross(const TVec& b) const
+	TVec cross(const TVec& b) const requires(kTComponentCount == 4 && kVec4Simd)
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
@@ -2982,28 +2575,24 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 3)
-	TVec projectTo(const TVec& toThis) const
+	TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 3)
 	{
 		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec projectTo(const TVec& toThis) const
+	TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 4)
 	{
 		ANKI_ASSERT(w() == T(0));
 		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 3)
-	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const
+	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 3)
 	{
 		const auto& a = *this;
 		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
 	}
 
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const
+	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 4)
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(rayOrigin.w() == T(0));
@@ -3013,8 +2602,7 @@ public:
 	}
 
 	/// Perspective divide. Divide the xyzw of this to the w of this. This method will handle some edge cases.
-	ANKI_ENABLE_METHOD(kTComponentCount == 4)
-	TVec perspectiveDivide() const
+	TVec perspectiveDivide() const requires(kTComponentCount == 4)
 	{
 		auto invw = T(1) / w(); // This may become (+-)inf
 		invw = (invw > 1e+11) ? 1e+11 : invw; // Clamp
@@ -3022,8 +2610,7 @@ public:
 		return (*this) * invw;
 	}
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	T getLengthSquared() const
+	T getLengthSquared() const requires(!kVec4Simd)
 	{
 		T out = T(0);
 		for(U i = 0; i < kTComponentCount; i++)
@@ -3033,8 +2620,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	T getLengthSquared() const
+	T getLengthSquared() const requires(kVec4Simd)
 	{
 		return dot(*this);
 	}
@@ -3054,15 +2640,13 @@ public:
 		return sqrt<T>(getDistance(b));
 	}
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	void normalize()
+	void normalize() requires(!kVec4Simd)
 	{
 		(*this) /= getLength();
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	void normalize()
+	void normalize() requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		const __m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
@@ -3083,15 +2667,13 @@ public:
 	}
 #endif
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec getNormalized() const
+	TVec getNormalized() const requires(!kVec4Simd)
 	{
 		return (*this) / getLength();
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec getNormalized() const
+	TVec getNormalized() const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		const __m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
@@ -3129,8 +2711,7 @@ public:
 		return ((*this) * (T(1) - t)) + (v1 * t);
 	}
 
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec abs() const
+	TVec abs() const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -3141,8 +2722,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec abs() const
+	TVec abs() const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		const __m128 signMask = _mm_set1_ps(-0.0f);
@@ -3166,8 +2746,7 @@ public:
 	}
 
 	/// Get the min of all components.
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec min(const TVec& b) const
+	TVec min(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -3179,8 +2758,7 @@ public:
 
 #if ANKI_ENABLE_SIMD
 	/// Get the min of all components.
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec min(const TVec& b) const
+	TVec min(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_min_ps(m_simd, b.m_simd));
@@ -3197,8 +2775,7 @@ public:
 	}
 
 	/// Get the max of all components.
-	ANKI_ENABLE_METHOD(!kHasVec4SIMD)
-	TVec max(const TVec& b) const
+	TVec max(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -3210,8 +2787,7 @@ public:
 
 #if ANKI_ENABLE_SIMD
 	/// Get the max of all components.
-	ANKI_ENABLE_METHOD(kHasVec4SIMD)
-	TVec max(const TVec& b) const
+	TVec max(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_max_ps(m_simd, b.m_simd));
@@ -3227,8 +2803,7 @@ public:
 		return max(TVec(b));
 	}
 
-	ANKI_ENABLE_METHOD(!kIsInteger)
-	TVec round() const
+	TVec round() const requires(!kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -3288,8 +2863,7 @@ public:
 		return U8(kTComponentCount);
 	}
 
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	String toString() const
+	String toString() const requires(std::is_floating_point<T>::value)
 	{
 		String str;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -3300,8 +2874,7 @@ public:
 	}
 
 	static constexpr Bool kClangWorkaround = std::is_integral<T>::value && std::is_unsigned<T>::value;
-	ANKI_ENABLE_METHOD(kClangWorkaround)
-	String toString() const
+	String toString() const requires(kClangWorkaround)
 	{
 		String str;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -3312,8 +2885,7 @@ public:
 	}
 
 	static constexpr Bool kClangWorkaround2 = std::is_integral<T>::value && std::is_signed<T>::value;
-	ANKI_ENABLE_METHOD(kClangWorkaround2)
-	String toString() const
+	String toString() const requires(kClangWorkaround2)
 	{
 		String str;
 		for(U i = 0; i < kTComponentCount; ++i)

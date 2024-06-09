@@ -10,7 +10,7 @@
 #include <ImGui/imgui.h>
 
 #include <AnKi/Util/Ptr.h>
-#include <AnKi/Gr/TextureView.h>
+#include <AnKi/Gr/Texture.h>
 
 namespace anki {
 
@@ -68,13 +68,14 @@ inline Vec2 toAnki(const ImVec2& v)
 /// This is extra data required by UiImageId.
 /// Since UiImageId needs to map to ImTextureID, UiImageId can only be a single pointer. Thus extra data required for
 /// custom drawing of that image need a different structure.
-class UiImageIdExtra
+class UiImageIdData
 {
 public:
-	TextureViewPtr m_textureView;
+	TextureView m_textureView;
 	ShaderProgramPtr m_customProgram;
 	U8 m_extraPushConstantsSize = 0;
 	Array<U8, 64> m_extraPushConstants;
+	Bool m_pointSampling = false;
 
 	void setExtraPushConstants(const void* ptr, PtrSize pushConstantSize)
 	{
@@ -91,46 +92,23 @@ class UiImageId
 	friend class Canvas;
 
 public:
-	/// Construct a simple UiImageId that only points to a texture view.
-	UiImageId(TextureViewPtr textureView, Bool pointSampling = false)
+	/// Construct a complex UiImageId that points to an UiImageIdDAta structure. Someone else needs to own the data.
+	UiImageId(const UiImageIdData* data)
+		: m_data(data)
 	{
-		m_bits.m_textureViewPtrOrComplex = ptrToNumber(textureView.get()) & 0x3FFFFFFFFFFFFFFFllu;
-		m_bits.m_pointSampling = pointSampling;
-		m_bits.m_extra = false;
-	}
-
-	/// Construct a complex UiImageId that points to an UiImageIdExtra structure.
-	UiImageId(const UiImageIdExtra* extra, Bool pointSampling = false)
-	{
-		m_bits.m_textureViewPtrOrComplex = ptrToNumber(extra) & 0x3FFFFFFFFFFFFFFFllu;
-		m_bits.m_pointSampling = pointSampling;
-		m_bits.m_extra = true;
 	}
 
 	operator void*() const
 	{
-		return numberToPtr<void*>(m_allBits);
+		return const_cast<void*>(static_cast<const void*>(m_data));
 	}
 
 private:
-	class Bits
-	{
-	public:
-		U64 m_textureViewPtrOrComplex : 62;
-		U64 m_pointSampling : 1;
-		U64 m_extra : 1;
-	};
-
-	union
-	{
-		Bits m_bits;
-		U64 m_allBits;
-	};
+	const UiImageIdData* m_data = nullptr;
 
 	UiImageId(void* ptr)
-		: m_allBits(ptrToNumber(ptr))
+		: m_data(reinterpret_cast<const UiImageIdData*>(ptr))
 	{
-		ANKI_ASSERT(ptr);
 	}
 };
 static_assert(sizeof(UiImageId) == sizeof(void*), "See file");

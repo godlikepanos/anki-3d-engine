@@ -3,52 +3,52 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture3D<RVec4> g_lightVolume;
-[[vk::binding(2)]] RWTexture3D<RVec4> g_fogVolume;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture3D<RVec4> g_lightVolume : register(t0);
+RWTexture3D<RVec4> g_fogVolume : register(u0);
 
-[[vk::push_constant]] ConstantBuffer<VolumetricFogConstants> g_consts;
+ANKI_PUSH_CONSTANTS(VolumetricFogUniforms, g_unis)
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	if(any(svDispatchThreadId.xy >= g_consts.m_volumeSize.xy))
+	if(any(svDispatchThreadId.xy >= g_unis.m_volumeSize.xy))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(g_consts.m_volumeSize.xy);
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / Vec2(g_unis.m_volumeSize.xy);
 
 	RVec4 colorAndDensityFront = 0.0;
-	[loop] for(U32 i = 0u; i < g_consts.m_volumeSize.z; ++i)
+	[loop] for(U32 i = 0u; i < g_unis.m_volumeSize.z; ++i)
 	{
 		const RF32 fi = F32(i);
 
 		// Compute the linear depth
-		const RF32 maxLinearDepth = g_consts.m_maxZSplitsToProcessf / g_consts.m_zSplitCountf;
-		const RF32 linearDepthFraction = maxLinearDepth / F32(g_consts.m_volumeSize.z);
+		const RF32 maxLinearDepth = g_unis.m_maxZSplitsToProcessf / g_unis.m_zSplitCountf;
+		const RF32 linearDepthFraction = maxLinearDepth / F32(g_unis.m_volumeSize.z);
 		const RF32 linearDepthNear = fi * linearDepthFraction;
 		const RF32 linearDepthFar = (fi + 1.0) * linearDepthFraction;
 
 		// Compute the min and max Z in view space if this cluster fragment
-		const RF32 zVSpaceNear = -linearDepthNear * (g_consts.m_far - g_consts.m_near) + g_consts.m_near;
-		const RF32 zVSpaceFar = -linearDepthFar * (g_consts.m_far - g_consts.m_near) + g_consts.m_near;
+		const RF32 zVSpaceNear = -linearDepthNear * (g_unis.m_far - g_unis.m_near) + g_unis.m_near;
+		const RF32 zVSpaceFar = -linearDepthFar * (g_unis.m_far - g_unis.m_near) + g_unis.m_near;
 
 		// Compute the thikness of this fragment
 		const RF32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
 
 		// Read the light value and the fog density from the fog volumes
-		const RF32 w = (fi + 0.5) / F32(g_consts.m_volumeSize.z);
+		const RF32 w = (fi + 0.5) / F32(g_unis.m_volumeSize.z);
 		RVec4 lightAndFogDensity = g_lightVolume.SampleLevel(g_linearAnyClampSampler, Vec3(uv, w), 0.0);
-		lightAndFogDensity.xyz *= g_consts.m_fogDiffuse / kPi;
+		lightAndFogDensity.xyz *= g_unis.m_fogDiffuse / kPi;
 
 		// Scattering & absorption
-		const RF32 scattering = lightAndFogDensity.w * g_consts.m_fogScatteringCoeff * layerThinkness;
-		const RF32 absorption = lightAndFogDensity.w * g_consts.m_fogAbsorptionCoeff * layerThinkness;
+		const RF32 scattering = lightAndFogDensity.w * g_unis.m_fogScatteringCoeff * layerThinkness;
+		const RF32 absorption = lightAndFogDensity.w * g_unis.m_fogAbsorptionCoeff * layerThinkness;
 
 		// Integrate
 		const RVec4 colorAndDensityBack = Vec4(lightAndFogDensity.xyz * scattering, scattering + absorption);
@@ -62,4 +62,4 @@
 	}
 }
 
-#pragma anki end
+#pragma anki technique_end comp

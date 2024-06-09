@@ -3,26 +3,25 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] Texture2D<UVec4> g_inputTex;
-[[vk::binding(1)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(2)]] RWTexture2D<UVec4> g_outUav;
+Texture2D<UVec4> g_inputTex : register(t0);
+SamplerState g_nearestAnyClampSampler : register(s0);
+RWTexture2D<UVec4> g_storageTex : register(u0);
 
-struct Constants
+struct Uniforms
 {
 	Vec2 m_oneOverViewportSize;
 	F32 m_padding0;
 	F32 m_padding1;
 };
-
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) * g_consts.m_oneOverViewportSize;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) * g_unis.m_oneOverViewportSize;
 
 	const UVec4 rates = g_inputTex.GatherRed(g_nearestAnyClampSampler, uv);
 
@@ -31,7 +30,7 @@ struct Constants
 	rate = min(rate, decodeVrsRate(rates[2]));
 	rate = min(rate, decodeVrsRate(rates[3]));
 
-	g_outUav[svDispatchThreadId.xy] = UVec4(encodeVrsRate(rate), 0, 0, 0);
+	g_storageTex[svDispatchThreadId.xy] = UVec4(encodeVrsRate(rate), 0, 0, 0);
 }
 
-#pragma anki end
+#pragma anki technique_end comp

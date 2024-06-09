@@ -46,16 +46,11 @@ public:
 private:
 	static constexpr Format kRtPixelFormat = Format::kA2B10G10R10_Unorm_Pack32;
 
-	FramebufferDescription m_fbDescr;
-
 	class
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-
-		U32 m_width = 0;
-		U32 m_height = 0;
 
 		RenderTargetDescription m_rtDescr;
 	} m_exposure;
@@ -66,9 +61,6 @@ private:
 		ImageResourcePtr m_lensDirtImage;
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-
-		U32 m_width = 0;
-		U32 m_height = 0;
 
 		RenderTargetDescription m_rtDescr;
 	} m_upscale;

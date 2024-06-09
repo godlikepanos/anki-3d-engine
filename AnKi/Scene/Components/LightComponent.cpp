@@ -233,7 +233,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 
 				computeEdgesOfFrustum(cascadeDistances[cascade], fovX, fovY, &edgePoints[1]);
 
-				boundingSpheres[cascade] = computeBoundingSphere(edgePoints);
+				boundingSpheres[cascade] = computeBoundingSphere(edgePoints.getBegin(), edgePoints.getSize(), sizeof(edgePoints[0]));
 
 				memcpy(&prevFarPlaneEdges[0], &edgePoints[1], sizeof(prevFarPlaneEdges));
 			}
@@ -244,7 +244,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 				computeEdgesOfFrustum(cascadeDistances[cascade], fovX, fovY, &edgePoints[0]);
 				memcpy(&edgePoints[4], &prevFarPlaneEdges[0], sizeof(prevFarPlaneEdges));
 
-				boundingSpheres[cascade] = computeBoundingSphere(edgePoints);
+				boundingSpheres[cascade] = computeBoundingSphere(edgePoints.getBegin(), edgePoints.getSize(), sizeof(edgePoints[0]));
 
 				memcpy(&prevFarPlaneEdges[0], &edgePoints[0], sizeof(prevFarPlaneEdges));
 			}
@@ -287,7 +287,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			rot.setZAxis(zAxis);
 			rot.setTranslationPart(Vec3(0.0f));
 
-			const Transform cascadeTransform(eye.xyz0(), rot, 1.0f);
+			const Transform cascadeTransform(eye.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
 
 			// Projection
@@ -311,7 +311,7 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 
 				// Fix the projection matrix by applying an offset
 				Mat4 correctionTranslationMat = Mat4::getIdentity();
-				correctionTranslationMat.setTranslationPart(Vec4(dx, dy, 0, 1.0f));
+				correctionTranslationMat.setTranslationPart(Vec3(dx, dy, 0.0f));
 
 				cascadeProjMat = correctionTranslationMat * cascadeProjMat;
 			}

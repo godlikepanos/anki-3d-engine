@@ -1,0 +1,20 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#include <AnKi/Shaders/PackFunctions.hlsl>
+
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_inTex : register(t0);
+
+Vec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+{
+	return unpackNormalFromGBuffer(g_inTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0)) / 2.0f + 0.5f;
+}
+#pragma anki technique_end frag

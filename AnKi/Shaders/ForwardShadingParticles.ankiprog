@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_TECHNIQUE 2
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
@@ -11,34 +10,33 @@
 
 struct VertIn
 {
-	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
+	UVec4 m_gpuSceneRenderable : MISC0;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
 struct VertOut
 {
-	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
+	nointerpolation U32 m_uniformsOffset : UNIS_OFFSET;
 	nointerpolation RF32 m_alpha : ALPHA;
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_worldPos : WORLD_POS;
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki reflect AnKiLocalConstants
-#pragma anki struct AnKiLocalConstants
-#pragma anki member F32 m_animationPeriod if ANIMATED_TEXTURE is 1
+#pragma anki struct AnKiLocalUniforms
+#pragma anki member F32 m_animationPeriod
 #pragma anki member Vec4 m_colorScale
 #pragma anki member Vec4 m_colorBias
 #pragma anki member U32 m_diffuseMap
-#pragma anki struct end
+#pragma anki struct_end
 
-#pragma anki start vert
+#pragma anki technique_start vert Forward
 
 VertOut main(VertIn input)
 {
-	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
 	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_boneTransformsOrParticleEmitterOffset);
-	const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
+	const GpuSceneMeshLod meshLod = g_meshLods[renderable.m_meshLodIndex];
 
 	const U32 particleId = input.m_svVertexId / meshLod.m_indexCount;
 	const U32 vertexId = g_unifiedGeom_R16_Uint[meshLod.m_firstIndex + input.m_svVertexId % meshLod.m_indexCount];
@@ -59,39 +57,39 @@ VertOut main(VertIn input)
 		+ meshLod.m_positionTranslation;
 
 	// Apply the particle scale, rotate the mesh to face the camera (billboard) and finally apply the particle position
-	output.m_worldPos = mul(g_globalConstants.m_cameraTransform, Vec4(localPos * particleScale, 0.0)) + particlePos;
+	output.m_worldPos = mul(g_globalUniforms.m_cameraTransform, Vec4(localPos * particleScale, 0.0)) + particlePos;
 
-	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
+	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
 
 	output.m_alpha = particleAlpha;
-	output.m_constantsOffset = renderable.m_constantsOffset;
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
 }
-#pragma anki end
+#pragma anki technique_end vert Forward
 
-#pragma anki start frag
+#pragma anki technique_start frag Forward
 
 FragOut main(VertOut input)
 {
 	FragOut output = (FragOut)0;
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 #if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(g_bindlessTextures2dArrayF32[localConstants.m_diffuseMap], g_globalSampler,
-										   localConstants.m_animationPeriod, input.m_uv, g_clusteredShading.m_time);
+	RVec4 texCol = readAnimatedTextureRgba(getBindlessTexture2DArrayRVec4(localUniforms.m_diffuseMap), g_globalSampler,
+										   localUniforms.m_animationPeriod, input.m_uv, g_globalRendererUniforms.m_time);
 #else
-	RVec4 texCol = g_bindlessTextures2dF32[localConstants.m_diffuseMap].Sample(g_globalSampler, input.m_uv);
+	RVec4 texCol = getBindlessTexture2DRVec4(localUniforms.m_diffuseMap).Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT
 	texCol.rgb = computeLightColorLow(texCol.rgb, input.m_worldPos, input.m_svPosition);
 #endif
 
-	RVec4 colScale = localConstants.m_colorScale;
+	RVec4 colScale = localUniforms.m_colorScale;
 	colScale.a *= input.m_alpha;
-	particleAlpha(texCol, colScale, localConstants.m_colorBias, output);
+	particleAlpha(texCol, colScale, localUniforms.m_colorBias, output);
 
 	return output;
 }
-#pragma anki end
+#pragma anki technique_end frag Forward

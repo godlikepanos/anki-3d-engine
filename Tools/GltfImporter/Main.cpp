@@ -226,10 +226,12 @@ int myMain(int argc, char** argv)
 		~Cleanup()
 		{
 			DefaultMemoryPool::freeSingleton();
+			ImporterMemoryPool::freeSingleton();
 		}
 	} cleanup;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
+	ImporterMemoryPool::allocateSingleton(allocAligned, nullptr);
 
 	CmdLineArgs cmdArgs;
 	if(parseCommandLineArgs(argc, argv, cmdArgs))
@@ -270,7 +272,7 @@ int myMain(int argc, char** argv)
 	initInfo.m_comment = comment;
 	initInfo.m_importTextures = cmdArgs.m_importTextures;
 
-	GltfImporter importer(&DefaultMemoryPool::getSingleton());
+	GltfImporter importer;
 	if(importer.init(initInfo))
 	{
 		return 1;
@@ -280,6 +282,8 @@ int myMain(int argc, char** argv)
 	{
 		return 1;
 	}
+
+	ANKI_IMPORTER_LOGI("File written: %s", cmdArgs.m_inputFname.cstr());
 
 	return 0;
 }

@@ -56,7 +56,8 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, DynamicArray<U8>& spirv, String& errorMessage)
+static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool spirv, ShaderCompilerDynamicArray<U8>& bin,
+						 ShaderCompilerString& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
 	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
@@ -65,7 +66,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	ANKI_CHECK(getTempDirectory(tmpDir));
 
 	// Store HLSL to a file
-	String hlslFilename;
+	ShaderCompilerString hlslFilename;
 	hlslFilename.sprintf("%s/%" PRIu64 ".hlsl", tmpDir.cstr(), rand);
 
 	File hlslFile;
@@ -75,12 +76,12 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	hlslFile.close();
 
 	// Call DXC
-	String spvFilename;
-	spvFilename.sprintf("%s/%" PRIu64 ".spv", tmpDir.cstr(), rand);
+	ShaderCompilerString binFilename;
+	binFilename.sprintf("%s/%" PRIu64 ".spvdxil", tmpDir.cstr(), rand);
 
-	DynamicArray<String> dxcArgs;
+	ShaderCompilerDynamicArray<ShaderCompilerString> dxcArgs;
 	dxcArgs.emplaceBack("-Fo");
-	dxcArgs.emplaceBack(spvFilename);
+	dxcArgs.emplaceBack(binFilename);
 	dxcArgs.emplaceBack("-Wall");
 	dxcArgs.emplaceBack("-Wextra");
 	dxcArgs.emplaceBack("-Wno-conversion");
@@ -88,15 +89,49 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.emplaceBack("-Wfatal-errors");
 	dxcArgs.emplaceBack("-Wundef");
 	dxcArgs.emplaceBack("-Wno-unused-const-variable");
+	dxcArgs.emplaceBack("-Wno-unused-parameter");
+	dxcArgs.emplaceBack("-Wno-unneeded-internal-declaration");
 	dxcArgs.emplaceBack("-HV");
 	dxcArgs.emplaceBack("2021");
 	dxcArgs.emplaceBack("-E");
 	dxcArgs.emplaceBack("main");
 	dxcArgs.emplaceBack("-T");
 	dxcArgs.emplaceBack(profile(shaderType));
-	dxcArgs.emplaceBack("-spirv");
-	dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4");
-	// dxcArgs.emplaceBack("-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
+	if(ANKI_COMPILER_MSVC)
+	{
+		dxcArgs.emplaceBack("-fdiagnostics-format=msvc"); // Make errors clickable in visual studio
+	}
+	if(spirv)
+	{
+		dxcArgs.emplaceBack("-spirv");
+		dxcArgs.emplaceBack("-fspv-target-env=vulkan1.1spirv1.4");
+		// dxcArgs.emplaceBack("-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
+
+		// Shift the bindings in order to identify the registers when doing reflection
+		for(U32 ds = 0; ds < kMaxDescriptorSets; ++ds)
+		{
+			dxcArgs.emplaceBack("-fvk-b-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kCbv]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+
+			dxcArgs.emplaceBack("-fvk-t-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kSrv]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+
+			dxcArgs.emplaceBack("-fvk-u-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kUav]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+
+			dxcArgs.emplaceBack("-fvk-s-shift");
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kSampler]));
+			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", ds));
+		}
+	}
+	else
+	{
+		dxcArgs.emplaceBack("-Wno-ignored-attributes"); // TODO rm that eventually
+		dxcArgs.emplaceBack("-Wno-inline-asm"); // TODO rm that eventually
+	}
 	// dxcArgs.emplaceBack("-Zi"); // Debug info
 	dxcArgs.emplaceBack(hlslFilename);
 
@@ -105,7 +140,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 		dxcArgs.emplaceBack("-enable-16bit-types");
 	}
 
-	DynamicArray<CString> dxcArgs2;
+	ShaderCompilerDynamicArray<CString> dxcArgs2;
 	dxcArgs2.resize(dxcArgs.getSize());
 	for(U32 i = 0; i < dxcArgs.getSize(); ++i)
 	{
@@ -115,7 +150,7 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 	while(true)
 	{
 		I32 exitCode;
-		String stdOut;
+		ShaderCompilerString stdOut;
 
 #if ANKI_OS_WINDOWS
 		CString dxcBin = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/dxc.exe";
@@ -131,7 +166,10 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 		if(exitCode != 0)
 		{
 			// There was an error, run again just to get the stderr
-			ANKI_CHECK(Process::callProcess(dxcBin, dxcArgs2, nullptr, &errorMessage, exitCode));
+			String errorMessageTmp;
+			const Error err = Process::callProcess(dxcBin, dxcArgs2, nullptr, &errorMessageTmp, exitCode);
+			(void)err; // Shoudn't throw an error
+			errorMessage = errorMessageTmp;
 
 			if(!errorMessage.isEmpty() && errorMessage.find("The process cannot access the file because") != CString::kNpos)
 			{
@@ -156,16 +194,28 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 		}
 	}
 
-	CleanupFile spvFileCleanup(spvFilename);
+	CleanupFile binFileCleanup(binFilename);
 
 	// Read the spirv back
-	File spvFile;
-	ANKI_CHECK(spvFile.open(spvFilename, FileOpenFlag::kRead));
-	spirv.resize(U32(spvFile.getSize()));
-	ANKI_CHECK(spvFile.read(&spirv[0], spirv.getSizeInBytes()));
-	spvFile.close();
+	File binFile;
+	ANKI_CHECK(binFile.open(binFilename, FileOpenFlag::kRead));
+	bin.resize(U32(binFile.getSize()));
+	ANKI_CHECK(binFile.read(&bin[0], bin.getSizeInBytes()));
+	binFile.close();
 
 	return Error::kNone;
+}
+
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& spirv,
+						 ShaderCompilerString& errorMessage)
+{
+	return compileHlsl(src, shaderType, compileWith16bitTypes, true, spirv, errorMessage);
+}
+
+Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& dxil,
+						ShaderCompilerString& errorMessage)
+{
+	return compileHlsl(src, shaderType, compileWith16bitTypes, false, dxil, errorMessage);
 }
 
 } // end namespace anki

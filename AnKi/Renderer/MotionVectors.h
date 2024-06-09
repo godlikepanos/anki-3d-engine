@@ -20,7 +20,6 @@ public:
 	MotionVectors()
 	{
 		registerDebugRenderTarget("MotionVectors");
-		registerDebugRenderTarget("MotionVectorsHistoryLength");
 	}
 
 	Error init();
@@ -32,11 +31,6 @@ public:
 		return m_runCtx.m_motionVectorsRtHandle;
 	}
 
-	RenderTargetHandle getHistoryLengthRt() const
-	{
-		return m_runCtx.m_historyLengthWriteRtHandle;
-	}
-
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
@@ -44,28 +38,17 @@ public:
 		{
 			handles[0] = m_runCtx.m_motionVectorsRtHandle;
 		}
-		else
-		{
-			ANKI_ASSERT(rtName == "MotionVectorsHistoryLength");
-			handles[0] = m_runCtx.m_historyLengthWriteRtHandle;
-		}
 	}
 
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	RenderTargetDescription m_motionVectorsRtDescr;
-	FramebufferDescription m_fbDescr;
-
-	Array<TexturePtr, 2> m_historyLengthTextures;
-	Bool m_historyLengthTexturesImportedOnce = false;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_motionVectorsRtHandle;
-		RenderTargetHandle m_historyLengthReadRtHandle;
-		RenderTargetHandle m_historyLengthWriteRtHandle;
 	} m_runCtx;
 
 	Error initInternal();

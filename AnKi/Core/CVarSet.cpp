@@ -62,7 +62,7 @@ Error CVarSet::setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineAr
 			{
 				if(foundCVar)
 				{
-					ANKI_CORE_LOGW("Command line arg %s has ambiguous name", varName.cstr());
+					ANKI_CORE_LOGE("Command line arg %s has ambiguous name. Skipping", varName.cstr());
 				}
 				else
 				{
@@ -102,6 +102,7 @@ Error CVarSet::setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineAr
 				break;
 			}
 				ANKI_CVAR_NUMERIC_SET(U8)
+				ANKI_CVAR_NUMERIC_SET(U16)
 				ANKI_CVAR_NUMERIC_SET(U32)
 				ANKI_CVAR_NUMERIC_SET(PtrSize)
 				ANKI_CVAR_NUMERIC_SET(F32)
@@ -117,7 +118,7 @@ Error CVarSet::setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineAr
 		}
 		else
 		{
-			ANKI_CORE_LOGW("Can't recognize command line argument: %s. Skipping", varName.cstr());
+			ANKI_CORE_LOGE("Can't recognize command line argument: %s. Skipping", varName.cstr());
 		}
 	}
 

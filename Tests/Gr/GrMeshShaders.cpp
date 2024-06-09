@@ -20,8 +20,9 @@ ANKI_TEST(Gr, MeshShaders)
 	g_meshShadersCVar.set(true);
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
-	NativeWindow* win = createWindow();
-	GrManager* gr = createGrManager(win);
+	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
+	initWindow();
+	initGrManager();
 
 	{
 		const CString taskShaderSrc = R"(
@@ -39,7 +40,7 @@ struct Meshlet
 	uint m_firstVertex;
 };
 
-[[vk::binding(3)]] StructuredBuffer<Meshlet> g_meshlets;
+StructuredBuffer<Meshlet> g_meshlets : register(t3);
 
 [numthreads(64, 1, 1)] void main(uint svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -81,10 +82,10 @@ struct Meshlet
 	uint m_firstVertex;
 };
 
-[[vk::binding(0)]] StructuredBuffer<uint> g_indices;
-[[vk::binding(1)]] StructuredBuffer<float4> g_positions;
-[[vk::binding(2)]] StructuredBuffer<float4> g_colors;
-[[vk::binding(3)]] StructuredBuffer<Meshlet> g_meshlets;
+StructuredBuffer<uint> g_indices : register(t0);
+StructuredBuffer<float4> g_positions : register(t1);
+StructuredBuffer<float4> g_colors : register(t2);
+StructuredBuffer<Meshlet> g_meshlets : register(t3);
 
 [numthreads(6, 1, 1)] [outputtopology("triangle")] void main(in payload Payload payload, out vertices VertOut verts[4],
                                                              out indices uint3 indices[6], uint svGroupId : SV_GROUPID,
@@ -121,24 +122,24 @@ float3 main(VertOut input) : SV_TARGET0
 
 		ShaderProgramPtr prog;
 		{
-			ShaderPtr taskShader = createShader(taskShaderSrc, ShaderType::kTask, *gr);
-			ShaderPtr meshShader = createShader(meshShaderSrc, ShaderType::kMesh, *gr);
-			ShaderPtr fragShader = createShader(fragShaderSrc, ShaderType::kFragment, *gr);
+			ShaderPtr taskShader = createShader(taskShaderSrc, ShaderType::kTask);
+			ShaderPtr meshShader = createShader(meshShaderSrc, ShaderType::kMesh);
+			ShaderPtr fragShader = createShader(fragShaderSrc, ShaderType::kFragment);
 
 			ShaderProgramInitInfo progInit("Program");
 			progInit.m_graphicsShaders[ShaderType::kTask] = taskShader.get();
 			progInit.m_graphicsShaders[ShaderType::kMesh] = meshShader.get();
 			progInit.m_graphicsShaders[ShaderType::kFragment] = fragShader.get();
-			prog = gr->newShaderProgram(progInit);
+			prog = GrManager::getSingleton().newShaderProgram(progInit);
 		}
 
 		BufferPtr indexBuff;
 		{
 			BufferInitInfo buffInit("Index");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = sizeof(U32) * 6;
-			indexBuff = gr->newBuffer(buffInit);
+			indexBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			void* mapped = indexBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 			const U32 indices[] = {0, 1, 2, 2, 1, 3};
@@ -150,9 +151,9 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Positions");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
-			positionsBuff = gr->newBuffer(buffInit);
+			positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			Vec4* mapped = static_cast<Vec4*>(positionsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -175,14 +176,14 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Colors");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
-			colorsBuff = gr->newBuffer(buffInit);
+			colorsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			Vec4* mapped = static_cast<Vec4*>(colorsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
 			const Array<Vec4, kTileCount> colors = {Vec4(1.0f, 0.0f, 0.0f, 0.0f), Vec4(0.0f, 1.0f, 0.0f, 0.0f), Vec4(0.0f, 0.0f, 1.0f, 0.0f),
-													Vec4(1.0f, 0.0f, 1.0f, 0.0f)};
+													Vec4(1.0f, 1.0f, 0.0f, 0.0f)};
 			for(U32 t = 0; t < kTileCount; t++)
 			{
 				mapped[0] = mapped[1] = mapped[2] = mapped[3] = colors[t];
@@ -204,9 +205,9 @@ float3 main(VertOut input) : SV_TARGET0
 
 			BufferInitInfo buffInit("Meshlets");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kUavGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
 			buffInit.m_size = sizeof(Meshlet) * kTileCount;
-			meshletsBuff = gr->newBuffer(buffInit);
+			meshletsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 			Meshlet* mapped = static_cast<Meshlet*>(meshletsBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 
@@ -221,33 +222,28 @@ float3 main(VertOut input) : SV_TARGET0
 
 		for(U32 i = 0; i < 100; ++i)
 		{
-			TexturePtr swapchainTex = gr->acquireNextPresentableTexture();
-			TextureViewInitInfo viewInit(swapchainTex.get(), "RTView");
-			TextureViewPtr swapchainView = gr->newTextureView(viewInit);
-
-			FramebufferInitInfo fbInit("FB");
-			fbInit.m_colorAttachmentCount = 1;
-			fbInit.m_colorAttachments[0].m_textureView = swapchainView;
-			fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
-			FramebufferPtr fb = gr->newFramebuffer(fbInit);
+			TexturePtr swapchainTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cmdbinit;
-			CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
 			cmdb->setViewport(0, 0, g_windowWidthCVar.get(), g_windowHeightCVar.get());
 
 			TextureBarrierInfo barrier;
-			barrier.m_texture = swapchainTex.get();
+			barrier.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDescriptor::all());
 			barrier.m_previousUsage = TextureUsageBit::kNone;
 			barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->beginRenderPass(fb.get(), {TextureUsageBit::kFramebufferWrite}, TextureUsageBit::kNone);
+			RenderTarget rt;
+			rt.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDescriptor::all());
+			rt.m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
+			cmdb->beginRenderPass({rt});
 
-			cmdb->bindUavBuffer(0, 0, indexBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindUavBuffer(0, 1, positionsBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindUavBuffer(0, 2, colorsBuff.get(), 0, kMaxPtrSize);
-			cmdb->bindUavBuffer(0, 3, meshletsBuff.get(), 0, kMaxPtrSize);
+			cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(indexBuff.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(t1), BufferView(positionsBuff.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(t2), BufferView(colorsBuff.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(t3), BufferView(meshletsBuff.get()));
 
 			cmdb->bindShaderProgram(prog.get());
 
@@ -259,9 +255,10 @@ float3 main(VertOut input) : SV_TARGET0
 			barrier.m_nextUsage = TextureUsageBit::kPresent;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->flush();
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
 
-			gr->swapBuffers();
+			GrManager::getSingleton().swapBuffers();
 
 			HighRezTimer::sleep(1.0_sec / 60.0);
 		}
@@ -269,5 +266,6 @@ float3 main(VertOut input) : SV_TARGET0
 
 	GrManager::freeSingleton();
 	NativeWindow::freeSingleton();
+	ShaderCompilerMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 }

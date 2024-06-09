@@ -5,19 +5,20 @@
 
 // A very simle compute shader that checks if the light shadows needs rendering or not.
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-[[vk::binding(0)]] StructuredBuffer<GpuVisibilityHash> g_hash;
-[[vk::binding(1)]] RWStructuredBuffer<U32> g_mdiDrawCounts;
-[[vk::binding(2)]] RWStructuredBuffer<GpuSceneLight> g_lights;
-[[vk::binding(3)]] RWStructuredBuffer<GpuSceneLightVisibleRenderablesHash> g_lightHashes;
-[[vk::binding(4)]] RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs;
+StructuredBuffer<GpuVisibilityHash> g_hash : register(t0);
+RWStructuredBuffer<U32> g_mdiDrawCounts : register(u0);
+RWStructuredBuffer<GpuSceneLight> g_lights : register(u1);
+RWStructuredBuffer<GpuSceneLightVisibleRenderablesHash> g_lightHashes : register(u2);
+RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs : register(u3);
+RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs : register(u4);
 
-struct Constants
+struct Uniforms
 {
 	U32 m_lightIndex;
 	U32 m_padding0;
@@ -25,7 +26,7 @@ struct Constants
 	U32 m_padding2;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 groupshared U32 s_renderLight;
 
@@ -33,7 +34,7 @@ groupshared U32 s_renderLight;
 {
 	if(svGroupIndex == 0)
 	{
-		const GpuSceneLight light = g_lights[g_consts.m_lightIndex];
+		const GpuSceneLight light = g_lights[g_unis.m_lightIndex];
 		const U32 crntHash = g_lightHashes[light.m_visibleRenderablesHashIndex].m_hash;
 		s_renderLight = crntHash != g_hash[0].m_renderablesHash || g_hash[0].m_containsDeformable == 1;
 
@@ -59,12 +60,22 @@ groupshared U32 s_renderLight;
 
 		U32 renderStateBucketCount, unused;
 		g_mdiDrawCounts.GetDimensions(renderStateBucketCount, unused);
+		ANKI_ASSERT(renderStateBucketCount <= 64);
 
 		if(svGroupIndex < renderStateBucketCount)
 		{
-			g_mdiDrawCounts[svGroupIndex] = 0;
+			g_mdiDrawCounts[svGroupIndex] = 0u;
+		}
+
+		// Do the same for the task shaders
+		g_taskShaderIndirectArgs.GetDimensions(renderStateBucketCount, unused);
+		ANKI_ASSERT(renderStateBucketCount <= 64);
+
+		if(svGroupIndex < renderStateBucketCount)
+		{
+			g_taskShaderIndirectArgs[svGroupIndex].m_threadGroupCountX = 0u;
 		}
 	}
 }
 
-#pragma anki end
+#pragma anki technique_end comp

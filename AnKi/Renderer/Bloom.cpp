@@ -31,61 +31,35 @@ Error Bloom::initInternal()
 
 	ANKI_CHECK(initExposure());
 	ANKI_CHECK(initUpscale());
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
 	return Error::kNone;
 }
 
 Error Bloom::initExposure()
 {
-	m_exposure.m_width = getRenderer().getDownscaleBlur().getPassWidth(kMaxU32) * 2;
-	m_exposure.m_height = getRenderer().getDownscaleBlur().getPassHeight(kMaxU32) * 2;
+	const U32 width = getRenderer().getDownscaleBlur().getPassWidth(kMaxU32) * 2;
+	const U32 height = getRenderer().getDownscaleBlur().getPassHeight(kMaxU32) * 2;
 
 	// Create RT info
-	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height, kRtPixelFormat, "Bloom Exp");
+	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, kRtPixelFormat, "Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	CString progFname = (g_preferComputeCVar.get()) ? "ShaderBinaries/BloomCompute.ankiprogbin" : "ShaderBinaries/BloomRaster.ankiprogbin";
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_exposure.m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
-	if(g_preferComputeCVar.get())
-	{
-		variantInitInfo.addConstant("kViewport", UVec2(m_exposure.m_width, m_exposure.m_height));
-	}
-
-	const ShaderProgramResourceVariant* variant;
-	m_exposure.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_exposure.m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom.ankiprogbin", m_exposure.m_prog, m_exposure.m_grProg));
 
 	return Error::kNone;
 }
 
 Error Bloom::initUpscale()
 {
-	m_upscale.m_width = getRenderer().getPostProcessResolution().x() / kBloomFraction;
-	m_upscale.m_height = getRenderer().getPostProcessResolution().y() / kBloomFraction;
+	const U32 width = getRenderer().getPostProcessResolution().x() / kBloomFraction;
+	const U32 height = getRenderer().getPostProcessResolution().y() / kBloomFraction;
 
 	// Create RT descr
-	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height, kRtPixelFormat, "Bloom Upscale");
+	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, kRtPixelFormat, "Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	CString progFname =
-		(g_preferComputeCVar.get()) ? "ShaderBinaries/BloomUpscaleCompute.ankiprogbin" : "ShaderBinaries/BloomUpscaleRaster.ankiprogbin";
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(progFname, m_upscale.m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);
-	variantInitInfo.addConstant("kInputTextureSize", UVec2(m_exposure.m_width, m_exposure.m_height));
-	if(g_preferComputeCVar.get())
-	{
-		variantInitInfo.addConstant("kViewport", UVec2(m_upscale.m_width, m_upscale.m_height));
-	}
-
-	const ShaderProgramResourceVariant* variant;
-	m_upscale.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_upscale.m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/BloomUpscale.ankiprogbin", m_upscale.m_prog, m_upscale.m_grProg));
 
 	// Textures
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtImage));
@@ -106,8 +80,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_exposureRt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
 
 		// Set the render pass
-		TextureSubresourceInfo inputTexSubresource;
-		inputTexSubresource.m_firstMipmap = getRenderer().getDownscaleBlur().getMipmapCount() - 1;
+		const TextureSubresourceDescriptor inputTexSubresource =
+			TextureSubresourceDescriptor::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
 
 		RenderPassDescriptionBase* prpass;
 		if(preferCompute)
@@ -115,14 +89,14 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 
 			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kUavComputeWrite);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kStorageComputeWrite);
 
 			prpass = &rpass;
 		}
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_exposureRt});
+			rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_exposureRt)});
 
 			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment, inputTexSubresource);
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite);
@@ -135,26 +109,26 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_exposure.m_grProg.get());
 
-			TextureSubresourceInfo inputTexSubresource;
-			inputTexSubresource.m_firstMipmap = getRenderer().getDownscaleBlur().getMipmapCount() - 1;
+			const TextureSubresourceDescriptor inputTexSubresource =
+				TextureSubresourceDescriptor::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(0, 1, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
+			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
-			const Vec4 uniforms(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
-			cmdb.setPushConstants(&uniforms, sizeof(uniforms));
+			const Vec4 consts(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
+			cmdb.setPushConstants(&consts, sizeof(consts));
 
-			rgraphCtx.bindUavTexture(0, 2, getRenderer().getTonemapping().getRt());
+			rgraphCtx.bindTexture(ANKI_REG(u0), getRenderer().getTonemapping().getRt());
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_exposureRt, TextureSubresourceInfo());
+				rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_exposureRt);
 
-				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_width, m_exposure.m_height);
+				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_rtDescr.m_width, m_exposure.m_rtDescr.m_height);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
+				cmdb.setViewport(0, 0, m_exposure.m_rtDescr.m_width, m_exposure.m_rtDescr.m_height);
 
 				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}
@@ -173,14 +147,14 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
 
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute);
-			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kUavComputeWrite);
+			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kStorageComputeWrite);
 
 			prpass = &rpass;
 		}
 		else
 		{
 			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
-			rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_upscaleRt});
+			rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_upscaleRt)});
 
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledFragment);
 			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kFramebufferWrite);
@@ -193,19 +167,19 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_upscale.m_grProg.get());
 
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_exposureRt);
-			cmdb.bindTexture(0, 2, &m_upscale.m_lensDirtImage->getTextureView());
+			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_exposureRt);
+			cmdb.bindTexture(ANKI_REG(t1), TextureView(&m_upscale.m_lensDirtImage->getTexture(), TextureSubresourceDescriptor::all()));
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindUavTexture(0, 3, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
+				rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_upscaleRt);
 
-				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_width, m_upscale.m_height);
+				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_rtDescr.m_width, m_upscale.m_rtDescr.m_height);
 			}
 			else
 			{
-				cmdb.setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
+				cmdb.setViewport(0, 0, m_upscale.m_rtDescr.m_width, m_upscale.m_rtDescr.m_height);
 
 				cmdb.draw(PrimitiveTopology::kTriangles, 3);
 			}

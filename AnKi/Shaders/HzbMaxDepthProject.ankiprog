@@ -7,11 +7,11 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
-[[vk::binding(0)]] Texture2D<Vec4> g_maxDepthRt;
+Texture2D<Vec4> g_maxDepthRt : register(t0);
 
-struct Constants
+struct Uniforms
 {
 	Mat4 m_reprojectionMat;
 
@@ -20,8 +20,7 @@ struct Constants
 	F32 m_padding0;
 	F32 m_padding1;
 };
-
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_POSITION
 {
@@ -31,8 +30,8 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 	const U32 tileX = svInstanceId % maxDepthRtSize.x;
 	const U32 tileY = svInstanceId / maxDepthRtSize.x;
 
-	const F32 maxDepth = min(g_maxDepthRt[UVec2(tileX, tileY)].x, g_consts.m_cascadeMaxDepth);
-	const F32 minDepth = g_consts.m_cascadeMinDepth;
+	const F32 maxDepth = min(g_maxDepthRt[UVec2(tileX, tileY)].x, g_unis.m_cascadeMaxDepth);
+	const F32 minDepth = g_unis.m_cascadeMinDepth;
 
 	if(maxDepth <= minDepth)
 	{
@@ -64,15 +63,15 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 	ndc.xy = uvToNdc(saturate(ndc.xy));
 
 	// Unproject and project
-	return mul(g_consts.m_reprojectionMat, Vec4(ndc, 1.0));
+	return mul(g_unis.m_reprojectionMat, Vec4(ndc, 1.0));
 }
 
-#pragma anki end
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
 void main()
 {
 }
 
-#pragma anki end
+#pragma anki technique_end frag

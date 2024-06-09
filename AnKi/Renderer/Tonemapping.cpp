@@ -30,23 +30,15 @@ Error Tonemapping::initInternal()
 	ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", width, height);
 
 	// Create program
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog));
-
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kInputTexSize", UVec2(width, height));
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog, m_grProg));
 
 	// Create exposure texture.
-	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no
-	// automatic image transitions
-	const TextureUsageBit usage = TextureUsageBit::kAllUav;
+	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no automatic image transitions
+	const TextureUsageBit usage = TextureUsageBit::kAllStorage;
 	const TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(1, 1, Format::kR16G16_Sfloat, usage, "ExposureAndAvgLum1x1");
 	ClearValue clearValue;
 	clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
-	m_exposureAndAvgLuminance1x1 = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kAllUav, clearValue);
+	m_exposureAndAvgLuminance1x1 = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kStorageComputeRead, clearValue);
 
 	return Error::kNone;
 }
@@ -54,7 +46,8 @@ Error Tonemapping::initInternal()
 void Tonemapping::importRenderTargets(RenderingContext& ctx)
 {
 	// Just import it. It will not be used in resource tracking
-	m_runCtx.m_exposureLuminanceHandle = ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kAllUav);
+	m_runCtx.m_exposureLuminanceHandle =
+		ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kStorageComputeRead);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
@@ -70,18 +63,14 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_grProg.get());
-		rgraphCtx.bindUavTexture(0, 1, m_runCtx.m_exposureLuminanceHandle);
-
-		TextureSubresourceInfo inputTexSubresource;
-		inputTexSubresource.m_firstMipmap = m_inputTexMip;
-		rgraphCtx.bindTexture(0, 0, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
+		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_exposureLuminanceHandle);
+		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDownscaleBlur().getRt(), TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
 
 		cmdb.dispatchCompute(1, 1, 1);
 	});
 
-	TextureSubresourceInfo inputTexSubresource;
-	inputTexSubresource.m_firstMipmap = m_inputTexMip;
-	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
+	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
+							  TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
 }
 
 } // end namespace anki

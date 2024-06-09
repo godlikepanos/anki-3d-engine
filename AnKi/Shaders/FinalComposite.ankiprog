@@ -7,58 +7,55 @@
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
-#pragma anki start vert
+#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
-#pragma anki end
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MotionBlur.hlsl>
 
-ANKI_SPECIALIZATION_CONSTANT_U32(kLutSize, 0u);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(kFramebufferSize, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(kMotionBlurSamples, 3u);
-
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(2)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(3)]] Texture2D<RVec4> g_lightShadingRt;
-[[vk::binding(4)]] Texture2D<RVec4> g_ppsBloomLfRt;
-[[vk::binding(5)]] Texture3D<RVec4> g_lut;
-[[vk::binding(6)]] Texture2D g_motionVectorsRt;
-[[vk::binding(7)]] Texture2D g_depthRt;
+SamplerState g_nearestAnyClampSampler : register(s0);
+SamplerState g_linearAnyClampSampler : register(s1);
+SamplerState g_trilinearRepeatSampler : register(s2);
+Texture2D<RVec4> g_lightShadingRt : register(t0);
+Texture2D<RVec4> g_ppsBloomLfRt : register(t1);
+Texture3D<RVec4> g_lut : register(t2);
+Texture2D g_motionVectorsRt : register(t3);
+Texture2D g_depthRt : register(t4);
 #if DBG_ENABLED
-[[vk::binding(8)]] Texture2D<RVec4> g_dbgOutlineRt;
+Texture2D<RVec4> g_dbgOutlineRt : register(t5);
 #endif
 
-struct PushConstants
+struct Uniforms
 {
-	Vec2 m_padding0;
+	U32 m_motionBlurSamples;
 	F32 m_filmGrainStrength;
 	U32 m_frameCount;
+	U32 m_padding;
 };
-
-[[vk::push_constant]] ConstantBuffer<PushConstants> g_pc;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 RVec3 colorGrading(RVec3 color)
 {
-	constexpr RF32 kLutSizef = RF32(kLutSize);
-	constexpr RVec3 kLutScale = ((kLutSizef - 1.0) / kLutSizef).xxx;
-	constexpr RVec3 kLutOffset = (1.0 / (2.0 * kLutSize)).xxx;
+	Vec3 lutSize;
+	g_lut.GetDimensions(lutSize.x, lutSize.y, lutSize.y);
+
+	const RVec3 lutScale = ((lutSize.x - 1.0) / lutSize.x).xxx;
+	const RVec3 lutOffset = (1.0 / (2.0 * lutSize.x)).xxx;
 
 	color = min(color, RVec3(1.0, 1.0, 1.0));
-	const RVec3 lutCoords = color * kLutScale + kLutOffset;
+	const RVec3 lutCoords = color * lutScale + lutOffset;
 	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
-RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 	RVec3 outColor;
 
-	if(kMotionBlurSamples > 0u)
+	if(g_unis.m_motionBlurSamples > 0u)
 	{
-		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, Vec2(kFramebufferSize), g_linearAnyClampSampler, uv,
-							  kMotionBlurSamples);
+		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, g_linearAnyClampSampler, uv, g_unis.m_motionBlurSamples);
 	}
 	else
 	{
@@ -74,7 +71,7 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 #if FILM_GRAIN
 	const F32 dt = 1.0;
-	outColor = filmGrain(outColor, uv, g_pc.m_filmGrainStrength, F32(g_pc.m_frameCount % 0xFFFFu) * dt);
+	outColor = filmGrain<F32>(outColor, uv, g_unis.m_filmGrainStrength, F32(g_unis.m_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED
@@ -85,4 +82,4 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 	return outColor;
 }
 
-#pragma anki end
+#pragma anki technique_end frag

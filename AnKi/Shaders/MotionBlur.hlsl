@@ -8,9 +8,12 @@
 #include <AnKi/Shaders/Common.hlsl>
 
 // Perform motion blur.
-RVec3 motionBlur(Texture2D motionVectorsRt, SamplerState motionVectorsRtSampler, Texture2D<RVec4> toBlurRt, Vec2 toBlurRtSize,
-				 SamplerState toBlurRtSampler, Vec2 uv, U32 maxSamples)
+RVec3 motionBlur(Texture2D<Vec4> motionVectorsRt, SamplerState motionVectorsRtSampler, Texture2D<RVec4> toBlurRt, SamplerState toBlurRtSampler,
+				 Vec2 uv, U32 maxSamples)
 {
+	Vec2 toBlurRtSize;
+	toBlurRt.GetDimensions(toBlurRtSize.x, toBlurRtSize.y);
+
 	// Compute velocity. Get the max velocity around the curent sample to avoid outlines. TAA's result and the motion
 	// vectors RT do not quite overlap
 	Vec2 velocityMin = motionVectorsRt.SampleLevel(motionVectorsRtSampler, uv, 0.0).rg;

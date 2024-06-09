@@ -145,7 +145,7 @@ private:
 	ResourceString m_cacheDir;
 
 	/// Add a filesystem path or an archive. The path is read-only.
-	Error addNewPath(const CString& path, const ResourceStringList& excludedStrings);
+	Error addNewPath(CString path, const ResourceStringList& includeStrings, const ResourceStringList& excludedStrings);
 
 	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
 };

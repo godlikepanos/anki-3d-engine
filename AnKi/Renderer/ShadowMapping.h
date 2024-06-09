@@ -14,6 +14,7 @@ namespace anki {
 
 // Forward
 class GpuVisibilityOutput;
+class GpuMeshletVisibilityOutput;
 extern NumericCVar<U32> g_shadowMappingPcfCVar;
 
 /// @addtogroup renderer
@@ -34,7 +35,15 @@ public:
 	}
 
 private:
-	class ViewportWorkItem;
+	class ShadowSubpassInfo
+	{
+	public:
+		UVec4 m_viewport;
+		Mat4 m_viewProjMat;
+		Mat3x4 m_viewMat;
+		BufferView m_clearTileIndirectArgs;
+		RenderTargetHandle m_hzbRt;
+	};
 
 	TileAllocator m_tileAlloc;
 	static constexpr U32 kTileAllocHierarchyCount = 4;
@@ -46,8 +55,6 @@ private:
 
 	U32 m_tileResolution = 0; ///< Tile resolution.
 	U32 m_tileCountBothAxis = 0;
-
-	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_clearDepthProg;
 	ShaderProgramPtr m_clearDepthGrProg;
@@ -61,10 +68,6 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-		WeakArray<ViewportWorkItem> m_workItems;
-
-		UVec2 m_renderAreaMin; ///< Calculate the viewport that contains all of the work items. Mobile optimization.
-		UVec2 m_renderAreaMax;
 	} m_runCtx;
 
 	Error initInternal();
@@ -77,10 +80,15 @@ private:
 
 	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const;
 
-	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
+	BufferView createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
+									   RenderGraphDescription& rgraph) const;
 
-	BufferOffsetRange vetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-										RenderGraphDescription& rgraph) const;
+	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
+							   const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
+							   const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph);
+
+	void createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subPasses, const GpuVisibilityOutput& visOut,
+							   const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphDescription& rgraph);
 };
 /// @}
 

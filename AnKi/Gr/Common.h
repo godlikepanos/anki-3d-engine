@@ -29,6 +29,7 @@ class ShaderProgramInitInfo;
 class CommandBufferInitInfo;
 class AccelerationStructureInitInfo;
 class GrUpscalerInitInfo;
+class PipelineQueryInitInfo;
 
 /// @addtogroup graphics
 /// @{
@@ -56,7 +57,6 @@ private:
 ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Gr, GrMemoryPool)
 
 // Some constants
-constexpr U32 kMaxVertexAttributes = 8;
 constexpr U32 kMaxColorRenderTargets = 4;
 constexpr U32 kMaxDescriptorSets = 3; ///< Groups that can be bound at the same time.
 constexpr U32 kMaxBindingsPerDescriptorSet = 32;
@@ -64,6 +64,7 @@ constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
 constexpr U32 kMaxBindlessTextures = 512;
 constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
+constexpr U32 kMaxPushConstantSize = 128; ///< Thanks AMD!!
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
@@ -87,13 +88,13 @@ using GrObjectPtr = GrObjectPtrT<GrObject>;
 
 ANKI_GR_CLASS(Buffer)
 ANKI_GR_CLASS(Texture)
-ANKI_GR_CLASS(TextureView)
 ANKI_GR_CLASS(Sampler)
 ANKI_GR_CLASS(CommandBuffer)
 ANKI_GR_CLASS(Shader)
 ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
 ANKI_GR_CLASS(TimestampQuery)
+ANKI_GR_CLASS(PipelineQuery)
 ANKI_GR_CLASS(ShaderProgram)
 ANKI_GR_CLASS(Fence)
 ANKI_GR_CLASS(RenderGraph)
@@ -144,19 +145,19 @@ class GpuDeviceCapabilities
 {
 public:
 	/// The alignment of offsets when bounding constant buffers.
-	U32 m_constantBufferBindOffsetAlignment = kMaxU32;
+	U32 m_uniformBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of constant buffers inside the shaders.
-	PtrSize m_constantBufferMaxRange = 0;
+	PtrSize m_uniformBufferMaxRange = 0;
 
-	/// The alignment of offsets when bounding UAV buffers.
-	U32 m_uavBufferBindOffsetAlignment = kMaxU32;
+	/// The alignment of offsets when bounding storage buffers.
+	U32 m_storageBufferBindOffsetAlignment = kMaxU32;
 
-	/// The max visible range of UAV buffers inside the shaders.
-	PtrSize m_uavBufferMaxRange = 0;
+	/// The max visible range of storage buffers inside the shaders.
+	PtrSize m_storageBufferMaxRange = 0;
 
 	/// The alignment of offsets when bounding texture buffers.
-	U32 m_textureBufferBindOffsetAlignment = kMaxU32;
+	U32 m_texelBufferBindOffsetAlignment = kMaxU32;
 
 	/// The max visible range of texture buffers inside the shaders.
 	PtrSize m_textureBufferMaxRange = 0;
@@ -220,6 +221,12 @@ public:
 
 	/// Mesh shaders.
 	Bool m_meshShaders = false;
+
+	/// Can create PipelineQuery objects.
+	Bool m_pipelineQuery = false;
+
+	/// Has access to barycentrics.
+	Bool m_barycentrics = false;
 };
 ANKI_END_PACKED_STRUCT
 
@@ -293,7 +300,7 @@ enum class PrimitiveTopology : U8
 	kLineStip,
 	kTriangles,
 	kTriangleStrip,
-	kPatchs
+	kPatches
 };
 
 enum class FillMode : U8
@@ -377,7 +384,6 @@ enum class VertexStepRate : U8
 {
 	kVertex,
 	kInstance,
-	kDraw,
 	kCount
 };
 
@@ -397,8 +403,12 @@ enum class Format : U32
 {
 	kNone = 0,
 
-#define ANKI_FORMAT_DEF(type, id, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = id,
-#include <AnKi/Gr/Format.defs.h>
+#if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = vk,
+#else
+#	define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = d3d,
+#endif
+#include <AnKi/Gr/BackendCommon/Format.def.h>
 #undef ANKI_FORMAT_DEF
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
@@ -473,14 +483,14 @@ enum class TextureUsageBit : U32
 	kSampledCompute = 1 << 2,
 	kSampledTraceRays = 1 << 3,
 
-	kUavGeometryRead = 1 << 4,
-	kUavGeometryWrite = 1 << 5,
-	kUavFragmentRead = 1 << 6,
-	kUavFragmentWrite = 1 << 7,
-	kUavComputeRead = 1 << 8,
-	kUavComputeWrite = 1 << 9,
-	kUavTraceRaysRead = 1 << 10,
-	kUavTraceRaysWrite = 1 << 11,
+	kStorageGeometryRead = 1 << 4,
+	kStorageGeometryWrite = 1 << 5,
+	kStorageFragmentRead = 1 << 6,
+	kStorageFragmentWrite = 1 << 7,
+	kStorageComputeRead = 1 << 8,
+	kStorageComputeWrite = 1 << 9,
+	kStorageTraceRaysRead = 1 << 10,
+	kStorageTraceRaysWrite = 1 << 11,
 
 	kFramebufferRead = 1 << 12,
 	kFramebufferWrite = 1 << 13,
@@ -493,19 +503,25 @@ enum class TextureUsageBit : U32
 
 	// Derived
 	kAllSampled = kSampledGeometry | kSampledFragment | kSampledCompute | kSampledTraceRays,
-	kAllUav = kUavGeometryRead | kUavGeometryWrite | kUavFragmentRead | kUavFragmentWrite | kUavComputeRead | kUavComputeWrite | kUavTraceRaysRead
-			  | kUavTraceRaysWrite,
+	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite | kStorageComputeRead
+				  | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
 	kAllFramebuffer = kFramebufferRead | kFramebufferWrite,
 
-	kAllGraphics = kSampledGeometry | kSampledFragment | kUavGeometryRead | kUavGeometryWrite | kUavFragmentRead | kUavFragmentWrite
+	kAllGeometry = kSampledGeometry | kStorageGeometryRead | kStorageGeometryWrite,
+	kAllFragment = kSampledFragment | kStorageFragmentRead | kStorageFragmentWrite,
+	kAllGraphics = kSampledGeometry | kSampledFragment | kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite
 				   | kFramebufferRead | kFramebufferWrite | kFramebufferShadingRate,
-	kAllCompute = kSampledCompute | kUavComputeRead | kUavComputeWrite,
+	kAllCompute = kSampledCompute | kStorageComputeRead | kStorageComputeWrite,
 	kAllTransfer = kTransferDestination | kGenerateMipmaps,
 
-	kAllRead = kAllSampled | kUavGeometryRead | kUavFragmentRead | kUavComputeRead | kUavTraceRaysRead | kFramebufferRead | kFramebufferShadingRate
-			   | kPresent | kGenerateMipmaps,
-	kAllWrite =
-		kUavGeometryWrite | kUavFragmentWrite | kUavComputeWrite | kUavTraceRaysWrite | kFramebufferWrite | kTransferDestination | kGenerateMipmaps,
+	kAllRead = kAllSampled | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead | kFramebufferRead
+			   | kFramebufferShadingRate | kPresent | kGenerateMipmaps,
+	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kFramebufferWrite
+				| kTransferDestination | kGenerateMipmaps,
+	kAll = kAllRead | kAllWrite,
+	kAllShaderResource = kAllSampled | kAllStorage,
+	kAllSrv = (kAllSampled | kAllStorage) & kAllRead,
+	kAllUav = kAllStorage & kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
@@ -515,7 +531,6 @@ enum class SamplingFilter : U8
 	kLinear,
 	kMin, ///< It calculates the min of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
 	kMax, ///< It calculates the max of a 2x2 quad. Only if GpuDeviceCapabilities::m_samplingFilterMinMax is supported.
-	kBase ///< Only for mipmaps.
 };
 
 enum class SamplingAddressing : U8
@@ -579,6 +594,7 @@ enum class ShaderTypeBit : U16
 	kAllLegacyGeometry = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry,
 	kAllModernGeometry = kTask | kMesh,
 	kAllRayTracing = kRayGen | kAnyHit | kClosestHit | kMiss | kIntersection | kCallable,
+	kAllHit = kAnyHit | kClosestHit,
 	kAll = kAllGraphics | kCompute | kAllRayTracing,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)
@@ -589,7 +605,7 @@ enum class ShaderVariableDataType : U8
 
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) k##type,
 #define ANKI_SVDT_MACRO_OPAQUE(constant, type) k##constant,
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 #undef ANKI_SVDT_MACRO_OPAQUE
 
@@ -654,8 +670,21 @@ enum class TimestampQueryResult : U8
 	kAvailable
 };
 
+/// Pipeline query result.
+enum class PipelineQueryResult : U8
+{
+	kNotAvailable,
+	kAvailable
+};
+
+enum class PipelineQueryType : U8
+{
+	kPrimitivesPassedClipping,
+	kCount
+};
+
 /// Attachment load operation.
-enum class AttachmentLoadOperation : U8
+enum class RenderTargetLoadOperation : U8
 {
 	kLoad,
 	kClear,
@@ -663,7 +692,7 @@ enum class AttachmentLoadOperation : U8
 };
 
 /// Attachment store operation.
-enum class AttachmentStoreOperation : U8
+enum class RenderTargetStoreOperation : U8
 {
 	kStore,
 	kDontCare
@@ -678,28 +707,28 @@ enum class BufferUsageBit : U64
 {
 	kNone = 0,
 
-	kConstantGeometry = 1ull << 0ull,
-	kConstantFragment = 1ull << 1ull,
-	kConstantCompute = 1ull << 2ull,
-	kConstantTraceRays = 1ull << 3ull,
+	kUniformGeometry = 1ull << 0ull,
+	kUniformFragment = 1ull << 1ull,
+	kUniformCompute = 1ull << 2ull,
+	kUniformTraceRays = 1ull << 3ull,
 
-	kUavGeometryRead = 1ull << 4ull,
-	kUavGeometryWrite = 1ull << 5ull,
-	kUavFragmentRead = 1ull << 6ull,
-	kUavFragmentWrite = 1ull << 7ull,
-	kUavComputeRead = 1ull << 8ull,
-	kUavComputeWrite = 1ull << 9ull,
-	kUavTraceRaysRead = 1ull << 10ull,
-	kUavTraceRaysWrite = 1ull << 11ull,
+	kStorageGeometryRead = 1ull << 4ull,
+	kStorageGeometryWrite = 1ull << 5ull,
+	kStorageFragmentRead = 1ull << 6ull,
+	kStorageFragmentWrite = 1ull << 7ull,
+	kStorageComputeRead = 1ull << 8ull,
+	kStorageComputeWrite = 1ull << 9ull,
+	kStorageTraceRaysRead = 1ull << 10ull,
+	kStorageTraceRaysWrite = 1ull << 11ull,
 
-	kTextureGeometryRead = 1ull << 12ull,
-	kTextureGeometryWrite = 1ull << 13ull,
-	kTextureFragmentRead = 1ull << 14ull,
-	kTextureFragmentWrite = 1ull << 15ull,
-	kTextureComputeRead = 1ull << 16ull,
-	kTextureComputeWrite = 1ull << 17ull,
-	kTextureTraceRaysRead = 1ull << 18ull,
-	kTextureTraceRaysWrite = 1ull << 19ull,
+	kTexelGeometryRead = 1ull << 12ull,
+	kTexelGeometryWrite = 1ull << 13ull,
+	kTexelFragmentRead = 1ull << 14ull,
+	kTexelFragmentWrite = 1ull << 15ull,
+	kTexelComputeRead = 1ull << 16ull,
+	kTexelComputeWrite = 1ull << 17ull,
+	kTexelTraceRaysRead = 1ull << 18ull,
+	kTexelTraceRaysWrite = 1ull << 19ull,
 
 	kIndex = 1ull << 20ull,
 	kVertex = 1ull << 21ull,
@@ -716,27 +745,28 @@ enum class BufferUsageBit : U64
 	kAccelerationStructureBuildScratch = 1ull << 29ull, ///< Used in buildAccelerationStructureXXX commands.
 
 	// Derived
-	kAllConstant = kConstantGeometry | kConstantFragment | kConstantCompute | kConstantTraceRays,
-	kAllUav = kUavGeometryRead | kUavGeometryWrite | kUavFragmentRead | kUavFragmentWrite | kUavComputeRead | kUavComputeWrite | kUavTraceRaysRead
-			  | kUavTraceRaysWrite,
-	kAllTexture = kTextureGeometryRead | kTextureGeometryWrite | kTextureFragmentRead | kTextureFragmentWrite | kTextureComputeRead
-				  | kTextureComputeWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite,
+	kAllUniform = kUniformGeometry | kUniformFragment | kUniformCompute | kUniformTraceRays,
+	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite | kStorageComputeRead
+				  | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
+	kAllTexel = kTexelGeometryRead | kTexelGeometryWrite | kTexelFragmentRead | kTexelFragmentWrite | kTexelComputeRead | kTexelComputeWrite
+				| kTexelTraceRaysRead | kTexelTraceRaysWrite,
 	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
 	kAllTransfer = kTransferSource | kTransferDestination,
 
-	kAllGeometry = kConstantGeometry | kUavGeometryRead | kUavGeometryWrite | kTextureGeometryRead | kTextureGeometryWrite | kIndex | kVertex,
-	kAllFragment = kConstantFragment | kUavFragmentRead | kUavFragmentWrite | kTextureFragmentRead | kTextureFragmentWrite,
+	kAllGeometry = kUniformGeometry | kStorageGeometryRead | kStorageGeometryWrite | kTexelGeometryRead | kTexelGeometryWrite | kIndex | kVertex,
+	kAllFragment = kUniformFragment | kStorageFragmentRead | kStorageFragmentWrite | kTexelFragmentRead | kTexelFragmentWrite,
 	kAllGraphics = kAllGeometry | kAllFragment | kIndirectDraw,
-	kAllCompute = kConstantCompute | kUavComputeRead | kUavComputeWrite | kTextureComputeRead | kTextureComputeWrite | kIndirectCompute,
-	kAllTraceRays = kConstantTraceRays | kUavTraceRaysRead | kUavTraceRaysWrite | kTextureTraceRaysRead | kTextureTraceRaysWrite | kIndirectTraceRays
-					| kShaderBindingTable,
+	kAllCompute = kUniformCompute | kStorageComputeRead | kStorageComputeWrite | kTexelComputeRead | kTexelComputeWrite | kIndirectCompute,
+	kAllTraceRays = kUniformTraceRays | kStorageTraceRaysRead | kStorageTraceRaysWrite | kTexelTraceRaysRead | kTexelTraceRaysWrite
+					| kIndirectTraceRays | kShaderBindingTable,
 
 	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch,
-	kAllRead = kAllConstant | kUavGeometryRead | kUavFragmentRead | kUavComputeRead | kUavTraceRaysRead | kTextureGeometryRead | kTextureFragmentRead
-			   | kTextureComputeRead | kTextureTraceRaysRead | kIndex | kVertex | kIndirectCompute | kIndirectDraw | kIndirectTraceRays
-			   | kTransferSource | kAccelerationStructureBuild | kShaderBindingTable,
-	kAllWrite = kUavGeometryWrite | kUavFragmentWrite | kUavComputeWrite | kUavTraceRaysWrite | kTextureGeometryWrite | kTextureFragmentWrite
-				| kTextureComputeWrite | kTextureTraceRaysWrite | kTransferDestination | kAccelerationStructureBuildScratch,
+	kAllRead = kAllUniform | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead | kTexelGeometryRead
+			   | kTexelFragmentRead | kTexelComputeRead | kTexelTraceRaysRead | kIndex | kVertex | kIndirectCompute | kIndirectDraw
+			   | kIndirectTraceRays | kTransferSource | kAccelerationStructureBuild | kShaderBindingTable,
+	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kTexelGeometryWrite
+				| kTexelFragmentWrite | kTexelComputeWrite | kTexelTraceRaysWrite | kTransferDestination | kAccelerationStructureBuildScratch,
+
 	kAll = kAllRead | kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
@@ -746,7 +776,8 @@ enum class BufferMapAccessBit : U8
 {
 	kNone = 0,
 	kRead = 1 << 0,
-	kWrite = 1 << 1
+	kWrite = 1 << 1,
+	kReadWrite = kRead | kWrite
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit)
 
@@ -813,6 +844,222 @@ enum class VrsRate : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VrsRate)
 
+enum class GpuQueueType : U8
+{
+	kGeneral,
+	kCompute,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuQueueType)
+
+enum class HlslResourceType : U8
+{
+	kCbv,
+	kSrv,
+	kUav,
+	kSampler, // !!!!WARNING!!! Keep it last
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(HlslResourceType)
+
+enum class VertexAttributeSemantic : U8
+{
+	kPosition,
+	kNormal,
+	kTexCoord,
+	kColor,
+	kMisc0,
+	kMisc1,
+	kMisc2,
+	kMisc3,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemantic)
+
+/// This doesn't match Vulkan or D3D.
+enum class DescriptorType : U8
+{
+	kTexture, ///< Vulkan: Image (sampled or storage). D3D: Textures
+	kSampler,
+	kUniformBuffer,
+	kStorageBuffer, ///< Vulkan: Storage buffers. D3D: Structured, ByteAddressBuffer
+	kTexelBuffer,
+	kAccelerationStructure,
+
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorType)
+
+enum class DescriptorFlag : U8
+{
+	kNone,
+	kRead = 1 << 0,
+	kWrite = 1 << 1,
+	kReadWrite = kRead | kWrite,
+	kByteAddressBuffer = 1 << 2
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorFlag)
+
+inline HlslResourceType descriptorTypeToHlslResourceType(DescriptorType type, DescriptorFlag flag)
+{
+	ANKI_ASSERT(type < DescriptorType::kCount && flag != DescriptorFlag::kNone);
+	if(type == DescriptorType::kSampler)
+	{
+		return HlslResourceType::kSampler;
+	}
+	else if(type == DescriptorType::kUniformBuffer)
+	{
+		return HlslResourceType::kCbv;
+	}
+	else if(!!(flag & DescriptorFlag::kWrite))
+	{
+		return HlslResourceType::kUav;
+	}
+	else
+	{
+		return HlslResourceType::kSrv;
+	}
+}
+
+ANKI_BEGIN_PACKED_STRUCT
+class ShaderReflectionBinding
+{
+public:
+	U32 m_registerBindingPoint = kMaxU32;
+	U16 m_arraySize = 0;
+
+	union
+	{
+		U16 m_vkBinding = kMaxU16; ///< Filled by the VK backend.
+		U16 m_d3dStructuredBufferStride;
+	};
+
+	DescriptorType m_type = DescriptorType::kCount;
+	DescriptorFlag m_flags = DescriptorFlag::kNone;
+
+	Bool operator<(const ShaderReflectionBinding& b) const
+	{
+#define ANKI_LESS(member) \
+	if(member != b.member) \
+	{ \
+		return member < b.member; \
+	}
+		const HlslResourceType hlslType = descriptorTypeToHlslResourceType(m_type, m_flags);
+		const HlslResourceType bhlslType = descriptorTypeToHlslResourceType(b.m_type, b.m_flags);
+		if(hlslType != bhlslType)
+		{
+			return hlslType < bhlslType;
+		}
+
+		ANKI_LESS(m_registerBindingPoint)
+		ANKI_LESS(m_arraySize)
+		ANKI_LESS(m_d3dStructuredBufferStride)
+#undef ANKI_LESS
+		return false;
+	}
+
+	Bool operator==(const ShaderReflectionBinding& b) const
+	{
+		return memcmp(this, &b, sizeof(*this)) == 0;
+	}
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_registerBindingPoint < kMaxU32);
+		ANKI_ASSERT(m_type < DescriptorType::kCount);
+		ANKI_ASSERT(m_flags != DescriptorFlag::kNone);
+		ANKI_ASSERT(m_arraySize > 0);
+		ANKI_ASSERT(ANKI_GR_BACKEND_VULKAN || m_type != DescriptorType::kStorageBuffer || m_d3dStructuredBufferStride != 0);
+	}
+};
+ANKI_END_PACKED_STRUCT
+
+ANKI_BEGIN_PACKED_STRUCT
+class ShaderReflectionDescriptorRelated
+{
+public:
+	Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
+	Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
+
+	U32 m_pushConstantsSize = 0;
+
+	Bool m_hasVkBindlessDescriptorSet = false; ///< Filled by the shader compiler.
+	U8 m_vkBindlessDescriptorSet = kMaxU8; ///< Filled by the VK backend.
+
+	void validate() const
+	{
+		for(U32 set = 0; set < kMaxDescriptorSets; ++set)
+		{
+			for(U32 ibinding = 0; ibinding < kMaxBindingsPerDescriptorSet; ++ibinding)
+			{
+				const ShaderReflectionBinding& binding = m_bindings[set][ibinding];
+
+				if(binding.m_type != DescriptorType::kCount)
+				{
+					ANKI_ASSERT(ibinding < m_bindingCounts[set]);
+					binding.validate();
+				}
+				else
+				{
+					ANKI_ASSERT(ibinding >= m_bindingCounts[set]);
+				}
+			}
+		}
+	}
+};
+ANKI_END_PACKED_STRUCT
+
+class ShaderReflection
+{
+public:
+	ShaderReflectionDescriptorRelated m_descriptor;
+
+	class
+	{
+	public:
+		Array<U8, U32(VertexAttributeSemantic::kCount)> m_vertexAttributeLocations;
+		BitSet<U32(VertexAttributeSemantic::kCount), U8> m_vertexAttributeMask = {false};
+	} m_vertex;
+
+	class
+	{
+	public:
+		BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
+
+		Bool m_discards = false;
+	} m_fragment;
+
+	ShaderReflection()
+	{
+		m_vertex.m_vertexAttributeLocations.fill(kMaxU8);
+	}
+
+	void validate() const
+	{
+		m_descriptor.validate();
+		for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
+		{
+			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vertexAttributeLocations[semantic] != kMaxU8);
+		}
+
+		const U32 attachmentCount = m_fragment.m_colorAttachmentWritemask.getSetBitCount();
+		for(U32 i = 0; i < attachmentCount; ++i)
+		{
+			ANKI_ASSERT(m_fragment.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
+		}
+	}
+
+	/// Combine shader reflection.
+	static Error linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c);
+};
+
 /// Clear values for textures or attachments.
 class ClearValue
 {
@@ -850,163 +1097,33 @@ public:
 	}
 };
 
-/// A way to identify a surface in a texture.
-class TextureSurfaceInfo
-{
-public:
-	U32 m_level = 0;
-	U32 m_depth = 0;
-	U32 m_face = 0;
-	U32 m_layer = 0;
-
-	constexpr TextureSurfaceInfo() = default;
-
-	constexpr TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
-
-	constexpr TextureSurfaceInfo(U32 level, U32 depth, U32 face, U32 layer)
-		: m_level(level)
-		, m_depth(depth)
-		, m_face(face)
-		, m_layer(layer)
-	{
-	}
-
-	TextureSurfaceInfo& operator=(const TextureSurfaceInfo&) = default;
-
-	Bool operator==(const TextureSurfaceInfo& b) const
-	{
-		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
-	}
-
-	Bool operator!=(const TextureSurfaceInfo& b) const
-	{
-		return !(*this == b);
-	}
-
-	U64 computeHash() const
-	{
-		return anki::computeHash(this, sizeof(*this), 0x1234567);
-	}
-
-	static TextureSurfaceInfo newZero()
-	{
-		return TextureSurfaceInfo();
-	}
-};
-
-/// A way to identify a volume in 3D textures.
-class TextureVolumeInfo
-{
-public:
-	U32 m_level = 0;
-
-	TextureVolumeInfo() = default;
-
-	TextureVolumeInfo(const TextureVolumeInfo&) = default;
-
-	TextureVolumeInfo(U32 level)
-		: m_level(level)
-	{
-	}
-
-	TextureVolumeInfo& operator=(const TextureVolumeInfo&) = default;
-};
-
-/// Defines a subset of a texture.
-class TextureSubresourceInfo
-{
-public:
-	U32 m_firstMipmap = 0;
-	U32 m_mipmapCount = 1;
-
-	U32 m_firstLayer = 0;
-	U32 m_layerCount = 1;
-
-	U8 m_firstFace = 0;
-	U8 m_faceCount = 1;
-
-	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::kNone;
-
-	U8 _m_padding[1] = {0};
-
-	constexpr TextureSubresourceInfo(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
-		: m_depthStencilAspect(aspect)
-	{
-	}
-
-	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
-
-	constexpr TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
-		: m_firstMipmap(surf.m_level)
-		, m_mipmapCount(1)
-		, m_firstLayer(surf.m_layer)
-		, m_layerCount(1)
-		, m_firstFace(U8(surf.m_face))
-		, m_faceCount(1)
-		, m_depthStencilAspect(aspect)
-	{
-	}
-
-	constexpr TextureSubresourceInfo(const TextureVolumeInfo& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
-		: m_firstMipmap(vol.m_level)
-		, m_mipmapCount(1)
-		, m_firstLayer(0)
-		, m_layerCount(1)
-		, m_firstFace(0)
-		, m_faceCount(1)
-		, m_depthStencilAspect(aspect)
-	{
-	}
-
-	TextureSubresourceInfo& operator=(const TextureSubresourceInfo&) = default;
-
-	Bool operator==(const TextureSubresourceInfo& b) const
-	{
-		ANKI_ASSERT(_m_padding[0] == b._m_padding[0]);
-		return memcmp(this, &b, sizeof(*this)) == 0;
-	}
-
-	Bool operator!=(const TextureSubresourceInfo& b) const
-	{
-		return !(*this == b);
-	}
-
-	U64 computeHash() const
-	{
-		static_assert(sizeof(*this) == sizeof(U32) * 4 + sizeof(U8) * 4, "Should be hashable");
-		ANKI_ASSERT(_m_padding[0] == 0);
-		return anki::computeHash(this, sizeof(*this));
-	}
-
-	Bool overlapsWith(const TextureSubresourceInfo& b) const
-	{
-		auto overlaps = [](U32 beginA, U32 countA, U32 beginB, U32 countB) -> Bool {
-			return (beginA < beginB) ? (beginA + countA > beginB) : (beginB + countB > beginA);
-		};
-
-		const Bool depthStencilOverlaps =
-			(m_depthStencilAspect == DepthStencilAspectBit::kNone && b.m_depthStencilAspect == DepthStencilAspectBit::kNone)
-			|| !!(m_depthStencilAspect & b.m_depthStencilAspect);
-
-		return overlaps(m_firstMipmap, m_mipmapCount, b.m_firstMipmap, b.m_mipmapCount)
-			   && overlaps(m_firstLayer, m_layerCount, b.m_firstLayer, b.m_layerCount)
-			   && overlaps(m_firstFace, m_faceCount, b.m_firstFace, b.m_faceCount) && depthStencilOverlaps;
-	}
-};
-
-class BufferOffsetRange
-{
-public:
-	Buffer* m_buffer = nullptr;
-	PtrSize m_offset = kMaxPtrSize;
-	PtrSize m_range = 0;
-};
-
 /// Compute max number of mipmaps for a 2D texture.
 U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1);
 
 /// Compute max number of mipmaps for a 3D texture.
 U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip = 1);
+
+/// Visit a SPIR-V binary.
+template<typename TArray, typename TFunc>
+static void visitSpirv(TArray spv, TFunc func)
+{
+	ANKI_ASSERT(spv.getSize() > 5);
+
+	auto it = &spv[5];
+	do
+	{
+		const U32 instructionCount = *it >> 16u;
+		const U32 opcode = *it & 0xFFFFu;
+
+		TArray instructions(it + 1, instructionCount - 1);
+
+		func(opcode, instructions);
+
+		it += instructionCount;
+	} while(it < spv.getEnd());
+
+	ANKI_ASSERT(it == spv.getEnd());
+}
 /// @}
 
 } // end namespace anki

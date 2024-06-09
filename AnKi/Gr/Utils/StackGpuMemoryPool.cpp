@@ -28,6 +28,7 @@ public:
 	PtrSize m_initialSize = 0;
 	F64 m_scale = 0.0;
 	PtrSize m_bias = 0;
+	PtrSize m_allocatedMemory = 0;
 	GrString m_bufferName;
 	U32 m_alignment = 0;
 	BufferUsageBit m_bufferUsage = BufferUsageBit::kNone;
@@ -77,6 +78,8 @@ public:
 		buffInit.m_mapAccess = m_bufferMap;
 		chunk->m_buffer = GrManager::getSingleton().newBuffer(buffInit);
 
+		m_allocatedMemory += size;
+
 		if(!!m_bufferMap)
 		{
 			chunk->m_mappedMemory = static_cast<U8*>(chunk->m_buffer->map(0, size, m_bufferMap));
@@ -94,6 +97,9 @@ public:
 		{
 			chunk->m_buffer->unmap();
 		}
+
+		ANKI_ASSERT(m_allocatedMemory >= chunk->m_buffer->getSize());
+		m_allocatedMemory -= chunk->m_buffer->getSize();
 
 		deleteInstance(GrMemoryPool::getSingleton(), chunk);
 	}
@@ -157,6 +163,11 @@ void StackGpuMemoryPool::allocate(PtrSize size, PtrSize& outOffset, Buffer*& buf
 	{
 		mappedMemory = chunk->m_mappedMemory + offset;
 	}
+}
+
+PtrSize StackGpuMemoryPool::getAllocatedMemory() const
+{
+	return m_builder->getInterface().m_allocatedMemory;
 }
 
 } // end namespace anki

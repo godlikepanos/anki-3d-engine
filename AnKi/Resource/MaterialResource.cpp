@@ -6,11 +6,12 @@
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/ImageResource.h>
+#include <AnKi/Core/App.h>
 #include <AnKi/Util/Xml.h>
 
 namespace anki {
 
-inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNames = {{"NONE", "ANKI_TECHNIQUE", "ANKI_BONES", "ANKI_VELOCITY"}};
+inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNames = {{"NONE", "ANKI_BONES", "ANKI_VELOCITY"}};
 
 inline constexpr Array<CString, U(RenderingTechnique::kCount)> kTechniqueNames = {{"GBuffer", "Depth", "Forward", "RtShadow"}};
 
@@ -31,7 +32,7 @@ public:
 	public: \
 		static constexpr Bool kValue = rowCount * columnCount > 1; \
 	};
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 
 template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::kValue>
@@ -56,6 +57,19 @@ public:
 
 } // namespace
 
+static Bool mutatorValueExists(const ShaderBinaryMutator& m, MutatorValue val)
+{
+	for(MutatorValue v : m.m_values)
+	{
+		if(v == val)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 MaterialVariable::MaterialVariable()
 {
 	m_Mat4 = Mat4::getZero();
@@ -65,56 +79,8 @@ MaterialVariable::~MaterialVariable()
 {
 }
 
-class MaterialResource::Program
-{
-public:
-	ShaderProgramResourcePtr m_prog;
-
-	mutable Array3d<MaterialVariant, U(RenderingTechnique::kCount), 2, 2> m_variantMatrix;
-	mutable RWMutex m_variantMatrixMtx;
-
-	ResourceDynamicArray<PartialMutation> m_partialMutation; ///< Only with the non-builtins.
-
-	U32 m_presentBuildinMutators = 0;
-	U32 m_localUniformsStructIdx = 0; ///< Struct index in the program binary.
-
-	U8 m_lodCount = 1;
-
-	Program() = default;
-
-	Program(const Program&) = delete; // Non-copyable
-
-	Program(Program&& b)
-	{
-		*this = std::move(b);
-	}
-
-	Program& operator=(const Program& b) = delete; // Non-copyable
-
-	Program& operator=(Program&& b)
-	{
-		m_prog = std::move(b.m_prog);
-		for(RenderingTechnique t : EnumIterable<RenderingTechnique>())
-		{
-			for(U32 skin = 0; skin < 2; ++skin)
-			{
-				for(U32 vel = 0; vel < 2; ++vel)
-				{
-					m_variantMatrix[t][skin][vel] = std::move(b.m_variantMatrix[t][skin][vel]);
-				}
-			}
-		}
-		m_partialMutation = std::move(b.m_partialMutation);
-		m_presentBuildinMutators = b.m_presentBuildinMutators;
-		m_localUniformsStructIdx = b.m_localUniformsStructIdx;
-		m_lodCount = b.m_lodCount;
-		return *this;
-	}
-};
-
 MaterialResource::MaterialResource()
 {
-	memset(m_techniqueToProgram.getBegin(), 0xFF, m_techniqueToProgram.getSizeInBytes());
 }
 
 MaterialResource::~MaterialResource()
@@ -146,15 +112,9 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(doc.getChildElement("material", rootEl));
 
 	// <shaderPrograms>
-	XmlElement shaderProgramsEl;
-	ANKI_CHECK(rootEl.getChildElement("shaderPrograms", shaderProgramsEl));
 	XmlElement shaderProgramEl;
-	ANKI_CHECK(shaderProgramsEl.getChildElement("shaderProgram", shaderProgramEl));
-	do
-	{
-		ANKI_CHECK(parseShaderProgram(shaderProgramEl, async));
-		ANKI_CHECK(shaderProgramEl.getNextSiblingElement("shaderProgram", shaderProgramEl));
-	} while(shaderProgramEl);
+	ANKI_CHECK(rootEl.getChildElement("shaderProgram", shaderProgramEl));
+	ANKI_CHECK(parseShaderProgram(shaderProgramEl, async));
 
 	ANKI_ASSERT(!!m_techniquesMask);
 
@@ -174,8 +134,19 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 
 	if(varsSet.getSetBitCount() != m_vars.getSize())
 	{
-		ANKI_RESOURCE_LOGE("Forgot to set a default value in %u input variables", U32(m_vars.getSize() - varsSet.getSetBitCount()));
-		return Error::kUserData;
+		ANKI_RESOURCE_LOGV("Material doesn't contain default value for %u input variables", U32(m_vars.getSize() - varsSet.getSetBitCount()));
+
+		// Remove unreferenced variables
+		ResourceDynamicArray<MaterialVariable> newVars;
+		for(U32 i = 0; i < m_vars.getSize(); ++i)
+		{
+			if(varsSet.get(i))
+			{
+				newVars.emplaceBack(std::move(m_vars[i]));
+			}
+		}
+
+		m_vars = std::move(newVars);
 	}
 
 	prefillLocalUniforms();
@@ -189,235 +160,85 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 	CString shaderName;
 	ANKI_CHECK(shaderProgramEl.getAttributeText("name", shaderName));
 
-	if(!GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && shaderName.find("Rt") == 0)
-	{
-		// Skip RT programs when RT is disabled
-		return Error::kNone;
-	}
-
 	ResourceString fname;
 	fname.sprintf("ShaderBinaries/%s.ankiprogbin", shaderName.cstr());
 
-	Program& prog = *m_programs.emplaceBack();
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(fname, prog.m_prog, async));
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource(fname, m_prog, async));
+
+	// Find present techniques
+	for(const ShaderBinaryTechnique& t : m_prog->getBinary().m_techniques)
+	{
+		if(t.m_name.getBegin() == CString("GBufferLegacy"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
+			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
+		}
+		else if(t.m_name.getBegin() == CString("GBufferMeshShaders"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
+			m_shaderTechniques |= ShaderTechniqueBit::kMeshSaders;
+		}
+		else if(t.m_name.getBegin() == CString("GBufferSwMeshletRendering"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kGBuffer;
+			m_shaderTechniques |= ShaderTechniqueBit::kSwMeshletRendering;
+		}
+		else if(t.m_name.getBegin() == CString("ShadowsLegacy"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kDepth;
+			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
+		}
+		else if(t.m_name.getBegin() == CString("ShadowsMeshShaders"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kDepth;
+			m_shaderTechniques |= ShaderTechniqueBit::kMeshSaders;
+		}
+		else if(t.m_name.getBegin() == CString("ShadowsSwMeshletRendering"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kDepth;
+			m_shaderTechniques |= ShaderTechniqueBit::kSwMeshletRendering;
+		}
+		else if(t.m_name.getBegin() == CString("RtShadows"))
+		{
+			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+			{
+				m_techniquesMask |= RenderingTechniqueBit::kRtShadow;
+			}
+		}
+		else if(t.m_name.getBegin() == CString("Forward"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kForward;
+			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
+		}
+		else if(t.m_name.getBegin() == CString("CommonTask"))
+		{
+			// Ignore
+		}
+		else
+		{
+			ANKI_RESOURCE_LOGE("Found unneeded technique in the shader: %s", t.m_name.getBegin());
+			return Error::kUserData;
+		}
+	}
 
 	// <mutation>
 	XmlElement mutatorsEl;
 	ANKI_CHECK(shaderProgramEl.getChildElementOptional("mutation", mutatorsEl));
 	if(mutatorsEl)
 	{
-		ANKI_CHECK(parseMutators(mutatorsEl, prog));
+		ANKI_CHECK(parseMutators(mutatorsEl));
 	}
 
 	// And find the builtin mutators
-	ANKI_CHECK(findBuiltinMutators(prog));
+	ANKI_CHECK(findBuiltinMutators());
 
 	// Create the vars
-	ANKI_CHECK(createVars(prog));
+	ANKI_CHECK(createVars());
 
 	return Error::kNone;
 }
 
-Error MaterialResource::createVars(Program& prog)
-{
-	const ShaderProgramBinary& binary = prog.m_prog->getBinary();
-
-	// Find struct
-	const ShaderProgramBinaryStruct* localUniformsStruct = nullptr;
-	for(const ShaderProgramBinaryStruct& strct : binary.m_structs)
-	{
-		if(CString(strct.m_name.getBegin()) == "AnKiLocalConstants")
-		{
-			localUniformsStruct = &strct;
-			break;
-		}
-
-		++prog.m_localUniformsStructIdx;
-	}
-
-	if(localUniformsStruct == nullptr)
-	{
-		prog.m_localUniformsStructIdx = kMaxU32;
-	}
-
-	// Iterate all members of the local uniforms struct to add its members
-	U32 offsetof = 0;
-	for(U32 i = 0; localUniformsStruct && i < localUniformsStruct->m_members.getSize(); ++i)
-	{
-		const ShaderProgramBinaryStructMember& member = localUniformsStruct->m_members[i];
-		const CString memberName = member.m_name.getBegin();
-
-		// Check if it needs to be added
-		Bool addIt = false;
-		if(member.m_dependentMutator == kMaxU32)
-		{
-			addIt = true;
-		}
-		else
-		{
-			Bool found = false;
-			for(const PartialMutation& m : prog.m_partialMutation)
-			{
-				if(m.m_mutator->m_name == binary.m_mutators[member.m_dependentMutator].m_name.getBegin())
-				{
-					if(m.m_value == member.m_dependentMutatorValue)
-					{
-						addIt = true;
-					}
-					found = true;
-					break;
-				}
-			}
-
-			if(!found)
-			{
-				ANKI_RESOURCE_LOGE("Incorrect combination of member variable %s and dependent mutator %s", memberName.cstr(),
-								   binary.m_mutators[member.m_dependentMutator].m_name.getBegin());
-				return Error::kUserData;
-			}
-		}
-
-		if(addIt)
-		{
-			MaterialVariable* var = tryFindVariable(memberName);
-			if(var)
-			{
-				if(var->m_dataType != member.m_type || var->m_offsetInLocalUniforms != offsetof)
-				{
-					ANKI_RESOURCE_LOGE("Member variable doesn't match between techniques: %s", memberName.cstr());
-					return Error::kUserData;
-				}
-			}
-			else
-			{
-				// Check that there are no other vars that overlap with the current var. This could happen if
-				// different programs have different signature for AnKiLocalConstants
-				for(const MaterialVariable& otherVar : m_vars)
-				{
-					if(!otherVar.isUniform())
-					{
-						continue;
-					}
-
-					const U32 aVarOffset = otherVar.m_offsetInLocalUniforms;
-					const U32 aVarEnd = aVarOffset + getShaderVariableDataTypeInfo(otherVar.m_dataType).m_size;
-					const U32 bVarOffset = offsetof;
-					const U32 bVarEnd = bVarOffset + getShaderVariableDataTypeInfo(member.m_type).m_size;
-
-					if((aVarOffset <= bVarOffset && aVarEnd > bVarOffset) || (bVarOffset <= aVarOffset && bVarEnd > aVarOffset))
-					{
-						ANKI_RESOURCE_LOGE("Member %s in AnKiLocalConstants overlaps with %s. Check your shaders", memberName.cstr(),
-										   otherVar.m_name.cstr());
-						return Error::kUserData;
-					}
-				}
-
-				// All good, add it
-				var = m_vars.emplaceBack();
-				var->m_name = memberName;
-				var->m_offsetInLocalUniforms = offsetof;
-				var->m_dataType = member.m_type;
-
-				offsetof += getShaderVariableDataTypeInfo(member.m_type).m_size;
-			}
-		}
-	}
-
-	m_localUniformsSize = max(offsetof, m_localUniformsSize);
-
-	// Iterate all variants of builtin mutators to gather the opaques
-	ShaderProgramResourceVariantInitInfo initInfo(prog.m_prog);
-
-	for(const PartialMutation& m : prog.m_partialMutation)
-	{
-		initInfo.addMutation(m.m_mutator->m_name, m.m_value);
-	}
-
-	Array<const ShaderProgramResourceMutator*, U(BuiltinMutatorId::kCount)> mutatorPtrs = {};
-	for(BuiltinMutatorId id : EnumIterable<BuiltinMutatorId>())
-	{
-		mutatorPtrs[id] = prog.m_prog->tryFindMutator(kBuiltinMutatorNames[id]);
-	}
-
-#define ANKI_LOOP(builtIn) \
-	for(U32 i = 0; i < ((mutatorPtrs[BuiltinMutatorId::builtIn]) ? mutatorPtrs[BuiltinMutatorId::builtIn]->m_values.getSize() : 1); ++i) \
-	{ \
-		if(mutatorPtrs[BuiltinMutatorId::builtIn]) \
-		{ \
-			initInfo.addMutation(mutatorPtrs[BuiltinMutatorId::builtIn]->m_name, mutatorPtrs[BuiltinMutatorId::builtIn]->m_values[i]); \
-		}
-
-#define ANKI_LOOP_END() }
-
-	ANKI_LOOP(kTechnique)
-	ANKI_LOOP(kBones)
-	ANKI_LOOP(kVelocity)
-	{
-		const ShaderProgramResourceVariant* variant;
-		prog.m_prog->getOrCreateVariant(initInfo, variant);
-		if(!variant)
-		{
-			// Skipped variant
-			continue;
-		}
-
-		// Add opaque vars
-		for(const ShaderProgramBinaryOpaqueInstance& instance : variant->getBinaryVariant().m_opaques)
-		{
-			const ShaderProgramBinaryOpaque& opaque = binary.m_opaques[instance.m_index];
-			if(opaque.m_type == ShaderVariableDataType::kSampler)
-			{
-				continue;
-			}
-
-			const CString opaqueName = opaque.m_name.getBegin();
-			MaterialVariable* var = tryFindVariable(opaqueName);
-
-			if(var)
-			{
-				if(var->m_dataType != opaque.m_type || var->m_opaqueBinding != opaque.m_binding)
-				{
-					ANKI_RESOURCE_LOGE("Opaque variable doesn't match between techniques: %s", opaqueName.cstr());
-					return Error::kUserData;
-				}
-			}
-			else
-			{
-				// Check that there are no other opaque with the same binding
-				for(const MaterialVariable& otherVar : m_vars)
-				{
-					if(!otherVar.isBoundableTexture())
-					{
-						continue;
-					}
-
-					if(otherVar.m_opaqueBinding == opaque.m_binding)
-					{
-						ANKI_RESOURCE_LOGE("Opaque variable %s has the same binding as %s. Check your shaders", otherVar.m_name.cstr(),
-										   opaqueName.cstr());
-						return Error::kUserData;
-					}
-				}
-
-				// All good, add it
-				var = m_vars.emplaceBack();
-				var->m_name = opaqueName;
-				var->m_opaqueBinding = opaque.m_binding;
-				var->m_dataType = opaque.m_type;
-			}
-		}
-	}
-	ANKI_LOOP_END()
-	ANKI_LOOP_END()
-	ANKI_LOOP_END()
-
-#undef ANKI_LOOP
-#undef ANKI_LOOP_END
-
-	return Error::kNone;
-}
-
-Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
+Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 {
 	XmlElement mutatorEl;
 	ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
@@ -426,12 +247,12 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 	ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
 	++mutatorCount;
 	ANKI_ASSERT(mutatorCount > 0);
-	prog.m_partialMutation.resize(mutatorCount);
+	m_partialMutation.resize(mutatorCount);
 	mutatorCount = 0;
 
 	do
 	{
-		PartialMutation& pmutation = prog.m_partialMutation[mutatorCount];
+		PartialMutation& pmutation = m_partialMutation[mutatorCount];
 
 		// name
 		CString mutatorName;
@@ -466,7 +287,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 		ANKI_CHECK(mutatorEl.getAttributeNumber("value", pmutation.m_value));
 
 		// Find mutator
-		pmutation.m_mutator = prog.m_prog->tryFindMutator(mutatorName);
+		pmutation.m_mutator = m_prog->tryFindMutator(mutatorName);
 
 		if(!pmutation.m_mutator)
 		{
@@ -474,7 +295,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 			return Error::kUserData;
 		}
 
-		if(!pmutation.m_mutator->valueExists(pmutation.m_value))
+		if(!mutatorValueExists(*pmutation.m_mutator, pmutation.m_value))
 		{
 			ANKI_RESOURCE_LOGE("Value %d is not part of the mutator %s", pmutation.m_value, mutatorName.cstr());
 			return Error::kUserData;
@@ -485,55 +306,18 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl, Program& prog)
 		ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
 	} while(mutatorEl);
 
-	ANKI_ASSERT(mutatorCount == prog.m_partialMutation.getSize());
+	ANKI_ASSERT(mutatorCount == m_partialMutation.getSize());
 
 	return Error::kNone;
 }
 
-Error MaterialResource::findBuiltinMutators(Program& prog)
+Error MaterialResource::findBuiltinMutators()
 {
 	U builtinMutatorCount = 0;
 
-	// ANKI_TECHNIQUE
-	CString techniqueMutatorName = kBuiltinMutatorNames[BuiltinMutatorId::kTechnique];
-	const ShaderProgramResourceMutator* techniqueMutator = prog.m_prog->tryFindMutator(techniqueMutatorName);
-	if(techniqueMutator)
-	{
-		for(U32 i = 0; i < techniqueMutator->m_values.getSize(); ++i)
-		{
-			const MutatorValue mvalue = techniqueMutator->m_values[i];
-			if(mvalue >= MutatorValue(RenderingTechnique::kCount) || mvalue < MutatorValue(RenderingTechnique::kFirst))
-			{
-				ANKI_RESOURCE_LOGE("Mutator %s has a wrong value %d", techniqueMutatorName.cstr(), mvalue);
-				return Error::kUserData;
-			}
-
-			const RenderingTechnique techniqueId = RenderingTechnique(mvalue);
-			const PtrSize progIdx = &prog - m_programs.getBegin();
-			ANKI_ASSERT(progIdx < m_programs.getSize());
-			m_techniqueToProgram[techniqueId] = U8(progIdx);
-
-			const RenderingTechniqueBit mask = RenderingTechniqueBit(1 << techniqueId);
-			if(!!(m_techniquesMask & mask))
-			{
-				ANKI_RESOURCE_LOGE("The %s technique appeared more than once", kTechniqueNames[mvalue].cstr());
-				return Error::kUserData;
-			}
-			m_techniquesMask |= mask;
-		}
-
-		++builtinMutatorCount;
-		prog.m_presentBuildinMutators |= U32(1 << BuiltinMutatorId::kTechnique);
-	}
-	else
-	{
-		ANKI_RESOURCE_LOGE("Mutator %s should be present in every shader program referenced by a material", techniqueMutatorName.cstr());
-		return Error::kUserData;
-	}
-
 	// ANKI_BONES
 	CString bonesMutatorName = kBuiltinMutatorNames[BuiltinMutatorId::kBones];
-	const ShaderProgramResourceMutator* bonesMutator = prog.m_prog->tryFindMutator(bonesMutatorName);
+	const ShaderBinaryMutator* bonesMutator = m_prog->tryFindMutator(bonesMutatorName);
 	if(bonesMutator)
 	{
 		if(bonesMutator->m_values.getSize() != 2)
@@ -554,12 +338,12 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		++builtinMutatorCount;
 
 		m_supportsSkinning = true;
-		prog.m_presentBuildinMutators |= U32(1 << BuiltinMutatorId::kBones);
+		m_presentBuildinMutatorMask |= U32(1 << BuiltinMutatorId::kBones);
 	}
 
 	// VELOCITY
 	CString velocityMutatorName = kBuiltinMutatorNames[BuiltinMutatorId::kVelocity];
-	const ShaderProgramResourceMutator* velocityMutator = prog.m_prog->tryFindMutator(velocityMutatorName);
+	const ShaderBinaryMutator* velocityMutator = m_prog->tryFindMutator(velocityMutatorName);
 	if(velocityMutator)
 	{
 		if(velocityMutator->m_values.getSize() != 2)
@@ -578,14 +362,47 @@ Error MaterialResource::findBuiltinMutators(Program& prog)
 		}
 
 		++builtinMutatorCount;
-		prog.m_presentBuildinMutators |= U32(1 << BuiltinMutatorId::kVelocity);
+		m_presentBuildinMutatorMask |= U32(1 << BuiltinMutatorId::kVelocity);
 	}
 
-	if(prog.m_partialMutation.getSize() + builtinMutatorCount != prog.m_prog->getMutators().getSize())
+	if(m_partialMutation.getSize() + builtinMutatorCount != m_prog->getBinary().m_mutators.getSize())
 	{
 		ANKI_RESOURCE_LOGE("Some mutatators are unacounted for");
 		return Error::kUserData;
 	}
+
+	return Error::kNone;
+}
+
+Error MaterialResource::createVars()
+{
+	const ShaderBinary& binary = m_prog->getBinary();
+
+	// Find struct
+	const ShaderBinaryStruct* localUniformsStruct = nullptr;
+	for(const ShaderBinaryStruct& strct : binary.m_structs)
+	{
+		if(CString(strct.m_name.getBegin()) == "AnKiLocalUniforms")
+		{
+			localUniformsStruct = &strct;
+			break;
+		}
+	}
+
+	// Create vars
+	for(U32 i = 0; localUniformsStruct && i < localUniformsStruct->m_members.getSize(); ++i)
+	{
+		const ShaderBinaryStructMember& member = localUniformsStruct->m_members[i];
+		const CString memberName = member.m_name.getBegin();
+
+		MaterialVariable& var = *m_vars.emplaceBack();
+		zeroMemory(var);
+		var.m_name = memberName;
+		var.m_dataType = member.m_type;
+		var.m_offsetInLocalUniforms = member.m_offset;
+	}
+
+	m_localUniformsSize = (localUniformsStruct) ? localUniformsStruct->m_size : 0;
 
 	return Error::kNone;
 }
@@ -614,15 +431,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	varsSet.set(idx);
 
 	// Set the value
-	if(foundVar->isBoundableTexture())
-	{
-		CString texfname;
-		ANKI_CHECK(inputEl.getAttributeText("value", texfname));
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(texfname, foundVar->m_image, async));
-
-		m_textures.emplaceBack(&foundVar->m_image->getTexture());
-	}
-	else if(foundVar->m_dataType == ShaderVariableDataType::kU32)
+	if(foundVar->m_dataType == ShaderVariableDataType::kU32)
 	{
 		// U32 is a bit special. It might be a number or a bindless texture
 
@@ -645,7 +454,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		{
 			ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
 
-			foundVar->m_U32 = foundVar->m_image->getTextureView().getOrCreateBindlessTextureIndex();
+			foundVar->m_U32 = foundVar->m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
 		}
 		else
 		{
@@ -660,7 +469,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	case ShaderVariableDataType::k##type: \
 		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 		default:
 			ANKI_ASSERT(0);
@@ -683,11 +492,6 @@ void MaterialResource::prefillLocalUniforms()
 
 	for(const MaterialVariable& var : m_vars)
 	{
-		if(!var.isUniform())
-		{
-			continue;
-		}
-
 		switch(var.m_dataType)
 		{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
@@ -695,7 +499,7 @@ void MaterialResource::prefillLocalUniforms()
 		ANKI_ASSERT(var.m_offsetInLocalUniforms + sizeof(type) <= m_localUniformsSize); \
 		memcpy(static_cast<U8*>(m_prefilledLocalUniforms) + var.m_offsetInLocalUniforms, &var.m_##type, sizeof(type)); \
 		break;
-#include <AnKi/Gr/ShaderVariableDataType.defs.h>
+#include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO
 		default:
 			ANKI_ASSERT(0);
@@ -707,11 +511,9 @@ void MaterialResource::prefillLocalUniforms()
 const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& key_) const
 {
 	RenderingKey key = key_;
-	ANKI_ASSERT(m_techniqueToProgram[key.getRenderingTechnique()] != kMaxU8);
-	const Program& prog = m_programs[m_techniqueToProgram[key.getRenderingTechnique()]];
 
 	// Sanitize the key
-	if(!(prog.m_presentBuildinMutators & U32(BuiltinMutatorId::kVelocity)) && key.getVelocity())
+	if(!(m_presentBuildinMutatorMask & U32(BuiltinMutatorId::kVelocity)) && key.getVelocity())
 	{
 		// Particles set their own velocity
 		key.setVelocity(false);
@@ -723,14 +525,22 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		key.setVelocity(false);
 	}
 
-	ANKI_ASSERT(!key.getSkinned() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kBones)));
-	ANKI_ASSERT(!key.getVelocity() || !!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kVelocity)));
+	const Bool meshShadersSupported = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
+	ANKI_ASSERT(!(key.getMeshletRendering() && (!meshShadersSupported && !g_meshletRenderingCVar.get()))
+				&& "Can't be asking for meshlet rendering if mesh shaders or SW meshlet rendering are not supported/enabled");
+	if(key.getMeshletRendering() && !(m_shaderTechniques & (ShaderTechniqueBit::kMeshSaders | ShaderTechniqueBit::kSwMeshletRendering)))
+	{
+		key.setMeshletRendering(false);
+	}
 
-	MaterialVariant& variant = prog.m_variantMatrix[key.getRenderingTechnique()][key.getSkinned()][key.getVelocity()];
+	ANKI_ASSERT(!key.getSkinned() || !!(m_presentBuildinMutatorMask & U32(1 << BuiltinMutatorId::kBones)));
+	ANKI_ASSERT(!key.getVelocity() || !!(m_presentBuildinMutatorMask & U32(1 << BuiltinMutatorId::kVelocity)));
+
+	MaterialVariant& variant = m_variantMatrix[key.getRenderingTechnique()][key.getSkinned()][key.getVelocity()][key.getMeshletRendering()];
 
 	// Check if it's initialized
 	{
-		RLockGuard<RWMutex> lock(prog.m_variantMatrixMtx);
+		RLockGuard<RWMutex> lock(m_variantMatrixMtx);
 		if(variant.m_prog.isCreated()) [[likely]]
 		{
 			return variant;
@@ -738,7 +548,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	}
 
 	// Not initialized, init it
-	WLockGuard<RWMutex> lock(prog.m_variantMatrixMtx);
+	WLockGuard<RWMutex> lock(m_variantMatrixMtx);
 
 	// Check again
 	if(variant.m_prog.isCreated())
@@ -746,27 +556,67 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		return variant;
 	}
 
-	ShaderProgramResourceVariantInitInfo initInfo(prog.m_prog);
+	ShaderProgramResourceVariantInitInfo initInfo(m_prog);
 
-	for(const PartialMutation& m : prog.m_partialMutation)
+	for(const PartialMutation& m : m_partialMutation)
 	{
-		initInfo.addMutation(m.m_mutator->m_name, m.m_value);
+		initInfo.addMutation(m.m_mutator->m_name.getBegin(), m.m_value);
 	}
 
-	initInfo.addMutation(kBuiltinMutatorNames[BuiltinMutatorId::kTechnique], MutatorValue(key.getRenderingTechnique()));
-
-	if(!!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kBones)))
+	if(!!(m_presentBuildinMutatorMask & U32(1 << BuiltinMutatorId::kBones)))
 	{
 		initInfo.addMutation(kBuiltinMutatorNames[BuiltinMutatorId::kBones], MutatorValue(key.getSkinned()));
 	}
 
-	if(!!(prog.m_presentBuildinMutators & U32(1 << BuiltinMutatorId::kVelocity)))
+	if(!!(m_presentBuildinMutatorMask & U32(1 << BuiltinMutatorId::kVelocity)))
 	{
 		initInfo.addMutation(kBuiltinMutatorNames[BuiltinMutatorId::kVelocity], MutatorValue(key.getVelocity()));
 	}
 
+	switch(key.getRenderingTechnique())
+	{
+	case RenderingTechnique::kGBuffer:
+		if(key.getMeshletRendering() && meshShadersSupported)
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "GBufferMeshShaders");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
+		}
+		else if(key.getMeshletRendering())
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBufferSwMeshletRendering");
+		}
+		else
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBufferLegacy");
+		}
+		break;
+	case RenderingTechnique::kDepth:
+		if(key.getMeshletRendering() && meshShadersSupported)
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "ShadowsMeshShaders");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
+		}
+		else if(key.getMeshletRendering())
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "ShadowsSwMeshletRendering");
+		}
+		else
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "ShadowsLegacy");
+		}
+		break;
+	case RenderingTechnique::kForward:
+		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "Forward");
+		break;
+	case RenderingTechnique::kRtShadow:
+		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
 	const ShaderProgramResourceVariant* progVariant = nullptr;
-	prog.m_prog->getOrCreateVariant(initInfo, progVariant);
+	m_prog->getOrCreateVariant(initInfo, progVariant);
 
 	if(!progVariant)
 	{

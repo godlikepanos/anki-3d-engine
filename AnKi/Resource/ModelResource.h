@@ -17,22 +17,6 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-/// @memberof ModelResource
-/// Part of the information required render the model.
-class ModelRenderingInfo
-{
-public:
-	ShaderProgramPtr m_program;
-
-	PtrSize m_indexBufferOffset;
-	IndexType m_indexType;
-	U32 m_firstIndex;
-	U32 m_indexCount;
-
-	/// Offset to the vertex buffer or kMaxPtrSize if stream is not present.
-	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets;
-};
-
 /// Part of the information required to create a TLAS and a SBT.
 /// @memberof ModelResource
 class ModelRayTracingInfo
@@ -41,7 +25,7 @@ public:
 	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
 	U32 m_shaderGroupHandleIndex;
 
-	PtrSize m_indexBufferOffset;
+	PtrSize m_indexUgbOffset;
 };
 
 /// @memberof ModelResource
@@ -49,12 +33,16 @@ public:
 class ModelPatchGeometryInfo
 {
 public:
-	PtrSize m_indexBufferOffset;
+	PtrSize m_indexUgbOffset;
 	U32 m_indexCount;
 	IndexType m_indexType;
 
 	/// Offset to the vertex buffer or kMaxPtrSize if stream is not present.
-	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets;
+	Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexUgbOffsets;
+
+	PtrSize m_meshletBoundingVolumesUgbOffset = kMaxPtrSize;
+	PtrSize m_meshletGometryDescriptorsUgbOffset = kMaxPtrSize;
+	U32 m_meshletCount;
 
 	AccelerationStructurePtr m_blas;
 };
@@ -80,9 +68,6 @@ public:
 		return m_aabb;
 	}
 
-	/// Get information for rendering.
-	void getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const;
-
 	void getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const;
 
 	/// Get the ray tracing info.
@@ -92,11 +77,14 @@ private:
 	class Lod
 	{
 	public:
-		PtrSize m_indexBufferOffset = kMaxPtrSize;
-		U32 m_firstIndex = kMaxU32;
+		PtrSize m_indexUgbOffset = kMaxPtrSize;
 		U32 m_indexCount = kMaxU32;
 
-		Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBufferOffsets = {};
+		Array<PtrSize, U32(VertexStreamId::kMeshRelatedCount)> m_vertexUgbOffsets = {};
+
+		PtrSize m_meshletBoundingVolumesUgbOffset = kMaxPtrSize;
+		PtrSize m_meshletGometryDescriptorsUgbOffset = kMaxPtrSize;
+		U32 m_meshletCount = kMaxU32;
 	};
 
 #if ANKI_ASSERTIONS_ENABLED

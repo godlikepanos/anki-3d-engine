@@ -7,7 +7,7 @@
 
 namespace anki {
 
-void ReadbackManager::allocateData(MultiframeReadbackToken& token, PtrSize size, Buffer*& buffer, PtrSize& bufferOffset) const
+void ReadbackManager::allocateData(MultiframeReadbackToken& token, PtrSize size, BufferView& buffer) const
 {
 	for([[maybe_unused]] U64 frame : token.m_frameIds)
 	{
@@ -27,8 +27,7 @@ void ReadbackManager::allocateData(MultiframeReadbackToken& token, PtrSize size,
 	}
 	token.m_frameIds[token.m_slot] = m_frameId;
 
-	buffer = &allocation.getBuffer();
-	bufferOffset = allocation.getOffset();
+	buffer = BufferView(&allocation.getBuffer(), allocation.getOffset(), size);
 
 	token.m_slot = (token.m_slot + 1) % kMaxFramesInFlight;
 }

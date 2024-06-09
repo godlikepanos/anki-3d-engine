@@ -33,6 +33,10 @@ static MaliOfflineCompilerHwUnit strToHwUnit(CString str)
 	{
 		out = MaliOfflineCompilerHwUnit::kTexture;
 	}
+	else if(str.find("A") == 0)
+	{
+		out = MaliOfflineCompilerHwUnit::kFma; // ????
+	}
 	else
 	{
 		ANKI_ASSERT(0);
@@ -82,7 +86,7 @@ String MaliOfflineCompilerOut::toString() const
 	return str;
 }
 
-Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType, MaliOfflineCompilerOut& out)
+Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, MaliOfflineCompilerOut& out)
 {
 	out = {};
 	const U32 rand = g_nextFileId.fetchAdd(1) + getCurrentProcessId();
@@ -118,6 +122,18 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 	case ShaderType::kCompute:
 		args[0] = "-C";
 		break;
+	case ShaderType::kRayGen:
+		args[0] = "--ray_generation";
+		break;
+	case ShaderType::kAnyHit:
+		args[0] = "--ray_any_hit";
+		break;
+	case ShaderType::kClosestHit:
+		args[0] = "--ray_closest_hit";
+		break;
+	case ShaderType::kMiss:
+		args[0] = "--ray_miss";
+		break;
 	default:
 		ANKI_ASSERT(0 && "Unhandled case");
 	}
@@ -131,6 +147,14 @@ Error runMaliOfflineCompiler(CString maliocExecutable, ConstWeakArray<U8> spirv,
 
 	// Execute
 	I32 exitCode;
+#if ANKI_OS_LINUX
+	CString maliocExecutable = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Linux64/MaliOfflineCompiler/malioc";
+#elif ANKI_OS_WINDOWS
+	CString maliocExecutable = ANKI_SOURCE_DIRECTORY "/ThirdParty/Bin/Windows64/MaliOfflineCompiler/malioc.exe";
+#else
+	CString maliocExecutable = "nothing";
+	ANKI_ASSERT(0);
+#endif
 	ANKI_CHECK(Process::callProcess(maliocExecutable, args, nullptr, nullptr, exitCode));
 	if(exitCode != 0)
 	{

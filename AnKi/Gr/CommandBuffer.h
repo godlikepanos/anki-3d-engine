@@ -6,7 +6,8 @@
 #pragma once
 
 #include <AnKi/Gr/GrObject.h>
-#include <AnKi/Gr/Framebuffer.h>
+#include <AnKi/Gr/Buffer.h>
+#include <AnKi/Gr/Texture.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math.h>
@@ -19,20 +20,17 @@ namespace anki {
 class TextureBarrierInfo
 {
 public:
-	Texture* m_texture = nullptr;
+	TextureView m_textureView;
 	TextureUsageBit m_previousUsage = TextureUsageBit::kNone;
 	TextureUsageBit m_nextUsage = TextureUsageBit::kNone;
-	TextureSubresourceInfo m_subresource;
 };
 
 class BufferBarrierInfo
 {
 public:
-	Buffer* m_buffer = nullptr;
+	BufferView m_bufferView;
 	BufferUsageBit m_previousUsage = BufferUsageBit::kNone;
 	BufferUsageBit m_nextUsage = BufferUsageBit::kNone;
-	PtrSize m_offset = 0;
-	PtrSize m_range = 0;
 };
 
 class AccelerationStructureBarrierInfo
@@ -51,21 +49,42 @@ public:
 	PtrSize m_range = 0;
 };
 
+class RenderTarget
+{
+public:
+	TextureView m_textureView;
+
+	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kClear;
+	RenderTargetStoreOperation m_storeOperation = RenderTargetStoreOperation::kStore;
+
+	RenderTargetLoadOperation m_stencilLoadOperation = RenderTargetLoadOperation::kClear;
+	RenderTargetStoreOperation m_stencilStoreOperation = RenderTargetStoreOperation::kStore;
+
+	ClearValue m_clearValue;
+
+	TextureUsageBit m_usage = TextureUsageBit::kFramebufferWrite;
+
+	RenderTarget() = default;
+
+	RenderTarget(const TextureView& view)
+		: m_textureView(view)
+	{
+	}
+};
+
 /// Command buffer initialization flags.
 enum class CommandBufferFlag : U8
 {
 	kNone = 0,
 
-	kSecondLevel = 1 << 0,
-
 	/// It will contain a handfull of commands.
-	kSmallBatch = 1 << 3,
+	kSmallBatch = 1 << 0,
 
 	/// Will contain graphics, compute and transfer work.
-	kGeneralWork = 1 << 4,
+	kGeneralWork = 1 << 1,
 
 	/// Will contain only compute work. It binds to async compute queues.
-	kComputeWork = 1 << 5,
+	kComputeWork = 1 << 2,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag)
 
@@ -73,10 +92,6 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag)
 class CommandBufferInitInfo : public GrBaseInitInfo
 {
 public:
-	Framebuffer* m_framebuffer = nullptr; ///< For second level command buffers.
-	Array<TextureUsageBit, kMaxColorRenderTargets> m_colorAttachmentUsages = {};
-	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::kNone;
-
 	CommandBufferFlag m_flags = CommandBufferFlag::kGeneralWork;
 
 	CommandBufferInitInfo(CString name = {})
@@ -84,6 +99,72 @@ public:
 	{
 	}
 };
+
+/// Maps to HLSL register(X#, S)
+class Register
+{
+public:
+	U32 m_bindPoint = kMaxU32;
+	HlslResourceType m_resourceType = HlslResourceType::kCount;
+	U8 m_space = kMaxU8;
+
+	Register(HlslResourceType type, U32 bindingPoint, U8 space = 0)
+		: m_bindPoint(bindingPoint)
+		, m_resourceType(type)
+		, m_space(space)
+	{
+		validate();
+	}
+
+	/// Construct using a couple of strings like ("t0", "space10")
+	Register(const Char* reg, const Char* space = "space0")
+	{
+		ANKI_ASSERT(reg && space);
+		m_resourceType = toResourceType(reg[0]);
+		++reg;
+		m_bindPoint = 0;
+		do
+		{
+			ANKI_ASSERT(*reg >= '0' && *reg <= '9');
+			m_bindPoint *= 10;
+			m_bindPoint += *reg - '0';
+			++reg;
+		} while(*reg != '\0');
+		ANKI_ASSERT(strlen(space) == 6);
+		ANKI_ASSERT(space[5] >= '0' && space[5] <= '9');
+		m_space = U8(space[5] - '0');
+	}
+
+	void validate() const
+	{
+		ANKI_ASSERT(m_bindPoint != kMaxU32);
+		ANKI_ASSERT(m_resourceType < HlslResourceType::kCount);
+		ANKI_ASSERT(m_space < kMaxDescriptorSets);
+	}
+
+private:
+	static HlslResourceType toResourceType(Char c)
+	{
+		switch(c)
+		{
+		case 'b':
+			return HlslResourceType::kCbv;
+		case 'u':
+			return HlslResourceType::kUav;
+		case 't':
+			return HlslResourceType::kSrv;
+		case 's':
+			return HlslResourceType::kSampler;
+		default:
+			ANKI_ASSERT(0);
+			return HlslResourceType::kCount;
+		}
+	}
+};
+
+/// Break the code style to define something HLSL like
+#define ANKI_REG(reg) Register(ANKI_STRINGIZE(reg))
+#define ANKI_REG2(reg, space) Register(ANKI_STRINGIZE(reg), ANKI_STRINGIZE(space))
 
 /// Command buffer.
 class CommandBuffer : public GrObject
@@ -93,22 +174,25 @@ class CommandBuffer : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kCommandBuffer;
 
-	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
-	/// @param[in]  waitFences Optionally wait for some fences.
-	/// @param[out] signalFence Optionaly create fence that will be signaled when the submission is done.
-	void flush(ConstWeakArray<FencePtr> waitFences = {}, FencePtr* signalFence = nullptr);
+	CommandBufferFlag getFlags() const
+	{
+		return m_flags;
+	}
+
+	/// Finalize the command buffer.
+	void endRecording();
 
 	/// @name State manipulation
 	/// @{
 
 	/// Bind vertex buffer.
-	void bindVertexBuffer(U32 binding, Buffer* buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate = VertexStepRate::kVertex);
+	void bindVertexBuffer(U32 binding, const BufferView& buff, U32 stride, VertexStepRate stepRate = VertexStepRate::kVertex);
 
 	/// Setup a vertex attribute.
-	void setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset);
+	void setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, U32 relativeOffset);
 
 	/// Bind index buffer.
-	void bindIndexBuffer(Buffer* buff, PtrSize offset, IndexType type);
+	void bindIndexBuffer(const BufferView& buff, IndexType type);
 
 	/// Enable primitive restart.
 	void setPrimitiveRestart(Bool enable);
@@ -185,93 +269,23 @@ public:
 	/// Set the line width. By default it's undefined.
 	void setLineWidth(F32 lineWidth);
 
-	/// Bind texture and sample.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param texView The texture view to bind.
-	/// @param sampler The sampler to override the default sampler of the tex.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindTextureAndSampler(U32 set, U32 binding, TextureView* texView, Sampler* sampler, U32 arrayIdx = 0);
-
 	/// Bind sampler.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param sampler The sampler to override the default sampler of the tex.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindSampler(U32 set, U32 binding, Sampler* sampler, U32 arrayIdx = 0);
+	void bindSampler(Register reg, Sampler* sampler);
 
 	/// Bind a texture.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param texView The texture view to bind.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindTexture(U32 set, U32 binding, TextureView* texView, U32 arrayIdx = 0);
+	void bindTexture(Register reg, const TextureView& texView);
 
 	/// Bind uniform buffer.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param[in,out] buff The buffer to bind.
-	/// @param offset The base of the binding.
-	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end of the buffer.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindConstantBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
-
-	/// Bind uniform buffer.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param[in,out] buff The buffer to bind.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindConstantBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
-	{
-		bindConstantBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
-	}
+	void bindUniformBuffer(Register reg, const BufferView& buff);
 
 	/// Bind storage buffer.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param[in,out] buff The buffer to bind.
-	/// @param offset The base of the binding.
-	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end
-	///              of the buffer.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindUavBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
+	void bindStorageBuffer(Register reg, const BufferView& buff);
 
-	/// Bind storage buffer.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param[in,out] buff The buffer to bind.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindUavBuffer(U32 set, U32 binding, const BufferOffsetRange& buff, U32 arrayIdx = 0)
-	{
-		bindUavBuffer(set, binding, buff.m_buffer, buff.m_offset, buff.m_range, arrayIdx);
-	}
+	/// Bind texel buffer.
+	void bindTexelBuffer(Register reg, const BufferView& buff, Format fmt);
 
-	/// Bind load/store image.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param img The view to bind.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindUavTexture(U32 set, U32 binding, TextureView* img, U32 arrayIdx = 0);
-
-	/// Bind texture buffer.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param[in,out] buff The buffer to bind.
-	/// @param offset The base of the binding.
-	/// @param range The bytes to bind starting from the offset. If it's kMaxPtrSize then map from offset to the end of the buffer.
-	/// @param fmt The format of the buffer.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindReadOnlyTextureBuffer(U32 set, U32 binding, Buffer* buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx = 0);
-
-	/// Bind an acceleration structure.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param[in,out] as The AS to bind.
-	/// @param arrayIdx The array index if the binding is an array.
-	void bindAccelerationStructure(U32 set, U32 binding, AccelerationStructure* as, U32 arrayIdx = 0);
-
-	/// Bind the bindless descriptor set into a slot.
-	void bindAllBindless(U32 set);
+	/// Bind AS.
+	void bindAccelerationStructure(Register reg, AccelerationStructure* as);
 
 	/// Set push constants.
 	void setPushConstants(const void* data, U32 dataSize);
@@ -279,11 +293,20 @@ public:
 	/// Bind a program.
 	void bindShaderProgram(ShaderProgram* prog);
 
-	/// Begin renderpass.
+	/// Begin a renderpass.
 	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is bigger than the render area
 	/// the results are undefined.
-	void beginRenderPass(Framebuffer* fb, const Array<TextureUsageBit, kMaxColorRenderTargets>& colorAttachmentUsages,
-						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32);
+	void beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32,
+						 U32 height = kMaxU32, const TextureView& vrsRt = TextureView(), U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
+
+	/// See beginRenderPass.
+	void beginRenderPass(std::initializer_list<RenderTarget> colorRts, RenderTarget* depthStencilRt = nullptr, U32 minx = 0, U32 miny = 0,
+						 U32 width = kMaxU32, U32 height = kMaxU32, const TextureView& vrsRt = TextureView(), U8 vrsRtTexelSizeX = 0,
+						 U8 vrsRtTexelSizeY = 0)
+	{
+		beginRenderPass(ConstWeakArray(colorRts.begin(), U32(colorRts.size())), depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX,
+						vrsRtTexelSizeY);
+	}
 
 	/// End renderpass.
 	void endRenderPass();
@@ -298,21 +321,23 @@ public:
 
 	void draw(PrimitiveTopology topology, U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
-	void drawIndexedIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* indirectBuff);
+	void drawIndexedIndirect(PrimitiveTopology topology, const BufferView& indirectBuff, U32 drawCount = 1);
 
-	void drawIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, Buffer* indirectBuff);
+	void drawIndirect(PrimitiveTopology topology, const BufferView& indirectBuff, U32 drawCount = 1);
 
-	void drawIndexedIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride, Buffer* countBuffer,
-								  PtrSize countBufferOffset, U32 maxDrawCount);
+	void drawIndexedIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride, const BufferView& countBuffer,
+								  U32 maxDrawCount);
 
-	void drawIndirectCount(PrimitiveTopology topology, Buffer* argBuffer, PtrSize argBufferOffset, U32 argBufferStride, Buffer* countBuffer,
-						   PtrSize countBufferOffset, U32 maxDrawCount);
+	void drawIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride, const BufferView& countBuffer,
+						   U32 maxDrawCount);
 
 	void drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
+	void drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawCount = 1);
+
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void dispatchComputeIndirect(Buffer* argBuffer, PtrSize argBufferOffset);
+	void dispatchComputeIndirect(const BufferView& argBuffer);
 
 	/// Trace rays.
 	///
@@ -335,79 +360,47 @@ public:
 	/// The I_offset is the AccelerationStructureInstance::m_hitgroupSbtRecordIndex.
 	///
 	/// @param[in] sbtBuffer The SBT buffer.
-	/// @param sbtBufferOffset Offset inside the sbtBuffer where SBT records start.
-	/// @param hitGroupSbtRecordCount The number of SBT records that contain hit groups.
 	/// @param sbtRecordSize The size of an SBT record
+	/// @param hitGroupSbtRecordCount The number of SBT records that contain hit groups.
 	/// @param rayTypecount The number of ray types hosted in the pipeline. See above on how it's been used.
 	/// @param width Width.
 	/// @param height Height.
 	/// @param depth Depth.
-	void traceRays(Buffer* sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
-				   U32 depth);
+	void traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
 	/// TextureUsageBit::kGenerateMipmaps before calling this method.
-	/// @param texView The texture view to generate mips. It should point to a subresource that contains the whole
-	///                mip chain and only one face and one layer.
-	void generateMipmaps2d(TextureView* texView);
-
-	/// Generate mipmaps only for 3D textures.
-	/// @param texView The texture view to generate mips.
-	void generateMipmaps3d(TextureView* tex);
+	/// @param texView The texture view to generate mips. It should point to a texture view that contains the 1st mip.
+	void generateMipmaps2d(const TextureView& texView);
 
 	/// Blit from surface to surface.
-	/// @param srcView The source view that points to a surface.
-	/// @param dstView The destination view that points to a surface.
-	void blitTextureViews(TextureView* srcView, TextureView* destView);
+	void blitTexture(const TextureView& srcView, const TextureView& destView);
 
 	/// Clear a single texture surface. Can be used for all textures except 3D.
-	/// @param[in,out] texView The texture view to clear.
-	/// @param[in] clearValue The value to clear it with.
-	void clearTextureView(TextureView* texView, const ClearValue& clearValue);
+	void clearTexture(const TextureView& texView, const ClearValue& clearValue);
 
 	/// Copy a buffer to a texture surface or volume.
-	/// @param buff The source buffer to copy from.
-	/// @param offset The offset in the buffer to start reading from.
-	/// @param range The size of the buffer to read.
-	/// @param texView The texture view that points to a surface or volume to write to.
-	void copyBufferToTextureView(Buffer* buff, PtrSize offset, PtrSize range, TextureView* texView);
+	void copyBufferToTexture(const BufferView& buff, const TextureView& texView);
 
 	/// Fill a buffer with some value.
-	/// @param[in,out] buff The buffer to fill.
-	/// @param offset From where to start filling. Must be multiple of 4.
-	/// @param size The bytes to fill. Must be multiple of 4 or kMaxPtrSize to indicate the whole buffer.
-	/// @param value The value to fill the buffer with.
-	void fillBuffer(Buffer* buff, PtrSize offset, PtrSize size, U32 value);
+	void fillBuffer(const BufferView& buff, U32 value);
 
 	/// Write the occlusion result to buffer.
-	/// @param[in] queries The queries to write the result of.
-	/// @param offset The offset inside the buffer to write the result.
-	/// @param buff The buffer to update.
-	void writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, PtrSize offset, Buffer* buff);
+	void writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff);
 
 	/// Copy buffer to buffer.
-	/// @param[in] src Source buffer.
-	/// @param srcOffset Offset in the src buffer.
-	/// @param[out] dst Destination buffer.
-	/// @param dstOffset Offset in the destination buffer.
-	/// @param range Size to copy.
-	void copyBufferToBuffer(Buffer* src, PtrSize srcOffset, Buffer* dst, PtrSize dstOffset, PtrSize range)
+	void copyBufferToBuffer(const BufferView& src, const BufferView& dst)
 	{
-		Array<CopyBufferToBufferInfo, 1> copies = {{{srcOffset, dstOffset, range}}};
-		copyBufferToBuffer(src, dst, copies);
+		ANKI_ASSERT(src.getRange() == dst.getRange());
+		Array<CopyBufferToBufferInfo, 1> copies = {{{src.getOffset(), dst.getOffset(), src.getRange()}}};
+		copyBufferToBuffer(&src.getBuffer(), &dst.getBuffer(), copies);
 	}
 
 	/// Copy buffer to buffer.
-	/// @param[in] src Source buffer.
-	/// @param[out] dst Destination buffer.
-	/// @param copies Info on the copies.
 	void copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies);
 
 	/// Build the acceleration structure.
-	/// @param as The AS to build.
-	/// @param scratchBuffer A scratch buffer. Ask the AS for size.
-	/// @param scratchBufferOffset Scratch buffer offset.
-	void buildAccelerationStructure(AccelerationStructure* as, Buffer* scratchBuffer, PtrSize scratchBufferOffset);
+	void buildAccelerationStructure(AccelerationStructure* as, const BufferView& scratchBuffer);
 
 	/// Do upscaling by an external upscaler
 	/// @param[in] upscaler the upscaler to use for upscaling
@@ -420,8 +413,9 @@ public:
 	/// @param[in] jitterOffset Jittering offset that was applied during the generation of sourceTexture
 	/// @param[in] motionVectorsScale Any scale factor that might need to be applied to the motionVectorsTexture (i.e UV space to Pixel space
 	///                               conversion)
-	void upscale(GrUpscaler* upscaler, TextureView* inColor, TextureView* outUpscaledColor, TextureView* motionVectors, TextureView* depth,
-				 TextureView* exposure, Bool resetAccumulation, const Vec2& jitterOffset, const Vec2& motionVectorsScale);
+	void upscale(GrUpscaler* upscaler, const TextureView& inColor, const TextureView& outUpscaledColor, const TextureView& motionVectors,
+				 const TextureView& depth, const TextureView& exposure, Bool resetAccumulation, const Vec2& jitterOffset,
+				 const Vec2& motionVectorsScale);
 	/// @}
 
 	/// @name Sync
@@ -433,23 +427,20 @@ public:
 	/// @name Other
 	/// @{
 
-	/// Reset queries before beginOcclusionQuery.
-	void resetOcclusionQueries(ConstWeakArray<OcclusionQuery*> queries);
-
 	/// Begin query.
 	void beginOcclusionQuery(OcclusionQuery* query);
 
 	/// End query.
 	void endOcclusionQuery(OcclusionQuery* query);
 
-	/// Reset timestamp queries before writeTimestamp.
-	void resetTimestampQueries(ConstWeakArray<TimestampQuery*> queries);
+	/// Begin query.
+	void beginPipelineQuery(PipelineQuery* query);
+
+	/// End query.
+	void endPipelineQuery(PipelineQuery* query);
 
 	/// Write a timestamp.
 	void writeTimestamp(TimestampQuery* query);
-
-	/// Append second level command buffers.
-	void pushSecondLevelCommandBuffers(ConstWeakArray<CommandBuffer*> cmdbs);
 
 	Bool isEmpty() const;
 
@@ -459,6 +450,8 @@ public:
 	/// @}
 
 protected:
+	CommandBufferFlag m_flags = CommandBufferFlag::kNone;
+
 	/// Construct.
 	CommandBuffer(CString name)
 		: GrObject(kClassType, name)

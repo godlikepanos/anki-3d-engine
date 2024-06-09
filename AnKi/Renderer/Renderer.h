@@ -23,6 +23,7 @@ extern BoolCVar g_vrsLimitTo2x2CVar;
 extern BoolCVar g_preferComputeCVar;
 extern NumericCVar<F32> g_renderScalingCVar;
 extern BoolCVar g_rayTracedShadowsCVar;
+extern BoolCVar g_meshletRenderingCVar;
 extern NumericCVar<U8> g_shadowCascadeCountCVar;
 extern NumericCVar<F32> g_shadowCascade0DistanceCVar;
 extern NumericCVar<F32> g_shadowCascade1DistanceCVar;
@@ -54,13 +55,12 @@ public:
 
 	~Renderer();
 
-#define ANKI_RENDERER_OBJECT_DEF(a, b) \
-	a& get##a() \
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
+	name& get##name() \
 	{ \
-		return *m_##b; \
+		return *m_##name2; \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
-#undef ANKI_RENDERER_OBJECT_DEF
 
 	Bool getRtShadowsEnabled() const
 	{
@@ -110,6 +110,11 @@ public:
 		return m_visibility;
 	}
 
+	Bool runSoftwareMeshletRendering() const
+	{
+		return g_meshletRenderingCVar.get() && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
+	}
+
 	GpuVisibilityNonRenderables& getGpuVisibilityNonRenderables()
 	{
 		return m_nonRenderablesVisibility;
@@ -139,14 +144,14 @@ public:
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());
 
-	TextureView& getDummyTextureView2d() const
+	Texture& getDummyTexture2d() const
 	{
-		return *m_dummyTexView2d;
+		return *m_dummyTex2d;
 	}
 
-	TextureView& getDummyTextureView3d() const
+	Texture& getDummyTexture3d() const
 	{
-		return *m_dummyTexView3d;
+		return *m_dummyTex3d;
 	}
 
 	Buffer& getDummyBuffer() const
@@ -202,12 +207,20 @@ public:
 		return *m_framePool;
 	}
 
+#if ANKI_STATS_ENABLED
+	void appendPipelineQuery(PipelineQuery* q)
+	{
+		ANKI_ASSERT(q);
+		LockGuard lock(m_pipelineQueriesMtx);
+		m_pipelineQueries[m_frameCount % kMaxFramesInFlight].emplaceBack(q);
+	}
+#endif
+
 private:
 	/// @name Rendering stages
 	/// @{
-#define ANKI_RENDERER_OBJECT_DEF(a, b) UniquePtr<a, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##b;
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) UniquePtr<name, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##name2;
 #include <AnKi/Renderer/RendererObject.def.h>
-#undef ANKI_RENDERER_OBJECT_DEF
 	/// @}
 
 	UVec2 m_tileCounts = UVec2(0u);
@@ -229,8 +242,8 @@ private:
 
 	Array<Vec2, 64> m_jitterOffsets;
 
-	TextureViewPtr m_dummyTexView2d;
-	TextureViewPtr m_dummyTexView3d;
+	TexturePtr m_dummyTex2d;
+	TexturePtr m_dummyTex3d;
 	BufferPtr m_dummyBuff;
 
 	RendererPrecreatedSamplers m_samplers;
@@ -254,9 +267,20 @@ private:
 		BufferHandle m_gpuSceneHandle;
 	} m_runCtx;
 
+#if ANKI_STATS_ENABLED
+	Array<RendererDynamicArray<PipelineQueryPtr>, kMaxFramesInFlight> m_pipelineQueries;
+	Mutex m_pipelineQueriesMtx;
+#endif
+
 	Error initInternal(UVec2 swapchainSize);
 
 	void gpuSceneCopy(RenderingContext& ctx);
+
+#if ANKI_STATS_ENABLED
+	void updatePipelineStats();
+#endif
+
+	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererUniforms& unis);
 };
 /// @}
 

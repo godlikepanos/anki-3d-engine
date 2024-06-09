@@ -100,7 +100,8 @@ public:
 		Cone out;
 		out.m_origin = transform.transform(m_origin);
 		out.m_dir = (transform.getRotation() * m_dir.xyz0()).xyz0();
-		out.m_length *= transform.getScale();
+		ANKI_ASSERT(transform.hasUniformScale());
+		out.m_length *= transform.getScale().x();
 		return out;
 	}
 

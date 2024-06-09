@@ -79,7 +79,6 @@ private:
 	GpuSceneArrays::ReflectionProbe::Allocation m_gpuSceneProbe;
 
 	TexturePtr m_reflectionTex;
-	TextureViewPtr m_reflectionView; ///< Keept alive for the bindless index.
 	U32 m_reflectionTexBindlessIndex = kMaxU32;
 	U32 m_uuid = 0;
 

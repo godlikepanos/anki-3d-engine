@@ -7,7 +7,8 @@ set(sources
 	GpuMemory/UnifiedGeometryBuffer.cpp
 	GpuMemory/GpuSceneBuffer.cpp
 	GpuMemory/RebarTransientMemoryPool.cpp
-	GpuMemory/GpuReadbackMemoryPool.cpp)
+	GpuMemory/GpuReadbackMemoryPool.cpp
+	GpuMemory/GpuVisibleTransientMemoryPool.cpp)
 
 set(headers
 	App.h

@@ -11,7 +11,6 @@
 #if defined(__cplusplus)
 
 #	include <AnKi/Math.h>
-#	include <AnKi/Gr/Common.h>
 
 #	define ANKI_HLSL 0
 #	define ANKI_GLSL 0
@@ -25,6 +24,7 @@
 #	define ANKI_CPP_CODE(...) __VA_ARGS__
 
 ANKI_BEGIN_NAMESPACE
+
 using Address = U64;
 using ScalarVec4 = Array<F32, 4>;
 using ScalarMat3x4 = Array<F32, 12>;
@@ -45,10 +45,17 @@ ANKI_END_NAMESPACE
 #	define ANKI_GLSL 0
 #	define ANKI_CPP 0
 
+#	if defined(__spirv__)
+#		define ANKI_GR_BACKEND_VULKAN 1
+#		define ANKI_GR_BACKEND_DIRECT3D 0
+#	else
+#		define ANKI_GR_BACKEND_VULKAN 0
+#		define ANKI_GR_BACKEND_DIRECT3D 1
+#	endif
+
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
 #	define inline
-#	define ANKI_ASSERT(x)
 
 #	define ANKI_ARRAY(type, size, name) type name[(U32)size]
 
@@ -58,7 +65,13 @@ ANKI_END_NAMESPACE
 
 #	define constexpr static const
 
-#	define ANKI_ASSERT(x)
+#	if defined(ANKI_ASSERTIONS_ENABLED) && ANKI_ASSERTIONS_ENABLED == 1
+#		define ANKI_ASSERT(x) \
+			if(!(x)) \
+			printf("Assertion failed. Line %i", __LINE__)
+#	else
+#		define ANKI_ASSERT(x)
+#	endif
 
 template<typename T>
 void maybeUnused(T a)
@@ -71,15 +84,6 @@ void maybeUnused(T a)
 #	define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
 #	define static_assert(x)
-
-#	define ANKI_BINDLESS_SET(s) \
-		[[vk::binding(0, s)]] Texture2D<uint4> g_bindlessTextures2dU32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2D<int4> g_bindlessTextures2dI32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2D<RVec4> g_bindlessTextures2dF32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture2DArray<RVec4> g_bindlessTextures2dArrayF32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] TextureCube<RVec4> g_bindlessTexturesCubeF32[kMaxBindlessTextures]; \
-		[[vk::binding(0, s)]] Texture3D<RVec4> g_bindlessTextures3dF32[kMaxBindlessTextures]; \
-		[[vk::binding(1, s)]] Buffer<float4> g_bindlessTextureBuffersF32[kMaxBindlessReadonlyTextureBuffers];
 
 #	define _ANKI_SCONST_X(type, n, id) [[vk::constant_id(id)]] const type n = (type)1;
 
@@ -198,7 +202,7 @@ constexpr uint kSizeof_I64Vec4 = 32u;
 
 typedef bool Bool;
 
-#	define _ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, op) \
+#	define _ANKI_DEFINE_OPERATOR_SCALAR_ROWS3(mat, fl, op) \
 		mat operator op(fl f) \
 		{ \
 			mat o; \
@@ -208,7 +212,7 @@ typedef bool Bool;
 			return o; \
 		}
 
-#	define _ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, op) \
+#	define _ANKI_DEFINE_OPERATOR_SCALAR_ROWS4(mat, fl, op) \
 		mat operator op(fl f) \
 		{ \
 			mat o; \
@@ -241,193 +245,170 @@ typedef bool Bool;
 		}
 
 #	define _ANKI_DEFINE_ALL_OPERATORS_ROWS3(mat, fl) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, +) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, -) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, *) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS3(mat, fl, /) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS3(mat, fl, +) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS3(mat, fl, -) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS3(mat, fl, *) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS3(mat, fl, /) \
 		_ANKI_DEFINE_OPERATOR_SELF_ROWS3(mat, +) \
 		_ANKI_DEFINE_OPERATOR_SELF_ROWS3(mat, -)
 
 #	define _ANKI_DEFINE_ALL_OPERATORS_ROWS4(mat, fl) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, +) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, -) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, *) \
-		_ANKI_DEFINE_OPERATOR_F32_ROWS4(mat, fl, /) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS4(mat, fl, +) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS4(mat, fl, -) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS4(mat, fl, *) \
+		_ANKI_DEFINE_OPERATOR_SCALAR_ROWS4(mat, fl, /) \
 		_ANKI_DEFINE_OPERATOR_SELF_ROWS4(mat, +) \
 		_ANKI_DEFINE_OPERATOR_SELF_ROWS4(mat, -)
 
-struct Mat3
-{
-	Vec3 m_row0;
-	Vec3 m_row1;
-	Vec3 m_row2;
+// Mat3 "template". Not an actual template because of bugs
+#	define _ANKI_MAT3(mat, vec, scalar) \
+		struct mat \
+		{ \
+			vec m_row0; \
+			vec m_row1; \
+			vec m_row2; \
+			_ANKI_DEFINE_ALL_OPERATORS_ROWS3(mat, scalar) \
+			void setColumns(vec c0, vec c1, vec c2) \
+			{ \
+				m_row0 = vec(c0.x, c1.x, c2.x); \
+				m_row1 = vec(c0.y, c1.y, c2.y); \
+				m_row2 = vec(c0.z, c1.z, c2.z); \
+			} \
+		}; \
+		vec mul(mat m, vec v) \
+		{ \
+			const scalar a = dot(m.m_row0, v); \
+			const scalar b = dot(m.m_row1, v); \
+			const scalar c = dot(m.m_row2, v); \
+			return vec(a, b, c); \
+		} \
+		mat transpose(mat m) \
+		{ \
+			mat o; \
+			o.setColumns(m.m_row0, m.m_row1, m.m_row2); \
+			return o; \
+		}
 
-	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(Mat3, F32)
-};
+// Mat4 "template". Not an actual template because of bugs
+#	define _ANKI_MAT4(mat, vec, scalar) \
+		struct mat \
+		{ \
+			vec m_row0; \
+			vec m_row1; \
+			vec m_row2; \
+			vec m_row3; \
+			_ANKI_DEFINE_ALL_OPERATORS_ROWS4(mat, scalar) \
+			vec getTranslationPart() \
+			{ \
+				return vec(m_row0.w, m_row1.w, m_row2.w, m_row3.w); \
+			} \
+			void setColumns(vec c0, vec c1, vec c2, vec c3) \
+			{ \
+				m_row0 = vec(c0.x, c1.x, c2.x, c3.x); \
+				m_row1 = vec(c0.y, c1.y, c2.y, c3.y); \
+				m_row2 = vec(c0.z, c1.z, c2.z, c3.z); \
+				m_row3 = vec(c0.w, c1.w, c2.w, c3.w); \
+			} \
+		}; \
+		vec mul(mat m, vec v) \
+		{ \
+			const scalar a = dot(m.m_row0, v); \
+			const scalar b = dot(m.m_row1, v); \
+			const scalar c = dot(m.m_row2, v); \
+			const scalar d = dot(m.m_row3, v); \
+			return vec(a, b, c, d); \
+		} \
+		mat mul(mat a_, mat b_) \
+		{ \
+			const vec a[4] = {a_.m_row0, a_.m_row1, a_.m_row2, a_.m_row3}; \
+			const vec b[4] = {b_.m_row0, b_.m_row1, b_.m_row2, b_.m_row3}; \
+			vec c[4]; \
+			[unroll] for(U32 i = 0; i < 4; i++) \
+			{ \
+				vec t1, t2; \
+				t1 = a[i][0]; \
+				t2 = b[0] * t1; \
+				t1 = a[i][1]; \
+				t2 += b[1] * t1; \
+				t1 = a[i][2]; \
+				t2 += b[2] * t1; \
+				t1 = a[i][3]; \
+				t2 += b[3] * t1; \
+				c[i] = t2; \
+			} \
+			mat o; \
+			o.m_row0 = c[0]; \
+			o.m_row1 = c[1]; \
+			o.m_row2 = c[2]; \
+			o.m_row3 = c[3]; \
+			return o; \
+		}
 
-struct Mat4
-{
-	Vec4 m_row0;
-	Vec4 m_row1;
-	Vec4 m_row2;
-	Vec4 m_row3;
+// Mat3x4 "template". Not an actual template because of bugs
+#	define _ANKI_MAT3x4(mat, row, column, scalar) \
+		struct mat \
+		{ \
+			row m_row0; \
+			row m_row1; \
+			row m_row2; \
+			_ANKI_DEFINE_ALL_OPERATORS_ROWS3(mat, scalar) \
+			column getTranslationPart() \
+			{ \
+				return column(m_row0.w, m_row1.w, m_row2.w); \
+			} \
+			void setColumns(column c0, column c1, column c2, column c3) \
+			{ \
+				m_row0 = row(c0.x, c1.x, c2.x, c3.x); \
+				m_row1 = row(c0.y, c1.y, c2.y, c3.y); \
+				m_row2 = row(c0.z, c1.z, c2.z, c3.z); \
+			} \
+		}; \
+		column mul(mat m, row v) \
+		{ \
+			const scalar a = dot(m.m_row0, v); \
+			const scalar b = dot(m.m_row1, v); \
+			const scalar c = dot(m.m_row2, v); \
+			return column(a, b, c); \
+		} \
+		mat combineTransformations(mat a_, mat b_) \
+		{ \
+			const row a[3] = {a_.m_row0, a_.m_row1, a_.m_row2}; \
+			const row b[3] = {b_.m_row0, b_.m_row1, b_.m_row2}; \
+			row c[3]; \
+			[unroll] for(U32 i = 0; i < 3; i++) \
+			{ \
+				row t2; \
+				t2 = b[0] * a[i][0]; \
+				t2 += b[1] * a[i][1]; \
+				t2 += b[2] * a[i][2]; \
+				const row v4 = row(0.0f, 0.0f, 0.0f, a[i][3]); \
+				t2 += v4; \
+				c[i] = t2; \
+			} \
+			mat o; \
+			o.m_row0 = c[0]; \
+			o.m_row1 = c[1]; \
+			o.m_row2 = c[2]; \
+			return o; \
+		}
 
-	_ANKI_DEFINE_ALL_OPERATORS_ROWS4(Mat4, F32)
-};
-
-struct Mat3x4
-{
-	Vec4 m_row0;
-	Vec4 m_row1;
-	Vec4 m_row2;
-
-	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(Mat3x4, F32)
-
-	Vec3 getTranslationPart()
-	{
-		return Vec3(m_row0.w, m_row1.w, m_row2.w);
-	}
-};
+_ANKI_MAT3(Mat3, Vec3, F32)
+_ANKI_MAT4(Mat4, Vec4, F32)
+_ANKI_MAT3x4(Mat3x4, Vec4, Vec3, F32)
 
 #	if ANKI_FORCE_FULL_FP_PRECISION
-typedef float RF32;
+	typedef float RF32;
 typedef float2 RVec2;
 typedef float3 RVec3;
 typedef float4 RVec4;
-typedef Mat3 RMat3;
+_ANKI_MAT3(RMat3, Vec3, F32)
 #	else
-typedef min16float RF32;
+	typedef min16float RF32;
 typedef min16float2 RVec2;
 typedef min16float3 RVec3;
 typedef min16float4 RVec4;
-
-struct RMat3
-{
-	RVec3 m_row0;
-	RVec3 m_row1;
-	RVec3 m_row2;
-
-	_ANKI_DEFINE_ALL_OPERATORS_ROWS3(RMat3, RF32)
-};
+_ANKI_MAT3(RMat3, RVec3, RF32)
 #	endif
-
-// Matrix functions
-Mat3 constructMatrixColumns(Vec3 c0, Vec3 c1, Vec3 c2)
-{
-	Mat3 m;
-	m.m_row0 = Vec3(c0.x, c1.x, c2.x);
-	m.m_row1 = Vec3(c0.y, c1.y, c2.y);
-	m.m_row2 = Vec3(c0.z, c1.z, c2.z);
-	return m;
-}
-
-#	if !ANKI_FORCE_FULL_FP_PRECISION
-RMat3 constructMatrixColumns(RVec3 c0, RVec3 c1, RVec3 c2)
-{
-	RMat3 m;
-	m.m_row0 = RVec3(c0.x, c1.x, c2.x);
-	m.m_row1 = RVec3(c0.y, c1.y, c2.y);
-	m.m_row2 = RVec3(c0.z, c1.z, c2.z);
-	return m;
-}
-#	endif
-
-Vec3 mul(Mat3 m, Vec3 v)
-{
-	const F32 a = dot(m.m_row0, v);
-	const F32 b = dot(m.m_row1, v);
-	const F32 c = dot(m.m_row2, v);
-	return Vec3(a, b, c);
-}
-
-#	if !ANKI_FORCE_FULL_FP_PRECISION
-RVec3 mul(RMat3 m, RVec3 v)
-{
-	const RF32 a = dot(m.m_row0, v);
-	const RF32 b = dot(m.m_row1, v);
-	const RF32 c = dot(m.m_row2, v);
-	return RVec3(a, b, c);
-}
-#	endif
-
-Vec4 mul(Mat4 m, Vec4 v)
-{
-	const F32 a = dot(m.m_row0, v);
-	const F32 b = dot(m.m_row1, v);
-	const F32 c = dot(m.m_row2, v);
-	const F32 d = dot(m.m_row3, v);
-	return Vec4(a, b, c, d);
-}
-
-Mat4 mul(Mat4 a_, Mat4 b_)
-{
-	const Vec4 a[4] = {a_.m_row0, a_.m_row1, a_.m_row2, a_.m_row3};
-	const Vec4 b[4] = {b_.m_row0, b_.m_row1, b_.m_row2, b_.m_row3};
-	Vec4 c[4];
-
-	[unroll] for(U32 i = 0; i < 4; i++)
-	{
-		Vec4 t1, t2;
-
-		t1 = a[i][0];
-		t2 = b[0] * t1;
-		t1 = a[i][1];
-		t2 += b[1] * t1;
-		t1 = a[i][2];
-		t2 += b[2] * t1;
-		t1 = a[i][3];
-		t2 += b[3] * t1;
-
-		c[i] = t2;
-	}
-
-	Mat4 o;
-	o.m_row0 = c[0];
-	o.m_row1 = c[1];
-	o.m_row2 = c[2];
-	o.m_row3 = c[3];
-	return o;
-}
-
-Vec3 mul(Mat3x4 m, Vec4 v)
-{
-	const F32 a = dot(m.m_row0, v);
-	const F32 b = dot(m.m_row1, v);
-	const F32 c = dot(m.m_row2, v);
-	return Vec3(a, b, c);
-}
-
-Mat3 transpose(Mat3 m)
-{
-	return constructMatrixColumns(m.m_row0, m.m_row1, m.m_row2);
-}
-
-Mat3x4 combineTransformations(Mat3x4 a_, Mat3x4 b_)
-{
-	const Vec4 a[3] = {a_.m_row0, a_.m_row1, a_.m_row2};
-	const Vec4 b[3] = {b_.m_row0, b_.m_row1, b_.m_row2};
-	Vec4 c[3];
-
-	[unroll] for(U32 i = 0; i < 3; i++)
-	{
-		Vec4 t2;
-
-		t2 = b[0] * a[i][0];
-		t2 += b[1] * a[i][1];
-		t2 += b[2] * a[i][2];
-
-		const Vec4 v4 = Vec4(0.0f, 0.0f, 0.0f, a[i][3]);
-		t2 += v4;
-
-		c[i] = t2;
-	}
-
-	Mat3x4 o;
-	o.m_row0 = c[0];
-	o.m_row1 = c[1];
-	o.m_row2 = c[2];
-	return o;
-}
 
 // Common constants
 constexpr F32 kEpsilonF32 = 0.000001f;
@@ -445,6 +426,7 @@ constexpr F16 kMinF16 = (F16)0.00006104;
 #	endif
 
 constexpr F32 kPi = 3.14159265358979323846f;
+constexpr F32 kNaN = 0.0f / 0.0f;
 
 //! == GLSL ============================================================================================================
 #else
@@ -764,6 +746,14 @@ constexpr F32 kShadowsPolygonOffsetFactor = 1.25f;
 constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
 
 constexpr U32 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
+
+constexpr U32 kMaxPrimitivesPerMeshlet = 124; ///< nVidia prefers 126 but meshoptimizer choks with that value.
+constexpr U32 kMaxVerticesPerMeshlet = 128;
+#define ANKI_TASK_SHADER_THREADGROUP_SIZE 64u
+constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
+
+#define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
+static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 
 struct DrawIndirectArgs
 {

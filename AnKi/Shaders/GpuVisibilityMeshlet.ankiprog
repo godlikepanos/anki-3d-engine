@@ -1,0 +1,137 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator HZB_TEST 0 1
+#pragma anki mutator PASSTHROUGH 0 1
+
+#pragma anki technique_start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+
+#define MESHLET_BACKFACE_CULLING 1
+#define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
+#define MESHLET_NO_SAMPLING_POINT_CULLING 1
+#define MESHLET_HZB_CULLING HZB_TEST
+
+#define THREADGROUP_SIZE ANKI_TASK_SHADER_THREADGROUP_SIZE
+
+StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroupInstances : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
+StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes : register(t4);
+RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs : register(u0);
+RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(u1);
+Texture2D<Vec4> g_hzbTexture : register(t5);
+SamplerState g_nearestClampSampler : register(s0);
+
+struct Consts
+{
+	Mat4 m_viewProjectionMatrix;
+
+	Vec3 m_cameraPos;
+	U32 m_firstDrawArg;
+
+	Vec2 m_viewportSizef;
+	U32 m_firstMeshletGroup;
+	U32 m_firstMeshlet;
+
+	U32 m_maxMeshlets;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
+};
+ANKI_PUSH_CONSTANTS(Consts, g_unis)
+
+[numthreads(THREADGROUP_SIZE, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupId : SV_GROUPID,
+											   U32 svGroupIndex : SV_GROUPINDEX)
+{
+	const GpuSceneMeshletGroupInstance groupInstance = g_meshletGroupInstances[g_unis.m_firstMeshletGroup + svGroupId];
+
+	const U32 lod = groupInstance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 30u;
+	const U32 renderableIdx = (groupInstance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 9u) & ((1u << 21u) - 1u);
+	const U32 meshletGroup = groupInstance.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit & ((1u << 9u) - 1u);
+
+	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
+	const GpuSceneMeshLod meshLod = g_meshLods[renderable.m_meshLodsIndex + lod];
+	U32 firstMeshletBoundingVolume = meshletGroup * kMeshletGroupSize;
+	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshletBoundingVolume);
+	firstMeshletBoundingVolume += meshLod.m_firstMeshletBoundingVolume;
+	const U32 firstMeshletGeometryDescriptor = meshletGroup * kMeshletGroupSize + meshLod.m_firstMeshletGeometryDescriptor;
+
+	// Meshlet culling
+	if(svGroupIndex < meshletCount)
+	{
+		Bool cull = false;
+
+		const MeshletBoundingVolume meshletBoundingVol = g_meshletBoundingVolumes[firstMeshletBoundingVolume + svGroupIndex];
+
+#if !PASSTHROUGH
+
+		const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
+
+#	if MESHLET_BACKFACE_CULLING
+		const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
+		cull = cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_unis.m_cameraPos);
+#	endif
+
+		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
+		const Mat4 mvp = mul(g_unis.m_viewProjectionMatrix, wordTransform4);
+
+		Vec2 minNdc, maxNdc;
+		F32 aabbMinDepth;
+		projectAabb(meshletBoundingVol.m_aabbMin, meshletBoundingVol.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
+
+#	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
+		// Outside of the screen
+		cull = cull || (any(minNdc > 1.0f) || any(maxNdc < -1.0f));
+#	endif
+
+#	if MESHLET_NO_SAMPLING_POINT_CULLING
+		// Sampling points test
+		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_unis.m_viewportSizef;
+		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_unis.m_viewportSizef;
+		cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
+#	endif
+
+#	if MESHLET_HZB_CULLING
+		cull = cull || (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+#	endif
+
+#endif // !PASSTHROUGH
+
+		if(!cull)
+		{
+			U32 instanceIdx;
+			InterlockedAdd(g_indirectDrawArgs[g_unis.m_firstDrawArg].m_instanceCount, 1u, instanceIdx);
+
+			if(instanceIdx >= g_unis.m_maxMeshlets)
+			{
+				// OoM, ignore
+				U32 orig;
+				InterlockedExchange(g_indirectDrawArgs[g_unis.m_firstDrawArg].m_instanceCount, g_unis.m_maxMeshlets, orig);
+			}
+			else
+			{
+				InterlockedMax(g_indirectDrawArgs[g_unis.m_firstDrawArg].m_vertexCount, meshletBoundingVol.m_primitiveCount * 3u);
+
+				GpuSceneMeshletInstance instance;
+				instance.m_meshletGeometryDescriptorIndex = firstMeshletGeometryDescriptor + svGroupIndex;
+				instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsIndex << 7u;
+				instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
+				instance.m_uniformsOffset = renderable.m_uniformsOffset;
+				instance.m_boneTransformsOrParticleEmitterOffset =
+					(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
+
+				g_meshletInstances[g_unis.m_firstMeshlet + instanceIdx] = instance;
+			}
+		}
+	}
+}
+
+#pragma anki technique_end comp

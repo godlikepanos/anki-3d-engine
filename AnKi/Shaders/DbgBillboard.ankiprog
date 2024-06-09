@@ -13,13 +13,13 @@
 constexpr F32 kAlpha = 1.0f;
 constexpr F32 kBillboardScale = 0.25f;
 
-struct Constants
+struct Uniforms
 {
 	Mat4 m_viewProjMat;
 	Mat3x4 m_camTrf;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 typedef LightUnion ClusteredType;
@@ -35,8 +35,8 @@ typedef GlobalIlluminationProbe ClusteredType;
 #	error See file
 #endif
 
-[[vk::binding(2)]] StructuredBuffer<ClusteredType> g_visibleObjects;
-[[vk::binding(3)]] StructuredBuffer<U32> g_visibleObjectCount;
+StructuredBuffer<ClusteredType> g_visibleObjects : register(t1);
+StructuredBuffer<U32> g_visibleObjectCount : register(t2);
 
 struct VertOut
 {
@@ -46,7 +46,7 @@ struct VertOut
 	nointerpolation U32 m_textureIndex : TEX_INDEX;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 struct VertIn
 {
@@ -85,9 +85,9 @@ VertOut main(VertIn input)
 #endif
 
 		// Rotate towards the camera and apply translation
-		const Vec3 worldPos = mul(g_consts.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + localPos;
+		const Vec3 worldPos = mul(g_unis.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + localPos;
 
-		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(worldPos, 1.0));
+		output.m_svPosition = mul(g_unis.m_viewProjMat, Vec4(worldPos, 1.0));
 	}
 	else
 	{
@@ -97,19 +97,19 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki end
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
-[[vk::binding(4)]] SamplerState g_trilinearRepeatSampler;
-[[vk::binding(5)]] Texture2D<Vec4> g_tex;
-[[vk::binding(6)]] Texture2D<Vec4> g_tex2;
+SamplerState g_trilinearRepeatSampler : register(s1);
+Texture2D<Vec4> g_tex : register(t3);
+Texture2D<Vec4> g_tex2 : register(t4);
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
 #if DEPTH_FAIL_VISUALIZATION == 1
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_depthRt;
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D g_depthRt : register(t0);
 #endif
 
 Vec4 main(VertOut input) : SV_TARGET0
@@ -140,4 +140,4 @@ Vec4 main(VertOut input) : SV_TARGET0
 		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
 	}
 }
-#pragma anki end
+#pragma anki technique_end frag

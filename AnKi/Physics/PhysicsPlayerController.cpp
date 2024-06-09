@@ -11,7 +11,7 @@ namespace anki {
 PhysicsPlayerController::PhysicsPlayerController(const PhysicsPlayerControllerInitInfo& init)
 	: PhysicsFilteredObject(kClassType)
 {
-	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
+	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 
 	m_convexShape.init(init.m_outerRadius, init.m_height);
 

@@ -70,7 +70,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			<enumerant name="kDirectional"/>
 		</enum>
 	</enums>
-	
+
 	<classes>
 		<!-- Other -->
 		<class name="WeakArraySceneNodePtr">
@@ -347,6 +347,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 						<arg>CString</arg>
 					</args>
 				</method>
+				<method name="setGeneratedSky" />
 				<method name="setMinFogDensity">
 					<args>
 						<arg>F32</arg>
@@ -365,6 +366,21 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				<method name="setHeightOfMaxFogDensity">
 					<args>
 						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setFogDiffuseColor">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="setImageBias">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="setImageScale">
+					<args>
+						<arg>Vec3</arg>
 					</args>
 				</method>
 			</methods>
@@ -401,11 +417,11 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 				<method name="setLocalScale">
 					<args>
-						<arg>F32</arg>
+						<arg>const Vec4&amp;</arg>
 					</args>
 				</method>
 				<method name="getLocalScale">
-					<return>F32</return>
+					<return>const Vec4&amp;</return>
 				</method>
 				<method name="setLocalTransform">
 					<args>
@@ -415,7 +431,7 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				<method name="getLocalTransform">
 					<return>const Transform&amp;</return>
 				</method>
-				
+
 				<method name="newComponent&lt;LightComponent&gt;" alias="newLightComponent">
 					<return>LightComponent*</return>
 				</method>

@@ -33,9 +33,9 @@ public:
 		return m_lightShading.m_mipCount;
 	}
 
-	TextureView& getIntegrationLut() const
+	Texture& getIntegrationLut() const
 	{
-		return m_integrationLut->getTextureView();
+		return m_integrationLut->getTexture();
 	}
 
 	SamplerPtr getIntegrationLutSampler() const
@@ -45,13 +45,13 @@ public:
 
 	RenderTargetHandle getCurrentlyRefreshedReflectionRt() const
 	{
-		ANKI_ASSERT(m_ctx.m_lightShadingRt.isValid());
-		return m_ctx.m_lightShadingRt;
+		ANKI_ASSERT(m_runCtx.m_probeTex.isValid());
+		return m_runCtx.m_probeTex;
 	}
 
 	Bool getHasCurrentlyRefreshedReflectionRt() const
 	{
-		return m_ctx.m_lightShadingRt.isValid();
+		return m_runCtx.m_probeTex.isValid();
 	}
 
 private:
@@ -61,7 +61,6 @@ private:
 		U32 m_tileSize = 0;
 		Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 		RenderTargetDescription m_depthRtDescr;
-		FramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class LS
@@ -69,7 +68,6 @@ private:
 	public:
 		U32 m_tileSize = 0;
 		U32 m_mipCount = 0;
-		Array<FramebufferDescription, 6> m_fbDescr;
 		TraditionalDeferredLightShading m_deferred;
 	} m_lightShading; ///< Light shading.
 
@@ -93,22 +91,17 @@ private:
 	{
 	public:
 		RenderTargetDescription m_rtDescr;
-		FramebufferDescription m_fbDescr;
 	} m_shadowMapping;
-
-	// Other
-	ImageResourcePtr m_integrationLut;
-	SamplerPtr m_integrationLutSampler;
 
 	class
 	{
 	public:
-		Array<RenderTargetHandle, kGBufferColorRenderTargetCount> m_gbufferColorRts;
-		RenderTargetHandle m_gbufferDepthRt;
-		RenderTargetHandle m_lightShadingRt;
-		BufferHandle m_irradianceDiceValuesBuffHandle;
-		RenderTargetHandle m_shadowMapRt;
-	} m_ctx; ///< Runtime context.
+		RenderTargetHandle m_probeTex;
+	} m_runCtx;
+
+	// Other
+	ImageResourcePtr m_integrationLut;
+	SamplerPtr m_integrationLutSampler;
 
 	Error initInternal();
 	Error initGBuffer();
@@ -116,16 +109,6 @@ private:
 	Error initIrradiance();
 	Error initIrradianceToRefl();
 	Error initShadowMapping();
-
-	void runGBuffer(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMatx, const Array<Mat3x4, 6> viewMats,
-					RenderPassWorkContext& rgraphCtx);
-	void runShadowMapping(const Array<GpuVisibilityOutput, 6>& visOuts, const Array<Mat4, 6>& viewProjMats, const Array<Mat3x4, 6>& viewMats,
-						  RenderPassWorkContext& rgraphCtx);
-	void runLightShading(U32 faceIdx, const BufferOffsetRange& visResult, const Mat4& viewProjMat, const Mat4& cascadeViewProjMat,
-						 const ReflectionProbeComponent& probe, RenderPassWorkContext& rgraphCtx);
-	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
-	void runIrradiance(RenderPassWorkContext& rgraphCtx);
-	void runIrradianceToRefl(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

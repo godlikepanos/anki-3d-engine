@@ -15,10 +15,48 @@
 namespace anki {
 
 StringCVar g_dataPathsCVar(CVarSubsystem::kResource, "DataPaths", ".",
-						   "The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive "
-						   "letters in Windows)");
-static StringCVar g_dataPathExcludeStringsCVar(CVarSubsystem::kResource, "DataPathExcludedStrings", "AndroidProject",
-											   "A list of string separated by : that will be used to exclude paths from rsrc_dataPaths");
+						   "The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive letters in "
+						   "Windows). After a path you can add an optional | and what follows it is a number of words to include or exclude paths. "
+						   "eg. my_path|include_this,include_that,+exclude_this");
+
+static Error tokenizePath(CString path, ResourceString& actualPath, ResourceStringList& includedWords, ResourceStringList& excludedWords)
+{
+	ResourceStringList tokens;
+	tokens.splitString(path, '|');
+
+	const PtrSize count = tokens.getSize();
+	if(count != 1 && count != 2)
+	{
+		ANKI_RESOURCE_LOGE("Tokenization of path failed: %s", path.cstr());
+		return Error::kUserData;
+	}
+
+	actualPath = tokens.getFront();
+
+	// Further tokenization
+	if(count == 2)
+	{
+		const ResourceString excludeInclude = *(tokens.getBegin() + 1);
+
+		ResourceStringList tokens;
+		tokens.splitString(excludeInclude, ',');
+
+		for(const auto& word : tokens)
+		{
+			if(word[0] == '!')
+			{
+				ResourceString w(&word[1], word.getEnd());
+				excludedWords.emplaceBack(std::move(w));
+			}
+			else
+			{
+				includedWords.emplaceBack(word);
+			}
+		}
+	}
+
+	return Error::kNone;
+}
 
 /// C resource file
 class CResourceFile final : public ResourceFile
@@ -200,9 +238,6 @@ Error ResourceFilesystem::init()
 	ResourceStringList paths;
 	paths.splitString(g_dataPathsCVar.get(), ':');
 
-	ResourceStringList excludedStrings;
-	excludedStrings.splitString(g_dataPathExcludeStringsCVar.get(), ':');
-
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS
 	ResourceStringList paths2;
@@ -234,36 +269,56 @@ Error ResourceFilesystem::init()
 		return Error::kUserData;
 	}
 
-	for(auto& path : paths)
+	for(const auto& path : paths)
 	{
-		ANKI_CHECK(addNewPath(path.toCString(), excludedStrings));
+		ResourceStringList includedStrings;
+		ResourceStringList excludedStrings;
+		ResourceString actualPath;
+		ANKI_CHECK(tokenizePath(path, actualPath, includedStrings, excludedStrings));
+
+		ANKI_CHECK(addNewPath(actualPath, includedStrings, excludedStrings));
 	}
 
 #if ANKI_OS_ANDROID
 	// Add the external storage
-	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, excludedStrings));
+	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, {}, {}));
 #endif
 
 	return Error::kNone;
 }
 
-Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStringList& excludedStrings)
+Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList& includedStrings, const ResourceStringList& excludedStrings)
 {
 	ANKI_RESOURCE_LOGV("Adding new resource path: %s", filepath.cstr());
 
 	U32 fileCount = 0; // Count files manually because it's slower to get that number from the list
 	constexpr CString extension(".ankizip");
 
-	auto rejectPath = [&](CString p) -> Bool {
+	auto includePath = [&](CString p) -> Bool {
 		for(const ResourceString& s : excludedStrings)
 		{
-			if(p.find(s) != CString::kNpos)
+			const Bool found = p.find(s) != CString::kNpos;
+			if(found)
 			{
-				return true;
+				return false;
 			}
 		}
 
-		return false;
+		if(!includedStrings.isEmpty())
+		{
+			for(const ResourceString& s : includedStrings)
+			{
+				const Bool found = p.find(s) != CString::kNpos;
+				if(found)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		return true;
 	};
 
 	PtrSize pos;
@@ -301,7 +356,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStri
 			}
 
 			const Bool itsADir = info.uncompressed_size == 0;
-			if(!itsADir && !rejectPath(&filename[0]))
+			if(!itsADir && includePath(&filename[0]))
 			{
 				path.m_files.pushBackSprintf("%s", &filename[0]);
 				++fileCount;
@@ -317,7 +372,7 @@ Error ResourceFilesystem::addNewPath(const CString& filepath, const ResourceStri
 		// It's simple directory
 
 		ANKI_CHECK(walkDirectoryTree(filepath, [&](const CString& fname, Bool isDir) -> Error {
-			if(!isDir && !rejectPath(fname))
+			if(!isDir && includePath(fname))
 			{
 				path.m_files.pushBackSprintf("%s", fname.cstr());
 				++fileCount;

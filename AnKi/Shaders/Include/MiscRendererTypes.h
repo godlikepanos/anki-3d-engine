@@ -9,55 +9,102 @@
 
 ANKI_BEGIN_NAMESPACE
 
+/// Directional light (sun).
+struct DirectionalLight
+{
+	RVec3 m_diffuseColor;
+	F32 m_power;
+
+	RVec3 m_direction;
+	U32 m_shadowCascadeCount_31bit_active_1bit; ///< If shadowCascadeCount is zero then it doesn't cast shadow.
+
+	Vec4 m_shadowCascadeDistances;
+
+	Mat4 m_textureMatrices[kMaxShadowCascades];
+};
+static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances is a Vec4
+
+/// Common matrices and stuff.
+struct CommonMatrices
+{
+	Mat3x4 m_cameraTransform;
+	Mat3x4 m_view;
+	Mat4 m_projection;
+	Mat4 m_viewProjection;
+
+	Mat4 m_jitter;
+	Mat4 m_projectionJitter;
+	Mat4 m_viewProjectionJitter;
+
+	Mat4 m_invertedViewProjectionJitter; ///< To unproject in world space.
+	Mat4 m_invertedViewProjection;
+	Mat4 m_invertedProjectionJitter; ///< To unproject in view space.
+
+	/// It's being used to reproject a clip space position of the current frame to the previous frame. Its value should
+	/// be m_jitter * m_prevFrame.m_viewProjection * m_invertedViewProjectionJitter. At first it unprojects the current
+	/// position to world space, all fine here. Then it projects to the previous frame as if the previous frame was
+	/// using the current frame's jitter matrix.
+	Mat4 m_reprojection;
+
+	/// To unproject to view space. Jitter not considered.
+	/// @code
+	/// F32 z = m_unprojectionParameters.z / (m_unprojectionParameters.w + depth);
+	/// Vec2 xy = ndc * m_unprojectionParameters.xy * z;
+	/// pos = Vec3(xy, z);
+	/// @endcode
+	Vec4 m_unprojectionParameters;
+
+	Vec2 m_jitterOffsetNdc;
+	Vec2 m_padding;
+};
+
+/// Common constants for all passes.
+struct GlobalRendererUniforms
+{
+	Vec2 m_renderingSize;
+	F32 m_time;
+	U32 m_frame;
+
+	Vec4 m_nearPlaneWSpace;
+
+	Vec3 m_cameraPosition;
+	F32 m_reflectionProbesMipCount;
+
+	UVec2 m_tileCounts;
+	U32 m_zSplitCount;
+	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
+
+	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
+	U32 m_lightVolumeLastZSplit;
+	U32 m_padding1;
+
+	UVec2 m_padding0;
+	F32 m_near;
+	F32 m_far;
+
+	DirectionalLight m_directionalLight;
+
+	CommonMatrices m_matrices;
+	CommonMatrices m_previousMatrices;
+};
+
 // RT shadows
-struct RtShadowsDenoiseConstants
+struct RtShadowsDenoiseUniforms
 {
 	Mat4 m_invViewProjMat;
 
 	F32 m_time;
-	F32 m_padding0;
-	F32 m_padding1;
+	U32 m_minSampleCount;
+	U32 m_maxSampleCount;
 	F32 m_padding2;
 };
 
-struct RtShadowsSbtBuildConstants
+struct RtShadowsSbtBuildUniforms
 {
 	U32 m_shaderHandleDwordSize;
 	U32 m_sbtRecordDwordSize;
 	U32 m_padding0;
 	U32 m_padding1;
-};
-
-// Indirect diffuse
-struct IndirectDiffuseConstants
-{
-	UVec2 m_viewportSize;
-	Vec2 m_viewportSizef;
-
-	Vec4 m_projectionMat;
-
-	RF32 m_radius; ///< In meters.
-	U32 m_sampleCount;
-	RF32 m_sampleCountf;
-	RF32 m_ssaoBias;
-
-	RF32 m_ssaoStrength;
-	F32 m_padding0;
-	F32 m_padding1;
-	F32 m_padding2;
-};
-
-struct IndirectDiffuseDenoiseConstants
-{
-	Mat4 m_invertedViewProjectionJitterMat;
-
-	UVec2 m_viewportSize;
-	Vec2 m_viewportSizef;
-
-	F32 m_sampleCountDiv2;
-	F32 m_padding0;
-	F32 m_padding1;
-	F32 m_padding2;
 };
 
 // Lens flare
@@ -69,7 +116,7 @@ struct LensFlareSprite
 };
 
 // Depth downscale
-struct DepthDownscaleConstants
+struct DepthDownscaleUniforms
 {
 	Vec2 m_srcTexSizeOverOne;
 	U32 m_threadgroupCount;
@@ -77,28 +124,26 @@ struct DepthDownscaleConstants
 };
 
 // Screen space reflections uniforms
-struct SsrConstants
+struct SsrUniforms
 {
-	UVec2 m_depthBufferSize;
-	UVec2 m_framebufferSize;
-
+	Vec2 m_viewportSizef;
 	U32 m_frameCount;
-	U32 m_depthMipCount;
-	U32 m_maxSteps;
-	U32 m_lightBufferMipCount;
+	U32 m_maxIterations;
 
-	UVec2 m_padding0;
+	UVec2 m_padding;
 	F32 m_roughnessCutoff;
-	U32 m_firstStepPixels;
+	U32 m_stepIncrement;
+
+	Vec4 m_projMat00_11_22_23;
+
+	Vec4 m_unprojectionParameters;
 
 	Mat4 m_prevViewProjMatMulInvViewProjMat;
-	Mat4 m_projMat;
-	Mat4 m_invProjMat;
 	Mat3x4 m_normalMat;
 };
 
 // Vol fog
-struct VolumetricFogConstants
+struct VolumetricFogUniforms
 {
 	RVec3 m_fogDiffuse;
 	RF32 m_fogScatteringCoeff;
@@ -113,7 +158,7 @@ struct VolumetricFogConstants
 };
 
 // Vol lighting
-struct VolumetricLightingConstants
+struct VolumetricLightingUniforms
 {
 	RF32 m_densityAtMinHeight;
 	RF32 m_densityAtMaxHeight;
@@ -122,6 +167,35 @@ struct VolumetricLightingConstants
 
 	UVec3 m_volumeSize;
 	F32 m_maxZSplitsToProcessf;
+};
+
+// SSAO
+struct SsaoUniforms
+{
+	RF32 m_radius; ///< In meters.
+	U32 m_sampleCount;
+	Vec2 m_viewportSizef;
+
+	Vec4 m_unprojectionParameters;
+
+	F32 m_projectionMat00;
+	F32 m_projectionMat11;
+	F32 m_projectionMat22;
+	F32 m_projectionMat23;
+
+	Vec2 m_padding;
+	RF32 m_ssaoPower;
+	U32 m_frameCount;
+
+	Mat3x4 m_viewMat;
+};
+
+struct SsaoSpatialDenoiseUniforms
+{
+	Mat3x4 m_viewToWorldMat;
+
+	Vec2 m_linearizeDepthParams;
+	Vec2 m_padding;
 };
 
 ANKI_END_NAMESPACE

@@ -53,9 +53,10 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/BlitRaster.ankiprogbin", m_blitProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Blit.ankiprogbin", m_blitProg));
+		ShaderProgramResourceVariantInitInfo varInit(m_blitProg);
 		const ShaderProgramResourceVariant* variant;
-		m_blitProg->getOrCreateVariant(variant);
+		m_blitProg->getOrCreateVariant(varInit, variant);
 		m_blitGrProg.reset(&variant->getProgram());
 
 		// The RT desc
@@ -67,10 +68,6 @@ Error MainRenderer::init(const MainRendererInitInfo& inf)
 			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
 			"Final Composite");
 		m_tmpRtDesc.bake();
-
-		// FB descr
-		m_fbDescr.m_colorAttachmentCount = 1;
-		m_fbDescr.bake();
 
 		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
 	}
@@ -115,14 +112,14 @@ Error MainRenderer::render(Texture* presentTex)
 	{
 		GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 
-		pass.setFramebufferInfo(m_fbDescr, {presentRt});
+		pass.setRenderpassInfo({RenderTargetInfo(presentRt)});
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 
 			cmdb.bindShaderProgram(m_blitGrProg.get());
-			cmdb.bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_ctx->m_outRenderTarget);
+			cmdb.bindSampler(ANKI_REG(s0), m_r->getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_ctx->m_outRenderTarget);
 
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		});
@@ -144,15 +141,9 @@ Error MainRenderer::render(Texture* presentTex)
 	// Bake the render graph
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
 
-	// Populate the 2nd level command buffers
-	m_rgraph->runSecondLevel();
-
-	// Populate 1st level command buffers
-	m_rgraph->run();
-
 	// Flush
 	FencePtr fence;
-	m_rgraph->flush(&fence);
+	m_rgraph->recordAndSubmitCommandBuffers(&fence);
 
 	// Reset for the next frame
 	m_rgraph->reset();

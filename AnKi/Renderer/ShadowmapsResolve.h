@@ -43,7 +43,6 @@ public:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	RenderTargetDescription m_rtDescr;
-	FramebufferDescription m_fbDescr;
 	Bool m_quarterRez = false;
 	ImageResourcePtr m_noiseImage;
 
@@ -55,7 +54,7 @@ public:
 
 	Error initInternal();
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx, RenderingContext& ctx);
 };
 /// @}
 

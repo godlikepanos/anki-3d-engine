@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-[[vk::binding(0)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
-[[vk::binding(1)]] RWStructuredBuffer<AccelerationStructureInstance> g_instances;
+StructuredBuffer<U32> g_visibleRenderableIndices : register(t0); // 1st element is the count
+RWStructuredBuffer<AccelerationStructureInstance> g_instances : register(u0);
 
 #define NUMTHREADS 64
 
@@ -29,4 +29,4 @@
 	}
 }
 
-#pragma anki end
+#pragma anki technique_end comp

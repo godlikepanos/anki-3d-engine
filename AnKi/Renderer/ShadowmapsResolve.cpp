@@ -39,23 +39,10 @@ Error ShadowmapsResolve::initInternal()
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR8G8B8A8_Unorm, "SM resolve");
 	m_rtDescr.bake();
 
-	// Create FB descr
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.bake();
-
 	// Prog
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource((g_preferComputeCVar.get()) ? "ShaderBinaries/ShadowmapsResolveCompute.ankiprogbin"
-																						: "ShaderBinaries/ShadowmapsResolveRaster.ankiprogbin",
-															m_prog));
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("kFramebufferSize", UVec2(width, height));
-	variantInitInfo.addConstant("kTileCount", getRenderer().getTileCounts());
-	variantInitInfo.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-	variantInitInfo.addMutation("PCF", g_shadowMappingPcfCVar.get() != 0);
-	variantInitInfo.addMutation("DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled());
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProg.reset(&variant->getProgram());
+	ANKI_CHECK(loadShaderProgram(
+		"ShaderBinaries/ShadowmapsResolve.ankiprogbin",
+		{{"PCF", g_shadowMappingPcfCVar.get() != 0}, {"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled()}}, m_prog, m_grProg));
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
@@ -73,18 +60,18 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ResolveShadows");
 
-		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			run(rgraphCtx);
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx, ctx);
 		});
 
-		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavComputeWrite);
+		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-								   TextureUsageBit::kSampledCompute, TextureSurfaceInfo(0, 0, 0, 0));
+								   TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledCompute);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavComputeRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageComputeRead);
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-								  BufferUsageBit::kUavComputeRead);
+								  BufferUsageBit::kStorageComputeRead);
 
 		if(getRenderer().getRtShadowsEnabled())
 		{
@@ -94,20 +81,21 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("ResolveShadows");
-		rpass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt});
 
-		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-			run(rgraphCtx);
+		rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_rt)});
+
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			run(rgraphCtx, ctx);
 		});
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-								   TextureUsageBit::kSampledFragment, TextureSurfaceInfo(0, 0, 0, 0));
+								   TextureUsageBit::kSampledFragment);
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSampledFragment);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kUavFragmentRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageFragmentRead);
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-								  BufferUsageBit::kUavFragmentRead);
+								  BufferUsageBit::kStorageFragmentRead);
 
 		if(getRenderer().getRtShadowsEnabled())
 		{
@@ -116,40 +104,47 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)
+void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb.bindConstantBuffer(0, 0, getRenderer().getClusterBinning().getClusteredShadingConstants());
-	cmdb.bindUavBuffer(0, 1, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-	rgraphCtx.bindColorTexture(0, 2, getRenderer().getShadowMapping().getShadowmapRt());
-	cmdb.bindUavBuffer(0, 3, getRenderer().getClusterBinning().getClustersBuffer());
+	cmdb.bindUniformBuffer(ANKI_REG(b0), ctx.m_globalRenderingUniformsBuffer);
+	cmdb.bindStorageBuffer(ANKI_REG(t0), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	cmdb.bindStorageBuffer(ANKI_REG(t1), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getShadowMapping().getShadowmapRt());
+	cmdb.bindStorageBuffer(ANKI_REG(t3), getRenderer().getClusterBinning().getClustersBuffer());
 
-	cmdb.bindSampler(0, 4, getRenderer().getSamplers().m_trilinearClamp.get());
-	cmdb.bindSampler(0, 5, getRenderer().getSamplers().m_trilinearClampShadow.get());
-	cmdb.bindSampler(0, 6, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb.bindSampler(ANKI_REG(s2), getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	if(m_quarterRez)
 	{
-		rgraphCtx.bindTexture(0, 7, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	}
 	else
 	{
-		rgraphCtx.bindTexture(0, 7, getRenderer().getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::kDepth));
+		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getGBuffer().getDepthRt());
 	}
-	cmdb.bindTexture(0, 8, &m_noiseImage->getTextureView());
+	cmdb.bindTexture(ANKI_REG(t5), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDescriptor::all()));
 
 	if(getRenderer().getRtShadowsEnabled())
 	{
-		rgraphCtx.bindColorTexture(0, 9, getRenderer().getRtShadows().getRt());
+		rgraphCtx.bindTexture(ANKI_REG(t6), getRenderer().getRtShadows().getRt());
+	}
+
+	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get())
+	{
+		const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
+		cmdb.setPushConstants(&consts, sizeof(consts));
 	}
 
 	if(g_preferComputeCVar.get())
 	{
-		rgraphCtx.bindUavTexture(0, 10, m_runCtx.m_rt, TextureSubresourceInfo());
+		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_rt);
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
 	}
 	else

@@ -12,6 +12,9 @@
 namespace anki {
 
 BoolCVar g_tracingEnabledCVar(CVarSubsystem::kCore, "Tracing", false, "Enable or disable tracing");
+#if ANKI_OS_ANDROID
+BoolCVar g_streamlineEnabledCVar(CVarSubsystem::kCore, "StreamlineAnnotations", false, "Enable or disable Streamline annotations");
+#endif
 
 #if ANKI_TRACING_ENABLED
 
@@ -94,9 +97,17 @@ CoreTracer::~CoreTracer()
 Error CoreTracer::init(CString directory)
 {
 	Tracer::allocateSingleton();
-	const Bool enableTracer = g_tracingEnabledCVar.get();
-	Tracer::getSingleton().setEnabled(enableTracer);
-	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
+	if(Tracer::getSingleton().getEnabled() != g_tracingEnabledCVar.get())
+	{
+		// Change the value inside the if because setEnabled prints a message
+		Tracer::getSingleton().setEnabled(g_tracingEnabledCVar.get());
+	}
+#	if ANKI_OS_ANDROID
+	if(Tracer::getSingleton().getStreamlineEnabled())
+	{
+		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar.get());
+	}
+#	endif
 
 	m_thread.start(this, [](ThreadCallbackInfo& info) -> Error {
 		return static_cast<CoreTracer*>(info.m_userData)->threadWorker();
@@ -326,8 +337,14 @@ void CoreTracer::flushFrame(U64 frame)
 	if(Tracer::getSingleton().getEnabled() != g_tracingEnabledCVar.get())
 	{
 		Tracer::getSingleton().setEnabled(g_tracingEnabledCVar.get());
-		ANKI_CORE_LOGI("%s tracing", (g_tracingEnabledCVar.get()) ? "Enabling" : "Disabling");
 	}
+
+#	if ANKI_OS_ANDROID
+	if(Tracer::getSingleton().getStreamlineEnabled() != g_streamlineEnabledCVar.get())
+	{
+		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar.get());
+	}
+#	endif
 }
 
 Error CoreTracer::writeCountersOnShutdown()

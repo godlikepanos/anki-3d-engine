@@ -22,10 +22,9 @@ class SparseArrayIterator
 	template<typename, typename, typename>
 	friend class SparseArray;
 
-private:
+public:
 	using Index = typename RemovePointer<TSparseArrayPtr>::Type::Index;
 
-public:
 	/// Default constructor.
 	SparseArrayIterator()
 		: m_array(nullptr)
@@ -135,7 +134,7 @@ public:
 		return !(*this == b);
 	}
 
-	U32 getKey() const
+	Index getKey() const
 	{
 		check();
 		return m_elementIdx;

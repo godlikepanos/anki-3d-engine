@@ -12,12 +12,15 @@
 #define SV_GROUPINDEX // gl_LocalInvocationIndex
 #define SV_GROUPID // gl_WorkGroupID
 #define SV_GROUPTHREADID // gl_LocalInvocationID
+#define SV_CULLPRIMITIVE
 #define SV_VERTEXID
 #define SV_POSITION
 #define SV_INSTANCEID
 #define numthreads(x, y, z) [nodiscard]
+#define outputtopology(x) [nodiscard]
 #define unroll [nodiscard]
 #define loop [nodiscard]
+#define branch [nodiscard]
 #define out
 #define in
 #define inout
@@ -27,6 +30,13 @@
 #define ANKI_END_NAMESPACE
 #define ANKI_HLSL 1
 
+#define ANKI_TASK_SHADER
+#define ANKI_VERTEX_SHADER
+#define ANKI_FRAGMENT_SHADER
+#define ANKI_MESH_SHADER
+#define ANKI_COMPUTE_SHADER
+#define ANKI_CLOSEST_HIT_SHADER
+
 using I8 = int;
 using I16 = int;
 using I32 = int;
@@ -35,6 +45,11 @@ using U16 = unsigned int;
 using U32 = unsigned int;
 using F32 = float;
 using Bool = bool;
+
+template<typename T, unsigned kC>
+struct vector
+{
+};
 
 struct UVec2
 {
@@ -119,6 +134,8 @@ struct Texture2D
 
 	void GetDimensions(F32& width, F32& height);
 
+	void GetDimensions(U32 mipLevel, F32& width, F32& height, F32& mipCount);
+
 	T SampleLevel(SamplerState sampler, Vec2 uvs, F32 lod, IVec2 offset = {});
 
 	F32 GatherRed(SamplerState sampler, Vec2 uv);
@@ -137,6 +154,11 @@ using Texture3D = Texture2D<T>;
 
 template<typename T>
 using RWTexture3D = Texture2D<T>;
+
+template<typename T>
+struct TextureCube
+{
+};
 
 template<typename T>
 struct StructuredBuffer
@@ -193,11 +215,31 @@ T saturate(T a);
 template<typename T>
 float dot(T a, T b);
 
+template<typename T>
+T cross(T a, T b);
+
+template<typename T>
+T ddx(T a);
+
+template<typename T>
+T ddy(T a);
+
 U32 asuint(float f);
 
 F32 asfloat(U32 u);
 
+I32 asint(float u);
+
 U32 NonUniformResourceIndex(U32 x);
+
+template<typename T>
+T rsqrt(T x);
+
+template<typename T>
+T round(T x);
+
+template<typename T>
+T ceil(T x);
 
 // Atomics
 
@@ -235,3 +277,12 @@ bool WaveIsFirstLane();
 unsigned WaveActiveCountBits(bool bit);
 
 unsigned WaveGetLaneCount();
+
+// Other
+
+void GroupMemoryBarrierWithGroupSync();
+
+template<typename T>
+void DispatchMesh(U32 groupSizeX, U32 groupSizeY, U32 groupSizeZ, T payload);
+
+void SetMeshOutputCounts(U32 vertexCount, U32 primitiveCount);

@@ -76,8 +76,6 @@ private:
 
 	BufferPtr m_boxIndexBuffer;
 
-	FramebufferDescription m_fbDescr;
-
 #if ANKI_ASSERTIONS_ENABLED
 	// Some helper things to make sure that we don't re-use the counters inside a frame
 	mutable U64 m_crntFrame = 0;

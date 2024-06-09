@@ -18,28 +18,12 @@
 
 namespace anki {
 
-static StatCounter g_executedDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls executed", StatFlag::kZeroEveryFrame);
-static StatCounter g_maxDrawcallsStatVar(StatCategory::kRenderer, "Drawcalls possible", StatFlag::kZeroEveryFrame);
-static StatCounter g_renderedPrimitivesStatVar(StatCategory::kRenderer, "Rendered primitives", StatFlag::kZeroEveryFrame);
-
 RenderableDrawer::~RenderableDrawer()
 {
 }
 
 Error RenderableDrawer::init()
 {
-#if ANKI_STATS_ENABLED
-	constexpr Array<MutatorValue, 3> kColorAttachmentCounts = {0, 1, 4};
-
-	U32 count = 0;
-	for(MutatorValue attachmentCount : kColorAttachmentCounts)
-	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/DrawerStats.ankiprogbin", Array<SubMutation, 1>{{{"COLOR_ATTACHMENT_COUNT", attachmentCount}}},
-									 m_stats.m_statsProg, m_stats.m_updateStatsGrProgs[count]));
-		++count;
-	}
-#endif
-
 	return Error::kNone;
 }
 
@@ -47,7 +31,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 {
 	// Allocate, set and bind global uniforms
 	{
-		MaterialGlobalConstants* globalUniforms;
+		MaterialGlobalUniforms* globalUniforms;
 		const RebarAllocation globalUniformsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUniforms);
 
 		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
@@ -57,22 +41,42 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 		static_assert(sizeof(globalUniforms->m_cameraTransform) == sizeof(args.m_cameraTransform));
 		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
-		cmdb.bindConstantBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGlobalConstants), globalUniformsToken);
+		ANKI_ASSERT(args.m_viewport != UVec4(0u));
+		globalUniforms->m_viewport = Vec4(args.m_viewport);
+
+		globalUniforms->m_enableHzbTesting = args.m_hzbTexture.isValid();
+
+		cmdb.bindUniformBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS), globalUniformsToken);
 	}
 
 	// More globals
-	cmdb.bindAllBindless(U32(MaterialSet::kBindless));
-	cmdb.bindSampler(U32(MaterialSet::kGlobal), U32(MaterialBinding::kTrilinearRepeatSampler), args.m_sampler);
-	cmdb.bindUavBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kGpuScene), &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER), args.m_sampler);
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GPU_SCENE), GpuSceneBuffer::getSingleton().getBufferView());
 
-#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType) \
-	cmdb.bindReadOnlyTextureBuffer(U32(MaterialSet::kGlobal), U32(MaterialBinding::kUnifiedGeometry_##fmt), \
-								   &UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize, Format::k##fmt);
-#include <AnKi/Shaders/Include/UnifiedGeometryTypes.defs.h>
+#define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
+	cmdb.bindTexelBuffer( \
+		ANKI_REG(reg), \
+		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
+				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
+		Format::k##fmt);
+#include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
+
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES), UnifiedGeometryBuffer::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS), UnifiedGeometryBuffer::getSingleton().getBufferView());
+	if(args.m_mesh.m_meshletGroupInstancesBuffer.isValid())
+	{
+		cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_GROUPS), args.m_mesh.m_meshletGroupInstancesBuffer);
+	}
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_RENDERABLES), GpuSceneArrays::Renderable::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESH_LODS), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_TRANSFORMS), GpuSceneArrays::Transform::getSingleton().getBufferView());
+	cmdb.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_HZB_TEXTURE),
+					 (args.m_hzbTexture.isValid()) ? args.m_hzbTexture
+												   : TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDescriptor::all()));
+	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	// Misc
-	cmdb.setVertexAttribute(0, 0, Format::kR32G32B32A32_Uint, 0);
-	cmdb.bindIndexBuffer(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, IndexType::kU16);
+	cmdb.bindIndexBuffer(UnifiedGeometryBuffer::getSingleton().getBufferView(), IndexType::kU16);
 }
 
 void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuffer& cmdb)
@@ -85,132 +89,107 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 	}
 
 #if ANKI_STATS_ENABLED
-	U32 variant = 0;
-	switch(args.m_renderingTechinuqe)
+	PipelineQueryPtr pplineQuery;
+
+	if(GrManager::getSingleton().getDeviceCapabilities().m_pipelineQuery)
 	{
-	case RenderingTechnique::kGBuffer:
-		variant = 2;
-		break;
-	case RenderingTechnique::kForward:
-		variant = 1;
-		break;
-	case RenderingTechnique::kDepth:
-		variant = 0;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
+		PipelineQueryInitInfo queryInit("Drawer");
+		queryInit.m_type = PipelineQueryType::kPrimitivesPassedClipping;
+		pplineQuery = GrManager::getSingleton().newPipelineQuery(queryInit);
+		getRenderer().appendPipelineQuery(pplineQuery.get());
 
-	{
-		constexpr U32 kFragmentThreadCount = 16;
-		using StatsArray = Array<U32, kFragmentThreadCount * 2>;
-
-		LockGuard lock(m_stats.m_mtx);
-
-		if(m_stats.m_frameIdx != getRenderer().getFrameCount())
-		{
-			m_stats.m_frameIdx = getRenderer().getFrameCount();
-
-			// Get previous stats
-			StatsArray prevFrameStats;
-			PtrSize dataRead;
-			getRenderer().getReadbackManager().readMostRecentData(m_stats.m_readback, &prevFrameStats, sizeof(prevFrameStats), dataRead);
-			if(dataRead > 0) [[likely]]
-			{
-				U32 drawCount = 0;
-				U32 primitiveCount = 0;
-				for(U32 tid = 0; tid < kFragmentThreadCount; ++tid)
-				{
-					drawCount += prevFrameStats[tid];
-					primitiveCount += prevFrameStats[kFragmentThreadCount + tid] / 3;
-				}
-
-				g_executedDrawcallsStatVar.set(drawCount);
-				g_renderedPrimitivesStatVar.set(primitiveCount);
-			}
-
-			// Get place to write new stats
-			getRenderer().getReadbackManager().allocateData(m_stats.m_readback, sizeof(prevFrameStats), m_stats.m_statsBuffer,
-															m_stats.m_statsBufferOffset);
-
-			// Allocate another atomic to count the passes. Do that because the calls to drawMdi might not be in the same order as they run on the GPU
-			U32* counter;
-			m_stats.m_threadCountBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), counter);
-			*counter = 0;
-		}
-
-		cmdb.pushDebugMarker("Draw stats", Vec3(0.0f, 1.0f, 0.0f));
-
-		cmdb.bindShaderProgram(m_stats.m_updateStatsGrProgs[variant].get());
-
-		cmdb.bindUavBuffer(0, 0, args.m_mdiDrawCountsBuffer);
-		cmdb.bindUavBuffer(0, 1, args.m_drawIndexedIndirectArgsBuffer);
-
-		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> offsets(&getRenderer().getFrameMemoryPool());
-		U32 allUserCount = 0;
-		RenderStateBucketContainer::getSingleton().iterateBuckets(args.m_renderingTechinuqe,
-																  [&]([[maybe_unused]] const RenderStateInfo& state, U32 userCount) {
-																	  offsets.emplaceBack(allUserCount);
-																	  allUserCount += userCount;
-																  });
-		U32* firstDrawArgIndices;
-		BufferOffsetRange firstDrawArgIndicesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(offsets.getSize(), firstDrawArgIndices);
-		memcpy(firstDrawArgIndices, &offsets[0], offsets.getSizeInBytes());
-		cmdb.bindUavBuffer(0, 2, firstDrawArgIndicesBuffer);
-
-		cmdb.bindUavBuffer(0, 3, m_stats.m_statsBuffer, m_stats.m_statsBufferOffset, sizeof(StatsArray));
-		cmdb.bindUavBuffer(0, 4, m_stats.m_threadCountBuffer);
-
-		cmdb.setPushConstants(&args.m_viewport, sizeof(args.m_viewport));
-
-		cmdb.draw(PrimitiveTopology::kTriangles, 6);
-
-		cmdb.popDebugMarker();
+		cmdb.beginPipelineQuery(pplineQuery.get());
 	}
 #endif
 
 	setState(args, cmdb);
 
-	cmdb.bindVertexBuffer(0, args.m_instanceRateRenderablesBuffer.m_buffer, args.m_instanceRateRenderablesBuffer.m_offset,
-						  sizeof(GpuSceneRenderableVertex), VertexStepRate::kInstance);
+	const Bool meshShaderHwSupport = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
 
-	U32 allUserCount = 0;
-	U32 bucketCount = 0;
-	RenderStateBucketContainer::getSingleton().iterateBuckets(args.m_renderingTechinuqe, [&](const RenderStateInfo& state, U32 userCount) {
-		if(userCount == 0)
-		{
-			++bucketCount;
-			return;
-		}
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kMisc0, 0, Format::kR32G32B32A32_Uint, 0);
 
-		ShaderProgramPtr prog = state.m_program;
-		cmdb.bindShaderProgram(prog.get());
+	RenderStateBucketContainer::getSingleton().iterateBucketsPerformanceOrder(
+		args.m_renderingTechinuqe,
+		[&](const RenderStateInfo& state, U32 bucketIdx, U32 userCount, U32 meshletGroupCount, [[maybe_unused]] U32 meshletCount) {
+			if(userCount == 0)
+			{
+				return;
+			}
 
-		const U32 maxDrawCount = userCount;
+			cmdb.bindShaderProgram(state.m_program.get());
 
-		if(state.m_indexedDrawcall)
-		{
-			cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
-										  args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
-										  sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
-										  args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
-		}
-		else
-		{
-			// Yes, the DrawIndexedIndirectArgs is intentional
-			cmdb.drawIndirectCount(state.m_primitiveTopology, args.m_drawIndexedIndirectArgsBuffer.m_buffer,
-								   args.m_drawIndexedIndirectArgsBuffer.m_offset + sizeof(DrawIndexedIndirectArgs) * allUserCount,
-								   sizeof(DrawIndexedIndirectArgs), args.m_mdiDrawCountsBuffer.m_buffer,
-								   args.m_mdiDrawCountsBuffer.m_offset + sizeof(U32) * bucketCount, maxDrawCount);
-		}
+			const Bool meshlets = meshletGroupCount > 0;
 
-		++bucketCount;
-		allUserCount += userCount;
-	});
+			if(meshlets && meshShaderHwSupport)
+			{
+				const UVec4 firstPayload(args.m_mesh.m_bucketMeshletGroupInstanceRanges[bucketIdx].getFirstInstance());
+				cmdb.setPushConstants(&firstPayload, sizeof(firstPayload));
 
-	ANKI_ASSERT(bucketCount == RenderStateBucketContainer::getSingleton().getBucketCount(args.m_renderingTechinuqe));
+				cmdb.drawMeshTasksIndirect(BufferView(
+					&args.m_mesh.m_taskShaderIndirectArgsBuffer.getBuffer(),
+					args.m_mesh.m_taskShaderIndirectArgsBuffer.getOffset() + sizeof(DispatchIndirectArgs) * bucketIdx, sizeof(DispatchIndirectArgs)));
+			}
+			else if(meshlets)
+			{
+				const InstanceRange& instanceRange = args.m_softwareMesh.m_bucketMeshletInstanceRanges[bucketIdx];
+				const BufferView vertBufferView = BufferView(args.m_softwareMesh.m_meshletInstancesBuffer)
+													  .incrementOffset(instanceRange.getFirstInstance() * sizeof(GpuSceneMeshletInstance))
+													  .setRange(instanceRange.getInstanceCount() * sizeof(GpuSceneMeshletInstance));
+				cmdb.bindVertexBuffer(0, vertBufferView, sizeof(GpuSceneMeshletInstance), VertexStepRate::kInstance);
 
-	g_maxDrawcallsStatVar.increment(allUserCount);
+				const BufferView indirectArgsBuffView = BufferView(args.m_softwareMesh.m_drawIndirectArgsBuffer)
+															.incrementOffset(sizeof(DrawIndirectArgs) * bucketIdx)
+															.setRange(sizeof(DrawIndirectArgs));
+				cmdb.drawIndirect(PrimitiveTopology::kTriangles, indirectArgsBuffView);
+			}
+			else if(state.m_indexedDrawcall)
+			{
+				// Legacy
+
+				const InstanceRange& instanceRange = args.m_legacy.m_bucketRenderableInstanceRanges[bucketIdx];
+				const U32 maxDrawCount = instanceRange.getInstanceCount();
+
+				const BufferView vertBufferView = BufferView(args.m_legacy.m_renderableInstancesBuffer)
+													  .incrementOffset(instanceRange.getFirstInstance() * sizeof(GpuSceneRenderableInstance))
+													  .setRange(instanceRange.getInstanceCount() * sizeof(GpuSceneRenderableInstance));
+				cmdb.bindVertexBuffer(0, vertBufferView, sizeof(GpuSceneRenderableInstance), VertexStepRate::kInstance);
+
+				const BufferView indirectArgsBuffView = BufferView(args.m_legacy.m_drawIndexedIndirectArgsBuffer)
+															.incrementOffset(instanceRange.getFirstInstance() * sizeof(DrawIndexedIndirectArgs))
+															.setRange(instanceRange.getInstanceCount() * sizeof(DrawIndexedIndirectArgs));
+				const BufferView mdiCountBuffView =
+					BufferView(args.m_legacy.m_mdiDrawCountsBuffer).incrementOffset(sizeof(U32) * bucketIdx).setRange(sizeof(U32));
+				cmdb.drawIndexedIndirectCount(state.m_primitiveTopology, indirectArgsBuffView, sizeof(DrawIndexedIndirectArgs), mdiCountBuffView,
+											  maxDrawCount);
+			}
+			else
+			{
+				// Legacy
+
+				const InstanceRange& instanceRange = args.m_legacy.m_bucketRenderableInstanceRanges[bucketIdx];
+				const U32 maxDrawCount = instanceRange.getInstanceCount();
+
+				const BufferView vertBufferView = BufferView(args.m_legacy.m_renderableInstancesBuffer)
+													  .incrementOffset(instanceRange.getFirstInstance() * sizeof(GpuSceneRenderableInstance))
+													  .setRange(instanceRange.getInstanceCount() * sizeof(GpuSceneRenderableInstance));
+				cmdb.bindVertexBuffer(0, vertBufferView, sizeof(GpuSceneRenderableInstance), VertexStepRate::kInstance);
+
+				// Yes, the DrawIndexedIndirectArgs is intentional
+				const BufferView indirectArgsBuffView = BufferView(args.m_legacy.m_drawIndexedIndirectArgsBuffer)
+															.incrementOffset(instanceRange.getFirstInstance() * sizeof(DrawIndexedIndirectArgs))
+															.setRange(instanceRange.getInstanceCount() * sizeof(DrawIndexedIndirectArgs));
+				const BufferView countBuffView =
+					BufferView(args.m_legacy.m_mdiDrawCountsBuffer).incrementOffset(sizeof(U32) * bucketIdx).setRange(sizeof(U32));
+				cmdb.drawIndirectCount(state.m_primitiveTopology, indirectArgsBuffView, sizeof(DrawIndexedIndirectArgs), countBuffView, maxDrawCount);
+			}
+		});
+
+#if ANKI_STATS_ENABLED
+	if(pplineQuery.isCreated())
+	{
+		cmdb.endPipelineQuery(pplineQuery.get());
+	}
+#endif
 }
 
 } // end namespace anki

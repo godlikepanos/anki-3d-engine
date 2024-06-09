@@ -20,13 +20,14 @@ namespace anki {
 /// The file is layed out in memory:
 /// * Header
 /// * Submeshes
-/// * Index buffer of max LOD
-/// ** Index buffer of #0 submesh
-/// ** etc ...
-/// * Vertex buffer #0 of max LOD
-/// ** Vert buffer #0 of #0 submesh
-/// ** etc ...
-/// * etc...
+/// * LOD of max LOD
+/// ** Index buffer of all sub meshes
+/// ** Vertex buffer #0 of all sub meshes
+/// ** ...
+/// ** Meshlets of all sub meshes
+/// ** Local index buffer all sub meshes
+/// * LOD of max-1 LOD
+/// ...
 class MeshBinaryLoader
 {
 public:
@@ -43,6 +44,10 @@ public:
 	Error storeIndexBuffer(U32 lod, void* ptr, PtrSize size);
 
 	Error storeVertexBuffer(U32 lod, U32 bufferIdx, void* ptr, PtrSize size);
+
+	Error storeMeshletIndicesBuffer(U32 lod, void* ptr, PtrSize size);
+
+	Error storeMeshletBuffer(U32 lod, WeakArray<MeshBinaryMeshlet> out);
 
 	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
 	Error storeIndicesAndPosition(U32 lod, ResourceDynamicArray<U32>& indices, ResourceDynamicArray<Vec3>& positions);
@@ -74,14 +79,28 @@ private:
 	{
 		ANKI_ASSERT(isLoaded());
 		ANKI_ASSERT(lod < m_header.m_lodCount);
-		return PtrSize(m_header.m_totalIndexCounts[lod]) * getIndexSize(m_header.m_indexType);
+		return PtrSize(m_header.m_indexCounts[lod]) * getIndexSize(m_header.m_indexType);
+	}
+
+	PtrSize getMeshletsBufferSize(U32 lod) const
+	{
+		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(lod < m_header.m_lodCount);
+		return PtrSize(m_header.m_meshletCounts[lod]) * sizeof(MeshBinaryMeshlet);
 	}
 
 	PtrSize getVertexBufferSize(U32 lod, U32 bufferIdx) const
 	{
 		ANKI_ASSERT(isLoaded());
 		ANKI_ASSERT(lod < m_header.m_lodCount);
-		return PtrSize(m_header.m_totalVertexCounts[lod]) * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride);
+		return PtrSize(m_header.m_vertexCounts[lod]) * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride);
+	}
+
+	PtrSize getMeshletPrimitivesBufferSize(U32 lod) const
+	{
+		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(lod < m_header.m_lodCount);
+		return PtrSize(m_header.m_meshletPrimitiveCounts[lod]) * getFormatInfo(kMeshletPrimitiveFormat).m_texelSize;
 	}
 
 	PtrSize getLodBuffersSize(U32 lod) const;

@@ -157,21 +157,22 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		Array<BufferBarrierInfo, 2> barriers;
-		barriers[0].m_buffer = m_gpuBuffer.get();
+		barriers[0].m_bufferView = BufferView(m_gpuBuffer.get());
 		barriers[0].m_previousUsage = m_bufferUsage;
 		barriers[0].m_nextUsage = BufferUsageBit::kTransferSource;
-		barriers[1].m_buffer = newBuffer.get();
+		barriers[1].m_bufferView = BufferView(newBuffer.get());
 		barriers[1].m_previousUsage = BufferUsageBit::kNone;
 		barriers[1].m_nextUsage = BufferUsageBit::kTransferDestination;
 		cmdb->setPipelineBarrier({}, barriers, {});
 
-		cmdb->copyBufferToBuffer(m_gpuBuffer.get(), 0, newBuffer.get(), 0, m_gpuBuffer->getSize());
+		cmdb->copyBufferToBuffer(BufferView(m_gpuBuffer.get()), BufferView(newBuffer.get(), 0, m_gpuBuffer->getSize()));
 
 		barriers[1].m_previousUsage = BufferUsageBit::kTransferDestination;
 		barriers[1].m_nextUsage = m_bufferUsage;
 		cmdb->setPipelineBarrier({}, ConstWeakArray<BufferBarrierInfo>{&barriers[1], 1}, {});
 
-		cmdb->flush();
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get());
 
 		// Create the new chunk
 		newChunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
@@ -204,7 +205,7 @@ void SegregatedListsGpuMemoryPool::deleteChunk(Chunk* chunk)
 void SegregatedListsGpuMemoryPool::allocate(PtrSize size, U32 alignment, SegregatedListsGpuMemoryPoolToken& token)
 {
 	ANKI_ASSERT(isInitialized());
-	ANKI_ASSERT(size > 0 && alignment > 0 && isPowerOfTwo(alignment));
+	ANKI_ASSERT(size > 0 && alignment > 0);
 	ANKI_ASSERT(token == SegregatedListsGpuMemoryPoolToken());
 
 	LockGuard lock(m_lock);

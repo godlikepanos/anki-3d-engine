@@ -62,10 +62,10 @@ ANKI_TEST(Ui, Ui)
 	g_windowHeightCVar.set(760);
 	g_dataPathsCVar.set("EngineAssets");
 
-	NativeWindow* win = createWindow();
+	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
-	GrManager* gr = createGrManager(win);
-	createResourceManager(gr);
+	initGrManager();
+	ANKI_TEST_EXPECT_NO_ERR(ResourceManager::allocateSingleton().init(allocAligned, nullptr));
 	UiManager* ui = &UiManager::allocateSingleton();
 
 	RebarTransientMemoryPool::allocateSingleton().init();
@@ -77,7 +77,7 @@ ANKI_TEST(Ui, Ui)
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "UbuntuRegular.ttf", Array<U32, 4>{10, 20, 30, 60}));
 
 		CanvasPtr canvas;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, win->getWidth(), win->getHeight()));
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 20, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight()));
 
 		IntrusivePtr<Label, UiObjectDeleter> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
@@ -98,32 +98,23 @@ ANKI_TEST(Ui, Ui)
 			canvas->beginBuilding();
 			label->build(canvas);
 
-			TexturePtr presentTex = gr->acquireNextPresentableTexture();
-			FramebufferPtr fb;
-			{
-				TextureViewInitInfo init;
-				init.m_texture = presentTex.get();
-				TextureViewPtr view = gr->newTextureView(init);
-
-				FramebufferInitInfo fbinit;
-				fbinit.m_colorAttachmentCount = 1;
-				fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
-				fbinit.m_colorAttachments[0].m_textureView = view;
-
-				fb = gr->newFramebuffer(fbinit);
-			}
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
 
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
-			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
 			TextureBarrierInfo barrier;
 			barrier.m_previousUsage = TextureUsageBit::kNone;
 			barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
-			barrier.m_texture = presentTex.get();
+			barrier.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->beginRenderPass(fb.get(), {{TextureUsageBit::kFramebufferWrite}}, {});
+			RenderTarget rt;
+			rt.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
+			rt.m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
+			cmdb->beginRenderPass({rt});
+
 			canvas->appendToCommandBuffer(*cmdb);
 			cmdb->endRenderPass();
 
@@ -131,9 +122,10 @@ ANKI_TEST(Ui, Ui)
 			barrier.m_nextUsage = TextureUsageBit::kPresent;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-			cmdb->flush();
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
 
-			gr->swapBuffers();
+			GrManager::getSingleton().swapBuffers();
 			RebarTransientMemoryPool::getSingleton().endFrame();
 
 			timer.stop();

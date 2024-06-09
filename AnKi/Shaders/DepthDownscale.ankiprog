@@ -1,0 +1,111 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator WAVE_OPERATIONS 0 1
+
+#pragma anki technique_start comp
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+
+ANKI_PUSH_CONSTANTS(DepthDownscaleUniforms, g_unis)
+
+globallycoherent RWStructuredBuffer<U32> g_spdCounter : register(u0);
+RWTexture2D<Vec4> g_dstStorageTextures[kMaxMipsSinglePassDownsamplerCanProduce] : register(u1);
+
+SamplerState u_linearAnyClampSampler : register(s0);
+Texture2D g_srcTex : register(t0);
+
+// Include SPD
+#define A_GPU 1
+#define A_HLSL 1
+#include <ThirdParty/FidelityFX/ffx_a.h>
+
+groupshared AU1 s_spdCounter;
+groupshared AF1 s_spdIntermediateR[16][16];
+
+AF4 SpdLoadSourceImage(AU2 p, AU1 slice)
+{
+	ANKI_MAYBE_UNUSED(slice);
+	const AF2 textureCoord = Vec2(p) * g_unis.m_srcTexSizeOverOne + g_unis.m_srcTexSizeOverOne;
+	return AF4(g_srcTex.SampleLevel(u_linearAnyClampSampler, textureCoord, 0.0).r, 0.0, 0.0, 0.0);
+}
+
+AF4 SpdLoad(AU2 p, AU1 slice)
+{
+	ANKI_MAYBE_UNUSED(slice);
+	return AF4(g_dstStorageTextures[5][p].r, 0.0, 0.0, 0.0);
+}
+
+void SpdStore(AU2 p, AF4 value, AU1 mip, AU1 slice)
+{
+	ANKI_MAYBE_UNUSED(slice);
+	g_dstStorageTextures[mip][p] = Vec4(value.x, 0.0, 0.0, 0.0);
+}
+
+void SpdIncreaseAtomicCounter(AU1 slice)
+{
+	ANKI_MAYBE_UNUSED(slice);
+	InterlockedAdd(g_spdCounter[0], 1u, s_spdCounter);
+}
+
+AU1 SpdGetAtomicCounter()
+{
+	return s_spdCounter;
+}
+
+void SpdResetAtomicCounter(AU1 slice)
+{
+	ANKI_MAYBE_UNUSED(slice);
+	g_spdCounter[0] = 0u;
+}
+
+AF4 SpdLoadIntermediate(AU1 x, AU1 y)
+{
+	return AF4(s_spdIntermediateR[x][y], 0.0, 0.0, 0.0);
+}
+
+void SpdStoreIntermediate(AU1 x, AU1 y, AF4 value)
+{
+	s_spdIntermediateR[x][y] = value.x;
+}
+
+AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
+{
+	const F32 avg = (v0.x + v1.x + v2.x + v3.x) / 4.0f;
+	return AF4(avg, 0.0, 0.0, 0.0);
+}
+
+#define SPD_LINEAR_SAMPLER 1
+
+#if WAVE_OPERATIONS == 0
+#	define SPD_NO_WAVE_OPERATIONS 1
+#endif
+
+#include <ThirdParty/FidelityFX/ffx_spd.h>
+
+[numthreads(256, 1, 1)] void main(UVec3 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	const U32 slice = 0u;
+	const UVec2 offset = UVec2(0, 0);
+	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_unis.m_mipmapCount), AU1(g_unis.m_threadgroupCount), slice, offset);
+}
+
+#pragma anki technique_end comp
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#include <AnKi/Shaders/Common.hlsl>
+
+Texture2D<Vec4> g_inputTex : register(t0);
+SamplerState g_linearAnyClampSampler : register(s0);
+
+F32 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+{
+	return g_inputTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x;
+}
+#pragma anki technique_end frag

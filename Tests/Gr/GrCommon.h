@@ -5,32 +5,57 @@
 
 #include <AnKi/Gr.h>
 #include <AnKi/ShaderCompiler.h>
-#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
+#include <AnKi/ShaderCompiler/ShaderParser.h>
 #include <AnKi/ShaderCompiler/Dxc.h>
 #include <Tests/Framework/Framework.h>
 
 namespace anki {
 
-inline ShaderPtr createShader(CString src, ShaderType type, GrManager& gr, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
+inline ShaderPtr createShader(CString src, ShaderType type)
 {
-	String header;
-	ShaderCompilerOptions compilerOptions;
-	ShaderProgramParser::generateAnkiShaderHeader(type, compilerOptions, header);
+	ShaderCompilerString header;
+	ShaderParser::generateAnkiShaderHeader(type, header);
 	header += src;
-	DynamicArray<U8> spirv;
-	String errorLog;
+	ShaderCompilerDynamicArray<U8> bin;
+	ShaderCompilerString errorLog;
 
-	const Error err = compileHlslToSpirv(header, type, false, spirv, errorLog);
+#if ANKI_GR_BACKEND_VULKAN
+	const Error err = compileHlslToSpirv(header, type, false, bin, errorLog);
+#else
+	const Error err = compileHlslToDxil(header, type, false, bin, errorLog);
+#endif
 	if(err)
 	{
 		ANKI_TEST_LOGE("Compile error:\n%s", errorLog.cstr());
 	}
 	ANKI_TEST_EXPECT_NO_ERR(err);
 
-	ShaderInitInfo initInf(type, spirv);
-	initInf.m_constValues = specVals;
+	ShaderReflection refl;
+	ShaderCompilerString errorStr;
+#if ANKI_GR_BACKEND_VULKAN
+	ANKI_TEST_EXPECT_NO_ERR(doReflectionSpirv(WeakArray(bin.getBegin(), bin.getSize()), type, refl, errorStr));
+#else
+	ANKI_TEST_EXPECT_NO_ERR(doReflectionDxil(bin, type, refl, errorStr));
+#endif
 
-	return gr.newShader(initInf);
+	ShaderInitInfo initInf(type, bin);
+	initInf.m_reflection = refl;
+
+	return GrManager::getSingleton().newShader(initInf);
+}
+
+inline ShaderProgramPtr createVertFragProg(CString vert, CString frag)
+{
+	ShaderPtr vertS = createShader(vert, ShaderType::kVertex);
+	ShaderPtr fragS = createShader(frag, ShaderType::kFragment);
+
+	ShaderProgramInitInfo init;
+	init.m_graphicsShaders[ShaderType::kVertex] = vertS.get();
+	init.m_graphicsShaders[ShaderType::kFragment] = fragS.get();
+
+	ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(init);
+
+	return prog;
 }
 
 } // end namespace anki

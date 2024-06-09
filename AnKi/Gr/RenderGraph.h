@@ -6,10 +6,8 @@
 #pragma once
 
 #include <AnKi/Gr/GrObject.h>
-#include <AnKi/Gr/TextureView.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/GrManager.h>
-#include <AnKi/Gr/Framebuffer.h>
 #include <AnKi/Gr/TimestampQuery.h>
 #include <AnKi/Gr/CommandBuffer.h>
 #include <AnKi/Gr/AccelerationStructure.h>
@@ -29,7 +27,7 @@ class RenderGraphDescription;
 
 /// @name RenderGraph constants
 /// @{
-constexpr U32 kMaxRenderGraphPasses = 256;
+constexpr U32 kMaxRenderGraphPasses = 512;
 constexpr U32 kMaxRenderGraphRenderTargets = 64; ///< Max imported or not render targets in RenderGraph.
 constexpr U32 kMaxRenderGraphBuffers = 256;
 constexpr U32 kMaxRenderGraphAccelerationStructures = 32;
@@ -104,6 +102,10 @@ public:
 		ANKI_ASSERT(m_hash == 0);
 		ANKI_ASSERT(m_usage == TextureUsageBit::kNone && "No need to supply the usage. RenderGraph will find out");
 		m_hash = computeHash();
+		// Append the name to the hash because there might be RTs with the same properties and thus the same hash. We can't have different Rt
+		// descriptors with the same hash
+		ANKI_ASSERT(getName().getLength() > 0);
+		m_hash = appendHash(getName().cstr(), getName().getLength(), m_hash);
 	}
 
 private:
@@ -118,107 +120,55 @@ class RenderPassWorkContext
 
 public:
 	CommandBuffer* m_commandBuffer = nullptr;
-	U32 m_currentSecondLevelCommandBufferIndex = 0;
-	U32 m_secondLevelCommandBufferCount = 0;
 
 	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 
-	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Texture*& tex) const;
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource, Texture*& tex) const;
 
-	/// Create a whole texture view from a handle
-	TextureViewPtr createTextureView(RenderTargetHandle handle)
-	{
-		Texture* tex = &getTexture(handle);
-		TextureViewInitInfo viewInit(tex, "TmpRenderGraph"); // Use the whole texture
-		getRenderTargetState(handle, viewInit, tex);
-		return GrManager::getSingleton().newTextureView(viewInit);
-	}
-
-	/// Convenience method.
-	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Sampler* sampler)
+	TextureView createTextureView(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource) const
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view.get(), sampler);
+		return TextureView(tex, subresource);
 	}
 
 	/// Convenience method.
-	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource)
+	void bindTexture(Register reg, RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource)
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view.get());
+		m_commandBuffer->bindTexture(reg, TextureView(tex, subresource));
 	}
 
-	/// Convenience method to bind the whole texture as color.
-	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, Sampler* sampler)
+	/// Convenience method to bind the whole texture.
+	void bindTexture(Register reg, RenderTargetHandle handle)
 	{
-		Texture* tex = &getTexture(handle);
-		TextureViewInitInfo viewInit(tex); // Use the whole texture
-		getRenderTargetState(handle, viewInit, tex);
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTextureAndSampler(set, binding, view.get(), sampler);
-	}
-
-	/// Convenience method to bind the whole texture as color.
-	void bindColorTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
-	{
-		Texture* tex = &getTexture(handle);
-		TextureViewInitInfo viewInit(tex); // Use the whole texture
-		getRenderTargetState(handle, viewInit, tex);
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view.get(), arrayIdx);
+		const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
+		Texture* tex;
+		getRenderTargetState(handle, subresource, tex); // Doesn't care about the aspect so it's OK
+		m_commandBuffer->bindTexture(reg, TextureView(tex, subresource));
 	}
 
 	/// Convenience method.
-	void bindUavTexture(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
-	{
-		Texture* tex;
-		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindUavTexture(set, binding, view.get(), arrayIdx);
-	}
-
-	/// Convenience method to bind the whole image.
-	void bindUavTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
-	{
-		Texture* tex;
-#if ANKI_ASSERTIONS_ENABLED
-		tex = &getTexture(handle);
-		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1 && tex->getDepthStencilAspect() == DepthStencilAspectBit::kNone);
-#endif
-		const TextureSubresourceInfo subresource;
-		getRenderTargetState(handle, subresource, tex);
-		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
-		TextureViewPtr view = GrManager::getSingleton().newTextureView(viewInit);
-		m_commandBuffer->bindUavTexture(set, binding, view.get(), arrayIdx);
-	}
-
-	/// Convenience method.
-	void bindUavBuffer(U32 set, U32 binding, BufferHandle handle)
+	void bindStorageBuffer(Register reg, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindUavBuffer(set, binding, buff, offset, range);
+		m_commandBuffer->bindStorageBuffer(reg, BufferView(buff, offset, range));
 	}
 
 	/// Convenience method.
-	void bindConstantBuffer(U32 set, U32 binding, BufferHandle handle)
+	void bindUniformBuffer(Register reg, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindConstantBuffer(set, binding, buff, offset, range);
+		m_commandBuffer->bindUniformBuffer(reg, BufferView(buff, offset, range));
 	}
 
 	/// Convenience method.
-	void bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle);
+	void bindAccelerationStructure(Register reg, AccelerationStructureHandle handle);
 
 private:
 	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);
@@ -237,21 +187,11 @@ class RenderPassDependency
 
 public:
 	/// Dependency to a texture subresource.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDescriptor& subresource)
 		: m_texture({handle, usage, subresource})
 		, m_type(Type::kTexture)
 	{
 		ANKI_ASSERT(handle.isValid());
-	}
-
-	/// Dependency to the whole texture.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
-		: m_texture({handle, usage, TextureSubresourceInfo()})
-		, m_type(Type::kTexture)
-	{
-		ANKI_ASSERT(handle.isValid());
-		m_texture.m_subresource.m_mipmapCount = kMaxU32; // Mark it as "whole texture"
-		m_texture.m_subresource.m_depthStencilAspect = aspect;
 	}
 
 	RenderPassDependency(BufferHandle handle, BufferUsageBit usage)
@@ -274,7 +214,7 @@ private:
 	public:
 		RenderTargetHandle m_handle;
 		TextureUsageBit m_usage;
-		TextureSubresourceInfo m_subresource;
+		TextureSubresourceDescriptor m_subresource = TextureSubresourceDescriptor::all();
 	};
 
 	class BufferInfo
@@ -317,27 +257,19 @@ class RenderPassDescriptionBase
 
 public:
 	template<typename TFunc>
-	void setWork(U32 secondLeveCmdbCount, TFunc func)
-	{
-		ANKI_ASSERT(m_type == Type::kGraphics || secondLeveCmdbCount == 0);
-		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
-		m_secondLevelCmdbsCount = secondLeveCmdbCount;
-	}
-
-	template<typename TFunc>
 	void setWork(TFunc func)
 	{
-		setWork(0, func);
+		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDescriptor& subresource)
 	{
 		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, subresource));
 	}
 
 	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
-		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, aspect));
+		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, TextureSubresourceDescriptor::all(aspect)));
 	}
 
 	void newBufferDependency(BufferHandle handle, BufferUsageBit usage)
@@ -362,7 +294,6 @@ protected:
 	RenderGraphDescription* m_descr;
 
 	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
-	U32 m_secondLevelCmdbsCount = 0;
 
 	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_rtDeps;
 	DynamicArray<RenderPassDependency, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffDeps;
@@ -402,46 +333,28 @@ protected:
 	void newDependency(const RenderPassDependency& dep);
 };
 
-/// Framebuffer attachment info.
-class FramebufferDescriptionAttachment
+/// Renderpass attachment info. Used in GraphicsRenderPassDescription::setRenderpassInfo. It mirrors the RenderPass.
+/// @memberof GraphicsRenderPassDescription
+class RenderTargetInfo
 {
 public:
-	TextureSurfaceInfo m_surface;
-	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::kDontCare;
-	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::kStore;
+	RenderTargetHandle m_handle;
+	TextureSubresourceDescriptor m_subresource = TextureSubresourceDescriptor::firstSurface();
+
+	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kDontCare;
+	RenderTargetStoreOperation m_storeOperation = RenderTargetStoreOperation::kStore;
+
+	RenderTargetLoadOperation m_stencilLoadOperation = RenderTargetLoadOperation::kDontCare;
+	RenderTargetStoreOperation m_stencilStoreOperation = RenderTargetStoreOperation::kStore;
+
 	ClearValue m_clearValue;
 
-	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::kDontCare;
-	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::kStore;
+	RenderTargetInfo() = default;
 
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::kNone; ///< Relevant only for depth stencil textures.
-};
-
-/// Describes a framebuffer.
-/// @memberof RenderGraphDescription
-class FramebufferDescription
-{
-	friend class GraphicsRenderPassDescription;
-	friend class RenderGraph;
-
-public:
-	Array<FramebufferDescriptionAttachment, kMaxColorRenderTargets> m_colorAttachments;
-	U32 m_colorAttachmentCount = 0;
-	FramebufferDescriptionAttachment m_depthStencilAttachment;
-	U32 m_shadingRateAttachmentTexelWidth = 0;
-	U32 m_shadingRateAttachmentTexelHeight = 0;
-	TextureSurfaceInfo m_shadingRateAttachmentSurface;
-
-	/// Calculate the hash for the framebuffer.
-	void bake();
-
-	Bool isBacked() const
+	RenderTargetInfo(RenderTargetHandle handle)
+		: m_handle(handle)
 	{
-		return m_hash != 0;
 	}
-
-private:
-	U64 m_hash = 0;
 };
 
 /// A graphics render pass for RenderGraph.
@@ -455,25 +368,30 @@ public:
 	GraphicsRenderPassDescription(RenderGraphDescription* descr, StackMemoryPool* pool)
 		: RenderPassDescriptionBase(Type::kGraphics, descr, pool)
 	{
-		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
 	}
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
-							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setRenderpassInfo(ConstWeakArray<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt = nullptr, U32 minx = 0, U32 miny = 0,
+						   U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0,
+						   U8 vrsRtTexelSizeY = 0);
 
-	void setFramebufferInfo(const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-							RenderTargetHandle depthStencilRenderTargetHandle = {}, RenderTargetHandle shadingRateRenderTargetHandle = {},
-							U32 minx = 0, U32 miny = 0, U32 maxx = kMaxU32, U32 maxy = kMaxU32);
+	void setRenderpassInfo(std::initializer_list<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt = nullptr, U32 minx = 0,
+						   U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0,
+						   U8 vrsRtTexelSizeY = 0)
+	{
+		ConstWeakArray<RenderTargetInfo> colorRtsArr(colorRts.begin(), U32(colorRts.size()));
+		setRenderpassInfo(colorRtsArr, depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX, vrsRtTexelSizeY);
+	}
 
 private:
-	Array<RenderTargetHandle, kMaxColorRenderTargets + 2> m_rtHandles;
-	FramebufferDescription m_fbDescr;
-	Array<U32, 4> m_fbRenderArea = {};
+	Array<RenderTargetInfo, kMaxColorRenderTargets + 2> m_rts;
+	Array<U32, 4> m_rpassRenderArea = {};
+	U8 m_colorRtCount = 0;
+	U8 m_vrsRtTexelSizeX = 0;
+	U8 m_vrsRtTexelSizeY = 0;
 
-	Bool hasFramebuffer() const
+	Bool hasRenderpass() const
 	{
-		return m_fbDescr.m_hash != 0;
+		return m_rpassRenderArea[3] != 0;
 	}
 };
 
@@ -521,13 +439,7 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
 
 	/// Import a buffer.
-	BufferHandle importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = kMaxPtrSize);
-
-	/// Import a buffer.
-	BufferHandle importBuffer(BufferUsageBit usage, const BufferOffsetRange& buff)
-	{
-		return importBuffer(buff.m_buffer, usage, buff.m_offset, buff.m_range);
-	}
+	BufferHandle importBuffer(const BufferView& buff, BufferUsageBit usage);
 
 	/// Import an AS.
 	AccelerationStructureHandle importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage);
@@ -586,24 +498,6 @@ private:
 	DynamicArray<BufferRsrc, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers{m_pool};
 	DynamicArray<AS, MemoryPoolPtrWrapper<StackMemoryPool>> m_as{m_pool};
 	Bool m_gatherStatistics = false;
-
-	/// Return true if 2 buffer ranges overlap.
-	static Bool bufferRangeOverlaps(PtrSize offsetA, PtrSize rangeA, PtrSize offsetB, PtrSize rangeB)
-	{
-		ANKI_ASSERT(rangeA > 0 && rangeB > 0);
-		if(rangeA == kMaxPtrSize || rangeB == kMaxPtrSize)
-		{
-			return true;
-		}
-		else if(offsetA <= offsetB)
-		{
-			return offsetA + rangeA > offsetB;
-		}
-		else
-		{
-			return offsetB + rangeB > offsetA;
-		}
-	}
 };
 
 /// Statistics.
@@ -619,8 +513,7 @@ public:
 ///
 /// The idea for the RenderGraph is to automate:
 /// - Synchronization (barriers, events etc) between passes.
-/// - Command buffer creation for primary and secondary command buffers.
-/// - Framebuffer creation.
+/// - Command buffer creation .
 /// - Render target creation (optional since textures can be imported as well).
 ///
 /// It accepts a description of the frame's render passes (compute and graphics), compiles that description to calculate
@@ -634,43 +527,17 @@ class RenderGraph final : public GrObject
 public:
 	static constexpr GrObjectType kClassType = GrObjectType::kRenderGraph;
 
-	/// @name 1st step methods
-	/// @{
+	/// 1st step.
 	void compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool);
-	/// @}
 
-	/// @name 2nd step methods
-	/// @{
+	/// 2nd step. Will call a number of RenderPassWorkCallback that populate command buffers and submit work.
+	void recordAndSubmitCommandBuffers(FencePtr* optionalFence = nullptr);
 
-	/// Will call a number of RenderPassWorkCallback that populate 2nd level command buffers.
-	void runSecondLevel();
-	/// @}
-
-	/// @name 3rd step methods
-	/// @{
-
-	/// Will call a number of RenderPassWorkCallback that populate 1st level command buffers.
-	void run() const;
-	/// @}
-
-	/// @name 3rd step methods
-	/// @{
-	void flush(FencePtr* optionalFence = nullptr);
-	/// @}
-
-	/// @name 4th step methods
-	/// @{
-
-	/// Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
+	/// 3rd step. Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
 	void reset();
-	/// @}
 
-	/// @name 5th step methods [OPTIONAL]
-	/// @{
-
-	/// Get some statistics.
-	void getStatistics(RenderGraphStatistics& statistics) const;
-	/// @}
+	/// [OPTIONAL] 4th step. Get some statistics.
+	void getStatistics(RenderGraphStatistics& statistics);
 
 private:
 	static constexpr U kPeriodicCleanupEvery = 60; ///< How many frames between cleanups.
@@ -702,7 +569,6 @@ private:
 	};
 
 	GrHashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
-	GrHashMap<U64, FramebufferPtr> m_fbCache; ///< Framebuffer cache.
 	GrHashMap<U64, ImportedRenderTargetInfo> m_importedRenderTargets;
 
 	BakeContext* m_ctx = nullptr;
@@ -712,7 +578,7 @@ private:
 	class
 	{
 	public:
-		Array<TimestampQueryPtr, kMaxBufferedTimestamps * 2> m_timestamps;
+		Array2d<TimestampQueryPtr, kMaxBufferedTimestamps, 2> m_timestamps;
 		Array<Second, kMaxBufferedTimestamps> m_cpuStartTimes;
 		U8 m_nextTimestamp = 0;
 	} m_statistics;
@@ -728,26 +594,25 @@ private:
 	void initBatches();
 	void initGraphicsPasses(const RenderGraphDescription& descr);
 	void setBatchBarriers(const RenderGraphDescription& descr);
+	/// Switching from compute to graphics and the opposite in the same queue is not great for some GPUs (nVidia)
+	void minimizeSubchannelSwitches();
+	void sortBatchPasses();
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name,
-										  Bool& drawsToPresentableTex);
 
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();
 
 	ANKI_HOT static Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
 
-	static Bool overlappingTextureSubresource(const TextureSubresourceInfo& suba, const TextureSubresourceInfo& subb);
-
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
 	void setTextureBarrier(Batch& batch, const RenderPassDependency& consumer);
 
 	template<typename TFunc>
-	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceInfo& subresource, TFunc func);
+	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDescriptor& subresource, TFunc func);
 
-	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const;
+	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDescriptor& subresource, TextureUsageBit& usage) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{

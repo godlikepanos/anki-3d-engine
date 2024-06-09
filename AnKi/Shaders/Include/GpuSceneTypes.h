@@ -19,9 +19,9 @@ constexpr F32 kSomeFarDistance = 100000.0f;
 /// @note All offsets in bytes
 struct GpuSceneRenderable
 {
-	U32 m_worldTransformsOffset; ///< First is the crnt transform and the 2nd the previous
-	U32 m_constantsOffset;
-	U32 m_meshLodsOffset; ///< Points to an array of GpuSceneMeshLod sized kMaxLodCount.
+	U32 m_worldTransformsIndex; ///< First index points to the crnt transform and the 2nd to the previous.
+	U32 m_uniformsOffset;
+	U32 m_meshLodsIndex; ///< Points to the array of GpuSceneMeshLod. kMaxLodCount are reserved for each renderable.
 	U32 m_boneTransformsOffset; ///< Array of Mat3x4 or 0 if its not a skin.
 	U32 m_particleEmitterOffset; ///< Offset to GpuSceneParticleEmitter or 0 if it's not an emitter.
 	U32 m_rtShadowsShaderHandleIndex; ///< The index of the shader handle in the array of library's handles.
@@ -29,23 +29,40 @@ struct GpuSceneRenderable
 };
 
 /// Almost similar to GpuSceneRenderable but with only what the material shaders need. Needs to fit in a UVec4 vertex attribute.
-struct GpuSceneRenderableVertex
+struct GpuSceneRenderableInstance
 {
-	U32 m_worldTransformsOffset;
-	U32 m_constantsOffset;
-	U32 m_meshLodOffset; ///< Points to a single GpuSceneMeshLod and not an array
+	U32 m_worldTransformsIndex;
+	U32 m_uniformsOffset;
+	U32 m_meshLodIndex; ///< Points to a single GpuSceneMeshLod in the mesh lods.
 	U32 m_boneTransformsOrParticleEmitterOffset;
 };
-static_assert(sizeof(GpuSceneRenderableVertex) == sizeof(UVec4));
+static_assert(sizeof(GpuSceneRenderableInstance) == sizeof(UVec4));
+
+/// Input to a single task shader threadgroup. Something similar to GpuSceneRenderableInstance but for mesh shading.
+struct GpuSceneMeshletGroupInstance
+{
+	U32 m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
+};
+static_assert(kMaxLodCount == 3);
+
+/// Minimal data passed to the vertex shaders in the case of meshlet rendering.
+struct GpuSceneMeshletInstance
+{
+	U32 m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit;
+	U32 m_uniformsOffset;
+	U32 m_meshletGeometryDescriptorIndex; ///< Index in the UGB.
+	U32 m_boneTransformsOrParticleEmitterOffset;
+};
+static_assert(kMaxPrimitivesPerMeshlet < ((1u << 7u) - 1));
 
 /// Used in visibility testing.
 struct GpuSceneRenderableBoundingVolume
 {
-	Vec3 m_sphereCenter ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
+	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
 
-	Vec3 m_aabbExtend ANKI_CPP_CODE(= Vec3(0.0f));
-	U32 m_renderableIndexAndRenderStateBucket; ///< High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx.
+	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
+	U32 m_renderableIndex_20bit_renderStateBucket_12bit; ///< High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx.
 };
 static_assert(sizeof(GpuSceneRenderableBoundingVolume) == sizeof(Vec4) * 2);
 
@@ -54,16 +71,22 @@ struct GpuSceneMeshLod
 {
 	U32 m_vertexOffsets[(U32)VertexStreamId::kMeshRelatedCount];
 	U32 m_indexCount;
-	U32 m_firstIndex; // In sizeof(indexType)
+	U32 m_firstIndex; ///< In sizeof(indexType)
+	U32 m_renderableIndex;
+
+	U32 m_firstMeshletBoundingVolume; ///< In sizeof(MeshletBoundingVolume)
+	U32 m_firstMeshletGeometryDescriptor; ///< In sizeof(MeshletGeometryDescriptor)
+	U32 m_meshletCount; ///< Can be zero if the mesh doesn't support mesh shading (or mesh shading is off)
+	U32 m_lod;
 
 	Vec3 m_positionTranslation;
 	F32 m_positionScale;
 
 	UVec2 m_blasAddress;
 	U32 m_tlasInstanceMask; ///< Mask that goes to AccelerationStructureInstance::m_instanceCustomIndex24_mask8
-	U32 m_padding;
+	U32 m_padding3;
 };
-static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 4);
+static_assert(sizeof(GpuSceneMeshLod) == sizeof(Vec4) * 5);
 
 struct GpuSceneParticleEmitter
 {

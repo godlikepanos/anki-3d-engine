@@ -7,9 +7,9 @@
 
 namespace anki {
 
-inline void RenderPassWorkContext::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle)
+inline void RenderPassWorkContext::bindAccelerationStructure(Register reg, AccelerationStructureHandle handle)
 {
-	m_commandBuffer->bindAccelerationStructure(set, binding, m_rgraph->getAs(handle));
+	m_commandBuffer->bindAccelerationStructure(reg, m_rgraph->getAs(handle));
 }
 
 inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const
@@ -17,7 +17,8 @@ inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& 
 	m_rgraph->getCachedBuffer(handle, buff, offset, range);
 }
 
-inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, Texture*& tex) const
+inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource,
+														Texture*& tex) const
 {
 	TextureUsageBit usage;
 	m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
@@ -27,50 +28,6 @@ inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handl
 inline Texture& RenderPassWorkContext::getTexture(RenderTargetHandle handle) const
 {
 	return m_rgraph->getTexture(handle);
-}
-
-inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep) const
-{
-	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::kTexture);
-
-	TextureSubresourceInfo& subresource = dep.m_texture.m_subresource;
-	const Bool wholeTexture = subresource.m_mipmapCount == kMaxU32;
-	const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
-	if(wholeTexture)
-	{
-		ANKI_ASSERT(subresource.m_firstFace == 0);
-		ANKI_ASSERT(subresource.m_firstMipmap == 0);
-		ANKI_ASSERT(subresource.m_firstLayer == 0);
-
-		if(rt.m_importedTex)
-		{
-			subresource.m_faceCount = textureTypeIsCube(rt.m_importedTex->getTextureType()) ? 6 : 1;
-			subresource.m_mipmapCount = rt.m_importedTex->getMipmapCount();
-			subresource.m_layerCount = rt.m_importedTex->getLayerCount();
-		}
-		else
-		{
-			subresource.m_faceCount = textureTypeIsCube(rt.m_initInfo.m_type) ? 6 : 1;
-			subresource.m_mipmapCount = rt.m_initInfo.m_mipmapCount;
-			subresource.m_layerCount = rt.m_initInfo.m_layerCount;
-		}
-	}
-
-	if(subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
-	{
-		const Bool imported = rt.m_importedTex.isCreated();
-		if(imported)
-		{
-			subresource.m_depthStencilAspect = rt.m_importedTex->getDepthStencilAspect();
-		}
-		else if(!imported && getFormatInfo(rt.m_initInfo.m_format).isDepthStencil())
-		{
-			subresource.m_depthStencilAspect = getFormatInfo(rt.m_initInfo.m_format).m_depthStencil;
-		}
-	}
-
-	ANKI_ASSERT(dep.m_texture.m_subresource.m_firstMipmap + dep.m_texture.m_subresource.m_mipmapCount
-				<= ((rt.m_importedTex) ? rt.m_importedTex->getMipmapCount() : rt.m_initInfo.m_mipmapCount));
 }
 
 inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)
@@ -126,8 +83,21 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 
 	if(kType == RenderPassDependency::Type::kTexture)
 	{
-		m_rtDeps.emplaceBack(dep);
-		fixSubresource(m_rtDeps.getBack());
+		RenderPassDependency& newDep = *m_rtDeps.emplaceBack(dep);
+
+		// Sanitize a bit
+		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
+		if(newDep.m_texture.m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
+		{
+			if(rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect())
+			{
+				newDep.m_texture.m_subresource.m_depthStencilAspect = rt.m_importedTex->getDepthStencilAspect();
+			}
+			else if(!rt.m_importedTex.isCreated() && getFormatInfo(rt.m_initInfo.m_format).isDepthStencil())
+			{
+				newDep.m_texture.m_subresource.m_depthStencilAspect = getFormatInfo(rt.m_initInfo.m_format).m_depthStencil;
+			}
+		}
 
 		if(!!(dep.m_texture.m_usage & TextureUsageBit::kAllRead))
 		{
@@ -144,7 +114,6 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 
 		// Checks
 #if ANKI_ASSERTIONS_ENABLED
-		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 		if((!rt.m_importedTex.isCreated() && !!getFormatInfo(rt.m_initInfo.m_format).m_depthStencil)
 		   || (rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect()))
 		{
@@ -186,66 +155,41 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
-															  std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-															  RenderTargetHandle depthStencilRenderTargetHandle,
-															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
-															  U32 maxy)
+inline void GraphicsRenderPassDescription::setRenderpassInfo(ConstWeakArray<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt,
+															 U32 minx, U32 miny, U32 width, U32 height, const RenderTargetHandle* vrsRt,
+															 U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
-	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
-	U32 count = 0;
-	for(const RenderTargetHandle& h : colorRenderTargetHandles)
+	m_colorRtCount = U8(colorRts.getSize());
+	for(U32 i = 0; i < m_colorRtCount; ++i)
 	{
-		rts[count++] = h;
-	}
-	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle, shadingRateRenderTargetHandle,
-					   minx, miny, maxx, maxy);
-}
-
-inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
-															  ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-															  RenderTargetHandle depthStencilRenderTargetHandle,
-															  RenderTargetHandle shadingRateRenderTargetHandle, U32 minx, U32 miny, U32 maxx,
-															  U32 maxy)
-{
-#if ANKI_ASSERTIONS_ENABLED
-	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
-	for(U32 i = 0; i < colorRenderTargetHandles.getSize(); ++i)
-	{
-		if(i >= fbInfo.m_colorAttachmentCount)
-		{
-			ANKI_ASSERT(!colorRenderTargetHandles[i].isValid());
-		}
-		else
-		{
-			ANKI_ASSERT(colorRenderTargetHandles[i].isValid());
-		}
+		m_rts[i].m_handle = colorRts[i].m_handle;
+		ANKI_ASSERT(!colorRts[i].m_subresource.m_depthStencilAspect);
+		m_rts[i].m_subresource = colorRts[i].m_subresource;
+		m_rts[i].m_loadOperation = colorRts[i].m_loadOperation;
+		m_rts[i].m_storeOperation = colorRts[i].m_storeOperation;
+		m_rts[i].m_clearValue = colorRts[i].m_clearValue;
 	}
 
-	if(!fbInfo.m_depthStencilAttachment.m_aspect)
+	if(depthStencilRt)
 	{
-		ANKI_ASSERT(!depthStencilRenderTargetHandle.isValid());
-	}
-	else
-	{
-		ANKI_ASSERT(depthStencilRenderTargetHandle.isValid());
+		m_rts[kMaxColorRenderTargets].m_handle = depthStencilRt->m_handle;
+		ANKI_ASSERT(!!depthStencilRt->m_subresource.m_depthStencilAspect);
+		m_rts[kMaxColorRenderTargets].m_subresource = depthStencilRt->m_subresource;
+		m_rts[kMaxColorRenderTargets].m_loadOperation = depthStencilRt->m_loadOperation;
+		m_rts[kMaxColorRenderTargets].m_storeOperation = depthStencilRt->m_storeOperation;
+		m_rts[kMaxColorRenderTargets].m_stencilLoadOperation = depthStencilRt->m_stencilLoadOperation;
+		m_rts[kMaxColorRenderTargets].m_stencilStoreOperation = depthStencilRt->m_stencilStoreOperation;
+		m_rts[kMaxColorRenderTargets].m_clearValue = depthStencilRt->m_clearValue;
 	}
 
-	if(fbInfo.m_shadingRateAttachmentTexelWidth > 0 && fbInfo.m_shadingRateAttachmentTexelHeight > 0)
+	if(vrsRt)
 	{
-		ANKI_ASSERT(shadingRateRenderTargetHandle.isValid());
+		m_rts[kMaxColorRenderTargets + 1].m_handle = *vrsRt;
+		m_vrsRtTexelSizeX = vrsRtTexelSizeX;
+		m_vrsRtTexelSizeY = vrsRtTexelSizeY;
 	}
-	else
-	{
-		ANKI_ASSERT(!shadingRateRenderTargetHandle.isValid());
-	}
-#endif
 
-	m_fbDescr = fbInfo;
-	memcpy(m_rtHandles.getBegin(), colorRenderTargetHandles.getBegin(), colorRenderTargetHandles.getSizeInBytes());
-	m_rtHandles[kMaxColorRenderTargets] = depthStencilRenderTargetHandle;
-	m_rtHandles[kMaxColorRenderTargets + 1] = shadingRateRenderTargetHandle;
-	m_fbRenderArea = {minx, miny, maxx, maxy};
+	m_rpassRenderArea = {minx, miny, width, height};
 }
 
 inline RenderGraphDescription::~RenderGraphDescription()
@@ -301,6 +245,12 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 {
 	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
 	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone && "Don't need to supply the usage. Render grap will find it");
+
+	for([[maybe_unused]] auto it : m_renderTargets)
+	{
+		ANKI_ASSERT(it.m_hash != initInf.m_hash && "There is another RT descriptor with the same hash. Rendergraph's RT recycler will get confused");
+	}
+
 	RT& rt = *m_renderTargets.emplaceBack();
 	rt.m_initInfo = initInf;
 	rt.m_hash = initInf.m_hash;
@@ -313,32 +263,21 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	return out;
 }
 
-inline BufferHandle RenderGraphDescription::importBuffer(Buffer* buff, BufferUsageBit usage, PtrSize offset, PtrSize range)
+inline BufferHandle RenderGraphDescription::importBuffer(const BufferView& buff, BufferUsageBit usage)
 {
-	// Checks
-	ANKI_ASSERT(buff);
-	if(range == kMaxPtrSize)
-	{
-		ANKI_ASSERT(offset < buff->getSize());
-	}
-	else
-	{
-		ANKI_ASSERT((offset + range) <= buff->getSize());
-	}
-
-	ANKI_ASSERT(range > 0);
+	ANKI_ASSERT(buff.isValid());
 
 	for([[maybe_unused]] const BufferRsrc& bb : m_buffers)
 	{
-		ANKI_ASSERT((bb.m_importedBuff.get() != buff || !bufferRangeOverlaps(bb.m_offset, bb.m_range, offset, range)) && "Range already imported");
+		ANKI_ASSERT(!buff.overlaps(BufferView(bb.m_importedBuff.get(), bb.m_offset, bb.m_range)) && "Range already imported");
 	}
 
 	BufferRsrc& b = *m_buffers.emplaceBack();
-	b.setName(buff->getName());
+	b.setName(buff.getBuffer().getName());
 	b.m_usage = usage;
-	b.m_importedBuff.reset(buff);
-	b.m_offset = offset;
-	b.m_range = range;
+	b.m_importedBuff.reset(&buff.getBuffer());
+	b.m_offset = buff.getOffset();
+	b.m_range = buff.getRange();
 
 	BufferHandle out;
 	out.m_idx = m_buffers.getSize() - 1;

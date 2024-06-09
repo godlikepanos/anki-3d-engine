@@ -6,18 +6,18 @@
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(1)]] ByteAddressBuffer g_gpuScene;
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
+ByteAddressBuffer g_gpuScene : register(t1);
 
-[[vk::binding(2)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+StructuredBuffer<U32> g_visibleRenderableIndices : register(t2); // 1st element is the count
 
-[[vk::binding(3)]] StructuredBuffer<U32> g_shaderHandles;
+StructuredBuffer<U32> g_shaderHandles : register(t3);
 
-[[vk::binding(4)]] RWStructuredBuffer<U32> g_sbtBuffer;
+RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
 
-[[vk::push_constant]] ConstantBuffer<RtShadowsSbtBuildConstants> g_consts;
+ANKI_PUSH_CONSTANTS(RtShadowsSbtBuildUniforms, g_unis)
 
 #define NUMTHREADS 64
 
@@ -31,21 +31,21 @@
 
 	const GpuSceneRenderable renderable = g_renderables[g_visibleRenderableIndices[svDispatchThreadId + 1]];
 
-	U32 sbtDwordOffset = g_consts.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
-	sbtDwordOffset += g_consts.m_sbtRecordDwordSize * svDispatchThreadId;
+	U32 sbtDwordOffset = g_unis.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
+	sbtDwordOffset += g_unis.m_sbtRecordDwordSize * svDispatchThreadId;
 
 	// Copy the handle
-	for(U32 i = 0; i < g_consts.m_shaderHandleDwordSize; ++i)
+	for(U32 i = 0; i < g_unis.m_shaderHandleDwordSize; ++i)
 	{
-		g_sbtBuffer[sbtDwordOffset] = g_shaderHandles[renderable.m_rtShadowsShaderHandleIndex * g_consts.m_shaderHandleDwordSize + i];
+		g_sbtBuffer[sbtDwordOffset] = g_shaderHandles[renderable.m_rtShadowsShaderHandleIndex * g_unis.m_shaderHandleDwordSize + i];
 		++sbtDwordOffset;
 	}
 
-	// Copy the GpuSceneRenderableVertex
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_worldTransformsOffset;
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_constantsOffset;
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsOffset;
+	// Copy the GpuSceneRenderableInstance
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_worldTransformsIndex;
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_uniformsOffset;
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsIndex;
 	g_sbtBuffer[sbtDwordOffset] = 0;
 }
 
-#pragma anki end
+#pragma anki technique_end comp

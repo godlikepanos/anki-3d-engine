@@ -3,26 +3,27 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
-#include <AnKi/Shaders/CollisionFunctions.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 // Buffers that point to the GPU scene
-[[vk::binding(0)]] StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes;
-[[vk::binding(1)]] StructuredBuffer<GpuSceneRenderable> g_renderables;
-[[vk::binding(2)]] ByteAddressBuffer g_gpuScene;
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
 
-[[vk::binding(3)]] RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances;
-[[vk::binding(4)]] RWStructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
+RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances : register(u0);
+RWStructuredBuffer<U32> g_visibleRenderableIndices : register(u1); // 1st element is the count
 
-[[vk::binding(5)]] globallycoherent RWStructuredBuffer<U32> g_counterBuffer; // 2 counters per dispatch
+globallycoherent RWStructuredBuffer<U32> g_counterBuffer : register(u2); // 2 counters per dispatch
 
-[[vk::binding(6)]] RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs;
+RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs : register(u3);
 
-[[vk::push_constant]] ConstantBuffer<GpuVisibilityAccelerationStructuresConstants> g_consts;
+ANKI_PUSH_CONSTANTS(GpuVisibilityAccelerationStructuresUniforms, g_unis)
 
 #define NUMTHREADS 64
 
@@ -37,10 +38,13 @@
 
 	// Sphere test
 	GpuSceneRenderableBoundingVolume bvolume;
+	Vec3 sphereCenter;
 	if(visible)
 	{
 		bvolume = g_renderableBoundingVolumes[bvolumeIdx];
-		visible = testSphereSphereCollision(bvolume.m_sphereCenter, bvolume.m_sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius);
+
+		sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
+		visible = testSphereSphereCollision(sphereCenter, bvolume.m_sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius);
 	}
 
 	// All good, write the instance
@@ -48,16 +52,16 @@
 	{
 		// LOD selection
 		U32 lod;
-		const Bool insideCameraFrustum = frustumTest(g_consts.m_clipPlanes, bvolume.m_sphereCenter, bvolume.m_sphereRadius);
+		const Bool insideCameraFrustum = frustumTest(g_unis.m_clipPlanes, sphereCenter, bvolume.m_sphereRadius);
 		if(insideCameraFrustum)
 		{
 			// Visible by the camera, need to match the camera LODs
-			const F32 distFromLodPoint = length(bvolume.m_sphereCenter - g_consts.m_pointOfTest) - bvolume.m_sphereRadius;
-			if(distFromLodPoint < g_consts.m_maxLodDistances[0])
+			const F32 distFromLodPoint = length(sphereCenter - g_unis.m_pointOfTest) - bvolume.m_sphereRadius;
+			if(distFromLodPoint < g_unis.m_maxLodDistances[0])
 			{
 				lod = 0u;
 			}
-			else if(distFromLodPoint < g_consts.m_maxLodDistances[1])
+			else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
 			{
 				lod = 1u;
 			}
@@ -72,17 +76,17 @@
 			lod = 2u;
 		}
 
-		const U32 renderableIdx = bvolume.m_renderableIndexAndRenderStateBucket >> 12u;
+		const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
 		const GpuSceneRenderable renderable = g_renderables[renderableIdx];
 
-		const U32 meshLodOffset = renderable.m_meshLodsOffset + sizeof(GpuSceneMeshLod) * lod;
-		const GpuSceneMeshLod meshLod = g_gpuScene.Load<GpuSceneMeshLod>(meshLodOffset);
+		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
+		const GpuSceneMeshLod meshLod = g_meshLods[meshLodIndex];
 
 		if(meshLod.m_blasAddress.x != 0 || meshLod.m_blasAddress.y != 0)
 		{
 			// It has a BLAS, write what is to write
 
-			const Mat3x4 transform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+			const Mat3x4 transform = g_transforms[renderable.m_worldTransformsIndex];
 			Mat3x4 meshQuantizationTransform;
 			meshQuantizationTransform.m_row0 = Vec4(meshLod.m_positionScale, 0.0f, 0.0f, meshLod.m_positionTranslation.x);
 			meshQuantizationTransform.m_row1 = Vec4(0.0f, meshLod.m_positionScale, 0.0f, meshLod.m_positionTranslation.y);
@@ -141,4 +145,4 @@
 	}
 }
 
-#pragma anki end
+#pragma anki technique_end comp

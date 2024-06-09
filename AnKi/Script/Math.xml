@@ -470,7 +470,7 @@ namespace anki {]]></head>
 					<args>
 						<arg>Vec4</arg>
 						<arg>Mat3x4</arg>
-						<arg>F32</arg>
+						<arg>Vec4</arg>
 					</args>
 				</constructor>
 			</constructors>
@@ -497,11 +497,11 @@ namespace anki {]]></head>
 					</args>
 				</method>
 				<method name="getScale">
-					<return>F32</return>
+					<return>Vec4</return>
 				</method>
 				<method name="setScale">
 					<args>
-						<arg>F32</arg>
+						<arg>const Vec4&amp;</arg>
 					</args>
 				</method>
 			</methods>

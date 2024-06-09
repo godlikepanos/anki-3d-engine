@@ -13,20 +13,17 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	g_windowFullscreenCVar.set(1);
 
 #if !ANKI_OS_ANDROID
-	CString mainDataPath = ANKI_SOURCE_DIRECTORY;
 	HeapMemoryPool tmpPool(allocAligned, nullptr);
 	BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>> assetsDataPath(&tmpPool);
 	assetsDataPath.sprintf("%s/Samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
 
 	if(!directoryExists(assetsDataPath))
 	{
-		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository? "
-				  "I'll continue but expect issues",
-				  assetsDataPath.cstr());
+		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository? I'll continue but expect issues", assetsDataPath.cstr());
 	}
 	else
 	{
-		g_dataPathsCVar.set(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
+		g_dataPathsCVar.set(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s|.anki,lua", assetsDataPath.cstr()));
 	}
 #endif
 
@@ -66,22 +63,22 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferNormals") ? "" : "GBufferNormals");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SkyLut") ? "" : "SkyLut");
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "IndirectDiffuse") ? "" : "IndirectDiffuse");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Ssr") ? "" : "Ssr");
 	}
 
 	if(in.getKey(KeyCode::kI) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Ssao") ? "" : "Ssao");
 	}
 
 	if(in.getKey(KeyCode::kO) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "ResolvedShadows") ? "" : "ResolvedShadows");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? "" : "RtShadows");
 	}
 
 	if(in.getKey(KeyCode::kP) == 1)
@@ -109,7 +106,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kL) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "LightShading") ? "" : "LightShading");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Bloom") ? "" : "Bloom");
 	}
 
 	if(in.getKey(KeyCode::kH) == 1)

@@ -25,6 +25,20 @@ namespace anki {
 /// @param prevHash The hash to append to.
 /// @return The new hash.
 [[nodiscard]] ANKI_PURE U64 appendHash(const void* buffer, PtrSize bufferSize, U64 prevHash);
+
+/// See computeHash.
+template<typename T>
+[[nodiscard]] ANKI_PURE U64 computeObjectHash(const T& obj, U64 seed = 123)
+{
+	return computeHash(&obj, sizeof(obj), seed);
+}
+
+/// See appendHash.
+template<typename T>
+[[nodiscard]] ANKI_PURE U64 appendObjectHash(const T& obj, U64 prevHash)
+{
+	return appendHash(&obj, sizeof(obj), prevHash);
+}
 /// @}
 
 } // end namespace anki

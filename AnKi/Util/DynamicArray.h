@@ -188,9 +188,12 @@ public:
 	{
 		if(m_data)
 		{
-			ANKI_ASSERT(m_size > 0);
 			ANKI_ASSERT(m_capacity > 0);
-			deleteArray(m_pool, m_data, m_size);
+			for(TSize i = 0; i < m_size; ++i)
+			{
+				m_data[i].~T();
+			}
+			m_pool.free(m_data);
 
 			m_data = nullptr;
 			m_size = 0;
@@ -293,6 +296,27 @@ public:
 			}
 		}
 		return end;
+	}
+
+	/// Fill the array.
+	static void fill(Iterator begin, Iterator end, const T& val)
+	{
+		while(begin != end)
+		{
+			*begin = val;
+			++begin;
+		}
+	}
+
+	void fill(const T& val)
+	{
+		auto begin = getBegin();
+		auto end = getEnd();
+		while(begin != end)
+		{
+			*begin = val;
+			++begin;
+		}
 	}
 
 	TMemoryPool& getMemoryPool()

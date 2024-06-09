@@ -8,10 +8,10 @@
 #pragma anki mutator TEXTURE_DIMENSIONS 2 3
 #pragma anki mutator COMPONENT_TYPE 0 1 // 0 is float, 1 is uint
 
-#pragma anki start comp
+#pragma anki technique_start comp
 #include <AnKi/Shaders/Common.hlsl>
 
-struct Constants
+struct Uniforms
 {
 #if COMPONENT_TYPE == 0
 	Vec4 m_clearColor;
@@ -20,19 +20,19 @@ struct Constants
 #endif
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_pc;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
 #if TEXTURE_DIMENSIONS == 2
 #	if COMPONENT_TYPE == 0
-[[vk::binding(0)]] RWTexture2D<Vec4> g_outUav;
+RWTexture2D<Vec4> g_storageTex : register(u0);
 #	else
-[[vk::binding(0)]] RWTexture2D<UVec4> g_outUav;
+RWTexture2D<UVec4> g_storageTex : register(u0);
 #	endif
 #else
 #	if COMPONENT_TYPE == 0
-[[vk::binding(0)]] RWTexture3D<Vec4> g_outUav;
+RWTexture3D<Vec4> g_storageTex : register(u0);
 #	else
-[[vk::binding(0)]] RWTexture3D<UVec4> g_outUav;
+RWTexture3D<UVec4> g_storageTex : register(u0);
 #	endif
 #endif
 
@@ -40,25 +40,25 @@ struct Constants
 {
 #if TEXTURE_DIMENSIONS == 2
 	UVec2 texSize;
-	g_outUav.GetDimensions(texSize.x, texSize.y);
+	g_storageTex.GetDimensions(texSize.x, texSize.y);
 
 	if(svDispatchThreadId.x >= texSize.x || svDispatchThreadId.y >= texSize.y)
 	{
 		return;
 	}
 
-	g_outUav[svDispatchThreadId.xy] = g_pc.m_clearColor;
+	g_storageTex[svDispatchThreadId.xy] = g_unis.m_clearColor;
 #else
 	UVec3 texSize;
-	g_outUav.GetDimensions(texSize.x, texSize.y, texSize.z);
+	g_storageTex.GetDimensions(texSize.x, texSize.y, texSize.z);
 
 	if(svDispatchThreadId.x >= texSize.x || svDispatchThreadId.y >= texSize.y || svDispatchThreadId.z >= texSize.z)
 	{
 		return;
 	}
 
-	g_outUav[svDispatchThreadId] = g_pc.m_clearColor;
+	g_storageTex[svDispatchThreadId] = g_unis.m_clearColor;
 #endif
 }
 
-#pragma anki end
+#pragma anki technique_end comp

@@ -1,0 +1,91 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Calculates the motion vectors that will be used to sample from the previous frame
+
+#if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+#	include <AnKi/Shaders/Functions.hlsl>
+
+constexpr F32 kMaxRejectionDistance = 0.1; // In meters
+
+SamplerState g_nearesetAnyClampSampler : register(s0);
+Texture2D g_currentDepthTex : register(t0);
+Texture2D g_velocityTex : register(t1);
+
+struct Uniforms
+{
+	Mat4 m_currentViewProjMat;
+	Mat4 m_currentInvViewProjMat;
+	Mat4 m_prevViewProjMat;
+};
+
+ConstantBuffer<Uniforms> g_unis : register(b0);
+
+#	if ANKI_COMPUTE_SHADER
+RWTexture2D<Vec2> g_motionVectorsStorageTex : register(u0);
+#	endif
+
+#	if ANKI_COMPUTE_SHADER
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
+#	else
+struct FragOut
+{
+	Vec2 m_motionVectors : SV_TARGET0;
+};
+
+FragOut main(Vec2 uv : TEXCOORD)
+#	endif
+{
+#	if ANKI_COMPUTE_SHADER
+	Vec2 texSize;
+	g_motionVectorsStorageTex.GetDimensions(texSize.x, texSize.y);
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / texSize;
+#	endif
+
+	const Vec2 velocity = g_velocityTex.SampleLevel(g_nearesetAnyClampSampler, uv, 0.0).rg;
+
+	Vec2 historyUv;
+	if(velocity.x != 1.0)
+	{
+		historyUv = uv + velocity;
+	}
+	else
+	{
+		// Don't use a reprojection matrix or other kind of optimizations. Due to numerical precision it produces slightly off result. Big enough to
+		// create slight visual issues. Do it the hard way.
+		const F32 depth = g_currentDepthTex.SampleLevel(g_nearesetAnyClampSampler, uv, 0.0).r;
+		const Vec4 v4 = mul(g_unis.m_currentInvViewProjMat, Vec4(uvToNdc(uv), depth, 1.0));
+		const Vec3 worldPos = v4.xyz / v4.w;
+
+		Vec4 clipPos = mul(g_unis.m_currentViewProjMat, Vec4(worldPos, 1.0));
+		clipPos.xy /= clipPos.w;
+
+		Vec4 prevClipPos = mul(g_unis.m_prevViewProjMat, Vec4(worldPos, 1.0));
+		prevClipPos.xy /= prevClipPos.w;
+
+		const Vec2 diff = (prevClipPos.xy - clipPos.xy) * 0.5f; // aka uvToNdc(prevClipPos.xy) - uvToNdc(clipPos.xy)
+		historyUv = uv + diff;
+	}
+
+	// Write out
+#	if ANKI_COMPUTE_SHADER
+	g_motionVectorsStorageTex[svDispatchThreadId] = historyUv - uv;
+#	else
+	FragOut output;
+	output.m_motionVectors = historyUv - uv;
+	return output;
+#	endif
+}
+#endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#pragma anki technique_end frag
+
+#pragma anki technique_start comp
+#pragma anki technique_end comp

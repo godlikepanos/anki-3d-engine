@@ -25,8 +25,6 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
-	FramebufferDescription m_fbDescr;
-
 	Error initInternal();
 };
 /// @}

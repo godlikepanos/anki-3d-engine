@@ -54,7 +54,6 @@ private:
 
 	GrUpscalerPtr m_grUpscaler;
 
-	FramebufferDescription m_fbDescr;
 	RenderTargetDescription m_upscaleAndSharpenRtDescr;
 	RenderTargetDescription m_tonemapedRtDescr;
 

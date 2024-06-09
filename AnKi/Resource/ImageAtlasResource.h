@@ -46,11 +46,6 @@ public:
 		return m_image->getTexture();
 	}
 
-	const TextureView& getTextureView() const
-	{
-		return m_image->getTextureView();
-	}
-
 	U32 getWidth() const
 	{
 		return m_size[0];

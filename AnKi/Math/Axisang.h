@@ -183,8 +183,7 @@ public:
 
 	/// @name Other
 	/// @{
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	String toString() const
+	String toString() const requires(std::is_floating_point<T>::value)
 	{
 		return String().sprintf("%f %f %f | %f", m_axis.x(), m_axis.y(), m_axis.z(), m_ang);
 	}

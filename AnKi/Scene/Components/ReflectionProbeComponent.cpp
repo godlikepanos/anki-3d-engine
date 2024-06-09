@@ -9,7 +9,6 @@
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Gr/Texture.h>
-#include <AnKi/Gr/TextureView.h>
 
 namespace anki {
 
@@ -29,15 +28,12 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	texInit.m_height = texInit.m_width;
 	texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
 	texInit.m_type = TextureType::kCube;
-	texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kUavComputeWrite | TextureUsageBit::kUavComputeRead
+	texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kStorageComputeRead
 					  | TextureUsageBit::kAllFramebuffer | TextureUsageBit::kGenerateMipmaps;
 
 	m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
 
-	TextureViewInitInfo viewInit(m_reflectionTex.get(), "ReflectionProbe");
-	m_reflectionView = GrManager::getSingleton().newTextureView(viewInit);
-
-	m_reflectionTexBindlessIndex = m_reflectionView->getOrCreateBindlessTextureIndex();
+	m_reflectionTexBindlessIndex = m_reflectionTex->getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()

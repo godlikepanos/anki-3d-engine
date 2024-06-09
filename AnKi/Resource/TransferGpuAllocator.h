@@ -48,6 +48,11 @@ public:
 		return *this;
 	}
 
+	operator BufferView() const
+	{
+		return {m_buffer.get(), m_offsetInBuffer, m_range};
+	}
+
 	Buffer& getBuffer() const
 	{
 		return *m_buffer;

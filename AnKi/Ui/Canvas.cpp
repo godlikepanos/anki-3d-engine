@@ -219,12 +219,12 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
 	cmdb.setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
-	cmdb.bindVertexBuffer(0, &vertsToken.getBuffer(), vertsToken.getOffset(), sizeof(ImDrawVert));
-	cmdb.setVertexAttribute(0, 0, Format::kR32G32_Sfloat, 0);
-	cmdb.setVertexAttribute(1, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
-	cmdb.setVertexAttribute(2, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
+	cmdb.bindVertexBuffer(0, vertsToken, sizeof(ImDrawVert));
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32_Sfloat, 0);
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kColor, 0, Format::kR8G8B8A8_Unorm, sizeof(Vec2) * 2);
+	cmdb.setVertexAttribute(VertexAttributeSemantic::kTexCoord, 0, Format::kR32G32_Sfloat, sizeof(Vec2));
 
-	cmdb.bindIndexBuffer(&indicesToken.getBuffer(), indicesToken.getOffset(), IndexType::kU16);
+	cmdb.bindIndexBuffer(indicesToken, IndexType::kU16);
 
 	// Will project scissor/clipping rectangles into framebuffer space
 	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports
@@ -269,24 +269,14 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					cmdb.setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()), U32(clipRect.w() - clipRect.y()));
 
 					UiImageId id(pcmd.TextureId);
-					const UiImageIdExtra* idExtra = nullptr;
-					TextureViewPtr textureView;
-					if(id.m_bits.m_extra)
-					{
-						idExtra = numberToPtr<const UiImageIdExtra*>(id.m_bits.m_textureViewPtrOrComplex);
-						textureView = idExtra->m_textureView;
-					}
-					else
-					{
-						textureView.reset(numberToPtr<TextureView*>(id.m_bits.m_textureViewPtrOrComplex));
-					}
+					const UiImageIdData* data = id.m_data;
 
 					// Bind program
-					if(idExtra && idExtra->m_customProgram.isCreated())
+					if(data && data->m_customProgram.isCreated())
 					{
-						cmdb.bindShaderProgram(idExtra->m_customProgram.get());
+						cmdb.bindShaderProgram(data->m_customProgram.get());
 					}
-					else if(textureView.isCreated())
+					else if(data && data->m_textureView.isValid())
 					{
 						cmdb.bindShaderProgram(m_grProgs[kRgbaTex].get());
 					}
@@ -296,10 +286,11 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					}
 
 					// Bindings
-					if(textureView.isCreated())
+					if(data && data->m_textureView.isValid())
 					{
-						cmdb.bindSampler(0, 0, (id.m_bits.m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
-						cmdb.bindTexture(0, 1, textureView.get());
+						cmdb.bindSampler(ANKI_REG(s0),
+										 (data->m_pointSampling) ? m_nearestNearestRepeatSampler.get() : m_linearLinearRepeatSampler.get());
+						cmdb.bindTexture(ANKI_REG(t0), data->m_textureView);
 					}
 
 					// Push constants
@@ -307,19 +298,19 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					{
 					public:
 						Vec4 m_transform;
-						Array<U8, sizeof(UiImageIdExtra::m_extraPushConstants)> m_extra;
+						Array<U8, sizeof(UiImageIdData::m_extraPushConstants)> m_extra;
 					} pc;
 					pc.m_transform.x() = 2.0f / drawData.DisplaySize.x;
 					pc.m_transform.y() = -2.0f / drawData.DisplaySize.y;
 					pc.m_transform.z() = (drawData.DisplayPos.x / drawData.DisplaySize.x) * 2.0f - 1.0f;
 					pc.m_transform.w() = -((drawData.DisplayPos.y / drawData.DisplaySize.y) * 2.0f - 1.0f);
 					U32 extraPushConstantsSize = 0;
-					if(idExtra && idExtra->m_extraPushConstantsSize)
+					if(data && data->m_extraPushConstantsSize)
 					{
-						ANKI_ASSERT(idExtra->m_extraPushConstantsSize <= sizeof(idExtra->m_extraPushConstants));
-						memcpy(&pc.m_extra[0], idExtra->m_extraPushConstants.getBegin(), idExtra->m_extraPushConstantsSize);
+						ANKI_ASSERT(data->m_extraPushConstantsSize <= sizeof(data->m_extraPushConstants));
+						memcpy(&pc.m_extra[0], data->m_extraPushConstants.getBegin(), data->m_extraPushConstantsSize);
 
-						extraPushConstantsSize = idExtra->m_extraPushConstantsSize;
+						extraPushConstantsSize = data->m_extraPushConstantsSize;
 					}
 					cmdb.setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
 

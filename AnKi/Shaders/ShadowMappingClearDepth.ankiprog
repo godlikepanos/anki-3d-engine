@@ -5,7 +5,7 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
 {
@@ -15,10 +15,10 @@ Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
 	return Vec4(pos, 1.0, 1.0);
 }
 
-#pragma anki end
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 void main()
 {
 }
-#pragma anki end
+#pragma anki technique_end frag

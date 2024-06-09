@@ -31,7 +31,6 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/TemporalAA.h>
 #include <AnKi/Renderer/UiStage.h>
-#include <AnKi/Renderer/IndirectSpecular.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>
@@ -39,10 +38,13 @@
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/Scale.h>
-#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/Ssao.h>
+#include <AnKi/Renderer/Ssr.h>
+#include <AnKi/Renderer/Sky.h>
+#include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
@@ -51,7 +53,7 @@ static NumericCVar<F32> g_internalRenderScalingCVar(CVarSubsystem::kRenderer, "I
 NumericCVar<F32> g_renderScalingCVar(CVarSubsystem::kRenderer, "RenderScaling", 1.0f, 0.5f, 8.0f,
 									 "A factor over the requested swapchain resolution. Applies to post-processing and UI");
 static NumericCVar<U32> g_zSplitCountCVar(CVarSubsystem::kRenderer, "ZSplitCount", 64, 8, kMaxZsplitCount, "Clusterer number of Z splits");
-static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 8, 1, 16,
+static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 16, 1, 16,
 											   "Texture anisotropy for the main passes");
 BoolCVar g_preferComputeCVar(CVarSubsystem::kRenderer, "PreferCompute", !ANKI_PLATFORM_MOBILE, "Prefer compute shaders");
 static BoolCVar g_highQualityHdrCVar(CVarSubsystem::kRenderer, "HighQualityHdr", !ANKI_PLATFORM_MOBILE,
@@ -74,6 +76,8 @@ NumericCVar<F32> g_lod0MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod0MaxDistanc
 									   "Distance that will be used to calculate the LOD 0");
 NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod1MaxDistance", 40.0f, 2.0f, kMaxF32,
 									   "Distance that will be used to calculate the LOD 1");
+
+static StatCounter g_primitivesDrawnStatVar(StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -163,110 +167,26 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	{
 		TextureInitInfo texinit("RendererDummy");
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kUavComputeWrite;
+		texinit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite;
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
-		TexturePtr tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
-
-		TextureViewInitInfo viewinit(tex.get());
-		m_dummyTexView2d = GrManager::getSingleton().newTextureView(viewinit);
+		m_dummyTex2d = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
-		tex = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
-		viewinit = TextureViewInitInfo(tex.get());
-		m_dummyTexView3d = GrManager::getSingleton().newTextureView(viewinit);
+		m_dummyTex3d = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSampled);
 
 		m_dummyBuff = GrManager::getSingleton().newBuffer(
-			BufferInitInfo(1024, BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav, BufferMapAccessBit::kNone, "Dummy"));
+			BufferInitInfo(1024, BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
-	// Init the stages. Careful with the order!!!!!!!!!!
-	m_volumetricLightingAccumulation.reset(newInstance<VolumetricLightingAccumulation>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_volumetricLightingAccumulation->init());
-
-	m_indirectDiffuseProbes.reset(newInstance<IndirectDiffuseProbes>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_indirectDiffuseProbes->init());
-
-	m_probeReflections.reset(newInstance<ProbeReflections>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_probeReflections->init());
-
-	m_vrsSriGeneration.reset(newInstance<VrsSriGeneration>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_vrsSriGeneration->init());
-
-	m_scale.reset(newInstance<Scale>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_scale->init());
-
-	m_gbuffer.reset(newInstance<GBuffer>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_gbuffer->init());
-
-	m_gbufferPost.reset(newInstance<GBufferPost>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_gbufferPost->init());
-
-	m_shadowMapping.reset(newInstance<ShadowMapping>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_shadowMapping->init());
-
-	m_volumetricFog.reset(newInstance<VolumetricFog>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_volumetricFog->init());
-
-	m_lightShading.reset(newInstance<LightShading>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_lightShading->init());
-
-	m_depthDownscale.reset(newInstance<DepthDownscale>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_depthDownscale->init());
-
-	m_forwardShading.reset(newInstance<ForwardShading>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_forwardShading->init());
-
-	m_lensFlare.reset(newInstance<LensFlare>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_lensFlare->init());
-
-	m_downscaleBlur.reset(newInstance<DownscaleBlur>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_downscaleBlur->init());
-
-	m_indirectSpecular.reset(newInstance<IndirectSpecular>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_indirectSpecular->init());
-
-	m_tonemapping.reset(newInstance<Tonemapping>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_tonemapping->init());
-
-	m_temporalAA.reset(newInstance<TemporalAA>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_temporalAA->init());
-
-	m_bloom.reset(newInstance<Bloom>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_bloom->init());
-
-	m_finalComposite.reset(newInstance<FinalComposite>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_finalComposite->init());
-
-	m_dbg.reset(newInstance<Dbg>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_dbg->init());
-
-	m_uiStage.reset(newInstance<UiStage>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_uiStage->init());
-
-	m_indirectDiffuse.reset(newInstance<IndirectDiffuse>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_indirectDiffuse->init());
-
-	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rayTracedShadowsCVar.get())
-	{
-		m_accelerationStructureBuilder.reset(newInstance<AccelerationStructureBuilder>(RendererMemoryPool::getSingleton()));
-		ANKI_CHECK(m_accelerationStructureBuilder->init());
-
-		m_rtShadows.reset(newInstance<RtShadows>(RendererMemoryPool::getSingleton()));
-		ANKI_CHECK(m_rtShadows->init());
+	// Init the stages
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
+	if(initCondition) \
+	{ \
+		m_##name2.reset(newInstance<name>(RendererMemoryPool::getSingleton())); \
+		ANKI_CHECK(m_##name2->init()); \
 	}
-
-	m_shadowmapsResolve.reset(newInstance<ShadowmapsResolve>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_shadowmapsResolve->init());
-
-	m_motionVectors.reset(newInstance<MotionVectors>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_motionVectors->init());
-
-	m_clusterBinning2.reset(newInstance<ClusterBinning>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_clusterBinning2->init());
-
-	m_primaryNonRenderableVisibility.reset(newInstance<PrimaryNonRenderableVisibility>(RendererMemoryPool::getSingleton()));
-	ANKI_CHECK(m_primaryNonRenderableVisibility->init());
+#include <AnKi/Renderer/RendererObject.def.h>
 
 	// Init samplers
 	{
@@ -285,9 +205,16 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		sinit.m_addressing = SamplingAddressing::kRepeat;
 		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
-		sinit.setName("TrilinearRepeatAniso");
-		sinit.m_anisotropyLevel = g_textureAnisotropyCVar.get();
-		m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
+		if(g_textureAnisotropyCVar.get() <= 1u)
+		{
+			m_samplers.m_trilinearRepeatAniso = m_samplers.m_trilinearRepeat;
+		}
+		else
+		{
+			sinit.setName("TrilinearRepeatAniso");
+			sinit.m_anisotropyLevel = g_textureAnisotropyCVar.get();
+			m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
+		}
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
 		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
@@ -324,6 +251,10 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
+#if ANKI_STATS_ENABLED
+	updatePipelineStats();
+#endif
+
 	const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
 	ctx.m_prevMatrices = m_prevMatrices;
@@ -334,10 +265,12 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_viewProjection = cam.getFrustum().getViewProjectionMatrix();
 
 	Vec2 jitter = m_jitterOffsets[m_frameCount & (m_jitterOffsets.getSize() - 1)]; // In [-0.5, 0.5]
-	const Vec2 ndcPixelSize = 2.0f / Vec2(m_internalResolution);
+	jitter *= 2.0f; // In [-1, 1]
+	const Vec2 ndcPixelSize = 1.0f / Vec2(m_internalResolution);
 	jitter *= ndcPixelSize;
 	ctx.m_matrices.m_jitter = Mat4::getIdentity();
-	ctx.m_matrices.m_jitter.setTranslationPart(Vec4(jitter, 0.0f, 1.0f));
+	ctx.m_matrices.m_jitter.setTranslationPart(Vec3(jitter, 0.0f));
+	ctx.m_matrices.m_jitterOffsetNdc = jitter;
 
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
 	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * Mat4(ctx.m_matrices.m_view, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -345,12 +278,16 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
 	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
 
-	ctx.m_matrices.m_reprojection = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjectionJitter;
+	ctx.m_matrices.m_reprojection = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjection;
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
 	ctx.m_cameraNear = cam.getNear();
 	ctx.m_cameraFar = cam.getFar();
+
+	// Allocate global constants
+	GlobalRendererUniforms* globalUnis;
+	ctx.m_globalRenderingUniformsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUnis);
 
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
@@ -365,16 +302,17 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);
 	}
-	m_forwardShading->populateRenderGraph(ctx); // This may feel out of place but it's only visibility
 	m_gbuffer->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_clusterBinning2->populateRenderGraph(ctx);
+	m_sky->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depthDownscale->populateRenderGraph(ctx);
+	m_ssr->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
@@ -382,8 +320,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_shadowmapsResolve->populateRenderGraph(ctx);
 	m_volumetricFog->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
-	m_indirectSpecular->populateRenderGraph(ctx);
-	m_indirectDiffuse->populateRenderGraph(ctx);
+	m_ssao->populateRenderGraph(ctx);
+	m_forwardShading->populateRenderGraph(ctx); // This may feel out of place but it's only visibility. Keep it just before light shading
 	m_lightShading->populateRenderGraph(ctx);
 	if(!getScale().getUsingGrUpscaler())
 	{
@@ -398,7 +336,64 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
+	writeGlobalRendererConstants(ctx, *globalUnis);
+
 	return Error::kNone;
+}
+
+void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererUniforms& unis)
+{
+	ANKI_TRACE_SCOPED_EVENT(RWriteGlobalRendererConstants);
+
+	unis.m_renderingSize = Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()));
+
+	unis.m_time = F32(HighRezTimer::getCurrentTime());
+	unis.m_frame = m_frameCount & kMaxU32;
+
+	Plane nearPlane;
+	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
+	unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+	unis.m_near = ctx.m_cameraNear;
+	unis.m_far = ctx.m_cameraFar;
+	unis.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+
+	unis.m_tileCounts = m_tileCounts;
+	unis.m_zSplitCount = m_zSplitCount;
+	unis.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_cameraFar - ctx.m_cameraNear);
+	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(m_zSplitCount));
+	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(m_zSplitCount));
+	unis.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar.get() - 1, m_zSplitCount);
+
+	unis.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
+
+	unis.m_matrices = ctx.m_matrices;
+	unis.m_previousMatrices = ctx.m_prevMatrices;
+
+	// Directional light
+	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+	if(dirLight)
+	{
+		DirectionalLight& out = unis.m_directionalLight;
+		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_shadowCascadeCountCVar.get() : 0;
+
+		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
+		out.m_power = dirLight->getLightPower();
+		out.m_shadowCascadeCount_31bit_active_1bit = shadowCascadeCount << 1u;
+		out.m_shadowCascadeCount_31bit_active_1bit |= 1;
+		out.m_direction = dirLight->getDirection();
+		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
+											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
+
+		for(U cascade = 0; cascade < shadowCascadeCount; ++cascade)
+		{
+			ANKI_ASSERT(ctx.m_dirLightTextureMatrices[cascade] != Mat4::getZero());
+			out.m_textureMatrices[cascade] = ctx.m_dirLightTextureMatrices[cascade];
+		}
+	}
+	else
+	{
+		unis.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
+	}
 }
 
 void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
@@ -411,7 +406,7 @@ void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferWrite) || !!(usage & TextureUsageBit::kUavComputeWrite));
+	ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferWrite) || !!(usage & TextureUsageBit::kStorageComputeWrite));
 	TextureInitInfo init(name);
 
 	init.m_width = w;
@@ -446,16 +441,16 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 
 TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage, const ClearValue& clearVal)
 {
-	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kUavComputeWrite));
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite) || !!(inf.m_usage & TextureUsageBit::kStorageComputeWrite));
 
-	const U faceCount = (inf.m_type == TextureType::kCube || inf.m_type == TextureType::kCubeArray) ? 6 : 1;
+	const U faceCount = textureTypeIsCube(inf.m_type) ? 6 : 1;
 
 	Bool useCompute = false;
 	if(!!(inf.m_usage & TextureUsageBit::kFramebufferWrite))
 	{
 		useCompute = false;
 	}
-	else if(!!(inf.m_usage & TextureUsageBit::kUavComputeWrite))
+	else if(!!(inf.m_usage & TextureUsageBit::kStorageComputeWrite))
 	{
 		useCompute = true;
 	}
@@ -482,13 +477,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 		{
 			for(U32 layer = 0; layer < inf.m_layerCount; ++layer)
 			{
-				TextureSurfaceInfo surf(mip, 0, face, layer);
-
 				if(!useCompute)
 				{
-					FramebufferInitInfo fbInit("RendererClearRT");
-					Array<TextureUsageBit, kMaxColorRenderTargets> colUsage = {};
-					TextureUsageBit dsUsage = TextureUsageBit::kNone;
+					RenderTarget rt;
+					rt.m_clearValue = clearVal;
 
 					if(getFormatInfo(inf.m_format).isDepthStencil())
 					{
@@ -503,33 +495,24 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf, aspect));
-
-						fbInit.m_depthStencilAttachment.m_textureView = std::move(view);
-						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::kClear;
-						fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::kClear;
-						fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
-
-						dsUsage = TextureUsageBit::kFramebufferWrite;
+						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer, aspect));
 					}
 					else
 					{
-						TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
-
-						fbInit.m_colorAttachmentCount = 1;
-						fbInit.m_colorAttachments[0].m_textureView = view;
-						fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::kClear;
-						fbInit.m_colorAttachments[0].m_clearValue = clearVal;
-
-						colUsage[0] = TextureUsageBit::kFramebufferWrite;
+						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer));
 					}
-					FramebufferPtr fb = GrManager::getSingleton().newFramebuffer(fbInit);
 
-					TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite, surf};
-					barrier.m_subresource.m_depthStencilAspect = tex->getDepthStencilAspect();
+					TextureBarrierInfo barrier = {rt.m_textureView, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
-					cmdb->beginRenderPass(fb.get(), colUsage, dsUsage);
+					if(getFormatInfo(inf.m_format).isDepthStencil())
+					{
+						cmdb->beginRenderPass({}, &rt);
+					}
+					else
+					{
+						cmdb->beginRenderPass({rt});
+					}
 					cmdb->endRenderPass();
 
 					if(!!initialUsage)
@@ -568,10 +551,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
-					TextureViewPtr view = GrManager::getSingleton().newTextureView(TextureViewInitInfo(tex.get(), surf));
-					cmdb->bindUavTexture(0, 0, view.get());
+					const TextureView view(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer));
 
-					const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kNone, TextureUsageBit::kUavComputeWrite, surf};
+					cmdb->bindTexture(ANKI_REG(u0), view);
+
+					const TextureBarrierInfo barrier = {view, TextureUsageBit::kNone, TextureUsageBit::kStorageComputeWrite};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 					UVec3 wgSize;
@@ -583,7 +567,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					if(!!initialUsage)
 					{
-						const TextureBarrierInfo barrier = {tex.get(), TextureUsageBit::kUavComputeWrite, initialUsage, surf};
+						const TextureBarrierInfo barrier = {view, TextureUsageBit::kStorageComputeWrite, initialUsage};
 
 						cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 					}
@@ -592,7 +576,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 		}
 	}
 
-	cmdb->flush();
+	cmdb->endRecording();
+
+	FencePtr fence;
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+	fence->clientWait(10.0_sec);
 
 	return tex;
 }
@@ -629,10 +617,18 @@ Bool Renderer::getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRe
 			obj = inf.m_obj;
 		}
 	}
-	ANKI_ASSERT(obj);
 
-	obj->getDebugRenderTarget(m_currentDebugRtName, handles, optionalShaderProgram);
-	return true;
+	if(obj)
+	{
+		obj->getDebugRenderTarget(m_currentDebugRtName, handles, optionalShaderProgram);
+		return true;
+	}
+	else
+	{
+		ANKI_R_LOGE("Debug rendertarget doesn't exist: %s", m_currentDebugRtName.cstr());
+		m_currentDebugRtName = {};
+		return false;
+	}
 }
 
 void Renderer::setCurrentDebugRenderTarget(CString rtName)
@@ -680,17 +676,43 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_gpuSceneHandle =
-		rgraph.importBuffer(&GpuSceneBuffer::getSingleton().getBuffer(), GpuSceneBuffer::getSingleton().getBuffer().getBufferUsage());
+		rgraph.importBuffer(GpuSceneBuffer::getSingleton().getBufferView(), GpuSceneBuffer::getSingleton().getBuffer().getBufferUsage());
 
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
-		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kUavComputeWrite);
+		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {
 			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer);
 		});
 	}
 }
+
+#if ANKI_STATS_ENABLED
+void Renderer::updatePipelineStats()
+{
+	RendererDynamicArray<PipelineQueryPtr>& arr = m_pipelineQueries[m_frameCount % kMaxFramesInFlight];
+
+	U64 sum = 0;
+	for(PipelineQueryPtr& q : arr)
+	{
+		U64 value;
+		const PipelineQueryResult res = q->getResult(value);
+		if(res == PipelineQueryResult::kNotAvailable)
+		{
+			ANKI_R_LOGW("Pipeline query result is not available");
+		}
+		else
+		{
+			sum += value;
+		}
+	}
+
+	arr.destroy();
+
+	g_primitivesDrawnStatVar.set(sum);
+}
+#endif
 
 } // end namespace anki

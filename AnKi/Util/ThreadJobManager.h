@@ -76,7 +76,7 @@ private:
 	Bool m_quit = false;
 
 	Bool pushBackTask(const Func& func);
-	Bool popFrontTask(Func& func, Bool& quit);
+	Bool popFrontTask(Func& func);
 
 	void threadRun(U32 threadId);
 };

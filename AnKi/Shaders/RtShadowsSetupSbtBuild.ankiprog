@@ -5,11 +5,10 @@
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
-[[vk::binding(0)]] StructuredBuffer<U32> g_visibleRenderableIndices; // 1st element is the count
-
-[[vk::binding(1)]] RWStructuredBuffer<DispatchIndirectArgs> g_args;
+StructuredBuffer<U32> g_visibleRenderableIndices : register(t0); // 1st element is the count
+RWStructuredBuffer<DispatchIndirectArgs> g_args : register(u0);
 
 #define NUMTHREADS 64
 
@@ -25,4 +24,4 @@
 	g_args[0] = args;
 }
 
-#pragma anki end
+#pragma anki technique_end comp

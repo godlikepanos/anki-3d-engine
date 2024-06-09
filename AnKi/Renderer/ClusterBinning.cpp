@@ -33,15 +33,11 @@ Error ClusterBinning::init()
 
 	for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 	{
-		ShaderProgramResourceVariantInitInfo inf(m_binningProg);
-		inf.addMutation("OBJECT_TYPE", MutatorValue(type));
-		inf.addConstant("kZSplitCount", getRenderer().getZSplitCount());
-		const ShaderProgramResourceVariant* variant;
-		m_binningProg->getOrCreateVariant(inf, variant);
-		m_binningGrProgs[type].reset(&variant->getProgram());
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_binningProg,
+									 m_binningGrProgs[type]));
 
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningPackVisibles.ankiprogbin",
-									 Array<SubMutation, 1>{{{"OBJECT_TYPE", MutatorValue(type)}}}, m_packingProg, m_packingGrProgs[type]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningPackVisibles.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_packingProg,
+									 m_packingGrProgs[type]));
 	}
 
 	return Error::kNone;
@@ -53,28 +49,21 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	// Fire an async job to fill the general consts
-	{
-		m_runCtx.m_rctx = &ctx;
-		m_runCtx.m_clusterConstBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, m_runCtx.m_constsCpu);
-		writeClusterConstsInternal();
-	}
-
 	// Allocate the clusters buffer
 	{
 		const U32 clusterCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y() + getRenderer().getZSplitCount();
 		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(Cluster) * clusterCount);
-		m_runCtx.m_clustersHandle = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_clustersBuffer);
+		m_runCtx.m_clustersHandle = rgraph.importBuffer(m_runCtx.m_clustersBuffer, BufferUsageBit::kNone);
 	}
 
 	// Setup the indirect dispatches and zero the clusters buffer
-	BufferOffsetRange indirectArgsBuff;
+	BufferView indirectArgsBuff;
 	BufferHandle indirectArgsHandle;
 	{
 		// Allocate memory for the indirect args
 		constexpr U32 dispatchCount = U32(GpuSceneNonRenderableObjectType::kCount) * 2;
 		indirectArgsBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * dispatchCount);
-		indirectArgsHandle = rgraph.importBuffer(BufferUsageBit::kNone, indirectArgsBuff);
+		indirectArgsHandle = rgraph.importBuffer(indirectArgsBuff, BufferUsageBit::kNone);
 
 		// Create the pass
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning setup");
@@ -82,9 +71,9 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
 			rpass.newBufferDependency(getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBufferHandle(type),
-									  BufferUsageBit::kUavComputeRead);
+									  BufferUsageBit::kStorageComputeRead);
 		}
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavComputeWrite);
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kStorageComputeWrite);
 		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kTransferDestination);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
@@ -97,16 +86,16 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 			{
-				const BufferOffsetRange& buff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindUavBuffer(0, 0, buff.m_buffer, buff.m_offset, buff.m_range, U32(type));
+				const BufferView& buff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
+				cmdb.bindStorageBuffer(Register(HlslResourceType::kSrv, U32(type)), buff);
 			}
 
-			cmdb.bindUavBuffer(0, 1, indirectArgsBuff.m_buffer, indirectArgsBuff.m_offset, indirectArgsBuff.m_range);
+			cmdb.bindStorageBuffer(ANKI_REG(u0), indirectArgsBuff);
 
 			cmdb.dispatchCompute(1, 1, 1);
 
 			// Now zero the clusters buffer
-			cmdb.fillBuffer(m_runCtx.m_clustersBuffer.m_buffer, m_runCtx.m_clustersBuffer.m_offset, m_runCtx.m_clustersBuffer.m_range, 0);
+			cmdb.fillBuffer(m_runCtx.m_clustersBuffer, 0);
 		});
 	}
 
@@ -116,18 +105,18 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning");
 
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
-		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kUavComputeWrite);
+		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			PtrSize indirectArgsBuffOffset = indirectArgsBuff.m_offset;
+			PtrSize indirectArgsBuffOffset = indirectArgsBuff.getOffset();
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 			{
 				cmdb.bindShaderProgram(m_binningGrProgs[type].get());
 
-				const BufferOffsetRange& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindUavBuffer(0, 0, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
+				const BufferView& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
+				cmdb.bindStorageBuffer(ANKI_REG(t0), idsBuff);
 
 				PtrSize objBufferOffset = 0;
 				PtrSize objBufferRange = 0;
@@ -160,13 +149,13 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				if(objBufferRange == 0)
 				{
 					objBufferOffset = 0;
-					objBufferRange = kMaxPtrSize;
+					objBufferRange = GpuSceneBuffer::getSingleton().getBufferView().getRange();
 				}
 
-				cmdb.bindUavBuffer(0, 1, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
-				cmdb.bindUavBuffer(0, 2, m_runCtx.m_clustersBuffer.m_buffer, m_runCtx.m_clustersBuffer.m_offset, m_runCtx.m_clustersBuffer.m_range);
+				cmdb.bindStorageBuffer(ANKI_REG(t1), BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
+				cmdb.bindStorageBuffer(ANKI_REG(u0), m_runCtx.m_clustersBuffer);
 
-				struct ClusterBinningConstants
+				struct ClusterBinningUniforms
 				{
 					Vec3 m_cameraOrigin;
 					F32 m_zSplitCountOverFrustumLength;
@@ -177,24 +166,32 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 					Vec4 m_nearPlaneWorld;
 
-					Mat4 m_invertedViewProjMat;
-				} consts;
+					I32 m_zSplitCountMinusOne;
+					I32 m_padding0;
+					I32 m_padding1;
+					I32 m_padding2;
 
-				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
-				consts.m_renderingSize = Vec2(getRenderer().getInternalResolution());
-				consts.m_tileCountX = getRenderer().getTileCounts().x();
-				consts.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
+					Mat4 m_invertedViewProjMat;
+				} unis;
+
+				unis.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+				unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
+				unis.m_renderingSize = Vec2(getRenderer().getInternalResolution());
+				unis.m_tileCountX = getRenderer().getTileCounts().x();
+				unis.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
 
 				Plane nearPlane;
 				extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-				consts.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+				unis.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
 
-				consts.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+				unis.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
 
-				cmdb.setPushConstants(&consts, sizeof(consts));
+				unis.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 
-				cmdb.dispatchComputeIndirect(indirectArgsBuff.m_buffer, indirectArgsBuffOffset);
+				cmdb.setPushConstants(&unis, sizeof(unis));
+
+				cmdb.dispatchComputeIndirect(BufferView(indirectArgsBuff).setOffset(indirectArgsBuffOffset).setRange(sizeof(DispatchIndirectArgs)));
+
 				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);
 			}
 		});
@@ -207,7 +204,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		{
 			m_runCtx.m_packedObjectsBuffers[type] =
 				GpuVisibleTransientMemoryPool::getSingleton().allocate(kClusteredObjectSizes[type] * kMaxVisibleClusteredObjects[type]);
-			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(BufferUsageBit::kNone, m_runCtx.m_packedObjectsBuffers[type]);
+			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(m_runCtx.m_packedObjectsBuffers[type], BufferUsageBit::kNone);
 		}
 
 		// Create the pass
@@ -215,13 +212,14 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kUavComputeWrite);
+			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kStorageComputeWrite);
 		}
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			PtrSize indirectArgsBuffOffset = indirectArgsBuff.m_offset + sizeof(DispatchIndirectArgs) * U32(GpuSceneNonRenderableObjectType::kCount);
+			PtrSize indirectArgsBuffOffset =
+				indirectArgsBuff.getOffset() + sizeof(DispatchIndirectArgs) * U32(GpuSceneNonRenderableObjectType::kCount);
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 			{
 				cmdb.bindShaderProgram(m_packingGrProgs[type].get());
@@ -257,76 +255,20 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				if(objBufferRange == 0)
 				{
 					objBufferOffset = 0;
-					objBufferRange = kMaxPtrSize;
+					objBufferRange = GpuSceneBuffer::getSingleton().getBufferView().getRange();
 				}
 
-				cmdb.bindUavBuffer(0, 0, &GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange);
-				cmdb.bindUavBuffer(0, 1, m_runCtx.m_packedObjectsBuffers[type].m_buffer, m_runCtx.m_packedObjectsBuffers[type].m_offset,
-								   m_runCtx.m_packedObjectsBuffers[type].m_range);
+				cmdb.bindStorageBuffer(ANKI_REG(t0), BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
+				cmdb.bindStorageBuffer(ANKI_REG(u0), m_runCtx.m_packedObjectsBuffers[type]);
 
-				const BufferOffsetRange& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindUavBuffer(0, 2, idsBuff.m_buffer, idsBuff.m_offset, idsBuff.m_range);
+				const BufferView& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
+				cmdb.bindStorageBuffer(ANKI_REG(t1), idsBuff);
 
-				cmdb.dispatchComputeIndirect(indirectArgsBuff.m_buffer, indirectArgsBuffOffset);
+				cmdb.dispatchComputeIndirect(BufferView(indirectArgsBuff).setOffset(indirectArgsBuffOffset).setRange(sizeof(DispatchIndirectArgs)));
+
 				indirectArgsBuffOffset += sizeof(DispatchIndirectArgs);
 			}
 		});
-	}
-}
-
-void ClusterBinning::writeClusterConstsInternal()
-{
-	ANKI_TRACE_SCOPED_EVENT(RWriteClusterShadingObjects);
-
-	RenderingContext& ctx = *m_runCtx.m_rctx;
-	ClusteredShadingConstants& unis = *m_runCtx.m_constsCpu;
-
-	unis.m_renderingSize = Vec2(F32(getRenderer().getInternalResolution().x()), F32(getRenderer().getInternalResolution().y()));
-
-	unis.m_time = F32(HighRezTimer::getCurrentTime());
-	unis.m_frame = getRenderer().getFrameCount() & kMaxU32;
-
-	Plane nearPlane;
-	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-	unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
-	unis.m_near = ctx.m_cameraNear;
-	unis.m_far = ctx.m_cameraFar;
-	unis.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-
-	unis.m_tileCounts = getRenderer().getTileCounts();
-	unis.m_zSplitCount = getRenderer().getZSplitCount();
-	unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
-	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
-	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(getRenderer().getZSplitCount()));
-	unis.m_lightVolumeLastZSplit = getRenderer().getVolumetricLightingAccumulation().getFinalZSplit();
-
-	unis.m_reflectionProbesMipCount = F32(getRenderer().getProbeReflections().getReflectionTextureMipmapCount());
-
-	unis.m_matrices = ctx.m_matrices;
-	unis.m_previousMatrices = ctx.m_prevMatrices;
-
-	// Directional light
-	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-	if(dirLight)
-	{
-		DirectionalLight& out = unis.m_directionalLight;
-
-		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
-		out.m_shadowCascadeCount = dirLight->getShadowEnabled() ? g_shadowCascadeCountCVar.get() : 0;
-		out.m_direction = dirLight->getDirection();
-		out.m_active = 1;
-		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
-											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
-
-		for(U cascade = 0; cascade < out.m_shadowCascadeCount; ++cascade)
-		{
-			ANKI_ASSERT(m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade] != Mat4::getZero());
-			out.m_textureMatrices[cascade] = m_runCtx.m_rctx->m_dirLightTextureMatrices[cascade];
-		}
-	}
-	else
-	{
-		unis.m_directionalLight.m_active = 0;
 	}
 }
 

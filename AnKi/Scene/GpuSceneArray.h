@@ -69,10 +69,10 @@ public:
 		GpuSceneMicroPatcher::getSingleton().newCopy(SceneGraph::getSingleton().getFrameMemoryPool(), getGpuSceneOffset(), data);
 	}
 
-	/// Allocate an element into the appropriate array.
+	/// Allocate an element into the appropriate array. See GpuSceneArray::allocate()
 	void allocate();
 
-	/// Free the allocation.
+	/// Free the allocation. See GpuSceneArray::free()
 	void free();
 
 private:
@@ -108,6 +108,7 @@ public:
 		return getElementCount() * getElementSize();
 	}
 
+	/// This count contains elements that may be innactive after a free. Frees in the middle of the array will not re-arrange other elements.
 	/// @note Thread-safe
 	U32 getElementCount() const
 	{
@@ -121,7 +122,7 @@ public:
 	}
 
 	/// @note Thread-safe
-	BufferOffsetRange getBufferOffsetRange() const
+	BufferView getBufferView() const
 	{
 		return {&GpuSceneBuffer::getSingleton().getBuffer(), getGpuSceneOffsetOfArrayBase(), getBufferRange()};
 	}

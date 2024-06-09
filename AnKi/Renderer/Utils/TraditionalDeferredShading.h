@@ -20,21 +20,27 @@ public:
 	Mat4 m_invViewProjectionMatrix;
 	Vec4 m_cameraPosWSpace;
 	UVec4 m_viewport;
-	Vec2 m_gbufferTexCoordsScale;
-	Vec2 m_gbufferTexCoordsBias;
-	Vec2 m_lightbufferTexCoordsScale;
-	Vec2 m_lightbufferTexCoordsBias;
 	F32 m_effectiveShadowDistance = -1.0f; // TODO rm
 	Mat4 m_dirLightMatrix; // TODO rm
 
-	BufferOffsetRange m_visibleLightsBuffer;
+	BufferView m_visibleLightsBuffer;
 
 	Bool m_computeSpecular = false;
 
 	// Render targets
 	Array<RenderTargetHandle, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargets;
+	Array<TextureSubresourceDescriptor, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargetSubresource{
+		TextureSubresourceDescriptor::firstSurface(), TextureSubresourceDescriptor::firstSurface(), TextureSubresourceDescriptor::firstSurface()};
+
 	RenderTargetHandle m_gbufferDepthRenderTarget;
+	TextureSubresourceDescriptor m_gbufferDepthRenderTargetSubresource = TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth);
+
 	RenderTargetHandle m_directionalLightShadowmapRenderTarget;
+	TextureSubresourceDescriptor m_directionalLightShadowmapRenderTargetSubresource =
+		TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth);
+
+	RenderTargetHandle m_skyLutRenderTarget;
+	BufferView m_globalRendererConsts;
 
 	RenderPassWorkContext* m_renderpassContext = nullptr;
 };
@@ -53,7 +59,7 @@ private:
 	Array<ShaderProgramPtr, 2> m_lightGrProg;
 
 	ShaderProgramResourcePtr m_skyboxProg;
-	Array<ShaderProgramPtr, 2> m_skyboxGrProgs;
+	Array<ShaderProgramPtr, 3> m_skyboxGrProgs;
 
 	SamplerPtr m_shadowSampler;
 };

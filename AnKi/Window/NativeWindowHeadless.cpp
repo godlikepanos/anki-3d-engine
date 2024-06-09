@@ -34,7 +34,9 @@ void MakeSingletonPtr<NativeWindow>::freeSingleton()
 
 Error NativeWindow::init([[maybe_unused]] const NativeWindowInitInfo& inf)
 {
-	// Nothing
+	// Nothing important
+	m_width = inf.m_width;
+	m_height = inf.m_height;
 	return Error::kNone;
 }
 

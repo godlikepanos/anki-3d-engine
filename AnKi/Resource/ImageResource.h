@@ -31,12 +31,6 @@ public:
 		return *m_tex;
 	}
 
-	/// Get the texture view.
-	TextureView& getTextureView() const
-	{
-		return *m_texView;
-	}
-
 	U32 getWidth() const
 	{
 		ANKI_ASSERT(m_size.x());
@@ -68,7 +62,6 @@ private:
 	class LoadingContext;
 
 	TexturePtr m_tex;
-	TextureViewPtr m_texView;
 	UVec3 m_size = UVec3(0u);
 	U32 m_layerCount = 0;
 

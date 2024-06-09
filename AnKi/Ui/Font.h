@@ -27,9 +27,9 @@ public:
 	Error init(const CString& filename, ConstWeakArray<U32> fontHeights);
 
 	/// Get font image atlas.
-	ANKI_INTERNAL const TextureViewPtr& getTextureView() const
+	ANKI_INTERNAL const TexturePtr& getTexture() const
 	{
-		return m_texView;
+		return m_tex;
 	}
 
 	ANKI_INTERNAL const ImFont& getImFont(U32 fontHeight) const
@@ -70,7 +70,7 @@ private:
 	UiDynamicArray<FontEntry> m_fonts;
 
 	TexturePtr m_tex;
-	TextureViewPtr m_texView; ///< Whole texture view
+	UiImageIdData m_imgData;
 
 	void createTexture(const void* data, U32 width, U32 height);
 };

@@ -84,6 +84,7 @@ public:
 
 	void setRadius(const F32 x)
 	{
+		ANKI_ASSERT(x > 0.0f);
 		m_radius = x;
 	}
 
@@ -95,7 +96,8 @@ public:
 		check();
 		Sphere out;
 		out.m_center = transform.transform(m_center);
-		out.m_radius = m_radius * transform.getScale();
+		ANKI_ASSERT(transform.hasUniformScale());
+		out.m_radius = m_radius * transform.getScale().x();
 		return out;
 	}
 

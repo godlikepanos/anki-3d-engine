@@ -8,7 +8,7 @@
 struct VertOut
 {
 	Vec4 m_position : SV_POSITION;
-	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
+	Vec2 m_uv : TEXCOORD;
 };
 
 VertOut main(U32 vertId : SV_VERTEXID)

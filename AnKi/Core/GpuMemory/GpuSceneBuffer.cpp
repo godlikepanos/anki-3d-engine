@@ -28,7 +28,7 @@ void GpuSceneBuffer::init()
 
 	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
 
-	BufferUsageBit buffUsage = BufferUsageBit::kAllUav | BufferUsageBit::kTransferDestination;
+	BufferUsageBit buffUsage = BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination;
 
 	m_pool.init(buffUsage, classes, poolSize, "GpuScene", true);
 
@@ -68,8 +68,9 @@ GpuSceneMicroPatcher::~GpuSceneMicroPatcher()
 Error GpuSceneMicroPatcher::init()
 {
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/GpuSceneMicroPatching.ankiprogbin", m_copyProgram));
+	ShaderProgramResourceVariantInitInfo varInit(m_copyProgram);
 	const ShaderProgramResourceVariant* variant;
-	m_copyProgram->getOrCreateVariant(variant);
+	m_copyProgram->getOrCreateVariant(varInit, variant);
 	m_grProgram.reset(&variant->getProgram());
 
 	return Error::kNone;
@@ -136,9 +137,9 @@ void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 	const RebarAllocation dataToken = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchData.getSizeInBytes(), mapped);
 	memcpy(mapped, &m_crntFramePatchData[0], m_crntFramePatchData.getSizeInBytes());
 
-	cmdb.bindUavBuffer(0, 0, headersToken);
-	cmdb.bindUavBuffer(0, 1, dataToken);
-	cmdb.bindUavBuffer(0, 2, &GpuSceneBuffer::getSingleton().getBuffer(), 0, kMaxPtrSize);
+	cmdb.bindStorageBuffer(ANKI_REG(t0), headersToken);
+	cmdb.bindStorageBuffer(ANKI_REG(t1), dataToken);
+	cmdb.bindStorageBuffer(ANKI_REG(u0), BufferView(&GpuSceneBuffer::getSingleton().getBuffer()));
 
 	cmdb.bindShaderProgram(m_grProgram.get());
 

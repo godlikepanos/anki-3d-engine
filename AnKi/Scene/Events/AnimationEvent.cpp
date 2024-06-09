@@ -50,7 +50,7 @@ Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, Second crnt
 	// trf.setOrigin(Vec4(0.0f));
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	// trf.setRotation(Mat3x4::getIdentity());
-	trf.setScale(scale);
+	trf.setScale(Vec4(scale, scale, scale, 0.0f));
 
 	m_associatedNodes[0]->setLocalTransform(trf);
 

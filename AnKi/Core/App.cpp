@@ -62,6 +62,7 @@ BoolCVar g_verboseLogCVar(CVarSubsystem::kCore, "VerboseLog", false, "Verbose lo
 BoolCVar g_benchmarkModeCVar(CVarSubsystem::kCore, "BenchmarkMode", false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS");
 NumericCVar<U32> g_benchmarkModeFrameCountCVar(CVarSubsystem::kCore, "BenchmarkModeFrameCount", 60 * 60 * 2, 1, kMaxU32,
 											   "How many frames the benchmark will run before it quits");
+BoolCVar g_meshletRenderingCVar(CVarSubsystem::kCore, "MeshletRendering", false, "Do meshlet culling and rendering");
 
 #if ANKI_PLATFORM_MOBILE
 static StatCounter g_maliGpuActiveStatVar(StatCategory::kGpuMisc, "Mali active cycles", StatFlag::kMainThreadUpdates);
@@ -222,13 +223,11 @@ Error App::initInternal()
 		"NOT built with tracing";
 #endif
 
-	ANKI_CORE_LOGI("Initializing application ("
-				   "version %u.%u, "
-				   "%s, "
-				   "compiler %s, "
-				   "build date %s, "
-				   "commit %s)",
-				   ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR, buildType, ANKI_COMPILER_STR, __DATE__, ANKI_REVISION);
+	ANKI_CORE_LOGI("Initializing application");
+	ANKI_CORE_LOGI("\tBuild type %s", buildType);
+	ANKI_CORE_LOGI("\tBuild time %s %s", __DATE__, __TIME__);
+	ANKI_CORE_LOGI("\tCompiler %s", ANKI_COMPILER_STR);
+	ANKI_CORE_LOGI("\tCommit %s", ANKI_REVISION);
 
 // Check SIMD support
 #if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
@@ -323,11 +322,13 @@ Error App::initInternal()
 	String executableFname;
 	ANKI_CHECK(getApplicationPath(executableFname));
 	ANKI_CORE_LOGI("Executable path is: %s", executableFname.cstr());
-	String shadersPath;
-	getParentFilepath(executableFname, shadersPath);
-	shadersPath += ":";
-	shadersPath += g_dataPathsCVar.get();
-	g_dataPathsCVar.set(shadersPath);
+	String extraPaths;
+	getParentFilepath(executableFname, extraPaths);
+	extraPaths += "|ankiprogbin"; // Shaders
+	extraPaths += ":" ANKI_SOURCE_DIRECTORY "|EngineAssets,!AndroidProject"; // EngineAssets
+	extraPaths += ":";
+	extraPaths += g_dataPathsCVar.get();
+	g_dataPathsCVar.set(extraPaths);
 #endif
 
 	ANKI_CHECK(ResourceManager::allocateSingleton().init(allocCb, allocCbUserData));

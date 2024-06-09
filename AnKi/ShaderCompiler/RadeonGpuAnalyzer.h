@@ -25,7 +25,7 @@ public:
 };
 
 /// Run the mali offline compiler and get some info back.
-Error runRadeonGpuAnalyzer(CString rgaExecutable, ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out);
+Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaOutput& out);
 /// @}
 
 } // end namespace anki

@@ -3,22 +3,22 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_linearAnyClampSampler;
-[[vk::binding(1)]] Texture2D<Vec4> g_shadowsTex;
-[[vk::binding(2)]] Texture2D<Vec4> g_momentsTex;
-[[vk::binding(3)]] Texture2D<Vec4> g_historyLengthTex;
-[[vk::binding(4)]] Texture2D<Vec4> g_depthTex;
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<Vec4> g_shadowsTex : register(t0);
+Texture2D<Vec4> g_momentsTex : register(t1);
+Texture2D<Vec4> g_historyLengthTex : register(t2);
+Texture2D<Vec4> g_depthTex : register(t3);
 
-[[vk::binding(5)]] RWTexture2D<Vec4> g_shadowUav;
-[[vk::binding(6)]] RWTexture2D<Vec4> g_varianceUav;
+RWTexture2D<Vec4> g_shadowUav : register(u0);
+RWTexture2D<Vec4> g_varianceUav : register(u1);
 
-[[vk::push_constant]] ConstantBuffer<Mat4> g_invProjMat;
+ANKI_PUSH_CONSTANTS(Mat4, g_invProjMat)
 
 constexpr I32 kConvolutionRadius = 1;
 
@@ -118,4 +118,4 @@ Vec3 toViewspace(Vec2 uv, F32 depth)
 	g_shadowUav[svDispatchThreadId] = outShadowFactor;
 	g_varianceUav[svDispatchThreadId] = Vec4(outVariance, 0.0, 0.0, 0.0);
 }
-#pragma anki end
+#pragma anki technique_end comp

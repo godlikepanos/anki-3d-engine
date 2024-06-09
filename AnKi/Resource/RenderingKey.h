@@ -31,7 +31,8 @@ enum class RenderingTechniqueBit : U8
 	kForward = 1 << 2,
 	kRtShadow = 1 << 3,
 
-	kAllRt = kRtShadow
+	kAllRt = kRtShadow,
+	kAllRaster = kGBuffer | kDepth | kForward
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 
@@ -39,22 +40,23 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)
 class RenderingKey
 {
 public:
-	RenderingKey(RenderingTechnique technique, U32 lod, Bool skinned, Bool velocity)
+	RenderingKey(RenderingTechnique technique, U32 lod, Bool skinned, Bool velocity, Bool meshletRendering)
 		: m_technique(technique)
 		, m_lod(lod & 0b11)
 		, m_skinned(skinned)
 		, m_velocity(velocity)
+		, m_meshletRendering(meshletRendering)
 	{
 		ANKI_ASSERT(lod < kMaxLodCount);
 	}
 
 	RenderingKey()
-		: RenderingKey(RenderingTechnique::kFirst, 0, false, false)
+		: RenderingKey(RenderingTechnique::kFirst, 0, false, false, false)
 	{
 	}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_technique, b.m_lod, b.m_skinned, b.m_velocity)
+		: RenderingKey(b.m_technique, b.m_lod, b.m_skinned, b.m_velocity, b.m_meshletRendering)
 	{
 	}
 
@@ -66,7 +68,8 @@ public:
 
 	Bool operator==(const RenderingKey& b) const
 	{
-		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
+		return m_technique == b.m_technique && m_lod == b.m_lod && m_skinned == b.m_skinned && m_velocity == b.m_velocity
+			   && m_meshletRendering == b.m_meshletRendering;
 	}
 
 	RenderingTechnique getRenderingTechnique() const
@@ -110,11 +113,22 @@ public:
 		m_velocity = v;
 	}
 
+	void setMeshletRendering(Bool b)
+	{
+		m_meshletRendering = b;
+	}
+
+	Bool getMeshletRendering() const
+	{
+		return m_meshletRendering;
+	}
+
 private:
 	RenderingTechnique m_technique;
 	U8 m_lod : 2;
 	Bool m_skinned : 1;
 	Bool m_velocity : 1;
+	Bool m_meshletRendering : 1;
 
 	static_assert(kMaxLodCount <= 3, "m_lod only reserves 2 bits so make sure all LODs will fit");
 };

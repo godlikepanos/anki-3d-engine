@@ -138,7 +138,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit)
 	Transform out;
 	out.setRotation(toAnki(t.getBasis()));
 	out.setOrigin(Vec4(toAnki(t.getOrigin()), 0.0f));
-	out.setScale(1.0f);
+	out.setScale(Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 	return out;
 }
 /// @}

@@ -24,14 +24,6 @@ public:
 	ImporterDynamicArray<GltfAnimKey<Quat>> m_rotations;
 	ImporterDynamicArray<GltfAnimKey<F32>> m_scales;
 	const cgltf_node* m_targetNode;
-
-	GltfAnimChannel(BaseMemoryPool* pool)
-		: m_name(pool)
-		, m_positions(pool)
-		, m_rotations(pool)
-		, m_scales(pool)
-	{
-	}
 };
 
 /// Optimize out same animation keys.
@@ -48,7 +40,7 @@ static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& 
 			break;
 		}
 
-		ImporterDynamicArray<GltfAnimKey<T>> newArr(&arr.getMemoryPool());
+		ImporterDynamicArray<GltfAnimKey<T>> newArr;
 		U32 it = 0;
 		while(true)
 		{
@@ -115,14 +107,14 @@ static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& 
 
 Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 {
-	ImporterString fname(m_pool);
+	ImporterString fname;
 	ImporterString animFname = computeAnimationResourceFilename(anim);
 	fname.sprintf("%s%s", m_outDir.cstr(), animFname.cstr());
 	fname = fixFilename(fname);
 	ANKI_IMPORTER_LOGV("Importing animation %s", fname.cstr());
 
 	// Gather the channels
-	ImporterHashMap<CString, Array<const cgltf_animation_channel*, 3>> channelMap(m_pool);
+	ImporterHashMap<CString, Array<const cgltf_animation_channel*, 3>> channelMap;
 	U32 channelCount = 0;
 	for(U i = 0; i < anim.channels_count; ++i)
 	{
@@ -161,8 +153,8 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	}
 
 	// Gather the keys
-	ImporterDynamicArray<GltfAnimChannel> tempChannels(m_pool);
-	tempChannels.resize(channelCount, m_pool);
+	ImporterDynamicArray<GltfAnimChannel> tempChannels;
+	tempChannels.resize(channelCount);
 	channelCount = 0;
 	for(auto it = channelMap.getBegin(); it != channelMap.getEnd(); ++it)
 	{
@@ -177,9 +169,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		if(arr[0])
 		{
 			const cgltf_animation_channel& channel = *arr[0];
-			ImporterDynamicArray<F32> keys(m_pool);
+			ImporterDynamicArray<F32> keys;
 			readAccessor(*channel.sampler->input, keys);
-			ImporterDynamicArray<Vec3> positions(m_pool);
+			ImporterDynamicArray<Vec3> positions;
 			readAccessor(*channel.sampler->output, positions);
 			if(keys.getSize() != positions.getSize())
 			{
@@ -201,9 +193,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		if(arr[1])
 		{
 			const cgltf_animation_channel& channel = *arr[1];
-			ImporterDynamicArray<F32> keys(m_pool);
+			ImporterDynamicArray<F32> keys;
 			readAccessor(*channel.sampler->input, keys);
-			ImporterDynamicArray<Quat> rotations(m_pool);
+			ImporterDynamicArray<Quat> rotations;
 			readAccessor(*channel.sampler->output, rotations);
 			if(keys.getSize() != rotations.getSize())
 			{
@@ -225,9 +217,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		if(arr[2])
 		{
 			const cgltf_animation_channel& channel = *arr[2];
-			ImporterDynamicArray<F32> keys(m_pool);
+			ImporterDynamicArray<F32> keys;
 			readAccessor(*channel.sampler->input, keys);
-			ImporterDynamicArray<Vec3> scales(m_pool);
+			ImporterDynamicArray<Vec3> scales;
 			readAccessor(*channel.sampler->output, scales);
 			if(keys.getSize() != scales.getSize())
 			{

@@ -145,8 +145,7 @@ public:
 
 	/// @name Other
 	/// @{
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	String toString() const
+	String toString() const requires(std::is_floating_point<T>::value)
 	{
 		return String().sprintf("%f %f %f", m_vec.m_x, m_vec.m_y, m_vec.m_z);
 	}

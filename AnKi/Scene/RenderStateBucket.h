@@ -46,6 +46,7 @@ public:
 		ANKI_ASSERT(!isValid() && "Forgot to delete");
 		m_index = b.m_index;
 		m_technique = b.m_technique;
+		m_lod0MeshletCount = b.m_lod0MeshletCount;
 		b.invalidate();
 		return *this;
 	}
@@ -63,11 +64,13 @@ public:
 
 private:
 	U32 m_index = kMaxU32;
+	U32 m_lod0MeshletCount = kMaxU32;
 	RenderingTechnique m_technique = RenderingTechnique::kCount;
 
 	void invalidate()
 	{
 		m_index = kMaxU32;
+		m_lod0MeshletCount = kMaxU32;
 		m_technique = RenderingTechnique::kCount;
 	}
 };
@@ -81,7 +84,7 @@ class RenderStateBucketContainer : public MakeSingleton<RenderStateBucketContain
 public:
 	/// Add a new user for a specific render state and rendering technique.
 	/// @note It's thread-safe against addUser and removeUser
-	RenderStateBucketIndex addUser(const RenderStateInfo& state, RenderingTechnique technique);
+	RenderStateBucketIndex addUser(const RenderStateInfo& state, RenderingTechnique technique, U32 lod0MeshletCount);
 
 	/// Remove the user.
 	/// @note It's thread-safe against addUser and removeUser
@@ -93,14 +96,37 @@ public:
 	{
 		for(const ExtendedBucket& b : m_buckets[technique])
 		{
-			func(static_cast<const RenderStateInfo&>(b), b.m_userCount);
+			func(static_cast<const RenderStateInfo&>(b), b.m_userCount, b.m_lod0MeshletGroupCount, b.m_lod0MeshletCount);
+		}
+	}
+
+	/// Iterate empty and non-empty buckets from the bucket that has the least heavy shader program to the one with the heavy.
+	template<typename TFunc>
+	void iterateBucketsPerformanceOrder(RenderingTechnique technique, TFunc func) const
+	{
+		for(U32 i : m_bucketPerfOrder[technique])
+		{
+			const ExtendedBucket& b = m_buckets[technique][i];
+			func(static_cast<const RenderStateInfo&>(b), i, b.m_userCount, b.m_lod0MeshletGroupCount, b.m_lod0MeshletCount);
 		}
 	}
 
 	/// Get the number of renderables of all the buckets of a specific rendering technique.
-	U32 getBucketsItemCount(RenderingTechnique technique) const
+	U32 getBucketsActiveUserCount(RenderingTechnique technique) const
 	{
-		return m_bucketItemCount[technique];
+		return m_bucketActiveUserCount[technique];
+	}
+
+	/// Get the number of meshlet groups of a technique.
+	U32 getBucketsLod0MeshletGroupCount(RenderingTechnique technique) const
+	{
+		return m_lod0MeshletGroupCount[technique];
+	}
+
+	/// Get the number of meshlets of a technique of LOD 0.
+	U32 getBucketsLod0MeshletCount(RenderingTechnique technique) const
+	{
+		return m_lod0MeshletCount[technique];
 	}
 
 	/// Get number of empty and non-empty buckets.
@@ -121,17 +147,24 @@ private:
 	public:
 		U64 m_hash = 0;
 		U32 m_userCount = 0;
+		U32 m_lod0MeshletGroupCount = 0;
+		U32 m_lod0MeshletCount = 0;
 	};
 
 	Array<SceneDynamicArray<ExtendedBucket>, U32(RenderingTechnique::kCount)> m_buckets;
-	Array<U32, U32(RenderingTechnique::kCount)> m_bucketItemCount = {};
+	Array<U32, U32(RenderingTechnique::kCount)> m_bucketActiveUserCount = {};
+	Array<U32, U32(RenderingTechnique::kCount)> m_lod0MeshletGroupCount = {};
+	Array<U32, U32(RenderingTechnique::kCount)> m_lod0MeshletCount = {};
 	Array<U32, U32(RenderingTechnique::kCount)> m_activeBucketCount = {};
+	Array<SceneDynamicArray<U32>, U32(RenderingTechnique::kCount)> m_bucketPerfOrder; ///< Orders the buckets from the least heavy to the most.
 
 	Mutex m_mtx;
 
 	RenderStateBucketContainer() = default;
 
 	~RenderStateBucketContainer();
+
+	void createPerfOrder(RenderingTechnique t);
 };
 
 inline RenderStateBucketIndex::~RenderStateBucketIndex()

@@ -3,22 +3,20 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_TECHNIQUE 2
 #pragma anki mutator TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 
-#pragma anki reflect AnKiLocalConstants
-#pragma anki struct AnKiLocalConstants
-#pragma anki member U32 m_texture if TEXTURE is 1
+#pragma anki struct AnKiLocalUniforms
+#pragma anki member U32 m_texture
 #pragma anki member RVec4 m_colorScale
 #pragma anki member RVec4 m_colorBias
-#pragma anki struct end
+#pragma anki struct_end
 
 struct VertIn
 {
-	[[vk::location(0)]] UVec4 m_gpuSceneRenderable : RENDERABLE;
+	UVec4 m_gpuSceneRenderable : MISC0;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -27,52 +25,52 @@ struct VertOut
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_worldPosition : WORLD_POSITION;
 	Vec4 m_svPosition : SV_POSITION;
-	nointerpolation U32 m_constantsOffset : UNIFORMS_OFFSET;
+	nointerpolation U32 m_uniformsOffset : UNIFORMS_OFFSET;
 };
 
-#pragma anki start vert
+#pragma anki technique_start vert Forward
 
 VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderableVertex renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_gpuScene.Load<GpuSceneMeshLod>(renderable.m_meshLodOffset);
-	const Mat3x4 worldTransform = g_gpuScene.Load<Mat3x4>(renderable.m_worldTransformsOffset);
+	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneMeshLod mesh = g_meshLods[renderable.m_meshLodIndex];
+	const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
 	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
 
 	output.m_worldPosition = mul(worldTransform, Vec4(vertex.m_position, 1.0));
 
-	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(output.m_worldPosition, 1.0));
+	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPosition, 1.0));
 
 	output.m_uv = vertex.m_uv;
-	output.m_constantsOffset = renderable.m_constantsOffset;
+	output.m_uniformsOffset = renderable.m_uniformsOffset;
 
 	return output;
 }
-#pragma anki end
+#pragma anki technique_end vert Forward
 
-#pragma anki start frag
+#pragma anki technique_start frag Forward
 
 FragOut main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
 	FragOut output;
 
-	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
+	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
 
 	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
 
 #if TEXTURE == 1
-	output.m_color = g_bindlessTextures2dF32[localConstants.m_texture].Sample(g_globalSampler, input.m_uv);
+	output.m_color = getBindlessTexture2DRVec4(localUniforms.m_texture).Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT == 1
 	output.m_color.rgb = computeLightColorLow(output.m_color.rgb, input.m_worldPosition, input.m_svPosition);
 #endif
 
-	output.m_color = output.m_color * localConstants.m_colorScale + localConstants.m_colorBias;
+	output.m_color = output.m_color * localUniforms.m_colorScale + localUniforms.m_colorBias;
 
 	return output;
 }
-#pragma anki end
+#pragma anki technique_end frag Forward

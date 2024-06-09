@@ -21,7 +21,8 @@ class SkyboxQueueElement;
 enum class SkyboxType : U8
 {
 	kSolidColor,
-	kImage2D
+	kImage2D,
+	kGenerated
 };
 
 /// Skybox config.
@@ -57,6 +58,31 @@ public:
 	{
 		ANKI_ASSERT(m_type == SkyboxType::kImage2D);
 		return *m_image;
+	}
+
+	void setImageScale(Vec3 s)
+	{
+		m_imageScale = s;
+	}
+
+	const Vec3& getImageScale() const
+	{
+		return m_imageScale;
+	}
+
+	void setImageBias(Vec3 s)
+	{
+		m_imageBias = s;
+	}
+
+	const Vec3& getImageBias() const
+	{
+		return m_imageBias;
+	}
+
+	void setGeneratedSky()
+	{
+		m_type = SkyboxType::kGenerated;
 	}
 
 	void setMinFogDensity(F32 density)
@@ -135,6 +161,8 @@ private:
 	SkyboxType m_type = SkyboxType::kSolidColor;
 	Vec3 m_color = Vec3(0.0f, 0.0f, 0.5f);
 	ImageResourcePtr m_image;
+	Vec3 m_imageScale = Vec3(1.0f);
+	Vec3 m_imageBias = Vec3(0.0f);
 
 	// Fog
 	class

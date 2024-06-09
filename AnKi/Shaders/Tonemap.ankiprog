@@ -1,0 +1,65 @@
+// Copyright (C) 2009-2023, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Does tonemapping
+
+#if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
+
+SamplerState g_nearestAnyClampSampler : register(s0);
+Texture2D<RVec4> g_inputRt : register(t0);
+
+#	define TONEMAPPING_REGISTER u0
+#	include <AnKi/Shaders/TonemappingResources.hlsl>
+
+#	if ANKI_COMPUTE_SHADER
+RWTexture2D<RVec4> g_storageTex : register(u1);
+#		define THREADGROUP_SIZE_SQRT 8
+#	endif
+
+struct Uniforms
+{
+	Vec2 m_viewportSizeOverOne;
+	UVec2 m_viewportSize;
+};
+
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+
+#	if ANKI_COMPUTE_SHADER
+[numthreads(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+#	else
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+#	endif
+{
+#	if ANKI_COMPUTE_SHADER
+	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_unis.m_viewportSize, svDispatchThreadId.xy))
+	{
+		return;
+	}
+
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) * g_unis.m_viewportSizeOverOne;
+#	endif
+
+	const RVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;
+	const Vec3 tonemapped = linearToSRgb(tonemap<RF32>(hdr, readExposureAndAverageLuminance().x));
+
+#	if ANKI_COMPUTE_SHADER
+	g_storageTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
+#	else
+	return tonemapped;
+#	endif
+}
+#endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+
+#pragma anki technique_start vert
+#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+#pragma anki technique_end frag
+
+#pragma anki technique_start comp
+#pragma anki technique_end comp

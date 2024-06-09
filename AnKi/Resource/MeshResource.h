@@ -44,11 +44,13 @@ public:
 	}
 
 	/// Get submesh info.
-	void getSubMeshInfo(U32 lod, U32 subMeshId, U32& firstIndex, U32& indexCount, Aabb& aabb) const
+	void getSubMeshInfo(U32 lod, U32 subMeshId, U32& firstIndex, U32& indexCount, U32& firstMeshlet, U32& meshletCount, Aabb& aabb) const
 	{
 		const SubMesh& sm = m_subMeshes[subMeshId];
 		firstIndex = sm.m_firstIndices[lod];
 		indexCount = sm.m_indexCounts[lod];
+		firstMeshlet = sm.m_firstMeshlet[lod];
+		meshletCount = sm.m_meshletCounts[lod];
 		aabb = sm.m_aabb;
 	}
 
@@ -62,10 +64,18 @@ public:
 	}
 
 	/// Get vertex buffer info.
-	void getVertexStreamInfo(U32 lod, VertexStreamId stream, PtrSize& bufferOffset, U32& vertexCount) const
+	void getVertexBufferInfo(U32 lod, VertexStreamId stream, PtrSize& ugbOffset, U32& vertexCount) const
 	{
-		bufferOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset();
+		ugbOffset = m_lods[lod].m_vertexBuffersAllocationToken[stream].getOffset();
 		vertexCount = m_lods[lod].m_vertexCount;
+	}
+
+	void getMeshletBufferInfo(U32 lod, PtrSize& meshletBoundingVolumesUgbOffset, PtrSize& meshletGeometryDescriptorsUgbOffset, U32& meshletCount)
+	{
+		meshletBoundingVolumesUgbOffset = m_lods[lod].m_meshletBoundingVolumes.getOffset();
+		meshletGeometryDescriptorsUgbOffset = m_lods[lod].m_meshletGeometryDescriptors.getOffset();
+		ANKI_ASSERT(m_lods[lod].m_meshletCount);
+		meshletCount = m_lods[lod].m_meshletCount;
 	}
 
 	const AccelerationStructurePtr& getBottomLevelAccelerationStructure(U32 lod) const
@@ -105,8 +115,13 @@ private:
 		UnifiedGeometryBufferAllocation m_indexBufferAllocationToken;
 		Array<UnifiedGeometryBufferAllocation, U32(VertexStreamId::kMeshRelatedCount)> m_vertexBuffersAllocationToken;
 
+		UnifiedGeometryBufferAllocation m_meshletIndices;
+		UnifiedGeometryBufferAllocation m_meshletBoundingVolumes;
+		UnifiedGeometryBufferAllocation m_meshletGeometryDescriptors;
+
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;
+		U32 m_meshletCount = 0;
 
 		AccelerationStructurePtr m_blas;
 	};
@@ -114,8 +129,10 @@ private:
 	class SubMesh
 	{
 	public:
-		Array<U32, kMaxLodCount> m_firstIndices;
-		Array<U32, kMaxLodCount> m_indexCounts;
+		Array<U32, kMaxLodCount> m_firstIndices = {};
+		Array<U32, kMaxLodCount> m_indexCounts = {};
+		Array<U32, kMaxLodCount> m_firstMeshlet = {};
+		Array<U32, kMaxLodCount> m_meshletCounts = {};
 		Aabb m_aabb;
 	};
 

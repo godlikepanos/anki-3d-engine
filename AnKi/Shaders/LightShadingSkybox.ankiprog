@@ -3,16 +3,16 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator METHOD 0 1 // 0: solid colod, 1: 2D image
+#pragma anki mutator METHOD 0 1 2 // 0: solid colod, 1: 2D image, 2: generated
 
-#pragma anki start vert
+#pragma anki technique_start vert
 
 #include <AnKi/Shaders/Common.hlsl>
 
 struct VertOut
 {
 	Vec4 m_position : SV_POSITION;
-	[[vk::location(0)]] Vec2 m_uv : TEXCOORD;
+	Vec2 m_uv : TEXCOORD;
 };
 
 VertOut main(U32 vertId : SV_VERTEXID)
@@ -25,46 +25,60 @@ VertOut main(U32 vertId : SV_VERTEXID)
 	return output;
 }
 
-#pragma anki end
+#pragma anki technique_end vert
 
-#pragma anki start frag
+#pragma anki technique_start frag
 
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#include <AnKi/Shaders/Sky.hlsl>
 
 #if METHOD == 0
-struct Constants
+struct Uniforms
 {
 	RVec3 m_solidColor;
 	F32 m_padding;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
-#else
-[[vk::binding(0)]] SamplerState g_trilinearAnySampler;
-[[vk::binding(1)]] Texture2D<RVec4> g_envMapTex;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+#elif METHOD == 1
+SamplerState g_trilinearAnySampler : register(s0);
+Texture2D<RVec4> g_envMapTex : register(t0);
 
-struct Constants
+struct Uniforms
 {
 	Mat4 m_invertedViewProjectionJitterMat;
+
 	Vec3 m_cameraPos;
 	F32 m_padding;
+
+	Vec3 m_scale;
+	F32 m_padding1;
+
+	Vec3 m_bias;
+	F32 m_padding2;
 };
 
-[[vk::push_constant]] ConstantBuffer<Constants> g_consts;
+ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+#else
+SamplerState g_linearAnyClampSampler : register(s0);
+Texture2D<Vec4> g_skyLut : register(t0);
+ConstantBuffer<GlobalRendererUniforms> g_unis : register(b0);
 #endif
 
-RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 {
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	return g_consts.m_solidColor;
-#else
+	return g_unis.m_solidColor;
+#elif METHOD == 1
 	const F32 depth = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_unis.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPos);
 
 	const Vec2 uv3 = equirectangularMapping(eyeToFrag);
 
@@ -76,8 +90,18 @@ RVec3 main([[vk::location(0)]] Vec2 uv : TEXCOORD) : SV_TARGET0
 
 	const F32 bias = (maxD > 0.9) ? -100.0f : 0.0f;
 
-	return g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb;
+	return g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb * g_unis.m_scale + g_unis.m_bias;
+#else
+	const F32 depth = 1.0;
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec4 worldPos4 = mul(g_unis.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPosition);
+
+	return computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_unis.m_directionalLight.m_direction, g_unis.m_directionalLight.m_power,
+						   true);
 #endif
 }
 
-#pragma anki end
+#pragma anki technique_end frag

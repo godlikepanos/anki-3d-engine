@@ -150,6 +150,11 @@ option(ANKI_HEADLESS "Build a headless application" OFF)
 option(ANKI_SHADER_FULL_PRECISION "Build shaders with full precision" OFF)
 set(ANKI_OVERRIDE_SHADER_COMPILER "" CACHE FILEPATH "Set the ShaderCompiler to be used to compile all shaders")
 option(ANKI_DLSS "Integrate DLSS if supported" OFF)
+if(ANDROID)
+	option(ANKI_PLATFORM_MOBILE "Build for a mobile platform" ON)
+else()
+	option(ANKI_PLATFORM_MOBILE "Build for a mobile platform" OFF)
+endif()
 
 # Take a wild guess on the windowing system
 if(ANKI_HEADLESS)
@@ -166,15 +171,17 @@ else()
 	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually.")
 endif()
 
-set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API to use (VULKAN or GL)")
+set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API to use (VULKAN or DIRECTX)")
 
-if(${ANKI_GR_BACKEND} STREQUAL "GL")
-	set(GL TRUE)
+if(${ANKI_GR_BACKEND} STREQUAL "DIRECTX")
+	set(DIRECTX TRUE)
 	set(VULKAN FALSE)
+elseif(${ANKI_GR_BACKEND} STREQUAL "VULKAN")
+	set(DIRECTX FALSE)
+	set(VULKAN TRUE)
 	set(VIDEO_VULKAN TRUE) # Set for the SDL2 to pick up
 else()
-	set(GL FALSE)
-	set(VULKAN TRUE)
+	message(FATAL_ERROR "Wrong ANKI_GR_BACKEND")
 endif()
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)
@@ -324,6 +331,7 @@ if(ANDROID)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
 	add_subdirectory(ThirdParty/HwcPipe)
+	add_subdirectory(ThirdParty/StreamlineAnnotate)
 endif()
 
 # DLSS
@@ -408,6 +416,20 @@ elseif(SDL)
 	set(_ANKI_WINDOWING_SYSTEM 1)
 else()
 	set(_ANKI_WINDOWING_SYSTEM 2)
+endif()
+
+if(ANKI_PLATFORM_MOBILE)
+	message("++ Compiling for a mobile platform")
+	set(_ANKI_PLATFORM_MOBILE 1)
+else()
+	message("++ NOT compiling for a mobile platform")
+	set(_ANKI_PLATFORM_MOBILE 0)
+endif()
+
+if(VULKAN)
+	set(_ANKI_GR_BACKEND 0)
+else()
+	set(_ANKI_GR_BACKEND 1)
 endif()
 
 configure_file("AnKi/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/AnKi/Config.h")

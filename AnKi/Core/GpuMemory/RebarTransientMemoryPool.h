@@ -47,7 +47,7 @@ public:
 
 	Buffer& getBuffer() const;
 
-	operator BufferOffsetRange() const;
+	operator BufferView() const;
 
 private:
 	PtrSize m_offset = kMaxPtrSize;
@@ -121,7 +121,7 @@ inline Buffer& RebarAllocation::getBuffer() const
 	return RebarTransientMemoryPool::getSingleton().getBuffer();
 }
 
-inline RebarAllocation::operator BufferOffsetRange() const
+inline RebarAllocation::operator BufferView() const
 {
 	ANKI_ASSERT(isValid());
 	return {&RebarTransientMemoryPool::getSingleton().getBuffer(), m_offset, m_range};

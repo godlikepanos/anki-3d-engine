@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <cstdarg>
+
 // Minimal Windows.h declaration. Only what's needed.
 extern "C" {
 
@@ -16,6 +18,8 @@ extern "C" {
 #define ANKI_DECLARE_HANDLE(name) \
 	struct name##__; \
 	typedef struct name##__* name
+
+#define ANKI_MAKELANGID(p, s) ((((WORD)(s)) << 10) | (WORD)(p))
 
 // Types
 typedef void VOID;
@@ -50,6 +54,8 @@ typedef HINSTANCE HMODULE;
 typedef wchar_t WCHAR;
 typedef const WCHAR* PCWSTR;
 typedef WCHAR *NWPSTR, *LPWSTR, *PWSTR;
+typedef const void* LPCVOID;
+typedef HANDLE HLOCAL;
 ANKI_DECLARE_HANDLE(HWND);
 
 typedef struct _SECURITY_ATTRIBUTES SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
@@ -120,6 +126,9 @@ ANKI_WINBASEAPI BOOL ANKI_WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, 
 ANKI_WINBASEAPI VOID ANKI_WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 ANKI_WINBASEAPI DWORD ANKI_WINAPI GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize);
 ANKI_WINBASEAPI int ANKI_WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+ANKI_WINBASEAPI DWORD ANKI_WINAPI FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId, LPSTR lpBuffer, DWORD nSize,
+												 va_list* Arguments);
+ANKI_WINBASEAPI HLOCAL ANKI_WINAPI LocalFree(HLOCAL hMem);
 
 #undef ANKI_WINBASEAPI
 #undef ANKI_DECLARE_HANDLE
@@ -157,6 +166,16 @@ constexpr WORD BACKGROUND_RED = 0x0040;
 constexpr WORD MB_OK = 0x00000000L;
 constexpr WORD MB_ICONWARNING = 0x00000030L;
 constexpr WORD MB_ICONERROR = 0x00000010L;
+
+constexpr DWORD FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100;
+constexpr DWORD FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200;
+constexpr DWORD FORMAT_MESSAGE_FROM_STRING = 0x00000400;
+constexpr DWORD FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
+constexpr DWORD FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
+constexpr DWORD FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000;
+constexpr DWORD FORMAT_MESSAGE_MAX_WIDTH_MASK = 0x000000FF;
+constexpr DWORD LANG_NEUTRAL = 0x00;
+constexpr DWORD SUBLANG_DEFAULT = 0x01;
 
 // Types
 typedef union _LARGE_INTEGER
@@ -455,6 +474,16 @@ inline DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 inline int MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 {
 	return ::MessageBoxA(hWnd, lpText, lpCaption, uType);
+}
+
+inline DWORD FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId, LPSTR lpBuffer, DWORD nSize, va_list* Arguments)
+{
+	return ::FormatMessageA(dwFlags, lpSource, dwMessageId, dwLanguageId, lpBuffer, nSize, Arguments);
+}
+
+inline HLOCAL LocalFree(HLOCAL hMem)
+{
+	return ::LocalFree(hMem);
 }
 
 } // end namespace anki

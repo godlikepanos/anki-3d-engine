@@ -50,4 +50,8 @@ if(LINUX OR WINDOWS)
 	set(libs ${libs} reproc)
 endif()
 
+if(ANDROID)
+	set(libs ${libs} AnKiStreamlineAnnotate)
+endif()
+
 target_link_libraries(AnKiUtil ${libs})

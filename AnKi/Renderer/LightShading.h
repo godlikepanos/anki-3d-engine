@@ -36,7 +36,6 @@ private:
 	{
 	public:
 		RenderTargetDescription m_rtDescr;
-		FramebufferDescription m_fbDescr;
 
 		// Light shaders
 		ShaderProgramResourcePtr m_prog;
@@ -47,15 +46,8 @@ private:
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
-		Array<ShaderProgramPtr, 2> m_grProgs;
+		Array<ShaderProgramPtr, 3> m_grProgs;
 	} m_skybox;
-
-	class
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-	} m_applyIndirect;
 
 	class
 	{
@@ -76,7 +68,6 @@ private:
 	Error initLightShading();
 	Error initSkybox();
 	Error initApplyFog();
-	Error initApplyIndirect();
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 

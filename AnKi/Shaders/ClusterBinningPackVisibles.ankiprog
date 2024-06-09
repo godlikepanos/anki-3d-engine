@@ -5,7 +5,7 @@
 
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
-#pragma anki start comp
+#pragma anki technique_start comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -29,9 +29,9 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 #	error See file
 #endif
 
-[[vk::binding(0)]] StructuredBuffer<GpuSceneType> g_inBuffer;
-[[vk::binding(1)]] RWStructuredBuffer<ClusteredType> g_outBuffer;
-[[vk::binding(2)]] StructuredBuffer<U32> g_visibles;
+StructuredBuffer<GpuSceneType> g_inBuffer : register(t0);
+RWStructuredBuffer<ClusteredType> g_outBuffer : register(u0);
+StructuredBuffer<U32> g_visibles : register(t1);
 
 #define THREAD_GROUP_SIZE 64
 
@@ -49,7 +49,7 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 
 	const Bool isPoint = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kPointLight) ? true : false;
 
-	LightUnion output;
+	LightUnion output = (LightUnion)0;
 	output.m_position = input.m_position;
 	output.m_radius = input.m_radius;
 
@@ -74,4 +74,4 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 #endif
 }
 
-#pragma anki end
+#pragma anki technique_end comp

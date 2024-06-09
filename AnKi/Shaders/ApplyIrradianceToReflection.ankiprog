@@ -3,28 +3,27 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki start comp
+#pragma anki technique_start comp
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 
-[[vk::binding(0)]] SamplerState g_nearestAnyClampSampler;
-[[vk::binding(1)]] Texture2D g_gbufferTex[3u];
-[[vk::binding(2)]] StructuredBuffer<RVec4> g_irradianceDice;
-[[vk::binding(3)]] RWTexture2D<RVec4> g_cubeTex[6u];
+SamplerState g_nearestAnyClampSampler : register(s0);
+TextureCube<Vec4> g_gbufferTex[3u] : register(t0);
+StructuredBuffer<RVec4> g_irradianceDice : register(t3);
+RWTexture2D<RVec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is no RWTextureCube
 
 [numthreads(8, 8, 6)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, UVec3 svGroupThreadId : SV_GROUPTHREADID)
 {
+	const U32 faceIdx = svGroupThreadId.z;
+
+	// Compute the UVs to read the gbuffer from
 	UVec2 cubeSizeu;
 	g_cubeTex[0].GetDimensions(cubeSizeu.x, cubeSizeu.y);
 	const Vec2 cubeSize = Vec2(cubeSizeu);
 	const UVec2 dispatchThreadId = min(svDispatchThreadId.xy, cubeSizeu - 1u);
 
-	const U32 faceIdx = svGroupThreadId.z;
-
-	// Compute the UVs to read the gbuffer from
-	Vec2 sampleUv = (Vec2(dispatchThreadId) + 0.5) / Vec2(cubeSize);
-	sampleUv.x *= (1.0 / 6.0);
-	sampleUv.x += (1.0 / 6.0) * F32(faceIdx);
+	const Vec2 uv = (Vec2(dispatchThreadId) + 0.5) / Vec2(cubeSize);
+	const Vec3 sampleUv = getCubemapDirection(uvToNdc(uv), faceIdx);
 
 	// Read the gbuffer
 	GbufferInfo gbuffer = (GbufferInfo)0;
@@ -49,4 +48,4 @@
 	// Write it back
 	g_cubeTex[faceIdx][dispatchThreadId] = RVec4(prevColorWithIndirectDiffuse, 0.0);
 }
-#pragma anki end
+#pragma anki technique_end comp

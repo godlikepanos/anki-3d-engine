@@ -23,13 +23,6 @@ public:
 	ImporterDynamicArrayLarge<U8> m_pixels;
 	ImporterDynamicArrayLarge<U8> m_s3tcPixels;
 	ImporterDynamicArrayLarge<U8> m_astcPixels;
-
-	SurfaceOrVolumeData(BaseMemoryPool* pool)
-		: m_pixels(pool)
-		, m_s3tcPixels(pool)
-		, m_astcPixels(pool)
-	{
-	}
 };
 
 class Mipmap
@@ -37,11 +30,6 @@ class Mipmap
 public:
 	/// One surface for each layer ore one per face or a single volume if it's a 3D texture.
 	ImporterDynamicArray<SurfaceOrVolumeData> m_surfacesOrVolume;
-
-	Mipmap(BaseMemoryPool* pool)
-		: m_surfacesOrVolume(pool)
-	{
-	}
 };
 
 /// Image importer context.
@@ -57,16 +45,6 @@ public:
 	U32 m_channelCount = 0;
 	U32 m_pixelSize = 0; ///< Texel size of an uncompressed image.
 	Bool m_hdr = false;
-
-	ImageImporterContext(BaseMemoryPool* pool)
-		: m_mipmaps(pool)
-	{
-	}
-
-	BaseMemoryPool& getMemoryPool()
-	{
-		return m_mipmaps.getMemoryPool();
-	}
 };
 
 class DdsPixelFormat
@@ -241,8 +219,7 @@ static Error checkInputImages(const ImageImporterConfig& config, U32& width, U32
 	return Error::kNone;
 }
 
-static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, CString tempDirectory, BaseMemoryPool& pool,
-						 ImporterString& tmpFilename)
+static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, CString tempDirectory, ImporterString& tmpFilename)
 {
 	U32 inWidth, inHeight, channelCount;
 	Bool hdr;
@@ -269,7 +246,7 @@ static Error resizeImage(CString inImageFilename, U32 outWidth, U32 outHeight, C
 
 	// Resize
 	I ok;
-	ImporterDynamicArray<U8> outPixels(&pool);
+	ImporterDynamicArray<U8> outPixels;
 	if(!hdr)
 	{
 		outPixels.resize(outWidth * outHeight * channelCount);
@@ -389,19 +366,17 @@ static void applyScaleAndBias(WeakArray<Vec3> pixels, Vec3 scale, Vec3 bias)
 
 static Error loadFirstMipmap(const ImageImporterConfig& config, ImageImporterContext& ctx)
 {
-	BaseMemoryPool& pool = ctx.getMemoryPool();
-
-	ctx.m_mipmaps.emplaceBack(&pool);
+	ctx.m_mipmaps.emplaceBack();
 	Mipmap& mip0 = ctx.m_mipmaps[0];
 
 	if(ctx.m_depth > 1)
 	{
-		mip0.m_surfacesOrVolume.resize(1, &pool);
+		mip0.m_surfacesOrVolume.resize(1);
 		mip0.m_surfacesOrVolume[0].m_pixels.resize(ctx.m_pixelSize * ctx.m_width * ctx.m_height * ctx.m_depth);
 	}
 	else
 	{
-		mip0.m_surfacesOrVolume.resize(ctx.m_faceCount * ctx.m_layerCount, &pool);
+		mip0.m_surfacesOrVolume.resize(ctx.m_faceCount * ctx.m_layerCount);
 		ANKI_ASSERT(mip0.m_surfacesOrVolume.getSize() == config.m_inputFilenames.getSize());
 
 		for(U32 f = 0; f < ctx.m_faceCount; ++f)
@@ -559,15 +534,15 @@ static void generateSurfaceMipmap(ConstWeakArray<U8, PtrSize> inBuffer, U32 inWi
 	}
 }
 
-static Error compressS3tc(BaseMemoryPool& pool, CString tempDirectory, CString compressonatorFilename, ConstWeakArray<U8, PtrSize> inPixels,
-						  U32 inWidth, U32 inHeight, U32 channelCount, Bool hdr, WeakArray<U8, PtrSize> outPixels)
+static Error compressS3tc(CString tempDirectory, CString compressonatorFilename, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth, U32 inHeight,
+						  U32 channelCount, Bool hdr, WeakArray<U8, PtrSize> outPixels)
 {
 	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * channelCount * ((hdr) ? sizeof(F32) : sizeof(U8)));
 	ANKI_ASSERT(inWidth > 0 && isPowerOfTwo(inWidth) && inHeight > 0 && isPowerOfTwo(inHeight));
 	ANKI_ASSERT(outPixels.getSizeInBytes() == PtrSize((hdr || channelCount == 4) ? 16 : 8) * (inWidth / 4) * (inHeight / 4));
 
 	// Create a PNG image to feed to the compressor
-	ImporterString tmpFilename(&pool);
+	ImporterString tmpFilename;
 	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
@@ -590,7 +565,7 @@ static Error compressS3tc(BaseMemoryPool& pool, CString tempDirectory, CString c
 	CleanupFile tmpCleanup(tmpFilename);
 
 	// Invoke the compressor process
-	ImporterString ddsFilename(&pool);
+	ImporterString ddsFilename;
 	ddsFilename.sprintf("%s/AnKiImageImporter_%u.dds", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
 	Process proc;
 	Array<CString, 5> args;
@@ -667,8 +642,8 @@ static Error compressS3tc(BaseMemoryPool& pool, CString tempDirectory, CString c
 	return Error::kNone;
 }
 
-static Error compressAstc(BaseMemoryPool& pool, CString tempDirectory, CString astcencFilename, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth,
-						  U32 inHeight, U32 inChannelCount, UVec2 blockSize, Bool hdr, WeakArray<U8, PtrSize> outPixels)
+static Error compressAstc(CString tempDirectory, CString astcencFilename, ConstWeakArray<U8, PtrSize> inPixels, U32 inWidth, U32 inHeight,
+						  U32 inChannelCount, UVec2 blockSize, Bool hdr, WeakArray<U8, PtrSize> outPixels)
 {
 	[[maybe_unused]] const PtrSize blockBytes = 16;
 	ANKI_ASSERT(inPixels.getSizeInBytes() == PtrSize(inWidth) * inHeight * inChannelCount * ((hdr) ? sizeof(F32) : sizeof(U8)));
@@ -676,7 +651,7 @@ static Error compressAstc(BaseMemoryPool& pool, CString tempDirectory, CString a
 	ANKI_ASSERT(outPixels.getSizeInBytes() == blockBytes * (inWidth / blockSize.x()) * (inHeight / blockSize.y()));
 
 	// Create a BMP image to feed to the astcebc
-	ImporterString tmpFilename(&pool);
+	ImporterString tmpFilename;
 	tmpFilename.sprintf("%s/AnKiImageImporter_%u.%s", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1), (hdr) ? "exr" : "png");
 	ANKI_IMPORTER_LOGV("Will store: %s", tmpFilename.cstr());
 	Bool saveTmpImageOk = false;
@@ -699,9 +674,9 @@ static Error compressAstc(BaseMemoryPool& pool, CString tempDirectory, CString a
 	CleanupFile pngCleanup(tmpFilename);
 
 	// Invoke the compressor process
-	ImporterString astcFilename(&pool);
+	ImporterString astcFilename;
 	astcFilename.sprintf("%s/AnKiImageImporter_%u.astc", tempDirectory.cstr(), g_tempFileIndex.fetchAdd(1));
-	ImporterString blockStr(&pool);
+	ImporterString blockStr;
 	blockStr.sprintf("%ux%u", blockSize.x(), blockSize.y());
 	Process proc;
 	Array<CString, 5> args;
@@ -872,7 +847,6 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 
 static Error importImageInternal(const ImageImporterConfig& configOriginal)
 {
-	BaseMemoryPool& pool = *configOriginal.m_pool;
 	ImageImporterConfig config = configOriginal;
 
 	config.m_minMipmapDimension = max(config.m_minMipmapDimension, 4u);
@@ -889,9 +863,9 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	ANKI_CHECK(checkInputImages(config, width, height, channelCount, isHdr));
 
 	// Resize
-	ImporterDynamicArray<ImporterString> newFilenames(&pool);
-	ImporterDynamicArray<CString> newFilenamesCString(&pool);
-	ImporterDynamicArray<CleanupFile> resizedImagesCleanup(&pool);
+	ImporterDynamicArray<ImporterString> newFilenames;
+	ImporterDynamicArray<CString> newFilenamesCString;
+	ImporterDynamicArray<CleanupFile> resizedImagesCleanup;
 	if(width < config.m_minMipmapDimension || height < config.m_minMipmapDimension)
 	{
 		const U32 newWidth = max(width, config.m_minMipmapDimension);
@@ -899,12 +873,12 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 
 		ANKI_IMPORTER_LOGV("Image is smaller than the min mipmap dimension. Will resize it to %ux%u", newWidth, newHeight);
 
-		newFilenames.resize(config.m_inputFilenames.getSize(), ImporterString(&pool));
+		newFilenames.resize(config.m_inputFilenames.getSize());
 		newFilenamesCString.resize(config.m_inputFilenames.getSize());
 
 		for(U32 i = 0; i < config.m_inputFilenames.getSize(); ++i)
 		{
-			ANKI_CHECK(resizeImage(config.m_inputFilenames[i], newWidth, newHeight, config.m_tempDirectory, pool, newFilenames[i]));
+			ANKI_CHECK(resizeImage(config.m_inputFilenames[i], newWidth, newHeight, config.m_tempDirectory, newFilenames[i]));
 
 			newFilenamesCString[i] = newFilenames[i];
 			resizedImagesCleanup.emplaceBack(newFilenames[i]);
@@ -917,7 +891,7 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	}
 
 	// Init image
-	ImageImporterContext ctx(&pool);
+	ImageImporterContext ctx;
 
 	ctx.m_width = width;
 	ctx.m_height = height;
@@ -975,11 +949,11 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 													   : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
 	for(U32 mip = 1; mip < mipCount; ++mip)
 	{
-		ctx.m_mipmaps.emplaceBack(&pool);
+		ctx.m_mipmaps.emplaceBack();
 
 		if(config.m_type != ImageBinaryType::k3D)
 		{
-			ctx.m_mipmaps[mip].m_surfacesOrVolume.resize(ctx.m_faceCount * ctx.m_layerCount, &pool);
+			ctx.m_mipmaps[mip].m_surfacesOrVolume.resize(ctx.m_faceCount * ctx.m_layerCount);
 			for(U32 l = 0; l < ctx.m_layerCount; ++l)
 			{
 				for(U32 f = 0; f < ctx.m_faceCount; ++f)
@@ -1047,9 +1021,8 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 
 					surface.m_s3tcPixels.resize(s3tcImageSize);
 
-					ANKI_CHECK(compressS3tc(pool, config.m_tempDirectory, config.m_compressonatorFilename,
-											ConstWeakArray<U8, PtrSize>(surface.m_pixels), width, height, ctx.m_channelCount, ctx.m_hdr,
-											WeakArray<U8, PtrSize>(surface.m_s3tcPixels)));
+					ANKI_CHECK(compressS3tc(config.m_tempDirectory, config.m_compressonatorFilename, ConstWeakArray<U8, PtrSize>(surface.m_pixels),
+											width, height, ctx.m_channelCount, ctx.m_hdr, WeakArray<U8, PtrSize>(surface.m_s3tcPixels)));
 				}
 			}
 		}
@@ -1075,8 +1048,8 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 
 					surface.m_astcPixels.resize(astcImageSize);
 
-					ANKI_CHECK(compressAstc(pool, config.m_tempDirectory, config.m_astcencFilename, ConstWeakArray<U8, PtrSize>(surface.m_pixels),
-											width, height, ctx.m_channelCount, config.m_astcBlockSize, ctx.m_hdr,
+					ANKI_CHECK(compressAstc(config.m_tempDirectory, config.m_astcencFilename, ConstWeakArray<U8, PtrSize>(surface.m_pixels), width,
+											height, ctx.m_channelCount, config.m_astcBlockSize, ctx.m_hdr,
 											WeakArray<U8, PtrSize>(surface.m_astcPixels)));
 				}
 			}
@@ -1099,7 +1072,7 @@ Error importImage(const ImageImporterConfig& config)
 	const Error err = importImageInternal(config);
 	if(err)
 	{
-		ANKI_IMPORTER_LOGE("Image importing failed");
+		ANKI_IMPORTER_LOGE("Image importing failed: %s", config.m_inputFilenames[0].cstr());
 		return err;
 	}
 

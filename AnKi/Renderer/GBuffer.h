@@ -57,38 +57,23 @@ public:
 	}
 
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
-							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
-	{
-		if(rtName == "GBufferAlbedo")
-		{
-			handles[0] = m_runCtx.m_colorRts[0];
-		}
-		else if(rtName == "GBufferNormals")
-		{
-			handles[0] = m_runCtx.m_colorRts[2];
-		}
-		else if(rtName == "GBufferVelocity")
-		{
-			handles[0] = m_runCtx.m_colorRts[3];
-		}
-		else
-		{
-			ANKI_ASSERT(!"See file");
-		}
-	}
+							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override;
 
 	/// Returns a buffer with indices of the visible AABBs. Used in debug drawing.
-	const BufferOffsetRange& getVisibleAabbsBuffer() const
+	void getVisibleAabbsBuffer(BufferView& visibleAaabbIndicesBuffer, BufferHandle& dep) const
 	{
-		ANKI_ASSERT(m_runCtx.m_visibleAabbsBuffer.m_buffer != nullptr);
-		return m_runCtx.m_visibleAabbsBuffer;
+		visibleAaabbIndicesBuffer = m_runCtx.m_visibleAaabbIndicesBuffer;
+		dep = m_runCtx.m_visibleAaabbIndicesBufferDepedency;
+		ANKI_ASSERT(visibleAaabbIndicesBuffer.isValid() && dep.isValid());
 	}
 
 private:
 	Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	TexturePtr m_hzbRt;
-	FramebufferDescription m_fbDescr;
+
+	ShaderProgramResourcePtr m_visNormalProg;
+	ShaderProgramPtr m_visNormalGrProg;
 
 	class
 	{
@@ -98,12 +83,11 @@ private:
 		RenderTargetHandle m_prevFrameDepthRt;
 		RenderTargetHandle m_hzbRt;
 
-		BufferOffsetRange m_visibleAabbsBuffer; ///< Optional
+		BufferView m_visibleAaabbIndicesBuffer; ///< Optional
+		BufferHandle m_visibleAaabbIndicesBufferDepedency;
 	} m_runCtx;
 
 	Error initInternal();
-
-	void runInThread(const RenderingContext& ctx, const GpuVisibilityOutput& visOut, RenderPassWorkContext& rgraphCtx) const;
 };
 /// @}
 

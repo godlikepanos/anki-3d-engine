@@ -20,18 +20,8 @@ void RendererObject::registerDebugRenderTarget(CString rtName)
 	getRenderer().registerDebugRenderTarget(this, rtName);
 }
 
-Error RendererObject::loadShaderProgram(CString filename, ShaderProgramResourcePtr& rsrc, ShaderProgramPtr& grProg)
-{
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, rsrc));
-	const ShaderProgramResourceVariant* variant;
-	rsrc->getOrCreateVariant(variant);
-	grProg.reset(&variant->getProgram());
-
-	return Error::kNone;
-}
-
-Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
-										ShaderProgramPtr& grProg)
+Error RendererObject::loadShaderProgram(CString filename, std::initializer_list<SubMutation> mutators, ShaderProgramResourcePtr& rsrc,
+										ShaderProgramPtr& grProg, CString technique, ShaderTypeBit shaderTypes)
 {
 	if(!rsrc.isCreated())
 	{
@@ -44,10 +34,63 @@ Error RendererObject::loadShaderProgram(CString filename, ConstWeakArray<SubMuta
 		initInf.addMutation(pair.m_mutatorName, pair.m_value);
 	}
 
+	if(technique.isEmpty())
+	{
+		technique = "Unnamed";
+	}
+
+	if(!shaderTypes)
+	{
+		U32 techniqueIdx = kMaxU32;
+		for(U32 i = 0; i < rsrc->getBinary().m_techniques.getSize(); ++i)
+		{
+			if(technique == rsrc->getBinary().m_techniques[i].m_name.getBegin())
+			{
+				techniqueIdx = i;
+				break;
+			}
+		}
+		ANKI_ASSERT(techniqueIdx != kMaxU32);
+		const ShaderTypeBit techniqueShaderTypes = rsrc->getBinary().m_techniques[techniqueIdx].m_shaderTypes;
+
+		if(techniqueShaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
+		{
+			if(g_preferComputeCVar.get())
+			{
+				shaderTypes = ShaderTypeBit::kCompute;
+			}
+			else
+			{
+				shaderTypes = ShaderTypeBit::kFragment | ShaderTypeBit::kVertex;
+			}
+		}
+		else if(techniqueShaderTypes == ShaderTypeBit::kCompute)
+		{
+			shaderTypes = techniqueShaderTypes;
+		}
+		else if(techniqueShaderTypes == (ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
+		{
+			shaderTypes = techniqueShaderTypes;
+		}
+		else
+		{
+			ANKI_ASSERT(!"Can't figure out a sensible default");
+		}
+	}
+
+	initInf.requestTechniqueAndTypes(shaderTypes, technique);
+
 	const ShaderProgramResourceVariant* variant;
 	rsrc->getOrCreateVariant(initInf, variant);
 
-	grProg.reset(&variant->getProgram());
+	if(variant)
+	{
+		grProg.reset(&variant->getProgram());
+	}
+	else
+	{
+		grProg.reset(nullptr);
+	}
 
 	return Error::kNone;
 }
@@ -58,12 +101,27 @@ void RendererObject::zeroBuffer(Buffer* buff)
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-	cmdb->fillBuffer(buff, 0, kMaxPtrSize, 0);
+	cmdb->fillBuffer(BufferView(buff), 0);
 
 	FencePtr fence;
-	cmdb->flush({}, &fence);
+	cmdb->endRecording();
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 
 	fence->clientWait(16.0_sec);
+}
+
+CString RendererObject::generateTempPassName(CString name, U32 index)
+{
+	Char* str = static_cast<Char*>(getRenderer().getFrameMemoryPool().allocate(128, 1));
+	snprintf(str, 128, "%s #%u", name.cstr(), index);
+	return str;
+}
+
+CString RendererObject::generateTempPassName(CString name, U32 index, CString name2, U32 index2)
+{
+	Char* str = static_cast<Char*>(getRenderer().getFrameMemoryPool().allocate(128, 1));
+	snprintf(str, 128, "%s #%u %s #%u", name.cstr(), index, name2.cstr(), index2);
+	return str;
 }
 
 } // end namespace anki

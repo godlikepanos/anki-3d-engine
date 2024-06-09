@@ -46,6 +46,8 @@ public:
 	Array<TexturePtr, 2> m_momentsRts;
 
 	RenderTargetDescription m_varianceRtDescr;
+
+	TexturePtr m_dummyHistoryLenTex;
 	/// @}
 
 	/// @name Programs
@@ -56,11 +58,9 @@ public:
 	ShaderProgramResourcePtr m_buildSbtProg;
 	ShaderProgramPtr m_buildSbtGrProg;
 
-	ShaderProgramResourcePtr m_rayGenProg;
+	ShaderProgramResourcePtr m_rayGenAndMissProg;
 	ShaderProgramPtr m_rtLibraryGrProg;
 	U32 m_rayGenShaderGroupIdx = kMaxU32;
-
-	ShaderProgramResourcePtr m_missProg;
 	U32 m_missShaderGroupIdx = kMaxU32;
 
 	ShaderProgramResourcePtr m_denoiseProg;
