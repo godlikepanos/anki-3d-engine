@@ -77,7 +77,7 @@ VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
 	case PrimitiveTopology::kTriangleStrip:
 		out = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 		break;
-	case PrimitiveTopology::kPatchs:
+	case PrimitiveTopology::kPatches:
 		out = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 		break;
 	default:
