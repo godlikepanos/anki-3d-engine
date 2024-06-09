@@ -293,7 +293,7 @@ const UINT D3D12_OS_RESERVED_REGISTER_SPACE_VALUES_END = 0xffffffff;
 const UINT D3D12_OS_RESERVED_REGISTER_SPACE_VALUES_START = 0xfffffff8;
 const UINT D3D12_PACKED_TILE = 0xffffffff;
 const UINT D3D12_PIXEL_ADDRESS_RANGE_BIT_COUNT = 15;
-const UINT D3D12_PREVIEW_SDK_VERSION = 713;
+const UINT D3D12_PREVIEW_SDK_VERSION = 714;
 const UINT D3D12_PRE_SCISSOR_PIXEL_ADDRESS_RANGE_BIT_COUNT = 16;
 const UINT D3D12_PS_CS_UAV_REGISTER_COMPONENTS = 1;
 const UINT D3D12_PS_CS_UAV_REGISTER_COUNT = 8;
@@ -361,7 +361,7 @@ const UINT D3D12_REQ_TEXTURECUBE_DIMENSION = 16384;
 const UINT D3D12_RESINFO_INSTRUCTION_MISSING_COMPONENT_RETVAL = 0;
 const UINT D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES = 0xffffffff;
 const UINT D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT = 2;
-const UINT D3D12_SDK_VERSION = 613;
+const UINT D3D12_SDK_VERSION = 614;
 const UINT D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES = 32;
 const UINT D3D12_SHADER_MAJOR_VERSION = 5;
 const UINT D3D12_SHADER_MAX_INSTANCES = 65535;
@@ -1030,7 +1030,7 @@ typedef enum D3D12_FEATURE
     D3D12_FEATURE_PREDICATION                           = 50,
     D3D12_FEATURE_PLACED_RESOURCE_SUPPORT_INFO          = 51,
     D3D12_FEATURE_HARDWARE_COPY                         = 52,
-    D3D12_FEATURE_D3D12_OPTIONS21                       = 53
+    D3D12_FEATURE_D3D12_OPTIONS21                       = 53,
 } D3D12_FEATURE;
 
 typedef enum D3D12_SHADER_MIN_PRECISION_SUPPORT
@@ -1621,6 +1621,7 @@ typedef struct D3D12_FEATURE_DATA_HARDWARE_COPY
     [annotation("_Out_")] BOOL Supported;
 } D3D12_FEATURE_DATA_HARDWARE_COPY;
 
+
 typedef struct D3D12_RESOURCE_ALLOCATION_INFO
 {
     UINT64 SizeInBytes;
@@ -1777,6 +1778,7 @@ typedef struct D3D12_RESOURCE_DESC1
     D3D12_RESOURCE_FLAGS Flags;
     D3D12_MIP_REGION SamplerFeedbackMipRegion;
 } D3D12_RESOURCE_DESC1;
+
 
 
 typedef struct D3D12_DEPTH_STENCIL_VALUE
@@ -5430,6 +5432,7 @@ interface ID3D12Resource2
 }
 
 
+
 [uuid(572F7389-2168-49E3-9693-D6DF5871BF6D), object, local, pointer_default(unique)]
 interface ID3D12Heap1
     : ID3D12Heap
@@ -6063,6 +6066,7 @@ interface ID3D12Device14 : ID3D12Device13
         [out, iid_is(riid), annotation("_COM_Outptr_")] void** ppvRootSignature);
 };
 
+
 [uuid(bc66d368-7373-4943-8757-fc87dc79e476), object, local, pointer_default(unique)]
 interface ID3D12VirtualizationGuestDevice
     : IUnknown
@@ -6087,7 +6091,6 @@ interface ID3D12Tools
     void EnableShaderInstrumentation(BOOL bEnable);
     BOOL ShaderInstrumentationEnabled();
 }
-
 
 
 typedef struct D3D12_SUBRESOURCE_DATA

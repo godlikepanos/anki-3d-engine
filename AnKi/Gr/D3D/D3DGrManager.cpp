@@ -29,7 +29,7 @@
 
 // Use the Agility SDK
 extern "C" {
-__declspec(dllexport) extern const UINT D3D12SDKVersion = 613; // Number taken from the download page
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 614; // Number taken from the download page
 __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; // The D3D12Core.dll should be in the same dir as the .exe
 }
 
@@ -41,6 +41,7 @@ BoolCVar g_vsyncCVar(CVarSubsystem::kGr, "Vsync", false, "Enable or not vsync");
 BoolCVar g_debugMarkersCVar(CVarSubsystem::kGr, "DebugMarkers", false, "Enable or not debug markers");
 BoolCVar g_meshShadersCVar(CVarSubsystem::kGr, "MeshShaders", false, "Enable or not mesh shaders");
 static NumericCVar<U8> g_deviceCVar(CVarSubsystem::kGr, "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
+static BoolCVar g_rayTracingCVar(CVarSubsystem::kGr, "RayTracing", false, "Try enabling ray tracing");
 
 static LONG NTAPI vexHandler(PEXCEPTION_POINTERS exceptionInfo)
 {
@@ -407,7 +408,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Create device
 	ComPtr<ID3D12Device> dev;
-	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dev)));
+	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&dev)));
 	ANKI_D3D_CHECK(dev->QueryInterface(IID_PPV_ARGS(&m_device)));
 
 	if(g_validationCVar.get())
@@ -426,17 +427,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	// Capabilities
-	{
-		D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16;
-		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16)));
-		m_d3dCapabilities.m_rebar = options16.GPUUploadHeapSupported;
-		if(!m_d3dCapabilities.m_rebar)
-		{
-			ANKI_D3D_LOGW("ReBAR not supported");
-		}
-	}
-
 	// Create queues
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -447,6 +437,43 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ANKI_D3D_CHECK(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_queues[GpuQueueType::kCompute])));
 
 		ANKI_D3D_CHECK(m_queues[GpuQueueType::kGeneral]->GetTimestampFrequency(&m_timestampFrequency));
+	}
+
+	// Set device capabilities (taken from mesa's dozen driver)
+	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16)));
+		D3D12_FEATURE_DATA_ARCHITECTURE architecture = {.NodeIndex = 0};
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture)));
+
+		m_d3dCapabilities.m_rebar = options16.GPUUploadHeapSupported;
+		if(!m_d3dCapabilities.m_rebar)
+		{
+			ANKI_D3D_LOGW("ReBAR not supported");
+		}
+
+		m_capabilities.m_uniformBufferBindOffsetAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+		m_capabilities.m_uniformBufferMaxRange = D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * D3D12_STANDARD_VECTOR_SIZE * sizeof(F32);
+		m_capabilities.m_storageBufferBindOffsetAlignment = D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT;
+		m_capabilities.m_storageBufferMaxRange = 1 << D3D12_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP;
+		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
+		m_capabilities.m_textureBufferMaxRange = kMaxU32; // ?
+		m_capabilities.m_pushConstantsSize = kMaxPushConstantSize;
+		m_capabilities.m_computeSharedMemorySize = D3D12_CS_TGSM_REGISTER_COUNT * sizeof(F32);
+		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = 32; // ?
+		m_capabilities.m_sbtRecordAlignment = 32; // ?
+		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
+		m_capabilities.m_discreteGpu = !architecture.UMA;
+		m_capabilities.m_majorApiVersion = 12;
+		m_capabilities.m_rayTracingEnabled = g_rayTracingCVar.get();
+		m_capabilities.m_64bitAtomics = true;
+		m_capabilities.m_vrs = true;
+		m_capabilities.m_samplingFilterMinMax = true;
+		m_capabilities.m_unalignedBbpTextureFormats = false;
+		m_capabilities.m_dlss = false;
+		m_capabilities.m_meshShaders = true;
+		m_capabilities.m_pipelineQuery = true;
+		m_capabilities.m_barycentrics = true;
 	}
 
 	// Other systems
@@ -504,11 +531,14 @@ void GrManagerImpl::destroy()
 
 void GrManagerImpl::waitAllQueues()
 {
-	for(GpuQueueType queueType : EnumIterable<GpuQueueType>())
+	if(FenceFactory::isAllocated())
 	{
-		MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
-		fence->gpuSignal(queueType);
-		fence->clientWait(kMaxSecond);
+		for(GpuQueueType queueType : EnumIterable<GpuQueueType>())
+		{
+			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+			fence->gpuSignal(queueType);
+			fence->clientWait(kMaxSecond);
+		}
 	}
 }
 

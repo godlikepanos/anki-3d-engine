@@ -131,7 +131,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
+		desc.Flags = {};
 
 		if(!!(m_usage & TextureUsageBit::kAllFramebuffer) && m_aspect == DepthStencilAspectBit::kNone)
 		{
@@ -257,9 +257,49 @@ void TextureImpl::initView(const TextureSubresourceDescriptor& subresource, Text
 	{
 		const TextureView tview(this, subresource);
 
+		ANKI_ASSERT(tview.getSubresource().m_depthStencilAspect != DepthStencilAspectBit::kDepthStencil && "Can only create a single plane SRV");
+
 		D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
 
-		desc.Format = DXGI_FORMAT(m_format);
+		if(!m_aspect)
+		{
+			desc.Format = DXGI_FORMAT(m_format);
+		}
+		else
+		{
+			// D3D doesn't like depth formats as SRVs
+			switch(m_format)
+			{
+			case Format::kD16_Unorm:
+				desc.Format = DXGI_FORMAT(Format::kR16_Unorm);
+				break;
+			case Format::kD32_Sfloat:
+				desc.Format = DXGI_FORMAT(Format::kR32_Sfloat);
+				break;
+			case Format::kD24_Unorm_S8_Uint:
+				if(tview.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::kDepth)
+				{
+					desc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+				}
+				else
+				{
+					desc.Format = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+				}
+				break;
+			case Format::kD32_Sfloat_S8_Uint:
+				if(tview.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::kDepth)
+				{
+					desc.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+				}
+				else
+				{
+					desc.Format = DXGI_FORMAT_R32G8X24_TYPELESS;
+				}
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+		}
 
 		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
 		const U32 surfaceCount = faceCount * m_layerCount;
@@ -501,7 +541,16 @@ D3D12_TEXTURE_BARRIER TextureImpl::computeBarrierInfo(TextureUsageBit before, Te
 		barrier.Subresources.NumMipLevels = 1;
 		barrier.Subresources.FirstArraySlice = subresource.m_layer * faceCount + subresource.m_face;
 		barrier.Subresources.NumArraySlices = 1;
-		barrier.Subresources.FirstPlane = !!(subresource.m_depthStencilAspect & DepthStencilAspectBit::kDepth) ? 0 : 1;
+
+		if(!!(subresource.m_depthStencilAspect & DepthStencilAspectBit::kDepth) || subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
+		{
+			barrier.Subresources.FirstPlane = 0;
+		}
+		else
+		{
+			barrier.Subresources.FirstPlane = 1;
+		}
+
 		barrier.Subresources.NumPlanes = (subresource.m_depthStencilAspect == DepthStencilAspectBit::kDepthStencil) ? 2 : 1;
 	}
 
@@ -638,36 +687,46 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 	}
 	else if(depthStencil)
 	{
-		if(!(usage & ~(TextureUsageBit::kAllSampled | TextureUsageBit::kFramebufferRead)))
+		if((usage & TextureUsageBit::kAllSampled) == usage)
+		{
+			// Only sampled
+			out = D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
+		}
+		else if((usage & TextureUsageBit::kFramebufferRead) == usage)
+		{
+			// Only FB read
+			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ;
+		}
+		else if((usage & (TextureUsageBit::kAllSampled | TextureUsageBit::kFramebufferRead)) == usage)
 		{
 			// Only depth tests and sampled
-			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ;
+			out = D3D12_BARRIER_LAYOUT_COMMON;
 		}
 		else
 		{
 			// Only attachment write, the rest (eg transfer) are not supported for now
-			ANKI_ASSERT(usage == TextureUsageBit::kFramebufferWrite || usage == TextureUsageBit::kAllFramebuffer);
+			ANKI_ASSERT(usage == TextureUsageBit::kAllFramebuffer || usage == TextureUsageBit::kFramebufferWrite);
 			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE;
 		}
 	}
-	else if(!(usage & ~TextureUsageBit::kAllFramebuffer))
+	else if((usage & TextureUsageBit::kAllFramebuffer) == usage)
 	{
 		// Color attachment
 		out = D3D12_BARRIER_LAYOUT_RENDER_TARGET;
 	}
-	else if(!(usage & ~TextureUsageBit::kFramebufferShadingRate))
+	else if((usage & TextureUsageBit::kFramebufferShadingRate) == usage)
 	{
 		// SRI
 		out = D3D12_BARRIER_LAYOUT_SHADING_RATE_SOURCE;
 	}
-	else if(!(usage & ~TextureUsageBit::kAllStorage))
+	else if((usage & TextureUsageBit::kAllUav) == usage)
 	{
-		// Only image load/store
+		// UAV
 		out = D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS;
 	}
-	else if(!(usage & ~TextureUsageBit::kAllSampled))
+	else if((usage & TextureUsageBit::kAllSrv) == usage)
 	{
-		// Only sampled
+		// SRV
 		out = D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
 	}
 	else if(usage == TextureUsageBit::kGenerateMipmaps)

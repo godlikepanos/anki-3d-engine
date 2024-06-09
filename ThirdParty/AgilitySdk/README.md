@@ -13,40 +13,8 @@ The included licenses apply to the following files:
 
 ## Changelog
 
-### Version 1.613.3
-
-- Same as 1.613.2, with minor updates shown at the end of this list:
-- Work Graphs
-- Generic Programs in State objects
-- Shader Model 6.8
-  - Work Graphs support
-  - Start Vertex/Instance Location
-  - Wave Size Range
-  - Expanded Comparison Sampling
-- GPU Upload Heaps (requires preview or future OS)
-- Incrementing Constants in ExecuteIndirect
-- Minor updates for .3:
-   - Honor root signature associations added to export in collections when the export is imported into generic program in an executable state object.
-   - Propagate root signatures to exports that have bindings and no root signatures within the scope of a generic program, like what happens with PSOs
-   - Other ganeric programs releated bug fixes, additional validation and optimizations
-   - For state objectgs, minor fixes to subobject association logic in edge cases involving collections to more precisely match spec wording
-
-### Version 1.613.2
-
-- Same as 1.613.1, with minor updates shown at the end of this list:
-- Work Graphs
-- Generic Programs in State objects
-- Shader Model 6.8
-  - Work Graphs support
-  - Start Vertex/Instance Location
-  - Wave Size Range
-  - Expanded Comparison Sampling
-- GPU Upload Heaps (requires preview or future OS)
-- Incrementing Constants in ExecuteIndirect
-- Minor updates for .2:
-   - Close validation hole: Prevent use of features in incompatible state object types, such as defining generic program components (like rast state) in a raytracing pipeline.
-   - Debug layer fixes around lifetime management of program identifiers (e.g. the handles for the new generic programs)
-   - ExecuteIndirect validation was too strict: buffer size only needs to be big enough for the number of commands * stride, _minus the unused space at end of last command_
+### Version 1.614.0
+- Enabled R9G9B9E5_SHAREDEXP format for Render Target and Unordered Access Views
 
 ### Version 1.613.1
 

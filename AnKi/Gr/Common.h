@@ -520,6 +520,8 @@ enum class TextureUsageBit : U32
 				| kTransferDestination | kGenerateMipmaps,
 	kAll = kAllRead | kAllWrite,
 	kAllShaderResource = kAllSampled | kAllStorage,
+	kAllSrv = (kAllSampled | kAllStorage) & kAllRead,
+	kAllUav = kAllStorage & kAllWrite,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
