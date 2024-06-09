@@ -483,7 +483,7 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 		outSpv.resize(inSpirv.getSize());
 		memcpy(outSpv.getBegin(), inSpirv.getBegin(), inSpirv.getSizeInBytes());
 
-		visitSpirv<WeakArray>(WeakArray<U32>(outSpv), [&](U32 cmd, WeakArray<U32> instructions) {
+		visitSpirv(WeakArray<U32>(outSpv), [&](U32 cmd, WeakArray<U32> instructions) {
 			if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationBinding
 			   && instructions[2] >= kDxcVkBindingShifts[0][HlslResourceType::kFirst]
 			   && instructions[2] < kDxcVkBindingShifts[kMaxDescriptorSets - 1][HlslResourceType::kCount - 1])

@@ -274,9 +274,9 @@ public:
 
 private:
 	constexpr TextureSubresourceDescriptor(U32 mip, U32 face, U32 layer, Bool allSurfs, DepthStencilAspectBit aspect)
-		: m_mipmap(mip)
-		, m_face(face)
-		, m_layer(layer)
+		: m_mipmap(mip & ((1u << 5u) - 1u))
+		, m_face(face & ((1u << 3u) - 1u))
+		, m_layer(layer & ((1u << 24u) - 1u))
 		, m_allSurfacesOrVolumes(allSurfs)
 		, m_depthStencilAspect(aspect)
 	{

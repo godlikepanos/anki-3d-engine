@@ -1104,8 +1104,8 @@ U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1);
 U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip = 1);
 
 /// Visit a SPIR-V binary.
-template<template<typename> typename TArray, typename TFunc>
-static void visitSpirv(TArray<U32> spv, TFunc func)
+template<typename TArray, typename TFunc>
+static void visitSpirv(TArray spv, TFunc func)
 {
 	ANKI_ASSERT(spv.getSize() > 5);
 
@@ -1115,7 +1115,7 @@ static void visitSpirv(TArray<U32> spv, TFunc func)
 		const U32 instructionCount = *it >> 16u;
 		const U32 opcode = *it & 0xFFFFu;
 
-		TArray<U32> instructions(it + 1, instructionCount - 1);
+		TArray instructions(it + 1, instructionCount - 1);
 
 		func(opcode, instructions);
 

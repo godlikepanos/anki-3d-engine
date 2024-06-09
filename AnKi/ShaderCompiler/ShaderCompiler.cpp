@@ -346,13 +346,13 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 	// Discards?
 	if(type == ShaderType::kFragment)
 	{
-		visitSpirv<ConstWeakArray>(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)),
-								   [&](U32 cmd, [[maybe_unused]] ConstWeakArray<U32> instructions) {
-									   if(cmd == spv::OpKill)
-									   {
-										   refl.m_fragment.m_discards = true;
-									   }
-								   });
+		visitSpirv(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)),
+				   [&](U32 cmd, [[maybe_unused]] ConstWeakArray<U32> instructions) {
+					   if(cmd == spv::OpKill)
+					   {
+						   refl.m_fragment.m_discards = true;
+					   }
+				   });
 	}
 
 	return Error::kNone;
