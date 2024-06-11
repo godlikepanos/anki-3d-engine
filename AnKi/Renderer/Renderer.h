@@ -6,14 +6,10 @@
 #pragma once
 
 #include <AnKi/Renderer/Common.h>
-#include <AnKi/Renderer/Utils/Drawer.h>
-#include <AnKi/Renderer/Utils/GpuVisibility.h>
-#include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
 #include <AnKi/Collision/Forward.h>
-#include <AnKi/Renderer/Utils/Readback.h>
 
 namespace anki {
 
@@ -95,44 +91,9 @@ public:
 		return m_frameCount;
 	}
 
-	const RenderableDrawer& getSceneDrawer() const
-	{
-		return m_sceneDrawer;
-	}
-
-	RenderableDrawer& getSceneDrawer()
-	{
-		return m_sceneDrawer;
-	}
-
-	GpuVisibility& getGpuVisibility()
-	{
-		return m_visibility;
-	}
-
 	Bool runSoftwareMeshletRendering() const
 	{
 		return g_meshletRenderingCVar.get() && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
-	}
-
-	GpuVisibilityNonRenderables& getGpuVisibilityNonRenderables()
-	{
-		return m_nonRenderablesVisibility;
-	}
-
-	GpuVisibilityAccelerationStructures& getGpuVisibilityAccelerationStructures()
-	{
-		return m_asVisibility;
-	}
-
-	const HzbGenerator& getHzbGenerator() const
-	{
-		return m_hzbGenerator;
-	}
-
-	ReadbackManager& getReadbackManager()
-	{
-		return m_readbaks;
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
@@ -228,13 +189,6 @@ private:
 
 	UVec2 m_internalResolution = UVec2(0u); ///< The resolution of all passes up until TAA.
 	UVec2 m_postProcessResolution = UVec2(0u); ///< The resolution of post processing and following passes.
-
-	RenderableDrawer m_sceneDrawer;
-	GpuVisibility m_visibility;
-	GpuVisibilityNonRenderables m_nonRenderablesVisibility;
-	GpuVisibilityAccelerationStructures m_asVisibility;
-	HzbGenerator m_hzbGenerator;
-	ReadbackManager m_readbaks;
 
 	U64 m_frameCount; ///< Frame number
 

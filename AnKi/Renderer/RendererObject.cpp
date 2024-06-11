@@ -110,18 +110,26 @@ void RendererObject::zeroBuffer(Buffer* buff)
 	fence->clientWait(16.0_sec);
 }
 
-CString RendererObject::generateTempPassName(CString name, U32 index)
+CString RendererObject::generateTempPassName(const Char* fmt, ...)
 {
-	Char* str = static_cast<Char*>(getRenderer().getFrameMemoryPool().allocate(128, 1));
-	snprintf(str, 128, "%s #%u", name.cstr(), index);
-	return str;
-}
+	Array<Char, 128> buffer;
 
-CString RendererObject::generateTempPassName(CString name, U32 index, CString name2, U32 index2)
-{
-	Char* str = static_cast<Char*>(getRenderer().getFrameMemoryPool().allocate(128, 1));
-	snprintf(str, 128, "%s #%u %s #%u", name.cstr(), index, name2.cstr(), index2);
-	return str;
+	va_list args;
+	va_start(args, fmt);
+	const I len = vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
+	va_end(args);
+
+	if(len > 0 && len < I(sizeof(buffer)))
+	{
+		Char* str = static_cast<Char*>(getRenderer().getFrameMemoryPool().allocate(len + 1, 1));
+		memcpy(str, buffer.getBegin(), len + 1);
+		return str;
+	}
+	else
+	{
+		ANKI_R_LOGE("generateTempPassName() failed. Ignoring error");
+		return "**failed**";
+	}
 }
 
 } // end namespace anki

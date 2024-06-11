@@ -298,9 +298,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 	return Error::kNone;
 }
 
-void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages, VkAccessFlags& accesses) const
+void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags& stages, VkAccessFlags& accesses) const
 {
-	ANKI_ASSERT(level < m_mipCount);
 	ANKI_ASSERT(usageValid(usage));
 	stages = 0;
 	accesses = 0;
@@ -391,30 +390,6 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 		accesses |= VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
 	}
 
-	if(!!(usage & TextureUsageBit::kGenerateMipmaps))
-	{
-		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-		if(src)
-		{
-			const Bool lastLevel = level == m_mipCount - 1;
-			if(lastLevel)
-			{
-				accesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
-			}
-			else
-			{
-				accesses |= VK_ACCESS_TRANSFER_READ_BIT;
-			}
-		}
-		else
-		{
-			ANKI_ASSERT(level == 0
-						&& "The upper layers should not allow others levels to transition to gen mips state. This "
-						   "happens elsewhere");
-			accesses |= VK_ACCESS_TRANSFER_READ_BIT;
-		}
-	}
-
 	if(!!(usage & TextureUsageBit::kTransferDestination))
 	{
 		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -428,27 +403,45 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 	}
 }
 
-void TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U32 level, VkPipelineStageFlags& srcStages,
-									 VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const
+VkImageMemoryBarrier TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDescriptor& subresource,
+													 VkPipelineStageFlags& srcStages, VkPipelineStageFlags& dstStages) const
 {
-	computeBarrierInfo(before, true, level, srcStages, srcAccesses);
-	computeBarrierInfo(after, false, level, dstStages, dstAccesses);
+	ANKI_ASSERT(usageValid(before));
+	ANKI_ASSERT(usageValid(after));
 
-	if(srcStages == 0)
+	VkImageMemoryBarrier barrier = {};
+
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = m_imageHandle;
+	barrier.subresourceRange = computeVkImageSubresourceRange(subresource);
+
+	barrier.oldLayout = computeLayout(before);
+	barrier.newLayout = computeLayout(after);
+
+	VkPipelineStageFlags srcStages2, dstStages2;
+	computeBarrierInfo(before, srcStages2, barrier.srcAccessMask);
+	computeBarrierInfo(after, dstStages2, barrier.dstAccessMask);
+
+	if(srcStages2 == 0)
 	{
-		srcStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		srcStages2 = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	}
 
-	ANKI_ASSERT(dstStages);
+	ANKI_ASSERT(dstStages2);
+
+	srcStages |= srcStages2;
+	dstStages |= dstStages2;
+
+	return barrier;
 }
 
-VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
+VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage) const
 {
-	ANKI_ASSERT(level < m_mipCount);
 	ANKI_ASSERT(usageValid(usage));
 
 	VkImageLayout out = VK_IMAGE_LAYOUT_MAX_ENUM;
-	const Bool lastLevel = level == m_mipCount - 1u;
 	const Bool depthStencil = !!m_aspect;
 
 	if(usage == TextureUsageBit::kNone)
@@ -488,17 +481,6 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		// Only sampled
 		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	}
-	else if(usage == TextureUsageBit::kGenerateMipmaps)
-	{
-		if(!lastLevel)
-		{
-			out = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		}
-		else
-		{
-			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		}
 	}
 	else if(usage == TextureUsageBit::kTransferDestination)
 	{

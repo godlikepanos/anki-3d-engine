@@ -14,6 +14,7 @@
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
+#include <AnKi/Core/StatsSet.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -44,7 +45,11 @@
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/Sky.h>
-#include <AnKi/Core/StatsSet.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
+#include <AnKi/Renderer/Utils/MipmapGenerator.h>
+#include <AnKi/Renderer/Utils/Readback.h>
+#include <AnKi/Renderer/Utils/HzbGenerator.h>
 
 namespace anki {
 
@@ -240,12 +245,6 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_jitterOffsets[i] = generateJitter(i);
 	}
 
-	ANKI_CHECK(m_visibility.init());
-	ANKI_CHECK(m_nonRenderablesVisibility.init());
-	ANKI_CHECK(m_asVisibility.init());
-	ANKI_CHECK(m_hzbGenerator.init());
-	ANKI_CHECK(m_sceneDrawer.init());
-
 	return Error::kNone;
 }
 
@@ -401,7 +400,7 @@ void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
 	++m_frameCount;
 
 	m_prevMatrices = ctx.m_matrices;
-	m_readbaks.endFrame(fence);
+	m_readbackManager->endFrame(fence);
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)

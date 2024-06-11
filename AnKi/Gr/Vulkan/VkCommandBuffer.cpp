@@ -276,7 +276,7 @@ void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
 	if(reg.m_resourceType == HlslResourceType::kSrv)
 	{
 		ANKI_ASSERT(texView.isGoodForSampling());
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage(), 0);
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage());
 		self.m_descriptorState.bindSampledTexture(reg.m_space, reg.m_bindPoint, tex.getImageView(texView.getSubresource()), lay);
 	}
 	else
@@ -447,7 +447,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		vkColorAttachments[i] = {};
 		vkColorAttachments[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 		vkColorAttachments[i].imageView = tex.getImageView(view.getSubresource());
-		vkColorAttachments[i].imageLayout = tex.computeLayout(colorRts[i].m_usage, 0);
+		vkColorAttachments[i].imageLayout = tex.computeLayout(colorRts[i].m_usage);
 		vkColorAttachments[i].loadOp = convertLoadOp(colorRts[i].m_loadOperation);
 		vkColorAttachments[i].storeOp = convertStoreOp(colorRts[i].m_storeOperation);
 		vkColorAttachments[i].clearValue.color.float32[0] = colorRts[i].m_clearValue.m_colorf[0];
@@ -488,7 +488,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 			vkDepthAttachment = {};
 			vkDepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 			vkDepthAttachment.imageView = tex.getImageView(view.getSubresource());
-			vkDepthAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage, 0);
+			vkDepthAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage);
 			vkDepthAttachment.loadOp = convertLoadOp(depthStencilRt->m_loadOperation);
 			vkDepthAttachment.storeOp = convertStoreOp(depthStencilRt->m_storeOperation);
 			vkDepthAttachment.clearValue.depthStencil.depth = depthStencilRt->m_clearValue.m_depthStencil.m_depth;
@@ -502,7 +502,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 			vkStencilAttachment = {};
 			vkStencilAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 			vkStencilAttachment.imageView = tex.getImageView(view.getSubresource());
-			vkStencilAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage, 0);
+			vkStencilAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage);
 			vkStencilAttachment.loadOp = convertLoadOp(depthStencilRt->m_stencilLoadOperation);
 			vkStencilAttachment.storeOp = convertStoreOp(depthStencilRt->m_stencilStoreOperation);
 			vkStencilAttachment.clearValue.depthStencil.depth = depthStencilRt->m_clearValue.m_depthStencil.m_depth;
@@ -807,94 +807,6 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 	vkCmdTraceRaysKHR(self.m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth);
 }
 
-void CommandBuffer::generateMipmaps2d(const TextureView& texView)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.commandCommon();
-
-	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
-	ANKI_ASSERT(tex.getTextureType() != TextureType::k3D && "Not for 3D");
-	ANKI_ASSERT(texView.getFirstMipmap() == 0 && texView.getMipmapCount() == 1);
-
-	const U32 blitCount = tex.getMipmapCount() - 1u;
-	if(blitCount == 0)
-	{
-		// Nothing to be done, flush the previous commands though because you may batch (and sort) things you shouldn't
-		return;
-	}
-
-	const DepthStencilAspectBit aspect = texView.getDepthStencilAspect();
-	const U32 face = texView.getFirstFace();
-	const U32 layer = texView.getFirstLayer();
-
-	for(U32 i = 0; i < blitCount; ++i)
-	{
-		// Transition source
-		// OPT: Combine the 2 barriers
-		if(i > 0)
-		{
-			const VkImageSubresourceRange range = tex.computeVkImageSubresourceRange(TextureSubresourceDescriptor::surface(i, face, layer, aspect));
-
-			self.setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-								 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
-								 range);
-		}
-
-		// Transition destination
-		{
-			const VkImageSubresourceRange range =
-				tex.computeVkImageSubresourceRange(TextureSubresourceDescriptor::surface(i + 1, face, layer, aspect));
-
-			self.setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TRANSFER_BIT,
-								 VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, tex.m_imageHandle, range);
-		}
-
-		// Setup the blit struct
-		I32 srcWidth = tex.getWidth() >> i;
-		I32 srcHeight = tex.getHeight() >> i;
-
-		I32 dstWidth = tex.getWidth() >> (i + 1);
-		I32 dstHeight = tex.getHeight() >> (i + 1);
-
-		ANKI_ASSERT(srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
-
-		U32 vkLayer = 0;
-		switch(tex.getTextureType())
-		{
-		case TextureType::k2D:
-		case TextureType::k2DArray:
-			break;
-		case TextureType::kCube:
-			vkLayer = face;
-			break;
-		case TextureType::kCubeArray:
-			vkLayer = layer * 6 + face;
-			break;
-		default:
-			ANKI_ASSERT(0);
-			break;
-		}
-
-		VkImageBlit blit;
-		blit.srcSubresource.aspectMask = convertImageAspect(aspect);
-		blit.srcSubresource.baseArrayLayer = vkLayer;
-		blit.srcSubresource.layerCount = 1;
-		blit.srcSubresource.mipLevel = i;
-		blit.srcOffsets[0] = {0, 0, 0};
-		blit.srcOffsets[1] = {srcWidth, srcHeight, 1};
-
-		blit.dstSubresource.aspectMask = convertImageAspect(aspect);
-		blit.dstSubresource.baseArrayLayer = vkLayer;
-		blit.dstSubresource.layerCount = 1;
-		blit.dstSubresource.mipLevel = i + 1;
-		blit.dstOffsets[0] = {0, 0, 0};
-		blit.dstOffsets[1] = {dstWidth, dstHeight, 1};
-
-		vkCmdBlitImage(self.m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, tex.m_imageHandle,
-					   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
-	}
-}
-
 void CommandBuffer::blitTexture([[maybe_unused]] const TextureView& srcView, [[maybe_unused]] const TextureView& destView)
 {
 	ANKI_ASSERT(!"TODO");
@@ -1145,80 +1057,27 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	for(const TextureBarrierInfo& barrier : textures)
 	{
 		const TextureImpl& impl = static_cast<const TextureImpl&>(barrier.m_textureView.getTexture());
-		const TextureUsageBit nextUsage = barrier.m_nextUsage;
-		const TextureUsageBit prevUsage = barrier.m_previousUsage;
 
-		ANKI_ASSERT(impl.usageValid(prevUsage));
-		ANKI_ASSERT(impl.usageValid(nextUsage));
-		ANKI_ASSERT(((nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kGenerateMipmaps
-					 || (nextUsage & TextureUsageBit::kGenerateMipmaps) == TextureUsageBit::kNone)
-					&& "GENERATE_MIPMAPS should be alone");
-
-		if(barrier.m_textureView.getFirstMipmap() > 0 && nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
-		{
-			// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
-			continue;
-		}
-
-		if(nextUsage == TextureUsageBit::kGenerateMipmaps) [[unlikely]]
-		{
-			// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the subresource
-
-			ANKI_ASSERT(barrier.m_textureView.getFirstMipmap() == 0 && barrier.m_textureView.getMipmapCount() == 1);
-		}
-
-		VkImageMemoryBarrier& inf = *imageBarriers.emplaceBack();
-		inf = {};
-		inf.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.image = impl.m_imageHandle;
-		inf.subresourceRange = impl.computeVkImageSubresourceRange(barrier.m_textureView.getSubresource());
-
-		VkPipelineStageFlags srcStage;
-		VkPipelineStageFlags dstStage;
-		impl.computeBarrierInfo(prevUsage, nextUsage, inf.subresourceRange.baseMipLevel, srcStage, inf.srcAccessMask, dstStage, inf.dstAccessMask);
-		inf.oldLayout = impl.computeLayout(prevUsage, inf.subresourceRange.baseMipLevel);
-		inf.newLayout = impl.computeLayout(nextUsage, inf.subresourceRange.baseMipLevel);
-
-		srcStageMask |= srcStage;
-		dstStageMask |= dstStage;
+		imageBarriers.emplaceBack(impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, barrier.m_textureView.getSubresource(),
+														  srcStageMask, dstStageMask));
 	}
 
 	for(const BufferBarrierInfo& barrier : buffers)
 	{
 		ANKI_ASSERT(barrier.m_bufferView.isValid());
 		const BufferImpl& impl = static_cast<const BufferImpl&>(barrier.m_bufferView.getBuffer());
+		const VkBufferMemoryBarrier akBarrier = impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStageMask, dstStageMask);
 
-		const VkBuffer handle = impl.getHandle();
-		VkPipelineStageFlags srcStage;
-		VkPipelineStageFlags dstStage;
-		VkAccessFlags srcAccessMask;
-		VkAccessFlags dstAccessMask;
-		impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage, srcAccessMask, dstStage, dstAccessMask);
-
-		srcStageMask |= srcStage;
-		dstStageMask |= dstStage;
-
-		if(bufferBarriers.getSize() && bufferBarriers.getBack().buffer == handle)
+		if(bufferBarriers.getSize() && bufferBarriers.getBack().buffer == akBarrier.buffer)
 		{
 			// Merge barriers
-			bufferBarriers.getBack().srcAccessMask |= srcAccessMask;
-			bufferBarriers.getBack().dstAccessMask |= dstAccessMask;
+			bufferBarriers.getBack().srcAccessMask |= akBarrier.srcAccessMask;
+			bufferBarriers.getBack().dstAccessMask |= akBarrier.dstAccessMask;
 		}
 		else
 		{
 			// Create a new buffer barrier
-			VkBufferMemoryBarrier& inf = *bufferBarriers.emplaceBack();
-			inf = {};
-			inf.buffer = handle;
-			inf.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-			inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			inf.srcAccessMask = srcAccessMask;
-			inf.dstAccessMask = dstAccessMask;
-			inf.offset = 0;
-			inf.size = VK_WHOLE_SIZE; // All size because we don't care
+			bufferBarriers.emplaceBack(akBarrier);
 		}
 	}
 
@@ -1226,18 +1085,8 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	{
 		ANKI_ASSERT(barrier.m_as);
 
-		VkMemoryBarrier& inf = *genericBarriers.emplaceBack();
-		inf = {};
-		inf.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-
-		VkPipelineStageFlags srcStage;
-		VkPipelineStageFlags dstStage;
-		AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStage, inf.srcAccessMask, dstStage,
-													  inf.dstAccessMask);
-
-		srcStageMask |= srcStage;
-		dstStageMask |= dstStage;
-
+		genericBarriers.emplaceBack(
+			AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStageMask, dstStageMask));
 		self.m_microCmdb->pushObjectRef(barrier.m_as);
 	}
 

@@ -424,16 +424,26 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 	return mask;
 }
 
-void BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
-									VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const
+VkBufferMemoryBarrier BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages,
+													 VkPipelineStageFlags& dstStages) const
 {
 	ANKI_ASSERT(usageValid(before) && usageValid(after));
 	ANKI_ASSERT(!!after);
 
-	srcStages = computePplineStage(before);
-	dstStages = computePplineStage(after);
-	srcAccesses = computeAccessMask(before);
-	dstAccesses = computeAccessMask(after);
+	VkBufferMemoryBarrier barrier = {};
+	barrier.buffer = m_handle;
+	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.srcAccessMask = computeAccessMask(before);
+	barrier.dstAccessMask = computeAccessMask(after);
+	barrier.offset = 0;
+	barrier.size = VK_WHOLE_SIZE; // All size because none cares really
+
+	srcStages |= computePplineStage(before);
+	dstStages |= computePplineStage(after);
+
+	return barrier;
 }
 
 VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSize range) const

@@ -5,6 +5,7 @@
 
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>

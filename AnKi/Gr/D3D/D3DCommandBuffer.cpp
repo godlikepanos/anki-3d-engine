@@ -565,11 +565,6 @@ void CommandBuffer::traceRays([[maybe_unused]] const BufferView& sbtBuffer, [[ma
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::generateMipmaps2d(const TextureView& texView)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
 void CommandBuffer::blitTexture([[maybe_unused]] const TextureView& srcView, [[maybe_unused]] const TextureView& destView)
 {
 	ANKI_ASSERT(!"TODO");

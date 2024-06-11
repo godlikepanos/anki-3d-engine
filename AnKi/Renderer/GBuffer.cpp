@@ -8,6 +8,8 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Dbg.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
+#include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/CVarSet.h>
@@ -219,7 +221,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
-		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+		getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 	});
 
 	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)

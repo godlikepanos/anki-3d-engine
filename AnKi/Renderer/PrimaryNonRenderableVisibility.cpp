@@ -6,6 +6,7 @@
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Scene/Components/LightComponent.h>

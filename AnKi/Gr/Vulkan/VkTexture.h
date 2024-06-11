@@ -60,11 +60,11 @@ public:
 	}
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
-	void computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U32 level, VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
-							VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const;
+	VkImageMemoryBarrier computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDescriptor& subresource,
+											VkPipelineStageFlags& srcStages, VkPipelineStageFlags& dstStages) const;
 
 	/// Predict the image layout.
-	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
+	VkImageLayout computeLayout(TextureUsageBit usage) const;
 
 	VkImageSubresourceRange computeVkImageSubresourceRange(const TextureSubresourceDescriptor& subresource) const
 	{
@@ -124,7 +124,7 @@ private:
 
 	Error initInternal(VkImage externalImage, const TextureInitInfo& init);
 
-	void computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages, VkAccessFlags& accesses) const;
+	void computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags& stages, VkAccessFlags& accesses) const;
 
 	U32 translateSurfaceOrVolume(U32 layer, U32 face, U32 mip) const
 	{

@@ -368,11 +368,6 @@ public:
 	/// @param depth Depth.
 	void traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
-	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
-	/// TextureUsageBit::kGenerateMipmaps before calling this method.
-	/// @param texView The texture view to generate mips. It should point to a texture view that contains the 1st mip.
-	void generateMipmaps2d(const TextureView& texView);
-
 	/// Blit from surface to surface.
 	void blitTexture(const TextureView& srcView, const TextureView& destView);
 

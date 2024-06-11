@@ -10,6 +10,8 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Renderer/Utils/MipmapGenerator.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
@@ -95,7 +97,7 @@ Error ProbeReflections::initGBuffer()
 Error ProbeReflections::initLightShading()
 {
 	m_lightShading.m_tileSize = g_reflectionProbeResolutionCVar.get();
-	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
+	m_lightShading.m_mipCount = U8(computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8));
 
 	// Init deferred
 	ANKI_CHECK(m_lightShading.m_deferred.init());
@@ -206,7 +208,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Cube refl: GBuffer", f);
+			visIn.m_passesName = generateTempPassName("Cube refl: GBuffer face:%u", f);
 			visIn.m_technique = RenderingTechnique::kGBuffer;
 			visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
@@ -234,7 +236,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		// GBuffer pass
 		{
 			// Create pass
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: GBuffer", f));
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: GBuffer face:%u", f));
 
 			Array<RenderTargetInfo, kGBufferColorRenderTargetCount> colorRtis;
 			for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
@@ -280,7 +282,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 					args.fill(meshletVisOut);
 				}
 
-				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+				getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 			});
 		}
 
@@ -301,7 +303,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Cube refl: Shadows", f);
+			visIn.m_passesName = generateTempPassName("Cube refl: Shadows face:%u", f);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMat;
 			visIn.m_lodReferencePoint = probeToRefresh->getWorldPosition();
@@ -330,7 +332,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		if(doShadows)
 		{
 			// Pass
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Shadows", f));
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Shadows face:%u", f));
 
 			RenderTargetInfo depthRti(shadowMapRt);
 			depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
@@ -367,7 +369,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 					args.fill(shadowMeshletVisOut);
 				}
 
-				getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+				getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 			});
 		}
 
@@ -375,7 +377,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		GpuVisibilityNonRenderablesOutput lightVis;
 		{
 			GpuVisibilityNonRenderablesInput in;
-			in.m_passesName = generateTempPassName("Cube refl: Light visibility", f);
+			in.m_passesName = generateTempPassName("Cube refl: Light visibility face:%u", f);
 			in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
 			in.m_viewProjectionMat = frustum.getViewProjectionMatrix();
 			in.m_rgraph = &rgraph;
@@ -384,7 +386,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		// Light shading pass
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: light shading", f));
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: light shading face:%u", f));
 
 			RenderTargetInfo colorRti(probeTexture);
 			colorRti.m_subresource.m_face = f;
@@ -512,23 +514,14 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Mipmapping "passes"
 	{
-		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Cube refl: Gen mips", faceIdx));
+		const MipmapGeneratorTargetArguments desc = {
+			.m_handle = probeTexture,
+			.m_targetSize = UVec2(probeToRefresh->getReflectionTexture().getWidth(), probeToRefresh->getReflectionTexture().getHeight()),
+			.m_layerCount = 1,
+			.m_mipmapCount = m_lightShading.m_mipCount,
+			.m_isCubeTexture = true};
 
-			for(U32 mip = 0; mip < m_lightShading.m_mipCount; ++mip)
-			{
-				const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::surface(mip, faceIdx, 0);
-				pass.newTextureDependency(probeTexture, TextureUsageBit::kGenerateMipmaps, subresource);
-			}
-
-			pass.setWork([this, faceIdx, probeTexture](RenderPassWorkContext& rgraphCtx) {
-				ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
-
-				const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::surface(0, faceIdx, 0);
-				rgraphCtx.m_commandBuffer->generateMipmaps2d(rgraphCtx.createTextureView(probeTexture, subresource));
-			});
-		}
+		getRenderer().getMipmapGenerator().populateRenderGraph(desc, rgraph, "Cube refl: Gen mips");
 	}
 }
 

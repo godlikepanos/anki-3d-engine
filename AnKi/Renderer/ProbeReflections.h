@@ -67,7 +67,7 @@ private:
 	{
 	public:
 		U32 m_tileSize = 0;
-		U32 m_mipCount = 0;
+		U8 m_mipCount = 0;
 		TraditionalDeferredLightShading m_deferred;
 	} m_lightShading; ///< Light shading.
 

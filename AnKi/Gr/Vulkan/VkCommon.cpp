@@ -436,11 +436,6 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::kGenerateMipmaps))
-	{
-		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-	}
-
 	ANKI_ASSERT(out);
 	return out;
 }

@@ -497,7 +497,6 @@ enum class TextureUsageBit : U32
 	kFramebufferShadingRate = 1 << 14,
 
 	kTransferDestination = 1 << 15,
-	kGenerateMipmaps = 1 << 16,
 
 	kPresent = 1 << 17,
 
@@ -512,12 +511,12 @@ enum class TextureUsageBit : U32
 	kAllGraphics = kSampledGeometry | kSampledFragment | kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite
 				   | kFramebufferRead | kFramebufferWrite | kFramebufferShadingRate,
 	kAllCompute = kSampledCompute | kStorageComputeRead | kStorageComputeWrite,
-	kAllTransfer = kTransferDestination | kGenerateMipmaps,
+	kAllTransfer = kTransferDestination,
 
 	kAllRead = kAllSampled | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead | kFramebufferRead
-			   | kFramebufferShadingRate | kPresent | kGenerateMipmaps,
-	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kFramebufferWrite
-				| kTransferDestination | kGenerateMipmaps,
+			   | kFramebufferShadingRate | kPresent,
+	kAllWrite =
+		kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kFramebufferWrite | kTransferDestination,
 	kAll = kAllRead | kAllWrite,
 	kAllShaderResource = kAllSampled | kAllStorage,
 	kAllSrv = (kAllSampled | kAllStorage) & kAllRead,

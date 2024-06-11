@@ -15,6 +15,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Util/Tracer.h>
@@ -105,7 +106,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 			args.fill(m_runCtx.m_meshVisOut);
 		}
 
-		getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+		getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 
 		// Restore state
 		cmdb.setDepthWrite(true);

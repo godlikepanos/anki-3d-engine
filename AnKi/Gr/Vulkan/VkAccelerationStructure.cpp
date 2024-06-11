@@ -211,99 +211,102 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	return Error::kNone;
 }
 
-void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after,
-												   VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
-												   VkAccessFlags& dstAccesses)
+VkMemoryBarrier AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after,
+															  VkPipelineStageFlags& srcStages_, VkPipelineStageFlags& dstStages_)
 {
+	VkMemoryBarrier barrier = {};
+	barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+
 	// Before
-	srcStages = 0;
-	srcAccesses = 0;
+	VkPipelineStageFlags srcStages = 0;
 
 	if(before == AccelerationStructureUsageBit::kNone)
 	{
 		srcStages |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		srcAccesses |= 0;
+		barrier.srcAccessMask |= 0;
 	}
 
 	if(!!(before & AccelerationStructureUsageBit::kBuild))
 	{
 		srcStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		barrier.srcAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
 	}
 
 	if(!!(before & AccelerationStructureUsageBit::kAttach))
 	{
 		srcStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		barrier.srcAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
 	if(!!(before & AccelerationStructureUsageBit::kGeometryRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
+		barrier.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
 	}
 
 	if(!!(before & AccelerationStructureUsageBit::kFragmentRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_MEMORY_READ_BIT;
+		barrier.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
 	if(!!(before & AccelerationStructureUsageBit::kComputeRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_MEMORY_READ_BIT;
+		barrier.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
 	if(!!(before & AccelerationStructureUsageBit::kTraceRaysRead))
 	{
 		srcStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
-		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		barrier.srcAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
 	// After
-	dstStages = 0;
-	dstAccesses = 0;
+	VkPipelineStageFlags dstStages = 0;
 
 	if(!!(after & AccelerationStructureUsageBit::kBuild))
 	{
 		dstStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		barrier.dstAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
 	}
 
 	if(!!(after & AccelerationStructureUsageBit::kAttach))
 	{
 		dstStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		barrier.dstAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
 	if(!!(after & AccelerationStructureUsageBit::kGeometryRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
+		barrier.dstAccessMask |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
 	}
 
 	if(!!(after & AccelerationStructureUsageBit::kFragmentRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT;
+		barrier.dstAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
 	if(!!(after & AccelerationStructureUsageBit::kComputeRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT;
+		barrier.dstAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
 	if(!!(after & AccelerationStructureUsageBit::kTraceRaysRead))
 	{
 		dstStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
-		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		barrier.dstAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
 	ANKI_ASSERT(srcStages && dstStages);
+
+	srcStages_ |= srcStages;
+	dstStages_ |= dstStages;
 }
 
 } // end namespace anki

@@ -46,8 +46,8 @@ public:
 		return m_actualSize;
 	}
 
-	void computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
-							VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const;
+	VkBufferMemoryBarrier computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages,
+											 VkPipelineStageFlags& dstStages) const;
 
 	/// Only for texture buffers.
 	/// @note It's thread-safe

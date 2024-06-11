@@ -29,7 +29,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
 	texInit.m_type = TextureType::kCube;
 	texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kStorageComputeRead
-					  | TextureUsageBit::kAllFramebuffer | TextureUsageBit::kGenerateMipmaps;
+					  | TextureUsageBit::kAllFramebuffer;
 
 	m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
 

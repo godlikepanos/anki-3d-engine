@@ -74,7 +74,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_width = width;
 	texInit.m_height = height;
 	texInit.m_format = Format::kR8G8B8A8_Unorm;
-	texInit.m_usage = TextureUsageBit::kTransferDestination | TextureUsageBit::kSampledFragment | TextureUsageBit::kGenerateMipmaps;
+	texInit.m_usage = TextureUsageBit::kTransferDestination | TextureUsageBit::kSampledFragment;
 	texInit.m_mipmapCount = 1; // No mips because it will appear blurry with trilinear filtering
 
 	m_tex = GrManager::getSingleton().newTexture(texInit);
@@ -96,13 +96,6 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	cmdb->copyBufferToTexture(BufferView(buff.get()), firstMipView);
 
 	barrier.m_previousUsage = TextureUsageBit::kTransferDestination;
-	barrier.m_nextUsage = TextureUsageBit::kGenerateMipmaps;
-	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
-
-	// Gen mips
-	cmdb->generateMipmaps2d(firstMipView);
-
-	barrier.m_previousUsage = TextureUsageBit::kGenerateMipmaps;
 	barrier.m_nextUsage = TextureUsageBit::kSampledFragment;
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 

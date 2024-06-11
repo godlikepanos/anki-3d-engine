@@ -5,6 +5,8 @@
 
 // Calculates the motion vectors that will be used to sample from the previous frame
 
+#include <AnKi/Shaders/Common.hlsl>
+
 #if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 

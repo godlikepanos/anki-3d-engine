@@ -7,6 +7,9 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Renderer/Utils/GpuVisibility.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
+#include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
@@ -351,7 +354,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			DistanceGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Shadows point light", lightIdx);
+			visIn.m_passesName = generateTempPassName("Shadows point light lightIdx:%u", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			visIn.m_lodDistances = lodDistances;
@@ -368,7 +371,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			BufferView clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet point light", lightIdx), *lightc, visOut, rgraph);
+				clearTileIndirectArgs =
+					createVetVisibilityPass(generateTempPassName("Shadows: Vet point light lightIdx:%u", lightIdx), *lightc, visOut, rgraph);
 			}
 
 			// Additional visibility
@@ -376,7 +380,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			if(getRenderer().runSoftwareMeshletRendering())
 			{
 				PassthroughGpuMeshletVisibilityInput meshIn;
-				meshIn.m_passesName = generateTempPassName("Shadows point light", lightIdx);
+				meshIn.m_passesName = generateTempPassName("Shadows point light lightIdx:%u", lightIdx);
 				meshIn.m_technique = RenderingTechnique::kDepth;
 				meshIn.m_rgraph = &rgraph;
 				meshIn.fillBuffers(visOut);
@@ -401,7 +405,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				subpasses[face].m_viewProjMat = frustum.getViewProjectionMatrix();
 			}
 
-			createDrawShadowsPass(subpasses, visOut, meshletVisOut, generateTempPassName("Shadows: Point light", lightIdx), rgraph);
+			createDrawShadowsPass(subpasses, visOut, meshletVisOut, generateTempPassName("Shadows: Point light lightIdx:%u", lightIdx), rgraph);
 		}
 		else
 		{
@@ -441,7 +445,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Shadows spot light", lightIdx);
+			visIn.m_passesName = generateTempPassName("Shadows spot light lightIdx:%u", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = cameraOrigin;
 			visIn.m_lodDistances = lodDistances;
@@ -458,7 +462,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			BufferView clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet spot light", lightIdx), *lightc, visOut, rgraph);
+				clearTileIndirectArgs =
+					createVetVisibilityPass(generateTempPassName("Shadows: Vet spot light lightIdx:%u", lightIdx), *lightc, visOut, rgraph);
 			}
 
 			// Additional visibility
@@ -466,7 +471,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			if(getRenderer().runSoftwareMeshletRendering())
 			{
 				GpuMeshletVisibilityInput meshIn;
-				meshIn.m_passesName = generateTempPassName("Shadows spot light", lightIdx);
+				meshIn.m_passesName = generateTempPassName("Shadows spot light lightIdx:%u", lightIdx);
 				meshIn.m_technique = RenderingTechnique::kDepth;
 				meshIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
 				meshIn.m_cameraTransform = lightc->getSpotLightViewMatrix().getInverseTransformation();
@@ -479,7 +484,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Add draw pass
 			createDrawShadowsPass(atlasViewport, lightc->getSpotLightViewProjectionMatrix(), lightc->getSpotLightViewMatrix(), visOut, meshletVisOut,
-								  clearTileIndirectArgs, {}, generateTempPassName("Shadows: Spot light", lightIdx), rgraph);
+								  clearTileIndirectArgs, {}, generateTempPassName("Shadows: Spot light lightIdx:%u", lightIdx), rgraph);
 		}
 		else
 		{
@@ -535,7 +540,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Shadows: Dir light cascade", cascade);
+			visIn.m_passesName = generateTempPassName("Shadows: Dir light cascade lightIdx:%u cascade:%u", lightIdx, cascade);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
@@ -552,7 +557,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			if(getRenderer().runSoftwareMeshletRendering())
 			{
 				GpuMeshletVisibilityInput meshIn;
-				meshIn.m_passesName = generateTempPassName("Shadows: Dir light cascade", lightIdx);
+				meshIn.m_passesName = generateTempPassName("Shadows: Dir light cascade lightIdx:%u cascade:%u", lightIdx, cascade);
 				meshIn.m_technique = RenderingTechnique::kDepth;
 				meshIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
 				meshIn.m_cameraTransform = cascadeViewMats[cascade].getInverseTransformation();
@@ -565,7 +570,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Draw
 			createDrawShadowsPass(dirLightAtlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, meshletVisOut, {},
-								  hzbGenIn.m_cascades[cascade].m_hzbRt, generateTempPassName("Shadows: Dir light cascade", cascade), rgraph);
+								  hzbGenIn.m_cascades[cascade].m_hzbRt,
+								  generateTempPassName("Shadows: Dir light lightIdx:%u cascade:%u", lightIdx, cascade), rgraph);
 
 			// Update the texture matrix to point to the correct region in the atlas
 			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(dirLightAtlasViewports[cascade]) * cascadeViewProjMats[cascade];
@@ -715,7 +721,7 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 				args.fill(meshletVisOut);
 			}
 
-			getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 		}
 	});
 }

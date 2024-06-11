@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Sky.h>
+#include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
@@ -207,7 +208,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 				FrustumGpuVisibilityInput visIn;
-				visIn.m_passesName = generateTempPassName("GI: GBuffer", cellIdx, "face", f);
+				visIn.m_passesName = generateTempPassName("GI: GBuffer cell:%u face:%u", cellIdx, f);
 				visIn.m_technique = RenderingTechnique::kGBuffer;
 				visIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
 				visIn.m_lodReferencePoint = cellCenter;
@@ -234,7 +235,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			// GBuffer
 			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: GBuffer", cellIdx, "face", f));
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: GBuffer cell:%u face:%u", cellIdx, f));
 
 				Array<RenderTargetInfo, kGBufferColorRenderTargetCount> colorRtis;
 				for(U j = 0; j < kGBufferColorRenderTargetCount; ++j)
@@ -282,7 +283,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 						args.fill(meshletVisOut);
 					}
 
-					getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 
 					// It's secondary, no need to restore any state
 				});
@@ -305,7 +306,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
 				FrustumGpuVisibilityInput visIn;
-				visIn.m_passesName = generateTempPassName("GI: Shadows", cellIdx, "face", f);
+				visIn.m_passesName = generateTempPassName("GI: Shadows cell:%u face:%u", cellIdx, f);
 				visIn.m_technique = RenderingTechnique::kDepth;
 				visIn.m_viewProjectionMatrix = cascadeViewProjMat;
 				visIn.m_lodReferencePoint = cellCenter;
@@ -334,7 +335,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			if(doShadows)
 			{
 				// Create the pass
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: Shadows", cellIdx, "face", f));
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: Shadows cell:%u face:%u", cellIdx, f));
 
 				RenderTargetInfo depthRti(shadowsRt);
 				depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
@@ -371,7 +372,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 						args.fill(shadowMeshletVisOut);
 					}
 
-					getRenderer().getSceneDrawer().drawMdi(args, cmdb);
+					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 
 					// It's secondary, no need to restore the state
 				});
@@ -381,7 +382,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			GpuVisibilityNonRenderablesOutput lightVis;
 			{
 				GpuVisibilityNonRenderablesInput in;
-				in.m_passesName = generateTempPassName("GI: Light visibility", cellIdx, "face", f);
+				in.m_passesName = generateTempPassName("GI: Light visibility cell:%u face:%u", cellIdx, f);
 				in.m_objectType = GpuSceneNonRenderableObjectType::kLight;
 				in.m_viewProjectionMat = frustum.getViewProjectionMatrix();
 				in.m_rgraph = &rgraph;
@@ -390,7 +391,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			// Light shading pass
 			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(generateTempPassName("GI: Light shading", cellIdx, "face", f));
+				GraphicsRenderPassDescription& pass =
+					rgraph.newGraphicsRenderPass(generateTempPassName("GI: Light shading cell:%u face:%u", cellIdx, f));
 
 				RenderTargetInfo colorRti(lightShadingRt);
 				colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
@@ -470,7 +472,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 		// Irradiance pass. First & 2nd bounce
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("GI: Irradiance", cellIdx));
+			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("GI: Irradiance cell:%u", cellIdx));
 
 			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSampledCompute);
 			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kStorageComputeWrite);

@@ -28,6 +28,12 @@ private:
 class ReadbackManager
 {
 public:
+	Error init()
+	{
+		// Just for the interface
+		return Error::kNone;
+	}
+
 	/// Read the most up to date data from the GPU. 1st thing to call in a frame.
 	void readMostRecentData(const MultiframeReadbackToken& token, void* data, PtrSize dataSize, PtrSize& dataOut) const;
 
