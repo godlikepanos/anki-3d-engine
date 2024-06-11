@@ -59,8 +59,8 @@ private:
 	{
 	public:
 		U32 m_tileSize = 0;
-		Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
-		RenderTargetDescription m_depthRtDescr;
+		Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
+		RenderTargetDesc m_depthRtDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class LS
@@ -90,7 +90,7 @@ private:
 	class
 	{
 	public:
-		RenderTargetDescription m_rtDescr;
+		RenderTargetDesc m_rtDescr;
 	} m_shadowMapping;
 
 	class

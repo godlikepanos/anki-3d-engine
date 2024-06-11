@@ -25,7 +25,7 @@ namespace anki {
 void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 {
 	m_runCtx = {};
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
@@ -117,7 +117,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	getRenderer().getLensFlare().runDrawFlares(ctx, cmdb);
 }
 
-void ForwardShading::setDependencies(GraphicsRenderPassDescription& pass)
+void ForwardShading::setDependencies(GraphicsRenderPass& pass)
 {
 	pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledFragment,
 							  DepthDownscale::kQuarterInternalResolution);

@@ -421,9 +421,9 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format form
 	return init;
 }
 
-RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name)
+RenderTargetDesc Renderer::create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name)
 {
-	RenderTargetDescription init(name);
+	RenderTargetDesc init(name);
 
 	init.m_width = w;
 	init.m_height = h;
@@ -494,11 +494,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 							aspect |= DepthStencilAspectBit::kStencil;
 						}
 
-						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer, aspect));
+						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDesc::surface(mip, face, layer, aspect));
 					}
 					else
 					{
-						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer));
+						rt.m_textureView = TextureView(tex.get(), TextureSubresourceDesc::surface(mip, face, layer));
 					}
 
 					TextureBarrierInfo barrier = {rt.m_textureView, TextureUsageBit::kNone, TextureUsageBit::kFramebufferWrite};
@@ -550,7 +550,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
-					const TextureView view(tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer));
+					const TextureView view(tex.get(), TextureSubresourceDesc::surface(mip, face, layer));
 
 					cmdb->bindTexture(ANKI_REG(u0), view);
 
@@ -672,14 +672,14 @@ Format Renderer::getDepthNoStencilFormat() const
 
 void Renderer::gpuSceneCopy(RenderingContext& ctx)
 {
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_gpuSceneHandle =
 		rgraph.importBuffer(GpuSceneBuffer::getSingleton().getBufferView(), GpuSceneBuffer::getSingleton().getBuffer().getBufferUsage());
 
 	if(GpuSceneMicroPatcher::getSingleton().patchingIsNeeded())
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("GPU scene patching");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("GPU scene patching");
 		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kStorageComputeWrite);
 
 		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {

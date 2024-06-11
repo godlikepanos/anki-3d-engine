@@ -51,14 +51,14 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Create indirect buffer
 	m_runCtx.m_indirectBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs) * flareCount);
 	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_runCtx.m_indirectBuff, BufferUsageBit::kNone);
 
 	// Create the pass
-	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Lens flare indirect");
+	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Lens flare indirect");
 
 	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite);
 	rpass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledCompute,
@@ -139,7 +139,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 
 		// Render
 		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearRepeat.get());
-		cmdb.bindTexture(ANKI_REG(t1), TextureView(&comp.getImage().getTexture(), TextureSubresourceDescriptor::all()));
+		cmdb.bindTexture(ANKI_REG(t1), TextureView(&comp.getImage().getTexture(), TextureSubresourceDesc::all()));
 
 		cmdb.drawIndirect(PrimitiveTopology::kTriangleStrip, BufferView(m_runCtx.m_indirectBuff).incrementOffset(count * sizeof(DrawIndirectArgs)));
 

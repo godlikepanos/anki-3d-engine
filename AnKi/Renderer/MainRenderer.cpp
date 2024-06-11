@@ -110,9 +110,9 @@ Error MainRenderer::render(Texture* presentTex)
 	// Blit renderer's result to default FB if needed
 	if(!m_rDrawToDefaultFb)
 	{
-		GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
+		GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 
-		pass.setRenderpassInfo({RenderTargetInfo(presentRt)});
+		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(presentRt)});
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
@@ -130,7 +130,7 @@ Error MainRenderer::render(Texture* presentTex)
 
 	// Create a dummy pass to transition the presentable image to present
 	{
-		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Present");
+		NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Present");
 
 		pass.setWork([]([[maybe_unused]] RenderPassWorkContext& rgraphCtx) {
 			// Do nothing. This pass is dummy

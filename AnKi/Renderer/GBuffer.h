@@ -68,7 +68,7 @@ public:
 	}
 
 private:
-	Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
+	Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
 	Array<TexturePtr, 2> m_depthRts;
 	TexturePtr m_hzbRt;
 

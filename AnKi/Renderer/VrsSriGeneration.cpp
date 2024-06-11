@@ -125,11 +125,11 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 	ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// SRI generation
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI generation");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("VRS SRI generation");
 
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), TextureUsageBit::kSampledCompute);
@@ -154,7 +154,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 	// Downscale
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("VRS SRI downscale");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("VRS SRI downscale");
 
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute);
 		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kStorageComputeWrite);

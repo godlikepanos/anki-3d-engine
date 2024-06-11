@@ -54,8 +54,8 @@ private:
 
 	GrUpscalerPtr m_grUpscaler;
 
-	RenderTargetDescription m_upscaleAndSharpenRtDescr;
-	RenderTargetDescription m_tonemapedRtDescr;
+	RenderTargetDesc m_upscaleAndSharpenRtDescr;
+	RenderTargetDesc m_tonemapedRtDescr;
 
 	enum class UpscalingMethod : U8
 	{

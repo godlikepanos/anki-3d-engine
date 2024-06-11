@@ -40,16 +40,16 @@ Error MotionVectors::initInternal()
 void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(MotionVectors);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_motionVectorsRtHandle = rgraph.newRenderTarget(m_motionVectorsRtDescr);
 
-	RenderPassDescriptionBase* ppass;
+	RenderPassBase* ppass;
 	TextureUsageBit readUsage;
 	TextureUsageBit writeUsage;
 	if(g_preferComputeCVar.get())
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("MotionVectors");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("MotionVectors");
 
 		readUsage = TextureUsageBit::kSampledCompute;
 		writeUsage = TextureUsageBit::kStorageComputeWrite;
@@ -57,8 +57,8 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("MotionVectors");
-		pass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_motionVectorsRtHandle)});
+		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("MotionVectors");
+		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_motionVectorsRtHandle)});
 
 		readUsage = TextureUsageBit::kSampledFragment;
 		writeUsage = TextureUsageBit::kFramebufferWrite;

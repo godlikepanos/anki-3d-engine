@@ -93,7 +93,7 @@ TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue)
 
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-	cmdb->copyBufferToTexture(BufferView(staging.get()), TextureView(tex.get(), TextureSubresourceDescriptor::all()));
+	cmdb->copyBufferToTexture(BufferView(staging.get()), TextureView(tex.get(), TextureSubresourceDesc::all()));
 	cmdb->endRecording();
 
 	FencePtr fence;
@@ -190,18 +190,18 @@ ANKI_TEST(Gr, ClearScreen)
 		cinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
-		const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()), TextureUsageBit::kNone,
+		const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
 											TextureUsageBit::kFramebufferWrite};
 		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 		RenderTarget rt;
-		rt.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
+		rt.m_textureView = TextureView(presentTex.get(), TextureSubresourceDesc::all());
 		const F32 col = 1.0f - F32(iterations) / F32(kIterations);
 		rt.m_clearValue.m_colorf = {col, 0.0f, col, 1.0f};
 		cmdb->beginRenderPass({rt});
 		cmdb->endRenderPass();
 
-		const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()), TextureUsageBit::kFramebufferWrite,
+		const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kFramebufferWrite,
 											 TextureUsageBit::kPresent};
 		cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
 
@@ -385,7 +385,7 @@ void main()
 		SamplerInitInfo samplInit;
 		SamplerPtr sampler = GrManager::getSingleton().newSampler(samplInit);
 
-		const U32 bindlessIdx = tex->getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
+		const U32 bindlessIdx = tex->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 
 		// Record
 		CommandBufferInitInfo cmdbInit;
@@ -394,12 +394,12 @@ void main()
 
 		cmdb->bindShaderProgram(prog.get());
 		cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(structured.get()));
-		cmdb->bindTexture(ANKI_REG(t2), TextureView(tex.get(), TextureSubresourceDescriptor::all()));
+		cmdb->bindTexture(ANKI_REG(t2), TextureView(tex.get(), TextureSubresourceDesc::all()));
 		cmdb->bindTexelBuffer(ANKI_REG(t3), BufferView(buff.get()), Format::kR32G32B32A32_Sfloat);
 		cmdb->bindStorageBuffer(ANKI_REG2(u0, space2), BufferView(rwstructured.get()));
-		cmdb->bindTexture(ANKI_REG(u2), TextureView(rwtex[0].get(), TextureSubresourceDescriptor::firstSurface()));
-		cmdb->bindTexture(ANKI_REG(u3), TextureView(rwtex[1].get(), TextureSubresourceDescriptor::firstSurface()));
-		cmdb->bindTexture(ANKI_REG(u4), TextureView(rwtex[2].get(), TextureSubresourceDescriptor::firstSurface()));
+		cmdb->bindTexture(ANKI_REG(u2), TextureView(rwtex[0].get(), TextureSubresourceDesc::firstSurface()));
+		cmdb->bindTexture(ANKI_REG(u3), TextureView(rwtex[1].get(), TextureSubresourceDesc::firstSurface()));
+		cmdb->bindTexture(ANKI_REG(u4), TextureView(rwtex[2].get(), TextureSubresourceDesc::firstSurface()));
 		cmdb->bindTexelBuffer(ANKI_REG(u7), BufferView(rwbuff.get()), Format::kR32G32B32A32_Sfloat);
 		cmdb->bindUniformBuffer(ANKI_REG(b0), BufferView(consts.get()));
 		cmdb->bindSampler(ANKI_REG(s2), sampler.get());
@@ -744,13 +744,13 @@ float4 main(VertOut i) : SV_TARGET0
 			cmdb->setViewport(0, 0, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 			cmdb->bindShaderProgram(prog.get());
 
-			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()), TextureUsageBit::kNone,
+			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
 												TextureUsageBit::kFramebufferWrite};
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 			cmdb->pushDebugMarker("AnKi", Vec3(1.0f, 0.0f, 0.0f));
 
-			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDescriptor::firstSurface())});
+			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDesc::firstSurface())});
 
 			// Set uniforms
 			class A
@@ -775,8 +775,8 @@ float4 main(VertOut i) : SV_TARGET0
 			cmdb->draw(PrimitiveTopology::kTriangles, 3);
 			cmdb->endRenderPass();
 
-			const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDescriptor::all()),
-												 TextureUsageBit::kFramebufferWrite, TextureUsageBit::kPresent};
+			const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kFramebufferWrite,
+												 TextureUsageBit::kPresent};
 			cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
 
 			cmdb->popDebugMarker();
@@ -1499,9 +1499,9 @@ ANKI_TEST(Gr, 3DTextures)
 #endif
 }
 
-static RenderTargetDescription newRTDescr(CString name)
+static RenderTargetDesc newRTDescr(CString name)
 {
-	RenderTargetDescription texInf(name);
+	RenderTargetDesc texInf(name);
 	texInf.m_width = texInf.m_height = 16;
 	texInf.m_usage = TextureUsageBit::kFramebufferWrite | TextureUsageBit::kSampledFragment;
 	texInf.m_format = Format::kR8G8B8A8_Unorm;
@@ -1515,7 +1515,7 @@ ANKI_TEST(Gr, RenderGraph)
 	COMMON_BEGIN()
 
 	StackMemoryPool pool(allocAligned, nullptr, 2_MB);
-	RenderGraphDescription descr(&pool);
+	RenderGraphBuilder descr(&pool);
 	RenderGraphPtr rgraph = g_gr->newRenderGraph();
 
 	const U GI_MIP_COUNT = 4;
@@ -1529,14 +1529,14 @@ ANKI_TEST(Gr, RenderGraph)
 	// SM
 	RenderTargetHandle smScratchRt = descr.newRenderTarget(newRTDescr("SM scratch"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SM");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("SM");
 		pass.newTextureDependency(smScratchRt, TextureUsageBit::kAllFramebuffer);
 	}
 
 	// SM to exponential SM
 	RenderTargetHandle smExpRt = descr.importRenderTarget(dummyTex.get(), TextureUsageBit::kSampledFragment);
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("ESM");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("ESM");
 		pass.newTextureDependency(smScratchRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(smExpRt, TextureUsageBit::kFramebufferWrite);
 	}
@@ -1546,7 +1546,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle giGbuffDiffRt = descr.newRenderTarget(newRTDescr("GI GBuff diff"));
 	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget(newRTDescr("GI GBuff depth"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("GI gbuff");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("GI gbuff");
 		pass.newTextureDependency(giGbuffNormRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(giGbuffDepthRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(giGbuffDiffRt, TextureUsageBit::kFramebufferWrite);
@@ -1558,7 +1558,7 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		TextureSubresourceInfo subresource(TextureSurfaceDescriptor(0, faceIdx, 0));
 
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass(String().sprintf("GI lp%u", faceIdx).toCString());
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass(String().sprintf("GI lp%u", faceIdx).toCString());
 		pass.newTextureDependency(giGiLightRt, TextureUsageBit::kFramebufferWrite, subresource);
 		pass.newTextureDependency(giGbuffNormRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(giGbuffDepthRt, TextureUsageBit::kSampledFragment);
@@ -1569,7 +1569,7 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
-			GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass(String().sprintf("GI mip%u", faceIdx).toCString());
+			GraphicsRenderPass& pass = descr.newGraphicsRenderPass(String().sprintf("GI mip%u", faceIdx).toCString());
 
 			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
@@ -1585,7 +1585,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle gbuffRt2 = descr.newRenderTarget(newRTDescr("GBuff RT2"));
 	RenderTargetHandle gbuffDepth = descr.newRenderTarget(newRTDescr("GBuff RT2"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("G-Buffer");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("G-Buffer");
 		pass.newTextureDependency(gbuffRt0, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(gbuffRt1, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(gbuffRt2, TextureUsageBit::kFramebufferWrite);
@@ -1595,7 +1595,7 @@ ANKI_TEST(Gr, RenderGraph)
 	// Half depth
 	RenderTargetHandle halfDepthRt = descr.newRenderTarget(newRTDescr("Depth/2"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("HalfDepth");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("HalfDepth");
 		pass.newTextureDependency(gbuffDepth, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(halfDepthRt, TextureUsageBit::kFramebufferWrite);
 	}
@@ -1603,7 +1603,7 @@ ANKI_TEST(Gr, RenderGraph)
 	// Quarter depth
 	RenderTargetHandle quarterDepthRt = descr.newRenderTarget(newRTDescr("Depth/4"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("QuarterDepth");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("QuarterDepth");
 		pass.newTextureDependency(quarterDepthRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(halfDepthRt, TextureUsageBit::kSampledFragment);
 	}
@@ -1611,17 +1611,17 @@ ANKI_TEST(Gr, RenderGraph)
 	// SSAO
 	RenderTargetHandle ssaoRt = descr.newRenderTarget(newRTDescr("SSAO"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SSAO main");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("SSAO main");
 		pass.newTextureDependency(ssaoRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(quarterDepthRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(gbuffRt2, TextureUsageBit::kSampledFragment);
 
 		RenderTargetHandle ssaoVBlurRt = descr.newRenderTarget(newRTDescr("SSAO tmp"));
-		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("SSAO vblur");
+		GraphicsRenderPass& pass2 = descr.newGraphicsRenderPass("SSAO vblur");
 		pass2.newTextureDependency(ssaoRt, TextureUsageBit::kSampledFragment);
 		pass2.newTextureDependency(ssaoVBlurRt, TextureUsageBit::kFramebufferWrite);
 
-		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("SSAO hblur");
+		GraphicsRenderPass& pass3 = descr.newGraphicsRenderPass("SSAO hblur");
 		pass3.newTextureDependency(ssaoRt, TextureUsageBit::kFramebufferWrite);
 		pass3.newTextureDependency(ssaoVBlurRt, TextureUsageBit::kSampledFragment);
 	}
@@ -1629,16 +1629,16 @@ ANKI_TEST(Gr, RenderGraph)
 	// Volumetric
 	RenderTargetHandle volRt = descr.newRenderTarget(newRTDescr("Vol"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Vol main");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("Vol main");
 		pass.newTextureDependency(volRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(quarterDepthRt, TextureUsageBit::kSampledFragment);
 
 		RenderTargetHandle volVBlurRt = descr.newRenderTarget(newRTDescr("Vol tmp"));
-		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("Vol vblur");
+		GraphicsRenderPass& pass2 = descr.newGraphicsRenderPass("Vol vblur");
 		pass2.newTextureDependency(volRt, TextureUsageBit::kSampledFragment);
 		pass2.newTextureDependency(volVBlurRt, TextureUsageBit::kFramebufferWrite);
 
-		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("Vol hblur");
+		GraphicsRenderPass& pass3 = descr.newGraphicsRenderPass("Vol hblur");
 		pass3.newTextureDependency(volRt, TextureUsageBit::kFramebufferWrite);
 		pass3.newTextureDependency(volVBlurRt, TextureUsageBit::kSampledFragment);
 	}
@@ -1646,7 +1646,7 @@ ANKI_TEST(Gr, RenderGraph)
 	// Forward shading
 	RenderTargetHandle fsRt = descr.newRenderTarget(newRTDescr("FS"));
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Forward shading");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("Forward shading");
 		pass.newTextureDependency(fsRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(halfDepthRt, TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
 		pass.newTextureDependency(volRt, TextureUsageBit::kSampledFragment);
@@ -1655,7 +1655,7 @@ ANKI_TEST(Gr, RenderGraph)
 	// Light shading
 	RenderTargetHandle lightRt = descr.importRenderTarget(dummyTex.get(), TextureUsageBit::kNone);
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Light shading");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("Light shading");
 
 		pass.newTextureDependency(lightRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(gbuffRt0, TextureUsageBit::kSampledFragment);
@@ -1672,7 +1672,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle taaHistoryRt = descr.importRenderTarget(dummyTex.get(), TextureUsageBit::kSampledFragment);
 	RenderTargetHandle taaRt = descr.importRenderTarget(dummyTex.get(), TextureUsageBit::kNone);
 	{
-		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Temporal AA");
+		GraphicsRenderPass& pass = descr.newGraphicsRenderPass("Temporal AA");
 
 		pass.newTextureDependency(lightRt, TextureUsageBit::kSampledFragment);
 		pass.newTextureDependency(taaRt, TextureUsageBit::kFramebufferWrite);

@@ -43,11 +43,11 @@ Error VolumetricFog::init()
 void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(VolumetricFog);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol fog");
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol fog");
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
 	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);

@@ -155,7 +155,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Step 1: Upscaling
@@ -164,7 +164,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_upscaledHdrRt = rgraph.newRenderTarget(m_upscaleAndSharpenRtDescr);
 		m_runCtx.m_upscaledTonemappedRt = {};
 
-		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("DLSS");
+		NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("DLSS");
 
 		// DLSS says input textures in sampled state and out as storage image
 		const TextureUsageBit readUsage = TextureUsageBit::kAllSampled & TextureUsageBit::kAllCompute;
@@ -173,7 +173,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage,
-								  TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
+								  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 		pass.newTextureDependency(m_runCtx.m_upscaledHdrRt, writeUsage);
 
 		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
@@ -189,7 +189,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Scale");
+			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Scale");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
 			pass.newTextureDependency(outRt, TextureUsageBit::kStorageComputeWrite);
 
@@ -199,8 +199,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		}
 		else
 		{
-			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
-			pass.setRenderpassInfo({RenderTargetInfo(outRt)});
+			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
+			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
 			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
@@ -226,7 +226,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Tonemap");
+			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Tonemap");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
 			pass.newTextureDependency(outRt, TextureUsageBit::kStorageComputeWrite);
 
@@ -236,8 +236,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		}
 		else
 		{
-			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
-			pass.setRenderpassInfo({RenderTargetInfo(outRt)});
+			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
+			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
 			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
@@ -260,7 +260,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Sharpen");
+			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Sharpen");
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
 			pass.newTextureDependency(outRt, TextureUsageBit::kStorageComputeWrite);
 
@@ -270,8 +270,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		}
 		else
 		{
-			GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
-			pass.setRenderpassInfo({RenderTargetInfo(outRt)});
+			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
+			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
 			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
 			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
 
@@ -413,14 +413,13 @@ void Scale::runGrUpscaling(RenderingContext& ctx, RenderPassWorkContext& rgraphC
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	const TextureView srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt(), TextureSubresourceDescriptor::firstSurface());
+	const TextureView srcView = rgraphCtx.createTextureView(getRenderer().getLightShading().getRt(), TextureSubresourceDesc::firstSurface());
 	const TextureView motionVectorsView =
-		rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureSubresourceDescriptor::firstSurface());
-	const TextureView depthView = rgraphCtx.createTextureView(getRenderer().getGBuffer().getDepthRt(),
-															  TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
-	const TextureView exposureView =
-		rgraphCtx.createTextureView(getRenderer().getTonemapping().getRt(), TextureSubresourceDescriptor::firstSurface());
-	const TextureView dstView = rgraphCtx.createTextureView(m_runCtx.m_upscaledHdrRt, TextureSubresourceDescriptor::firstSurface());
+		rgraphCtx.createTextureView(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureSubresourceDesc::firstSurface());
+	const TextureView depthView =
+		rgraphCtx.createTextureView(getRenderer().getGBuffer().getDepthRt(), TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
+	const TextureView exposureView = rgraphCtx.createTextureView(getRenderer().getTonemapping().getRt(), TextureSubresourceDesc::firstSurface());
+	const TextureView dstView = rgraphCtx.createTextureView(m_runCtx.m_upscaledHdrRt, TextureSubresourceDesc::firstSurface());
 
 	cmdb.upscale(m_grUpscaler.get(), srcView, dstView, motionVectorsView, depthView, exposureView, reset, jitterOffset, mvScale);
 }

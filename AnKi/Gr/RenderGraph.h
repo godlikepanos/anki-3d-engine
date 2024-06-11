@@ -20,7 +20,7 @@ namespace anki {
 
 // Forward
 class RenderGraph;
-class RenderGraphDescription;
+class RenderGraphBuilder;
 
 /// @addtogroup graphics
 /// @{
@@ -34,13 +34,13 @@ constexpr U32 kMaxRenderGraphAccelerationStructures = 32;
 /// @}
 
 /// Render target handle used in the RenderGraph.
-/// @memberof RenderGraphDescription
+/// @memberof RenderGraphBuilder
 class RenderGraphGrObjectHandle
 {
 	friend class RenderPassDependency;
-	friend class RenderGraphDescription;
+	friend class RenderGraphBuilder;
 	friend class RenderGraph;
-	friend class RenderPassDescriptionBase;
+	friend class RenderPassBase;
 
 public:
 	Bool operator==(const RenderGraphGrObjectHandle& b) const
@@ -63,35 +63,35 @@ private:
 };
 
 /// Render target (TexturePtr) handle.
-/// @memberof RenderGraphDescription
+/// @memberof RenderGraphBuilder
 class RenderTargetHandle : public RenderGraphGrObjectHandle
 {
 };
 
 /// BufferPtr handle.
-/// @memberof RenderGraphDescription
+/// @memberof RenderGraphBuilder
 class BufferHandle : public RenderGraphGrObjectHandle
 {
 };
 
 /// AccelerationStructurePtr handle.
-/// @memberof RenderGraphDescription
+/// @memberof RenderGraphBuilder
 class AccelerationStructureHandle : public RenderGraphGrObjectHandle
 {
 };
 
 /// Describes the render target.
-/// @memberof RenderGraphDescription
-class RenderTargetDescription : public TextureInitInfo
+/// @memberof RenderGraphBuilder
+class RenderTargetDesc : public TextureInitInfo
 {
-	friend class RenderGraphDescription;
+	friend class RenderGraphBuilder;
 
 public:
-	RenderTargetDescription()
+	RenderTargetDesc()
 	{
 	}
 
-	RenderTargetDescription(CString name)
+	RenderTargetDesc(CString name)
 		: TextureInitInfo(name)
 	{
 	}
@@ -123,9 +123,9 @@ public:
 
 	void getBufferState(BufferHandle handle, Buffer*& buff, PtrSize& offset, PtrSize& range) const;
 
-	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource, Texture*& tex) const;
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDesc& subresource, Texture*& tex) const;
 
-	TextureView createTextureView(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource) const
+	TextureView createTextureView(RenderTargetHandle handle, const TextureSubresourceDesc& subresource) const
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
@@ -133,7 +133,7 @@ public:
 	}
 
 	/// Convenience method.
-	void bindTexture(Register reg, RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource)
+	void bindTexture(Register reg, RenderTargetHandle handle, const TextureSubresourceDesc& subresource)
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
@@ -143,7 +143,7 @@ public:
 	/// Convenience method to bind the whole texture.
 	void bindTexture(Register reg, RenderTargetHandle handle)
 	{
-		const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
+		const TextureSubresourceDesc subresource = TextureSubresourceDesc::all();
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex); // Doesn't care about the aspect so it's OK
 		m_commandBuffer->bindTexture(reg, TextureView(tex, subresource));
@@ -179,15 +179,15 @@ private:
 };
 
 /// RenderGraph pass dependency.
-/// @memberof RenderGraphDescription
+/// @memberof RenderGraphBuilder
 class RenderPassDependency
 {
 	friend class RenderGraph;
-	friend class RenderPassDescriptionBase;
+	friend class RenderPassBase;
 
 public:
 	/// Dependency to a texture subresource.
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDescriptor& subresource)
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource)
 		: m_texture({handle, usage, subresource})
 		, m_type(Type::kTexture)
 	{
@@ -214,7 +214,7 @@ private:
 	public:
 		RenderTargetHandle m_handle;
 		TextureUsageBit m_usage;
-		TextureSubresourceDescriptor m_subresource = TextureSubresourceDescriptor::all();
+		TextureSubresourceDesc m_subresource = TextureSubresourceDesc::all();
 	};
 
 	class BufferInfo
@@ -249,11 +249,11 @@ private:
 };
 
 /// The base of compute/transfer and graphics renderpasses for RenderGraph.
-/// @memberof RenderGraphDescription
-class RenderPassDescriptionBase
+/// @memberof RenderGraphBuilder
+class RenderPassBase
 {
 	friend class RenderGraph;
-	friend class RenderGraphDescription;
+	friend class RenderGraphBuilder;
 
 public:
 	template<typename TFunc>
@@ -262,14 +262,14 @@ public:
 		m_callback = {func, m_rtDeps.getMemoryPool().m_pool};
 	}
 
-	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDescriptor& subresource)
+	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceDesc& subresource)
 	{
 		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, subresource));
 	}
 
 	void newTextureDependency(RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
-		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, TextureSubresourceDescriptor::all(aspect)));
+		newDependency<RenderPassDependency::Type::kTexture>(RenderPassDependency(handle, usage, TextureSubresourceDesc::all(aspect)));
 	}
 
 	void newBufferDependency(BufferHandle handle, BufferUsageBit usage)
@@ -286,12 +286,12 @@ protected:
 	enum class Type : U8
 	{
 		kGraphics,
-		kNoGraphics
+		kNonGraphics
 	};
 
 	Type m_type;
 
-	RenderGraphDescription* m_descr;
+	RenderGraphBuilder* m_descr;
 
 	Function<void(RenderPassWorkContext&), MemoryPoolPtrWrapper<StackMemoryPool>> m_callback;
 
@@ -308,7 +308,7 @@ protected:
 
 	BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> m_name;
 
-	RenderPassDescriptionBase(Type t, RenderGraphDescription* descr, StackMemoryPool* pool)
+	RenderPassBase(Type t, RenderGraphBuilder* descr, StackMemoryPool* pool)
 		: m_type(t)
 		, m_descr(descr)
 		, m_rtDeps(pool)
@@ -333,13 +333,13 @@ protected:
 	void newDependency(const RenderPassDependency& dep);
 };
 
-/// Renderpass attachment info. Used in GraphicsRenderPassDescription::setRenderpassInfo. It mirrors the RenderPass.
-/// @memberof GraphicsRenderPassDescription
-class RenderTargetInfo
+/// Renderpass attachment info. Used in GraphicsRenderPass::setRenderpassInfo. It mirrors the RenderPass.
+/// @memberof GraphicsRenderPass
+class GraphicsRenderPassTargetDesc
 {
 public:
 	RenderTargetHandle m_handle;
-	TextureSubresourceDescriptor m_subresource = TextureSubresourceDescriptor::firstSurface();
+	TextureSubresourceDesc m_subresource = TextureSubresourceDesc::firstSurface();
 
 	RenderTargetLoadOperation m_loadOperation = RenderTargetLoadOperation::kDontCare;
 	RenderTargetStoreOperation m_storeOperation = RenderTargetStoreOperation::kStore;
@@ -349,41 +349,41 @@ public:
 
 	ClearValue m_clearValue;
 
-	RenderTargetInfo() = default;
+	GraphicsRenderPassTargetDesc() = default;
 
-	RenderTargetInfo(RenderTargetHandle handle)
+	GraphicsRenderPassTargetDesc(RenderTargetHandle handle)
 		: m_handle(handle)
 	{
 	}
 };
 
 /// A graphics render pass for RenderGraph.
-/// @memberof RenderGraphDescription
-class GraphicsRenderPassDescription : public RenderPassDescriptionBase
+/// @memberof RenderGraphBuilder
+class GraphicsRenderPass : public RenderPassBase
 {
-	friend class RenderGraphDescription;
+	friend class RenderGraphBuilder;
 	friend class RenderGraph;
 
 public:
-	GraphicsRenderPassDescription(RenderGraphDescription* descr, StackMemoryPool* pool)
-		: RenderPassDescriptionBase(Type::kGraphics, descr, pool)
+	GraphicsRenderPass(RenderGraphBuilder* descr, StackMemoryPool* pool)
+		: RenderPassBase(Type::kGraphics, descr, pool)
 	{
 	}
 
-	void setRenderpassInfo(ConstWeakArray<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt = nullptr, U32 minx = 0, U32 miny = 0,
-						   U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0,
-						   U8 vrsRtTexelSizeY = 0);
+	void setRenderpassInfo(ConstWeakArray<GraphicsRenderPassTargetDesc> colorRts, const GraphicsRenderPassTargetDesc* depthStencilRt = nullptr,
+						   U32 minx = 0, U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr,
+						   U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
 
-	void setRenderpassInfo(std::initializer_list<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt = nullptr, U32 minx = 0,
-						   U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0,
-						   U8 vrsRtTexelSizeY = 0)
+	void setRenderpassInfo(std::initializer_list<GraphicsRenderPassTargetDesc> colorRts, const GraphicsRenderPassTargetDesc* depthStencilRt = nullptr,
+						   U32 minx = 0, U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr,
+						   U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0)
 	{
-		ConstWeakArray<RenderTargetInfo> colorRtsArr(colorRts.begin(), U32(colorRts.size()));
+		ConstWeakArray<GraphicsRenderPassTargetDesc> colorRtsArr(colorRts.begin(), U32(colorRts.size()));
 		setRenderpassInfo(colorRtsArr, depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX, vrsRtTexelSizeY);
 	}
 
 private:
-	Array<RenderTargetInfo, kMaxColorRenderTargets + 2> m_rts;
+	Array<GraphicsRenderPassTargetDesc, kMaxColorRenderTargets + 2> m_rts;
 	Array<U32, 4> m_rpassRenderArea = {};
 	U8 m_colorRtCount = 0;
 	U8 m_vrsRtTexelSizeX = 0;
@@ -396,38 +396,38 @@ private:
 };
 
 /// A compute render pass for RenderGraph.
-/// @memberof RenderGraphDescription
-class ComputeRenderPassDescription : public RenderPassDescriptionBase
+/// @memberof RenderGraphBuilder
+class NonGraphicsRenderPass : public RenderPassBase
 {
-	friend class RenderGraphDescription;
+	friend class RenderGraphBuilder;
 
 public:
-	ComputeRenderPassDescription(RenderGraphDescription* descr, StackMemoryPool* pool)
-		: RenderPassDescriptionBase(Type::kNoGraphics, descr, pool)
+	NonGraphicsRenderPass(RenderGraphBuilder* descr, StackMemoryPool* pool)
+		: RenderPassBase(Type::kNonGraphics, descr, pool)
 	{
 	}
 };
 
 /// Builds the description of the frame's render passes and their interactions.
 /// @memberof RenderGraph
-class RenderGraphDescription
+class RenderGraphBuilder
 {
 	friend class RenderGraph;
-	friend class RenderPassDescriptionBase;
+	friend class RenderPassBase;
 
 public:
-	RenderGraphDescription(StackMemoryPool* pool)
+	RenderGraphBuilder(StackMemoryPool* pool)
 		: m_pool(pool)
 	{
 	}
 
-	~RenderGraphDescription();
+	~RenderGraphBuilder();
 
 	/// Create a new graphics render pass.
-	GraphicsRenderPassDescription& newGraphicsRenderPass(CString name);
+	GraphicsRenderPass& newGraphicsRenderPass(CString name);
 
 	/// Create a new compute render pass.
-	ComputeRenderPassDescription& newComputeRenderPass(CString name);
+	NonGraphicsRenderPass& newNonGraphicsRenderPass(CString name);
 
 	/// Import an existing render target and let the render graph know about it's up-to-date usage.
 	RenderTargetHandle importRenderTarget(Texture* tex, TextureUsageBit usage);
@@ -436,7 +436,7 @@ public:
 	RenderTargetHandle importRenderTarget(Texture* tex);
 
 	/// Get or create a new render target.
-	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
+	RenderTargetHandle newRenderTarget(const RenderTargetDesc& initInf);
 
 	/// Import a buffer.
 	BufferHandle importBuffer(const BufferView& buff, BufferUsageBit usage);
@@ -493,7 +493,7 @@ private:
 	};
 
 	StackMemoryPool* m_pool = nullptr;
-	DynamicArray<RenderPassDescriptionBase*, MemoryPoolPtrWrapper<StackMemoryPool>> m_passes{m_pool};
+	DynamicArray<RenderPassBase*, MemoryPoolPtrWrapper<StackMemoryPool>> m_passes{m_pool};
 	DynamicArray<RT, MemoryPoolPtrWrapper<StackMemoryPool>> m_renderTargets{m_pool};
 	DynamicArray<BufferRsrc, MemoryPoolPtrWrapper<StackMemoryPool>> m_buffers{m_pool};
 	DynamicArray<AS, MemoryPoolPtrWrapper<StackMemoryPool>> m_as{m_pool};
@@ -528,7 +528,7 @@ public:
 	static constexpr GrObjectType kClassType = GrObjectType::kRenderGraph;
 
 	/// 1st step.
-	void compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool);
+	void compileNewGraph(const RenderGraphBuilder& descr, StackMemoryPool& pool);
 
 	/// 2nd step. Will call a number of RenderPassWorkCallback that populate command buffers and submit work.
 	void recordAndSubmitCommandBuffers(FencePtr* optionalFence = nullptr);
@@ -589,11 +589,11 @@ private:
 
 	[[nodiscard]] static RenderGraph* newInstance();
 
-	BakeContext* newContext(const RenderGraphDescription& descr, StackMemoryPool& pool);
-	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr);
+	BakeContext* newContext(const RenderGraphBuilder& descr, StackMemoryPool& pool);
+	void initRenderPassesAndSetDeps(const RenderGraphBuilder& descr);
 	void initBatches();
-	void initGraphicsPasses(const RenderGraphDescription& descr);
-	void setBatchBarriers(const RenderGraphDescription& descr);
+	void initGraphicsPasses(const RenderGraphBuilder& descr);
+	void setBatchBarriers(const RenderGraphBuilder& descr);
 	/// Switching from compute to graphics and the opposite in the same queue is not great for some GPUs (nVidia)
 	void minimizeSubchannelSwitches();
 	void sortBatchPasses();
@@ -603,20 +603,20 @@ private:
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();
 
-	ANKI_HOT static Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
+	ANKI_HOT static Bool passADependsOnB(const RenderPassBase& a, const RenderPassBase& b);
 
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
 	void setTextureBarrier(Batch& batch, const RenderPassDependency& consumer);
 
 	template<typename TFunc>
-	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDescriptor& subresource, TFunc func);
+	static void iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDesc& subresource, TFunc func);
 
-	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDescriptor& subresource, TextureUsageBit& usage) const;
+	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDesc& subresource, TextureUsageBit& usage) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{
-	Error dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const;
+	Error dumpDependencyDotFile(const RenderGraphBuilder& descr, const BakeContext& ctx, CString path) const;
 	static GrString textureUsageToStr(StackMemoryPool& pool, TextureUsageBit usage);
 	static GrString bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit usage);
 	static GrString asUsageToStr(StackMemoryPool& pool, AccelerationStructureUsageBit usage);

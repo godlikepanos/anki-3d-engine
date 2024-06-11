@@ -45,7 +45,7 @@ public:
 	ShaderProgramPtr m_spatialDenoiseGrProg;
 	ShaderProgramPtr m_tempralDenoiseGrProg;
 
-	RenderTargetDescription m_bentNormalsAndSsaoRtDescr;
+	RenderTargetDesc m_bentNormalsAndSsaoRtDescr;
 
 	Array<TexturePtr, 2> m_tex;
 	Bool m_texImportedOnce = false;

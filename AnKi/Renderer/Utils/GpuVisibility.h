@@ -52,7 +52,7 @@ public:
 	Vec3 m_lodReferencePoint = Vec3(kMaxF32);
 	Array<F32, kMaxLodCount - 1> m_lodDistances = {};
 
-	RenderGraphDescription* m_rgraph = nullptr;
+	RenderGraphBuilder* m_rgraph = nullptr;
 
 	Bool m_gatherAabbIndices = false; ///< For debug draw.
 	Bool m_hashVisibles = false; ///< Create a hash for the visible renderables.
@@ -129,7 +129,7 @@ public:
 
 	BufferHandle m_dependency;
 
-	RenderGraphDescription* m_rgraph = nullptr;
+	RenderGraphBuilder* m_rgraph = nullptr;
 
 	void fillBuffers(const GpuVisibilityOutput& perObjVisOut)
 	{
@@ -297,7 +297,7 @@ public:
 	CString m_passesName;
 	GpuSceneNonRenderableObjectType m_objectType = GpuSceneNonRenderableObjectType::kCount;
 	Mat4 m_viewProjectionMat;
-	RenderGraphDescription* m_rgraph = nullptr;
+	RenderGraphBuilder* m_rgraph = nullptr;
 
 	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
 	BufferView m_cpuFeedbackBuffer; ///< Optional.
@@ -345,7 +345,7 @@ public:
 
 	Mat4 m_viewProjectionMatrix;
 
-	RenderGraphDescription* m_rgraph = nullptr;
+	RenderGraphBuilder* m_rgraph = nullptr;
 
 	void validate() const
 	{

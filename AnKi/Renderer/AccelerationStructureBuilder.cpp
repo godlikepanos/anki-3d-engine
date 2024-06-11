@@ -49,13 +49,13 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 
 	// Build the AS
 	{
-		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+		RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 		const BufferView scratchBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(m_runCtx.m_tlas->getBuildScratchBufferSize());
 
 		m_runCtx.m_tlasHandle = rgraph.importAccelerationStructure(m_runCtx.m_tlas.get(), AccelerationStructureUsageBit::kNone);
 
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Build TLAS");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Build TLAS");
 		rpass.newAccelerationStructureDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::kBuild);
 		rpass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kAccelerationStructureBuild);
 

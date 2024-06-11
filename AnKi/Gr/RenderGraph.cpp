@@ -64,9 +64,9 @@ public:
 	U32 m_idx;
 	TextureUsageBit m_usageBefore;
 	TextureUsageBit m_usageAfter;
-	TextureSubresourceDescriptor m_subresource;
+	TextureSubresourceDesc m_subresource;
 
-	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSubresourceDescriptor& sub)
+	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSubresourceDesc& sub)
 		: m_idx(rtIdx)
 		, m_usageBefore(usageBefore)
 		, m_usageAfter(usageAfter)
@@ -342,7 +342,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	return tex;
 }
 
-Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b)
+Bool RenderGraph::passADependsOnB(const RenderPassBase& a, const RenderPassBase& b)
 {
 	// Render targets
 	{
@@ -494,7 +494,7 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 	return depends;
 }
 
-RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& descr, StackMemoryPool& pool)
+RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphBuilder& descr, StackMemoryPool& pool)
 {
 	// Allocate
 	BakeContext* ctx = anki::newInstance<BakeContext>(pool, &pool);
@@ -504,7 +504,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 	for(U32 rtIdx = 0; rtIdx < descr.m_renderTargets.getSize(); ++rtIdx)
 	{
 		RT& outRt = *ctx->m_rts.emplaceBack(&pool);
-		const RenderGraphDescription::RT& inRt = descr.m_renderTargets[rtIdx];
+		const RenderGraphBuilder::RT& inRt = descr.m_renderTargets[rtIdx];
 
 		const Bool imported = inRt.m_importedTex.isCreated();
 		if(imported)
@@ -586,7 +586,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 	return ctx;
 }
 
-void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr)
+void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphBuilder& descr)
 {
 	BakeContext& ctx = *m_ctx;
 	const U32 passCount = descr.m_passes.getSize();
@@ -595,7 +595,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 	ctx.m_passes.resizeStorage(passCount);
 	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
-		const RenderPassDescriptionBase& inPass = *descr.m_passes[passIdx];
+		const RenderPassBase& inPass = *descr.m_passes[passIdx];
 		Pass& outPass = *ctx.m_passes.emplaceBack(ctx.m_as.getMemoryPool().m_pool);
 
 		outPass.m_callback = inPass.m_callback;
@@ -618,7 +618,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		U32 prevPassIdx = passIdx;
 		while(prevPassIdx--)
 		{
-			const RenderPassDescriptionBase& prevPass = *descr.m_passes[prevPassIdx];
+			const RenderPassBase& prevPass = *descr.m_passes[prevPassIdx];
 
 			if(passADependsOnB(inPass, prevPass))
 			{
@@ -660,7 +660,7 @@ void RenderGraph::initBatches()
 	}
 }
 
-void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
+void RenderGraph::initGraphicsPasses(const RenderGraphBuilder& descr)
 {
 	BakeContext& ctx = *m_ctx;
 	const U32 passCount = descr.m_passes.getSize();
@@ -668,13 +668,13 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 
 	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
-		const RenderPassDescriptionBase& baseInPass = *descr.m_passes[passIdx];
+		const RenderPassBase& baseInPass = *descr.m_passes[passIdx];
 		Pass& outPass = ctx.m_passes[passIdx];
 
 		// Create command buffers and framebuffer
-		if(baseInPass.m_type == RenderPassDescriptionBase::Type::kGraphics)
+		if(baseInPass.m_type == RenderPassBase::Type::kGraphics)
 		{
-			const GraphicsRenderPassDescription& inPass = static_cast<const GraphicsRenderPassDescription&>(baseInPass);
+			const GraphicsRenderPass& inPass = static_cast<const GraphicsRenderPass&>(baseInPass);
 
 			if(inPass.hasRenderpass())
 			{
@@ -684,7 +684,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 				// Init the usage bits
 				for(U32 i = 0; i < inPass.m_colorRtCount; ++i)
 				{
-					const RenderTargetInfo& inAttachment = inPass.m_rts[i];
+					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_rts[i];
 					RenderTarget& outAttachment = outPass.m_beginRenderpassInfo.m_colorRts[i];
 
 					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, inAttachment.m_subresource, outAttachment.m_usage);
@@ -699,7 +699,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 
 				if(!!inPass.m_rts[kMaxColorRenderTargets].m_subresource.m_depthStencilAspect)
 				{
-					const RenderTargetInfo& inAttachment = inPass.m_rts[kMaxColorRenderTargets];
+					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_rts[kMaxColorRenderTargets];
 					RenderTarget& outAttachment = outPass.m_beginRenderpassInfo.m_dsRt;
 
 					getCrntUsage(inAttachment.m_handle, outPass.m_batchIdx, inAttachment.m_subresource, outAttachment.m_usage);
@@ -716,7 +716,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 
 				if(inPass.m_vrsRtTexelSizeX > 0)
 				{
-					const RenderTargetInfo& inAttachment = inPass.m_rts[kMaxColorRenderTargets + 1];
+					const GraphicsRenderPassTargetDesc& inAttachment = inPass.m_rts[kMaxColorRenderTargets + 1];
 
 					outPass.m_beginRenderpassInfo.m_vrsRt =
 						TextureView(m_ctx->m_rts[inAttachment.m_handle.m_idx].m_texture.get(), inAttachment.m_subresource);
@@ -731,7 +731,7 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr)
 }
 
 template<typename TFunc>
-void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDescriptor& subresource, TFunc func)
+void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubresourceDesc& subresource, TFunc func)
 {
 	subresource.validate(tex);
 	const U32 faceCount = textureTypeIsCube(tex.getTextureType()) ? 6 : 1;
@@ -747,7 +747,7 @@ void RenderGraph::iterateSurfsOrVolumes(const Texture& tex, const TextureSubreso
 					// Compute surf or vol idx
 					const U32 idx = (faceCount * tex.getLayerCount()) * mip + faceCount * layer + face;
 
-					if(!func(idx, TextureSubresourceDescriptor::surface(mip, face, layer, subresource.m_depthStencilAspect)))
+					if(!func(idx, TextureSubresourceDesc::surface(mip, face, layer, subresource.m_depthStencilAspect)))
 					{
 						return;
 					}
@@ -773,7 +773,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 	const TextureUsageBit depUsage = dep.m_texture.m_usage;
 	RT& rt = ctx.m_rts[rtIdx];
 
-	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSubresourceDescriptor& subresource) {
+	iterateSurfsOrVolumes(*rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSubresourceDesc& subresource) {
 		TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
 
 		const Bool skipBarrier = crntUsage == depUsage && !(crntUsage & TextureUsageBit::kAllWrite);
@@ -815,7 +815,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 	});
 }
 
-void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
+void RenderGraph::setBatchBarriers(const RenderGraphBuilder& descr)
 {
 	BakeContext& ctx = *m_ctx;
 
@@ -828,7 +828,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 		// For all passes of that batch
 		for(U32 passIdx : batch.m_passIndices)
 		{
-			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
+			const RenderPassBase& pass = *descr.m_passes[passIdx];
 
 			// Do textures
 			for(const RenderPassDependency& dep : pass.m_rtDeps)
@@ -1031,7 +1031,7 @@ void RenderGraph::sortBatchPasses()
 	}
 }
 
-void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackMemoryPool& pool)
+void RenderGraph::compileNewGraph(const RenderGraphBuilder& descr, StackMemoryPool& pool)
 {
 	ANKI_TRACE_SCOPED_EVENT(GrRenderGraphCompile);
 
@@ -1263,7 +1263,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 	}
 }
 
-void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDescriptor& subresource, TextureUsageBit& usage) const
+void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceDesc& subresource, TextureUsageBit& usage) const
 {
 	usage = TextureUsageBit::kNone;
 	const Batch& batch = m_ctx->m_batches[batchIdx];
@@ -1476,7 +1476,7 @@ StringRaii RenderGraph::asUsageToStr(StackMemoryPool& pool, AccelerationStructur
 	return str;
 }
 
-Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const
+Error RenderGraph::dumpDependencyDotFile(const RenderGraphBuilder& descr, const BakeContext& ctx, CString path) const
 {
 	ANKI_GR_LOGW("Running with debug code");
 
@@ -1503,7 +1503,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 			CString passName = descr.m_passes[passIdx]->m_name.toCString();
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=%s,shape=box];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()],
-								  (descr.m_passes[passIdx]->m_type == RenderPassDescriptionBase::Type::kGraphics) ? "bold" : "dashed");
+								  (descr.m_passes[passIdx]->m_type == RenderPassBase::Type::kGraphics) ? "bold" : "dashed");
 
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
 			{
@@ -1596,7 +1596,7 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 
 		for(U32 passIdx : batch.m_passIndices)
 		{
-			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
+			const RenderPassBase& pass = *descr.m_passes[passIdx];
 			StringRaii passName(&pool);
 			passName.sprintf("%s pass", pass.m_name.cstr());
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()]);

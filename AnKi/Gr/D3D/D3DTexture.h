@@ -37,35 +37,35 @@ public:
 		return initInternal(external, init);
 	}
 
-	DescriptorHeapHandle getOrCreateRtv(const TextureSubresourceDescriptor& subresource) const
+	DescriptorHeapHandle getOrCreateRtv(const TextureSubresourceDesc& subresource) const
 	{
 		const View& e = getOrCreateView(subresource, TextureUsageBit::kAllFramebuffer);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
 
-	DescriptorHeapHandle getOrCreateDsv(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage) const
+	DescriptorHeapHandle getOrCreateDsv(const TextureSubresourceDesc& subresource, TextureUsageBit usage) const
 	{
 		const View& e = getOrCreateView(subresource, usage);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
 
-	DescriptorHeapHandle getOrCreateSrv(const TextureSubresourceDescriptor& subresource) const
+	DescriptorHeapHandle getOrCreateSrv(const TextureSubresourceDesc& subresource) const
 	{
 		const View& e = getOrCreateView(subresource, TextureUsageBit::kAllSampled);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
 
-	DescriptorHeapHandle getOrCreateUav(const TextureSubresourceDescriptor& subresource) const
+	DescriptorHeapHandle getOrCreateUav(const TextureSubresourceDesc& subresource) const
 	{
 		const View& e = getOrCreateView(subresource, TextureUsageBit::kAllStorage);
 		ANKI_ASSERT(e.m_handle.isCreated());
 		return e.m_handle;
 	}
 
-	U32 calcD3DSubresourceIndex(const TextureSubresourceDescriptor& subresource) const
+	U32 calcD3DSubresourceIndex(const TextureSubresourceDesc& subresource) const
 	{
 		const TextureView view(this, subresource);
 
@@ -77,7 +77,7 @@ public:
 		return view.getFirstMipmap() + (arraySlice * m_mipCount) + (planeSlice * m_mipCount * arraySize);
 	}
 
-	D3D12_TEXTURE_BARRIER computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDescriptor& subresource) const;
+	D3D12_TEXTURE_BARRIER computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDesc& subresource) const;
 
 	ID3D12Resource& getD3DResource() const
 	{
@@ -126,14 +126,14 @@ private:
 	// Cache a few common views
 	View m_wholeTextureSrv;
 	View m_firstSurfaceRtvOrDsv;
-	TextureSubresourceDescriptor m_wholeTextureSrvSubresource = TextureSubresourceDescriptor::all();
-	TextureSubresourceDescriptor m_firstSurfaceRtvOrDsvSubresource = TextureSubresourceDescriptor::all();
+	TextureSubresourceDesc m_wholeTextureSrvSubresource = TextureSubresourceDesc::all();
+	TextureSubresourceDesc m_firstSurfaceRtvOrDsvSubresource = TextureSubresourceDesc::all();
 
 	Error initInternal(ID3D12Resource* external, const TextureInitInfo& init);
 
-	const View& getOrCreateView(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage) const;
+	const View& getOrCreateView(const TextureSubresourceDesc& subresource, TextureUsageBit usage) const;
 
-	void initView(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage, View& view) const;
+	void initView(const TextureSubresourceDesc& subresource, TextureUsageBit usage, View& view) const;
 
 	void computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& stages, D3D12_BARRIER_ACCESS& accesses) const;
 

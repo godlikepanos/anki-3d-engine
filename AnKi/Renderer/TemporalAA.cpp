@@ -55,7 +55,7 @@ Error TemporalAA::initInternal()
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(TemporalAA);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
@@ -77,10 +77,10 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 	// Create pass
 	TextureUsageBit readUsage;
-	RenderPassDescriptionBase* prpass;
+	RenderPassBase* prpass;
 	if(preferCompute)
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("TemporalAA");
 
 		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kStorageComputeWrite);
 		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kStorageComputeWrite);
@@ -91,8 +91,8 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("TemporalAA");
-		pass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_renderRt), RenderTargetInfo(m_runCtx.m_tonemappedRt)});
+		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("TemporalAA");
+		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_renderRt), GraphicsRenderPassTargetDesc(m_runCtx.m_tonemappedRt)});
 
 		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kFramebufferWrite);
 		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kFramebufferWrite);

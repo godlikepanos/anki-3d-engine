@@ -126,7 +126,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindTexture(ANKI_REG(t9), getRenderer().getShadowmapsResolve().getRt());
 		rgraphCtx.bindTexture(ANKI_REG(t10), getRenderer().getSsao().getRt());
 		rgraphCtx.bindTexture(ANKI_REG(t11), getRenderer().getSsr().getRt());
-		cmdb.bindTexture(ANKI_REG(t12), TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDescriptor::all()));
+		cmdb.bindTexture(ANKI_REG(t12), TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 
 		// Draw
 		drawQuad(cmdb);
@@ -176,7 +176,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
 			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
-			cmdb.bindTexture(ANKI_REG(t0), TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDescriptor::all()));
+			cmdb.bindTexture(ANKI_REG(t0), TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
 		}
 		else
 		{
@@ -248,7 +248,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 void LightShading::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(LightShading);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get();
 
@@ -262,14 +262,14 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad");
+	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Light&FW Shad");
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(ctx, rgraphCtx);
 	});
 
-	RenderTargetInfo colorRt(m_runCtx.m_rt);
-	RenderTargetInfo depthRt(getRenderer().getGBuffer().getDepthRt());
+	GraphicsRenderPassTargetDesc colorRt(m_runCtx.m_rt);
+	GraphicsRenderPassTargetDesc depthRt(getRenderer().getGBuffer().getDepthRt());
 	depthRt.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	depthRt.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({colorRt}, &depthRt, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,

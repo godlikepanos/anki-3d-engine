@@ -66,7 +66,7 @@ public:
 	}
 
 private:
-	RenderTargetDescription m_rtDescr;
+	RenderTargetDesc m_rtDescr;
 
 	ImageResourcePtr m_giProbeImage;
 	ImageResourcePtr m_pointLightImage;

@@ -165,7 +165,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		return;
 	}
 
-	RenderGraphDescription& rgraph = *in.m_rgraph;
+	RenderGraphBuilder& rgraph = *in.m_rgraph;
 
 	class DistanceTestData
 	{
@@ -324,7 +324,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		Array<Char, 128> passName;
 		snprintf(passName.getBegin(), passName.getSizeInBytes(), "GPU vis zero: %s", in.m_passesName.cstr());
 
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName.getBegin());
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(passName.getBegin());
 		pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kTransferDestination);
 
 		pass.setWork([out](RenderPassWorkContext& rpass) {
@@ -361,7 +361,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	out.m_dependency = mem.m_bufferDepedency;
 
 	// Create the renderpass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("GPU vis: %s", in.m_passesName.cstr()));
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis: %s", in.m_passesName.cstr()));
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(zeroStuffDependency, BufferUsageBit::kStorageComputeWrite);
@@ -516,7 +516,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
 {
-	RenderGraphDescription& rgraph = *in.m_rgraph;
+	RenderGraphBuilder& rgraph = *in.m_rgraph;
 
 	if(!in.m_taskShaderIndirectArgsBuffer.isValid()) [[unlikely]]
 	{
@@ -564,7 +564,7 @@ void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpu
 	// Zero some stuff
 	const BufferHandle indirectArgsDep = rgraph.importBuffer(out.m_drawIndirectArgsBuffer, BufferUsageBit::kNone);
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("GPU meshlet vis zero: %s", in.m_passesName.cstr()));
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU meshlet vis zero: %s", in.m_passesName.cstr()));
 		pass.newBufferDependency(indirectArgsDep, BufferUsageBit::kTransferDestination);
 
 		pass.setWork([drawIndirectArgsBuffer = out.m_drawIndirectArgsBuffer](RenderPassWorkContext& rpass) {
@@ -579,7 +579,7 @@ void GpuVisibility::populateRenderGraphMeshletInternal(Bool passthrough, BaseGpu
 	out.m_dependency = mem.m_bufferDepedency;
 
 	// Create the renderpass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("GPU meshlet vis: %s", in.m_passesName.cstr()));
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU meshlet vis: %s", in.m_passesName.cstr()));
 
 	pass.newBufferDependency(indirectArgsDep, BufferUsageBit::kStorageComputeWrite);
 	pass.newBufferDependency(mem.m_bufferDepedency, BufferUsageBit::kStorageComputeWrite);
@@ -672,7 +672,7 @@ Error GpuVisibilityNonRenderables::init()
 void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderablesInput& in, GpuVisibilityNonRenderablesOutput& out)
 {
 	ANKI_ASSERT(in.m_viewProjectionMat != Mat4::getZero());
-	RenderGraphDescription& rgraph = *in.m_rgraph;
+	RenderGraphBuilder& rgraph = *in.m_rgraph;
 
 	U32 objCount = 0;
 	switch(in.m_objectType)
@@ -735,8 +735,8 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 		m_counterBufferZeroingHandle = rgraph.importBuffer(BufferView(m_counterBuffer.get()), buffInit.m_usage);
 
-		ComputeRenderPassDescription& pass =
-			rgraph.newComputeRenderPass(generateTempPassName("Non-renderables vis: Clear counter buff: %s", in.m_passesName.cstr()));
+		NonGraphicsRenderPass& pass =
+			rgraph.newNonGraphicsRenderPass(generateTempPassName("Non-renderables vis: Clear counter buff: %s", in.m_passesName.cstr()));
 
 		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kTransferDestination);
 
@@ -756,7 +756,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	out.m_visiblesBufferHandle = rgraph.importBuffer(out.m_visiblesBuffer, BufferUsageBit::kNone);
 
 	// Create the renderpass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("Non-renderables vis: %s", in.m_passesName.cstr()));
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("Non-renderables vis: %s", in.m_passesName.cstr()));
 
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 	pass.newBufferDependency(out.m_visiblesBufferHandle, BufferUsageBit::kStorageComputeWrite);
@@ -844,7 +844,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 															  GpuVisibilityAccelerationStructuresOutput& out)
 {
 	in.validate();
-	RenderGraphDescription& rgraph = *in.m_rgraph;
+	RenderGraphBuilder& rgraph = *in.m_rgraph;
 
 #if ANKI_ASSERTIONS_ENABLED
 	ANKI_ASSERT(m_lastFrameIdx != getRenderer().getFrameCount());
@@ -863,7 +863,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 	// Create vis pass
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(generateTempPassName("Accel vis: %s", in.m_passesName.cstr()));
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("Accel vis: %s", in.m_passesName.cstr()));
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
@@ -910,8 +910,8 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 	// Zero remaining instances
 	{
-		ComputeRenderPassDescription& pass =
-			rgraph.newComputeRenderPass(generateTempPassName("Accel vis zero remaining instances: %s", in.m_passesName.cstr()));
+		NonGraphicsRenderPass& pass =
+			rgraph.newNonGraphicsRenderPass(generateTempPassName("Accel vis zero remaining instances: %s", in.m_passesName.cstr()));
 
 		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
 

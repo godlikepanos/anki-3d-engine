@@ -67,7 +67,7 @@ Error Ssao::initInternal()
 void Ssao::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Ssao);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = g_preferComputeCVar.get();
 
 	const U32 readRtIdx = getRenderer().getFrameCount() & 1;
@@ -107,16 +107,16 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 	// Main pass
 	{
-		RenderPassDescriptionBase* ppass;
+		RenderPassBase* ppass;
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SSAO");
+			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSAO");
 			ppass = &pass;
 		}
 		else
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO");
-			pass.setRenderpassInfo({RenderTargetInfo(finalRt)});
+			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("SSAO");
+			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(finalRt)});
 			ppass = &pass;
 		}
 
@@ -134,7 +134,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindTexture(ANKI_REG(t1),
 								  (g_ssaoQuarterRez.get()) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt());
 
-			cmdb.bindTexture(ANKI_REG(t2), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDescriptor::all()));
+			cmdb.bindTexture(ANKI_REG(t2), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearRepeat.get());
 			cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
 
@@ -171,17 +171,17 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 	// Spatial denoise
 	{
-		RenderPassDescriptionBase* ppass;
+		RenderPassBase* ppass;
 
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SSAO spatial denoise");
+			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSAO spatial denoise");
 			ppass = &pass;
 		}
 		else
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO spatial denoise");
-			pass.setRenderpassInfo({RenderTargetInfo(bentNormalsAndSsaoTempRt)});
+			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("SSAO spatial denoise");
+			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(bentNormalsAndSsaoTempRt)});
 			ppass = &pass;
 		}
 
@@ -220,17 +220,17 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 	// Temporal denoise
 	{
-		RenderPassDescriptionBase* ppass;
+		RenderPassBase* ppass;
 
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SSAO temporal denoise");
+			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSAO temporal denoise");
 			ppass = &pass;
 		}
 		else
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO temporal denoise");
-			pass.setRenderpassInfo({RenderTargetInfo(finalRt)});
+			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("SSAO temporal denoise");
+			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(finalRt)});
 			ppass = &pass;
 		}
 

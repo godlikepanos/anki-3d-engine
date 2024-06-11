@@ -40,12 +40,12 @@ public:
 	/// @name Render targets
 	/// @{
 	TexturePtr m_historyRt;
-	RenderTargetDescription m_intermediateShadowsRtDescr;
-	RenderTargetDescription m_upscaledRtDescr;
+	RenderTargetDesc m_intermediateShadowsRtDescr;
+	RenderTargetDesc m_upscaledRtDescr;
 
 	Array<TexturePtr, 2> m_momentsRts;
 
-	RenderTargetDescription m_varianceRtDescr;
+	RenderTargetDesc m_varianceRtDescr;
 
 	TexturePtr m_dummyHistoryLenTex;
 	/// @}

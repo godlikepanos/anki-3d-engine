@@ -60,13 +60,13 @@ public:
 	}
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
-	VkImageMemoryBarrier computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDescriptor& subresource,
+	VkImageMemoryBarrier computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDesc& subresource,
 											VkPipelineStageFlags& srcStages, VkPipelineStageFlags& dstStages) const;
 
 	/// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage) const;
 
-	VkImageSubresourceRange computeVkImageSubresourceRange(const TextureSubresourceDescriptor& subresource) const
+	VkImageSubresourceRange computeVkImageSubresourceRange(const TextureSubresourceDesc& subresource) const
 	{
 		const TextureView in(this, subresource);
 		VkImageSubresourceRange range = {};
@@ -80,7 +80,7 @@ public:
 		return range;
 	}
 
-	VkImageView getImageView(const TextureSubresourceDescriptor& subresource) const
+	VkImageView getImageView(const TextureSubresourceDesc& subresource) const
 	{
 		return getTextureViewEntry(subresource).m_handle;
 	}
@@ -133,7 +133,7 @@ private:
 		return layer * faceCount * m_mipCount + face * m_mipCount + mip;
 	}
 
-	const TextureViewEntry& getTextureViewEntry(const TextureSubresourceDescriptor& subresource) const;
+	const TextureViewEntry& getTextureViewEntry(const TextureSubresourceDesc& subresource) const;
 };
 /// @}
 

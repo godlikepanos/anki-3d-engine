@@ -60,7 +60,7 @@ private:
 	UVec2 m_swapchainResolution = UVec2(0u);
 
 	RenderGraphPtr m_rgraph;
-	RenderTargetDescription m_tmpRtDesc;
+	RenderTargetDesc m_tmpRtDesc;
 
 	class
 	{

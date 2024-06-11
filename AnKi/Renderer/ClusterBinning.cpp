@@ -47,7 +47,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ClusterBinning);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Allocate the clusters buffer
 	{
@@ -66,7 +66,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		indirectArgsHandle = rgraph.importBuffer(indirectArgsBuff, BufferUsageBit::kNone);
 
 		// Create the pass
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning setup");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Cluster binning setup");
 
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
@@ -102,7 +102,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	// Cluster binning
 	{
 		// Create the pass
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster binning");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Cluster binning");
 
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kStorageComputeWrite);
@@ -208,7 +208,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		// Create the pass
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Cluster object packing");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Cluster object packing");
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{

@@ -53,7 +53,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kStorageComputeRead;
 
 		m_volTex = GrManager::getSingleton().newTexture(texInit);
-		m_volTexBindlessIdx = m_volTex->getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
+		m_volTexBindlessIdx = m_volTex->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 
 		// Zero the texture
 		const ShaderProgramResourceVariant* variant;
@@ -69,11 +69,11 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		TextureBarrierInfo texBarrier;
 		texBarrier.m_previousUsage = TextureUsageBit::kNone;
 		texBarrier.m_nextUsage = TextureUsageBit::kStorageComputeWrite;
-		texBarrier.m_textureView = TextureView(m_volTex.get(), TextureSubresourceDescriptor::all());
+		texBarrier.m_textureView = TextureView(m_volTex.get(), TextureSubresourceDesc::all());
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
 		cmdb->bindShaderProgram(&variant->getProgram());
-		cmdb->bindTexture(ANKI_REG(u0), TextureView(m_volTex.get(), TextureSubresourceDescriptor::all()));
+		cmdb->bindTexture(ANKI_REG(u0), TextureView(m_volTex.get(), TextureSubresourceDesc::all()));
 
 		const Vec4 clearColor(0.0f);
 		cmdb->setPushConstants(&clearColor, sizeof(clearColor));

@@ -43,7 +43,7 @@ public:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_ssrGrProg;
 
-	RenderTargetDescription m_ssrRtDescr;
+	RenderTargetDesc m_ssrRtDescr;
 
 	class
 	{

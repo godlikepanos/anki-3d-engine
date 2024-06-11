@@ -73,17 +73,17 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Ssr);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = g_preferComputeCVar.get();
 
 	m_runCtx.m_ssrRt = rgraph.newRenderTarget(m_ssrRtDescr);
 
 	TextureUsageBit readUsage;
 	TextureUsageBit writeUsage;
-	RenderPassDescriptionBase* ppass;
+	RenderPassBase* ppass;
 	if(preferCompute)
 	{
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SSR");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSR");
 		ppass = &pass;
 
 		readUsage = TextureUsageBit::kSampledCompute;
@@ -92,9 +92,9 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		// TODO
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSR");
+		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("SSR");
 
-		pass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_ssrRt)});
+		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_ssrRt)});
 
 		ppass = &pass;
 

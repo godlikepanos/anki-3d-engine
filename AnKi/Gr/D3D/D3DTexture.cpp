@@ -22,7 +22,7 @@ Texture* Texture::newInstance(const TextureInitInfo& init)
 	return impl;
 }
 
-U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor& subresource)
+U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDesc& subresource)
 {
 	ANKI_D3D_SELF(TextureImpl);
 
@@ -171,14 +171,14 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 	// Create the default views
 	if(!!(m_usage & TextureUsageBit::kAllFramebuffer))
 	{
-		const TextureView tview(this, TextureSubresourceDescriptor::firstSurface());
+		const TextureView tview(this, TextureSubresourceDesc::firstSurface());
 		initView(tview.getSubresource(), TextureUsageBit::kAllFramebuffer, m_firstSurfaceRtvOrDsv);
 		m_firstSurfaceRtvOrDsvSubresource = tview.getSubresource();
 	}
 
 	if(!!(m_usage & TextureUsageBit::kAllSampled))
 	{
-		const TextureView tview(this, TextureSubresourceDescriptor::all());
+		const TextureView tview(this, TextureSubresourceDesc::all());
 		initView(tview.getSubresource(), TextureUsageBit::kAllSampled, m_wholeTextureSrv);
 		m_wholeTextureSrvSubresource = tview.getSubresource();
 	}
@@ -186,7 +186,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 	return Error::kNone;
 }
 
-void TextureImpl::initView(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage, View& view) const
+void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsageBit usage, View& view) const
 {
 	ANKI_ASSERT(!!(m_usage & usage));
 
@@ -452,7 +452,7 @@ void TextureImpl::initView(const TextureSubresourceDescriptor& subresource, Text
 	}
 }
 
-const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDescriptor& subresource, TextureUsageBit usage) const
+const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDesc& subresource, TextureUsageBit usage) const
 {
 	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
 	ANKI_ASSERT(!!(usage & m_usage));
@@ -473,7 +473,7 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 	class
 	{
 	public:
-		TextureSubresourceDescriptor m_subresource;
+		TextureSubresourceDesc m_subresource;
 		TextureUsageBit m_usage;
 	} toHash = {subresource, usage};
 	ANKI_END_PACKED_STRUCT
@@ -513,8 +513,7 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 	return nview;
 }
 
-D3D12_TEXTURE_BARRIER TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after,
-													  const TextureSubresourceDescriptor& subresource) const
+D3D12_TEXTURE_BARRIER TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDesc& subresource) const
 {
 	ANKI_ASSERT((m_usage & before) == before);
 	ANKI_ASSERT((m_usage & after) == after);

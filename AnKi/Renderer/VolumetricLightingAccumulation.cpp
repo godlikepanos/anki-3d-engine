@@ -62,14 +62,14 @@ Error VolumetricLightingAccumulation::init()
 void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(VolumetricLightingAccumulation);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	const U readRtIdx = getRenderer().getFrameCount() & 1;
 
 	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx].get(), TextureUsageBit::kSampledFragment);
 	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx].get(), TextureUsageBit::kNone);
 
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol light");
 
 	pass.newTextureDependency(m_runCtx.m_rts[0], TextureUsageBit::kSampledCompute);
 	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kStorageComputeWrite);
@@ -102,7 +102,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_rts[1]);
 
-		cmdb.bindTexture(ANKI_REG(t0), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDescriptor::all()));
+		cmdb.bindTexture(ANKI_REG(t0), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 
 		rgraphCtx.bindTexture(ANKI_REG(t1), m_runCtx.m_rts[0]);
 

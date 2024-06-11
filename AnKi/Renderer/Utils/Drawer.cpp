@@ -72,7 +72,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_TRANSFORMS), GpuSceneArrays::Transform::getSingleton().getBufferView());
 	cmdb.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_HZB_TEXTURE),
 					 (args.m_hzbTexture.isValid()) ? args.m_hzbTexture
-												   : TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDescriptor::all()));
+												   : TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
 	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	// Misc

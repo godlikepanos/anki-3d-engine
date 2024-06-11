@@ -80,11 +80,11 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	m_tex = GrManager::getSingleton().newTexture(texInit);
 
 	// Create the whole texture view
-	m_imgData.m_textureView = TextureView(m_tex.get(), TextureSubresourceDescriptor::all());
+	m_imgData.m_textureView = TextureView(m_tex.get(), TextureSubresourceDesc::all());
 	m_imFontAtlas->SetTexID(UiImageId(&m_imgData));
 
 	// Do the copy
-	const TextureView firstMipView(m_tex.get(), TextureSubresourceDescriptor::firstSurface());
+	const TextureView firstMipView(m_tex.get(), TextureSubresourceDesc::firstSurface());
 
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;

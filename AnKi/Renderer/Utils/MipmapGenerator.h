@@ -29,7 +29,7 @@ class MipmapGenerator : public RendererObject
 public:
 	Error init();
 
-	void populateRenderGraph(const MipmapGeneratorTargetArguments& target, RenderGraphDescription& rgraph, CString passesName = {});
+	void populateRenderGraph(const MipmapGeneratorTargetArguments& target, RenderGraphBuilder& rgraph, CString passesName = {});
 
 private:
 	ShaderProgramResourcePtr m_genMipsProg;

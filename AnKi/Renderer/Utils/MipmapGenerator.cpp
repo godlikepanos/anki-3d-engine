@@ -16,7 +16,7 @@ Error MipmapGenerator::init()
 	return Error::kNone;
 }
 
-void MipmapGenerator::populateRenderGraph(const MipmapGeneratorTargetArguments& target, RenderGraphDescription& rgraph, CString passesName)
+void MipmapGenerator::populateRenderGraph(const MipmapGeneratorTargetArguments& target, RenderGraphBuilder& rgraph, CString passesName)
 {
 	for(U32 readMip = 0; readMip < target.m_mipmapCount - 1u; ++readMip)
 	{
@@ -25,17 +25,16 @@ void MipmapGenerator::populateRenderGraph(const MipmapGeneratorTargetArguments& 
 		{
 			for(U32 layer = 0; layer < target.m_layerCount; ++layer)
 			{
-				GraphicsRenderPassDescription& rpass =
+				GraphicsRenderPass& rpass =
 					rgraph.newGraphicsRenderPass(generateTempPassName("%s: mip #%u face #%u layer #%u", passesName.cstr(), readMip, face, layer));
 
-				rpass.newTextureDependency(target.m_handle, TextureUsageBit::kSampledFragment,
-										   TextureSubresourceDescriptor::surface(readMip, face, layer));
+				rpass.newTextureDependency(target.m_handle, TextureUsageBit::kSampledFragment, TextureSubresourceDesc::surface(readMip, face, layer));
 				rpass.newTextureDependency(target.m_handle, TextureUsageBit::kFramebufferWrite,
-										   TextureSubresourceDescriptor::surface(readMip + 1, face, layer));
+										   TextureSubresourceDesc::surface(readMip + 1, face, layer));
 
-				RenderTargetInfo rtInfo;
+				GraphicsRenderPassTargetDesc rtInfo;
 				rtInfo.m_handle = target.m_handle;
-				rtInfo.m_subresource = TextureSubresourceDescriptor::surface(readMip + 1, face, layer);
+				rtInfo.m_subresource = TextureSubresourceDesc::surface(readMip + 1, face, layer);
 				rpass.setRenderpassInfo({rtInfo});
 
 				rpass.setWork([this, rt = target.m_handle, readMip, face, layer,
@@ -47,7 +46,7 @@ void MipmapGenerator::populateRenderGraph(const MipmapGeneratorTargetArguments& 
 					cmdb.bindShaderProgram(m_genMipsGrProg.get());
 					cmdb.setViewport(0, 0, viewport.x(), viewport.y());
 
-					rgraphCtx.bindTexture(ANKI_REG(t0), rt, TextureSubresourceDescriptor::surface(readMip, face, layer));
+					rgraphCtx.bindTexture(ANKI_REG(t0), rt, TextureSubresourceDesc::surface(readMip, face, layer));
 					cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
 
 					drawQuad(cmdb);

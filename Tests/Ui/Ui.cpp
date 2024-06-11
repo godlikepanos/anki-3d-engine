@@ -107,11 +107,11 @@ ANKI_TEST(Ui, Ui)
 			TextureBarrierInfo barrier;
 			barrier.m_previousUsage = TextureUsageBit::kNone;
 			barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
-			barrier.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
+			barrier.m_textureView = TextureView(presentTex.get(), TextureSubresourceDesc::all());
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 			RenderTarget rt;
-			rt.m_textureView = TextureView(presentTex.get(), TextureSubresourceDescriptor::all());
+			rt.m_textureView = TextureView(presentTex.get(), TextureSubresourceDesc::all());
 			rt.m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
 			cmdb->beginRenderPass({rt});
 

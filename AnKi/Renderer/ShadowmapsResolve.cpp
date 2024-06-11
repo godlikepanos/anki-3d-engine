@@ -53,12 +53,12 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	if(g_preferComputeCVar.get())
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ResolveShadows");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ResolveShadows");
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(rgraphCtx, ctx);
@@ -80,9 +80,9 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("ResolveShadows");
+		GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("ResolveShadows");
 
-		rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_rt)});
+		rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_rt)});
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			run(rgraphCtx, ctx);
@@ -129,7 +129,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 	{
 		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getGBuffer().getDepthRt());
 	}
-	cmdb.bindTexture(ANKI_REG(t5), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDescriptor::all()));
+	cmdb.bindTexture(ANKI_REG(t5), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 
 	if(getRenderer().getRtShadowsEnabled())
 	{

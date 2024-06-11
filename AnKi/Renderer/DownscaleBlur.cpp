@@ -55,14 +55,14 @@ Error DownscaleBlur::initInternal()
 
 void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
 {
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex.get(), TextureUsageBit::kSampledCompute);
 }
 
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(DownscaleBlur);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Create passes
 	static constexpr Array<CString, 8> passNames = {"Down/Blur #0", "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
@@ -71,16 +71,16 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 
 	for(U32 i = 0; i < m_passCount; ++i)
 	{
-		RenderPassDescriptionBase* ppass;
+		RenderPassBase* ppass;
 		if(g_preferComputeCVar.get())
 		{
-			ppass = &rgraph.newComputeRenderPass(passNames[i]);
+			ppass = &rgraph.newNonGraphicsRenderPass(passNames[i]);
 		}
 		else
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
+			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(passNames[i]);
 
-			RenderTargetInfo rtInf(m_runCtx.m_rt);
+			GraphicsRenderPassTargetDesc rtInf(m_runCtx.m_rt);
 			rtInf.m_subresource.m_mipmap = i;
 			pass.setRenderpassInfo({rtInf});
 
@@ -92,15 +92,15 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 
 		if(i > 0)
 		{
-			const TextureSubresourceDescriptor sampleSubresource = TextureSubresourceDescriptor::surface(i - 1, 0, 0);
-			const TextureSubresourceDescriptor renderSubresource = TextureSubresourceDescriptor::surface(i, 0, 0);
+			const TextureSubresourceDesc sampleSubresource = TextureSubresourceDesc::surface(i - 1, 0, 0);
+			const TextureSubresourceDesc renderSubresource = TextureSubresourceDesc::surface(i, 0, 0);
 
 			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, renderSubresource);
 			ppass->newTextureDependency(m_runCtx.m_rt, readUsage, sampleSubresource);
 		}
 		else
 		{
-			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, TextureSubresourceDescriptor::firstSurface());
+			ppass->newTextureDependency(m_runCtx.m_rt, writeUsage, TextureSubresourceDesc::firstSurface());
 			ppass->newTextureDependency(inRt, readUsage);
 		}
 
@@ -123,7 +123,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 
 	if(passIdx > 0)
 	{
-		rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt, TextureSubresourceDescriptor::surface(passIdx - 1, 0, 0));
+		rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt, TextureSubresourceDesc::surface(passIdx - 1, 0, 0));
 	}
 	else
 	{
@@ -137,7 +137,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 		const Vec4 fbSize(F32(vpWidth), F32(vpHeight), 0.0f, 0.0f);
 		cmdb.setPushConstants(&fbSize, sizeof(fbSize));
 
-		rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_rt, TextureSubresourceDescriptor::surface(passIdx, 0, 0));
+		rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_rt, TextureSubresourceDesc::surface(passIdx, 0, 0));
 
 		dispatchPPCompute(cmdb, 8, 8, vpWidth, vpHeight);
 	}

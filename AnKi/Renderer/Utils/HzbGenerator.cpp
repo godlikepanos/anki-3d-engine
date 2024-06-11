@@ -85,7 +85,7 @@ Error HzbGenerator::init()
 }
 
 void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, U32 firstCounterBufferElement, CString customName,
-											   RenderGraphDescription& rgraph) const
+											   RenderGraphBuilder& rgraph) const
 {
 	const U32 dispatchCount = dispatchInputs.getSize();
 
@@ -103,12 +103,12 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 	}
 #endif
 
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass((customName.isEmpty()) ? "HZB generation" : customName);
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass((customName.isEmpty()) ? "HZB generation" : customName);
 
 	Array<DispatchInput, kMaxShadowCascades> dispatchInputsCopy;
 	for(U32 i = 0; i < dispatchCount; ++i)
 	{
-		const TextureSubresourceDescriptor firstMipSubresource = TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth);
+		const TextureSubresourceDesc firstMipSubresource = TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(dispatchInputs[i].m_srcDepthRt, TextureUsageBit::kSampledCompute, firstMipSubresource);
 		pass.newTextureDependency(dispatchInputs[i].m_dstHzbRt, TextureUsageBit::kStorageComputeWrite);
 
@@ -152,7 +152,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 			Register mipsReg(ANKI_REG(u1));
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
-				TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::firstSurface();
+				TextureSubresourceDesc subresource = TextureSubresourceDesc::firstSurface();
 				if(mip < mipsToCompute)
 				{
 					subresource.m_mipmap = mip;
@@ -168,7 +168,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 
 			cmdb.bindStorageBuffer(
 				ANKI_REG(u0), BufferView(m_counterBuffer.get(), (firstCounterBufferElement + dispatch) * m_counterBufferElementSize, sizeof(U32)));
-			rgraphCtx.bindTexture(ANKI_REG(t0), in.m_srcDepthRt, TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(ANKI_REG(t0), in.m_srcDepthRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		}
@@ -176,7 +176,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 }
 
 void HzbGenerator::populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-									   RenderGraphDescription& rgraph, CString customName) const
+									   RenderGraphBuilder& rgraph, CString customName) const
 {
 	DispatchInput in;
 	in.m_dstHzbRt = dstHzbRt;
@@ -186,7 +186,7 @@ void HzbGenerator::populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcD
 	populateRenderGraphInternal({&in, 1}, 0, customName, rgraph);
 }
 
-void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphDescription& rgraph) const
+void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphBuilder& rgraph) const
 {
 	const U32 cascadeCount = in.m_cascadeCount;
 	ANKI_ASSERT(cascadeCount > 0);
@@ -196,14 +196,14 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 	constexpr U32 kTileSize = 64;
 	const UVec2 maxDepthRtSize = (in.m_depthBufferRtSize + kTileSize - 1) / kTileSize;
 	{
-		RenderTargetDescription maxDepthRtDescr("HZB max tile depth");
+		RenderTargetDesc maxDepthRtDescr("HZB max tile depth");
 		maxDepthRtDescr.m_width = maxDepthRtSize.x();
 		maxDepthRtDescr.m_height = maxDepthRtSize.y();
 		maxDepthRtDescr.m_format = Format::kR32_Sfloat;
 		maxDepthRtDescr.bake();
 		maxDepthRt = rgraph.newRenderTarget(maxDepthRtDescr);
 
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HZB max tile depth");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("HZB max tile depth");
 
 		pass.newTextureDependency(in.m_depthBufferRt, TextureUsageBit::kSampledCompute, DepthStencilAspectBit::kDepth);
 		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kStorageComputeWrite);
@@ -211,7 +211,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		pass.setWork([this, depthBufferRt = in.m_depthBufferRt, maxDepthRt, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), depthBufferRt, TextureSubresourceDescriptor::firstSurface(DepthStencilAspectBit::kDepth));
+			rgraphCtx.bindTexture(ANKI_REG(t0), depthBufferRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(ANKI_REG(u0), maxDepthRt);
 
@@ -256,16 +256,16 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 			ANKI_ASSERT(cascadeMinDepth <= cascadeMaxDepth);
 		}
 
-		RenderTargetDescription depthRtDescr(generateTempPassName("HZB boxes depth cascade:%u", i));
+		RenderTargetDesc depthRtDescr(generateTempPassName("HZB boxes depth cascade:%u", i));
 		depthRtDescr.m_width = cascade.m_hzbRtSize.x() * 2;
 		depthRtDescr.m_height = cascade.m_hzbRtSize.y() * 2;
 		depthRtDescr.m_format = Format::kD16_Unorm;
 		depthRtDescr.bake();
 		depthRts[i] = rgraph.newRenderTarget(depthRtDescr);
 
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("HZB boxes");
+		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("HZB boxes");
 
-		RenderTargetInfo depthRt(depthRts[i]);
+		GraphicsRenderPassTargetDesc depthRt(depthRts[i]);
 		depthRt.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 		depthRt.m_clearValue.m_depthStencil.m_depth = 0.0f;
 		depthRt.m_loadOperation = RenderTargetLoadOperation::kClear;

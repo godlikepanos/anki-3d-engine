@@ -68,15 +68,15 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Create the pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
+	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		run(rgraphCtx);
 	});
-	pass.setRenderpassInfo({RenderTargetInfo(ctx.m_outRenderTarget)});
+	pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(ctx.m_outRenderTarget)});
 
 	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kFramebufferWrite);
 
@@ -140,7 +140,7 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getScale().getTonemappedRt());
 
 		rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getBloom().getRt());
-		cmdb.bindTexture(ANKI_REG(t2), TextureView(&m_lut->getTexture(), TextureSubresourceDescriptor::all()));
+		cmdb.bindTexture(ANKI_REG(t2), TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
 		rgraphCtx.bindTexture(ANKI_REG(t3), getRenderer().getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getGBuffer().getDepthRt());
 

@@ -62,7 +62,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 	ANKI_ASSERT(dirLightc);
@@ -101,7 +101,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	// Transmittance LUT
 	if(renderTransAndMultiScatLuts)
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyTransmittanceLut");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SkyTransmittanceLut");
 
 		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kStorageComputeWrite);
 
@@ -121,7 +121,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	// Multiple scattering LUT
 	if(renderTransAndMultiScatLuts)
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyMultipleScatteringLut");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SkyMultipleScatteringLut");
 
 		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(multipleScatteringLutRt, TextureUsageBit::kStorageComputeWrite);
@@ -144,7 +144,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	// Sky LUT
 	if(renderSkyLut)
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SkyLut");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SkyLut");
 
 		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(multipleScatteringLutRt, TextureUsageBit::kSampledCompute);
@@ -169,7 +169,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 	// Compute sun color always
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("ComputeSunColor");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ComputeSunColor");
 
 		rpass.newTextureDependency(transmittanceLutRt, TextureUsageBit::kSampledCompute);
 

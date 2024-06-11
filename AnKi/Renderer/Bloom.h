@@ -52,7 +52,7 @@ private:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 
-		RenderTargetDescription m_rtDescr;
+		RenderTargetDesc m_rtDescr;
 	} m_exposure;
 
 	class
@@ -62,7 +62,7 @@ private:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 
-		RenderTargetDescription m_rtDescr;
+		RenderTargetDesc m_rtDescr;
 	} m_upscale;
 
 	class

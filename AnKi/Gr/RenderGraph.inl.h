@@ -17,8 +17,7 @@ inline void RenderPassWorkContext::getBufferState(BufferHandle handle, Buffer*& 
 	m_rgraph->getCachedBuffer(handle, buff, offset, range);
 }
 
-inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDescriptor& subresource,
-														Texture*& tex) const
+inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceDesc& subresource, Texture*& tex) const
 {
 	TextureUsageBit usage;
 	m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
@@ -30,7 +29,7 @@ inline Texture& RenderPassWorkContext::getTexture(RenderTargetHandle handle) con
 	return m_rgraph->getTexture(handle);
 }
 
-inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)
+inline void RenderPassBase::validateDep(const RenderPassDependency& dep)
 {
 	// Validate dep
 	if(dep.m_type == RenderPassDependency::Type::kTexture)
@@ -76,7 +75,7 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 }
 
 template<RenderPassDependency::Type kType>
-inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency& dep)
+inline void RenderPassBase::newDependency(const RenderPassDependency& dep)
 {
 	ANKI_ASSERT(kType == dep.m_type);
 	validateDep(dep);
@@ -86,7 +85,7 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		RenderPassDependency& newDep = *m_rtDeps.emplaceBack(dep);
 
 		// Sanitize a bit
-		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
+		const RenderGraphBuilder::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 		if(newDep.m_texture.m_subresource.m_depthStencilAspect == DepthStencilAspectBit::kNone)
 		{
 			if(rt.m_importedTex.isCreated() && !!rt.m_importedTex->getDepthStencilAspect())
@@ -155,9 +154,9 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 }
 
-inline void GraphicsRenderPassDescription::setRenderpassInfo(ConstWeakArray<RenderTargetInfo> colorRts, const RenderTargetInfo* depthStencilRt,
-															 U32 minx, U32 miny, U32 width, U32 height, const RenderTargetHandle* vrsRt,
-															 U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
+inline void GraphicsRenderPass::setRenderpassInfo(ConstWeakArray<GraphicsRenderPassTargetDesc> colorRts,
+												  const GraphicsRenderPassTargetDesc* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
+												  const RenderTargetHandle* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
 	m_colorRtCount = U8(colorRts.getSize());
 	for(U32 i = 0; i < m_colorRtCount; ++i)
@@ -192,31 +191,31 @@ inline void GraphicsRenderPassDescription::setRenderpassInfo(ConstWeakArray<Rend
 	m_rpassRenderArea = {minx, miny, width, height};
 }
 
-inline RenderGraphDescription::~RenderGraphDescription()
+inline RenderGraphBuilder::~RenderGraphBuilder()
 {
-	for(RenderPassDescriptionBase* pass : m_passes)
+	for(RenderPassBase* pass : m_passes)
 	{
 		deleteInstance(*m_pool, pass);
 	}
 }
 
-inline GraphicsRenderPassDescription& RenderGraphDescription::newGraphicsRenderPass(CString name)
+inline GraphicsRenderPass& RenderGraphBuilder::newGraphicsRenderPass(CString name)
 {
-	GraphicsRenderPassDescription* pass = newInstance<GraphicsRenderPassDescription>(*m_pool, this, m_pool);
+	GraphicsRenderPass* pass = newInstance<GraphicsRenderPass>(*m_pool, this, m_pool);
 	pass->setName(name);
 	m_passes.emplaceBack(pass);
 	return *pass;
 }
 
-inline ComputeRenderPassDescription& RenderGraphDescription::newComputeRenderPass(CString name)
+inline NonGraphicsRenderPass& RenderGraphBuilder::newNonGraphicsRenderPass(CString name)
 {
-	ComputeRenderPassDescription* pass = newInstance<ComputeRenderPassDescription>(*m_pool, this, m_pool);
+	NonGraphicsRenderPass* pass = newInstance<NonGraphicsRenderPass>(*m_pool, this, m_pool);
 	pass->setName(name);
 	m_passes.emplaceBack(pass);
 	return *pass;
 }
 
-inline RenderTargetHandle RenderGraphDescription::importRenderTarget(Texture* tex, TextureUsageBit usage)
+inline RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex, TextureUsageBit usage)
 {
 	for([[maybe_unused]] const RT& rt : m_renderTargets)
 	{
@@ -234,16 +233,16 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(Texture* te
 	return out;
 }
 
-inline RenderTargetHandle RenderGraphDescription::importRenderTarget(Texture* tex)
+inline RenderTargetHandle RenderGraphBuilder::importRenderTarget(Texture* tex)
 {
 	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::kNone);
 	m_renderTargets.getBack().m_importedAndUndefinedUsage = true;
 	return out;
 }
 
-inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTargetDescription& initInf)
+inline RenderTargetHandle RenderGraphBuilder::newRenderTarget(const RenderTargetDesc& initInf)
 {
-	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
+	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDesc::bake");
 	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::kNone && "Don't need to supply the usage. Render grap will find it");
 
 	for([[maybe_unused]] auto it : m_renderTargets)
@@ -263,7 +262,7 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	return out;
 }
 
-inline BufferHandle RenderGraphDescription::importBuffer(const BufferView& buff, BufferUsageBit usage)
+inline BufferHandle RenderGraphBuilder::importBuffer(const BufferView& buff, BufferUsageBit usage)
 {
 	ANKI_ASSERT(buff.isValid());
 
@@ -284,7 +283,7 @@ inline BufferHandle RenderGraphDescription::importBuffer(const BufferView& buff,
 	return out;
 }
 
-inline AccelerationStructureHandle RenderGraphDescription::importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage)
+inline AccelerationStructureHandle RenderGraphBuilder::importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage)
 {
 	for([[maybe_unused]] const AS& a : m_as)
 	{

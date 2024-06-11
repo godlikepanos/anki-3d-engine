@@ -43,7 +43,7 @@ public:
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	RenderTargetDescription m_motionVectorsRtDescr;
+	RenderTargetDesc m_motionVectorsRtDescr;
 
 	class
 	{

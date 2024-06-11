@@ -35,7 +35,7 @@ private:
 	class
 	{
 	public:
-		RenderTargetDescription m_rtDescr;
+		RenderTargetDesc m_rtDescr;
 
 		// Light shaders
 		ShaderProgramResourcePtr m_prog;

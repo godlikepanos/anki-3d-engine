@@ -74,7 +74,7 @@ inline constexpr Array<Format, kGBufferColorRenderTargetCount> kGBufferColorRend
 class RenderingContext
 {
 public:
-	RenderGraphDescription m_renderGraphDescr;
+	RenderGraphBuilder m_renderGraphDescr;
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_prevMatrices;

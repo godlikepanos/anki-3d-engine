@@ -145,7 +145,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Import
 	if(m_rtImportedOnce) [[likely]]
@@ -273,7 +273,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 	// Vars
 	const Vec3 cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const CameraComponent& mainCam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
 
 	// Allocate tiles for the dir light first but don't build any passes
@@ -580,13 +580,13 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 }
 
 BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-												  RenderGraphDescription& rgraph) const
+												  RenderGraphBuilder& rgraph) const
 {
 	BufferView clearTileIndirectArgs;
 
 	clearTileIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs));
 
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passName);
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(passName);
 
 	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
 	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kStorageComputeWrite);
@@ -616,7 +616,7 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 
 void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
 										  const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
-										  const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph)
+										  const RenderTargetHandle hzbRt, CString passName, RenderGraphBuilder& rgraph)
 {
 	ShadowSubpassInfo spass;
 	spass.m_clearTileIndirectArgs = clearTileIndirectArgs;
@@ -629,7 +629,7 @@ void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& vie
 }
 
 void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subpasses_, const GpuVisibilityOutput& visOut,
-										  const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphDescription& rgraph)
+										  const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphBuilder& rgraph)
 {
 	WeakArray<ShadowSubpassInfo> subpasses;
 	newArray<ShadowSubpassInfo>(getRenderer().getFrameMemoryPool(), subpasses_.getSize(), subpasses);
@@ -656,11 +656,11 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	}
 
 	// Create the pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passName);
+	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(passName);
 
 	const Bool loadFb = !(subpasses.getSize() == 1 && subpasses[0].m_clearTileIndirectArgs.isValid());
 
-	RenderTargetInfo smRti(m_runCtx.m_rt);
+	GraphicsRenderPassTargetDesc smRti(m_runCtx.m_rt);
 	smRti.m_loadOperation = (loadFb) ? RenderTargetLoadOperation::kLoad : RenderTargetLoadOperation::kClear;
 	smRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	smRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
@@ -713,7 +713,7 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 
 			if(spass.m_hzbRt.isValid())
 			{
-				args.m_hzbTexture = rgraphCtx.createTextureView(spass.m_hzbRt, TextureSubresourceDescriptor::all());
+				args.m_hzbTexture = rgraphCtx.createTextureView(spass.m_hzbRt, TextureSubresourceDesc::all());
 			}
 
 			if(meshletVisOut.isFilled())

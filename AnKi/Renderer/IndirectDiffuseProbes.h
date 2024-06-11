@@ -40,20 +40,20 @@ private:
 	class
 	{
 	public:
-		Array<RenderTargetDescription, kGBufferColorRenderTargetCount> m_colorRtDescrs;
-		RenderTargetDescription m_depthRtDescr;
+		Array<RenderTargetDesc, kGBufferColorRenderTargetCount> m_colorRtDescrs;
+		RenderTargetDesc m_depthRtDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class
 	{
 	public:
-		RenderTargetDescription m_rtDescr;
+		RenderTargetDesc m_rtDescr;
 	} m_shadowMapping;
 
 	class LS
 	{
 	public:
-		RenderTargetDescription m_rtDescr;
+		RenderTargetDesc m_rtDescr;
 		TraditionalDeferredLightShading m_deferred;
 	} m_lightShading; ///< Light shading.
 

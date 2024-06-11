@@ -41,7 +41,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
-	RenderTargetDescription m_rtDescr;
+	RenderTargetDesc m_rtDescr;
 
 	U32 m_finalZSplit = 0;
 

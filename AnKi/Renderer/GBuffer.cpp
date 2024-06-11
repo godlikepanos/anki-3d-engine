@@ -79,7 +79,7 @@ Error GBuffer::initInternal()
 
 void GBuffer::importRenderTargets(RenderingContext& ctx)
 {
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	if(m_runCtx.m_crntFrameDepthRt.isValid()) [[likely]]
 	{
@@ -103,7 +103,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Visibility
 	GpuVisibilityOutput visOut;
@@ -161,9 +161,9 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
+	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
-	Array<RenderTargetInfo, kGBufferColorRenderTargetCount> colorRti;
+	Array<GraphicsRenderPassTargetDesc, kGBufferColorRenderTargetCount> colorRti;
 	colorRti[0].m_handle = rts[0];
 	colorRti[0].m_loadOperation = RenderTargetLoadOperation::kClear;
 	colorRti[1].m_handle = rts[1];
@@ -173,7 +173,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	colorRti[3].m_handle = rts[3];
 	colorRti[3].m_loadOperation = RenderTargetLoadOperation::kClear;
 	colorRti[3].m_clearValue.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
-	RenderTargetInfo depthRti(m_runCtx.m_crntFrameDepthRt);
+	GraphicsRenderPassTargetDesc depthRti(m_runCtx.m_crntFrameDepthRt);
 	depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 	depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
@@ -208,7 +208,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 		{
-			const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::all();
+			const TextureSubresourceDesc subresource = TextureSubresourceDesc::all();
 			Texture* tex;
 			rgraphCtx.getRenderTargetState(m_runCtx.m_hzbRt, subresource, tex);
 			args.m_hzbTexture = TextureView(tex, subresource);

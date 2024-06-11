@@ -31,7 +31,7 @@ public:
 	{
 		if(!m_imageIdExtra.m_textureView.isValid())
 		{
-			m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDescriptor::all());
+			m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDesc::all());
 		}
 
 		return Error::kNone;
@@ -142,7 +142,7 @@ private:
 			if(lastCrntMip != m_crntMip)
 			{
 				// Re-create the image view
-				m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDescriptor::surface(m_crntMip, 0, 0));
+				m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDesc::surface(m_crntMip, 0, 0));
 			}
 
 			ImGui::SameLine();

@@ -43,7 +43,7 @@ static WeakArray<TComponent*> gatherComponents(ConstWeakArray<UVec2> pairs, TArr
 void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(PrimaryNonRenderableVisibility);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx = {};
 

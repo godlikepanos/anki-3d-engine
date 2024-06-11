@@ -62,7 +62,7 @@ private:
 	ShaderProgramResourcePtr m_vetVisibilityProg;
 	ShaderProgramPtr m_vetVisibilityGrProg;
 
-	Array<RenderTargetDescription, kMaxShadowCascades> m_cascadeHzbRtDescrs;
+	Array<RenderTargetDesc, kMaxShadowCascades> m_cascadeHzbRtDescrs;
 
 	class
 	{
@@ -81,14 +81,14 @@ private:
 	void chooseDetail(const Vec3& cameraOrigin, const LightComponent& lightc, Vec2 lodDistances, U32& tileAllocatorHierarchy) const;
 
 	BufferView createVetVisibilityPass(CString passName, const LightComponent& lightc, const GpuVisibilityOutput& visOut,
-									   RenderGraphDescription& rgraph) const;
+									   RenderGraphBuilder& rgraph) const;
 
 	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
 							   const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
-							   const RenderTargetHandle hzbRt, CString passName, RenderGraphDescription& rgraph);
+							   const RenderTargetHandle hzbRt, CString passName, RenderGraphBuilder& rgraph);
 
 	void createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subPasses, const GpuVisibilityOutput& visOut,
-							   const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphDescription& rgraph);
+							   const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphBuilder& rgraph);
 };
 /// @}
 

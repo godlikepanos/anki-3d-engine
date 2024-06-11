@@ -53,10 +53,10 @@ void Tonemapping::importRenderTargets(RenderingContext& ctx)
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Tonemapping);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Create the pass
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("AvgLuminance");
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("AvgLuminance");
 
 	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(Tonemapping);
@@ -64,13 +64,13 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_exposureLuminanceHandle);
-		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDownscaleBlur().getRt(), TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
+		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDownscaleBlur().getRt(), TextureSubresourceDesc::surface(m_inputTexMip, 0, 0));
 
 		cmdb.dispatchCompute(1, 1, 1);
 	});
 
 	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
-							  TextureSubresourceDescriptor::surface(m_inputTexMip, 0, 0));
+							  TextureSubresourceDesc::surface(m_inputTexMip, 0, 0));
 }
 
 } // end namespace anki

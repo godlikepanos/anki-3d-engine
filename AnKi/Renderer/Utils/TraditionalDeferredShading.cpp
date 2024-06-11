@@ -75,7 +75,7 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		else if(skyc->getSkyboxType() == SkyboxType::kImage2D)
 		{
 			cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearRepeatAniso.get());
-			cmdb.bindTexture(ANKI_REG(t1), TextureView(&skyc->getImageResource().getTexture(), TextureSubresourceDescriptor::all()));
+			cmdb.bindTexture(ANKI_REG(t1), TextureView(&skyc->getImageResource().getTexture(), TextureSubresourceDesc::all()));
 		}
 		else
 		{

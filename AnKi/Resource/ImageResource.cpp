@@ -198,7 +198,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 
 	// Transition it. TODO remove this
 	{
-		const TextureView view(m_tex.get(), TextureSubresourceDescriptor::all());
+		const TextureView view(m_tex.get(), TextureSubresourceDesc::all());
 
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
@@ -256,8 +256,8 @@ Error ImageResource::load(LoadingContext& ctx)
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer)),
-										TextureUsageBit::kAllSampled, TextureUsageBit::kTransferDestination};
+			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kAllSampled,
+										TextureUsageBit::kTransferDestination};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
@@ -300,7 +300,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			memcpy(data, surfOrVolData, surfOrVolSize);
 
 			// Create temp tex view
-			const TextureSubresourceDescriptor subresource = TextureSubresourceDescriptor::surface(mip, face, layer);
+			const TextureSubresourceDesc subresource = TextureSubresourceDesc::surface(mip, face, layer);
 			cmdb->copyBufferToTexture(handle, TextureView(ctx.m_tex.get(), subresource));
 		}
 
@@ -311,7 +311,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDescriptor::surface(mip, face, layer)),
+			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
 										TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledGeometry};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});

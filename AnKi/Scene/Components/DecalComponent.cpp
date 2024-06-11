@@ -37,7 +37,7 @@ void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
 	m_dirty = true;
 
 	l.m_image = std::move(rsrc);
-	l.m_bindlessTextureIndex = l.m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
+	l.m_bindlessTextureIndex = l.m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 	l.m_blendFactor = blendFactor;
 }
 

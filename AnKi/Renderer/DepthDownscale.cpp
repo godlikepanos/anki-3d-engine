@@ -94,7 +94,7 @@ Error DepthDownscale::init()
 void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
@@ -102,7 +102,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 	{
 		// Do it with compute
 
-		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Depth downscale");
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Depth downscale");
 
 		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
 
@@ -128,7 +128,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
-				TextureSubresourceDescriptor surface = TextureSubresourceDescriptor::firstSurface();
+				TextureSubresourceDesc surface = TextureSubresourceDesc::firstSurface();
 				if(mip < m_mipCount)
 				{
 					surface.m_mipmap = mip;
@@ -156,9 +156,9 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		for(U32 mip = 0; mip < m_mipCount; ++mip)
 		{
 			static constexpr Array<CString, 4> passNames = {"Depth downscale #1", "Depth downscale #2", "Depth downscale #3", "Depth downscale #4"};
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
+			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(passNames[mip]);
 
-			RenderTargetInfo rti(m_runCtx.m_rt);
+			GraphicsRenderPassTargetDesc rti(m_runCtx.m_rt);
 			rti.m_subresource.m_mipmap = mip;
 			pass.setRenderpassInfo({rti});
 
@@ -168,10 +168,10 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			}
 			else
 			{
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, TextureSubresourceDescriptor::surface(mip - 1, 0, 0));
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, TextureSubresourceDesc::surface(mip - 1, 0, 0));
 			}
 
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceDescriptor::surface(mip, 0, 0));
+			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceDesc::surface(mip, 0, 0));
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -185,7 +185,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 				}
 				else
 				{
-					rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt, TextureSubresourceDescriptor::surface(mip - 1, 0, 0));
+					rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt, TextureSubresourceDesc::surface(mip - 1, 0, 0));
 				}
 
 				const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;

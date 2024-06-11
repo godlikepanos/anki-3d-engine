@@ -230,13 +230,13 @@ float3 main(VertOut input) : SV_TARGET0
 			cmdb->setViewport(0, 0, g_windowWidthCVar.get(), g_windowHeightCVar.get());
 
 			TextureBarrierInfo barrier;
-			barrier.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDescriptor::all());
+			barrier.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDesc::all());
 			barrier.m_previousUsage = TextureUsageBit::kNone;
 			barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 			RenderTarget rt;
-			rt.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDescriptor::all());
+			rt.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDesc::all());
 			rt.m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
 			cmdb->beginRenderPass({rt});
 

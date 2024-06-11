@@ -158,7 +158,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledTraceRays | TextureUsageBit::kSampledCompute, \
 		DepthDownscale::kQuarterInternalResolution
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Import RTs
 	{
@@ -211,7 +211,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs));
 		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kStorageComputeWrite);
 
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows setup build SBT");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows setup build SBT");
 
 		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kAccelerationStructureBuild);
 
@@ -245,7 +245,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		memcpy(sbtMem + m_sbtRecordSize, &shaderGroupHandles[m_missShaderGroupIdx * shaderHandleSize], shaderHandleSize);
 
 		// Create the pass
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows build SBT");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows build SBT");
 
 		BufferHandle visibilityHandle;
 		BufferView visibleRenderableIndicesBuff;
@@ -280,7 +280,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	// Ray gen
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows");
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSampledTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kStorageTraceRaysWrite);
@@ -332,13 +332,13 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(ANKI_REG2(s1, space2), getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(ANKI_REG2(t1, space2), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 			rgraphCtx.bindTexture(ANKI_REG2(t2, space2), getRenderer().getMotionVectors().getMotionVectorsRt());
-			cmdb.bindTexture(ANKI_REG2(t3, space2), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
+			cmdb.bindTexture(ANKI_REG2(t3, space2), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDesc::all()));
 			rgraphCtx.bindTexture(ANKI_REG2(t4, space2), getRenderer().getGBuffer().getColorRt(2));
 			rgraphCtx.bindAccelerationStructure(ANKI_REG2(t5, space2),
 												getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
 			rgraphCtx.bindTexture(ANKI_REG2(t6, space2), m_runCtx.m_prevMomentsRt);
 			rgraphCtx.bindTexture(ANKI_REG2(u1, space2), m_runCtx.m_currentMomentsRt);
-			cmdb.bindTexture(ANKI_REG2(t7, space2), TextureView(&m_blueNoiseImage->getTexture(), TextureSubresourceDescriptor::all()));
+			cmdb.bindTexture(ANKI_REG2(t7, space2), TextureView(&m_blueNoiseImage->getTexture(), TextureSubresourceDesc::all()));
 
 			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 						   getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, 1);
@@ -348,7 +348,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// Denoise pass horizontal
 	if(!m_useSvgf)
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Denoise Horizontal");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows Denoise Horizontal");
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			runDenoise(ctx, rgraphCtx, true);
@@ -365,7 +365,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// Denoise pass vertical
 	if(!m_useSvgf)
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Denoise Vertical");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows Denoise Vertical");
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			runDenoise(ctx, rgraphCtx, false);
 		});
@@ -381,7 +381,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	// Variance calculation pass
 	if(m_useSvgf)
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows SVGF Variance");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows SVGF Variance");
 
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSampledCompute);
@@ -401,7 +401,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_intermediateShadowsRts[0]);
 			rgraphCtx.bindTexture(ANKI_REG(t1), m_runCtx.m_currentMomentsRt);
-			cmdb.bindTexture(ANKI_REG(t2), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
+			cmdb.bindTexture(ANKI_REG(t2), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDesc::all()));
 			rgraphCtx.bindTexture(ANKI_REG(t3), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 
 			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_intermediateShadowsRts[1]);
@@ -422,7 +422,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			const Bool lastPass = i == U32(m_atrousPassCount - 1);
 			const U32 readRtIdx = (i + 1) & 1;
 
-			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows SVGF Atrous");
+			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows SVGF Atrous");
 
 			rpass.newTextureDependency(ANKI_DEPTH_DEP);
 			rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
@@ -482,7 +482,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	// Upscale
 	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows Upscale");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows Upscale");
 
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSampledCompute);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
@@ -520,7 +520,7 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 	rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getGBuffer().getColorRt(2));
 	rgraphCtx.bindTexture(ANKI_REG(t3), m_runCtx.m_currentMomentsRt);
-	cmdb.bindTexture(ANKI_REG(t4), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDescriptor::all()));
+	cmdb.bindTexture(ANKI_REG(t4), TextureView(m_dummyHistoryLenTex.get(), TextureSubresourceDesc::all()));
 
 	rgraphCtx.bindTexture(ANKI_REG(u0), (horizontal) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
 

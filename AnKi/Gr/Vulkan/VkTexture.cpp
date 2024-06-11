@@ -21,7 +21,7 @@ Texture* Texture::newInstance(const TextureInitInfo& init)
 	return impl;
 }
 
-U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor& subresource)
+U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDesc& subresource)
 {
 	ANKI_VK_SELF(TextureImpl);
 
@@ -403,7 +403,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 	}
 }
 
-VkImageMemoryBarrier TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDescriptor& subresource,
+VkImageMemoryBarrier TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, const TextureSubresourceDesc& subresource,
 													 VkPipelineStageFlags& srcStages, VkPipelineStageFlags& dstStages) const
 {
 	ANKI_ASSERT(usageValid(before));
@@ -598,7 +598,7 @@ Error TextureImpl::initViews()
 	return Error::kNone;
 }
 
-const TextureImpl::TextureViewEntry& TextureImpl::getTextureViewEntry(const TextureSubresourceDescriptor& subresource) const
+const TextureImpl::TextureViewEntry& TextureImpl::getTextureViewEntry(const TextureSubresourceDesc& subresource) const
 {
 	const TextureView view(this, subresource);
 

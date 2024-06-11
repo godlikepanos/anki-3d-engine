@@ -38,7 +38,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
-	RenderTargetDescription m_tonemappedRtDescr;
+	RenderTargetDesc m_tonemappedRtDescr;
 
 	class
 	{

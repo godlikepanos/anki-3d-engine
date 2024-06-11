@@ -28,7 +28,7 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void setDependencies(GraphicsRenderPassDescription& pass);
+	void setDependencies(GraphicsRenderPass& pass);
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 

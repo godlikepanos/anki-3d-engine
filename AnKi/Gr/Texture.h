@@ -10,7 +10,7 @@
 namespace anki {
 
 // Forward
-class TextureSubresourceDescriptor;
+class TextureSubresourceDesc;
 
 /// @addtogroup graphics
 /// @{
@@ -160,7 +160,7 @@ public:
 
 	/// Returns an index to be used for bindless access. Only for sampling.
 	/// @note It's thread-safe
-	U32 getOrCreateBindlessTextureIndex(const TextureSubresourceDescriptor& subresource);
+	U32 getOrCreateBindlessTextureIndex(const TextureSubresourceDesc& subresource);
 
 protected:
 	U32 m_width = 0;
@@ -190,7 +190,7 @@ private:
 };
 
 /// Defines a part of a texture. This part can be a single surface or volume or the whole texture.
-class TextureSubresourceDescriptor
+class TextureSubresourceDesc
 {
 public:
 	U32 m_mipmap : 5 = 0;
@@ -204,38 +204,38 @@ public:
 
 	U8 _m_padding[2] = {0, 0};
 
-	constexpr TextureSubresourceDescriptor(const TextureSubresourceDescriptor&) = default;
+	constexpr TextureSubresourceDesc(const TextureSubresourceDesc&) = default;
 
-	constexpr TextureSubresourceDescriptor& operator=(const TextureSubresourceDescriptor&) = default;
+	constexpr TextureSubresourceDesc& operator=(const TextureSubresourceDesc&) = default;
 
-	constexpr Bool operator==(const TextureSubresourceDescriptor& b) const
+	constexpr Bool operator==(const TextureSubresourceDesc& b) const
 	{
 		return m_mipmap == b.m_mipmap && m_face == b.m_face && m_layer == b.m_layer && m_allSurfacesOrVolumes == b.m_allSurfacesOrVolumes
 			   && m_depthStencilAspect == b.m_depthStencilAspect;
 	}
 
-	static constexpr TextureSubresourceDescriptor all(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	static constexpr TextureSubresourceDesc all(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
-		return TextureSubresourceDescriptor(0, 0, 0, true, aspect);
+		return TextureSubresourceDesc(0, 0, 0, true, aspect);
 	}
 
-	static constexpr TextureSubresourceDescriptor surface(U32 mip, U32 face, U32 layer, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	static constexpr TextureSubresourceDesc surface(U32 mip, U32 face, U32 layer, DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
-		return TextureSubresourceDescriptor(mip, face, layer, false, aspect);
+		return TextureSubresourceDesc(mip, face, layer, false, aspect);
 	}
 
-	static constexpr TextureSubresourceDescriptor firstSurface(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
+	static constexpr TextureSubresourceDesc firstSurface(DepthStencilAspectBit aspect = DepthStencilAspectBit::kNone)
 	{
-		return TextureSubresourceDescriptor(0, 0, 0, false, aspect);
+		return TextureSubresourceDesc(0, 0, 0, false, aspect);
 	}
 
-	static constexpr TextureSubresourceDescriptor volume(U32 mip)
+	static constexpr TextureSubresourceDesc volume(U32 mip)
 	{
-		return TextureSubresourceDescriptor(mip, 0, 0, false, DepthStencilAspectBit::kNone);
+		return TextureSubresourceDesc(mip, 0, 0, false, DepthStencilAspectBit::kNone);
 	}
 
 	/// Returns true if there is a surface or volume that overlaps. It doesn't check the aspect.
-	Bool overlapsWith(const TextureSubresourceDescriptor& b) const
+	Bool overlapsWith(const TextureSubresourceDesc& b) const
 	{
 		return m_allSurfacesOrVolumes || b.m_allSurfacesOrVolumes || (m_mipmap == b.m_mipmap && m_face == b.m_face && m_layer == b.m_layer);
 	}
@@ -273,14 +273,14 @@ public:
 	}
 
 private:
-	constexpr TextureSubresourceDescriptor(U32 mip, U32 face, U32 layer, Bool allSurfs, DepthStencilAspectBit aspect)
+	constexpr TextureSubresourceDesc(U32 mip, U32 face, U32 layer, Bool allSurfs, DepthStencilAspectBit aspect)
 		: m_mipmap(mip & ((1u << 5u) - 1u))
 		, m_face(face & ((1u << 3u) - 1u))
 		, m_layer(layer & ((1u << 24u) - 1u))
 		, m_allSurfacesOrVolumes(allSurfs)
 		, m_depthStencilAspect(aspect)
 	{
-		static_assert(sizeof(TextureSubresourceDescriptor) == 8, "Because it may get hashed");
+		static_assert(sizeof(TextureSubresourceDesc) == 8, "Because it may get hashed");
 	}
 };
 
@@ -289,11 +289,11 @@ class TextureView
 {
 public:
 	TextureView()
-		: m_subresource(TextureSubresourceDescriptor::all())
+		: m_subresource(TextureSubresourceDesc::all())
 	{
 	}
 
-	explicit TextureView(const Texture* tex, const TextureSubresourceDescriptor& subresource)
+	explicit TextureView(const Texture* tex, const TextureSubresourceDesc& subresource)
 		: m_tex(tex)
 		, m_subresource(subresource)
 	{
@@ -421,7 +421,7 @@ public:
 		return m_subresource.overlapsWith(b.m_subresource);
 	}
 
-	const TextureSubresourceDescriptor& getSubresource() const
+	const TextureSubresourceDesc& getSubresource() const
 	{
 		validate();
 		return m_subresource;
@@ -429,7 +429,7 @@ public:
 
 private:
 	const Texture* m_tex = nullptr;
-	TextureSubresourceDescriptor m_subresource;
+	TextureSubresourceDesc m_subresource;
 
 	void validate() const
 	{

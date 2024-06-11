@@ -44,9 +44,9 @@ public:
 	Error init();
 
 	void populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-							 RenderGraphDescription& rgraph, CString customName = {}) const;
+							 RenderGraphBuilder& rgraph, CString customName = {}) const;
 
-	void populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphDescription& rgraph) const;
+	void populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphBuilder& rgraph) const;
 
 private:
 	class DispatchInput
@@ -83,7 +83,7 @@ private:
 #endif
 
 	void populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, U32 firstCounterBufferElement, CString customName,
-									 RenderGraphDescription& rgraph) const;
+									 RenderGraphBuilder& rgraph) const;
 };
 /// @}
 

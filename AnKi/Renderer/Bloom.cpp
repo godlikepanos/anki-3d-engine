@@ -71,7 +71,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Bloom);
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = g_preferComputeCVar.get();
 
 	// Main pass
@@ -80,13 +80,13 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_exposureRt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
 
 		// Set the render pass
-		const TextureSubresourceDescriptor inputTexSubresource =
-			TextureSubresourceDescriptor::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
+		const TextureSubresourceDesc inputTexSubresource =
+			TextureSubresourceDesc::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
 
-		RenderPassDescriptionBase* prpass;
+		RenderPassBase* prpass;
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
+			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Bloom Main");
 
 			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kStorageComputeWrite);
@@ -95,8 +95,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		}
 		else
 		{
-			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
-			rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_exposureRt)});
+			GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
+			rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_exposureRt)});
 
 			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment, inputTexSubresource);
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite);
@@ -109,8 +109,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_exposure.m_grProg.get());
 
-			const TextureSubresourceDescriptor inputTexSubresource =
-				TextureSubresourceDescriptor::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
+			const TextureSubresourceDesc inputTexSubresource =
+				TextureSubresourceDesc::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
 
 			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
@@ -141,10 +141,10 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_upscaleRt = rgraph.newRenderTarget(m_upscale.m_rtDescr);
 
 		// Set the render pass
-		RenderPassDescriptionBase* prpass;
+		RenderPassBase* prpass;
 		if(preferCompute)
 		{
-			ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
+			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Bloom Upscale");
 
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute);
 			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kStorageComputeWrite);
@@ -153,8 +153,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		}
 		else
 		{
-			GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
-			rpass.setRenderpassInfo({RenderTargetInfo(m_runCtx.m_upscaleRt)});
+			GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
+			rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_upscaleRt)});
 
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledFragment);
 			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kFramebufferWrite);
@@ -169,7 +169,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_exposureRt);
-			cmdb.bindTexture(ANKI_REG(t1), TextureView(&m_upscale.m_lensDirtImage->getTexture(), TextureSubresourceDescriptor::all()));
+			cmdb.bindTexture(ANKI_REG(t1), TextureView(&m_upscale.m_lensDirtImage->getTexture(), TextureSubresourceDesc::all()));
 
 			if(g_preferComputeCVar.get())
 			{

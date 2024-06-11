@@ -139,8 +139,8 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	cmdb.bindStorageBuffer(ANKI_REG(t2), getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
 
 	cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearRepeat.get());
-	cmdb.bindTexture(ANKI_REG(t3), TextureView(&image.getTexture(), TextureSubresourceDescriptor::all()));
-	cmdb.bindTexture(ANKI_REG(t4), TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDescriptor::all()));
+	cmdb.bindTexture(ANKI_REG(t3), TextureView(&image.getTexture(), TextureSubresourceDesc::all()));
+	cmdb.bindTexture(ANKI_REG(t4), TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDesc::all()));
 
 	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
 }
@@ -236,21 +236,21 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RT
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Debug");
+	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Debug");
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		run(rgraphCtx, ctx);
 	});
 
-	RenderTargetInfo colorRti(m_runCtx.m_rt);
+	GraphicsRenderPassTargetDesc colorRti(m_runCtx.m_rt);
 	colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-	RenderTargetInfo depthRti(getRenderer().getGBuffer().getDepthRt());
+	GraphicsRenderPassTargetDesc depthRti(getRenderer().getGBuffer().getDepthRt());
 	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	pass.setRenderpassInfo({colorRti}, &depthRti);
 

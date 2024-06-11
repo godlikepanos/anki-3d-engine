@@ -33,7 +33,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 
 	m_reflectionTex = GrManager::getSingleton().newTexture(texInit);
 
-	m_reflectionTexBindlessIndex = m_reflectionTex->getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
+	m_reflectionTexBindlessIndex = m_reflectionTex->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 }
 
 ReflectionProbeComponent::~ReflectionProbeComponent()

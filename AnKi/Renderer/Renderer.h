@@ -100,7 +100,7 @@ public:
 	[[nodiscard]] TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name = {});
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	[[nodiscard]] RenderTargetDescription create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name = {});
+	[[nodiscard]] RenderTargetDesc create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name = {});
 
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());

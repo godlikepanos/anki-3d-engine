@@ -41,10 +41,10 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		return;
 	}
 
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Create pass
-	GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
+	GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
 
 	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -74,9 +74,9 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		cmdb.setBlendFactors(1, BlendFactor::kOne, BlendFactor::kZero);
 	});
 
-	RenderTargetInfo rt0(getRenderer().getGBuffer().getColorRt(0));
+	GraphicsRenderPassTargetDesc rt0(getRenderer().getGBuffer().getColorRt(0));
 	rt0.m_loadOperation = RenderTargetLoadOperation::kLoad;
-	RenderTargetInfo rt1(getRenderer().getGBuffer().getColorRt(1));
+	GraphicsRenderPassTargetDesc rt1(getRenderer().getGBuffer().getColorRt(1));
 	rt1.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	rpass.setRenderpassInfo({rt0, rt1});
 

@@ -454,7 +454,7 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 		{
 			ANKI_CHECK(ResourceManager::getSingleton().loadResource(value, foundVar->m_image, async));
 
-			foundVar->m_U32 = foundVar->m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDescriptor::all());
+			foundVar->m_U32 = foundVar->m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
 		}
 		else
 		{
