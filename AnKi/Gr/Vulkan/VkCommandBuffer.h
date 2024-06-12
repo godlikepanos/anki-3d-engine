@@ -14,7 +14,7 @@
 #include <AnKi/Gr/Vulkan/VkPipelineQuery.h>
 #include <AnKi/Gr/Vulkan/VkBuffer.h>
 #include <AnKi/Gr/Vulkan/VkTexture.h>
-#include <AnKi/Gr/Vulkan/VkPipelineFactory.h>
+#include <AnKi/Gr/Vulkan/VkGraphicsState.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/List.h>
 
@@ -104,9 +104,6 @@ private:
 	Bool m_empty : 1 = true;
 	Bool m_beganRecording : 1 = false;
 	Bool m_debugMarkers : 1 = false;
-	Bool m_renderpassDrawsToDefaultFb : 1 = false;
-	U32 m_renderpassWidth = 0;
-	U32 m_renderpassHeight = 0;
 #if ANKI_ASSERTIONS_ENABLED
 	U32 m_commandCount = 0;
 	U32 m_debugMarkersPushed = 0;
@@ -114,30 +111,12 @@ private:
 	Bool m_insideRenderpass = false;
 #endif
 
-	PipelineStateTracker m_state;
+	GraphicsStateTracker m_graphicsState;
 	DescriptorState m_descriptorState;
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
 	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);
 	ShaderProgramImpl* m_rtProg ANKI_DEBUG_CODE(= nullptr);
-
-	/// @name state_opts
-	/// @{
-	Array<U32, 4> m_viewport = {0, 0, 0, 0};
-	Array<U32, 4> m_scissor = {0, 0, kMaxU32, kMaxU32};
-	VkViewport m_lastViewport = {};
-	Bool m_viewportDirty = true;
-	Bool m_scissorDirty = true;
-	VkRect2D m_lastScissor = {{-1, -1}, {kMaxU32, kMaxU32}};
-	Array<U32, 2> m_stencilCompareMasks = {0x5A5A5A5A, 0x5A5A5A5A}; ///< Use a stupid number to initialize.
-	Array<U32, 2> m_stencilWriteMasks = {0x5A5A5A5A, 0x5A5A5A5A};
-	Array<U32, 2> m_stencilReferenceMasks = {0x5A5A5A5A, 0x5A5A5A5A};
-#if ANKI_ASSERTIONS_ENABLED
-	Bool m_lineWidthSet = false;
-#endif
-	Bool m_vrsRateDirty = true;
-	VrsRate m_vrsRate = VrsRate::k1x1;
-	/// @}
 
 	/// Some common operations per command.
 	ANKI_FORCE_INLINE void commandCommon()
@@ -166,44 +145,6 @@ private:
 						 VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img, const VkImageSubresourceRange& range);
 
 	void beginRecording();
-
-	static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight, Bool flipvp)
-	{
-		const U32 minx = viewport[0];
-		const U32 miny = viewport[1];
-		const U32 width = min<U32>(fbWidth, viewport[2]);
-		const U32 height = min<U32>(fbHeight, viewport[3]);
-		ANKI_ASSERT(width > 0 && height > 0);
-		ANKI_ASSERT(minx + width <= fbWidth);
-		ANKI_ASSERT(miny + height <= fbHeight);
-
-		VkViewport s = {};
-		s.x = F32(minx);
-		s.y = (flipvp) ? F32(fbHeight - miny) : F32(miny); // Move to the bottom;
-		s.width = F32(width);
-		s.height = (flipvp) ? -F32(height) : F32(height);
-		s.minDepth = 0.0f;
-		s.maxDepth = 1.0f;
-		return s;
-	}
-
-	static VkRect2D computeScissor(U32* scissor, U32 fbWidth, U32 fbHeight, Bool flipvp)
-	{
-		const U32 minx = scissor[0];
-		const U32 miny = scissor[1];
-		const U32 width = min<U32>(fbWidth, scissor[2]);
-		const U32 height = min<U32>(fbHeight, scissor[3]);
-		ANKI_ASSERT(minx + width <= fbWidth);
-		ANKI_ASSERT(miny + height <= fbHeight);
-
-		VkRect2D out = {};
-		out.extent.width = width;
-		out.extent.height = height;
-		out.offset.x = minx;
-		out.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
-
-		return out;
-	}
 
 	const ShaderProgramImpl& getBoundProgram()
 	{

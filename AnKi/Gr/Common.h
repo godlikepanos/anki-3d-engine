@@ -794,14 +794,6 @@ inline U32 getIndexSize(IndexType type)
 	return 2u << U32(type);
 }
 
-/// Rasterization order.
-enum class RasterizationOrder : U8
-{
-	kOrdered,
-	kRelaxed,
-	kCount
-};
-
 /// Acceleration structure type.
 enum class AccelerationStructureType : U8
 {
@@ -1023,7 +1015,7 @@ public:
 	class
 	{
 	public:
-		Array<U8, U32(VertexAttributeSemantic::kCount)> m_vertexAttributeLocations;
+		Array<U8, U32(VertexAttributeSemantic::kCount)> m_vkVertexAttributeLocations;
 		BitSet<U32(VertexAttributeSemantic::kCount), U8> m_vertexAttributeMask = {false};
 	} m_vertex;
 
@@ -1037,7 +1029,7 @@ public:
 
 	ShaderReflection()
 	{
-		m_vertex.m_vertexAttributeLocations.fill(kMaxU8);
+		m_vertex.m_vkVertexAttributeLocations.fill(kMaxU8);
 	}
 
 	void validate() const
@@ -1045,7 +1037,7 @@ public:
 		m_descriptor.validate();
 		for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 		{
-			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vertexAttributeLocations[semantic] != kMaxU8);
+			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vkVertexAttributeLocations[semantic] != kMaxU8);
 		}
 
 		const U32 attachmentCount = m_fragment.m_colorAttachmentWritemask.getSetBitCount();

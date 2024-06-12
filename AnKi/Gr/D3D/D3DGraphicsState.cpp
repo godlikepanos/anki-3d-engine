@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/D3D/D3DGraphicsState.h>
+#include <AnKi/Gr/D3D/D3DShaderProgram.h>
 #include <AnKi/Gr/BackendCommon/Functions.h>
 
 namespace anki {
@@ -49,122 +50,6 @@ static void getVertexAttributeSemanticInfo(VertexAttributeSemantic x, const Char
 	};
 }
 
-Bool GraphicsStateTracker::updateHashes()
-{
-	if(m_hashes.m_vert == 0)
-	{
-		if(m_state.m_vert.m_activeAttribs.getAnySet())
-		{
-			m_hashes.m_vert = 0xC0FEE;
-
-			for(VertexAttributeSemantic i : EnumIterable<VertexAttributeSemantic>())
-			{
-				if(!m_state.m_vert.m_activeAttribs.get(i))
-				{
-					continue;
-				}
-
-				ANKI_ASSERT(m_state.m_vert.m_attribsSetMask.get(i) && "Forgot to set the vert attribute");
-				m_hashes.m_vert = appendObjectHash(m_state.m_vert.m_attribs[i], m_hashes.m_vert);
-
-				ANKI_ASSERT(m_state.m_vert.m_bindingsSetMask.get(m_state.m_vert.m_attribs[i].m_binding) && "Forgot to inform about the vert binding");
-				m_hashes.m_vert = appendObjectHash(m_state.m_vert.m_bindings[m_state.m_vert.m_attribs[i].m_binding], m_hashes.m_vert);
-			}
-		}
-		else
-		{
-			m_hashes.m_vert = 0xC0FEE;
-		}
-	}
-
-	if(m_hashes.m_rast == 0)
-	{
-		m_hashes.m_rast = computeObjectHash(&m_state.m_rast);
-	}
-
-	if(m_hashes.m_depthStencil == 0)
-	{
-		const Bool hasStencil =
-			m_state.m_misc.m_depthStencilFormat != Format::kNone && getFormatInfo(m_state.m_misc.m_depthStencilFormat).isStencil();
-
-		const Bool hasDepth = m_state.m_misc.m_depthStencilFormat != Format::kNone && getFormatInfo(m_state.m_misc.m_depthStencilFormat).isDepth();
-
-		m_hashes.m_depthStencil = 0xC0FEE;
-
-		if(hasStencil)
-		{
-			m_hashes.m_depthStencil = appendObjectHash(m_state.m_stencil, m_hashes.m_depthStencil);
-		}
-
-		if(hasDepth)
-		{
-			m_hashes.m_depthStencil = appendObjectHash(m_state.m_depth, m_hashes.m_depthStencil);
-		}
-	}
-
-	if(m_hashes.m_blend == 0)
-	{
-		if(m_state.m_misc.m_colorRtMask.getAnySet())
-		{
-			m_hashes.m_blend = m_state.m_blend.m_alphaToCoverage;
-
-			for(U32 i = 0; i < kMaxColorRenderTargets; ++i)
-			{
-				if(m_state.m_misc.m_colorRtMask.get(i))
-				{
-					m_hashes.m_blend = appendObjectHash(m_state.m_blend.m_colorRts[i], m_hashes.m_blend);
-				}
-			}
-		}
-		else
-		{
-			m_hashes.m_blend = 0xC0FFE;
-		}
-	}
-
-	if(m_hashes.m_misc == 0)
-	{
-		Array<U32, kMaxColorRenderTargets + 3> toHash;
-		U32 toHashCount = 0;
-
-		toHash[toHashCount++] = m_state.m_misc.m_colorRtMask.getData()[0];
-		for(U32 i = 0; i < kMaxColorRenderTargets; ++i)
-		{
-			if(m_state.m_misc.m_colorRtMask.get(i))
-			{
-				toHash[toHashCount++] = U32(m_state.m_misc.m_colorRtFormats[i]);
-			}
-		}
-
-		if(m_state.m_misc.m_depthStencilFormat != Format::kNone)
-		{
-			toHash[toHashCount++] = U32(m_state.m_misc.m_depthStencilFormat);
-		}
-
-		toHash[toHashCount++] = U32(m_state.m_misc.m_topology);
-
-		m_hashes.m_misc = computeHash(toHash.getBegin(), sizeof(toHash[0]) * toHashCount);
-	}
-
-	if(m_hashes.m_shaderProg == 0)
-	{
-		m_hashes.m_shaderProg = m_state.m_shaderProg->getUuid();
-	}
-
-	// Compute complete hash
-	const U64 globalHash = computeObjectHash(m_hashes);
-
-	if(globalHash != m_globalHash)
-	{
-		m_globalHash = globalHash;
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
 GraphicsPipelineFactory::~GraphicsPipelineFactory()
 {
 	for(auto pso : m_map)
@@ -175,42 +60,51 @@ GraphicsPipelineFactory::~GraphicsPipelineFactory()
 
 void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12GraphicsCommandListX& cmdList)
 {
+	const GraphicsStateTracker::StaticState& staticState = state.m_staticState;
+	GraphicsStateTracker::DynamicState& dynState = state.m_dynState;
+
 	// Set dynamic state
-	if(state.m_dynState.m_stencilRefMaskDirty && state.m_state.m_misc.m_depthStencilFormat != Format::kNone
-	   && getFormatInfo(state.m_state.m_misc.m_depthStencilFormat).isStencil())
+	const auto& ss = staticState.m_stencil;
+	const Bool stencilTestEnabled = anki::stencilTestEnabled(ss.m_face[0].m_fail, ss.m_face[0].m_stencilPassDepthFail,
+															 ss.m_face[0].m_stencilPassDepthPass, ss.m_face[0].m_compare)
+									|| anki::stencilTestEnabled(ss.m_face[1].m_fail, ss.m_face[1].m_stencilPassDepthFail,
+																ss.m_face[1].m_stencilPassDepthPass, ss.m_face[1].m_compare);
+
+	const Bool hasStencilRt =
+		staticState.m_misc.m_depthStencilFormat != Format::kNone && getFormatInfo(staticState.m_misc.m_depthStencilFormat).isStencil();
+
+	if(stencilTestEnabled && hasStencilRt && dynState.m_stencilRefDirty)
 	{
-		state.m_dynState.m_stencilRefMaskDirty = false;
-		cmdList.OMSetStencilRef(state.m_dynState.m_stencilRefMask);
+		dynState.m_stencilRefDirty = false;
+		cmdList.OMSetStencilRef(dynState.m_stencilFaces[0].m_ref);
 	}
 
-	if(state.m_dynState.m_topologyDirty)
+	if(dynState.m_topologyDirty)
 	{
-		state.m_dynState.m_topologyDirty = false;
-		cmdList.IASetPrimitiveTopology(convertPrimitiveTopology2(state.m_dynState.m_topology));
+		dynState.m_topologyDirty = false;
+		cmdList.IASetPrimitiveTopology(convertPrimitiveTopology2(staticState.m_ia.m_topology));
 	}
 
-	if(state.m_dynState.m_viewportDirty)
+	if(dynState.m_viewportDirty)
 	{
-		state.m_dynState.m_viewportDirty = false;
-		const D3D12_VIEWPORT vp = {.TopLeftX = F32(state.m_dynState.m_viewport[0]),
-								   .TopLeftY = F32(state.m_dynState.m_viewport[1]),
-								   .Width = F32(state.m_dynState.m_viewport[2]),
-								   .Height = F32(state.m_dynState.m_viewport[3]),
+		dynState.m_viewportDirty = false;
+		const D3D12_VIEWPORT vp = {.TopLeftX = F32(dynState.m_viewport[0]),
+								   .TopLeftY = F32(dynState.m_viewport[1]),
+								   .Width = F32(dynState.m_viewport[2]),
+								   .Height = F32(dynState.m_viewport[3]),
 								   .MinDepth = 0.0f,
 								   .MaxDepth = 1.0f};
 		cmdList.RSSetViewports(1, &vp);
 	}
 
-	if(state.m_dynState.m_scissorDirty)
+	if(dynState.m_scissorDirty)
 	{
-		state.m_dynState.m_scissorDirty = false;
+		dynState.m_scissorDirty = false;
 
-		const U32 minx = max(state.m_dynState.m_scissor[0], state.m_dynState.m_viewport[0]);
-		const U32 miny = max(state.m_dynState.m_scissor[1], state.m_dynState.m_viewport[1]);
-		const U32 right =
-			min(state.m_dynState.m_scissor[0] + state.m_dynState.m_scissor[2], state.m_dynState.m_viewport[0] + state.m_dynState.m_viewport[2]);
-		const U32 bottom =
-			min(state.m_dynState.m_scissor[1] + state.m_dynState.m_scissor[3], state.m_dynState.m_viewport[1] + state.m_dynState.m_viewport[3]);
+		const U32 minx = max(dynState.m_scissor[0], dynState.m_viewport[0]);
+		const U32 miny = max(dynState.m_scissor[1], dynState.m_viewport[1]);
+		const U32 right = min(dynState.m_scissor[0] + dynState.m_scissor[2], dynState.m_viewport[0] + dynState.m_viewport[2]);
+		const U32 bottom = min(dynState.m_scissor[1] + dynState.m_scissor[3], dynState.m_viewport[1] + dynState.m_viewport[3]);
 
 		const D3D12_RECT rect = {.left = I32(minx), .top = I32(miny), .right = I32(right), .bottom = I32(bottom)};
 		cmdList.RSSetScissorRects(1, &rect);
@@ -242,22 +136,22 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 
 	// PSO not found, proactively create it WITHOUT a lock (we dont't want to serialize pipeline creation)
 
-	const ShaderProgramImpl& prog = *state.m_state.m_shaderProg;
+	const ShaderProgramImpl& prog = static_cast<const ShaderProgramImpl&>(*staticState.m_shaderProg);
 
 	// Vertex input
 	Array<D3D12_INPUT_ELEMENT_DESC, U32(VertexAttributeSemantic::kCount)> inputElementDescs;
 	U32 inputElementDescCount = 0;
 	for(VertexAttributeSemantic i : EnumIterable<VertexAttributeSemantic>())
 	{
-		if(state.m_state.m_vert.m_activeAttribs.get(i))
+		if(staticState.m_vert.m_activeAttribs.get(i))
 		{
 			D3D12_INPUT_ELEMENT_DESC& elem = inputElementDescs[inputElementDescCount++];
 
 			getVertexAttributeSemanticInfo(i, elem.SemanticName, elem.SemanticIndex);
-			elem.Format = DXGI_FORMAT(state.m_state.m_vert.m_attribs[i].m_fmt);
-			elem.InputSlot = state.m_state.m_vert.m_attribs[i].m_binding;
-			elem.AlignedByteOffset = state.m_state.m_vert.m_attribs[i].m_relativeOffset;
-			elem.InputSlotClass = (state.m_state.m_vert.m_bindings[state.m_state.m_vert.m_attribs[i].m_binding].m_stepRate == VertexStepRate::kVertex)
+			elem.Format = DXGI_FORMAT(staticState.m_vert.m_attribs[i].m_fmt);
+			elem.InputSlot = staticState.m_vert.m_attribs[i].m_binding;
+			elem.AlignedByteOffset = staticState.m_vert.m_attribs[i].m_relativeOffset;
+			elem.InputSlotClass = (staticState.m_vert.m_bindings[staticState.m_vert.m_attribs[i].m_binding].m_stepRate == VertexStepRate::kVertex)
 									  ? D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
 									  : D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
 			elem.InstanceDataStepRate = (elem.InputSlotClass == D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA) ? 0 : 1;
@@ -265,14 +159,14 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	}
 
 	// Blending
-	D3D12_BLEND_DESC blendDesc = {.AlphaToCoverageEnable = state.m_state.m_blend.m_alphaToCoverage, .IndependentBlendEnable = true};
+	D3D12_BLEND_DESC blendDesc = {.AlphaToCoverageEnable = staticState.m_blend.m_alphaToCoverage, .IndependentBlendEnable = true};
 	for(U32 i = 0; i < kMaxColorRenderTargets; ++i)
 	{
-		if(state.m_state.m_misc.m_colorRtMask.get(i))
+		if(staticState.m_misc.m_colorRtMask.get(i))
 		{
-			const auto& in = state.m_state.m_blend.m_colorRts[i];
+			const auto& in = staticState.m_blend.m_colorRts[i];
 			D3D12_RENDER_TARGET_BLEND_DESC& out = blendDesc.RenderTarget[i];
-			out.BlendEnable = blendingDisabled(in.m_srcRgb, in.m_dstRgb, in.m_srcA, in.m_dstA, in.m_funcRgb, in.m_funcA);
+			out.BlendEnable = blendingEnabled(in.m_srcRgb, in.m_dstRgb, in.m_srcA, in.m_dstA, in.m_funcRgb, in.m_funcA);
 			out.SrcBlend = convertBlendFactor(in.m_srcRgb);
 			out.DestBlend = convertBlendFactor(in.m_dstRgb);
 			out.BlendOp = convertBlendOperation(in.m_funcRgb);
@@ -285,48 +179,45 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 
 	// DS
 	D3D12_DEPTH_STENCIL_DESC2 dsDesc = {};
-	if(state.m_state.m_misc.m_depthStencilFormat != Format::kNone)
+	if(staticState.m_misc.m_depthStencilFormat != Format::kNone)
 	{
-		const Bool stencilEnabled = !stencilTestDisabled(state.m_state.m_stencil.m_fail[0], state.m_state.m_stencil.m_stencilPassDepthFail[0],
-														 state.m_state.m_stencil.m_stencilPassDepthPass[0], state.m_state.m_stencil.m_compare[0])
-									|| !stencilTestDisabled(state.m_state.m_stencil.m_fail[1], state.m_state.m_stencil.m_stencilPassDepthFail[1],
-															state.m_state.m_stencil.m_stencilPassDepthPass[1], state.m_state.m_stencil.m_compare[1]);
-
 		Array<D3D12_DEPTH_STENCILOP_DESC1, 2> stencilDescs;
 		for(U32 w = 0; w < 2; ++w)
 		{
-			stencilDescs[w].StencilFailOp = convertStencilOperation(state.m_state.m_stencil.m_fail[w]);
-			stencilDescs[w].StencilDepthFailOp = convertStencilOperation(state.m_state.m_stencil.m_stencilPassDepthFail[w]);
-			stencilDescs[w].StencilPassOp = convertStencilOperation(state.m_state.m_stencil.m_stencilPassDepthPass[w]);
-			stencilDescs[w].StencilFunc = convertComparisonFunc(state.m_state.m_stencil.m_compare[w]);
-			stencilDescs[w].StencilReadMask = U8(state.m_state.m_stencil.m_compareMask[w]);
-			stencilDescs[w].StencilWriteMask = U8(state.m_state.m_stencil.m_writeMask[w]);
+			stencilDescs[w].StencilFailOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_fail);
+			stencilDescs[w].StencilDepthFailOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_stencilPassDepthFail);
+			stencilDescs[w].StencilPassOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_stencilPassDepthPass);
+			stencilDescs[w].StencilFunc = convertComparisonFunc(staticState.m_stencil.m_face[w].m_compare);
+
+			ANKI_ASSERT(staticState.m_stencil.m_face[w].m_compareMask != 0x5A5A5A5A && staticState.m_stencil.m_face[w].m_writeMask != 0x5A5A5A5A);
+			stencilDescs[w].StencilReadMask = U8(staticState.m_stencil.m_face[w].m_compareMask);
+			stencilDescs[w].StencilWriteMask = U8(staticState.m_stencil.m_face[w].m_writeMask);
 		}
 
-		dsDesc = {.DepthEnable = state.m_state.m_depth.m_compare != CompareOperation::kAlways || state.m_state.m_depth.m_writeEnabled,
-				  .DepthWriteMask = state.m_state.m_depth.m_writeEnabled ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO,
-				  .DepthFunc = convertCompareOperation(state.m_state.m_depth.m_compare),
-				  .StencilEnable = stencilEnabled,
+		dsDesc = {.DepthEnable = depthTestEnabled(staticState.m_depth.m_compare, staticState.m_depth.m_writeEnabled),
+				  .DepthWriteMask = staticState.m_depth.m_writeEnabled ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO,
+				  .DepthFunc = convertCompareOperation(staticState.m_depth.m_compare),
+				  .StencilEnable = stencilTestEnabled,
 				  .FrontFace = stencilDescs[0],
 				  .BackFace = stencilDescs[1],
 				  .DepthBoundsTestEnable = false};
 	}
 
 	// Rast state
-	const D3D12_RASTERIZER_DESC2 rastDesc = {.FillMode = convertFillMode(state.m_state.m_rast.m_fillMode),
-											 .CullMode = convertCullMode(state.m_state.m_rast.m_cullMode),
+	const D3D12_RASTERIZER_DESC2 rastDesc = {.FillMode = convertFillMode(staticState.m_rast.m_fillMode),
+											 .CullMode = convertCullMode(staticState.m_rast.m_cullMode),
 											 .FrontCounterClockwise = true,
-											 .DepthBias = state.m_state.m_rast.m_depthBias,
-											 .DepthBiasClamp = state.m_state.m_rast.m_depthBiasClamp,
-											 .SlopeScaledDepthBias = state.m_state.m_rast.m_slopeScaledDepthBias};
+											 .DepthBias = staticState.m_rast.m_depthBias,
+											 .DepthBiasClamp = staticState.m_rast.m_depthBiasClamp,
+											 .SlopeScaledDepthBias = staticState.m_rast.m_slopeScaledDepthBias};
 
 	// Misc
 	D3D12_RT_FORMAT_ARRAY rtFormats = {};
 	for(U32 i = 0; i < kMaxColorRenderTargets; ++i)
 	{
-		if(state.m_state.m_misc.m_colorRtMask.get(i))
+		if(staticState.m_misc.m_colorRtMask.get(i))
 		{
-			rtFormats.RTFormats[i] = DXGI_FORMAT(state.m_state.m_misc.m_colorRtFormats[i]);
+			rtFormats.RTFormats[i] = DXGI_FORMAT(staticState.m_misc.m_colorRtFormats[i]);
 			rtFormats.NumRenderTargets = i + 1;
 		}
 	}
@@ -342,9 +233,9 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 
 	CD3DX12_PIPELINE_STATE_STREAM5 desc = {};
 	desc.Flags = D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS;
-	desc.pRootSignature = &state.m_state.m_shaderProg->m_rootSignature->getD3DRootSignature();
+	desc.pRootSignature = &prog.m_rootSignature->getD3DRootSignature();
 	desc.InputLayout = D3D12_INPUT_LAYOUT_DESC{.pInputElementDescs = inputElementDescs.getBegin(), .NumElements = inputElementDescCount};
-	desc.PrimitiveTopologyType = convertPrimitiveTopology(state.m_state.m_misc.m_topology);
+	desc.PrimitiveTopologyType = convertPrimitiveTopology(staticState.m_ia.m_topology);
 	ANKI_SET_IR(VS, kVertex)
 	ANKI_SET_IR(GS, kGeometry)
 	ANKI_SET_IR(HS, kTessellationControl)
@@ -354,7 +245,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	ANKI_SET_IR(MS, kMesh)
 	desc.BlendState = CD3DX12_BLEND_DESC(blendDesc);
 	desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC2(dsDesc);
-	desc.DSVFormat = DXGI_FORMAT(state.m_state.m_misc.m_depthStencilFormat);
+	desc.DSVFormat = DXGI_FORMAT(staticState.m_misc.m_depthStencilFormat);
 	desc.RasterizerState = CD3DX12_RASTERIZER_DESC2(rastDesc);
 	desc.RTVFormats = rtFormats;
 	desc.SampleDesc = sampleDesc;

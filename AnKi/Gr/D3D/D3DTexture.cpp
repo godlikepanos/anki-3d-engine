@@ -657,11 +657,6 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 		accesses |= D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE;
 	}
 
-	if(!!(usage & TextureUsageBit::kGenerateMipmaps))
-	{
-		ANKI_ASSERT(!"TODO rm");
-	}
-
 	if(!!(usage & TextureUsageBit::kTransferDestination))
 	{
 		stages |= D3D12_BARRIER_SYNC_COPY;
@@ -727,10 +722,6 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 	{
 		// SRV
 		out = D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
-	}
-	else if(usage == TextureUsageBit::kGenerateMipmaps)
-	{
-		ANKI_ASSERT(!"TODO rm");
 	}
 	else if(usage == TextureUsageBit::kTransferDestination)
 	{

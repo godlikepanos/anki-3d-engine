@@ -63,6 +63,8 @@ public:
 		return operator[](typename std::underlying_type<TEnum>::type(n));
 	}
 
+	Bool operator==(const Array&) const = default;
+
 	Iterator getBegin()
 	{
 		return &m_data[0];

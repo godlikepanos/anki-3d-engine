@@ -289,25 +289,6 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	return out;
 }
 
-[[nodiscard]] inline VkRasterizationOrderAMD convertRasterizationOrder(RasterizationOrder ak)
-{
-	VkRasterizationOrderAMD out;
-	switch(ak)
-	{
-	case RasterizationOrder::kOrdered:
-		out = VK_RASTERIZATION_ORDER_STRICT_AMD;
-		break;
-	case RasterizationOrder::kRelaxed:
-		out = VK_RASTERIZATION_ORDER_RELAXED_AMD;
-		break;
-	default:
-		ANKI_ASSERT(0);
-		out = VK_RASTERIZATION_ORDER_STRICT_AMD;
-	}
-
-	return out;
-}
-
 [[nodiscard]] inline VkAccelerationStructureTypeKHR convertAccelerationStructureType(AccelerationStructureType ak)
 {
 	VkAccelerationStructureTypeKHR out;

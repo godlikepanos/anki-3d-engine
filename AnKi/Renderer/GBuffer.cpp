@@ -188,7 +188,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		// Set some state, leave the rest to default
 		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-		cmdb.setRasterizationOrder(RasterizationOrder::kRelaxed);
 
 		const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
 		if(enableVrs)

@@ -90,7 +90,12 @@ public:
 	Bool hasDiscard() const
 	{
 		ANKI_ASSERT(!!(m_shaderTypes & ShaderTypeBit::kFragment));
-		return m_hasDiscard;
+		return m_refl.m_fragment.m_discards;
+	}
+
+	const ShaderReflection& getReflection() const
+	{
+		return m_refl;
 	}
 
 protected:
@@ -98,7 +103,7 @@ protected:
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 
-	Bool m_hasDiscard = false;
+	ShaderReflection m_refl;
 
 	/// Construct.
 	ShaderProgram(CString name)

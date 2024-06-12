@@ -309,7 +309,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	}
 	else
 	{
-		self.m_graphicsState.bindShaderProgram(&progImpl);
+		self.m_graphicsState.bindShaderProgram(prog);
 	}
 
 	// Shader program means descriptors so bind the descriptor heaps
@@ -375,7 +375,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		rtHeight = tex.getHeight() >> depthStencilRt->m_textureView.getFirstMipmap();
 	}
 
-	self.m_graphicsState.beginRenderPass(ConstWeakArray(colorRtFormats.getBegin(), colorRts.getSize()), dsFormat, rtWidth, rtHeight);
+	self.m_graphicsState.beginRenderPass(ConstWeakArray(colorRtFormats.getBegin(), colorRts.getSize()), dsFormat, UVec2(rtWidth, rtHeight));
 
 	self.m_cmdList->BeginRenderPass(colorRts.getSize(), colorRtDescs.getBegin(), (depthStencilRt) ? &dsDesc : nullptr,
 									D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES);
@@ -791,11 +791,6 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
 	self.m_descriptors.setRootConstants(data, dataSize);
-}
-
-void CommandBuffer::setRasterizationOrder([[maybe_unused]] RasterizationOrder order)
-{
-	// Only a Vulkan/AMD thing, skip
 }
 
 void CommandBuffer::setLineWidth(F32 width)

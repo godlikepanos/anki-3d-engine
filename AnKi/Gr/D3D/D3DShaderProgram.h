@@ -22,8 +22,6 @@ class ShaderProgramImpl final : public ShaderProgram
 public:
 	RootSignature* m_rootSignature = nullptr;
 
-	ShaderReflection m_refl;
-
 	class
 	{
 	public:

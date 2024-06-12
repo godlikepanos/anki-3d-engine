@@ -137,11 +137,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		const U32 size = s->getShaderBinarySize();
 
 		m_shaderBinarySizes[type] = size;
-
-		if(type == ShaderType::kFragment)
-		{
-			m_hasDiscard = s->hasDiscard();
-		}
 	}
 
 	// Misc

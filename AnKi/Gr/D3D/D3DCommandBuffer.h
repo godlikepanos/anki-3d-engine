@@ -10,6 +10,7 @@
 #include <AnKi/Gr/D3D/D3DDescriptor.h>
 #include <AnKi/Gr/D3D/D3DGraphicsState.h>
 #include <AnKi/Gr/D3D/D3DQueryFactory.h>
+#include <AnKi/Gr/D3D/D3DShaderProgram.h>
 
 namespace anki {
 
@@ -65,7 +66,7 @@ private:
 	{
 		commandCommon();
 
-		m_graphicsState.getShaderProgram().m_graphics.m_pipelineFactory->flushState(m_graphicsState, *m_cmdList);
+		static_cast<ShaderProgramImpl&>(m_graphicsState.getShaderProgram()).m_graphics.m_pipelineFactory->flushState(m_graphicsState, *m_cmdList);
 		m_descriptors.flush(*m_cmdList);
 	}
 

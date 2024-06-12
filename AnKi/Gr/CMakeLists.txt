@@ -8,6 +8,7 @@ set(backend_sources
 	Utils/StackGpuMemoryPool.cpp
 	BackendCommon/Functions.cpp
 	BackendCommon/Common.cpp
+	BackendCommon/GraphicsStateTracker.cpp
 	Utils/SegregatedListsGpuMemoryPool.cpp)
 
 set(backend_headers

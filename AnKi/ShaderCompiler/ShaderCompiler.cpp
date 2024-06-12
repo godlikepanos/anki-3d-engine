@@ -339,7 +339,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 				return Error::kUserData;
 			}
 
-			refl.m_vertex.m_vertexAttributeLocations[a] = U8(location);
+			refl.m_vertex.m_vkVertexAttributeLocations[a] = U8(location);
 		}
 	}
 
@@ -615,7 +615,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 #	undef ANKI_ATTRIB_NAME
 
 			refl.m_vertex.m_vertexAttributeMask.set(a);
-			refl.m_vertex.m_vertexAttributeLocations[a] = U8(i);
+			refl.m_vertex.m_vkVertexAttributeLocations[a] = U8(i);
 		}
 	}
 

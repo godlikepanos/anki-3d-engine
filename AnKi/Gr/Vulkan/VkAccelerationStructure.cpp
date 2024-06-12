@@ -307,6 +307,8 @@ VkMemoryBarrier AccelerationStructureImpl::computeBarrierInfo(AccelerationStruct
 
 	srcStages_ |= srcStages;
 	dstStages_ |= dstStages;
+
+	return barrier;
 }
 
 } // end namespace anki

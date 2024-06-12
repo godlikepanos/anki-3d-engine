@@ -12,6 +12,7 @@
 #include <AnKi/Gr/Vulkan/VkTimestampQuery.h>
 #include <AnKi/Gr/Vulkan/VkSampler.h>
 #include <AnKi/Gr/Vulkan/VkAccelerationStructure.h>
+#include <AnKi/Gr/Vulkan/VkShaderProgram.h>
 
 #if ANKI_DLSS
 #	include <ThirdParty/DlssSdk/sdk/include/nvsdk_ngx.h>
@@ -47,7 +48,8 @@ void CommandBuffer::bindVertexBuffer(U32 binding, const BufferView& buff, U32 st
 
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.bindVertexBuffer(binding, stride, stepRate);
+	self.m_graphicsState.bindVertexBuffer(binding, stepRate, stride);
+
 	const VkBuffer vkbuff = static_cast<const BufferImpl&>(buff.getBuffer()).getHandle();
 	vkCmdBindVertexBuffers(self.m_handle, binding, 1, &vkbuff, &buff.getOffset());
 }
@@ -56,7 +58,7 @@ void CommandBuffer::setVertexAttribute(VertexAttributeSemantic attribute, U32 bu
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setVertexAttribute(attribute, buffBinding, fmt, relativeOffset);
+	self.m_graphicsState.setVertexAttribute(attribute, buffBinding, fmt, relativeOffset);
 }
 
 void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
@@ -74,7 +76,7 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setPrimitiveRestart(enable);
+	self.m_graphicsState.setPrimitiveRestart(enable);
 }
 
 void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
@@ -82,16 +84,7 @@ void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(width > 0 && height > 0);
 	self.commandCommon();
-
-	if(self.m_viewport[0] != minx || self.m_viewport[1] != miny || self.m_viewport[2] != width || self.m_viewport[3] != height)
-	{
-		self.m_viewportDirty = true;
-
-		self.m_viewport[0] = minx;
-		self.m_viewport[1] = miny;
-		self.m_viewport[2] = width;
-		self.m_viewport[3] = height;
-	}
+	self.m_graphicsState.setViewport(minx, miny, width, height);
 }
 
 void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
@@ -99,37 +92,28 @@ void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(width > 0 && height > 0);
 	self.commandCommon();
-
-	if(self.m_scissor[0] != minx || self.m_scissor[1] != miny || self.m_scissor[2] != width || self.m_scissor[3] != height)
-	{
-		self.m_scissorDirty = true;
-
-		self.m_scissor[0] = minx;
-		self.m_scissor[1] = miny;
-		self.m_scissor[2] = width;
-		self.m_scissor[3] = height;
-	}
+	self.m_graphicsState.setScissor(minx, miny, width, height);
 }
 
 void CommandBuffer::setFillMode(FillMode mode)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setFillMode(mode);
+	self.m_graphicsState.setFillMode(mode);
 }
 
 void CommandBuffer::setCullMode(FaceSelectionBit mode)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setCullMode(mode);
+	self.m_graphicsState.setCullMode(mode);
 }
 
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setPolygonOffset(factor, units);
+	self.m_graphicsState.setPolygonOffset(factor, units);
 	vkCmdSetDepthBias(self.m_handle, factor, 0.0f, units);
 }
 
@@ -138,131 +122,77 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
+	self.m_graphicsState.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
 }
 
 void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setStencilCompareOperation(face, comp);
+	self.m_graphicsState.setStencilCompareOperation(face, comp);
 }
 
 void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-
-	VkStencilFaceFlags flags = 0;
-
-	if(!!(face & FaceSelectionBit::kFront) && self.m_stencilCompareMasks[0] != mask)
-	{
-		self.m_stencilCompareMasks[0] = mask;
-		flags = VK_STENCIL_FACE_FRONT_BIT;
-	}
-
-	if(!!(face & FaceSelectionBit::kBack) && self.m_stencilCompareMasks[1] != mask)
-	{
-		self.m_stencilCompareMasks[1] = mask;
-		flags |= VK_STENCIL_FACE_BACK_BIT;
-	}
-
-	if(flags)
-	{
-		vkCmdSetStencilCompareMask(self.m_handle, flags, mask);
-	}
+	self.m_graphicsState.setStencilCompareMask(face, mask);
 }
 
 void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-
-	VkStencilFaceFlags flags = 0;
-
-	if(!!(face & FaceSelectionBit::kFront) && self.m_stencilWriteMasks[0] != mask)
-	{
-		self.m_stencilWriteMasks[0] = mask;
-		flags = VK_STENCIL_FACE_FRONT_BIT;
-	}
-
-	if(!!(face & FaceSelectionBit::kBack) && self.m_stencilWriteMasks[1] != mask)
-	{
-		self.m_stencilWriteMasks[1] = mask;
-		flags |= VK_STENCIL_FACE_BACK_BIT;
-	}
-
-	if(flags)
-	{
-		vkCmdSetStencilWriteMask(self.m_handle, flags, mask);
-	}
+	self.m_graphicsState.setStencilWriteMask(face, mask);
 }
 
 void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-
-	VkStencilFaceFlags flags = 0;
-
-	if(!!(face & FaceSelectionBit::kFront) && self.m_stencilReferenceMasks[0] != ref)
-	{
-		self.m_stencilReferenceMasks[0] = ref;
-		flags = VK_STENCIL_FACE_FRONT_BIT;
-	}
-
-	if(!!(face & FaceSelectionBit::kBack) && self.m_stencilReferenceMasks[1] != ref)
-	{
-		self.m_stencilWriteMasks[1] = ref;
-		flags |= VK_STENCIL_FACE_BACK_BIT;
-	}
-
-	if(flags)
-	{
-		vkCmdSetStencilReference(self.m_handle, flags, ref);
-	}
+	self.m_graphicsState.setStencilReference(face, ref);
 }
 
 void CommandBuffer::setDepthWrite(Bool enable)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setDepthWrite(enable);
+	self.m_graphicsState.setDepthWrite(enable);
 }
 
 void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setDepthCompareOperation(op);
+	self.m_graphicsState.setDepthCompareOperation(op);
 }
 
 void CommandBuffer::setAlphaToCoverage(Bool enable)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setAlphaToCoverage(enable);
+	self.m_graphicsState.setAlphaToCoverage(enable);
 }
 
 void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setColorChannelWriteMask(attachment, mask);
+	self.m_graphicsState.setColorChannelWriteMask(attachment, mask);
 }
 
 void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
+	self.m_graphicsState.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
 }
 
 void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	self.m_state.setBlendOperation(attachment, funcRgb, funcA);
+	self.m_graphicsState.setBlendOperation(attachment, funcRgb, funcA);
 }
 
 void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
@@ -380,7 +310,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 		self.m_graphicsProg = &impl;
 		self.m_computeProg = nullptr; // Unbind the compute prog. Doesn't work like vulkan
 		self.m_rtProg = nullptr; // See above
-		self.m_state.bindShaderProgram(&impl);
+		self.m_graphicsState.bindShaderProgram(&impl);
 
 		bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	}
@@ -557,20 +487,11 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	info.renderArea.extent.height = height;
 
 	// State bookkeeping
-	self.m_state.beginRenderPass({colorFormats.getBegin(), colorRts.getSize()}, dsFormat, flipViewport);
-
-	// Re-set the viewport and scissor because sometimes they are set clamped
-	self.m_viewportDirty = true;
-	self.m_scissorDirty = true;
-
-	self.m_renderpassDrawsToDefaultFb = drawsToSwapchain;
+	self.m_graphicsState.beginRenderPass({colorFormats.getBegin(), colorRts.getSize()}, dsFormat, UVec2(fbWidth, fbHeight), drawsToSwapchain);
 	if(drawsToSwapchain)
 	{
 		self.m_renderedToDefaultFb = true;
 	}
-
-	self.m_renderpassWidth = fbWidth;
-	self.m_renderpassHeight = fbHeight;
 
 	// Finaly
 	vkCmdBeginRenderingKHR(self.m_handle, &info);
@@ -586,7 +507,6 @@ void CommandBuffer::endRenderPass()
 #endif
 
 	self.commandCommon();
-	self.m_state.endRenderPass();
 	vkCmdEndRenderingKHR(self.m_handle);
 }
 
@@ -597,17 +517,13 @@ void CommandBuffer::setVrsRate(VrsRate rate)
 	ANKI_ASSERT(rate < VrsRate::kCount);
 	self.commandCommon();
 
-	if(self.m_vrsRate != rate)
-	{
-		self.m_vrsRate = rate;
-		self.m_vrsRateDirty = true;
-	}
+	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::drawIndexed(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.m_state.setPrimitiveTopology(topology);
+	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 	vkCmdDrawIndexed(self.m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
@@ -615,7 +531,7 @@ void CommandBuffer::drawIndexed(PrimitiveTopology topology, U32 count, U32 insta
 void CommandBuffer::draw(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.m_state.setPrimitiveTopology(topology);
+	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 	vkCmdDraw(self.m_handle, count, instanceCount, first, baseInstance);
 }
@@ -626,7 +542,7 @@ void CommandBuffer::drawIndirect(PrimitiveTopology topology, const BufferView& b
 	ANKI_ASSERT(drawCount > 0);
 
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.m_state.setPrimitiveTopology(topology);
+	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
@@ -644,7 +560,7 @@ void CommandBuffer::drawIndexedIndirect(PrimitiveTopology topology, const Buffer
 	ANKI_ASSERT(drawCount > 0);
 
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.m_state.setPrimitiveTopology(topology);
+	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
@@ -662,7 +578,7 @@ void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const B
 	ANKI_ASSERT(countBuffer.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.m_state.setPrimitiveTopology(topology);
+	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
 	ANKI_ASSERT(argBufferStride >= sizeof(DrawIndexedIndirectArgs));
@@ -691,7 +607,7 @@ void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferVi
 	ANKI_ASSERT(countBuffer.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.m_state.setPrimitiveTopology(topology);
+	self.m_graphicsState.setPrimitiveTopology(topology);
 	self.drawcallCommon();
 
 	ANKI_ASSERT(argBufferStride >= sizeof(DrawIndirectArgs));
@@ -733,7 +649,7 @@ void CommandBuffer::drawMeshTasksIndirect(const BufferView& argBuffer, U32 drawC
 
 	ANKI_VK_SELF(CommandBufferImpl);
 
-	self.m_state.setPrimitiveTopology(PrimitiveTopology::kTriangles); // Not sure if that's needed
+	self.m_graphicsState.setPrimitiveTopology(PrimitiveTopology::kTriangles); // Not sure if that's needed
 	self.drawcallCommon();
 	vkCmdDrawMeshTasksIndirectEXT(self.m_handle, impl.getHandle(), argBuffer.getOffset(), drawCount, sizeof(DispatchIndirectArgs));
 }
@@ -1172,33 +1088,18 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
 	const ShaderProgramImpl& prog = self.getBoundProgram();
-	ANKI_ASSERT(prog.getReflectionInfo().m_descriptor.m_pushConstantsSize == dataSize
+	ANKI_ASSERT(prog.getReflection().m_descriptor.m_pushConstantsSize == dataSize
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
 	self.commandCommon();
 	self.m_descriptorState.setPushConstants(data, dataSize);
 }
 
-void CommandBuffer::setRasterizationOrder(RasterizationOrder order)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.commandCommon();
-
-	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kAMD_rasterization_order))
-	{
-		self.m_state.setRasterizationOrder(order);
-	}
-}
-
 void CommandBuffer::setLineWidth(F32 width)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
-	vkCmdSetLineWidth(self.m_handle, width);
-
-#if ANKI_ASSERTIONS_ENABLED
-	self.m_lineWidthSet = true;
-#endif
+	self.m_graphicsState.setLineWidth(width);
 }
 
 void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
@@ -1272,8 +1173,6 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	m_descriptorState.init(m_pool);
 
-	m_state.setVrsCapable(getGrManagerImpl().getDeviceCapabilities().m_vrs);
-
 	m_debugMarkers = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::kEXT_debug_utils);
 
 	return Error::kNone;
@@ -1317,7 +1216,7 @@ void CommandBufferImpl::beginRecording()
 	// Stats
 	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_pipeline_executable_properties))
 	{
-		m_state.setEnablePipelineStatistics(true);
+		m_graphicsState.setEnablePipelineStatistics(true);
 	}
 }
 
@@ -1374,69 +1273,10 @@ void CommandBufferImpl::drawcallCommon()
 	ANKI_ASSERT(m_insideRenderpass);
 
 	// Get or create ppline
-	Pipeline ppline;
-	Bool stateDirty;
-	m_graphicsProg->getPipelineFactory().getOrCreatePipeline(m_state, ppline, stateDirty);
-
-	if(stateDirty)
-	{
-		vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, ppline.getHandle());
-	}
+	m_graphicsProg->getGraphicsPipelineFactory().flushState(m_graphicsState, m_handle);
 
 	// Bind dsets
 	m_descriptorState.flush(m_handle, m_microCmdb->getDSAllocator());
-
-	// Flush viewport
-	if(m_viewportDirty) [[unlikely]]
-	{
-		const Bool flipvp = m_renderpassDrawsToDefaultFb;
-		VkViewport vp = computeViewport(&m_viewport[0], m_renderpassWidth, m_renderpassHeight, flipvp);
-
-		// Additional optimization
-		if(memcmp(&vp, &m_lastViewport, sizeof(vp)) != 0)
-		{
-			vkCmdSetViewport(m_handle, 0, 1, &vp);
-			m_lastViewport = vp;
-		}
-
-		m_viewportDirty = false;
-	}
-
-	// Flush scissor
-	if(m_scissorDirty) [[unlikely]]
-	{
-		const Bool flipvp = m_renderpassDrawsToDefaultFb;
-		VkRect2D scissor = computeScissor(&m_scissor[0], m_renderpassWidth, m_renderpassHeight, flipvp);
-
-		// Additional optimization
-		if(memcmp(&scissor, &m_lastScissor, sizeof(scissor)) != 0)
-		{
-			vkCmdSetScissor(m_handle, 0, 1, &scissor);
-			m_lastScissor = scissor;
-		}
-
-		m_scissorDirty = false;
-	}
-
-	// VRS
-	if(getGrManagerImpl().getDeviceCapabilities().m_vrs && m_vrsRateDirty)
-	{
-		const VkExtent2D extend = convertVrsShadingRate(m_vrsRate);
-		Array<VkFragmentShadingRateCombinerOpKHR, 2> combiner;
-		combiner[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR; // Keep pipeline rating over primitive
-		combiner[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MAX_KHR; // Max of attachment and pipeline rates
-		vkCmdSetFragmentShadingRateKHR(m_handle, &extend, &combiner[0]);
-
-		m_vrsRateDirty = false;
-	}
-
-	// Some checks
-#if ANKI_ASSERTIONS_ENABLED
-	if(m_state.getPrimitiveTopology() == PrimitiveTopology::kLines || m_state.getPrimitiveTopology() == PrimitiveTopology::kLineStip)
-	{
-		ANKI_ASSERT(m_lineWidthSet == true);
-	}
-#endif
 
 	ANKI_TRACE_INC_COUNTER(VkDrawcall, 1);
 }

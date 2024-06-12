@@ -6,7 +6,7 @@
 #include <AnKi/Gr/Vulkan/VkShaderProgram.h>
 #include <AnKi/Gr/Vulkan/VkShader.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
-#include <AnKi/Gr/Vulkan/VkPipelineFactory.h>
+#include <AnKi/Gr/Vulkan/VkGraphicsState.h>
 #include <AnKi/Gr/BackendCommon/Functions.h>
 #include <AnKi/Gr/Vulkan/VkBuffer.h>
 
@@ -140,7 +140,6 @@ ShaderProgramImpl::~ShaderProgramImpl()
 
 	if(m_graphics.m_pplineFactory)
 	{
-		m_graphics.m_pplineFactory->destroy();
 		deleteInstance(GrMemoryPool::getSingleton(), m_graphics.m_pplineFactory);
 	}
 
@@ -295,7 +294,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(graphicsProg)
 	{
-		m_graphics.m_pplineFactory = anki::newInstance<PipelineFactory>(GrMemoryPool::getSingleton());
+		m_graphics.m_pplineFactory = anki::newInstance<GraphicsPipelineFactory>(GrMemoryPool::getSingleton());
 	}
 
 	// Create the pipeline if compute
@@ -436,11 +435,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		const U32 size = s->getShaderBinarySize();
 
 		m_shaderBinarySizes[type] = size;
-
-		if(type == ShaderType::kFragment)
-		{
-			m_hasDiscard = s->hasDiscard();
-		}
 	}
 
 	// Non graphics programs have created their pipeline, destroy the shader modules

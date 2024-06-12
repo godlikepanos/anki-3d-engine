@@ -12,7 +12,7 @@
 namespace anki {
 
 // Forward
-class PipelineFactory;
+class GraphicsPipelineFactory;
 
 /// @addtogroup vulkan
 /// @{
@@ -47,13 +47,8 @@ public:
 		return *m_pplineLayout;
 	}
 
-	const ShaderReflection& getReflectionInfo() const
-	{
-		return m_refl;
-	}
-
 	/// Only for graphics programs.
-	PipelineFactory& getPipelineFactory()
+	GraphicsPipelineFactory& getGraphicsPipelineFactory()
 	{
 		ANKI_ASSERT(m_graphics.m_pplineFactory);
 		return *m_graphics.m_pplineFactory;
@@ -99,14 +94,12 @@ private:
 
 	PipelineLayout2* m_pplineLayout = nullptr;
 
-	ShaderReflection m_refl;
-
 	class
 	{
 	public:
 		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::kFragment - ShaderType::kVertex) + 1> m_shaderCreateInfos = {};
 		U32 m_shaderCreateInfoCount = 0;
-		PipelineFactory* m_pplineFactory = nullptr;
+		GraphicsPipelineFactory* m_pplineFactory = nullptr;
 	} m_graphics;
 
 	class
