@@ -684,7 +684,7 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
 	ANKI_ASSERT(self.m_rtProg);
-	const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*self.m_rtProg);
+	[[maybe_unused]] const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*self.m_rtProg);
 
 	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
@@ -1087,8 +1087,7 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
-	const ShaderProgramImpl& prog = self.getBoundProgram();
-	ANKI_ASSERT(prog.getReflection().m_descriptor.m_pushConstantsSize == dataSize
+	ANKI_ASSERT(static_cast<self.getBoundProgram()>(prog).getReflection().m_descriptor.m_pushConstantsSize == dataSize
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
 	self.commandCommon();

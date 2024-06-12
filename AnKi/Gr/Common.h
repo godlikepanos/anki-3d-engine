@@ -1035,7 +1035,7 @@ public:
 	void validate() const
 	{
 		m_descriptor.validate();
-		for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
+		for([[maybe_unused]] VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 		{
 			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vkVertexAttributeLocations[semantic] != kMaxU8);
 		}
