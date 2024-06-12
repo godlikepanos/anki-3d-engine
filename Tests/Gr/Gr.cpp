@@ -422,6 +422,147 @@ void main()
 	commonDestroy();
 }
 
+ANKI_TEST(Gr, CoordinateSystem)
+{
+	commonInit();
+
+	{
+		constexpr const Char* kVertSrc = R"(
+struct VertOut
+{
+	float4 m_svPosition : SV_POSITION;
+	float2 m_uv : TEXCOORDS;
+};
+
+VertOut main(uint svVertexId : SV_VERTEXID)
+{
+	const float2 positions[6] = {float2(-1, -1), float2(1, 1), float2(-1, 1), float2(-1, -1), float2(1, -1), float2(1, 1)};
+	svVertexId = min(svVertexId, 5u);
+
+	VertOut o;
+	o.m_svPosition = float4(positions[svVertexId], 0.0f, 1.0f);
+	o.m_uv = positions[svVertexId].xy / 2.0f + 0.5f;
+	return o;
+})";
+
+		constexpr const Char* kFragSrc = R"(
+struct Viewport
+{
+	float4 m_viewport;
+};
+
+#if defined(__spirv__)
+[[vk::push_constant]] ConstantBuffer<Viewport> g_viewport;
+#else
+ConstantBuffer<Viewport> g_viewport : register(b0, space3000);
+#endif
+
+Texture2D g_tex : register(t0);
+SamplerState g_sampler : register(s0);
+
+float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimId : SV_PRIMITIVEID) : SV_TARGET0
+{
+	if(svPrimId == 1u)
+	{	
+		return float4(svPosition.xy / g_viewport.m_viewport.zw, 0.0f, 0.0f);
+	}
+	else
+	{
+		return g_tex.Sample(g_sampler, float2(uv.x, -uv.y) * 2.0f);
+	}
+})";
+
+		ShaderProgramPtr prog = createVertFragProg(kVertSrc, kFragSrc);
+
+		// Create a texture
+		TextureInitInfo texInit;
+		texInit.m_width = 2;
+		texInit.m_height = 2;
+		texInit.m_format = Format::kR32G32B32A32_Sfloat;
+		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kAllTransfer;
+		TexturePtr tex = GrManager::getSingleton().newTexture(texInit);
+
+		BufferInitInfo buffInit;
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+		buffInit.m_size = sizeof(Vec4) * 4;
+		buffInit.m_usage = BufferUsageBit::kTransferSource;
+		BufferPtr uploadBuff = GrManager::getSingleton().newBuffer(buffInit);
+		void* mappedMem = uploadBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		const Array<Vec4, 4> texelData = {Vec4(1.0f, 0.0f, 0.0f, 1.0f), Vec4(0.0f, 1.0f, 0.0f, 1.0f), Vec4(0.0f, 0.0f, 1.0f, 1.0f),
+										  Vec4(1.0f, 0.0f, 1.0f, 1.0f)};
+		memcpy(mappedMem, &texelData[0][0], sizeof(texelData));
+		uploadBuff->unmap();
+
+		CommandBufferInitInfo cmdbInit;
+		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+		TextureBarrierInfo barrier = {TextureView(tex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
+									  TextureUsageBit::kTransferDestination};
+		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+		cmdb->copyBufferToTexture(BufferView(uploadBuff.get()), TextureView(tex.get(), TextureSubresourceDesc::all()));
+		barrier = {TextureView(tex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment};
+		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+		cmdb->endRecording();
+		FencePtr fence;
+		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+		fence->clientWait(kMaxSecond);
+
+		// Create sampler
+		SamplerInitInfo samplInit;
+		SamplerPtr sampler = GrManager::getSingleton().newSampler(samplInit);
+
+		const U kIterationCount = 100;
+		U iterations = kIterationCount;
+		while(iterations--)
+		{
+			HighRezTimer timer;
+			timer.start();
+
+			TexturePtr presentTex = GrManager::getSingleton().acquireNextPresentableTexture();
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::kGeneralWork;
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
+
+			cmdb->setViewport(0, 0, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
+			cmdb->bindShaderProgram(prog.get());
+
+			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
+												TextureUsageBit::kFramebufferWrite};
+			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
+
+			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDesc::firstSurface())});
+
+			const Vec4 viewport(0.0f, 0.0f, F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight()));
+			cmdb->setPushConstants(&viewport, sizeof(viewport));
+
+			cmdb->bindTexture(ANKI_REG(t0), TextureView(tex.get(), TextureSubresourceDesc::all()));
+			cmdb->bindSampler(ANKI_REG(s0), sampler.get());
+
+			cmdb->draw(PrimitiveTopology::kTriangles, 6);
+			cmdb->endRenderPass();
+
+			const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kFramebufferWrite,
+												 TextureUsageBit::kPresent};
+			cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
+
+			cmdb->endRecording();
+			GrManager::getSingleton().submit(cmdb.get());
+
+			GrManager::getSingleton().swapBuffers();
+
+			timer.stop();
+			const Second kTick = 1.0f / 30.0f;
+			if(timer.getElapsedTime() < kTick)
+			{
+				HighRezTimer::sleep(kTick - timer.getElapsedTime());
+			}
+		}
+	}
+
+	commonDestroy();
+}
+
 ANKI_TEST(Gr, ViewportAndScissor)
 {
 #if 0
