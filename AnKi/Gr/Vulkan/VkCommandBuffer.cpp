@@ -1087,7 +1087,7 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
-	ANKI_ASSERT(static_cast<self.getBoundProgram()>(prog).getReflection().m_descriptor.m_pushConstantsSize == dataSize
+	ANKI_ASSERT(static_cast<const ShaderProgramImpl&>(self.getBoundProgram()).getReflection().m_descriptor.m_pushConstantsSize == dataSize
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
 	self.commandCommon();

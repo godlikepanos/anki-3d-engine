@@ -156,7 +156,7 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-		U32 count = 1;
+		U32 count = 0;
 		for(const RenderTargetHandle& handle : dbgRts)
 		{
 			if(handle.isValid())
