@@ -91,7 +91,16 @@ void Logger::write(const Char* file, int line, const Char* func, const Char* sub
 
 	if(type == LoggerMessageType::kFatal)
 	{
-		abort();
+#if ANKI_OS_WINDOWS
+		if(!IsDebuggerPresent())
+		{
+			abort();
+		}
+		else
+#endif
+		{
+			ANKI_DEBUG_BREAK();
+		}
 	}
 }
 

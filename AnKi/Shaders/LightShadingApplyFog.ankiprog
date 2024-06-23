@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
+
+#pragma anki technique_start vert
 #pragma anki technique_end vert
 
 #pragma anki technique_start frag
-
 #include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
@@ -25,8 +25,9 @@ struct Uniforms
 };
 ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
 
-RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main(VertOut input) : SV_TARGET0
 {
+	const Vec2 uv = input.m_uv;
 	Vec3 uvw;
 
 	// Compute W coordinate

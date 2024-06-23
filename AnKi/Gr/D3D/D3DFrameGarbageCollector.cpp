@@ -69,7 +69,7 @@ void FrameGarbageCollector::collectGarbage()
 
 		if(frame.m_fence.isCreated() && !frame.m_fence->done())
 		{
-			ANKI_ASSERT(!frame.m_textureGarbage.isEmpty());
+			ANKI_ASSERT(!frame.m_textureGarbage.isEmpty() || !frame.m_bufferGarbage.isEmpty());
 			newFrames.pushBack(&frame);
 			continue;
 		}

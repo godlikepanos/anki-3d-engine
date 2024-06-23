@@ -80,7 +80,7 @@ ANKI_FORMAT_DEF(A2R10G10B10_Uscaled_Pack32,           60, 1041, 4,  4,  0,  0,  
 ANKI_FORMAT_DEF(A2R10G10B10_Sscaled_Pack32,           61, 1042, 4,  4,  0,  0,  0,  2,         None)
 ANKI_FORMAT_DEF(A2R10G10B10_Uint_Pack32,              62, 1043, 4,  4,  0,  0,  0,  1,         None)
 ANKI_FORMAT_DEF(A2R10G10B10_Sint_Pack32,              63, 1044, 4,  4,  0,  0,  0,  2,         None)
-ANKI_FORMAT_DEF(A2B10G10R10_Unorm_Pack32,             64, 1045, 4,  4,  0,  0,  0,  0,         None)
+ANKI_FORMAT_DEF(A2B10G10R10_Unorm_Pack32,             64,   24, 4,  4,  0,  0,  0,  0,         None)
 ANKI_FORMAT_DEF(A2B10G10R10_Snorm_Pack32,             65, 1046, 4,  4,  0,  0,  0,  0,         None)
 ANKI_FORMAT_DEF(A2B10G10R10_Uscaled_Pack32,           66, 1047, 4,  4,  0,  0,  0,  1,         None)
 ANKI_FORMAT_DEF(A2B10G10R10_Sscaled_Pack32,           67, 1048, 4,  4,  0,  0,  0,  2,         None)

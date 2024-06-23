@@ -48,6 +48,7 @@ public:
 	Bool done() const
 	{
 		const U64 cval = m_fence->GetCompletedValue();
+		ANKI_D3D_CHECKF((cval < kMaxU64) ? S_OK : DXGI_ERROR_DEVICE_REMOVED);
 		const U64 val = m_value.load();
 		ANKI_ASSERT(cval <= val);
 		return cval == val;

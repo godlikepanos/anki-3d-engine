@@ -85,7 +85,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
 		texBarrier.m_previousUsage = TextureUsageBit::kStorageComputeWrite;
-		texBarrier.m_nextUsage = m_volTex->getTextureUsage();
+		texBarrier.m_nextUsage = TextureUsageBit::kAllSampled; // Put something random, the renderer will start from kNone
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
 		cmdb->endRecording();

@@ -6,6 +6,7 @@
 #pragma anki mutator VARIANCE_CLIPPING 0 1
 #pragma anki mutator YCBCR 0 1
 
+#include <AnKi/Shaders/QuadVert.hlsl>
 #if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/PackFunctions.hlsl>
@@ -44,7 +45,7 @@ struct FragOut
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-FragOut main(Vec2 uv : TEXCOORD)
+FragOut main(VertOut input)
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -52,6 +53,8 @@ FragOut main(Vec2 uv : TEXCOORD)
 	g_storageTex.GetDimensions(outStorageTexSize.x, outStorageTexSize.y);
 
 	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / outStorageTexSize;
+#	else
+	const Vec2 uv = input.m_uv;
 #	endif
 
 	// Get prev uv coords
@@ -118,7 +121,6 @@ FragOut main(Vec2 uv : TEXCOORD)
 #endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 
 #pragma anki technique_start vert
-#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert
 
 #pragma anki technique_start frag

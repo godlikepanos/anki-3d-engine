@@ -44,8 +44,6 @@ public:
 	}
 
 private:
-	static constexpr Format kRtPixelFormat = Format::kA2B10G10R10_Unorm_Pack32;
-
 	class
 	{
 	public:

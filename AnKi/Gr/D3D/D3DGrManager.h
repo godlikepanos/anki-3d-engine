@@ -57,6 +57,8 @@ public:
 		return m_timestampFrequency;
 	}
 
+	void invokeDred() const;
+
 private:
 	ID3D12DeviceX* m_device = nullptr;
 	Array<ID3D12CommandQueue*, U32(GpuQueueType::kCount)> m_queues = {};
@@ -81,6 +83,8 @@ private:
 	D3DCapabilities m_d3dCapabilities;
 
 	U64 m_timestampFrequency = 0;
+
+	Bool m_canInvokeDred = false;
 
 	void destroy();
 

@@ -44,13 +44,19 @@ namespace anki {
 #define ANKI_D3D_SELF(class_) class_& self = *static_cast<class_*>(this)
 #define ANKI_D3D_SELF_CONST(class_) const class_& self = *static_cast<const class_*>(this)
 
+void invokeDred();
+
 #define ANKI_D3D_CHECKF(x) \
 	do \
 	{ \
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGF("D3D function failed (HRESULT: %d message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			if(rez == DXGI_ERROR_DEVICE_REMOVED) \
+			{ \
+				invokeDred(); \
+			} \
+			ANKI_D3D_LOGF("D3D function failed (HRESULT: 0x%X message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
 		} \
 	} while(0)
 
@@ -60,7 +66,11 @@ namespace anki {
 		HRESULT rez; \
 		if((rez = (x)) < 0) [[unlikely]] \
 		{ \
-			ANKI_D3D_LOGE("D3D function failed (HRESULT: %d message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			ANKI_D3D_LOGE("D3D function failed (HRESULT: 0x%X message: %s): %s", rez, errorMessageToString(GetLastError()).cstr(), #x); \
+			if(rez == DXGI_ERROR_DEVICE_REMOVED) \
+			{ \
+				invokeDred(); \
+			} \
 			return Error::kFunctionFailed; \
 		} \
 	} while(0)
@@ -484,6 +494,8 @@ inline [[nodiscard]] D3D12_CULL_MODE convertCullMode(FaceSelectionBit c)
 
 	return out;
 }
+
+[[nodiscard]] DXGI_FORMAT convertFormat(Format fmt);
 /// @}
 
 } // end namespace anki

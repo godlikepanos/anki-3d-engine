@@ -37,7 +37,7 @@ void CommandBuffer::endRecording()
 		const QueryInfo qinfo = TimestampQueryFactory::getSingleton().getQueryInfo(handle);
 
 		self.m_cmdList->ResolveQueryData(qinfo.m_queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, qinfo.m_indexInHeap, 1, qinfo.m_resultsBuffer,
-										 qinfo.m_resultsBufferOffset / sizeof(U64));
+										 qinfo.m_resultsBufferOffset);
 	}
 
 	for(QueryHandle handle : self.m_pipelineQueries)
@@ -45,7 +45,7 @@ void CommandBuffer::endRecording()
 		const QueryInfo qinfo = PrimitivesPassedClippingFactory::getSingleton().getQueryInfo(handle);
 
 		self.m_cmdList->ResolveQueryData(qinfo.m_queryHeap, D3D12_QUERY_TYPE_PIPELINE_STATISTICS, qinfo.m_indexInHeap, 1, qinfo.m_resultsBuffer,
-										 qinfo.m_resultsBufferOffset / sizeof(U64));
+										 qinfo.m_resultsBufferOffset);
 	}
 
 	self.m_cmdList->Close();
@@ -275,12 +275,12 @@ void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
 	if(reg.m_resourceType == HlslResourceType::kUav)
 	{
-		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), DXGI_FORMAT(fmt));
+		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), fmt);
 	}
 	else
 	{
 		ANKI_ASSERT(reg.m_resourceType == HlslResourceType::kSrv);
-		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), DXGI_FORMAT(fmt));
+		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), fmt);
 	}
 }
 
@@ -331,6 +331,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 
 	U32 rtWidth = 0;
 	U32 rtHeight = 0;
+	D3D12_RENDER_PASS_FLAGS flags = D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES;
 
 	Array<D3D12_RENDER_PASS_RENDER_TARGET_DESC, kMaxColorRenderTargets> colorRtDescs;
 	Array<Format, kMaxColorRenderTargets> colorRtFormats;
@@ -359,7 +360,9 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		const TextureImpl& tex = static_cast<const TextureImpl&>(depthStencilRt->m_textureView.getTexture());
 
 		dsDesc = {};
-		dsDesc.cpuDescriptor = tex.getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), depthStencilRt->m_usage).getCpuOffset();
+		dsDesc.cpuDescriptor =
+			tex.getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), !(depthStencilRt->m_usage & TextureUsageBit::kFramebufferWrite))
+				.getCpuOffset();
 
 		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
 		dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth, depthStencilRt->m_clearValue.m_depthStencil.m_depth;
@@ -373,12 +376,22 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 
 		rtWidth = tex.getWidth() >> depthStencilRt->m_textureView.getFirstMipmap();
 		rtHeight = tex.getHeight() >> depthStencilRt->m_textureView.getFirstMipmap();
+
+		if(!(depthStencilRt->m_usage & TextureUsageBit::kFramebufferWrite))
+		{
+			flags |= !!(depthStencilRt->m_textureView.getDepthStencilAspect() & DepthStencilAspectBit::kDepth)
+						 ? D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH
+						 : D3D12_RENDER_PASS_FLAG_NONE;
+
+			flags |= !!(depthStencilRt->m_textureView.getDepthStencilAspect() & DepthStencilAspectBit::kStencil)
+						 ? D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_STENCIL
+						 : D3D12_RENDER_PASS_FLAG_NONE;
+		}
 	}
 
 	self.m_graphicsState.beginRenderPass(ConstWeakArray(colorRtFormats.getBegin(), colorRts.getSize()), dsFormat, UVec2(rtWidth, rtHeight));
 
-	self.m_cmdList->BeginRenderPass(colorRts.getSize(), colorRtDescs.getBegin(), (depthStencilRt) ? &dsDesc : nullptr,
-									D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES);
+	self.m_cmdList->BeginRenderPass(colorRts.getSize(), colorRtDescs.getBegin(), (depthStencilRt) ? &dsDesc : nullptr, flags);
 }
 
 void CommandBuffer::endRenderPass()
@@ -589,6 +602,8 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	const U32 depth = (texImpl.getTextureType() == TextureType::k3D) ? (texImpl.getDepth() >> texView.getFirstMipmap()) : 1u;
 	ANKI_ASSERT(width && height && depth);
 
+	const FormatInfo& formatInfo = getFormatInfo(texImpl.getFormat());
+
 	D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
 	srcLocation.pResource = &buffImpl.getD3DResource();
 	srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
@@ -597,7 +612,8 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	srcLocation.PlacedFootprint.Footprint.Width = width;
 	srcLocation.PlacedFootprint.Footprint.Height = height;
 	srcLocation.PlacedFootprint.Footprint.Depth = depth;
-	srcLocation.PlacedFootprint.Footprint.RowPitch = width * getFormatInfo(texImpl.getFormat()).m_texelSize;
+	srcLocation.PlacedFootprint.Footprint.RowPitch = (formatInfo.isCompressed()) ? (width / formatInfo.m_blockWidth * formatInfo.m_blockSize)
+																				 : (width * getFormatInfo(texImpl.getFormat()).m_texelSize);
 
 	D3D12_TEXTURE_COPY_LOCATION dstLocation = {};
 	dstLocation.pResource = &texImpl.getD3DResource();
@@ -688,8 +704,32 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	for(const BufferBarrierInfo& barrier : buffers)
 	{
 		const BufferImpl& impl = static_cast<const BufferImpl&>(barrier.m_bufferView.getBuffer());
-		D3D12_BUFFER_BARRIER& d3dBarrier = *bufferBarriers.emplaceBack();
-		d3dBarrier = impl.computeBarrier(barrier.m_previousUsage, barrier.m_nextUsage);
+		D3D12_BUFFER_BARRIER b = impl.computeBarrier(barrier.m_previousUsage, barrier.m_nextUsage);
+
+		if(bufferBarriers.getSize() && bufferBarriers.getBack().pResource == b.pResource)
+		{
+			// Merge barriers
+
+			if(bufferBarriers.getBack().AccessBefore == D3D12_BARRIER_ACCESS_NO_ACCESS && b.AccessBefore != D3D12_BARRIER_ACCESS_NO_ACCESS)
+			{
+				bufferBarriers.getBack().AccessBefore = D3D12_BARRIER_ACCESS(0);
+			}
+			else if(bufferBarriers.getBack().AccessBefore != D3D12_BARRIER_ACCESS_NO_ACCESS && b.AccessBefore == D3D12_BARRIER_ACCESS_NO_ACCESS)
+			{
+				b.AccessBefore = D3D12_BARRIER_ACCESS(0);
+			}
+
+			bufferBarriers.getBack().AccessBefore |= b.AccessBefore;
+			bufferBarriers.getBack().AccessAfter |= b.AccessAfter;
+			bufferBarriers.getBack().SyncBefore |= b.SyncBefore;
+			bufferBarriers.getBack().SyncAfter |= b.SyncAfter;
+		}
+		else
+		{
+			// New barrier
+			D3D12_BUFFER_BARRIER& d3dBarrier = *bufferBarriers.emplaceBack();
+			d3dBarrier = b;
+		}
 	}
 
 	ANKI_ASSERT(accelerationStructures.getSize() == 0 && "TODO");
@@ -768,16 +808,6 @@ void CommandBuffer::writeTimestamp(TimestampQuery* query)
 	self.m_timestampQueries.emplaceBack(impl.m_handle);
 
 	const QueryInfo qinfo = TimestampQueryFactory::getSingleton().getQueryInfo(impl.m_handle);
-
-	// Make sure all the work has finished (mesa's dozen does that)
-	const D3D12_GLOBAL_BARRIER barrier = {.SyncBefore = D3D12_BARRIER_SYNC_ALL,
-										  .SyncAfter = D3D12_BARRIER_SYNC_NONE,
-										  .AccessBefore = D3D12_BARRIER_ACCESS_COMMON,
-										  .AccessAfter = D3D12_BARRIER_ACCESS_NO_ACCESS};
-
-	const D3D12_BARRIER_GROUP barrierGroup = {.Type = D3D12_BARRIER_TYPE_GLOBAL, .NumBarriers = 1, .pGlobalBarriers = &barrier};
-	self.m_cmdList->Barrier(1, &barrierGroup);
-
 	self.m_cmdList->EndQuery(qinfo.m_queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, qinfo.m_indexInHeap);
 }
 
@@ -809,8 +839,8 @@ void CommandBuffer::pushDebugMarker(CString name, Vec3 color)
 
 	if(self.m_debugMarkersEnabled)
 	{
-		const UVec3 coloru(color * 255.0f);
-		const U64 val = (U64(coloru.x()) << 48) | (U64(coloru.x()) << 32) | (U64(coloru.x()) << 16);
+		const U8Vec3 coloru(color * 255.0f);
+		const U32 val = PIX_COLOR(coloru.x(), coloru.y(), coloru.z());
 
 		PIXBeginEvent(self.m_cmdList, val, "%s", name.cstr());
 	}
@@ -835,11 +865,20 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	ANKI_CHECK(CommandBufferFactory::getSingleton().newCommandBuffer(init.m_flags, m_mcmdb));
 
 	m_cmdList = &m_mcmdb->getCmdList();
+
+	GrDynamicArray<WChar> wstr;
+	wstr.resize(getName().getLength() + 1);
+	getName().toWideChars(wstr.getBegin(), wstr.getSize());
+	m_cmdList->SetName(wstr.getBegin());
+
 	m_fastPool = &m_mcmdb->getFastMemoryPool();
 
 	m_descriptors.init(m_fastPool);
 
 	m_debugMarkersEnabled = g_debugMarkersCVar.get();
+
+	m_timestampQueries = {m_fastPool};
+	m_pipelineQueries = {m_fastPool};
 
 	return Error::kNone;
 }

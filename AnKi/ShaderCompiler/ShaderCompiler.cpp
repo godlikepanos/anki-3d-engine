@@ -519,12 +519,14 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			// ByteAddressBuffer
 			akBinding.m_type = DescriptorType::kStorageBuffer;
 			akBinding.m_flags = DescriptorFlag::kRead | DescriptorFlag::kByteAddressBuffer;
+			akBinding.m_d3dStructuredBufferStride = sizeof(U32);
 		}
 		else if(bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS)
 		{
 			// RWByteAddressBuffer
 			akBinding.m_type = DescriptorType::kStorageBuffer;
 			akBinding.m_flags = DescriptorFlag::kReadWrite | DescriptorFlag::kByteAddressBuffer;
+			akBinding.m_d3dStructuredBufferStride = sizeof(U32);
 		}
 		else if(bindDesc.Type == D3D_SIT_RTACCELERATIONSTRUCTURE)
 		{
@@ -615,7 +617,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 #	undef ANKI_ATTRIB_NAME
 
 			refl.m_vertex.m_vertexAttributeMask.set(a);
-			refl.m_vertex.m_vkVertexAttributeLocations[a] = U8(i);
+			refl.m_vertex.m_vkVertexAttributeLocations[a] = U8(i); // Just set something
 		}
 	}
 

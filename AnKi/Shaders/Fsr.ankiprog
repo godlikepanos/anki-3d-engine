@@ -7,6 +7,8 @@
 #pragma anki mutator SHARPEN 0 1
 #pragma anki mutator FSR_QUALITY 0 1
 
+#include <AnKi/Shaders/QuadVert.hlsl>
+
 #if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 
@@ -79,7 +81,7 @@ AH3 FsrEasuSampleH(AF2 p)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
+Vec3 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -90,7 +92,7 @@ Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 
 	const UVec2 uv = svDispatchThreadId.xy;
 #	else
-	const UVec2 uv = UVec2(svPosition.xy);
+	const UVec2 uv = UVec2(input.m_svPosition.xy);
 #	endif
 
 	HVec3 color;
@@ -111,7 +113,6 @@ Vec3 main(Vec4 svPosition : SV_POSITION) : SV_TARGET0
 #endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 
 #pragma anki technique_start vert
-#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert
 
 #pragma anki technique_start frag

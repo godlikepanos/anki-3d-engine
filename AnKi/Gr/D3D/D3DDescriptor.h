@@ -175,6 +175,7 @@ public:
 		RingDescriptorAllocator& alloc = (type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) ? m_gpuRing.m_cbvSrvUav : m_gpuRing.m_sampler;
 		DescriptorHeapHandle out = alloc.allocate(descriptorCount);
 		out.m_heapType = type;
+		out.validate();
 		return out;
 	}
 
@@ -318,7 +319,7 @@ public:
 
 	void bindRootSignature(const RootSignature* rootSignature, Bool isCompute);
 
-	void bindUav(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range, DXGI_FORMAT fmt = DXGI_FORMAT_UNKNOWN)
+	void bindUav(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range, Format fmt = Format::kNone)
 	{
 		Descriptor& descriptor = getDescriptor(HlslResourceType::kUav, space, registerBinding);
 		descriptor.m_bufferView.m_resource = resource;
@@ -327,7 +328,7 @@ public:
 		descriptor.m_bufferView.m_format = fmt;
 		descriptor.m_isHandle = false;
 #if ANKI_ASSERTIONS_ENABLED
-		if(fmt == DXGI_FORMAT_UNKNOWN)
+		if(fmt == Format::kNone)
 		{
 			descriptor.m_type = DescriptorType::kStorageBuffer;
 			descriptor.m_flags = DescriptorFlag::kReadWrite;
@@ -355,7 +356,7 @@ public:
 		m_spaces[space].m_cbvSrvUavDirty = true;
 	}
 
-	void bindSrv(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range, DXGI_FORMAT fmt = DXGI_FORMAT_UNKNOWN)
+	void bindSrv(U32 space, U32 registerBinding, ID3D12Resource* resource, PtrSize offset, PtrSize range, Format fmt = Format::kNone)
 	{
 		Descriptor& descriptor = getDescriptor(HlslResourceType::kSrv, space, registerBinding);
 		descriptor.m_bufferView.m_resource = resource;
@@ -364,7 +365,7 @@ public:
 		descriptor.m_bufferView.m_format = fmt;
 		descriptor.m_isHandle = false;
 #if ANKI_ASSERTIONS_ENABLED
-		if(fmt == DXGI_FORMAT_UNKNOWN)
+		if(fmt == Format::kNone)
 		{
 			descriptor.m_type = DescriptorType::kStorageBuffer;
 			descriptor.m_flags = DescriptorFlag::kRead;
@@ -398,7 +399,7 @@ public:
 		descriptor.m_bufferView.m_resource = resource;
 		descriptor.m_bufferView.m_offset = offset;
 		descriptor.m_bufferView.m_range = range;
-		descriptor.m_bufferView.m_format = DXGI_FORMAT_UNKNOWN;
+		descriptor.m_bufferView.m_format = Format::kNone;
 		descriptor.m_isHandle = false;
 #if ANKI_ASSERTIONS_ENABLED
 		descriptor.m_type = DescriptorType::kUniformBuffer;
@@ -438,7 +439,7 @@ private:
 		ID3D12Resource* m_resource;
 		PtrSize m_offset;
 		PtrSize m_range;
-		DXGI_FORMAT m_format;
+		Format m_format;
 	};
 
 	class Descriptor
@@ -514,7 +515,6 @@ private:
 inline void DescriptorHeapHandle::increment(U32 descriptorCount)
 {
 	m_cpuHandle.ptr += DescriptorFactory::getSingleton().getDescriptorHandleIncrementSize(m_heapType) * descriptorCount;
-	validate();
 }
 /// @}
 

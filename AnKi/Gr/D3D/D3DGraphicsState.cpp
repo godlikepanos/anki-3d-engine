@@ -148,7 +148,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 			D3D12_INPUT_ELEMENT_DESC& elem = inputElementDescs[inputElementDescCount++];
 
 			getVertexAttributeSemanticInfo(i, elem.SemanticName, elem.SemanticIndex);
-			elem.Format = DXGI_FORMAT(staticState.m_vert.m_attribs[i].m_fmt);
+			elem.Format = convertFormat(staticState.m_vert.m_attribs[i].m_fmt);
 			elem.InputSlot = staticState.m_vert.m_attribs[i].m_binding;
 			elem.AlignedByteOffset = staticState.m_vert.m_attribs[i].m_relativeOffset;
 			elem.InputSlotClass = (staticState.m_vert.m_bindings[staticState.m_vert.m_attribs[i].m_binding].m_stepRate == VertexStepRate::kVertex)
@@ -182,16 +182,34 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	if(staticState.m_misc.m_depthStencilFormat != Format::kNone)
 	{
 		Array<D3D12_DEPTH_STENCILOP_DESC1, 2> stencilDescs;
-		for(U32 w = 0; w < 2; ++w)
+		if(hasStencilRt)
 		{
-			stencilDescs[w].StencilFailOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_fail);
-			stencilDescs[w].StencilDepthFailOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_stencilPassDepthFail);
-			stencilDescs[w].StencilPassOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_stencilPassDepthPass);
-			stencilDescs[w].StencilFunc = convertComparisonFunc(staticState.m_stencil.m_face[w].m_compare);
+			for(U32 w = 0; w < 2; ++w)
+			{
+				stencilDescs[w].StencilFailOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_fail);
+				stencilDescs[w].StencilDepthFailOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_stencilPassDepthFail);
+				stencilDescs[w].StencilPassOp = convertStencilOperation(staticState.m_stencil.m_face[w].m_stencilPassDepthPass);
+				stencilDescs[w].StencilFunc = convertComparisonFunc(staticState.m_stencil.m_face[w].m_compare);
 
-			ANKI_ASSERT(staticState.m_stencil.m_face[w].m_compareMask != 0x5A5A5A5A && staticState.m_stencil.m_face[w].m_writeMask != 0x5A5A5A5A);
-			stencilDescs[w].StencilReadMask = U8(staticState.m_stencil.m_face[w].m_compareMask);
-			stencilDescs[w].StencilWriteMask = U8(staticState.m_stencil.m_face[w].m_writeMask);
+				ANKI_ASSERT(
+					!stencilTestEnabled
+					|| (staticState.m_stencil.m_face[w].m_compareMask != 0x5A5A5A5A && staticState.m_stencil.m_face[w].m_writeMask != 0x5A5A5A5A));
+				stencilDescs[w].StencilReadMask = U8(staticState.m_stencil.m_face[w].m_compareMask);
+				stencilDescs[w].StencilWriteMask = U8(staticState.m_stencil.m_face[w].m_writeMask);
+			}
+		}
+		else
+		{
+			for(U32 w = 0; w < 2; ++w)
+			{
+				stencilDescs[w].StencilFailOp = D3D12_STENCIL_OP_KEEP;
+				stencilDescs[w].StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+				stencilDescs[w].StencilPassOp = D3D12_STENCIL_OP_KEEP;
+				stencilDescs[w].StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
+				stencilDescs[w].StencilReadMask = 0;
+				stencilDescs[w].StencilWriteMask = 0;
+			}
 		}
 
 		dsDesc = {.DepthEnable = depthTestEnabled(staticState.m_depth.m_compare, staticState.m_depth.m_writeEnabled),
@@ -217,7 +235,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	{
 		if(staticState.m_misc.m_colorRtMask.get(i))
 		{
-			rtFormats.RTFormats[i] = DXGI_FORMAT(staticState.m_misc.m_colorRtFormats[i]);
+			rtFormats.RTFormats[i] = convertFormat(staticState.m_misc.m_colorRtFormats[i]);
 			rtFormats.NumRenderTargets = i + 1;
 		}
 	}
@@ -245,7 +263,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	ANKI_SET_IR(MS, kMesh)
 	desc.BlendState = CD3DX12_BLEND_DESC(blendDesc);
 	desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC2(dsDesc);
-	desc.DSVFormat = DXGI_FORMAT(staticState.m_misc.m_depthStencilFormat);
+	desc.DSVFormat = convertFormat(staticState.m_misc.m_depthStencilFormat);
 	desc.RasterizerState = CD3DX12_RASTERIZER_DESC2(rastDesc);
 	desc.RTVFormats = rtFormats;
 	desc.SampleDesc = sampleDesc;

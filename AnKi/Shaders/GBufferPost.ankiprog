@@ -3,8 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
+
+#pragma anki technique_start vert
 #pragma anki technique_end vert
 
 #pragma anki technique_start frag
@@ -27,8 +28,10 @@ struct FragOut
 	RVec4 m_roughnessAndOther : SV_TARGET1;
 };
 
-FragOut main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION)
+FragOut main(VertOut input)
 {
+	const Vec2 uv = input.m_uv;
+
 	// This code blends the diffuse and the specular+rougness of the decals with GBuffer render targets.
 	// Normaly the blending is being done ('D' is the decal diffuse and 'f' is decal blend factor):
 	// d=gbuffer.diff
@@ -46,7 +49,7 @@ FragOut main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION)
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalUniforms, Vec3(svPosition.xy, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalUniforms, Vec3(input.m_svPosition.xy, depth));
 
 	// Make the decalsMask uniform across the wave because we are accessing bindless textures later on
 	U32 decalsMask = cluster.m_decalsMask[0];

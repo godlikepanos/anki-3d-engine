@@ -43,7 +43,7 @@ Error QueryFactory::newQuery(QueryHandle& handle)
 		BufferInitInfo buffInit("QueryBuffer");
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_usage = BufferUsageBit::kTransferDestination;
-		buffInit.m_size = kMaxQueriesPerQueryChunk * m_resultStructSize64 * sizeof(U64);
+		buffInit.m_size = kMaxQueriesPerQueryChunk * m_resultStructSize;
 		chunk.m_resultsBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		chunk.m_resultsBufferCpuAddr = static_cast<U64*>(chunk.m_resultsBuffer->map(0, buffInit.m_size, BufferMapAccessBit::kRead));
@@ -111,7 +111,7 @@ Bool QueryFactory::getResult(QueryHandle handle, U64& result)
 	const Bool available = (it->m_fenceArr[handle.m_queryIndex].isCreated()) ? it->m_fenceArr[handle.m_queryIndex]->done() : true;
 	if(available)
 	{
-		result = it->m_resultsBufferCpuAddr[handle.m_queryIndex * m_resultStructSize64 + m_resultMemberOffset64];
+		result = it->m_resultsBufferCpuAddr[(handle.m_queryIndex * m_resultStructSize + m_resultMemberOffset) / sizeof(U64)];
 		it->m_fenceArr[handle.m_queryIndex].reset(nullptr);
 	}
 	else

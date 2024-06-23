@@ -50,8 +50,8 @@ class QueryFactory
 public:
 	QueryFactory(D3D12_QUERY_HEAP_TYPE type, U32 resultStructSize, U32 resultMemberOffset)
 		: m_type(type)
-		, m_resultStructSize64(resultStructSize / sizeof(U64))
-		, m_resultMemberOffset64(resultMemberOffset / sizeof(U64))
+		, m_resultStructSize(resultStructSize)
+		, m_resultMemberOffset(resultMemberOffset)
 	{
 		ANKI_ASSERT(resultStructSize > 0);
 		ANKI_ASSERT((resultStructSize % sizeof(U64)) == 0);
@@ -79,7 +79,7 @@ public:
 		auto it = m_chunkArray.indexToIterator(handle.m_chunkIndex);
 
 		info.m_resultsBuffer = &static_cast<const BufferImpl&>(*it->m_resultsBuffer).getD3DResource();
-		info.m_resultsBufferOffset = (handle.m_queryIndex * m_resultStructSize64 + m_resultMemberOffset64) / sizeof(U64);
+		info.m_resultsBufferOffset = handle.m_queryIndex * m_resultStructSize + m_resultMemberOffset;
 		info.m_queryHeap = it->m_heap;
 		info.m_indexInHeap = handle.m_queryIndex;
 		return info;
@@ -131,8 +131,8 @@ private:
 	Mutex m_mtx;
 
 	D3D12_QUERY_HEAP_TYPE m_type;
-	U32 m_resultStructSize64;
-	U32 m_resultMemberOffset64;
+	U32 m_resultStructSize;
+	U32 m_resultMemberOffset;
 };
 
 class OcclusionQueryFactory : public QueryFactory, public MakeSingleton<OcclusionQueryFactory>

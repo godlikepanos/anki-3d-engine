@@ -32,7 +32,7 @@ Error Sky::initInternal()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_computeSunColorGrProg, "ComputeSunColor"));
 
 	const TextureUsageBit usage = TextureUsageBit::kAllCompute;
-	const TextureUsageBit initialUsage = TextureUsageBit::kAllCompute;
+	const TextureUsageBit initialUsage = TextureUsageBit::kSampledCompute;
 	const Format formatB =
 		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Unorm : Format::kR16G16B16A16_Unorm;
 
@@ -78,8 +78,8 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	RenderTargetHandle multipleScatteringLutRt;
 	if(renderTransAndMultiScatLuts)
 	{
-		transmittanceLutRt = rgraph.importRenderTarget(m_transmittanceLut.get(), TextureUsageBit::kAllCompute);
-		multipleScatteringLutRt = rgraph.importRenderTarget(m_multipleScatteringLut.get(), TextureUsageBit::kAllCompute);
+		transmittanceLutRt = rgraph.importRenderTarget(m_transmittanceLut.get(), TextureUsageBit::kSampledCompute);
+		multipleScatteringLutRt = rgraph.importRenderTarget(m_multipleScatteringLut.get(), TextureUsageBit::kSampledCompute);
 		m_transmittanceAndMultiScatterLutsGenerated = true;
 	}
 	else
@@ -94,7 +94,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get(), TextureUsageBit::kAllCompute);
+		m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get(), TextureUsageBit::kSampledCompute);
 		m_skyLutImportedOnce = true;
 	}
 

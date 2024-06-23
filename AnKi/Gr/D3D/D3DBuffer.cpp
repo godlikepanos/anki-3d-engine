@@ -159,7 +159,12 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	const D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 	ANKI_D3D_CHECK(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &resourceDesc, initialState, nullptr, IID_PPV_ARGS(&m_resource)));
 
-	ANKI_D3D_CHECK(m_resource->SetName(s2ws(inf.getName().cstr()).c_str()));
+	GrDynamicArray<WChar> wstr;
+	wstr.resize(getName().getLength() + 1);
+	getName().toWideChars(wstr.getBegin(), wstr.getSize());
+	ANKI_D3D_CHECK(m_resource->SetName(wstr.getBegin()));
+
+	m_gpuAddress = m_resource->GetGPUVirtualAddress();
 
 	return Error::kNone;
 }
@@ -195,9 +200,9 @@ D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
 		sync |= D3D12_BARRIER_SYNC_EXECUTE_INDIRECT;
 	}
 
-	if(!!(usage & (BufferUsageBit::kIndex | BufferUsageBit::kVertex)))
+	if(!!(usage & BufferUsageBit::kIndex))
 	{
-		sync |= D3D12_BARRIER_SYNC_INDEX_INPUT | D3D12_BARRIER_SYNC_VERTEX_SHADING;
+		sync |= D3D12_BARRIER_SYNC_INDEX_INPUT;
 	}
 
 	if(!!(usage & BufferUsageBit::kAllGeometry))

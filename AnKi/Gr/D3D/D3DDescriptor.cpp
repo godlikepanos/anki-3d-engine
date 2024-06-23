@@ -355,7 +355,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	D3D12_ROOT_SIGNATURE_DESC1& sigDesc = verSigDesc.Desc_1_1;
 	sigDesc.NumParameters = rootParameters.getSize();
 	sigDesc.pParameters = rootParameters.getBegin();
-	sigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+	sigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED | D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	ComPtr<ID3DBlob> signatureBlob;
 	ComPtr<ID3DBlob> errorBlob;
@@ -402,13 +402,17 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 			for(U32 arrayIdx = 0; arrayIdx < inBinding.m_arraySize; ++arrayIdx)
 			{
 				const U32 idxInDescriptorsArr = inBinding.m_registerBindingPoint + arrayIdx;
-				signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType].resize(idxInDescriptorsArr + 1); // Account for holes
+				if(idxInDescriptorsArr >= signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType].getSize())
+				{
+					signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType].resize(idxInDescriptorsArr + 1); // Account for holes
+				}
 
 				RootSignature::Descriptor& outDescriptor = signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType][idxInDescriptorsArr];
 				outDescriptor.m_flags = inBinding.m_flags;
 				outDescriptor.m_type = inBinding.m_type;
 				if(outDescriptor.m_type == DescriptorType::kStorageBuffer)
 				{
+					ANKI_ASSERT(inBinding.m_d3dStructuredBufferStride < kMaxU16);
 					outDescriptor.m_structuredBufferStride = inBinding.m_d3dStructuredBufferStride;
 				}
 			}
@@ -540,8 +544,8 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 				}
 
 				const Descriptor& outDescriptor = stateSpace.m_descriptors[hlslResourceType][registerBinding];
-				ANKI_ASSERT(inDescriptor.m_flags == outDescriptor.m_flags && inDescriptor.m_type == outDescriptor.m_type
-							&& "Have bound the wrong thing");
+				ANKI_ASSERT((inDescriptor.m_flags & ~DescriptorFlag::kByteAddressBuffer) == outDescriptor.m_flags
+							&& inDescriptor.m_type == outDescriptor.m_type && "Have bound the wrong thing");
 
 				if(inDescriptor.m_type == DescriptorType::kUniformBuffer)
 				{
@@ -551,7 +555,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					const BufferView& view = outDescriptor.m_bufferView;
 					D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
 					desc.BufferLocation = view.m_resource->GetGPUVirtualAddress() + view.m_offset;
-					desc.SizeInBytes = getAlignedRoundUp(view.m_range, 256);
+					desc.SizeInBytes = U32(getAlignedRoundUp(256, view.m_range));
 
 					getDevice().CreateConstantBufferView(&desc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
@@ -573,40 +577,43 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 				}
 				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
 				{
-					// RWStructuredBuffer
+					// RWStructuredBuffer or RWByteAddressBuffer
 
 					ANKI_ASSERT(!outDescriptor.m_isHandle);
+
 					const BufferView& view = outDescriptor.m_bufferView;
 					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+					uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+					uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
 
-					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
-					uavDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
+					ANKI_ASSERT((view.m_offset % sizeof(U32)) == 0);
+					uavDesc.Buffer.FirstElement = view.m_offset / sizeof(U32);
 
 					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
-					uavDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
-
-					uavDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
+					ANKI_ASSERT((view.m_range % sizeof(U32)) == 0);
+					uavDesc.Buffer.NumElements = U32(view.m_range / sizeof(U32));
 
 					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
 				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite))
 				{
-					// StructuredBuffer
+					// StructuredBuffer or ByteAddressBuffer
 
 					ANKI_ASSERT(!outDescriptor.m_isHandle);
 					const BufferView& view = outDescriptor.m_bufferView;
 					D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-					srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+					srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 					srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+					srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 					srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
-					srvDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
+					ANKI_ASSERT((view.m_offset % sizeof(U32)) == 0);
+					srvDesc.Buffer.FirstElement = view.m_offset / sizeof(U32);
 
 					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
-					srvDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
-					srvDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
+					ANKI_ASSERT((view.m_range % sizeof(U32)) == 0);
+					srvDesc.Buffer.NumElements = U32(view.m_range / sizeof(U32));
 
 					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
@@ -617,7 +624,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					ANKI_ASSERT(!outDescriptor.m_isHandle);
 					const BufferView& view = outDescriptor.m_bufferView;
 					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-					uavDesc.Format = view.m_format;
+					uavDesc.Format = convertFormat(view.m_format);
 					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 
 					const U32 texelSize = getFormatInfo(Format(view.m_format)).m_texelSize;
@@ -637,7 +644,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					const BufferView& view = outDescriptor.m_bufferView;
 					D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 
-					srvDesc.Format = view.m_format;
+					srvDesc.Format = convertFormat(view.m_format);
 					srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 					srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 

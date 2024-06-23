@@ -5,26 +5,10 @@
 
 #pragma anki mutator METHOD 0 1 2 // 0: solid colod, 1: 2D image, 2: generated
 
+#define CUSTOM_DEPTH 1.0
+#include <AnKi/Shaders/QuadVert.hlsl>
+
 #pragma anki technique_start vert
-
-#include <AnKi/Shaders/Common.hlsl>
-
-struct VertOut
-{
-	Vec4 m_position : SV_POSITION;
-	Vec2 m_uv : TEXCOORD;
-};
-
-VertOut main(U32 vertId : SV_VERTEXID)
-{
-	VertOut output;
-	output.m_uv = Vec2(vertId & 1, vertId >> 1) * 2.0;
-
-	output.m_position = Vec4(output.m_uv * 2.0 - 1.0, 1.0, 1.0);
-
-	return output;
-}
-
 #pragma anki technique_end vert
 
 #pragma anki technique_start frag
@@ -67,8 +51,9 @@ Texture2D<Vec4> g_skyLut : register(t0);
 ConstantBuffer<GlobalRendererUniforms> g_unis : register(b0);
 #endif
 
-RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(VertOut input) : SV_TARGET0
 {
+	const Vec2 uv = input.m_uv;
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
 	return g_unis.m_solidColor;

@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include <AnKi/Shaders/QuadVert.hlsl>
 #if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 #	include <AnKi/Shaders/Functions.hlsl>
@@ -31,7 +32,7 @@ RWTexture2D<RVec4> g_storageTex : register(u1);
 #	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SIZE_X, THREADGROUP_SIZE_Y, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -39,6 +40,8 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	g_storageTex.GetDimensions(imgSize.x, imgSize.y);
 
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / imgSize;
+#	else
+	const Vec2 uv = input.m_uv;
 #	endif
 
 	const RF32 weight = 1.0 / 5.0;
@@ -59,7 +62,6 @@ RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
 
 #pragma anki technique_start vert
-#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert
 
 #pragma anki technique_start frag

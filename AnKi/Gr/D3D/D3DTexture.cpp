@@ -26,7 +26,7 @@ U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDesc& subre
 {
 	ANKI_D3D_SELF(TextureImpl);
 
-	const TextureImpl::View& view = self.getOrCreateView(subresource, TextureUsageBit::kAllSampled);
+	const TextureImpl::View& view = self.getOrCreateView(subresource, TextureImpl::ViewType::kSrv);
 
 	LockGuard lock(view.m_bindlessLock);
 
@@ -127,7 +127,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		desc.Width = m_width;
 		desc.Height = m_height;
 		desc.MipLevels = U16(m_mipCount);
-		desc.Format = DXGI_FORMAT(m_format);
+		desc.Format = convertFormat(m_format);
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -165,42 +165,38 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		const D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 		ANKI_D3D_CHECK(getDevice().CreateCommittedResource(&heapProperties, heapFlags, &desc, initialState, nullptr, IID_PPV_ARGS(&m_resource)));
 
-		ANKI_D3D_CHECK(m_resource->SetName(s2ws(init.getName().cstr()).c_str()));
+		GrDynamicArray<WChar> wstr;
+		wstr.resize(getName().getLength() + 1);
+		getName().toWideChars(wstr.getBegin(), wstr.getSize());
+		ANKI_D3D_CHECK(m_resource->SetName(wstr.getBegin()));
 	}
 
 	// Create the default views
 	if(!!(m_usage & TextureUsageBit::kAllFramebuffer))
 	{
 		const TextureView tview(this, TextureSubresourceDesc::firstSurface());
-		initView(tview.getSubresource(), TextureUsageBit::kAllFramebuffer, m_firstSurfaceRtvOrDsv);
+		initView(tview.getSubresource(), !!(m_aspect & DepthStencilAspectBit::kDepthStencil) ? ViewType::kDsv : ViewType::kRtv,
+				 m_firstSurfaceRtvOrDsv);
 		m_firstSurfaceRtvOrDsvSubresource = tview.getSubresource();
 	}
 
 	if(!!(m_usage & TextureUsageBit::kAllSampled))
 	{
 		const TextureView tview(this, TextureSubresourceDesc::all());
-		initView(tview.getSubresource(), TextureUsageBit::kAllSampled, m_wholeTextureSrv);
+		initView(tview.getSubresource(), ViewType::kSrv, m_wholeTextureSrv);
 		m_wholeTextureSrvSubresource = tview.getSubresource();
 	}
 
 	return Error::kNone;
 }
 
-void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsageBit usage, View& view) const
+void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType type, View& view) const
 {
-	ANKI_ASSERT(!!(m_usage & usage));
+	view.m_type = type;
 
-	const Bool rtv = !!(usage & TextureUsageBit::kAllFramebuffer) && m_aspect == DepthStencilAspectBit::kNone;
-	const Bool dsv = !!(usage & TextureUsageBit::kAllFramebuffer) && m_aspect != DepthStencilAspectBit::kNone;
-	const Bool srv = !!(usage & TextureUsageBit::kAllSampled);
-	const Bool uav = !!(usage & TextureUsageBit::kAllStorage);
-
-	ANKI_ASSERT(rtv + dsv + srv + uav == 1 && "Only enable one");
-
-	view.m_usage = usage;
-
-	if(rtv)
+	if(type == ViewType::kRtv)
 	{
+		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllFramebuffer));
 		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect == DepthStencilAspectBit::kNone);
 
 		D3D12_RENDER_TARGET_VIEW_DESC desc = {};
@@ -222,19 +218,20 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsa
 		view.m_handle = DescriptorFactory::getSingleton().allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
 		getDevice().CreateRenderTargetView(m_resource, (isExternal()) ? nullptr : &desc, view.m_handle.getCpuOffset());
 	}
-	else if(dsv)
+	else if(type == ViewType::kDsv || type == ViewType::kReadOnlyDsv)
 	{
+		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllFramebuffer));
 		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect != DepthStencilAspectBit::kNone);
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
 
-		desc.Format = DXGI_FORMAT(m_format);
+		desc.Format = convertFormat(m_format);
 
-		const Bool readOnlyDsv = !(usage & TextureUsageBit::kFramebufferWrite);
-		if(readOnlyDsv)
+		if(type == ViewType::kReadOnlyDsv)
 		{
-			desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_DEPTH;
-			desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_STENCIL;
+			desc.Flags |= !!(subresource.m_depthStencilAspect & DepthStencilAspectBit::kDepth) ? D3D12_DSV_FLAG_READ_ONLY_DEPTH : D3D12_DSV_FLAG_NONE;
+			desc.Flags |=
+				!!(subresource.m_depthStencilAspect & DepthStencilAspectBit::kStencil) ? D3D12_DSV_FLAG_READ_ONLY_STENCIL : D3D12_DSV_FLAG_NONE;
 		}
 
 		if(m_texType == TextureType::k2D)
@@ -253,8 +250,9 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsa
 		view.m_handle = DescriptorFactory::getSingleton().allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, false);
 		getDevice().CreateDepthStencilView(m_resource, &desc, view.m_handle.getCpuOffset());
 	}
-	else if(srv)
+	else if(type == ViewType::kSrv)
 	{
+		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllSrv));
 		const TextureView tview(this, subresource);
 
 		ANKI_ASSERT(tview.getSubresource().m_depthStencilAspect != DepthStencilAspectBit::kDepthStencil && "Can only create a single plane SRV");
@@ -263,7 +261,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsa
 
 		if(!m_aspect)
 		{
-			desc.Format = DXGI_FORMAT(m_format);
+			desc.Format = convertFormat(m_format);
 		}
 		else
 		{
@@ -271,10 +269,10 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsa
 			switch(m_format)
 			{
 			case Format::kD16_Unorm:
-				desc.Format = DXGI_FORMAT(Format::kR16_Unorm);
+				desc.Format = convertFormat(Format::kR16_Unorm);
 				break;
 			case Format::kD32_Sfloat:
-				desc.Format = DXGI_FORMAT(Format::kR32_Sfloat);
+				desc.Format = convertFormat(Format::kR32_Sfloat);
 				break;
 			case Format::kD24_Unorm_S8_Uint:
 				if(tview.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::kDepth)
@@ -390,11 +388,12 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsa
 		view.m_handle = DescriptorFactory::getSingleton().allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, false);
 		getDevice().CreateShaderResourceView(m_resource, &desc, view.m_handle.getCpuOffset());
 	}
-	else if(uav)
+	else if(type == ViewType::kUav)
 	{
+		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllUav));
 		D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
 
-		desc.Format = DXGI_FORMAT(m_format);
+		desc.Format = convertFormat(m_format);
 
 		if(m_texType == TextureType::k1D)
 		{
@@ -452,17 +451,16 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, TextureUsa
 	}
 }
 
-const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDesc& subresource, TextureUsageBit usage) const
+const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDesc& subresource, ViewType type) const
 {
 	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
-	ANKI_ASSERT(!!(usage & m_usage));
 
 	// Check some pre-created
-	if(!!(usage & TextureUsageBit::kAllSampled) && subresource == m_wholeTextureSrvSubresource)
+	if(type == m_wholeTextureSrv.m_type && subresource == m_wholeTextureSrvSubresource)
 	{
 		return m_wholeTextureSrv;
 	}
-	else if(usage == TextureUsageBit::kAllFramebuffer && subresource == m_firstSurfaceRtvOrDsvSubresource)
+	else if(m_firstSurfaceRtvOrDsv.m_type == type && subresource == m_firstSurfaceRtvOrDsvSubresource)
 	{
 		return m_firstSurfaceRtvOrDsv;
 	}
@@ -474,8 +472,8 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 	{
 	public:
 		TextureSubresourceDesc m_subresource;
-		TextureUsageBit m_usage;
-	} toHash = {subresource, usage};
+		ViewType m_type;
+	} toHash = {subresource, type};
 	ANKI_END_PACKED_STRUCT
 
 	const U64 hash = computeHash(&toHash, sizeof(toHash));
@@ -508,7 +506,7 @@ const TextureImpl::View& TextureImpl::getOrCreateView(const TextureSubresourceDe
 
 	// Need to create it
 	View& nview = *m_viewsMap.emplace(hash);
-	initView(subresource, usage, nview);
+	initView(subresource, type, nview);
 
 	return nview;
 }
@@ -575,99 +573,153 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 	const Bool depthStencil = !!m_aspect;
 	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
 
-	if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kStorageGeometryRead)))
+	if(depthStencil)
 	{
-		stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
-	}
+		// DS is a little bit special, it has 3 states
 
-	if(!!(usage & TextureUsageBit::kStorageGeometryWrite))
-	{
-		stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
-	}
-
-	if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kStorageFragmentRead)))
-	{
-		stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
-	}
-
-	if(!!(usage & TextureUsageBit::kStorageFragmentWrite))
-	{
-		stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
-	}
-
-	if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeRead)))
-	{
-		stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
-	}
-
-	if(!!(usage & TextureUsageBit::kStorageComputeWrite))
-	{
-		stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
-	}
-
-	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kStorageTraceRaysRead)) && rt)
-	{
-		stages |= D3D12_BARRIER_SYNC_RAYTRACING;
-		accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
-	}
-
-	if(!!(usage & TextureUsageBit::kStorageTraceRaysWrite) && rt)
-	{
-		stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
-	}
-
-	if(!!(usage & TextureUsageBit::kFramebufferRead))
-	{
-		if(depthStencil)
+		if(!!(usage & TextureUsageBit::kFramebufferWrite))
 		{
-			stages |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
-			accesses |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ;
-		}
-		else
-		{
-			stages |= D3D12_BARRIER_SYNC_RENDER_TARGET;
-			accesses |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
-		}
-	}
-
-	if(!!(usage & TextureUsageBit::kFramebufferWrite))
-	{
-		if(depthStencil)
-		{
+			// Writing to DS, can't be anything else
 			stages |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
 			accesses |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE;
 		}
+		else if(!!(usage & TextureUsageBit::kFramebufferRead) && !!(usage & TextureUsageBit::kAllSampled))
+		{
+			// Reading in the renderpass and sampling at the same time
+
+			if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kSampledFragment)))
+			{
+				stages |= D3D12_BARRIER_SYNC_DRAW;
+			}
+
+			if(!!(usage & TextureUsageBit::kSampledCompute))
+			{
+				stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+			}
+
+			if(!!(usage & TextureUsageBit::kSampledTraceRays) && rt)
+			{
+				stages |= D3D12_BARRIER_SYNC_RAYTRACING;
+			}
+
+			accesses |= D3D12_BARRIER_ACCESS_COMMON; // Include all
+		}
+		else if(!!(usage & TextureUsageBit::kAllSampled))
+		{
+			// Only sampled
+
+			if(!!(usage & TextureUsageBit::kSampledGeometry))
+			{
+				stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+			}
+
+			if(!!(usage & TextureUsageBit::kSampledFragment))
+			{
+				stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+			}
+
+			if(!!(usage & TextureUsageBit::kSampledCompute))
+			{
+				stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+			}
+
+			if(!!(usage & TextureUsageBit::kSampledTraceRays) && rt)
+			{
+				stages |= D3D12_BARRIER_SYNC_RAYTRACING;
+			}
+
+			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+		}
 		else
+		{
+			// Only renderpass read
+			ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferRead));
+			stages |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
+			accesses |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ;
+		}
+	}
+	else
+	{
+		if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kStorageGeometryRead)))
+		{
+			stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+		}
+
+		if(!!(usage & TextureUsageBit::kStorageGeometryWrite))
+		{
+			stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+		}
+
+		if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kStorageFragmentRead)))
+		{
+			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+		}
+
+		if(!!(usage & TextureUsageBit::kStorageFragmentWrite))
+		{
+			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+		}
+
+		if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeRead)))
+		{
+			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+		}
+
+		if(!!(usage & TextureUsageBit::kStorageComputeWrite))
+		{
+			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+		}
+
+		if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kStorageTraceRaysRead)) && rt)
+		{
+			stages |= D3D12_BARRIER_SYNC_RAYTRACING;
+			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+		}
+
+		if(!!(usage & TextureUsageBit::kStorageTraceRaysWrite) && rt)
+		{
+			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+		}
+
+		if(!!(usage & TextureUsageBit::kFramebufferWrite))
 		{
 			stages |= D3D12_BARRIER_SYNC_RENDER_TARGET;
 			accesses |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
 		}
+		else if(!!(usage & TextureUsageBit::kFramebufferRead))
+		{
+			// Read only
+			stages |= D3D12_BARRIER_SYNC_RENDER_TARGET;
+			accesses |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
+		}
+
+		if(!!(usage & TextureUsageBit::kFramebufferShadingRate))
+		{
+			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
+			accesses |= D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE;
+		}
+
+		if(!!(usage & TextureUsageBit::kTransferDestination))
+		{
+			stages |= D3D12_BARRIER_SYNC_COPY;
+			accesses |= D3D12_BARRIER_ACCESS_COPY_DEST;
+		}
+
+		if(!!(usage & TextureUsageBit::kPresent))
+		{
+			stages |= D3D12_BARRIER_SYNC_COPY;
+			accesses |= D3D12_BARRIER_ACCESS_COPY_SOURCE;
+		}
 	}
 
-	if(!!(usage & TextureUsageBit::kFramebufferShadingRate))
-	{
-		stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
-		accesses |= D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE;
-	}
-
-	if(!!(usage & TextureUsageBit::kTransferDestination))
-	{
-		stages |= D3D12_BARRIER_SYNC_COPY;
-		accesses |= D3D12_BARRIER_ACCESS_COPY_DEST;
-	}
-
-	if(!!(usage & TextureUsageBit::kPresent))
-	{
-		stages |= D3D12_BARRIER_SYNC_COPY;
-		accesses |= D3D12_BARRIER_ACCESS_COPY_SOURCE;
-	}
+	ANKI_ASSERT(!!stages);
 }
 
 D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
@@ -694,7 +746,7 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 		else if((usage & (TextureUsageBit::kAllSampled | TextureUsageBit::kFramebufferRead)) == usage)
 		{
 			// Only depth tests and sampled
-			out = D3D12_BARRIER_LAYOUT_COMMON;
+			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ;
 		}
 		else
 		{

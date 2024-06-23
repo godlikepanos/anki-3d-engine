@@ -323,7 +323,7 @@ SamplerState g_sampler : register(s2);
 [numthreads(1, 1, 1)]
 void main()
 {
-	g_rwstructured[0] = g_structured[0];
+	g_rwstructured[0] = g_structured[0] + g_structured[1];
 
 	g_rwtex[0][uint2(0, 0)] = g_consts.m_val;
 
@@ -358,6 +358,7 @@ void main()
 		const Vec4 kInvalidVec(1.0f, 2.0f, 3.0f, 4.0f);
 
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
+		buffInit.m_size = sizeof(kMagicVec) * 2;
 		BufferPtr structured = createBuffer(buffInit, kMagicVec, "structured");
 
 		texInit.m_usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kTransferDestination;
@@ -367,6 +368,7 @@ void main()
 		BufferPtr buff = createBuffer(buffInit, kMagicVec * 2.0f, "buff");
 
 		buffInit.m_usage = BufferUsageBit::kAllStorage;
+		buffInit.m_size = sizeof(kInvalidVec);
 		BufferPtr rwstructured = createBuffer(buffInit, kInvalidVec, "rwstructured");
 
 		buffInit.m_usage = BufferUsageBit::kAllTexel;
@@ -415,7 +417,7 @@ void main()
 		signalFence->clientWait(kMaxSecond);
 
 		// Check
-		validateBuffer(rwstructured, kMagicVec);
+		validateBuffer(rwstructured, kMagicVec + kMagicVec);
 		validateBuffer(rwbuff, kMagicVec * 2.0f);
 	}
 

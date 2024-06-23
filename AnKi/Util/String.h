@@ -258,6 +258,24 @@ public:
 		return anki::computeHash(m_ptr, getLength());
 	}
 
+	void toWideChars(WChar* arr, U32 arrSize) const
+	{
+		checkInit();
+		const U32 len = getLength();
+		ANKI_ASSERT(arrSize >= len + 1);
+
+		if(len > 0)
+		{
+			PtrSize outSize;
+			[[maybe_unused]] const errno_t err = mbstowcs_s(&outSize, arr, arrSize, m_ptr, len);
+			ANKI_ASSERT(err == 0 && outSize == len + 1);
+		}
+		else
+		{
+			*arr = L'\0';
+		}
+	}
+
 private:
 	const Char* m_ptr = nullptr;
 

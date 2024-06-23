@@ -403,11 +403,7 @@ enum class Format : U32
 {
 	kNone = 0,
 
-#if ANKI_GR_BACKEND_VULKAN
-#	define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = vk,
-#else
-#	define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = d3d,
-#endif
+#define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) k##type = vk,
 #include <AnKi/Gr/BackendCommon/Format.def.h>
 #undef ANKI_FORMAT_DEF
 };

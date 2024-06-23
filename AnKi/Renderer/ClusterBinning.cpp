@@ -120,27 +120,33 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 				PtrSize objBufferOffset = 0;
 				PtrSize objBufferRange = 0;
+				U32 elementSize = 0;
 				switch(type)
 				{
 				case GpuSceneNonRenderableObjectType::kLight:
 					objBufferOffset = GpuSceneArrays::Light::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::Light::getSingleton().getBufferRange();
+					elementSize = GpuSceneArrays::Light::getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kDecal:
 					objBufferOffset = GpuSceneArrays::Decal::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::Decal::getSingleton().getBufferRange();
+					elementSize = GpuSceneArrays::Decal::getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kFogDensityVolume:
 					objBufferOffset = GpuSceneArrays::FogDensityVolume::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::FogDensityVolume::getSingleton().getBufferRange();
+					elementSize = GpuSceneArrays::FogDensityVolume::getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
 					objBufferOffset = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferRange();
+					elementSize = GpuSceneArrays::GlobalIlluminationProbe::getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kReflectionProbe:
 					objBufferOffset = GpuSceneArrays::ReflectionProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::ReflectionProbe::getSingleton().getBufferRange();
+					elementSize = GpuSceneArrays::ReflectionProbe::getElementSize();
 					break;
 				default:
 					ANKI_ASSERT(0);
@@ -149,7 +155,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				if(objBufferRange == 0)
 				{
 					objBufferOffset = 0;
-					objBufferRange = GpuSceneBuffer::getSingleton().getBufferView().getRange();
+					objBufferRange = getAlignedRoundDown(elementSize, GpuSceneBuffer::getSingleton().getBufferView().getRange());
 				}
 
 				cmdb.bindStorageBuffer(ANKI_REG(t1), BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
@@ -226,27 +232,33 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 
 				PtrSize objBufferOffset = 0;
 				PtrSize objBufferRange = 0;
+				U32 objSize = 0;
 				switch(type)
 				{
 				case GpuSceneNonRenderableObjectType::kLight:
 					objBufferOffset = GpuSceneArrays::Light::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::Light::getSingleton().getBufferRange();
+					objSize = GpuSceneArrays::Light::getSingleton().getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kDecal:
 					objBufferOffset = GpuSceneArrays::Decal::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::Decal::getSingleton().getBufferRange();
+					objSize = GpuSceneArrays::Decal::getSingleton().getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kFogDensityVolume:
 					objBufferOffset = GpuSceneArrays::FogDensityVolume::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::FogDensityVolume::getSingleton().getBufferRange();
+					objSize = GpuSceneArrays::FogDensityVolume::getSingleton().getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe:
 					objBufferOffset = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferRange();
+					objSize = GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize();
 					break;
 				case GpuSceneNonRenderableObjectType::kReflectionProbe:
 					objBufferOffset = GpuSceneArrays::ReflectionProbe::getSingleton().getGpuSceneOffsetOfArrayBase();
 					objBufferRange = GpuSceneArrays::ReflectionProbe::getSingleton().getBufferRange();
+					objSize = GpuSceneArrays::ReflectionProbe::getSingleton().getElementSize();
 					break;
 				default:
 					ANKI_ASSERT(0);
@@ -255,7 +267,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				if(objBufferRange == 0)
 				{
 					objBufferOffset = 0;
-					objBufferRange = GpuSceneBuffer::getSingleton().getBufferView().getRange();
+					objBufferRange = getAlignedRoundDown(objSize, GpuSceneBuffer::getSingleton().getBufferView().getRange());
 				}
 
 				cmdb.bindStorageBuffer(ANKI_REG(t0), BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));

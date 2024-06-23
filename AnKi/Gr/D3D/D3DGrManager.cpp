@@ -42,73 +42,18 @@ BoolCVar g_debugMarkersCVar(CVarSubsystem::kGr, "DebugMarkers", false, "Enable o
 BoolCVar g_meshShadersCVar(CVarSubsystem::kGr, "MeshShaders", false, "Enable or not mesh shaders");
 static NumericCVar<U8> g_deviceCVar(CVarSubsystem::kGr, "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
 static BoolCVar g_rayTracingCVar(CVarSubsystem::kGr, "RayTracing", false, "Try enabling ray tracing");
-
-static LONG NTAPI vexHandler(PEXCEPTION_POINTERS exceptionInfo)
-{
-	PEXCEPTION_RECORD exceptionRecord = exceptionInfo->ExceptionRecord;
-
-	switch(exceptionRecord->ExceptionCode)
-	{
-	case DBG_PRINTEXCEPTION_WIDE_C:
-	case DBG_PRINTEXCEPTION_C:
-
-		if(exceptionRecord->NumberParameters >= 2)
-		{
-			ULONG len = exceptionRecord->ExceptionInformation[0];
-
-			union
-			{
-				ULONG_PTR up;
-				PCWSTR pwz;
-				PCSTR psz;
-			};
-
-			up = exceptionRecord->ExceptionInformation[1];
-
-			if(exceptionRecord->ExceptionCode == DBG_PRINTEXCEPTION_C)
-			{
-				const ULONG n = MultiByteToWideChar(CP_ACP, 0, psz, len, 0, 0);
-				if(n)
-				{
-					WCHAR* wz = static_cast<WCHAR*>(_malloca(n * sizeof(WCHAR)));
-
-					len = MultiByteToWideChar(CP_ACP, 0, psz, len, wz, n);
-					if(len)
-					{
-						pwz = wz;
-					}
-				}
-			}
-
-			if(len)
-			{
-				const std::wstring wstring(pwz, len - 1);
-				std::string str = ws2s(wstring);
-				str.erase(std::remove(str.begin(), str.end(), '\n'), str.cend());
-				str.erase(std::remove(str.begin(), str.end(), '\r'), str.cend());
-
-				if(str.find("D3D12 INFO") == std::string::npos)
-				{
-					if(GrMemoryPool::isAllocated())
-					{
-						ANKI_D3D_LOGE("%s", str.c_str());
-					}
-					else
-					{
-						printf("D3D12 validation error: %s", str.c_str());
-					}
-				}
-			}
-		}
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-
-	return EXCEPTION_CONTINUE_SEARCH;
-}
+static BoolCVar g_dredCVar(CVarSubsystem::kGr, "Dred", false, "Enable DRED");
+static BoolCVar g_vrsCVar(CVarSubsystem::kGr, "Vrs", false, "Enable or not VRS");
 
 static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 										  [[maybe_unused]] D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext)
 {
+	if(id == D3D12_MESSAGE_ID_INCOMPATIBLE_BARRIER_LAYOUT)
+	{
+		// Skip for now
+		return;
+	}
+
 	if(!Logger::isAllocated())
 	{
 		printf("d3dDebugMessageCallback : %s", pDescription);
@@ -213,7 +158,15 @@ void GrManager::swapBuffers()
 
 void GrManager::finish()
 {
-	ANKI_ASSERT(!"TODO");
+	if(FenceFactory::isAllocated())
+	{
+		for(GpuQueueType qType : EnumIterable<GpuQueueType>())
+		{
+			MicroFencePtr fence = FenceFactory::getSingleton().newInstance();
+			fence->gpuSignal(qType);
+			fence->clientWait(kMaxSecond);
+		}
+	}
 }
 
 #define ANKI_NEW_GR_OBJECT(type) \
@@ -333,8 +286,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
-
-		AddVectoredExceptionHandler(true, vexHandler);
 	}
 
 	ComPtr<IDXGIFactory2> factory2;
@@ -427,6 +378,19 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
+	if(g_dredCVar.get())
+	{
+		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
+		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
+
+		// Turn on AutoBreadcrumbs and Page Fault reporting
+		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+
+		ANKI_D3D_LOGI("DRED is enabled");
+		m_canInvokeDred = true;
+	}
+
 	// Create queues
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -467,11 +431,11 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_majorApiVersion = 12;
 		m_capabilities.m_rayTracingEnabled = g_rayTracingCVar.get();
 		m_capabilities.m_64bitAtomics = true;
-		m_capabilities.m_vrs = true;
+		m_capabilities.m_vrs = g_vrsCVar.get();
 		m_capabilities.m_samplingFilterMinMax = true;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;
-		m_capabilities.m_meshShaders = true;
+		m_capabilities.m_meshShaders = g_meshShadersCVar.get();
 		m_capabilities.m_pipelineQuery = true;
 		m_capabilities.m_barycentrics = true;
 	}
@@ -491,6 +455,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	IndirectCommandSignatureFactory::allocateSingleton();
 	ANKI_CHECK(IndirectCommandSignatureFactory::getSingleton().init());
 
+	TimestampQueryFactory::allocateSingleton();
+	PrimitivesPassedClippingFactory::allocateSingleton();
+
 	return Error::kNone;
 }
 
@@ -506,6 +473,8 @@ void GrManagerImpl::destroy()
 
 	// Destroy systems
 	CommandBufferFactory::freeSingleton();
+	PrimitivesPassedClippingFactory::freeSingleton();
+	TimestampQueryFactory::freeSingleton();
 	SwapchainFactory::freeSingleton();
 	FrameGarbageCollector::freeSingleton();
 	RootSignatureFactory::freeSingleton();
@@ -540,6 +509,38 @@ void GrManagerImpl::waitAllQueues()
 			fence->clientWait(kMaxSecond);
 		}
 	}
+}
+
+void GrManagerImpl::invokeDred() const
+{
+	Bool error = false;
+
+	do
+	{
+		if(m_canInvokeDred)
+		{
+			ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
+			if(!SUCCEEDED(m_device->QueryInterface(IID_PPV_ARGS(&pDred))))
+			{
+				error = true;
+				break;
+			}
+
+			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
+			if(!SUCCEEDED(pDred->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)))
+			{
+				error = true;
+				break;
+			}
+
+			D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
+			if(!SUCCEEDED(pDred->GetPageFaultAllocationOutput(&dredPageFaultOutput)))
+			{
+				error = true;
+				break;
+			}
+		}
+	} while(false);
 }
 
 } // end namespace anki

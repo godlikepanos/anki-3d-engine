@@ -63,4 +63,34 @@ D3D12_FILTER convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter
 	return out;
 }
 
+void invokeDred()
+{
+	getGrManagerImpl().invokeDred();
+}
+
+DXGI_FORMAT convertFormat(Format fmt)
+{
+	DXGI_FORMAT out = DXGI_FORMAT_UNKNOWN;
+
+	switch(fmt)
+	{
+	case Format::kNone:
+		out = DXGI_FORMAT_UNKNOWN;
+		break;
+
+#define ANKI_FORMAT_DEF(type, vk, d3d, componentCount, texelSize, blockWidth, blockHeight, blockSize, shaderType, depthStencil) \
+	case Format::k##type: \
+		out = DXGI_FORMAT(d3d); \
+		break;
+#include <AnKi/Gr/BackendCommon/Format.def.h>
+#undef ANKI_FORMAT_DEF
+
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	ANKI_ASSERT(out < DXGI_FORMAT(1000));
+	return out;
+}
+
 } // end namespace anki

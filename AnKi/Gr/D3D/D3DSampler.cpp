@@ -35,7 +35,7 @@ Error SamplerImpl::init(const SamplerInitInfo& inf)
 	desc.AddressW = desc.AddressU;
 	desc.MipLODBias = inf.m_lodBias;
 	desc.MaxAnisotropy = inf.m_anisotropyLevel;
-	desc.ComparisonFunc = convertComparisonFunc(inf.m_compareOperation);
+	desc.ComparisonFunc = D3D12_DECODE_IS_COMPARISON_FILTER(desc.Filter) ? convertComparisonFunc(inf.m_compareOperation) : D3D12_COMPARISON_FUNC_NONE;
 
 	if(inf.m_addressing == SamplingAddressing::kBlack)
 	{

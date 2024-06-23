@@ -7,9 +7,10 @@
 
 #pragma anki mutator SPECULAR 0 1
 
+#include <AnKi/Shaders/QuadVert.hlsl>
+
 // VERT
 #pragma anki technique_start vert
-#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert
 
 // FRAG
@@ -36,8 +37,9 @@ Texture2D<RVec4> g_shadowMap : register(t6);
 
 ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts : register(b1);
 
-RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(VertOut input) : SV_TARGET0
 {
+	const Vec2 uv = input.m_uv;
 	const F32 depth = g_depthTex.SampleLevel(g_gbufferSampler, uv, 0.0).r;
 	if(depth == 1.0f)
 	{

@@ -129,6 +129,7 @@ ANKI_WINBASEAPI int ANKI_WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpC
 ANKI_WINBASEAPI DWORD ANKI_WINAPI FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId, LPSTR lpBuffer, DWORD nSize,
 												 va_list* Arguments);
 ANKI_WINBASEAPI HLOCAL ANKI_WINAPI LocalFree(HLOCAL hMem);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI IsDebuggerPresent();
 
 #undef ANKI_WINBASEAPI
 #undef ANKI_DECLARE_HANDLE
@@ -484,6 +485,11 @@ inline DWORD FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, 
 inline HLOCAL LocalFree(HLOCAL hMem)
 {
 	return ::LocalFree(hMem);
+}
+
+inline BOOL IsDebuggerPresent()
+{
+	return ::IsDebuggerPresent();
 }
 
 } // end namespace anki

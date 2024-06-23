@@ -7,8 +7,9 @@
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
-#pragma anki technique_start vert
 #include <AnKi/Shaders/QuadVert.hlsl>
+
+#pragma anki technique_start vert
 #pragma anki technique_end vert
 
 #pragma anki technique_start frag
@@ -49,8 +50,9 @@ RVec3 colorGrading(RVec3 color)
 	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
-RVec3 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec3 main(VertOut input) : SV_TARGET0
 {
+	const Vec2 uv = input.m_uv;
 	RVec3 outColor;
 
 	if(g_unis.m_motionBlurSamples > 0u)

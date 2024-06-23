@@ -40,7 +40,7 @@ Error Bloom::initExposure()
 	const U32 height = getRenderer().getDownscaleBlur().getPassHeight(kMaxU32) * 2;
 
 	// Create RT info
-	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, kRtPixelFormat, "Bloom Exp");
+	m_exposure.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, getRenderer().getHdrFormat(), "Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
@@ -55,7 +55,7 @@ Error Bloom::initUpscale()
 	const U32 height = getRenderer().getPostProcessResolution().y() / kBloomFraction;
 
 	// Create RT descr
-	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, kRtPixelFormat, "Bloom Upscale");
+	m_upscale.m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, getRenderer().getHdrFormat(), "Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders

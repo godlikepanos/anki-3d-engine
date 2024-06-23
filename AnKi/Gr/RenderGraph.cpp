@@ -1115,7 +1115,9 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 			[this, start, end, pool, &cmdbs, &cmdbsMtx, group, batchGroupCount]([[maybe_unused]] U32 tid) {
 				ANKI_TRACE_SCOPED_EVENT(GrRenderGraphTask);
 
-				CommandBufferInitInfo cmdbInit("RenderGraph cmdb");
+				Array<Char, 32> name;
+				snprintf(name.getBegin(), name.getSize(), "RenderGraph cmdb %u-%u", start, end);
+				CommandBufferInitInfo cmdbInit(name.getBegin());
 				cmdbInit.m_flags = CommandBufferFlag::kGeneralWork;
 				CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
@@ -1169,6 +1171,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 						inf.m_nextUsage = barrier.m_usageAfter;
 						inf.m_textureView = TextureView(&tex, barrier.m_subresource);
 					}
+
 					DynamicArray<BufferBarrierInfo, MemoryPoolPtrWrapper<StackMemoryPool>> buffBarriers(pool);
 					buffBarriers.resizeStorage(batch.m_bufferBarriersBefore.getSize());
 					for(const BufferBarrier& barrier : batch.m_bufferBarriersBefore)
@@ -1179,6 +1182,12 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 						inf.m_bufferView = BufferView(m_ctx->m_buffers[barrier.m_idx].m_buffer.get(), m_ctx->m_buffers[barrier.m_idx].m_offset,
 													  m_ctx->m_buffers[barrier.m_idx].m_range);
 					}
+
+					// Sort them for the command buffer to merge as many as possible
+					std::sort(buffBarriers.getBegin(), buffBarriers.getEnd(), [](const BufferBarrierInfo& a, const BufferBarrierInfo& b) {
+						return a.m_bufferView.getBuffer().getUuid() < b.m_bufferView.getBuffer().getUuid();
+					});
+
 					DynamicArray<AccelerationStructureBarrierInfo, MemoryPoolPtrWrapper<StackMemoryPool>> asBarriers(pool);
 					for(const ASBarrier& barrier : batch.m_asBarriersBefore)
 					{

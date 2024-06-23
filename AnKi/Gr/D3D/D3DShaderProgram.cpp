@@ -97,6 +97,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		refl.validate();
 	}
 
+	m_refl = refl;
+
 	// Create root signature
 	ANKI_CHECK(RootSignatureFactory::getSingleton().getOrCreateRootSignature(refl, m_rootSignature));
 

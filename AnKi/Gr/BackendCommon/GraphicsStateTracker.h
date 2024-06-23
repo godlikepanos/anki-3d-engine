@@ -322,6 +322,7 @@ public:
 				m_hashes.m_vert = 0;
 			}
 
+#if ANKI_GR_BACKEND_VULKAN
 			if(!!(prog->getShaderTypes() & ShaderTypeBit::kVertex) && refl.m_vertex.m_vertexAttributeMask.getSetBitCount())
 			{
 				if(m_staticState.m_shaderProg)
@@ -334,13 +335,12 @@ public:
 					}
 				}
 
-#if ANKI_GR_BACKEND_VULKAN
 				for(VertexAttributeSemantic s : EnumIterable<VertexAttributeSemantic>())
 				{
 					m_staticState.m_vert.m_attribs[s].m_semanticToVertexAttributeLocation = refl.m_vertex.m_vkVertexAttributeLocations[s];
 				}
-#endif
 			}
+#endif
 
 			if(m_staticState.m_misc.m_colorRtMask != refl.m_fragment.m_colorAttachmentWritemask)
 			{

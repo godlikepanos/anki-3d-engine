@@ -7,7 +7,7 @@
 
 #pragma anki mutator SPATIAL_DENOISE_QUALITY 0 1
 
-#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/QuadVert.hlsl>
 
 // ===========================================================================
 // SSAO                                                                      =
@@ -51,14 +51,15 @@ RF32 computeFalloff(RF32 len)
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec4 main(Vec2 uv : TEXCOORD, Vec4 svPosition : SV_POSITION) : SV_TARGET0
+RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / g_unis.m_viewportSizef;
 #	else
-	const UVec2 svDispatchThreadId = svPosition;
+	const UVec2 svDispatchThreadId = input.m_svPosition;
 	ANKI_MAYBE_UNUSED(svDispatchThreadId);
+	const Vec2 uv = input.m_uv;
 #	endif
 
 	const Vec2 ndc = uvToNdc(uv);
@@ -201,7 +202,7 @@ void sampleTex(Vec2 uv, IVec2 offset, F32 refDepth, inout RF32 ssao, inout RVec3
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 {
 // Set UVs
@@ -210,6 +211,8 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	U32 mipCount;
 	g_bentNormalsAndSsaoTex.GetDimensions(0, textureSize.x, textureSize.y, mipCount);
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / textureSize;
+#	else
+	const Vec2 uv = input.m_uv;
 #	endif
 
 	// Sample ref
@@ -276,7 +279,7 @@ RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex : register(u0);
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
+RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -284,6 +287,8 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 	U32 mipCount;
 	g_bentNormalsAndSsaoTex.GetDimensions(0, textureSize.x, textureSize.y, mipCount);
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / textureSize;
+#	else
+	const Vec2 uv = input.m_uv;
 #	endif
 
 	const Vec2 historyUv = uv + g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).xy;
@@ -343,7 +348,6 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 // Techniques                                                                =
 // ===========================================================================
 #pragma anki technique_start vert Ssao uses_mutators
-#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert Ssao
 
 #pragma anki technique_start frag Ssao uses_mutators
@@ -353,7 +357,6 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #pragma anki technique_end comp Ssao
 
 #pragma anki technique_start vert SsaoSpatialDenoise
-#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert SsaoSpatialDenoise
 
 #pragma anki technique_start frag SsaoSpatialDenoise
@@ -363,7 +366,6 @@ RVec4 main(Vec2 uv : TEXCOORD) : SV_TARGET0
 #pragma anki technique_end comp SsaoSpatialDenoise
 
 #pragma anki technique_start vert SsaoTemporalDenoise
-#include <AnKi/Shaders/QuadVert.hlsl>
 #pragma anki technique_end vert SsaoTemporalDenoise
 
 #pragma anki technique_start frag SsaoTemporalDenoise
