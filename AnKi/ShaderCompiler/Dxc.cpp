@@ -8,6 +8,7 @@
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/File.h>
 #include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/StringList.h>
 
 namespace anki {
 
@@ -18,28 +19,28 @@ static CString profile(ShaderType shaderType)
 	switch(shaderType)
 	{
 	case ShaderType::kVertex:
-		return "vs_6_7";
+		return "vs_6_8";
 		break;
 	case ShaderType::kFragment:
-		return "ps_6_7";
+		return "ps_6_8";
 		break;
 	case ShaderType::kTessellationEvaluation:
-		return "ds_6_7";
+		return "ds_6_8";
 		break;
 	case ShaderType::kTessellationControl:
-		return "ds_6_7";
+		return "ds_6_8";
 		break;
 	case ShaderType::kGeometry:
-		return "gs_6_7";
+		return "gs_6_8";
 		break;
 	case ShaderType::kTask:
-		return "as_6_7";
+		return "as_6_8";
 		break;
 	case ShaderType::kMesh:
-		return "ms_6_7";
+		return "ms_6_8";
 		break;
 	case ShaderType::kCompute:
-		return "cs_6_7";
+		return "cs_6_8";
 		break;
 	case ShaderType::kRayGen:
 	case ShaderType::kAnyHit:
@@ -47,7 +48,8 @@ static CString profile(ShaderType shaderType)
 	case ShaderType::kMiss:
 	case ShaderType::kIntersection:
 	case ShaderType::kCallable:
-		return "lib_6_7";
+	case ShaderType::kWorkgraph:
+		return "lib_6_8";
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -56,8 +58,8 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool spirv, ShaderCompilerDynamicArray<U8>& bin,
-						 ShaderCompilerString& errorMessage)
+static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, Bool spirv,
+						 ShaderCompilerDynamicArray<U8>& bin, ShaderCompilerString& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
 	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
@@ -79,7 +81,7 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	ShaderCompilerString binFilename;
 	binFilename.sprintf("%s/%" PRIu64 ".spvdxil", tmpDir.cstr(), rand);
 
-	ShaderCompilerDynamicArray<ShaderCompilerString> dxcArgs;
+	ShaderCompilerStringList dxcArgs;
 	dxcArgs.emplaceBack("-Fo");
 	dxcArgs.emplaceBack(binFilename);
 	dxcArgs.emplaceBack("-Wall");
@@ -97,10 +99,12 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.emplaceBack("main");
 	dxcArgs.emplaceBack("-T");
 	dxcArgs.emplaceBack(profile(shaderType));
+
 	if(ANKI_COMPILER_MSVC)
 	{
 		dxcArgs.emplaceBack("-fdiagnostics-format=msvc"); // Make errors clickable in visual studio
 	}
+
 	if(spirv)
 	{
 		dxcArgs.emplaceBack("-spirv");
@@ -129,10 +133,15 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	}
 	else
 	{
-		dxcArgs.emplaceBack("-Wno-ignored-attributes"); // TODO rm that eventually
-		dxcArgs.emplaceBack("-Wno-inline-asm"); // TODO rm that eventually
+		dxcArgs.emplaceBack("-Wno-ignored-attributes"); // TODO remove that at some point
+		dxcArgs.emplaceBack("-Wno-inline-asm"); // Workaround a DXC bug
 	}
-	// dxcArgs.emplaceBack("-Zi"); // Debug info
+
+	if(debugInfo)
+	{
+		dxcArgs.emplaceBack("-Zi");
+	}
+
 	dxcArgs.emplaceBack(hlslFilename);
 
 	if(compileWith16bitTypes)
@@ -141,10 +150,11 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	}
 
 	ShaderCompilerDynamicArray<CString> dxcArgs2;
-	dxcArgs2.resize(dxcArgs.getSize());
-	for(U32 i = 0; i < dxcArgs.getSize(); ++i)
+	dxcArgs2.resize(U32(dxcArgs.getSize()));
+	U32 count = 0;
+	for(auto& it : dxcArgs)
 	{
-		dxcArgs2[i] = dxcArgs[i];
+		dxcArgs2[count++] = it.cstr();
 	}
 
 	while(true)
@@ -170,6 +180,12 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 			const Error err = Process::callProcess(dxcBin, dxcArgs2, nullptr, &errorMessageTmp, exitCode);
 			(void)err; // Shoudn't throw an error
 			errorMessage = errorMessageTmp;
+
+			ShaderCompilerString args;
+			dxcArgs.join(" ", args);
+			errorMessage += " (";
+			errorMessage += args;
+			errorMessage += ")";
 
 			if(!errorMessage.isEmpty() && errorMessage.find("The process cannot access the file because") != CString::kNpos)
 			{
@@ -206,16 +222,16 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	return Error::kNone;
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& spirv,
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderCompilerDynamicArray<U8>& spirv,
 						 ShaderCompilerString& errorMessage)
 {
-	return compileHlsl(src, shaderType, compileWith16bitTypes, true, spirv, errorMessage);
+	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, true, spirv, errorMessage);
 }
 
-Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& dxil,
+Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderCompilerDynamicArray<U8>& dxil,
 						ShaderCompilerString& errorMessage)
 {
-	return compileHlsl(src, shaderType, compileWith16bitTypes, false, dxil, errorMessage);
+	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, false, dxil, errorMessage);
 }
 
 } // end namespace anki

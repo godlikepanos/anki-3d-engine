@@ -267,7 +267,7 @@ public:
 		if(len > 0)
 		{
 			PtrSize outSize;
-			[[maybe_unused]] const errno_t err = mbstowcs_s(&outSize, arr, arrSize, m_ptr, len);
+			[[maybe_unused]] const auto err = mbstowcs_s(&outSize, arr, arrSize, m_ptr, len);
 			ANKI_ASSERT(err == 0 && outSize == len + 1);
 		}
 		else

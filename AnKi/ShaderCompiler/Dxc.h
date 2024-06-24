@@ -20,11 +20,11 @@ inline constexpr Array2d<U32, kMaxDescriptorSets, U32(HlslResourceType::kCount)>
 inline constexpr U32 kDxcVkBindlessRegisterSpace = 1000000;
 
 /// Compile HLSL to SPIR-V.
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& spirv,
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderCompilerDynamicArray<U8>& spirv,
 						 ShaderCompilerString& errorMessage);
 
 /// Compile HLSL to DXIL.
-Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, ShaderCompilerDynamicArray<U8>& dxil,
+Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderCompilerDynamicArray<U8>& dxil,
 						ShaderCompilerString& errorMessage);
 /// @}
 

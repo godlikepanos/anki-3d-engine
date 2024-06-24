@@ -16,6 +16,7 @@ Options:
 -D<define_name:val>  : Extra defines to pass to the compiler
 -spirv               : Compile SPIR-V
 -dxil                : Compile DXIL
+-g                   : Include debug info
 )";
 
 class CmdLineArgs
@@ -29,6 +30,7 @@ public:
 	DynamicArray<ShaderCompilerDefine> m_defines;
 	Bool m_spirv = false;
 	Bool m_dxil = false;
+	Bool m_debugInfo = false;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -130,6 +132,10 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 		{
 			info.m_dxil = true;
 		}
+		else if(strcmp(argv[i], "-g") == 0)
+		{
+			info.m_debugInfo = true;
+		}
 		else
 		{
 			return Error::kUserData;
@@ -210,8 +216,8 @@ static Error work(const CmdLineArgs& info)
 
 	// Compile
 	ShaderBinary* binary = nullptr;
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname, info.m_spirv, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr, info.m_defines,
-									binary));
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, info.m_spirv, info.m_debugInfo, fsystem, nullptr,
+									(info.m_threadCount) ? &taskManager : nullptr, info.m_defines, binary));
 
 	class Dummy
 	{

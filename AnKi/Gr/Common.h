@@ -556,6 +556,7 @@ enum class ShaderType : U16
 	kMiss,
 	kIntersection,
 	kCallable,
+	kWorkgraph,
 
 	kCount,
 	kFirst = 0,
@@ -583,6 +584,7 @@ enum class ShaderTypeBit : U16
 	kMiss = 1 << 11,
 	kIntersection = 1 << 12,
 	kCallable = 1 << 13,
+	kWorkgraph = 1 << 14,
 
 	kNone = 0,
 	kAllGraphics = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry | kTask | kMesh | kFragment,
@@ -590,7 +592,7 @@ enum class ShaderTypeBit : U16
 	kAllModernGeometry = kTask | kMesh,
 	kAllRayTracing = kRayGen | kAnyHit | kClosestHit | kMiss | kIntersection | kCallable,
 	kAllHit = kAnyHit | kClosestHit,
-	kAll = kAllGraphics | kCompute | kAllRayTracing,
+	kAll = kAllGraphics | kCompute | kAllRayTracing | kWorkgraph,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)
 
