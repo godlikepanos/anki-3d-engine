@@ -98,6 +98,12 @@ public:
 		: GrBaseInitInfo(name)
 	{
 	}
+
+	CommandBufferInitInfo(CommandBufferFlag flags, CString name = {})
+		: GrBaseInitInfo(name)
+		, m_flags(flags)
+	{
+	}
 };
 
 /// Maps to HLSL register(X#, S)
@@ -335,6 +341,8 @@ public:
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
 	void dispatchComputeIndirect(const BufferView& argBuffer);
+
+	void dispatchGraph(const BufferView& scratchBuffer, const void* records, U32 recordCount, U32 recordStride);
 
 	/// Trace rays.
 	///

@@ -674,6 +674,12 @@ void CommandBuffer::dispatchComputeIndirect(const BufferView& argBuffer)
 	vkCmdDispatchIndirect(self.m_handle, static_cast<BufferImpl&>(argBuffer.getBuffer()).getHandle(), argBuffer.getOffset());
 }
 
+void CommandBuffer::dispatchGraph([[maybe_unused]] const BufferView& scratchBuffer, [[maybe_unused]] const void* records,
+								  [[maybe_unused]] U32 recordCount, [[maybe_unused]] U32 recordStride)
+{
+	ANKI_ASSERT(!"Not supported");
+}
+
 void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
 							  U32 depth)
 {

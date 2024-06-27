@@ -106,17 +106,15 @@ Bool ShaderProgramInitInfo::isValid() const
 		rtMask |= localRtMask;
 	}
 
-	if(!!rtMask && (!!graphicsMask || compute))
-	{
-		return false;
-	}
-
-	if(!graphicsMask && !compute && !rtMask)
-	{
-		return false;
-	}
-
 	if(!!rtMask && m_rayTracingShaders.m_maxRecursionDepth == 0)
+	{
+		return false;
+	}
+
+	const Bool workGraph = m_workGraphShader != nullptr;
+
+	const U32 options = !!graphicsMask + compute + !!rtMask + workGraph;
+	if(options != 1)
 	{
 		return false;
 	}

@@ -714,7 +714,7 @@ FragOut main(
 #if ANKI_ANY_HIT_SHADER
 
 #	if REALLY_ALPHA_TEST
-[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable;
+[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D
 #	endif
 
 [shader("anyhit")] void main(inout RayPayload payload, in Barycentrics barycentrics)

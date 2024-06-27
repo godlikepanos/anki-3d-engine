@@ -53,6 +53,8 @@ private:
 	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_timestampQueries;
 	DynamicArray<QueryHandle, MemoryPoolPtrWrapper<StackMemoryPool>> m_pipelineQueries;
 
+	const ShaderProgramImpl* m_wgProg = nullptr;
+
 	Bool m_descriptorHeapsBound = false;
 	Bool m_debugMarkersEnabled = false;
 	Bool m_lineWidthWarningAlreadyShown = false;

@@ -20,12 +20,14 @@
 #include <windows.h>
 #include <d3d12.h>
 #include <d3dx12/d3dx12_pipeline_state_stream.h>
+#include <d3dx12/d3dx12_state_object.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
 #include <D3Dcompiler.h>
 #include <DirectXMath.h>
 #include <wrl.h>
 #include <pix3.h>
+#include <atlcomcli.h>
 #include <AnKi/Util/CleanupWindows.h>
 
 using Microsoft::WRL::ComPtr;
@@ -76,8 +78,8 @@ void invokeDred();
 	} while(0)
 
 // Globaly define the versions of some D3D objects
-using D3D12GraphicsCommandListX = ID3D12GraphicsCommandList9;
-using ID3D12DeviceX = ID3D12Device2;
+using D3D12GraphicsCommandListX = ID3D12GraphicsCommandList10;
+using ID3D12DeviceX = ID3D12Device14;
 
 enum class D3DTextureViewType : U8
 {

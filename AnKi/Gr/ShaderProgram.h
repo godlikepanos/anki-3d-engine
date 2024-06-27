@@ -44,6 +44,9 @@ public:
 	/// Option 3
 	RayTracingShaders m_rayTracingShaders;
 
+	/// Option 4
+	Shader* m_workGraphShader = nullptr;
+
 	ShaderProgramInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
 	{
@@ -98,8 +101,16 @@ public:
 		return m_refl;
 	}
 
+	PtrSize getWorkGraphMemoryRequirements() const
+	{
+		ANKI_ASSERT(m_workGraphScratchBufferSize);
+		return m_workGraphScratchBufferSize;
+	}
+
 protected:
 	Array<U32, U32(ShaderType::kCount)> m_shaderBinarySizes = {};
+
+	PtrSize m_workGraphScratchBufferSize = 0;
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::kNone;
 

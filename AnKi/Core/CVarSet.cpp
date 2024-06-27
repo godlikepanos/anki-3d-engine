@@ -33,22 +33,22 @@ void CVarSet::registerCVar(CVar* cvar)
 	m_cvars.pushBack(cvar);
 }
 
-Error CVarSet::setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineArgs[])
+Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 {
-	for(U i = 0; i < cmdLineArgsCount; ++i)
+	for(U i = 0; i < arr.getSize(); ++i)
 	{
-		ANKI_ASSERT(cmdLineArgs[i]);
-		const CString varName = cmdLineArgs[i];
+		ANKI_ASSERT(arr[i]);
+		const CString varName = arr[i];
 
 		// Get the value string
 		++i;
-		if(i >= cmdLineArgsCount)
+		if(i >= arr.getSize())
 		{
 			ANKI_CORE_LOGE("Expecting a command line argument after %s", varName.cstr());
 			return Error::kUserData;
 		}
-		ANKI_ASSERT(cmdLineArgs[i]);
-		const CString value = cmdLineArgs[i];
+		ANKI_ASSERT(arr[i]);
+		const CString value = arr[i];
 
 		// Find the CVar
 		CVar* foundCVar = nullptr;

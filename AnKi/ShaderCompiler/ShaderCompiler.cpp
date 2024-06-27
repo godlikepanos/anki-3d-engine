@@ -398,32 +398,17 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 		}
 	}
 
-	const Bool isRayTracing = type >= ShaderType::kFirstRayTracing && type <= ShaderType::kLastRayTracing;
-	if(isRayTracing)
-	{
-		// TODO: Skip for now. RT shaders require explicity register()
-		return Error::kNone;
-	}
+	const Bool isLib = (type >= ShaderType::kFirstRayTracing && type <= ShaderType::kLastRayTracing) || type == ShaderType::kWorkGraph;
 
 	ComPtr<IDxcUtils> utils;
 	ANKI_REFL_CHECK(g_DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
 
 	ComPtr<ID3D12ShaderReflection> dxRefl;
 	ComPtr<ID3D12LibraryReflection> libRefl;
-	ID3D12FunctionReflection* funcRefl = nullptr;
+	ShaderCompilerDynamicArray<ID3D12FunctionReflection*> funcReflections;
 	D3D12_SHADER_DESC shaderDesc = {};
-	U32 bindingCount = 0;
 
-	if(!isRayTracing)
-	{
-		const DxcBuffer buff = {dxil.getBegin(), dxil.getSizeInBytes(), 0};
-		ANKI_REFL_CHECK(utils->CreateReflection(&buff, IID_PPV_ARGS(&dxRefl)));
-
-		ANKI_REFL_CHECK(dxRefl->GetDesc(&shaderDesc));
-
-		bindingCount = shaderDesc.BoundResources;
-	}
-	else
+	if(isLib)
 	{
 		const DxcBuffer buff = {dxil.getBegin(), dxil.getSizeInBytes(), 0};
 		ANKI_REFL_CHECK(utils->CreateReflection(&buff, IID_PPV_ARGS(&libRefl)));
@@ -431,131 +416,153 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 		D3D12_LIBRARY_DESC libDesc = {};
 		libRefl->GetDesc(&libDesc);
 
-		if(libDesc.FunctionCount != 1)
+		if(libDesc.FunctionCount == 0)
 		{
-			errorStr.sprintf("Expecting 1 in D3D12_LIBRARY_DESC::FunctionCount");
+			errorStr.sprintf("Expecting at least 1 in D3D12_LIBRARY_DESC::FunctionCount");
 			return Error::kUserData;
 		}
 
-		funcRefl = libRefl->GetFunctionByIndex(0);
+		funcReflections.resize(libDesc.FunctionCount);
+		for(U32 i = 0; i < libDesc.FunctionCount; ++i)
+		{
 
-		D3D12_FUNCTION_DESC funcDesc;
-		ANKI_REFL_CHECK(funcRefl->GetDesc(&funcDesc));
+			funcReflections[i] = libRefl->GetFunctionByIndex(i);
+		}
+	}
+	else
+	{
+		const DxcBuffer buff = {dxil.getBegin(), dxil.getSizeInBytes(), 0};
+		ANKI_REFL_CHECK(utils->CreateReflection(&buff, IID_PPV_ARGS(&dxRefl)));
 
-		bindingCount = funcDesc.BoundResources;
+		ANKI_REFL_CHECK(dxRefl->GetDesc(&shaderDesc));
 	}
 
-	for(U32 i = 0; i < bindingCount; ++i)
+	for(U32 ifunc = 0; ifunc < ((isLib) ? funcReflections.getSize() : 1); ++ifunc)
 	{
-		D3D12_SHADER_INPUT_BIND_DESC bindDesc;
-		if(dxRefl.Get() != nullptr)
+		U32 bindingCount;
+		if(isLib)
 		{
-			ANKI_REFL_CHECK(dxRefl->GetResourceBindingDesc(i, &bindDesc));
+			D3D12_FUNCTION_DESC funcDesc;
+			ANKI_REFL_CHECK(funcReflections[ifunc]->GetDesc(&funcDesc));
+			bindingCount = funcDesc.BoundResources;
 		}
 		else
 		{
-			ANKI_REFL_CHECK(funcRefl->GetResourceBindingDesc(i, &bindDesc));
+			bindingCount = shaderDesc.BoundResources;
 		}
 
-		ShaderReflectionBinding akBinding;
-
-		akBinding.m_type = DescriptorType::kCount;
-		akBinding.m_flags = DescriptorFlag::kNone;
-		akBinding.m_arraySize = U16(bindDesc.BindCount);
-		akBinding.m_registerBindingPoint = bindDesc.BindPoint;
-
-		if(bindDesc.Type == D3D_SIT_CBUFFER)
+		for(U32 i = 0; i < bindingCount; ++i)
 		{
-			// ConstantBuffer
-
-			if(bindDesc.Space == 3000 && bindDesc.BindPoint == 0)
+			D3D12_SHADER_INPUT_BIND_DESC bindDesc;
+			if(isLib)
 			{
-				// It's push/root constants
-
-				ID3D12ShaderReflectionConstantBuffer* cbuffer =
-					(dxRefl.Get()) ? dxRefl->GetConstantBufferByName(bindDesc.Name) : funcRefl->GetConstantBufferByName(bindDesc.Name);
-				D3D12_SHADER_BUFFER_DESC desc;
-				ANKI_REFL_CHECK(cbuffer->GetDesc(&desc));
-				refl.m_descriptor.m_pushConstantsSize = desc.Size;
-
-				continue;
+				ANKI_REFL_CHECK(funcReflections[ifunc]->GetResourceBindingDesc(i, &bindDesc));
+			}
+			else
+			{
+				ANKI_REFL_CHECK(dxRefl->GetResourceBindingDesc(i, &bindDesc));
 			}
 
-			akBinding.m_type = DescriptorType::kUniformBuffer;
-			akBinding.m_flags = DescriptorFlag::kRead;
-		}
-		else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
-		{
-			// Texture2D etc
-			akBinding.m_type = DescriptorType::kTexture;
-			akBinding.m_flags = DescriptorFlag::kRead;
-		}
-		else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
-		{
-			// Buffer
-			akBinding.m_type = DescriptorType::kTexelBuffer;
-			akBinding.m_flags = DescriptorFlag::kRead;
-		}
-		else if(bindDesc.Type == D3D_SIT_SAMPLER)
-		{
-			// SamplerState
-			akBinding.m_type = DescriptorType::kSampler;
-			akBinding.m_flags = DescriptorFlag::kRead;
-		}
-		else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
-		{
-			// RWBuffer
-			akBinding.m_type = DescriptorType::kTexelBuffer;
-			akBinding.m_flags = DescriptorFlag::kReadWrite;
-		}
-		else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
-		{
-			// RWTexture2D etc
-			akBinding.m_type = DescriptorType::kTexture;
-			akBinding.m_flags = DescriptorFlag::kReadWrite;
-		}
-		else if(bindDesc.Type == D3D_SIT_BYTEADDRESS)
-		{
-			// ByteAddressBuffer
-			akBinding.m_type = DescriptorType::kStorageBuffer;
-			akBinding.m_flags = DescriptorFlag::kRead | DescriptorFlag::kByteAddressBuffer;
-			akBinding.m_d3dStructuredBufferStride = sizeof(U32);
-		}
-		else if(bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS)
-		{
-			// RWByteAddressBuffer
-			akBinding.m_type = DescriptorType::kStorageBuffer;
-			akBinding.m_flags = DescriptorFlag::kReadWrite | DescriptorFlag::kByteAddressBuffer;
-			akBinding.m_d3dStructuredBufferStride = sizeof(U32);
-		}
-		else if(bindDesc.Type == D3D_SIT_RTACCELERATIONSTRUCTURE)
-		{
-			// RaytracingAccelerationStructure
-			akBinding.m_type = DescriptorType::kAccelerationStructure;
-			akBinding.m_flags = DescriptorFlag::kRead;
-		}
-		else if(bindDesc.Type == D3D_SIT_STRUCTURED)
-		{
-			// StructuredBuffer
-			akBinding.m_type = DescriptorType::kStorageBuffer;
-			akBinding.m_flags = DescriptorFlag::kRead;
-			akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
-		}
-		else if(bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED)
-		{
-			// RWStructuredBuffer
-			akBinding.m_type = DescriptorType::kStorageBuffer;
-			akBinding.m_flags = DescriptorFlag::kReadWrite;
-			akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
-		}
-		else
-		{
-			errorStr.sprintf("Unrecognized type for binding: %s", bindDesc.Name);
-			return Error::kUserData;
-		}
+			ShaderReflectionBinding akBinding;
 
-		refl.m_descriptor.m_bindings[bindDesc.Space][refl.m_descriptor.m_bindingCounts[bindDesc.Space]] = akBinding;
-		++refl.m_descriptor.m_bindingCounts[bindDesc.Space];
+			akBinding.m_type = DescriptorType::kCount;
+			akBinding.m_flags = DescriptorFlag::kNone;
+			akBinding.m_arraySize = U16(bindDesc.BindCount);
+			akBinding.m_registerBindingPoint = bindDesc.BindPoint;
+
+			if(bindDesc.Type == D3D_SIT_CBUFFER)
+			{
+				// ConstantBuffer
+
+				if(bindDesc.Space == 3000 && bindDesc.BindPoint == 0)
+				{
+					// It's push/root constants
+
+					ID3D12ShaderReflectionConstantBuffer* cbuffer =
+						(isLib) ? funcReflections[ifunc]->GetConstantBufferByName(bindDesc.Name) : dxRefl->GetConstantBufferByName(bindDesc.Name);
+					D3D12_SHADER_BUFFER_DESC desc;
+					ANKI_REFL_CHECK(cbuffer->GetDesc(&desc));
+					refl.m_descriptor.m_pushConstantsSize = desc.Size;
+
+					continue;
+				}
+
+				akBinding.m_type = DescriptorType::kUniformBuffer;
+				akBinding.m_flags = DescriptorFlag::kRead;
+			}
+			else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
+			{
+				// Texture2D etc
+				akBinding.m_type = DescriptorType::kTexture;
+				akBinding.m_flags = DescriptorFlag::kRead;
+			}
+			else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
+			{
+				// Buffer
+				akBinding.m_type = DescriptorType::kTexelBuffer;
+				akBinding.m_flags = DescriptorFlag::kRead;
+			}
+			else if(bindDesc.Type == D3D_SIT_SAMPLER)
+			{
+				// SamplerState
+				akBinding.m_type = DescriptorType::kSampler;
+				akBinding.m_flags = DescriptorFlag::kRead;
+			}
+			else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
+			{
+				// RWBuffer
+				akBinding.m_type = DescriptorType::kTexelBuffer;
+				akBinding.m_flags = DescriptorFlag::kReadWrite;
+			}
+			else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
+			{
+				// RWTexture2D etc
+				akBinding.m_type = DescriptorType::kTexture;
+				akBinding.m_flags = DescriptorFlag::kReadWrite;
+			}
+			else if(bindDesc.Type == D3D_SIT_BYTEADDRESS)
+			{
+				// ByteAddressBuffer
+				akBinding.m_type = DescriptorType::kStorageBuffer;
+				akBinding.m_flags = DescriptorFlag::kRead | DescriptorFlag::kByteAddressBuffer;
+				akBinding.m_d3dStructuredBufferStride = sizeof(U32);
+			}
+			else if(bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS)
+			{
+				// RWByteAddressBuffer
+				akBinding.m_type = DescriptorType::kStorageBuffer;
+				akBinding.m_flags = DescriptorFlag::kReadWrite | DescriptorFlag::kByteAddressBuffer;
+				akBinding.m_d3dStructuredBufferStride = sizeof(U32);
+			}
+			else if(bindDesc.Type == D3D_SIT_RTACCELERATIONSTRUCTURE)
+			{
+				// RaytracingAccelerationStructure
+				akBinding.m_type = DescriptorType::kAccelerationStructure;
+				akBinding.m_flags = DescriptorFlag::kRead;
+			}
+			else if(bindDesc.Type == D3D_SIT_STRUCTURED)
+			{
+				// StructuredBuffer
+				akBinding.m_type = DescriptorType::kStorageBuffer;
+				akBinding.m_flags = DescriptorFlag::kRead;
+				akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
+			}
+			else if(bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED)
+			{
+				// RWStructuredBuffer
+				akBinding.m_type = DescriptorType::kStorageBuffer;
+				akBinding.m_flags = DescriptorFlag::kReadWrite;
+				akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
+			}
+			else
+			{
+				errorStr.sprintf("Unrecognized type for binding: %s", bindDesc.Name);
+				return Error::kUserData;
+			}
+
+			refl.m_descriptor.m_bindings[bindDesc.Space][refl.m_descriptor.m_bindingCounts[bindDesc.Space]] = akBinding;
+			++refl.m_descriptor.m_bindingCounts[bindDesc.Space];
+		}
 	}
 
 	for(U32 i = 0; i < kMaxDescriptorSets; ++i)

@@ -35,6 +35,13 @@ public:
 		ID3D12PipelineState* m_pipelineState = nullptr;
 	} m_compute;
 
+	class
+	{
+	public:
+		ID3D12StateObject* m_stateObject = nullptr;
+		D3D12_PROGRAM_IDENTIFIER m_progIdentifier = {};
+	} m_workGraph;
+
 	ShaderProgramImpl(CString name)
 		: ShaderProgram(name)
 	{

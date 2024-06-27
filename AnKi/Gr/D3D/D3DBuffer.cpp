@@ -96,7 +96,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;
 		heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
 
-		if(getGrManagerImpl().getD3DCapabilities().m_rebar)
+		if(getGrManagerImpl().getD3DCapabilities().m_rebar && getGrManagerImpl().getDeviceCapabilities().m_discreteGpu)
 		{
 			heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
 		}
@@ -137,7 +137,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	D3D12_RESOURCE_DESC resourceDesc = {};
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	resourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-	resourceDesc.Width = getAlignedRoundUp(m_size, 256) + 256; // Align to 256 and add padding because of CBV requirements
+	resourceDesc.Width = getAlignedRoundUp(256, m_size) + 256; // Align to 256 and add padding because of CBV requirements
 	resourceDesc.Height = 1;
 	resourceDesc.DepthOrArraySize = 1;
 	resourceDesc.MipLevels = 1;

@@ -101,13 +101,15 @@ if(ANKI_DLSS)
 	endif()
 endif()
 
-# Copy Agility SDK files to Binaries
+# Copy DX DLLs next to the binaries
 if(DIRECTX)
 	file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.dll")
 	file(GLOB FILES_TO_COPY2 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/AgilitySdk/bin/x64/*.pdb")
 	file(GLOB FILES_TO_COPY3 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Pix/bin/x64/*.dll")
+	file(GLOB FILES_TO_COPY4 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Warp/bin/x64/*.dll")
+	file(GLOB FILES_TO_COPY5 "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/Warp/bin/x64/*.pdb")
 
-	list(APPEND FILES_TO_COPY ${FILES_TO_COPY2} ${FILES_TO_COPY3})
+	list(APPEND FILES_TO_COPY ${FILES_TO_COPY2} ${FILES_TO_COPY3} ${FILES_TO_COPY4} ${FILES_TO_COPY5})
 
 	foreach(FILE_TO_COPY IN LISTS FILES_TO_COPY)
 		add_custom_command(TARGET AnKiGr POST_BUILD

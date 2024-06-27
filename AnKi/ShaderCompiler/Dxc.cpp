@@ -48,7 +48,7 @@ static CString profile(ShaderType shaderType)
 	case ShaderType::kMiss:
 	case ShaderType::kIntersection:
 	case ShaderType::kCallable:
-	case ShaderType::kWorkgraph:
+	case ShaderType::kWorkGraph:
 		return "lib_6_8";
 		break;
 	default:

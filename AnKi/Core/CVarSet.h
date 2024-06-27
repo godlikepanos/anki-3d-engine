@@ -10,6 +10,7 @@
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Singleton.h>
 #include <AnKi/Util/Enum.h>
+#include <AnKi/Util/WeakArray.h>
 #include <AnKi/Math/Functions.h>
 
 namespace anki {
@@ -215,7 +216,19 @@ public:
 
 	Error saveToFile(CString filename) const;
 
-	Error setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLineArgs[]);
+	Error setFromCommandLineArguments(U32 cmdLineArgsCount, Char* cmdLineArgs[])
+	{
+		ConstWeakArray<const Char*> arr(cmdLineArgs, cmdLineArgsCount);
+		return setMultiple(arr);
+	}
+
+	template<U32 kTCount>
+	Error setMultiple(Array<const Char*, kTCount> arr)
+	{
+		return setMultiple(ConstWeakArray<const Char*>(arr.getBegin(), kTCount));
+	}
+
+	Error setMultiple(ConstWeakArray<const Char*> arr);
 
 private:
 	IntrusiveList<CVar> m_cvars;

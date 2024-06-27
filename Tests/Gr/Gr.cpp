@@ -20,101 +20,6 @@
 
 using namespace anki;
 
-const U kWidth = 1024;
-const U kHeight = 768;
-
-static void commonInit()
-{
-	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
-	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
-	g_windowWidthCVar.set(kWidth);
-	g_windowHeightCVar.set(kHeight);
-	g_validationCVar.set(true);
-	g_vsyncCVar.set(false);
-	g_debugMarkersCVar.set(true);
-	initWindow();
-	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
-	initGrManager();
-}
-
-static void commonDestroy()
-{
-	GrManager::freeSingleton();
-	Input::freeSingleton();
-	NativeWindow::freeSingleton();
-	ShaderCompilerMemoryPool::freeSingleton();
-	DefaultMemoryPool::freeSingleton();
-}
-
-template<typename T>
-static BufferPtr createBuffer(const BufferInitInfo& buffInit_, T initialValue, CString name = {})
-{
-	BufferInitInfo buffInit = buffInit_;
-	if(!name.isEmpty())
-	{
-		buffInit.setName(name);
-	}
-
-	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
-
-	T* inData = static_cast<T*>(buff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
-	const T* endData = inData + (buffInit.m_size / sizeof(T));
-	for(; inData < endData; ++inData)
-	{
-		*inData = initialValue;
-	}
-	buff->unmap();
-
-	return buff;
-};
-
-template<typename T>
-TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue)
-{
-	BufferInitInfo buffInit;
-	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	buffInit.m_size = texInit.m_height * texInit.m_width * getFormatInfo(texInit.m_format).m_texelSize;
-	buffInit.m_usage = BufferUsageBit::kTransferSource;
-
-	BufferPtr staging = GrManager::getSingleton().newBuffer(buffInit);
-
-	T* inData = static_cast<T*>(staging->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
-	const T* endData = inData + (buffInit.m_size / sizeof(T));
-	for(; inData < endData; ++inData)
-	{
-		*inData = initialValue;
-	}
-	staging->unmap();
-
-	TexturePtr tex = GrManager::getSingleton().newTexture(texInit);
-
-	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
-
-	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
-
-	cmdb->copyBufferToTexture(BufferView(staging.get()), TextureView(tex.get(), TextureSubresourceDesc::all()));
-	cmdb->endRecording();
-
-	FencePtr fence;
-	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-	fence->clientWait(kMaxSecond);
-
-	return tex;
-};
-
-template<typename T>
-void validateBuffer(BufferPtr buff, T value)
-{
-	const T* inData = static_cast<T*>(buff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
-	const T* endData = inData + (buff->getSize() / sizeof(T));
-	for(; inData < endData; ++inData)
-	{
-		ANKI_TEST_EXPECT_EQ(*inData, value);
-	}
-	buff->unmap();
-}
-
 ANKI_TEST(Gr, GrManager)
 {
 	g_validationCVar.set(true);
@@ -344,10 +249,6 @@ void main()
 		texInit.m_width = texInit.m_height = 1;
 		texInit.m_format = Format::kR32G32B32A32_Sfloat;
 
-		BufferInitInfo buffInit;
-		buffInit.m_mapAccess = BufferMapAccessBit::kReadWrite;
-		buffInit.m_size = sizeof(Vec4);
-
 		ShaderPtr compShader = createShader(kSrc, ShaderType::kCompute);
 
 		ShaderProgramInitInfo progInit("Program");
@@ -357,22 +258,15 @@ void main()
 		const Vec4 kMagicVec(1.0f, 2.0f, 3.0f, 4.0f);
 		const Vec4 kInvalidVec(1.0f, 2.0f, 3.0f, 4.0f);
 
-		buffInit.m_usage = BufferUsageBit::kAllStorage;
-		buffInit.m_size = sizeof(kMagicVec) * 2;
-		BufferPtr structured = createBuffer(buffInit, kMagicVec, "structured");
+		const Array<Vec4, 2> data = {kMagicVec, kMagicVec};
+		BufferPtr structured = createBuffer(BufferUsageBit::kAllStorage, ConstWeakArray<Vec4>(data), "structured");
 
 		texInit.m_usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kTransferDestination;
 		TexturePtr tex = createTexture2d(texInit, kMagicVec * 2.0f);
 
-		buffInit.m_usage = BufferUsageBit::kAllTexel;
-		BufferPtr buff = createBuffer(buffInit, kMagicVec * 2.0f, "buff");
-
-		buffInit.m_usage = BufferUsageBit::kAllStorage;
-		buffInit.m_size = sizeof(kInvalidVec);
-		BufferPtr rwstructured = createBuffer(buffInit, kInvalidVec, "rwstructured");
-
-		buffInit.m_usage = BufferUsageBit::kAllTexel;
-		BufferPtr rwbuff = createBuffer(buffInit, kInvalidVec, "rwbuff");
+		BufferPtr buff = createBuffer(BufferUsageBit::kAllTexel, kMagicVec * 2.0f, "buff");
+		BufferPtr rwstructured = createBuffer(BufferUsageBit::kAllStorage, kInvalidVec, "rwstructured");
+		BufferPtr rwbuff = createBuffer(BufferUsageBit::kAllTexel, kInvalidVec, "rwbuff");
 
 		Array<TexturePtr, 3> rwtex;
 
@@ -381,8 +275,7 @@ void main()
 		rwtex[1] = createTexture2d(texInit, kInvalidVec);
 		rwtex[2] = createTexture2d(texInit, kInvalidVec);
 
-		buffInit.m_usage = BufferUsageBit::kUniformCompute;
-		BufferPtr consts = createBuffer(buffInit, kMagicVec * 3.0f, "consts");
+		BufferPtr consts = createBuffer(BufferUsageBit::kUniformCompute, kMagicVec * 3.0f, "consts");
 
 		SamplerInitInfo samplInit;
 		SamplerPtr sampler = GrManager::getSingleton().newSampler(samplInit);

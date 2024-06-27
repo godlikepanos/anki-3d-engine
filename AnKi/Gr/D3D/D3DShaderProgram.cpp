@@ -39,6 +39,7 @@ Buffer& ShaderProgram::getShaderGroupHandlesGpuBuffer() const
 ShaderProgramImpl::~ShaderProgramImpl()
 {
 	safeRelease(m_compute.m_pipelineState);
+	safeRelease(m_workGraph.m_stateObject);
 
 	deleteInstance(GrMemoryPool::getSingleton(), m_graphics.m_pipelineFactory);
 }
@@ -62,6 +63,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			}
 		}
 	}
+	else if(inf.m_workGraphShader)
+	{
+		m_shaders.emplaceBack(inf.m_workGraphShader);
+	}
 	else
 	{
 		ANKI_ASSERT(!"TODO");
@@ -77,6 +82,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	const Bool isGraphicsProg = !!(m_shaderTypes & ShaderTypeBit::kAllGraphics);
 	const Bool isComputeProg = !!(m_shaderTypes & ShaderTypeBit::kCompute);
 	const Bool isRtProg = !!(m_shaderTypes & ShaderTypeBit::kAllRayTracing);
+	const Bool isWorkGraph = !!(m_shaderTypes & ShaderTypeBit::kWorkGraph);
 
 	// Link reflection
 	ShaderReflection refl;
@@ -125,6 +131,44 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		desc.CS.pShaderBytecode = shaderImpl.m_binary.getBegin();
 
 		ANKI_D3D_CHECK(getDevice().CreateComputePipelineState(&desc, IID_PPV_ARGS(&m_compute.m_pipelineState)));
+	}
+
+	// Create the shader object if workgraph
+	if(isWorkGraph)
+	{
+		const WChar* wgName = L"main";
+
+		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[0]);
+
+		// Init sub-objects
+		CD3DX12_STATE_OBJECT_DESC stateObj(D3D12_STATE_OBJECT_TYPE_EXECUTABLE);
+
+		auto lib = stateObj.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+		CD3DX12_SHADER_BYTECODE libCode(shaderImpl.m_binary.getBegin(), shaderImpl.m_binary.getSizeInBytes());
+		lib->SetDXILLibrary(&libCode);
+
+		auto rootSigSubObj = stateObj.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
+		rootSigSubObj->SetRootSignature(&m_rootSignature->getD3DRootSignature());
+
+		auto wgSubObj = stateObj.CreateSubobject<CD3DX12_WORK_GRAPH_SUBOBJECT>();
+		wgSubObj->IncludeAllAvailableNodes(); // Auto populate the graph
+		wgSubObj->SetProgramName(wgName);
+
+		// Create state obj
+		ANKI_D3D_CHECK(getDevice().CreateStateObject(stateObj, IID_PPV_ARGS(&m_workGraph.m_stateObject)));
+
+		// Create misc
+		ComPtr<ID3D12StateObjectProperties1> spSOProps;
+		ANKI_D3D_CHECK(m_workGraph.m_stateObject->QueryInterface(IID_PPV_ARGS(&spSOProps)));
+		m_workGraph.m_progIdentifier = spSOProps->GetProgramIdentifier(wgName);
+
+		ComPtr<ID3D12WorkGraphProperties> spWGProps;
+		ANKI_D3D_CHECK(m_workGraph.m_stateObject->QueryInterface(IID_PPV_ARGS(&spWGProps)));
+		const UINT wgIndex = spWGProps->GetWorkGraphIndex(wgName);
+		D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS memReqs;
+		spWGProps->GetWorkGraphMemoryRequirements(wgIndex, &memReqs);
+
+		m_workGraphScratchBufferSize = memReqs.MaxSizeInBytes;
 	}
 
 	// Get shader sizes and a few other things

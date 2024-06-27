@@ -227,6 +227,9 @@ public:
 
 	/// Has access to barycentrics.
 	Bool m_barycentrics = false;
+
+	/// WorkGraphs
+	Bool m_workGraphs = false;
 };
 ANKI_END_PACKED_STRUCT
 
@@ -556,7 +559,7 @@ enum class ShaderType : U16
 	kMiss,
 	kIntersection,
 	kCallable,
-	kWorkgraph,
+	kWorkGraph,
 
 	kCount,
 	kFirst = 0,
@@ -584,7 +587,7 @@ enum class ShaderTypeBit : U16
 	kMiss = 1 << 11,
 	kIntersection = 1 << 12,
 	kCallable = 1 << 13,
-	kWorkgraph = 1 << 14,
+	kWorkGraph = 1 << 14,
 
 	kNone = 0,
 	kAllGraphics = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry | kTask | kMesh | kFragment,
@@ -592,7 +595,7 @@ enum class ShaderTypeBit : U16
 	kAllModernGeometry = kTask | kMesh,
 	kAllRayTracing = kRayGen | kAnyHit | kClosestHit | kMiss | kIntersection | kCallable,
 	kAllHit = kAnyHit | kClosestHit,
-	kAll = kAllGraphics | kCompute | kAllRayTracing | kWorkgraph,
+	kAll = kAllGraphics | kCompute | kAllRayTracing | kWorkGraph,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)
 

@@ -296,20 +296,29 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 
 	self.commandCommon();
 
-	const ShaderProgramImpl& progImpl = static_cast<const ShaderProgramImpl&>(*prog);
-	const Bool isCompute = !(progImpl.getShaderTypes() & ShaderTypeBit::kAllGraphics);
-
-	self.m_descriptors.bindRootSignature(progImpl.m_rootSignature, isCompute);
-
 	self.m_mcmdb->pushObjectRef(prog);
+
+	const ShaderProgramImpl& progImpl = static_cast<const ShaderProgramImpl&>(*prog);
+	const Bool isCompute = !!(progImpl.getShaderTypes() & ShaderTypeBit::kCompute);
+	const Bool isGraphics = !!(progImpl.getShaderTypes() & ShaderTypeBit::kAllGraphics);
+	const Bool isWg = !!(progImpl.getShaderTypes() & ShaderTypeBit::kWorkGraph);
+
+	self.m_descriptors.bindRootSignature(progImpl.m_rootSignature, isCompute || isWg);
 
 	if(isCompute)
 	{
 		self.m_cmdList->SetPipelineState(progImpl.m_compute.m_pipelineState);
+		self.m_wgProg = nullptr;
+	}
+	else if(isWg)
+	{
+		self.m_wgProg = &progImpl;
 	}
 	else
 	{
+		ANKI_ASSERT(isGraphics);
 		self.m_graphicsState.bindShaderProgram(prog);
+		self.m_wgProg = nullptr;
 	}
 
 	// Shader program means descriptors so bind the descriptor heaps
@@ -854,6 +863,35 @@ void CommandBuffer::popDebugMarker()
 	{
 		PIXEndEvent(self.m_cmdList);
 	}
+}
+
+void CommandBuffer::dispatchGraph(const BufferView& scratchBuffer, const void* records, U32 recordCount, U32 recordStride)
+{
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	ANKI_ASSERT(records && recordStride >= sizeof(U32) * 3);
+	ANKI_ASSERT(self.m_wgProg);
+	ANKI_ASSERT(self.m_wgProg->getWorkGraphMemoryRequirements() == scratchBuffer.getRange());
+
+	self.dispatchCommon();
+
+	// Setup program
+	D3D12_SET_PROGRAM_DESC setProg = {};
+	setProg.Type = D3D12_PROGRAM_TYPE_WORK_GRAPH;
+	setProg.WorkGraph.ProgramIdentifier = self.m_wgProg->m_workGraph.m_progIdentifier;
+	setProg.WorkGraph.Flags = D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE;
+	setProg.WorkGraph.BackingMemory = {.StartAddress = scratchBuffer.getBuffer().getGpuAddress() + scratchBuffer.getOffset(),
+									   .SizeInBytes = scratchBuffer.getRange()};
+	self.m_cmdList->SetProgram(&setProg);
+
+	// Dispatch the graph
+	D3D12_DISPATCH_GRAPH_DESC dispDesc = {};
+	dispDesc.Mode = D3D12_DISPATCH_MODE_NODE_CPU_INPUT;
+	dispDesc.NodeCPUInput.EntrypointIndex = 0; // just one entrypoint in this graph
+	dispDesc.NodeCPUInput.NumRecords = recordCount;
+	dispDesc.NodeCPUInput.RecordStrideInBytes = recordStride;
+	dispDesc.NodeCPUInput.pRecords = records;
+	self.m_cmdList->DispatchGraph(&dispDesc);
 }
 
 CommandBufferImpl::~CommandBufferImpl()

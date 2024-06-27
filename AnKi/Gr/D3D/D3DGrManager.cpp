@@ -44,6 +44,7 @@ static NumericCVar<U8> g_deviceCVar(CVarSubsystem::kGr, "Device", 0, 0, 16, "Cho
 static BoolCVar g_rayTracingCVar(CVarSubsystem::kGr, "RayTracing", false, "Try enabling ray tracing");
 static BoolCVar g_dredCVar(CVarSubsystem::kGr, "Dred", false, "Enable DRED");
 static BoolCVar g_vrsCVar(CVarSubsystem::kGr, "Vrs", false, "Enable or not VRS");
+static BoolCVar g_workGraphcsCVar(CVarSubsystem::kGr, "WorkGraphs", false, "Enable or not WorkGraphs");
 
 static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 										  [[maybe_unused]] D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext)
@@ -359,7 +360,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Create device
 	ComPtr<ID3D12Device> dev;
-	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&dev)));
+	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dev)));
 	ANKI_D3D_CHECK(dev->QueryInterface(IID_PPV_ARGS(&m_device)));
 
 	if(g_validationCVar.get())
@@ -409,6 +410,18 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16)));
 		D3D12_FEATURE_DATA_ARCHITECTURE architecture = {.NodeIndex = 0};
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture)));
+		D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21;
+		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21)));
+
+		if(g_workGraphcsCVar.get() && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		{
+			ANKI_D3D_LOGW("WorkGraphs can't be enabled. They not supported");
+		}
+		else if(g_workGraphcsCVar.get() && options21.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		{
+			ANKI_D3D_LOGV("WorkGraphs supported");
+			m_capabilities.m_workGraphs = true;
+		}
 
 		m_d3dCapabilities.m_rebar = options16.GPUUploadHeapSupported;
 		if(!m_d3dCapabilities.m_rebar)
