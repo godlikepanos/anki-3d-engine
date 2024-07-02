@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <AnKi/Util/Assert.h>
 #include <AnKi/Util/StdTypes.h>
 
 namespace anki {
@@ -17,13 +18,25 @@ class HighRezTimer
 {
 public:
 	/// Start the timer
-	void start();
+	void start()
+	{
+		m_startTime = getCurrentTime();
+		m_stopTime = 0.0;
+	}
 
 	/// Stop the timer
-	void stop();
+	void stop()
+	{
+		ANKI_ASSERT(m_startTime != 0.0);
+		ANKI_ASSERT(m_stopTime == 0.0);
+		m_stopTime = getCurrentTime();
+	}
 
 	/// Get the time elapsed between start and stop (if its stopped) or between start and the current time.
-	Second getElapsedTime() const;
+	Second getElapsedTime() const
+	{
+		return (m_stopTime == 0.0) ? getCurrentTime() - m_startTime : m_stopTime - m_startTime;
+	}
 
 	/// Get the current date's seconds
 	static Second getCurrentTime();

@@ -63,9 +63,9 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			}
 		}
 	}
-	else if(inf.m_workGraphShader)
+	else if(inf.m_workGraph.m_shader)
 	{
-		m_shaders.emplaceBack(inf.m_workGraphShader);
+		m_shaders.emplaceBack(inf.m_workGraph.m_shader);
 	}
 	else
 	{
@@ -154,6 +154,19 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		wgSubObj->IncludeAllAvailableNodes(); // Auto populate the graph
 		wgSubObj->SetProgramName(wgName);
 
+		GrDynamicArray<Array<WChar, 128>> nodeNames;
+		nodeNames.resize(inf.m_workGraph.m_nodeSpecializations.getSize());
+		for(U32 i = 0; i < inf.m_workGraph.m_nodeSpecializations.getSize(); ++i)
+		{
+			const WorkGraphNodeSpecialization& specialization = inf.m_workGraph.m_nodeSpecializations[i];
+			specialization.m_nodeName.toWideChars(nodeNames[i].getBegin(), nodeNames[i].getSize());
+			CD3DX12_BROADCASTING_LAUNCH_NODE_OVERRIDES* spec = wgSubObj->CreateBroadcastingLaunchNodeOverrides(nodeNames[i].getBegin());
+
+			ANKI_ASSERT(specialization.m_maxNodeDispatchGrid > UVec3(0u));
+			spec->MaxDispatchGrid(specialization.m_maxNodeDispatchGrid.x(), specialization.m_maxNodeDispatchGrid.y(),
+								  specialization.m_maxNodeDispatchGrid.z());
+		}
+
 		// Create state obj
 		ANKI_D3D_CHECK(getDevice().CreateStateObject(stateObj, IID_PPV_ARGS(&m_workGraph.m_stateObject)));
 
@@ -167,6 +180,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		const UINT wgIndex = spWGProps->GetWorkGraphIndex(wgName);
 		D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS memReqs;
 		spWGProps->GetWorkGraphMemoryRequirements(wgIndex, &memReqs);
+		ANKI_ASSERT(spWGProps->GetNumEntrypoints(wgIndex) == 1);
 
 		m_workGraphScratchBufferSize = memReqs.MaxSizeInBytes;
 	}

@@ -5,7 +5,6 @@ set(sources
 	Filesystem.cpp
 	MemoryPool.cpp
 	System.cpp
-	HighRezTimer.cpp
 	ThreadPool.cpp
 	ThreadHive.cpp
 	Hash.cpp

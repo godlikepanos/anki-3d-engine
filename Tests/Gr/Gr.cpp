@@ -264,9 +264,9 @@ void main()
 		texInit.m_usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kTransferDestination;
 		TexturePtr tex = createTexture2d(texInit, kMagicVec * 2.0f);
 
-		BufferPtr buff = createBuffer(BufferUsageBit::kAllTexel, kMagicVec * 2.0f, "buff");
-		BufferPtr rwstructured = createBuffer(BufferUsageBit::kAllStorage, kInvalidVec, "rwstructured");
-		BufferPtr rwbuff = createBuffer(BufferUsageBit::kAllTexel, kInvalidVec, "rwbuff");
+		BufferPtr buff = createBuffer(BufferUsageBit::kAllTexel, kMagicVec * 2.0f, 1, "buff");
+		BufferPtr rwstructured = createBuffer(BufferUsageBit::kAllStorage, kInvalidVec, 1, "rwstructured");
+		BufferPtr rwbuff = createBuffer(BufferUsageBit::kAllTexel, kInvalidVec, 1, "rwbuff");
 
 		Array<TexturePtr, 3> rwtex;
 
@@ -275,7 +275,7 @@ void main()
 		rwtex[1] = createTexture2d(texInit, kInvalidVec);
 		rwtex[2] = createTexture2d(texInit, kInvalidVec);
 
-		BufferPtr consts = createBuffer(BufferUsageBit::kUniformCompute, kMagicVec * 3.0f, "consts");
+		BufferPtr consts = createBuffer(BufferUsageBit::kUniformCompute, kMagicVec * 3.0f, 1, "consts");
 
 		SamplerInitInfo samplInit;
 		SamplerPtr sampler = GrManager::getSingleton().newSampler(samplInit);

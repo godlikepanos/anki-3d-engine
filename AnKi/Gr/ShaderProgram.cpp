@@ -111,7 +111,7 @@ Bool ShaderProgramInitInfo::isValid() const
 		return false;
 	}
 
-	const Bool workGraph = m_workGraphShader != nullptr;
+	const Bool workGraph = m_workGraph.m_shader != nullptr;
 
 	const U32 options = !!graphicsMask + compute + !!rtMask + workGraph;
 	if(options != 1)

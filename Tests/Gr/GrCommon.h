@@ -65,18 +65,26 @@ inline ShaderProgramPtr createVertFragProg(CString vert, CString frag)
 const U kWidth = 1024;
 const U kHeight = 768;
 
-inline void commonInit()
+inline void commonInit(Bool validation = true)
 {
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
 	g_windowWidthCVar.set(kWidth);
 	g_windowHeightCVar.set(kHeight);
-	g_validationCVar.set(true);
 	g_vsyncCVar.set(false);
 	g_debugMarkersCVar.set(true);
+	if(validation)
+	{
+		g_validationCVar.set(true);
+		[[maybe_unused]] const Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"GpuValidation", "1"});
+	}
 
 	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
+
+	Input::allocateSingleton();
+	ANKI_TEST_EXPECT_NO_ERR(Input::getSingleton().init());
+
 	initGrManager();
 }
 
@@ -85,6 +93,7 @@ inline void commonDestroy()
 	GrManager::freeSingleton();
 	Input::freeSingleton();
 	NativeWindow::freeSingleton();
+	Input::freeSingleton();
 	ShaderCompilerMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
 }
@@ -92,35 +101,38 @@ inline void commonDestroy()
 template<typename T>
 inline BufferPtr createBuffer(BufferUsageBit usage, ConstWeakArray<T> data, CString name = {})
 {
-	BufferInitInfo buffInit;
-	if(!name.isEmpty())
-	{
-		buffInit.setName(name);
-	}
+	BufferPtr copyBuff =
+		GrManager::getSingleton().newBuffer(BufferInitInfo(data.getSizeInBytes(), BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite));
 
-	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	buffInit.m_usage = usage | BufferUsageBit::kTransferSource;
-	buffInit.m_size = data.getSizeInBytes();
-
-	BufferPtr buff = GrManager::getSingleton().newBuffer(buffInit);
-
-	T* inData = static_cast<T*>(buff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
-
+	T* inData = static_cast<T*>(copyBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 	for(U32 i = 0; i < data.getSize(); ++i)
 	{
 		inData[i] = data[i];
 	}
+	copyBuff->unmap();
 
-	buff->unmap();
+	BufferPtr buff = GrManager::getSingleton().newBuffer(
+		BufferInitInfo(data.getSizeInBytes(), usage | BufferUsageBit::kTransferSource, BufferMapAccessBit::kNone, name));
+
+	CommandBufferInitInfo cmdbInit;
+	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+	cmdb->copyBufferToBuffer(BufferView(copyBuff.get()), BufferView(buff.get()));
+	cmdb->endRecording();
+
+	FencePtr fence;
+	GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+	fence->clientWait(kMaxSecond);
 
 	return buff;
 };
 
 template<typename T>
-inline BufferPtr createBuffer(BufferUsageBit usage, T data, CString name = {})
+inline BufferPtr createBuffer(BufferUsageBit usage, T pattern, U32 count, CString name = {})
 {
-	ConstWeakArray<T> arr(&data, 1);
-	return createBuffer(usage, arr, name);
+	DynamicArray<T> arr;
+	arr.resize(count, pattern);
+	return createBuffer(usage, ConstWeakArray<T>(arr), name);
 }
 
 template<typename T>
@@ -159,7 +171,7 @@ inline TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue
 };
 
 template<typename T>
-inline void validateBuffer(BufferPtr buff, T value)
+inline void readBuffer(BufferPtr buff, DynamicArray<T>& out)
 {
 	BufferPtr tmpBuff;
 
@@ -184,13 +196,24 @@ inline void validateBuffer(BufferPtr buff, T value)
 		fence->clientWait(kMaxSecond);
 	}
 
-	const T* inData = static_cast<T*>(tmpBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead));
-	const T* endData = inData + (tmpBuff->getSize() / sizeof(T));
-	for(; inData < endData; ++inData)
-	{
-		ANKI_TEST_EXPECT_EQ(*inData, value);
-	}
+	ANKI_ASSERT((buff->getSize() % sizeof(T)) == 0);
+	out.resize(U32(buff->getSize() / sizeof(T)));
+
+	const void* data = tmpBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kRead);
+	memcpy(out.getBegin(), data, buff->getSize());
 	tmpBuff->unmap();
+}
+
+template<typename T>
+inline void validateBuffer(BufferPtr buff, T value)
+{
+	DynamicArray<T> cpuBuff;
+	readBuffer<T>(buff, cpuBuff);
+
+	for(const T& x : cpuBuff)
+	{
+		ANKI_TEST_EXPECT_EQ(x, value);
+	}
 }
 
 } // end namespace anki

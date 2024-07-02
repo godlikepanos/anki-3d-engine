@@ -22,13 +22,11 @@ public:
 };
 
 /// @memberof ShaderProgramInitInfo
-class RayTracingShaders
+class WorkGraphNodeSpecialization
 {
 public:
-	WeakArray<Shader*> m_rayGenShaders;
-	WeakArray<Shader*> m_missShaders;
-	WeakArray<RayTracingHitGroup> m_hitGroups;
-	U32 m_maxRecursionDepth = 1;
+	CString m_nodeName;
+	UVec3 m_maxNodeDispatchGrid;
 };
 
 /// ShaderProgram init info.
@@ -42,10 +40,22 @@ public:
 	Shader* m_computeShader = nullptr;
 
 	/// Option 3
-	RayTracingShaders m_rayTracingShaders;
+	class
+	{
+	public:
+		WeakArray<Shader*> m_rayGenShaders;
+		WeakArray<Shader*> m_missShaders;
+		WeakArray<RayTracingHitGroup> m_hitGroups;
+		U32 m_maxRecursionDepth = 1;
+	} m_rayTracingShaders;
 
 	/// Option 4
-	Shader* m_workGraphShader = nullptr;
+	class
+	{
+	public:
+		Shader* m_shader = nullptr;
+		ConstWeakArray<WorkGraphNodeSpecialization> m_nodeSpecializations;
+	} m_workGraph;
 
 	ShaderProgramInitInfo(CString name = {})
 		: GrBaseInitInfo(name)

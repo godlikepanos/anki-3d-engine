@@ -560,8 +560,25 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 				return Error::kUserData;
 			}
 
-			refl.m_descriptor.m_bindings[bindDesc.Space][refl.m_descriptor.m_bindingCounts[bindDesc.Space]] = akBinding;
-			++refl.m_descriptor.m_bindingCounts[bindDesc.Space];
+			Bool skip = false;
+			if(isLib)
+			{
+				// Search if the binding exists because it may repeat
+				for(U32 i = 0; i < refl.m_descriptor.m_bindingCounts[bindDesc.Space]; ++i)
+				{
+					if(refl.m_descriptor.m_bindings[bindDesc.Space][i] == akBinding)
+					{
+						skip = true;
+						break;
+					}
+				}
+			}
+
+			if(!skip)
+			{
+				refl.m_descriptor.m_bindings[bindDesc.Space][refl.m_descriptor.m_bindingCounts[bindDesc.Space]] = akBinding;
+				++refl.m_descriptor.m_bindingCounts[bindDesc.Space];
+			}
 		}
 	}
 
