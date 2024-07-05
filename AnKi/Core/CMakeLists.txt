@@ -27,7 +27,7 @@ add_library(AnKiCore ${sources} ${headers})
 
 if(SDL)
 	if(LINUX)
-		set(extra_libs X11-xcb pthread dl)
+		set(extra_libs pthread dl)
 	endif()
 
 	set(extra_libs ${extra_libs} SDL2-static)

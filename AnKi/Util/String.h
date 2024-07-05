@@ -14,6 +14,7 @@
 #include <cctype>
 #include <cinttypes> // For PRId8 etc
 #include <cstdarg> // For var args
+#include <cstdlib>
 
 namespace anki {
 
@@ -266,9 +267,8 @@ public:
 
 		if(len > 0)
 		{
-			PtrSize outSize;
-			[[maybe_unused]] const auto err = mbstowcs_s(&outSize, arr, arrSize, m_ptr, len);
-			ANKI_ASSERT(err == 0 && outSize == len + 1);
+			[[maybe_unused]] const PtrSize charsWritten = mbstowcs(arr, m_ptr, arrSize);
+			ANKI_ASSERT(charsWritten == len + 1);
 		}
 		else
 		{

@@ -100,14 +100,12 @@ public:
 		return m_surface;
 	}
 
-#if ANKI_WINDOWING_SYSTEM_HEADLESS
 	void getNativeWindowSize(U32& width, U32& height) const
 	{
 		width = m_nativeWindowWidth;
 		height = m_nativeWindowHeight;
 		ANKI_ASSERT(width && height);
 	}
-#endif
 
 	/// @name Debug report
 	/// @{
@@ -174,10 +172,8 @@ private:
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-#if ANKI_WINDOWING_SYSTEM_HEADLESS
 	U32 m_nativeWindowWidth = 0;
 	U32 m_nativeWindowHeight = 0;
-#endif
 	MicroSwapchainPtr m_crntSwapchain;
 	U8 m_acquiredImageIdx = kMaxU8;
 

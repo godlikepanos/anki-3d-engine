@@ -11,8 +11,7 @@
 #if ANKI_WINDOWING_SYSTEM_HEADLESS
 // Do nothing
 #elif ANKI_OS_LINUX
-#	define VK_USE_PLATFORM_XCB_KHR 1
-#	define VK_USE_PLATFORM_XLIB_KHR 1
+#	define VK_USE_PLATFORM_WAYLAND_KHR 1
 #elif ANKI_OS_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR 1
 #elif ANKI_OS_ANDROID
@@ -52,8 +51,7 @@ ANKI_PURE VkDevice getVkDevice();
 enum class VulkanExtensions : U64
 {
 	kNone = 0,
-	kKHR_xcb_surface = 1u << 1u,
-	kKHR_xlib_surface = 1u << 2u,
+	kKHR_wayland_surface = 1u << 1u,
 	kKHR_win32_surface = 1u << 3u,
 	kKHR_android_surface = 1u << 4u,
 	kEXT_headless_surface = 1u << 5u,

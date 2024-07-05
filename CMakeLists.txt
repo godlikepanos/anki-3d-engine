@@ -302,6 +302,7 @@ endif()
 # SDL
 if(SDL)
 	message("++ Configuring SDL2")
+	option(SDL_X11 OFF)
 	add_subdirectory(ThirdParty/Sdl2)
 	message("++ End configuring SDL2")
 
@@ -461,7 +462,7 @@ if(LINUX)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
 
 	if(SDL)
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
+		#set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
 	endif()
 endif()
 

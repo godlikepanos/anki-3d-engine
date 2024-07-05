@@ -602,15 +602,10 @@ Error GrManagerImpl::initInstance()
 				instExtensions[instExtensionCount++] = VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME;
 			}
 #elif ANKI_OS_LINUX
-			if(extensionName == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
+			if(extensionName == VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME)
 			{
-				m_extensions |= VulkanExtensions::kKHR_xcb_surface;
-				instExtensions[instExtensionCount++] = VK_KHR_XCB_SURFACE_EXTENSION_NAME;
-			}
-			else if(extensionName == VK_KHR_XLIB_SURFACE_EXTENSION_NAME)
-			{
-				m_extensions |= VulkanExtensions::kKHR_xlib_surface;
-				instExtensions[instExtensionCount++] = VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
+				m_extensions |= VulkanExtensions::kKHR_wayland_surface;
+				instExtensions[instExtensionCount++] = VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
 			}
 #elif ANKI_OS_WINDOWS
 			if(extensionName == VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
@@ -641,8 +636,8 @@ Error GrManagerImpl::initInstance()
 		}
 
 		if(!(m_extensions
-			 & (VulkanExtensions::kEXT_headless_surface | VulkanExtensions::kKHR_xcb_surface | VulkanExtensions::kKHR_xlib_surface
-				| VulkanExtensions::kKHR_win32_surface | VulkanExtensions::kKHR_android_surface)))
+			 & (VulkanExtensions::kEXT_headless_surface | VulkanExtensions::kKHR_wayland_surface | VulkanExtensions::kKHR_win32_surface
+				| VulkanExtensions::kKHR_android_surface)))
 		{
 			ANKI_VK_LOGE("Couldn't find suitable surface extension");
 			return Error::kFunctionFailed;
@@ -1813,12 +1808,12 @@ Error GrManagerImpl::initSurface()
 	createInfo.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT;
 
 	ANKI_VK_CHECK(vkCreateHeadlessSurfaceEXT(m_instance, &createInfo, nullptr, &m_surface));
-
-	m_nativeWindowWidth = NativeWindow::getSingleton().getWidth();
-	m_nativeWindowHeight = NativeWindow::getSingleton().getHeight();
 #else
 #	error Unsupported
 #endif
+
+	m_nativeWindowWidth = NativeWindow::getSingleton().getWidth();
+	m_nativeWindowHeight = NativeWindow::getSingleton().getHeight();
 
 	return Error::kNone;
 }

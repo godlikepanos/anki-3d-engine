@@ -6,6 +6,7 @@
 #include <AnKi/Gr/Vulkan/VkSwapchainFactory.h>
 #include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Gr/Vulkan/VkTexture.h>
+#include <AnKi/Math/Functions.h>
 
 namespace anki {
 
@@ -35,28 +36,24 @@ Error MicroSwapchain::initInternal()
 
 	// Get the surface size
 	VkSurfaceCapabilitiesKHR surfaceProperties;
+	U32 swapchainImages = 0;
 	U32 surfaceWidth = 0, surfaceHeight = 0;
 	{
 		ANKI_VK_CHECK(
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(getGrManagerImpl().getPhysicalDevice(), getGrManagerImpl().getSurface(), &surfaceProperties));
 
-#if ANKI_WINDOWING_SYSTEM_HEADLESS
-		if(surfaceProperties.currentExtent.width != kMaxU32 || surfaceProperties.currentExtent.height != kMaxU32)
+		if(surfaceProperties.currentExtent.width == kMaxU32 && surfaceProperties.currentExtent.height == kMaxU32)
 		{
-			ANKI_VK_LOGE("Was expecting an indication that the surface size will be determined by the extent of a "
-						 "swapchain targeting the surface");
-			return Error::kFunctionFailed;
+			// On some platforms this isn't set for some reason (wayland & headless)
+			getGrManagerImpl().getNativeWindowSize(surfaceWidth, surfaceHeight);
 		}
-		getGrManagerImpl().getNativeWindowSize(surfaceWidth, surfaceHeight);
-#else
-		if(surfaceProperties.currentExtent.width == kMaxU32 || surfaceProperties.currentExtent.height == kMaxU32)
+		else
 		{
-			ANKI_VK_LOGE("Wrong surface size");
-			return Error::kFunctionFailed;
+			surfaceWidth = surfaceProperties.currentExtent.width;
+			surfaceHeight = surfaceProperties.currentExtent.height;
 		}
-		surfaceWidth = surfaceProperties.currentExtent.width;
-		surfaceHeight = surfaceProperties.currentExtent.height;
-#endif
+
+		swapchainImages = max<U32>(surfaceProperties.minImageCount, kMaxFramesInFlight);
 	}
 
 	// Get the surface format
@@ -185,7 +182,7 @@ Error MicroSwapchain::initInternal()
 		VkSwapchainCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		ci.surface = getGrManagerImpl().getSurface();
-		ci.minImageCount = kMaxFramesInFlight;
+		ci.minImageCount = swapchainImages;
 		ci.imageFormat = surfaceFormat;
 		ci.imageColorSpace = colorspace;
 		ci.imageExtent.width = surfaceWidth;
@@ -208,9 +205,9 @@ Error MicroSwapchain::initInternal()
 	{
 		U32 count = 0;
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, nullptr));
-		if(count != kMaxFramesInFlight)
+		if(count != swapchainImages)
 		{
-			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", kMaxFramesInFlight, count);
+			ANKI_VK_LOGI("Requested a swapchain with %u images but got one with %u", swapchainImages, count);
 		}
 
 		m_textures.resize(count);

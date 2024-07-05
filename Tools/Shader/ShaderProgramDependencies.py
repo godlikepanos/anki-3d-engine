@@ -31,7 +31,7 @@ def parse_file(fname):
     file = open(fname, mode="r")
     txt = file.read()
 
-    my_includes = re.findall("\s*#\s*include\ <(.*)>", txt)
+    my_includes = re.findall(r"\s*#\s*include\ <(.*)>", txt)
     agregated_includes = []
 
     for include in my_includes:
