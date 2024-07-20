@@ -35,7 +35,7 @@ StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes :
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
 StructuredBuffer<Mat3x4> g_transforms : register(t3);
-ByteAddressBuffer g_gpuScene : register(t4);
+StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t4);
 
 #if GATHER_MDI
 // These 3 have the same size
@@ -162,7 +162,7 @@ RWStructuredBuffer<GpuVisibilityHash> g_hash : register(u7);
 	const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
 	const GpuSceneMeshLod meshLod = g_meshLods[meshLodIndex];
 
-	const Bool isParticleEmitter = renderable.m_particleEmitterOffset != 0;
+	const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32;
 	ANKI_MAYBE_UNUSED(isParticleEmitter);
 
 	const Bool usesMeshShaders = meshLod.m_meshletCount != 0u;
@@ -238,7 +238,7 @@ RWStructuredBuffer<GpuVisibilityHash> g_hash : register(u7);
 			}
 			else
 			{
-				const GpuSceneParticleEmitter emitter = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_particleEmitterOffset);
+				const GpuSceneParticleEmitter emitter = g_particleEmitters[renderable.m_particleEmitterIndex];
 
 				DrawIndirectArgsWithPadding indirect;
 				indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
@@ -252,7 +252,7 @@ RWStructuredBuffer<GpuVisibilityHash> g_hash : register(u7);
 				instanceVertex.x = renderable.m_worldTransformsIndex;
 				instanceVertex.y = renderable.m_uniformsOffset;
 				instanceVertex.z = meshLodIndex;
-				instanceVertex.w = renderable.m_particleEmitterOffset;
+				instanceVertex.w = renderable.m_particleEmitterIndex;
 				g_instanceRateRenderables[indirectIdx] = instanceVertex;
 			}
 		}

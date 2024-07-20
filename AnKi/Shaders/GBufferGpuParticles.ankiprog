@@ -43,7 +43,7 @@ VertOut main(VertIn input)
 	VertOut output;
 
 	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_boneTransformsOrParticleEmitterOffset);
+	const GpuSceneParticleEmitter particles = g_particleEmitters[renderable.m_boneTransformsOffsetOrParticleEmitterIndex];
 
 	// Read vertex
 	const U32 particleId = input.m_svVertexId;

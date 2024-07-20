@@ -70,6 +70,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_RENDERABLES), GpuSceneArrays::Renderable::getSingleton().getBufferView());
 	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESH_LODS), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_TRANSFORMS), GpuSceneArrays::Transform::getSingleton().getBufferView());
+	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS), GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
 	cmdb.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_HZB_TEXTURE),
 					 (args.m_hzbTexture.isValid()) ? args.m_hzbTexture
 												   : TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));

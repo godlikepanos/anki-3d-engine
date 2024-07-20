@@ -209,6 +209,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
 			gpuRenderable.m_meshLodsIndex = m_patchInfos[i].m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
+			gpuRenderable.m_particleEmitterIndex = kMaxU32;
 			if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtShadow))
 			{
 				const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false, false);

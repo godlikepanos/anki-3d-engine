@@ -425,7 +425,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::Renderable::getSingleton().getBufferView());
 		cmdb.bindStorageBuffer(ANKI_REG(t2), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 		cmdb.bindStorageBuffer(ANKI_REG(t3), GpuSceneArrays::Transform::getSingleton().getBufferView());
-		cmdb.bindStorageBuffer(ANKI_REG(t4), GpuSceneBuffer::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(t4), GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
 		if(gatherType & 1u)
 		{
 			cmdb.bindStorageBuffer(ANKI_REG(u0), out.m_legacy.m_renderableInstancesBuffer);

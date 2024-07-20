@@ -125,8 +125,8 @@ ANKI_PUSH_CONSTANTS(Consts, g_unis)
 				instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsIndex << 7u;
 				instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
 				instance.m_uniformsOffset = renderable.m_uniformsOffset;
-				instance.m_boneTransformsOrParticleEmitterOffset =
-					(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterOffset;
+				instance.m_boneTransformsOffsetOrParticleEmitterIndex =
+					(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterIndex;
 
 				g_meshletInstances[g_unis.m_firstMeshlet + instanceIdx] = instance;
 			}

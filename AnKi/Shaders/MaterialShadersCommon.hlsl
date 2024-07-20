@@ -29,6 +29,7 @@ StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(ANKI_MATERIAL_REGISTER_M
 StructuredBuffer<Mat3x4> g_transforms : register(ANKI_MATERIAL_REGISTER_TRANSFORMS);
 Texture2D<Vec4> g_hzbTexture : register(ANKI_MATERIAL_REGISTER_HZB_TEXTURE);
 SamplerState g_nearestClampSampler : register(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER);
+StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS);
 
 // FW shading specific
 #if defined(FORWARD_SHADING)

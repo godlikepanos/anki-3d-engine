@@ -396,11 +396,11 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		m_gpuSceneMeshLods.uploadToGpuScene(meshLods);
 
 		// Upload the GpuSceneRenderable
-		GpuSceneRenderable renderable;
+		GpuSceneRenderable renderable = {};
 		renderable.m_boneTransformsOffset = 0;
 		renderable.m_uniformsOffset = m_gpuSceneUniforms.getOffset();
 		renderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
-		renderable.m_particleEmitterOffset = m_gpuSceneParticleEmitter.getGpuSceneOffset();
+		renderable.m_particleEmitterIndex = m_gpuSceneParticleEmitter.getIndex();
 		renderable.m_worldTransformsIndex = 0;
 		renderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
 		if(!m_gpuSceneRenderable.isValid())

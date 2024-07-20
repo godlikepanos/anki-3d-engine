@@ -34,9 +34,9 @@ struct VertOut
 
 VertOut main(VertIn input)
 {
-	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneParticleEmitter particles = g_gpuScene.Load<GpuSceneParticleEmitter>(renderable.m_boneTransformsOrParticleEmitterOffset);
-	const GpuSceneMeshLod meshLod = g_meshLods[renderable.m_meshLodIndex];
+	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
+	const GpuSceneParticleEmitter particles = g_particleEmitters[instance.m_boneTransformsOffsetOrParticleEmitterIndex];
+	const GpuSceneMeshLod meshLod = g_meshLods[instance.m_meshLodIndex];
 
 	const U32 particleId = input.m_svVertexId / meshLod.m_indexCount;
 	const U32 vertexId = g_unifiedGeom_R16_Uint[meshLod.m_firstIndex + input.m_svVertexId % meshLod.m_indexCount];
@@ -62,7 +62,7 @@ VertOut main(VertIn input)
 	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPos, 1.0));
 
 	output.m_alpha = particleAlpha;
-	output.m_uniformsOffset = renderable.m_uniformsOffset;
+	output.m_uniformsOffset = instance.m_uniformsOffset;
 
 	return output;
 }

@@ -265,7 +265,7 @@ VertOut main(VertIn input)
 
 	const U32 uniformsOffset = instance.m_uniformsOffset;
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
-	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
+	const U32 boneTransformsOffset = instance.m_boneTransformsOffsetOrParticleEmitterIndex;
 
 #		if VISUALIZE_MESHLETS
 	output.m_meshletIndex = instance.m_meshletGeometryDescriptorIndex;
@@ -278,9 +278,9 @@ VertOut main(VertIn input)
 
 	const U32 uniformsOffset = instance.m_uniformsOffset;
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
-	const U32 boneTransformsOrParticleEmitterOffset = instance.m_boneTransformsOrParticleEmitterOffset;
+	const U32 boneTransformsOffset = instance.m_boneTransformsOffsetOrParticleEmitterIndex;
 #	endif // SW_MESHLETS
-	ANKI_MAYBE_UNUSED(boneTransformsOrParticleEmitterOffset);
+	ANKI_MAYBE_UNUSED(boneTransformsOffset);
 
 	const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
 	const Mat3x4 prevWorldTransform = g_transforms[worldTransformsIndex + 1u];
@@ -295,7 +295,7 @@ VertOut main(VertIn input)
 
 	// Do stuff
 #	if ANKI_BONES
-	skinning(vert, boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
+	skinning(vert, boneTransformsOffset, vert.m_position, prevPos, vert.m_normal);
 #	endif
 
 	const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));

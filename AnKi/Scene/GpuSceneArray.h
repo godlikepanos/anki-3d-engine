@@ -127,6 +127,19 @@ public:
 		return {&GpuSceneBuffer::getSingleton().getBuffer(), getGpuSceneOffsetOfArrayBase(), getBufferRange()};
 	}
 
+	/// @note Thread-safe
+	BufferView getBufferViewSafe() const
+	{
+		PtrSize range = getBufferRange();
+		if(range == 0)
+		{
+			// Just set something
+			range = getElementSize();
+		}
+
+		return {&GpuSceneBuffer::getSingleton().getBuffer(), getGpuSceneOffsetOfArrayBase(), range};
+	}
+
 	/// Some bookeeping. Needs to be called once per frame.
 	/// @note Thread-safe
 	void flush()
