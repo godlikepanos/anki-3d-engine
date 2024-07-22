@@ -268,7 +268,7 @@ public:
 		if(len > 0)
 		{
 			[[maybe_unused]] const PtrSize charsWritten = mbstowcs(arr, m_ptr, arrSize);
-			ANKI_ASSERT(charsWritten == len + 1);
+			ANKI_ASSERT(charsWritten == len);
 		}
 		else
 		{

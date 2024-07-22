@@ -82,9 +82,6 @@ inline void commonInit(Bool validation = true)
 	initWindow();
 	ANKI_TEST_EXPECT_NO_ERR(Input::allocateSingleton().init());
 
-	Input::allocateSingleton();
-	ANKI_TEST_EXPECT_NO_ERR(Input::getSingleton().init());
-
 	initGrManager();
 }
 
@@ -111,8 +108,8 @@ inline BufferPtr createBuffer(BufferUsageBit usage, ConstWeakArray<T> data, CStr
 	}
 	copyBuff->unmap();
 
-	BufferPtr buff = GrManager::getSingleton().newBuffer(
-		BufferInitInfo(data.getSizeInBytes(), usage | BufferUsageBit::kTransferSource, BufferMapAccessBit::kNone, name));
+	BufferPtr buff = GrManager::getSingleton().newBuffer(BufferInitInfo(
+		data.getSizeInBytes(), usage | BufferUsageBit::kTransferDestination | BufferUsageBit::kTransferSource, BufferMapAccessBit::kNone, name));
 
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
