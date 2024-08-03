@@ -161,15 +161,6 @@ struct FragOut
 	Vec2 m_color3 : SV_TARGET3;
 };
 
-struct TaskOut
-{
-	U32 m_firstMeshletGeometryDescriptor;
-	U32 m_visibleMeshletsRelativeIndices[kMeshletGroupSize / sizeof(U32)];
-	U32 m_worldTransformsIndex;
-	U32 m_uniformsOffset;
-	U32 m_boneTransformsOrParticleEmitterOffset;
-};
-
 struct Mat3x4_2
 {
 	Mat3x4 m_a;
@@ -318,103 +309,6 @@ VertOut main(VertIn input)
 #endif // ANKI_VERTEX_SHADER
 
 // ===========================================================================
-// Task                                                                      =
-// ===========================================================================
-#if ANKI_TASK_SHADER
-groupshared TaskOut s_payload;
-groupshared U32 s_visibleMeshletCount;
-
-struct FirstPayload
-{
-	UVec4 m_val;
-};
-
-ANKI_PUSH_CONSTANTS(FirstPayload, g_firstPayload)
-
-[numthreads(ANKI_TASK_SHADER_THREADGROUP_SIZE, 1, 1)] void main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX)
-{
-	const GpuSceneMeshletGroupInstance inPayload = g_meshletGroups[g_firstPayload.m_val.x + svGroupId];
-
-	const U32 lod = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 30u;
-	const U32 renderableIdx = (inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit >> 9u) & ((1u << 21u) - 1u);
-	const U32 meshletGroup = inPayload.m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit & ((1u << 9u) - 1u);
-
-	const GpuSceneRenderable renderable = g_renderables[renderableIdx];
-	const GpuSceneMeshLod meshLod = g_meshLods[renderable.m_meshLodsIndex + lod];
-	U32 firstMeshletBoundingVolume = meshletGroup * kMeshletGroupSize;
-	const U32 meshletCount = min(kMeshletGroupSize, meshLod.m_meshletCount - firstMeshletBoundingVolume);
-	firstMeshletBoundingVolume += meshLod.m_firstMeshletBoundingVolume;
-	const U32 firstMeshletGeometryDescriptor = meshletGroup * kMeshletGroupSize + meshLod.m_firstMeshletGeometryDescriptor;
-
-	if(svGroupIndex == 0u)
-	{
-		s_payload.m_firstMeshletGeometryDescriptor = firstMeshletGeometryDescriptor;
-		s_payload.m_worldTransformsIndex = renderable.m_worldTransformsIndex;
-		s_payload.m_uniformsOffset = renderable.m_uniformsOffset;
-		s_payload.m_boneTransformsOrParticleEmitterOffset = renderable.m_boneTransformsOffset;
-
-		s_visibleMeshletCount = 0;
-
-		[unroll] for(U32 i = 0; i < kMeshletGroupSize / sizeof(U32); ++i)
-		{
-			s_payload.m_visibleMeshletsRelativeIndices[i] = 0u;
-		}
-	}
-
-	GroupMemoryBarrierWithGroupSync();
-
-	if(svGroupIndex < meshletCount)
-	{
-		Bool cull = false;
-
-		const MeshletBoundingVolume meshletBoundingVol = g_meshletBoundingVolumes[firstMeshletBoundingVolume + svGroupIndex];
-		const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
-
-#	if MESHLET_BACKFACE_CULLING
-		cull = cullBackfaceMeshlet(meshletBoundingVol, worldTransform, g_globalUniforms.m_cameraTransform.getTranslationPart());
-#	endif
-
-		const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
-		const Mat4 mvp = mul(g_globalUniforms.m_viewProjectionMatrix, wordTransform4);
-
-		Vec2 minNdc, maxNdc;
-		F32 aabbMinDepth;
-		projectAabb(meshletBoundingVol.m_aabbMin, meshletBoundingVol.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
-
-#	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
-		// Outside of the screen
-		cull = cull || (any(minNdc > 1.0f) || any(maxNdc < -1.0f));
-#	endif
-
-#	if MESHLET_NO_SAMPLING_POINT_CULLING
-		// Sampling points test
-		const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_globalUniforms.m_viewport.zw;
-		const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_globalUniforms.m_viewport.zw;
-		cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
-#	endif
-
-#	if MESHLET_HZB_CULLING
-		cull = cull || (g_globalUniforms.m_enableHzbTesting == 1u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
-#	endif
-
-		if(!cull)
-		{
-			U32 idx;
-			InterlockedAdd(s_visibleMeshletCount, 1u, idx);
-
-			const U32 groupIdx = idx / 4u;
-			const U32 localIdx = idx % 4u;
-
-			const U32 mask = svGroupIndex << (localIdx * 8u);
-			InterlockedOr(s_payload.m_visibleMeshletsRelativeIndices[groupIdx], mask);
-		}
-	}
-
-	DispatchMesh(s_visibleMeshletCount, 1, 1, s_payload);
-}
-#endif
-
-// ===========================================================================
 // Mesh                                                                      =
 // ===========================================================================
 #if ANKI_MESH_SHADER
@@ -426,15 +320,18 @@ groupshared F32 s_clipW[kMaxVerticesPerMeshlet];
 constexpr int g_trick = 0; // Trick the formatter
 
 [numthreads(ANKI_MESH_SHADER_THREADGROUP_SIZE, 1, 1)] [outputtopology("triangle")] void
-main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload TaskOut payload,
-	 out vertices MeshPerVertOut verts[kMaxVerticesPerMeshlet], out primitives MeshPerPrimitiveOut primitives[kMaxPrimitivesPerMeshlet],
-	 out indices UVec3 indices[kMaxPrimitivesPerMeshlet])
+main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices MeshPerVertOut verts[kMaxVerticesPerMeshlet],
+	 out primitives MeshPerPrimitiveOut primitives[kMaxPrimitivesPerMeshlet], out indices UVec3 indices[kMaxPrimitivesPerMeshlet])
 {
-	const U32 groupIdx = svGroupId / 4u;
-	const U32 localIdx = svGroupId % 4u;
-	const U32 relativeMeshletIdx = (payload.m_visibleMeshletsRelativeIndices[groupIdx] >> (localIdx * 8u)) & 0xFFu;
+	const U32 instanceIdx = g_firstMeshlet[g_pushConsts.m_bucketIndex] + svGroupId;
 
-	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[payload.m_firstMeshletGeometryDescriptor + relativeMeshletIdx];
+	const GpuSceneMeshletInstance instance = g_meshletInstances[instanceIdx];
+	const U32 uniformsOffset = instance.m_uniformsOffset;
+	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
+	const U32 boneTransformsOffset = instance.m_boneTransformsOffsetOrParticleEmitterIndex;
+	ANKI_MAYBE_UNUSED(boneTransformsOffset);
+
+	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
 	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
 	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
 
@@ -452,8 +349,8 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 
 			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES);
 
-			const Mat3x4 worldTransform = g_transforms[payload.m_worldTransformsIndex];
-			const Mat3x4 prevWorldTransform = g_transforms[payload.m_worldTransformsIndex];
+			const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
+			const Mat3x4 prevWorldTransform = g_transforms[worldTransformsIndex + 1u];
 			ANKI_MAYBE_UNUSED(prevWorldTransform);
 
 #	if UVS
@@ -464,7 +361,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 
 			// Do stuff
 #	if ANKI_BONES
-			skinning(vert, payload.m_boneTransformsOrParticleEmitterOffset, vert.m_position, prevPos, vert.m_normal);
+			skinning(vert, boneTransformsOffset, vert.m_position, prevPos, vert.m_normal);
 #	endif
 
 			const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
@@ -534,7 +431,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, in payload Ta
 			primitives[idx].m_cullPrimitive = cull;
 #	endif
 
-			primitives[idx].m_uniformsOffset = payload.m_uniformsOffset;
+			primitives[idx].m_uniformsOffset = uniformsOffset;
 #	if VISUALIZE_MESHLETS
 			primitives[idx].m_meshletIndex = relativeMeshletIdx;
 #	endif
@@ -781,9 +678,6 @@ FragOut main(
 
 #pragma anki technique_start vert ShadowsSwMeshletRendering uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end vert ShadowsSwMeshletRendering
-
-#pragma anki technique_start task CommonTask uses_mutators
-#pragma anki technique_end task CommonTask
 
 #pragma anki technique_start mesh GBufferMeshShaders uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end mesh GBufferMeshShaders

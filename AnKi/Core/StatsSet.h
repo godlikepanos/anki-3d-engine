@@ -177,6 +177,41 @@ public:
 	}
 
 	template<std::integral T>
+	U64 max(T value)
+	{
+#if ANKI_STATS_ENABLED
+		ANKI_ASSERT(!(m_flags & StatFlag::kFloat));
+		checkThread();
+		U64 orig;
+		if(!!(m_flags & StatFlag::kMainThreadUpdates))
+		{
+			orig = m_u;
+			m_u = value;
+		}
+		else
+		{
+			orig = m_atomic.max(value);
+		}
+		return orig;
+#else
+		(void)value;
+		return 0;
+#endif
+	}
+
+	template<std::floating_point T>
+	F64 max([[maybe_unused]] T value)
+	{
+#if ANKI_STATS_ENABLED
+		ANKI_ASSERT("Not supported for floats");
+		return 0.0;
+#else
+		(void)value;
+		return 0.0;
+#endif
+	}
+
+	template<std::integral T>
 	U64 getValue() const
 	{
 #if ANKI_STATS_ENABLED

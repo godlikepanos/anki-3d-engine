@@ -113,3 +113,21 @@ DEFINE_COMPARISON2(max)
 
 #undef DEFINE_COMPARISON2
 #undef DEFINE_COMPARISON
+
+template<typename T>
+U32 getStructuredBufferElementCount(T x)
+{
+	U32 size, stride;
+	x.GetDimensions(size, stride);
+	return size;
+}
+
+template<typename T>
+U32 checkStructuredBuffer(T buff, U32 idx)
+{
+	ANKI_ASSERT(idx < getStructuredBufferElementCount(buff));
+	return 0u;
+}
+
+// Safely access a structured buffer. Throw an assertion if it's out of bounds
+#define SBUFF(buff, idx) buff[(idx) + checkStructuredBuffer(buff, idx)]

@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<material>
-	<shaderPrograms>
-		<shaderProgram name="ForwardShadingParticles">
-			<mutation>
-				<mutator name="ANIMATED_TEXTURE" value="0"/>
-				<mutator name="LIGHT" value="1"/>
-			</mutation>
-		</shaderProgram>
-	</shaderPrograms>
+<material shadow="0">
+	<shaderProgram name="ForwardShadingParticles">
+		<mutation>
+			<mutator name="ANIMATED_TEXTURE" value="0"/>
+			<mutator name="LIGHT" value="1"/>
+		</mutation>
+	</shaderProgram>
 
 	<inputs>
 		<input name="m_diffuseMap" value="Assets/Smoke.ankitex"/>

@@ -210,10 +210,6 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 			m_techniquesMask |= RenderingTechniqueBit::kForward;
 			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
 		}
-		else if(t.m_name.getBegin() == CString("CommonTask"))
-		{
-			// Ignore
-		}
 		else
 		{
 			ANKI_RESOURCE_LOGE("Found unneeded technique in the shader: %s", t.m_name.getBegin());
@@ -579,7 +575,6 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		if(key.getMeshletRendering() && meshShadersSupported)
 		{
 			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "GBufferMeshShaders");
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
 		}
 		else if(key.getMeshletRendering())
 		{
@@ -594,7 +589,6 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		if(key.getMeshletRendering() && meshShadersSupported)
 		{
 			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "ShadowsMeshShaders");
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kTask, "CommonTask");
 		}
 		else if(key.getMeshletRendering())
 		{

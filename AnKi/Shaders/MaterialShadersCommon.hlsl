@@ -23,13 +23,23 @@ ByteAddressBuffer g_gpuScene : register(ANKI_MATERIAL_REGISTER_GPU_SCENE);
 
 StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes : register(ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES);
 StructuredBuffer<MeshletGeometryDescriptor> g_meshletGeometryDescriptors : register(ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS);
-StructuredBuffer<GpuSceneMeshletGroupInstance> g_meshletGroups : register(ANKI_MATERIAL_REGISTER_MESHLET_GROUPS);
+StructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(ANKI_MATERIAL_REGISTER_MESHLET_INSTANCES);
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(ANKI_MATERIAL_REGISTER_RENDERABLES);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(ANKI_MATERIAL_REGISTER_MESH_LODS);
 StructuredBuffer<Mat3x4> g_transforms : register(ANKI_MATERIAL_REGISTER_TRANSFORMS);
 Texture2D<Vec4> g_hzbTexture : register(ANKI_MATERIAL_REGISTER_HZB_TEXTURE);
 SamplerState g_nearestClampSampler : register(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER);
 StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS);
+StructuredBuffer<U32> g_firstMeshlet : register(ANKI_MATERIAL_REGISTER_FIRST_MESHLET);
+
+#if ANKI_MESH_SHADER
+struct PushConsts
+{
+	UVec3 m_padding;
+	U32 m_bucketIndex;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, g_pushConsts)
+#endif
 
 // FW shading specific
 #if defined(FORWARD_SHADING)

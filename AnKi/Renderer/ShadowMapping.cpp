@@ -375,19 +375,6 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 					createVetVisibilityPass(generateTempPassName("Shadows: Vet point light lightIdx:%u", lightIdx), *lightc, visOut, rgraph);
 			}
 
-			// Additional visibility
-			GpuMeshletVisibilityOutput meshletVisOut;
-			if(getRenderer().runSoftwareMeshletRendering())
-			{
-				PassthroughGpuMeshletVisibilityInput meshIn;
-				meshIn.m_passesName = generateTempPassName("Shadows point light lightIdx:%u", lightIdx);
-				meshIn.m_technique = RenderingTechnique::kDepth;
-				meshIn.m_rgraph = &rgraph;
-				meshIn.fillBuffers(visOut);
-
-				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
-			}
-
 			// Draw
 			Array<ShadowSubpassInfo, 6> subpasses;
 			for(U32 face = 0; face < 6; ++face)
@@ -405,7 +392,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				subpasses[face].m_viewProjMat = frustum.getViewProjectionMatrix();
 			}
 
-			createDrawShadowsPass(subpasses, visOut, meshletVisOut, generateTempPassName("Shadows: Point light lightIdx:%u", lightIdx), rgraph);
+			createDrawShadowsPass(subpasses, visOut, generateTempPassName("Shadows: Point light lightIdx:%u", lightIdx), rgraph);
 		}
 		else
 		{
@@ -466,24 +453,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 					createVetVisibilityPass(generateTempPassName("Shadows: Vet spot light lightIdx:%u", lightIdx), *lightc, visOut, rgraph);
 			}
 
-			// Additional visibility
-			GpuMeshletVisibilityOutput meshletVisOut;
-			if(getRenderer().runSoftwareMeshletRendering())
-			{
-				GpuMeshletVisibilityInput meshIn;
-				meshIn.m_passesName = generateTempPassName("Shadows spot light lightIdx:%u", lightIdx);
-				meshIn.m_technique = RenderingTechnique::kDepth;
-				meshIn.m_viewProjectionMatrix = lightc->getSpotLightViewProjectionMatrix();
-				meshIn.m_cameraTransform = lightc->getSpotLightViewMatrix().getInverseTransformation();
-				meshIn.m_viewportSize = atlasViewport.zw();
-				meshIn.m_rgraph = &rgraph;
-				meshIn.fillBuffers(visOut);
-
-				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
-			}
-
 			// Add draw pass
-			createDrawShadowsPass(atlasViewport, lightc->getSpotLightViewProjectionMatrix(), lightc->getSpotLightViewMatrix(), visOut, meshletVisOut,
+			createDrawShadowsPass(atlasViewport, lightc->getSpotLightViewProjectionMatrix(), lightc->getSpotLightViewMatrix(), visOut,
 								  clearTileIndirectArgs, {}, generateTempPassName("Shadows: Spot light lightIdx:%u", lightIdx), rgraph);
 		}
 		else
@@ -552,24 +523,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			GpuVisibilityOutput visOut;
 			getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
 
-			// Additional visibility
-			GpuMeshletVisibilityOutput meshletVisOut;
-			if(getRenderer().runSoftwareMeshletRendering())
-			{
-				GpuMeshletVisibilityInput meshIn;
-				meshIn.m_passesName = generateTempPassName("Shadows: Dir light cascade lightIdx:%u cascade:%u", lightIdx, cascade);
-				meshIn.m_technique = RenderingTechnique::kDepth;
-				meshIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
-				meshIn.m_cameraTransform = cascadeViewMats[cascade].getInverseTransformation();
-				meshIn.m_viewportSize = dirLightAtlasViewports[cascade].zw();
-				meshIn.m_rgraph = &rgraph;
-				meshIn.fillBuffers(visOut);
-
-				getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
-			}
-
 			// Draw
-			createDrawShadowsPass(dirLightAtlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, meshletVisOut, {},
+			createDrawShadowsPass(dirLightAtlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, {},
 								  hzbGenIn.m_cascades[cascade].m_hzbRt,
 								  generateTempPassName("Shadows: Dir light lightIdx:%u cascade:%u", lightIdx, cascade), rgraph);
 
@@ -592,7 +547,8 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kStorageComputeWrite);
 
 	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_legacy.m_mdiDrawCountsBuffer, clearTileIndirectArgs,
-				  taskShadersIndirectArgs = visOut.m_mesh.m_taskShaderIndirectArgsBuffer](RenderPassWorkContext& rpass) {
+				  dispatchMeshIndirectArgs = visOut.m_mesh.m_dispatchMeshIndirectArgsBuffer,
+				  drawIndirectArgs = visOut.m_mesh.m_drawIndirectArgs](RenderPassWorkContext& rpass) {
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());
@@ -601,11 +557,16 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
 
 		cmdb.bindStorageBuffer(ANKI_REG(t0), hashBuff);
-		cmdb.bindStorageBuffer(ANKI_REG(u0), mdiBuff);
+		cmdb.bindStorageBuffer(ANKI_REG(u0), mdiBuff.isValid() ? mdiBuff : BufferView(&getRenderer().getDummyBuffer()).setRange(sizeof(U32)));
 		cmdb.bindStorageBuffer(ANKI_REG(u1), GpuSceneArrays::Light::getSingleton().getBufferView());
 		cmdb.bindStorageBuffer(ANKI_REG(u2), GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferView());
 		cmdb.bindStorageBuffer(ANKI_REG(u3), clearTileIndirectArgs);
-		cmdb.bindStorageBuffer(ANKI_REG(u4), taskShadersIndirectArgs);
+		cmdb.bindStorageBuffer(ANKI_REG(u4), dispatchMeshIndirectArgs.isValid()
+												 ? dispatchMeshIndirectArgs
+												 : BufferView(&getRenderer().getDummyBuffer()).setRange(sizeof(DispatchIndirectArgs)));
+		cmdb.bindStorageBuffer(ANKI_REG(u5), drawIndirectArgs.isValid()
+												 ? drawIndirectArgs
+												 : BufferView(&getRenderer().getDummyBuffer()).setRange(sizeof(DrawIndirectArgs)));
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);
@@ -615,8 +576,8 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 }
 
 void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
-										  const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
-										  const RenderTargetHandle hzbRt, CString passName, RenderGraphBuilder& rgraph)
+										  const BufferView& clearTileIndirectArgs, const RenderTargetHandle hzbRt, CString passName,
+										  RenderGraphBuilder& rgraph)
 {
 	ShadowSubpassInfo spass;
 	spass.m_clearTileIndirectArgs = clearTileIndirectArgs;
@@ -625,11 +586,11 @@ void ShadowMapping::createDrawShadowsPass(const UVec4& viewport, const Mat4& vie
 	spass.m_viewport = viewport;
 	spass.m_viewProjMat = viewProjMat;
 
-	createDrawShadowsPass({&spass, 1}, visOut, meshletVisOut, passName, rgraph);
+	createDrawShadowsPass({&spass, 1}, visOut, passName, rgraph);
 }
 
-void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subpasses_, const GpuVisibilityOutput& visOut,
-										  const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphBuilder& rgraph)
+void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subpasses_, const GpuVisibilityOutput& visOut, CString passName,
+										  RenderGraphBuilder& rgraph)
 {
 	WeakArray<ShadowSubpassInfo> subpasses;
 	newArray<ShadowSubpassInfo>(getRenderer().getFrameMemoryPool(), subpasses_.getSize(), subpasses);
@@ -666,10 +627,10 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	smRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({}, &smRti, viewport[0], viewport[1], viewport[2], viewport[3]);
 
-	pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency, BufferUsageBit::kIndirectDraw);
+	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
 
-	pass.setWork([this, visOut, meshletVisOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, visOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -714,11 +675,6 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 			if(spass.m_hzbRt.isValid())
 			{
 				args.m_hzbTexture = rgraphCtx.createTextureView(spass.m_hzbRt, TextureSubresourceDesc::all());
-			}
-
-			if(meshletVisOut.isFilled())
-			{
-				args.fill(meshletVisOut);
 			}
 
 			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);

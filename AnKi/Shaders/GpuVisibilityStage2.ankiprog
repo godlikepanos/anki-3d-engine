@@ -1,0 +1,261 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator HZB_TEST 0 1
+#pragma anki mutator PASSTHROUGH 0 1
+#pragma anki mutator MESH_SHADERS 0 1
+
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+
+#pragma anki technique_start comp Legacy uses_mutators
+
+struct DrawIndirectArgsWithPadding
+{
+	U32 m_vertexCount;
+	U32 m_instanceCount;
+	U32 m_firstVertex;
+	U32 m_firstInstance;
+	U32 m_padding;
+};
+
+// GPU scene
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
+StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+
+StructuredBuffer<GpuVisibilityVisibleRenderableDesc> g_visibleRenderables : register(t3);
+StructuredBuffer<U32> g_visibleRenderableCount : register(t4);
+StructuredBuffer<U32> g_renderablePrefixSums : register(t5);
+
+// One for each bucket. Points to the 1st indirect args struct. 2nd element contains the max count
+StructuredBuffer<UVec2> g_firstDrawIndirectArgAndCount : register(t6);
+
+// These 3 have the same size
+RWStructuredBuffer<UVec4> g_instanceRateRenderables : register(u0);
+RWStructuredBuffer<DrawIndexedIndirectArgs> g_drawIndexedIndirectArgs : register(u1);
+RWStructuredBuffer<DrawIndirectArgsWithPadding> g_drawIndirectArgs : register(u2); // This points to the same buffer as the above
+
+// The MDI counts. One for each render state bucket
+RWStructuredBuffer<U32> g_mdiDrawCounts : register(u3);
+
+RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
+
+[numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	if(svDispatchThreadId.x >= g_visibleRenderableCount[0])
+	{
+		return;
+	}
+
+	const GpuVisibilityVisibleRenderableDesc desc = SBUFF(g_visibleRenderables, svDispatchThreadId.x);
+
+	const U32 renderStateBucket = desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit & ((1u << 10u) - 1u);
+	const U32 renderableIdx = (desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit >> 10u) & ((1u << 20u) - 1u);
+	const U32 lod = desc.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit >> 30u;
+
+	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
+	const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
+	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
+
+	const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32;
+
+	U32 bucketLocalIndex;
+	InterlockedAdd(SBUFF(g_mdiDrawCounts, renderStateBucket), 1u, bucketLocalIndex);
+
+	const U32 instanceIndex = bucketLocalIndex + SBUFF(g_renderablePrefixSums, renderStateBucket);
+	const U32 indirectArgsIndex = bucketLocalIndex + SBUFF(g_firstDrawIndirectArgAndCount, renderStateBucket).x;
+
+	if(bucketLocalIndex >= SBUFF(g_firstDrawIndirectArgAndCount, renderStateBucket).y)
+	{
+		// OoM, try to recover and inform the CPU
+		U32 orig;
+		InterlockedExchange(SBUFF(g_mdiDrawCounts, renderStateBucket), SBUFF(g_firstDrawIndirectArgAndCount, renderStateBucket).y, orig);
+		InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 2);
+	}
+	else if(!isParticleEmitter)
+	{
+		// Regular renderables are always indexed
+
+		DrawIndexedIndirectArgs indirect;
+		indirect.m_indexCount = meshLod.m_indexCount;
+		indirect.m_instanceCount = 1;
+		indirect.m_firstIndex = meshLod.m_firstIndex;
+		indirect.m_vertexOffset = 0;
+		indirect.m_firstInstance = instanceIndex;
+		SBUFF(g_drawIndexedIndirectArgs, indirectArgsIndex) = indirect;
+
+		UVec4 instanceVertex;
+		instanceVertex.x = renderable.m_worldTransformsIndex;
+		instanceVertex.y = renderable.m_uniformsOffset;
+		instanceVertex.z = meshLodIndex;
+		instanceVertex.w = renderable.m_boneTransformsOffset;
+		SBUFF(g_instanceRateRenderables, instanceIndex) = instanceVertex;
+	}
+	else
+	{
+		const GpuSceneParticleEmitter emitter = SBUFF(g_particleEmitters, renderable.m_particleEmitterIndex);
+
+		DrawIndirectArgsWithPadding indirect;
+		indirect.m_vertexCount = emitter.m_aliveParticleCount * meshLod.m_indexCount;
+		indirect.m_instanceCount = 1;
+		indirect.m_firstVertex = 0;
+		indirect.m_firstInstance = instanceIndex;
+		indirect.m_padding = 0;
+		SBUFF(g_drawIndirectArgs, indirectArgsIndex) = indirect;
+
+		UVec4 instanceVertex;
+		instanceVertex.x = renderable.m_worldTransformsIndex;
+		instanceVertex.y = renderable.m_uniformsOffset;
+		instanceVertex.z = meshLodIndex;
+		instanceVertex.w = renderable.m_particleEmitterIndex;
+		SBUFF(g_instanceRateRenderables, instanceIndex) = instanceVertex;
+	}
+}
+
+#pragma anki technique_end comp Legacy
+
+#pragma anki technique_start comp Meshlets uses_mutators HZB_TEST PASSTHROUGH MESH_SHADERS
+
+#define MESHLET_BACKFACE_CULLING 1
+#define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
+#define MESHLET_NO_SAMPLING_POINT_CULLING 1
+#define MESHLET_HZB_CULLING HZB_TEST
+
+// GPU scene
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t1);
+StructuredBuffer<Mat3x4> g_transforms : register(t2);
+
+// UGB
+StructuredBuffer<MeshletBoundingVolume> g_meshletBoundingVolumes : register(t3);
+
+#if MESHLET_HZB_CULLING
+Texture2D<Vec4> g_hzbTexture : register(t4);
+SamplerState g_nearestClampSampler : register(s0);
+#endif
+
+// Prev stage results
+StructuredBuffer<U32> g_counters : register(t5); // 2nd element is the visible meshlet count
+StructuredBuffer<U32> g_meshletPrefixSums : register(t6);
+StructuredBuffer<GpuVisibilityVisibleMeshletDesc> g_visibleMeshlets : register(t7);
+
+// New results
+#if MESH_SHADERS
+RWStructuredBuffer<DispatchIndirectArgs> g_dispatchMeshIndirectArgs : register(u0);
+#else
+RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs : register(u0);
+#endif
+RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(u1);
+
+RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u2);
+
+struct Consts
+{
+	Mat4 m_viewProjectionMatrix;
+
+	Vec3 m_cameraPos;
+	U32 m_padding1;
+
+	Vec2 m_viewportSizef;
+	UVec2 m_padding2;
+};
+ANKI_PUSH_CONSTANTS(Consts, g_unis)
+
+[numthreads(64, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 visibleMeshlets = SBUFF(g_counters, 1);
+	if(svDispatchThreadId >= visibleMeshlets)
+	{
+		return;
+	}
+
+	const GpuVisibilityVisibleMeshletDesc desc = SBUFF(g_visibleMeshlets, svDispatchThreadId);
+
+	const U32 renderableIdx = desc.m_renderableIndex_30bit_renderStageBucket_12bit >> 12u;
+	const U32 renderStateBucket = desc.m_renderableIndex_30bit_renderStageBucket_12bit & ((1u << 12u) - 1u);
+	const U32 lod = desc.m_lod_2bit_meshletIndex_30bit >> 30u;
+	const U32 meshletIdx = desc.m_lod_2bit_meshletIndex_30bit & ((1u << 30u) - 1u);
+
+	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
+	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);
+	const MeshletBoundingVolume meshletBoundingVol = SBUFF(g_meshletBoundingVolumes, meshLod.m_firstMeshletBoundingVolume + meshletIdx);
+
+	// Meshlet culling
+	Bool cull = false;
+
+#if !PASSTHROUGH
+	const Mat3x4 worldTransform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
+
+#	if MESHLET_BACKFACE_CULLING
+	const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
+	cull = cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_unis.m_cameraPos);
+#	endif
+
+	const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
+	const Mat4 mvp = mul(g_unis.m_viewProjectionMatrix, wordTransform4);
+
+	Vec2 minNdc, maxNdc;
+	F32 aabbMinDepth;
+	projectAabb(meshletBoundingVol.m_aabbMin, meshletBoundingVol.m_aabbMax, mvp, minNdc, maxNdc, aabbMinDepth);
+
+#	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
+	// Outside of the screen
+	cull = cull || (any(minNdc > 1.0f) || any(maxNdc < -1.0f));
+#	endif
+
+#	if MESHLET_NO_SAMPLING_POINT_CULLING
+	// Sampling points test
+	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_unis.m_viewportSizef;
+	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_unis.m_viewportSizef;
+	cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
+#	endif
+
+#	if MESHLET_HZB_CULLING
+	cull = cull || (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+#	endif
+
+#endif // !PASSTHROUGH
+
+	if(!cull)
+	{
+		U32 instanceIdx;
+#if MESH_SHADERS
+		InterlockedAdd(SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountX, 1u, instanceIdx);
+#else
+		InterlockedAdd(SBUFF(g_indirectDrawArgs, renderStateBucket).m_instanceCount, 1u, instanceIdx);
+#endif
+
+		if(instanceIdx == 0)
+		{
+			// First instance, init the drawcall
+#if MESH_SHADERS
+			SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountY = 1u;
+			SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountZ = 1u;
+#else
+			SBUFF(g_indirectDrawArgs, renderStateBucket).m_firstInstance = SBUFF(g_meshletPrefixSums, renderStateBucket);
+#endif
+		}
+
+#if !MESH_SHADERS
+		// Try to limit the vertex size
+		InterlockedMax(SBUFF(g_indirectDrawArgs, renderStateBucket).m_vertexCount, meshletBoundingVol.m_primitiveCount * 3u);
+#endif
+
+		GpuSceneMeshletInstance instance;
+		instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsIndex << 7u;
+		instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
+		instance.m_uniformsOffset = renderable.m_uniformsOffset;
+		instance.m_boneTransformsOffsetOrParticleEmitterIndex =
+			(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterIndex;
+		instance.m_meshletGeometryDescriptorIndex = meshLod.m_firstMeshletGeometryDescriptor + meshletIdx;
+
+		SBUFF(g_meshletInstances, SBUFF(g_meshletPrefixSums, renderStateBucket) + instanceIdx) = instance;
+	}
+}
+
+#pragma anki technique_end comp Meshlets

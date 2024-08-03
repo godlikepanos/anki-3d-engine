@@ -197,7 +197,6 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		{
 			// GBuffer visibility
 			GpuVisibilityOutput visOut;
-			GpuMeshletVisibilityOutput meshletVisOut;
 			Frustum frustum;
 			{
 				frustum.setPerspective(kClusterObjectFrustumNearPlane, probeToRefresh->getRenderRadius(), kPi / 2.0f, kPi / 2.0f);
@@ -215,22 +214,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				visIn.m_lodDistances = lodDistances;
 				visIn.m_rgraph = &rgraph;
 				visIn.m_viewportSize = UVec2(m_tileSize);
+				visIn.m_limitMemory = true;
 
 				getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
-
-				if(getRenderer().runSoftwareMeshletRendering())
-				{
-					GpuMeshletVisibilityInput meshIn;
-					meshIn.m_passesName = visIn.m_passesName;
-					meshIn.m_technique = RenderingTechnique::kGBuffer;
-					meshIn.m_viewProjectionMatrix = frustum.getViewProjectionMatrix();
-					meshIn.m_cameraTransform = frustum.getViewMatrix().getInverseTransformation();
-					meshIn.m_viewportSize = UVec2(m_tileSize);
-					meshIn.m_rgraph = &rgraph;
-					meshIn.fillBuffers(visOut);
-
-					getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
-				}
 			}
 
 			// GBuffer
@@ -258,10 +244,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
-				pass.newBufferDependency((meshletVisOut.isFilled()) ? meshletVisOut.m_dependency : visOut.m_dependency,
-										 BufferUsageBit::kIndirectDraw);
+				pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
-				pass.setWork([this, visOut, meshletVisOut, viewProjMat = frustum.getViewProjectionMatrix(),
+				pass.setWork([this, visOut, viewProjMat = frustum.getViewProjectionMatrix(),
 							  viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -278,11 +263,6 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					args.m_viewport = UVec4(0, 0, m_tileSize, m_tileSize);
 					args.fill(visOut);
 
-					if(meshletVisOut.isFilled())
-					{
-						args.fill(meshletVisOut);
-					}
-
 					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 
 					// It's secondary, no need to restore any state
@@ -291,7 +271,6 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 			// Shadow visibility. Optional
 			GpuVisibilityOutput shadowVisOut;
-			GpuMeshletVisibilityOutput shadowMeshletVisOut;
 			Mat4 cascadeProjMat;
 			Mat3x4 cascadeViewMat;
 			Mat4 cascadeViewProjMat;
@@ -313,22 +292,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				visIn.m_lodDistances = lodDistances;
 				visIn.m_rgraph = &rgraph;
 				visIn.m_viewportSize = UVec2(m_shadowMapping.m_rtDescr.m_height);
+				visIn.m_limitMemory = true;
 
 				getRenderer().getGpuVisibility().populateRenderGraph(visIn, shadowVisOut);
-
-				if(getRenderer().runSoftwareMeshletRendering())
-				{
-					GpuMeshletVisibilityInput meshIn;
-					meshIn.m_passesName = visIn.m_passesName;
-					meshIn.m_technique = RenderingTechnique::kDepth;
-					meshIn.m_viewProjectionMatrix = cascadeViewProjMat;
-					meshIn.m_cameraTransform = cascadeViewMat.getInverseTransformation();
-					meshIn.m_viewportSize = visIn.m_viewportSize;
-					meshIn.m_rgraph = &rgraph;
-					meshIn.fillBuffers(shadowVisOut);
-
-					getRenderer().getGpuVisibility().populateRenderGraph(meshIn, shadowMeshletVisOut);
-				}
 			}
 
 			// Shadow pass. Optional
@@ -345,10 +311,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
-				pass.newBufferDependency((shadowMeshletVisOut.isFilled()) ? shadowMeshletVisOut.m_dependency : shadowVisOut.m_dependency,
-										 BufferUsageBit::kIndirectDraw);
+				pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
-				pass.setWork([this, shadowVisOut, shadowMeshletVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
+				pass.setWork([this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
 					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -366,11 +331,6 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					args.m_renderingTechinuqe = RenderingTechnique::kDepth;
 					args.m_viewport = UVec4(0, 0, rez, rez);
 					args.fill(shadowVisOut);
-
-					if(shadowMeshletVisOut.isFilled())
-					{
-						args.fill(shadowMeshletVisOut);
-					}
 
 					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 

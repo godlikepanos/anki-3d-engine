@@ -107,7 +107,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	// Visibility
 	GpuVisibilityOutput visOut;
-	GpuMeshletVisibilityOutput meshletVisOut;
 	{
 		const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
 		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
@@ -127,21 +126,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		m_runCtx.m_visibleAaabbIndicesBuffer = visOut.m_visibleAaabbIndicesBuffer;
 		m_runCtx.m_visibleAaabbIndicesBufferDepedency = visOut.m_dependency;
-
-		if(getRenderer().runSoftwareMeshletRendering())
-		{
-			GpuMeshletVisibilityInput meshIn;
-			meshIn.m_passesName = "GBuffer";
-			meshIn.m_technique = RenderingTechnique::kGBuffer;
-			meshIn.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
-			meshIn.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
-			meshIn.m_viewportSize = getRenderer().getInternalResolution();
-			meshIn.m_rgraph = &rgraph;
-			meshIn.m_hzbRt = getRenderer().getGBuffer().getHzbRt();
-			meshIn.fillBuffers(visOut);
-
-			getRenderer().getGpuVisibility().populateRenderGraph(meshIn, meshletVisOut);
-		}
 	}
 
 	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
@@ -181,7 +165,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0);
-	pass.setWork([this, &ctx, visOut, meshletVisOut](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, &ctx, visOut](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -214,10 +198,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		args.fill(visOut);
-		if(meshletVisOut.isFilled())
-		{
-			args.fill(meshletVisOut);
-		}
 
 		cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
 		getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
@@ -243,11 +223,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
 
 	// Only add one depedency to the GPU visibility. No need to track all buffers
-	if(meshletVisOut.isFilled())
-	{
-		pass.newBufferDependency(meshletVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
-	}
-	else if(visOut.containsDrawcalls())
+	if(visOut.containsDrawcalls())
 	{
 		pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	}

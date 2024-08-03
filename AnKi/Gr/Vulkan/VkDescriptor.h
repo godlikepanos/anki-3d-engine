@@ -45,6 +45,7 @@ private:
 	public:
 		VkDescriptorPool m_pool = VK_NULL_HANDLE;
 		U32 m_dsetsAllocatedCount = 0;
+		U32 m_maxDsets = 0;
 	};
 
 	static constexpr U32 kDescriptorSetGrowScale = 2;

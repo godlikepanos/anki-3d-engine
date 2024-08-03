@@ -38,13 +38,6 @@ struct GpuSceneRenderableInstance
 };
 static_assert(sizeof(GpuSceneRenderableInstance) == sizeof(UVec4));
 
-/// Input to a single task shader threadgroup. Something similar to GpuSceneRenderableInstance but for mesh shading.
-struct GpuSceneMeshletGroupInstance
-{
-	U32 m_lod_2bit_renderableIdx_21bit_meshletGroup_9bit;
-};
-static_assert(kMaxLodCount == 3);
-
 /// Minimal data passed to the vertex shaders in the case of meshlet rendering.
 struct GpuSceneMeshletInstance
 {
@@ -62,7 +55,7 @@ struct GpuSceneRenderableBoundingVolume
 	F32 m_sphereRadius ANKI_CPP_CODE(= 0.0f);
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_renderableIndex_20bit_renderStateBucket_12bit; ///< High 20bits point to a GpuSceneRenderable. Rest 12bits are the render state bucket idx.
+	U32 m_renderableIndex_20bit_renderStateBucket_12bit;
 };
 static_assert(sizeof(GpuSceneRenderableBoundingVolume) == sizeof(Vec4) * 2);
 

@@ -55,4 +55,15 @@ struct GpuVisibilityHash
 	U32 m_containsDeformable;
 };
 
+struct GpuVisibilityVisibleRenderableDesc
+{
+	U32 m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit;
+};
+
+struct GpuVisibilityVisibleMeshletDesc
+{
+	U32 m_renderableIndex_30bit_renderStageBucket_12bit;
+	U32 m_lod_2bit_meshletIndex_30bit;
+};
+
 ANKI_END_NAMESPACE

@@ -45,7 +45,6 @@ private:
 	{
 	public:
 		GpuVisibilityOutput m_visOut;
-		GpuMeshletVisibilityOutput m_meshVisOut;
 	} m_runCtx;
 };
 /// @}

@@ -470,7 +470,7 @@ Error PipelineCache::init(CString cacheDir)
 	ANKI_VK_CHECK(vkCreatePipelineCache(getVkDevice(), &ci, nullptr, &m_cacheHandle));
 
 #if ANKI_PLATFORM_MOBILE
-	ANKI_ASSERT(GrManager::getSingleton().getDeviceCapabilities() != GpuVendor::kNone);
+	ANKI_ASSERT(GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor != GpuVendor::kUnknown);
 	if(GrManager::getSingleton().getDeviceCapabilities().m_gpuVendor == GpuVendor::kQualcomm)
 	{
 		// Calling vkCreateGraphicsPipeline from multiple threads crashes qualcomm's compiler

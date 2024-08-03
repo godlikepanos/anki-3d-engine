@@ -35,7 +35,7 @@ void CVarSet::registerCVar(CVar* cvar)
 
 Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 {
-	for(U i = 0; i < arr.getSize(); ++i)
+	for(U32 i = 0; i < arr.getSize(); ++i)
 	{
 		ANKI_ASSERT(arr[i]);
 		const CString varName = arr[i];

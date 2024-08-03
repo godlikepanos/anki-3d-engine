@@ -73,8 +73,9 @@ void DescriptorAllocator::createNewBlock()
 	inf.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	inf.flags = 0;
 	inf.maxSets = g_dsAllocatorConsts.m_maxSets * powu(kDescriptorSetGrowScale, m_blocks.getSize());
-	static_assert(DescriptorType::kAccelerationStructure == DescriptorType::kCount - 1, "Needs to be the last for the bellow to work");
-	inf.poolSizeCount = rtEnabled ? U32(DescriptorType::kCount) : U32(DescriptorType::kCount) - 1;
+	ANKI_ASSERT(g_dsAllocatorConsts.m_descriptorCount.getBack().first == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR
+				&& "Needs to be the last for the bellow to work");
+	inf.poolSizeCount = rtEnabled ? g_dsAllocatorConsts.m_descriptorCount.getSize() : g_dsAllocatorConsts.m_descriptorCount.getSize() - 1;
 	inf.pPoolSizes = poolSizes.getBegin();
 
 	VkDescriptorPool handle;
@@ -82,6 +83,7 @@ void DescriptorAllocator::createNewBlock()
 
 	Block& block = *m_blocks.emplaceBack();
 	block.m_pool = handle;
+	block.m_maxDsets = inf.maxSets;
 
 	g_descriptorSetsAllocatedStatVar.increment(1);
 }
@@ -101,7 +103,7 @@ void DescriptorAllocator::allocate(VkDescriptorSetLayout layout, VkDescriptorSet
 	do
 	{
 		VkResult res;
-		if(m_blocks[m_activeBlock].m_dsetsAllocatedCount > g_dsAllocatorConsts.m_maxSets * powu(kDescriptorSetGrowScale, m_activeBlock) * 2)
+		if(m_blocks[m_activeBlock].m_dsetsAllocatedCount > m_blocks[m_activeBlock].m_maxDsets * 2)
 		{
 			// The driver doesn't respect VkDescriptorPoolCreateInfo::maxSets. It should have thrown OoM already. To avoid growing the same DS forever
 			// force OoM
@@ -163,7 +165,10 @@ void DescriptorAllocator::reset()
 	// Reset the remaining pools
 	for(Block& b : m_blocks)
 	{
-		vkResetDescriptorPool(getVkDevice(), b.m_pool, 0);
+		if(b.m_dsetsAllocatedCount > 0)
+		{
+			vkResetDescriptorPool(getVkDevice(), b.m_pool, 0);
+		}
 		b.m_dsetsAllocatedCount = 0;
 	}
 

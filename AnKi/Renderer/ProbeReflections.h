@@ -11,9 +11,6 @@
 
 namespace anki {
 
-// Forward
-class GpuVisibilityOutput;
-
 /// @addtogroup renderer
 /// @{
 

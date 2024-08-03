@@ -264,6 +264,12 @@ void InterlockedMax(T dest, T value);
 template<typename T>
 void InterlockedExchange(T dest, T value, T& originalValue);
 
+template<typename T>
+void InterlockedOr(T dest, T value, T& originalValue);
+
+template<typename T>
+void InterlockedOr(T dest, T value);
+
 // Wave ops
 
 template<typename T>

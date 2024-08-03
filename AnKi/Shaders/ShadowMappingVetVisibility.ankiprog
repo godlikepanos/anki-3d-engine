@@ -16,7 +16,8 @@ RWStructuredBuffer<U32> g_mdiDrawCounts : register(u0);
 RWStructuredBuffer<GpuSceneLight> g_lights : register(u1);
 RWStructuredBuffer<GpuSceneLightVisibleRenderablesHash> g_lightHashes : register(u2);
 RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs : register(u3);
-RWStructuredBuffer<DispatchIndirectArgs> g_taskShaderIndirectArgs : register(u4);
+RWStructuredBuffer<DispatchIndirectArgs> g_dispatchMeshIndirectArgs : register(u4);
+RWStructuredBuffer<DrawIndirectArgs> g_drawIndirectArgs : register(u5);
 
 struct Uniforms
 {
@@ -56,24 +57,27 @@ groupshared U32 s_renderLight;
 
 	if(s_renderLight == 0)
 	{
-		// Won't render, nullify MDI counts
+		// Nullify indirect args
 
-		U32 renderStateBucketCount, unused;
-		g_mdiDrawCounts.GetDimensions(renderStateBucketCount, unused);
-		ANKI_ASSERT(renderStateBucketCount <= 64);
-
-		if(svGroupIndex < renderStateBucketCount)
+		const U32 mdiCounts = getStructuredBufferElementCount(g_mdiDrawCounts);
+		ANKI_ASSERT(mdiCounts <= 64);
+		if(svGroupIndex < mdiCounts)
 		{
 			g_mdiDrawCounts[svGroupIndex] = 0u;
 		}
 
-		// Do the same for the task shaders
-		g_taskShaderIndirectArgs.GetDimensions(renderStateBucketCount, unused);
-		ANKI_ASSERT(renderStateBucketCount <= 64);
-
-		if(svGroupIndex < renderStateBucketCount)
+		const U32 argCount = getStructuredBufferElementCount(g_dispatchMeshIndirectArgs);
+		ANKI_ASSERT(argCount <= 64);
+		if(svGroupIndex < argCount)
 		{
-			g_taskShaderIndirectArgs[svGroupIndex].m_threadGroupCountX = 0u;
+			g_dispatchMeshIndirectArgs[svGroupIndex].m_threadGroupCountX = 0u;
+		}
+
+		const U32 drawCount = getStructuredBufferElementCount(g_drawIndirectArgs);
+		ANKI_ASSERT(drawCount <= 64);
+		if(svGroupIndex < drawCount)
+		{
+			g_drawIndirectArgs[svGroupIndex].m_vertexCount = 0;
 		}
 	}
 }

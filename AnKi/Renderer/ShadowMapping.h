@@ -14,7 +14,6 @@ namespace anki {
 
 // Forward
 class GpuVisibilityOutput;
-class GpuMeshletVisibilityOutput;
 extern NumericCVar<U32> g_shadowMappingPcfCVar;
 
 /// @addtogroup renderer
@@ -84,11 +83,10 @@ private:
 									   RenderGraphBuilder& rgraph) const;
 
 	void createDrawShadowsPass(const UVec4& viewport, const Mat4& viewProjMat, const Mat3x4& viewMat, const GpuVisibilityOutput& visOut,
-							   const GpuMeshletVisibilityOutput& meshletVisOut, const BufferView& clearTileIndirectArgs,
-							   const RenderTargetHandle hzbRt, CString passName, RenderGraphBuilder& rgraph);
+							   const BufferView& clearTileIndirectArgs, const RenderTargetHandle hzbRt, CString passName, RenderGraphBuilder& rgraph);
 
-	void createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subPasses, const GpuVisibilityOutput& visOut,
-							   const GpuMeshletVisibilityOutput& meshletVisOut, CString passName, RenderGraphBuilder& rgraph);
+	void createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subPasses, const GpuVisibilityOutput& visOut, CString passName,
+							   RenderGraphBuilder& rgraph);
 };
 /// @}
 

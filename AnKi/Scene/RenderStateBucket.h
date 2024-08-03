@@ -76,6 +76,7 @@ private:
 };
 
 /// Holds an array of all render state buckets.
+/// It creates buckets at will. If a bucket looses all its users then it becomes inactive but still be part of the bucket list.
 class RenderStateBucketContainer : public MakeSingleton<RenderStateBucketContainer>
 {
 	template<typename>
@@ -96,7 +97,7 @@ public:
 	{
 		for(const ExtendedBucket& b : m_buckets[technique])
 		{
-			func(static_cast<const RenderStateInfo&>(b), b.m_userCount, b.m_lod0MeshletGroupCount, b.m_lod0MeshletCount);
+			func(static_cast<const RenderStateInfo&>(b), b.m_userCount, b.m_lod0MeshletCount);
 		}
 	}
 
@@ -107,7 +108,7 @@ public:
 		for(U32 i : m_bucketPerfOrder[technique])
 		{
 			const ExtendedBucket& b = m_buckets[technique][i];
-			func(static_cast<const RenderStateInfo&>(b), i, b.m_userCount, b.m_lod0MeshletGroupCount, b.m_lod0MeshletCount);
+			func(static_cast<const RenderStateInfo&>(b), i, b.m_userCount, b.m_lod0MeshletCount);
 		}
 	}
 
@@ -117,10 +118,17 @@ public:
 		return m_bucketActiveUserCount[technique];
 	}
 
-	/// Get the number of meshlet groups of a technique.
-	U32 getBucketsLod0MeshletGroupCount(RenderingTechnique technique) const
+	/// Get the number of renderables of all the buckets that support meshlets.
+	U32 getBucketsActiveUserCountWithMeshletSupport(RenderingTechnique technique) const
 	{
-		return m_lod0MeshletGroupCount[technique];
+		return m_bucketActiveUserCountWithMeshlets[technique];
+	}
+
+	/// Get the number of renderables of all the buckets that support meshlets.
+	U32 getBucketsActiveUserCountWithNoMeshletSupport(RenderingTechnique technique) const
+	{
+		ANKI_ASSERT(m_bucketActiveUserCount[technique] >= m_bucketActiveUserCountWithMeshlets[technique]);
+		return m_bucketActiveUserCount[technique] - m_bucketActiveUserCountWithMeshlets[technique];
 	}
 
 	/// Get the number of meshlets of a technique of LOD 0.
@@ -147,13 +155,12 @@ private:
 	public:
 		U64 m_hash = 0;
 		U32 m_userCount = 0;
-		U32 m_lod0MeshletGroupCount = 0;
 		U32 m_lod0MeshletCount = 0;
 	};
 
 	Array<SceneDynamicArray<ExtendedBucket>, U32(RenderingTechnique::kCount)> m_buckets;
 	Array<U32, U32(RenderingTechnique::kCount)> m_bucketActiveUserCount = {};
-	Array<U32, U32(RenderingTechnique::kCount)> m_lod0MeshletGroupCount = {};
+	Array<U32, U32(RenderingTechnique::kCount)> m_bucketActiveUserCountWithMeshlets = {};
 	Array<U32, U32(RenderingTechnique::kCount)> m_lod0MeshletCount = {};
 	Array<U32, U32(RenderingTechnique::kCount)> m_activeBucketCount = {};
 	Array<SceneDynamicArray<U32>, U32(RenderingTechnique::kCount)> m_bucketPerfOrder; ///< Orders the buckets from the least heavy to the most.

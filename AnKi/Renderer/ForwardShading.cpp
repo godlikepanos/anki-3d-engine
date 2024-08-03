@@ -42,21 +42,6 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	visIn.m_viewportSize = getRenderer().getInternalResolution();
 
 	getRenderer().getGpuVisibility().populateRenderGraph(visIn, m_runCtx.m_visOut);
-
-	if(getRenderer().runSoftwareMeshletRendering())
-	{
-		GpuMeshletVisibilityInput meshIn;
-		meshIn.m_passesName = "FW shading";
-		meshIn.m_technique = RenderingTechnique::kForward;
-		meshIn.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
-		meshIn.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
-		meshIn.m_viewportSize = getRenderer().getInternalResolution();
-		meshIn.m_rgraph = &rgraph;
-		meshIn.m_hzbRt = getRenderer().getGBuffer().getHzbRt();
-		meshIn.fillBuffers(m_runCtx.m_visOut);
-
-		getRenderer().getGpuVisibility().populateRenderGraph(meshIn, m_runCtx.m_meshVisOut);
-	}
 }
 
 void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
@@ -101,11 +86,6 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
 		args.fill(m_runCtx.m_visOut);
 
-		if(m_runCtx.m_meshVisOut.isFilled())
-		{
-			args.fill(m_runCtx.m_meshVisOut);
-		}
-
 		getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 
 		// Restore state
@@ -130,8 +110,7 @@ void ForwardShading::setDependencies(GraphicsRenderPass& pass)
 
 	if(m_runCtx.m_visOut.containsDrawcalls())
 	{
-		pass.newBufferDependency((m_runCtx.m_meshVisOut.isFilled()) ? m_runCtx.m_meshVisOut.m_dependency : m_runCtx.m_visOut.m_dependency,
-								 BufferUsageBit::kIndirectDraw);
+		pass.newBufferDependency(m_runCtx.m_visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	}
 }
 

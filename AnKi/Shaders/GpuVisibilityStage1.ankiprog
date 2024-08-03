@@ -1,0 +1,318 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator HZB_TEST 0 1
+#pragma anki mutator DISTANCE_TEST 0 1
+#pragma anki mutator GATHER_AABBS 0 1
+#pragma anki mutator HASH_VISIBLES 0 1
+#pragma anki mutator GATHER_MESHLETS 0 1
+
+#pragma anki skip_mutation DISTANCE_TEST 1 HZB_TEST 1
+
+#pragma anki technique_start comp
+
+#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
+
+#define NUMTHREADS 64
+
+// Buffers that point to the GPU scene
+StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t1);
+StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
+StructuredBuffer<Mat3x4> g_transforms : register(t3);
+StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t4);
+
+// 1st counter is the visible renderable count, 2nd the visible meshlet count and 3rd the number of threadgroups having been executed
+RWStructuredBuffer<U32> g_counters : register(u0);
+
+RWStructuredBuffer<GpuVisibilityVisibleRenderableDesc> g_visibleRenderables : register(u1); // Indices of visible renderables
+RWStructuredBuffer<GpuVisibilityVisibleMeshletDesc> g_visibleMeshlets : register(u2); // Descriptors of visible meshlets
+
+// One U32 per bucket. For each bucket it's the offset where stage 2 will put the per-bucket results
+RWStructuredBuffer<U32> g_renderablePrefixSums : register(u3);
+RWStructuredBuffer<U32> g_meshletPrefixSums : register(u4);
+
+RWStructuredBuffer<DispatchIndirectArgs> g_stage2IndirectArgs : register(u5); // 2 elements. One for MDI and another for meshlets
+
+RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u6);
+
+#if GATHER_AABBS
+RWStructuredBuffer<U32> g_visibleAabbIndices : register(u7); // Indices of the visible AABBs. The 1st element is the count.
+#endif
+
+#if HASH_VISIBLES
+RWStructuredBuffer<GpuVisibilityHash> g_hash : register(u8);
+#endif
+
+#if DISTANCE_TEST == 0
+ConstantBuffer<FrustumGpuVisibilityUniforms> g_unis : register(b0);
+#else
+ANKI_PUSH_CONSTANTS(DistanceGpuVisibilityUniforms, g_unis)
+#endif
+
+#if HZB_TEST
+Texture2D<Vec4> g_hzbTex : register(t5);
+SamplerState g_nearestAnyClampSampler : register(s0);
+#endif
+
+Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
+{
+	const Vec3 sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
+	const F32 sphereRadius = bvolume.m_sphereRadius;
+
+#if DISTANCE_TEST == 0
+	// Frustum test
+	//
+	if(!frustumTest(g_unis.m_clipPlanes, sphereCenter, sphereRadius))
+	{
+		return false;
+	}
+
+	// Screen-space AABB calculation and checking
+	//
+	Vec2 minNdc, maxNdc;
+	F32 aabbMinDepth;
+	projectAabb(bvolume.m_aabbMin, bvolume.m_aabbMax, g_unis.m_viewProjectionMat, minNdc, maxNdc, aabbMinDepth);
+
+	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
+	{
+		// Outside of the screen
+		return false;
+	}
+
+	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_unis.m_finalRenderTargetSize;
+	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_unis.m_finalRenderTargetSize;
+	if(any(round(windowCoordsMin) == round(windowCoordsMax)))
+	{
+		// Doesn't touch the sampling points
+		return false;
+	}
+
+	// HiZ culling
+	//
+#	if HZB_TEST
+	if(cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTex, g_nearestAnyClampSampler))
+	{
+		return false;
+	}
+#	endif // HZB_TEST
+
+#else // DISTANCE_TEST == 1
+	if(!testSphereSphereCollision(sphereCenter, sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius))
+	{
+		return false;
+	}
+#endif
+
+	return true;
+}
+
+[numthreads(NUMTHREADS, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	const U32 bvolumeIdx = svDispatchThreadId.x;
+	const U32 bvolumeCount = getStructuredBufferElementCount(g_renderableBoundingVolumes);
+	Bool skip = (bvolumeIdx >= bvolumeCount);
+
+	GpuSceneRenderableBoundingVolume bvolume;
+	if(!skip)
+	{
+		bvolume = SBUFF(g_renderableBoundingVolumes, bvolumeIdx);
+		skip = !isVisible(bvolume);
+	}
+
+	const U32 maxVisibleMeshlets = getStructuredBufferElementCount(g_visibleMeshlets);
+	const U32 maxVisibleInstances = getStructuredBufferElementCount(g_visibleRenderables);
+
+	if(!skip)
+	{
+		// Object is visible, add it to a bunch of buffers
+
+		// Compute the LOD
+		//
+		const Vec3 sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
+		const F32 sphereRadius = bvolume.m_sphereRadius;
+		const F32 distFromLodPoint = length(sphereCenter - g_unis.m_lodReferencePoint) - sphereRadius;
+
+		U32 lod;
+		if(distFromLodPoint < g_unis.m_maxLodDistances[0])
+		{
+			lod = 0u;
+		}
+		else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
+		{
+			lod = 1u;
+		}
+		else
+		{
+			lod = 2u;
+		}
+
+		// Add the object
+		//
+		const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
+		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
+		const U32 renderStateBucket = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit & ((1u << 12u) - 1u);
+		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
+		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
+
+		const Bool isParticleEmitter = renderable.m_particleEmitterIndex < kMaxU32;
+		ANKI_MAYBE_UNUSED(isParticleEmitter);
+
+		const Bool hasMeshlets = meshLod.m_meshletCount != 0u;
+		if(GATHER_MESHLETS && hasMeshlets)
+		{
+			GpuVisibilityVisibleMeshletDesc desc;
+			desc.m_renderableIndex_30bit_renderStageBucket_12bit = (renderableIdx << 12u) | renderStateBucket;
+			desc.m_lod_2bit_meshletIndex_30bit = lod << 30u;
+
+			// X dimension will be fixed later
+			U32 firstMeshletIndex;
+			InterlockedAdd(SBUFF(g_counters, 1), meshLod.m_meshletCount, firstMeshletIndex);
+
+			if(firstMeshletIndex + meshLod.m_meshletCount > maxVisibleMeshlets)
+			{
+				// OoM, do nothing
+			}
+			else
+			{
+				// All good
+
+				// Store the meshlet descriptors
+				for(U32 i = 0; i < meshLod.m_meshletCount; ++i)
+				{
+					SBUFF(g_visibleMeshlets, firstMeshletIndex + i) = desc;
+					++desc.m_lod_2bit_meshletIndex_30bit;
+				}
+
+				// Add to the prefix sum
+				const U32 bucketCount = getStructuredBufferElementCount(g_meshletPrefixSums);
+				for(U32 i = renderStateBucket + 1; i < bucketCount; ++i)
+				{
+					InterlockedAdd(SBUFF(g_meshletPrefixSums, i), meshLod.m_meshletCount);
+				}
+			}
+		}
+		else
+		{
+			// X dimension will be fixed later
+			U32 firstInstance;
+			InterlockedAdd(SBUFF(g_counters, 0), 1, firstInstance);
+
+			if(firstInstance >= maxVisibleInstances)
+			{
+				// OoM, do nothing
+			}
+			else
+			{
+				// All good
+
+				// Store the renderable
+				GpuVisibilityVisibleRenderableDesc visRenderable;
+				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit = lod << 30u;
+				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit |= renderableIdx << 10u;
+				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit |= renderStateBucket;
+				SBUFF(g_visibleRenderables, firstInstance) = visRenderable;
+
+				// Add to the prefix sum
+				const U32 bucketCount = getStructuredBufferElementCount(g_renderablePrefixSums);
+				for(U32 i = renderStateBucket + 1; i < bucketCount; ++i)
+				{
+					InterlockedAdd(SBUFF(g_renderablePrefixSums, i), 1);
+				}
+			}
+		}
+
+#if HASH_VISIBLES
+		// Update the renderables hash
+		{
+			// Transform a random point as a way to get a feel for the transform
+			const Mat3x4 trf = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
+			const Vec3 pt = mul(trf, Vec4(1503.98f, 2006.8f, -1400.16f, 1.0f));
+			const UVec3 ptu = UVec3(asuint(pt.x), asuint(pt.y), asuint(pt.z));
+
+			U32 hash = ptu.x;
+			hash ^= ptu.y;
+			hash ^= ptu.z;
+			hash ^= renderable.m_uuid;
+
+			InterlockedXor(SBUFF(g_hash, 0).m_renderablesHash, hash);
+
+			const Bool deformable = isParticleEmitter || renderable.m_boneTransformsOffset != 0;
+			if(deformable)
+			{
+				SBUFF(g_hash, 0).m_containsDeformable = 1;
+			}
+		}
+#endif
+
+#if GATHER_AABBS
+		U32 index;
+		InterlockedAdd(SBUFF(g_visibleAabbIndices, 0), 1, index);
+		SBUFF(g_visibleAabbIndices, index + 1) = bvolumeIdx;
+#endif
+	}
+
+	// Check if it's the last threadgroup running
+	Bool lastThreadExecuting = false;
+	if(svGroupIndex == 0)
+	{
+		U32 threadgroupIdx;
+		InterlockedAdd(SBUFF(g_counters, 2), 1, threadgroupIdx);
+		const U32 threadgroupCount = (bvolumeCount + NUMTHREADS - 1) / NUMTHREADS;
+		lastThreadExecuting = (threadgroupIdx + 1 == threadgroupCount);
+	}
+
+	// Sync to make sure all the atomic ops have finished before the following code reads them
+	AllMemoryBarrierWithGroupSync();
+
+	if(lastThreadExecuting)
+	{
+		// Last thing executing, fixup some sizes
+
+		// Renderables
+		U32 visibleInstancesCount;
+		if(SBUFF(g_counters, 0) <= maxVisibleInstances)
+		{
+			visibleInstancesCount = SBUFF(g_counters, 0);
+		}
+		else
+		{
+			// OoM, fix a few things and inform the CPU
+			visibleInstancesCount = maxVisibleInstances;
+			SBUFF(g_counters, 0) = maxVisibleInstances;
+			InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 1);
+		}
+
+		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountX = (visibleInstancesCount + NUMTHREADS - 1) / NUMTHREADS;
+		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountY = 1;
+		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountZ = 1;
+
+		// Meshlets
+		U32 visibleMeshletCount;
+		if(SBUFF(g_counters, 1) <= maxVisibleMeshlets)
+		{
+			visibleMeshletCount = SBUFF(g_counters, 1);
+		}
+		else
+		{
+			// OoM, fix a few things and inform the CPU
+			visibleMeshletCount = maxVisibleMeshlets;
+			SBUFF(g_counters, 1) = maxVisibleMeshlets;
+			InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 1);
+		}
+
+		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountX = (visibleMeshletCount + NUMTHREADS - 1) / NUMTHREADS;
+		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountY = 1;
+		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountZ = 1;
+
+		// Reset it for the next job
+		SBUFF(g_counters, 2) = 0;
+	}
+}
+
+#pragma anki technique_end comp

@@ -56,6 +56,8 @@ public:
 
 	Bool m_gatherAabbIndices = false; ///< For debug draw.
 	Bool m_hashVisibles = false; ///< Create a hash for the visible renderables.
+
+	Bool m_limitMemory = false; ///< Use less memory but you pay some cost scheduling the work.
 };
 
 /// @memberof GpuVisibility
@@ -91,86 +93,26 @@ public:
 		BufferView m_mdiDrawCountsBuffer; ///< An array of U32, one for each render state bucket (even those that use task/mesh flow).
 		BufferView m_drawIndexedIndirectArgsBuffer; ///< Array of DrawIndexedIndirectArgs or DrawIndirectArgs.
 
-		/// Defines the element sub-ranges in the m_renderableInstancesBuffer an m_drawIndexedIndirectArgsBuffer per render state bucket.
-		ConstWeakArray<InstanceRange> m_bucketRenderableInstanceRanges;
+		/// Defines the element sub-ranges in the m_drawIndexedIndirectArgsBuffer per render state bucket.
+		WeakArray<InstanceRange> m_bucketIndirectArgsRanges;
 	} m_legacy; ///< Legacy vertex shading.
 
 	class
 	{
 	public:
-		BufferView m_taskShaderIndirectArgsBuffer; ///< An array of DispatchIndirectArgs, one for each render state bucket.
-		BufferView m_meshletGroupInstancesBuffer; ///< Array with GpuSceneMeshletGroupInstance.
+		BufferView m_dispatchMeshIndirectArgsBuffer; ///< H/W meshlet rendering array of DispatchIndirectArgs, one for each render state bucket.
+		BufferView m_drawIndirectArgs; ///< S/W meshlet rendering array of DrawIndirectArgs, one for each state bucket.
 
-		/// Defines the element sub-ranges in the m_meshletGroupInstancesBuffer per render state bucket.
-		ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges;
-	} m_mesh; ///< S/W meshlets or H/W mesh shading.
+		BufferView m_meshletInstancesBuffer;
+
+		BufferView m_firstMeshletBuffer; ///< For H/W meshlet rendering. Points to the first meshlet in the m_meshletInstancesBuffer. One per bucket.
+	} m_mesh; ///< S/W or H/W meshlet rendering.
 
 	BufferView m_visibleAaabbIndicesBuffer; ///< [Optional] Indices to the AABB buffer. The 1st element is the count.
 
 	BufferView m_visiblesHashBuffer; ///< [Optional] A hash of the visible objects. Used to conditionaly not perform shadow randering.
 
 	Bool containsDrawcalls() const
-	{
-		return m_dependency.isValid();
-	}
-};
-
-/// @memberof GpuVisibility
-class BaseGpuMeshletVisibilityInput
-{
-public:
-	CString m_passesName;
-
-	RenderingTechnique m_technique = RenderingTechnique::kCount;
-
-	BufferView m_taskShaderIndirectArgsBuffer; ///< Taken from GpuVisibilityOutput.
-	BufferView m_meshletGroupInstancesBuffer; ///< Taken from GpuVisibilityOutput.
-	ConstWeakArray<InstanceRange> m_bucketMeshletGroupInstanceRanges; ///< Taken from GpuVisibilityOutput.
-
-	BufferHandle m_dependency;
-
-	RenderGraphBuilder* m_rgraph = nullptr;
-
-	void fillBuffers(const GpuVisibilityOutput& perObjVisOut)
-	{
-		m_taskShaderIndirectArgsBuffer = perObjVisOut.m_mesh.m_taskShaderIndirectArgsBuffer;
-		m_meshletGroupInstancesBuffer = perObjVisOut.m_mesh.m_meshletGroupInstancesBuffer;
-		m_bucketMeshletGroupInstanceRanges = perObjVisOut.m_mesh.m_bucketMeshletGroupInstanceRanges;
-		m_dependency = perObjVisOut.m_dependency;
-	}
-};
-
-/// @memberof GpuVisibility
-class GpuMeshletVisibilityInput : public BaseGpuMeshletVisibilityInput
-{
-public:
-	Mat4 m_viewProjectionMatrix;
-	Mat3x4 m_cameraTransform;
-
-	/// The size of the viewport the visibility results will be used on. Used to kill objects that don't touch the sampling positions.
-	UVec2 m_viewportSize;
-
-	RenderTargetHandle m_hzbRt; ///< Optional.
-};
-
-/// @memberof GpuVisibility
-class PassthroughGpuMeshletVisibilityInput : public BaseGpuMeshletVisibilityInput
-{
-};
-
-/// @memberof GpuVisibility
-class GpuMeshletVisibilityOutput
-{
-public:
-	BufferView m_drawIndirectArgsBuffer; ///< Array of DrawIndirectArgs. One for every render state bucket (even those that use that flow).
-	BufferView m_meshletInstancesBuffer; ///< Array of GpuSceneMeshletInstance.
-
-	/// Defines the element sub-ranges in the m_meshletInstancesBuffer per render state bucket.
-	ConstWeakArray<InstanceRange> m_bucketMeshletInstanceRanges;
-
-	BufferHandle m_dependency; ///< Some dependency to wait on. Wait usage is indirect draw.
-
-	Bool isFilled() const
 	{
 		return m_dependency.isValid();
 	}
@@ -198,96 +140,47 @@ public:
 		populateRenderGraphInternal(true, in, out);
 	}
 
-	/// Perform meshlet GPU visibility.
-	/// @note Not thread-safe.
-	void populateRenderGraph(GpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
-	{
-		populateRenderGraphMeshletInternal(false, in, out);
-	}
-
-	/// Perform meshlet GPU visibility.
-	/// @note Not thread-safe.
-	void populateRenderGraph(PassthroughGpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out)
-	{
-		populateRenderGraphMeshletInternal(true, in, out);
-	}
-
 private:
-	ShaderProgramResourcePtr m_prog;
-	Array4d<ShaderProgramPtr, 2, 2, 2, 3> m_frustumGrProgs;
-	Array3d<ShaderProgramPtr, 2, 2, 3> m_distGrProgs;
+	ShaderProgramResourcePtr m_1stStageProg;
+	Array4d<ShaderProgramPtr, 2, 2, 2, 2> m_frustumGrProgs;
+	Array3d<ShaderProgramPtr, 2, 2, 2> m_distGrProgs;
 
-	ShaderProgramResourcePtr m_meshletCullingProg;
-	Array2d<ShaderProgramPtr, 2, 2> m_meshletCullingGrProgs;
-
-	// Contains quite large buffer that we want want to reuse muptiple times in a single frame.
-	class PersistentMemory
-	{
-	public:
-		// Legacy
-		BufferView m_drawIndexedIndirectArgsBuffer;
-		BufferView m_renderableInstancesBuffer; ///< Instance rate vertex buffer.
-
-		// HW & SW Meshlet rendering
-		BufferView m_meshletGroupsInstancesBuffer;
-
-		// SW meshlet rendering
-		BufferView m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
-
-		BufferHandle m_bufferDepedency;
-	};
-
-	class PersistentMemoryMeshletRendering
-	{
-	public:
-		// SW meshlet rendering
-		BufferView m_meshletInstancesBuffer; ///< Instance rate vertex buffer.
-
-		BufferHandle m_bufferDepedency;
-	};
-
-	class MemoryRequirements
-	{
-	public:
-		U32 m_renderableInstanceCount = 0; ///< Count of GpuSceneRenderableInstance and a few other things
-		U32 m_meshletGroupInstanceCount = 0; ///< Count of GpuSceneMeshletGroupInstance
-		U32 m_meshletInstanceCount = 0; ///< Count of GpuSceneMeshletInstance
-
-		MemoryRequirements max(const MemoryRequirements& b)
-		{
-			MemoryRequirements out;
-#define ANKI_MAX(member) out.member = anki::max(member, b.member)
-			ANKI_MAX(m_renderableInstanceCount);
-			ANKI_MAX(m_meshletGroupInstanceCount);
-			ANKI_MAX(m_meshletInstanceCount);
-#undef ANKI_MAX
-			return out;
-		}
-	};
+	ShaderProgramResourcePtr m_2ndStageProg;
+	ShaderProgramPtr m_gatherGrProg;
+	Array3d<ShaderProgramPtr, 2, 2, 2> m_meshletGrProgs;
 
 	class
 	{
 	public:
+		class
+		{
+		public:
+			BufferView m_visibleRenderables;
+			BufferView m_visibleMeshlets;
+		} m_stage1;
+
+		class
+		{
+		public:
+			BufferView m_instanceRateRenderables;
+			BufferView m_drawIndexedIndirectArgs;
+		} m_stage2Legacy;
+
+		class
+		{
+		public:
+			BufferView m_meshletInstances;
+		} m_stage2Meshlet;
+
 		U64 m_frameIdx = kMaxU64;
-		U32 m_populateRenderGraphCallCount = 0;
-		U32 m_populateRenderGraphMeshletRenderingCallCount = 0;
 
-		/// The more persistent memory there is the more passes will be able to run in parallel but the more memory is used.
-		Array<PersistentMemory, 4> m_persistentMem;
-		Array<PersistentMemoryMeshletRendering, 4> m_persistentMeshletRenderingMem; ///< See m_persistentMem.
+		BufferHandle m_dep;
+	} m_persistentMemory;
 
-		Array<MemoryRequirements, U32(RenderingTechnique::kCount)> m_totalMemRequirements;
-
-		Array<WeakArray<InstanceRange>, U32(RenderingTechnique::kCount)> m_renderableInstanceRanges;
-		Array<WeakArray<InstanceRange>, U32(RenderingTechnique::kCount)> m_meshletGroupInstanceRanges;
-		Array<WeakArray<InstanceRange>, U32(RenderingTechnique::kCount)> m_meshletInstanceRanges;
-	} m_runCtx;
+	MultiframeReadbackToken m_outOfMemoryReadback;
+	BufferView m_outOfMemoryReadbackBuffer;
 
 	void populateRenderGraphInternal(Bool distanceBased, BaseGpuVisibilityInput& in, GpuVisibilityOutput& out);
-
-	void populateRenderGraphMeshletInternal(Bool passthrough, BaseGpuMeshletVisibilityInput& in, GpuMeshletVisibilityOutput& out);
-
-	static void computeGpuVisibilityMemoryRequirements(RenderingTechnique t, MemoryRequirements& total, WeakArray<MemoryRequirements> perBucket);
 };
 
 /// @memberof GpuVisibilityNonRenderables
