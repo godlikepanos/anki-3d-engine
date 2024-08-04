@@ -567,6 +567,10 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 			{
 				ANKI_CHECK(parsePragma16bit(token + 1, end, line, fname));
 			}
+			else if(*token == "extra_compiler_args")
+			{
+				ANKI_CHECK(parseExtraCompilerArgs(token + 1, end, line, fname));
+			}
 			else
 			{
 				ANKI_PP_ERROR_MALFORMED();
@@ -725,6 +729,28 @@ Error ShaderParser::parsePragma16bit(const ShaderCompilerString* begin, const Sh
 	return Error::kNone;
 }
 
+Error ShaderParser::parseExtraCompilerArgs(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	for(; begin < end; ++begin)
+	{
+		if(tokenIsComment(begin->toCString()))
+		{
+			break;
+		}
+
+		m_extraCompilerArgs.emplaceBack(*begin);
+	}
+
+	return Error::kNone;
+}
+
 Error ShaderParser::parseFile(CString fname, U32 depth)
 {
 	// First check the depth
@@ -827,6 +853,17 @@ Error ShaderParser::parse()
 			{
 				ANKI_ASSERT(!(m_techniques[i].m_shaderTypes & ShaderTypeBit(1 << s)));
 			}
+		}
+	}
+
+	// Copy the extra compiler args to a better structure
+	if(m_extraCompilerArgs.getSize() > 0)
+	{
+		m_extraCompilerArgsCString.resize(m_extraCompilerArgs.getSize());
+
+		for(U32 i = 0; i < m_extraCompilerArgs.getSize(); ++i)
+		{
+			m_extraCompilerArgsCString[i] = m_extraCompilerArgs[i];
 		}
 	}
 

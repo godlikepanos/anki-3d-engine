@@ -441,7 +441,16 @@ PtrSize File::tell()
 	else
 #endif
 	{
-		return ftell(ANKI_CFILE);
+#if ANKI_OS_WINDOWS
+		const auto offset = _ftelli64(ANKI_CFILE);
+#else
+		const auto offset = ftell(ANKI_CFILE);
+#endif
+		if(offset < 0)
+		{
+			ANKI_UTIL_LOGF("ftell overflow");
+		}
+		return offset;
 	}
 }
 

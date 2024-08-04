@@ -63,6 +63,7 @@ public:
 /// #pragma anki 16bit // Works only in HLSL. Gain 16bit types but loose min16xxx types
 /// #pragma anki technique_start STAGE [NAME] [uses_mutators [USES_MUTATOR1 [USES_MUTATOR2 ...]]]
 /// #pragma anki technique_end STAGE [NAME]
+/// #pragma anki extra_compiler_args ARG0 [ARG1 [ARG2...]]
 ///
 /// #pragma anki struct NAME
 /// #	pragma anki member TYPE NAME
@@ -117,6 +118,11 @@ public:
 		return m_16bitTypes;
 	}
 
+	ConstWeakArray<CString> getExtraCompilerArgs() const
+	{
+		return m_extraCompilerArgsCString;
+	}
+
 	/// Generates the common header that will be used by all AnKi shaders.
 	static void generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header);
 
@@ -164,6 +170,9 @@ private:
 
 	Bool m_16bitTypes = false;
 
+	ShaderCompilerDynamicArray<ShaderCompilerString> m_extraCompilerArgs;
+	ShaderCompilerDynamicArray<CString> m_extraCompilerArgsCString;
+
 	ShaderCompilerStringList& getAppendSourceList()
 	{
 		return (insideTechnique()) ? m_techniqueExtras[m_insideTechniqueIdx].m_sourceLines[m_insideTechniqueShaderType] : m_commonSourceLines;
@@ -185,6 +194,7 @@ private:
 	Error parsePragmaStructEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parsePragmaMember(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parsePragma16bit(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parseExtraCompilerArgs(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, ShaderCompilerDynamicArray<ShaderCompilerString>& tokens) const;
 

@@ -762,11 +762,13 @@ static void compileVariantAsync(const ShaderParser& parser, Bool spirv, Bool deb
 				ShaderCompilerDynamicArray<U8> il;
 				if(ctx.m_spirv)
 				{
-					err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo, il, compilerErrorLog);
+					err = compileHlslToSpirv(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo,
+											 ctx.m_parser->getExtraCompilerArgs(), il, compilerErrorLog);
 				}
 				else
 				{
-					err = compileHlslToDxil(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo, il, compilerErrorLog);
+					err = compileHlslToDxil(source, shaderType, ctx.m_parser->compileWith16bitTypes(), ctx.m_debugInfo,
+											ctx.m_parser->getExtraCompilerArgs(), il, compilerErrorLog);
 				}
 
 				if(err)

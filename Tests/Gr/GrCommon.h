@@ -20,9 +20,9 @@ inline ShaderPtr createShader(CString src, ShaderType type)
 	ShaderCompilerString errorLog;
 
 #if ANKI_GR_BACKEND_VULKAN
-	Error err = compileHlslToSpirv(header, type, false, true, bin, errorLog);
+	Error err = compileHlslToSpirv(header, type, false, true, {}, bin, errorLog);
 #else
-	Error err = compileHlslToDxil(header, type, false, true, bin, errorLog);
+	Error err = compileHlslToDxil(header, type, false, true, {}, bin, errorLog);
 #endif
 	if(err)
 	{

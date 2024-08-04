@@ -58,8 +58,8 @@ static CString profile(ShaderType shaderType)
 	return "";
 }
 
-static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, Bool spirv,
-						 ShaderCompilerDynamicArray<U8>& bin, ShaderCompilerString& errorMessage)
+static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ConstWeakArray<CString> compilerArgs,
+						 Bool spirv, ShaderCompilerDynamicArray<U8>& bin, ShaderCompilerString& errorMessage)
 {
 	Array<U64, 3> toHash = {g_nextFileId.fetchAdd(1), getCurrentProcessId(), getRandom() & kMaxU32};
 	const U64 rand = computeHash(&toHash[0], sizeof(toHash));
@@ -149,6 +149,11 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 		dxcArgs.emplaceBack("-enable-16bit-types");
 	}
 
+	for(CString extraArg : compilerArgs)
+	{
+		dxcArgs.emplaceBack(extraArg);
+	}
+
 	ShaderCompilerDynamicArray<CString> dxcArgs2;
 	dxcArgs2.resize(U32(dxcArgs.getSize()));
 	U32 count = 0;
@@ -222,16 +227,16 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	return Error::kNone;
 }
 
-Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderCompilerDynamicArray<U8>& spirv,
-						 ShaderCompilerString& errorMessage)
+Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ConstWeakArray<CString> compilerArgs,
+						 ShaderCompilerDynamicArray<U8>& spirv, ShaderCompilerString& errorMessage)
 {
-	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, true, spirv, errorMessage);
+	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, compilerArgs, true, spirv, errorMessage);
 }
 
-Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ShaderCompilerDynamicArray<U8>& dxil,
-						ShaderCompilerString& errorMessage)
+Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ConstWeakArray<CString> compilerArgs,
+						ShaderCompilerDynamicArray<U8>& dxil, ShaderCompilerString& errorMessage)
 {
-	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, false, dxil, errorMessage);
+	return compileHlsl(src, shaderType, compileWith16bitTypes, debugInfo, compilerArgs, false, dxil, errorMessage);
 }
 
 } // end namespace anki
