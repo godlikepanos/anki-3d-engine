@@ -142,8 +142,8 @@ public:
 
 private:
 	ShaderProgramResourcePtr m_1stStageProg;
-	Array4d<ShaderProgramPtr, 2, 2, 2, 2> m_frustumGrProgs;
-	Array3d<ShaderProgramPtr, 2, 2, 2> m_distGrProgs;
+	Array5d<ShaderProgramPtr, 2, 2, 2, 2, 2> m_frustumGrProgs;
+	Array4d<ShaderProgramPtr, 2, 2, 2, 2> m_distGrProgs;
 
 	ShaderProgramResourcePtr m_2ndStageProg;
 	ShaderProgramPtr m_gatherGrProg;

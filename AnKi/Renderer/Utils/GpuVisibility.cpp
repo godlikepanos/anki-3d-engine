@@ -104,13 +104,22 @@ Error GpuVisibility::init()
 			{
 				for(MutatorValue gatherMeshlets = 0; gatherMeshlets < 2; ++gatherMeshlets)
 				{
-					ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage1.ankiprogbin",
-												 {{"HZB_TEST", hzb},
-												  {"DISTANCE_TEST", 0},
-												  {"GATHER_AABBS", gatherAabbs},
-												  {"HASH_VISIBLES", genHash},
-												  {"GATHER_MESHLETS", gatherMeshlets}},
-												 m_1stStageProg, m_frustumGrProgs[hzb][gatherAabbs][genHash][gatherMeshlets]));
+					for(MutatorValue gatherLegacy = 0; gatherLegacy < 2; ++gatherLegacy)
+					{
+						if(gatherLegacy == 0 && gatherMeshlets == 0)
+						{
+							continue; // Not allowed
+						}
+
+						ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage1.ankiprogbin",
+													 {{"HZB_TEST", hzb},
+													  {"DISTANCE_TEST", 0},
+													  {"GATHER_AABBS", gatherAabbs},
+													  {"HASH_VISIBLES", genHash},
+													  {"GATHER_MESHLETS", gatherMeshlets},
+													  {"GATHER_LEGACY", gatherLegacy}},
+													 m_1stStageProg, m_frustumGrProgs[hzb][gatherAabbs][genHash][gatherMeshlets][gatherLegacy]));
+					}
 				}
 			}
 		}
@@ -122,13 +131,22 @@ Error GpuVisibility::init()
 		{
 			for(MutatorValue gatherMeshlets = 0; gatherMeshlets < 2; ++gatherMeshlets)
 			{
-				ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage1.ankiprogbin",
-											 {{"HZB_TEST", 0},
-											  {"DISTANCE_TEST", 1},
-											  {"GATHER_AABBS", gatherAabbs},
-											  {"HASH_VISIBLES", genHash},
-											  {"GATHER_MESHLETS", gatherMeshlets}},
-											 m_1stStageProg, m_distGrProgs[gatherAabbs][genHash][gatherMeshlets]));
+				for(MutatorValue gatherLegacy = 0; gatherLegacy < 2; ++gatherLegacy)
+				{
+					if(gatherLegacy == 0 && gatherMeshlets == 0)
+					{
+						continue; // Not allowed
+					}
+
+					ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage1.ankiprogbin",
+												 {{"HZB_TEST", 0},
+												  {"DISTANCE_TEST", 1},
+												  {"GATHER_AABBS", gatherAabbs},
+												  {"HASH_VISIBLES", genHash},
+												  {"GATHER_MESHLETS", gatherMeshlets},
+												  {"GATHER_LEGACY", gatherLegacy}},
+												 m_1stStageProg, m_distGrProgs[gatherAabbs][genHash][gatherMeshlets][gatherLegacy]));
+				}
 			}
 		}
 	}
@@ -523,15 +541,15 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			const Bool gatherAabbIndices = stage1Mem.m_visibleAabbIndices.isValid();
 			const Bool genHash = stage1Mem.m_hash.isValid();
-			const Bool gatherMeshlets = stage1Mem.m_visibleMeshlets.isValid();
 
 			if(frustumTestData)
 			{
-				cmdb.bindShaderProgram(m_frustumGrProgs[frustumTestData->m_hzbRt.isValid()][gatherAabbIndices][genHash][gatherMeshlets].get());
+				cmdb.bindShaderProgram(
+					m_frustumGrProgs[frustumTestData->m_hzbRt.isValid()][gatherAabbIndices][genHash][bMeshletRendering][bLegacyRendering].get());
 			}
 			else
 			{
-				cmdb.bindShaderProgram(m_distGrProgs[gatherAabbIndices][genHash][gatherMeshlets].get());
+				cmdb.bindShaderProgram(m_distGrProgs[gatherAabbIndices][genHash][bMeshletRendering][bLegacyRendering].get());
 			}
 
 			BufferView aabbsBuffer;

@@ -8,8 +8,10 @@
 #pragma anki mutator GATHER_AABBS 0 1
 #pragma anki mutator HASH_VISIBLES 0 1
 #pragma anki mutator GATHER_MESHLETS 0 1
+#pragma anki mutator GATHER_LEGACY 0 1
 
 #pragma anki skip_mutation DISTANCE_TEST 1 HZB_TEST 1
+#pragma anki skip_mutation GATHER_MESHLETS 0 GATHER_LEGACY 0
 
 #pragma anki technique_start comp
 
@@ -30,12 +32,20 @@ StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t4);
 // 1st counter is the visible renderable count, 2nd the visible meshlet count and 3rd the number of threadgroups having been executed
 RWStructuredBuffer<U32> g_counters : register(u0);
 
+#if GATHER_LEGACY
 RWStructuredBuffer<GpuVisibilityVisibleRenderableDesc> g_visibleRenderables : register(u1); // Indices of visible renderables
+#endif
+#if GATHER_MESHLETS
 RWStructuredBuffer<GpuVisibilityVisibleMeshletDesc> g_visibleMeshlets : register(u2); // Descriptors of visible meshlets
+#endif
 
 // One U32 per bucket. For each bucket it's the offset where stage 2 will put the per-bucket results
+#if GATHER_LEGACY
 RWStructuredBuffer<U32> g_renderablePrefixSums : register(u3);
+#endif
+#if GATHER_MESHLETS
 RWStructuredBuffer<U32> g_meshletPrefixSums : register(u4);
+#endif
 
 RWStructuredBuffer<DispatchIndirectArgs> g_stage2IndirectArgs : register(u5); // 2 elements. One for MDI and another for meshlets
 
@@ -125,8 +135,20 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		skip = !isVisible(bvolume);
 	}
 
+#if GATHER_MESHLETS
 	const U32 maxVisibleMeshlets = getStructuredBufferElementCount(g_visibleMeshlets);
+#endif
+#if GATHER_LEGACY
 	const U32 maxVisibleInstances = getStructuredBufferElementCount(g_visibleRenderables);
+#endif
+
+#if GATHER_LEGACY && !GATHER_MESHLETS
+	const U32 bucketCount = getStructuredBufferElementCount(g_renderablePrefixSums);
+#elif GATHER_MESHLETS && !GATHER_LEGACY
+	const U32 bucketCount = getStructuredBufferElementCount(g_meshletPrefixSums);
+#else
+	const U32 bucketCount = getStructuredBufferElementCount(g_meshletPrefixSums);
+#endif
 
 	if(!skip)
 	{
@@ -164,8 +186,9 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		ANKI_MAYBE_UNUSED(isParticleEmitter);
 
 		const Bool hasMeshlets = meshLod.m_meshletCount != 0u;
-		if(GATHER_MESHLETS && hasMeshlets)
+		if(hasMeshlets)
 		{
+#if GATHER_MESHLETS
 			GpuVisibilityVisibleMeshletDesc desc;
 			desc.m_renderableIndex_30bit_renderStageBucket_12bit = (renderableIdx << 12u) | renderStateBucket;
 			desc.m_lod_2bit_meshletIndex_30bit = lod << 30u;
@@ -189,16 +212,17 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 					++desc.m_lod_2bit_meshletIndex_30bit;
 				}
 
-				// Add to the prefix sum
-				const U32 bucketCount = getStructuredBufferElementCount(g_meshletPrefixSums);
-				for(U32 i = renderStateBucket + 1; i < bucketCount; ++i)
+				// Add to the next bucket
+				if(renderStateBucket + 1u < bucketCount)
 				{
-					InterlockedAdd(SBUFF(g_meshletPrefixSums, i), meshLod.m_meshletCount);
+					InterlockedAdd(SBUFF(g_meshletPrefixSums, renderStateBucket + 1u), meshLod.m_meshletCount);
 				}
 			}
+#endif
 		}
 		else
 		{
+#if GATHER_LEGACY
 			// X dimension will be fixed later
 			U32 firstInstance;
 			InterlockedAdd(SBUFF(g_counters, 0), 1, firstInstance);
@@ -218,13 +242,13 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 				visRenderable.m_lod_2bit_renderableIndex_20bit_renderStageBucket_10bit |= renderStateBucket;
 				SBUFF(g_visibleRenderables, firstInstance) = visRenderable;
 
-				// Add to the prefix sum
-				const U32 bucketCount = getStructuredBufferElementCount(g_renderablePrefixSums);
-				for(U32 i = renderStateBucket + 1; i < bucketCount; ++i)
+				// Add to the next bucket
+				if(renderStateBucket + 1u < bucketCount)
 				{
-					InterlockedAdd(SBUFF(g_renderablePrefixSums, i), 1);
+					InterlockedAdd(SBUFF(g_renderablePrefixSums, renderStateBucket + 1u), 1u);
 				}
 			}
+#endif
 		}
 
 #if HASH_VISIBLES
@@ -275,6 +299,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		// Last thing executing, fixup some sizes
 
 		// Renderables
+#if GATHER_LEGACY
 		U32 visibleInstancesCount;
 		if(SBUFF(g_counters, 0) <= maxVisibleInstances)
 		{
@@ -291,8 +316,10 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountX = (visibleInstancesCount + NUMTHREADS - 1) / NUMTHREADS;
 		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountY = 1;
 		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountZ = 1;
+#endif
 
 		// Meshlets
+#if GATHER_MESHLETS
 		U32 visibleMeshletCount;
 		if(SBUFF(g_counters, 1) <= maxVisibleMeshlets)
 		{
@@ -309,6 +336,19 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountX = (visibleMeshletCount + NUMTHREADS - 1) / NUMTHREADS;
 		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountY = 1;
 		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountZ = 1;
+#endif
+
+		// Prefix sums
+		for(U32 i = 1; i < bucketCount; ++i)
+		{
+#if GATHER_LEGACY
+			SBUFF(g_renderablePrefixSums, i) += SBUFF(g_renderablePrefixSums, i - 1u);
+#endif
+
+#if GATHER_MESHLETS
+			SBUFF(g_meshletPrefixSums, i) += SBUFF(g_meshletPrefixSums, i - 1u);
+#endif
+		}
 
 		// Reset it for the next job
 		SBUFF(g_counters, 2) = 0;
