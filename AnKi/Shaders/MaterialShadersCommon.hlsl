@@ -27,7 +27,6 @@ StructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(ANKI_MAT
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(ANKI_MATERIAL_REGISTER_RENDERABLES);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(ANKI_MATERIAL_REGISTER_MESH_LODS);
 StructuredBuffer<Mat3x4> g_transforms : register(ANKI_MATERIAL_REGISTER_TRANSFORMS);
-Texture2D<Vec4> g_hzbTexture : register(ANKI_MATERIAL_REGISTER_HZB_TEXTURE);
 SamplerState g_nearestClampSampler : register(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER);
 StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS);
 StructuredBuffer<U32> g_firstMeshlet : register(ANKI_MATERIAL_REGISTER_FIRST_MESHLET);

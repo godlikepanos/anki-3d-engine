@@ -151,8 +151,9 @@ Error GpuVisibility::init()
 		}
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage2.ankiprogbin", {{"HZB_TEST", 0}, {"PASSTHROUGH", 0}, {"MESH_SHADERS", 0}},
-								 m_2ndStageProg, m_gatherGrProg, "Legacy"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage2And3.ankiprogbin",
+								 {{"HZB_TEST", 0}, {"PASSTHROUGH", 0}, {"MESH_SHADERS", 0}, {"STORE_MESHLETS_FAILED_HZB", 1}}, m_2ndStageProg,
+								 m_gatherGrProg, "Legacy"));
 
 	for(MutatorValue hzb = 0; hzb < 2; ++hzb)
 	{
@@ -160,9 +161,16 @@ Error GpuVisibility::init()
 		{
 			for(MutatorValue meshShaders = 0; meshShaders < 2; ++meshShaders)
 			{
-				ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage2.ankiprogbin",
-											 {{"HZB_TEST", hzb}, {"PASSTHROUGH", passthrough}, {"MESH_SHADERS", meshShaders}}, m_2ndStageProg,
-											 m_meshletGrProgs[hzb][passthrough][meshShaders], "Meshlets"));
+				for(MutatorValue storeMeshletsFailedHzb = 0; storeMeshletsFailedHzb < 2; ++storeMeshletsFailedHzb)
+				{
+					ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityStage2And3.ankiprogbin",
+												 {{"HZB_TEST", hzb},
+												  {"PASSTHROUGH", passthrough},
+												  {"MESH_SHADERS", meshShaders},
+												  {"STORE_MESHLETS_FAILED_HZB", storeMeshletsFailedHzb}},
+												 m_2ndStageProg, m_meshletGrProgs[hzb][passthrough][meshShaders][storeMeshletsFailedHzb],
+												 "Meshlets"));
+				}
 			}
 		}
 	}
@@ -201,6 +209,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	FrustumTestData* frustumTestData = nullptr;
 	DistanceTestData* distTestData = nullptr;
 
+	Bool bStoreMeshletsFailedHzb = false;
 	if(distanceBased)
 	{
 		distTestData = newInstance<DistanceTestData>(getRenderer().getFrameMemoryPool());
@@ -219,6 +228,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		{
 			frustumTestData->m_hzbRt = *fin.m_hzbRt;
 		}
+
+		bStoreMeshletsFailedHzb = fin.m_twoPhaseOcclusionCulling;
 	}
 
 	const Bool firstCallInFrame = m_persistentMemory.m_frameIdx != getRenderer().getFrameCount();
@@ -263,10 +274,15 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	const U32 bucketCount = buckets.getBucketCount(in.m_technique);
 	const GpuVisLimits limits = computeLimits(in.m_technique);
 
-	const Bool bHwMeshletRendering = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders && limits.m_maxVisibleMeshlets > 0;
-	const Bool bSwMeshletRendering = g_meshletRenderingCVar.get() && !bHwMeshletRendering && limits.m_maxVisibleMeshlets > 0;
+	const Bool bHwMeshletRendering = getRenderer().getMeshletRenderingType() == MeshletRenderingType::kMeshShaders && limits.m_maxVisibleMeshlets > 0;
+	const Bool bSwMeshletRendering = getRenderer().getMeshletRenderingType() == MeshletRenderingType::kSoftware && limits.m_maxVisibleMeshlets > 0;
 	const Bool bMeshletRendering = bHwMeshletRendering || bSwMeshletRendering;
 	const Bool bLegacyRendering = limits.m_maxVisibleLegacyRenderables > 0;
+
+	if(bStoreMeshletsFailedHzb)
+	{
+		ANKI_ASSERT(bMeshletRendering && frustumTestData->m_hzbRt.isValid());
+	}
 
 	// Allocate persistent memory for the frame
 	if(firstCallInFrame)
@@ -291,6 +307,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		m_persistentMemory.m_stage2Meshlet.m_meshletInstances =
 			allocateTransientGpuMem(sizeof(GpuSceneMeshletInstance) * maxLimits.m_maxVisibleMeshlets);
+
+		m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb =
+			allocateTransientGpuMem(sizeof(GpuVisibilityVisibleRenderableDesc) * maxLimits.m_maxVisibleMeshlets);
+
+		m_persistentMemory.m_stage3.m_meshletInstances = allocateTransientGpuMem(sizeof(GpuSceneMeshletInstance) * maxLimits.m_maxVisibleMeshlets);
 
 		m_persistentMemory.m_dep = rgraph.importBuffer((bMeshletRendering) ? m_persistentMemory.m_stage1.m_visibleMeshlets
 																		   : m_persistentMemory.m_stage1.m_visibleRenderables,
@@ -334,13 +355,13 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		BufferView m_renderablePrefixSums;
 		BufferView m_meshletPrefixSums;
-		BufferView m_stage2IndirectArgs;
+		BufferView m_gpuVisIndirectDispatchArgs;
 
 		BufferView m_visibleAabbIndices;
 		BufferView m_hash;
 	} stage1Mem;
 
-	stage1Mem.m_counters = allocateTransientGpuMem(sizeof(U32) * 3);
+	stage1Mem.m_counters = allocateTransientGpuMem(sizeof(U32) * U32(GpuVisibilityCounter::kCount));
 	if(in.m_limitMemory)
 	{
 		PtrSize newRange = sizeof(GpuVisibilityVisibleRenderableDesc) * limits.m_maxVisibleLegacyRenderables;
@@ -364,7 +385,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 	stage1Mem.m_renderablePrefixSums = allocateTransientGpuMem(sizeof(U32) * bucketCount);
 	stage1Mem.m_meshletPrefixSums = allocateTransientGpuMem(sizeof(U32) * bucketCount);
-	stage1Mem.m_stage2IndirectArgs = allocateTransientGpuMem(sizeof(DispatchIndirectArgs) * 2);
+	stage1Mem.m_gpuVisIndirectDispatchArgs = allocateTransientGpuMem(sizeof(DispatchIndirectArgs) * U32(GpuVisibilityIndirectDispatches::kCount));
 
 	if(in.m_gatherAabbIndices)
 	{
@@ -396,6 +417,8 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			BufferView m_dispatchMeshIndirectArgs;
 
 			BufferView m_meshletInstances;
+
+			BufferView m_meshletsFailedHzb;
 		} m_meshlet;
 	} stage2Mem;
 
@@ -442,6 +465,53 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		{
 			stage2Mem.m_meshlet.m_meshletInstances = allocateTransientGpuMem(newRange);
 		}
+
+		if(bStoreMeshletsFailedHzb)
+		{
+			const PtrSize newRange = sizeof(GpuVisibilityVisibleMeshletDesc) * limits.m_maxVisibleMeshlets;
+			if(in.m_limitMemory)
+			{
+				ANKI_ASSERT(newRange <= m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb.getRange());
+				stage2Mem.m_meshlet.m_meshletsFailedHzb = BufferView(m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb).setRange(newRange);
+			}
+			else
+			{
+				stage2Mem.m_meshlet.m_meshletsFailedHzb = allocateTransientGpuMem(newRange);
+			}
+		}
+	}
+
+	// Stage 3 memory
+	class Stage3Mem
+	{
+	public:
+		BufferView m_indirectDrawArgs;
+		BufferView m_dispatchMeshIndirectArgs;
+
+		BufferView m_meshletInstances;
+	} stage3Mem;
+
+	if(bStoreMeshletsFailedHzb)
+	{
+		if(bHwMeshletRendering)
+		{
+			stage3Mem.m_dispatchMeshIndirectArgs = allocateTransientGpuMem(sizeof(DispatchIndirectArgs) * bucketCount);
+		}
+		else
+		{
+			stage3Mem.m_indirectDrawArgs = allocateTransientGpuMem(sizeof(DrawIndirectArgs) * bucketCount);
+		}
+
+		const PtrSize newRange = sizeof(GpuSceneMeshletInstance) * limits.m_maxVisibleMeshlets;
+		if(in.m_limitMemory)
+		{
+			ANKI_ASSERT(newRange <= m_persistentMemory.m_stage3.m_meshletInstances.getRange());
+			stage3Mem.m_meshletInstances = BufferView(m_persistentMemory.m_stage3.m_meshletInstances).setRange(newRange);
+		}
+		else
+		{
+			stage3Mem.m_meshletInstances = allocateTransientGpuMem(newRange);
+		}
 	}
 
 	// Setup output
@@ -457,9 +527,21 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	{
 		out.m_mesh.m_firstMeshletBuffer = stage1Mem.m_meshletPrefixSums;
 	}
+	if(bStoreMeshletsFailedHzb)
+	{
+		out.m_stage1And2Mem.m_meshletsFailedHzb = stage2Mem.m_meshlet.m_meshletsFailedHzb;
+		out.m_stage1And2Mem.m_counters = stage1Mem.m_counters;
+		out.m_stage1And2Mem.m_meshletPrefixSums = stage1Mem.m_meshletPrefixSums;
+		out.m_stage1And2Mem.m_gpuVisIndirectDispatchArgs = stage1Mem.m_gpuVisIndirectDispatchArgs;
+
+		out.m_stage3Mem.m_indirectDrawArgs = stage3Mem.m_indirectDrawArgs;
+		out.m_stage3Mem.m_dispatchMeshIndirectArgs = stage3Mem.m_dispatchMeshIndirectArgs;
+		out.m_stage3Mem.m_meshletInstances = stage3Mem.m_meshletInstances;
+	}
 
 	// Use one buffer as a depedency. Doesn't matter which
-	out.m_dependency = (in.m_limitMemory) ? m_persistentMemory.m_dep : rgraph.importBuffer(stage1Mem.m_stage2IndirectArgs, BufferUsageBit::kNone);
+	out.m_dependency =
+		(in.m_limitMemory) ? m_persistentMemory.m_dep : rgraph.importBuffer(stage1Mem.m_gpuVisIndirectDispatchArgs, BufferUsageBit::kNone);
 
 	// Zero some stuff
 	const BufferHandle zeroMemDep = rgraph.importBuffer(stage1Mem.m_counters, BufferUsageBit::kNone);
@@ -467,64 +549,46 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis zero: %s", in.m_passesName.cstr()));
 		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kTransferDestination);
 
-		pass.setWork([stage1Mem, stage2Mem, this](RenderPassWorkContext& rpass) {
+		pass.setWork([stage1Mem, stage2Mem, stage3Mem, this](RenderPassWorkContext& rpass) {
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
-			cmdb.pushDebugMarker("Temp counters", Vec3(1.0f, 1.0f, 1.0f));
-			cmdb.fillBuffer(stage1Mem.m_counters, 0);
-			cmdb.popDebugMarker();
+			constexpr Bool debugZeroing = false; // For debugging purposes zero everything
 
-			if(stage1Mem.m_renderablePrefixSums.isValid())
-			{
-				cmdb.pushDebugMarker("Renderable prefix sums", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(stage1Mem.m_renderablePrefixSums, 0);
-				cmdb.popDebugMarker();
-			}
+#define ANKI_ZERO(buff, alwaysZero) \
+	if((alwaysZero || debugZeroing) && buff.isValid()) \
+	{ \
+		cmdb.pushDebugMarker(#buff, Vec3(1.0f, 1.0f, 1.0f)); \
+		cmdb.fillBuffer(buff, 0); \
+		cmdb.popDebugMarker(); \
+	}
+			ANKI_ZERO(stage1Mem.m_counters, true)
+			ANKI_ZERO(stage1Mem.m_visibleRenderables, false)
+			ANKI_ZERO(stage1Mem.m_visibleMeshlets, false)
+			ANKI_ZERO(stage1Mem.m_renderablePrefixSums, true)
+			ANKI_ZERO(stage1Mem.m_meshletPrefixSums, true)
+			ANKI_ZERO(stage1Mem.m_gpuVisIndirectDispatchArgs, false)
+			ANKI_ZERO(stage1Mem.m_visibleAabbIndices, false)
+			ANKI_ZERO(stage1Mem.m_hash, true)
 
-			if(stage1Mem.m_meshletPrefixSums.isValid())
-			{
-				cmdb.pushDebugMarker("Meshlet prefix sums", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(stage1Mem.m_meshletPrefixSums, 0);
-				cmdb.popDebugMarker();
-			}
+			ANKI_ZERO(stage2Mem.m_legacy.m_instanceRateRenderables, false)
+			ANKI_ZERO(stage2Mem.m_legacy.m_drawIndexedIndirectArgs, true)
+			ANKI_ZERO(stage2Mem.m_legacy.m_mdiDrawCounts, true)
+			ANKI_ZERO(stage2Mem.m_meshlet.m_indirectDrawArgs, true)
+			ANKI_ZERO(stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs, true)
+			ANKI_ZERO(stage2Mem.m_meshlet.m_meshletInstances, false)
+			ANKI_ZERO(stage2Mem.m_meshlet.m_meshletsFailedHzb, false)
 
-			if(stage2Mem.m_legacy.m_drawIndexedIndirectArgs.isValid())
-			{
-				cmdb.pushDebugMarker("Draw indexed indirect args", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(stage2Mem.m_legacy.m_drawIndexedIndirectArgs, 0);
-				cmdb.popDebugMarker();
-			}
+			ANKI_ZERO(stage3Mem.m_indirectDrawArgs, true)
+			ANKI_ZERO(stage3Mem.m_dispatchMeshIndirectArgs, true)
+			ANKI_ZERO(stage3Mem.m_meshletInstances, false)
 
-			if(stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs.isValid())
-			{
-				cmdb.pushDebugMarker("Dispatch indirect args", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs, 0);
-				cmdb.popDebugMarker();
-			}
-
-			if(stage2Mem.m_meshlet.m_indirectDrawArgs.isValid())
-			{
-				cmdb.pushDebugMarker("Draw indirect args (S/W meshlet rendering)", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(stage2Mem.m_meshlet.m_indirectDrawArgs, 0);
-				cmdb.popDebugMarker();
-			}
-
-			if(stage2Mem.m_legacy.m_mdiDrawCounts.isValid())
-			{
-				cmdb.pushDebugMarker("MDI counts", Vec3(1.0f, 1.0f, 1.0f));
-				cmdb.fillBuffer(stage2Mem.m_legacy.m_mdiDrawCounts, 0);
-				cmdb.popDebugMarker();
-			}
-
-			cmdb.pushDebugMarker("OoM readback", Vec3(1.0f, 1.0f, 1.0f));
-			cmdb.fillBuffer(m_outOfMemoryReadbackBuffer, 0);
-			cmdb.popDebugMarker();
+#undef ANKI_ZERO
 		});
 	}
 
 	// 1st stage
 	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 1st pass: %s", in.m_passesName.cstr()));
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 1st stage: %s", in.m_passesName.cstr()));
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
 		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kStorageComputeWrite);
@@ -586,7 +650,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			cmdb.bindStorageBuffer(ANKI_REG(u3), (bLegacyRendering) ? stage1Mem.m_renderablePrefixSums : BufferView(&getRenderer().getDummyBuffer()));
 			cmdb.bindStorageBuffer(ANKI_REG(u4), (bMeshletRendering) ? stage1Mem.m_meshletPrefixSums : BufferView(&getRenderer().getDummyBuffer()));
 
-			cmdb.bindStorageBuffer(ANKI_REG(u5), stage1Mem.m_stage2IndirectArgs);
+			cmdb.bindStorageBuffer(ANKI_REG(u5), stage1Mem.m_gpuVisIndirectDispatchArgs);
 
 			cmdb.bindStorageBuffer(ANKI_REG(u6), m_outOfMemoryReadbackBuffer);
 
@@ -649,7 +713,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 	// 2nd stage
 	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 2nd pass: %s", in.m_passesName.cstr()));
+		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 2nd stage: %s", in.m_passesName.cstr()));
 
 		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kStorageComputeWrite);
 
@@ -659,7 +723,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		}
 
 		pass.setWork([this, stage1Mem, stage2Mem, bLegacyRendering, bMeshletRendering, bHwMeshletRendering, out, frustumTestData,
-					  lodReferencePoint = in.m_lodReferencePoint](RenderPassWorkContext& rpass) {
+					  lodReferencePoint = in.m_lodReferencePoint, bStoreMeshletsFailedHzb](RenderPassWorkContext& rpass) {
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 			if(bLegacyRendering)
@@ -691,7 +755,10 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 				cmdb.bindStorageBuffer(ANKI_REG(u4), m_outOfMemoryReadbackBuffer);
 
-				cmdb.dispatchComputeIndirect(BufferView(stage1Mem.m_stage2IndirectArgs).setRange(sizeof(DispatchIndirectArgs)));
+				cmdb.dispatchComputeIndirect(
+					BufferView(stage1Mem.m_gpuVisIndirectDispatchArgs)
+						.incrementOffset(sizeof(DispatchIndirectArgs) * U32(GpuVisibilityIndirectDispatches::k2ndStageLegacy))
+						.setRange(sizeof(DispatchIndirectArgs)));
 			}
 
 			if(bMeshletRendering)
@@ -700,7 +767,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 				const Bool passthrough = frustumTestData == nullptr;
 				const Bool meshShaders = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
 
-				cmdb.bindShaderProgram(m_meshletGrProgs[hzbTex][passthrough][meshShaders].get());
+				cmdb.bindShaderProgram(m_meshletGrProgs[hzbTex][passthrough][meshShaders][bStoreMeshletsFailedHzb].get());
 
 				cmdb.bindStorageBuffer(ANKI_REG(t0), GpuSceneArrays::Renderable::getSingleton().getBufferView());
 				cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
@@ -714,29 +781,25 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 					cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
 				}
 
-				cmdb.bindStorageBuffer(ANKI_REG(t5), stage1Mem.m_counters);
-				cmdb.bindStorageBuffer(ANKI_REG(t6), stage1Mem.m_meshletPrefixSums);
-				cmdb.bindStorageBuffer(ANKI_REG(t7), stage1Mem.m_visibleMeshlets);
+				cmdb.bindStorageBuffer(ANKI_REG(u0), stage1Mem.m_counters);
+				cmdb.bindStorageBuffer(ANKI_REG(t5), stage1Mem.m_meshletPrefixSums);
+				cmdb.bindStorageBuffer(ANKI_REG(t6), stage1Mem.m_visibleMeshlets);
 
-				cmdb.bindStorageBuffer(ANKI_REG(u0), (bHwMeshletRendering) ? stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs
+				cmdb.bindStorageBuffer(ANKI_REG(u1), (bHwMeshletRendering) ? stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs
 																		   : stage2Mem.m_meshlet.m_indirectDrawArgs);
-				cmdb.bindStorageBuffer(ANKI_REG(u1), stage2Mem.m_meshlet.m_meshletInstances);
+				cmdb.bindStorageBuffer(ANKI_REG(u2), stage2Mem.m_meshlet.m_meshletInstances);
 
-				cmdb.bindStorageBuffer(ANKI_REG(u2), m_outOfMemoryReadbackBuffer);
+				cmdb.bindStorageBuffer(ANKI_REG(u3), m_outOfMemoryReadbackBuffer);
+
+				if(bStoreMeshletsFailedHzb)
+				{
+					cmdb.bindStorageBuffer(ANKI_REG(u4), stage2Mem.m_meshlet.m_meshletsFailedHzb);
+					cmdb.bindStorageBuffer(ANKI_REG(u5), stage1Mem.m_gpuVisIndirectDispatchArgs);
+				}
 
 				if(!passthrough)
 				{
-					class Consts
-					{
-					public:
-						Mat4 m_viewProjectionMatrix;
-
-						Vec3 m_cameraPos;
-						U32 m_padding1;
-
-						Vec2 m_viewportSizef;
-						UVec2 m_padding2;
-					} consts;
+					GpuVisibilityMeshletUniforms consts;
 					consts.m_viewProjectionMatrix = frustumTestData->m_viewProjMat;
 					consts.m_cameraPos = lodReferencePoint;
 					consts.m_viewportSizef = Vec2(frustumTestData->m_finalRenderTargetSize);
@@ -745,11 +808,84 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 				}
 
 				cmdb.dispatchComputeIndirect(
-					BufferView(stage1Mem.m_stage2IndirectArgs).incrementOffset(sizeof(DispatchIndirectArgs)).setRange(sizeof(DispatchIndirectArgs)));
+					BufferView(stage1Mem.m_gpuVisIndirectDispatchArgs)
+						.incrementOffset(sizeof(DispatchIndirectArgs) * U32(GpuVisibilityIndirectDispatches::k2ndStageMeshlets))
+						.setRange(sizeof(DispatchIndirectArgs)));
 			}
 		});
 
 	} // end 2nd stage
+}
+
+void GpuVisibility::populateRenderGraphStage3(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out)
+{
+	RenderGraphBuilder& rgraph = *in.m_rgraph;
+
+	const GpuVisLimits limits = computeLimits(in.m_technique);
+	const Bool bHwMeshletRendering = getRenderer().getMeshletRenderingType() == MeshletRenderingType::kMeshShaders && limits.m_maxVisibleMeshlets > 0;
+	const Bool bSwMeshletRendering = getRenderer().getMeshletRenderingType() == MeshletRenderingType::kSoftware && limits.m_maxVisibleMeshlets > 0;
+	const Bool bMeshletRendering = bHwMeshletRendering || bSwMeshletRendering;
+
+	if(!bMeshletRendering)
+	{
+		return;
+	}
+
+	// Set the output
+	if(bHwMeshletRendering)
+	{
+		out.m_mesh.m_dispatchMeshIndirectArgsBuffer = out.m_stage3Mem.m_dispatchMeshIndirectArgs;
+	}
+	else
+	{
+		out.m_mesh.m_drawIndirectArgs = out.m_stage3Mem.m_indirectDrawArgs;
+	}
+	out.m_mesh.m_meshletInstancesBuffer = out.m_stage3Mem.m_meshletInstances;
+
+	// Create the pass
+	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 3rd stage: %s", in.m_passesName.cstr()));
+
+	pass.newBufferDependency(out.m_dependency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(m_persistentMemory.m_dep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kStorageComputeWrite);
+	pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
+
+	pass.setWork([this, hzbRt = *in.m_hzbRt, bHwMeshletRendering, stage1And2Mem = out.m_stage1And2Mem, stage3Mem = out.m_stage3Mem,
+				  in](RenderPassWorkContext& rpass) {
+		CommandBuffer& cmdb = *rpass.m_commandBuffer;
+
+		const Bool hzbTex = true;
+		const Bool passthrough = false;
+		const Bool bStoreMeshletsFailedHzb = false;
+		cmdb.bindShaderProgram(m_meshletGrProgs[hzbTex][passthrough][bHwMeshletRendering][bStoreMeshletsFailedHzb].get());
+
+		cmdb.bindStorageBuffer(ANKI_REG(t0), GpuSceneArrays::Renderable::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+		cmdb.bindStorageBuffer(ANKI_REG(t2), GpuSceneArrays::Transform::getSingleton().getBufferView());
+
+		cmdb.bindStorageBuffer(ANKI_REG(t3), UnifiedGeometryBuffer::getSingleton().getBufferView());
+
+		rpass.bindTexture(ANKI_REG(t4), hzbRt);
+		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+
+		cmdb.bindStorageBuffer(ANKI_REG(u0), stage1And2Mem.m_counters);
+		cmdb.bindStorageBuffer(ANKI_REG(t5), stage1And2Mem.m_meshletPrefixSums);
+		cmdb.bindStorageBuffer(ANKI_REG(t6), stage1And2Mem.m_meshletsFailedHzb);
+
+		cmdb.bindStorageBuffer(ANKI_REG(u1), (bHwMeshletRendering) ? stage3Mem.m_dispatchMeshIndirectArgs : stage3Mem.m_indirectDrawArgs);
+		cmdb.bindStorageBuffer(ANKI_REG(u2), stage3Mem.m_meshletInstances);
+
+		cmdb.bindStorageBuffer(ANKI_REG(u3), m_outOfMemoryReadbackBuffer);
+
+		GpuVisibilityMeshletUniforms consts;
+		consts.m_viewProjectionMatrix = in.m_viewProjectionMatrix;
+		consts.m_cameraPos = in.m_lodReferencePoint;
+		consts.m_viewportSizef = Vec2(in.m_viewportSize);
+		cmdb.setPushConstants(&consts, sizeof(consts));
+
+		cmdb.dispatchComputeIndirect(BufferView(stage1And2Mem.m_gpuVisIndirectDispatchArgs)
+										 .incrementOffset(sizeof(DispatchIndirectArgs) * U32(GpuVisibilityIndirectDispatches::k3rdStageMeshlets))
+										 .setRange(sizeof(DispatchIndirectArgs)));
+	});
 }
 
 Error GpuVisibilityNonRenderables::init()

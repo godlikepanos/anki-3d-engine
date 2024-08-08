@@ -43,6 +43,13 @@ public:
 	SamplerPtr m_trilinearClampShadow;
 };
 
+enum class MeshletRenderingType
+{
+	kNone,
+	kMeshShaders,
+	kSoftware
+};
+
 /// Offscreen renderer.
 class Renderer
 {
@@ -91,9 +98,9 @@ public:
 		return m_frameCount;
 	}
 
-	Bool runSoftwareMeshletRendering() const
+	MeshletRenderingType getMeshletRenderingType() const
 	{
-		return g_meshletRenderingCVar.get() && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
+		return m_meshletRenderingType;
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
@@ -225,6 +232,8 @@ private:
 	Array<RendererDynamicArray<PipelineQueryPtr>, kMaxFramesInFlight> m_pipelineQueries;
 	Mutex m_pipelineQueriesMtx;
 #endif
+
+	MeshletRenderingType m_meshletRenderingType = MeshletRenderingType::kNone;
 
 	Error initInternal(UVec2 swapchainSize);
 

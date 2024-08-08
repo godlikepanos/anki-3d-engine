@@ -26,8 +26,6 @@ public:
 
 	UVec4 m_viewport;
 
-	TextureView m_hzbTexture; ///< Optional.
-
 	Sampler* m_sampler = nullptr;
 
 	RenderingTechnique m_renderingTechinuqe = RenderingTechnique::kCount;

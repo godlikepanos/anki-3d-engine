@@ -66,4 +66,34 @@ struct GpuVisibilityVisibleMeshletDesc
 	U32 m_lod_2bit_meshletIndex_30bit;
 };
 
+struct GpuVisibilityMeshletUniforms
+{
+	Mat4 m_viewProjectionMatrix;
+
+	Vec3 m_cameraPos;
+	U32 m_padding1;
+
+	Vec2 m_viewportSizef;
+	UVec2 m_padding2;
+};
+
+enum class GpuVisibilityCounter : U32
+{
+	kVisibleRenderableCount,
+	kMeshletsSurvivingStage1Count,
+	kThreadgroupCount,
+	kMeshletsCulledByHzbCount,
+
+	kCount
+};
+
+enum class GpuVisibilityIndirectDispatches : U32
+{
+	k2ndStageLegacy,
+	k2ndStageMeshlets,
+	k3rdStageMeshlets,
+
+	kCount
+};
+
 ANKI_END_NAMESPACE

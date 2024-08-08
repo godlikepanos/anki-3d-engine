@@ -47,7 +47,7 @@ RWStructuredBuffer<U32> g_renderablePrefixSums : register(u3);
 RWStructuredBuffer<U32> g_meshletPrefixSums : register(u4);
 #endif
 
-RWStructuredBuffer<DispatchIndirectArgs> g_stage2IndirectArgs : register(u5); // 2 elements. One for MDI and another for meshlets
+RWStructuredBuffer<DispatchIndirectArgs> g_gpuVisIndirectDispatchArgs : register(u5); // 2 elements. One for MDI and another for meshlets
 
 RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u6);
 
@@ -195,7 +195,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 
 			// X dimension will be fixed later
 			U32 firstMeshletIndex;
-			InterlockedAdd(SBUFF(g_counters, 1), meshLod.m_meshletCount, firstMeshletIndex);
+			InterlockedAdd(SBUFF(g_counters, (U32)GpuVisibilityCounter::kMeshletsSurvivingStage1Count), meshLod.m_meshletCount, firstMeshletIndex);
 
 			if(firstMeshletIndex + meshLod.m_meshletCount > maxVisibleMeshlets)
 			{
@@ -225,7 +225,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 #if GATHER_LEGACY
 			// X dimension will be fixed later
 			U32 firstInstance;
-			InterlockedAdd(SBUFF(g_counters, 0), 1, firstInstance);
+			InterlockedAdd(SBUFF(g_counters, (U32)GpuVisibilityCounter::kVisibleRenderableCount), 1, firstInstance);
 
 			if(firstInstance >= maxVisibleInstances)
 			{
@@ -281,77 +281,82 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 #endif
 	}
 
-	// Check if it's the last threadgroup running
-	Bool lastThreadExecuting = false;
-	if(svGroupIndex == 0)
-	{
-		U32 threadgroupIdx;
-		InterlockedAdd(SBUFF(g_counters, 2), 1, threadgroupIdx);
-		const U32 threadgroupCount = (bvolumeCount + NUMTHREADS - 1) / NUMTHREADS;
-		lastThreadExecuting = (threadgroupIdx + 1 == threadgroupCount);
-	}
-
 	// Sync to make sure all the atomic ops have finished before the following code reads them
 	AllMemoryBarrierWithGroupSync();
 
-	if(lastThreadExecuting)
+	// Check if it's the last threadgroup running
+	if(svGroupIndex == 0)
 	{
-		// Last thing executing, fixup some sizes
+		U32 threadgroupIdx;
+		InterlockedAdd(SBUFF(g_counters, (U32)GpuVisibilityCounter::kThreadgroupCount), 1, threadgroupIdx);
+		const U32 threadgroupCount = (bvolumeCount + NUMTHREADS - 1) / NUMTHREADS;
+		const Bool lastThreadExecuting = (threadgroupIdx + 1 == threadgroupCount);
 
-		// Renderables
+		if(lastThreadExecuting)
+		{
+			// Last thing executing, fixup some sizes
+
+			DispatchIndirectArgs args;
+
+			// Renderables
 #if GATHER_LEGACY
-		U32 visibleInstancesCount;
-		if(SBUFF(g_counters, 0) <= maxVisibleInstances)
-		{
-			visibleInstancesCount = SBUFF(g_counters, 0);
-		}
-		else
-		{
-			// OoM, fix a few things and inform the CPU
-			visibleInstancesCount = maxVisibleInstances;
-			SBUFF(g_counters, 0) = maxVisibleInstances;
-			InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 1);
-		}
+			U32 visibleInstancesCount = SBUFF(g_counters, (U32)GpuVisibilityCounter::kVisibleRenderableCount);
+			if(visibleInstancesCount > maxVisibleInstances)
+			{
+				// OoM, fix a few things and inform the CPU
+				visibleInstancesCount = maxVisibleInstances;
+				SBUFF(g_counters, (U32)GpuVisibilityCounter::kVisibleRenderableCount) = maxVisibleInstances;
+				InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 1);
+			}
 
-		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountX = (visibleInstancesCount + NUMTHREADS - 1) / NUMTHREADS;
-		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountY = 1;
-		SBUFF(g_stage2IndirectArgs, 0).m_threadGroupCountZ = 1;
+			args.m_threadGroupCountX = (visibleInstancesCount + NUMTHREADS - 1) / NUMTHREADS;
+			args.m_threadGroupCountY = 1;
+			args.m_threadGroupCountZ = 1;
+			SBUFF(g_gpuVisIndirectDispatchArgs, (U32)GpuVisibilityIndirectDispatches::k2ndStageLegacy) = args;
 #endif
 
-		// Meshlets
+			// Meshlets
 #if GATHER_MESHLETS
-		U32 visibleMeshletCount;
-		if(SBUFF(g_counters, 1) <= maxVisibleMeshlets)
-		{
-			visibleMeshletCount = SBUFF(g_counters, 1);
-		}
-		else
-		{
-			// OoM, fix a few things and inform the CPU
-			visibleMeshletCount = maxVisibleMeshlets;
-			SBUFF(g_counters, 1) = maxVisibleMeshlets;
-			InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 1);
-		}
+			U32 meshletsForStage2Count = SBUFF(g_counters, (U32)GpuVisibilityCounter::kMeshletsSurvivingStage1Count);
+			if(meshletsForStage2Count > maxVisibleMeshlets)
+			{
+				// OoM, fix a few things and inform the CPU
+				meshletsForStage2Count = maxVisibleMeshlets;
+				SBUFF(g_counters, (U32)GpuVisibilityCounter::kMeshletsSurvivingStage1Count) = maxVisibleMeshlets;
+				InterlockedOr(SBUFF(g_outOfMemoryBuffer, 0), 1);
+			}
 
-		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountX = (visibleMeshletCount + NUMTHREADS - 1) / NUMTHREADS;
-		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountY = 1;
-		SBUFF(g_stage2IndirectArgs, 1).m_threadGroupCountZ = 1;
+			args.m_threadGroupCountX = (meshletsForStage2Count + NUMTHREADS - 1) / NUMTHREADS;
+			args.m_threadGroupCountY = 1;
+			args.m_threadGroupCountZ = 1;
+			SBUFF(g_gpuVisIndirectDispatchArgs, (U32)GpuVisibilityIndirectDispatches::k2ndStageMeshlets) = args;
 #endif
 
-		// Prefix sums
-		for(U32 i = 1; i < bucketCount; ++i)
-		{
+			// Prefix sums. Use atomics because nVidia flickers
+			U32 prevLegacyVal = 0;
+			U32 prevMeshletVal = 0;
+			ANKI_MAYBE_UNUSED(prevMeshletVal);
+			ANKI_MAYBE_UNUSED(prevLegacyVal);
+			for(U32 i = 1; i < bucketCount; ++i)
+			{
+				U32 old;
+
 #if GATHER_LEGACY
-			SBUFF(g_renderablePrefixSums, i) += SBUFF(g_renderablePrefixSums, i - 1u);
+				// Equivalent to: g_renderablePrefixSums[i] += g_renderablePrefixSums[i - 1u]
+				InterlockedAdd(SBUFF(g_renderablePrefixSums, i), prevLegacyVal, old);
+				prevLegacyVal += old;
 #endif
 
 #if GATHER_MESHLETS
-			SBUFF(g_meshletPrefixSums, i) += SBUFF(g_meshletPrefixSums, i - 1u);
+				// Equivalent to: g_meshletPrefixSums[i] += g_meshletPrefixSums[i - 1u]
+				InterlockedAdd(SBUFF(g_meshletPrefixSums, i), prevMeshletVal, old);
+				prevMeshletVal += old;
 #endif
-		}
+			}
 
-		// Reset it for the next job
-		SBUFF(g_counters, 2) = 0;
+			// Reset it for the next job
+			SBUFF(g_counters, (U32)GpuVisibilityCounter::kThreadgroupCount) = 0;
+		}
 	}
 }
 

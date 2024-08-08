@@ -159,6 +159,19 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 	m_tileCounts.y() = (m_internalResolution.y() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
 	m_zSplitCount = g_zSplitCountCVar.get();
 
+	if(g_meshletRenderingCVar.get() && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	{
+		m_meshletRenderingType = MeshletRenderingType::kSoftware;
+	}
+	else if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	{
+		m_meshletRenderingType = MeshletRenderingType::kMeshShaders;
+	}
+	else
+	{
+		m_meshletRenderingType = MeshletRenderingType::kNone;
+	}
+
 	// A few sanity checks
 	if(m_internalResolution.x() < 64 || m_internalResolution.y() < 64)
 	{

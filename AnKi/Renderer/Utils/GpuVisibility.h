@@ -70,6 +70,8 @@ public:
 	UVec2 m_viewportSize;
 
 	const RenderTargetHandle* m_hzbRt = nullptr; ///< Optional.
+
+	Bool m_twoPhaseOcclusionCulling = false; ///< If it's false then it's only a single phase. Only applies when meshlet rendering is enabled.
 };
 
 /// @memberof GpuVisibility
@@ -83,6 +85,8 @@ public:
 /// @memberof GpuVisibility
 class GpuVisibilityOutput
 {
+	friend class GpuVisibility;
+
 public:
 	BufferHandle m_dependency; ///< Just expose one handle for depedencies. No need to track all buffers. Wait on it using indirect draw usage.
 
@@ -116,6 +120,24 @@ public:
 	{
 		return m_dependency.isValid();
 	}
+
+private:
+	class
+	{
+	public:
+		BufferView m_meshletsFailedHzb;
+		BufferView m_counters;
+		BufferView m_meshletPrefixSums;
+		BufferView m_gpuVisIndirectDispatchArgs;
+	} m_stage1And2Mem; ///< Output of the 2nd (or 1st) stage that will be used in the 3rd
+
+	class
+	{
+	public:
+		BufferView m_indirectDrawArgs;
+		BufferView m_dispatchMeshIndirectArgs;
+		BufferView m_meshletInstances;
+	} m_stage3Mem; ///< Output of the 3rd stage.
 };
 
 /// Performs GPU visibility for some pass.
@@ -133,6 +155,10 @@ public:
 		populateRenderGraphInternal(false, in, out);
 	}
 
+	/// Perform the optional stage 3: 2nd phase of the 2-phase occlusion culling.
+	/// @note Not thread-safe.
+	void populateRenderGraphStage3(FrustumGpuVisibilityInput& in, GpuVisibilityOutput& out);
+
 	/// Perform simple distance-based visibility testing.
 	/// @note Not thread-safe.
 	void populateRenderGraph(DistanceGpuVisibilityInput& in, GpuVisibilityOutput& out)
@@ -147,7 +173,7 @@ private:
 
 	ShaderProgramResourcePtr m_2ndStageProg;
 	ShaderProgramPtr m_gatherGrProg;
-	Array3d<ShaderProgramPtr, 2, 2, 2> m_meshletGrProgs;
+	Array4d<ShaderProgramPtr, 2, 2, 2, 2> m_meshletGrProgs;
 
 	class
 	{
@@ -170,7 +196,14 @@ private:
 		{
 		public:
 			BufferView m_meshletInstances;
+			BufferView m_meshletsFailedHzb;
 		} m_stage2Meshlet;
+
+		class
+		{
+		public:
+			BufferView m_meshletInstances;
+		} m_stage3;
 
 		U64 m_frameIdx = kMaxU64;
 

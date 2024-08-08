@@ -672,11 +672,6 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 			args.m_viewport = UVec4(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
 			args.fill(visOut);
 
-			if(spass.m_hzbRt.isValid())
-			{
-				args.m_hzbTexture = rgraphCtx.createTextureView(spass.m_hzbRt, TextureSubresourceDesc::all());
-			}
-
 			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 		}
 	});

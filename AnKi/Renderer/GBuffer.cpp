@@ -107,11 +107,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	// Visibility
 	GpuVisibilityOutput visOut;
+	FrustumGpuVisibilityInput visIn;
 	{
-		const CommonMatrices& matrices = (getRenderer().getFrameCount() <= 1) ? ctx.m_matrices : ctx.m_prevMatrices;
+		const CommonMatrices& matrices = ctx.m_matrices;
 		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
 
-		FrustumGpuVisibilityInput visIn;
 		visIn.m_passesName = "GBuffer";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
 		visIn.m_viewProjectionMatrix = matrices.m_viewProjection;
@@ -121,14 +121,13 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
 		visIn.m_gatherAabbIndices = g_dbgCVar.get();
 		visIn.m_viewportSize = getRenderer().getInternalResolution();
+		visIn.m_twoPhaseOcclusionCulling = getRenderer().getMeshletRenderingType() != MeshletRenderingType::kNone;
 
 		getRenderer().getGpuVisibility().populateRenderGraph(visIn, visOut);
 
 		m_runCtx.m_visibleAaabbIndicesBuffer = visOut.m_visibleAaabbIndicesBuffer;
 		m_runCtx.m_visibleAaabbIndicesBufferDepedency = visOut.m_dependency;
 	}
-
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
 
 	// Create RTs
 	Array<RenderTargetHandle, kMaxColorRenderTargets> rts;
@@ -138,104 +137,90 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		rts[i] = m_runCtx.m_colorRts[i];
 	}
 
-	RenderTargetHandle sriRt;
-	if(enableVrs)
-	{
-		sriRt = getRenderer().getVrsSriGeneration().getSriRt();
-	}
+	// Create the GBuffer pass
+	auto genGBuffer = [&](Bool firstPass) {
+		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass((firstPass) ? "GBuffer" : "GBuffer 2nd phase");
 
-	// Create pass
-	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("GBuffer");
-
-	Array<GraphicsRenderPassTargetDesc, kGBufferColorRenderTargetCount> colorRti;
-	colorRti[0].m_handle = rts[0];
-	colorRti[0].m_loadOperation = RenderTargetLoadOperation::kClear;
-	colorRti[1].m_handle = rts[1];
-	colorRti[1].m_loadOperation = RenderTargetLoadOperation::kClear;
-	colorRti[2].m_handle = rts[2];
-	colorRti[2].m_loadOperation = RenderTargetLoadOperation::kClear;
-	colorRti[3].m_handle = rts[3];
-	colorRti[3].m_loadOperation = RenderTargetLoadOperation::kClear;
-	colorRti[3].m_clearValue.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
-	GraphicsRenderPassTargetDesc depthRti(m_runCtx.m_crntFrameDepthRt);
-	depthRti.m_loadOperation = RenderTargetLoadOperation::kClear;
-	depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
-	depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
-
-	pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,
-						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
-						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0);
-	pass.setWork([this, &ctx, visOut](RenderPassWorkContext& rgraphCtx) {
-		ANKI_TRACE_SCOPED_EVENT(GBuffer);
-
-		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-		// Set some state, leave the rest to default
-		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-
-		const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get() && g_gbufferVrsCVar.get();
-		if(enableVrs)
+		const TextureUsageBit rtUsage =
+			(firstPass) ? TextureUsageBit::kFramebufferWrite : (TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite);
+		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
-			// Just set some low value, the attachment will take over
-			cmdb.setVrsRate(VrsRate::k1x1);
+			pass.newTextureDependency(m_runCtx.m_colorRts[i], rtUsage);
 		}
 
-		RenderableDrawerArguments args;
-		args.m_viewMatrix = ctx.m_matrices.m_view;
-		args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
-		args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
-		args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
-		args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
-		args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
-		args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
+		pass.newTextureDependency(m_runCtx.m_crntFrameDepthRt, rtUsage);
 
-		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
+								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+
+		// Only add one depedency to the GPU visibility. No need to track all buffers
+		if(visOut.containsDrawcalls())
 		{
-			const TextureSubresourceDesc subresource = TextureSubresourceDesc::all();
-			Texture* tex;
-			rgraphCtx.getRenderTargetState(m_runCtx.m_hzbRt, subresource, tex);
-			args.m_hzbTexture = TextureView(tex, subresource);
+			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageGeometryRead);
+		}
+		else
+		{
+			// Weird, make a check
+			ANKI_ASSERT(GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount() == 0);
 		}
 
-		args.fill(visOut);
+		const RenderTargetLoadOperation loadOp = (firstPass) ? RenderTargetLoadOperation::kClear : RenderTargetLoadOperation::kLoad;
+		Array<GraphicsRenderPassTargetDesc, kGBufferColorRenderTargetCount> colorRti;
+		for(U32 i = 0; i < 4; ++i)
+		{
+			colorRti[i].m_handle = rts[i];
+			colorRti[i].m_loadOperation = loadOp;
+		}
+		colorRti[3].m_clearValue.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
+		GraphicsRenderPassTargetDesc depthRti(m_runCtx.m_crntFrameDepthRt);
+		depthRti.m_loadOperation = loadOp;
+		depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
+		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
+		pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti, 0, 0, kMaxU32, kMaxU32);
 
-		cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
-		getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
-	});
+		pass.setWork([this, &ctx, visOut](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
-	for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
-	{
-		pass.newTextureDependency(m_runCtx.m_colorRts[i], TextureUsageBit::kFramebufferWrite);
-	}
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	pass.newTextureDependency(m_runCtx.m_crntFrameDepthRt, TextureUsageBit::kAllFramebuffer);
+			// Set some state, leave the rest to default
+			cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 
-	if(enableVrs)
-	{
-		pass.newTextureDependency(sriRt, TextureUsageBit::kFramebufferShadingRate);
-	}
+			RenderableDrawerArguments args;
+			args.m_viewMatrix = ctx.m_matrices.m_view;
+			args.m_cameraTransform = ctx.m_matrices.m_cameraTransform;
+			args.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjectionJitter;
+			args.m_previousViewProjectionMatrix = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection;
+			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get();
+			args.m_renderingTechinuqe = RenderingTechnique::kGBuffer;
+			args.m_viewport = UVec4(0, 0, getRenderer().getInternalResolution());
 
-	if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
-	{
-		pass.newTextureDependency(m_runCtx.m_hzbRt, TextureUsageBit::kSampledGeometry);
-	}
+			args.fill(visOut);
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+			cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
+			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+		});
+	};
 
-	// Only add one depedency to the GPU visibility. No need to track all buffers
-	if(visOut.containsDrawcalls())
-	{
-		pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
-	}
-	else
-	{
-		// Weird, make a check
-		ANKI_ASSERT(GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount() == 0);
-	}
+	genGBuffer(true);
 
-	// HZB generation for the next frame
+	// HZB generation for the 3rd stage or next frame
 	getRenderer().getHzbGenerator().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
 														UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), rgraph);
+
+	// 2nd phase
+	if(visIn.m_twoPhaseOcclusionCulling)
+	{
+		// Visibility (again)
+		getRenderer().getGpuVisibility().populateRenderGraphStage3(visIn, visOut);
+
+		// GBuffer again
+		genGBuffer(false);
+
+		// HZB generation for the next frame
+		getRenderer().getHzbGenerator().populateRenderGraph(m_runCtx.m_crntFrameDepthRt, getRenderer().getInternalResolution(), m_runCtx.m_hzbRt,
+															UVec2(m_hzbRt->getWidth(), m_hzbRt->getHeight()), rgraph);
+	}
 }
 
 void GBuffer::getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,

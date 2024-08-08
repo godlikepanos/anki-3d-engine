@@ -44,8 +44,6 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 		ANKI_ASSERT(args.m_viewport != UVec4(0u));
 		globalUniforms->m_viewport = Vec4(args.m_viewport);
 
-		globalUniforms->m_enableHzbTesting = args.m_hzbTexture.isValid();
-
 		cmdb.bindUniformBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS), globalUniformsToken);
 	}
 
@@ -71,9 +69,6 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESH_LODS), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_TRANSFORMS), GpuSceneArrays::Transform::getSingleton().getBufferView());
 	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS), GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
-	cmdb.bindTexture(ANKI_REG(ANKI_MATERIAL_REGISTER_HZB_TEXTURE),
-					 (args.m_hzbTexture.isValid()) ? args.m_hzbTexture
-												   : TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
 	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER), getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	if(args.m_mesh.m_firstMeshletBuffer.isValid())

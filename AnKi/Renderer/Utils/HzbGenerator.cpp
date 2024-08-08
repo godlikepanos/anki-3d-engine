@@ -57,20 +57,9 @@ Error HzbGenerator::init()
 	m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	// Zero counter buffer
-	{
-		CommandBufferInitInfo cmdbInit;
-		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+	zeroBuffer(m_counterBuffer.get());
 
-		cmdb->fillBuffer(BufferView(m_counterBuffer.get()), 0);
-
-		FencePtr fence;
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-
-		fence->clientWait(6.0_sec);
-	}
-
+	// Boxes buffer
 	buffInit = BufferInitInfo("HzbBoxIndices");
 	buffInit.m_size = sizeof(kBoxIndices);
 	buffInit.m_usage = BufferUsageBit::kIndex;
@@ -84,24 +73,19 @@ Error HzbGenerator::init()
 	return Error::kNone;
 }
 
-void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, U32 firstCounterBufferElement, CString customName,
-											   RenderGraphBuilder& rgraph) const
+void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, CString customName, RenderGraphBuilder& rgraph)
 {
 	const U32 dispatchCount = dispatchInputs.getSize();
 
-#if ANKI_ASSERTIONS_ENABLED
 	if(m_crntFrame != getRenderer().getFrameCount())
 	{
 		m_crntFrame = getRenderer().getFrameCount();
-		m_counterBufferElementUseMask = 0;
+		m_counterBufferCrntElementCount = 0;
 	}
 
-	for(U32 i = 0; i < dispatchCount; ++i)
-	{
-		ANKI_ASSERT(!(m_counterBufferElementUseMask & (1 << (firstCounterBufferElement + i))));
-		m_counterBufferElementUseMask |= (1 << (firstCounterBufferElement + i));
-	}
-#endif
+	const U32 counterBufferElement = m_counterBufferCrntElementCount;
+	m_counterBufferCrntElementCount += dispatchCount;
+	ANKI_ASSERT(counterBufferElement < kCounterBufferElementCount);
 
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass((customName.isEmpty()) ? "HZB generation" : customName);
 
@@ -115,7 +99,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 		dispatchInputsCopy[i] = dispatchInputs[i];
 	}
 
-	pass.setWork([this, dispatchInputsCopy, dispatchCount, firstCounterBufferElement](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, dispatchInputsCopy, dispatchCount, counterBufferElement](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_genPyramidGrProg.get());
@@ -166,8 +150,9 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 				++mipsReg.m_bindPoint;
 			}
 
-			cmdb.bindStorageBuffer(
-				ANKI_REG(u0), BufferView(m_counterBuffer.get(), (firstCounterBufferElement + dispatch) * m_counterBufferElementSize, sizeof(U32)));
+			cmdb.bindStorageBuffer(ANKI_REG(u0), BufferView(m_counterBuffer.get())
+													 .incrementOffset((counterBufferElement + dispatch) * m_counterBufferElementSize)
+													 .setRange(sizeof(U32)));
 			rgraphCtx.bindTexture(ANKI_REG(t0), in.m_srcDepthRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
@@ -176,17 +161,17 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 }
 
 void HzbGenerator::populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-									   RenderGraphBuilder& rgraph, CString customName) const
+									   RenderGraphBuilder& rgraph, CString customName)
 {
 	DispatchInput in;
 	in.m_dstHzbRt = dstHzbRt;
 	in.m_dstHzbRtSize = dstHzbRtSize;
 	in.m_srcDepthRt = srcDepthRt;
 	in.m_srcDepthRtSize = srcDepthRtSize;
-	populateRenderGraphInternal({&in, 1}, 0, customName, rgraph);
+	populateRenderGraphInternal({&in, 1}, customName, rgraph);
 }
 
-void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphBuilder& rgraph) const
+void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphBuilder& rgraph)
 {
 	const U32 cascadeCount = in.m_cascadeCount;
 	ANKI_ASSERT(cascadeCount > 0);
@@ -323,7 +308,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		inputs[i].m_srcDepthRt = depthRts[i];
 		inputs[i].m_srcDepthRtSize = cascade.m_hzbRtSize * 2;
 	}
-	populateRenderGraphInternal({&inputs[0], cascadeCount}, 1, "HZB generation shadow cascades", rgraph);
+	populateRenderGraphInternal({&inputs[0], cascadeCount}, "HZB generation shadow cascades", rgraph);
 }
 
 } // end namespace anki

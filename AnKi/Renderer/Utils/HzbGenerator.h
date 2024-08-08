@@ -44,9 +44,9 @@ public:
 	Error init();
 
 	void populateRenderGraph(RenderTargetHandle srcDepthRt, UVec2 srcDepthRtSize, RenderTargetHandle dstHzbRt, UVec2 dstHzbRtSize,
-							 RenderGraphBuilder& rgraph, CString customName = {}) const;
+							 RenderGraphBuilder& rgraph, CString customName = {});
 
-	void populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphBuilder& rgraph) const;
+	void populateRenderGraphDirectionalLight(const HzbDirectionalLightInput& in, RenderGraphBuilder& rgraph);
 
 private:
 	class DispatchInput
@@ -70,20 +70,15 @@ private:
 	SamplerPtr m_maxSampler;
 
 	// This class assumes that the populateRenderGraph and the populateRenderGraphDirectionalLight will be called once per frame
-	static constexpr U32 kCounterBufferElementCount = 1 + kMaxShadowCascades; ///< One for the main pass and a few for shadow cascades
-	U32 m_counterBufferElementSize = 0;
+	static constexpr U32 kCounterBufferElementCount = 2 + kMaxShadowCascades; ///< Two for the main pass and a few for shadow cascades
 	BufferPtr m_counterBuffer;
+	U64 m_crntFrame = 0;
+	U32 m_counterBufferElementSize = 0;
+	U32 m_counterBufferCrntElementCount = 0;
 
 	BufferPtr m_boxIndexBuffer;
 
-#if ANKI_ASSERTIONS_ENABLED
-	// Some helper things to make sure that we don't re-use the counters inside a frame
-	mutable U64 m_crntFrame = 0;
-	mutable U8 m_counterBufferElementUseMask = 0;
-#endif
-
-	void populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, U32 firstCounterBufferElement, CString customName,
-									 RenderGraphBuilder& rgraph) const;
+	void populateRenderGraphInternal(ConstWeakArray<DispatchInput> dispatchInputs, CString customName, RenderGraphBuilder& rgraph);
 };
 /// @}
 

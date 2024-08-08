@@ -6,12 +6,16 @@
 #pragma anki mutator HZB_TEST 0 1
 #pragma anki mutator PASSTHROUGH 0 1
 #pragma anki mutator MESH_SHADERS 0 1
+#pragma anki mutator STORE_MESHLETS_FAILED_HZB 0 1 // Two-phase occlusion culling
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 
+#define NUMTHREADS 64u
+
+// This technique is used for legacy rendering. It gathers the visible renderables and places them into the correct buckets.
 #pragma anki technique_start comp Legacy uses_mutators
 
 struct DrawIndirectArgsWithPadding
@@ -29,7 +33,7 @@ StructuredBuffer<GpuSceneParticleEmitter> g_particleEmitters : register(t1);
 StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
 
 StructuredBuffer<GpuVisibilityVisibleRenderableDesc> g_visibleRenderables : register(t3);
-StructuredBuffer<U32> g_visibleRenderableCount : register(t4);
+StructuredBuffer<U32> g_counters : register(t4);
 StructuredBuffer<U32> g_renderablePrefixSums : register(t5);
 
 // One for each bucket. Points to the 1st indirect args struct. 2nd element contains the max count
@@ -45,9 +49,9 @@ RWStructuredBuffer<U32> g_mdiDrawCounts : register(u3);
 
 RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
 
-[numthreads(64, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+[numthreads(NUMTHREADS, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	if(svDispatchThreadId.x >= g_visibleRenderableCount[0])
+	if(svDispatchThreadId.x >= g_counters[(U32)GpuVisibilityCounter::kVisibleRenderableCount])
 	{
 		return;
 	}
@@ -119,9 +123,9 @@ RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u4);
 
 #pragma anki technique_end comp Legacy
 
-#pragma anki technique_start comp Meshlets uses_mutators HZB_TEST PASSTHROUGH MESH_SHADERS
+#pragma anki technique_start comp Meshlets uses_mutators HZB_TEST PASSTHROUGH MESH_SHADERS STORE_MESHLETS_FAILED_HZB
 
-#define MESHLET_BACKFACE_CULLING 1
+#define MESHLET_BACKFACE_CULLING 0 // Doesn't work correctly for some reason
 #define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
 #define MESHLET_NO_SAMPLING_POINT_CULLING 1
 #define MESHLET_HZB_CULLING HZB_TEST
@@ -140,60 +144,41 @@ SamplerState g_nearestClampSampler : register(s0);
 #endif
 
 // Prev stage results
-StructuredBuffer<U32> g_counters : register(t5); // 2nd element is the visible meshlet count
-StructuredBuffer<U32> g_meshletPrefixSums : register(t6);
-StructuredBuffer<GpuVisibilityVisibleMeshletDesc> g_visibleMeshlets : register(t7);
+RWStructuredBuffer<U32> g_counters : register(u0); // 2nd element is the visible meshlet count
+StructuredBuffer<U32> g_meshletPrefixSums : register(t5);
+StructuredBuffer<GpuVisibilityVisibleMeshletDesc> g_visibleMeshlets : register(t6);
 
 // New results
 #if MESH_SHADERS
-RWStructuredBuffer<DispatchIndirectArgs> g_dispatchMeshIndirectArgs : register(u0);
+RWStructuredBuffer<DispatchIndirectArgs> g_dispatchMeshIndirectArgs : register(u1);
 #else
-RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs : register(u0);
+RWStructuredBuffer<DrawIndirectArgs> g_indirectDrawArgs : register(u1);
 #endif
-RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(u1);
+RWStructuredBuffer<GpuSceneMeshletInstance> g_meshletInstances : register(u2);
 
-RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u2);
+RWStructuredBuffer<U32> g_outOfMemoryBuffer : register(u3);
 
-struct Consts
+#if STORE_MESHLETS_FAILED_HZB
+RWStructuredBuffer<GpuVisibilityVisibleMeshletDesc> g_meshletsFailedHzb : register(u4);
+
+RWStructuredBuffer<DispatchIndirectArgs> g_gpuVisIndirectDispatchArgs : register(u5);
+#endif
+
+ANKI_PUSH_CONSTANTS(GpuVisibilityMeshletUniforms, g_unis)
+
+Bool cullMeshlet(GpuSceneRenderable renderable, const MeshletBoundingVolume meshletBoundingVol, out Bool meshletCulledByHzb)
 {
-	Mat4 m_viewProjectionMatrix;
-
-	Vec3 m_cameraPos;
-	U32 m_padding1;
-
-	Vec2 m_viewportSizef;
-	UVec2 m_padding2;
-};
-ANKI_PUSH_CONSTANTS(Consts, g_unis)
-
-[numthreads(64, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
-{
-	const U32 visibleMeshlets = SBUFF(g_counters, 1);
-	if(svDispatchThreadId >= visibleMeshlets)
-	{
-		return;
-	}
-
-	const GpuVisibilityVisibleMeshletDesc desc = SBUFF(g_visibleMeshlets, svDispatchThreadId);
-
-	const U32 renderableIdx = desc.m_renderableIndex_30bit_renderStageBucket_12bit >> 12u;
-	const U32 renderStateBucket = desc.m_renderableIndex_30bit_renderStageBucket_12bit & ((1u << 12u) - 1u);
-	const U32 lod = desc.m_lod_2bit_meshletIndex_30bit >> 30u;
-	const U32 meshletIdx = desc.m_lod_2bit_meshletIndex_30bit & ((1u << 30u) - 1u);
-
-	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
-	const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);
-	const MeshletBoundingVolume meshletBoundingVol = SBUFF(g_meshletBoundingVolumes, meshLod.m_firstMeshletBoundingVolume + meshletIdx);
-
-	// Meshlet culling
-	Bool cull = false;
+	meshletCulledByHzb = false;
 
 #if !PASSTHROUGH
 	const Mat3x4 worldTransform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
 
 #	if MESHLET_BACKFACE_CULLING
 	const Vec4 coneDirAndAng = unpackSnorm4x8(meshletBoundingVol.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
-	cull = cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_unis.m_cameraPos);
+	if(cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshletBoundingVol.m_coneApex, worldTransform, g_unis.m_cameraPos))
+	{
+		return true;
+	}
 #	endif
 
 	const Mat4 wordTransform4 = {worldTransform.m_row0, worldTransform.m_row1, worldTransform.m_row2, Vec4(0.0f, 0.0f, 0.0f, 1.0f)};
@@ -205,57 +190,125 @@ ANKI_PUSH_CONSTANTS(Consts, g_unis)
 
 #	if MESHLET_OUTSIDE_OF_SCREEN_CULLING
 	// Outside of the screen
-	cull = cull || (any(minNdc > 1.0f) || any(maxNdc < -1.0f));
+	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
+	{
+		return true;
+	}
 #	endif
 
 #	if MESHLET_NO_SAMPLING_POINT_CULLING
 	// Sampling points test
 	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_unis.m_viewportSizef;
 	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_unis.m_viewportSizef;
-	cull = cull || any(round(windowCoordsMin) == round(windowCoordsMax));
+	if(any(round(windowCoordsMin) == round(windowCoordsMax)))
+	{
+		return true;
+	}
 #	endif
 
 #	if MESHLET_HZB_CULLING
-	cull = cull || (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+	meshletCulledByHzb = (renderable.m_boneTransformsOffset == 0u && cullHzb(minNdc, maxNdc, aabbMinDepth, g_hzbTexture, g_nearestClampSampler));
+	return meshletCulledByHzb;
 #	endif
 
 #endif // !PASSTHROUGH
 
-	if(!cull)
+	return false;
+}
+
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
+{
+	const U32 meshletsSurvivingStage1Count = SBUFF(g_counters, (U32)GpuVisibilityCounter::kMeshletsSurvivingStage1Count);
+	if(svDispatchThreadId < meshletsSurvivingStage1Count)
 	{
-		U32 instanceIdx;
+		const GpuVisibilityVisibleMeshletDesc desc = SBUFF(g_visibleMeshlets, svDispatchThreadId);
+
+		const U32 renderableIdx = desc.m_renderableIndex_30bit_renderStageBucket_12bit >> 12u;
+		const U32 renderStateBucket = desc.m_renderableIndex_30bit_renderStageBucket_12bit & ((1u << 12u) - 1u);
+		const U32 lod = desc.m_lod_2bit_meshletIndex_30bit >> 30u;
+		const U32 meshletIdx = desc.m_lod_2bit_meshletIndex_30bit & ((1u << 30u) - 1u);
+
+		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
+		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, renderable.m_meshLodsIndex + lod);
+		const MeshletBoundingVolume meshletBoundingVol = SBUFF(g_meshletBoundingVolumes, meshLod.m_firstMeshletBoundingVolume + meshletIdx);
+
+		// Meshlet culling
+		Bool meshletCulledByHzb;
+		const Bool cull = cullMeshlet(renderable, meshletBoundingVol, meshletCulledByHzb);
+
+		if(!cull)
+		{
+			U32 instanceIdx;
 #if MESH_SHADERS
-		InterlockedAdd(SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountX, 1u, instanceIdx);
+			InterlockedAdd(SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountX, 1u, instanceIdx);
 #else
-		InterlockedAdd(SBUFF(g_indirectDrawArgs, renderStateBucket).m_instanceCount, 1u, instanceIdx);
+			InterlockedAdd(SBUFF(g_indirectDrawArgs, renderStateBucket).m_instanceCount, 1u, instanceIdx);
 #endif
 
-		if(instanceIdx == 0)
-		{
-			// First instance, init the drawcall
+			if(instanceIdx == 0)
+			{
+				// First instance, init the drawcall
 #if MESH_SHADERS
-			SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountY = 1u;
-			SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountZ = 1u;
+				SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountY = 1u;
+				SBUFF(g_dispatchMeshIndirectArgs, renderStateBucket).m_threadGroupCountZ = 1u;
 #else
-			SBUFF(g_indirectDrawArgs, renderStateBucket).m_firstInstance = SBUFF(g_meshletPrefixSums, renderStateBucket);
+				SBUFF(g_indirectDrawArgs, renderStateBucket).m_firstInstance = SBUFF(g_meshletPrefixSums, renderStateBucket);
 #endif
-		}
+			}
 
 #if !MESH_SHADERS
-		// Try to limit the vertex size
-		InterlockedMax(SBUFF(g_indirectDrawArgs, renderStateBucket).m_vertexCount, meshletBoundingVol.m_primitiveCount * 3u);
+			// Try to limit the vertex size
+			InterlockedMax(SBUFF(g_indirectDrawArgs, renderStateBucket).m_vertexCount, meshletBoundingVol.m_primitiveCount * 3u);
 #endif
 
-		GpuSceneMeshletInstance instance;
-		instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsIndex << 7u;
-		instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
-		instance.m_uniformsOffset = renderable.m_uniformsOffset;
-		instance.m_boneTransformsOffsetOrParticleEmitterIndex =
-			(renderable.m_boneTransformsOffset) ? renderable.m_boneTransformsOffset : renderable.m_particleEmitterIndex;
-		instance.m_meshletGeometryDescriptorIndex = meshLod.m_firstMeshletGeometryDescriptor + meshletIdx;
+			GpuSceneMeshletInstance instance;
+			instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit = renderable.m_worldTransformsIndex << 7u;
+			instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit |= meshletBoundingVol.m_primitiveCount;
+			instance.m_uniformsOffset = renderable.m_uniformsOffset;
+			instance.m_boneTransformsOffsetOrParticleEmitterIndex = renderable.m_boneTransformsOffset;
+			instance.m_meshletGeometryDescriptorIndex = meshLod.m_firstMeshletGeometryDescriptor + meshletIdx;
 
-		SBUFF(g_meshletInstances, SBUFF(g_meshletPrefixSums, renderStateBucket) + instanceIdx) = instance;
+			SBUFF(g_meshletInstances, SBUFF(g_meshletPrefixSums, renderStateBucket) + instanceIdx) = instance;
+		}
+
+#if STORE_MESHLETS_FAILED_HZB
+		if(cull && meshletCulledByHzb)
+		{
+			U32 idx;
+			InterlockedAdd(SBUFF(g_counters, (U32)GpuVisibilityCounter::kMeshletsCulledByHzbCount), 1u, idx);
+			SBUFF(g_meshletsFailedHzb, idx) = desc;
+		}
+#endif
 	}
+
+#if STORE_MESHLETS_FAILED_HZB
+	// Sync to make sure all the atomic ops have finished before the following code reads them
+	AllMemoryBarrierWithGroupSync();
+
+	// Check if it's the last threadgroup running
+	if(svGroupIndex == 0)
+	{
+		U32 threadgroupIdx;
+		InterlockedAdd(SBUFF(g_counters, (U32)GpuVisibilityCounter::kThreadgroupCount), 1, threadgroupIdx);
+		const U32 threadgroupCount = (meshletsSurvivingStage1Count + NUMTHREADS - 1) / NUMTHREADS;
+		const Bool lastThreadExecuting = (threadgroupIdx + 1 == threadgroupCount);
+
+		if(lastThreadExecuting)
+		{
+			// Last thing executing, prepare stage 3
+
+			const U32 meshletsNeedReTestingCount = SBUFF(g_counters, (U32)GpuVisibilityCounter::kMeshletsCulledByHzbCount);
+
+			DispatchIndirectArgs args;
+			args.m_threadGroupCountX = (meshletsNeedReTestingCount + NUMTHREADS - 1) / NUMTHREADS;
+			args.m_threadGroupCountY = 1;
+			args.m_threadGroupCountZ = 1;
+			SBUFF(g_gpuVisIndirectDispatchArgs, (U32)GpuVisibilityIndirectDispatches::k3rdStageMeshlets) = args;
+
+			SBUFF(g_counters, (U32)GpuVisibilityCounter::kMeshletsSurvivingStage1Count) = meshletsNeedReTestingCount;
+		}
+	}
+#endif
 }
 
 #pragma anki technique_end comp Meshlets
