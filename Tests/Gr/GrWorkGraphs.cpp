@@ -145,7 +145,7 @@ void thirdNode([MaxRecords(32)] GroupNodeInputRecords<ThirdNodeRecord> inp, uint
 		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
 		fence->clientWait(kMaxSecond);
 
-		validateBuffer(counterBuff, 122880);
+		validateBuffer(counterBuff, ConstWeakArray(Array<U32, 1>{122880}));
 	}
 
 	commonDestroy();

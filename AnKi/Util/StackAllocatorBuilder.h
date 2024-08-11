@@ -22,7 +22,6 @@ namespace anki {
 ///                @endcode
 /// @tparam TInterface This is the type of the interface that contains various info. Should have the following members:
 ///                    @code
-///                    U32 getMaxAlignment();
 ///                    PtrSize getInitialChunkSize();
 ///                    F64 getNextChunkGrowScale();
 ///                    PtrSize getNextChunkGrowBias();
@@ -52,7 +51,7 @@ public:
 
 	/// Allocate memory.
 	/// @param size The size to allocate.
-	/// @param alignment The alignment of the returned address.
+	/// @param alignment The alignment of the returned address. Can be anything, not only a power of two.
 	/// @param[out] chunk The chunk that the memory belongs to.
 	/// @param[out] offset The offset inside the chunk.
 	/// @note This is thread safe with itself.

@@ -575,9 +575,10 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					getDevice().CopyDescriptorsSimple(1, samplerHeapOffset.getCpuOffset(), outDescriptor.m_heapOffset,
 													  D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 				}
-				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite)
+						&& !!(inDescriptor.m_flags | DescriptorFlag::kByteAddressBuffer))
 				{
-					// RWStructuredBuffer or RWByteAddressBuffer
+					// RWByteAddressBuffer
 
 					ANKI_ASSERT(!outDescriptor.m_isHandle);
 
@@ -596,9 +597,31 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
-				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
 				{
-					// StructuredBuffer or ByteAddressBuffer
+					// RWStructuredBuffer
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+
+					const BufferView& view = outDescriptor.m_bufferView;
+					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+					uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+
+					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
+					uavDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
+
+					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
+					uavDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
+
+					uavDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
+
+					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite)
+						&& !!(inDescriptor.m_flags & DescriptorFlag::kByteAddressBuffer))
+				{
+					// ByteAddressBuffer
 
 					ANKI_ASSERT(!outDescriptor.m_isHandle);
 					const BufferView& view = outDescriptor.m_bufferView;
@@ -614,6 +637,27 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
 					ANKI_ASSERT((view.m_range % sizeof(U32)) == 0);
 					srvDesc.Buffer.NumElements = U32(view.m_range / sizeof(U32));
+
+					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
+				}
+				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				{
+					// StructuredBuffer
+
+					ANKI_ASSERT(!outDescriptor.m_isHandle);
+					const BufferView& view = outDescriptor.m_bufferView;
+					D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+					srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+					srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+					srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
+					srvDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
+
+					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
+					srvDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
+
+					srvDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
 
 					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}

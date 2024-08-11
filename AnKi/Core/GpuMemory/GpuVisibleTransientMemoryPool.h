@@ -15,43 +15,6 @@ namespace anki {
 /// @addtogroup core
 /// @{
 
-/// @memberof GpuVisibleTransientMemoryPool
-class GpuVisibleTransientMemoryAllocation
-{
-	friend class GpuVisibleTransientMemoryPool;
-
-public:
-	Buffer& getBuffer() const
-	{
-		ANKI_ASSERT(isValid());
-		return *m_buffer;
-	}
-
-	PtrSize getOffset() const
-	{
-		ANKI_ASSERT(isValid());
-		return m_offset;
-	}
-
-	PtrSize getRange() const
-	{
-		ANKI_ASSERT(isValid());
-		return m_size;
-	}
-
-	Bool isValid() const
-	{
-		return m_buffer != nullptr;
-	}
-
-	operator BufferView() const;
-
-private:
-	Buffer* m_buffer = nullptr;
-	PtrSize m_offset = kMaxPtrSize;
-	PtrSize m_size = 0;
-};
-
 /// GPU only transient memory. Used for temporary allocations. Allocations will get reset after each frame.
 class GpuVisibleTransientMemoryPool : public MakeSingleton<GpuVisibleTransientMemoryPool>
 {
@@ -59,26 +22,44 @@ class GpuVisibleTransientMemoryPool : public MakeSingleton<GpuVisibleTransientMe
 	friend class MakeSingleton;
 
 public:
-	GpuVisibleTransientMemoryAllocation allocate(PtrSize size)
+	BufferView allocate(PtrSize size, PtrSize alignment = 0)
 	{
-		GpuVisibleTransientMemoryAllocation out;
-		m_pool.allocate(size, out.m_offset, out.m_buffer);
-		out.m_size = size;
-		return out;
+		alignment = (alignment == 0) ? m_alignment : alignment;
+		PtrSize offset;
+		Buffer* buffer;
+		m_pool.allocate(size, alignment, offset, buffer);
+		return BufferView(buffer, offset, size);
+	}
+
+	template<typename T>
+	BufferView allocateStructuredBuffer(U32 count)
+	{
+		return allocateStructuredBuffer(count, sizeof(T));
+	}
+
+	BufferView allocateStructuredBuffer(U32 count, U32 structureSize)
+	{
+		return allocate(PtrSize(structureSize * count), (m_structuredBufferAlignment == kMaxU32) ? structureSize : m_structuredBufferAlignment);
 	}
 
 	void endFrame();
 
 private:
 	StackGpuMemoryPool m_pool;
+	U32 m_alignment = 0;
 	U32 m_frame = 0;
+	U32 m_structuredBufferAlignment = 0;
 
 	GpuVisibleTransientMemoryPool()
 	{
-		U32 alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
-		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
-		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
-		alignment = max(alignment, GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
+		m_structuredBufferAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+										  ? kMaxU32
+										  : GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment;
+
+		m_alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
+		m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
+		m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
+		m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
 
 		BufferUsageBit buffUsage = BufferUsageBit::kAllUniform | BufferUsageBit::kAllStorage | BufferUsageBit::kIndirectDraw
 								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertex | BufferUsageBit::kAllTransfer;
@@ -86,17 +67,11 @@ private:
 		{
 			buffUsage |= (BufferUsageBit::kAccelerationStructureBuildScratch | BufferUsageBit::kAccelerationStructureBuild);
 		}
-		m_pool.init(10_MB, 2.0, 0, alignment, buffUsage, BufferMapAccessBit::kNone, true, "GpuVisibleTransientMemoryPool");
+		m_pool.init(10_MB, 2.0, 0, buffUsage, BufferMapAccessBit::kNone, true, "GpuVisibleTransientMemoryPool");
 	}
 
 	~GpuVisibleTransientMemoryPool() = default;
 };
-
-inline GpuVisibleTransientMemoryAllocation::operator BufferView() const
-{
-	ANKI_ASSERT(isValid());
-	return {m_buffer, m_offset, m_size};
-}
 /// @}
 
 } // end namespace anki

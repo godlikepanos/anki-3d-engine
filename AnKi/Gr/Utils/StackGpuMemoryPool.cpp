@@ -30,17 +30,10 @@ public:
 	PtrSize m_bias = 0;
 	PtrSize m_allocatedMemory = 0;
 	GrString m_bufferName;
-	U32 m_alignment = 0;
 	BufferUsageBit m_bufferUsage = BufferUsageBit::kNone;
 	BufferMapAccessBit m_bufferMap = BufferMapAccessBit::kNone;
 	U8 m_chunkCount = 0;
 	Bool m_allowToGrow = false;
-
-	// Builder interface stuff:
-	U32 getMaxAlignment() const
-	{
-		return m_alignment;
-	}
 
 	PtrSize getInitialChunkSize() const
 	{
@@ -123,11 +116,10 @@ StackGpuMemoryPool::~StackGpuMemoryPool()
 	}
 }
 
-void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSize nextChunkGrowBias, U32 alignment, BufferUsageBit bufferUsage,
+void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSize nextChunkGrowBias, BufferUsageBit bufferUsage,
 							  BufferMapAccessBit bufferMapping, Bool allowToGrow, CString bufferName)
 {
 	ANKI_ASSERT(m_builder == nullptr);
-	ANKI_ASSERT(initialSize > 0 && alignment > 0);
 	ANKI_ASSERT(nextChunkGrowScale >= 1.0);
 
 	m_builder = newInstance<Builder>(GrMemoryPool::getSingleton());
@@ -136,7 +128,6 @@ void StackGpuMemoryPool::init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSi
 	inter.m_scale = nextChunkGrowScale;
 	inter.m_bias = nextChunkGrowBias;
 	inter.m_bufferName = bufferName;
-	inter.m_alignment = alignment;
 	inter.m_bufferUsage = bufferUsage;
 	inter.m_bufferMap = bufferMapping;
 	inter.m_allowToGrow = allowToGrow;
@@ -147,11 +138,11 @@ void StackGpuMemoryPool::reset()
 	m_builder->reset();
 }
 
-void StackGpuMemoryPool::allocate(PtrSize size, PtrSize& outOffset, Buffer*& buffer, void*& mappedMemory)
+void StackGpuMemoryPool::allocate(PtrSize size, PtrSize alignment, PtrSize& outOffset, Buffer*& buffer, void*& mappedMemory)
 {
 	Chunk* chunk;
 	PtrSize offset;
-	const Error err = m_builder->allocate(size, 1, chunk, offset);
+	const Error err = m_builder->allocate(size, alignment, chunk, offset);
 	if(err)
 	{
 		ANKI_GR_LOGF("Allocation failed");

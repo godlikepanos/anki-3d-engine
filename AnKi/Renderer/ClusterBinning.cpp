@@ -52,7 +52,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	// Allocate the clusters buffer
 	{
 		const U32 clusterCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y() + getRenderer().getZSplitCount();
-		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(Cluster) * clusterCount);
+		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<Cluster>(clusterCount);
 		m_runCtx.m_clustersHandle = rgraph.importBuffer(m_runCtx.m_clustersBuffer, BufferUsageBit::kNone);
 	}
 
@@ -62,7 +62,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	{
 		// Allocate memory for the indirect args
 		constexpr U32 dispatchCount = U32(GpuSceneNonRenderableObjectType::kCount) * 2;
-		indirectArgsBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs) * dispatchCount);
+		indirectArgsBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(dispatchCount);
 		indirectArgsHandle = rgraph.importBuffer(indirectArgsBuff, BufferUsageBit::kNone);
 
 		// Create the pass
@@ -208,8 +208,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		// Allocations
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			m_runCtx.m_packedObjectsBuffers[type] =
-				GpuVisibleTransientMemoryPool::getSingleton().allocate(kClusteredObjectSizes[type] * kMaxVisibleClusteredObjects[type]);
+			m_runCtx.m_packedObjectsBuffers[type] = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer(
+				kMaxVisibleClusteredObjects[type], kClusteredObjectSizes[type]);
 			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(m_runCtx.m_packedObjectsBuffers[type], BufferUsageBit::kNone);
 		}
 

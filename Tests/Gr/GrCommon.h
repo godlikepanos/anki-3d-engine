@@ -184,7 +184,8 @@ inline void readBuffer(BufferPtr buff, DynamicArray<T>& out)
 		buffInit.m_usage = BufferUsageBit::kTransferDestination;
 		tmpBuff = GrManager::getSingleton().newBuffer(buffInit);
 
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kSmallBatch));
+		CommandBufferPtr cmdb =
+			GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch));
 		cmdb->copyBufferToBuffer(BufferView(buff.get()), BufferView(tmpBuff.get()));
 		cmdb->endRecording();
 
@@ -202,14 +203,16 @@ inline void readBuffer(BufferPtr buff, DynamicArray<T>& out)
 }
 
 template<typename T>
-inline void validateBuffer(BufferPtr buff, T value)
+inline void validateBuffer(BufferPtr buff, ConstWeakArray<T> values)
 {
 	DynamicArray<T> cpuBuff;
 	readBuffer<T>(buff, cpuBuff);
 
-	for(const T& x : cpuBuff)
+	ANKI_ASSERT(values.getSize() == cpuBuff.getSize());
+
+	for(U32 i = 0; i < values.getSize(); ++i)
 	{
-		ANKI_TEST_EXPECT_EQ(x, value);
+		ANKI_TEST_EXPECT_EQ(cpuBuff[i], values[i]);
 	}
 }
 

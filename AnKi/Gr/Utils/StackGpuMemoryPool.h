@@ -25,18 +25,18 @@ public:
 
 	StackGpuMemoryPool& operator=(const StackGpuMemoryPool&) = delete; // Non-copyable
 
-	void init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSize nextChunkGrowBias, U32 alignment, BufferUsageBit bufferUsage,
-			  BufferMapAccessBit bufferMapping, Bool allowToGrow, CString bufferName);
+	void init(PtrSize initialSize, F64 nextChunkGrowScale, PtrSize nextChunkGrowBias, BufferUsageBit bufferUsage, BufferMapAccessBit bufferMapping,
+			  Bool allowToGrow, CString bufferName);
 
 	/// @note It's thread-safe against other allocate()
-	void allocate(PtrSize size, PtrSize& outOffset, Buffer*& buffer)
+	void allocate(PtrSize size, PtrSize alignment, PtrSize& outOffset, Buffer*& buffer)
 	{
 		void* dummyMapped = nullptr;
-		allocate(size, outOffset, buffer, dummyMapped);
+		allocate(size, alignment, outOffset, buffer, dummyMapped);
 	}
 
 	/// @note It's thread-safe against other allocate()
-	void allocate(PtrSize size, PtrSize& outOffset, Buffer*& buffer, void*& mappedMemory);
+	void allocate(PtrSize size, PtrSize alignment, PtrSize& outOffset, Buffer*& buffer, void*& mappedMemory);
 
 	void reset();
 

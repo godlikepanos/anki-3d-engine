@@ -104,7 +104,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 {
 	SceneMemoryPool::allocateSingleton(allocCallback, allocCallbackData);
 
-	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, ANKI_SAFE_ALIGNMENT, "SceneGraphFramePool");
+	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, "SceneGraphFramePool");
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));

@@ -154,11 +154,6 @@ private:
 
 		// The rest of the functions implement the StackAllocatorBuilder TInterface.
 
-		constexpr PtrSize getMaxAlignment()
-		{
-			return kGpuBufferAlignment;
-		}
-
 		constexpr PtrSize getInitialChunkSize() const
 		{
 			return kChunkInitialSize;

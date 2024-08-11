@@ -539,7 +539,7 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 {
 	BufferView clearTileIndirectArgs;
 
-	clearTileIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs));
+	clearTileIndirectArgs = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DrawIndirectArgs>(1);
 
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(passName);
 

@@ -79,16 +79,17 @@ private:
 	U64 m_frameIdx = kMaxU64;
 };
 
-BufferView allocateTransientGpuMem(PtrSize size)
+template<typename T>
+static BufferView allocateStructuredBuffer(U32 count)
 {
 	BufferView out = {};
 
-	if(size)
+	if(count > 0)
 	{
-		g_gpuVisMemoryAllocatedStatVar.increment(size);
-		out = GpuVisibleTransientMemoryPool::getSingleton().allocate(size);
+		g_gpuVisMemoryAllocatedStatVar.increment(sizeof(T) * count);
+		out = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<T>(count);
 
-		GpuVisMemoryStats::getSingleton().informAboutAllocation(size);
+		GpuVisMemoryStats::getSingleton().informAboutAllocation(sizeof(T) * count);
 	}
 
 	return out;
@@ -296,22 +297,19 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		}
 
 		m_persistentMemory.m_stage1.m_visibleRenderables =
-			allocateTransientGpuMem(sizeof(GpuVisibilityVisibleRenderableDesc) * maxLimits.m_maxVisibleLegacyRenderables);
-		m_persistentMemory.m_stage1.m_visibleMeshlets =
-			allocateTransientGpuMem(sizeof(GpuVisibilityVisibleMeshletDesc) * maxLimits.m_maxVisibleMeshlets);
+			allocateStructuredBuffer<GpuVisibilityVisibleRenderableDesc>(maxLimits.m_maxVisibleLegacyRenderables);
+		m_persistentMemory.m_stage1.m_visibleMeshlets = allocateStructuredBuffer<GpuVisibilityVisibleMeshletDesc>(maxLimits.m_maxVisibleMeshlets);
 
-		m_persistentMemory.m_stage2Legacy.m_instanceRateRenderables =
-			allocateTransientGpuMem(sizeof(UVec4) * maxLimits.m_maxVisibleLegacyRenderables);
+		m_persistentMemory.m_stage2Legacy.m_instanceRateRenderables = allocateStructuredBuffer<UVec4>(maxLimits.m_maxVisibleLegacyRenderables);
 		m_persistentMemory.m_stage2Legacy.m_drawIndexedIndirectArgs =
-			allocateTransientGpuMem(sizeof(DrawIndexedIndirectArgs) * maxLimits.m_maxVisibleLegacyRenderables);
+			allocateStructuredBuffer<DrawIndexedIndirectArgs>(maxLimits.m_maxVisibleLegacyRenderables);
 
-		m_persistentMemory.m_stage2Meshlet.m_meshletInstances =
-			allocateTransientGpuMem(sizeof(GpuSceneMeshletInstance) * maxLimits.m_maxVisibleMeshlets);
+		m_persistentMemory.m_stage2Meshlet.m_meshletInstances = allocateStructuredBuffer<GpuSceneMeshletInstance>(maxLimits.m_maxVisibleMeshlets);
 
 		m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb =
-			allocateTransientGpuMem(sizeof(GpuVisibilityVisibleRenderableDesc) * maxLimits.m_maxVisibleMeshlets);
+			allocateStructuredBuffer<GpuVisibilityVisibleRenderableDesc>(maxLimits.m_maxVisibleMeshlets);
 
-		m_persistentMemory.m_stage3.m_meshletInstances = allocateTransientGpuMem(sizeof(GpuSceneMeshletInstance) * maxLimits.m_maxVisibleMeshlets);
+		m_persistentMemory.m_stage3.m_meshletInstances = allocateStructuredBuffer<GpuSceneMeshletInstance>(maxLimits.m_maxVisibleMeshlets);
 
 		m_persistentMemory.m_dep = rgraph.importBuffer((bMeshletRendering) ? m_persistentMemory.m_stage1.m_visibleMeshlets
 																		   : m_persistentMemory.m_stage1.m_visibleRenderables,
@@ -361,7 +359,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		BufferView m_hash;
 	} stage1Mem;
 
-	stage1Mem.m_counters = allocateTransientGpuMem(sizeof(U32) * U32(GpuVisibilityCounter::kCount));
+	stage1Mem.m_counters = allocateStructuredBuffer<U32>(U32(GpuVisibilityCounter::kCount));
 	if(in.m_limitMemory)
 	{
 		PtrSize newRange = sizeof(GpuVisibilityVisibleRenderableDesc) * limits.m_maxVisibleLegacyRenderables;
@@ -380,21 +378,21 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	}
 	else
 	{
-		stage1Mem.m_visibleRenderables = allocateTransientGpuMem(sizeof(GpuVisibilityVisibleRenderableDesc) * limits.m_maxVisibleLegacyRenderables);
-		stage1Mem.m_visibleMeshlets = allocateTransientGpuMem(sizeof(GpuVisibilityVisibleMeshletDesc) * limits.m_maxVisibleMeshlets);
+		stage1Mem.m_visibleRenderables = allocateStructuredBuffer<GpuVisibilityVisibleRenderableDesc>(limits.m_maxVisibleLegacyRenderables);
+		stage1Mem.m_visibleMeshlets = allocateStructuredBuffer<GpuVisibilityVisibleMeshletDesc>(limits.m_maxVisibleMeshlets);
 	}
-	stage1Mem.m_renderablePrefixSums = allocateTransientGpuMem(sizeof(U32) * bucketCount);
-	stage1Mem.m_meshletPrefixSums = allocateTransientGpuMem(sizeof(U32) * bucketCount);
-	stage1Mem.m_gpuVisIndirectDispatchArgs = allocateTransientGpuMem(sizeof(DispatchIndirectArgs) * U32(GpuVisibilityIndirectDispatches::kCount));
+	stage1Mem.m_renderablePrefixSums = allocateStructuredBuffer<U32>(bucketCount);
+	stage1Mem.m_meshletPrefixSums = allocateStructuredBuffer<U32>(bucketCount);
+	stage1Mem.m_gpuVisIndirectDispatchArgs = allocateStructuredBuffer<DispatchIndirectArgs>(U32(GpuVisibilityIndirectDispatches::kCount));
 
 	if(in.m_gatherAabbIndices)
 	{
-		stage1Mem.m_visibleAabbIndices = allocateTransientGpuMem(sizeof(U32) * buckets.getBucketsActiveUserCount(in.m_technique));
+		stage1Mem.m_visibleAabbIndices = allocateStructuredBuffer<U32>(buckets.getBucketsActiveUserCount(in.m_technique));
 	}
 
 	if(in.m_hashVisibles)
 	{
-		stage1Mem.m_hash = allocateTransientGpuMem(sizeof(GpuVisibilityHash));
+		stage1Mem.m_hash = allocateStructuredBuffer<GpuVisibilityHash>(1);
 	}
 
 	// Allocate memory for stage 2
@@ -436,47 +434,48 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		}
 		else
 		{
-			stage2Mem.m_legacy.m_instanceRateRenderables = allocateTransientGpuMem(sizeof(UVec4) * limits.m_maxVisibleLegacyRenderables);
-			stage2Mem.m_legacy.m_drawIndexedIndirectArgs =
-				allocateTransientGpuMem(sizeof(DrawIndexedIndirectArgs) * limits.m_maxVisibleLegacyRenderables);
+			stage2Mem.m_legacy.m_instanceRateRenderables = allocateStructuredBuffer<UVec4>(limits.m_maxVisibleLegacyRenderables);
+			stage2Mem.m_legacy.m_drawIndexedIndirectArgs = allocateStructuredBuffer<DrawIndexedIndirectArgs>(limits.m_maxVisibleLegacyRenderables);
 		}
 
-		stage2Mem.m_legacy.m_mdiDrawCounts = allocateTransientGpuMem(sizeof(U32) * bucketCount);
+		stage2Mem.m_legacy.m_mdiDrawCounts = allocateStructuredBuffer<U32>(bucketCount);
 	}
 
 	if(bMeshletRendering)
 	{
 		if(bHwMeshletRendering)
 		{
-			stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs = allocateTransientGpuMem(sizeof(DispatchIndirectArgs) * bucketCount);
+			stage2Mem.m_meshlet.m_dispatchMeshIndirectArgs = allocateStructuredBuffer<DispatchIndirectArgs>(bucketCount);
 		}
 		else
 		{
-			stage2Mem.m_meshlet.m_indirectDrawArgs = allocateTransientGpuMem(sizeof(DrawIndirectArgs) * bucketCount);
+			stage2Mem.m_meshlet.m_indirectDrawArgs = allocateStructuredBuffer<DrawIndirectArgs>(bucketCount);
 		}
 
-		const PtrSize newRange = sizeof(GpuSceneMeshletInstance) * limits.m_maxVisibleMeshlets;
+		const U32 newCount = limits.m_maxVisibleMeshlets;
 		if(in.m_limitMemory)
 		{
-			ANKI_ASSERT(newRange <= m_persistentMemory.m_stage2Meshlet.m_meshletInstances.getRange());
-			stage2Mem.m_meshlet.m_meshletInstances = BufferView(m_persistentMemory.m_stage2Meshlet.m_meshletInstances).setRange(newRange);
+			ANKI_ASSERT(newCount * sizeof(GpuSceneMeshletInstance) <= m_persistentMemory.m_stage2Meshlet.m_meshletInstances.getRange());
+			stage2Mem.m_meshlet.m_meshletInstances =
+				BufferView(m_persistentMemory.m_stage2Meshlet.m_meshletInstances).setRange(newCount * sizeof(GpuSceneMeshletInstance));
 		}
 		else
 		{
-			stage2Mem.m_meshlet.m_meshletInstances = allocateTransientGpuMem(newRange);
+			stage2Mem.m_meshlet.m_meshletInstances = allocateStructuredBuffer<GpuSceneMeshletInstance>(newCount);
 		}
 
 		if(bStoreMeshletsFailedHzb)
 		{
-			const PtrSize newRange = sizeof(GpuVisibilityVisibleMeshletDesc) * limits.m_maxVisibleMeshlets;
+			const U32 newCount = limits.m_maxVisibleMeshlets;
 			if(in.m_limitMemory)
 			{
-				ANKI_ASSERT(newRange <= m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb.getRange());
-				stage2Mem.m_meshlet.m_meshletsFailedHzb = BufferView(m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb).setRange(newRange);
+				ANKI_ASSERT(newCount * sizeof(GpuVisibilityVisibleMeshletDesc) <= m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb.getRange());
+				stage2Mem.m_meshlet.m_meshletsFailedHzb =
+					BufferView(m_persistentMemory.m_stage2Meshlet.m_meshletsFailedHzb).setRange(newCount * sizeof(GpuVisibilityVisibleMeshletDesc));
 			}
 			else
 			{
-				stage2Mem.m_meshlet.m_meshletsFailedHzb = allocateTransientGpuMem(newRange);
+				stage2Mem.m_meshlet.m_meshletsFailedHzb = allocateStructuredBuffer<GpuVisibilityVisibleMeshletDesc>(newCount);
 			}
 		}
 	}
@@ -495,22 +494,23 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	{
 		if(bHwMeshletRendering)
 		{
-			stage3Mem.m_dispatchMeshIndirectArgs = allocateTransientGpuMem(sizeof(DispatchIndirectArgs) * bucketCount);
+			stage3Mem.m_dispatchMeshIndirectArgs = allocateStructuredBuffer<DispatchIndirectArgs>(bucketCount);
 		}
 		else
 		{
-			stage3Mem.m_indirectDrawArgs = allocateTransientGpuMem(sizeof(DrawIndirectArgs) * bucketCount);
+			stage3Mem.m_indirectDrawArgs = allocateStructuredBuffer<DrawIndirectArgs>(bucketCount);
 		}
 
-		const PtrSize newRange = sizeof(GpuSceneMeshletInstance) * limits.m_maxVisibleMeshlets;
+		const U32 newCount = limits.m_maxVisibleMeshlets;
 		if(in.m_limitMemory)
 		{
-			ANKI_ASSERT(newRange <= m_persistentMemory.m_stage3.m_meshletInstances.getRange());
-			stage3Mem.m_meshletInstances = BufferView(m_persistentMemory.m_stage3.m_meshletInstances).setRange(newRange);
+			ANKI_ASSERT(newCount * sizeof(GpuSceneMeshletInstance) <= m_persistentMemory.m_stage3.m_meshletInstances.getRange());
+			stage3Mem.m_meshletInstances =
+				BufferView(m_persistentMemory.m_stage3.m_meshletInstances).setRange(newCount * sizeof(GpuSceneMeshletInstance));
 		}
 		else
 		{
-			stage3Mem.m_meshletInstances = allocateTransientGpuMem(newRange);
+			stage3Mem.m_meshletInstances = allocateStructuredBuffer<GpuSceneMeshletInstance>(newCount);
 		}
 	}
 
@@ -991,7 +991,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	}
 
 	// Allocate memory for the result
-	out.m_visiblesBuffer = allocateTransientGpuMem((objCount + 1) * sizeof(U32));
+	out.m_visiblesBuffer = allocateStructuredBuffer<U32>(objCount + 1);
 	out.m_visiblesBufferHandle = rgraph.importBuffer(out.m_visiblesBuffer, BufferUsageBit::kNone);
 
 	// Create the renderpass
@@ -1093,12 +1093,12 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	// Allocate the transient buffers
 	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 
-	out.m_instancesBuffer = allocateTransientGpuMem(aabbCount * sizeof(AccelerationStructureInstance));
+	out.m_instancesBuffer = allocateStructuredBuffer<AccelerationStructureInstance>(aabbCount);
 	out.m_someBufferHandle = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kStorageComputeWrite);
 
-	out.m_renderableIndicesBuffer = allocateTransientGpuMem((aabbCount + 1) * sizeof(U32));
+	out.m_renderableIndicesBuffer = allocateStructuredBuffer<U32>(aabbCount + 1);
 
-	const BufferView zeroInstancesDispatchArgsBuff = allocateTransientGpuMem(sizeof(DispatchIndirectArgs));
+	const BufferView zeroInstancesDispatchArgsBuff = allocateStructuredBuffer<DispatchIndirectArgs>(1);
 
 	// Create vis pass
 	{

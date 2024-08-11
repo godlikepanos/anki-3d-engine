@@ -276,15 +276,13 @@ void StackMemoryPool::StackAllocatorBuilderInterface::recycleChunk([[maybe_unuse
 }
 
 void StackMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale, PtrSize nextChunkBias,
-						   Bool ignoreDeallocationErrors, U32 alignmentBytes, const Char* name)
+						   Bool ignoreDeallocationErrors, const Char* name)
 {
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);
-	ANKI_ASSERT(alignmentBytes > 0 && alignmentBytes <= kMaxAlignment);
 	BaseMemoryPool::init(allocCb, allocCbUserData, name);
 
 	m_builder.getInterface().m_parent = this;
-	m_builder.getInterface().m_alignmentBytes = alignmentBytes;
 	m_builder.getInterface().m_ignoreDeallocationErrors = ignoreDeallocationErrors;
 	m_builder.getInterface().m_initialChunkSize = initialChunkSize;
 	m_builder.getInterface().m_nextChunkScale = nextChunkScale;
@@ -301,6 +299,7 @@ void StackMemoryPool::destroy()
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(alignment > 0 && alignment <= kMaxAlignment);
 
 	Chunk* chunk;
 	PtrSize offset;

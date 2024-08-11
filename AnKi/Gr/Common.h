@@ -201,6 +201,9 @@ public:
 	/// API version.
 	U8 m_majorApiVersion = 0;
 
+	/// Align structured buffers using the structure's size and not the m_storageBufferBindOffsetAlignment.
+	Bool m_structuredBufferNaturalAlignment = false;
+
 	/// RT.
 	Bool m_rayTracingEnabled = false;
 

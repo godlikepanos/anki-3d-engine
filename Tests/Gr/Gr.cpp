@@ -196,11 +196,18 @@ ANKI_TEST(Gr, Bindings)
 
 	{
 		constexpr const char* kSrc = R"(
+struct Foo3
+{
+	float x;
+	float y;
+	float z;
+};
+
 StructuredBuffer<float4> g_structured : register(t0);
 Texture2D g_tex : register(t2);
 Buffer<float4> g_buff : register(t3);
 
-RWStructuredBuffer<float4> g_rwstructured : register(u0, space2);
+RWStructuredBuffer<Foo3> g_rwstructured : register(u0, space2);
 RWTexture2D<float4> g_rwtex[3] : register(u2);
 RWBuffer<float4> g_rwbuff : register(u7);
 
@@ -228,7 +235,12 @@ SamplerState g_sampler : register(s2);
 [numthreads(1, 1, 1)]
 void main()
 {
-	g_rwstructured[0] = g_structured[0] + g_structured[1];
+	float3 tmp = (g_structured[0] + g_structured[1]).xyz;
+	Foo3 tmp3 = {tmp.x, tmp.y, tmp.z};
+	g_rwstructured[0] = tmp3;
+	tmp *= 2.0f;
+	Foo3 tmp3_ = {tmp.x, tmp.y, tmp.z};
+	g_rwstructured[1] = tmp3_;
 
 	g_rwtex[0][uint2(0, 0)] = g_consts.m_val;
 
@@ -244,6 +256,26 @@ void main()
 	g_rwbuff[0] = g_buff[0];
 }
 )";
+		struct Foo
+		{
+			F32 x;
+			F32 y;
+			F32 z;
+
+			Foo() = default;
+
+			Foo(Vec4 v)
+				: x(v.x())
+				, y(v.y())
+				, z(v.z())
+			{
+			}
+
+			Bool operator==(const Foo& b) const
+			{
+				return x == b.x && y == b.y && z == b.z;
+			}
+		};
 
 		TextureInitInfo texInit;
 		texInit.m_width = texInit.m_height = 1;
@@ -258,14 +290,14 @@ void main()
 		const Vec4 kMagicVec(1.0f, 2.0f, 3.0f, 4.0f);
 		const Vec4 kInvalidVec(1.0f, 2.0f, 3.0f, 4.0f);
 
-		const Array<Vec4, 2> data = {kMagicVec, kMagicVec};
+		const Array<Vec4, 2> data = {kMagicVec, kMagicVec * 2.0f};
 		BufferPtr structured = createBuffer(BufferUsageBit::kAllStorage, ConstWeakArray<Vec4>(data), "structured");
 
 		texInit.m_usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kTransferDestination;
 		TexturePtr tex = createTexture2d(texInit, kMagicVec * 2.0f);
 
 		BufferPtr buff = createBuffer(BufferUsageBit::kAllTexel, kMagicVec * 2.0f, 1, "buff");
-		BufferPtr rwstructured = createBuffer(BufferUsageBit::kAllStorage, kInvalidVec, 1, "rwstructured");
+		BufferPtr rwstructured = createBuffer(BufferUsageBit::kAllStorage, Foo(kInvalidVec), 2, "rwstructured");
 		BufferPtr rwbuff = createBuffer(BufferUsageBit::kAllTexel, kInvalidVec, 1, "rwbuff");
 
 		Array<TexturePtr, 3> rwtex;
@@ -310,8 +342,8 @@ void main()
 		signalFence->clientWait(kMaxSecond);
 
 		// Check
-		validateBuffer(rwstructured, kMagicVec + kMagicVec);
-		validateBuffer(rwbuff, kMagicVec * 2.0f);
+		validateBuffer(rwstructured, ConstWeakArray(Array<Foo, 2>{kMagicVec + kMagicVec * 2.0f, (kMagicVec + kMagicVec * 2.0f) * 2.0f}));
+		validateBuffer(rwbuff, ConstWeakArray(Array<Vec4, 1>{kMagicVec * 2.0f}));
 	}
 
 	commonDestroy();

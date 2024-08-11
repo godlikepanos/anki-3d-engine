@@ -208,7 +208,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	BufferHandle sbtBuildIndirectArgsHandle;
 	BufferView sbtBuildIndirectArgsBuffer;
 	{
-		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DispatchIndirectArgs));
+		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(1);
 		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kStorageComputeWrite);
 
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows setup build SBT");

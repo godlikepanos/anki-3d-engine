@@ -54,7 +54,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
 	// Create indirect buffer
-	m_runCtx.m_indirectBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(sizeof(DrawIndirectArgs) * flareCount);
+	m_runCtx.m_indirectBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DrawIndirectArgs>(flareCount);
 	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_runCtx.m_indirectBuff, BufferUsageBit::kNone);
 
 	// Create the pass

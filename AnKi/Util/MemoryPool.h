@@ -195,11 +195,10 @@ public:
 
 	/// @see init
 	StackMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale = 2.0,
-					PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true, U32 alignmentBytes = ANKI_SAFE_ALIGNMENT,
-					const Char* name = nullptr)
+					PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true, const Char* name = nullptr)
 		: StackMemoryPool()
 	{
-		init(allocCb, allocCbUserData, initialChunkSize, nextChunkScale, nextChunkBias, ignoreDeallocationErrors, alignmentBytes, name);
+		init(allocCb, allocCbUserData, initialChunkSize, nextChunkScale, nextChunkBias, ignoreDeallocationErrors, name);
 	}
 
 	/// Destroy
@@ -214,12 +213,10 @@ public:
 	/// @param initialChunkSize The size of the first chunk.
 	/// @param nextChunkScale Value that controls the next chunk.
 	/// @param nextChunkBias Value that controls the next chunk.
-	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to
-	///        true to suppress such errors.
-	/// @param alignmentBytes The maximum supported alignment for returned memory.
+	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to true to suppress such errors.
 	/// @param name An optional name.
 	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F64 nextChunkScale = 2.0, PtrSize nextChunkBias = 0,
-			  Bool ignoreDeallocationErrors = true, U32 alignmentBytes = ANKI_SAFE_ALIGNMENT, const Char* name = nullptr);
+			  Bool ignoreDeallocationErrors = true, const Char* name = nullptr);
 
 	/// Manual destroy. The destructor calls that as well.
 	void destroy();
@@ -274,8 +271,6 @@ private:
 	public:
 		StackMemoryPool* m_parent = nullptr;
 
-		PtrSize m_alignmentBytes = 0;
-
 		Bool m_ignoreDeallocationErrors = false;
 
 		PtrSize m_initialChunkSize = 0;
@@ -285,12 +280,6 @@ private:
 		PtrSize m_nextChunkBias = 0;
 
 		// The rest of the functions implement the StackAllocatorBuilder TInterface.
-
-		PtrSize getMaxAlignment() const
-		{
-			ANKI_ASSERT(m_alignmentBytes > 0);
-			return m_alignmentBytes;
-		}
 
 		PtrSize getInitialChunkSize() const
 		{

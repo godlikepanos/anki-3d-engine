@@ -38,12 +38,10 @@ void StackAllocatorBuilder<TChunk, TInterface, TLock>::destroy()
 }
 
 template<typename TChunk, typename TInterface, typename TLock>
-Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [[maybe_unused]] PtrSize alignment, TChunk*& chunk, PtrSize& offset)
+Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, PtrSize alignment, TChunk*& chunk, PtrSize& offset)
 {
-	ANKI_ASSERT(alignment <= m_interface.getMaxAlignment());
-
-	size = getAlignedRoundUp(m_interface.getMaxAlignment(), size);
 	ANKI_ASSERT(size > 0);
+	size += alignment;
 
 	chunk = nullptr;
 	offset = kMaxPtrSize;
@@ -73,7 +71,7 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [
 		}
 		else
 		{
-			// Need new chunk
+			// Need new chunk, create it and loop back
 
 			LockGuard<TLock> lock(m_lock);
 
@@ -98,7 +96,6 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [
 			}
 
 			nextChunkSize = max(size, nextChunkSize); // Can't have the allocation fail
-			alignRoundUp(m_interface.getMaxAlignment(), nextChunkSize); // Align again
 
 			TChunk* nextChunk;
 			if(crntChunk)
@@ -167,7 +164,10 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, [
 		}
 	}
 
+	alignRoundUp(alignment, offset);
+
 	ANKI_ASSERT(chunk && offset != kMaxPtrSize);
+	ANKI_ASSERT(offset + size <= chunk->m_chunkSize);
 	return Error::kNone;
 }
 

@@ -432,6 +432,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_uniformBufferBindOffsetAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 		m_capabilities.m_uniformBufferMaxRange = D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * D3D12_STANDARD_VECTOR_SIZE * sizeof(F32);
 		m_capabilities.m_storageBufferBindOffsetAlignment = D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT;
+		m_capabilities.m_structuredBufferNaturalAlignment = true;
 		m_capabilities.m_storageBufferMaxRange = 1 << D3D12_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP;
 		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
 		m_capabilities.m_textureBufferMaxRange = kMaxU32; // ?
