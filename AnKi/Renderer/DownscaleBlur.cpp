@@ -35,17 +35,17 @@ Error DownscaleBlur::initInternal()
 
 	// Create the miped texture
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), getRenderer().getHdrFormat(), "DownscaleBlur");
-	texinit.m_usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
+	texinit.m_usage = TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvCompute;
 	if(preferCompute)
 	{
-		texinit.m_usage |= TextureUsageBit::kStorageComputeWrite;
+		texinit.m_usage |= TextureUsageBit::kUavCompute;
 	}
 	else
 	{
-		texinit.m_usage |= TextureUsageBit::kFramebufferWrite;
+		texinit.m_usage |= TextureUsageBit::kRtvDsvWrite;
 	}
 	texinit.m_mipmapCount = U8(m_passCount);
-	m_rtTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute);
+	m_rtTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvCompute);
 
 	// Shader programs
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/DownscaleBlur.ankiprogbin", m_prog, m_grProg));
@@ -56,7 +56,7 @@ Error DownscaleBlur::initInternal()
 void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex.get(), TextureUsageBit::kSampledCompute);
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex.get(), TextureUsageBit::kSrvCompute);
 }
 
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
@@ -87,8 +87,8 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 			ppass = &pass;
 		}
 
-		const TextureUsageBit readUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kSampledCompute : TextureUsageBit::kSampledFragment;
-		const TextureUsageBit writeUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kStorageComputeWrite : TextureUsageBit::kFramebufferWrite;
+		const TextureUsageBit readUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvFragment;
+		const TextureUsageBit writeUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		if(i > 0)
 		{

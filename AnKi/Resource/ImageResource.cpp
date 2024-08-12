@@ -62,7 +62,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	getFilepathFilename(filename, filenameExt);
 
 	TextureInitInfo init(filenameExt);
-	init.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kTransferDestination;
+	init.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kCopyDestination;
 	U32 faces = 0;
 
 	ResourceFilePtr file;
@@ -204,7 +204,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 		cmdbinit.m_flags = CommandBufferFlag::kGeneralWork | CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
-		const TextureBarrierInfo barrier = {view, TextureUsageBit::kNone, TextureUsageBit::kAllSampled};
+		const TextureBarrierInfo barrier = {view, TextureUsageBit::kNone, TextureUsageBit::kAllSrv};
 		cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 		FencePtr outFence;
@@ -256,8 +256,8 @@ Error ImageResource::load(LoadingContext& ctx)
 			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
-			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kAllSampled,
-										TextureUsageBit::kTransferDestination};
+			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)), TextureUsageBit::kAllSrv,
+										TextureUsageBit::kCopyDestination};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 
@@ -312,7 +312,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
-										TextureUsageBit::kTransferDestination, TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledGeometry};
+										TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvGeometry};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 

@@ -51,8 +51,8 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("MotionVectors");
 
-		readUsage = TextureUsageBit::kSampledCompute;
-		writeUsage = TextureUsageBit::kStorageComputeWrite;
+		readUsage = TextureUsageBit::kSrvCompute;
+		writeUsage = TextureUsageBit::kUavCompute;
 		ppass = &pass;
 	}
 	else
@@ -60,8 +60,8 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("MotionVectors");
 		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_motionVectorsRtHandle)});
 
-		readUsage = TextureUsageBit::kSampledFragment;
-		writeUsage = TextureUsageBit::kFramebufferWrite;
+		readUsage = TextureUsageBit::kSrvFragment;
+		writeUsage = TextureUsageBit::kRtvDsvWrite;
 		ppass = &pass;
 	}
 

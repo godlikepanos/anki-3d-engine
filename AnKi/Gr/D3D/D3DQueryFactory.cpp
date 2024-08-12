@@ -42,7 +42,7 @@ Error QueryFactory::newQuery(QueryHandle& handle)
 
 		BufferInitInfo buffInit("QueryBuffer");
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
-		buffInit.m_usage = BufferUsageBit::kTransferDestination;
+		buffInit.m_usage = BufferUsageBit::kCopyDestination;
 		buffInit.m_size = kMaxQueriesPerQueryChunk * m_resultStructSize;
 		chunk.m_resultsBuffer = GrManager::getSingleton().newBuffer(buffInit);
 

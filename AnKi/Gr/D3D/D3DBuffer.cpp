@@ -89,7 +89,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	// D3D12_HEAP_PROPERTIES
 	D3D12_HEAP_PROPERTIES heapProperties = {};
-	if(m_access == BufferMapAccessBit::kWrite && !!(m_usage & ~BufferUsageBit::kAllTransfer))
+	if(m_access == BufferMapAccessBit::kWrite && !!(m_usage & ~BufferUsageBit::kAllCopy))
 	{
 		// Not only transfer, choose ReBAR
 
@@ -128,7 +128,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	// D3D12_HEAP_FLAGS
 	D3D12_HEAP_FLAGS heapFlags = {};
-	if(!!(m_usage & BufferUsageBit::kAllStorage))
+	if(!!(m_usage & BufferUsageBit::kAllUav))
 	{
 		heapFlags |= D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS;
 	}
@@ -146,11 +146,11 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	resourceDesc.SampleDesc.Quality = 0;
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	resourceDesc.Flags = {};
-	if(!!(m_usage & (BufferUsageBit::kAllStorage | BufferUsageBit::kAllTexel)))
+	if(!!(m_usage & BufferUsageBit::kAllUav))
 	{
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	}
-	if(!(m_usage & (BufferUsageBit::kAllStorage | BufferUsageBit::kAllUniform | BufferUsageBit::kAllTexel)))
+	if(!(m_usage & BufferUsageBit::kAllShaderResource))
 	{
 		resourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 	}
@@ -230,7 +230,7 @@ D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
 		sync |= D3D12_BARRIER_SYNC_RAYTRACING;
 	}
 
-	if(!!(usage & BufferUsageBit::kAllTransfer))
+	if(!!(usage & BufferUsageBit::kAllCopy))
 	{
 		sync |= D3D12_BARRIER_SYNC_COPY;
 	}
@@ -253,7 +253,7 @@ D3D12_BARRIER_ACCESS BufferImpl::computeAccess(BufferUsageBit usage) const
 		out |= D3D12_BARRIER_ACCESS_VERTEX_BUFFER;
 	}
 
-	if(!!(usage & BufferUsageBit::kAllUniform))
+	if(!!(usage & BufferUsageBit::kAllConstant))
 	{
 		out |= D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
 	}
@@ -263,12 +263,12 @@ D3D12_BARRIER_ACCESS BufferImpl::computeAccess(BufferUsageBit usage) const
 		out |= D3D12_BARRIER_ACCESS_INDEX_BUFFER;
 	}
 
-	if(!!(usage & ((BufferUsageBit::kAllStorage | BufferUsageBit::kAllTexel) & BufferUsageBit::kAllWrite)))
+	if(!!(usage & BufferUsageBit::kAllUav))
 	{
 		out |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 	}
 
-	if(!!(usage & ((BufferUsageBit::kAllStorage | BufferUsageBit::kAllTexel) & BufferUsageBit::kAllRead)))
+	if(!!(usage & BufferUsageBit::kAllSrv))
 	{
 		out |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
 	}
@@ -278,12 +278,12 @@ D3D12_BARRIER_ACCESS BufferImpl::computeAccess(BufferUsageBit usage) const
 		out |= D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT;
 	}
 
-	if(!!(usage & BufferUsageBit::kTransferDestination))
+	if(!!(usage & BufferUsageBit::kCopyDestination))
 	{
 		out |= D3D12_BARRIER_ACCESS_COPY_DEST;
 	}
 
-	if(!!(usage & BufferUsageBit::kTransferSource))
+	if(!!(usage & BufferUsageBit::kCopySource))
 	{
 		out |= D3D12_BARRIER_ACCESS_COPY_SOURCE;
 	}

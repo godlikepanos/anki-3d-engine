@@ -205,7 +205,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 			}
 		}
 
-		const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), BufferUsageBit::kTransferDestination,
+		const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), BufferUsageBit::kCopyDestination,
 										   BufferUsageBit::kVertex};
 
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
@@ -238,7 +238,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	U32 handleCount = 0;
 
 	Buffer* unifiedGeometryBuffer = &UnifiedGeometryBuffer::getSingleton().getBuffer();
-	const BufferUsageBit unifiedGeometryBufferNonTransferUsage = unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kTransferDestination;
+	const BufferUsageBit unifiedGeometryBufferNonTransferUsage = unifiedGeometryBuffer->getBufferUsage() ^ BufferUsageBit::kCopyDestination;
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
@@ -246,7 +246,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 
 	// Set transfer to transfer barrier because of the clear that happened while sync loading
 	const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), unifiedGeometryBufferNonTransferUsage,
-									   BufferUsageBit::kTransferDestination};
+									   BufferUsageBit::kCopyDestination};
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 
 	// Upload index and vertex buffers
@@ -362,7 +362,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		// Set the barriers
 		BufferBarrierInfo bufferBarrier;
 		bufferBarrier.m_bufferView = UnifiedGeometryBuffer::getSingleton().getBufferView();
-		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
+		bufferBarrier.m_previousUsage = BufferUsageBit::kCopyDestination;
 		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
 		Array<AccelerationStructureBarrierInfo, kMaxLodCount> asBarriers;
@@ -402,7 +402,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		// Only set a barrier
 		BufferBarrierInfo bufferBarrier;
 		bufferBarrier.m_bufferView = UnifiedGeometryBuffer::getSingleton().getBufferView();
-		bufferBarrier.m_previousUsage = BufferUsageBit::kTransferDestination;
+		bufferBarrier.m_previousUsage = BufferUsageBit::kCopyDestination;
 		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
 
 		cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {});

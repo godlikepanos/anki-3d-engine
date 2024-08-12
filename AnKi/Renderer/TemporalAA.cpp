@@ -33,14 +33,14 @@ Error TemporalAA::initInternal()
 
 	for(U32 i = 0; i < 2; ++i)
 	{
-		TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute;
-		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kStorageComputeWrite : TextureUsageBit::kFramebufferWrite;
+		TextureUsageBit usage = TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvCompute;
+		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 													   getRenderer().getHdrFormat(), usage, String().sprintf("TemporalAA #%u", i).cstr());
 
-		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
 	}
 
 	m_tonemappedRtDescr = getRenderer().create2DRenderTargetDescription(
@@ -68,7 +68,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSampledFragment);
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSrvFragment);
 		m_rtTexturesImportedOnce = true;
 	}
 
@@ -82,10 +82,10 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("TemporalAA");
 
-		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kStorageComputeWrite);
-		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kStorageComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kUavCompute);
 
-		readUsage = TextureUsageBit::kSampledCompute;
+		readUsage = TextureUsageBit::kSrvCompute;
 
 		prpass = &pass;
 	}
@@ -94,10 +94,10 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("TemporalAA");
 		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_renderRt), GraphicsRenderPassTargetDesc(m_runCtx.m_tonemappedRt)});
 
-		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kFramebufferWrite);
-		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kFramebufferWrite);
+		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kRtvDsvWrite);
+		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kRtvDsvWrite);
 
-		readUsage = TextureUsageBit::kSampledFragment;
+		readUsage = TextureUsageBit::kSrvFragment;
 
 		prpass = &pass;
 	}

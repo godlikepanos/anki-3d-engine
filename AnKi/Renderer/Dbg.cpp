@@ -254,18 +254,18 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	pass.setRenderpassInfo({colorRti}, &depthRti);
 
-	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment | TextureUsageBit::kFramebufferRead);
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
+	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvFragment | TextureUsageBit::kRtvDsvRead);
 
 	BufferView indicesBuff;
 	BufferHandle dep;
 	getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
-	pass.newBufferDependency(dep, BufferUsageBit::kStorageGeometryRead);
+	pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
 
 	if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())
 	{
 		getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-		pass.newBufferDependency(dep, BufferUsageBit::kStorageGeometryRead);
+		pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
 	}
 }
 

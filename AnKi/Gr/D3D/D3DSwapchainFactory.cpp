@@ -81,7 +81,7 @@ Error MicroSwapchain::initInternal()
 		init.m_width = window.getWidth();
 		init.m_height = window.getHeight();
 		init.m_format = Format::kR8G8B8A8_Unorm;
-		init.m_usage = TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite | TextureUsageBit::kPresent;
+		init.m_usage = TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite | TextureUsageBit::kPresent;
 		init.m_type = TextureType::k2D;
 
 		TextureImpl* tex = newInstance<TextureImpl>(GrMemoryPool::getSingleton(), init.getName());

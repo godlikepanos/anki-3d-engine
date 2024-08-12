@@ -34,11 +34,11 @@ Error Tonemapping::initInternal()
 
 	// Create exposure texture.
 	// WARNING: Use it only as IMAGE and nothing else. It will not be tracked by the rendergraph. No tracking means no automatic image transitions
-	const TextureUsageBit usage = TextureUsageBit::kAllStorage;
+	const TextureUsageBit usage = TextureUsageBit::kAllUav;
 	const TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(1, 1, Format::kR16G16_Sfloat, usage, "ExposureAndAvgLum1x1");
 	ClearValue clearValue;
 	clearValue.m_colorf = {0.5f, 0.5f, 0.5f, 0.5f};
-	m_exposureAndAvgLuminance1x1 = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kStorageComputeRead, clearValue);
+	m_exposureAndAvgLuminance1x1 = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kUavCompute, clearValue);
 
 	return Error::kNone;
 }
@@ -46,8 +46,7 @@ Error Tonemapping::initInternal()
 void Tonemapping::importRenderTargets(RenderingContext& ctx)
 {
 	// Just import it. It will not be used in resource tracking
-	m_runCtx.m_exposureLuminanceHandle =
-		ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kStorageComputeRead);
+	m_runCtx.m_exposureLuminanceHandle = ctx.m_renderGraphDescr.importRenderTarget(m_exposureAndAvgLuminance1x1.get(), TextureUsageBit::kUavCompute);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
@@ -69,7 +68,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		cmdb.dispatchCompute(1, 1, 1);
 	});
 
-	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute,
+	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSrvCompute,
 							  TextureSubresourceDesc::surface(m_inputTexMip, 0, 0));
 }
 

@@ -137,7 +137,7 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Index");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kSrvGeometry;
 			buffInit.m_size = sizeof(U32) * 6;
 			indexBuff = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -151,7 +151,7 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Positions");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kSrvGeometry;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
 			positionsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -176,7 +176,7 @@ float3 main(VertOut input) : SV_TARGET0
 		{
 			BufferInitInfo buffInit("Colors");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kSrvGeometry;
 			buffInit.m_size = kVertCount * sizeof(Vec4) * kTileCount;
 			colorsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -205,7 +205,7 @@ float3 main(VertOut input) : SV_TARGET0
 
 			BufferInitInfo buffInit("Meshlets");
 			buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-			buffInit.m_usage = BufferUsageBit::kStorageGeometryRead;
+			buffInit.m_usage = BufferUsageBit::kSrvGeometry;
 			buffInit.m_size = sizeof(Meshlet) * kTileCount;
 			meshletsBuff = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -232,7 +232,7 @@ float3 main(VertOut input) : SV_TARGET0
 			TextureBarrierInfo barrier;
 			barrier.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDesc::all());
 			barrier.m_previousUsage = TextureUsageBit::kNone;
-			barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
+			barrier.m_nextUsage = TextureUsageBit::kRtvDsvWrite;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 			RenderTarget rt;
@@ -251,7 +251,7 @@ float3 main(VertOut input) : SV_TARGET0
 
 			cmdb->endRenderPass();
 
-			barrier.m_previousUsage = TextureUsageBit::kFramebufferWrite;
+			barrier.m_previousUsage = TextureUsageBit::kRtvDsvWrite;
 			barrier.m_nextUsage = TextureUsageBit::kPresent;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 

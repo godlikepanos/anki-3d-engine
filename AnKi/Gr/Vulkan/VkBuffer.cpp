@@ -127,7 +127,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
 	const Bool exposeGpuAddress =
-		!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_buffer_device_address) && !!(inf.m_usage & ~BufferUsageBit::kAllTransfer);
+		!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_buffer_device_address) && !!(inf.m_usage & ~BufferUsageBit::kAllCopy);
 
 	PtrSize size = inf.m_size;
 	BufferMapAccessBit access = inf.m_mapAccess;
@@ -175,7 +175,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 		if(isDiscreteGpu)
 		{
-			if((usage & (~BufferUsageBit::kAllTransfer)) != BufferUsageBit::kNone)
+			if((usage & (~BufferUsageBit::kAllCopy)) != BufferUsageBit::kNone)
 			{
 				// Will be used for something other than transfer, try to put it in the device
 				prefer |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -199,7 +199,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 			{
 				ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
 
-				if((usage & (~BufferUsageBit::kAllTransfer)) == BufferUsageBit::kNone)
+				if((usage & (~BufferUsageBit::kAllCopy)) == BufferUsageBit::kNone)
 				{
 					// Will be used only for transfers, don't want it in the device
 					avoid |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -343,7 +343,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 	}
 
-	if(!!(usage & BufferUsageBit::kAllTransfer))
+	if(!!(usage & BufferUsageBit::kAllCopy))
 	{
 		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
@@ -361,17 +361,10 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 {
 	VkAccessFlags mask = 0;
 
-	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead
-										   | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageTraceRaysRead
-										   | BufferUsageBit::kTexelGeometryRead | BufferUsageBit::kTexelFragmentRead
-										   | BufferUsageBit::kTexelComputeRead | BufferUsageBit::kTexelTraceRaysRead;
+	constexpr BufferUsageBit kShaderRead = BufferUsageBit::kAllShaderResource & BufferUsageBit::kAllRead;
+	constexpr BufferUsageBit kShaderWrite = BufferUsageBit::kAllShaderResource & BufferUsageBit::kAllWrite;
 
-	constexpr BufferUsageBit kShaderWrite = BufferUsageBit::kStorageGeometryWrite | BufferUsageBit::kStorageFragmentWrite
-											| BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageTraceRaysWrite
-											| BufferUsageBit::kTexelGeometryWrite | BufferUsageBit::kTexelFragmentWrite
-											| BufferUsageBit::kTexelComputeWrite | BufferUsageBit::kTexelTraceRaysWrite;
-
-	if(!!(usage & BufferUsageBit::kAllUniform))
+	if(!!(usage & BufferUsageBit::kAllConstant))
 	{
 		mask |= VK_ACCESS_UNIFORM_READ_BIT;
 	}
@@ -401,12 +394,12 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::kTransferDestination))
+	if(!!(usage & BufferUsageBit::kCopyDestination))
 	{
 		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::kTransferSource))
+	if(!!(usage & BufferUsageBit::kCopySource))
 	{
 		mask |= VK_ACCESS_TRANSFER_READ_BIT;
 	}
@@ -456,7 +449,6 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 	}
 
 	// Checks
-	ANKI_ASSERT(!!(m_usage & BufferUsageBit::kAllTexel));
 	ANKI_ASSERT(offset + range <= m_size);
 
 	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_texelBufferBindOffsetAlignment, offset) && "Offset not aligned");

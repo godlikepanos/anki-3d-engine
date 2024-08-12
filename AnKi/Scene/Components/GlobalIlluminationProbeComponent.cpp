@@ -50,7 +50,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		texInit.m_height = m_cellCounts.y();
 		texInit.m_depth = m_cellCounts.z();
 		texInit.m_type = TextureType::k3D;
-		texInit.m_usage = TextureUsageBit::kAllSampled | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kStorageComputeRead;
+		texInit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kUavCompute;
 
 		m_volTex = GrManager::getSingleton().newTexture(texInit);
 		m_volTexBindlessIdx = m_volTex->getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
@@ -68,7 +68,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 
 		TextureBarrierInfo texBarrier;
 		texBarrier.m_previousUsage = TextureUsageBit::kNone;
-		texBarrier.m_nextUsage = TextureUsageBit::kStorageComputeWrite;
+		texBarrier.m_nextUsage = TextureUsageBit::kUavCompute;
 		texBarrier.m_textureView = TextureView(m_volTex.get(), TextureSubresourceDesc::all());
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
@@ -84,8 +84,8 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		wgSize.z() = (8 - 1 + m_volTex->getDepth()) / 8;
 		cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
-		texBarrier.m_previousUsage = TextureUsageBit::kStorageComputeWrite;
-		texBarrier.m_nextUsage = TextureUsageBit::kAllSampled; // Put something random, the renderer will start from kNone
+		texBarrier.m_previousUsage = TextureUsageBit::kUavCompute;
+		texBarrier.m_nextUsage = TextureUsageBit::kAllSrv; // Put something random, the renderer will start from kNone
 		cmdb->setPipelineBarrier({&texBarrier, 1}, {}, {});
 
 		cmdb->endRecording();

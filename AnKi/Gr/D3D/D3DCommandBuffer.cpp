@@ -370,7 +370,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 
 		dsDesc = {};
 		dsDesc.cpuDescriptor =
-			tex.getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), !(depthStencilRt->m_usage & TextureUsageBit::kFramebufferWrite))
+			tex.getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), !(depthStencilRt->m_usage & TextureUsageBit::kRtvDsvWrite))
 				.getCpuOffset();
 
 		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
@@ -386,7 +386,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		rtWidth = tex.getWidth() >> depthStencilRt->m_textureView.getFirstMipmap();
 		rtHeight = tex.getHeight() >> depthStencilRt->m_textureView.getFirstMipmap();
 
-		if(!(depthStencilRt->m_usage & TextureUsageBit::kFramebufferWrite))
+		if(!(depthStencilRt->m_usage & TextureUsageBit::kRtvDsvWrite))
 		{
 			flags |= !!(depthStencilRt->m_textureView.getDepthStencilAspect() & DepthStencilAspectBit::kDepth)
 						 ? D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH
@@ -634,11 +634,11 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 {
 	ANKI_ASSERT((buff.getRange() % sizeof(U32)) == 0);
-	ANKI_ASSERT(!!(buff.getBuffer().getBufferUsage() & BufferUsageBit::kTransferDestination));
+	ANKI_ASSERT(!!(buff.getBuffer().getBufferUsage() & BufferUsageBit::kCopyDestination));
 
 	BufferInitInfo srcBufferInit("FillBufferTmp");
 	srcBufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	srcBufferInit.m_usage = BufferUsageBit::kTransferSource;
+	srcBufferInit.m_usage = BufferUsageBit::kCopySource;
 	srcBufferInit.m_size = buff.getRange();
 
 	BufferPtr srcBuffer = GrManager::getSingleton().newBuffer(srcBufferInit);
@@ -663,8 +663,8 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer([[maybe_unused]] ConstWe
 void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies)
 {
 	ANKI_ASSERT(src && dst);
-	ANKI_ASSERT(!!(src->getBufferUsage() & BufferUsageBit::kTransferSource));
-	ANKI_ASSERT(!!(dst->getBufferUsage() & BufferUsageBit::kTransferDestination));
+	ANKI_ASSERT(!!(src->getBufferUsage() & BufferUsageBit::kCopySource));
+	ANKI_ASSERT(!!(dst->getBufferUsage() & BufferUsageBit::kCopyDestination));
 
 	ANKI_D3D_SELF(CommandBufferImpl);
 

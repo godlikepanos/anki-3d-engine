@@ -206,7 +206,7 @@ void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
 	if(reg.m_resourceType == HlslResourceType::kSrv)
 	{
 		ANKI_ASSERT(texView.isGoodForSampling());
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSampled & tex.getTextureUsage());
+		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSrv & tex.getTextureUsage());
 		self.m_descriptorState.bindSampledTexture(reg.m_space, reg.m_bindPoint, tex.getImageView(texView.getSubresource()), lay);
 	}
 	else
@@ -764,7 +764,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	self.commandCommon();
 
 	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
-	ANKI_ASSERT(tex.usageValid(TextureUsageBit::kTransferDestination));
+	ANKI_ASSERT(tex.usageValid(TextureUsageBit::kCopyDestination));
 	ANKI_ASSERT(texView.isGoodForCopyBufferToTexture());
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	const VkImageSubresourceRange range = tex.computeVkImageSubresourceRange(texView.getSubresource());
@@ -809,7 +809,7 @@ void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 	self.commandCommon();
 	ANKI_ASSERT(!self.m_insideRenderpass);
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kTransferDestination));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kCopyDestination));
 
 	ANKI_ASSERT((buff.getOffset() % 4) == 0 && "Should be multiple of 4");
 	ANKI_ASSERT((buff.getRange() % 4) == 0 && "Should be multiple of 4");
@@ -830,7 +830,7 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<Occlusion
 	ANKI_ASSERT((buff.getOffset() % 4) == 0);
 
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kTransferDestination));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::kCopyDestination));
 
 	for(U32 i = 0; i < queries.getSize(); ++i)
 	{
@@ -848,8 +848,8 @@ void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<Occlusion
 void CommandBuffer::copyBufferToBuffer(Buffer* src, Buffer* dst, ConstWeakArray<CopyBufferToBufferInfo> copies)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	ANKI_ASSERT(static_cast<const BufferImpl&>(*src).usageValid(BufferUsageBit::kTransferSource));
-	ANKI_ASSERT(static_cast<const BufferImpl&>(*dst).usageValid(BufferUsageBit::kTransferDestination));
+	ANKI_ASSERT(static_cast<const BufferImpl&>(*src).usageValid(BufferUsageBit::kCopySource));
+	ANKI_ASSERT(static_cast<const BufferImpl&>(*dst).usageValid(BufferUsageBit::kCopyDestination));
 	ANKI_ASSERT(copies.getSize() > 0);
 
 	self.commandCommon();

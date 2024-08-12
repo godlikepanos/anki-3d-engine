@@ -133,17 +133,17 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		desc.Flags = {};
 
-		if(!!(m_usage & TextureUsageBit::kAllFramebuffer) && m_aspect == DepthStencilAspectBit::kNone)
+		if(!!(m_usage & TextureUsageBit::kAllRtvDsv) && m_aspect == DepthStencilAspectBit::kNone)
 		{
 			desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 		}
 
-		if(!!(m_usage & TextureUsageBit::kAllFramebuffer) && m_aspect != DepthStencilAspectBit::kNone)
+		if(!!(m_usage & TextureUsageBit::kAllRtvDsv) && m_aspect != DepthStencilAspectBit::kNone)
 		{
 			desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 		}
 
-		if(!!(m_usage & TextureUsageBit::kAllStorage))
+		if(!!(m_usage & TextureUsageBit::kAllUav))
 		{
 			desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 		}
@@ -157,7 +157,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 
 		D3D12_HEAP_FLAGS heapFlags = {};
-		if(!!(m_usage & TextureUsageBit::kAllStorage))
+		if(!!(m_usage & TextureUsageBit::kAllUav))
 		{
 			heapFlags |= D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS;
 		}
@@ -172,7 +172,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 	}
 
 	// Create the default views
-	if(!!(m_usage & TextureUsageBit::kAllFramebuffer))
+	if(!!(m_usage & TextureUsageBit::kAllRtvDsv))
 	{
 		const TextureView tview(this, TextureSubresourceDesc::firstSurface());
 		initView(tview.getSubresource(), !!(m_aspect & DepthStencilAspectBit::kDepthStencil) ? ViewType::kDsv : ViewType::kRtv,
@@ -180,7 +180,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		m_firstSurfaceRtvOrDsvSubresource = tview.getSubresource();
 	}
 
-	if(!!(m_usage & TextureUsageBit::kAllSampled))
+	if(!!(m_usage & TextureUsageBit::kAllSrv))
 	{
 		const TextureView tview(this, TextureSubresourceDesc::all());
 		initView(tview.getSubresource(), ViewType::kSrv, m_wholeTextureSrv);
@@ -196,7 +196,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 
 	if(type == ViewType::kRtv)
 	{
-		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllFramebuffer));
+		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllRtvDsv));
 		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect == DepthStencilAspectBit::kNone);
 
 		D3D12_RENDER_TARGET_VIEW_DESC desc = {};
@@ -220,7 +220,7 @@ void TextureImpl::initView(const TextureSubresourceDesc& subresource, ViewType t
 	}
 	else if(type == ViewType::kDsv || type == ViewType::kReadOnlyDsv)
 	{
-		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllFramebuffer));
+		ANKI_ASSERT(!!(m_usage & TextureUsageBit::kAllRtvDsv));
 		ANKI_ASSERT(TextureView(this, subresource).isGoodForRenderTarget() && m_aspect != DepthStencilAspectBit::kNone);
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
@@ -577,53 +577,53 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 	{
 		// DS is a little bit special, it has 3 states
 
-		if(!!(usage & TextureUsageBit::kFramebufferWrite))
+		if(!!(usage & TextureUsageBit::kRtvDsvWrite))
 		{
 			// Writing to DS, can't be anything else
 			stages |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
 			accesses |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE;
 		}
-		else if(!!(usage & TextureUsageBit::kFramebufferRead) && !!(usage & TextureUsageBit::kAllSampled))
+		else if(!!(usage & TextureUsageBit::kRtvDsvRead) && !!(usage & TextureUsageBit::kAllSrv))
 		{
 			// Reading in the renderpass and sampling at the same time
 
-			if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kSampledFragment)))
+			if(!!(usage & (TextureUsageBit::kSrvGeometry | TextureUsageBit::kSrvFragment)))
 			{
 				stages |= D3D12_BARRIER_SYNC_DRAW;
 			}
 
-			if(!!(usage & TextureUsageBit::kSampledCompute))
+			if(!!(usage & TextureUsageBit::kSrvCompute))
 			{
 				stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			}
 
-			if(!!(usage & TextureUsageBit::kSampledTraceRays) && rt)
+			if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
 			{
 				stages |= D3D12_BARRIER_SYNC_RAYTRACING;
 			}
 
 			accesses |= D3D12_BARRIER_ACCESS_COMMON; // Include all
 		}
-		else if(!!(usage & TextureUsageBit::kAllSampled))
+		else if(!!(usage & TextureUsageBit::kAllSrv))
 		{
 			// Only sampled
 
-			if(!!(usage & TextureUsageBit::kSampledGeometry))
+			if(!!(usage & TextureUsageBit::kSrvGeometry))
 			{
 				stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
 			}
 
-			if(!!(usage & TextureUsageBit::kSampledFragment))
+			if(!!(usage & TextureUsageBit::kSrvFragment))
 			{
 				stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 			}
 
-			if(!!(usage & TextureUsageBit::kSampledCompute))
+			if(!!(usage & TextureUsageBit::kSrvCompute))
 			{
 				stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			}
 
-			if(!!(usage & TextureUsageBit::kSampledTraceRays) && rt)
+			if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
 			{
 				stages |= D3D12_BARRIER_SYNC_RAYTRACING;
 			}
@@ -633,80 +633,80 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 		else
 		{
 			// Only renderpass read
-			ANKI_ASSERT(!!(usage & TextureUsageBit::kFramebufferRead));
+			ANKI_ASSERT(!!(usage & TextureUsageBit::kRtvDsvRead));
 			stages |= D3D12_BARRIER_SYNC_DEPTH_STENCIL;
 			accesses |= D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ;
 		}
 	}
 	else
 	{
-		if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kStorageGeometryRead)))
+		if(!!(usage & TextureUsageBit::kSrvGeometry))
 		{
 			stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
 		}
 
-		if(!!(usage & TextureUsageBit::kStorageGeometryWrite))
+		if(!!(usage & TextureUsageBit::kUavGeometry))
 		{
 			stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 		}
 
-		if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kStorageFragmentRead)))
+		if(!!(usage & TextureUsageBit::kSrvFragment))
 		{
 			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
 		}
 
-		if(!!(usage & TextureUsageBit::kStorageFragmentWrite))
+		if(!!(usage & TextureUsageBit::kUavFragment))
 		{
 			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 		}
 
-		if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeRead)))
+		if(!!(usage & TextureUsageBit::kSrvCompute))
 		{
 			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
 		}
 
-		if(!!(usage & TextureUsageBit::kStorageComputeWrite))
+		if(!!(usage & TextureUsageBit::kUavCompute))
 		{
 			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 		}
 
-		if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kStorageTraceRaysRead)) && rt)
+		if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
 		{
 			stages |= D3D12_BARRIER_SYNC_RAYTRACING;
 			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
 		}
 
-		if(!!(usage & TextureUsageBit::kStorageTraceRaysWrite) && rt)
+		if(!!(usage & TextureUsageBit::kUavTraceRays) && rt)
 		{
 			stages |= D3D12_BARRIER_SYNC_COMPUTE_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 		}
 
-		if(!!(usage & TextureUsageBit::kFramebufferWrite))
+		if(!!(usage & TextureUsageBit::kRtvDsvWrite))
 		{
 			stages |= D3D12_BARRIER_SYNC_RENDER_TARGET;
 			accesses |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
 		}
-		else if(!!(usage & TextureUsageBit::kFramebufferRead))
+		else if(!!(usage & TextureUsageBit::kRtvDsvRead))
 		{
 			// Read only
 			stages |= D3D12_BARRIER_SYNC_RENDER_TARGET;
 			accesses |= D3D12_BARRIER_ACCESS_RENDER_TARGET;
 		}
 
-		if(!!(usage & TextureUsageBit::kFramebufferShadingRate))
+		if(!!(usage & TextureUsageBit::kShadingRate))
 		{
 			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE;
 		}
 
-		if(!!(usage & TextureUsageBit::kTransferDestination))
+		if(!!(usage & TextureUsageBit::kCopyDestination))
 		{
 			stages |= D3D12_BARRIER_SYNC_COPY;
 			accesses |= D3D12_BARRIER_ACCESS_COPY_DEST;
@@ -733,17 +733,17 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 	}
 	else if(depthStencil)
 	{
-		if((usage & TextureUsageBit::kAllSampled) == usage)
+		if((usage & TextureUsageBit::kAllSrv) == usage)
 		{
 			// Only sampled
 			out = D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
 		}
-		else if((usage & TextureUsageBit::kFramebufferRead) == usage)
+		else if((usage & TextureUsageBit::kRtvDsvRead) == usage)
 		{
 			// Only FB read
 			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ;
 		}
-		else if((usage & (TextureUsageBit::kAllSampled | TextureUsageBit::kFramebufferRead)) == usage)
+		else if((usage & (TextureUsageBit::kAllSrv | TextureUsageBit::kRtvDsvRead)) == usage)
 		{
 			// Only depth tests and sampled
 			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ;
@@ -751,16 +751,16 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 		else
 		{
 			// Only attachment write, the rest (eg transfer) are not supported for now
-			ANKI_ASSERT(usage == TextureUsageBit::kAllFramebuffer || usage == TextureUsageBit::kFramebufferWrite);
+			ANKI_ASSERT(usage == TextureUsageBit::kAllRtvDsv || usage == TextureUsageBit::kRtvDsvWrite);
 			out = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE;
 		}
 	}
-	else if((usage & TextureUsageBit::kAllFramebuffer) == usage)
+	else if((usage & TextureUsageBit::kAllRtvDsv) == usage)
 	{
 		// Color attachment
 		out = D3D12_BARRIER_LAYOUT_RENDER_TARGET;
 	}
-	else if((usage & TextureUsageBit::kFramebufferShadingRate) == usage)
+	else if((usage & TextureUsageBit::kShadingRate) == usage)
 	{
 		// SRI
 		out = D3D12_BARRIER_LAYOUT_SHADING_RATE_SOURCE;
@@ -775,7 +775,7 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 		// SRV
 		out = D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
 	}
-	else if(usage == TextureUsageBit::kTransferDestination)
+	else if(usage == TextureUsageBit::kCopyDestination)
 	{
 		out = D3D12_BARRIER_LAYOUT_COPY_DEST;
 	}

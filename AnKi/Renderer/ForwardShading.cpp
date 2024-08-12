@@ -99,9 +99,8 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 void ForwardShading::setDependencies(GraphicsRenderPass& pass)
 {
-	pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledFragment,
-							  DepthDownscale::kQuarterInternalResolution);
-	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledFragment);
+	pass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSrvFragment, DepthDownscale::kQuarterInternalResolution);
+	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSrvFragment);
 
 	if(getRenderer().getLensFlare().getIndirectDrawBuffer().isValid())
 	{

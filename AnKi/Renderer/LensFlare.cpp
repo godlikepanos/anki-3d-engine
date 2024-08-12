@@ -60,9 +60,8 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Lens flare indirect");
 
-	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kStorageComputeWrite);
-	rpass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledCompute,
-							   DepthDownscale::kEighthInternalResolution);
+	rpass.newBufferDependency(m_runCtx.m_indirectBuffHandle, BufferUsageBit::kUavCompute);
+	rpass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute, DepthDownscale::kEighthInternalResolution);
 
 	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(LensFlare);

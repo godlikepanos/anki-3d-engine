@@ -88,12 +88,12 @@ Error ShadowMapping::initInternal()
 					m_tileResolution * m_tileCountBothAxis);
 
 		// RT
-		const TextureUsageBit usage = TextureUsageBit::kSampledFragment | TextureUsageBit::kSampledCompute | TextureUsageBit::kAllFramebuffer;
+		const TextureUsageBit usage = TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvCompute | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			m_tileResolution * m_tileCountBothAxis, m_tileResolution * m_tileCountBothAxis, Format::kD16_Unorm, usage, "ShadowAtlas");
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
-		m_atlasTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment, clearVal);
+		m_atlasTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment, clearVal);
 	}
 
 	// Tiles
@@ -154,7 +154,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get(), TextureUsageBit::kSampledFragment);
+		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get(), TextureUsageBit::kSrvFragment);
 		m_rtImportedOnce = true;
 	}
 
@@ -544,7 +544,7 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(passName);
 
 	// The shader doesn't actually write to the handle but have it as a write dependency for the drawer to correctly wait for this pass
-	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kUavCompute);
 
 	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_legacy.m_mdiDrawCountsBuffer, clearTileIndirectArgs,
 				  dispatchMeshIndirectArgs = visOut.m_mesh.m_dispatchMeshIndirectArgsBuffer,
@@ -628,7 +628,7 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	pass.setRenderpassInfo({}, &smRti, viewport[0], viewport[1], viewport[2], viewport[3]);
 
 	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
-	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite);
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 
 	pass.setWork([this, visOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);

@@ -38,14 +38,14 @@ Error Ssao::initInternal()
 	const Bool preferCompute = g_preferComputeCVar.get();
 
 	{
-		TextureUsageBit usage = TextureUsageBit::kAllSampled;
-		usage |= (preferCompute) ? TextureUsageBit::kStorageComputeWrite : TextureUsageBit::kFramebufferWrite;
+		TextureUsageBit usage = TextureUsageBit::kAllSrv;
+		usage |= (preferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 		TextureInitInfo texInit =
 			getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8G8B8A8_Snorm, usage, "Bent normals + SSAO #1");
-		m_tex[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
+		m_tex[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSrv);
 
 		texInit.setName("Bent normals + SSAO #2");
-		m_tex[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSampled);
+		m_tex[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kAllSrv);
 	}
 
 	m_bentNormalsAndSsaoRtDescr =
@@ -83,8 +83,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		finalRt = rgraph.importRenderTarget(m_tex[writeRtIdx].get(), TextureUsageBit::kAllSampled);
-		historyRt = rgraph.importRenderTarget(m_tex[readRtIdx].get(), TextureUsageBit::kAllSampled);
+		finalRt = rgraph.importRenderTarget(m_tex[writeRtIdx].get(), TextureUsageBit::kAllSrv);
+		historyRt = rgraph.importRenderTarget(m_tex[readRtIdx].get(), TextureUsageBit::kAllSrv);
 		m_texImportedOnce = true;
 	}
 
@@ -96,13 +96,13 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 	TextureUsageBit writeUsage;
 	if(preferCompute)
 	{
-		readUsage = TextureUsageBit::kSampledCompute;
-		writeUsage = TextureUsageBit::kStorageComputeWrite;
+		readUsage = TextureUsageBit::kSrvCompute;
+		writeUsage = TextureUsageBit::kUavCompute;
 	}
 	else
 	{
-		readUsage = TextureUsageBit::kSampledFragment;
-		writeUsage = TextureUsageBit::kFramebufferWrite;
+		readUsage = TextureUsageBit::kSrvFragment;
+		writeUsage = TextureUsageBit::kRtvDsvWrite;
 	}
 
 	// Main pass

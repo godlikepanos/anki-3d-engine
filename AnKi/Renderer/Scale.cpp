@@ -167,8 +167,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("DLSS");
 
 		// DLSS says input textures in sampled state and out as storage image
-		const TextureUsageBit readUsage = TextureUsageBit::kAllSampled & TextureUsageBit::kAllCompute;
-		const TextureUsageBit writeUsage = TextureUsageBit::kAllStorage & TextureUsageBit::kAllCompute;
+		const TextureUsageBit readUsage = TextureUsageBit::kAllSrv & TextureUsageBit::kAllCompute;
+		const TextureUsageBit writeUsage = TextureUsageBit::kAllUav & TextureUsageBit::kAllCompute;
 
 		pass.newTextureDependency(getRenderer().getLightShading().getRt(), readUsage);
 		pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
@@ -190,8 +190,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Scale");
-			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(outRt, TextureUsageBit::kStorageComputeWrite);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runFsrOrBilinearScaling(rgraphCtx);
@@ -201,8 +201,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
-			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
-			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvFragment);
+			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runFsrOrBilinearScaling(rgraphCtx);
@@ -227,8 +227,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Tonemap");
-			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(outRt, TextureUsageBit::kStorageComputeWrite);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runTonemapping(rgraphCtx);
@@ -238,8 +238,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
-			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
-			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvFragment);
+			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runTonemapping(rgraphCtx);
@@ -261,8 +261,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		if(preferCompute)
 		{
 			NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Sharpen");
-			pass.newTextureDependency(inRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(outRt, TextureUsageBit::kStorageComputeWrite);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(outRt, TextureUsageBit::kUavCompute);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runRcasSharpening(rgraphCtx);
@@ -272,8 +272,8 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
-			pass.newTextureDependency(inRt, TextureUsageBit::kSampledFragment);
-			pass.newTextureDependency(outRt, TextureUsageBit::kFramebufferWrite);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvFragment);
+			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 				runRcasSharpening(rgraphCtx);

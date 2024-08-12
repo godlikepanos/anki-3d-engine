@@ -28,7 +28,7 @@ void GpuSceneBuffer::init()
 
 	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
 
-	BufferUsageBit buffUsage = BufferUsageBit::kAllStorage | BufferUsageBit::kTransferDestination;
+	BufferUsageBit buffUsage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kCopyDestination;
 
 	m_pool.init(buffUsage, classes, poolSize, "GpuScene", true);
 

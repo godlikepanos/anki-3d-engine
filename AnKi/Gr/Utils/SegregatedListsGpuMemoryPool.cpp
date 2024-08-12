@@ -119,7 +119,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_initialBufferSize;
-		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
+		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllCopy;
 		buffInit.m_mapAccess = m_mapAccess;
 		m_gpuBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -147,7 +147,7 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		// Create the new buffer
 		BufferInitInfo buffInit(m_bufferName);
 		buffInit.m_size = m_gpuBuffer->getSize() * 2;
-		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllTransfer;
+		buffInit.m_usage = m_bufferUsage | BufferUsageBit::kAllCopy;
 		buffInit.m_mapAccess = m_mapAccess;
 		BufferPtr newBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -159,15 +159,15 @@ Error SegregatedListsGpuMemoryPool::allocateChunk(Chunk*& newChunk, PtrSize& chu
 		Array<BufferBarrierInfo, 2> barriers;
 		barriers[0].m_bufferView = BufferView(m_gpuBuffer.get());
 		barriers[0].m_previousUsage = m_bufferUsage;
-		barriers[0].m_nextUsage = BufferUsageBit::kTransferSource;
+		barriers[0].m_nextUsage = BufferUsageBit::kCopySource;
 		barriers[1].m_bufferView = BufferView(newBuffer.get());
 		barriers[1].m_previousUsage = BufferUsageBit::kNone;
-		barriers[1].m_nextUsage = BufferUsageBit::kTransferDestination;
+		barriers[1].m_nextUsage = BufferUsageBit::kCopyDestination;
 		cmdb->setPipelineBarrier({}, barriers, {});
 
 		cmdb->copyBufferToBuffer(BufferView(m_gpuBuffer.get()), BufferView(newBuffer.get(), 0, m_gpuBuffer->getSize()));
 
-		barriers[1].m_previousUsage = BufferUsageBit::kTransferDestination;
+		barriers[1].m_previousUsage = BufferUsageBit::kCopyDestination;
 		barriers[1].m_nextUsage = m_bufferUsage;
 		cmdb->setPipelineBarrier({}, ConstWeakArray<BufferBarrierInfo>{&barriers[1], 1}, {});
 

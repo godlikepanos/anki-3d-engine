@@ -45,12 +45,12 @@ Error GBuffer::initInternal()
 	static constexpr Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)
 	{
-		const TextureUsageBit usage = TextureUsageBit::kAllSampled | TextureUsageBit::kAllFramebuffer;
+		const TextureUsageBit usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 													   getRenderer().getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
-		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
 	}
 
 	static constexpr Array<const char*, kGBufferColorRenderTargetCount> rtNames = {{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
@@ -62,14 +62,14 @@ Error GBuffer::initInternal()
 	}
 
 	{
-		const TextureUsageBit usage = TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kSampledGeometry;
+		const TextureUsageBit usage = TextureUsageBit::kSrvCompute | TextureUsageBit::kUavCompute | TextureUsageBit::kSrvGeometry;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar.get(), g_hzbHeightCVar.get(), Format::kR32_Sfloat, usage, "GBuffer HZB");
 		texinit.m_mipmapCount = U8(computeMaxMipmapCount2d(texinit.m_width, texinit.m_height));
 		ClearValue clear;
 		clear.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
-		m_hzbRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledCompute, clear);
+		m_hzbRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvCompute, clear);
 	}
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeGBufferNormal.ankiprogbin", m_visNormalProg, m_visNormalGrProg));
@@ -93,9 +93,9 @@ void GBuffer::importRenderTargets(RenderingContext& ctx)
 	{
 		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kSampledFragment);
+			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kSrvFragment);
 
-		m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get(), TextureUsageBit::kSampledCompute);
+		m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get(), TextureUsageBit::kSrvCompute);
 	}
 }
 
@@ -141,8 +141,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	auto genGBuffer = [&](Bool firstPass) {
 		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass((firstPass) ? "GBuffer" : "GBuffer 2nd phase");
 
-		const TextureUsageBit rtUsage =
-			(firstPass) ? TextureUsageBit::kFramebufferWrite : (TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite);
+		const TextureUsageBit rtUsage = (firstPass) ? TextureUsageBit::kRtvDsvWrite : (TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite);
 		for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 		{
 			pass.newTextureDependency(m_runCtx.m_colorRts[i], rtUsage);
@@ -150,13 +149,12 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(m_runCtx.m_crntFrameDepthRt, rtUsage);
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(),
-								 BufferUsageBit::kStorageGeometryRead | BufferUsageBit::kStorageFragmentRead);
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvGeometry | BufferUsageBit::kSrvFragment);
 
 		// Only add one depedency to the GPU visibility. No need to track all buffers
 		if(visOut.containsDrawcalls())
 		{
-			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw | BufferUsageBit::kStorageGeometryRead);
+			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw | BufferUsageBit::kSrvGeometry);
 		}
 		else
 		{
@@ -178,7 +176,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 		pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti, 0, 0, kMaxU32, kMaxU32);
 
-		pass.setWork([this, &ctx, visOut](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([&ctx, visOut](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(GBuffer);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

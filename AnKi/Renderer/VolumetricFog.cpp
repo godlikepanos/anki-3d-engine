@@ -49,8 +49,8 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol fog");
 
-	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
-	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSampledCompute);
+	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
+	pass.newTextureDependency(getRenderer().getVolumetricLightingAccumulation().getRt(), TextureUsageBit::kSrvCompute);
 
 	pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(VolumetricFog);

@@ -106,7 +106,7 @@ ANKI_TEST(Ui, Ui)
 
 			TextureBarrierInfo barrier;
 			barrier.m_previousUsage = TextureUsageBit::kNone;
-			barrier.m_nextUsage = TextureUsageBit::kFramebufferWrite;
+			barrier.m_nextUsage = TextureUsageBit::kRtvDsvWrite;
 			barrier.m_textureView = TextureView(presentTex.get(), TextureSubresourceDesc::all());
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
@@ -118,7 +118,7 @@ ANKI_TEST(Ui, Ui)
 			canvas->appendToCommandBuffer(*cmdb);
 			cmdb->endRenderPass();
 
-			barrier.m_previousUsage = TextureUsageBit::kFramebufferWrite;
+			barrier.m_previousUsage = TextureUsageBit::kRtvDsvWrite;
 			barrier.m_nextUsage = TextureUsageBit::kPresent;
 			cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 

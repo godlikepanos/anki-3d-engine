@@ -276,12 +276,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 
 	const Bool rt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
 
-	if(!!(usageMask & BufferUsageBit::kAllUniform))
+	if(!!(usageMask & BufferUsageBit::kAllConstant))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::kAllStorage))
+	if(!!(usageMask & (BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv)))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
@@ -301,22 +301,22 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::kTransferDestination))
+	if(!!(usageMask & BufferUsageBit::kCopyDestination))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::kTransferSource))
+	if(!!(usageMask & BufferUsageBit::kCopySource))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::kAllTexel & BufferUsageBit::kAllRead)))
+	if(!!(usageMask & ((BufferUsageBit::kAllSrv | BufferUsageBit::kAllUav) & BufferUsageBit::kAllRead)))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::kAllTexel & BufferUsageBit::kAllWrite)))
+	if(!!(usageMask & ((BufferUsageBit::kAllSrv | BufferUsageBit::kAllUav) & BufferUsageBit::kAllWrite)))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
 	}
@@ -404,17 +404,17 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 {
 	VkImageUsageFlags out = 0;
 
-	if(!!(ak & TextureUsageBit::kAllSampled))
+	if(!!(ak & TextureUsageBit::kAllSrv))
 	{
 		out |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::kAllStorage))
+	if(!!(ak & TextureUsageBit::kAllUav))
 	{
 		out |= VK_IMAGE_USAGE_STORAGE_BIT;
 	}
 
-	if(!!(ak & (TextureUsageBit::kFramebufferRead | TextureUsageBit::kFramebufferWrite)))
+	if(!!(ak & (TextureUsageBit::kRtvDsvRead | TextureUsageBit::kRtvDsvWrite)))
 	{
 		if(getFormatInfo(format).isDepthStencil())
 		{
@@ -426,12 +426,12 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 		}
 	}
 
-	if(!!(ak & TextureUsageBit::kFramebufferShadingRate))
+	if(!!(ak & TextureUsageBit::kShadingRate))
 	{
 		out |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
 	}
 
-	if(!!(ak & TextureUsageBit::kTransferDestination))
+	if(!!(ak & TextureUsageBit::kCopyDestination))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}

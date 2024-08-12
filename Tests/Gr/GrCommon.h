@@ -108,7 +108,7 @@ template<typename T>
 inline BufferPtr createBuffer(BufferUsageBit usage, ConstWeakArray<T> data, CString name = {})
 {
 	BufferPtr copyBuff =
-		GrManager::getSingleton().newBuffer(BufferInitInfo(data.getSizeInBytes(), BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite));
+		GrManager::getSingleton().newBuffer(BufferInitInfo(data.getSizeInBytes(), BufferUsageBit::kCopySource, BufferMapAccessBit::kWrite));
 
 	T* inData = static_cast<T*>(copyBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 	for(U32 i = 0; i < data.getSize(); ++i)
@@ -118,7 +118,7 @@ inline BufferPtr createBuffer(BufferUsageBit usage, ConstWeakArray<T> data, CStr
 	copyBuff->unmap();
 
 	BufferPtr buff = GrManager::getSingleton().newBuffer(BufferInitInfo(
-		data.getSizeInBytes(), usage | BufferUsageBit::kTransferDestination | BufferUsageBit::kTransferSource, BufferMapAccessBit::kNone, name));
+		data.getSizeInBytes(), usage | BufferUsageBit::kCopyDestination | BufferUsageBit::kCopySource, BufferMapAccessBit::kNone, name));
 
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
@@ -152,7 +152,6 @@ inline TexturePtr createTexture2d(const TextureInitInfo texInit_, ConstWeakArray
 	buffInit.m_size = texInit.m_height * texInit.m_width * getFormatInfo(texInit.m_format).m_texelSize;
 	ANKI_ASSERT(getFormatInfo(texInit.m_format).m_texelSize == sizeof(T));
 	ANKI_ASSERT(buffInit.m_size == data.getSizeInBytes());
-	buffInit.m_usage = BufferUsageBit::kTransferSource;
 
 	BufferPtr staging = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -200,7 +199,7 @@ inline void readBuffer(BufferPtr buff, DynamicArray<T>& out)
 		BufferInitInfo buffInit;
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = buff->getSize();
-		buffInit.m_usage = BufferUsageBit::kTransferDestination;
+		buffInit.m_usage = BufferUsageBit::kCopyDestination;
 		tmpBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 		CommandBufferPtr cmdb =

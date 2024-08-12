@@ -547,7 +547,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	const BufferHandle zeroMemDep = rgraph.importBuffer(stage1Mem.m_counters, BufferUsageBit::kNone);
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis zero: %s", in.m_passesName.cstr()));
-		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kTransferDestination);
+		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kCopyDestination);
 
 		pass.setWork([stage1Mem, stage2Mem, stage3Mem, this](RenderPassWorkContext& rpass) {
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
@@ -590,13 +590,13 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 1st stage: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kStorageComputeWrite);
-		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kStorageComputeWrite);
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
+		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kUavCompute);
+		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kUavCompute);
 
 		if(frustumTestData && frustumTestData->m_hzbRt.isValid())
 		{
-			pass.newTextureDependency(frustumTestData->m_hzbRt, TextureUsageBit::kSampledCompute);
+			pass.newTextureDependency(frustumTestData->m_hzbRt, TextureUsageBit::kSrvCompute);
 		}
 
 		pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
@@ -715,11 +715,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 2nd stage: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kStorageComputeWrite);
+		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kUavCompute);
 
 		if(frustumTestData && frustumTestData->m_hzbRt.isValid())
 		{
-			pass.newTextureDependency(frustumTestData->m_hzbRt, TextureUsageBit::kSampledCompute);
+			pass.newTextureDependency(frustumTestData->m_hzbRt, TextureUsageBit::kSrvCompute);
 		}
 
 		pass.setWork([this, stage1Mem, stage2Mem, bLegacyRendering, bMeshletRendering, bHwMeshletRendering, out, frustumTestData,
@@ -845,9 +845,9 @@ void GpuVisibility::populateRenderGraphStage3(FrustumGpuVisibilityInput& in, Gpu
 	// Create the pass
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis 3rd stage: %s", in.m_passesName.cstr()));
 
-	pass.newBufferDependency(out.m_dependency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kStorageComputeWrite);
-	pass.newBufferDependency(m_persistentMemory.m_dep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kStorageComputeWrite);
-	pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
+	pass.newBufferDependency(out.m_dependency, BufferUsageBit::kIndirectCompute | BufferUsageBit::kUavCompute);
+	pass.newBufferDependency(m_persistentMemory.m_dep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kUavCompute);
+	pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSrvCompute);
 
 	pass.setWork([this, hzbRt = *in.m_hzbRt, bHwMeshletRendering, stage1And2Mem = out.m_stage1And2Mem, stage3Mem = out.m_stage3Mem,
 				  in](RenderPassWorkContext& rpass) {
@@ -969,7 +969,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		BufferInitInfo buffInit("GpuVisibilityNonRenderablesCounters");
 		buffInit.m_size = (m_counterBuffer.isCreated()) ? m_counterBuffer->getSize() * 2
 														: kCountersPerDispatch * counterBufferElementSize * kInitialCounterArraySize;
-		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kTransferDestination;
+		buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kSrvCompute | BufferUsageBit::kCopyDestination;
 		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		m_counterBufferZeroingHandle = rgraph.importBuffer(BufferView(m_counterBuffer.get()), buffInit.m_usage);
@@ -977,7 +977,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		NonGraphicsRenderPass& pass =
 			rgraph.newNonGraphicsRenderPass(generateTempPassName("Non-renderables vis: Clear counter buff: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kTransferDestination);
+		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kCopyDestination);
 
 		pass.setWork([counterBuffer = m_counterBuffer](RenderPassWorkContext& rgraph) {
 			rgraph.m_commandBuffer->fillBuffer(BufferView(counterBuffer.get()), 0);
@@ -997,17 +997,17 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	// Create the renderpass
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("Non-renderables vis: %s", in.m_passesName.cstr()));
 
-	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-	pass.newBufferDependency(out.m_visiblesBufferHandle, BufferUsageBit::kStorageComputeWrite);
+	pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
+	pass.newBufferDependency(out.m_visiblesBufferHandle, BufferUsageBit::kUavCompute);
 
 	if(in.m_hzbRt)
 	{
-		pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(*in.m_hzbRt, TextureUsageBit::kSrvCompute);
 	}
 
 	if(m_counterBufferZeroingHandle.isValid()) [[unlikely]]
 	{
-		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kStorageComputeRead | BufferUsageBit::kStorageComputeWrite);
+		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kSrvCompute | BufferUsageBit::kUavCompute);
 	}
 
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
@@ -1071,7 +1071,7 @@ Error GpuVisibilityAccelerationStructures::init()
 
 	BufferInitInfo inf("GpuVisibilityAccelerationStructuresCounters");
 	inf.m_size = sizeof(U32) * 2;
-	inf.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kStorageComputeRead | BufferUsageBit::kTransferDestination;
+	inf.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kSrvCompute | BufferUsageBit::kCopyDestination;
 	m_counterBuffer = GrManager::getSingleton().newBuffer(inf);
 
 	zeroBuffer(m_counterBuffer.get());
@@ -1094,7 +1094,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 
 	out.m_instancesBuffer = allocateStructuredBuffer<AccelerationStructureInstance>(aabbCount);
-	out.m_someBufferHandle = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kStorageComputeWrite);
+	out.m_someBufferHandle = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kUavCompute);
 
 	out.m_renderableIndicesBuffer = allocateStructuredBuffer<U32>(aabbCount + 1);
 
@@ -1104,8 +1104,8 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("Accel vis: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kStorageComputeRead);
-		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute);
 
 		pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
 					  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, indicesBuff = out.m_renderableIndicesBuffer,
@@ -1152,7 +1152,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		NonGraphicsRenderPass& pass =
 			rgraph.newNonGraphicsRenderPass(generateTempPassName("Accel vis zero remaining instances: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kStorageComputeWrite);
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute);
 
 		pass.setWork([this, zeroInstancesDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
 					  indicesBuff = out.m_renderableIndicesBuffer](RenderPassWorkContext& rgraph) {

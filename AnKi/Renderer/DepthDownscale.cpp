@@ -60,21 +60,10 @@ Error DepthDownscale::initInternal()
 	{
 		BufferInitInfo buffInit("Depth downscale counter buffer");
 		buffInit.m_size = sizeof(U32);
-		buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
+		buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
 		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
-		// Zero it
-		CommandBufferInitInfo cmdbInit;
-		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
-		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
-
-		cmdb->fillBuffer(BufferView(m_counterBuffer.get()), 0);
-
-		FencePtr fence;
-		cmdb->endRecording();
-		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-
-		fence->clientWait(6.0_sec);
+		zeroBuffer(m_counterBuffer.get());
 	}
 
 	return Error::kNone;
@@ -104,9 +93,9 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Depth downscale");
 
-		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -164,14 +153,14 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			if(mip == 0)
 			{
-				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledFragment);
+				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvFragment);
 			}
 			else
 			{
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledFragment, TextureSubresourceDesc::surface(mip - 1, 0, 0));
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSrvFragment, TextureSubresourceDesc::surface(mip - 1, 0, 0));
 			}
 
-			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kFramebufferWrite, TextureSubresourceDesc::surface(mip, 0, 0));
+			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(mip, 0, 0));
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

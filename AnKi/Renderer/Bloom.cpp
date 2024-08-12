@@ -88,8 +88,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		{
 			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Bloom Main");
 
-			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledCompute, inputTexSubresource);
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kStorageComputeWrite);
+			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSrvCompute, inputTexSubresource);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kUavCompute);
 
 			prpass = &rpass;
 		}
@@ -98,8 +98,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
 			rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_exposureRt)});
 
-			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSampledFragment, inputTexSubresource);
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kFramebufferWrite);
+			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSrvFragment, inputTexSubresource);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kRtvDsvWrite);
 
 			prpass = &rpass;
 		}
@@ -146,8 +146,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		{
 			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Bloom Upscale");
 
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledCompute);
-			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kStorageComputeWrite);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSrvCompute);
+			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kUavCompute);
 
 			prpass = &rpass;
 		}
@@ -156,8 +156,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
 			rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_upscaleRt)});
 
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSampledFragment);
-			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kFramebufferWrite);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSrvFragment);
+			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kRtvDsvWrite);
 
 			prpass = &rpass;
 		}

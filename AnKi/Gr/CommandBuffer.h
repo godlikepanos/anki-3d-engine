@@ -62,7 +62,7 @@ public:
 
 	ClearValue m_clearValue;
 
-	TextureUsageBit m_usage = TextureUsageBit::kFramebufferWrite;
+	TextureUsageBit m_usage = TextureUsageBit::kRtvDsvWrite;
 
 	RenderTarget() = default;
 

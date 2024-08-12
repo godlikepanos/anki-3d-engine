@@ -239,9 +239,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
-					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSubresourceDesc::surface(0, f, 0));
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(0, f, 0));
 				}
-				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer,
+				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllRtvDsv,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
 				pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
@@ -309,7 +309,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 				pass.setRenderpassInfo({}, &depthRti);
 
-				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllFramebuffer,
+				pass.newTextureDependency(shadowsRt, TextureUsageBit::kAllRtvDsv,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 				pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
@@ -358,25 +358,25 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				colorRti.m_subresource.m_face = f;
 				pass.setRenderpassInfo({colorRti});
 
-				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
+				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kSrvFragment);
 
-				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kFramebufferWrite, TextureSubresourceDesc::surface(0, f, 0));
+				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(0, f, 0));
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
-					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSubresourceDesc::surface(0, f, 0));
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSrvFragment, TextureSubresourceDesc::surface(0, f, 0));
 				}
-				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment,
+				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSrvFragment,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
 				if(shadowsRt.isValid())
 				{
-					pass.newTextureDependency(shadowsRt, TextureUsageBit::kSampledFragment);
+					pass.newTextureDependency(shadowsRt, TextureUsageBit::kSrvFragment);
 				}
 
 				if(getRenderer().getSky().isEnabled())
 				{
-					pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSampledFragment);
+					pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSrvFragment);
 				}
 
 				pass.setWork([this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
@@ -433,11 +433,11 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 		{
 			NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GI: Irradiance cell:%u", cellIdx));
 
-			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSampledCompute);
-			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kStorageComputeWrite);
+			pass.newTextureDependency(lightShadingRt, TextureUsageBit::kSrvCompute);
+			pass.newTextureDependency(irradianceVolume, TextureUsageBit::kUavCompute);
 			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledCompute);
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSrvCompute);
 			}
 
 			pass.setWork([this, lightShadingRt, gbufferColorRts, irradianceVolume, cellIdx, probeToRefresh](RenderPassWorkContext& rgraphCtx) {

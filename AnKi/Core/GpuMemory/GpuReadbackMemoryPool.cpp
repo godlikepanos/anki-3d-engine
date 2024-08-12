@@ -12,7 +12,7 @@ GpuReadbackMemoryPool::GpuReadbackMemoryPool()
 {
 	const Array classes = {64_B, 256_B, 1_MB, 5_MB};
 
-	const BufferUsageBit buffUsage = BufferUsageBit::kAllStorage;
+	const BufferUsageBit buffUsage = BufferUsageBit::kAllUav;
 	const BufferMapAccessBit mapAccess = BufferMapAccessBit::kRead;
 
 	m_pool.init(buffUsage, classes, classes.getBack(), "GpuReadback", false, mapAccess);

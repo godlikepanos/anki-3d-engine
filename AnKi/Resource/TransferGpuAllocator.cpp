@@ -15,7 +15,7 @@ Error TransferGpuAllocator::StackAllocatorBuilderInterface::allocateChunk(PtrSiz
 {
 	out = newInstance<Chunk>(ResourceMemoryPool::getSingleton());
 
-	BufferInitInfo bufferInit(size, BufferUsageBit::kTransferSource, BufferMapAccessBit::kWrite, "Transfer");
+	BufferInitInfo bufferInit(size, BufferUsageBit::kCopySource, BufferMapAccessBit::kWrite, "Transfer");
 	out->m_buffer = GrManager::getSingleton().newBuffer(bufferInit);
 
 	out->m_mappedBuffer = out->m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);

@@ -120,7 +120,7 @@ Error ProbeReflections::initIrradiance()
 	// Create buff
 	{
 		BufferInitInfo init;
-		init.m_usage = BufferUsageBit::kAllStorage;
+		init.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
 		init.m_size = 6 * sizeof(Vec4);
 		m_irradiance.m_diceValuesBuff = GrManager::getSingleton().newBuffer(init);
 	}
@@ -240,10 +240,10 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kFramebufferWrite, TextureSubresourceDesc::surface(0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(0, f, 0));
 			}
 
-			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllFramebuffer, DepthStencilAspectBit::kDepth);
+			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kAllRtvDsv, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
 			pass.setWork(
@@ -308,7 +308,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			pass.setRenderpassInfo({}, &depthRti);
 
-			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllFramebuffer, DepthStencilAspectBit::kDepth);
+			pass.newTextureDependency(shadowMapRt, TextureUsageBit::kAllRtvDsv, DepthStencilAspectBit::kDepth);
 			pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
 			pass.setWork([this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
@@ -354,23 +354,23 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 			pass.setRenderpassInfo({colorRti});
 
-			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kStorageFragmentRead);
-			pass.newTextureDependency(probeTexture, TextureUsageBit::kFramebufferWrite, TextureSubresourceDesc::surface(0, f, 0));
+			pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kSrvFragment);
+			pass.newTextureDependency(probeTexture, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(0, f, 0));
 
 			for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 			{
-				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledFragment, TextureSubresourceDesc::surface(0, f, 0));
+				pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSrvFragment, TextureSubresourceDesc::surface(0, f, 0));
 			}
-			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSampledFragment, DepthStencilAspectBit::kDepth);
+			pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSrvFragment, DepthStencilAspectBit::kDepth);
 
 			if(shadowMapRt.isValid())
 			{
-				pass.newTextureDependency(shadowMapRt, TextureUsageBit::kSampledFragment);
+				pass.newTextureDependency(shadowMapRt, TextureUsageBit::kSrvFragment);
 			}
 
 			if(getRenderer().getSky().isEnabled())
 			{
-				pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSampledFragment);
+				pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSrvFragment);
 			}
 
 			pass.setWork([this, visResult = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(),
@@ -413,9 +413,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Cube refl: Irradiance");
 
-		pass.newTextureDependency(probeTexture, TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(probeTexture, TextureUsageBit::kSrvCompute);
 
-		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeWrite);
+		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kUavCompute);
 
 		pass.setWork([this, probeTexture](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
@@ -440,12 +440,12 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 		for(U i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
 		{
-			pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSampledCompute);
+			pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSrvCompute);
 		}
 
-		pass.newTextureDependency(probeTexture, TextureUsageBit::kStorageComputeRead | TextureUsageBit::kStorageComputeWrite);
+		pass.newTextureDependency(probeTexture, TextureUsageBit::kUavCompute);
 
-		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kStorageComputeRead);
+		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kSrvCompute);
 
 		pass.setWork([this, gbufferColorRts, probeTexture](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ProbeReflections);

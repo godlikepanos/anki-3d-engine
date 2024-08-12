@@ -51,14 +51,14 @@ Error Ssr::initInternal()
 
 	ANKI_R_LOGV("Initializing SSR. Resolution %ux%u", rez.x(), rez.y());
 
-	TextureUsageBit mipTexUsage = TextureUsageBit::kAllSampled;
+	TextureUsageBit mipTexUsage = TextureUsageBit::kAllSrv;
 	if(g_preferComputeCVar.get())
 	{
-		mipTexUsage |= TextureUsageBit::kStorageComputeWrite;
+		mipTexUsage |= TextureUsageBit::kUavCompute;
 	}
 	else
 	{
-		mipTexUsage |= TextureUsageBit::kFramebufferWrite;
+		mipTexUsage |= TextureUsageBit::kRtvDsvWrite;
 	}
 
 	m_ssrRtDescr = getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), Format::kR16G16B16A16_Sfloat, "SSR");
@@ -86,8 +86,8 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("SSR");
 		ppass = &pass;
 
-		readUsage = TextureUsageBit::kSampledCompute;
-		writeUsage = TextureUsageBit::kStorageComputeWrite;
+		readUsage = TextureUsageBit::kSrvCompute;
+		writeUsage = TextureUsageBit::kUavCompute;
 	}
 	else
 	{
@@ -98,8 +98,8 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 
 		ppass = &pass;
 
-		readUsage = TextureUsageBit::kSampledFragment;
-		writeUsage = TextureUsageBit::kFramebufferWrite;
+		readUsage = TextureUsageBit::kSrvFragment;
+		writeUsage = TextureUsageBit::kRtvDsvWrite;
 	}
 
 	ppass->newTextureDependency(getRenderer().getDownscaleBlur().getRt(), readUsage);

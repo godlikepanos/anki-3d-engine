@@ -98,8 +98,8 @@ Error RtShadows::initInternal()
 	{
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR8_Unorm,
-			TextureUsageBit::kAllSampled | TextureUsageBit::kStorageTraceRaysWrite | TextureUsageBit::kStorageComputeWrite, "RtShadows History");
-		m_historyRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+			TextureUsageBit::kAllSrv | TextureUsageBit::kUavTraceRays | TextureUsageBit::kUavCompute, "RtShadows History");
+		m_historyRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
 	}
 
 	// Temp shadow RT
@@ -113,11 +113,11 @@ Error RtShadows::initInternal()
 	{
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR32G32_Sfloat,
-			TextureUsageBit::kAllSampled | TextureUsageBit::kStorageTraceRaysWrite | TextureUsageBit::kStorageComputeWrite, "RtShadows Moments #1");
-		m_momentsRts[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+			TextureUsageBit::kAllSrv | TextureUsageBit::kUavTraceRays | TextureUsageBit::kUavCompute, "RtShadows Moments #1");
+		m_momentsRts[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
 
 		texinit.setName("RtShadows Moments #2");
-		m_momentsRts[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment);
+		m_momentsRts[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
 	}
 
 	// Variance RT
@@ -138,10 +138,10 @@ Error RtShadows::initInternal()
 	{
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR32_Sfloat,
-			TextureUsageBit::kAllSampled | TextureUsageBit::kStorageTraceRaysWrite | TextureUsageBit::kStorageComputeWrite, "RtShadows history len");
+			TextureUsageBit::kAllSrv | TextureUsageBit::kUavTraceRays | TextureUsageBit::kUavCompute, "RtShadows history len");
 		ClearValue clear;
 		clear.m_colorf[0] = 1.0f;
-		m_dummyHistoryLenTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSampledFragment, clear);
+		m_dummyHistoryLenTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment, clear);
 	}
 
 	// Misc
@@ -155,7 +155,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(RtShadows);
 
 #define ANKI_DEPTH_DEP \
-	getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSampledTraceRays | TextureUsageBit::kSampledCompute, \
+	getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSrvTraceRays | TextureUsageBit::kSrvCompute, \
 		DepthDownscale::kQuarterInternalResolution
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
@@ -166,9 +166,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		if(!m_rtsImportedOnce) [[unlikely]]
 		{
-			m_runCtx.m_historyRt = rgraph.importRenderTarget(m_historyRt.get(), TextureUsageBit::kSampledFragment);
+			m_runCtx.m_historyRt = rgraph.importRenderTarget(m_historyRt.get(), TextureUsageBit::kSrvFragment);
 
-			m_runCtx.m_prevMomentsRt = rgraph.importRenderTarget(m_momentsRts[prevRtIdx].get(), TextureUsageBit::kSampledFragment);
+			m_runCtx.m_prevMomentsRt = rgraph.importRenderTarget(m_momentsRts[prevRtIdx].get(), TextureUsageBit::kSrvFragment);
 
 			m_rtsImportedOnce = true;
 		}
@@ -209,7 +209,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	BufferView sbtBuildIndirectArgsBuffer;
 	{
 		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(1);
-		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kStorageComputeWrite);
+		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kUavCompute);
 
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows setup build SBT");
 
@@ -236,7 +236,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		U8* sbtMem;
 		sbtBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(
 			(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize, sbtMem);
-		sbtHandle = rgraph.importBuffer(sbtBuffer, BufferUsageBit::kStorageComputeWrite);
+		sbtHandle = rgraph.importBuffer(sbtBuffer, BufferUsageBit::kUavCompute);
 
 		// Write the first 2 entries of the SBT
 		ConstWeakArray<U8> shaderGroupHandles = m_rtLibraryGrProg->getShaderGroupHandles();
@@ -251,7 +251,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		BufferView visibleRenderableIndicesBuff;
 		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityHandle, visibleRenderableIndicesBuff);
 
-		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kStorageComputeRead);
+		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kIndirectCompute);
 
 		rpass.setWork([this, sbtBuildIndirectArgsBuffer, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
@@ -282,18 +282,18 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows");
 
-		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSampledTraceRays);
-		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kStorageTraceRaysWrite);
+		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kUavTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kTraceRaysRead);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSampledTraceRays);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledTraceRays);
+		rpass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
 
-		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSampledTraceRays);
-		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kStorageTraceRaysWrite);
+		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kUavTraceRays);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kStorageTraceRaysRead);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvTraceRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
@@ -354,12 +354,12 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			runDenoise(ctx, rgraphCtx, true);
 		});
 
-		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kStorageComputeWrite);
+		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kUavCompute);
 	}
 
 	// Denoise pass vertical
@@ -370,12 +370,12 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			runDenoise(ctx, rgraphCtx, false);
 		});
 
-		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kStorageComputeWrite);
+		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kUavCompute);
 	}
 
 	// Variance calculation pass
@@ -383,13 +383,13 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows SVGF Variance");
 
-		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kStorageComputeWrite);
-		rpass.newTextureDependency(m_runCtx.m_varianceRts[1], TextureUsageBit::kStorageComputeWrite);
+		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[1], TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(m_runCtx.m_varianceRts[1], TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
@@ -425,19 +425,19 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows SVGF Atrous");
 
 			rpass.newTextureDependency(ANKI_DEPTH_DEP);
-			rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSampledCompute);
-			rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[readRtIdx], TextureUsageBit::kSampledCompute);
-			rpass.newTextureDependency(m_runCtx.m_varianceRts[readRtIdx], TextureUsageBit::kSampledCompute);
+			rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+			rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[readRtIdx], TextureUsageBit::kSrvCompute);
+			rpass.newTextureDependency(m_runCtx.m_varianceRts[readRtIdx], TextureUsageBit::kSrvCompute);
 
 			if(!lastPass)
 			{
-				rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[!readRtIdx], TextureUsageBit::kStorageComputeWrite);
+				rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[!readRtIdx], TextureUsageBit::kUavCompute);
 
-				rpass.newTextureDependency(m_runCtx.m_varianceRts[!readRtIdx], TextureUsageBit::kStorageComputeWrite);
+				rpass.newTextureDependency(m_runCtx.m_varianceRts[!readRtIdx], TextureUsageBit::kUavCompute);
 			}
 			else
 			{
-				rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kStorageComputeWrite);
+				rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kUavCompute);
 			}
 
 			rpass.setWork([this, &ctx, passIdx = i](RenderPassWorkContext& rgraphCtx) {
@@ -484,11 +484,11 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows Upscale");
 
-		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSampledCompute);
-		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSampledCompute);
+		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
 
-		rpass.newTextureDependency(m_runCtx.m_upscaledRt, TextureUsageBit::kStorageComputeWrite);
+		rpass.newTextureDependency(m_runCtx.m_upscaledRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);

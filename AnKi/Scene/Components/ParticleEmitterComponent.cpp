@@ -238,7 +238,7 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 	cmdb->copyBufferToBuffer(indicesAlloc, m_quadIndices);
 	BufferBarrierInfo barrier;
 	barrier.m_bufferView = BufferView(dstBuff);
-	barrier.m_previousUsage = BufferUsageBit::kTransferDestination;
+	barrier.m_previousUsage = BufferUsageBit::kCopyDestination;
 	barrier.m_nextUsage = dstBuff->getBufferUsage();
 	cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 	cmdb->endRecording();

@@ -24,7 +24,7 @@ static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
 	}
 
 	const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
-										TextureUsageBit::kFramebufferWrite};
+										TextureUsageBit::kRtvDsvWrite};
 	cmdb->setPipelineBarrier({&barrier, 1}, {}, {});
 
 	RenderTarget rt;
@@ -33,7 +33,7 @@ static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
 	cmdb->beginRenderPass({rt});
 	cmdb->endRenderPass();
 
-	const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kFramebufferWrite,
+	const TextureBarrierInfo barrier2 = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kRtvDsvWrite,
 										 TextureUsageBit::kPresent};
 	cmdb->setPipelineBarrier({&barrier2, 1}, {}, {});
 
@@ -115,11 +115,11 @@ void thirdNode([MaxRecords(32)] GroupNodeInputRecords<ThirdNodeRecord> inp, uint
 		progInit.m_workGraph.m_nodeSpecializations = ConstWeakArray<WorkGraphNodeSpecialization>(&wgSpecialization, 1);
 		ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(progInit);
 
-		BufferPtr counterBuff = createBuffer(BufferUsageBit::kAllStorage | BufferUsageBit::kTransferSource, 0u, 1, "CounterBuffer");
+		BufferPtr counterBuff = createBuffer(BufferUsageBit::kAllUav | BufferUsageBit::kCopySource, 0u, 1, "CounterBuffer");
 
 		BufferInitInfo scratchInit("scratch");
 		scratchInit.m_size = prog->getWorkGraphMemoryRequirements();
-		scratchInit.m_usage = BufferUsageBit::kAllStorage;
+		scratchInit.m_usage = BufferUsageBit::kAllUav;
 		BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
 
 		struct FirstNodeRecord
@@ -352,10 +352,10 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 
 		printf("Obj count %u, pos count %u\n", kObjectCount, positionCount);
 
-		BufferPtr objBuff = createBuffer(BufferUsageBit::kStorageComputeRead, ConstWeakArray(objects), "Objects");
+		BufferPtr objBuff = createBuffer(BufferUsageBit::kSrvCompute, ConstWeakArray(objects), "Objects");
 
 		// AABBs
-		BufferPtr aabbsBuff = createBuffer(BufferUsageBit::kStorageComputeWrite, Aabb(), kObjectCount, "AABBs");
+		BufferPtr aabbsBuff = createBuffer(BufferUsageBit::kUavCompute, Aabb(), kObjectCount, "AABBs");
 
 		// Positions
 		GrDynamicArray<U32> positions;
@@ -378,7 +378,7 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 			positionCount += obj.m_positionCount;
 		}
 
-		BufferPtr posBuff = createBuffer(BufferUsageBit::kStorageComputeRead, ConstWeakArray(positions), "Positions");
+		BufferPtr posBuff = createBuffer(BufferUsageBit::kSrvCompute, ConstWeakArray(positions), "Positions");
 
 		// Execute
 		for(U32 i = 0; i < ((benchmark) ? 200 : 1); ++i)
@@ -390,7 +390,7 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 			{
 				BufferInitInfo scratchInit("scratch");
 				scratchInit.m_size = prog->getWorkGraphMemoryRequirements();
-				scratchInit.m_usage = BufferUsageBit::kAllStorage;
+				scratchInit.m_usage = BufferUsageBit::kAllUav;
 				scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
 			}
 

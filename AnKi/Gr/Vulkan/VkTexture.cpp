@@ -120,7 +120,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		ANKI_ASSERT(!!(init.m_usage & TextureUsageBit::kPresent));
 	}
 
-	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs || !(init.m_usage & TextureUsageBit::kFramebufferShadingRate));
+	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs || !(init.m_usage & TextureUsageBit::kShadingRate));
 
 	// Set some stuff
 	m_width = init.m_width;
@@ -306,57 +306,57 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 	const Bool depthStencil = !!m_aspect;
 	const Bool rt = getGrManagerImpl().getDeviceCapabilities().m_rayTracingEnabled;
 
-	if(!!(usage & (TextureUsageBit::kSampledGeometry | TextureUsageBit::kStorageGeometryRead)))
+	if(!!(usage & TextureUsageBit::kSrvGeometry))
 	{
 		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kStorageGeometryWrite))
+	if(!!(usage & TextureUsageBit::kUavGeometry))
 	{
 		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::kSampledFragment | TextureUsageBit::kStorageFragmentRead)))
+	if(!!(usage & TextureUsageBit::kSrvFragment))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kStorageFragmentWrite))
+	if(!!(usage & TextureUsageBit::kUavFragment))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::kSampledCompute | TextureUsageBit::kStorageComputeRead)))
+	if(!!(usage & TextureUsageBit::kSrvCompute))
 	{
 		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kStorageComputeWrite))
+	if(!!(usage & TextureUsageBit::kUavCompute))
 	{
 		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & (TextureUsageBit::kSampledTraceRays | TextureUsageBit::kStorageTraceRaysRead)) && rt)
+	if(!!(usage & TextureUsageBit::kSrvTraceRays) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kStorageTraceRaysWrite) && rt)
+	if(!!(usage & TextureUsageBit::kUavTraceRays) && rt)
 	{
 		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kFramebufferRead))
+	if(!!(usage & TextureUsageBit::kRtvDsvRead))
 	{
 		if(depthStencil)
 		{
@@ -370,7 +370,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 		}
 	}
 
-	if(!!(usage & TextureUsageBit::kFramebufferWrite))
+	if(!!(usage & TextureUsageBit::kRtvDsvWrite))
 	{
 		if(depthStencil)
 		{
@@ -384,13 +384,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 		}
 	}
 
-	if(!!(usage & TextureUsageBit::kFramebufferShadingRate))
+	if(!!(usage & TextureUsageBit::kShadingRate))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
 		accesses |= VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
 	}
 
-	if(!!(usage & TextureUsageBit::kTransferDestination))
+	if(!!(usage & TextureUsageBit::kCopyDestination))
 	{
 		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 		accesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -450,7 +450,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage) const
 	}
 	else if(depthStencil)
 	{
-		if(!(usage & ~(TextureUsageBit::kAllSampled | TextureUsageBit::kFramebufferRead)))
+		if(!(usage & ~(TextureUsageBit::kAllSrv | TextureUsageBit::kRtvDsvRead)))
 		{
 			// Only depth tests and sampled
 			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
@@ -458,31 +458,31 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage) const
 		else
 		{
 			// Only attachment write, the rest (eg transfer) are not supported for now
-			ANKI_ASSERT(usage == TextureUsageBit::kFramebufferWrite || usage == TextureUsageBit::kAllFramebuffer);
+			ANKI_ASSERT(usage == TextureUsageBit::kRtvDsvWrite || usage == TextureUsageBit::kAllRtvDsv);
 			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
 	}
-	else if(!(usage & ~TextureUsageBit::kAllFramebuffer))
+	else if(!(usage & ~TextureUsageBit::kAllRtvDsv))
 	{
 		// Color attachment
 		out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
-	else if(!(usage & ~TextureUsageBit::kFramebufferShadingRate))
+	else if(!(usage & ~TextureUsageBit::kShadingRate))
 	{
 		// SRI
 		out = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 	}
-	else if(!(usage & ~TextureUsageBit::kAllStorage))
+	else if(!(usage & ~TextureUsageBit::kAllUav))
 	{
 		// Only image load/store
 		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
-	else if(!(usage & ~TextureUsageBit::kAllSampled))
+	else if(!(usage & ~TextureUsageBit::kAllSrv))
 	{
 		// Only sampled
 		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	else if(usage == TextureUsageBit::kTransferDestination)
+	else if(usage == TextureUsageBit::kCopyDestination)
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	}

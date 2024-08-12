@@ -37,7 +37,7 @@ void main()
 		BufferInitInfo buffInit;
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		buffInit.m_size = sizeof(U8) * 4;
-		buffInit.m_usage = BufferUsageBit::kAllTexel;
+		buffInit.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
 		BufferPtr texBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 		I8* data = static_cast<I8*>(texBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
@@ -51,7 +51,7 @@ void main()
 
 		buffInit.m_mapAccess = BufferMapAccessBit::kRead;
 		buffInit.m_size = sizeof(F32) * 4;
-		buffInit.m_usage = BufferUsageBit::kAllStorage;
+		buffInit.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
 		BufferPtr storageBuff = GrManager::getSingleton().newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit;

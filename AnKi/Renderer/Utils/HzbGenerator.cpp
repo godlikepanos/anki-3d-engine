@@ -53,7 +53,7 @@ Error HzbGenerator::init()
 	m_counterBufferElementSize = max<U32>(sizeof(U32), GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
 	BufferInitInfo buffInit("HzbCounterBuffer");
 	buffInit.m_size = m_counterBufferElementSize * kCounterBufferElementCount;
-	buffInit.m_usage = BufferUsageBit::kStorageComputeWrite | BufferUsageBit::kTransferDestination;
+	buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
 	m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 	// Zero counter buffer
@@ -93,8 +93,8 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 	for(U32 i = 0; i < dispatchCount; ++i)
 	{
 		const TextureSubresourceDesc firstMipSubresource = TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth);
-		pass.newTextureDependency(dispatchInputs[i].m_srcDepthRt, TextureUsageBit::kSampledCompute, firstMipSubresource);
-		pass.newTextureDependency(dispatchInputs[i].m_dstHzbRt, TextureUsageBit::kStorageComputeWrite);
+		pass.newTextureDependency(dispatchInputs[i].m_srcDepthRt, TextureUsageBit::kSrvCompute, firstMipSubresource);
+		pass.newTextureDependency(dispatchInputs[i].m_dstHzbRt, TextureUsageBit::kUavCompute);
 
 		dispatchInputsCopy[i] = dispatchInputs[i];
 	}
@@ -190,8 +190,8 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("HZB max tile depth");
 
-		pass.newTextureDependency(in.m_depthBufferRt, TextureUsageBit::kSampledCompute, DepthStencilAspectBit::kDepth);
-		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kStorageComputeWrite);
+		pass.newTextureDependency(in.m_depthBufferRt, TextureUsageBit::kSrvCompute, DepthStencilAspectBit::kDepth);
+		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this, depthBufferRt = in.m_depthBufferRt, maxDepthRt, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -256,8 +256,8 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		depthRt.m_loadOperation = RenderTargetLoadOperation::kClear;
 		pass.setRenderpassInfo({}, &depthRt);
 
-		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kSampledFragment);
-		pass.newTextureDependency(depthRts[i], TextureUsageBit::kFramebufferWrite, DepthStencilAspectBit::kDepth);
+		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kSrvFragment);
+		pass.newTextureDependency(depthRts[i], TextureUsageBit::kRtvDsvWrite, DepthStencilAspectBit::kDepth);
 
 		pass.setWork([this, maxDepthRt, invViewProjMat = in.m_cameraInverseViewProjectionMatrix,
 					  lightViewProjMat = cascade.m_projectionMatrix * Mat4(cascade.m_viewMatrix, Vec4(0.0f, 0.0f, 0.0f, 1.0f)),

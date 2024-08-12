@@ -124,8 +124,8 @@ Error MainRenderer::render(Texture* presentTex)
 			cmdb.draw(PrimitiveTopology::kTriangles, 3);
 		});
 
-		pass.newTextureDependency(presentRt, TextureUsageBit::kFramebufferWrite);
-		pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kSampledFragment);
+		pass.newTextureDependency(presentRt, TextureUsageBit::kRtvDsvWrite);
+		pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kSrvFragment);
 	}
 
 	// Create a dummy pass to transition the presentable image to present

@@ -71,10 +71,10 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
 			rpass.newBufferDependency(getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBufferHandle(type),
-									  BufferUsageBit::kStorageComputeRead);
+									  BufferUsageBit::kSrvCompute);
 		}
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kStorageComputeWrite);
-		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kTransferDestination);
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
+		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kCopyDestination);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -105,7 +105,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Cluster binning");
 
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
-		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kStorageComputeWrite);
+		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -218,7 +218,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 		{
-			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kStorageComputeWrite);
+			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kUavCompute);
 		}
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {

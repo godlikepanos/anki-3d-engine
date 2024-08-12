@@ -480,49 +480,39 @@ enum class TextureUsageBit : U32
 {
 	kNone = 0,
 
-	kSampledGeometry = 1 << 0,
-	kSampledFragment = 1 << 1,
-	kSampledCompute = 1 << 2,
-	kSampledTraceRays = 1 << 3,
+	kSrvGeometry = 1 << 0,
+	kSrvFragment = 1 << 1,
+	kSrvCompute = 1 << 2,
+	kSrvTraceRays = 1 << 3,
 
-	kStorageGeometryRead = 1 << 4,
-	kStorageGeometryWrite = 1 << 5,
-	kStorageFragmentRead = 1 << 6,
-	kStorageFragmentWrite = 1 << 7,
-	kStorageComputeRead = 1 << 8,
-	kStorageComputeWrite = 1 << 9,
-	kStorageTraceRaysRead = 1 << 10,
-	kStorageTraceRaysWrite = 1 << 11,
+	kUavGeometry = 1 << 4,
+	kUavFragment = 1 << 5,
+	kUavCompute = 1 << 6,
+	kUavTraceRays = 1 << 7,
 
-	kFramebufferRead = 1 << 12,
-	kFramebufferWrite = 1 << 13,
-	kFramebufferShadingRate = 1 << 14,
+	kRtvDsvRead = 1 << 8,
+	kRtvDsvWrite = 1 << 9,
+	kShadingRate = 1 << 10,
 
-	kTransferDestination = 1 << 15,
+	kCopyDestination = 1 << 11,
 
-	kPresent = 1 << 17,
+	kPresent = 1 << 12,
 
 	// Derived
-	kAllSampled = kSampledGeometry | kSampledFragment | kSampledCompute | kSampledTraceRays,
-	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite | kStorageComputeRead
-				  | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
-	kAllFramebuffer = kFramebufferRead | kFramebufferWrite,
+	kAllSrv = kSrvGeometry | kSrvFragment | kSrvCompute | kSrvTraceRays,
+	kAllUav = kUavGeometry | kUavFragment | kUavCompute | kUavTraceRays,
+	kAllRtvDsv = kRtvDsvRead | kRtvDsvWrite,
 
-	kAllGeometry = kSampledGeometry | kStorageGeometryRead | kStorageGeometryWrite,
-	kAllFragment = kSampledFragment | kStorageFragmentRead | kStorageFragmentWrite,
-	kAllGraphics = kSampledGeometry | kSampledFragment | kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite
-				   | kFramebufferRead | kFramebufferWrite | kFramebufferShadingRate,
-	kAllCompute = kSampledCompute | kStorageComputeRead | kStorageComputeWrite,
-	kAllTransfer = kTransferDestination,
+	kAllGeometry = kSrvGeometry | kUavGeometry,
+	kAllFragment = kSrvFragment | kUavFragment,
+	kAllGraphics = kAllGeometry | kAllFragment | kRtvDsvRead | kRtvDsvWrite | kShadingRate,
+	kAllCompute = kSrvCompute | kUavCompute,
+	kAllTransfer = kCopyDestination,
 
-	kAllRead = kAllSampled | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead | kFramebufferRead
-			   | kFramebufferShadingRate | kPresent,
-	kAllWrite =
-		kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kFramebufferWrite | kTransferDestination,
+	kAllRead = kAllSrv | kAllUav | kRtvDsvRead | kShadingRate | kPresent,
+	kAllWrite = kAllUav | kRtvDsvWrite | kCopyDestination,
 	kAll = kAllRead | kAllWrite,
-	kAllShaderResource = kAllSampled | kAllStorage,
-	kAllSrv = (kAllSampled | kAllStorage) & kAllRead,
-	kAllUav = kAllStorage & kAllWrite,
+	kAllShaderResource = kAllSrv | kAllUav,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
@@ -710,65 +700,53 @@ enum class BufferUsageBit : U64
 {
 	kNone = 0,
 
-	kUniformGeometry = 1ull << 0ull,
-	kUniformFragment = 1ull << 1ull,
-	kUniformCompute = 1ull << 2ull,
-	kUniformTraceRays = 1ull << 3ull,
+	kConstantGeometry = 1ull << 0ull,
+	kConstantFragment = 1ull << 1ull,
+	kConstantCompute = 1ull << 2ull,
+	kConstantTraceRays = 1ull << 3ull,
 
-	kStorageGeometryRead = 1ull << 4ull,
-	kStorageGeometryWrite = 1ull << 5ull,
-	kStorageFragmentRead = 1ull << 6ull,
-	kStorageFragmentWrite = 1ull << 7ull,
-	kStorageComputeRead = 1ull << 8ull,
-	kStorageComputeWrite = 1ull << 9ull,
-	kStorageTraceRaysRead = 1ull << 10ull,
-	kStorageTraceRaysWrite = 1ull << 11ull,
+	kSrvGeometry = 1ull << 4ull,
+	kSrvFragment = 1ull << 5ull,
+	kSrvCompute = 1ull << 6ull,
+	kSrvTraceRays = 1ull << 7ull,
 
-	kTexelGeometryRead = 1ull << 12ull,
-	kTexelGeometryWrite = 1ull << 13ull,
-	kTexelFragmentRead = 1ull << 14ull,
-	kTexelFragmentWrite = 1ull << 15ull,
-	kTexelComputeRead = 1ull << 16ull,
-	kTexelComputeWrite = 1ull << 17ull,
-	kTexelTraceRaysRead = 1ull << 18ull,
-	kTexelTraceRaysWrite = 1ull << 19ull,
+	kUavGeometry = 1ull << 8ull,
+	kUavFragment = 1ull << 9ull,
+	kUavCompute = 1ull << 10ull,
+	kUavTraceRays = 1ull << 11ull,
 
-	kIndex = 1ull << 20ull,
-	kVertex = 1ull << 21ull,
+	kIndex = 1ull << 12ull,
+	kVertex = 1ull << 13ull,
 
-	kIndirectCompute = 1ull << 22ll,
-	kIndirectDraw = 1ull << 23ull,
-	kIndirectTraceRays = 1ull << 24ull,
+	kIndirectCompute = 1ull << 14ll,
+	kIndirectDraw = 1ull << 15ull,
+	kIndirectTraceRays = 1ull << 16ull,
 
-	kTransferSource = 1ull << 25ull,
-	kTransferDestination = 1ull << 26ull,
+	kCopySource = 1ull << 17ull,
+	kCopyDestination = 1ull << 18ull,
 
-	kAccelerationStructureBuild = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
-	kShaderBindingTable = 1ull << 28ull, ///< Will be used as SBT in a traceRays() command.
-	kAccelerationStructureBuildScratch = 1ull << 29ull, ///< Used in buildAccelerationStructureXXX commands.
+	kAccelerationStructureBuild = 1ull << 19ull, ///< Will be used as a position or index buffer in a BLAS build.
+	kShaderBindingTable = 1ull << 20ull, ///< Will be used as SBT in a traceRays() command.
+	kAccelerationStructureBuildScratch = 1ull << 21ull, ///< Used in buildAccelerationStructureXXX commands.
 
 	// Derived
-	kAllUniform = kUniformGeometry | kUniformFragment | kUniformCompute | kUniformTraceRays,
-	kAllStorage = kStorageGeometryRead | kStorageGeometryWrite | kStorageFragmentRead | kStorageFragmentWrite | kStorageComputeRead
-				  | kStorageComputeWrite | kStorageTraceRaysRead | kStorageTraceRaysWrite,
-	kAllTexel = kTexelGeometryRead | kTexelGeometryWrite | kTexelFragmentRead | kTexelFragmentWrite | kTexelComputeRead | kTexelComputeWrite
-				| kTexelTraceRaysRead | kTexelTraceRaysWrite,
+	kAllConstant = kConstantGeometry | kConstantFragment | kConstantCompute | kConstantTraceRays,
+	kAllSrv = kSrvGeometry | kSrvFragment | kSrvCompute | kSrvTraceRays,
+	kAllUav = kUavGeometry | kUavFragment | kUavCompute | kUavTraceRays,
 	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
-	kAllTransfer = kTransferSource | kTransferDestination,
+	kAllCopy = kCopySource | kCopyDestination,
 
-	kAllGeometry = kUniformGeometry | kStorageGeometryRead | kStorageGeometryWrite | kTexelGeometryRead | kTexelGeometryWrite | kIndex | kVertex,
-	kAllFragment = kUniformFragment | kStorageFragmentRead | kStorageFragmentWrite | kTexelFragmentRead | kTexelFragmentWrite,
+	kAllGeometry = kConstantGeometry | kSrvGeometry | kUavGeometry | kIndex | kVertex,
+	kAllFragment = kConstantFragment | kSrvFragment | kUavFragment,
 	kAllGraphics = kAllGeometry | kAllFragment | kIndirectDraw,
-	kAllCompute = kUniformCompute | kStorageComputeRead | kStorageComputeWrite | kTexelComputeRead | kTexelComputeWrite | kIndirectCompute,
-	kAllTraceRays = kUniformTraceRays | kStorageTraceRaysRead | kStorageTraceRaysWrite | kTexelTraceRaysRead | kTexelTraceRaysWrite
-					| kIndirectTraceRays | kShaderBindingTable,
+	kAllCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute,
+	kAllTraceRays = kConstantTraceRays | kSrvTraceRays | kUavTraceRays | kIndirectTraceRays | kShaderBindingTable,
 
 	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch,
-	kAllRead = kAllUniform | kStorageGeometryRead | kStorageFragmentRead | kStorageComputeRead | kStorageTraceRaysRead | kTexelGeometryRead
-			   | kTexelFragmentRead | kTexelComputeRead | kTexelTraceRaysRead | kIndex | kVertex | kIndirectCompute | kIndirectDraw
-			   | kIndirectTraceRays | kTransferSource | kAccelerationStructureBuild | kShaderBindingTable,
-	kAllWrite = kStorageGeometryWrite | kStorageFragmentWrite | kStorageComputeWrite | kStorageTraceRaysWrite | kTexelGeometryWrite
-				| kTexelFragmentWrite | kTexelComputeWrite | kTexelTraceRaysWrite | kTransferDestination | kAccelerationStructureBuildScratch,
+	kAllRead = kAllConstant | kAllSrv | kAllUav | kIndex | kVertex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable,
+	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch,
+
+	kAllShaderResource = kAllConstant | kAllSrv | kAllUav,
 
 	kAll = kAllRead | kAllWrite,
 };

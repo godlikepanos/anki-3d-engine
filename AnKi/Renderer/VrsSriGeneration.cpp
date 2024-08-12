@@ -38,13 +38,13 @@ Error VrsSriGeneration::initInternal()
 	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
 
 	// Create textures
-	const TextureUsageBit texUsage = TextureUsageBit::kFramebufferShadingRate | TextureUsageBit::kStorageComputeWrite | TextureUsageBit::kAllSampled;
+	const TextureUsageBit texUsage = TextureUsageBit::kShadingRate | TextureUsageBit::kUavCompute | TextureUsageBit::kAllSrv;
 	TextureInitInfo sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rez.x(), rez.y(), Format::kR8_Uint, texUsage, "VrsSri");
-	m_sriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
+	m_sriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kShadingRate);
 
 	const UVec2 rezDownscaled = (getRenderer().getInternalResolution() / 2 + m_sriTexelDimension - 1) / m_sriTexelDimension;
 	sriInitInfo = getRenderer().create2DRenderTargetInitInfo(rezDownscaled.x(), rezDownscaled.y(), Format::kR8_Uint, texUsage, "VrsSriDownscaled");
-	m_downscaledSriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kFramebufferShadingRate);
+	m_downscaledSriTex = getRenderer().createAndClearRenderTarget(sriInitInfo, TextureUsageBit::kShadingRate);
 
 	// Load programs
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/VrsSriGenerationCompute.ankiprogbin", m_prog));
@@ -109,8 +109,8 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex.get(), TextureUsageBit::kFramebufferShadingRate);
-		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex.get(), TextureUsageBit::kFramebufferShadingRate);
+		m_runCtx.m_rt = ctx.m_renderGraphDescr.importRenderTarget(m_sriTex.get(), TextureUsageBit::kShadingRate);
+		m_runCtx.m_downscaledRt = ctx.m_renderGraphDescr.importRenderTarget(m_downscaledSriTex.get(), TextureUsageBit::kShadingRate);
 		m_sriTexImportedOnce = true;
 	}
 }
@@ -131,8 +131,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("VRS SRI generation");
 
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kStorageComputeWrite);
-		pass.newTextureDependency(getRenderer().getLightShading().getRt(), TextureUsageBit::kSampledCompute);
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
+		pass.newTextureDependency(getRenderer().getLightShading().getRt(), TextureUsageBit::kSrvCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
@@ -156,8 +156,8 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("VRS SRI downscale");
 
-		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSampledCompute);
-		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kStorageComputeWrite);
+		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSrvCompute);
+		pass.newTextureDependency(m_runCtx.m_downscaledRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(VrsSriGeneration);
