@@ -971,8 +971,7 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	self.commandCommon();
 
 	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(self.m_pool);
-	DynamicArray<VkBufferMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(self.m_pool);
-	DynamicArray<VkMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> genericBarriers(self.m_pool);
+	VkMemoryBarrier genericBarrier = {.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER};
 	VkPipelineStageFlags srcStageMask = 0;
 	VkPipelineStageFlags dstStageMask = 0;
 
@@ -990,32 +989,27 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		const BufferImpl& impl = static_cast<const BufferImpl&>(barrier.m_bufferView.getBuffer());
 		const VkBufferMemoryBarrier akBarrier = impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStageMask, dstStageMask);
 
-		if(bufferBarriers.getSize() && bufferBarriers.getBack().buffer == akBarrier.buffer)
-		{
-			// Merge barriers
-			bufferBarriers.getBack().srcAccessMask |= akBarrier.srcAccessMask;
-			bufferBarriers.getBack().dstAccessMask |= akBarrier.dstAccessMask;
-		}
-		else
-		{
-			// Create a new buffer barrier
-			bufferBarriers.emplaceBack(akBarrier);
-		}
+		genericBarrier.srcAccessMask |= akBarrier.srcAccessMask;
+		genericBarrier.dstAccessMask |= akBarrier.dstAccessMask;
 	}
 
 	for(const AccelerationStructureBarrierInfo& barrier : accelerationStructures)
 	{
 		ANKI_ASSERT(barrier.m_as);
 
-		genericBarriers.emplaceBack(
-			AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStageMask, dstStageMask));
+		const VkMemoryBarrier memBarrier =
+			AccelerationStructureImpl::computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, srcStageMask, dstStageMask);
+
+		genericBarrier.srcAccessMask |= memBarrier.srcAccessMask;
+		genericBarrier.dstAccessMask |= memBarrier.dstAccessMask;
+
 		self.m_microCmdb->pushObjectRef(barrier.m_as);
 	}
 
-	vkCmdPipelineBarrier(self.m_handle, srcStageMask, dstStageMask, 0, genericBarriers.getSize(),
-						 (genericBarriers.getSize()) ? &genericBarriers[0] : nullptr, bufferBarriers.getSize(),
-						 (bufferBarriers.getSize()) ? &bufferBarriers[0] : nullptr, imageBarriers.getSize(),
-						 (imageBarriers.getSize()) ? &imageBarriers[0] : nullptr);
+	const Bool genericBarrierSet = genericBarrier.srcAccessMask != 0 && genericBarrier.dstAccessMask != 0;
+
+	vkCmdPipelineBarrier(self.m_handle, srcStageMask, dstStageMask, 0, (genericBarrierSet) ? 1 : 0, (genericBarrierSet) ? &genericBarrier : nullptr,
+						 0, nullptr, imageBarriers.getSize(), (imageBarriers.getSize()) ? &imageBarriers[0] : nullptr);
 
 	ANKI_TRACE_INC_COUNTER(VkBarrier, 1);
 }

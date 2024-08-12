@@ -298,9 +298,13 @@ inline void unflatten3dArrayIndex(const T sizeA, const T sizeB, const T sizeC, c
 inline void splitThreadedProblem(U32 threadId, U32 threadCount, U32 problemSize, U32& start, U32& end)
 {
 	ANKI_ASSERT(threadCount > 0 && threadId < threadCount);
-	const U32 div = problemSize / threadCount;
-	start = threadId * div;
-	end = (threadId == threadCount - 1) ? problemSize : (threadId + 1u) * div;
+	const U32 range = problemSize / threadCount;
+	const U32 remain = problemSize % threadCount;
+
+	start = threadId * range + min(remain, threadId);
+	end = start + range + (threadId < remain);
+
+	ANKI_ASSERT(start <= problemSize && end <= end);
 	ANKI_ASSERT(!(threadId == threadCount - 1 && end != problemSize));
 }
 
