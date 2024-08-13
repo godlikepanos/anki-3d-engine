@@ -472,3 +472,153 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 
 	commonDestroy();
 }
+
+ANKI_TEST(Gr, WorkGraphsWorkDrain)
+{
+	const Bool bBenchmark = getenv("BENCHMARK") && CString(getenv("BENCHMARK")) == "1";
+
+	[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"WorkGraphs", "1"});
+
+	commonInit(!bBenchmark);
+
+	const Bool bWorkgraphs =
+		getenv("WORKGRAPHS") && CString(getenv("WORKGRAPHS")) == "1" && GrManager::getSingleton().getDeviceCapabilities().m_workGraphs;
+
+	ANKI_TEST_LOGI("Testing with BENCHMARK=%u WORKGRAPHS=%u", bBenchmark, bWorkgraphs);
+
+#define TEX_SIZE_X 4096u
+#define TEX_SIZE_Y 4096u
+#define TILE_SIZE_X 32u
+#define TILE_SIZE_Y 32u
+#define TILE_COUNT_X (TEX_SIZE_X / TILE_SIZE_X)
+#define TILE_COUNT_Y (TEX_SIZE_Y / TILE_SIZE_Y)
+#define TILE_COUNT (TILE_COUNT_X * TILE_COUNT_Y)
+
+	{
+		// Create WG prog
+		ShaderProgramPtr wgProg;
+		if(bWorkgraphs)
+		{
+			ShaderPtr wgShader = loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/WorkDrainWg.hlsl", ShaderType::kWorkGraph);
+
+			ShaderProgramInitInfo progInit;
+			progInit.m_workGraph.m_shader = wgShader.get();
+			Array<WorkGraphNodeSpecialization, 1> specializations = {{{"main", UVec3(TILE_COUNT_X, TILE_COUNT_Y, 1)}}};
+			progInit.m_workGraph.m_nodeSpecializations = specializations;
+			wgProg = GrManager::getSingleton().newShaderProgram(progInit);
+		}
+
+		// Scratch buff
+		BufferPtr scratchBuff;
+		if(bWorkgraphs)
+		{
+			BufferInitInfo scratchInit("scratch");
+			scratchInit.m_size = wgProg->getWorkGraphMemoryRequirements();
+			scratchInit.m_usage = BufferUsageBit::kAllStorage;
+			scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+		}
+
+		// Create compute progs
+		ShaderProgramPtr compProg0, compProg1;
+		{
+			ShaderPtr shader =
+				loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/WorkDrainCompute.hlsl", ShaderType::kCompute, Array<CString, 1>{"-DFIRST"});
+			ShaderProgramInitInfo progInit;
+			progInit.m_computeShader = shader.get();
+			compProg0 = GrManager::getSingleton().newShaderProgram(progInit);
+
+			shader = loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/WorkDrainCompute.hlsl", ShaderType::kCompute);
+			progInit.m_computeShader = shader.get();
+			compProg1 = GrManager::getSingleton().newShaderProgram(progInit);
+		}
+
+		// Create texture 2D
+		TexturePtr tex;
+		{
+			DynamicArray<Vec4> data;
+			data.resize(TEX_SIZE_X * TEX_SIZE_Y, Vec4(1.0f));
+			data[10] = Vec4(1.1f, 2.06f, 3.88f, 0.5f);
+
+			TextureInitInfo texInit("Tex");
+			texInit.m_width = TEX_SIZE_X;
+			texInit.m_height = TEX_SIZE_Y;
+			texInit.m_format = Format::kR32G32B32A32_Sfloat;
+			texInit.m_usage = TextureUsageBit::kAllUav | TextureUsageBit::kAllSrv;
+
+			tex = createTexture2d(texInit, ConstWeakArray(data));
+		}
+
+		// Create counter buff
+		BufferPtr threadgroupCountBuff;
+		{
+			threadgroupCountBuff = createBuffer(BufferUsageBit::kStorageComputeWrite, U32(0u), 1);
+		}
+
+		// Result buffers
+		BufferPtr tileMax = createBuffer(BufferUsageBit::kAllStorage, Vec4(0.1f), TILE_COUNT);
+		BufferPtr finalMax = createBuffer(BufferUsageBit::kAllStorage, Vec4(0.1f), 1);
+
+		const U32 iterationCount = (!bBenchmark) ? 1 : 10000u;
+		Second avgTimeMs = 0.0;
+		for(U32 i = 0; i < iterationCount; ++i)
+		{
+			CommandBufferPtr cmdb =
+				GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork));
+
+			BufferBarrierInfo barr = {BufferView(tileMax.get()), BufferUsageBit::kStorageComputeWrite, BufferUsageBit::kStorageComputeWrite};
+			cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+
+			cmdb->bindTexture(ANKI_REG(t0), TextureView(tex.get(), TextureSubresourceDesc::all()));
+			cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(tileMax.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(u1), BufferView(finalMax.get()));
+			cmdb->bindStorageBuffer(ANKI_REG(u2), BufferView(threadgroupCountBuff.get()));
+
+			if(bWorkgraphs)
+			{
+				cmdb->bindShaderProgram(wgProg.get());
+
+				struct FirstNodeRecord
+				{
+					UVec3 m_gridSize;
+				};
+
+				Array<FirstNodeRecord, 1> records;
+				records[0].m_gridSize = UVec3(TILE_COUNT_X, TILE_COUNT_Y, 1);
+
+				cmdb->dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
+			}
+			else
+			{
+				cmdb->bindShaderProgram(compProg0.get());
+				cmdb->dispatchCompute(TILE_COUNT_X, TILE_COUNT_Y, 1);
+
+				barr = {BufferView(tileMax.get()), BufferUsageBit::kStorageComputeWrite, BufferUsageBit::kStorageComputeRead};
+				cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+
+				cmdb->bindShaderProgram(compProg1.get());
+				cmdb->dispatchCompute(1, 1, 1);
+			}
+
+			cmdb->endRecording();
+
+			const U64 start = HighRezTimer::getCurrentTimeUs();
+
+			FencePtr fence;
+			GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+			fence->clientWait(kMaxSecond);
+
+			const U64 end = HighRezTimer::getCurrentTimeUs();
+
+			avgTimeMs += (Second(end - start) * 0.001) / Second(iterationCount);
+		}
+
+		validateBuffer2(finalMax, Vec4(1.1f, 2.06f, 3.88f, 1.0f));
+
+		if(bBenchmark)
+		{
+			ANKI_TEST_LOGI("Benchmark: avg time: %fms", avgTimeMs);
+		}
+	}
+
+	commonDestroy();
+}

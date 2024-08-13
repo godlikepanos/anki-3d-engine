@@ -675,7 +675,7 @@ vector<T, 3> filmGrain(vector<T, 3> color, Vec2 uv, T strength, F32 time)
 	return color * grain;
 }
 
-#if ANKI_COMPUTE_SHADER
+#if ANKI_COMPUTE_SHADER || ANKI_WORK_GRAPH_SHADER
 /// HLSL doesn't have SubgroupID so compute it. It's a macro because we can't have functions that InterlockedAdd on local variables (the compiler
 /// can't see it's groupshared).
 /// @param svGroupIndex Self explanatory.

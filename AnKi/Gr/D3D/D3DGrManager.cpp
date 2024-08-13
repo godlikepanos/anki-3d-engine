@@ -287,6 +287,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
+
+		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_gpuValidationCVar.get()) ? "as well" : "no");
 	}
 
 	ComPtr<IDXGIFactory2> factory2;

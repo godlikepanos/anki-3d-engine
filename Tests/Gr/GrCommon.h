@@ -11,7 +11,7 @@
 
 namespace anki {
 
-inline ShaderPtr createShader(CString src, ShaderType type)
+inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<CString> extraCompilerArgs = {})
 {
 	ShaderCompilerString header;
 	ShaderParser::generateAnkiShaderHeader(type, header);
@@ -20,9 +20,9 @@ inline ShaderPtr createShader(CString src, ShaderType type)
 	ShaderCompilerString errorLog;
 
 #if ANKI_GR_BACKEND_VULKAN
-	Error err = compileHlslToSpirv(header, type, false, true, {}, bin, errorLog);
+	Error err = compileHlslToSpirv(header, type, false, true, extraCompilerArgs, bin, errorLog);
 #else
-	Error err = compileHlslToDxil(header, type, false, true, {}, bin, errorLog);
+	Error err = compileHlslToDxil(header, type, false, true, extraCompilerArgs, bin, errorLog);
 #endif
 	if(err)
 	{
@@ -48,10 +48,10 @@ inline ShaderPtr createShader(CString src, ShaderType type)
 	return GrManager::getSingleton().newShader(initInf);
 }
 
-inline ShaderProgramPtr createVertFragProg(CString vert, CString frag)
+inline ShaderProgramPtr createVertFragProg(CString vert, CString frag, ConstWeakArray<CString> extraCompilerArgs = {})
 {
-	ShaderPtr vertS = createShader(vert, ShaderType::kVertex);
-	ShaderPtr fragS = createShader(frag, ShaderType::kFragment);
+	ShaderPtr vertS = createShader(vert, ShaderType::kVertex, extraCompilerArgs);
+	ShaderPtr fragS = createShader(frag, ShaderType::kFragment, extraCompilerArgs);
 
 	ShaderProgramInitInfo init;
 	init.m_graphicsShaders[ShaderType::kVertex] = vertS.get();
@@ -60,6 +60,15 @@ inline ShaderProgramPtr createVertFragProg(CString vert, CString frag)
 	ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(init);
 
 	return prog;
+}
+
+inline ShaderPtr loadShader(CString filename, ShaderType type, ConstWeakArray<CString> extraCompilerArgs = {})
+{
+	File file;
+	ANKI_TEST_EXPECT_NO_ERR(file.open(filename, FileOpenFlag::kRead));
+	String src;
+	ANKI_TEST_EXPECT_NO_ERR(file.readAllText(src));
+	return createShader(src, type, extraCompilerArgs);
 }
 
 const U kWidth = 1024;
@@ -75,8 +84,8 @@ inline void commonInit(Bool validation = true)
 	g_debugMarkersCVar.set(true);
 	if(validation)
 	{
-		g_validationCVar.set(true);
-		[[maybe_unused]] const Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"GpuValidation", "1"});
+		[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"GpuValidation", "1"});
+		err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"DebugMarkers", "1"});
 	}
 
 	initWindow();
@@ -133,21 +142,22 @@ inline BufferPtr createBuffer(BufferUsageBit usage, T pattern, U32 count, CStrin
 }
 
 template<typename T>
-inline TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue)
+inline TexturePtr createTexture2d(const TextureInitInfo texInit_, ConstWeakArray<T> data)
 {
+	TextureInitInfo texInit = texInit_;
+	texInit.m_usage |= TextureUsageBit::kTransferDestination;
+
 	BufferInitInfo buffInit;
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	buffInit.m_size = texInit.m_height * texInit.m_width * getFormatInfo(texInit.m_format).m_texelSize;
+	ANKI_ASSERT(getFormatInfo(texInit.m_format).m_texelSize == sizeof(T));
+	ANKI_ASSERT(buffInit.m_size == data.getSizeInBytes());
 	buffInit.m_usage = BufferUsageBit::kTransferSource;
 
 	BufferPtr staging = GrManager::getSingleton().newBuffer(buffInit);
 
-	T* inData = static_cast<T*>(staging->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
-	const T* endData = inData + (buffInit.m_size / sizeof(T));
-	for(; inData < endData; ++inData)
-	{
-		*inData = initialValue;
-	}
+	void* inData = staging->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+	memcpy(inData, data.getBegin(), buffInit.m_size);
 	staging->unmap();
 
 	TexturePtr tex = GrManager::getSingleton().newTexture(texInit);
@@ -165,6 +175,15 @@ inline TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue
 	fence->clientWait(kMaxSecond);
 
 	return tex;
+};
+
+template<typename T>
+inline TexturePtr createTexture2d(const TextureInitInfo& texInit, T initialValue)
+{
+	DynamicArray<T> arr;
+	arr.resize(texInit.m_height * texInit.m_width, initialValue);
+
+	return createTexture2d(texInit, ConstWeakArray<T>(arr));
 };
 
 template<typename T>
@@ -214,6 +233,13 @@ inline void validateBuffer(BufferPtr buff, ConstWeakArray<T> values)
 	{
 		ANKI_TEST_EXPECT_EQ(cpuBuff[i], values[i]);
 	}
+}
+
+template<typename T>
+inline void validateBuffer2(BufferPtr buff, T value)
+{
+	const Array<T, 1> arr = {value};
+	validateBuffer(buff, ConstWeakArray(arr));
 }
 
 } // end namespace anki

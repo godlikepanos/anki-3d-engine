@@ -576,7 +576,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 													  D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 				}
 				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite)
-						&& !!(inDescriptor.m_flags | DescriptorFlag::kByteAddressBuffer))
+						&& !!(inDescriptor.m_flags & DescriptorFlag::kByteAddressBuffer))
 				{
 					// RWByteAddressBuffer
 

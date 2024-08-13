@@ -292,3 +292,15 @@ template<typename T>
 void DispatchMesh(U32 groupSizeX, U32 groupSizeY, U32 groupSizeZ, T payload);
 
 void SetMeshOutputCounts(U32 vertexCount, U32 primitiveCount);
+
+// Workgraphs
+
+template<typename T>
+struct DispatchNodeInputRecord
+{
+	T Get() const
+	{
+		T t;
+		return t;
+	}
+};

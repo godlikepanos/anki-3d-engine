@@ -15,14 +15,9 @@ namespace anki {
 	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
 	return Error::kUserData
 
-inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION",
-																			   "GEOMETRY", "TASK", "MESH", "FRAGMENT", "COMPUTE", "RAY_GEN",
-																			   "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
-
-inline constexpr char kShaderHeader[] = R"(#define ANKI_%s_SHADER 1
-#define kMaxBindlessTextures %uu
-#define kMaxBindlessReadonlyTextureBuffers %uu
-)";
+inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {
+	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "TASK", "MESH", "FRAGMENT", "COMPUTE", "RAY_GEN", "ANY_HIT",
+	 "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE", "WORK_GRAPH"}};
 
 static ShaderType strToShaderType(CString str)
 {
