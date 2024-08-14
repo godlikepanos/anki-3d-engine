@@ -112,7 +112,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_transmittanceLutGrProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(u0), transmittanceLutRt);
+			rgraphCtx.bindUav(0, 0, transmittanceLutRt);
 
 			dispatchPPCompute(cmdb, 8, 8, kTransmittanceLutSize.x(), kTransmittanceLutSize.y());
 		});
@@ -133,9 +133,9 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_multipleScatteringLutGrProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), transmittanceLutRt);
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(u0), multipleScatteringLutRt);
+			rgraphCtx.bindSrv(0, 0, transmittanceLutRt);
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindUav(0, 0, multipleScatteringLutRt);
 
 			dispatchPPCompute(cmdb, 8, 8, kMultipleScatteringLutSize.x(), kMultipleScatteringLutSize.y());
 		});
@@ -157,11 +157,11 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_skyLutGrProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), transmittanceLutRt);
-			rgraphCtx.bindTexture(ANKI_REG(t1), multipleScatteringLutRt);
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_skyLutRt);
-			cmdb.bindUniformBuffer(ANKI_REG(b0), ctx.m_globalRenderingUniformsBuffer);
+			rgraphCtx.bindSrv(0, 0, transmittanceLutRt);
+			rgraphCtx.bindSrv(1, 0, multipleScatteringLutRt);
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindUav(0, 0, m_runCtx.m_skyLutRt);
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x(), kSkyLutSize.y());
 		});
@@ -180,8 +180,8 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_computeSunColorGrProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), transmittanceLutRt);
-			cmdb.bindStorageBuffer(ANKI_REG(u0), ctx.m_globalRenderingUniformsBuffer);
+			rgraphCtx.bindSrv(0, 0, transmittanceLutRt);
+			cmdb.bindUav(0, 0, ctx.m_globalRenderingUniformsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});

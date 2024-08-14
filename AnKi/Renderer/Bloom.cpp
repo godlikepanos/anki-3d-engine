@@ -112,17 +112,17 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			const TextureSubresourceDesc inputTexSubresource =
 				TextureSubresourceDesc::surface(getRenderer().getDownscaleBlur().getMipmapCount() - 1, 0, 0);
 
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getDownscaleBlur().getRt(), inputTexSubresource);
 
 			const Vec4 consts(g_bloomThresholdCVar.get(), g_bloomScaleCVar.get(), 0.0f, 0.0f);
 			cmdb.setPushConstants(&consts, sizeof(consts));
 
-			rgraphCtx.bindTexture(ANKI_REG(u0), getRenderer().getTonemapping().getRt());
+			rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getRt());
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_exposureRt);
+				rgraphCtx.bindUav(1, 0, m_runCtx.m_exposureRt);
 
 				dispatchPPCompute(cmdb, 8, 8, m_exposure.m_rtDescr.m_width, m_exposure.m_rtDescr.m_height);
 			}
@@ -167,13 +167,13 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_upscale.m_grProg.get());
 
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_exposureRt);
-			cmdb.bindTexture(ANKI_REG(t1), TextureView(&m_upscale.m_lensDirtImage->getTexture(), TextureSubresourceDesc::all()));
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, m_runCtx.m_exposureRt);
+			cmdb.bindSrv(1, 0, TextureView(&m_upscale.m_lensDirtImage->getTexture(), TextureSubresourceDesc::all()));
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_upscaleRt);
+				rgraphCtx.bindUav(0, 0, m_runCtx.m_upscaleRt);
 
 				dispatchPPCompute(cmdb, 8, 8, m_upscale.m_rtDescr.m_width, m_upscale.m_rtDescr.m_height);
 			}

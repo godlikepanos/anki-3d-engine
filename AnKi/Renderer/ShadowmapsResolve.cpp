@@ -111,29 +111,29 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb.bindUniformBuffer(ANKI_REG(b0), ctx.m_globalRenderingUniformsBuffer);
-	cmdb.bindStorageBuffer(ANKI_REG(t0), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-	cmdb.bindStorageBuffer(ANKI_REG(t1), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-	rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getShadowMapping().getShadowmapRt());
-	cmdb.bindStorageBuffer(ANKI_REG(t3), getRenderer().getClusterBinning().getClustersBuffer());
+	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+	cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+	rgraphCtx.bindSrv(2, 0, getRenderer().getShadowMapping().getShadowmapRt());
+	cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
-	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-	cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClampShadow.get());
-	cmdb.bindSampler(ANKI_REG(s2), getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
+	cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
 	if(m_quarterRez)
 	{
-		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
+		rgraphCtx.bindSrv(4, 0, getRenderer().getDepthDownscale().getRt(), DepthDownscale::kQuarterInternalResolution);
 	}
 	else
 	{
-		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());
 	}
-	cmdb.bindTexture(ANKI_REG(t5), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
+	cmdb.bindSrv(5, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 
 	if(getRenderer().getRtShadowsEnabled())
 	{
-		rgraphCtx.bindTexture(ANKI_REG(t6), getRenderer().getRtShadows().getRt());
+		rgraphCtx.bindSrv(6, 0, getRenderer().getRtShadows().getRt());
 	}
 
 	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get())
@@ -144,7 +144,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 
 	if(g_preferComputeCVar.get())
 	{
-		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_rt);
+		rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);
 	}
 	else

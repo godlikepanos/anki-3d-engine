@@ -106,72 +106,6 @@ public:
 	}
 };
 
-/// Maps to HLSL register(X#, S)
-class Register
-{
-public:
-	U32 m_bindPoint = kMaxU32;
-	HlslResourceType m_resourceType = HlslResourceType::kCount;
-	U8 m_space = kMaxU8;
-
-	Register(HlslResourceType type, U32 bindingPoint, U8 space = 0)
-		: m_bindPoint(bindingPoint)
-		, m_resourceType(type)
-		, m_space(space)
-	{
-		validate();
-	}
-
-	/// Construct using a couple of strings like ("t0", "space10")
-	Register(const Char* reg, const Char* space = "space0")
-	{
-		ANKI_ASSERT(reg && space);
-		m_resourceType = toResourceType(reg[0]);
-		++reg;
-		m_bindPoint = 0;
-		do
-		{
-			ANKI_ASSERT(*reg >= '0' && *reg <= '9');
-			m_bindPoint *= 10;
-			m_bindPoint += *reg - '0';
-			++reg;
-		} while(*reg != '\0');
-		ANKI_ASSERT(strlen(space) == 6);
-		ANKI_ASSERT(space[5] >= '0' && space[5] <= '9');
-		m_space = U8(space[5] - '0');
-	}
-
-	void validate() const
-	{
-		ANKI_ASSERT(m_bindPoint != kMaxU32);
-		ANKI_ASSERT(m_resourceType < HlslResourceType::kCount);
-		ANKI_ASSERT(m_space < kMaxDescriptorSets);
-	}
-
-private:
-	static HlslResourceType toResourceType(Char c)
-	{
-		switch(c)
-		{
-		case 'b':
-			return HlslResourceType::kCbv;
-		case 'u':
-			return HlslResourceType::kUav;
-		case 't':
-			return HlslResourceType::kSrv;
-		case 's':
-			return HlslResourceType::kSampler;
-		default:
-			ANKI_ASSERT(0);
-			return HlslResourceType::kCount;
-		}
-	}
-};
-
-/// Break the code style to define something HLSL like
-#define ANKI_REG(reg) Register(ANKI_STRINGIZE(reg))
-#define ANKI_REG2(reg, space) Register(ANKI_STRINGIZE(reg), ANKI_STRINGIZE(space))
-
 /// Command buffer.
 class CommandBuffer : public GrObject
 {
@@ -272,23 +206,26 @@ public:
 	/// Set the line width. By default it's undefined.
 	void setLineWidth(F32 lineWidth);
 
+	/// Bind constant buffer.
+	void bindConstantBuffer(U32 reg, U32 space, const BufferView& buff);
+
 	/// Bind sampler.
-	void bindSampler(Register reg, Sampler* sampler);
+	void bindSampler(U32 reg, U32 space, Sampler* sampler);
 
 	/// Bind a texture.
-	void bindTexture(Register reg, const TextureView& texView);
+	void bindSrv(U32 reg, U32 space, const TextureView& texView);
 
-	/// Bind uniform buffer.
-	void bindUniformBuffer(Register reg, const BufferView& buff);
-
-	/// Bind storage buffer.
-	void bindStorageBuffer(Register reg, const BufferView& buff);
-
-	/// Bind texel buffer.
-	void bindTexelBuffer(Register reg, const BufferView& buff, Format fmt);
+	/// Bind a buffer.
+	void bindSrv(U32 reg, U32 space, const BufferView& buffer, Format fmt = Format::kNone);
 
 	/// Bind AS.
-	void bindAccelerationStructure(Register reg, AccelerationStructure* as);
+	void bindSrv(U32 reg, U32 space, AccelerationStructure* as);
+
+	/// Bind a texture.
+	void bindUav(U32 reg, U32 space, const TextureView& texView);
+
+	/// Bind a buffer.
+	void bindUav(U32 reg, U32 space, const BufferView& buffer, Format fmt = Format::kNone);
 
 	/// Set push constants.
 	void setPushConstants(const void* data, U32 dataSize);

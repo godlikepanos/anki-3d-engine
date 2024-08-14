@@ -103,7 +103,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_genPyramidGrProg.get());
-		cmdb.bindSampler(ANKI_REG(s0), m_maxSampler.isCreated() ? m_maxSampler.get() : getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 0, m_maxSampler.isCreated() ? m_maxSampler.get() : getRenderer().getSamplers().m_trilinearClamp.get());
 
 		for(U32 dispatch = 0; dispatch < dispatchCount; ++dispatch)
 		{
@@ -133,7 +133,6 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
-			Register mipsReg(ANKI_REG(u1));
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
 				TextureSubresourceDesc subresource = TextureSubresourceDesc::firstSurface();
@@ -146,14 +145,14 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 					subresource.m_mipmap = 0; // Put something random
 				}
 
-				rgraphCtx.bindTexture(mipsReg, in.m_dstHzbRt, subresource);
-				++mipsReg.m_bindPoint;
+				rgraphCtx.bindUav(1 + mip, 0, in.m_dstHzbRt, subresource);
 			}
 
-			cmdb.bindStorageBuffer(ANKI_REG(u0), BufferView(m_counterBuffer.get())
-													 .incrementOffset((counterBufferElement + dispatch) * m_counterBufferElementSize)
-													 .setRange(sizeof(U32)));
-			rgraphCtx.bindTexture(ANKI_REG(t0), in.m_srcDepthRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
+			cmdb.bindUav(0, 0,
+						 BufferView(m_counterBuffer.get())
+							 .incrementOffset((counterBufferElement + dispatch) * m_counterBufferElementSize)
+							 .setRange(sizeof(U32)));
+			rgraphCtx.bindSrv(0, 0, in.m_srcDepthRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		}
@@ -196,9 +195,9 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		pass.setWork([this, depthBufferRt = in.m_depthBufferRt, maxDepthRt, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), depthBufferRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(u0), maxDepthRt);
+			rgraphCtx.bindSrv(0, 0, depthBufferRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindUav(0, 0, maxDepthRt);
 
 			cmdb.bindShaderProgram(m_maxDepthGrProg.get());
 
@@ -270,7 +269,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			cmdb.bindShaderProgram(m_maxBoxGrProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), maxDepthRt);
+			rgraphCtx.bindSrv(0, 0, maxDepthRt);
 
 			struct Uniforms
 			{

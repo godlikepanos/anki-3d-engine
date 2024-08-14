@@ -132,43 +132,45 @@ public:
 		return TextureView(tex, subresource);
 	}
 
-	/// Convenience method.
-	void bindTexture(Register reg, RenderTargetHandle handle, const TextureSubresourceDesc& subresource)
+	void bindSrv(U32 reg, U32 space, RenderTargetHandle handle, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
 	{
 		Texture* tex;
 		getRenderTargetState(handle, subresource, tex);
-		m_commandBuffer->bindTexture(reg, TextureView(tex, subresource));
+		m_commandBuffer->bindSrv(reg, space, TextureView(tex, subresource));
 	}
 
-	/// Convenience method to bind the whole texture.
-	void bindTexture(Register reg, RenderTargetHandle handle)
+	void bindUav(U32 reg, U32 space, RenderTargetHandle handle, const TextureSubresourceDesc& subresource = TextureSubresourceDesc::all())
 	{
-		const TextureSubresourceDesc subresource = TextureSubresourceDesc::all();
 		Texture* tex;
-		getRenderTargetState(handle, subresource, tex); // Doesn't care about the aspect so it's OK
-		m_commandBuffer->bindTexture(reg, TextureView(tex, subresource));
+		getRenderTargetState(handle, subresource, tex);
+		m_commandBuffer->bindUav(reg, space, TextureView(tex, subresource));
 	}
 
-	/// Convenience method.
-	void bindStorageBuffer(Register reg, BufferHandle handle)
+	void bindSrv(U32 reg, U32 space, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindStorageBuffer(reg, BufferView(buff, offset, range));
+		m_commandBuffer->bindSrv(reg, space, BufferView(buff, offset, range));
 	}
 
-	/// Convenience method.
-	void bindUniformBuffer(Register reg, BufferHandle handle)
+	void bindUav(U32 reg, U32 space, BufferHandle handle)
 	{
 		Buffer* buff;
 		PtrSize offset, range;
 		getBufferState(handle, buff, offset, range);
-		m_commandBuffer->bindUniformBuffer(reg, BufferView(buff, offset, range));
+		m_commandBuffer->bindUav(reg, space, BufferView(buff, offset, range));
 	}
 
-	/// Convenience method.
-	void bindAccelerationStructure(Register reg, AccelerationStructureHandle handle);
+	void bindSrv(U32 reg, U32 space, AccelerationStructureHandle handle);
+
+	void bindConstantBuffer(U32 reg, U32 space, BufferHandle handle)
+	{
+		Buffer* buff;
+		PtrSize offset, range;
+		getBufferState(handle, buff, offset, range);
+		m_commandBuffer->bindConstantBuffer(reg, space, BufferView(buff, offset, range));
+	}
 
 private:
 	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);

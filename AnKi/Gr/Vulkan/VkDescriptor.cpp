@@ -355,7 +355,7 @@ Error PipelineLayoutFactory2::getOrCreateDescriptorSetLayout(ConstWeakArray<Shad
 		U32 count = 0;
 		for(const ShaderReflectionBinding& reflBinding : reflBindings)
 		{
-			bindings[count].m_type = convertDescriptorType(reflBinding.m_type, reflBinding.m_flags);
+			bindings[count].m_type = convertDescriptorType(reflBinding.m_type);
 			bindings[count].m_arraySize = reflBinding.m_arraySize;
 			bindings[count].m_binding = reflBinding.m_vkBinding;
 			++count;
@@ -540,14 +540,14 @@ void DescriptorState::flush(VkCommandBuffer cmdb, DescriptorAllocator& dalloc)
 				for(U32 arrayIdx = 0; arrayIdx < binding.m_arraySize; ++arrayIdx)
 				{
 					VkWriteDescriptorSet& writeInfo = set.m_writeInfos[writeInfoCount++];
-					const HlslResourceType hlslType = descriptorTypeToHlslResourceType(binding.m_type, binding.m_flags);
+					const HlslResourceType hlslType = descriptorTypeToHlslResourceType(binding.m_type);
 					ANKI_ASSERT(binding.m_registerBindingPoint + arrayIdx < set.m_descriptors[hlslType].getSize() && "Forgot to bind something");
 					const Descriptor& desc = set.m_descriptors[hlslType][binding.m_registerBindingPoint + arrayIdx];
 
-					ANKI_ASSERT(desc.m_type == binding.m_type && desc.m_flags == binding.m_flags && "Have bound the wrong type");
+					ANKI_ASSERT(desc.m_type == binding.m_type && "Have bound the wrong type");
 
 					writeInfo = writeTemplate;
-					writeInfo.descriptorType = convertDescriptorType(binding.m_type, binding.m_flags);
+					writeInfo.descriptorType = convertDescriptorType(binding.m_type);
 					writeInfo.dstArrayElement = arrayIdx;
 					writeInfo.dstBinding = binding.m_vkBinding;
 

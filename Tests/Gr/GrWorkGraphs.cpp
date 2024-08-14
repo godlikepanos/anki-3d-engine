@@ -137,7 +137,7 @@ void thirdNode([MaxRecords(32)] GroupNodeInputRecords<ThirdNodeRecord> inp, uint
 
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kSmallBatch));
 		cmdb->bindShaderProgram(prog.get());
-		cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(counterBuff.get()));
+		cmdb->bindUav(0, 0, BufferView(counterBuff.get()));
 		cmdb->dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
 		cmdb->endRecording();
 
@@ -410,18 +410,18 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 				cmdb = GrManager::getSingleton().newCommandBuffer(
 					CommandBufferInitInfo(CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork));
 				cmdb->bindShaderProgram(prog.get());
-				cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(aabbsBuff.get()));
-				cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(objBuff.get()));
-				cmdb->bindStorageBuffer(ANKI_REG(t1), BufferView(posBuff.get()));
+				cmdb->bindUav(0, 0, BufferView(aabbsBuff.get()));
+				cmdb->bindSrv(0, 0, BufferView(objBuff.get()));
+				cmdb->bindSrv(1, 0, BufferView(posBuff.get()));
 				cmdb->dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
 			}
 			else
 			{
 				cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kGeneralWork));
 				cmdb->bindShaderProgram(prog.get());
-				cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(aabbsBuff.get()));
-				cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(objBuff.get()));
-				cmdb->bindStorageBuffer(ANKI_REG(t1), BufferView(posBuff.get()));
+				cmdb->bindUav(0, 0, BufferView(aabbsBuff.get()));
+				cmdb->bindSrv(0, 0, BufferView(objBuff.get()));
+				cmdb->bindSrv(1, 0, BufferView(posBuff.get()));
 
 				for(U32 iobj = 0; iobj < kObjectCount; ++iobj)
 				{

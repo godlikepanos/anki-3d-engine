@@ -119,25 +119,25 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	const U32 vpWidth = m_rtTex->getWidth() >> passIdx;
 	const U32 vpHeight = m_rtTex->getHeight() >> passIdx;
 
-	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 	if(passIdx > 0)
 	{
-		rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt, TextureSubresourceDesc::surface(passIdx - 1, 0, 0));
+		rgraphCtx.bindSrv(0, 0, m_runCtx.m_rt, TextureSubresourceDesc::surface(passIdx - 1, 0, 0));
 	}
 	else
 	{
-		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getLightShading().getRt());
+		rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 	}
 
-	rgraphCtx.bindTexture(ANKI_REG(u0), getRenderer().getTonemapping().getRt());
+	rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getRt());
 
 	if(g_preferComputeCVar.get())
 	{
 		const Vec4 fbSize(F32(vpWidth), F32(vpHeight), 0.0f, 0.0f);
 		cmdb.setPushConstants(&fbSize, sizeof(fbSize));
 
-		rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_rt, TextureSubresourceDesc::surface(passIdx, 0, 0));
+		rgraphCtx.bindUav(1, 0, m_runCtx.m_rt, TextureSubresourceDesc::surface(passIdx, 0, 0));
 
 		dispatchPPCompute(cmdb, 8, 8, vpWidth, vpHeight);
 	}

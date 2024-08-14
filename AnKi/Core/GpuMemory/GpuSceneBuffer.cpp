@@ -137,9 +137,9 @@ void GpuSceneMicroPatcher::patchGpuScene(CommandBuffer& cmdb)
 	const RebarAllocation dataToken = RebarTransientMemoryPool::getSingleton().allocateFrame(m_crntFramePatchData.getSizeInBytes(), mapped);
 	memcpy(mapped, &m_crntFramePatchData[0], m_crntFramePatchData.getSizeInBytes());
 
-	cmdb.bindStorageBuffer(ANKI_REG(t0), headersToken);
-	cmdb.bindStorageBuffer(ANKI_REG(t1), dataToken);
-	cmdb.bindStorageBuffer(ANKI_REG(u0), BufferView(&GpuSceneBuffer::getSingleton().getBuffer()));
+	cmdb.bindSrv(0, 0, headersToken);
+	cmdb.bindSrv(1, 0, dataToken);
+	cmdb.bindUav(0, 0, BufferView(&GpuSceneBuffer::getSingleton().getBuffer()));
 
 	cmdb.bindShaderProgram(m_grProgram.get());
 

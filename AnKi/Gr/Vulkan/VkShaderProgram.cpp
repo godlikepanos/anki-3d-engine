@@ -513,7 +513,7 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 				for(U32 i = 0; i < refl.m_bindingCounts[set]; ++i)
 				{
 					const ShaderReflectionBinding& x = refl.m_bindings[set][i];
-					if(x.m_registerBindingPoint == registerBindingPoint && hlslResourceType == descriptorTypeToHlslResourceType(x.m_type, x.m_flags))
+					if(x.m_registerBindingPoint == registerBindingPoint && hlslResourceType == descriptorTypeToHlslResourceType(x.m_type))
 					{
 						ANKI_ASSERT(foundBindingIdx == kMaxU32);
 						foundBindingIdx = i;

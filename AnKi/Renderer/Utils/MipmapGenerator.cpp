@@ -45,8 +45,8 @@ void MipmapGenerator::populateRenderGraph(const MipmapGeneratorTargetArguments& 
 					cmdb.bindShaderProgram(m_genMipsGrProg.get());
 					cmdb.setViewport(0, 0, viewport.x(), viewport.y());
 
-					rgraphCtx.bindTexture(ANKI_REG(t0), rt, TextureSubresourceDesc::surface(readMip, face, layer));
-					cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+					rgraphCtx.bindSrv(0, 0, rt, TextureSubresourceDesc::surface(readMip, face, layer));
+					cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 					drawQuad(cmdb);
 				});

@@ -565,7 +565,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					const TextureView view(tex.get(), TextureSubresourceDesc::surface(mip, face, layer));
 
-					cmdb->bindTexture(ANKI_REG(u0), view);
+					cmdb->bindUav(0, 0, view);
 
 					const TextureBarrierInfo barrier = {view, TextureUsageBit::kNone, TextureUsageBit::kUavCompute};
 					cmdb->setPipelineBarrier({&barrier, 1}, {}, {});

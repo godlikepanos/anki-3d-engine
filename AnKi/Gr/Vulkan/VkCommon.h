@@ -237,28 +237,38 @@ static_assert(!(BufferUsageBit::kAll & PrivateBufferUsageBit::kAllPrivate), "Upd
 	return out;
 }
 
-[[nodiscard]] inline VkDescriptorType convertDescriptorType(DescriptorType ak, DescriptorFlag flags)
+[[nodiscard]] inline VkDescriptorType convertDescriptorType(DescriptorType ak)
 {
 	VkDescriptorType out;
+
 	switch(ak)
 	{
-	case DescriptorType::kTexture:
-		out = !!(flags & DescriptorFlag::kWrite) ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		break;
-	case DescriptorType::kSampler:
-		out = VK_DESCRIPTOR_TYPE_SAMPLER;
-		break;
-	case DescriptorType::kUniformBuffer:
+	case DescriptorType::kConstantBuffer:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		break;
-	case DescriptorType::kTexelBuffer:
-		out = !!(flags & DescriptorFlag::kWrite) ? VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER : VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
-		break;
-	case DescriptorType::kStorageBuffer:
+	case DescriptorType::kSrvStructuredBuffer:
+	case DescriptorType::kUavStructuredBuffer:
+	case DescriptorType::kSrvByteAddressBuffer:
+	case DescriptorType::kUavByteAddressBuffer:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		break;
+	case DescriptorType::kSrvTexelBuffer:
+		out = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+		break;
+	case DescriptorType::kUavTexelBuffer:
+		out = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+		break;
+	case DescriptorType::kSrvTexture:
+		out = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		break;
+	case DescriptorType::kUavTexture:
+		out = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		break;
 	case DescriptorType::kAccelerationStructure:
 		out = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+		break;
+	case DescriptorType::kSampler:
+		out = VK_DESCRIPTOR_TYPE_SAMPLER;
 		break;
 	default:
 		out = VK_DESCRIPTOR_TYPE_MAX_ENUM;

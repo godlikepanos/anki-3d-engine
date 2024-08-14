@@ -44,36 +44,36 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 		ANKI_ASSERT(args.m_viewport != UVec4(0u));
 		globalUniforms->m_viewport = Vec4(args.m_viewport);
 
-		cmdb.bindUniformBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS), globalUniformsToken);
+		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS, 0, globalUniformsToken);
 	}
 
 	// More globals
-	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER), args.m_sampler);
-	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_GPU_SCENE), GpuSceneBuffer::getSingleton().getBufferView());
+	cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, args.m_sampler);
+	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
-	cmdb.bindTexelBuffer( \
-		ANKI_REG(reg), \
+	cmdb.bindSrv( \
+		reg, 0, \
 		BufferView(&UnifiedGeometryBuffer::getSingleton().getBuffer(), 0, \
 				   getAlignedRoundDown(getFormatInfo(Format::k##fmt).m_texelSize, UnifiedGeometryBuffer::getSingleton().getBuffer().getSize())), \
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES), UnifiedGeometryBuffer::getSingleton().getBufferView());
-	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS), UnifiedGeometryBuffer::getSingleton().getBufferView());
+	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
+	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESHLET_GEOMETRY_DESCRIPTORS, 0, UnifiedGeometryBuffer::getSingleton().getBufferView());
 	if(args.m_mesh.m_meshletInstancesBuffer.isValid())
 	{
-		cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESHLET_INSTANCES), args.m_mesh.m_meshletInstancesBuffer);
+		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESHLET_INSTANCES, 0, args.m_mesh.m_meshletInstancesBuffer);
 	}
-	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_RENDERABLES), GpuSceneArrays::Renderable::getSingleton().getBufferView());
-	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_MESH_LODS), GpuSceneArrays::MeshLod::getSingleton().getBufferView());
-	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_TRANSFORMS), GpuSceneArrays::Transform::getSingleton().getBufferView());
-	cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS), GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
-	cmdb.bindSampler(ANKI_REG(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER), getRenderer().getSamplers().m_nearestNearestClamp.get());
+	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_RENDERABLES, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
+	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
+	cmdb.bindSrv(ANKI_MATERIAL_REGISTER_PARTICLE_EMITTERS, 0, GpuSceneArrays::ParticleEmitter::getSingleton().getBufferViewSafe());
+	cmdb.bindSampler(ANKI_MATERIAL_REGISTER_NEAREST_CLAMP_SAMPLER, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 	if(args.m_mesh.m_firstMeshletBuffer.isValid())
 	{
-		cmdb.bindStorageBuffer(ANKI_REG(ANKI_MATERIAL_REGISTER_FIRST_MESHLET), args.m_mesh.m_firstMeshletBuffer);
+		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_FIRST_MESHLET, 0, args.m_mesh.m_firstMeshletBuffer);
 	}
 
 	// Misc

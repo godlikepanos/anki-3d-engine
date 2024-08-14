@@ -135,12 +135,12 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	unis.m_camTrf = ctx.m_matrices.m_cameraTransform;
 	cmdb.setPushConstants(&unis, sizeof(unis));
 
-	cmdb.bindStorageBuffer(ANKI_REG(t1), getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
-	cmdb.bindStorageBuffer(ANKI_REG(t2), getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
+	cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
+	cmdb.bindSrv(2, 0, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
 
-	cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearRepeat.get());
-	cmdb.bindTexture(ANKI_REG(t3), TextureView(&image.getTexture(), TextureSubresourceDesc::all()));
-	cmdb.bindTexture(ANKI_REG(t4), TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDesc::all()));
+	cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+	cmdb.bindSrv(3, 0, TextureView(&image.getTexture(), TextureSubresourceDesc::all()));
+	cmdb.bindSrv(4, 0, TextureView(&m_spotLightImage->getTexture(), TextureSubresourceDesc::all()));
 
 	cmdb.draw(PrimitiveTopology::kTriangles, 6, objCount);
 }
@@ -160,8 +160,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb.setDepthCompareOperation((m_depthTestOn) ? CompareOperation::kLess : CompareOperation::kAlways);
 	cmdb.setLineWidth(2.0f);
 
-	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 
 	// GBuffer renderables
 	{
@@ -187,12 +187,12 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
 		cmdb.bindIndexBuffer(BufferView(m_cubeIndicesBuffer.get()), IndexType::kU16);
 
-		cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
+		cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getBufferView());
 
 		BufferView indicesBuff;
 		BufferHandle dep;
 		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
-		cmdb.bindStorageBuffer(ANKI_REG(t2), indicesBuff);
+		cmdb.bindSrv(2, 0, indicesBuff);
 
 		cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 	}
@@ -203,12 +203,12 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 		if(allAabbCount)
 		{
-			cmdb.bindStorageBuffer(ANKI_REG(t1), GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
+			cmdb.bindSrv(1, 0, GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getBufferView());
 
 			BufferView indicesBuff;
 			BufferHandle dep;
 			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
-			cmdb.bindStorageBuffer(ANKI_REG(t2), indicesBuff);
+			cmdb.bindSrv(2, 0, indicesBuff);
 
 			cmdb.drawIndexed(PrimitiveTopology::kLines, 12 * 2, allAabbCount);
 		}

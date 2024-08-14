@@ -210,81 +210,58 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	self.m_graphicsState.setBlendOperation(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
+void CommandBuffer::bindSrv(U32 reg, U32 space, const TextureView& texView)
 {
-	reg.validate();
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(texView.getTexture());
-
-	if(reg.m_resourceType == HlslResourceType::kSrv)
-	{
-		const DescriptorHeapHandle handle = impl.getOrCreateSrv(texView.getSubresource());
-		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, handle);
-	}
-	else
-	{
-		const DescriptorHeapHandle handle = impl.getOrCreateUav(texView.getSubresource());
-		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, handle);
-	}
+	const DescriptorHeapHandle handle = impl.getOrCreateSrv(texView.getSubresource());
+	self.m_descriptors.bindSrv(space, reg, handle);
 }
 
-void CommandBuffer::bindSampler(Register reg, Sampler* sampler)
+void CommandBuffer::bindUav(U32 reg, U32 space, const TextureView& texView)
 {
-	reg.validate();
+	ANKI_D3D_SELF(CommandBufferImpl);
+
+	const TextureImpl& impl = static_cast<const TextureImpl&>(texView.getTexture());
+	const DescriptorHeapHandle handle = impl.getOrCreateUav(texView.getSubresource());
+	self.m_descriptors.bindUav(space, reg, handle);
+}
+
+void CommandBuffer::bindSampler(U32 reg, U32 space, Sampler* sampler)
+{
 	ANKI_ASSERT(sampler);
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	const SamplerImpl& impl = static_cast<const SamplerImpl&>(*sampler);
-	self.m_descriptors.bindSampler(reg.m_space, reg.m_bindPoint, impl.m_handle);
+	self.m_descriptors.bindSampler(space, reg, impl.m_handle);
 
 	self.m_mcmdb->pushObjectRef(sampler);
 }
 
-void CommandBuffer::bindUniformBuffer(Register reg, const BufferView& buff)
+void CommandBuffer::bindConstantBuffer(U32 reg, U32 space, const BufferView& buff)
 {
-	reg.validate();
 	ANKI_D3D_SELF(CommandBufferImpl);
 
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
-	self.m_descriptors.bindCbv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
+	self.m_descriptors.bindCbv(space, reg, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
 }
 
-void CommandBuffer::bindStorageBuffer(Register reg, const BufferView& buff)
+void CommandBuffer::bindSrv(U32 reg, U32 space, const BufferView& buff, Format fmt)
 {
-	reg.validate();
 	ANKI_D3D_SELF(CommandBufferImpl);
-
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
-	if(reg.m_resourceType == HlslResourceType::kUav)
-	{
-		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
-	}
-	else
-	{
-		ANKI_ASSERT(reg.m_resourceType == HlslResourceType::kSrv);
-		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange());
-	}
+	self.m_descriptors.bindSrv(space, reg, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), fmt);
 }
 
-void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format fmt)
+void CommandBuffer::bindUav(U32 reg, U32 space, const BufferView& buff, Format fmt)
 {
-	reg.validate();
 	ANKI_D3D_SELF(CommandBufferImpl);
-
 	const BufferImpl& impl = static_cast<const BufferImpl&>(buff.getBuffer());
-	if(reg.m_resourceType == HlslResourceType::kUav)
-	{
-		self.m_descriptors.bindUav(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), fmt);
-	}
-	else
-	{
-		ANKI_ASSERT(reg.m_resourceType == HlslResourceType::kSrv);
-		self.m_descriptors.bindSrv(reg.m_space, reg.m_bindPoint, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), fmt);
-	}
+	self.m_descriptors.bindUav(space, reg, &impl.getD3DResource(), buff.getOffset(), buff.getRange(), fmt);
 }
 
-void CommandBuffer::bindAccelerationStructure([[maybe_unused]] Register reg, [[maybe_unused]] AccelerationStructure* as)
+void CommandBuffer::bindSrv([[maybe_unused]] U32 reg, [[maybe_unused]] U32 space, [[maybe_unused]] AccelerationStructure* as)
 {
 	ANKI_ASSERT(!"TODO");
 }

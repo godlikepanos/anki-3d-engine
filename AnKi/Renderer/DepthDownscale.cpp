@@ -127,13 +127,13 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 					surface.m_mipmap = 0; // Put something random
 				}
 
-				rgraphCtx.bindTexture(Register(HlslResourceType::kUav, mip + 1), m_runCtx.m_rt, surface);
+				rgraphCtx.bindUav(mip + 1, 0, m_runCtx.m_rt, surface);
 			}
 
-			cmdb.bindStorageBuffer(ANKI_REG(u0), BufferView(m_counterBuffer.get(), 0, sizeof(U32)));
+			cmdb.bindUav(0, 0, BufferView(m_counterBuffer.get(), 0, sizeof(U32)));
 
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 
 			cmdb.dispatchCompute(dispatchThreadGroupCountXY[0], dispatchThreadGroupCountXY[1], 1);
 		});
@@ -166,15 +166,15 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 				cmdb.bindShaderProgram(m_grProg.get());
-				cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
+				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 				if(mip == 0)
 				{
-					rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
+					rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 				}
 				else
 				{
-					rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt, TextureSubresourceDesc::surface(mip - 1, 0, 0));
+					rgraphCtx.bindSrv(0, 0, m_runCtx.m_rt, TextureSubresourceDesc::surface(mip - 1, 0, 0));
 				}
 
 				const UVec2 size = (getRenderer().getInternalResolution() / 2) >> mip;

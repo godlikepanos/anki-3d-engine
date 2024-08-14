@@ -298,12 +298,12 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_scaleGrProg.get());
 
-	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-	rgraphCtx.bindTexture(ANKI_REG(t0), inRt);
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+	rgraphCtx.bindSrv(0, 0, inRt);
 
 	if(preferCompute)
 	{
-		rgraphCtx.bindTexture(ANKI_REG(u0), outRt);
+		rgraphCtx.bindUav(0, 0, outRt);
 	}
 
 	if(m_upscalingMethod == UpscalingMethod::kFsr)
@@ -363,12 +363,12 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_sharpenGrProg.get());
 
-	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-	rgraphCtx.bindTexture(ANKI_REG(t0), inRt);
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+	rgraphCtx.bindSrv(0, 0, inRt);
 
 	if(preferCompute)
 	{
-		rgraphCtx.bindTexture(ANKI_REG(u0), outRt);
+		rgraphCtx.bindUav(0, 0, outRt);
 	}
 
 	class
@@ -434,10 +434,10 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 
 	cmdb.bindShaderProgram(m_tonemapGrProg.get());
 
-	cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
-	rgraphCtx.bindTexture(ANKI_REG(t0), inRt);
+	cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+	rgraphCtx.bindSrv(0, 0, inRt);
 
-	rgraphCtx.bindTexture(ANKI_REG(u0), getRenderer().getTonemapping().getRt());
+	rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getRt());
 
 	if(preferCompute)
 	{
@@ -450,7 +450,7 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 		pc.m_viewportSizeOverOne = 1.0f / Vec2(getRenderer().getPostProcessResolution());
 		pc.m_viewportSize = getRenderer().getPostProcessResolution();
 		cmdb.setPushConstants(&pc, sizeof(pc));
-		rgraphCtx.bindTexture(ANKI_REG(u1), outRt);
+		rgraphCtx.bindUav(1, 0, outRt);
 
 		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
 	}

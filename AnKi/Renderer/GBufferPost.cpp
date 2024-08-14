@@ -56,15 +56,15 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		cmdb.setBlendFactors(1, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
 
 		// Bind all
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
-		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 
-		cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		cmdb.bindUniformBuffer(ANKI_REG(b0), ctx.m_globalRenderingUniformsBuffer);
-		cmdb.bindStorageBuffer(ANKI_REG(t0), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
-		cmdb.bindStorageBuffer(ANKI_REG(t1), getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
+		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
 		// Draw
 		cmdb.draw(PrimitiveTopology::kTriangles, 3);

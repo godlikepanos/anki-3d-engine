@@ -87,10 +87,10 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 			{
 				const BufferView& buff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindStorageBuffer(Register(HlslResourceType::kSrv, U32(type)), buff);
+				cmdb.bindSrv(U32(type), 0, buff);
 			}
 
-			cmdb.bindStorageBuffer(ANKI_REG(u0), indirectArgsBuff);
+			cmdb.bindUav(0, 0, indirectArgsBuff);
 
 			cmdb.dispatchCompute(1, 1, 1);
 
@@ -116,7 +116,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				cmdb.bindShaderProgram(m_binningGrProgs[type].get());
 
 				const BufferView& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindStorageBuffer(ANKI_REG(t0), idsBuff);
+				cmdb.bindSrv(0, 0, idsBuff);
 
 				PtrSize objBufferOffset = 0;
 				PtrSize objBufferRange = 0;
@@ -158,8 +158,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					objBufferRange = getAlignedRoundDown(elementSize, GpuSceneBuffer::getSingleton().getBufferView().getRange());
 				}
 
-				cmdb.bindStorageBuffer(ANKI_REG(t1), BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
-				cmdb.bindStorageBuffer(ANKI_REG(u0), m_runCtx.m_clustersBuffer);
+				cmdb.bindSrv(1, 0, BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
+				cmdb.bindUav(0, 0, m_runCtx.m_clustersBuffer);
 
 				struct ClusterBinningUniforms
 				{
@@ -270,11 +270,11 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					objBufferRange = getAlignedRoundDown(objSize, GpuSceneBuffer::getSingleton().getBufferView().getRange());
 				}
 
-				cmdb.bindStorageBuffer(ANKI_REG(t0), BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
-				cmdb.bindStorageBuffer(ANKI_REG(u0), m_runCtx.m_packedObjectsBuffers[type]);
+				cmdb.bindSrv(0, 0, BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
+				cmdb.bindUav(0, 0, m_runCtx.m_packedObjectsBuffers[type]);
 
 				const BufferView& idsBuff = getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type);
-				cmdb.bindStorageBuffer(ANKI_REG(t1), idsBuff);
+				cmdb.bindSrv(1, 0, idsBuff);
 
 				cmdb.dispatchComputeIndirect(BufferView(indirectArgsBuff).setOffset(indirectArgsBuffOffset).setRange(sizeof(DispatchIndirectArgs)));
 

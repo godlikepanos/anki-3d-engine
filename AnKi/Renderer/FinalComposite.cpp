@@ -133,20 +133,20 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 	// Bind stuff
 	if(!hasDebugRt)
 	{
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb.bindSampler(ANKI_REG(s2), getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getScale().getTonemappedRt());
+		rgraphCtx.bindSrv(0, 0, getRenderer().getScale().getTonemappedRt());
 
-		rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getBloom().getRt());
-		cmdb.bindTexture(ANKI_REG(t2), TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
-		rgraphCtx.bindTexture(ANKI_REG(t3), getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getRt());
+		cmdb.bindSrv(2, 0, TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
+		rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());
 
 		if(dbgEnabled)
 		{
-			rgraphCtx.bindTexture(ANKI_REG(t5), getRenderer().getDbg().getRt());
+			rgraphCtx.bindSrv(5, 0, getRenderer().getDbg().getRt());
 		}
 
 		const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
@@ -154,14 +154,14 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 
 		U32 count = 0;
 		for(const RenderTargetHandle& handle : dbgRts)
 		{
 			if(handle.isValid())
 			{
-				rgraphCtx.bindTexture(Register(HlslResourceType::kSrv, count++), handle);
+				rgraphCtx.bindSrv(count++, 0, handle);
 			}
 		}
 	}

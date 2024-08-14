@@ -126,17 +126,17 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		consts.m_unprojectionParameters = ctx.m_matrices.m_unprojectionParameters;
 		consts.m_prevViewProjMatMulInvViewProjMat = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 		consts.m_normalMat = Mat3x4(Vec3(0.0f), ctx.m_matrices.m_view.getRotationPart());
-		*allocateAndBindConstants<SsrUniforms>(cmdb, ANKI_REG(b0)) = consts;
+		*allocateAndBindConstants<SsrUniforms>(cmdb, 0, 0) = consts;
 
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getDepthDownscale().getRt());
-		rgraphCtx.bindTexture(ANKI_REG(t3), getRenderer().getDownscaleBlur().getRt());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindSrv(2, 0, getRenderer().getDepthDownscale().getRt());
+		rgraphCtx.bindSrv(3, 0, getRenderer().getDownscaleBlur().getRt());
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_ssrRt);
+			rgraphCtx.bindUav(0, 0, m_runCtx.m_ssrRt);
 			dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 		}
 		else

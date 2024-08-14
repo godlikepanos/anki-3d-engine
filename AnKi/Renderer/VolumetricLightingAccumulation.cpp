@@ -95,25 +95,23 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		cmdb.bindShaderProgram(m_grProg.get());
 
 		// Bind all
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearRepeat.get());
-		cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb.bindSampler(ANKI_REG(s2), getRenderer().getSamplers().m_trilinearClampShadow.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-		rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_rts[1]);
+		rgraphCtx.bindUav(0, 0, m_runCtx.m_rts[1]);
 
-		cmdb.bindTexture(ANKI_REG(t0), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
+		cmdb.bindSrv(0, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 
-		rgraphCtx.bindTexture(ANKI_REG(t1), m_runCtx.m_rts[0]);
+		rgraphCtx.bindSrv(1, 0, m_runCtx.m_rts[0]);
 
-		cmdb.bindUniformBuffer(ANKI_REG(b0), ctx.m_globalRenderingUniformsBuffer);
-		cmdb.bindStorageBuffer(ANKI_REG(t2), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindStorageBuffer(ANKI_REG(t3), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		rgraphCtx.bindTexture(ANKI_REG(t4), getRenderer().getShadowMapping().getShadowmapRt());
-		cmdb.bindStorageBuffer(ANKI_REG(t5),
-							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-		cmdb.bindStorageBuffer(ANKI_REG(t6),
-							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
-		cmdb.bindStorageBuffer(ANKI_REG(t7), getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		rgraphCtx.bindSrv(4, 0, getRenderer().getShadowMapping().getShadowmapRt());
+		cmdb.bindSrv(5, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		cmdb.bindSrv(6, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kFogDensityVolume));
+		cmdb.bindSrv(7, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 

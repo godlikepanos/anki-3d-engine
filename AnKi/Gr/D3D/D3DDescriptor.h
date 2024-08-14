@@ -267,7 +267,6 @@ private:
 	{
 	public:
 		DescriptorType m_type = DescriptorType::kCount;
-		DescriptorFlag m_flags = DescriptorFlag::kNone;
 		U16 m_structuredBufferStride = kMaxU8;
 	};
 
@@ -330,13 +329,11 @@ public:
 #if ANKI_ASSERTIONS_ENABLED
 		if(fmt == Format::kNone)
 		{
-			descriptor.m_type = DescriptorType::kStorageBuffer;
-			descriptor.m_flags = DescriptorFlag::kReadWrite;
+			descriptor.m_type = DescriptorType::kUavStructuredBuffer;
 		}
 		else
 		{
-			descriptor.m_type = DescriptorType::kTexelBuffer;
-			descriptor.m_flags = DescriptorFlag::kReadWrite;
+			descriptor.m_type = DescriptorType::kUavTexelBuffer;
 		}
 #endif
 
@@ -349,8 +346,7 @@ public:
 		descriptor.m_heapOffset = handle.getCpuOffset();
 		descriptor.m_isHandle = true;
 #if ANKI_ASSERTIONS_ENABLED
-		descriptor.m_type = DescriptorType::kTexture;
-		descriptor.m_flags = DescriptorFlag::kReadWrite;
+		descriptor.m_type = DescriptorType::kUavTexture;
 #endif
 
 		m_spaces[space].m_cbvSrvUavDirty = true;
@@ -367,13 +363,11 @@ public:
 #if ANKI_ASSERTIONS_ENABLED
 		if(fmt == Format::kNone)
 		{
-			descriptor.m_type = DescriptorType::kStorageBuffer;
-			descriptor.m_flags = DescriptorFlag::kRead;
+			descriptor.m_type = DescriptorType::kSrvStructuredBuffer;
 		}
 		else
 		{
-			descriptor.m_type = DescriptorType::kTexelBuffer;
-			descriptor.m_flags = DescriptorFlag::kRead;
+			descriptor.m_type = DescriptorType::kSrvTexelBuffer;
 		}
 #endif
 
@@ -386,8 +380,7 @@ public:
 		descriptor.m_heapOffset = handle.getCpuOffset();
 		descriptor.m_isHandle = true;
 #if ANKI_ASSERTIONS_ENABLED
-		descriptor.m_type = DescriptorType::kTexture;
-		descriptor.m_flags = DescriptorFlag::kRead;
+		descriptor.m_type = DescriptorType::kSrvTexture;
 #endif
 
 		m_spaces[space].m_cbvSrvUavDirty = true;
@@ -402,8 +395,7 @@ public:
 		descriptor.m_bufferView.m_format = Format::kNone;
 		descriptor.m_isHandle = false;
 #if ANKI_ASSERTIONS_ENABLED
-		descriptor.m_type = DescriptorType::kUniformBuffer;
-		descriptor.m_flags = DescriptorFlag::kRead;
+		descriptor.m_type = DescriptorType::kConstantBuffer;
 #endif
 
 		m_spaces[space].m_cbvSrvUavDirty = true;
@@ -416,7 +408,6 @@ public:
 		descriptor.m_isHandle = true;
 #if ANKI_ASSERTIONS_ENABLED
 		descriptor.m_type = DescriptorType::kSampler;
-		descriptor.m_flags = DescriptorFlag::kRead;
 #endif
 
 		m_spaces[space].m_samplersDirty = true;
@@ -454,7 +445,6 @@ private:
 		Bool m_isHandle;
 #if ANKI_ASSERTIONS_ENABLED
 		DescriptorType m_type = DescriptorType::kCount;
-		DescriptorFlag m_flags = DescriptorFlag::kNone;
 #endif
 
 		Descriptor()
@@ -475,7 +465,6 @@ private:
 			m_isHandle = b.m_isHandle;
 #if ANKI_ASSERTIONS_ENABLED
 			m_type = b.m_type;
-			m_flags = b.m_flags;
 #endif
 			return *this;
 		}

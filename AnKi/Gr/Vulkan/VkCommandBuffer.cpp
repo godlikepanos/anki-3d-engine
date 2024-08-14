@@ -195,106 +195,104 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	self.m_graphicsState.setBlendOperation(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTexture(Register reg, const TextureView& texView)
+void CommandBuffer::bindSrv(U32 reg, U32 space, const TextureView& texView)
 {
-	reg.validate();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
 	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
 
-	if(reg.m_resourceType == HlslResourceType::kSrv)
-	{
-		ANKI_ASSERT(texView.isGoodForSampling());
-		const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSrv & tex.getTextureUsage());
-		self.m_descriptorState.bindSampledTexture(reg.m_space, reg.m_bindPoint, tex.getImageView(texView.getSubresource()), lay);
-	}
-	else
-	{
-		ANKI_ASSERT(texView.isGoodForStorage());
-		self.m_descriptorState.bindStorageTexture(reg.m_space, reg.m_bindPoint, tex.getImageView(texView.getSubresource()));
+	ANKI_ASSERT(texView.isGoodForSampling());
+	const VkImageLayout lay = tex.computeLayout(TextureUsageBit::kAllSrv & tex.getTextureUsage());
+	self.m_descriptorState.bindSampledTexture(space, reg, tex.getImageView(texView.getSubresource()), lay);
+}
 
-		const Bool isPresentable = !!(tex.getTextureUsage() & TextureUsageBit::kPresent);
-		if(isPresentable)
-		{
-			self.m_renderedToDefaultFb = true;
-		}
+void CommandBuffer::bindUav(U32 reg, U32 space, const TextureView& texView)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.commandCommon();
+
+	const TextureImpl& tex = static_cast<const TextureImpl&>(texView.getTexture());
+
+	ANKI_ASSERT(texView.isGoodForStorage());
+	self.m_descriptorState.bindStorageTexture(space, reg, tex.getImageView(texView.getSubresource()));
+
+	const Bool isPresentable = !!(tex.getTextureUsage() & TextureUsageBit::kPresent);
+	if(isPresentable)
+	{
+		self.m_renderedToDefaultFb = true;
 	}
 }
 
-void CommandBuffer::bindSampler(Register reg, Sampler* sampler)
+void CommandBuffer::bindSampler(U32 reg, U32 space, Sampler* sampler)
 {
-	reg.validate();
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
 	const VkSampler handle = static_cast<const SamplerImpl&>(*sampler).m_sampler->getHandle();
-	self.m_descriptorState.bindSampler(reg.m_space, reg.m_bindPoint, handle);
+	self.m_descriptorState.bindSampler(space, reg, handle);
 	self.m_microCmdb->pushObjectRef(sampler);
 }
 
-void CommandBuffer::bindUniformBuffer(Register reg, const BufferView& buff)
+void CommandBuffer::bindConstantBuffer(U32 reg, U32 space, const BufferView& buff)
 {
-	reg.validate();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
 	const VkBuffer handle = static_cast<const BufferImpl&>(buff.getBuffer()).getHandle();
-	self.m_descriptorState.bindUniformBuffer(reg.m_space, reg.m_bindPoint, handle, buff.getOffset(), buff.getRange());
+	self.m_descriptorState.bindUniformBuffer(space, reg, handle, buff.getOffset(), buff.getRange());
 }
 
-void CommandBuffer::bindStorageBuffer(Register reg, const BufferView& buff)
+void CommandBuffer::bindSrv(U32 reg, U32 space, const BufferView& buff, Format fmt)
 {
-	reg.validate();
 	ANKI_ASSERT(buff.isValid());
 
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
 	const VkBuffer handle = static_cast<const BufferImpl&>(buff.getBuffer()).getHandle();
-	if(reg.m_resourceType == HlslResourceType::kSrv)
+
+	if(fmt == Format::kNone)
 	{
-		self.m_descriptorState.bindReadStorageBuffer(reg.m_space, reg.m_bindPoint, handle, buff.getOffset(), buff.getRange());
+		self.m_descriptorState.bindReadStorageBuffer(space, reg, handle, buff.getOffset(), buff.getRange());
 	}
 	else
 	{
-		self.m_descriptorState.bindReadWriteStorageBuffer(reg.m_space, reg.m_bindPoint, handle, buff.getOffset(), buff.getRange());
+		const VkBufferView view = static_cast<const BufferImpl&>(buff.getBuffer()).getOrCreateBufferView(fmt, buff.getOffset(), buff.getRange());
+		self.m_descriptorState.bindReadTexelBuffer(space, reg, view);
 	}
 }
 
-void CommandBuffer::bindAccelerationStructure(Register reg, AccelerationStructure* as)
+void CommandBuffer::bindUav(U32 reg, U32 space, const BufferView& buff, Format fmt)
 {
-	reg.validate();
+	ANKI_ASSERT(buff.isValid());
+
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.commandCommon();
+
+	const VkBuffer handle = static_cast<const BufferImpl&>(buff.getBuffer()).getHandle();
+
+	if(fmt == Format::kNone)
+	{
+		self.m_descriptorState.bindReadWriteStorageBuffer(space, reg, handle, buff.getOffset(), buff.getRange());
+	}
+	else
+	{
+		const VkBufferView view = static_cast<const BufferImpl&>(buff.getBuffer()).getOrCreateBufferView(fmt, buff.getOffset(), buff.getRange());
+		self.m_descriptorState.bindReadWriteTexelBuffer(space, reg, view);
+	}
+}
+
+void CommandBuffer::bindSrv(U32 reg, U32 space, AccelerationStructure* as)
+{
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 
 	const VkAccelerationStructureKHR& handle = static_cast<const AccelerationStructureImpl&>(*as).getHandle();
-	self.m_descriptorState.bindAccelerationStructure(reg.m_space, reg.m_bindPoint, &handle);
+	self.m_descriptorState.bindAccelerationStructure(space, reg, &handle);
 	self.m_microCmdb->pushObjectRef(as);
-}
-
-void CommandBuffer::bindTexelBuffer(Register reg, const BufferView& buff, Format fmt)
-{
-	reg.validate();
-	ANKI_ASSERT(fmt != Format::kNone);
-	reg.validate();
-
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.commandCommon();
-
-	const VkBufferView view = static_cast<const BufferImpl&>(buff.getBuffer()).getOrCreateBufferView(fmt, buff.getOffset(), buff.getRange());
-
-	if(reg.m_resourceType == HlslResourceType::kSrv)
-	{
-		self.m_descriptorState.bindReadTexelBuffer(reg.m_space, reg.m_bindPoint, view);
-	}
-	else
-	{
-		ANKI_ASSERT(reg.m_resourceType == HlslResourceType::kUav);
-		self.m_descriptorState.bindReadWriteTexelBuffer(reg.m_space, reg.m_bindPoint, view);
-	}
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgram* prog)

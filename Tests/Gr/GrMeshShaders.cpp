@@ -240,10 +240,10 @@ float3 main(VertOut input) : SV_TARGET0
 			rt.m_clearValue.m_colorf = {1.0f, 0.0f, 1.0f, 0.0f};
 			cmdb->beginRenderPass({rt});
 
-			cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(indexBuff.get()));
-			cmdb->bindStorageBuffer(ANKI_REG(t1), BufferView(positionsBuff.get()));
-			cmdb->bindStorageBuffer(ANKI_REG(t2), BufferView(colorsBuff.get()));
-			cmdb->bindStorageBuffer(ANKI_REG(t3), BufferView(meshletsBuff.get()));
+			cmdb->bindSrv(0, 0, BufferView(indexBuff.get()));
+			cmdb->bindSrv(1, 0, BufferView(positionsBuff.get()));
+			cmdb->bindSrv(2, 0, BufferView(colorsBuff.get()));
+			cmdb->bindSrv(3, 0, BufferView(meshletsBuff.get()));
 
 			cmdb->bindShaderProgram(prog.get());
 

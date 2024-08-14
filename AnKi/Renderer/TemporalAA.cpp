@@ -113,16 +113,16 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getLightShading().getRt());
-		rgraphCtx.bindTexture(ANKI_REG(t1), m_runCtx.m_historyRt);
-		rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindTexture(ANKI_REG(u0), getRenderer().getTonemapping().getRt());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
+		rgraphCtx.bindSrv(1, 0, m_runCtx.m_historyRt);
+		rgraphCtx.bindSrv(2, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getRt());
 
 		if(g_preferComputeCVar.get())
 		{
-			rgraphCtx.bindTexture(ANKI_REG(u1), m_runCtx.m_renderRt);
-			rgraphCtx.bindTexture(ANKI_REG(u2), m_runCtx.m_tonemappedRt);
+			rgraphCtx.bindUav(1, 0, m_runCtx.m_renderRt);
+			rgraphCtx.bindUav(2, 0, m_runCtx.m_tonemappedRt);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}

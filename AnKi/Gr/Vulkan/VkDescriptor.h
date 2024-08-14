@@ -183,8 +183,7 @@ public:
 		desc.m_image.imageLayout = layout;
 		desc.m_image.sampler = 0;
 #if ANKI_ASSERTIONS_ENABLED
-		desc.m_type = DescriptorType::kTexture;
-		desc.m_flags = DescriptorFlag::kRead;
+		desc.m_type = DescriptorType::kSrvTexture;
 #endif
 	}
 
@@ -196,8 +195,7 @@ public:
 		desc.m_image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		desc.m_image.sampler = 0;
 #if ANKI_ASSERTIONS_ENABLED
-		desc.m_type = DescriptorType::kTexture;
-		desc.m_flags = DescriptorFlag::kReadWrite;
+		desc.m_type = DescriptorType::kUavTexture;
 #endif
 	}
 
@@ -210,7 +208,6 @@ public:
 		desc.m_image.sampler = sampler;
 #if ANKI_ASSERTIONS_ENABLED
 		desc.m_type = DescriptorType::kSampler;
-		desc.m_flags = DescriptorFlag::kRead;
 #endif
 	}
 
@@ -222,8 +219,7 @@ public:
 		desc.m_buffer.offset = offset;
 		desc.m_buffer.range = range;
 #if ANKI_ASSERTIONS_ENABLED
-		desc.m_type = DescriptorType::kUniformBuffer;
-		desc.m_flags = DescriptorFlag::kRead;
+		desc.m_type = DescriptorType::kConstantBuffer;
 #endif
 	}
 
@@ -235,8 +231,7 @@ public:
 		desc.m_buffer.offset = offset;
 		desc.m_buffer.range = range;
 #if ANKI_ASSERTIONS_ENABLED
-		desc.m_type = DescriptorType::kStorageBuffer;
-		desc.m_flags = DescriptorFlag::kRead;
+		desc.m_type = DescriptorType::kSrvStructuredBuffer;
 #endif
 	}
 
@@ -248,8 +243,7 @@ public:
 		desc.m_buffer.offset = offset;
 		desc.m_buffer.range = range;
 #if ANKI_ASSERTIONS_ENABLED
-		desc.m_type = DescriptorType::kStorageBuffer;
-		desc.m_flags = DescriptorFlag::kReadWrite;
+		desc.m_type = DescriptorType::kUavStructuredBuffer;
 #endif
 	}
 
@@ -259,8 +253,7 @@ public:
 		Descriptor& desc = getDescriptor(HlslResourceType::kSrv, space, registerBinding);
 		desc.m_bufferView = bufferView;
 #if ANKI_ASSERTIONS_ENABLED
-		desc.m_type = DescriptorType::kTexelBuffer;
-		desc.m_flags = DescriptorFlag::kRead;
+		desc.m_type = DescriptorType::kSrvTexelBuffer;
 #endif
 	}
 
@@ -270,8 +263,7 @@ public:
 		Descriptor& desc = getDescriptor(HlslResourceType::kUav, space, registerBinding);
 		desc.m_bufferView = bufferView;
 #if ANKI_ASSERTIONS_ENABLED
-		desc.m_type = DescriptorType::kTexelBuffer;
-		desc.m_flags = DescriptorFlag::kReadWrite;
+		desc.m_type = DescriptorType::kUavTexelBuffer;
 #endif
 	}
 
@@ -285,7 +277,6 @@ public:
 		desc.m_as.pAccelerationStructures = handle;
 #if ANKI_ASSERTIONS_ENABLED
 		desc.m_type = DescriptorType::kAccelerationStructure;
-		desc.m_flags = DescriptorFlag::kRead;
 #endif
 	}
 
@@ -313,7 +304,6 @@ private:
 
 #if ANKI_ASSERTIONS_ENABLED
 		DescriptorType m_type = DescriptorType::kCount;
-		DescriptorFlag m_flags = DescriptorFlag::kNone;
 #endif
 	};
 

@@ -171,8 +171,8 @@ void main()
 
 		// Record
 		cmdb->bindShaderProgram(prog.get());
-		cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(readBuff.get()));
-		cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(writeBuff.get()));
+		cmdb->bindSrv(0, 0, BufferView(readBuff.get()));
+		cmdb->bindUav(0, 0, BufferView(writeBuff.get()));
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->endRecording();
 
@@ -288,7 +288,7 @@ void main()
 		ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(progInit);
 
 		const Vec4 kMagicVec(1.0f, 2.0f, 3.0f, 4.0f);
-		const Vec4 kInvalidVec(1.0f, 2.0f, 3.0f, 4.0f);
+		const Vec4 kInvalidVec(100.0f, 200.0f, 300.0f, 400.0f);
 
 		const Array<Vec4, 2> data = {kMagicVec, kMagicVec * 2.0f};
 		BufferPtr structured = createBuffer(BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv, ConstWeakArray<Vec4>(data), "structured");
@@ -320,16 +320,16 @@ void main()
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		cmdb->bindShaderProgram(prog.get());
-		cmdb->bindStorageBuffer(ANKI_REG(t0), BufferView(structured.get()));
-		cmdb->bindTexture(ANKI_REG(t2), TextureView(tex.get(), TextureSubresourceDesc::all()));
-		cmdb->bindTexelBuffer(ANKI_REG(t3), BufferView(buff.get()), Format::kR32G32B32A32_Sfloat);
-		cmdb->bindStorageBuffer(ANKI_REG2(u0, space2), BufferView(rwstructured.get()));
-		cmdb->bindTexture(ANKI_REG(u2), TextureView(rwtex[0].get(), TextureSubresourceDesc::firstSurface()));
-		cmdb->bindTexture(ANKI_REG(u3), TextureView(rwtex[1].get(), TextureSubresourceDesc::firstSurface()));
-		cmdb->bindTexture(ANKI_REG(u4), TextureView(rwtex[2].get(), TextureSubresourceDesc::firstSurface()));
-		cmdb->bindTexelBuffer(ANKI_REG(u7), BufferView(rwbuff.get()), Format::kR32G32B32A32_Sfloat);
-		cmdb->bindUniformBuffer(ANKI_REG(b0), BufferView(consts.get()));
-		cmdb->bindSampler(ANKI_REG(s2), sampler.get());
+		cmdb->bindSrv(0, 0, BufferView(structured.get()));
+		cmdb->bindSrv(2, 0, TextureView(tex.get(), TextureSubresourceDesc::all()));
+		cmdb->bindSrv(3, 0, BufferView(buff.get()), Format::kR32G32B32A32_Sfloat);
+		cmdb->bindUav(0, 2, BufferView(rwstructured.get()));
+		cmdb->bindUav(2, 0, TextureView(rwtex[0].get(), TextureSubresourceDesc::firstSurface()));
+		cmdb->bindUav(3, 0, TextureView(rwtex[1].get(), TextureSubresourceDesc::firstSurface()));
+		cmdb->bindUav(4, 0, TextureView(rwtex[2].get(), TextureSubresourceDesc::firstSurface()));
+		cmdb->bindUav(7, 0, BufferView(rwbuff.get()), Format::kR32G32B32A32_Sfloat);
+		cmdb->bindConstantBuffer(0, 0, BufferView(consts.get()));
+		cmdb->bindSampler(2, 0, sampler.get());
 
 		const UVec4 pc(bindlessIdx);
 		cmdb->setPushConstants(&pc, sizeof(pc));
@@ -463,8 +463,8 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			const Vec4 viewport(0.0f, 0.0f, F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight()));
 			cmdb->setPushConstants(&viewport, sizeof(viewport));
 
-			cmdb->bindTexture(ANKI_REG(t0), TextureView(tex.get(), TextureSubresourceDesc::all()));
-			cmdb->bindSampler(ANKI_REG(s0), sampler.get());
+			cmdb->bindSrv(0, 0, TextureView(tex.get(), TextureSubresourceDesc::all()));
+			cmdb->bindSampler(0, 0, sampler.get());
 
 			cmdb->draw(PrimitiveTopology::kTriangles, 6);
 			cmdb->endRenderPass();

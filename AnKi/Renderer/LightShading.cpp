@@ -108,25 +108,23 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthWrite(false);
 
 		// Bind all
-		cmdb.bindUniformBuffer(ANKI_REG(b0), ctx.m_globalRenderingUniformsBuffer);
-		cmdb.bindStorageBuffer(ANKI_REG(t0), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindStorageBuffer(ANKI_REG(t1), getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindStorageBuffer(ANKI_REG(t2),
-							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
-		cmdb.bindStorageBuffer(ANKI_REG(t3),
-							   getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
-		cmdb.bindStorageBuffer(ANKI_REG(t4), getRenderer().getClusterBinning().getClustersBuffer());
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
+		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
+		cmdb.bindSrv(4, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
-		rgraphCtx.bindTexture(ANKI_REG(t5), getRenderer().getGBuffer().getColorRt(0));
-		rgraphCtx.bindTexture(ANKI_REG(t6), getRenderer().getGBuffer().getColorRt(1));
-		rgraphCtx.bindTexture(ANKI_REG(t7), getRenderer().getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(ANKI_REG(t8), getRenderer().getGBuffer().getDepthRt());
-		rgraphCtx.bindTexture(ANKI_REG(t9), getRenderer().getShadowmapsResolve().getRt());
-		rgraphCtx.bindTexture(ANKI_REG(t10), getRenderer().getSsao().getRt());
-		rgraphCtx.bindTexture(ANKI_REG(t11), getRenderer().getSsr().getRt());
-		cmdb.bindTexture(ANKI_REG(t12), TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+		rgraphCtx.bindSrv(5, 0, getRenderer().getGBuffer().getColorRt(0));
+		rgraphCtx.bindSrv(6, 0, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindSrv(7, 0, getRenderer().getGBuffer().getColorRt(2));
+		rgraphCtx.bindSrv(8, 0, getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(9, 0, getRenderer().getShadowmapsResolve().getRt());
+		rgraphCtx.bindSrv(10, 0, getRenderer().getSsao().getRt());
+		rgraphCtx.bindSrv(11, 0, getRenderer().getSsr().getRt());
+		cmdb.bindSrv(12, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 
 		// Draw
 		drawQuad(cmdb);
@@ -175,16 +173,16 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
-			cmdb.bindTexture(ANKI_REG(t0), TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
+			cmdb.bindSrv(0, 0, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
 		}
 		else
 		{
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
 
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getSky().getSkyLutRt());
-			cmdb.bindUniformBuffer(ANKI_REG(b0), ctx.m_globalRenderingUniformsBuffer);
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getSky().getSkyLutRt());
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
 		}
 
 		drawQuad(cmdb);
@@ -198,11 +196,11 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.bindShaderProgram(m_applyFog.m_grProg.get());
 
 		// Bind all
-		cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-		rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getDepthRt());
-		rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getVolumetricFog().getRt());
+		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+		rgraphCtx.bindSrv(1, 0, getRenderer().getVolumetricFog().getRt());
 
 		class PushConsts
 		{

@@ -140,8 +140,7 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 				const ShaderReflectionBinding& abinding = a.m_descriptor.m_bindings[set][binding2];
 
 				if(abinding.m_registerBindingPoint == bbinding.m_registerBindingPoint
-				   && descriptorTypeToHlslResourceType(abinding.m_type, abinding.m_flags)
-						  == descriptorTypeToHlslResourceType(bbinding.m_type, bbinding.m_flags))
+				   && descriptorTypeToHlslResourceType(abinding.m_type) == descriptorTypeToHlslResourceType(bbinding.m_type))
 				{
 					if(abinding != bbinding)
 					{

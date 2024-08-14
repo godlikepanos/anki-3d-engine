@@ -140,9 +140,9 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_grProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getLightShading().getRt());
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_rt);
+			rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar.get(), 0.0f);
 			cmdb.setPushConstants(&pc, sizeof(pc));
 
@@ -167,9 +167,9 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_downscaleGrProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), m_runCtx.m_rt);
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_nearestNearestClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(u0), m_runCtx.m_downscaledRt);
+			rgraphCtx.bindSrv(0, 0, m_runCtx.m_rt);
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			rgraphCtx.bindUav(0, 0, m_runCtx.m_downscaledRt);
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
 			cmdb.setPushConstants(&pc, sizeof(pc));
 

@@ -117,8 +117,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
 	spirv_cross::ShaderResources rsrcActive = spvc.get_shader_resources(spvc.get_active_interface_variables());
 
-	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType,
-					const DescriptorFlag origFlags) -> Error {
+	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, const DescriptorType origType) -> Error {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
@@ -152,19 +151,16 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 
 			// Images are special, they might be texel buffers
 			DescriptorType type = origType;
-			DescriptorFlag flags = origFlags;
-			if(type == DescriptorType::kTexture && typeInfo.image.dim == spv::DimBuffer)
+			if((type == DescriptorType::kSrvTexture || type == DescriptorType::kUavTexture) && typeInfo.image.dim == spv::DimBuffer)
 			{
-				type = DescriptorType::kTexelBuffer;
-
 				if(typeInfo.image.sampled == 1)
 				{
-					flags = DescriptorFlag::kRead;
+					type = DescriptorType::kSrvTexelBuffer;
 				}
 				else
 				{
 					ANKI_ASSERT(typeInfo.image.sampled == 2);
-					flags = DescriptorFlag::kReadWrite;
+					type = DescriptorType::kUavTexelBuffer;
 				}
 			}
 
@@ -177,7 +173,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 					errorStr.sprintf("Unexpected unbound array for bindless: %s", r.name.c_str());
 				}
 
-				if(type != DescriptorType::kTexture || flags != DescriptorFlag::kRead)
+				if(type != DescriptorType::kSrvTexture)
 				{
 					errorStr.sprintf("Unexpected bindless binding: %s", r.name.c_str());
 					return Error::kUserData;
@@ -189,14 +185,15 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			{
 				// Regular binding
 
-				if(origType == DescriptorType::kStorageBuffer && binding >= kDxcVkBindingShifts[set][HlslResourceType::kSrv]
-				   && binding < kDxcVkBindingShifts[set][HlslResourceType::kSrv] + 1000)
+				// Use the binding to find out if it's a read or write storage buffer, there is no other way
+				if(origType == DescriptorType::kSrvStructuredBuffer
+				   && (binding < kDxcVkBindingShifts[set][HlslResourceType::kSrv]
+					   || binding >= kDxcVkBindingShifts[set][HlslResourceType::kSrv] + 1000))
 				{
-					// Storage buffer is read only
-					flags = DescriptorFlag::kRead;
+					type = DescriptorType::kUavStructuredBuffer;
 				}
 
-				const HlslResourceType hlslResourceType = descriptorTypeToHlslResourceType(type, flags);
+				const HlslResourceType hlslResourceType = descriptorTypeToHlslResourceType(type);
 				if(binding < kDxcVkBindingShifts[set][hlslResourceType] || binding >= kDxcVkBindingShifts[set][hlslResourceType] + 1000)
 				{
 					errorStr.sprintf("Unexpected binding: %s", r.name.c_str());
@@ -207,7 +204,6 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 				akBinding.m_registerBindingPoint = binding - kDxcVkBindingShifts[set][hlslResourceType];
 				akBinding.m_arraySize = U16(arraySize);
 				akBinding.m_type = type;
-				akBinding.m_flags = flags;
 
 				refl.m_descriptor.m_bindings[set][refl.m_descriptor.m_bindingCounts[set]] = akBinding;
 				++refl.m_descriptor.m_bindingCounts[set];
@@ -217,37 +213,37 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 		return Error::kNone;
 	};
 
-	Error err = func(rsrc.uniform_buffers, DescriptorType::kUniformBuffer, DescriptorFlag::kRead);
+	Error err = func(rsrc.uniform_buffers, DescriptorType::kConstantBuffer);
 	if(err)
 	{
 		return err;
 	}
 
-	err = func(rsrc.separate_images, DescriptorType::kTexture, DescriptorFlag::kRead); // This also handles texel buffers
+	err = func(rsrc.separate_images, DescriptorType::kSrvTexture); // This also handles texel buffers
 	if(err)
 	{
 		return err;
 	}
 
-	err = func(rsrc.separate_samplers, DescriptorType::kSampler, DescriptorFlag::kRead);
+	err = func(rsrc.separate_samplers, DescriptorType::kSampler);
 	if(err)
 	{
 		return err;
 	}
 
-	err = func(rsrc.storage_buffers, DescriptorType::kStorageBuffer, DescriptorFlag::kReadWrite);
+	err = func(rsrc.storage_buffers, DescriptorType::kSrvStructuredBuffer);
 	if(err)
 	{
 		return err;
 	}
 
-	err = func(rsrc.storage_images, DescriptorType::kTexture, DescriptorFlag::kReadWrite);
+	err = func(rsrc.storage_images, DescriptorType::kUavTexture);
 	if(err)
 	{
 		return err;
 	}
 
-	err = func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure, DescriptorFlag::kRead);
+	err = func(rsrc.acceleration_structures, DescriptorType::kAccelerationStructure);
 	if(err)
 	{
 		return err;
@@ -466,7 +462,6 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			ShaderReflectionBinding akBinding;
 
 			akBinding.m_type = DescriptorType::kCount;
-			akBinding.m_flags = DescriptorFlag::kNone;
 			akBinding.m_arraySize = U16(bindDesc.BindCount);
 			akBinding.m_registerBindingPoint = bindDesc.BindPoint;
 
@@ -487,71 +482,60 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 					continue;
 				}
 
-				akBinding.m_type = DescriptorType::kUniformBuffer;
-				akBinding.m_flags = DescriptorFlag::kRead;
+				akBinding.m_type = DescriptorType::kConstantBuffer;
 			}
 			else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
 			{
 				// Texture2D etc
-				akBinding.m_type = DescriptorType::kTexture;
-				akBinding.m_flags = DescriptorFlag::kRead;
+				akBinding.m_type = DescriptorType::kSrvTexture;
 			}
 			else if(bindDesc.Type == D3D_SIT_TEXTURE && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
 			{
 				// Buffer
-				akBinding.m_type = DescriptorType::kTexelBuffer;
-				akBinding.m_flags = DescriptorFlag::kRead;
+				akBinding.m_type = DescriptorType::kSrvTexelBuffer;
 			}
 			else if(bindDesc.Type == D3D_SIT_SAMPLER)
 			{
 				// SamplerState
 				akBinding.m_type = DescriptorType::kSampler;
-				akBinding.m_flags = DescriptorFlag::kRead;
 			}
 			else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
 			{
 				// RWBuffer
-				akBinding.m_type = DescriptorType::kTexelBuffer;
-				akBinding.m_flags = DescriptorFlag::kReadWrite;
+				akBinding.m_type = DescriptorType::kUavTexelBuffer;
 			}
 			else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED && bindDesc.Dimension != D3D_SRV_DIMENSION_BUFFER)
 			{
 				// RWTexture2D etc
-				akBinding.m_type = DescriptorType::kTexture;
-				akBinding.m_flags = DescriptorFlag::kReadWrite;
+				akBinding.m_type = DescriptorType::kUavTexture;
 			}
 			else if(bindDesc.Type == D3D_SIT_BYTEADDRESS)
 			{
 				// ByteAddressBuffer
-				akBinding.m_type = DescriptorType::kStorageBuffer;
-				akBinding.m_flags = DescriptorFlag::kRead | DescriptorFlag::kByteAddressBuffer;
+				akBinding.m_type = DescriptorType::kSrvByteAddressBuffer;
 				akBinding.m_d3dStructuredBufferStride = sizeof(U32);
 			}
 			else if(bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS)
 			{
 				// RWByteAddressBuffer
-				akBinding.m_type = DescriptorType::kStorageBuffer;
-				akBinding.m_flags = DescriptorFlag::kReadWrite | DescriptorFlag::kByteAddressBuffer;
+				akBinding.m_type = DescriptorType::kUavByteAddressBuffer;
 				akBinding.m_d3dStructuredBufferStride = sizeof(U32);
 			}
 			else if(bindDesc.Type == D3D_SIT_RTACCELERATIONSTRUCTURE)
 			{
 				// RaytracingAccelerationStructure
 				akBinding.m_type = DescriptorType::kAccelerationStructure;
-				akBinding.m_flags = DescriptorFlag::kRead;
 			}
 			else if(bindDesc.Type == D3D_SIT_STRUCTURED)
 			{
 				// StructuredBuffer
-				akBinding.m_type = DescriptorType::kStorageBuffer;
-				akBinding.m_flags = DescriptorFlag::kRead;
+				akBinding.m_type = DescriptorType::kSrvStructuredBuffer;
 				akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
 			}
 			else if(bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED)
 			{
 				// RWStructuredBuffer
-				akBinding.m_type = DescriptorType::kStorageBuffer;
-				akBinding.m_flags = DescriptorFlag::kReadWrite;
+				akBinding.m_type = DescriptorType::kUavStructuredBuffer;
 				akBinding.m_d3dStructuredBufferStride = U16(bindDesc.NumSamples);
 			}
 			else

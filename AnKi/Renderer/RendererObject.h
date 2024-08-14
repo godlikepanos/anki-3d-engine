@@ -62,22 +62,32 @@ protected:
 	}
 
 	template<typename T>
-	static T* allocateAndBindConstants(CommandBuffer& cmdb, Register reg)
+	static T* allocateAndBindConstants(CommandBuffer& cmdb, U32 reg, U32 space)
 	{
 		T* ptr;
 		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(1, ptr);
 		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
-		cmdb.bindUniformBuffer(reg, alloc);
+		cmdb.bindConstantBuffer(reg, space, alloc);
 		return ptr;
 	}
 
 	template<typename T>
-	static T* allocateAndBindStorageBuffer(CommandBuffer& cmdb, Register reg, U32 count = 1)
+	static T* allocateAndBindSrvStructuredBuffer(CommandBuffer& cmdb, U32 reg, U32 space, U32 count = 1)
 	{
 		T* ptr;
 		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(count, ptr);
 		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
-		cmdb.bindStorageBuffer(reg, alloc);
+		cmdb.bindSrv(reg, space, alloc);
+		return ptr;
+	}
+
+	template<typename T>
+	static T* allocateAndBindUavStructuredBuffer(CommandBuffer& cmdb, U32 reg, U32 space, U32 count = 1)
+	{
+		T* ptr;
+		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(count, ptr);
+		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
+		cmdb.bindUav(reg, space, alloc);
 		return ptr;
 	}
 

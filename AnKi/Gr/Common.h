@@ -827,18 +827,6 @@ enum class GpuQueueType : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuQueueType)
 
-enum class HlslResourceType : U8
-{
-	kCbv,
-	kSrv,
-	kUav,
-	kSampler, // !!!!WARNING!!! Keep it last
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(HlslResourceType)
-
 enum class VertexAttributeSemantic : U8
 {
 	kPosition,
@@ -855,50 +843,68 @@ enum class VertexAttributeSemantic : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemantic)
 
-/// This doesn't match Vulkan or D3D.
+/// This matches D3D.
 enum class DescriptorType : U8
 {
-	kTexture, ///< Vulkan: Image (sampled or storage). D3D: Textures
-	kSampler,
-	kUniformBuffer,
-	kStorageBuffer, ///< Vulkan: Storage buffers. D3D: Structured, ByteAddressBuffer
-	kTexelBuffer,
+	kConstantBuffer,
+	kSrvStructuredBuffer,
+	kUavStructuredBuffer,
+	kSrvByteAddressBuffer,
+	kUavByteAddressBuffer,
+	kSrvTexelBuffer,
+	kUavTexelBuffer,
+	kSrvTexture,
+	kUavTexture,
 	kAccelerationStructure,
+	kSampler,
 
 	kCount,
 	kFirst = 0
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorType)
 
-enum class DescriptorFlag : U8
+enum class HlslResourceType : U8
 {
-	kNone,
-	kRead = 1 << 0,
-	kWrite = 1 << 1,
-	kReadWrite = kRead | kWrite,
-	kByteAddressBuffer = 1 << 2
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DescriptorFlag)
+	kCbv,
+	kSrv,
+	kUav,
+	kSampler, // !!!!WARNING!!! Keep it last
 
-inline HlslResourceType descriptorTypeToHlslResourceType(DescriptorType type, DescriptorFlag flag)
+	kCount,
+	kFirst = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(HlslResourceType)
+
+inline HlslResourceType descriptorTypeToHlslResourceType(DescriptorType type)
 {
-	ANKI_ASSERT(type < DescriptorType::kCount && flag != DescriptorFlag::kNone);
-	if(type == DescriptorType::kSampler)
+	HlslResourceType out = HlslResourceType::kCount;
+
+	switch(type)
 	{
-		return HlslResourceType::kSampler;
+	case DescriptorType::kConstantBuffer:
+		out = HlslResourceType::kCbv;
+		break;
+	case DescriptorType::kSrvStructuredBuffer:
+	case DescriptorType::kSrvByteAddressBuffer:
+	case DescriptorType::kSrvTexelBuffer:
+	case DescriptorType::kSrvTexture:
+	case DescriptorType::kAccelerationStructure:
+		out = HlslResourceType::kSrv;
+		break;
+	case DescriptorType::kUavStructuredBuffer:
+	case DescriptorType::kUavByteAddressBuffer:
+	case DescriptorType::kUavTexelBuffer:
+	case DescriptorType::kUavTexture:
+		out = HlslResourceType::kUav;
+		break;
+	case DescriptorType::kSampler:
+		out = HlslResourceType::kSampler;
+		break;
+	default:
+		ANKI_ASSERT(0);
 	}
-	else if(type == DescriptorType::kUniformBuffer)
-	{
-		return HlslResourceType::kCbv;
-	}
-	else if(!!(flag & DescriptorFlag::kWrite))
-	{
-		return HlslResourceType::kUav;
-	}
-	else
-	{
-		return HlslResourceType::kSrv;
-	}
+
+	return out;
 }
 
 ANKI_BEGIN_PACKED_STRUCT
@@ -915,26 +921,23 @@ public:
 	};
 
 	DescriptorType m_type = DescriptorType::kCount;
-	DescriptorFlag m_flags = DescriptorFlag::kNone;
 
+	/// Order the bindings. THIS IS IMPORTANT because the backends expect them in a specific order.
 	Bool operator<(const ShaderReflectionBinding& b) const
 	{
-#define ANKI_LESS(member) \
-	if(member != b.member) \
-	{ \
-		return member < b.member; \
-	}
-		const HlslResourceType hlslType = descriptorTypeToHlslResourceType(m_type, m_flags);
-		const HlslResourceType bhlslType = descriptorTypeToHlslResourceType(b.m_type, b.m_flags);
-		if(hlslType != bhlslType)
+		const HlslResourceType ahlsl = descriptorTypeToHlslResourceType(m_type);
+		const HlslResourceType bhlsl = descriptorTypeToHlslResourceType(b.m_type);
+		if(ahlsl != bhlsl)
 		{
-			return hlslType < bhlslType;
+			return ahlsl < bhlsl;
 		}
 
-		ANKI_LESS(m_registerBindingPoint)
-		ANKI_LESS(m_arraySize)
-		ANKI_LESS(m_d3dStructuredBufferStride)
-#undef ANKI_LESS
+		if(m_registerBindingPoint != b.m_registerBindingPoint)
+		{
+			return m_registerBindingPoint < b.m_registerBindingPoint;
+		}
+
+		ANKI_ASSERT(!"Can't have 2 bindings with the same HlslResourceType and same binding point");
 		return false;
 	}
 
@@ -947,9 +950,9 @@ public:
 	{
 		ANKI_ASSERT(m_registerBindingPoint < kMaxU32);
 		ANKI_ASSERT(m_type < DescriptorType::kCount);
-		ANKI_ASSERT(m_flags != DescriptorFlag::kNone);
 		ANKI_ASSERT(m_arraySize > 0);
-		ANKI_ASSERT(ANKI_GR_BACKEND_VULKAN || m_type != DescriptorType::kStorageBuffer || m_d3dStructuredBufferStride != 0);
+		ANKI_ASSERT(!(ANKI_GR_BACKEND_DIRECT3D && (m_type == DescriptorType::kSrvStructuredBuffer || m_type == DescriptorType::kUavStructuredBuffer)
+					  && m_d3dStructuredBufferStride == 0));
 	}
 };
 ANKI_END_PACKED_STRUCT
@@ -958,7 +961,9 @@ ANKI_BEGIN_PACKED_STRUCT
 class ShaderReflectionDescriptorRelated
 {
 public:
+	/// The D3D backend expects bindings inside a space need to be ordered by HLSL type and then by register.
 	Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
+
 	Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
 
 	U32 m_pushConstantsSize = 0;

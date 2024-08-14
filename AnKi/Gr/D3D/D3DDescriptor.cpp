@@ -282,7 +282,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 			const Bool isSampler = (akBinding.m_type == DescriptorType::kSampler);
 			akBinding.validate();
 			D3D12_DESCRIPTOR_RANGE1& range = (isSampler) ? *samplerRanges.emplaceBack() : *nonSamplerRanges.emplaceBack();
-			const HlslResourceType hlslRsrcType = descriptorTypeToHlslResourceType(akBinding.m_type, akBinding.m_flags);
+			const HlslResourceType hlslRsrcType = descriptorTypeToHlslResourceType(akBinding.m_type);
 
 			range = {};
 			range.NumDescriptors = akBinding.m_arraySize;
@@ -315,6 +315,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 			}
 		}
 
+		// Add the root parameter
 		if(nonSamplerRanges.getSize())
 		{
 			D3D12_ROOT_PARAMETER1& table = *rootParameters.emplaceBack();
@@ -325,6 +326,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 			table.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 		}
 
+		// Add the root parameter
 		if(samplerRanges.getSize())
 		{
 			D3D12_ROOT_PARAMETER1& table = *rootParameters.emplaceBack();
@@ -388,7 +390,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 		{
 			const ShaderReflectionBinding& inBinding = refl.m_descriptor.m_bindings[spaceIdx][bindingIdx];
 			inBinding.validate();
-			const HlslResourceType hlslResourceType = descriptorTypeToHlslResourceType(inBinding.m_type, inBinding.m_flags);
+			const HlslResourceType hlslResourceType = descriptorTypeToHlslResourceType(inBinding.m_type);
 
 			if(hlslResourceType < HlslResourceType::kSampler)
 			{
@@ -408,9 +410,8 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 				}
 
 				RootSignature::Descriptor& outDescriptor = signature->m_spaces[spaceIdx].m_descriptors[hlslResourceType][idxInDescriptorsArr];
-				outDescriptor.m_flags = inBinding.m_flags;
 				outDescriptor.m_type = inBinding.m_type;
-				if(outDescriptor.m_type == DescriptorType::kStorageBuffer)
+				if(outDescriptor.m_type == DescriptorType::kSrvStructuredBuffer || outDescriptor.m_type == DescriptorType::kUavStructuredBuffer)
 				{
 					ANKI_ASSERT(inBinding.m_d3dStructuredBufferStride < kMaxU16);
 					outDescriptor.m_structuredBufferStride = inBinding.m_d3dStructuredBufferStride;
@@ -544,10 +545,10 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 				}
 
 				const Descriptor& outDescriptor = stateSpace.m_descriptors[hlslResourceType][registerBinding];
-				ANKI_ASSERT((inDescriptor.m_flags & ~DescriptorFlag::kByteAddressBuffer) == outDescriptor.m_flags
-							&& inDescriptor.m_type == outDescriptor.m_type && "Have bound the wrong thing");
+				ANKI_ASSERT(inDescriptor.m_type == outDescriptor.m_type && "Have bound the wrong thing");
+				ANKI_ASSERT(descriptorTypeToHlslResourceType(inDescriptor.m_type) == hlslResourceType);
 
-				if(inDescriptor.m_type == DescriptorType::kUniformBuffer)
+				if(inDescriptor.m_type == DescriptorType::kConstantBuffer)
 				{
 					// ConstantBuffer
 
@@ -559,7 +560,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateConstantBufferView(&desc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
-				else if(inDescriptor.m_type == DescriptorType::kTexture)
+				else if(inDescriptor.m_type == DescriptorType::kSrvTexture || inDescriptor.m_type == DescriptorType::kUavTexture)
 				{
 					// Texture2D or RWTexture2D
 
@@ -575,8 +576,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					getDevice().CopyDescriptorsSimple(1, samplerHeapOffset.getCpuOffset(), outDescriptor.m_heapOffset,
 													  D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 				}
-				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite)
-						&& !!(inDescriptor.m_flags & DescriptorFlag::kByteAddressBuffer))
+				else if(inDescriptor.m_type == DescriptorType::kUavByteAddressBuffer)
 				{
 					// RWByteAddressBuffer
 
@@ -597,7 +597,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
-				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				else if(inDescriptor.m_type == DescriptorType::kUavStructuredBuffer)
 				{
 					// RWStructuredBuffer
 
@@ -618,8 +618,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
-				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite)
-						&& !!(inDescriptor.m_flags & DescriptorFlag::kByteAddressBuffer))
+				else if(inDescriptor.m_type == DescriptorType::kSrvByteAddressBuffer)
 				{
 					// ByteAddressBuffer
 
@@ -640,7 +639,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
-				else if(inDescriptor.m_type == DescriptorType::kStorageBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				else if(inDescriptor.m_type == DescriptorType::kSrvStructuredBuffer)
 				{
 					// StructuredBuffer
 
@@ -661,7 +660,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateShaderResourceView(view.m_resource, &srvDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
-				else if(inDescriptor.m_type == DescriptorType::kTexelBuffer && !!(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				else if(inDescriptor.m_type == DescriptorType::kUavTexelBuffer)
 				{
 					// RWBuffer
 
@@ -680,7 +679,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 
 					getDevice().CreateUnorderedAccessView(view.m_resource, nullptr, &uavDesc, cbvSrvUavHeapOffset.getCpuOffset());
 				}
-				else if(inDescriptor.m_type == DescriptorType::kTexelBuffer && !(inDescriptor.m_flags & DescriptorFlag::kWrite))
+				else if(inDescriptor.m_type == DescriptorType::kSrvTexelBuffer)
 				{
 					// Buffer
 

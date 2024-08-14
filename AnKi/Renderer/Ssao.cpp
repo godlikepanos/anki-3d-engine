@@ -130,13 +130,12 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_grProg.get());
 
-			rgraphCtx.bindTexture(ANKI_REG(t0), getRenderer().getGBuffer().getColorRt(2));
-			rgraphCtx.bindTexture(ANKI_REG(t1),
-								  (g_ssaoQuarterRez.get()) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(1, 0, (g_ssaoQuarterRez.get()) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt());
 
-			cmdb.bindTexture(ANKI_REG(t2), TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearRepeat.get());
-			cmdb.bindSampler(ANKI_REG(s1), getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSrv(2, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
@@ -156,7 +155,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindTexture(ANKI_REG(u0), finalRt);
+				rgraphCtx.bindUav(0, 0, finalRt);
 
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 			}
@@ -194,9 +193,9 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_spatialDenoiseGrProg.get());
 
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(t0), finalRt);
-			rgraphCtx.bindTexture(ANKI_REG(t1), getRenderer().getGBuffer().getDepthRt());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, finalRt);
+			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getDepthRt());
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
@@ -207,7 +206,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindTexture(ANKI_REG(u0), bentNormalsAndSsaoTempRt);
+				rgraphCtx.bindUav(0, 0, bentNormalsAndSsaoTempRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 			}
 			else
@@ -244,16 +243,16 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_tempralDenoiseGrProg.get());
 
-			cmdb.bindSampler(ANKI_REG(s0), getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindTexture(ANKI_REG(t0), bentNormalsAndSsaoTempRt);
-			rgraphCtx.bindTexture(ANKI_REG(t1), historyRt);
-			rgraphCtx.bindTexture(ANKI_REG(t2), getRenderer().getMotionVectors().getMotionVectorsRt());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, bentNormalsAndSsaoTempRt);
+			rgraphCtx.bindSrv(1, 0, historyRt);
+			rgraphCtx.bindSrv(2, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
 			if(g_preferComputeCVar.get())
 			{
-				rgraphCtx.bindTexture(ANKI_REG(u0), finalRt);
+				rgraphCtx.bindUav(0, 0, finalRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
 			}
 			else

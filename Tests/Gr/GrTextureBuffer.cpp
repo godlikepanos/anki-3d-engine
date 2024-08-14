@@ -58,8 +58,8 @@ void main()
 		cmdbInit.m_flags = CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-		cmdb->bindTexelBuffer(ANKI_REG(t0), BufferView(texBuff.get()), Format::kR8G8B8A8_Snorm);
-		cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(storageBuff.get()));
+		cmdb->bindSrv(0, 0, BufferView(texBuff.get()), Format::kR8G8B8A8_Snorm);
+		cmdb->bindUav(0, 0, BufferView(storageBuff.get()));
 		cmdb->bindShaderProgram(prog.get());
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->endRecording();
