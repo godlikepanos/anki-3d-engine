@@ -145,11 +145,12 @@ template<typename T>
 inline TexturePtr createTexture2d(const TextureInitInfo texInit_, ConstWeakArray<T> data)
 {
 	TextureInitInfo texInit = texInit_;
-	texInit.m_usage |= TextureUsageBit::kTransferDestination;
+	texInit.m_usage |= TextureUsageBit::kCopyDestination;
 
 	BufferInitInfo buffInit;
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	buffInit.m_size = texInit.m_height * texInit.m_width * getFormatInfo(texInit.m_format).m_texelSize;
+	buffInit.m_usage = BufferUsageBit::kCopySource;
 	ANKI_ASSERT(getFormatInfo(texInit.m_format).m_texelSize == sizeof(T));
 	ANKI_ASSERT(buffInit.m_size == data.getSizeInBytes());
 

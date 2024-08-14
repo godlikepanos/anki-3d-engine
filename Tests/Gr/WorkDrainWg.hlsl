@@ -57,7 +57,7 @@ main(DispatchNodeInputRecord<FirstNodeInput> input, [MaxRecords(1)] NodeOutput<S
 	{
 		uint orig;
 		InterlockedAdd(g_threadgroupCount[0], 1, orig);
-		lastThreadgroup = orig + 1u == TILE_SIZE_X * TILE_SIZE_Y;
+		lastThreadgroup = (orig + 1u) == TILE_COUNT;
 
 		if(lastThreadgroup)
 		{

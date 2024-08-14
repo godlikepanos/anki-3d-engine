@@ -44,6 +44,43 @@ static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
 	}
 }
 
+template<typename TFunc>
+static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, F64& avgTimePerIterationMs, F64& avgCpuTimePerIterationMs, TFunc func)
+{
+	ANKI_ASSERT(iterationCount >= iterationsPerCommandBuffer && (iterationCount % iterationsPerCommandBuffer) == 0);
+
+	U64 startUs = 0;
+	FencePtr fence;
+
+	const U32 commandBufferCount = iterationCount / iterationsPerCommandBuffer;
+	for(U32 icmdb = 0; icmdb < commandBufferCount; ++icmdb)
+	{
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kGeneralWork));
+
+		const U64 cpuTimeStart = HighRezTimer::getCurrentTimeUs();
+		for(U32 i = 0; i < iterationsPerCommandBuffer; ++i)
+		{
+			func(*cmdb);
+		}
+
+		cmdb->endRecording();
+		const U64 cpuTimeEnd = HighRezTimer::getCurrentTimeUs();
+		avgCpuTimePerIterationMs += (Second(cpuTimeEnd - cpuTimeStart) * 0.001) / Second(iterationCount);
+
+		if(icmdb == 0)
+		{
+			startUs = HighRezTimer::getCurrentTimeUs();
+		}
+
+		GrManager::getSingleton().submit(cmdb.get(), {}, (icmdb == commandBufferCount - 1) ? &fence : nullptr);
+	}
+
+	fence->clientWait(kMaxSecond);
+	const U64 endUs = HighRezTimer::getCurrentTimeUs();
+
+	avgTimePerIterationMs = (Second(endUs - startUs) * 0.001) / Second(iterationCount);
+}
+
 ANKI_TEST(Gr, WorkGraphHelloWorld)
 {
 	// CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"Device", "1"});
@@ -514,7 +551,7 @@ ANKI_TEST(Gr, WorkGraphsWorkDrain)
 		{
 			BufferInitInfo scratchInit("scratch");
 			scratchInit.m_size = wgProg->getWorkGraphMemoryRequirements();
-			scratchInit.m_usage = BufferUsageBit::kAllStorage;
+			scratchInit.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
 			scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
 		}
 
@@ -549,33 +586,28 @@ ANKI_TEST(Gr, WorkGraphsWorkDrain)
 		}
 
 		// Create counter buff
-		BufferPtr threadgroupCountBuff;
-		{
-			threadgroupCountBuff = createBuffer(BufferUsageBit::kStorageComputeWrite, U32(0u), 1);
-		}
+		BufferPtr threadgroupCountBuff = createBuffer(BufferUsageBit::kUavCompute, U32(0u), 1);
 
 		// Result buffers
-		BufferPtr tileMax = createBuffer(BufferUsageBit::kAllStorage, Vec4(0.1f), TILE_COUNT);
-		BufferPtr finalMax = createBuffer(BufferUsageBit::kAllStorage, Vec4(0.1f), 1);
+		BufferPtr tileMax = createBuffer(BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv, Vec4(0.1f), TILE_COUNT);
+		BufferPtr finalMax = createBuffer(BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv, Vec4(0.1f), 1);
 
-		const U32 iterationCount = (!bBenchmark) ? 1 : 10000u;
-		Second avgTimeMs = 0.0;
-		for(U32 i = 0; i < iterationCount; ++i)
-		{
-			CommandBufferPtr cmdb =
-				GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork));
+		const U32 iterationsPerCmdb = (!bBenchmark) ? 1 : 100u;
+		const U32 iterationCount = (!bBenchmark) ? 1 : iterationsPerCmdb * 100;
+		F64 avgTimeMs = 0.0;
+		F64 avgCpuTimeMs = 0.0;
+		runBenchmark(iterationCount, iterationsPerCmdb, avgTimeMs, avgCpuTimeMs, [&](CommandBuffer& cmdb) {
+			BufferBarrierInfo barr = {BufferView(tileMax.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
+			cmdb.setPipelineBarrier({}, {&barr, 1}, {});
 
-			BufferBarrierInfo barr = {BufferView(tileMax.get()), BufferUsageBit::kStorageComputeWrite, BufferUsageBit::kStorageComputeWrite};
-			cmdb->setPipelineBarrier({}, {&barr, 1}, {});
-
-			cmdb->bindTexture(ANKI_REG(t0), TextureView(tex.get(), TextureSubresourceDesc::all()));
-			cmdb->bindStorageBuffer(ANKI_REG(u0), BufferView(tileMax.get()));
-			cmdb->bindStorageBuffer(ANKI_REG(u1), BufferView(finalMax.get()));
-			cmdb->bindStorageBuffer(ANKI_REG(u2), BufferView(threadgroupCountBuff.get()));
+			cmdb.bindSrv(0, 0, TextureView(tex.get(), TextureSubresourceDesc::all()));
+			cmdb.bindUav(0, 0, BufferView(tileMax.get()));
+			cmdb.bindUav(1, 0, BufferView(finalMax.get()));
+			cmdb.bindUav(2, 0, BufferView(threadgroupCountBuff.get()));
 
 			if(bWorkgraphs)
 			{
-				cmdb->bindShaderProgram(wgProg.get());
+				cmdb.bindShaderProgram(wgProg.get());
 
 				struct FirstNodeRecord
 				{
@@ -585,39 +617,46 @@ ANKI_TEST(Gr, WorkGraphsWorkDrain)
 				Array<FirstNodeRecord, 1> records;
 				records[0].m_gridSize = UVec3(TILE_COUNT_X, TILE_COUNT_Y, 1);
 
-				cmdb->dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
+				cmdb.dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
 			}
 			else
 			{
-				cmdb->bindShaderProgram(compProg0.get());
-				cmdb->dispatchCompute(TILE_COUNT_X, TILE_COUNT_Y, 1);
+				cmdb.bindShaderProgram(compProg0.get());
+				cmdb.dispatchCompute(TILE_COUNT_X, TILE_COUNT_Y, 1);
 
-				barr = {BufferView(tileMax.get()), BufferUsageBit::kStorageComputeWrite, BufferUsageBit::kStorageComputeRead};
-				cmdb->setPipelineBarrier({}, {&barr, 1}, {});
+				barr = {BufferView(tileMax.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
+				cmdb.setPipelineBarrier({}, {&barr, 1}, {});
 
-				cmdb->bindShaderProgram(compProg1.get());
-				cmdb->dispatchCompute(1, 1, 1);
+				cmdb.bindShaderProgram(compProg1.get());
+				cmdb.dispatchCompute(1, 1, 1);
 			}
-
-			cmdb->endRecording();
-
-			const U64 start = HighRezTimer::getCurrentTimeUs();
-
-			FencePtr fence;
-			GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-			fence->clientWait(kMaxSecond);
-
-			const U64 end = HighRezTimer::getCurrentTimeUs();
-
-			avgTimeMs += (Second(end - start) * 0.001) / Second(iterationCount);
-		}
+		});
 
 		validateBuffer2(finalMax, Vec4(1.1f, 2.06f, 3.88f, 1.0f));
 
 		if(bBenchmark)
 		{
-			ANKI_TEST_LOGI("Benchmark: avg time: %fms", avgTimeMs);
+			ANKI_TEST_LOGI("Benchmark: avg GPU time: %fms, avg CPU time: %fms", avgTimeMs, avgCpuTimeMs);
 		}
+	}
+
+	commonDestroy();
+}
+
+ANKI_TEST(Gr, WorkGraphsOverhead)
+{
+	const Bool bBenchmark = getenv("BENCHMARK") && CString(getenv("BENCHMARK")) == "1";
+
+	[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"WorkGraphs", "1"});
+
+	commonInit(!bBenchmark);
+
+	const Bool bWorkgraphs =
+		getenv("WORKGRAPHS") && CString(getenv("WORKGRAPHS")) == "1" && GrManager::getSingleton().getDeviceCapabilities().m_workGraphs;
+
+	ANKI_TEST_LOGI("Testing with BENCHMARK=%u WORKGRAPHS=%u", bBenchmark, bWorkgraphs);
+
+	{
 	}
 
 	commonDestroy();
