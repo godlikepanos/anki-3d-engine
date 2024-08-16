@@ -227,8 +227,8 @@ public:
 	/// Bind a buffer.
 	void bindUav(U32 reg, U32 space, const BufferView& buffer, Format fmt = Format::kNone);
 
-	/// Set push constants.
-	void setPushConstants(const void* data, U32 dataSize);
+	/// Set push constants (Vulkan) or root constants (D3D).
+	void setFastConstants(const void* data, U32 dataSize);
 
 	/// Bind a program.
 	void bindShaderProgram(ShaderProgram* prog);

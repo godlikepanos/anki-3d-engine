@@ -421,7 +421,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
 					dsInfo.m_skyLutRenderTarget = (getRenderer().getSky().isEnabled()) ? getRenderer().getSky().getSkyLutRt() : RenderTargetHandle();
-					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingUniformsBuffer;
+					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstantsBuffer;
 					dsInfo.m_renderpassContext = &rgraphCtx;
 
 					m_lightShading.m_deferred.drawLights(dsInfo);
@@ -463,15 +463,15 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				public:
 					IVec3 m_volumeTexel;
 					I32 m_nextTexelOffsetInU;
-				} unis;
+				} consts;
 
 				U32 x, y, z;
 				unflatten3dArrayIndex(probeToRefresh->getCellCountsPerDimension().x(), probeToRefresh->getCellCountsPerDimension().y(),
 									  probeToRefresh->getCellCountsPerDimension().z(), cellIdx, x, y, z);
-				unis.m_volumeTexel = IVec3(x, y, z);
+				consts.m_volumeTexel = IVec3(x, y, z);
 
-				unis.m_nextTexelOffsetInU = probeToRefresh->getCellCountsPerDimension().x();
-				cmdb.setPushConstants(&unis, sizeof(unis));
+				consts.m_nextTexelOffsetInU = probeToRefresh->getCellCountsPerDimension().x();
+				cmdb.setFastConstants(&consts, sizeof(consts));
 
 				// Dispatch
 				cmdb.dispatchCompute(1, 1, 1);

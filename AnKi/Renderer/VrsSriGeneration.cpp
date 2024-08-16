@@ -144,7 +144,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar.get(), 0.0f);
-			cmdb.setPushConstants(&pc, sizeof(pc));
+			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;
 			dispatchPPCompute(cmdb, fakeWorkgroupSizeXorY, fakeWorkgroupSizeXorY, getRenderer().getInternalResolution().x(),
@@ -171,7 +171,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_downscaledRt);
 			const Vec4 pc(1.0f / Vec2(rezDownscaled), 0.0f, 0.0f);
-			cmdb.setPushConstants(&pc, sizeof(pc));
+			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			dispatchPPCompute(cmdb, 8, 8, rezDownscaled.x(), rezDownscaled.y());
 		});

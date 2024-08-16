@@ -150,7 +150,7 @@ void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
 		}
 
 		const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
-		cmdb.setPushConstants(&pc, sizeof(pc));
+		cmdb.setFastConstants(&pc, sizeof(pc));
 	}
 	else
 	{

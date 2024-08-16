@@ -48,7 +48,7 @@ private:
 	class PatchInfo
 	{
 	public:
-		U32 m_gpuSceneUniformsOffset = kMaxU32;
+		U32 m_gpuSceneConstantsOffset = kMaxU32;
 
 		GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;
 		GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
@@ -66,7 +66,7 @@ private:
 	ModelResourcePtr m_model;
 
 	// GPU scene part 1
-	GpuSceneBufferAllocation m_gpuSceneUniforms;
+	GpuSceneBufferAllocation m_gpuSceneConstants;
 	GpuSceneArrays::Transform::Allocation m_gpuSceneTransforms;
 
 	// Other stuff

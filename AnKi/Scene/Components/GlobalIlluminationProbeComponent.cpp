@@ -76,7 +76,7 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		cmdb->bindUav(0, 0, TextureView(m_volTex.get(), TextureSubresourceDesc::all()));
 
 		const Vec4 clearColor(0.0f);
-		cmdb->setPushConstants(&clearColor, sizeof(clearColor));
+		cmdb->setFastConstants(&clearColor, sizeof(clearColor));
 
 		UVec3 wgSize;
 		wgSize.x() = (8 - 1 + m_volTex->getWidth()) / 8;

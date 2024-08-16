@@ -18,7 +18,7 @@
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-ANKI_PUSH_CONSTANTS(TraditionalDeferredSkyboxUniforms, g_unis)
+ANKI_FAST_CONSTANTS(TraditionalDeferredSkyboxConstants, g_consts)
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D g_depthTex : register(t0);
@@ -31,7 +31,7 @@ SamplerState g_linearAnyClampSampler : register(s1);
 Texture2D<Vec4> g_skyLut : register(t1);
 #endif
 
-ConstantBuffer<GlobalRendererUniforms> g_globalRendererConsts : register(b0);
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
 
 RVec3 main(VertOut input) : SV_TARGET0
 {
@@ -44,23 +44,23 @@ RVec3 main(VertOut input) : SV_TARGET0
 
 #if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
-	return g_unis.m_solidColor;
+	return g_consts.m_solidColor;
 #elif METHOD == 1
 	const F32 depthFar = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_unis.m_invertedViewProjectionMat, Vec4(ndc, depthFar, 1.0));
+	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depthFar, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
 
 	const Vec2 uv2 = equirectangularMapping(eyeToFrag);
-	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_unis.m_scale + g_unis.m_bias;
+	return g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_consts.m_scale + g_consts.m_bias;
 #else
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_unis.m_invertedViewProjectionMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const Vec3 eyeToFrag = normalize(worldPos - g_unis.m_cameraPos);
+	const Vec3 eyeToFrag = normalize(worldPos - g_consts.m_cameraPos);
 
 	const F32 sunPower = computeLuminance(g_globalRendererConsts.m_directionalLight.m_diffuseColor);
 

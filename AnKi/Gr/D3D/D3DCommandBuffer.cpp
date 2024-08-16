@@ -803,7 +803,7 @@ Bool CommandBuffer::isEmpty() const
 	return self.m_commandCount == 0;
 }
 
-void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
+void CommandBuffer::setFastConstants(const void* data, U32 dataSize)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
 	self.m_descriptors.setRootConstants(data, dataSize);

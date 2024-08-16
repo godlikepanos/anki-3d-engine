@@ -16,14 +16,14 @@ SamplerState g_nearesetAnyClampSampler : register(s0);
 Texture2D g_currentDepthTex : register(t0);
 Texture2D g_velocityTex : register(t1);
 
-struct Uniforms
+struct Constants
 {
 	Mat4 m_currentViewProjMat;
 	Mat4 m_currentInvViewProjMat;
 	Mat4 m_prevViewProjMat;
 };
 
-ConstantBuffer<Uniforms> g_unis : register(b0);
+ConstantBuffer<Constants> g_consts : register(b0);
 
 #	if ANKI_COMPUTE_SHADER
 RWTexture2D<Vec2> g_motionVectorsStorageTex : register(u0);
@@ -60,13 +60,13 @@ FragOut main(VertOut input)
 		// Don't use a reprojection matrix or other kind of optimizations. Due to numerical precision it produces slightly off result. Big enough to
 		// create slight visual issues. Do it the hard way.
 		const F32 depth = g_currentDepthTex.SampleLevel(g_nearesetAnyClampSampler, uv, 0.0).r;
-		const Vec4 v4 = mul(g_unis.m_currentInvViewProjMat, Vec4(uvToNdc(uv), depth, 1.0));
+		const Vec4 v4 = mul(g_consts.m_currentInvViewProjMat, Vec4(uvToNdc(uv), depth, 1.0));
 		const Vec3 worldPos = v4.xyz / v4.w;
 
-		Vec4 clipPos = mul(g_unis.m_currentViewProjMat, Vec4(worldPos, 1.0));
+		Vec4 clipPos = mul(g_consts.m_currentViewProjMat, Vec4(worldPos, 1.0));
 		clipPos.xy /= clipPos.w;
 
-		Vec4 prevClipPos = mul(g_unis.m_prevViewProjMat, Vec4(worldPos, 1.0));
+		Vec4 prevClipPos = mul(g_consts.m_prevViewProjMat, Vec4(worldPos, 1.0));
 		prevClipPos.xy /= prevClipPos.w;
 
 		const Vec2 diff = (prevClipPos.xy - clipPos.xy) * 0.5f; // aka uvToNdc(prevClipPos.xy) - uvToNdc(clipPos.xy)

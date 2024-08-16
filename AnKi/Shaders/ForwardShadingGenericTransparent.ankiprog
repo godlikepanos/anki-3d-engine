@@ -8,7 +8,7 @@
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 
-#pragma anki struct AnKiLocalUniforms
+#pragma anki struct AnKiLocalConstants
 #pragma anki member U32 m_texture
 #pragma anki member RVec4 m_colorScale
 #pragma anki member RVec4 m_colorBias
@@ -25,7 +25,7 @@ struct VertOut
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_worldPosition : WORLD_POSITION;
 	Vec4 m_svPosition : SV_POSITION;
-	nointerpolation U32 m_uniformsOffset : UNIFORMS_OFFSET;
+	nointerpolation U32 m_constantsOffset : CONSTANTS_OFFSET;
 };
 
 #pragma anki technique_start vert Forward
@@ -41,10 +41,10 @@ VertOut main(VertIn input)
 
 	output.m_worldPosition = mul(worldTransform, Vec4(vertex.m_position, 1.0));
 
-	output.m_svPosition = mul(g_globalUniforms.m_viewProjectionMatrix, Vec4(output.m_worldPosition, 1.0));
+	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(output.m_worldPosition, 1.0));
 
 	output.m_uv = vertex.m_uv;
-	output.m_uniformsOffset = renderable.m_uniformsOffset;
+	output.m_constantsOffset = renderable.m_constantsOffset;
 
 	return output;
 }
@@ -57,19 +57,19 @@ FragOut main(VertOut input)
 	ANKI_MAYBE_UNUSED(input);
 	FragOut output;
 
-	const AnKiLocalUniforms localUniforms = loadAnKiLocalUniforms(g_gpuScene, WaveReadLaneFirst(input.m_uniformsOffset));
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
 	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
 
 #if TEXTURE == 1
-	output.m_color = getBindlessTexture2DRVec4(localUniforms.m_texture).Sample(g_globalSampler, input.m_uv);
+	output.m_color = getBindlessTexture2DRVec4(localConstants.m_texture).Sample(g_globalSampler, input.m_uv);
 #endif
 
 #if LIGHT == 1
 	output.m_color.rgb = computeLightColorLow(output.m_color.rgb, input.m_worldPosition, input.m_svPosition);
 #endif
 
-	output.m_color = output.m_color * localUniforms.m_colorScale + localUniforms.m_colorBias;
+	output.m_color = output.m_color * localConstants.m_colorScale + localConstants.m_colorBias;
 
 	return output;
 }

@@ -272,7 +272,7 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuScenePositions);
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneScales);
 	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneAlphas);
-	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneUniforms);
+	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneConstants);
 
 	for(RenderStateBucketIndex& idx : m_renderStateBuckets)
 	{
@@ -304,8 +304,8 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_gpuScenePositions = GpuSceneBuffer::getSingleton().allocate(sizeof(Vec3) * m_props.m_maxNumOfParticles, alignof(F32));
 	m_gpuSceneAlphas = GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32));
 	m_gpuSceneScales = GpuSceneBuffer::getSingleton().allocate(sizeof(F32) * m_props.m_maxNumOfParticles, alignof(F32));
-	m_gpuSceneUniforms =
-		GpuSceneBuffer::getSingleton().allocate(m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(), alignof(U32));
+	m_gpuSceneConstants = GpuSceneBuffer::getSingleton().allocate(
+		m_particleEmitterResource->getMaterial()->getPrefilledLocalConstants().getSizeInBytes(), alignof(U32));
 
 	// Allocate buckets
 	for(RenderingTechnique t :
@@ -374,8 +374,9 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		m_gpuSceneParticleEmitter.uploadToGpuScene(particles);
 
 		// Upload uniforms
-		patcher.newCopy(*info.m_framePool, m_gpuSceneUniforms, m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getSizeInBytes(),
-						m_particleEmitterResource->getMaterial()->getPrefilledLocalUniforms().getBegin());
+		patcher.newCopy(*info.m_framePool, m_gpuSceneConstants,
+						m_particleEmitterResource->getMaterial()->getPrefilledLocalConstants().getSizeInBytes(),
+						m_particleEmitterResource->getMaterial()->getPrefilledLocalConstants().getBegin());
 
 		// Upload mesh LODs
 		GpuSceneMeshLod meshLod = {};
@@ -398,7 +399,7 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		// Upload the GpuSceneRenderable
 		GpuSceneRenderable renderable = {};
 		renderable.m_boneTransformsOffset = 0;
-		renderable.m_uniformsOffset = m_gpuSceneUniforms.getOffset();
+		renderable.m_constantsOffset = m_gpuSceneConstants.getOffset();
 		renderable.m_meshLodsIndex = m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 		renderable.m_particleEmitterIndex = m_gpuSceneParticleEmitter.getIndex();
 		renderable.m_worldTransformsIndex = 0;

@@ -29,13 +29,13 @@ TextureCube<Vec4> g_gbufferTex[3u] : register(t1);
 #if STORE_LOCATION == 0
 RWTexture3D<Vec4> g_irradianceVolume : register(u0);
 
-struct Uniforms
+struct Constants
 {
 	IVec3 m_volumeTexel;
 	I32 m_nextTexelOffsetInU;
 };
 
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 #else
 struct BufferOut
 {
@@ -197,13 +197,14 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 
 		const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
 		const U32 cellIdx =
-			g_unis.m_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + g_unis.m_volumeTexel.y * subvolumeSize.x + g_unis.m_volumeTexel.x;
+			g_consts.m_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + g_consts.m_volumeTexel.y * subvolumeSize.x + g_consts.m_volumeTexel.x;
 		const RF32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
 		const RVec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
 #if STORE_LOCATION == 0
-		const UVec3 storeUvw = UVec3(g_unis.m_volumeTexel.x + I32(f) * g_unis.m_nextTexelOffsetInU, g_unis.m_volumeTexel.y, g_unis.m_volumeTexel.z);
+		const UVec3 storeUvw =
+			UVec3(g_consts.m_volumeTexel.x + I32(f) * g_consts.m_nextTexelOffsetInU, g_consts.m_volumeTexel.y, g_consts.m_volumeTexel.z);
 		g_irradianceVolume[storeUvw] = Vec4(toStoreValue, 0.0);
 #else
 		g_irradianceDisceResults[0].m_val[f] = toStoreValue.xyzx;

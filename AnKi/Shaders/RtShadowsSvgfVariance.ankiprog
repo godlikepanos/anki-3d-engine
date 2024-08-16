@@ -18,7 +18,7 @@ Texture2D<Vec4> g_depthTex : register(t3);
 RWTexture2D<Vec4> g_shadowUav : register(u0);
 RWTexture2D<Vec4> g_varianceUav : register(u1);
 
-ANKI_PUSH_CONSTANTS(Mat4, g_invProjMat)
+ANKI_FAST_CONSTANTS(Mat4, g_invProjMat)
 
 constexpr I32 kConvolutionRadius = 1;
 

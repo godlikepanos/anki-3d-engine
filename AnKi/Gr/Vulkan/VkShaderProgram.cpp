@@ -455,7 +455,7 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 	// Find a binding for the bindless DS
 	if(refl.m_hasVkBindlessDescriptorSet)
 	{
-		for(U8 iset = 0; iset < kMaxDescriptorSets; ++iset)
+		for(U8 iset = 0; iset < kMaxRegisterSpaces; ++iset)
 		{
 			if(refl.m_bindingCounts[iset] == 0)
 			{
@@ -468,7 +468,7 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 	// Re-write all SPIRVs and compute the new bindings
 	rewrittenSpirvs.resize(m_shaders.getSize());
 	Bool hasBindless = false;
-	Array<U16, kMaxDescriptorSets> vkBindingCount = {};
+	Array<U16, kMaxRegisterSpaces> vkBindingCount = {};
 	for(U32 ishader = 0; ishader < m_shaders.getSize(); ++ishader)
 	{
 		ConstWeakArray<U32> inSpirv = static_cast<const ShaderImpl&>(*m_shaders[ishader]).m_spirvBin;
@@ -480,14 +480,14 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 		visitSpirv(WeakArray<U32>(outSpv), [&](U32 cmd, WeakArray<U32> instructions) {
 			if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationBinding
 			   && instructions[2] >= kDxcVkBindingShifts[0][HlslResourceType::kFirst]
-			   && instructions[2] < kDxcVkBindingShifts[kMaxDescriptorSets - 1][HlslResourceType::kCount - 1])
+			   && instructions[2] < kDxcVkBindingShifts[kMaxRegisterSpaces - 1][HlslResourceType::kCount - 1])
 			{
 				const U32 binding = instructions[2];
 
 				// Look at the binding and derive a few things. See the DXC compilation on what they mean
-				U32 set = kMaxDescriptorSets;
+				U32 set = kMaxRegisterSpaces;
 				HlslResourceType hlslResourceType = HlslResourceType::kCount;
-				for(set = 0; set < kMaxDescriptorSets; ++set)
+				for(set = 0; set < kMaxRegisterSpaces; ++set)
 				{
 					for(HlslResourceType hlslResourceType_ : EnumIterable<HlslResourceType>())
 					{
@@ -504,7 +504,7 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 					}
 				}
 
-				ANKI_ASSERT(set < kMaxDescriptorSets);
+				ANKI_ASSERT(set < kMaxRegisterSpaces);
 				ANKI_ASSERT(hlslResourceType < HlslResourceType::kCount);
 				const U32 registerBindingPoint = binding - kDxcVkBindingShifts[set][hlslResourceType];
 

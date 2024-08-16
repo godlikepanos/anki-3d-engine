@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup shader_compiler
 /// @{
 
-inline constexpr Array2d<U32, kMaxDescriptorSets, U32(HlslResourceType::kCount)> kDxcVkBindingShifts = {
+inline constexpr Array2d<U32, kMaxRegisterSpaces, U32(HlslResourceType::kCount)> kDxcVkBindingShifts = {
 	{{1000, 2000, 3000, 4000}, {5000, 6000, 7000, 8000}, {9000, 10000, 11000, 12000}}};
 
 // !!!!WARNING!!!! Need to change HLSL if you change the value bellow

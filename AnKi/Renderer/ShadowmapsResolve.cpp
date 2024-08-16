@@ -111,7 +111,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 
 	cmdb.bindShaderProgram(m_grProg.get());
 
-	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 	cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 	cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 	rgraphCtx.bindSrv(2, 0, getRenderer().getShadowMapping().getShadowmapRt());
@@ -139,7 +139,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get())
 	{
 		const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
-		cmdb.setPushConstants(&consts, sizeof(consts));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 	}
 
 	if(g_preferComputeCVar.get())

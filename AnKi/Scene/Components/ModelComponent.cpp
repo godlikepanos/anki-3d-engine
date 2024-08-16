@@ -27,7 +27,7 @@ ModelComponent::~ModelComponent()
 
 void ModelComponent::freeGpuScene()
 {
-	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneUniforms);
+	GpuSceneBuffer::getSingleton().deferredFree(m_gpuSceneConstants);
 
 	for(PatchInfo& patch : m_patchInfos)
 	{
@@ -69,12 +69,12 @@ void ModelComponent::loadModelResource(CString filename)
 	U32 uniformsSize = 0;
 	for(U32 i = 0; i < modelPatchCount; ++i)
 	{
-		const U32 size = U32(m_model->getModelPatches()[i].getMaterial()->getPrefilledLocalUniforms().getSizeInBytes());
+		const U32 size = U32(m_model->getModelPatches()[i].getMaterial()->getPrefilledLocalConstants().getSizeInBytes());
 		ANKI_ASSERT((size % 4) == 0);
 		uniformsSize += size;
 	}
 
-	m_gpuSceneUniforms = GpuSceneBuffer::getSingleton().allocate(uniformsSize, 4);
+	m_gpuSceneConstants = GpuSceneBuffer::getSingleton().allocate(uniformsSize, 4);
 	uniformsSize = 0;
 
 	// Init the patches
@@ -87,8 +87,8 @@ void ModelComponent::loadModelResource(CString filename)
 		m_castsShadow = m_castsShadow || in.getMaterial()->castsShadow();
 		m_presentRenderingTechniques |= in.getMaterial()->getRenderingTechniques();
 
-		out.m_gpuSceneUniformsOffset = m_gpuSceneUniforms.getOffset() + uniformsSize;
-		uniformsSize += U32(in.getMaterial()->getPrefilledLocalUniforms().getSizeInBytes());
+		out.m_gpuSceneConstantsOffset = m_gpuSceneConstants.getOffset() + uniformsSize;
+		uniformsSize += U32(in.getMaterial()->getPrefilledLocalConstants().getSizeInBytes());
 
 		out.m_gpuSceneMeshLods.allocate();
 		out.m_gpuSceneRenderable.allocate();
@@ -206,7 +206,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			// Upload the GpuSceneRenderable
 			GpuSceneRenderable gpuRenderable = {};
 			gpuRenderable.m_worldTransformsIndex = m_gpuSceneTransforms.getIndex() * 2;
-			gpuRenderable.m_uniformsOffset = m_patchInfos[i].m_gpuSceneUniformsOffset;
+			gpuRenderable.m_constantsOffset = m_patchInfos[i].m_gpuSceneConstantsOffset;
 			gpuRenderable.m_meshLodsIndex = m_patchInfos[i].m_gpuSceneMeshLods.getIndex() * kMaxLodCount;
 			gpuRenderable.m_boneTransformsOffset = (hasSkin) ? m_skinComponent->getBoneTransformsGpuSceneOffset() : 0;
 			gpuRenderable.m_particleEmitterIndex = kMaxU32;
@@ -221,21 +221,21 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 
 		// Upload the uniforms
-		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> allUniforms(info.m_framePool);
-		allUniforms.resize(m_gpuSceneUniforms.getAllocatedSize() / 4);
+		DynamicArray<U32, MemoryPoolPtrWrapper<StackMemoryPool>> allConstants(info.m_framePool);
+		allConstants.resize(m_gpuSceneConstants.getAllocatedSize() / 4);
 		U32 count = 0;
 		for(U32 i = 0; i < modelPatchCount; ++i)
 		{
 			const ModelPatch& patch = m_model->getModelPatches()[i];
 			const MaterialResource& mtl = *patch.getMaterial();
-			memcpy(&allUniforms[count], mtl.getPrefilledLocalUniforms().getBegin(), mtl.getPrefilledLocalUniforms().getSizeInBytes());
+			memcpy(&allConstants[count], mtl.getPrefilledLocalConstants().getBegin(), mtl.getPrefilledLocalConstants().getSizeInBytes());
 
-			count += U32(mtl.getPrefilledLocalUniforms().getSizeInBytes() / 4);
+			count += U32(mtl.getPrefilledLocalConstants().getSizeInBytes() / 4);
 		}
 
-		ANKI_ASSERT(count * 4 == m_gpuSceneUniforms.getAllocatedSize());
-		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneUniforms.getOffset(), m_gpuSceneUniforms.getAllocatedSize(),
-													 &allUniforms[0]);
+		ANKI_ASSERT(count * 4 == m_gpuSceneConstants.getAllocatedSize());
+		GpuSceneMicroPatcher::getSingleton().newCopy(*info.m_framePool, m_gpuSceneConstants.getOffset(), m_gpuSceneConstants.getAllocatedSize(),
+													 &allConstants[0]);
 	}
 
 	// Upload transforms

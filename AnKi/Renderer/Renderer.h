@@ -243,7 +243,7 @@ private:
 	void updatePipelineStats();
 #endif
 
-	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererUniforms& unis);
+	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& consts);
 };
 /// @}
 

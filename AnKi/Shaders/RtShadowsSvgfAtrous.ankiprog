@@ -21,7 +21,7 @@ RWTexture2D<UVec4> g_shadowStorageTex : register(u0);
 RWTexture2D<Vec4> g_varianceStorageTex : register(u1);
 #endif
 
-ANKI_PUSH_CONSTANTS(Mat4, g_invProjMat)
+ANKI_FAST_CONSTANTS(Mat4, g_invProjMat)
 
 constexpr I32 kConvolutionRadius = 2;
 constexpr F32 kKernelWeights[kConvolutionRadius + 1] = {1.0, 2.0 / 3.0, 1.0 / 6.0};

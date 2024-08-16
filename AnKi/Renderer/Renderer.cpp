@@ -298,8 +298,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_cameraFar = cam.getFar();
 
 	// Allocate global constants
-	GlobalRendererUniforms* globalUnis;
-	ctx.m_globalRenderingUniformsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUnis);
+	GlobalRendererConstants* globalUnis;
+	ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUnis);
 
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
@@ -353,39 +353,39 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	return Error::kNone;
 }
 
-void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererUniforms& unis)
+void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& consts)
 {
 	ANKI_TRACE_SCOPED_EVENT(RWriteGlobalRendererConstants);
 
-	unis.m_renderingSize = Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()));
+	consts.m_renderingSize = Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()));
 
-	unis.m_time = F32(HighRezTimer::getCurrentTime());
-	unis.m_frame = m_frameCount & kMaxU32;
+	consts.m_time = F32(HighRezTimer::getCurrentTime());
+	consts.m_frame = m_frameCount & kMaxU32;
 
 	Plane nearPlane;
 	extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-	unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
-	unis.m_near = ctx.m_cameraNear;
-	unis.m_far = ctx.m_cameraFar;
-	unis.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+	consts.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+	consts.m_near = ctx.m_cameraNear;
+	consts.m_far = ctx.m_cameraFar;
+	consts.m_cameraPosition = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 
-	unis.m_tileCounts = m_tileCounts;
-	unis.m_zSplitCount = m_zSplitCount;
-	unis.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_cameraFar - ctx.m_cameraNear);
-	unis.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(m_zSplitCount));
-	unis.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(m_zSplitCount));
-	unis.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar.get() - 1, m_zSplitCount);
+	consts.m_tileCounts = m_tileCounts;
+	consts.m_zSplitCount = m_zSplitCount;
+	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_cameraFar - ctx.m_cameraNear);
+	consts.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(m_zSplitCount));
+	consts.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(m_zSplitCount));
+	consts.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar.get() - 1, m_zSplitCount);
 
-	unis.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
+	consts.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
 
-	unis.m_matrices = ctx.m_matrices;
-	unis.m_previousMatrices = ctx.m_prevMatrices;
+	consts.m_matrices = ctx.m_matrices;
+	consts.m_previousMatrices = ctx.m_prevMatrices;
 
 	// Directional light
 	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 	if(dirLight)
 	{
-		DirectionalLight& out = unis.m_directionalLight;
+		DirectionalLight& out = consts.m_directionalLight;
 		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_shadowCascadeCountCVar.get() : 0;
 
 		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
@@ -404,7 +404,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	}
 	else
 	{
-		unis.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
+		consts.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
 	}
 }
 
@@ -561,7 +561,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, Text
 
 					cmdb->bindShaderProgram(&variant->getProgram());
 
-					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
+					cmdb->setFastConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
 					const TextureView view(tex.get(), TextureSubresourceDesc::surface(mip, face, layer));
 

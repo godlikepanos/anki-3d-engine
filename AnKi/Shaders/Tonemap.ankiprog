@@ -21,13 +21,13 @@ RWTexture2D<RVec4> g_storageTex : register(u1);
 #		define THREADGROUP_SIZE_SQRT 8
 #	endif
 
-struct Uniforms
+struct Constants
 {
 	Vec2 m_viewportSizeOverOne;
 	UVec2 m_viewportSize;
 };
 
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
@@ -36,12 +36,12 @@ RVec3 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_unis.m_viewportSize, svDispatchThreadId.xy))
+	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_consts.m_viewportSize, svDispatchThreadId.xy))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) * g_unis.m_viewportSizeOverOne;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) * g_consts.m_viewportSizeOverOne;
 #	else
 	const Vec2 uv = input.m_uv;
 #	endif

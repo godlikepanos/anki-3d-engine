@@ -438,7 +438,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_storageBufferMaxRange = 1 << D3D12_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP;
 		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
 		m_capabilities.m_textureBufferMaxRange = kMaxU32; // ?
-		m_capabilities.m_pushConstantsSize = kMaxPushConstantSize;
+		m_capabilities.m_fastConstantsSize = kMaxFastConstantsSize;
 		m_capabilities.m_computeSharedMemorySize = D3D12_CS_TGSM_REGISTER_COUNT * sizeof(F32);
 		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = 32; // ?
 		m_capabilities.m_sbtRecordAlignment = 32; // ?

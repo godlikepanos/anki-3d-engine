@@ -124,7 +124,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 
 			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
-			if(set >= kMaxDescriptorSets && set != kDxcVkBindlessRegisterSpace)
+			if(set >= kMaxRegisterSpaces && set != kDxcVkBindlessRegisterSpace)
 			{
 				errorStr.sprintf("Exceeded set for: %s", r.name.c_str());
 				return Error::kUserData;
@@ -249,7 +249,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 		return err;
 	}
 
-	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
+	for(U32 i = 0; i < kMaxRegisterSpaces; ++i)
 	{
 		std::sort(refl.m_descriptor.m_bindings[i].getBegin(), refl.m_descriptor.m_bindings[i].getBegin() + refl.m_descriptor.m_bindingCounts[i]);
 	}
@@ -270,13 +270,13 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 	if(rsrc.push_constant_buffers.size() == 1)
 	{
 		const U32 blockSize = U32(spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id)));
-		if(blockSize == 0 || (blockSize % 16) != 0 || blockSize > kMaxU8)
+		if(blockSize == 0 || (blockSize % 16) != 0 || blockSize > kMaxFastConstantsSize)
 		{
 			errorStr.sprintf("Incorrect push constants size");
 			return Error::kUserData;
 		}
 
-		refl.m_descriptor.m_pushConstantsSize = blockSize;
+		refl.m_descriptor.m_fastConstantsSize = blockSize;
 	}
 
 	// Attribs
@@ -477,7 +477,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 						(isLib) ? funcReflections[ifunc]->GetConstantBufferByName(bindDesc.Name) : dxRefl->GetConstantBufferByName(bindDesc.Name);
 					D3D12_SHADER_BUFFER_DESC desc;
 					ANKI_REFL_CHECK(cbuffer->GetDesc(&desc));
-					refl.m_descriptor.m_pushConstantsSize = desc.Size;
+					refl.m_descriptor.m_fastConstantsSize = desc.Size;
 
 					continue;
 				}
@@ -566,7 +566,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 		}
 	}
 
-	for(U32 i = 0; i < kMaxDescriptorSets; ++i)
+	for(U32 i = 0; i < kMaxRegisterSpaces; ++i)
 	{
 		std::sort(refl.m_descriptor.m_bindings[i].getBegin(), refl.m_descriptor.m_bindings[i].getBegin() + refl.m_descriptor.m_bindingCounts[i]);
 	}

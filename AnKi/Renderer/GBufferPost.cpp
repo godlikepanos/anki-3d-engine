@@ -62,7 +62,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
 		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getClustersBuffer());
 

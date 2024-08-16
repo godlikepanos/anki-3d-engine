@@ -97,7 +97,7 @@ Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 }
 
 /// Get the final cluster after ORing and ANDing the masks.
-Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, GlobalRendererUniforms consts, Vec3 fragCoord)
+Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, GlobalRendererConstants consts, Vec3 fragCoord)
 {
 	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, consts.m_tileCounts.x)];
 	const Cluster zCluster = clusters[computeZSplitClusterIndex(fragCoord.z, consts.m_zSplitCount, consts.m_zSplitMagic.x, consts.m_zSplitMagic.y)

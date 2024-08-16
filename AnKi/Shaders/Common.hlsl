@@ -14,9 +14,9 @@
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN
-#	define ANKI_PUSH_CONSTANTS(type, var) [[vk::push_constant]] ConstantBuffer<type> var;
+#	define ANKI_FAST_CONSTANTS(type, var) [[vk::push_constant]] ConstantBuffer<type> var;
 #else
-#	define ANKI_PUSH_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3000);
+#	define ANKI_FAST_CONSTANTS(type, var) ConstantBuffer<type> var : register(b0, space3000);
 #endif
 
 #if ANKI_GR_BACKEND_VULKAN

@@ -17,7 +17,7 @@
 #define ANKI_REG(type, binding) _ANKI_REG(type, binding)
 
 SamplerState g_globalSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER));
-ConstantBuffer<MaterialGlobalUniforms> g_globalUniforms : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS));
+ConstantBuffer<MaterialGlobalConstants> g_globalConstants : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_GLOBAL_CONSTANTS));
 ByteAddressBuffer g_gpuScene : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_GPU_SCENE));
 
 // Unified geom:
@@ -35,12 +35,12 @@ SamplerState g_nearestClampSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER
 StructuredBuffer<U32> g_firstMeshlet : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_FIRST_MESHLET));
 
 #if ANKI_MESH_SHADER
-struct PushConsts
+struct Consts
 {
 	UVec3 m_padding;
 	U32 m_bucketIndex;
 };
-ANKI_PUSH_CONSTANTS(PushConsts, g_pushConsts)
+ANKI_FAST_CONSTANTS(Consts, g_consts)
 #endif
 
 // FW shading specific
@@ -52,7 +52,7 @@ Texture2D g_gbufferDepthTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_SCENE_
 Texture3D<RVec4> g_lightVol : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_LIGHT_VOLUME));
 SamplerComparisonState g_shadowSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER));
 
-ConstantBuffer<GlobalRendererUniforms> g_globalRendererUniforms : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_UNIFORMS));
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS));
 StructuredBuffer<Cluster> g_clusters : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTERS));
 StructuredBuffer<PointLight> g_pointLights : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS));
 StructuredBuffer<SpotLight> g_spotLights : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_SPOT_LIGHTS));

@@ -32,7 +32,7 @@ typedef GpuSceneGlobalIlluminationProbe ObjectType;
 StructuredBuffer<ObjectType> g_objects : register(t0);
 RWStructuredBuffer<U32> g_visibleIndices : register(u0); // 1st element is the count. What follows is indices
 
-ANKI_PUSH_CONSTANTS(GpuVisibilityNonRenderableUniforms, g_unis)
+ANKI_FAST_CONSTANTS(GpuVisibilityNonRenderableConstants, g_consts)
 
 constexpr U32 kVisibleObjCounterIdx = 1;
 constexpr U32 kThreadgroupCounterIdx = 0;
@@ -96,7 +96,7 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 	if(!skip)
 	{
 		const Vec4 sphere = getSphere(g_objects[svDispatchThreadId]);
-		skip = !frustumTest(g_unis.m_clipPlanes, sphere.xyz, sphere.w);
+		skip = !frustumTest(g_consts.m_clipPlanes, sphere.xyz, sphere.w);
 	}
 
 	// Add the object

@@ -58,13 +58,12 @@ ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Gr, GrMemoryPool)
 
 // Some constants
 constexpr U32 kMaxColorRenderTargets = 4;
-constexpr U32 kMaxDescriptorSets = 3; ///< Groups that can be bound at the same time.
-constexpr U32 kMaxBindingsPerDescriptorSet = 32;
+constexpr U32 kMaxRegisterSpaces = 3; ///< Groups that can be bound at the same time.
+constexpr U32 kMaxBindingsPerRegisterSpace = 32;
 constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
 constexpr U32 kMaxBindlessTextures = 512;
-constexpr U32 kMaxBindlessReadonlyTextureBuffers = 512;
-constexpr U32 kMaxPushConstantSize = 128; ///< Thanks AMD!!
+constexpr U32 kMaxFastConstantsSize = 128; ///< Thanks AMD!!
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
@@ -162,8 +161,8 @@ public:
 	/// The max visible range of texture buffers inside the shaders.
 	PtrSize m_textureBufferMaxRange = 0;
 
-	/// Max push constant size.
-	PtrSize m_pushConstantsSize = 128;
+	/// Max push/root constant size.
+	PtrSize m_fastConstantsSize = 128;
 
 	/// The max combined size of shared variables (with paddings) in compute shaders.
 	PtrSize m_computeSharedMemorySize = 16_KB;
@@ -962,20 +961,20 @@ class ShaderReflectionDescriptorRelated
 {
 public:
 	/// The D3D backend expects bindings inside a space need to be ordered by HLSL type and then by register.
-	Array2d<ShaderReflectionBinding, kMaxDescriptorSets, kMaxBindingsPerDescriptorSet> m_bindings;
+	Array2d<ShaderReflectionBinding, kMaxRegisterSpaces, kMaxBindingsPerRegisterSpace> m_bindings;
 
-	Array<U8, kMaxDescriptorSets> m_bindingCounts = {};
+	Array<U8, kMaxRegisterSpaces> m_bindingCounts = {};
 
-	U32 m_pushConstantsSize = 0;
+	U32 m_fastConstantsSize = 0;
 
 	Bool m_hasVkBindlessDescriptorSet = false; ///< Filled by the shader compiler.
 	U8 m_vkBindlessDescriptorSet = kMaxU8; ///< Filled by the VK backend.
 
 	void validate() const
 	{
-		for(U32 set = 0; set < kMaxDescriptorSets; ++set)
+		for(U32 set = 0; set < kMaxRegisterSpaces; ++set)
 		{
-			for(U32 ibinding = 0; ibinding < kMaxBindingsPerDescriptorSet; ++ibinding)
+			for(U32 ibinding = 0; ibinding < kMaxBindingsPerRegisterSpace; ++ibinding)
 			{
 				const ShaderReflectionBinding& binding = m_bindings[set][ibinding];
 

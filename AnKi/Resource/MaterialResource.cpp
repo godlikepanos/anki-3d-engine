@@ -85,7 +85,7 @@ MaterialResource::MaterialResource()
 
 MaterialResource::~MaterialResource()
 {
-	ResourceMemoryPool::getSingleton().free(m_prefilledLocalUniforms);
+	ResourceMemoryPool::getSingleton().free(m_prefilledLocalConstants);
 }
 
 const MaterialVariable* MaterialResource::tryFindVariableInternal(CString name) const
@@ -149,7 +149,7 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 		m_vars = std::move(newVars);
 	}
 
-	prefillLocalUniforms();
+	prefillLocalConstants();
 
 	return Error::kNone;
 }
@@ -375,30 +375,30 @@ Error MaterialResource::createVars()
 	const ShaderBinary& binary = m_prog->getBinary();
 
 	// Find struct
-	const ShaderBinaryStruct* localUniformsStruct = nullptr;
+	const ShaderBinaryStruct* localConstantsStruct = nullptr;
 	for(const ShaderBinaryStruct& strct : binary.m_structs)
 	{
-		if(CString(strct.m_name.getBegin()) == "AnKiLocalUniforms")
+		if(CString(strct.m_name.getBegin()) == "AnKiLocalConstants")
 		{
-			localUniformsStruct = &strct;
+			localConstantsStruct = &strct;
 			break;
 		}
 	}
 
 	// Create vars
-	for(U32 i = 0; localUniformsStruct && i < localUniformsStruct->m_members.getSize(); ++i)
+	for(U32 i = 0; localConstantsStruct && i < localConstantsStruct->m_members.getSize(); ++i)
 	{
-		const ShaderBinaryStructMember& member = localUniformsStruct->m_members[i];
+		const ShaderBinaryStructMember& member = localConstantsStruct->m_members[i];
 		const CString memberName = member.m_name.getBegin();
 
 		MaterialVariable& var = *m_vars.emplaceBack();
 		zeroMemory(var);
 		var.m_name = memberName;
 		var.m_dataType = member.m_type;
-		var.m_offsetInLocalUniforms = member.m_offset;
+		var.m_offsetInLocalConstants = member.m_offset;
 	}
 
-	m_localUniformsSize = (localUniformsStruct) ? localUniformsStruct->m_size : 0;
+	m_localConstantsSize = (localConstantsStruct) ? localConstantsStruct->m_size : 0;
 
 	return Error::kNone;
 }
@@ -476,15 +476,15 @@ Error MaterialResource::parseInput(XmlElement inputEl, Bool async, BitSet<128>& 
 	return Error::kNone;
 }
 
-void MaterialResource::prefillLocalUniforms()
+void MaterialResource::prefillLocalConstants()
 {
-	if(m_localUniformsSize == 0)
+	if(m_localConstantsSize == 0)
 	{
 		return;
 	}
 
-	m_prefilledLocalUniforms = ResourceMemoryPool::getSingleton().allocate(m_localUniformsSize, 1);
-	memset(m_prefilledLocalUniforms, 0, m_localUniformsSize);
+	m_prefilledLocalConstants = ResourceMemoryPool::getSingleton().allocate(m_localConstantsSize, 1);
+	memset(m_prefilledLocalConstants, 0, m_localConstantsSize);
 
 	for(const MaterialVariable& var : m_vars)
 	{
@@ -492,8 +492,8 @@ void MaterialResource::prefillLocalUniforms()
 		{
 #define ANKI_SVDT_MACRO(type, baseType, rowCount, columnCount, isIntagralType) \
 	case ShaderVariableDataType::k##type: \
-		ANKI_ASSERT(var.m_offsetInLocalUniforms + sizeof(type) <= m_localUniformsSize); \
-		memcpy(static_cast<U8*>(m_prefilledLocalUniforms) + var.m_offsetInLocalUniforms, &var.m_##type, sizeof(type)); \
+		ANKI_ASSERT(var.m_offsetInLocalConstants + sizeof(type) <= m_localConstantsSize); \
+		memcpy(static_cast<U8*>(m_prefilledLocalConstants) + var.m_offsetInLocalConstants, &var.m_##type, sizeof(type)); \
 		break;
 #include <AnKi/Gr/ShaderVariableDataType.def.h>
 #undef ANKI_SVDT_MACRO

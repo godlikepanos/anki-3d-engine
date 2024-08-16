@@ -128,23 +128,23 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 	ShaderReflection c;
 
 	memcpy(&c.m_descriptor, &a.m_descriptor, sizeof(a.m_descriptor));
-	for(U32 set = 0; set < kMaxDescriptorSets; ++set)
+	for(U32 space = 0; space < kMaxRegisterSpaces; ++space)
 	{
-		for(U32 binding = 0; binding < b.m_descriptor.m_bindingCounts[set]; ++binding)
+		for(U32 binding = 0; binding < b.m_descriptor.m_bindingCounts[space]; ++binding)
 		{
 			// Search for the binding in a
-			const ShaderReflectionBinding& bbinding = b.m_descriptor.m_bindings[set][binding];
+			const ShaderReflectionBinding& bbinding = b.m_descriptor.m_bindings[space][binding];
 			Bool bindingFoundOnA = false;
-			for(U32 binding2 = 0; binding2 < a.m_descriptor.m_bindingCounts[set]; ++binding2)
+			for(U32 binding2 = 0; binding2 < a.m_descriptor.m_bindingCounts[space]; ++binding2)
 			{
-				const ShaderReflectionBinding& abinding = a.m_descriptor.m_bindings[set][binding2];
+				const ShaderReflectionBinding& abinding = a.m_descriptor.m_bindings[space][binding2];
 
 				if(abinding.m_registerBindingPoint == bbinding.m_registerBindingPoint
 				   && descriptorTypeToHlslResourceType(abinding.m_type) == descriptorTypeToHlslResourceType(bbinding.m_type))
 				{
 					if(abinding != bbinding)
 					{
-						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Set %u binding %u", set, binding);
+						ANKI_GR_LOGE("Can't link shader reflection because of different bindings. Space %u binding %u", space, binding);
 						return Error::kFunctionFailed;
 					}
 					bindingFoundOnA = true;
@@ -154,18 +154,18 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 
 			if(!bindingFoundOnA)
 			{
-				c.m_descriptor.m_bindings[set][c.m_descriptor.m_bindingCounts[set]++] = bbinding;
+				c.m_descriptor.m_bindings[space][c.m_descriptor.m_bindingCounts[space]++] = bbinding;
 			}
 		}
 	}
 
-	if(a.m_descriptor.m_pushConstantsSize != 0 && b.m_descriptor.m_pushConstantsSize != 0
-	   && a.m_descriptor.m_pushConstantsSize != b.m_descriptor.m_pushConstantsSize)
+	if(a.m_descriptor.m_fastConstantsSize != 0 && b.m_descriptor.m_fastConstantsSize != 0
+	   && a.m_descriptor.m_fastConstantsSize != b.m_descriptor.m_fastConstantsSize)
 	{
-		ANKI_GR_LOGE("Can't link shader reflection because push constant size doesn't match");
+		ANKI_GR_LOGE("Can't link shader reflection because fast constant size doesn't match");
 		return Error::kFunctionFailed;
 	}
-	c.m_descriptor.m_pushConstantsSize = max(a.m_descriptor.m_pushConstantsSize, b.m_descriptor.m_pushConstantsSize);
+	c.m_descriptor.m_fastConstantsSize = max(a.m_descriptor.m_fastConstantsSize, b.m_descriptor.m_fastConstantsSize);
 
 	c.m_descriptor.m_hasVkBindlessDescriptorSet = a.m_descriptor.m_hasVkBindlessDescriptorSet || b.m_descriptor.m_hasVkBindlessDescriptorSet;
 

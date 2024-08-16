@@ -10,7 +10,7 @@
 ANKI_BEGIN_NAMESPACE
 
 /// Common data for all materials.
-struct MaterialGlobalUniforms
+struct MaterialGlobalConstants
 {
 	Mat4 m_viewProjectionMatrix;
 	Mat4 m_previousViewProjectionMatrix;
@@ -19,10 +19,10 @@ struct MaterialGlobalUniforms
 
 	Vec4 m_viewport;
 };
-static_assert(sizeof(MaterialGlobalUniforms) == 15 * sizeof(Vec4));
+static_assert(sizeof(MaterialGlobalConstants) == 15 * sizeof(Vec4));
 
 #define ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER 0
-#define ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS 0
+#define ANKI_MATERIAL_REGISTER_GLOBAL_CONSTANTS 0
 #define ANKI_MATERIAL_REGISTER_GPU_SCENE 0
 
 #define ANKI_MATERIAL_REGISTER_MESHLET_BOUNDING_VOLUMES 1 ///< Points to the unified geom buffer
@@ -40,7 +40,7 @@ static_assert(sizeof(MaterialGlobalUniforms) == 15 * sizeof(Vec4));
 #define ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER 3
 #define ANKI_MATERIAL_REGISTER_SCENE_DEPTH 9
 #define ANKI_MATERIAL_REGISTER_LIGHT_VOLUME 10
-#define ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_UNIFORMS 1
+#define ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS 1
 #define ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS 11
 #define ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_SPOT_LIGHTS 12
 #define ANKI_MATERIAL_REGISTER_SHADOW_ATLAS 13

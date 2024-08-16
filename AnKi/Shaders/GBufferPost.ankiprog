@@ -18,7 +18,7 @@ SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D g_depthTex : register(t0);
 SamplerState g_trilinearRepeatSampler : register(s1);
 
-ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 StructuredBuffer<Decal> g_decals : register(t1);
 StructuredBuffer<Cluster> g_clusters : register(t2);
 
@@ -45,11 +45,11 @@ FragOut main(VertOut input)
 	// Get worldPos
 	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	const Vec2 ndc = uvToNdc(uv);
-	const Vec4 worldPos4 = mul(g_globalUniforms.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalUniforms, Vec3(input.m_svPosition.xy, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants, Vec3(input.m_svPosition.xy, depth));
 
 	// Make the decalsMask uniform across the wave because we are accessing bindless textures later on
 	U32 decalsMask = cluster.m_decalsMask[0];

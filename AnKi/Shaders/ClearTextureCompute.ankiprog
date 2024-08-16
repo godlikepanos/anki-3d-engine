@@ -11,7 +11,7 @@
 #pragma anki technique_start comp
 #include <AnKi/Shaders/Common.hlsl>
 
-struct Uniforms
+struct Consts
 {
 #if COMPONENT_TYPE == 0
 	Vec4 m_clearColor;
@@ -20,7 +20,7 @@ struct Uniforms
 #endif
 };
 
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 #if TEXTURE_DIMENSIONS == 2
 #	if COMPONENT_TYPE == 0
@@ -47,7 +47,7 @@ RWTexture3D<UVec4> g_storageTex : register(u0);
 		return;
 	}
 
-	g_storageTex[svDispatchThreadId.xy] = g_unis.m_clearColor;
+	g_storageTex[svDispatchThreadId.xy] = g_consts.m_clearColor;
 #else
 	UVec3 texSize;
 	g_storageTex.GetDimensions(texSize.x, texSize.y, texSize.z);
@@ -57,7 +57,7 @@ RWTexture3D<UVec4> g_storageTex : register(u0);
 		return;
 	}
 
-	g_storageTex[svDispatchThreadId] = g_unis.m_clearColor;
+	g_storageTex[svDispatchThreadId] = g_consts.m_clearColor;
 #endif
 }
 

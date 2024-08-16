@@ -75,14 +75,14 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 		rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(3));
 
-		class Uniforms
+		class Constants
 		{
 		public:
 			Mat4 m_currentViewProjMat;
 			Mat4 m_currentInvViewProjMat;
 			Mat4 m_prevViewProjMat;
 		} * pc;
-		pc = allocateAndBindConstants<Uniforms>(cmdb, 0, 0);
+		pc = allocateAndBindConstants<Constants>(cmdb, 0, 0);
 
 		pc->m_currentViewProjMat = ctx.m_matrices.m_viewProjection;
 		pc->m_currentInvViewProjMat = ctx.m_matrices.m_invertedViewProjection;

@@ -1081,15 +1081,15 @@ Bool CommandBuffer::isEmpty() const
 	return self.isEmpty();
 }
 
-void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
+void CommandBuffer::setFastConstants(const void* data, U32 dataSize)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
-	ANKI_ASSERT(static_cast<const ShaderProgramImpl&>(self.getBoundProgram()).getReflection().m_descriptor.m_pushConstantsSize == dataSize
+	ANKI_ASSERT(static_cast<const ShaderProgramImpl&>(self.getBoundProgram()).getReflection().m_descriptor.m_fastConstantsSize == dataSize
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
 	self.commandCommon();
-	self.m_descriptorState.setPushConstants(data, dataSize);
+	self.m_descriptorState.setFastConstants(data, dataSize);
 }
 
 void CommandBuffer::setLineWidth(F32 width)

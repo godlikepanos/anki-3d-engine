@@ -554,7 +554,7 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());
 
 		const UVec4 lightIndex(lightc.getGpuSceneLightAllocation().getIndex());
-		cmdb.setPushConstants(&lightIndex, sizeof(lightIndex));
+		cmdb.setFastConstants(&lightIndex, sizeof(lightIndex));
 
 		cmdb.bindSrv(0, 0, hashBuff);
 		cmdb.bindUav(0, 0, mdiBuff.isValid() ? mdiBuff : BufferView(&getRenderer().getDummyBuffer()).setRange(sizeof(U32)));

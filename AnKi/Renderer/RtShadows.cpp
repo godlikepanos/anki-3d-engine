@@ -266,13 +266,13 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(3, 0, BufferView(&m_rtLibraryGrProg->getShaderGroupHandlesGpuBuffer()));
 			cmdb.bindUav(0, 0, sbtBuffer);
 
-			RtShadowsSbtBuildUniforms unis = {};
+			RtShadowsSbtBuildConstants consts = {};
 			ANKI_ASSERT(m_sbtRecordSize % 4 == 0);
-			unis.m_sbtRecordDwordSize = m_sbtRecordSize / 4;
+			consts.m_sbtRecordDwordSize = m_sbtRecordSize / 4;
 			const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
 			ANKI_ASSERT(shaderHandleSize % 4 == 0);
-			unis.m_shaderHandleDwordSize = shaderHandleSize / 4;
-			cmdb.setPushConstants(&unis, sizeof(unis));
+			consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.dispatchComputeIndirect(sbtBuildIndirectArgsBuffer);
 		});
@@ -303,12 +303,12 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 			// Allocate, set and bind global uniforms
 			{
-				MaterialGlobalUniforms* globalUniforms;
-				const RebarAllocation globalUniformsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUniforms);
+				MaterialGlobalConstants* globalConstants;
+				const RebarAllocation globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalConstants);
 
-				memset(globalUniforms, 0, sizeof(*globalUniforms)); // Don't care for now
+				memset(globalConstants, 0, sizeof(*globalConstants)); // Don't care for now
 
-				cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS, 0, globalUniformsToken);
+				cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_GLOBAL_CONSTANTS, 0, globalConstantsToken);
 			}
 
 			// More globals
@@ -323,7 +323,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		Format::k##fmt);
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
-			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingUniformsBuffer);
+			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearRepeat.get());
 
@@ -407,7 +407,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(1, 0, m_runCtx.m_varianceRts[1]);
 
 			const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
-			cmdb.setPushConstants(&invProjMat, sizeof(invProjMat));
+			cmdb.setFastConstants(&invProjMat, sizeof(invProjMat));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 		});
@@ -472,7 +472,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
-				cmdb.setPushConstants(&invProjMat, sizeof(invProjMat));
+				cmdb.setFastConstants(&invProjMat, sizeof(invProjMat));
 
 				dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 			});
@@ -523,12 +523,12 @@ void RtShadows::runDenoise(const RenderingContext& ctx, RenderPassWorkContext& r
 
 	rgraphCtx.bindUav(0, 0, (horizontal) ? m_runCtx.m_intermediateShadowsRts[1] : m_runCtx.m_historyRt);
 
-	RtShadowsDenoiseUniforms consts;
+	RtShadowsDenoiseConstants consts;
 	consts.m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 	consts.m_time = F32(GlobalFrameIndex::getSingleton().m_value % 0xFFFFu);
 	consts.m_minSampleCount = 8;
 	consts.m_maxSampleCount = 32;
-	cmdb.setPushConstants(&consts, sizeof(consts));
+	cmdb.setFastConstants(&consts, sizeof(consts));
 
 	dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
 }

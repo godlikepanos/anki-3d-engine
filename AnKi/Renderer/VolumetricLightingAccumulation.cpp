@@ -105,7 +105,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 		rgraphCtx.bindSrv(1, 0, m_runCtx.m_rts[0]);
 
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		rgraphCtx.bindSrv(4, 0, getRenderer().getShadowMapping().getShadowmapRt());
@@ -115,34 +115,34 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 
-		VolumetricLightingUniforms unis;
+		VolumetricLightingConstants consts;
 		if(!sky)
 		{
-			unis.m_minHeight = 0.0f;
-			unis.m_oneOverMaxMinusMinHeight = 0.0f;
-			unis.m_densityAtMinHeight = 0.0f;
-			unis.m_densityAtMaxHeight = 0.0f;
+			consts.m_minHeight = 0.0f;
+			consts.m_oneOverMaxMinusMinHeight = 0.0f;
+			consts.m_densityAtMinHeight = 0.0f;
+			consts.m_densityAtMaxHeight = 0.0f;
 		}
 		else if(sky->getHeightOfMaxFogDensity() > sky->getHeightOfMaxFogDensity())
 		{
-			unis.m_minHeight = sky->getHeightOfMinFogDensity();
-			unis.m_oneOverMaxMinusMinHeight = 1.0f / (sky->getHeightOfMaxFogDensity() - unis.m_minHeight + kEpsilonf);
-			unis.m_densityAtMinHeight = sky->getMinFogDensity();
-			unis.m_densityAtMaxHeight = sky->getMaxFogDensity();
+			consts.m_minHeight = sky->getHeightOfMinFogDensity();
+			consts.m_oneOverMaxMinusMinHeight = 1.0f / (sky->getHeightOfMaxFogDensity() - consts.m_minHeight + kEpsilonf);
+			consts.m_densityAtMinHeight = sky->getMinFogDensity();
+			consts.m_densityAtMaxHeight = sky->getMaxFogDensity();
 		}
 		else
 		{
-			unis.m_minHeight = sky->getHeightOfMaxFogDensity();
-			unis.m_oneOverMaxMinusMinHeight = 1.0f / (sky->getHeightOfMinFogDensity() - unis.m_minHeight + kEpsilonf);
-			unis.m_densityAtMinHeight = sky->getMaxFogDensity();
-			unis.m_densityAtMaxHeight = sky->getMinFogDensity();
+			consts.m_minHeight = sky->getHeightOfMaxFogDensity();
+			consts.m_oneOverMaxMinusMinHeight = 1.0f / (sky->getHeightOfMinFogDensity() - consts.m_minHeight + kEpsilonf);
+			consts.m_densityAtMinHeight = sky->getMaxFogDensity();
+			consts.m_densityAtMaxHeight = sky->getMinFogDensity();
 		}
-		unis.m_volumeSize = UVec3(m_volumeSize);
+		consts.m_volumeSize = UVec3(m_volumeSize);
 
 		const U32 finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
-		unis.m_maxZSplitsToProcessf = F32(finalZSplit + 1);
+		consts.m_maxZSplitsToProcessf = F32(finalZSplit + 1);
 
-		cmdb.setPushConstants(&unis, sizeof(unis));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		dispatchPPCompute(cmdb, 8, 8, 8, m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 	});

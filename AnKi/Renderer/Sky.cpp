@@ -161,7 +161,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, multipleScatteringLutRt);
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_skyLutRt);
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x(), kSkyLutSize.y());
 		});
@@ -181,7 +181,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_computeSunColorGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, transmittanceLutRt);
-			cmdb.bindUav(0, 0, ctx.m_globalRenderingUniformsBuffer);
+			cmdb.bindUav(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
 			cmdb.dispatchCompute(1, 1, 1);
 		});

@@ -108,7 +108,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.setDepthWrite(false);
 
 		// Bind all
-		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
@@ -145,7 +145,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[0].get());
 
 			const Vec4 color((sky) ? sky->getSolidColor() : Vec3(0.0f), 0.0);
-			cmdb.setPushConstants(&color, sizeof(color));
+			cmdb.setFastConstants(&color, sizeof(color));
 		}
 		else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 		{
@@ -171,7 +171,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			pc.m_scale = sky->getImageScale();
 			pc.m_bias = sky->getImageBias();
 
-			cmdb.setPushConstants(&pc, sizeof(pc));
+			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeatAnisoResolutionScalingBias.get());
 			cmdb.bindSrv(0, 0, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
@@ -182,7 +182,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getRenderer().getSky().getSkyLutRt());
-			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingUniformsBuffer);
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		}
 
 		drawQuad(cmdb);
@@ -202,20 +202,20 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 		rgraphCtx.bindSrv(1, 0, getRenderer().getVolumetricFog().getRt());
 
-		class PushConsts
+		class Consts
 		{
 		public:
 			F32 m_zSplitCount;
 			F32 m_finalZSplit;
 			F32 m_near;
 			F32 m_far;
-		} regs;
-		regs.m_zSplitCount = F32(getRenderer().getZSplitCount());
-		regs.m_finalZSplit = F32(getRenderer().getVolumetricFog().getFinalClusterInZ());
-		regs.m_near = ctx.m_cameraNear;
-		regs.m_far = ctx.m_cameraFar;
+		} consts;
+		consts.m_zSplitCount = F32(getRenderer().getZSplitCount());
+		consts.m_finalZSplit = F32(getRenderer().getVolumetricFog().getFinalClusterInZ());
+		consts.m_near = ctx.m_cameraNear;
+		consts.m_far = ctx.m_cameraFar;
 
-		cmdb.setPushConstants(&regs, sizeof(regs));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		// finalPixelColor = pixelWithoutFog * transmitance + inScattering (see the shader)
 		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha);

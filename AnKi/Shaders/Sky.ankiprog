@@ -329,7 +329,7 @@ Texture2D<Vec4> g_tLutTex : register(t0);
 Texture2D<Vec4> g_mLutTex : register(t1);
 SamplerState g_linearAnyClampSampler : register(s0);
 RWTexture2D<Vec4> g_skyLutStorageTex : register(u0);
-ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 
 Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numSteps)
 {
@@ -402,7 +402,7 @@ Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numS
 	const F32 cosAltitude = cos(altitudeAngle);
 	const Vec3 rayDir = Vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle), -cosAltitude * cos(azimuthAngle));
 
-	const F32 sunAltitude = (0.5f * kPi) - acos(dot(-g_globalUniforms.m_directionalLight.m_direction, up));
+	const F32 sunAltitude = (0.5f * kPi) - acos(dot(-g_globalConstants.m_directionalLight.m_direction, up));
 	const Vec3 dirToSun = Vec3(0.0f, sin(sunAltitude), -cos(sunAltitude));
 
 	const F32 atmoDist = rayIntersectSphere(kViewPos, rayDir, kAtmosphereRadiusMM);
@@ -424,14 +424,14 @@ Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numS
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 Texture2D<Vec4> g_tLutTex : register(t0);
-globallycoherent RWStructuredBuffer<GlobalRendererUniforms> g_globalUniforms : register(u0);
+globallycoherent RWStructuredBuffer<GlobalRendererConstants> g_globalConstants : register(u0);
 
 [numthreads(1, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	const Vec3 sunTransmittance = getValFromTLut(g_tLutTex, kViewPos, -g_globalUniforms[0].m_directionalLight.m_direction);
-	const F32 sunPower = g_globalUniforms[0].m_directionalLight.m_power;
+	const Vec3 sunTransmittance = getValFromTLut(g_tLutTex, kViewPos, -g_globalConstants[0].m_directionalLight.m_direction);
+	const F32 sunPower = g_globalConstants[0].m_directionalLight.m_power;
 
-	g_globalUniforms[0].m_directionalLight.m_diffuseColor = Vec4(sunPower * sunTransmittance, 0.0f);
+	g_globalConstants[0].m_directionalLight.m_diffuseColor = Vec4(sunPower * sunTransmittance, 0.0f);
 }
 
 #pragma anki technique_end comp ComputeSunColor

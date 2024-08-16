@@ -666,24 +666,24 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			if(frustumTestData)
 			{
-				FrustumGpuVisibilityUniforms* unis = allocateAndBindConstants<FrustumGpuVisibilityUniforms>(cmdb, 0, 0);
+				FrustumGpuVisibilityConsts* consts = allocateAndBindConstants<FrustumGpuVisibilityConsts>(cmdb, 0, 0);
 
 				Array<Plane, 6> planes;
 				extractClipPlanes(frustumTestData->m_viewProjMat, planes);
 				for(U32 i = 0; i < 6; ++i)
 				{
-					unis->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+					consts->m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 				}
 
 				ANKI_ASSERT(kMaxLodCount == 3);
-				unis->m_maxLodDistances[0] = lodDistances[0];
-				unis->m_maxLodDistances[1] = lodDistances[1];
-				unis->m_maxLodDistances[2] = kMaxF32;
-				unis->m_maxLodDistances[3] = kMaxF32;
+				consts->m_maxLodDistances[0] = lodDistances[0];
+				consts->m_maxLodDistances[1] = lodDistances[1];
+				consts->m_maxLodDistances[2] = kMaxF32;
+				consts->m_maxLodDistances[3] = kMaxF32;
 
-				unis->m_lodReferencePoint = lodReferencePoint;
-				unis->m_viewProjectionMat = frustumTestData->m_viewProjMat;
-				unis->m_finalRenderTargetSize = Vec2(frustumTestData->m_finalRenderTargetSize);
+				consts->m_lodReferencePoint = lodReferencePoint;
+				consts->m_viewProjectionMat = frustumTestData->m_viewProjMat;
+				consts->m_finalRenderTargetSize = Vec2(frustumTestData->m_finalRenderTargetSize);
 
 				if(frustumTestData->m_hzbRt.isValid())
 				{
@@ -693,18 +693,18 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			}
 			else
 			{
-				DistanceGpuVisibilityUniforms unis;
-				unis.m_pointOfTest = distTestData->m_pointOfTest;
-				unis.m_testRadius = distTestData->m_testRadius;
+				DistanceGpuVisibilityConstants consts;
+				consts.m_pointOfTest = distTestData->m_pointOfTest;
+				consts.m_testRadius = distTestData->m_testRadius;
 
-				unis.m_maxLodDistances[0] = lodDistances[0];
-				unis.m_maxLodDistances[1] = lodDistances[1];
-				unis.m_maxLodDistances[2] = kMaxF32;
-				unis.m_maxLodDistances[3] = kMaxF32;
+				consts.m_maxLodDistances[0] = lodDistances[0];
+				consts.m_maxLodDistances[1] = lodDistances[1];
+				consts.m_maxLodDistances[2] = kMaxF32;
+				consts.m_maxLodDistances[3] = kMaxF32;
 
-				unis.m_lodReferencePoint = lodReferencePoint;
+				consts.m_lodReferencePoint = lodReferencePoint;
 
-				cmdb.setPushConstants(&unis, sizeof(unis));
+				cmdb.setFastConstants(&consts, sizeof(consts));
 			}
 
 			dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
@@ -798,12 +798,12 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 				if(!passthrough)
 				{
-					GpuVisibilityMeshletUniforms consts;
+					GpuVisibilityMeshletConstants consts;
 					consts.m_viewProjectionMatrix = frustumTestData->m_viewProjMat;
 					consts.m_cameraPos = lodReferencePoint;
 					consts.m_viewportSizef = Vec2(frustumTestData->m_finalRenderTargetSize);
 
-					cmdb.setPushConstants(&consts, sizeof(consts));
+					cmdb.setFastConstants(&consts, sizeof(consts));
 				}
 
 				cmdb.dispatchComputeIndirect(
@@ -875,11 +875,11 @@ void GpuVisibility::populateRenderGraphStage3(FrustumGpuVisibilityInput& in, Gpu
 
 		cmdb.bindUav(3, 0, m_outOfMemoryReadbackBuffer);
 
-		GpuVisibilityMeshletUniforms consts;
+		GpuVisibilityMeshletConstants consts;
 		consts.m_viewProjectionMatrix = in.m_viewProjectionMatrix;
 		consts.m_cameraPos = in.m_lodReferencePoint;
 		consts.m_viewportSizef = Vec2(in.m_viewportSize);
-		cmdb.setPushConstants(&consts, sizeof(consts));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		cmdb.dispatchComputeIndirect(BufferView(stage1And2Mem.m_gpuVisIndirectDispatchArgs)
 										 .incrementOffset(sizeof(DispatchIndirectArgs) * U32(GpuVisibilityIndirectDispatches::k3rdStageMeshlets))
@@ -1041,14 +1041,14 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		}
 		cmdb.bindSrv(0, 0, objBuffer);
 
-		GpuVisibilityNonRenderableUniforms unis;
+		GpuVisibilityNonRenderableConstants consts;
 		Array<Plane, 6> planes;
 		extractClipPlanes(viewProjectionMat, planes);
 		for(U32 i = 0; i < 6; ++i)
 		{
-			unis.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+			consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 		}
-		cmdb.setPushConstants(&unis, sizeof(unis));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		rgraph.bindUav(0, 0, visibleIndicesBuffHandle);
 		cmdb.bindUav(1, 0, BufferView(counterBuffer.get(), counterBufferOffset, sizeof(U32) * kCountersPerDispatch));
@@ -1113,24 +1113,24 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 			cmdb.bindShaderProgram(m_visibilityGrProg.get());
 
-			GpuVisibilityAccelerationStructuresUniforms unis;
+			GpuVisibilityAccelerationStructuresConstants consts;
 			Array<Plane, 6> planes;
 			extractClipPlanes(viewProjMat, planes);
 			for(U32 i = 0; i < 6; ++i)
 			{
-				unis.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
+				consts.m_clipPlanes[i] = Vec4(planes[i].getNormal().xyz(), planes[i].getOffset());
 			}
 
-			unis.m_pointOfTest = pointOfTest;
-			unis.m_testRadius = testRadius;
+			consts.m_pointOfTest = pointOfTest;
+			consts.m_testRadius = testRadius;
 
 			ANKI_ASSERT(kMaxLodCount == 3);
-			unis.m_maxLodDistances[0] = lodDistances[0];
-			unis.m_maxLodDistances[1] = lodDistances[1];
-			unis.m_maxLodDistances[2] = kMaxF32;
-			unis.m_maxLodDistances[3] = kMaxF32;
+			consts.m_maxLodDistances[0] = lodDistances[0];
+			consts.m_maxLodDistances[1] = lodDistances[1];
+			consts.m_maxLodDistances[2] = kMaxF32;
+			consts.m_maxLodDistances[3] = kMaxF32;
 
-			cmdb.setPushConstants(&unis, sizeof(unis));
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.bindSrv(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferView());
 			cmdb.bindSrv(1, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());

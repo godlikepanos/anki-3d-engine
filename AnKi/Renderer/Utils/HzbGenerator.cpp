@@ -120,7 +120,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 			varAU4(rectInfo) = initAU4(0, 0, in.m_dstHzbRtSize.x() * 2, in.m_dstHzbRtSize.y() * 2);
 			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, mipsToCompute);
 
-			struct Uniforms
+			struct Constants
 			{
 				Vec2 m_invSrcTexSize;
 				U32 m_threadGroupCount;
@@ -131,7 +131,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 			pc.m_threadGroupCount = numWorkGroupsAndMips[0];
 			pc.m_mipmapCount = numWorkGroupsAndMips[1];
 
-			cmdb.setPushConstants(&pc, sizeof(pc));
+			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
@@ -271,7 +271,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 
 			rgraphCtx.bindSrv(0, 0, maxDepthRt);
 
-			struct Uniforms
+			struct Constants
 			{
 				Mat4 m_reprojectionMat;
 
@@ -279,13 +279,13 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 				F32 m_cascadeMaxDepth;
 				F32 m_padding0;
 				F32 m_padding1;
-			} unis;
+			} consts;
 
-			unis.m_reprojectionMat = lightViewProjMat * invViewProjMat;
-			unis.m_cascadeMinDepth = cascadeMinDepth;
-			unis.m_cascadeMaxDepth = cascadeMaxDepth;
+			consts.m_reprojectionMat = lightViewProjMat * invViewProjMat;
+			consts.m_cascadeMinDepth = cascadeMinDepth;
+			consts.m_cascadeMaxDepth = cascadeMaxDepth;
 
-			cmdb.setPushConstants(&unis, sizeof(unis));
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.bindIndexBuffer(BufferView(m_boxIndexBuffer.get()), IndexType::kU16);
 

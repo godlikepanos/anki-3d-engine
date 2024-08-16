@@ -72,7 +72,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_updateIndirectBuffGrProg.get());
 
-		cmdb.setPushConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
+		cmdb.setFastConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
 		// Write flare info
 		Vec4* flarePositions = allocateAndBindSrvStructuredBuffer<Vec4>(cmdb, 0, 0, flareCount);

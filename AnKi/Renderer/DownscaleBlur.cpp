@@ -135,7 +135,7 @@ void DownscaleBlur::run(U32 passIdx, RenderPassWorkContext& rgraphCtx)
 	if(g_preferComputeCVar.get())
 	{
 		const Vec4 fbSize(F32(vpWidth), F32(vpHeight), 0.0f, 0.0f);
-		cmdb.setPushConstants(&fbSize, sizeof(fbSize));
+		cmdb.setFastConstants(&fbSize, sizeof(fbSize));
 
 		rgraphCtx.bindUav(1, 0, m_runCtx.m_rt, TextureSubresourceDesc::surface(passIdx, 0, 0));
 

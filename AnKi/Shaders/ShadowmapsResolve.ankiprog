@@ -12,7 +12,7 @@
 
 #	define DEBUG_CASCADES 0
 
-ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 StructuredBuffer<PointLight> g_pointLights : register(t0);
 StructuredBuffer<SpotLight> g_spotLights : register(t1);
 Texture2D<Vec4> g_shadowAtlasTex : register(t2);
@@ -32,14 +32,14 @@ Texture2D<Vec4> g_dirLightResolvedShadowsTex : register(t6);
 RWTexture2D<RVec4> g_storageTex : register(u0);
 #	endif
 
-struct Uniforms
+struct Constants
 {
 	Vec2 m_framebufferSize;
 	F32 m_padding0;
 	F32 m_padding1;
 };
 
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 Vec3 computeDebugShadowCascadeColor(U32 cascade)
 {
@@ -68,8 +68,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	svDispatchThreadId = min(svDispatchThreadId, UVec2(g_unis.m_framebufferSize - 1.0f)); // Just to be sure
-	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / g_unis.m_framebufferSize;
+	svDispatchThreadId = min(svDispatchThreadId, UVec2(g_consts.m_framebufferSize - 1.0f)); // Just to be sure
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / g_consts.m_framebufferSize;
 #	else
 	const Vec2 uv = input.m_uv;
 #	endif
@@ -79,21 +79,21 @@ RVec4 main(VertOut input) : SV_TARGET0
 	Vec2 noiseTexSize;
 	g_noiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
 
-	const Vec2 noiseUv = g_unis.m_framebufferSize / noiseTexSize * uv;
+	const Vec2 noiseUv = g_consts.m_framebufferSize / noiseTexSize * uv;
 	RVec3 noise = g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb;
-	noise = animateBlueNoise(noise, g_globalUniforms.m_frame % 16u);
+	noise = animateBlueNoise(noise, g_globalConstants.m_frame % 16u);
 	const RF32 randFactor = noise.x;
 #	endif
 
 	// World position
 	const Vec2 ndc = uvToNdc(uv);
 	const F32 depth = g_depthRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
-	const Vec4 worldPos4 = mul(g_globalUniforms.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Cluster
-	const Vec2 fragCoord = uv * g_globalUniforms.m_renderingSize;
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalUniforms, Vec3(fragCoord, depth));
+	const Vec2 fragCoord = uv * g_globalConstants.m_renderingSize;
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants, Vec3(fragCoord, depth));
 
 	// Layers
 	U32 shadowCasterCountPerFragment = 0u;
@@ -105,13 +105,13 @@ RVec4 main(VertOut input) : SV_TARGET0
 	shadowFactors[0] = g_dirLightResolvedShadowsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0f).x;
 	++shadowCasterCountPerFragment;
 #	else
-	const DirectionalLight dirLight = g_globalUniforms.m_directionalLight;
+	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
 	if(dirLight.m_shadowCascadeCount_31bit_active_1bit != 0u)
 	{
 		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
 
 		const RF32 positiveZViewSpace =
-			testPlanePoint(g_globalUniforms.m_nearPlaneWSpace.xyz, g_globalUniforms.m_nearPlaneWSpace.w, worldPos) + g_globalUniforms.m_near;
+			testPlanePoint(g_globalConstants.m_nearPlaneWSpace.xyz, g_globalConstants.m_nearPlaneWSpace.w, worldPos) + g_globalConstants.m_near;
 
 		const F32 lastCascadeDistance = dirLight.m_shadowCascadeDistances[shadowCascadeCount - 1u];
 		RF32 shadowFactor;

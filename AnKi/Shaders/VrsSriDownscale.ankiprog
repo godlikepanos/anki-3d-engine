@@ -11,17 +11,17 @@ Texture2D<UVec4> g_inputTex : register(t0);
 SamplerState g_nearestAnyClampSampler : register(s0);
 RWTexture2D<UVec4> g_storageTex : register(u0);
 
-struct Uniforms
+struct Constants
 {
 	Vec2 m_oneOverViewportSize;
 	F32 m_padding0;
 	F32 m_padding1;
 };
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) * g_unis.m_oneOverViewportSize;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) * g_consts.m_oneOverViewportSize;
 
 	const UVec4 rates = g_inputTex.GatherRed(g_nearestAnyClampSampler, uv);
 

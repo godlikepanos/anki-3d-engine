@@ -28,14 +28,14 @@ Texture2D g_depthRt : register(t4);
 Texture2D<RVec4> g_dbgOutlineRt : register(t5);
 #endif
 
-struct Uniforms
+struct Constants
 {
 	U32 m_motionBlurSamples;
 	F32 m_filmGrainStrength;
 	U32 m_frameCount;
 	U32 m_padding;
 };
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 RVec3 colorGrading(RVec3 color)
 {
@@ -55,9 +55,10 @@ RVec3 main(VertOut input) : SV_TARGET0
 	const Vec2 uv = input.m_uv;
 	RVec3 outColor;
 
-	if(g_unis.m_motionBlurSamples > 0u)
+	if(g_consts.m_motionBlurSamples > 0u)
 	{
-		outColor = motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, g_linearAnyClampSampler, uv, g_unis.m_motionBlurSamples);
+		outColor =
+			motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, g_linearAnyClampSampler, uv, g_consts.m_motionBlurSamples);
 	}
 	else
 	{
@@ -73,7 +74,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 
 #if FILM_GRAIN
 	const F32 dt = 1.0;
-	outColor = filmGrain<F32>(outColor, uv, g_unis.m_filmGrainStrength, F32(g_unis.m_frameCount % 0xFFFFu) * dt);
+	outColor = filmGrain<F32>(outColor, uv, g_consts.m_filmGrainStrength, F32(g_consts.m_frameCount % 0xFFFFu) * dt);
 #endif
 
 #if DBG_ENABLED

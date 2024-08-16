@@ -112,7 +112,7 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 		// dxcArgs.emplaceBack("-fvk-support-nonzero-base-instance"); // Match DX12's behavior, SV_INSTANCEID starts from zero
 
 		// Shift the bindings in order to identify the registers when doing reflection
-		for(U32 ds = 0; ds < kMaxDescriptorSets; ++ds)
+		for(U32 ds = 0; ds < kMaxRegisterSpaces; ++ds)
 		{
 			dxcArgs.emplaceBack("-fvk-b-shift");
 			dxcArgs.emplaceBack(ShaderCompilerString().sprintf("%u", kDxcVkBindingShifts[ds][HlslResourceType::kCbv]));

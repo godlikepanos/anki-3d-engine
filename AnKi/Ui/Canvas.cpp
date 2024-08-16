@@ -297,21 +297,21 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 					{
 					public:
 						Vec4 m_transform;
-						Array<U8, sizeof(UiImageIdData::m_extraPushConstants)> m_extra;
+						Array<U8, sizeof(UiImageIdData::m_extraFastConstants)> m_extra;
 					} pc;
 					pc.m_transform.x() = 2.0f / drawData.DisplaySize.x;
 					pc.m_transform.y() = -2.0f / drawData.DisplaySize.y;
 					pc.m_transform.z() = (drawData.DisplayPos.x / drawData.DisplaySize.x) * 2.0f - 1.0f;
 					pc.m_transform.w() = -((drawData.DisplayPos.y / drawData.DisplaySize.y) * 2.0f - 1.0f);
-					U32 extraPushConstantsSize = 0;
-					if(data && data->m_extraPushConstantsSize)
+					U32 extraFastConstantsSize = 0;
+					if(data && data->m_extraFastConstantsSize)
 					{
-						ANKI_ASSERT(data->m_extraPushConstantsSize <= sizeof(data->m_extraPushConstants));
-						memcpy(&pc.m_extra[0], data->m_extraPushConstants.getBegin(), data->m_extraPushConstantsSize);
+						ANKI_ASSERT(data->m_extraFastConstantsSize <= sizeof(data->m_extraFastConstants));
+						memcpy(&pc.m_extra[0], data->m_extraFastConstants.getBegin(), data->m_extraFastConstantsSize);
 
-						extraPushConstantsSize = data->m_extraPushConstantsSize;
+						extraFastConstantsSize = data->m_extraFastConstantsSize;
 					}
-					cmdb.setPushConstants(&pc, sizeof(Vec4) + extraPushConstantsSize);
+					cmdb.setFastConstants(&pc, sizeof(Vec4) + extraFastConstantsSize);
 
 					// Draw
 					cmdb.drawIndexed(PrimitiveTopology::kTriangles, pcmd.ElemCount, 1, idxOffset, vertOffset);

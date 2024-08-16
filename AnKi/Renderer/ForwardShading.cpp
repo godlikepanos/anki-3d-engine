@@ -64,7 +64,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 						  DepthDownscale::kQuarterInternalResolution);
 		rgraphCtx.bindSrv(ANKI_MATERIAL_REGISTER_LIGHT_VOLUME, 0, getRenderer().getVolumetricLightingAccumulation().getRt());
 
-		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_UNIFORMS, 0, ctx.m_globalRenderingUniformsBuffer);
+		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS, 0, ctx.m_globalRenderingConstantsBuffer);
 
 		cmdb.bindSrv(ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_POINT_LIGHTS, 0,
 					 getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));

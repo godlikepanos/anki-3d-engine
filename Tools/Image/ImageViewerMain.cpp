@@ -205,8 +205,8 @@ private:
 			pc.m_depth = Vec4((m_depth + 0.5f) / F32(grTex.getDepth()));
 
 			m_imageIdExtra.m_customProgram = m_imageGrProgram;
-			m_imageIdExtra.m_extraPushConstantsSize = U8(sizeof(pc));
-			m_imageIdExtra.setExtraPushConstants(&pc, sizeof(pc));
+			m_imageIdExtra.m_extraFastConstantsSize = U8(sizeof(pc));
+			m_imageIdExtra.setExtraFastConstants(&pc, sizeof(pc));
 			m_imageIdExtra.m_pointSampling = m_pointSampling;
 
 			ImGui::Image(UiImageId(&m_imageIdExtra), imageSize, Vec2(0.0f, 1.0f), Vec2(1.0f, 0.0f), Vec4(1.0f), Vec4(0.0f, 0.0f, 0.0f, 1.0f));

@@ -326,7 +326,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 
 		pc.m_viewportSize = getRenderer().getPostProcessResolution();
 
-		cmdb.setPushConstants(&pc, sizeof(pc));
+		cmdb.setFastConstants(&pc, sizeof(pc));
 	}
 	else if(preferCompute)
 	{
@@ -339,7 +339,7 @@ void Scale::runFsrOrBilinearScaling(RenderPassWorkContext& rgraphCtx)
 		pc.m_viewportSize = Vec2(getRenderer().getPostProcessResolution());
 		pc.m_viewportSizeU = getRenderer().getPostProcessResolution();
 
-		cmdb.setPushConstants(&pc, sizeof(pc));
+		cmdb.setFastConstants(&pc, sizeof(pc));
 	}
 
 	if(preferCompute)
@@ -389,7 +389,7 @@ void Scale::runRcasSharpening(RenderPassWorkContext& rgraphCtx)
 
 	pc.m_viewportSize = getRenderer().getPostProcessResolution();
 
-	cmdb.setPushConstants(&pc, sizeof(pc));
+	cmdb.setFastConstants(&pc, sizeof(pc));
 
 	if(preferCompute)
 	{
@@ -449,7 +449,7 @@ void Scale::runTonemapping(RenderPassWorkContext& rgraphCtx)
 		} pc;
 		pc.m_viewportSizeOverOne = 1.0f / Vec2(getRenderer().getPostProcessResolution());
 		pc.m_viewportSize = getRenderer().getPostProcessResolution();
-		cmdb.setPushConstants(&pc, sizeof(pc));
+		cmdb.setFastConstants(&pc, sizeof(pc));
 		rgraphCtx.bindUav(1, 0, outRt);
 
 		dispatchPPCompute(cmdb, 8, 8, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());

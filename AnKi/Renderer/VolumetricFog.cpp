@@ -65,17 +65,17 @@ void VolumetricFog::populateRenderGraph(RenderingContext& ctx)
 
 		const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
 
-		VolumetricFogUniforms regs;
-		regs.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
-		regs.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
-		regs.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;
-		regs.m_near = ctx.m_cameraNear;
-		regs.m_far = ctx.m_cameraFar;
-		regs.m_zSplitCountf = F32(getRenderer().getZSplitCount());
-		regs.m_volumeSize = UVec3(m_volumeSize);
-		regs.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
+		VolumetricFogConstants consts;
+		consts.m_fogDiffuse = (sky) ? sky->getFogDiffuseColor() : Vec3(0.0f);
+		consts.m_fogScatteringCoeff = (sky) ? sky->getFogScatteringCoefficient() : 0.0f;
+		consts.m_fogAbsorptionCoeff = (sky) ? sky->getFogAbsorptionCoefficient() : 0.0f;
+		consts.m_near = ctx.m_cameraNear;
+		consts.m_far = ctx.m_cameraFar;
+		consts.m_zSplitCountf = F32(getRenderer().getZSplitCount());
+		consts.m_volumeSize = UVec3(m_volumeSize);
+		consts.m_maxZSplitsToProcessf = F32(m_finalZSplit + 1);
 
-		cmdb.setPushConstants(&regs, sizeof(regs));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		dispatchPPCompute(cmdb, 8, 8, m_volumeSize[0], m_volumeSize[1]);
 	});

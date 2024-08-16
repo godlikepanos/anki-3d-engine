@@ -14,14 +14,14 @@ Texture2D<RVec4> g_inTex : register(t0);
 #	define TONEMAPPING_REGISTER u0
 #	include <AnKi/Shaders/TonemappingResources.hlsl>
 
-struct Uniforms
+struct Consts
 {
 	RF32 m_threshold;
 	F32 m_scale;
 	F32 m_padding0;
 	F32 m_padding1;
 };
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 #	if ANKI_COMPUTE_SHADER
 #		define THREADGROUP_SIZE_X 8
@@ -51,7 +51,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(-1, +1)).rgb * weight;
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(+1, -1)).rgb * weight;
 
-	color = tonemap(color, readExposureAndAverageLuminance().y, g_unis.m_threshold) * g_unis.m_scale;
+	color = tonemap(color, readExposureAndAverageLuminance().y, g_consts.m_threshold) * g_consts.m_scale;
 
 #	if ANKI_COMPUTE_SHADER
 	g_storageTex[svDispatchThreadId] = RVec4(color, 0.0);

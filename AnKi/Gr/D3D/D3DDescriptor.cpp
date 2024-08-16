@@ -263,9 +263,9 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	GrDynamicArray<D3D12_ROOT_PARAMETER1> rootParameters;
 
 	// Create the tables
-	Array<GrDynamicArray<D3D12_DESCRIPTOR_RANGE1>, kMaxBindingsPerDescriptorSet * 2> tableRanges; // One per descriptor table
+	Array<GrDynamicArray<D3D12_DESCRIPTOR_RANGE1>, kMaxBindingsPerRegisterSpace * 2> tableRanges; // One per descriptor table
 	U32 tableRangesCount = 0;
-	for(U32 space = 0; space < kMaxDescriptorSets; ++space)
+	for(U32 space = 0; space < kMaxRegisterSpaces; ++space)
 	{
 		if(refl.m_descriptor.m_bindingCounts[space] == 0)
 		{
@@ -339,13 +339,13 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	}
 
 	// Root constants
-	if(refl.m_descriptor.m_pushConstantsSize)
+	if(refl.m_descriptor.m_fastConstantsSize)
 	{
 		D3D12_ROOT_PARAMETER1& rootParam = *rootParameters.emplaceBack();
 		rootParam = {};
 		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-		ANKI_ASSERT((refl.m_descriptor.m_pushConstantsSize % 4) == 0);
-		rootParam.Constants.Num32BitValues = refl.m_descriptor.m_pushConstantsSize / 4;
+		ANKI_ASSERT((refl.m_descriptor.m_fastConstantsSize % 4) == 0);
+		rootParam.Constants.Num32BitValues = refl.m_descriptor.m_fastConstantsSize / 4;
 		rootParam.Constants.RegisterSpace = 3000;
 		rootParam.Constants.ShaderRegister = 0;
 		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
@@ -377,7 +377,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 	signature->m_rootSignature = dxRootSig;
 
 	U8 rootParameterIdx = 0;
-	for(U32 spaceIdx = 0; spaceIdx < kMaxDescriptorSets; ++spaceIdx)
+	for(U32 spaceIdx = 0; spaceIdx < kMaxRegisterSpaces; ++spaceIdx)
 	{
 		if(refl.m_descriptor.m_bindingCounts[spaceIdx] == 0)
 		{
@@ -430,7 +430,7 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 		}
 	}
 
-	signature->m_rootConstantsSize = refl.m_descriptor.m_pushConstantsSize;
+	signature->m_rootConstantsSize = refl.m_descriptor.m_fastConstantsSize;
 	if(signature->m_rootConstantsSize)
 	{
 		signature->m_rootConstantsParameterIdx = rootParameterIdx++;
@@ -462,7 +462,7 @@ void DescriptorState::bindRootSignature(const RootSignature* rootSignature, Bool
 		return;
 	}
 
-	for(U32 space = 0; space < kMaxDescriptorSets; ++space)
+	for(U32 space = 0; space < kMaxRegisterSpaces; ++space)
 	{
 		if(!rootSignature->m_spaces[space].isEmpty())
 		{
@@ -496,7 +496,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 	}
 
 	// Populate the heaps
-	for(U32 spaceIdx = 0; spaceIdx < kMaxDescriptorSets; ++spaceIdx)
+	for(U32 spaceIdx = 0; spaceIdx < kMaxRegisterSpaces; ++spaceIdx)
 	{
 		const RootSignature::Space& rootSignatureSpace = m_rootSignature->m_spaces[spaceIdx];
 		if(rootSignatureSpace.isEmpty())
@@ -718,7 +718,7 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 	}
 
 	// Bind root parameters
-	for(U32 spaceIdx = 0; spaceIdx < kMaxDescriptorSets; ++spaceIdx)
+	for(U32 spaceIdx = 0; spaceIdx < kMaxRegisterSpaces; ++spaceIdx)
 	{
 		const RootSignature::Space& rootSignatureSpace = m_rootSignature->m_spaces[spaceIdx];
 		if(rootSignatureSpace.isEmpty())

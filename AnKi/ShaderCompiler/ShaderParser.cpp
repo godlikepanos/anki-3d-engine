@@ -871,9 +871,7 @@ void ShaderParser::generateAnkiShaderHeader(ShaderType shaderType, ShaderCompile
 {
 	header.destroy();
 
-	header += ShaderCompilerString().sprintf("#define kMaxBindlessTextures %uu\n"
-											 "#define kMaxBindlessReadonlyTextureBuffers %uu\n",
-											 kMaxBindlessTextures, kMaxBindlessReadonlyTextureBuffers);
+	header += ShaderCompilerString().sprintf("#define kMaxBindlessTextures %uu\n", kMaxBindlessTextures);
 
 	for(ShaderType type : EnumIterable<ShaderType>())
 	{

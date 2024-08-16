@@ -346,7 +346,7 @@ Error PipelineLayoutFactory2::getOrCreateDescriptorSetLayout(ConstWeakArray<Shad
 	ANKI_END_PACKED_STRUCT
 
 	// Compute the hash for the layout
-	Array<DSBinding, kMaxBindingsPerDescriptorSet> bindings;
+	Array<DSBinding, kMaxBindingsPerRegisterSpace> bindings;
 	U64 hash;
 
 	if(reflBindings.getSize())
@@ -386,7 +386,7 @@ Error PipelineLayoutFactory2::getOrCreateDescriptorSetLayout(ConstWeakArray<Shad
 		layout = newInstance<DescriptorSetLayout>(GrMemoryPool::getSingleton());
 		m_dsLayouts.emplace(hash, layout);
 
-		Array<VkDescriptorSetLayoutBinding, kMaxBindingsPerDescriptorSet> vkBindings;
+		Array<VkDescriptorSetLayoutBinding, kMaxBindingsPerRegisterSpace> vkBindings;
 		VkDescriptorSetLayoutCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
@@ -433,7 +433,7 @@ Error PipelineLayoutFactory2::getOrCreatePipelineLayout(const ShaderReflectionDe
 
 		// Find dset count
 		layout->m_dsetCount = 0;
-		for(U8 iset = 0; iset < kMaxDescriptorSets; ++iset)
+		for(U8 iset = 0; iset < kMaxRegisterSpaces; ++iset)
 		{
 			if(refl.m_bindingCounts[iset])
 			{
@@ -473,10 +473,10 @@ Error PipelineLayoutFactory2::getOrCreatePipelineLayout(const ShaderReflectionDe
 		ci.setLayoutCount = layout->m_dsetCount;
 
 		VkPushConstantRange pushConstantRange;
-		if(refl.m_pushConstantsSize > 0)
+		if(refl.m_fastConstantsSize > 0)
 		{
 			pushConstantRange.offset = 0;
-			pushConstantRange.size = refl.m_pushConstantsSize;
+			pushConstantRange.size = refl.m_fastConstantsSize;
 			pushConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
 			ci.pushConstantRangeCount = 1;
 			ci.pPushConstantRanges = &pushConstantRange;
@@ -495,7 +495,7 @@ void DescriptorState::flush(VkCommandBuffer cmdb, DescriptorAllocator& dalloc)
 	const ShaderReflectionDescriptorRelated& refl = m_pipelineLayout->getReflection();
 
 	// Small opt to bind the high frequency sets as little as possible
-	BitSet<kMaxDescriptorSets> dirtySets(false);
+	BitSet<kMaxRegisterSpaces> dirtySets(false);
 
 	for(U32 iset = 0; iset < m_pipelineLayout->m_dsetCount; ++iset)
 	{
@@ -608,9 +608,9 @@ void DescriptorState::flush(VkCommandBuffer cmdb, DescriptorAllocator& dalloc)
 	}
 
 	// Set push consts
-	if(refl.m_pushConstantsSize)
+	if(refl.m_fastConstantsSize)
 	{
-		ANKI_ASSERT(refl.m_pushConstantsSize == m_pushConstSize && "Possibly forgot to set push constants");
+		ANKI_ASSERT(refl.m_fastConstantsSize == m_pushConstSize && "Possibly forgot to set push constants");
 
 		if(m_pushConstantsDirty)
 		{

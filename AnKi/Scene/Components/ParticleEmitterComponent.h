@@ -65,7 +65,7 @@ private:
 	GpuSceneBufferAllocation m_gpuScenePositions;
 	GpuSceneBufferAllocation m_gpuSceneAlphas;
 	GpuSceneBufferAllocation m_gpuSceneScales;
-	GpuSceneBufferAllocation m_gpuSceneUniforms;
+	GpuSceneBufferAllocation m_gpuSceneConstants;
 	GpuSceneArrays::ParticleEmitter::Allocation m_gpuSceneParticleEmitter;
 	GpuSceneArrays::Renderable::Allocation m_gpuSceneRenderable;
 	GpuSceneArrays::MeshLod::Allocation m_gpuSceneMeshLods;

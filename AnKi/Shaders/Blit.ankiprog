@@ -20,12 +20,12 @@ Texture2D<RVec4> g_inputTex : register(t0);
 #	if USE_COMPUTE
 RWTexture2D<RVec4> g_storageTex : register(u0);
 
-struct Uniforms
+struct Consts
 {
 	Vec2 m_viewportSize;
 	UVec2 m_viewportSizeU;
 };
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Consts, g_consts)
 #	endif
 
 #	if USE_COMPUTE
@@ -35,12 +35,12 @@ RVec3 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if USE_COMPUTE
-	if(skipOutOfBoundsInvocations(UVec2(8, 8), g_unis.m_viewportSizeU, svDispatchThreadId.xy))
+	if(skipOutOfBoundsInvocations(UVec2(8, 8), g_consts.m_viewportSizeU, svDispatchThreadId.xy))
 	{
 		return;
 	}
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / g_unis.m_viewportSize;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5) / g_consts.m_viewportSize;
 #	else
 	const Vec2 uv = input.m_uv;
 #	endif

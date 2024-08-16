@@ -73,16 +73,16 @@ class UiImageIdData
 public:
 	TextureView m_textureView;
 	ShaderProgramPtr m_customProgram;
-	U8 m_extraPushConstantsSize = 0;
-	Array<U8, 64> m_extraPushConstants;
+	U8 m_extraFastConstantsSize = 0;
+	Array<U8, 64> m_extraFastConstants;
 	Bool m_pointSampling = false;
 
-	void setExtraPushConstants(const void* ptr, PtrSize pushConstantSize)
+	void setExtraFastConstants(const void* ptr, PtrSize fastConstantsSize)
 	{
 		ANKI_ASSERT(ptr);
-		ANKI_ASSERT(pushConstantSize > 0 && pushConstantSize < sizeof(m_extraPushConstants));
-		m_extraPushConstantsSize = U8(pushConstantSize);
-		memcpy(m_extraPushConstants.getBegin(), ptr, pushConstantSize);
+		ANKI_ASSERT(fastConstantsSize > 0 && fastConstantsSize < sizeof(m_extraFastConstants));
+		m_extraFastConstantsSize = U8(fastConstantsSize);
+		memcpy(m_extraFastConstants.getBegin(), ptr, fastConstantsSize);
 	}
 };
 

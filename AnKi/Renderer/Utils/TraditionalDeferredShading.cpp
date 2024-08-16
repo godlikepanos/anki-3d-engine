@@ -62,15 +62,15 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 		rgraphCtx.bindSrv(0, 0, info.m_gbufferDepthRenderTarget, info.m_gbufferDepthRenderTargetSubresource);
 
-		TraditionalDeferredSkyboxUniforms unis = {};
-		unis.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
-		unis.m_cameraPos = info.m_cameraPosWSpace.xyz();
-		unis.m_scale = skyc->getImageScale();
-		unis.m_bias = skyc->getImageBias();
+		TraditionalDeferredSkyboxConstants consts = {};
+		consts.m_invertedViewProjectionMat = info.m_invViewProjectionMatrix;
+		consts.m_cameraPos = info.m_cameraPosWSpace.xyz();
+		consts.m_scale = skyc->getImageScale();
+		consts.m_bias = skyc->getImageBias();
 
 		if(skyc->getSkyboxType() == SkyboxType::kSolidColor)
 		{
-			unis.m_solidColor = skyc->getSolidColor();
+			consts.m_solidColor = skyc->getSolidColor();
 		}
 		else if(skyc->getSkyboxType() == SkyboxType::kImage2D)
 		{
@@ -85,22 +85,22 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 
 		cmdb.bindConstantBuffer(0, 0, info.m_globalRendererConsts);
 
-		cmdb.setPushConstants(&unis, sizeof(unis));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		drawQuad(cmdb);
 	}
 
 	// Light shading
 	{
-		TraditionalDeferredShadingUniforms* unis = allocateAndBindConstants<TraditionalDeferredShadingUniforms>(cmdb, 0, 0);
+		TraditionalDeferredShadingConstants* consts = allocateAndBindConstants<TraditionalDeferredShadingConstants>(cmdb, 0, 0);
 
-		unis->m_invViewProjMat = info.m_invViewProjectionMatrix;
-		unis->m_cameraPos = info.m_cameraPosWSpace.xyz();
+		consts->m_invViewProjMat = info.m_invViewProjectionMatrix;
+		consts->m_cameraPos = info.m_cameraPosWSpace.xyz();
 
 		if(dirLightc)
 		{
-			unis->m_dirLight.m_effectiveShadowDistance = info.m_effectiveShadowDistance;
-			unis->m_dirLight.m_lightMatrix = info.m_dirLightMatrix;
+			consts->m_dirLight.m_effectiveShadowDistance = info.m_effectiveShadowDistance;
+			consts->m_dirLight.m_lightMatrix = info.m_dirLightMatrix;
 		}
 
 		cmdb.bindSrv(0, 0, info.m_visibleLightsBuffer);

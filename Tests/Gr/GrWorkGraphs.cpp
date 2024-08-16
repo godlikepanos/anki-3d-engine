@@ -299,9 +299,9 @@ StructuredBuffer<Object> g_objects : register(t0);
 StructuredBuffer<uint> g_positions : register(t1);
 
 #if defined(__spirv__)
-[[vk::push_constant]] ConstantBuffer<PushConsts> g_pushConsts;
+[[vk::push_constant]] ConstantBuffer<PushConsts> g_consts;
 #else
-ConstantBuffer<PushConsts> g_pushConsts : register(b0, space3000);
+ConstantBuffer<PushConsts> g_consts : register(b0, space3000);
 #endif
 
 #define THREAD_COUNT 64u
@@ -311,7 +311,7 @@ groupshared Aabb g_aabb;
 [NumThreads(THREAD_COUNT, 1, 1)]
 void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_GroupIndex)
 {
-	const Object obj = g_objects[g_pushConsts.m_objectIndex];
+	const Object obj = g_objects[g_consts.m_objectIndex];
 
 	svDispatchThreadId = min(svDispatchThreadId, obj.m_positionCount - 1);
 
@@ -331,8 +331,8 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 
 	Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE | GROUP_SYNC);
 
-	InterlockedMin(g_aabbs[g_pushConsts.m_objectIndex].m_min, g_aabb.m_min);
-	InterlockedMax(g_aabbs[g_pushConsts.m_objectIndex].m_max, g_aabb.m_max);
+	InterlockedMin(g_aabbs[g_consts.m_objectIndex].m_min, g_aabb.m_min);
+	InterlockedMax(g_aabbs[g_consts.m_objectIndex].m_max, g_aabb.m_max);
 }
 )";
 
@@ -463,7 +463,7 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 				for(U32 iobj = 0; iobj < kObjectCount; ++iobj)
 				{
 					const UVec4 pc(iobj);
-					cmdb->setPushConstants(&pc, sizeof(pc));
+					cmdb->setFastConstants(&pc, sizeof(pc));
 
 					cmdb->dispatchCompute((objects[iobj].m_positionCount + kThreadCount - 1) / kThreadCount, 1, 1);
 				}

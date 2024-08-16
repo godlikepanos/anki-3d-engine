@@ -112,8 +112,8 @@ public:
 private:
 	VkPipelineLayout m_handle = VK_NULL_HANDLE;
 	ShaderReflectionDescriptorRelated m_refl;
-	Array<VkDescriptorSetLayout, kMaxDescriptorSets> m_dsetLayouts = {};
-	Array<U32, kMaxDescriptorSets> m_descriptorCounts = {};
+	Array<VkDescriptorSetLayout, kMaxRegisterSpaces> m_dsetLayouts = {};
+	Array<U32, kMaxRegisterSpaces> m_descriptorCounts = {};
 	U8 m_dsetCount = 0;
 };
 
@@ -162,7 +162,7 @@ public:
 		{
 			m_pipelineLayout = layout;
 			m_pipelineBindPoint = bindPoint;
-			m_pushConstantsDirty = m_pushConstantsDirty || (m_pushConstSize != m_pipelineLayout->m_refl.m_pushConstantsSize);
+			m_pushConstantsDirty = m_pushConstantsDirty || (m_pushConstSize != m_pipelineLayout->m_refl.m_fastConstantsSize);
 
 			for(U32 iset = 0; iset < m_pipelineLayout->m_dsetCount; ++iset)
 			{
@@ -280,9 +280,9 @@ public:
 #endif
 	}
 
-	void setPushConstants(const void* data, U32 dataSize)
+	void setFastConstants(const void* data, U32 dataSize)
 	{
-		ANKI_ASSERT(data && dataSize && dataSize <= kMaxPushConstantSize);
+		ANKI_ASSERT(data && dataSize && dataSize <= kMaxFastConstantsSize);
 		memcpy(m_pushConsts.getBegin(), data, dataSize);
 		m_pushConstSize = dataSize;
 		m_pushConstantsDirty = true;
@@ -331,10 +331,10 @@ private:
 
 	const PipelineLayout2* m_pipelineLayout = nullptr;
 	VkPipelineBindPoint m_pipelineBindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
-	Array<DescriptorSet, kMaxDescriptorSets> m_sets;
-	Array<VkDescriptorSet, kMaxDescriptorSets> m_vkDsets = {};
+	Array<DescriptorSet, kMaxRegisterSpaces> m_sets;
+	Array<VkDescriptorSet, kMaxRegisterSpaces> m_vkDsets = {};
 
-	Array<U8, kMaxPushConstantSize> m_pushConsts;
+	Array<U8, kMaxFastConstantsSize> m_pushConsts;
 	U32 m_pushConstSize = 0;
 	Bool m_pushConstantsDirty = true;
 

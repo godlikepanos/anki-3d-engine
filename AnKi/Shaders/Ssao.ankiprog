@@ -30,22 +30,23 @@ SamplerState g_linearAnyClampSampler : register(s1);
 RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex : register(u0);
 #	endif
 
-ANKI_PUSH_CONSTANTS(SsaoUniforms, g_unis)
+ANKI_FAST_CONSTANTS(SsaoConstants, g_consts)
 
 Vec3 unproject(Vec2 ndc)
 {
 	const F32 d = g_depthTex.SampleLevel(g_linearAnyClampSampler, ndcToUv(ndc), 0.0).r;
-	return cheapPerspectiveUnprojection(g_unis.m_unprojectionParameters, ndc, d);
+	return cheapPerspectiveUnprojection(g_consts.m_unprojectionParameters, ndc, d);
 }
 
 Vec4 project(Vec4 p)
 {
-	return cheapPerspectiveProjection(g_unis.m_projectionMat00, g_unis.m_projectionMat11, g_unis.m_projectionMat22, g_unis.m_projectionMat23, p);
+	return cheapPerspectiveProjection(g_consts.m_projectionMat00, g_consts.m_projectionMat11, g_consts.m_projectionMat22, g_consts.m_projectionMat23,
+									  p);
 }
 
 RF32 computeFalloff(RF32 len)
 {
-	return sqrt(1.0f - min(1.0f, len / g_unis.m_radius));
+	return sqrt(1.0f - min(1.0f, len / g_consts.m_radius));
 }
 
 #	if ANKI_COMPUTE_SHADER
@@ -55,7 +56,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / g_unis.m_viewportSizef;
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / g_consts.m_viewportSizef;
 #	else
 	const UVec2 svDispatchThreadId = input.m_svPosition;
 	ANKI_MAYBE_UNUSED(svDispatchThreadId);
@@ -64,23 +65,23 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 	const Vec2 ndc = uvToNdc(uv);
 	const F32 depth = g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).r;
-	const Vec3 Pc = cheapPerspectiveUnprojection(g_unis.m_unprojectionParameters, ndc, depth);
+	const Vec3 Pc = cheapPerspectiveUnprojection(g_consts.m_unprojectionParameters, ndc, depth);
 	const RVec3 V = normalize(-Pc); // View vector
 
 	// Get noise
 #	if 0
 	Vec2 noiseTexSize;
 	g_noiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
-	const RVec2 noiseUv = Vec2(g_unis.m_viewportSizef) / noiseTexSize * uv;
-	const RVec2 noise2 = animateBlueNoise(g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).xyz, g_unis.m_frameCount).yx;
+	const RVec2 noiseUv = Vec2(g_consts.m_viewportSizef) / noiseTexSize * uv;
+	const RVec2 noise2 = animateBlueNoise(g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).xyz, g_consts.m_frameCount).yx;
 #	else
-	const RVec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_unis.m_frameCount);
+	const RVec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_consts.m_frameCount);
 #	endif
 
 	// Rand slice direction
 	const RF32 randAng = noise2.x * kPi;
 #	if 0
-	const RF32 aspect = g_unis.m_viewportSizef.x / g_unis.m_viewportSizef.y;
+	const RF32 aspect = g_consts.m_viewportSizef.x / g_consts.m_viewportSizef.y;
 	const RVec2 dir2d = normalize(Vec2(cos(randAng), sin(randAng)) * Vec2(1.0f, aspect));
 #	else
 	const RVec2 dir2d = Vec2(cos(randAng), sin(randAng));
@@ -88,7 +89,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 	// Project the view normal to the slice
 	const Vec3 worldNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_linearAnyClampSampler, uv, 0.0));
-	const RVec3 viewNormal = mul(g_unis.m_viewMat, Vec4(worldNormal, 0.0));
+	const RVec3 viewNormal = mul(g_consts.m_viewMat, Vec4(worldNormal, 0.0));
 
 	const RVec3 directionVec = RVec3(dir2d, 0.0f);
 	const RVec3 orthoDirectionVec = directionVec - (dot(directionVec, V) * V);
@@ -100,13 +101,13 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const RF32 n = -signNorm * fastAcos(cosNorm);
 
 	// Find the projected radius
-	const Vec3 sphereLimit = Pc + Vec3(g_unis.m_radius, 0.0, 0.0);
+	const Vec3 sphereLimit = Pc + Vec3(g_consts.m_radius, 0.0, 0.0);
 	const Vec4 projSphereLimit = project(Vec4(sphereLimit, 1.0));
 	const Vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
 	const RF32 projRadius = length(projSphereLimit2 - ndc);
 
 	// Compute the inner integral (Slide 54)
-	const U32 stepCount = max(1u, g_unis.m_sampleCount / 2u);
+	const U32 stepCount = max(1u, g_consts.m_sampleCount / 2u);
 
 	const RF32 lowHorizonCos1 = cos(n - kPi / 2.0f);
 	const RF32 lowHorizonCos2 = cos(n + kPi / 2.0f);
@@ -146,7 +147,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	Vd *= projectedNormalVecLength;
 
 	// Apply power
-	Vd = pow(Vd, g_unis.m_ssaoPower);
+	Vd = pow(Vd, g_consts.m_ssaoPower);
 
 	// Compute bent normal: see "Algorithm 2 Extension that computes bent normals b."
 	const RF32 t0 =
@@ -180,7 +181,7 @@ Texture2D<Vec4> g_depthTex : register(t1);
 RWTexture2D<RVec4> g_bentNormalsAndSsaoStorageTex : register(u0);
 #	endif
 
-ANKI_PUSH_CONSTANTS(SsaoSpatialDenoiseUniforms, g_unis)
+ANKI_FAST_CONSTANTS(SsaoSpatialDenoiseConstants, g_consts)
 
 F32 computeWeight(F32 depth, F32 refDepth)
 {
@@ -190,8 +191,8 @@ F32 computeWeight(F32 depth, F32 refDepth)
 
 void sampleTex(Vec2 uv, IVec2 offset, F32 refDepth, inout RF32 ssao, inout RVec3 bentNormal, inout F32 weight)
 {
-	const F32 linearDepth = linearizeDepthOptimal(g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, offset).x, g_unis.m_linearizeDepthParams.x,
-												  g_unis.m_linearizeDepthParams.y);
+	const F32 linearDepth = linearizeDepthOptimal(g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, offset).x,
+												  g_consts.m_linearizeDepthParams.x, g_consts.m_linearizeDepthParams.y);
 	const RVec4 bentNormalAndSsao = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, offset);
 	const F32 w = computeWeight(refDepth, linearDepth);
 	ssao += bentNormalAndSsao.w * w;
@@ -219,8 +220,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const RVec4 refBentNormalAndSsao = g_bentNormalsAndSsaoTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0);
 	RF32 ssao = refBentNormalAndSsao.w;
 	RVec3 bentNormal = refBentNormalAndSsao.xyz;
-	const F32 refDepth = linearizeDepthOptimal(g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x, g_unis.m_linearizeDepthParams.x,
-											   g_unis.m_linearizeDepthParams.y);
+	const F32 refDepth = linearizeDepthOptimal(g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x, g_consts.m_linearizeDepthParams.x,
+											   g_consts.m_linearizeDepthParams.y);
 	F32 weight = computeWeight(0.0f, 0.0f); // Highest weight that this function can give
 
 	// Sample taps
@@ -249,7 +250,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 	bentNormal /= weight;
 	bentNormal = normalize(bentNormal);
-	bentNormal = mul(g_unis.m_viewToWorldMat, Vec4(bentNormal, 0.0f));
+	bentNormal = mul(g_consts.m_viewToWorldMat, Vec4(bentNormal, 0.0f));
 
 	// Write value
 #	if ANKI_COMPUTE_SHADER

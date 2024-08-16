@@ -19,7 +19,7 @@ RWStructuredBuffer<DrawIndirectArgs> g_clearTileIndirectArgs : register(u3);
 RWStructuredBuffer<DispatchIndirectArgs> g_dispatchMeshIndirectArgs : register(u4);
 RWStructuredBuffer<DrawIndirectArgs> g_drawIndirectArgs : register(u5);
 
-struct Uniforms
+struct Constants
 {
 	U32 m_lightIndex;
 	U32 m_padding0;
@@ -27,7 +27,7 @@ struct Uniforms
 	U32 m_padding2;
 };
 
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 groupshared U32 s_renderLight;
 
@@ -35,7 +35,7 @@ groupshared U32 s_renderLight;
 {
 	if(svGroupIndex == 0)
 	{
-		const GpuSceneLight light = g_lights[g_unis.m_lightIndex];
+		const GpuSceneLight light = g_lights[g_consts.m_lightIndex];
 		const U32 crntHash = g_lightHashes[light.m_visibleRenderablesHashIndex].m_hash;
 		s_renderLight = crntHash != g_hash[0].m_renderablesHash || g_hash[0].m_containsDeformable == 1;
 

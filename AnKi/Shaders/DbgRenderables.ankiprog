@@ -8,13 +8,13 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-struct Uniforms
+struct Constants
 {
 	Vec4 m_color;
 	Mat4 m_viewProjMat;
 };
 
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t1);
 StructuredBuffer<U32> g_visibleRenderableBoundingVolumeIndices : register(t2);
@@ -42,7 +42,7 @@ VertOut main(VertIn input)
 		const GpuSceneRenderableBoundingVolume bvol = g_renderableBoundingVolumes[g_visibleRenderableBoundingVolumeIndices[input.m_svInstanceId + 1]];
 		const Vec3 boxCenter = (bvol.m_aabbMin + bvol.m_aabbMax) * 0.5f;
 		Vec3 localPos = input.m_position * (bvol.m_aabbMax - boxCenter) + boxCenter;
-		output.m_svPosition = mul(g_unis.m_viewProjMat, Vec4(localPos, 1.0));
+		output.m_svPosition = mul(g_consts.m_viewProjMat, Vec4(localPos, 1.0));
 	}
 	else
 	{
@@ -76,11 +76,11 @@ Vec4 main(VertOut input) : SV_TARGET0
 	const Bool depthTestFailed = input.m_svPosition.z >= depthRef;
 	if(depthTestFailed)
 	{
-		return g_unis.m_color * 0.5;
+		return g_consts.m_color * 0.5;
 	}
 #endif
 
 	// Write the color
-	return g_unis.m_color;
+	return g_consts.m_color;
 }
 #pragma anki technique_end frag

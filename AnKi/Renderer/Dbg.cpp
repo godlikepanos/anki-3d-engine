@@ -125,15 +125,15 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 	m_nonRenderablesProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());
 
-	class Uniforms
+	class Constants
 	{
 	public:
 		Mat4 m_viewProjMat;
 		Mat3x4 m_camTrf;
-	} unis;
-	unis.m_viewProjMat = ctx.m_matrices.m_viewProjection;
-	unis.m_camTrf = ctx.m_matrices.m_cameraTransform;
-	cmdb.setPushConstants(&unis, sizeof(unis));
+	} consts;
+	consts.m_viewProjMat = ctx.m_matrices.m_viewProjection;
+	consts.m_camTrf = ctx.m_matrices.m_cameraTransform;
+	cmdb.setFastConstants(&consts, sizeof(consts));
 
 	cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(type));
 	cmdb.bindSrv(2, 0, getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBuffer(type));
@@ -173,16 +173,16 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		m_renderablesProg->getOrCreateVariant(variantInitInfo, variant);
 		cmdb.bindShaderProgram(&variant->getProgram());
 
-		class Uniforms
+		class Constants
 		{
 		public:
 			Vec4 m_color;
 			Mat4 m_viewProjMat;
-		} unis;
-		unis.m_color = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
-		unis.m_viewProjMat = ctx.m_matrices.m_viewProjection;
+		} consts;
+		consts.m_color = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
+		consts.m_viewProjMat = ctx.m_matrices.m_viewProjection;
 
-		cmdb.setPushConstants(&unis, sizeof(unis));
+		cmdb.setFastConstants(&consts, sizeof(consts));
 		cmdb.bindVertexBuffer(0, BufferView(m_cubeVertsBuffer.get()), sizeof(Vec3));
 		cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR32G32B32_Sfloat, 0);
 		cmdb.bindIndexBuffer(BufferView(m_cubeIndicesBuffer.get()), IndexType::kU16);

@@ -82,7 +82,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_jobSetupGrProg.get());
 
 			const UVec4 consts(getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y());
-			cmdb.setPushConstants(&consts, sizeof(consts));
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 			{
@@ -161,7 +161,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 				cmdb.bindSrv(1, 0, BufferView(&GpuSceneBuffer::getSingleton().getBuffer(), objBufferOffset, objBufferRange));
 				cmdb.bindUav(0, 0, m_runCtx.m_clustersBuffer);
 
-				struct ClusterBinningUniforms
+				struct ClusterBinningConstants
 				{
 					Vec3 m_cameraOrigin;
 					F32 m_zSplitCountOverFrustumLength;
@@ -178,23 +178,23 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 					I32 m_padding2;
 
 					Mat4 m_invertedViewProjMat;
-				} unis;
+				} consts;
 
-				unis.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-				unis.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
-				unis.m_renderingSize = Vec2(getRenderer().getInternalResolution());
-				unis.m_tileCountX = getRenderer().getTileCounts().x();
-				unis.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
+				consts.m_cameraOrigin = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+				consts.m_zSplitCountOverFrustumLength = F32(getRenderer().getZSplitCount()) / (ctx.m_cameraFar - ctx.m_cameraNear);
+				consts.m_renderingSize = Vec2(getRenderer().getInternalResolution());
+				consts.m_tileCountX = getRenderer().getTileCounts().x();
+				consts.m_tileCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y();
 
 				Plane nearPlane;
 				extractClipPlane(ctx.m_matrices.m_viewProjection, FrustumPlaneType::kNear, nearPlane);
-				unis.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
+				consts.m_nearPlaneWorld = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
 
-				unis.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
+				consts.m_zSplitCountMinusOne = getRenderer().getZSplitCount() - 1;
 
-				unis.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+				consts.m_invertedViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
 
-				cmdb.setPushConstants(&unis, sizeof(unis));
+				cmdb.setFastConstants(&consts, sizeof(consts));
 
 				cmdb.dispatchComputeIndirect(BufferView(indirectArgsBuff).setOffset(indirectArgsBuffOffset).setRange(sizeof(DispatchIndirectArgs)));
 

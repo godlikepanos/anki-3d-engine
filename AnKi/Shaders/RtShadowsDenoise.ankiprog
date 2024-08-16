@@ -20,11 +20,11 @@ Texture2D<Vec4> g_momentsTex : register(t3);
 Texture2D<Vec4> g_historyLengthTex : register(t4);
 RWTexture2D<Vec4> g_storageTex : register(u0);
 
-ANKI_PUSH_CONSTANTS(RtShadowsDenoiseUniforms, g_unis)
+ANKI_FAST_CONSTANTS(RtShadowsDenoiseConstants, g_consts)
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {
-	const Vec4 worldPos4 = mul(g_unis.m_invViewProjMat, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_consts.m_invViewProjMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	return worldPos;
 }
@@ -82,12 +82,12 @@ F32 computeVarianceCenter(Vec2 uv)
 	if(historyLength < 2.0)
 	{
 		// Worst case
-		sampleCount = g_unis.m_maxSampleCount;
+		sampleCount = g_consts.m_maxSampleCount;
 	}
 	else if(historyLength > 4.0 && varianceCenter < 0.0001)
 	{
 		// Best case
-		sampleCount = g_unis.m_minSampleCount;
+		sampleCount = g_consts.m_minSampleCount;
 	}
 	else
 	{
@@ -96,7 +96,7 @@ F32 computeVarianceCenter(Vec2 uv)
 		F32 blur = varianceCenter * 100.0;
 		blur = min(1.0, blur);
 
-		const F32 sampleCountf = lerp(F32(g_unis.m_minSampleCount), F32(g_unis.m_maxSampleCount), blur);
+		const F32 sampleCountf = lerp(F32(g_consts.m_minSampleCount), F32(g_consts.m_maxSampleCount), blur);
 
 		sampleCount = U32(sampleCountf);
 	}

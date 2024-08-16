@@ -60,9 +60,9 @@ RWStructuredBuffer<GpuVisibilityHash> g_hash : register(u8);
 #endif
 
 #if DISTANCE_TEST == 0
-ConstantBuffer<FrustumGpuVisibilityUniforms> g_unis : register(b0);
+ConstantBuffer<FrustumGpuVisibilityConsts> g_consts : register(b0);
 #else
-ANKI_PUSH_CONSTANTS(DistanceGpuVisibilityUniforms, g_unis)
+ANKI_FAST_CONSTANTS(DistanceGpuVisibilityConstants, g_consts)
 #endif
 
 #if HZB_TEST
@@ -78,7 +78,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 #if DISTANCE_TEST == 0
 	// Frustum test
 	//
-	if(!frustumTest(g_unis.m_clipPlanes, sphereCenter, sphereRadius))
+	if(!frustumTest(g_consts.m_clipPlanes, sphereCenter, sphereRadius))
 	{
 		return false;
 	}
@@ -87,7 +87,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 	//
 	Vec2 minNdc, maxNdc;
 	F32 aabbMinDepth;
-	projectAabb(bvolume.m_aabbMin, bvolume.m_aabbMax, g_unis.m_viewProjectionMat, minNdc, maxNdc, aabbMinDepth);
+	projectAabb(bvolume.m_aabbMin, bvolume.m_aabbMax, g_consts.m_viewProjectionMat, minNdc, maxNdc, aabbMinDepth);
 
 	if(any(minNdc > 1.0f) || any(maxNdc < -1.0f))
 	{
@@ -95,8 +95,8 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		return false;
 	}
 
-	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_unis.m_finalRenderTargetSize;
-	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_unis.m_finalRenderTargetSize;
+	const Vec2 windowCoordsMin = ndcToUv(minNdc) * g_consts.m_finalRenderTargetSize;
+	const Vec2 windowCoordsMax = ndcToUv(maxNdc) * g_consts.m_finalRenderTargetSize;
 	if(any(round(windowCoordsMin) == round(windowCoordsMax)))
 	{
 		// Doesn't touch the sampling points
@@ -113,7 +113,7 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 #	endif // HZB_TEST
 
 #else // DISTANCE_TEST == 1
-	if(!testSphereSphereCollision(sphereCenter, sphereRadius, g_unis.m_pointOfTest, g_unis.m_testRadius))
+	if(!testSphereSphereCollision(sphereCenter, sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius))
 	{
 		return false;
 	}
@@ -158,14 +158,14 @@ Bool isVisible(GpuSceneRenderableBoundingVolume bvolume)
 		//
 		const Vec3 sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
 		const F32 sphereRadius = bvolume.m_sphereRadius;
-		const F32 distFromLodPoint = length(sphereCenter - g_unis.m_lodReferencePoint) - sphereRadius;
+		const F32 distFromLodPoint = length(sphereCenter - g_consts.m_lodReferencePoint) - sphereRadius;
 
 		U32 lod;
-		if(distFromLodPoint < g_unis.m_maxLodDistances[0])
+		if(distFromLodPoint < g_consts.m_maxLodDistances[0])
 		{
 			lod = 0u;
 		}
-		else if(distFromLodPoint < g_unis.m_maxLodDistances[1])
+		else if(distFromLodPoint < g_consts.m_maxLodDistances[1])
 		{
 			lod = 1u;
 		}

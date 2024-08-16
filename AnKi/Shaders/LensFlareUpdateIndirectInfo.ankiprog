@@ -8,7 +8,7 @@
 
 #define THREAD_COUNT_SQRT 8
 
-ANKI_PUSH_CONSTANTS(Mat4, g_mvp)
+ANKI_FAST_CONSTANTS(Mat4, g_mvp)
 StructuredBuffer<Vec4> g_flarePositions : register(t0);
 RWStructuredBuffer<DrawIndirectArgs> g_indirectInfo : register(u0);
 SamplerState g_nearestAnyClampSampler : register(s0);

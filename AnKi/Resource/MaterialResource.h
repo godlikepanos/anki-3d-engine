@@ -56,7 +56,7 @@ public:
 	MaterialVariable& operator=(MaterialVariable&& b)
 	{
 		m_name = std::move(b.m_name);
-		m_offsetInLocalUniforms = b.m_offsetInLocalUniforms;
+		m_offsetInLocalConstants = b.m_offsetInLocalConstants;
 		m_dataType = b.m_dataType;
 		m_Mat4 = b.m_Mat4;
 		m_image = std::move(b.m_image);
@@ -77,15 +77,15 @@ public:
 		return m_dataType;
 	}
 
-	U32 getOffsetInLocalUniforms() const
+	U32 getOffsetInLocalConstants() const
 	{
-		ANKI_ASSERT(m_offsetInLocalUniforms != kMaxU32);
-		return m_offsetInLocalUniforms;
+		ANKI_ASSERT(m_offsetInLocalConstants != kMaxU32);
+		return m_offsetInLocalConstants;
 	}
 
 protected:
 	ResourceString m_name;
-	U32 m_offsetInLocalUniforms = kMaxU32;
+	U32 m_offsetInLocalConstants = kMaxU32;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::kNone;
 
 	/// Values
@@ -175,7 +175,7 @@ private:
 ///		</shaderProgram>
 ///
 ///		[<inputs>
-///			<input name="name in AnKiMaterialUniforms struct" value="value(s)"/>
+///			<input name="name in AnKiLocalConstants struct" value="value(s)"/>
 ///		</inputs>]
 ///	</material>
 /// @endcode
@@ -214,9 +214,9 @@ public:
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
 	/// Get a buffer with prefilled uniforms.
-	ConstWeakArray<U8> getPrefilledLocalUniforms() const
+	ConstWeakArray<U8> getPrefilledLocalConstants() const
 	{
-		return ConstWeakArray<U8>(static_cast<const U8*>(m_prefilledLocalUniforms), m_localUniformsSize);
+		return ConstWeakArray<U8>(static_cast<const U8*>(m_prefilledLocalConstants), m_localConstantsSize);
 	}
 
 private:
@@ -245,8 +245,8 @@ private:
 
 	ResourceDynamicArray<MaterialVariable> m_vars;
 
-	void* m_prefilledLocalUniforms = nullptr;
-	U32 m_localUniformsSize = 0;
+	void* m_prefilledLocalConstants = nullptr;
+	U32 m_localConstantsSize = 0;
 
 	U32 m_presentBuildinMutatorMask = 0;
 
@@ -259,7 +259,7 @@ private:
 	Error parseInput(XmlElement inputEl, Bool async, BitSet<128>& varsSet);
 	Error findBuiltinMutators();
 	Error createVars();
-	void prefillLocalUniforms();
+	void prefillLocalConstants();
 
 	const MaterialVariable* tryFindVariableInternal(CString name) const;
 

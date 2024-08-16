@@ -16,14 +16,14 @@ StructuredBuffer<U32> g_visibleIndices[(U32)GpuSceneNonRenderableObjectType::kCo
 // binning dispatches and the rest GpuSceneNonRenderableObjectType::kCount for the packing dispatches
 RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u0);
 
-struct Uniforms
+struct Constants
 {
 	U32 m_tileCount;
 	U32 m_padding1;
 	U32 m_padding2;
 	U32 m_padding3;
 };
-ANKI_PUSH_CONSTANTS(Uniforms, g_unis)
+ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 constexpr U32 kSampleCount = 8;
 constexpr U32 kClusterBinningThreadgroupSize = 64;
@@ -41,7 +41,7 @@ constexpr U32 kPackVisiblesThreadgroupSize = 64;
 		const U32 objCount = min(kMaxVisibleClusteredObjects[(U32)type], g_visibleIndices[(U32)type][0]);
 
 		DispatchIndirectArgs args;
-		args.m_threadGroupCountX = (g_unis.m_tileCount * kSampleCount + kClusterBinningThreadgroupSize - 1) / kClusterBinningThreadgroupSize;
+		args.m_threadGroupCountX = (g_consts.m_tileCount * kSampleCount + kClusterBinningThreadgroupSize - 1) / kClusterBinningThreadgroupSize;
 		args.m_threadGroupCountY = objCount;
 		args.m_threadGroupCountZ = 1;
 

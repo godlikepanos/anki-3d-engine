@@ -289,7 +289,7 @@ private:
 
 	ID3D12RootSignature* m_rootSignature = nullptr;
 
-	Array<Space, kMaxDescriptorSets> m_spaces;
+	Array<Space, kMaxRegisterSpaces> m_spaces;
 
 	U32 m_rootConstantsSize = kMaxU32;
 	U8 m_rootConstantsParameterIdx = kMaxU8;
@@ -415,7 +415,7 @@ public:
 
 	void setRootConstants(const void* data, U32 dataSize)
 	{
-		ANKI_ASSERT(data && dataSize && dataSize <= kMaxPushConstantSize);
+		ANKI_ASSERT(data && dataSize && dataSize <= kMaxFastConstantsSize);
 		memcpy(m_rootConsts.getBegin(), data, dataSize);
 		m_rootConstSize = dataSize;
 		m_rootConstsDirty = true;
@@ -482,9 +482,9 @@ private:
 	};
 
 	const RootSignature* m_rootSignature = nullptr;
-	Array<Space, kMaxDescriptorSets> m_spaces;
+	Array<Space, kMaxRegisterSpaces> m_spaces;
 
-	Array<U8, kMaxPushConstantSize> m_rootConsts;
+	Array<U8, kMaxFastConstantsSize> m_rootConsts;
 	U32 m_rootConstSize = 0;
 
 	Bool m_rootSignatureNeedsRebinding = true;

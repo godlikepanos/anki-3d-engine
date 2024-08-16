@@ -17,7 +17,7 @@ StructuredBuffer<U32> g_shaderHandles : register(t3);
 
 RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
 
-ANKI_PUSH_CONSTANTS(RtShadowsSbtBuildUniforms, g_unis)
+ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 
 #define NUMTHREADS 64
 
@@ -31,19 +31,19 @@ ANKI_PUSH_CONSTANTS(RtShadowsSbtBuildUniforms, g_unis)
 
 	const GpuSceneRenderable renderable = g_renderables[g_visibleRenderableIndices[svDispatchThreadId + 1]];
 
-	U32 sbtDwordOffset = g_unis.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
-	sbtDwordOffset += g_unis.m_sbtRecordDwordSize * svDispatchThreadId;
+	U32 sbtDwordOffset = g_consts.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
+	sbtDwordOffset += g_consts.m_sbtRecordDwordSize * svDispatchThreadId;
 
 	// Copy the handle
-	for(U32 i = 0; i < g_unis.m_shaderHandleDwordSize; ++i)
+	for(U32 i = 0; i < g_consts.m_shaderHandleDwordSize; ++i)
 	{
-		g_sbtBuffer[sbtDwordOffset] = g_shaderHandles[renderable.m_rtShadowsShaderHandleIndex * g_unis.m_shaderHandleDwordSize + i];
+		g_sbtBuffer[sbtDwordOffset] = g_shaderHandles[renderable.m_rtShadowsShaderHandleIndex * g_consts.m_shaderHandleDwordSize + i];
 		++sbtDwordOffset;
 	}
 
 	// Copy the GpuSceneRenderableInstance
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_worldTransformsIndex;
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_uniformsOffset;
+	g_sbtBuffer[sbtDwordOffset++] = renderable.m_constantsOffset;
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsIndex;
 	g_sbtBuffer[sbtDwordOffset] = 0;
 }

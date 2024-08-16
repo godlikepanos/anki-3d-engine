@@ -26,7 +26,7 @@ typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
 #	error See file
 #endif
 
-struct ClusterBinningUniforms
+struct ClusterBinningConstants
 {
 	Vec3 m_cameraOrigin;
 	F32 m_zSplitCountOverFrustumLength;
@@ -44,7 +44,7 @@ struct ClusterBinningUniforms
 
 	Mat4 m_invertedViewProjMat;
 };
-ANKI_PUSH_CONSTANTS(ClusterBinningUniforms, g_unis)
+ANKI_FAST_CONSTANTS(ClusterBinningConstants, g_consts)
 
 StructuredBuffer<U32> g_visibleObjectIds : register(t0); // 1st index is the count and then the indices to the g_objects
 StructuredBuffer<GpuSceneType> g_objects : register(t1);
@@ -62,25 +62,25 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 
 [numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
-	const U32 dispatchThreadIdX = min(svDispatchThreadId.x, g_unis.m_tileCount * kSampleCount);
+	const U32 dispatchThreadIdX = min(svDispatchThreadId.x, g_consts.m_tileCount * kSampleCount);
 	const U32 tileIdx = dispatchThreadIdX / kSampleCount;
 	const U32 sampleIdx = dispatchThreadIdX % kSampleCount;
 	const U32 visibleObjectIdx = svDispatchThreadId.y;
 	ANKI_ASSERT(visibleObjectIdx < kMaxVisibleClusteredObjects[OBJECT_TYPE]);
 
-	const UVec2 tileXY = UVec2(tileIdx % g_unis.m_tileCountX, tileIdx / g_unis.m_tileCountX);
+	const UVec2 tileXY = UVec2(tileIdx % g_consts.m_tileCountX, tileIdx / g_consts.m_tileCountX);
 
 	// This is a pixel in one of the main framebuffers of the renderer, eg the gbuffer's framebuffers
 	const UVec2 pixel = tileXY * kClusteredShadingTileSize + kSampleLocations[sampleIdx];
-	const Vec2 uv = Vec2(pixel) / g_unis.m_renderingSize;
+	const Vec2 uv = Vec2(pixel) / g_consts.m_renderingSize;
 	const Vec2 ndc = uvToNdc(uv);
 
 	// Unproject the sample in world space
-	const Vec4 farWorldPos4 = mul(g_unis.m_invertedViewProjMat, Vec4(ndc, 1.0, 1.0));
+	const Vec4 farWorldPos4 = mul(g_consts.m_invertedViewProjMat, Vec4(ndc, 1.0, 1.0));
 	const Vec3 farWorldPos = farWorldPos4.xyz / farWorldPos4.w;
 
 	// Create the ray that will test the clusterer objects
-	const Vec3 rayOrigin = g_unis.m_cameraOrigin;
+	const Vec3 rayOrigin = g_consts.m_cameraOrigin;
 	const Vec3 rayDir = normalize(farWorldPos - rayOrigin);
 
 	// Do collision
@@ -181,8 +181,8 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 		// Compute and set the Z splits
 		const Vec3 hitpointA = rayDir * t0 + rayOrigin;
 		const Vec3 hitpointB = rayDir * t1 + rayOrigin;
-		const F32 distFromNearPlaneA = testPlanePoint(g_unis.m_nearPlaneWorld.xyz, g_unis.m_nearPlaneWorld.w, hitpointA);
-		const F32 distFromNearPlaneB = testPlanePoint(g_unis.m_nearPlaneWorld.xyz, g_unis.m_nearPlaneWorld.w, hitpointB);
+		const F32 distFromNearPlaneA = testPlanePoint(g_consts.m_nearPlaneWorld.xyz, g_consts.m_nearPlaneWorld.w, hitpointA);
+		const F32 distFromNearPlaneB = testPlanePoint(g_consts.m_nearPlaneWorld.xyz, g_consts.m_nearPlaneWorld.w, hitpointB);
 
 		F32 minDistFromNearPlane;
 		F32 maxDistFromNearPlane;
@@ -197,27 +197,27 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 			maxDistFromNearPlane = distFromNearPlaneA;
 		}
 
-		const I32 startZSplit = max(I32(minDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0);
-		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_unis.m_zSplitCountOverFrustumLength), 0, g_unis.m_zSplitCountMinusOne);
+		const I32 startZSplit = max(I32(minDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0);
+		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0, g_consts.m_zSplitCountMinusOne);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
 #if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 			if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 			{
-				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_pointLightsMask[maskArrayIdx], mask);
+				InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_pointLightsMask[maskArrayIdx], mask);
 			}
 			else
 			{
-				InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_spotLightsMask[maskArrayIdx], mask);
+				InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_spotLightsMask[maskArrayIdx], mask);
 			}
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_decalsMask[maskArrayIdx], mask);
+			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_decalsMask[maskArrayIdx], mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_fogDensityVolumesMask, mask);
+			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_fogDensityVolumesMask, mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_reflectionProbesMask, mask);
+			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_reflectionProbesMask, mask);
 #elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-			InterlockedOr(g_clusters[g_unis.m_tileCount + i].m_giProbesMask, mask);
+			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_giProbesMask, mask);
 #else
 #	error See file
 #endif

@@ -139,7 +139,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			SsaoUniforms consts;
+			SsaoConstants consts;
 			consts.m_radius = g_ssaoRadiusCVar.get();
 			consts.m_sampleCount = g_ssaoSampleCountCVar.get();
 			consts.m_viewportSizef = Vec2(rez);
@@ -151,7 +151,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			consts.m_frameCount = getRenderer().getFrameCount() % kMaxU32;
 			consts.m_ssaoPower = g_ssaoPower.get();
 			consts.m_viewMat = ctx.m_matrices.m_view;
-			cmdb.setPushConstants(&consts, sizeof(consts));
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			if(g_preferComputeCVar.get())
 			{
@@ -199,10 +199,10 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			SsaoSpatialDenoiseUniforms consts;
+			SsaoSpatialDenoiseConstants consts;
 			computeLinearizeDepthOptimal(ctx.m_cameraNear, ctx.m_cameraFar, consts.m_linearizeDepthParams.x(), consts.m_linearizeDepthParams.y());
 			consts.m_viewToWorldMat = ctx.m_matrices.m_cameraTransform;
-			cmdb.setPushConstants(&consts, sizeof(consts));
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			if(g_preferComputeCVar.get())
 			{

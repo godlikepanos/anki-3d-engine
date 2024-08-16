@@ -108,12 +108,12 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			varAU4(rectInfo) = initAU4(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 			SpdSetup(dispatchThreadGroupCountXY, workGroupOffset, numWorkGroupsAndMips, rectInfo, m_mipCount);
 
-			DepthDownscaleUniforms pc;
+			DepthDownscaleConstants pc;
 			pc.m_threadgroupCount = numWorkGroupsAndMips[0];
 			pc.m_mipmapCount = numWorkGroupsAndMips[1];
 			pc.m_srcTexSizeOverOne = 1.0f / Vec2(getRenderer().getInternalResolution());
 
-			cmdb.setPushConstants(&pc, sizeof(pc));
+			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{

@@ -31,20 +31,20 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 {
 	// Allocate, set and bind global uniforms
 	{
-		MaterialGlobalUniforms* globalUniforms;
-		const RebarAllocation globalUniformsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUniforms);
+		MaterialGlobalConstants* globalConstants;
+		const RebarAllocation globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalConstants);
 
-		globalUniforms->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
-		globalUniforms->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
-		static_assert(sizeof(globalUniforms->m_viewTransform) == sizeof(args.m_viewMatrix));
-		memcpy(&globalUniforms->m_viewTransform, &args.m_viewMatrix, sizeof(args.m_viewMatrix));
-		static_assert(sizeof(globalUniforms->m_cameraTransform) == sizeof(args.m_cameraTransform));
-		memcpy(&globalUniforms->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
+		globalConstants->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
+		globalConstants->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;
+		static_assert(sizeof(globalConstants->m_viewTransform) == sizeof(args.m_viewMatrix));
+		memcpy(&globalConstants->m_viewTransform, &args.m_viewMatrix, sizeof(args.m_viewMatrix));
+		static_assert(sizeof(globalConstants->m_cameraTransform) == sizeof(args.m_cameraTransform));
+		memcpy(&globalConstants->m_cameraTransform, &args.m_cameraTransform, sizeof(args.m_cameraTransform));
 
 		ANKI_ASSERT(args.m_viewport != UVec4(0u));
-		globalUniforms->m_viewport = Vec4(args.m_viewport);
+		globalConstants->m_viewport = Vec4(args.m_viewport);
 
-		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_GLOBAL_UNIFORMS, 0, globalUniformsToken);
+		cmdb.bindConstantBuffer(ANKI_MATERIAL_REGISTER_GLOBAL_CONSTANTS, 0, globalConstantsToken);
 	}
 
 	// More globals
@@ -124,7 +124,7 @@ void RenderableDrawer::drawMdi(const RenderableDrawerArguments& args, CommandBuf
 		if(bMeshlets && meshShaderHwSupport)
 		{
 			const UVec4 consts(bucketIdx);
-			cmdb.setPushConstants(&consts, sizeof(consts));
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.drawMeshTasksIndirect(BufferView(args.m_mesh.m_dispatchMeshIndirectArgsBuffer)
 										   .incrementOffset(sizeof(DispatchIndirectArgs) * bucketIdx)

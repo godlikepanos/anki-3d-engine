@@ -223,11 +223,11 @@ struct Foo2
 	uint4 m_val;
 };
 #if defined(__spirv__)
-[[vk::push_constant]] ConstantBuffer<Foo2> g_pushConsts;
+[[vk::push_constant]] ConstantBuffer<Foo2> g_consts;
 
 [[vk::binding(0, 1000000)]] Texture2D g_bindless[];
 #else
-ConstantBuffer<Foo2> g_pushConsts : register(b0, space3000);
+ConstantBuffer<Foo2> g_consts : register(b0, space3000);
 #endif
 
 SamplerState g_sampler : register(s2);
@@ -245,9 +245,9 @@ void main()
 	g_rwtex[0][uint2(0, 0)] = g_consts.m_val;
 
 #if defined(__spirv__)
-	Texture2D tex = g_bindless[g_pushConsts.m_val.x];
+	Texture2D tex = g_bindless[g_consts.m_val.x];
 #else
-	Texture2D tex = ResourceDescriptorHeap[g_pushConsts.m_val.x];
+	Texture2D tex = ResourceDescriptorHeap[g_consts.m_val.x];
 #endif
 	g_rwtex[1][uint2(0, 0)] = tex.SampleLevel(g_sampler, 0.0f, 0.0f);
 
@@ -332,7 +332,7 @@ void main()
 		cmdb->bindSampler(2, 0, sampler.get());
 
 		const UVec4 pc(bindlessIdx);
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb->setFastConstants(&pc, sizeof(pc));
 
 		cmdb->dispatchCompute(1, 1, 1);
 		cmdb->endRecording();
@@ -461,7 +461,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDesc::firstSurface())});
 
 			const Vec4 viewport(0.0f, 0.0f, F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight()));
-			cmdb->setPushConstants(&viewport, sizeof(viewport));
+			cmdb->setFastConstants(&viewport, sizeof(viewport));
 
 			cmdb->bindSrv(0, 0, TextureView(tex.get(), TextureSubresourceDesc::all()));
 			cmdb->bindSampler(0, 0, sampler.get());
@@ -740,9 +740,9 @@ struct A
 };
 
 #if defined(__spirv__)
-[[vk::push_constant]] ConstantBuffer<A> g_pushConsts;
+[[vk::push_constant]] ConstantBuffer<A> g_consts;
 #else
-ConstantBuffer<A> g_pushConsts : register(b0, space3000);
+ConstantBuffer<A> g_consts : register(b0, space3000);
 #endif
 
 struct VertOut
@@ -760,13 +760,13 @@ VertOut main(uint svVertexId : SV_VERTEXID)
 	switch(svVertexId)
 	{
 	case 0:
-		color = g_pushConsts.m_color[0];
+		color = g_consts.m_color[0];
 		break;
 	case 1:
-		color = g_pushConsts.m_color[1];
+		color = g_consts.m_color[1];
 		break;
 	default:
-		color = g_pushConsts.m_color[2];
+		color = g_consts.m_color[2];
 	};
 
 	o.m_color = color.xyz;
@@ -774,7 +774,7 @@ VertOut main(uint svVertexId : SV_VERTEXID)
 	const float2 kPositions[3] = {float2(-1.0, 1.0), float2(0.0, -1.0), float2(1.0, 1.0)};
 
 	float2x2 rot = float2x2(
-		g_pushConsts.m_rotation2d.x, g_pushConsts.m_rotation2d.y, g_pushConsts.m_rotation2d.z, g_pushConsts.m_rotation2d.w);
+		g_consts.m_rotation2d.x, g_consts.m_rotation2d.y, g_consts.m_rotation2d.z, g_consts.m_rotation2d.w);
 	float2 pos = mul(rot, kPositions[svVertexId % 3]);
 
 	o.m_svPosition = float4(pos, 0.0, 1.0);
@@ -838,7 +838,7 @@ float4 main(VertOut i) : SV_TARGET0
 			pc.m_color[1] = Vec4(0.0, 1.0, 0.0, 0.0);
 			pc.m_color[2] = Vec4(0.0, 0.0, 1.0, 0.0);
 
-			cmdb->setPushConstants(&pc, sizeof(pc));
+			cmdb->setFastConstants(&pc, sizeof(pc));
 
 			cmdb->draw(PrimitiveTopology::kTriangles, 3);
 			cmdb->endRenderPass();
@@ -1149,7 +1149,7 @@ void main()
 		cmdb->beginRenderPass(fb.get(), {TextureUsageBit::kRtvDsvWrite}, {});
 
 		Vec4 pc(F32(g_win->getWidth()), F32(g_win->getHeight()), 0.0f, 0.0f);
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb->setFastConstants(&pc, sizeof(pc));
 
 		// cmdb->bindTextureAndSampler(0, 0, aView.get(), sampler.get());
 		// cmdb->bindTextureAndSampler(0, 1, bView.get(), sampler.get());
@@ -1997,7 +1997,7 @@ void main()
 		Mat4 m_mat = Mat4(0.0f);
 	} pc;
 	pc.m_mat(0, 1) = 0.5f;
-	cmdb->setPushConstants(&pc, sizeof(pc));
+	cmdb->setFastConstants(&pc, sizeof(pc));
 
 	cmdb->bindStorageBuffer(0, 0, resultBuff.get(), 0, resultBuff->getSize());
 	TexturePtr presentTex = g_gr->acquireNextPresentableTexture();
@@ -2204,7 +2204,7 @@ void main()
 	const U32 idx1 = viewB->getOrCreateBindlessTextureIndex();
 	const U32 idx2 = viewC->getOrCreateBindlessTextureIndex();
 	UVec4 pc(idx0, idx1, idx2, 0);
-	cmdb->setPushConstants(&pc, sizeof(pc));
+	cmdb->setFastConstants(&pc, sizeof(pc));
 
 	cmdb->bindAllBindless(0);
 
@@ -2472,7 +2472,7 @@ void main()
 		} pc;
 		pc.m_vp = projMat * viewMat;
 		pc.m_cameraPos = cameraPos;
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb->setFastConstants(&pc, sizeof(pc));
 
 		if(useRayTracing)
 		{
@@ -3322,7 +3322,7 @@ void main()
 		pc.m_lightCount = lightCount;
 		pc.m_frame = i;
 
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb->setFastConstants(&pc, sizeof(pc));
 
 		const U32 sbtRecordSize = g_gr->getDeviceCapabilities().m_sbtRecordAlignment;
 		cmdb->traceRays(BufferView(sbt.get()), sbtRecordSize, U32(GeomWhat::kCount) * 2, 2, WIDTH, HEIGHT, 1);

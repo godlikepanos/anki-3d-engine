@@ -14,7 +14,7 @@
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-ConstantBuffer<GlobalRendererUniforms> g_globalUniforms : register(b0);
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 StructuredBuffer<PointLight> g_pointLights : register(t0);
 StructuredBuffer<SpotLight> g_spotLights : register(t1);
 StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t2);
@@ -54,13 +54,13 @@ RVec3 main(VertOut input) : SV_TARGET0
 	}
 
 	// Get world position
-	const Vec4 worldPos4 = mul(g_globalUniforms.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const RVec3 viewDir = normalize(g_globalUniforms.m_cameraPosition - worldPos);
+	const RVec3 viewDir = normalize(g_globalConstants.m_cameraPosition - worldPos);
 
 	// Get the cluster
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalUniforms, Vec3(input.m_svPosition.xy, depth));
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants, Vec3(input.m_svPosition.xy, depth));
 
 	// return clusterHeatmap(cluster, 1u << (U32)GpuSceneNonRenderableObjectType::kLight, 3);
 
@@ -133,7 +133,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 		[branch] if(ssr.w < 0.9f)
 		{
 			const Vec3 reflDir = reflect(-viewDir, gbuffer.m_normal);
-			const RF32 reflLod = (g_globalUniforms.m_reflectionProbesMipCount - 1.0f) * gbuffer.m_roughness;
+			const RF32 reflLod = (g_globalConstants.m_reflectionProbesMipCount - 1.0f) * gbuffer.m_roughness;
 			RVec3 probeColor = 0.0f;
 
 			const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_reflectionProbesMask) == 1);
@@ -191,7 +191,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 	U32 resolvedSmIdx = 0u;
 
 	// Dir light
-	const DirectionalLight dirLight = g_globalUniforms.m_directionalLight;
+	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
 	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
 	{
 		RF32 shadowFactor;
