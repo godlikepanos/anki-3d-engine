@@ -267,7 +267,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 			ANKI_RESOURCE_LOGE("GPU visibility went out of memory: %s", who.cstr());
 		}
 
-		getRenderer().getReadbackManager().allocateData(m_outOfMemoryReadback, sizeof(U32), m_outOfMemoryReadbackBuffer);
+		m_outOfMemoryReadbackBuffer = getRenderer().getReadbackManager().allocateStructuredBuffer<U32>(m_outOfMemoryReadback, 1);
 	}
 
 	// Get some limits
@@ -738,13 +738,12 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 				cmdb.bindSrv(4, 0, stage1Mem.m_counters);
 				cmdb.bindSrv(5, 0, stage1Mem.m_renderablePrefixSums);
 
-				UVec2* firstDrawIndirectArgAndCount =
+				WeakArray<UVec2> firstDrawIndirectArgAndCount =
 					allocateAndBindSrvStructuredBuffer<UVec2>(cmdb, 6, 0, out.m_legacy.m_bucketIndirectArgsRanges.getSize());
 				for(U32 ibucket = 0; ibucket < out.m_legacy.m_bucketIndirectArgsRanges.getSize(); ++ibucket)
 				{
-					firstDrawIndirectArgAndCount->x() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_firstInstance;
-					firstDrawIndirectArgAndCount->y() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_instanceCount;
-					++firstDrawIndirectArgAndCount;
+					firstDrawIndirectArgAndCount[ibucket].x() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_firstInstance;
+					firstDrawIndirectArgAndCount[ibucket].y() = out.m_legacy.m_bucketIndirectArgsRanges[ibucket].m_instanceCount;
 				}
 
 				cmdb.bindUav(0, 0, stage2Mem.m_legacy.m_instanceRateRenderables);
@@ -936,9 +935,9 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 	if(objCount == 0)
 	{
-		U32* count;
-		out.m_visiblesBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), count);
-		*count = 0;
+		WeakArray<U32> count;
+		out.m_visiblesBuffer = RebarTransientMemoryPool::getSingleton().allocateStructuredBuffer(1, count);
+		count[0] = 0;
 		out.m_visiblesBufferHandle = rgraph.importBuffer(out.m_visiblesBuffer, BufferUsageBit::kNone);
 
 		return;
@@ -958,16 +957,23 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		m_counterBufferZeroingHandle = {};
 	}
 
-	constexpr U32 kCountersPerDispatch = 3; // 1 for the threadgroup, 1 for the visbile object count and 1 for objects with feedback
-	const U32 counterBufferElementSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
-														   U32(kCountersPerDispatch * sizeof(U32)));
+	U32 counterBufferElementSize;
+	if(GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+	{
+		counterBufferElementSize = sizeof(GpuVisibilityNonRenderablesCounters);
+	}
+	else
+	{
+		counterBufferElementSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment,
+													 U32(sizeof(GpuVisibilityNonRenderablesCounters)));
+	}
+
 	if(!m_counterBuffer.isCreated() || m_counterBufferOffset + counterBufferElementSize > m_counterBuffer->getSize()) [[unlikely]]
 	{
 		// Counter buffer not created or not big enough, create a new one
 
 		BufferInitInfo buffInit("GpuVisibilityNonRenderablesCounters");
-		buffInit.m_size = (m_counterBuffer.isCreated()) ? m_counterBuffer->getSize() * 2
-														: kCountersPerDispatch * counterBufferElementSize * kInitialCounterArraySize;
+		buffInit.m_size = (m_counterBuffer.isCreated()) ? m_counterBuffer->getSize() * 2 : counterBufferElementSize * kInitialCounterArraySize;
 		buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kSrvCompute | BufferUsageBit::kCopyDestination;
 		m_counterBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -1051,7 +1057,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		cmdb.setFastConstants(&consts, sizeof(consts));
 
 		rgraph.bindUav(0, 0, visibleIndicesBuffHandle);
-		cmdb.bindUav(1, 0, BufferView(counterBuffer.get(), counterBufferOffset, sizeof(U32) * kCountersPerDispatch));
+		cmdb.bindUav(1, 0, BufferView(counterBuffer.get(), counterBufferOffset, sizeof(GpuVisibilityNonRenderablesCounters)));
 
 		if(needsFeedback)
 		{

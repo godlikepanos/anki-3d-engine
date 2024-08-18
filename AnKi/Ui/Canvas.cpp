@@ -190,7 +190,7 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 	ImDrawData& drawData = *ImGui::GetDrawData();
 
 	// Allocate index and vertex buffers
-	RebarAllocation vertsToken, indicesToken;
+	BufferView vertsToken, indicesToken;
 	{
 		if(drawData.TotalVtxCount == 0 || drawData.TotalIdxCount == 0)
 		{
@@ -198,9 +198,9 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 		}
 
 		ImDrawVert* verts;
-		vertsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(drawData.TotalVtxCount, verts);
+		vertsToken = RebarTransientMemoryPool::getSingleton().allocate(drawData.TotalVtxCount * sizeof(ImDrawVert), sizeof(F32), verts);
 		ImDrawIdx* indices;
-		indicesToken = RebarTransientMemoryPool::getSingleton().allocateFrame(drawData.TotalIdxCount, indices);
+		indicesToken = RebarTransientMemoryPool::getSingleton().allocate(drawData.TotalIdxCount * sizeof(ImDrawIdx), sizeof(ImDrawIdx), indices);
 
 		for(I n = 0; n < drawData.CmdListsCount; ++n)
 		{

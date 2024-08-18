@@ -17,17 +17,20 @@ GpuReadbackMemoryPool::GpuReadbackMemoryPool()
 
 	m_pool.init(buffUsage, classes, classes.getBack(), "GpuReadback", false, mapAccess);
 
-	m_alignment = GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment;
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+	{
+		m_structuredBufferAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+	}
 }
 
 GpuReadbackMemoryPool ::~GpuReadbackMemoryPool()
 {
 }
 
-GpuReadbackMemoryAllocation GpuReadbackMemoryPool::allocate(PtrSize size)
+GpuReadbackMemoryAllocation GpuReadbackMemoryPool::allocate(PtrSize size, U32 alignment)
 {
 	GpuReadbackMemoryAllocation out;
-	m_pool.allocate(size, m_alignment, out.m_token);
+	m_pool.allocate(size, alignment, out.m_token);
 	out.m_buffer = &m_pool.getGpuBuffer();
 	out.m_mappedMemory = static_cast<U8*>(m_pool.getGpuBufferMappedMemory()) + out.m_token.m_offset;
 	return out;

@@ -41,6 +41,7 @@ template<typename TChunk, typename TInterface, typename TLock>
 Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, PtrSize alignment, TChunk*& chunk, PtrSize& offset)
 {
 	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(alignment > 0);
 	size += alignment;
 
 	chunk = nullptr;

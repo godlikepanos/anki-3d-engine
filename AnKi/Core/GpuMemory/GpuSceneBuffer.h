@@ -83,6 +83,17 @@ public:
 		return alloc;
 	}
 
+	template<typename T>
+	GpuSceneBufferAllocation allocateStructuredBuffer(U32 count)
+	{
+		const U32 alignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+								  ? sizeof(T)
+								  : GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+		GpuSceneBufferAllocation alloc;
+		m_pool.allocate(count * sizeof(T), alignment, alloc.m_token);
+		return alloc;
+	}
+
 	void deferredFree(GpuSceneBufferAllocation& alloc)
 	{
 		m_pool.deferredFree(alloc.m_token);

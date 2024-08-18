@@ -433,7 +433,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 
 			primitives[idx].m_constantsOffset = constantsOffset;
 #	if VISUALIZE_MESHLETS
-			primitives[idx].m_meshletIndex = relativeMeshletIdx;
+			primitives[idx].m_meshletIndex = instance.m_meshletGeometryDescriptorIndex;
 #	endif
 		}
 	}

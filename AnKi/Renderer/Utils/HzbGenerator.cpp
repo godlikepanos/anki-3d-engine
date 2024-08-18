@@ -50,7 +50,15 @@ Error HzbGenerator::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HzbMaxDepth.ankiprogbin", m_maxDepthProg, m_maxDepthGrProg));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/HzbMaxDepthProject.ankiprogbin", m_maxBoxProg, m_maxBoxGrProg));
 
-	m_counterBufferElementSize = max<U32>(sizeof(U32), GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
+	if(GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+	{
+		m_counterBufferElementSize = sizeof(U32);
+	}
+	else
+	{
+		m_counterBufferElementSize = max<U32>(sizeof(U32), GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment);
+	}
+
 	BufferInitInfo buffInit("HzbCounterBuffer");
 	buffInit.m_size = m_counterBufferElementSize * kCounterBufferElementCount;
 	buffInit.m_usage = BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;

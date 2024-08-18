@@ -233,16 +233,16 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	BufferView sbtBuffer;
 	{
 		// Allocate SBT
-		U8* sbtMem;
-		sbtBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(
-			(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize, sbtMem);
+		WeakArray<U32> sbtMem;
+		sbtBuffer = RebarTransientMemoryPool::getSingleton().allocateStructuredBuffer(
+			(GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount() + 2) * m_sbtRecordSize / sizeof(U32), sbtMem);
 		sbtHandle = rgraph.importBuffer(sbtBuffer, BufferUsageBit::kUavCompute);
 
 		// Write the first 2 entries of the SBT
 		ConstWeakArray<U8> shaderGroupHandles = m_rtLibraryGrProg->getShaderGroupHandles();
 		const U32 shaderHandleSize = GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize;
-		memcpy(sbtMem, &shaderGroupHandles[m_rayGenShaderGroupIdx * shaderHandleSize], shaderHandleSize);
-		memcpy(sbtMem + m_sbtRecordSize, &shaderGroupHandles[m_missShaderGroupIdx * shaderHandleSize], shaderHandleSize);
+		memcpy(&sbtMem[0], &shaderGroupHandles[m_rayGenShaderGroupIdx * shaderHandleSize], shaderHandleSize);
+		memcpy(&sbtMem[m_sbtRecordSize / sizeof(U32)], &shaderGroupHandles[m_missShaderGroupIdx * shaderHandleSize], shaderHandleSize);
 
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows build SBT");
@@ -304,7 +304,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			// Allocate, set and bind global uniforms
 			{
 				MaterialGlobalConstants* globalConstants;
-				const RebarAllocation globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalConstants);
+				const BufferView globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateConstantBuffer(globalConstants);
 
 				memset(globalConstants, 0, sizeof(*globalConstants)); // Don't care for now
 

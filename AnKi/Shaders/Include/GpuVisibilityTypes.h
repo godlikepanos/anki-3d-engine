@@ -96,4 +96,12 @@ enum class GpuVisibilityIndirectDispatches : U32
 	kCount
 };
 
+/// Counters used in non-renderables visibility
+class GpuVisibilityNonRenderablesCounters
+{
+	U32 m_threadgroupCount; ///< Counts the no of threadgroups
+	U32 m_visibleObjectCount; ///< Counts the visible objects
+	U32 m_feedbackObjectCount; ///< Counts the visbile objects that need feedback
+};
+
 ANKI_END_NAMESPACE

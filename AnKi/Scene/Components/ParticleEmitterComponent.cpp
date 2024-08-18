@@ -206,7 +206,7 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 
 	static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition] == Format::kR16G16B16A16_Unorm);
 	WeakArray<U16Vec4> transientPositions;
-	const RebarAllocation positionsAlloc = RebarTransientMemoryPool::getSingleton().allocateFrame(vertCount, transientPositions);
+	const BufferView positionsAlloc = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(vertCount, transientPositions);
 	transientPositions[0] = U16Vec4(0, 0, 0, 0);
 	transientPositions[1] = U16Vec4(kMaxU16, 0, 0, 0);
 	transientPositions[2] = U16Vec4(kMaxU16, kMaxU16, 0, 0);
@@ -214,14 +214,14 @@ ParticleEmitterComponent::ParticleEmitterComponent(SceneNode* node)
 
 	static_assert(kMeshRelatedVertexStreamFormats[VertexStreamId::kUv] == Format::kR32G32_Sfloat);
 	WeakArray<Vec2> transientUvs;
-	const RebarAllocation uvsAlloc = RebarTransientMemoryPool::getSingleton().allocateFrame(vertCount, transientUvs);
+	const BufferView uvsAlloc = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(vertCount, transientUvs);
 	transientUvs[0] = Vec2(0.0f);
 	transientUvs[1] = Vec2(1.0f, 0.0f);
 	transientUvs[2] = Vec2(1.0f, 1.0f);
 	transientUvs[3] = Vec2(0.0f, 1.0f);
 
 	WeakArray<U16> transientIndices;
-	const RebarAllocation indicesAlloc = RebarTransientMemoryPool::getSingleton().allocateFrame(indexCount, transientIndices);
+	const BufferView indicesAlloc = RebarTransientMemoryPool::getSingleton().allocateCopyBuffer(indexCount, transientIndices);
 	transientIndices[0] = 0;
 	transientIndices[1] = 1;
 	transientIndices[2] = 3;

@@ -75,7 +75,6 @@ public:
 	[[nodiscard]] ShaderPtr newShader(const ShaderInitInfo& init);
 	[[nodiscard]] ShaderProgramPtr newShaderProgram(const ShaderProgramInitInfo& init);
 	[[nodiscard]] CommandBufferPtr newCommandBuffer(const CommandBufferInitInfo& init);
-	[[nodiscard]] FramebufferPtr newFramebuffer(const FramebufferInitInfo& init);
 	[[nodiscard]] OcclusionQueryPtr newOcclusionQuery();
 	[[nodiscard]] TimestampQueryPtr newTimestampQuery();
 	[[nodiscard]] PipelineQueryPtr newPipelineQuery(const PipelineQueryInitInfo& inf);

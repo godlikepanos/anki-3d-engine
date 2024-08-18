@@ -342,7 +342,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kU) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "Ssr") ? "" : "Ssr");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");
 	}
 
 	if(in.getKey(KeyCode::kI) == 1)

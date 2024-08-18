@@ -65,30 +65,30 @@ protected:
 	static T* allocateAndBindConstants(CommandBuffer& cmdb, U32 reg, U32 space)
 	{
 		T* ptr;
-		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(1, ptr);
+		const BufferView alloc = RebarTransientMemoryPool::getSingleton().allocateConstantBuffer<T>(ptr);
 		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
 		cmdb.bindConstantBuffer(reg, space, alloc);
 		return ptr;
 	}
 
 	template<typename T>
-	static T* allocateAndBindSrvStructuredBuffer(CommandBuffer& cmdb, U32 reg, U32 space, U32 count = 1)
+	static WeakArray<T> allocateAndBindSrvStructuredBuffer(CommandBuffer& cmdb, U32 reg, U32 space, U32 count = 1)
 	{
-		T* ptr;
-		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(count, ptr);
-		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
+		WeakArray<T> out;
+		const BufferView alloc = RebarTransientMemoryPool::getSingleton().allocateStructuredBuffer<T>(count, out);
+		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(out.getBegin())));
 		cmdb.bindSrv(reg, space, alloc);
-		return ptr;
+		return out;
 	}
 
 	template<typename T>
-	static T* allocateAndBindUavStructuredBuffer(CommandBuffer& cmdb, U32 reg, U32 space, U32 count = 1)
+	static WeakArray<T> allocateAndBindUavStructuredBuffer(CommandBuffer& cmdb, U32 reg, U32 space, U32 count = 1)
 	{
-		T* ptr;
-		const RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(count, ptr);
-		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(ptr)));
+		WeakArray<T> out;
+		const BufferView alloc = RebarTransientMemoryPool::getSingleton().allocateStructuredBuffer<T>(count, out);
+		ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(out.getBegin())));
 		cmdb.bindUav(reg, space, alloc);
-		return ptr;
+		return out;
 	}
 
 	void registerDebugRenderTarget(CString rtName);

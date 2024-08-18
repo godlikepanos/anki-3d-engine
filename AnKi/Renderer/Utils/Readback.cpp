@@ -7,31 +7,6 @@
 
 namespace anki {
 
-void ReadbackManager::allocateData(MultiframeReadbackToken& token, PtrSize size, BufferView& buffer) const
-{
-	for([[maybe_unused]] U64 frame : token.m_frameIds)
-	{
-		ANKI_ASSERT(frame != m_frameId && "Can't allocate multiple times in a frame");
-	}
-
-	GpuReadbackMemoryAllocation& allocation = token.m_allocations[token.m_slot];
-
-	if(allocation.isValid() && allocation.getAllocatedSize() != size)
-	{
-		GpuReadbackMemoryPool::getSingleton().deferredFree(allocation);
-	}
-
-	if(!allocation.isValid())
-	{
-		allocation = GpuReadbackMemoryPool::getSingleton().allocate(size);
-	}
-	token.m_frameIds[token.m_slot] = m_frameId;
-
-	buffer = BufferView(&allocation.getBuffer(), allocation.getOffset(), size);
-
-	token.m_slot = (token.m_slot + 1) % kMaxFramesInFlight;
-}
-
 U32 ReadbackManager::findBestSlot(const MultiframeReadbackToken& token) const
 {
 	const U64 earliestFrame = m_frameId - (kMaxFramesInFlight - 1);

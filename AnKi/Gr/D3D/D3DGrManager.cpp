@@ -328,35 +328,35 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::kArm;
-		m_capabilities.m_minSubgroupSize = 16;
-		m_capabilities.m_maxSubgroupSize = 16;
+		m_capabilities.m_minWaveSize = 16;
+		m_capabilities.m_maxWaveSize = 16;
 		break;
 	case 0x10DE:
 		m_capabilities.m_gpuVendor = GpuVendor::kNvidia;
-		m_capabilities.m_minSubgroupSize = 32;
-		m_capabilities.m_maxSubgroupSize = 32;
+		m_capabilities.m_minWaveSize = 32;
+		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x1002:
 	case 0x1022:
 		m_capabilities.m_gpuVendor = GpuVendor::kAMD;
-		m_capabilities.m_minSubgroupSize = 32;
-		m_capabilities.m_maxSubgroupSize = 64;
+		m_capabilities.m_minWaveSize = 32;
+		m_capabilities.m_maxWaveSize = 64;
 		break;
 	case 0x8086:
 		m_capabilities.m_gpuVendor = GpuVendor::kIntel;
-		m_capabilities.m_minSubgroupSize = 8;
-		m_capabilities.m_maxSubgroupSize = 32;
+		m_capabilities.m_minWaveSize = 8;
+		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x5143:
 		m_capabilities.m_gpuVendor = GpuVendor::kQualcomm;
-		m_capabilities.m_minSubgroupSize = 64;
-		m_capabilities.m_maxSubgroupSize = 128;
+		m_capabilities.m_minWaveSize = 64;
+		m_capabilities.m_maxWaveSize = 128;
 		break;
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 		// Choose something really low
-		m_capabilities.m_minSubgroupSize = 8;
-		m_capabilities.m_maxSubgroupSize = 8;
+		m_capabilities.m_minWaveSize = 8;
+		m_capabilities.m_maxWaveSize = 8;
 	}
 	ANKI_D3D_LOGI("Vendor identified as %s", &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
@@ -431,13 +431,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			ANKI_D3D_LOGW("ReBAR not supported");
 		}
 
-		m_capabilities.m_uniformBufferBindOffsetAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
-		m_capabilities.m_uniformBufferMaxRange = D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * D3D12_STANDARD_VECTOR_SIZE * sizeof(F32);
-		m_capabilities.m_storageBufferBindOffsetAlignment = D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT;
+		m_capabilities.m_constantBufferBindOffsetAlignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+		m_capabilities.m_structuredBufferBindOffsetAlignment = 0; // Not for DX
 		m_capabilities.m_structuredBufferNaturalAlignment = true;
-		m_capabilities.m_storageBufferMaxRange = 1 << D3D12_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP;
 		m_capabilities.m_texelBufferBindOffsetAlignment = 32;
-		m_capabilities.m_textureBufferMaxRange = kMaxU32; // ?
 		m_capabilities.m_fastConstantsSize = kMaxFastConstantsSize;
 		m_capabilities.m_computeSharedMemorySize = D3D12_CS_TGSM_REGISTER_COUNT * sizeof(F32);
 		m_capabilities.m_accelerationStructureBuildScratchOffsetAlignment = 32; // ?

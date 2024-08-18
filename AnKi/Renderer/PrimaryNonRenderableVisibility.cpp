@@ -81,9 +81,9 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 		{
 			// No objects, point to a buffer with zeros
 
-			void* mem;
-			RebarAllocation alloc = RebarTransientMemoryPool::getSingleton().allocateFrame(sizeof(U32), mem);
-			memset(mem, 0, sizeof(U32));
+			WeakArray<U32> mem;
+			const BufferView alloc = RebarTransientMemoryPool::getSingleton().allocateStructuredBuffer(1, mem);
+			mem[0] = 0;
 
 			m_runCtx.m_visibleIndicesBuffers[type] = alloc;
 			m_runCtx.m_visibleIndicesHandles[type] = rgraph.importBuffer(m_runCtx.m_visibleIndicesBuffers[type], BufferUsageBit::kNone);
@@ -135,7 +135,8 @@ void PrimaryNonRenderableVisibility::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				// Allocate feedback buffer for this frame
-				getRenderer().getReadbackManager().allocateData(m_readbacks[feedbackType], (objCount * 2 + 1) * sizeof(U32), in.m_cpuFeedbackBuffer);
+				in.m_cpuFeedbackBuffer =
+					getRenderer().getReadbackManager().allocateStructuredBuffer<U32>(m_readbacks[feedbackType], objCount * 2 + 1);
 			}
 
 			GpuVisibilityNonRenderablesOutput out;

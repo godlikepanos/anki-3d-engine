@@ -299,7 +299,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Allocate global constants
 	GlobalRendererConstants* globalUnis;
-	ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalUnis);
+	ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocateConstantBuffer(globalUnis);
 
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);

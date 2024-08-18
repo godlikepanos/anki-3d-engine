@@ -56,7 +56,33 @@ public:
 	}
 
 	/// Allocate new data for the following frame. 2nd thing to call in a frame.
-	void allocateData(MultiframeReadbackToken& token, PtrSize size, BufferView& buffer) const;
+	template<typename T>
+	BufferView allocateStructuredBuffer(MultiframeReadbackToken& token, U32 count) const
+	{
+		ANKI_ASSERT(count > 0);
+
+		for([[maybe_unused]] U64 frame : token.m_frameIds)
+		{
+			ANKI_ASSERT(frame != m_frameId && "Can't allocate multiple times in a frame");
+		}
+
+		GpuReadbackMemoryAllocation& allocation = token.m_allocations[token.m_slot];
+
+		if(allocation.isValid() && allocation.getAllocatedSize() != sizeof(T) * count)
+		{
+			GpuReadbackMemoryPool::getSingleton().deferredFree(allocation);
+		}
+
+		if(!allocation.isValid())
+		{
+			allocation = GpuReadbackMemoryPool::getSingleton().allocateStructuredBuffer<T>(count);
+		}
+		token.m_frameIds[token.m_slot] = m_frameId;
+
+		token.m_slot = (token.m_slot + 1) % kMaxFramesInFlight;
+
+		return BufferView(&allocation.getBuffer(), allocation.getOffset(), sizeof(T) * count);
+	}
 
 	/// Last thing to call in a frame.
 	void endFrame(Fence* fence);

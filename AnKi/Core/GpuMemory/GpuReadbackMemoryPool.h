@@ -84,7 +84,14 @@ class GpuReadbackMemoryPool : public MakeSingleton<GpuReadbackMemoryPool>
 	friend class MakeSingleton;
 
 public:
-	GpuReadbackMemoryAllocation allocate(PtrSize size);
+	GpuReadbackMemoryAllocation allocate(PtrSize size, U32 alignment);
+
+	template<typename T>
+	GpuReadbackMemoryAllocation allocateStructuredBuffer(U32 count)
+	{
+		const U32 alignment = (m_structuredBufferAlignment == kMaxU32) ? sizeof(T) : m_structuredBufferAlignment;
+		return allocate(sizeof(T) * count, alignment);
+	}
 
 	void deferredFree(GpuReadbackMemoryAllocation& allocation);
 
@@ -92,7 +99,7 @@ public:
 
 private:
 	SegregatedListsGpuMemoryPool m_pool;
-	U32 m_alignment = 0;
+	U32 m_structuredBufferAlignment = kMaxU32;
 
 	GpuReadbackMemoryPool();
 

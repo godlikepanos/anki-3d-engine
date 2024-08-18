@@ -13,47 +13,6 @@ namespace anki {
 /// @addtogroup core
 /// @{
 
-/// Token that gets returned when requesting for memory to write to a resource.
-class RebarAllocation
-{
-	friend class RebarTransientMemoryPool;
-
-public:
-	RebarAllocation() = default;
-
-	~RebarAllocation() = default;
-
-	Bool operator==(const RebarAllocation& b) const
-	{
-		return m_offset == b.m_offset && m_range == b.m_range;
-	}
-
-	Bool isValid() const
-	{
-		return m_range != 0;
-	}
-
-	PtrSize getOffset() const
-	{
-		ANKI_ASSERT(isValid());
-		return m_offset;
-	}
-
-	PtrSize getRange() const
-	{
-		ANKI_ASSERT(isValid());
-		return m_range;
-	}
-
-	Buffer& getBuffer() const;
-
-	operator BufferView() const;
-
-private:
-	PtrSize m_offset = kMaxPtrSize;
-	PtrSize m_range = 0;
-};
-
 /// Manages staging GPU memory.
 class RebarTransientMemoryPool : public MakeSingleton<RebarTransientMemoryPool>
 {
@@ -70,28 +29,43 @@ public:
 	void endFrame();
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
-	RebarAllocation allocateFrame(PtrSize size, void*& mappedMem);
-
 	template<typename T>
-	RebarAllocation allocateFrame(U32 count, T*& mappedMem)
+	BufferView allocate(PtrSize size, U32 alignment, T*& mappedMem)
 	{
 		void* mem;
-		const RebarAllocation out = allocateFrame(count * sizeof(T), mem);
+		const BufferView out = allocateInternal(size, alignment, mem);
 		mappedMem = static_cast<T*>(mem);
 		return out;
 	}
 
+	/// @copydoc allocate
 	template<typename T>
-	RebarAllocation allocateFrame(U32 count, WeakArray<T>& arr)
+	BufferView allocateConstantBuffer(T*& mappedMem)
 	{
-		void* mem;
-		const RebarAllocation out = allocateFrame(count * sizeof(T), mem);
-		arr = {static_cast<T*>(mem), count};
+		return allocate(sizeof(T), GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment, mappedMem);
+	}
+
+	/// @copydoc allocate
+	template<typename T>
+	BufferView allocateStructuredBuffer(U32 count, WeakArray<T>& arr)
+	{
+		T* mem;
+		const U32 alignment = (m_structuredBufferAlignment == kMaxU32) ? sizeof(T) : m_structuredBufferAlignment;
+		const BufferView out = allocate(count * sizeof(T), alignment, mem);
+		arr = {mem, count};
 		return out;
 	}
 
-	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the N-(kMaxFramesInFlight-1) frame.
-	RebarAllocation tryAllocateFrame(PtrSize size, void*& mappedMem);
+	/// @copydoc allocate
+	template<typename T>
+	BufferView allocateCopyBuffer(U32 count, WeakArray<T>& arr)
+	{
+		T* mem;
+		const U32 alignment = sizeof(U32);
+		const BufferView out = allocate(sizeof(T) * count, alignment, mem);
+		arr = {mem, count};
+		return out;
+	}
 
 	ANKI_PURE Buffer& getBuffer() const
 	{
@@ -109,23 +83,14 @@ private:
 	PtrSize m_bufferSize = 0; ///< Cache it.
 	Atomic<PtrSize> m_offset = {0};
 	PtrSize m_previousFrameEndOffset = 0;
-	U32 m_alignment = 0;
+	U32 m_structuredBufferAlignment = kMaxU32;
 
 	RebarTransientMemoryPool() = default;
 
 	~RebarTransientMemoryPool();
+
+	BufferView allocateInternal(PtrSize size, U32 alignment, void*& mappedMem);
 };
-
-inline Buffer& RebarAllocation::getBuffer() const
-{
-	return RebarTransientMemoryPool::getSingleton().getBuffer();
-}
-
-inline RebarAllocation::operator BufferView() const
-{
-	ANKI_ASSERT(isValid());
-	return {&RebarTransientMemoryPool::getSingleton().getBuffer(), m_offset, m_range};
-}
 /// @}
 
 } // end namespace anki

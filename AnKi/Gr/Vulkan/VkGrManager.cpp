@@ -771,48 +771,45 @@ Error GrManagerImpl::initInstance()
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::kArm;
-		m_capabilities.m_minSubgroupSize = 16;
-		m_capabilities.m_maxSubgroupSize = 16;
+		m_capabilities.m_minWaveSize = 16;
+		m_capabilities.m_maxWaveSize = 16;
 		break;
 	case 0x10DE:
 		m_capabilities.m_gpuVendor = GpuVendor::kNvidia;
-		m_capabilities.m_minSubgroupSize = 32;
-		m_capabilities.m_maxSubgroupSize = 32;
+		m_capabilities.m_minWaveSize = 32;
+		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x1002:
 	case 0x1022:
 		m_capabilities.m_gpuVendor = GpuVendor::kAMD;
-		m_capabilities.m_minSubgroupSize = 32;
-		m_capabilities.m_maxSubgroupSize = 64;
+		m_capabilities.m_minWaveSize = 32;
+		m_capabilities.m_maxWaveSize = 64;
 		break;
 	case 0x8086:
 		m_capabilities.m_gpuVendor = GpuVendor::kIntel;
-		m_capabilities.m_minSubgroupSize = 8;
-		m_capabilities.m_maxSubgroupSize = 32;
+		m_capabilities.m_minWaveSize = 8;
+		m_capabilities.m_maxWaveSize = 32;
 		break;
 	case 0x5143:
 		m_capabilities.m_gpuVendor = GpuVendor::kQualcomm;
-		m_capabilities.m_minSubgroupSize = 64;
-		m_capabilities.m_maxSubgroupSize = 128;
+		m_capabilities.m_minWaveSize = 64;
+		m_capabilities.m_maxWaveSize = 128;
 		break;
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::kUnknown;
 		// Choose something really low
-		m_capabilities.m_minSubgroupSize = 8;
-		m_capabilities.m_maxSubgroupSize = 8;
+		m_capabilities.m_minWaveSize = 8;
+		m_capabilities.m_maxWaveSize = 8;
 	}
 	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.properties.deviceName, &kGPUVendorStrings[m_capabilities.m_gpuVendor][0]);
 
 	// Set limits
-	m_capabilities.m_uniformBufferBindOffsetAlignment =
+	m_capabilities.m_constantBufferBindOffsetAlignment =
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minUniformBufferOffsetAlignment));
-	m_capabilities.m_uniformBufferMaxRange = m_devProps.properties.limits.maxUniformBufferRange;
-	m_capabilities.m_storageBufferBindOffsetAlignment =
+	m_capabilities.m_structuredBufferBindOffsetAlignment =
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minStorageBufferOffsetAlignment));
 	m_capabilities.m_structuredBufferNaturalAlignment = false;
-	m_capabilities.m_storageBufferMaxRange = m_devProps.properties.limits.maxStorageBufferRange;
 	m_capabilities.m_texelBufferBindOffsetAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
-	m_capabilities.m_textureBufferMaxRange = kMaxU32;
 	m_capabilities.m_computeSharedMemorySize = m_devProps.properties.limits.maxComputeSharedMemorySize;
 	m_capabilities.m_maxDrawIndirectCount = m_devProps.properties.limits.maxDrawIndirectCount;
 

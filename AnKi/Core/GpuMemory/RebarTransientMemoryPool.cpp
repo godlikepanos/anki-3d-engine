@@ -36,28 +36,19 @@ void RebarTransientMemoryPool::init()
 
 	m_bufferSize = buffInit.m_size;
 
-	m_alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
-	m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
-	m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
+	if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+	{
+		m_structuredBufferAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+	}
 
 	m_mappedMem = static_cast<U8*>(m_buffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));
 }
 
-RebarAllocation RebarTransientMemoryPool::allocateFrame(PtrSize size, void*& mappedMem)
-{
-	RebarAllocation out = tryAllocateFrame(size, mappedMem);
-	if(!out.isValid()) [[unlikely]]
-	{
-		ANKI_CORE_LOGF("Out of ReBAR GPU memory");
-	}
-
-	return out;
-}
-
-RebarAllocation RebarTransientMemoryPool::tryAllocateFrame(PtrSize origSize, void*& mappedMem)
+BufferView RebarTransientMemoryPool::allocateInternal(PtrSize origSize, U32 alignment, void*& mappedMem)
 {
 	ANKI_ASSERT(origSize > 0);
-	const PtrSize size = getAlignedRoundUp(m_alignment, origSize);
+	ANKI_ASSERT(alignment > 0);
+	const PtrSize size = origSize + alignment;
 
 	// Try in a loop because we may end up with an allocation its offset crosses the buffer's end
 	PtrSize offset;
@@ -65,17 +56,16 @@ RebarAllocation RebarTransientMemoryPool::tryAllocateFrame(PtrSize origSize, voi
 	do
 	{
 		offset = m_offset.fetchAdd(size) % m_bufferSize;
-		const PtrSize end = (offset + origSize) % (m_bufferSize + 1);
+		const PtrSize end = (offset + size) % (m_bufferSize + 1);
 
 		done = offset < end;
 	} while(!done);
 
-	mappedMem = m_mappedMem + offset;
-	RebarAllocation out;
-	out.m_offset = offset;
-	out.m_range = origSize;
+	const PtrSize alignedOffset = getAlignedRoundUp(alignment, offset);
+	ANKI_ASSERT(alignedOffset + origSize <= offset + size);
 
-	return out;
+	mappedMem = m_mappedMem + alignedOffset;
+	return BufferView(m_buffer.get(), alignedOffset, origSize);
 }
 
 void RebarTransientMemoryPool::endFrame()

@@ -51,7 +51,9 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	{
 		RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-		const BufferView scratchBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(m_runCtx.m_tlas->getBuildScratchBufferSize());
+		const BufferView scratchBuff = GpuVisibleTransientMemoryPool::getSingleton().allocate(
+			m_runCtx.m_tlas->getBuildScratchBufferSize(),
+			GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
 
 		m_runCtx.m_tlasHandle = rgraph.importAccelerationStructure(m_runCtx.m_tlas.get(), AccelerationStructureUsageBit::kNone);
 

@@ -22,9 +22,8 @@ class GpuVisibleTransientMemoryPool : public MakeSingleton<GpuVisibleTransientMe
 	friend class MakeSingleton;
 
 public:
-	BufferView allocate(PtrSize size, PtrSize alignment = 0)
+	BufferView allocate(PtrSize size, PtrSize alignment)
 	{
-		alignment = (alignment == 0) ? m_alignment : alignment;
 		PtrSize offset;
 		Buffer* buffer;
 		m_pool.allocate(size, alignment, offset, buffer);
@@ -46,20 +45,15 @@ public:
 
 private:
 	StackGpuMemoryPool m_pool;
-	U32 m_alignment = 0;
 	U32 m_frame = 0;
-	U32 m_structuredBufferAlignment = 0;
+	U32 m_structuredBufferAlignment = kMaxU32;
 
 	GpuVisibleTransientMemoryPool()
 	{
-		m_structuredBufferAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
-										  ? kMaxU32
-										  : GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment;
-
-		m_alignment = GrManager::getSingleton().getDeviceCapabilities().m_uniformBufferBindOffsetAlignment;
-		m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_storageBufferBindOffsetAlignment);
-		m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment);
-		m_alignment = max(m_alignment, GrManager::getSingleton().getDeviceCapabilities().m_accelerationStructureBuildScratchOffsetAlignment);
+		if(!GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+		{
+			m_structuredBufferAlignment = GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+		}
 
 		BufferUsageBit buffUsage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kIndirectDraw
 								   | BufferUsageBit::kIndirectCompute | BufferUsageBit::kVertex | BufferUsageBit::kAllCopy;

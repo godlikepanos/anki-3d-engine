@@ -63,7 +63,7 @@ constexpr U32 kMaxBindingsPerRegisterSpace = 32;
 constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
 constexpr U32 kMaxBindlessTextures = 512;
-constexpr U32 kMaxFastConstantsSize = 128; ///< Thanks AMD!!
+constexpr U32 kMaxFastConstantsSize = 128; ///< Push/root constants size. Thanks AMD!!
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 constexpr U32 kCommandBufferSmallBatchMaxCommands = 100;
@@ -90,7 +90,6 @@ ANKI_GR_CLASS(Texture)
 ANKI_GR_CLASS(Sampler)
 ANKI_GR_CLASS(CommandBuffer)
 ANKI_GR_CLASS(Shader)
-ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
 ANKI_GR_CLASS(TimestampQuery)
 ANKI_GR_CLASS(PipelineQuery)
@@ -144,22 +143,13 @@ class GpuDeviceCapabilities
 {
 public:
 	/// The alignment of offsets when bounding constant buffers.
-	U32 m_uniformBufferBindOffsetAlignment = kMaxU32;
+	U32 m_constantBufferBindOffsetAlignment = kMaxU32;
 
-	/// The max visible range of constant buffers inside the shaders.
-	PtrSize m_uniformBufferMaxRange = 0;
-
-	/// The alignment of offsets when bounding storage buffers.
-	U32 m_storageBufferBindOffsetAlignment = kMaxU32;
-
-	/// The max visible range of storage buffers inside the shaders.
-	PtrSize m_storageBufferMaxRange = 0;
+	/// The alignment of offsets when bounding structured buffers.
+	U32 m_structuredBufferBindOffsetAlignment = kMaxU32;
 
 	/// The alignment of offsets when bounding texture buffers.
 	U32 m_texelBufferBindOffsetAlignment = kMaxU32;
-
-	/// The max visible range of texture buffers inside the shaders.
-	PtrSize m_textureBufferMaxRange = 0;
 
 	/// Max push/root constant size.
 	PtrSize m_fastConstantsSize = 128;
@@ -177,10 +167,10 @@ public:
 	U32 m_shaderGroupHandleSize = 0;
 
 	/// Min subgroup size of the GPU.
-	U32 m_minSubgroupSize = 0;
+	U32 m_minWaveSize = 0;
 
 	/// Max subgroup size of the GPU.
-	U32 m_maxSubgroupSize = 0;
+	U32 m_maxWaveSize = 0;
 
 	/// Min size of a texel in the shading rate image.
 	U32 m_minShadingRateImageTexelSize = 0;

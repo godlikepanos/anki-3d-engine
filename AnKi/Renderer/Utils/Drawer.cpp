@@ -32,7 +32,7 @@ void RenderableDrawer::setState(const RenderableDrawerArguments& args, CommandBu
 	// Allocate, set and bind global uniforms
 	{
 		MaterialGlobalConstants* globalConstants;
-		const RebarAllocation globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateFrame(1, globalConstants);
+		const BufferView globalConstantsToken = RebarTransientMemoryPool::getSingleton().allocateConstantBuffer(globalConstants);
 
 		globalConstants->m_viewProjectionMatrix = args.m_viewProjectionMatrix;
 		globalConstants->m_previousViewProjectionMatrix = args.m_previousViewProjectionMatrix;

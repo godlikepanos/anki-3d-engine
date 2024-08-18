@@ -75,11 +75,11 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 		cmdb.setFastConstants(&ctx.m_matrices.m_viewProjectionJitter, sizeof(ctx.m_matrices.m_viewProjectionJitter));
 
 		// Write flare info
-		Vec4* flarePositions = allocateAndBindSrvStructuredBuffer<Vec4>(cmdb, 0, 0, flareCount);
+		WeakArray<Vec4> flarePositions = allocateAndBindSrvStructuredBuffer<Vec4>(cmdb, 0, 0, flareCount);
+		U32 count = 0;
 		for(const LensFlareComponent& comp : SceneGraph::getSingleton().getComponentArrays().getLensFlares())
 		{
-			*flarePositions = Vec4(comp.getWorldPosition(), 1.0f);
-			++flarePositions;
+			flarePositions[count++] = Vec4(comp.getWorldPosition(), 1.0f);
 		}
 
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_indirectBuffHandle);
@@ -122,8 +122,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBuffer& cmdb)
 		U32 spritesCount = max<U32>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
-		LensFlareSprite* tmpSprites = allocateAndBindSrvStructuredBuffer<LensFlareSprite>(cmdb, 0, 0, spritesCount);
-		WeakArray<LensFlareSprite> sprites(tmpSprites, spritesCount);
+		WeakArray<LensFlareSprite> sprites = allocateAndBindSrvStructuredBuffer<LensFlareSprite>(cmdb, 0, 0, spritesCount);
 
 		// misc
 		Vec2 posNdc = posClip.xy() / posClip.w();

@@ -51,12 +51,12 @@ Error VrsSriGeneration::initInternal()
 	ShaderProgramResourceVariantInitInfo variantInit(m_prog);
 	variantInit.addMutation("SRI_TEXEL_DIMENSION", m_sriTexelDimension);
 
-	if(m_sriTexelDimension == 16 && GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 32)
+	if(m_sriTexelDimension == 16 && GrManager::getSingleton().getDeviceCapabilities().m_minWaveSize >= 32)
 	{
 		// Algorithm's workgroup size is 32, GPU's subgroup size is min 32 -> each workgroup has 1 subgroup -> No need for shared mem
 		variantInit.addMutation("SHARED_MEMORY", 0);
 	}
-	else if(m_sriTexelDimension == 8 && GrManager::getSingleton().getDeviceCapabilities().m_minSubgroupSize >= 16)
+	else if(m_sriTexelDimension == 8 && GrManager::getSingleton().getDeviceCapabilities().m_minWaveSize >= 16)
 	{
 		// Algorithm's workgroup size is 16, GPU's subgroup size is min 16 -> each workgroup has 1 subgroup -> No need for shared mem
 		variantInit.addMutation("SHARED_MEMORY", 0);
