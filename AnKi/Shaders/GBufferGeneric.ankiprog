@@ -144,13 +144,13 @@ struct MeshPerVertOut
 
 struct MeshPerPrimitiveOut
 {
-	U32 m_constantsOffset : UNIS_OFFSET;
+	ANKI_PER_PRIMITIVE_MEMBER U32 m_constantsOffset : UNIS_OFFSET;
 
 #if VISUALIZE_MESHLETS
-	U32 m_meshletIndex : MESHLET_INDEX;
+	ANKI_PER_PRIMITIVE_MEMBER U32 m_meshletIndex : MESHLET_INDEX;
 #endif
 
-	Bool m_cullPrimitive : SV_CULLPRIMITIVE;
+	ANKI_PER_PRIMITIVE_MEMBER Bool m_cullPrimitive : SV_CULLPRIMITIVE;
 };
 
 struct FragOut
@@ -461,7 +461,7 @@ void main()
 
 void main(
 #		if ANKI_TECHNIQUE_ShadowsMeshShaders
-	MeshPerVertOut vertInput, MeshPerPrimitiveOut primInput
+	MeshPerVertOut vertInput, ANKI_PER_PRIMITIVE_VAR MeshPerPrimitiveOut primInput
 #		else
 	VertOut vertInput
 #		endif
@@ -485,7 +485,7 @@ void main(
 
 FragOut main(
 #		if ANKI_TECHNIQUE_GBufferMeshShaders
-	MeshPerVertOut vertInput, MeshPerPrimitiveOut primInput
+	MeshPerVertOut vertInput, ANKI_PER_PRIMITIVE_VAR MeshPerPrimitiveOut primInput
 #		else
 	VertOut vertInput
 #		endif

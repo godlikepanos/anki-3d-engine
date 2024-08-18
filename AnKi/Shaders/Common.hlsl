@@ -131,3 +131,12 @@ U32 checkStructuredBuffer(T buff, U32 idx)
 
 // Safely access a structured buffer. Throw an assertion if it's out of bounds
 #define SBUFF(buff, idx) buff[(idx) + checkStructuredBuffer(buff, idx)]
+
+// Need extra decoration for per-primitive stuff in Vulkan. Remove when https://github.com/microsoft/DirectXShaderCompiler/issues/6862 is fixed
+#if ANKI_GR_BACKEND_VULKAN
+#	define ANKI_PER_PRIMITIVE_VAR [[vk::ext_extension("SPV_EXT_mesh_shader")]] [[vk::ext_capability(5283 /*MeshShadingEXT*/)]]
+#	define ANKI_PER_PRIMITIVE_MEMBER [[vk::ext_decorate(5271 /*PerPrimitiveEXT*/)]]
+#else
+#	define ANKI_PER_PRIMITIVE_VAR
+#	define ANKI_PER_PRIMITIVE_MEMBER
+#endif
