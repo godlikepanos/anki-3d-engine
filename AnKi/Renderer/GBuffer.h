@@ -72,6 +72,9 @@ private:
 	ShaderProgramResourcePtr m_visNormalProg;
 	ShaderProgramPtr m_visNormalGrProg;
 
+	ShaderProgramResourcePtr m_visualizeGiProbeProg;
+	ShaderProgramPtr m_visualizeGiProbeGrProg;
+
 	class
 	{
 	public:

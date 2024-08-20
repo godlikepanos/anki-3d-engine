@@ -114,6 +114,11 @@ public:
 		return *m_volTex;
 	}
 
+	const GpuSceneArrays::GlobalIlluminationProbe::Allocation& getGpuSceneAllocation() const
+	{
+		return m_gpuSceneProbe;
+	}
+
 private:
 	Vec3 m_halfSize = Vec3(0.5f);
 	Vec3 m_worldPos = Vec3(0.0f);

@@ -754,3 +754,11 @@ T barycentricInterpolation(T a, T b, T c, Vec3 barycentrics)
 {
 	return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
 }
+
+void unflatten3dArrayIndex(const U32 sizeA, const U32 sizeB, const U32 sizeC, const U32 flatIdx, out U32 a, out U32 b, out U32 c)
+{
+	ANKI_ASSERT(flatIdx < (sizeA * sizeB * sizeC));
+	a = (flatIdx / (sizeB * sizeC)) % sizeA;
+	b = (flatIdx / sizeC) % sizeB;
+	c = flatIdx % sizeC;
+}

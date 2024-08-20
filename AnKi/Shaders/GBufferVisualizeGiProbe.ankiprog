@@ -1,0 +1,157 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t0);
+
+struct Consts
+{
+	Mat4 m_viewProjMat;
+	Mat4 m_invViewProjMat;
+
+	Vec2 m_viewportSize;
+	U32 m_probeIdx;
+	F32 m_sphereRadius;
+
+	Vec3 m_cameraPos;
+	F32 m_padding;
+};
+
+ConstantBuffer<Consts> g_consts : register(b0);
+
+struct VertIn
+{
+	U32 m_svInstanceId : SV_InstanceID;
+	U32 m_svVertexId : SV_VertexID;
+};
+
+struct VertOut
+{
+	Vec4 m_svPosition : SV_Position;
+	Vec3 m_sphereCenter : SpherePosition;
+};
+
+struct FragOut
+{
+	Vec4 m_color0 : SV_TARGET0;
+	Vec4 m_color1 : SV_TARGET1;
+	Vec4 m_color2 : SV_TARGET2;
+	Vec2 m_color3 : SV_TARGET3;
+
+	F32 m_svDepth : SV_Depth;
+};
+
+#pragma anki technique_start vert
+
+UVec3 getCellCount(GpuSceneGlobalIlluminationProbe probe)
+{
+	UVec3 texSize;
+	getBindlessTextureNonUniformIndex3DRVec4(probe.m_volumeTexture).GetDimensions(texSize.x, texSize.y, texSize.z);
+	texSize.x /= 6u;
+	return texSize;
+}
+
+VertOut main(VertIn input)
+{
+	const GpuSceneGlobalIlluminationProbe probe = SBUFF(g_giProbes, g_consts.m_probeIdx);
+
+	// Compute the cell ID
+	const U32 cellIdx = input.m_svInstanceId;
+	const UVec3 cellCount = getCellCount(probe);
+	ANKI_ASSERT(cellIdx < cellCount.x * cellCount.y * cellCount.z);
+	UVec3 cellId;
+	unflatten3dArrayIndex(cellCount.x, cellCount.y, cellCount.z, cellIdx, cellId.x, cellId.y, cellId.z);
+
+	// Compute the NDC min and max of the sphere
+	const Vec3 cellSize = (probe.m_aabbMax - probe.m_aabbMin) / Vec3(cellCount);
+
+	const Vec3 cellCenter = cellSize * Vec3(cellId) + probe.m_aabbMin + cellSize / 2.0;
+
+	const Vec3 sphereMin = cellCenter - g_consts.m_sphereRadius;
+	const Vec3 sphereMax = cellCenter + g_consts.m_sphereRadius;
+
+	Vec3 sphereAabbPoints[8];
+	sphereAabbPoints[0] = Vec3(sphereMin.x, sphereMin.y, sphereMax.z);
+	sphereAabbPoints[1] = Vec3(sphereMax.x, sphereMin.y, sphereMax.z);
+	sphereAabbPoints[2] = Vec3(sphereMax.x, sphereMax.y, sphereMax.z);
+	sphereAabbPoints[3] = Vec3(sphereMin.x, sphereMax.y, sphereMax.z);
+	sphereAabbPoints[4] = Vec3(sphereMin.x, sphereMin.y, sphereMin.z);
+	sphereAabbPoints[5] = Vec3(sphereMax.x, sphereMin.y, sphereMin.z);
+	sphereAabbPoints[6] = Vec3(sphereMax.x, sphereMax.y, sphereMin.z);
+	sphereAabbPoints[7] = Vec3(sphereMin.x, sphereMax.y, sphereMin.z);
+
+	Vec2 ndcMin = +10000.0;
+	Vec2 ndcMax = -10000.0;
+	for(U32 i = 0; i < 8; ++i)
+	{
+		const Vec4 v4 = mul(g_consts.m_viewProjMat, Vec4(sphereAabbPoints[i], 1.0));
+		const Vec2 ndc = v4.xy / v4.w;
+
+		ndcMin = min(ndcMin, ndc);
+		ndcMax = max(ndcMax, ndc);
+	}
+
+	// Write the position
+	VertOut output = (VertOut)0;
+	output.m_svPosition.x = (input.m_svVertexId == 0 || input.m_svVertexId == 2 || input.m_svVertexId == 5) ? ndcMin.x : ndcMax.x;
+	output.m_svPosition.y = (input.m_svVertexId == 0 || input.m_svVertexId == 1 || input.m_svVertexId == 3) ? ndcMin.y : ndcMax.y;
+	output.m_svPosition.z = 0.0;
+	output.m_svPosition.w = 1.0;
+
+	output.m_sphereCenter = cellCenter;
+
+	return output;
+}
+
+#pragma anki technique_end vert
+
+#pragma anki technique_start frag
+
+FragOut main(VertOut input)
+{
+	FragOut output = (FragOut)0;
+
+	// Compute the far point
+	const Vec2 ndc = uvToNdc(input.m_svPosition.xy / g_consts.m_viewportSize);
+	const Vec4 v4 = mul(g_consts.m_invViewProjMat, Vec4(ndc, 1.0, 1.0));
+	const Vec3 farPoint = v4.xyz / v4.w;
+
+	// Do sphere to view vec collision
+	const Vec3 rayDir = normalize(farPoint - g_consts.m_cameraPos);
+	F32 t0, t1;
+	const Bool collides = testRaySphere(g_consts.m_cameraPos, rayDir, input.m_sphereCenter, g_consts.m_sphereRadius, t0, t1);
+
+	if(!collides)
+	{
+		discard;
+	}
+
+	const F32 t = min(t0, t1);
+
+	const Vec3 collisionPoint = g_consts.m_cameraPos + rayDir * t;
+	const Vec4 p = mul(g_consts.m_viewProjMat, Vec4(collisionPoint, 1.0));
+	output.m_svDepth = p.z / p.w;
+
+	// Set the GBuffer
+	GbufferInfo g;
+	g.m_diffuse = 0.5;
+	g.m_normal = normalize(collisionPoint - input.m_sphereCenter);
+	g.m_f0 = 0.04;
+	g.m_roughness = 1.0;
+	g.m_subsurface = 0.0;
+	g.m_emission = 0.0;
+	g.m_metallic = 0.0;
+	g.m_velocity = 1.0;
+
+	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
+
+	return output;
+}
+
+#pragma anki technique_end frag
