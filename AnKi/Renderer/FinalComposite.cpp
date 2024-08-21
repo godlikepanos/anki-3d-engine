@@ -82,13 +82,13 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	if(g_dbgCVar.get())
 	{
-		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvFragment);
+		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
-	pass.newTextureDependency(getRenderer().getScale().getTonemappedRt(), TextureUsageBit::kSrvFragment);
-	pass.newTextureDependency(getRenderer().getBloom().getRt(), TextureUsageBit::kSrvFragment);
-	pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvFragment);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvFragment);
+	pass.newTextureDependency(getRenderer().getScale().getTonemappedRt(), TextureUsageBit::kSrvPixel);
+	pass.newTextureDependency(getRenderer().getBloom().getRt(), TextureUsageBit::kSrvPixel);
+	pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvPixel);
+	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr debugProgram;
@@ -99,7 +99,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		{
 			if(handle.isValid())
 			{
-				pass.newTextureDependency(handle, TextureUsageBit::kSrvFragment);
+				pass.newTextureDependency(handle, TextureUsageBit::kSrvPixel);
 			}
 		}
 	}

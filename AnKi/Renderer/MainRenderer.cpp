@@ -125,7 +125,7 @@ Error MainRenderer::render(Texture* presentTex)
 		});
 
 		pass.newTextureDependency(presentRt, TextureUsageBit::kRtvDsvWrite);
-		pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kSrvFragment);
+		pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kSrvPixel);
 	}
 
 	// Create a dummy pass to transition the presentable image to present

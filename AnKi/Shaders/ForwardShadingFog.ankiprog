@@ -49,11 +49,11 @@ VertOut main(VertIn input)
 
 #pragma anki technique_end vert Forward
 
-#pragma anki technique_start frag Forward
+#pragma anki technique_start pixel Forward
 
-FragOut main(VertOut input)
+PixelOut main(VertOut input)
 {
-	FragOut output = (FragOut)0;
+	PixelOut output = (PixelOut)0;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
 
 	fog(localConstants.m_fogColor, localConstants.m_fogAlphaScale, localConstants.m_fogDistanceOfMaxThikness, input.m_svPosition, input.m_zVSpace,
@@ -61,4 +61,4 @@ FragOut main(VertOut input)
 
 	return output;
 }
-#pragma anki technique_end frag Forward
+#pragma anki technique_end pixel Forward

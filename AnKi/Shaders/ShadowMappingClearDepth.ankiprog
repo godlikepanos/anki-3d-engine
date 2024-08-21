@@ -17,8 +17,8 @@ Vec4 main(U32 svVertexId : SV_VERTEXID) : SV_POSITION
 
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 void main()
 {
 }
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

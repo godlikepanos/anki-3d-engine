@@ -60,7 +60,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("MotionVectors");
 		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_motionVectorsRtHandle)});
 
-		readUsage = TextureUsageBit::kSrvFragment;
+		readUsage = TextureUsageBit::kSrvPixel;
 		writeUsage = TextureUsageBit::kRtvDsvWrite;
 		ppass = &pass;
 	}

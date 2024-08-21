@@ -159,7 +159,7 @@ void RenderStateBucketContainer::createPerfOrder(RenderingTechnique t)
 
 	std::sort(m_bucketPerfOrder[t].getBegin(), m_bucketPerfOrder[t].getBegin() + bucketCount, [&, this](U32 a, U32 b) {
 		auto getProgramHeaviness = [](const ShaderProgram& p) {
-			U64 size = U64(p.getShaderBinarySize(ShaderType::kFragment)) << 32u; // Fragment is more important
+			U64 size = U64(p.getShaderBinarySize(ShaderType::kPixel)) << 32u; // Fragment is more important
 			if(!!(p.getShaderTypes() & ShaderTypeBit::kVertex))
 			{
 				size |= p.getShaderBinarySize(ShaderType::kVertex);

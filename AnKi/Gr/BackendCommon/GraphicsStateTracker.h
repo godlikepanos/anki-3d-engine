@@ -342,9 +342,9 @@ public:
 			}
 #endif
 
-			if(m_staticState.m_misc.m_colorRtMask != refl.m_fragment.m_colorAttachmentWritemask)
+			if(m_staticState.m_misc.m_colorRtMask != refl.m_pixel.m_colorRenderTargetWritemask)
 			{
-				m_staticState.m_misc.m_colorRtMask = refl.m_fragment.m_colorAttachmentWritemask;
+				m_staticState.m_misc.m_colorRtMask = refl.m_pixel.m_colorRenderTargetWritemask;
 				m_hashes.m_misc = 0;
 			}
 

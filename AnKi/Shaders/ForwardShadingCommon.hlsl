@@ -16,13 +16,13 @@
 //
 // Frag
 //
-#if ANKI_FRAGMENT_SHADER
-struct FragOut
+#if ANKI_PIXEL_SHADER
+struct PixelOut
 {
 	RVec4 m_color : SV_TARGET0;
 };
 
-void packGBuffer(Vec4 color, out FragOut output)
+void packGBuffer(Vec4 color, out PixelOut output)
 {
 	output.m_color = RVec4(color.rgb, color.a);
 }
@@ -107,12 +107,12 @@ RVec3 computeLightColorLow(RVec3 diffCol, RVec3 worldPos, Vec4 svPosition)
 	return diffuseLobe(diffCol) * light;
 }
 
-void particleAlpha(RVec4 color, RVec4 scaleColor, RVec4 biasColor, out FragOut output)
+void particleAlpha(RVec4 color, RVec4 scaleColor, RVec4 biasColor, out PixelOut output)
 {
 	packGBuffer(color * scaleColor + biasColor, output);
 }
 
-void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out FragOut output)
+void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out PixelOut output)
 {
 	const Vec2 screenSize = 1.0 / g_globalRendererConstants.m_renderingSize;
 
@@ -130,4 +130,4 @@ void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVS
 	packGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale), output);
 }
 
-#endif // ANKI_FRAGMENT_SHADER
+#endif // ANKI_PIXEL_SHADER

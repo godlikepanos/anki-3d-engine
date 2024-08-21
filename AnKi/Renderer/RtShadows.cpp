@@ -99,7 +99,7 @@ Error RtShadows::initInternal()
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR8_Unorm,
 			TextureUsageBit::kAllSrv | TextureUsageBit::kUavTraceRays | TextureUsageBit::kUavCompute, "RtShadows History");
-		m_historyRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
+		m_historyRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 	}
 
 	// Temp shadow RT
@@ -114,10 +114,10 @@ Error RtShadows::initInternal()
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2, Format::kR32G32_Sfloat,
 			TextureUsageBit::kAllSrv | TextureUsageBit::kUavTraceRays | TextureUsageBit::kUavCompute, "RtShadows Moments #1");
-		m_momentsRts[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
+		m_momentsRts[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 
 		texinit.setName("RtShadows Moments #2");
-		m_momentsRts[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
+		m_momentsRts[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 	}
 
 	// Variance RT
@@ -141,7 +141,7 @@ Error RtShadows::initInternal()
 			TextureUsageBit::kAllSrv | TextureUsageBit::kUavTraceRays | TextureUsageBit::kUavCompute, "RtShadows history len");
 		ClearValue clear;
 		clear.m_colorf[0] = 1.0f;
-		m_dummyHistoryLenTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment, clear);
+		m_dummyHistoryLenTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel, clear);
 	}
 
 	// Misc
@@ -166,9 +166,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 		if(!m_rtsImportedOnce) [[unlikely]]
 		{
-			m_runCtx.m_historyRt = rgraph.importRenderTarget(m_historyRt.get(), TextureUsageBit::kSrvFragment);
+			m_runCtx.m_historyRt = rgraph.importRenderTarget(m_historyRt.get(), TextureUsageBit::kSrvPixel);
 
-			m_runCtx.m_prevMomentsRt = rgraph.importRenderTarget(m_momentsRts[prevRtIdx].get(), TextureUsageBit::kSrvFragment);
+			m_runCtx.m_prevMomentsRt = rgraph.importRenderTarget(m_momentsRts[prevRtIdx].get(), TextureUsageBit::kSrvPixel);
 
 			m_rtsImportedOnce = true;
 		}
@@ -285,7 +285,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_historyRt, TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_intermediateShadowsRts[0], TextureUsageBit::kUavTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
-												 AccelerationStructureUsageBit::kTraceRaysRead);
+												 AccelerationStructureUsageBit::kTraceRaysSrv);
 		rpass.newTextureDependency(ANKI_DEPTH_DEP);
 		rpass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);

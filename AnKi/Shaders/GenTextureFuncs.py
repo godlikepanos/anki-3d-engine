@@ -342,7 +342,7 @@ def gen_split_sampler_tex_func(func):
     for func in func_instances:
         # Shader guard
         if not func.all_shader_stages:
-            out += "#if ANKI_FRAGMENT_SHADER\n"
+            out += "#if ANKI_PIXEL_SHADER\n"
 
         # Return type
         out += write_type(func.return_type) + " "

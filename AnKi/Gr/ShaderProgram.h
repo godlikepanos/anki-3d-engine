@@ -99,11 +99,11 @@ public:
 		return m_shaderBinarySizes[type];
 	}
 
-	/// The fragment shader of the program has a discard.
+	/// The pixel shader of the program has a discard.
 	Bool hasDiscard() const
 	{
-		ANKI_ASSERT(!!(m_shaderTypes & ShaderTypeBit::kFragment));
-		return m_refl.m_fragment.m_discards;
+		ANKI_ASSERT(!!(m_shaderTypes & ShaderTypeBit::kPixel));
+		return m_refl.m_pixel.m_discards;
 	}
 
 	const ShaderReflection& getReflection() const

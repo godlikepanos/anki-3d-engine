@@ -153,11 +153,11 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			if(mip == 0)
 			{
-				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvFragment);
+				pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 			}
 			else
 			{
-				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSrvFragment, TextureSubresourceDesc::surface(mip - 1, 0, 0));
+				pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kSrvPixel, TextureSubresourceDesc::surface(mip - 1, 0, 0));
 			}
 
 			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(mip, 0, 0));

@@ -88,12 +88,12 @@ Error ShadowMapping::initInternal()
 					m_tileResolution * m_tileCountBothAxis);
 
 		// RT
-		const TextureUsageBit usage = TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvCompute | TextureUsageBit::kAllRtvDsv;
+		const TextureUsageBit usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			m_tileResolution * m_tileCountBothAxis, m_tileResolution * m_tileCountBothAxis, Format::kD16_Unorm, usage, "ShadowAtlas");
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
-		m_atlasTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment, clearVal);
+		m_atlasTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel, clearVal);
 	}
 
 	// Tiles
@@ -154,7 +154,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get(), TextureUsageBit::kSrvFragment);
+		m_runCtx.m_rt = rgraph.importRenderTarget(m_atlasTex.get(), TextureUsageBit::kSrvPixel);
 		m_rtImportedOnce = true;
 	}
 

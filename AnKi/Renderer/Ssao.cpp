@@ -101,7 +101,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		readUsage = TextureUsageBit::kSrvFragment;
+		readUsage = TextureUsageBit::kSrvPixel;
 		writeUsage = TextureUsageBit::kRtvDsvWrite;
 	}
 

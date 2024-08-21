@@ -35,7 +35,7 @@ Error DownscaleBlur::initInternal()
 
 	// Create the miped texture
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetDescription(rez.x(), rez.y(), getRenderer().getHdrFormat(), "DownscaleBlur");
-	texinit.m_usage = TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvCompute;
+	texinit.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute;
 	if(preferCompute)
 	{
 		texinit.m_usage |= TextureUsageBit::kUavCompute;
@@ -87,7 +87,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 			ppass = &pass;
 		}
 
-		const TextureUsageBit readUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvFragment;
+		const TextureUsageBit readUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kSrvCompute : TextureUsageBit::kSrvPixel;
 		const TextureUsageBit writeUsage = (g_preferComputeCVar.get()) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		if(i > 0)

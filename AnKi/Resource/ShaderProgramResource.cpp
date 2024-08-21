@@ -69,7 +69,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 		ANKI_ASSERT(techniqueIdx != kMaxU32);
 		const ShaderTypeBit techniqueShaderTypes = m_binary->m_techniques[techniqueIdx].m_shaderTypes;
 
-		if(techniqueShaderTypes == (ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
+		if(techniqueShaderTypes == (ShaderTypeBit::kPixel | ShaderTypeBit::kVertex))
 		{
 			info.requestTechniqueAndTypes(techniqueShaderTypes, "Unnamed");
 		}

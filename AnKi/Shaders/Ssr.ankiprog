@@ -10,7 +10,7 @@
 // ===========================================================================
 // SSR                                                                       =
 // ===========================================================================
-#if ANKI_TECHNIQUE_Ssr && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
+#if ANKI_TECHNIQUE_Ssr && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/PackFunctions.hlsl>
@@ -151,7 +151,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 }
 
-#endif // ANKI_TECHNIQUE_Ssr && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
+#endif // ANKI_TECHNIQUE_Ssr && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 
 // ===========================================================================
 // Techniques                                                                =
@@ -159,8 +159,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 #pragma anki technique_start vert Ssr
 #pragma anki technique_end vert Ssr
 
-#pragma anki technique_start frag Ssr
-#pragma anki technique_end frag Ssr
+#pragma anki technique_start pixel Ssr
+#pragma anki technique_end pixel Ssr
 
 #pragma anki technique_start comp Ssr
 #pragma anki technique_end comp Ssr

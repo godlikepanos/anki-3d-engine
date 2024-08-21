@@ -15,9 +15,9 @@ namespace anki {
 	ANKI_SHADER_COMPILER_LOGE("%s: " msg_ ": %s", fname.cstr(), line.cstr()); \
 	return Error::kUserData
 
-inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {
-	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "TASK", "MESH", "FRAGMENT", "COMPUTE", "RAY_GEN", "ANY_HIT",
-	 "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE", "WORK_GRAPH"}};
+inline constexpr Array<CString, U32(ShaderType::kCount)> kShaderStageNames = {{"VERTEX", "HULL", "DOMAIN", "GEOMETRY", "AMPLIFICATION", "MESH",
+																			   "PIXEL", "COMPUTE", "RAY_GEN", "ANY_HIT", "CLOSEST_HIT", "MISS",
+																			   "INTERSECTION", "CALLABLE", "WORK_GRAPH"}};
 
 static ShaderType strToShaderType(CString str)
 {
@@ -26,28 +26,28 @@ static ShaderType strToShaderType(CString str)
 	{
 		shaderType = ShaderType::kVertex;
 	}
-	else if(str == "tessc")
+	else if(str == "hull")
 	{
-		shaderType = ShaderType::kTessellationControl;
+		shaderType = ShaderType::kHull;
 	}
-	else if(str == "tesse")
+	else if(str == "domain")
 	{
 	}
 	else if(str == "geom")
 	{
 		shaderType = ShaderType::kGeometry;
 	}
-	else if(str == "task")
+	else if(str == "ampl")
 	{
-		shaderType = ShaderType::kTask;
+		shaderType = ShaderType::kAmplification;
 	}
 	else if(str == "mesh")
 	{
 		shaderType = ShaderType::kMesh;
 	}
-	else if(str == "frag")
+	else if(str == "pixel")
 	{
-		shaderType = ShaderType::kFragment;
+		shaderType = ShaderType::kPixel;
 	}
 	else if(str == "comp")
 	{

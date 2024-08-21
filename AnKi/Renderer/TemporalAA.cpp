@@ -33,14 +33,14 @@ Error TemporalAA::initInternal()
 
 	for(U32 i = 0; i < 2; ++i)
 	{
-		TextureUsageBit usage = TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvCompute;
+		TextureUsageBit usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute;
 		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 													   getRenderer().getHdrFormat(), usage, String().sprintf("TemporalAA #%u", i).cstr());
 
-		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
+		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 	}
 
 	m_tonemappedRtDescr = getRenderer().create2DRenderTargetDescription(
@@ -68,7 +68,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSrvFragment);
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyRtIdx].get(), TextureUsageBit::kSrvPixel);
 		m_rtTexturesImportedOnce = true;
 	}
 
@@ -97,7 +97,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kRtvDsvWrite);
 		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kRtvDsvWrite);
 
-		readUsage = TextureUsageBit::kSrvFragment;
+		readUsage = TextureUsageBit::kSrvPixel;
 
 		prpass = &pass;
 	}

@@ -6,7 +6,7 @@
 // Does tonemapping
 
 #include <AnKi/Shaders/QuadVert.hlsl>
-#if ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+#if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
@@ -55,13 +55,13 @@ RVec3 main(VertOut input) : SV_TARGET0
 	return tonemapped;
 #	endif
 }
-#endif // ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER
+#endif // ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
 
 #pragma anki technique_start vert
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
-#pragma anki technique_end frag
+#pragma anki technique_start pixel
+#pragma anki technique_end pixel
 
 #pragma anki technique_start comp
 #pragma anki technique_end comp

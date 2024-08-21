@@ -323,7 +323,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		}
 	}
 
-	if(!!(usage & BufferUsageBit::kAllFragment))
+	if(!!(usage & BufferUsageBit::kAllPixel))
 	{
 		stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}

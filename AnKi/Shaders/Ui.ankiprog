@@ -49,7 +49,7 @@ VertOut main(VertIn input)
 }
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 
 #if TEXTURE_TYPE > 0
 SamplerState g_trilinearRepeatSampler : register(s0);
@@ -65,4 +65,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 #endif
 }
 
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

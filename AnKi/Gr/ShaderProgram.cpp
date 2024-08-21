@@ -24,7 +24,7 @@ Bool ShaderProgramInitInfo::isValid() const
 
 	if(!!graphicsMask)
 	{
-		if(!(graphicsMask & ShaderTypeBit::kFragment))
+		if(!(graphicsMask & ShaderTypeBit::kPixel))
 		{
 			return false;
 		}

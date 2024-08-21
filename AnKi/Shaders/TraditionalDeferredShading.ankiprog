@@ -14,7 +14,7 @@
 #pragma anki technique_end vert
 
 // FRAG
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
@@ -119,4 +119,4 @@ RVec3 main(VertOut input) : SV_TARGET0
 	return outColor;
 }
 
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

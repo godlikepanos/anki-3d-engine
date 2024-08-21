@@ -49,11 +49,11 @@ Error VolumetricLightingAccumulation::init()
 	// Create RTs
 	TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 		m_volumeSize[0], m_volumeSize[1], Format::kR16G16B16A16_Sfloat,
-		TextureUsageBit::kUavCompute | TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvCompute, "VolLight");
+		TextureUsageBit::kUavCompute | TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute, "VolLight");
 	texinit.m_depth = m_volumeSize[2];
 	texinit.m_type = TextureType::k3D;
-	m_rtTextures[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
-	m_rtTextures[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
+	m_rtTextures[0] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
+	m_rtTextures[1] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 
 	return Error::kNone;
 }
@@ -65,7 +65,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 
 	const U readRtIdx = getRenderer().getFrameCount() & 1;
 
-	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx].get(), TextureUsageBit::kSrvFragment);
+	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx].get(), TextureUsageBit::kSrvPixel);
 	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx].get(), TextureUsageBit::kNone);
 
 	NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Vol light");

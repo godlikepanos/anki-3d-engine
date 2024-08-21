@@ -52,7 +52,7 @@ Error GBuffer::initInternal()
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 													   getRenderer().getDepthNoStencilFormat(), usage, depthRtNames[i]);
 
-		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvFragment);
+		m_depthRts[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 	}
 
 	static constexpr Array<const char*, kGBufferColorRenderTargetCount> rtNames = {{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
@@ -96,7 +96,7 @@ void GBuffer::importRenderTargets(RenderingContext& ctx)
 	{
 		m_runCtx.m_crntFrameDepthRt = rgraph.importRenderTarget(m_depthRts[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kNone);
 		m_runCtx.m_prevFrameDepthRt =
-			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kSrvFragment);
+			rgraph.importRenderTarget(m_depthRts[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kSrvPixel);
 
 		m_runCtx.m_hzbRt = rgraph.importRenderTarget(m_hzbRt.get(), TextureUsageBit::kSrvCompute);
 	}
@@ -152,7 +152,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newTextureDependency(m_runCtx.m_crntFrameDepthRt, rtUsage);
 
-		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvGeometry | BufferUsageBit::kSrvFragment);
+		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvGeometry | BufferUsageBit::kSrvPixel);
 
 		// Only add one depedency to the GPU visibility. No need to track all buffers
 		if(visOut.containsDrawcalls())

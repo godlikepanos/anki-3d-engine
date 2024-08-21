@@ -51,11 +51,11 @@ inline ShaderPtr createShader(CString src, ShaderType type, ConstWeakArray<CStri
 inline ShaderProgramPtr createVertFragProg(CString vert, CString frag, ConstWeakArray<CString> extraCompilerArgs = {})
 {
 	ShaderPtr vertS = createShader(vert, ShaderType::kVertex, extraCompilerArgs);
-	ShaderPtr fragS = createShader(frag, ShaderType::kFragment, extraCompilerArgs);
+	ShaderPtr fragS = createShader(frag, ShaderType::kPixel, extraCompilerArgs);
 
 	ShaderProgramInitInfo init;
 	init.m_graphicsShaders[ShaderType::kVertex] = vertS.get();
-	init.m_graphicsShaders[ShaderType::kFragment] = fragS.get();
+	init.m_graphicsShaders[ShaderType::kPixel] = fragS.get();
 
 	ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(init);
 

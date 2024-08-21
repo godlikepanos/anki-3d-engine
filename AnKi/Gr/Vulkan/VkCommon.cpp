@@ -487,12 +487,12 @@ VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit)
 		out |= VK_SHADER_STAGE_VERTEX_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::kTessellationControl))
+	if(!!(bit & ShaderTypeBit::kHull))
 	{
 		out |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::kTessellationEvaluation))
+	if(!!(bit & ShaderTypeBit::kDomain))
 	{
 		out |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 	}
@@ -502,7 +502,7 @@ VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit)
 		out |= VK_SHADER_STAGE_GEOMETRY_BIT;
 	}
 
-	if(!!(bit & ShaderTypeBit::kTask))
+	if(!!(bit & ShaderTypeBit::kAmplification))
 	{
 		out |= VK_SHADER_STAGE_TASK_BIT_EXT;
 	}
@@ -512,7 +512,7 @@ VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit)
 		out |= VK_SHADER_STAGE_MESH_BIT_EXT;
 	}
 
-	if(!!(bit & ShaderTypeBit::kFragment))
+	if(!!(bit & ShaderTypeBit::kPixel))
 	{
 		out |= VK_SHADER_STAGE_FRAGMENT_BIT;
 	}

@@ -238,26 +238,26 @@ VkMemoryBarrier AccelerationStructureImpl::computeBarrierInfo(AccelerationStruct
 		barrier.srcAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kGeometryRead))
+	if(!!(before & AccelerationStructureUsageBit::kGeometrySrv))
 	{
 		srcStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		barrier.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kFragmentRead))
+	if(!!(before & AccelerationStructureUsageBit::kPixelSrv))
 	{
 		srcStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		barrier.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kComputeRead))
+	if(!!(before & AccelerationStructureUsageBit::kComputeSrv))
 	{
 		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		barrier.srcAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::kTraceRaysRead))
+	if(!!(before & AccelerationStructureUsageBit::kTraceRaysSrv))
 	{
 		srcStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		barrier.srcAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
@@ -278,26 +278,26 @@ VkMemoryBarrier AccelerationStructureImpl::computeBarrierInfo(AccelerationStruct
 		barrier.dstAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kGeometryRead))
+	if(!!(after & AccelerationStructureUsageBit::kGeometrySrv))
 	{
 		dstStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		barrier.dstAccessMask |= VK_ACCESS_MEMORY_READ_BIT; // READ_BIT is the only viable solution by elimination
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kFragmentRead))
+	if(!!(after & AccelerationStructureUsageBit::kPixelSrv))
 	{
 		dstStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		barrier.dstAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kComputeRead))
+	if(!!(after & AccelerationStructureUsageBit::kComputeSrv))
 	{
 		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		barrier.dstAccessMask |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::kTraceRaysRead))
+	if(!!(after & AccelerationStructureUsageBit::kTraceRaysSrv))
 	{
 		dstStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		barrier.dstAccessMask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;

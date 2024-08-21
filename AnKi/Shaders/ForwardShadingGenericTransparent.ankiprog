@@ -50,12 +50,12 @@ VertOut main(VertIn input)
 }
 #pragma anki technique_end vert Forward
 
-#pragma anki technique_start frag Forward
+#pragma anki technique_start pixel Forward
 
-FragOut main(VertOut input)
+PixelOut main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
-	FragOut output;
+	PixelOut output;
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
@@ -73,4 +73,4 @@ FragOut main(VertOut input)
 
 	return output;
 }
-#pragma anki technique_end frag Forward
+#pragma anki technique_end pixel Forward

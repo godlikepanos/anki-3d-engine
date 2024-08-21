@@ -320,13 +320,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, VkPipelineStageFlags
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kSrvFragment))
+	if(!!(usage & TextureUsageBit::kSrvPixel))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(usage & TextureUsageBit::kUavFragment))
+	if(!!(usage & TextureUsageBit::kUavPixel))
 	{
 		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;

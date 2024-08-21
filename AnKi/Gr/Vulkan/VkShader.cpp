@@ -36,7 +36,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	inf.validate();
 	ANKI_ASSERT((inf.m_binary.getSize() % sizeof(U32)) == 0);
 	m_shaderType = inf.m_shaderType;
-	m_hasDiscard = inf.m_reflection.m_fragment.m_discards;
+	m_hasDiscard = inf.m_reflection.m_pixel.m_discards;
 	m_shaderBinarySize = U32(inf.m_binary.getSizeInBytes());
 	m_reflection = inf.m_reflection;
 	m_reflection.validate();

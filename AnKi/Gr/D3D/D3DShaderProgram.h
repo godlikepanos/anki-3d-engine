@@ -26,7 +26,7 @@ public:
 	{
 	public:
 		GraphicsPipelineFactory* m_pipelineFactory = nullptr;
-		Array<D3D12_SHADER_BYTECODE, U32(ShaderType::kFragment - ShaderType::kVertex) + 1> m_shaderCreateInfos = {};
+		Array<D3D12_SHADER_BYTECODE, U32(ShaderType::kPixel - ShaderType::kVertex) + 1> m_shaderCreateInfos = {};
 	} m_graphics;
 
 	class

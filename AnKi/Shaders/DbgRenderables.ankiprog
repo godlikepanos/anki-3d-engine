@@ -54,7 +54,7 @@ VertOut main(VertIn input)
 }
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
@@ -83,4 +83,4 @@ Vec4 main(VertOut input) : SV_TARGET0
 	// Write the color
 	return g_consts.m_color;
 }
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

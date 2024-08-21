@@ -274,7 +274,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0);
 
-	const TextureUsageBit readUsage = TextureUsageBit::kSrvFragment;
+	const TextureUsageBit readUsage = TextureUsageBit::kSrvPixel;
 
 	// All
 	if(enableVrs)
@@ -287,11 +287,11 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), readUsage);
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvFragment | TextureUsageBit::kRtvDsvRead);
+	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
 	pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvFragment);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvPixel);
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-							 BufferUsageBit::kSrvFragment);
+							 BufferUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getSsr().getRt(), readUsage);
 

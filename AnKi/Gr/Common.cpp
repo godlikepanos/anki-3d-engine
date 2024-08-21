@@ -173,8 +173,8 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 		(a.m_vertex.m_vertexAttributeMask.getAnySet()) ? a.m_vertex.m_vkVertexAttributeLocations : b.m_vertex.m_vkVertexAttributeLocations;
 	c.m_vertex.m_vertexAttributeMask = a.m_vertex.m_vertexAttributeMask | b.m_vertex.m_vertexAttributeMask;
 
-	c.m_fragment.m_colorAttachmentWritemask = a.m_fragment.m_colorAttachmentWritemask | b.m_fragment.m_colorAttachmentWritemask;
-	c.m_fragment.m_discards = a.m_fragment.m_discards || b.m_fragment.m_discards;
+	c.m_pixel.m_colorRenderTargetWritemask = a.m_pixel.m_colorRenderTargetWritemask | b.m_pixel.m_colorRenderTargetWritemask;
+	c.m_pixel.m_discards = a.m_pixel.m_discards || b.m_pixel.m_discards;
 
 	c_ = c;
 	return Error::kNone;

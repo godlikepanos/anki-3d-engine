@@ -210,7 +210,7 @@ D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
 		sync |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
 	}
 
-	if(!!(usage & BufferUsageBit::kAllFragment))
+	if(!!(usage & BufferUsageBit::kAllPixel))
 	{
 		sync |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 	}

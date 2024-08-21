@@ -53,7 +53,7 @@ Error RendererObject::loadShaderProgram(CString filename, std::initializer_list<
 		ANKI_ASSERT(techniqueIdx != kMaxU32);
 		const ShaderTypeBit techniqueShaderTypes = rsrc->getBinary().m_techniques[techniqueIdx].m_shaderTypes;
 
-		if(techniqueShaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
+		if(techniqueShaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kPixel | ShaderTypeBit::kVertex))
 		{
 			if(g_preferComputeCVar.get())
 			{
@@ -61,14 +61,14 @@ Error RendererObject::loadShaderProgram(CString filename, std::initializer_list<
 			}
 			else
 			{
-				shaderTypes = ShaderTypeBit::kFragment | ShaderTypeBit::kVertex;
+				shaderTypes = ShaderTypeBit::kPixel | ShaderTypeBit::kVertex;
 			}
 		}
 		else if(techniqueShaderTypes == ShaderTypeBit::kCompute)
 		{
 			shaderTypes = techniqueShaderTypes;
 		}
-		else if(techniqueShaderTypes == (ShaderTypeBit::kFragment | ShaderTypeBit::kVertex))
+		else if(techniqueShaderTypes == (ShaderTypeBit::kPixel | ShaderTypeBit::kVertex))
 		{
 			shaderTypes = techniqueShaderTypes;
 		}

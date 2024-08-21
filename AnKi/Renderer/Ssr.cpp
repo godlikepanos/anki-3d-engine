@@ -98,7 +98,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 
 		ppass = &pass;
 
-		readUsage = TextureUsageBit::kSrvFragment;
+		readUsage = TextureUsageBit::kSrvPixel;
 		writeUsage = TextureUsageBit::kRtvDsvWrite;
 	}
 

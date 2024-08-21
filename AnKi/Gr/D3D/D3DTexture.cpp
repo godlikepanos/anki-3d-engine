@@ -587,7 +587,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 		{
 			// Reading in the renderpass and sampling at the same time
 
-			if(!!(usage & (TextureUsageBit::kSrvGeometry | TextureUsageBit::kSrvFragment)))
+			if(!!(usage & (TextureUsageBit::kSrvGeometry | TextureUsageBit::kSrvPixel)))
 			{
 				stages |= D3D12_BARRIER_SYNC_DRAW;
 			}
@@ -613,7 +613,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 				stages |= D3D12_BARRIER_SYNC_VERTEX_SHADING;
 			}
 
-			if(!!(usage & TextureUsageBit::kSrvFragment))
+			if(!!(usage & TextureUsageBit::kSrvPixel))
 			{
 				stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 			}
@@ -652,13 +652,13 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, D3D12_BARRIER_SYNC& 
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 		}
 
-		if(!!(usage & TextureUsageBit::kSrvFragment))
+		if(!!(usage & TextureUsageBit::kSrvPixel))
 		{
 			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
 		}
 
-		if(!!(usage & TextureUsageBit::kUavFragment))
+		if(!!(usage & TextureUsageBit::kUavPixel))
 		{
 			stages |= D3D12_BARRIER_SYNC_PIXEL_SHADING;
 			accesses |= D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;

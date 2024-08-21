@@ -358,25 +358,25 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				colorRti.m_subresource.m_face = f;
 				pass.setRenderpassInfo({colorRti});
 
-				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kSrvFragment);
+				pass.newBufferDependency(lightVis.m_visiblesBufferHandle, BufferUsageBit::kSrvPixel);
 
 				pass.newTextureDependency(lightShadingRt, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(0, f, 0));
 
 				for(U i = 0; i < kGBufferColorRenderTargetCount; ++i)
 				{
-					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSrvFragment, TextureSubresourceDesc::surface(0, f, 0));
+					pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSrvPixel, TextureSubresourceDesc::surface(0, f, 0));
 				}
-				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSrvFragment,
+				pass.newTextureDependency(gbufferDepthRt, TextureUsageBit::kSrvPixel,
 										  TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
 
 				if(shadowsRt.isValid())
 				{
-					pass.newTextureDependency(shadowsRt, TextureUsageBit::kSrvFragment);
+					pass.newTextureDependency(shadowsRt, TextureUsageBit::kSrvPixel);
 				}
 
 				if(getRenderer().getSky().isEnabled())
 				{
-					pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSrvFragment);
+					pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSrvPixel);
 				}
 
 				pass.setWork([this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,

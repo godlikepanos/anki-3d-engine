@@ -574,33 +574,33 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	case RenderingTechnique::kGBuffer:
 		if(key.getMeshletRendering() && meshShadersSupported)
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "GBufferMeshShaders");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kPixel, "GBufferMeshShaders");
 		}
 		else if(key.getMeshletRendering())
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBufferSwMeshletRendering");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "GBufferSwMeshletRendering");
 		}
 		else
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "GBufferLegacy");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "GBufferLegacy");
 		}
 		break;
 	case RenderingTechnique::kDepth:
 		if(key.getMeshletRendering() && meshShadersSupported)
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kFragment, "ShadowsMeshShaders");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kPixel, "ShadowsMeshShaders");
 		}
 		else if(key.getMeshletRendering())
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "ShadowsSwMeshletRendering");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "ShadowsSwMeshletRendering");
 		}
 		else
 		{
-			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "ShadowsLegacy");
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "ShadowsLegacy");
 		}
 		break;
 	case RenderingTechnique::kForward:
-		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kFragment, "Forward");
+		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Forward");
 		break;
 	case RenderingTechnique::kRtShadow:
 		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");

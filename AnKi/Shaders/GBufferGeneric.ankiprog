@@ -37,7 +37,7 @@
 #	define PARALLAX 0
 #endif
 
-#if ANKI_TASK_SHADER
+#if ANKI_AMPLIFICATION_SHADER
 #	define ALPHA_TEST 0
 #	define DIFFUSE_TEX 0
 #	define ANKI_VELOCITY 0
@@ -153,7 +153,7 @@ struct MeshPerPrimitiveOut
 	ANKI_PER_PRIMITIVE_MEMBER Bool m_cullPrimitive : SV_CULLPRIMITIVE;
 };
 
-struct FragOut
+struct PixelOut
 {
 	Vec4 m_color0 : SV_TARGET0;
 	Vec4 m_color1 : SV_TARGET1;
@@ -443,7 +443,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 // ===========================================================================
 // Frag                                                                      =
 // ===========================================================================
-#if ANKI_FRAGMENT_SHADER
+#if ANKI_PIXEL_SHADER
 
 #	if SW_MESHLETS
 #		define BINDLESS(x) getBindlessTextureNonUniformIndex2DRVec4(x)
@@ -483,7 +483,7 @@ void main(
 
 #	else // GBUFFER
 
-FragOut main(
+PixelOut main(
 #		if ANKI_TECHNIQUE_GBufferMeshShaders
 	MeshPerVertOut vertInput, ANKI_PER_PRIMITIVE_VAR MeshPerPrimitiveOut primInput
 #		else
@@ -598,12 +598,12 @@ FragOut main(
 	}
 #		endif
 
-	FragOut output;
+	PixelOut output;
 	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
 	return output;
 }
 #	endif
-#endif // ANKI_FRAGMENT_SHADER
+#endif // ANKI_PIXEL_SHADER
 
 // ===========================================================================
 // RT Shadows                                                                =
@@ -685,23 +685,23 @@ FragOut main(
 #pragma anki technique_start mesh ShadowsMeshShaders uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
 #pragma anki technique_end mesh ShadowsMeshShaders
 
-#pragma anki technique_start frag GBufferLegacy
-#pragma anki technique_end frag GBufferLegacy
+#pragma anki technique_start pixel GBufferLegacy
+#pragma anki technique_end pixel GBufferLegacy
 
-#pragma anki technique_start frag ShadowsLegacy
-#pragma anki technique_end frag ShadowsLegacy
+#pragma anki technique_start pixel ShadowsLegacy
+#pragma anki technique_end pixel ShadowsLegacy
 
-#pragma anki technique_start frag GBufferMeshShaders
-#pragma anki technique_end frag GBufferMeshShaders
+#pragma anki technique_start pixel GBufferMeshShaders
+#pragma anki technique_end pixel GBufferMeshShaders
 
-#pragma anki technique_start frag ShadowsMeshShaders
-#pragma anki technique_end frag ShadowsMeshShaders
+#pragma anki technique_start pixel ShadowsMeshShaders
+#pragma anki technique_end pixel ShadowsMeshShaders
 
-#pragma anki technique_start frag GBufferSwMeshletRendering
-#pragma anki technique_end frag GBufferSwMeshletRendering
+#pragma anki technique_start pixel GBufferSwMeshletRendering
+#pragma anki technique_end pixel GBufferSwMeshletRendering
 
-#pragma anki technique_start frag ShadowsSwMeshletRendering
-#pragma anki technique_end frag ShadowsSwMeshletRendering
+#pragma anki technique_start pixel ShadowsSwMeshletRendering
+#pragma anki technique_end pixel ShadowsSwMeshletRendering
 
 #pragma anki technique_start ahit RtShadows uses_mutators ALPHA_TEST DIFFUSE_TEX
 #pragma anki technique_end ahit RtShadows

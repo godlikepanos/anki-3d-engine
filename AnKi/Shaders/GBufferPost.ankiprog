@@ -8,7 +8,7 @@
 #pragma anki technique_start vert
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
@@ -22,13 +22,13 @@ ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 StructuredBuffer<Decal> g_decals : register(t1);
 StructuredBuffer<Cluster> g_clusters : register(t2);
 
-struct FragOut
+struct PixelOut
 {
 	RVec4 m_diffuse : SV_TARGET0;
 	RVec4 m_roughnessAndOther : SV_TARGET1;
 };
 
-FragOut main(VertOut input)
+PixelOut main(VertOut input)
 {
 	const Vec2 uv = input.m_uv;
 
@@ -113,9 +113,9 @@ FragOut main(VertOut input)
 		roughnessAndOther.a *= (1.0 - f);
 	}
 
-	FragOut output;
+	PixelOut output;
 	output.m_diffuse = diffuse;
 	output.m_roughnessAndOther = roughnessAndOther;
 	return output;
 }
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

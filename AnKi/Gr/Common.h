@@ -470,12 +470,12 @@ enum class TextureUsageBit : U32
 	kNone = 0,
 
 	kSrvGeometry = 1 << 0,
-	kSrvFragment = 1 << 1,
+	kSrvPixel = 1 << 1,
 	kSrvCompute = 1 << 2,
 	kSrvTraceRays = 1 << 3,
 
 	kUavGeometry = 1 << 4,
-	kUavFragment = 1 << 5,
+	kUavPixel = 1 << 5,
 	kUavCompute = 1 << 6,
 	kUavTraceRays = 1 << 7,
 
@@ -488,13 +488,13 @@ enum class TextureUsageBit : U32
 	kPresent = 1 << 12,
 
 	// Derived
-	kAllSrv = kSrvGeometry | kSrvFragment | kSrvCompute | kSrvTraceRays,
-	kAllUav = kUavGeometry | kUavFragment | kUavCompute | kUavTraceRays,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvTraceRays,
+	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavTraceRays,
 	kAllRtvDsv = kRtvDsvRead | kRtvDsvWrite,
 
 	kAllGeometry = kSrvGeometry | kUavGeometry,
-	kAllFragment = kSrvFragment | kUavFragment,
-	kAllGraphics = kAllGeometry | kAllFragment | kRtvDsvRead | kRtvDsvWrite | kShadingRate,
+	kAllPixel = kSrvPixel | kUavPixel,
+	kAllGraphics = kAllGeometry | kAllPixel | kRtvDsvRead | kRtvDsvWrite | kShadingRate,
 	kAllCompute = kSrvCompute | kUavCompute,
 	kAllTransfer = kCopyDestination,
 
@@ -528,12 +528,12 @@ enum class SamplingAddressing : U8
 enum class ShaderType : U16
 {
 	kVertex,
-	kTessellationControl,
-	kTessellationEvaluation,
+	kHull,
+	kDomain,
 	kGeometry,
-	kTask,
+	kAmplification,
 	kMesh,
-	kFragment,
+	kPixel,
 	kCompute,
 	kRayGen,
 	kAnyHit,
@@ -547,7 +547,7 @@ enum class ShaderType : U16
 	kFirst = 0,
 	kLast = kCount - 1,
 	kFirstGraphics = kVertex,
-	kLastGraphics = kFragment,
+	kLastGraphics = kPixel,
 	kFirstRayTracing = kRayGen,
 	kLastRayTracing = kCallable,
 };
@@ -556,12 +556,12 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType)
 enum class ShaderTypeBit : U16
 {
 	kVertex = 1 << 0,
-	kTessellationControl = 1 << 1,
-	kTessellationEvaluation = 1 << 2,
+	kHull = 1 << 1,
+	kDomain = 1 << 2,
 	kGeometry = 1 << 3,
-	kTask = 1 << 4,
+	kAmplification = 1 << 4,
 	kMesh = 1 << 5,
-	kFragment = 1 << 6,
+	kPixel = 1 << 6,
 	kCompute = 1 << 7,
 	kRayGen = 1 << 8,
 	kAnyHit = 1 << 9,
@@ -572,9 +572,9 @@ enum class ShaderTypeBit : U16
 	kWorkGraph = 1 << 14,
 
 	kNone = 0,
-	kAllGraphics = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry | kTask | kMesh | kFragment,
-	kAllLegacyGeometry = kVertex | kTessellationControl | kTessellationEvaluation | kGeometry,
-	kAllModernGeometry = kTask | kMesh,
+	kAllGraphics = kVertex | kHull | kDomain | kGeometry | kAmplification | kMesh | kPixel,
+	kAllLegacyGeometry = kVertex | kHull | kDomain | kGeometry,
+	kAllModernGeometry = kAmplification | kMesh,
 	kAllRayTracing = kRayGen | kAnyHit | kClosestHit | kMiss | kIntersection | kCallable,
 	kAllHit = kAnyHit | kClosestHit,
 	kAll = kAllGraphics | kCompute | kAllRayTracing | kWorkGraph,
@@ -681,7 +681,7 @@ enum class RenderTargetStoreOperation : U8
 };
 
 /// Buffer usage modes.
-/// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry stages) and finaly fragment.
+/// The graphics work consists of the following pipes: indirect, geometry (all programmable and fixed function geometry stages) and finaly pixel.
 /// The compute from the consists of the following: indirect and compute.
 /// The trace rays from the: indirect and trace_rays
 /// !!WARNING!! If you change this remember to change PrivateBufferUsageBit.
@@ -690,17 +690,17 @@ enum class BufferUsageBit : U64
 	kNone = 0,
 
 	kConstantGeometry = 1ull << 0ull,
-	kConstantFragment = 1ull << 1ull,
+	kConstantPixel = 1ull << 1ull,
 	kConstantCompute = 1ull << 2ull,
 	kConstantTraceRays = 1ull << 3ull,
 
 	kSrvGeometry = 1ull << 4ull,
-	kSrvFragment = 1ull << 5ull,
+	kSrvPixel = 1ull << 5ull,
 	kSrvCompute = 1ull << 6ull,
 	kSrvTraceRays = 1ull << 7ull,
 
 	kUavGeometry = 1ull << 8ull,
-	kUavFragment = 1ull << 9ull,
+	kUavPixel = 1ull << 9ull,
 	kUavCompute = 1ull << 10ull,
 	kUavTraceRays = 1ull << 11ull,
 
@@ -719,15 +719,15 @@ enum class BufferUsageBit : U64
 	kAccelerationStructureBuildScratch = 1ull << 21ull, ///< Used in buildAccelerationStructureXXX commands.
 
 	// Derived
-	kAllConstant = kConstantGeometry | kConstantFragment | kConstantCompute | kConstantTraceRays,
-	kAllSrv = kSrvGeometry | kSrvFragment | kSrvCompute | kSrvTraceRays,
-	kAllUav = kUavGeometry | kUavFragment | kUavCompute | kUavTraceRays,
+	kAllConstant = kConstantGeometry | kConstantPixel | kConstantCompute | kConstantTraceRays,
+	kAllSrv = kSrvGeometry | kSrvPixel | kSrvCompute | kSrvTraceRays,
+	kAllUav = kUavGeometry | kUavPixel | kUavCompute | kUavTraceRays,
 	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
 	kAllCopy = kCopySource | kCopyDestination,
 
 	kAllGeometry = kConstantGeometry | kSrvGeometry | kUavGeometry | kIndex | kVertex,
-	kAllFragment = kConstantFragment | kSrvFragment | kUavFragment,
-	kAllGraphics = kAllGeometry | kAllFragment | kIndirectDraw,
+	kAllPixel = kConstantPixel | kSrvPixel | kUavPixel,
+	kAllGraphics = kAllGeometry | kAllPixel | kIndirectDraw,
 	kAllCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute,
 	kAllTraceRays = kConstantTraceRays | kSrvTraceRays | kUavTraceRays | kIndirectTraceRays | kShaderBindingTable,
 
@@ -778,14 +778,14 @@ enum class AccelerationStructureUsageBit : U8
 	kNone = 0,
 	kBuild = 1 << 0,
 	kAttach = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
-	kGeometryRead = 1 << 2,
-	kFragmentRead = 1 << 3,
-	kComputeRead = 1 << 4,
-	kTraceRaysRead = 1 << 5,
+	kGeometrySrv = 1 << 2,
+	kPixelSrv = 1 << 3,
+	kComputeSrv = 1 << 4,
+	kTraceRaysSrv = 1 << 5,
 
 	// Derived
-	kAllGraphics = kGeometryRead | kFragmentRead,
-	kAllRead = kAttach | kGeometryRead | kFragmentRead | kComputeRead | kTraceRaysRead,
+	kAllGraphics = kGeometrySrv | kPixelSrv,
+	kAllRead = kAttach | kGeometrySrv | kPixelSrv | kComputeSrv | kTraceRaysSrv,
 	kAllWrite = kBuild
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
@@ -998,10 +998,10 @@ public:
 	class
 	{
 	public:
-		BitSet<kMaxColorRenderTargets, U8> m_colorAttachmentWritemask = {false};
+		BitSet<kMaxColorRenderTargets, U8> m_colorRenderTargetWritemask = {false};
 
 		Bool m_discards = false;
-	} m_fragment;
+	} m_pixel;
 
 	ShaderReflection()
 	{
@@ -1016,10 +1016,10 @@ public:
 			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vkVertexAttributeLocations[semantic] != kMaxU8);
 		}
 
-		const U32 attachmentCount = m_fragment.m_colorAttachmentWritemask.getSetBitCount();
+		const U32 attachmentCount = m_pixel.m_colorRenderTargetWritemask.getSetBitCount();
 		for(U32 i = 0; i < attachmentCount; ++i)
 		{
-			ANKI_ASSERT(m_fragment.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
+			ANKI_ASSERT(m_pixel.m_colorRenderTargetWritemask.get(i) && "Should write to all attachments");
 		}
 	}
 

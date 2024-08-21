@@ -116,7 +116,7 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 	case ShaderType::kVertex:
 		args[0] = "-v";
 		break;
-	case ShaderType::kFragment:
+	case ShaderType::kPixel:
 		args[0] = "-f";
 		break;
 	case ShaderType::kCompute:
@@ -224,7 +224,7 @@ Error runMaliOfflineCompiler(ConstWeakArray<U8> spirv, ShaderType shaderType, Ma
 			return Error::kFunctionFailed;
 		}
 	}
-	else if(shaderType == ShaderType::kFragment)
+	else if(shaderType == ShaderType::kPixel)
 	{
 		if(std::regex_search(analysisTextStl, match,
 							 std::regex("Total instruction cycles:\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX "\\s*" ANKI_FLOAT_REGEX

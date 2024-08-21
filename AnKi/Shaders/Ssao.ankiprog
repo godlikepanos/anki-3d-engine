@@ -12,7 +12,7 @@
 // ===========================================================================
 // SSAO                                                                      =
 // ===========================================================================
-#if ANKI_TECHNIQUE_Ssao && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
+#if ANKI_TECHNIQUE_Ssao && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/PackFunctions.hlsl>
@@ -163,12 +163,12 @@ RVec4 main(VertOut input) : SV_TARGET0
 	return RVec4(bentNormal, Vd);
 #	endif
 }
-#endif // ANKI_TECHNIQUE_Ssao && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
+#endif // ANKI_TECHNIQUE_Ssao && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 
 // ===========================================================================
 // SSAO spatial denoise                                                      =
 // ===========================================================================
-#if ANKI_TECHNIQUE_SsaoSpatialDenoise && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
+#if ANKI_TECHNIQUE_SsaoSpatialDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/BilateralFilter.hlsl>
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #	include <AnKi/Shaders/Functions.hlsl>
@@ -264,7 +264,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 // ===========================================================================
 // SSAO temporal denoise                                                     =
 // ===========================================================================
-#if ANKI_TECHNIQUE_SsaoTemporalDenoise && (ANKI_COMPUTE_SHADER || ANKI_FRAGMENT_SHADER)
+#if ANKI_TECHNIQUE_SsaoTemporalDenoise && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
@@ -351,8 +351,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 #pragma anki technique_start vert Ssao uses_mutators
 #pragma anki technique_end vert Ssao
 
-#pragma anki technique_start frag Ssao uses_mutators
-#pragma anki technique_end frag Ssao
+#pragma anki technique_start pixel Ssao uses_mutators
+#pragma anki technique_end pixel Ssao
 
 #pragma anki technique_start comp Ssao
 #pragma anki technique_end comp Ssao
@@ -360,8 +360,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 #pragma anki technique_start vert SsaoSpatialDenoise
 #pragma anki technique_end vert SsaoSpatialDenoise
 
-#pragma anki technique_start frag SsaoSpatialDenoise
-#pragma anki technique_end frag SsaoSpatialDenoise
+#pragma anki technique_start pixel SsaoSpatialDenoise
+#pragma anki technique_end pixel SsaoSpatialDenoise
 
 #pragma anki technique_start comp SsaoSpatialDenoise
 #pragma anki technique_end comp SsaoSpatialDenoise
@@ -369,8 +369,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 #pragma anki technique_start vert SsaoTemporalDenoise
 #pragma anki technique_end vert SsaoTemporalDenoise
 
-#pragma anki technique_start frag SsaoTemporalDenoise
-#pragma anki technique_end frag SsaoTemporalDenoise
+#pragma anki technique_start pixel SsaoTemporalDenoise
+#pragma anki technique_end pixel SsaoTemporalDenoise
 
 #pragma anki technique_start comp SsaoTemporalDenoise
 #pragma anki technique_end comp SsaoTemporalDenoise

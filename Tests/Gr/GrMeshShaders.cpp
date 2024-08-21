@@ -122,14 +122,14 @@ float3 main(VertOut input) : SV_TARGET0
 
 		ShaderProgramPtr prog;
 		{
-			ShaderPtr taskShader = createShader(taskShaderSrc, ShaderType::kTask);
+			ShaderPtr taskShader = createShader(taskShaderSrc, ShaderType::kAmplification);
 			ShaderPtr meshShader = createShader(meshShaderSrc, ShaderType::kMesh);
-			ShaderPtr fragShader = createShader(fragShaderSrc, ShaderType::kFragment);
+			ShaderPtr fragShader = createShader(fragShaderSrc, ShaderType::kPixel);
 
 			ShaderProgramInitInfo progInit("Program");
-			progInit.m_graphicsShaders[ShaderType::kTask] = taskShader.get();
+			progInit.m_graphicsShaders[ShaderType::kAmplification] = taskShader.get();
 			progInit.m_graphicsShaders[ShaderType::kMesh] = meshShader.get();
-			progInit.m_graphicsShaders[ShaderType::kFragment] = fragShader.get();
+			progInit.m_graphicsShaders[ShaderType::kPixel] = fragShader.get();
 			prog = GrManager::getSingleton().newShaderProgram(progInit);
 		}
 

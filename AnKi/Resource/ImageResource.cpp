@@ -312,7 +312,7 @@ Error ImageResource::load(LoadingContext& ctx)
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			barriers[barrierCount++] = {TextureView(ctx.m_tex.get(), TextureSubresourceDesc::surface(mip, face, layer)),
-										TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvFragment | TextureUsageBit::kSrvGeometry};
+										TextureUsageBit::kCopyDestination, TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvGeometry};
 		}
 		cmdb->setPipelineBarrier({&barriers[0], barrierCount}, {}, {});
 

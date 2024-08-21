@@ -256,10 +256,10 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	desc.PrimitiveTopologyType = convertPrimitiveTopology(staticState.m_ia.m_topology);
 	ANKI_SET_IR(VS, kVertex)
 	ANKI_SET_IR(GS, kGeometry)
-	ANKI_SET_IR(HS, kTessellationControl)
-	ANKI_SET_IR(DS, kTessellationEvaluation)
-	ANKI_SET_IR(PS, kFragment)
-	ANKI_SET_IR(AS, kTask)
+	ANKI_SET_IR(HS, kHull)
+	ANKI_SET_IR(DS, kDomain)
+	ANKI_SET_IR(PS, kPixel)
+	ANKI_SET_IR(AS, kAmplification)
 	ANKI_SET_IR(MS, kMesh)
 	desc.BlendState = CD3DX12_BLEND_DESC(blendDesc);
 	desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC2(dsDesc);

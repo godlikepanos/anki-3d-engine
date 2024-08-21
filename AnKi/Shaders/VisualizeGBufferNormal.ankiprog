@@ -8,7 +8,7 @@
 #pragma anki technique_start vert
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 #include <AnKi/Shaders/PackFunctions.hlsl>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
@@ -18,4 +18,4 @@ Vec3 main(VertOut input) : SV_TARGET0
 {
 	return unpackNormalFromGBuffer(g_inTex.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0)) / 2.0f + 0.5f;
 }
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

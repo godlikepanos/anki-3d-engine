@@ -201,7 +201,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Scale");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
-			pass.newTextureDependency(inRt, TextureUsageBit::kSrvFragment);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvPixel);
 			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
@@ -238,7 +238,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
-			pass.newTextureDependency(inRt, TextureUsageBit::kSrvFragment);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvPixel);
 			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
@@ -272,7 +272,7 @@ void Scale::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Sharpen");
 			pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
-			pass.newTextureDependency(inRt, TextureUsageBit::kSrvFragment);
+			pass.newTextureDependency(inRt, TextureUsageBit::kSrvPixel);
 			pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
 			pass.setWork([this](RenderPassWorkContext& rgraphCtx) {

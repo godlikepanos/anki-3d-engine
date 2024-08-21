@@ -255,7 +255,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	pass.setRenderpassInfo({colorRti}, &depthRti);
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvFragment | TextureUsageBit::kRtvDsvRead);
+	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
 
 	BufferView indicesBuff;
 	BufferHandle dep;

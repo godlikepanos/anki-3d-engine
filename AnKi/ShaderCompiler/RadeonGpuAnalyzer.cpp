@@ -21,7 +21,7 @@ static CString getPipelineStageString(ShaderType shaderType)
 	case ShaderType::kVertex:
 		out = "vert";
 		break;
-	case ShaderType::kFragment:
+	case ShaderType::kPixel:
 		out = "frag";
 		break;
 	case ShaderType::kCompute:

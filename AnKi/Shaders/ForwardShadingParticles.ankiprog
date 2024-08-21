@@ -68,11 +68,11 @@ VertOut main(VertIn input)
 }
 #pragma anki technique_end vert Forward
 
-#pragma anki technique_start frag Forward
+#pragma anki technique_start pixel Forward
 
-FragOut main(VertOut input)
+PixelOut main(VertOut input)
 {
-	FragOut output = (FragOut)0;
+	PixelOut output = (PixelOut)0;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
 #if ANIMATED_TEXTURE == 1
@@ -92,4 +92,4 @@ FragOut main(VertOut input)
 
 	return output;
 }
-#pragma anki technique_end frag Forward
+#pragma anki technique_end pixel Forward

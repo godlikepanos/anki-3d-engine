@@ -53,7 +53,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		m_shaders.emplaceBack(inf.m_computeShader);
 	}
-	else if(inf.m_graphicsShaders[ShaderType::kFragment])
+	else if(inf.m_graphicsShaders[ShaderType::kPixel])
 	{
 		for(Shader* s : inf.m_graphicsShaders)
 		{

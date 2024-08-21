@@ -90,16 +90,16 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 		rpass.newTextureDependency((m_quarterRez) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
-								   TextureUsageBit::kSrvFragment);
-		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvFragment);
+								   TextureUsageBit::kSrvPixel);
+		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvPixel);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvFragment);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvPixel);
 		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-								  BufferUsageBit::kSrvFragment);
+								  BufferUsageBit::kSrvPixel);
 
 		if(getRenderer().getRtShadowsEnabled())
 		{
-			rpass.newTextureDependency(getRenderer().getRtShadows().getRt(), TextureUsageBit::kSrvFragment);
+			rpass.newTextureDependency(getRenderer().getRtShadows().getRt(), TextureUsageBit::kSrvPixel);
 		}
 	}
 }

@@ -28,7 +28,7 @@ void MipmapGenerator::populateRenderGraph(const MipmapGeneratorTargetArguments& 
 				GraphicsRenderPass& rpass =
 					rgraph.newGraphicsRenderPass(generateTempPassName("%s: mip #%u face #%u layer #%u", passesName.cstr(), readMip, face, layer));
 
-				rpass.newTextureDependency(target.m_handle, TextureUsageBit::kSrvFragment, TextureSubresourceDesc::surface(readMip, face, layer));
+				rpass.newTextureDependency(target.m_handle, TextureUsageBit::kSrvPixel, TextureSubresourceDesc::surface(readMip, face, layer));
 				rpass.newTextureDependency(target.m_handle, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(readMip + 1, face, layer));
 
 				GraphicsRenderPassTargetDesc rtInfo;

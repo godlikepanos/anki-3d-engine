@@ -263,7 +263,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		depthRt.m_loadOperation = RenderTargetLoadOperation::kClear;
 		pass.setRenderpassInfo({}, &depthRt);
 
-		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kSrvFragment);
+		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kSrvPixel);
 		pass.newTextureDependency(depthRts[i], TextureUsageBit::kRtvDsvWrite, DepthStencilAspectBit::kDepth);
 
 		pass.setWork([this, maxDepthRt, invViewProjMat = in.m_cameraInverseViewProjectionMatrix,

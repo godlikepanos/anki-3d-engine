@@ -28,7 +28,7 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-struct FragOut
+struct PixelOut
 {
 	Vec4 m_color0 : SV_TARGET0;
 	Vec4 m_color1 : SV_TARGET1;
@@ -78,12 +78,12 @@ VertOut main(VertIn input)
 }
 #pragma anki technique_end vert GBuffer
 
-#pragma anki technique_start frag GBuffer
+#pragma anki technique_start pixel GBuffer
 #include <AnKi/Shaders/PackFunctions.hlsl>
 
-FragOut main(VertOut input)
+PixelOut main(VertOut input)
 {
-	FragOut output;
+	PixelOut output;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
 
 	GbufferInfo g;
@@ -101,4 +101,4 @@ FragOut main(VertOut input)
 	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
 	return output;
 }
-#pragma anki technique_end frag GBuffer
+#pragma anki technique_end pixel GBuffer

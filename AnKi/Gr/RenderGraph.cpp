@@ -1414,7 +1414,7 @@ StringRaii RenderGraph::bufferUsageToStr(StackMemoryPool& pool, BufferUsageBit u
 		}
 
 	ANKI_BUFF_USAGE(kConstantGeometry);
-	ANKI_BUFF_USAGE(kConstantFragment);
+	ANKI_BUFF_USAGE(kConstantPixel);
 	ANKI_BUFF_USAGE(kConstantCompute);
 	ANKI_BUFF_USAGE(kConstantTraceRays);
 	ANKI_BUFF_USAGE(kStorageGeometryRead);

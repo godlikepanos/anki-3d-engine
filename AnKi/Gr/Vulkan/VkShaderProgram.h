@@ -97,7 +97,7 @@ private:
 	class
 	{
 	public:
-		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::kFragment - ShaderType::kVertex) + 1> m_shaderCreateInfos = {};
+		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::kPixel - ShaderType::kVertex) + 1> m_shaderCreateInfos = {};
 		U32 m_shaderCreateInfoCount = 0;
 		GraphicsPipelineFactory* m_pplineFactory = nullptr;
 	} m_graphics;

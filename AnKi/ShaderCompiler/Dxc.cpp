@@ -21,19 +21,19 @@ static CString profile(ShaderType shaderType)
 	case ShaderType::kVertex:
 		return "vs_6_8";
 		break;
-	case ShaderType::kFragment:
+	case ShaderType::kPixel:
 		return "ps_6_8";
 		break;
-	case ShaderType::kTessellationEvaluation:
+	case ShaderType::kDomain:
 		return "ds_6_8";
 		break;
-	case ShaderType::kTessellationControl:
+	case ShaderType::kHull:
 		return "ds_6_8";
 		break;
 	case ShaderType::kGeometry:
 		return "gs_6_8";
 		break;
-	case ShaderType::kTask:
+	case ShaderType::kAmplification:
 		return "as_6_8";
 		break;
 	case ShaderType::kMesh:

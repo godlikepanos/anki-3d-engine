@@ -255,14 +255,14 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 	}
 
 	// Color attachments
-	if(type == ShaderType::kFragment)
+	if(type == ShaderType::kPixel)
 	{
 		for(const spirv_cross::Resource& r : rsrc.stage_outputs)
 		{
 			const U32 id = r.id;
 			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
 
-			refl.m_fragment.m_colorAttachmentWritemask.set(location);
+			refl.m_pixel.m_colorRenderTargetWritemask.set(location);
 		}
 	}
 
@@ -340,13 +340,13 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 	}
 
 	// Discards?
-	if(type == ShaderType::kFragment)
+	if(type == ShaderType::kPixel)
 	{
 		visitSpirv(ConstWeakArray<U32>(reinterpret_cast<const U32*>(&spirv[0]), spirv.getSize() / sizeof(U32)),
 				   [&](U32 cmd, [[maybe_unused]] ConstWeakArray<U32> instructions) {
 					   if(cmd == spv::OpKill)
 					   {
-						   refl.m_fragment.m_discards = true;
+						   refl.m_pixel.m_discards = true;
 					   }
 				   });
 	}
@@ -629,7 +629,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 		}
 	}
 
-	if(type == ShaderType::kFragment)
+	if(type == ShaderType::kPixel)
 	{
 		for(U32 i = 0; i < shaderDesc.OutputParameters; ++i)
 		{
@@ -638,7 +638,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 
 			if(CString(desc.SemanticName) == "SV_TARGET")
 			{
-				refl.m_fragment.m_colorAttachmentWritemask.set(desc.SemanticIndex);
+				refl.m_pixel.m_colorRenderTargetWritemask.set(desc.SemanticIndex);
 			}
 		}
 	}

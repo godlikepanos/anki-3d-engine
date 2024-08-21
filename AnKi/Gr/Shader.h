@@ -109,10 +109,10 @@ public:
 		return m_shaderBinarySize;
 	}
 
-	/// Fragment shader had a discard.
+	/// Pixel shader had a discard.
 	U32 hasDiscard() const
 	{
-		ANKI_ASSERT(m_shaderType == ShaderType::kFragment);
+		ANKI_ASSERT(m_shaderType == ShaderType::kPixel);
 		return m_hasDiscard;
 	}
 

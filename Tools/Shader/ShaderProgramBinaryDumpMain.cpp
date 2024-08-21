@@ -175,7 +175,7 @@ Error dumpStats(const ShaderBinary& bin)
 					MaliOfflineCompilerOut maliocOut;
 					Error err = Error::kNone;
 
-					if(shaderType == ShaderType::kVertex || shaderType == ShaderType::kFragment || shaderType == ShaderType::kCompute)
+					if(shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute)
 					{
 						err = runMaliOfflineCompiler(codeBlock.m_binary, shaderType, maliocOut);
 

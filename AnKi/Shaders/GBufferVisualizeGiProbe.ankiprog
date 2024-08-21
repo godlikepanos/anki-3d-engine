@@ -37,7 +37,7 @@ struct VertOut
 	Vec3 m_sphereCenter : SpherePosition;
 };
 
-struct FragOut
+struct PixelOut
 {
 	Vec4 m_color0 : SV_TARGET0;
 	Vec4 m_color1 : SV_TARGET1;
@@ -111,11 +111,11 @@ VertOut main(VertIn input)
 
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 
-FragOut main(VertOut input)
+PixelOut main(VertOut input)
 {
-	FragOut output = (FragOut)0;
+	PixelOut output = (PixelOut)0;
 
 	// Compute the far point
 	const Vec2 ndc = uvToNdc(input.m_svPosition.xy / g_consts.m_viewportSize);
@@ -154,4 +154,4 @@ FragOut main(VertOut input)
 	return output;
 }
 
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

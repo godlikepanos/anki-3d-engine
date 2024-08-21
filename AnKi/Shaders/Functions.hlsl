@@ -56,7 +56,7 @@ Vec3 cheapPerspectiveUnprojection(Vec4 unprojParams, Vec2 ndc, F32 depth)
 	return Vec3(xy, z);
 }
 
-#if ANKI_FRAGMENT_SHADER
+#if ANKI_PIXEL_SHADER
 // Stolen from shadertoy.com/view/4tyGDD
 Vec4 textureCatmullRom4Samples(Texture2D tex, SamplerState sampl, Vec2 uv, Vec2 texSize)
 {
@@ -567,7 +567,7 @@ vector<T, 3> animateBlueNoise(vector<T, 3> inputBlueNoise, U32 frameIdx)
 	return frac(inputBlueNoise + T(frameIdx % 64u) * goldenRatioConjugate);
 }
 
-#if ANKI_FRAGMENT_SHADER
+#if ANKI_PIXEL_SHADER
 /// https://bgolus.medium.com/distinctive-derivative-differences-cce38d36797b
 /// normalizedUvs is uv*textureResolution
 F32 computeMipLevel(Vec2 normalizedUvs)

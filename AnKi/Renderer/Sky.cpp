@@ -46,7 +46,7 @@ Error Sky::initInternal()
 		initialUsage);
 
 	m_skyLut = getRenderer().createAndClearRenderTarget(
-		getRenderer().create2DRenderTargetInitInfo(kSkyLutSize.x(), kSkyLutSize.y(), formatB, usage | TextureUsageBit::kSrvFragment, "SkyLut"),
+		getRenderer().create2DRenderTargetInitInfo(kSkyLutSize.x(), kSkyLutSize.y(), formatB, usage | TextureUsageBit::kSrvPixel, "SkyLut"),
 		initialUsage);
 
 	return Error::kNone;

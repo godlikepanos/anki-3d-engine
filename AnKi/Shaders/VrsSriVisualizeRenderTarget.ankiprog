@@ -8,7 +8,7 @@
 #pragma anki technique_start vert
 #pragma anki technique_end vert
 
-#pragma anki technique_start frag
+#pragma anki technique_start pixel
 #include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
@@ -20,4 +20,4 @@ Vec3 main(VertOut input) : SV_TARGET0
 	const UVec2 rate = decodeVrsRate(texel);
 	return visualizeVrsRate(rate);
 }
-#pragma anki technique_end frag
+#pragma anki technique_end pixel

@@ -98,7 +98,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
 			rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_exposureRt)});
 
-			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSrvFragment, inputTexSubresource);
+			rpass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSrvPixel, inputTexSubresource);
 			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kRtvDsvWrite);
 
 			prpass = &rpass;
@@ -156,7 +156,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
 			rpass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_upscaleRt)});
 
-			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSrvFragment);
+			rpass.newTextureDependency(m_runCtx.m_exposureRt, TextureUsageBit::kSrvPixel);
 			rpass.newTextureDependency(m_runCtx.m_upscaleRt, TextureUsageBit::kRtvDsvWrite);
 
 			prpass = &rpass;
