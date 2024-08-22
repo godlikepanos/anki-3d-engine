@@ -3,12 +3,18 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator PROBE_TYPE 0 1
+
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t0);
+#if PROBE_TYPE == 0
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_probes : register(t0);
+#else
+StructuredBuffer<GpuSceneReflectionProbe> g_probes : register(t0);
+#endif
 
 struct Consts
 {
@@ -59,8 +65,13 @@ UVec3 getCellCount(GpuSceneGlobalIlluminationProbe probe)
 
 VertOut main(VertIn input)
 {
-	const GpuSceneGlobalIlluminationProbe probe = SBUFF(g_giProbes, g_consts.m_probeIdx);
+#if PROBE_TYPE == 0
+	const GpuSceneGlobalIlluminationProbe probe = SBUFF(g_probes, g_consts.m_probeIdx);
+#else
+	const GpuSceneReflectionProbe probe = SBUFF(g_probes, g_consts.m_probeIdx);
+#endif
 
+#if PROBE_TYPE == 0
 	// Compute the cell ID
 	const U32 cellIdx = input.m_svInstanceId;
 	const UVec3 cellCount = getCellCount(probe);
@@ -72,9 +83,13 @@ VertOut main(VertIn input)
 	const Vec3 cellSize = (probe.m_aabbMax - probe.m_aabbMin) / Vec3(cellCount);
 
 	const Vec3 cellCenter = cellSize * Vec3(cellId) + probe.m_aabbMin + cellSize / 2.0;
+	const Vec3 sphereCenter = cellCenter;
+#else
+	const Vec3 sphereCenter = probe.m_position;
+#endif
 
-	const Vec3 sphereMin = cellCenter - g_consts.m_sphereRadius;
-	const Vec3 sphereMax = cellCenter + g_consts.m_sphereRadius;
+	const Vec3 sphereMin = sphereCenter - g_consts.m_sphereRadius;
+	const Vec3 sphereMax = sphereCenter + g_consts.m_sphereRadius;
 
 	Vec3 sphereAabbPoints[8];
 	sphereAabbPoints[0] = Vec3(sphereMin.x, sphereMin.y, sphereMax.z);
@@ -104,7 +119,7 @@ VertOut main(VertIn input)
 	output.m_svPosition.z = 0.0;
 	output.m_svPosition.w = 1.0;
 
-	output.m_sphereCenter = cellCenter;
+	output.m_sphereCenter = sphereCenter;
 
 	return output;
 }
@@ -140,13 +155,13 @@ PixelOut main(VertOut input)
 
 	// Set the GBuffer
 	GbufferInfo g;
-	g.m_diffuse = 0.5;
+	g.m_diffuse = (PROBE_TYPE == 0) ? 0.5 : 1.0;
 	g.m_normal = normalize(collisionPoint - input.m_sphereCenter);
 	g.m_f0 = 0.04;
-	g.m_roughness = 1.0;
+	g.m_roughness = (PROBE_TYPE == 0) ? 1.0 : 0.0;
 	g.m_subsurface = 0.0;
 	g.m_emission = 0.0;
-	g.m_metallic = 0.0;
+	g.m_metallic = (PROBE_TYPE == 0) ? 0.0 : 1.0;
 	g.m_velocity = 1.0;
 
 	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);

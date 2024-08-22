@@ -72,6 +72,11 @@ public:
 		return *m_reflectionTex;
 	}
 
+	const GpuSceneArrays::ReflectionProbe::Allocation& getGpuSceneAllocation() const
+	{
+		return m_gpuSceneProbe;
+	}
+
 private:
 	Vec3 m_worldPos = Vec3(kMaxF32);
 	Vec3 m_halfSize = Vec3(1.0f);

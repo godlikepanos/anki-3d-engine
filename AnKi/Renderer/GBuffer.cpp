@@ -15,6 +15,7 @@
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
+#include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 
 namespace anki {
 
@@ -22,6 +23,7 @@ static NumericCVar<U32> g_hzbWidthCVar(CVarSubsystem::kRenderer, "HzbWidth", 512
 static NumericCVar<U32> g_hzbHeightCVar(CVarSubsystem::kRenderer, "HzbHeight", 256, 16, 4 * 1024, "HZB map height");
 static BoolCVar g_gbufferVrsCVar(CVarSubsystem::kRenderer, "GBufferVrs", false, "Enable VRS in GBuffer");
 static BoolCVar g_visualizeGiProbes(CVarSubsystem::kRenderer, "VisualizeGiProbes", false, "Visualize GI probes");
+static BoolCVar g_visualizeReflectionProbes(CVarSubsystem::kRenderer, "VisualizeReflProbes", false, "Visualize reflection probes");
 
 GBuffer::~GBuffer()
 {
@@ -75,7 +77,10 @@ Error GBuffer::initInternal()
 	}
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeGBufferNormal.ankiprogbin", m_visNormalProg, m_visNormalGrProg));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GBufferVisualizeGiProbe.ankiprogbin", m_visualizeGiProbeProg, m_visualizeGiProbeGrProg));
+	ANKI_CHECK(
+		loadShaderProgram("ShaderBinaries/GBufferVisualizeProbe.ankiprogbin", {{"PROBE_TYPE", 0}}, m_visualizeProbeProg, m_visualizeGiProbeGrProg));
+	ANKI_CHECK(
+		loadShaderProgram("ShaderBinaries/GBufferVisualizeProbe.ankiprogbin", {{"PROBE_TYPE", 1}}, m_visualizeProbeProg, m_visualizeReflProbeGrProg));
 
 	return Error::kNone;
 }
@@ -205,7 +210,6 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			if(g_visualizeGiProbes.get())
 			{
 				cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
-
 				cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 
 				for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes())
@@ -233,6 +237,40 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 					consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 
 					cmdb.draw(PrimitiveTopology::kTriangles, 6, probe.getCellCount());
+				}
+			}
+
+			// Visualize refl probes
+			if(g_visualizeReflectionProbes.get())
+			{
+				cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
+				cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());
+
+				for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getReflectionProbes())
+				{
+					struct Consts
+					{
+						Mat4 m_viewProjMat;
+						Mat4 m_invViewProjMat;
+
+						Vec2 m_viewportSize;
+						U32 m_probeIdx;
+						F32 m_sphereRadius;
+
+						Vec3 m_cameraPos;
+						F32 m_padding;
+					};
+
+					Consts* consts = allocateAndBindConstants<Consts>(cmdb, 0, 0);
+
+					consts->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
+					consts->m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+					consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
+					consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
+					consts->m_sphereRadius = 0.5f;
+					consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+
+					cmdb.draw(PrimitiveTopology::kTriangles, 6);
 				}
 			}
 		});
