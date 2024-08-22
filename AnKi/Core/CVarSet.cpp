@@ -30,6 +30,11 @@ CoreString CVar::getFullName() const
 
 void CVarSet::registerCVar(CVar* cvar)
 {
+	for([[maybe_unused]] CVar& it : m_cvars)
+	{
+		ANKI_ASSERT(it.m_name != cvar->m_name || it.m_subsystem != cvar->m_subsystem);
+	}
+
 	m_cvars.pushBack(cvar);
 }
 

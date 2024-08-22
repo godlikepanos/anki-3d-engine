@@ -271,7 +271,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Validation
 	UINT dxgiFactoryFlags = 0;
-	if(g_validationCVar.get())
+	if(g_validationCVar.get() || g_gpuValidationCVar.get())
 	{
 		ComPtr<ID3D12Debug> debugInterface;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));

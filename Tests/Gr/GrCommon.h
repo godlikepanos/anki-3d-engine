@@ -84,8 +84,7 @@ inline void commonInit(Bool validation = true)
 	g_debugMarkersCVar.set(true);
 	if(validation)
 	{
-		[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"GpuValidation", "1"});
-		err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"DebugMarkers", "1"});
+		[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 4>{"Validation", "1", "DebugMarkers", "1"});
 	}
 
 	initWindow();

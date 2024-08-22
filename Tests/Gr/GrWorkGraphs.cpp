@@ -63,6 +63,8 @@ static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, F64
 			func(*cmdb);
 		}
 
+		// clearSwapchain(cmdb);
+
 		cmdb->endRecording();
 		const U64 cpuTimeEnd = HighRezTimer::getCurrentTimeUs();
 		avgCpuTimePerIterationMs += (Second(cpuTimeEnd - cpuTimeStart) * 0.001) / Second(iterationCount);
@@ -73,9 +75,12 @@ static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, F64
 		}
 
 		GrManager::getSingleton().submit(cmdb.get(), {}, (icmdb == commandBufferCount - 1) ? &fence : nullptr);
+
+		// GrManager::getSingleton().swapBuffers();
 	}
 
-	fence->clientWait(kMaxSecond);
+	const Bool done = fence->clientWait(kMaxSecond);
+	ANKI_TEST_EXPECT_EQ(done, true);
 	const U64 endUs = HighRezTimer::getCurrentTimeUs();
 
 	avgTimePerIterationMs = (Second(endUs - startUs) * 0.001) / Second(iterationCount);
@@ -656,7 +661,127 @@ ANKI_TEST(Gr, WorkGraphsOverhead)
 
 	ANKI_TEST_LOGI("Testing with BENCHMARK=%u WORKGRAPHS=%u", bBenchmark, bWorkgraphs);
 
+	constexpr U32 kMaxCandidates = 100 * 1024;
+
 	{
+		// Create compute progs
+		ShaderProgramPtr compProg;
+		{
+			ShaderPtr shader =
+				loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/FindPrimeNumbers.hlsl", ShaderType::kCompute, Array<CString, 1>{"-DWORKGRAPHS=0"});
+			ShaderProgramInitInfo progInit;
+			progInit.m_computeShader = shader.get();
+			compProg = GrManager::getSingleton().newShaderProgram(progInit);
+		}
+
+		// Create WG prog
+		ShaderProgramPtr wgProg;
+		if(bWorkgraphs)
+		{
+			ShaderPtr shader =
+				loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/FindPrimeNumbers.hlsl", ShaderType::kWorkGraph, Array<CString, 1>{"-DWORKGRAPHS=1"});
+
+			ShaderProgramInitInfo progInit;
+			progInit.m_workGraph.m_shader = shader.get();
+			Array<WorkGraphNodeSpecialization, 1> specializations = {{{"main", UVec3(kMaxCandidates, 1, 1)}}};
+			progInit.m_workGraph.m_nodeSpecializations = specializations;
+			wgProg = GrManager::getSingleton().newShaderProgram(progInit);
+		}
+
+		// Scratch buff
+		BufferPtr scratchBuff;
+		if(bWorkgraphs)
+		{
+			BufferInitInfo scratchInit("scratch");
+			scratchInit.m_size = wgProg->getWorkGraphMemoryRequirements();
+			scratchInit.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
+			scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+		}
+
+		BufferPtr miscBuff = createBuffer(BufferUsageBit::kUavCompute, UVec3(0, kMaxCandidates, 0), 2);
+
+		BufferPtr primeNumbersBuff = createBuffer(BufferUsageBit::kUavCompute, U32(0u), kMaxCandidates + 1);
+
+		const U32 iterationsPerCmdb = (!bBenchmark) ? 1 : 100u;
+		const U32 iterationCount = (!bBenchmark) ? 1 : iterationsPerCmdb * 50;
+		F64 avgTimeMs = 0.0;
+		F64 avgCpuTimeMs = 0.0;
+		runBenchmark(iterationCount, iterationsPerCmdb, avgTimeMs, avgCpuTimeMs, [&](CommandBuffer& cmdb) {
+			BufferBarrierInfo barr = {BufferView(primeNumbersBuff.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
+			cmdb.setPipelineBarrier({}, {&barr, 1}, {});
+
+			cmdb.bindUav(0, 0, BufferView(primeNumbersBuff.get()));
+			cmdb.bindUav(1, 0, BufferView(miscBuff.get()));
+
+			if(bWorkgraphs)
+			{
+				cmdb.bindShaderProgram(wgProg.get());
+
+				struct FirstNodeRecord
+				{
+					UVec3 m_gridSize;
+				};
+
+				Array<FirstNodeRecord, 1> records;
+				records[0].m_gridSize = UVec3(kMaxCandidates, 1, 1);
+
+				cmdb.dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
+			}
+			else
+			{
+				cmdb.bindShaderProgram(compProg.get());
+
+				cmdb.dispatchCompute(kMaxCandidates, 1, 1);
+			}
+		});
+
+		if(bBenchmark)
+		{
+			ANKI_TEST_LOGI("Benchmark: avg GPU time: %fms, avg CPU time: %fms", avgTimeMs, avgCpuTimeMs);
+		}
+
+		DynamicArray<U32> values;
+		readBuffer(primeNumbersBuff, values);
+
+		values.resize(values[0] + 1);
+
+		std::sort(values.getBegin() + 1, values.getEnd(), [](U32 a, U32 b) {
+			return a < b;
+		});
+
+		auto isPrime = [](int N) {
+			if(N <= 1)
+			{
+				return false;
+			}
+
+			for(int i = 2; i < N / 2; i++)
+			{
+				if(N % i == 0)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		};
+
+		DynamicArray<U32> values2;
+		values2.resize(1, 0);
+		for(U32 i = 0; i < kMaxCandidates; ++i)
+		{
+			if(isPrime(i))
+			{
+				++values2[0];
+				values2.emplaceBack(i);
+			}
+		}
+
+		ANKI_TEST_EXPECT_EQ(values.getSize(), values2.getSize());
+		for(U32 i = 0; i < values2.getSize(); ++i)
+		{
+			ANKI_TEST_EXPECT_EQ(values[i], values2[i]);
+		}
 	}
 
 	commonDestroy();
