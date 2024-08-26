@@ -396,7 +396,7 @@ F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
 // https://www.shadertoy.com/view/XtcBDB
 RVec3 sampleAmbientDice(RVec3 posx, RVec3 negx, RVec3 posy, RVec3 negy, RVec3 posz, RVec3 negz, RVec3 normal)
 {
-	const RVec3 axisWeights = abs(normal);
+	const RVec3 axisWeights = normal * normal;
 	const RVec3 uv = ndcToUv(normal);
 
 	RVec3 col = lerp(negx, posx, uv.x) * axisWeights.x;
