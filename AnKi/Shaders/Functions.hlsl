@@ -762,3 +762,27 @@ void unflatten3dArrayIndex(const U32 sizeA, const U32 sizeB, const U32 sizeC, co
 	b = (flatIdx / sizeC) % sizeB;
 	c = flatIdx % sizeC;
 }
+
+Bool dither2x2(Vec2 svPosition, F32 factor)
+{
+	const U32 ditherMatrix[4] = {0, 3, 2, 1};
+	const F32 axisSize = 2.0;
+
+	const U32 x = U32(fmod(svPosition.x, axisSize));
+	const U32 y = U32(fmod(svPosition.y, axisSize));
+	const U32 index = x + y * U32(axisSize);
+	const F32 limit = (F32(ditherMatrix[index]) + 1.0) / (1.0 + axisSize * axisSize);
+	return (factor < limit) ? true : false;
+}
+
+Bool dither4x4(Vec2 svPosition, F32 factor)
+{
+	const U32 ditherMatrix[16] = {0, 12, 3, 15, 8, 4, 11, 7, 2, 14, 1, 13, 10, 6, 9, 5};
+	const F32 axisSize = 4.0;
+
+	const U32 x = U32(fmod(svPosition.x, axisSize));
+	const U32 y = U32(fmod(svPosition.y, axisSize));
+	const U32 index = x + y * U32(axisSize);
+	const F32 limit = (F32(ditherMatrix[index]) + 1.0) / (1.0 + axisSize * axisSize);
+	return (factor < limit) ? true : false;
+}

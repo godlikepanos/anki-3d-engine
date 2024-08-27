@@ -26,7 +26,7 @@ struct Consts
 	F32 m_sphereRadius;
 
 	Vec3 m_cameraPos;
-	F32 m_padding;
+	F32 m_pixelShift;
 };
 
 ConstantBuffer<Consts> g_consts : register(b0);
@@ -147,9 +147,23 @@ PixelOut main(VertOut input)
 		discard;
 	}
 
-	const F32 t = min(t0, t1);
+	// Compute a fade close to the camera
+	const F32 fullBrightDist = g_consts.m_sphereRadius * 4.0;
+	const F32 zeroBrightDist = g_consts.m_sphereRadius * 2.0;
+	F32 fade = length(g_consts.m_cameraPos - input.m_sphereCenter) - zeroBrightDist;
+	fade = saturate(fade / (fullBrightDist - zeroBrightDist));
+	fade = sqrt(fade);
 
+	// Dither close to the camera
+	const Bool skip = dither4x4(input.m_svPosition.xy + Vec2(g_consts.m_pixelShift, 0.0), fade);
+	if(skip)
+	{
+		discard;
+	}
+
+	const F32 t = min(t0, t1);
 	const Vec3 collisionPoint = g_consts.m_cameraPos + rayDir * t;
+
 	const Vec4 p = mul(g_consts.m_viewProjMat, Vec4(collisionPoint, 1.0));
 	output.m_svDepth = p.z / p.w;
 

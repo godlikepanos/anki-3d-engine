@@ -206,71 +206,62 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 			cmdb.setDepthCompareOperation(CompareOperation::kLessEqual);
 			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 
-			// Visualize GI probes
-			if(g_visualizeGiProbes.get())
 			{
-				cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
-				cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
-
-				for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes())
+				struct Consts
 				{
-					struct Consts
+					Mat4 m_viewProjMat;
+					Mat4 m_invViewProjMat;
+
+					Vec2 m_viewportSize;
+					U32 m_probeIdx;
+					F32 m_sphereRadius;
+
+					Vec3 m_cameraPos;
+					F32 m_pixelShift;
+				};
+
+				// Visualize GI probes
+				if(g_visualizeGiProbes.get())
+				{
+					cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
+					cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
+
+					for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getGlobalIlluminationProbes())
 					{
-						Mat4 m_viewProjMat;
-						Mat4 m_invViewProjMat;
+						Consts* consts = allocateAndBindConstants<Consts>(cmdb, 0, 0);
 
-						Vec2 m_viewportSize;
-						U32 m_probeIdx;
-						F32 m_sphereRadius;
+						consts->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
+						consts->m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+						consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
+						consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
+						consts->m_sphereRadius = 0.5f;
+						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+						consts->m_pixelShift = (getRenderer().getFrameCount() & 1) ? 1.0f : 0.0f;
 
-						Vec3 m_cameraPos;
-						F32 m_padding;
-					};
-
-					Consts* consts = allocateAndBindConstants<Consts>(cmdb, 0, 0);
-
-					consts->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
-					consts->m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-					consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
-					consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
-					consts->m_sphereRadius = 0.5f;
-					consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-
-					cmdb.draw(PrimitiveTopology::kTriangles, 6, probe.getCellCount());
+						cmdb.draw(PrimitiveTopology::kTriangles, 6, probe.getCellCount());
+					}
 				}
-			}
 
-			// Visualize refl probes
-			if(g_visualizeReflectionProbes.get())
-			{
-				cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
-				cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());
-
-				for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getReflectionProbes())
+				// Visualize refl probes
+				if(g_visualizeReflectionProbes.get())
 				{
-					struct Consts
+					cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
+					cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());
+
+					for(const auto& probe : SceneGraph::getSingleton().getComponentArrays().getReflectionProbes())
 					{
-						Mat4 m_viewProjMat;
-						Mat4 m_invViewProjMat;
+						Consts* consts = allocateAndBindConstants<Consts>(cmdb, 0, 0);
 
-						Vec2 m_viewportSize;
-						U32 m_probeIdx;
-						F32 m_sphereRadius;
+						consts->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
+						consts->m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
+						consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
+						consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
+						consts->m_sphereRadius = 0.5f;
+						consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
+						consts->m_pixelShift = (getRenderer().getFrameCount() & 1) ? 1.0f : 0.0f;
 
-						Vec3 m_cameraPos;
-						F32 m_padding;
-					};
-
-					Consts* consts = allocateAndBindConstants<Consts>(cmdb, 0, 0);
-
-					consts->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
-					consts->m_invViewProjMat = ctx.m_matrices.m_invertedViewProjectionJitter;
-					consts->m_viewportSize = Vec2(getRenderer().getInternalResolution());
-					consts->m_probeIdx = probe.getGpuSceneAllocation().getIndex();
-					consts->m_sphereRadius = 0.5f;
-					consts->m_cameraPos = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
-
-					cmdb.draw(PrimitiveTopology::kTriangles, 6);
+						cmdb.draw(PrimitiveTopology::kTriangles, 6);
+					}
 				}
 			}
 		});
