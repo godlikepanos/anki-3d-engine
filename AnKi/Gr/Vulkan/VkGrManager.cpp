@@ -515,8 +515,7 @@ Error GrManagerImpl::initInstance()
 				ANKI_VK_LOGV("\t%s", layer.layerName);
 				CString layerName = layer.layerName;
 
-				Bool enableLayer =
-					(g_validationCVar.get() || g_debugMarkersCVar.get() || g_debugPrintfCVar.get()) && layerName == "VK_LAYER_KHRONOS_validation";
+				Bool enableLayer = (g_validationCVar.get() || g_debugPrintfCVar.get()) && layerName == "VK_LAYER_KHRONOS_validation";
 				enableLayer = enableLayer || (!g_vkLayers.get().isEmpty() && g_vkLayers.get().find(layerName) != CString::kNpos);
 
 				if(enableLayer)
@@ -548,7 +547,7 @@ Error GrManagerImpl::initInstance()
 		enabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
 	}
 
-	if((g_debugPrintfCVar.get() || g_debugMarkersCVar.get()) && !g_validationCVar.get())
+	if(g_debugPrintfCVar.get() && !g_validationCVar.get())
 	{
 		disabledValidationFeatures.emplaceBack(VK_VALIDATION_FEATURE_DISABLE_ALL_EXT);
 	}
@@ -857,8 +856,7 @@ Error GrManagerImpl::initDevice()
 
 	if(m_queueFamilyIndices[GpuQueueType::kGeneral] == kMaxU32)
 	{
-		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present. "
-					 "Something is wrong");
+		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present. Something is wrong");
 		return Error::kFunctionFailed;
 	}
 

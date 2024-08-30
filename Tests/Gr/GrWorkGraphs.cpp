@@ -45,12 +45,14 @@ static void clearSwapchain(CommandBufferPtr cmdb = CommandBufferPtr())
 }
 
 template<typename TFunc>
-static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, F64& avgTimePerIterationMs, F64& avgCpuTimePerIterationMs, TFunc func)
+static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, Bool bBenchmark, TFunc func)
 {
 	ANKI_ASSERT(iterationCount >= iterationsPerCommandBuffer && (iterationCount % iterationsPerCommandBuffer) == 0);
 
 	U64 startUs = 0;
 	FencePtr fence;
+
+	F64 avgCpuTimePerIterationMs = 0.0;
 
 	const U32 commandBufferCount = iterationCount / iterationsPerCommandBuffer;
 	for(U32 icmdb = 0; icmdb < commandBufferCount; ++icmdb)
@@ -83,7 +85,25 @@ static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, F64
 	ANKI_TEST_EXPECT_EQ(done, true);
 	const U64 endUs = HighRezTimer::getCurrentTimeUs();
 
-	avgTimePerIterationMs = (Second(endUs - startUs) * 0.001) / Second(iterationCount);
+	const F64 avgTimePerIterationMs = (Second(endUs - startUs) * 0.001) / Second(iterationCount);
+
+	if(bBenchmark)
+	{
+		ANKI_TEST_LOGI("Benchmark: avg GPU time: %fms, avg CPU time: %fms", avgTimePerIterationMs, avgCpuTimePerIterationMs);
+	}
+}
+
+void commonInitWg(Bool& bBenchmark, Bool& bWorkgraphs)
+{
+	bBenchmark = getenv("BENCHMARK") && CString(getenv("BENCHMARK")) == "1";
+
+	[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"WorkGraphs", "1"});
+
+	commonInit(!bBenchmark);
+
+	bWorkgraphs = getenv("WORKGRAPHS") && CString(getenv("WORKGRAPHS")) == "1" && GrManager::getSingleton().getDeviceCapabilities().m_workGraphs;
+
+	ANKI_TEST_LOGI("Testing with BENCHMARK=%u WORKGRAPHS=%u", bBenchmark, bWorkgraphs);
 }
 
 ANKI_TEST(Gr, WorkGraphHelloWorld)
@@ -195,10 +215,9 @@ void thirdNode([MaxRecords(32)] GroupNodeInputRecords<ThirdNodeRecord> inp, uint
 
 ANKI_TEST(Gr, WorkGraphAmplification)
 {
-	constexpr Bool benchmark = true;
-
 	// CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"Device", "2"});
-	commonInit(!benchmark);
+	Bool bBenchmark, bWorkgraphs;
+	commonInitWg(bBenchmark, bWorkgraphs);
 
 	{
 		const Char* kSrc = R"(
@@ -341,13 +360,12 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 }
 )";
 
-		constexpr U32 kObjectCount = 4000 * 64;
+		constexpr U32 kObjectCount = 1000 * 64;
 		constexpr U32 kPositionsPerObject = 10 * 64; // 1 * 1024;
 		constexpr U32 kThreadCount = 64;
-		constexpr Bool useWorkgraphs = true;
 
 		ShaderProgramPtr prog;
-		if(useWorkgraphs)
+		if(bWorkgraphs)
 		{
 			ShaderPtr shader = createShader(kSrc, ShaderType::kWorkGraph);
 			ShaderProgramInitInfo progInit;
@@ -422,24 +440,23 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 
 		BufferPtr posBuff = createBuffer(BufferUsageBit::kSrvCompute, ConstWeakArray(positions), "Positions");
 
-		// Execute
-		for(U32 i = 0; i < ((benchmark) ? 200 : 1); ++i)
+		BufferPtr scratchBuff;
+		if(bWorkgraphs)
 		{
-			[[maybe_unused]] const Error err = Input::getSingleton().handleEvents();
+			BufferInitInfo scratchInit("scratch");
+			scratchInit.m_size = prog->getWorkGraphMemoryRequirements();
+			scratchInit.m_usage = BufferUsageBit::kAllUav;
+			scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
+		}
 
-			BufferPtr scratchBuff;
-			if(useWorkgraphs)
-			{
-				BufferInitInfo scratchInit("scratch");
-				scratchInit.m_size = prog->getWorkGraphMemoryRequirements();
-				scratchInit.m_usage = BufferUsageBit::kAllUav;
-				scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
-			}
+		// Execute
+		const U32 iterationsPerCmdb = (!bBenchmark) ? 1 : 100u;
+		const U32 iterationCount = (!bBenchmark) ? 1 : iterationsPerCmdb * 10;
+		runBenchmark(iterationCount, iterationsPerCmdb, bBenchmark, [&](CommandBuffer& cmdb) {
+			BufferBarrierInfo barr = {BufferView(aabbsBuff.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
+			cmdb.setPipelineBarrier({}, {&barr, 1}, {});
 
-			const Second timeA = HighRezTimer::getCurrentTime();
-
-			CommandBufferPtr cmdb;
-			if(useWorkgraphs)
+			if(bWorkgraphs)
 			{
 				struct FirstNodeRecord
 				{
@@ -449,47 +466,28 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 				Array<FirstNodeRecord, 1> records;
 				records[0].m_gridSize = UVec3((objects.getSize() + kThreadCount - 1) / kThreadCount, 1, 1);
 
-				cmdb = GrManager::getSingleton().newCommandBuffer(
-					CommandBufferInitInfo(CommandBufferFlag::kSmallBatch | CommandBufferFlag::kGeneralWork));
-				cmdb->bindShaderProgram(prog.get());
-				cmdb->bindUav(0, 0, BufferView(aabbsBuff.get()));
-				cmdb->bindSrv(0, 0, BufferView(objBuff.get()));
-				cmdb->bindSrv(1, 0, BufferView(posBuff.get()));
-				cmdb->dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
+				cmdb.bindShaderProgram(prog.get());
+				cmdb.bindUav(0, 0, BufferView(aabbsBuff.get()));
+				cmdb.bindSrv(0, 0, BufferView(objBuff.get()));
+				cmdb.bindSrv(1, 0, BufferView(posBuff.get()));
+				cmdb.dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
 			}
 			else
 			{
-				cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kGeneralWork));
-				cmdb->bindShaderProgram(prog.get());
-				cmdb->bindUav(0, 0, BufferView(aabbsBuff.get()));
-				cmdb->bindSrv(0, 0, BufferView(objBuff.get()));
-				cmdb->bindSrv(1, 0, BufferView(posBuff.get()));
+				cmdb.bindShaderProgram(prog.get());
+				cmdb.bindUav(0, 0, BufferView(aabbsBuff.get()));
+				cmdb.bindSrv(0, 0, BufferView(objBuff.get()));
+				cmdb.bindSrv(1, 0, BufferView(posBuff.get()));
 
 				for(U32 iobj = 0; iobj < kObjectCount; ++iobj)
 				{
 					const UVec4 pc(iobj);
-					cmdb->setFastConstants(&pc, sizeof(pc));
+					cmdb.setFastConstants(&pc, sizeof(pc));
 
-					cmdb->dispatchCompute((objects[iobj].m_positionCount + kThreadCount - 1) / kThreadCount, 1, 1);
+					cmdb.dispatchCompute((objects[iobj].m_positionCount + kThreadCount - 1) / kThreadCount, 1, 1);
 				}
 			}
-
-			clearSwapchain(cmdb);
-
-			cmdb->endRecording();
-
-			const Second timeB = HighRezTimer::getCurrentTime();
-
-			FencePtr fence;
-			GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
-			fence->clientWait(kMaxSecond);
-
-			GrManager::getSingleton().swapBuffers();
-
-			const Second timeC = HighRezTimer::getCurrentTime();
-
-			printf("GPU time: %fms, cmdb build time: %fms\n", (timeC - timeB) * 1000.0, (timeB - timeA) * 1000.0);
-		}
+		});
 
 		// Check
 		DynamicArray<Aabb> aabbs;
@@ -517,16 +515,8 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 
 ANKI_TEST(Gr, WorkGraphsWorkDrain)
 {
-	const Bool bBenchmark = getenv("BENCHMARK") && CString(getenv("BENCHMARK")) == "1";
-
-	[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"WorkGraphs", "1"});
-
-	commonInit(!bBenchmark);
-
-	const Bool bWorkgraphs =
-		getenv("WORKGRAPHS") && CString(getenv("WORKGRAPHS")) == "1" && GrManager::getSingleton().getDeviceCapabilities().m_workGraphs;
-
-	ANKI_TEST_LOGI("Testing with BENCHMARK=%u WORKGRAPHS=%u", bBenchmark, bWorkgraphs);
+	Bool bBenchmark, bWorkgraphs;
+	commonInitWg(bBenchmark, bWorkgraphs);
 
 #define TEX_SIZE_X 4096u
 #define TEX_SIZE_Y 4096u
@@ -599,9 +589,7 @@ ANKI_TEST(Gr, WorkGraphsWorkDrain)
 
 		const U32 iterationsPerCmdb = (!bBenchmark) ? 1 : 100u;
 		const U32 iterationCount = (!bBenchmark) ? 1 : iterationsPerCmdb * 100;
-		F64 avgTimeMs = 0.0;
-		F64 avgCpuTimeMs = 0.0;
-		runBenchmark(iterationCount, iterationsPerCmdb, avgTimeMs, avgCpuTimeMs, [&](CommandBuffer& cmdb) {
+		runBenchmark(iterationCount, iterationsPerCmdb, bBenchmark, [&](CommandBuffer& cmdb) {
 			BufferBarrierInfo barr = {BufferView(tileMax.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
 			cmdb.setPipelineBarrier({}, {&barr, 1}, {});
 
@@ -638,11 +626,6 @@ ANKI_TEST(Gr, WorkGraphsWorkDrain)
 		});
 
 		validateBuffer2(finalMax, Vec4(1.1f, 2.06f, 3.88f, 1.0f));
-
-		if(bBenchmark)
-		{
-			ANKI_TEST_LOGI("Benchmark: avg GPU time: %fms, avg CPU time: %fms", avgTimeMs, avgCpuTimeMs);
-		}
 	}
 
 	commonDestroy();
@@ -650,16 +633,8 @@ ANKI_TEST(Gr, WorkGraphsWorkDrain)
 
 ANKI_TEST(Gr, WorkGraphsOverhead)
 {
-	const Bool bBenchmark = getenv("BENCHMARK") && CString(getenv("BENCHMARK")) == "1";
-
-	[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"WorkGraphs", "1"});
-
-	commonInit(!bBenchmark);
-
-	const Bool bWorkgraphs =
-		getenv("WORKGRAPHS") && CString(getenv("WORKGRAPHS")) == "1" && GrManager::getSingleton().getDeviceCapabilities().m_workGraphs;
-
-	ANKI_TEST_LOGI("Testing with BENCHMARK=%u WORKGRAPHS=%u", bBenchmark, bWorkgraphs);
+	Bool bBenchmark, bWorkgraphs;
+	commonInitWg(bBenchmark, bWorkgraphs);
 
 	constexpr U32 kMaxCandidates = 100 * 1024;
 
@@ -704,9 +679,7 @@ ANKI_TEST(Gr, WorkGraphsOverhead)
 
 		const U32 iterationsPerCmdb = (!bBenchmark) ? 1 : 100u;
 		const U32 iterationCount = (!bBenchmark) ? 1 : iterationsPerCmdb * 50;
-		F64 avgTimeMs = 0.0;
-		F64 avgCpuTimeMs = 0.0;
-		runBenchmark(iterationCount, iterationsPerCmdb, avgTimeMs, avgCpuTimeMs, [&](CommandBuffer& cmdb) {
+		runBenchmark(iterationCount, iterationsPerCmdb, bBenchmark, [&](CommandBuffer& cmdb) {
 			BufferBarrierInfo barr = {BufferView(primeNumbersBuff.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
 			cmdb.setPipelineBarrier({}, {&barr, 1}, {});
 
@@ -734,11 +707,6 @@ ANKI_TEST(Gr, WorkGraphsOverhead)
 				cmdb.dispatchCompute(kMaxCandidates, 1, 1);
 			}
 		});
-
-		if(bBenchmark)
-		{
-			ANKI_TEST_LOGI("Benchmark: avg GPU time: %fms, avg CPU time: %fms", avgTimeMs, avgCpuTimeMs);
-		}
 
 		DynamicArray<U32> values;
 		readBuffer(primeNumbersBuff, values);
@@ -782,6 +750,118 @@ ANKI_TEST(Gr, WorkGraphsOverhead)
 		{
 			ANKI_TEST_EXPECT_EQ(values[i], values2[i]);
 		}
+	}
+
+	commonDestroy();
+}
+
+ANKI_TEST(Gr, WorkGraphsJobManager)
+{
+	Bool bBenchmark, bWorkgraphs;
+	commonInitWg(bBenchmark, bWorkgraphs);
+
+	constexpr U32 kQueueRingBufferSize = 2 * 1024 * 1024;
+
+	{
+		// Create compute progs
+		ShaderProgramPtr compProg;
+		{
+			ShaderPtr shader =
+				loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/JobManager.hlsl", ShaderType::kCompute, Array<CString, 1>{"-DWORKGRAPHS=0"});
+			ShaderProgramInitInfo progInit;
+			progInit.m_computeShader = shader.get();
+			compProg = GrManager::getSingleton().newShaderProgram(progInit);
+		}
+
+		DynamicArray<U32> initialWorkItems;
+		U32 finalValue = 0;
+		{
+			initialWorkItems.resize(128 * 1024);
+			for(U32 i = 0; i < initialWorkItems.getSize(); ++i)
+			{
+				initialWorkItems[i] = ((rand() % 4) << 16) | 1;
+			}
+
+			DynamicArray<U32> initialWorkItems2 = initialWorkItems;
+			while(initialWorkItems2.getSize() > 0)
+			{
+				const U32 workItem = initialWorkItems2.getBack();
+				initialWorkItems2.popBack();
+				const U32 level = workItem >> 16u;
+				const U32 payload = workItem & 0xFFFFu;
+
+				if(level == 0)
+				{
+					finalValue += payload;
+				}
+				else
+				{
+					U32 newWorkItem = (level - 1) << 16u;
+					newWorkItem |= payload;
+
+					for(U32 i = 0; i < 4; ++i)
+					{
+						initialWorkItems2.emplaceBack(newWorkItem);
+					}
+				}
+			};
+		}
+
+		BufferPtr resultBuff = createBuffer<U32>(BufferUsageBit::kAllUav, 0u, 2);
+
+		BufferPtr queueRingBuff;
+		{
+			queueRingBuff = createBuffer<U32>(BufferUsageBit::kAllUav, 0u, kQueueRingBufferSize);
+
+			BufferPtr tempBuff = createBuffer<U32>(BufferUsageBit::kCopySource, initialWorkItems);
+
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo());
+			cmdb->copyBufferToBuffer(BufferView(tempBuff.get(), 0, initialWorkItems.getSizeInBytes()),
+									 BufferView(queueRingBuff.get(), 0, initialWorkItems.getSizeInBytes()));
+			cmdb->endRecording();
+
+			FencePtr fence;
+			GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+
+			ANKI_TEST_EXPECT_EQ(fence->clientWait(kMaxSecond), true);
+		}
+
+		BufferPtr queueBuff;
+		{
+			struct Queue
+			{
+				U32 m_spinlock;
+				U32 m_head;
+				U32 m_tail;
+				U32 m_ringBufferSize;
+				U32 m_pendingWork;
+			};
+
+			Queue q = {};
+			q.m_head = initialWorkItems.getSize();
+			q.m_ringBufferSize = kQueueRingBufferSize;
+
+			queueBuff = createBuffer(BufferUsageBit::kAllUav, q, 1);
+		}
+
+		const U32 iterationsPerCmdb = 1;
+		const U32 iterationCount = 1;
+		runBenchmark(iterationCount, iterationsPerCmdb, bBenchmark, [&](CommandBuffer& cmdb) {
+			if(!bWorkgraphs)
+			{
+				cmdb.bindShaderProgram(compProg.get());
+
+				cmdb.bindUav(0, 0, BufferView(queueBuff.get()));
+				cmdb.bindUav(1, 0, BufferView(queueRingBuff.get()));
+				cmdb.bindUav(2, 0, BufferView(resultBuff.get()));
+
+				cmdb.dispatchCompute(256, 1, 1);
+			}
+		});
+
+		DynamicArray<U32> result;
+		readBuffer(resultBuff, result);
+		printf("vals_equal:%u failed:%u total_workitems:%u\n", result[0] == finalValue, result[1], finalValue);
 	}
 
 	commonDestroy();
