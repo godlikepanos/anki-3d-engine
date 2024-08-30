@@ -26,7 +26,6 @@ struct Queue
 	uint m_spinlock;
 	uint m_head;
 	uint m_tail;
-	uint m_ringBufferSize;
 	uint m_pendingWork;
 };
 
@@ -34,6 +33,18 @@ globallycoherent RWStructuredBuffer<Queue> g_queue : register(u0);
 globallycoherent RWStructuredBuffer<uint> g_ringBuffer : register(u1);
 
 RWStructuredBuffer<uint> g_finalResult : register(u2);
+
+struct Consts
+{
+	uint m_ringBufferSize;
+	uint m_padding[3];
+};
+
+#if defined(__spirv__)
+[[vk::push_constant]] ConstantBuffer<Consts> g_consts;
+#else
+ConstantBuffer<Consts> g_consts : register(b0, space3000);
+#endif
 
 groupshared uint g_inWorkItems[NUMTHREADS];
 groupshared uint g_inWorkItemCount;
@@ -57,7 +68,7 @@ groupshared uint g_outWorkItemCount;
 
 			for(uint it = 0; it < workItemCount; ++it)
 			{
-				g_inWorkItems[it] = g_ringBuffer[(g_queue[0].m_tail + it) % g_queue[0].m_ringBufferSize];
+				g_inWorkItems[it] = g_ringBuffer[(g_queue[0].m_tail + it) & (g_consts.m_ringBufferSize - 1u)];
 			}
 
 			g_inWorkItemCount = workItemCount;
@@ -116,13 +127,13 @@ groupshared uint g_outWorkItemCount;
 			{
 				LOCK(g_queue[0].m_spinlock);
 
-				const bool full = (g_queue[0].m_head - g_queue[0].m_tail) + g_outWorkItemCount >= g_queue[0].m_ringBufferSize;
+				const bool full = (g_queue[0].m_head - g_queue[0].m_tail) + g_outWorkItemCount >= g_consts.m_ringBufferSize;
 				success = !full;
 				if(success)
 				{
 					for(uint i = 0; i < g_outWorkItemCount; ++i)
 					{
-						g_ringBuffer[(g_queue[0].m_head + i) % g_queue[0].m_ringBufferSize] = g_outWorkItems[i];
+						g_ringBuffer[(g_queue[0].m_head + i) & (g_consts.m_ringBufferSize - 1u)] = g_outWorkItems[i];
 					}
 
 					g_queue[0].m_head += g_outWorkItemCount;

@@ -760,7 +760,7 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 	Bool bBenchmark, bWorkgraphs;
 	commonInitWg(bBenchmark, bWorkgraphs);
 
-	constexpr U32 kQueueRingBufferSize = 2 * 1024 * 1024;
+	const U32 queueRingBufferSize = nextPowerOfTwo(2 * 1024 * 1024);
 
 	{
 		// Create compute progs
@@ -779,7 +779,10 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 			initialWorkItems.resize(128 * 1024);
 			for(U32 i = 0; i < initialWorkItems.getSize(); ++i)
 			{
-				initialWorkItems[i] = ((rand() % 4) << 16) | 1;
+				const U32 level = (bBenchmark) ? i : (rand() % 4);
+				const U32 payload = (bBenchmark) ? 1 : (rand() % 4);
+
+				initialWorkItems[i] = (level << 16) | payload;
 			}
 
 			DynamicArray<U32> initialWorkItems2 = initialWorkItems;
@@ -811,7 +814,7 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 
 		BufferPtr queueRingBuff;
 		{
-			queueRingBuff = createBuffer<U32>(BufferUsageBit::kAllUav, 0u, kQueueRingBufferSize);
+			queueRingBuff = createBuffer<U32>(BufferUsageBit::kAllUav, 0u, queueRingBufferSize);
 
 			BufferPtr tempBuff = createBuffer<U32>(BufferUsageBit::kCopySource, initialWorkItems);
 
@@ -833,13 +836,11 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 				U32 m_spinlock;
 				U32 m_head;
 				U32 m_tail;
-				U32 m_ringBufferSize;
 				U32 m_pendingWork;
 			};
 
 			Queue q = {};
 			q.m_head = initialWorkItems.getSize();
-			q.m_ringBufferSize = kQueueRingBufferSize;
 
 			queueBuff = createBuffer(BufferUsageBit::kAllUav, q, 1);
 		}
@@ -854,6 +855,8 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 				cmdb.bindUav(0, 0, BufferView(queueBuff.get()));
 				cmdb.bindUav(1, 0, BufferView(queueRingBuff.get()));
 				cmdb.bindUav(2, 0, BufferView(resultBuff.get()));
+				UVec4 consts(queueRingBufferSize);
+				cmdb.setFastConstants(&consts, sizeof(consts));
 
 				cmdb.dispatchCompute(256, 1, 1);
 			}
