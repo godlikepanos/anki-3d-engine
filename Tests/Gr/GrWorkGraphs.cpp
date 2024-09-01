@@ -775,11 +775,12 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 
 		DynamicArray<U32> initialWorkItems;
 		U32 finalValue = 0;
+		U32 workItemCount = 0;
 		{
 			initialWorkItems.resize(128 * 1024);
 			for(U32 i = 0; i < initialWorkItems.getSize(); ++i)
 			{
-				const U32 level = (bBenchmark) ? i : (rand() % 4);
+				const U32 level = ((bBenchmark) ? i : rand()) % 4;
 				const U32 payload = (bBenchmark) ? 1 : (rand() % 4);
 
 				initialWorkItems[i] = (level << 16) | payload;
@@ -792,6 +793,8 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 				initialWorkItems2.popBack();
 				const U32 level = workItem >> 16u;
 				const U32 payload = workItem & 0xFFFFu;
+
+				++workItemCount;
 
 				if(level == 0)
 				{
@@ -845,6 +848,8 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 			queueBuff = createBuffer(BufferUsageBit::kAllUav, q, 1);
 		}
 
+		ANKI_TEST_LOGI("Init complete");
+
 		const U32 iterationsPerCmdb = 1;
 		const U32 iterationCount = 1;
 		runBenchmark(iterationCount, iterationsPerCmdb, bBenchmark, [&](CommandBuffer& cmdb) {
@@ -855,7 +860,7 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 				cmdb.bindUav(0, 0, BufferView(queueBuff.get()));
 				cmdb.bindUav(1, 0, BufferView(queueRingBuff.get()));
 				cmdb.bindUav(2, 0, BufferView(resultBuff.get()));
-				UVec4 consts(queueRingBufferSize);
+				UVec4 consts(queueRingBufferSize - 1);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
 				cmdb.dispatchCompute(256, 1, 1);
@@ -864,7 +869,8 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 
 		DynamicArray<U32> result;
 		readBuffer(resultBuff, result);
-		printf("vals_equal:%u failed:%u total_workitems:%u\n", result[0] == finalValue, result[1], finalValue);
+		ANKI_TEST_EXPECT_EQ(result[0], finalValue);
+		ANKI_TEST_EXPECT_EQ(result[1], 0);
 	}
 
 	commonDestroy();

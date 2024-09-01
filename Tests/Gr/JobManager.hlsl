@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #define LOCK(spinlock) \
-	for(uint keepWaiting__ = true; keepWaiting__;) \
+	for(bool keepWaiting__ = true; keepWaiting__;) \
 	{ \
 		uint locked__; \
 		InterlockedCompareExchange(spinlock, 0, 1, locked__); \
@@ -18,7 +18,7 @@
 	} \
 	}
 
-#define NUMTHREADS 64
+#define NUMTHREADS 128
 #define MAX_CHILDREN 4
 
 struct Queue
@@ -36,7 +36,7 @@ RWStructuredBuffer<uint> g_finalResult : register(u2);
 
 struct Consts
 {
-	uint m_ringBufferSize;
+	uint m_ringBufferSizeMinusOne;
 	uint m_padding[3];
 };
 
@@ -53,33 +53,86 @@ groupshared bool g_bNoMoreWork;
 groupshared uint g_outWorkItems[NUMTHREADS * MAX_CHILDREN];
 groupshared uint g_outWorkItemCount;
 
+static const int kMashPushTries = 1000;
+
 [numthreads(NUMTHREADS, 1, 1)] void main(uint svGroupIndex : SV_GroupIndex)
 {
+	if(svGroupIndex == 0)
+	{
+		g_inWorkItemCount = 0;
+		g_outWorkItemCount = 0;
+	}
+
 	while(true)
 	{
 		GroupMemoryBarrierWithGroupSync();
 
-		// Dequeue work
 		if(svGroupIndex == 0)
 		{
-			LOCK(g_queue[0].m_spinlock);
-
-			const uint workItemCount = min(NUMTHREADS, g_queue[0].m_head - g_queue[0].m_tail);
-
-			for(uint it = 0; it < workItemCount; ++it)
+			bool pushSuccessful = true;
+			int iterationCount = kMashPushTries;
+			const uint oldInWorkItemCount = g_inWorkItemCount;
+			const uint outWorkItemCount = g_outWorkItemCount;
+			do
 			{
-				g_inWorkItems[it] = g_ringBuffer[(g_queue[0].m_tail + it) & (g_consts.m_ringBufferSize - 1u)];
+				LOCK(g_queue[0].m_spinlock);
+
+				// Touch groupshared as little as possible
+				uint head = g_queue[0].m_head;
+				uint tail = g_queue[0].m_tail;
+				uint pendingWork = g_queue[0].m_pendingWork;
+
+				// Dequeue work
+				if(iterationCount == kMashPushTries)
+				{
+					const uint workItemCount = min(NUMTHREADS, head - tail);
+
+					for(uint it = 0; it < workItemCount; ++it)
+					{
+						g_inWorkItems[it] = g_ringBuffer[(tail + it) & g_consts.m_ringBufferSizeMinusOne];
+					}
+
+					pendingWork += workItemCount;
+					g_inWorkItemCount = workItemCount;
+					tail += workItemCount;
+				}
+
+				// Push work
+				if(outWorkItemCount > 0)
+				{
+					const bool full = (head - tail) + outWorkItemCount >= (g_consts.m_ringBufferSizeMinusOne + 1);
+					pushSuccessful = !full;
+					if(pushSuccessful)
+					{
+						for(uint i = 0; i < outWorkItemCount; ++i)
+						{
+							g_ringBuffer[(head + i) & g_consts.m_ringBufferSizeMinusOne] = g_outWorkItems[i];
+						}
+
+						head += outWorkItemCount;
+						g_outWorkItemCount = 0;
+					}
+				}
+
+				if(pushSuccessful)
+				{
+					pendingWork -= oldInWorkItemCount;
+					g_bNoMoreWork = pendingWork == 0;
+				}
+
+				// Restore mem
+				g_queue[0].m_head = head;
+				g_queue[0].m_tail = tail;
+				g_queue[0].m_pendingWork = pendingWork;
+
+				UNLOCK(g_queue[0].m_spinlock);
+			} while(!pushSuccessful && (iterationCount-- > 0));
+
+			if(!pushSuccessful)
+			{
+				InterlockedAdd(g_finalResult[1], 1);
+				g_bNoMoreWork = true;
 			}
-
-			g_inWorkItemCount = workItemCount;
-			g_queue[0].m_tail += workItemCount;
-			g_queue[0].m_pendingWork += workItemCount;
-
-			g_bNoMoreWork = g_queue[0].m_pendingWork == 0;
-
-			UNLOCK(g_queue[0].m_spinlock);
-
-			g_outWorkItemCount = 0;
 		}
 
 		GroupMemoryBarrierWithGroupSync();
@@ -113,39 +166,6 @@ groupshared uint g_outWorkItemCount;
 				{
 					g_outWorkItems[slot + i] = newWorkItem;
 				}
-			}
-		}
-
-		GroupMemoryBarrierWithGroupSync();
-
-		// Push new work
-		if(svGroupIndex == 0)
-		{
-			bool success = true;
-			int iterationCount = 1000;
-			do
-			{
-				LOCK(g_queue[0].m_spinlock);
-
-				const bool full = (g_queue[0].m_head - g_queue[0].m_tail) + g_outWorkItemCount >= g_consts.m_ringBufferSize;
-				success = !full;
-				if(success)
-				{
-					for(uint i = 0; i < g_outWorkItemCount; ++i)
-					{
-						g_ringBuffer[(g_queue[0].m_head + i) & (g_consts.m_ringBufferSize - 1u)] = g_outWorkItems[i];
-					}
-
-					g_queue[0].m_head += g_outWorkItemCount;
-					g_queue[0].m_pendingWork -= g_inWorkItemCount;
-				}
-
-				UNLOCK(g_queue[0].m_spinlock);
-			} while(!success && (iterationCount-- > 0));
-
-			if(iterationCount <= 0)
-			{
-				InterlockedAdd(g_finalResult[1], 1);
 			}
 		}
 	}
