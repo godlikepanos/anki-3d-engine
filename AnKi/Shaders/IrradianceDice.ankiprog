@@ -46,14 +46,13 @@ RWStructuredBuffer<BufferOut> g_irradianceDisceResults : register(u0);
 #endif
 
 constexpr U32 kMinWaveSize = 8u;
-groupshared Vec3 s_integrationResults[6u][kThreadgroupSize / kMinWaveSize];
+groupshared Vec3 s_integrationResults[6u][kThreadgroupSize / kMinWaveSize]; // In cube coords
 groupshared U32 s_waveIndexInsideThreadGroup;
 
 RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 {
 	const Vec2 uv = (Vec2(svGroupThreadId.x, svGroupThreadId.y) + 0.5) / F32(THREDGROUP_SIZE_SQRT);
-	const Vec2 ndc = uvToNdc(uv);
-	const Vec3 cubeUvw = getCubemapDirection(ndc, face);
+	const Vec3 cubeUvw = getCubemapDirection(uv, face);
 
 	return g_lightShadingTexCube.SampleLevel(g_nearestAnyClampSampler, cubeUvw, 0.0).rgb;
 }
@@ -67,21 +66,20 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 
 	// Compute the NDC used in cubeCoordSolidAngle
 	const Vec2 faceUv = (Vec2(svGroupThreadId.xy) + 0.5) / threadgroupSizeSqrtf;
-	const Vec2 ndc = uvToNdc(faceUv);
 
 	// Compute result for a pixel
 	Vec3 resultFaces[6u];
 	for(U32 f = 0u; f < 6u; ++f)
 	{
 		// Get the direction of the dice face
-		const Vec3 diceDir = getCubemapDirection(Vec2(0.0, 0.0), f);
+		const Vec3 diceDir = getCubemapDirection(0.5, f) * Vec3(1.0, 1.0, -1.0);
 
-		const Vec3 r = getCubemapDirection(ndc, f);
+		const Vec3 r = getCubemapDirection(faceUv, f) * Vec3(1.0, 1.0, -1.0);
 
 		// Compute integral part
 		const RF32 lambert = max(0.0, dot(r, diceDir));
 		const RVec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
-		const RVec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, threadgroupSizeSqrtf);
+		const RVec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(uvToNdc(faceUv), threadgroupSizeSqrtf);
 
 		// Store
 		resultFaces[f] = irradiance;
@@ -122,15 +120,15 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 	for(U32 f = 0u; f < 6u; ++f)
 	{
 		// Get the direction of the dice face
-		const Vec3 diceDir = getCubemapDirection(Vec2(0.0, 0.0), f);
+		const Vec3 diceDir = getCubemapDirection(0.5, f) * Vec3(1.0, 1.0, -1.0);
 
-		const Vec3 r = getCubemapDirection(ndc, f);
+		const Vec3 r = getCubemapDirection(faceUv, f) * Vec3(1.0, 1.0, -1.0);
 
 		// Compute integral part
 		const RF32 lambert = max(0.0, dot(r, diceDir));
 
 		// Read the gbuffer
-		const Vec3 gbufferUv = getCubemapDirection(ndc, f);
+		const Vec3 gbufferUv = getCubemapDirection(faceUv, f);
 		GbufferInfo gbuffer = (GbufferInfo)0;
 		unpackGBufferNoVelocity(g_gbufferTex[0u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0),
 								g_gbufferTex[1u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0),
@@ -139,12 +137,12 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 		// Sample irradiance
 		RVec3 firstBounceIrradiance =
 			sampleAmbientDice(s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0], s_integrationResults[3][0],
-							  s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal);
+							  s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce
 		const RVec3 lightShading = sampleLightShadingTexture(f, svGroupThreadId);
-		const RVec3 irradiance = (firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, threadgroupSizeSqrtf);
+		const RVec3 irradiance = (firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(uvToNdc(faceUv), threadgroupSizeSqrtf);
 
 		// Store
 		resultFaces[f] = irradiance;

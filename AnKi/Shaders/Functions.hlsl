@@ -225,9 +225,16 @@ Vec4 bilateralUpsample(Texture2D depthHigh, Texture2D depthLow, Texture2D colorL
 	return sum / normalize;
 }
 
-/// Compute the UV that can be passed to a cube texture. The norm is in [-1, 1].
-Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
+/// Compute the UV that can be passed to a cube texture.
+/// (0.5, 0) returns {1, 0, 0}
+/// (0.5, 1) returns {-1, 0, 0}
+/// (0.5, 2) returns {0, 1, 0}
+/// (0.5, 3) returns {0, -1, 0}
+/// (0.5, 4) returns {0, 0, 1}
+/// (0.5, 5) returns {0, 0, -1}
+Vec3 getCubemapDirection(const Vec2 uv, const U32 faceIdx)
 {
+	const Vec2 norm = uv * 2.0 - 1.0;
 	Vec3 zDir = Vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);
 	zDir *= (((faceIdx & 1u) == 1u) ? -1.0 : 1.0);
 	const Vec3 yDir = (faceIdx == 2u) ? Vec3(0.0, 0.0, 1.0) : (faceIdx == 3u) ? Vec3(0.0, 0.0, -1.0) : Vec3(0.0, -1.0, 0.0);
@@ -235,62 +242,44 @@ Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 	return normalize(norm.x * xDir + norm.y * yDir + zDir);
 }
 
-// Convert 3D cubemap coordinates to 2D plus face index. v doesn't need to be normalized.
-Vec2 convertCubeUvs(const Vec3 v, out F32 faceIndex)
+/// Convert 3D cubemap coordinates to 2D plus face index. vec doesn't need to be normalized. It's the opposite of getCubemapDirection.
+/// This is the exact same thing AMD is doing (v_cubeid and co) with a small difference. AMD for some reason adds 1.5 to the final result instead of
+/// 0.5.
+template<typename T>
+Vec2 convertCubeUvs(const Vec3 vec, out T faceIndex)
 {
-	const Vec3 absV = abs(v);
-	F32 mag;
-	Vec2 uv;
+	F32 u, v;
+	const F32 x = vec.x;
+	const F32 y = vec.y;
+	const F32 z = vec.z;
+	const F32 ax = abs(vec.x);
+	const F32 ay = abs(vec.y);
+	const F32 az = abs(vec.z);
+	F32 major;
 
-	if(absV.z >= absV.x && absV.z >= absV.y)
+	if(az >= ax && az >= ay)
 	{
-		faceIndex = (v.z < 0.0) ? 5.0 : 4.0;
-		uv = Vec2((v.z < 0.0) ? -v.x : v.x, -v.y);
-		mag = absV.z;
+		major = az;
+		u = (z < 0.0f) ? -x : x;
+		v = -y;
+		faceIndex = (z < 0.0f) ? (T)5 : (T)4;
 	}
-	else if(absV.y >= absV.x)
+	else if(ay >= ax)
 	{
-		faceIndex = (v.y < 0.0) ? 3.0 : 2.0;
-		uv = Vec2(v.x, (v.y < 0.0) ? -v.z : v.z);
-		mag = absV.y;
+		major = ay;
+		u = x;
+		v = (y < 0.0f) ? -z : z;
+		faceIndex = (y < 0.0f) ? (T)3 : (T)2;
 	}
 	else
 	{
-		faceIndex = (v.x < 0.0) ? 1.0 : 0.0;
-		uv = Vec2((v.x < 0.0) ? v.z : -v.z, -v.y);
-		mag = absV.x;
+		major = ax;
+		u = (x < 0.0f) ? z : -z;
+		v = -y;
+		faceIndex = (x < 0.0f) ? (T)1 : (T)0;
 	}
 
-	return 0.5 / mag * uv + 0.5;
-}
-
-// Same as convertCubeUvs but it returns the faceIndex as unsigned I32.
-Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
-{
-	const Vec3 absV = abs(v);
-	F32 mag;
-	Vec2 uv;
-
-	if(absV.z >= absV.x && absV.z >= absV.y)
-	{
-		faceIndex = (v.z < 0.0) ? 5u : 4u;
-		uv = Vec2((v.z < 0.0) ? -v.x : v.x, -v.y);
-		mag = absV.z;
-	}
-	else if(absV.y >= absV.x)
-	{
-		faceIndex = (v.y < 0.0) ? 3u : 2u;
-		uv = Vec2(v.x, (v.y < 0.0) ? -v.z : v.z);
-		mag = absV.y;
-	}
-	else
-	{
-		faceIndex = (v.x < 0.0) ? 1u : 0u;
-		uv = Vec2((v.x < 0.0) ? v.z : -v.z, -v.y);
-		mag = absV.x;
-	}
-
-	return 0.5 / mag * uv + 0.5;
+	return Vec2(u, v) / (major * 2.0f) + 0.5f;
 }
 
 template<typename T>
@@ -703,6 +692,7 @@ vector<T, 3> filmGrain(vector<T, 3> color, Vec2 uv, T strength, F32 time)
 
 /// Perturb normal, see http://www.thetenthplanet.de/archives/1180
 /// Does normal mapping in the fragment shader. It assumes that green is up. viewDir and geometricNormal need to be in the same space.
+/// viewDir is the -(eye - vertexPos)
 RVec3 perturbNormal(RVec3 tangentNormal, Vec3 viewDir, Vec2 uv, Vec3 geometricNormal)
 {
 	tangentNormal.y = -tangentNormal.y; // Green is up

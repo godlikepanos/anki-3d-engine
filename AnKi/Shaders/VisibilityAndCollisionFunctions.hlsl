@@ -225,8 +225,11 @@ Bool cullHzb(Vec2 aabbMinNdc, Vec2 aabbMaxNdc, F32 aabbMinDepth, Texture2D<Vec4>
 	F32 mipCount;
 	hzb.GetDimensions(0, texSize.x, texSize.y, mipCount);
 
-	const Vec2 minUv = saturate(ndcToUv(aabbMinNdc));
-	const Vec2 maxUv = saturate(ndcToUv(aabbMaxNdc));
+	const Vec2 uva = saturate(ndcToUv(aabbMinNdc));
+	const Vec2 uvb = saturate(ndcToUv(aabbMaxNdc));
+
+	const Vec2 minUv = Vec2(uva.x, uvb.y);
+	const Vec2 maxUv = Vec2(uvb.x, uva.y);
 	const Vec2 sizeXY = (maxUv - minUv) * texSize;
 	F32 mip = ceil(log2(max(sizeXY.x, sizeXY.y)));
 

@@ -33,6 +33,8 @@ U32 Texture::getOrCreateBindlessTextureIndex(const TextureSubresourceDesc& subre
 	if(view.m_bindlessIndex == kMaxU32)
 	{
 		view.m_bindlessHandle = DescriptorFactory::getSingleton().allocatePersistent(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+		getDevice().CopyDescriptorsSimple(1, view.m_bindlessHandle.getCpuOffset(), view.m_handle.getCpuOffset(),
+										  D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		view.m_bindlessIndex = DescriptorFactory::getSingleton().getBindlessIndex(view.m_bindlessHandle);
 	}
 

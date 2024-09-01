@@ -59,10 +59,6 @@
 #define SW_MESHLETS (ANKI_TECHNIQUE_GBufferSwMeshletRendering || ANKI_TECHNIQUE_ShadowsSwMeshletRendering)
 
 #define VISUALIZE_MESHLETS (0 && GBUFFER)
-#define MESHLET_BACKFACE_CULLING 0
-#define MESHLET_OUTSIDE_OF_SCREEN_CULLING 1
-#define MESHLET_NO_SAMPLING_POINT_CULLING 1
-#define MESHLET_HZB_CULLING 1
 #define PRIMITIVE_BACKFACE_CULLING 1
 #define PRIMITIVE_NO_SAMPLING_POINTS_CULLING 1
 #define PRIMITIVE_ANY_CULLING (PRIMITIVE_BACKFACE_CULLING || PRIMITIVE_NO_SAMPLING_POINTS_CULLING)
@@ -414,7 +410,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 			const Vec2 eb = c - a;
 			const Vec2 ec = b - a;
 
-			cull = cull || (eb.x * ec.y >= eb.y * ec.x);
+			cull = cull || (eb.x * ec.y < eb.y * ec.x);
 #	endif
 
 #	if PRIMITIVE_NO_SAMPLING_POINTS_CULLING
@@ -537,7 +533,7 @@ PixelOut main(
 
 #		if NORMAL_TEX
 	const RVec3 nAtTangentspace = normalize((BINDLESS(localConstants.m_normalTex).Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
-	const Vec3 viewDir = normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
+	const Vec3 viewDir = -normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
 	const RVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertInput.m_normal));
 #		else
 	const RVec3 normal = normalize(vertInput.m_normal);

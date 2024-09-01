@@ -440,6 +440,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 
 		const U kIterationCount = 100;
 		U iterations = kIterationCount;
+		const Vec4 viewport(10.0f, 10.0f, F32(NativeWindow::getSingleton().getWidth() - 20), F32(NativeWindow::getSingleton().getHeight() - 30));
 		while(iterations--)
 		{
 			HighRezTimer timer;
@@ -451,7 +452,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 			cinit.m_flags = CommandBufferFlag::kGeneralWork;
 			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cinit);
 
-			cmdb->setViewport(0, 0, NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
+			cmdb->setViewport(U32(viewport.x()), U32(viewport.y()), U32(viewport.z()), U32(viewport.w()));
 			cmdb->bindShaderProgram(prog.get());
 
 			const TextureBarrierInfo barrier = {TextureView(presentTex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
@@ -460,7 +461,6 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 
 			cmdb->beginRenderPass({TextureView(presentTex.get(), TextureSubresourceDesc::firstSurface())});
 
-			const Vec4 viewport(0.0f, 0.0f, F32(NativeWindow::getSingleton().getWidth()), F32(NativeWindow::getSingleton().getHeight()));
 			cmdb->setFastConstants(&viewport, sizeof(viewport));
 
 			cmdb->bindSrv(0, 0, TextureView(tex.get(), TextureSubresourceDesc::all()));

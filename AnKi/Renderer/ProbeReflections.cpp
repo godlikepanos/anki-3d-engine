@@ -385,7 +385,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				dsInfo.m_viewport = UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 				dsInfo.m_effectiveShadowDistance = probeToRefresh->getShadowsRenderRadius();
 
-				const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+				const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 				dsInfo.m_dirLightMatrix = biasMat4 * cascadeViewProjMat;
 
 				dsInfo.m_visibleLightsBuffer = visResult;

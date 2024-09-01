@@ -23,7 +23,7 @@ RWTexture2D<RVec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is
 	const UVec2 dispatchThreadId = min(svDispatchThreadId.xy, cubeSizeu - 1u);
 
 	const Vec2 uv = (Vec2(dispatchThreadId) + 0.5) / Vec2(cubeSize);
-	const Vec3 sampleUv = getCubemapDirection(uvToNdc(uv), faceIdx);
+	const Vec3 sampleUv = getCubemapDirection(uv, faceIdx);
 
 	// Read the gbuffer
 	GbufferInfo gbuffer = (GbufferInfo)0;
@@ -33,7 +33,7 @@ RWTexture2D<RVec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is
 
 	// Sample
 	const RVec3 irradiance = sampleAmbientDice(g_irradianceDice[0u].xyz, g_irradianceDice[1u].xyz, g_irradianceDice[2u].xyz, g_irradianceDice[3u].xyz,
-											   g_irradianceDice[4u].xyz, g_irradianceDice[5u].xyz, gbuffer.m_normal);
+											   g_irradianceDice[4u].xyz, g_irradianceDice[5u].xyz, gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
 
 	// Compute the indirect term
 	const RVec3 indirect = gbuffer.m_diffuse * irradiance;

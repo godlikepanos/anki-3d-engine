@@ -75,7 +75,8 @@ Vec3 getValFromTLut(Texture2D<Vec4> tex, SamplerState linearAnyClampSampler, Vec
 	const F32 height = length(pos);
 	const Vec3 up = pos / height;
 	const F32 sunCosZenithAngle = dot(dirToSun, up);
-	const Vec2 uv = Vec2(saturate(0.5f + 0.5f * sunCosZenithAngle), saturate((height - kGroundRadiusMM) / (kAtmosphereRadiusMM - kGroundRadiusMM)));
+	const Vec2 uv =
+		Vec2(saturate(0.5f + 0.5f * sunCosZenithAngle), 1.0 - saturate((height - kGroundRadiusMM) / (kAtmosphereRadiusMM - kGroundRadiusMM)));
 	return tex.SampleLevel(linearAnyClampSampler, uv, 0.0f).xyz;
 }
 
@@ -86,7 +87,7 @@ Vec3 getValFromTLut(Texture2D<Vec4> tex, Vec3 pos, Vec3 dirToSun)
 	const Vec3 up = pos / height;
 	const F32 sunCosZenithAngle = dot(dirToSun, up);
 
-	const Vec2 uv = Vec2(0.5f + 0.5f * sunCosZenithAngle, (height - kGroundRadiusMM) / (kAtmosphereRadiusMM - kGroundRadiusMM));
+	const Vec2 uv = Vec2(0.5f + 0.5f * sunCosZenithAngle, 1.0 - (height - kGroundRadiusMM) / (kAtmosphereRadiusMM - kGroundRadiusMM));
 
 	Vec2 texSize;
 	tex.GetDimensions(texSize.x, texSize.y);
@@ -100,7 +101,8 @@ Vec3 getValFromMultiScattLut(Texture2D<Vec4> tex, SamplerState linearAnyClampSam
 	const F32 height = length(pos);
 	const Vec3 up = pos / height;
 	const F32 sunCosZenithAngle = dot(dirToSun, up);
-	const Vec2 uv = Vec2(saturate(0.5 + 0.5 * sunCosZenithAngle), saturate((height - kGroundRadiusMM) / (kAtmosphereRadiusMM - kGroundRadiusMM)));
+	const Vec2 uv =
+		Vec2(saturate(0.5 + 0.5 * sunCosZenithAngle), 1.0 - saturate((height - kGroundRadiusMM) / (kAtmosphereRadiusMM - kGroundRadiusMM)));
 	return tex.SampleLevel(linearAnyClampSampler, uv, 0.0f).xyz;
 }
 
@@ -181,7 +183,7 @@ Vec3 getSunTransmittance(Vec3 pos, Vec3 dirToSun)
 
 	const F32 sunCosTheta = 2.0f * uv.x - 1.0f;
 	const F32 sunTheta = safeacos(sunCosTheta);
-	const F32 height = lerp(kGroundRadiusMM, kAtmosphereRadiusMM, uv.y);
+	const F32 height = lerp(kGroundRadiusMM, kAtmosphereRadiusMM, 1.0 - uv.y);
 
 	const Vec3 pos = Vec3(0.0f, height, 0.0f);
 	const Vec3 dirToSun = normalize(Vec3(0.0f, sunCosTheta, -sin(sunTheta)));
@@ -301,7 +303,7 @@ void getMulScattValues(Vec3 pos, Vec3 dirToSun, out Vec3 lumTotal, out Vec3 fms)
 
 	const F32 sunCosTheta = 2.0f * uv.x - 1.0f;
 	const F32 sunTheta = safeacos(sunCosTheta);
-	const F32 height = lerp(kGroundRadiusMM, kAtmosphereRadiusMM, uv.y);
+	const F32 height = lerp(kGroundRadiusMM, kAtmosphereRadiusMM, 1.0 - uv.y);
 
 	const Vec3 pos = Vec3(0.0f, height, 0.0f);
 	const Vec3 dirToSun = normalize(Vec3(0.0f, sunCosTheta, -sin(sunTheta)));
@@ -378,7 +380,8 @@ Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numS
 	Vec2 lutSize;
 	g_skyLutStorageTex.GetDimensions(lutSize.x, lutSize.y);
 
-	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / lutSize;
+	Vec2 uv = (Vec2(svDispatchThreadId) + 0.5f) / lutSize;
+	uv.y = 1.0f - uv.y;
 
 	const F32 azimuthAngle = (uv.x - 0.5f) * 2.0f * kPi;
 	// Non-linear mapping of altitude. See Section 5.3 of the paper.

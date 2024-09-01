@@ -113,7 +113,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 			init.m_format = Format::kR8G8B8_Unorm;
 			break;
 		case ImageBinaryDataCompression::kS3tc:
-			init.m_format = Format::kBC1_Rgb_Unorm_Block;
+			init.m_format = Format::kBC1_Rgba_Unorm_Block;
 			break;
 		case ImageBinaryDataCompression::kAstc:
 			if(loader.getAstcBlockSize() == UVec2(4u))

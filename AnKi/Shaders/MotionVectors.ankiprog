@@ -10,8 +10,6 @@
 #if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 
-constexpr F32 kMaxRejectionDistance = 0.1; // In meters
-
 SamplerState g_nearesetAnyClampSampler : register(s0);
 Texture2D g_currentDepthTex : register(t0);
 Texture2D g_velocityTex : register(t1);
@@ -69,7 +67,7 @@ PixelOut main(VertOut input)
 		Vec4 prevClipPos = mul(g_consts.m_prevViewProjMat, Vec4(worldPos, 1.0));
 		prevClipPos.xy /= prevClipPos.w;
 
-		const Vec2 diff = (prevClipPos.xy - clipPos.xy) * 0.5f; // aka uvToNdc(prevClipPos.xy) - uvToNdc(clipPos.xy)
+		const Vec2 diff = ndcToUv(prevClipPos.xy) - ndcToUv(clipPos.xy);
 		historyUv = uv + diff;
 	}
 

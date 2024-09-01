@@ -8,12 +8,12 @@
 
 namespace anki {
 
-Array<Mat3x4, 6> Frustum::m_omnidirectionalRotations = {Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
-														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
-														Mat3x4(Vec3(0.0f), Mat3(Euler(kPi / 2.0f, 0.0f, 0.0f))),
-														Mat3x4(Vec3(0.0f), Mat3(Euler(-kPi / 2.0f, 0.0f, 0.0f))),
-														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi, 0.0f)) * Mat3(Euler(0.0f, 0.0f, kPi))),
-														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, 0.0f, kPi)))};
+Array<Mat3x4, 6> Frustum::m_omnidirectionalRotations = {Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, -kPi / 2.0f, 0.0f))), // +x
+														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi / 2.0f, 0.0f))), // -x
+														Mat3x4(Vec3(0.0f), Mat3(Euler(kPi / 2.0f, 0.0f, 0.0f))), // +y
+														Mat3x4(Vec3(0.0f), Mat3(Euler(-kPi / 2.0f, 0.0f, 0.0f))), // -y
+														Mat3x4(Vec3(0.0f), Mat3::getIdentity()), // -z
+														Mat3x4(Vec3(0.0f), Mat3(Euler(0.0f, kPi, 0.0f)))}; // +z
 
 Frustum::Frustum()
 {

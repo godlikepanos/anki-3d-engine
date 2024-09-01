@@ -201,6 +201,28 @@ inline void alignRoundDown(TAlignment alignment, TValue& value)
 	value = getAlignedRoundDown(alignment, value);
 }
 
+/// Given two alignments compute a new alignment that satisfies both
+template<typename T>
+T computeCompoundAlignment(const T alignment1, const T alignment2)
+{
+	ANKI_ASSERT(alignment1 && alignment2);
+
+	// Compute greatest common divisor
+	T greatestCommonDivisor = alignment1;
+	T alignment2_ = alignment2;
+	while(alignment2_ != 0)
+	{
+		const auto temp = alignment2_;
+		alignment2_ = greatestCommonDivisor % alignment2_;
+		greatestCommonDivisor = temp;
+	}
+
+	// Calculate the least common multiple (LCM) of the two alignments
+	const auto lcmAlignment = alignment1 * (alignment2 / greatestCommonDivisor);
+
+	return lcmAlignment;
+}
+
 /// Check if a number is aligned
 template<typename Type>
 inline constexpr Bool isAligned(PtrSize alignment, Type value)

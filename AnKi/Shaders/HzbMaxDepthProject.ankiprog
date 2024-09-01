@@ -53,7 +53,7 @@ Vec4 main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID) : SV_P
 
 	// Y
 	ndc.y = F32(tileY);
-	if(svVertexId == 3 || svVertexId == 2 || svVertexId == 7 || svVertexId == 6)
+	if(svVertexId == 0 || svVertexId == 1 || svVertexId == 4 || svVertexId == 5)
 	{
 		// Top side, move the point
 		ndc.y += 1.0f;

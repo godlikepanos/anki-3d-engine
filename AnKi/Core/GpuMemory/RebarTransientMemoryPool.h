@@ -7,6 +7,7 @@
 
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Buffer.h>
+#include <AnKi/Gr/GrManager.h>
 
 namespace anki {
 

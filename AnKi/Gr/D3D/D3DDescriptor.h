@@ -194,7 +194,8 @@ public:
 	U32 getBindlessIndex(const DescriptorHeapHandle& handle) const
 	{
 		handle.validate();
-		ANKI_ASSERT(handle.m_cpuHandle.ptr == m_gpuPersistent.m_cbvSrvUav.m_cpuHeapStart.ptr);
+		ANKI_ASSERT(handle.m_heapCpuStart.ptr == m_gpuPersistent.m_cbvSrvUav.m_cpuHeapStart.ptr);
+		ANKI_ASSERT(handle.m_heapGpuStart.ptr == m_gpuPersistent.m_cbvSrvUav.m_gpuHeapStart.ptr);
 		const PtrSize idx = (handle.m_cpuHandle.ptr - m_gpuPersistent.m_cbvSrvUav.m_cpuHeapStart.ptr) / m_gpuPersistent.m_cbvSrvUav.m_descriptorSize;
 		return U32(idx);
 	}

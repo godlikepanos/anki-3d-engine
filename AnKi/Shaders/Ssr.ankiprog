@@ -128,7 +128,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 		const RF32 oppositeLen = tan(coneAngle / 2.0f) * adjacentLen;
 		const Vec3 projectedOpposite =
 			cheapPerspectiveProjection(g_consts.m_projMat00_11_22_23, Vec4(hitPointViewSpace + Vec3(oppositeLen, 0.0f, 0.0f), 1.0f));
-		const F32 uvDistance = abs(ndcToUv(projectedOpposite.x) - hitPoint.x);
+		const F32 uvDistance = abs((projectedOpposite.x * 0.5f + 0.5f) - hitPoint.x);
 		const RF32 mip = max(0.0f, log2(uvDistance * lightShadingTexSize.x + kEpsilonF32));
 
 		// Reproject the hit point because you are reading the previous frame

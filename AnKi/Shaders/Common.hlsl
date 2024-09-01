@@ -72,15 +72,19 @@
 ANKI_BINDLESS3()
 
 template<typename T>
-T uvToNdc(T x)
+T uvToNdc(T uv)
 {
-	return x * 2.0f - 1.0f;
+	T ndc = uv * 2.0f - 1.0f;
+	ndc.y *= -1.0f;
+	return ndc;
 }
 
 template<typename T>
-T ndcToUv(T x)
+T ndcToUv(T ndc)
 {
-	return x * 0.5f + 0.5f;
+	T uv = ndc * 0.5f + 0.5f;
+	uv.y = 1.0f - uv.y;
+	return uv;
 }
 
 // Define min3, max3, min4, max4 functions

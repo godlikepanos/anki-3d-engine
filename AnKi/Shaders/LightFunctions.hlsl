@@ -178,7 +178,7 @@ RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Tex
 
 	// Convert cube coords
 	U32 faceIdxu;
-	Vec2 uv = convertCubeUvsu(dir, faceIdxu);
+	Vec2 uv = convertCubeUvs(dir * Vec3(1.0, 1.0, -1.0), faceIdxu);
 
 	// Get the atlas offset
 	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu].xy;
@@ -396,8 +396,9 @@ F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
 // https://www.shadertoy.com/view/XtcBDB
 RVec3 sampleAmbientDice(RVec3 posx, RVec3 negx, RVec3 posy, RVec3 negy, RVec3 posz, RVec3 negz, RVec3 normal)
 {
+	normal.z *= -1.0f;
 	const RVec3 axisWeights = normal * normal;
-	const RVec3 uv = ndcToUv(normal);
+	const RVec3 uv = normal * 0.5f + 0.5f;
 
 	RVec3 col = lerp(negx, posx, uv.x) * axisWeights.x;
 	col += lerp(negy, posy, uv.y) * axisWeights.y;
@@ -415,6 +416,8 @@ RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glo
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);
+	uvw = saturate(uvw);
+	uvw.y = 1.0f - uvw.y;
 
 	// The U contains the 6 directions so divide
 	uvw.x /= 6.0;

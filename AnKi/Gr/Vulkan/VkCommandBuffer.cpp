@@ -468,7 +468,6 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	// Set the render area
 	ANKI_ASSERT(minx < fbWidth && miny < fbHeight);
 
-	const Bool flipViewport = drawsToSwapchain;
 	const U32 maxx = min<U32>(minx + width, fbWidth);
 	const U32 maxy = min<U32>(miny + height, fbHeight);
 	width = maxx - minx;
@@ -476,16 +475,12 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	ANKI_ASSERT(minx + width <= fbWidth && miny + height <= fbHeight);
 
 	info.renderArea.offset.x = minx;
-	if(flipViewport)
-	{
-		ANKI_ASSERT(height <= fbHeight);
-	}
-	info.renderArea.offset.y = (flipViewport) ? fbHeight - (miny + height) : miny;
+	info.renderArea.offset.y = miny;
 	info.renderArea.extent.width = width;
 	info.renderArea.extent.height = height;
 
 	// State bookkeeping
-	self.m_graphicsState.beginRenderPass({colorFormats.getBegin(), colorRts.getSize()}, dsFormat, UVec2(fbWidth, fbHeight), drawsToSwapchain);
+	self.m_graphicsState.beginRenderPass({colorFormats.getBegin(), colorRts.getSize()}, dsFormat, UVec2(fbWidth, fbHeight));
 	if(drawsToSwapchain)
 	{
 		self.m_renderedToDefaultFb = true;

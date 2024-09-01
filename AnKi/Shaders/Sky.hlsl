@@ -42,7 +42,7 @@ Vec3 getValFromSkyLut(Texture2D<Vec4> skyLut, SamplerState linearAnyClampSampler
 
 	// Non-linear mapping of altitude angle. See Section 5.3 of the paper.
 	const F32 v = 0.5 + 0.5 * sign(altitudeAngle) * sqrt(abs(altitudeAngle) * 2.0 / kPi);
-	const Vec2 uv = Vec2(azimuthAngle / (2.0f * kPi), v);
+	const Vec2 uv = Vec2(azimuthAngle / (2.0f * kPi), 1.0 - v);
 
 	return skyLut.SampleLevel(linearAnyClampSampler, uv, 0.0f).xyz;
 }

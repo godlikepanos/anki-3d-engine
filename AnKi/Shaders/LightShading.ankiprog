@@ -144,7 +144,8 @@ RVec3 main(VertOut input) : SV_TARGET0
 				const ReflectionProbe probe = g_reflectionProbes[firstbitlow2(cluster.m_reflectionProbesMask)];
 
 				// Sample
-				const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+				Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+				cubeUv.z = -cubeUv.z;
 				probeColor = getBindlessTextureCubeRVec4(probe.m_cubeTexture).SampleLevel(g_trilinearClampSampler, cubeUv, reflLod).rgb;
 			}
 			else
@@ -165,7 +166,8 @@ RVec3 main(VertOut input) : SV_TARGET0
 					totalBlendWeight += blendWeight;
 
 					// Sample reflections
-					const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+					Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+					cubeUv.z = -cubeUv.z;
 					const Vec3 c =
 						getBindlessTextureNonUniformIndexCubeRVec4(probe.m_cubeTexture).SampleLevel(g_trilinearClampSampler, cubeUv, reflLod).rgb;
 					probeColor += c * blendWeight;

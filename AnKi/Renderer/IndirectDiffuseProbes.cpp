@@ -402,7 +402,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 					if(doShadows)
 					{
-						const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+						const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 						dsInfo.m_dirLightMatrix = biasMat4 * cascadeViewProjMat;
 					}
 					else
@@ -468,7 +468,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				U32 x, y, z;
 				unflatten3dArrayIndex(probeToRefresh->getCellCountsPerDimension().x(), probeToRefresh->getCellCountsPerDimension().y(),
 									  probeToRefresh->getCellCountsPerDimension().z(), cellIdx, x, y, z);
-				consts.m_volumeTexel = IVec3(x, y, z);
+				consts.m_volumeTexel = IVec3(x, probeToRefresh->getCellCountsPerDimension().y() - y - 1, z);
 
 				consts.m_nextTexelOffsetInU = probeToRefresh->getCellCountsPerDimension().x();
 				cmdb.setFastConstants(&consts, sizeof(consts));

@@ -8,6 +8,7 @@
 #include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
+#include <AnKi/Gr/GrManager.h>
 
 namespace anki {
 

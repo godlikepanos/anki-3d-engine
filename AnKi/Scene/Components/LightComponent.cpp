@@ -171,7 +171,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		if(reallyShadow)
 		{
-			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+			const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 			const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle, kClusterObjectFrustumNearPlane,
 																		 m_spot.m_distance);
 			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z(), 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x(), 0.0f, m_shadowAtlasUvViewports[0].w(),

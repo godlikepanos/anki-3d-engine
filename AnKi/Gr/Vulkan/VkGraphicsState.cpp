@@ -14,7 +14,7 @@ namespace anki {
 static NumericCVar<PtrSize> g_diskShaderCacheMaxSizeCVar(CVarSubsystem::kGr, "DiskShaderCacheMaxSize", 128_MB, 1_MB, 1_GB,
 														 "Max size of the pipeline cache file");
 
-static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight, Bool flipvp)
+static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight)
 {
 	const U32 minx = viewport[0];
 	const U32 miny = viewport[1];
@@ -24,17 +24,12 @@ static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight, Bool
 	ANKI_ASSERT(minx + width <= fbWidth);
 	ANKI_ASSERT(miny + height <= fbHeight);
 
-	const VkViewport s = {.x = F32(minx),
-						  .y = (flipvp) ? F32(fbHeight - miny) : F32(miny), // Move to the bottom
-						  .width = F32(width),
-						  .height = (flipvp) ? -F32(height) : F32(height),
-						  .minDepth = 0.0f,
-						  .maxDepth = 1.0f};
+	const VkViewport s = {.x = F32(minx), .y = F32(height + miny), .width = F32(width), .height = -F32(height), .minDepth = 0.0f, .maxDepth = 1.0f};
 
 	return s;
 }
 
-static VkRect2D computeScissor(U32* scissor, U32 fbWidth, U32 fbHeight, Bool flipvp)
+static VkRect2D computeScissor(U32* scissor, U32 fbWidth, U32 fbHeight)
 {
 	const U32 minx = scissor[0];
 	const U32 miny = scissor[1];
@@ -48,7 +43,7 @@ static VkRect2D computeScissor(U32* scissor, U32 fbWidth, U32 fbHeight, Bool fli
 	out.extent.width = width;
 	out.extent.height = height;
 	out.offset.x = minx;
-	out.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
+	out.offset.y = fbHeight - (miny + height);
 
 	return out;
 }
@@ -140,20 +135,14 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 	{
 		ANKI_ASSERT(dynState.m_viewport[2] != 0 && dynState.m_viewport[3] != 0);
 		dynState.m_viewportDirty = false;
-
-		const Bool flipVp = staticState.m_misc.m_rendersToSwapchain;
-		const VkViewport vp = computeViewport(dynState.m_viewport.getBegin(), state.m_rtsSize.x(), state.m_rtsSize.y(), flipVp);
-
+		const VkViewport vp = computeViewport(dynState.m_viewport.getBegin(), state.m_rtsSize.x(), state.m_rtsSize.y());
 		vkCmdSetViewport(cmdb, 0, 1, &vp);
 	}
 
 	if(dynState.m_scissorDirty)
 	{
 		dynState.m_scissorDirty = false;
-
-		const Bool flipVp = staticState.m_misc.m_rendersToSwapchain;
-		const VkRect2D rect = computeScissor(dynState.m_scissor.getBegin(), state.m_rtsSize.x(), state.m_rtsSize.y(), flipVp);
-
+		const VkRect2D rect = computeScissor(dynState.m_scissor.getBegin(), state.m_rtsSize.x(), state.m_rtsSize.y());
 		vkCmdSetScissor(cmdb, 0, 1, &rect);
 	}
 
@@ -258,7 +247,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 	rastCi.rasterizerDiscardEnable = false;
 	rastCi.polygonMode = convertFillMode(staticState.m_rast.m_fillMode);
 	rastCi.cullMode = convertCullMode(staticState.m_rast.m_cullMode);
-	rastCi.frontFace = (!staticState.m_misc.m_rendersToSwapchain) ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE; // For viewport flip
+	rastCi.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rastCi.depthBiasEnable = staticState.m_rast.m_depthBiasEnabled;
 	rastCi.lineWidth = 1.0f;
 	ci.pRasterizationState = &rastCi;

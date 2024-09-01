@@ -549,7 +549,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis zero: %s", in.m_passesName.cstr()));
 		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kCopyDestination);
 
-		pass.setWork([stage1Mem, stage2Mem, stage3Mem, this](RenderPassWorkContext& rpass) {
+		pass.setWork([stage1Mem, stage2Mem, stage3Mem](RenderPassWorkContext& rpass) {
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 			constexpr Bool debugZeroing = false; // For debugging purposes zero everything

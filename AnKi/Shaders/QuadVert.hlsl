@@ -18,10 +18,11 @@ struct VertOut
 #if ANKI_VERTEX_SHADER
 VertOut main(U32 vertId : SV_VERTEXID)
 {
-	VertOut output;
-	output.m_uv = Vec2(vertId & 1, vertId >> 1) * 2.0;
+	const Vec2 coord = Vec2(vertId >> 1, vertId & 1);
 
-	output.m_svPosition = Vec4(output.m_uv * 2.0 - 1.0, CUSTOM_DEPTH, 1.0);
+	VertOut output;
+	output.m_svPosition = Vec4(coord * Vec2(4.0, -4.0) + Vec2(-1.0, 1.0), CUSTOM_DEPTH, 1.0);
+	output.m_uv = coord * 2.0f;
 
 	return output;
 }

@@ -273,12 +273,7 @@ public:
 		}
 	}
 
-	void beginRenderPass(ConstWeakArray<Format> colorFormats, Format depthStencilFormat, UVec2 rtsSize
-#if ANKI_GR_BACKEND_VULKAN
-						 ,
-						 Bool rendersToSwapchain
-#endif
-	)
+	void beginRenderPass(ConstWeakArray<Format> colorFormats, Format depthStencilFormat, UVec2 rtsSize)
 	{
 		m_staticState.m_misc.m_colorRtFormats.fill(Format::kNone);
 		m_staticState.m_misc.m_colorRtMask.unsetAll();
@@ -292,11 +287,7 @@ public:
 
 		m_hashes.m_misc = 0; // Always mark it dirty because calling beginRenderPass is a rare occurance and we want to avoid extra checks
 
-		if(m_rtsSize != rtsSize
-#if ANKI_GR_BACKEND_VULKAN
-		   || m_staticState.m_misc.m_rendersToSwapchain != rendersToSwapchain
-#endif
-		)
+		if(m_rtsSize != rtsSize)
 		{
 			m_rtsSize = rtsSize;
 
@@ -304,10 +295,6 @@ public:
 			m_dynState.m_scissorDirty = true;
 			m_dynState.m_viewportDirty = true;
 		}
-
-#if ANKI_GR_BACKEND_VULKAN
-		m_staticState.m_misc.m_rendersToSwapchain = rendersToSwapchain;
-#endif
 	}
 
 	void bindShaderProgram(ShaderProgram* prog)
@@ -558,7 +545,6 @@ private:
 			BitSet<kMaxColorRenderTargets> m_colorRtMask = {false};
 
 #if ANKI_GR_BACKEND_VULKAN
-			Bool m_rendersToSwapchain = false;
 			Bool m_pipelineStatisticsEnabled = false;
 #endif
 		} m_misc;
