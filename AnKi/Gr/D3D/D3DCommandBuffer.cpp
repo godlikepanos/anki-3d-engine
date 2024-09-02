@@ -351,7 +351,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 				.getCpuOffset();
 
 		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
-		dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth, depthStencilRt->m_clearValue.m_depthStencil.m_depth;
+		dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth = depthStencilRt->m_clearValue.m_depthStencil.m_depth;
 		dsDesc.DepthEndingAccess.Type = convertStoreOp(depthStencilRt->m_storeOperation);
 
 		dsDesc.StencilBeginningAccess.Type = convertLoadOp(depthStencilRt->m_stencilLoadOperation);

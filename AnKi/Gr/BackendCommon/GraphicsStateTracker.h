@@ -44,14 +44,15 @@ public:
 
 	void setVertexAttribute(VertexAttributeSemantic attribute, U32 buffBinding, Format fmt, U32 relativeOffset)
 	{
+		const VertexAttributeSemanticBit mask = VertexAttributeSemanticBit(1u << attribute);
 		auto& attr = m_staticState.m_vert.m_attribs[attribute];
-		if(!m_staticState.m_vert.m_attribsSetMask.get(attribute) || attr.m_fmt != fmt || attr.m_binding != buffBinding
+		if(!(m_staticState.m_vert.m_attribsSetMask & mask) || attr.m_fmt != fmt || attr.m_binding != buffBinding
 		   || attr.m_relativeOffset != relativeOffset)
 		{
 			attr.m_fmt = fmt;
 			attr.m_binding = buffBinding;
 			attr.m_relativeOffset = relativeOffset;
-			m_staticState.m_vert.m_attribsSetMask.set(attribute);
+			m_staticState.m_vert.m_attribsSetMask |= mask;
 			m_hashes.m_vert = 0;
 		}
 	}
@@ -310,7 +311,7 @@ public:
 			}
 
 #if ANKI_GR_BACKEND_VULKAN
-			if(!!(prog->getShaderTypes() & ShaderTypeBit::kVertex) && refl.m_vertex.m_vertexAttributeMask.getSetBitCount())
+			if(!!(prog->getShaderTypes() & ShaderTypeBit::kVertex) && !!refl.m_vertex.m_vertexAttributeMask)
 			{
 				if(m_staticState.m_shaderProg)
 				{
@@ -465,10 +466,10 @@ private:
 
 			Array<Binding, U32(VertexAttributeSemantic::kCount)> m_bindings;
 			Array<Attribute, U32(VertexAttributeSemantic::kCount)> m_attribs;
-			BitSet<U32(VertexAttributeSemantic::kCount)> m_activeAttribs = false;
+			VertexAttributeSemanticBit m_activeAttribs = VertexAttributeSemanticBit::kNone;
 
-			BitSet<U32(VertexAttributeSemantic::kCount)> m_bindingsSetMask = false;
-			BitSet<U32(VertexAttributeSemantic::kCount)> m_attribsSetMask = false;
+			BitSet<U32(VertexAttributeSemantic::kCount)> m_bindingsSetMask = {false};
+			VertexAttributeSemanticBit m_attribsSetMask = VertexAttributeSemanticBit::kNone;
 		} m_vert;
 
 		class InputAssembler

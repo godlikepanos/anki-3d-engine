@@ -378,6 +378,19 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		else
 		{
 			ANKI_D3D_LOGW("ID3D12InfoQueue1 not supported");
+
+			// At least break when debugging
+			if(IsDebuggerPresent())
+			{
+				ComPtr<ID3D12InfoQueue> infoq;
+				const HRESULT res = m_device->QueryInterface(IID_PPV_ARGS(&infoq));
+
+				if(res == S_OK)
+				{
+					infoq->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+					infoq->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+				}
+			}
 		}
 	}
 

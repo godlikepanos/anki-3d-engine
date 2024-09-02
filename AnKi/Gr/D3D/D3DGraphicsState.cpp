@@ -22,7 +22,7 @@ static void getVertexAttributeSemanticInfo(VertexAttributeSemantic x, const Char
 		idx = 0;
 		break;
 	case VertexAttributeSemantic::kTexCoord:
-		str = "TEX_COORD";
+		str = "TEXCOORD";
 		idx = 0;
 		break;
 	case VertexAttributeSemantic::kColor:
@@ -141,21 +141,18 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 	// Vertex input
 	Array<D3D12_INPUT_ELEMENT_DESC, U32(VertexAttributeSemantic::kCount)> inputElementDescs;
 	U32 inputElementDescCount = 0;
-	for(VertexAttributeSemantic i : EnumIterable<VertexAttributeSemantic>())
+	for(VertexAttributeSemantic i : EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(staticState.m_vert.m_activeAttribs))
 	{
-		if(staticState.m_vert.m_activeAttribs.get(i))
-		{
-			D3D12_INPUT_ELEMENT_DESC& elem = inputElementDescs[inputElementDescCount++];
+		D3D12_INPUT_ELEMENT_DESC& elem = inputElementDescs[inputElementDescCount++];
 
-			getVertexAttributeSemanticInfo(i, elem.SemanticName, elem.SemanticIndex);
-			elem.Format = convertFormat(staticState.m_vert.m_attribs[i].m_fmt);
-			elem.InputSlot = staticState.m_vert.m_attribs[i].m_binding;
-			elem.AlignedByteOffset = staticState.m_vert.m_attribs[i].m_relativeOffset;
-			elem.InputSlotClass = (staticState.m_vert.m_bindings[staticState.m_vert.m_attribs[i].m_binding].m_stepRate == VertexStepRate::kVertex)
-									  ? D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
-									  : D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
-			elem.InstanceDataStepRate = (elem.InputSlotClass == D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA) ? 0 : 1;
-		}
+		getVertexAttributeSemanticInfo(i, elem.SemanticName, elem.SemanticIndex);
+		elem.Format = convertFormat(staticState.m_vert.m_attribs[i].m_fmt);
+		elem.InputSlot = staticState.m_vert.m_attribs[i].m_binding;
+		elem.AlignedByteOffset = staticState.m_vert.m_attribs[i].m_relativeOffset;
+		elem.InputSlotClass = (staticState.m_vert.m_bindings[staticState.m_vert.m_attribs[i].m_binding].m_stepRate == VertexStepRate::kVertex)
+								  ? D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
+								  : D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+		elem.InstanceDataStepRate = (elem.InputSlotClass == D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA) ? 0 : 1;
 	}
 
 	// Blending

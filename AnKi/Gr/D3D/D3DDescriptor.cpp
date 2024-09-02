@@ -416,6 +416,12 @@ Error RootSignatureFactory::getOrCreateRootSignature(const ShaderReflection& ref
 					ANKI_ASSERT(inBinding.m_d3dStructuredBufferStride < kMaxU16);
 					outDescriptor.m_structuredBufferStride = inBinding.m_d3dStructuredBufferStride;
 				}
+				else if(outDescriptor.m_type == DescriptorType::kSrvByteAddressBuffer
+						|| outDescriptor.m_type == DescriptorType::kUavByteAddressBuffer)
+				{
+					ANKI_ASSERT(inBinding.m_d3dStructuredBufferStride == sizeof(U32));
+					outDescriptor.m_structuredBufferStride = sizeof(U32);
+				}
 			}
 		}
 
@@ -545,7 +551,12 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 				}
 
 				const Descriptor& outDescriptor = stateSpace.m_descriptors[hlslResourceType][registerBinding];
-				ANKI_ASSERT(inDescriptor.m_type == outDescriptor.m_type && "Have bound the wrong thing");
+				ANKI_ASSERT(
+					(inDescriptor.m_type == outDescriptor.m_type
+					 || (inDescriptor.m_type == DescriptorType::kSrvByteAddressBuffer && outDescriptor.m_type == DescriptorType::kSrvStructuredBuffer)
+					 || (inDescriptor.m_type == DescriptorType::kUavByteAddressBuffer
+						 && outDescriptor.m_type == DescriptorType::kUavStructuredBuffer))
+					&& "Have bound the wrong thing");
 				ANKI_ASSERT(descriptorTypeToHlslResourceType(inDescriptor.m_type) == hlslResourceType);
 
 				if(inDescriptor.m_type == DescriptorType::kConstantBuffer)
@@ -591,7 +602,6 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					ANKI_ASSERT((view.m_offset % sizeof(U32)) == 0);
 					uavDesc.Buffer.FirstElement = view.m_offset / sizeof(U32);
 
-					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
 					ANKI_ASSERT((view.m_range % sizeof(U32)) == 0);
 					uavDesc.Buffer.NumElements = U32(view.m_range / sizeof(U32));
 
@@ -611,8 +621,8 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
 					uavDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
 
-					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
 					uavDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
+					ANKI_ASSERT(uavDesc.Buffer.NumElements > 0);
 
 					uavDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
 
@@ -633,7 +643,6 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					ANKI_ASSERT((view.m_offset % sizeof(U32)) == 0);
 					srvDesc.Buffer.FirstElement = view.m_offset / sizeof(U32);
 
-					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
 					ANKI_ASSERT((view.m_range % sizeof(U32)) == 0);
 					srvDesc.Buffer.NumElements = U32(view.m_range / sizeof(U32));
 
@@ -653,8 +662,8 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 					ANKI_ASSERT((view.m_offset % inDescriptor.m_structuredBufferStride) == 0);
 					srvDesc.Buffer.FirstElement = view.m_offset / inDescriptor.m_structuredBufferStride;
 
-					ANKI_ASSERT((view.m_range % inDescriptor.m_structuredBufferStride) == 0);
 					srvDesc.Buffer.NumElements = U32(view.m_range / inDescriptor.m_structuredBufferStride);
+					ANKI_ASSERT(srvDesc.Buffer.NumElements > 0);
 
 					srvDesc.Buffer.StructureByteStride = inDescriptor.m_structuredBufferStride;
 

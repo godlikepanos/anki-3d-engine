@@ -42,7 +42,7 @@ Texture2D<RVec4> g_integrationLut : register(t12);
 	const RF32 att = computeAttenuationFactor(light.m_radius, frag2Light); \
 	RF32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
-RVec3 main(VertOut input) : SV_TARGET0
+RVec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
 	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
@@ -50,7 +50,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 
 	if(depth == 1.0)
 	{
-		return RVec3(0.0, 0.0, 0.0);
+		return 0.0;
 	}
 
 	// Get world position
@@ -253,6 +253,6 @@ RVec3 main(VertOut input) : SV_TARGET0
 	}
 
 	outColor = min(outColor, RVec3(kMaxRF32, kMaxRF32, kMaxRF32));
-	return outColor;
+	return RVec4(outColor, 0.0);
 }
 #pragma anki technique_end pixel

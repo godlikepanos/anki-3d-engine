@@ -37,7 +37,7 @@ Texture2D<RVec4> g_shadowMap : register(t6);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b1);
 
-RVec3 main(VertOut input) : SV_TARGET0
+Vec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
 	const F32 depth = g_depthTex.SampleLevel(g_gbufferSampler, uv, 0.0).r;
@@ -116,7 +116,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 		outColor += (specC + diffC) * light.m_diffuseColor * factor;
 	}
 
-	return outColor;
+	return Vec4(outColor, 0.0);
 }
 
 #pragma anki technique_end pixel

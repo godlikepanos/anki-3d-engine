@@ -13,18 +13,14 @@ Bool GraphicsStateTracker::updateHashes()
 
 	if(m_hashes.m_vert == 0)
 	{
-		if(m_staticState.m_vert.m_activeAttribs.getAnySet())
+		if(!!m_staticState.m_vert.m_activeAttribs)
 		{
 			m_hashes.m_vert = 0xC0FEE;
 
-			for(VertexAttributeSemantic i : EnumIterable<VertexAttributeSemantic>())
+			for(const VertexAttributeSemantic i :
+				EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(m_staticState.m_vert.m_activeAttribs))
 			{
-				if(!m_staticState.m_vert.m_activeAttribs.get(i))
-				{
-					continue;
-				}
-
-				ANKI_ASSERT(m_staticState.m_vert.m_attribsSetMask.get(i) && "Forgot to set the vert attribute");
+				ANKI_ASSERT(!!(m_staticState.m_vert.m_attribsSetMask & VertexAttributeSemanticBit(1 << i)) && "Forgot to set the vert attribute");
 				m_hashes.m_vert = appendObjectHash(m_staticState.m_vert.m_attribs[i], m_hashes.m_vert);
 
 				ANKI_ASSERT(m_staticState.m_vert.m_bindingsSetMask.get(m_staticState.m_vert.m_attribs[i].m_binding)

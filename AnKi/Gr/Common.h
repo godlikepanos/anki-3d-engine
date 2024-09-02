@@ -832,6 +832,21 @@ enum class VertexAttributeSemantic : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemantic)
 
+enum class VertexAttributeSemanticBit : U8
+{
+	kNone,
+
+	kPosition = 1u << 0u,
+	kNormal = 1u << 1u,
+	kTexCoord = 1u << 2u,
+	kColor = 1u << 3u,
+	kMisc0 = 1u << 4u,
+	kMisc1 = 1u << 5u,
+	kMisc2 = 1u << 6u,
+	kMisc3 = 1u << 7u
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeSemanticBit)
+
 /// This matches D3D.
 enum class DescriptorType : U8
 {
@@ -992,7 +1007,7 @@ public:
 	{
 	public:
 		Array<U8, U32(VertexAttributeSemantic::kCount)> m_vkVertexAttributeLocations;
-		BitSet<U32(VertexAttributeSemantic::kCount), U8> m_vertexAttributeMask = {false};
+		VertexAttributeSemanticBit m_vertexAttributeMask = VertexAttributeSemanticBit::kNone;
 	} m_vertex;
 
 	class
@@ -1013,7 +1028,8 @@ public:
 		m_descriptor.validate();
 		for([[maybe_unused]] VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
 		{
-			ANKI_ASSERT(!m_vertex.m_vertexAttributeMask.get(semantic) || m_vertex.m_vkVertexAttributeLocations[semantic] != kMaxU8);
+			ANKI_ASSERT(!(m_vertex.m_vertexAttributeMask & VertexAttributeSemanticBit(1 << semantic))
+						|| m_vertex.m_vkVertexAttributeLocations[semantic] != kMaxU8);
 		}
 
 		const U32 attachmentCount = m_pixel.m_colorRenderTargetWritemask.getSetBitCount();

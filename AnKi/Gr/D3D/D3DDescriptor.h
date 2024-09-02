@@ -268,7 +268,7 @@ private:
 	{
 	public:
 		DescriptorType m_type = DescriptorType::kCount;
-		U16 m_structuredBufferStride = kMaxU8;
+		U16 m_structuredBufferStride = kMaxU16;
 	};
 
 	class Space

@@ -50,7 +50,7 @@ RVec3 colorGrading(RVec3 color)
 	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
-RVec3 main(VertOut input) : SV_TARGET0
+RVec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
 	RVec3 outColor;
@@ -82,7 +82,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 	outColor = lerp(outColor, dbg.rgb, dbg.a);
 #endif
 
-	return outColor;
+	return RVec4(outColor, 0.0);
 }
 
 #pragma anki technique_end pixel

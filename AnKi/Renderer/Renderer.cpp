@@ -298,8 +298,14 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_cameraFar = cam.getFar();
 
 	// Allocate global constants
-	GlobalRendererConstants* globalUnis;
-	ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocateConstantBuffer(globalUnis);
+	GlobalRendererConstants* globalConsts;
+	{
+		U32 alignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+							? sizeof(*globalConsts)
+							: GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+		alignment = computeCompoundAlignment(alignment, GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment);
+		ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocate(sizeof(*globalConsts), alignment, globalConsts);
+	}
 
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
@@ -348,7 +354,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
-	writeGlobalRendererConstants(ctx, *globalUnis);
+	writeGlobalRendererConstants(ctx, *globalConsts);
 
 	return Error::kNone;
 }

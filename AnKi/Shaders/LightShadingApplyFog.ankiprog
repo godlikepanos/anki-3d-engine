@@ -25,7 +25,14 @@ struct Constants
 };
 ANKI_FAST_CONSTANTS(Constants, g_consts)
 
-RVec4 main(VertOut input) : SV_TARGET0
+// Workaround validation errors
+#if ANKI_GR_BACKEND_DIRECT3D
+#	define OUT_TYPE Vec4
+#else
+#	define OUT_TYPE RVec4
+#endif
+
+OUT_TYPE main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
 	Vec3 uvw;
@@ -44,7 +51,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const RF32 transmittance = fogVals.a;
 
 	// Apply the fog
-	return RVec4(inScattering, transmittance);
+	return OUT_TYPE(inScattering, transmittance);
 }
 
 #pragma anki technique_end pixel

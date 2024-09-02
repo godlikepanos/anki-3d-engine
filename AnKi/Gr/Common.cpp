@@ -170,7 +170,7 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 	c.m_descriptor.m_hasVkBindlessDescriptorSet = a.m_descriptor.m_hasVkBindlessDescriptorSet || b.m_descriptor.m_hasVkBindlessDescriptorSet;
 
 	c.m_vertex.m_vkVertexAttributeLocations =
-		(a.m_vertex.m_vertexAttributeMask.getAnySet()) ? a.m_vertex.m_vkVertexAttributeLocations : b.m_vertex.m_vkVertexAttributeLocations;
+		(!!a.m_vertex.m_vertexAttributeMask) ? a.m_vertex.m_vkVertexAttributeLocations : b.m_vertex.m_vkVertexAttributeLocations;
 	c.m_vertex.m_vertexAttributeMask = a.m_vertex.m_vertexAttributeMask | b.m_vertex.m_vertexAttributeMask;
 
 	c.m_pixel.m_colorRenderTargetWritemask = a.m_pixel.m_colorRenderTargetWritemask | b.m_pixel.m_colorRenderTargetWritemask;

@@ -201,26 +201,23 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 	vertCi.pVertexBindingDescriptions = &vertBindings[0];
 
 	BitSet<U32(VertexAttributeSemantic::kCount), U8> bindingSet = {false};
-	for(VertexAttributeSemantic semantic : EnumIterable<VertexAttributeSemantic>())
+	for(VertexAttributeSemantic semantic : EnumBitsIterable<VertexAttributeSemantic, VertexAttributeSemanticBit>(staticState.m_vert.m_activeAttribs))
 	{
-		if(staticState.m_vert.m_activeAttribs.get(semantic))
+		VkVertexInputAttributeDescription& attrib = attribs[vertCi.vertexAttributeDescriptionCount++];
+		attrib.binding = staticState.m_vert.m_attribs[semantic].m_binding;
+		attrib.format = convertFormat(staticState.m_vert.m_attribs[semantic].m_fmt);
+		attrib.location = staticState.m_vert.m_attribs[semantic].m_semanticToVertexAttributeLocation;
+		attrib.offset = staticState.m_vert.m_attribs[semantic].m_relativeOffset;
+
+		if(!bindingSet.get(attrib.binding))
 		{
-			VkVertexInputAttributeDescription& attrib = attribs[vertCi.vertexAttributeDescriptionCount++];
-			attrib.binding = staticState.m_vert.m_attribs[semantic].m_binding;
-			attrib.format = convertFormat(staticState.m_vert.m_attribs[semantic].m_fmt);
-			attrib.location = staticState.m_vert.m_attribs[semantic].m_semanticToVertexAttributeLocation;
-			attrib.offset = staticState.m_vert.m_attribs[semantic].m_relativeOffset;
+			bindingSet.set(attrib.binding);
 
-			if(!bindingSet.get(attrib.binding))
-			{
-				bindingSet.set(attrib.binding);
+			VkVertexInputBindingDescription& binding = vertBindings[vertCi.vertexBindingDescriptionCount++];
 
-				VkVertexInputBindingDescription& binding = vertBindings[vertCi.vertexBindingDescriptionCount++];
-
-				binding.binding = attrib.binding;
-				binding.inputRate = convertVertexStepRate(staticState.m_vert.m_bindings[attrib.binding].m_stepRate);
-				binding.stride = staticState.m_vert.m_bindings[attrib.binding].m_stride;
-			}
+			binding.binding = attrib.binding;
+			binding.inputRate = convertVertexStepRate(staticState.m_vert.m_bindings[attrib.binding].m_stepRate);
+			binding.stride = staticState.m_vert.m_bindings[attrib.binding].m_stride;
 		}
 	}
 

@@ -165,14 +165,6 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mousePosOn1stClick = in.getMousePosition();
 	}
 
-	if(in.getKey(KeyCode::kF2) == 1)
-	{
-		mover->setLocalRotation(
-			Mat3x4(-0.600323, -0.173433, 0.780726, 0.000000, 0.000000, 0.976203, 0.216857, 0.000000, -0.799758, 0.130185, -0.586037, 0.000000));
-
-		// printf("%s | %s\n", mover->getWorldTransform().getRotation().toString().cstr(), mover->getWorldTransform().getOrigin().toString().cstr());
-	}
-
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())
 	{
 		constexpr F32 ROTATE_ANGLE = toRad(2.5f);

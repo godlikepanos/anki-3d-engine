@@ -325,7 +325,7 @@ Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflect
 			}
 #undef ANKI_ATTRIB_NAME
 
-			refl.m_vertex.m_vertexAttributeMask.set(a);
+			refl.m_vertex.m_vertexAttributeMask |= VertexAttributeSemanticBit(1 << a);
 
 			const U32 id = r.id;
 			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
@@ -624,7 +624,7 @@ Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflectio
 			}
 #	undef ANKI_ATTRIB_NAME
 
-			refl.m_vertex.m_vertexAttributeMask.set(a);
+			refl.m_vertex.m_vertexAttributeMask |= VertexAttributeSemanticBit(1 << a);
 			refl.m_vertex.m_vkVertexAttributeLocations[a] = U8(i); // Just set something
 		}
 	}
