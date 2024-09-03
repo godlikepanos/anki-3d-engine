@@ -21,7 +21,14 @@ endfunction()
 macro(anki_new_executable)
 	if(NOT ANDROID)
 		add_executable(${ARGV})
+
+		# Move the target to another dir
 		set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries)
+
+		# Move the target to another dir using a different way as well because cor some reason it doesn't work on windows
+		add_custom_command(TARGET ${ARGV0} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Binaries
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${ARGV0}> ${CMAKE_BINARY_DIR}/Binaries/$<TARGET_FILE_NAME:${ARGV0}>)
 	else()
 		set(_SKIP TRUE)
 		foreach(ARG ${ARGV})
