@@ -618,10 +618,11 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	// Create the pass
 	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(passName);
 
-	const Bool loadFb = !(subpasses.getSize() == 1 && subpasses[0].m_clearTileIndirectArgs.isValid());
+	const Bool maySkipDrawcalls = subpasses[0].m_clearTileIndirectArgs.isValid();
+	const Bool renderpassClear = subpasses.getSize() == 1 && !maySkipDrawcalls; // Rely on renderpass clear
 
 	GraphicsRenderPassTargetDesc smRti(m_runCtx.m_rt);
-	smRti.m_loadOperation = (loadFb) ? RenderTargetLoadOperation::kLoad : RenderTargetLoadOperation::kClear;
+	smRti.m_loadOperation = (renderpassClear) ? RenderTargetLoadOperation::kClear : RenderTargetLoadOperation::kLoad;
 	smRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	smRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({}, &smRti, viewport[0], viewport[1], viewport[2], viewport[3]);
@@ -629,7 +630,7 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 
-	pass.setWork([this, visOut, subpasses, loadFb](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, visOut, subpasses, renderpassClear](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -640,7 +641,8 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 
 			cmdb.setViewport(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
 
-			if(loadFb)
+			// Clear the tile
+			if(!renderpassClear)
 			{
 				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
 				cmdb.setDepthCompareOperation(CompareOperation::kAlways);

@@ -183,6 +183,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mover = &scene.getActiveCameraNode();
 		}
 
+		if(in.getKey(KeyCode::k2) == 1)
+		{
+			mover = &scene.findSceneNode("Spot");
+		}
+
 		if(in.getKey(KeyCode::kUp))
 		{
 			mover->rotateLocalX(ROTATE_ANGLE);

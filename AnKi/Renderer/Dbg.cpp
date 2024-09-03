@@ -252,6 +252,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	colorRti.m_loadOperation = RenderTargetLoadOperation::kClear;
 	GraphicsRenderPassTargetDesc depthRti(getRenderer().getGBuffer().getDepthRt());
 	depthRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
+	depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
 	pass.setRenderpassInfo({colorRti}, &depthRti);
 
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);

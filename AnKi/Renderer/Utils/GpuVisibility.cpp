@@ -561,13 +561,22 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		cmdb.fillBuffer(buff, 0); \
 		cmdb.popDebugMarker(); \
 	}
+
+#define ANKI_ZERO_PART(buff, alwaysZero, sizeToZero) \
+	if((alwaysZero || debugZeroing) && buff.isValid()) \
+	{ \
+		cmdb.pushDebugMarker(#buff, Vec3(1.0f, 1.0f, 1.0f)); \
+		cmdb.fillBuffer((debugZeroing) ? buff : BufferView(buff).setRange(sizeToZero), 0); \
+		cmdb.popDebugMarker(); \
+	}
+
 			ANKI_ZERO(stage1Mem.m_counters, true)
 			ANKI_ZERO(stage1Mem.m_visibleRenderables, false)
 			ANKI_ZERO(stage1Mem.m_visibleMeshlets, false)
 			ANKI_ZERO(stage1Mem.m_renderablePrefixSums, true)
 			ANKI_ZERO(stage1Mem.m_meshletPrefixSums, true)
 			ANKI_ZERO(stage1Mem.m_gpuVisIndirectDispatchArgs, false)
-			ANKI_ZERO(stage1Mem.m_visibleAabbIndices, false)
+			ANKI_ZERO_PART(stage1Mem.m_visibleAabbIndices, true, sizeof(U32))
 			ANKI_ZERO(stage1Mem.m_hash, true)
 
 			ANKI_ZERO(stage2Mem.m_legacy.m_instanceRateRenderables, false)
