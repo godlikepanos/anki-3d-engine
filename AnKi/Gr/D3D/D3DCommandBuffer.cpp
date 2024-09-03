@@ -350,13 +350,29 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 			tex.getOrCreateDsv(depthStencilRt->m_textureView.getSubresource(), !(depthStencilRt->m_usage & TextureUsageBit::kRtvDsvWrite))
 				.getCpuOffset();
 
-		dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
-		dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth = depthStencilRt->m_clearValue.m_depthStencil.m_depth;
-		dsDesc.DepthEndingAccess.Type = convertStoreOp(depthStencilRt->m_storeOperation);
+		if(!!(depthStencilRt->m_textureView.getDepthStencilAspect() & DepthStencilAspectBit::kDepth))
+		{
+			dsDesc.DepthBeginningAccess.Type = convertLoadOp(depthStencilRt->m_loadOperation);
+			dsDesc.DepthBeginningAccess.Clear.ClearValue.DepthStencil.Depth = depthStencilRt->m_clearValue.m_depthStencil.m_depth;
+			dsDesc.DepthEndingAccess.Type = convertStoreOp(depthStencilRt->m_storeOperation);
+		}
+		else
+		{
+			dsDesc.DepthBeginningAccess.Type = D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS;
+			dsDesc.DepthEndingAccess.Type = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS;
+		}
 
-		dsDesc.StencilBeginningAccess.Type = convertLoadOp(depthStencilRt->m_stencilLoadOperation);
-		dsDesc.StencilBeginningAccess.Clear.ClearValue.DepthStencil.Stencil = U8(depthStencilRt->m_clearValue.m_depthStencil.m_stencil);
-		dsDesc.StencilEndingAccess.Type = convertStoreOp(depthStencilRt->m_stencilStoreOperation);
+		if(!!(depthStencilRt->m_textureView.getDepthStencilAspect() & DepthStencilAspectBit::kStencil))
+		{
+			dsDesc.StencilBeginningAccess.Type = convertLoadOp(depthStencilRt->m_stencilLoadOperation);
+			dsDesc.StencilBeginningAccess.Clear.ClearValue.DepthStencil.Stencil = U8(depthStencilRt->m_clearValue.m_depthStencil.m_stencil);
+			dsDesc.StencilEndingAccess.Type = convertStoreOp(depthStencilRt->m_stencilStoreOperation);
+		}
+		else
+		{
+			dsDesc.StencilBeginningAccess.Type = D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS;
+			dsDesc.StencilEndingAccess.Type = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS;
+		}
 
 		dsFormat = tex.getFormat();
 

@@ -49,12 +49,6 @@ static BoolCVar g_workGraphcsCVar(CVarSubsystem::kGr, "WorkGraphs", false, "Enab
 static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 										  [[maybe_unused]] D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext)
 {
-	if(id == D3D12_MESSAGE_ID_INCOMPATIBLE_BARRIER_LAYOUT)
-	{
-		// Skip for now
-		return;
-	}
-
 	if(!Logger::isAllocated())
 	{
 		printf("d3dDebugMessageCallback : %s", pDescription);
