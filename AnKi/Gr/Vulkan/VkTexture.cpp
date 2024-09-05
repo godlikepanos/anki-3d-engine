@@ -256,18 +256,9 @@ Error TextureImpl::initImage(const TextureInitInfo& init)
 
 	// Allocate memory
 	//
-	VkMemoryDedicatedRequirementsKHR dedicatedRequirements = {};
-	dedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
-
-	VkMemoryRequirements2 requirements = {};
-	requirements.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
-	requirements.pNext = &dedicatedRequirements;
-
-	VkImageMemoryRequirementsInfo2 imageRequirementsInfo = {};
-	imageRequirementsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
-	imageRequirementsInfo.image = m_imageHandle;
-
-	vkGetImageMemoryRequirements2(getVkDevice(), &imageRequirementsInfo, &requirements);
+	VkMemoryDedicatedRequirementsKHR dedicatedRequirements;
+	VkMemoryRequirements2 requirements;
+	GpuMemoryManager::getSingleton().getImageMemoryRequirements(m_imageHandle, dedicatedRequirements, requirements);
 
 	U32 memIdx = GpuMemoryManager::getSingleton().findMemoryType(requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 																 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);

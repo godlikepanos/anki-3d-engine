@@ -303,4 +303,28 @@ void GpuMemoryManager::updateStats() const
 	g_deviceMemoryAllocationCountStatVar.increment(m_dedicatedAllocationCount.load());
 }
 
+void GpuMemoryManager::getImageMemoryRequirements(VkImage image, VkMemoryDedicatedRequirementsKHR& dedicatedRequirements,
+												  VkMemoryRequirements2& requirements)
+{
+	dedicatedRequirements = {};
+	dedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
+
+	requirements = {};
+	requirements.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+	requirements.pNext = &dedicatedRequirements;
+
+	VkImageMemoryRequirementsInfo2 imageRequirements = {};
+	imageRequirements.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
+	imageRequirements.image = image;
+
+	vkGetImageMemoryRequirements2(getVkDevice(), &imageRequirements, &requirements);
+
+	if(requirements.memoryRequirements.size > kClasses.getBack().m_chunkSize)
+	{
+		// Allocation to big, force a dedicated allocation
+		dedicatedRequirements.prefersDedicatedAllocation = true;
+		dedicatedRequirements.requiresDedicatedAllocation = true;
+	}
+}
+
 } // end namespace anki

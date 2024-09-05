@@ -124,6 +124,8 @@ public:
 
 	GpuMemoryManager& operator=(const GpuMemoryManager&) = delete; // Non-copyable
 
+	void getImageMemoryRequirements(VkImage image, VkMemoryDedicatedRequirementsKHR& dedicatedRequirements, VkMemoryRequirements2& requirements);
+
 	/// Allocate memory.
 	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, GpuMemoryHandle& handle);
 

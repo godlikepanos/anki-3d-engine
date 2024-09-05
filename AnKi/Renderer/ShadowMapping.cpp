@@ -90,7 +90,7 @@ Error ShadowMapping::initInternal()
 		// RT
 		const TextureUsageBit usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
-			m_tileResolution * m_tileCountBothAxis, m_tileResolution * m_tileCountBothAxis, Format::kD16_Unorm, usage, "ShadowAtlas");
+			m_tileResolution * m_tileCountBothAxis, m_tileResolution * m_tileCountBothAxis, Format::kD32_Sfloat, usage, "ShadowAtlas");
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
 		m_atlasTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel, clearVal);
