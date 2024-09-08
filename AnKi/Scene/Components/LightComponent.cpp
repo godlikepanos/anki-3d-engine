@@ -205,7 +205,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 }
 
 void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeProjMats,
-											WeakArray<Mat3x4> cascadeViewMats) const
+											WeakArray<Mat3x4> cascadeViewMats, WeakArray<F32> cascadeFarPlanes) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::kDirectional);
 	ANKI_ASSERT(m_shadow);
@@ -292,6 +292,11 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 
 			// Projection
 			const F32 far = (eye - sphereCenter).getLength() + sphereRadius;
+			if(cascadeFarPlanes.getSize() > 0)
+			{
+				cascadeFarPlanes[cascade] = far;
+			}
+
 			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(sphereRadius, -sphereRadius, sphereRadius, -sphereRadius,
 																			  kClusterObjectFrustumNearPlane, far);
 

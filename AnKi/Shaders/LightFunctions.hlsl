@@ -13,9 +13,15 @@
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-constexpr Vec2 kPoissonDisk[4u] = {Vec2(-0.94201624, -0.39906216), Vec2(0.94558609, -0.76890725), Vec2(-0.094184101, -0.92938870),
-								   Vec2(0.34495938, 0.29387760)};
+constexpr Vec2 kPoissonDisk4[4u] = {Vec2(-0.15, 0.06), Vec2(0.14, -0.48), Vec2(-0.05, 0.97), Vec2(0.58, -0.18)};
+
+constexpr Vec2 kPoissonDisk8[8u] = {Vec2(-0.16, 0.66), Vec2(0.15, -0.02), Vec2(-0.76, 0.49),  Vec2(-0.57, -0.48),
+									Vec2(0.82, -0.43), Vec2(0.91, 0.15),  Vec2(-0.39, -0.86), Vec2(0.24, -0.76)};
+
 constexpr RF32 kPcfScale = 2.0f;
+constexpr RF32 kPcssScale = kPcfScale * 12.0;
+constexpr RF32 kPcssSearchScale = kPcfScale * 12.0;
+constexpr F32 kPcssDirLightMaxPenumbraMeters = 6.0; // If the occluder and the reciever have more than this value then do full penumbra
 
 // Fresnel term unreal
 // specular: The specular color aka F0
@@ -113,45 +119,148 @@ RF32 computeSpotFactor(RVec3 l, RF32 outerCos, RF32 innerCos, RVec3 spotDir)
 	return spotFactor;
 }
 
-RF32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, RF32 randFactor)
+// PCSS calculation. Can be visualized here for spot lights: https://www.desmos.com/calculator/l0viaopwbi
+// and here for directional: https://www.desmos.com/calculator/0dh0ybqvv1
+struct Pcss
+{
+	SamplerState m_linearClampSampler;
+
+	Vec2 computePenumbra(Texture2D<Vec4> shadowmap, Vec2 smTexelSize, Vec3 projCoords, F32 cosTheta, F32 sinTheta, F32 lightSize, Bool dirLight)
+	{
+		F32 inShadowCount = 0.0;
+		F32 avgOccluderZ = 0.0;
+		[unroll] for(U32 i = 0u; i < ARRAY_SIZE(kPoissonDisk4); ++i)
+		{
+			const Vec2 diskPoint = kPoissonDisk4[i] * kPcssSearchScale;
+
+			// Rotate the disk point
+			Vec2 rotatedDiskPoint;
+			rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
+			rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
+
+			// Offset calculation
+			const Vec2 newUv = projCoords.xy + rotatedDiskPoint * smTexelSize;
+
+			const F32 occluderZ = shadowmap.SampleLevel(m_linearClampSampler, newUv, 0.0).x;
+			if(projCoords.z >= occluderZ)
+			{
+				inShadowCount += 1.0;
+				avgOccluderZ += occluderZ;
+			}
+		}
+
+		F32 factor;
+		if(inShadowCount == 0.0 || inShadowCount == ARRAY_SIZE(kPoissonDisk4))
+		{
+			factor = 0;
+		}
+		else
+		{
+			avgOccluderZ /= inShadowCount;
+			if(!dirLight)
+			{
+				factor = (projCoords.z - avgOccluderZ) * lightSize / avgOccluderZ;
+			}
+			else
+			{
+				// Dir light's depth is linear
+				factor = (projCoords.z - avgOccluderZ) * lightSize / kPcssDirLightMaxPenumbraMeters;
+				factor *= factor;
+			}
+		}
+
+		return Vec2(factor, inShadowCount);
+	}
+};
+
+struct PcssDisabled
+{
+	Vec2 computePenumbra(Texture2D<Vec4> shadowmap, Vec2 texelSize, Vec3 projCoords, F32 cosTheta, F32 sinTheta, F32 lightSize, Bool dirLight)
+	{
+		return -1.0;
+	}
+};
+
+template<typename TPcss>
+RF32 computeShadowFactorSpotLightGeneric(SpotLight light, Vec3 worldPos, Texture2D<Vec4> shadowTex, SamplerComparisonState shadowMapSampler, Bool pcf,
+										 RF32 randFactor, TPcss pcss)
 {
 	const Vec4 texCoords4 = mul(light.m_textureMatrix, Vec4(worldPos, 1.0));
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	Vec2 texSize;
-	F32 mipCount;
-	shadowTex.GetDimensions(0, texSize.x, texSize.y, mipCount);
-	const Vec2 smTexelSize = 1.0 / texSize;
-
-	const F32 sinTheta = sin(randFactor * 2.0 * kPi);
-	const F32 cosTheta = cos(randFactor * 2.0 * kPi);
-
-	RF32 shadow = 0.0;
-	[unroll] for(U32 i = 0u; i < 4u; ++i)
+	RF32 shadow;
+	if(pcf)
 	{
-		const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
+		Vec2 texSize;
+		F32 mipCount;
+		shadowTex.GetDimensions(0, texSize.x, texSize.y, mipCount);
+		const Vec2 smTexelSize = 1.0 / texSize;
 
-		// Rotate the disk point
-		Vec2 rotatedDiskPoint;
-		rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
-		rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
+		const F32 sinTheta = sin(randFactor * 2.0 * kPi);
+		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
-		// Offset calculation
-		const Vec2 newUv = texCoords3.xy + rotatedDiskPoint * smTexelSize;
+		// PCSS
+		const Vec2 pcssRes = pcss.computePenumbra(shadowTex, smTexelSize, texCoords3, cosTheta, sinTheta, light.m_radius, false);
+		F32 pcsfScale;
+		if(pcssRes.x == -1.0)
+		{
+			// PCSS disabled
+			pcsfScale = kPcfScale;
+		}
+		else
+		{
+			if(pcssRes.y == ARRAY_SIZE(kPoissonDisk4))
+			{
+				return 0.0;
+			}
 
-		shadow += shadowTex.SampleCmpLevelZero(shadowMapSampler, newUv, texCoords3.z);
+			pcsfScale = kPcfScale + pcssRes.x * kPcssScale;
+		}
+
+		shadow = 0.0;
+		[unroll] for(U32 i = 0u; i < ARRAY_SIZE(kPoissonDisk4); ++i)
+		{
+			const Vec2 diskPoint = kPoissonDisk4[i] * pcsfScale;
+
+			// Rotate the disk point
+			Vec2 rotatedDiskPoint;
+			rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
+			rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
+
+			// Offset calculation
+			const Vec2 newUv = texCoords3.xy + rotatedDiskPoint * smTexelSize;
+
+			shadow += shadowTex.SampleCmpLevelZero(shadowMapSampler, newUv, texCoords3.z);
+		}
+
+		shadow /= F32(ARRAY_SIZE(kPoissonDisk4));
 	}
-
-	shadow /= 4.0;
+	else
+	{
+		shadow = shadowTex.SampleCmpLevelZero(shadowMapSampler, texCoords3.xy, texCoords3.z);
+	}
 
 	return shadow;
 }
 
 RF32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler)
 {
-	const Vec4 texCoords4 = mul(light.m_textureMatrix, Vec4(worldPos, 1.0));
-	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
-	return shadowTex.SampleCmpLevelZero(shadowMapSampler, texCoords3.xy, texCoords3.z);
+	PcssDisabled noPcss = (PcssDisabled)0;
+	return computeShadowFactorSpotLightGeneric(light, worldPos, shadowTex, shadowMapSampler, false, 0.0, noPcss);
+}
+
+RF32 computeShadowFactorSpotLightPcf(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, RF32 randFactor)
+{
+	PcssDisabled noPcss = (PcssDisabled)0;
+	return computeShadowFactorSpotLightGeneric(light, worldPos, shadowTex, shadowMapSampler, true, randFactor, noPcss);
+}
+
+RF32 computeShadowFactorSpotLightPcss(SpotLight light, Vec3 worldPos, Texture2D shadowTex, SamplerComparisonState shadowMapSampler, RF32 randFactor,
+									  SamplerState linearClampAnySampler)
+{
+	Pcss pcss;
+	pcss.m_linearClampSampler = linearClampAnySampler;
+	return computeShadowFactorSpotLightGeneric(light, worldPos, shadowTex, shadowMapSampler, true, randFactor, pcss);
 }
 
 // Compute the shadow factor of point (omni) lights.
@@ -200,9 +309,9 @@ RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Tex
 		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
 		shadow = 0.0;
-		[unroll] for(U32 i = 0u; i < 4u; ++i)
+		[unroll] for(U32 i = 0u; i < ARRAY_SIZE(kPoissonDisk4); ++i)
 		{
-			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
+			const Vec2 diskPoint = kPoissonDisk4[i] * kPcfScale;
 
 			// Rotate the disk point
 			Vec2 rotatedDiskPoint;
@@ -215,7 +324,7 @@ RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Tex
 			shadow += shadowMap.SampleCmpLevelZero(shadowMapSampler, newUv, z);
 		}
 
-		shadow /= 4.0;
+		shadow /= F32(ARRAY_SIZE(kPoissonDisk4));
 	}
 	else
 	{
@@ -237,27 +346,33 @@ RF32 computeShadowFactorPointLightPcf(PointLight light, Vec3 frag2Light, Texture
 }
 
 // Compute the shadow factor of a directional light
+template<typename TPcss>
 RF32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, Texture2D shadowMap,
-										SamplerComparisonState shadowMapSampler, RF32 randFactor, Bool pcf)
+										SamplerComparisonState shadowMapSampler, RF32 randFactor, Bool pcf, TPcss pcss)
 {
-#define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
+#define ANKI_FAST_CASCADES_WORKAROUND 1 // light might be in a constant buffer and dynamic indexing in constant buffers is too slow on nvidia
 
 #if ANKI_FAST_CASCADES_WORKAROUND
 	// Assumes kMaxShadowCascades is 4
 	Mat4 lightProjectionMat;
+	F32 far;
 	switch(cascadeIdx)
 	{
 	case 0:
 		lightProjectionMat = light.m_textureMatrices[0];
+		far = light.m_cascadeFarPlanes[0];
 		break;
 	case 1:
 		lightProjectionMat = light.m_textureMatrices[1];
+		far = light.m_cascadeFarPlanes[1];
 		break;
 	case 2:
 		lightProjectionMat = light.m_textureMatrices[2];
+		far = light.m_cascadeFarPlanes[2];
 		break;
 	default:
 		lightProjectionMat = light.m_textureMatrices[3];
+		far = light.m_cascadeFarPlanes[3];
 	}
 #else
 	const Mat4 lightProjectionMat = light.m_textureMatrices[cascadeIdx];
@@ -277,10 +392,28 @@ RF32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 cascadeIdx, 
 		const F32 sinTheta = sin(randFactor * 2.0 * kPi);
 		const F32 cosTheta = cos(randFactor * 2.0 * kPi);
 
-		shadow = 0.0;
-		[unroll] for(U32 i = 0u; i < 4u; ++i)
+		// PCSS
+		const Vec2 pcssRes = pcss.computePenumbra(shadowMap, smTexelSize, texCoords3, cosTheta, sinTheta, far, true);
+		F32 pcsfScale;
+		if(pcssRes.x == -1.0)
 		{
-			const Vec2 diskPoint = kPoissonDisk[i] * kPcfScale;
+			// PCSS disabled
+			pcsfScale = kPcfScale;
+		}
+		else
+		{
+			if(pcssRes.y == ARRAY_SIZE(kPoissonDisk4))
+			{
+				return 0.0;
+			}
+
+			pcsfScale = kPcfScale + pcssRes.x * kPcssScale;
+		}
+
+		shadow = 0.0;
+		[unroll] for(U32 i = 0u; i < ARRAY_SIZE(kPoissonDisk8); ++i)
+		{
+			const Vec2 diskPoint = kPoissonDisk8[i] * pcsfScale;
 
 			// Rotate the disk point
 			Vec2 rotatedDiskPoint;
@@ -293,7 +426,7 @@ RF32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 cascadeIdx, 
 			shadow += shadowMap.SampleCmpLevelZero(shadowMapSampler, newUv, texCoords3.z);
 		}
 
-		shadow /= 4.0;
+		shadow /= F32(ARRAY_SIZE(kPoissonDisk8));
 	}
 	else
 	{
@@ -305,13 +438,23 @@ RF32 computeShadowFactorDirLightGeneric(DirectionalLight light, U32 cascadeIdx, 
 
 RF32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, Texture2D shadowMap, SamplerComparisonState shadowMapSampler)
 {
-	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, -1.0, false);
+	PcssDisabled noPcss = (PcssDisabled)0;
+	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, -1.0, false, noPcss);
 }
 
 RF32 computeShadowFactorDirLightPcf(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, Texture2D shadowMap,
 									SamplerComparisonState shadowMapSampler, F32 randFactor)
 {
-	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, randFactor, true);
+	PcssDisabled noPcss = (PcssDisabled)0;
+	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, randFactor, true, noPcss);
+}
+
+RF32 computeShadowFactorDirLightPcss(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, Texture2D shadowMap,
+									 SamplerComparisonState shadowMapSampler, F32 randFactor, SamplerState linearClampAnySampler)
+{
+	Pcss pcss;
+	pcss.m_linearClampSampler = linearClampAnySampler;
+	return computeShadowFactorDirLightGeneric(light, cascadeIdx, worldPos, shadowMap, shadowMapSampler, randFactor, true, pcss);
 }
 
 // Compute the shadow factor of a directional light

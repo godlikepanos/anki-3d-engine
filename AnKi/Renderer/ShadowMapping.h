@@ -14,7 +14,8 @@ namespace anki {
 
 // Forward
 class GpuVisibilityOutput;
-extern NumericCVar<U32> g_shadowMappingPcfCVar;
+extern BoolCVar g_shadowMappingPcfCVar;
+extern BoolCVar g_shadowMappingPcssCVar;
 
 /// @addtogroup renderer
 /// @{

@@ -3,12 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator PCF 0 1
+#pragma anki mutator QUALITY 0 1 2 // No filtering, PCF, PCSS
 #pragma anki mutator DIRECTIONAL_LIGHT_SHADOW_RESOLVED 0 1
 
 #include <AnKi/Shaders/QuadVert.hlsl>
 #if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#	include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 #	define DEBUG_CASCADES 0
 
@@ -72,9 +73,12 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / g_consts.m_framebufferSize;
 #	else
 	const Vec2 uv = input.m_uv;
+	const UVec2 svDispatchThreadId = input.m_svPosition;
+	ANKI_MAYBE_UNUSED(svDispatchThreadId);
 #	endif
 
-#	if PCF
+#	if QUALITY > 0
+#		if 1
 	// Noise
 	Vec2 noiseTexSize;
 	g_noiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
@@ -83,6 +87,10 @@ RVec4 main(VertOut input) : SV_TARGET0
 	RVec3 noise = g_noiseTex.SampleLevel(g_trilinearRepeatSampler, noiseUv, 0.0).rgb;
 	noise = animateBlueNoise(noise, g_globalConstants.m_frame % 16u);
 	const RF32 randFactor = noise.x;
+#		else
+	const RVec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_globalConstants.m_frame);
+	const RF32 randFactor = noise2.x;
+#		endif
 #	endif
 
 	// World position
@@ -133,7 +141,10 @@ RVec4 main(VertOut input) : SV_TARGET0
 #			endif
 #		endif
 
-#		if PCF
+#		if QUALITY == 2
+			const F32 shadowFactorCascadeA = computeShadowFactorDirLightPcss(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex,
+																			 g_linearAnyClampShadowSampler, randFactor, g_linearAnyClampSampler);
+#		elif QUALITY == 1
 			const F32 shadowFactorCascadeA =
 				computeShadowFactorDirLightPcf(dirLight, cascadeIndices.x, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
 #		else
@@ -148,7 +159,11 @@ RVec4 main(VertOut input) : SV_TARGET0
 			}
 			else
 			{
-#		if PCF
+#		if QUALITY == 2
+				// Blend cascades
+				const F32 shadowFactorCascadeB = computeShadowFactorDirLightPcss(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex,
+																				 g_linearAnyClampShadowSampler, randFactor, g_linearAnyClampSampler);
+#		elif QUALITY == 1
 				// Blend cascades
 				const F32 shadowFactorCascadeB =
 					computeShadowFactorDirLightPcf(dirLight, cascadeIndices.y, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
@@ -184,7 +199,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 		{
 			const Vec3 frag2Light = light.m_position - worldPos;
 
-#	if PCF
+#	if QUALITY > 0
 			const RF32 shadowFactor =
 				computeShadowFactorPointLightPcf(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
 #	else
@@ -201,7 +216,10 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 		[branch] if(light.m_shadow)
 		{
-#	if PCF
+#	if QUALITY == 2
+			const RF32 shadowFactor = computeShadowFactorSpotLightPcss(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor,
+																	   g_linearAnyClampSampler);
+#	elif QUALITY == 1
 			const RF32 shadowFactor = computeShadowFactorSpotLightPcf(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler, randFactor);
 #	else
 			const RF32 shadowFactor = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);

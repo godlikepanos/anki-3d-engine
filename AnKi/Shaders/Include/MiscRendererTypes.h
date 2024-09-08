@@ -21,8 +21,10 @@ struct DirectionalLight
 	Vec4 m_shadowCascadeDistances;
 
 	Mat4 m_textureMatrices[kMaxShadowCascades];
+
+	Vec4 m_cascadeFarPlanes;
 };
-static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances is a Vec4
+static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances and m_cascadeFarPlanes is a Vec4
 
 /// Common matrices and stuff.
 struct CommonMatrices
@@ -40,10 +42,9 @@ struct CommonMatrices
 	Mat4 m_invertedViewProjection;
 	Mat4 m_invertedProjectionJitter; ///< To unproject in view space.
 
-	/// It's being used to reproject a clip space position of the current frame to the previous frame. Its value should
-	/// be m_jitter * m_prevFrame.m_viewProjection * m_invertedViewProjectionJitter. At first it unprojects the current
-	/// position to world space, all fine here. Then it projects to the previous frame as if the previous frame was
-	/// using the current frame's jitter matrix.
+	/// It's being used to reproject a clip space position of the current frame to the previous frame. Its value should be m_jitter *
+	/// m_prevFrame.m_viewProjection * m_invertedViewProjectionJitter. At first it unprojects the current position to world space, all fine here. Then
+	/// it projects to the previous frame as if the previous frame was using the current frame's jitter matrix.
 	Mat4 m_reprojection;
 
 	/// To unproject to view space. Jitter not considered.

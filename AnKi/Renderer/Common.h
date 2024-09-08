@@ -86,6 +86,7 @@ public:
 	RenderTargetHandle m_outRenderTarget;
 
 	Array<Mat4, kMaxShadowCascades> m_dirLightTextureMatrices;
+	Array<F32, kMaxShadowCascades> m_dirLightFarPlanes;
 
 	BufferView m_globalRenderingConstantsBuffer;
 

@@ -144,3 +144,5 @@ U32 checkStructuredBuffer(T buff, U32 idx)
 #	define ANKI_PER_PRIMITIVE_VAR
 #	define ANKI_PER_PRIMITIVE_MEMBER
 #endif
+
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))

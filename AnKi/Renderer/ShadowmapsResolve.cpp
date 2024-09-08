@@ -40,9 +40,12 @@ Error ShadowmapsResolve::initInternal()
 	m_rtDescr.bake();
 
 	// Prog
-	ANKI_CHECK(loadShaderProgram(
-		"ShaderBinaries/ShadowmapsResolve.ankiprogbin",
-		{{"PCF", g_shadowMappingPcfCVar.get() != 0}, {"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled()}}, m_prog, m_grProg));
+	for(MutatorValue quality = 0; quality < 3; ++quality)
+	{
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ShadowmapsResolve.ankiprogbin",
+									 {{"QUALITY", quality}, {"DIRECTIONAL_LIGHT_SHADOW_RESOLVED", getRenderer().getRtShadowsEnabled()}}, m_prog,
+									 m_grProgs[quality]));
+	}
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
 
@@ -109,7 +112,20 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 	ANKI_TRACE_SCOPED_EVENT(ShadowmapsResolve);
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-	cmdb.bindShaderProgram(m_grProg.get());
+	U32 quality;
+	if(g_shadowMappingPcssCVar.get())
+	{
+		quality = 2;
+	}
+	else if(g_shadowMappingPcfCVar.get())
+	{
+		quality = 1;
+	}
+	else
+	{
+		quality = 0;
+	}
+	cmdb.bindShaderProgram(m_grProgs[quality].get());
 
 	cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 	cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
@@ -136,7 +152,7 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 		rgraphCtx.bindSrv(6, 0, getRenderer().getRtShadows().getRt());
 	}
 
-	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get())
+	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get() || g_shadowMappingPcssCVar.get())
 	{
 		const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
 		cmdb.setFastConstants(&consts, sizeof(consts));

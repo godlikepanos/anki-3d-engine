@@ -24,8 +24,8 @@ static NumericCVar<U32> g_shadowMappingTileResolutionCVar(CVarSubsystem::kRender
 														  16, 2048, "Shadowmapping tile resolution");
 static NumericCVar<U32> g_shadowMappingTileCountPerRowOrColumnCVar(CVarSubsystem::kRenderer, "ShadowMappingTileCountPerRowOrColumn", 32, 1, 256,
 																   "Shadowmapping atlas will have this number squared number of tiles");
-NumericCVar<U32> g_shadowMappingPcfCVar(CVarSubsystem::kRenderer, "ShadowMappingPcf", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1,
-										"Shadow PCF (CVarSubsystem::kRenderer, 0: off, 1: on)");
+BoolCVar g_shadowMappingPcfCVar(CVarSubsystem::kRenderer, "ShadowMappingPcf", (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCF");
+BoolCVar g_shadowMappingPcssCVar(CVarSubsystem::kRenderer, "ShadowMappingPcss", (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCSS");
 
 static StatCounter g_tilesAllocatedStatVar(StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates);
 
@@ -324,7 +324,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Remove a few texels to avoid bilinear filtering bleeding
 			F32 texelsBorder;
-			if(g_shadowMappingPcfCVar.get())
+			if(g_shadowMappingPcfCVar.get() || g_shadowMappingPcssCVar.get())
 			{
 				texelsBorder = 2.0f; // 2 texels
 			}
@@ -480,8 +480,9 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
 		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
 		Array<Mat4, kMaxShadowCascades> cascadeProjMats;
+		Array<F32, kMaxShadowCascades> cascadeFarPlanes;
 		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeProjMats[0], cascadeCount},
-										 {&cascadeViewMats[0], cascadeCount});
+										 {&cascadeViewMats[0], cascadeCount}, {cascadeFarPlanes.getBegin(), cascadeCount});
 		for(U cascade = 0; cascade < cascadeCount; ++cascade)
 		{
 			cascadeViewProjMats[cascade] = cascadeProjMats[cascade] * Mat4(cascadeViewMats[cascade], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -530,6 +531,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Update the texture matrix to point to the correct region in the atlas
 			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(dirLightAtlasViewports[cascade]) * cascadeViewProjMats[cascade];
+			ctx.m_dirLightFarPlanes[cascade] = cascadeFarPlanes[cascade];
 		}
 	}
 }

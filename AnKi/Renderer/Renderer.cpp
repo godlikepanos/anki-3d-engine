@@ -406,6 +406,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 		{
 			ANKI_ASSERT(ctx.m_dirLightTextureMatrices[cascade] != Mat4::getZero());
 			out.m_textureMatrices[cascade] = ctx.m_dirLightTextureMatrices[cascade];
+			out.m_cascadeFarPlanes[cascade] = ctx.m_dirLightFarPlanes[cascade];
 		}
 	}
 	else

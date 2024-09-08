@@ -41,7 +41,7 @@ public:
 
 public:
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	Array<ShaderProgramPtr, 3> m_grProgs;
 	RenderTargetDesc m_rtDescr;
 	Bool m_quarterRez = false;
 	ImageResourcePtr m_noiseImage;

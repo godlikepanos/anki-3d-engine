@@ -336,6 +336,11 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 #endif
 
+	if(in.getKey(KeyCode::kY) == 1)
+	{
+		g_shadowMappingPcssCVar.set(!g_shadowMappingPcssCVar.get());
+	}
+
 	if(in.getKey(KeyCode::kU) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");

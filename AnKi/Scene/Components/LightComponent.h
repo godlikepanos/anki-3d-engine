@@ -146,7 +146,7 @@ public:
 	/// @param cascadeProjMats View projection matrices for each cascade.
 	/// @param cascadeViewMats View matrices for each cascade. Optional.
 	void computeCascadeFrustums(const Frustum& cameraFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeProjMats,
-								WeakArray<Mat3x4> cascadeViewMats = {}) const;
+								WeakArray<Mat3x4> cascadeViewMats = {}, WeakArray<F32> cascadeFarPlanes = {}) const;
 
 	U32 getUuid() const
 	{
