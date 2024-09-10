@@ -758,30 +758,54 @@ ANKI_TEST(Gr, WorkGraphsOverhead)
 ANKI_TEST(Gr, WorkGraphsJobManager)
 {
 	Bool bBenchmark, bWorkgraphs;
+	// CVarSet::getSingleton().setMultiple(Array<const Char*, 2>{"Device", "1"});
 	commonInitWg(bBenchmark, bWorkgraphs);
 
 	const U32 queueRingBufferSize = nextPowerOfTwo(2 * 1024 * 1024);
+	const U32 initialWorkItemCount = 128 * 1024;
 
 	{
 		// Create compute progs
 		ShaderProgramPtr compProg;
 		{
-			ShaderPtr shader =
-				loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/JobManager.hlsl", ShaderType::kCompute, Array<CString, 1>{"-DWORKGRAPHS=0"});
+			ShaderPtr shader = loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/JobManagerCompute.hlsl", ShaderType::kCompute);
 			ShaderProgramInitInfo progInit;
 			progInit.m_computeShader = shader.get();
 			compProg = GrManager::getSingleton().newShaderProgram(progInit);
+		}
+
+		ShaderProgramPtr wgProg;
+		if(bWorkgraphs)
+		{
+			ShaderPtr shader = loadShader(ANKI_SOURCE_DIRECTORY "/Tests/Gr/JobManagerWg.hlsl", ShaderType::kWorkGraph);
+
+			ShaderProgramInitInfo progInit;
+			Array<WorkGraphNodeSpecialization, 1> specializations = {{{"main", UVec3((initialWorkItemCount + 64 - 1) / 64, 1, 1)}}};
+			progInit.m_workGraph.m_nodeSpecializations = specializations;
+			progInit.m_workGraph.m_shader = shader.get();
+			wgProg = GrManager::getSingleton().newShaderProgram(progInit);
+		}
+
+		// Scratch buff
+		BufferPtr scratchBuff;
+		if(bWorkgraphs)
+		{
+			BufferInitInfo scratchInit("scratch");
+			scratchInit.m_size = wgProg->getWorkGraphMemoryRequirements();
+			scratchInit.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
+			scratchBuff = GrManager::getSingleton().newBuffer(scratchInit);
 		}
 
 		DynamicArray<U32> initialWorkItems;
 		U32 finalValue = 0;
 		U32 workItemCount = 0;
 		{
-			initialWorkItems.resize(128 * 1024);
+			initialWorkItems.resize(initialWorkItemCount);
 			for(U32 i = 0; i < initialWorkItems.getSize(); ++i)
 			{
-				const U32 level = ((bBenchmark) ? i : rand()) % 4;
-				const U32 payload = (bBenchmark) ? 1 : (rand() % 4);
+				const Bool bDeterministic = bBenchmark;
+				const U32 level = ((bDeterministic) ? i : rand()) % 4;
+				const U32 payload = ((bDeterministic) ? 1 : rand()) % 4;
 
 				initialWorkItems[i] = (level << 16) | payload;
 			}
@@ -816,6 +840,7 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 		BufferPtr resultBuff = createBuffer<U32>(BufferUsageBit::kAllUav, 0u, 2);
 
 		BufferPtr queueRingBuff;
+		if(!bWorkgraphs)
 		{
 			queueRingBuff = createBuffer<U32>(BufferUsageBit::kAllUav, 0u, queueRingBufferSize);
 
@@ -832,7 +857,26 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 			ANKI_TEST_EXPECT_EQ(fence->clientWait(kMaxSecond), true);
 		}
 
+		BufferPtr initialWorkItemsBuff;
+		if(bWorkgraphs)
+		{
+			initialWorkItemsBuff = createBuffer<U32>(BufferUsageBit::kAllUav, 0u, initialWorkItemCount);
+
+			BufferPtr tempBuff = createBuffer<U32>(BufferUsageBit::kCopySource, initialWorkItems);
+
+			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo());
+			cmdb->copyBufferToBuffer(BufferView(tempBuff.get(), 0, initialWorkItems.getSizeInBytes()),
+									 BufferView(initialWorkItemsBuff.get(), 0, initialWorkItems.getSizeInBytes()));
+			cmdb->endRecording();
+
+			FencePtr fence;
+			GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+
+			ANKI_TEST_EXPECT_EQ(fence->clientWait(kMaxSecond), true);
+		}
+
 		BufferPtr queueBuff;
+		if(!bWorkgraphs)
 		{
 			struct Queue
 			{
@@ -865,10 +909,28 @@ ANKI_TEST(Gr, WorkGraphsJobManager)
 
 				cmdb.dispatchCompute(256, 1, 1);
 			}
+			else
+			{
+				cmdb.bindShaderProgram(wgProg.get());
+
+				cmdb.bindSrv(0, 0, BufferView(initialWorkItemsBuff.get()));
+				cmdb.bindUav(0, 0, BufferView(resultBuff.get()));
+
+				struct FirstNodeRecord
+				{
+					UVec3 m_gridSize;
+				};
+
+				Array<FirstNodeRecord, 1> records;
+				records[0].m_gridSize = UVec3((initialWorkItemCount + 64 - 1) / 64, 1, 1);
+
+				cmdb.dispatchGraph(BufferView(scratchBuff.get()), records.getBegin(), records.getSize(), sizeof(records[0]));
+			}
 		});
 
 		DynamicArray<U32> result;
 		readBuffer(resultBuff, result);
+		printf("expecting %u, got %u. Error %u\n", finalValue, result[0], result[1]);
 		ANKI_TEST_EXPECT_EQ(result[0], finalValue);
 		ANKI_TEST_EXPECT_EQ(result[1], 0);
 	}
