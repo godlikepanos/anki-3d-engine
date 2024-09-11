@@ -221,7 +221,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				};
 
 				// Visualize GI probes
-				if(g_visualizeGiProbes.get())
+				if(g_visualizeGiProbes.get() && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
@@ -243,7 +243,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				// Visualize refl probes
-				if(g_visualizeReflectionProbes.get())
+				if(g_visualizeReflectionProbes.get() && GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());
