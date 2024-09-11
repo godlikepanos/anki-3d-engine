@@ -83,6 +83,9 @@ NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod1MaxDistanc
 									   "Distance that will be used to calculate the LOD 1");
 
 static StatCounter g_primitivesDrawnStatVar(StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
+static StatCounter g_rendererCpuTimeStatVar(StatCategory::kTime, "Renderer",
+											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
+StatCounter g_rendererGpuTimeStatVar(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -123,14 +126,15 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) deleteInstance(RendererMemoryPool::getSingleton(), m_##name2);
+#include <AnKi/Renderer/RendererObject.def.h>
 }
 
-Error Renderer::init(UVec2 swapchainSize, StackMemoryPool* framePool)
+Error Renderer::init(const RendererInitInfo& inf)
 {
 	ANKI_TRACE_SCOPED_EVENT(RInit);
 
-	m_framePool = framePool;
-	const Error err = initInternal(swapchainSize);
+	const Error err = initInternal(inf);
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize the renderer");
@@ -139,12 +143,17 @@ Error Renderer::init(UVec2 swapchainSize, StackMemoryPool* framePool)
 	return err;
 }
 
-Error Renderer::initInternal(UVec2 swapchainResolution)
+Error Renderer::initInternal(const RendererInitInfo& inf)
 {
+	RendererMemoryPool::allocateSingleton(inf.m_allocCallback, inf.m_allocCallbackUserData);
+
+	m_framePool.init(inf.m_allocCallback, inf.m_allocCallbackUserData, 10_MB, 1.0f);
 	m_frameCount = 0;
+	m_swapchainResolution = inf.m_swapchainSize;
+	m_rgraph = GrManager::getSingleton().newRenderGraph();
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(swapchainResolution) * g_renderScalingCVar.get());
+	m_postProcessResolution = UVec2(Vec2(m_swapchainResolution) * g_renderScalingCVar.get());
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
@@ -201,7 +210,7 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 #define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
 	if(initCondition) \
 	{ \
-		m_##name2.reset(newInstance<name>(RendererMemoryPool::getSingleton())); \
+		m_##name2 = newInstance<name>(RendererMemoryPool::getSingleton()); \
 		ANKI_CHECK(m_##name2->init()); \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
@@ -258,55 +267,23 @@ Error Renderer::initInternal(UVec2 swapchainResolution)
 		m_jitterOffsets[i] = generateJitter(i);
 	}
 
+	if(m_swapchainResolution != m_postProcessResolution)
+	{
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Blit.ankiprogbin", m_blitProg));
+		ShaderProgramResourceVariantInitInfo varInit(m_blitProg);
+		const ShaderProgramResourceVariant* variant;
+		varInit.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel);
+		m_blitProg->getOrCreateVariant(varInit, variant);
+		m_blitGrProg.reset(&variant->getProgram());
+
+		ANKI_R_LOGI("There will be a blit pass to the swapchain because render scaling is not 1.0");
+	}
+
 	return Error::kNone;
 }
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
-#if ANKI_STATS_ENABLED
-	updatePipelineStats();
-#endif
-
-	const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
-
-	ctx.m_prevMatrices = m_prevMatrices;
-
-	ctx.m_matrices.m_cameraTransform = Mat3x4(cam.getFrustum().getWorldTransform());
-	ctx.m_matrices.m_view = cam.getFrustum().getViewMatrix();
-	ctx.m_matrices.m_projection = cam.getFrustum().getProjectionMatrix();
-	ctx.m_matrices.m_viewProjection = cam.getFrustum().getViewProjectionMatrix();
-
-	Vec2 jitter = m_jitterOffsets[m_frameCount & (m_jitterOffsets.getSize() - 1)]; // In [-0.5, 0.5]
-	jitter *= 2.0f; // In [-1, 1]
-	const Vec2 ndcPixelSize = 1.0f / Vec2(m_internalResolution);
-	jitter *= ndcPixelSize;
-	ctx.m_matrices.m_jitter = Mat4::getIdentity();
-	ctx.m_matrices.m_jitter.setTranslationPart(Vec3(jitter, 0.0f));
-	ctx.m_matrices.m_jitterOffsetNdc = jitter;
-
-	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
-	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * Mat4(ctx.m_matrices.m_view, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
-	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
-	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
-
-	ctx.m_matrices.m_reprojection = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjection;
-
-	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
-
-	ctx.m_cameraNear = cam.getNear();
-	ctx.m_cameraFar = cam.getFar();
-
-	// Allocate global constants
-	GlobalRendererConstants* globalConsts;
-	{
-		U32 alignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
-							? sizeof(*globalConsts)
-							: GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
-		alignment = computeCompoundAlignment(alignment, GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment);
-		ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocate(sizeof(*globalConsts), alignment, globalConsts);
-	}
-
 	// Import RTs first
 	m_downscaleBlur->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
@@ -353,8 +330,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_dbg->populateRenderGraph(ctx);
 
 	m_finalComposite->populateRenderGraph(ctx);
-
-	writeGlobalRendererConstants(ctx, *globalConsts);
 
 	return Error::kNone;
 }
@@ -413,14 +388,6 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	{
 		consts.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
 	}
-}
-
-void Renderer::finalize(const RenderingContext& ctx, Fence* fence)
-{
-	++m_frameCount;
-
-	m_prevMatrices = ctx.m_matrices;
-	m_readbackManager->endFrame(fence);
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
@@ -733,5 +700,133 @@ void Renderer::updatePipelineStats()
 	g_primitivesDrawnStatVar.set(sum);
 }
 #endif
+
+Error Renderer::render(Texture* presentTex)
+{
+	ANKI_TRACE_SCOPED_EVENT(Render);
+
+	const Second startTime = HighRezTimer::getCurrentTime();
+
+	// First thing, reset the temp mem pool
+	m_framePool.reset();
+
+	RenderingContext ctx(&m_framePool);
+	ctx.m_renderGraphDescr.setStatisticsEnabled(ANKI_STATS_ENABLED);
+	ctx.m_swapchainRenderTarget = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::kNone);
+
+#if ANKI_STATS_ENABLED
+	updatePipelineStats();
+#endif
+
+	const CameraComponent& cam = SceneGraph::getSingleton().getActiveCameraNode().getFirstComponentOfType<CameraComponent>();
+
+	ctx.m_prevMatrices = m_prevMatrices;
+
+	ctx.m_matrices.m_cameraTransform = Mat3x4(cam.getFrustum().getWorldTransform());
+	ctx.m_matrices.m_view = cam.getFrustum().getViewMatrix();
+	ctx.m_matrices.m_projection = cam.getFrustum().getProjectionMatrix();
+	ctx.m_matrices.m_viewProjection = cam.getFrustum().getViewProjectionMatrix();
+
+	Vec2 jitter = m_jitterOffsets[m_frameCount & (m_jitterOffsets.getSize() - 1)]; // In [-0.5, 0.5]
+	jitter *= 2.0f; // In [-1, 1]
+	const Vec2 ndcPixelSize = 1.0f / Vec2(m_internalResolution);
+	jitter *= ndcPixelSize;
+	ctx.m_matrices.m_jitter = Mat4::getIdentity();
+	ctx.m_matrices.m_jitter.setTranslationPart(Vec3(jitter, 0.0f));
+	ctx.m_matrices.m_jitterOffsetNdc = jitter;
+
+	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
+	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * Mat4(ctx.m_matrices.m_view, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
+	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
+
+	ctx.m_matrices.m_reprojection = ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_invertedViewProjection;
+
+	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
+
+	ctx.m_cameraNear = cam.getNear();
+	ctx.m_cameraFar = cam.getFar();
+
+	// Allocate global constants
+	GlobalRendererConstants* globalConsts;
+	{
+		U32 alignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
+							? sizeof(*globalConsts)
+							: GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferBindOffsetAlignment;
+		alignment = computeCompoundAlignment(alignment, GrManager::getSingleton().getDeviceCapabilities().m_constantBufferBindOffsetAlignment);
+		ctx.m_globalRenderingConstantsBuffer = RebarTransientMemoryPool::getSingleton().allocate(sizeof(*globalConsts), alignment, globalConsts);
+	}
+
+	ANKI_CHECK(populateRenderGraph(ctx));
+
+	// Blit renderer's result to swapchain
+	const Bool bNeedsBlit = m_postProcessResolution != m_swapchainResolution;
+	if(bNeedsBlit)
+	{
+		GraphicsRenderPass& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
+		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(ctx.m_swapchainRenderTarget)});
+
+		pass.newTextureDependency(ctx.m_swapchainRenderTarget, TextureUsageBit::kRtvDsvWrite);
+		pass.newTextureDependency(m_finalComposite->getRenderTarget(), TextureUsageBit::kSrvPixel);
+
+		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
+
+			cmdb.bindShaderProgram(m_blitGrProg.get());
+			cmdb.bindSampler(0, 0, m_samplers.m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, m_finalComposite->getRenderTarget());
+
+			cmdb.draw(PrimitiveTopology::kTriangles, 3);
+
+			// Draw the UI
+			m_uiStage->draw(m_swapchainResolution.x(), m_swapchainResolution.y(), cmdb);
+		});
+	}
+
+	// Create a dummy pass to transition the presentable image to present
+	{
+		NonGraphicsRenderPass& pass = ctx.m_renderGraphDescr.newNonGraphicsRenderPass("Present");
+
+		pass.setWork([]([[maybe_unused]] RenderPassWorkContext& rgraphCtx) {
+			// Do nothing. This pass is dummy
+		});
+		pass.newTextureDependency(ctx.m_swapchainRenderTarget, TextureUsageBit::kPresent);
+	}
+
+	writeGlobalRendererConstants(ctx, *globalConsts);
+
+	// Bake the render graph
+	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_framePool);
+
+	// Flush
+	FencePtr fence;
+	m_rgraph->recordAndSubmitCommandBuffers(&fence);
+
+	// Misc
+	m_rgraph->reset();
+	++m_frameCount;
+	m_prevMatrices = ctx.m_matrices;
+	m_readbackManager->endFrame(fence.get());
+
+	// Stats
+	if(ANKI_STATS_ENABLED || ANKI_TRACING_ENABLED)
+	{
+		g_rendererCpuTimeStatVar.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+
+		RenderGraphStatistics rgraphStats;
+		m_rgraph->getStatistics(rgraphStats);
+		g_rendererGpuTimeStatVar.set(rgraphStats.m_gpuTime * 1000.0);
+
+		if(rgraphStats.m_gpuTime > 0.0)
+		{
+			// WARNING: The name of the event is somewhat special. Search it to see why
+			ANKI_TRACE_CUSTOM_EVENT(GpuFrameTime, rgraphStats.m_cpuStartTime, rgraphStats.m_gpuTime);
+		}
+	}
+
+	return Error::kNone;
+}
 
 } // end namespace anki

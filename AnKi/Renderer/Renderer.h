@@ -50,24 +50,38 @@ enum class MeshletRenderingType
 	kSoftware
 };
 
+class RendererInitInfo
+{
+public:
+	UVec2 m_swapchainSize = UVec2(0u);
+
+	AllocAlignedCallback m_allocCallback = nullptr;
+	void* m_allocCallbackUserData = nullptr;
+};
+
 /// Offscreen renderer.
-class Renderer
+class Renderer : public MakeSingleton<Renderer>
 {
 public:
 	Renderer();
 
 	~Renderer();
 
+	Error init(const RendererInitInfo& inf);
+
+	Error render(Texture* presentTex);
+
 #define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
 	name& get##name() \
 	{ \
+		ANKI_ASSERT(m_##name2); \
 		return *m_##name2; \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
 
 	Bool getRtShadowsEnabled() const
 	{
-		return m_rtShadows.isCreated();
+		return m_rtShadows != nullptr;
 	}
 
 	const UVec2& getInternalResolution() const
@@ -80,18 +94,15 @@ public:
 		return m_postProcessResolution;
 	}
 
+	const UVec2& getSwapchainResolution() const
+	{
+		return m_swapchainResolution;
+	}
+
 	F32 getAspectRatio() const
 	{
 		return F32(m_internalResolution.x()) / F32(m_internalResolution.y());
 	}
-
-	/// Init the renderer.
-	Error init(UVec2 swapchainSize, StackMemoryPool* framePool);
-
-	/// This function does all the rendering stages and produces a final result.
-	Error populateRenderGraph(RenderingContext& ctx);
-
-	void finalize(const RenderingContext& ctx, Fence* fence);
 
 	U64 getFrameCount() const
 	{
@@ -169,10 +180,9 @@ public:
 	Bool getCurrentDebugRenderTarget(Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles, ShaderProgramPtr& optionalShaderProgram);
 	/// @}
 
-	StackMemoryPool& getFrameMemoryPool() const
+	StackMemoryPool& getFrameMemoryPool()
 	{
-		ANKI_ASSERT(m_framePool);
-		return *m_framePool;
+		return m_framePool;
 	}
 
 #if ANKI_STATS_ENABLED
@@ -185,17 +195,26 @@ public:
 #endif
 
 private:
+	class Cleanup
+	{
+	public:
+		~Cleanup()
+		{
+			RendererMemoryPool::freeSingleton();
+		}
+	} m_cleanup; // First so it will be called last in the renderer's destructor
+
 	/// @name Rendering stages
 	/// @{
-#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) UniquePtr<name, SingletonMemoryPoolDeleter<RendererMemoryPool>> m_##name2;
+#define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) name* m_##name2 = nullptr;
 #include <AnKi/Renderer/RendererObject.def.h>
 	/// @}
 
-	UVec2 m_tileCounts = UVec2(0u);
-	U32 m_zSplitCount = 0;
+	StackMemoryPool m_framePool;
 
 	UVec2 m_internalResolution = UVec2(0u); ///< The resolution of all passes up until TAA.
 	UVec2 m_postProcessResolution = UVec2(0u); ///< The resolution of post processing and following passes.
+	UVec2 m_swapchainResolution = UVec2(0u);
 
 	U64 m_frameCount; ///< Frame number
 
@@ -211,8 +230,6 @@ private:
 
 	ShaderProgramResourcePtr m_clearTexComputeProg;
 
-	StackMemoryPool* m_framePool = nullptr;
-
 	class DebugRtInfo
 	{
 	public:
@@ -221,6 +238,14 @@ private:
 	};
 	RendererDynamicArray<DebugRtInfo> m_debugRts;
 	RendererString m_currentDebugRtName;
+
+	ShaderProgramResourcePtr m_blitProg;
+	ShaderProgramPtr m_blitGrProg;
+
+	RenderGraphPtr m_rgraph;
+
+	UVec2 m_tileCounts = UVec2(0u);
+	U32 m_zSplitCount = 0;
 
 	class
 	{
@@ -235,7 +260,7 @@ private:
 
 	MeshletRenderingType m_meshletRenderingType = MeshletRenderingType::kNone;
 
-	Error initInternal(UVec2 swapchainSize);
+	Error initInternal(const RendererInitInfo& inf);
 
 	void gpuSceneCopy(RenderingContext& ctx);
 
@@ -244,6 +269,9 @@ private:
 #endif
 
 	void writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& consts);
+
+	/// This function does all the rendering stages and produces a final result.
+	Error populateRenderGraph(RenderingContext& ctx);
 };
 /// @}
 

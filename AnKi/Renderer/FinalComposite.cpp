@@ -40,6 +40,15 @@ Error FinalComposite::initInternal()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg,
 								 m_defaultVisualizeRenderTargetGrProg));
 
+	if(getRenderer().getSwapchainResolution() != getRenderer().getPostProcessResolution())
+	{
+		m_rtDesc = getRenderer().create2DRenderTargetDescription(
+			getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(),
+			(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
+			"Final Composite");
+		m_rtDesc.bake();
+	}
+
 	return Error::kNone;
 }
 
@@ -73,12 +82,17 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
-		run(rgraphCtx);
-	});
-	pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(ctx.m_outRenderTarget)});
+	const Bool bRendersToSwapchain = getRenderer().getSwapchainResolution() == getRenderer().getPostProcessResolution();
+	const RenderTargetHandle outRt = (!bRendersToSwapchain) ? rgraph.newRenderTarget(m_rtDesc) : ctx.m_swapchainRenderTarget;
 
-	pass.newTextureDependency(ctx.m_outRenderTarget, TextureUsageBit::kRtvDsvWrite);
+	if(!bRendersToSwapchain)
+	{
+		m_runCtx.m_rt = outRt;
+	}
+
+	pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(outRt)});
+
+	pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
 	if(g_dbgCVar.get())
 	{
@@ -103,74 +117,77 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 			}
 		}
 	}
-}
 
-void FinalComposite::run(RenderPassWorkContext& rgraphCtx)
-{
-	ANKI_TRACE_SCOPED_EVENT(FinalComposite);
+	pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
-	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-	const Bool dbgEnabled = g_dbgCVar.get();
+		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+		const Bool dbgEnabled = g_dbgCVar.get();
 
-	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
-	ShaderProgramPtr optionalDebugProgram;
-	const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, optionalDebugProgram);
+		Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
+		ShaderProgramPtr optionalDebugProgram;
+		const Bool hasDebugRt = getRenderer().getCurrentDebugRenderTarget(dbgRts, optionalDebugProgram);
 
-	// Bind program
-	if(hasDebugRt && optionalDebugProgram.isCreated())
-	{
-		cmdb.bindShaderProgram(optionalDebugProgram.get());
-	}
-	else if(hasDebugRt)
-	{
-		cmdb.bindShaderProgram(m_defaultVisualizeRenderTargetGrProg.get());
-	}
-	else
-	{
-		cmdb.bindShaderProgram(m_grProgs[dbgEnabled].get());
-	}
-
-	// Bind stuff
-	if(!hasDebugRt)
-	{
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-		cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
-
-		rgraphCtx.bindSrv(0, 0, getRenderer().getScale().getTonemappedRt());
-
-		rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getRt());
-		cmdb.bindSrv(2, 0, TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
-		rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());
-
-		if(dbgEnabled)
+		// Bind program
+		if(hasDebugRt && optionalDebugProgram.isCreated())
 		{
-			rgraphCtx.bindSrv(5, 0, getRenderer().getDbg().getRt());
+			cmdb.bindShaderProgram(optionalDebugProgram.get());
+		}
+		else if(hasDebugRt)
+		{
+			cmdb.bindShaderProgram(m_defaultVisualizeRenderTargetGrProg.get());
+		}
+		else
+		{
+			cmdb.bindShaderProgram(m_grProgs[dbgEnabled].get());
 		}
 
-		const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
-		cmdb.setFastConstants(&pc, sizeof(pc));
-	}
-	else
-	{
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-
-		U32 count = 0;
-		for(const RenderTargetHandle& handle : dbgRts)
+		// Bind stuff
+		if(!hasDebugRt)
 		{
-			if(handle.isValid())
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+
+			rgraphCtx.bindSrv(0, 0, getRenderer().getScale().getTonemappedRt());
+
+			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getRt());
+			cmdb.bindSrv(2, 0, TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
+			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());
+
+			if(dbgEnabled)
 			{
-				rgraphCtx.bindSrv(count++, 0, handle);
+				rgraphCtx.bindSrv(5, 0, getRenderer().getDbg().getRt());
+			}
+
+			const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
+			cmdb.setFastConstants(&pc, sizeof(pc));
+		}
+		else
+		{
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+
+			U32 count = 0;
+			for(const RenderTargetHandle& handle : dbgRts)
+			{
+				if(handle.isValid())
+				{
+					rgraphCtx.bindSrv(count++, 0, handle);
+				}
 			}
 		}
-	}
 
-	cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
-	drawQuad(cmdb);
+		cmdb.setViewport(0, 0, getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y());
+		drawQuad(cmdb);
 
-	// Draw UI
-	getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), cmdb);
+		// Draw UI
+		const Bool bRendersToSwapchain = getRenderer().getSwapchainResolution() == getRenderer().getPostProcessResolution();
+		if(bRendersToSwapchain)
+		{
+			getRenderer().getUiStage().draw(getRenderer().getPostProcessResolution().x(), getRenderer().getPostProcessResolution().y(), cmdb);
+		}
+	});
 }
 
 } // end namespace anki

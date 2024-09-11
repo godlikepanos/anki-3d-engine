@@ -200,7 +200,7 @@ Error MyApp::sampleExtraInit()
 Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 {
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
-	Renderer& renderer = MainRenderer::getSingleton().getOffscreenRenderer();
+	Renderer& renderer = Renderer::getSingleton();
 
 	if(Input::getSingleton().getKey(KeyCode::kEscape))
 	{
@@ -256,14 +256,14 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		else if(mode == 1)
 		{
 			g_dbgCVar.set(true);
-			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(true);
-			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(false);
+			renderer.getDbg().setDepthTestEnabled(true);
+			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
 			g_dbgCVar.set(true);
-			MainRenderer::getSingleton().getDbg().setDepthTestEnabled(false);
-			MainRenderer::getSingleton().getDbg().setDitheredDepthTestEnabled(true);
+			renderer.getDbg().setDepthTestEnabled(false);
+			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
 	}
 

@@ -13,7 +13,6 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/ShadowMapping.h>
-#include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>

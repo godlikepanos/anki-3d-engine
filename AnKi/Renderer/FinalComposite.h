@@ -29,6 +29,11 @@ public:
 	/// Load the color grading texture.
 	Error loadColorGradingTextureImage(CString filename);
 
+	RenderTargetHandle getRenderTarget() const
+	{
+		return m_runCtx.m_rt;
+	}
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs; ///< [Debug on or off]
@@ -37,6 +42,14 @@ private:
 	ShaderProgramPtr m_defaultVisualizeRenderTargetGrProg;
 
 	ImageResourcePtr m_lut; ///< Color grading lookup texture.
+
+	RenderTargetDesc m_rtDesc;
+
+	class
+	{
+	public:
+		RenderTargetHandle m_rt;
+	} m_runCtx;
 
 	Error initInternal();
 

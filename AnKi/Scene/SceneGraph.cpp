@@ -7,7 +7,6 @@
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Core/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>

@@ -24,7 +24,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Physics/PhysicsWorld.h>
-#include <AnKi/Renderer/MainRenderer.h>
+#include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Resource/AsyncLoader.h>
@@ -145,7 +145,7 @@ void App::cleanup()
 {
 	SceneGraph::freeSingleton();
 	ScriptManager::freeSingleton();
-	MainRenderer::freeSingleton();
+	Renderer::freeSingleton();
 	UiManager::freeSingleton();
 	GpuSceneMicroPatcher::freeSingleton();
 	ResourceManager::freeSingleton();
@@ -346,11 +346,11 @@ Error App::initInternal()
 	//
 	// Renderer
 	//
-	MainRendererInitInfo renderInit;
+	RendererInitInfo renderInit;
 	renderInit.m_swapchainSize = UVec2(NativeWindow::getSingleton().getWidth(), NativeWindow::getSingleton().getHeight());
 	renderInit.m_allocCallback = allocCb;
 	renderInit.m_allocCallbackUserData = allocCbUserData;
-	ANKI_CHECK(MainRenderer::allocateSingleton().init(renderInit));
+	ANKI_CHECK(Renderer::allocateSingleton().init(renderInit));
 
 	//
 	// Script
@@ -450,7 +450,7 @@ Error App::mainLoop()
 
 			// Render
 			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();
-			ANKI_CHECK(MainRenderer::getSingleton().render(presentableTex.get()));
+			ANKI_CHECK(Renderer::getSingleton().render(presentableTex.get()));
 
 			// If we get stats exclude the time of GR because it forces some GPU-CPU serialization. We don't want to count that
 			Second grTime = 0.0;

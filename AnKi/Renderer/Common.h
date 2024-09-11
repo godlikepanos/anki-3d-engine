@@ -83,7 +83,7 @@ public:
 	F32 m_cameraFar = 0.0f;
 
 	/// The render target that the Renderer will populate.
-	RenderTargetHandle m_outRenderTarget;
+	RenderTargetHandle m_swapchainRenderTarget;
 
 	Array<Mat4, kMaxShadowCascades> m_dirLightTextureMatrices;
 	Array<F32, kMaxShadowCascades> m_dirLightFarPlanes;

@@ -20,8 +20,6 @@ namespace anki {
 
 // Forward
 class LuaUserData;
-class SceneGraph;
-class MainRenderer;
 
 /// @addtogroup script
 /// @{

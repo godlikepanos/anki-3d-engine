@@ -1196,8 +1196,8 @@ Error GltfImporter::writeCamera(const cgltf_node& node, [[maybe_unused]] const I
 	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node)\n"));
 	ANKI_CHECK(m_sceneFile.writeText("comp = node:newCameraComponent()\n"));
 
-	ANKI_CHECK(m_sceneFile.writeTextf("comp:setPerspective(%f, %f, getMainRenderer():getAspectRatio() * %f, %f)\n", cam.znear, cam.zfar, cam.yfov,
-									  cam.yfov));
+	ANKI_CHECK(
+		m_sceneFile.writeTextf("comp:setPerspective(%f, %f, getRenderer():getAspectRatio() * %f, %f)\n", cam.znear, cam.zfar, cam.yfov, cam.yfov));
 
 	return Error::kNone;
 }

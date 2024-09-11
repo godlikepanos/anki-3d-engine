@@ -11,25 +11,25 @@
 
 namespace anki {
 
-static MainRenderer* getMainRenderer(lua_State* l)
+static Renderer* getRenderer(lua_State* l)
 {
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	return &MainRenderer::getSingleton();
+	return &Renderer::getSingleton();
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-6365712250974230727, "MainRenderer",
-													   LuaUserData::computeSizeForGarbageCollected<MainRenderer>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoRenderer = {4110901869536678112, "Renderer", LuaUserData::computeSizeForGarbageCollected<Renderer>(), nullptr,
+												   nullptr};
 
 template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MainRenderer>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Renderer>()
 {
-	return luaUserDataTypeInfoMainRenderer;
+	return luaUserDataTypeInfoRenderer;
 }
 
-/// Pre-wrap method MainRenderer::getAspectRatio.
-static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
+/// Pre-wrap method Renderer::getAspectRatio.
+static inline int pwrapRenderergetAspectRatio(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -41,12 +41,12 @@ static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 	}
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMainRenderer, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoRenderer, ud))
 	{
 		return -1;
 	}
 
-	MainRenderer* self = ud->getData<MainRenderer>();
+	Renderer* self = ud->getData<Renderer>();
 
 	// Call the method
 	F32 ret = self->getAspectRatio();
@@ -57,10 +57,10 @@ static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 	return 1;
 }
 
-/// Wrap method MainRenderer::getAspectRatio.
-static int wrapMainRenderergetAspectRatio(lua_State* l)
+/// Wrap method Renderer::getAspectRatio.
+static int wrapRenderergetAspectRatio(lua_State* l)
 {
-	int res = pwrapMainRenderergetAspectRatio(l);
+	int res = pwrapRenderergetAspectRatio(l);
 	if(res >= 0)
 	{
 		return res;
@@ -70,8 +70,8 @@ static int wrapMainRenderergetAspectRatio(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method MainRenderer::setCurrentDebugRenderTarget.
-static inline int pwrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
+/// Pre-wrap method Renderer::setCurrentDebugRenderTarget.
+static inline int pwrapRenderersetCurrentDebugRenderTarget(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -83,12 +83,12 @@ static inline int pwrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
 	}
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMainRenderer, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoRenderer, ud))
 	{
 		return -1;
 	}
 
-	MainRenderer* self = ud->getData<MainRenderer>();
+	Renderer* self = ud->getData<Renderer>();
 
 	// Pop arguments
 	const char* arg0;
@@ -98,15 +98,15 @@ static inline int pwrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
 	}
 
 	// Call the method
-	self->getOffscreenRenderer().setCurrentDebugRenderTarget(arg0);
+	self->setCurrentDebugRenderTarget(arg0);
 
 	return 0;
 }
 
-/// Wrap method MainRenderer::setCurrentDebugRenderTarget.
-static int wrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
+/// Wrap method Renderer::setCurrentDebugRenderTarget.
+static int wrapRenderersetCurrentDebugRenderTarget(lua_State* l)
 {
-	int res = pwrapMainRenderersetCurrentDebugRenderTarget(l);
+	int res = pwrapRenderersetCurrentDebugRenderTarget(l);
 	if(res >= 0)
 	{
 		return res;
@@ -116,17 +116,17 @@ static int wrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
 	return 0;
 }
 
-/// Wrap class MainRenderer.
-static inline void wrapMainRenderer(lua_State* l)
+/// Wrap class Renderer.
+static inline void wrapRenderer(lua_State* l)
 {
-	LuaBinder::createClass(l, &luaUserDataTypeInfoMainRenderer);
-	LuaBinder::pushLuaCFuncMethod(l, "getAspectRatio", wrapMainRenderergetAspectRatio);
-	LuaBinder::pushLuaCFuncMethod(l, "setCurrentDebugRenderTarget", wrapMainRenderersetCurrentDebugRenderTarget);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoRenderer);
+	LuaBinder::pushLuaCFuncMethod(l, "getAspectRatio", wrapRenderergetAspectRatio);
+	LuaBinder::pushLuaCFuncMethod(l, "setCurrentDebugRenderTarget", wrapRenderersetCurrentDebugRenderTarget);
 	lua_settop(l, 0);
 }
 
-/// Pre-wrap function getMainRenderer.
-static inline int pwrapgetMainRenderer(lua_State* l)
+/// Pre-wrap function getRenderer.
+static inline int pwrapgetRenderer(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -138,7 +138,7 @@ static inline int pwrapgetMainRenderer(lua_State* l)
 	}
 
 	// Call the function
-	MainRenderer* ret = getMainRenderer(l);
+	Renderer* ret = getRenderer(l);
 
 	// Push return value
 	if(ret == nullptr) [[unlikely]]
@@ -149,17 +149,17 @@ static inline int pwrapgetMainRenderer(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "MainRenderer");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer;
-	ud->initPointed(&luaUserDataTypeInfoMainRenderer, ret);
+	luaL_setmetatable(l, "Renderer");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoRenderer;
+	ud->initPointed(&luaUserDataTypeInfoRenderer, ret);
 
 	return 1;
 }
 
-/// Wrap function getMainRenderer.
-static int wrapgetMainRenderer(lua_State* l)
+/// Wrap function getRenderer.
+static int wrapgetRenderer(lua_State* l)
 {
-	int res = pwrapgetMainRenderer(l);
+	int res = pwrapgetRenderer(l);
 	if(res >= 0)
 	{
 		return res;
@@ -172,8 +172,8 @@ static int wrapgetMainRenderer(lua_State* l)
 /// Wrap the module.
 void wrapModuleRenderer(lua_State* l)
 {
-	wrapMainRenderer(l);
-	LuaBinder::pushLuaCFunc(l, "getMainRenderer", wrapgetMainRenderer);
+	wrapRenderer(l);
+	LuaBinder::pushLuaCFunc(l, "getRenderer", wrapgetRenderer);
 }
 
 } // end namespace anki

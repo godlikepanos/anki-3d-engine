@@ -13,8 +13,6 @@
 namespace anki {
 
 // Forward
-class UiQueueElement;
-class RenderQueue;
 class StatCounter;
 extern NumericCVar<U32> g_windowWidthCVar;
 extern NumericCVar<U32> g_windowHeightCVar;

@@ -5,14 +5,13 @@
 
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/MainRenderer.h>
 #include <AnKi/Util/Enum.h>
 
 namespace anki {
 
 Renderer& RendererObject::getRenderer()
 {
-	return MainRenderer::getSingleton().getOffscreenRenderer();
+	return Renderer::getSingleton();
 }
 
 void RendererObject::registerDebugRenderTarget(CString rtName)
