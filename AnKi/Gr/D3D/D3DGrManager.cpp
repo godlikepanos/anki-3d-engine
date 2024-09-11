@@ -382,7 +382,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 				if(res == S_OK)
 				{
 					infoq->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-					infoq->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+					// infoq->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 				}
 			}
 		}

@@ -693,6 +693,14 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	ANKI_D3D_SELF(CommandBufferImpl);
 	self.commandCommon();
 
+	auto sanitizeAccess = [](D3D12_BARRIER_ACCESS& access) {
+		if((access & D3D12_BARRIER_ACCESS_NO_ACCESS) && access != D3D12_BARRIER_ACCESS_NO_ACCESS)
+		{
+			// If access has other accesses as well as NO_ACCESS then remove the NO_ACCESS
+			access &= ~D3D12_BARRIER_ACCESS_NO_ACCESS;
+		}
+	};
+
 	DynamicArray<D3D12_TEXTURE_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> texBarriers(self.m_fastPool);
 	DynamicArray<D3D12_BUFFER_BARRIER, MemoryPoolPtrWrapper<StackMemoryPool>> bufferBarriers(self.m_fastPool);
 
@@ -701,6 +709,9 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		const TextureImpl& impl = static_cast<const TextureImpl&>(barrier.m_textureView.getTexture());
 		D3D12_TEXTURE_BARRIER& d3dBarrier = *texBarriers.emplaceBack();
 		d3dBarrier = impl.computeBarrierInfo(barrier.m_previousUsage, barrier.m_nextUsage, barrier.m_textureView.getSubresource());
+
+		sanitizeAccess(d3dBarrier.AccessBefore);
+		sanitizeAccess(d3dBarrier.AccessAfter);
 	}
 
 	for(const BufferBarrierInfo& barrier : buffers)
@@ -711,15 +722,6 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 		if(bufferBarriers.getSize() && bufferBarriers.getBack().pResource == b.pResource)
 		{
 			// Merge barriers
-
-			if(bufferBarriers.getBack().AccessBefore == D3D12_BARRIER_ACCESS_NO_ACCESS && b.AccessBefore != D3D12_BARRIER_ACCESS_NO_ACCESS)
-			{
-				bufferBarriers.getBack().AccessBefore = D3D12_BARRIER_ACCESS(0);
-			}
-			else if(bufferBarriers.getBack().AccessBefore != D3D12_BARRIER_ACCESS_NO_ACCESS && b.AccessBefore == D3D12_BARRIER_ACCESS_NO_ACCESS)
-			{
-				b.AccessBefore = D3D12_BARRIER_ACCESS(0);
-			}
 
 			bufferBarriers.getBack().AccessBefore |= b.AccessBefore;
 			bufferBarriers.getBack().AccessAfter |= b.AccessAfter;
@@ -732,6 +734,9 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 			D3D12_BUFFER_BARRIER& d3dBarrier = *bufferBarriers.emplaceBack();
 			d3dBarrier = b;
 		}
+
+		sanitizeAccess(bufferBarriers.getBack().AccessBefore);
+		sanitizeAccess(bufferBarriers.getBack().AccessAfter);
 	}
 
 	ANKI_ASSERT(accelerationStructures.getSize() == 0 && "TODO");

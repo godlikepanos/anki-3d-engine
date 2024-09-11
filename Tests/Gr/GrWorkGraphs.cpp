@@ -49,15 +49,19 @@ static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, Boo
 {
 	ANKI_ASSERT(iterationCount >= iterationsPerCommandBuffer && (iterationCount % iterationsPerCommandBuffer) == 0);
 
-	U64 startUs = 0;
 	FencePtr fence;
 
 	F64 avgCpuTimePerIterationMs = 0.0;
+	DynamicArray<TimestampQueryPtr> timestamps;
 
 	const U32 commandBufferCount = iterationCount / iterationsPerCommandBuffer;
 	for(U32 icmdb = 0; icmdb < commandBufferCount; ++icmdb)
 	{
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(CommandBufferInitInfo(CommandBufferFlag::kGeneralWork));
+
+		TimestampQueryPtr query1 = GrManager::getSingleton().newTimestampQuery();
+		cmdb->writeTimestamp(query1.get());
+		timestamps.emplaceBack(query1);
 
 		const U64 cpuTimeStart = HighRezTimer::getCurrentTimeUs();
 		for(U32 i = 0; i < iterationsPerCommandBuffer; ++i)
@@ -67,14 +71,13 @@ static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, Boo
 
 		// clearSwapchain(cmdb);
 
+		TimestampQueryPtr query2 = GrManager::getSingleton().newTimestampQuery();
+		cmdb->writeTimestamp(query2.get());
+		timestamps.emplaceBack(query2);
+
 		cmdb->endRecording();
 		const U64 cpuTimeEnd = HighRezTimer::getCurrentTimeUs();
 		avgCpuTimePerIterationMs += (Second(cpuTimeEnd - cpuTimeStart) * 0.001) / Second(iterationCount);
-
-		if(icmdb == 0)
-		{
-			startUs = HighRezTimer::getCurrentTimeUs();
-		}
 
 		GrManager::getSingleton().submit(cmdb.get(), {}, (icmdb == commandBufferCount - 1) ? &fence : nullptr);
 
@@ -83,9 +86,16 @@ static void runBenchmark(U32 iterationCount, U32 iterationsPerCommandBuffer, Boo
 
 	const Bool done = fence->clientWait(kMaxSecond);
 	ANKI_TEST_EXPECT_EQ(done, true);
-	const U64 endUs = HighRezTimer::getCurrentTimeUs();
 
-	const F64 avgTimePerIterationMs = (Second(endUs - startUs) * 0.001) / Second(iterationCount);
+	F64 avgTimePerIterationMs = 0.0f;
+	for(U32 i = 0; i < timestamps.getSize(); i += 2)
+	{
+		Second a, b;
+		ANKI_TEST_EXPECT_EQ(timestamps[i]->getResult(a), TimestampQueryResult::kAvailable);
+		ANKI_TEST_EXPECT_EQ(timestamps[i + 1]->getResult(b), TimestampQueryResult::kAvailable);
+
+		avgTimePerIterationMs += (Second(b - a) * 1000.0) / Second(iterationCount);
+	}
 
 	if(bBenchmark)
 	{
@@ -251,8 +261,7 @@ StructuredBuffer<uint> g_positions : register(t1);
 #define THREAD_COUNT 64u
 
 // Operates per object
-[Shader("node")] [NodeLaunch("broadcasting")] [NodeIsProgramEntry] [NodeMaxDispatchGrid(1, 1, 1)]
-[NumThreads(THREAD_COUNT, 1, 1)]
+[Shader("node")] [NodeLaunch("broadcasting")] [NodeIsProgramEntry] [NodeMaxDispatchGrid(1, 1, 1)] [NumThreads(THREAD_COUNT, 1, 1)]
 void main(DispatchNodeInputRecord<FirstNodeRecord> inp, [MaxRecords(THREAD_COUNT)] NodeOutput<SecondNodeRecord> computeAabb,
 		  uint svGroupIndex : SV_GroupIndex, uint svDispatchThreadId : SV_DispatchThreadId)
 {
@@ -451,9 +460,9 @@ void main(uint svDispatchThreadId : SV_DispatchThreadId, uint svGroupIndex : SV_
 
 		// Execute
 		const U32 iterationsPerCmdb = (!bBenchmark) ? 1 : 100u;
-		const U32 iterationCount = (!bBenchmark) ? 1 : iterationsPerCmdb * 10;
+		const U32 iterationCount = (!bBenchmark) ? iterationsPerCmdb : iterationsPerCmdb * 1;
 		runBenchmark(iterationCount, iterationsPerCmdb, bBenchmark, [&](CommandBuffer& cmdb) {
-			BufferBarrierInfo barr = {BufferView(aabbsBuff.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
+			const BufferBarrierInfo barr = {BufferView(aabbsBuff.get()), BufferUsageBit::kUavCompute, BufferUsageBit::kUavCompute};
 			cmdb.setPipelineBarrier({}, {&barr, 1}, {});
 
 			if(bWorkgraphs)
