@@ -156,7 +156,7 @@ void DeveloperConsoleUiNode::draw(CanvasPtr& canvas)
 		const Error err = m_scriptEnv.evalString(&m_inputText[0]);
 		if(!err)
 		{
-			ANKI_CORE_LOGI("Script ran without errors");
+			ANKI_SCENE_LOGI("Script ran without errors");
 		}
 		m_inputText[0] = '\0';
 	}

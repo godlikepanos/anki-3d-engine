@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
@@ -43,7 +43,7 @@ Error DepthDownscale::initInternal()
 
 	ANKI_R_LOGV("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, lastMipSize.x(), lastMipSize.y());
 
-	const Bool preferCompute = g_preferComputeCVar.get();
+	const Bool preferCompute = g_preferComputeCVar;
 
 	// Create RT descr
 	{
@@ -87,7 +87,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	if(g_preferComputeCVar.get())
+	if(g_preferComputeCVar)
 	{
 		// Do it with compute
 

@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Window/Input.h>
 
@@ -47,7 +47,7 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 	RenderPassBase* ppass;
 	TextureUsageBit readUsage;
 	TextureUsageBit writeUsage;
-	if(g_preferComputeCVar.get())
+	if(g_preferComputeCVar)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("MotionVectors");
 
@@ -88,12 +88,12 @@ void MotionVectors::populateRenderGraph(RenderingContext& ctx)
 		pc->m_currentInvViewProjMat = ctx.m_matrices.m_invertedViewProjection;
 		pc->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjection;
 
-		if(g_preferComputeCVar.get())
+		if(g_preferComputeCVar)
 		{
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_motionVectorsRtHandle);
 		}
 
-		if(g_preferComputeCVar.get())
+		if(g_preferComputeCVar)
 		{
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}

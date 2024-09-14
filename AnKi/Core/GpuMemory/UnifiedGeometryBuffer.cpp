@@ -4,23 +4,18 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
-#include <AnKi/Core/CVarSet.h>
-#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Gr/GrManager.h>
 
 namespace anki {
 
-static StatCounter g_unifiedGeomBufferAllocatedSizeStatVar(StatCategory::kGpuMem, "UGB allocated", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
-static StatCounter g_unifiedGeomBufferTotalStatVar(StatCategory::kGpuMem, "UGB total", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
-static StatCounter g_unifiedGeomBufferFragmentationStatVar(StatCategory::kGpuMem, "UGB fragmentation",
+inline StatCounter g_unifiedGeomBufferAllocatedSizeStatVar(StatCategory::kGpuMem, "UGB allocated", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
+inline StatCounter g_unifiedGeomBufferTotalStatVar(StatCategory::kGpuMem, "UGB total", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
+inline StatCounter g_unifiedGeomBufferFragmentationStatVar(StatCategory::kGpuMem, "UGB fragmentation",
 														   StatFlag::kFloat | StatFlag::kMainThreadUpdates);
-
-static NumericCVar<PtrSize> g_unifiedGometryBufferSizeCvar(CVarSubsystem::kCore, "UnifiedGeometryBufferSize", 128_MB, 16_MB, 2_GB,
-														   "Global index and vertex buffer size");
 
 void UnifiedGeometryBuffer::init()
 {
-	const PtrSize poolSize = g_unifiedGometryBufferSizeCvar.get();
+	const PtrSize poolSize = g_unifiedGometryBufferSizeCvar;
 
 	const Array classes = {1_KB, 8_KB, 32_KB, 128_KB, 512_KB, 4_MB, 8_MB, 16_MB, poolSize};
 

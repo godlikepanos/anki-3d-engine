@@ -5,23 +5,19 @@
 
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/Bloom.h>
+#include <AnKi/Renderer/Bloom2.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
-#include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 
 namespace anki {
-
-static NumericCVar<U32> g_motionBlurSamplesCVar(CVarSubsystem::kRenderer, "MotionBlurSamples", 32, 0, 2048, "Max motion blur samples");
-static NumericCVar<F32> g_filmGrainStrengthCVar(CVarSubsystem::kRenderer, "FilmGrainStrength", 16.0f, 0.0f, 250.0f, "Film grain strength");
 
 Error FinalComposite::initInternal()
 {
@@ -33,8 +29,8 @@ Error FinalComposite::initInternal()
 	for(MutatorValue dbg = 0; dbg < 2; ++dbg)
 	{
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/FinalComposite.ankiprogbin",
-									 {{"FILM_GRAIN", (g_filmGrainStrengthCVar.get() > 0.0) ? 1 : 0}, {"BLOOM_ENABLED", 1}, {"DBG_ENABLED", dbg}},
-									 m_prog, m_grProgs[dbg]));
+									 {{"FILM_GRAIN", (g_filmGrainStrengthCVar > 0.0) ? 1 : 0}, {"BLOOM_ENABLED", 1}, {"DBG_ENABLED", dbg}}, m_prog,
+									 m_grProgs[dbg]));
 	}
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg,
@@ -94,13 +90,13 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
-	if(g_dbgCVar.get())
+	if(g_dbgCVar)
 	{
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
 	pass.newTextureDependency(getRenderer().getScale().getTonemappedRt(), TextureUsageBit::kSrvPixel);
-	pass.newTextureDependency(getRenderer().getBloom().getRt(), TextureUsageBit::kSrvPixel);
+	pass.newTextureDependency(getRenderer().getBloom2().getBloomRt(), TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 
@@ -122,7 +118,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-		const Bool dbgEnabled = g_dbgCVar.get();
+		const Bool dbgEnabled = g_dbgCVar;
 
 		Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 		ShaderProgramPtr optionalDebugProgram;
@@ -151,7 +147,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindSrv(0, 0, getRenderer().getScale().getTonemappedRt());
 
-			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getRt());
+			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom2().getBloomRt());
 			cmdb.bindSrv(2, 0, TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
 			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());
@@ -161,7 +157,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindSrv(5, 0, getRenderer().getDbg().getRt());
 			}
 
-			const UVec4 pc(g_motionBlurSamplesCVar.get(), floatBitsToUint(g_filmGrainStrengthCVar.get()), getRenderer().getFrameCount() & kMaxU32, 0);
+			const UVec4 pc(g_motionBlurSamplesCVar, floatBitsToUint(g_filmGrainStrengthCVar), getRenderer().getFrameCount() & kMaxU32, 0);
 			cmdb.setFastConstants(&pc, sizeof(pc));
 		}
 		else

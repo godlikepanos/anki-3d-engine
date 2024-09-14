@@ -15,14 +15,11 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Enum.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Collision/ConvexHullShape.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
-
-BoolCVar g_dbgCVar(CVarSubsystem::kRenderer, "Dbg", false, "Enable or not debug visualization");
-static BoolCVar g_dbgPhysicsCVar(CVarSubsystem::kRenderer, "DbgPhysics", false, "Enable or not physics debug visualization");
 
 Dbg::Dbg()
 {
@@ -148,7 +145,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
-	ANKI_ASSERT(g_dbgCVar.get());
+	ANKI_ASSERT(g_dbgCVar);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -231,7 +228,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
 
-	if(!g_dbgCVar.get())
+	if(!g_dbgCVar)
 	{
 		return;
 	}

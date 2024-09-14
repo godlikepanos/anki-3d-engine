@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ShaderProgramResourceSystem.h>
 #include <AnKi/Resource/AnimationResource.h>
 #include <AnKi/Util/Logger.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 
 #include <AnKi/Resource/MaterialResource.h>
 #include <AnKi/Resource/MeshResource.h>
@@ -24,9 +24,6 @@
 #include <AnKi/Resource/SkeletonResource.h>
 
 namespace anki {
-
-static NumericCVar<PtrSize> g_transferScratchMemorySizeCVar(CVarSubsystem::kResource, "TransferScratchMemorySize", 256_MB, 1_MB, 4_GB,
-															"Memory that is used fot texture and buffer uploads");
 
 ResourceManager::ResourceManager()
 {
@@ -57,7 +54,7 @@ Error ResourceManager::init(AllocAlignedCallback allocCallback, void* allocCallb
 	m_asyncLoader = newInstance<AsyncLoader>(ResourceMemoryPool::getSingleton());
 
 	m_transferGpuAlloc = newInstance<TransferGpuAllocator>(ResourceMemoryPool::getSingleton());
-	ANKI_CHECK(m_transferGpuAlloc->init(g_transferScratchMemorySizeCVar.get()));
+	ANKI_CHECK(m_transferGpuAlloc->init(g_transferScratchMemorySizeCVar));
 
 	// Init the programs
 	m_shaderProgramSystem = newInstance<ShaderProgramResourceSystem>(ResourceMemoryPool::getSingleton());

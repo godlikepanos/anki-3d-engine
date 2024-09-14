@@ -7,7 +7,7 @@
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/HighRezTimer.h>
@@ -40,33 +40,6 @@ static StatCounter g_sceneUpdateTimeStatVar(StatCategory::kTime, "All scene upda
 											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 static StatCounter g_scenePhysicsTimeStatVar(StatCategory::kTime, "Physics",
 											 StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
-
-static NumericCVar<U32> g_octreeMaxDepthCVar(CVarSubsystem::kScene, "OctreeMaxDepth", 5, 2, 10, "The max depth of the octree");
-
-NumericCVar<F32> g_probeEffectiveDistanceCVar(CVarSubsystem::kScene, "ProbeEffectiveDistance", 256.0f, 1.0f, kMaxF32,
-											  "How far various probes can render");
-NumericCVar<F32> g_probeShadowEffectiveDistanceCVar(CVarSubsystem::kScene, "ProbeShadowEffectiveDistance", 32.0f, 1.0f, kMaxF32,
-													"How far to render shadows for the various probes");
-
-// Gpu scene arrays
-static NumericCVar<U32> g_minGpuSceneTransformsCVar(CVarSubsystem::kScene, "MinGpuSceneTransforms", 2 * 10 * 1024, 8, 100 * 1024,
-													"The min number of transforms stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneMeshesCVar(CVarSubsystem::kScene, "MinGpuSceneMeshes", 8 * 1024, 8, 100 * 1024,
-												"The min number of meshes stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneParticleEmittersCVar(CVarSubsystem::kScene, "MinGpuSceneParticleEmitters", 1 * 1024, 8, 100 * 1024,
-														  "The min number of particle emitters stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneLightsCVar(CVarSubsystem::kScene, "MinGpuSceneLights", 2 * 1024, 8, 100 * 1024,
-												"The min number of lights stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneReflectionProbesCVar(CVarSubsystem::kScene, "MinGpuSceneReflectionProbes", 128, 8, 100 * 1024,
-														  "The min number of reflection probes stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneGlobalIlluminationProbesCVar(CVarSubsystem::kScene, "MinGpuSceneGlobalIlluminationProbes", 128, 8, 100 * 1024,
-																  "The min number of GI probes stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneDecalsCVar(CVarSubsystem::kScene, "MinGpuSceneDecals", 2 * 1024, 8, 100 * 1024,
-												"The min number of decals stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneFogDensityVolumesCVar(CVarSubsystem::kScene, "MinGpuSceneFogDensityVolumes", 512, 8, 100 * 1024,
-														   "The min number fog density volumes stored in the GPU scene");
-static NumericCVar<U32> g_minGpuSceneRenderablesCVar(CVarSubsystem::kScene, "MinGpuSceneRenderables", 10 * 1024, 8, 100 * 1024,
-													 "The min number of renderables stored in the GPU scene");
 
 constexpr U32 kUpdateNodeBatchSize = 10;
 
@@ -111,17 +84,17 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
-#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(cvarName.get());
+#define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::allocateSingleton(U32(cvarName));
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
 	RenderStateBucketContainer::allocateSingleton();
 
 	// Construct a few common nodex
-	if(g_displayStatsCVar.get() > 0)
+	if(g_displayStatsCVar > 0)
 	{
 		StatsUiNode* statsNode;
 		ANKI_CHECK(newSceneNode("_StatsUi", statsNode));
-		statsNode->setFpsOnly(g_displayStatsCVar.get() == 1);
+		statsNode->setFpsOnly(g_displayStatsCVar == 1);
 	}
 
 	DeveloperConsoleUiNode* consoleNode;

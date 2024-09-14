@@ -20,13 +20,6 @@
 
 namespace anki {
 
-static NumericCVar<U32> g_shadowMappingTileResolutionCVar(CVarSubsystem::kRenderer, "ShadowMappingTileResolution", (ANKI_PLATFORM_MOBILE) ? 128 : 256,
-														  16, 2048, "Shadowmapping tile resolution");
-static NumericCVar<U32> g_shadowMappingTileCountPerRowOrColumnCVar(CVarSubsystem::kRenderer, "ShadowMappingTileCountPerRowOrColumn", 32, 1, 256,
-																   "Shadowmapping atlas will have this number squared number of tiles");
-BoolCVar g_shadowMappingPcfCVar(CVarSubsystem::kRenderer, "ShadowMappingPcf", (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCF");
-BoolCVar g_shadowMappingPcssCVar(CVarSubsystem::kRenderer, "ShadowMappingPcss", (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCSS");
-
 static StatCounter g_tilesAllocatedStatVar(StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates);
 
 class LightHash
@@ -81,8 +74,8 @@ Error ShadowMapping::initInternal()
 {
 	// Init RT
 	{
-		m_tileResolution = g_shadowMappingTileResolutionCVar.get();
-		m_tileCountBothAxis = g_shadowMappingTileCountPerRowOrColumnCVar.get();
+		m_tileResolution = g_shadowMappingTileResolutionCVar;
+		m_tileCountBothAxis = g_shadowMappingTileCountPerRowOrColumnCVar;
 
 		ANKI_R_LOGV("Initializing shadowmapping. Atlas resolution %ux%u", m_tileResolution * m_tileCountBothAxis,
 					m_tileResolution * m_tileCountBothAxis);
@@ -278,7 +271,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 	// Allocate tiles for the dir light first but don't build any passes
 	const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
-	if(dirLight && (!dirLight->getShadowEnabled() || !g_shadowCascadeCountCVar.get()))
+	if(dirLight && (!dirLight->getShadowEnabled() || !g_shadowCascadeCountCVar))
 	{
 		dirLight = nullptr; // Skip dir light
 	}
@@ -286,7 +279,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 	Array<UVec4, kMaxShadowCascades> dirLightAtlasViewports;
 	if(dirLight)
 	{
-		const U32 cascadeCount = g_shadowCascadeCountCVar.get();
+		const U32 cascadeCount = g_shadowCascadeCountCVar;
 
 		Array<U32, kMaxShadowCascades> hierarchies;
 		for(U32 cascade = 0; cascade < cascadeCount; ++cascade)
@@ -311,7 +304,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		// Prepare data to allocate tiles and allocate
 		U32 hierarchy;
-		chooseDetail(cameraOrigin, *lightc, {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()}, hierarchy);
+		chooseDetail(cameraOrigin, *lightc, {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar}, hierarchy);
 		Array<U32, 6> hierarchies;
 		hierarchies.fill(hierarchy);
 
@@ -324,7 +317,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Remove a few texels to avoid bilinear filtering bleeding
 			F32 texelsBorder;
-			if(g_shadowMappingPcfCVar.get() || g_shadowMappingPcssCVar.get())
+			if(g_shadowMappingPcfCVar || g_shadowMappingPcssCVar)
 			{
 				texelsBorder = 2.0f; // 2 texels
 			}
@@ -352,7 +345,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			}
 
 			// Vis testing
-			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 			DistanceGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Shadows point light lightIdx:%u", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
@@ -414,7 +407,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 		// Allocate tile
 		U32 hierarchy;
-		chooseDetail(cameraOrigin, *lightc, {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()}, hierarchy);
+		chooseDetail(cameraOrigin, *lightc, {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar}, hierarchy);
 		UVec4 atlasViewport;
 		const TileAllocatorResult2 result = allocateAtlasTiles(lightc->getUuid(), lightc->getArrayIndex(), 1, &hierarchy, &atlasViewport);
 
@@ -430,7 +423,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			}
 
 			// Vis testing
-			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Shadows spot light lightIdx:%u", lightIdx);
 			visIn.m_technique = RenderingTechnique::kDepth;
@@ -467,15 +460,15 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 	// Process the directional light last
 	if(dirLight)
 	{
-		const U32 cascadeCount = g_shadowCascadeCountCVar.get();
+		const U32 cascadeCount = g_shadowCascadeCountCVar;
 
 		// Compute the view projection matrices
 		Array<F32, kMaxShadowCascades> cascadeDistances;
 		static_assert(kMaxShadowCascades == 4);
-		cascadeDistances[0] = g_shadowCascade0DistanceCVar.get();
-		cascadeDistances[1] = g_shadowCascade1DistanceCVar.get();
-		cascadeDistances[2] = g_shadowCascade2DistanceCVar.get();
-		cascadeDistances[3] = g_shadowCascade3DistanceCVar.get();
+		cascadeDistances[0] = g_shadowCascade0DistanceCVar;
+		cascadeDistances[1] = g_shadowCascade1DistanceCVar;
+		cascadeDistances[2] = g_shadowCascade2DistanceCVar;
+		cascadeDistances[3] = g_shadowCascade3DistanceCVar;
 
 		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
 		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
@@ -510,7 +503,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		for(U32 cascade = 0; cascade < cascadeCount; ++cascade)
 		{
 			// Vis testing
-			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Shadows: Dir light cascade lightIdx:%u cascade:%u", lightIdx, cascade);
 			visIn.m_technique = RenderingTechnique::kDepth;

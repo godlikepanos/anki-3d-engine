@@ -12,6 +12,10 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline NumericCVar<U8> g_fsrQualityCVar("R", "FsrQuality", 1, 0, 2, "0: Use bilinear, 1: FSR low quality, 2: FSR high quality");
+inline NumericCVar<U8> g_dlssQualityCVar("R", "DlssQuality", 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality");
+inline NumericCVar<F32> g_sharpnessCVar("R", "Sharpness", (ANKI_PLATFORM_MOBILE) ? 0.0f : 0.8f, 0.0f, 1.0f, "Sharpen the image. It's a factor");
+
 /// Upscales, sharpens and in some cases tonemaps.
 class Scale : public RendererObject
 {

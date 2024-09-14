@@ -278,7 +278,7 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				key.setRenderingTechnique(t);
 				key.setSkinned(hasSkin);
 				key.setVelocity(moved);
-				key.setMeshletRendering(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar.get());
+				key.setMeshletRendering(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar);
 
 				const MaterialVariant& mvariant = m_model->getModelPatches()[i].getMaterial()->getOrCreateVariant(key);
 

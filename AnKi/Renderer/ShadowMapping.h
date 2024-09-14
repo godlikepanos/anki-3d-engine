@@ -14,11 +14,16 @@ namespace anki {
 
 // Forward
 class GpuVisibilityOutput;
-extern BoolCVar g_shadowMappingPcfCVar;
-extern BoolCVar g_shadowMappingPcssCVar;
 
 /// @addtogroup renderer
 /// @{
+
+inline NumericCVar<U32> g_shadowMappingTileResolutionCVar("R", "ShadowMappingTileResolution", (ANKI_PLATFORM_MOBILE) ? 128 : 256, 16, 2048,
+														  "Shadowmapping tile resolution");
+inline NumericCVar<U32> g_shadowMappingTileCountPerRowOrColumnCVar("R", "ShadowMappingTileCountPerRowOrColumn", 32, 1, 256,
+																   "Shadowmapping atlas will have this number squared number of tiles");
+inline BoolCVar g_shadowMappingPcfCVar("R", "ShadowMappingPcf", (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCF");
+inline BoolCVar g_shadowMappingPcssCVar("R", "ShadowMappingPcss", (ANKI_PLATFORM_MOBILE) ? false : true, "Shadow PCSS");
 
 /// Shadowmapping pass
 class ShadowMapping : public RendererObject

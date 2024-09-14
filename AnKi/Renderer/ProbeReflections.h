@@ -14,6 +14,11 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline NumericCVar<U32> g_probeReflectionIrradianceResolutionCVar("R", "ProbeReflectionIrradianceResolution", 16, 4, 2048,
+																  "Reflection probe irradiance resolution");
+inline NumericCVar<U32> g_probeReflectionShadowMapResolutionCVar("R", "ProbeReflectionShadowMapResolution", 64, 4, 2048,
+																 "Reflection probe shadow resolution");
+
 /// Probe reflections.
 class ProbeReflections : public RendererObject
 {

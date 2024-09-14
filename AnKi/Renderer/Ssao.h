@@ -14,6 +14,12 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline NumericCVar<U32> g_ssaoSampleCountCVar("R", "SsaoSampleCount", 4, 1, 1024, "SSAO sample count");
+inline NumericCVar<F32> g_ssaoRadiusCVar("R", "SsaoRadius", 2.0f, 0.1f, 100.0f, "SSAO radius in meters");
+inline BoolCVar g_ssaoQuarterRezCVar("R", "SsaoQuarterResolution", ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez");
+inline NumericCVar<F32> g_ssaoPowerCVar("R", "SsaoPower", 1.5f, 0.1f, 100.0f, "SSAO power");
+inline NumericCVar<U8> g_ssaoSpatialQualityCVar("R", "SsaoSpatialQuality", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1, "SSAO spatial denoise quality");
+
 /// Screen space ambient occlusion.
 class Ssao : public RendererObject
 {

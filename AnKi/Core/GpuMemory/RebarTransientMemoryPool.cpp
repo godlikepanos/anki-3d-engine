@@ -4,18 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/CVarSet.h>
-#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Buffer.h>
 
 namespace anki {
 
-static StatCounter g_rebarUserMemoryStatVar(StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
-
-static NumericCVar<PtrSize> g_rebarGpuMemorySizeCvar(CVarSubsystem::kCore, "RebarGpuMemorySize", 24_MB, 1_MB, 1_GB,
-													 "ReBAR: always mapped GPU memory");
+inline StatCounter g_rebarUserMemoryStatVar(StatCategory::kGpuMem, "ReBAR used mem", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
 
 RebarTransientMemoryPool::~RebarTransientMemoryPool()
 {
@@ -29,7 +24,7 @@ void RebarTransientMemoryPool::init()
 {
 	BufferInitInfo buffInit("ReBar");
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	buffInit.m_size = g_rebarGpuMemorySizeCvar.get();
+	buffInit.m_size = g_rebarGpuMemorySizeCvar;
 	buffInit.m_usage = BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv | BufferUsageBit::kVertex
 					   | BufferUsageBit::kIndex | BufferUsageBit::kShaderBindingTable | BufferUsageBit::kAllIndirect | BufferUsageBit::kCopySource;
 	m_buffer = GrManager::getSingleton().newBuffer(buffInit);

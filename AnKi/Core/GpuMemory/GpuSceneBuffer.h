@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
+#include <AnKi/Util/CVarSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
 #include <AnKi/Resource/ShaderProgramResource.h>
 #include <AnKi/Gr/GrManager.h>
@@ -14,6 +15,8 @@ namespace anki {
 
 /// @addtogroup core
 /// @{
+
+inline NumericCVar<PtrSize> g_gpuSceneInitialSizeCVar("Core", "GpuSceneInitialSize", 64_MB, 16_MB, 2_GB, "Global memory for the GPU scene");
 
 /// @memberof GpuSceneBuffer
 class GpuSceneBufferAllocation

@@ -9,7 +9,7 @@
 #include <AnKi/Gr.h>
 #include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Window/Input.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>

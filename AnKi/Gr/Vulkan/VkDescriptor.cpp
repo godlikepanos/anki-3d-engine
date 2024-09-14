@@ -195,7 +195,7 @@ BindlessDescriptorSet::~BindlessDescriptorSet()
 
 Error BindlessDescriptorSet::init()
 {
-	const U32 bindlessTextureCount = g_maxBindlessSampledTextureCountCVar.get();
+	const U32 bindlessTextureCount = g_maxBindlessSampledTextureCountCVar;
 
 	// Create the layout
 	{

@@ -115,6 +115,13 @@ inline constexpr T max(T a, T b)
 	return (a > b) ? a : b;
 }
 
+template<typename T>
+inline constexpr T clamp(T v, T minv, T maxv)
+{
+	ANKI_ASSERT(minv <= maxv);
+	return min<T>(max<T>(minv, v), maxv);
+}
+
 /// Check if a number is a power of 2
 template<typename Int>
 inline constexpr Bool isPowerOfTwo(Int x) requires(std::is_integral<Int>::value)

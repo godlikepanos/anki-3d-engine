@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Resource/MeshResource.h>
@@ -24,10 +24,6 @@
 
 namespace anki {
 
-static NumericCVar<U32> g_probeReflectionIrradianceResolutionCVar(CVarSubsystem::kRenderer, "ProbeReflectionIrradianceResolution", 16, 4, 2048,
-																  "Reflection probe irradiance resolution");
-static NumericCVar<U32> g_probeReflectionShadowMapResolutionCVar(CVarSubsystem::kRenderer, "ProbeReflectionShadowMapResolution", 64, 4, 2048,
-																 "Reflection probe shadow resolution");
 static StatCounter g_probeReflectionCountStatVar(StatCategory::kRenderer, "Reflection probes rendered", StatFlag::kMainThreadUpdates);
 
 Error ProbeReflections::init()
@@ -66,7 +62,7 @@ Error ProbeReflections::initInternal()
 
 Error ProbeReflections::initGBuffer()
 {
-	m_gbuffer.m_tileSize = g_reflectionProbeResolutionCVar.get();
+	m_gbuffer.m_tileSize = g_reflectionProbeResolutionCVar;
 
 	// Create RT descriptions
 	{
@@ -96,7 +92,7 @@ Error ProbeReflections::initGBuffer()
 
 Error ProbeReflections::initLightShading()
 {
-	m_lightShading.m_tileSize = g_reflectionProbeResolutionCVar.get();
+	m_lightShading.m_tileSize = g_reflectionProbeResolutionCVar;
 	m_lightShading.m_mipCount = U8(computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8));
 
 	// Init deferred
@@ -107,7 +103,7 @@ Error ProbeReflections::initLightShading()
 
 Error ProbeReflections::initIrradiance()
 {
-	m_irradiance.m_workgroupSize = g_probeReflectionIrradianceResolutionCVar.get();
+	m_irradiance.m_workgroupSize = g_probeReflectionIrradianceResolutionCVar;
 
 	// Create prog
 	{
@@ -137,7 +133,7 @@ Error ProbeReflections::initIrradianceToRefl()
 
 Error ProbeReflections::initShadowMapping()
 {
-	const U32 resolution = g_probeReflectionShadowMapResolutionCVar.get();
+	const U32 resolution = g_probeReflectionShadowMapResolutionCVar;
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -204,7 +200,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				Transform(probeToRefresh->getWorldPosition().xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 			frustum.update();
 
-			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 
 			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Cube refl: GBuffer face:%u", f);
@@ -280,7 +276,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 			cascadeViewProjMat = cascadeProjMat * Mat4(cascadeViewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+			Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 
 			FrustumGpuVisibilityInput visIn;
 			visIn.m_passesName = generateTempPassName("Cube refl: Shadows face:%u", f);

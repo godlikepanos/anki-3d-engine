@@ -12,18 +12,12 @@
 #include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 #include <AnKi/Scene/Components/ReflectionProbeComponent.h>
 
 namespace anki {
-
-static NumericCVar<U32> g_hzbWidthCVar(CVarSubsystem::kRenderer, "HzbWidth", 512, 16, 4 * 1024, "HZB map width");
-static NumericCVar<U32> g_hzbHeightCVar(CVarSubsystem::kRenderer, "HzbHeight", 256, 16, 4 * 1024, "HZB map height");
-static BoolCVar g_gbufferVrsCVar(CVarSubsystem::kRenderer, "GBufferVrs", false, "Enable VRS in GBuffer");
-static BoolCVar g_visualizeGiProbes(CVarSubsystem::kRenderer, "VisualizeGiProbes", false, "Visualize GI probes");
-static BoolCVar g_visualizeReflectionProbes(CVarSubsystem::kRenderer, "VisualizeReflProbes", false, "Visualize reflection probes");
 
 GBuffer::~GBuffer()
 {
@@ -69,7 +63,7 @@ Error GBuffer::initInternal()
 		const TextureUsageBit usage = TextureUsageBit::kSrvCompute | TextureUsageBit::kUavCompute | TextureUsageBit::kSrvGeometry;
 
 		TextureInitInfo texinit =
-			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar.get(), g_hzbHeightCVar.get(), Format::kR32_Sfloat, usage, "GBuffer HZB");
+			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar, g_hzbHeightCVar, Format::kR32_Sfloat, usage, "GBuffer HZB");
 		texinit.m_mipmapCount = U8(computeMaxMipmapCount2d(texinit.m_width, texinit.m_height));
 		ClearValue clear;
 		clear.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -118,7 +112,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	FrustumGpuVisibilityInput visIn;
 	{
 		const CommonMatrices& matrices = ctx.m_matrices;
-		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 
 		visIn.m_passesName = "GBuffer";
 		visIn.m_technique = RenderingTechnique::kGBuffer;
@@ -127,7 +121,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		visIn.m_lodDistances = lodDistances;
 		visIn.m_rgraph = &rgraph;
 		visIn.m_hzbRt = &m_runCtx.m_hzbRt;
-		visIn.m_gatherAabbIndices = g_dbgCVar.get();
+		visIn.m_gatherAabbIndices = g_dbgCVar;
 		visIn.m_viewportSize = getRenderer().getInternalResolution();
 		visIn.m_twoPhaseOcclusionCulling = getRenderer().getMeshletRenderingType() != MeshletRenderingType::kNone;
 
@@ -221,7 +215,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				};
 
 				// Visualize GI probes
-				if(g_visualizeGiProbes.get() && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
+				if(g_visualizeGiProbesCVar && GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeGiProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
@@ -243,7 +237,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 				}
 
 				// Visualize refl probes
-				if(g_visualizeReflectionProbes.get() && GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
+				if(g_visualizeReflectionProbesCVar && GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
 				{
 					cmdb.bindShaderProgram(m_visualizeReflProbeGrProg.get());
 					cmdb.bindSrv(0, 0, GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView());

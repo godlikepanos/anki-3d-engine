@@ -522,7 +522,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	}
 
 	const Bool meshShadersSupported = GrManager::getSingleton().getDeviceCapabilities().m_meshShaders;
-	ANKI_ASSERT(!(key.getMeshletRendering() && (!meshShadersSupported && !g_meshletRenderingCVar.get()))
+	ANKI_ASSERT(!(key.getMeshletRendering() && (!meshShadersSupported && !g_meshletRenderingCVar))
 				&& "Can't be asking for meshlet rendering if mesh shaders or SW meshlet rendering are not supported/enabled");
 	if(key.getMeshletRendering() && !(m_shaderTechniques & (ShaderTechniqueBit::kMeshSaders | ShaderTechniqueBit::kSwMeshletRendering)))
 	{

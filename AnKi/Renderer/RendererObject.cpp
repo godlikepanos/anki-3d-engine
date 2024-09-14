@@ -54,7 +54,7 @@ Error RendererObject::loadShaderProgram(CString filename, std::initializer_list<
 
 		if(techniqueShaderTypes == (ShaderTypeBit::kCompute | ShaderTypeBit::kPixel | ShaderTypeBit::kVertex))
 		{
-			if(g_preferComputeCVar.get())
+			if(g_preferComputeCVar)
 			{
 				shaderTypes = ShaderTypeBit::kCompute;
 			}

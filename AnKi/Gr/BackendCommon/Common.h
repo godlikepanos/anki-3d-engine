@@ -6,7 +6,6 @@
 #pragma once
 
 #include <AnKi/Gr/Common.h>
-#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 
@@ -14,7 +13,5 @@ namespace anki {
 constexpr Second kMaxFenceOrSemaphoreWaitTime = 120.0;
 
 constexpr U32 kMaxQueriesPerQueryChunk = 64;
-
-extern NumericCVar<U32> g_maxBindlessSampledTextureCountCVar;
 
 } // end namespace anki

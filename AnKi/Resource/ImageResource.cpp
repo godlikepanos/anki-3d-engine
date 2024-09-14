@@ -7,12 +7,10 @@
 #include <AnKi/Resource/ImageLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Resource/AsyncLoader.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Filesystem.h>
 
 namespace anki {
-
-static NumericCVar<U32> g_maxImageSizeCVar(CVarSubsystem::kResource, "MaxImageSize", 1024u * 1024u, 4u, kMaxU32, "Max image size to load");
 
 class ImageResource::LoadingContext
 {
@@ -68,7 +66,7 @@ Error ImageResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(loader.load(file, filename, g_maxImageSizeCVar.get()));
+	ANKI_CHECK(loader.load(file, filename, g_maxImageSizeCVar));
 
 	// Various sizes
 	init.m_width = loader.getWidth();

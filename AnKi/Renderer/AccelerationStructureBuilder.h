@@ -12,6 +12,10 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline NumericCVar<F32>
+	g_rayTracingExtendedFrustumDistanceCVar("R", "RayTracingExtendedFrustumDistance", 100.0f, 10.0f, 10000.0f,
+											"Every object that its distance from the camera is bellow that value will take part in ray tracing");
+
 /// Build acceleration structures.
 class AccelerationStructureBuilder : public RendererObject
 {

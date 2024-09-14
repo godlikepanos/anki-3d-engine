@@ -12,6 +12,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline NumericCVar<F32> g_vrsThresholdCVar("R", "VrsThreshold", 0.1f, 0.0f, 1.0f, "Threshold under which a lower shading rate will be applied");
+
 /// Computes the shading rate image to be used by a number of passes.
 class VrsSriGeneration : public RendererObject
 {

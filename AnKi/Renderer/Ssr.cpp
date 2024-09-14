@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Renderer/DownscaleBlur.h>
+#include <AnKi/Renderer/Bloom2.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 
@@ -29,12 +29,6 @@
 
 namespace anki {
 
-static NumericCVar<U32> g_ssrStepIncrementCVar(CVarSubsystem::kRenderer, "SsrStepIncrement", 32, 1, 256, "The number of steps for each loop");
-static NumericCVar<U32> g_ssrMaxIterationsCVar(CVarSubsystem::kRenderer, "SsrMaxIterations", 64, 1, 256, "Max SSR raymarching loop iterations");
-static NumericCVar<F32> g_ssrRoughnessCutoffCVar(CVarSubsystem::kRenderer, "SsrRoughnessCutoff", (ANKI_PLATFORM_MOBILE) ? 0.7f : 1.0f, 0.0f, 1.0f,
-												 "Materials with roughness higher that this value will fallback to probe reflections");
-static BoolCVar g_ssrQuarterResolution(CVarSubsystem::kRenderer, "SsrQuarterResolution", ANKI_PLATFORM_MOBILE);
-
 Error Ssr::init()
 {
 	const Error err = initInternal();
@@ -47,12 +41,12 @@ Error Ssr::init()
 
 Error Ssr::initInternal()
 {
-	const UVec2 rez = (g_ssrQuarterResolution.get()) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
+	const UVec2 rez = (g_ssrQuarterResolutionCVar) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
 
 	ANKI_R_LOGV("Initializing SSR. Resolution %ux%u", rez.x(), rez.y());
 
 	TextureUsageBit mipTexUsage = TextureUsageBit::kAllSrv;
-	if(g_preferComputeCVar.get())
+	if(g_preferComputeCVar)
 	{
 		mipTexUsage |= TextureUsageBit::kUavCompute;
 	}
@@ -74,7 +68,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(Ssr);
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = g_preferComputeCVar.get();
+	const Bool preferCompute = g_preferComputeCVar;
 
 	m_runCtx.m_ssrRt = rgraph.newRenderTarget(m_ssrRtDescr);
 
@@ -102,7 +96,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		writeUsage = TextureUsageBit::kRtvDsvWrite;
 	}
 
-	ppass->newTextureDependency(getRenderer().getDownscaleBlur().getRt(), readUsage);
+	ppass->newTextureDependency(getRenderer().getBloom2().getPyramidRt(), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
 	ppass->newTextureDependency(getRenderer().getDepthDownscale().getRt(), readUsage);
@@ -111,16 +105,16 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	ppass->setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		const UVec2 rez = getRenderer().getInternalResolution() / ((g_ssrQuarterResolution.get()) ? 2 : 1);
+		const UVec2 rez = getRenderer().getInternalResolution() / ((g_ssrQuarterResolutionCVar) ? 2 : 1);
 
 		cmdb.bindShaderProgram(m_ssrGrProg.get());
 
 		SsrConstants consts = {};
 		consts.m_viewportSizef = Vec2(rez);
 		consts.m_frameCount = getRenderer().getFrameCount() % kMaxU32;
-		consts.m_maxIterations = g_ssrMaxIterationsCVar.get();
-		consts.m_roughnessCutoff = g_ssrRoughnessCutoffCVar.get();
-		consts.m_stepIncrement = g_ssrStepIncrementCVar.get();
+		consts.m_maxIterations = g_ssrMaxIterationsCVar;
+		consts.m_roughnessCutoff = g_ssrRoughnessCutoffCVar;
+		consts.m_stepIncrement = g_ssrStepIncrementCVar;
 		consts.m_projMat00_11_22_23 = Vec4(ctx.m_matrices.m_projection(0, 0), ctx.m_matrices.m_projection(1, 1), ctx.m_matrices.m_projection(2, 2),
 										   ctx.m_matrices.m_projection(2, 3));
 		consts.m_unprojectionParameters = ctx.m_matrices.m_unprojectionParameters;
@@ -132,9 +126,9 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(1));
 		rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
 		rgraphCtx.bindSrv(2, 0, getRenderer().getDepthDownscale().getRt());
-		rgraphCtx.bindSrv(3, 0, getRenderer().getDownscaleBlur().getRt());
+		rgraphCtx.bindSrv(3, 0, getRenderer().getBloom2().getPyramidRt());
 
-		if(g_preferComputeCVar.get())
+		if(g_preferComputeCVar)
 		{
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_ssrRt);
 			dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());

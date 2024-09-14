@@ -64,7 +64,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::kY) == 1)
 	{
 		// renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");
-		g_shadowMappingPcssCVar.set(!g_shadowMappingPcssCVar.get());
+		g_shadowMappingPcssCVar.set(!g_shadowMappingPcssCVar);
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)
@@ -135,7 +135,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar.set(!g_vrsCVar.get());
+		g_vrsCVar.set(!g_vrsCVar);
 	}
 
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
@@ -169,7 +169,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1 && ANKI_TRACING_ENABLED)
 	{
-		g_tracingEnabledCVar.set(!g_tracingEnabledCVar.get());
+		g_tracingEnabledCVar.set(!g_tracingEnabledCVar);
 	}
 
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())

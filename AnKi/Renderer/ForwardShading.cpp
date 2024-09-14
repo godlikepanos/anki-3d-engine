@@ -27,7 +27,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx = {};
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+	const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 
 	FrustumGpuVisibilityInput visIn;
 	visIn.m_passesName = "FW shading";
@@ -36,7 +36,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 	visIn.m_lodDistances = lodDistances;
 	visIn.m_rgraph = &rgraph;
-	visIn.m_gatherAabbIndices = g_dbgCVar.get();
+	visIn.m_gatherAabbIndices = g_dbgCVar;
 	RenderTargetHandle hzb = getRenderer().getGBuffer().getHzbRt();
 	visIn.m_hzbRt = &hzb;
 	visIn.m_viewportSize = getRenderer().getInternalResolution();

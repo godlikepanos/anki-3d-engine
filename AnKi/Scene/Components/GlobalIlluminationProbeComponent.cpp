@@ -7,7 +7,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Gr/Texture.h>
 #include <AnKi/Gr/CommandBuffer.h>
@@ -139,13 +139,13 @@ F32 GlobalIlluminationProbeComponent::getRenderRadius() const
 {
 	F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 	effectiveDistance = max(effectiveDistance, m_halfSize.z());
-	effectiveDistance = max(effectiveDistance, g_probeEffectiveDistanceCVar.get());
+	effectiveDistance = max<F32>(effectiveDistance, g_probeEffectiveDistanceCVar);
 	return effectiveDistance;
 }
 
 F32 GlobalIlluminationProbeComponent::getShadowsRenderRadius() const
 {
-	return min(getRenderRadius(), g_probeShadowEffectiveDistanceCVar.get());
+	return min<F32>(getRenderRadius(), g_probeShadowEffectiveDistanceCVar);
 }
 
 } // end namespace anki

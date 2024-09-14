@@ -25,6 +25,9 @@ class ShaderProgramResourceSystem;
 /// @addtogroup resource
 /// @{
 
+inline NumericCVar<PtrSize> g_transferScratchMemorySizeCVar("Rsrc", "TransferScratchMemorySize", 256_MB, 1_MB, 4_GB,
+															"Memory that is used fot texture and buffer uploads");
+
 /// Manage resources of a certain type
 template<typename Type>
 class TypeResourceManager

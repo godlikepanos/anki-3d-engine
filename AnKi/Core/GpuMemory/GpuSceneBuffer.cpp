@@ -5,26 +5,21 @@
 
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/CVarSet.h>
-#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Gr/CommandBuffer.h>
 
 namespace anki {
 
-static StatCounter g_gpuSceneBufferAllocatedSizeStatVar(StatCategory::kGpuMem, "GPU scene allocated",
+inline StatCounter g_gpuSceneBufferAllocatedSizeStatVar(StatCategory::kGpuMem, "GPU scene allocated",
 														StatFlag::kBytes | StatFlag::kMainThreadUpdates);
-static StatCounter g_gpuSceneBufferTotalStatVar(StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
-static StatCounter g_gpuSceneBufferFragmentationStatVar(StatCategory::kGpuMem, "GPU scene fragmentation",
+inline StatCounter g_gpuSceneBufferTotalStatVar(StatCategory::kGpuMem, "GPU scene total", StatFlag::kBytes | StatFlag::kMainThreadUpdates);
+inline StatCounter g_gpuSceneBufferFragmentationStatVar(StatCategory::kGpuMem, "GPU scene fragmentation",
 														StatFlag::kFloat | StatFlag::kMainThreadUpdates);
-
-static NumericCVar<PtrSize> g_gpuSceneInitialSizeCVar(CVarSubsystem::kCore, "GpuSceneInitialSize", 64_MB, 16_MB, 2_GB,
-													  "Global memory for the GPU scene");
 
 void GpuSceneBuffer::init()
 {
-	const PtrSize poolSize = g_gpuSceneInitialSizeCVar.get();
+	const PtrSize poolSize = g_gpuSceneInitialSizeCVar;
 
 	const Array classes = {32_B, 64_B, 128_B, 256_B, poolSize};
 

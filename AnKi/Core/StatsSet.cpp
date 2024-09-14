@@ -79,6 +79,11 @@ void StatsSet::registerCounter(StatCounter* counter)
 {
 	ANKI_ASSERT(counter);
 
+	for(U32 i = 0; i < m_statCounterArrSize; ++i)
+	{
+		ANKI_ASSERT(m_statCounterArr[i]->m_name != counter->m_name);
+	}
+
 	// Try grow the array
 	if(m_statCounterArrSize + 1 > m_statCounterArrStorageSize)
 	{

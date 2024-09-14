@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
@@ -20,11 +20,6 @@
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 
 namespace anki {
-
-static BoolCVar g_rtShadowsSvgfCVar(CVarSubsystem::kRenderer, "RtShadowsSvgf", false, "Enable or not RT shadows SVGF");
-static NumericCVar<U8> g_rtShadowsSvgfAtrousPassCountCVar(CVarSubsystem::kRenderer, "RtShadowsSvgfAtrousPassCount", 3, 1, 20,
-														  "Number of atrous passes of SVGF");
-static NumericCVar<U32> g_rtShadowsRaysPerPixelCVar(CVarSubsystem::kRenderer, "RtShadowsRaysPerPixel", 1, 1, 8, "Number of shadow rays per pixel");
 
 Error RtShadows::init()
 {
@@ -41,8 +36,8 @@ Error RtShadows::initInternal()
 {
 	ANKI_R_LOGV("Initializing RT shadows");
 
-	m_useSvgf = g_rtShadowsSvgfCVar.get();
-	m_atrousPassCount = g_rtShadowsSvgfAtrousPassCountCVar.get();
+	m_useSvgf = g_rtShadowsSvgfCVar;
+	m_atrousPassCount = g_rtShadowsSvgfAtrousPassCountCVar;
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImage));
 
@@ -53,7 +48,7 @@ Error RtShadows::initInternal()
 	// Ray gen and miss
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenAndMissProg);
-		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar.get());
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtShadows");
 		const ShaderProgramResourceVariant* variant;
 		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo, variant);
@@ -61,7 +56,7 @@ Error RtShadows::initInternal()
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_rayGenAndMissProg);
-		variantInitInfo2.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar.get());
+		variantInitInfo2.addMutation("RAYS_PER_PIXEL", g_rtShadowsRaysPerPixelCVar);
 		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtShadows");
 		m_rayGenAndMissProg->getOrCreateVariant(variantInitInfo2, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();

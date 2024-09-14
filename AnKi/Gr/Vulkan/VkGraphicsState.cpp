@@ -11,9 +11,6 @@
 
 namespace anki {
 
-static NumericCVar<PtrSize> g_diskShaderCacheMaxSizeCVar(CVarSubsystem::kGr, "DiskShaderCacheMaxSize", 128_MB, 1_MB, 1_GB,
-														 "Max size of the pipeline cache file");
-
 static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight)
 {
 	const U32 minx = viewport[0];
@@ -403,7 +400,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 Error PipelineCache::init(CString cacheDir)
 {
 	ANKI_ASSERT(cacheDir);
-	m_dumpSize = g_diskShaderCacheMaxSizeCVar.get();
+	m_dumpSize = g_diskShaderCacheMaxSizeCVar;
 	m_dumpFilename.sprintf("%s/VkPipelineCache", cacheDir.cstr());
 
 	// Try read the pipeline cache file.

@@ -8,11 +8,9 @@
 #include <AnKi/Resource/MeshResource.h>
 #include <AnKi/Util/Xml.h>
 #include <AnKi/Util/Logger.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
-
-// Forward
-extern BoolCVar g_meshletRenderingCVar;
 
 void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 {
@@ -118,7 +116,7 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 			}
 		}
 
-		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar.get())
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar)
 		{
 			U32 dummy;
 			m_mesh->getMeshletBufferInfo(l, lod.m_meshletBoundingVolumesUgbOffset, lod.m_meshletGometryDescriptorsUgbOffset, dummy);

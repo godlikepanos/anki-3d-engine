@@ -10,12 +10,10 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/RtShadows.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
-
-static BoolCVar g_smResolveQuarterRezCVar(CVarSubsystem::kRenderer, "SmResolveQuarterRez", ANKI_PLATFORM_MOBILE, "Shadowmapping resolve quality");
 
 Error ShadowmapsResolve::init()
 {
@@ -30,7 +28,7 @@ Error ShadowmapsResolve::init()
 
 Error ShadowmapsResolve::initInternal()
 {
-	m_quarterRez = g_smResolveQuarterRezCVar.get();
+	m_quarterRez = g_smResolveQuarterRezCVar;
 	const U32 width = getRenderer().getInternalResolution().x() / (m_quarterRez + 1);
 	const U32 height = getRenderer().getInternalResolution().y() / (m_quarterRez + 1);
 
@@ -59,7 +57,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
-	if(g_preferComputeCVar.get())
+	if(g_preferComputeCVar)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ResolveShadows");
 
@@ -113,11 +111,11 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 	U32 quality;
-	if(g_shadowMappingPcssCVar.get())
+	if(g_shadowMappingPcssCVar)
 	{
 		quality = 2;
 	}
-	else if(g_shadowMappingPcfCVar.get())
+	else if(g_shadowMappingPcfCVar)
 	{
 		quality = 1;
 	}
@@ -152,13 +150,13 @@ void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx, RenderingContext& 
 		rgraphCtx.bindSrv(6, 0, getRenderer().getRtShadows().getRt());
 	}
 
-	if(g_preferComputeCVar.get() || g_shadowMappingPcfCVar.get() || g_shadowMappingPcssCVar.get())
+	if(g_preferComputeCVar || g_shadowMappingPcfCVar || g_shadowMappingPcssCVar)
 	{
 		const Vec4 consts(F32(m_rtDescr.m_width), F32(m_rtDescr.m_height), 0.0f, 0.0f);
 		cmdb.setFastConstants(&consts, sizeof(consts));
 	}
 
-	if(g_preferComputeCVar.get())
+	if(g_preferComputeCVar)
 	{
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
 		dispatchPPCompute(cmdb, 8, 8, m_rtDescr.m_width, m_rtDescr.m_height);

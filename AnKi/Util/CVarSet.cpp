@@ -3,28 +3,20 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/CVarSet.h>
-#include <AnKi/Util/Xml.h>
-#include <AnKi/Util/Logger.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/File.h>
-
-// Because some cvars set their default values
-#include <AnKi/Util/System.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki {
 
-static constexpr Array<CString, U32(CVarSubsystem::kCount)> g_cvarSubsystemNames = {"Core", "R", "Gr", "Rsrc", "Scene"};
-
 void CVar::getFullNameInternal(Array<Char, 256>& arr) const
 {
-	snprintf(arr.getBegin(), arr.getSize(), "%s.%s", g_cvarSubsystemNames[m_subsystem].cstr(), m_name.cstr());
+	snprintf(arr.getBegin(), arr.getSize(), "%s.%s", m_subsystem.cstr(), m_name.cstr());
 }
 
-CoreString CVar::getFullName() const
+String CVar::getFullName() const
 {
-	CoreString out;
-	out.sprintf("%s.%s", g_cvarSubsystemNames[m_subsystem].cstr(), m_name.cstr());
+	String out;
+	out.sprintf("%s.%s", m_subsystem.cstr(), m_name.cstr());
 	return out;
 }
 
@@ -49,7 +41,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 		++i;
 		if(i >= arr.getSize())
 		{
-			ANKI_CORE_LOGE("Expecting a command line argument after %s", varName.cstr());
+			ANKI_UTIL_LOGE("Expecting a command line argument after %s", varName.cstr());
 			return Error::kUserData;
 		}
 		ANKI_ASSERT(arr[i]);
@@ -67,7 +59,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 			{
 				if(foundCVar)
 				{
-					ANKI_CORE_LOGE("Command line arg %s has ambiguous name. Skipping", varName.cstr());
+					ANKI_UTIL_LOGE("Command line arg %s has ambiguous name. Skipping", varName.cstr());
 				}
 				else
 				{
@@ -118,12 +110,12 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 			if(err)
 			{
 				foundCVar->getFullNameInternal(fullnameArr);
-				ANKI_CORE_LOGE("Wrong value for %s. Value will not be set", &fullnameArr[0]);
+				ANKI_UTIL_LOGE("Wrong value for %s. Value will not be set", &fullnameArr[0]);
 			}
 		}
 		else
 		{
-			ANKI_CORE_LOGE("Can't recognize command line argument: %s. Skipping", varName.cstr());
+			ANKI_UTIL_LOGE("Can't recognize command line argument: %s. Skipping", varName.cstr());
 		}
 	}
 

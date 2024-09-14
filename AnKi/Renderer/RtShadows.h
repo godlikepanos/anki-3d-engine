@@ -15,6 +15,10 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline BoolCVar g_rtShadowsSvgfCVar("R", "RtShadowsSvgf", false, "Enable or not RT shadows SVGF");
+inline NumericCVar<U8> g_rtShadowsSvgfAtrousPassCountCVar("R", "RtShadowsSvgfAtrousPassCount", 3, 1, 20, "Number of atrous passes of SVGF");
+inline NumericCVar<U32> g_rtShadowsRaysPerPixelCVar("R", "RtShadowsRaysPerPixel", 1, 1, 8, "Number of shadow rays per pixel");
+
 /// Similar to ShadowmapsResolve but it's using ray tracing.
 class RtShadows : public RendererObject
 {

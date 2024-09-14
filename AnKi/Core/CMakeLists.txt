@@ -1,6 +1,5 @@
 set(sources
 	App.cpp
-	CVarSet.cpp
 	CoreTracer.cpp
 	MaliHwCounters.cpp
 	StatsSet.cpp
@@ -13,7 +12,6 @@ set(sources
 set(headers
 	App.h
 	Common.h
-	CVarSet.h
 	CoreTracer.h
 	MaliHwCounters.h
 	StatsSet.h

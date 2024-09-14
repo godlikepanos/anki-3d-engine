@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Renderer/Tonemapping.h>
-#include <AnKi/Renderer/DownscaleBlur.h>
+#include <AnKi/Renderer/Bloom2.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -23,11 +23,10 @@ Error Tonemapping::init()
 
 Error Tonemapping::initInternal()
 {
-	m_inputTexMip = getRenderer().getDownscaleBlur().getMipmapCount() - 2;
-	const U32 width = getRenderer().getDownscaleBlur().getPassWidth(m_inputTexMip);
-	const U32 height = getRenderer().getDownscaleBlur().getPassHeight(m_inputTexMip);
+	m_inputTexMip = (getRenderer().getBloom2().getPyramidTextureMipmapCount() > 2) ? getRenderer().getBloom2().getPyramidTextureMipmapCount() - 2 : 0;
+	const UVec2 size = getRenderer().getBloom2().getPyramidTextureSize() >> m_inputTexMip;
 
-	ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", width, height);
+	ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", size.x(), size.y());
 
 	// Create program
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_prog, m_grProg));
@@ -63,12 +62,12 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 		cmdb.bindShaderProgram(m_grProg.get());
 		rgraphCtx.bindUav(0, 0, m_runCtx.m_exposureLuminanceHandle);
-		rgraphCtx.bindSrv(0, 0, getRenderer().getDownscaleBlur().getRt(), TextureSubresourceDesc::surface(m_inputTexMip, 0, 0));
+		rgraphCtx.bindSrv(0, 0, getRenderer().getBloom2().getPyramidRt(), TextureSubresourceDesc::surface(m_inputTexMip, 0, 0));
 
 		cmdb.dispatchCompute(1, 1, 1);
 	});
 
-	pass.newTextureDependency(getRenderer().getDownscaleBlur().getRt(), TextureUsageBit::kSrvCompute,
+	pass.newTextureDependency(getRenderer().getBloom2().getPyramidRt(), TextureUsageBit::kSrvCompute,
 							  TextureSubresourceDesc::surface(m_inputTexMip, 0, 0));
 }
 

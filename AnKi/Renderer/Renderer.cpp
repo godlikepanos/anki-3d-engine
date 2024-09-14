@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Plane.h>
@@ -15,6 +15,7 @@
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Core/StatsSet.h>
+#include <AnKi/Core/App.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -22,12 +23,11 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/FinalComposite.h>
-#include <AnKi/Renderer/Bloom.h>
+#include <AnKi/Renderer/Bloom2.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/Dbg.h>
-#include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/TemporalAA.h>
@@ -53,39 +53,9 @@
 
 namespace anki {
 
-static NumericCVar<F32> g_internalRenderScalingCVar(CVarSubsystem::kRenderer, "InternalRenderScaling", 1.0f, 0.5f, 1.0f,
-													"A factor over the requested swapchain resolution. Applies to all passes up to TAA");
-NumericCVar<F32> g_renderScalingCVar(CVarSubsystem::kRenderer, "RenderScaling", 1.0f, 0.5f, 8.0f,
-									 "A factor over the requested swapchain resolution. Applies to post-processing and UI");
-static NumericCVar<U32> g_zSplitCountCVar(CVarSubsystem::kRenderer, "ZSplitCount", 64, 8, kMaxZsplitCount, "Clusterer number of Z splits");
-static NumericCVar<U8> g_textureAnisotropyCVar(CVarSubsystem::kRenderer, "TextureAnisotropy", (ANKI_PLATFORM_MOBILE) ? 1 : 16, 1, 16,
-											   "Texture anisotropy for the main passes");
-BoolCVar g_preferComputeCVar(CVarSubsystem::kRenderer, "PreferCompute", !ANKI_PLATFORM_MOBILE, "Prefer compute shaders");
-static BoolCVar g_highQualityHdrCVar(CVarSubsystem::kRenderer, "HighQualityHdr", !ANKI_PLATFORM_MOBILE,
-									 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11");
-BoolCVar g_vrsLimitTo2x2CVar(CVarSubsystem::kRenderer, "VrsLimitTo2x2", false, "If true the max rate will be 2x2");
-BoolCVar g_vrsCVar(CVarSubsystem::kRenderer, "Vrs", true, "Enable VRS in multiple passes");
-BoolCVar g_rayTracedShadowsCVar(CVarSubsystem::kRenderer, "RayTracedShadows", true,
-								"Enable or not ray traced shadows. Ignored if RT is not supported");
-NumericCVar<U8> g_shadowCascadeCountCVar(CVarSubsystem::kRenderer, "ShadowCascadeCount", (ANKI_PLATFORM_MOBILE) ? 3 : kMaxShadowCascades, 1,
-										 kMaxShadowCascades, "Max number of shadow cascades for directional lights");
-NumericCVar<F32> g_shadowCascade0DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade0Distance", 18.0, 1.0, kMaxF32,
-											  "The distance of the 1st cascade");
-NumericCVar<F32> g_shadowCascade1DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade1Distance", (ANKI_PLATFORM_MOBILE) ? 80.0f : 40.0, 1.0, kMaxF32,
-											  "The distance of the 2nd cascade");
-NumericCVar<F32> g_shadowCascade2DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade2Distance", (ANKI_PLATFORM_MOBILE) ? 150.0f : 80.0, 1.0,
-											  kMaxF32, "The distance of the 3rd cascade");
-NumericCVar<F32> g_shadowCascade3DistanceCVar(CVarSubsystem::kRenderer, "ShadowCascade3Distance", 200.0, 1.0, kMaxF32,
-											  "The distance of the 4th cascade");
-NumericCVar<F32> g_lod0MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod0MaxDistance", 20.0f, 1.0f, kMaxF32,
-									   "Distance that will be used to calculate the LOD 0");
-NumericCVar<F32> g_lod1MaxDistanceCVar(CVarSubsystem::kRenderer, "Lod1MaxDistance", 40.0f, 2.0f, kMaxF32,
-									   "Distance that will be used to calculate the LOD 1");
-
 static StatCounter g_primitivesDrawnStatVar(StatCategory::kRenderer, "Primitives drawn", StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
 static StatCounter g_rendererCpuTimeStatVar(StatCategory::kTime, "Renderer",
 											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
-StatCounter g_rendererGpuTimeStatVar(StatCategory::kTime, "GPU frame", StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 /// Generate a Halton jitter in [-0.5, 0.5]
 static Vec2 generateJitter(U32 frame)
@@ -153,11 +123,11 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	m_rgraph = GrManager::getSingleton().newRenderGraph();
 
 	// Set from the config
-	m_postProcessResolution = UVec2(Vec2(m_swapchainResolution) * g_renderScalingCVar.get());
+	m_postProcessResolution = UVec2(Vec2(m_swapchainResolution) * g_renderScalingCVar);
 	alignRoundDown(2, m_postProcessResolution.x());
 	alignRoundDown(2, m_postProcessResolution.y());
 
-	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_internalRenderScalingCVar.get());
+	m_internalResolution = UVec2(Vec2(m_postProcessResolution) * g_internalRenderScalingCVar);
 	alignRoundDown(2, m_internalResolution.x());
 	alignRoundDown(2, m_internalResolution.y());
 
@@ -166,9 +136,9 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 
 	m_tileCounts.x() = (m_internalResolution.x() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
 	m_tileCounts.y() = (m_internalResolution.y() + kClusteredShadingTileSize - 1) / kClusteredShadingTileSize;
-	m_zSplitCount = g_zSplitCountCVar.get();
+	m_zSplitCount = g_zSplitCountCVar;
 
-	if(g_meshletRenderingCVar.get() && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
+	if(g_meshletRenderingCVar && !GrManager::getSingleton().getDeviceCapabilities().m_meshShaders)
 	{
 		m_meshletRenderingType = MeshletRenderingType::kSoftware;
 	}
@@ -232,14 +202,14 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		sinit.m_addressing = SamplingAddressing::kRepeat;
 		m_samplers.m_trilinearRepeat = GrManager::getSingleton().newSampler(sinit);
 
-		if(g_textureAnisotropyCVar.get() <= 1u)
+		if(g_textureAnisotropyCVar <= 1u)
 		{
 			m_samplers.m_trilinearRepeatAniso = m_samplers.m_trilinearRepeat;
 		}
 		else
 		{
 			sinit.setName("TrilinearRepeatAniso");
-			sinit.m_anisotropyLevel = g_textureAnisotropyCVar.get();
+			sinit.m_anisotropyLevel = g_textureAnisotropyCVar;
 			m_samplers.m_trilinearRepeatAniso = GrManager::getSingleton().newSampler(sinit);
 		}
 
@@ -285,7 +255,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
 	// Import RTs first
-	m_downscaleBlur->importRenderTargets(ctx);
+	m_bloom2->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
 	m_vrsSriGeneration->importRenderTargets(ctx);
 	m_gbuffer->importRenderTargets(ctx);
@@ -324,9 +294,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	}
 	m_vrsSriGeneration->populateRenderGraph(ctx);
 	m_scale->populateRenderGraph(ctx);
-	m_downscaleBlur->populateRenderGraph(ctx);
+	m_bloom2->populateRenderGraph(ctx);
 	m_tonemapping->populateRenderGraph(ctx);
-	m_bloom->populateRenderGraph(ctx);
 	m_dbg->populateRenderGraph(ctx);
 
 	m_finalComposite->populateRenderGraph(ctx);
@@ -355,7 +324,7 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	consts.m_zSplitCountOverFrustumLength = F32(m_zSplitCount) / (ctx.m_cameraFar - ctx.m_cameraNear);
 	consts.m_zSplitMagic.x() = (ctx.m_cameraNear - ctx.m_cameraFar) / (ctx.m_cameraNear * F32(m_zSplitCount));
 	consts.m_zSplitMagic.y() = ctx.m_cameraFar / (ctx.m_cameraNear * F32(m_zSplitCount));
-	consts.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar.get() - 1, m_zSplitCount);
+	consts.m_lightVolumeLastZSplit = min(g_volumetricLightingAccumulationFinalZSplitCVar - 1, m_zSplitCount);
 
 	consts.m_reflectionProbesMipCount = F32(m_probeReflections->getReflectionTextureMipmapCount());
 
@@ -367,15 +336,15 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	if(dirLight)
 	{
 		DirectionalLight& out = consts.m_directionalLight;
-		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_shadowCascadeCountCVar.get() : 0;
+		const U32 shadowCascadeCount = (dirLight->getShadowEnabled()) ? g_shadowCascadeCountCVar : 0;
 
 		out.m_diffuseColor = dirLight->getDiffuseColor().xyz();
 		out.m_power = dirLight->getLightPower();
 		out.m_shadowCascadeCount_31bit_active_1bit = shadowCascadeCount << 1u;
 		out.m_shadowCascadeCount_31bit_active_1bit |= 1;
 		out.m_direction = dirLight->getDirection();
-		out.m_shadowCascadeDistances = Vec4(g_shadowCascade0DistanceCVar.get(), g_shadowCascade1DistanceCVar.get(),
-											g_shadowCascade2DistanceCVar.get(), g_shadowCascade3DistanceCVar.get());
+		out.m_shadowCascadeDistances =
+			Vec4(g_shadowCascade0DistanceCVar, g_shadowCascade1DistanceCVar, g_shadowCascade2DistanceCVar, g_shadowCascade3DistanceCVar);
 
 		for(U cascade = 0; cascade < shadowCascadeCount; ++cascade)
 		{
@@ -630,7 +599,7 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 Format Renderer::getHdrFormat() const
 {
 	Format out;
-	if(!g_highQualityHdrCVar.get())
+	if(!g_highQualityHdrCVar)
 	{
 		out = Format::kB10G11R11_Ufloat_Pack32;
 	}

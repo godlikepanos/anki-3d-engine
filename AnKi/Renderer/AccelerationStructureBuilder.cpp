@@ -12,10 +12,6 @@
 
 namespace anki {
 
-static NumericCVar<F32>
-	g_rayTracingExtendedFrustumDistanceCVar(CVarSubsystem::kRenderer, "RayTracingExtendedFrustumDistance", 100.0f, 10.0f, 10000.0f,
-											"Every object that its distance from the camera is bellow that value will take part in ray tracing");
-
 void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ASBuilder);
@@ -23,14 +19,14 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 	// Do visibility
 	GpuVisibilityAccelerationStructuresOutput visOut;
 	{
-		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+		const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 
 		GpuVisibilityAccelerationStructuresInput in;
 		in.m_passesName = "Main TLAS visiblity";
 		in.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 		in.m_lodDistances = lodDistances;
 		in.m_pointOfTest = in.m_lodReferencePoint;
-		in.m_testRadius = g_rayTracingExtendedFrustumDistanceCVar.get();
+		in.m_testRadius = g_rayTracingExtendedFrustumDistanceCVar;
 		in.m_viewProjectionMatrix = ctx.m_matrices.m_viewProjection;
 		in.m_rgraph = &ctx.m_renderGraphDescr;
 

@@ -11,7 +11,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/Components/GlobalIlluminationProbeComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Collision/Aabb.h>
@@ -19,11 +19,6 @@
 #include <AnKi/Resource/AsyncLoader.h>
 
 namespace anki {
-
-static NumericCVar<U32> g_indirectDiffuseProbeTileResolutionCVar(CVarSubsystem::kRenderer, "IndirectDiffuseProbeTileResolution",
-																 (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32, "GI tile resolution");
-static NumericCVar<U32> g_indirectDiffuseProbeShadowMapResolutionCVar(CVarSubsystem::kRenderer, "IndirectDiffuseProbeShadowMapResolution", 128, 4,
-																	  2048, "GI shadowmap resolution");
 
 static StatCounter g_giProbeRenderCountStatVar(StatCategory::kRenderer, "GI probes rendered", StatFlag::kMainThreadUpdates);
 static StatCounter g_giProbeCellsRenderCountStatVar(StatCategory::kRenderer, "GI probes cells rendered", StatFlag::kMainThreadUpdates);
@@ -55,7 +50,7 @@ Error IndirectDiffuseProbes::init()
 
 Error IndirectDiffuseProbes::initInternal()
 {
-	m_tileSize = g_indirectDiffuseProbeTileResolutionCVar.get();
+	m_tileSize = g_indirectDiffuseProbeTileResolutionCVar;
 
 	ANKI_CHECK(initGBuffer());
 	ANKI_CHECK(initLightShading());
@@ -95,7 +90,7 @@ Error IndirectDiffuseProbes::initGBuffer()
 
 Error IndirectDiffuseProbes::initShadowMapping()
 {
-	const U32 resolution = g_indirectDiffuseProbeShadowMapResolutionCVar.get();
+	const U32 resolution = g_indirectDiffuseProbeShadowMapResolutionCVar;
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -204,7 +199,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					Transform(cellCenter.xyz0(), Frustum::getOmnidirectionalFrustumRotations()[f], Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 				frustum.update();
 
-				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 
 				FrustumGpuVisibilityInput visIn;
 				visIn.m_passesName = generateTempPassName("GI: GBuffer cell:%u face:%u", cellIdx, f);
@@ -282,7 +277,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				cascadeViewProjMat = cascadeProjMat * Mat4(cascadeViewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar.get(), g_lod1MaxDistanceCVar.get()};
+				Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 
 				FrustumGpuVisibilityInput visIn;
 				visIn.m_passesName = generateTempPassName("GI: Shadows cell:%u face:%u", cellIdx, f);

@@ -11,11 +11,6 @@
 
 namespace anki {
 
-BoolCVar g_tracingEnabledCVar(CVarSubsystem::kCore, "Tracing", false, "Enable or disable tracing");
-#if ANKI_OS_ANDROID
-BoolCVar g_streamlineEnabledCVar(CVarSubsystem::kCore, "StreamlineAnnotations", false, "Enable or disable Streamline annotations");
-#endif
-
 #if ANKI_TRACING_ENABLED
 
 static void getSpreadsheetColumnName(U32 column, Array<char, 3>& arr)

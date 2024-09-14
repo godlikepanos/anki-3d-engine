@@ -9,6 +9,7 @@
 #include <AnKi/Core/App.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Font.h>
+#include <AnKi/Renderer/Renderer.h>
 
 namespace anki {
 

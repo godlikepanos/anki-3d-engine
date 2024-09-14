@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
+#include <AnKi/Util/CVarSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Gr/Buffer.h>
 #include <AnKi/Gr/GrManager.h>
 
@@ -13,6 +14,8 @@ namespace anki {
 
 /// @addtogroup core
 /// @{
+
+inline NumericCVar<PtrSize> g_rebarGpuMemorySizeCvar("Core", "RebarGpuMemorySize", 24_MB, 1_MB, 1_GB, "ReBAR: always mapped GPU memory");
 
 /// Manages staging GPU memory.
 class RebarTransientMemoryPool : public MakeSingleton<RebarTransientMemoryPool>

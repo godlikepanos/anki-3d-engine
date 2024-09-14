@@ -14,6 +14,11 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline NumericCVar<U32> g_indirectDiffuseProbeTileResolutionCVar("R", "IndirectDiffuseProbeTileResolution", (ANKI_PLATFORM_MOBILE) ? 16 : 32, 8, 32,
+																 "GI tile resolution");
+inline NumericCVar<U32> g_indirectDiffuseProbeShadowMapResolutionCVar("R", "IndirectDiffuseProbeShadowMapResolution", 128, 4, 2048,
+																	  "GI shadowmap resolution");
+
 /// Ambient global illumination passes.
 ///
 /// It builds a volume clipmap with ambient GI information.

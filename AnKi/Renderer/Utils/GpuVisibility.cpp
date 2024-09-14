@@ -14,7 +14,8 @@
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/StatsSet.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
 
@@ -45,7 +46,7 @@ static GpuVisLimits computeLimits(RenderingTechnique t)
 	const RenderStateBucketContainer& buckets = RenderStateBucketContainer::getSingleton();
 
 	const U32 meshletUserCount = buckets.getBucketsActiveUserCountWithMeshletSupport(t);
-	ANKI_ASSERT(meshletUserCount == 0 || (g_meshletRenderingCVar.get() || GrManager::getSingleton().getDeviceCapabilities().m_meshShaders));
+	ANKI_ASSERT(meshletUserCount == 0 || (g_meshletRenderingCVar || GrManager::getSingleton().getDeviceCapabilities().m_meshShaders));
 	out.m_totalLegacyRenderables = buckets.getBucketsActiveUserCountWithNoMeshletSupport(t);
 	out.m_maxVisibleLegacyRenderables = min(out.m_totalLegacyRenderables, kMaxVisibleObjects);
 

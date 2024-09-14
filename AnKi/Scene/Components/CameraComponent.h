@@ -7,7 +7,6 @@
 
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/Frustum.h>
-#include <AnKi/Core/CVarSet.h>
 
 namespace anki {
 

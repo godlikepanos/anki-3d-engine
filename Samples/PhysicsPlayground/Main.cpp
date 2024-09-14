@@ -242,7 +242,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar.set(!g_vrsCVar.get());
+		g_vrsCVar.set(!g_vrsCVar);
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)

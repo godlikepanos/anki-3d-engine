@@ -5,23 +5,35 @@
 
 #pragma once
 
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
+#include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Ptr.h>
+#include <AnKi/Util/System.h>
+#include <AnKi/Util/Functions.h>
 #include <AnKi/Ui/UiImmediateModeBuilder.h>
 
 namespace anki {
 
-// Forward
-class StatCounter;
-extern NumericCVar<U32> g_windowWidthCVar;
-extern NumericCVar<U32> g_windowHeightCVar;
-extern NumericCVar<U32> g_windowFullscreenCVar;
-extern NumericCVar<U32> g_targetFpsCVar;
-extern NumericCVar<U32> g_displayStatsCVar;
-extern BoolCVar g_meshletRenderingCVar;
-extern StatCounter g_cpuTotalTimeStatVar;
-extern StatCounter g_rendererGpuTimeStatVar;
+inline NumericCVar<U32> g_windowWidthCVar("Core", "Width", 1920, 16, 16 * 1024, "Width");
+inline NumericCVar<U32> g_windowHeightCVar("Core", "Height", 1080, 16, 16 * 1024, "Height");
+inline NumericCVar<U32> g_windowFullscreenCVar("Core", "WindowFullscreen", 1, 0, 2, "0: windowed, 1: borderless fullscreen, 2: exclusive fullscreen");
+inline NumericCVar<U32> g_targetFpsCVar("Core", "TargetFps", 60u, 1u, kMaxU32, "Target FPS");
+inline NumericCVar<U32> g_jobThreadCountCVar("Core", "JobThreadCount", clamp(getCpuCoresCount() / 2u, 2u, 16u), 2u, 1024u, "Number of job thread");
+inline NumericCVar<U32> g_displayStatsCVar("Core", "DisplayStats", 0, 0, 2, "Display stats, 0: None, 1: Simple, 2: Detailed");
+inline BoolCVar g_clearCachesCVar("Core", "ClearCaches", false, "Clear all caches");
+inline BoolCVar g_verboseLogCVar("Core", "VerboseLog", false, "Verbose logging");
+inline BoolCVar g_benchmarkModeCVar("Core", "BenchmarkMode", false, "Run in a benchmark mode. Fixed timestep, unlimited target FPS");
+inline NumericCVar<U32> g_benchmarkModeFrameCountCVar("Core", "BenchmarkModeFrameCount", 60 * 60 * 2, 1, kMaxU32,
+													  "How many frames the benchmark will run before it quits");
+inline BoolCVar g_meshletRenderingCVar("Core", "MeshletRendering", false, "Do meshlet culling and rendering");
+
+#if ANKI_PLATFORM_MOBILE
+inline BoolCVar g_maliHwCountersCVar("Core", "MaliHwCounters", false, "Enable Mali counters");
+#endif
+
+inline StatCounter g_cpuTotalTimeStatVar(StatCategory::kTime, "CPU total",
+										 StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 /// The core class of the engine.
 class App

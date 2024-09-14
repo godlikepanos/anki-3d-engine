@@ -6,13 +6,10 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/LightShading.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
-
-static NumericCVar<F32> g_vrsThresholdCVar(CVarSubsystem::kRenderer, "VrsThreshold", 0.1f, 0.0f, 1.0f,
-										   "Threshold under which a lower shading rate will be applied");
 
 Error VrsSriGeneration::init()
 {
@@ -66,7 +63,7 @@ Error VrsSriGeneration::initInternal()
 		variantInit.addMutation("SHARED_MEMORY", 1);
 	}
 
-	variantInit.addMutation("LIMIT_RATE_TO_2X2", g_vrsLimitTo2x2CVar.get());
+	variantInit.addMutation("LIMIT_RATE_TO_2X2", g_vrsLimitTo2x2CVar);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInit, variant);
@@ -96,7 +93,7 @@ void VrsSriGeneration::getDebugRenderTarget(CString rtName, Array<RenderTargetHa
 
 void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
 	if(!enableVrs)
 	{
 		return;
@@ -117,7 +114,7 @@ void VrsSriGeneration::importRenderTargets(RenderingContext& ctx)
 
 void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 {
-	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar.get();
+	const Bool enableVrs = GrManager::getSingleton().getDeviceCapabilities().m_vrs && g_vrsCVar;
 	if(!enableVrs)
 	{
 		return;
@@ -143,7 +140,7 @@ void VrsSriGeneration::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_rt);
-			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar.get(), 0.0f);
+			const Vec4 pc(1.0f / Vec2(getRenderer().getInternalResolution()), g_vrsThresholdCVar, 0.0f);
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
 			const U32 fakeWorkgroupSizeXorY = m_sriTexelDimension;

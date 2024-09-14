@@ -10,7 +10,7 @@
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Util/Functions.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 
 namespace anki {
 

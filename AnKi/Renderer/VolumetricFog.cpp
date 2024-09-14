@@ -9,7 +9,7 @@
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -18,9 +18,9 @@ namespace anki {
 Error VolumetricFog::init()
 {
 	// Misc
-	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar.get();
-	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar.get();
-	m_finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
+	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar;
+	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar;
+	m_finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar);
 
 	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);

@@ -7,13 +7,10 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/SceneNode.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Gr/Texture.h>
 
 namespace anki {
-
-NumericCVar<U32> g_reflectionProbeResolutionCVar(CVarSubsystem::kScene, "ReflectionProbeResolution", 128, 8, 2048,
-												 "The resolution of the reflection probe's reflection");
 
 ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
@@ -24,7 +21,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	TextureInitInfo texInit("ReflectionProbe");
 	texInit.m_format =
 		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat : Format::kR16G16B16A16_Sfloat;
-	texInit.m_width = g_reflectionProbeResolutionCVar.get();
+	texInit.m_width = g_reflectionProbeResolutionCVar;
 	texInit.m_height = texInit.m_width;
 	texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
 	texInit.m_type = TextureType::kCube;
@@ -78,13 +75,13 @@ F32 ReflectionProbeComponent::getRenderRadius() const
 {
 	F32 effectiveDistance = max(m_halfSize.x(), m_halfSize.y());
 	effectiveDistance = max(effectiveDistance, m_halfSize.z());
-	effectiveDistance = max(effectiveDistance, g_probeEffectiveDistanceCVar.get());
+	effectiveDistance = max<F32>(effectiveDistance, g_probeEffectiveDistanceCVar);
 	return effectiveDistance;
 }
 
 F32 ReflectionProbeComponent::getShadowsRenderRadius() const
 {
-	return min(getRenderRadius(), g_probeShadowEffectiveDistanceCVar.get());
+	return min<F32>(getRenderRadius(), g_probeShadowEffectiveDistanceCVar);
 }
 
 } // end namespace anki

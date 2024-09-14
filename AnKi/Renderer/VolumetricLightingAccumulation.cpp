@@ -9,25 +9,18 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Resource/ImageResource.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
-NumericCVar<F32> g_volumetricLightingAccumulationQualityXYCVar(CVarSubsystem::kRenderer, "VolumetricLightingAccumulationQualityXY", 4.0f, 1.0f, 16.0f,
-															   "Quality of XY dimensions of volumetric lights");
-NumericCVar<F32> g_volumetricLightingAccumulationQualityZCVar(CVarSubsystem::kRenderer, "VolumetricLightingAccumulationQualityZ", 4.0f, 1.0f, 16.0f,
-															  "Quality of Z dimension of volumetric lights");
-NumericCVar<U32> g_volumetricLightingAccumulationFinalZSplitCVar(CVarSubsystem::kRenderer, "VolumetricLightingAccumulationFinalZSplit", 26, 1, 256,
-																 "Final cluster split that will recieve volumetric lights");
-
 Error VolumetricLightingAccumulation::init()
 {
 	// Misc
-	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar.get();
-	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar.get();
-	const U32 finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
+	const F32 qualityXY = g_volumetricLightingAccumulationQualityXYCVar;
+	const F32 qualityZ = g_volumetricLightingAccumulationQualityZCVar;
+	const U32 finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar);
 
 	m_volumeSize[0] = U32(F32(getRenderer().getTileCounts().x()) * qualityXY);
 	m_volumeSize[1] = U32(F32(getRenderer().getTileCounts().y()) * qualityXY);
@@ -139,7 +132,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 		}
 		consts.m_volumeSize = UVec3(m_volumeSize);
 
-		const U32 finalZSplit = min(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar.get());
+		const U32 finalZSplit = min<U32>(getRenderer().getZSplitCount() - 1, g_volumetricLightingAccumulationFinalZSplitCVar);
 		consts.m_maxZSplitsToProcessf = F32(finalZSplit + 1);
 
 		cmdb.setFastConstants(&consts, sizeof(consts));

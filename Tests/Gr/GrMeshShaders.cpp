@@ -227,7 +227,7 @@ float3 main(VertOut input) : SV_TARGET0
 			CommandBufferInitInfo cmdbinit;
 			CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbinit);
 
-			cmdb->setViewport(0, 0, g_windowWidthCVar.get(), g_windowHeightCVar.get());
+			cmdb->setViewport(0, 0, g_windowWidthCVar, g_windowHeightCVar);
 
 			TextureBarrierInfo barrier;
 			barrier.m_textureView = TextureView(swapchainTex.get(), TextureSubresourceDesc::all());

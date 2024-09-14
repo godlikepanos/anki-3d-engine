@@ -11,11 +11,11 @@
 
 namespace anki {
 
-// Forward
-extern BoolCVar g_dbgCVar;
-
 /// @addtogroup renderer
 /// @{
+
+inline BoolCVar g_dbgCVar("R", "Dbg", false, "Enable or not debug visualization");
+inline BoolCVar g_dbgPhysicsCVar("R", "DbgPhysics", false, "Enable or not physics debug visualization");
 
 /// Debugging stage
 class Dbg : public RendererObject

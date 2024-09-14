@@ -13,7 +13,6 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/ShadowMapping.h>
-#include <AnKi/Renderer/DownscaleBlur.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/TemporalAA.h>
@@ -23,7 +22,7 @@
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/Bloom.h>
+#include <AnKi/Renderer/Bloom2.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>

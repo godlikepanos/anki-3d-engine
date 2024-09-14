@@ -9,11 +9,9 @@
 #include <AnKi/Resource/AsyncLoader.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
+#include <AnKi/Core/App.h>
 
 namespace anki {
-
-// Forward
-extern BoolCVar g_meshletRenderingCVar;
 
 class MeshResource::LoadContext
 {
@@ -145,7 +143,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		}
 
 		// Meshlet
-		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar.get())
+		if(GrManager::getSingleton().getDeviceCapabilities().m_meshShaders || g_meshletRenderingCVar)
 		{
 			const PtrSize meshletIndicesSize = header.m_meshletPrimitiveCounts[l] * sizeof(U8Vec4);
 			lod.m_meshletIndices = UnifiedGeometryBuffer::getSingleton().allocate(meshletIndicesSize, sizeof(U8Vec4));

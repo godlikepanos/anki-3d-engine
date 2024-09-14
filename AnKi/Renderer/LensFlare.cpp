@@ -6,17 +6,13 @@
 #include <AnKi/Renderer/LensFlare.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
-
-static NumericCVar<U8> g_lensFlareMaxSpritesPerFlareCVar(CVarSubsystem::kRenderer, "LensFlareMaxSpritesPerFlare", 8, 4, 255,
-														 "Max sprites per lens flare");
-static NumericCVar<U8> g_lensFlareMaxFlaresCVar(CVarSubsystem::kRenderer, "LensFlareMaxFlares", 16, 8, 255, "Max flare count");
 
 Error LensFlare::init()
 {
@@ -33,7 +29,7 @@ Error LensFlare::initInternal()
 {
 	ANKI_R_LOGV("Initializing lens flare");
 
-	m_maxSpritesPerFlare = g_lensFlareMaxSpritesPerFlareCVar.get();
+	m_maxSpritesPerFlare = g_lensFlareMaxSpritesPerFlareCVar;
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LensFlareSprite.ankiprogbin", m_realProg, m_realGrProg));
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LensFlareUpdateIndirectInfo.ankiprogbin", m_updateIndirectBuffProg, m_updateIndirectBuffGrProg));

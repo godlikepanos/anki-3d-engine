@@ -154,7 +154,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
-		g_tracingEnabledCVar.set(!g_tracingEnabledCVar.get());
+		g_tracingEnabledCVar.set(!g_tracingEnabledCVar);
 	}
 
 #if !PLAYER
@@ -338,7 +338,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		g_shadowMappingPcssCVar.set(!g_shadowMappingPcssCVar.get());
+		g_shadowMappingPcssCVar.set(!g_shadowMappingPcssCVar);
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)
@@ -394,7 +394,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar.set(!g_vrsCVar.get());
+		g_vrsCVar.set(!g_vrsCVar);
 	}
 
 	if(in.getEvent(InputEvent::kWindowClosed))

@@ -9,13 +9,15 @@
 
 namespace anki {
 
-// Forward
-extern NumericCVar<F32> g_volumetricLightingAccumulationQualityXYCVar;
-extern NumericCVar<F32> g_volumetricLightingAccumulationQualityZCVar;
-extern NumericCVar<U32> g_volumetricLightingAccumulationFinalZSplitCVar;
-
 /// @addtogroup renderer
 /// @{
+
+inline NumericCVar<F32> g_volumetricLightingAccumulationQualityXYCVar("R", "VolumetricLightingAccumulationQualityXY", 4.0f, 1.0f, 16.0f,
+																	  "Quality of XY dimensions of volumetric lights");
+inline NumericCVar<F32> g_volumetricLightingAccumulationQualityZCVar("R", "VolumetricLightingAccumulationQualityZ", 4.0f, 1.0f, 16.0f,
+																	 "Quality of Z dimension of volumetric lights");
+inline NumericCVar<U32> g_volumetricLightingAccumulationFinalZSplitCVar("R", "VolumetricLightingAccumulationFinalZSplit", 26, 1, 256,
+																		"Final cluster split that will recieve volumetric lights");
 
 /// Volumetric lighting. It accumulates lighting in a volume texture.
 class VolumetricLightingAccumulation : public RendererObject

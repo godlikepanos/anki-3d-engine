@@ -12,13 +12,6 @@
 
 namespace anki {
 
-static NumericCVar<U32> g_ssaoSampleCountCVar(CVarSubsystem::kRenderer, "SsaoSampleCount", 4, 1, 1024, "SSAO sample count");
-static NumericCVar<F32> g_ssaoRadiusCVar(CVarSubsystem::kRenderer, "SsaoRadius", 2.0f, 0.1f, 100.0f, "SSAO radius in meters");
-static BoolCVar g_ssaoQuarterRez(CVarSubsystem::kRenderer, "SsaoQuarterResolution", ANKI_PLATFORM_MOBILE, "Render SSAO in quarter rez");
-static NumericCVar<F32> g_ssaoPower(CVarSubsystem::kRenderer, "SsaoPower", 1.5f, 0.1f, 100.0f, "SSAO power");
-static NumericCVar<U8> g_ssaoSpatialQuality(CVarSubsystem::kRenderer, "SsaoSpatialQuality", (ANKI_PLATFORM_MOBILE) ? 0 : 1, 0, 1,
-											"SSAO spatial denoise quality");
-
 Error Ssao::init()
 {
 	const Error err = initInternal();
@@ -31,11 +24,11 @@ Error Ssao::init()
 
 Error Ssao::initInternal()
 {
-	const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
+	const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
 
 	ANKI_R_LOGV("Initializing SSAO. Resolution %ux%u", rez.x(), rez.y());
 
-	const Bool preferCompute = g_preferComputeCVar.get();
+	const Bool preferCompute = g_preferComputeCVar;
 
 	{
 		TextureUsageBit usage = TextureUsageBit::kAllSrv;
@@ -53,10 +46,10 @@ Error Ssao::initInternal()
 	m_bentNormalsAndSsaoRtDescr.bake();
 
 	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQuality.get()}}, m_prog, m_grProg, "Ssao"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQuality.get()}}, m_prog,
+		loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQualityCVar}}, m_prog, m_grProg, "Ssao"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQualityCVar}}, m_prog,
 								 m_spatialDenoiseGrProg, "SsaoSpatialDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQuality.get()}}, m_prog,
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Ssao.ankiprogbin", {{"SPATIAL_DENOISE_QUALITY", g_ssaoSpatialQualityCVar}}, m_prog,
 								 m_tempralDenoiseGrProg, "SsaoTemporalDenoise"));
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_noiseImage));
@@ -68,7 +61,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Ssao);
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
-	const Bool preferCompute = g_preferComputeCVar.get();
+	const Bool preferCompute = g_preferComputeCVar;
 
 	const U32 readRtIdx = getRenderer().getFrameCount() & 1;
 	const U32 writeRtIdx = !readRtIdx;
@@ -121,7 +114,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
-		ppass->newTextureDependency((g_ssaoQuarterRez.get()) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
+		ppass->newTextureDependency((g_ssaoQuarterRezCVar) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt(),
 									readUsage);
 		ppass->newTextureDependency(finalRt, writeUsage);
 
@@ -131,17 +124,17 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindShaderProgram(m_grProg.get());
 
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(2));
-			rgraphCtx.bindSrv(1, 0, (g_ssaoQuarterRez.get()) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, (g_ssaoQuarterRezCVar) ? getRenderer().getDepthDownscale().getRt() : getRenderer().getGBuffer().getDepthRt());
 
 			cmdb.bindSrv(2, 0, TextureView(&m_noiseImage->getTexture(), TextureSubresourceDesc::all()));
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
 			SsaoConstants consts;
-			consts.m_radius = g_ssaoRadiusCVar.get();
-			consts.m_sampleCount = g_ssaoSampleCountCVar.get();
+			consts.m_radius = g_ssaoRadiusCVar;
+			consts.m_sampleCount = g_ssaoSampleCountCVar;
 			consts.m_viewportSizef = Vec2(rez);
 			consts.m_unprojectionParameters = ctx.m_matrices.m_unprojectionParameters;
 			consts.m_projectionMat00 = ctx.m_matrices.m_projection(0, 0);
@@ -149,11 +142,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			consts.m_projectionMat22 = ctx.m_matrices.m_projection(2, 2);
 			consts.m_projectionMat23 = ctx.m_matrices.m_projection(2, 3);
 			consts.m_frameCount = getRenderer().getFrameCount() % kMaxU32;
-			consts.m_ssaoPower = g_ssaoPower.get();
+			consts.m_ssaoPower = g_ssaoPowerCVar;
 			consts.m_viewMat = ctx.m_matrices.m_view;
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			if(g_preferComputeCVar.get())
+			if(g_preferComputeCVar)
 			{
 				rgraphCtx.bindUav(0, 0, finalRt);
 
@@ -197,14 +190,14 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, finalRt);
 			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getDepthRt());
 
-			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
 			SsaoSpatialDenoiseConstants consts;
 			computeLinearizeDepthOptimal(ctx.m_cameraNear, ctx.m_cameraFar, consts.m_linearizeDepthParams.x(), consts.m_linearizeDepthParams.y());
 			consts.m_viewToWorldMat = ctx.m_matrices.m_cameraTransform;
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			if(g_preferComputeCVar.get())
+			if(g_preferComputeCVar)
 			{
 				rgraphCtx.bindUav(0, 0, bentNormalsAndSsaoTempRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());
@@ -248,9 +241,9 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, historyRt);
 			rgraphCtx.bindSrv(2, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 
-			const UVec2 rez = (g_ssaoQuarterRez.get()) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
+			const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2u : getRenderer().getInternalResolution();
 
-			if(g_preferComputeCVar.get())
+			if(g_preferComputeCVar)
 			{
 				rgraphCtx.bindUav(0, 0, finalRt);
 				dispatchPPCompute(cmdb, 8, 8, rez.x(), rez.y());

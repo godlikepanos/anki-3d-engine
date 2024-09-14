@@ -13,6 +13,9 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
+inline NumericCVar<U32> g_motionBlurSamplesCVar("R", "MotionBlurSamples", 32, 0, 2048, "Max motion blur samples");
+inline NumericCVar<F32> g_filmGrainStrengthCVar("R", "FilmGrainStrength", 16.0f, 0.0f, 250.0f, "Film grain strength");
+
 /// Post-processing stage.
 class FinalComposite : public RendererObject
 {

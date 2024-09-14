@@ -5,7 +5,7 @@
 
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <ZLib/contrib/minizip/unzip.h>
 #if ANKI_OS_ANDROID
@@ -14,7 +14,7 @@
 
 namespace anki {
 
-StringCVar g_dataPathsCVar(CVarSubsystem::kResource, "DataPaths", ".",
+StringCVar g_dataPathsCVar("Rsrc", "DataPaths", ".",
 						   "The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive letters in "
 						   "Windows). After a path you can add an optional | and what follows it is a number of words to include or exclude paths. "
 						   "eg. my_path|include_this,include_that,+exclude_this");
@@ -236,7 +236,7 @@ ResourceFilesystem::~ResourceFilesystem()
 Error ResourceFilesystem::init()
 {
 	ResourceStringList paths;
-	paths.splitString(g_dataPathsCVar.get(), ':');
+	paths.splitString(g_dataPathsCVar, ':');
 
 	// Workaround the fact that : is used in drives in Windows
 #if ANKI_OS_WINDOWS

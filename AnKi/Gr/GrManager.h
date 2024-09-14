@@ -9,16 +9,12 @@
 #include <AnKi/Gr/GrObject.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/WeakArray.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 
 namespace anki {
 
 // Forward
 class NativeWindow;
-extern BoolCVar g_vsyncCVar;
-extern BoolCVar g_validationCVar;
-extern BoolCVar g_debugMarkersCVar;
-extern BoolCVar g_meshShadersCVar;
 
 /// @addtogroup graphics
 /// @{

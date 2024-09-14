@@ -35,17 +35,6 @@ __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; // The D3D12Core.
 
 namespace anki {
 
-BoolCVar g_validationCVar(CVarSubsystem::kGr, "Validation", false, "Enable or not validation");
-static BoolCVar g_gpuValidationCVar(CVarSubsystem::kGr, "GpuValidation", false, "Enable or not GPU validation");
-BoolCVar g_vsyncCVar(CVarSubsystem::kGr, "Vsync", false, "Enable or not vsync");
-BoolCVar g_debugMarkersCVar(CVarSubsystem::kGr, "DebugMarkers", false, "Enable or not debug markers");
-BoolCVar g_meshShadersCVar(CVarSubsystem::kGr, "MeshShaders", false, "Enable or not mesh shaders");
-static NumericCVar<U8> g_deviceCVar(CVarSubsystem::kGr, "Device", 0, 0, 16, "Choose an available device. Devices are sorted by performance");
-static BoolCVar g_rayTracingCVar(CVarSubsystem::kGr, "RayTracing", false, "Try enabling ray tracing");
-static BoolCVar g_dredCVar(CVarSubsystem::kGr, "Dred", false, "Enable DRED");
-static BoolCVar g_vrsCVar(CVarSubsystem::kGr, "Vrs", false, "Enable or not VRS");
-static BoolCVar g_workGraphcsCVar(CVarSubsystem::kGr, "WorkGraphs", false, "Enable or not WorkGraphs");
-
 static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 										  [[maybe_unused]] D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext)
 {
@@ -127,7 +116,7 @@ void GrManager::swapBuffers()
 	ANKI_TRACE_SCOPED_EVENT(D3DSwapBuffers);
 	ANKI_D3D_SELF(GrManagerImpl);
 
-	self.m_crntSwapchain->m_swapchain->Present((g_vsyncCVar.get()) ? 1 : 0, (g_vsyncCVar.get()) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+	self.m_crntSwapchain->m_swapchain->Present((g_vsyncCVar) ? 1 : 0, (g_vsyncCVar) ? 0 : DXGI_PRESENT_ALLOW_TEARING);
 
 	MicroFencePtr presentFence = FenceFactory::getSingleton().newInstance();
 	presentFence->gpuSignal(GpuQueueType::kGeneral);
@@ -265,7 +254,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	// Validation
 	UINT dxgiFactoryFlags = 0;
-	if(g_validationCVar.get() || g_gpuValidationCVar.get())
+	if(g_validationCVar || g_gpuValidationCVar)
 	{
 		ComPtr<ID3D12Debug> debugInterface;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
@@ -274,7 +263,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 
-		if(g_gpuValidationCVar.get())
+		if(g_gpuValidationCVar)
 		{
 			ComPtr<ID3D12Debug1> debugInterface1;
 			ANKI_D3D_CHECK(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1)));
@@ -282,7 +271,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
 
-		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_gpuValidationCVar.get()) ? "as well" : "no");
+		ANKI_D3D_LOGI("Validation is enabled (GPU validation %s)", (g_gpuValidationCVar) ? "as well" : "no");
 	}
 
 	ComPtr<IDXGIFactory2> factory2;
@@ -309,7 +298,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		++adapterIdx;
 	}
 
-	const U32 chosenPhysDevIdx = min<U32>(g_deviceCVar.get(), adapters.getSize() - 1);
+	const U32 chosenPhysDevIdx = min<U32>(g_deviceCVar, adapters.getSize() - 1);
 
 	ANKI_D3D_LOGI("Physical devices:");
 	for(U32 i = 0; i < adapters.getSize(); ++i)
@@ -359,7 +348,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_D3D_CHECK(D3D12CreateDevice(adapters[chosenPhysDevIdx].m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&dev)));
 	ANKI_D3D_CHECK(dev->QueryInterface(IID_PPV_ARGS(&m_device)));
 
-	if(g_validationCVar.get())
+	if(g_validationCVar)
 	{
 		ComPtr<ID3D12InfoQueue1> infoq;
 		const HRESULT res = m_device->QueryInterface(IID_PPV_ARGS(&infoq));
@@ -388,7 +377,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	if(g_dredCVar.get())
+	if(g_dredCVar)
 	{
 		ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
 		ANKI_D3D_CHECK(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings)));
@@ -422,11 +411,11 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21;
 		ANKI_D3D_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21)));
 
-		if(g_workGraphcsCVar.get() && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		if(g_workGraphcsCVar && options21.WorkGraphsTier == D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
 			ANKI_D3D_LOGW("WorkGraphs can't be enabled. They not supported");
 		}
-		else if(g_workGraphcsCVar.get() && options21.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
+		else if(g_workGraphcsCVar && options21.WorkGraphsTier != D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED)
 		{
 			ANKI_D3D_LOGV("WorkGraphs supported");
 			m_capabilities.m_workGraphs = true;
@@ -449,13 +438,13 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_maxDrawIndirectCount = kMaxU32;
 		m_capabilities.m_discreteGpu = !architecture.UMA;
 		m_capabilities.m_majorApiVersion = 12;
-		m_capabilities.m_rayTracingEnabled = g_rayTracingCVar.get();
+		m_capabilities.m_rayTracingEnabled = g_rayTracingCVar;
 		m_capabilities.m_64bitAtomics = true;
-		m_capabilities.m_vrs = g_vrsCVar.get();
+		m_capabilities.m_vrs = g_vrsCVar;
 		m_capabilities.m_samplingFilterMinMax = true;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;
-		m_capabilities.m_meshShaders = g_meshShadersCVar.get();
+		m_capabilities.m_meshShaders = g_meshShadersCVar;
 		m_capabilities.m_pipelineQuery = true;
 		m_capabilities.m_barycentrics = true;
 	}

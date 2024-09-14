@@ -5,33 +5,17 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/Singleton.h>
-#include <AnKi/Util/Enum.h>
 #include <AnKi/Util/WeakArray.h>
-#include <AnKi/Math/Functions.h>
 
 namespace anki {
 
-/// @addtogroup core
+/// @addtogroup util_other
 /// @{
 
-enum class CVarSubsystem : U32
-{
-	kCore,
-	kRenderer,
-	kGr,
-	kResource,
-	kScene,
-
-	kCount,
-	kFirst = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CVarSubsystem)
-
-/// Config variable base.
+/// ConfigSet variable base.
 class CVar : public IntrusiveListEnabled<CVar>
 {
 	friend class CVarSet;
@@ -41,12 +25,12 @@ public:
 
 	CVar& operator=(const CVar&) = delete;
 
-	CoreString getFullName() const;
+	String getFullName() const;
 
 protected:
 	CString m_name;
 	CString m_descr;
-	CVarSubsystem m_subsystem;
+	CString m_subsystem;
 
 	enum class Type : U32
 	{
@@ -61,13 +45,12 @@ protected:
 
 	Type m_type;
 
-	CVar(Type type, CVarSubsystem subsystem, CString name, CString descr = {})
+	CVar(Type type, CString subsystem, CString name, CString descr = {})
 		: m_name(name)
 		, m_descr((!descr.isEmpty()) ? descr : "No description")
 		, m_subsystem(subsystem)
 		, m_type(type)
 	{
-		ANKI_ASSERT(subsystem < CVarSubsystem::kCount);
 		registerSelf();
 	}
 
@@ -82,7 +65,7 @@ template<typename TNumber>
 class NumericCVar : public CVar
 {
 public:
-	NumericCVar(CVarSubsystem subsystem, CString name, TNumber defaultVal, TNumber min = getMinNumericLimit<TNumber>(),
+	NumericCVar(CString subsystem, CString name, TNumber defaultVal, TNumber min = getMinNumericLimit<TNumber>(),
 				TNumber max = getMaxNumericLimit<TNumber>(), CString descr = CString())
 		: CVar(getCVarType(), subsystem, name, descr)
 		, m_value(defaultVal)
@@ -98,12 +81,12 @@ public:
 		const TNumber newVal = clamp(val, m_min, m_max);
 		if(newVal != val)
 		{
-			ANKI_CORE_LOGW("Out of range value set for config var: %s", m_name.cstr());
+			ANKI_UTIL_LOGW("Out of range value set for config var: %s", m_name.cstr());
 		}
 		m_value = newVal;
 	}
 
-	TNumber get() const
+	operator TNumber() const
 	{
 		return m_value;
 	}
@@ -134,7 +117,7 @@ ANKI_CVAR_NUMERIC_TYPE(F32)
 class StringCVar : public CVar
 {
 public:
-	StringCVar(CVarSubsystem subsystem, CString name, CString value, CString descr = CString())
+	StringCVar(CString subsystem, CString name, CString value, CString descr = CString())
 		: CVar(Type::kString, subsystem, name, descr)
 	{
 		set(value);
@@ -167,7 +150,7 @@ public:
 		}
 	}
 
-	CString get() const
+	operator CString() const
 	{
 		return m_str;
 	}
@@ -180,7 +163,7 @@ private:
 class BoolCVar : public CVar
 {
 public:
-	BoolCVar(CVarSubsystem subsystem, CString name, Bool defaultVal, CString descr = CString())
+	BoolCVar(CString subsystem, CString name, Bool defaultVal, CString descr = CString())
 		: CVar(Type::kBool, subsystem, name, descr)
 		, m_val(defaultVal)
 	{
@@ -191,7 +174,7 @@ public:
 		m_val = val;
 	}
 
-	Bool get() const
+	operator Bool() const
 	{
 		return m_val;
 	}

@@ -9,7 +9,7 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 
 namespace anki {
@@ -34,7 +34,7 @@ Error TemporalAA::initInternal()
 	for(U32 i = 0; i < 2; ++i)
 	{
 		TextureUsageBit usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute;
-		usage |= (g_preferComputeCVar.get()) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
+		usage |= (g_preferComputeCVar) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
 
 		TextureInitInfo texinit =
 			getRenderer().create2DRenderTargetInitInfo(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
@@ -59,7 +59,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 	const U32 historyRtIdx = (getRenderer().getFrameCount() + 1) & 1;
 	const U32 renderRtIdx = !historyRtIdx;
-	const Bool preferCompute = g_preferComputeCVar.get();
+	const Bool preferCompute = g_preferComputeCVar;
 
 	// Import RTs
 	if(m_rtTexturesImportedOnce) [[likely]]
@@ -119,7 +119,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(2, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 		rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getRt());
 
-		if(g_preferComputeCVar.get())
+		if(g_preferComputeCVar)
 		{
 			rgraphCtx.bindUav(1, 0, m_runCtx.m_renderRt);
 			rgraphCtx.bindUav(2, 0, m_runCtx.m_tonemappedRt);

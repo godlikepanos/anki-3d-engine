@@ -9,16 +9,16 @@
 #include <AnKi/Util/Thread.h>
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/File.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
 
 namespace anki {
 
 /// @addtogroup core
 /// @{
 
-extern BoolCVar g_tracingEnabledCVar;
+inline BoolCVar g_tracingEnabledCVar("Core", "Tracing", false, "Enable or disable tracing");
 #if ANKI_OS_ANDROID
-extern BoolCVar g_streamlineEnabledCVar;
+inline BoolCVar g_streamlineEnabledCVar("Core", "StreamlineAnnotations", false, "Enable or disable Streamline annotations");
 #endif
 
 #if ANKI_TRACING_ENABLED

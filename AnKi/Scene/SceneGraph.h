@@ -12,17 +12,37 @@
 #include <AnKi/Util/BlockArray.h>
 #include <AnKi/Scene/Events/EventManager.h>
 #include <AnKi/Resource/Common.h>
-#include <AnKi/Core/CVarSet.h>
+#include <AnKi/Util/CVarSet.h>
+#include <AnKi/Core/Common.h>
 
 namespace anki {
 
-// Forward
-class RenderQueue;
-extern NumericCVar<F32> g_probeEffectiveDistanceCVar;
-extern NumericCVar<F32> g_probeShadowEffectiveDistanceCVar;
-
 /// @addtogroup scene
 /// @{
+
+inline NumericCVar<F32> g_probeEffectiveDistanceCVar("Scene", "ProbeEffectiveDistance", 256.0f, 1.0f, kMaxF32, "How far various probes can render");
+inline NumericCVar<F32> g_probeShadowEffectiveDistanceCVar("Scene", "ProbeShadowEffectiveDistance", 32.0f, 1.0f, kMaxF32,
+														   "How far to render shadows for the various probes");
+
+// Gpu scene arrays
+inline NumericCVar<U32> g_minGpuSceneTransformsCVar("Scene", "MinGpuSceneTransforms", 2 * 10 * 1024, 8, 100 * 1024,
+													"The min number of transforms stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneMeshesCVar("Scene", "MinGpuSceneMeshes", 8 * 1024, 8, 100 * 1024,
+												"The min number of meshes stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneParticleEmittersCVar("Scene", "MinGpuSceneParticleEmitters", 1 * 1024, 8, 100 * 1024,
+														  "The min number of particle emitters stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneLightsCVar("Scene", "MinGpuSceneLights", 2 * 1024, 8, 100 * 1024,
+												"The min number of lights stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneReflectionProbesCVar("Scene", "MinGpuSceneReflectionProbes", 128, 8, 100 * 1024,
+														  "The min number of reflection probes stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneGlobalIlluminationProbesCVar("Scene", "MinGpuSceneGlobalIlluminationProbes", 128, 8, 100 * 1024,
+																  "The min number of GI probes stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneDecalsCVar("Scene", "MinGpuSceneDecals", 2 * 1024, 8, 100 * 1024,
+												"The min number of decals stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneFogDensityVolumesCVar("Scene", "MinGpuSceneFogDensityVolumes", 512, 8, 100 * 1024,
+														   "The min number fog density volumes stored in the GPU scene");
+inline NumericCVar<U32> g_minGpuSceneRenderablesCVar("Scene", "MinGpuSceneRenderables", 10 * 1024, 8, 100 * 1024,
+													 "The min number of renderables stored in the GPU scene");
 
 class SceneComponentArrays
 {
