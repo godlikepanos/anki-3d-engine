@@ -269,7 +269,7 @@ RF32 computeShadowFactorPointLightGeneric(PointLight light, Vec3 frag2Light, Tex
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);
-	const F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
+	const F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z)) - 0.01; // Push it out to avoid artifacts
 
 	// 1) Project the dist to light's proj mat
 	//
