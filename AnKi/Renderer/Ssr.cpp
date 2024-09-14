@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Renderer/Bloom2.h>
+#include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 
@@ -96,7 +96,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		writeUsage = TextureUsageBit::kRtvDsvWrite;
 	}
 
-	ppass->newTextureDependency(getRenderer().getBloom2().getPyramidRt(), readUsage);
+	ppass->newTextureDependency(getRenderer().getBloom().getPyramidRt(), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
 	ppass->newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
 	ppass->newTextureDependency(getRenderer().getDepthDownscale().getRt(), readUsage);
@@ -126,7 +126,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(1));
 		rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
 		rgraphCtx.bindSrv(2, 0, getRenderer().getDepthDownscale().getRt());
-		rgraphCtx.bindSrv(3, 0, getRenderer().getBloom2().getPyramidRt());
+		rgraphCtx.bindSrv(3, 0, getRenderer().getBloom().getPyramidRt());
 
 		if(g_preferComputeCVar)
 		{

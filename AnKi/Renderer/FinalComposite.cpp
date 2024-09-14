@@ -5,7 +5,7 @@
 
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Renderer.h>
-#include <AnKi/Renderer/Bloom2.h>
+#include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/LightShading.h>
@@ -96,7 +96,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	pass.newTextureDependency(getRenderer().getScale().getTonemappedRt(), TextureUsageBit::kSrvPixel);
-	pass.newTextureDependency(getRenderer().getBloom2().getBloomRt(), TextureUsageBit::kSrvPixel);
+	pass.newTextureDependency(getRenderer().getBloom().getBloomRt(), TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 
@@ -147,7 +147,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindSrv(0, 0, getRenderer().getScale().getTonemappedRt());
 
-			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom2().getBloomRt());
+			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getBloomRt());
 			cmdb.bindSrv(2, 0, TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
 			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());

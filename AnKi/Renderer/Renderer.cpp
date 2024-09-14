@@ -23,7 +23,7 @@
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/FinalComposite.h>
-#include <AnKi/Renderer/Bloom2.h>
+#include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/LensFlare.h>

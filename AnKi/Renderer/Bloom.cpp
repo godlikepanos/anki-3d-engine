@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/Bloom2.h>
+#include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/Tonemapping.h>
 
 namespace anki {
 
-Error Bloom2::init()
+Error Bloom::init()
 {
 	// Pyramid
 	{
@@ -30,7 +30,7 @@ Error Bloom2::init()
 		m_pyramidTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvCompute);
 
 		// Shader programs
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom2.ankiprogbin", {}, m_prog, m_downscaleGrProg, "Downscale"));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom.ankiprogbin", {}, m_prog, m_downscaleGrProg, "Downscale"));
 	}
 
 	// Exposure
@@ -44,7 +44,7 @@ Error Bloom2::init()
 		m_exposureRtDesc.bake();
 
 		// init shaders
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom2.ankiprogbin", {}, m_prog, m_exposureGrProg, "Exposure"));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom.ankiprogbin", {}, m_prog, m_exposureGrProg, "Exposure"));
 	}
 
 	// Upscale
@@ -56,7 +56,7 @@ Error Bloom2::init()
 		m_finalRtDesc.bake();
 
 		// init shaders
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom2.ankiprogbin", {}, m_prog, m_upscaleGrProg, "Upscale"));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/Bloom.ankiprogbin", {}, m_prog, m_upscaleGrProg, "Upscale"));
 
 		// Textures
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/LensDirt.ankitex", m_lensDirtImg));
@@ -65,13 +65,13 @@ Error Bloom2::init()
 	return Error::kNone;
 }
 
-void Bloom2::importRenderTargets(RenderingContext& ctx)
+void Bloom::importRenderTargets(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_pyramidRt = rgraph.importRenderTarget(m_pyramidTex.get(), TextureUsageBit::kSrvCompute);
 }
 
-void Bloom2::populateRenderGraph(RenderingContext& ctx)
+void Bloom::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 	const Bool preferCompute = g_preferComputeCVar;

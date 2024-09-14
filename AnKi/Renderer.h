@@ -22,7 +22,7 @@
 #include <AnKi/Renderer/UiStage.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Renderer/Bloom2.h>
+#include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
 #include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/ShadowmapsResolve.h>

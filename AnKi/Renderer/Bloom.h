@@ -18,7 +18,7 @@ inline NumericCVar<U32> g_bloomPyramidLowLimit("R", "BloomPyramidLowLimit", 32, 
 inline NumericCVar<U32> g_bloomUpscaleDivisor("R", "BloomUpscaleDivisor", 4, 1, 1024, "Defines the resolution of the final bloom result");
 
 /// Contains multiple post-process passes that operate on the HDR output.
-class Bloom2 : public RendererObject
+class Bloom : public RendererObject
 {
 public:
 	Error init();
