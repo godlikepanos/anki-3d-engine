@@ -5,7 +5,7 @@
 
 #pragma anki mutator LAST_PASS 0 1
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
@@ -148,4 +148,3 @@ F32 computeVarianceCenter(Vec2 uv)
 	g_varianceStorageTex[svDispatchThreadId.xy] = Vec4(sumVariance, 0.0, 0.0, 0.0);
 #endif
 }
-#pragma anki technique_end comp

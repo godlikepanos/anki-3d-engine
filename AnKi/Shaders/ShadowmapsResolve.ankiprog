@@ -6,6 +6,8 @@
 #pragma anki mutator QUALITY 0 1 2 // No filtering, PCF, PCSS
 #pragma anki mutator DIRECTIONAL_LIGHT_SHADOW_RESOLVED 0 1
 
+#pragma anki technique vert pixel comp
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 #if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
@@ -236,12 +238,3 @@ RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 }
 #endif // ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
-
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-#pragma anki technique_end pixel
-
-#pragma anki technique_start comp
-#pragma anki technique_end comp

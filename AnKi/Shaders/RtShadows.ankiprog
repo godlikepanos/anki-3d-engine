@@ -5,7 +5,7 @@
 
 #pragma anki mutator RAYS_PER_PIXEL 1 2 4 8
 
-#pragma anki technique_start rgen RtShadows
+#pragma anki technique RtShadows rgen miss
 
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -13,7 +13,8 @@
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-#define SPACE space2
+#if ANKI_RAY_GEN_SHADER
+#	define SPACE space2
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0, SPACE);
 
@@ -130,14 +131,11 @@ Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 	// Store the moments
 	g_momentsImage[DispatchRaysIndex().xy] = Vec4(moments, 0.0, 0.0);
 }
-#pragma anki technique_end rgen RtShadows
+#endif // ANKI_RAY_GEN_SHADER
 
-#pragma anki technique_start miss RtShadows
-
-#include <AnKi/Shaders/RtShadows.hlsl>
-
+#if ANKI_MISS_SHADER
 [shader("miss")] void main(inout RayPayload payload)
 {
 	payload.m_shadowFactor = 1.0;
 }
-#pragma anki technique_end miss RtShadows
+#endif // ANKI_MISS_SHADER

@@ -3,6 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique Downscale vert pixel comp
+#pragma anki technique Exposure vert pixel comp
+#pragma anki technique Upscale vert pixel comp
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
 // ===========================================================================
@@ -221,30 +225,3 @@ RVec3 main(VertOut input) : SV_TARGET0
 #	endif
 }
 #endif // (ANKI_PIXEL_SHADER || ANKI_COMPUTE_SHADER) && ANKI_TECHNIQUE_Upscale
-
-#pragma anki technique_start vert Downscale
-#pragma anki technique_end vert Downscale
-
-#pragma anki technique_start pixel Downscale
-#pragma anki technique_end pixel Downscale
-
-#pragma anki technique_start comp Downscale
-#pragma anki technique_end comp Downscale
-
-#pragma anki technique_start vert Exposure
-#pragma anki technique_end vert Exposure
-
-#pragma anki technique_start pixel Exposure
-#pragma anki technique_end pixel Exposure
-
-#pragma anki technique_start comp Exposure
-#pragma anki technique_end comp Exposure
-
-#pragma anki technique_start vert Upscale
-#pragma anki technique_end vert Upscale
-
-#pragma anki technique_start pixel Upscale
-#pragma anki technique_end pixel Upscale
-
-#pragma anki technique_start comp Upscale
-#pragma anki technique_end comp Upscale

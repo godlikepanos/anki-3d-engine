@@ -5,7 +5,7 @@
 
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -73,5 +73,3 @@ StructuredBuffer<U32> g_visibles : register(t1);
 	g_outBuffer[idxOut] = g_inBuffer[g_visibles[idxOut + 1]];
 #endif
 }
-
-#pragma anki technique_end comp

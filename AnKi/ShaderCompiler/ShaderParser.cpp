@@ -126,7 +126,7 @@ void ShaderParser::tokenizeLine(CString line, ShaderCompilerDynamicArray<ShaderC
 	}
 }
 
-Error ShaderParser::parsePragmaTechniqueStart(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
+Error ShaderParser::parsePragmaTechnique(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -136,40 +136,51 @@ Error ShaderParser::parsePragmaTechniqueStart(const ShaderCompilerString* begin,
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	const ShaderType shaderType = strToShaderType(*begin);
-	if(shaderType == ShaderType::kCount)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
+	// Technique name
 	ShaderCompilerString techniqueName;
-	++begin;
-	if(begin == end)
-	{
-		techniqueName = "Unnamed";
-	}
-	else if(*begin == "uses_mutators")
-	{
-		techniqueName = "Unnamed";
-	}
-	else if(*begin != "uses_mutators")
+	if(strToShaderType(*begin) == ShaderType::kCount)
 	{
 		techniqueName = *begin;
 		++begin;
 	}
+	else
+	{
+		techniqueName = "Unnamed";
+	}
+
+	// Stages
+	ShaderTypeBit stages = ShaderTypeBit::kNone;
+	while(begin != end)
+	{
+		const ShaderType stage = strToShaderType(*begin);
+		if(stage == ShaderType::kCount)
+		{
+			break;
+		}
+
+		const ShaderTypeBit stageBit = ShaderTypeBit(1 << stage);
+		if(!!(stageBit & stages))
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Stage appeared more than once");
+		}
+
+		stages |= stageBit;
+		++begin;
+	}
+
+	if(!stages)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Missing stages");
+	}
 
 	// Mutators
 	U64 activeMutators = kMaxU64;
-	if(begin != end)
+	if(begin != end && *begin == "mutators")
 	{
-		if(*begin != "uses_mutators")
-		{
-			ANKI_PP_ERROR_MALFORMED();
-		}
 		++begin;
-
 		activeMutators = 0;
-		for(; begin != end; ++begin)
+
+		while(begin != end)
 		{
 			// Find mutator
 			U32 count = 0;
@@ -187,13 +198,14 @@ Error ShaderParser::parsePragmaTechniqueStart(const ShaderCompilerString* begin,
 			{
 				ANKI_PP_ERROR_MALFORMED_MSG("Mutator not found");
 			}
+
+			++begin;
 		}
 	}
 
-	// Checks
-	if(insideTechnique())
+	if(begin != end)
 	{
-		ANKI_PP_ERROR_MALFORMED_MSG("Need to close the previous technique_start before starting a new one");
+		ANKI_PP_ERROR_MALFORMED();
 	}
 
 	// Find the technique
@@ -202,9 +214,9 @@ Error ShaderParser::parsePragmaTechniqueStart(const ShaderCompilerString* begin,
 	{
 		if(t.m_name == techniqueName)
 		{
-			if(!!(t.m_shaderTypes & ShaderTypeBit(1 << shaderType)))
+			if(!!(t.m_shaderTypes & stages))
 			{
-				ANKI_PP_ERROR_MALFORMED_MSG("technique_start with the same name and type appeared more than once");
+				ANKI_PP_ERROR_MALFORMED_MSG("technique with the same name and type appeared more than once");
 			}
 
 			technique = &t;
@@ -213,80 +225,17 @@ Error ShaderParser::parsePragmaTechniqueStart(const ShaderCompilerString* begin,
 	}
 
 	// Done
-	TechniqueExtra* extra = nullptr;
 	if(!technique)
 	{
 		technique = m_techniques.emplaceBack();
 		technique->m_name = techniqueName;
-
-		extra = m_techniqueExtras.emplaceBack();
 	}
-	else
+
+	technique->m_shaderTypes |= stages;
+	for(ShaderType s : EnumBitsIterable<ShaderType, ShaderTypeBit>(stages))
 	{
-		const U32 idx = U32(technique - m_techniques.getBegin());
-		extra = &m_techniqueExtras[idx];
+		technique->m_activeMutators[s] = activeMutators;
 	}
-
-	technique->m_shaderTypes |= ShaderTypeBit(1 << shaderType);
-	technique->m_activeMutators[shaderType] = activeMutators;
-
-	ANKI_ASSERT(extra->m_sourceLines[shaderType].getSize() == 0);
-	extra->m_sourceLines[shaderType] = m_commonSourceLines;
-
-	m_insideTechniqueIdx = U32(technique - m_techniques.getBegin());
-	m_insideTechniqueShaderType = shaderType;
-
-	return Error::kNone;
-}
-
-Error ShaderParser::parsePragmaTechniqueEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname)
-{
-	ANKI_ASSERT(begin && end);
-
-	// Check tokens
-	if(begin >= end)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	const ShaderType shaderType = strToShaderType(*begin);
-	if(shaderType == ShaderType::kCount)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	ShaderCompilerString techniqueName;
-	++begin;
-	if(begin == end)
-	{
-		// Last token
-		techniqueName = "Unnamed";
-	}
-	else
-	{
-		techniqueName = *begin;
-
-		++begin;
-		if(begin != end)
-		{
-			ANKI_PP_ERROR_MALFORMED();
-		}
-	}
-
-	// Checks
-	if(!insideTechnique())
-	{
-		ANKI_PP_ERROR_MALFORMED_MSG("Forgot to insert a #pragma anki technique_start");
-	}
-
-	if(m_techniques[m_insideTechniqueIdx].m_name != techniqueName || m_insideTechniqueShaderType != shaderType)
-	{
-		ANKI_PP_ERROR_MALFORMED_MSG("name or type doesn't match the one in technique_start");
-	}
-
-	// Done
-	m_insideTechniqueIdx = kMaxU32;
-	m_insideTechniqueShaderType = ShaderType::kCount;
 
 	return Error::kNone;
 }
@@ -487,7 +436,7 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 		// We _must_ have an #include
 		ANKI_CHECK(parseInclude(token + 1, end, line, fname, depth));
 
-		getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
+		m_sourceLines.pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
 	}
 	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
 	{
@@ -511,11 +460,11 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 			// Add the guard unique for this file
 			foundPragmaOnce = true;
 			const U64 hash = fname.computeHash();
-			getAppendSourceList().pushBackSprintf("#ifndef _ANKI_INCL_GUARD_%" PRIu64 "\n"
-												  "#define _ANKI_INCL_GUARD_%" PRIu64,
-												  hash, hash);
+			m_sourceLines.pushBackSprintf("#ifndef _ANKI_INCL_GUARD_%" PRIu64 "\n"
+										  "#define _ANKI_INCL_GUARD_%" PRIu64,
+										  hash, hash);
 
-			getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
+			m_sourceLines.pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
 		}
 		else if(*token == "anki")
 		{
@@ -528,15 +477,10 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 				ANKI_CHECK(checkNoActiveStruct());
 				ANKI_CHECK(parsePragmaMutator(token + 1, end, line, fname));
 			}
-			else if(*token == "technique_start")
+			else if(*token == "technique")
 			{
 				ANKI_CHECK(checkNoActiveStruct());
-				ANKI_CHECK(parsePragmaTechniqueStart(token + 1, end, line, fname));
-			}
-			else if(*token == "technique_end")
-			{
-				ANKI_CHECK(checkNoActiveStruct());
-				ANKI_CHECK(parsePragmaTechniqueEnd(token + 1, end, line, fname));
+				ANKI_CHECK(parsePragmaTechnique(token + 1, end, line, fname));
 			}
 			else if(*token == "skip_mutation")
 			{
@@ -572,18 +516,18 @@ Error ShaderParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce
 			}
 
 			// For good measure
-			getAppendSourceList().pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
+			m_sourceLines.pushBackSprintf("#line %u \"%s\"", lineNo + 1, sanitizeFilename(fname).cstr());
 		}
 		else
 		{
 			// Some other pragma, ignore
-			getAppendSourceList().pushBack(line);
+			m_sourceLines.pushBack(line);
 		}
 	}
 	else
 	{
 		// Ignore
-		getAppendSourceList().pushBack(line);
+		m_sourceLines.pushBack(line);
 	}
 
 	return Error::kNone;
@@ -600,7 +544,7 @@ Error ShaderParser::parsePragmaStructBegin(const ShaderCompilerString* begin, co
 	GhostStruct& gstruct = *m_ghostStructs.emplaceBack();
 	gstruct.m_name = *begin;
 
-	getAppendSourceList().pushBackSprintf("struct %s {", begin->cstr());
+	m_sourceLines.pushBackSprintf("struct %s {", begin->cstr());
 
 	ANKI_ASSERT(!m_insideStruct);
 	m_insideStruct = true;
@@ -658,8 +602,8 @@ Error ShaderParser::parsePragmaMember(const ShaderCompilerString* begin, const S
 						  ? structure.m_members.getBack().m_offset + getShaderVariableDataTypeInfo(structure.m_members.getBack().m_type).m_size
 						  : 0;
 
-	getAppendSourceList().pushBackSprintf("#define %s_%s_OFFSETOF %u", structure.m_name.cstr(), member.m_name.cstr(), member.m_offset);
-	getAppendSourceList().pushBackSprintf("\t%s %s;", typeStr.cstr(), member.m_name.cstr());
+	m_sourceLines.pushBackSprintf("#define %s_%s_OFFSETOF %u", structure.m_name.cstr(), member.m_name.cstr(), member.m_offset);
+	m_sourceLines.pushBackSprintf("\t%s %s;", typeStr.cstr(), member.m_name.cstr());
 
 	structure.m_members.emplaceBack(std::move(member));
 
@@ -683,26 +627,26 @@ Error ShaderParser::parsePragmaStructEnd(const ShaderCompilerString* begin, cons
 		ANKI_PP_ERROR_MALFORMED_MSG("Struct doesn't have any members");
 	}
 
-	getAppendSourceList().pushBack("};");
+	m_sourceLines.pushBack("};");
 
 	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
 		const Member& m = gstruct.m_members[i];
 
 		// #	define XXX_LOAD()
-		getAppendSourceList().pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) buff.Load<%s>(%s_%s_OFFSETOF + (offset))%s", structName.cstr(),
-											  m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name, structName.cstr(), m.m_name.cstr(),
-											  (i != gstruct.m_members.getSize() - 1) ? "," : "");
+		m_sourceLines.pushBackSprintf("#\tdefine %s_%s_LOAD(buff, offset) buff.Load<%s>(%s_%s_OFFSETOF + (offset))%s", structName.cstr(),
+									  m.m_name.cstr(), getShaderVariableDataTypeInfo(m.m_type).m_name, structName.cstr(), m.m_name.cstr(),
+									  (i != gstruct.m_members.getSize() - 1) ? "," : "");
 	}
 
 	// Now define the structure LOAD in HLSL
-	getAppendSourceList().pushBackSprintf("#define load%s(buff, offset) { \\", structName.cstr());
+	m_sourceLines.pushBackSprintf("#define load%s(buff, offset) { \\", structName.cstr());
 	for(U32 i = 0; i < gstruct.m_members.getSize(); ++i)
 	{
 		const Member& m = gstruct.m_members[i];
-		getAppendSourceList().pushBackSprintf("\t%s_%s_LOAD(buff, offset) \\", structName.cstr(), m.m_name.cstr());
+		m_sourceLines.pushBackSprintf("\t%s_%s_LOAD(buff, offset) \\", structName.cstr(), m.m_name.cstr());
 	}
-	getAppendSourceList().pushBack("}");
+	m_sourceLines.pushBack("}");
 
 	// Done
 	m_insideStruct = false;
@@ -769,7 +713,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 		ANKI_SHADER_COMPILER_LOGE("Source is empty");
 	}
 
-	getAppendSourceList().pushBackSprintf("#line 0 \"%s\"", sanitizeFilename(fname).cstr());
+	m_sourceLines.pushBackSprintf("#line 0 \"%s\"", sanitizeFilename(fname).cstr());
 
 	// Parse lines
 	U32 lineNo = 1;
@@ -777,7 +721,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 	{
 		if(line.isEmpty())
 		{
-			getAppendSourceList().pushBack(" ");
+			m_sourceLines.pushBack(" ");
 		}
 		else if(line.find("pragma") != ShaderCompilerString::kNpos || line.find("include") != ShaderCompilerString::kNpos)
 		{
@@ -787,7 +731,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 		else
 		{
 			// Just append the line
-			getAppendSourceList().pushBack(line.toCString());
+			m_sourceLines.pushBack(line.toCString());
 		}
 
 		++lineNo;
@@ -796,7 +740,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 	if(foundPragmaOnce)
 	{
 		// Append the guard
-		getAppendSourceList().pushBack("#endif // Include guard");
+		m_sourceLines.pushBack("#endif // Include guard");
 	}
 
 	return Error::kNone;
@@ -805,7 +749,7 @@ Error ShaderParser::parseFile(CString fname, U32 depth)
 Error ShaderParser::parse()
 {
 	ANKI_ASSERT(!m_fname.isEmpty());
-	ANKI_ASSERT(m_commonSourceLines.isEmpty());
+	ANKI_ASSERT(m_sourceLines.isEmpty());
 
 	const CString fname = m_fname;
 
@@ -820,34 +764,10 @@ Error ShaderParser::parse()
 			return Error::kUserData;
 		}
 
-		if(insideTechnique())
-		{
-			ANKI_SHADER_COMPILER_LOGE("Forgot to end a technique");
-			return Error::kUserData;
-		}
-
 		if(m_insideStruct)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Forgot to end a struct");
 			return Error::kUserData;
-		}
-	}
-
-	// Create the code lines for each technique
-	for(U32 i = 0; i < m_techniques.getSize(); ++i)
-	{
-		for(ShaderType s : EnumIterable<ShaderType>())
-		{
-			if(m_techniqueExtras[i].m_sourceLines[s].getSize())
-			{
-				ANKI_ASSERT(!!(m_techniques[i].m_shaderTypes & ShaderTypeBit(1 << s)));
-				m_techniqueExtras[i].m_sourceLines[s].join("\n", m_techniqueExtras[i].m_sources[s]);
-				m_techniqueExtras[i].m_sourceLines[s].destroy(); // Free mem
-			}
-			else
-			{
-				ANKI_ASSERT(!(m_techniques[i].m_shaderTypes & ShaderTypeBit(1 << s)));
-			}
 		}
 	}
 
@@ -862,7 +782,8 @@ Error ShaderParser::parse()
 		}
 	}
 
-	m_commonSourceLines.destroy(); // Free mem
+	m_sourceLines.join("\n", m_source);
+	m_sourceLines.destroy(); // Free mem
 
 	return Error::kNone;
 }
@@ -870,8 +791,6 @@ Error ShaderParser::parse()
 void ShaderParser::generateAnkiShaderHeader(ShaderType shaderType, ShaderCompilerString& header)
 {
 	header.destroy();
-
-	header += ShaderCompilerString().sprintf("#define kMaxBindlessTextures %uu\n", kMaxBindlessTextures);
 
 	for(ShaderType type : EnumIterable<ShaderType>())
 	{
@@ -926,8 +845,7 @@ void ShaderParser::generateVariant(ConstWeakArray<MutatorValue> mutation, const 
 		source += "#define ANKI_SUPPORTS_16BIT_TYPES 0\n";
 	}
 
-	ANKI_ASSERT(m_techniqueExtras[tIdx].m_sources[shaderType].getLength() > 0);
-	source += m_techniqueExtras[tIdx].m_sources[shaderType];
+	source += m_source;
 }
 
 Bool ShaderParser::mutatorHasValue(const ShaderParserMutator& mutator, MutatorValue value)

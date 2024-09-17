@@ -197,13 +197,14 @@ Error DescriptorFactory::init()
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart;
 	U32 descriptorSize;
 	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-									g_maxGpuCbvSrvUavDescriptorsCVar + kMaxBindlessTextures, heap, cpuHeapStart, gpuHeapStart, descriptorSize));
+									g_maxGpuCbvSrvUavDescriptorsCVar + g_maxBindlessSampledTextureCountCVar, heap, cpuHeapStart, gpuHeapStart,
+									descriptorSize));
 	m_descriptorHeaps.emplaceBack(heap);
 
-	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, kMaxBindlessTextures);
+	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, U16(g_maxBindlessSampledTextureCountCVar));
 
-	cpuHeapStart.ptr += descriptorSize * kMaxBindlessTextures;
-	gpuHeapStart.ptr += descriptorSize * kMaxBindlessTextures;
+	cpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
+	gpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
 	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuCbvSrvUavDescriptorsCVar);
 
 	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, g_maxGpuSamplerDescriptorsCVar,

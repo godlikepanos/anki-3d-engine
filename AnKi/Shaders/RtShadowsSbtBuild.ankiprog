@@ -6,7 +6,7 @@
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
 ByteAddressBuffer g_gpuScene : register(t1);
@@ -47,5 +47,3 @@ ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
 	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsIndex;
 	g_sbtBuffer[sbtDwordOffset] = 0;
 }
-
-#pragma anki technique_end comp

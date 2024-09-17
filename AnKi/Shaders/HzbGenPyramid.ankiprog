@@ -6,7 +6,8 @@
 #pragma anki mutator REDUCTION_TYPE 0 1 // 0: min 1: max
 #pragma anki mutator MIN_MAX_SAMPLER 0 1
 
-#pragma anki technique_start comp
+#pragma anki technique comp
+
 #include <AnKi/Shaders/Common.hlsl>
 
 struct Constants
@@ -113,5 +114,3 @@ AF4 SpdReduce4(AF4 v0, AF4 v1, AF4 v2, AF4 v3)
 	const UVec2 offset = UVec2(0, 0);
 	SpdDownsample(AU2(svGroupId.xy), AU1(svGroupIndex), AU1(g_consts.m_mipmapCount), AU1(g_consts.m_threadGroupCount), slice, offset);
 }
-
-#pragma anki technique_end comp

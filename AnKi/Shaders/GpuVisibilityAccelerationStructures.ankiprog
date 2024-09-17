@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -144,5 +144,3 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 		}
 	}
 }
-
-#pragma anki technique_end comp

@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique Forward vert pixel
+
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 
@@ -25,8 +27,7 @@ struct VertOut
 	nointerpolation U32 m_constantsOffset : CONSTANTS_OFFSET;
 };
 
-#pragma anki technique_start vert Forward
-
+#if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
 	VertOut output;
@@ -46,11 +47,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_end vert Forward
-
-#pragma anki technique_start pixel Forward
-
+#if ANKI_PIXEL_SHADER
 PixelOut main(VertOut input)
 {
 	PixelOut output = (PixelOut)0;
@@ -61,4 +60,4 @@ PixelOut main(VertOut input)
 
 	return output;
 }
-#pragma anki technique_end pixel Forward
+#endif // ANKI_PIXEL_SHADER

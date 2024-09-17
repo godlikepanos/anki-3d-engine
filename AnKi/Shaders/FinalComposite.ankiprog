@@ -7,14 +7,13 @@
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/MotionBlur.hlsl>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/MotionBlur.hlsl>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 SamplerState g_linearAnyClampSampler : register(s1);
@@ -24,9 +23,9 @@ Texture2D<RVec4> g_ppsBloomLfRt : register(t1);
 Texture3D<RVec4> g_lut : register(t2);
 Texture2D g_motionVectorsRt : register(t3);
 Texture2D g_depthRt : register(t4);
-#if DBG_ENABLED
+#	if DBG_ENABLED
 Texture2D<RVec4> g_dbgOutlineRt : register(t5);
-#endif
+#	endif
 
 struct Constants
 {
@@ -65,24 +64,23 @@ RVec4 main(VertOut input) : SV_TARGET0
 		outColor = g_lightShadingRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 	}
 
-#if BLOOM_ENABLED
+#	if BLOOM_ENABLED
 	const RVec3 bloom = g_ppsBloomLfRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 	outColor += bloom;
-#endif
+#	endif
 
 	outColor = colorGrading(outColor);
 
-#if FILM_GRAIN
+#	if FILM_GRAIN
 	const F32 dt = 1.0;
 	outColor = filmGrain<F32>(outColor, uv, g_consts.m_filmGrainStrength, F32(g_consts.m_frameCount % 0xFFFFu) * dt);
-#endif
+#	endif
 
-#if DBG_ENABLED
+#	if DBG_ENABLED
 	const RVec4 dbg = g_dbgOutlineRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0);
 	outColor = lerp(outColor, dbg.rgb, dbg.a);
-#endif
+#	endif
 
 	return RVec4(outColor, 0.0);
 }
-
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER

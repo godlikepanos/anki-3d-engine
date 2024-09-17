@@ -5,20 +5,18 @@
 
 #pragma anki mutator METHOD 0 1 2 // 0: solid colod, 1: 2D image, 2: generated
 
+#pragma anki technique vert pixel
+
 #define CUSTOM_DEPTH 1.0
 #include <AnKi/Shaders/QuadVert.hlsl>
 
-#pragma anki technique_start vert
-#pragma anki technique_end vert
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#	include <AnKi/Shaders/Sky.hlsl>
 
-#pragma anki technique_start pixel
-
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/TonemappingFunctions.hlsl>
-#include <AnKi/Shaders/Sky.hlsl>
-
-#if METHOD == 0
+#	if METHOD == 0
 struct Constants
 {
 	RVec3 m_solidColor;
@@ -26,7 +24,7 @@ struct Constants
 };
 
 ANKI_FAST_CONSTANTS(Constants, g_consts)
-#elif METHOD == 1
+#	elif METHOD == 1
 SamplerState g_trilinearAnySampler : register(s0);
 Texture2D<RVec4> g_envMapTex : register(t0);
 
@@ -45,19 +43,19 @@ struct Constants
 };
 
 ANKI_FAST_CONSTANTS(Constants, g_consts)
-#else
+#	else
 SamplerState g_linearAnyClampSampler : register(s0);
 Texture2D<Vec4> g_skyLut : register(t0);
 ConstantBuffer<GlobalRendererConstants> g_consts : register(b0);
-#endif
+#	endif
 
 RVec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
-#if METHOD == 0
+#	if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
 	const RVec3 output = g_consts.m_solidColor;
-#elif METHOD == 1
+#	elif METHOD == 1
 	const F32 depth = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionJitterMat, Vec4(ndc, depth, 1.0));
@@ -76,7 +74,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const F32 bias = (maxD > 0.9) ? -100.0f : 0.0f;
 
 	const RVec3 output = g_envMapTex.SampleBias(g_trilinearAnySampler, uv3, bias).rgb * g_consts.m_scale + g_consts.m_bias;
-#else
+#	else
 	const F32 depth = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_consts.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
@@ -86,9 +84,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 	const RVec3 output = computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_consts.m_directionalLight.m_direction,
 										 g_consts.m_directionalLight.m_power, true);
-#endif
+#	endif
 
 	return RVec4(output, 0.0);
 }
-
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER

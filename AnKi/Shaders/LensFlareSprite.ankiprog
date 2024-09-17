@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
@@ -13,7 +15,7 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki technique_start vert
+#if ANKI_VERTEX_SHADER
 
 // The block contains data for all flares
 StructuredBuffer<LensFlareSprite> g_sprites : register(t0);
@@ -35,10 +37,9 @@ VertOut main(U32 svVertexId : SV_VERTEXID, U32 svInstanceId : SV_INSTANCEID)
 
 	return output;
 }
-#pragma anki technique_end vert
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_start pixel
-
+#if ANKI_PIXEL_SHADER
 SamplerState g_trilinearRepeatSampler : register(s0);
 Texture2DArray<RVec4> g_tex : register(t1);
 
@@ -47,4 +48,4 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const RVec4 col = g_tex.Sample(g_trilinearRepeatSampler, input.m_uv);
 	return col * input.m_color;
 }
-#pragma anki technique_end pixel
+#endif

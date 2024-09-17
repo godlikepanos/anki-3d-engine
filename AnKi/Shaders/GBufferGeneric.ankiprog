@@ -15,6 +15,27 @@
 
 #pragma anki skip_mutation ALPHA_TEST 1 DIFFUSE_TEX 0
 
+#pragma anki technique GBufferLegacy vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique GBufferLegacy pixel
+
+#pragma anki technique ShadowsLegacy vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique ShadowsLegacy pixel
+
+#pragma anki technique GBufferSwMeshletRendering vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique GBufferSwMeshletRendering pixel
+
+#pragma anki technique ShadowsSwMeshletRendering vert mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique ShadowsSwMeshletRendering pixel
+
+#pragma anki technique GBufferMeshShaders mesh mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
+#pragma anki technique GBufferMeshShaders pixel
+
+#pragma anki technique ShadowsMeshShaders mesh mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
+#pragma anki technique ShadowsMeshShaders pixel
+
+#pragma anki technique RtShadows ahit mutators ALPHA_TEST DIFFUSE_TEX
+#pragma anki technique RtShadows chit mutators
+
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -659,48 +680,3 @@ PixelOut main(
 	ANKI_MAYBE_UNUSED(barycentrics);
 }
 #endif // ANKI_CLOSEST_HIT_SHADER
-
-// ===========================================================================
-// Define the techniques                                                     =
-// ===========================================================================
-#pragma anki technique_start vert GBufferLegacy uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert GBufferLegacy
-
-#pragma anki technique_start vert ShadowsLegacy uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert ShadowsLegacy
-
-#pragma anki technique_start vert GBufferSwMeshletRendering uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert GBufferSwMeshletRendering
-
-#pragma anki technique_start vert ShadowsSwMeshletRendering uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end vert ShadowsSwMeshletRendering
-
-#pragma anki technique_start mesh GBufferMeshShaders uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX NORMAL_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end mesh GBufferMeshShaders
-
-#pragma anki technique_start mesh ShadowsMeshShaders uses_mutators ANKI_VELOCITY ANKI_BONES DIFFUSE_TEX PARALLAX ALPHA_TEST
-#pragma anki technique_end mesh ShadowsMeshShaders
-
-#pragma anki technique_start pixel GBufferLegacy
-#pragma anki technique_end pixel GBufferLegacy
-
-#pragma anki technique_start pixel ShadowsLegacy
-#pragma anki technique_end pixel ShadowsLegacy
-
-#pragma anki technique_start pixel GBufferMeshShaders
-#pragma anki technique_end pixel GBufferMeshShaders
-
-#pragma anki technique_start pixel ShadowsMeshShaders
-#pragma anki technique_end pixel ShadowsMeshShaders
-
-#pragma anki technique_start pixel GBufferSwMeshletRendering
-#pragma anki technique_end pixel GBufferSwMeshletRendering
-
-#pragma anki technique_start pixel ShadowsSwMeshletRendering
-#pragma anki technique_end pixel ShadowsSwMeshletRendering
-
-#pragma anki technique_start ahit RtShadows uses_mutators ALPHA_TEST DIFFUSE_TEX
-#pragma anki technique_end ahit RtShadows
-
-#pragma anki technique_start chit RtShadows uses_mutators
-#pragma anki technique_end chit RtShadows

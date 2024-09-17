@@ -3,13 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-#include <AnKi/Shaders/Functions.hlsl>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D<U32> g_inTex : register(t0);
@@ -20,4 +19,4 @@ Vec3 main(VertOut input) : SV_TARGET0
 	const UVec2 rate = decodeVrsRate(texel);
 	return visualizeVrsRate(rate);
 }
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SAHDER

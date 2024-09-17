@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
@@ -92,4 +92,3 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 		writeExposureAndAverageLuminance(computeExposure(finalAvgLum, 0.0f), finalAvgLum);
 	}
 }
-#pragma anki technique_end comp

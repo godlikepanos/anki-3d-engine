@@ -10,7 +10,7 @@
 #pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 1
 #pragma anki skip_mutation CPU_FEEDBACK 1 OBJECT_TYPE 2
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -143,5 +143,3 @@ Vec4 getSphere(GpuSceneGlobalIlluminationProbe l)
 		}
 	}
 }
-
-#pragma anki technique_end comp

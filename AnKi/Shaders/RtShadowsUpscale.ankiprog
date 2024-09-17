@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/RtShadows.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
@@ -56,5 +56,3 @@ Texture2D<Vec4> g_fullDepthTex : register(t2);
 
 	g_fullShadowStorageTex[svDispatchThreadId.xy] = sumShadowFactor;
 }
-
-#pragma anki technique_end comp

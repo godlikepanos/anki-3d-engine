@@ -5,7 +5,7 @@
 
 #pragma anki mutator BLUR_ORIENTATION 0 1
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
@@ -135,5 +135,3 @@ F32 computeVarianceCenter(Vec2 uv)
 	shadowFactor /= weight;
 	g_storageTex[svDispatchThreadId.xy] = shadowFactor;
 }
-
-#pragma anki technique_end comp

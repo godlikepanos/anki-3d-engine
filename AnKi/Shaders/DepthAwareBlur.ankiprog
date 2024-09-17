@@ -7,6 +7,8 @@
 #pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
+#pragma anki technique vert pixel comp
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
@@ -129,12 +131,3 @@ ColorType main(VertOut input) : SV_TARGET0
 #	endif
 }
 #endif // ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
-
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-#pragma anki technique_end pixel
-
-#pragma anki technique_start comp
-#pragma anki technique_end comp

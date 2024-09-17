@@ -44,6 +44,7 @@ inline NumericCVar<U8> g_deviceCVar("Gr", "Device", 0, 0, 16, "Choose an availab
 inline BoolCVar g_rayTracingCVar("Gr", "RayTracing", false, "Try enabling ray tracing");
 inline BoolCVar g_vrsCVar("Gr", "Vrs", false, "Enable or not VRS");
 inline BoolCVar g_workGraphcsCVar("Gr", "WorkGraphs", false, "Enable or not WorkGraphs");
+inline NumericCVar<U32> g_maxBindlessSampledTextureCountCVar("Gr", "MaxBindlessSampledTextureCountCVar", 512, 16, kMaxU16);
 
 #if ANKI_GR_BACKEND_DIRECT3D
 inline NumericCVar<U16> g_maxRtvDescriptorsCVar("Gr", "MaxRvtDescriptors", 128, 8, kMaxU16, "Max number of RTVs");
@@ -57,7 +58,6 @@ inline NumericCVar<U16> g_maxGpuSamplerDescriptorsCVar("Gr", "MaxGpuSamplerDescr
 
 inline BoolCVar g_dredCVar("Gr", "Dred", false, "Enable DRED");
 #else
-inline NumericCVar<U32> g_maxBindlessSampledTextureCountCVar("Gr", "MaxBindlessSampledTextureCountCVar", 512, 16, kMaxU16);
 inline NumericCVar<PtrSize> g_diskShaderCacheMaxSizeCVar("Gr", "DiskShaderCacheMaxSize", 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file");
 inline BoolCVar g_debugPrintfCVar("Gr", "DebugPrintf", false, "Enable or not debug printf");
 inline BoolCVar g_samplerFilterMinMaxCVar("Gr", "SamplerFilterMinMax", true, "Enable or not min/max sample filtering");
@@ -93,7 +93,6 @@ constexpr U32 kMaxRegisterSpaces = 3; ///< Groups that can be bound at the same 
 constexpr U32 kMaxBindingsPerRegisterSpace = 32;
 constexpr U32 kMaxFramesInFlight = 3; ///< Triple buffering.
 constexpr U32 kMaxGrObjectNameLength = 61;
-constexpr U32 kMaxBindlessTextures = 512;
 constexpr U32 kMaxFastConstantsSize = 128; ///< Push/root constants size. Thanks AMD!!
 
 /// The number of commands in a command buffer that make it a small batch command buffer.

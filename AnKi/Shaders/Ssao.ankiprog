@@ -7,6 +7,10 @@
 
 #pragma anki mutator SPATIAL_DENOISE_QUALITY 0 1
 
+#pragma anki technique Ssao vert pixel comp mutators
+#pragma anki technique SsaoSpatialDenoise vert pixel comp
+#pragma anki technique SsaoTemporalDenoise vert pixel comp
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
 // ===========================================================================
@@ -344,33 +348,3 @@ RVec4 main(VertOut input) : SV_TARGET0
 #	endif
 }
 #endif
-
-// ===========================================================================
-// Techniques                                                                =
-// ===========================================================================
-#pragma anki technique_start vert Ssao uses_mutators
-#pragma anki technique_end vert Ssao
-
-#pragma anki technique_start pixel Ssao uses_mutators
-#pragma anki technique_end pixel Ssao
-
-#pragma anki technique_start comp Ssao
-#pragma anki technique_end comp Ssao
-
-#pragma anki technique_start vert SsaoSpatialDenoise
-#pragma anki technique_end vert SsaoSpatialDenoise
-
-#pragma anki technique_start pixel SsaoSpatialDenoise
-#pragma anki technique_end pixel SsaoSpatialDenoise
-
-#pragma anki technique_start comp SsaoSpatialDenoise
-#pragma anki technique_end comp SsaoSpatialDenoise
-
-#pragma anki technique_start vert SsaoTemporalDenoise
-#pragma anki technique_end vert SsaoTemporalDenoise
-
-#pragma anki technique_start pixel SsaoTemporalDenoise
-#pragma anki technique_end pixel SsaoTemporalDenoise
-
-#pragma anki technique_start comp SsaoTemporalDenoise
-#pragma anki technique_end comp SsaoTemporalDenoise

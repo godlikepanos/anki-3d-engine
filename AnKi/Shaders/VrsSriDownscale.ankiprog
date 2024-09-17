@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Functions.hlsl>
 
@@ -32,5 +32,3 @@ ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 	g_storageTex[svDispatchThreadId.xy] = UVec4(encodeVrsRate(rate), 0, 0, 0);
 }
-
-#pragma anki technique_end comp

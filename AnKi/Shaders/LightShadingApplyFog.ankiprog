@@ -3,13 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-#include <AnKi/Shaders/Functions.hlsl>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 SamplerState g_linearAnyClampSampler : register(s1);
@@ -26,11 +25,11 @@ struct Constants
 ANKI_FAST_CONSTANTS(Constants, g_consts)
 
 // Workaround validation errors
-#if ANKI_GR_BACKEND_DIRECT3D
-#	define OUT_TYPE Vec4
-#else
-#	define OUT_TYPE RVec4
-#endif
+#	if ANKI_GR_BACKEND_DIRECT3D
+#		define OUT_TYPE Vec4
+#	else
+#		define OUT_TYPE RVec4
+#	endif
 
 OUT_TYPE main(VertOut input) : SV_TARGET0
 {
@@ -53,5 +52,4 @@ OUT_TYPE main(VertOut input) : SV_TARGET0
 	// Apply the fog
 	return OUT_TYPE(inScattering, transmittance);
 }
-
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER

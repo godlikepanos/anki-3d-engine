@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
 
@@ -26,5 +26,3 @@ RWStructuredBuffer<U32> g_dstBuffer : register(u0);
 
 	g_dstBuffer[dstDwordOffset + svGroupIndex] = g_srcBuffer[srcDwordOffset + svGroupIndex];
 }
-
-#pragma anki technique_end comp

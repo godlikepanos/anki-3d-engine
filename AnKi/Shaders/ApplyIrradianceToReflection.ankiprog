@@ -3,7 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
+
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/LightFunctions.hlsl>
 
@@ -48,4 +49,3 @@ RWTexture2D<RVec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is
 	// Write it back
 	g_cubeTex[faceIdx][dispatchThreadId] = RVec4(prevColorWithIndirectDiffuse, 0.0);
 }
-#pragma anki technique_end comp

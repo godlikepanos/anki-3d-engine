@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique GBuffer vert pixel
+
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
 #pragma anki struct AnKiLocalConstants
@@ -36,8 +38,7 @@ struct PixelOut
 	Vec2 m_color3 : SV_TARGET3;
 };
 
-#pragma anki technique_start vert GBuffer
-
+#if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
 	VertOut output;
@@ -76,10 +77,10 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki technique_end vert GBuffer
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_start pixel GBuffer
-#include <AnKi/Shaders/PackFunctions.hlsl>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/PackFunctions.hlsl>
 
 PixelOut main(VertOut input)
 {
@@ -101,4 +102,4 @@ PixelOut main(VertOut input)
 	packGBuffer(g, output.m_color0, output.m_color1, output.m_color2, output.m_color3);
 	return output;
 }
-#pragma anki technique_end pixel GBuffer
+#endif // ANKI_PIXEL_SHADER

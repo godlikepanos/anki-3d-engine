@@ -7,7 +7,7 @@
 #pragma anki mutator SHARED_MEMORY 0 1
 #pragma anki mutator LIMIT_RATE_TO_2X2 0 1
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
@@ -190,5 +190,3 @@ RF32 computeLuma(RVec3 color)
 		g_sriStorageTex[outTexelCoord] = encodeVrsRate(rate);
 	}
 }
-
-#pragma anki technique_end comp

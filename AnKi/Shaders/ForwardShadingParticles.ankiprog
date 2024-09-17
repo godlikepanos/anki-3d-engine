@@ -6,6 +6,8 @@
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
+#pragma anki technique Forward vert pixel
+
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 
 struct VertIn
@@ -30,8 +32,7 @@ struct VertOut
 #pragma anki member U32 m_diffuseMap
 #pragma anki struct_end
 
-#pragma anki technique_start vert Forward
-
+#if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
 	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
@@ -66,25 +67,24 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki technique_end vert Forward
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_start pixel Forward
-
+#if ANKI_PIXEL_SHADER
 PixelOut main(VertOut input)
 {
 	PixelOut output = (PixelOut)0;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
-#if ANIMATED_TEXTURE == 1
+#	if ANIMATED_TEXTURE == 1
 	RVec4 texCol = readAnimatedTextureRgba(getBindlessTexture2DArrayRVec4(localConstants.m_diffuseMap), g_globalSampler,
 										   localConstants.m_animationPeriod, input.m_uv, g_globalRendererConstants.m_time);
-#else
+#	else
 	RVec4 texCol = getBindlessTexture2DRVec4(localConstants.m_diffuseMap).Sample(g_globalSampler, input.m_uv);
-#endif
+#	endif
 
-#if LIGHT
+#	if LIGHT
 	texCol.rgb = computeLightColorLow(texCol.rgb, input.m_worldPos, input.m_svPosition);
-#endif
+#	endif
 
 	RVec4 colScale = localConstants.m_colorScale;
 	colScale.a *= input.m_alpha;
@@ -92,4 +92,4 @@ PixelOut main(VertOut input)
 
 	return output;
 }
-#pragma anki technique_end pixel Forward
+#endif // ANKI_PIXEL_SHADER

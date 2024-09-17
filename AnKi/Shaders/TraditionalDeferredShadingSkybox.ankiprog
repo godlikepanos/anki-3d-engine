@@ -5,31 +5,29 @@
 
 #pragma anki mutator METHOD 0 1 2 // 0: solid colod, 1: 2D image, 2: Generated
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/Sky.hlsl>
-#include <AnKi/Shaders/TonemappingFunctions.hlsl>
-#include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/Sky.hlsl>
+#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
+#	include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 ANKI_FAST_CONSTANTS(TraditionalDeferredSkyboxConstants, g_consts)
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D g_depthTex : register(t0);
 
-#if METHOD == 1
+#	if METHOD == 1
 SamplerState g_trilinearAnySampler : register(s1);
 Texture2D<RVec4> g_envMapTex : register(t1);
-#elif METHOD == 2
+#	elif METHOD == 2
 SamplerState g_linearAnyClampSampler : register(s1);
 Texture2D<Vec4> g_skyLut : register(t1);
-#endif
+#	endif
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b0);
 
@@ -42,10 +40,10 @@ Vec4 main(VertOut input) : SV_TARGET0
 		discard;
 	}
 
-#if METHOD == 0
+#	if METHOD == 0
 	ANKI_MAYBE_UNUSED(uv);
 	const Vec3 outColor = g_consts.m_solidColor;
-#elif METHOD == 1
+#	elif METHOD == 1
 	const F32 depthFar = 1.0;
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depthFar, 1.0));
@@ -55,7 +53,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 	const Vec2 uv2 = equirectangularMapping(eyeToFrag);
 	const Vec3 outColor = g_envMapTex.Sample(g_trilinearAnySampler, uv2).rgb * g_consts.m_scale + g_consts.m_bias;
-#else
+#	else
 	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_consts.m_invertedViewProjectionMat, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
@@ -66,9 +64,9 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 	const Vec3 outColor =
 		computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_globalRendererConsts.m_directionalLight.m_direction, sunPower, false);
-#endif
+#	endif
 
 	return Vec4(outColor, 0.0);
 }
 
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER

@@ -5,6 +5,8 @@
 
 // Screen space reflections
 
+#pragma anki technique Ssr vert pixel comp
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
 // ===========================================================================
@@ -152,15 +154,3 @@ RVec4 main(VertOut input) : SV_TARGET0
 }
 
 #endif // ANKI_TECHNIQUE_Ssr && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
-
-// ===========================================================================
-// Techniques                                                                =
-// ===========================================================================
-#pragma anki technique_start vert Ssr
-#pragma anki technique_end vert Ssr
-
-#pragma anki technique_start pixel Ssr
-#pragma anki technique_end pixel Ssr
-
-#pragma anki technique_start comp Ssr
-#pragma anki technique_end comp Ssr

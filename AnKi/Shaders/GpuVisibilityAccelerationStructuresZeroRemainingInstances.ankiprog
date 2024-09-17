@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -28,5 +28,3 @@ RWStructuredBuffer<AccelerationStructureInstance> g_instances : register(u0);
 		g_instances[visibleInstances + svDispatchThreadId] = (AccelerationStructureInstance)0;
 	}
 }
-
-#pragma anki technique_end comp

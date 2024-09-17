@@ -5,7 +5,7 @@
 
 // This shader prepares the indirect args of future dispatches
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
@@ -67,5 +67,3 @@ constexpr U32 kPackVisiblesThreadgroupSize = 64;
 		// Skip remaining threads
 	}
 }
-
-#pragma anki technique_end comp

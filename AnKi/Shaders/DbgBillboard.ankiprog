@@ -6,6 +6,8 @@
 #pragma anki mutator DEPTH_FAIL_VISUALIZATION 0 1
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
@@ -46,14 +48,13 @@ struct VertOut
 	nointerpolation U32 m_textureIndex : TEX_INDEX;
 };
 
-#pragma anki technique_start vert
-
 struct VertIn
 {
 	U32 m_svInstanceId : SV_INSTANCEID;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
+#if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
 	VertOut output;
@@ -67,22 +68,22 @@ VertOut main(VertIn input)
 
 	if(input.m_svInstanceId < objCount)
 	{
-#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
 		output.m_colorScale.xyz = reinhardTonemap(g_visibleObjects[input.m_svInstanceId].m_diffuseColor);
 		output.m_textureIndex = g_visibleObjects[input.m_svInstanceId].m_lightType;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_sphereCenter;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
 		const ClusteredType obj = g_visibleObjects[input.m_svInstanceId];
 		const Vec3 localPos = (obj.m_isBox) ? (obj.m_aabbMinOrSphereCenter + obj.m_aabbMaxOrSphereRadius) / 2.0f : obj.m_aabbMinOrSphereCenter;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
 		const Vec3 localPos = g_visibleObjects[input.m_svInstanceId].m_position;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
 		const Vec3 localPos = (g_visibleObjects[input.m_svInstanceId].m_aabbMin + g_visibleObjects[input.m_svInstanceId].m_aabbMax) / 2.0f;
-#else
-#	error See file
-#endif
+#	else
+#		error See file
+#	endif
 
 		// Rotate towards the camera and apply translation
 		const Vec3 worldPos = mul(g_consts.m_camTrf, Vec4((output.m_uv * 2.0 - 1.0) * kBillboardScale, 0.0, 0.0)) + localPos;
@@ -97,20 +98,20 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki technique_end vert
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_start pixel
-#include <AnKi/Shaders/ImportanceSampling.hlsl>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 SamplerState g_trilinearRepeatSampler : register(s1);
 Texture2D<Vec4> g_tex : register(t3);
 Texture2D<Vec4> g_tex2 : register(t4);
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#if DEPTH_FAIL_VISUALIZATION == 1
+#	if DEPTH_FAIL_VISUALIZATION == 1
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D g_depthRt : register(t0);
-#endif
+#	endif
 
 Vec4 main(VertOut input) : SV_TARGET0
 {
@@ -118,7 +119,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 
 	// Check if we should skip the frag
 	F32 colorFactor = 1.0f;
-#if DEPTH_FAIL_VISUALIZATION == 1
+#	if DEPTH_FAIL_VISUALIZATION == 1
 	Vec2 texSize;
 	g_depthRt.GetDimensions(texSize.x, texSize.y);
 	const Vec2 uv = input.m_svPosition.xy / texSize;
@@ -128,7 +129,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	{
 		colorFactor = 0.6;
 	}
-#endif
+#	endif
 
 	// Write the color
 	if(input.m_textureIndex == 0)
@@ -140,4 +141,4 @@ Vec4 main(VertOut input) : SV_TARGET0
 		return g_tex2.Sample(g_trilinearRepeatSampler, input.m_uv) * input.m_colorScale * colorFactor;
 	}
 }
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER

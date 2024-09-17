@@ -5,7 +5,7 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 Texture2D<Vec4> g_depthRt : register(t0);
 SamplerState g_linearAnyClampSampler : register(s0);
@@ -46,5 +46,3 @@ groupshared U32 s_maxDepth;
 		g_maxDepthStorageTex[svGroupId] = asfloat(s_maxDepth);
 	}
 }
-
-#pragma anki technique_end comp

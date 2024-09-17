@@ -5,6 +5,8 @@
 
 #pragma anki mutator DEPTH_FAIL_VISUALIZATION 0 1
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 
@@ -24,13 +26,13 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-#pragma anki technique_start vert
 struct VertIn
 {
 	Vec3 m_position : POSITION;
 	U32 m_svInstanceId : SV_INSTANCEID;
 };
 
+#if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
 	VertOut output;
@@ -52,23 +54,23 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki technique_end vert
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_start pixel
-#include <AnKi/Shaders/ImportanceSampling.hlsl>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/ImportanceSampling.hlsl>
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
-#if DEPTH_FAIL_VISUALIZATION == 1
+#	if DEPTH_FAIL_VISUALIZATION == 1
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D g_depthRt : register(t0);
-#endif
+#	endif
 
 Vec4 main(VertOut input) : SV_TARGET0
 {
 	ANKI_MAYBE_UNUSED(input);
 
 	// Check if we should skip the frag
-#if DEPTH_FAIL_VISUALIZATION == 1
+#	if DEPTH_FAIL_VISUALIZATION == 1
 	Vec2 texSize;
 	g_depthRt.GetDimensions(texSize.x, texSize.y);
 	const Vec2 uv = input.m_svPosition.xy / texSize;
@@ -78,9 +80,9 @@ Vec4 main(VertOut input) : SV_TARGET0
 	{
 		return g_consts.m_color * 0.5;
 	}
-#endif
+#	endif
 
 	// Write the color
 	return g_consts.m_color;
 }
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER

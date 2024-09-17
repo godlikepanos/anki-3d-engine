@@ -5,7 +5,7 @@
 
 // A very simle compute shader that checks if the light shadows needs rendering or not.
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
@@ -81,5 +81,3 @@ groupshared U32 s_renderLight;
 		}
 	}
 }
-
-#pragma anki technique_end comp

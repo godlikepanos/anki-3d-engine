@@ -5,6 +5,8 @@
 
 #pragma anki mutator PROBE_TYPE 0 1
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
@@ -53,7 +55,7 @@ struct PixelOut
 	F32 m_svDepth : SV_Depth;
 };
 
-#pragma anki technique_start vert
+#if ANKI_VERTEX_SHADER
 
 UVec3 getCellCount(GpuSceneGlobalIlluminationProbe probe)
 {
@@ -65,13 +67,13 @@ UVec3 getCellCount(GpuSceneGlobalIlluminationProbe probe)
 
 VertOut main(VertIn input)
 {
-#if PROBE_TYPE == 0
+#	if PROBE_TYPE == 0
 	const GpuSceneGlobalIlluminationProbe probe = SBUFF(g_probes, g_consts.m_probeIdx);
-#else
+#	else
 	const GpuSceneReflectionProbe probe = SBUFF(g_probes, g_consts.m_probeIdx);
-#endif
+#	endif
 
-#if PROBE_TYPE == 0
+#	if PROBE_TYPE == 0
 	// Compute the cell ID
 	const U32 cellIdx = input.m_svInstanceId;
 	const UVec3 cellCount = getCellCount(probe);
@@ -84,9 +86,9 @@ VertOut main(VertIn input)
 
 	const Vec3 cellCenter = cellSize * Vec3(cellId) + probe.m_aabbMin + cellSize / 2.0;
 	const Vec3 sphereCenter = cellCenter;
-#else
+#	else
 	const Vec3 sphereCenter = probe.m_position;
-#endif
+#	endif
 
 	const Vec3 sphereMin = sphereCenter - g_consts.m_sphereRadius;
 	const Vec3 sphereMax = sphereCenter + g_consts.m_sphereRadius;
@@ -123,11 +125,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-
+#if ANKI_PIXEL_SHADER
 PixelOut main(VertOut input)
 {
 	PixelOut output = (PixelOut)0;
@@ -182,5 +182,4 @@ PixelOut main(VertOut input)
 
 	return output;
 }
-
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER

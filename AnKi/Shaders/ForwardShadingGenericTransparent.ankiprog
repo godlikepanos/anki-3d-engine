@@ -6,6 +6,8 @@
 #pragma anki mutator TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
+#pragma anki technique Forward vert pixel
+
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 
 #pragma anki struct AnKiLocalConstants
@@ -28,8 +30,7 @@ struct VertOut
 	nointerpolation U32 m_constantsOffset : CONSTANTS_OFFSET;
 };
 
-#pragma anki technique_start vert Forward
-
+#if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
 	VertOut output;
@@ -48,10 +49,9 @@ VertOut main(VertIn input)
 
 	return output;
 }
-#pragma anki technique_end vert Forward
+#endif // ANKI_VERTEX_SHADER
 
-#pragma anki technique_start pixel Forward
-
+#if ANKI_PIXEL_SHADER
 PixelOut main(VertOut input)
 {
 	ANKI_MAYBE_UNUSED(input);
@@ -61,16 +61,16 @@ PixelOut main(VertOut input)
 
 	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
 
-#if TEXTURE == 1
+#	if TEXTURE == 1
 	output.m_color = getBindlessTexture2DRVec4(localConstants.m_texture).Sample(g_globalSampler, input.m_uv);
-#endif
+#	endif
 
-#if LIGHT == 1
+#	if LIGHT == 1
 	output.m_color.rgb = computeLightColorLow(output.m_color.rgb, input.m_worldPosition, input.m_svPosition);
-#endif
+#	endif
 
 	output.m_color = output.m_color * localConstants.m_colorScale + localConstants.m_colorBias;
 
 	return output;
 }
-#pragma anki technique_end pixel Forward
+#endif // ANKI_PIXEL_SHADER

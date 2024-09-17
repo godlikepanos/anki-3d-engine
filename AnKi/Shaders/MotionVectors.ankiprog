@@ -5,6 +5,8 @@
 
 // Calculates the motion vectors that will be used to sample from the previous frame
 
+#pragma anki technique vert pixel comp
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
 #if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
@@ -81,12 +83,3 @@ PixelOut main(VertOut input)
 #	endif
 }
 #endif // ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
-
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-#pragma anki technique_end pixel
-
-#pragma anki technique_start comp
-#pragma anki technique_end comp

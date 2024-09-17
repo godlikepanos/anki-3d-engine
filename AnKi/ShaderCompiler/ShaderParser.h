@@ -61,8 +61,7 @@ public:
 /// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2 ...]]
 /// #pragma anki skip_mutation MUTATOR0 VALUE0 [MUTATOR1 VALUE1 [MUTATOR2 VALUE2 ...]]
 /// #pragma anki 16bit // Works only in HLSL. Gain 16bit types but loose min16xxx types
-/// #pragma anki technique_start STAGE [NAME] [uses_mutators [USES_MUTATOR1 [USES_MUTATOR2 ...]]]
-/// #pragma anki technique_end STAGE [NAME]
+/// #pragma anki technique [NAME] STAGE0 [STAGE1 ...] [mutators [MUTATOR0 [MUTATOR1 ...]]]
 /// #pragma anki extra_compiler_args ARG0 [ARG1 [ARG2...]]
 ///
 /// #pragma anki struct NAME
@@ -138,13 +137,6 @@ private:
 		ShaderCompilerDynamicArray<MutatorValue> m_partialMutation;
 	};
 
-	class TechniqueExtra
-	{
-	public:
-		Array<ShaderCompilerStringList, U32(ShaderType::kCount)> m_sourceLines;
-		Array<ShaderCompilerString, U32(ShaderType::kCount)> m_sources;
-	};
-
 	static constexpr U32 kMaxIncludeDepth = 8;
 
 	ShaderCompilerString m_fname;
@@ -155,12 +147,10 @@ private:
 
 	U64 m_hash = 0;
 
-	ShaderCompilerStringList m_commonSourceLines; ///< Common code until now.
+	ShaderCompilerStringList m_sourceLines;
+	ShaderCompilerString m_source;
 
 	ShaderCompilerDynamicArray<Technique> m_techniques;
-	ShaderCompilerDynamicArray<TechniqueExtra> m_techniqueExtras;
-	U32 m_insideTechniqueIdx = kMaxU32;
-	ShaderType m_insideTechniqueShaderType = ShaderType::kCount;
 
 	ShaderCompilerDynamicArray<Mutator> m_mutators;
 	ShaderCompilerDynamicArray<PartialMutationSkip> m_skipMutations;
@@ -173,22 +163,11 @@ private:
 	ShaderCompilerDynamicArray<ShaderCompilerString> m_extraCompilerArgs;
 	ShaderCompilerDynamicArray<CString> m_extraCompilerArgsCString;
 
-	ShaderCompilerStringList& getAppendSourceList()
-	{
-		return (insideTechnique()) ? m_techniqueExtras[m_insideTechniqueIdx].m_sourceLines[m_insideTechniqueShaderType] : m_commonSourceLines;
-	}
-
-	Bool insideTechnique() const
-	{
-		return m_insideTechniqueIdx < kMaxU32;
-	}
-
 	Error parseFile(CString fname, U32 depth);
 	Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth, U32 lineNumber);
 	Error parseInclude(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname, U32 depth);
 	Error parsePragmaMutator(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
-	Error parsePragmaTechniqueStart(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
-	Error parsePragmaTechniqueEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
+	Error parsePragmaTechnique(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parsePragmaSkipMutation(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parsePragmaStructBegin(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);
 	Error parsePragmaStructEnd(const ShaderCompilerString* begin, const ShaderCompilerString* end, CString line, CString fname);

@@ -3,7 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
+
 #include <AnKi/Shaders/Common.hlsl>
 
 #define THREAD_COUNT_SQRT 8
@@ -58,4 +59,3 @@ groupshared U32 s_maxDepth;
 		g_indirectInfo[flareIdx].m_firstInstance = 0u;
 	}
 }
-#pragma anki technique_end comp

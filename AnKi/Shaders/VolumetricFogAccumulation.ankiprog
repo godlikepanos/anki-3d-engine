@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique_start comp
+#pragma anki technique comp
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
@@ -61,5 +61,3 @@ ANKI_FAST_CONSTANTS(VolumetricFogConstants, g_consts)
 		g_fogVolume[UVec3(svDispatchThreadId.xy, i)] = valToWrite;
 	}
 }
-
-#pragma anki technique_end comp

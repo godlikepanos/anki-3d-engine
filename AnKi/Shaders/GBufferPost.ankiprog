@@ -3,16 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique vert pixel
+
 #include <AnKi/Shaders/QuadVert.hlsl>
 
-#pragma anki technique_start vert
-#pragma anki technique_end vert
-
-#pragma anki technique_start pixel
-#include <AnKi/Shaders/PackFunctions.hlsl>
-#include <AnKi/Shaders/Functions.hlsl>
-#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
-#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#if ANKI_PIXEL_SHADER
+#	include <AnKi/Shaders/PackFunctions.hlsl>
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 Texture2D g_depthTex : register(t0);
@@ -118,4 +117,4 @@ PixelOut main(VertOut input)
 	output.m_roughnessAndOther = roughnessAndOther;
 	return output;
 }
-#pragma anki technique_end pixel
+#endif // ANKI_PIXEL_SHADER
