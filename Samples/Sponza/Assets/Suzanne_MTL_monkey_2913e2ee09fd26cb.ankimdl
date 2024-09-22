@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/Suzanne_e3526e1428c0763c.ankimesh</mesh>
+			<material>Assets/MTL_monkey_381dce880f246211.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

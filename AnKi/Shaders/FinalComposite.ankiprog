@@ -13,26 +13,22 @@
 
 #if ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
-#	include <AnKi/Shaders/MotionBlur.hlsl>
 
-SamplerState g_nearestAnyClampSampler : register(s0);
-SamplerState g_linearAnyClampSampler : register(s1);
-SamplerState g_trilinearRepeatSampler : register(s2);
+SamplerState g_linearAnyClampSampler : register(s0);
+SamplerState g_trilinearRepeatSampler : register(s1);
 Texture2D<RVec4> g_lightShadingRt : register(t0);
 Texture2D<RVec4> g_ppsBloomLfRt : register(t1);
 Texture3D<RVec4> g_lut : register(t2);
-Texture2D g_motionVectorsRt : register(t3);
-Texture2D g_depthRt : register(t4);
 #	if DBG_ENABLED
-Texture2D<RVec4> g_dbgOutlineRt : register(t5);
+Texture2D<RVec4> g_dbgOutlineRt : register(t3);
 #	endif
 
 struct Constants
 {
-	U32 m_motionBlurSamples;
 	F32 m_filmGrainStrength;
 	U32 m_frameCount;
-	U32 m_padding;
+	U32 m_padding1;
+	U32 m_padding2;
 };
 ANKI_FAST_CONSTANTS(Constants, g_consts)
 
@@ -52,17 +48,8 @@ RVec3 colorGrading(RVec3 color)
 RVec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
-	RVec3 outColor;
-
-	if(g_consts.m_motionBlurSamples > 0u)
-	{
-		outColor =
-			motionBlur(g_motionVectorsRt, g_nearestAnyClampSampler, g_lightShadingRt, g_linearAnyClampSampler, uv, g_consts.m_motionBlurSamples);
-	}
-	else
-	{
-		outColor = g_lightShadingRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
-	}
+	ANKI_MAYBE_UNUSED(uv);
+	RVec3 outColor = outColor = g_lightShadingRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 
 #	if BLOOM_ENABLED
 	const RVec3 bloom = g_ppsBloomLfRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;

@@ -2890,3 +2890,16 @@ rot:setAll(0.082121, 0.000000, -0.996622, 0.000000, 0.996622, 0.000000, 0.082121
 trf:setRotation(rot)
 trf:setScale(Vec4.new(1.000000, 1.000000, 1.000000, 0))
 node:setLocalTransform(trf)
+
+node = scene:newSceneNode("Suzanne")
+node:newModelComponent():loadModelResource("Assets/Suzanne_MTL_monkey_2913e2ee09fd26cb.ankimdl")
+trf = Transform.new()
+trf:setOrigin(Vec4.new(-15.349269, 1.508187, -2.281604, 0))
+rot = Mat3x4.new()
+rot:setAll(-0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, -0.000000, 0.000000)
+trf:setRotation(rot)
+trf:setScale(Vec4.new(1.000000, 1.000000, 1.000000, 0))
+node:setLocalTransform(trf)
+
+node = scene:tryFindSceneNode("Suzanne")
+getEventManager():newAnimationEvent("Assets/SuzanneAction_a8e545711d9aeca3.ankianim", "Suzanne", node)

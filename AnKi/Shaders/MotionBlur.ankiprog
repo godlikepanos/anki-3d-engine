@@ -1,0 +1,215 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Motion blur based on "A Reconstruction Filter for Plausible Motion Blur"
+
+#pragma anki mutator SAMPLE_COUNT 8 16 32
+#pragma anki mutator TILE_SIZE 8 16 32
+
+#pragma anki technique MaxTileVelocity comp mutators TILE_SIZE
+#pragma anki technique MaxNeighbourTileVelocity comp mutators TILE_SIZE
+#pragma anki technique Reconstruct vert pixel comp
+
+#include <AnKi/Shaders/QuadVert.hlsl>
+
+Vec2 computeMaxVelocity(Vec2 a, Vec2 b)
+{
+	const F32 alen2 = dot(a, a);
+	const F32 blen2 = dot(b, b);
+	return (alen2 > blen2) ? a : b;
+}
+
+// ===========================================================================
+// MaxTileVelocity                                                           =
+// ===========================================================================
+#if ANKI_TECHNIQUE_MaxTileVelocity
+#	define NUMTHREADS 64
+
+Texture2D<Vec4> g_motionVectorsTex : register(t0);
+RWTexture2D<Vec4> g_maxVelocityTex : register(u0);
+
+groupshared Vec2 g_maxVelocities[NUMTHREADS];
+
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID, U32 svGroupIndex : SV_GroupIndex, UVec2 svGroupId : SV_GroupID)
+{
+	// Gather the thread result
+	const U32 pixelsPerThread = TILE_SIZE / 8;
+	Vec2 maxV = 0.0;
+	for(U32 x = 0; x < pixelsPerThread; ++x)
+	{
+		for(U32 y = 0; y < pixelsPerThread; ++y)
+		{
+			const Vec2 v = g_motionVectorsTex[svDispatchThreadId * pixelsPerThread + UVec2(x, y)];
+			maxV = computeMaxVelocity(maxV, v);
+		}
+	}
+
+	// Parallel reduction
+	g_maxVelocities[svGroupIndex] = maxV;
+	GroupMemoryBarrierWithGroupSync();
+	[loop] for(U32 s = NUMTHREADS / 2u; s > 0u; s >>= 1u)
+	{
+		if(svGroupIndex < s)
+		{
+			g_maxVelocities[svGroupIndex] = computeMaxVelocity(g_maxVelocities[svGroupIndex], g_maxVelocities[svGroupIndex + s]);
+		}
+
+		GroupMemoryBarrierWithGroupSync();
+	}
+
+	// Write the result
+	g_maxVelocityTex[svGroupId] = Vec4(g_maxVelocities[0], 0.0, 0.0);
+}
+#endif // ANKI_TECHNIQUE_MaxTileVelocity
+
+// ===========================================================================
+// MaxNeighbourTileVelocity                                                  =
+// ===========================================================================
+#if ANKI_TECHNIQUE_MaxNeighbourTileVelocity
+Texture2D<Vec4> g_maxVelocityTex : register(t0);
+RWTexture2D<Vec4> g_maxNeighbourVelTex : register(u0);
+
+void sample(IVec2 svDispatchThreadId, IVec2 offset, inout Vec2 maxVel)
+{
+	const Vec2 v = g_maxVelocityTex[svDispatchThreadId + offset].xy;
+	maxVel = computeMaxVelocity(maxVel, v);
+}
+
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+{
+	Vec2 maxv = 0.0;
+	for(I32 i = -1; i <= 1; ++i)
+	{
+		for(I32 j = -1; j <= 1; ++j)
+		{
+			const Vec2 v = g_maxVelocityTex[svDispatchThreadId + IVec2(i, j)].xy;
+			maxv = computeMaxVelocity(maxv, v);
+		}
+	}
+
+	g_maxNeighbourVelTex[svDispatchThreadId] = Vec4(maxv, 0.0, 0.0);
+}
+#endif // MaxNeighbourTileVelocity
+
+// ===========================================================================
+// Reconstruct                                                               =
+// ===========================================================================
+#if ANKI_TECHNIQUE_Reconstruct && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)
+
+#	include <AnKi/Shaders/ImportanceSampling.hlsl>
+#	include <AnKi/Shaders/Functions.hlsl>
+
+Texture2D<Vec4> g_colorTex : register(t0);
+Texture2D<Vec4> g_depthTex : register(t1);
+Texture2D<Vec4> g_neighbourMaxTex : register(t2);
+Texture2D<Vec4> g_motionVectorsTex : register(t3);
+SamplerState g_linearAnyClampSampler : register(s0);
+
+#	if ANKI_COMPUTE_SHADER
+RWTexture2D<Vec4> g_blurredTex : register(u0);
+#	endif
+
+struct Constants
+{
+	Vec2 m_depthLinearizationParams;
+	U32 m_frame;
+	F32 m_far;
+};
+ANKI_FAST_CONSTANTS(Constants, g_consts);
+
+F32 cone(Vec2 x, Vec2 y, Vec2 u)
+{
+	return saturate(1.0 - length(x - y) / length(u));
+}
+
+F32 cylinder(Vec2 x, Vec2 y, Vec2 u)
+{
+	return 1.0 - smoothstep(0.95 * length(u), 1.05 * length(u), length(x - y));
+}
+
+F32 softDepthCompare(F32 za, F32 zb)
+{
+	return saturate(1.0 - (za - zb) / 0.01);
+}
+
+F32 readDepth(Vec2 uv)
+{
+	const F32 d = g_depthTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).x;
+	return -linearizeDepthOptimal(d, g_consts.m_depthLinearizationParams.x, g_consts.m_depthLinearizationParams.y) * g_consts.m_far;
+}
+
+#	if ANKI_COMPUTE_SHADER
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+{
+	Vec2 colorTexSize;
+	g_colorTex.GetDimensions(colorTexSize.x, colorTexSize.y);
+	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / colorTexSize;
+	const Vec2 x = Vec2(svDispatchThreadId) + 0.5;
+#	else
+Vec3 main(Vec2 uv : TEXCOORDS, Vec4 svPosition : SV_Position): SV_Target0
+{
+	Vec2 colorTexSize;
+	g_colorTex.GetDimensions(colorTexSize.x, colorTexSize.y);
+	const Vec2 x = svPosition.xy;
+#	endif
+
+	Vec3 outColor;
+	const Vec2 un = g_neighbourMaxTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xy * colorTexSize;
+	const Vec3 cx = g_colorTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xyz;
+
+	if(dot(un, un) < 0.5 * 0.5)
+	{
+		// Velocity less than 0.5 pixels. Skip blurring
+		outColor = cx;
+	}
+	else
+	{
+#	if ANKI_COMPUTE_SHADER
+		const Vec2 noise2 = spatioTemporalNoise(svDispatchThreadId, g_consts.m_frame);
+#	else
+		const Vec2 noise2 = spatioTemporalNoise(svPosition.xy, g_consts.m_frame);
+#	endif
+		const F32 j = noise2.x - 0.5;
+
+		const F32 zx = readDepth(uv);
+
+		const F32 vx = g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0).xy * colorTexSize;
+		F32 weight = 1.0 / max(length(vx), 0.5);
+		outColor = cx * weight;
+
+		for(F32 i = 0.0; i < SAMPLE_COUNT; i += 1.0)
+		{
+			if(i == (SAMPLE_COUNT - 1) / 2)
+			{
+				continue;
+			}
+
+			const F32 t = lerp(-1.0, 1.0, (i + j + 1.0) / (SAMPLE_COUNT + 1));
+
+			const Vec2 y = x + un * t + 0.5;
+
+			const F32 zy = readDepth(y / colorTexSize);
+			const F32 f = softDepthCompare(zx, zy); // 1 means zy if forground
+			const F32 b = softDepthCompare(zy, zx); // 1 means zy if background
+
+			const Vec2 vy = g_motionVectorsTex.SampleLevel(g_linearAnyClampSampler, y / colorTexSize, 0.0).xy * colorTexSize;
+
+			const F32 a = f * cone(y, x, vy) + b * cone(x, y, vx) + cylinder(y, x, vy) * cylinder(x, y, vx) * 2.0;
+
+			weight += a;
+			outColor += a * g_colorTex.SampleLevel(g_linearAnyClampSampler, y / colorTexSize, 0.0).xyz;
+		}
+
+		outColor /= weight;
+	}
+
+#	if ANKI_COMPUTE_SHADER
+	g_blurredTex[svDispatchThreadId] = Vec4(outColor, 0.0);
+#	else
+	return outColor;
+#	endif
+}
+
+#endif // ANKI_TECHNIQUE_Reconstruct && (ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER)

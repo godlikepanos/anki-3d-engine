@@ -45,6 +45,7 @@
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/Sky.h>
+#include <AnKi/Renderer/MotionBlur.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -294,6 +295,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	}
 	m_vrsSriGeneration->populateRenderGraph(ctx);
 	m_scale->populateRenderGraph(ctx);
+	m_motionBlur->populateRenderGraph(ctx);
 	m_bloom2->populateRenderGraph(ctx);
 	m_tonemapping->populateRenderGraph(ctx);
 	m_dbg->populateRenderGraph(ctx);

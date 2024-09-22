@@ -126,7 +126,7 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 		}
 
 		// <scalingKeys>
-		ANKI_CHECK(chEl.getChildElementOptional("scalingKeys", keysEl));
+		ANKI_CHECK(chEl.getChildElementOptional("scaleKeys", keysEl));
 		if(keysEl)
 		{
 			ANKI_CHECK(keysEl.getChildElement("key", keyEl));
@@ -147,7 +147,6 @@ Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]]
 				maxTime = std::max(maxTime, key.m_time);
 
 				// value
-				ANKI_CHECK(keyEl.getChildElement("value", el));
 				ANKI_CHECK(keyEl.getNumber(key.m_value));
 
 				// Check ident

@@ -351,9 +351,8 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			continue;
 		}
 
-		// Only animate cameras for now
 		const cgltf_node& node = *channel.m_targetNode;
-		if(node.camera == nullptr || node.name == nullptr)
+		if(node.name == nullptr)
 		{
 			continue;
 		}

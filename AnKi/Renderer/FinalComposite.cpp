@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/UiStage.h>
-#include <AnKi/Renderer/MotionVectors.h>
+#include <AnKi/Renderer/MotionBlur.h>
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/CVarSet.h>
@@ -95,10 +95,9 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
-	pass.newTextureDependency(getRenderer().getScale().getTonemappedRt(), TextureUsageBit::kSrvPixel);
+	pass.newTextureDependency((g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getScale().getTonemappedRt(),
+							  TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getBloom().getBloomRt(), TextureUsageBit::kSrvPixel);
-	pass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvPixel);
-	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 
 	Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 	ShaderProgramPtr debugProgram;
@@ -141,23 +140,21 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		// Bind stuff
 		if(!hasDebugRt)
 		{
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(2, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-			rgraphCtx.bindSrv(0, 0, getRenderer().getScale().getTonemappedRt());
+			rgraphCtx.bindSrv(
+				0, 0, (g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getScale().getTonemappedRt());
 
 			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getBloomRt());
 			cmdb.bindSrv(2, 0, TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
-			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
-			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getDepthRt());
 
 			if(dbgEnabled)
 			{
-				rgraphCtx.bindSrv(5, 0, getRenderer().getDbg().getRt());
+				rgraphCtx.bindSrv(3, 0, getRenderer().getDbg().getRt());
 			}
 
-			const UVec4 pc(g_motionBlurSamplesCVar, floatBitsToUint(g_filmGrainStrengthCVar), getRenderer().getFrameCount() & kMaxU32, 0);
+			const UVec4 pc(floatBitsToUint(g_filmGrainStrengthCVar), getRenderer().getFrameCount() & kMaxU32, 0, 0);
 			cmdb.setFastConstants(&pc, sizeof(pc));
 		}
 		else
