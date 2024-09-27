@@ -9,14 +9,16 @@
 
 #include <AnKi/Shaders/Common.hlsl>
 
-RWTexture2D<RVec4> g_tonemappingStorageTex : register(TONEMAPPING_REGISTER);
+RWTexture2D<Vec4> g_tonemappingStorageTex : register(TONEMAPPING_REGISTER);
 
-void writeExposureAndAverageLuminance(RF32 exposure, RF32 avgLuminance)
+template<typename T>
+void writeExposureAndAverageLuminance(T exposure, T avgLuminance)
 {
-	g_tonemappingStorageTex[UVec2(0, 0)] = Vec4(exposure, avgLuminance, 0.0f, 0.0f);
+	g_tonemappingStorageTex[UVec2(0, 0)] = vector<T, 4>(exposure, avgLuminance, 0.0, 0.0);
 }
 
-RVec2 readExposureAndAverageLuminance()
+template<typename T>
+vector<T, 2> readExposureAndAverageLuminance()
 {
 	return g_tonemappingStorageTex[UVec2(0, 0)].xy;
 }

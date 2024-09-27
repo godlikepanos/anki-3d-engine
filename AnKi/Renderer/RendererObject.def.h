@@ -27,7 +27,7 @@ ANKI_RENDERER_OBJECT_DEF(RtShadows, rtShadows, GrManager::getSingleton().getDevi
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rayTracedShadowsCVar)
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors, 1)
-ANKI_RENDERER_OBJECT_DEF(Scale, scale, 1)
+ANKI_RENDERER_OBJECT_DEF(TemporalUpscaler, temporalUpscaler, 1)
 ANKI_RENDERER_OBJECT_DEF(VrsSriGeneration, vrsSriGeneration, 1)
 ANKI_RENDERER_OBJECT_DEF(PrimaryNonRenderableVisibility, primaryNonRenderableVisibility, 1)
 ANKI_RENDERER_OBJECT_DEF(ClusterBinning, clusterBinning2, 1)

@@ -224,6 +224,9 @@ void GrManager::submit(WeakArray<CommandBuffer*> cmdbs, WeakArray<Fence*> waitFe
 			// That depends on how we use the swapchain img. Be a bit conservative
 			waitStages.emplaceBack(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
+			// Set something
+			waitTimelineValues.emplaceBack(0);
+
 			// Refresh the fence because the semaphore can't be recycled until the current submission is done
 			frame.m_acquireSemaphore->setFence(fence.get());
 

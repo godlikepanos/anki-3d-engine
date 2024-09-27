@@ -8,6 +8,7 @@
 *.py text eol=lf
 *.cmake text eol=lf
 *.txt text eol=lf
+*.TXT text eol=lf
 *.md text eol=lf
 *.sh text eol=lf
 *.ankiprog text eol=lf
@@ -17,6 +18,7 @@
 *.ankiskel text eol=lf
 *.ankiankim text eol=lf
 *.ankicl text eol=lf
+*.json text eol=lf
 
 # Github stats
 ThirdParty/** linguist-vendored

@@ -20,28 +20,48 @@ public:
 
 	void importRenderTargets(RenderingContext& ctx);
 
-	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
 	/// @copydoc m_exposureAndAvgLuminance1x1
-	RenderTargetHandle getRt() const
+	RenderTargetHandle getExposureAndAvgLuminanceRt() const
 	{
 		return m_runCtx.m_exposureLuminanceHandle;
 	}
 
-private:
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-	U32 m_inputTexMip;
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
+	}
 
-	/// This is a 1x1 2 component texture where R is the exposure and G the average luminance. It's not tracked in
-	/// rendergraph depedencies. We don't care to track it because it affects the eye adaptation.
-	TexturePtr m_exposureAndAvgLuminance1x1;
+private:
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		U32 m_inputTexMip;
+
+		/// This is a 1x1 2 component texture where R is the exposure and G the average luminance. It's not tracked in
+		/// rendergraph depedencies. We don't care to track it because it affects the eye adaptation.
+		TexturePtr m_exposureAndAvgLuminance1x1;
+	} m_expAndAvgLum;
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+
+		RenderTargetDesc m_rtDesc;
+
+		ImageResourcePtr m_lut; ///< Color grading lookup texture.
+	} m_tonemapping;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_exposureLuminanceHandle;
+		RenderTargetHandle m_rt;
 	} m_runCtx;
 
 	Error initInternal();

@@ -12,34 +12,37 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// Temporal AA resolve.
-class TemporalAA : public RendererObject
+inline NumericCVar<U8> g_dlssQualityCVar("R", "DlssQuality", 2, 0, 3, "0: Disabled, 1: Performance, 2: Balanced, 3: Quality");
+
+/// Upscales.
+class TemporalUpscaler : public RendererObject
 {
 public:
 	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
 
+	/// This is the HDR upscaled RT.
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_renderRt;
+		return m_runCtx.m_rt;
+	}
+
+	Bool getEnabled() const
+	{
+		return m_grUpscaler.isCreated();
 	}
 
 private:
-	Array<TexturePtr, 2> m_rtTextures;
-	Bool m_rtTexturesImportedOnce = false;
+	GrUpscalerPtr m_grUpscaler;
 
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	RenderTargetDesc m_rtDesc;
 
 	class
 	{
 	public:
-		RenderTargetHandle m_renderRt;
-		RenderTargetHandle m_historyRt;
+		RenderTargetHandle m_rt;
 	} m_runCtx;
-
-	Error initInternal();
 };
 /// @}
 

@@ -100,7 +100,7 @@ Error CoreTracer::init(CString directory)
 #	if ANKI_OS_ANDROID
 	if(Tracer::getSingleton().getStreamlineEnabled())
 	{
-		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar.get());
+		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar);
 	}
 #	endif
 
@@ -335,9 +335,9 @@ void CoreTracer::flushFrame(U64 frame)
 	}
 
 #	if ANKI_OS_ANDROID
-	if(Tracer::getSingleton().getStreamlineEnabled() != g_streamlineEnabledCVar.get())
+	if(Tracer::getSingleton().getStreamlineEnabled() != g_streamlineEnabledCVar)
 	{
-		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar.get());
+		Tracer::getSingleton().setStreamlineEnabled(g_streamlineEnabledCVar);
 	}
 #	endif
 }

@@ -43,12 +43,6 @@ Error TemporalAA::initInternal()
 		m_rtTextures[i] = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvPixel);
 	}
 
-	m_tonemappedRtDescr = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR8G8B8_Unorm : Format::kR8G8B8A8_Unorm,
-		"TemporalAA Tonemapped");
-	m_tonemappedRtDescr.bake();
-
 	return Error::kNone;
 }
 
@@ -73,7 +67,6 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[renderRtIdx].get(), TextureUsageBit::kNone);
-	m_runCtx.m_tonemappedRt = rgraph.newRenderTarget(m_tonemappedRtDescr);
 
 	// Create pass
 	TextureUsageBit readUsage;
@@ -83,7 +76,6 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("TemporalAA");
 
 		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kUavCompute);
-		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kUavCompute);
 
 		readUsage = TextureUsageBit::kSrvCompute;
 
@@ -92,10 +84,9 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass("TemporalAA");
-		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_renderRt), GraphicsRenderPassTargetDesc(m_runCtx.m_tonemappedRt)});
+		pass.setRenderpassInfo({GraphicsRenderPassTargetDesc(m_runCtx.m_renderRt)});
 
 		pass.newTextureDependency(m_runCtx.m_renderRt, TextureUsageBit::kRtvDsvWrite);
-		pass.newTextureDependency(m_runCtx.m_tonemappedRt, TextureUsageBit::kRtvDsvWrite);
 
 		readUsage = TextureUsageBit::kSrvPixel;
 
@@ -117,12 +108,10 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		rgraphCtx.bindSrv(0, 0, getRenderer().getLightShading().getRt());
 		rgraphCtx.bindSrv(1, 0, m_runCtx.m_historyRt);
 		rgraphCtx.bindSrv(2, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
-		rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getRt());
 
 		if(g_preferComputeCVar)
 		{
-			rgraphCtx.bindUav(1, 0, m_runCtx.m_renderRt);
-			rgraphCtx.bindUav(2, 0, m_runCtx.m_tonemappedRt);
+			rgraphCtx.bindUav(0, 0, m_runCtx.m_renderRt);
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		}

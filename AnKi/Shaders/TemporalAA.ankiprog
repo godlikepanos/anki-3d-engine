@@ -12,7 +12,6 @@
 #if ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/Functions.hlsl>
 #	include <AnKi/Shaders/PackFunctions.hlsl>
-#	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 constexpr F32 kVarianceClippingGamma = 2.7f; // Variance clipping paper proposes 1.0
 constexpr F32 kBlendFactor = 1.0f / 16.0f;
@@ -22,18 +21,8 @@ Texture2D<RVec4> g_inputRt : register(t0);
 Texture2D<RVec4> g_historyRt : register(t1);
 Texture2D g_motionVectorsTex : register(t2);
 
-#	define TONEMAPPING_REGISTER u0
-#	include <AnKi/Shaders/TonemappingResources.hlsl>
-
 #	if ANKI_COMPUTE_SHADER
-RWTexture2D<RVec4> g_storageTex : register(u1);
-RWTexture2D<RVec4> g_tonemappedStorageTex : register(u2);
-#	else
-struct PixelOut
-{
-	RVec3 m_color : SV_TARGET0;
-	RVec3 m_tonemappedColor : SV_TARGET1;
-};
+RWTexture2D<RVec4> g_storageTex : register(u0);
 #	endif
 
 #	if YCBCR
@@ -47,7 +36,7 @@ struct PixelOut
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-PixelOut main(VertOut input)
+RVec3 main(VertOut input): SV_Target0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
@@ -109,15 +98,11 @@ PixelOut main(VertOut input)
 #	if YCBCR
 	outColor = yCbCrToRgb(outColor);
 #	endif
-	const Vec3 tonemapped = linearToSRgb(tonemap<F32>(outColor, readExposureAndAverageLuminance().x));
+
 #	if ANKI_COMPUTE_SHADER
 	g_storageTex[svDispatchThreadId.xy] = RVec4(outColor, 0.0);
-	g_tonemappedStorageTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
 #	else
-	PixelOut output;
-	output.m_color = outColor;
-	output.m_tonemappedColor = tonemapped;
-	return output;
+	return outColor;
 #	endif
 }
 #endif // ANKI_COMPUTE_SHADER || ANKI_PIXEL_SHADER

@@ -103,7 +103,7 @@ RVec3 main(VertOut input) : SV_TARGET0
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(-1, +1)).rgb * weight;
 	color += g_inTex.SampleLevel(g_linearAnyClampSampler, uv, 0.0, IVec2(+1, -1)).rgb * weight;
 
-	color = tonemap(color, readExposureAndAverageLuminance().y, g_consts.m_threshold) * g_consts.m_scale;
+	color = tonemap<F32>(color, readExposureAndAverageLuminance<F32>().y, g_consts.m_threshold) * g_consts.m_scale;
 
 #	if ANKI_COMPUTE_SHADER
 	g_storageTex[svDispatchThreadId] = RVec4(color, 0.0);

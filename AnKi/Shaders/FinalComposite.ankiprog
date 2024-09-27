@@ -3,9 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki mutator FILM_GRAIN 0 1
-#pragma anki mutator BLOOM_ENABLED 0 1
-#pragma anki mutator DBG_ENABLED 0 1
+#pragma anki mutator BLOOM 0 1
+#pragma anki mutator DBG 0 1
+#pragma anki mutator SHARPEN 0 1
 
 #pragma anki technique vert pixel
 
@@ -15,16 +18,16 @@
 #	include <AnKi/Shaders/Functions.hlsl>
 
 SamplerState g_linearAnyClampSampler : register(s0);
-SamplerState g_trilinearRepeatSampler : register(s1);
-Texture2D<RVec4> g_lightShadingRt : register(t0);
-Texture2D<RVec4> g_ppsBloomLfRt : register(t1);
-Texture3D<RVec4> g_lut : register(t2);
-#	if DBG_ENABLED
-Texture2D<RVec4> g_dbgOutlineRt : register(t3);
+Texture2D<Vec4> g_lightShadingRt : register(t0);
+Texture2D<Vec4> g_ppsBloomLfRt : register(t1);
+#	if DBG
+Texture2D<Vec4> g_dbgOutlineRt : register(t2);
 #	endif
 
 struct Constants
 {
+	UVec4 m_fsrConsts0;
+
 	F32 m_filmGrainStrength;
 	U32 m_frameCount;
 	U32 m_padding1;
@@ -32,42 +35,55 @@ struct Constants
 };
 ANKI_FAST_CONSTANTS(Constants, g_consts)
 
-RVec3 colorGrading(RVec3 color)
+// FSR begin
+#	define A_GPU 1
+#	define A_HLSL 1
+#	define A_HALF 1
+#	include <ThirdParty/FidelityFX/ffx_a.h>
+
+AH4 FsrRcasLoadH(ASW2 p)
 {
-	Vec3 lutSize;
-	g_lut.GetDimensions(lutSize.x, lutSize.y, lutSize.y);
-
-	const RVec3 lutScale = ((lutSize.x - 1.0) / lutSize.x).xxx;
-	const RVec3 lutOffset = (1.0 / (2.0 * lutSize.x)).xxx;
-
-	color = min(color, RVec3(1.0, 1.0, 1.0));
-	const RVec3 lutCoords = color * lutScale + lutOffset;
-	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
+	return AH4(g_lightShadingRt.Load(IVec3(p, 0)));
 }
 
-RVec4 main(VertOut input) : SV_TARGET0
+void FsrRcasInputH(inout AH1 r, inout AH1 g, inout AH1 b)
+{
+	ANKI_MAYBE_UNUSED(r);
+	ANKI_MAYBE_UNUSED(g);
+	ANKI_MAYBE_UNUSED(b);
+}
+#	define FSR_RCAS_H 1
+#	include <ThirdParty/FidelityFX/ffx_fsr1.h>
+// FSR end
+
+Vec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
 	ANKI_MAYBE_UNUSED(uv);
-	RVec3 outColor = outColor = g_lightShadingRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 
-#	if BLOOM_ENABLED
-	const RVec3 bloom = g_ppsBloomLfRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
-	outColor += bloom;
+	HVec3 outColor;
+
+#	if SHARPEN
+	FsrRcasH(outColor.r, outColor.g, outColor.b, input.m_svPosition.xy, g_consts.m_fsrConsts0);
+#	else
+	outColor = g_lightShadingRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
 #	endif
 
-	outColor = colorGrading(outColor);
+#	if BLOOM
+	const HVec3 bloom = g_ppsBloomLfRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0).rgb;
+	outColor += bloom;
+#	endif
 
 #	if FILM_GRAIN
 	const F32 dt = 1.0;
 	outColor = filmGrain<F32>(outColor, uv, g_consts.m_filmGrainStrength, F32(g_consts.m_frameCount % 0xFFFFu) * dt);
 #	endif
 
-#	if DBG_ENABLED
-	const RVec4 dbg = g_dbgOutlineRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0);
+#	if DBG
+	const HVec4 dbg = g_dbgOutlineRt.SampleLevel(g_linearAnyClampSampler, uv, 0.0);
 	outColor = lerp(outColor, dbg.rgb, dbg.a);
 #	endif
 
-	return RVec4(outColor, 0.0);
+	return Vec4(outColor, 0.0);
 }
 #endif // ANKI_PIXEL_SHADER

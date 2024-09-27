@@ -6,7 +6,6 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
-#include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Dbg.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/HzbGenerator.h>

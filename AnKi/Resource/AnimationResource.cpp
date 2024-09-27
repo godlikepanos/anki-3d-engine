@@ -10,8 +10,6 @@ namespace anki {
 
 Error AnimationResource::load(const ResourceFilename& filename, [[maybe_unused]] Bool async)
 {
-	XmlElement el;
-
 	m_startTime = kMaxSecond;
 	Second maxTime = kMinSecond;
 

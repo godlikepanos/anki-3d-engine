@@ -6,7 +6,6 @@
 #include <AnKi/Renderer/FinalComposite.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/Bloom.h>
-#include <AnKi/Renderer/Scale.h>
 #include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -17,20 +16,36 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/CVarSet.h>
 
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-function"
+#	pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#elif ANKI_COMPILER_MSVC
+#	pragma warning(push)
+#	pragma warning(disable : 4505)
+#endif
+#define A_CPU
+#include <ThirdParty/FidelityFX/ffx_a.h>
+#include <ThirdParty/FidelityFX/ffx_fsr1.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#elif ANKI_COMPILER_MSVC
+#	pragma warning(pop)
+#endif
+
 namespace anki {
 
 Error FinalComposite::initInternal()
 {
 	ANKI_R_LOGV("Initializing final composite");
 
-	ANKI_CHECK(loadColorGradingTextureImage("EngineAssets/DefaultLut.ankitex"));
-
 	// Progs
 	for(MutatorValue dbg = 0; dbg < 2; ++dbg)
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/FinalComposite.ankiprogbin",
-									 {{"FILM_GRAIN", (g_filmGrainStrengthCVar > 0.0) ? 1 : 0}, {"BLOOM_ENABLED", 1}, {"DBG_ENABLED", dbg}}, m_prog,
-									 m_grProgs[dbg]));
+		ANKI_CHECK(loadShaderProgram(
+			"ShaderBinaries/FinalComposite.ankiprogbin",
+			{{"FILM_GRAIN", (g_filmGrainCVar > 0.0) ? 1 : 0}, {"BLOOM", 1}, {"DBG", dbg}, {"SHARPEN", MutatorValue(g_sharpnessCVar > 0.0)}}, m_prog,
+			m_grProgs[dbg]));
 	}
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeRenderTarget.ankiprogbin", m_defaultVisualizeRenderTargetProg,
@@ -59,16 +74,6 @@ Error FinalComposite::init()
 	return err;
 }
 
-Error FinalComposite::loadColorGradingTextureImage(CString filename)
-{
-	m_lut.reset(nullptr);
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(filename, m_lut));
-	ANKI_ASSERT(m_lut->getWidth() == m_lut->getHeight());
-	ANKI_ASSERT(m_lut->getWidth() == m_lut->getDepth());
-
-	return Error::kNone;
-}
-
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RFinalComposite);
@@ -95,7 +100,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
 	}
 
-	pass.newTextureDependency((g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getScale().getTonemappedRt(),
+	pass.newTextureDependency((g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getTonemapping().getRt(),
 							  TextureUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getBloom().getBloomRt(), TextureUsageBit::kSrvPixel);
 
@@ -141,21 +146,36 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		if(!hasDebugRt)
 		{
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 
-			rgraphCtx.bindSrv(
-				0, 0, (g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getScale().getTonemappedRt());
+			rgraphCtx.bindSrv(0, 0,
+							  (g_motionBlurSampleCountCVar != 0) ? getRenderer().getMotionBlur().getRt() : getRenderer().getTonemapping().getRt());
 
 			rgraphCtx.bindSrv(1, 0, getRenderer().getBloom().getBloomRt());
-			cmdb.bindSrv(2, 0, TextureView(&m_lut->getTexture(), TextureSubresourceDesc::all()));
 
 			if(dbgEnabled)
 			{
-				rgraphCtx.bindSrv(3, 0, getRenderer().getDbg().getRt());
+				rgraphCtx.bindSrv(2, 0, getRenderer().getDbg().getRt());
 			}
 
-			const UVec4 pc(floatBitsToUint(g_filmGrainStrengthCVar), getRenderer().getFrameCount() & kMaxU32, 0, 0);
-			cmdb.setFastConstants(&pc, sizeof(pc));
+			struct Constants
+			{
+				UVec4 m_fsrConsts0;
+
+				F32 m_filmGrainStrength;
+				U32 m_frameCount;
+				U32 m_padding1;
+				U32 m_padding2;
+			} consts;
+
+			F32 sharpness = g_sharpnessCVar; // [0, 1]
+			sharpness *= 3.0f; // [0, 3]
+			sharpness = 3.0f - sharpness; // [3, 0], RCAS translates 0 to max sharpness
+			FsrRcasCon(&consts.m_fsrConsts0[0], sharpness);
+
+			consts.m_filmGrainStrength = g_filmGrainCVar;
+			consts.m_frameCount = getRenderer().getFrameCount() & kMaxU32;
+
+			cmdb.setFastConstants(&consts, sizeof(consts));
 		}
 		else
 		{

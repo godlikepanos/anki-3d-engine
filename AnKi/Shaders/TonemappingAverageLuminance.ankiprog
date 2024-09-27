@@ -77,7 +77,7 @@ groupshared F32 s_avgLum[THREAD_COUNT_X * THREAD_COUNT_Y];
 		const F32 crntLum = s_avgLum[0];
 
 #if 1
-		const F32 prevLum = readExposureAndAverageLuminance().y;
+		const F32 prevLum = readExposureAndAverageLuminance<F32>().y;
 
 		// Lerp between previous and new L value
 		const F32 interpolationFactor = 0.05;

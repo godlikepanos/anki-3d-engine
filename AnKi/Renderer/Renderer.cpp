@@ -38,7 +38,7 @@
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Renderer/Scale.h>
+#include <AnKi/Renderer/TemporalUpscaler.h>
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/ClusterBinning.h>
@@ -216,7 +216,7 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 
 		sinit.setName("TrilinearRepeatAnisoRezScalingBias");
 		F32 scalingMipBias = log2(F32(m_internalResolution.x()) / F32(m_postProcessResolution.x()));
-		if(getScale().getUsingGrUpscaler())
+		if(getTemporalUpscaler().getEnabled())
 		{
 			// DLSS wants more bias
 			scalingMipBias -= 1.0f;
@@ -289,15 +289,18 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_ssao->populateRenderGraph(ctx);
 	m_forwardShading->populateRenderGraph(ctx); // This may feel out of place but it's only visibility. Keep it just before light shading
 	m_lightShading->populateRenderGraph(ctx);
-	if(!getScale().getUsingGrUpscaler())
+	if(getTemporalUpscaler().getEnabled())
+	{
+		m_temporalUpscaler->populateRenderGraph(ctx);
+	}
+	else
 	{
 		m_temporalAA->populateRenderGraph(ctx);
 	}
 	m_vrsSriGeneration->populateRenderGraph(ctx);
-	m_scale->populateRenderGraph(ctx);
+	m_tonemapping->populateRenderGraph(ctx);
 	m_motionBlur->populateRenderGraph(ctx);
 	m_bloom2->populateRenderGraph(ctx);
-	m_tonemapping->populateRenderGraph(ctx);
 	m_dbg->populateRenderGraph(ctx);
 
 	m_finalComposite->populateRenderGraph(ctx);

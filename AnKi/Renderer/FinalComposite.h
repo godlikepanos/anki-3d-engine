@@ -13,7 +13,8 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<F32> g_filmGrainStrengthCVar("R", "FilmGrainStrength", 16.0f, 0.0f, 250.0f, "Film grain strength");
+inline NumericCVar<F32> g_filmGrainCVar("R", "FilmGrain", 16.0f, 0.0f, 250.0f, "Film grain strength");
+inline NumericCVar<F32> g_sharpnessCVar("R", "Sharpness", (ANKI_PLATFORM_MOBILE) ? 0.0f : 0.8f, 0.0f, 1.0f, "Sharpen the image. It's a factor");
 
 /// Post-processing stage.
 class FinalComposite : public RendererObject
@@ -28,9 +29,6 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	/// Load the color grading texture.
-	Error loadColorGradingTextureImage(CString filename);
-
 	RenderTargetHandle getRenderTarget() const
 	{
 		return m_runCtx.m_rt;
@@ -42,8 +40,6 @@ private:
 
 	ShaderProgramResourcePtr m_defaultVisualizeRenderTargetProg;
 	ShaderProgramPtr m_defaultVisualizeRenderTargetGrProg;
-
-	ImageResourcePtr m_lut; ///< Color grading lookup texture.
 
 	RenderTargetDesc m_rtDesc;
 

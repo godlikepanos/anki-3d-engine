@@ -6,7 +6,7 @@
 #include <AnKi/Renderer/MotionBlur.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/MotionVectors.h>
-#include <AnKi/Renderer/TemporalAA.h>
+#include <AnKi/Renderer/Tonemapping.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Util/Tracer.h>
 
@@ -117,7 +117,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 			writeUsage = TextureUsageBit::kRtvDsvWrite;
 		}
 
-		ppass->newTextureDependency(getRenderer().getTemporalAA().getTonemappedRt(), readUsage);
+		ppass->newTextureDependency(getRenderer().getTonemapping().getRt(), readUsage);
 		ppass->newTextureDependency(getRenderer().getGBuffer().getDepthRt(), readUsage);
 		ppass->newTextureDependency(maxNeighbourVelRt, readUsage);
 		ppass->newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), readUsage);
@@ -128,7 +128,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_reconstructGrProg.get());
 
-			rgraphCtx.bindSrv(0, 0, getRenderer().getTemporalAA().getTonemappedRt());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getTonemapping().getRt());
 			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(2, 0, maxNeighbourVelRt);
 			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());

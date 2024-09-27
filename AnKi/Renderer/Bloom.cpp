@@ -193,7 +193,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, m_runCtx.m_pyramidRt, inputTexSubresource);
-			rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getRt());
+			rgraphCtx.bindUav(0, 0, getRenderer().getTonemapping().getExposureAndAvgLuminanceRt());
 
 			const Vec4 consts(g_bloomThresholdCVar, g_bloomScaleCVar, 0.0f, 0.0f);
 			cmdb.setFastConstants(&consts, sizeof(consts));

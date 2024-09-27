@@ -5,6 +5,8 @@
 
 // Does tonemapping
 
+#pragma anki 16bit
+
 #pragma anki technique vert pixel comp
 
 #include <AnKi/Shaders/QuadVert.hlsl>
@@ -13,46 +15,53 @@
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
 SamplerState g_nearestAnyClampSampler : register(s0);
-Texture2D<RVec4> g_inputRt : register(t0);
+SamplerState g_trilinearRepeatSampler : register(s1);
+Texture2D<Vec4> g_inputRt : register(t0);
+Texture3D<Vec4> g_lut : register(t1);
 
 #	define TONEMAPPING_REGISTER u0
 #	include <AnKi/Shaders/TonemappingResources.hlsl>
 
 #	if ANKI_COMPUTE_SHADER
-RWTexture2D<RVec4> g_storageTex : register(u1);
+RWTexture2D<Vec4> g_storageTex : register(u1);
 #		define THREADGROUP_SIZE_SQRT 8
 #	endif
 
-struct Constants
+HVec3 colorGrading(HVec3 color)
 {
-	Vec2 m_viewportSizeOverOne;
-	UVec2 m_viewportSize;
-};
+	Vec3 lutSize;
+	g_lut.GetDimensions(lutSize.x, lutSize.y, lutSize.y);
 
-ANKI_FAST_CONSTANTS(Constants, g_consts)
+	const HVec3 lutScale = ((lutSize.x - 1.0) / lutSize.x).xxx;
+	const HVec3 lutOffset = (1.0 / (2.0 * lutSize.x)).xxx;
+
+	color = min(color, HVec3(1.0, 1.0, 1.0));
+	const HVec3 lutCoords = color * lutScale + lutOffset;
+	return g_lut.SampleLevel(g_trilinearRepeatSampler, lutCoords, 0.0).rgb;
+}
 
 #	if ANKI_COMPUTE_SHADER
 [numthreads(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec3 main(VertOut input) : SV_TARGET0
+Vec3 main(VertOut input) : SV_TARGET0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER
-	if(skipOutOfBoundsInvocations(UVec2(THREADGROUP_SIZE_SQRT, THREADGROUP_SIZE_SQRT), g_consts.m_viewportSize, svDispatchThreadId.xy))
-	{
-		return;
-	}
+	Vec2 texSize;
+	g_storageTex.GetDimensions(texSize.x, texSize.y);
 
-	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) * g_consts.m_viewportSizeOverOne;
+	const Vec2 uv = (Vec2(svDispatchThreadId.xy) + 0.5f) / texSize;
 #	else
 	const Vec2 uv = input.m_uv;
 #	endif
 
-	const RVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;
-	const Vec3 tonemapped = linearToSRgb(tonemap<RF32>(hdr, readExposureAndAverageLuminance().x));
+	const HVec3 hdr = g_inputRt.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f).rgb;
+	HVec3 tonemapped = linearToSRgb(tonemap<F16>(hdr, readExposureAndAverageLuminance<F16>().x));
+
+	tonemapped = colorGrading(tonemapped);
 
 #	if ANKI_COMPUTE_SHADER
-	g_storageTex[svDispatchThreadId.xy] = RVec4(tonemapped, 0.0);
+	g_storageTex[svDispatchThreadId.xy] = Vec4(tonemapped, 0.0);
 #	else
 	return tonemapped;
 #	endif
