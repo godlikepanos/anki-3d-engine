@@ -519,7 +519,7 @@ D3D12_TEXTURE_BARRIER TextureImpl::computeBarrierInfo(TextureUsageBit before, Te
 	ANKI_ASSERT((m_usage & after) == after);
 	ANKI_ASSERT(subresource == TextureView(this, subresource).getSubresource() && "Should have been sanitized");
 
-	D3D12_TEXTURE_BARRIER barrier;
+	D3D12_TEXTURE_BARRIER barrier = {};
 
 	computeBarrierInfo(before, barrier.SyncBefore, barrier.AccessBefore);
 	computeBarrierInfo(after, barrier.SyncAfter, barrier.AccessAfter);
