@@ -106,7 +106,8 @@ private:
 class RingDescriptorAllocator
 {
 public:
-	void init(D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart, D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart, U32 descriptorSize, U32 descriptorCount);
+	void init(D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart, D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart, U32 descriptorSize, U32 descriptorCount,
+			  CString name);
 
 	/// Allocate for this frame. Memory will be reclaimed a few frames in the future.
 	/// @note Thread-safe.
@@ -124,7 +125,9 @@ private:
 
 	Atomic<U64> m_increment = 0;
 
-	U64 m_incrementAtFrameStart = 0;
+	Atomic<U64> m_incrementAtFrameStart = 0;
+
+	GrString m_name;
 };
 
 /// A container of all descriptor heaps.
@@ -198,6 +201,13 @@ public:
 		ANKI_ASSERT(handle.m_heapGpuStart.ptr == m_gpuPersistent.m_cbvSrvUav.m_gpuHeapStart.ptr);
 		const PtrSize idx = (handle.m_cpuHandle.ptr - m_gpuPersistent.m_cbvSrvUav.m_cpuHeapStart.ptr) / m_gpuPersistent.m_cbvSrvUav.m_descriptorSize;
 		return U32(idx);
+	}
+
+	/// @note Thread-safe.
+	void endFrame()
+	{
+		m_gpuRing.m_cbvSrvUav.endFrame();
+		m_gpuRing.m_sampler.endFrame();
 	}
 
 private:

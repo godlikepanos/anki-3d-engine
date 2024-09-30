@@ -70,7 +70,7 @@ Texture2D<RVec4> g_inTex : register(t0);
 
 struct Consts
 {
-	RF32 m_threshold;
+	F32 m_threshold;
 	F32 m_scale;
 	F32 m_padding0;
 	F32 m_padding1;

@@ -8,7 +8,7 @@
 
 namespace anki {
 
-static Error createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, U32 descriptorCount,
+static Error createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, U32 descriptorCount, CString name,
 								  ID3D12DescriptorHeap*& heap, D3D12_CPU_DESCRIPTOR_HANDLE& cpuHeapStart, D3D12_GPU_DESCRIPTOR_HANDLE& gpuHeapStart,
 								  U32& descriptorSize)
 {
@@ -18,6 +18,12 @@ static Error createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIP
 	heapDesc.Type = type;
 	heapDesc.Flags = flags;
 	ANKI_D3D_CHECK(getDevice().CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heap)));
+
+	ANKI_ASSERT(name.getLength() > 0);
+	GrDynamicArray<WChar> wstr;
+	wstr.resize(name.getLength() + 1);
+	name.toWideChars(wstr.getBegin(), wstr.getSize());
+	heap->SetName(wstr.getBegin());
 
 	cpuHeapStart = heap->GetCPUDescriptorHandleForHeapStart();
 	if(flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
@@ -107,7 +113,7 @@ void PersistentDescriptorAllocator::free(DescriptorHeapHandle& handle)
 }
 
 void RingDescriptorAllocator::init(D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart, D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart, U32 descriptorSize,
-								   U32 descriptorCount)
+								   U32 descriptorCount, CString name)
 {
 	ANKI_ASSERT(descriptorSize > 0);
 	ANKI_ASSERT(descriptorCount > 0);
@@ -117,20 +123,31 @@ void RingDescriptorAllocator::init(D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart, D3D
 	m_gpuHeapStart = gpuHeapStart;
 	m_descriptorSize = descriptorSize;
 	m_descriptorCount = descriptorCount;
+	m_name = name;
 }
 
 DescriptorHeapHandle RingDescriptorAllocator::allocate(U32 descriptorCount)
 {
+	ANKI_ASSERT(descriptorCount > 0);
 	ANKI_ASSERT(m_descriptorSize > 0);
 
 	U32 firstDescriptor;
 	Bool allocationPassesEnd = false;
+	U64 increment;
 	do
 	{
-		firstDescriptor = m_increment.fetchAdd(descriptorCount) % m_descriptorCount;
+		increment = m_increment.fetchAdd(descriptorCount);
+		firstDescriptor = increment % m_descriptorCount;
 
 		allocationPassesEnd = firstDescriptor + descriptorCount > m_descriptorCount;
 	} while(allocationPassesEnd);
+
+	const U64 frameIncrementEnd = m_incrementAtFrameStart.load() + m_descriptorCount / (kMaxFramesInFlight + 1);
+
+	if(increment >= frameIncrementEnd)
+	{
+		ANKI_D3D_LOGW("Allocated too many descriptors from the ring buffer %s. Need to increase the limits", m_name.cstr());
+	}
 
 	DescriptorHeapHandle out;
 	out.m_cpuHandle.ptr = (m_cpuHeapStart.ptr) ? (m_cpuHeapStart.ptr + firstDescriptor * m_descriptorSize) : 0;
@@ -146,17 +163,7 @@ DescriptorHeapHandle RingDescriptorAllocator::allocate(U32 descriptorCount)
 
 void RingDescriptorAllocator::endFrame()
 {
-	const U64 crntIncrement = m_increment.load();
-
-	const U32 descriptorsAllocatedThisFrame = U32(crntIncrement - m_incrementAtFrameStart);
-
-	const U32 maxFramesInFlight = kMaxFramesInFlight + 1; // Be very conservative
-	if(descriptorsAllocatedThisFrame > m_descriptorCount / maxFramesInFlight)
-	{
-		ANKI_D3D_LOGW("Allocated too many descriptors this frame");
-	}
-
-	m_incrementAtFrameStart = crntIncrement;
+	m_incrementAtFrameStart.store(m_increment.load());
 }
 
 DescriptorFactory::~DescriptorFactory()
@@ -170,26 +177,26 @@ DescriptorFactory::~DescriptorFactory()
 Error DescriptorFactory::init()
 {
 	// Init CPU descriptors first
-	auto createHeapAndAllocator = [this](D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, U16 descriptorCount,
+	auto createHeapAndAllocator = [this](D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, U16 descriptorCount, CString name,
 										 PersistentDescriptorAllocator& alloc) -> Error {
 		ID3D12DescriptorHeap* heap;
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHeapStart;
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart;
 		U32 descriptorSize;
-		ANKI_CHECK(createDescriptorHeap(type, flags, descriptorCount, heap, cpuHeapStart, gpuHeapStart, descriptorSize));
+		ANKI_CHECK(createDescriptorHeap(type, flags, descriptorCount, name, heap, cpuHeapStart, gpuHeapStart, descriptorSize));
 		alloc.init(cpuHeapStart, gpuHeapStart, descriptorSize, descriptorCount);
 		m_descriptorHeaps.emplaceBack(heap);
 		return Error::kNone;
 	};
 
 	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxCpuCbvSrvUavDescriptorsCVar,
-									  m_cpuPersistent.m_cbvSrvUav));
+									  "CPU CBV/SRV/UAV", m_cpuPersistent.m_cbvSrvUav));
 	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxCpuSamplerDescriptorsCVar,
-									  m_cpuPersistent.m_sampler));
-	ANKI_CHECK(
-		createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxRtvDescriptorsCVar, m_cpuPersistent.m_rtv));
-	ANKI_CHECK(
-		createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxDsvDescriptorsCVar, m_cpuPersistent.m_dsv));
+									  "CPU samplers", m_cpuPersistent.m_sampler));
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxRtvDescriptorsCVar, "CPU RTV",
+									  m_cpuPersistent.m_rtv));
+	ANKI_CHECK(createHeapAndAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_maxDsvDescriptorsCVar, "CPU DSV",
+									  m_cpuPersistent.m_dsv));
 
 	// Init GPU visible heaps
 	ID3D12DescriptorHeap* heap;
@@ -197,20 +204,20 @@ Error DescriptorFactory::init()
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHeapStart;
 	U32 descriptorSize;
 	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-									g_maxGpuCbvSrvUavDescriptorsCVar + g_maxBindlessSampledTextureCountCVar, heap, cpuHeapStart, gpuHeapStart,
-									descriptorSize));
+									g_maxGpuCbvSrvUavDescriptorsCVar + g_maxBindlessSampledTextureCountCVar, "GPU CBV/SRV/UAV", heap, cpuHeapStart,
+									gpuHeapStart, descriptorSize));
 	m_descriptorHeaps.emplaceBack(heap);
 
 	m_gpuPersistent.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, U16(g_maxBindlessSampledTextureCountCVar));
 
 	cpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
 	gpuHeapStart.ptr += descriptorSize * g_maxBindlessSampledTextureCountCVar;
-	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuCbvSrvUavDescriptorsCVar);
+	m_gpuRing.m_cbvSrvUav.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuCbvSrvUavDescriptorsCVar, "CBV/SRV/UAV");
 
 	ANKI_CHECK(createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, g_maxGpuSamplerDescriptorsCVar,
-									heap, cpuHeapStart, gpuHeapStart, descriptorSize));
+									"GPU samplers", heap, cpuHeapStart, gpuHeapStart, descriptorSize));
 	m_descriptorHeaps.emplaceBack(heap);
-	m_gpuRing.m_sampler.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuSamplerDescriptorsCVar);
+	m_gpuRing.m_sampler.init(cpuHeapStart, gpuHeapStart, descriptorSize, g_maxGpuSamplerDescriptorsCVar, "Samplers");
 
 	// Misc
 	for(D3D12_DESCRIPTOR_HEAP_TYPE type = D3D12_DESCRIPTOR_HEAP_TYPE(0); type < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
@@ -452,7 +459,7 @@ void DescriptorState::bindRootSignature(const RootSignature* rootSignature, Bool
 {
 	ANKI_ASSERT(rootSignature);
 
-	if(rootSignature == m_rootSignature)
+	if(m_rootSignature && rootSignature->m_hash == m_rootSignature->m_hash)
 	{
 		ANKI_ASSERT(m_rootSignatureNeedsRebinding == false);
 		return;
@@ -501,26 +508,37 @@ void DescriptorState::flush(ID3D12GraphicsCommandList& cmdList)
 		}
 
 		Space& stateSpace = m_spaces[spaceIdx];
-		Bool skip = true;
 
 		// Allocate descriptor memory (doesn't include holes)
-		if(stateSpace.m_cbvSrvUavDirty && rootSignatureSpace.m_cbvSrvUavCount)
 		{
-			stateSpace.m_cbvSrvUavHeapHandle = DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-																								   rootSignatureSpace.m_cbvSrvUavCount, true);
-			skip = false;
-		}
+			Bool skip = true;
 
-		if(stateSpace.m_samplersDirty && rootSignatureSpace.m_samplerCount)
-		{
-			stateSpace.m_samplerHeapHandle =
-				DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, rootSignatureSpace.m_samplerCount, true);
-			skip = false;
-		}
+			if(rootSignatureSpace.m_cbvSrvUavCount && (stateSpace.m_cbvSrvUavDirty || rootSignatureNeedsRebinding))
+			{
+				skip = false;
+			}
 
-		if(skip)
-		{
-			continue;
+			if(rootSignatureSpace.m_samplerCount && (stateSpace.m_samplersDirty || rootSignatureNeedsRebinding))
+			{
+				skip = false;
+			}
+
+			if(skip)
+			{
+				continue;
+			}
+
+			if(rootSignatureSpace.m_cbvSrvUavCount)
+			{
+				stateSpace.m_cbvSrvUavHeapHandle = DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+																									   rootSignatureSpace.m_cbvSrvUavCount, true);
+			}
+
+			if(rootSignatureSpace.m_samplerCount)
+			{
+				stateSpace.m_samplerHeapHandle =
+					DescriptorFactory::getSingleton().allocateTransient(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, rootSignatureSpace.m_samplerCount, true);
+			}
 		}
 
 		// Populate descriptors

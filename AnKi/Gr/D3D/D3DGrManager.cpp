@@ -38,6 +38,12 @@ namespace anki {
 static void NTAPI d3dDebugMessageCallback([[maybe_unused]] D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 										  [[maybe_unused]] D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext)
 {
+	if(id == D3D12_MESSAGE_ID_INVALID_BARRIER_ACCESS)
+	{
+		// Skip these for now
+		return;
+	}
+
 	if(!Logger::isAllocated())
 	{
 		printf("d3dDebugMessageCallback : %s", pDescription);
@@ -138,6 +144,7 @@ void GrManager::swapBuffers()
 	self.m_crntFrame = (self.m_crntFrame + 1) % self.m_frames.getSize();
 
 	FrameGarbageCollector::getSingleton().endFrame(presentFence.get());
+	DescriptorFactory::getSingleton().endFrame();
 }
 
 void GrManager::finish()

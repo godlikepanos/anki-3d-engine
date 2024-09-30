@@ -157,6 +157,9 @@ Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const Sh
 				c.m_descriptor.m_bindings[space][c.m_descriptor.m_bindingCounts[space]++] = bbinding;
 			}
 		}
+
+		// Sort again
+		std::sort(c.m_descriptor.m_bindings[space].getBegin(), c.m_descriptor.m_bindings[space].getBegin() + c.m_descriptor.m_bindingCounts[space]);
 	}
 
 	if(a.m_descriptor.m_fastConstantsSize != 0 && b.m_descriptor.m_fastConstantsSize != 0

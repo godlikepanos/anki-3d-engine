@@ -47,14 +47,14 @@ inline BoolCVar g_workGraphcsCVar("Gr", "WorkGraphs", false, "Enable or not Work
 inline NumericCVar<U32> g_maxBindlessSampledTextureCountCVar("Gr", "MaxBindlessSampledTextureCountCVar", 512, 16, kMaxU16);
 
 #if ANKI_GR_BACKEND_DIRECT3D
-inline NumericCVar<U16> g_maxRtvDescriptorsCVar("Gr", "MaxRvtDescriptors", 128, 8, kMaxU16, "Max number of RTVs");
-inline NumericCVar<U16> g_maxDsvDescriptorsCVar("Gr", "MaxDsvDescriptors", 128, 8, kMaxU16, "Max number of DSVs");
-inline NumericCVar<U16> g_maxCpuCbvSrvUavDescriptorsCVar("Gr", "MaxCpuCbvSrvUavDescriptors", 1024, 8, kMaxU16,
+inline NumericCVar<U16> g_maxRtvDescriptorsCVar("Gr", "MaxRvtDescriptors", 1024, 8, kMaxU16, "Max number of RTVs");
+inline NumericCVar<U16> g_maxDsvDescriptorsCVar("Gr", "MaxDsvDescriptors", 512, 8, kMaxU16, "Max number of DSVs");
+inline NumericCVar<U16> g_maxCpuCbvSrvUavDescriptorsCVar("Gr", "MaxCpuCbvSrvUavDescriptors", 16 * 1024, 8, kMaxU16,
 														 "Max number of CBV/SRV/UAV descriptors");
-inline NumericCVar<U16> g_maxCpuSamplerDescriptorsCVar("Gr", "MaxCpuSamplerDescriptors", 64, 8, kMaxU16, "Max number of sampler descriptors");
-inline NumericCVar<U16> g_maxGpuCbvSrvUavDescriptorsCVar("Gr", "MaxGpuCbvSrvUavDescriptors", 2 * 1024, 8, kMaxU16,
+inline NumericCVar<U16> g_maxCpuSamplerDescriptorsCVar("Gr", "MaxCpuSamplerDescriptors", 512, 8, kMaxU16, "Max number of sampler descriptors");
+inline NumericCVar<U16> g_maxGpuCbvSrvUavDescriptorsCVar("Gr", "MaxGpuCbvSrvUavDescriptors", 16 * 1024, 8, kMaxU16,
 														 "Max number of CBV/SRV/UAV descriptors");
-inline NumericCVar<U16> g_maxGpuSamplerDescriptorsCVar("Gr", "MaxGpuSamplerDescriptors", 128, 8, kMaxU16, "Max number of sampler descriptors");
+inline NumericCVar<U16> g_maxGpuSamplerDescriptorsCVar("Gr", "MaxGpuSamplerDescriptors", 2 * 1024, 8, kMaxU16, "Max number of sampler descriptors");
 
 inline BoolCVar g_dredCVar("Gr", "Dred", false, "Enable DRED");
 #else
