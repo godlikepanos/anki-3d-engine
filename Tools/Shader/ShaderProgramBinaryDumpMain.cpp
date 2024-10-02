@@ -7,8 +7,10 @@
 #include <AnKi/ShaderCompiler/ShaderDump.h>
 #include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
 #include <AnKi/ShaderCompiler/RadeonGpuAnalyzer.h>
+#include <AnKi/ShaderCompiler/Dxc.h>
 #include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Util/System.h>
+#include <ThirdParty/SpirvCross/spirv.hpp>
 
 using namespace anki;
 
@@ -171,13 +173,33 @@ Error dumpStats(const ShaderBinary& bin)
 
 					const ShaderBinaryCodeBlock& codeBlock = ctx.m_bin->m_codeBlocks[codeblockIdx];
 
+					// Rewrite spir-v because of the decorations we ask DXC to put
+					Bool bRequiresMeshShaders = false;
+					DynamicArray<U8> newSpirv;
+					newSpirv.resize(codeBlock.m_binary.getSize());
+					memcpy(newSpirv.getBegin(), codeBlock.m_binary.getBegin(), codeBlock.m_binary.getSizeInBytes());
+					visitSpirv(WeakArray<U32>(reinterpret_cast<U32*>(newSpirv.getBegin()), newSpirv.getSizeInBytes() / sizeof(U32)),
+							   [&](U32 cmd, WeakArray<U32> instructions) {
+								   if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet
+									  && instructions[2] == kDxcVkBindlessRegisterSpace)
+								   {
+									   // Bindless set, rewrite its set
+									   instructions[2] = kMaxRegisterSpaces;
+								   }
+								   else if(cmd == spv::OpCapability && instructions[0] == spv::CapabilityMeshShadingEXT)
+								   {
+									   bRequiresMeshShaders = true;
+								   }
+							   });
+
 					// Arm stats
 					MaliOfflineCompilerOut maliocOut;
 					Error err = Error::kNone;
 
-					if(shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute)
+					if((shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute)
+					   && !bRequiresMeshShaders)
 					{
-						err = runMaliOfflineCompiler(codeBlock.m_binary, shaderType, maliocOut);
+						err = runMaliOfflineCompiler(newSpirv, shaderType, maliocOut);
 
 						if(err)
 						{
@@ -190,7 +212,7 @@ Error dumpStats(const ShaderBinary& bin)
 					// AMD
 					RgaOutput rgaOut = {};
 #if 0
-					err = runRadeonGpuAnalyzer(codeBlock.m_binary, shaderType, rgaOut);
+					err = runRadeonGpuAnalyzer(newSpirv, shaderType, rgaOut);
 					if(err)
 					{
 						ANKI_LOGE("Radeon GPU Analyzer compiler failed");

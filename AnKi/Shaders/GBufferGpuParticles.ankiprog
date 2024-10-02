@@ -30,14 +30,6 @@ struct VertOut
 	Vec4 m_svPosition : SV_POSITION;
 };
 
-struct PixelOut
-{
-	Vec4 m_color0 : SV_TARGET0;
-	Vec4 m_color1 : SV_TARGET1;
-	Vec4 m_color2 : SV_TARGET2;
-	Vec2 m_color3 : SV_TARGET3;
-};
-
 #if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
@@ -82,12 +74,12 @@ VertOut main(VertIn input)
 #if ANKI_PIXEL_SHADER
 #	include <AnKi/Shaders/PackFunctions.hlsl>
 
-PixelOut main(VertOut input)
+GBufferPixelOut main(VertOut input)
 {
-	PixelOut output;
+	GBufferPixelOut output;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
 
-	GbufferInfo g;
+	GbufferInfo<RF32> g;
 	g.m_diffuse = localConstants.m_diffColor;
 
 	const Mat3x4 camTrf = g_globalConstants.m_cameraTransform;

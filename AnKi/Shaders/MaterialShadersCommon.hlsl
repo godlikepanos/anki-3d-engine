@@ -61,6 +61,14 @@ Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_S
 
 #undef ANKI_REG
 
+struct GBufferPixelOut
+{
+	RVec4 m_color0 : SV_TARGET0;
+	RVec4 m_color1 : SV_TARGET1;
+	RVec4 m_color2 : SV_TARGET2;
+	Vec2 m_color3 : SV_TARGET3;
+};
+
 UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 {
 	UnpackedMeshVertex v;
@@ -99,6 +107,6 @@ UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 vertexIndex
 
 Bool cullBackfaceMeshlet(MeshletBoundingVolume meshlet, Mat3x4 worldTransform, Vec3 cameraWorldPos)
 {
-	const Vec4 coneDirAndAng = unpackSnorm4x8(meshlet.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
+	const Vec4 coneDirAndAng = unpackSnorm4x8<F32>(meshlet.m_coneDirection_R8G8B8_Snorm_cosHalfAngle_R8_Snorm);
 	return cullBackfaceMeshlet(coneDirAndAng.xyz, coneDirAndAng.w, meshlet.m_coneApex, worldTransform, cameraWorldPos);
 }

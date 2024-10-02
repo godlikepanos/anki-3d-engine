@@ -13,6 +13,79 @@
 #	include <AnKi/Shaders/Include/Common.h>
 #endif
 
+// Common constants
+constexpr F32 kEpsilonF32 = 0.000001f;
+#if ANKI_SUPPORTS_16BIT_TYPES
+constexpr F16 kEpsilonF16 = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee
+#endif
+constexpr RF32 kEpsilonRF32 = 0.0001f;
+
+template<typename T>
+T getEpsilon();
+
+template<>
+F32 getEpsilon()
+{
+	return kEpsilonF32;
+}
+
+#if ANKI_SUPPORTS_16BIT_TYPES
+template<>
+F16 getEpsilon()
+{
+	return kEpsilonF16;
+}
+#endif
+
+#if !ANKI_FORCE_FULL_FP_PRECISION
+template<>
+RF32 getEpsilon()
+{
+	return kEpsilonRF32;
+}
+#endif
+
+constexpr U32 kMaxU32 = 0xFFFFFFFFu;
+constexpr F32 kMaxF32 = 3.402823e+38;
+constexpr RF32 kMaxRF32 = 65504.0f; // Max half float value according to wikipedia
+#if ANKI_SUPPORTS_16BIT_TYPES
+constexpr F16 kMaxF16 = (F16)65504.0;
+#endif
+
+template<typename T>
+T getMaxNumericLimit();
+
+template<>
+F32 getMaxNumericLimit()
+{
+	return kMaxF32;
+}
+
+#if !ANKI_FORCE_FULL_FP_PRECISION
+template<>
+RF32 getMaxNumericLimit()
+{
+	return kMaxRF32;
+}
+#endif
+
+#if ANKI_SUPPORTS_16BIT_TYPES
+template<>
+F16 getMaxNumericLimit()
+{
+	return kMaxF16;
+}
+#endif
+
+template<>
+U32 getMaxNumericLimit()
+{
+	return kMaxU32;
+}
+
+constexpr F32 kPi = 3.14159265358979323846f;
+constexpr F32 kNaN = 0.0f / 0.0f;
+
 #if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_FAST_CONSTANTS(type, var) [[vk::push_constant]] ConstantBuffer<type> var;
 #else

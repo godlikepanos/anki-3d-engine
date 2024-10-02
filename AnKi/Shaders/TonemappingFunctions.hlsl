@@ -11,19 +11,19 @@
 template<typename T>
 T log10(T x)
 {
-	return log(x) / log((T)10.0);
+	return log(x) / log(T(10));
 }
 
 template<typename T>
 vector<T, 3> computeLuminance(vector<T, 3> color)
 {
-	return max(dot(vector<T, 3>(0.30, 0.59, 0.11), color), T(kEpsilonRF32));
+	return max(dot(vector<T, 3>(0.30, 0.59, 0.11), color), getEpsilon<T>());
 }
 
 template<typename T>
 T computeExposure(T avgLum, T threshold)
 {
-	const T keyValue = T(1.03) - (T(2.0) / (T(2.0) + log10(avgLum + T(1.0))));
+	const T keyValue = T(1.03) - (T(2) / (T(2) + log10(avgLum + T(1))));
 	const T linearExposure = (keyValue / avgLum);
 	T exposure = log2(linearExposure);
 
@@ -41,12 +41,12 @@ vector<T, 3> computeExposedColor(vector<T, 3> color, vector<T, 3> avgLum, vector
 template<typename T>
 vector<T, 3> tonemapUncharted2(vector<T, 3> color)
 {
-	const T A = 0.15;
-	const T B = 0.50;
-	const T C = 0.10;
-	const T D = 0.20;
-	const T E = 0.02;
-	const T F = 0.30;
+	constexpr T A = 0.15;
+	constexpr T B = 0.50;
+	constexpr T C = 0.10;
+	constexpr T D = 0.20;
+	constexpr T E = 0.02;
+	constexpr T F = 0.30;
 
 	return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 }
@@ -75,8 +75,8 @@ vector<T, 3> invertTonemapACESFilm(vector<T, 3> x)
 	constexpr T kAcesE = 0.14;
 
 	vector<T, 3> res = kAcesD * x - kAcesB;
-	res += sqrt(x * x * (kAcesD * kAcesD - T(4.0) * kAcesE * kAcesC) + x * (T(4.0) * kAcesE * kAcesA - T(2.0) * kAcesB * kAcesD) + kAcesB * kAcesB);
-	res /= T(2.0) * kAcesA - T(2.0) * kAcesC * x;
+	res += sqrt(x * x * (kAcesD * kAcesD - T(4) * kAcesE * kAcesC) + x * (T(4) * kAcesE * kAcesA - T(2) * kAcesB * kAcesD) + kAcesB * kAcesB);
+	res /= T(2) * kAcesA - T(2) * kAcesC * x;
 
 	return res;
 }
@@ -92,7 +92,7 @@ template<typename T>
 vector<T, 3> invertTonemap(vector<T, 3> color, T exposure)
 {
 	color = invertTonemapACESFilm(color);
-	color /= max(T(kEpsilonRF32), exposure);
+	color /= max(getEpsilon<T>(), exposure);
 	return color;
 }
 
@@ -108,12 +108,12 @@ template<typename T>
 vector<T, 3> reinhardTonemap(vector<T, 3> colour)
 {
 	// rgb / (1 + max(rgb))
-	return colour / (T(1.0) + max(max(colour.r, colour.g), colour.b));
+	return colour / (T(1) + max(max(colour.r, colour.g), colour.b));
 }
 
 template<typename T>
 vector<T, 3> invertReinhardTonemap(vector<T, 3> colour)
 {
 	// rgb / (1 - max(rgb))
-	return colour / max(T(1.0 / 32768.0), T(1.0) - max(max(colour.r, colour.g), colour.b));
+	return colour / max(T(1.0 / 32768.0), T(1) - max(max(colour.r, colour.g), colour.b));
 }

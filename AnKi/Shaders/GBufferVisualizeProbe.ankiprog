@@ -168,7 +168,7 @@ PixelOut main(VertOut input)
 	output.m_svDepth = p.z / p.w;
 
 	// Set the GBuffer
-	GbufferInfo g;
+	GbufferInfo<F32> g;
 	g.m_diffuse = (PROBE_TYPE == 0) ? 0.5 : 1.0;
 	g.m_normal = normalize(collisionPoint - input.m_sphereCenter);
 	g.m_f0 = 0.04;

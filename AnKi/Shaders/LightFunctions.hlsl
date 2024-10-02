@@ -32,28 +32,30 @@ Vec3 F_Unreal(Vec3 specular, F32 VoH)
 
 // Fresnel Schlick: "An Inexpensive BRDF Model for Physically-Based Rendering"
 // It has lower VGRPs than F_Unreal
-RVec3 F_Schlick(RVec3 f0, RF32 VoH)
+template<typename T>
+vector<T, 3> F_Schlick(vector<T, 3> f0, T VoH)
 {
-	const RF32 f = pow(1.0 - VoH, 5.0);
-	return f + f0 * (1.0 - f);
+	const T f = pow(max(T(0), T(1) - VoH), T(5.0));
+	return f + f0 * (T(1) - f);
 }
 
 // D(n,h) aka NDF: GGX Trowbridge-Reitz
-RF32 D_GGX(RF32 roughness, RF32 NoH, RVec3 h, RVec3 worldNormal)
+template<typename T>
+T D_GGX(T roughness, T NoH, vector<T, 3> h, vector<T, 3> worldNormal)
 {
 #if 0 && ANKI_PLATFORM_MOBILE
-	const RVec3 NxH = cross(worldNormal, h);
-	const RF32 oneMinusNoHSquared = dot(NxH, NxH);
+	const vector<T, 3> NxH = cross(worldNormal, h);
+	const T oneMinusNoHSquared = dot(NxH, NxH);
 #else
-	const RF32 oneMinusNoHSquared = 1.0 - NoH * NoH;
+	const T oneMinusNoHSquared = T(1) - NoH * NoH;
 	ANKI_MAYBE_UNUSED(h);
 	ANKI_MAYBE_UNUSED(worldNormal);
 #endif
 
-	const RF32 a = roughness * roughness;
-	const RF32 v = NoH * a;
-	const RF32 k = a / (oneMinusNoHSquared + v * v);
-	const RF32 d = k * k * (1.0 / kPi);
+	const T a = roughness * roughness;
+	const T v = NoH * a;
+	const T k = a / (oneMinusNoHSquared + v * v);
+	const T d = k * k * T(1.0 / kPi);
 	return saturate(d);
 }
 
@@ -67,10 +69,11 @@ RF32 V_Schlick(RF32 roughness, RF32 NoV, RF32 NoL)
 }
 
 // Visibility term: Hammon 2017, "PBR Diffuse Lighting for GGX+Smith Microsurfaces"
-RF32 V_SmithGGXCorrelatedFast(RF32 roughness, RF32 NoV, RF32 NoL)
+template<typename T>
+T V_SmithGGXCorrelatedFast(T roughness, T NoV, T NoL)
 {
-	const RF32 a = roughness * roughness;
-	const RF32 v = 0.5 / lerp(2.0 * NoL * NoV, NoL + NoV, a);
+	const T a = roughness * roughness;
+	const T v = T(0.5) / lerp(T(2) * NoL * NoV, NoL + NoV, a);
 	return saturate(v);
 }
 
@@ -85,23 +88,24 @@ RVec3 diffuseLobe(RVec3 diffuse)
 }
 
 // Performs BRDF specular lighting
-RVec3 specularIsotropicLobe(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2Light)
+template<typename T>
+vector<T, 3> specularIsotropicLobe(vector<T, 3> normal, vector<T, 3> f0, T roughness, vector<T, 3> viewDir, vector<T, 3> frag2Light)
 {
-	const RVec3 H = normalize(frag2Light + viewDir);
+	const vector<T, 3> H = normalize(frag2Light + viewDir);
 
-	const RF32 NoL = max(0.0, dot(gbuffer.m_normal, frag2Light));
-	const RF32 VoH = max(0.0, dot(viewDir, H));
-	const RF32 NoH = max(0.0, dot(gbuffer.m_normal, H));
-	const RF32 NoV = max(0.05, dot(gbuffer.m_normal, viewDir));
+	const T NoL = max(0.0, dot(normal, frag2Light));
+	const T VoH = max(0.0, dot(viewDir, H));
+	const T NoH = max(0.0, dot(normal, H));
+	const T NoV = max(0.05, dot(normal, viewDir));
 
 	// F
-	const RVec3 F = F_Schlick(gbuffer.m_f0, VoH);
+	const vector<T, 3> F = F_Schlick(f0, VoH);
 
 	// D
-	const RF32 D = D_GGX(gbuffer.m_roughness, NoH, H, gbuffer.m_normal);
+	const T D = D_GGX(roughness, NoH, H, normal);
 
 	// Vis
-	const RF32 V = V_SmithGGXCorrelatedFast(gbuffer.m_roughness, NoV, NoL);
+	const T V = V_SmithGGXCorrelatedFast(roughness, NoV, NoL);
 
 	return F * (V * D);
 }

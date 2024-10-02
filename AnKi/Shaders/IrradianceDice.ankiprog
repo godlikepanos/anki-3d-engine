@@ -129,7 +129,7 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 
 		// Read the gbuffer
 		const Vec3 gbufferUv = getCubemapDirection(faceUv, f);
-		GbufferInfo gbuffer = (GbufferInfo)0;
+		GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
 		unpackGBufferNoVelocity(g_gbufferTex[0u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0),
 								g_gbufferTex[1u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0),
 								g_gbufferTex[2u].SampleLevel(g_nearestAnyClampSampler, gbufferUv, 0.0), gbuffer);

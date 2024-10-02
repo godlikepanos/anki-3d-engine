@@ -44,7 +44,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 	}
 
 	// Decode and process gbuffer
-	GbufferInfo gbuffer = (GbufferInfo)0;
+	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
 	unpackGBufferNoVelocity(g_gbufferTex0.SampleLevel(g_gbufferSampler, uv, 0.0), g_gbufferTex1.SampleLevel(g_gbufferSampler, uv, 0.0),
 							g_gbufferTex2.SampleLevel(g_gbufferSampler, uv, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin * 8.0);
@@ -80,7 +80,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 		const RF32 factor = shadowFactor * max(gbuffer.m_subsurface, lambert);
 
 #	if SPECULAR == 1
-		const Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
+		const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
 #	else
 		const Vec3 specC = Vec3(0.0, 0.0, 0.0);
 #	endif
@@ -105,7 +105,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 		const F32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
 
 #	if SPECULAR == 1
-		const Vec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
+		const Vec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
 #	else
 		const Vec3 specC = Vec3(0.0, 0.0, 0.0);
 #	endif

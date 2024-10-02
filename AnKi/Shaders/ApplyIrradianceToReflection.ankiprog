@@ -10,8 +10,8 @@
 
 SamplerState g_nearestAnyClampSampler : register(s0);
 TextureCube<Vec4> g_gbufferTex[3u] : register(t0);
-StructuredBuffer<RVec4> g_irradianceDice : register(t3);
-RWTexture2D<RVec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is no RWTextureCube
+StructuredBuffer<Vec4> g_irradianceDice : register(t3);
+RWTexture2D<Vec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is no RWTextureCube
 
 [numthreads(8, 8, 6)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID, UVec3 svGroupThreadId : SV_GROUPTHREADID)
 {
@@ -27,7 +27,7 @@ RWTexture2D<RVec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is
 	const Vec3 sampleUv = getCubemapDirection(uv, faceIdx);
 
 	// Read the gbuffer
-	GbufferInfo gbuffer = (GbufferInfo)0;
+	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
 	unpackGBufferNoVelocity(g_gbufferTex[0u].SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0),
 							g_gbufferTex[1u].SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0),
 							g_gbufferTex[2u].SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0), gbuffer);

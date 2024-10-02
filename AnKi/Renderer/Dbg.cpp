@@ -222,6 +222,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 	// Restore state
 	cmdb.setDepthCompareOperation(CompareOperation::kLess);
+	cmdb.setDepthWrite(true);
 }
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)

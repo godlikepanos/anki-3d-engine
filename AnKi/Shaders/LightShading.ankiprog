@@ -36,7 +36,7 @@ Texture2D<RVec4> g_integrationLut : register(t12);
 #	define LIGHTING_COMMON_BRDF() \
 		const RVec3 frag2Light = light.m_position - worldPos; \
 		const RVec3 l = normalize(frag2Light); \
-		const RVec3 specC = specularIsotropicLobe(gbuffer, viewDir, l); \
+		const RVec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l); \
 		const RVec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
 		const RF32 att = computeAttenuationFactor(light.m_radius, frag2Light); \
 		RF32 lambert = max(0.0, dot(gbuffer.m_normal, l));
@@ -64,10 +64,10 @@ RVec4 main(VertOut input) : SV_TARGET0
 	// return clusterHeatmap(cluster, 1u << (U32)GpuSceneNonRenderableObjectType::kLight, 3);
 
 	// Decode GBuffer
-	GbufferInfo gbuffer = (GbufferInfo)0;
-	unpackGBufferNoVelocity(g_gbuffer0Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
-							g_gbuffer1Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
-							g_gbuffer2Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0), gbuffer);
+	GbufferInfo<RF32> gbuffer = (GbufferInfo<RF32>)0;
+	unpackGBufferNoVelocity<RF32>(g_gbuffer0Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
+								  g_gbuffer1Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
+								  g_gbuffer2Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0), gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 	// Apply SSAO
@@ -211,7 +211,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 		const RF32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
 		const RVec3 diffC = diffuseLobe(gbuffer.m_diffuse);
-		const RVec3 specC = specularIsotropicLobe(gbuffer, viewDir, l);
+		const RVec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
 
 		outColor += (diffC + specC) * dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}

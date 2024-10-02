@@ -8,54 +8,58 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
-constexpr RF32 kMinRoughness = 0.05;
+constexpr F32 kMinRoughness = 0.05;
 
 /// Pack 3D normal to 2D vector
 /// See the clean code in comments in revision < r467
-Vec2 packNormal(const Vec3 normal)
+template<typename T>
+vector<T, 2> packNormal(vector<T, 3> normal)
 {
-	const F32 scale = 1.7777;
-	const F32 scalar1 = (normal.z + 1.0) * (scale * 2.0);
-	return normal.xy / scalar1 + 0.5;
+	const T scale = 1.7777;
+	const T scalar1 = (normal.z + T(1)) * (scale * T(2));
+	return normal.xy / scalar1 + T(0.5);
 }
 
 /// Reverse the packNormal
-Vec3 unpackNormal(const Vec2 enc)
+template<typename T>
+vector<T, 3> unpackNormal(const vector<T, 2> enc)
 {
-	const F32 scale = 1.7777;
-	const Vec2 nn = enc * (2.0 * scale) - scale;
-	const F32 g = 2.0 / (dot(nn.xy, nn.xy) + 1.0);
-	Vec3 normal;
+	const T scale = 1.7777;
+	const vector<T, 2> nn = enc * (T(2) * scale) - scale;
+	const T g = T(2) / (dot(nn.xy, nn.xy) + T(1));
+	vector<T, 3> normal;
 	normal.xy = g * nn.xy;
-	normal.z = g - 1.0;
+	normal.z = g - T(1);
 	return normalize(normal);
 }
 
 // See http://johnwhite3d.blogspot.no/2017/10/signed-octahedron-normal-encoding.html
 // Result in [0.0, 1.0]
-Vec3 signedOctEncode(Vec3 n)
+template<typename T>
+vector<T, 3> signedOctEncode(vector<T, 3> n)
 {
-	Vec3 outn;
+	vector<T, 3> outn;
 
-	const Vec3 nabs = abs(n);
+	const vector<T, 3> nabs = abs(n);
 	n /= nabs.x + nabs.y + nabs.z;
 
-	outn.y = n.y * 0.5 + 0.5;
-	outn.x = n.x * 0.5 + outn.y;
-	outn.y = n.x * -0.5 + outn.y;
+	outn.y = n.y * T(0.5) + T(0.5);
+	outn.x = n.x * T(0.5) + outn.y;
+	outn.y = n.x * -T(0.5) + outn.y;
 
-	outn.z = saturate(n.z * kMaxF32);
+	outn.z = saturate(n.z * getMaxNumericLimit<T>());
 	return outn;
 }
 
 // See http://johnwhite3d.blogspot.no/2017/10/signed-octahedron-normal-encoding.html
-Vec3 signedOctDecode(const Vec3 n)
+template<typename T>
+vector<T, 3> signedOctDecode(vector<T, 3> n)
 {
-	Vec3 outn;
+	vector<T, 3> outn;
 
 	outn.x = n.x - n.y;
-	outn.y = n.x + n.y - 1.0;
-	outn.z = n.z * 2.0 - 1.0;
+	outn.y = n.x + n.y - T(1);
+	outn.z = n.z * T(2) - T(1);
 	outn.z = outn.z * (1.0 - abs(outn.x) - abs(outn.y));
 
 	outn = normalize(outn);
@@ -63,146 +67,160 @@ Vec3 signedOctDecode(const Vec3 n)
 }
 
 // Vectorized version. Assumes that v is in [0.0, 1.0]
-U32 newPackUnorm4x8(const Vec4 v)
+template<typename T>
+U32 newPackUnorm4x8(const vector<T, 4> v)
 {
-	Vec4 a = v * 255.0;
-	UVec4 b = UVec4(a) << UVec4(0u, 8u, 16u, 24u);
-	UVec2 c = b.xy | b.zw;
+	const vector<T, 4> a = v * 255.0;
+	const UVec4 b = UVec4(a) << UVec4(0u, 8u, 16u, 24u);
+	const UVec2 c = b.xy | b.zw;
 	return c.x | c.y;
 }
 
 // Vectorized version
-Vec4 newUnpackUnorm4x8(const U32 u)
+template<typename T>
+vector<T, 4> newUnpackUnorm4x8(const U32 u)
 {
 	const UVec4 a = ((UVec4)u) >> UVec4(0u, 8u, 16u, 24u);
 	const UVec4 b = a & ((UVec4)0xFFu);
 	const Vec4 c = Vec4(b);
-	return c * (1.0 / 255.0);
+	return c * T(1.0 / 255.0);
 }
 
-U32 packSnorm4x8(Vec4 value)
+template<typename T>
+U32 packSnorm4x8(vector<T, 4> value)
 {
-	const IVec4 packed = IVec4(round(clamp(value, -1.0f, 1.0f) * 127.0f)) & 0xFFu;
+	const IVec4 packed = IVec4(round(clamp(value, T(-1), T(1)) * T(127))) & 0xFFu;
 	return U32(packed.x | (packed.y << 8) | (packed.z << 16) | (packed.w << 24));
 }
 
-Vec4 unpackSnorm4x8(U32 value)
+template<typename T>
+vector<T, 4> unpackSnorm4x8(U32 value)
 {
 	const I32 signedValue = (I32)value;
 	const IVec4 packed = IVec4(signedValue << 24, signedValue << 16, signedValue << 8, signedValue) >> 24;
-	return clamp(Vec4(packed) / 127.0f, -1.0f, 1.0f);
+	return clamp(vector<T, 4>(packed) / T(127), T(-1), T(1));
 }
 
 // Convert from RGB to YCbCr.
 // The RGB should be in [0, 1] and the output YCbCr will be in [0, 1] as well.
-Vec3 rgbToYCbCr(const Vec3 rgb)
+template<typename T>
+vector<T, 3> rgbToYCbCr(const vector<T, 3> rgb)
 {
-	const F32 y = dot(rgb, Vec3(0.299, 0.587, 0.114));
-	const F32 cb = 0.5 + dot(rgb, Vec3(-0.168736, -0.331264, 0.5));
-	const F32 cr = 0.5 + dot(rgb, Vec3(0.5, -0.418688, -0.081312));
-	return Vec3(y, cb, cr);
+	const T y = dot(rgb, vector<T, 3>(0.299, 0.587, 0.114));
+	const T cb = T(0.5) + dot(rgb, vector<T, 3>(-0.168736, -0.331264, 0.5));
+	const T cr = T(0.5) + dot(rgb, vector<T, 3>(0.5, -0.418688, -0.081312));
+	return vector<T, 3>(y, cb, cr);
 }
 
 // Convert the output of rgbToYCbCr back to RGB.
-Vec3 yCbCrToRgb(const Vec3 ycbcr)
+template<typename T>
+vector<T, 3> yCbCrToRgb(const vector<T, 3> ycbcr)
 {
-	const F32 cb = ycbcr.y - 0.5;
-	const F32 cr = ycbcr.z - 0.5;
-	const F32 y = ycbcr.x;
-	const F32 r = 1.402 * cr;
-	const F32 g = -0.344 * cb - 0.714 * cr;
-	const F32 b = 1.772 * cb;
-	return Vec3(r, g, b) + y;
+	const T cb = ycbcr.y - T(0.5);
+	const T cr = ycbcr.z - T(0.5);
+	const T y = ycbcr.x;
+	const T r = T(1.402) * cr;
+	const T g = T(-0.344) * cb - T(0.714) * cr;
+	const T b = T(1.772) * cb;
+	return vector<T, 3>(r, g, b) + y;
 }
 
 // Pack a Vec2 to a single F32.
 // comp should be in [0, 1] and the output will be in [0, 1].
-F32 packUnorm2ToUnorm1(const Vec2 comp)
+template<typename T>
+T packUnorm2ToUnorm1(const vector<T, 2> comp)
 {
-	return dot(round(comp * 15.0), Vec2(1.0 / (255.0 / 16.0), 1.0 / 255.0));
+	return dot(round(comp * T(15)), Vec2(T(1) / T(255.0 / 16.0), T(1.0 / 255.0)));
 }
 
 // Unpack a single F32 to Vec2. Does the oposite of packUnorm2ToUnorm1.
-Vec2 unpackUnorm1ToUnorm2(F32 c)
+template<typename T>
+vector<T, 2> unpackUnorm1ToUnorm2(T c)
 {
 #if 1
-	const F32 temp = c * (255.0 / 16.0);
-	const F32 a = floor(temp);
-	const F32 b = temp - a; // b = fract(temp)
-	return Vec2(a, b) * Vec2(1.0 / 15.0, 16.0 / 15.0);
+	const T temp = c * T(255.0 / 16.0);
+	const T a = floor(temp);
+	const T b = temp - a; // b = fract(temp)
+	return vector<T, 2>(a, b) * vector<T, 2>(1.0 / 15.0, 16.0 / 15.0);
 #else
 	const U32 temp = U32(c * 255.0);
 	const U32 a = temp >> 4;
 	const U32 b = temp & 0xF;
-	return Vec2(a, b) / 15.0;
+	return vector<T, 2>(a, b) / T(15);
 #endif
 }
 
 // G-Buffer structure
+template<typename T>
 struct GbufferInfo
 {
-	RVec3 m_diffuse;
-	RVec3 m_f0; ///< Freshnel at zero angles.
-	RVec3 m_normal;
-	RF32 m_roughness;
-	RF32 m_metallic;
-	RF32 m_subsurface;
-	RVec3 m_emission;
+	vector<T, 3> m_diffuse;
+	vector<T, 3> m_f0; ///< Freshnel at zero angles.
+	vector<T, 3> m_normal;
+	vector<T, 3> m_emission;
+	T m_roughness;
+	T m_metallic;
+	T m_subsurface;
 	Vec2 m_velocity;
 };
 
 // Populate the G buffer
-void packGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out Vec2 rt3)
+template<typename T>
+void packGBuffer(GbufferInfo<T> g, out vector<T, 4> rt0, out vector<T, 4> rt1, out vector<T, 4> rt2, out Vec2 rt3)
 {
-	const F32 packedSubsurfaceMetallic = packUnorm2ToUnorm1(Vec2(g.m_subsurface, g.m_metallic));
+	const T packedSubsurfaceMetallic = packUnorm2ToUnorm1(vector<T, 2>(g.m_subsurface, g.m_metallic));
 
-	const Vec3 tonemappedEmission = reinhardTonemap(g.m_emission);
+	const vector<T, 3> tonemappedEmission = reinhardTonemap(g.m_emission);
 
-	rt0 = Vec4(g.m_diffuse, packedSubsurfaceMetallic);
-	rt1 = Vec4(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);
+	rt0 = vector<T, 4>(g.m_diffuse, packedSubsurfaceMetallic);
+	rt1 = vector<T, 4>(g.m_roughness, g.m_f0.x, tonemappedEmission.rb);
 
-	const Vec3 encNorm = signedOctEncode(g.m_normal);
-	rt2 = Vec4(tonemappedEmission.g, encNorm);
+	const vector<T, 3> encNorm = signedOctEncode(g.m_normal);
+	rt2 = vector<T, 4>(tonemappedEmission.g, encNorm);
 
 	rt3 = g.m_velocity;
 }
 
-RVec3 unpackDiffuseFromGBuffer(RVec4 rt0, RF32 metallic)
+template<typename T>
+vector<T, 3> unpackDiffuseFromGBuffer(vector<T, 4> rt0, T metallic)
 {
-	return rt0.xyz *= 1.0 - metallic;
+	return rt0.xyz *= T(1) - metallic;
 }
 
-Vec3 unpackNormalFromGBuffer(Vec4 rt2)
+template<typename T>
+vector<T, 3> unpackNormalFromGBuffer(vector<T, 4> rt2)
 {
 	return signedOctDecode(rt2.yzw);
 }
 
-RF32 unpackRoughnessFromGBuffer(RVec4 rt1)
+template<typename T>
+T unpackRoughnessFromGBuffer(vector<T, 4> rt1)
 {
-	RF32 r = rt1.x;
-	r = r * (1.0 - kMinRoughness) + kMinRoughness;
+	T r = rt1.x;
+	r = r * (T(1) - T(kMinRoughness)) + T(kMinRoughness);
 	return r;
 }
 
 // Read part of the G-buffer
-void unpackGBufferNoVelocity(Vec4 rt0, Vec4 rt1, Vec4 rt2, out GbufferInfo g)
+template<typename T>
+void unpackGBufferNoVelocity(vector<T, 4> rt0, vector<T, 4> rt1, vector<T, 4> rt2, out GbufferInfo<T> g)
 {
 	g.m_diffuse = rt0.xyz;
-	const Vec2 unpackedSubsurfaceMetallic = unpackUnorm1ToUnorm2(rt0.w);
+	const vector<T, 2> unpackedSubsurfaceMetallic = unpackUnorm1ToUnorm2(rt0.w);
 	g.m_subsurface = unpackedSubsurfaceMetallic.x;
 	g.m_metallic = unpackedSubsurfaceMetallic.y;
 
 	g.m_roughness = unpackRoughnessFromGBuffer(rt1);
-	g.m_f0 = Vec3(rt1.y, rt1.y, rt1.y);
-	g.m_emission = invertReinhardTonemap(Vec3(rt1.z, rt2.x, rt1.w));
+	g.m_f0 = vector<T, 3>(rt1.y, rt1.y, rt1.y);
+	g.m_emission = invertReinhardTonemap(vector<T, 3>(rt1.z, rt2.x, rt1.w));
 
 	g.m_normal = signedOctDecode(rt2.yzw);
 
-	g.m_velocity = Vec2(kMaxF32, kMaxF32); // Put something random
+	g.m_velocity = getMaxNumericLimit<T>(); // Put something random
 
 	// Compute reflectance
 	g.m_f0 = lerp(g.m_f0, g.m_diffuse, g.m_metallic);
 
 	// Compute diffuse
-	g.m_diffuse *= 1.0 - g.m_metallic;
+	g.m_diffuse *= T(1) - g.m_metallic;
 }
