@@ -86,7 +86,8 @@ public:
 	RenderTargetHandle m_swapchainRenderTarget;
 
 	Array<Mat4, kMaxShadowCascades> m_dirLightTextureMatrices;
-	Array<F32, kMaxShadowCascades> m_dirLightFarPlanes;
+	Array<F32, kMaxShadowCascades> m_dirLightFarPlanes = {};
+	Array<F32, kMaxShadowCascades> m_dirLightPcfTexelRadius = {};
 
 	BufferView m_globalRenderingConstantsBuffer;
 

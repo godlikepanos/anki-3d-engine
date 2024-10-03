@@ -8,6 +8,7 @@
 #include <AnKi/Scene/Components/SceneComponent.h>
 #include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Math.h>
+#include <AnKi/Collision/Common.h>
 
 namespace anki {
 
@@ -146,7 +147,8 @@ public:
 	/// @param cascadeProjMats View projection matrices for each cascade.
 	/// @param cascadeViewMats View matrices for each cascade. Optional.
 	void computeCascadeFrustums(const Frustum& cameraFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeProjMats,
-								WeakArray<Mat3x4> cascadeViewMats = {}, WeakArray<F32> cascadeFarPlanes = {}) const;
+								WeakArray<Mat3x4> cascadeViewMats = {},
+								WeakArray<Array<F32, U32(FrustumPlaneType::kCount)>> cascadePlanes = {}) const;
 
 	U32 getUuid() const
 	{

@@ -430,6 +430,11 @@ constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 #define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
 static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 
+constexpr RF32 kPcfTexelRadius = 4.0f;
+constexpr RF32 kPcssSearchTexelRadius = 12.0;
+constexpr RF32 kPcssTexelRadius = 12.0;
+constexpr F32 kPcssDirLightMaxPenumbraMeters = 6.0; // If the occluder and the reciever have more than this value then do full penumbra
+
 struct DrawIndirectArgs
 {
 	U32 m_vertexCount;

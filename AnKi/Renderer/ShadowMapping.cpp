@@ -473,9 +473,9 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 		Array<Mat4, kMaxShadowCascades> cascadeViewProjMats;
 		Array<Mat3x4, kMaxShadowCascades> cascadeViewMats;
 		Array<Mat4, kMaxShadowCascades> cascadeProjMats;
-		Array<F32, kMaxShadowCascades> cascadeFarPlanes;
+		Array<Array<F32, U32(FrustumPlaneType::kCount)>, kMaxShadowCascades> cascadePlanes;
 		dirLight->computeCascadeFrustums(mainCam.getFrustum(), {&cascadeDistances[0], cascadeCount}, {&cascadeProjMats[0], cascadeCount},
-										 {&cascadeViewMats[0], cascadeCount}, {cascadeFarPlanes.getBegin(), cascadeCount});
+										 {&cascadeViewMats[0], cascadeCount}, {cascadePlanes.getBegin(), cascadeCount});
 		for(U cascade = 0; cascade < cascadeCount; ++cascade)
 		{
 			cascadeViewProjMats[cascade] = cascadeProjMats[cascade] * Mat4(cascadeViewMats[cascade], Vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -524,7 +524,28 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Update the texture matrix to point to the correct region in the atlas
 			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(dirLightAtlasViewports[cascade]) * cascadeViewProjMats[cascade];
-			ctx.m_dirLightFarPlanes[cascade] = cascadeFarPlanes[cascade];
+			ctx.m_dirLightFarPlanes[cascade] = cascadePlanes[cascade][FrustumPlaneType::kFar];
+
+			const F32 texelSize = 1.0f / F32(m_atlasTex->getWidth());
+			if(cascade == 0)
+			{
+				ctx.m_dirLightPcfTexelRadius[cascade] = kPcfTexelRadius * texelSize;
+			}
+			else
+			{
+				// Make the PCF radius proportional to the 1st cascade to make PCF blurring for all cascades look somewhat similar
+
+				const F32 cascade0Meters = cascadePlanes[0][FrustumPlaneType::kRight] - cascadePlanes[0][FrustumPlaneType::kLeft];
+				const F32 cascadeXMeters = cascadePlanes[cascade][FrustumPlaneType::kRight] - cascadePlanes[cascade][FrustumPlaneType::kLeft];
+
+				ctx.m_dirLightPcfTexelRadius[cascade] = ctx.m_dirLightPcfTexelRadius[0] * cascade0Meters / cascadeXMeters;
+
+				if(ctx.m_dirLightPcfTexelRadius[cascade] < texelSize * 0.5)
+				{
+					// Too small, don't bother
+					ctx.m_dirLightPcfTexelRadius[cascade] = 0.0f;
+				}
+			}
 		}
 	}
 }

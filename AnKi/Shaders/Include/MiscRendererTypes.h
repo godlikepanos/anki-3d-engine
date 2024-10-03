@@ -23,6 +23,8 @@ struct DirectionalLight
 	Mat4 m_textureMatrices[kMaxShadowCascades];
 
 	Vec4 m_cascadeFarPlanes;
+
+	Vec4 m_cascadePcfTexelRadius; ///< The radius of the PCF. In UV space.
 };
 static_assert(kMaxShadowCascades == 4u); // Because m_shadowCascadeDistances and m_cascadeFarPlanes is a Vec4
 
