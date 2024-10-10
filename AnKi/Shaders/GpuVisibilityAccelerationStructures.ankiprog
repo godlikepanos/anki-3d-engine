@@ -8,6 +8,7 @@
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
 // Buffers that point to the GPU scene
@@ -17,7 +18,7 @@ StructuredBuffer<GpuSceneMeshLod> g_meshLods : register(t2);
 StructuredBuffer<Mat3x4> g_transforms : register(t3);
 
 RWStructuredBuffer<AccelerationStructureInstance> g_visibleInstances : register(u0);
-RWStructuredBuffer<U32> g_visibleRenderableIndices : register(u1); // 1st element is the count
+RWStructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(u1); // 1st element is the count
 
 globallycoherent RWStructuredBuffer<U32> g_counterBuffer : register(u2); // 2 counters per dispatch
 
@@ -29,11 +30,11 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 
 [numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
+	const U32 maxVisibleInstances = getStructuredBufferElementCount(g_visibleInstances);
+
 	// Skip remaining threads
 	const U32 bvolumeIdx = svDispatchThreadId;
-	U32 bvolumeCount;
-	U32 unused;
-	g_renderableBoundingVolumes.GetDimensions(bvolumeCount, unused);
+	const U32 bvolumeCount = getStructuredBufferElementCount(g_renderableBoundingVolumes);
 	Bool visible = (bvolumeIdx < bvolumeCount);
 
 	// Sphere test
@@ -41,7 +42,7 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 	Vec3 sphereCenter;
 	if(visible)
 	{
-		bvolume = g_renderableBoundingVolumes[bvolumeIdx];
+		bvolume = SBUFF(g_renderableBoundingVolumes, bvolumeIdx);
 
 		sphereCenter = (bvolume.m_aabbMin + bvolume.m_aabbMax) * 0.5f;
 		visible = testSphereSphereCollision(sphereCenter, bvolume.m_sphereRadius, g_consts.m_pointOfTest, g_consts.m_testRadius);
@@ -77,16 +78,16 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 		}
 
 		const U32 renderableIdx = bvolume.m_renderableIndex_20bit_renderStateBucket_12bit >> 12u;
-		const GpuSceneRenderable renderable = g_renderables[renderableIdx];
+		const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
 
 		const U32 meshLodIndex = renderable.m_meshLodsIndex + lod;
-		const GpuSceneMeshLod meshLod = g_meshLods[meshLodIndex];
+		const GpuSceneMeshLod meshLod = SBUFF(g_meshLods, meshLodIndex);
 
 		if(meshLod.m_blasAddress.x != 0 || meshLod.m_blasAddress.y != 0)
 		{
 			// It has a BLAS, write what is to write
 
-			const Mat3x4 transform = g_transforms[renderable.m_worldTransformsIndex];
+			const Mat3x4 transform = SBUFF(g_transforms, renderable.m_worldTransformsIndex);
 			Mat3x4 meshQuantizationTransform;
 			meshQuantizationTransform.m_row0 = Vec4(meshLod.m_positionScale, 0.0f, 0.0f, meshLod.m_positionTranslation.x);
 			meshQuantizationTransform.m_row1 = Vec4(0.0f, meshLod.m_positionScale, 0.0f, meshLod.m_positionTranslation.y);
@@ -94,53 +95,55 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 			const Mat3x4 finalTrf = combineTransformations(transform, meshQuantizationTransform);
 
 			U32 instanceIdx;
-			InterlockedAdd(g_counterBuffer[0], 1, instanceIdx);
+			InterlockedAdd(SBUFF(g_counterBuffer, 0), 1, instanceIdx);
 
-			AccelerationStructureInstance instance;
-			instance.m_transform = finalTrf;
-			instance.m_mask8_instanceCustomIndex24 = (meshLod.m_tlasInstanceMask << 24u) | (instanceIdx & 0x00FFFFFFu);
-			instance.m_flags8_instanceShaderBindingTableRecordOffset24 =
-				((kAccellerationStructureFlagTriangleFrontCounterlockwise | kAccellerationStructureFlagTriangleFacingCullDisable)
-				 << (AccellerationStructureFlag)24u)
-				| (instanceIdx & 0x00FFFFFFu);
-			instance.m_accelerationStructureAddress = meshLod.m_blasAddress;
-			g_visibleInstances[instanceIdx] = instance;
+			if(instanceIdx < maxVisibleInstances)
+			{
+				AccelerationStructureInstance instance;
+				instance.m_transform = finalTrf;
+				instance.m_mask8_instanceCustomIndex24 = (meshLod.m_tlasInstanceMask << 24u) | (instanceIdx & 0x00FFFFFFu);
+				instance.m_flags8_instanceShaderBindingTableRecordOffset24 =
+					((kAccellerationStructureFlagTriangleFrontCounterlockwise | kAccellerationStructureFlagTriangleFacingCullDisable)
+					 << (AccellerationStructureFlag)24u)
+					| (instanceIdx & 0x00FFFFFFu);
+				instance.m_accelerationStructureAddress = meshLod.m_blasAddress;
 
-			g_visibleRenderableIndices[instanceIdx + 1] = renderableIdx;
+				SBUFF(g_visibleInstances, instanceIdx) = instance;
+
+				SBUFF(g_visibleRenderables, instanceIdx + 1).m_lod_2bit_renderableIndex_30bit = (lod << 30u) | renderableIdx;
+			}
 		}
 	}
 
 	// Store the counters to the actual buffers
 	{
-		Bool lastThreadgroupExecuting = false;
-		if(svGroupIndex == 0)
-		{
-			U32 threadgroupIdx;
-			InterlockedAdd(g_counterBuffer[1], 1, threadgroupIdx);
-			const U32 threadgroupCount = (bvolumeCount + NUMTHREADS - 1) / NUMTHREADS;
-			lastThreadgroupExecuting = (threadgroupIdx + 1 == threadgroupCount);
-		}
-
 		// Sync to make sure all the atomic ops have finished before the following code reads them
 		AllMemoryBarrierWithGroupSync();
 
-		if(lastThreadgroupExecuting)
+		if(svGroupIndex == 0)
 		{
-			const U32 visible = g_counterBuffer[0];
-			g_visibleRenderableIndices[0] = visible;
+			U32 threadgroupIdx;
+			InterlockedAdd(SBUFF(g_counterBuffer, 1), 1, threadgroupIdx);
+			const U32 threadgroupCount = (bvolumeCount + NUMTHREADS - 1) / NUMTHREADS;
+			const Bool lastThreadgroupExecuting = (threadgroupIdx + 1 == threadgroupCount);
 
-			g_counterBuffer[0] = 0;
-			g_counterBuffer[1] = 0;
+			if(lastThreadgroupExecuting)
+			{
+				const U32 visible = min(SBUFF(g_counterBuffer, 0), maxVisibleInstances);
+				SBUFF(g_visibleRenderables, 0).m_lod_2bit_renderableIndex_30bit = visible;
 
-			// Update indirect args of some next job
-			U32 total, unused;
-			g_visibleInstances.GetDimensions(total, unused);
+				SBUFF(g_counterBuffer, 0) = 0;
+				SBUFF(g_counterBuffer, 1) = 0;
 
-			const U32 remaining = total - visible;
+				// Update indirect args of some next job
+				const U32 remaining = maxVisibleInstances - visible;
 
-			g_nextDispatchIndirectArgs[0].m_threadGroupCountX = (remaining + NUMTHREADS - 1) / NUMTHREADS;
-			g_nextDispatchIndirectArgs[0].m_threadGroupCountY = 1;
-			g_nextDispatchIndirectArgs[0].m_threadGroupCountZ = 1;
+				DispatchIndirectArgs args;
+				args.m_threadGroupCountX = (remaining + NUMTHREADS - 1) / NUMTHREADS;
+				args.m_threadGroupCountY = 1;
+				args.m_threadGroupCountZ = 1;
+				SBUFF(g_nextDispatchIndirectArgs, 0) = args;
+			}
 		}
 	}
 }

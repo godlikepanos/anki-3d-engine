@@ -17,9 +17,13 @@ enum class RenderingTechnique : U8
 	kDepth = 1,
 	kForward = 2,
 	kRtShadow = 3,
+	kRtMaterialFetch = 4,
 
 	kCount,
-	kFirst = 0
+	kFirst = 0,
+	kFirstRt = kRtShadow,
+	kLastRt = kRtMaterialFetch,
+	kRtCount = kLastRt - kFirstRt + 1
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechnique)
 
@@ -30,8 +34,9 @@ enum class RenderingTechniqueBit : U8
 	kDepth = 1 << 1,
 	kForward = 1 << 2,
 	kRtShadow = 1 << 3,
+	kRtMaterialFetch = 1 << 4,
 
-	kAllRt = kRtShadow,
+	kAllRt = kRtShadow | kRtMaterialFetch,
 	kAllRaster = kGBuffer | kDepth | kForward
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderingTechniqueBit)

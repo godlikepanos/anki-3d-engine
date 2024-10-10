@@ -1239,8 +1239,9 @@ Error GrManagerImpl::initDevice()
 		accelerationStructureFeatures.accelerationStructureHostCommands = false;
 		accelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = false;
 
-		ANKI_ASSERT(accelerationStructureFeatures.pNext == nullptr);
 		appendPNextList(ci, &accelerationStructureFeatures);
+		appendPNextList(ci, &rayQueryFeatures);
+		appendPNextList(ci, &rtPipelineFeatures);
 
 		// Get some more stuff
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {};

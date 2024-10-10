@@ -47,6 +47,7 @@ static_assert(sizeof(MaterialGlobalConstants) == 15 * sizeof(Vec4));
 #define ANKI_MATERIAL_REGISTER_CLUSTERS 14
 
 // Always last because it's variable. Texture buffer bindings pointing to unified geom buffer:
+// !!WARNING!! Remember to update the UnifiedGeometryTypes.def.h if you change that one
 #define ANKI_MATERIAL_REGISTER_UNIFIED_GEOMETRY_START 15
 
 ANKI_END_NAMESPACE

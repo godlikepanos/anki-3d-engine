@@ -46,6 +46,7 @@
 #include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/MotionBlur.h>
+#include <AnKi/Renderer/RtMaterialFetchDbg.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -279,9 +280,13 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depthDownscale->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
-	if(m_rtShadows)
+	if(g_rayTracingCVar && m_rtShadows)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
+	}
+	if(g_rayTracingCVar && m_rtMaterialFetchDbg)
+	{
+		m_rtMaterialFetchDbg->populateRenderGraph(ctx);
 	}
 	m_shadowmapsResolve->populateRenderGraph(ctx);
 	m_volumetricFog->populateRenderGraph(ctx);

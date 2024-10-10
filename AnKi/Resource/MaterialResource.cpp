@@ -13,8 +13,6 @@ namespace anki {
 
 inline constexpr Array<CString, U32(BuiltinMutatorId::kCount)> kBuiltinMutatorNames = {{"NONE", "ANKI_BONES", "ANKI_VELOCITY"}};
 
-inline constexpr Array<CString, U(RenderingTechnique::kCount)> kTechniqueNames = {{"GBuffer", "Depth", "Forward", "RtShadow"}};
-
 // This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
 namespace {
 
@@ -209,6 +207,13 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kForward;
 			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
+		}
+		else if(t.m_name.getBegin() == CString("RtMaterialFetch"))
+		{
+			if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled)
+			{
+				m_techniquesMask |= RenderingTechniqueBit::kRtMaterialFetch;
+			}
 		}
 		else
 		{
@@ -604,6 +609,9 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		break;
 	case RenderingTechnique::kRtShadow:
 		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");
+		break;
+	case RenderingTechnique::kRtMaterialFetch:
+		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtMaterialFetch");
 		break;
 	default:
 		ANKI_ASSERT(0);

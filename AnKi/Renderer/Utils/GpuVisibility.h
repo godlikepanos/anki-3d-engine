@@ -291,7 +291,7 @@ public:
 	BufferHandle m_someBufferHandle; ///< Some handle to track dependencies. No need to track every buffer.
 
 	BufferView m_instancesBuffer; ///< Points to AccelerationStructureBuildRangeInfo::m_primitiveCount number of AccelerationStructureInstance.
-	BufferView m_renderableIndicesBuffer; ///< AccelerationStructureBuildRangeInfo::m_primitiveCount number of indices to renderables.
+	BufferView m_renderablesBuffer; ///< AccelerationStructureBuildRangeInfo::m_primitiveCount + 1 number of indices to renderables.
 };
 
 /// Performs visibility to gather bottom-level acceleration structures in a buffer that can be used to build a TLAS.

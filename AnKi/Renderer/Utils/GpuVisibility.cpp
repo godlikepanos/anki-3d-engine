@@ -1111,7 +1111,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	out.m_instancesBuffer = allocateStructuredBuffer<AccelerationStructureInstance>(aabbCount);
 	out.m_someBufferHandle = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kUavCompute);
 
-	out.m_renderableIndicesBuffer = allocateStructuredBuffer<U32>(aabbCount + 1);
+	out.m_renderablesBuffer = allocateStructuredBuffer<LodAndRenderableIndex>(aabbCount + 1);
 
 	const BufferView zeroInstancesDispatchArgsBuff = allocateStructuredBuffer<DispatchIndirectArgs>(1);
 
@@ -1123,7 +1123,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute);
 
 		pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
-					  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, indicesBuff = out.m_renderableIndicesBuffer,
+					  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, visRenderablesBuff = out.m_renderablesBuffer,
 					  zeroInstancesDispatchArgsBuff](RenderPassWorkContext& rgraph) {
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
@@ -1153,7 +1153,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 			cmdb.bindSrv(2, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
 			cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 			cmdb.bindUav(0, 0, instancesBuff);
-			cmdb.bindUav(1, 0, indicesBuff);
+			cmdb.bindUav(1, 0, visRenderablesBuff);
 			cmdb.bindUav(2, 0, BufferView(m_counterBuffer.get(), 0, sizeof(U32) * 2));
 			cmdb.bindUav(3, 0, zeroInstancesDispatchArgsBuff);
 
@@ -1170,12 +1170,12 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute);
 
 		pass.setWork([this, zeroInstancesDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
-					  indicesBuff = out.m_renderableIndicesBuffer](RenderPassWorkContext& rgraph) {
+					  visRenderablesBuff = out.m_renderablesBuffer](RenderPassWorkContext& rgraph) {
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_zeroRemainingInstancesGrProg.get());
 
-			cmdb.bindSrv(0, 0, indicesBuff);
+			cmdb.bindSrv(0, 0, visRenderablesBuff);
 			cmdb.bindUav(0, 0, instancesBuff);
 
 			cmdb.dispatchComputeIndirect(zeroInstancesDispatchArgsBuff);

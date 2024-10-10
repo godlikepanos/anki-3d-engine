@@ -148,8 +148,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		else
 		{
 			// Instances buffer already created
-			ANKI_ASSERT(inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getOffset()
-							+ sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_indirectArgs.m_maxInstanceCount
+			ANKI_ASSERT(sizeof(VkAccelerationStructureInstanceKHR) * inf.m_topLevel.m_indirectArgs.m_maxInstanceCount
 						<= inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getRange());
 			m_topLevelInfo.m_instancesBuffer.reset(&inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getBuffer());
 
@@ -164,7 +163,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		geom.geometry.instances.data.deviceAddress = m_topLevelInfo.m_instancesBuffer->getGpuAddress();
 		if(isIndirect)
 		{
-			geom.geometry.instances.data.deviceAddress += inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getRange();
+			geom.geometry.instances.data.deviceAddress += inf.m_topLevel.m_indirectArgs.m_instancesBuffer.getOffset();
 		}
 		geom.geometry.instances.arrayOfPointers = false;
 		geom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO

@@ -63,6 +63,7 @@ public:
 			ShaderInitInfo inf(progName);
 			inf.m_shaderType = shaderType;
 			inf.m_binary = codeBlock.m_binary;
+			inf.m_reflection = codeBlock.m_reflection;
 			shader->m_shader = GrManager::getSingleton().newShader(inf);
 			shader->m_hash = codeBlock.m_hash;
 
@@ -338,7 +339,9 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(ResourceDynamicArray
 			ShaderProgramRaytracingLibrary& outLib = outLibs[libIdx];
 			const Lib& inLib = libs[libIdx];
 
-			if(inLib.m_presentStages != (ShaderTypeBit::kRayGen | ShaderTypeBit::kMiss | ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit))
+			const ShaderTypeBit requiredShaders = ShaderTypeBit::kRayGen | ShaderTypeBit::kMiss;
+			if((inLib.m_presentStages & requiredShaders) != requiredShaders
+			   || !(inLib.m_presentStages & (ShaderTypeBit::kClosestHit | ShaderTypeBit::kAnyHit)))
 			{
 				ANKI_RESOURCE_LOGE("The libray is missing shader shader types: %s", inLib.m_name.cstr());
 				return Error::kUserData;

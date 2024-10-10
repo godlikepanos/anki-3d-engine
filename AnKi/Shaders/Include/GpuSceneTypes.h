@@ -25,6 +25,7 @@ struct GpuSceneRenderable
 	U32 m_boneTransformsOffset; ///< Array of Mat3x4 or 0 if its not a skin.
 	U32 m_particleEmitterIndex; ///< Index to the GpuSceneParticleEmitter array or kMaxU32 if it's not an emitter.
 	U32 m_rtShadowsShaderHandleIndex; ///< The index of the shader handle in the array of library's handles.
+	U32 m_rtMaterialFetchShaderHandleIndex; ///< The index of the shader handle in the array of library's handles.
 	U32 m_uuid;
 };
 

@@ -45,7 +45,7 @@ F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 	ray.Direction = rayDir;
 	ray.TMax = tMax;
 
-	RayPayload payload;
+	RtShadowsRayPayload payload;
 	payload.m_shadowFactor = 0.0;
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
@@ -134,7 +134,7 @@ Vec3 genRandomDirection(U32 rayIdx, Vec2 uv)
 #endif // ANKI_RAY_GEN_SHADER
 
 #if ANKI_MISS_SHADER
-[shader("miss")] void main(inout RayPayload payload)
+[shader("miss")] void main(inout RtShadowsRayPayload payload)
 {
 	payload.m_shadowFactor = 1.0;
 }

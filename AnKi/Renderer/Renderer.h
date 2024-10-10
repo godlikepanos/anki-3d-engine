@@ -27,7 +27,6 @@ inline BoolCVar g_preferComputeCVar("R", "PreferCompute", !ANKI_PLATFORM_MOBILE,
 inline BoolCVar g_highQualityHdrCVar("R", "HighQualityHdr", !ANKI_PLATFORM_MOBILE,
 									 "If true use R16G16B16 for HDR images. Alternatively use B10G11R11");
 inline BoolCVar g_vrsLimitTo2x2CVar("R", "VrsLimitTo2x2", false, "If true the max rate will be 2x2");
-inline BoolCVar g_rayTracedShadowsCVar("R", "RayTracedShadows", true, "Enable or not ray traced shadows. Ignored if RT is not supported");
 inline NumericCVar<U8> g_shadowCascadeCountCVar("R", "ShadowCascadeCount", (ANKI_PLATFORM_MOBILE) ? 3 : kMaxShadowCascades, 1, kMaxShadowCascades,
 												"Max number of shadow cascades for directional lights");
 inline NumericCVar<F32> g_shadowCascade0DistanceCVar("R", "ShadowCascade0Distance", 18.0, 1.0, kMaxF32, "The distance of the 1st cascade");

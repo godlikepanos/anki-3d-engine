@@ -17,11 +17,10 @@ RWStructuredBuffer<AccelerationStructureInstance> g_instances : register(u0);
 {
 	const U32 visibleInstances = g_visibleRenderableIndices[0];
 
-	U32 totalInstances, unused;
-	g_instances.GetDimensions(totalInstances, unused);
+	const U32 maxInstances = getStructuredBufferElementCount(g_instances);
 
-	ANKI_ASSERT(totalInstances >= visibleInstances);
-	const U32 remainingInstances = totalInstances - visibleInstances;
+	ANKI_ASSERT(maxInstances >= visibleInstances);
+	const U32 remainingInstances = maxInstances - visibleInstances;
 
 	if(svDispatchThreadId < remainingInstances)
 	{

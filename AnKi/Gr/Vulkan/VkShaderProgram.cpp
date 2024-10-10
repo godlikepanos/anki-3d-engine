@@ -480,7 +480,7 @@ void ShaderProgramImpl::rewriteSpirv(ShaderReflectionDescriptorRelated& refl, Gr
 		visitSpirv(WeakArray<U32>(outSpv), [&](U32 cmd, WeakArray<U32> instructions) {
 			if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationBinding
 			   && instructions[2] >= kDxcVkBindingShifts[0][HlslResourceType::kFirst]
-			   && instructions[2] < kDxcVkBindingShifts[kMaxRegisterSpaces - 1][HlslResourceType::kCount - 1])
+			   && instructions[2] < kDxcVkBindingShifts[kMaxRegisterSpaces - 1][HlslResourceType::kCount - 1] + 1000)
 			{
 				const U32 binding = instructions[2];
 

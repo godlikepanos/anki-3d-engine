@@ -6,11 +6,9 @@
 #pragma once
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
-#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Common.hlsl>
 
-constexpr F32 kRtShadowsMaxHistoryLength = 16.0; // The frames of history
-
-struct [raypayload] RtShadowsRayPayload
+struct [raypayload] RtMaterialFetchRayPayload
 {
-	F32 m_shadowFactor : write(caller, anyhit, miss): read(caller);
+	Vec3 m_diffuseColor : write(caller, closesthit, miss): read(caller);
 };

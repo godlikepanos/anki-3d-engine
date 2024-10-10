@@ -107,6 +107,7 @@ void ModelComponent::loadModelResource(CString filename)
 				out.m_gpuSceneRenderableAabbDepth.allocate();
 				break;
 			case RenderingTechnique::kRtShadow:
+			case RenderingTechnique::kRtMaterialFetch:
 				out.m_gpuSceneRenderableAabbRt.allocate();
 				break;
 			default:
@@ -215,6 +216,12 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 				const RenderingKey key(RenderingTechnique::kRtShadow, 0, false, false, false);
 				const MaterialVariant& variant = mtl.getOrCreateVariant(key);
 				gpuRenderable.m_rtShadowsShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
+			}
+			if(!!(mtl.getRenderingTechniques() & RenderingTechniqueBit::kRtMaterialFetch))
+			{
+				const RenderingKey key(RenderingTechnique::kRtMaterialFetch, 0, false, false, false);
+				const MaterialVariant& variant = mtl.getOrCreateVariant(key);
+				gpuRenderable.m_rtMaterialFetchShaderHandleIndex = variant.getRtShaderGroupHandleIndex();
 			}
 			gpuRenderable.m_uuid = SceneGraph::getSingleton().getNewUuid();
 			m_patchInfos[i].m_gpuSceneRenderable.uploadToGpuScene(gpuRenderable);

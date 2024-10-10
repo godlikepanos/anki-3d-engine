@@ -35,7 +35,9 @@
 #define ANKI_PIXEL_SHADER 1
 #define ANKI_MESH_SHADER 1
 #define ANKI_COMPUTE_SHADER 1
+#define ANKI_MISS_SHADER 1
 #define ANKI_CLOSEST_HIT_SHADER 1
+#define ANKI_RAY_GEN_SHADER 1
 
 using I8 = int;
 using I16 = int;

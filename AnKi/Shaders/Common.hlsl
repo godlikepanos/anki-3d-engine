@@ -86,6 +86,11 @@ U32 getMaxNumericLimit()
 constexpr F32 kPi = 3.14159265358979323846f;
 constexpr F32 kNaN = 0.0f / 0.0f;
 
+struct Barycentrics
+{
+	Vec2 m_value;
+};
+
 #if ANKI_GR_BACKEND_VULKAN
 #	define ANKI_FAST_CONSTANTS(type, var) [[vk::push_constant]] ConstantBuffer<type> var;
 #else

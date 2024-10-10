@@ -25,7 +25,8 @@ ANKI_RENDERER_OBJECT_DEF(IndirectDiffuseProbes, indirectDiffuseProbes, 1)
 ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(RtShadows, rtShadows, GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rayTracedShadowsCVar)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
-						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rayTracedShadowsCVar)
+						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
+							 && (g_rayTracedShadowsCVar || g_rtMaterialFetchDbgCVar))
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalUpscaler, temporalUpscaler, 1)
 ANKI_RENDERER_OBJECT_DEF(VrsSriGeneration, vrsSriGeneration, 1)
@@ -35,6 +36,8 @@ ANKI_RENDERER_OBJECT_DEF(Ssao, ssao, 1)
 ANKI_RENDERER_OBJECT_DEF(Ssr, ssr, 1)
 ANKI_RENDERER_OBJECT_DEF(Sky, sky, 1)
 ANKI_RENDERER_OBJECT_DEF(MotionBlur, motionBlur, 1)
+ANKI_RENDERER_OBJECT_DEF(RtMaterialFetchDbg, rtMaterialFetchDbg,
+						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rtMaterialFetchDbgCVar)
 
 // Util objects
 ANKI_RENDERER_OBJECT_DEF(RenderableDrawer, drawer, 1)

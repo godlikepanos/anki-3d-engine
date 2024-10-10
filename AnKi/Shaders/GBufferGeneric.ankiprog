@@ -36,12 +36,15 @@
 #pragma anki technique RtShadows ahit mutators ALPHA_TEST DIFFUSE_TEX
 #pragma anki technique RtShadows chit mutators
 
+#pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX
+
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 #include <AnKi/Shaders/RtShadows.hlsl>
+#include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
 // Define a few things to avoid compilation errors
 #if ANKI_TECHNIQUE_RtShadows && ANKI_CLOSEST_HIT_SHADER
@@ -53,6 +56,13 @@
 #endif
 
 #if ANKI_TECHNIQUE_RtShadows && ANKI_ANY_HIT_SHADER
+#	define ANKI_VELOCITY 0
+#	define ANKI_BONES 0
+#	define PARALLAX 0
+#endif
+
+#if ANKI_TECHNIQUE_RtMaterialFetch
+#	define ALPHA_TEST 0
 #	define ANKI_VELOCITY 0
 #	define ANKI_BONES 0
 #	define PARALLAX 0
@@ -617,18 +627,20 @@ GBufferPixelOut main(
 // ===========================================================================
 // RT Shadows                                                                =
 // ===========================================================================
-#if ANKI_ANY_HIT_SHADER
+#if ANKI_TECHNIQUE_RtShadows
 
-#	if REALLY_ALPHA_TEST
+#	if ANKI_ANY_HIT_SHADER
+
+#		if REALLY_ALPHA_TEST
 [[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D
-#	endif
+#		endif
 
-[shader("anyhit")] void main(inout RayPayload payload, in Barycentrics barycentrics)
+[shader("anyhit")] void main(inout RtShadowsRayPayload payload, in Barycentrics barycentrics)
 {
 	ANKI_MAYBE_UNUSED(payload);
 	ANKI_MAYBE_UNUSED(barycentrics);
 
-#	if REALLY_ALPHA_TEST
+#		if REALLY_ALPHA_TEST
 	payload.m_shadowFactor = 1.0;
 
 	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
@@ -658,17 +670,59 @@ GBufferPixelOut main(
 	{
 		IgnoreHit();
 	}
-#	else
+#		else
 	payload.m_shadowFactor = 0.0;
 	AcceptHitAndEndSearch();
-#	endif
+#		endif
 }
-#endif // ANKI_ANY_HIT_SHADER
+#	endif // ANKI_ANY_HIT_SHADER
 
-#if ANKI_CLOSEST_HIT_SHADER
-[shader("closesthit")] void main(inout RayPayload payload, in Barycentrics barycentrics)
+#	if ANKI_CLOSEST_HIT_SHADER
+[shader("closesthit")] void main(inout RtShadowsRayPayload payload, in Barycentrics barycentrics)
 {
 	ANKI_MAYBE_UNUSED(payload);
 	ANKI_MAYBE_UNUSED(barycentrics);
 }
-#endif // ANKI_CLOSEST_HIT_SHADER
+#	endif // ANKI_CLOSEST_HIT_SHADER
+
+#endif // ANKI_TECHNIQUE_RtShadows
+
+// ===========================================================================
+// RT material fetch                                                         =
+// ===========================================================================
+#if ANKI_TECHNIQUE_RtMaterialFetch
+
+#	if ANKI_CLOSEST_HIT_SHADER
+[[vk::shader_record_ext]] ConstantBuffer<GpuSceneRenderableInstance> g_gpuSceneRenderable : register(b0); // TODO that won't work on D3D
+
+[shader("closesthit")] void main(inout RtMaterialFetchRayPayload payload : SV_RayPayload, in Barycentrics barycentrics : SV_IntersectionAttributes)
+{
+	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
+
+#		if DIFFUSE_TEX
+	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
+
+	const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
+
+	const U32 idx0 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 0];
+	const U32 idx1 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 1];
+	const U32 idx2 = g_unifiedGeom_R16_Uint[mesh.m_firstIndex + PrimitiveIndex() * 3 + 2];
+
+	const UnpackedMeshVertex vert0 = loadVertex(mesh, idx0, false);
+	const UnpackedMeshVertex vert1 = loadVertex(mesh, idx1, false);
+	const UnpackedMeshVertex vert2 = loadVertex(mesh, idx2, false);
+
+	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
+
+	RVec3 diffColor = getBindlessTexture2DRVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0).xyz;
+#		else
+	RVec3 diffColor = 1.0;
+#		endif
+
+	diffColor *= localConstants.m_diffuseScale;
+
+	payload.m_diffuseColor = diffColor;
+}
+#	endif
+
+#endif // ANKI_TECHNIQUE_RtMaterialFetch

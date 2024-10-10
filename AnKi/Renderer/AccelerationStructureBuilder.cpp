@@ -33,7 +33,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 		getRenderer().getGpuVisibilityAccelerationStructures().pupulateRenderGraph(in, visOut);
 
 		m_runCtx.m_visibilityHandle = visOut.m_someBufferHandle;
-		m_runCtx.m_visibleRenderableIndicesBuff = visOut.m_renderableIndicesBuffer;
+		m_runCtx.m_visibleRenderablesBuff = visOut.m_renderablesBuffer;
 	}
 
 	// Create the TLAS

@@ -201,4 +201,9 @@ struct SsaoSpatialDenoiseConstants
 	Vec2 m_padding;
 };
 
+struct LodAndRenderableIndex
+{
+	U32 m_lod_2bit_renderableIndex_30bit;
+};
+
 ANKI_END_NAMESPACE
