@@ -14,20 +14,7 @@ namespace anki {
 
 Error Ssao::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize SSAO");
-	}
-	return err;
-}
-
-Error Ssao::initInternal()
-{
 	const UVec2 rez = (g_ssaoQuarterRezCVar) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
-
-	ANKI_R_LOGV("Initializing SSAO. Resolution %ux%u", rez.x(), rez.y());
-
 	const Bool preferCompute = g_preferComputeCVar;
 
 	{

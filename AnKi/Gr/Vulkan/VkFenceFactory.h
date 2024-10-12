@@ -77,7 +77,7 @@ public:
 		}
 		else
 		{
-			seconds = min(seconds, kMaxFenceOrSemaphoreWaitTime);
+			seconds = min<Second>(seconds, g_gpuTimeoutCVar);
 			const F64 nsf = 1e+9 * seconds;
 			const U64 ns = U64(nsf);
 			VkResult res;

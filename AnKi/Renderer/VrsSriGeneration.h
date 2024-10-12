@@ -69,8 +69,6 @@ public:
 		RenderTargetHandle m_downscaledRt;
 	} m_runCtx;
 
-	Error initInternal();
-
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  ShaderProgramPtr& optionalShaderProgram) const override;
 };

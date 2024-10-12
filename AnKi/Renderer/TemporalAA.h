@@ -38,8 +38,6 @@ private:
 		RenderTargetHandle m_renderRt;
 		RenderTargetHandle m_historyRt;
 	} m_runCtx;
-
-	Error initInternal();
 };
 /// @}
 

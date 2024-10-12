@@ -104,8 +104,6 @@ public:
 		Array<RenderTargetHandle, 2> m_varianceRts;
 	} m_runCtx;
 
-	Error initInternal();
-
 	void runDenoise(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, Bool horizontal);
 
 	U32 getPassCountWithoutUpscaling() const

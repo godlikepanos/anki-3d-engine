@@ -50,8 +50,6 @@ private:
 	public:
 		RenderTargetHandle m_motionVectorsRtHandle;
 	} m_runCtx;
-
-	Error initInternal();
 };
 /// @}
 

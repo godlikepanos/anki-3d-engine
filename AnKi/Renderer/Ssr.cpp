@@ -31,19 +31,7 @@ namespace anki {
 
 Error Ssr::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize SSR");
-	}
-	return err;
-}
-
-Error Ssr::initInternal()
-{
 	const UVec2 rez = (g_ssrQuarterResolutionCVar) ? getRenderer().getInternalResolution() / 2 : getRenderer().getInternalResolution();
-
-	ANKI_R_LOGV("Initializing SSR. Resolution %ux%u", rez.x(), rez.y());
 
 	TextureUsageBit mipTexUsage = TextureUsageBit::kAllSrv;
 	if(g_preferComputeCVar)

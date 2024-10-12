@@ -54,8 +54,6 @@ public:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	Error initInternal();
-
 	void run(RenderPassWorkContext& rgraphCtx, RenderingContext& ctx);
 };
 /// @}

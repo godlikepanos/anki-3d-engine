@@ -65,10 +65,6 @@ private:
 	ShaderProgramResourcePtr m_visualizeRtProg;
 	ShaderProgramPtr m_visualizeRtGrProg;
 
-	Error initLightShading();
-	Error initSkybox();
-	Error initApplyFog();
-
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	void getDebugRenderTarget(CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,

@@ -13,16 +13,6 @@ namespace anki {
 
 Error VrsSriGeneration::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize VRS SRI generation");
-	}
-	return err;
-}
-
-Error VrsSriGeneration::initInternal()
-{
 	if(!GrManager::getSingleton().getDeviceCapabilities().m_vrs)
 	{
 		return Error::kNone;
@@ -31,8 +21,6 @@ Error VrsSriGeneration::initInternal()
 	m_sriTexelDimension = U8(GrManager::getSingleton().getDeviceCapabilities().m_minShadingRateImageTexelSize);
 	ANKI_ASSERT(m_sriTexelDimension == 8 || m_sriTexelDimension == 16);
 	const UVec2 rez = (getRenderer().getInternalResolution() + m_sriTexelDimension - 1) / m_sriTexelDimension;
-
-	ANKI_R_LOGV("Intializing VRS SRI generation. SRI resolution %ux%u", rez.x(), rez.y());
 
 	// Create textures
 	const TextureUsageBit texUsage = TextureUsageBit::kShadingRate | TextureUsageBit::kUavCompute | TextureUsageBit::kAllSrv;

@@ -63,8 +63,6 @@ private:
 		RenderTargetHandle m_exposureLuminanceHandle;
 		RenderTargetHandle m_rt;
 	} m_runCtx;
-
-	Error initInternal();
 };
 /// @}
 

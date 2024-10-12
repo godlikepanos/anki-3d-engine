@@ -13,19 +13,6 @@ namespace anki {
 
 Error Sky::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize sky passes");
-	}
-
-	return Error::kNone;
-}
-
-Error Sky::initInternal()
-{
-	ANKI_R_LOGV("Initializing sky passes");
-
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_transmittanceLutGrProg, "SkyTransmittanceLut"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_multipleScatteringLutGrProg, "SkyMultipleScatteringLut"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_skyLutGrProg, "SkyLut"));

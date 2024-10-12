@@ -47,8 +47,7 @@ public:
 /// @memberof Logger
 using LoggerMessageHandlerCallback = void (*)(void*, const LoggerMessageInfo& info);
 
-/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. It's
-/// thread safe.
+/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. It's thread safe.
 /// To add a new signal:
 /// @code logger.addMessageHandler((void*)obj, &function) @endcode
 class Logger : public MakeSingleton<Logger>
@@ -67,7 +66,16 @@ public:
 	void addFileMessageHandler(File* file);
 
 	/// Send a message.
-	void write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName, const Char* msg);
+	void write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName, const Char* msg)
+	{
+		// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
+		if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled)
+		{
+			return;
+		}
+
+		writeInternal(file, line, func, subsystem, type, threadName, msg);
+	}
 
 	/// Send a formated message.
 	ANKI_CHECK_FORMAT(7, 8)
@@ -100,6 +108,9 @@ private:
 
 	static void defaultSystemMessageHandler(void*, const LoggerMessageInfo& info);
 	static void fileMessageHandler(void* file, const LoggerMessageInfo& info);
+
+	void writeInternal(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
+					   const Char* msg);
 };
 
 #define ANKI_LOG(subsystem_, t, ...) \

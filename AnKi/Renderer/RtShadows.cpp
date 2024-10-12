@@ -23,19 +23,6 @@ namespace anki {
 
 Error RtShadows::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize ray traced shadows");
-	}
-
-	return err;
-}
-
-Error RtShadows::initInternal()
-{
-	ANKI_R_LOGV("Initializing RT shadows");
-
 	m_useSvgf = g_rtShadowsSvgfCVar;
 	m_atrousPassCount = g_rtShadowsSvgfAtrousPassCountCVar;
 

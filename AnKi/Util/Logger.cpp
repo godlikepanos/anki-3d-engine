@@ -65,15 +65,9 @@ void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callb
 	}
 }
 
-void Logger::write(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
-				   const Char* msg)
+void Logger::writeInternal(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
+						   const Char* msg)
 {
-	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
-	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled) [[likely]]
-	{
-		return;
-	}
-
 	const Char* baseFile = strrchr(file, (ANKI_OS_WINDOWS) ? '\\' : '/');
 	baseFile = (baseFile) ? baseFile + 1 : file;
 
@@ -107,6 +101,12 @@ void Logger::write(const Char* file, int line, const Char* func, const Char* sub
 void Logger::writeFormated(const Char* file, int line, const Char* func, const Char* subsystem, LoggerMessageType type, const Char* threadName,
 						   const Char* fmt, ...)
 {
+	// Note: m_verbosityEnabled is not accessed in a thread-safe way. It doesn't really matter though
+	if(type == LoggerMessageType::kVerbose && !m_verbosityEnabled)
+	{
+		return;
+	}
+
 	Array<Char, 256> buffer;
 	va_list args;
 
@@ -119,7 +119,7 @@ void Logger::writeFormated(const Char* file, int line, const Char* func, const C
 	}
 	else if(len < I(sizeof(buffer)))
 	{
-		write(file, line, func, subsystem, type, threadName, &buffer[0]);
+		writeInternal(file, line, func, subsystem, type, threadName, &buffer[0]);
 		va_end(args);
 	}
 	else
@@ -133,7 +133,7 @@ void Logger::writeFormated(const Char* file, int line, const Char* func, const C
 		Char* newBuffer = static_cast<Char*>(malloc(newSize));
 		len = vsnprintf(newBuffer, newSize, fmt, args);
 
-		write(file, line, func, subsystem, type, threadName, newBuffer);
+		writeInternal(file, line, func, subsystem, type, threadName, newBuffer);
 
 		free(newBuffer);
 		va_end(args);

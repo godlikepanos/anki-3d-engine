@@ -75,8 +75,6 @@ private:
 		RenderTargetHandle m_rt;
 	} m_runCtx;
 
-	Error initInternal();
-
 	void processLights(RenderingContext& ctx);
 
 	TileAllocatorResult2 allocateAtlasTiles(U32 lightUuid, U32 componentIndex, U32 faceCount, const U32* hierarchies, UVec4* atlasTileViewports);

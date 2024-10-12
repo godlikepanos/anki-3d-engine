@@ -31,8 +31,6 @@ Dbg::~Dbg()
 
 Error Dbg::init()
 {
-	ANKI_R_LOGV("Initializing DBG");
-
 	// RT descr
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
 															  Format::kR8G8B8A8_Unorm, "Dbg");

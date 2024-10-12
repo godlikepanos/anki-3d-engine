@@ -39,7 +39,7 @@ Bool MicroFence::clientWait(Second seconds)
 	}
 	else
 	{
-		seconds = min(seconds, kMaxFenceOrSemaphoreWaitTime);
+		seconds = min<Second>(seconds, g_gpuTimeoutCVar);
 
 		ANKI_D3D_CHECKF(m_fence->SetEventOnCompletion(m_value.load(), m_event));
 
@@ -134,7 +134,7 @@ void FenceFactory::trimSignaledFences(Bool wait)
 	GrDynamicArray<MicroFence*> unsignaledFences;
 	for(MicroFence* fence : m_fences)
 	{
-		const Bool signaled = fence->clientWait((wait) ? kMaxFenceOrSemaphoreWaitTime : 0.0f);
+		const Bool signaled = fence->clientWait((wait) ? g_gpuTimeoutCVar : 0.0);
 		if(signaled)
 		{
 			deleteInstance(GrMemoryPool::getSingleton(), fence);

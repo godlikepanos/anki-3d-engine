@@ -93,8 +93,6 @@ private:
 		BufferView m_visibleAaabbIndicesBuffer; ///< Optional
 		BufferHandle m_visibleAaabbIndicesBufferDepedency;
 	} m_runCtx;
-
-	Error initInternal();
 };
 /// @}
 

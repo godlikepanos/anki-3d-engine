@@ -15,23 +15,10 @@ namespace anki {
 
 Error Tonemapping::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize tonemapping");
-	}
-
-	return err;
-}
-
-Error Tonemapping::initInternal()
-{
 	{
 		m_expAndAvgLum.m_inputTexMip =
 			(getRenderer().getBloom().getPyramidTextureMipmapCount() > 2) ? getRenderer().getBloom().getPyramidTextureMipmapCount() - 2 : 0;
 		const UVec2 size = getRenderer().getBloom().getPyramidTextureSize() >> m_expAndAvgLum.m_inputTexMip;
-
-		ANKI_R_LOGV("Initializing tonemapping. Resolution %ux%u", size.x(), size.y());
 
 		// Create program
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_expAndAvgLum.m_prog, m_expAndAvgLum.m_grProg));

@@ -17,22 +17,9 @@ namespace anki {
 
 Error ShadowmapsResolve::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize shadow resolve pass");
-	}
-
-	return Error::kNone;
-}
-
-Error ShadowmapsResolve::initInternal()
-{
 	m_quarterRez = g_smResolveQuarterRezCVar;
 	const U32 width = getRenderer().getInternalResolution().x() / (m_quarterRez + 1);
 	const U32 height = getRenderer().getInternalResolution().y() / (m_quarterRez + 1);
-
-	ANKI_R_LOGV("Initializing shadowmaps resolve. Resolution %ux%u", width, height);
 
 	m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR8G8B8A8_Unorm, "SM resolve");
 	m_rtDescr.bake();

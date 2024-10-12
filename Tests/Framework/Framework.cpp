@@ -241,7 +241,7 @@ void initWindow()
 	inf.m_width = g_windowWidthCVar;
 	inf.m_height = g_windowHeightCVar;
 	inf.m_title = "AnKi unit tests";
-	NativeWindow* win = &NativeWindow::allocateSingleton();
+	NativeWindow::allocateSingleton();
 	ANKI_TEST_EXPECT_NO_ERR(NativeWindow::getSingleton().init(inf));
 }
 

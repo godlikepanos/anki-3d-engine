@@ -17,8 +17,6 @@ Error Bloom::init()
 		const UVec2 pyramidSize = getRenderer().getInternalResolution() / 2;
 		const U32 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x(), pyramidSize.y(), g_bloomPyramidLowLimit);
 
-		ANKI_R_LOGV("Initializing bloom downscale pyramid. Resolution %ux%u, mip count %u", pyramidSize.x(), pyramidSize.y(), pyramidMipCount);
-
 		const Bool preferCompute = g_preferComputeCVar;
 
 		// Create the miped texture

@@ -13,21 +13,7 @@ namespace anki {
 
 Error GBufferPost::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize GBufferPost pass");
-	}
-	return err;
-}
-
-Error GBufferPost::initInternal()
-{
-	ANKI_R_LOGV("Initializing GBufferPost pass");
-
-	// Load shaders
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GBufferPost.ankiprogbin", m_prog, m_grProg));
-
 	return Error::kNone;
 }
 

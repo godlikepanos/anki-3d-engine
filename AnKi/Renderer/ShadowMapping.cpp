@@ -61,26 +61,11 @@ static LightHash decodeTileHash(U64 hash)
 
 Error ShadowMapping::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize shadowmapping");
-	}
-
-	return err;
-}
-
-Error ShadowMapping::initInternal()
-{
 	// Init RT
 	{
 		m_tileResolution = g_shadowMappingTileResolutionCVar;
 		m_tileCountBothAxis = g_shadowMappingTileCountPerRowOrColumnCVar;
 
-		ANKI_R_LOGV("Initializing shadowmapping. Atlas resolution %ux%u", m_tileResolution * m_tileCountBothAxis,
-					m_tileResolution * m_tileCountBothAxis);
-
-		// RT
 		const TextureUsageBit usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			m_tileResolution * m_tileCountBothAxis, m_tileResolution * m_tileCountBothAxis, Format::kD32_Sfloat, usage, "ShadowAtlas");

@@ -56,8 +56,6 @@ public:
 	public:
 		RenderTargetHandle m_ssrRt;
 	} m_runCtx;
-
-	Error initInternal();
 };
 /// @}
 

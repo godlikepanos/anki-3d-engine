@@ -39,7 +39,7 @@ Bool MicroSemaphore::clientWait(Second seconds)
 {
 	ANKI_ASSERT(m_isTimeline);
 
-	seconds = min(seconds, kMaxFenceOrSemaphoreWaitTime);
+	seconds = min<Second>(seconds, g_gpuTimeoutCVar);
 
 	VkSemaphoreWaitInfo waitInfo = {};
 	waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;

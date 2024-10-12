@@ -24,20 +24,6 @@ GBuffer::~GBuffer()
 
 Error GBuffer::init()
 {
-	Error err = initInternal();
-
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize g-buffer pass");
-	}
-
-	return err;
-}
-
-Error GBuffer::initInternal()
-{
-	ANKI_R_LOGV("Initializing GBuffer. Resolution %ux%u", getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-
 	// RTs
 	static constexpr Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
 	for(U32 i = 0; i < 2; ++i)

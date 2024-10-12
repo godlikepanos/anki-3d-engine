@@ -14,22 +14,8 @@ namespace anki {
 
 Error MotionVectors::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize motion vectors");
-	}
-	return err;
-}
-
-Error MotionVectors::initInternal()
-{
-	ANKI_R_LOGV("Initializing motion vectors");
-
-	// Prog
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/MotionVectors.ankiprogbin", m_prog, m_grProg));
 
-	// RTs
 	m_motionVectorsRtDescr = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16_Sfloat, "MotionVectors");
 	m_motionVectorsRtDescr.bake();

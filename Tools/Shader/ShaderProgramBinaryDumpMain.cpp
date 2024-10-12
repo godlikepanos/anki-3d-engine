@@ -178,7 +178,7 @@ Error dumpStats(const ShaderBinary& bin)
 					DynamicArray<U8> newSpirv;
 					newSpirv.resize(codeBlock.m_binary.getSize());
 					memcpy(newSpirv.getBegin(), codeBlock.m_binary.getBegin(), codeBlock.m_binary.getSizeInBytes());
-					visitSpirv(WeakArray<U32>(reinterpret_cast<U32*>(newSpirv.getBegin()), newSpirv.getSizeInBytes() / sizeof(U32)),
+					visitSpirv(WeakArray<U32>(reinterpret_cast<U32*>(newSpirv.getBegin()), U32(newSpirv.getSizeInBytes() / sizeof(U32))),
 							   [&](U32 cmd, WeakArray<U32> instructions) {
 								   if(cmd == spv::OpDecorate && instructions[1] == spv::DecorationDescriptorSet
 									  && instructions[2] == kDxcVkBindlessRegisterSpace)

@@ -45,6 +45,8 @@ inline BoolCVar g_rayTracingCVar("Gr", "RayTracing", false, "Try enabling ray tr
 inline BoolCVar g_vrsCVar("Gr", "Vrs", false, "Enable or not VRS");
 inline BoolCVar g_workGraphcsCVar("Gr", "WorkGraphs", false, "Enable or not WorkGraphs");
 inline NumericCVar<U32> g_maxBindlessSampledTextureCountCVar("Gr", "MaxBindlessSampledTextureCountCVar", 512, 16, kMaxU16);
+inline NumericCVar<Second> g_gpuTimeoutCVar("Gr", "GpuTimeout", 120.0, 0.0, 24.0 * 60.0,
+											"Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout");
 
 #if ANKI_GR_BACKEND_DIRECT3D
 inline NumericCVar<U16> g_maxRtvDescriptorsCVar("Gr", "MaxRvtDescriptors", 1024, 8, kMaxU16, "Max number of RTVs");

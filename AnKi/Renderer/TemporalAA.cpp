@@ -16,19 +16,6 @@ namespace anki {
 
 Error TemporalAA::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to init TAA");
-	}
-
-	return Error::kNone;
-}
-
-Error TemporalAA::initInternal()
-{
-	ANKI_R_LOGV("Initializing TAA");
-
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/TemporalAA.ankiprogbin", {{"VARIANCE_CLIPPING", 1}, {"YCBCR", 0}}, m_prog, m_grProg));
 
 	for(U32 i = 0; i < 2; ++i)

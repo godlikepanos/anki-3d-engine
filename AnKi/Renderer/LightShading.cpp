@@ -27,62 +27,33 @@ namespace anki {
 
 Error LightShading::init()
 {
-	ANKI_R_LOGV("Initializing light shading");
-
-	Error err = initLightShading();
-
-	if(!err)
 	{
-		err = initSkybox();
+		// Load shaders and programs
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog, m_lightShading.m_grProg));
+
+		// Create RT descr
+		const UVec2 internalResolution = getRenderer().getInternalResolution();
+		m_lightShading.m_rtDescr = getRenderer().create2DRenderTargetDescription(internalResolution.x(), internalResolution.y(),
+																				 getRenderer().getHdrFormat(), "Light Shading");
+		m_lightShading.m_rtDescr.bake();
+
+		// Debug visualization
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg, m_visualizeRtGrProg));
 	}
 
-	if(!err)
 	{
-		err = initApplyFog();
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
+
+		for(MutatorValue method = 0; method < 3; ++method)
+		{
+			ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}, m_skybox.m_prog,
+										 m_skybox.m_grProgs[method]));
+		}
 	}
 
-	if(err)
 	{
-		ANKI_R_LOGE("Failed to init light stage");
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog, m_applyFog.m_grProg));
 	}
-
-	return err;
-}
-
-Error LightShading::initLightShading()
-{
-	// Load shaders and programs
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog, m_lightShading.m_grProg));
-
-	// Create RT descr
-	const UVec2 internalResolution = getRenderer().getInternalResolution();
-	m_lightShading.m_rtDescr =
-		getRenderer().create2DRenderTargetDescription(internalResolution.x(), internalResolution.y(), getRenderer().getHdrFormat(), "Light Shading");
-	m_lightShading.m_rtDescr.bake();
-
-	// Debug visualization
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/VisualizeHdrRenderTarget.ankiprogbin", m_visualizeRtProg, m_visualizeRtGrProg));
-
-	return Error::kNone;
-}
-
-Error LightShading::initSkybox()
-{
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/LightShadingSkybox.ankiprogbin", m_skybox.m_prog));
-
-	for(MutatorValue method = 0; method < 3; ++method)
-	{
-		ANKI_CHECK(
-			loadShaderProgram("ShaderBinaries/LightShadingSkybox.ankiprogbin", {{"METHOD", method}}, m_skybox.m_prog, m_skybox.m_grProgs[method]));
-	}
-
-	return Error::kNone;
-}
-
-Error LightShading::initApplyFog()
-{
-	// Load shaders and programs
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShadingApplyFog.ankiprogbin", m_applyFog.m_prog, m_applyFog.m_grProg));
 
 	return Error::kNone;
 }

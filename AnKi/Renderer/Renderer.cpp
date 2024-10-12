@@ -183,7 +183,13 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 	if(initCondition) \
 	{ \
 		m_##name2 = newInstance<name>(RendererMemoryPool::getSingleton()); \
-		ANKI_CHECK(m_##name2->init()); \
+		ANKI_R_LOGV("Initializing " ANKI_STRINGIZE(name)); \
+		const Error err = m_##name2->init(); \
+		if(err) \
+		{ \
+			ANKI_R_LOGE("Initialization failed: " ANKI_STRINGIZE(name)); \
+			return err; \
+		} \
 	}
 #include <AnKi/Renderer/RendererObject.def.h>
 

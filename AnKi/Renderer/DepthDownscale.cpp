@@ -41,8 +41,6 @@ Error DepthDownscale::initInternal()
 
 	const UVec2 lastMipSize = UVec2(width, height) >> (m_mipCount - 1);
 
-	ANKI_R_LOGV("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, lastMipSize.x(), lastMipSize.y());
-
 	const Bool preferCompute = g_preferComputeCVar;
 
 	// Create RT descr

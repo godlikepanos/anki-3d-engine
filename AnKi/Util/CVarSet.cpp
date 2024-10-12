@@ -103,6 +103,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 				ANKI_CVAR_NUMERIC_SET(U32)
 				ANKI_CVAR_NUMERIC_SET(PtrSize)
 				ANKI_CVAR_NUMERIC_SET(F32)
+				ANKI_CVAR_NUMERIC_SET(F64)
 			default:
 				ANKI_ASSERT(0);
 			}

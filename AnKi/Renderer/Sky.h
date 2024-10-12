@@ -67,8 +67,6 @@ public:
 	public:
 		RenderTargetHandle m_skyLutRt;
 	} m_runCtx;
-
-	Error initInternal();
 };
 /// @}
 

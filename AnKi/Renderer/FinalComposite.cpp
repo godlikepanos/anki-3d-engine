@@ -37,8 +37,6 @@ namespace anki {
 
 Error FinalComposite::initInternal()
 {
-	ANKI_R_LOGV("Initializing final composite");
-
 	// Progs
 	for(MutatorValue dbg = 0; dbg < 2; ++dbg)
 	{
