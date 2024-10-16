@@ -685,7 +685,6 @@ void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, 
 	ANKI_ASSERT(self.m_rtProg);
 	[[maybe_unused]] const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*self.m_rtProg);
 
-	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
 	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
 	[[maybe_unused]] const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;

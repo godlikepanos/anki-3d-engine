@@ -10,5 +10,8 @@
 
 struct [raypayload] RtMaterialFetchRayPayload
 {
-	Vec3 m_diffuseColor : write(caller, closesthit, miss): read(caller);
+	Vec3 m_diffuseColor : write(closesthit, miss): read(caller);
+	Vec3 m_worldNormal : write(closesthit, miss): read(caller);
+	Vec3 m_emission : write(closesthit, miss): read(caller);
+	F32 m_rayT : write(closesthit, miss): read(caller);
 };

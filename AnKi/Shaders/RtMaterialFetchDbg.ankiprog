@@ -4,8 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki technique RtMaterialFetch rgen miss
-#pragma anki technique SbtBuild comp
-#pragma anki technique SbtBuildSetup comp
 
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -37,7 +35,7 @@ RWTexture2D<Vec4> g_outTex : register(u0, SPACE);
 
 	// Trace
 	RtMaterialFetchRayPayload payload;
-	payload.m_diffuseColor = 0.0;
+	payload = (RtMaterialFetchRayPayload)0;
 	const U32 flags = RAY_FLAG_FORCE_OPAQUE;
 	const U32 sbtRecordOffset = 0u;
 	const U32 sbtRecordStride = 0u;
@@ -50,7 +48,8 @@ RWTexture2D<Vec4> g_outTex : register(u0, SPACE);
 	ray.TMax = 100.0; // TODO
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
-	g_outTex[DispatchRaysIndex().xy] = Vec4(payload.m_diffuseColor, 0.0);
+	g_outTex[DispatchRaysIndex().xy] =
+		Vec4(payload.m_diffuseColor + payload.m_worldNormal * 0.0 + payload.m_rayT * 0.0 + payload.m_emission * 0.0, 0.0);
 }
 #endif // ANKI_RAY_GEN_SHADER
 
@@ -60,77 +59,9 @@ RWTexture2D<Vec4> g_outTex : register(u0, SPACE);
 #if ANKI_MISS_SHADER
 [shader("miss")] void main(inout RtMaterialFetchRayPayload payload)
 {
-	payload.m_diffuseColor = Vec3(0.0, 0.0, 0.5);
+	payload.m_diffuseColor = 0.0;
+	payload.m_worldNormal = 0.0;
+	payload.m_emission = Vec3(0.0, 0.0, 0.5); // TODO
+	payload.m_rayT = -1.0;
 }
 #endif // ANKI_MISS_SHADER
-
-// ===========================================================================
-// SbtBuildSetup                                                             =
-// ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuildSetup
-StructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(t0); // 1st element is the count
-RWStructuredBuffer<DispatchIndirectArgs> g_args : register(u0);
-
-#	define NUMTHREADS 64
-
-[numthreads(1, 1, 1)] void main()
-{
-	const U32 renderableCount = SBUFF(g_visibleRenderables, 0).m_lod_2bit_renderableIndex_30bit;
-
-	DispatchIndirectArgs args;
-	args.m_threadGroupCountX = (renderableCount + NUMTHREADS - 1) / NUMTHREADS;
-	args.m_threadGroupCountY = 1;
-	args.m_threadGroupCountZ = 1;
-
-	g_args[0] = args;
-}
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuildSetup
-
-// ===========================================================================
-// SbtBuild                                                                  =
-// ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuild
-
-StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
-
-StructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(t1); // 1st element is the count
-
-StructuredBuffer<U32> g_shaderHandles : register(t2);
-
-RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
-
-ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
-
-#	define NUMTHREADS 64
-
-[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
-{
-	const U32 renderableCount = SBUFF(g_visibleRenderables, 0).m_lod_2bit_renderableIndex_30bit;
-	if(svDispatchThreadId >= renderableCount)
-	{
-		return;
-	}
-
-	const U32 lodAndRenderableIdx = SBUFF(g_visibleRenderables, svDispatchThreadId + 1).m_lod_2bit_renderableIndex_30bit;
-	const U32 renderableIdx = lodAndRenderableIdx & ((1u << 30) - 1u);
-	const U32 lod = lodAndRenderableIdx >> 30u;
-	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
-
-	U32 sbtDwordOffset = g_consts.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
-	sbtDwordOffset += g_consts.m_sbtRecordDwordSize * svDispatchThreadId;
-
-	// Copy the handle
-	for(U32 i = 0; i < g_consts.m_shaderHandleDwordSize; ++i)
-	{
-		const U32 offset = renderable.m_rtMaterialFetchShaderHandleIndex * g_consts.m_shaderHandleDwordSize + i;
-		SBUFF(g_sbtBuffer, sbtDwordOffset) = SBUFF(g_shaderHandles, offset);
-		++sbtDwordOffset;
-	}
-
-	// Copy the GpuSceneRenderableInstance
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_worldTransformsIndex;
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_constantsOffset;
-	g_sbtBuffer[sbtDwordOffset++] = renderable.m_meshLodsIndex + lod;
-	g_sbtBuffer[sbtDwordOffset] = 0;
-}
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuild

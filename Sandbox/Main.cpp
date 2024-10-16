@@ -343,7 +343,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kU) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtReflections") ? "" : "RtReflections");
 	}
 
 	if(in.getKey(KeyCode::kI) == 1)

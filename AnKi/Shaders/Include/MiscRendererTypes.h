@@ -15,7 +15,7 @@ struct DirectionalLight
 	RVec3 m_diffuseColor;
 	F32 m_power;
 
-	RVec3 m_direction;
+	Vec3 m_direction;
 	U32 m_shadowCascadeCount_31bit_active_1bit; ///< If shadowCascadeCount is zero then it doesn't cast shadow.
 
 	Vec4 m_shadowCascadeDistances;

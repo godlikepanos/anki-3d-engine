@@ -208,11 +208,11 @@ template<typename T>
 U32 checkStructuredBuffer(T buff, U32 idx)
 {
 	ANKI_ASSERT(idx < getStructuredBufferElementCount(buff));
-	return 0u;
+	return idx;
 }
 
 // Safely access a structured buffer. Throw an assertion if it's out of bounds
-#define SBUFF(buff, idx) buff[(idx) + checkStructuredBuffer(buff, idx)]
+#define SBUFF(buff, idx) buff[checkStructuredBuffer(buff, idx)]
 
 // Need extra decoration for per-primitive stuff in Vulkan. Remove when https://github.com/microsoft/DirectXShaderCompiler/issues/6862 is fixed
 #if ANKI_GR_BACKEND_VULKAN

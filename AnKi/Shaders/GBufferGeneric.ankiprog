@@ -36,7 +36,7 @@
 #pragma anki technique RtShadows ahit mutators ALPHA_TEST DIFFUSE_TEX
 #pragma anki technique RtShadows chit mutators
 
-#pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX
+#pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX EMISSIVE_TEX
 
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
@@ -699,7 +699,6 @@ GBufferPixelOut main(
 {
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
 
-#		if DIFFUSE_TEX
 	const Vec3 bary = Vec3(1.0f - barycentrics.m_value.x - barycentrics.m_value.y, barycentrics.m_value.x, barycentrics.m_value.y);
 
 	const GpuSceneMeshLod mesh = g_meshLods[g_gpuSceneRenderable.m_meshLodIndex];
@@ -713,15 +712,36 @@ GBufferPixelOut main(
 	const UnpackedMeshVertex vert2 = loadVertex(mesh, idx2, false);
 
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
+	ANKI_MAYBE_UNUSED(uv);
 
+	// Diffuse
+#		if DIFFUSE_TEX
 	RVec3 diffColor = getBindlessTexture2DRVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0).xyz;
 #		else
 	RVec3 diffColor = 1.0;
 #		endif
-
 	diffColor *= localConstants.m_diffuseScale;
-
 	payload.m_diffuseColor = diffColor;
+
+	// Emissive
+#		if EMISSIVE_TEX
+	RVec3 emission = getBindlessTexture2DRVec4(localConstants.m_emissiveTex).SampleLevel(g_globalSampler, uv, 0.0).rgb;
+#		else
+	RVec3 emission = 1.0;
+#		endif
+	emission *= localConstants.m_emissionScale;
+	payload.m_emission = emission;
+
+	// Normal
+	const Mat3x4 worldTransform = g_transforms[g_gpuSceneRenderable.m_worldTransformsIndex];
+
+	Vec3 normal = vert0.m_normal * bary.x + vert1.m_normal * bary.y + vert2.m_normal * bary.z;
+	normal = mul(worldTransform, Vec4(normal, 0.0));
+
+	payload.m_worldNormal = normal;
+
+	// Ray T
+	payload.m_rayT = RayTCurrent();
 }
 #	endif
 

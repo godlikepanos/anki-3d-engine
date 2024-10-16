@@ -598,7 +598,7 @@ Vec3 sampleGgxVndf(Vec3 v, F32 alphaX, F32 alphaY, F32 u1, F32 u2)
 
 	// Section 4.1: orthonormal basis (with special case if cross product is zero)
 	const F32 lensq = vH.x * vH.x + vH.y * vH.y;
-	const Vec3 tangent1 = (lensq > 0.0) ? Vec3(-vH.y, vH.x, 0) / sqrt(lensq) : Vec3(1.0, 0.0, 0.0);
+	const Vec3 tangent1 = (lensq > 0.0) ? Vec3(-vH.y, vH.x, 0) * rsqrt(lensq) : Vec3(1.0, 0.0, 0.0);
 	const Vec3 tangent2 = cross(vH, tangent1);
 
 	// Section 4.2: parameterization of the projected area
@@ -618,24 +618,39 @@ Vec3 sampleGgxVndf(Vec3 v, F32 alphaX, F32 alphaY, F32 u1, F32 u2)
 	return nE;
 }
 
-/// Calculate the reflection vector based on roughness.
-Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 uniformRandom)
+/// Calculate the reflection vector based on roughness. Sometimes the refl vector is bellow the normal so this func will try again with a new one.
+/// viewDir is camPos-worldPos
+Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount)
 {
 	const Mat3 tbn = rotationFromDirection(normal);
 	const Mat3 tbnT = transpose(tbn);
 	const Vec3 viewDirTbn = mul(tbnT, viewDir);
 
-	Vec3 sampledNormalTbn = sampleGgxVndf(viewDirTbn, roughness, roughness, uniformRandom.x, uniformRandom.y);
-	const Bool perfectReflection = false; // For debugging
-	if(perfectReflection)
+	const F32 alpha = pow(roughness, 2.0);
+
+	Vec3 reflectedDirTbn;
+	do
 	{
-		sampledNormalTbn = Vec3(0.0, 0.0, 1.0);
-	}
+		const Vec3 sampledNormalTbn = sampleGgxVndf(viewDirTbn, alpha, alpha, randFactors.x, randFactors.y);
+		reflectedDirTbn = reflect(-viewDirTbn, sampledNormalTbn);
 
-	const Vec3 reflectedDirTbn = reflect(-viewDirTbn, sampledNormalTbn);
+		if(dot(reflectedDirTbn, Vec3(0.0, 0.0, 1.0)) > cos(kPi / 2.0 * 0.9))
+		{
+			// Angle between the refl vec and the normal is less than 90 degr. We are good to go
+			break;
+		}
+		else
+		{
+			// Try again
+			randFactors.x = frac(randFactors.x + 0.7324);
+			randFactors.y = frac(randFactors.y + 0.6523);
+		}
+	} while(--tryCount);
 
-	// Transform reflected_direction back to the initial space.
-	return mul(tbn, reflectedDirTbn);
+	// Transform reflectedDirTbn back to the initial space.
+	const Vec3 r = mul(tbn, reflectedDirTbn);
+
+	return r;
 }
 
 /// Get the index of the cascade given the distance from zero.

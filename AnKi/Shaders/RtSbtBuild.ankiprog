@@ -1,0 +1,85 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator TECHNIQUE 0 1 // Shdows or MaterialFetch
+
+#pragma anki technique SbtBuildSetup comp
+#pragma anki technique SbtBuild comp
+
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/Common.hlsl>
+
+// ===========================================================================
+// SbtBuildSetup                                                             =
+// ===========================================================================
+#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuildSetup
+StructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(t0); // 1st element is the count
+RWStructuredBuffer<DispatchIndirectArgs> g_args : register(u0);
+
+#	define NUMTHREADS 64
+
+[numthreads(1, 1, 1)] void main()
+{
+	const U32 renderableCount = SBUFF(g_visibleRenderables, 0).m_lod_2bit_renderableIndex_30bit;
+
+	DispatchIndirectArgs args;
+	args.m_threadGroupCountX = (renderableCount + NUMTHREADS - 1) / NUMTHREADS;
+	args.m_threadGroupCountY = 1;
+	args.m_threadGroupCountZ = 1;
+
+	g_args[0] = args;
+}
+#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuildSetup
+
+// ===========================================================================
+// SbtBuild                                                                  =
+// ===========================================================================
+#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuild
+
+StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
+
+StructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(t1); // 1st element is the count
+
+StructuredBuffer<U32> g_shaderHandles : register(t2);
+
+RWStructuredBuffer<U32> g_sbtBuffer : register(u0);
+
+ANKI_FAST_CONSTANTS(RtShadowsSbtBuildConstants, g_consts)
+
+#	define NUMTHREADS 64
+
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 renderableCount = SBUFF(g_visibleRenderables, 0).m_lod_2bit_renderableIndex_30bit;
+	if(svDispatchThreadId >= renderableCount)
+	{
+		return;
+	}
+
+	const U32 lodAndRenderableIdx = SBUFF(g_visibleRenderables, svDispatchThreadId + 1).m_lod_2bit_renderableIndex_30bit;
+	const U32 renderableIdx = lodAndRenderableIdx & ((1u << 30) - 1u);
+	const U32 lod = lodAndRenderableIdx >> 30u;
+	const GpuSceneRenderable renderable = SBUFF(g_renderables, renderableIdx);
+
+	U32 sbtDwordOffset = g_consts.m_sbtRecordDwordSize * 2; // Skip raygen and miss shaders which are first
+	sbtDwordOffset += g_consts.m_sbtRecordDwordSize * svDispatchThreadId;
+
+	// Copy the handle
+	for(U32 i = 0; i < g_consts.m_shaderHandleDwordSize; ++i)
+	{
+		const U32 shaderHandleIdx = (TECHNIQUE == 0) ? renderable.m_rtShadowsShaderHandleIndex : renderable.m_rtMaterialFetchShaderHandleIndex;
+		const U32 offset = shaderHandleIdx * g_consts.m_shaderHandleDwordSize + i;
+		SBUFF(g_sbtBuffer, sbtDwordOffset) = SBUFF(g_shaderHandles, offset);
+		++sbtDwordOffset;
+	}
+
+	// Copy the GpuSceneRenderableInstance
+	SBUFF(g_sbtBuffer, sbtDwordOffset++) = renderable.m_worldTransformsIndex;
+	SBUFF(g_sbtBuffer, sbtDwordOffset++) = renderable.m_constantsOffset;
+	SBUFF(g_sbtBuffer, sbtDwordOffset++) = renderable.m_meshLodsIndex + lod;
+	SBUFF(g_sbtBuffer, sbtDwordOffset) = 0;
+}
+#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuild

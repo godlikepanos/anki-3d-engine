@@ -3,25 +3,26 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/RtMaterialFetchDbg.h>
+#include <AnKi/Renderer/RtReflections.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 
 namespace anki {
 
-Error RtMaterialFetchDbg::init()
+Error RtReflections::init()
 {
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildSetupGrProg, "SbtBuildSetup"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
 
 	// Ray gen and miss
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchDbg.ankiprogbin", m_rtProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtReflections.ankiprogbin", m_rtProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rtProg);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
@@ -40,13 +41,15 @@ Error RtMaterialFetchDbg::init()
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
 	m_rtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-															 Format::kR8G8B8A8_Unorm, "RtMaterialFetch");
+															 getRenderer().getHdrFormat(), "RtReflections");
 	m_rtDesc.bake();
+
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImg));
 
 	return Error::kNone;
 }
 
-void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
+void RtReflections::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
@@ -57,12 +60,12 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(1);
 		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kUavCompute);
 
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch setup build SBT");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections setup build SBT");
 
 		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kAccelerationStructureBuild);
 
 		rpass.setWork([this, sbtBuildIndirectArgsBuffer](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetch);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_sbtBuildSetupGrProg.get());
@@ -95,7 +98,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		memcpy(sbtMem + m_sbtRecordSize, &shaderGroupHandles[m_missShaderGroupIdx * shaderHandleSize], shaderHandleSize);
 
 		// Create the pass
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch build SBT");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections build SBT");
 
 		BufferHandle visibilityHandle;
 		BufferView visibleRenderableIndicesBuff;
@@ -131,10 +134,13 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDesc);
 
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections");
 
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
 		rpass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavTraceRays);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
 
@@ -148,6 +154,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
@@ -158,7 +165,13 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
 			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
+
 			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
+			rgraphCtx.bindSrv(1, 2, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(2, 2, getRenderer().getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(3, 2, getRenderer().getGBuffer().getColorRt(2));
+			cmdb.bindSrv(4, 2, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::all()));
+
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
 
 			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,

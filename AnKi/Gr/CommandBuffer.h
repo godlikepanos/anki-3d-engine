@@ -285,11 +285,11 @@ public:
 	///
 	/// The 1st thing in the sbtBuffer is the ray gen shader group handle:
 	/// @code RG = RG_offset @endcode
-	/// The RG_offset is equal to the stbBufferOffset.
+	/// The RG_offset is equal to the sbtBuffer.getOffset().
 	///
 	/// Then the sbtBuffer contains the miss shader group handles and their data. The indexing is as follows:
 	/// @code M = M_offset + M_stride * R_miss @endcode
-	/// The M_offset is equal to stbBufferOffset + GpuDeviceCapabilities::m_sbtRecordSize.
+	/// The M_offset is equal to sbtBuffer.getOffset() + GpuDeviceCapabilities::m_sbtRecordSize.
 	/// The M_stride is equal to GpuDeviceCapabilities::m_sbtRecordSize.
 	/// The R_miss is defined in the traceRayEXT and it's the "ray type".
 	///

@@ -265,3 +265,18 @@ Bool cullBackfaceMeshlet(Vec3 coneDirection, F32 coneCosHalfAngle, Vec3 coneApex
 	const Vec3 dir = normalize(apexWSpace - cameraWorldPos);
 	return dot(dir, coneAxisWSpace) >= coneCosHalfAngle;
 }
+
+F32 distancePointToLineSegment(Vec2 p, Vec2 lineSegmentA, Vec2 lineSegmentB)
+{
+	const Vec2 ap = p - lineSegmentA;
+	const Vec2 ab = lineSegmentB - lineSegmentA;
+	const F32 abLenSq = dot(ab, ab);
+	if(abLenSq == 0.0f)
+	{
+		return length(p - lineSegmentA);
+	}
+
+	const F32 t = saturate(dot(ap, ab) / abLenSq);
+	const Vec2 closestPoint = lineSegmentA + t * ab;
+	return length(p - closestPoint);
+}

@@ -12,15 +12,14 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtMaterialFetchDbgCVar("R", "RtMaterialFetchDbg", false, "Enable material debugging pass");
+inline BoolCVar g_rtReflectionsCVar("R", "RtReflections", false, "Enable RT reflections");
 
-/// Similar to ShadowmapsResolve but it's using ray tracing.
-class RtMaterialFetchDbg : public RendererObject
+class RtReflections : public RendererObject
 {
 public:
-	RtMaterialFetchDbg()
+	RtReflections()
 	{
-		registerDebugRenderTarget("RtMaterialFetchDbg");
+		registerDebugRenderTarget("RtReflections");
 	}
 
 	Error init();
@@ -41,6 +40,8 @@ public:
 	ShaderProgramPtr m_libraryGrProg;
 
 	RenderTargetDesc m_rtDesc;
+
+	ImageResourcePtr m_blueNoiseImg;
 
 	U32 m_sbtRecordSize = 0;
 	U32 m_rayGenShaderGroupIdx = 0;
