@@ -618,6 +618,41 @@ Vec3 sampleGgxVndf(Vec3 v, F32 alphaX, F32 alphaY, F32 u1, F32 u2)
 	return nE;
 }
 
+// Same thing as sampleGgxVndf but it works in world space and not in TBN
+// https://auzaiffe.wordpress.com/2024/04/15/vndf-importance-sampling-an-isotropic-distribution/
+// viewDir is camPos-worldPos
+Vec3 sampleVndfIsotropic(Vec2 randFactors, Vec3 viewDir, F32 alpha, Vec3 normal)
+{
+	// decompose the floattor in parallel and perpendicular components
+	const Vec3 viewDirZ = -normal * dot(viewDir, normal);
+	const Vec3 viewDirXY = viewDir + viewDirZ;
+
+	// warp to the hemisphere configuration
+	const Vec3 wiStd = -normalize(alpha * viewDirXY + viewDirZ);
+
+	// sample a spherical cap in (-wiStd.z, 1]
+	const F32 wiStdZ = dot(wiStd, normal);
+	const F32 z = 1.0 - randFactors.y * (1.0 + wiStdZ);
+	const F32 sinTheta = sqrt(saturate(1.0 - z * z));
+	const F32 phi = 2.0 * kPi * randFactors.x - kPi;
+	const F32 x = sinTheta * cos(phi);
+	const F32 y = sinTheta * sin(phi);
+	const Vec3 cStd = Vec3(x, y, z);
+
+	// reflect sample to align with normal
+	const Vec3 up = Vec3(0, 0, 1.000001); // Used for the singularity
+	const Vec3 wr = normal + up;
+	const Vec3 c = dot(wr, cStd) * wr / wr.z - cStd;
+
+	// compute halfway direction as standard normal
+	const Vec3 wmStd = c + wiStd;
+	const Vec3 wmStdZ = normal * dot(normal, wmStd);
+	const Vec3 wmStdXY = wmStdZ - wmStd;
+
+	// return final normal
+	return normalize(alpha * wmStdXY + wmStdZ);
+}
+
 /// Calculate the reflection vector based on roughness. Sometimes the refl vector is bellow the normal so this func will try again with a new one.
 /// viewDir is camPos-worldPos
 Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount)
@@ -651,6 +686,33 @@ Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randF
 	const Vec3 r = mul(tbn, reflectedDirTbn);
 
 	return r;
+}
+
+// Another version of sampleReflectionVector. Possibly faster
+Vec3 sampleReflectionVector2(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount)
+{
+	const F32 alpha = roughness * roughness;
+
+	Vec3 reflDir = normal;
+	do
+	{
+		reflDir = sampleVndfIsotropic(randFactors, viewDir, alpha, normal);
+		reflDir = reflect(-viewDir, reflDir);
+
+		if(dot(reflDir, normal) > cos(kPi / 2.0 * 0.9))
+		{
+			// Angle between the refl vec and the normal is less than 90 degr. We are good to go
+			break;
+		}
+		else
+		{
+			// Try again
+			randFactors.x = frac(randFactors.x + 0.7324);
+			randFactors.y = frac(randFactors.y + 0.6523);
+		}
+	} while(--tryCount);
+
+	return reflDir;
 }
 
 /// Get the index of the cascade given the distance from zero.
