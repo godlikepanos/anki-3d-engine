@@ -618,7 +618,24 @@ Vec3 sampleGgxVndf(Vec3 v, F32 alphaX, F32 alphaY, F32 u1, F32 u2)
 	return nE;
 }
 
-// Same thing as sampleGgxVndf but it works in world space and not in TBN
+// The PDF for the sampleGgxVndf. It's D_Ve(nE) = G1(v) * max(0, dot(v, nE)) * D(nE) / v.z
+F32 pdfGgxVndf(Vec3 nE, Vec3 v, F32 alphaX, F32 alphaY)
+{
+	// Equation (2) in the paper
+	F32 lambdaV = (pow2(alphaX * v.x) + pow2(alphaY * v.y)) / pow2(v.z);
+	lambdaV = (-1.0 + sqrt(1.0 + lambdaV)) / 2.0;
+	F32 G1 = 1.0 / (1.0 + lambdaV);
+
+	// Equation (1) in the paper
+	F32 DnE = pow2(nE.x / alphaX) + pow2(nE.y / alphaY) + pow2(nE.z);
+	DnE = kPi * alphaX * alphaY * pow2(DnE);
+	DnE = 1.0 / DnE;
+
+	const F32 pdf = G1 * max(0.0, dot(v, nE)) * DnE / v.z;
+	return pdf;
+}
+
+// Same thing as sampleGgxVndf but it works in world space and not in TBN and it's also isotropic
 // https://auzaiffe.wordpress.com/2024/04/15/vndf-importance-sampling-an-isotropic-distribution/
 // viewDir is camPos-worldPos
 Vec3 sampleVndfIsotropic(Vec2 randFactors, Vec3 viewDir, F32 alpha, Vec3 normal)
@@ -650,13 +667,29 @@ Vec3 sampleVndfIsotropic(Vec2 randFactors, Vec3 viewDir, F32 alpha, Vec3 normal)
 	const Vec3 wmStdXY = wmStdZ - wmStd;
 
 	// return final normal
-	return normalize(alpha * wmStdXY + wmStdZ);
+	const Vec3 nE = normalize(alpha * wmStdXY + wmStdZ);
+	return nE;
 }
 
-/// Calculate the reflection vector based on roughness. Sometimes the refl vector is bellow the normal so this func will try again with a new one.
-/// viewDir is camPos-worldPos
-Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount)
+// The PDF of sampleVndfIsotropic
+F32 pdfVndfIsotropic(Vec3 nE, Vec3 viewDir, F32 alpha, Vec3 normal)
 {
+	const F32 alphaSquare = alpha * alpha;
+	const Vec3 wm = normalize(nE + viewDir);
+	const F32 zm = dot(wm, normal);
+	const F32 zi = dot(viewDir, normal);
+	const F32 nrm = rsqrt((zi * zi) * (1.0f - alphaSquare) + alphaSquare);
+	const F32 sigmaStd = (zi * nrm) * 0.5f + 0.5f;
+	const F32 sigmaI = sigmaStd / nrm;
+	const F32 nrmN = (zm * zm) * (alphaSquare - 1.0f) + 1.0f;
+	return alphaSquare / (kPi * 4.0f * nrmN * nrmN * sigmaI);
+}
+
+/// Calculate the reflection vector based on roughness. Sometimes the refl vector is bellow the normal so this func will try again to get a new one.
+/// viewDir is camPos-worldPos
+Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount, out F32 pdf)
+{
+	pdf = 0.0;
 	const Mat3 tbn = rotationFromDirection(normal);
 	const Mat3 tbnT = transpose(tbn);
 	const Vec3 viewDirTbn = mul(tbnT, viewDir);
@@ -672,6 +705,7 @@ Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randF
 		if(dot(reflectedDirTbn, Vec3(0.0, 0.0, 1.0)) > cos(kPi / 2.0 * 0.9))
 		{
 			// Angle between the refl vec and the normal is less than 90 degr. We are good to go
+			pdf = pdfGgxVndf(sampledNormalTbn, viewDirTbn, alpha, alpha);
 			break;
 		}
 		else
@@ -689,19 +723,21 @@ Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randF
 }
 
 // Another version of sampleReflectionVector. Possibly faster
-Vec3 sampleReflectionVector2(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount)
+Vec3 sampleReflectionVector2(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount, out F32 pdf)
 {
+	pdf = 0.0;
 	const F32 alpha = roughness * roughness;
 
 	Vec3 reflDir = normal;
 	do
 	{
-		reflDir = sampleVndfIsotropic(randFactors, viewDir, alpha, normal);
-		reflDir = reflect(-viewDir, reflDir);
+		const Vec3 nE = sampleVndfIsotropic(randFactors, viewDir, alpha, normal);
+		const Vec3 reflDir = reflect(-viewDir, nE);
 
 		if(dot(reflDir, normal) > cos(kPi / 2.0 * 0.9))
 		{
 			// Angle between the refl vec and the normal is less than 90 degr. We are good to go
+			pdf = pdfVndfIsotropic(nE, viewDir, alpha, normal);
 			break;
 		}
 		else

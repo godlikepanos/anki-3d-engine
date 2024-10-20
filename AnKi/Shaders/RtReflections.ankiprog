@@ -65,7 +65,8 @@ RWTexture2D<Vec4> g_outTex : register(u0, SPACE);
 	// Compute refl
 	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
 #	if 1
-	const Vec3 reflDir = sampleReflectionVector(viewDir, worldNormal, roughness, randFactors, 4);
+	F32 pdf;
+	const Vec3 reflDir = sampleReflectionVector(viewDir, worldNormal, roughness, randFactors, 4, pdf);
 #	else
 	ANKI_MAYBE_UNUSED(roughness);
 	const Vec3 reflDir = reflect(-viewDir, worldNormal);
