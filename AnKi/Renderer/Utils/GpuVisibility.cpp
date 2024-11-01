@@ -1080,9 +1080,10 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 
 Error GpuVisibilityAccelerationStructures::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", m_visibilityProg, m_visibilityGrProg));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructuresZeroRemainingInstances.ankiprogbin", m_zeroRemainingInstancesProg,
-								 m_zeroRemainingInstancesGrProg));
+	ANKI_CHECK(
+		loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", {}, m_visibilityProg, m_visibilityGrProg, "Visibility"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", {}, m_visibilityProg,
+								 m_zeroRemainingInstancesGrProg, "ZeroRemaining"));
 
 	BufferInitInfo inf("GpuVisibilityAccelerationStructuresCounters");
 	inf.m_size = sizeof(U32) * 2;
@@ -1167,7 +1168,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		NonGraphicsRenderPass& pass =
 			rgraph.newNonGraphicsRenderPass(generateTempPassName("Accel vis zero remaining instances: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute);
+		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute | BufferUsageBit::kIndirectCompute);
 
 		pass.setWork([this, zeroInstancesDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
 					  visRenderablesBuff = out.m_renderablesBuffer](RenderPassWorkContext& rgraph) {

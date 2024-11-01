@@ -30,13 +30,19 @@ public:
 	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
 							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
 	{
-		handles[0] = m_runCtx.m_skyLutRt;
+		handles[0] = m_runCtx.m_envMapRt;
 	}
 
 	RenderTargetHandle getSkyLutRt() const
 	{
 		ANKI_ASSERT(isEnabled());
 		return m_runCtx.m_skyLutRt;
+	}
+
+	RenderTargetHandle getEnvironmentMapRt() const
+	{
+		ANKI_ASSERT(isEnabled());
+		return m_runCtx.m_envMapRt;
 	}
 
 	ANKI_PURE Bool isEnabled() const;
@@ -47,14 +53,17 @@ public:
 	ShaderProgramPtr m_multipleScatteringLutGrProg;
 	ShaderProgramPtr m_skyLutGrProg;
 	ShaderProgramPtr m_computeSunColorGrProg;
+	ShaderProgramPtr m_computeEnvMapGrProg;
 
 	static constexpr UVec2 kTransmittanceLutSize{256, 64};
 	static constexpr UVec2 kMultipleScatteringLutSize{32, 32};
 	static constexpr UVec2 kSkyLutSize{256, 256};
+	static constexpr UVec2 kEnvMapSize{64, 64};
 
 	TexturePtr m_transmittanceLut;
 	TexturePtr m_multipleScatteringLut;
 	TexturePtr m_skyLut;
+	TexturePtr m_envMap;
 
 	Vec3 m_sunDir = Vec3(0.0f);
 	F32 m_sunPower = -100.0f;
@@ -66,6 +75,7 @@ public:
 	{
 	public:
 		RenderTargetHandle m_skyLutRt;
+		RenderTargetHandle m_envMapRt;
 	} m_runCtx;
 };
 /// @}

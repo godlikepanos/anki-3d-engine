@@ -17,6 +17,7 @@ Error Sky::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_multipleScatteringLutGrProg, "SkyMultipleScatteringLut"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_skyLutGrProg, "SkyLut"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_computeSunColorGrProg, "ComputeSunColor"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_computeEnvMapGrProg, "ComputeEnvMap"));
 
 	const TextureUsageBit usage = TextureUsageBit::kAllCompute;
 	const TextureUsageBit initialUsage = TextureUsageBit::kSrvCompute;
@@ -35,6 +36,11 @@ Error Sky::init()
 	m_skyLut = getRenderer().createAndClearRenderTarget(
 		getRenderer().create2DRenderTargetInitInfo(kSkyLutSize.x(), kSkyLutSize.y(), formatB, usage | TextureUsageBit::kSrvPixel, "SkyLut"),
 		initialUsage);
+
+	m_envMap = getRenderer().createAndClearRenderTarget(getRenderer().create2DRenderTargetInitInfo(kEnvMapSize.x(), kEnvMapSize.y(),
+																								   getRenderer().getHdrFormat(),
+																								   usage | TextureUsageBit::kAllSrv, "SkyEnvMap"),
+														initialUsage);
 
 	return Error::kNone;
 }
@@ -78,10 +84,12 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	if(m_skyLutImportedOnce) [[likely]]
 	{
 		m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get());
+		m_runCtx.m_envMapRt = rgraph.importRenderTarget(m_envMap.get());
 	}
 	else
 	{
 		m_runCtx.m_skyLutRt = rgraph.importRenderTarget(m_skyLut.get(), TextureUsageBit::kSrvCompute);
+		m_runCtx.m_envMapRt = rgraph.importRenderTarget(m_envMap.get(), TextureUsageBit::kSrvCompute);
 		m_skyLutImportedOnce = true;
 	}
 
@@ -151,6 +159,30 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
 			dispatchPPCompute(cmdb, 8, 8, kSkyLutSize.x(), kSkyLutSize.y());
+		});
+	}
+
+	// Sky env map
+	if(renderSkyLut)
+	{
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SkyLutEnvMap");
+
+		rpass.newTextureDependency(m_runCtx.m_skyLutRt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(m_runCtx.m_envMapRt, TextureUsageBit::kUavCompute);
+
+		rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(SkyLut);
+
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_computeEnvMapGrProg.get());
+
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			rgraphCtx.bindSrv(0, 0, m_runCtx.m_skyLutRt);
+			rgraphCtx.bindUav(0, 0, m_runCtx.m_envMapRt);
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+
+			dispatchPPCompute(cmdb, 8, 8, kEnvMapSize.x(), kEnvMapSize.y());
 		});
 	}
 

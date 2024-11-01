@@ -305,8 +305,6 @@ public:
 private:
 	ShaderProgramResourcePtr m_visibilityProg;
 	ShaderProgramPtr m_visibilityGrProg;
-
-	ShaderProgramResourcePtr m_zeroRemainingInstancesProg;
 	ShaderProgramPtr m_zeroRemainingInstancesGrProg;
 
 	BufferPtr m_counterBuffer; ///< A buffer containing multiple counters for atomic operations.

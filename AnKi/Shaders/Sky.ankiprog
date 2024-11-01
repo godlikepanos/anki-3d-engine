@@ -9,6 +9,7 @@
 #pragma anki technique SkyMultipleScatteringLut comp
 #pragma anki technique SkyLut comp
 #pragma anki technique ComputeSunColor comp
+#pragma anki technique ComputeEnvMap comp
 
 #include <AnKi/Shaders/Sky.hlsl>
 
@@ -426,7 +427,6 @@ Vec3 raymarchScattering(Vec3 pos, Vec3 rayDir, Vec3 dirToSun, F32 tMax, F32 numS
 // Compute sun color                                                         =
 // ===========================================================================
 #if ANKI_TECHNIQUE_ComputeSunColor
-
 #	include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #	include <AnKi/Shaders/TonemappingFunctions.hlsl>
 
@@ -440,5 +440,43 @@ globallycoherent RWStructuredBuffer<GlobalRendererConstants> g_globalConstants :
 
 	g_globalConstants[0].m_directionalLight.m_diffuseColor = Vec4(sunPower * sunTransmittance, 0.0f);
 }
-
 #endif // ANKI_TECHNIQUE_ComputeSunColor
+
+// ===========================================================================
+// Compute a cheap env map                                                   =
+// ===========================================================================
+#if ANKI_TECHNIQUE_ComputeEnvMap
+#	include <AnKi/Shaders/Functions.hlsl>
+#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+
+SamplerState g_linearAnyClampSampler : register(s0);
+
+Texture2D<Vec4> g_skyLut : register(t0);
+
+RWTexture2D<Vec4> g_envMap : register(u0);
+
+ConstantBuffer<GlobalRendererConstants> g_consts : register(b0);
+
+[numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+{
+	const Vec2 svDispatchThreadIdf = Vec2(svDispatchThreadId);
+
+	Vec2 envMapSize;
+	g_envMap.GetDimensions(envMapSize.x, envMapSize.y);
+
+	if(any(svDispatchThreadIdf >= envMapSize))
+	{
+		return;
+	}
+
+	const Vec2 envMapUv = (svDispatchThreadIdf + 0.5) / envMapSize;
+
+	const Vec3 eyeToFrag = octahedronDecode(envMapUv);
+
+	const Vec3 output = computeSkyColor(g_skyLut, g_linearAnyClampSampler, eyeToFrag, -g_consts.m_directionalLight.m_direction,
+										g_consts.m_directionalLight.m_power, true);
+
+	g_envMap[svDispatchThreadId] = Vec4(output, 0.0);
+}
+
+#endif // ANKI_TECHNIQUE_ComputeEnvMap

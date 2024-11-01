@@ -3,13 +3,19 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique comp
+#pragma anki technique Visibility comp
+#pragma anki technique ZeroRemaining comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
+
+// ===========================================================================
+// Visibility                                                                =
+// ===========================================================================
+#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_Visibility
 
 // Buffers that point to the GPU scene
 StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
@@ -26,7 +32,7 @@ RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs : register(u
 
 ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 
-#define NUMTHREADS 64
+#	define NUMTHREADS 64
 
 [numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID, U32 svGroupIndex : SV_GROUPINDEX)
 {
@@ -39,7 +45,7 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 
 	// Sphere test
 	GpuSceneRenderableBoundingVolume bvolume;
-	Vec3 sphereCenter;
+	Vec3 sphereCenter = 0.0;
 	if(visible)
 	{
 		bvolume = SBUFF(g_renderableBoundingVolumes, bvolumeIdx);
@@ -147,3 +153,30 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 		}
 	}
 }
+#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_Visibility
+
+// ===========================================================================
+// ZeroRemaining                                                             =
+// ===========================================================================
+#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_ZeroRemaining
+
+StructuredBuffer<U32> g_visibleRenderableIndices : register(t0); // 1st element is the count
+RWStructuredBuffer<AccelerationStructureInstance> g_instances : register(u0);
+
+#	define NUMTHREADS 64
+
+[numthreads(NUMTHREADS, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 visibleInstances = g_visibleRenderableIndices[0];
+
+	const U32 maxInstances = getStructuredBufferElementCount(g_instances);
+
+	ANKI_ASSERT(maxInstances >= visibleInstances);
+	const U32 remainingInstances = maxInstances - visibleInstances;
+
+	if(svDispatchThreadId < remainingInstances)
+	{
+		SBUFF(g_instances, visibleInstances + svDispatchThreadId) = (AccelerationStructureInstance)0;
+	}
+}
+#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_ZeroRemaining

@@ -13,6 +13,8 @@ namespace anki {
 /// @{
 
 inline BoolCVar g_rtReflectionsCVar("R", "RtReflections", false, "Enable RT reflections");
+inline NumericCVar<F32> g_rtReflectionsMaxRayDistanceCVar("R", "RtReflectionsMaxRayDistance", 100.0f, 1.0f, 10000.0f,
+														  "Max RT reflections ray distance");
 
 class RtReflections : public RendererObject
 {
@@ -32,16 +34,28 @@ public:
 		handles[0] = m_runCtx.m_rt;
 	}
 
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
+	}
+
 public:
 	ShaderProgramResourcePtr m_sbtProg;
 	ShaderProgramResourcePtr m_rtProg;
 	ShaderProgramPtr m_sbtBuildSetupGrProg;
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_libraryGrProg;
+	ShaderProgramPtr m_spatialDenoisingGrProg;
+	ShaderProgramPtr m_temporalDenoisingGrProg;
+	ShaderProgramPtr m_bilateralDenoisingGrProg;
 
-	RenderTargetDesc m_rtDesc;
+	RenderTargetDesc m_transientRtDesc1;
+	RenderTargetDesc m_transientRtDesc2;
+	RenderTargetDesc m_hitPosAndDepthRtDesc;
 
-	ImageResourcePtr m_blueNoiseImg;
+	TexturePtr m_tex;
+	Array<TexturePtr, 2> m_momentsTextures;
+	Bool m_texImportedOnce = false;
 
 	U32 m_sbtRecordSize = 0;
 	U32 m_rayGenShaderGroupIdx = 0;

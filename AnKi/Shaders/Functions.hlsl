@@ -539,12 +539,21 @@ UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 }
 #endif
 
-// Gaussian distrubution function
+// Gaussian distrubution function. Play with the values here https://www.desmos.com/calculator/7oxmohg3ta
+// s is the sigma and x is a factor where abs(x) is in [0, 1]
 template<typename T>
 T gaussianWeight(T s, T x)
 {
-	T p = T(1.0) / (s * sqrt(T(2.0) * kPi));
-	p *= exp((x * x) / (T(-2.0) * s * s));
+	T p = T(1) / (s * sqrt(T(2) * kPi));
+	p *= exp((x * x) / (T(-2) * s * s));
+	return p;
+}
+
+template<typename T>
+T gaussianWeight2d(T s, T x, T y)
+{
+	T p = T(1) / (T(2) * kPi * s * s);
+	p *= exp((x * x + y * y) / (T(-2) * s * s));
 	return p;
 }
 
@@ -775,4 +784,25 @@ Bool dither4x4(Vec2 svPosition, F32 factor)
 	const U32 index = x + y * U32(axisSize);
 	const F32 limit = (F32(ditherMatrix[index]) + 1.0) / (1.0 + axisSize * axisSize);
 	return (factor < limit) ? true : false;
+}
+
+// Encode a normal to octahedron UV coordinates
+Vec2 octahedronEncode(Vec3 n)
+{
+	n /= (abs(n.x) + abs(n.y) + abs(n.z));
+	const Vec2 octWrap = (1.0 - abs(n.yx)) * select(n.xy >= 0.0, 1.0, -1.0);
+	n.xy = select(n.z >= 0.0, n.xy, octWrap);
+	n.xy = n.xy * 0.5 + 0.5;
+	return n.xy;
+}
+
+// The reverse of octahedronEncode
+// https://twitter.com/Stubbesaurus/status/937994790553227264
+Vec3 octahedronDecode(Vec2 f)
+{
+	f = f * 2.0 - 1.0;
+	Vec3 n = Vec3(f.x, f.y, 1.0 - abs(f.x) - abs(f.y));
+	const F32 t = saturate(-n.z);
+	n.xy += select(n.xy >= 0.0, -t, t);
+	return normalize(n);
 }

@@ -10,6 +10,7 @@
 #include <AnKi/Shaders/Common.hlsl>
 
 // https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
+// phi can be equal to 1
 F32 calculateBilateralWeightDepth(F32 depthCenter, F32 depthTap, F32 phi)
 {
 	const F32 diff = abs(depthTap - depthCenter);

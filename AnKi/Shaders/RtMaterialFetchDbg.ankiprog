@@ -12,19 +12,10 @@
 // RayGen                                                                    =
 // ===========================================================================
 #if ANKI_RAY_GEN_SHADER
-
-#	define SPACE space2
-
-ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0, SPACE);
-
-RaytracingAccelerationStructure g_tlas : register(t0, SPACE);
-
-RWTexture2D<Vec4> g_outTex : register(u0, SPACE);
-
 [shader("raygeneration")] void main()
 {
 	Vec2 outSize;
-	g_outTex.GetDimensions(outSize.x, outSize.y);
+	g_colorAndPdfTex.GetDimensions(outSize.x, outSize.y);
 	const Vec2 uv = Vec2(DispatchRaysIndex().xy) / outSize;
 
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), 1.0, 1.0));
@@ -48,7 +39,7 @@ RWTexture2D<Vec4> g_outTex : register(u0, SPACE);
 	ray.TMax = 100.0; // TODO
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
-	g_outTex[DispatchRaysIndex().xy] =
+	g_colorAndPdfTex[DispatchRaysIndex().xy] =
 		Vec4(payload.m_diffuseColor + payload.m_worldNormal * 0.0 + payload.m_rayT * 0.0 + payload.m_emission * 0.0, 0.0);
 }
 #endif // ANKI_RAY_GEN_SHADER

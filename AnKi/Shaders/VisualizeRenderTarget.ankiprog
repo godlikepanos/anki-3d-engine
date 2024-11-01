@@ -16,6 +16,7 @@ Texture2D g_inTex : register(t0);
 Vec3 main(VertOut input) : SV_TARGET0
 {
 	const Vec4 rgba = g_inTex.SampleLevel(g_nearestAnyClampSampler, input.m_uv, 0.0);
+	// return (input.m_uv.x > 0.5) ? rgba.xyz : rgba.aaa * 1.0;
 	return rgba.xyz;
 }
 #endif // ANKI_PIXEL_SHADER

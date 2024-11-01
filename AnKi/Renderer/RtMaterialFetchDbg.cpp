@@ -55,11 +55,12 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 	BufferView sbtBuildIndirectArgsBuffer;
 	{
 		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(1);
-		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kUavCompute);
+		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kNone);
 
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch setup build SBT");
 
-		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kAccelerationStructureBuild);
+		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kUavCompute);
+		rpass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
 
 		rpass.setWork([this, sbtBuildIndirectArgsBuffer](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetch);
@@ -103,6 +104,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kIndirectCompute);
+		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, sbtBuildIndirectArgsBuffer, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
@@ -148,6 +150,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(ANKI_MATERIAL_REGISTER_TILINEAR_REPEAT_SAMPLER, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_GPU_SCENE, 0, GpuSceneBuffer::getSingleton().getBufferView());
 			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_MESH_LODS, 0, GpuSceneArrays::MeshLod::getSingleton().getBufferView());
+			cmdb.bindSrv(ANKI_MATERIAL_REGISTER_TRANSFORMS, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 
 #define ANKI_UNIFIED_GEOM_FORMAT(fmt, shaderType, reg) \
 	cmdb.bindSrv( \
@@ -158,8 +161,17 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 #include <AnKi/Shaders/Include/UnifiedGeometryTypes.def.h>
 
 			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
+
 			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
+
 			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
+
+			// Fill the rest of the interface resources
+			cmdb.bindSrv(1, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(2, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(3, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(4, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			cmdb.bindUav(1, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::firstSurface()));
 
 			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);

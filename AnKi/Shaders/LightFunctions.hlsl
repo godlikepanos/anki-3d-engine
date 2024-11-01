@@ -587,7 +587,7 @@ RVec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const Glo
 
 /// To play with it use https://www.shadertoy.com/view/sttSDf
 /// http://jcgt.org/published/0007/04/01/paper.pdf by Eric Heitz
-/// Input v: view direction
+/// Input v: view direction (camPos - pos)
 /// Input alphaX, alphaY: roughness parameters
 /// Input u1, u2: uniform random numbers
 /// Output: normal sampled with PDF D_Ve(nE) = G1(v) * max(0, dot(v, nE)) * D(nE) / v.z
@@ -672,10 +672,10 @@ Vec3 sampleVndfIsotropic(Vec2 randFactors, Vec3 viewDir, F32 alpha, Vec3 normal)
 }
 
 // The PDF of sampleVndfIsotropic
-F32 pdfVndfIsotropic(Vec3 nE, Vec3 viewDir, F32 alpha, Vec3 normal)
+F32 pdfVndfIsotropic(Vec3 reflectedDir, Vec3 viewDir, F32 alpha, Vec3 normal)
 {
 	const F32 alphaSquare = alpha * alpha;
-	const Vec3 wm = normalize(nE + viewDir);
+	const Vec3 wm = normalize(reflectedDir + viewDir);
 	const F32 zm = dot(wm, normal);
 	const F32 zi = dot(viewDir, normal);
 	const F32 nrm = rsqrt((zi * zi) * (1.0f - alphaSquare) + alphaSquare);
@@ -687,25 +687,26 @@ F32 pdfVndfIsotropic(Vec3 nE, Vec3 viewDir, F32 alpha, Vec3 normal)
 
 /// Calculate the reflection vector based on roughness. Sometimes the refl vector is bellow the normal so this func will try again to get a new one.
 /// viewDir is camPos-worldPos
-Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount, out F32 pdf)
+Vec3 sampleReflectionVectorAnisotropic(Vec3 viewDir, Vec3 normal, F32 roughnessX, F32 roughnessY, Vec2 randFactors, U32 tryCount, out F32 pdf)
 {
 	pdf = 0.0;
 	const Mat3 tbn = rotationFromDirection(normal);
 	const Mat3 tbnT = transpose(tbn);
 	const Vec3 viewDirTbn = mul(tbnT, viewDir);
 
-	const F32 alpha = pow(roughness, 2.0);
+	const F32 alphaX = roughnessX * roughnessX;
+	const F32 alphaY = roughnessY * roughnessY;
 
 	Vec3 reflectedDirTbn;
 	do
 	{
-		const Vec3 sampledNormalTbn = sampleGgxVndf(viewDirTbn, alpha, alpha, randFactors.x, randFactors.y);
+		const Vec3 sampledNormalTbn = sampleGgxVndf(viewDirTbn, alphaX, alphaY, randFactors.x, randFactors.y);
 		reflectedDirTbn = reflect(-viewDirTbn, sampledNormalTbn);
 
 		if(dot(reflectedDirTbn, Vec3(0.0, 0.0, 1.0)) > cos(kPi / 2.0 * 0.9))
 		{
 			// Angle between the refl vec and the normal is less than 90 degr. We are good to go
-			pdf = pdfGgxVndf(sampledNormalTbn, viewDirTbn, alpha, alpha);
+			pdf = pdfGgxVndf(sampledNormalTbn, viewDirTbn, alphaX, alphaY);
 			break;
 		}
 		else
@@ -723,21 +724,19 @@ Vec3 sampleReflectionVector(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randF
 }
 
 // Another version of sampleReflectionVector. Possibly faster
-Vec3 sampleReflectionVector2(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount, out F32 pdf)
+Vec3 sampleReflectionVectorIsotropic(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 randFactors, U32 tryCount, out F32 pdf)
 {
-	pdf = 0.0;
 	const F32 alpha = roughness * roughness;
 
 	Vec3 reflDir = normal;
 	do
 	{
 		const Vec3 nE = sampleVndfIsotropic(randFactors, viewDir, alpha, normal);
-		const Vec3 reflDir = reflect(-viewDir, nE);
+		reflDir = reflect(-viewDir, nE);
 
 		if(dot(reflDir, normal) > cos(kPi / 2.0 * 0.9))
 		{
 			// Angle between the refl vec and the normal is less than 90 degr. We are good to go
-			pdf = pdfVndfIsotropic(nE, viewDir, alpha, normal);
 			break;
 		}
 		else
@@ -748,6 +747,7 @@ Vec3 sampleReflectionVector2(Vec3 viewDir, Vec3 normal, F32 roughness, Vec2 rand
 		}
 	} while(--tryCount);
 
+	pdf = pdfVndfIsotropic(reflDir, viewDir, alpha, normal);
 	return reflDir;
 }
 

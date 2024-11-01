@@ -15,7 +15,7 @@ T log10(T x)
 }
 
 template<typename T>
-vector<T, 3> computeLuminance(vector<T, 3> color)
+T computeLuminance(vector<T, 3> color)
 {
 	return max(dot(vector<T, 3>(0.30, 0.59, 0.11), color), getEpsilon<T>());
 }

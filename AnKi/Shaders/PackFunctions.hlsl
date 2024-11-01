@@ -194,11 +194,20 @@ vector<T, 3> unpackNormalFromGBuffer(vector<T, 4> rt2)
 }
 
 template<typename T>
-T unpackRoughnessFromGBuffer(vector<T, 4> rt1)
+T unpackRoughnessFromGBuffer(vector<T, 4> rt1, T minRoughness)
 {
 	T r = rt1.x;
-	r = r * (T(1) - T(kMinRoughness)) + T(kMinRoughness);
+	if(minRoughness > 0.0)
+	{
+		r = r * (T(1) - T(minRoughness)) + T(minRoughness);
+	}
 	return r;
+}
+
+template<typename T>
+T unpackRoughnessFromGBuffer(vector<T, 4> rt1)
+{
+	return unpackRoughnessFromGBuffer<T>(rt1, kMinRoughness);
 }
 
 // Read part of the G-buffer
