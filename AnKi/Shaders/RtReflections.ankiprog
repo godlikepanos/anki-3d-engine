@@ -6,7 +6,8 @@
 #pragma anki technique RtMaterialFetch rgen miss
 #pragma anki technique SpatialDenoise comp
 #pragma anki technique TemporalDenoise comp
-#pragma anki technique BilateralDenoise comp
+#pragma anki technique BilateralDenoiseVertical comp
+#pragma anki technique BilateralDenoiseHorizontal comp
 
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -18,6 +19,8 @@
 // Config
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
 #define SPATIAL_UPSCALING_POISON_KERNEL kPoissonDisk4
+constexpr F32 kMaxBilateralSamples = 5.0;
+constexpr F32 kGaussianSigma = 0.55;
 
 // ===========================================================================
 // RayGen                                                                    =
@@ -71,6 +74,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec3 reflDir = sampleReflectionVectorIsotropic(viewDir, worldNormal, roughness, randFactors, 4, pdf);
 #	else
 	ANKI_MAYBE_UNUSED(roughness);
+	ANKI_MAYBE_UNUSED(randFactors);
 	const Vec3 reflDir = reflect(-viewDir, worldNormal);
 	const F32 pdf = 1.0;
 #	endif
@@ -124,7 +128,11 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	outColor += diffC * dirLight.m_diffuseColor * lambert * shadow;
 
 	g_colorAndPdfTex[coord] = Vec4(outColor, max(0.0, pdf));
-	g_hitPosAndDepthTex[coord] = Vec4(worldPos + reflDir * payload.m_rayT, depth);
+
+	Vec3 hitPos = worldPos + reflDir * payload.m_rayT;
+	hitPos -= g_globalRendererConstants.m_cameraPosition; // Move it with camera to avoid precision issues since it's stored in fp16
+
+	g_hitPosAndDepthTex[coord] = Vec4(hitPos, 1.0 - depth); // Store depth in reverse for better precision
 }
 #endif // ANKI_RAY_GEN_SHADER
 
@@ -144,7 +152,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 // ===========================================================================
 // SpatialDenoise                                                            =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SpatialDenoise
+#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_SpatialDenoise)
 Texture2D<Vec4> g_colorAndPdfTex : register(t0);
 Texture2D<Vec4> g_hitPosAndDepthTex : register(t1);
 Texture2D<Vec4> g_depthTex : register(t2);
@@ -170,6 +178,11 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 	const F32 pdf = rgba.w;
 
 	const F32 depth = g_depthTex[coord];
+	if(depth == 1.0)
+	{
+		g_denoisedTex[svDispatchThreadId] = 0.0;
+		return;
+	}
 
 	const Vec2 ndc = uvToNdc((Vec2(coord) + 0.5) / Vec2(outSize));
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
@@ -178,8 +191,6 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
 
 	const Vec4 rt1 = g_gbufferRt1[coord];
-	const Vec4 rt2 = g_gbufferRt2[coord];
-	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
 	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
 	const F32 alpha = pow2(roughness);
 
@@ -191,6 +202,9 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 	}
 	else
 	{
+		const Vec4 rt2 = g_gbufferRt2[coord];
+		const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+
 		const UVec3 seed = rand3DPCG16(UVec3(svDispatchThreadId, g_globalRendererConstants.m_frame % 8u));
 		const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
 
@@ -214,19 +228,22 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 			const IVec2 newCoord = clamp(IVec2(coord) + rotatedDiskPoint * kSpatialUpscalingPcfTexelOffset, 0, outSize - 1);
 
 			rgba = g_hitPosAndDepthTex[newCoord];
-			const F32 sampleDepth = rgba.w;
-			const Vec3 hitPos = rgba.xyz;
+			const F32 sampleDepth = 1.0 - rgba.w;
+			const Vec3 hitPos = rgba.xyz + g_globalRendererConstants.m_cameraPosition;
 
 			const Vec3 reflectedDir = normalize(hitPos - worldPos);
 			const F32 pdf = pdfVndfIsotropic(reflectedDir, viewDir, alpha, worldNormal);
 
-			const Vec3 sampleColor = g_colorAndPdfTex[newCoord].xyz;
-
 			const F32 weight = pdf * calculateBilateralWeightDepth(depth, sampleDepth, 1.0);
 
-			outColor += sampleColor * weight;
-			weightSum += weight;
-			avgLuma += computeLuminance(sampleColor) / sampleCount;
+			if(weight > 0.001)
+			{
+				const Vec3 sampleColor = g_colorAndPdfTex[newCoord].xyz;
+
+				outColor += sampleColor * weight;
+				weightSum += weight;
+				avgLuma += computeLuminance(sampleColor) / sampleCount;
+			}
 		}
 
 		outColor = outColor / weightSum;
@@ -246,7 +263,7 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 // ===========================================================================
 // TemporalDenoise                                                           =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_TemporalDenoise
+#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_TemporalDenoise)
 SamplerState g_linearAnyClampSampler : register(s0);
 
 Texture2D<Vec4> g_colorAndDepth : register(t0);
@@ -264,12 +281,12 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
 {
 	// Compute the history UV by reprojecting the hit point
-	const Vec3 worldPos = g_hitPosTex[coords].xyz;
+	const Vec3 hitWorldPos = g_hitPosTex[coords].xyz + g_globalRendererConstants.m_cameraPosition;
 
-	Vec4 clipPos = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(worldPos, 1.0));
+	Vec4 clipPos = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitWorldPos, 1.0));
 	clipPos.xy /= clipPos.w;
 
-	Vec4 prevClipPos = mul(g_globalRendererConstants.m_previousMatrices.m_viewProjection, Vec4(worldPos, 1.0));
+	Vec4 prevClipPos = mul(g_globalRendererConstants.m_previousMatrices.m_viewProjection, Vec4(hitWorldPos, 1.0));
 	prevClipPos.xy /= prevClipPos.w;
 
 	const Vec2 diff = ndcToUv(prevClipPos.xy) - ndcToUv(clipPos.xy);
@@ -289,6 +306,87 @@ Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
 	return historyUv;
 }
 
+void accumulateSourceColor(Vec2 newUv, Vec4 texelWeights, inout Vec3 m1, inout Vec3 m2, inout Vec3 sourceSample, inout Vec3 neighboorMin,
+						   inout Vec3 neighboorMax)
+{
+	const Vec4 red = g_colorAndDepth.GatherRed(g_linearAnyClampSampler, newUv);
+	const Vec4 green = g_colorAndDepth.GatherGreen(g_linearAnyClampSampler, newUv);
+	const Vec4 blue = g_colorAndDepth.GatherBlue(g_linearAnyClampSampler, newUv);
+
+	[unroll] for(U32 c = 0; c < 4; ++c)
+	{
+		if(texelWeights[c] > 0.0)
+		{
+			const Vec3 neighbor = Vec3(red[c], green[c], blue[c]);
+
+			sourceSample += neighbor * texelWeights[c];
+
+			neighboorMin = min(neighboorMin, neighbor);
+			neighboorMax = max(neighboorMax, neighbor);
+
+			m1 += neighbor;
+			m2 += neighbor * neighbor;
+		}
+	}
+}
+
+void accumulateSourceColor(IVec2 coord, IVec2 textureSize, F32 weight, inout Vec3 m1, inout Vec3 m2, inout Vec3 sourceSample, inout Vec3 neighboorMin,
+						   inout Vec3 neighboorMax)
+{
+	coord = clamp(coord, 0, textureSize - 1);
+
+	const Vec3 neighbor = g_colorAndDepth[coord].xyz;
+
+	sourceSample += neighbor * weight;
+
+	neighboorMin = min(neighboorMin, neighbor);
+	neighboorMax = max(neighboorMax, neighbor);
+
+	m1 += neighbor;
+	m2 += neighbor * neighbor;
+}
+
+void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, out Vec3 m2, out Vec3 sourceSample, out Vec3 neighboorMin,
+						out Vec3 neighboorMax)
+{
+	sourceSample = 0.0;
+	neighboorMin = 1000.0;
+	neighboorMax = -1000.0;
+	m1 = 0.0;
+	m2 = 0.0;
+
+	const Vec2 texelSize = 1.0 / textureSize;
+	const Vec2 halfTexelSize = texelSize / 2.0;
+
+	// Positioning mentioned bellow is in screen space (bottom left is in the bottom left of the screen)
+	// Alogithm wants to sample 9 taps of this:
+	// +-+-+-+
+	// |6|7|8|
+	// +-+-+-+
+	// |3|4|5|
+	// +-+-+-+
+	// |0|1|2|
+	// +-+-+-+
+	// "uv" points to the middle of 4
+
+	// Bottom left (0, 1, 4, 3)
+	Vec2 newUv = uv + Vec2(-halfTexelSize.x, +halfTexelSize.y);
+	accumulateSourceColor(newUv, Vec4(0.5, 0.5, 1.0, 0.5), m1, m2, sourceSample, neighboorMin, neighboorMax);
+
+	// Top right (4, 5, 8, 7)
+	newUv = uv + Vec2(+halfTexelSize.x, -halfTexelSize.y);
+	accumulateSourceColor(newUv, Vec4(0.0, 0.5, 0.5, 0.5), m1, m2, sourceSample, neighboorMin, neighboorMax);
+
+	// Top left
+	accumulateSourceColor(coord + IVec2(-1, -1), textureSize, 0.5, m1, m2, sourceSample, neighboorMin, neighboorMax);
+
+	// Bottom right
+	accumulateSourceColor(coord + IVec2(+1, +1), textureSize, 0.5, m1, m2, sourceSample, neighboorMin, neighboorMax);
+
+	// Misc
+	sourceSample /= 1.0 + 0.5 * 8.0;
+}
+
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
 	UVec2 textureSize;
@@ -298,48 +396,20 @@ Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
 	const Vec2 uv = (Vec2(coord) + 0.5f) / textureSize;
 
 	// Read crnt
-	Vec4 rgba = g_colorAndDepth[coord];
-	const F32 depth = rgba.w;
-	Vec3 sourceSample = rgba.xyz;
-	Vec3 neighboorMin = sourceSample;
-	Vec3 neighboorMax = sourceSample;
-	F32 weightSum = 1.0;
-	Vec3 m1 = sourceSample;
-	Vec3 m2 = sourceSample * sourceSample;
-	constexpr F32 sampleCount = 9.0;
-	for(I32 x = -1; x <= 1; ++x)
-	{
-		for(I32 y = -1; y <= 1; ++y)
-		{
-			if(x == 0 && y == 0)
-			{
-				continue;
-			}
-
-			IVec2 newCoords = IVec2(coord) + IVec2(x, y);
-			newCoords = clamp(newCoords, 0, textureSize - 1);
-
-			const Vec3 neighbor = g_colorAndDepth[newCoords].xyz;
-
-			const F32 weight = 0.5;
-			sourceSample += neighbor * weight;
-			weightSum += weight;
-
-			neighboorMin = min(neighboorMin, neighbor);
-			neighboorMax = max(neighboorMax, neighbor);
-
-			m1 += neighbor;
-			m2 += neighbor * neighbor;
-		}
-	}
-
-	sourceSample /= weightSum;
+	const F32 depth = g_colorAndDepth[coord].w;
+	Vec3 sourceSample = 0.0;
+	Vec3 neighboorMin = 0.0;
+	Vec3 neighboorMax = 0.0;
+	Vec3 m1 = 0.0;
+	Vec3 m2 = 0.0;
+	computeSourceColor(uv, coord, textureSize, m1, m2, sourceSample, neighboorMin, neighboorMax);
 
 	// Read history
 	const Vec2 historyUv = computeHistoryUv(coord, uv);
 	Vec3 history = g_historyTex.SampleLevel(g_linearAnyClampSampler, historyUv, 0.0f);
 
 	// Fix history
+	constexpr F32 sampleCount = 9.0;
 	const F32 gamma = 1.0;
 	const Vec3 mu = m1 / sampleCount;
 	const Vec3 sigma = sqrt(abs((m2 / sampleCount) - (mu * mu)));
@@ -369,16 +439,15 @@ Vec2 computeHistoryUv(UVec2 coords, Vec2 uv)
 	const Vec2 moments = lerp(crntMoments, momentsHistory, 0.25);
 
 	// Write value
-	g_outTex[svDispatchThreadId] = Vec4(finalVal, depth);
-	g_momentsTex[svDispatchThreadId] = Vec4(moments, 0.0, 0.0);
+	g_outTex[coord] = Vec4(finalVal, depth);
+	g_momentsTex[coord] = Vec4(moments, 0.0, 0.0);
 }
 #endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_TemporalDenoise
 
 // ===========================================================================
-// BilateralDenoise                                                          =
+// BilateralDenoiseHorizontal                                                =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoise
-SamplerState g_linearAnyClampSampler : register(s0);
+#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_BilateralDenoiseHorizontal)
 Texture2D<Vec4> g_colorAndDepth : register(t0);
 Texture2D<Vec4> g_momentsTex : register(t1);
 Texture2D<Vec4> g_gbufferRt1 : register(t2);
@@ -421,51 +490,112 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 	const F32 refDepth = rgba.w;
 	const Vec3 centerColor = rgba.xyz;
 
-	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / outSize;
-	const Vec2 texelSize = 1.0 / outSize;
-	const Vec2 halfTexelSize = texelSize / 2.0;
-
 	const F32 variance = sqrt(computeVarianceCenter(coord, outSize)) * 100.0;
 
 	const Vec4 rt1 = g_gbufferRt1[coord];
 	const F32 roughness = unpackRoughnessFromGBuffer<F32>(rt1, 0.0);
 	const F32 sqRoughness = sqrt(roughness);
 
-	constexpr F32 kSamples = 5.0;
-	constexpr F32 kGaussianSigma = 0.55;
-
 	const F32 lerpFactor = sqRoughness * min(1.0, max(sqRoughness, variance));
 
-	const F32 sampleCount = round(lerp(0, kSamples, lerpFactor));
+	const F32 sampleCount = round(lerp(0, kMaxBilateralSamples, lerpFactor));
 
-	Vec3 colorSum = centerColor;
 	F32 weightSum = gaussianWeight2d<F32>(kGaussianSigma, 0.0, 0.0);
+	Vec3 colorSum = centerColor * weightSum;
 	for(F32 x = -sampleCount; x <= sampleCount; x += 1.0)
 	{
-		for(F32 y = -sampleCount; y <= sampleCount; y += 1.0)
+		if(x == 0.0)
 		{
-			if(x == 0.0 && y == 0.0)
-			{
-				continue;
-			}
-
-			const Vec2 suv = uv + Vec2(x, y) * texelSize + Vec2(sign(x), sign(y)) * halfTexelSize;
-
-			rgba = g_colorAndDepth.SampleLevel(g_linearAnyClampSampler, suv, 0.0);
-			const F32 sampleDepth = rgba.w;
-			const Vec3 sampleColor = rgba.xyz;
-
-			const F32 gaussianWeight = gaussianWeight2d<F32>(kGaussianSigma, x / sampleCount, y / sampleCount);
-			const F32 depthWeight = calculateBilateralWeightDepth(refDepth, sampleDepth, 1.0);
-			const F32 weight = gaussianWeight * depthWeight;
-
-			colorSum += sampleColor * weight;
-			weightSum += weight;
+			continue;
 		}
+
+		IVec2 newCoord = coord + IVec2(x, 0);
+		newCoord.x = clamp(newCoord.x, 0, outSize.x - 1);
+
+		rgba = g_colorAndDepth[newCoord];
+		const F32 sampleDepth = rgba.w;
+		const Vec3 sampleColor = rgba.xyz;
+
+		const F32 gWeight = gaussianWeight<F32>(kGaussianSigma, x / sampleCount);
+		const F32 depthWeight = calculateBilateralWeightDepth(refDepth, sampleDepth, 1.0);
+		const F32 weight = gWeight * depthWeight;
+
+		colorSum += sampleColor * weight;
+		weightSum += weight;
+	}
+
+	colorSum /= weightSum;
+
+	// Encode the step count in the signs of the out color
+	const U32 sampleCountu = sampleCount;
+	Vec4 signs;
+	[unroll] for(U32 i = 0; i < 4; i++)
+	{
+		signs[i] = (sampleCountu & (1u << i)) ? 1.0 : -1.0;
+	}
+
+	g_outTex[coord] = Vec4(colorSum, refDepth) * signs;
+}
+#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoiseHorizontal
+
+// ===========================================================================
+// BilateralDenoiseVertical                                                  =
+// ===========================================================================
+#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_BilateralDenoiseVertical)
+Texture2D<Vec4> g_colorAndDepthAndSampleCount : register(t0);
+
+RWTexture2D<Vec4> g_outTex : register(u0);
+
+F32 decodeSampleCount(Vec4 rgba)
+{
+	U32 sampleCountu = 0;
+	[unroll] for(U32 i = 0; i < 4; ++i)
+	{
+		sampleCountu |= (sign(rgba[i]) > 0.0) ? (1u << i) : 0u;
+	}
+
+	return sampleCountu;
+}
+
+[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+{
+	UVec2 outSize;
+	g_outTex.GetDimensions(outSize.x, outSize.y);
+
+	const UVec2 coord = min(svDispatchThreadId, outSize - 1);
+
+	Vec4 rgba = g_colorAndDepthAndSampleCount[coord];
+	const F32 sampleCount = decodeSampleCount(rgba);
+	rgba = abs(rgba);
+	const F32 refDepth = rgba.w;
+	const Vec3 refColor = rgba.xyz;
+
+	F32 weightSum = gaussianWeight<F32>(kGaussianSigma, 0.0);
+	Vec3 colorSum = refColor * weightSum;
+	for(F32 y = -sampleCount; y <= sampleCount; y += 1.0)
+	{
+		if(y == 0.0)
+		{
+			continue;
+		}
+
+		IVec2 newCoord = coord + IVec2(0.0, y);
+		newCoord.y = clamp(newCoord.y, 0, outSize.y - 1);
+
+		rgba = abs(g_colorAndDepthAndSampleCount[newCoord]);
+		const F32 sampleDepth = rgba.w;
+		const Vec3 sampleColor = rgba.xyz;
+
+		const F32 gWeight = gaussianWeight<F32>(kGaussianSigma, y / sampleCount);
+		const F32 depthWeight = calculateBilateralWeightDepth(refDepth, sampleDepth, 1.0);
+		const F32 weight = gWeight * depthWeight;
+
+		colorSum += sampleColor * weight;
+		weightSum += weight;
 	}
 
 	colorSum /= weightSum;
 
 	g_outTex[coord] = Vec4(colorSum, 1.0);
 }
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoise
+#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoiseVertical

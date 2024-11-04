@@ -47,7 +47,8 @@ public:
 	ShaderProgramPtr m_libraryGrProg;
 	ShaderProgramPtr m_spatialDenoisingGrProg;
 	ShaderProgramPtr m_temporalDenoisingGrProg;
-	ShaderProgramPtr m_bilateralDenoisingGrProg;
+	ShaderProgramPtr m_verticalBilateralDenoisingGrProg;
+	ShaderProgramPtr m_horizontalBilateralDenoisingGrProg;
 
 	RenderTargetDesc m_transientRtDesc1;
 	RenderTargetDesc m_transientRtDesc2;

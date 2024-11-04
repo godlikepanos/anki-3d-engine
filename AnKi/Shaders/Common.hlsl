@@ -225,6 +225,13 @@ DEFINE_COMPARISON2(max)
 #undef DEFINE_COMPARISON2
 #undef DEFINE_COMPARISON
 
+// Trick intellisense
+#if defined(__INTELLISENSE__)
+#	define NOT_ZERO(exr) (1)
+#else
+#	define NOT_ZERO(exr) ((exr) != 0)
+#endif
+
 template<typename T>
 T pow2(T x)
 {

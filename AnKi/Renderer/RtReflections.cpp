@@ -41,7 +41,10 @@ Error RtReflections::init()
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_bilateralDenoisingGrProg, "BilateralDenoise"));
+	ANKI_CHECK(
+		loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_verticalBilateralDenoisingGrProg, "BilateralDenoiseVertical"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_horizontalBilateralDenoisingGrProg,
+								 "BilateralDenoiseHorizontal"));
 
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
@@ -55,7 +58,7 @@ Error RtReflections::init()
 	m_transientRtDesc2.bake();
 
 	m_hitPosAndDepthRtDesc = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR32G32B32A32_Sfloat, "HitPosAndDepth");
+		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
 	m_hitPosAndDepthRtDesc.bake();
 
 	TextureInitInfo texInit = getRenderer().create2DRenderTargetDescription(
@@ -306,28 +309,49 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			});
 	}
 
-	// Bilateral filter
+	// Hotizontal bilateral filter
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflectionsBilateral");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflectionsHorizBilateral");
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
 
-		rpass.newTextureDependency(mainRt, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx, transientRt1, mainRt, writeMomentsRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, &ctx, transientRt1, transientRt2, writeMomentsRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-			cmdb.bindShaderProgram(m_bilateralDenoisingGrProg.get());
-
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindShaderProgram(m_horizontalBilateralDenoisingGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, transientRt1);
 			rgraphCtx.bindSrv(1, 0, writeMomentsRt);
 			rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getColorRt(1));
+
+			rgraphCtx.bindUav(0, 0, transientRt2);
+
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		});
+	}
+
+	// Vertical bilateral filter
+	{
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflectionsVertBilateral");
+
+		rpass.newTextureDependency(transientRt2, TextureUsageBit::kSrvCompute);
+
+		rpass.newTextureDependency(mainRt, TextureUsageBit::kUavCompute);
+
+		rpass.setWork([this, &ctx, transientRt2, mainRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_verticalBilateralDenoisingGrProg.get());
+
+			rgraphCtx.bindSrv(0, 0, transientRt2);
 
 			rgraphCtx.bindUav(0, 0, mainRt);
 
