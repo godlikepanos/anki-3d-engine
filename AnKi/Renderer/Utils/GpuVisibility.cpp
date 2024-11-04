@@ -1083,7 +1083,7 @@ Error GpuVisibilityAccelerationStructures::init()
 	ANKI_CHECK(
 		loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", {}, m_visibilityProg, m_visibilityGrProg, "Visibility"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/GpuVisibilityAccelerationStructures.ankiprogbin", {}, m_visibilityProg,
-								 m_zeroRemainingInstancesGrProg, "ZeroRemaining"));
+								 m_zeroRemainingInstancesGrProg, "ZeroRemainingInstances"));
 
 	BufferInitInfo inf("GpuVisibilityAccelerationStructuresCounters");
 	inf.m_size = sizeof(U32) * 2;
@@ -1110,22 +1110,24 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 
 	out.m_instancesBuffer = allocateStructuredBuffer<AccelerationStructureInstance>(aabbCount);
-	out.m_someBufferHandle = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kUavCompute);
+	out.m_dependency = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kUavCompute);
 
 	out.m_renderablesBuffer = allocateStructuredBuffer<LodAndRenderableIndex>(aabbCount + 1);
 
-	const BufferView zeroInstancesDispatchArgsBuff = allocateStructuredBuffer<DispatchIndirectArgs>(1);
+	const BufferView zeroInstancesAndSbtBuildDispatchArgsBuff = allocateStructuredBuffer<DispatchIndirectArgs>(2);
+
+	out.m_buildSbtIndirectArgsBuffer = BufferView(zeroInstancesAndSbtBuildDispatchArgsBuff).incrementOffset(sizeof(DispatchIndirectArgs));
 
 	// Create vis pass
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("Accel vis: %s", in.m_passesName.cstr()));
 
 		pass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
-		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute);
+		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kUavCompute);
 
 		pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
 					  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, visRenderablesBuff = out.m_renderablesBuffer,
-					  zeroInstancesDispatchArgsBuff](RenderPassWorkContext& rgraph) {
+					  zeroInstancesAndSbtBuildDispatchArgsBuff](RenderPassWorkContext& rgraph) {
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_visibilityGrProg.get());
@@ -1156,7 +1158,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 			cmdb.bindUav(0, 0, instancesBuff);
 			cmdb.bindUav(1, 0, visRenderablesBuff);
 			cmdb.bindUav(2, 0, BufferView(m_counterBuffer.get(), 0, sizeof(U32) * 2));
-			cmdb.bindUav(3, 0, zeroInstancesDispatchArgsBuff);
+			cmdb.bindUav(3, 0, zeroInstancesAndSbtBuildDispatchArgsBuff);
 
 			const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 			dispatchPPCompute(cmdb, 64, 1, aabbCount, 1);
@@ -1168,9 +1170,9 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		NonGraphicsRenderPass& pass =
 			rgraph.newNonGraphicsRenderPass(generateTempPassName("Accel vis zero remaining instances: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(out.m_someBufferHandle, BufferUsageBit::kUavCompute | BufferUsageBit::kIndirectCompute);
+		pass.newBufferDependency(out.m_dependency, BufferUsageBit::kUavCompute | BufferUsageBit::kIndirectCompute);
 
-		pass.setWork([this, zeroInstancesDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
+		pass.setWork([this, zeroInstancesAndSbtBuildDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
 					  visRenderablesBuff = out.m_renderablesBuffer](RenderPassWorkContext& rgraph) {
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
@@ -1179,7 +1181,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 			cmdb.bindSrv(0, 0, visRenderablesBuff);
 			cmdb.bindUav(0, 0, instancesBuff);
 
-			cmdb.dispatchComputeIndirect(zeroInstancesDispatchArgsBuff);
+			cmdb.dispatchComputeIndirect(BufferView(zeroInstancesAndSbtBuildDispatchArgsBuff).setRange(sizeof(DispatchIndirectArgs)));
 		});
 	}
 }

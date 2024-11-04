@@ -5,7 +5,6 @@
 
 #pragma anki mutator TECHNIQUE 0 1 // Shdows or MaterialFetch
 
-#pragma anki technique SbtBuildSetup comp
 #pragma anki technique SbtBuild comp
 
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -13,31 +12,9 @@
 #include <AnKi/Shaders/Common.hlsl>
 
 // ===========================================================================
-// SbtBuildSetup                                                             =
-// ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuildSetup
-StructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(t0); // 1st element is the count
-RWStructuredBuffer<DispatchIndirectArgs> g_args : register(u0);
-
-#	define NUMTHREADS 64
-
-[numthreads(1, 1, 1)] void main()
-{
-	const U32 renderableCount = SBUFF(g_visibleRenderables, 0).m_lod_2bit_renderableIndex_30bit;
-
-	DispatchIndirectArgs args;
-	args.m_threadGroupCountX = (renderableCount + NUMTHREADS - 1) / NUMTHREADS;
-	args.m_threadGroupCountY = 1;
-	args.m_threadGroupCountZ = 1;
-
-	g_args[0] = args;
-}
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuildSetup
-
-// ===========================================================================
 // SbtBuild                                                                  =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SbtBuild
+#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_SbtBuild)
 
 StructuredBuffer<GpuSceneRenderable> g_renderables : register(t0);
 

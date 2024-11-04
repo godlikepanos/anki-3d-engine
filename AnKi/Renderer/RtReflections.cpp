@@ -19,7 +19,6 @@ namespace anki {
 
 Error RtReflections::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildSetupGrProg, "SbtBuildSetup"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
 
 	// Ray gen and miss
@@ -102,34 +101,9 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	const RenderTargetHandle transientRt2 = rgraph.newRenderTarget(m_transientRtDesc2);
 	const RenderTargetHandle hitPosAndDepthRt = rgraph.newRenderTarget(m_hitPosAndDepthRtDesc);
 
-	BufferHandle visibilityHandle;
-	BufferView visibleRenderableIndicesBuff;
-	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityHandle, visibleRenderableIndicesBuff);
-
-	// SBT build setup
-	BufferHandle sbtBuildIndirectArgsHandle;
-	BufferView sbtBuildIndirectArgsBuffer;
-	{
-		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(1);
-		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kNone);
-
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections setup build SBT");
-
-		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kUavCompute);
-		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kSrvCompute);
-
-		rpass.setWork([this, sbtBuildIndirectArgsBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_sbtBuildSetupGrProg.get());
-
-			cmdb.bindSrv(0, 0, visibleRenderableIndicesBuff);
-			cmdb.bindUav(0, 0, sbtBuildIndirectArgsBuffer);
-
-			cmdb.dispatchCompute(1, 1, 1);
-		});
-	}
+	BufferHandle visibilityDep;
+	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
+	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
 
 	// SBT build
 	BufferHandle sbtHandle;
@@ -154,10 +128,10 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections build SBT");
 
-		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kIndirectCompute);
+		rpass.newBufferDependency(visibilityDep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, sbtBuildIndirectArgsBuffer, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -176,7 +150,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.dispatchComputeIndirect(sbtBuildIndirectArgsBuffer);
+			cmdb.dispatchComputeIndirect(buildSbtIndirectArgsBuff);
 		});
 	}
 

@@ -36,7 +36,6 @@ public:
 public:
 	ShaderProgramResourcePtr m_sbtProg;
 	ShaderProgramResourcePtr m_rtProg;
-	ShaderProgramPtr m_sbtBuildSetupGrProg;
 	ShaderProgramPtr m_sbtBuildGrProg;
 	ShaderProgramPtr m_libraryGrProg;
 

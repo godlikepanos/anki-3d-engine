@@ -32,10 +32,11 @@ public:
 		return m_runCtx.m_tlasHandle;
 	}
 
-	void getVisibilityInfo(BufferHandle& handle, BufferView& visibleRenderables) const
+	void getVisibilityInfo(BufferHandle& depedency, BufferView& visibleRenderables, BufferView& buildSbtIndirectArgs) const
 	{
-		handle = m_runCtx.m_visibilityHandle;
+		depedency = m_runCtx.m_dependency;
 		visibleRenderables = m_runCtx.m_visibleRenderablesBuff;
+		buildSbtIndirectArgs = m_runCtx.m_buildSbtIndirectArgsBuff;
 	}
 
 public:
@@ -45,8 +46,9 @@ public:
 		AccelerationStructurePtr m_tlas;
 		AccelerationStructureHandle m_tlasHandle;
 
-		BufferHandle m_visibilityHandle;
+		BufferHandle m_dependency;
 		BufferView m_visibleRenderablesBuff;
+		BufferView m_buildSbtIndirectArgsBuff;
 	} m_runCtx;
 };
 /// @}

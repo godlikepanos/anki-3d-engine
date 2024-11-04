@@ -230,8 +230,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtShadows build SBT");
 
 		BufferHandle visibilityHandle;
-		BufferView visibleRenderableIndicesBuff;
-		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityHandle, visibleRenderableIndicesBuff);
+		BufferView visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff;
+		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityHandle, visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff);
 
 		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kIndirectCompute);

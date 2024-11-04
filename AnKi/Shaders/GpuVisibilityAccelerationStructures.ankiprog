@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki technique Visibility comp
-#pragma anki technique ZeroRemaining comp
+#pragma anki technique ZeroRemainingInstances comp
 
 #include <AnKi/Shaders/Common.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -15,7 +15,7 @@
 // ===========================================================================
 // Visibility                                                                =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_Visibility
+#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_Visibility)
 
 // Buffers that point to the GPU scene
 StructuredBuffer<GpuSceneRenderableBoundingVolume> g_renderableBoundingVolumes : register(t0);
@@ -28,6 +28,7 @@ RWStructuredBuffer<LodAndRenderableIndex> g_visibleRenderables : register(u1); /
 
 globallycoherent RWStructuredBuffer<U32> g_counterBuffer : register(u2); // 2 counters per dispatch
 
+// Contains 2 elements. 1st is the args of the ZeroRemainingInstances
 RWStructuredBuffer<DispatchIndirectArgs> g_nextDispatchIndirectArgs : register(u3);
 
 ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
@@ -141,7 +142,7 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 				SBUFF(g_counterBuffer, 0) = 0;
 				SBUFF(g_counterBuffer, 1) = 0;
 
-				// Update indirect args of some next job
+				// Update indirect args of the ZeroRemainingInstances
 				const U32 remaining = maxVisibleInstances - visible;
 
 				DispatchIndirectArgs args;
@@ -149,6 +150,10 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 				args.m_threadGroupCountY = 1;
 				args.m_threadGroupCountZ = 1;
 				SBUFF(g_nextDispatchIndirectArgs, 0) = args;
+
+				// Update the args for the various SBT build dispatches
+				args.m_threadGroupCountX = (visible + NUMTHREADS - 1) / NUMTHREADS;
+				SBUFF(g_nextDispatchIndirectArgs, 1) = args;
 			}
 		}
 	}
@@ -156,9 +161,9 @@ ANKI_FAST_CONSTANTS(GpuVisibilityAccelerationStructuresConstants, g_consts)
 #endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_Visibility
 
 // ===========================================================================
-// ZeroRemaining                                                             =
+// ZeroRemainingInstances                                                    =
 // ===========================================================================
-#if ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_ZeroRemaining
+#if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_ZeroRemainingInstances)
 
 StructuredBuffer<U32> g_visibleRenderableIndices : register(t0); // 1st element is the count
 RWStructuredBuffer<AccelerationStructureInstance> g_instances : register(u0);
@@ -179,4 +184,4 @@ RWStructuredBuffer<AccelerationStructureInstance> g_instances : register(u0);
 		SBUFF(g_instances, visibleInstances + svDispatchThreadId) = (AccelerationStructureInstance)0;
 	}
 }
-#endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_ZeroRemaining
+#endif

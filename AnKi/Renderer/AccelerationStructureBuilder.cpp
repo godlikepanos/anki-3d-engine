@@ -32,8 +32,9 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 
 		getRenderer().getGpuVisibilityAccelerationStructures().pupulateRenderGraph(in, visOut);
 
-		m_runCtx.m_visibilityHandle = visOut.m_someBufferHandle;
+		m_runCtx.m_dependency = visOut.m_dependency;
 		m_runCtx.m_visibleRenderablesBuff = visOut.m_renderablesBuffer;
+		m_runCtx.m_buildSbtIndirectArgsBuff = visOut.m_buildSbtIndirectArgsBuffer;
 	}
 
 	// Create the TLAS
@@ -55,7 +56,7 @@ void AccelerationStructureBuilder::populateRenderGraph(RenderingContext& ctx)
 
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Build TLAS");
 		rpass.newAccelerationStructureDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::kBuild);
-		rpass.newBufferDependency(visOut.m_someBufferHandle, BufferUsageBit::kAccelerationStructureBuild);
+		rpass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kAccelerationStructureBuild);
 
 		rpass.setWork([this, scratchBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ASBuilder);

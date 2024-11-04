@@ -16,7 +16,6 @@ namespace anki {
 
 Error RtMaterialFetchDbg::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildSetupGrProg, "SbtBuildSetup"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
 
 	// Ray gen and miss
@@ -50,30 +49,9 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	// SBT build setup
-	BufferHandle sbtBuildIndirectArgsHandle;
-	BufferView sbtBuildIndirectArgsBuffer;
-	{
-		sbtBuildIndirectArgsBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(1);
-		sbtBuildIndirectArgsHandle = rgraph.importBuffer(sbtBuildIndirectArgsBuffer, BufferUsageBit::kNone);
-
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch setup build SBT");
-
-		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kUavCompute);
-		rpass.newBufferDependency(getRenderer().getGpuSceneBufferHandle(), BufferUsageBit::kSrvCompute);
-
-		rpass.setWork([this, sbtBuildIndirectArgsBuffer](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetch);
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_sbtBuildSetupGrProg.get());
-
-			cmdb.bindSrv(0, 0, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getBufferView());
-			cmdb.bindUav(0, 0, sbtBuildIndirectArgsBuffer);
-
-			cmdb.dispatchCompute(1, 1, 1);
-		});
-	}
+	BufferHandle visibilityDep;
+	BufferView visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff;
+	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, sbtBuildIndirectArgsBuff);
 
 	// SBT build
 	BufferHandle sbtHandle;
@@ -98,15 +76,10 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtMaterialFetch build SBT");
 
-		BufferHandle visibilityHandle;
-		BufferView visibleRenderableIndicesBuff;
-		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityHandle, visibleRenderableIndicesBuff);
-
-		rpass.newBufferDependency(visibilityHandle, BufferUsageBit::kSrvCompute);
-		rpass.newBufferDependency(sbtBuildIndirectArgsHandle, BufferUsageBit::kIndirectCompute);
+		rpass.newBufferDependency(visibilityDep, BufferUsageBit::kSrvCompute | BufferUsageBit::kIndirectCompute);
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, sbtBuildIndirectArgsBuffer, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, sbtBuildIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -125,7 +98,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 			consts.m_shaderHandleDwordSize = shaderHandleSize / 4;
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.dispatchComputeIndirect(sbtBuildIndirectArgsBuffer);
+			cmdb.dispatchComputeIndirect(sbtBuildIndirectArgsBuff);
 		});
 	}
 
