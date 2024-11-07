@@ -83,7 +83,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	{
 		RVec3 probeColor = Vec3(0.0, 0.0, 0.0);
 
-		const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_giProbesMask) == 1);
+		const Bool oneProbe = WaveActiveAllTrue(countbits(cluster.m_giProbesMask) == 1);
 		if(oneProbe)
 		{
 			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight

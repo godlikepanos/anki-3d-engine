@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki technique Ssr comp
 #pragma anki technique RtMaterialFetch rgen miss
 #pragma anki technique SpatialDenoise comp
 #pragma anki technique TemporalDenoise comp
@@ -15,12 +16,178 @@
 #include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
+#include <AnKi/Shaders/SsRayMarching.hlsl>
 
 // Config
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
 #define SPATIAL_UPSCALING_POISON_KERNEL kPoissonDisk4
 constexpr F32 kMaxBilateralSamples = 5.0;
 constexpr F32 kGaussianSigma = 0.55;
+
+// Functions
+Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
+						SamplerState linearAnyClampSampler)
+{
+	const U32 probeCount = getStructuredBufferElementCount(giProbes);
+	U32 i;
+	for(i = 0; i < probeCount; ++i)
+	{
+		if(all(worldPos < giProbes[i].m_aabbMax) && all(worldPos > giProbes[i].m_aabbMin))
+		{
+			break;
+		}
+	}
+
+	const Bool probeFound = (i != probeCount);
+	if(probeFound)
+	{
+		const GpuSceneGlobalIlluminationProbe probe = giProbes[i];
+		return sampleGlobalIllumination(worldPos, worldNormal, probe, getBindlessTexture3DRVec4(probe.m_volumeTexture), linearAnyClampSampler);
+	}
+	else
+	{
+		return 0.0;
+	}
+}
+
+// ===========================================================================
+// SSR                                                                       =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_Ssr)
+#	define EXTRA_REJECTION 1
+
+SamplerState g_trilinearClampSampler : register(s0);
+
+Texture2D<Vec4> g_gbufferRt1 : register(t0);
+Texture2D<Vec4> g_gbufferRt2 : register(t1);
+Texture2D<Vec4> g_downscaledDepthTex : register(t2);
+Texture2D<Vec4> g_depthTex : register(t3);
+Texture2D<Vec4> g_lightBufferRt : register(t4);
+
+RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
+RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
+
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
+
+ANKI_FAST_CONSTANTS(SsrConstants2, g_consts)
+
+// All calculations in view space
+[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+{
+	UVec2 outSize;
+	g_colorAndPdfTex.GetDimensions(outSize.x, outSize.y);
+
+	const UVec2 coord = min(svDispatchThreadId, outSize - 1u);
+	const Vec2 uv = (Vec2(coord) + 0.5) / Vec2(outSize);
+
+	const F32 depth = g_depthTex.SampleLevel(g_trilinearClampSampler, uv, 0.0).x;
+	if(depth == 1.0)
+	{
+		g_colorAndPdfTex[coord] = 0.0;
+		g_hitPosAndDepthTex[coord] = 0.0;
+		return;
+	}
+
+	const Vec4 rt1 = g_gbufferRt1[coord];
+	const Vec4 rt2 = g_gbufferRt2[coord];
+
+	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+	const Vec3 viewNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(worldNormal, 0.0));
+	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
+
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec3 viewPos = cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, ndc, depth);
+
+	// Noise
+	const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
+	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
+
+	// Compute refl
+	const Vec3 viewDir = -normalize(viewPos);
+#	if 1
+	F32 pdf;
+	const Vec3 reflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
+#	else
+	ANKI_MAYBE_UNUSED(roughness);
+	ANKI_MAYBE_UNUSED(randFactors);
+	const Vec3 reflDir = reflect(-viewDir, viewNormal);
+	F32 pdf = 1.0;
+#	endif
+
+	// Trace
+	F32 ssrAttenuation;
+	Vec3 hitPoint;
+	{
+		const U32 lod = 8u; // Use the max LOD for ray marching
+		const U32 stepIncrement = g_consts.m_stepIncrement;
+		const F32 stepIncrementf = F32(stepIncrement);
+		const F32 minStepf = min(4.0f, stepIncrementf);
+		const U32 initialStepIncrement = U32(lerp(minStepf, stepIncrementf, randFactors.x));
+		F32 hitAttenuation;
+		raymarchGroundTruth(viewPos, reflDir, uv, depth, g_consts.m_projMat00_11_22_23, g_consts.m_maxIterations, g_downscaledDepthTex,
+							g_trilinearClampSampler, F32(lod), stepIncrement, initialStepIncrement, hitPoint, hitAttenuation);
+
+		ssrAttenuation = hitAttenuation;
+	}
+
+	// Compute the hit point in viewspace
+	Vec3 hitPointViewSpace = 0.0;
+	if(ssrAttenuation > 0.0)
+	{
+		const F32 depth = g_downscaledDepthTex.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).r;
+		hitPointViewSpace = cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, uvToNdc(hitPoint.xy), depth);
+	}
+
+#	if EXTRA_REJECTION
+	// Reject backfacing
+	if(ssrAttenuation > 0.0)
+	{
+		const Vec3 gbufferNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0));
+		const Vec3 hitNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(gbufferNormal, 0.0));
+		RF32 backFaceAttenuation;
+		rejectBackFaces(reflDir, hitNormal, backFaceAttenuation);
+
+		ssrAttenuation *= backFaceAttenuation;
+	}
+
+	// Reject far from hit point
+	if(ssrAttenuation > 0.0)
+	{
+		const Vec3 reflRayHitPointVSpace =
+			cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, uvToNdc(hitPoint.xy), hitPoint.z);
+
+		const RF32 rejectionMeters = 0.5f;
+		const RF32 diff = length(reflRayHitPointVSpace - hitPointViewSpace);
+		const RF32 distAttenuation = 1.0f - smoothstep(0.0f, rejectionMeters, diff);
+		ssrAttenuation *= distAttenuation;
+	}
+#	endif
+
+	// Read the reflection
+	Vec3 outColor = 0.0;
+	if(ssrAttenuation > 0.0)
+	{
+		// Reproject the hit point because you are reading the previous frame
+		const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_reprojection, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
+		hitPoint.xy = ndcToUv(v4.xy / v4.w);
+
+		// Read the light buffer
+		Vec3 ssrColor = g_lightBufferRt.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).rgb;
+		ssrColor = clamp(ssrColor, 0.0, kMaxRF32); // Fix the value just in case
+
+		outColor = ssrColor;
+	}
+
+	// Complete
+	Vec3 worldHitPos = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(hitPointViewSpace, 1.0));
+	worldHitPos -= g_globalRendererConstants.m_cameraPosition; // Move it with camera to avoid precision issues since it's stored in fp16
+
+	pdf = max(0.0, pdf) * ssrAttenuation;
+
+	g_colorAndPdfTex[coord] = Vec4(outColor, pdf);
+	g_hitPosAndDepthTex[coord] = Vec4(worldHitPos, 1.0 - depth); // Store depth in reverse for better precision
+}
+#endif
 
 // ===========================================================================
 // RayGen                                                                    =
@@ -42,6 +209,13 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	g_colorAndPdfTex.GetDimensions(outSize.x, outSize.y);
 
 	const UVec2 coord = min(DispatchRaysIndex().xy, outSize - 1u);
+
+	// Check if SSR succedded
+	const F32 oldPdf = g_colorAndPdfTex[coord].w;
+	if(oldPdf > kEpsilonF32)
+	{
+		return;
+	}
 
 	const F32 depth = g_depthTex[coord].x;
 	if(depth == 1.0)
@@ -89,14 +263,15 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const U32 cullMask = 0xFFu;
 	RayDesc ray;
 	ray.Origin = worldPos;
-	ray.TMin = 0.1;
+	ray.TMin = 0.05;
 	ray.Direction = reflDir;
 	ray.TMax = g_consts.m_maxRayT;
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
+	const Bool hasHitSky = payload.m_rayT < 0.0;
 
 	// Trace shadow
 	F32 shadow;
-	if(payload.m_rayT > 0.0)
+	if(!hasHitSky)
 	{
 		constexpr U32 qFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
 		RayQuery<qFlags> q;
@@ -121,7 +296,15 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 	// Do simple light shading
 	Vec3 outColor = payload.m_emission;
-	outColor += payload.m_diffuseColor * 0.3;
+
+	const Vec3 hitPos = worldPos + reflDir * payload.m_rayT;
+	Vec3 indirectDiffuse = 0.0;
+	if(!hasHitSky)
+	{
+		indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, payload.m_worldNormal, g_linearClampAnySampler);
+	}
+	outColor += payload.m_diffuseColor * indirectDiffuse;
+
 	const Vec3 l = -dirLight.m_direction;
 	const F32 lambert = dot(l, payload.m_worldNormal);
 	const Vec3 diffC = diffuseLobe(payload.m_diffuseColor);
@@ -129,10 +312,9 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 	g_colorAndPdfTex[coord] = Vec4(outColor, max(0.0, pdf));
 
-	Vec3 hitPos = worldPos + reflDir * payload.m_rayT;
-	hitPos -= g_globalRendererConstants.m_cameraPosition; // Move it with camera to avoid precision issues since it's stored in fp16
-
-	g_hitPosAndDepthTex[coord] = Vec4(hitPos, 1.0 - depth); // Store depth in reverse for better precision
+	// Move it with camera to avoid precision issues since it's stored in fp16
+	// Store depth in reverse for better precision
+	g_hitPosAndDepthTex[coord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
 }
 #endif // ANKI_RAY_GEN_SHADER
 

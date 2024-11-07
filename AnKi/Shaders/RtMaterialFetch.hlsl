@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
 #include <AnKi/Shaders/Common.hlsl>
 
 struct [raypayload] RtMaterialFetchRayPayload
@@ -27,6 +28,7 @@ Texture2D<Vec4> g_depthTex : register(t1, SPACE);
 Texture2D<Vec4> g_gbufferRt1 : register(t2, SPACE);
 Texture2D<Vec4> g_gbufferRt2 : register(t3, SPACE);
 Texture2D<Vec4> g_envMap : register(t4, SPACE);
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t5, SPACE);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0, SPACE);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1, SPACE);

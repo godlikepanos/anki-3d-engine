@@ -9,6 +9,9 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/MotionVectors.h>
 #include <AnKi/Renderer/Sky.h>
+#include <AnKi/Renderer/Bloom.h>
+#include <AnKi/Renderer/DepthDownscale.h>
+#include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
@@ -44,6 +47,7 @@ Error RtReflections::init()
 		loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_verticalBilateralDenoisingGrProg, "BilateralDenoiseVertical"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_horizontalBilateralDenoisingGrProg,
 								 "BilateralDenoiseHorizontal"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_ssrGrProg, "Ssr"));
 
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
@@ -83,6 +87,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	RenderTargetHandle mainRt;
 	RenderTargetHandle readMomentsRt;
 	RenderTargetHandle writeMomentsRt;
+
 	if(m_texImportedOnce)
 	{
 		mainRt = rgraph.importRenderTarget(m_tex.get());
@@ -104,6 +109,50 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	BufferHandle visibilityDep;
 	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
 	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
+
+	// SSR
+	{
+		// Create the pass
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SSR");
+
+		rpass.newTextureDependency(getRenderer().getDepthDownscale().getRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(getRenderer().getBloom().getPyramidRt(), TextureUsageBit::kSrvCompute);
+
+		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
+
+		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_ssrGrProg.get());
+
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+
+			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(1));
+			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(2, 0, getRenderer().getDepthDownscale().getRt());
+			rgraphCtx.bindSrv(3, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(4, 0, getRenderer().getBloom().getPyramidRt());
+
+			rgraphCtx.bindUav(0, 0, transientRt1);
+			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
+
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+
+			SsrConstants2 consts;
+			consts.m_stepIncrement = g_ssrStepIncrementCVar;
+			consts.m_maxIterations = g_ssrMaxIterationsCVar;
+			consts.m_projMat00_11_22_23 = Vec4(ctx.m_matrices.m_projection(0, 0), ctx.m_matrices.m_projection(1, 1),
+											   ctx.m_matrices.m_projection(2, 2), ctx.m_matrices.m_projection(2, 3));
+			cmdb.setFastConstants(&consts, sizeof(consts));
+
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		});
+	}
 
 	// SBT build
 	BufferHandle sbtHandle;
@@ -140,6 +189,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSrv(0, 0, GpuSceneArrays::Renderable::getSingleton().getBufferView());
 			cmdb.bindSrv(1, 0, visibleRenderableIndicesBuff);
 			cmdb.bindSrv(2, 0, BufferView(&m_libraryGrProg->getShaderGroupHandlesGpuBuffer()));
+
 			cmdb.bindUav(0, 0, sbtBuffer);
 
 			RtShadowsSbtBuildConstants consts = {};
@@ -195,6 +245,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(2, 2, getRenderer().getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(3, 2, getRenderer().getGBuffer().getColorRt(2));
 			rgraphCtx.bindSrv(4, 2, getRenderer().getSky().getEnvironmentMapRt());
+			cmdb.bindSrv(5, 2, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);

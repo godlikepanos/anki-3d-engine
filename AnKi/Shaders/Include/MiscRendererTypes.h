@@ -145,6 +145,16 @@ struct SsrConstants
 	Mat3x4 m_normalMat;
 };
 
+struct SsrConstants2
+{
+	U32 m_maxIterations;
+	U32 m_stepIncrement;
+	U32 m_padding1;
+	U32 m_padding2;
+
+	Vec4 m_projMat00_11_22_23;
+};
+
 // Vol fog
 struct VolumetricFogConstants
 {
