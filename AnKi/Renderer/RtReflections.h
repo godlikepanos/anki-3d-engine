@@ -54,6 +54,8 @@ public:
 	RenderTargetDesc m_transientRtDesc2;
 	RenderTargetDesc m_hitPosAndDepthRtDesc;
 
+	BufferPtr m_raygenIndirectArgsBuff;
+
 	TexturePtr m_tex;
 	Array<TexturePtr, 2> m_momentsTextures;
 	Bool m_texImportedOnce = false;

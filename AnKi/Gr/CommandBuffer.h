@@ -310,6 +310,9 @@ public:
 	/// @param depth Depth.
 	void traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
+	/// Same as traceRays but indirect.
+	void traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount, BufferView argsBuffer);
+
 	/// Blit from surface to surface.
 	void blitTexture(const TextureView& srcView, const TextureView& destView);
 

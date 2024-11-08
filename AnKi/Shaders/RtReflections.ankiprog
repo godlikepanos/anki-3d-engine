@@ -66,6 +66,8 @@ Texture2D<Vec4> g_lightBufferRt : register(t4);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
+RWStructuredBuffer<U32> g_pixelsFailedSsr : register(u2);
+RWStructuredBuffer<DispatchIndirectArgs> g_raygenIndirectArgs : register(u3);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -179,13 +181,25 @@ ANKI_FAST_CONSTANTS(SsrConstants2, g_consts)
 	}
 
 	// Complete
-	Vec3 worldHitPos = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(hitPointViewSpace, 1.0));
-	worldHitPos -= g_globalRendererConstants.m_cameraPosition; // Move it with camera to avoid precision issues since it's stored in fp16
+	if(ssrAttenuation > 0.0)
+	{
+		// Write to the image
 
-	pdf = max(0.0, pdf) * ssrAttenuation;
+		Vec3 worldHitPos = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(hitPointViewSpace, 1.0));
+		worldHitPos -= g_globalRendererConstants.m_cameraPosition; // Move it with camera to avoid precision issues since it's stored in fp16
 
-	g_colorAndPdfTex[coord] = Vec4(outColor, pdf);
-	g_hitPosAndDepthTex[coord] = Vec4(worldHitPos, 1.0 - depth); // Store depth in reverse for better precision
+		pdf = max(0.0, pdf) * ssrAttenuation;
+
+		g_colorAndPdfTex[coord] = Vec4(outColor, pdf);
+		g_hitPosAndDepthTex[coord] = Vec4(worldHitPos, 1.0 - depth); // Store depth in reverse for better precision
+	}
+	else
+	{
+		U32 writePos;
+		InterlockedAdd(g_raygenIndirectArgs[0].m_threadGroupCountX, 1u, writePos);
+
+		g_pixelsFailedSsr[writePos] = (coord.x << 16u) | coord.y;
+	}
 }
 #endif
 
@@ -208,14 +222,8 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	UVec2 outSize;
 	g_colorAndPdfTex.GetDimensions(outSize.x, outSize.y);
 
-	const UVec2 coord = min(DispatchRaysIndex().xy, outSize - 1u);
-
-	// Check if SSR succedded
-	const F32 oldPdf = g_colorAndPdfTex[coord].w;
-	if(oldPdf > kEpsilonF32)
-	{
-		return;
-	}
+	const U32 pixel = g_pixelsFailedSsr[DispatchRaysIndex().x];
+	const UVec2 coord = UVec2(pixel >> 16u, pixel & 0xFFFFu);
 
 	const F32 depth = g_depthTex[coord].x;
 	if(depth == 1.0)
@@ -727,6 +735,7 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 Texture2D<Vec4> g_colorAndDepthAndSampleCount : register(t0);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
+RWStructuredBuffer<DispatchIndirectArgs> g_raygenIndirectArgs : register(u1);
 
 F32 decodeSampleCount(Vec4 rgba)
 {
@@ -745,6 +754,12 @@ F32 decodeSampleCount(Vec4 rgba)
 	g_outTex.GetDimensions(outSize.x, outSize.y);
 
 	const UVec2 coord = min(svDispatchThreadId, outSize - 1);
+
+	if(coord.x == 0 && coord.y == 0)
+	{
+		// Reset the value for the next frame
+		g_raygenIndirectArgs[0].m_threadGroupCountX = 0;
+	}
 
 	Vec4 rgba = g_colorAndDepthAndSampleCount[coord];
 	const F32 sampleCount = decodeSampleCount(rgba);

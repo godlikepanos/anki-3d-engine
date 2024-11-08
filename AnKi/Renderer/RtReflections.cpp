@@ -76,6 +76,26 @@ Error RtReflections::init()
 	texInit.setName("RtReflectionsMoments #2");
 	m_momentsTextures[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
+	{
+		BufferInitInfo buffInit("ReflRayGenIndirectArgs");
+		buffInit.m_size = sizeof(DispatchIndirectArgs);
+		buffInit.m_usage = BufferUsageBit::kIndirectTraceRays | BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
+		m_raygenIndirectArgsBuff = GrManager::getSingleton().newBuffer(buffInit);
+
+		CommandBufferInitInfo cmdbInit("Init buffer");
+		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
+		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
+
+		cmdb->fillBuffer(BufferView(m_raygenIndirectArgsBuff.get(), 0, sizeof(U32)), 0);
+		cmdb->fillBuffer(BufferView(m_raygenIndirectArgsBuff.get(), sizeof(U32), 2 * sizeof(U32)), 1);
+
+		FencePtr fence;
+		cmdb->endRecording();
+		GrManager::getSingleton().submit(cmdb.get(), {}, &fence);
+
+		fence->clientWait(16.0_sec);
+	}
+
 	return Error::kNone;
 }
 
@@ -111,7 +131,15 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
 
 	// SSR
+	BufferView pixelsFailedSsrBuff;
+	BufferHandle raygenIndirectArgsHandle;
 	{
+		const U32 pixelCount = getRenderer().getInternalResolution().x() * getRenderer().getInternalResolution().y();
+		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(pixelCount);
+
+		// Yes pixelsFailedSsrBuff has nothing to do with indirect args. We are cheating
+		raygenIndirectArgsHandle = rgraph.importBuffer(pixelsFailedSsrBuff, BufferUsageBit::kNone);
+
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SSR");
 
@@ -123,8 +151,9 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
+		rpass.newBufferDependency(raygenIndirectArgsHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -140,6 +169,8 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindUav(0, 0, transientRt1);
 			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
+			cmdb.bindUav(2, 0, pixelsFailedSsrBuff);
+			cmdb.bindUav(3, 0, BufferView(m_raygenIndirectArgsBuff.get()));
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
@@ -217,8 +248,9 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
+		rpass.newBufferDependency(raygenIndirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
 
-		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -246,6 +278,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(3, 2, getRenderer().getGBuffer().getColorRt(2));
 			rgraphCtx.bindSrv(4, 2, getRenderer().getSky().getEnvironmentMapRt());
 			cmdb.bindSrv(5, 2, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
+			cmdb.bindSrv(6, 2, pixelsFailedSsrBuff);
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
@@ -255,8 +288,8 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			const Vec4 consts(g_rtReflectionsMaxRayDistanceCVar);
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);
+			cmdb.traceRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
+								   BufferView(m_raygenIndirectArgsBuff.get()));
 		});
 	}
 
@@ -292,9 +325,6 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});
 	}
-
-	// m_runCtx.m_rt = transientRt2;
-	// return;
 
 	// Temporal denoising
 	{
@@ -379,6 +409,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, transientRt2);
 
 			rgraphCtx.bindUav(0, 0, mainRt);
+			cmdb.bindUav(1, 0, BufferView(m_raygenIndirectArgsBuff.get()));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});

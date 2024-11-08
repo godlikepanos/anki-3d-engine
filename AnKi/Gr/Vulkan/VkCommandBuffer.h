@@ -164,6 +164,9 @@ private:
 			return *m_rtProg;
 		}
 	}
+
+	void traceRaysInternal(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
+						   U32 depth, BufferView argsBuff);
 };
 /// @}
 

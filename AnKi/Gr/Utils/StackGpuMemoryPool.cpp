@@ -65,7 +65,10 @@ public:
 
 		Chunk* chunk = newInstance<Chunk>(GrMemoryPool::getSingleton());
 
-		BufferInitInfo buffInit(m_bufferName);
+		GrString name;
+		name.sprintf("%s (chunk %u)", m_bufferName.cstr(), m_chunkCount);
+
+		BufferInitInfo buffInit(name);
 		buffInit.m_size = size;
 		buffInit.m_usage = m_bufferUsage;
 		buffInit.m_mapAccess = m_bufferMap;

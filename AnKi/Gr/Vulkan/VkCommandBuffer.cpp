@@ -676,49 +676,15 @@ void CommandBuffer::dispatchGraph([[maybe_unused]] const BufferView& scratchBuff
 void CommandBuffer::traceRays(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
 							  U32 depth)
 {
-	ANKI_ASSERT(sbtBuffer.isValid());
-
 	ANKI_VK_SELF(CommandBufferImpl);
-	const PtrSize sbtRecordSize = sbtRecordSize32;
-	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
-	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
-	ANKI_ASSERT(self.m_rtProg);
-	[[maybe_unused]] const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*self.m_rtProg);
+	self.traceRaysInternal(sbtBuffer, sbtRecordSize32, hitGroupSbtRecordCount, rayTypeCount, width, height, depth, {});
+}
 
-	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
-	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
-	[[maybe_unused]] const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
-	ANKI_ASSERT(sbtBufferSize <= sbtBuffer.getRange());
-	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBuffer.getOffset()));
-
-	self.commandCommon();
-
-	// Bind descriptors
-	self.m_descriptorState.flush(self.m_handle, self.m_microCmdb->getDSAllocator());
-
-	Array<VkStridedDeviceAddressRegionKHR, 4> regions;
-	const U64 stbBufferAddress = sbtBuffer.getBuffer().getGpuAddress() + sbtBuffer.getOffset();
-	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, stbBufferAddress));
-
-	// Rgen
-	regions[0].deviceAddress = stbBufferAddress;
-	regions[0].stride = sbtRecordSize;
-	regions[0].size = sbtRecordSize;
-
-	// Miss
-	regions[1].deviceAddress = regions[0].deviceAddress + regions[0].size;
-	regions[1].stride = sbtRecordSize;
-	regions[1].size = sbtRecordSize * rayTypeCount;
-
-	// Hit
-	regions[2].deviceAddress = regions[1].deviceAddress + regions[1].size;
-	regions[2].stride = sbtRecordSize * rayTypeCount;
-	regions[2].size = sbtRecordSize * hitGroupSbtRecordCount;
-
-	// Callable, nothing for now
-	regions[3] = VkStridedDeviceAddressRegionKHR();
-
-	vkCmdTraceRaysKHR(self.m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth);
+void CommandBuffer::traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+									  BufferView argsBuffer)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.traceRaysInternal(sbtBuffer, sbtRecordSize32, hitGroupSbtRecordCount, rayTypeCount, 0, 0, 0, argsBuffer);
 }
 
 void CommandBuffer::blitTexture([[maybe_unused]] const TextureView& srcView, [[maybe_unused]] const TextureView& destView)
@@ -1280,6 +1246,62 @@ ANKI_FORCE_INLINE void CommandBufferImpl::dispatchCommon()
 
 	// Bind descriptors
 	m_descriptorState.flush(m_handle, m_microCmdb->getDSAllocator());
+}
+
+void CommandBufferImpl::traceRaysInternal(const BufferView& sbtBuffer, U32 sbtRecordSize32, U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width,
+										  U32 height, U32 depth, BufferView argsBuff)
+{
+	ANKI_ASSERT(sbtBuffer.isValid());
+
+	const PtrSize sbtRecordSize = sbtRecordSize32;
+	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
+	ANKI_ASSERT(m_rtProg);
+	[[maybe_unused]] const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*m_rtProg);
+
+	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
+	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
+	[[maybe_unused]] const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
+	ANKI_ASSERT(sbtBufferSize <= sbtBuffer.getRange());
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBuffer.getOffset()));
+
+	commandCommon();
+
+	// Bind descriptors
+	m_descriptorState.flush(m_handle, m_microCmdb->getDSAllocator());
+
+	Array<VkStridedDeviceAddressRegionKHR, 4> regions;
+	const U64 stbBufferAddress = sbtBuffer.getBuffer().getGpuAddress() + sbtBuffer.getOffset();
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, stbBufferAddress));
+
+	// Rgen
+	regions[0].deviceAddress = stbBufferAddress;
+	regions[0].stride = sbtRecordSize;
+	regions[0].size = sbtRecordSize;
+
+	// Miss
+	regions[1].deviceAddress = regions[0].deviceAddress + regions[0].size;
+	regions[1].stride = sbtRecordSize;
+	regions[1].size = sbtRecordSize * rayTypeCount;
+
+	// Hit
+	regions[2].deviceAddress = regions[1].deviceAddress + regions[1].size;
+	regions[2].stride = sbtRecordSize * rayTypeCount;
+	regions[2].size = sbtRecordSize * hitGroupSbtRecordCount;
+
+	// Callable, nothing for now
+	regions[3] = VkStridedDeviceAddressRegionKHR();
+
+	if(!argsBuff.isValid())
+	{
+		ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
+		vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth);
+	}
+	else
+	{
+		ANKI_ASSERT(argsBuff.getRange() == sizeof(DispatchIndirectArgs));
+		vkCmdTraceRaysIndirectKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3],
+								  argsBuff.getBuffer().getGpuAddress() + argsBuff.getOffset());
+	}
 }
 
 } // end namespace anki
