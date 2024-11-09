@@ -15,6 +15,7 @@ struct [raypayload] RtMaterialFetchRayPayload
 	Vec3 m_worldNormal : write(closesthit, miss): read(caller);
 	Vec3 m_emission : write(closesthit, miss): read(caller);
 	F32 m_rayT : write(closesthit, miss): read(caller);
+	F32 m_textureLod : write(caller): read(closesthit);
 };
 
 // Have a common resouce interface for all shaders

@@ -261,9 +261,18 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const F32 pdf = 1.0;
 #	endif
 
+	// The more rough and the more far this pixel is then instruct the hit shaders to choose less detail mip
+	const F32 distanceToMaxMip = 50.0;
+	const F32 pixelDistFromCamera = length(worldPos - g_globalRendererConstants.m_cameraPosition);
+	const F32 distFactor = pow(pixelDistFromCamera / distanceToMaxMip, 4.0);
+	const F32 maxMips = 8.0;
+	const F32 textureLod = max(roughness, distFactor) * maxMips;
+
 	// Trace
 	RtMaterialFetchRayPayload payload;
 	payload = (RtMaterialFetchRayPayload)0;
+	payload.m_textureLod = textureLod;
+
 	constexpr U32 flags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
 	const U32 sbtRecordOffset = 0u;
 	const U32 sbtRecordStride = 0u;

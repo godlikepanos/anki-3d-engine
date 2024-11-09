@@ -716,7 +716,7 @@ GBufferPixelOut main(
 
 	// Diffuse
 #		if DIFFUSE_TEX
-	RVec3 diffColor = getBindlessTexture2DRVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0).xyz;
+	RVec3 diffColor = getBindlessTexture2DRVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
 #		else
 	RVec3 diffColor = 1.0;
 #		endif
@@ -725,7 +725,7 @@ GBufferPixelOut main(
 
 	// Emissive
 #		if EMISSIVE_TEX
-	RVec3 emission = getBindlessTexture2DRVec4(localConstants.m_emissiveTex).SampleLevel(g_globalSampler, uv, 0.0).rgb;
+	RVec3 emission = getBindlessTexture2DRVec4(localConstants.m_emissiveTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).rgb;
 #		else
 	RVec3 emission = 1.0;
 #		endif

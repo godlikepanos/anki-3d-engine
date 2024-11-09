@@ -27,6 +27,7 @@
 	// Trace
 	RtMaterialFetchRayPayload payload;
 	payload = (RtMaterialFetchRayPayload)0;
+	payload.m_textureLod = 0.0;
 	const U32 flags = RAY_FLAG_FORCE_OPAQUE;
 	const U32 sbtRecordOffset = 0u;
 	const U32 sbtRecordStride = 0u;
