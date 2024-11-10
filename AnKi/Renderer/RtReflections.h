@@ -53,6 +53,7 @@ public:
 	RenderTargetDesc m_transientRtDesc1;
 	RenderTargetDesc m_transientRtDesc2;
 	RenderTargetDesc m_hitPosAndDepthRtDesc;
+	RenderTargetDesc m_hitPosRtDesc;
 
 	BufferPtr m_raygenIndirectArgsBuff;
 

@@ -64,6 +64,10 @@ Error RtReflections::init()
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
 	m_hitPosAndDepthRtDesc.bake();
 
+	m_hitPosRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(),
+																   getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPos");
+	m_hitPosRtDesc.bake();
+
 	TextureInitInfo texInit = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), "RtReflectionsMain");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
@@ -125,6 +129,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	const RenderTargetHandle transientRt1 = rgraph.newRenderTarget(m_transientRtDesc1);
 	const RenderTargetHandle transientRt2 = rgraph.newRenderTarget(m_transientRtDesc2);
 	const RenderTargetHandle hitPosAndDepthRt = rgraph.newRenderTarget(m_hitPosAndDepthRtDesc);
+	const RenderTargetHandle hitPosRt = rgraph.newRenderTarget(m_hitPosRtDesc);
 
 	BufferHandle visibilityDep;
 	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
@@ -304,8 +309,9 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -319,6 +325,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getColorRt(2));
 
 			rgraphCtx.bindUav(0, 0, transientRt2);
+			rgraphCtx.bindUav(1, 0, hitPosRt);
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
@@ -334,34 +341,33 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(mainRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(readMomentsRt, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getMotionVectors().getMotionVectorsRt(), TextureUsageBit::kSrvCompute);
-		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork(
-			[this, &ctx, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
-				ANKI_TRACE_SCOPED_EVENT(RtShadows);
+		rpass.setWork([this, &ctx, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtShadows);
 
-				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-				cmdb.bindShaderProgram(m_temporalDenoisingGrProg.get());
+			cmdb.bindShaderProgram(m_temporalDenoisingGrProg.get());
 
-				cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-				rgraphCtx.bindSrv(0, 0, transientRt2);
-				rgraphCtx.bindSrv(1, 0, mainRt);
-				rgraphCtx.bindSrv(2, 0, readMomentsRt);
-				rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
-				rgraphCtx.bindSrv(4, 0, hitPosAndDepthRt);
+			rgraphCtx.bindSrv(0, 0, transientRt2);
+			rgraphCtx.bindSrv(1, 0, mainRt);
+			rgraphCtx.bindSrv(2, 0, readMomentsRt);
+			rgraphCtx.bindSrv(3, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
+			rgraphCtx.bindSrv(4, 0, hitPosRt);
 
-				rgraphCtx.bindUav(0, 0, transientRt1);
-				rgraphCtx.bindUav(1, 0, writeMomentsRt);
+			rgraphCtx.bindUav(0, 0, transientRt1);
+			rgraphCtx.bindUav(1, 0, writeMomentsRt);
 
-				cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-				dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-			});
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+		});
 	}
 
 	// Hotizontal bilateral filter

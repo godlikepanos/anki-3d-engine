@@ -359,6 +359,7 @@ Texture2D<Vec4> g_gbufferRt1 : register(t3);
 Texture2D<Vec4> g_gbufferRt2 : register(t4);
 
 RWTexture2D<Vec4> g_denoisedTex : register(u0);
+RWTexture2D<Vec4> g_hitPosTex : register(u1);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -394,10 +395,12 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 	const F32 alpha = pow2(roughness);
 
 	Vec3 outColor = 0.0;
+	Vec3 newHitPos = 0.0;
 
 	if(roughness <= kMinRoughness + kEpsilonF32)
 	{
 		outColor = color;
+		newHitPos = g_hitPosAndDepthTex[coord].xyz + g_globalRendererConstants.m_cameraPosition;
 	}
 	else
 	{
@@ -442,10 +445,13 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 				outColor += sampleColor * weight;
 				weightSum += weight;
 				avgLuma += computeLuminance(sampleColor) / sampleCount;
+
+				newHitPos += hitPos * weight;
 			}
 		}
 
-		outColor = outColor / weightSum;
+		outColor /= weightSum;
+		newHitPos /= weightSum;
 
 		// Remove fireflies
 		const F32 luma = computeLuminance(outColor);
@@ -455,7 +461,8 @@ ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0)
 		}
 	}
 
-	g_denoisedTex[svDispatchThreadId] = Vec4(outColor, 1.0 - depth); // Store depth in reverse for better precision
+	g_denoisedTex[coord] = Vec4(outColor, 1.0 - depth); // Store depth in reverse for better precision
+	g_hitPosTex[coord] = Vec4(newHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
 }
 #endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_SpatialDenoise
 
