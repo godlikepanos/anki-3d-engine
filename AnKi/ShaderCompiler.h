@@ -6,6 +6,8 @@
 #pragma once
 
 #include <AnKi/ShaderCompiler/ShaderCompiler.h>
+#include <AnKi/ShaderCompiler/Spirv.h>
+#include <AnKi/ShaderCompiler/Dxc.h>
 #include <AnKi/ShaderCompiler/MaliOfflineCompiler.h>
 
 /// @defgroup shader_compiler Shader compiler and shader tools

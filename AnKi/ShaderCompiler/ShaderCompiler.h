@@ -46,9 +46,6 @@ Error compileShaderProgram(CString fname, Bool spirv, Bool debugInfo, ShaderComp
 
 /// Free the binary created ONLY by compileShaderProgram.
 void freeShaderBinary(ShaderBinary*& binary);
-
-Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr);
-Error doReflectionSpirv(ConstWeakArray<U8> spirv, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorStr);
 /// @}
 
 } // end namespace anki

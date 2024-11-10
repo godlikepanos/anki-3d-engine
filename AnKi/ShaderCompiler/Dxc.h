@@ -27,6 +27,8 @@ Error compileHlslToSpirv(CString src, ShaderType shaderType, Bool compileWith16b
 /// Compile HLSL to DXIL.
 Error compileHlslToDxil(CString src, ShaderType shaderType, Bool compileWith16bitTypes, Bool debugInfo, ConstWeakArray<CString> compilerArgs,
 						ShaderCompilerDynamicArray<U8>& dxil, ShaderCompilerString& errorMessage);
+
+Error doReflectionDxil(ConstWeakArray<U8> dxil, ShaderType type, ShaderReflection& refl, ShaderCompilerString& errorMessage);
 /// @}
 
 } // end namespace anki

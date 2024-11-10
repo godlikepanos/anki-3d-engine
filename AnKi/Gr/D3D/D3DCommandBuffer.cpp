@@ -580,6 +580,12 @@ void CommandBuffer::traceRays([[maybe_unused]] const BufferView& sbtBuffer, [[ma
 	ANKI_ASSERT(!"TODO");
 }
 
+void CommandBuffer::traceRaysIndirect(const BufferView& sbtBuffer, U32 sbtRecordSize, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+									  BufferView argsBuffer)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
 void CommandBuffer::blitTexture([[maybe_unused]] const TextureView& srcView, [[maybe_unused]] const TextureView& destView)
 {
 	ANKI_ASSERT(!"TODO");
