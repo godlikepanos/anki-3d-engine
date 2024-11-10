@@ -16,7 +16,7 @@
 #include <AnKi/Shaders/LightFunctions.hlsl>
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
-#include <AnKi/Shaders/SsRayMarching.hlsl>
+#include <AnKi/Shaders/SsRaymarching.hlsl>
 
 // Config
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
