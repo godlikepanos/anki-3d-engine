@@ -61,7 +61,7 @@ Error RtReflections::init()
 	m_transientRtDesc2.bake();
 
 	m_hitPosAndDepthRtDesc = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
+		getRenderer().getInternalResolution().x() / 2u, getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "HitPosAndDepth");
 	m_hitPosAndDepthRtDesc.bake();
 
 	m_hitPosRtDesc = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(),
@@ -186,7 +186,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 											   ctx.m_matrices.m_projection(2, 2), ctx.m_matrices.m_projection(2, 3));
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
-			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
+			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y());
 		});
 	}
 
