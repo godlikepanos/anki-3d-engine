@@ -12,6 +12,7 @@
 #include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Ssr.h>
+#include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
@@ -251,6 +252,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(getRenderer().getSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
 		rpass.newBufferDependency(raygenIndirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
@@ -284,11 +286,13 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(4, 2, getRenderer().getSky().getEnvironmentMapRt());
 			cmdb.bindSrv(5, 2, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 			cmdb.bindSrv(6, 2, pixelsFailedSsrBuff);
+			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
 			const Vec4 consts(g_rtReflectionsMaxRayDistanceCVar);
 			cmdb.setFastConstants(&consts, sizeof(consts));

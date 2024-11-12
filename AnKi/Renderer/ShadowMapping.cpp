@@ -66,7 +66,8 @@ Error ShadowMapping::init()
 		m_tileResolution = g_shadowMappingTileResolutionCVar;
 		m_tileCountBothAxis = g_shadowMappingTileCountPerRowOrColumnCVar;
 
-		const TextureUsageBit usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute | TextureUsageBit::kAllRtvDsv;
+		const TextureUsageBit usage =
+			TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute | TextureUsageBit::kSrvTraceRays | TextureUsageBit::kAllRtvDsv;
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(
 			m_tileResolution * m_tileCountBothAxis, m_tileResolution * m_tileCountBothAxis, Format::kD32_Sfloat, usage, "ShadowAtlas");
 		ClearValue clearVal;

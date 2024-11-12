@@ -23,6 +23,8 @@ constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
 #define SPATIAL_UPSCALING_POISON_KERNEL kPoissonDisk8
 constexpr F32 kMaxBilateralSamples = 5.0;
 constexpr F32 kGaussianSigma = 0.55;
+#define STOCHASTIC_REFLECTIONS 1
+#define TRY_SHADOWMAP_FIRST 1
 
 // Functions
 Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
@@ -107,7 +109,7 @@ ANKI_FAST_CONSTANTS(SsrConstants2, g_consts)
 
 	// Compute refl
 	const Vec3 viewDir = -normalize(viewPos);
-#	if 1
+#	if STOCHASTIC_REFLECTIONS
 	F32 pdf;
 	const Vec3 reflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
 #	else
@@ -246,7 +248,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 	// Compute refl
 	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
-#	if 1
+#	if STOCHASTIC_REFLECTIONS
 	F32 pdf;
 	const Vec3 reflDir = sampleReflectionVectorIsotropic(viewDir, worldNormal, roughness, randFactors, 4, pdf);
 #	else
@@ -279,11 +281,39 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	ray.Direction = reflDir;
 	ray.TMax = g_consts.m_maxRayT;
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
+
 	const Bool hasHitSky = payload.m_rayT < 0.0;
+	if(hasHitSky)
+	{
+		payload.m_rayT = g_consts.m_maxRayT;
+	}
+
+	const Vec3 hitPos = worldPos + reflDir * payload.m_rayT;
 
 	// Trace shadow
-	F32 shadow;
-	if(!hasHitSky)
+	Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
+	vv4.xy /= vv4.w;
+	const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
+
+	F32 shadow = 0.0;
+	if(hasHitSky)
+	{
+		// Skybox
+		shadow = 1.0;
+
+		const Vec2 uv = octahedronEncode(worldNormal);
+		payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
+	}
+	else if(bInsideFrustum && TRY_SHADOWMAP_FIRST)
+	{
+		const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+
+		const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
+
+		shadow = computeShadowFactorDirLight(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
+	}
+	else
 	{
 		constexpr U32 qFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
 		RayQuery<qFlags> q;
@@ -296,20 +326,9 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		q.Proceed();
 		shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
 	}
-	else
-	{
-		// Skybox
-		shadow = 1.0;
-		payload.m_rayT = g_consts.m_maxRayT;
-
-		const Vec2 uv = octahedronEncode(worldNormal);
-		payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
-	}
 
 	// Do simple light shading
 	Vec3 outColor = payload.m_emission;
-
-	const Vec3 hitPos = worldPos + reflDir * payload.m_rayT;
 	Vec3 indirectDiffuse = 0.0;
 	if(!hasHitSky)
 	{

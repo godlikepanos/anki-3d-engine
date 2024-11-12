@@ -31,9 +31,11 @@ Texture2D<Vec4> g_gbufferRt2 : register(t3, SPACE);
 Texture2D<Vec4> g_envMap : register(t4, SPACE);
 StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t5, SPACE);
 StructuredBuffer<U32> g_pixelsFailedSsr : register(t6, SPACE);
+Texture2D<Vec4> g_shadowAtlasTex : register(t7, SPACE);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0, SPACE);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1, SPACE);
 
 SamplerState g_linearClampAnySampler : register(s0, SPACE);
+SamplerComparisonState g_shadowSampler : register(s1, SPACE);
 #endif
