@@ -369,9 +369,9 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					pass.newTextureDependency(shadowsRt, TextureUsageBit::kSrvPixel);
 				}
 
-				if(getRenderer().getSky().isEnabled())
+				if(getRenderer().getGeneratedSky().isEnabled())
 				{
-					pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSrvPixel);
+					pass.newTextureDependency(getRenderer().getGeneratedSky().getSkyLutRt(), TextureUsageBit::kSrvPixel);
 				}
 
 				pass.setWork([this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
@@ -415,7 +415,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 					dsInfo.m_gbufferRenderTargetSubresource[2].m_face = faceIdx;
 					dsInfo.m_gbufferDepthRenderTarget = gbufferDepthRt;
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowsRt;
-					dsInfo.m_skyLutRenderTarget = (getRenderer().getSky().isEnabled()) ? getRenderer().getSky().getSkyLutRt() : RenderTargetHandle();
+					dsInfo.m_skyLutRenderTarget =
+						(getRenderer().getGeneratedSky().isEnabled()) ? getRenderer().getGeneratedSky().getSkyLutRt() : RenderTargetHandle();
 					dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstantsBuffer;
 					dsInfo.m_renderpassContext = &rgraphCtx;
 

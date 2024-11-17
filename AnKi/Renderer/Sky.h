@@ -15,10 +15,10 @@ namespace anki {
 /// @{
 
 /// Resolves shadowmaps into a single texture.
-class Sky : public RendererObject
+class GeneratedSky : public RendererObject
 {
 public:
-	Sky()
+	GeneratedSky()
 	{
 		registerDebugRenderTarget("SkyLut");
 	}
@@ -43,6 +43,11 @@ public:
 	{
 		ANKI_ASSERT(isEnabled());
 		return m_runCtx.m_envMapRt;
+	}
+
+	Texture& getEnvironmentMapTexture() const
+	{
+		return *m_envMap;
 	}
 
 	ANKI_PURE Bool isEnabled() const;

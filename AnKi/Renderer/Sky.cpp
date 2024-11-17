@@ -11,7 +11,7 @@
 
 namespace anki {
 
-Error Sky::init()
+Error GeneratedSky::init()
 {
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_transmittanceLutGrProg, "SkyTransmittanceLut"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Sky.ankiprogbin", {}, m_prog, m_multipleScatteringLutGrProg, "SkyMultipleScatteringLut"));
@@ -45,7 +45,7 @@ Error Sky::init()
 	return Error::kNone;
 }
 
-void Sky::populateRenderGraph(RenderingContext& ctx)
+void GeneratedSky::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Sky);
 
@@ -207,7 +207,7 @@ void Sky::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-Bool Sky::isEnabled() const
+Bool GeneratedSky::isEnabled() const
 {
 	const SkyboxComponent* skyc = SceneGraph::getSingleton().getSkybox();
 	const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();

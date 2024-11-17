@@ -364,9 +364,9 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				pass.newTextureDependency(shadowMapRt, TextureUsageBit::kSrvPixel);
 			}
 
-			if(getRenderer().getSky().isEnabled())
+			if(getRenderer().getGeneratedSky().isEnabled())
 			{
-				pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), TextureUsageBit::kSrvPixel);
+				pass.newTextureDependency(getRenderer().getGeneratedSky().getSkyLutRt(), TextureUsageBit::kSrvPixel);
 			}
 
 			pass.setWork([this, visResult = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(),
@@ -396,7 +396,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				{
 					dsInfo.m_directionalLightShadowmapRenderTarget = shadowMapRt;
 				}
-				dsInfo.m_skyLutRenderTarget = (getRenderer().getSky().isEnabled()) ? getRenderer().getSky().getSkyLutRt() : RenderTargetHandle();
+				dsInfo.m_skyLutRenderTarget =
+					(getRenderer().getGeneratedSky().isEnabled()) ? getRenderer().getGeneratedSky().getSkyLutRt() : RenderTargetHandle();
 				dsInfo.m_globalRendererConsts = rctx.m_globalRenderingConstantsBuffer;
 				dsInfo.m_renderpassContext = &rgraphCtx;
 

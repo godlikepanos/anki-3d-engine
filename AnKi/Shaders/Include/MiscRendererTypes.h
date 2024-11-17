@@ -61,6 +61,12 @@ struct CommonMatrices
 	Vec2 m_padding;
 };
 
+struct Sky
+{
+	Vec3 m_solidColor;
+	U32 m_type;
+};
+
 /// Common constants for all passes.
 struct GlobalRendererConstants
 {
@@ -89,6 +95,8 @@ struct GlobalRendererConstants
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;
+
+	Sky m_sky;
 };
 
 // RT shadows
@@ -153,6 +161,13 @@ struct SsrConstants2
 	U32 m_padding2;
 
 	Vec4 m_projMat00_11_22_23;
+};
+
+struct PixelFailedSsr
+{
+	U32 m_pixel;
+	U32 m_reflectionDirAndRoughness;
+	F32 m_pdf;
 };
 
 // Vol fog

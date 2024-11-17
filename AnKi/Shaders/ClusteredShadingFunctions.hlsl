@@ -149,3 +149,110 @@ U32 iterateDecals(inout Cluster cluster)
 
 	return kMaxU32;
 }
+
+template<typename T>
+vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<ReflectionProbe> probes, Vec3 reflDir, Vec3 worldPos, T reflTexLod,
+									SamplerState trilinearClampSampler)
+{
+	const U32 probeCount = countbits(cluster.m_reflectionProbesMask);
+	vector<T, 3> probeColor;
+
+	if(probeCount == 0)
+	{
+		probeColor = -1.0;
+	}
+	else if(WaveActiveAllTrue(probeCount == 1))
+	{
+		// Only one probe, do a fast path without blending probes
+
+		const ReflectionProbe probe = probes[firstbitlow2(cluster.m_reflectionProbesMask)];
+
+		// Sample
+		Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+		cubeUv.z = -cubeUv.z;
+		probeColor = getBindlessTextureCubeRVec4(probe.m_cubeTexture).SampleLevel(trilinearClampSampler, cubeUv, reflTexLod).rgb;
+	}
+	else
+	{
+		// More than one probes, do a slow path that blends them together
+
+		probeColor = 0.0;
+		T totalBlendWeight = 0.001;
+
+		// Loop probes
+		[loop] while(cluster.m_reflectionProbesMask != 0u)
+		{
+			const U32 idx = U32(firstbitlow2(cluster.m_reflectionProbesMask));
+			cluster.m_reflectionProbesMask &= ~(1u << idx);
+			const ReflectionProbe probe = probes[idx];
+
+			// Compute blend weight
+			const T blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
+			totalBlendWeight += blendWeight;
+
+			// Sample reflections
+			Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+			cubeUv.z = -cubeUv.z;
+			const vector<T, 3> c =
+				getBindlessTextureNonUniformIndexCubeRVec4(probe.m_cubeTexture).SampleLevel(trilinearClampSampler, cubeUv, reflTexLod).rgb;
+			probeColor += c * blendWeight;
+		}
+
+		// Normalize the colors
+		probeColor /= totalBlendWeight;
+	}
+
+	return probeColor;
+}
+
+template<typename T>
+vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GlobalIlluminationProbe> probes, Vec3 normal, Vec3 worldPos,
+							SamplerState trilinearClampSampler)
+{
+	vector<T, 3> probeColor;
+
+	const U32 probeCount = countbits(cluster.m_giProbesMask);
+
+	if(probeCount == 0)
+	{
+		probeColor = -1.0;
+	}
+	else if(WaveActiveAllTrue(probeCount == 1))
+	{
+		// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
+
+		const GlobalIlluminationProbe probe = probes[firstbitlow2(cluster.m_giProbesMask)];
+
+		// Sample
+		probeColor = sampleGlobalIllumination(worldPos, normal, probe, getBindlessTexture3DRVec4(probe.m_volumeTexture), trilinearClampSampler);
+	}
+	else
+	{
+		// More than one probes, do a slow path that blends them together
+
+		probeColor = 0.0;
+		T totalBlendWeight = 0.001;
+
+		// Loop probes
+		[loop] while(cluster.m_giProbesMask != 0u)
+		{
+			const U32 idx = U32(firstbitlow2(cluster.m_giProbesMask));
+			cluster.m_giProbesMask &= ~(1u << idx);
+			const GlobalIlluminationProbe probe = probes[idx];
+
+			// Compute blend weight
+			const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+			totalBlendWeight += blendWeight;
+
+			// Sample
+			const vector<T, 3> c = sampleGlobalIllumination(worldPos, normal, probe, getBindlessTextureNonUniformIndex3DRVec4(probe.m_volumeTexture),
+															trilinearClampSampler);
+			probeColor += c * blendWeight;
+		}
+
+		// Normalize
+		probeColor /= totalBlendWeight;
+	}
+
+	return probeColor;
+}

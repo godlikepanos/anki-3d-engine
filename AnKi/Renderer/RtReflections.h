@@ -12,9 +12,11 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_rtReflectionsCVar("R", "RtReflections", false, "Enable RT reflections");
+inline BoolCVar g_rtReflectionsCVar("R", "RtReflections", true, "Enable RT reflections");
 inline NumericCVar<F32> g_rtReflectionsMaxRayDistanceCVar("R", "RtReflectionsMaxRayDistance", 100.0f, 1.0f, 10000.0f,
 														  "Max RT reflections ray distance");
+inline NumericCVar<U32> g_ssrStepIncrementCVar("R", "SsrStepIncrement", 32, 1, 256, "The number of steps for each loop");
+inline NumericCVar<U32> g_ssrMaxIterationsCVar("R", "SsrMaxIterations", 64, 1, 256, "Max SSR raymarching loop iterations");
 
 class RtReflections : public RendererObject
 {
@@ -49,13 +51,15 @@ public:
 	ShaderProgramPtr m_temporalDenoisingGrProg;
 	ShaderProgramPtr m_verticalBilateralDenoisingGrProg;
 	ShaderProgramPtr m_horizontalBilateralDenoisingGrProg;
+	ShaderProgramPtr m_probeFallbackGrProg;
 
 	RenderTargetDesc m_transientRtDesc1;
 	RenderTargetDesc m_transientRtDesc2;
 	RenderTargetDesc m_hitPosAndDepthRtDesc;
 	RenderTargetDesc m_hitPosRtDesc;
 
-	BufferPtr m_raygenIndirectArgsBuff;
+	/// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
+	BufferPtr m_indirectArgsBuffer;
 
 	TexturePtr m_tex;
 	Array<TexturePtr, 2> m_momentsTextures;

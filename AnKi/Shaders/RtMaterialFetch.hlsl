@@ -30,7 +30,7 @@ Texture2D<Vec4> g_gbufferRt1 : register(t2, SPACE);
 Texture2D<Vec4> g_gbufferRt2 : register(t3, SPACE);
 Texture2D<Vec4> g_envMap : register(t4, SPACE);
 StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t5, SPACE);
-StructuredBuffer<U32> g_pixelsFailedSsr : register(t6, SPACE);
+StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t6, SPACE);
 Texture2D<Vec4> g_shadowAtlasTex : register(t7, SPACE);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0, SPACE);

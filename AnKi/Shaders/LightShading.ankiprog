@@ -29,7 +29,7 @@ Texture2D<Vec4> g_gbuffer2Tex : register(t7);
 Texture2D g_depthTex : register(t8);
 Texture2D<RVec4> g_resolvedShadowsTex : register(t9);
 Texture2D<RVec4> g_ssaoTex : register(t10);
-Texture2D<RVec4> g_ssrTex : register(t11);
+Texture2D<RVec4> g_reflectionsTex : register(t11);
 Texture2D<RVec4> g_integrationLut : register(t12);
 
 // Common code for lighting
@@ -46,6 +46,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const Vec2 uv = input.m_uv;
 	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	const Vec2 ndc = uvToNdc(uv);
+	const UVec2 coord = input.m_svPosition;
 
 	if(depth == 1.0)
 	{
@@ -65,13 +66,11 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 	// Decode GBuffer
 	GbufferInfo<RF32> gbuffer = (GbufferInfo<RF32>)0;
-	unpackGBufferNoVelocity<RF32>(g_gbuffer0Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
-								  g_gbuffer1Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0),
-								  g_gbuffer2Tex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0), gbuffer);
+	unpackGBufferNoVelocity<RF32>(g_gbuffer0Tex[coord], g_gbuffer1Tex[coord], g_gbuffer2Tex[coord], gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 	// Apply SSAO
-	const RVec4 ssaoAndBentNormals = g_ssaoTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0f);
+	const RVec4 ssaoAndBentNormals = g_ssaoTex[coord];
 	const RF32 ssao = ssaoAndBentNormals.w;
 	const RVec3 bentNormal = ssaoAndBentNormals.xyz;
 	gbuffer.m_diffuse *= ssao;
@@ -80,104 +79,12 @@ RVec4 main(VertOut input) : SV_TARGET0
 	RVec3 outColor = gbuffer.m_emission;
 
 	// Indirect diffuse
-	{
-		RVec3 probeColor = Vec3(0.0, 0.0, 0.0);
-
-		const Bool oneProbe = WaveActiveAllTrue(countbits(cluster.m_giProbesMask) == 1);
-		if(oneProbe)
-		{
-			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
-
-			const GlobalIlluminationProbe probe = g_giProbes[firstbitlow2(cluster.m_giProbesMask)];
-
-			// Sample
-			probeColor =
-				sampleGlobalIllumination(worldPos, bentNormal, probe, getBindlessTexture3DRVec4(probe.m_volumeTexture), g_trilinearClampSampler);
-		}
-		else
-		{
-			// Zero or more than one probes, do a slow path that blends them together
-
-			F32 totalBlendWeight = kEpsilonF32;
-
-			// Loop probes
-			[loop] while(cluster.m_giProbesMask != 0u)
-			{
-				const U32 idx = U32(firstbitlow2(cluster.m_giProbesMask));
-				cluster.m_giProbesMask &= ~(1u << idx);
-				const GlobalIlluminationProbe probe = g_giProbes[idx];
-
-				// Compute blend weight
-				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
-				totalBlendWeight += blendWeight;
-
-				// Sample
-				const RVec3 c = sampleGlobalIllumination(worldPos, bentNormal, probe, getBindlessTextureNonUniformIndex3DRVec4(probe.m_volumeTexture),
-														 g_trilinearClampSampler);
-				probeColor += c * blendWeight;
-			}
-
-			// Normalize
-			probeColor /= totalBlendWeight;
-		}
-
-		outColor += probeColor * gbuffer.m_diffuse;
-	}
+	const RVec3 probeColor = sampleGiProbes<RF32>(cluster, g_giProbes, bentNormal, worldPos, g_trilinearClampSampler);
+	outColor += probeColor * gbuffer.m_diffuse;
 
 	// Indirect specular
 	{
-		const RVec4 ssr = g_ssrTex.SampleLevel(g_trilinearClampSampler, uv, 0.0f);
-		RVec3 refl = ssr.xyz;
-
-		[branch] if(ssr.w < 0.9f)
-		{
-			const Vec3 reflDir = reflect(-viewDir, gbuffer.m_normal);
-			const RF32 reflLod = (g_globalConstants.m_reflectionProbesMipCount - 1.0f) * gbuffer.m_roughness;
-			RVec3 probeColor = 0.0f;
-
-			const U32 oneProbe = WaveActiveAllTrue(countbits(cluster.m_reflectionProbesMask) == 1);
-			if(oneProbe)
-			{
-				// Only one probe, do a fast path without blend weight
-
-				const ReflectionProbe probe = g_reflectionProbes[firstbitlow2(cluster.m_reflectionProbesMask)];
-
-				// Sample
-				Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-				cubeUv.z = -cubeUv.z;
-				probeColor = getBindlessTextureCubeRVec4(probe.m_cubeTexture).SampleLevel(g_trilinearClampSampler, cubeUv, reflLod).rgb;
-			}
-			else
-			{
-				// Zero or more than one probes, do a slow path that blends them together
-
-				F32 totalBlendWeight = kEpsilonF32;
-
-				// Loop probes
-				[loop] while(cluster.m_reflectionProbesMask != 0u)
-				{
-					const U32 idx = U32(firstbitlow2(cluster.m_reflectionProbesMask));
-					cluster.m_reflectionProbesMask &= ~(1u << idx);
-					const ReflectionProbe probe = g_reflectionProbes[idx];
-
-					// Compute blend weight
-					const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
-					totalBlendWeight += blendWeight;
-
-					// Sample reflections
-					Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
-					cubeUv.z = -cubeUv.z;
-					const Vec3 c =
-						getBindlessTextureNonUniformIndexCubeRVec4(probe.m_cubeTexture).SampleLevel(g_trilinearClampSampler, cubeUv, reflLod).rgb;
-					probeColor += c * blendWeight;
-				}
-
-				// Normalize the colors
-				probeColor /= totalBlendWeight;
-			}
-
-			refl = lerp(probeColor, ssr.xyz, ssr.w);
-		}
+		RVec3 refl = g_reflectionsTex[coord].xyz;
 
 		// Apply the reflection
 		const F32 NoV = max(0.0f, dot(gbuffer.m_normal, viewDir));
@@ -188,7 +95,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	}
 
 	// SM
-	RVec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);
+	RVec4 resolvedSm = g_resolvedShadowsTex[coord];
 	U32 resolvedSmIdx = 0u;
 
 	// Dir light

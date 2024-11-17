@@ -17,7 +17,6 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
-#include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/RtReflections.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
@@ -95,16 +94,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindSrv(8, 0, getRenderer().getGBuffer().getDepthRt());
 		rgraphCtx.bindSrv(9, 0, getRenderer().getShadowmapsResolve().getRt());
 		rgraphCtx.bindSrv(10, 0, getRenderer().getSsao().getRt());
-
-		const Bool rtReflections = g_rtReflectionsCVar && GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
-		if(rtReflections)
-		{
-			rgraphCtx.bindSrv(11, 0, getRenderer().getRtReflections().getRt());
-		}
-		else
-		{
-			rgraphCtx.bindSrv(11, 0, getRenderer().getSsr().getRt());
-		}
+		rgraphCtx.bindSrv(11, 0, getRenderer().getRtReflections().getRt());
 		cmdb.bindSrv(12, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 
 		// Draw
@@ -162,7 +152,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			cmdb.bindShaderProgram(m_skybox.m_grProgs[2].get());
 
 			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
-			rgraphCtx.bindSrv(0, 0, getRenderer().getSky().getSkyLutRt());
+			rgraphCtx.bindSrv(0, 0, getRenderer().getGeneratedSky().getSkyLutRt());
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		}
 
@@ -264,8 +254,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Light shading
-	const Bool rtReflections = g_rtReflectionsCVar && GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled;
-
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), readUsage);
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), readUsage);
@@ -276,15 +264,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 							 BufferUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
-
-	if(rtReflections)
-	{
-		pass.newTextureDependency(getRenderer().getRtReflections().getRt(), readUsage);
-	}
-	else
-	{
-		pass.newTextureDependency(getRenderer().getSsr().getRt(), readUsage);
-	}
+	pass.newTextureDependency(getRenderer().getRtReflections().getRt(), readUsage);
 
 	if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
 	{
@@ -295,9 +275,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getVolumetricFog().getRt(), readUsage);
 
 	// Sky
-	if(getRenderer().getSky().isEnabled())
+	if(getRenderer().getGeneratedSky().isEnabled())
 	{
-		pass.newTextureDependency(getRenderer().getSky().getSkyLutRt(), readUsage);
+		pass.newTextureDependency(getRenderer().getGeneratedSky().getSkyLutRt(), readUsage);
 	}
 
 	// For forward shading

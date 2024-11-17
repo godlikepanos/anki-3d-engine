@@ -33,12 +33,11 @@ ANKI_RENDERER_OBJECT_DEF(VrsSriGeneration, vrsSriGeneration, 1)
 ANKI_RENDERER_OBJECT_DEF(PrimaryNonRenderableVisibility, primaryNonRenderableVisibility, 1)
 ANKI_RENDERER_OBJECT_DEF(ClusterBinning, clusterBinning2, 1)
 ANKI_RENDERER_OBJECT_DEF(Ssao, ssao, 1)
-ANKI_RENDERER_OBJECT_DEF(Ssr, ssr, 1)
-ANKI_RENDERER_OBJECT_DEF(Sky, sky, 1)
+ANKI_RENDERER_OBJECT_DEF(GeneratedSky, generatedSky, 1)
 ANKI_RENDERER_OBJECT_DEF(MotionBlur, motionBlur, 1)
 ANKI_RENDERER_OBJECT_DEF(RtMaterialFetchDbg, rtMaterialFetchDbg,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rtMaterialFetchDbgCVar)
-ANKI_RENDERER_OBJECT_DEF(RtReflections, rtReflections, GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rtReflectionsCVar)
+ANKI_RENDERER_OBJECT_DEF(RtReflections, rtReflections, 1)
 
 // Util objects
 ANKI_RENDERER_OBJECT_DEF(RenderableDrawer, drawer, 1)

@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki technique Ssr comp
+#pragma anki technique ReflectionProbeFallback comp
 #pragma anki technique RtMaterialFetch rgen miss
 #pragma anki technique SpatialDenoise comp
 #pragma anki technique TemporalDenoise comp
@@ -17,6 +18,7 @@
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/BilateralFilter.hlsl>
 #include <AnKi/Shaders/SsRaymarching.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
 // Config
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
@@ -68,8 +70,8 @@ Texture2D<Vec4> g_lightBufferRt : register(t4);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
-RWStructuredBuffer<U32> g_pixelsFailedSsr : register(u2);
-RWStructuredBuffer<DispatchIndirectArgs> g_raygenIndirectArgs : register(u3);
+RWStructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(u2);
+RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u3);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
@@ -198,11 +200,99 @@ ANKI_FAST_CONSTANTS(SsrConstants2, g_consts)
 	}
 	else
 	{
-		U32 writePos;
-		InterlockedAdd(g_raygenIndirectArgs[0].m_threadGroupCountX, 1u, writePos);
+		U32 writeOffset;
+		InterlockedAdd(g_indirectArgs[0].m_threadGroupCountX, 1u, writeOffset);
 
-		g_pixelsFailedSsr[writePos] = (realCoord.x << 16u) | realCoord.y;
+		const Vec3 reflDirWorld = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(reflDir, 0.0)).xyz;
+
+		PixelFailedSsr failedPixel;
+		failedPixel.m_pixel = (realCoord.x << 16u) | realCoord.y;
+		failedPixel.m_reflectionDirAndRoughness = packSnorm4x8(Vec4(reflDirWorld, roughness));
+		failedPixel.m_pdf = pdf;
+
+		g_pixelsFailedSsr[writeOffset] = failedPixel;
+
+		// Set the threadgroup count for Z for ReflectionProbeFallback
+		const U32 failedCount = writeOffset + 1;
+		InterlockedMax(g_indirectArgs[1].m_threadGroupCountX, (failedCount + (64 - 1)) / 64);
+
+		if(false)
+		{
+			g_colorAndPdfTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
+			g_hitPosAndDepthTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
+		}
 	}
+}
+#endif
+
+// ===========================================================================
+// ReflectionProbeFallback                                                   =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_ReflectionProbeFallback)
+
+Texture2D<Vec4> g_depthTex : register(t0);
+StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t1);
+StructuredBuffer<ReflectionProbe> g_reflectionProbes : register(t2);
+StructuredBuffer<Cluster> g_clusters : register(t3);
+StructuredBuffer<U32> g_pixelsFailedSsrCount : register(t4);
+Texture2D<Vec4> g_envMap : register(t5);
+
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
+
+SamplerState g_trilinearClampSampler : register(s0);
+
+RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
+RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
+
+[NumThreads(64, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+{
+	if(svDispatchThreadId.x >= g_pixelsFailedSsrCount[0])
+	{
+		return;
+	}
+
+	UVec2 halfViewportSize;
+	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
+
+	const PixelFailedSsr pixelFailedSsr = g_pixelsFailedSsr[svDispatchThreadId.x];
+	const UVec2 realCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
+	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
+	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
+	const Vec3 reflDir = packed.xyz;
+	const F32 roughness = packed.w;
+	const F32 pdf = pixelFailedSsr.m_pdf;
+
+	const F32 depth = g_depthTex[logicalCoord].x;
+	const Vec2 ndc = uvToNdc((Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y));
+	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = v4.xyz / v4.w;
+
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
+
+	const F32 reflLod = (g_globalRendererConstants.m_reflectionProbesMipCount - 1.0f) * roughness;
+	Vec3 probeColor = sampleReflectionProbes<F32>(cluster, g_reflectionProbes, reflDir, worldPos, reflLod, g_trilinearClampSampler);
+
+	if(probeColor.x < 0.0)
+	{
+		// No probe, sample sky
+		if(g_globalRendererConstants.m_sky.m_type == 0)
+		{
+			probeColor = g_globalRendererConstants.m_sky.m_solidColor;
+		}
+		else
+		{
+			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(reflDir) : octahedronEncode(reflDir);
+			probeColor = g_envMap.SampleLevel(g_trilinearClampSampler, uv, 0.0).xyz;
+		}
+	}
+
+	// Write out
+	g_colorAndPdfTex[realCoord] = Vec4(probeColor, max(0.0, pdf));
+
+	// Move it with camera to avoid precision issues since it's stored in fp16
+	// Store depth in reverse for better precision
+	const Vec3 hitPos = worldPos + reflDir * 100.0; // TODO
+	g_hitPosAndDepthTex[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
 }
 #endif
 
@@ -225,38 +315,20 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	UVec2 halfViewportSize;
 	g_hitPosAndDepthTex.GetDimensions(halfViewportSize.x, halfViewportSize.y);
 
-	const U32 pixel = g_pixelsFailedSsr[DispatchRaysIndex().x];
-	const UVec2 realCoord = UVec2(pixel >> 16u, pixel & 0xFFFFu);
+	const PixelFailedSsr pixelFailedSsr = g_pixelsFailedSsr[DispatchRaysIndex().x];
+	const UVec2 realCoord = UVec2(pixelFailedSsr.m_pixel >> 16u, pixelFailedSsr.m_pixel & 0xFFFFu);
 	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
+	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
+	const Vec3 reflDir = packed.xyz;
+	const F32 roughness = packed.w;
+	const F32 pdf = pixelFailedSsr.m_pdf;
 
 	const F32 depth = g_depthTex[logicalCoord].x;
-	const Vec4 rt1 = g_gbufferRt1[logicalCoord];
-	const Vec4 rt2 = g_gbufferRt2[logicalCoord];
-
-	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
-	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
-
 	const Vec2 ndc = uvToNdc((Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y));
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;
 
 	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
-
-	// Noise
-	const UVec3 seed = rand3DPCG16(UVec3(logicalCoord, g_globalRendererConstants.m_frame % 8u));
-	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
-
-	// Compute refl
-	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
-#	if STOCHASTIC_REFLECTIONS
-	F32 pdf;
-	const Vec3 reflDir = sampleReflectionVectorIsotropic(viewDir, worldNormal, roughness, randFactors, 4, pdf);
-#	else
-	ANKI_MAYBE_UNUSED(roughness);
-	ANKI_MAYBE_UNUSED(randFactors);
-	const Vec3 reflDir = reflect(-viewDir, worldNormal);
-	const F32 pdf = 1.0;
-#	endif
 
 	// The more rough and the more far this pixel is then instruct the hit shaders to choose less detail mip
 	const F32 distanceToMaxMip = 50.0;
@@ -301,8 +373,15 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 		// Skybox
 		shadow = 1.0;
 
-		const Vec2 uv = octahedronEncode(worldNormal);
-		payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
+		if(g_globalRendererConstants.m_sky.m_type == 0)
+		{
+			payload.m_emission = g_globalRendererConstants.m_sky.m_solidColor;
+		}
+		else
+		{
+			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(reflDir) : octahedronEncode(reflDir);
+			payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
+		}
 	}
 	else if(bInsideFrustum && TRY_SHADOWMAP_FIRST)
 	{
@@ -833,7 +912,7 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 Texture2D<Vec4> g_colorAndDepthAndSampleCount : register(t0);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
-RWStructuredBuffer<DispatchIndirectArgs> g_raygenIndirectArgs : register(u1);
+RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 
 F32 decodeSampleCount(Vec4 rgba)
 {
@@ -856,7 +935,8 @@ F32 decodeSampleCount(Vec4 rgba)
 	if(coord.x == 0 && coord.y == 0)
 	{
 		// Reset the value for the next frame
-		g_raygenIndirectArgs[0].m_threadGroupCountX = 0;
+		g_indirectArgs[0].m_threadGroupCountX = 0;
+		g_indirectArgs[1].m_threadGroupCountX = 0;
 	}
 
 	Vec4 rgba = g_colorAndDepthAndSampleCount[coord];

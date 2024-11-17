@@ -11,10 +11,11 @@
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/Bloom.h>
 #include <AnKi/Renderer/DepthDownscale.h>
-#include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/ShadowMapping.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/ImageAtlasResource.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
@@ -23,9 +24,15 @@ namespace anki {
 
 Error RtReflections::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
+
+	if(bRtReflections)
+	{
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
+	}
 
 	// Ray gen and miss
+	if(bRtReflections)
 	{
 		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtReflections.ankiprogbin", m_rtProg));
 
@@ -49,6 +56,7 @@ Error RtReflections::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_horizontalBilateralDenoisingGrProg,
 								 "BilateralDenoiseHorizontal"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_ssrGrProg, "Ssr"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
 
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
@@ -83,16 +91,23 @@ Error RtReflections::init()
 
 	{
 		BufferInitInfo buffInit("ReflRayGenIndirectArgs");
-		buffInit.m_size = sizeof(DispatchIndirectArgs);
-		buffInit.m_usage = BufferUsageBit::kIndirectTraceRays | BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
-		m_raygenIndirectArgsBuff = GrManager::getSingleton().newBuffer(buffInit);
+		buffInit.m_size = sizeof(DispatchIndirectArgs) * 2;
+		buffInit.m_usage = BufferUsageBit::kAllIndirect | BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
+		m_indirectArgsBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit("Init buffer");
 		cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-		cmdb->fillBuffer(BufferView(m_raygenIndirectArgsBuff.get(), 0, sizeof(U32)), 0);
-		cmdb->fillBuffer(BufferView(m_raygenIndirectArgsBuff.get(), sizeof(U32), 2 * sizeof(U32)), 1);
+		U32 offset = 0;
+		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
+		offset += sizeof(U32);
+		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
+
+		offset += sizeof(U32) * 2;
+		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
+		offset += sizeof(U32);
+		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
 
 		FencePtr fence;
 		cmdb->endRecording();
@@ -107,6 +122,8 @@ Error RtReflections::init()
 void RtReflections::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
+
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
 
 	// Create or import render targets
 	RenderTargetHandle mainRt;
@@ -132,19 +149,15 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	const RenderTargetHandle hitPosAndDepthRt = rgraph.newRenderTarget(m_hitPosAndDepthRtDesc);
 	const RenderTargetHandle hitPosRt = rgraph.newRenderTarget(m_hitPosRtDesc);
 
-	BufferHandle visibilityDep;
-	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
-	getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
-
 	// SSR
 	BufferView pixelsFailedSsrBuff;
-	BufferHandle raygenIndirectArgsHandle;
+	BufferHandle indirectArgsHandle;
 	{
 		const U32 pixelCount = getRenderer().getInternalResolution().x() * getRenderer().getInternalResolution().y();
-		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<U32>(pixelCount);
+		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<PixelFailedSsr>(pixelCount);
 
 		// Yes pixelsFailedSsrBuff has nothing to do with indirect args. We are cheating
-		raygenIndirectArgsHandle = rgraph.importBuffer(pixelsFailedSsrBuff, BufferUsageBit::kNone);
+		indirectArgsHandle = rgraph.importBuffer(pixelsFailedSsrBuff, BufferUsageBit::kNone);
 
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SSR");
@@ -157,10 +170,10 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
-		rpass.newBufferDependency(raygenIndirectArgsHandle, BufferUsageBit::kUavCompute);
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_ssrGrProg.get());
@@ -176,7 +189,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(0, 0, transientRt1);
 			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
 			cmdb.bindUav(2, 0, pixelsFailedSsrBuff);
-			cmdb.bindUav(3, 0, BufferView(m_raygenIndirectArgsBuff.get()));
+			cmdb.bindUav(3, 0, BufferView(m_indirectArgsBuffer.get()));
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
@@ -194,7 +207,12 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
+	BufferHandle visibilityDep;
+	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
+	if(bRtReflections)
 	{
+		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
+
 		// Allocate SBT
 		U32 sbtAlignment = (GrManager::getSingleton().getDeviceCapabilities().m_structuredBufferNaturalAlignment)
 							   ? sizeof(U32)
@@ -218,7 +236,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
@@ -242,6 +260,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Ray gen
+	if(bRtReflections)
 	{
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflections");
 
@@ -251,14 +270,17 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvTraceRays);
-		rpass.newTextureDependency(getRenderer().getSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+		if(getRenderer().getGeneratedSky().isEnabled())
+		{
+			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvTraceRays);
+		}
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvTraceRays);
 		rpass.newAccelerationStructureDependency(getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
-		rpass.newBufferDependency(raygenIndirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());
@@ -283,7 +305,24 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 2, getRenderer().getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(2, 2, getRenderer().getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(3, 2, getRenderer().getGBuffer().getColorRt(2));
-			rgraphCtx.bindSrv(4, 2, getRenderer().getSky().getEnvironmentMapRt());
+
+			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+			const Bool bSkySolidColor =
+				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
+			if(bSkySolidColor)
+			{
+				cmdb.bindSrv(4, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			}
+			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+			{
+				cmdb.bindSrv(4, 2, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+			}
+			else
+			{
+				rgraphCtx.bindSrv(4, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
+			}
+
 			cmdb.bindSrv(5, 2, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
 			cmdb.bindSrv(6, 2, pixelsFailedSsrBuff);
 			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
@@ -298,7 +337,63 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.traceRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
-								   BufferView(m_raygenIndirectArgsBuff.get()));
+								   BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(DispatchIndirectArgs)));
+		});
+	}
+	else
+	{
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionProbeFallback");
+
+		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvCompute);
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
+		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
+		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
+		if(getRenderer().getGeneratedSky().isEnabled())
+		{
+			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvCompute);
+		}
+
+		rpass.setWork([this, pixelsFailedSsrBuff, &ctx, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
+
+			cmdb.bindShaderProgram(m_probeFallbackGrProg.get());
+
+			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+			cmdb.bindSrv(1, 0, pixelsFailedSsrBuff);
+			cmdb.bindSrv(2, 0,
+						 (GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
+							 ? GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView()
+							 : BufferView(&getRenderer().getDummyBuffer()));
+			cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getClustersBuffer());
+			cmdb.bindSrv(4, 0, BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(U32)));
+
+			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
+			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+			const Bool bSkySolidColor =
+				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
+			if(bSkySolidColor)
+			{
+				cmdb.bindSrv(5, 0, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			}
+			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+			{
+				cmdb.bindSrv(5, 0, TextureView(&sky->getImageResource().getTexture(), TextureSubresourceDesc::all()));
+			}
+			else
+			{
+				rgraphCtx.bindSrv(5, 0, getRenderer().getGeneratedSky().getEnvironmentMapRt());
+			}
+
+			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
+
+			rgraphCtx.bindUav(0, 0, transientRt1);
+			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
+
+			cmdb.dispatchComputeIndirect(BufferView(m_indirectArgsBuffer.get()).incrementOffset(sizeof(DispatchIndirectArgs)));
 		});
 	}
 
@@ -316,7 +411,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -351,7 +446,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -385,7 +480,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, writeMomentsRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -410,7 +505,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(mainRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt2, mainRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtReflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -419,7 +514,7 @@ void RtReflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, transientRt2);
 
 			rgraphCtx.bindUav(0, 0, mainRt);
-			cmdb.bindUav(1, 0, BufferView(m_raygenIndirectArgsBuff.get()));
+			cmdb.bindUav(1, 0, BufferView(m_indirectArgsBuffer.get()));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});

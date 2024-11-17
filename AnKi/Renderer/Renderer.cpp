@@ -14,6 +14,7 @@
 #include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
+#include <AnKi/Scene/Components/SkyboxComponent.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Core/App.h>
 
@@ -43,7 +44,6 @@
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
-#include <AnKi/Renderer/Ssr.h>
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/MotionBlur.h>
 #include <AnKi/Renderer/RtMaterialFetchDbg.h>
@@ -279,14 +279,13 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbuffer->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_clusterBinning2->populateRenderGraph(ctx);
-	m_sky->populateRenderGraph(ctx);
+	m_generatedSky->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depthDownscale->populateRenderGraph(ctx);
-	m_ssr->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
@@ -295,10 +294,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_rtMaterialFetchDbg->populateRenderGraph(ctx);
 	}
-	if(m_rtReflections)
-	{
-		m_rtReflections->populateRenderGraph(ctx);
-	}
+
+	m_rtReflections->populateRenderGraph(ctx);
 	m_shadowmapsResolve->populateRenderGraph(ctx);
 	m_volumetricFog->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
@@ -378,6 +375,25 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	else
 	{
 		consts.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit = 0;
+	}
+
+	// Sky
+	const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
+
+	const Bool isSolidColor =
+		(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
+	if(isSolidColor)
+	{
+		consts.m_sky.m_solidColor = (sky) ? sky->getSolidColor() : Vec3(0.0);
+		consts.m_sky.m_type = 0;
+	}
+	else if(sky->getSkyboxType() == SkyboxType::kImage2D)
+	{
+		consts.m_sky.m_type = 1;
+	}
+	else
+	{
+		consts.m_sky.m_type = 2;
 	}
 }
 
