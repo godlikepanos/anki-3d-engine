@@ -17,7 +17,7 @@
 #include <AnKi/Renderer/VrsSriGeneration.h>
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
-#include <AnKi/Renderer/RtReflections.h>
+#include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -94,7 +94,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindSrv(8, 0, getRenderer().getGBuffer().getDepthRt());
 		rgraphCtx.bindSrv(9, 0, getRenderer().getShadowmapsResolve().getRt());
 		rgraphCtx.bindSrv(10, 0, getRenderer().getSsao().getRt());
-		rgraphCtx.bindSrv(11, 0, getRenderer().getRtReflections().getRt());
+		rgraphCtx.bindSrv(11, 0, getRenderer().getReflections().getRt());
 		cmdb.bindSrv(12, 0, TextureView(&getRenderer().getProbeReflections().getIntegrationLut(), TextureSubresourceDesc::all()));
 
 		// Draw
@@ -264,7 +264,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
 							 BufferUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
-	pass.newTextureDependency(getRenderer().getRtReflections().getRt(), readUsage);
+	pass.newTextureDependency(getRenderer().getReflections().getRt(), readUsage);
 
 	if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
 	{

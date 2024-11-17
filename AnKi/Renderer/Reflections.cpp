@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Renderer/RtReflections.h>
+#include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -22,7 +22,7 @@
 
 namespace anki {
 
-Error RtReflections::init()
+Error Reflections::init()
 {
 	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
 
@@ -34,7 +34,7 @@ Error RtReflections::init()
 	// Ray gen and miss
 	if(bRtReflections)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtReflections.ankiprogbin", m_rtProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Reflections.ankiprogbin", m_rtProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rtProg);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
@@ -49,14 +49,14 @@ Error RtReflections::init()
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", {}, m_rtProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", {}, m_rtProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
 	ANKI_CHECK(
-		loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_verticalBilateralDenoisingGrProg, "BilateralDenoiseVertical"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_horizontalBilateralDenoisingGrProg,
+		loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", {}, m_rtProg, m_verticalBilateralDenoisingGrProg, "BilateralDenoiseVertical"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", {}, m_rtProg, m_horizontalBilateralDenoisingGrProg,
 								 "BilateralDenoiseHorizontal"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_ssrGrProg, "Ssr"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtReflections.ankiprogbin", {}, m_rtProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", {}, m_rtProg, m_ssrGrProg, "Ssr"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", {}, m_rtProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
 
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
@@ -119,7 +119,7 @@ Error RtReflections::init()
 	return Error::kNone;
 }
 
-void RtReflections::populateRenderGraph(RenderingContext& ctx)
+void Reflections::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 

@@ -18,12 +18,12 @@ inline NumericCVar<F32> g_rtReflectionsMaxRayDistanceCVar("R", "RtReflectionsMax
 inline NumericCVar<U32> g_ssrStepIncrementCVar("R", "SsrStepIncrement", 32, 1, 256, "The number of steps for each loop");
 inline NumericCVar<U32> g_ssrMaxIterationsCVar("R", "SsrMaxIterations", 64, 1, 256, "Max SSR raymarching loop iterations");
 
-class RtReflections : public RendererObject
+class Reflections : public RendererObject
 {
 public:
-	RtReflections()
+	Reflections()
 	{
-		registerDebugRenderTarget("RtReflections");
+		registerDebugRenderTarget("Reflections");
 	}
 
 	Error init();
