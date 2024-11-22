@@ -62,11 +62,11 @@ Error Reflections::init()
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "RtReflections #1");
+		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #1");
 	m_transientRtDesc1.bake();
 
 	m_transientRtDesc2 = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "RtReflections #2");
+		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #2");
 	m_transientRtDesc2.bake();
 
 	m_hitPosAndDepthRtDesc = getRenderer().create2DRenderTargetDescription(
@@ -78,15 +78,15 @@ Error Reflections::init()
 	m_hitPosRtDesc.bake();
 
 	TextureInitInfo texInit = getRenderer().create2DRenderTargetDescription(
-		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), "RtReflectionsMain");
+		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), getRenderer().getHdrFormat(), "ReflectionsMain");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
 	m_tex = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
 	texInit = getRenderer().create2DRenderTargetDescription(getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(),
-															Format::kR32G32_Sfloat, "RtReflectionsMoments #1");
+															Format::kR32G32_Sfloat, "ReflectionsMoments #1");
 	texInit.m_usage = TextureUsageBit::kAllShaderResource | TextureUsageBit::kAllUav;
 	m_momentsTextures[0] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
-	texInit.setName("RtReflectionsMoments #2");
+	texInit.setName("ReflectionsMoments #2");
 	m_momentsTextures[1] = getRenderer().createAndClearRenderTarget(texInit, TextureUsageBit::kSrvCompute);
 
 	{
@@ -153,7 +153,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	BufferView pixelsFailedSsrBuff;
 	BufferHandle indirectArgsHandle;
 	{
-		const U32 pixelCount = getRenderer().getInternalResolution().x() * getRenderer().getInternalResolution().y();
+		const U32 pixelCount = getRenderer().getInternalResolution().x() / 2 * getRenderer().getInternalResolution().y();
 		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<PixelFailedSsr>(pixelCount);
 
 		// Yes pixelsFailedSsrBuff has nothing to do with indirect args. We are cheating
@@ -173,7 +173,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_ssrGrProg.get());
@@ -236,7 +236,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
@@ -280,7 +280,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());
@@ -355,17 +355,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		rpass.setWork([this, pixelsFailedSsrBuff, &ctx, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_probeFallbackGrProg.get());
 
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 			cmdb.bindSrv(1, 0, pixelsFailedSsrBuff);
-			cmdb.bindSrv(2, 0,
-						 (GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount())
-							 ? GpuSceneArrays::ReflectionProbe::getSingleton().getBufferView()
-							 : BufferView(&getRenderer().getDummyBuffer()));
+			cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
 			cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getClustersBuffer());
 			cmdb.bindSrv(4, 0, BufferView(m_indirectArgsBuffer.get()).setRange(sizeof(U32)));
 
@@ -399,7 +396,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 	// Spatial denoising
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflectionsSpatialDenoise");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsSpatialDenoise");
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kSrvCompute);
@@ -411,7 +408,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -434,7 +431,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 	// Temporal denoising
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflectionsTemporalDenoise");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsTemporalDenoise");
 
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(mainRt, TextureUsageBit::kSrvCompute);
@@ -446,7 +443,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -471,7 +468,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 	// Hotizontal bilateral filter
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflectionsHorizBilateral");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsHorizBilateral");
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(writeMomentsRt, TextureUsageBit::kSrvCompute);
@@ -480,7 +477,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, writeMomentsRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -498,14 +495,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 	// Vertical bilateral filter
 	{
-		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("RtReflectionsVertBilateral");
+		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionsVertBilateral");
 
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(mainRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt2, mainRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtReflections);
+			ANKI_TRACE_SCOPED_EVENT(Reflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
