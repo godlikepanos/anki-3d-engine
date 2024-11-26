@@ -20,14 +20,14 @@
 #include <AnKi/Shaders/SsRaymarching.hlsl>
 #include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
 
-// Config
+// Config & debug
 constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
 #define SPATIAL_UPSCALING_POISON_KERNEL kPoissonDisk8
 constexpr F32 kMaxBilateralSamples = 5.0;
 constexpr F32 kGaussianSigma = 0.55;
 #define STOCHASTIC_REFLECTIONS 1
 #define TRY_SHADOWMAP_FIRST 1
-#define DISABLE_DENOISING 0
+constexpr Bool kDisableDenoising = false;
 
 // Functions
 Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
@@ -55,6 +55,32 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 	}
 }
 
+Vec4 encodeColorDepthAndSampleCount(Vec3 color, F32 depth, U32 sampleCount)
+{
+	Vec4 signs;
+	[unroll] for(U32 i = 0; i < 4; i++)
+	{
+		signs[i] = (sampleCount & (1u << i)) ? 1.0 : -1.0;
+	}
+
+	return (Vec4(color, depth) + 0.01) * signs; // Add 0.01 to make sure that the sign sticks
+}
+
+void decodeColorDepthAndSampleCount(Vec4 rgba, out Vec3 color, out F32 depth, out U32 sampleCount)
+{
+	sampleCount = 0;
+	[unroll] for(U32 i = 0; i < 4; ++i)
+	{
+		sampleCount |= (sign(rgba[i]) > 0.0) ? (1u << i) : 0u;
+	}
+
+	rgba = abs(rgba);
+	rgba -= 0.01;
+
+	color = rgba.xyz;
+	depth = rgba.w;
+}
+
 // ===========================================================================
 // SSR                                                                       =
 // ===========================================================================
@@ -69,6 +95,8 @@ Texture2D<Vec4> g_gbufferRt2 : register(t1);
 Texture2D<Vec4> g_downscaledDepthTex : register(t2);
 Texture2D<Vec4> g_depthTex : register(t3);
 Texture2D<Vec4> g_lightBufferRt : register(t4);
+StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t5);
+StructuredBuffer<Cluster> g_clusters : register(t6);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
@@ -77,66 +105,30 @@ RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u3);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
-ANKI_FAST_CONSTANTS(SsrConstants2, g_consts)
+ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 
 #	define NUM_THREADS_SQRT 8
 
 groupshared Vec4 g_viewHitPointAndAttenuation[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 groupshared Vec4 g_viewPosAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 
-void doWork(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, out F32 attenuation, out Vec3 outColor, out F32 pdf, out F32 roughness, out F32 depth,
-			out Vec3 viewReflDir, out Vec3 viewHitPoint, out Vec3 viewPos, out Vec3 viewNormal)
+void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewReflDir, Vec3 viewPos, F32 depth, F32 randFactor, out F32 attenuation,
+		   out Vec3 outColor, out Vec3 viewHitPoint)
 {
 	attenuation = 0.0;
 	outColor = 0.0;
-	pdf = 0.0;
-	roughness = 0.0;
-	viewReflDir = 0.0;
 	viewHitPoint = 0.0;
-	viewPos = 0.0;
-	viewNormal = 0.0;
-
-	depth = g_depthTex[logicalCoord].x;
-	if(depth == 1.0)
-	{
-		return;
-	}
-
-	const Vec4 rt1 = g_gbufferRt1[logicalCoord];
-	const Vec4 rt2 = g_gbufferRt2[logicalCoord];
-
-	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
-	viewNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(worldNormal, 0.0));
-	roughness = unpackRoughnessFromGBuffer(rt1);
-
-	const Vec2 ndc = uvToNdc(uv);
-	viewPos = cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, ndc, depth);
-
-	// Noise
-	const UVec3 seed = rand3DPCG16(UVec3(logicalCoord, g_globalRendererConstants.m_frame % 8u));
-	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
-
-	// Compute refl
-	const Vec3 viewDir = -normalize(viewPos);
-#	if STOCHASTIC_REFLECTIONS
-	viewReflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
-#	else
-	ANKI_MAYBE_UNUSED(roughness);
-	ANKI_MAYBE_UNUSED(randFactors);
-	viewReflDir = reflect(-viewDir, viewNormal);
-	pdf = 1.0;
-#	endif
 
 	// Trace
 	Vec3 hitPoint;
 	{
 		const U32 lod = 8u; // Use the max LOD for ray marching
-		const U32 stepIncrement = g_consts.m_stepIncrement;
+		const U32 stepIncrement = g_consts.m_ssrStepIncrement;
 		const F32 stepIncrementf = F32(stepIncrement);
 		const F32 minStepf = min(4.0f, stepIncrementf);
-		const U32 initialStepIncrement = U32(lerp(minStepf, stepIncrementf, randFactors.x));
-		raymarchGroundTruth(viewPos, viewReflDir, uv, depth, g_consts.m_projMat00_11_22_23, g_consts.m_maxIterations, g_downscaledDepthTex,
-							g_trilinearClampSampler, F32(lod), stepIncrement, initialStepIncrement, hitPoint, attenuation);
+		const U32 initialStepIncrement = U32(lerp(minStepf, stepIncrementf, randFactor));
+		raymarchGroundTruth(viewPos, viewReflDir, uv, depth, g_globalRendererConstants.m_matrices.m_projMat00_11_22_23, g_consts.m_ssrMaxIterations,
+							g_downscaledDepthTex, g_trilinearClampSampler, F32(lod), stepIncrement, initialStepIncrement, hitPoint, attenuation);
 
 		if(attenuation < kLowAttenuation)
 		{
@@ -202,12 +194,13 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		return;
 	}
 
+	candidateCount += 1.0;
+
 	const F32 weight = calculateBilateralWeightDepth(depth, g_viewPosAndDepth[svGroupThreadId2.x][svGroupThreadId2.y].w, 1.0);
 	if(weight > depthWeight)
 	{
 		depthWeight = weight;
 		neighbourOffset = svGroupThreadId2 - svGroupThreadId;
-		candidateCount += 1.0;
 	}
 }
 
@@ -222,17 +215,67 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
 	const Vec2 uv = (Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y);
 
-	F32 ssrAttenuation;
+	// Read stuff
+	const F32 depth = g_depthTex[logicalCoord].x;
+	const Vec4 rt1 = g_gbufferRt1[logicalCoord];
+	const Vec4 rt2 = g_gbufferRt2[logicalCoord];
+	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+	const Vec3 viewNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(worldNormal, 0.0));
+	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
+
+	const Vec2 ndc = uvToNdc(uv);
+	const Vec3 viewPos = cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, ndc, depth);
+
+	// Rand
+	const UVec3 seed = rand3DPCG16(UVec3(logicalCoord, g_globalRendererConstants.m_frame % 8u));
+	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
+
+	// Compute refl vector
+	const Vec3 viewDir = -normalize(viewPos);
+
+	// Sample GI probes factor
+	const F32 sampleGiProbesLerp = smoothstep(g_consts.m_roughnessCutoffToGiEdges.x, g_consts.m_roughnessCutoffToGiEdges.y, roughness);
+	const Bool bSampleGiProbes = (sampleGiProbesLerp > randFactors.x); // Choose stocasticly
+
+	// Sample probes or to SS trace
 	Vec3 outColor;
-	F32 pdf;
-	F32 roughness;
-	F32 depth;
 	Vec3 viewReflDir;
 	Vec3 viewHitPoint;
-	Vec3 viewPos;
-	Vec3 viewNormal;
-	doWork(realCoord, logicalCoord, uv, ssrAttenuation, outColor, pdf, roughness, depth, viewReflDir, viewHitPoint, viewPos, viewNormal);
+	F32 pdf;
+	F32 ssrAttenuation;
+	if(bSampleGiProbes)
+	{
+		viewReflDir = reflect(-viewDir, viewNormal);
 
+		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
+
+		const Vec3 woldReflDir = mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewReflDir, 0.0));
+
+		Vec4 worldPos = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjection, Vec4(uvToNdc(uv), depth, 1.0));
+		worldPos.xyz /= worldPos.w;
+
+		outColor = sampleGiProbes<F32>(cluster, g_giProbes, woldReflDir, worldPos.xyz, g_trilinearClampSampler);
+
+		viewHitPoint = viewPos + viewReflDir * 1.0;
+		pdf = 1.0;
+		ssrAttenuation = 1.0;
+	}
+	else
+	{
+		// SS trace
+		if(STOCHASTIC_REFLECTIONS)
+		{
+			viewReflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
+		}
+		else
+		{
+			viewReflDir = reflect(-viewDir, viewNormal);
+		}
+
+		doSsr(realCoord, logicalCoord, uv, viewReflDir, viewPos, depth, randFactors.x, ssrAttenuation, outColor, viewHitPoint);
+	}
+
+	// Stash to groupshared
 	g_viewHitPointAndAttenuation[svGroupThreadId.x][svGroupThreadId.y] = Vec4(viewHitPoint, ssrAttenuation);
 	g_viewPosAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(viewPos, depth);
 	GroupMemoryBarrierWithGroupSync();
@@ -246,7 +289,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	}
 
 	// Hallucinate if needed
-	if(ssrAttenuation <= kLowAttenuation && false)
+	if(ssrAttenuation <= kLowAttenuation)
 	{
 		IVec2 neighbourOffset = -100;
 		F32 depthWeight = 0.0;
@@ -257,7 +300,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		bestCandidateToHallucinate(svGroupThreadId, IVec2(1, -1), depth, neighbourOffset, depthWeight, candidateCount);
 		bestCandidateToHallucinate(svGroupThreadId, IVec2(1, 1), depth, neighbourOffset, depthWeight, candidateCount);
 
-		if(neighbourOffset.x != -100)
+		if(neighbourOffset.x != -100 && candidateCount == 4.0)
 		{
 			// Found something
 
@@ -275,7 +318,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 			ssrAttenuation = g_viewHitPointAndAttenuation[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].w;
 
-			const Vec4 v4 = cheapPerspectiveProjection(g_consts.m_projMat00_11_22_23, Vec4(viewHitPoint, 1.0));
+			const Vec4 v4 = cheapPerspectiveProjection(g_globalRendererConstants.m_matrices.m_projMat00_11_22_23, Vec4(viewHitPoint, 1.0));
 			const Vec2 uv = ndcToUv(v4.xy / v4.w);
 			outColor = g_lightBufferRt.SampleLevel(g_trilinearClampSampler, uv, 0.0).rgb;
 		}
@@ -555,8 +598,10 @@ RWTexture2D<Vec4> g_hitPosTex : register(u1);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
-groupshared Vec4 g_colorAndPdf[4][8];
-groupshared Vec4 g_hitPosAndDepth[4][8];
+ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
+
+groupshared Vec4 g_colorAndPdf[8][8];
+groupshared Vec4 g_hitPosAndDepth[8][8];
 
 // Return true if the coord contains a pixel that was populated by the previous passes
 Bool isCheckerboardWhite(UVec2 coord)
@@ -570,8 +615,6 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 	{
 		return;
 	}
-
-	svGroupThreadId /= 2;
 
 	const F32 weight = calculateBilateralWeightDepth(refDepth, g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y], 1.0);
 
@@ -603,10 +646,10 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 		const Vec4 rgba = g_colorAndPdfTex[checkerboardCoord];
 		refColor = rgba.xyz;
 		refPdf = rgba.w;
-		g_colorAndPdf[svGroupThreadId.x / 2u][svGroupThreadId.y] = rgba;
+		g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y] = rgba;
 
 		refHitPos = g_hitPosAndDepthTex[checkerboardCoord].xyz;
-		g_hitPosAndDepth[svGroupThreadId.x / 2u][svGroupThreadId.y] = Vec4(refHitPos, refDepth);
+		g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(refHitPos, refDepth);
 	}
 
 	GroupMemoryBarrierWithGroupSync();
@@ -634,7 +677,11 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 		return;
 	}
 
-	if(DISABLE_DENOISING)
+	const Vec4 rt1 = g_gbufferRt1[coord];
+	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
+	const F32 alpha = pow2(roughness);
+
+	if(kDisableDenoising || roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
 	{
 		g_denoisedTex[coord] = Vec4(refColor, 1.0 - refDepth); // Store depth in reverse for better precision
 		g_hitPosTex[coord] = Vec4(refHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
@@ -646,10 +693,6 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 	const Vec3 worldPos = v4.xyz / v4.w;
 
 	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
-
-	const Vec4 rt1 = g_gbufferRt1[coord];
-	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
-	const F32 alpha = pow2(roughness);
 
 	Vec3 outColor = 0.0;
 	Vec3 newHitPos = 0.0;
@@ -868,7 +911,7 @@ void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, ou
 	const UVec2 coord = min(svDispatchThreadId, textureSize - 1);
 	const Vec2 uv = (Vec2(coord) + 0.5f) / textureSize;
 
-	if(DISABLE_DENOISING)
+	if(kDisableDenoising)
 	{
 		g_outTex[coord] = g_colorAndDepth[coord];
 		g_momentsTex[coord] = 0.0;
@@ -934,6 +977,8 @@ Texture2D<Vec4> g_gbufferRt1 : register(t2);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
+ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
+
 F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 {
 #	if 1
@@ -970,17 +1015,17 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 	const F32 refDepth = rgba.w;
 	const Vec3 centerColor = rgba.xyz;
 
-	if(DISABLE_DENOISING)
+	const Vec4 rt1 = g_gbufferRt1[coord];
+	const F32 roughness = unpackRoughnessFromGBuffer<F32>(rt1, 0.0);
+	const F32 sqRoughness = sqrt(roughness);
+
+	if(kDisableDenoising || roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
 	{
-		g_outTex[coord] = Vec4(centerColor, refDepth);
+		g_outTex[coord] = encodeColorDepthAndSampleCount(centerColor, refDepth, 0u);
 		return;
 	}
 
 	const F32 variance = sqrt(computeVarianceCenter(coord, outSize)) * 100.0;
-
-	const Vec4 rt1 = g_gbufferRt1[coord];
-	const F32 roughness = unpackRoughnessFromGBuffer<F32>(rt1, 0.0);
-	const F32 sqRoughness = sqrt(roughness);
 
 	const F32 lerpFactor = sqRoughness * min(1.0, max(sqRoughness, variance));
 
@@ -1012,15 +1057,7 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 
 	colorSum /= weightSum;
 
-	// Encode the step count in the signs of the out color
-	const U32 sampleCountu = sampleCount;
-	Vec4 signs;
-	[unroll] for(U32 i = 0; i < 4; i++)
-	{
-		signs[i] = (sampleCountu & (1u << i)) ? 1.0 : -1.0;
-	}
-
-	g_outTex[coord] = Vec4(colorSum, refDepth) * signs;
+	g_outTex[coord] = encodeColorDepthAndSampleCount(colorSum, refDepth, sampleCount);
 }
 #endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoiseHorizontal
 
@@ -1032,17 +1069,6 @@ Texture2D<Vec4> g_colorAndDepthAndSampleCount : register(t0);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
-
-F32 decodeSampleCount(Vec4 rgba)
-{
-	U32 sampleCountu = 0;
-	[unroll] for(U32 i = 0; i < 4; ++i)
-	{
-		sampleCountu |= (sign(rgba[i]) > 0.0) ? (1u << i) : 0u;
-	}
-
-	return sampleCountu;
-}
 
 [NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
 {
@@ -1058,13 +1084,13 @@ F32 decodeSampleCount(Vec4 rgba)
 		g_indirectArgs[1].m_threadGroupCountX = 0;
 	}
 
-	Vec4 rgba = g_colorAndDepthAndSampleCount[coord];
-	const F32 sampleCount = decodeSampleCount(rgba);
-	rgba = abs(rgba);
-	const F32 refDepth = rgba.w;
-	const Vec3 refColor = rgba.xyz;
+	U32 sampleCountu;
+	F32 refDepth;
+	Vec3 refColor;
+	decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[coord], refColor, refDepth, sampleCountu);
+	const F32 sampleCount = sampleCountu;
 
-	if(DISABLE_DENOISING)
+	if(kDisableDenoising)
 	{
 		g_outTex[coord] = Vec4(refColor, 1.0);
 		return;
@@ -1082,7 +1108,7 @@ F32 decodeSampleCount(Vec4 rgba)
 		IVec2 newCoord = coord + IVec2(0.0, y);
 		newCoord.y = clamp(newCoord.y, 0, outSize.y - 1);
 
-		rgba = abs(g_colorAndDepthAndSampleCount[newCoord]);
+		const Vec4 rgba = abs(g_colorAndDepthAndSampleCount[newCoord]);
 		const F32 sampleDepth = rgba.w;
 		const Vec3 sampleColor = rgba.xyz;
 

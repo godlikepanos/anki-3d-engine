@@ -149,6 +149,11 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	const RenderTargetHandle hitPosAndDepthRt = rgraph.newRenderTarget(m_hitPosAndDepthRtDesc);
 	const RenderTargetHandle hitPosRt = rgraph.newRenderTarget(m_hitPosRtDesc);
 
+	ReflectionConstants consts;
+	consts.m_ssrStepIncrement = g_ssrStepIncrementCVar;
+	consts.m_ssrMaxIterations = g_ssrMaxIterationsCVar;
+	consts.m_roughnessCutoffToGiEdges = Vec2(g_roughnessCutoffToGiEdge0, g_roughnessCutoffToGiEdge1);
+
 	// SSR
 	BufferView pixelsFailedSsrBuff;
 	BufferHandle indirectArgsHandle;
@@ -167,12 +172,13 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getBloom().getPyramidRt(), TextureUsageBit::kSrvCompute);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
-		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx, pixelsFailedSsrBuff, consts](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Reflections);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -185,6 +191,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(2, 0, getRenderer().getDepthDownscale().getRt());
 			rgraphCtx.bindSrv(3, 0, getRenderer().getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(4, 0, getRenderer().getBloom().getPyramidRt());
+			cmdb.bindSrv(5, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+			cmdb.bindSrv(6, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
 			rgraphCtx.bindUav(0, 0, transientRt1);
 			rgraphCtx.bindUav(1, 0, hitPosAndDepthRt);
@@ -193,11 +201,6 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 
-			SsrConstants2 consts;
-			consts.m_stepIncrement = g_ssrStepIncrementCVar;
-			consts.m_maxIterations = g_ssrMaxIterationsCVar;
-			consts.m_projMat00_11_22_23 = Vec4(ctx.m_matrices.m_projection(0, 0), ctx.m_matrices.m_projection(1, 1),
-											   ctx.m_matrices.m_projection(2, 2), ctx.m_matrices.m_projection(2, 3));
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y());
@@ -407,7 +410,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt, consts](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Reflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -424,6 +427,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(1, 0, hitPosRt);
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
+
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});
@@ -476,7 +481,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx, transientRt1, transientRt2, writeMomentsRt](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, &ctx, transientRt1, transientRt2, writeMomentsRt, consts](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Reflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -488,6 +493,8 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getColorRt(1));
 
 			rgraphCtx.bindUav(0, 0, transientRt2);
+
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});

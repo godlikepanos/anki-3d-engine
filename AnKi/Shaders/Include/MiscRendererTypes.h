@@ -57,6 +57,9 @@ struct CommonMatrices
 	/// @endcode
 	Vec4 m_unprojectionParameters;
 
+	/// Part of the perspective projection matrix. Used in cheapPerspectiveUnprojection
+	Vec4 m_projMat00_11_22_23;
+
 	Vec2 m_jitterOffsetNdc;
 	Vec2 m_padding;
 };
@@ -134,33 +137,11 @@ struct DepthDownscaleConstants
 	U32 m_mipmapCount;
 };
 
-// Screen space reflections uniforms
-struct SsrConstants
+struct ReflectionConstants
 {
-	Vec2 m_viewportSizef;
-	U32 m_frameCount;
-	U32 m_maxIterations;
-
-	UVec2 m_padding;
-	F32 m_roughnessCutoff;
-	U32 m_stepIncrement;
-
-	Vec4 m_projMat00_11_22_23;
-
-	Vec4 m_unprojectionParameters;
-
-	Mat4 m_prevViewProjMatMulInvViewProjMat;
-	Mat3x4 m_normalMat;
-};
-
-struct SsrConstants2
-{
-	U32 m_maxIterations;
-	U32 m_stepIncrement;
-	U32 m_padding1;
-	U32 m_padding2;
-
-	Vec4 m_projMat00_11_22_23;
+	U32 m_ssrMaxIterations;
+	U32 m_ssrStepIncrement;
+	Vec2 m_roughnessCutoffToGiEdges;
 };
 
 struct PixelFailedSsr

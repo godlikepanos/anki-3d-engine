@@ -752,6 +752,9 @@ Error Renderer::render(Texture* presentTex)
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
+	ctx.m_matrices.m_projMat00_11_22_23 = Vec4(ctx.m_matrices.m_projection(0, 0), ctx.m_matrices.m_projection(1, 1),
+											   ctx.m_matrices.m_projection(2, 2), ctx.m_matrices.m_projection(2, 3));
+
 	ctx.m_cameraNear = cam.getNear();
 	ctx.m_cameraFar = cam.getFar();
 

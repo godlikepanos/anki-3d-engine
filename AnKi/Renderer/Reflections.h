@@ -18,6 +18,11 @@ inline NumericCVar<F32> g_rtReflectionsMaxRayDistanceCVar("R", "RtReflectionsMax
 inline NumericCVar<U32> g_ssrStepIncrementCVar("R", "SsrStepIncrement", 32, 1, 256, "The number of steps for each loop");
 inline NumericCVar<U32> g_ssrMaxIterationsCVar("R", "SsrMaxIterations", 64, 1, 256, "Max SSR raymarching loop iterations");
 
+inline NumericCVar<F32> g_roughnessCutoffToGiEdge0("R", "RoughnessCutoffToGiEdge0", 0.7f, 0.0f, 1.0f,
+												   "Before this roughness the reflections will never sample the GI probes");
+inline NumericCVar<F32> g_roughnessCutoffToGiEdge1("R", "RoughnessCutoffToGiEdge1", 0.9f, 0.0f, 1.0f,
+												   "After this roughness the reflections will sample the GI probes");
+
 class Reflections : public RendererObject
 {
 public:
