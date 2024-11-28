@@ -173,7 +173,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	U32 depthTexMipCount;
 	depthTex.GetDimensions(0u, depthTexSize.x, depthTexSize.y, depthTexMipCount);
 	depthLod = min(depthLod, F32(depthTexMipCount) - 1.0f);
-	const UVec2 deptTexMipSize = depthTexSize >> U32(depthLod);
+	const UVec2 depthTexMipSize = depthTexSize >> U32(depthLod);
 
 	// Start point
 	const Vec3 start = Vec3(uv, depthRef);
@@ -186,9 +186,10 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 
 	// Compute the ray and step size
 	Vec3 dir = end - start;
-	const Vec2 texelSize = abs(dir.xy) * Vec2(deptTexMipSize);
-	const F32 stepSize = length(dir.xy) / max(texelSize.x, texelSize.y);
-	dir = normalize(dir);
+	const Vec2 dir2d = normalize(dir.xy);
+	dir = dir * (dir2d.x / dir.x); // Normalize only on xy
+
+	const F32 stepSize = 1.0 / ((dir.x > dir.y) ? depthTexMipSize.x : depthTexMipSize.y);
 
 	// Compute step
 	I32 stepIncrement = I32(stepIncrement_);
