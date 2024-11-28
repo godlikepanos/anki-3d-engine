@@ -25,8 +25,8 @@ constexpr F32 kSpatialUpscalingPcfTexelOffset = 8.0;
 #define SPATIAL_UPSCALING_POISON_KERNEL kPoissonDisk8
 constexpr F32 kMaxBilateralSamples = 5.0;
 constexpr F32 kGaussianSigma = 0.55;
-#define STOCHASTIC_REFLECTIONS 1
-#define TRY_SHADOWMAP_FIRST 1
+constexpr Bool kStochasticReflections = true;
+constexpr Bool kTryShadowmapFirst = true;
 constexpr Bool kDisableDenoising = false;
 
 // Functions
@@ -263,7 +263,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	else
 	{
 		// SS trace
-		if(STOCHASTIC_REFLECTIONS)
+		if(kStochasticReflections)
 		{
 			viewReflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
 		}
@@ -525,7 +525,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 			payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
 		}
 	}
-	else if(bInsideFrustum && TRY_SHADOWMAP_FIRST)
+	else if(bInsideFrustum && kTryShadowmapFirst)
 	{
 		const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
 		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
