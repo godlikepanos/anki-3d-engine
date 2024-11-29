@@ -212,6 +212,10 @@ T ndcToUv(T ndc)
 	scalarType func##3(scalarType x, scalarType y, scalarType z) \
 	{ \
 		return func(x, func(y, z)); \
+	} \
+	scalarType func##2(vectorType##2 v) \
+	{ \
+		return func(v.x, v.y); \
 	}
 
 #define DEFINE_COMPARISON2(func) \

@@ -159,6 +159,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 						 out RF32 attenuation)
 {
 	attenuation = 0.0;
+	hitPoint = Vec3(uv, depthRef);
 
 	// Check for view facing reflections [sakibsaikia]
 	const Vec3 viewDir = normalize(rayOrigin);
@@ -196,22 +197,23 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	I32 crntStep = I32(initialStepIncrement);
 
 	// Search
-	Vec3 origin;
 	[loop] while(maxIterations-- != 0u)
 	{
-		origin = start + dir * (F32(crntStep) * stepSize);
+		const Vec3 newHit = start + dir * (F32(crntStep) * stepSize);
 
 		// Check if it's out of the view
-		if(origin.x <= 0.0 || origin.y <= 0.0 || origin.x >= 1.0 || origin.y >= 1.0)
+		if(any(newHit <= 0.0) || any(newHit >= 1.0))
 		{
+			hitPoint = start;
 			break;
 		}
 
-		const F32 depth = depthTex.SampleLevel(depthSampler, origin.xy, depthLod).r;
-		const Bool hit = origin.z - depth >= 0.0;
+		const F32 depth = depthTex.SampleLevel(depthSampler, newHit.xy, depthLod).r;
+		const Bool hit = newHit.z >= depth;
 		if(!hit)
 		{
 			crntStep += stepIncrement;
+			hitPoint = newHit;
 		}
 		else if(stepIncrement > 1)
 		{
@@ -228,12 +230,12 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 			const RF32 blackMargin = 0.05 / 4.0;
 			const RF32 whiteMargin = 0.1 / 2.0;
 			const RVec2 marginAttenuation2d =
-				smoothstep(blackMargin, whiteMargin, origin.xy) * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
+				smoothstep(blackMargin, whiteMargin, newHit.xy) * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, newHit.xy));
 			const RF32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
 			attenuation = marginAttenuation * cameraContribution;
 
-			// ...and hit point
-			hitPoint = origin;
+			hitPoint = newHit;
+
 			break;
 		}
 	}

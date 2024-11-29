@@ -148,7 +148,7 @@ struct PixelFailedSsr
 {
 	U32 m_pixel;
 	U32 m_reflectionDirAndRoughness;
-	F32 m_pdf;
+	U32 m_pdf_f16_rayDirT_f16;
 };
 
 // Vol fog

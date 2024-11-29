@@ -28,6 +28,8 @@ constexpr F32 kGaussianSigma = 0.55;
 constexpr Bool kStochasticReflections = true;
 constexpr Bool kTryShadowmapFirst = true;
 constexpr Bool kDisableDenoising = false;
+constexpr F32 kTMinBias = -1.0;
+constexpr Bool kExtraSsrRejection = true;
 
 // Functions
 Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
@@ -85,7 +87,6 @@ void decodeColorDepthAndSampleCount(Vec4 rgba, out Vec3 color, out F32 depth, ou
 // SSR                                                                       =
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_Ssr)
-#	define EXTRA_REJECTION 1
 constexpr F32 kLowAttenuation = 0.01;
 
 SamplerState g_trilinearClampSampler : register(s0);
@@ -112,7 +113,7 @@ ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 groupshared Vec4 g_viewHitPointAndAttenuation[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 groupshared Vec4 g_viewPosAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 
-void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewReflDir, Vec3 viewPos, F32 depth, F32 randFactor, out F32 attenuation,
+void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewPos, F32 depth, F32 randFactor, inout Vec3 viewReflDir, out F32 attenuation,
 		   out Vec3 outColor, out Vec3 viewHitPoint)
 {
 	attenuation = 0.0;
@@ -129,19 +130,19 @@ void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewReflDir, Vec3 
 		const U32 initialStepIncrement = U32(lerp(minStepf, stepIncrementf, randFactor));
 		raymarchGroundTruth(viewPos, viewReflDir, uv, depth, g_globalRendererConstants.m_matrices.m_projMat00_11_22_23, g_consts.m_ssrMaxIterations,
 							g_downscaledDepthTex, g_trilinearClampSampler, F32(lod), stepIncrement, initialStepIncrement, hitPoint, attenuation);
-
-		if(attenuation < kLowAttenuation)
-		{
-			return;
-		}
 	}
 
-	// Compute the hit point in viewspace
+	if(attenuation < kLowAttenuation)
+	{
+		viewHitPoint = cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, uvToNdc(hitPoint.xy), hitPoint.z);
+		return;
+	}
+
 	const F32 depth1 = g_downscaledDepthTex.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).r;
 	viewHitPoint = cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, uvToNdc(hitPoint.xy), depth1);
 
-#	if EXTRA_REJECTION
 	// Reject backfacing
+	if(kExtraSsrRejection)
 	{
 		const Vec3 gbufferNormal = unpackNormalFromGBuffer(g_gbufferRt2.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0));
 		const Vec3 hitNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(gbufferNormal, 0.0));
@@ -155,6 +156,7 @@ void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewReflDir, Vec3 
 	}
 
 	// Reject far from hit point
+	if(kExtraSsrRejection)
 	{
 		const Vec3 reflRayHitPointVSpace =
 			cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, uvToNdc(hitPoint.xy), hitPoint.z);
@@ -167,7 +169,6 @@ void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewReflDir, Vec3 
 			return;
 		}
 	}
-#	endif
 
 	// Read the reflection
 	{
@@ -272,7 +273,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 			viewReflDir = reflect(-viewDir, viewNormal);
 		}
 
-		doSsr(realCoord, logicalCoord, uv, viewReflDir, viewPos, depth, randFactors.x, ssrAttenuation, outColor, viewHitPoint);
+		doSsr(realCoord, logicalCoord, uv, viewPos, depth, randFactors.x, viewReflDir, ssrAttenuation, outColor, viewHitPoint);
 	}
 
 	// Stash to groupshared
@@ -356,7 +357,8 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		PixelFailedSsr failedPixel;
 		failedPixel.m_pixel = (realCoord.x << 16u) | realCoord.y;
 		failedPixel.m_reflectionDirAndRoughness = packSnorm4x8(Vec4(reflDirWorld, roughness));
-		failedPixel.m_pdf = pdf;
+		failedPixel.m_pdf_f16_rayDirT_f16 = f32tof16(pdf) << 16u;
+		failedPixel.m_pdf_f16_rayDirT_f16 |= f32tof16(length(viewPos - viewHitPoint));
 
 		SBUFF(g_pixelsFailedSsr, writeOffset) = failedPixel;
 
@@ -402,7 +404,7 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
 	const Vec3 reflDir = packed.xyz;
 	const F32 roughness = packed.w;
-	const F32 pdf = pixelFailedSsr.m_pdf;
+	const F32 pdf = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 >> 16u);
 
 	const F32 depth = g_depthTex[logicalCoord].x;
 	const Vec2 ndc = uvToNdc((Vec2(logicalCoord) + 0.5) / Vec2(viewportSize));
@@ -463,7 +465,8 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const Vec4 packed = unpackSnorm4x8<F32>(pixelFailedSsr.m_reflectionDirAndRoughness);
 	const Vec3 reflDir = packed.xyz;
 	const F32 roughness = packed.w;
-	const F32 pdf = pixelFailedSsr.m_pdf;
+	const F32 pdf = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 >> 16u);
+	const F32 tmin = f16tof32(pixelFailedSsr.m_pdf_f16_rayDirT_f16 & 0xFFFFu);
 
 	const F32 depth = g_depthTex[logicalCoord].x;
 	const Vec2 ndc = uvToNdc((Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y));
@@ -491,7 +494,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const U32 cullMask = 0xFFu;
 	RayDesc ray;
 	ray.Origin = worldPos;
-	ray.TMin = 0.05;
+	ray.TMin = max(tmin + kTMinBias, 0.05);
 	ray.Direction = reflDir;
 	ray.TMax = g_consts.m_maxRayT;
 	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
