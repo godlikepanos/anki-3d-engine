@@ -13,8 +13,6 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<U32> g_hzbWidthCVar("R", "HzbWidth", 512, 16, 4 * 1024, "HZB map width");
-inline NumericCVar<U32> g_hzbHeightCVar("R", "HzbHeight", 256, 16, 4 * 1024, "HZB map height");
 inline BoolCVar g_gbufferVrsCVar("R", "GBufferVrs", false, "Enable VRS in GBuffer");
 inline BoolCVar g_visualizeGiProbesCVar("R", "VisualizeGiProbes", false, "Visualize GI probes");
 inline BoolCVar g_visualizeReflectionProbesCVar("R", "VisualizeReflProbes", false, "Visualize reflection probes");

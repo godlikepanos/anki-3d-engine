@@ -47,8 +47,9 @@ Error GBuffer::init()
 	{
 		const TextureUsageBit usage = TextureUsageBit::kSrvCompute | TextureUsageBit::kUavCompute | TextureUsageBit::kSrvGeometry;
 
-		TextureInitInfo texinit =
-			getRenderer().create2DRenderTargetInitInfo(g_hzbWidthCVar, g_hzbHeightCVar, Format::kR32_Sfloat, usage, "GBuffer HZB");
+		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(previousPowerOfTwo(getRenderer().getInternalResolution().x()),
+																			 previousPowerOfTwo(getRenderer().getInternalResolution().y()),
+																			 Format::kR32_Sfloat, usage, "GBuffer HZB");
 		texinit.m_mipmapCount = U8(computeMaxMipmapCount2d(texinit.m_width, texinit.m_height));
 		ClearValue clear;
 		clear.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
