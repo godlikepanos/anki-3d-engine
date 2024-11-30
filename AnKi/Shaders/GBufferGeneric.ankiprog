@@ -36,7 +36,7 @@
 #pragma anki technique RtShadows ahit mutators ALPHA_TEST DIFFUSE_TEX
 #pragma anki technique RtShadows chit mutators
 
-#pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX EMISSIVE_TEX
+#pragma anki technique RtMaterialFetch chit mutators DIFFUSE_TEX EMISSIVE_TEX ROUGHNESS_METALNESS_TEX
 
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
@@ -714,6 +714,14 @@ GBufferPixelOut main(
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 	ANKI_MAYBE_UNUSED(uv);
 
+	// Metallness
+#		if ROUGHNESS_METALNESS_TEX
+	const RVec3 comp = getBindlessTexture2DRVec4(localConstants.m_roughnessMetalnessTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
+	const RF32 metallic = comp.b * localConstants.m_metalnessScale;
+#		else
+	const RF32 metallic = localConstants.m_metalnessScale;
+#		endif
+
 	// Diffuse
 #		if DIFFUSE_TEX
 	RVec3 diffColor = getBindlessTexture2DRVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
@@ -721,7 +729,7 @@ GBufferPixelOut main(
 	RVec3 diffColor = 1.0;
 #		endif
 	diffColor *= localConstants.m_diffuseScale;
-	payload.m_diffuseColor = diffColor;
+	payload.m_diffuseColor = diffColor * (1.0 - metallic);
 
 	// Emissive
 #		if EMISSIVE_TEX

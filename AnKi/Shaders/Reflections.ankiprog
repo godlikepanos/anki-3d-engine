@@ -3,13 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator SSR_SAMPLE_GBUFFER 0 1
+
 #pragma anki technique Ssr comp
-#pragma anki technique ReflectionProbeFallback comp
-#pragma anki technique RtMaterialFetch rgen miss
-#pragma anki technique SpatialDenoise comp
-#pragma anki technique TemporalDenoise comp
-#pragma anki technique BilateralDenoiseVertical comp
-#pragma anki technique BilateralDenoiseHorizontal comp
+#pragma anki technique ReflectionProbeFallback comp mutators
+#pragma anki technique RtMaterialFetch rgen miss mutators
+#pragma anki technique SpatialDenoise comp mutators
+#pragma anki technique TemporalDenoise comp mutators
+#pragma anki technique BilateralDenoiseVertical comp mutators
+#pragma anki technique BilateralDenoiseHorizontal comp mutators
 
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
@@ -30,6 +32,9 @@ constexpr Bool kTryShadowmapFirst = true;
 constexpr Bool kDisableDenoising = false;
 constexpr F32 kTMinBias = -1.0;
 constexpr Bool kExtraSsrRejection = true;
+constexpr Bool kDebugSsr = false;
+constexpr Bool kSsrHallucinate = true;
+constexpr Bool kSsrHallucinateDebug = false;
 
 // Functions
 Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
@@ -90,14 +95,17 @@ void decodeColorDepthAndSampleCount(Vec4 rgba, out Vec3 color, out F32 depth, ou
 constexpr F32 kLowAttenuation = 0.01;
 
 SamplerState g_trilinearClampSampler : register(s0);
+SamplerComparisonState g_shadowSampler : register(s1);
 
-Texture2D<Vec4> g_gbufferRt1 : register(t0);
-Texture2D<Vec4> g_gbufferRt2 : register(t1);
-Texture2D<Vec4> g_downscaledDepthTex : register(t2);
-Texture2D<Vec4> g_depthTex : register(t3);
-Texture2D<Vec4> g_lightBufferRt : register(t4);
-StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t5);
-StructuredBuffer<Cluster> g_clusters : register(t6);
+Texture2D<Vec4> g_gbufferRt0 : register(t0);
+Texture2D<Vec4> g_gbufferRt1 : register(t1);
+Texture2D<Vec4> g_gbufferRt2 : register(t2);
+Texture2D<Vec4> g_downscaledDepthTex : register(t3);
+Texture2D<Vec4> g_depthTex : register(t4);
+Texture2D<Vec4> g_lightBufferRt : register(t5);
+StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t6);
+StructuredBuffer<Cluster> g_clusters : register(t7);
+Texture2D<Vec4> g_shadowAtlasTex : register(t8);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
@@ -111,10 +119,50 @@ ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 #	define NUM_THREADS_SQRT 8
 
 groupshared Vec4 g_viewHitPointAndAttenuation[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
-groupshared Vec4 g_viewPosAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
+groupshared Vec4 g_colorAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 
-void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewPos, F32 depth, F32 randFactor, inout Vec3 viewReflDir, out F32 attenuation,
-		   out Vec3 outColor, out Vec3 viewHitPoint)
+Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
+{
+	// Read
+	GbufferInfo<RF32> gbuffer = (GbufferInfo<RF32>)0;
+	unpackGBufferNoVelocity<RF32>(g_gbufferRt0[coord], g_gbufferRt1[coord], g_gbufferRt2[coord], gbuffer);
+
+	Vec3 outColor = gbuffer.m_emission;
+	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
+
+	// GI
+	outColor += sampleGiProbes<F32>(cluster, g_giProbes, gbuffer.m_normal, worldPos.xyz, g_trilinearClampSampler) * gbuffer.m_diffuse;
+
+	// Dir light
+	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
+	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
+	{
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+		F32 shadowFactor;
+		if(shadowCascadeCount >> 1u)
+		{
+			const F32 negativeZViewSpace = -viewPos.z;
+
+			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
+
+			shadowFactor = computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_shadowSampler);
+		}
+		else
+		{
+			shadowFactor = 1.0;
+		}
+
+		const Vec3 l = -dirLight.m_direction;
+		const F32 lambert = max(0.0, dot(l, gbuffer.m_normal));
+		const Vec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+		outColor += diffC * dirLight.m_diffuseColor * lambert * shadowFactor;
+	}
+
+	return outColor;
+}
+
+void doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewPos, F32 depth, F32 randFactor, inout Vec3 viewReflDir,
+		   out F32 attenuation, out Vec3 outColor, out Vec3 viewHitPoint)
 {
 	attenuation = 0.0;
 	outColor = 0.0;
@@ -172,15 +220,21 @@ void doSsr(UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewPos, F32 depth
 
 	// Read the reflection
 	{
-		// Reproject the hit point because you are reading the previous frame
-		const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_reprojection, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
-		hitPoint.xy = ndcToUv(v4.xy / v4.w);
+		if(!SSR_SAMPLE_GBUFFER)
+		{
+			// Reproject the hit point because you are reading the previous frame
+			const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_reprojection, Vec4(uvToNdc(hitPoint.xy), hitPoint.z, 1.0));
+			hitPoint.xy = ndcToUv(v4.xy / v4.w);
 
-		// Read the light buffer
-		Vec3 ssrColor = g_lightBufferRt.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).rgb;
-		ssrColor = clamp(ssrColor, 0.0, kMaxRF32); // Fix the value just in case
-
-		outColor = ssrColor;
+			// Read the light buffer
+			const Vec3 ssrColor = g_lightBufferRt.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).rgb;
+			outColor = clamp(ssrColor, 0.0, kMaxRF32); // Fix the value just in case
+		}
+		else
+		{
+			outColor = doLightShading(mul(g_globalRendererConstants.m_matrices.m_cameraTransform, Vec4(viewHitPoint, 1.0)), viewHitPoint,
+									  hitPoint.xy * logicalViewportSize, depth1);
+		}
 	}
 }
 
@@ -197,7 +251,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 	candidateCount += 1.0;
 
-	const F32 weight = calculateBilateralWeightDepth(depth, g_viewPosAndDepth[svGroupThreadId2.x][svGroupThreadId2.y].w, 1.0);
+	const F32 weight = calculateBilateralWeightDepth(depth, g_colorAndDepth[svGroupThreadId2.x][svGroupThreadId2.y].w, 1.0);
 	if(weight > depthWeight)
 	{
 		depthWeight = weight;
@@ -273,12 +327,13 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 			viewReflDir = reflect(-viewDir, viewNormal);
 		}
 
-		doSsr(realCoord, logicalCoord, uv, viewPos, depth, randFactors.x, viewReflDir, ssrAttenuation, outColor, viewHitPoint);
+		doSsr(halfViewportSize * UVec2(2, 1), realCoord, logicalCoord, uv, viewPos, depth, randFactors.x, viewReflDir, ssrAttenuation, outColor,
+			  viewHitPoint);
 	}
 
 	// Stash to groupshared
 	g_viewHitPointAndAttenuation[svGroupThreadId.x][svGroupThreadId.y] = Vec4(viewHitPoint, ssrAttenuation);
-	g_viewPosAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(viewPos, depth);
+	g_colorAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(outColor, depth);
 	GroupMemoryBarrierWithGroupSync();
 
 	if(depth == 1.0)
@@ -290,7 +345,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	}
 
 	// Hallucinate if needed
-	if(ssrAttenuation <= kLowAttenuation)
+	if(ssrAttenuation <= kLowAttenuation && kSsrHallucinate)
 	{
 		IVec2 neighbourOffset = -100;
 		F32 depthWeight = 0.0;
@@ -307,10 +362,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 			const UVec2 neighbourSvGroupThreadId = svGroupThreadId + neighbourOffset;
 
-			const Vec3 neighbourViewPos = g_viewPosAndDepth[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].xyz;
-
 			viewHitPoint = g_viewHitPointAndAttenuation[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].xyz;
-			viewHitPoint += viewPos - g_viewPosAndDepth[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].xyz;
 
 			viewReflDir = normalize(viewHitPoint - viewPos);
 			const Vec3 viewDir = normalize(-viewPos);
@@ -319,9 +371,12 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 			ssrAttenuation = g_viewHitPointAndAttenuation[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].w;
 
-			const Vec4 v4 = cheapPerspectiveProjection(g_globalRendererConstants.m_matrices.m_projMat00_11_22_23, Vec4(viewHitPoint, 1.0));
-			const Vec2 uv = ndcToUv(v4.xy / v4.w);
-			outColor = g_lightBufferRt.SampleLevel(g_trilinearClampSampler, uv, 0.0).rgb;
+			outColor = g_colorAndDepth[neighbourSvGroupThreadId.x][neighbourSvGroupThreadId.y].xyz;
+
+			if(kSsrHallucinateDebug)
+			{
+				outColor *= Vec3(0.0, 10.0, 0.0);
+			}
 		}
 	}
 
@@ -329,8 +384,6 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	if(ssrAttenuation > kLowAttenuation)
 	{
 		// Write to the image
-
-		pdf = max(0.0, pdf) * ssrAttenuation;
 
 		g_colorAndPdfTex[realCoord] = Vec4(outColor, pdf);
 
@@ -342,7 +395,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	}
 	else
 	{
-		if(false)
+		if(kDebugSsr)
 		{
 			g_colorAndPdfTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
 			g_hitPosAndDepthTex[realCoord] = Vec4(1.0, 0.0, 1.0, 0.0);
@@ -561,7 +614,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	outColor += payload.m_diffuseColor * indirectDiffuse;
 
 	const Vec3 l = -dirLight.m_direction;
-	const F32 lambert = dot(l, payload.m_worldNormal);
+	const F32 lambert = max(0.0, dot(l, payload.m_worldNormal));
 	const Vec3 diffC = diffuseLobe(payload.m_diffuseColor);
 	outColor += diffC * dirLight.m_diffuseColor * lambert * shadow;
 
