@@ -161,8 +161,8 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 	return outColor;
 }
 
-void doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewPos, F32 depth, F32 randFactor, inout Vec3 viewReflDir,
-		   out F32 attenuation, out Vec3 outColor, out Vec3 viewHitPoint)
+void doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 uv, Vec3 viewPos, F32 depth, F32 randFactor, F32 roughness,
+		   inout Vec3 viewReflDir, out F32 attenuation, out Vec3 outColor, out Vec3 viewHitPoint)
 {
 	attenuation = 0.0;
 	outColor = 0.0;
@@ -208,7 +208,7 @@ void doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 
 	{
 		const Vec3 reflRayHitPointVSpace =
 			cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, uvToNdc(hitPoint.xy), hitPoint.z);
-		const F32 rejectionMeters = 0.5f;
+		const F32 rejectionMeters = smoothstep(0.1f, 0.6f, roughness);
 		const F32 diff = length(reflRayHitPointVSpace - viewHitPoint);
 		const F32 distAttenuation = 1.0f - smoothstep(0.0f, rejectionMeters, diff);
 		attenuation *= distAttenuation;
@@ -327,8 +327,8 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 			viewReflDir = reflect(-viewDir, viewNormal);
 		}
 
-		doSsr(halfViewportSize * UVec2(2, 1), realCoord, logicalCoord, uv, viewPos, depth, randFactors.x, viewReflDir, ssrAttenuation, outColor,
-			  viewHitPoint);
+		doSsr(halfViewportSize * UVec2(2, 1), realCoord, logicalCoord, uv, viewPos, depth, randFactors.x, roughness, viewReflDir, ssrAttenuation,
+			  outColor, viewHitPoint);
 	}
 
 	// Stash to groupshared
