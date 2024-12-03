@@ -57,11 +57,13 @@ public:
 	ShaderProgramPtr m_verticalBilateralDenoisingGrProg;
 	ShaderProgramPtr m_horizontalBilateralDenoisingGrProg;
 	ShaderProgramPtr m_probeFallbackGrProg;
+	ShaderProgramPtr m_tileClassificationGrProg;
 
 	RenderTargetDesc m_transientRtDesc1;
 	RenderTargetDesc m_transientRtDesc2;
 	RenderTargetDesc m_hitPosAndDepthRtDesc;
 	RenderTargetDesc m_hitPosRtDesc;
+	RenderTargetDesc m_classTileMapRtDesc;
 
 	/// 2 x DispatchIndirectArgs. 1st is for RT and 2nd for probe fallback
 	BufferPtr m_indirectArgsBuffer;
@@ -73,6 +75,8 @@ public:
 	U32 m_sbtRecordSize = 0;
 	U32 m_rayGenShaderGroupIdx = 0;
 	U32 m_missShaderGroupIdx = 0;
+
+	static constexpr U32 kTileSize = 32;
 
 	class
 	{

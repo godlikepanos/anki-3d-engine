@@ -39,8 +39,6 @@ Error DepthDownscale::initInternal()
 
 	m_mipCount = 2;
 
-	const UVec2 lastMipSize = UVec2(width, height) >> (m_mipCount - 1);
-
 	const Bool preferCompute = g_preferComputeCVar;
 
 	// Create RT descr

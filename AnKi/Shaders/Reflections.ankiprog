@@ -5,6 +5,7 @@
 
 #pragma anki mutator SSR_SAMPLE_GBUFFER 0 1
 
+#pragma anki technique Classification comp mutators
 #pragma anki technique Ssr comp
 #pragma anki technique ReflectionProbeFallback comp mutators
 #pragma anki technique RtMaterialFetch rgen miss mutators
@@ -35,6 +36,17 @@ constexpr Bool kExtraSsrRejection = true;
 constexpr Bool kDebugSsr = false;
 constexpr Bool kSsrHallucinate = true;
 constexpr Bool kSsrHallucinateDebug = false;
+constexpr F32 kTemporalSourceWeight = 0.005;
+#define TILE_SIZE 32
+
+// The states of a tile
+enum
+{
+	kClassNormal, // Always 1st
+	kClassSky, // Always 2nd
+	kClassMirror,
+	kClassVeryRough,
+};
 
 // Functions
 Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
@@ -89,6 +101,85 @@ void decodeColorDepthAndSampleCount(Vec4 rgba, out Vec3 color, out F32 depth, ou
 }
 
 // ===========================================================================
+// Classification                                                            =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_Classification)
+
+SamplerState g_trilinearClampSampler : register(s0);
+
+Texture2D<Vec4> g_gbufferRt1 : register(t0);
+Texture2D<Vec4> g_depthTex : register(t1);
+
+RWTexture2D<UVec4> g_classTimeMap : register(u0);
+
+ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
+
+groupshared U32 g_minRoughness;
+groupshared U32 g_maxRoughness;
+groupshared U32 g_allSky;
+
+[NumThreads(TILE_SIZE / 2, TILE_SIZE, 1)] void main(U32 svGroupIndex : SV_GroupIndex, UVec2 svDispatchThreadId : SV_DispatchThreadID,
+													UVec2 svGroupId : SV_GroupID)
+{
+	if(svGroupIndex == 0)
+	{
+		g_minRoughness = asuint(1.0);
+		g_maxRoughness = asuint(0.0);
+		g_allSky = 0;
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	UVec2 fullViewportSize;
+	g_gbufferRt1.GetDimensions(fullViewportSize.x, fullViewportSize.y);
+
+	const UVec2 realCoord = min(svDispatchThreadId, fullViewportSize / UVec2(2, 1) - 1u);
+	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
+
+	const F32 depth = g_depthTex[logicalCoord].x;
+
+	if(depth < 1.0)
+	{
+		const Vec4 rt1 = g_gbufferRt1[logicalCoord];
+		const F32 roughness = unpackRoughnessFromGBuffer(rt1);
+
+		U32 orig;
+		InterlockedMax(g_maxRoughness, asuint(roughness), orig);
+		InterlockedMin(g_minRoughness, asuint(roughness), orig);
+	}
+	else
+	{
+		InterlockedAdd(g_allSky, 1u);
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	if(svGroupIndex == 0)
+	{
+		U32 tileClass = 0;
+		if(g_allSky == TILE_SIZE / 2 * TILE_SIZE)
+		{
+			tileClass = kClassSky;
+		}
+		else if(asfloat(g_minRoughness) >= g_consts.m_roughnessCutoffToGiEdges.y && g_allSky == 0)
+		{
+			tileClass = kClassVeryRough;
+		}
+		else if(asfloat(g_maxRoughness) <= kMinRoughness * 2.0)
+		{
+			tileClass = kClassMirror;
+		}
+		else
+		{
+			tileClass = kClassNormal;
+		}
+
+		g_classTimeMap[svGroupId] = tileClass;
+	}
+}
+#endif
+
+// ===========================================================================
 // SSR                                                                       =
 // ===========================================================================
 #if NOT_ZERO(ANKI_TECHNIQUE_Ssr)
@@ -106,6 +197,7 @@ Texture2D<Vec4> g_lightBufferRt : register(t5);
 StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t6);
 StructuredBuffer<Cluster> g_clusters : register(t7);
 Texture2D<Vec4> g_shadowAtlasTex : register(t8);
+Texture2D<UVec4> g_classTileMap : register(t9);
 
 RWTexture2D<Vec4> g_colorAndPdfTex : register(u0);
 RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
@@ -270,11 +362,41 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
 	const Vec2 uv = (Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y);
 
-	// Read stuff
+	// Fast path 1
+	const U32 tileClass = g_classTileMap[logicalCoord / TILE_SIZE];
+	if(tileClass == kClassSky)
+	{
+		g_colorAndPdfTex[realCoord] = 0.0;
+		g_hitPosAndDepthTex[realCoord] = 0.0;
+		return;
+	}
+
 	const F32 depth = g_depthTex[logicalCoord].x;
-	const Vec4 rt1 = g_gbufferRt1[logicalCoord];
 	const Vec4 rt2 = g_gbufferRt2[logicalCoord];
 	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+
+	// Fast path 2
+	if(tileClass == kClassVeryRough)
+	{
+		Vec4 worldPos = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjection, Vec4(uvToNdc(uv), depth, 1.0));
+		worldPos.xyz /= worldPos.w;
+
+		const Vec3 reflDir = reflect(normalize(worldPos.xyz - g_globalRendererConstants.m_cameraPosition), worldNormal);
+
+		Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(logicalCoord.xy + 0.5, depth));
+
+		const Vec3 col = sampleGiProbes<F32>(cluster, g_giProbes, reflDir, worldPos.xyz, g_trilinearClampSampler);
+
+		Vec3 worldHitPos = worldPos + reflDir * 1.0;
+		worldHitPos -= g_globalRendererConstants.m_cameraPosition;
+
+		g_colorAndPdfTex[realCoord] = Vec4(col, 1.0);
+		g_hitPosAndDepthTex[realCoord] = Vec4(worldHitPos, 1.0 - depth);
+		return;
+	}
+
+	// Read stuff
+	const Vec4 rt1 = g_gbufferRt1[logicalCoord];
 	const Vec3 viewNormal = mul(g_globalRendererConstants.m_matrices.m_view, Vec4(worldNormal, 0.0));
 	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
 
@@ -843,6 +965,7 @@ Texture2D<Vec4> g_historyTex : register(t1);
 Texture2D<Vec4> g_momentsHistoryTex : register(t2);
 Texture2D<Vec4> g_motionVectorsTex : register(t3);
 Texture2D<Vec4> g_hitPosTex : register(t4);
+Texture2D<UVec4> g_classTileMap : register(t5);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 RWTexture2D<Vec4> g_momentsTex : register(u1);
@@ -967,7 +1090,9 @@ void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, ou
 	const UVec2 coord = min(svDispatchThreadId, textureSize - 1);
 	const Vec2 uv = (Vec2(coord) + 0.5f) / textureSize;
 
-	if(kDisableDenoising)
+	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
+
+	if(kDisableDenoising || tileClass >= kClassSky)
 	{
 		g_outTex[coord] = g_colorAndDepth[coord];
 		g_momentsTex[coord] = 0.0;
@@ -1003,7 +1128,7 @@ void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, ou
 	const F32 luminanceSource = computeLuminance(compressedSource);
 	const F32 luminanceHistory = computeLuminance(compressedHistory);
 
-	F32 sourceWeight = 0.1;
+	F32 sourceWeight = kTemporalSourceWeight;
 	F32 historyWeight = 1.0 - sourceWeight;
 	sourceWeight *= 1.0 / (1.0 + luminanceSource);
 	historyWeight *= 1.0 / (1.0 + luminanceHistory);
@@ -1030,6 +1155,7 @@ void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, ou
 Texture2D<Vec4> g_colorAndDepth : register(t0);
 Texture2D<Vec4> g_momentsTex : register(t1);
 Texture2D<Vec4> g_gbufferRt1 : register(t2);
+Texture2D<UVec4> g_classTileMap : register(t3);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
@@ -1071,11 +1197,19 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 	const F32 refDepth = rgba.w;
 	const Vec3 centerColor = rgba.xyz;
 
+	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
+
+	if(kDisableDenoising || tileClass >= kClassSky)
+	{
+		g_outTex[coord] = encodeColorDepthAndSampleCount(centerColor, refDepth, 0u);
+		return;
+	}
+
 	const Vec4 rt1 = g_gbufferRt1[coord];
 	const F32 roughness = unpackRoughnessFromGBuffer<F32>(rt1, 0.0);
 	const F32 sqRoughness = sqrt(roughness);
 
-	if(kDisableDenoising || roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
+	if(roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
 	{
 		g_outTex[coord] = encodeColorDepthAndSampleCount(centerColor, refDepth, 0u);
 		return;
@@ -1122,6 +1256,7 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 // ===========================================================================
 #if ANKI_COMPUTE_SHADER && NOT_ZERO(ANKI_TECHNIQUE_BilateralDenoiseVertical)
 Texture2D<Vec4> g_colorAndDepthAndSampleCount : register(t0);
+Texture2D<UVec4> g_classTileMap : register(t1);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
@@ -1146,7 +1281,9 @@ RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 	decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[coord], refColor, refDepth, sampleCountu);
 	const F32 sampleCount = sampleCountu;
 
-	if(kDisableDenoising)
+	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
+
+	if(kDisableDenoising || tileClass >= kClassSky)
 	{
 		g_outTex[coord] = Vec4(refColor, 1.0);
 		return;

@@ -18,7 +18,6 @@ Error Tonemapping::init()
 	{
 		m_expAndAvgLum.m_inputTexMip =
 			(getRenderer().getBloom().getPyramidTextureMipmapCount() > 2) ? getRenderer().getBloom().getPyramidTextureMipmapCount() - 2 : 0;
-		const UVec2 size = getRenderer().getBloom().getPyramidTextureSize() >> m_expAndAvgLum.m_inputTexMip;
 
 		// Create program
 		ANKI_CHECK(loadShaderProgram("ShaderBinaries/TonemappingAverageLuminance.ankiprogbin", m_expAndAvgLum.m_prog, m_expAndAvgLum.m_grProg));

@@ -780,7 +780,7 @@ Error Renderer::render(Texture* presentTex)
 		pass.newTextureDependency(ctx.m_swapchainRenderTarget, TextureUsageBit::kRtvDsvWrite);
 		pass.newTextureDependency(m_finalComposite->getRenderTarget(), TextureUsageBit::kSrvPixel);
 
-		pass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
+		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 

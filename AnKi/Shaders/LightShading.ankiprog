@@ -44,9 +44,9 @@ Texture2D<RVec4> g_integrationLut : register(t12);
 RVec4 main(VertOut input) : SV_TARGET0
 {
 	const Vec2 uv = input.m_uv;
-	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
 	const Vec2 ndc = uvToNdc(uv);
 	const UVec2 coord = input.m_svPosition;
+	const F32 depth = g_depthTex[coord].r;
 
 	if(depth == 1.0)
 	{
@@ -70,7 +70,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 	// Apply SSAO
-	const RVec4 ssaoAndBentNormals = g_ssaoTex[coord];
+	const RVec4 ssaoAndBentNormals = g_ssaoTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);
 	const RF32 ssao = ssaoAndBentNormals.w;
 	const RVec3 bentNormal = ssaoAndBentNormals.xyz;
 	gbuffer.m_diffuse *= ssao;
@@ -95,7 +95,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	}
 
 	// SM
-	RVec4 resolvedSm = g_resolvedShadowsTex[coord];
+	RVec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
 	U32 resolvedSmIdx = 0u;
 
 	// Dir light
