@@ -224,7 +224,7 @@ vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GlobalIllumination
 		const GlobalIlluminationProbe probe = probes[firstbitlow2(cluster.m_giProbesMask)];
 
 		// Sample
-		probeColor = sampleGlobalIllumination(worldPos, normal, probe, getBindlessTexture3DRVec4(probe.m_volumeTexture), trilinearClampSampler);
+		probeColor = sampleGlobalIllumination<T>(worldPos, normal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), trilinearClampSampler);
 	}
 	else
 	{
@@ -245,8 +245,8 @@ vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GlobalIllumination
 			totalBlendWeight += blendWeight;
 
 			// Sample
-			const vector<T, 3> c = sampleGlobalIllumination(worldPos, normal, probe, getBindlessTextureNonUniformIndex3DRVec4(probe.m_volumeTexture),
-															trilinearClampSampler);
+			const vector<T, 3> c = sampleGlobalIllumination<T>(worldPos, normal, probe,
+															   getBindlessTextureNonUniformIndex3DVec4(probe.m_volumeTexture), trilinearClampSampler);
 			probeColor += c * blendWeight;
 		}
 

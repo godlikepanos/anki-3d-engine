@@ -37,6 +37,8 @@ constexpr Bool kDebugSsr = false;
 constexpr Bool kSsrHallucinate = true;
 constexpr Bool kSsrHallucinateDebug = false;
 constexpr F32 kTemporalSourceWeight = 0.005;
+constexpr F32 kTemporalGamma = 1.2;
+constexpr Bool kPerfectTemporal = true;
 #define TILE_SIZE 32
 
 // The states of a tile
@@ -66,7 +68,7 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 	if(probeFound)
 	{
 		const GpuSceneGlobalIlluminationProbe probe = giProbes[i];
-		return sampleGlobalIllumination(worldPos, worldNormal, probe, getBindlessTexture3DRVec4(probe.m_volumeTexture), linearAnyClampSampler);
+		return sampleGlobalIllumination<F32>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), linearAnyClampSampler);
 	}
 	else
 	{
@@ -237,7 +239,7 @@ Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 
 			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
 
-			shadowFactor = computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_shadowSampler);
+			shadowFactor = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}
 		else
 		{
@@ -710,7 +712,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 		const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
 
-		shadow = computeShadowFactorDirLight(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
+		shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
 	}
 	else
 	{
@@ -1114,11 +1116,10 @@ void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, ou
 
 	// Fix history
 	constexpr F32 sampleCount = 9.0;
-	const F32 gamma = 1.0;
 	const Vec3 mu = m1 / sampleCount;
 	const Vec3 sigma = sqrt(abs((m2 / sampleCount) - (mu * mu)));
-	const Vec3 minc = mu - gamma * sigma;
-	const Vec3 maxc = mu + gamma * sigma;
+	const Vec3 minc = mu - kTemporalGamma * sigma;
+	const Vec3 maxc = mu + kTemporalGamma * sigma;
 
 	history = clamp(history, minc, maxc);
 

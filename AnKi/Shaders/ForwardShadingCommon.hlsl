@@ -56,12 +56,12 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
+		const RF32 att = computeAttenuationFactor<RF32>(light.m_radius, frag2Light);
 
-		F32 shadow = 1.0;
+		RF32 shadow = 1.0;
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			shadow = computeShadowFactorPointLight(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
+			shadow = computeShadowFactorPointLight<RF32>(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
 		}
 
 		outColor += diffC * (att * shadow);
@@ -75,16 +75,16 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
+		const RF32 att = computeAttenuationFactor<RF32>(light.m_radius, frag2Light);
 
 		const Vec3 l = normalize(frag2Light);
 
-		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
+		const F32 spot = computeSpotFactor<RF32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
 		F32 shadow = 1.0;
 		[branch] if(light.m_shadow != 0u)
 		{
-			shadow = computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
+			shadow = computeShadowFactorSpotLight<RF32>(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}
 
 		outColor += diffC * (att * spot * shadow);

@@ -107,7 +107,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		{
 			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
 
-			factor *= computeShadowFactorDirLight(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			factor *= computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -121,14 +121,14 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const PointLight light = g_pointLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		F32 factor = computeAttenuationFactor(light.m_radius, frag2Light);
+		F32 factor = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 
 		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_position), kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		if(light.m_shadow)
 		{
-			factor *= computeShadowFactorPointLight(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			factor *= computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -141,18 +141,18 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		const SpotLight light = g_spotLights[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		F32 factor = computeAttenuationFactor(light.m_radius, frag2Light);
+		F32 factor = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 
 		const Vec3 l = normalize(frag2Light);
 
-		factor *= computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
+		factor *= computeSpotFactor<RF32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
 		factor *= phaseFunction(viewDir, light.m_direction, kPhaseFunctionAnisotropy);
 
 #if ENABLE_SHADOWS
 		if(light.m_shadow)
 		{
-			factor *= computeShadowFactorSpotLight(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
+			factor *= computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_linearAnyClampShadowSampler);
 		}
 #endif
 
@@ -172,7 +172,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 
 			// Sample
 			diffIndirect =
-				sampleGlobalIllumination(worldPos, viewDir, probe, getBindlessTexture3DRVec4(probe.m_volumeTexture), g_linearAnyClampSampler);
+				sampleGlobalIllumination<F32>(worldPos, viewDir, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), g_linearAnyClampSampler);
 		}
 		else
 		{
@@ -193,8 +193,8 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const Vec3 c = sampleGlobalIllumination(worldPos, viewDir, probe, getBindlessTextureNonUniformIndex3DRVec4(probe.m_volumeTexture),
-														g_linearAnyClampSampler);
+				const Vec3 c = sampleGlobalIllumination<F32>(worldPos, viewDir, probe, getBindlessTextureNonUniformIndex3DVec4(probe.m_volumeTexture),
+															 g_linearAnyClampSampler);
 				diffIndirect += c * blendWeight;
 			}
 

@@ -136,8 +136,8 @@ RVec3 sampleLightShadingTexture(const U32 face, UVec3 svGroupThreadId)
 
 		// Sample irradiance
 		RVec3 firstBounceIrradiance =
-			sampleAmbientDice(s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0], s_integrationResults[3][0],
-							  s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
+			sampleAmbientDice<RF32>(s_integrationResults[0][0], s_integrationResults[1][0], s_integrationResults[2][0], s_integrationResults[3][0],
+									s_integrationResults[4][0], s_integrationResults[5][0], gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce

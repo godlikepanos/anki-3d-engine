@@ -30,7 +30,7 @@ Texture2D<Vec4> g_depthTex : register(t5);
 
 // For directional light:
 SamplerComparisonState g_shadowMapSampler : register(s1);
-Texture2D<RVec4> g_shadowMap : register(t6);
+Texture2D<Vec4> g_shadowMap : register(t6);
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b1);
 
@@ -68,7 +68,7 @@ Vec4 main(VertOut input) : SV_TARGET0
 		{
 			// Acceptable distance
 
-			shadowFactor = computeShadowFactorDirLight(g_consts.m_dirLight.m_lightMatrix, worldPos, g_shadowMap, g_shadowMapSampler);
+			shadowFactor = computeShadowFactorDirLight<RF32>(g_consts.m_dirLight.m_lightMatrix, worldPos, g_shadowMap, g_shadowMapSampler);
 		}
 		else
 		{
@@ -97,10 +97,10 @@ Vec4 main(VertOut input) : SV_TARGET0
 		const Vec3 l = normalize(frag2Light);
 		const F32 nol = max(0.0, dot(gbuffer.m_normal, l));
 
-		const F32 att = computeAttenuationFactor(light.m_radius, frag2Light);
+		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 		const F32 lambert = nol;
 		const F32 spot = ((U32)light.m_flags & (U32)GpuSceneLightFlag::kSpotLight)
-							 ? computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction)
+							 ? computeSpotFactor<RF32>(l, light.m_outerCos, light.m_innerCos, light.m_direction)
 							 : 1.0f;
 		const F32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
 

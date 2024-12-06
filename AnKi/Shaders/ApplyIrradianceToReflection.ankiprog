@@ -33,8 +33,9 @@ RWTexture2D<Vec4> g_cubeTex[6u] : register(u0); // RWTexture2D because there is 
 							g_gbufferTex[2u].SampleLevel(g_nearestAnyClampSampler, sampleUv, 0.0), gbuffer);
 
 	// Sample
-	const RVec3 irradiance = sampleAmbientDice(g_irradianceDice[0u].xyz, g_irradianceDice[1u].xyz, g_irradianceDice[2u].xyz, g_irradianceDice[3u].xyz,
-											   g_irradianceDice[4u].xyz, g_irradianceDice[5u].xyz, gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
+	const RVec3 irradiance =
+		sampleAmbientDice<RF32>(g_irradianceDice[0u].xyz, g_irradianceDice[1u].xyz, g_irradianceDice[2u].xyz, g_irradianceDice[3u].xyz,
+								g_irradianceDice[4u].xyz, g_irradianceDice[5u].xyz, gbuffer.m_normal * Vec3(1.0, 1.0, -1.0));
 
 	// Compute the indirect term
 	const RVec3 indirect = gbuffer.m_diffuse * irradiance;

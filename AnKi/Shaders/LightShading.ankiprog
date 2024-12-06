@@ -30,7 +30,7 @@ Texture2D g_depthTex : register(t8);
 Texture2D<RVec4> g_resolvedShadowsTex : register(t9);
 Texture2D<RVec4> g_ssaoTex : register(t10);
 Texture2D<RVec4> g_reflectionsTex : register(t11);
-Texture2D<RVec4> g_integrationLut : register(t12);
+Texture2D<Vec4> g_integrationLut : register(t12);
 
 // Common code for lighting
 #	define LIGHTING_COMMON_BRDF() \
@@ -38,7 +38,7 @@ Texture2D<RVec4> g_integrationLut : register(t12);
 		const RVec3 l = normalize(frag2Light); \
 		const RVec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l); \
 		const RVec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
-		const RF32 att = computeAttenuationFactor(light.m_radius, frag2Light); \
+		const RF32 att = computeAttenuationFactor<RF32>(light.m_radius, frag2Light); \
 		RF32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
 RVec4 main(VertOut input) : SV_TARGET0
@@ -87,8 +87,8 @@ RVec4 main(VertOut input) : SV_TARGET0
 		RVec3 refl = g_reflectionsTex[coord].xyz;
 
 		// Apply the reflection
-		const F32 NoV = max(0.0f, dot(gbuffer.m_normal, viewDir));
-		const Vec3 env = specularDFG(gbuffer.m_f0, gbuffer.m_roughness, g_integrationLut, g_trilinearClampSampler, NoV);
+		const RF32 NoV = max(0.0f, dot(gbuffer.m_normal, viewDir));
+		const Vec3 env = specularDFG<RF32>(gbuffer.m_f0, gbuffer.m_roughness, g_integrationLut, g_trilinearClampSampler, NoV);
 		refl *= env;
 
 		outColor += refl;
@@ -147,7 +147,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 		LIGHTING_COMMON_BRDF();
 
-		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
+		const F32 spot = computeSpotFactor<RF32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
 		[branch] if(light.m_shadow)
 		{
