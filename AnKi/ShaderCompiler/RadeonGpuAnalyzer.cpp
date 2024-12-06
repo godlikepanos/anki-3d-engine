@@ -54,14 +54,18 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 	ShaderCompilerString analysisFilename;
 	analysisFilename.sprintf("%s/AnKiRgaOutAnalysis_%u.csv", tmpDir.cstr(), rand);
 
-	Array<CString, 7> args;
+	ShaderCompilerString stageStr = "--";
+	stageStr += getPipelineStageString(shaderType);
+
+	Array<CString, 8> args;
 	args[0] = "-s";
 	args[1] = "vk-spv-offline";
 	args[2] = "-c";
 	args[3] = "gfx1030"; // Target RDNA2
 	args[4] = "-a";
 	args[5] = analysisFilename;
-	args[6] = spvFilename;
+	args[6] = stageStr;
+	args[7] = spvFilename;
 
 	I32 exitCode;
 #if ANKI_OS_LINUX
@@ -72,6 +76,14 @@ Error runRadeonGpuAnalyzer(ConstWeakArray<U8> spirv, ShaderType shaderType, RgaO
 	CString rgaExecutable = "nothing";
 	ANKI_ASSERT(0);
 #endif
+	ShaderCompilerString argsStr;
+	for(CString a : args)
+	{
+		argsStr += a;
+		argsStr += " ";
+	}
+	ANKI_SHADER_COMPILER_LOGV("Calling RGA: %s %s", rgaExecutable.cstr(), argsStr.cstr());
+
 	ANKI_CHECK(Process::callProcess(rgaExecutable, args, nullptr, nullptr, exitCode));
 
 	if(exitCode != 0)

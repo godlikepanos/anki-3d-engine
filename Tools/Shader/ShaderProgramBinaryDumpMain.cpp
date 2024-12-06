@@ -21,6 +21,7 @@ Options:
 -no-binary : Don't print the binary
 -no-glsl   : Don't print GLSL
 -spirv     : Print SPIR-V
+-v         : Verbose log
 )";
 
 static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv, String& filename)
@@ -55,6 +56,10 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 		else if(CString(argv[i]) == "-spirv")
 		{
 			spirv = true;
+		}
+		else if(CString(argv[i]) == "-v")
+		{
+			Logger::getSingleton().enableVerbosity(true);
 		}
 	}
 
@@ -211,13 +216,17 @@ Error dumpStats(const ShaderBinary& bin)
 
 					// AMD
 					RgaOutput rgaOut = {};
-#if 0
-					err = runRadeonGpuAnalyzer(newSpirv, shaderType, rgaOut);
-					if(err)
+#if 1
+					if((shaderType == ShaderType::kVertex || shaderType == ShaderType::kPixel || shaderType == ShaderType::kCompute)
+					   && !bRequiresMeshShaders)
 					{
-						ANKI_LOGE("Radeon GPU Analyzer compiler failed");
-						ctx.m_error.store(1);
-						break;
+						err = runRadeonGpuAnalyzer(newSpirv, shaderType, rgaOut);
+						if(err)
+						{
+							ANKI_LOGE("Radeon GPU Analyzer compiler failed");
+							ctx.m_error.store(1);
+							break;
+						}
 					}
 #endif
 

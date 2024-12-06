@@ -170,7 +170,7 @@ vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<Reflection
 		// Sample
 		Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 		cubeUv.z = -cubeUv.z;
-		probeColor = getBindlessTextureCubeRVec4(probe.m_cubeTexture).SampleLevel(trilinearClampSampler, cubeUv, reflTexLod).rgb;
+		probeColor = getBindlessTextureCubeVec4(probe.m_cubeTexture).SampleLevel(trilinearClampSampler, cubeUv, reflTexLod).rgb;
 	}
 	else
 	{
@@ -194,7 +194,7 @@ vector<T, 3> sampleReflectionProbes(Cluster cluster, StructuredBuffer<Reflection
 			Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 			cubeUv.z = -cubeUv.z;
 			const vector<T, 3> c =
-				getBindlessTextureNonUniformIndexCubeRVec4(probe.m_cubeTexture).SampleLevel(trilinearClampSampler, cubeUv, reflTexLod).rgb;
+				getBindlessTextureNonUniformIndexCubeVec4(probe.m_cubeTexture).SampleLevel(trilinearClampSampler, cubeUv, reflTexLod).rgb;
 			probeColor += c * blendWeight;
 		}
 
