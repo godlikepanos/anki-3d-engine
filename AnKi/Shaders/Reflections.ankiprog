@@ -36,8 +36,8 @@ constexpr Bool kExtraSsrRejection = true;
 constexpr Bool kDebugSsr = false;
 constexpr Bool kSsrHallucinate = true;
 constexpr Bool kSsrHallucinateDebug = false;
-constexpr F32 kTemporalSourceWeight = 0.005;
-constexpr F32 kTemporalGamma = 1.2;
+constexpr F32 kTemporalSourceWeight = 0.01;
+constexpr F32 kTemporalGamma = 1.0;
 constexpr Bool kPerfectTemporal = true;
 #define TILE_SIZE 32
 
@@ -1302,9 +1302,10 @@ RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 		IVec2 newCoord = coord + IVec2(0.0, y);
 		newCoord.y = clamp(newCoord.y, 0, outSize.y - 1);
 
-		const Vec4 rgba = abs(g_colorAndDepthAndSampleCount[newCoord]);
-		const F32 sampleDepth = rgba.w;
-		const Vec3 sampleColor = rgba.xyz;
+		F32 sampleDepth;
+		Vec3 sampleColor;
+		U32 unused;
+		decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[newCoord], sampleColor, sampleDepth, unused);
 
 		const F32 gWeight = gaussianWeight<F32>(kGaussianSigma, y / sampleCount);
 		const F32 depthWeight = calculateBilateralWeightDepth(refDepth, sampleDepth, 1.0);
