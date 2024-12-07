@@ -345,7 +345,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 	candidateCount += 1.0;
 
-	const F32 weight = calculateBilateralWeightDepth(depth, g_colorAndDepth[svGroupThreadId2.x][svGroupThreadId2.y].w, 1.0);
+	const F32 weight = calculateBilateralWeightDepth<F32>(depth, g_colorAndDepth[svGroupThreadId2.x][svGroupThreadId2.y].w, 1.0);
 	if(weight > depthWeight)
 	{
 		depthWeight = weight;
@@ -796,7 +796,7 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 		return;
 	}
 
-	const F32 weight = calculateBilateralWeightDepth(refDepth, g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y], 1.0);
+	const F32 weight = calculateBilateralWeightDepth<F32>(refDepth, g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y], 1.0);
 
 	color += g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y].xyz * weight;
 	pdf += g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y].w * weight;
@@ -918,7 +918,7 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 			const Vec3 reflectedDir = normalize(hitPos - worldPos);
 			const F32 pdf = pdfVndfIsotropic(reflectedDir, viewDir, alpha, worldNormal);
 
-			const F32 weight = pdf * calculateBilateralWeightDepth(refDepth, sampleDepth, 1.0);
+			const F32 weight = pdf * calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
 
 			if(weight > 0.001)
 			{
@@ -1239,7 +1239,7 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 		const Vec3 sampleColor = rgba.xyz;
 
 		const F32 gWeight = gaussianWeight<F32>(kGaussianSigma, x / sampleCount);
-		const F32 depthWeight = calculateBilateralWeightDepth(refDepth, sampleDepth, 1.0);
+		const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
 		const F32 weight = gWeight * depthWeight;
 
 		colorSum += sampleColor * weight;
@@ -1308,7 +1308,7 @@ RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 		decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[newCoord], sampleColor, sampleDepth, unused);
 
 		const F32 gWeight = gaussianWeight<F32>(kGaussianSigma, y / sampleCount);
-		const F32 depthWeight = calculateBilateralWeightDepth(refDepth, sampleDepth, 1.0);
+		const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
 		const F32 weight = gWeight * depthWeight;
 
 		colorSum += sampleColor * weight;

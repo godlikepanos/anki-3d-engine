@@ -11,13 +11,14 @@
 
 // https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
 // phi can be equal to 1
-F32 calculateBilateralWeightDepth(F32 depthCenter, F32 depthTap, F32 phi)
+template<typename T>
+T calculateBilateralWeightDepth(T depthCenter, T depthTap, T phi)
 {
-	const F32 diff = abs(depthTap - depthCenter);
+	const T diff = abs(depthTap - depthCenter);
 #if 0
 	return max(0.0, 1.0 - diff * phi);
 #else
-	return sqrt(1.0 / (kEpsilonF32 + diff)) * phi;
+	return sqrt(1.0 / (getEpsilon<T>() + diff)) * phi;
 #endif
 }
 

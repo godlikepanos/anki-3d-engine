@@ -27,7 +27,7 @@ void packGBuffer(Vec4 color, out PixelOut output)
 	output.m_color = RVec4(color.rgb, color.a);
 }
 
-RVec4 readAnimatedTextureRgba(Texture2DArray<RVec4> tex, SamplerState sampl, F32 period, Vec2 uv, F32 time)
+RVec4 readAnimatedTextureRgba(Texture2DArray<Vec4> tex, SamplerState sampl, F32 period, Vec2 uv, F32 time)
 {
 	Vec2 texSize;
 	F32 layerCount;

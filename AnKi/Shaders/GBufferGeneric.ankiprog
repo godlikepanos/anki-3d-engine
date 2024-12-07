@@ -465,9 +465,9 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 #if ANKI_PIXEL_SHADER
 
 #	if SW_MESHLETS
-#		define BINDLESS(x) getBindlessTextureNonUniformIndex2DRVec4(x)
+#		define BINDLESS(x) getBindlessTextureNonUniformIndex2DVec4(x)
 #	else
-#		define BINDLESS(x) getBindlessTexture2DRVec4(x)
+#		define BINDLESS(x) getBindlessTexture2DVec4(x)
 #	endif
 
 #	if !GBUFFER && !REALLY_ALPHA_TEST // Shadows without alpha
@@ -659,7 +659,7 @@ GBufferPixelOut main(
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
 	const RVec4 diffColorA =
-		getBindlessTexture2DRVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0) * localConstants.m_diffuseScale;
+		getBindlessTexture2DVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0) * localConstants.m_diffuseScale;
 
 	if(diffColorA.a < 1.0)
 	{
@@ -716,7 +716,7 @@ GBufferPixelOut main(
 
 	// Metallness
 #		if ROUGHNESS_METALNESS_TEX
-	const RVec3 comp = getBindlessTexture2DRVec4(localConstants.m_roughnessMetalnessTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
+	const RVec3 comp = getBindlessTexture2DVec4(localConstants.m_roughnessMetalnessTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
 	const RF32 metallic = comp.b * localConstants.m_metalnessScale;
 #		else
 	const RF32 metallic = localConstants.m_metalnessScale;
@@ -724,7 +724,7 @@ GBufferPixelOut main(
 
 	// Diffuse
 #		if DIFFUSE_TEX
-	RVec3 diffColor = getBindlessTexture2DRVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
+	RVec3 diffColor = getBindlessTexture2DVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
 #		else
 	RVec3 diffColor = 1.0;
 #		endif
@@ -733,7 +733,7 @@ GBufferPixelOut main(
 
 	// Emissive
 #		if EMISSIVE_TEX
-	RVec3 emission = getBindlessTexture2DRVec4(localConstants.m_emissiveTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).rgb;
+	RVec3 emission = getBindlessTexture2DVec4(localConstants.m_emissiveTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).rgb;
 #		else
 	RVec3 emission = 1.0;
 #		endif

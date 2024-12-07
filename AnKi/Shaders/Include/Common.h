@@ -396,20 +396,23 @@ _ANKI_MAT3(Mat3, Vec3, F32)
 _ANKI_MAT4(Mat4, Vec4, F32)
 _ANKI_MAT3x4(Mat3x4, Vec4, Vec3, F32)
 
-#	if ANKI_FORCE_FULL_FP_PRECISION
+#	if ANKI_SUPPORTS_16BIT_TYPES == 0
+#		if ANKI_FORCE_FULL_FP_PRECISION
 	typedef float RF32;
 typedef float2 RVec2;
 typedef float3 RVec3;
 typedef float4 RVec4;
 _ANKI_MAT3(RMat3, Vec3, F32)
-#	else
+#		else
 	typedef min16float RF32;
 typedef min16float2 RVec2;
 typedef min16float3 RVec3;
 typedef min16float4 RVec4;
 _ANKI_MAT3(RMat3, RVec3, RF32)
-#	endif
-#endif
+#		endif
+#	endif // ANKI_SUPPORTS_16BIT_TYPES == 0
+
+#endif // defined(__HLSL_VERSION)
 
 //! == Common ==========================================================================================================
 ANKI_BEGIN_NAMESPACE
@@ -430,9 +433,9 @@ constexpr U32 kMeshletGroupSize = ANKI_TASK_SHADER_THREADGROUP_SIZE;
 #define ANKI_MESH_SHADER_THREADGROUP_SIZE 32u
 static_assert(kMaxVerticesPerMeshlet % ANKI_MESH_SHADER_THREADGROUP_SIZE == 0);
 
-constexpr RF32 kPcfTexelRadius = 4.0f;
-constexpr RF32 kPcssSearchTexelRadius = 12.0;
-constexpr RF32 kPcssTexelRadius = 12.0;
+constexpr F32 kPcfTexelRadius = 4.0f;
+constexpr F32 kPcssSearchTexelRadius = 12.0;
+constexpr F32 kPcssTexelRadius = 12.0;
 constexpr F32 kPcssDirLightMaxPenumbraMeters = 6.0; // If the occluder and the reciever have more than this value then do full penumbra
 
 struct DrawIndirectArgs

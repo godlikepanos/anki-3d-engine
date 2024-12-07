@@ -42,7 +42,7 @@ Texture2D<Vec4> g_fullDepthTex : register(t2);
 			const Vec2 sampleUv = uv + Vec2(x, y) * texelSize;
 			const F32 depthTap = g_quarterDepthTex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0).x;
 
-			const F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
+			const F32 w = calculateBilateralWeightDepth<F32>(depthCenter, depthTap, 1.0);
 
 			const F32 localShadowFactor = g_quarterShadowsTex.SampleLevel(g_linearAnyClampSampler, sampleUv, 0.0).x;
 

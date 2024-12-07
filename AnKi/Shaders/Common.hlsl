@@ -17,8 +17,9 @@
 constexpr F32 kEpsilonF32 = 0.000001f;
 #if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kEpsilonF16 = (F16)0.0001f; // Divisions by this should be OK according to http://weitz.de/ieee
-#endif
+#else
 constexpr RF32 kEpsilonRF32 = 0.0001f;
+#endif
 
 template<typename T>
 T getEpsilon();
@@ -37,7 +38,7 @@ F16 getEpsilon()
 }
 #endif
 
-#if !ANKI_FORCE_FULL_FP_PRECISION
+#if !ANKI_FORCE_FULL_FP_PRECISION && !ANKI_SUPPORTS_16BIT_TYPES
 template<>
 RF32 getEpsilon()
 {
@@ -47,7 +48,9 @@ RF32 getEpsilon()
 
 constexpr U32 kMaxU32 = 0xFFFFFFFFu;
 constexpr F32 kMaxF32 = 3.402823e+38;
+#if !ANKI_SUPPORTS_16BIT_TYPES
 constexpr RF32 kMaxRF32 = 65504.0f; // Max half float value according to wikipedia
+#endif
 #if ANKI_SUPPORTS_16BIT_TYPES
 constexpr F16 kMaxF16 = (F16)65504.0;
 #endif
@@ -61,7 +64,7 @@ F32 getMaxNumericLimit()
 	return kMaxF32;
 }
 
-#if !ANKI_FORCE_FULL_FP_PRECISION
+#if !ANKI_FORCE_FULL_FP_PRECISION && !ANKI_SUPPORTS_16BIT_TYPES
 template<>
 RF32 getMaxNumericLimit()
 {
@@ -122,30 +125,16 @@ struct Barycentrics
 		}
 #endif
 
-#if ANKI_SUPPORTS_16BIT_TYPES
-#	define ANKI_BINDLESS2(texType) \
-		ANKI_BINDLESS(texType, UVec4) \
-		ANKI_BINDLESS(texType, IVec4) \
-		ANKI_BINDLESS(texType, Vec4)
+#define ANKI_BINDLESS2(texType) \
+	ANKI_BINDLESS(texType, UVec4) \
+	ANKI_BINDLESS(texType, IVec4) \
+	ANKI_BINDLESS(texType, Vec4)
 
-#	define ANKI_BINDLESS3() \
-		ANKI_BINDLESS2(2D) \
-		ANKI_BINDLESS2(Cube) \
-		ANKI_BINDLESS2(2DArray) \
-		ANKI_BINDLESS2(3D)
-#else
-#	define ANKI_BINDLESS2(texType) \
-		ANKI_BINDLESS(texType, UVec4) \
-		ANKI_BINDLESS(texType, IVec4) \
-		ANKI_BINDLESS(texType, Vec4) \
-		ANKI_BINDLESS(texType, RVec4)
-
-#	define ANKI_BINDLESS3() \
-		ANKI_BINDLESS2(2D) \
-		ANKI_BINDLESS2(Cube) \
-		ANKI_BINDLESS2(2DArray) \
-		ANKI_BINDLESS2(3D)
-#endif
+#define ANKI_BINDLESS3() \
+	ANKI_BINDLESS2(2D) \
+	ANKI_BINDLESS2(Cube) \
+	ANKI_BINDLESS2(2DArray) \
+	ANKI_BINDLESS2(3D)
 
 ANKI_BINDLESS3()
 

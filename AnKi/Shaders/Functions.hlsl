@@ -702,7 +702,7 @@ vector<T, 3> filmGrain(vector<T, 3> color, Vec2 uv, T strength, F32 time)
 /// Perturb normal, see http://www.thetenthplanet.de/archives/1180
 /// Does normal mapping in the fragment shader. It assumes that green is up. viewDir and geometricNormal need to be in the same space.
 /// viewDir is the -(eye - vertexPos)
-RVec3 perturbNormal(RVec3 tangentNormal, Vec3 viewDir, Vec2 uv, Vec3 geometricNormal)
+Vec3 perturbNormal(Vec3 tangentNormal, Vec3 viewDir, Vec2 uv, Vec3 geometricNormal)
 {
 	tangentNormal.y = -tangentNormal.y; // Green is up
 
@@ -721,7 +721,7 @@ RVec3 perturbNormal(RVec3 tangentNormal, Vec3 viewDir, Vec2 uv, Vec3 geometricNo
 	// Construct a scale-invariant frame
 	const F32 invmax = rsqrt(max(dot(T, T), dot(B, B)));
 
-	RMat3 TBN;
+	Mat3 TBN;
 	TBN.setColumns(T * invmax, B * invmax, geometricNormal);
 	return normalize(mul(TBN, tangentNormal));
 }

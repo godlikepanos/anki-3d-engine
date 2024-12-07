@@ -76,10 +76,10 @@ PixelOut main(VertOut input)
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
 #	if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(getBindlessTexture2DArrayRVec4(localConstants.m_diffuseMap), g_globalSampler,
+	RVec4 texCol = readAnimatedTextureRgba(getBindlessTexture2DArrayVec4(localConstants.m_diffuseMap), g_globalSampler,
 										   localConstants.m_animationPeriod, input.m_uv, g_globalRendererConstants.m_time);
 #	else
-	RVec4 texCol = getBindlessTexture2DRVec4(localConstants.m_diffuseMap).Sample(g_globalSampler, input.m_uv);
+	RVec4 texCol = getBindlessTexture2DVec4(localConstants.m_diffuseMap).Sample(g_globalSampler, input.m_uv);
 #	endif
 
 #	if LIGHT

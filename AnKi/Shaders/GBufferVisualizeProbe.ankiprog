@@ -60,7 +60,7 @@ struct PixelOut
 UVec3 getCellCount(GpuSceneGlobalIlluminationProbe probe)
 {
 	UVec3 texSize;
-	getBindlessTextureNonUniformIndex3DRVec4(probe.m_volumeTexture).GetDimensions(texSize.x, texSize.y, texSize.z);
+	getBindlessTextureNonUniformIndex3DVec4(probe.m_volumeTexture).GetDimensions(texSize.x, texSize.y, texSize.z);
 	texSize.x /= 6u;
 	return texSize;
 }
