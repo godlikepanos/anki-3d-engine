@@ -78,18 +78,18 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 	}
 }
 
-Vec4 encodeColorDepthAndSampleCount(Vec3 color, F32 depth, U32 sampleCount)
+HVec4 encodeColorDepthAndSampleCount(HVec3 color, F16 depth, U32 sampleCount)
 {
-	Vec4 signs;
+	HVec4 signs;
 	[unroll] for(U32 i = 0; i < 4; i++)
 	{
 		signs[i] = (sampleCount & (1u << i)) ? 1.0 : -1.0;
 	}
 
-	return (Vec4(color, depth) + 0.01) * signs; // Add 0.01 to make sure that the sign sticks
+	return (HVec4(color, depth) + 0.01) * signs; // Add 0.01 to make sure that the sign sticks
 }
 
-void decodeColorDepthAndSampleCount(Vec4 rgba, out Vec3 color, out F32 depth, out U32 sampleCount)
+void decodeColorDepthAndSampleCount(HVec4 rgba, out HVec3 color, out F16 depth, out U32 sampleCount)
 {
 	sampleCount = 0;
 	[unroll] for(U32 i = 0; i < 4; ++i)
@@ -458,9 +458,12 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	}
 
 	// Stash to groupshared
-	g_viewHitPointAndAttenuation[svGroupThreadId.x][svGroupThreadId.y] = Vec4(viewHitPoint, ssrAttenuation);
-	g_colorAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(outColor, depth);
-	GroupMemoryBarrierWithGroupSync();
+	if(kSsrHallucinate)
+	{
+		g_viewHitPointAndAttenuation[svGroupThreadId.x][svGroupThreadId.y] = Vec4(viewHitPoint, ssrAttenuation);
+		g_colorAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(outColor, depth);
+		GroupMemoryBarrierWithGroupSync();
+	}
 
 	if(depth == 1.0)
 	{
@@ -1164,13 +1167,13 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 
 ANKI_FAST_CONSTANTS(ReflectionConstants, g_consts)
 
-F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
+F16 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 {
 #	if 1
-	const F32 kernel[2][2] = {{1.0 / 4.0, 1.0 / 8.0}, {1.0 / 8.0, 1.0 / 16.0}};
+	const F16 kernel[2][2] = {{1.0 / 4.0, 1.0 / 8.0}, {1.0 / 8.0, 1.0 / 16.0}};
 	const I32 radius = 1;
 
-	Vec2 sumMoments = 0.0f;
+	HVec2 sumMoments = 0.0f;
 	for(I32 yy = -radius; yy <= radius; yy++)
 	{
 		for(I32 xx = -radius; xx <= radius; xx++)
@@ -1178,7 +1181,7 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 			IVec2 newCoord = coord + IVec2(xx, yy);
 			newCoord = clamp(newCoord, 0, textureSize - 1);
 
-			const F32 k = kernel[abs(xx)][abs(yy)];
+			const F16 k = kernel[abs(xx)][abs(yy)];
 			sumMoments += g_momentsTex[newCoord].xy * k;
 		}
 	}
@@ -1196,9 +1199,9 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 	g_outTex.GetDimensions(outSize.x, outSize.y);
 
 	const UVec2 coord = min(svDispatchThreadId, outSize - 1);
-	Vec4 rgba = g_colorAndDepth[coord];
-	const F32 refDepth = rgba.w;
-	const Vec3 centerColor = rgba.xyz;
+	HVec4 rgba = g_colorAndDepth[coord];
+	const F16 refDepth = rgba.w;
+	const HVec3 centerColor = rgba.xyz;
 
 	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
 
@@ -1208,9 +1211,9 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 		return;
 	}
 
-	const Vec4 rt1 = g_gbufferRt1[coord];
-	const F32 roughness = unpackRoughnessFromGBuffer<F32>(rt1, 0.0);
-	const F32 sqRoughness = sqrt(roughness);
+	const HVec4 rt1 = g_gbufferRt1[coord];
+	const F16 roughness = unpackRoughnessFromGBuffer<F16>(rt1, 0.0);
+	const F16 sqRoughness = sqrt(roughness);
 
 	if(roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
 	{
@@ -1218,15 +1221,15 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 		return;
 	}
 
-	const F32 variance = sqrt(computeVarianceCenter(coord, outSize)) * 100.0;
+	const F16 variance = sqrt(computeVarianceCenter(coord, outSize)) * 100.0;
 
-	const F32 lerpFactor = sqRoughness * min(1.0, max(sqRoughness, variance));
+	const F16 lerpFactor = sqRoughness * min(1.0, max(sqRoughness, variance));
 
-	const F32 sampleCount = round(lerp(0, kMaxBilateralSamples, lerpFactor));
+	const F16 sampleCount = round(lerp(0, kMaxBilateralSamples, lerpFactor));
 
-	F32 weightSum = gaussianWeight2d<F32>(kGaussianSigma, 0.0, 0.0);
-	Vec3 colorSum = centerColor * weightSum;
-	for(F32 x = -sampleCount; x <= sampleCount; x += 1.0)
+	F16 weightSum = gaussianWeight2d<F16>(kGaussianSigma, 0.0, 0.0);
+	HVec3 colorSum = centerColor * weightSum;
+	for(F16 x = -sampleCount; x <= sampleCount; x += 1.0)
 	{
 		if(x == 0.0)
 		{
@@ -1237,12 +1240,12 @@ F32 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 		newCoord.x = clamp(newCoord.x, 0, outSize.x - 1);
 
 		rgba = g_colorAndDepth[newCoord];
-		const F32 sampleDepth = rgba.w;
-		const Vec3 sampleColor = rgba.xyz;
+		const F16 sampleDepth = rgba.w;
+		const HVec3 sampleColor = rgba.xyz;
 
-		const F32 gWeight = gaussianWeight<F32>(kGaussianSigma, x / sampleCount);
-		const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
-		const F32 weight = gWeight * depthWeight;
+		const F16 gWeight = gaussianWeight<F16>(kGaussianSigma, x / sampleCount);
+		const F16 depthWeight = calculateBilateralWeightDepth<F16>(refDepth, sampleDepth, 1.0);
+		const F16 weight = gWeight * depthWeight;
 
 		colorSum += sampleColor * weight;
 		weightSum += weight;
@@ -1279,22 +1282,22 @@ RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 	}
 
 	U32 sampleCountu;
-	F32 refDepth;
-	Vec3 refColor;
+	F16 refDepth;
+	HVec3 refColor;
 	decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[coord], refColor, refDepth, sampleCountu);
-	const F32 sampleCount = sampleCountu;
+	const F16 sampleCount = sampleCountu;
 
 	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
 
 	if(kDisableDenoising || tileClass >= kClassSky)
 	{
-		g_outTex[coord] = Vec4(refColor, 1.0);
+		g_outTex[coord] = HVec4(refColor, 1.0);
 		return;
 	}
 
-	F32 weightSum = gaussianWeight<F32>(kGaussianSigma, 0.0);
-	Vec3 colorSum = refColor * weightSum;
-	for(F32 y = -sampleCount; y <= sampleCount; y += 1.0)
+	F16 weightSum = gaussianWeight<F16>(kGaussianSigma, 0.0);
+	HVec3 colorSum = refColor * weightSum;
+	for(F16 y = -sampleCount; y <= sampleCount; y += 1.0)
 	{
 		if(y == 0.0)
 		{
@@ -1304,14 +1307,14 @@ RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 		IVec2 newCoord = coord + IVec2(0.0, y);
 		newCoord.y = clamp(newCoord.y, 0, outSize.y - 1);
 
-		F32 sampleDepth;
-		Vec3 sampleColor;
+		F16 sampleDepth;
+		HVec3 sampleColor;
 		U32 unused;
 		decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[newCoord], sampleColor, sampleDepth, unused);
 
-		const F32 gWeight = gaussianWeight<F32>(kGaussianSigma, y / sampleCount);
-		const F32 depthWeight = calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
-		const F32 weight = gWeight * depthWeight;
+		const F16 gWeight = gaussianWeight<F16>(kGaussianSigma, y / sampleCount);
+		const F16 depthWeight = calculateBilateralWeightDepth<F16>(refDepth, sampleDepth, 1.0);
+		const F16 weight = gWeight * depthWeight;
 
 		colorSum += sampleColor * weight;
 		weightSum += weight;
@@ -1319,6 +1322,6 @@ RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u1);
 
 	colorSum /= weightSum;
 
-	g_outTex[coord] = Vec4(colorSum, 1.0);
+	g_outTex[coord] = HVec4(colorSum, 1.0);
 }
 #endif // ANKI_COMPUTE_SHADER && ANKI_TECHNIQUE_BilateralDenoiseVertical
