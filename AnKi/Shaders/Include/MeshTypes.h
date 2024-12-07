@@ -78,10 +78,10 @@ constexpr Format kMeshletPrimitiveFormat = Format::kR8G8B8A8_Uint;
 struct UnpackedMeshVertex
 {
 	Vec3 m_position;
-	RVec3 m_normal;
+	Vec3 m_normal;
 	Vec2 m_uv;
 	UVec4 m_boneIndices;
-	RVec4 m_boneWeights;
+	Vec4 m_boneWeights;
 };
 
 /// Contains the meshlet data accessed by the task shaders (or whomever does meshlet visibility).

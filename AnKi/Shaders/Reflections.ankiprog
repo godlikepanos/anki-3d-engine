@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki mutator SSR_SAMPLE_GBUFFER 0 1
 
 #pragma anki technique Classification comp mutators
@@ -218,8 +220,8 @@ groupshared Vec4 g_colorAndDepth[NUM_THREADS_SQRT][NUM_THREADS_SQRT];
 Vec3 doLightShading(Vec3 worldPos, Vec3 viewPos, UVec2 coord, F32 depth)
 {
 	// Read
-	GbufferInfo<RF32> gbuffer = (GbufferInfo<RF32>)0;
-	unpackGBufferNoVelocity<RF32>(g_gbufferRt0[coord], g_gbufferRt1[coord], g_gbufferRt2[coord], gbuffer);
+	GbufferInfo<F32> gbuffer = (GbufferInfo<F32>)0;
+	unpackGBufferNoVelocity<F32>(g_gbufferRt0[coord], g_gbufferRt1[coord], g_gbufferRt2[coord], gbuffer);
 
 	Vec3 outColor = gbuffer.m_emission;
 	Cluster cluster = getClusterFragCoord(g_clusters, g_globalRendererConstants, Vec3(coord.xy + 0.5, depth));
@@ -322,7 +324,7 @@ void doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 
 
 			// Read the light buffer
 			const Vec3 ssrColor = g_lightBufferRt.SampleLevel(g_trilinearClampSampler, hitPoint.xy, 0.0).rgb;
-			outColor = clamp(ssrColor, 0.0, kMaxRF32); // Fix the value just in case
+			outColor = clamp(ssrColor, 0.0, kMaxF32); // Fix the value just in case
 		}
 		else
 		{

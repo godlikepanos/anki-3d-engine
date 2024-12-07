@@ -12,7 +12,7 @@ ANKI_BEGIN_NAMESPACE
 /// Directional light (sun).
 struct DirectionalLight
 {
-	RVec3 m_diffuseColor;
+	Vec3 m_diffuseColor;
 	F32 m_power;
 
 	Vec3 m_direction;
@@ -125,7 +125,7 @@ struct RtShadowsSbtBuildConstants
 struct LensFlareSprite
 {
 	Vec4 m_posScale; // xy: Position, zw: Scale
-	RVec4 m_color;
+	Vec4 m_color;
 	Vec4 m_depthPad3;
 };
 
@@ -154,12 +154,12 @@ struct PixelFailedSsr
 // Vol fog
 struct VolumetricFogConstants
 {
-	RVec3 m_fogDiffuse;
-	RF32 m_fogScatteringCoeff;
+	Vec3 m_fogDiffuse;
+	F32 m_fogScatteringCoeff;
 
-	RF32 m_fogAbsorptionCoeff;
-	RF32 m_near;
-	RF32 m_far;
+	F32 m_fogAbsorptionCoeff;
+	F32 m_near;
+	F32 m_far;
 	F32 m_zSplitCountf;
 
 	UVec3 m_volumeSize;
@@ -169,8 +169,8 @@ struct VolumetricFogConstants
 // Vol lighting
 struct VolumetricLightingConstants
 {
-	RF32 m_densityAtMinHeight;
-	RF32 m_densityAtMaxHeight;
+	F32 m_densityAtMinHeight;
+	F32 m_densityAtMaxHeight;
 	F32 m_minHeight;
 	F32 m_oneOverMaxMinusMinHeight; // 1 / (maxHeight / minHeight)
 
@@ -181,7 +181,7 @@ struct VolumetricLightingConstants
 // SSAO
 struct SsaoConstants
 {
-	RF32 m_radius; ///< In meters.
+	F32 m_radius; ///< In meters.
 	U32 m_sampleCount;
 	Vec2 m_viewportSizef;
 
@@ -193,7 +193,7 @@ struct SsaoConstants
 	F32 m_projectionMat23;
 
 	Vec2 m_padding;
-	RF32 m_ssaoPower;
+	F32 m_ssaoPower;
 	U32 m_frameCount;
 
 	Mat3x4 m_viewMat;

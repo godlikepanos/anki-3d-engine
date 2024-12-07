@@ -156,7 +156,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 						 U32 stepIncrement_, // The step increment of each iteration
 						 U32 initialStepIncrement, // The initial step
 						 out Vec3 hitPoint, // Hit point in UV coordinates
-						 out RF32 attenuation)
+						 out F32 attenuation)
 {
 	attenuation = 0.0;
 	hitPoint = Vec3(uv, depthRef);
@@ -227,11 +227,11 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 			// Found it
 
 			// Compute attenuation
-			const RF32 blackMargin = 0.05 / 4.0;
-			const RF32 whiteMargin = 0.1 / 2.0;
-			const RVec2 marginAttenuation2d =
+			const F32 blackMargin = 0.05 / 4.0;
+			const F32 whiteMargin = 0.1 / 2.0;
+			const Vec2 marginAttenuation2d =
 				smoothstep(blackMargin, whiteMargin, newHit.xy) * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, newHit.xy));
-			const RF32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
+			const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
 			attenuation = marginAttenuation * cameraContribution;
 
 			hitPoint = newHit;
@@ -241,7 +241,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	}
 }
 
-void rejectBackFaces(Vec3 reflection, Vec3 normalAtHitPoint, out RF32 attenuation)
+void rejectBackFaces(Vec3 reflection, Vec3 normalAtHitPoint, out F32 attenuation)
 {
 	attenuation = smoothstep(-0.17, 0.0, dot(normalAtHitPoint, -reflection));
 }

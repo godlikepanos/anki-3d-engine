@@ -108,9 +108,9 @@ struct GpuSceneLightVisibleRenderablesHash
 struct GpuSceneLight
 {
 	Vec3 m_position ANKI_CPP_CODE(= Vec3(kSomeFarDistance)); ///< Position in world space.
-	RF32 m_radius ANKI_CPP_CODE(= 0.0f); ///< Radius.
+	F32 m_radius ANKI_CPP_CODE(= 0.0f); ///< Radius.
 
-	RVec3 m_diffuseColor;
+	Vec3 m_diffuseColor;
 	U32 m_visibleRenderablesHashIndex; ///< Points to a GpuSceneLightVisibleRenderablesHash
 
 	GpuSceneLightFlag m_flags;
@@ -118,8 +118,8 @@ struct GpuSceneLight
 	U32 m_uuid; ///< The UUID of that light. If it's zero the GPU will not inform the CPU about it.
 	F32 m_innerCos; ///< Only for spot light.
 
-	RVec3 m_direction; ///< Only for spot light. Light direction.
-	RF32 m_outerCos; ///< Only for spot light.
+	Vec3 m_direction; ///< Only for spot light. Light direction.
+	F32 m_outerCos; ///< Only for spot light.
 
 	Vec4 m_edgePoints[4u]; ///< Edge points in world space. Only for spot light.
 
@@ -153,7 +153,7 @@ struct GpuSceneGlobalIlluminationProbe
 
 	U32 m_volumeTexture; ///< Bindless index of the irradiance volume texture.
 	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
-	RF32 m_fadeDistance; ///< Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
+	F32 m_fadeDistance; ///< Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
 	F32 m_padding2;
 };
 constexpr U32 kSizeof_GpuSceneGlobalIlluminationProbe = 3u * sizeof(Vec4);
@@ -164,8 +164,8 @@ struct GpuSceneDecal
 {
 	U32 m_diffuseTexture;
 	U32 m_roughnessMetalnessTexture;
-	RF32 m_diffuseBlendFactor;
-	RF32 m_roughnessMetalnessFactor;
+	F32 m_diffuseBlendFactor;
+	F32 m_roughnessMetalnessFactor;
 
 	Mat4 m_textureMatrix;
 
@@ -182,7 +182,7 @@ struct GpuSceneFogDensityVolume
 	U32 m_isBox ANKI_CPP_CODE(= 1);
 
 	Vec3 m_aabbMaxOrSphereRadius ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	RF32 m_density;
+	F32 m_density;
 };
 constexpr U32 kSizeof_GpuSceneFogDensityVolume = 2u * sizeof(Vec4);
 static_assert(sizeof(GpuSceneFogDensityVolume) == kSizeof_GpuSceneFogDensityVolume);

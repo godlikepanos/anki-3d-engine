@@ -17,8 +17,8 @@ constexpr U32 kMaxVisibleReflectionProbes = 16u;
 constexpr U32 kMaxVisibleGlobalIlluminationProbes = 8u;
 
 // Other consts
-constexpr RF32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
-constexpr RF32 kSubsurfaceMin = 0.01f;
+constexpr F32 kClusterObjectFrustumNearPlane = 0.1f / 4.0f; ///< Near plane of all clusterer object frustums.
+constexpr F32 kSubsurfaceMin = 0.01f;
 constexpr U32 kMaxZsplitCount = 128u;
 constexpr U32 kClusteredShadingTileSize = 64; ///< The size of the tile in clustered shading.
 
@@ -26,9 +26,9 @@ constexpr U32 kClusteredShadingTileSize = 64; ///< The size of the tile in clust
 struct LightUnion
 {
 	Vec3 m_position; ///< Position in world space.
-	RF32 m_radius; ///< Radius
+	F32 m_radius; ///< Radius
 
-	RVec3 m_diffuseColor;
+	Vec3 m_diffuseColor;
 	U32 m_lightType; ///< 0 is point and 1 is spot
 
 	U32 m_shadow;
@@ -36,7 +36,7 @@ struct LightUnion
 	F32 m_outerCos; ///< SPOT LIGHTS
 	F32 m_padding;
 
-	RVec3 m_direction; ///< SPOT LIGHTS: Light direction.
+	Vec3 m_direction; ///< SPOT LIGHTS: Light direction.
 	F32 m_shadowAtlasTileScale; ///< POINT LIGHTS: UV scale for all tiles.
 
 	/// When it's a point light this is an array of 6 Vec2s (but because of padding it's actually Vec4s). When it's a spot light the first 4 Vec4s are
@@ -49,9 +49,9 @@ struct LightUnion
 struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
-	RF32 m_radius; ///< Radius
+	F32 m_radius; ///< Radius
 
-	RVec3 m_diffuseColor;
+	Vec3 m_diffuseColor;
 	U32 m_padding1;
 
 	U32 m_shadow;
@@ -59,7 +59,7 @@ struct PointLight
 	U32 m_padding3;
 	U32 m_padding4;
 
-	RVec3 m_padding5;
+	Vec3 m_padding5;
 	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
 
 	Vec4 m_shadowAtlasTileOffsets[6u]; ///< It's a array of Vec2 but because of padding round it up.
@@ -71,9 +71,9 @@ static_assert(sizeof(PointLight) == sizeof(LightUnion));
 struct SpotLight
 {
 	Vec3 m_position; ///< Position in world space.
-	RF32 m_radius; ///< Radius
+	F32 m_radius; ///< Radius
 
-	RVec3 m_diffuseColor;
+	Vec3 m_diffuseColor;
 	U32 m_padding1;
 
 	U32 m_shadow;
@@ -81,7 +81,7 @@ struct SpotLight
 	F32 m_outerCos;
 	F32 m_padding2;
 
-	RVec3 m_direction;
+	Vec3 m_direction;
 	F32 m_padding3;
 
 	Mat4 m_textureMatrix;
