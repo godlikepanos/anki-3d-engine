@@ -76,7 +76,7 @@ void GpuMemoryManager::destroy()
 	m_callocs.destroy();
 }
 
-void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
+void GpuMemoryManager::init()
 {
 	// Print some info
 	ANKI_VK_LOGV("Initializing memory manager");
@@ -118,7 +118,7 @@ void GpuMemoryManager::init(Bool exposeBufferGpuAddress)
 		GpuMemoryManagerInterface& iface = m_callocs[memTypeIdx].getInterface();
 		iface.m_parent = this;
 		iface.m_memTypeIdx = U8(memTypeIdx);
-		iface.m_exposesBufferGpuAddress = exposeBufferGpuAddress;
+		iface.m_exposesBufferGpuAddress = true;
 
 		const U32 heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
 		iface.m_isDeviceMemory = !!(m_memoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);

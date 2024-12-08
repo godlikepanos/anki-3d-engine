@@ -48,41 +48,26 @@ class GrManagerImpl;
 ANKI_PURE GrManagerImpl& getGrManagerImpl();
 ANKI_PURE VkDevice getVkDevice();
 
-enum class VulkanExtensions : U64
+enum class VulkanExtensions : U32
 {
 	kNone = 0,
 	kKHR_wayland_surface = 1u << 1u,
-	kKHR_win32_surface = 1u << 3u,
-	kKHR_android_surface = 1u << 4u,
-	kEXT_headless_surface = 1u << 5u,
-	kKHR_swapchain = 1u << 6u,
-	kKHR_surface = 1u << 7u,
-	kEXT_debug_utils = 1u << 8u,
-	kAMD_rasterization_order = 1u << 10u,
-	kKHR_ray_tracing = 1u << 11u,
-	kKHR_pipeline_executable_properties = 1u << 12u,
-	kEXT_descriptor_indexing = 1u << 13u,
-	kKHR_buffer_device_address = 1u << 14u,
-	kEXT_scalar_block_layout = 1u << 15u,
-	kKHR_timeline_semaphore = 1u << 16u,
-	kKHR_shader_float16_int8 = 1u << 17u,
-	kKHR_shader_atomic_int64 = 1u << 18u,
-	kKHR_spirv_1_4 = 1u << 19u,
-	kKHR_shader_float_controls = 1u << 20u,
-	kKHR_sampler_filter_min_max = 1u << 21u,
-	kKHR_create_renderpass_2 = 1u << 22u,
-	kKHR_fragment_shading_rate = 1u << 23u,
-	kEXT_astc_decode_mode = 1u << 24u,
-	kEXT_texture_compression_astc_hdr = 1u << 25u,
-	kNVX_binary_import = 1u << 26u,
-	kNVX_image_view_handle = 1u << 27u,
-	kKHR_push_descriptor = 1u << 28u,
-	kKHR_maintenance_4 = 1u << 29u,
-	kKHR_draw_indirect_count = 1u << 30u,
-	kEXT_mesh_shader = 1u << 31u,
-	kEXT_host_query_reset = 1_U64 << 32_U64,
-	kKHR_fragment_shader_barycentric = 1_U64 << 33_U64,
-	kKHR_dynamic_rendering = 1_U64 << 34_U64,
+	kKHR_win32_surface = 1u << 2u,
+	kKHR_android_surface = 1u << 3u,
+	kEXT_headless_surface = 1u << 4u,
+	kKHR_swapchain = 1u << 5u,
+	kKHR_surface = 1u << 6u,
+	kEXT_debug_utils = 1u << 7u,
+	kKHR_ray_tracing = 1u << 8u,
+	kKHR_pipeline_executable_properties = 1u << 9u,
+	kKHR_fragment_shading_rate = 1u << 10u,
+	kEXT_astc_decode_mode = 1u << 11u,
+	kEXT_texture_compression_astc_hdr = 1u << 12u,
+	kNVX_binary_import = 1u << 13u,
+	kNVX_image_view_handle = 1u << 14u,
+	kKHR_push_descriptor = 1u << 15u,
+	kEXT_mesh_shader = 1u << 16u,
+	kKHR_fragment_shader_barycentric = 1u << 17u
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 

@@ -71,7 +71,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 			handle.m_queryIndex = i;
 			handle.m_chunk = chunk;
 
-			vkResetQueryPoolEXT(getVkDevice(), chunk->m_pool, handle.m_queryIndex, 1);
+			vkResetQueryPool(getVkDevice(), chunk->m_pool, handle.m_queryIndex, 1);
 
 			break;
 		}

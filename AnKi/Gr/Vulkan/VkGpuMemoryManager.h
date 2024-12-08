@@ -110,9 +110,9 @@ class GpuMemoryManager : public MakeSingleton<GpuMemoryManager>
 	friend class GpuMemoryManagerInterface;
 
 public:
-	GpuMemoryManager(Bool exposeBufferGpuAddress)
+	GpuMemoryManager()
 	{
-		init(exposeBufferGpuAddress);
+		init();
 	}
 
 	GpuMemoryManager(const GpuMemoryManager&) = delete; // Non-copyable
@@ -154,7 +154,7 @@ private:
 	Atomic<PtrSize> m_dedicatedAllocatedMemory = {0};
 	Atomic<U32> m_dedicatedAllocationCount = {0};
 
-	void init(Bool exposeBufferGpuAddress);
+	void init();
 
 	void destroy();
 };

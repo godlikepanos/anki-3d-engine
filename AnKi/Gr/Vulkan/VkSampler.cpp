@@ -33,7 +33,6 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	else
 	{
 		ANKI_ASSERT(inf.m_minMagFilter == SamplingFilter::kMax || inf.m_minMagFilter == SamplingFilter::kMin);
-		ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_samplingFilterMinMax);
 		ci.minFilter = VK_FILTER_LINEAR;
 	}
 

@@ -21,8 +21,7 @@ Error GeneratedSky::init()
 
 	const TextureUsageBit usage = TextureUsageBit::kAllCompute;
 	const TextureUsageBit initialUsage = TextureUsageBit::kSrvCompute;
-	const Format formatB =
-		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Unorm : Format::kR16G16B16A16_Unorm;
+	const Format formatB = getRenderer().getHdrFormat();
 
 	m_transmittanceLut = getRenderer().createAndClearRenderTarget(
 		getRenderer().create2DRenderTargetInitInfo(kTransmittanceLutSize.x(), kTransmittanceLutSize.y(), formatB, usage, "SkyTransmittanceLut"),

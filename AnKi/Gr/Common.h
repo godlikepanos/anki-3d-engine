@@ -228,14 +228,8 @@ public:
 	/// RT.
 	Bool m_rayTracingEnabled = false;
 
-	/// 64 bit atomics.
-	Bool m_64bitAtomics = false;
-
 	/// VRS.
 	Bool m_vrs = false;
-
-	/// Supports min/max texture filtering.
-	Bool m_samplingFilterMinMax = false;
 
 	/// Supports or not 24bit, 48bit or 96bit texture formats.
 	Bool m_unalignedBbpTextureFormats = false;

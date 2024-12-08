@@ -373,7 +373,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		const TextureImpl& tex = static_cast<const TextureImpl&>(view.getTexture());
 
 		vkColorAttachments[i] = {};
-		vkColorAttachments[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+		vkColorAttachments[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		vkColorAttachments[i].imageView = tex.getImageView(view.getSubresource());
 		vkColorAttachments[i].imageLayout = tex.computeLayout(colorRts[i].m_usage);
 		vkColorAttachments[i].loadOp = convertLoadOp(colorRts[i].m_loadOperation);
@@ -414,7 +414,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		if(!!(view.getDepthStencilAspect() & DepthStencilAspectBit::kDepth))
 		{
 			vkDepthAttachment = {};
-			vkDepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+			vkDepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 			vkDepthAttachment.imageView = tex.getImageView(view.getSubresource());
 			vkDepthAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage);
 			vkDepthAttachment.loadOp = convertLoadOp(depthStencilRt->m_loadOperation);
@@ -428,7 +428,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 		if(!!(view.getDepthStencilAspect() & DepthStencilAspectBit::kStencil) && getFormatInfo(tex.getFormat()).isStencil())
 		{
 			vkStencilAttachment = {};
-			vkStencilAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+			vkStencilAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 			vkStencilAttachment.imageView = tex.getImageView(view.getSubresource());
 			vkStencilAttachment.imageLayout = tex.computeLayout(depthStencilRt->m_usage);
 			vkStencilAttachment.loadOp = convertLoadOp(depthStencilRt->m_stencilLoadOperation);
@@ -487,7 +487,7 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	}
 
 	// Finaly
-	vkCmdBeginRenderingKHR(self.m_handle, &info);
+	vkCmdBeginRendering(self.m_handle, &info);
 }
 
 void CommandBuffer::endRenderPass()
@@ -500,7 +500,7 @@ void CommandBuffer::endRenderPass()
 #endif
 
 	self.commandCommon();
-	vkCmdEndRenderingKHR(self.m_handle);
+	vkCmdEndRendering(self.m_handle);
 }
 
 void CommandBuffer::setVrsRate(VrsRate rate)
@@ -589,8 +589,8 @@ void CommandBuffer::drawIndexedIndirectCount(PrimitiveTopology topology, const B
 
 	ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
 
-	vkCmdDrawIndexedIndirectCountKHR(self.m_handle, argBufferImpl.getHandle(), argBuffer.getOffset(), countBufferImpl.getHandle(),
-									 countBuffer.getOffset(), maxDrawCount, argBufferStride);
+	vkCmdDrawIndexedIndirectCount(self.m_handle, argBufferImpl.getHandle(), argBuffer.getOffset(), countBufferImpl.getHandle(),
+								  countBuffer.getOffset(), maxDrawCount, argBufferStride);
 }
 
 void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferView& argBuffer, U32 argBufferStride, const BufferView& countBuffer,
@@ -617,8 +617,8 @@ void CommandBuffer::drawIndirectCount(PrimitiveTopology topology, const BufferVi
 
 	ANKI_ASSERT(maxDrawCount > 0 && maxDrawCount <= getGrManagerImpl().getDeviceCapabilities().m_maxDrawIndirectCount);
 
-	vkCmdDrawIndirectCountKHR(self.m_handle, argBufferImpl.getHandle(), argBuffer.getOffset(), countBufferImpl.getHandle(), countBuffer.getOffset(),
-							  maxDrawCount, argBufferStride);
+	vkCmdDrawIndirectCount(self.m_handle, argBufferImpl.getHandle(), argBuffer.getOffset(), countBufferImpl.getHandle(), countBuffer.getOffset(),
+						   maxDrawCount, argBufferStride);
 }
 
 void CommandBuffer::drawMeshTasks(U32 groupCountX, U32 groupCountY, U32 groupCountZ)

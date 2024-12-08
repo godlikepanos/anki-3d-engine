@@ -149,7 +149,6 @@ private:
 	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties2 m_devProps = {};
-	VkPhysicalDeviceAccelerationStructurePropertiesKHR m_accelerationStructureProps = {};
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR m_rtPipelineProps = {};
 
 	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;

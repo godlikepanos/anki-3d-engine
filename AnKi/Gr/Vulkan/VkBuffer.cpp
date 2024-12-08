@@ -126,8 +126,7 @@ BufferImpl::~BufferImpl()
 Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
-	const Bool exposeGpuAddress =
-		!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_buffer_device_address) && !!(inf.m_usage & ~BufferUsageBit::kAllCopy);
+	const Bool exposeGpuAddress = !!(inf.m_usage & ~BufferUsageBit::kAllCopy);
 
 	PtrSize size = inf.m_size;
 	BufferMapAccessBit access = inf.m_mapAccess;
@@ -151,7 +150,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ci.usage = convertBufferUsageBit(usage);
 	if(exposeGpuAddress)
 	{
-		ci.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR;
+		ci.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	}
 	ci.queueFamilyIndexCount = getGrManagerImpl().getQueueFamilies().getSize();
 	ci.pQueueFamilyIndices = &getGrManagerImpl().getQueueFamilies()[0];
@@ -278,14 +277,14 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	// Get GPU buffer address
 	if(exposeGpuAddress)
 	{
-		VkBufferDeviceAddressInfoKHR info = {};
-		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
+		VkBufferDeviceAddressInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 		info.buffer = m_handle;
-		m_gpuAddress = vkGetBufferDeviceAddressKHR(getVkDevice(), &info);
+		m_gpuAddress = vkGetBufferDeviceAddress(getVkDevice(), &info);
 
 		if(m_gpuAddress == 0)
 		{
-			ANKI_VK_LOGE("vkGetBufferDeviceAddressKHR() failed");
+			ANKI_VK_LOGE("vkGetBufferDeviceAddress() failed");
 			return Error::kFunctionFailed;
 		}
 	}

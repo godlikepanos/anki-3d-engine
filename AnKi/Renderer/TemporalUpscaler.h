@@ -38,6 +38,9 @@ private:
 
 	RenderTargetDesc m_rtDesc;
 
+	ShaderProgramResourcePtr m_blitProg;
+	ShaderProgramPtr m_blitGrProg;
+
 	class
 	{
 	public:

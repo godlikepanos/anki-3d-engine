@@ -836,6 +836,11 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 		refHitPos = g_hitPosAndDepthTex[checkerboardCoord].xyz;
 		g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(refHitPos, refDepth);
 	}
+	else
+	{
+		g_colorAndPdf[svGroupThreadId.x][svGroupThreadId.y] = 0.0;
+		g_hitPosAndDepth[svGroupThreadId.x][svGroupThreadId.y] = Vec4(0.0, 0.0, 0.0, refDepth);
+	}
 
 	GroupMemoryBarrierWithGroupSync();
 

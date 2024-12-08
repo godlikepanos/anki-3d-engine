@@ -35,7 +35,6 @@ static constexpr U16 kBoxIndices[] = {1, 2, 5, 2, 6, 5, 0, 4, 3, 4, 7, 3, 3, 7, 
 
 Error HzbGenerator::init()
 {
-	if(GrManager::getSingleton().getDeviceCapabilities().m_samplingFilterMinMax)
 	{
 		SamplerInitInfo sinit("HzbReductionMax");
 		sinit.m_addressing = SamplingAddressing::kClamp;
