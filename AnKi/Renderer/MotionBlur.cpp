@@ -66,8 +66,12 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_maxVelocityGrProg.get());
 
+			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 			rgraphCtx.bindSrv(0, 0, getRenderer().getMotionVectors().getMotionVectorsRt());
 			rgraphCtx.bindUav(0, 0, maxVelRt);
+
+			const Vec4 consts(Vec2(getRenderer().getPostProcessResolution()), 0.0f, 0.0f);
+			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			const UVec2 tiledTexSize = (getRenderer().getPostProcessResolution() + g_motionBlurTileSizeCVar - 1) / g_motionBlurTileSizeCVar;
 			cmdb.dispatchCompute(tiledTexSize.x(), tiledTexSize.y(), 1);

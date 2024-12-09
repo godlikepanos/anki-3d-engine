@@ -27,21 +27,31 @@ Vec2 computeMaxVelocity(Vec2 a, Vec2 b)
 #if ANKI_TECHNIQUE_MaxTileVelocity
 #	define NUMTHREADS 64
 
+SamplerState g_linearClampSampler : register(s0);
 Texture2D<Vec4> g_motionVectorsTex : register(t0);
 RWTexture2D<Vec4> g_maxVelocityTex : register(u0);
 
 groupshared Vec2 g_maxVelocities[NUMTHREADS];
 
+struct Consts
+{
+	Vec2 m_resolution;
+	Vec2 m_padding;
+};
+
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
 [numthreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID, U32 svGroupIndex : SV_GroupIndex, UVec2 svGroupId : SV_GroupID)
 {
 	// Gather the thread result
-	const U32 pixelsPerThread = TILE_SIZE / 8;
+	const F32 pixelsPerThread = TILE_SIZE / 8;
 	Vec2 maxV = 0.0;
-	for(U32 x = 0; x < pixelsPerThread; ++x)
+	for(F32 x = 0.0; x < pixelsPerThread; x += 1.0)
 	{
-		for(U32 y = 0; y < pixelsPerThread; ++y)
+		for(F32 y = 0; y < pixelsPerThread; y += 1.0)
 		{
-			const Vec2 v = g_motionVectorsTex[svDispatchThreadId * pixelsPerThread + UVec2(x, y)];
+			const Vec2 uv = (svDispatchThreadId * pixelsPerThread + Vec2(x, y) + 0.5) / g_consts.m_resolution;
+			const Vec2 v = g_motionVectorsTex.SampleLevel(g_linearClampSampler, uv, 0.0);
 			maxV = computeMaxVelocity(maxV, v);
 		}
 	}
