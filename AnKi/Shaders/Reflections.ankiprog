@@ -60,7 +60,11 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 	U32 i;
 	for(i = 0; i < probeCount; ++i)
 	{
-		if(all(worldPos < giProbes[i].m_aabbMax) && all(worldPos > giProbes[i].m_aabbMin))
+		if(any(worldPos >= giProbes[i].m_aabbMax) || any(worldPos <= giProbes[i].m_aabbMin))
+		{
+			continue;
+		}
+		else
 		{
 			break;
 		}

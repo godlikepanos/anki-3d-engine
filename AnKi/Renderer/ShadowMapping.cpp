@@ -676,6 +676,8 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 			args.fill(visOut);
 
 			getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+
+			cmdb.setPolygonOffset(0.0, 0.0);
 		}
 	});
 }

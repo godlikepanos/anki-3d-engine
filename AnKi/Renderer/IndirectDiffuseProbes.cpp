@@ -329,6 +329,8 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 					getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
 
+					cmdb.setPolygonOffset(0.0, 0.0);
+
 					// It's secondary, no need to restore the state
 				});
 			}

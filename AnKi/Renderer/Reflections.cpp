@@ -13,6 +13,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/ClusterBinning.h>
+#include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -403,6 +404,11 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		if(getRenderer().getGeneratedSky().isEnabled())
 		{
 			rpass.newTextureDependency(getRenderer().getGeneratedSky().getEnvironmentMapRt(), TextureUsageBit::kSrvCompute);
+		}
+
+		if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
+		{
+			rpass.newTextureDependency(getRenderer().getProbeReflections().getCurrentlyRefreshedReflectionRt(), TextureUsageBit::kSrvCompute);
 		}
 
 		rpass.setWork([this, pixelsFailedSsrBuff, &ctx, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {

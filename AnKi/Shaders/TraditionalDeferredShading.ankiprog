@@ -6,6 +6,7 @@
 // Classic deferred lighting shader
 
 #pragma anki mutator SPECULAR 0 1
+#pragma anki mutator INDIRECT_DIFFUSE 0 1
 
 #pragma anki technique vert pixel
 
@@ -32,7 +33,38 @@ Texture2D<Vec4> g_depthTex : register(t5);
 SamplerComparisonState g_shadowMapSampler : register(s1);
 Texture2D<Vec4> g_shadowMap : register(t6);
 
+#	if INDIRECT_DIFFUSE
+StructuredBuffer<GpuSceneGlobalIlluminationProbe> g_giProbes : register(t7);
+SamplerState g_linearAnyClampSampler : register(s2);
+#	endif
+
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConsts : register(b1);
+
+#	if INDIRECT_DIFFUSE
+Vec3 getDiffuseIndirect(Vec3 worldPos, Vec3 worldNormal)
+{
+	const U32 probeCount = getStructuredBufferElementCount(g_giProbes);
+	U32 i;
+	for(i = 0; i < probeCount; ++i)
+	{
+		if(all(worldPos < g_giProbes[i].m_aabbMax) && all(worldPos > g_giProbes[i].m_aabbMin))
+		{
+			break;
+		}
+	}
+
+	const Bool probeFound = (i != probeCount);
+	if(probeFound)
+	{
+		const GpuSceneGlobalIlluminationProbe probe = g_giProbes[i];
+		return sampleGlobalIllumination<F32>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), g_linearAnyClampSampler);
+	}
+	else
+	{
+		return 0.0;
+	}
+}
+#	endif
 
 Vec4 main(VertOut input) : SV_TARGET0
 {
@@ -58,6 +90,10 @@ Vec4 main(VertOut input) : SV_TARGET0
 	Vec3 outColor = gbuffer.m_emission;
 	const Vec3 viewDir = normalize(g_consts.m_cameraPos - worldPos);
 	ANKI_MAYBE_UNUSED(viewDir);
+
+#	if INDIRECT_DIFFUSE
+	outColor += getDiffuseIndirect(worldPos, gbuffer.m_normal) * gbuffer.m_diffuse;
+#	endif
 
 	// Dir light
 	if(g_globalRendererConsts.m_directionalLight.m_shadowCascadeCount_31bit_active_1bit & 1u)

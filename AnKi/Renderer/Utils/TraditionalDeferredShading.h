@@ -26,6 +26,7 @@ public:
 	BufferView m_visibleLightsBuffer;
 
 	Bool m_computeSpecular = false;
+	Bool m_applyIndirectDiffuse = false; ///< Apply GI using the indirect diffuse probes.
 
 	// Render targets
 	Array<RenderTargetHandle, kGBufferColorRenderTargetCount - 1> m_gbufferRenderTargets;
@@ -55,7 +56,7 @@ public:
 
 private:
 	ShaderProgramResourcePtr m_lightProg;
-	Array<ShaderProgramPtr, 2> m_lightGrProg;
+	Array2d<ShaderProgramPtr, 2, 2> m_lightGrProg;
 
 	ShaderProgramResourcePtr m_skyboxProg;
 	Array<ShaderProgramPtr, 3> m_skyboxGrProgs;

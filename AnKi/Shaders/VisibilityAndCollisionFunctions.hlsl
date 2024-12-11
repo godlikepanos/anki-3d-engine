@@ -216,6 +216,13 @@ void projectAabb(Vec3 aabbMin, Vec3 aabbMax, Mat4 viewProjMat, out Vec2 minNdc, 
 		aabbMinDepth = min(aabbMinDepth, p.z);
 	}
 
+	if(aabbMinDepth < 0.0)
+	{
+		// Behind the camera so we can't be sure about our calculations
+		minNdc = -1.0;
+		maxNdc = 1.0;
+	}
+
 	aabbMinDepth = saturate(aabbMinDepth);
 }
 

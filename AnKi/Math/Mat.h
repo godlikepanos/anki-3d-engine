@@ -1278,6 +1278,37 @@ public:
 		return m;
 	}
 
+	/// Calculate a perspective projection matrix. The z is reversed and mapped in [1, 0] range just like DX and Vulkan.
+	/// Same as D3DXMatrixPerspectiveFovRH but z reversed
+	[[nodiscard]] static TMat calculatePerspectiveProjectionMatrixReverseZ(T fovX, T fovY, T near, T far) requires(kSize == 16)
+	{
+		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
+		const T g = near - far;
+		const T f = T(1) / tan(fovY / T(2)); // f = cot(fovY/2)
+
+		TMat proj;
+		proj(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
+		proj(0, 1) = T(0);
+		proj(0, 2) = T(0);
+		proj(0, 3) = T(0);
+		proj(1, 0) = T(0);
+		proj(1, 1) = f;
+		proj(1, 2) = T(0);
+		proj(1, 3) = T(0);
+		proj(2, 0) = T(0);
+		proj(2, 1) = T(0);
+		proj(2, 2) = far / g;
+		proj(2, 3) = (far * near) / g;
+		proj(3, 0) = T(0);
+		proj(3, 1) = T(0);
+		proj(3, 2) = T(-1);
+		proj(3, 3) = T(0);
+
+		const TMat rev(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(-1), T(1), T(0), T(0), T(0), T(1));
+
+		return rev * proj;
+	}
+
 	/// Given the parameters that construct a projection matrix extract 4 values that can be used to unproject a point from NDC to view space.
 	/// @code
 	/// Vec4 unprojParams = calculatePerspectiveUnprojectionParams(...);

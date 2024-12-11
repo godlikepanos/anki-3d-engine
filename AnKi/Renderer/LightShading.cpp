@@ -266,11 +266,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getReflections().getRt(), readUsage);
 
-	if(getRenderer().getProbeReflections().getHasCurrentlyRefreshedReflectionRt())
-	{
-		pass.newTextureDependency(getRenderer().getProbeReflections().getCurrentlyRefreshedReflectionRt(), readUsage);
-	}
-
 	// Fog
 	pass.newTextureDependency(getRenderer().getVolumetricFog().getRt(), readUsage);
 

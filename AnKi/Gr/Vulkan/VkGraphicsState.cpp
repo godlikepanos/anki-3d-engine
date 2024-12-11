@@ -11,7 +11,7 @@
 
 namespace anki {
 
-static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight)
+static VkViewport computeViewport(const U32 viewport[], U32 fbWidth, U32 fbHeight)
 {
 	const U32 minx = viewport[0];
 	const U32 miny = viewport[1];
@@ -26,7 +26,7 @@ static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight)
 	return s;
 }
 
-static VkRect2D computeScissor(U32* scissor, U32 fbWidth, U32 fbHeight)
+static VkRect2D computeScissor(const U32 scissor[], U32 fbWidth, U32 fbHeight)
 {
 	const U32 minx = scissor[0];
 	const U32 miny = scissor[1];

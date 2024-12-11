@@ -10,8 +10,10 @@
 #include <AnKi/Renderer/GBuffer.h>
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/PrimaryNonRenderableVisibility.h>
+#include <AnKi/Renderer/IndirectDiffuseProbes.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
+#include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
@@ -148,6 +150,12 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
 
+	const Bool bRtReflections = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtReflectionsCVar;
+	if(bRtReflections)
+	{
+		return;
+	}
+
 	// Iterate the visible probes to find a candidate for update
 	WeakArray<ReflectionProbeComponent*> visibleProbes =
 		getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_reflectionProbes;
@@ -161,7 +169,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		}
 	}
 
-	if(probeToRefresh == nullptr || ResourceManager::getSingleton().getAsyncLoader().getTasksInFlightCount() != 0) [[likely]]
+	if(probeToRefresh == nullptr || ResourceManager::getSingleton().getAsyncLoader().getTasksInFlightCount() != 0
+	   || getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt()) [[likely]]
 	{
 		// Nothing to update or can't update right now, early exit
 		m_runCtx = {};
@@ -327,6 +336,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				args.fill(shadowVisOut);
 
 				getRenderer().getRenderableDrawer().drawMdi(args, cmdb);
+
+				cmdb.setPolygonOffset(0.0, 0.0);
 			});
 		}
 
@@ -369,6 +380,11 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				pass.newTextureDependency(getRenderer().getGeneratedSky().getSkyLutRt(), TextureUsageBit::kSrvPixel);
 			}
 
+			if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
+			{
+				pass.newTextureDependency(getRenderer().getIndirectDiffuseProbes().getCurrentlyRefreshedVolumeRt(), TextureUsageBit::kSrvPixel);
+			}
+
 			pass.setWork([this, visResult = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(),
 						  cascadeViewProjMat = cascadeViewProjMat, probeToRefresh, gbufferColorRts, gbufferDepthRt, shadowMapRt, faceIdx = f,
 						  &rctx](RenderPassWorkContext& rgraphCtx) {
@@ -380,6 +396,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 				dsInfo.m_cameraPosWSpace = probeToRefresh->getWorldPosition().xyz1();
 				dsInfo.m_viewport = UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 				dsInfo.m_effectiveShadowDistance = probeToRefresh->getShadowsRenderRadius();
+				dsInfo.m_applyIndirectDiffuse = true;
 
 				const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 				dsInfo.m_dirLightMatrix = biasMat4 * cascadeViewProjMat;
@@ -405,70 +422,6 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			});
 		}
 	} // For 6 faces
-
-	// Compute Irradiance
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Cube refl: Irradiance");
-
-		pass.newTextureDependency(probeTexture, TextureUsageBit::kSrvCompute);
-
-		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kUavCompute);
-
-		pass.setWork([this, probeTexture](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
-
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_irradiance.m_grProg.get());
-
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-
-			rgraphCtx.bindSrv(0, 0, probeTexture);
-
-			cmdb.bindUav(0, 0, BufferView(m_irradiance.m_diceValuesBuff.get()));
-
-			cmdb.dispatchCompute(1, 1, 1);
-		});
-	}
-
-	// Append irradiance back to refl cubemap
-	{
-		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("Cube refl: Apply indirect");
-
-		for(U i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
-		{
-			pass.newTextureDependency(gbufferColorRts[i], TextureUsageBit::kSrvCompute);
-		}
-
-		pass.newTextureDependency(probeTexture, TextureUsageBit::kUavCompute);
-
-		pass.newBufferDependency(irradianceDiceValuesBuffHandle, BufferUsageBit::kSrvCompute);
-
-		pass.setWork([this, gbufferColorRts, probeTexture](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(ProbeReflections);
-
-			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-
-			cmdb.bindShaderProgram(m_irradianceToRefl.m_grProg.get());
-
-			// Bind resources
-			cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
-
-			for(U32 i = 0; i < kGBufferColorRenderTargetCount - 1; ++i)
-			{
-				rgraphCtx.bindSrv(i, 0, gbufferColorRts[i]);
-			}
-
-			cmdb.bindSrv(3, 0, BufferView(m_irradiance.m_diceValuesBuff.get()));
-
-			for(U8 f = 0; f < 6; ++f)
-			{
-				rgraphCtx.bindUav(f, 0, probeTexture, TextureSubresourceDesc::surface(0, f, 0));
-			}
-
-			dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
-		});
-	}
 
 	// Mipmapping "passes"
 	{
