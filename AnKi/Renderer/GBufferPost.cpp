@@ -70,9 +70,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kAllRtvDsv);
 	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
 
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvPixel);
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kDecal),
-							  BufferUsageBit::kSrvPixel);
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 }
 
 } // end namespace anki

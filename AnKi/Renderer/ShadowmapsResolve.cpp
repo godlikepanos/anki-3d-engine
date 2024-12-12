@@ -57,9 +57,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvCompute);
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-								  BufferUsageBit::kSrvCompute);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 
 		if(getRenderer().getRtShadowsEnabled())
 		{
@@ -81,9 +79,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 								   TextureUsageBit::kSrvPixel);
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvPixel);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvPixel);
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-								  BufferUsageBit::kSrvPixel);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 
 		if(getRenderer().getRtShadowsEnabled())
 		{

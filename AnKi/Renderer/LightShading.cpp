@@ -260,9 +260,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), readUsage);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
 	pass.newTextureDependency(getRenderer().getShadowmapsResolve().getRt(), readUsage);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvPixel);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-							 BufferUsageBit::kSrvPixel);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getReflections().getRt(), readUsage);
 

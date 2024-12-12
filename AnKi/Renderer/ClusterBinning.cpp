@@ -27,17 +27,15 @@ ClusterBinning::~ClusterBinning()
 
 Error ClusterBinning::init()
 {
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningSetup.ankiprogbin", m_jobSetupProg, m_jobSetupGrProg));
-
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/ClusterBinning.ankiprogbin", m_binningProg));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning.ankiprogbin", {{"OBJECT_TYPE", 0}}, m_prog, m_jobSetupGrProg, "Setup"));
 
 	for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
 	{
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_binningProg,
-									 m_binningGrProgs[type]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_prog,
+									 m_binningGrProgs[type], "Binning"));
 
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinningPackVisibles.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_packingProg,
-									 m_packingGrProgs[type]));
+		ANKI_CHECK(loadShaderProgram("ShaderBinaries/ClusterBinning.ankiprogbin", {{"OBJECT_TYPE", MutatorValue(type)}}, m_prog,
+									 m_packingGrProgs[type], "PackVisibles"));
 	}
 
 	return Error::kNone;
@@ -53,17 +51,15 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 	{
 		const U32 clusterCount = getRenderer().getTileCounts().x() * getRenderer().getTileCounts().y() + getRenderer().getZSplitCount();
 		m_runCtx.m_clustersBuffer = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<Cluster>(clusterCount);
-		m_runCtx.m_clustersHandle = rgraph.importBuffer(m_runCtx.m_clustersBuffer, BufferUsageBit::kNone);
+		m_runCtx.m_dep = rgraph.importBuffer(m_runCtx.m_clustersBuffer, BufferUsageBit::kNone);
 	}
 
 	// Setup the indirect dispatches and zero the clusters buffer
 	BufferView indirectArgsBuff;
-	BufferHandle indirectArgsHandle;
 	{
 		// Allocate memory for the indirect args
 		constexpr U32 dispatchCount = U32(GpuSceneNonRenderableObjectType::kCount) * 2;
 		indirectArgsBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<DispatchIndirectArgs>(dispatchCount);
-		indirectArgsHandle = rgraph.importBuffer(indirectArgsBuff, BufferUsageBit::kNone);
 
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Cluster binning setup");
@@ -73,8 +69,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 			rpass.newBufferDependency(getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBufferHandle(type),
 									  BufferUsageBit::kSrvCompute);
 		}
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
-		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kCopyDestination);
+		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kCopyDestination | BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -104,8 +99,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Cluster binning");
 
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
-		rpass.newBufferDependency(m_runCtx.m_clustersHandle, BufferUsageBit::kUavCompute);
+		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kUavCompute | BufferUsageBit::kIndirectCompute);
 
 		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -210,16 +204,11 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		{
 			m_runCtx.m_packedObjectsBuffers[type] = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer(
 				kMaxVisibleClusteredObjects[type], kClusteredObjectSizes[type]);
-			m_runCtx.m_packedObjectsHandles[type] = rgraph.importBuffer(m_runCtx.m_packedObjectsBuffers[type], BufferUsageBit::kNone);
 		}
 
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("Cluster object packing");
-		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
-		for(GpuSceneNonRenderableObjectType type : EnumIterable<GpuSceneNonRenderableObjectType>())
-		{
-			rpass.newBufferDependency(m_runCtx.m_packedObjectsHandles[type], BufferUsageBit::kUavCompute);
-		}
+		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;

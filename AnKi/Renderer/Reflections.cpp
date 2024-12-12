@@ -215,7 +215,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getBloom().getPyramidRt(), TextureUsageBit::kSrvCompute);
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvCompute);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
@@ -397,7 +397,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("ReflectionProbeFallback");
 
 		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvCompute);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectCompute);
 		rpass.newTextureDependency(transientRt1, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosAndDepthRt, TextureUsageBit::kUavCompute);

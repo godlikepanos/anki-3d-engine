@@ -7,24 +7,95 @@
 
 #pragma anki mutator OBJECT_TYPE 0 1 2 3 4 // Same as GpuSceneNonRenderableObjectType
 
-#pragma anki technique comp
+#pragma anki technique Setup comp mutators
+#pragma anki technique Binning comp
+#pragma anki technique PackVisibles comp
 
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/VisibilityAndCollisionFunctions.hlsl>
 
-#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
-typedef GpuSceneLight GpuSceneType;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
-typedef GpuSceneDecal GpuSceneType;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
-typedef GpuSceneFogDensityVolume GpuSceneType;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
-typedef GpuSceneReflectionProbe GpuSceneType;
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
-typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
-#else
-#	error See file
+// ===========================================================================
+// Setup                                                                     =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_Setup)
+
+StructuredBuffer<U32> g_visibleIndices[(U32)GpuSceneNonRenderableObjectType::kCount] : register(t0);
+
+// This has a size of 2*GpuSceneNonRenderableObjectType::kCount. The first GpuSceneNonRenderableObjectType::kCount elements are for the cluster
+// binning dispatches and the rest GpuSceneNonRenderableObjectType::kCount for the packing dispatches
+RWStructuredBuffer<DispatchIndirectArgs> g_indirectArgs : register(u0);
+
+struct Constants
+{
+	U32 m_tileCount;
+	U32 m_padding1;
+	U32 m_padding2;
+	U32 m_padding3;
+};
+ANKI_FAST_CONSTANTS(Constants, g_consts)
+
+constexpr U32 kSampleCount = 8;
+constexpr U32 kClusterBinningThreadgroupSize = 64;
+constexpr U32 kPackVisiblesThreadgroupSize = 64;
+
+#	define THREADGROUP_SIZE 16
+
+[numthreads(THREADGROUP_SIZE, 1, 1)] void main(U32 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	if(svDispatchThreadId < (U32)GpuSceneNonRenderableObjectType::kCount)
+	{
+		// First threads set the dispatch args of cluster binning
+
+		const GpuSceneNonRenderableObjectType type = (GpuSceneNonRenderableObjectType)svDispatchThreadId;
+		const U32 objCount = min(kMaxVisibleClusteredObjects[(U32)type], g_visibleIndices[(U32)type][0]);
+
+		DispatchIndirectArgs args;
+		args.m_threadGroupCountX = (g_consts.m_tileCount * kSampleCount + kClusterBinningThreadgroupSize - 1) / kClusterBinningThreadgroupSize;
+		args.m_threadGroupCountY = objCount;
+		args.m_threadGroupCountZ = 1;
+
+		g_indirectArgs[svDispatchThreadId] = args;
+	}
+	else if(svDispatchThreadId < (U32)GpuSceneNonRenderableObjectType::kCount * 2)
+	{
+		// Next threads set the dispatch args of packing
+
+		const GpuSceneNonRenderableObjectType type =
+			(GpuSceneNonRenderableObjectType)(svDispatchThreadId - (U32)GpuSceneNonRenderableObjectType::kCount);
+		const U32 objCount = min(kMaxVisibleClusteredObjects[(U32)type], g_visibleIndices[(U32)type][0]);
+
+		DispatchIndirectArgs args;
+		args.m_threadGroupCountX = (objCount + kPackVisiblesThreadgroupSize - 1) / kPackVisiblesThreadgroupSize;
+		args.m_threadGroupCountY = 1;
+		args.m_threadGroupCountZ = 1;
+
+		g_indirectArgs[svDispatchThreadId] = args;
+	}
+	else
+	{
+		// Skip remaining threads
+	}
+}
 #endif
+
+// ===========================================================================
+// Binning                                                                   =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_Binning)
+
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+typedef GpuSceneLight GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+typedef GpuSceneDecal GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+typedef GpuSceneFogDensityVolume GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+typedef GpuSceneReflectionProbe GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
+#	else
+#		error See file
+#	endif
 
 struct ClusterBinningConstants
 {
@@ -51,14 +122,14 @@ StructuredBuffer<GpuSceneType> g_objects : register(t1);
 
 RWStructuredBuffer<Cluster> g_clusters : register(u0);
 
-#define THREADGROUP_SIZE 64
+#	define THREADGROUP_SIZE 64
 
 // ALMOST like DX Sample locations (https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels)
 constexpr U32 kSampleCount = 8u;
-#define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(kClusteredShadingTileSize))
+#	define LOCATION(x, y) UVec2(Vec2(IVec2(x, y) + 8) / 16.0 * F32(kClusteredShadingTileSize))
 constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 3),  LOCATION(5, 1), LOCATION(-6, -6),
 												  LOCATION(-6, 6), LOCATION(-7, -1), LOCATION(6, 7), LOCATION(7, -7)};
-#undef LOCATION
+#	undef LOCATION
 
 [numthreads(THREADGROUP_SIZE, 1, 1)] void main(UVec2 svDispatchThreadId : SV_DISPATCHTHREADID)
 {
@@ -88,7 +159,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	Bool collides;
 	const GpuSceneType obj = g_objects[g_visibleObjectIds[visibleObjectIdx + 1]];
 
-#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 	if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 	{
 		collides = testRaySphere(rayOrigin, rayDir, obj.m_position, obj.m_radius, t0, t1);
@@ -131,9 +202,9 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 
 		collides = (hits != 0u);
 	}
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 	collides = testRaySphere(rayOrigin, rayDir, obj.m_sphereCenter, obj.m_sphereRadius, t0, t1);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
 	if(obj.m_isBox != 0u)
 	{
 		collides = testRayAabb(rayOrigin, rayDir, obj.m_aabbMinOrSphereCenter, obj.m_aabbMaxOrSphereRadius, t0, t1);
@@ -142,12 +213,12 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 	{
 		collides = testRaySphere(rayOrigin, rayDir, obj.m_aabbMinOrSphereCenter, obj.m_aabbMaxOrSphereRadius.x, t0, t1);
 	}
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE \
-	|| OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE \
+		|| OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
 	collides = testRayAabb(rayOrigin, rayDir, obj.m_aabbMin, obj.m_aabbMax, t0, t1);
-#else
-#	error See file
-#endif
+#	else
+#		error See file
+#	endif
 
 	// Update the masks
 	if(collides)
@@ -157,7 +228,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 		ANKI_MAYBE_UNUSED(maskArrayIdx);
 
 		// Set the tile
-#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 		if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 		{
 			InterlockedOr(g_clusters[tileIdx].m_pointLightsMask[maskArrayIdx], mask);
@@ -166,17 +237,17 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 		{
 			InterlockedOr(g_clusters[tileIdx].m_spotLightsMask[maskArrayIdx], mask);
 		}
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 		InterlockedOr(g_clusters[tileIdx].m_decalsMask[maskArrayIdx], mask);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
 		InterlockedOr(g_clusters[tileIdx].m_fogDensityVolumesMask, mask);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
 		InterlockedOr(g_clusters[tileIdx].m_reflectionProbesMask, mask);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
 		InterlockedOr(g_clusters[tileIdx].m_giProbesMask, mask);
-#else
-#	error See file
-#endif
+#	else
+#		error See file
+#	endif
 
 		// Compute and set the Z splits
 		const Vec3 hitpointA = rayDir * t0 + rayOrigin;
@@ -201,7 +272,7 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 		const I32 endZSplit = clamp(I32(maxDistFromNearPlane * g_consts.m_zSplitCountOverFrustumLength), 0, g_consts.m_zSplitCountMinusOne);
 		for(I32 i = startZSplit; i <= endZSplit; ++i)
 		{
-#if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
 			if((U32)obj.m_flags & (U32)GpuSceneLightFlag::kPointLight)
 			{
 				InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_pointLightsMask[maskArrayIdx], mask);
@@ -210,17 +281,88 @@ constexpr UVec2 kSampleLocations[kSampleCount] = {LOCATION(1, -3), LOCATION(-1, 
 			{
 				InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_spotLightsMask[maskArrayIdx], mask);
 			}
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
 			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_decalsMask[maskArrayIdx], mask);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
 			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_fogDensityVolumesMask, mask);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
 			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_reflectionProbesMask, mask);
-#elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
 			InterlockedOr(g_clusters[g_consts.m_tileCount + i].m_giProbesMask, mask);
-#else
-#	error See file
-#endif
+#	else
+#		error See file
+#	endif
 		}
 	}
 }
+#endif
+
+// ===========================================================================
+// PackVisibles                                                              =
+// ===========================================================================
+#if NOT_ZERO(ANKI_TECHNIQUE_PackVisibles)
+
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+typedef LightUnion ClusteredType;
+typedef GpuSceneLight GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_DECAL
+typedef Decal ClusteredType;
+typedef GpuSceneDecal GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_FOG_DENSITY_VOLUME
+typedef FogDensityVolume ClusteredType;
+typedef GpuSceneFogDensityVolume GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_REFLECTION_PROBE
+typedef ReflectionProbe ClusteredType;
+typedef GpuSceneReflectionProbe GpuSceneType;
+#	elif OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE
+typedef GlobalIlluminationProbe ClusteredType;
+typedef GpuSceneGlobalIlluminationProbe GpuSceneType;
+#	else
+#		error See file
+#	endif
+
+StructuredBuffer<GpuSceneType> g_inBuffer : register(t0);
+RWStructuredBuffer<ClusteredType> g_outBuffer : register(u0);
+StructuredBuffer<U32> g_visibles : register(t1);
+
+#	define THREAD_GROUP_SIZE 64
+
+[numthreads(THREAD_GROUP_SIZE, 1, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
+{
+	const U32 visibleObjCount = min(g_visibles[0], kMaxVisibleClusteredObjects[OBJECT_TYPE]);
+	const U32 idxOut = svDispatchThreadId.x;
+	if(idxOut >= visibleObjCount)
+	{
+		return;
+	}
+
+#	if OBJECT_TYPE == ANKI_GPU_SCENE_NON_RENDERABLE_OBJECT_TYPE_LIGHT
+	const GpuSceneLight input = g_inBuffer[g_visibles[idxOut + 1]];
+
+	const Bool isPoint = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kPointLight) ? true : false;
+
+	LightUnion output = (LightUnion)0;
+	output.m_position = input.m_position;
+	output.m_radius = input.m_radius;
+
+	output.m_diffuseColor = input.m_diffuseColor;
+	output.m_lightType = (isPoint) ? 0 : 1;
+
+	output.m_shadow = ((U32)input.m_flags & (U32)GpuSceneLightFlag::kShadow) ? 1 : 0;
+	output.m_innerCos = input.m_innerCos;
+	output.m_outerCos = input.m_outerCos;
+
+	output.m_direction = input.m_direction;
+	output.m_shadowAtlasTileScale = input.m_spotLightMatrixOrPointLightUvViewports[0].z; // Scale should be the same for all
+
+	for(U32 i = 0; i < 6; ++i)
+	{
+		output.m_spotLightMatrixOrPointLightUvViewports[i] = input.m_spotLightMatrixOrPointLightUvViewports[i];
+	}
+
+	g_outBuffer[idxOut] = output;
+#	else
+	g_outBuffer[idxOut] = g_inBuffer[g_visibles[idxOut + 1]];
+#	endif
+}
+#endif

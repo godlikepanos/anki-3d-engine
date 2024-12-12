@@ -66,14 +66,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rts[1], TextureUsageBit::kUavCompute);
 	pass.newTextureDependency(getRenderer().getShadowMapping().getShadowmapRt(), TextureUsageBit::kSrvCompute);
 
-	pass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvCompute);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kLight),
-							 BufferUsageBit::kSrvCompute);
-	pass.newBufferDependency(
-		getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe),
-		BufferUsageBit::kSrvCompute);
-	pass.newBufferDependency(getRenderer().getClusterBinning().getPackedObjectsBufferHandle(GpuSceneNonRenderableObjectType::kFogDensityVolume),
-							 BufferUsageBit::kSrvCompute);
+	pass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 
 	if(getRenderer().getIndirectDiffuseProbes().hasCurrentlyRefreshedVolumeRt())
 	{

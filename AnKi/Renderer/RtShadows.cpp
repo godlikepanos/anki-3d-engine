@@ -275,7 +275,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(m_runCtx.m_prevMomentsRt, TextureUsageBit::kSrvTraceRays);
 		rpass.newTextureDependency(m_runCtx.m_currentMomentsRt, TextureUsageBit::kUavTraceRays);
 
-		rpass.newBufferDependency(getRenderer().getClusterBinning().getClustersBufferHandle(), BufferUsageBit::kSrvTraceRays);
+		rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvTraceRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(RtShadows);
