@@ -703,7 +703,7 @@ F32 pdfVndfIsotropic(Vec3 reflectedDir, Vec3 viewDir, F32 alpha, Vec3 normal)
 	const F32 sigmaStd = (zi * nrm) * 0.5f + 0.5f;
 	const F32 sigmaI = sigmaStd / nrm;
 	const F32 nrmN = (zm * zm) * (alphaSquare - 1.0f) + 1.0f;
-	return alphaSquare / (kPi * 4.0f * nrmN * nrmN * sigmaI);
+	return alphaSquare / (kPi * 4.0f * nrmN * nrmN * sigmaI + kEpsilonF32);
 }
 
 /// Calculate the reflection vector based on roughness. Sometimes the refl vector is bellow the normal so this func will try again to get a new one.

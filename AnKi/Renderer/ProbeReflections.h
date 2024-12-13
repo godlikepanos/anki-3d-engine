@@ -40,11 +40,6 @@ public:
 		return m_integrationLut->getTexture();
 	}
 
-	SamplerPtr getIntegrationLutSampler() const
-	{
-		return m_integrationLutSampler;
-	}
-
 	RenderTargetHandle getCurrentlyRefreshedReflectionRt() const
 	{
 		ANKI_ASSERT(m_runCtx.m_probeTex.isValid());
@@ -76,22 +71,6 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-		BufferPtr m_diceValuesBuff;
-		U32 m_workgroupSize = 16;
-	} m_irradiance; ///< Irradiance.
-
-	class
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-	} m_irradianceToRefl; ///< Apply irradiance back to the reflection.
-
-	class
-	{
-	public:
 		RenderTargetDesc m_rtDescr;
 	} m_shadowMapping;
 
@@ -103,14 +82,6 @@ private:
 
 	// Other
 	ImageResourcePtr m_integrationLut;
-	SamplerPtr m_integrationLutSampler;
-
-	Error initInternal();
-	Error initGBuffer();
-	Error initLightShading();
-	Error initIrradiance();
-	Error initIrradianceToRefl();
-	Error initShadowMapping();
 };
 /// @}
 

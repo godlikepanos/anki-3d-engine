@@ -30,43 +30,10 @@ static StatCounter g_probeReflectionCountStatVar(StatCategory::kRenderer, "Refle
 
 Error ProbeReflections::init()
 {
-	const Error err = initInternal();
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize image reflections");
-	}
-
-	return err;
-}
-
-Error ProbeReflections::initInternal()
-{
-	// Init cache entries
-	ANKI_CHECK(initGBuffer());
-	ANKI_CHECK(initLightShading());
-	ANKI_CHECK(initIrradiance());
-	ANKI_CHECK(initIrradianceToRefl());
-	ANKI_CHECK(initShadowMapping());
-
-	// Load split sum integration LUT
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/IblDfg.png", m_integrationLut));
 
-	SamplerInitInfo sinit;
-	sinit.m_minMagFilter = SamplingFilter::kLinear;
-	sinit.m_mipmapFilter = SamplingFilter::kNearest;
-	sinit.m_minLod = 0.0;
-	sinit.m_maxLod = 1.0;
-	sinit.m_addressing = SamplingAddressing::kClamp;
-	m_integrationLutSampler = GrManager::getSingleton().newSampler(sinit);
-
-	return Error::kNone;
-}
-
-Error ProbeReflections::initGBuffer()
-{
 	m_gbuffer.m_tileSize = g_reflectionProbeResolutionCVar;
 
-	// Create RT descriptions
 	{
 		RenderTargetDesc texinit = getRenderer().create2DRenderTargetDescription(m_gbuffer.m_tileSize, m_gbuffer.m_tileSize,
 																				 kGBufferColorRenderTargetFormats[0], "CubeRefl GBuffer");
@@ -89,59 +56,20 @@ Error ProbeReflections::initGBuffer()
 		m_gbuffer.m_depthRtDescr.bake();
 	}
 
-	return Error::kNone;
-}
-
-Error ProbeReflections::initLightShading()
-{
 	m_lightShading.m_tileSize = g_reflectionProbeResolutionCVar;
 	m_lightShading.m_mipCount = U8(computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8));
 
-	// Init deferred
+	{
+		const U32 resolution = g_probeReflectionShadowMapResolutionCVar;
+		ANKI_ASSERT(resolution > 8);
+
+		// RT descr
+		m_shadowMapping.m_rtDescr =
+			getRenderer().create2DRenderTargetDescription(resolution, resolution, getRenderer().getDepthNoStencilFormat(), "CubeRefl SM");
+		m_shadowMapping.m_rtDescr.bake();
+	}
+
 	ANKI_CHECK(m_lightShading.m_deferred.init());
-
-	return Error::kNone;
-}
-
-Error ProbeReflections::initIrradiance()
-{
-	m_irradiance.m_workgroupSize = g_probeReflectionIrradianceResolutionCVar;
-
-	// Create prog
-	{
-		ANKI_CHECK(
-			loadShaderProgram("ShaderBinaries/IrradianceDice.ankiprogbin",
-							  {{"THREDGROUP_SIZE_SQRT", MutatorValue(m_irradiance.m_workgroupSize)}, {"STORE_LOCATION", 1}, {"SECOND_BOUNCE", 0}},
-							  m_irradiance.m_prog, m_irradiance.m_grProg));
-	}
-
-	// Create buff
-	{
-		BufferInitInfo init;
-		init.m_usage = BufferUsageBit::kAllUav | BufferUsageBit::kAllSrv;
-		init.m_size = 6 * sizeof(Vec4);
-		m_irradiance.m_diceValuesBuff = GrManager::getSingleton().newBuffer(init);
-	}
-
-	return Error::kNone;
-}
-
-Error ProbeReflections::initIrradianceToRefl()
-{
-	// Create program
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/ApplyIrradianceToReflection.ankiprogbin", m_irradianceToRefl.m_prog, m_irradianceToRefl.m_grProg));
-	return Error::kNone;
-}
-
-Error ProbeReflections::initShadowMapping()
-{
-	const U32 resolution = g_probeReflectionShadowMapResolutionCVar;
-	ANKI_ASSERT(resolution > 8);
-
-	// RT descr
-	m_shadowMapping.m_rtDescr =
-		getRenderer().create2DRenderTargetDescription(resolution, resolution, getRenderer().getDepthNoStencilFormat(), "CubeRefl SM");
-	m_shadowMapping.m_rtDescr.bake();
 
 	return Error::kNone;
 }
@@ -188,7 +116,6 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 	// Create render targets now to save memory
 	const RenderTargetHandle probeTexture = rgraph.importRenderTarget(&probeToRefresh->getReflectionTexture(), TextureUsageBit::kNone);
 	m_runCtx.m_probeTex = probeTexture;
-	const BufferHandle irradianceDiceValuesBuffHandle = rgraph.importBuffer(BufferView(m_irradiance.m_diceValuesBuff.get()), BufferUsageBit::kNone);
 	const RenderTargetHandle gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 	const RenderTargetHandle shadowMapRt = (doShadows) ? rgraph.newRenderTarget(m_shadowMapping.m_rtDescr) : RenderTargetHandle();
 
