@@ -446,9 +446,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		m_capabilities.m_discreteGpu = !architecture.UMA;
 		m_capabilities.m_majorApiVersion = 12;
 		m_capabilities.m_rayTracingEnabled = g_rayTracingCVar;
-		m_capabilities.m_64bitAtomics = true;
 		m_capabilities.m_vrs = g_vrsCVar;
-		m_capabilities.m_samplingFilterMinMax = true;
 		m_capabilities.m_unalignedBbpTextureFormats = false;
 		m_capabilities.m_dlss = false;
 		m_capabilities.m_meshShaders = g_meshShadersCVar;
