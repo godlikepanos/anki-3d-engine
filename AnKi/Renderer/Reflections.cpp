@@ -163,6 +163,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	const RenderTargetHandle hitPosAndDepthRt = rgraph.newRenderTarget(m_hitPosAndDepthRtDesc);
 	const RenderTargetHandle hitPosRt = rgraph.newRenderTarget(m_hitPosRtDesc);
 	const RenderTargetHandle classTileMapRt = rgraph.newRenderTarget(m_classTileMapRtDesc);
+	const BufferHandle indirectArgsHandle = rgraph.importBuffer(BufferView(m_indirectArgsBuffer.get()), BufferUsageBit::kNone);
 
 	ReflectionConstants consts;
 	consts.m_ssrStepIncrement = g_ssrStepIncrementCVar;
@@ -178,6 +179,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kUavCompute);
+		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, classTileMapRt, consts](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Reflections);
@@ -188,6 +190,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getDepthRt());
 			rgraphCtx.bindUav(0, 0, classTileMapRt);
+			cmdb.bindUav(1, 0, BufferView(m_indirectArgsBuffer.get()));
 
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
@@ -198,13 +201,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 	// SSR
 	BufferView pixelsFailedSsrBuff;
-	BufferHandle indirectArgsHandle;
 	{
 		const U32 pixelCount = getRenderer().getInternalResolution().x() / 2 * getRenderer().getInternalResolution().y();
 		pixelsFailedSsrBuff = GpuVisibleTransientMemoryPool::getSingleton().allocateStructuredBuffer<PixelFailedSsr>(pixelCount);
-
-		// Yes pixelsFailedSsrBuff has nothing to do with indirect args. We are cheating
-		indirectArgsHandle = rgraph.importBuffer(pixelsFailedSsrBuff, BufferUsageBit::kNone);
 
 		// Create the pass
 		NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("SSR");
@@ -579,7 +578,6 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(1, 0, classTileMapRt);
 
 			rgraphCtx.bindUav(0, 0, mainRt);
-			cmdb.bindUav(1, 0, BufferView(m_indirectArgsBuffer.get()));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 		});

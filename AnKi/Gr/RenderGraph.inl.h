@@ -262,7 +262,7 @@ inline RenderTargetHandle RenderGraphBuilder::newRenderTarget(const RenderTarget
 	return out;
 }
 
-inline BufferHandle RenderGraphBuilder::importBuffer(const BufferView& buff, BufferUsageBit usage)
+inline BufferHandle RenderGraphBuilder::importBuffer(const BufferView& buff, BufferUsageBit crntUsage)
 {
 	ANKI_ASSERT(buff.isValid());
 
@@ -273,7 +273,7 @@ inline BufferHandle RenderGraphBuilder::importBuffer(const BufferView& buff, Buf
 
 	BufferRsrc& b = *m_buffers.emplaceBack();
 	b.setName(buff.getBuffer().getName());
-	b.m_usage = usage;
+	b.m_usage = crntUsage;
 	b.m_importedBuff.reset(&buff.getBuffer());
 	b.m_offset = buff.getOffset();
 	b.m_range = buff.getRange();
@@ -283,7 +283,7 @@ inline BufferHandle RenderGraphBuilder::importBuffer(const BufferView& buff, Buf
 	return out;
 }
 
-inline AccelerationStructureHandle RenderGraphBuilder::importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage)
+inline AccelerationStructureHandle RenderGraphBuilder::importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit crntUsage)
 {
 	for([[maybe_unused]] const AS& a : m_as)
 	{
@@ -293,7 +293,7 @@ inline AccelerationStructureHandle RenderGraphBuilder::importAccelerationStructu
 	AS& a = *m_as.emplaceBack();
 	a.setName(as->getName());
 	a.m_importedAs.reset(as);
-	a.m_usage = usage;
+	a.m_usage = crntUsage;
 
 	AccelerationStructureHandle handle;
 	handle.m_idx = m_as.getSize() - 1;

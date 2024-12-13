@@ -441,10 +441,10 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDesc& initInf);
 
 	/// Import a buffer.
-	BufferHandle importBuffer(const BufferView& buff, BufferUsageBit usage);
+	BufferHandle importBuffer(const BufferView& buff, BufferUsageBit crntUsage);
 
 	/// Import an AS.
-	AccelerationStructureHandle importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit usage);
+	AccelerationStructureHandle importAccelerationStructure(AccelerationStructure* as, AccelerationStructureUsageBit crntUsage);
 
 	/// Gather statistics.
 	void setStatisticsEnabled(Bool gather)
