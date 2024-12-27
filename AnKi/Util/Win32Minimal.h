@@ -130,6 +130,7 @@ ANKI_WINBASEAPI DWORD ANKI_WINAPI FormatMessageA(DWORD dwFlags, LPCVOID lpSource
 												 va_list* Arguments);
 ANKI_WINBASEAPI HLOCAL ANKI_WINAPI LocalFree(HLOCAL hMem);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI IsDebuggerPresent();
+ANKI_WINBASEAPI BOOL ANKI_WINAPI SetProcessDPIAware();
 
 #undef ANKI_WINBASEAPI
 #undef ANKI_DECLARE_HANDLE
@@ -490,6 +491,11 @@ inline HLOCAL LocalFree(HLOCAL hMem)
 inline BOOL IsDebuggerPresent()
 {
 	return ::IsDebuggerPresent();
+}
+
+inline BOOL SetProcessDPIAware()
+{
+	return ::SetProcessDPIAware();
 }
 
 } // end namespace anki

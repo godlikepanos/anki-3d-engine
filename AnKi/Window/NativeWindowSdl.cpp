@@ -60,6 +60,14 @@ NativeWindowSdl::~NativeWindowSdl()
 
 Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 {
+#if ANKI_OS_WINDOWS
+	// Tell windows that the app will handle scaling. Otherwise SDL_GetDesktopDisplayMode will return a resolution that has the scaling applied
+	if(!SetProcessDPIAware())
+	{
+		ANKI_WIND_LOGE("SetProcessDPIAware() failed");
+	}
+#endif
+
 	if(SDL_Init(kInitSubsystems) != 0)
 	{
 		ANKI_WIND_LOGE("SDL_Init() failed: %s", SDL_GetError());
