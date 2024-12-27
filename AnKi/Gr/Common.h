@@ -522,7 +522,7 @@ enum class TextureUsageBit : U32
 	kAllPixel = kSrvPixel | kUavPixel,
 	kAllGraphics = kAllGeometry | kAllPixel | kRtvDsvRead | kRtvDsvWrite | kShadingRate,
 	kAllCompute = kSrvCompute | kUavCompute,
-	kAllTransfer = kCopyDestination,
+	kAllCopy = kCopyDestination,
 
 	kAllRead = kAllSrv | kAllUav | kRtvDsvRead | kShadingRate | kPresent,
 	kAllWrite = kAllUav | kRtvDsvWrite | kCopyDestination,

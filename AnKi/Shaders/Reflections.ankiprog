@@ -41,6 +41,7 @@ constexpr Bool kSsrHallucinateDebug = false;
 constexpr F32 kTemporalSourceWeight = 0.01;
 constexpr F32 kTemporalGamma = 1.0;
 constexpr Bool kPerfectTemporal = true;
+constexpr F32 kPdfForVeryRough = 1.0; // Something like 100 would have made more sense but it doesn't work well
 #define TILE_SIZE 32
 
 // The states of a tile
@@ -106,6 +107,12 @@ void decodeColorDepthAndSampleCount(HVec4 rgba, out HVec3 color, out F16 depth, 
 
 	color = rgba.xyz;
 	depth = rgba.w;
+}
+
+template<typename T>
+Bool isMirror(T roughness)
+{
+	return roughness <= T(kMinRoughness * 2);
 }
 
 // ===========================================================================
@@ -181,7 +188,7 @@ groupshared U32 g_allSky;
 		{
 			tileClass = kClassVeryRough;
 		}
-		else if(asfloat(g_maxRoughness) <= kMinRoughness * 2.0)
+		else if(isMirror(asfloat(g_maxRoughness)) && g_allSky == 0)
 		{
 			tileClass = kClassMirror;
 		}
@@ -378,7 +385,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	const UVec2 logicalCoord = UVec2(realCoord.x * 2u + (realCoord.y & 1u), realCoord.y);
 	const Vec2 uv = (Vec2(logicalCoord) + 0.5) / Vec2(halfViewportSize.x * 2u, halfViewportSize.y);
 
-	// Fast path 1
+	// Sky
 	const U32 tileClass = g_classTileMap[logicalCoord / TILE_SIZE];
 	if(tileClass == kClassSky)
 	{
@@ -391,7 +398,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 	const Vec4 rt2 = g_gbufferRt2[logicalCoord];
 	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
 
-	// Fast path 2
+	// Very rough
 	if(tileClass == kClassVeryRough)
 	{
 		Vec4 worldPos = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjection, Vec4(uvToNdc(uv), depth, 1.0));
@@ -406,7 +413,7 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		Vec3 worldHitPos = worldPos + reflDir * 1.0;
 		worldHitPos -= g_globalRendererConstants.m_cameraPosition;
 
-		g_colorAndPdfTex[realCoord] = Vec4(col, 1.0);
+		g_colorAndPdfTex[realCoord] = Vec4(col, kPdfForVeryRough);
 		g_hitPosAndDepthTex[realCoord] = Vec4(worldHitPos, 1.0 - depth);
 		return;
 	}
@@ -428,9 +435,9 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 	// Sample GI probes factor
 	const F32 sampleGiProbesLerp = smoothstep(g_consts.m_roughnessCutoffToGiEdges.x, g_consts.m_roughnessCutoffToGiEdges.y, roughness);
-	const Bool bSampleGiProbes = (sampleGiProbesLerp > randFactors.x); // Choose stocasticly
+	const Bool bSampleGiProbes = tileClass == kClassNormal && (sampleGiProbesLerp > randFactors.x); // Choose stocasticly
 
-	// Sample probes or to SS trace
+	// Sample probes or do SS trace
 	Vec3 outColor;
 	Vec3 viewReflDir;
 	Vec3 viewHitPoint;
@@ -450,19 +457,20 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 		outColor = sampleGiProbes<F32>(cluster, g_giProbes, woldReflDir, worldPos.xyz, g_trilinearClampSampler);
 
 		viewHitPoint = viewPos + viewReflDir * 1.0;
-		pdf = 1.0;
+		pdf = kPdfForVeryRough;
 		ssrAttenuation = 1.0;
 	}
 	else
 	{
 		// SS trace
-		if(kStochasticReflections)
+		if(!kStochasticReflections || tileClass == kClassMirror)
 		{
-			viewReflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
+			viewReflDir = reflect(-viewDir, viewNormal);
+			pdf = pdfVndfIsotropic(viewReflDir, viewDir, kMinRoughness, viewNormal);
 		}
 		else
 		{
-			viewReflDir = reflect(-viewDir, viewNormal);
+			viewReflDir = sampleReflectionVectorIsotropic(viewDir, viewNormal, roughness, randFactors, 4, pdf);
 		}
 
 		doSsr(halfViewportSize * UVec2(2, 1), realCoord, logicalCoord, uv, viewPos, depth, randFactors.x, roughness, viewReflDir, ssrAttenuation,
@@ -629,7 +637,7 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 
 	// Move it with camera to avoid precision issues since it's stored in fp16
 	// Store depth in reverse for better precision
-	const Vec3 hitPos = worldPos + reflDir * 100.0; // TODO
+	const Vec3 hitPos = worldPos + reflDir * 1.0;
 	g_hitPosAndDepthTex[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
 }
 #endif
@@ -789,6 +797,7 @@ Texture2D<Vec4> g_hitPosAndDepthTex : register(t1);
 Texture2D<Vec4> g_depthTex : register(t2);
 Texture2D<Vec4> g_gbufferRt1 : register(t3);
 Texture2D<Vec4> g_gbufferRt2 : register(t4);
+Texture2D<UVec4> g_classTileMap : register(t5);
 
 RWTexture2D<Vec4> g_denoisedTex : register(u0);
 RWTexture2D<Vec4> g_hitPosTex : register(u1);
@@ -872,7 +881,11 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 		refHitPos /= sumWeight;
 	}
 
-	if(refDepth == 1.0)
+	// NOTE: We are done with groupshared so we can use "return"
+
+	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
+
+	if(tileClass == kClassSky || refDepth == 1.0)
 	{
 		g_denoisedTex[coord] = 0.0;
 		g_hitPosTex[coord] = 0.0;
@@ -883,7 +896,8 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 	const F32 roughness = unpackRoughnessFromGBuffer(rt1);
 	const F32 alpha = pow2(roughness);
 
-	if(kDisableDenoising || roughness >= g_consts.m_roughnessCutoffToGiEdges.y)
+	if(kDisableDenoising || tileClass == kClassVeryRough || tileClass == kClassMirror || roughness >= g_consts.m_roughnessCutoffToGiEdges.y
+	   || isMirror(roughness))
 	{
 		g_denoisedTex[coord] = Vec4(refColor, 1.0 - refDepth); // Store depth in reverse for better precision
 		g_hitPosTex[coord] = Vec4(refHitPos - g_globalRendererConstants.m_cameraPosition, 0.0);
@@ -896,81 +910,72 @@ void reconstructCheckerboardBlack(IVec2 svGroupThreadId, F32 refDepth, inout Vec
 
 	const Vec3 viewDir = normalize(g_globalRendererConstants.m_cameraPosition - worldPos);
 
-	Vec3 outColor = 0.0;
 	Vec3 newHitPos = 0.0;
 
-	if(roughness <= kMinRoughness + kEpsilonF32)
+	const Vec4 rt2 = g_gbufferRt2[coord];
+	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+
+	const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
+	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
+
+	const F32 sinTheta = sin(randFactors.x * 2.0 * kPi);
+	const F32 cosTheta = cos(randFactors.x * 2.0 * kPi);
+
+	const F32 sampleCount = ARRAY_SIZE(SPATIAL_UPSCALING_POISON_KERNEL) + 1.0;
+	F32 avgLuma = computeLuminance(refColor) / sampleCount;
+	Vec3 outColor = refColor;
+	F32 weightSum = refPdf;
+	for(U32 i = 0u; i < ARRAY_SIZE(SPATIAL_UPSCALING_POISON_KERNEL); ++i)
 	{
-		outColor = refColor;
-		newHitPos = refHitPos + g_globalRendererConstants.m_cameraPosition;
+		const Vec2 diskPoint = SPATIAL_UPSCALING_POISON_KERNEL[i];
+
+		// Rotate the disk point
+		Vec2 rotatedDiskPoint;
+		rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
+		rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
+
+		rotatedDiskPoint.x /= 2.0; // Adjust because the input textures are in half width
+
+		// Offset calculation
+		const IVec2 newCoord = clamp(IVec2(checkerboardCoord) + rotatedDiskPoint * kSpatialUpscalingPcfTexelOffset, 0, halfViewportSize - 1u);
+
+		const Vec4 rgba = g_hitPosAndDepthTex[newCoord];
+		const F32 sampleDepth = 1.0 - rgba.w;
+		const Vec3 hitPos = rgba.xyz + g_globalRendererConstants.m_cameraPosition;
+
+		const Vec3 reflectedDir = normalize(hitPos - worldPos);
+		const F32 pdf = pdfVndfIsotropic(reflectedDir, viewDir, alpha, worldNormal);
+
+		const F32 weight = pdf * calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
+
+		if(weight > 0.001)
+		{
+			const Vec3 sampleColor = g_colorAndPdfTex[newCoord].xyz;
+
+			outColor += sampleColor * weight;
+			weightSum += weight;
+			avgLuma += computeLuminance(sampleColor) / sampleCount;
+
+			newHitPos += hitPos * weight;
+		}
+	}
+
+	if(weightSum > 0.001)
+	{
+		outColor /= weightSum;
+		newHitPos /= weightSum;
 	}
 	else
 	{
-		const Vec4 rt2 = g_gbufferRt2[coord];
-		const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+		outColor = 0.0;
+		newHitPos = g_globalRendererConstants.m_cameraPosition;
+	}
 
-		const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
-		const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
-
-		const F32 sinTheta = sin(randFactors.x * 2.0 * kPi);
-		const F32 cosTheta = cos(randFactors.x * 2.0 * kPi);
-
-		const F32 sampleCount = ARRAY_SIZE(SPATIAL_UPSCALING_POISON_KERNEL) + 1.0;
-		F32 avgLuma = computeLuminance(refColor) / sampleCount;
-		outColor = refColor;
-		F32 weightSum = refPdf;
-		for(U32 i = 0u; i < ARRAY_SIZE(SPATIAL_UPSCALING_POISON_KERNEL); ++i)
-		{
-			const Vec2 diskPoint = SPATIAL_UPSCALING_POISON_KERNEL[i];
-
-			// Rotate the disk point
-			Vec2 rotatedDiskPoint;
-			rotatedDiskPoint.x = diskPoint.x * cosTheta - diskPoint.y * sinTheta;
-			rotatedDiskPoint.y = diskPoint.y * cosTheta + diskPoint.x * sinTheta;
-
-			rotatedDiskPoint.x /= 2.0; // Adjust because the input textures are in half width
-
-			// Offset calculation
-			const IVec2 newCoord = clamp(IVec2(checkerboardCoord) + rotatedDiskPoint * kSpatialUpscalingPcfTexelOffset, 0, halfViewportSize - 1u);
-
-			const Vec4 rgba = g_hitPosAndDepthTex[newCoord];
-			const F32 sampleDepth = 1.0 - rgba.w;
-			const Vec3 hitPos = rgba.xyz + g_globalRendererConstants.m_cameraPosition;
-
-			const Vec3 reflectedDir = normalize(hitPos - worldPos);
-			const F32 pdf = pdfVndfIsotropic(reflectedDir, viewDir, alpha, worldNormal);
-
-			const F32 weight = pdf * calculateBilateralWeightDepth<F32>(refDepth, sampleDepth, 1.0);
-
-			if(weight > 0.001)
-			{
-				const Vec3 sampleColor = g_colorAndPdfTex[newCoord].xyz;
-
-				outColor += sampleColor * weight;
-				weightSum += weight;
-				avgLuma += computeLuminance(sampleColor) / sampleCount;
-
-				newHitPos += hitPos * weight;
-			}
-		}
-
-		if(weightSum > 0.001)
-		{
-			outColor /= weightSum;
-			newHitPos /= weightSum;
-		}
-		else
-		{
-			outColor = 0.0;
-			newHitPos = g_globalRendererConstants.m_cameraPosition;
-		}
-
-		// Remove fireflies
-		const F32 luma = computeLuminance(outColor);
-		if(luma > avgLuma && luma > 0.001)
-		{
-			outColor *= avgLuma / luma;
-		}
+	// Remove fireflies
+	const F32 luma = computeLuminance(outColor);
+	if(luma > avgLuma && luma > 0.001)
+	{
+		outColor *= avgLuma / luma;
 	}
 
 	g_denoisedTex[coord] = Vec4(outColor, 1.0 - refDepth); // Store depth in reverse for better precision
@@ -1114,9 +1119,9 @@ void computeSourceColor(Vec2 uv, IVec2 coord, IVec2 textureSize, out Vec3 m1, ou
 	const UVec2 coord = min(svDispatchThreadId, textureSize - 1);
 	const Vec2 uv = (Vec2(coord) + 0.5f) / textureSize;
 
-	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
+	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
 
-	if(kDisableDenoising || tileClass >= kClassSky)
+	if(kDisableDenoising || tileClass != kClassNormal)
 	{
 		g_outTex[coord] = g_colorAndDepth[coord];
 		g_momentsTex[coord] = 0.0;
@@ -1220,9 +1225,9 @@ F16 computeVarianceCenter(IVec2 coord, UVec2 textureSize)
 	const F16 refDepth = rgba.w;
 	const HVec3 centerColor = rgba.xyz;
 
-	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
+	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
 
-	if(kDisableDenoising || tileClass >= kClassSky)
+	if(kDisableDenoising || tileClass != kClassNormal)
 	{
 		g_outTex[coord] = encodeColorDepthAndSampleCount(centerColor, refDepth, 0u);
 		return;
@@ -1296,7 +1301,7 @@ RWTexture2D<Vec4> g_outTex : register(u0);
 	decodeColorDepthAndSampleCount(g_colorAndDepthAndSampleCount[coord], refColor, refDepth, sampleCountu);
 	const F16 sampleCount = sampleCountu;
 
-	const U32 tileClass = g_classTileMap[coord / TILE_SIZE];
+	const U16 tileClass = g_classTileMap[coord / TILE_SIZE];
 
 	if(kDisableDenoising || tileClass >= kClassSky)
 	{

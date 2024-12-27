@@ -8,15 +8,15 @@
 #define groupshared
 #define globallycoherent
 #define nointerpolation
-#define SV_DISPATCHTHREADID // gl_GlobalInvocationID
-#define SV_GROUPINDEX // gl_LocalInvocationIndex
-#define SV_GROUPID // gl_WorkGroupID
-#define SV_GROUPTHREADID // gl_LocalInvocationID
-#define SV_CULLPRIMITIVE
-#define SV_VERTEXID
-#define SV_POSITION
-#define SV_INSTANCEID
-#define numthreads(x, y, z) [nodiscard]
+#define SV_DispatchThreadID // gl_GlobalInvocationID
+#define SV_GroupIndex // gl_LocalInvocationIndex
+#define SV_GroupID // gl_WorkGroupID
+#define SV_GroupThreadID // gl_LocalInvocationID
+#define SV_CullPrimitive
+#define SV_VertexID
+#define SV_Position
+#define SV_InstanceID
+#define NumThreads(x, y, z) [nodiscard]
 #define outputtopology(x) [nodiscard]
 #define unroll [nodiscard]
 #define loop [nodiscard]

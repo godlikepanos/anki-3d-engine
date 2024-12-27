@@ -38,32 +38,32 @@ Error Reflections::init()
 	// Ray gen and miss
 	if(bRtReflections)
 	{
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Reflections.ankiprogbin", m_rtProg));
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/Reflections.ankiprogbin", m_mainProg));
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rtProg);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_mainProg);
 		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
 		variantInitInfo.addMutation("SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer);
 		const ShaderProgramResourceVariant* variant;
-		m_rtProg->getOrCreateVariant(variantInitInfo, variant);
+		m_mainProg->getOrCreateVariant(variantInitInfo, variant);
 		m_libraryGrProg.reset(&variant->getProgram());
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_rtProg);
+		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_mainProg);
 		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
 		variantInitInfo2.addMutation("SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer);
-		m_rtProg->getOrCreateVariant(variantInitInfo2, variant);
+		m_mainProg->getOrCreateVariant(variantInitInfo2, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 	}
 
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_rtProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_rtProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_rtProg, m_verticalBilateralDenoisingGrProg,
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_temporalDenoisingGrProg, "TemporalDenoise"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_verticalBilateralDenoisingGrProg,
 								 "BilateralDenoiseVertical"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_rtProg, m_horizontalBilateralDenoisingGrProg,
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_horizontalBilateralDenoisingGrProg,
 								 "BilateralDenoiseHorizontal"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_rtProg, m_ssrGrProg, "Ssr"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_rtProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
-	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_rtProg, m_tileClassificationGrProg, "Classification"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_ssrGrProg, "Ssr"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
 
 	m_sbtRecordSize = (bRtReflections)
 						  ? getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
@@ -459,11 +459,12 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kSrvCompute);
 		rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
+		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
 
-		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt, consts](RenderPassWorkContext& rgraphCtx) {
+		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(Reflections);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -475,6 +476,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindSrv(2, 0, getRenderer().getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(3, 0, getRenderer().getGBuffer().getColorRt(1));
 			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getColorRt(2));
+			rgraphCtx.bindSrv(5, 0, classTileMapRt);
 
 			rgraphCtx.bindUav(0, 0, transientRt2);
 			rgraphCtx.bindUav(1, 0, hitPosRt);
