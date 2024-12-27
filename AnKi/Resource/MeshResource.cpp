@@ -204,7 +204,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		}
 
 		const BufferBarrierInfo barrier = {UnifiedGeometryBuffer::getSingleton().getBufferView(), BufferUsageBit::kCopyDestination,
-										   BufferUsageBit::kVertex};
+										   BufferUsageBit::kVertexOrIndex};
 
 		cmdb->setPipelineBarrier({}, {&barrier, 1}, {});
 

@@ -68,7 +68,7 @@ void CommandBuffer::bindIndexBuffer(const BufferView& buff, IndexType type)
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.commandCommon();
 	const BufferImpl& buffi = static_cast<const BufferImpl&>(buff.getBuffer());
-	ANKI_ASSERT(!!(buffi.getBufferUsage() & BufferUsageBit::kIndex));
+	ANKI_ASSERT(!!(buffi.getBufferUsage() & BufferUsageBit::kVertexOrIndex));
 	vkCmdBindIndexBuffer(self.m_handle, buffi.getHandle(), buff.getOffset(), convertIndexType(type));
 }
 

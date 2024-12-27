@@ -49,7 +49,7 @@ Error Dbg::init()
 	{
 		BufferInitInfo buffInit("Dbg cube verts");
 		buffInit.m_size = sizeof(Vec3) * 8;
-		buffInit.m_usage = BufferUsageBit::kVertex;
+		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 		m_cubeVertsBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
@@ -69,7 +69,7 @@ Error Dbg::init()
 
 		constexpr U kIndexCount = 12 * 2;
 		buffInit.setName("Dbg cube indices");
-		buffInit.m_usage = BufferUsageBit::kIndex;
+		buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 		buffInit.m_size = kIndexCount * sizeof(U16);
 		m_cubeIndicesBuffer = GrManager::getSingleton().newBuffer(buffInit);
 		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite));

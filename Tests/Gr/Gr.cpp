@@ -406,7 +406,7 @@ float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimI
 		texInit.m_width = 2;
 		texInit.m_height = 2;
 		texInit.m_format = Format::kR32G32B32A32_Sfloat;
-		texInit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllTransfer;
+		texInit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kAllCopy;
 		TexturePtr tex = GrManager::getSingleton().newTexture(texInit);
 
 		BufferInitInfo buffInit;
@@ -2511,7 +2511,7 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 {
 	BufferInitInfo inf;
 	inf.m_mapAccess = BufferMapAccessBit::kWrite;
-	inf.m_usage = BufferUsageBit::kIndex | BufferUsageBit::kVertex | BufferUsageBit::kSrvTraceRays;
+	inf.m_usage = BufferUsageBit::kVertexOrIndex | BufferUsageBit::kSrvTraceRays;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
 	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::kWrite);

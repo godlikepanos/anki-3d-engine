@@ -730,8 +730,7 @@ enum class BufferUsageBit : U64
 	kUavCompute = 1ull << 10ull,
 	kUavTraceRays = 1ull << 11ull,
 
-	kIndex = 1ull << 12ull,
-	kVertex = 1ull << 13ull,
+	kVertexOrIndex = 1ull << 12ull,
 
 	kIndirectCompute = 1ull << 14ll,
 	kIndirectDraw = 1ull << 15ull,
@@ -751,14 +750,14 @@ enum class BufferUsageBit : U64
 	kAllIndirect = kIndirectCompute | kIndirectDraw | kIndirectTraceRays,
 	kAllCopy = kCopySource | kCopyDestination,
 
-	kAllGeometry = kConstantGeometry | kSrvGeometry | kUavGeometry | kIndex | kVertex,
+	kAllGeometry = kConstantGeometry | kSrvGeometry | kUavGeometry | kVertexOrIndex,
 	kAllPixel = kConstantPixel | kSrvPixel | kUavPixel,
 	kAllGraphics = kAllGeometry | kAllPixel | kIndirectDraw,
 	kAllCompute = kConstantCompute | kSrvCompute | kUavCompute | kIndirectCompute,
 	kAllTraceRays = kConstantTraceRays | kSrvTraceRays | kUavTraceRays | kIndirectTraceRays | kShaderBindingTable,
 
 	kAllRayTracing = kAllTraceRays | kAccelerationStructureBuild | kAccelerationStructureBuildScratch,
-	kAllRead = kAllConstant | kAllSrv | kAllUav | kIndex | kVertex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable,
+	kAllRead = kAllConstant | kAllSrv | kAllUav | kVertexOrIndex | kAllIndirect | kCopySource | kAccelerationStructureBuild | kShaderBindingTable,
 	kAllWrite = kAllUav | kCopyDestination | kAccelerationStructureBuildScratch,
 
 	kAllShaderResource = kAllConstant | kAllSrv | kAllUav,

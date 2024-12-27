@@ -200,7 +200,7 @@ D3D12_BARRIER_SYNC BufferImpl::computeSync(BufferUsageBit usage) const
 		sync |= D3D12_BARRIER_SYNC_EXECUTE_INDIRECT;
 	}
 
-	if(!!(usage & BufferUsageBit::kIndex))
+	if(!!(usage & BufferUsageBit::kVertexOrIndex))
 	{
 		sync |= D3D12_BARRIER_SYNC_INDEX_INPUT;
 	}
@@ -248,19 +248,14 @@ D3D12_BARRIER_ACCESS BufferImpl::computeAccess(BufferUsageBit usage) const
 
 	D3D12_BARRIER_ACCESS out = {};
 
-	if(!!(usage & BufferUsageBit::kVertex))
+	if(!!(usage & BufferUsageBit::kVertexOrIndex))
 	{
-		out |= D3D12_BARRIER_ACCESS_VERTEX_BUFFER;
+		out |= D3D12_BARRIER_ACCESS_VERTEX_BUFFER | D3D12_BARRIER_ACCESS_INDEX_BUFFER;
 	}
 
 	if(!!(usage & BufferUsageBit::kAllConstant))
 	{
 		out |= D3D12_BARRIER_ACCESS_CONSTANT_BUFFER;
-	}
-
-	if(!!(usage & BufferUsageBit::kIndex))
-	{
-		out |= D3D12_BARRIER_ACCESS_INDEX_BUFFER;
 	}
 
 	if(!!(usage & BufferUsageBit::kAllUav))

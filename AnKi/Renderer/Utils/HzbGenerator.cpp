@@ -69,7 +69,7 @@ Error HzbGenerator::init()
 	// Boxes buffer
 	buffInit = BufferInitInfo("HzbBoxIndices");
 	buffInit.m_size = sizeof(kBoxIndices);
-	buffInit.m_usage = BufferUsageBit::kIndex;
+	buffInit.m_usage = BufferUsageBit::kVertexOrIndex;
 	buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
 	m_boxIndexBuffer = GrManager::getSingleton().newBuffer(buffInit);
 

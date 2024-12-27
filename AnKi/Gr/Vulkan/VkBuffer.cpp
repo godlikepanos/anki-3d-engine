@@ -306,7 +306,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::kIndex | BufferUsageBit::kVertex)))
+	if(!!(usage & (BufferUsageBit::kVertexOrIndex)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
 	}
@@ -378,14 +378,9 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::kIndex))
+	if(!!(usage & BufferUsageBit::kVertexOrIndex))
 	{
-		mask |= VK_ACCESS_INDEX_READ_BIT;
-	}
-
-	if(!!(usage & BufferUsageBit::kVertex))
-	{
-		mask |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		mask |= VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 	}
 
 	if(!!(usage & BufferUsageBit::kAllIndirect))

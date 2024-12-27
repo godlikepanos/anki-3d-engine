@@ -286,14 +286,9 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::kIndex))
+	if(!!(usageMask & BufferUsageBit::kVertexOrIndex))
 	{
-		out |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	}
-
-	if(!!(usageMask & BufferUsageBit::kVertex))
-	{
-		out |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		out |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	}
 
 	if(!!(usageMask & BufferUsageBit::kAllIndirect))
