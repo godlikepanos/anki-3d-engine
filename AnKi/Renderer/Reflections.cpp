@@ -53,6 +53,9 @@ Error Reflections::init()
 		variantInitInfo2.addMutation("SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer);
 		m_mainProg->getOrCreateVariant(variantInitInfo2, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
+
+		m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
+											GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 	}
 
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_spatialDenoisingGrProg, "SpatialDenoise"));
@@ -64,11 +67,6 @@ Error Reflections::init()
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_ssrGrProg, "Ssr"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_probeFallbackGrProg, "ReflectionProbeFallback"));
 	ANKI_CHECK(loadShaderProgram("ShaderBinaries/Reflections.ankiprogbin", mutation, m_mainProg, m_tileClassificationGrProg, "Classification"));
-
-	m_sbtRecordSize = (bRtReflections)
-						  ? getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
-											  GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)))
-						  : 0;
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "Reflections #1");
@@ -258,10 +256,10 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	// SBT build
 	BufferHandle sbtHandle;
 	BufferView sbtBuffer;
-	BufferHandle visibilityDep;
-	BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
 	if(bRtReflections)
 	{
+		BufferHandle visibilityDep;
+		BufferView visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff;
 		getRenderer().getAccelerationStructureBuilder().getVisibilityInfo(visibilityDep, visibleRenderableIndicesBuff, buildSbtIndirectArgsBuff);
 
 		// Allocate SBT

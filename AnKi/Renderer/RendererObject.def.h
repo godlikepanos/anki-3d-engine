@@ -38,6 +38,7 @@ ANKI_RENDERER_OBJECT_DEF(MotionBlur, motionBlur, 1)
 ANKI_RENDERER_OBJECT_DEF(RtMaterialFetchDbg, rtMaterialFetchDbg,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rtMaterialFetchDbgCVar)
 ANKI_RENDERER_OBJECT_DEF(Reflections, reflections, 1)
+ANKI_RENDERER_OBJECT_DEF(IndirectDiffuse, indirectDiffuse, 1)
 
 // Util objects
 ANKI_RENDERER_OBJECT_DEF(RenderableDrawer, drawer, 1)

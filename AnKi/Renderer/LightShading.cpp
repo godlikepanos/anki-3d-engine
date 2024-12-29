@@ -18,6 +18,7 @@
 #include <AnKi/Renderer/ClusterBinning.h>
 #include <AnKi/Renderer/Ssao.h>
 #include <AnKi/Renderer/Reflections.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
@@ -29,7 +30,10 @@ Error LightShading::init()
 {
 	{
 		// Load shaders and programs
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/LightShading.ankiprogbin", m_lightShading.m_prog, m_lightShading.m_grProg));
+		ANKI_CHECK(loadShaderProgram(
+			"ShaderBinaries/LightShading.ankiprogbin",
+			{{"INDIRECT_DIFFUSE_TEX", GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar}},
+			m_lightShading.m_prog, m_lightShading.m_grProg));
 
 		// Create RT descr
 		const UVec2 internalResolution = getRenderer().getInternalResolution();
@@ -82,7 +86,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
 		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
 		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kLight));
-		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar)
+		{
+			rgraphCtx.bindSrv(2, 0, getRenderer().getIndirectDiffuse().getRt());
+		}
+		else
+		{
+			cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe));
+		}
 		cmdb.bindSrv(3, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kReflectionProbe));
 		cmdb.bindSrv(4, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
@@ -263,6 +274,11 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 	pass.newTextureDependency(getRenderer().getSsao().getRt(), readUsage);
 	pass.newTextureDependency(getRenderer().getReflections().getRt(), readUsage);
+
+	if(GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar)
+	{
+		pass.newTextureDependency(getRenderer().getIndirectDiffuse().getRt(), TextureUsageBit::kSrvPixel);
+	}
 
 	// Fog
 	pass.newTextureDependency(getRenderer().getVolumetricFog().getRt(), readUsage);

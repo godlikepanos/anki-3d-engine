@@ -49,7 +49,7 @@ Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
 }
 
 /// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-/// From a uniform 2D point inside a circle get a 3D point in the surface of a hemisphere. It's oriented in the z axis
+/// From a uniform 2D point inside a circle get a 3D point in the surface of a hemisphere. It's oriented in the +Z. uv is in [0, 1]
 Vec3 hemisphereSampleUniform(Vec2 uv)
 {
 	const F32 phi = uv.y * 2.0 * kPi;

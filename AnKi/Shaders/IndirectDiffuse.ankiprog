@@ -1,0 +1,191 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki 16bit
+
+#pragma anki technique RtMaterialFetch rgen miss
+
+#include <AnKi/Shaders/RtMaterialFetch.hlsl>
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/ImportanceSampling.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/LightFunctions.hlsl>
+
+// Config and consts
+constexpr Bool kTryShadowmapFirst = true;
+
+// Functions
+Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
+						SamplerState linearAnyClampSampler)
+{
+	const U32 probeCount = getStructuredBufferElementCount(giProbes);
+	U32 i;
+	for(i = 0; i < probeCount; ++i)
+	{
+		if(any(worldPos >= giProbes[i].m_aabbMax) || any(worldPos <= giProbes[i].m_aabbMin))
+		{
+			continue;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	const Bool probeFound = (i != probeCount);
+	if(probeFound)
+	{
+		const GpuSceneGlobalIlluminationProbe probe = giProbes[i];
+		return sampleGlobalIllumination<F32>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), linearAnyClampSampler);
+	}
+	else
+	{
+		return 0.0;
+	}
+}
+
+// ===========================================================================
+// RayGen                                                                    =
+// ===========================================================================
+#if ANKI_RAY_GEN_SHADER
+
+[Shader("raygeneration")] void main()
+{
+	Vec2 outSize;
+	g_colorAndPdfTex.GetDimensions(outSize.x, outSize.y);
+
+	const UVec2 coord = DispatchRaysIndex().xy;
+	const Vec2 uv = Vec2(coord) / outSize;
+
+	const F32 depth = g_depthTex[coord].x;
+	const Vec4 rt2 = g_gbufferRt2[coord];
+	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
+
+#	if 0
+	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
+	const Vec3 worldPos = v4.xyz / v4.w;
+
+	// Rand
+	const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
+	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
+
+	const Vec3 rayOrigin = worldPos;
+
+	const Mat3 tbn = rotationFromDirection(worldNormal);
+	const Vec3 rayDir = mul(tbn, hemisphereSampleCos(randFactors));
+#	else
+	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), 1.0, 1.0));
+	const Vec3 worldPos = v4.xyz / v4.w;
+
+	const Vec3 rayOrigin = g_globalRendererConstants.m_matrices.m_cameraTransform.getTranslationPart().xyz;
+	const Vec3 rayDir = normalize(worldPos - rayOrigin);
+#	endif
+
+	// Trace
+	RtMaterialFetchRayPayload payload;
+	payload = (RtMaterialFetchRayPayload)0;
+	payload.m_textureLod = 100.0;
+	const U32 flags = RAY_FLAG_FORCE_OPAQUE;
+	const U32 sbtRecordOffset = 0u;
+	const U32 sbtRecordStride = 0u;
+	const U32 missIndex = 0u;
+	const U32 cullMask = 0xFFu;
+	RayDesc ray;
+	ray.Origin = rayOrigin;
+	ray.TMin = 0.1;
+	ray.Direction = rayDir;
+	ray.TMax = 100.0; // TODO
+	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
+
+#	if 1
+	g_colorAndPdfTex[coord] = Vec4(payload.m_diffuseColor * 0.0 + payload.m_worldNormal * 0.0 + payload.m_rayT * 0.0 + payload.m_emission * 1.0, 0.0);
+	return;
+#	endif
+
+	const Bool hasHitSky = payload.m_rayT < 0.0;
+	if(hasHitSky)
+	{
+		payload.m_rayT = 100.0; // TODO
+	}
+
+	const Vec3 hitPos = worldPos + rayDir * payload.m_rayT;
+
+	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
+
+	// Trace shadow
+	Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
+	vv4.xy /= vv4.w;
+	const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
+
+	F32 shadow = 0.0;
+	if(hasHitSky)
+	{
+		// Skybox
+		shadow = 1.0;
+
+		if(g_globalRendererConstants.m_sky.m_type == 0)
+		{
+			payload.m_emission = g_globalRendererConstants.m_sky.m_solidColor;
+		}
+		else
+		{
+			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
+			payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
+		}
+	}
+	else if(bInsideFrustum && kTryShadowmapFirst)
+	{
+		const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
+		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+
+		const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
+
+		shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
+	}
+	else
+	{
+		constexpr U32 qFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
+		RayQuery<qFlags> q;
+		RayDesc ray;
+		ray.Origin = worldPos + rayDir * (payload.m_rayT - 0.01);
+		ray.TMin = 0.01;
+		ray.Direction = -dirLight.m_direction;
+		ray.TMax = 100.0; // TODO
+		q.TraceRayInline(g_tlas, qFlags, cullMask, ray);
+		q.Proceed();
+		shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
+	}
+
+	// Do simple light shading
+	Vec3 outColor = payload.m_emission;
+	Vec3 indirectDiffuse = 0.0;
+	if(!hasHitSky)
+	{
+		indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, payload.m_worldNormal, g_linearClampAnySampler);
+	}
+	// outColor += payload.m_diffuseColor * indirectDiffuse;
+
+	const Vec3 l = -dirLight.m_direction;
+	const F32 lambert = max(0.0, dot(l, payload.m_worldNormal));
+	const Vec3 diffC = diffuseLobe(payload.m_diffuseColor);
+	outColor += diffC * dirLight.m_diffuseColor * lambert * shadow;
+
+	g_colorAndPdfTex[coord] = Vec4(outColor, 0.0);
+}
+#endif // ANKI_RAY_GEN_SHADER
+
+// ===========================================================================
+// Miss                                                                      =
+// ===========================================================================
+#if ANKI_MISS_SHADER
+	[Shader("miss")] void main(inout RtMaterialFetchRayPayload payload)
+{
+	payload.m_diffuseColor = 0.0;
+	payload.m_worldNormal = 0.0;
+	payload.m_emission = 0.0;
+	payload.m_rayT = -1.0;
+}
+#endif // ANKI_MISS_SHADER

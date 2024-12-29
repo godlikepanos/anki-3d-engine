@@ -48,6 +48,7 @@
 #include <AnKi/Renderer/MotionBlur.h>
 #include <AnKi/Renderer/RtMaterialFetchDbg.h>
 #include <AnKi/Renderer/Reflections.h>
+#include <AnKi/Renderer/IndirectDiffuse.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -294,7 +295,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_rtMaterialFetchDbg->populateRenderGraph(ctx);
 	}
-
+	m_indirectDiffuse->populateRenderGraph(ctx);
 	m_reflections->populateRenderGraph(ctx);
 	m_shadowmapsResolve->populateRenderGraph(ctx);
 	m_volumetricFog->populateRenderGraph(ctx);

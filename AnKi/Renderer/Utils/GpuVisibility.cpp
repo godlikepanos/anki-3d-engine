@@ -1110,7 +1110,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 	const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();
 
 	out.m_instancesBuffer = allocateStructuredBuffer<AccelerationStructureInstance>(aabbCount);
-	out.m_dependency = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kUavCompute);
+	out.m_dependency = rgraph.importBuffer(out.m_instancesBuffer, BufferUsageBit::kNone);
 
 	out.m_renderablesBuffer = allocateStructuredBuffer<LodAndRenderableIndex>(aabbCount + 1);
 
@@ -1157,7 +1157,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 			cmdb.bindSrv(3, 0, GpuSceneArrays::Transform::getSingleton().getBufferView());
 			cmdb.bindUav(0, 0, instancesBuff);
 			cmdb.bindUav(1, 0, visRenderablesBuff);
-			cmdb.bindUav(2, 0, BufferView(m_counterBuffer.get(), 0, sizeof(U32) * 2));
+			cmdb.bindUav(2, 0, BufferView(m_counterBuffer.get()));
 			cmdb.bindUav(3, 0, zeroInstancesAndSbtBuildDispatchArgsBuff);
 
 			const U32 aabbCount = GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount();

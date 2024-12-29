@@ -25,6 +25,7 @@
 #define in
 #define inout
 #define discard return
+#define Shader(x)
 
 #define ANKI_BEGIN_NAMESPACE
 #define ANKI_END_NAMESPACE
@@ -294,6 +295,8 @@ template<typename T>
 void DispatchMesh(U32 groupSizeX, U32 groupSizeY, U32 groupSizeZ, T payload);
 
 void SetMeshOutputCounts(U32 vertexCount, U32 primitiveCount);
+
+UVec2 DispatchRaysIndex();
 
 // Workgraphs
 

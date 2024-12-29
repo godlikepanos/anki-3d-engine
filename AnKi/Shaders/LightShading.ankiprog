@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator INDIRECT_DIFFUSE_TEX 0 1
+
 #pragma anki technique vert pixel
 
 #include <AnKi/Shaders/QuadVert.hlsl>
@@ -16,8 +18,11 @@
 ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
 StructuredBuffer<PointLight> g_pointLights : register(t0);
 StructuredBuffer<SpotLight> g_spotLights : register(t1);
+#	if INDIRECT_DIFFUSE_TEX
+Texture2D<Vec4> g_indirectDiffuseTex : register(t2);
+#	else
 StructuredBuffer<GlobalIlluminationProbe> g_giProbes : register(t2);
-StructuredBuffer<ReflectionProbe> g_reflectionProbes : register(t3);
+#	endif
 StructuredBuffer<Cluster> g_clusters : register(t4);
 
 SamplerState g_nearestAnyClampSampler : register(s0);
@@ -79,8 +84,13 @@ RVec4 main(VertOut input) : SV_TARGET0
 	RVec3 outColor = gbuffer.m_emission;
 
 	// Indirect diffuse
+#	if INDIRECT_DIFFUSE_TEX
+	const RVec3 indirectCol = g_indirectDiffuseTex[coord];
+	outColor += indirectCol * gbuffer.m_diffuse;
+#	else
 	const RVec3 probeColor = sampleGiProbes<RF32>(cluster, g_giProbes, bentNormal, worldPos, g_trilinearClampSampler);
 	outColor += probeColor * gbuffer.m_diffuse;
+#	endif
 
 	// Indirect specular
 	{
