@@ -26,7 +26,7 @@ ANKI_RENDERER_OBJECT_DEF(ShadowmapsResolve, shadowmapsResolve, 1)
 ANKI_RENDERER_OBJECT_DEF(RtShadows, rtShadows, GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled&& g_rayTracedShadowsCVar)
 ANKI_RENDERER_OBJECT_DEF(AccelerationStructureBuilder, accelerationStructureBuilder,
 						 GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled
-							 && (g_rayTracedShadowsCVar || g_rtMaterialFetchDbgCVar || g_rtReflectionsCVar))
+							 && (g_rayTracedShadowsCVar || g_rtMaterialFetchDbgCVar || g_rtReflectionsCVar || g_rtIndirectDiffuseCVar))
 ANKI_RENDERER_OBJECT_DEF(MotionVectors, motionVectors, 1)
 ANKI_RENDERER_OBJECT_DEF(TemporalUpscaler, temporalUpscaler, 1)
 ANKI_RENDERER_OBJECT_DEF(VrsSriGeneration, vrsSriGeneration, 1)

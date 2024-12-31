@@ -1,0 +1,12 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh subMeshIndex="0">Assets/candle_3_l.001_9966f5242837df58.ankimesh</mesh>
+			<material>Assets/MTL_Candle_33551c344b101f46.ankimtl</material>
+		</modelPatch>
+		<modelPatch>
+			<mesh subMeshIndex="1">Assets/candle_3_l.001_9966f5242837df58.ankimesh</mesh>
+			<material>Assets/MTL_Flame_35971c3f216651ba.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

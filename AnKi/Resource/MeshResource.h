@@ -78,10 +78,10 @@ public:
 		meshletCount = m_lods[lod].m_meshletCount;
 	}
 
-	const AccelerationStructurePtr& getBottomLevelAccelerationStructure(U32 lod) const
+	const AccelerationStructurePtr& getBottomLevelAccelerationStructure(U32 lod, U32 subMeshId) const
 	{
-		ANKI_ASSERT(m_lods[lod].m_blas);
-		return m_lods[lod].m_blas;
+		ANKI_ASSERT(m_subMeshes[subMeshId].m_blas[lod]);
+		return m_subMeshes[subMeshId].m_blas[lod];
 	}
 
 	/// Check if a vertex stream is present.
@@ -122,8 +122,6 @@ private:
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;
 		U32 m_meshletCount = 0;
-
-		AccelerationStructurePtr m_blas;
 	};
 
 	class SubMesh
@@ -133,6 +131,9 @@ private:
 		Array<U32, kMaxLodCount> m_indexCounts = {};
 		Array<U32, kMaxLodCount> m_firstMeshlet = {};
 		Array<U32, kMaxLodCount> m_meshletCounts = {};
+
+		Array<AccelerationStructurePtr, kMaxLodCount> m_blas;
+
 		Aabb m_aabb;
 	};
 

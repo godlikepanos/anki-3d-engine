@@ -361,7 +361,8 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 
 		xml.replaceAll("%emission%", ImporterString().sprintf("<input name=\"m_emissiveTex\" value=\"%s\"/>\n"
 															  "\t\t<input name=\"m_emissionScale\" value=\"%f %f %f\"/>",
-															  uri.cstr(), mtl.emissive_factor[0], mtl.emissive_factor[1], mtl.emissive_factor[2]));
+															  uri.cstr(), mtl.emissive_strength.emissive_strength,
+															  mtl.emissive_strength.emissive_strength, mtl.emissive_strength.emissive_strength));
 
 		xml.replaceAll("%emissiveTexMutator%", "1");
 
@@ -376,8 +377,10 @@ Error GltfImporter::writeMaterialInternal(const cgltf_material& mtl, Bool writeR
 	}
 	else
 	{
-		xml.replaceAll("%emission%", ImporterString().sprintf("<input name=\"m_emissionScale\" value=\"%f %f %f\"/>", mtl.emissive_factor[0],
-															  mtl.emissive_factor[1], mtl.emissive_factor[2]));
+		xml.replaceAll("%emission%", ImporterString().sprintf("<input name=\"m_emissionScale\" value=\"%f %f %f\"/>",
+															  mtl.emissive_factor[0] * mtl.emissive_strength.emissive_strength,
+															  mtl.emissive_factor[1] * mtl.emissive_strength.emissive_strength,
+															  mtl.emissive_factor[2] * mtl.emissive_strength.emissive_strength));
 
 		xml.replaceAll("%emissiveTexMutator%", "0");
 	}

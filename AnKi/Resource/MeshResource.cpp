@@ -157,22 +157,34 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 			lod.m_meshletCount = header.m_meshletCounts[l];
 		}
+	}
 
-		// BLAS
-		if(rayTracingEnabled)
+	// BLAS
+	if(rayTracingEnabled)
+	{
+		for(U32 submeshIdx = 0; submeshIdx < m_subMeshes.getSize(); ++submeshIdx)
 		{
-			AccelerationStructureInitInfo inf(ResourceString().sprintf("%s_%s", "Blas", basename.cstr()));
-			inf.m_type = AccelerationStructureType::kBottomLevel;
+			SubMesh& subMesh = m_subMeshes[submeshIdx];
 
-			inf.m_bottomLevel.m_indexBuffer = lod.m_indexBufferAllocationToken;
-			inf.m_bottomLevel.m_indexCount = lod.m_indexCount;
-			inf.m_bottomLevel.m_indexType = m_indexType;
-			inf.m_bottomLevel.m_positionBuffer = lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition];
-			inf.m_bottomLevel.m_positionStride = getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
-			inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
-			inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
+			for(U32 lodIdx = 0; lodIdx < header.m_lodCount; ++lodIdx)
+			{
+				Lod& lod = m_lods[lodIdx];
 
-			lod.m_blas = GrManager::getSingleton().newAccelerationStructure(inf);
+				AccelerationStructureInitInfo inf(ResourceString().sprintf("%s_%s", "BLAS", basename.cstr()));
+				inf.m_type = AccelerationStructureType::kBottomLevel;
+
+				inf.m_bottomLevel.m_indexBuffer = BufferView(lod.m_indexBufferAllocationToken)
+													  .incrementOffset(getIndexSize(m_indexType) * subMesh.m_firstIndices[lodIdx])
+													  .setRange(getIndexSize(m_indexType) * subMesh.m_indexCounts[lodIdx]);
+				inf.m_bottomLevel.m_indexCount = subMesh.m_indexCounts[lodIdx];
+				inf.m_bottomLevel.m_indexType = m_indexType;
+				inf.m_bottomLevel.m_positionBuffer = lod.m_vertexBuffersAllocationToken[VertexStreamId::kPosition];
+				inf.m_bottomLevel.m_positionStride = getFormatInfo(kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition]).m_texelSize;
+				inf.m_bottomLevel.m_positionsFormat = kMeshRelatedVertexStreamFormats[VertexStreamId::kPosition];
+				inf.m_bottomLevel.m_positionCount = lod.m_vertexCount;
+
+				subMesh.m_blas[lodIdx] = GrManager::getSingleton().newAccelerationStructure(inf);
+			}
 		}
 	}
 
@@ -357,43 +369,48 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	{
 		// Build BLASes
 
-		// Set the barriers
-		BufferBarrierInfo bufferBarrier;
-		bufferBarrier.m_bufferView = UnifiedGeometryBuffer::getSingleton().getBufferView();
-		bufferBarrier.m_previousUsage = BufferUsageBit::kCopyDestination;
-		bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
-
-		Array<AccelerationStructureBarrierInfo, kMaxLodCount> asBarriers;
-		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
+		for(U32 submeshIdx = 0; submeshIdx < m_subMeshes.getSize(); ++submeshIdx)
 		{
-			asBarriers[lodIdx].m_as = m_lods[lodIdx].m_blas.get();
-			asBarriers[lodIdx].m_previousUsage = AccelerationStructureUsageBit::kNone;
-			asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kBuild;
+			const SubMesh& submesh = m_subMeshes[submeshIdx];
+
+			// Set the barriers
+			BufferBarrierInfo bufferBarrier;
+			bufferBarrier.m_bufferView = UnifiedGeometryBuffer::getSingleton().getBufferView();
+			bufferBarrier.m_previousUsage = BufferUsageBit::kCopyDestination;
+			bufferBarrier.m_nextUsage = unifiedGeometryBufferNonTransferUsage;
+
+			Array<AccelerationStructureBarrierInfo, kMaxLodCount> asBarriers;
+			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
+			{
+				asBarriers[lodIdx].m_as = submesh.m_blas[lodIdx].get();
+				asBarriers[lodIdx].m_previousUsage = AccelerationStructureUsageBit::kNone;
+				asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kBuild;
+			}
+
+			cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {&asBarriers[0], m_lods.getSize()});
+
+			// Build BLASes
+			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
+			{
+				// TODO find a temp buffer
+				BufferInitInfo buffInit("BLAS scratch");
+				buffInit.m_size = submesh.m_blas[lodIdx]->getBuildScratchBufferSize();
+				buffInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
+				BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(buffInit);
+
+				cmdb->buildAccelerationStructure(submesh.m_blas[lodIdx].get(), BufferView(scratchBuff.get()));
+			}
+
+			// Barriers again
+			for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
+			{
+				asBarriers[lodIdx].m_as = submesh.m_blas[lodIdx].get();
+				asBarriers[lodIdx].m_previousUsage = AccelerationStructureUsageBit::kBuild;
+				asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kAllRead;
+			}
+
+			cmdb->setPipelineBarrier({}, {}, {&asBarriers[0], m_lods.getSize()});
 		}
-
-		cmdb->setPipelineBarrier({}, {&bufferBarrier, 1}, {&asBarriers[0], m_lods.getSize()});
-
-		// Build BLASes
-		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
-		{
-			// TODO find a temp buffer
-			BufferInitInfo buffInit("BLAS scratch");
-			buffInit.m_size = m_lods[lodIdx].m_blas->getBuildScratchBufferSize();
-			buffInit.m_usage = BufferUsageBit::kAccelerationStructureBuildScratch;
-			BufferPtr scratchBuff = GrManager::getSingleton().newBuffer(buffInit);
-
-			cmdb->buildAccelerationStructure(m_lods[lodIdx].m_blas.get(), BufferView(scratchBuff.get()));
-		}
-
-		// Barriers again
-		for(U32 lodIdx = 0; lodIdx < m_lods.getSize(); ++lodIdx)
-		{
-			asBarriers[lodIdx].m_as = m_lods[lodIdx].m_blas.get();
-			asBarriers[lodIdx].m_previousUsage = AccelerationStructureUsageBit::kBuild;
-			asBarriers[lodIdx].m_nextUsage = AccelerationStructureUsageBit::kAllRead;
-		}
-
-		cmdb->setPipelineBarrier({}, {}, {&asBarriers[0], m_lods.getSize()});
 	}
 	else
 	{

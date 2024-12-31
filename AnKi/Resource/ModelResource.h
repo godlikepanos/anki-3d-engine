@@ -96,6 +96,7 @@ private:
 	Array<Lod, kMaxLodCount> m_lodInfos;
 	Aabb m_aabb;
 	U32 m_meshLodCount = 0;
+	U32 m_submeshIdx = kMaxU32;
 
 	[[nodiscard]] Bool supportsSkinning() const
 	{

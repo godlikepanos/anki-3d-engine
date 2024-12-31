@@ -27,7 +27,7 @@ void ModelPatch::getGeometryInfo(U32 lod, ModelPatchGeometryInfo& inf) const
 
 	if(!!(m_mtl->getRenderingTechniques() & RenderingTechniqueBit::kAllRt))
 	{
-		inf.m_blas = m_mesh->getBottomLevelAccelerationStructure(lod);
+		inf.m_blas = m_mesh->getBottomLevelAccelerationStructure(lod, m_submeshIdx);
 	}
 
 	if(m_lodInfos[lod].m_meshletCount != kMaxU32)
@@ -51,7 +51,7 @@ void ModelPatch::getRayTracingInfo(const RenderingKey& key, ModelRayTracingInfo&
 
 	// Mesh
 	const U32 meshLod = min<U32>(key.getLod(), m_meshLodCount - 1);
-	info.m_bottomLevelAccelerationStructure = m_mesh->getBottomLevelAccelerationStructure(meshLod);
+	info.m_bottomLevelAccelerationStructure = m_mesh->getBottomLevelAccelerationStructure(meshLod, m_submeshIdx);
 
 	info.m_indexUgbOffset = m_lodInfos[meshLod].m_indexUgbOffset;
 
@@ -65,6 +65,8 @@ Error ModelPatch::init([[maybe_unused]] ModelResource* model, CString meshFName,
 #if ANKI_ASSERTIONS_ENABLED
 	m_model = model;
 #endif
+
+	m_submeshIdx = (subMeshIndex == kMaxU32) ? 0 : subMeshIndex;
 
 	// Load material
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource(mtlFName, m_mtl, async));

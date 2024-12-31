@@ -3,10 +3,10 @@
 <material shadows="1">
 	<shaderProgram name="GBufferGeneric">
 		<mutation>
-			<mutator name="DIFFUSE_TEX" value="1"/>
+			<mutator name="DIFFUSE_TEX" value="0"/>
 			<mutator name="SPECULAR_TEX" value="0"/>
-			<mutator name="ROUGHNESS_METALNESS_TEX" value="1"/>
-			<mutator name="NORMAL_TEX" value="1"/>
+			<mutator name="ROUGHNESS_METALNESS_TEX" value="0"/>
+			<mutator name="NORMAL_TEX" value="0"/>
 			<mutator name="PARALLAX" value="0"/>
 			<mutator name="EMISSIVE_TEX" value="0"/>
 			<mutator name="ALPHA_TEST" value="0"/>
@@ -15,13 +15,11 @@
 
 	<inputs>
 		
-		<input name="m_diffuseTex" value="Assets/sponza_floor_a_diff.ankitex"/>
-		<input name="m_diffuseScale" value="1.000000 1.000000 1.000000 1.000000"/>
+		<input name="m_diffuseScale" value="0.799103 0.485215 0.282108 1.000000"/>
 		<input name="m_specularScale" value="0.040000 0.040000 0.040000"/>
-		<input name="m_roughnessMetalnessTex" value="Assets/Sponza_Floor_roughness.ankitex"/>
-		<input name="m_roughnessScale" value="0.050000"/>
+		<input name="m_roughnessScale" value="0.600000"/>
 		<input name="m_metalnessScale" value="0.000000"/>
-		<input name="m_normalTex" value="Assets/Sponza_Floor_normal.ankitex"/>
+		
 		<input name="m_emissionScale" value="0.000000 0.000000 0.000000"/>
 		<input name="m_subsurface" value="0.000000"/>
 		
