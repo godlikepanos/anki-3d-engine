@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki mutator INDIRECT_DIFFUSE_TEX 0 1
 
 #pragma anki technique vert pixel
@@ -32,21 +34,21 @@ Texture2D<Vec4> g_gbuffer0Tex : register(t5);
 Texture2D<Vec4> g_gbuffer1Tex : register(t6);
 Texture2D<Vec4> g_gbuffer2Tex : register(t7);
 Texture2D g_depthTex : register(t8);
-Texture2D<RVec4> g_resolvedShadowsTex : register(t9);
-Texture2D<RVec4> g_ssaoTex : register(t10);
-Texture2D<RVec4> g_reflectionsTex : register(t11);
+Texture2D<Vec4> g_resolvedShadowsTex : register(t9);
+Texture2D<Vec4> g_ssaoTex : register(t10);
+Texture2D<Vec4> g_reflectionsTex : register(t11);
 Texture2D<Vec4> g_integrationLut : register(t12);
 
 // Common code for lighting
 #	define LIGHTING_COMMON_BRDF() \
-		const RVec3 frag2Light = light.m_position - worldPos; \
-		const RVec3 l = normalize(frag2Light); \
-		const RVec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l); \
-		const RVec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
-		const RF32 att = computeAttenuationFactor<RF32>(light.m_radius, frag2Light); \
-		RF32 lambert = max(0.0, dot(gbuffer.m_normal, l));
+		const Vec3 frag2Light = light.m_position - worldPos; \
+		const HVec3 l = normalize(frag2Light); \
+		const HVec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l); \
+		const HVec3 diffC = diffuseLobe(gbuffer.m_diffuse); \
+		const F16 att = computeAttenuationFactor<F16>(light.m_radius, frag2Light); \
+		F16 lambert = max(F16(0.0), dot(gbuffer.m_normal, l));
 
-RVec4 main(VertOut input) : SV_TARGET0
+Vec4 main(VertOut input) : SV_Target0
 {
 	const Vec2 uv = input.m_uv;
 	const Vec2 ndc = uvToNdc(uv);
@@ -62,7 +64,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const RVec3 viewDir = normalize(g_globalConstants.m_cameraPosition - worldPos);
+	const HVec3 viewDir = normalize(g_globalConstants.m_cameraPosition - worldPos);
 
 	// Get the cluster
 	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants, Vec3(input.m_svPosition.xy, depth));
@@ -70,49 +72,49 @@ RVec4 main(VertOut input) : SV_TARGET0
 	// return clusterHeatmap(cluster, 1u << (U32)GpuSceneNonRenderableObjectType::kLight, 3);
 
 	// Decode GBuffer
-	GbufferInfo<RF32> gbuffer = (GbufferInfo<RF32>)0;
-	unpackGBufferNoVelocity<RF32>(g_gbuffer0Tex[coord], g_gbuffer1Tex[coord], g_gbuffer2Tex[coord], gbuffer);
+	GbufferInfo<F16> gbuffer = (GbufferInfo<F16>)0;
+	unpackGBufferNoVelocity<F16>(g_gbuffer0Tex[coord], g_gbuffer1Tex[coord], g_gbuffer2Tex[coord], gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, kSubsurfaceMin);
 
 	// Apply SSAO
-	const RVec4 ssaoAndBentNormals = g_ssaoTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);
-	const RF32 ssao = ssaoAndBentNormals.w;
-	const RVec3 bentNormal = ssaoAndBentNormals.xyz;
+	const HVec4 ssaoAndBentNormals = g_ssaoTex.SampleLevel(g_trilinearClampSampler, uv, 0.0);
+	const F16 ssao = ssaoAndBentNormals.w;
+	const HVec3 bentNormal = ssaoAndBentNormals.xyz;
 	gbuffer.m_diffuse *= ssao;
 
 	// Ambient and emissive color
-	RVec3 outColor = gbuffer.m_emission;
+	HVec3 outColor = gbuffer.m_emission;
 
 	// Indirect diffuse
 #	if INDIRECT_DIFFUSE_TEX
-	const RVec3 indirectCol = g_indirectDiffuseTex[coord];
+	const HVec3 indirectCol = g_indirectDiffuseTex[coord];
 	outColor += indirectCol * gbuffer.m_diffuse;
 #	else
-	const RVec3 probeColor = sampleGiProbes<RF32>(cluster, g_giProbes, bentNormal, worldPos, g_trilinearClampSampler);
+	const HVec3 probeColor = sampleGiProbes<F16>(cluster, g_giProbes, bentNormal, worldPos, g_trilinearClampSampler);
 	outColor += probeColor * gbuffer.m_diffuse;
 #	endif
 
 	// Indirect specular
 	{
-		RVec3 refl = g_reflectionsTex[coord].xyz;
+		HVec3 refl = g_reflectionsTex[coord].xyz;
 
 		// Apply the reflection
-		const RF32 NoV = max(0.0f, dot(gbuffer.m_normal, viewDir));
-		const Vec3 env = specularDFG<RF32>(gbuffer.m_f0, gbuffer.m_roughness, g_integrationLut, g_trilinearClampSampler, NoV);
+		const F16 NoV = max(0.0, dot(gbuffer.m_normal, viewDir));
+		const Vec3 env = specularDFG<F16>(gbuffer.m_f0, gbuffer.m_roughness, g_integrationLut, g_trilinearClampSampler, NoV);
 		refl *= env;
 
 		outColor += refl;
 	}
 
 	// SM
-	RVec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
+	HVec4 resolvedSm = g_resolvedShadowsTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0);
 	U32 resolvedSmIdx = 0u;
 
 	// Dir light
 	const DirectionalLight dirLight = g_globalConstants.m_directionalLight;
 	if(dirLight.m_shadowCascadeCount_31bit_active_1bit & 1u)
 	{
-		RF32 shadowFactor;
+		F16 shadowFactor;
 		if(dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u)
 		{
 			shadowFactor = resolvedSm[0];
@@ -123,12 +125,12 @@ RVec4 main(VertOut input) : SV_TARGET0
 			shadowFactor = 1.0;
 		}
 
-		const RVec3 l = -dirLight.m_direction;
+		const HVec3 l = -dirLight.m_direction;
 
-		const RF32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
+		const F16 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
-		const RVec3 diffC = diffuseLobe(gbuffer.m_diffuse);
-		const RVec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
+		const HVec3 diffC = diffuseLobe(gbuffer.m_diffuse);
+		const HVec3 specC = specularIsotropicLobe(gbuffer.m_normal, gbuffer.m_f0, gbuffer.m_roughness, viewDir, l);
 
 		outColor += (diffC + specC) * dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}
@@ -143,7 +145,7 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 		[branch] if(light.m_shadow)
 		{
-			const RF32 shadow = resolvedSm[resolvedSmIdx++];
+			const F16 shadow = resolvedSm[resolvedSmIdx++];
 			lambert *= shadow;
 		}
 
@@ -157,18 +159,22 @@ RVec4 main(VertOut input) : SV_TARGET0
 
 		LIGHTING_COMMON_BRDF();
 
-		const F32 spot = computeSpotFactor<RF32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
+		const F16 spot = computeSpotFactor<F16>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
 		[branch] if(light.m_shadow)
 		{
-			const RF32 shadow = resolvedSm[resolvedSmIdx++];
+			const F16 shadow = resolvedSm[resolvedSmIdx++];
 			lambert *= shadow;
 		}
 
 		outColor += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
 
-	outColor = min(outColor, RVec3(kMaxRF32, kMaxRF32, kMaxRF32));
-	return RVec4(outColor, 0.0);
+	if(any(isnan(outColor)) || any(isinf(outColor)))
+	{
+		outColor = 0.0;
+	}
+
+	return Vec4(outColor, 0.0);
 }
 #endif // ANKI_PIXEL_SHADER

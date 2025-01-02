@@ -324,7 +324,7 @@ void doSsr(UVec2 logicalViewportSize, UVec2 realCoord, UVec2 logicalCoord, Vec2 
 		const Vec3 reflRayHitPointVSpace =
 			cheapPerspectiveUnprojection(g_globalRendererConstants.m_matrices.m_unprojectionParameters, uvToNdc(hitPoint.xy), hitPoint.z);
 		const F32 rejectionMeters = smoothstep(0.1f, 0.6f, roughness);
-		const F32 diff = length(reflRayHitPointVSpace - viewHitPoint);
+		const F32 diff = min(rejectionMeters, length(reflRayHitPointVSpace - viewHitPoint));
 		const F32 distAttenuation = 1.0f - smoothstep(0.0f, rejectionMeters, diff);
 		attenuation *= distAttenuation;
 		if(attenuation < kLowAttenuation)
