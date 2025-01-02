@@ -745,6 +745,7 @@ GBufferPixelOut main(
 
 	Vec3 normal = vert0.m_normal * bary.x + vert1.m_normal * bary.y + vert2.m_normal * bary.z;
 	normal = mul(worldTransform, Vec4(normal, 0.0));
+	normal = normalize(normal);
 
 	payload.m_worldNormal = normal;
 

@@ -147,6 +147,7 @@ static Error compileHlsl(CString src, ShaderType shaderType, Bool compileWith16b
 	dxcArgs.push_back(L"-Wno-unused-const-variable");
 	dxcArgs.push_back(L"-Wno-unused-parameter");
 	dxcArgs.push_back(L"-Wno-unneeded-internal-declaration");
+	dxcArgs.push_back(L"-Wno-payload-access-perf"); // Doesn't always work
 	dxcArgs.push_back(L"-HV");
 	dxcArgs.push_back(L"2021");
 	dxcArgs.push_back(L"-E");

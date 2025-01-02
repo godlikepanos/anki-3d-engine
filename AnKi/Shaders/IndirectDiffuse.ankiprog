@@ -16,6 +16,7 @@
 
 // Config and consts
 constexpr Bool kTryShadowmapFirst = true;
+constexpr F32 kTMax = 1000.0;
 
 // Functions
 Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
@@ -52,6 +53,72 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 // ===========================================================================
 #if ANKI_RAY_GEN_SHADER
 
+Vec3 lightShading(Vec3 rayOrigin, Vec3 rayDir, Vec3 hitPos, Vec3 hitNormal, Vec3 emission, Vec3 diffuse, Bool isSky)
+{
+	Vec3 color = 0;
+
+	if(isSky)
+	{
+		if(g_globalRendererConstants.m_sky.m_type == 0)
+		{
+			color = g_globalRendererConstants.m_sky.m_solidColor;
+		}
+		else
+		{
+			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
+			color = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
+		}
+	}
+	else
+	{
+		const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
+
+		// Trace shadow
+		Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
+		vv4.xy /= vv4.w;
+		const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
+
+		F32 shadow;
+		if(bInsideFrustum && kTryShadowmapFirst)
+		{
+			const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
+			const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
+
+			const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
+
+			shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
+		}
+		else
+		{
+			constexpr U32 qFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
+			RayQuery<qFlags> q;
+			const U32 flags = RAY_FLAG_FORCE_OPAQUE;
+			const U32 cullMask = 0xFFu;
+			RayDesc ray;
+			ray.Origin = hitPos;
+			ray.TMin = 0.01;
+			ray.Direction = -dirLight.m_direction;
+			ray.TMax = kTMax;
+			q.TraceRayInline(g_tlas, qFlags, cullMask, ray);
+			q.Proceed();
+			shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
+		}
+
+		// Do simple light shading
+		color = emission;
+
+		const Vec3 indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, hitNormal, g_linearClampAnySampler);
+		// color += diffuse * indirectDiffuse;
+
+		const Vec3 l = -dirLight.m_direction;
+		const F32 lambert = max(0.0, dot(l, hitNormal));
+		const Vec3 diffC = diffuseLobe(diffuse);
+		color += diffC * dirLight.m_diffuseColor * lambert * shadow;
+	}
+
+	return color;
+}
+
 [Shader("raygeneration")] void main()
 {
 	Vec2 outSize;
@@ -64,7 +131,6 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 	const Vec4 rt2 = g_gbufferRt2[coord];
 	const Vec3 worldNormal = unpackNormalFromGBuffer(rt2);
 
-#	if 0
 	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), depth, 1.0));
 	const Vec3 worldPos = v4.xyz / v4.w;
 
@@ -72,108 +138,53 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 	const UVec3 seed = rand3DPCG16(UVec3(coord, g_globalRendererConstants.m_frame % 8u));
 	const Vec2 randFactors = hammersleyRandom16(g_globalRendererConstants.m_frame % 64u, 64u, seed);
 
-	const Vec3 rayOrigin = worldPos;
+	Vec3 rayOrigin = worldPos;
+	Vec3 normal = worldNormal;
 
-	const Mat3 tbn = rotationFromDirection(worldNormal);
-	const Vec3 rayDir = mul(tbn, hemisphereSampleCos(randFactors));
-#	else
-	const Vec4 v4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(uvToNdc(uv), 1.0, 1.0));
-	const Vec3 worldPos = v4.xyz / v4.w;
-
-	const Vec3 rayOrigin = g_globalRendererConstants.m_matrices.m_cameraTransform.getTranslationPart().xyz;
-	const Vec3 rayDir = normalize(worldPos - rayOrigin);
-#	endif
-
-	// Trace
-	RtMaterialFetchRayPayload payload;
-	payload = (RtMaterialFetchRayPayload)0;
-	payload.m_textureLod = 100.0;
-	const U32 flags = RAY_FLAG_FORCE_OPAQUE;
-	const U32 sbtRecordOffset = 0u;
-	const U32 sbtRecordStride = 0u;
-	const U32 missIndex = 0u;
-	const U32 cullMask = 0xFFu;
-	RayDesc ray;
-	ray.Origin = rayOrigin;
-	ray.TMin = 0.1;
-	ray.Direction = rayDir;
-	ray.TMax = 100.0; // TODO
-	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
-
-#	if 1
-	g_colorAndPdfTex[coord] = Vec4(payload.m_diffuseColor * 0.0 + payload.m_worldNormal * 0.0 + payload.m_rayT * 0.0 + payload.m_emission * 1.0, 0.0);
-	return;
-#	endif
-
-	const Bool hasHitSky = payload.m_rayT < 0.0;
-	if(hasHitSky)
+	Vec3 outColor = 0.0;
+	Vec3 diffuse = 1.0;
+	[unroll] for(U32 bounce = 0; bounce < 3; ++bounce)
 	{
-		payload.m_rayT = 100.0; // TODO
-	}
+		const Mat3 tbn = rotationFromDirection(normal);
+		const Vec3 rayDir = normalize(mul(tbn, hemisphereSampleCos(randFactors)));
 
-	const Vec3 hitPos = worldPos + rayDir * payload.m_rayT;
-
-	const DirectionalLight dirLight = g_globalRendererConstants.m_directionalLight;
-
-	// Trace shadow
-	Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
-	vv4.xy /= vv4.w;
-	const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
-
-	F32 shadow = 0.0;
-	if(hasHitSky)
-	{
-		// Skybox
-		shadow = 1.0;
-
-		if(g_globalRendererConstants.m_sky.m_type == 0)
-		{
-			payload.m_emission = g_globalRendererConstants.m_sky.m_solidColor;
-		}
-		else
-		{
-			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(rayDir) : octahedronEncode(rayDir);
-			payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
-		}
-	}
-	else if(bInsideFrustum && kTryShadowmapFirst)
-	{
-		const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
-
-		const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
-
-		shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
-	}
-	else
-	{
-		constexpr U32 qFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
-		RayQuery<qFlags> q;
+		RtMaterialFetchRayPayload payload;
+		payload.m_textureLod = 100.0;
+		const U32 flags = RAY_FLAG_FORCE_OPAQUE;
+		const U32 sbtRecordOffset = 0u;
+		const U32 sbtRecordStride = 0u;
+		const U32 missIndex = 0u;
+		const U32 cullMask = 0xFFu;
 		RayDesc ray;
-		ray.Origin = worldPos + rayDir * (payload.m_rayT - 0.01);
+		ray.Origin = rayOrigin;
 		ray.TMin = 0.01;
-		ray.Direction = -dirLight.m_direction;
-		ray.TMax = 100.0; // TODO
-		q.TraceRayInline(g_tlas, qFlags, cullMask, ray);
-		q.Proceed();
-		shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
-	}
+		ray.Direction = rayDir;
+		ray.TMax = kTMax;
+		TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
-	// Do simple light shading
-	Vec3 outColor = payload.m_emission;
-	Vec3 indirectDiffuse = 0.0;
-	if(!hasHitSky)
-	{
-		indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, payload.m_worldNormal, g_linearClampAnySampler);
-	}
-	// outColor += payload.m_diffuseColor * indirectDiffuse;
+		F32 rayT = payload.m_rayT;
+		const Bool hasHitSky = rayT < 0.0;
+		if(hasHitSky)
+		{
+			rayT = kTMax;
+		}
 
-	const Vec3 l = -dirLight.m_direction;
-	const F32 lambert = max(0.0, dot(l, payload.m_worldNormal));
-	const Vec3 diffC = diffuseLobe(payload.m_diffuseColor);
-	outColor += diffC * dirLight.m_diffuseColor * lambert * shadow;
+		const Vec3 hitPos = rayOrigin + rayDir * rayT;
+
+		outColor += diffuse * lightShading(worldPos, rayDir, hitPos, payload.m_worldNormal, payload.m_emission, payload.m_diffuseColor, hasHitSky);
+
+		if(hasHitSky)
+		{
+			break;
+		}
+
+		rayOrigin = hitPos;
+		normal = payload.m_worldNormal;
+		diffuse = payload.m_diffuseColor;
+	}
 
 	g_colorAndPdfTex[coord] = Vec4(outColor, 0.0);
+	// g_colorAndPdfTex[coord] = Vec4(lerp(outColor, g_colorAndPdfTex[coord].xyz, 0.98), 0.0);
 }
 #endif // ANKI_RAY_GEN_SHADER
 
