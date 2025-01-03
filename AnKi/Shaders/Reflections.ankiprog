@@ -412,9 +412,9 @@ void bestCandidateToHallucinate(IVec2 svGroupThreadId, IVec2 offset, F32 depth, 
 
 		Vec3 worldHitPos = worldPos + reflDir * 1.0;
 		worldHitPos -= g_globalRendererConstants.m_cameraPosition;
-
-		g_colorAndPdfTex[realCoord] = Vec4(col, kPdfForVeryRough);
 		g_hitPosAndDepthTex[realCoord] = Vec4(worldHitPos, 1.0 - depth);
+		g_colorAndPdfTex[realCoord] = Vec4(col, kPdfForVeryRough);
+
 		return;
 	}
 
@@ -650,7 +650,7 @@ RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1);
 struct Consts
 {
 	F32 m_maxRayT;
-	F32 m_padding0;
+	U32 m_giProbeCount;
 	F32 m_padding1;
 	F32 m_padding2;
 };
@@ -756,7 +756,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	// Do simple light shading
 	Vec3 outColor = payload.m_emission;
 	Vec3 indirectDiffuse = 0.0;
-	if(!hasHitSky)
+	if(!hasHitSky && g_consts.m_giProbeCount > 0)
 	{
 		indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, payload.m_worldNormal, g_linearClampAnySampler);
 	}

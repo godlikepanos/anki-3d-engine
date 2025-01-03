@@ -372,7 +372,11 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindSrv(4, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
 			}
 
-			cmdb.bindSrv(5, 2, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
+			cmdb.bindSrv(
+				5, 2,
+				(GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
+					? GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView()
+					: BufferView(&getRenderer().getDummyBuffer(), 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize()));
 			cmdb.bindSrv(6, 2, pixelsFailedSsrBuff);
 			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
 
@@ -382,7 +386,14 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
-			const Vec4 consts(g_rtReflectionsMaxRayDistanceCVar);
+			struct Consts
+			{
+				F32 m_maxRayT;
+				U32 m_giProbeCount;
+				F32 m_padding1;
+				F32 m_padding2;
+			} consts = {g_rtReflectionsMaxRayDistanceCVar, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), 0, 0};
+
 			cmdb.setFastConstants(&consts, sizeof(consts));
 
 			cmdb.traceRaysIndirect(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,

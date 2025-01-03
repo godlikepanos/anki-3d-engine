@@ -215,7 +215,7 @@ vector<T, 3> sampleGiProbes(Cluster cluster, StructuredBuffer<GlobalIllumination
 
 	if(probeCount == 0)
 	{
-		probeColor = -1.0;
+		probeColor = 0.0;
 	}
 	else if(WaveActiveAllTrue(probeCount == 1))
 	{
