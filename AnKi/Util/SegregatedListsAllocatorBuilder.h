@@ -132,10 +132,10 @@ private:
 	U32 findClass(PtrSize size, PtrSize alignment) const;
 
 	/// Choose the best free block out of 2 given the allocation size and alignment.
+	/// @return True if the block returned is the best candidate overall.
 	static Bool chooseBestFit(PtrSize allocSize, PtrSize allocAlignment, FreeBlock* blockA, FreeBlock* blockB, FreeBlock*& bestBlock);
 
 	/// Place a free block in one of the lists.
-	/// @param[in,out] chunk The input chunk. If it's freed the pointer will become null.
 	void placeFreeBlock(PtrSize address, PtrSize size, ChunksIterator chunkIt);
 };
 /// @}

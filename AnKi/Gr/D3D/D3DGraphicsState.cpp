@@ -224,7 +224,8 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, D3D12Graph
 											 .FrontCounterClockwise = true,
 											 .DepthBias = staticState.m_rast.m_depthBias,
 											 .DepthBiasClamp = staticState.m_rast.m_depthBiasClamp,
-											 .SlopeScaledDepthBias = staticState.m_rast.m_slopeScaledDepthBias};
+											 .SlopeScaledDepthBias = staticState.m_rast.m_slopeScaledDepthBias,
+											 .DepthClipEnable = true};
 
 	// Misc
 	D3D12_RT_FORMAT_ARRAY rtFormats = {};

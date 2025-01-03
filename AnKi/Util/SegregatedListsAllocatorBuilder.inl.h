@@ -185,6 +185,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pl
 
 		if(leftBlock != kMaxU32 && rightBlock != kMaxU32)
 		{
+			// Best case, stop searching
 			break;
 		}
 	}
@@ -205,8 +206,7 @@ void SegregatedListsAllocatorBuilder<TChunk, TInterface, TLock, TMemoryPool>::pl
 
 		if(rightBlock != kMaxU32 && rightClass == leftClass)
 		{
-			// Both right and left blocks live in the same dynamic array. Due to the erase() above the rights's index
-			// is no longer valid, adjust it
+			// Both right and left blocks live in the same dynamic array. Due to the erase() above the rights's index is no longer valid, adjust it
 			ANKI_ASSERT(rightBlock > leftBlock);
 			--rightBlock;
 		}
