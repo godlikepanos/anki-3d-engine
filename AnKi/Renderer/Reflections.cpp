@@ -150,9 +150,9 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		mainRt = rgraph.importRenderTarget(m_tex.get(), TextureUsageBit::kAllCompute);
-		readMomentsRt = rgraph.importRenderTarget(m_momentsTextures[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kAllCompute);
-		writeMomentsRt = rgraph.importRenderTarget(m_momentsTextures[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kAllCompute);
+		mainRt = rgraph.importRenderTarget(m_tex.get(), TextureUsageBit::kAllSrv);
+		readMomentsRt = rgraph.importRenderTarget(m_momentsTextures[getRenderer().getFrameCount() & 1].get(), TextureUsageBit::kAllSrv);
+		writeMomentsRt = rgraph.importRenderTarget(m_momentsTextures[(getRenderer().getFrameCount() + 1) & 1].get(), TextureUsageBit::kAllSrv);
 		m_texImportedOnce = true;
 	}
 

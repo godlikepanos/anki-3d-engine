@@ -158,7 +158,7 @@ F32 readDepth(Vec2 uv)
 	const Vec2 uv = (Vec2(svDispatchThreadId) + 0.5) / colorTexSize;
 	const Vec2 x = Vec2(svDispatchThreadId) + 0.5;
 #	else
-Vec3 main(Vec2 uv : TEXCOORDS, Vec4 svPosition : SV_Position): SV_Target0
+Vec3 main(Vec2 uv : TEXCOORDS, Vec4 svPosition : SV_Position) : SV_Target0
 {
 	Vec2 colorTexSize;
 	g_colorTex.GetDimensions(colorTexSize.x, colorTexSize.y);

@@ -16,7 +16,8 @@ import platform
 file_extensions = ["h", "hpp", "c", "cpp", "glsl", "hlsl", "ankiprog"]
 directories = ["AnKi", "Tests", "Sandbox", "Tools", "Samples"]
 hlsl_semantics = ["TEXCOORD", "SV_POSITION", "SV_Position", "SV_TARGET0", "SV_TARGET1", "SV_TARGET2", "SV_TARGET3", "SV_TARGET4",
-                  "SV_TARGET5", "SV_TARGET6", "SV_TARGET7", "SV_DISPATCHTHREADID", "SV_DispatchThreadID", "SV_GROUPINDEX", "SV_GroupIndex",
+                  "SV_TARGET5", "SV_TARGET6", "SV_TARGET7", "SV_Target0", "SV_Target1", "SV_Target2", "SV_Target3", "SV_Target4",
+                  "SV_Target5", "SV_Target6", "SV_Target7", "SV_DISPATCHTHREADID", "SV_DispatchThreadID", "SV_GROUPINDEX", "SV_GroupIndex",
                   "SV_GROUPID", "SV_GroupID", "SV_GROUPTHREADID", "SV_GroupThreadID"]
 hlsl_attribs = ["[shader(\"closesthit\")]", "[shader(\"anyhit\")]", "[shader(\"raygeneration\")]", "[shader(\"miss\")]",
                 "[raypayload]", "[outputtopology(\"triangle\")]"]

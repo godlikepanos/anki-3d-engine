@@ -36,7 +36,7 @@ RWTexture2D<RVec4> g_storageTex : register(u0);
 #	if ANKI_COMPUTE_SHADER
 [numthreads(8, 8, 1)] void main(UVec3 svDispatchThreadId : SV_DISPATCHTHREADID)
 #	else
-RVec3 main(VertOut input): SV_Target0
+RVec3 main(VertOut input) : SV_Target0
 #	endif
 {
 #	if ANKI_COMPUTE_SHADER

@@ -787,8 +787,8 @@ D3D12_BARRIER_LAYOUT TextureImpl::computeLayout(TextureUsageBit usage) const
 	}
 	else
 	{
-		// No idea so play it safe
-		out = D3D12_BARRIER_LAYOUT_COMMON;
+		// No idea
+		ANKI_ASSERT(!"Can't figure out the layout");
 	}
 
 	return out;
