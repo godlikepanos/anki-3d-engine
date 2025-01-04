@@ -40,7 +40,7 @@ static VkRect2D computeScissor(const U32 scissor[], U32 fbWidth, U32 fbHeight)
 	out.extent.width = width;
 	out.extent.height = height;
 	out.offset.x = minx;
-	out.offset.y = fbHeight - (miny + height);
+	out.offset.y = miny;
 
 	return out;
 }

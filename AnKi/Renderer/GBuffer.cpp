@@ -162,7 +162,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		depthRti.m_loadOperation = loadOp;
 		depthRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 		depthRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
-		pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti, 0, 0, kMaxU32, kMaxU32);
+		pass.setRenderpassInfo(WeakArray{colorRti}, &depthRti);
 
 		pass.setWork([&ctx, visOut, this](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(GBuffer);

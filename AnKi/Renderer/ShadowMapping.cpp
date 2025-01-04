@@ -21,6 +21,8 @@
 namespace anki {
 
 static StatCounter g_tilesAllocatedStatVar(StatCategory::kRenderer, "Shadow tiles (re)allocated", StatFlag::kMainThreadUpdates);
+static StatCounter g_shadowLightsProcessedStatVar(StatCategory::kRenderer, "Lights processed by shadows",
+												  StatFlag::kMainThreadUpdates | StatFlag::kZeroEveryFrame);
 
 class LightHash
 {
@@ -279,8 +281,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 	}
 
 	// Process the point lights first
-	U32 lightIdx = 0;
 	WeakArray<LightComponent*> lights = getRenderer().getPrimaryNonRenderableVisibility().getInterestingVisibleComponents().m_shadowLights;
+	g_shadowLightsProcessedStatVar.increment(lights.getSize() + (dirLight != 0));
 	for(LightComponent* lightc : lights)
 	{
 		if(lightc->getLightComponentType() != LightComponentType::kPoint || !lightc->getShadowEnabled())
@@ -333,7 +335,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 			DistanceGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Shadows point light lightIdx:%u", lightIdx);
+			visIn.m_passesName = generateTempPassName("Shadows point light light UUID:%u", lightc->getUuid());
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 			visIn.m_lodDistances = lodDistances;
@@ -350,8 +352,8 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			BufferView clearTileIndirectArgs;
 			if(!renderAllways)
 			{
-				clearTileIndirectArgs =
-					createVetVisibilityPass(generateTempPassName("Shadows: Vet point light lightIdx:%u", lightIdx), *lightc, visOut, rgraph);
+				clearTileIndirectArgs = createVetVisibilityPass(generateTempPassName("Shadows: Vet point light light UUID:%u", lightc->getUuid()),
+																*lightc, visOut, rgraph);
 			}
 
 			// Draw
@@ -371,19 +373,16 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 				subpasses[face].m_viewProjMat = frustum.getViewProjectionMatrix();
 			}
 
-			createDrawShadowsPass(subpasses, visOut, generateTempPassName("Shadows: Point light lightIdx:%u", lightIdx), rgraph);
+			createDrawShadowsPass(subpasses, visOut, generateTempPassName("Shadows: Point light UUID:%u", lightc->getUuid()), rgraph);
 		}
 		else
 		{
 			// Can't be a caster from now on
 			lightc->setShadowAtlasUvViewports({});
 		}
-
-		++lightIdx;
 	}
 
 	// Process the spot lights 2nd
-	lightIdx = 0;
 	for(LightComponent* lightc : lights)
 	{
 		if(lightc->getLightComponentType() != LightComponentType::kSpot || !lightc->getShadowEnabled())
@@ -411,7 +410,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Shadows spot light lightIdx:%u", lightIdx);
+			visIn.m_passesName = generateTempPassName("Shadows spot light UUID:%u", lightc->getUuid());
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_lodReferencePoint = cameraOrigin;
 			visIn.m_lodDistances = lodDistances;
@@ -429,12 +428,12 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			if(!renderAllways)
 			{
 				clearTileIndirectArgs =
-					createVetVisibilityPass(generateTempPassName("Shadows: Vet spot light lightIdx:%u", lightIdx), *lightc, visOut, rgraph);
+					createVetVisibilityPass(generateTempPassName("Shadows: Vet spot light UUID:%u", lightc->getUuid()), *lightc, visOut, rgraph);
 			}
 
 			// Add draw pass
 			createDrawShadowsPass(atlasViewport, lightc->getSpotLightViewProjectionMatrix(), lightc->getSpotLightViewMatrix(), visOut,
-								  clearTileIndirectArgs, {}, generateTempPassName("Shadows: Spot light lightIdx:%u", lightIdx), rgraph);
+								  clearTileIndirectArgs, {}, generateTempPassName("Shadows: Spot light UUID:%u", lightc->getUuid()), rgraph);
 		}
 		else
 		{
@@ -491,7 +490,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 			// Vis testing
 			const Array<F32, kMaxLodCount - 1> lodDistances = {g_lod0MaxDistanceCVar, g_lod1MaxDistanceCVar};
 			FrustumGpuVisibilityInput visIn;
-			visIn.m_passesName = generateTempPassName("Shadows: Dir light cascade lightIdx:%u cascade:%u", lightIdx, cascade);
+			visIn.m_passesName = generateTempPassName("Shadows: Dir light cascade cascade:%u", cascade);
 			visIn.m_technique = RenderingTechnique::kDepth;
 			visIn.m_viewProjectionMatrix = cascadeViewProjMats[cascade];
 			visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
@@ -505,8 +504,7 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// Draw
 			createDrawShadowsPass(dirLightAtlasViewports[cascade], cascadeViewProjMats[cascade], cascadeViewMats[cascade], visOut, {},
-								  hzbGenIn.m_cascades[cascade].m_hzbRt,
-								  generateTempPassName("Shadows: Dir light lightIdx:%u cascade:%u", lightIdx, cascade), rgraph);
+								  hzbGenIn.m_cascades[cascade].m_hzbRt, generateTempPassName("Shadows: Dir light cascade:%u", cascade), rgraph);
 
 			// Update the texture matrix to point to the correct region in the atlas
 			ctx.m_dirLightTextureMatrices[cascade] = createSpotLightTextureMatrix(dirLightAtlasViewports[cascade]) * cascadeViewProjMats[cascade];
@@ -597,42 +595,19 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 	newArray<ShadowSubpassInfo>(getRenderer().getFrameMemoryPool(), subpasses_.getSize(), subpasses);
 	memcpy(subpasses.getBegin(), subpasses_.getBegin(), subpasses.getSizeInBytes());
 
-	// Compute the whole viewport
-	UVec4 viewport;
-	if(subpasses.getSize() == 1)
-	{
-		viewport = subpasses[0].m_viewport;
-	}
-	else
-	{
-		viewport = UVec4(kMaxU32, kMaxU32, 0, 0);
-		for(const ShadowSubpassInfo& s : subpasses)
-		{
-			viewport.x() = min(viewport.x(), s.m_viewport.x());
-			viewport.y() = min(viewport.y(), s.m_viewport.y());
-			viewport.z() = max(viewport.z(), s.m_viewport.x() + s.m_viewport.z());
-			viewport.w() = max(viewport.w(), s.m_viewport.y() + s.m_viewport.w());
-		}
-		viewport.z() -= viewport.x();
-		viewport.w() -= viewport.y();
-	}
-
 	// Create the pass
 	GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(passName);
 
-	const Bool maySkipDrawcalls = subpasses[0].m_clearTileIndirectArgs.isValid();
-	const Bool renderpassClear = subpasses.getSize() == 1 && !maySkipDrawcalls; // Rely on renderpass clear
-
 	GraphicsRenderPassTargetDesc smRti(m_runCtx.m_rt);
-	smRti.m_loadOperation = (renderpassClear) ? RenderTargetLoadOperation::kClear : RenderTargetLoadOperation::kLoad;
+	smRti.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	smRti.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	smRti.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
-	pass.setRenderpassInfo({}, &smRti, viewport[0], viewport[1], viewport[2], viewport[3]);
+	pass.setRenderpassInfo({}, &smRti);
 
 	pass.newBufferDependency(visOut.m_dependency, BufferUsageBit::kIndirectDraw);
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 
-	pass.setWork([this, visOut, subpasses, renderpassClear](RenderPassWorkContext& rgraphCtx) {
+	pass.setWork([this, visOut, subpasses](RenderPassWorkContext& rgraphCtx) {
 		ANKI_TRACE_SCOPED_EVENT(ShadowMapping);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
@@ -644,7 +619,6 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 			cmdb.setViewport(spass.m_viewport[0], spass.m_viewport[1], spass.m_viewport[2], spass.m_viewport[3]);
 
 			// Clear the tile
-			if(!renderpassClear)
 			{
 				cmdb.bindShaderProgram(m_clearDepthGrProg.get());
 				cmdb.setDepthCompareOperation(CompareOperation::kAlways);

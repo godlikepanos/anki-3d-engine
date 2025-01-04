@@ -341,8 +341,8 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	self.m_microCmdb->pushObjectRef(prog);
 }
 
-void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
-									const TextureView& vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
+void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, const TextureView& vrsRt, U8 vrsRtTexelSizeX,
+									U8 vrsRtTexelSizeY)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 
@@ -466,18 +466,10 @@ void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, Rende
 	info.layerCount = 1;
 
 	// Set the render area
-	ANKI_ASSERT(minx < fbWidth && miny < fbHeight);
-
-	const U32 maxx = min<U32>(minx + width, fbWidth);
-	const U32 maxy = min<U32>(miny + height, fbHeight);
-	width = maxx - minx;
-	height = maxy - miny;
-	ANKI_ASSERT(minx + width <= fbWidth && miny + height <= fbHeight);
-
-	info.renderArea.offset.x = minx;
-	info.renderArea.offset.y = miny;
-	info.renderArea.extent.width = width;
-	info.renderArea.extent.height = height;
+	info.renderArea.offset.x = 0;
+	info.renderArea.offset.y = 0;
+	info.renderArea.extent.width = fbWidth;
+	info.renderArea.extent.height = fbHeight;
 
 	// State bookkeeping
 	self.m_graphicsState.beginRenderPass({colorFormats.getBegin(), colorRts.getSize()}, dsFormat, UVec2(fbWidth, fbHeight));

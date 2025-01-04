@@ -155,8 +155,8 @@ inline void RenderPassBase::newDependency(const RenderPassDependency& dep)
 }
 
 inline void GraphicsRenderPass::setRenderpassInfo(ConstWeakArray<GraphicsRenderPassTargetDesc> colorRts,
-												  const GraphicsRenderPassTargetDesc* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
-												  const RenderTargetHandle* vrsRt, U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
+												  const GraphicsRenderPassTargetDesc* depthStencilRt, const RenderTargetHandle* vrsRt,
+												  U8 vrsRtTexelSizeX, U8 vrsRtTexelSizeY)
 {
 	m_colorRtCount = U8(colorRts.getSize());
 	for(U32 i = 0; i < m_colorRtCount; ++i)
@@ -188,7 +188,7 @@ inline void GraphicsRenderPass::setRenderpassInfo(ConstWeakArray<GraphicsRenderP
 		m_vrsRtTexelSizeY = vrsRtTexelSizeY;
 	}
 
-	m_rpassRenderArea = {minx, miny, width, height};
+	m_hasRenderpass = true;
 }
 
 inline RenderGraphBuilder::~RenderGraphBuilder()

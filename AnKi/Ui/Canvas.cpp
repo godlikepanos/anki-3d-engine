@@ -246,12 +246,12 @@ void Canvas::appendToCommandBufferInternal(CommandBuffer& cmdb)
 			}
 			else
 			{
-				// Project scissor/clipping rectangles into framebuffer space. Flip Y
+				// Project scissor/clipping rectangles into framebuffer space
 				Vec4 clipRect;
 				clipRect.x() = (pcmd.ClipRect.x - clipOff.x()) * clipScale.x();
-				clipRect.y() = (fbHeight - pcmd.ClipRect.w - clipOff.y()) * clipScale.y();
+				clipRect.y() = (pcmd.ClipRect.y - clipOff.y()) * clipScale.y();
 				clipRect.z() = (pcmd.ClipRect.z - clipOff.x()) * clipScale.x();
-				clipRect.w() = (fbHeight - pcmd.ClipRect.y - clipOff.y()) * clipScale.y();
+				clipRect.w() = (pcmd.ClipRect.w - clipOff.y()) * clipScale.y();
 
 				if(clipRect.x() < fbWidth && clipRect.y() < fbHeight && clipRect.z() >= 0.0f && clipRect.w() >= 0.0f)
 				{

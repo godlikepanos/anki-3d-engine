@@ -124,17 +124,12 @@ public:
 		Array<RenderTarget, kMaxColorRenderTargets> m_colorRts;
 		RenderTarget m_dsRt;
 		TextureView m_vrsRt;
-		Array<U32, 4> m_renderArea = {};
 		U8 m_colorRtCount = 0;
 		U8 m_vrsTexelSizeX = 0;
 		U8 m_vrsTexelSizeY = 0;
+		Bool m_hasRenderpass = false;
 
 		Array<TexturePtr, kMaxColorRenderTargets + 2> m_refs;
-
-		Bool hasRenderpass() const
-		{
-			return m_renderArea[3] != 0;
-		}
 	} m_beginRenderpassInfo;
 
 	BaseString<MemoryPoolPtrWrapper<StackMemoryPool>> m_name;
@@ -676,9 +671,9 @@ void RenderGraph::initGraphicsPasses(const RenderGraphBuilder& descr)
 		{
 			const GraphicsRenderPass& inPass = static_cast<const GraphicsRenderPass&>(baseInPass);
 
-			if(inPass.hasRenderpass())
+			if(inPass.m_hasRenderpass)
 			{
-				outPass.m_beginRenderpassInfo.m_renderArea = inPass.m_rpassRenderArea;
+				outPass.m_beginRenderpassInfo.m_hasRenderpass = true;
 				outPass.m_beginRenderpassInfo.m_colorRtCount = inPass.m_colorRtCount;
 
 				// Init the usage bits
@@ -982,8 +977,8 @@ void RenderGraph::minimizeSubchannelSwitches()
 		U32 computePasses = 0;
 
 		std::sort(batch.m_passIndices.getBegin(), batch.m_passIndices.getEnd(), [&](U32 a, U32 b) {
-			const Bool aIsCompute = !ctx.m_passes[a].m_beginRenderpassInfo.hasRenderpass();
-			const Bool bIsCompute = !ctx.m_passes[b].m_beginRenderpassInfo.hasRenderpass();
+			const Bool aIsCompute = !ctx.m_passes[a].m_beginRenderpassInfo.m_hasRenderpass;
+			const Bool bIsCompute = !ctx.m_passes[b].m_beginRenderpassInfo.m_hasRenderpass;
 
 			graphicsPasses += !aIsCompute + !bIsCompute;
 			computePasses += aIsCompute + bIsCompute;
@@ -1023,8 +1018,8 @@ void RenderGraph::sortBatchPasses()
 	for(Batch& batch : ctx.m_batches)
 	{
 		std::sort(batch.m_passIndices.getBegin(), batch.m_passIndices.getEnd(), [&](U32 a, U32 b) {
-			const Bool aIsCompute = !ctx.m_passes[a].m_beginRenderpassInfo.hasRenderpass();
-			const Bool bIsCompute = !ctx.m_passes[b].m_beginRenderpassInfo.hasRenderpass();
+			const Bool aIsCompute = !ctx.m_passes[a].m_beginRenderpassInfo.m_hasRenderpass;
+			const Bool bIsCompute = !ctx.m_passes[b].m_beginRenderpassInfo.m_hasRenderpass;
 
 			return aIsCompute < bIsCompute;
 		});
@@ -1209,16 +1204,14 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 					{
 						Pass& pass = m_ctx->m_passes[passIdx];
 
-						const Vec3 passColor = (pass.m_beginRenderpassInfo.hasRenderpass()) ? Vec3(0.0f, 1.0f, 0.0f) : Vec3(1.0f, 1.0f, 0.0f);
+						const Vec3 passColor = (pass.m_beginRenderpassInfo.m_hasRenderpass) ? Vec3(0.0f, 1.0f, 0.0f) : Vec3(1.0f, 1.0f, 0.0f);
 						cmdb->pushDebugMarker(pass.m_name, passColor);
 
-						if(pass.m_beginRenderpassInfo.hasRenderpass())
+						if(pass.m_beginRenderpassInfo.m_hasRenderpass)
 						{
 							cmdb->beginRenderPass({pass.m_beginRenderpassInfo.m_colorRts.getBegin(), U32(pass.m_beginRenderpassInfo.m_colorRtCount)},
 												  pass.m_beginRenderpassInfo.m_dsRt.m_textureView.isValid() ? &pass.m_beginRenderpassInfo.m_dsRt
 																											: nullptr,
-												  pass.m_beginRenderpassInfo.m_renderArea[0], pass.m_beginRenderpassInfo.m_renderArea[1],
-												  pass.m_beginRenderpassInfo.m_renderArea[2], pass.m_beginRenderpassInfo.m_renderArea[3],
 												  pass.m_beginRenderpassInfo.m_vrsRt, pass.m_beginRenderpassInfo.m_vrsTexelSizeX,
 												  pass.m_beginRenderpassInfo.m_vrsTexelSizeY);
 						}
@@ -1229,7 +1222,7 @@ void RenderGraph::recordAndSubmitCommandBuffers(FencePtr* optionalFence)
 							pass.m_callback(ctx);
 						}
 
-						if(pass.m_beginRenderpassInfo.hasRenderpass())
+						if(pass.m_beginRenderpassInfo.m_hasRenderpass)
 						{
 							cmdb->endRenderPass();
 						}

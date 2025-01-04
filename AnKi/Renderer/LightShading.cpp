@@ -252,7 +252,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	GraphicsRenderPassTargetDesc depthRt(getRenderer().getGBuffer().getDepthRt());
 	depthRt.m_loadOperation = RenderTargetLoadOperation::kLoad;
 	depthRt.m_subresource.m_depthStencilAspect = DepthStencilAspectBit::kDepth;
-	pass.setRenderpassInfo({colorRt}, &depthRt, 0, 0, kMaxU32, kMaxU32, (enableVrs) ? &sriRt : nullptr,
+	pass.setRenderpassInfo({colorRt}, &depthRt, (enableVrs) ? &sriRt : nullptr,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0,
 						   (enableVrs) ? getRenderer().getVrsSriGeneration().getSriTexelDimension() : 0);
 

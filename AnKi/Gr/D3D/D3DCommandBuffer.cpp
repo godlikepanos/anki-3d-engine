@@ -308,9 +308,8 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	}
 }
 
-void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx, U32 miny, U32 width, U32 height,
-									[[maybe_unused]] const TextureView& vrsRt, [[maybe_unused]] U8 vrsRtTexelSizeX,
-									[[maybe_unused]] U8 vrsRtTexelSizeY)
+void CommandBuffer::beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, [[maybe_unused]] const TextureView& vrsRt,
+									[[maybe_unused]] U8 vrsRtTexelSizeX, [[maybe_unused]] U8 vrsRtTexelSizeY)
 {
 	ANKI_D3D_SELF(CommandBufferImpl);
 	self.commandCommon();

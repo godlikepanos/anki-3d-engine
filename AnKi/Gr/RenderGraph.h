@@ -373,28 +373,21 @@ public:
 	}
 
 	void setRenderpassInfo(ConstWeakArray<GraphicsRenderPassTargetDesc> colorRts, const GraphicsRenderPassTargetDesc* depthStencilRt = nullptr,
-						   U32 minx = 0, U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr,
-						   U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
+						   const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
 
 	void setRenderpassInfo(std::initializer_list<GraphicsRenderPassTargetDesc> colorRts, const GraphicsRenderPassTargetDesc* depthStencilRt = nullptr,
-						   U32 minx = 0, U32 miny = 0, U32 width = kMaxU32, U32 height = kMaxU32, const RenderTargetHandle* vrsRt = nullptr,
-						   U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0)
+						   const RenderTargetHandle* vrsRt = nullptr, U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0)
 	{
 		ConstWeakArray<GraphicsRenderPassTargetDesc> colorRtsArr(colorRts.begin(), U32(colorRts.size()));
-		setRenderpassInfo(colorRtsArr, depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX, vrsRtTexelSizeY);
+		setRenderpassInfo(colorRtsArr, depthStencilRt, vrsRt, vrsRtTexelSizeX, vrsRtTexelSizeY);
 	}
 
 private:
 	Array<GraphicsRenderPassTargetDesc, kMaxColorRenderTargets + 2> m_rts;
-	Array<U32, 4> m_rpassRenderArea = {};
 	U8 m_colorRtCount = 0;
 	U8 m_vrsRtTexelSizeX = 0;
 	U8 m_vrsRtTexelSizeY = 0;
-
-	Bool hasRenderpass() const
-	{
-		return m_rpassRenderArea[3] != 0;
-	}
+	Bool m_hasRenderpass = false;
 };
 
 /// A compute render pass for RenderGraph.

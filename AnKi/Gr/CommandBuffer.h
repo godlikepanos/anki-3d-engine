@@ -234,18 +234,14 @@ public:
 	void bindShaderProgram(ShaderProgram* prog);
 
 	/// Begin a renderpass.
-	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is bigger than the render area
-	/// the results are undefined.
-	void beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, U32 minx = 0, U32 miny = 0, U32 width = kMaxU32,
-						 U32 height = kMaxU32, const TextureView& vrsRt = TextureView(), U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
+	void beginRenderPass(ConstWeakArray<RenderTarget> colorRts, RenderTarget* depthStencilRt, const TextureView& vrsRt = TextureView(),
+						 U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0);
 
 	/// See beginRenderPass.
-	void beginRenderPass(std::initializer_list<RenderTarget> colorRts, RenderTarget* depthStencilRt = nullptr, U32 minx = 0, U32 miny = 0,
-						 U32 width = kMaxU32, U32 height = kMaxU32, const TextureView& vrsRt = TextureView(), U8 vrsRtTexelSizeX = 0,
-						 U8 vrsRtTexelSizeY = 0)
+	void beginRenderPass(std::initializer_list<RenderTarget> colorRts, RenderTarget* depthStencilRt = nullptr,
+						 const TextureView& vrsRt = TextureView(), U8 vrsRtTexelSizeX = 0, U8 vrsRtTexelSizeY = 0)
 	{
-		beginRenderPass(ConstWeakArray(colorRts.begin(), U32(colorRts.size())), depthStencilRt, minx, miny, width, height, vrsRt, vrsRtTexelSizeX,
-						vrsRtTexelSizeY);
+		beginRenderPass(ConstWeakArray(colorRts.begin(), U32(colorRts.size())), depthStencilRt, vrsRt, vrsRtTexelSizeX, vrsRtTexelSizeY);
 	}
 
 	/// End renderpass.
