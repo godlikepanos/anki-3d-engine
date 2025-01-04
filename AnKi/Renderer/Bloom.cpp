@@ -7,6 +7,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/LightShading.h>
 #include <AnKi/Renderer/Tonemapping.h>
+#include <AnKi/Util/Tracer.h>
 
 namespace anki {
 
@@ -115,6 +116,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			}
 
 			ppass->setWork([this, passIdx = i](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(BoomPyramid);
+
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 				cmdb.bindShaderProgram(m_downscaleGrProg.get());
@@ -183,6 +186,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		prpass->setWork([this, exposureRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(BoomExposure);
+
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_exposureGrProg.get());
@@ -241,6 +246,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		prpass->setWork([this, exposureRt, upscaledRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(BoomUpscale);
+
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_upscaleGrProg.get());

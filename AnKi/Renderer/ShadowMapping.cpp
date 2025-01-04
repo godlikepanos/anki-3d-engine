@@ -549,6 +549,7 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 	pass.setWork([this, &lightc, hashBuff = visOut.m_visiblesHashBuffer, mdiBuff = visOut.m_legacy.m_mdiDrawCountsBuffer, clearTileIndirectArgs,
 				  dispatchMeshIndirectArgs = visOut.m_mesh.m_dispatchMeshIndirectArgsBuffer,
 				  drawIndirectArgs = visOut.m_mesh.m_drawIndirectArgs](RenderPassWorkContext& rpass) {
+		ANKI_TRACE_SCOPED_EVENT(ShadowmappingVet);
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_vetVisibilityGrProg.get());

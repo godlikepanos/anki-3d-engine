@@ -243,7 +243,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 
 				pass.setWork([this, visOut, viewProjMat = frustum.getViewProjectionMatrix(),
 							  viewMat = frustum.getViewMatrix()](RenderPassWorkContext& rgraphCtx) {
-					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseGBuffer);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 					cmdb.setViewport(0, 0, m_tileSize, m_tileSize);
@@ -309,7 +309,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				pass.newBufferDependency(shadowVisOut.m_dependency, BufferUsageBit::kIndirectDraw);
 
 				pass.setWork([this, shadowVisOut, cascadeViewProjMat, cascadeViewMat](RenderPassWorkContext& rgraphCtx) {
-					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseShadows);
 					CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 					cmdb.setPolygonOffset(kShadowsPolygonOffsetFactor, kShadowsPolygonOffsetUnits);
@@ -379,7 +379,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 				pass.setWork([this, visibleLightsBuffer = lightVis.m_visiblesBuffer, viewProjMat = frustum.getViewProjectionMatrix(), cellCenter,
 							  gbufferColorRts, gbufferDepthRt, probeToRefresh, cascadeViewProjMat, shadowsRt, faceIdx = f,
 							  &rctx](RenderPassWorkContext& rgraphCtx) {
-					ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+					ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseLightShading);
 
 					const LightComponent* dirLightc = SceneGraph::getSingleton().getDirectionalLight();
 					const Bool doShadows = dirLightc && dirLightc->getShadowEnabled();
@@ -439,7 +439,7 @@ void IndirectDiffuseProbes::populateRenderGraph(RenderingContext& rctx)
 			}
 
 			pass.setWork([this, lightShadingRt, gbufferColorRts, irradianceVolume, cellIdx, probeToRefresh](RenderPassWorkContext& rgraphCtx) {
-				ANKI_TRACE_SCOPED_EVENT(RIndirectDiffuse);
+				ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseIrradiance);
 
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 

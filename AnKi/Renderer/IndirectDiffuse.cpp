@@ -95,7 +95,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuse);
+			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseSbtBuild);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
@@ -136,7 +136,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(IndirectDiffuseRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());

@@ -72,6 +72,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kCopyDestination | BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ClusterBinningSetup);
+
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_jobSetupGrProg.get());
@@ -102,6 +104,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kUavCompute | BufferUsageBit::kIndirectCompute);
 
 		rpass.setWork([this, &ctx, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ClusterBinning);
+
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			PtrSize indirectArgsBuffOffset = indirectArgsBuff.getOffset();
@@ -211,6 +215,8 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kIndirectCompute | BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(ClusterBinningObjectPacking);
+
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			PtrSize indirectArgsBuffOffset =

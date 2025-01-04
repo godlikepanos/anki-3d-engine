@@ -80,7 +80,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, sbtBuildIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetchSbtBuild);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
@@ -114,7 +114,7 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 												 AccelerationStructureUsageBit::kTraceRaysSrv);
 
 		rpass.setWork([this, sbtBuffer, &ctx](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(RtShadows);
+			ANKI_TRACE_SCOPED_EVENT(RtMaterialFetchRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());

@@ -106,6 +106,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(finalRt, writeUsage);
 
 		ppass->setWork([this, &ctx, finalRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(SsaoMain);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_grProg.get());
@@ -169,6 +170,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(bentNormalsAndSsaoTempRt, writeUsage);
 
 		ppass->setWork([this, finalRt, bentNormalsAndSsaoTempRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(SsaoSpatialDenoise);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_spatialDenoiseGrProg.get());
@@ -219,6 +221,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(finalRt, writeUsage);
 
 		ppass->setWork([this, bentNormalsAndSsaoTempRt, finalRt, historyRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(SsaoTemporalDenoise);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_tempralDenoiseGrProg.get());

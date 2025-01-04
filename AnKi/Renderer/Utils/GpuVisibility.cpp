@@ -15,6 +15,7 @@
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/CVarSet.h>
+#include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/App.h>
 
 namespace anki {
@@ -551,6 +552,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kCopyDestination);
 
 		pass.setWork([stage1Mem, stage2Mem, stage3Mem](RenderPassWorkContext& rpass) {
+			ANKI_TRACE_SCOPED_EVENT(GpuVisZero);
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 			constexpr Bool debugZeroing = false; // For debugging purposes zero everything
@@ -611,6 +613,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		pass.setWork([this, frustumTestData, distTestData, lodReferencePoint = in.m_lodReferencePoint, lodDistances = in.m_lodDistances,
 					  technique = in.m_technique, stage1Mem, bLegacyRendering, bMeshletRendering](RenderPassWorkContext& rpass) {
+			ANKI_TRACE_SCOPED_EVENT(GpuVis1stStage);
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 			const Bool gatherAabbIndices = stage1Mem.m_visibleAabbIndices.isValid();
@@ -734,6 +737,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 		pass.setWork([this, stage1Mem, stage2Mem, bLegacyRendering, bMeshletRendering, bHwMeshletRendering, out, frustumTestData,
 					  lodReferencePoint = in.m_lodReferencePoint, bStoreMeshletsFailedHzb](RenderPassWorkContext& rpass) {
+			ANKI_TRACE_SCOPED_EVENT(GpuVis2ndStage);
 			CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 			if(bLegacyRendering)
@@ -859,6 +863,7 @@ void GpuVisibility::populateRenderGraphStage3(FrustumGpuVisibilityInput& in, Gpu
 
 	pass.setWork([this, hzbRt = *in.m_hzbRt, bHwMeshletRendering, stage1And2Mem = out.m_stage1And2Mem, stage3Mem = out.m_stage3Mem,
 				  in](RenderPassWorkContext& rpass) {
+		ANKI_TRACE_SCOPED_EVENT(GpuVis3rdStage);
 		CommandBuffer& cmdb = *rpass.m_commandBuffer;
 
 		const Bool hzbTex = true;
@@ -995,6 +1000,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kCopyDestination);
 
 		pass.setWork([counterBuffer = m_counterBuffer](RenderPassWorkContext& rgraph) {
+			ANKI_TRACE_SCOPED_EVENT(GpuVisNonRenderablesSetup);
 			rgraph.m_commandBuffer->fillBuffer(BufferView(counterBuffer.get()), 0);
 		});
 
@@ -1028,6 +1034,7 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 	pass.setWork([this, objType = in.m_objectType, feedbackBuffer = in.m_cpuFeedbackBuffer, viewProjectionMat = in.m_viewProjectionMat,
 				  visibleIndicesBuffHandle = out.m_visiblesBufferHandle, counterBuffer = m_counterBuffer, counterBufferOffset = m_counterBufferOffset,
 				  objCount](RenderPassWorkContext& rgraph) {
+		ANKI_TRACE_SCOPED_EVENT(GpuVisNonRenderables);
 		CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 		const Bool needsFeedback = feedbackBuffer.isValid();
@@ -1128,6 +1135,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 		pass.setWork([this, viewProjMat = in.m_viewProjectionMatrix, lodDistances = in.m_lodDistances, pointOfTest = in.m_pointOfTest,
 					  testRadius = in.m_testRadius, instancesBuff = out.m_instancesBuffer, visRenderablesBuff = out.m_renderablesBuffer,
 					  zeroInstancesAndSbtBuildDispatchArgsBuff](RenderPassWorkContext& rgraph) {
+			ANKI_TRACE_SCOPED_EVENT(GpuVisibilityAccelStruct);
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_visibilityGrProg.get());
@@ -1174,6 +1182,7 @@ void GpuVisibilityAccelerationStructures::pupulateRenderGraph(GpuVisibilityAccel
 
 		pass.setWork([this, zeroInstancesAndSbtBuildDispatchArgsBuff, instancesBuff = out.m_instancesBuffer,
 					  visRenderablesBuff = out.m_renderablesBuffer](RenderPassWorkContext& rgraph) {
+			ANKI_TRACE_SCOPED_EVENT(GpuVisibilityAccelStructZero);
 			CommandBuffer& cmdb = *rgraph.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_zeroRemainingInstancesGrProg.get());

@@ -678,6 +678,7 @@ void Renderer::gpuSceneCopy(RenderingContext& ctx)
 		rpass.newBufferDependency(m_runCtx.m_gpuSceneHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(GpuSceneCopy);
 			GpuSceneMicroPatcher::getSingleton().patchGpuScene(*rgraphCtx.m_commandBuffer);
 		});
 	}
@@ -782,6 +783,7 @@ Error Renderer::render(Texture* presentTex)
 		pass.newTextureDependency(m_finalComposite->getRenderTarget(), TextureUsageBit::kSrvPixel);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(BlitAndUi);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 			cmdb.setViewport(0, 0, m_swapchainResolution.x(), m_swapchainResolution.y());
 

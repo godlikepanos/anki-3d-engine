@@ -62,6 +62,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(maxVelRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this, maxVelRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(MotionBlurMinTileVelocity);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_maxVelocityGrProg.get());
@@ -87,6 +88,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(maxNeighbourVelRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this, maxVelRt, maxNeighbourVelRt](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(MotionBlurMaxNeighbourTileVelocity);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_maxNeightbourVelocityGrProg.get());
@@ -128,6 +130,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 		ppass->newTextureDependency(m_runCtx.m_rt, writeUsage);
 
 		ppass->setWork([this, maxNeighbourVelRt, &ctx](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(MotionBlurReconstruct);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_reconstructGrProg.get());

@@ -94,6 +94,8 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
+
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_grProg.get());
@@ -159,6 +161,8 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 			pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite, TextureSubresourceDesc::surface(mip, 0, 0));
 
 			pass.setWork([this, mip](RenderPassWorkContext& rgraphCtx) {
+				ANKI_TRACE_SCOPED_EVENT(DepthDownscale);
+
 				CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 				cmdb.bindShaderProgram(m_grProg.get());

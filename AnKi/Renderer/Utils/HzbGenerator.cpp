@@ -5,6 +5,7 @@
 
 #include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Renderer/Renderer.h>
+#include <AnKi/Util/Tracer.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -107,6 +108,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 	}
 
 	pass.setWork([this, dispatchInputsCopy, dispatchCount, counterBufferElement](RenderPassWorkContext& rgraphCtx) {
+		ANKI_TRACE_SCOPED_EVENT(HzbGeneration);
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 		cmdb.bindShaderProgram(m_genPyramidGrProg.get());
@@ -200,6 +202,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		pass.newTextureDependency(maxDepthRt, TextureUsageBit::kUavCompute);
 
 		pass.setWork([this, depthBufferRt = in.m_depthBufferRt, maxDepthRt, maxDepthRtSize](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(HzbGenerationDepthTile);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			rgraphCtx.bindSrv(0, 0, depthBufferRt, TextureSubresourceDesc::firstSurface(DepthStencilAspectBit::kDepth));
@@ -268,6 +271,7 @@ void HzbGenerator::populateRenderGraphDirectionalLight(const HzbDirectionalLight
 		pass.setWork([this, maxDepthRt, invViewProjMat = in.m_cameraInverseViewProjectionMatrix,
 					  lightViewProjMat = cascade.m_projectionMatrix * Mat4(cascade.m_viewMatrix, Vec4(0.0f, 0.0f, 0.0f, 1.0f)),
 					  viewport = cascade.m_hzbRtSize * 2, maxDepthRtSize, cascadeMinDepth, cascadeMaxDepth](RenderPassWorkContext& rgraphCtx) {
+			ANKI_TRACE_SCOPED_EVENT(HzbGenerationDirLight);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.setDepthCompareOperation(CompareOperation::kGreater);

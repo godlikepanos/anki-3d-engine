@@ -180,7 +180,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, classTileMapRt, consts](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsClassification);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_tileClassificationGrProg.get());
@@ -221,7 +221,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, transientRt1, hitPosAndDepthRt, &ctx, pixelsFailedSsrBuff, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsSsr);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_ssrGrProg.get());
@@ -285,7 +285,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(sbtHandle, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, buildSbtIndirectArgsBuff, sbtBuffer, visibleRenderableIndicesBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsSbtBuild);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_sbtBuildGrProg.get());
@@ -329,7 +329,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newBufferDependency(indirectArgsHandle, BufferUsageBit::kIndirectTraceRays);
 
 		rpass.setWork([this, sbtBuffer, &ctx, transientRt1, hitPosAndDepthRt, pixelsFailedSsrBuff](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsRayGen);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_libraryGrProg.get());
@@ -420,7 +420,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		}
 
 		rpass.setWork([this, pixelsFailedSsrBuff, &ctx, transientRt1, hitPosAndDepthRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsProbeFallback);
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
 			cmdb.bindShaderProgram(m_probeFallbackGrProg.get());
@@ -474,7 +474,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(hitPosRt, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, hitPosAndDepthRt, hitPosRt, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsSpatialDenoise);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -514,7 +514,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.setWork([this, &ctx, transientRt1, transientRt2, mainRt, readMomentsRt, writeMomentsRt, hitPosRt,
 					   classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsTemporalDenoise);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -550,7 +550,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(transientRt2, TextureUsageBit::kUavCompute);
 
 		rpass.setWork([this, transientRt1, transientRt2, writeMomentsRt, consts, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsHorizontalDenoise);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -579,7 +579,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 		rpass.newTextureDependency(classTileMapRt, TextureUsageBit::kSrvCompute);
 
 		rpass.setWork([this, transientRt2, mainRt, classTileMapRt](RenderPassWorkContext& rgraphCtx) {
-			ANKI_TRACE_SCOPED_EVENT(Reflections);
+			ANKI_TRACE_SCOPED_EVENT(ReflectionsVerticalDenoise);
 
 			CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
