@@ -341,6 +341,13 @@ public:
 		}
 	}
 
+	/// Used in D3D which doesn't have a separate binding point for compute and graphics.
+	void unbindShaderProgram()
+	{
+		m_staticState.m_shaderProg = nullptr;
+		m_globalHash = 0;
+	}
+
 	void setPrimitiveTopology(PrimitiveTopology topology)
 	{
 		if(m_staticState.m_ia.m_topology != topology)

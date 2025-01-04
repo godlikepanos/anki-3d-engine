@@ -285,10 +285,12 @@ void CommandBuffer::bindShaderProgram(ShaderProgram* prog)
 	if(isCompute)
 	{
 		self.m_cmdList->SetPipelineState(progImpl.m_compute.m_pipelineState);
+		self.m_graphicsState.unbindShaderProgram();
 		self.m_wgProg = nullptr;
 	}
 	else if(isWg)
 	{
+		self.m_graphicsState.unbindShaderProgram();
 		self.m_wgProg = &progImpl;
 	}
 	else
