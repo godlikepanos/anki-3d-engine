@@ -113,6 +113,15 @@ protected:
 
 	/// Temp pass name.
 	static CString generateTempPassName(const Char* fmt, ...);
+
+	/// Fill some buffers with some value. It's a **COMPUTE** dispatch.
+	static void fillBuffers(CommandBuffer& cmdb, ConstWeakArray<BufferView> buffers, U32 value);
+
+	/// See @fillBuffers
+	static void fillBuffer(CommandBuffer& cmdb, BufferView buffer, U32 value)
+	{
+		fillBuffers(cmdb, ConstWeakArray<BufferView>(&buffer, 1), value);
+	}
 };
 /// @}
 

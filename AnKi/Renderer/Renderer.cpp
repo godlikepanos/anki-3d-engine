@@ -180,6 +180,15 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 			BufferInitInfo(1024, BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav, BufferMapAccessBit::kNone, "Dummy"));
 	}
 
+	{
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/FillBuffer.ankiprogbin", m_fillBufferProg));
+
+		ShaderProgramResourceVariantInitInfo initInf(m_fillBufferProg);
+		const ShaderProgramResourceVariant* variant;
+		m_fillBufferProg->getOrCreateVariant(initInf, variant);
+		m_fillBufferGrProg.reset(&variant->getProgram());
+	}
+
 	// Init the stages
 #define ANKI_RENDERER_OBJECT_DEF(name, name2, initCondition) \
 	if(initCondition) \

@@ -100,7 +100,7 @@ void RendererObject::zeroBuffer(Buffer* buff)
 	cmdbInit.m_flags |= CommandBufferFlag::kSmallBatch;
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
-	cmdb->fillBuffer(BufferView(buff), 0);
+	cmdb->zeroBuffer(BufferView(buff));
 
 	FencePtr fence;
 	cmdb->endRecording();
@@ -129,6 +129,31 @@ CString RendererObject::generateTempPassName(const Char* fmt, ...)
 		ANKI_R_LOGE("generateTempPassName() failed. Ignoring error");
 		return "**failed**";
 	}
+}
+
+void RendererObject::fillBuffers(CommandBuffer& cmdb, ConstWeakArray<BufferView> buffers, U32 value)
+{
+	ANKI_ASSERT(buffers.getSize() > 0);
+
+	cmdb.pushDebugMarker("fillBuffers", Vec3(1.0, 1.0, 0.0));
+
+	cmdb.bindShaderProgram(&getRenderer().getFillBufferProgram());
+
+	for(const BufferView& view : buffers)
+	{
+		cmdb.bindUav(0, 0, BufferView(&view.getBuffer()));
+
+		ANKI_ASSERT(view.getOffset() % sizeof(U32) == 0);
+		ANKI_ASSERT(view.getRange() % sizeof(U32) == 0);
+		const UVec4 consts(value, U32(view.getOffset() / sizeof(U32)), U32(view.getRange() / sizeof(U32)), 0);
+		cmdb.setFastConstants(&consts, sizeof(consts));
+
+		ANKI_ASSERT(view.getRange() % sizeof(U32) == 0);
+		const U32 elementCount = U32(view.getRange() / sizeof(U32));
+		cmdb.dispatchCompute((elementCount + 63) / 64, 1, 1);
+	}
+
+	cmdb.popDebugMarker();
 }
 
 } // end namespace anki

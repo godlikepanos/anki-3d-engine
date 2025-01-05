@@ -195,6 +195,11 @@ public:
 		return m_framePool;
 	}
 
+	ShaderProgram& getFillBufferProgram() const
+	{
+		return *m_fillBufferGrProg;
+	}
+
 #if ANKI_STATS_ENABLED
 	void appendPipelineQuery(PipelineQuery* q)
 	{
@@ -251,6 +256,9 @@ private:
 
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;
+
+	ShaderProgramResourcePtr m_fillBufferProg;
+	ShaderProgramPtr m_fillBufferGrProg;
 
 	RenderGraphPtr m_rgraph;
 

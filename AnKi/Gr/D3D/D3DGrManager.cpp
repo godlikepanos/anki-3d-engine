@@ -472,12 +472,26 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	TimestampQueryFactory::allocateSingleton();
 	PrimitivesPassedClippingFactory::allocateSingleton();
 
+	{
+		BufferInitInfo buffInit("ZeroBuffer");
+		buffInit.m_mapAccess = BufferMapAccessBit::kWrite;
+		buffInit.m_size = 1_KB;
+		buffInit.m_usage = BufferUsageBit::kCopySource;
+		m_zeroBuffer = newBuffer(buffInit);
+
+		void* mapped = m_zeroBuffer->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
+		memset(mapped, 0, buffInit.m_size);
+		m_zeroBuffer->unmap();
+	}
+
 	return Error::kNone;
 }
 
 void GrManagerImpl::destroy()
 {
 	ANKI_D3D_LOGI("Destroying D3D backend");
+
+	m_zeroBuffer.reset(nullptr);
 
 	waitAllQueues();
 

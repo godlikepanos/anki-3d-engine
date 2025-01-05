@@ -1,0 +1,27 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki technique comp
+
+#include <AnKi/Shaders/Common.hlsl>
+
+RWStructuredBuffer<U32> g_buff : register(u0);
+
+struct Consts
+{
+	U32 m_val;
+	U32 m_offset;
+	U32 m_elementCount;
+	U32 m_padding2;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
+[NumThreads(64, 1, 1)] void main(U32 svDispatchThreadId : SV_DispatchThreadID)
+{
+	if(svDispatchThreadId < g_consts.m_elementCount)
+	{
+		g_buff[svDispatchThreadId + g_consts.m_offset] = g_consts.m_val;
+	}
+}

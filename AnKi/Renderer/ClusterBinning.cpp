@@ -69,7 +69,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 			rpass.newBufferDependency(getRenderer().getPrimaryNonRenderableVisibility().getVisibleIndicesBufferHandle(type),
 									  BufferUsageBit::kSrvCompute);
 		}
-		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kCopyDestination | BufferUsageBit::kUavCompute);
+		rpass.newBufferDependency(m_runCtx.m_dep, BufferUsageBit::kUavCompute);
 
 		rpass.setWork([this, indirectArgsBuff](RenderPassWorkContext& rgraphCtx) {
 			ANKI_TRACE_SCOPED_EVENT(ClusterBinningSetup);
@@ -92,7 +92,7 @@ void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 			cmdb.dispatchCompute(1, 1, 1);
 
 			// Now zero the clusters buffer
-			cmdb.fillBuffer(m_runCtx.m_clustersBuffer, 0);
+			fillBuffer(cmdb, m_runCtx.m_clustersBuffer, 0);
 		});
 	}
 

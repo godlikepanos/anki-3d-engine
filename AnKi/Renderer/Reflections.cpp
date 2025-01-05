@@ -104,7 +104,7 @@ Error Reflections::init()
 	{
 		BufferInitInfo buffInit("ReflRayGenIndirectArgs");
 		buffInit.m_size = sizeof(DispatchIndirectArgs) * 2;
-		buffInit.m_usage = BufferUsageBit::kAllIndirect | BufferUsageBit::kUavCompute | BufferUsageBit::kCopyDestination;
+		buffInit.m_usage = BufferUsageBit::kAllIndirect | BufferUsageBit::kUavCompute;
 		m_indirectArgsBuffer = GrManager::getSingleton().newBuffer(buffInit);
 
 		CommandBufferInitInfo cmdbInit("Init buffer");
@@ -112,14 +112,14 @@ Error Reflections::init()
 		CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
 		U32 offset = 0;
-		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
+		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
 		offset += sizeof(U32);
-		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
+		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
 
 		offset += sizeof(U32) * 2;
-		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
+		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, sizeof(U32)), 0);
 		offset += sizeof(U32);
-		cmdb->fillBuffer(BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
+		fillBuffer(*cmdb, BufferView(m_indirectArgsBuffer.get(), offset, 2 * sizeof(U32)), 1);
 
 		FencePtr fence;
 		cmdb->endRecording();

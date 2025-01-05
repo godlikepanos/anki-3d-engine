@@ -549,7 +549,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	const BufferHandle zeroMemDep = rgraph.importBuffer(stage1Mem.m_counters, BufferUsageBit::kNone);
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass(generateTempPassName("GPU vis zero: %s", in.m_passesName.cstr()));
-		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kCopyDestination);
+		pass.newBufferDependency(zeroMemDep, BufferUsageBit::kUavCompute);
 
 		pass.setWork([stage1Mem, stage2Mem, stage3Mem](RenderPassWorkContext& rpass) {
 			ANKI_TRACE_SCOPED_EVENT(GpuVisZero);
@@ -561,7 +561,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	if((alwaysZero || debugZeroing) && buff.isValid()) \
 	{ \
 		cmdb.pushDebugMarker(#buff, Vec3(1.0f, 1.0f, 1.0f)); \
-		cmdb.fillBuffer(buff, 0); \
+		fillBuffer(cmdb, buff, 0); \
 		cmdb.popDebugMarker(); \
 	}
 
@@ -569,7 +569,7 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 	if((alwaysZero || debugZeroing) && buff.isValid()) \
 	{ \
 		cmdb.pushDebugMarker(#buff, Vec3(1.0f, 1.0f, 1.0f)); \
-		cmdb.fillBuffer((debugZeroing) ? buff : BufferView(buff).setRange(sizeToZero), 0); \
+		fillBuffer(cmdb, (debugZeroing) ? buff : BufferView(buff).setRange(sizeToZero), 0); \
 		cmdb.popDebugMarker(); \
 	}
 
@@ -997,11 +997,11 @@ void GpuVisibilityNonRenderables::populateRenderGraph(GpuVisibilityNonRenderable
 		NonGraphicsRenderPass& pass =
 			rgraph.newNonGraphicsRenderPass(generateTempPassName("Non-renderables vis: Clear counter buff: %s", in.m_passesName.cstr()));
 
-		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kCopyDestination);
+		pass.newBufferDependency(m_counterBufferZeroingHandle, BufferUsageBit::kUavCompute);
 
 		pass.setWork([counterBuffer = m_counterBuffer](RenderPassWorkContext& rgraph) {
 			ANKI_TRACE_SCOPED_EVENT(GpuVisNonRenderablesSetup);
-			rgraph.m_commandBuffer->fillBuffer(BufferView(counterBuffer.get()), 0);
+			fillBuffer(*rgraph.m_commandBuffer, BufferView(counterBuffer.get()), 0);
 		});
 
 		m_counterBufferOffset = 0;

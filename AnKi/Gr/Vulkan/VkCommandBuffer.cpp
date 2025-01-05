@@ -751,7 +751,7 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	vkCmdCopyBufferToImage(self.m_handle, static_cast<const BufferImpl&>(buff.getBuffer()).getHandle(), tex.m_imageHandle, layout, 1, &region);
 }
 
-void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
+void CommandBuffer::zeroBuffer(const BufferView& buff)
 {
 	ANKI_ASSERT(buff.isValid());
 
@@ -764,7 +764,7 @@ void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
 	ANKI_ASSERT((buff.getOffset() % 4) == 0 && "Should be multiple of 4");
 	ANKI_ASSERT((buff.getRange() % 4) == 0 && "Should be multiple of 4");
 
-	vkCmdFillBuffer(self.m_handle, impl.getHandle(), buff.getOffset(), buff.getRange(), value);
+	vkCmdFillBuffer(self.m_handle, impl.getHandle(), buff.getOffset(), buff.getRange(), 0);
 }
 
 void CommandBuffer::writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff)

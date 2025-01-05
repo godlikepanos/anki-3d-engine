@@ -318,8 +318,8 @@ public:
 	/// Copy a buffer to a texture surface or volume.
 	void copyBufferToTexture(const BufferView& buff, const TextureView& texView);
 
-	/// Fill a buffer with some value.
-	void fillBuffer(const BufferView& buff, U32 value);
+	/// Fill a buffer with zeros. It's a copy operation.
+	void zeroBuffer(const BufferView& buff);
 
 	/// Write the occlusion result to buffer.
 	void writeOcclusionQueriesResultToBuffer(ConstWeakArray<OcclusionQuery*> queries, const BufferView& buff);

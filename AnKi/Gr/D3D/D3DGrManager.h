@@ -59,6 +59,11 @@ public:
 
 	void invokeDred() const;
 
+	Buffer& getZeroBuffer() const
+	{
+		return *m_zeroBuffer;
+	}
+
 private:
 	ID3D12DeviceX* m_device = nullptr;
 	Array<ID3D12CommandQueue*, U32(GpuQueueType::kCount)> m_queues = {};
@@ -81,6 +86,8 @@ private:
 	U8 m_crntFrame = 0;
 
 	D3DCapabilities m_d3dCapabilities;
+
+	BufferPtr m_zeroBuffer; ///< Used in CommandBuffer::zeroBuffer
 
 	U64 m_timestampFrequency = 0;
 

@@ -631,27 +631,39 @@ void CommandBuffer::copyBufferToTexture(const BufferView& buff, const TextureVie
 	self.m_cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
 }
 
-void CommandBuffer::fillBuffer(const BufferView& buff, U32 value)
+void CommandBuffer::zeroBuffer(const BufferView& buff)
 {
 	ANKI_ASSERT((buff.getRange() % sizeof(U32)) == 0);
 	ANKI_ASSERT(!!(buff.getBuffer().getBufferUsage() & BufferUsageBit::kCopyDestination));
 
-	BufferInitInfo srcBufferInit("FillBufferTmp");
-	srcBufferInit.m_mapAccess = BufferMapAccessBit::kWrite;
-	srcBufferInit.m_usage = BufferUsageBit::kCopySource;
-	srcBufferInit.m_size = buff.getRange();
+	ANKI_D3D_SELF(CommandBufferImpl);
 
-	BufferPtr srcBuffer = GrManager::getSingleton().newBuffer(srcBufferInit);
+	Buffer& zeroBuff = getGrManagerImpl().getZeroBuffer();
+	const PtrSize zeroBuffSize = zeroBuff.getSize();
 
-	U32* array = static_cast<U32*>(srcBuffer->map(0, buff.getRange(), BufferMapAccessBit::kWrite));
-	for(U32 i = 0; i < buff.getRange() / sizeof(U32); ++i)
+	const U32 copyRangeCount = (buff.getRange() + (zeroBuffSize - 1)) / zeroBuffSize;
+	WeakArray<CopyBufferToBufferInfo> copyRanges;
+	CopyBufferToBufferInfo defaultCopyRange;
+	if(copyRangeCount > 1)
 	{
-		array[i] = value;
+		newArray<CopyBufferToBufferInfo>(*self.m_fastPool, copyRangeCount, copyRanges);
+	}
+	else
+	{
+		copyRanges = {&defaultCopyRange, 1};
 	}
 
-	srcBuffer->unmap();
+	for(U32 i = 0; i < copyRangeCount; ++i)
+	{
+		const PtrSize offset = buff.getOffset() + PtrSize(i) * zeroBuffSize;
+		const PtrSize end = min(offset + zeroBuffSize, buff.getOffset() + buff.getRange());
 
-	copyBufferToBuffer(BufferView(srcBuffer.get()), buff);
+		copyRanges[i].m_destinationOffset = offset;
+		copyRanges[i].m_sourceOffset = 0;
+		copyRanges[i].m_range = end - offset;
+	}
+
+	copyBufferToBuffer(&zeroBuff, &buff.getBuffer(), copyRanges);
 }
 
 void CommandBuffer::writeOcclusionQueriesResultToBuffer([[maybe_unused]] ConstWeakArray<OcclusionQuery*> queries,

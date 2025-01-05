@@ -197,21 +197,21 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 		for(const Lod& lod : m_lods)
 		{
-			cmdb->fillBuffer(lod.m_indexBufferAllocationToken.getCompleteBufferView(), 0);
+			cmdb->zeroBuffer(lod.m_indexBufferAllocationToken.getCompleteBufferView());
 
 			for(VertexStreamId stream : EnumIterable(VertexStreamId::kMeshRelatedFirst, VertexStreamId::kMeshRelatedCount))
 			{
 				if(header.m_vertexAttributes[stream].m_format != Format::kNone)
 				{
-					cmdb->fillBuffer(lod.m_vertexBuffersAllocationToken[stream].getCompleteBufferView(), 0);
+					cmdb->zeroBuffer(lod.m_vertexBuffersAllocationToken[stream].getCompleteBufferView());
 				}
 			}
 
 			if(lod.m_meshletIndices.isValid())
 			{
-				cmdb->fillBuffer(lod.m_meshletIndices, 0);
-				cmdb->fillBuffer(lod.m_meshletBoundingVolumes, 0);
-				cmdb->fillBuffer(lod.m_meshletGeometryDescriptors, 0);
+				cmdb->zeroBuffer(lod.m_meshletIndices);
+				cmdb->zeroBuffer(lod.m_meshletBoundingVolumes);
+				cmdb->zeroBuffer(lod.m_meshletGeometryDescriptors);
 			}
 		}
 
