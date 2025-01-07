@@ -9,6 +9,12 @@
 
 #include <AnKi/Shaders/Functions.hlsl>
 
+// If the angle between the reflection and the normal grows more than 90 deg than the return value turns to zero
+F32 rejectBackFaces(Vec3 reflection, Vec3 normalAtHitPoint)
+{
+	return smoothstep(-0.17, 0.0, dot(normalAtHitPoint, -reflection));
+}
+
 // Find the intersection of a ray and a AABB when the ray is inside the AABB
 void rayAabbIntersectionInside2d(Vec2 rayOrigin, Vec2 rayDir, Vec2 aabbMin, Vec2 aabbMax, out F32 t)
 {
@@ -143,38 +149,59 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 	hitPoint = origin;
 }
 
+struct RayMarchingConfig
+{
+	U32 m_maxIterations; // The max iterations of the base algorithm
+	F32 m_depthTextureLod; // LOD to pass to the SampleLevel of the depth texture
+	U32 m_stepIncrement; // The step increment of each iteration
+	U32 m_initialStepIncrement; // The initial step
+
+	Bool m_backfaceRejection; // If it's zero then no rejection will happen
+	F32 m_minRayToBackgroundDistance; // Distance between the hit point on the ray and the hit point that is touching the depth buffer.
+									  // Make it kMaxF32 to disable the test
+};
+
+struct DummySampleNormalFunc
+{
+	Vec3 sample(Vec2 uv)
+	{
+		return 0.0;
+	}
+};
+
 // Note: All calculations in view space
-void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
+template<typename TSampleNormalFunc>
+Bool raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 						 Vec3 rayDir, // Ray dir in view space
 						 Vec2 uv, // UV the ray starts
 						 F32 depthRef, // Depth the ray starts
 						 Vec4 projMat00_11_22_23, // Projection matrix
-						 U32 maxIterations, // The max iterations of the base algorithm
+						 Vec4 unprojectionParams,
 						 Texture2D<Vec4> depthTex, // Depth tex
 						 SamplerState depthSampler, // Sampler for depthTex
-						 F32 depthLod, // LOD to pass to the textureLod
-						 U32 stepIncrement_, // The step increment of each iteration
-						 U32 initialStepIncrement, // The initial step
-						 out Vec3 hitPoint, // Hit point in UV coordinates
-						 out F32 attenuation)
+						 RayMarchingConfig config,
+						 TSampleNormalFunc sampleNormalFunc, // Only used if m_backfaceRejection is true
+						 out Vec3 hitPoint, // Hit point in view space
+						 out Vec2 hitUv, out F32 hitDepth)
 {
-	attenuation = 0.0;
-	hitPoint = Vec3(uv, depthRef);
+	hitPoint = rayOrigin;
+	hitUv = uv;
+	hitDepth = 0.0;
 
 	// Check for view facing reflections [sakibsaikia]
 	const Vec3 viewDir = normalize(rayOrigin);
 	const F32 cameraContribution = 1.0 - smoothstep(0.25, 0.5, dot(-viewDir, rayDir));
 	if(cameraContribution <= 0.0)
 	{
-		return;
+		return false;
 	}
 
 	// Find the depth's mipmap size
 	UVec2 depthTexSize;
 	U32 depthTexMipCount;
 	depthTex.GetDimensions(0u, depthTexSize.x, depthTexSize.y, depthTexMipCount);
-	depthLod = min(depthLod, F32(depthTexMipCount) - 1.0f);
-	const UVec2 depthTexMipSize = depthTexSize >> U32(depthLod);
+	config.m_depthTextureLod = min(config.m_depthTextureLod, F32(depthTexMipCount) - 1.0f);
+	const UVec2 depthTexMipSize = depthTexSize >> U32(config.m_depthTextureLod);
 
 	// Start point
 	const Vec3 start = Vec3(uv, depthRef);
@@ -193,27 +220,32 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	const F32 stepSize = 1.0 / ((dir.x > dir.y) ? depthTexMipSize.x : depthTexMipSize.y);
 
 	// Compute step
-	I32 stepIncrement = I32(stepIncrement_);
-	I32 crntStep = I32(initialStepIncrement);
+	I32 stepIncrement = I32(config.m_stepIncrement);
+	I32 crntStep = I32(config.m_initialStepIncrement);
 
 	// Search
-	[loop] while(maxIterations-- != 0u)
+	[loop] while(config.m_maxIterations-- != 0u)
 	{
 		const Vec3 newHit = start + dir * (F32(crntStep) * stepSize);
 
 		// Check if it's out of the view
 		if(any(newHit <= 0.0) || any(newHit >= 1.0))
 		{
-			hitPoint = start;
-			break;
+			return false;
 		}
 
-		const F32 depth = depthTex.SampleLevel(depthSampler, newHit.xy, depthLod).r;
+		const F32 depth = depthTex.SampleLevel(depthSampler, newHit.xy, config.m_depthTextureLod).r;
 		const Bool hit = newHit.z >= depth;
+
+		// Move the hit point to where the depth is
+		Vec3 newHitPoint = cheapPerspectiveUnprojection(unprojectionParams, uvToNdc(newHit.xy), newHit.z);
+
 		if(!hit)
 		{
 			crntStep += stepIncrement;
-			hitPoint = newHit;
+			hitPoint = newHitPoint;
+			hitUv = newHit.xy;
+			hitDepth = depth;
 		}
 		else if(stepIncrement > 1)
 		{
@@ -224,24 +256,37 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 		}
 		else
 		{
+			// Maybe found it
+
+			if(config.m_backfaceRejection)
+			{
+				const Vec3 hitNormal = sampleNormalFunc.sample(newHit.xy);
+				const F32 backFaceAttenuation = rejectBackFaces(rayDir, hitNormal);
+				if(backFaceAttenuation <= 0.5)
+				{
+					return false;
+				}
+			}
+
+			if(config.m_minRayToBackgroundDistance < kMaxF32)
+			{
+				const Vec3 pointInDepth = cheapPerspectiveUnprojection(unprojectionParams, uvToNdc(newHit.xy), depth);
+				const F32 dist = length(newHitPoint - pointInDepth);
+				if(dist > config.m_minRayToBackgroundDistance)
+				{
+					return false;
+				}
+
+				newHitPoint = pointInDepth;
+			}
+
 			// Found it
-
-			// Compute attenuation
-			const F32 blackMargin = 0.05 / 4.0;
-			const F32 whiteMargin = 0.1 / 2.0;
-			const Vec2 marginAttenuation2d =
-				smoothstep(blackMargin, whiteMargin, newHit.xy) * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, newHit.xy));
-			const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
-			attenuation = marginAttenuation * cameraContribution;
-
-			hitPoint = newHit;
-
-			break;
+			hitPoint = newHitPoint;
+			hitUv = newHit.xy;
+			hitDepth = depth;
+			return true;
 		}
 	}
-}
 
-void rejectBackFaces(Vec3 reflection, Vec3 normalAtHitPoint, out F32 attenuation)
-{
-	attenuation = smoothstep(-0.17, 0.0, dot(normalAtHitPoint, -reflection));
+	return false;
 }
