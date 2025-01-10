@@ -255,9 +255,12 @@ if(NOT MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 else()
 	#ProcessorCount(PC)
+	string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+
 	add_compile_options(
 		/MP
-		/EHsc) # Disable exceptions
+		/EHsc # Disable exceptions
+		/GR-) # Disable RTTI
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 		#add_definitions(/Ox)
@@ -292,7 +295,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SpirvCross)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SpirvCross "Jolt/Build")
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
