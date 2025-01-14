@@ -921,7 +921,8 @@ void CommandBuffer::setPipelineBarrier(ConstWeakArray<TextureBarrierInfo> textur
 	self.commandCommon();
 
 	DynamicArray<VkImageMemoryBarrier, MemoryPoolPtrWrapper<StackMemoryPool>> imageBarriers(self.m_pool);
-	VkMemoryBarrier genericBarrier = {.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+	VkMemoryBarrier genericBarrier = {};
+	genericBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 	VkPipelineStageFlags srcStageMask = 0;
 	VkPipelineStageFlags dstStageMask = 0;
 

@@ -741,10 +741,12 @@ Error GrManagerImpl::initInstance()
 	m_devProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	vkGetPhysicalDeviceProperties2(m_physicalDevice, &m_devProps);
 
-	VkPhysicalDeviceVulkan12Properties props12 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES};
+	VkPhysicalDeviceVulkan12Properties props12 = {};
+	props12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
 	getPhysicalDeviceProperties2(props12);
 
-	VkPhysicalDeviceVulkan13Properties props13 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES};
+	VkPhysicalDeviceVulkan13Properties props13 = {};
+	props13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES;
 	getPhysicalDeviceProperties2(props13);
 	m_capabilities.m_minWaveSize = props13.minSubgroupSize;
 	m_capabilities.m_maxWaveSize = props13.maxSubgroupSize;

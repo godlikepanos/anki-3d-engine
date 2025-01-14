@@ -92,9 +92,7 @@ Error NativeWindowSdl::initSdl(const NativeWindowInitInfo& init)
 	//
 	U32 flags = 0;
 
-#if ANKI_GR_BACKEND_GL
-	flags |= SDL_WINDOW_OPENGL;
-#elif ANKI_GR_BACKEND_VULKAN
+#if ANKI_GR_BACKEND_VULKAN
 	flags |= SDL_WINDOW_VULKAN;
 #endif
 
