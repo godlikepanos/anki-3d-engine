@@ -165,20 +165,20 @@ Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 	btAlignedAllocSetCustom(btAlloc, btFree);
 
 	// Create objects
-	m_broadphase.init();
-	m_gpc.init();
+	m_broadphase.construct();
+	m_gpc.construct();
 	m_broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(m_gpc.get());
 	m_filterCallback = anki::newInstance<MyOverlapFilterCallback>(PhysicsMemoryPool::getSingleton());
 	m_broadphase->getOverlappingPairCache()->setOverlapFilterCallback(m_filterCallback);
 
-	m_collisionConfig.init();
+	m_collisionConfig.construct();
 
-	m_dispatcher.init(m_collisionConfig.get());
+	m_dispatcher.construct(m_collisionConfig.get());
 	btGImpactCollisionAlgorithm::registerAlgorithm(m_dispatcher.get());
 
-	m_solver.init();
+	m_solver.construct();
 
-	m_world.init(m_dispatcher.get(), m_broadphase.get(), m_solver.get(), m_collisionConfig.get());
+	m_world.construct(m_dispatcher.get(), m_broadphase.get(), m_solver.get(), m_collisionConfig.get());
 	m_world->setGravity(btVector3(0.0f, -9.8f, 0.0f));
 
 	return Error::kNone;

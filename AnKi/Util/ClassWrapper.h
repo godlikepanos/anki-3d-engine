@@ -25,7 +25,7 @@ public:
 
 	/// Call the constructor of the TClass.
 	template<typename... TArgs>
-	void init(TArgs&&... args)
+	void construct(TArgs&&... args)
 	{
 		::new(&m_data[0]) TClass(std::forward<TArgs>(args)...);
 	}

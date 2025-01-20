@@ -1,0 +1,5 @@
+file(GLOB_RECURSE sources *.cpp)
+file(GLOB_RECURSE headers *.h)
+add_library(AnKiPhysics2 ${sources} ${headers})
+target_compile_definitions(AnKiPhysics2 PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKiPhysics2 AnKiUtil)

@@ -22,7 +22,7 @@ Font::~Font()
 
 Error Font::init(const CString& filename, ConstWeakArray<U32> fontHeights)
 {
-	m_imFontAtlas.init();
+	m_imFontAtlas.construct();
 
 	// Load font in memory
 	ResourceFilePtr file;

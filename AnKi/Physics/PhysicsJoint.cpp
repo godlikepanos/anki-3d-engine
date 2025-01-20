@@ -29,7 +29,7 @@ PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec
 	: PhysicsJoint(JointType::kP2P)
 {
 	m_bodyA = std::move(bodyA);
-	m_p2p.init(*m_bodyA->getBtBody(), toBt(relPos));
+	m_p2p.construct(*m_bodyA->getBtBody(), toBt(relPos));
 	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
@@ -40,7 +40,7 @@ PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsBodyPtr bodyA, const Vec
 	m_bodyA = std::move(bodyA);
 	m_bodyB = std::move(bodyB);
 
-	m_p2p.init(*m_bodyA->getBtBody(), *m_bodyB->getBtBody(), toBt(relPosA), toBt(relPosB));
+	m_p2p.construct(*m_bodyA->getBtBody(), *m_bodyB->getBtBody(), toBt(relPosA), toBt(relPosB));
 	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
@@ -53,7 +53,7 @@ PhysicsHingeJoint::PhysicsHingeJoint(PhysicsBodyPtr bodyA, const Vec3& relPos, c
 	: PhysicsJoint(JointType::kHinge)
 {
 	m_bodyA = std::move(bodyA);
-	m_hinge.init(*m_bodyA->getBtBody(), toBt(relPos), toBt(axis));
+	m_hinge.construct(*m_bodyA->getBtBody(), toBt(relPos), toBt(axis));
 	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 

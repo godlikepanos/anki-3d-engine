@@ -32,7 +32,7 @@ PhysicsBody::PhysicsBody(const PhysicsBodyInitInfo& init)
 	// Create body
 	btRigidBody::btRigidBodyConstructionInfo cInfo(init.m_mass, &m_motionState, shape, localInertia);
 	cInfo.m_friction = init.m_friction;
-	m_body.init(cInfo);
+	m_body.construct(cInfo);
 
 	// User pointer
 	m_body->setUserPointer(static_cast<PhysicsObject*>(this));

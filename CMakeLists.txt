@@ -452,6 +452,7 @@ include_directories(
 	"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Bullet/src"
 	"ThirdParty"
 	"ThirdParty/ZLib"
+	"ThirdParty/Jolt"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
 if(SDL2_INCLUDE_DIRS)

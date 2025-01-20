@@ -15,7 +15,7 @@ PhysicsTrigger::PhysicsTrigger(PhysicsCollisionShapePtr shape)
 {
 	m_shape = shape;
 
-	m_ghostShape.init();
+	m_ghostShape.construct();
 	m_ghostShape->setWorldTransform(btTransform::getIdentity());
 	m_ghostShape->setCollisionShape(shape->getBtShape(true));
 
