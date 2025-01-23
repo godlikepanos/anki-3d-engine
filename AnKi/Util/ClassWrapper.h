@@ -61,6 +61,18 @@ public:
 	}
 
 	/// Access the instance.
+	const TClass* operator&() const
+	{
+		return reinterpret_cast<const TClass*>(&m_data[0]);
+	}
+
+	/// Access the instance.
+	TClass* operator&()
+	{
+		return reinterpret_cast<TClass*>(&m_data[0]);
+	}
+
+	/// Access the instance.
 	TClass* get()
 	{
 		return reinterpret_cast<TClass*>(&m_data[0]);

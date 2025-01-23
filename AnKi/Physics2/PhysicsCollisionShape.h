@@ -8,45 +8,55 @@
 #include <AnKi/Physics2/Common.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/ClassWrapper.h>
-#include <Jolt/Physics/Collision/Shape/BoxShape.h>
-#include <Jolt/Physics/Collision/Shape/SphereShape.h>
 
 namespace anki {
+namespace v2 {
 
 /// Wrapper on top of JPH collision shapes.
-class Physics2CollisionShape
+class PhysicsCollisionShape
 {
-	friend class Physics2World;
-	template<typename, typename>
-	friend class IntrusivePtr;
-	template<typename, typename, typename>
-	friend class BlockArray;
+	ANKI_PHYSICS_COMMON_FRIENDS
+	friend class PhysicsCollisionShapePtrDeleter;
 
-protected:
-	enum ShapeType : U8
+public:
+	PhysicsCollisionShape(const PhysicsCollisionShape&) = delete;
+
+	PhysicsCollisionShape& operator=(const PhysicsCollisionShape&) = delete;
+
+private:
+	enum class ShapeType : U8
 	{
 		kBox,
 		kSphere,
 		kConvex,
-		kTrimesh
+		kTrimesh,
+		kScaled, ///< This is for internal use
+
+		kCount
 	};
 
 	union
 	{
+		ClassWrapper<JPH::Shape> m_shapeBase;
 		ClassWrapper<JPH::BoxShape> m_box;
 		ClassWrapper<JPH::SphereShape> m_sphere;
+		ClassWrapper<JPH::ScaledShape> m_scaled; ///< We don't hold a reference to the target shape to avoid locking mutexes twice.
 	};
 
 	mutable Atomic<U32> m_refcount = {0};
-	U32 m_arrayIndex : 24 = 0b111111111111111111111111;
-	U32 m_type : 8;
+	U32 m_arrayIndex = kMaxU32;
+	ShapeType m_type;
 
-	Physics2CollisionShape(ShapeType type)
+	PhysicsCollisionShape(ShapeType type)
 		: m_type(type)
 	{
+		ANKI_ASSERT(type < ShapeType::kCount);
+		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_box));
+		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_sphere));
+		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_scaled));
 	}
 
-	~Physics2CollisionShape()
+	~PhysicsCollisionShape()
 	{
 		switch(m_type)
 		{
@@ -55,6 +65,9 @@ protected:
 			break;
 		case ShapeType::kSphere:
 			m_sphere.destroy();
+			break;
+		case ShapeType::kScaled:
+			m_scaled.destroy();
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -72,4 +85,5 @@ protected:
 	}
 };
 
+} // namespace v2
 } // end namespace anki

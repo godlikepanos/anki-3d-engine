@@ -7,9 +7,9 @@
 
 #include <AnKi/Physics2/Common.h>
 #include <AnKi/Util/ClassWrapper.h>
-#include <Jolt/Physics/Body/Body.h>
 
 namespace anki {
+namespace v2 {
 
 /// @addtogroup physics
 /// @{
@@ -18,87 +18,75 @@ namespace anki {
 class PhysicsBodyInitInfo
 {
 public:
-	Physics2CollisionShape* m_shape = nullptr;
-	F32 m_mass = 0.0f;
+	PhysicsCollisionShape* m_shape = nullptr;
+	F32 m_mass = 0.0f; ///< Zero mass means static object.
 	Transform m_transform = Transform::getIdentity();
 	F32 m_friction = 0.5f;
+	PhysicsLayer m_layer = PhysicsLayer::kStatic;
 };
 
 /// Rigid body.
 class PhysicsBody
 {
+	ANKI_PHYSICS_COMMON_FRIENDS
+	friend class PhysicsBodyPtrDeleter;
+
 public:
-	const Transform& getTransform() const
+	PhysicsBody(const PhysicsBody&) = delete;
+
+	PhysicsBody& operator=(const PhysicsBody&) = delete;
+
+	const Transform& getTransform(U32* version = nullptr) const
 	{
-		return m_trf;
+		if(version)
+		{
+			*version = m_worldTrfVersion;
+		}
+		return m_worldTrf;
 	}
 
-	void setTransform(const Transform& trf)
-	{
-		// TODO
-	}
+	void setTransform(const Transform& trf);
 
-	void applyForce(const Vec3& force, const Vec3& relPos)
-	{
-		// TODO
-	}
+	void applyForce(const Vec3& force, const Vec3& relPos);
 
-	void setMass(F32 mass);
+	/// Apply force to the center of mass.
+	void applyForce(const Vec3& force);
 
-	F32 getMass() const
-	{
-		return m_mass;
-	}
+	void activate(Bool activate);
 
-	void activate(Bool activate)
-	{
-		// TODO
-	}
-
-	void clearForces()
-	{
-		// TODO
-	}
-
-	void setLinearVelocity(const Vec3& velocity)
-	{
-		// TODO
-	}
-
-	void setAngularVelocity(const Vec3& velocity)
-	{
-		// TODO
-	}
-
-	void setGravity(const Vec3& gravity)
-	{
-		// TODO
-	}
-
-	void setAngularFactor(const Vec3& factor)
-	{
-		// TODO
-	}
+	/// Zero means no gravity, 1 means normal gravity.
+	void setGravityFactor(F32 factor);
 
 private:
-	/// Store the data of the btRigidBody in place to avoid additional allocations.
-	ClassWrapper<btRigidBody> m_body;
+	JPH::Body* m_jphBody = nullptr;
+	PhysicsCollisionShapePtr m_primaryShape;
+	PhysicsCollisionShapePtr m_scaledShape;
+	mutable Atomic<U32> m_refcount = {0};
 
-	Transform m_trf = Transform::getIdentity();
-	MotionState m_motionState;
+	Transform m_worldTrf;
+	U32 m_worldTrfVersion = 1;
 
-	PhysicsCollisionShapePtr m_shape;
+	U32 m_arrayIndex : 31 = kMaxU32 >> 1u;
+	U32 m_activated : 1 = false;
 
-	F32 m_mass = 1.0f;
+	PhysicsBody() = default;
 
-	PhysicsBody(const PhysicsBodyInitInfo& init);
+	~PhysicsBody()
+	{
+		ANKI_ASSERT(m_jphBody == nullptr);
+	}
 
-	~PhysicsBody();
+	void retain() const
+	{
+		m_refcount.fetchAdd(1);
+	}
 
-	void registerToWorld() override;
-
-	void unregisterFromWorld() override;
+	U32 release() const
+	{
+		return m_refcount.fetchSub(1);
+	}
 };
 /// @}
 
+} // namespace v2
 } // end namespace anki

@@ -12,45 +12,101 @@
 #include <AnKi/Math.h>
 
 #include <Jolt/Jolt.h>
+#include <Jolt/Physics/Body/Body.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
 
 namespace anki {
+namespace v2 {
 
 #define ANKI_PHYS_LOGI(...) ANKI_LOG("PHYS", kNormal, __VA_ARGS__)
 #define ANKI_PHYS_LOGE(...) ANKI_LOG("PHYS", kError, __VA_ARGS__)
 #define ANKI_PHYS_LOGW(...) ANKI_LOG("PHYS", kWarning, __VA_ARGS__)
 #define ANKI_PHYS_LOGF(...) ANKI_LOG("PHYS", kFatal, __VA_ARGS__)
 
-class Physics2MemoryPool : public HeapMemoryPool, public MakeSingleton<Physics2MemoryPool>
+#define ANKI_PHYSICS_COMMON_FRIENDS \
+	friend class PhysicsWorld; \
+	template<typename, typename> \
+	friend class IntrusivePtr; \
+	template<typename, typename, typename> \
+	friend class BlockArray;
+
+class PhysicsMemoryPool : public HeapMemoryPool, public MakeSingleton<PhysicsMemoryPool>
 {
 	template<typename>
 	friend class MakeSingleton;
 
 private:
-	Physics2MemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
+	PhysicsMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)
 		: HeapMemoryPool(allocCb, allocCbUserData, "PhysicsMemPool")
 	{
 	}
 
-	~Physics2MemoryPool() = default;
+	~PhysicsMemoryPool() = default;
 };
 
-ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Physics2, Physics2MemoryPool)
+ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Physics, PhysicsMemoryPool)
+
+enum class PhysicsLayer : U8
+{
+	kStatic,
+	kMoving,
+	kCharacter,
+	kCount
+};
 
 // Forward
-class Physics2CollisionShape;
+class PhysicsCollisionShape;
+class PhysicsBody;
 
 /// Custom deleter.
-class Physics2CollisionShapePtrDeleter
+class PhysicsCollisionShapePtrDeleter
 {
 public:
-	void operator()(Physics2CollisionShape* ptr);
+	void operator()(PhysicsCollisionShape* ptr);
 };
 
-using Physics2CollisionShapePtr = IntrusivePtr<Physics2CollisionShape, Physics2CollisionShapePtrDeleter>;
+using PhysicsCollisionShapePtr = IntrusivePtr<PhysicsCollisionShape, PhysicsCollisionShapePtrDeleter>;
+
+/// Custom deleter.
+class PhysicsBodyPtrDeleter
+{
+public:
+	void operator()(PhysicsBody* ptr);
+};
+
+using PhysicsBodyPtr = IntrusivePtr<PhysicsBody, PhysicsBodyPtrDeleter>;
 
 inline JPH::RVec3 toJPH(Vec3 ak)
 {
 	return JPH::RVec3(ak.x(), ak.y(), ak.z());
 }
 
+inline JPH::Quat toJPH(Quat ak)
+{
+	return JPH::Quat(ak.x(), ak.y(), ak.z(), ak.w());
+}
+
+inline Vec4 toAnKi(const JPH::Vec4& jph)
+{
+	return Vec4(jph.GetX(), jph.GetY(), jph.GetZ(), jph.GetW());
+}
+
+inline Transform toAnKi(const JPH::RMat44& jph)
+{
+	Mat4 m;
+	for(U32 i = 0; i < 4; ++i)
+	{
+		m.setColumn(i, toAnKi(jph.GetColumn4(i)));
+	}
+	return Transform(m);
+}
+
+} // namespace v2
 } // end namespace anki
