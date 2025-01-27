@@ -71,10 +71,7 @@ private:
 
 	PhysicsBody() = default;
 
-	~PhysicsBody()
-	{
-		ANKI_ASSERT(m_jphBody == nullptr);
-	}
+	~PhysicsBody() = default;
 
 	void retain() const
 	{
@@ -85,6 +82,8 @@ private:
 	{
 		return m_refcount.fetchSub(1);
 	}
+
+	void postPhysicsUpdate();
 };
 /// @}
 

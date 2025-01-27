@@ -17,6 +17,7 @@ class PhysicsCollisionShape
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
 	friend class PhysicsCollisionShapePtrDeleter;
+	friend class PhysicsPlayerController;
 
 public:
 	PhysicsCollisionShape(const PhysicsCollisionShape&) = delete;
@@ -28,6 +29,7 @@ private:
 	{
 		kBox,
 		kSphere,
+		kCapsule,
 		kConvex,
 		kTrimesh,
 		kScaled, ///< This is for internal use
@@ -40,6 +42,7 @@ private:
 		ClassWrapper<JPH::Shape> m_shapeBase;
 		ClassWrapper<JPH::BoxShape> m_box;
 		ClassWrapper<JPH::SphereShape> m_sphere;
+		ClassWrapper<JPH::CapsuleShape> m_capsule;
 		ClassWrapper<JPH::ScaledShape> m_scaled; ///< We don't hold a reference to the target shape to avoid locking mutexes twice.
 	};
 
@@ -53,25 +56,13 @@ private:
 		ANKI_ASSERT(type < ShapeType::kCount);
 		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_box));
 		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_sphere));
+		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_capsule));
 		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_scaled));
 	}
 
 	~PhysicsCollisionShape()
 	{
-		switch(m_type)
-		{
-		case ShapeType::kBox:
-			m_box.destroy();
-			break;
-		case ShapeType::kSphere:
-			m_sphere.destroy();
-			break;
-		case ShapeType::kScaled:
-			m_scaled.destroy();
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
+		m_shapeBase.destroy();
 	}
 
 	void retain() const

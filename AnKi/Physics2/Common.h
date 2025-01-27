@@ -17,8 +17,12 @@
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Constraints/PointConstraint.h>
+#include <Jolt/Physics/Constraints/HingeConstraint.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 
@@ -61,27 +65,46 @@ enum class PhysicsLayer : U8
 	kCount
 };
 
-// Forward
-class PhysicsCollisionShape;
-class PhysicsBody;
+#define ANKI_PHYSICS_DEFINE_PTRS(className) \
+	class className; \
+	class className##PtrDeleter \
+	{ \
+	public: \
+		void operator()(className* ptr); \
+	}; \
+	using className##Ptr = IntrusivePtr<className, className##PtrDeleter>;
 
-/// Custom deleter.
-class PhysicsCollisionShapePtrDeleter
+ANKI_PHYSICS_DEFINE_PTRS(PhysicsCollisionShape)
+ANKI_PHYSICS_DEFINE_PTRS(PhysicsBody)
+ANKI_PHYSICS_DEFINE_PTRS(PhysicsJoint)
+ANKI_PHYSICS_DEFINE_PTRS(PhysicsPlayerController)
+#undef ANKI_PHYSICS_DEFINE_PTRS
+
+template<U32 kSize>
+class StaticTempAllocator final : public JPH::TempAllocator
 {
 public:
-	void operator()(PhysicsCollisionShape* ptr);
+	alignas(JPH_RVECTOR_ALIGNMENT) Array<U8, kSize> m_memory;
+	U32 m_base = 0;
+
+	void* Allocate(U32 size) override
+	{
+		ANKI_ASSERT(size);
+		size = getAlignedRoundUp(JPH_RVECTOR_ALIGNMENT, size);
+		ANKI_ASSERT(m_base + size <= sizeof(m_memory));
+		void* out = &m_memory[0] + size;
+		m_base += size;
+		return out;
+	}
+
+	void Free([[maybe_unused]] void* address, U32 size) override
+	{
+		ANKI_ASSERT(address && size);
+		size = getAlignedRoundUp(JPH_RVECTOR_ALIGNMENT, size);
+		ANKI_ASSERT(m_base >= size);
+		m_base -= size;
+	}
 };
-
-using PhysicsCollisionShapePtr = IntrusivePtr<PhysicsCollisionShape, PhysicsCollisionShapePtrDeleter>;
-
-/// Custom deleter.
-class PhysicsBodyPtrDeleter
-{
-public:
-	void operator()(PhysicsBody* ptr);
-};
-
-using PhysicsBodyPtr = IntrusivePtr<PhysicsBody, PhysicsBodyPtrDeleter>;
 
 inline JPH::RVec3 toJPH(Vec3 ak)
 {
@@ -96,6 +119,11 @@ inline JPH::Quat toJPH(Quat ak)
 inline Vec4 toAnKi(const JPH::Vec4& jph)
 {
 	return Vec4(jph.GetX(), jph.GetY(), jph.GetZ(), jph.GetW());
+}
+
+inline Vec3 toAnKi(JPH::Vec3 x)
+{
+	return Vec3(x.GetX(), x.GetY(), x.GetZ());
 }
 
 inline Transform toAnKi(const JPH::RMat44& jph)

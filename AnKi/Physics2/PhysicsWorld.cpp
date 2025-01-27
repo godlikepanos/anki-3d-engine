@@ -70,43 +70,43 @@ static ObjectLayerPairFilterImpl g_objectLayerPairFilterImpl;
 
 void PhysicsCollisionShapePtrDeleter::operator()(PhysicsCollisionShape* ptr)
 {
+	ANKI_ASSERT(ptr);
 	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
-	LockGuard lock(world.m_mtx);
+	LockGuard lock(world.m_collisionShapes.m_mtx);
 
-	world.m_collisionShapes.erase(ptr->m_arrayIndex);
+	world.m_collisionShapes.m_array.erase(ptr->m_arrayIndex);
 }
 
 void PhysicsBodyPtrDeleter::operator()(PhysicsBody* ptr)
 {
+	ANKI_ASSERT(ptr);
 	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
-	LockGuard lock(world.m_mtx);
+	world.m_jphPhysicsSystem->GetBodyInterface().RemoveBody(ptr->m_jphBody->GetID());
+	world.m_jphPhysicsSystem->GetBodyInterface().DestroyBody(ptr->m_jphBody->GetID());
 
-	if(!ptr->m_jphBody->IsInBroadPhase())
-	{
-		// Hasn't been added yet to the physics system, do special cleanup
+	LockGuard lock(world.m_bodies.m_mtx);
+	world.m_bodies.m_array.erase(ptr->m_arrayIndex);
+	world.m_optimizeBroadphase = true;
+}
 
-		decltype(world.m_bodiesToAdd)::Iterator it = world.m_bodiesToAdd.getBegin();
-		while(it != world.m_bodiesToAdd.getEnd())
-		{
-			if(*it == ptr)
-			{
-				break;
-			}
-		}
+void PhysicsJointPtrDeleter::operator()(PhysicsJoint* ptr)
+{
+	ANKI_ASSERT(ptr);
+	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
-		ANKI_ASSERT(it != world.m_bodiesToAdd.getEnd() && "Should have been in the \"toAdd\" list");
-		world.m_bodiesToAdd.erase(it);
+	LockGuard lock(world.m_joints.m_mtx);
+	world.m_joints.m_array.erase(ptr->m_arrayIndex);
+}
 
-		world.m_bodies.erase(ptr->m_arrayIndex);
-	}
-	else
-	{
-		// Deferred cleanup
+void PhysicsPlayerControllerPtrDeleter::operator()(PhysicsPlayerController* ptr)
+{
+	ANKI_ASSERT(ptr);
+	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
-		world.m_bodiesToRemove.emplaceBack(ptr);
-	}
+	LockGuard lock(world.m_characters.m_mtx);
+	world.m_characters.m_array.erase(ptr->m_arrayIndex);
 }
 
 void PhysicsWorld::MyBodyActivationListener::OnBodyActivated([[maybe_unused]] const JPH::BodyID& inBodyID, U64 inBodyUserData)
@@ -123,10 +123,10 @@ void PhysicsWorld::MyBodyActivationListener::OnBodyDeactivated([[maybe_unused]] 
 
 PhysicsWorld::~PhysicsWorld()
 {
-	removeBodies();
-
-	ANKI_ASSERT(m_collisionShapes.getSize() == 0);
-	ANKI_ASSERT(m_bodies.getSize() == 0);
+	ANKI_ASSERT(m_collisionShapes.m_array.getSize() == 0);
+	ANKI_ASSERT(m_bodies.m_array.getSize() == 0);
+	ANKI_ASSERT(m_joints.m_array.getSize() == 0);
+	ANKI_ASSERT(m_characters.m_array.getSize() == 0);
 
 	m_jobSystem.destroy();
 	m_jphPhysicsSystem.destroy();
@@ -207,30 +207,33 @@ Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 
 void PhysicsWorld::update(Second dt)
 {
-	const Bool optimizeBroadphase = m_bodiesToAdd.getSize() || m_bodiesToRemove.getSize();
-
-	removeBodies();
-	addBodies();
-
-	if(optimizeBroadphase)
+	// Pre-update work
 	{
-		m_jphPhysicsSystem->OptimizeBroadPhase();
+		for(PhysicsPlayerController& charController : m_characters.m_array)
+		{
+			charController.prePhysicsUpdate(dt);
+		}
+
+		if(m_optimizeBroadphase)
+		{
+			m_optimizeBroadphase = false;
+			m_jphPhysicsSystem->OptimizeBroadPhase();
+		}
 	}
 
 	constexpr I32 collisionSteps = 1;
 	m_jphPhysicsSystem->Update(F32(dt), collisionSteps, &m_tempAllocator, &m_jobSystem);
 
-	// Update transforms
-	for(auto& body : m_bodies)
+	// Post-update work
 	{
-		if(body.m_activated)
+		for(PhysicsBody& body : m_bodies.m_array)
 		{
-			const Transform newTrf = toAnKi(body.m_jphBody->GetWorldTransform());
-			if(newTrf != body.m_worldTrf)
-			{
-				body.m_worldTrf = newTrf;
-				++body.m_worldTrfVersion;
-			}
+			body.postPhysicsUpdate();
+		}
+
+		for(PhysicsPlayerController& charController : m_characters.m_array)
+		{
+			charController.postPhysicsUpdate();
 		}
 	}
 }
@@ -238,11 +241,11 @@ void PhysicsWorld::update(Second dt)
 template<typename TJPHCollisionShape, typename... TArgs>
 PhysicsCollisionShapePtr PhysicsWorld::newCollisionShape(PhysicsCollisionShape::ShapeType type, TArgs&&... args)
 {
-	decltype(m_collisionShapes)::Iterator it;
+	decltype(m_collisionShapes.m_array)::Iterator it;
 
 	{
-		LockGuard lock(m_mtx);
-		it = m_collisionShapes.emplace(type);
+		LockGuard lock(m_collisionShapes.m_mtx);
+		it = m_collisionShapes.m_array.emplace(type);
 	}
 
 	ClassWrapper<TJPHCollisionShape>& classw = reinterpret_cast<ClassWrapper<TJPHCollisionShape>&>(it->m_shapeBase);
@@ -263,8 +266,24 @@ PhysicsCollisionShapePtr PhysicsWorld::newBoxCollisionShape(Vec3 extend)
 	return newCollisionShape<JPH::BoxShape>(PhysicsCollisionShape::ShapeType::kBox, toJPH(extend));
 }
 
+PhysicsCollisionShapePtr PhysicsWorld::newCapsuleCollisionShape(F32 height, F32 radius)
+{
+	return newCollisionShape<JPH::CapsuleShape>(PhysicsCollisionShape::ShapeType::kCapsule, height / 2.0f, radius);
+}
+
 PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 {
+	PhysicsBody* newBody;
+	{
+		LockGuard lock(m_bodies.m_mtx);
+
+		m_optimizeBroadphase = true;
+		auto it = m_bodies.m_array.emplace();
+
+		newBody = &(*it);
+		newBody->m_arrayIndex = it.getArrayIndex();
+	}
+
 	const Vec3 pos = init.m_transform.getOrigin().xyz();
 	const Quat rot = Quat(init.m_transform.getRotation());
 
@@ -288,78 +307,71 @@ PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 	}
 
 	settings.mFriction = init.m_friction;
+	settings.mUserData = ptrToNumber(newBody);
 
+	// Call the thread-safe version because characters will be creating bodies as well
 	JPH::Body* jphBody = m_jphPhysicsSystem->GetBodyInterface().CreateBody(settings);
+	m_jphPhysicsSystem->GetBodyInterface().AddBody(jphBody->GetID(), JPH::EActivation::Activate);
 
 	// Create AnKi body
-	LockGuard lock(m_mtx);
+	newBody->m_jphBody = jphBody;
+	newBody->m_primaryShape.reset(init.m_shape);
+	newBody->m_scaledShape = scaledShape;
+	newBody->m_worldTrf = init.m_transform;
 
-	auto it = m_bodies.emplace();
-	it->m_jphBody = jphBody;
+	return PhysicsBodyPtr(newBody);
+}
+
+template<typename TJPHJoint, typename... TArgs>
+PhysicsJointPtr PhysicsWorld::newJoint(PhysicsJoint::Type type, PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args)
+{
+	ANKI_ASSERT(body1 && body2);
+
+	decltype(m_joints.m_array)::Iterator it;
+	{
+		LockGuard lock(m_joints.m_mtx);
+		it = m_joints.m_array.emplace(type);
+	}
+
+	ClassWrapper<TJPHJoint>& classw = reinterpret_cast<ClassWrapper<TJPHJoint>&>(it->m_base);
+	classw.construct(*body1->m_jphBody, *body2->m_jphBody, std::forward<TArgs>(args)...);
+	classw->SetEmbedded();
+
+	it->m_body1.reset(body1);
+	it->m_body2.reset(body2);
 	it->m_arrayIndex = it.getArrayIndex();
-	it->m_primaryShape.reset(init.m_shape);
-	it->m_scaledShape = scaledShape;
-	it->m_worldTrf = init.m_transform;
 
-	jphBody->SetUserData(ptrToNumber(&(*it)));
+	m_jphPhysicsSystem->AddConstraint(&it->m_base); // It's thread-safe
 
-	m_bodiesToAdd.emplaceBack(&(*it));
-
-	return PhysicsBodyPtr(&(*it));
+	return PhysicsJointPtr(&(*it));
 }
 
-void PhysicsWorld::addBodies()
+PhysicsJointPtr PhysicsWorld::newPointJoint(PhysicsBody* body1, PhysicsBody* body2, Bool pointsInWorldSpace, const Vec3& body1Point,
+											const Vec3& body2Point)
 {
-	if(m_bodiesToAdd.getSize() == 0) [[likely]]
-	{
-		return;
-	}
+	JPH::PointConstraintSettings settings;
+	settings.SetEmbedded();
 
-	PhysicsDynamicArray<JPH::BodyID> jphBodies;
-	jphBodies.resize(m_bodiesToAdd.getSize());
+	settings.mSpace = (pointsInWorldSpace) ? JPH::EConstraintSpace::WorldSpace : JPH::EConstraintSpace::LocalToBodyCOM;
+	settings.mPoint1 = toJPH(body1Point);
+	settings.mPoint2 = toJPH(body2Point);
 
-	for(U32 i = 0; i < m_bodiesToAdd.getSize(); ++i)
-	{
-		jphBodies[i] = m_bodiesToAdd[i]->m_jphBody->GetID();
-	}
-
-	const JPH::BodyInterface::AddState state = m_jphPhysicsSystem->GetBodyInterface().AddBodiesPrepare(jphBodies.getBegin(), jphBodies.getSize());
-	m_jphPhysicsSystem->GetBodyInterface().AddBodiesFinalize(jphBodies.getBegin(), jphBodies.getSize(), state, JPH::EActivation::Activate);
-
-	for(U32 i = 0; i < m_bodiesToAdd.getSize(); ++i)
-	{
-		ANKI_ASSERT(m_bodiesToAdd[i]->m_jphBody->IsInBroadPhase());
-	}
-
-	m_bodiesToAdd.resize(0);
+	return newJoint<JPH::PointConstraint>(PhysicsJoint::Type::kPoint, body1, body2, settings);
 }
 
-void PhysicsWorld::removeBodies()
+PhysicsPlayerControllerPtr PhysicsWorld::newPlayerController(const PhysicsPlayerControllerInitInfo& init)
 {
-	if(m_bodiesToRemove.getSize() == 0) [[likely]]
+	PhysicsPlayerController* newChar;
 	{
-		return;
+		LockGuard lock(m_characters.m_mtx);
+
+		auto it = m_characters.m_array.emplace();
+		newChar = &(*it);
+		newChar->m_arrayIndex = it.getArrayIndex();
 	}
 
-	// 1st, remove from phys system
-	PhysicsDynamicArray<JPH::BodyID> jphBodies;
-	jphBodies.resize(m_bodiesToRemove.getSize());
-	for(U32 i = 0; i < m_bodiesToRemove.getSize(); ++i)
-	{
-		jphBodies[i] = m_bodiesToRemove[i]->m_jphBody->GetID();
-	}
-	m_jphPhysicsSystem->GetBodyInterface().RemoveBodies(jphBodies.getBegin(), jphBodies.getSize());
-
-	// 2nd, delete the JPH bodies
-	m_jphPhysicsSystem->GetBodyInterface().DestroyBodies(jphBodies.getBegin(), jphBodies.getSize());
-
-	// 3rd, delete the AnKi bodies
-	for(U32 i = 0; i < m_bodiesToRemove.getSize(); ++i)
-	{
-		m_bodies.erase(m_bodiesToRemove[i]->m_arrayIndex);
-	}
-
-	m_bodiesToRemove.resize(0);
+	newChar->init(init);
+	return PhysicsPlayerControllerPtr(newChar);
 }
 
 } // namespace v2

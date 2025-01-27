@@ -8,6 +8,8 @@
 #include <AnKi/Physics2/Common.h>
 #include <AnKi/Physics2/PhysicsCollisionShape.h>
 #include <AnKi/Physics2/PhysicsBody.h>
+#include <AnKi/Physics2/PhysicsJoint.h>
+#include <AnKi/Physics2/PhysicsPlayerController.h>
 #include <AnKi/Util/BlockArray.h>
 
 namespace anki {
@@ -24,14 +26,22 @@ class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 	friend class PhysicsCollisionShapePtrDeleter;
 	friend class PhysicsBodyPtrDeleter;
 	friend class PhysicsBody;
+	friend class PhysicsPlayerController;
+	friend class PhysicsPlayerControllerPtrDeleter;
+	friend class PhysicsJointPtrDeleter;
 
 public:
 	Error init(AllocAlignedCallback allocCb, void* allocCbData);
 
 	PhysicsCollisionShapePtr newSphereCollisionShape(F32 radius);
 	PhysicsCollisionShapePtr newBoxCollisionShape(Vec3 extend);
+	PhysicsCollisionShapePtr newCapsuleCollisionShape(F32 height, F32 radius); ///< Capsule axis is in Y.
 
 	PhysicsBodyPtr newPhysicsBody(const PhysicsBodyInitInfo& init);
+
+	PhysicsJointPtr newPointJoint(PhysicsBody* body1, PhysicsBody* body2, Bool pointsInWorldSpace, const Vec3& body1Point, const Vec3& body2Point);
+
+	PhysicsPlayerControllerPtr newPlayerController(const PhysicsPlayerControllerInitInfo& init);
 
 	void update(Second dt);
 
@@ -43,28 +53,34 @@ private:
 		virtual void OnBodyDeactivated(const JPH::BodyID& inBodyID, U64 inBodyUserData) override;
 	};
 
-	PhysicsBlockArray<PhysicsCollisionShape> m_collisionShapes;
-	PhysicsBlockArray<PhysicsBody> m_bodies;
+	template<typename T>
+	class ObjArray
+	{
+	public:
+		PhysicsBlockArray<T> m_array;
+		Mutex m_mtx;
+	};
 
 	ClassWrapper<JPH::PhysicsSystem> m_jphPhysicsSystem;
 	ClassWrapper<JPH::JobSystemThreadPool> m_jobSystem;
 	ClassWrapper<JPH::TempAllocatorImpl> m_tempAllocator;
 
-	// Add bodies and remove bodies in batches for perf reasons
-	PhysicsDynamicArray<PhysicsBody*> m_bodiesToAdd;
-	PhysicsDynamicArray<PhysicsBody*> m_bodiesToRemove;
+	ObjArray<PhysicsCollisionShape> m_collisionShapes;
+	ObjArray<PhysicsBody> m_bodies;
+	ObjArray<PhysicsJoint> m_joints;
+	ObjArray<PhysicsPlayerController> m_characters;
 
-	Mutex m_mtx;
+	Bool m_optimizeBroadphase = true;
 
 	PhysicsWorld();
 
 	~PhysicsWorld();
 
-	void addBodies();
-	void removeBodies();
-
 	template<typename TJPHCollisionShape, typename... TArgs>
 	PhysicsCollisionShapePtr newCollisionShape(PhysicsCollisionShape::ShapeType type, TArgs&&... args);
+
+	template<typename TJPHJoint, typename... TArgs>
+	PhysicsJointPtr newJoint(PhysicsJoint::Type type, PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args);
 };
 /// @}
 

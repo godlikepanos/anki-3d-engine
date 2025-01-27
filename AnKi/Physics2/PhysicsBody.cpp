@@ -12,7 +12,6 @@ namespace v2 {
 void PhysicsBody::setTransform(const Transform& trf)
 {
 	ANKI_ASSERT(trf.getScale() == m_worldTrf.getScale() && "Can't handle dynamic scaling for now");
-	ANKI_ASSERT(!m_jphBody->IsStatic());
 
 	const JPH::RVec3 pos = toJPH(trf.getOrigin().xyz());
 	const JPH::Quat rot = toJPH(Quat(trf.getRotation()));
@@ -26,13 +25,11 @@ void PhysicsBody::setTransform(const Transform& trf)
 
 void PhysicsBody::applyForce(const Vec3& force, const Vec3& relPos)
 {
-	ANKI_ASSERT(!m_jphBody->IsStatic());
 	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().AddForce(m_jphBody->GetID(), toJPH(force), toJPH(relPos));
 }
 
 void PhysicsBody::applyForce(const Vec3& force)
 {
-	ANKI_ASSERT(!m_jphBody->IsStatic());
 	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().AddForce(m_jphBody->GetID(), toJPH(force));
 }
 
@@ -51,6 +48,20 @@ void PhysicsBody::activate(Bool activate)
 void PhysicsBody::setGravityFactor(F32 factor)
 {
 	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().SetGravityFactor(m_jphBody->GetID(), factor);
+}
+
+void PhysicsBody::postPhysicsUpdate()
+{
+	if(m_activated)
+	{
+		const Transform newTrf =
+			toAnKi(PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().GetWorldTransform(m_jphBody->GetID()));
+		if(newTrf != m_worldTrf)
+		{
+			m_worldTrf = newTrf;
+			++m_worldTrfVersion;
+		}
+	}
 }
 
 } // namespace v2
