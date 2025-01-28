@@ -70,10 +70,13 @@ private:
 	static constexpr F32 kPredictiveContactDistance = 0.1f;
 	static constexpr Bool kEnhancedInternalEdgeRemoval = false;
 	static constexpr Bool kEnableCharacterInertia = true;
+	static constexpr F32 kInnerShapeFraction = 0.9f;
 
 	ClassWrapper<JPH::CharacterVirtual> m_jphCharacter;
 	PhysicsCollisionShapePtr m_standingShape;
 	PhysicsCollisionShapePtr m_crouchingShape;
+	PhysicsCollisionShapePtr m_innerStandingShape; ///< Inner shape to recieve collision events.
+	PhysicsCollisionShapePtr m_innerCrouchingShape;
 
 	JPH::Vec3 m_desiredVelocity = JPH::Vec3::sZero();
 

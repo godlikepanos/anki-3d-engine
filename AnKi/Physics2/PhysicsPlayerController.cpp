@@ -23,6 +23,10 @@ void PhysicsPlayerController::init(const PhysicsPlayerControllerInitInfo& init)
 {
 	m_standingShape = PhysicsWorld::getSingleton().newCapsuleCollisionShape(init.m_standingHeight, init.m_waistWidth);
 	m_crouchingShape = PhysicsWorld::getSingleton().newCapsuleCollisionShape(init.m_crouchingHeight, init.m_waistWidth);
+	m_innerStandingShape =
+		PhysicsWorld::getSingleton().newCapsuleCollisionShape(init.m_standingHeight * kInnerShapeFraction, init.m_waistWidth * kInnerShapeFraction);
+	m_innerCrouchingShape =
+		PhysicsWorld::getSingleton().newCapsuleCollisionShape(init.m_crouchingHeight * kInnerShapeFraction, init.m_waistWidth * kInnerShapeFraction);
 
 	JPH::CharacterVirtualSettings settings;
 	settings.SetEmbedded();
@@ -36,8 +40,13 @@ void PhysicsPlayerController::init(const PhysicsPlayerControllerInitInfo& init)
 	settings.mPredictiveContactDistance = kPredictiveContactDistance;
 	settings.mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), -init.m_waistWidth); // Accept contacts that touch the lower sphere of the capsule
 	settings.mEnhancedInternalEdgeRemoval = kEnhancedInternalEdgeRemoval;
-	settings.mInnerBodyShape = nullptr;
-	m_jphCharacter.construct(&settings, toJPH(init.m_initialPosition), JPH::Quat::sIdentity(), ptrToNumber(this),
+	settings.mInnerBodyShape = &m_innerStandingShape->m_capsule;
+
+	U64 userData = ptrToNumber(this);
+	ANKI_ASSERT((userData & 1u) == 0);
+	userData |= 1u; ///< Encode an 1 to show that it's a controller
+
+	m_jphCharacter.construct(&settings, toJPH(init.m_initialPosition), JPH::Quat::sIdentity(), userData,
 							 &PhysicsWorld::getSingleton().m_jphPhysicsSystem);
 
 	m_position = init.m_initialPosition;
@@ -134,9 +143,8 @@ void PhysicsPlayerController::prePhysicsUpdate(Second dt)
 									physicsSystem.GetDefaultBroadPhaseLayerFilter(JPH::ObjectLayer(PhysicsLayer::kCharacter)),
 									physicsSystem.GetDefaultLayerFilter(JPH::ObjectLayer(PhysicsLayer::kCharacter)), {}, {}, g_tempAllocator))
 		{
-			// Not sure why Jolt does that, disable for now
-			// const JPH::Shape* innerShape = (isStanding) ? mInnerCrouchingShape : mInnerStandingShape;
-			// m_jphCharacter->SetInnerBodyShape(innerShape);
+			const JPH::Shape* innerShape = (isStanding) ? &m_innerCrouchingShape->m_capsule : &m_innerCrouchingShape->m_capsule;
+			m_jphCharacter->SetInnerBodyShape(innerShape);
 		}
 	}
 }

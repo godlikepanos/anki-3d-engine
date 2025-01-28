@@ -14,6 +14,32 @@ namespace v2 {
 /// @addtogroup physics
 /// @{
 
+/// An interface to process contacts.
+/// @memberof PhysicsBody
+class PhysicsTriggerCallbacks
+{
+public:
+	/// Will be called whenever a contact first touches a trigger.
+	virtual void onTriggerEnter([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsBody& obj)
+	{
+	}
+
+	/// Will be called whenever a contact first touches a trigger.
+	virtual void onTriggerEnter([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsPlayerController& obj)
+	{
+	}
+
+	/// Will be called whenever a contact stops touching a trigger.
+	virtual void onTriggerExit([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsBody& obj)
+	{
+	}
+
+	/// Will be called whenever a contact stops touching a trigger.
+	virtual void onTriggerExit([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsPlayerController& obj)
+	{
+	}
+};
+
 /// Init info for PhysicsBody.
 class PhysicsBodyInitInfo
 {
@@ -23,6 +49,7 @@ public:
 	Transform m_transform = Transform::getIdentity();
 	F32 m_friction = 0.5f;
 	PhysicsLayer m_layer = PhysicsLayer::kStatic;
+	Bool m_isTrigger = false;
 };
 
 /// Rigid body.
@@ -57,6 +84,11 @@ public:
 	/// Zero means no gravity, 1 means normal gravity.
 	void setGravityFactor(F32 factor);
 
+	void setPhysicsTriggerCallbacks(PhysicsTriggerCallbacks* callbacks)
+	{
+		m_triggerCallbacks = callbacks;
+	}
+
 private:
 	JPH::Body* m_jphBody = nullptr;
 	PhysicsCollisionShapePtr m_primaryShape;
@@ -66,12 +98,17 @@ private:
 	Transform m_worldTrf;
 	U32 m_worldTrfVersion = 1;
 
-	U32 m_arrayIndex : 31 = kMaxU32 >> 1u;
+	PhysicsTriggerCallbacks* m_triggerCallbacks = nullptr;
+
+	U32 m_arrayIndex : 30 = kMaxU32 >> 2u;
 	U32 m_activated : 1 = false;
+	U32 m_isTrigger : 1 = false;
 
 	PhysicsBody() = default;
 
 	~PhysicsBody() = default;
+
+	void init(const PhysicsBodyInitInfo& init);
 
 	void retain() const
 	{

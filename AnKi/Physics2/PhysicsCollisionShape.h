@@ -18,6 +18,7 @@ class PhysicsCollisionShape
 	ANKI_PHYSICS_COMMON_FRIENDS
 	friend class PhysicsCollisionShapePtrDeleter;
 	friend class PhysicsPlayerController;
+	friend class PhysicsBody;
 
 public:
 	PhysicsCollisionShape(const PhysicsCollisionShape&) = delete;

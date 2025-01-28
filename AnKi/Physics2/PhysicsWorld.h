@@ -46,12 +46,8 @@ public:
 	void update(Second dt);
 
 private:
-	class MyBodyActivationListener final : public JPH::BodyActivationListener
-	{
-	public:
-		virtual void OnBodyActivated(const JPH::BodyID& inBodyID, U64 inBodyUserData) override;
-		virtual void OnBodyDeactivated(const JPH::BodyID& inBodyID, U64 inBodyUserData) override;
-	};
+	class MyBodyActivationListener;
+	class MyContactListener;
 
 	template<typename T>
 	class ObjArray
@@ -59,6 +55,20 @@ private:
 	public:
 		PhysicsBlockArray<T> m_array;
 		Mutex m_mtx;
+	};
+
+	class Contact
+	{
+	public:
+		PhysicsBody* m_trigger;
+
+		union
+		{
+			PhysicsBody* m_recieverBody;
+			PhysicsPlayerController* m_recieverController;
+		};
+
+		Bool m_recieverIsBody;
 	};
 
 	ClassWrapper<JPH::PhysicsSystem> m_jphPhysicsSystem;
@@ -70,7 +80,15 @@ private:
 	ObjArray<PhysicsJoint> m_joints;
 	ObjArray<PhysicsPlayerController> m_characters;
 
+	DynamicArray<Contact> m_insertedContacts;
+	DynamicArray<Contact> m_deletedContacts;
+	Mutex m_insertedContactsMtx;
+	Mutex m_deletedContactsMtx;
+
 	Bool m_optimizeBroadphase = true;
+
+	static MyBodyActivationListener m_bodyActivationListener;
+	static MyContactListener m_contactListener;
 
 	PhysicsWorld();
 
@@ -81,6 +99,8 @@ private:
 
 	template<typename TJPHJoint, typename... TArgs>
 	PhysicsJointPtr newJoint(PhysicsJoint::Type type, PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args);
+
+	PhysicsCollisionShapePtr newScaleCollisionObject(const Vec3& scale, PhysicsCollisionShape* baseShape);
 };
 /// @}
 

@@ -9,6 +9,36 @@
 namespace anki {
 namespace v2 {
 
+class BodyOrController
+{
+public:
+	union
+	{
+		PhysicsBody* m_body = nullptr;
+		PhysicsPlayerController* m_controller;
+	};
+
+	Bool m_isBody = false;
+};
+
+static BodyOrController decodeBodyUserData(U64 userData)
+{
+	BodyOrController out;
+	ANKI_ASSERT(userData);
+	if(userData & 1u)
+	{
+		out.m_controller = numberToPtr<PhysicsPlayerController*>(userData & (~1_U64));
+		out.m_isBody = false;
+	}
+	else
+	{
+		out.m_body = numberToPtr<PhysicsBody*>(userData);
+		out.m_isBody = true;
+	}
+
+	return out;
+}
+
 class BPLayerInterfaceImpl final : public JPH::BroadPhaseLayerInterface
 {
 public:
@@ -64,9 +94,114 @@ public:
 	}
 };
 
+class PhysicsWorld::MyBodyActivationListener final : public JPH::BodyActivationListener
+{
+public:
+	void OnBodyActivated([[maybe_unused]] const JPH::BodyID& inBodyID, U64 bodyUserData) override
+	{
+		const BodyOrController userData = decodeBodyUserData(bodyUserData);
+
+		if(userData.m_isBody)
+		{
+			userData.m_body->m_activated = 1;
+		}
+		else
+		{
+			// It's a player controller, do nothing for now
+		}
+	}
+
+	void OnBodyDeactivated([[maybe_unused]] const JPH::BodyID& inBodyID, U64 bodyUserData) override
+	{
+		const BodyOrController userData = decodeBodyUserData(bodyUserData);
+
+		if(userData.m_isBody)
+		{
+			userData.m_body->m_activated = 0;
+		}
+		else
+		{
+			// It's a player controller, do nothing for now
+		}
+	}
+};
+
+class PhysicsWorld::MyContactListener final : public JPH::ContactListener
+{
+public:
+	void gatherObjects(U64 body1UserData, U64 body2UserData, PhysicsBody*& trigger, BodyOrController& receiver)
+	{
+		const BodyOrController userData1 = decodeBodyUserData(body1UserData);
+		const BodyOrController userData2 = decodeBodyUserData(body2UserData);
+
+		if(userData1.m_isBody && userData1.m_body->m_isTrigger)
+		{
+			trigger = userData1.m_body;
+			receiver = userData2;
+		}
+		else if(userData2.m_isBody && userData2.m_body->m_isTrigger)
+		{
+			trigger = userData2.m_body;
+			receiver = userData1;
+		}
+		else
+		{
+			trigger = nullptr;
+			receiver = {};
+		}
+	}
+
+	void OnContactAdded(const JPH::Body& inBody1, const JPH::Body& inBody2, [[maybe_unused]] const JPH::ContactManifold& inManifold,
+						[[maybe_unused]] JPH::ContactSettings& ioSettings) override
+	{
+		// You can practically do nothing with the bodies so stash them
+
+		PhysicsBody* trigger;
+		BodyOrController receiver;
+		gatherObjects(inBody1.GetUserData(), inBody2.GetUserData(), trigger, receiver);
+
+		if(!trigger || trigger->m_triggerCallbacks == nullptr)
+		{
+			return;
+		}
+
+		const Contact contact = {trigger, receiver.m_body, receiver.m_isBody};
+
+		PhysicsWorld& world = PhysicsWorld::getSingleton();
+
+		LockGuard lock(world.m_insertedContactsMtx);
+		world.m_insertedContacts.emplaceBack(contact);
+	}
+
+	void OnContactRemoved(const JPH::SubShapeIDPair& pair) override
+	{
+		// You can practically do nothing with the bodies so stash them
+
+		PhysicsWorld& world = PhysicsWorld::getSingleton();
+
+		PhysicsBody* trigger;
+		BodyOrController receiver;
+		gatherObjects(world.m_jphPhysicsSystem->GetBodyInterfaceNoLock().GetUserData(pair.GetBody1ID()),
+					  world.m_jphPhysicsSystem->GetBodyInterfaceNoLock().GetUserData(pair.GetBody2ID()), trigger, receiver);
+
+		if(!trigger || trigger->m_triggerCallbacks == nullptr)
+		{
+			return;
+		}
+
+		const Contact contact = {trigger, receiver.m_body, receiver.m_isBody};
+
+		LockGuard lock(world.m_deletedContactsMtx);
+		world.m_deletedContacts.emplaceBack(contact);
+	}
+};
+
+// Globals
 static BPLayerInterfaceImpl g_bPLayerInterfaceImpl;
 static ObjectVsBroadPhaseLayerFilterImpl g_objectVsBroadPhaseLayerFilterImpl;
 static ObjectLayerPairFilterImpl g_objectLayerPairFilterImpl;
+PhysicsWorld::MyBodyActivationListener PhysicsWorld::m_bodyActivationListener;
+PhysicsWorld::MyContactListener PhysicsWorld::m_contactListener;
 
 void PhysicsCollisionShapePtrDeleter::operator()(PhysicsCollisionShape* ptr)
 {
@@ -107,18 +242,6 @@ void PhysicsPlayerControllerPtrDeleter::operator()(PhysicsPlayerController* ptr)
 
 	LockGuard lock(world.m_characters.m_mtx);
 	world.m_characters.m_array.erase(ptr->m_arrayIndex);
-}
-
-void PhysicsWorld::MyBodyActivationListener::OnBodyActivated([[maybe_unused]] const JPH::BodyID& inBodyID, U64 inBodyUserData)
-{
-	PhysicsBody* body = numberToPtr<PhysicsBody*>(inBodyUserData);
-	body->m_activated = 1;
-}
-
-void PhysicsWorld::MyBodyActivationListener::OnBodyDeactivated([[maybe_unused]] const JPH::BodyID& inBodyID, U64 inBodyUserData)
-{
-	PhysicsBody* body = numberToPtr<PhysicsBody*>(inBodyUserData);
-	body->m_activated = 0;
 }
 
 PhysicsWorld::~PhysicsWorld()
@@ -196,6 +319,8 @@ Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 							 g_objectLayerPairFilterImpl);
 
 	m_jphPhysicsSystem->SetGravity(toJPH(Vec3(0.0f, -9.81f, 0.0f)));
+	m_jphPhysicsSystem->SetBodyActivationListener(&m_bodyActivationListener);
+	m_jphPhysicsSystem->SetContactListener(&m_contactListener);
 
 	const U32 threadCount = min(8u, getCpuCoresCount() - 1);
 	m_jobSystem.construct(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, threadCount);
@@ -235,6 +360,34 @@ void PhysicsWorld::update(Second dt)
 		{
 			charController.postPhysicsUpdate();
 		}
+
+		for(Contact& contact : m_insertedContacts)
+		{
+			if(contact.m_recieverIsBody)
+			{
+				contact.m_trigger->m_triggerCallbacks->onTriggerEnter(*contact.m_trigger, *contact.m_recieverBody);
+			}
+			else
+			{
+				contact.m_trigger->m_triggerCallbacks->onTriggerEnter(*contact.m_trigger, *contact.m_recieverController);
+			}
+		}
+
+		m_insertedContacts.destroy();
+
+		for(Contact& contact : m_deletedContacts)
+		{
+			if(contact.m_recieverIsBody)
+			{
+				contact.m_trigger->m_triggerCallbacks->onTriggerExit(*contact.m_trigger, *contact.m_recieverBody);
+			}
+			else
+			{
+				contact.m_trigger->m_triggerCallbacks->onTriggerExit(*contact.m_trigger, *contact.m_recieverController);
+			}
+		}
+
+		m_deletedContacts.destroy();
 	}
 }
 
@@ -271,6 +424,11 @@ PhysicsCollisionShapePtr PhysicsWorld::newCapsuleCollisionShape(F32 height, F32 
 	return newCollisionShape<JPH::CapsuleShape>(PhysicsCollisionShape::ShapeType::kCapsule, height / 2.0f, radius);
 }
 
+PhysicsCollisionShapePtr PhysicsWorld::newScaleCollisionObject(const Vec3& scale, PhysicsCollisionShape* baseShape)
+{
+	return newCollisionShape<JPH::ScaledShape>(PhysicsCollisionShape::ShapeType::kScaled, &baseShape->m_shapeBase, toJPH(scale));
+}
+
 PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 {
 	PhysicsBody* newBody;
@@ -284,41 +442,7 @@ PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 		newBody->m_arrayIndex = it.getArrayIndex();
 	}
 
-	const Vec3 pos = init.m_transform.getOrigin().xyz();
-	const Quat rot = Quat(init.m_transform.getRotation());
-
-	// Create a scale shape
-	const Bool hasScale = (init.m_transform.getScale().xyz() - 1.0).getLengthSquared() > kEpsilonf * 10.0;
-	PhysicsCollisionShapePtr scaledShape;
-	if(hasScale)
-	{
-		scaledShape = newCollisionShape<JPH::ScaledShape>(PhysicsCollisionShape::ShapeType::kScaled, &init.m_shape->m_shapeBase,
-														  toJPH(init.m_transform.getScale().xyz()));
-	}
-
-	// Create JPH body
-	JPH::BodyCreationSettings settings((scaledShape) ? &scaledShape->m_scaled : &init.m_shape->m_shapeBase, toJPH(pos), toJPH(rot),
-									   (init.m_mass == 0.0f) ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic, JPH::ObjectLayer(init.m_layer));
-
-	if(init.m_mass)
-	{
-		settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
-		settings.mMassPropertiesOverride.mMass = init.m_mass;
-	}
-
-	settings.mFriction = init.m_friction;
-	settings.mUserData = ptrToNumber(newBody);
-
-	// Call the thread-safe version because characters will be creating bodies as well
-	JPH::Body* jphBody = m_jphPhysicsSystem->GetBodyInterface().CreateBody(settings);
-	m_jphPhysicsSystem->GetBodyInterface().AddBody(jphBody->GetID(), JPH::EActivation::Activate);
-
-	// Create AnKi body
-	newBody->m_jphBody = jphBody;
-	newBody->m_primaryShape.reset(init.m_shape);
-	newBody->m_scaledShape = scaledShape;
-	newBody->m_worldTrf = init.m_transform;
-
+	newBody->init(init);
 	return PhysicsBodyPtr(newBody);
 }
 

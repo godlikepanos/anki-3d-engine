@@ -9,6 +9,64 @@
 namespace anki {
 namespace v2 {
 
+void PhysicsBody::init(const PhysicsBodyInitInfo& init)
+{
+	PhysicsWorld& world = PhysicsWorld::getSingleton();
+
+	const Vec3 pos = init.m_transform.getOrigin().xyz();
+	const Quat rot = Quat(init.m_transform.getRotation());
+
+	// Create a scale shape
+	const Bool hasScale = (init.m_transform.getScale().xyz() - 1.0).getLengthSquared() > kEpsilonf * 10.0;
+	PhysicsCollisionShapePtr scaledShape;
+	if(hasScale)
+	{
+		scaledShape = world.newScaleCollisionObject(init.m_transform.getScale().xyz(), init.m_shape);
+	}
+
+	// Create JPH body
+	JPH::EMotionType motionType;
+	if(init.m_isTrigger)
+	{
+		motionType = JPH::EMotionType::Kinematic;
+	}
+	else if(init.m_mass == 0.0f)
+	{
+		motionType = JPH::EMotionType::Static;
+	}
+	else
+	{
+		motionType = JPH::EMotionType::Dynamic;
+	}
+
+	JPH::BodyCreationSettings settings((scaledShape) ? &scaledShape->m_scaled : &init.m_shape->m_shapeBase, toJPH(pos), toJPH(rot), motionType,
+									   JPH::ObjectLayer(init.m_layer));
+
+	if(init.m_mass)
+	{
+		ANKI_ASSERT(!init.m_isTrigger && "Triggers can't have mass");
+		settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+		settings.mMassPropertiesOverride.mMass = init.m_mass;
+	}
+
+	settings.mFriction = init.m_friction;
+	settings.mUserData = ptrToNumber(this);
+	ANKI_ASSERT((settings.mUserData & 1u) == 0 && "We encode a flag in the lower bits");
+
+	settings.mIsSensor = init.m_isTrigger;
+
+	// Call the thread-safe version because characters will be creating bodies as well
+	JPH::Body* jphBody = world.m_jphPhysicsSystem->GetBodyInterface().CreateBody(settings);
+	world.m_jphPhysicsSystem->GetBodyInterface().AddBody(jphBody->GetID(), JPH::EActivation::Activate);
+
+	// Misc
+	m_jphBody = jphBody;
+	m_primaryShape.reset(init.m_shape);
+	m_scaledShape = scaledShape;
+	m_worldTrf = init.m_transform;
+	m_isTrigger = init.m_isTrigger;
+}
+
 void PhysicsBody::setTransform(const Transform& trf)
 {
 	ANKI_ASSERT(trf.getScale() == m_worldTrf.getScale() && "Can't handle dynamic scaling for now");
