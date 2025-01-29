@@ -27,10 +27,12 @@ public:
 	Vec3 m_initialPosition = Vec3(0.0f);
 
 	Bool m_controlMovementDuringJump = true;
+
+	void* m_userData = nullptr;
 };
 
 /// A player controller that walks the world.
-class PhysicsPlayerController
+class PhysicsPlayerController : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
 	friend class PhysicsPlayerControllerPtrDeleter;
@@ -93,26 +95,17 @@ private:
 	Vec3 m_position;
 	U32 m_positionVersion = 0;
 
-	mutable Atomic<U32> m_refcount = {0};
-
 	U32 m_arrayIndex : 29 = kMaxU32 >> 3u;
 	U32 m_controlMovementDuringJump : 1 = true;
 	U32 m_allowSliding : 1 = false;
 	U32 m_crouching : 1 = false;
 
-	PhysicsPlayerController() = default;
+	PhysicsPlayerController()
+		: PhysicsObjectBase(PhysicsObjectType::kPlayerController, nullptr)
+	{
+	}
 
 	~PhysicsPlayerController();
-
-	void retain() const
-	{
-		m_refcount.fetchAdd(1);
-	}
-
-	U32 release() const
-	{
-		return m_refcount.fetchSub(1);
-	}
 
 	void init(const PhysicsPlayerControllerInitInfo& init);
 

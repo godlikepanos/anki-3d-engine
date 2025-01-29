@@ -41,15 +41,13 @@ void PhysicsPlayerController::init(const PhysicsPlayerControllerInitInfo& init)
 	settings.mSupportingVolume = JPH::Plane(JPH::Vec3::sAxisY(), -init.m_waistWidth); // Accept contacts that touch the lower sphere of the capsule
 	settings.mEnhancedInternalEdgeRemoval = kEnhancedInternalEdgeRemoval;
 	settings.mInnerBodyShape = &m_innerStandingShape->m_capsule;
+	settings.mInnerBodyLayer = JPH::ObjectLayer(PhysicsLayer::kPlayerController);
 
-	U64 userData = ptrToNumber(this);
-	ANKI_ASSERT((userData & 1u) == 0);
-	userData |= 1u; ///< Encode an 1 to show that it's a controller
-
-	m_jphCharacter.construct(&settings, toJPH(init.m_initialPosition), JPH::Quat::sIdentity(), userData,
+	m_jphCharacter.construct(&settings, toJPH(init.m_initialPosition), JPH::Quat::sIdentity(), ptrToNumber(static_cast<PhysicsObjectBase*>(this)),
 							 &PhysicsWorld::getSingleton().m_jphPhysicsSystem);
 
 	m_position = init.m_initialPosition;
+	setUserData(init.m_userData);
 }
 
 void PhysicsPlayerController::prePhysicsUpdate(Second dt)
@@ -140,8 +138,8 @@ void PhysicsPlayerController::prePhysicsUpdate(Second dt)
 		const Bool isStanding = m_jphCharacter->GetShape() == &m_standingShape->m_shapeBase;
 		const JPH::Shape* shape = (isStanding) ? &m_crouchingShape->m_shapeBase : &m_standingShape->m_shapeBase;
 		if(m_jphCharacter->SetShape(shape, 1.5f * physicsSystem.GetPhysicsSettings().mPenetrationSlop,
-									physicsSystem.GetDefaultBroadPhaseLayerFilter(JPH::ObjectLayer(PhysicsLayer::kCharacter)),
-									physicsSystem.GetDefaultLayerFilter(JPH::ObjectLayer(PhysicsLayer::kCharacter)), {}, {}, g_tempAllocator))
+									physicsSystem.GetDefaultBroadPhaseLayerFilter(JPH::ObjectLayer(PhysicsLayer::kPlayerController)),
+									physicsSystem.GetDefaultLayerFilter(JPH::ObjectLayer(PhysicsLayer::kPlayerController)), {}, {}, g_tempAllocator))
 		{
 			const JPH::Shape* innerShape = (isStanding) ? &m_innerCrouchingShape->m_capsule : &m_innerCrouchingShape->m_capsule;
 			m_jphCharacter->SetInnerBodyShape(innerShape);

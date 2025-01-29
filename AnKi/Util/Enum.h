@@ -239,7 +239,7 @@ private:
 
 /// Allow a mask to be used in a for range loop of a compatible enum.
 /// @code
-/// for(SomeEnum type : EnumIterableBits<SomeEnum, SomeCompatibleBitEnum>(bitmask))
+/// for(SomeEnum type : EnumBitsIterable<SomeEnum, SomeCompatibleBitEnum>(bitmask))
 /// {
 /// 	...
 /// }

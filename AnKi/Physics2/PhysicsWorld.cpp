@@ -9,56 +9,40 @@
 namespace anki {
 namespace v2 {
 
-class BodyOrController
+class BroadphaseLayer
 {
 public:
-	union
-	{
-		PhysicsBody* m_body = nullptr;
-		PhysicsPlayerController* m_controller;
-	};
+	static constexpr JPH::BroadPhaseLayer kStatic{0};
+	static constexpr JPH::BroadPhaseLayer kDynamic{1};
+	static constexpr JPH::BroadPhaseLayer kDebris{2};
 
-	Bool m_isBody = false;
+	static constexpr U32 kCount = 3;
 };
 
-static BodyOrController decodeBodyUserData(U64 userData)
+static JPH::BroadPhaseLayer objectLayerToBroadphaseLayer(PhysicsLayer objectLayer)
 {
-	BodyOrController out;
-	ANKI_ASSERT(userData);
-	if(userData & 1u)
+	switch(PhysicsLayer(objectLayer))
 	{
-		out.m_controller = numberToPtr<PhysicsPlayerController*>(userData & (~1_U64));
-		out.m_isBody = false;
+	case PhysicsLayer::kStatic:
+		return BroadphaseLayer::kStatic;
+	case PhysicsLayer::kDebris:
+		return BroadphaseLayer::kDebris;
+	default:
+		return BroadphaseLayer::kDynamic;
 	}
-	else
-	{
-		out.m_body = numberToPtr<PhysicsBody*>(userData);
-		out.m_isBody = true;
-	}
-
-	return out;
 }
 
 class BPLayerInterfaceImpl final : public JPH::BroadPhaseLayerInterface
 {
 public:
-	static constexpr JPH::BroadPhaseLayer kStaticBroadPhaseLayer{0};
-	static constexpr JPH::BroadPhaseLayer kDynamicBroadPhaseLayer{1};
-
-	virtual U32 GetNumBroadPhaseLayers() const override
+	U32 GetNumBroadPhaseLayers() const override
 	{
-		return 2;
+		return BroadphaseLayer::kCount;
 	}
 
-	virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override
+	JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer objLayer) const override
 	{
-		switch(PhysicsLayer(inLayer))
-		{
-		case PhysicsLayer::kStatic:
-			return kStaticBroadPhaseLayer;
-		default:
-			return kDynamicBroadPhaseLayer;
-		}
+		return objectLayerToBroadphaseLayer(PhysicsLayer(objLayer));
 	}
 };
 
@@ -66,12 +50,14 @@ public:
 class ObjectVsBroadPhaseLayerFilterImpl final : public JPH::ObjectVsBroadPhaseLayerFilter
 {
 public:
-	virtual bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override
+	Bool ShouldCollide(JPH::ObjectLayer layer1, JPH::BroadPhaseLayer layer2) const override
 	{
-		switch(PhysicsLayer(inLayer1))
+		switch(PhysicsLayer(layer1))
 		{
 		case PhysicsLayer::kStatic:
-			return inLayer2 != BPLayerInterfaceImpl::kStaticBroadPhaseLayer; // Static doesn't collide with static.
+			return layer2 != BroadphaseLayer::kStatic; // Static doesn't collide with static
+		case PhysicsLayer::kDebris:
+			return layer2 == BroadphaseLayer::kStatic; // Debris only collides with static
 		default:
 			return true;
 		}
@@ -82,15 +68,46 @@ public:
 class ObjectLayerPairFilterImpl final : public JPH::ObjectLayerPairFilter
 {
 public:
-	virtual bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override
+	Bool ShouldCollide(JPH::ObjectLayer layer1, JPH::ObjectLayer layer2) const override
 	{
-		switch(PhysicsLayer(inObject1))
+		const PhysicsLayerBit layer1Bit = PhysicsLayerBit(1u << layer1);
+		const PhysicsLayerBit layer2Bit = PhysicsLayerBit(1u << layer2);
+
+		const PhysicsLayerBit layer1Mask = kPhysicsLayerCollisionTable[layer1];
+		const PhysicsLayerBit layer2Mask = kPhysicsLayerCollisionTable[layer2];
+
+		return !!(layer1Bit & layer2Mask) && !!(layer2Bit & layer1Mask);
+	}
+};
+
+class MaskBroadPhaseLayerFilter final : public JPH::BroadPhaseLayerFilter
+{
+public:
+	PhysicsLayerBit m_layerMask;
+
+	Bool ShouldCollide(JPH::BroadPhaseLayer inLayer) const override
+	{
+		for(PhysicsLayer layer : EnumBitsIterable<PhysicsLayer, PhysicsLayerBit>(m_layerMask))
 		{
-		case PhysicsLayer::kStatic:
-			return PhysicsLayer(inObject2) != PhysicsLayer::kStatic; // Static doesn't collide with static.
-		default:
-			return true; // Moving collides with everything
+			if(objectLayerToBroadphaseLayer(layer) == inLayer)
+			{
+				return true;
+			}
 		}
+
+		return false;
+	}
+};
+
+class MaskObjectLayerFilter final : public JPH::ObjectLayerFilter
+{
+public:
+	PhysicsLayerBit m_layerMask;
+
+	Bool ShouldCollide(JPH::ObjectLayer inLayer) const override
+	{
+		const PhysicsLayerBit inMask = PhysicsLayerBit(1u << inLayer);
+		return !!(m_layerMask & inMask);
 	}
 };
 
@@ -99,29 +116,29 @@ class PhysicsWorld::MyBodyActivationListener final : public JPH::BodyActivationL
 public:
 	void OnBodyActivated([[maybe_unused]] const JPH::BodyID& inBodyID, U64 bodyUserData) override
 	{
-		const BodyOrController userData = decodeBodyUserData(bodyUserData);
+		PhysicsObjectBase* base = numberToPtr<PhysicsObjectBase*>(bodyUserData);
 
-		if(userData.m_isBody)
+		if(base->getType() == PhysicsObjectType::kBody)
 		{
-			userData.m_body->m_activated = 1;
+			static_cast<PhysicsBody*>(base)->m_activated = 1;
 		}
 		else
 		{
-			// It's a player controller, do nothing for now
+			// Don't care
 		}
 	}
 
 	void OnBodyDeactivated([[maybe_unused]] const JPH::BodyID& inBodyID, U64 bodyUserData) override
 	{
-		const BodyOrController userData = decodeBodyUserData(bodyUserData);
+		PhysicsObjectBase* base = numberToPtr<PhysicsObjectBase*>(bodyUserData);
 
-		if(userData.m_isBody)
+		if(base->getType() == PhysicsObjectType::kBody)
 		{
-			userData.m_body->m_activated = 0;
+			static_cast<PhysicsBody*>(base)->m_activated = 0;
 		}
 		else
 		{
-			// It's a player controller, do nothing for now
+			// Don't care
 		}
 	}
 };
@@ -129,25 +146,27 @@ public:
 class PhysicsWorld::MyContactListener final : public JPH::ContactListener
 {
 public:
-	void gatherObjects(U64 body1UserData, U64 body2UserData, PhysicsBody*& trigger, BodyOrController& receiver)
+	void gatherObjects(U64 body1UserData, U64 body2UserData, PhysicsBody*& trigger, PhysicsObjectBase*& receiver)
 	{
-		const BodyOrController userData1 = decodeBodyUserData(body1UserData);
-		const BodyOrController userData2 = decodeBodyUserData(body2UserData);
+		PhysicsObjectBase* obj1 = numberToPtr<PhysicsObjectBase*>(body1UserData);
+		PhysicsObjectBase* obj2 = numberToPtr<PhysicsObjectBase*>(body2UserData);
 
-		if(userData1.m_isBody && userData1.m_body->m_isTrigger)
+		if(obj1->getType() == PhysicsObjectType::kBody && static_cast<PhysicsBody*>(obj1)->m_triggerCallbacks)
 		{
-			trigger = userData1.m_body;
-			receiver = userData2;
+			ANKI_ASSERT(obj2->getType() == PhysicsObjectType::kBody || obj2->getType() == PhysicsObjectType::kPlayerController);
+			trigger = static_cast<PhysicsBody*>(obj1);
+			receiver = obj2;
 		}
-		else if(userData2.m_isBody && userData2.m_body->m_isTrigger)
+		else if(obj2->getType() == PhysicsObjectType::kBody && static_cast<PhysicsBody*>(obj2)->m_triggerCallbacks)
 		{
-			trigger = userData2.m_body;
-			receiver = userData1;
+			ANKI_ASSERT(obj1->getType() == PhysicsObjectType::kBody || obj1->getType() == PhysicsObjectType::kPlayerController);
+			trigger = static_cast<PhysicsBody*>(obj2);
+			receiver = obj1;
 		}
 		else
 		{
 			trigger = nullptr;
-			receiver = {};
+			receiver = nullptr;
 		}
 	}
 
@@ -157,15 +176,15 @@ public:
 		// You can practically do nothing with the bodies so stash them
 
 		PhysicsBody* trigger;
-		BodyOrController receiver;
+		PhysicsObjectBase* receiver;
 		gatherObjects(inBody1.GetUserData(), inBody2.GetUserData(), trigger, receiver);
 
-		if(!trigger || trigger->m_triggerCallbacks == nullptr)
+		if(!trigger)
 		{
 			return;
 		}
 
-		const Contact contact = {trigger, receiver.m_body, receiver.m_isBody};
+		const Contact contact = {trigger, receiver};
 
 		PhysicsWorld& world = PhysicsWorld::getSingleton();
 
@@ -180,16 +199,16 @@ public:
 		PhysicsWorld& world = PhysicsWorld::getSingleton();
 
 		PhysicsBody* trigger;
-		BodyOrController receiver;
+		PhysicsObjectBase* receiver;
 		gatherObjects(world.m_jphPhysicsSystem->GetBodyInterfaceNoLock().GetUserData(pair.GetBody1ID()),
 					  world.m_jphPhysicsSystem->GetBodyInterfaceNoLock().GetUserData(pair.GetBody2ID()), trigger, receiver);
 
-		if(!trigger || trigger->m_triggerCallbacks == nullptr)
+		if(!trigger)
 		{
 			return;
 		}
 
-		const Contact contact = {trigger, receiver.m_body, receiver.m_isBody};
+		const Contact contact = {trigger, receiver};
 
 		LockGuard lock(world.m_deletedContactsMtx);
 		world.m_deletedContacts.emplaceBack(contact);
@@ -363,28 +382,14 @@ void PhysicsWorld::update(Second dt)
 
 		for(Contact& contact : m_insertedContacts)
 		{
-			if(contact.m_recieverIsBody)
-			{
-				contact.m_trigger->m_triggerCallbacks->onTriggerEnter(*contact.m_trigger, *contact.m_recieverBody);
-			}
-			else
-			{
-				contact.m_trigger->m_triggerCallbacks->onTriggerEnter(*contact.m_trigger, *contact.m_recieverController);
-			}
+			contact.m_trigger->m_triggerCallbacks->onTriggerEnter(*contact.m_trigger, *contact.m_receiver);
 		}
 
 		m_insertedContacts.destroy();
 
 		for(Contact& contact : m_deletedContacts)
 		{
-			if(contact.m_recieverIsBody)
-			{
-				contact.m_trigger->m_triggerCallbacks->onTriggerExit(*contact.m_trigger, *contact.m_recieverBody);
-			}
-			else
-			{
-				contact.m_trigger->m_triggerCallbacks->onTriggerExit(*contact.m_trigger, *contact.m_recieverController);
-			}
+			contact.m_trigger->m_triggerCallbacks->onTriggerExit(*contact.m_trigger, *contact.m_receiver);
 		}
 
 		m_deletedContacts.destroy();
@@ -496,6 +501,89 @@ PhysicsPlayerControllerPtr PhysicsWorld::newPlayerController(const PhysicsPlayer
 
 	newChar->init(init);
 	return PhysicsPlayerControllerPtr(newChar);
+}
+
+RayHitResult PhysicsWorld::jphToAnKi(const JPH::RRayCast& ray, const JPH::RayCastResult& hit)
+{
+	RayHitResult result;
+
+	const JPH::RVec3 hitPosJph = ray.GetPointOnRay(hit.mFraction);
+	result.m_hitPosition = toAnKi(hitPosJph);
+
+	const U64 userData = m_jphPhysicsSystem->GetBodyInterfaceNoLock().GetUserData(hit.mBodyID);
+	result.m_object = numberToPtr<PhysicsObjectBase*>(userData);
+
+	JPH::BodyLockRead lock(m_jphPhysicsSystem->GetBodyLockInterfaceNoLock(), hit.mBodyID);
+	if(lock.Succeeded())
+	{
+		result.m_normal = toAnKi(lock.GetBody().GetWorldSpaceSurfaceNormal(hit.mSubShapeID2, hitPosJph));
+	}
+
+	return result;
+}
+
+Bool PhysicsWorld::castRayClosestHit(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers, RayHitResult& result)
+{
+	MaskBroadPhaseLayerFilter broadphaseFilter;
+	broadphaseFilter.m_layerMask = layers;
+
+	MaskObjectLayerFilter objectFilter;
+	objectFilter.m_layerMask = layers;
+
+	JPH::RRayCast ray;
+	ray.mOrigin = toJPH(rayStart);
+	ray.mDirection = toJPH(rayEnd - rayStart); // Not exactly a direction if it's not normalized but anyway
+	JPH::RayCastResult hit;
+	const Bool success = m_jphPhysicsSystem->GetNarrowPhaseQueryNoLock().CastRay(ray, hit, broadphaseFilter, objectFilter);
+
+	if(success)
+	{
+		result = jphToAnKi(ray, hit);
+	}
+	else
+	{
+		result = {};
+	}
+
+	return success;
+}
+
+Bool PhysicsWorld::castRayAllHitsInternal(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers,
+										  PhysicsDynamicArray<RayHitResult>& results)
+{
+	MaskBroadPhaseLayerFilter broadphaseFilter;
+	broadphaseFilter.m_layerMask = layers;
+
+	MaskObjectLayerFilter objectFilter;
+	objectFilter.m_layerMask = layers;
+
+	JPH::RRayCast ray;
+	ray.mOrigin = toJPH(rayStart);
+	ray.mDirection = toJPH(rayEnd - rayStart); // Not exactly a direction if it's not normalized but anyway
+	JPH::RayCastResult hit;
+
+	JPH::RayCastSettings settings;
+
+	class MyCastRayCollector final : public JPH::CastRayCollector
+	{
+	public:
+		PhysicsDynamicArray<RayHitResult>* m_resArray;
+		JPH::RRayCast m_ray;
+		PhysicsWorld* m_world;
+
+		void AddHit(const JPH::RayCastResult& hit) override
+		{
+			const RayHitResult result = m_world->jphToAnKi(m_ray, hit);
+			m_resArray->emplaceBack(result);
+		}
+	} collector;
+	collector.m_resArray = &results;
+	collector.m_ray = ray;
+	collector.m_world = this;
+
+	m_jphPhysicsSystem->GetNarrowPhaseQueryNoLock().CastRay(ray, settings, collector, broadphaseFilter, objectFilter);
+
+	return results.getSize() > 0;
 }
 
 } // namespace v2

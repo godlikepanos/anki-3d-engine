@@ -50,8 +50,7 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 	}
 
 	settings.mFriction = init.m_friction;
-	settings.mUserData = ptrToNumber(this);
-	ANKI_ASSERT((settings.mUserData & 1u) == 0 && "We encode a flag in the lower bits");
+	settings.mUserData = ptrToNumber(static_cast<PhysicsObjectBase*>(this));
 
 	settings.mIsSensor = init.m_isTrigger;
 
@@ -65,6 +64,7 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 	m_scaledShape = scaledShape;
 	m_worldTrf = init.m_transform;
 	m_isTrigger = init.m_isTrigger;
+	setUserData(init.m_userData);
 }
 
 void PhysicsBody::setTransform(const Transform& trf)

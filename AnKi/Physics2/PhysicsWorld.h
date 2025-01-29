@@ -18,6 +18,15 @@ namespace v2 {
 /// @addtogroup physics
 /// @{
 
+/// @memberof PhysicsWorld
+class RayHitResult
+{
+public:
+	PhysicsObjectBase* m_object = nullptr;
+	Vec3 m_normal; ///< In world space.
+	Vec3 m_hitPosition; ///< In world space.
+};
+
 /// The master container for all physics related stuff.
 class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 {
@@ -45,6 +54,25 @@ public:
 
 	void update(Second dt);
 
+	/// Returns the closest hit.
+	Bool castRayClosestHit(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers, RayHitResult& result);
+
+	/// Executes a callback for all hits found.
+	template<typename TFunc>
+	Bool castRayAllHits(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers, TFunc func)
+	{
+		PhysicsDynamicArray<RayHitResult> results;
+		const Bool success = castRayAllHits(rayStart, rayEnd, layers, results);
+		if(success)
+		{
+			for(RayHitResult& res : results)
+			{
+				func(res);
+			}
+		}
+		return success;
+	}
+
 private:
 	class MyBodyActivationListener;
 	class MyContactListener;
@@ -61,14 +89,7 @@ private:
 	{
 	public:
 		PhysicsBody* m_trigger;
-
-		union
-		{
-			PhysicsBody* m_recieverBody;
-			PhysicsPlayerController* m_recieverController;
-		};
-
-		Bool m_recieverIsBody;
+		PhysicsObjectBase* m_receiver;
 	};
 
 	ClassWrapper<JPH::PhysicsSystem> m_jphPhysicsSystem;
@@ -101,6 +122,10 @@ private:
 	PhysicsJointPtr newJoint(PhysicsJoint::Type type, PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args);
 
 	PhysicsCollisionShapePtr newScaleCollisionObject(const Vec3& scale, PhysicsCollisionShape* baseShape);
+
+	RayHitResult jphToAnKi(const JPH::RRayCast& ray, const JPH::RayCastResult& hit);
+
+	Bool castRayAllHitsInternal(const Vec3& rayStart, const Vec3& rayEnd, PhysicsLayerBit layers, PhysicsDynamicArray<RayHitResult>& results);
 };
 /// @}
 

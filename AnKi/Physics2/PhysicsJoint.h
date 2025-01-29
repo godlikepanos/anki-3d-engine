@@ -15,15 +15,10 @@ namespace v2 {
 /// @{
 
 /// Wrapper on top of Jolt joints.
-class PhysicsJoint
+class PhysicsJoint : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
 	friend class PhysicsJointPtrDeleter;
-
-public:
-	PhysicsJoint(const PhysicsJoint&) = delete;
-
-	PhysicsJoint& operator=(const PhysicsJoint&) = delete;
 
 private:
 	enum class Type : U8
@@ -44,12 +39,12 @@ private:
 	PhysicsBodyPtr m_body1;
 	PhysicsBodyPtr m_body2;
 
-	mutable Atomic<U32> m_refcount = {0};
 	U32 m_arrayIndex = kMaxU32;
 	Type m_type;
 
 	PhysicsJoint(Type type)
-		: m_type(type)
+		: PhysicsObjectBase(PhysicsObjectType::kJoint, nullptr)
+		, m_type(type)
 	{
 		ANKI_ASSERT(type < Type::kCount);
 		ANKI_ASSERT(&m_base == static_cast<JPH::TwoBodyConstraint*>(&m_point));
@@ -59,16 +54,6 @@ private:
 	~PhysicsJoint()
 	{
 		m_base.destroy();
-	}
-
-	void retain() const
-	{
-		m_refcount.fetchAdd(1);
-	}
-
-	U32 release() const
-	{
-		return m_refcount.fetchSub(1);
 	}
 };
 /// @}

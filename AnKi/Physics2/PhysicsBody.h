@@ -20,22 +20,12 @@ class PhysicsTriggerCallbacks
 {
 public:
 	/// Will be called whenever a contact first touches a trigger.
-	virtual void onTriggerEnter([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsBody& obj)
-	{
-	}
-
-	/// Will be called whenever a contact first touches a trigger.
-	virtual void onTriggerEnter([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsPlayerController& obj)
+	virtual void onTriggerEnter([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsObjectBase& obj)
 	{
 	}
 
 	/// Will be called whenever a contact stops touching a trigger.
-	virtual void onTriggerExit([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsBody& obj)
-	{
-	}
-
-	/// Will be called whenever a contact stops touching a trigger.
-	virtual void onTriggerExit([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsPlayerController& obj)
+	virtual void onTriggerExit([[maybe_unused]] const PhysicsBody& trigger, [[maybe_unused]] const PhysicsObjectBase& obj)
 	{
 	}
 };
@@ -50,19 +40,16 @@ public:
 	F32 m_friction = 0.5f;
 	PhysicsLayer m_layer = PhysicsLayer::kStatic;
 	Bool m_isTrigger = false;
+	void* m_userData = nullptr;
 };
 
 /// Rigid body.
-class PhysicsBody
+class PhysicsBody : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
 	friend class PhysicsBodyPtrDeleter;
 
 public:
-	PhysicsBody(const PhysicsBody&) = delete;
-
-	PhysicsBody& operator=(const PhysicsBody&) = delete;
-
 	const Transform& getTransform(U32* version = nullptr) const
 	{
 		if(version)
@@ -86,6 +73,7 @@ public:
 
 	void setPhysicsTriggerCallbacks(PhysicsTriggerCallbacks* callbacks)
 	{
+		ANKI_ASSERT(m_isTrigger);
 		m_triggerCallbacks = callbacks;
 	}
 
@@ -93,7 +81,6 @@ private:
 	JPH::Body* m_jphBody = nullptr;
 	PhysicsCollisionShapePtr m_primaryShape;
 	PhysicsCollisionShapePtr m_scaledShape;
-	mutable Atomic<U32> m_refcount = {0};
 
 	Transform m_worldTrf;
 	U32 m_worldTrfVersion = 1;
@@ -104,21 +91,14 @@ private:
 	U32 m_activated : 1 = false;
 	U32 m_isTrigger : 1 = false;
 
-	PhysicsBody() = default;
+	PhysicsBody()
+		: PhysicsObjectBase(PhysicsObjectType::kBody, nullptr)
+	{
+	}
 
 	~PhysicsBody() = default;
 
 	void init(const PhysicsBodyInitInfo& init);
-
-	void retain() const
-	{
-		m_refcount.fetchAdd(1);
-	}
-
-	U32 release() const
-	{
-		return m_refcount.fetchSub(1);
-	}
 
 	void postPhysicsUpdate();
 };

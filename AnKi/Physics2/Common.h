@@ -10,6 +10,7 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Math.h>
+#include <AnKi/Util/Enum.h>
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/Body.h>
@@ -19,6 +20,9 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Collision/CastResult.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Constraints/PointConstraint.h>
 #include <Jolt/Physics/Constraints/HingeConstraint.h>
@@ -57,13 +61,102 @@ private:
 
 ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Physics, PhysicsMemoryPool)
 
+enum class PhysicsObjectType : U8
+{
+	kNone,
+	kCollisionShape,
+	kBody,
+	kPlayerController,
+	kJoint,
+
+	kCount
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType);
+
+/// The base class of all physics objects.
+class PhysicsObjectBase
+{
+	template<typename, typename>
+	friend class IntrusivePtr;
+
+public:
+	PhysicsObjectBase(const PhysicsObjectBase&) = delete;
+
+	PhysicsObjectBase& operator=(const PhysicsObjectBase&) = delete;
+
+	PhysicsObjectType getType() const
+	{
+		return m_type;
+	}
+
+	void* getUserData() const
+	{
+		return m_userData;
+	}
+
+	void setUserData(void* userData)
+	{
+		m_userData = userData;
+	}
+
+protected:
+	PhysicsObjectBase(PhysicsObjectType type, void* userData)
+		: m_userData(userData)
+		, m_type(type)
+	{
+		ANKI_ASSERT(type < PhysicsObjectType::kCount);
+	}
+
+	void retain() const
+	{
+		m_refcount.fetchAdd(1);
+	}
+
+	U32 release() const
+	{
+		return m_refcount.fetchSub(1);
+	}
+
+private:
+	void* m_userData;
+	mutable Atomic<U32> m_refcount = {0};
+	PhysicsObjectType m_type;
+};
+
+/// The physics layers a PhysicsBody can be.
 enum class PhysicsLayer : U8
 {
 	kStatic,
 	kMoving,
-	kCharacter,
-	kCount
+	kPlayerController,
+	kTrigger,
+	kDebris,
+
+	kCount,
+	kFirst = 0
 };
+
+enum class PhysicsLayerBit : U8
+{
+	kNone = 0,
+
+	kStatic = 1u << 0u,
+	kMoving = 1u << 1u,
+	kPlayerController = 1u << 2u,
+	kTrigger = 1u << 3u,
+	kDebris = 1u << 4u,
+
+	kAll = kStatic | kMoving | kPlayerController | kTrigger | kDebris
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsLayerBit)
+
+/// Table that shows which layer collides with whom.
+inline constexpr Array<PhysicsLayerBit, U32(PhysicsLayer::kCount)> kPhysicsLayerCollisionTable = {
+	{/* kStatic           */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kStatic | PhysicsLayerBit::kTrigger),
+	 /* kMoving           */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kDebris),
+	 /* kPlayerController */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kDebris),
+	 /* kTrigger          */ PhysicsLayerBit::kAll & ~(PhysicsLayerBit::kStatic | PhysicsLayerBit::kTrigger),
+	 /* kDebris           */ PhysicsLayerBit::kStatic}};
 
 #define ANKI_PHYSICS_DEFINE_PTRS(className) \
 	class className; \

@@ -13,7 +13,7 @@ namespace anki {
 namespace v2 {
 
 /// Wrapper on top of JPH collision shapes.
-class PhysicsCollisionShape
+class PhysicsCollisionShape : public PhysicsObjectBase
 {
 	ANKI_PHYSICS_COMMON_FRIENDS
 	friend class PhysicsCollisionShapePtrDeleter;
@@ -47,12 +47,12 @@ private:
 		ClassWrapper<JPH::ScaledShape> m_scaled; ///< We don't hold a reference to the target shape to avoid locking mutexes twice.
 	};
 
-	mutable Atomic<U32> m_refcount = {0};
 	U32 m_arrayIndex = kMaxU32;
 	ShapeType m_type;
 
 	PhysicsCollisionShape(ShapeType type)
-		: m_type(type)
+		: PhysicsObjectBase(PhysicsObjectType::kCollisionShape, nullptr)
+		, m_type(type)
 	{
 		ANKI_ASSERT(type < ShapeType::kCount);
 		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_box));
@@ -64,16 +64,6 @@ private:
 	~PhysicsCollisionShape()
 	{
 		m_shapeBase.destroy();
-	}
-
-	void retain() const
-	{
-		m_refcount.fetchAdd(1);
-	}
-
-	U32 release() const
-	{
-		return m_refcount.fetchSub(1);
 	}
 };
 
