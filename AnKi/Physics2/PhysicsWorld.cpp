@@ -6,6 +6,8 @@
 #include <AnKi/Physics2/PhysicsWorld.h>
 #include <AnKi/Util/System.h>
 
+#include <Jolt/Renderer/DebugRendererSimple.h>
+
 namespace anki {
 namespace v2 {
 
@@ -229,7 +231,7 @@ void PhysicsCollisionShapePtrDeleter::operator()(PhysicsCollisionShape* ptr)
 
 	LockGuard lock(world.m_collisionShapes.m_mtx);
 
-	world.m_collisionShapes.m_array.erase(ptr->m_arrayIndex);
+	world.m_collisionShapes.m_array.erase(ptr->m_blockArrayIndex);
 }
 
 void PhysicsBodyPtrDeleter::operator()(PhysicsBody* ptr)
@@ -241,7 +243,7 @@ void PhysicsBodyPtrDeleter::operator()(PhysicsBody* ptr)
 	world.m_jphPhysicsSystem->GetBodyInterface().DestroyBody(ptr->m_jphBody->GetID());
 
 	LockGuard lock(world.m_bodies.m_mtx);
-	world.m_bodies.m_array.erase(ptr->m_arrayIndex);
+	world.m_bodies.m_array.erase(ptr->m_blockArrayIndex);
 	world.m_optimizeBroadphase = true;
 }
 
@@ -251,7 +253,7 @@ void PhysicsJointPtrDeleter::operator()(PhysicsJoint* ptr)
 	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
 	LockGuard lock(world.m_joints.m_mtx);
-	world.m_joints.m_array.erase(ptr->m_arrayIndex);
+	world.m_joints.m_array.erase(ptr->m_blockArrayIndex);
 }
 
 void PhysicsPlayerControllerPtrDeleter::operator()(PhysicsPlayerController* ptr)
@@ -260,8 +262,33 @@ void PhysicsPlayerControllerPtrDeleter::operator()(PhysicsPlayerController* ptr)
 	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
 	LockGuard lock(world.m_characters.m_mtx);
-	world.m_characters.m_array.erase(ptr->m_arrayIndex);
+	world.m_characters.m_array.erase(ptr->m_blockArrayIndex);
 }
+
+class PhysicsWorld::MyDebugRenderer final : public JPH::DebugRendererSimple
+{
+public:
+	PhysicsDebugDrawerInterface* m_interface = nullptr;
+
+	void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override
+	{
+		const Array<Vec3, 2> line = {toAnKi(inFrom), toAnKi(inTo)};
+		m_interface->drawLines(line, {inColor.r, inColor.g, inColor.b, inColor.a});
+	}
+
+	void DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor,
+					  [[maybe_unused]] ECastShadow inCastShadow) override
+	{
+		Array<Vec3, 6> line = {toAnKi(inV1), toAnKi(inV2), toAnKi(inV2), toAnKi(inV3), toAnKi(inV3), toAnKi(inV1)};
+		m_interface->drawLines(line, {inColor.r, inColor.g, inColor.b, inColor.a});
+	}
+
+	void DrawText3D([[maybe_unused]] JPH::RVec3Arg inPosition, [[maybe_unused]] const std::string_view& inString,
+					[[maybe_unused]] JPH::ColorArg inColor, [[maybe_unused]] F32 inHeight) override
+	{
+		// Nothing for now
+	}
+};
 
 PhysicsWorld::~PhysicsWorld()
 {
@@ -397,41 +424,41 @@ void PhysicsWorld::update(Second dt)
 }
 
 template<typename TJPHCollisionShape, typename... TArgs>
-PhysicsCollisionShapePtr PhysicsWorld::newCollisionShape(PhysicsCollisionShape::ShapeType type, TArgs&&... args)
+PhysicsCollisionShapePtr PhysicsWorld::newCollisionShape(TArgs&&... args)
 {
 	decltype(m_collisionShapes.m_array)::Iterator it;
 
 	{
 		LockGuard lock(m_collisionShapes.m_mtx);
-		it = m_collisionShapes.m_array.emplace(type);
+		it = m_collisionShapes.m_array.emplace();
 	}
 
 	ClassWrapper<TJPHCollisionShape>& classw = reinterpret_cast<ClassWrapper<TJPHCollisionShape>&>(it->m_shapeBase);
 	classw.construct(std::forward<TArgs>(args)...);
 	classw->SetEmbedded();
 
-	it->m_arrayIndex = it.getArrayIndex();
+	it->m_blockArrayIndex = it.getArrayIndex();
 	return PhysicsCollisionShapePtr(&(*it));
 }
 
 PhysicsCollisionShapePtr PhysicsWorld::newSphereCollisionShape(F32 radius)
 {
-	return newCollisionShape<JPH::SphereShape>(PhysicsCollisionShape::ShapeType::kSphere, radius);
+	return newCollisionShape<JPH::SphereShape>(radius);
 }
 
 PhysicsCollisionShapePtr PhysicsWorld::newBoxCollisionShape(Vec3 extend)
 {
-	return newCollisionShape<JPH::BoxShape>(PhysicsCollisionShape::ShapeType::kBox, toJPH(extend));
+	return newCollisionShape<JPH::BoxShape>(toJPH(extend));
 }
 
 PhysicsCollisionShapePtr PhysicsWorld::newCapsuleCollisionShape(F32 height, F32 radius)
 {
-	return newCollisionShape<JPH::CapsuleShape>(PhysicsCollisionShape::ShapeType::kCapsule, height / 2.0f, radius);
+	return newCollisionShape<JPH::CapsuleShape>(height / 2.0f, radius);
 }
 
 PhysicsCollisionShapePtr PhysicsWorld::newScaleCollisionObject(const Vec3& scale, PhysicsCollisionShape* baseShape)
 {
-	return newCollisionShape<JPH::ScaledShape>(PhysicsCollisionShape::ShapeType::kScaled, &baseShape->m_shapeBase, toJPH(scale));
+	return newCollisionShape<JPH::ScaledShape>(&baseShape->m_shapeBase, toJPH(scale));
 }
 
 PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
@@ -444,7 +471,7 @@ PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 		auto it = m_bodies.m_array.emplace();
 
 		newBody = &(*it);
-		newBody->m_arrayIndex = it.getArrayIndex();
+		newBody->m_blockArrayIndex = it.getArrayIndex();
 	}
 
 	newBody->init(init);
@@ -452,14 +479,14 @@ PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 }
 
 template<typename TJPHJoint, typename... TArgs>
-PhysicsJointPtr PhysicsWorld::newJoint(PhysicsJoint::Type type, PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args)
+PhysicsJointPtr PhysicsWorld::newJoint(PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args)
 {
 	ANKI_ASSERT(body1 && body2);
 
 	decltype(m_joints.m_array)::Iterator it;
 	{
 		LockGuard lock(m_joints.m_mtx);
-		it = m_joints.m_array.emplace(type);
+		it = m_joints.m_array.emplace();
 	}
 
 	ClassWrapper<TJPHJoint>& classw = reinterpret_cast<ClassWrapper<TJPHJoint>&>(it->m_base);
@@ -468,7 +495,7 @@ PhysicsJointPtr PhysicsWorld::newJoint(PhysicsJoint::Type type, PhysicsBody* bod
 
 	it->m_body1.reset(body1);
 	it->m_body2.reset(body2);
-	it->m_arrayIndex = it.getArrayIndex();
+	it->m_blockArrayIndex = it.getArrayIndex();
 
 	m_jphPhysicsSystem->AddConstraint(&it->m_base); // It's thread-safe
 
@@ -485,7 +512,7 @@ PhysicsJointPtr PhysicsWorld::newPointJoint(PhysicsBody* body1, PhysicsBody* bod
 	settings.mPoint1 = toJPH(body1Point);
 	settings.mPoint2 = toJPH(body2Point);
 
-	return newJoint<JPH::PointConstraint>(PhysicsJoint::Type::kPoint, body1, body2, settings);
+	return newJoint<JPH::PointConstraint>(body1, body2, settings);
 }
 
 PhysicsPlayerControllerPtr PhysicsWorld::newPlayerController(const PhysicsPlayerControllerInitInfo& init)
@@ -496,7 +523,7 @@ PhysicsPlayerControllerPtr PhysicsWorld::newPlayerController(const PhysicsPlayer
 
 		auto it = m_characters.m_array.emplace();
 		newChar = &(*it);
-		newChar->m_arrayIndex = it.getArrayIndex();
+		newChar->m_blockArrayIndex = it.getArrayIndex();
 	}
 
 	newChar->init(init);
@@ -584,6 +611,17 @@ Bool PhysicsWorld::castRayAllHitsInternal(const Vec3& rayStart, const Vec3& rayE
 	m_jphPhysicsSystem->GetNarrowPhaseQueryNoLock().CastRay(ray, settings, collector, broadphaseFilter, objectFilter);
 
 	return results.getSize() > 0;
+}
+
+void PhysicsWorld::debugDraw(PhysicsDebugDrawerInterface& interface)
+{
+	MyDebugRenderer renderer;
+	renderer.m_interface = &interface;
+
+	JPH::BodyManager::DrawSettings settings;
+	m_jphPhysicsSystem->DrawBodies(settings, &renderer);
+
+	m_jphPhysicsSystem->DrawConstraints(&renderer);
 }
 
 } // namespace v2

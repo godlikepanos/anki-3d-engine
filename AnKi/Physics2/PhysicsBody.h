@@ -82,17 +82,16 @@ private:
 	PhysicsCollisionShapePtr m_primaryShape;
 	PhysicsCollisionShapePtr m_scaledShape;
 
+	PhysicsTriggerCallbacks* m_triggerCallbacks = nullptr;
+
 	Transform m_worldTrf;
 	U32 m_worldTrfVersion = 1;
 
-	PhysicsTriggerCallbacks* m_triggerCallbacks = nullptr;
-
-	U32 m_arrayIndex : 30 = kMaxU32 >> 2u;
 	U32 m_activated : 1 = false;
 	U32 m_isTrigger : 1 = false;
 
 	PhysicsBody()
-		: PhysicsObjectBase(PhysicsObjectType::kBody, nullptr)
+		: PhysicsObjectBase(PhysicsObjectType::kBody)
 	{
 	}
 

@@ -86,7 +86,7 @@ public:
 
 	PhysicsObjectType getType() const
 	{
-		return m_type;
+		return PhysicsObjectType(m_type);
 	}
 
 	void* getUserData() const
@@ -100,9 +100,17 @@ public:
 	}
 
 protected:
-	PhysicsObjectBase(PhysicsObjectType type, void* userData)
-		: m_userData(userData)
-		, m_type(type)
+	static constexpr U32 kTypeBits = 5u; ///< 5 is more than enough
+
+	void* m_userData = nullptr;
+
+	mutable Atomic<U32> m_refcount = {0};
+
+	U32 m_type : kTypeBits;
+	U32 m_blockArrayIndex : 32 - kTypeBits = kMaxU32 >> kTypeBits;
+
+	PhysicsObjectBase(PhysicsObjectType type)
+		: m_type(U32(type))
 	{
 		ANKI_ASSERT(type < PhysicsObjectType::kCount);
 	}
@@ -116,11 +124,6 @@ protected:
 	{
 		return m_refcount.fetchSub(1);
 	}
-
-private:
-	void* m_userData;
-	mutable Atomic<U32> m_refcount = {0};
-	PhysicsObjectType m_type;
 };
 
 /// The physics layers a PhysicsBody can be.

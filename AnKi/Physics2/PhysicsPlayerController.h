@@ -95,13 +95,12 @@ private:
 	Vec3 m_position;
 	U32 m_positionVersion = 0;
 
-	U32 m_arrayIndex : 29 = kMaxU32 >> 3u;
 	U32 m_controlMovementDuringJump : 1 = true;
 	U32 m_allowSliding : 1 = false;
 	U32 m_crouching : 1 = false;
 
 	PhysicsPlayerController()
-		: PhysicsObjectBase(PhysicsObjectType::kPlayerController, nullptr)
+		: PhysicsObjectBase(PhysicsObjectType::kPlayerController)
 	{
 	}
 

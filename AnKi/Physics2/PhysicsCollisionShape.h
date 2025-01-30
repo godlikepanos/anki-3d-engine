@@ -26,18 +26,6 @@ public:
 	PhysicsCollisionShape& operator=(const PhysicsCollisionShape&) = delete;
 
 private:
-	enum class ShapeType : U8
-	{
-		kBox,
-		kSphere,
-		kCapsule,
-		kConvex,
-		kTrimesh,
-		kScaled, ///< This is for internal use
-
-		kCount
-	};
-
 	union
 	{
 		ClassWrapper<JPH::Shape> m_shapeBase;
@@ -47,14 +35,9 @@ private:
 		ClassWrapper<JPH::ScaledShape> m_scaled; ///< We don't hold a reference to the target shape to avoid locking mutexes twice.
 	};
 
-	U32 m_arrayIndex = kMaxU32;
-	ShapeType m_type;
-
-	PhysicsCollisionShape(ShapeType type)
-		: PhysicsObjectBase(PhysicsObjectType::kCollisionShape, nullptr)
-		, m_type(type)
+	PhysicsCollisionShape()
+		: PhysicsObjectBase(PhysicsObjectType::kCollisionShape)
 	{
-		ANKI_ASSERT(type < ShapeType::kCount);
 		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_box));
 		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_sphere));
 		ANKI_ASSERT(&m_shapeBase == static_cast<JPH::Shape*>(&m_capsule));

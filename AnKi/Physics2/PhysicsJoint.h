@@ -21,14 +21,6 @@ class PhysicsJoint : public PhysicsObjectBase
 	friend class PhysicsJointPtrDeleter;
 
 private:
-	enum class Type : U8
-	{
-		kPoint,
-		kHinge,
-
-		kCount
-	};
-
 	union
 	{
 		ClassWrapper<JPH::TwoBodyConstraint> m_base;
@@ -39,14 +31,9 @@ private:
 	PhysicsBodyPtr m_body1;
 	PhysicsBodyPtr m_body2;
 
-	U32 m_arrayIndex = kMaxU32;
-	Type m_type;
-
-	PhysicsJoint(Type type)
-		: PhysicsObjectBase(PhysicsObjectType::kJoint, nullptr)
-		, m_type(type)
+	PhysicsJoint()
+		: PhysicsObjectBase(PhysicsObjectType::kJoint)
 	{
-		ANKI_ASSERT(type < Type::kCount);
 		ANKI_ASSERT(&m_base == static_cast<JPH::TwoBodyConstraint*>(&m_point));
 		ANKI_ASSERT(&m_base == static_cast<JPH::TwoBodyConstraint*>(&m_hinge));
 	}

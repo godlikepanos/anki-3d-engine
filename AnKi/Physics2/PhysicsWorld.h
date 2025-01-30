@@ -27,6 +27,14 @@ public:
 	Vec3 m_hitPosition; ///< In world space.
 };
 
+/// @memberof PhysicsWorld
+class PhysicsDebugDrawerInterface
+{
+public:
+	/// The implementer is responsible of batching lines together.
+	virtual void drawLines(ConstWeakArray<Vec3> lines, Array<U8, 4> color) = 0;
+};
+
 /// The master container for all physics related stuff.
 class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 {
@@ -73,15 +81,28 @@ public:
 		return success;
 	}
 
+	void debugDraw(PhysicsDebugDrawerInterface& interface);
+
 private:
 	class MyBodyActivationListener;
 	class MyContactListener;
+	class MyDebugRenderer;
 
-	template<typename T>
+	template<U32 kElementsPerBlock>
+	class BlockArrayConfig
+	{
+	public:
+		static constexpr U32 getElementCountPerBlock()
+		{
+			return kElementsPerBlock;
+		}
+	};
+
+	template<typename T, U32 kElementsPerBlock>
 	class ObjArray
 	{
 	public:
-		PhysicsBlockArray<T> m_array;
+		PhysicsBlockArray<T, BlockArrayConfig<kElementsPerBlock>> m_array;
 		Mutex m_mtx;
 	};
 
@@ -96,10 +117,10 @@ private:
 	ClassWrapper<JPH::JobSystemThreadPool> m_jobSystem;
 	ClassWrapper<JPH::TempAllocatorImpl> m_tempAllocator;
 
-	ObjArray<PhysicsCollisionShape> m_collisionShapes;
-	ObjArray<PhysicsBody> m_bodies;
-	ObjArray<PhysicsJoint> m_joints;
-	ObjArray<PhysicsPlayerController> m_characters;
+	ObjArray<PhysicsCollisionShape, 32> m_collisionShapes;
+	ObjArray<PhysicsBody, 64> m_bodies;
+	ObjArray<PhysicsJoint, 16> m_joints;
+	ObjArray<PhysicsPlayerController, 8> m_characters;
 
 	DynamicArray<Contact> m_insertedContacts;
 	DynamicArray<Contact> m_deletedContacts;
@@ -116,10 +137,10 @@ private:
 	~PhysicsWorld();
 
 	template<typename TJPHCollisionShape, typename... TArgs>
-	PhysicsCollisionShapePtr newCollisionShape(PhysicsCollisionShape::ShapeType type, TArgs&&... args);
+	PhysicsCollisionShapePtr newCollisionShape(TArgs&&... args);
 
 	template<typename TJPHJoint, typename... TArgs>
-	PhysicsJointPtr newJoint(PhysicsJoint::Type type, PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args);
+	PhysicsJointPtr newJoint(PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args);
 
 	PhysicsCollisionShapePtr newScaleCollisionObject(const Vec3& scale, PhysicsCollisionShape* baseShape);
 
