@@ -25,6 +25,13 @@ class MicroCommandBuffer;
 /// @addtogroup vulkan
 /// @{
 
+enum class AsyncComputeType
+{
+	kProper,
+	kLowPriorityQueue,
+	kDisabled
+};
+
 /// Vulkan implementation of GrManager.
 class GrManagerImpl : public GrManager
 {
@@ -41,8 +48,24 @@ public:
 
 	ConstWeakArray<U32> getQueueFamilies() const
 	{
-		const Bool hasAsyncCompute = m_queueFamilyIndices[GpuQueueType::kCompute] != kMaxU32;
+		const Bool hasAsyncCompute = m_queueFamilyIndices[GpuQueueType::kGeneral] != m_queueFamilyIndices[GpuQueueType::kCompute];
 		return (hasAsyncCompute) ? m_queueFamilyIndices : ConstWeakArray<U32>(&m_queueFamilyIndices[0], 1);
+	}
+
+	AsyncComputeType getAsyncComputeType() const
+	{
+		if(m_queues[GpuQueueType::kCompute] == nullptr)
+		{
+			return AsyncComputeType::kDisabled;
+		}
+		else if(m_queueFamilyIndices[GpuQueueType::kCompute] == m_queueFamilyIndices[GpuQueueType::kGeneral])
+		{
+			return AsyncComputeType::kLowPriorityQueue;
+		}
+		else
+		{
+			return AsyncComputeType::kProper;
+		}
 	}
 
 	const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const
@@ -145,7 +168,7 @@ private:
 	VulkanExtensions m_extensions = VulkanExtensions::kNone;
 	VkDevice m_device = VK_NULL_HANDLE;
 	VulkanQueueFamilies m_queueFamilyIndices = {kMaxU32, kMaxU32};
-	Array<VkQueue, U32(GpuQueueType::kCount)> m_queues = {};
+	Array<VkQueue, U32(GpuQueueType::kCount)> m_queues = {nullptr, nullptr};
 	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties2 m_devProps = {};

@@ -11,8 +11,6 @@ using namespace anki;
 ANKI_MAIN_FUNCTION(myMain)
 int myMain(int argc, char** argv)
 {
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-
 	int exitcode = getTesterSingleton().run(argc, argv);
 
 	deleteTesterSingleton();

@@ -63,7 +63,9 @@ inline BoolCVar g_dredCVar("Gr", "Dred", false, "Enable DRED");
 inline NumericCVar<PtrSize> g_diskShaderCacheMaxSizeCVar("Gr", "DiskShaderCacheMaxSize", 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file");
 inline BoolCVar g_debugPrintfCVar("Gr", "DebugPrintf", false, "Enable or not debug printf");
 inline BoolCVar g_samplerFilterMinMaxCVar("Gr", "SamplerFilterMinMax", true, "Enable or not min/max sample filtering");
-inline BoolCVar g_asyncComputeCVar("Gr", "AsyncCompute", true, "Enable or not async compute");
+inline NumericCVar<U8> g_asyncComputeCVar("Gr", "AsyncCompute", 0, 0, 2,
+										  "Control the async compute behaviour: 0: Try use separate queue family, 1: Use lower priority queue in the "
+										  "general's queue family, 2: Use the general queue");
 inline StringCVar g_vkLayersCVar("Gr", "VkLayers", "", "VK layers to enable. Seperated by :");
 #endif
 

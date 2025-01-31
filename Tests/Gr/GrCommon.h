@@ -62,6 +62,18 @@ inline ShaderProgramPtr createVertFragProg(CString vert, CString frag, ConstWeak
 	return prog;
 }
 
+inline ShaderProgramPtr createComputeProg(CString src, ConstWeakArray<CString> extraCompilerArgs = {})
+{
+	ShaderPtr shader = createShader(src, ShaderType::kCompute, extraCompilerArgs);
+
+	ShaderProgramInitInfo init;
+	init.m_computeShader = shader.get();
+
+	ShaderProgramPtr prog = GrManager::getSingleton().newShaderProgram(init);
+
+	return prog;
+}
+
 inline ShaderPtr loadShader(CString filename, ShaderType type, ConstWeakArray<CString> extraCompilerArgs = {})
 {
 	File file;
@@ -166,6 +178,9 @@ inline TexturePtr createTexture2d(const TextureInitInfo texInit_, ConstWeakArray
 
 	CommandBufferPtr cmdb = GrManager::getSingleton().newCommandBuffer(cmdbInit);
 
+	const TextureBarrierInfo barr = {TextureView(tex.get(), TextureSubresourceDesc::all()), TextureUsageBit::kNone,
+									 TextureUsageBit::kCopyDestination};
+	cmdb->setPipelineBarrier({&barr, 1}, {}, {});
 	cmdb->copyBufferToTexture(BufferView(staging.get()), TextureView(tex.get(), TextureSubresourceDesc::all()));
 	cmdb->endRecording();
 

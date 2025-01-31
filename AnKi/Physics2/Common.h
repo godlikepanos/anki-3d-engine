@@ -41,14 +41,14 @@ namespace v2 {
 #define ANKI_PHYSICS_COMMON_FRIENDS \
 	friend class PhysicsWorld; \
 	template<typename, typename> \
-	friend class IntrusivePtr; \
+	friend class anki::IntrusivePtr; \
 	template<typename, typename, typename> \
-	friend class BlockArray;
+	friend class anki::BlockArray;
 
 class PhysicsMemoryPool : public HeapMemoryPool, public MakeSingleton<PhysicsMemoryPool>
 {
 	template<typename>
-	friend class MakeSingleton;
+	friend class anki::MakeSingleton;
 
 private:
 	PhysicsMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData)

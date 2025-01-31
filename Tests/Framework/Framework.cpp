@@ -150,6 +150,10 @@ Options:
 			}
 			testName = argv[i];
 		}
+		else
+		{
+			break;
+		}
 	}
 
 	// Sanity check

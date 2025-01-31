@@ -385,18 +385,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initSurface());
 	ANKI_CHECK(initDevice());
 
-	for(GpuQueueType qtype : EnumIterable<GpuQueueType>())
-	{
-		if(m_queueFamilyIndices[qtype] != kMaxU32)
-		{
-			vkGetDeviceQueue(m_device, m_queueFamilyIndices[qtype], 0, &m_queues[qtype]);
-		}
-		else
-		{
-			m_queues[qtype] = VK_NULL_HANDLE;
-		}
-	}
-
 	SwapchainFactory::allocateSingleton(U32(g_vsyncCVar));
 	m_crntSwapchain = SwapchainFactory::getSingleton().newInstance();
 
@@ -405,7 +393,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	ANKI_CHECK(initMemory());
 
-	CommandBufferFactory::allocateSingleton(m_queueFamilyIndices);
+	CommandBufferFactory::allocateSingleton();
 	FenceFactory::allocateSingleton();
 	SemaphoreFactory::allocateSingleton();
 	OcclusionQueryFactory::allocateSingleton();
@@ -808,23 +796,32 @@ Error GrManagerImpl::initDevice()
 	queueInfos.resize(count);
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
-	const VkQueueFlags GENERAL_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
+	Bool generalQueueFamilySupportsMultipleQueues = false;
+
+	const VkQueueFlags generalQueueFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
 	for(U32 i = 0; i < count; ++i)
 	{
 		VkBool32 supportsPresent = false;
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent));
 
-		if(supportsPresent)
+		if(!supportsPresent)
 		{
-			if((queueInfos[i].queueFlags & GENERAL_QUEUE_FLAGS) == GENERAL_QUEUE_FLAGS)
+			continue;
+		}
+
+		if((queueInfos[i].queueFlags & generalQueueFlags) == generalQueueFlags)
+		{
+			m_queueFamilyIndices[GpuQueueType::kGeneral] = i;
+
+			if(queueInfos[i].queueCount > 1)
 			{
-				m_queueFamilyIndices[GpuQueueType::kGeneral] = i;
+				generalQueueFamilySupportsMultipleQueues = true;
 			}
-			else if((queueInfos[i].queueFlags & VK_QUEUE_COMPUTE_BIT) && !(queueInfos[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
-			{
-				// This must be the async compute
-				m_queueFamilyIndices[GpuQueueType::kCompute] = i;
-			}
+		}
+		else if((queueInfos[i].queueFlags & VK_QUEUE_COMPUTE_BIT) && !(queueInfos[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+		{
+			// This must be the async compute
+			m_queueFamilyIndices[GpuQueueType::kCompute] = i;
 		}
 	}
 
@@ -834,39 +831,58 @@ Error GrManagerImpl::initDevice()
 		return Error::kFunctionFailed;
 	}
 
-	if(!g_asyncComputeCVar)
-	{
-		m_queueFamilyIndices[GpuQueueType::kCompute] = kMaxU32;
-	}
+	const Bool pureAsyncCompute = m_queueFamilyIndices[GpuQueueType::kCompute] != kMaxU32 && g_asyncComputeCVar == 0;
+	const Bool lowPriorityQueueAsyncCompute = !pureAsyncCompute && generalQueueFamilySupportsMultipleQueues && g_asyncComputeCVar <= 1;
 
-	if(m_queueFamilyIndices[GpuQueueType::kCompute] == kMaxU32)
-	{
-		ANKI_VK_LOGW("Couldn't find an async compute queue. Will try to use the general queue instead");
-	}
-	else
-	{
-		ANKI_VK_LOGI("Async compute is enabled");
-	}
-
-	const F32 priority = 1.0f;
+	Array<F32, U32(GpuQueueType::kCount)> priorities = {1.0f, 0.5f};
 	Array<VkDeviceQueueCreateInfo, U32(GpuQueueType::kCount)> q = {};
+	q.fill({VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO});
 
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	ci.pQueueCreateInfos = &q[0];
 
-	for(GpuQueueType qtype : EnumIterable<GpuQueueType>())
+	CString asyncComputeMsg;
+	if(pureAsyncCompute)
 	{
-		if(m_queueFamilyIndices[qtype] != kMaxU32)
-		{
-			q[qtype].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			q[qtype].queueFamilyIndex = m_queueFamilyIndices[qtype];
-			q[qtype].queueCount = 1;
-			q[qtype].pQueuePriorities = &priority;
+		asyncComputeMsg = "Using pure async compute queue";
 
-			++ci.queueCreateInfoCount;
-		}
+		q[GpuQueueType::kGeneral].queueFamilyIndex = m_queueFamilyIndices[GpuQueueType::kGeneral];
+		q[GpuQueueType::kGeneral].queueCount = 1;
+		q[GpuQueueType::kGeneral].pQueuePriorities = &priorities[0];
+
+		q[GpuQueueType::kCompute].queueFamilyIndex = m_queueFamilyIndices[GpuQueueType::kCompute];
+		q[GpuQueueType::kCompute].queueCount = 1;
+		q[GpuQueueType::kCompute].pQueuePriorities = &priorities[0];
+
+		ci.queueCreateInfoCount = 2;
 	}
+	else if(lowPriorityQueueAsyncCompute)
+	{
+		asyncComputeMsg = "Using low priority queue in same family as general queue (fallback #1)";
+
+		m_queueFamilyIndices[GpuQueueType::kCompute] = m_queueFamilyIndices[GpuQueueType::kGeneral];
+
+		q[0].queueFamilyIndex = m_queueFamilyIndices[GpuQueueType::kGeneral];
+		q[0].queueCount = 2;
+		q[0].pQueuePriorities = &priorities[0];
+
+		ci.queueCreateInfoCount = 1;
+	}
+	else
+	{
+		asyncComputeMsg = "Can't do much, using general queue (fallback #2)";
+
+		m_queueFamilyIndices[GpuQueueType::kCompute] = m_queueFamilyIndices[GpuQueueType::kGeneral];
+
+		q[0].queueFamilyIndex = m_queueFamilyIndices[GpuQueueType::kGeneral];
+		q[0].queueCount = 1;
+		q[0].pQueuePriorities = &priorities[0];
+
+		ci.queueCreateInfoCount = 1;
+	}
+
+	ANKI_VK_LOGI("Async compute: %s", asyncComputeMsg.cstr());
 
 	// Extensions
 	U32 extCount = 0;
@@ -1208,6 +1224,25 @@ Error GrManagerImpl::initDevice()
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
+
+	// Get the queues
+	vkGetDeviceQueue(m_device, m_queueFamilyIndices[GpuQueueType::kGeneral], 0, &m_queues[GpuQueueType::kGeneral]);
+	trySetVulkanHandleName("General", VK_OBJECT_TYPE_QUEUE, m_queues[GpuQueueType::kGeneral]);
+
+	if(pureAsyncCompute)
+	{
+		vkGetDeviceQueue(m_device, m_queueFamilyIndices[GpuQueueType::kCompute], 0, &m_queues[GpuQueueType::kCompute]);
+		trySetVulkanHandleName("AsyncCompute", VK_OBJECT_TYPE_QUEUE, m_queues[GpuQueueType::kGeneral]);
+	}
+	else if(lowPriorityQueueAsyncCompute)
+	{
+		vkGetDeviceQueue(m_device, m_queueFamilyIndices[GpuQueueType::kGeneral], 1, &m_queues[GpuQueueType::kCompute]);
+		trySetVulkanHandleName("GeneralLowPriority", VK_OBJECT_TYPE_QUEUE, m_queues[GpuQueueType::kCompute]);
+	}
+	else
+	{
+		m_queues[GpuQueueType::kCompute] = nullptr;
+	}
 
 	return Error::kNone;
 }

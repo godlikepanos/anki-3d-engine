@@ -196,10 +196,7 @@ class CommandBufferFactory : public MakeSingleton<CommandBufferFactory>
 	friend class MicroCommandBuffer;
 
 public:
-	CommandBufferFactory(const VulkanQueueFamilies& queueFamilies)
-		: m_queueFamilies(queueFamilies)
-	{
-	}
+	CommandBufferFactory() = default;
 
 	CommandBufferFactory(const CommandBufferFactory&) = delete; // Non-copyable
 
@@ -214,8 +211,6 @@ public:
 	Error newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
 private:
-	VulkanQueueFamilies m_queueFamilies;
-
 	GrDynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
 	RWMutex m_threadAllocMtx;
 

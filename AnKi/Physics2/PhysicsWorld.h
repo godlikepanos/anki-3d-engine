@@ -39,7 +39,7 @@ public:
 class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 {
 	template<typename>
-	friend class MakeSingleton;
+	friend class anki::MakeSingleton;
 	friend class PhysicsCollisionShapePtrDeleter;
 	friend class PhysicsBodyPtrDeleter;
 	friend class PhysicsBody;

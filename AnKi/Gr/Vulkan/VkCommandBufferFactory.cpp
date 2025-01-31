@@ -4,26 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Gr/Vulkan/VkCommandBufferFactory.h>
+#include <AnKi/Gr/Vulkan/VkGrManager.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/StatsSet.h>
 
 namespace anki {
 
 static StatCounter g_commandBufferCountStatVar(StatCategory::kMisc, "CommandBufferCount", StatFlag::kNone);
-
-static GpuQueueType getQueueTypeFromCommandBufferFlags(CommandBufferFlag flags, const VulkanQueueFamilies& queueFamilies)
-{
-	ANKI_ASSERT(!!(flags & CommandBufferFlag::kGeneralWork) ^ !!(flags & CommandBufferFlag::kComputeWork));
-	if(!(flags & CommandBufferFlag::kGeneralWork) && queueFamilies[GpuQueueType::kCompute] != kMaxU32)
-	{
-		return GpuQueueType::kCompute;
-	}
-	else
-	{
-		ANKI_ASSERT(queueFamilies[GpuQueueType::kGeneral] != kMaxU32);
-		return GpuQueueType::kGeneral;
-	}
-}
 
 void MicroCommandBufferPtrDeleter::operator()(MicroCommandBuffer* ptr)
 {
@@ -39,7 +26,10 @@ MicroCommandBuffer::~MicroCommandBuffer()
 
 	if(m_handle)
 	{
-		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[m_queue], 1, &m_handle);
+		const U32 queueFamilyIdx =
+			(m_queue == GpuQueueType::kCompute && getGrManagerImpl().getAsyncComputeType() == AsyncComputeType::kLowPriorityQueue) ? 0 : U32(m_queue);
+
+		vkFreeCommandBuffers(getVkDevice(), m_threadAlloc->m_pools[queueFamilyIdx], 1, &m_handle);
 		m_handle = {};
 
 		g_commandBufferCountStatVar.decrement(1_U64);
@@ -65,19 +55,15 @@ void MicroCommandBuffer::reset()
 
 Error CommandBufferThreadAllocator::init()
 {
-	for(GpuQueueType qtype : EnumIterable<GpuQueueType>())
+	ConstWeakArray<U32> families = getGrManagerImpl().getQueueFamilies();
+	for(U32 i = 0; i < families.getSize(); ++i)
 	{
-		if(CommandBufferFactory::getSingleton().m_queueFamilies[qtype] == kMaxU32)
-		{
-			continue;
-		}
-
 		VkCommandPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		ci.queueFamilyIndex = CommandBufferFactory::getSingleton().m_queueFamilies[qtype];
+		ci.queueFamilyIndex = families[i];
 
-		ANKI_VK_CHECK(vkCreateCommandPool(getVkDevice(), &ci, nullptr, &m_pools[qtype]));
+		ANKI_VK_CHECK(vkCreateCommandPool(getVkDevice(), &ci, nullptr, &m_pools[i]));
 	}
 
 	return Error::kNone;
@@ -108,9 +94,26 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	ANKI_ASSERT(!!(cmdbFlags & CommandBufferFlag::kComputeWork) ^ !!(cmdbFlags & CommandBufferFlag::kGeneralWork));
 
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::kSmallBatch);
-	const GpuQueueType queue = getQueueTypeFromCommandBufferFlags(cmdbFlags, CommandBufferFactory::getSingleton().m_queueFamilies);
 
-	MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[smallBatch][queue];
+	GpuQueueType queue;
+	U32 queueFamilyIdx;
+	if(!!(cmdbFlags & CommandBufferFlag::kGeneralWork) || getGrManagerImpl().getAsyncComputeType() == AsyncComputeType::kDisabled)
+	{
+		queue = GpuQueueType::kGeneral;
+		queueFamilyIdx = 0;
+	}
+	else if(getGrManagerImpl().getAsyncComputeType() == AsyncComputeType::kLowPriorityQueue)
+	{
+		queue = GpuQueueType::kCompute;
+		queueFamilyIdx = 0;
+	}
+	else
+	{
+		queue = GpuQueueType::kCompute;
+		queueFamilyIdx = 1;
+	}
+
+	MicroObjectRecycler<MicroCommandBuffer>& recycler = m_recyclers[smallBatch][queueFamilyIdx];
 
 	MicroCommandBuffer* out = recycler.findToReuse();
 
@@ -120,7 +123,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		VkCommandBufferAllocateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		ci.commandPool = m_pools[queue];
+		ci.commandPool = m_pools[queueFamilyIdx];
 		ci.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
@@ -154,7 +157,6 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	}
 
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);
-	ANKI_ASSERT(out->m_flags == cmdbFlags);
 	outPtr.reset(out);
 	return Error::kNone;
 }
@@ -165,7 +167,12 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 
 	const Bool smallBatch = !!(ptr->m_flags & CommandBufferFlag::kSmallBatch);
 
-	m_recyclers[smallBatch][ptr->m_queue].recycle(ptr);
+	const U32 queueFamilyIdx =
+		(ptr->m_queue == GpuQueueType::kCompute && getGrManagerImpl().getAsyncComputeType() == AsyncComputeType::kLowPriorityQueue)
+			? 0
+			: U32(ptr->m_queue);
+
+	m_recyclers[smallBatch][queueFamilyIdx].recycle(ptr);
 }
 
 void CommandBufferFactory::destroy()
