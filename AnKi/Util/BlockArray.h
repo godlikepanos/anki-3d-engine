@@ -16,15 +16,19 @@ namespace anki {
 /// @{
 
 /// Config options for a BlockArray.
-/// @tparam T The type of the array.
-template<typename T>
-class BlockArrayDefaultConfig
+template<U32 kElementCountPerBlock>
+class BlockArrayConfig
 {
 public:
 	static constexpr U32 getElementCountPerBlock()
 	{
-		return 64;
+		return kElementCountPerBlock;
 	}
+};
+
+/// Config options for a BlockArray.
+class BlockArrayDefaultConfig : public BlockArrayConfig<64>
+{
 };
 
 /// BlockArray iterator.
@@ -130,7 +134,7 @@ private:
 };
 
 /// It's a type of dynamic array that unlike DynamicArray doesn't move elements around when it shrinks or grows the storage.
-template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TConfig = BlockArrayDefaultConfig<T>>
+template<typename T, typename TMemoryPool = SingletonMemoryPoolWrapper<DefaultMemoryPool>, typename TConfig = BlockArrayDefaultConfig>
 class BlockArray
 {
 	template<typename, typename, typename>

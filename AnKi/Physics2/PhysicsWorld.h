@@ -88,16 +88,6 @@ private:
 	class MyContactListener;
 	class MyDebugRenderer;
 
-	template<U32 kElementsPerBlock>
-	class BlockArrayConfig
-	{
-	public:
-		static constexpr U32 getElementCountPerBlock()
-		{
-			return kElementsPerBlock;
-		}
-	};
-
 	template<typename T, U32 kElementsPerBlock>
 	class ObjArray
 	{

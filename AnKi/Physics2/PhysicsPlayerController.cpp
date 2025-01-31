@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma once
-
 #include <AnKi/Physics2/PhysicsPlayerController.h>
 #include <AnKi/Physics2/PhysicsWorld.h>
 #include <AnKi/Physics2/PhysicsCollisionShape.h>

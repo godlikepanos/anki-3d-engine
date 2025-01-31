@@ -7,6 +7,7 @@
 #include <AnKi/Util/System.h>
 
 #include <Jolt/Renderer/DebugRendererSimple.h>
+#include <Jolt/ConfigurationString.h>
 
 namespace anki {
 namespace v2 {
@@ -310,6 +311,8 @@ PhysicsWorld::~PhysicsWorld()
 
 Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 {
+	ANKI_PHYS_LOGI("Initializing physics. Jolt config: %s", JPH::GetConfigurationString());
+
 	PhysicsMemoryPool::allocateSingleton(allocCb, allocCbData);
 
 	JPH::Allocate = [](PtrSize size) -> void* {
