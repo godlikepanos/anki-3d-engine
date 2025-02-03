@@ -32,6 +32,8 @@ private:
 		ClassWrapper<JPH::BoxShape> m_box;
 		ClassWrapper<JPH::SphereShape> m_sphere;
 		ClassWrapper<JPH::CapsuleShape> m_capsule;
+		ClassWrapper<JPH::ConvexHullShape> m_convex;
+		ClassWrapper<JPH::MeshShape> m_mesh;
 		ClassWrapper<JPH::ScaledShape> m_scaled; ///< We don't hold a reference to the target shape to avoid locking mutexes twice.
 	};
 

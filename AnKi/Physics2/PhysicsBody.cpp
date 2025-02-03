@@ -54,7 +54,7 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 
 	settings.mIsSensor = init.m_isTrigger;
 
-	// Call the thread-safe version because characters will be creating bodies as well
+	// Call the thread-safe version because many threads may try to create bodies
 	JPH::Body* jphBody = world.m_jphPhysicsSystem->GetBodyInterface().CreateBody(settings);
 	world.m_jphPhysicsSystem->GetBodyInterface().AddBody(jphBody->GetID(), JPH::EActivation::Activate);
 
@@ -64,6 +64,7 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 	m_scaledShape = scaledShape;
 	m_worldTrf = init.m_transform;
 	m_isTrigger = init.m_isTrigger;
+	m_mass = init.m_mass;
 	setUserData(init.m_userData);
 }
 
@@ -83,7 +84,9 @@ void PhysicsBody::setTransform(const Transform& trf)
 
 void PhysicsBody::applyForce(const Vec3& force, const Vec3& relPos)
 {
-	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().AddForce(m_jphBody->GetID(), toJPH(force), toJPH(relPos));
+	const Vec3 worldForcePos = m_worldTrf.transform(relPos);
+
+	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().AddForce(m_jphBody->GetID(), toJPH(force), toJPH(worldForcePos));
 }
 
 void PhysicsBody::applyForce(const Vec3& force)

@@ -36,6 +36,7 @@ public:
 };
 
 /// The master container for all physics related stuff.
+/// The newXXX methods are thread-safe between themselves and the dereference of the pointers. Every other method is not thread-safe.
 class PhysicsWorld : public MakeSingleton<PhysicsWorld>
 {
 	template<typename>
@@ -53,6 +54,8 @@ public:
 	PhysicsCollisionShapePtr newSphereCollisionShape(F32 radius);
 	PhysicsCollisionShapePtr newBoxCollisionShape(Vec3 extend);
 	PhysicsCollisionShapePtr newCapsuleCollisionShape(F32 height, F32 radius); ///< Capsule axis is in Y.
+	PhysicsCollisionShapePtr newConvexHullShape(ConstWeakArray<Vec3> positions);
+	PhysicsCollisionShapePtr newStaticMeshShape(ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices);
 
 	PhysicsBodyPtr newPhysicsBody(const PhysicsBodyInitInfo& init);
 

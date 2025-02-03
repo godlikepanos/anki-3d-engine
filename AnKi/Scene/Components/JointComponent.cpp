@@ -14,7 +14,32 @@ class JointComponent::JointNode : public IntrusiveListEnabled<JointNode>
 {
 public:
 	PhysicsJointPtr m_joint;
-	SceneNode* m_parentNode = nullptr; ///< Keep track the node that is connected with this node through a joint.
+	F32 m_breakingImpulse = 0.0f;
+
+	class P2P
+	{
+	public:
+		Vec3 m_relPosBody1 = Vec3(kMaxF32);
+		Vec3 m_relPosBody2 = Vec3(kMaxF32);
+	};
+
+	class Hinge
+	{
+	public:
+		Vec3 m_relPosBody1 = Vec3(kMaxF32);
+		Vec3 m_relPosBody2 = Vec3(kMaxF32);
+		Vec3 m_axis = Vec3(0.0f);
+	};
+
+	union
+	{
+		Hinge m_hinge = {};
+		P2P m_p2p;
+	};
+
+	JointType m_type = JointType::kCount;
+
+	JointNode() = default;
 };
 
 JointComponent::~JointComponent()
@@ -49,79 +74,92 @@ Vec3 JointComponent::computeLocalPivotFromFactors(const PhysicsBodyPtr& body, co
 	return out;
 }
 
-template<typename TJoint, typename... TArgs>
-void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TArgs&&... args)
-{
-	BodyComponent* bodyc = m_bodyc;
-
-	if(bodyc)
-	{
-		Vec3 relPos = computeLocalPivotFromFactors(bodyc->getPhysicsBody(), relPosFactor);
-
-		PhysicsJointPtr joint = PhysicsWorld::getSingleton().newInstance<TJoint>(bodyc->getPhysicsBody(), relPos, std::forward<TArgs>(args)...);
-		joint->setBreakingImpulseThreshold(breakingImpulse);
-
-		JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
-		newNode->m_joint = std::move(joint);
-		m_jointList.pushBack(newNode);
-	}
-	else
-	{
-		ANKI_SCENE_LOGW("Can't create new joint. The node is missing a BodyComponent");
-	}
-}
-
 void JointComponent::newPoint2PointJoint(const Vec3& relPosFactor, F32 breakingImpulse)
 {
-	newJoint<PhysicsPoint2PointJoint>(relPosFactor, breakingImpulse);
+	JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
+
+	newNode->m_type = JointType::kPoint;
+	newNode->m_p2p.m_relPosBody1 = relPosFactor;
+	newNode->m_breakingImpulse = breakingImpulse;
+
+	m_jointList.pushBack(newNode);
 }
 
 void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 breakingImpulse)
 {
-	BodyComponent* bodycA = m_bodyc;
-	BodyComponent* bodycB = nullptr;
-	if(m_node->getParent())
-	{
-		bodycB = m_node->getParent()->tryGetFirstComponentOfType<BodyComponent>();
-	}
+	JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
 
-	if(bodycA && bodycB)
-	{
-		Vec3 relPosA = computeLocalPivotFromFactors(bodycA->getPhysicsBody(), relPosFactorA);
-		Vec3 relPosB = computeLocalPivotFromFactors(bodycB->getPhysicsBody(), relPosFactorB);
+	newNode->m_type = JointType::kPoint;
+	newNode->m_p2p.m_relPosBody1 = relPosFactorA;
+	newNode->m_p2p.m_relPosBody2 = relPosFactorB;
+	newNode->m_breakingImpulse = breakingImpulse;
 
-		PhysicsJointPtr joint =
-			PhysicsWorld::getSingleton().newInstance<PhysicsPoint2PointJoint>(bodycA->getPhysicsBody(), relPosA, bodycB->getPhysicsBody(), relPosB);
-		joint->setBreakingImpulseThreshold(breakingImpulse);
-
-		JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
-		newNode->m_joint = std::move(joint);
-		newNode->m_parentNode = m_node->getParent();
-		m_jointList.pushBack(newNode);
-	}
-	else
-	{
-		ANKI_SCENE_LOGW("Can't create new joint. The node or its parent are missing a BodyComponent");
-	}
+	m_jointList.pushBack(newNode);
 }
 
 void JointComponent::newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 breakingImpulse)
 {
-	newJoint<PhysicsHingeJoint>(relPosFactor, breakingImpulse, axis);
+	JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
+
+	newNode->m_type = JointType::kHinge;
+	newNode->m_hinge.m_relPosBody1 = relPosFactor;
+	newNode->m_hinge.m_axis = axis;
+	newNode->m_breakingImpulse = breakingImpulse;
+
+	m_jointList.pushBack(newNode);
 }
 
-Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
-	// Iterate the joints and check if the connected scene node is not the parent of this node anymore.
+	SceneNode* parent = m_node->getParent();
+	BodyComponent* bodyc1 = (m_bodyc && m_bodyc->getPhysicsBody()) ? m_bodyc : nullptr;
+	BodyComponent* bodyc2 = nullptr;
+	if(parent)
+	{
+		bodyc2 = parent->tryGetFirstComponentOfType<BodyComponent>();
+		bodyc2 = (bodyc2 && bodyc2->getPhysicsBody()) ? bodyc2 : nullptr;
+	}
+
+	auto resetJoints = [this]() -> Bool {
+		U32 resetCount = 0;
+		for(JointNode& node : m_jointList)
+		{
+			resetCount += !!(node.m_joint);
+			node.m_joint.reset(nullptr);
+		}
+
+		return resetCount > 0;
+	};
+
+	if(!bodyc1)
+	{
+		// No body no joints
+		if(resetJoints())
+		{
+			updated = true;
+		}
+		return Error::kNone;
+	}
+
+	const Bool parentChanged = parent && m_parentUuid != parent->getUuid();
+	if(parentChanged)
+	{
+		// New parent, reset joints
+		updated = true;
+		m_parentUuid = parent->getUuid();
+		resetJoints();
+	}
+
+	// Remove broken joints
 	while(true)
 	{
 		Bool erasedOne = false;
-		for(JointNode& joint : m_jointList)
+		for(JointNode& node : m_jointList)
 		{
-			if(joint.m_parentNode != info.m_node->getParent() || joint.m_joint->isBroken())
+			if(node.m_joint && node.m_joint->isBroken())
 			{
-				m_jointList.erase(&joint);
-				deleteInstance(SceneMemoryPool::getSingleton(), &joint);
+				m_jointList.erase(&node);
+				deleteInstance(SceneMemoryPool::getSingleton(), &node);
 				erasedOne = true;
 				updated = true;
 				break;
@@ -132,6 +170,56 @@ Error JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		{
 			break;
 		}
+	}
+
+	// Create new joints
+	for(JointNode& node : m_jointList)
+	{
+		if(node.m_joint)
+		{
+			continue;
+		}
+
+		updated = true;
+
+		switch(node.m_type)
+		{
+		case JointType::kPoint:
+		{
+			const Vec3 relPos1 = computeLocalPivotFromFactors(bodyc1->getPhysicsBody(), node.m_p2p.m_relPosBody1);
+
+			if(node.m_p2p.m_relPosBody2 != Vec3(kMaxF32) && bodyc2)
+			{
+				const Vec3 relPos2 = computeLocalPivotFromFactors(bodyc2->getPhysicsBody(), node.m_p2p.m_relPosBody2);
+
+				node.m_joint = PhysicsWorld::getSingleton().newInstance<PhysicsPoint2PointJoint>(bodyc1->getPhysicsBody(), relPos1,
+																								 bodyc2->getPhysicsBody(), relPos2);
+			}
+			else
+			{
+				node.m_joint = PhysicsWorld::getSingleton().newInstance<PhysicsPoint2PointJoint>(bodyc1->getPhysicsBody(), relPos1);
+			}
+			break;
+		}
+		case JointType::kHinge:
+		{
+			const Vec3 relPos1 = computeLocalPivotFromFactors(bodyc1->getPhysicsBody(), node.m_hinge.m_relPosBody1);
+
+			if(node.m_hinge.m_relPosBody2 != Vec3(kMaxF32) && bodyc2)
+			{
+				ANKI_ASSERT(!"TODO");
+			}
+			else
+			{
+				node.m_joint = PhysicsWorld::getSingleton().newInstance<PhysicsHingeJoint>(bodyc1->getPhysicsBody(), relPos1, node.m_hinge.m_axis);
+			}
+			break;
+		}
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		node.m_joint->setBreakingImpulseThreshold(node.m_breakingImpulse);
 	}
 
 	return Error::kNone;

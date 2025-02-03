@@ -30,31 +30,65 @@ public:
 
 	CString getMeshResourceFilename() const;
 
+	void removeBody()
+	{
+		m_body.reset(nullptr);
+		m_teleported = false;
+		m_force = Vec3(0.0f);
+	}
+
 	void setMass(F32 mass);
 
 	F32 getMass() const
 	{
-		return (m_body) ? m_body->getMass() : 0.0f;
+		return m_mass;
 	}
 
-	PhysicsBodyPtr getPhysicsBody() const
+	const PhysicsBodyPtr& getPhysicsBody() const
 	{
 		return m_body;
 	}
 
-	Bool isEnabled() const
+	void applyForce(Vec3 force, Vec3 relativePosition)
 	{
-		return m_mesh.isCreated();
+		m_force = force;
+		m_forcePosition = relativePosition;
 	}
 
 	void teleportTo(const Transform& trf);
 
 private:
+	enum class ShapeType : U8
+	{
+		kMesh,
+		kAabb,
+		kSphere,
+		kCount
+	};
+
 	SceneNode* m_node = nullptr;
+	PhysicsBodyPtr m_body;
+
 	ModelComponent* m_modelc = nullptr;
 	CpuMeshResourcePtr m_mesh;
-	PhysicsBodyPtr m_body;
-	Bool m_dirty = true;
+
+	union
+	{
+		Vec3 m_aabbExtend = Vec3(0.0f);
+		F32 m_sphereRadius;
+	};
+
+	F32 m_mass = 0.0f;
+
+	Transform m_teleportTrf;
+
+	Vec3 m_force = Vec3(0.0f);
+	Vec3 m_forcePosition = Vec3(0.0f);
+
+	Bool m_shapeDirty = true;
+	Bool m_teleported = false;
+
+	ShapeType m_shapeType = ShapeType::kCount;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

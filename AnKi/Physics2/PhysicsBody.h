@@ -61,6 +61,8 @@ public:
 
 	void setTransform(const Transform& trf);
 
+	/// @param force In Newton and in world space.
+	/// @param relPos The position to apply the force. It's in the local space of the body.
 	void applyForce(const Vec3& force, const Vec3& relPos);
 
 	/// Apply force to the center of mass.
@@ -77,6 +79,11 @@ public:
 		m_triggerCallbacks = callbacks;
 	}
 
+	F32 getMass() const
+	{
+		return m_mass;
+	}
+
 private:
 	JPH::Body* m_jphBody = nullptr;
 	PhysicsCollisionShapePtr m_primaryShape;
@@ -89,6 +96,8 @@ private:
 
 	U32 m_activated : 1 = false;
 	U32 m_isTrigger : 1 = false;
+
+	F32 m_mass = 0.0f;
 
 	PhysicsBody()
 		: PhysicsObjectBase(PhysicsObjectType::kBody)

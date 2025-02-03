@@ -28,27 +28,14 @@ BodyComponent::~BodyComponent()
 void BodyComponent::loadMeshResource(CString meshFilename)
 {
 	CpuMeshResourcePtr rsrc;
-	const Error err = ResourceManager::getSingleton().loadResource(meshFilename, rsrc);
-	if(err)
+	if(ResourceManager::getSingleton().loadResource(meshFilename, rsrc))
 	{
 		ANKI_SCENE_LOGE("Failed to load mesh");
 		return;
 	}
 
 	m_mesh = std::move(rsrc);
-
-	const Transform prevTransform = m_node->getWorldTransform();
-	const F32 prevMass = (m_body) ? m_body->getMass() : 0.0f;
-
-	PhysicsBodyInitInfo init;
-	init.m_mass = prevMass;
-	init.m_transform = prevTransform;
-	init.m_shape = m_mesh->getCollisionShape();
-	m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
-	m_body->setUserData(this);
-	m_body->setTransform(m_node->getWorldTransform());
-
-	m_dirty = true;
+	m_shapeDirty = true;
 }
 
 void BodyComponent::setMeshFromModelComponent(U32 patchIndex)
@@ -73,49 +60,63 @@ CString BodyComponent::getMeshResourceFilename() const
 
 void BodyComponent::setMass(F32 mass)
 {
-	if(!ANKI_SCENE_ASSERT(mass >= 0.0f && m_body.isCreated()))
+	if(!ANKI_SCENE_ASSERT(mass >= 0.0f))
 	{
 		return;
 	}
 
-	if((m_body->getMass() == 0.0f && mass != 0.0f) || (m_body->getMass() != 0.0f && mass == 0.0f))
-	{
-		// Will become from static to dynamic or the opposite, re-create the body
-
-		const Transform& prevTransform = m_body->getTransform();
-		PhysicsBodyInitInfo init;
-		init.m_transform = prevTransform;
-		init.m_mass = mass;
-		init.m_shape = m_mesh->getCollisionShape();
-		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
-		m_body->setUserData(this);
-
-		m_dirty = true;
-	}
-	else
-	{
-		m_body->setMass(mass);
-	}
+	m_mass = mass;
+	m_shapeDirty = true;
 }
 
 void BodyComponent::teleportTo(const Transform& trf)
 {
-	if(ANKI_SCENE_ASSERT(m_body.isCreated()))
-	{
-		m_body->setTransform(trf);
-		m_node->setLocalTransform(trf); // Set that just to be sure
-	}
+	m_teleportTrf = trf;
+	m_teleported = true;
+
+	m_node->setLocalTransform(trf); // Set that just to be sure
 }
 
 Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = m_dirty;
-	m_dirty = false;
+	if(m_shapeDirty)
+	{
+		updated = true;
+		m_shapeDirty = false;
+
+		m_body.reset(nullptr);
+
+		PhysicsBodyInitInfo init;
+		init.m_mass = m_mass;
+		init.m_transform = (m_teleported) ? m_teleportTrf : m_node->getWorldTransform();
+		init.m_shape = m_mesh->getOrCreateCollisionShape(m_mass == 0.0f);
+		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
+		m_body->setUserData(this);
+
+		m_teleported = false; // Cancel teleportation since the body was re-created
+	}
+
+	if(m_body && m_teleported)
+	{
+		updated = true;
+		m_teleported = false;
+		m_body->setTransform(m_teleportTrf);
+	}
 
 	if(m_body && m_body->getTransform() != info.m_node->getWorldTransform())
 	{
 		updated = true;
 		info.m_node->setLocalTransform(m_body->getTransform());
+	}
+
+	if(m_force.getLengthSquared() > 0.0f)
+	{
+		if(m_body)
+		{
+			m_body->applyForce(m_force, m_forcePosition);
+		}
+
+		m_force = Vec3(0.0f);
 	}
 
 	return Error::kNone;

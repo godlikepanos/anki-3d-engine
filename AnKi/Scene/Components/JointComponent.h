@@ -39,17 +39,23 @@ public:
 private:
 	class JointNode;
 
+	enum class JointType : U8
+	{
+		kPoint,
+		kHinge,
+		kCount
+	};
+
 	SceneNode* m_node = nullptr;
 	BodyComponent* m_bodyc = nullptr;
+
+	U32 m_parentUuid = 0;
 
 	IntrusiveList<JointNode> m_jointList;
 
 	/// Given a 3 coodrinates that lie in [-1.0, +1.0] compute a pivot point that lies into the AABB of the collision
 	/// shape of the body.
 	static Vec3 computeLocalPivotFromFactors(const PhysicsBodyPtr& body, const Vec3& factors);
-
-	template<typename TJoint, typename... TArgs>
-	void newJoint(const Vec3& relPosFactor, F32 brakingImpulse, TArgs&&... args);
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

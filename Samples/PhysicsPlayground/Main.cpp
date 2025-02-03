@@ -350,8 +350,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		bodyc->teleportTo(camTrf);
 		bodyc->setMass(1.0f);
 
-		PhysicsBodyPtr pbody = bodyc->getPhysicsBody();
-		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
+		bodyc->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
 
 		// Create the destruction event
 		ANKI_CHECK(createDestructionEvent(monkey));

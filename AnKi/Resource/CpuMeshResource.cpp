@@ -17,11 +17,21 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 	ANKI_CHECK(loader.load(filename));
 	ANKI_CHECK(loader.storeIndicesAndPosition(0, m_indices, m_positions));
 
-	// Create the collision shape
-	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);
-	m_physicsShape = PhysicsWorld::getSingleton().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
+	m_isConvex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);
 
 	return Error::kNone;
+}
+
+const PhysicsCollisionShapePtr& CpuMeshResource::getOrCreateCollisionShape([[maybe_unused]] Bool isStatic) const
+{
+	LockGuard lock(m_shapeMtx);
+
+	if(!m_collisionShape)
+	{
+		m_collisionShape = PhysicsWorld::getSingleton().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, m_isConvex);
+	}
+
+	return m_collisionShape;
 }
 
 } // end namespace anki

@@ -37,15 +37,16 @@ public:
 		return m_indices;
 	}
 
-	const PhysicsCollisionShapePtr& getCollisionShape() const
-	{
-		return m_physicsShape;
-	}
+	const PhysicsCollisionShapePtr& getOrCreateCollisionShape(Bool isStatic) const;
 
 private:
 	ResourceDynamicArray<Vec3> m_positions;
 	ResourceDynamicArray<U32> m_indices;
-	PhysicsCollisionShapePtr m_physicsShape;
+
+	mutable PhysicsCollisionShapePtr m_collisionShape;
+	mutable SpinLock m_shapeMtx;
+
+	Bool m_isConvex = false;
 };
 /// @}
 

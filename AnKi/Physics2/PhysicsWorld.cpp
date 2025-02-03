@@ -459,6 +459,53 @@ PhysicsCollisionShapePtr PhysicsWorld::newCapsuleCollisionShape(F32 height, F32 
 	return newCollisionShape<JPH::CapsuleShape>(height / 2.0f, radius);
 }
 
+PhysicsCollisionShapePtr PhysicsWorld::newConvexHullShape(ConstWeakArray<Vec3> positions)
+{
+	JPH::Array<JPH::Vec3> verts;
+	verts.resize(positions.getSize());
+
+	for(U32 i = 0; i < positions.getSize(); ++i)
+	{
+		verts[i] = toJPH(positions[i]);
+	}
+
+	JPH::ConvexHullShapeSettings settings(std::move(verts));
+	settings.SetEmbedded();
+
+	JPH::Shape::ShapeResult outResult;
+	PhysicsCollisionShapePtr out = newCollisionShape<JPH::ConvexHullShape>(settings, outResult);
+	ANKI_ASSERT(outResult.IsValid());
+	return out;
+}
+
+PhysicsCollisionShapePtr PhysicsWorld::newStaticMeshShape(ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices)
+{
+	ANKI_ASSERT(positions.getSize() && indices.getSize() && indices.getSize() % 3 == 0);
+
+	JPH::VertexList verts;
+	verts.resize(positions.getSize());
+	for(U32 i = 0; i < positions.getSize(); ++i)
+	{
+		verts[i] = {positions[i].x(), positions[i].y(), positions[i].z()};
+	}
+
+	JPH::IndexedTriangleList idx;
+	idx.resize(indices.getSize() / 3);
+	for(U32 i = 0; i < indices.getSize(); i += 3)
+	{
+		const U32 material = 0;
+		idx[i] = JPH::IndexedTriangle(indices[i], indices[i + 1], indices[i + 2], material);
+	}
+
+	JPH::MeshShapeSettings settings(std::move(verts), std::move(idx));
+	settings.SetEmbedded();
+
+	JPH::Shape::ShapeResult outResult;
+	PhysicsCollisionShapePtr out = newCollisionShape<JPH::MeshShape>(settings, outResult);
+	ANKI_ASSERT(outResult.IsValid());
+	return out;
+}
+
 PhysicsCollisionShapePtr PhysicsWorld::newScaleCollisionObject(const Vec3& scale, PhysicsCollisionShape* baseShape)
 {
 	return newCollisionShape<JPH::ScaledShape>(&baseShape->m_shapeBase, toJPH(scale));

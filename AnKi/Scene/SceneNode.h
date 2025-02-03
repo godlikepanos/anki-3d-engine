@@ -45,7 +45,7 @@ public:
 		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
 	}
 
-	U64 getUuid() const
+	U32 getUuid() const
 	{
 		return m_uuid;
 	}
