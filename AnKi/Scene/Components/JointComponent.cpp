@@ -109,6 +109,19 @@ void JointComponent::newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F
 	m_jointList.pushBack(newNode);
 }
 
+void JointComponent::newHingeJoint(const Vec3& relPosFactorA, const Vec3& relPosFactorB, const Vec3& axis, F32 breakingImpulse)
+{
+	JointNode* newNode = newInstance<JointNode>(SceneMemoryPool::getSingleton());
+
+	newNode->m_type = JointType::kHinge;
+	newNode->m_hinge.m_relPosBody1 = relPosFactorA;
+	newNode->m_hinge.m_relPosBody2 = relPosFactorB;
+	newNode->m_hinge.m_axis = axis;
+	newNode->m_breakingImpulse = breakingImpulse;
+
+	m_jointList.pushBack(newNode);
+}
+
 Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
 	SceneNode* parent = m_node->getParent();
@@ -207,7 +220,10 @@ Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bo
 
 			if(node.m_hinge.m_relPosBody2 != Vec3(kMaxF32) && bodyc2)
 			{
-				ANKI_ASSERT(!"TODO");
+				const Vec3 relPos2 = computeLocalPivotFromFactors(bodyc2->getPhysicsBody(), node.m_hinge.m_relPosBody2);
+
+				node.m_joint = PhysicsWorld::getSingleton().newInstance<PhysicsHingeJoint>(bodyc1->getPhysicsBody(), relPos1, node.m_hinge.m_axis,
+																						   bodyc2->getPhysicsBody(), relPos2, node.m_hinge.m_axis);
 			}
 			else
 			{

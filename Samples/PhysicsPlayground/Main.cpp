@@ -129,23 +129,38 @@ Error MyApp::sampleExtraInit()
 
 	// Create a body component with joint
 	{
+		SceneNode* base;
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("hingeBase", base));
+		BodyComponent* bodyc = base->newComponent<BodyComponent>();
+		bodyc->setBoxCollisionShape(Vec3(0.1f));
+		bodyc->teleportTo(Transform(Vec4(-0.0f, 5.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+
 		SceneNode* monkey;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("monkey_p2p", monkey));
+		base->addChild(monkey);
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
-		BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
+		bodyc = monkey->newComponent<BodyComponent>();
 		bodyc->loadMeshResource("Assets/Suzanne_e3526e1428c0763c.ankimesh");
 		bodyc->teleportTo(Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 		bodyc->setMass(2.0f);
 
 		JointComponent* jointc = monkey->newComponent<JointComponent>();
-		jointc->newHingeJoint(Vec3(0.2f, 1.0f, 0.0f), Vec3(1, 0, 0));
+		jointc->newHingeJoint(Vec3(0.2f, 1.0f, 0.0f), Vec3(0.0f, -1.3f, 0.0f), Vec3(1, 0, 0));
 	}
 
 	// Create a chain
 	{
 		const U LINKS = 5;
+
+		Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0, 1.0, 1.0, 0.0));
+
+		SceneNode* base;
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("p2pBase", base));
+		BodyComponent* bodyc = base->newComponent<BodyComponent>();
+		bodyc->setBoxCollisionShape(Vec3(0.1f));
+		bodyc->teleportTo(trf);
 
 		SceneNode* prevBody = nullptr;
 		for(U32 i = 0; i < LINKS; ++i)
@@ -154,8 +169,7 @@ Error MyApp::sampleExtraInit()
 			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("monkey_chain%u", i).toCString(), monkey));
 			monkey->newComponent<ModelComponent>()->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 
-			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0, 1.0, 1.0, 0.0));
-			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, F32(i) * 1.25f, 0.0f, 0.0f));
+			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, F32(i * 1) * 1.25f, 0.0f, 0.0f));
 			// trf.getOrigin().x() -= i * 0.25f;
 
 			// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
@@ -169,13 +183,13 @@ Error MyApp::sampleExtraInit()
 			JointComponent* jointc = monkey->newComponent<JointComponent>();
 			if(prevBody == nullptr)
 			{
-				jointc->newPoint2PointJoint(Vec3(0, 1, 0));
+				base->addChild(monkey);
 			}
 			else
 			{
 				prevBody->addChild(monkey);
-				jointc->newPoint2PointJoint2(Vec3(0, 1.0, 0), Vec3(0, -1.0, 0));
 			}
+			jointc->newPoint2PointJoint2(Vec3(0, 1.0, 0), Vec3(0, -1.0, 0));
 
 			prevBody = monkey;
 		}

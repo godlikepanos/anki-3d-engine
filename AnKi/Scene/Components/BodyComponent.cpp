@@ -25,6 +25,16 @@ BodyComponent::~BodyComponent()
 {
 }
 
+void BodyComponent::removeBody()
+{
+	m_shapeType = ShapeType::kCount;
+	m_body.reset(nullptr);
+	m_teleported = false;
+	m_force = Vec3(0.0f);
+	m_mesh.reset(nullptr);
+	m_collisionShape.reset(nullptr);
+}
+
 void BodyComponent::loadMeshResource(CString meshFilename)
 {
 	CpuMeshResourcePtr rsrc;
@@ -34,8 +44,9 @@ void BodyComponent::loadMeshResource(CString meshFilename)
 		return;
 	}
 
+	removeBody();
+	m_shapeType = ShapeType::kMesh;
 	m_mesh = std::move(rsrc);
-	m_shapeDirty = true;
 }
 
 void BodyComponent::setMeshFromModelComponent(U32 patchIndex)
@@ -58,6 +69,17 @@ CString BodyComponent::getMeshResourceFilename() const
 	return (m_mesh.isCreated()) ? m_mesh->getFilename() : CString();
 }
 
+void BodyComponent::setBoxCollisionShape(const Vec3& extend)
+{
+	if(ANKI_SCENE_ASSERT(extend > 0.0f))
+	{
+		removeBody();
+		m_shapeType = ShapeType::kAabb;
+		m_boxExtend = extend;
+		m_collisionShape = PhysicsWorld::getSingleton().newInstance<PhysicsBox>(extend);
+	}
+}
+
 void BodyComponent::setMass(F32 mass)
 {
 	if(!ANKI_SCENE_ASSERT(mass >= 0.0f))
@@ -65,8 +87,11 @@ void BodyComponent::setMass(F32 mass)
 		return;
 	}
 
-	m_mass = mass;
-	m_shapeDirty = true;
+	if(m_mass != mass)
+	{
+		m_mass = mass;
+		m_body.reset(nullptr);
+	}
 }
 
 void BodyComponent::teleportTo(const Transform& trf)
@@ -79,17 +104,29 @@ void BodyComponent::teleportTo(const Transform& trf)
 
 Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(m_shapeDirty)
+	if(m_shapeType == ShapeType::kCount)
+	{
+		return Error::kNone;
+	}
+
+	const Bool shapeDirty = !m_body.isCreated();
+	if(shapeDirty)
 	{
 		updated = true;
-		m_shapeDirty = false;
-
-		m_body.reset(nullptr);
 
 		PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
 		init.m_transform = (m_teleported) ? m_teleportTrf : m_node->getWorldTransform();
-		init.m_shape = m_mesh->getOrCreateCollisionShape(m_mass == 0.0f);
+
+		if(m_shapeType == ShapeType::kMesh)
+		{
+			init.m_shape = m_mesh->getOrCreateCollisionShape(m_mass == 0.0f);
+		}
+		else
+		{
+			init.m_shape = m_collisionShape;
+		}
+
 		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
 		m_body->setUserData(this);
 

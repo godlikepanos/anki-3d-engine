@@ -36,6 +36,9 @@ public:
 	/// Create a hinge joint on the BodyComponent of the SceneNode.
 	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = kMaxF32);
 
+	/// Create a hinge joint on the BodyComponent of the SceneNode.
+	void newHingeJoint(const Vec3& relPosFactorA, const Vec3& relPosFactorB, const Vec3& axis, F32 brakingImpulse = kMaxF32);
+
 private:
 	class JointNode;
 

@@ -30,12 +30,9 @@ public:
 
 	CString getMeshResourceFilename() const;
 
-	void removeBody()
-	{
-		m_body.reset(nullptr);
-		m_teleported = false;
-		m_force = Vec3(0.0f);
-	}
+	void setBoxCollisionShape(const Vec3& extend);
+
+	void removeBody();
 
 	void setMass(F32 mass);
 
@@ -72,9 +69,11 @@ private:
 	ModelComponent* m_modelc = nullptr;
 	CpuMeshResourcePtr m_mesh;
 
+	PhysicsCollisionShapePtr m_collisionShape;
+
 	union
 	{
-		Vec3 m_aabbExtend = Vec3(0.0f);
+		Vec3 m_boxExtend = Vec3(0.0f);
 		F32 m_sphereRadius;
 	};
 
@@ -85,7 +84,6 @@ private:
 	Vec3 m_force = Vec3(0.0f);
 	Vec3 m_forcePosition = Vec3(0.0f);
 
-	Bool m_shapeDirty = true;
 	Bool m_teleported = false;
 
 	ShapeType m_shapeType = ShapeType::kCount;

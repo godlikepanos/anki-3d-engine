@@ -57,6 +57,16 @@ PhysicsHingeJoint::PhysicsHingeJoint(PhysicsBodyPtr bodyA, const Vec3& relPos, c
 	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
+PhysicsHingeJoint::PhysicsHingeJoint(PhysicsBodyPtr bodyA, const Vec3& relPosA, const Vec3& axisA, PhysicsBodyPtr bodyB, const Vec3& relPosB,
+									 const Vec3& axisB)
+	: PhysicsJoint(JointType::kHinge)
+{
+	m_bodyA = std::move(bodyA);
+	m_bodyB = std::move(bodyB);
+	m_hinge.construct(*m_bodyA->getBtBody(), *m_bodyB->getBtBody(), toBt(relPosA), toBt(relPosB), toBt(axisA), toBt(axisB));
+	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
+}
+
 PhysicsHingeJoint::~PhysicsHingeJoint()
 {
 	m_hinge.destroy();
