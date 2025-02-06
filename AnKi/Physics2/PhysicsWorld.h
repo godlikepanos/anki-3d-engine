@@ -59,7 +59,10 @@ public:
 
 	PhysicsBodyPtr newPhysicsBody(const PhysicsBodyInitInfo& init);
 
-	PhysicsJointPtr newPointJoint(PhysicsBody* body1, PhysicsBody* body2, Bool pointsInWorldSpace, const Vec3& body1Point, const Vec3& body2Point);
+	PhysicsJointPtr newPointJoint(PhysicsBody* body1, PhysicsBody* body2, const Vec3& pivot);
+
+	/// @param pivot Gives the origin and rotation of the hinge. The hinge rotats in the X axis of the transform.
+	PhysicsJointPtr newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot);
 
 	PhysicsPlayerControllerPtr newPlayerController(const PhysicsPlayerControllerInitInfo& init);
 

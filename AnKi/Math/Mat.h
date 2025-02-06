@@ -1411,6 +1411,22 @@ public:
 		return out;
 	}
 
+	/// Create a rotation matrix from some direction. http://jcgt.org/published/0006/01/01/
+	static TMat rotationFromDirection(const TVec<T, 3>& zAxis) requires(kSize == 9)
+	{
+		const TVec<T, 3> z = zAxis;
+		const T sign = (z.z() >= T(0)) ? T(1) : -T(1);
+		const T a = -T(1) / (sign + z.z());
+		const T b = z.x() * z.y() * a;
+
+		const TVec<T, 3> x = TVec<T, 3>(T(1) + sign * a * pow(z.x(), T(2)), sign * b, -sign * z.x());
+		const TVec<T, 3> y = TVec<T, 3>(b, sign + a * pow(z.y(), T(2)), -z.y());
+
+		TMat out;
+		out.setColumns(x, y, z);
+		return out;
+	}
+
 	TMat lerp(const TMat& b, T t) const
 	{
 		return ((*this) * (T(1) - t)) + (b * t);

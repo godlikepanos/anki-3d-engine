@@ -552,17 +552,29 @@ PhysicsJointPtr PhysicsWorld::newJoint(PhysicsBody* body1, PhysicsBody* body2, T
 	return PhysicsJointPtr(&(*it));
 }
 
-PhysicsJointPtr PhysicsWorld::newPointJoint(PhysicsBody* body1, PhysicsBody* body2, Bool pointsInWorldSpace, const Vec3& body1Point,
-											const Vec3& body2Point)
+PhysicsJointPtr PhysicsWorld::newPointJoint(PhysicsBody* body1, PhysicsBody* body2, const Vec3& pivot)
 {
+	ANKI_ASSERT(body1 && body2);
 	JPH::PointConstraintSettings settings;
 	settings.SetEmbedded();
 
-	settings.mSpace = (pointsInWorldSpace) ? JPH::EConstraintSpace::WorldSpace : JPH::EConstraintSpace::LocalToBodyCOM;
-	settings.mPoint1 = toJPH(body1Point);
-	settings.mPoint2 = toJPH(body2Point);
+	settings.mPoint1 = settings.mPoint2 = toJPH(pivot);
 
 	return newJoint<JPH::PointConstraint>(body1, body2, settings);
+}
+
+PhysicsJointPtr PhysicsWorld::newHingeJoint(PhysicsBody* body1, PhysicsBody* body2, const Transform& pivot)
+{
+	ANKI_ASSERT(body1 && body2);
+	JPH::HingeConstraintSettings settings;
+	settings.SetEmbedded();
+
+	settings.mPoint1 = settings.mPoint2 = toJPH(pivot.getOrigin().xyz());
+	settings.mHingeAxis1 = settings.mHingeAxis2 = toJPH(pivot.getRotation().getXAxis());
+
+	settings.mNormalAxis1 = settings.mNormalAxis2 = toJPH(pivot.getRotation().getYAxis());
+
+	return newJoint<JPH::HingeConstraint>(body1, body2, settings);
 }
 
 PhysicsPlayerControllerPtr PhysicsWorld::newPlayerController(const PhysicsPlayerControllerInitInfo& init)

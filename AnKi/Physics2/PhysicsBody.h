@@ -30,16 +30,30 @@ public:
 	}
 };
 
+/// An interface to process contacts.
+/// @memberof PhysicsBody
+class PhysicsCollisionFilterCallback
+{
+public:
+	virtual Bool collidesWith(const PhysicsBody& body1, const PhysicsBody& body2) = 0;
+};
+
 /// Init info for PhysicsBody.
 class PhysicsBodyInitInfo
 {
 public:
 	PhysicsCollisionShape* m_shape = nullptr;
+
 	F32 m_mass = 0.0f; ///< Zero mass means static object.
+
 	Transform m_transform = Transform::getIdentity();
+
 	F32 m_friction = 0.5f;
+
 	PhysicsLayer m_layer = PhysicsLayer::kStatic;
+
 	Bool m_isTrigger = false;
+
 	void* m_userData = nullptr;
 };
 
@@ -79,17 +93,28 @@ public:
 		m_triggerCallbacks = callbacks;
 	}
 
+	void setCollisionFilterCallback(PhysicsCollisionFilterCallback* callback);
+
 	F32 getMass() const
 	{
 		return m_mass;
 	}
 
 private:
+	class MyGroupFilter final : public JPH::GroupFilter
+	{
+	public:
+		Bool CanCollide(const JPH::CollisionGroup& inGroup1, const JPH::CollisionGroup& inGroup2) const override;
+	};
+
+	static MyGroupFilter m_groupFilter;
+
 	JPH::Body* m_jphBody = nullptr;
 	PhysicsCollisionShapePtr m_primaryShape;
 	PhysicsCollisionShapePtr m_scaledShape;
 
 	PhysicsTriggerCallbacks* m_triggerCallbacks = nullptr;
+	PhysicsCollisionFilterCallback* m_collisionFilterCallback = nullptr;
 
 	Transform m_worldTrf;
 	U32 m_worldTrfVersion = 1;

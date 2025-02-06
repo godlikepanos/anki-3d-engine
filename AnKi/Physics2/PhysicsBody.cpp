@@ -9,8 +9,39 @@
 namespace anki {
 namespace v2 {
 
+PhysicsBody::MyGroupFilter PhysicsBody::m_groupFilter;
+
+Bool PhysicsBody::MyGroupFilter::CanCollide(const JPH::CollisionGroup& inGroup1, const JPH::CollisionGroup& inGroup2) const
+{
+	const U64 address1 = (U64(inGroup1.GetGroupID()) << 32_U64) | U64(inGroup1.GetSubGroupID());
+	const U64 address2 = (U64(inGroup2.GetGroupID()) << 32_U64) | U64(inGroup2.GetSubGroupID());
+	ANKI_ASSERT(address1 && address2);
+
+	const PhysicsBody& body1 = *numberToPtr<const PhysicsBody*>(address1);
+	const PhysicsBody& body2 = *numberToPtr<const PhysicsBody*>(address2);
+
+	if(body1.m_collisionFilterCallback == body2.m_collisionFilterCallback && body1.m_collisionFilterCallback)
+	{
+		// Both have the same filter callback and it's not nullptr, use it
+		return body1.m_collisionFilterCallback->collidesWith(body1, body2);
+	}
+	else
+	{
+		return true;
+	}
+}
+
 void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 {
+	if(init.m_layer == PhysicsLayer::kStatic)
+	{
+		ANKI_ASSERT(init.m_mass == 0.0f);
+	}
+	else
+	{
+		ANKI_ASSERT(init.m_mass > 0.0f);
+	}
+
 	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
 	const Vec3 pos = init.m_transform.getOrigin().xyz();
@@ -123,6 +154,20 @@ void PhysicsBody::postPhysicsUpdate()
 			++m_worldTrfVersion;
 		}
 	}
+}
+
+void PhysicsBody::setCollisionFilterCallback(PhysicsCollisionFilterCallback* callback)
+{
+	m_collisionFilterCallback = callback;
+	JPH::CollisionGroup collisionGroup;
+
+	if(m_collisionFilterCallback)
+	{
+		const U64 callbackAddress = ptrToNumber(callback);
+		collisionGroup = JPH::CollisionGroup(&m_groupFilter, U32(callbackAddress >> 32_U64), U32(callbackAddress));
+	}
+
+	m_jphBody->SetCollisionGroup(collisionGroup);
 }
 
 } // namespace v2
