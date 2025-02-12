@@ -9,9 +9,9 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Physics/PhysicsBody.h>
-#include <AnKi/Physics/PhysicsCollisionShape.h>
-#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics2/PhysicsBody.h>
+#include <AnKi/Physics2/PhysicsCollisionShape.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 #include <AnKi/Math.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
@@ -127,16 +127,13 @@ public:
 class ParticleEmitterComponent::PhysicsParticle : public ParticleEmitterComponent::ParticleBase
 {
 public:
-	PhysicsBodyPtr m_body;
+	v2::PhysicsBodyPtr m_body;
 
-	PhysicsParticle(const PhysicsBodyInitInfo& init, ParticleEmitterComponent* component)
+	PhysicsParticle(const v2::PhysicsBodyInitInfo& init, ParticleEmitterComponent* component)
 	{
-		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
+		m_body = v2::PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(component);
 		m_body->activate(false);
-		m_body->setMaterialGroup(PhysicsMaterialBit::kParticle);
-		m_body->setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
-		m_body->setAngularFactor(Vec3(0.0f));
 	}
 
 	void kill()
@@ -157,7 +154,7 @@ public:
 		m_body->activate(true);
 		m_body->setLinearVelocity(Vec3(0.0f));
 		m_body->setAngularVelocity(Vec3(0.0f));
-		m_body->clearForces();
+		m_body->clearForcesAndTorque();
 
 		// force
 		if(forceFlag)
@@ -175,7 +172,7 @@ public:
 		// gravity
 		if(!worldGravFlag)
 		{
-			m_body->setGravity(getRandom(props.m_particle.m_minGravity, props.m_particle.m_maxGravity));
+			// TODO m_body->setGravity(getRandom(props.m_particle.m_minGravity, props.m_particle.m_maxGravity));
 		}
 
 		// Starting pos. In local space
@@ -283,10 +280,12 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
 	if(m_simulationType == SimulationType::kPhysicsEngine)
 	{
-		PhysicsCollisionShapePtr collisionShape = PhysicsWorld::getSingleton().newInstance<PhysicsSphere>(m_props.m_particle.m_minInitialSize / 2.0f);
+		v2::PhysicsCollisionShapePtr collisionShape =
+			v2::PhysicsWorld::getSingleton().newSphereCollisionShape(m_props.m_particle.m_minInitialSize / 2.0f);
 
-		PhysicsBodyInitInfo binit;
-		binit.m_shape = std::move(collisionShape);
+		v2::PhysicsBodyInitInfo binit;
+		binit.m_layer = v2::PhysicsLayer::kDebris;
+		binit.m_shape = collisionShape.get();
 
 		m_physicsParticles.resizeStorage(m_props.m_maxNumOfParticles);
 		for(U32 i = 0; i < m_props.m_maxNumOfParticles; i++)

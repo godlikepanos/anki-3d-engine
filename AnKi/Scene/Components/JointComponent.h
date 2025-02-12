@@ -6,63 +6,47 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics/PhysicsJoint.h>
+#include <AnKi/Physics2/PhysicsJoint.h>
 
 namespace anki {
 
 /// @addtogroup scene
 /// @{
 
-/// Contains a list of joints.
+/// @memberof JointComponent
+enum class JointType : U8
+{
+	kPoint,
+	kHinge,
+
+	kCount,
+	kFirst
+};
+
+/// Contains a single joint that connects the parent node with the 1st child node of the node that has this component.
 class JointComponent : public SceneComponent
 {
 	ANKI_SCENE_COMPONENT(JointComponent)
 
 public:
-	JointComponent(SceneNode* node)
-		: SceneComponent(node, kClassType)
-		, m_node(node)
-	{
-	}
+	JointComponent(SceneNode* node);
 
 	~JointComponent();
 
-	/// Create a point 2 point joint on the BodyComponent of the SceneNode.
-	void newPoint2PointJoint(const Vec3& relPosFactor, F32 brakingImpulse = kMaxF32);
-
-	/// Create a point 2 point joint on the BodyComponents of the SceneNode and its child node.
-	void newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 brakingImpulse = kMaxF32);
-
-	/// Create a hinge joint on the BodyComponent of the SceneNode.
-	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = kMaxF32);
-
-	/// Create a hinge joint on the BodyComponent of the SceneNode.
-	void newHingeJoint(const Vec3& relPosFactorA, const Vec3& relPosFactorB, const Vec3& axis, F32 brakingImpulse = kMaxF32);
+	void setType(JointType type)
+	{
+		m_type = type;
+	}
 
 private:
-	class JointNode;
+	v2::PhysicsJointPtr m_joint;
 
-	enum class JointType : U8
-	{
-		kPoint,
-		kHinge,
-		kCount
-	};
+	U32 m_parentNodeUuid = 0;
+	U32 m_childNodeUuid = 0;
 
-	SceneNode* m_node = nullptr;
-	BodyComponent* m_bodyc = nullptr;
-
-	U32 m_parentUuid = 0;
-
-	IntrusiveList<JointNode> m_jointList;
-
-	/// Given a 3 coodrinates that lie in [-1.0, +1.0] compute a pivot point that lies into the AABB of the collision
-	/// shape of the body.
-	static Vec3 computeLocalPivotFromFactors(const PhysicsBodyPtr& body, const Vec3& factors);
+	JointType m_type = JointType::kCount;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
-
-	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 };
 /// @}
 

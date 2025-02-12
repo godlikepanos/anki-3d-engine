@@ -23,7 +23,7 @@
 #include <AnKi/Window/Input.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
@@ -131,7 +131,7 @@ void App::cleanup()
 	UiManager::freeSingleton();
 	GpuSceneMicroPatcher::freeSingleton();
 	ResourceManager::freeSingleton();
-	PhysicsWorld::freeSingleton();
+	v2::PhysicsWorld::freeSingleton();
 	RebarTransientMemoryPool::freeSingleton();
 	GpuVisibleTransientMemoryPool::freeSingleton();
 	UnifiedGeometryBuffer::freeSingleton();
@@ -224,7 +224,7 @@ Error App::initInternal()
 	if(g_benchmarkModeCVar && g_vsyncCVar)
 	{
 		ANKI_CORE_LOGW("Vsync is enabled and benchmark mode as well. Will turn vsync off");
-		g_vsyncCVar.set(false);
+		g_vsyncCVar = false;
 	}
 
 	GlobalFrameIndex::allocateSingleton();
@@ -293,8 +293,8 @@ Error App::initInternal()
 	//
 	// Physics
 	//
-	PhysicsWorld::allocateSingleton();
-	ANKI_CHECK(PhysicsWorld::getSingleton().init(allocCb, allocCbUserData));
+	v2::PhysicsWorld::allocateSingleton();
+	ANKI_CHECK(v2::PhysicsWorld::getSingleton().init(allocCb, allocCbUserData));
 
 	//
 	// Resources
@@ -310,7 +310,7 @@ Error App::initInternal()
 	extraPaths += ":" ANKI_SOURCE_DIRECTORY "|EngineAssets,!AndroidProject"; // EngineAssets
 	extraPaths += ":";
 	extraPaths += g_dataPathsCVar;
-	g_dataPathsCVar.set(extraPaths);
+	g_dataPathsCVar = extraPaths;
 #endif
 
 	ANKI_CHECK(ResourceManager::allocateSingleton().init(allocCb, allocCbUserData));

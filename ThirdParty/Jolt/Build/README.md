@@ -8,6 +8,7 @@ Each platform supports multiple build targets
 - Release - Release version of the library, no asserts but includes profiling support and can draw the world and simulation properties
 - ReleaseASAN - As Release but turns on Address Sanitizer (clang only) to find bugs
 - ReleaseUBSAN - As Release but turns on Undefined Behavior Sanitizer (clang only) to find bugs
+- ReleaseTSAN - As Release but turns on the Thread Sanitizer (clang only) to find bugs
 - ReleaseCoverage - As Release but turns on Coverage reporting (clang only) to find which areas of the code are not executed
 - Distribution - Shippable version of the library, turns off all debugging support
 
@@ -125,7 +126,7 @@ To implement your custom memory allocator override Allocate, Free, Reallocate, A
 </details>
 
 <details>
-	<summary>Linux</summary>
+	<summary>Linux (Ubuntu)</summary>
 	<ul>
 		<li>Install clang (apt-get install clang)</li>
 		<li>Install cmake (apt-get install cmake)</li>
@@ -152,7 +153,6 @@ To implement your custom memory allocator override Allocate, Free, Reallocate, A
 	<ul>
 		<li>Install XCode</li>
 		<li>Download CMake 3.23+ (https://cmake.org/download/)</li>
-		<li>If you want to build the Samples or JoltViewer, install the <a href="https://vulkan.lunarg.com/sdk/home#mac">Vulkan SDK</a></li>
 		<li>Run: ./cmake_xcode_macos.sh</li>
 		<li>This will open XCode with a newly generated project</li>
 		<li>Build and run the project</li>
@@ -187,6 +187,7 @@ To implement your custom memory allocator override Allocate, Free, Reallocate, A
 
 * A vcpkg package is available [here](https://github.com/microsoft/vcpkg/tree/master/ports/joltphysics).
 * A xmake package is available [here](https://github.com/xmake-io/xmake-repo/tree/dev/packages/j/joltphysics).
+* A conan package is available [here](https://conan.io/center/recipes/joltphysics)
 * Jolt has been verified to build with [ninja](https://ninja-build.org/) through CMake.
 
 ## Errors

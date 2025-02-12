@@ -5,12 +5,20 @@
 
 #include <AnKi/Physics2/PhysicsWorld.h>
 #include <AnKi/Util/System.h>
+#include <AnKi/Core/StatsSet.h>
+#include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/Tracer.h>
 
 #include <Jolt/Renderer/DebugRendererSimple.h>
 #include <Jolt/ConfigurationString.h>
 
 namespace anki {
 namespace v2 {
+
+static StatCounter g_physicsBodiesCreatedStatVar(StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame);
+static StatCounter g_physicsJointsCreatedStatVar(StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame);
+static StatCounter g_physicsUpdateTimeStatVar(StatCategory::kTime, "Phys update",
+											  StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 class BroadphaseLayer
 {
@@ -47,6 +55,25 @@ public:
 	{
 		return objectLayerToBroadphaseLayer(PhysicsLayer(objLayer));
 	}
+
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+	const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override
+	{
+		if(inLayer == BroadphaseLayer::kStatic)
+		{
+			return "Static";
+		}
+		else if(inLayer == BroadphaseLayer::kDynamic)
+		{
+			return "Dynamic";
+		}
+		else
+		{
+			ANKI_ASSERT(inLayer == BroadphaseLayer::kDebris);
+			return "Debris";
+		}
+	}
+#endif
 };
 
 // Class that determines if an object layer can collide with a broadphase layer
@@ -151,8 +178,17 @@ class PhysicsWorld::MyContactListener final : public JPH::ContactListener
 public:
 	void gatherObjects(U64 body1UserData, U64 body2UserData, PhysicsBody*& trigger, PhysicsObjectBase*& receiver)
 	{
+		trigger = nullptr;
+		receiver = nullptr;
+
 		PhysicsObjectBase* obj1 = numberToPtr<PhysicsObjectBase*>(body1UserData);
 		PhysicsObjectBase* obj2 = numberToPtr<PhysicsObjectBase*>(body2UserData);
+
+		if(!obj1 || !obj2)
+		{
+			// Possibly a body was removed and Jolt tried to remove the contact, that body doesn't have user data
+			return;
+		}
 
 		if(obj1->getType() == PhysicsObjectType::kBody && static_cast<PhysicsBody*>(obj1)->m_triggerCallbacks)
 		{
@@ -168,8 +204,7 @@ public:
 		}
 		else
 		{
-			trigger = nullptr;
-			receiver = nullptr;
+			// Do nothing
 		}
 	}
 
@@ -253,6 +288,8 @@ void PhysicsJointPtrDeleter::operator()(PhysicsJoint* ptr)
 	ANKI_ASSERT(ptr);
 	PhysicsWorld& world = PhysicsWorld::getSingleton();
 
+	world.m_jphPhysicsSystem->RemoveConstraint(&(*ptr->m_base));
+
 	LockGuard lock(world.m_joints.m_mtx);
 	world.m_joints.m_array.erase(ptr->m_blockArrayIndex);
 }
@@ -291,6 +328,10 @@ public:
 	}
 };
 
+PhysicsWorld::PhysicsWorld()
+{
+}
+
 PhysicsWorld::~PhysicsWorld()
 {
 	ANKI_ASSERT(m_collisionShapes.m_array.getSize() == 0);
@@ -300,6 +341,7 @@ PhysicsWorld::~PhysicsWorld()
 
 	m_jobSystem.destroy();
 	m_jphPhysicsSystem.destroy();
+	m_tempAllocator.destroy();
 
 	JPH::UnregisterTypes();
 
@@ -354,6 +396,13 @@ Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 		PhysicsMemoryPool::getSingleton().free(ptr);
 	};
 
+#if ANKI_ASSERTIONS_ENABLED
+	JPH::AssertFailed = [](const Char* inExpression, [[maybe_unused]] const Char* inMessage, const Char* inFile, U32 inLine) -> Bool {
+		Logger::getSingleton().write(inFile, inLine, "?", "JOLT", LoggerMessageType::kFatal, "?", inExpression);
+		return true;
+	};
+#endif
+
 	JPH::Factory::sInstance = new JPH::Factory();
 
 	JPH::RegisterTypes();
@@ -381,6 +430,12 @@ Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 
 void PhysicsWorld::update(Second dt)
 {
+	ANKI_TRACE_SCOPED_EVENT(Physics);
+
+#if ANKI_STATS_ENABLED
+	const Second startTime = HighRezTimer::getCurrentTime();
+#endif
+
 	// Pre-update work
 	{
 		for(PhysicsPlayerController& charController : m_characters.m_array)
@@ -424,6 +479,10 @@ void PhysicsWorld::update(Second dt)
 
 		m_deletedContacts.destroy();
 	}
+
+#if ANKI_STATS_ENABLED
+	g_physicsUpdateTimeStatVar.set((HighRezTimer::getCurrentTime() - startTime) * 1000.0);
+#endif
 }
 
 template<typename TJPHCollisionShape, typename... TArgs>
@@ -494,7 +553,7 @@ PhysicsCollisionShapePtr PhysicsWorld::newStaticMeshShape(ConstWeakArray<Vec3> p
 	for(U32 i = 0; i < indices.getSize(); i += 3)
 	{
 		const U32 material = 0;
-		idx[i] = JPH::IndexedTriangle(indices[i], indices[i + 1], indices[i + 2], material);
+		idx[i / 3] = JPH::IndexedTriangle(indices[i], indices[i + 1], indices[i + 2], material);
 	}
 
 	JPH::MeshShapeSettings settings(std::move(verts), std::move(idx));
@@ -513,6 +572,8 @@ PhysicsCollisionShapePtr PhysicsWorld::newScaleCollisionObject(const Vec3& scale
 
 PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 {
+	g_physicsBodiesCreatedStatVar.increment(1);
+
 	PhysicsBody* newBody;
 	{
 		LockGuard lock(m_bodies.m_mtx);
@@ -532,6 +593,8 @@ template<typename TJPHJoint, typename... TArgs>
 PhysicsJointPtr PhysicsWorld::newJoint(PhysicsBody* body1, PhysicsBody* body2, TArgs&&... args)
 {
 	ANKI_ASSERT(body1 && body2);
+
+	g_physicsJointsCreatedStatVar.increment(1);
 
 	decltype(m_joints.m_array)::Iterator it;
 	{
@@ -681,6 +744,7 @@ void PhysicsWorld::debugDraw(PhysicsDebugDrawerInterface& interface)
 	renderer.m_interface = &interface;
 
 	JPH::BodyManager::DrawSettings settings;
+	settings.mDrawShapeWireframe = true;
 	m_jphPhysicsSystem->DrawBodies(settings, &renderer);
 
 	m_jphPhysicsSystem->DrawConstraints(&renderer);

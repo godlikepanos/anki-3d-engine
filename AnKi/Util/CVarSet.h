@@ -77,7 +77,7 @@ public:
 		ANKI_ASSERT(defaultVal >= min && defaultVal <= max);
 	}
 
-	void set(TNumber val)
+	NumericCVar& operator=(TNumber val)
 	{
 		const TNumber newVal = clamp(val, m_min, m_max);
 		if(newVal != val)
@@ -85,6 +85,7 @@ public:
 			ANKI_UTIL_LOGW("Out of range value set for config var: %s", m_name.cstr());
 		}
 		m_value = newVal;
+		return *this;
 	}
 
 	operator TNumber() const
@@ -122,7 +123,7 @@ public:
 	StringCVar(CString subsystem, CString name, CString value, CString descr = CString())
 		: CVar(Type::kString, subsystem, name, descr)
 	{
-		set(value);
+		*this = value;
 	}
 
 	~StringCVar()
@@ -133,7 +134,7 @@ public:
 		}
 	}
 
-	void set(CString name)
+	StringCVar& operator=(CString name)
 	{
 		if(m_str)
 		{
@@ -150,6 +151,8 @@ public:
 		{
 			memcpy(m_str, name.cstr(), len + 1);
 		}
+
+		return *this;
 	}
 
 	operator CString() const
@@ -171,9 +174,10 @@ public:
 	{
 	}
 
-	void set(Bool val)
+	BoolCVar& operator=(Bool val)
 	{
 		m_val = val;
+		return *this;
 	}
 
 	operator Bool() const

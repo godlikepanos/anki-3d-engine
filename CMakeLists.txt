@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.15)
 
 message("++ CMake version ${CMAKE_VERSION}")
 
@@ -224,6 +224,8 @@ if(NOT MSVC)
 		add_compile_options(-msse4)
 	endif()
 
+	add_compile_options(-fno-rtti)
+
 	if(ANKI_LTO)
 		add_compile_options(-flto)
 		set(LINKER_FLAGS "${LINKER_FLAGS} -flto ")
@@ -304,6 +306,16 @@ option(BUILD_CPU_DEMOS OFF)
 option(BUILD_OPENGL3_DEMOS OFF)
 option(BUILD_EXTRAS OFF)
 option(BUILD_UNIT_TESTS OFF)
+
+# Jolt config
+option(USE_STATIC_MSVC_RUNTIME_LIBRARY "Use the static MSVC runtime library" OFF)
+set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF)
+option(DEBUG_RENDERER_IN_DISTRIBUTION "Enable debug renderer in all builds" ON)
+set(DEBUG_RENDERER_IN_DISTRIBUTION ON)
+if(ANKI_EXTRA_CHECKS)
+	option(USE_ASSERTS "Enable asserts" ON)
+	set(USE_ASSERTS ON)
+endif()
 
 if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)

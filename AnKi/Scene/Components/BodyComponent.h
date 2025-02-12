@@ -6,13 +6,23 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics/PhysicsBody.h>
+#include <AnKi/Physics2/PhysicsBody.h>
 #include <AnKi/Resource/Forward.h>
 
 namespace anki {
 
 /// @addtogroup scene
 /// @{
+
+/// @memberof BodyComponent
+enum class BodyComponentCollisionShapeType : U8
+{
+	kFromModelComponent, ///< Set the collision shape by looking at the ModelComponent's meshes.
+	kAabb,
+	kSphere,
+
+	kCount
+};
 
 /// Rigid body component.
 class BodyComponent : public SceneComponent
@@ -24,24 +34,64 @@ public:
 
 	~BodyComponent();
 
-	void loadMeshResource(CString meshFilename);
+	void setBoxExtend(Vec3 extend)
+	{
+		if(ANKI_SCENE_ASSERT(extend > 0.01f) && extend != m_box.m_extend)
+		{
+			m_box.m_extend = extend;
+			if(m_shapeType == BodyComponentCollisionShapeType::kAabb)
+			{
+				m_body.reset(nullptr); // Force recreate
+			}
+		}
+	}
 
-	void setMeshFromModelComponent(U32 patchIndex = 0);
+	const Vec3& getBoxExtend() const
+	{
+		return m_box.m_extend;
+	}
 
-	CString getMeshResourceFilename() const;
+	void setSphereRadius(F32 radius)
+	{
+		if(ANKI_SCENE_ASSERT(radius > 0.01f) && radius != m_sphere.m_radius)
+		{
+			m_sphere.m_radius = radius;
+			if(m_shapeType == BodyComponentCollisionShapeType::kSphere)
+			{
+				m_body.reset(nullptr); // Force recreate
+			}
+		}
+	}
 
-	void setBoxCollisionShape(const Vec3& extend);
+	F32 getSphereRadius() const
+	{
+		return m_sphere.m_radius;
+	}
 
-	void removeBody();
+	void setCollisionShapeType(BodyComponentCollisionShapeType type)
+	{
+		if(ANKI_SCENE_ASSERT(type <= BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
+		{
+			m_shapeType = type;
+			m_body.reset(nullptr); // Force recreate
+		}
+	}
 
-	void setMass(F32 mass);
+	void setMass(F32 mass)
+	{
+		if(ANKI_SCENE_ASSERT(mass >= 0.0f) && m_mass != mass)
+		{
+			m_mass = mass;
+			m_body.reset(nullptr); // Force recreate
+		}
+	}
 
 	F32 getMass() const
 	{
 		return m_mass;
 	}
 
-	const PhysicsBodyPtr& getPhysicsBody() const
+	const v2::PhysicsBodyPtr& getPhysicsBody() const
 	{
 		return m_body;
 	}
@@ -54,28 +104,35 @@ public:
 
 	void teleportTo(const Transform& trf);
 
+	SceneNode& getSceneNode()
+	{
+		return *m_node;
+	}
+
 private:
-	enum class ShapeType : U8
-	{
-		kMesh,
-		kAabb,
-		kSphere,
-		kCount
-	};
-
 	SceneNode* m_node = nullptr;
-	PhysicsBodyPtr m_body;
+	v2::PhysicsBodyPtr m_body;
 
-	ModelComponent* m_modelc = nullptr;
-	CpuMeshResourcePtr m_mesh;
+	v2::PhysicsCollisionShapePtr m_collisionShape;
 
-	PhysicsCollisionShapePtr m_collisionShape;
-
-	union
+	class
 	{
-		Vec3 m_boxExtend = Vec3(0.0f);
-		F32 m_sphereRadius;
-	};
+	public:
+		ModelComponent* m_modelc = nullptr;
+		U32 m_modelcUuid = 0;
+	} m_mesh;
+
+	class
+	{
+	public:
+		Vec3 m_extend = Vec3(1.0f);
+	} m_box;
+
+	class
+	{
+	public:
+		F32 m_radius = 1.0f;
+	} m_sphere;
 
 	F32 m_mass = 0.0f;
 
@@ -86,7 +143,7 @@ private:
 
 	Bool m_teleported = false;
 
-	ShapeType m_shapeType = ShapeType::kCount;
+	BodyComponentCollisionShapeType m_shapeType = BodyComponentCollisionShapeType::kCount;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 

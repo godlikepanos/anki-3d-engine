@@ -6,12 +6,9 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics/PhysicsTrigger.h>
+#include <AnKi/Physics2/PhysicsBody.h>
 
 namespace anki {
-
-// Forward
-class BodyComponent;
 
 /// @addtogroup scene
 /// @{
@@ -28,31 +25,31 @@ public:
 
 	void setSphereVolumeRadius(F32 radius);
 
-	WeakArray<BodyComponent*> getBodyComponentsEnter()
+	WeakArray<SceneNode*> getSceneNodesEnter()
 	{
-		return WeakArray<BodyComponent*>(m_bodiesEnter);
+		return WeakArray<SceneNode*>(m_bodiesEnter);
 	}
 
-	WeakArray<BodyComponent*> getBodyComponentsInside()
+	WeakArray<SceneNode*> getSceneNodesExit()
 	{
-		return WeakArray<BodyComponent*>(m_bodiesInside);
-	}
-
-	WeakArray<BodyComponent*> getBodyComponentsExit()
-	{
-		return WeakArray<BodyComponent*>(m_bodiesExit);
+		return WeakArray<SceneNode*>(m_bodiesExit);
 	}
 
 private:
-	class MyPhysicsTriggerProcessContactCallback;
+	class MyPhysicsTriggerCallbacks;
 
 	SceneNode* m_node;
-	PhysicsCollisionShapePtr m_shape;
-	PhysicsTriggerPtr m_trigger;
-	SceneDynamicArray<BodyComponent*> m_bodiesEnter;
-	SceneDynamicArray<BodyComponent*> m_bodiesInside;
-	SceneDynamicArray<BodyComponent*> m_bodiesExit;
-	MyPhysicsTriggerProcessContactCallback* m_callbacks = nullptr;
+
+	v2::PhysicsCollisionShapePtr m_shape;
+	v2::PhysicsBodyPtr m_trigger;
+
+	SceneDynamicArray<SceneNode*> m_bodiesEnter;
+	SceneDynamicArray<SceneNode*> m_bodiesExit;
+
+	Bool m_resetEnter = true;
+	Bool m_resetExit = true;
+
+	static MyPhysicsTriggerCallbacks m_callbacks;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };

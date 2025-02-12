@@ -9,6 +9,7 @@
 #include <Jolt/Physics/Collision/Shape/MutableCompoundShape.h>
 #include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
 #include <Jolt/Physics/Collision/CollidePointResult.h>
+#include <Jolt/Physics/Collision/CollideShape.h>
 
 TEST_SUITE("MutableCompoundShapeTests")
 {
@@ -117,7 +118,7 @@ TEST_SUITE("MutableCompoundShapeTests")
 
 		shape->RemoveShape(0);
 		CHECK(shape->GetNumSubShapes() == 0);
-		CHECK(!shape->GetLocalBounds().IsValid());
+		CHECK(shape->GetLocalBounds() == AABox(Vec3::sZero(), Vec3::sZero()));
 		CHECK(check_shape_hit(Vec3::sZero()) == nullptr);
 		CHECK(check_shape_hit(Vec3(10, 0, 0)) == nullptr);
 		CHECK(check_shape_hit(Vec3(15, 0, 0)) == nullptr);
@@ -128,12 +129,12 @@ TEST_SUITE("MutableCompoundShapeTests")
 	{
 		// Start with a box at (-1 0 0)
 		MutableCompoundShapeSettings settings;
-		Ref<Shape> box_shape1 = new BoxShape(Vec3::sReplicate(1.0f));
+		Ref<Shape> box_shape1 = new BoxShape(Vec3::sOne());
 		box_shape1->SetUserData(1);
 		settings.AddShape(Vec3(-1.0f, 0.0f, 0.0f), Quat::sIdentity(), box_shape1);
 		Ref<MutableCompoundShape> shape = StaticCast<MutableCompoundShape>(settings.Create().Get());
 		CHECK(shape->GetCenterOfMass() == Vec3(-1.0f, 0.0f, 0.0f));
-		CHECK(shape->GetLocalBounds() == AABox(Vec3::sReplicate(-1.0f), Vec3::sReplicate(1.0f)));
+		CHECK(shape->GetLocalBounds() == AABox(Vec3::sReplicate(-1.0f), Vec3::sOne()));
 
 		// Check that we can hit the box
 		AllHitCollisionCollector<CollidePointCollector> collector;
@@ -143,7 +144,7 @@ TEST_SUITE("MutableCompoundShapeTests")
 		CHECK(collector.mHits.empty());
 
 		// Now add another box at (1 0 0)
-		Ref<Shape> box_shape2 = new BoxShape(Vec3::sReplicate(1.0f));
+		Ref<Shape> box_shape2 = new BoxShape(Vec3::sOne());
 		box_shape2->SetUserData(2);
 		shape->AddShape(Vec3(1.0f, 0.0f, 0.0f), Quat::sIdentity(), box_shape2);
 		CHECK(shape->GetCenterOfMass() == Vec3(-1.0f, 0.0f, 0.0f));
@@ -169,5 +170,40 @@ TEST_SUITE("MutableCompoundShapeTests")
 		shape->CollidePoint(Vec3(0.5f, 0.0f, 0.0f) - shape->GetCenterOfMass(), SubShapeIDCreator(), collector);
 		CHECK((collector.mHits.size() == 1 && shape->GetSubShapeUserData(collector.mHits[0].mSubShapeID2) == 2));
 		collector.Reset();
+	}
+
+	TEST_CASE("TestEmptyMutableCompoundShape")
+	{
+		// Create an empty compound shape
+		PhysicsTestContext c;
+		MutableCompoundShapeSettings settings;
+		Ref<MutableCompoundShape> shape = StaticCast<MutableCompoundShape>(settings.Create().Get());
+		BodyCreationSettings bcs(shape, RVec3::sZero(), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+		bcs.mLinearDamping = 0.0f;
+		bcs.mOverrideMassProperties = EOverrideMassProperties::MassAndInertiaProvided;
+		bcs.mMassPropertiesOverride.mMass = 1.0f;
+		bcs.mMassPropertiesOverride.mInertia = Mat44::sIdentity();
+		BodyID body_id = c.GetBodyInterface().CreateAndAddBody(bcs, EActivation::Activate);
+
+		// Simulate with empty shape
+		c.Simulate(1.0f);
+		RVec3 expected_pos = c.PredictPosition(RVec3::sZero(), Vec3::sZero(), c.GetSystem()->GetGravity(), 1.0f);
+		CHECK_APPROX_EQUAL(c.GetBodyInterface().GetPosition(body_id), expected_pos);
+
+		// Check that we can't hit the shape
+		Ref<Shape> box_shape = new BoxShape(Vec3::sReplicate(10000));
+		AllHitCollisionCollector<CollideShapeCollector> collector;
+		c.GetSystem()->GetNarrowPhaseQuery().CollideShape(box_shape, Vec3::sOne(), RMat44::sIdentity(), CollideShapeSettings(), RVec3::sZero(), collector);
+		CHECK(collector.mHits.empty());
+
+		// Add a box to the compound shape
+		Vec3 com = shape->GetCenterOfMass();
+		shape->AddShape(Vec3::sZero(), Quat::sIdentity(), new BoxShape(Vec3::sOne()));
+		c.GetBodyInterface().NotifyShapeChanged(body_id, com, false, EActivation::DontActivate);
+
+		// Check that we can now hit the shape
+		c.GetSystem()->GetNarrowPhaseQuery().CollideShape(box_shape, Vec3::sOne(), RMat44::sIdentity(), CollideShapeSettings(), RVec3::sZero(), collector);
+		CHECK(collector.mHits.size() == 1);
+		CHECK(collector.mHits[0].mBodyID2 == body_id);
 	}
 }

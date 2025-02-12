@@ -876,7 +876,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 					const ImporterString meshFname = computeMeshResourceFilename(*node.mesh);
 
-					ANKI_CHECK(m_sceneFile.writeText("comp:setMeshFromModelComponent()\n"));
+					ANKI_CHECK(m_sceneFile.writeText("comp:setCollisionShapeType(BodyComponentCollisionShapeType.kFromModelComponent)\n"));
 					ANKI_CHECK(m_sceneFile.writeText("comp:teleportTo(trf)\n"));
 				}
 			}

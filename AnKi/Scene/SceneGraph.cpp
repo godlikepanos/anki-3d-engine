@@ -5,7 +5,7 @@
 
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/RenderStateBucket.h>
-#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
@@ -38,8 +38,6 @@ namespace anki {
 
 static StatCounter g_sceneUpdateTimeStatVar(StatCategory::kTime, "All scene update",
 											StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
-static StatCounter g_scenePhysicsTimeStatVar(StatCategory::kTime, "Physics",
-											 StatFlag::kMilisecond | StatFlag::kShowAverage | StatFlag::kMainThreadUpdates);
 
 constexpr U32 kUpdateNodeBatchSize = 10;
 
@@ -207,12 +205,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	// Update
 	{
-		ANKI_TRACE_SCOPED_EVENT(ScenePhysics);
-		const Second physicsUpdate = HighRezTimer::getCurrentTime();
-
-		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
-
-		g_scenePhysicsTimeStatVar.set((HighRezTimer::getCurrentTime() - physicsUpdate) * 1000.0);
+		v2::PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
 	}
 
 	{

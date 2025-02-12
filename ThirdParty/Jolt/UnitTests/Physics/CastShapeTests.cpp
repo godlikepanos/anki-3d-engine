@@ -24,12 +24,12 @@ TEST_SUITE("CastShapeTests")
 	/// Helper function that tests a sphere against a triangle
 	static void sTestCastSphereVertexOrEdge(const Shape *inSphere, Vec3Arg inPosition, Vec3Arg inDirection, const Shape *inTriangle)
 	{
-		ShapeCast shape_cast(inSphere, Vec3::sReplicate(1.0f), Mat44::sTranslation(inPosition - inDirection), inDirection);
+		ShapeCast shape_cast(inSphere, Vec3::sOne(), Mat44::sTranslation(inPosition - inDirection), inDirection);
 		ShapeCastSettings cast_settings;
 		cast_settings.mBackFaceModeTriangles = EBackFaceMode::CollideWithBackFaces;
 		cast_settings.mBackFaceModeConvex = EBackFaceMode::CollideWithBackFaces;
 		AllHitCollisionCollector<CastShapeCollector> collector;
-		CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sReplicate(1.0f), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
+		CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sOne(), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
 		CHECK(collector.mHits.size() == 1);
 		const ShapeCastResult &result = collector.mHits.back();
 		CHECK_APPROX_EQUAL(result.mFraction, 1.0f - 0.2f / inDirection.Length(), 1.0e-4f);
@@ -47,13 +47,13 @@ TEST_SUITE("CastShapeTests")
 
 		{
 			// Hit front face
-			ShapeCast shape_cast(sphere, Vec3::sReplicate(1.0f), Mat44::sTranslation(Vec3(0, 0, 15)), Vec3(0, 0, -30));
+			ShapeCast shape_cast(sphere, Vec3::sOne(), Mat44::sTranslation(Vec3(0, 0, 15)), Vec3(0, 0, -30));
 			ShapeCastSettings cast_settings;
 			cast_settings.mBackFaceModeTriangles = EBackFaceMode::IgnoreBackFaces;
 			cast_settings.mBackFaceModeConvex = EBackFaceMode::IgnoreBackFaces;
 			cast_settings.mReturnDeepestPoint = false;
 			AllHitCollisionCollector<CastShapeCollector> collector;
-			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sReplicate(1.0f), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
+			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sOne(), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
 			CHECK(collector.mHits.size() == 1);
 			const ShapeCastResult &result = collector.mHits.back();
 			CHECK_APPROX_EQUAL(result.mFraction, (15.0f - 0.2f) / 30.0f, 1.0e-4f);
@@ -66,19 +66,19 @@ TEST_SUITE("CastShapeTests")
 
 		{
 			// Hit back face -> ignored
-			ShapeCast shape_cast(sphere, Vec3::sReplicate(1.0f), Mat44::sTranslation(Vec3(0, 0, -15)), Vec3(0, 0, 30));
+			ShapeCast shape_cast(sphere, Vec3::sOne(), Mat44::sTranslation(Vec3(0, 0, -15)), Vec3(0, 0, 30));
 			ShapeCastSettings cast_settings;
 			cast_settings.mBackFaceModeTriangles = EBackFaceMode::IgnoreBackFaces;
 			cast_settings.mBackFaceModeConvex = EBackFaceMode::IgnoreBackFaces;
 			cast_settings.mReturnDeepestPoint = false;
 			AllHitCollisionCollector<CastShapeCollector> collector;
-			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sReplicate(1.0f), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
+			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sOne(), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
 			CHECK(collector.mHits.empty());
 
 			// Hit back face -> collision
 			cast_settings.mBackFaceModeTriangles = EBackFaceMode::CollideWithBackFaces;
 			cast_settings.mBackFaceModeConvex = EBackFaceMode::CollideWithBackFaces;
-			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sReplicate(1.0f), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
+			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sOne(), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
 			CHECK(collector.mHits.size() == 1);
 			const ShapeCastResult &result = collector.mHits.back();
 			CHECK_APPROX_EQUAL(result.mFraction, (15.0f - 0.2f) / 30.0f, 1.0e-4f);
@@ -91,19 +91,19 @@ TEST_SUITE("CastShapeTests")
 
 		{
 			// Hit back face while starting in collision -> ignored
-			ShapeCast shape_cast(sphere, Vec3::sReplicate(1.0f), Mat44::sTranslation(Vec3(0, 0, -0.1f)), Vec3(0, 0, 15));
+			ShapeCast shape_cast(sphere, Vec3::sOne(), Mat44::sTranslation(Vec3(0, 0, -0.1f)), Vec3(0, 0, 15));
 			ShapeCastSettings cast_settings;
 			cast_settings.mBackFaceModeTriangles = EBackFaceMode::IgnoreBackFaces;
 			cast_settings.mBackFaceModeConvex = EBackFaceMode::IgnoreBackFaces;
 			cast_settings.mReturnDeepestPoint = true;
 			AllHitCollisionCollector<CastShapeCollector> collector;
-			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sReplicate(1.0f), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
+			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sOne(), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
 			CHECK(collector.mHits.empty());
 
 			// Hit back face while starting in collision -> collision
 			cast_settings.mBackFaceModeTriangles = EBackFaceMode::CollideWithBackFaces;
 			cast_settings.mBackFaceModeConvex = EBackFaceMode::CollideWithBackFaces;
-			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sReplicate(1.0f), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
+			CollisionDispatch::sCastShapeVsShapeLocalSpace(shape_cast, cast_settings, inTriangle, Vec3::sOne(), ShapeFilter(), Mat44::sIdentity(), SubShapeIDCreator(), SubShapeIDCreator(), collector);
 			CHECK(collector.mHits.size() == 1);
 			const ShapeCastResult &result = collector.mHits.back();
 			CHECK_APPROX_EQUAL(result.mFraction, 0.0f);
@@ -143,7 +143,7 @@ TEST_SUITE("CastShapeTests")
 
 		// Create box to collide against (shape 2)
 		// The box is scaled up by a factor 10 in the X axis and then rotated so that the X axis is up
-		BoxShapeSettings box(Vec3::sReplicate(1.0f));
+		BoxShapeSettings box(Vec3::sOne());
 		box.SetEmbedded();
 		ScaledShapeSettings scaled_box(&box, Vec3(10, 1, 1));
 		scaled_box.SetEmbedded();
@@ -158,7 +158,7 @@ TEST_SUITE("CastShapeTests")
 		{
 			// Create shape cast
 			Ref<Shape> normal_sphere = new SphereShape(1.0f);
-			RShapeCast shape_cast { normal_sphere, Vec3::sReplicate(1.0f), RMat44::sTranslation(RVec3(0, 11, 0)), Vec3(0, 1, 0) };
+			RShapeCast shape_cast { normal_sphere, Vec3::sOne(), RMat44::sTranslation(RVec3(0, 11, 0)), Vec3(0, 1, 0) };
 
 			// Shape is intersecting at the start
 			AllHitCollisionCollector<CastShapeCollector> collector;
@@ -219,7 +219,7 @@ TEST_SUITE("CastShapeTests")
 		{
 			// Create shape cast in X from -5 to 5
 			RefConst<Shape> sphere = new SphereShape(1.0f);
-			RShapeCast shape_cast { sphere, Vec3::sReplicate(1.0f), RMat44::sTranslation(RVec3(-5, 0, 0)), Vec3(10, 0, 0) };
+			RShapeCast shape_cast { sphere, Vec3::sOne(), RMat44::sTranslation(RVec3(-5, 0, 0)), Vec3(10, 0, 0) };
 
 			// We should hit the first body
 			ClosestHitCollisionCollector<CastShapeCollector> collector;
@@ -237,7 +237,7 @@ TEST_SUITE("CastShapeTests")
 		{
 			// Create shape cast in X from 5 to -5
 			RefConst<Shape> sphere = new SphereShape(1.0f);
-			RShapeCast shape_cast { sphere, Vec3::sReplicate(1.0f), RMat44::sTranslation(RVec3(5, 0, 0)), Vec3(-10, 0, 0) };
+			RShapeCast shape_cast { sphere, Vec3::sOne(), RMat44::sTranslation(RVec3(5, 0, 0)), Vec3(-10, 0, 0) };
 
 			// We should hit the last body
 			ClosestHitCollisionCollector<CastShapeCollector> collector;
@@ -255,7 +255,7 @@ TEST_SUITE("CastShapeTests")
 		{
 			// Create shape cast in X from 1.05 to 11, this should intersect with all bodies and have deepest penetration in bodies[5]
 			RefConst<Shape> sphere = new SphereShape(1.0f);
-			RShapeCast shape_cast { sphere, Vec3::sReplicate(1.0f), RMat44::sTranslation(RVec3(1.05_r, 0, 0)), Vec3(10, 0, 0) };
+			RShapeCast shape_cast { sphere, Vec3::sOne(), RMat44::sTranslation(RVec3(1.05_r, 0, 0)), Vec3(10, 0, 0) };
 
 			// We should hit bodies[5]
 			AllHitCollisionCollector<CastShapeCollector> collector;
@@ -315,7 +315,7 @@ TEST_SUITE("CastShapeTests")
 		// Cast the shape starting inside the mesh with a long distance so that internally in the mesh shape the RayAABox4 test will return a low negative fraction.
 		// This used to be confused with the penetration depth and would cause an early out and return the wrong result.
 		const float capsule_offset = 0.1f;
-		RShapeCast shape_cast(cast_shape, Vec3::sReplicate(1.0f), RMat44::sTranslation(RVec3(0, capsule_half_height + capsule_offset, 0)), Vec3(0, -100, 0));
+		RShapeCast shape_cast(cast_shape, Vec3::sOne(), RMat44::sTranslation(RVec3(0, capsule_half_height + capsule_offset, 0)), Vec3(0, -100, 0));
 
 		// Cast first using the closest hit collector
 		ClosestHitCollisionCollector<CastShapeCollector> collector;
@@ -353,10 +353,108 @@ TEST_SUITE("CastShapeTests")
 		AllHitCollisionCollector<CastShapeCollector> collector;
 		SphereShape sphere(0.2f);
 		sphere.SetEmbedded();
-		ShapeCast cast(&sphere, Vec3::sReplicate(1.0f), Mat44::sTranslation(Vec3(14.8314590f, 8.19055080f, -4.30825043f)), Vec3(-0.0988006592f, 5.96046448e-08f, 0.000732421875f));
+		ShapeCast cast(&sphere, Vec3::sOne(), Mat44::sTranslation(Vec3(14.8314590f, 8.19055080f, -4.30825043f)), Vec3(-0.0988006592f, 5.96046448e-08f, 0.000732421875f));
 		ShapeCastSettings settings;
-		CastSphereVsTriangles caster(cast, settings, Vec3::sReplicate(1.0f), Mat44::sIdentity(), { }, collector);
+		CastSphereVsTriangles caster(cast, settings, Vec3::sOne(), Mat44::sIdentity(), { }, collector);
 		caster.Cast(Vec3(14.5536213f, 10.5973721f, -0.00600051880f), Vec3(14.5536213f, 10.5969315f, -3.18638134f), Vec3(14.5536213f, 10.5969315f, -5.18637228f), 0b111, SubShapeID());
 		CHECK(!collector.HadHit());
+	}
+
+	// Test ClosestHitPerBodyCollisionCollector
+	TEST_CASE("TestClosestHitPerBodyCollisionCollector")
+	{
+		PhysicsTestContext c;
+
+		// Create a 1 by 1 by 1 box consisting of 10 slabs
+		StaticCompoundShapeSettings compound_settings;
+		compound_settings.SetEmbedded();
+		for (int i = 0; i < 10; ++i)
+			compound_settings.AddShape(Vec3(0.1f * i - 0.45f, 0, 0), Quat::sIdentity(), new BoxShape(Vec3(0.05f, 0.5f, 0.5f)));
+
+		// Create 2 instances
+		Body &body1 = c.CreateBody(&compound_settings, RVec3::sZero(), Quat::sIdentity(), EMotionType::Static, EMotionQuality::Discrete, Layers::NON_MOVING, EActivation::DontActivate);
+		Body &body2 = c.CreateBody(&compound_settings, RVec3(1.0_r, 0, 0), Quat::sIdentity(), EMotionType::Static, EMotionQuality::Discrete, Layers::NON_MOVING, EActivation::DontActivate);
+
+		ShapeCastSettings cast_settings;
+
+		SphereShape sphere(0.1f);
+		sphere.SetEmbedded();
+
+		// Override ClosestHitPerBodyCollisionCollector so that we can count the number of calls to AddHit
+		class MyClosestHitPerBodyCollisionCollector : public ClosestHitPerBodyCollisionCollector<CastShapeCollector>
+		{
+		public:
+			virtual void		AddHit(const ResultType &inResult) override
+			{
+				ClosestHitPerBodyCollisionCollector<CastShapeCollector>::AddHit(inResult);
+
+				++mNumCalls;
+			}
+
+			int					mNumCalls = 0;
+		};
+
+		{
+			RShapeCast shape_cast(&sphere, Vec3::sOne(), RMat44::sTranslation(RVec3(-1, 0, 0)), Vec3(3, 0, 0));
+
+			// Check that the all hit collector finds 20 hits (2 x 10 slabs)
+			AllHitCollisionCollector<CastShapeCollector> all_collector;
+			c.GetSystem()->GetNarrowPhaseQuery().CastShape(shape_cast, cast_settings, RVec3::sZero(), all_collector);
+			all_collector.Sort();
+			CHECK(all_collector.mHits.size() == 20);
+			for (int i = 0; i < 10; ++i)
+			{
+				CHECK(all_collector.mHits[i].mBodyID2 == body1.GetID());
+				CHECK_APPROX_EQUAL(all_collector.mHits[i].mContactPointOn1, Vec3(-0.5f + 0.1f * i, 0, 0));
+			}
+			for (int i = 0; i < 10; ++i)
+			{
+				CHECK(all_collector.mHits[10 + i].mBodyID2 == body2.GetID());
+				CHECK_APPROX_EQUAL(all_collector.mHits[10 + i].mContactPointOn1, Vec3(0.5f + 0.1f * i, 0, 0));
+			}
+
+			// Check that the closest hit per body collector only finds 2
+			MyClosestHitPerBodyCollisionCollector closest_collector;
+			c.GetSystem()->GetNarrowPhaseQuery().CastShape(shape_cast, cast_settings, RVec3::sZero(), closest_collector);
+			CHECK(closest_collector.mNumCalls == 2); // Spatial ordering by the broad phase and compound shape and the early out value should have resulted in only 2 calls to AddHit
+			closest_collector.Sort();
+			CHECK(closest_collector.mHits.size() == 2);
+			CHECK(closest_collector.mHits[0].mBodyID2 == body1.GetID());
+			CHECK_APPROX_EQUAL(closest_collector.mHits[0].mContactPointOn1, Vec3(-0.5f, 0, 0));
+			CHECK(closest_collector.mHits[1].mBodyID2 == body2.GetID());
+			CHECK_APPROX_EQUAL(closest_collector.mHits[1].mContactPointOn1, Vec3(0.5f, 0, 0));
+		}
+
+		{
+			// Cast in reverse direction
+			RShapeCast shape_cast(&sphere, Vec3::sOne(), RMat44::sTranslation(RVec3(2, 0, 0)), Vec3(-3, 0, 0));
+
+			// Check that the all hit collector finds 20 hits (2 x 10 slabs)
+			AllHitCollisionCollector<CastShapeCollector> all_collector;
+			c.GetSystem()->GetNarrowPhaseQuery().CastShape(shape_cast, cast_settings, RVec3::sZero(), all_collector);
+			all_collector.Sort();
+			CHECK(all_collector.mHits.size() == 20);
+			for (int i = 0; i < 10; ++i)
+			{
+				CHECK(all_collector.mHits[i].mBodyID2 == body2.GetID());
+				CHECK_APPROX_EQUAL(all_collector.mHits[i].mContactPointOn1, Vec3(1.5f - 0.1f * i, 0, 0));
+			}
+			for (int i = 0; i < 10; ++i)
+			{
+				CHECK(all_collector.mHits[10 + i].mBodyID2 == body1.GetID());
+				CHECK_APPROX_EQUAL(all_collector.mHits[10 + i].mContactPointOn1, Vec3(0.5f - 0.1f * i, 0, 0));
+			}
+
+			// Check that the closest hit per body collector only finds 2
+			MyClosestHitPerBodyCollisionCollector closest_collector;
+			c.GetSystem()->GetNarrowPhaseQuery().CastShape(shape_cast, cast_settings, RVec3::sZero(), closest_collector);
+			CHECK(closest_collector.mNumCalls == 2); // Spatial ordering by the broad phase and compound shape and the early out value should have resulted in only 2 calls to AddHit
+			closest_collector.Sort();
+			CHECK(closest_collector.mHits.size() == 2);
+			CHECK(closest_collector.mHits[0].mBodyID2 == body2.GetID());
+			CHECK_APPROX_EQUAL(closest_collector.mHits[0].mContactPointOn1, Vec3(1.5f, 0, 0));
+			CHECK(closest_collector.mHits[1].mBodyID2 == body1.GetID());
+			CHECK_APPROX_EQUAL(closest_collector.mHits[1].mContactPointOn1, Vec3(0.5f, 0, 0));
+		}
 	}
 }

@@ -90,10 +90,10 @@ inline void commonInit(Bool validation = true)
 {
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);
-	g_windowWidthCVar.set(kWidth);
-	g_windowHeightCVar.set(kHeight);
-	g_vsyncCVar.set(false);
-	g_debugMarkersCVar.set(true);
+	g_windowWidthCVar = kWidth;
+	g_windowHeightCVar = kHeight;
+	g_vsyncCVar = false;
+	g_debugMarkersCVar = true;
 	if(validation)
 	{
 		[[maybe_unused]] Error err = CVarSet::getSingleton().setMultiple(Array<const Char*, 4>{"Validation", "1", "DebugMarkers", "1"});

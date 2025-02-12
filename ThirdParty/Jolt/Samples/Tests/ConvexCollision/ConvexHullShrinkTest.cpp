@@ -10,6 +10,7 @@
 #include <Jolt/Geometry/ConvexSupport.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Renderer/DebugRendererImp.h>
+#include <Utils/AssetStream.h>
 
 JPH_SUPPRESS_WARNINGS_STD_BEGIN
 #include <fstream>
@@ -91,29 +92,27 @@ void ConvexHullShrinkTest::Initialize()
 
 	// Open the external file with hulls
 	// A stream containing predefined convex hulls
-	ifstream points_stream("Assets/convex_hulls.bin", std::ios::binary);
-	if (points_stream.is_open())
+	AssetStream points_asset_stream("convex_hulls.bin", std::ios::in | std::ios::binary);
+	std::istream &points_stream = points_asset_stream.Get();
+	for (;;)
 	{
-		for (;;)
-		{
-			// Read the length of the next point cloud
-			uint32 len = 0;
-			points_stream.read((char *)&len, sizeof(len));
-			if (points_stream.eof())
-				break;
+		// Read the length of the next point cloud
+		uint32 len = 0;
+		points_stream.read((char *)&len, sizeof(len));
+		if (points_stream.eof())
+			break;
 
-			// Read the points
-			if (len > 0)
+		// Read the points
+		if (len > 0)
+		{
+			Points p;
+			for (uint32 i = 0; i < len; ++i)
 			{
-				Points p;
-				for (uint32 i = 0; i < len; ++i)
-				{
-					Float3 v;
-					points_stream.read((char *)&v, sizeof(v));
-					p.push_back(Vec3(v));
-				}
-				mPoints.push_back(std::move(p));
+				Float3 v;
+				points_stream.read((char *)&v, sizeof(v));
+				p.push_back(Vec3(v));
 			}
+			mPoints.push_back(std::move(p));
 		}
 	}
 }
@@ -140,8 +139,8 @@ void ConvexHullShrinkTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 	{
 		// Get the support function of the shape excluding convex radius and add the convex radius
 		ConvexShape::SupportBuffer buffer;
-		const ConvexShape::Support *support = shape->GetSupportFunction(ConvexShape::ESupportMode::ExcludeConvexRadius, buffer, Vec3::sReplicate(1.0f));
-		AddConvexRadius<ConvexShape::Support> add_cvx(*support, convex_radius);
+		const ConvexShape::Support *support = shape->GetSupportFunction(ConvexShape::ESupportMode::ExcludeConvexRadius, buffer, Vec3::sOne());
+		AddConvexRadius add_cvx(*support, convex_radius);
 
 		// Calculate the error w.r.t. the original hull
 		float max_error = -FLT_MAX;
@@ -170,8 +169,8 @@ void ConvexHullShrinkTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 
 #ifdef JPH_DEBUG_RENDERER
 	// Draw the hulls
-	shape->Draw(DebugRenderer::sInstance, RMat44::sIdentity(), Vec3::sReplicate(1.0f), Color::sRed, false, false);
-	shape->DrawGetSupportFunction(DebugRenderer::sInstance, RMat44::sIdentity(), Vec3::sReplicate(1.0f), Color::sLightGrey, false);
-	shape->DrawShrunkShape(DebugRenderer::sInstance, RMat44::sIdentity(), Vec3::sReplicate(1.0f));
+	shape->Draw(DebugRenderer::sInstance, RMat44::sIdentity(), Vec3::sOne(), Color::sRed, false, false);
+	shape->DrawGetSupportFunction(DebugRenderer::sInstance, RMat44::sIdentity(), Vec3::sOne(), Color::sLightGrey, false);
+	shape->DrawShrunkShape(DebugRenderer::sInstance, RMat44::sIdentity(), Vec3::sOne());
 #endif // JPH_DEBUG_RENDERER
 }

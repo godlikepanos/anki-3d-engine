@@ -57,6 +57,15 @@ void QuadTree::Node::GetChildBounds(int inChildIndex, AABox &outBounds) const
 
 void QuadTree::Node::SetChildBounds(int inChildIndex, const AABox &inBounds)
 {
+	// Bounding boxes provided to the quad tree should never be larger than cLargeFloat because this may trigger overflow exceptions
+	// e.g. when squaring the value while testing sphere overlaps
+	JPH_ASSERT(inBounds.mMin.GetX() >= -cLargeFloat && inBounds.mMin.GetX() <= cLargeFloat
+			   && inBounds.mMin.GetY() >= -cLargeFloat && inBounds.mMin.GetY() <= cLargeFloat
+			   && inBounds.mMin.GetZ() >= -cLargeFloat && inBounds.mMin.GetZ() <= cLargeFloat
+			   && inBounds.mMax.GetX() >= -cLargeFloat && inBounds.mMax.GetX() <= cLargeFloat
+			   && inBounds.mMax.GetY() >= -cLargeFloat && inBounds.mMax.GetY() <= cLargeFloat
+			   && inBounds.mMax.GetZ() >= -cLargeFloat && inBounds.mMax.GetZ() <= cLargeFloat);
+
 	// Set max first (this keeps the bounding box invalid for reading threads)
 	mBoundsMaxZ[inChildIndex] = inBounds.mMax.GetZ();
 	mBoundsMaxY[inChildIndex] = inBounds.mMax.GetY();
@@ -1534,7 +1543,7 @@ void QuadTree::ValidateTree(const BodyVector &inBodies, const TrackingVector &in
 					node.GetChildBounds(i, body_bounds);
 					const Body *body = inBodies[child_node_id.GetBodyID().GetIndex()];
 					AABox cached_body_bounds = body->GetWorldSpaceBounds();
-					AABox real_body_bounds = body->GetShape()->GetWorldSpaceBounds(body->GetCenterOfMassTransform(), Vec3::sReplicate(1.0f));
+					AABox real_body_bounds = body->GetShape()->GetWorldSpaceBounds(body->GetCenterOfMassTransform(), Vec3::sOne());
 					JPH_ASSERT(cached_body_bounds == real_body_bounds); // Check that cached body bounds are up to date
 					JPH_ASSERT(body_bounds.Contains(real_body_bounds));
 				}

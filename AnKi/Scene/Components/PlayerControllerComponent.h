@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics/PhysicsPlayerController.h>
+#include <AnKi/Physics2/PhysicsPlayerController.h>
 
 namespace anki {
 
@@ -21,9 +21,9 @@ class PlayerControllerComponent : public SceneComponent
 public:
 	PlayerControllerComponent(SceneNode* node);
 
-	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
+	void setVelocity(F32 forwardSpeed, F32 jumpSpeed, Vec3 forwardDir, Bool crouch)
 	{
-		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
+		m_player->updateState(forwardSpeed, forwardDir, jumpSpeed, crouch);
 	}
 
 	void moveToPosition(const Vec3& pos)
@@ -31,16 +31,16 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	PhysicsPlayerController& getPhysicsPlayerController()
+	v2::PhysicsPlayerController& getPhysicsPlayerController()
 	{
 		return *m_player;
 	}
 
 private:
-	PhysicsPlayerControllerPtr m_player;
-	Vec3 m_worldPos = Vec3(0.0f);
+	v2::PhysicsPlayerControllerPtr m_player;
+	U32 m_positionVersion = kMaxU32;
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override;
+	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

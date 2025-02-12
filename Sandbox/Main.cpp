@@ -50,8 +50,8 @@ Error MyApp::init(int argc, char* argv[])
 	if(getenv("PROFILE"))
 	{
 		m_profile = true;
-		g_targetFpsCVar.set(240);
-		g_tracingEnabledCVar.set(true);
+		g_targetFpsCVar = 240;
+		g_tracingEnabledCVar = true;
 	}
 
 	// Load scene
@@ -120,17 +120,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgCVar.set(false);
+			g_dbgSceneCVar = false;
 		}
 		else if(mode == 1)
 		{
-			g_dbgCVar.set(true);
+			g_dbgSceneCVar = true;
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			g_dbgCVar.set(true);
+			g_dbgSceneCVar = true;
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -154,7 +154,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1)
 	{
-		g_tracingEnabledCVar.set(!g_tracingEnabledCVar);
+		g_tracingEnabledCVar = !g_tracingEnabledCVar;
 	}
 
 #if !PLAYER
@@ -183,17 +183,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			mode = (mode + 1) % 3;
 			if(mode == 0)
 			{
-				g_dbgCVar.set(false);
+				g_dbgSceneCVar = false;
 			}
 			else if(mode == 1)
 			{
-				g_dbgCVar.set(true);
+				g_dbgSceneCVar = true;
 				renderer.getDbg().setDepthTestEnabled(true);
 				renderer.getDbg().setDitheredDepthTestEnabled(false);
 			}
 			else
 			{
-				g_dbgCVar.set(true);
+				g_dbgSceneCVar = true;
 				renderer.getDbg().setDepthTestEnabled(false);
 				renderer.getDbg().setDitheredDepthTestEnabled(true);
 			}
@@ -338,7 +338,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		g_shadowMappingPcssCVar.set(!g_shadowMappingPcssCVar);
+		g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)
@@ -394,7 +394,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar.set(!g_vrsCVar);
+		g_vrsCVar = !g_vrsCVar;
 	}
 
 	if(in.getEvent(InputEvent::kWindowClosed))

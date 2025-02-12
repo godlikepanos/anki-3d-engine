@@ -73,6 +73,11 @@ public:
 		Base::addChild(obj);
 	}
 
+	void setParent(SceneNode* obj)
+	{
+		Base::setParent(obj);
+	}
+
 	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
@@ -105,7 +110,7 @@ public:
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func) const
 	{
-		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
+		if(hasComponent<TComponent>())
 		{
 			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
@@ -121,7 +126,7 @@ public:
 	template<typename TComponent, typename TFunct>
 	void iterateComponentsOfType(TFunct func)
 	{
-		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
+		if(hasComponent<TComponent>())
 		{
 			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
@@ -137,7 +142,7 @@ public:
 	template<typename TComponent>
 	const TComponent* tryGetFirstComponentOfType() const
 	{
-		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
+		if(hasComponent<TComponent>())
 		{
 			for(U32 i = 0; i < m_components.getSize(); ++i)
 			{
@@ -179,7 +184,7 @@ public:
 	template<typename TComponent>
 	const TComponent* tryGetNthComponentOfType(U32 nth) const
 	{
-		if(!!(m_componentTypeMask & (1 << SceneComponentTypeMask(TComponent::kClassType))))
+		if(hasComponent<TComponent>())
 		{
 			I32 inth = I32(nth);
 			for(U32 i = 0; i < m_components.getSize(); ++i)
@@ -380,6 +385,12 @@ public:
 	/// Create and append a component to the components container. The SceneNode has the ownership.
 	template<typename TComponent>
 	TComponent* newComponent();
+
+	template<typename TComponent>
+	Bool hasComponent() const
+	{
+		return !!((1u << SceneComponentTypeMask(TComponent::kClassType)) & m_componentTypeMask);
+	}
 
 private:
 	SceneString m_name; ///< A unique name.

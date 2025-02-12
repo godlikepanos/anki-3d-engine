@@ -191,9 +191,9 @@ private:
 	EProbeMode				mProbeMode = EProbeMode::Pick;								// Mouse probe mode. Determines what happens under the crosshair.
 	EProbeShape				mProbeShape = EProbeShape::Sphere;							// Shape to use for the mouse probe.
 	bool					mScaleShape = false;										// If the shape is scaled or not. When true mShapeScale is taken into account.
-	Vec3					mShapeScale = Vec3::sReplicate(1.0f);						// Scale in local space for the probe shape.
+	Vec3					mShapeScale = Vec3::sOne();									// Scale in local space for the probe shape.
 	EBackFaceMode			mBackFaceModeTriangles = EBackFaceMode::CollideWithBackFaces; // How to handle back facing triangles when doing a collision probe check.
-	EBackFaceMode			mBackFaceModeConvex = EBackFaceMode::CollideWithBackFaces; // How to handle back facing convex shapes when doing a collision probe check.
+	EBackFaceMode			mBackFaceModeConvex = EBackFaceMode::CollideWithBackFaces;	// How to handle back facing convex shapes when doing a collision probe check.
 	EActiveEdgeMode			mActiveEdgeMode = EActiveEdgeMode::CollideOnlyWithActive;	// How to handle active edges when doing a collision probe check.
 	ECollectFacesMode		mCollectFacesMode = ECollectFacesMode::NoFaces;				// If we should collect colliding faces
 	float					mMaxSeparationDistance = 0.0f;								// Max separation distance for collide shape test
@@ -202,6 +202,7 @@ private:
 	bool					mUseShrunkenShapeAndConvexRadius = false;					// Shrink then expand the shape by the convex radius
 	bool					mDrawSupportingFace = false;								// Draw the result of GetSupportingFace
 	int						mMaxHits = 10;												// The maximum number of hits to request for a collision probe.
+	bool					mClosestHitPerBody = false;									// If we are only interested in the closest hit for every body
 
 	// Which object to shoot
 	enum class EShootObjectShape
@@ -219,7 +220,7 @@ private:
 	float					mShootObjectFriction = 0.2f;								// Friction for the object that is shot
 	float					mShootObjectRestitution = 0.0f;								// Restitution for the object that is shot
 	bool					mShootObjectScaleShape = false;								// If the shape should be scaled
-	Vec3					mShootObjectShapeScale = Vec3::sReplicate(1.0f);			// Scale of the object to shoot
+	Vec3					mShootObjectShapeScale = Vec3::sOne();						// Scale of the object to shoot
 	bool					mWasShootKeyPressed = false;								// Remembers if the shoot key was pressed last frame
 
 	// Mouse dragging

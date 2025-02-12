@@ -148,7 +148,10 @@ Bool SceneNode::updateTransform()
 
 		// Make children dirty as well. Don't walk the whole tree because you will re-walk it later
 		[[maybe_unused]] const Error err = visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
-			childNode.m_localTransformDirty = true;
+			if(!childNode.m_ignoreParentNodeTransform)
+			{
+				childNode.m_localTransformDirty = true;
+			}
 			return Error::kNone;
 		});
 	}

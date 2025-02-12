@@ -69,26 +69,27 @@ public:
 };
 
 /// Scene node component.
-/// @note Doesn't have C++ virtuals to keep it compact.
 class SceneComponent
 {
 public:
 	/// Construct the scene component.
-	SceneComponent([[maybe_unused]] SceneNode* node, SceneComponentType type)
-		: m_type(type)
-	{
-	}
+	SceneComponent(SceneNode* node, SceneComponentType type);
 
 	virtual ~SceneComponent() = default;
 
 	SceneComponentType getType() const
 	{
-		return m_type;
+		return SceneComponentType(m_type);
 	}
 
 	Timestamp getTimestamp() const
 	{
 		return m_timestamp;
+	}
+
+	U32 getUuid() const
+	{
+		return m_uuid;
 	}
 
 	ANKI_INTERNAL U32 getArrayIndex() const
@@ -127,8 +128,10 @@ public:
 
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
-	U32 m_arrayIdx = kMaxU32;
-	SceneComponentType m_type; ///< Cache the type ID.
+	U32 m_uuid = 0;
+
+	U32 m_arrayIdx : 24 = kMaxU32 >> 24u;
+	U32 m_type : 8 = 0; ///< Cache the type ID.
 
 	static constexpr Array<F32, U32(SceneComponentType::kCount)> m_updateOrderWeights = {
 #define ANKI_DEFINE_SCENE_COMPONENT(name, weight) weight

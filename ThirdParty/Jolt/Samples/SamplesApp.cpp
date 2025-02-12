@@ -105,6 +105,7 @@ JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, ContactListenerTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, ModifyMassTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, ActivateDuringUpdateTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SensorTest)
+JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, SimCollideBodyVsBodyTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, DynamicMeshTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, TwoDFunnelTest)
 JPH_DECLARE_RTTI_FOR_FACTORY(JPH_NO_EXPORT, AllowedDOFsTest)
@@ -152,6 +153,7 @@ static TestNameAndRTTI sGeneralTests[] =
 	{ "Modify Mass",						JPH_RTTI(ModifyMassTest) },
 	{ "Activate During Update",				JPH_RTTI(ActivateDuringUpdateTest) },
 	{ "Sensor",								JPH_RTTI(SensorTest) },
+	{ "Override Body Vs Body Collision",	JPH_RTTI(SimCollideBodyVsBodyTest) },
 	{ "Dynamic Mesh",						JPH_RTTI(DynamicMeshTest) },
 	{ "Allowed Degrees of Freedom",			JPH_RTTI(AllowedDOFsTest) },
 	{ "Shape Filter (Collision Detection)",	JPH_RTTI(ShapeFilterTest) },
@@ -443,7 +445,7 @@ static constexpr uint cMaxBodyPairs = 65536;
 static constexpr uint cMaxContactConstraints = 20480;
 
 SamplesApp::SamplesApp(const String &inCommandLine) :
-	Application(inCommandLine)
+	Application("Jolt Physics Samples", inCommandLine)
 {
 	// Limit the render frequency to our simulation frequency so we don't play back the simulation too fast
 	// Note that if the simulation frequency > vsync frequency the simulation will slow down as we want
@@ -590,6 +592,7 @@ SamplesApp::SamplesApp(const String &inCommandLine) :
 			mDebugUI->CreateCheckBox(probe_options, "Shrunken Shape + Convex Radius", mUseShrunkenShapeAndConvexRadius, [this](UICheckBox::EState inState) { mUseShrunkenShapeAndConvexRadius = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateCheckBox(probe_options, "Draw Supporting Face", mDrawSupportingFace, [this](UICheckBox::EState inState) { mDrawSupportingFace = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->CreateSlider(probe_options, "Max Hits", float(mMaxHits), 0, 10, 1, [this](float inValue) { mMaxHits = (int)inValue; });
+			mDebugUI->CreateCheckBox(probe_options, "Closest Hit Per Body", mClosestHitPerBody, [this](UICheckBox::EState inState) { mClosestHitPerBody = inState == UICheckBox::STATE_CHECKED; });
 			mDebugUI->ShowMenu(probe_options);
 		});
 		mDebugUI->CreateTextButton(main_menu, "Shoot Object", [this]() {
@@ -928,7 +931,7 @@ RefConst<Shape> SamplesApp::CreateProbeShape()
 	JPH_ASSERT(shape != nullptr);
 
 	// Scale the shape
-	Vec3 scale = mScaleShape? shape->MakeScaleValid(mShapeScale) : Vec3::sReplicate(1.0f);
+	Vec3 scale = mScaleShape? shape->MakeScaleValid(mShapeScale) : Vec3::sOne();
 	JPH_ASSERT(shape->IsValidScale(scale)); // Double check the MakeScaleValid function
 	if (!ScaleHelpers::IsNotScaled(scale))
 		shape = new ScaledShape(shape, scale);
@@ -939,7 +942,7 @@ RefConst<Shape> SamplesApp::CreateProbeShape()
 RefConst<Shape> SamplesApp::CreateShootObjectShape()
 {
 	// Get the scale
-	Vec3 scale = mShootObjectScaleShape? mShootObjectShapeScale : Vec3::sReplicate(1.0f);
+	Vec3 scale = mShootObjectScaleShape? mShootObjectShapeScale : Vec3::sOne();
 
 	// Make it minimally -0.1 or 0.1 depending on the sign
 	Vec3 clamped_value = Vec3::sSelect(Vec3::sReplicate(-0.1f), Vec3::sReplicate(0.1f), Vec3::sGreaterOrEqual(scale, Vec3::sZero()));
@@ -1001,7 +1004,7 @@ RefConst<Shape> SamplesApp::CreateShootObjectShape()
 	}
 
 	// Scale shape if needed
-	if (scale != Vec3::sReplicate(1.0f))
+	if (scale != Vec3::sOne())
 		shape = new ScaledShape(shape, scale);
 
 	return shape;
@@ -1166,6 +1169,15 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 				if (collector.HadHit())
 					hits.push_back(collector.mHit);
 			}
+			else if (mClosestHitPerBody)
+			{
+				ClosestHitPerBodyCollisionCollector<CastRayCollector> collector;
+				mPhysicsSystem->GetNarrowPhaseQuery().CastRay(ray, settings, collector);
+				collector.Sort();
+				hits.insert(hits.end(), collector.mHits.begin(), collector.mHits.end());
+				if ((int)hits.size() > mMaxHits)
+					hits.resize(mMaxHits);
+			}
 			else
 			{
 				AllHitCollisionCollector<CastRayCollector> collector;
@@ -1294,21 +1306,30 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 			if (mMaxHits == 0)
 			{
 				AnyHitCollisionCollector<CollideShapeCollector> collector;
-				(mPhysicsSystem->GetNarrowPhaseQuery().*collide_shape_function)(shape, Vec3::sReplicate(1.0f), shape_transform, settings, base_offset, collector, { }, { }, { }, { });
+				(mPhysicsSystem->GetNarrowPhaseQuery().*collide_shape_function)(shape, Vec3::sOne(), shape_transform, settings, base_offset, collector, { }, { }, { }, { });
 				if (collector.HadHit())
 					hits.push_back(collector.mHit);
 			}
 			else if (mMaxHits == 1)
 			{
 				ClosestHitCollisionCollector<CollideShapeCollector> collector;
-				(mPhysicsSystem->GetNarrowPhaseQuery().*collide_shape_function)(shape, Vec3::sReplicate(1.0f), shape_transform, settings, base_offset, collector, { }, { }, { }, { });
+				(mPhysicsSystem->GetNarrowPhaseQuery().*collide_shape_function)(shape, Vec3::sOne(), shape_transform, settings, base_offset, collector, { }, { }, { }, { });
 				if (collector.HadHit())
 					hits.push_back(collector.mHit);
+			}
+			else if (mClosestHitPerBody)
+			{
+				ClosestHitPerBodyCollisionCollector<CollideShapeCollector> collector;
+				(mPhysicsSystem->GetNarrowPhaseQuery().*collide_shape_function)(shape, Vec3::sOne(), shape_transform, settings, base_offset, collector, { }, { }, { }, { });
+				collector.Sort();
+				hits.insert(hits.end(), collector.mHits.begin(), collector.mHits.end());
+				if ((int)hits.size() > mMaxHits)
+					hits.resize(mMaxHits);
 			}
 			else
 			{
 				AllHitCollisionCollector<CollideShapeCollector> collector;
-				(mPhysicsSystem->GetNarrowPhaseQuery().*collide_shape_function)(shape, Vec3::sReplicate(1.0f), shape_transform, settings, base_offset, collector, { }, { }, { }, { });
+				(mPhysicsSystem->GetNarrowPhaseQuery().*collide_shape_function)(shape, Vec3::sOne(), shape_transform, settings, base_offset, collector, { }, { }, { }, { });
 				collector.Sort();
 				hits.insert(hits.end(), collector.mHits.begin(), collector.mHits.end());
 				if ((int)hits.size() > mMaxHits)
@@ -1359,7 +1380,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 
 		#ifdef JPH_DEBUG_RENDERER
 			// Draw shape
-			shape->Draw(mDebugRenderer, shape_transform, Vec3::sReplicate(1.0f), had_hit? Color::sGreen : Color::sGrey, false, false);
+			shape->Draw(mDebugRenderer, shape_transform, Vec3::sOne(), had_hit? Color::sGreen : Color::sGrey, false, false);
 		#endif // JPH_DEBUG_RENDERER
 		}
 		break;
@@ -1369,7 +1390,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 			// Create shape cast
 			RefConst<Shape> shape = CreateProbeShape();
 			Mat44 rotation = Mat44::sRotation(Vec3::sAxisX(), 0.1f * JPH_PI) * Mat44::sRotation(Vec3::sAxisY(), 0.2f * JPH_PI);
-			RShapeCast shape_cast = RShapeCast::sFromWorldTransform(shape, Vec3::sReplicate(1.0f), RMat44::sTranslation(start) * rotation, direction);
+			RShapeCast shape_cast = RShapeCast::sFromWorldTransform(shape, Vec3::sOne(), RMat44::sTranslation(start) * rotation, direction);
 
 			// Settings
 			ShapeCastSettings settings;
@@ -1395,6 +1416,15 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 				mPhysicsSystem->GetNarrowPhaseQuery().CastShape(shape_cast, settings, base_offset, collector);
 				if (collector.HadHit())
 					hits.push_back(collector.mHit);
+			}
+			else if (mClosestHitPerBody)
+			{
+				ClosestHitPerBodyCollisionCollector<CastShapeCollector> collector;
+				mPhysicsSystem->GetNarrowPhaseQuery().CastShape(shape_cast, settings, base_offset, collector);
+				collector.Sort();
+				hits.insert(hits.end(), collector.mHits.begin(), collector.mHits.end());
+				if ((int)hits.size() > mMaxHits)
+					hits.resize(mMaxHits);
 			}
 			else
 			{
@@ -1434,7 +1464,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 						// Draw shape
 						Color color = hit_body.IsDynamic()? Color::sYellow : Color::sOrange;
 					#ifdef JPH_DEBUG_RENDERER
-						shape_cast.mShape->Draw(mDebugRenderer, shape_cast.mCenterOfMassStart.PostTranslated(hit.mFraction * shape_cast.mDirection), Vec3::sReplicate(1.0f), color, false, false);
+						shape_cast.mShape->Draw(mDebugRenderer, shape_cast.mCenterOfMassStart.PostTranslated(hit.mFraction * shape_cast.mDirection), Vec3::sOne(), color, false, false);
 					#endif // JPH_DEBUG_RENDERER
 
 						// Draw normal
@@ -1470,7 +1500,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 				// Draw 'miss'
 				mDebugRenderer->DrawLine(start, start + direction, Color::sRed);
 			#ifdef JPH_DEBUG_RENDERER
-				shape_cast.mShape->Draw(mDebugRenderer, shape_cast.mCenterOfMassStart.PostTranslated(shape_cast.mDirection), Vec3::sReplicate(1.0f), Color::sRed, false, false);
+				shape_cast.mShape->Draw(mDebugRenderer, shape_cast.mCenterOfMassStart.PostTranslated(shape_cast.mDirection), Vec3::sOne(), Color::sRed, false, false);
 			#endif // JPH_DEBUG_RENDERER
 			}
 		}
@@ -1511,7 +1541,7 @@ bool SamplesApp::CastProbe(float inProbeLength, float &outFraction, RVec3 &outPo
 					CollideShapeSettings settings;
 					settings.mMaxSeparationDistance = sqrt(3.0f) * max_distance; // Box is extended in all directions by max_distance
 					ClosestHitCollisionCollector<CollideShapeCollector> collide_shape_collector;
-					ts.CollideShape(&point_sphere, Vec3::sReplicate(1.0f), RMat44::sTranslation(start + position), settings, start, collide_shape_collector);
+					ts.CollideShape(&point_sphere, Vec3::sOne(), RMat44::sTranslation(start + position), settings, start, collide_shape_collector);
 					if (collide_shape_collector.HadHit())
 					{
 						closest_point = collide_shape_collector.mHit.mContactPointOn2;
@@ -2338,7 +2368,7 @@ void SamplesApp::DrawPhysics()
 
 						// Start iterating all triangles of the shape
 						Shape::GetTrianglesContext context;
-						transformed_shape.mShape->GetTrianglesStart(context, AABox::sBiggest(), Vec3::sZero(), Quat::sIdentity(), Vec3::sReplicate(1.0f));
+						transformed_shape.mShape->GetTrianglesStart(context, AABox::sBiggest(), Vec3::sZero(), Quat::sIdentity(), Vec3::sOne());
 						for (;;)
 						{
 							// Get the next batch of vertices

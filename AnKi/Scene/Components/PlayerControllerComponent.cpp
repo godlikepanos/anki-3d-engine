@@ -6,16 +6,16 @@
 #include <AnKi/Scene/Components/PlayerControllerComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 
 namespace anki {
 
 PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 {
-	PhysicsPlayerControllerInitInfo init;
-	init.m_position = node->getWorldTransform().getOrigin().xyz();
-	m_player = PhysicsWorld::getSingleton().newInstance<PhysicsPlayerController>(init);
+	v2::PhysicsPlayerControllerInitInfo init;
+	init.m_initialPosition = node->getWorldTransform().getOrigin().xyz();
+	m_player = v2::PhysicsWorld::getSingleton().newPlayerController(init);
 	m_player->setUserData(this);
 
 	node->setIgnoreParentTransform(true);
@@ -23,12 +23,14 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 
 Error PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	const Vec3 newPos = m_player->getTransform().getOrigin().xyz();
-	updated = newPos != m_worldPos;
+	U32 posVersion;
+	const Vec3 newPos = m_player->getPosition(&posVersion);
 
-	if(updated)
+	if(posVersion != m_positionVersion)
 	{
-		m_worldPos = newPos;
+		updated = true;
+		m_positionVersion = posVersion;
+
 		info.m_node->setLocalOrigin(newPos.xyz0());
 	}
 

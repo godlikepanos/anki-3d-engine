@@ -87,6 +87,12 @@ public:
 	/// Zero means no gravity, 1 means normal gravity.
 	void setGravityFactor(F32 factor);
 
+	void setLinearVelocity(Vec3 v);
+
+	void setAngularVelocity(Vec3 v);
+
+	void clearForcesAndTorque();
+
 	void setPhysicsTriggerCallbacks(PhysicsTriggerCallbacks* callbacks)
 	{
 		ANKI_ASSERT(m_isTrigger);
@@ -124,12 +130,9 @@ private:
 
 	F32 m_mass = 0.0f;
 
-	PhysicsBody()
-		: PhysicsObjectBase(PhysicsObjectType::kBody)
-	{
-	}
+	PhysicsBody();
 
-	~PhysicsBody() = default;
+	~PhysicsBody();
 
 	void init(const PhysicsBodyInitInfo& init);
 

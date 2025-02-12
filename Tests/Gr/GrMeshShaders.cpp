@@ -14,10 +14,10 @@ ANKI_TEST(Gr, MeshShaders)
 	constexpr U32 kTileCount = 4;
 	constexpr U32 kVertCount = 4;
 
-	g_validationCVar.set(true);
-	g_windowWidthCVar.set(64 * kTileCount);
-	g_windowHeightCVar.set(64);
-	g_meshShadersCVar.set(true);
+	g_validationCVar = true;
+	g_windowWidthCVar = 64 * kTileCount;
+	g_windowHeightCVar = 64;
+	g_meshShadersCVar = true;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	ShaderCompilerMemoryPool::allocateSingleton(allocAligned, nullptr);

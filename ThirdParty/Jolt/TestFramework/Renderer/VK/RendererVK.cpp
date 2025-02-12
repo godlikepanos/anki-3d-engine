@@ -804,8 +804,8 @@ void RendererVK::BeginFrame(const CameraState &inCamera, float inWorldScale)
 	// Wait for this frame to complete
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
 
-	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mFrameIndex], VK_NULL_HANDLE, &mImageIndex);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	VkResult result = mSubOptimalSwapChain? VK_ERROR_OUT_OF_DATE_KHR : vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mFrameIndex], VK_NULL_HANDLE, &mImageIndex);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		vkDeviceWaitIdle(mDevice);
 		DestroySwapChain();
@@ -813,6 +813,13 @@ void RendererVK::BeginFrame(const CameraState &inCamera, float inWorldScale)
 		if (mSwapChain == nullptr)
 			return;
 		result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mFrameIndex], VK_NULL_HANDLE, &mImageIndex);
+		mSubOptimalSwapChain = false;
+	}
+	else if (result == VK_SUBOPTIMAL_KHR)
+	{
+		// Render this frame with the suboptimal swap chain as we've already acquired an image
+		mSubOptimalSwapChain = true;
+		result = VK_SUCCESS;
 	}
 	FatalErrorIfFailed(result);
 
@@ -958,9 +965,9 @@ Ref<Texture> RendererVK::CreateTexture(const Surface *inSurface)
 	return new TextureVK(this, inSurface);
 }
 
-Ref<VertexShader> RendererVK::CreateVertexShader(const char *inFileName)
+Ref<VertexShader> RendererVK::CreateVertexShader(const char *inName)
 {
-	Array<uint8> data = ReadData((String(inFileName) + ".vert.spv").c_str());
+	Array<uint8> data = ReadData((String("Shaders/VK/") + inName + ".vert.spv").c_str());
 
 	VkShaderModuleCreateInfo create_info = {};
 	create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -972,9 +979,9 @@ Ref<VertexShader> RendererVK::CreateVertexShader(const char *inFileName)
 	return new VertexShaderVK(mDevice, shader_module);
 }
 
-Ref<PixelShader> RendererVK::CreatePixelShader(const char *inFileName)
+Ref<PixelShader> RendererVK::CreatePixelShader(const char *inName)
 {
-	Array<uint8> data = ReadData((String(inFileName) + ".frag.spv").c_str());
+	Array<uint8> data = ReadData((String("Shaders/VK/") + inName + ".frag.spv").c_str());
 
 	VkShaderModuleCreateInfo create_info = {};
 	create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1260,3 +1267,10 @@ void RendererVK::UpdateViewPortAndScissorRect(uint32 inWidth, uint32 inHeight)
 	scissor.extent = { inWidth, inHeight };
 	vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }
+
+#ifdef JPH_ENABLE_VULKAN
+Renderer *Renderer::sCreate()
+{
+	return new RendererVK;
+}
+#endif

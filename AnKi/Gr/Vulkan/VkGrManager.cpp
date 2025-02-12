@@ -836,7 +836,9 @@ Error GrManagerImpl::initDevice()
 
 	Array<F32, U32(GpuQueueType::kCount)> priorities = {1.0f, 0.5f};
 	Array<VkDeviceQueueCreateInfo, U32(GpuQueueType::kCount)> q = {};
-	q.fill({VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO});
+	VkDeviceQueueCreateInfo queueCreateInfo = {};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	q.fill(queueCreateInfo);
 
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

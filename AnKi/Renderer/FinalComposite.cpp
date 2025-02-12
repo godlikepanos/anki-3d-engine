@@ -93,7 +93,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newTextureDependency(outRt, TextureUsageBit::kRtvDsvWrite);
 
-	if(g_dbgCVar)
+	if(g_dbgSceneCVar || g_dbgPhysicsCVar)
 	{
 		pass.newTextureDependency(getRenderer().getDbg().getRt(), TextureUsageBit::kSrvPixel);
 	}
@@ -120,7 +120,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		ANKI_TRACE_SCOPED_EVENT(FinalComposite);
 
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
-		const Bool dbgEnabled = g_dbgCVar;
+		const Bool dbgEnabled = g_dbgSceneCVar || g_dbgPhysicsCVar;
 
 		Array<RenderTargetHandle, kMaxDebugRenderTargets> dbgRts;
 		ShaderProgramPtr optionalDebugProgram;

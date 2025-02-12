@@ -115,6 +115,8 @@ void BlockArray<T, TMemoryPool, TConfig>::erase(Iterator it)
 	{
 		m_firstIndex = 0;
 		m_endIndex = 0;
+		m_blockStorages.destroy();
+		m_blockMetadatas.destroy();
 	}
 	else
 	{

@@ -142,8 +142,8 @@ void MutableCompoundShape::CalculateLocalBounds()
 	}
 	else
 	{
-		// There are no subshapes, set the bounding box to invalid
-		mLocalBounds.SetEmpty();
+		// There are no subshapes, make the bounding box empty
+		mLocalBounds.mMin = mLocalBounds.mMax = Vec3::sZero();
 	}
 
 	// Cache the inner radius as it can take a while to recursively iterate over all sub shapes
@@ -181,7 +181,7 @@ void MutableCompoundShape::CalculateSubShapeBounds(uint inStartIdx, uint inNumbe
 				Mat44 transform = Mat44::sRotationTranslation(sub_shape.GetRotation(), sub_shape.GetPositionCOM());
 
 				// Get the bounding box
-				sub_shape_bounds = sub_shape.mShape->GetWorldSpaceBounds(transform, Vec3::sReplicate(1.0f));
+				sub_shape_bounds = sub_shape.mShape->GetWorldSpaceBounds(transform, Vec3::sOne());
 			}
 
 			// Put the bounds as columns in a matrix

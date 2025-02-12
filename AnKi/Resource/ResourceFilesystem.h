@@ -94,8 +94,9 @@ public:
 
 	Error init();
 
-	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
-	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
+	/// Search the path list to find the file. Then open the file for reading.
+	/// @note Thread-safe.
+	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file) const;
 
 	/// Iterate all the filenames from all paths provided.
 	template<typename TFunc>
@@ -147,7 +148,7 @@ private:
 	/// Add a filesystem path or an archive. The path is read-only.
 	Error addNewPath(CString path, const ResourceStringList& includeStrings, const ResourceStringList& excludedStrings);
 
-	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile);
+	Error openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile) const;
 };
 /// @}
 

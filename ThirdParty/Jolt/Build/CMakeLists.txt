@@ -65,6 +65,10 @@ option(USE_FMADD "Enable FMADD" ON)
 # See: https://caniuse.com/?search=WebAssembly%20SIMD (Safari got support in March 2023 and was the last major browser to get support).
 option(USE_WASM_SIMD "Enable SIMD for WASM" OFF)
 
+# Enable 64 bit WASM instead of the default 32 bit WASM. Note that this currently requires special commandline flags in browsers and nodejs to enable.
+# E.g. use 'node --experimental-wasm-memory64 UnitTests.js' to run the unit tests in nodejs in 64 bit.
+option(JPH_USE_WASM64 "Enable 64 bit WASM" OFF)
+
 # Enable all warnings
 option(ENABLE_ALL_WARNINGS "Enable all warnings and warnings as errors" ON)
 
@@ -107,7 +111,7 @@ include(CMakeDependentOption)
 cmake_dependent_option(USE_STATIC_MSVC_RUNTIME_LIBRARY "Use the static MSVC runtime library" ON "MSVC;NOT WINDOWS_STORE" OFF)
 
 # Enable Vulkan instead of DirectX
-cmake_dependent_option(JPH_ENABLE_VULKAN "Enable Vulkan" OFF "WIN32" ON)
+cmake_dependent_option(JPH_ENABLE_VULKAN "Enable Vulkan" ON "LINUX" OFF)
 
 # Determine which configurations exist
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR) # Only do this when we're at the top level, see: https://gitlab.kitware.com/cmake/cmake/-/issues/24181
@@ -345,6 +349,10 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 		target_include_directories(UnitTests PUBLIC ${UNIT_TESTS_ROOT})
 		target_link_libraries(UnitTests LINK_PUBLIC Jolt)
 
+		if (EMSCRIPTEN)
+			target_link_options(UnitTests PUBLIC -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728)
+		endif()
+
 		# Code coverage doesn't work when using precompiled headers
 		if (CMAKE_GENERATOR STREQUAL "Ninja Multi-Config" AND MSVC)
 			# The Ninja Multi-Config generator errors out when selectively disabling precompiled headers for certain configurations.
@@ -385,6 +393,9 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 			if (MSVC)
 				target_link_options(HelloWorld PUBLIC "/SUBSYSTEM:CONSOLE")
 			endif()
+			if (EMSCRIPTEN)
+				target_link_options(HelloWorld PUBLIC -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728)
+			endif()
 		endif()
 
 		if (TARGET_PERFORMANCE_TEST)
@@ -401,6 +412,7 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 				target_link_options(PerformanceTest PUBLIC "SHELL:--preload-file ${PHYSICS_REPO_ROOT}/Assets/Human.tof@/Assets/Human.tof")
 				target_link_options(PerformanceTest PUBLIC "SHELL:--preload-file ${PHYSICS_REPO_ROOT}/Assets/Human/dead_pose1.tof@/Assets/Human/dead_pose1.tof")
 				target_link_options(PerformanceTest PUBLIC "SHELL:--preload-file ${PHYSICS_REPO_ROOT}/Assets/terrain2.bof@/Assets/terrain2.bof")
+				target_link_options(PerformanceTest PUBLIC -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728)
 			endif()
 			set_property(TARGET PerformanceTest PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PHYSICS_REPO_ROOT}")
 		endif()
@@ -425,10 +437,5 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 				message("Cannot build JoltViewer because Vulkan/DirectX SDK is not available!")
 			endif()
 		endif()
-	endif()
-
-	# Copy the assets folder
-	if (TARGET_PERFORMANCE_TEST OR TEST_FRAMEWORK_AVAILABLE)
-		add_custom_command(TARGET Jolt PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${PHYSICS_REPO_ROOT}/Assets/ $<TARGET_FILE_DIR:Jolt>/Assets/)
 	endif()
 endif()

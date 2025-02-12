@@ -16,6 +16,7 @@
 #include <Jolt/Core/Profiler.h>
 #include <Utils/ReadData.h>
 #include <Utils/Log.h>
+#include <Utils/AssetStream.h>
 
 #include <d3dcompiler.h>
 #ifdef JPH_DEBUG
@@ -512,7 +513,7 @@ Ref<Texture> RendererDX12::CreateTexture(const Surface *inSurface)
 	return new TextureDX12(this, inSurface);
 }
 
-Ref<VertexShader> RendererDX12::CreateVertexShader(const char *inFileName)
+Ref<VertexShader> RendererDX12::CreateVertexShader(const char *inName)
 {
 	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
 #ifdef JPH_DEBUG
@@ -525,13 +526,14 @@ Ref<VertexShader> RendererDX12::CreateVertexShader(const char *inFileName)
 	};
 
 	// Read shader source file
-	Array<uint8> data = ReadData((String(inFileName) + ".hlsl").c_str());
+	String file_name = String("Shaders/DX/") + inName + ".hlsl";
+	Array<uint8> data = ReadData(file_name.c_str());
 
 	// Compile source
 	ComPtr<ID3DBlob> shader_blob, error_blob;
 	HRESULT hr = D3DCompile(&data[0],
 							(uint)data.size(),
-							inFileName,
+							(AssetStream::sGetAssetsBasePath() + file_name).c_str(),
 							defines,
 							D3D_COMPILE_STANDARD_FILE_INCLUDE,
 							"main",
@@ -551,7 +553,7 @@ Ref<VertexShader> RendererDX12::CreateVertexShader(const char *inFileName)
 	return new VertexShaderDX12(shader_blob);
 }
 
-Ref<PixelShader> RendererDX12::CreatePixelShader(const char *inFileName)
+Ref<PixelShader> RendererDX12::CreatePixelShader(const char *inName)
 {
 	UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
 #ifdef JPH_DEBUG
@@ -564,13 +566,14 @@ Ref<PixelShader> RendererDX12::CreatePixelShader(const char *inFileName)
 	};
 
 	// Read shader source file
-	Array<uint8> data = ReadData((String(inFileName) + ".hlsl").c_str());
+	String file_name = String("Shaders/DX/") + inName + ".hlsl";
+	Array<uint8> data = ReadData(file_name.c_str());
 
 	// Compile source
 	ComPtr<ID3DBlob> shader_blob, error_blob;
 	HRESULT hr = D3DCompile(&data[0],
 							(uint)data.size(),
-							inFileName,
+							(AssetStream::sGetAssetsBasePath() + file_name).c_str(),
 							defines,
 							D3D_COMPILE_STANDARD_FILE_INCLUDE,
 							"main",
@@ -705,3 +708,10 @@ void RendererDX12::RecycleD3DObject(ID3D12Object *inResource)
 	if (!mIsExiting)
 		mDelayReleased[mFrameIndex].push_back(inResource);
 }
+
+#ifndef JPH_ENABLE_VULKAN
+Renderer *Renderer::sCreate()
+{
+	return new RendererDX12;
+}
+#endif

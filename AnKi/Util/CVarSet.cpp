@@ -77,7 +77,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 		err = value.toNumber(v); \
 		if(!err) \
 		{ \
-			static_cast<NumericCVar<type>&>(*foundCVar).set(v); \
+			static_cast<NumericCVar<type>&>(*foundCVar) = v; \
 		} \
 		break; \
 	}
@@ -86,7 +86,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 			switch(foundCVar->m_type)
 			{
 			case CVar::Type::kString:
-				static_cast<StringCVar&>(*foundCVar).set(value);
+				static_cast<StringCVar&>(*foundCVar) = value;
 				break;
 			case CVar::Type::kBool:
 			{
@@ -94,7 +94,7 @@ Error CVarSet::setMultiple(ConstWeakArray<const Char*> arr)
 				err = value.toNumber(v);
 				if(!err)
 				{
-					static_cast<BoolCVar&>(*foundCVar).set(v != 0);
+					static_cast<BoolCVar&>(*foundCVar) = (v != 0);
 				}
 				break;
 			}

@@ -9,7 +9,7 @@
 
 ANKI_TEST(Gr, TextureBuffer)
 {
-	g_validationCVar.set(true);
+	g_validationCVar = true;
 
 	initWindow();
 	initGrManager();

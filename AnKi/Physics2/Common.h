@@ -10,7 +10,14 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Util/MemoryPool.h>
 #include <AnKi/Math.h>
-#include <AnKi/Util/Enum.h>
+
+#if ANKI_ASSERTIONS_ENABLED && !defined(JPH_ENABLE_ASSERTS)
+#	error "See file"
+#endif
+
+#if !defined(JPH_DEBUG_RENDERER)
+#	error "See file"
+#endif
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/Body.h>

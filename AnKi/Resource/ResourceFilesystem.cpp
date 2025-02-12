@@ -406,7 +406,7 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 	return Error::kNone;
 }
 
-Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFilePtr& filePtr)
+Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFilePtr& filePtr) const
 {
 	ResourceFile* rfile;
 	Error err = openFileInternal(filename, rfile);
@@ -425,7 +425,7 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 	return err;
 }
 
-Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile)
+Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile) const
 {
 	rfile = nullptr;
 

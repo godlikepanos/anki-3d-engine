@@ -4,103 +4,114 @@
 // http://www.anki3d.org/LICENSE
 
 #include <AnKi/Scene/Components/TriggerComponent.h>
+#include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Physics/PhysicsCollisionShape.h>
-#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics2/PhysicsCollisionShape.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 
 namespace anki {
 
 /// The callbacks execute before the TriggerComponent::update
-class TriggerComponent::MyPhysicsTriggerProcessContactCallback final : public PhysicsTriggerProcessContactCallback
+class TriggerComponent::MyPhysicsTriggerCallbacks final : public v2::PhysicsTriggerCallbacks
 {
 public:
-	TriggerComponent* m_comp = nullptr;
-	Bool m_updated = false;
-	Bool m_enterUpdated = false;
-	Bool m_insideUpdated = false;
-	Bool m_exitUpdated = false;
-
-	void onTriggerEnter([[maybe_unused]] PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	void onTriggerEnter(const v2::PhysicsBody& trigger, const v2::PhysicsObjectBase& obj) override
 	{
-		// Clean previous results
-		if(!m_enterUpdated)
+		TriggerComponent& triggerc = *reinterpret_cast<TriggerComponent*>(trigger.getUserData());
+		ANKI_ASSERT(triggerc.getType() == TriggerComponent::kClassType);
+
+		if(triggerc.m_resetEnter)
 		{
-			m_enterUpdated = true;
-			m_comp->m_bodiesEnter.destroy();
+			triggerc.m_bodiesEnter.destroy();
+			triggerc.m_resetEnter = false;
 		}
 
-		m_updated = true;
-
-		m_comp->m_bodiesEnter.emplaceBack(static_cast<BodyComponent*>(obj.getUserData()));
+		if(obj.getType() == v2::PhysicsObjectType::kBody)
+		{
+			const v2::PhysicsBody& body = static_cast<const v2::PhysicsBody&>(obj);
+			BodyComponent& bodyc = *reinterpret_cast<BodyComponent*>(body.getUserData());
+			ANKI_ASSERT(bodyc.getType() == BodyComponent::kClassType);
+			triggerc.m_bodiesEnter.emplaceBack(&bodyc.getSceneNode());
+		}
 	}
 
-	void onTriggerInside([[maybe_unused]] PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	void onTriggerExit(const v2::PhysicsBody& trigger, const v2::PhysicsObjectBase& obj) override
 	{
-		// Clean previous results
-		if(!m_insideUpdated)
+		TriggerComponent& triggerc = *reinterpret_cast<TriggerComponent*>(trigger.getUserData());
+		ANKI_ASSERT(triggerc.getType() == TriggerComponent::kClassType);
+
+		if(triggerc.m_resetExit)
 		{
-			m_insideUpdated = true;
-			m_comp->m_bodiesInside.destroy();
+			triggerc.m_bodiesExit.destroy();
+			triggerc.m_resetExit = false;
 		}
 
-		m_updated = true;
-
-		m_comp->m_bodiesInside.emplaceBack(static_cast<BodyComponent*>(obj.getUserData()));
-	}
-
-	void onTriggerExit([[maybe_unused]] PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
-	{
-		// Clean previous results
-		if(!m_exitUpdated)
+		if(obj.getType() == v2::PhysicsObjectType::kBody)
 		{
-			m_exitUpdated = true;
-			m_comp->m_bodiesExit.destroy();
+			const v2::PhysicsBody& body = static_cast<const v2::PhysicsBody&>(obj);
+			BodyComponent& bodyc = *reinterpret_cast<BodyComponent*>(body.getUserData());
+			ANKI_ASSERT(bodyc.getType() == BodyComponent::kClassType);
+			triggerc.m_bodiesExit.emplaceBack(&bodyc.getSceneNode());
 		}
-
-		m_updated = true;
-
-		m_comp->m_bodiesExit.emplaceBack(static_cast<BodyComponent*>(obj.getUserData()));
 	}
 };
+
+TriggerComponent::MyPhysicsTriggerCallbacks TriggerComponent::m_callbacks;
 
 TriggerComponent::TriggerComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 	, m_node(node)
 {
-	ANKI_ASSERT(node);
-	m_callbacks = newInstance<MyPhysicsTriggerProcessContactCallback>(SceneMemoryPool::getSingleton());
-	m_callbacks->m_comp = this;
 }
 
 TriggerComponent::~TriggerComponent()
 {
-	deleteInstance(SceneMemoryPool::getSingleton(), m_callbacks);
 }
 
 void TriggerComponent::setSphereVolumeRadius(F32 radius)
 {
 	// Need to re-create it
-	m_shape = PhysicsWorld::getSingleton().newInstance<PhysicsSphere>(radius);
-	m_trigger = PhysicsWorld::getSingleton().newInstance<PhysicsTrigger>(m_shape);
+	m_shape = v2::PhysicsWorld::getSingleton().newSphereCollisionShape(radius);
+
+	v2::PhysicsBodyInitInfo init;
+	init.m_isTrigger = true;
+	init.m_shape = m_shape.get();
+	init.m_transform = m_node->getWorldTransform();
+	init.m_layer = v2::PhysicsLayer::kTrigger;
+
+	m_trigger = v2::PhysicsWorld::getSingleton().newPhysicsBody(init);
 	m_trigger->setUserData(this);
-	m_trigger->setContactProcessCallback(m_callbacks);
+	m_trigger->setPhysicsTriggerCallbacks(&m_callbacks);
 	m_trigger->setTransform(m_node->getWorldTransform());
 }
 
 Error TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	updated = false;
-
-	if(m_trigger.isCreated()) [[likely]]
+	if(m_trigger) [[likely]]
 	{
-		updated = m_callbacks->m_updated;
-		m_callbacks->m_updated = false;
-		m_callbacks->m_enterUpdated = false;
-		m_callbacks->m_insideUpdated = false;
-		m_callbacks->m_exitUpdated = false;
+		if(!m_resetEnter || !m_resetExit)
+		{
+			updated = true;
+		}
 
-		if(info.m_node->movedThisFrame() && m_trigger.isCreated())
+		if(m_resetEnter)
+		{
+			// None entered, cleanup
+			m_bodiesEnter.destroy();
+		}
+
+		if(m_resetExit)
+		{
+			// None exited, cleanup
+			m_bodiesExit.destroy();
+		}
+
+		// Prepare them for the next frame
+		m_resetEnter = true;
+		m_resetExit = true;
+
+		if(info.m_node->movedThisFrame())
 		{
 			updated = true;
 			m_trigger->setTransform(info.m_node->getWorldTransform());

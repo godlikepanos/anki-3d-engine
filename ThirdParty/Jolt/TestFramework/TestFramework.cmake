@@ -1,6 +1,6 @@
 # Find Vulkan
 find_package(Vulkan)
-if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
+if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32 OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")))
 	# We have Vulkan/DirectX so we can compile TestFramework
 	set(TEST_FRAMEWORK_AVAILABLE TRUE)
 
@@ -75,7 +75,7 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 		${TEST_FRAMEWORK_ROOT}/UI/UIVerticalStack.h
 		${TEST_FRAMEWORK_ROOT}/Utils/CustomMemoryHook.cpp
 		${TEST_FRAMEWORK_ROOT}/Utils/CustomMemoryHook.h
-		${TEST_FRAMEWORK_ROOT}/Utils/Log.cpp
+		${TEST_FRAMEWORK_ROOT}/Utils/AssetStream.h
 		${TEST_FRAMEWORK_ROOT}/Utils/Log.h
 		${TEST_FRAMEWORK_ROOT}/Utils/ReadData.cpp
 		${TEST_FRAMEWORK_ROOT}/Utils/ReadData.h
@@ -108,34 +108,34 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 			${TEST_FRAMEWORK_ROOT}/Renderer/DX12/TextureDX12.cpp
 			${TEST_FRAMEWORK_ROOT}/Renderer/DX12/TextureDX12.h
 			${TEST_FRAMEWORK_ROOT}/Renderer/DX12/VertexShaderDX12.h
+			${TEST_FRAMEWORK_ROOT}/Utils/AssetStream.cpp
+			${TEST_FRAMEWORK_ROOT}/Utils/Log.cpp
 			${TEST_FRAMEWORK_ROOT}/Window/ApplicationWindowWin.cpp
 			${TEST_FRAMEWORK_ROOT}/Window/ApplicationWindowWin.h
 		)
 
-		# All shaders
-		set(TEST_FRAMEWORK_SRC_FILES_SHADERS
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/VertexConstants.h
-		)
-
 		# HLSL vertex shaders
+		set(TEST_FRAMEWORK_SRC_FILES_SHADERS
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/VertexConstants.h
+		)
 		set(TEST_FRAMEWORK_HLSL_VERTEX_SHADERS
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/FontVertexShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/LineVertexShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TriangleDepthVertexShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TriangleVertexShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/UIVertexShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/FontVertexShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/LineVertexShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/TriangleDepthVertexShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/TriangleVertexShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/UIVertexShader.hlsl
 		)
 		set(TEST_FRAMEWORK_SRC_FILES_SHADERS ${TEST_FRAMEWORK_SRC_FILES_SHADERS} ${TEST_FRAMEWORK_HLSL_VERTEX_SHADERS})
 		set_source_files_properties(${TEST_FRAMEWORK_HLSL_VERTEX_SHADERS} PROPERTIES VS_SHADER_FLAGS "/WX /T vs_5_0")
 
 		# HLSL pixel shaders
 		set(TEST_FRAMEWORK_HLSL_PIXEL_SHADERS
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/FontPixelShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/LinePixelShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TriangleDepthPixelShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TrianglePixelShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/UIPixelShader.hlsl
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/UIPixelShaderUntextured.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/FontPixelShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/LinePixelShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/TriangleDepthPixelShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/TrianglePixelShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/UIPixelShader.hlsl
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/DX/UIPixelShaderUntextured.hlsl
 		)
 		set(TEST_FRAMEWORK_SRC_FILES_SHADERS ${TEST_FRAMEWORK_SRC_FILES_SHADERS} ${TEST_FRAMEWORK_HLSL_PIXEL_SHADERS})
 		set_source_files_properties(${TEST_FRAMEWORK_HLSL_PIXEL_SHADERS} PROPERTIES VS_SHADER_FLAGS "/WX /T ps_5_0")
@@ -149,6 +149,8 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 			${TEST_FRAMEWORK_ROOT}/Input/Linux/KeyboardLinux.h
 			${TEST_FRAMEWORK_ROOT}/Input/Linux/MouseLinux.cpp
 			${TEST_FRAMEWORK_ROOT}/Input/Linux/MouseLinux.h
+			${TEST_FRAMEWORK_ROOT}/Utils/AssetStream.cpp
+			${TEST_FRAMEWORK_ROOT}/Utils/Log.cpp
 			${TEST_FRAMEWORK_ROOT}/Window/ApplicationWindowLinux.cpp
 			${TEST_FRAMEWORK_ROOT}/Window/ApplicationWindowLinux.h
 		)
@@ -158,13 +160,58 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 		# macOS source files
 		set(TEST_FRAMEWORK_SRC_FILES
 			${TEST_FRAMEWORK_SRC_FILES}
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/FatalErrorIfFailedMTL.mm
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/FatalErrorIfFailedMTL.h
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/PipelineStateMTL.mm
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/PipelineStateMTL.h
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/PixelShaderMTL.h
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/RendererMTL.mm
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/RendererMTL.h
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/RenderInstancesMTL.mm
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/RenderInstancesMTL.h
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/RenderPrimitiveMTL.mm
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/RenderPrimitiveMTL.h
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/TextureMTL.mm
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/TextureMTL.h
+			${TEST_FRAMEWORK_ROOT}/Renderer/MTL/VertexShaderMTL.h
 			${TEST_FRAMEWORK_ROOT}/Input/MacOS/KeyboardMacOS.mm
 			${TEST_FRAMEWORK_ROOT}/Input/MacOS/KeyboardMacOS.h
 			${TEST_FRAMEWORK_ROOT}/Input/MacOS/MouseMacOS.mm
 			${TEST_FRAMEWORK_ROOT}/Input/MacOS/MouseMacOS.h
+			${TEST_FRAMEWORK_ROOT}/Utils/AssetStream.mm
+			${TEST_FRAMEWORK_ROOT}/Utils/Log.mm
 			${TEST_FRAMEWORK_ROOT}/Window/ApplicationWindowMacOS.mm
 			${TEST_FRAMEWORK_ROOT}/Window/ApplicationWindowMacOS.h
 		)
+
+		# Metal shaders
+		set(TEST_FRAMEWORK_SRC_FILES_SHADERS
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/MTL/VertexConstants.h
+		)
+		set(TEST_FRAMEWORK_METAL_SHADERS
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/MTL/FontShader.metal
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/MTL/LineShader.metal
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/MTL/TriangleShader.metal
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/MTL/UIShader.metal
+		)
+
+		# Compile Metal shaders
+		foreach(SHADER ${TEST_FRAMEWORK_METAL_SHADERS})
+			cmake_path(GET SHADER FILENAME AIR_SHADER)
+			set(AIR_SHADER "${CMAKE_CURRENT_BINARY_DIR}/${AIR_SHADER}.air")
+			add_custom_command(OUTPUT ${AIR_SHADER}
+				COMMAND xcrun -sdk macosx metal -c ${SHADER} -o ${AIR_SHADER}
+				DEPENDS ${SHADER}
+				COMMENT "Compiling ${SHADER}")
+			list(APPEND TEST_FRAMEWORK_AIR_SHADERS ${AIR_SHADER})
+		endforeach()
+
+		# Link Metal shaders
+		set(TEST_FRAMEWORK_METAL_LIB ${PHYSICS_REPO_ROOT}/Assets/Shaders/MTL/Shaders.metallib)
+		add_custom_command(OUTPUT ${TEST_FRAMEWORK_METAL_LIB}
+			COMMAND xcrun -sdk macosx metallib -o ${TEST_FRAMEWORK_METAL_LIB} ${TEST_FRAMEWORK_AIR_SHADERS}
+			DEPENDS ${TEST_FRAMEWORK_AIR_SHADERS}
+			COMMENT "Linking shaders")
 	endif()
 
 	# Include the Vulkan library
@@ -194,22 +241,20 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 		# GLSL headers
 		set(TEST_FRAMEWORK_SRC_FILES_SHADERS
 			${TEST_FRAMEWORK_SRC_FILES_SHADERS}
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/VertexConstantsVK.h
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/VertexConstants.h
 		)
-
-		# GLSL shaders
 		set(TEST_FRAMEWORK_GLSL_SHADERS
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/FontVertexShader.vert
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/LineVertexShader.vert
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TriangleDepthVertexShader.vert
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TriangleVertexShader.vert
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/UIVertexShader.vert
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/FontPixelShader.frag
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/LinePixelShader.frag
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TriangleDepthPixelShader.frag
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/TrianglePixelShader.frag
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/UIPixelShader.frag
-			${PHYSICS_REPO_ROOT}/Assets/Shaders/UIPixelShaderUntextured.frag
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/FontVertexShader.vert
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/LineVertexShader.vert
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/TriangleDepthVertexShader.vert
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/TriangleVertexShader.vert
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/UIVertexShader.vert
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/FontPixelShader.frag
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/LinePixelShader.frag
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/TriangleDepthPixelShader.frag
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/TrianglePixelShader.frag
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/UIPixelShader.frag
+			${PHYSICS_REPO_ROOT}/Assets/Shaders/VK/UIPixelShaderUntextured.frag
 		)
 
 		# Compile GLSL shaders
@@ -223,14 +268,28 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 		endforeach()
 	endif()
 
+	# Assets used by the test framework
+	set(TEST_FRAMEWORK_ASSETS
+		${PHYSICS_REPO_ROOT}/Assets/Fonts/Roboto-Regular.ttf
+		${PHYSICS_REPO_ROOT}/Assets/UI.tga
+		${TEST_FRAMEWORK_SRC_FILES_SHADERS}
+		${TEST_FRAMEWORK_HLSL_VERTEX_SHADERS}
+		${TEST_FRAMEWORK_HLSL_PIXEL_SHADERS}
+		${TEST_FRAMEWORK_SPV_SHADERS}
+		${TEST_FRAMEWORK_METAL_LIB}
+	)
+
 	# Group source files
 	source_group(TREE ${TEST_FRAMEWORK_ROOT} FILES ${TEST_FRAMEWORK_SRC_FILES})
 
 	# Group shader files
-	source_group(TREE ${PHYSICS_REPO_ROOT} FILES ${TEST_FRAMEWORK_SRC_FILES_SHADERS} ${TEST_FRAMEWORK_GLSL_SHADERS} ${TEST_FRAMEWORK_SPV_SHADERS})
+	source_group(TREE ${PHYSICS_REPO_ROOT} FILES ${TEST_FRAMEWORK_SRC_FILES_SHADERS} ${TEST_FRAMEWORK_GLSL_SHADERS} ${TEST_FRAMEWORK_METAL_SHADERS})
+
+	# Group intermediate files
+	source_group(Intermediate FILES ${TEST_FRAMEWORK_SPV_SHADERS} ${TEST_FRAMEWORK_METAL_LIB})
 
 	# Create TestFramework lib
-	add_library(TestFramework STATIC ${TEST_FRAMEWORK_SRC_FILES} ${TEST_FRAMEWORK_SRC_FILES_SHADERS} ${TEST_FRAMEWORK_SPV_SHADERS})
+	add_library(TestFramework STATIC ${TEST_FRAMEWORK_SRC_FILES} ${TEST_FRAMEWORK_SRC_FILES_SHADERS} ${TEST_FRAMEWORK_GLSL_SHADERS} ${TEST_FRAMEWORK_SPV_SHADERS} ${TEST_FRAMEWORK_METAL_SHADERS} ${TEST_FRAMEWORK_METAL_LIB})
 	target_include_directories(TestFramework PUBLIC ${TEST_FRAMEWORK_ROOT})
 	target_precompile_headers(TestFramework PUBLIC ${TEST_FRAMEWORK_ROOT}/TestFramework.h)
 
@@ -245,7 +304,6 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 	if (WIN32)
 		# Windows configuration
 		target_link_libraries(TestFramework LINK_PUBLIC Jolt dxguid.lib dinput8.lib dxgi.lib d3d12.lib d3dcompiler.lib shcore.lib)
-		target_compile_definitions(TestFramework PRIVATE JPH_ENABLE_DIRECTX)
 	endif()
 	if (LINUX)
 		# Linux configuration
@@ -254,7 +312,14 @@ if (NOT CROSS_COMPILE_ARM AND (Vulkan_FOUND OR WIN32))
 	if ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
 		# macOS configuration
 		target_link_libraries(TestFramework LINK_PUBLIC Jolt "-framework Cocoa -framework Metal -framework MetalKit -framework GameController")
-		
+
+		# Make sure that all test framework assets move to the Resources folder in the package
+		foreach(ASSET_FILE ${TEST_FRAMEWORK_ASSETS})
+			string(REPLACE ${PHYSICS_REPO_ROOT}/Assets "Resources" ASSET_DST ${ASSET_FILE})
+			get_filename_component(ASSET_DST ${ASSET_DST} DIRECTORY)
+			set_source_files_properties(${ASSET_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION ${ASSET_DST})
+		endforeach()
+
 		# Ignore PCH files for .mm files
 		foreach(SRC_FILE ${TEST_FRAMEWORK_SRC_FILES})
 			if (SRC_FILE MATCHES "\.mm")

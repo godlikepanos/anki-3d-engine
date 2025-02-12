@@ -17,7 +17,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Collision/ConvexHullShape.h>
-#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 
 namespace anki {
 
@@ -43,8 +43,7 @@ Error Dbg::init()
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/GreenDecal.ankitex", m_decalImage));
 	ANKI_CHECK(rsrcManager.loadResource("EngineAssets/Mirror.ankitex", m_reflectionImage));
 
-	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/DbgRenderables.ankiprogbin", m_renderablesProg));
-	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/DbgBillboard.ankiprogbin", m_nonRenderablesProg));
+	ANKI_CHECK(rsrcManager.loadResource("ShaderBinaries/Dbg.ankiprogbin", m_dbgProg));
 
 	{
 		BufferInitInfo buffInit("Dbg cube verts");
@@ -113,11 +112,12 @@ Error Dbg::init()
 void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, const RenderingContext& ctx, const ImageResource& image,
 							CommandBuffer& cmdb)
 {
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_nonRenderablesProg);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 	variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", U32(m_ditheredDepthTestOn != 0));
 	variantInitInfo.addMutation("OBJECT_TYPE", U32(type));
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Bilboards");
 	const ShaderProgramResourceVariant* variant;
-	m_nonRenderablesProg->getOrCreateVariant(variantInitInfo, variant);
+	m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 	cmdb.bindShaderProgram(&variant->getProgram());
 
 	class Constants
@@ -143,7 +143,7 @@ void Dbg::drawNonRenderable(GpuSceneNonRenderableObjectType type, U32 objCount, 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
-	ANKI_ASSERT(g_dbgCVar);
+	ANKI_ASSERT(g_dbgSceneCVar || g_dbgPhysicsCVar);
 
 	CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
@@ -159,13 +159,16 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 
 	// GBuffer renderables
+	if(g_dbgSceneCVar)
 	{
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeGBuffer::getSingleton().getElementCount();
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_renderablesProg);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
 		variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", U32(m_ditheredDepthTestOn != 0));
+		variantInitInfo.addMutation("OBJECT_TYPE", 0);
+		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Renderables");
 		const ShaderProgramResourceVariant* variant;
-		m_renderablesProg->getOrCreateVariant(variantInitInfo, variant);
+		m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
 		cmdb.bindShaderProgram(&variant->getProgram());
 
 		class Constants
@@ -193,6 +196,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	}
 
 	// Forward shading renderables
+	if(g_dbgSceneCVar)
 	{
 		const U32 allAabbCount = GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount();
 
@@ -210,13 +214,76 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	}
 
 	// Draw non-renderables
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), ctx, *m_pointLightImage,
-					  cmdb);
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), ctx, *m_decalImage, cmdb);
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
-					  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), ctx, *m_giProbeImage, cmdb);
-	drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe, GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(), ctx,
-					  *m_reflectionImage, cmdb);
+	if(g_dbgSceneCVar)
+	{
+		drawNonRenderable(GpuSceneNonRenderableObjectType::kLight, GpuSceneArrays::Light::getSingleton().getElementCount(), ctx, *m_pointLightImage,
+						  cmdb);
+		drawNonRenderable(GpuSceneNonRenderableObjectType::kDecal, GpuSceneArrays::Decal::getSingleton().getElementCount(), ctx, *m_decalImage, cmdb);
+		drawNonRenderable(GpuSceneNonRenderableObjectType::kGlobalIlluminationProbe,
+						  GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount(), ctx, *m_giProbeImage, cmdb);
+		drawNonRenderable(GpuSceneNonRenderableObjectType::kReflectionProbe, GpuSceneArrays::ReflectionProbe::getSingleton().getElementCount(), ctx,
+						  *m_reflectionImage, cmdb);
+	}
+
+	// Physics
+	if(g_dbgPhysicsCVar)
+	{
+		class MyPhysicsDebugDrawerInterface final : public v2::PhysicsDebugDrawerInterface
+		{
+		public:
+			RendererDynamicArray<HVec4> m_positions;
+			RendererDynamicArray<Array<U8, 4>> m_colors;
+
+			void drawLines(ConstWeakArray<Vec3> lines, Array<U8, 4> color) override
+			{
+				static constexpr U32 kMaxVerts = 1024 * 100;
+
+				for(const Vec3& pos : lines)
+				{
+					if(m_positions.getSize() >= kMaxVerts)
+					{
+						break;
+					}
+
+					m_positions.emplaceBack(HVec4(pos.xyz0()));
+					m_colors.emplaceBack(color);
+				}
+			}
+		} drawerInterface;
+
+		v2::PhysicsWorld::getSingleton().debugDraw(drawerInterface);
+
+		const U32 vertCount = drawerInterface.m_positions.getSize();
+		if(vertCount)
+		{
+			HVec4* positions;
+			const BufferView positionBuff =
+				RebarTransientMemoryPool::getSingleton().allocate(drawerInterface.m_positions.getSizeInBytes(), sizeof(HVec4), positions);
+			memcpy(positions, drawerInterface.m_positions.getBegin(), drawerInterface.m_positions.getSizeInBytes());
+
+			U8* colors;
+			const BufferView colorBuff =
+				RebarTransientMemoryPool::getSingleton().allocate(drawerInterface.m_colors.getSizeInBytes(), sizeof(U8) * 4, colors);
+			memcpy(colors, drawerInterface.m_colors.getBegin(), drawerInterface.m_colors.getSizeInBytes());
+
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_dbgProg);
+			variantInitInfo.addMutation("DEPTH_FAIL_VISUALIZATION", U32(m_ditheredDepthTestOn != 0));
+			variantInitInfo.addMutation("OBJECT_TYPE", 0);
+			variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Lines");
+			const ShaderProgramResourceVariant* variant;
+			m_dbgProg->getOrCreateVariant(variantInitInfo, variant);
+			cmdb.bindShaderProgram(&variant->getProgram());
+
+			cmdb.setVertexAttribute(VertexAttributeSemantic::kPosition, 0, Format::kR16G16B16A16_Sfloat, 0);
+			cmdb.setVertexAttribute(VertexAttributeSemantic::kColor, 1, Format::kR8G8B8A8_Unorm, 0);
+			cmdb.bindVertexBuffer(0, positionBuff, sizeof(HVec4));
+			cmdb.bindVertexBuffer(1, colorBuff, sizeof(U8) * 4);
+
+			cmdb.setFastConstants(&ctx.m_matrices.m_viewProjection, sizeof(ctx.m_matrices.m_viewProjection));
+
+			cmdb.draw(PrimitiveTopology::kLines, vertCount);
+		}
+	}
 
 	// Restore state
 	cmdb.setDepthCompareOperation(CompareOperation::kLess);
@@ -227,7 +294,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(Dbg);
 
-	if(!g_dbgCVar)
+	if(!g_dbgSceneCVar && !g_dbgPhysicsCVar)
 	{
 		return;
 	}
@@ -254,15 +321,18 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	pass.newTextureDependency(m_runCtx.m_rt, TextureUsageBit::kRtvDsvWrite);
 	pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel | TextureUsageBit::kRtvDsvRead);
 
-	BufferView indicesBuff;
-	BufferHandle dep;
-	getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
-	pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
-
-	if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())
+	if(g_dbgSceneCVar)
 	{
-		getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+		BufferView indicesBuff;
+		BufferHandle dep;
+		getRenderer().getGBuffer().getVisibleAabbsBuffer(indicesBuff, dep);
 		pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
+
+		if(GpuSceneArrays::RenderableBoundingVolumeForward::getSingleton().getElementCount())
+		{
+			getRenderer().getForwardShading().getVisibleAabbsBuffer(indicesBuff, dep);
+			pass.newBufferDependency(dep, BufferUsageBit::kSrvGeometry);
+		}
 	}
 }
 

@@ -36,7 +36,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	visIn.m_lodReferencePoint = ctx.m_matrices.m_cameraTransform.getTranslationPart().xyz();
 	visIn.m_lodDistances = lodDistances;
 	visIn.m_rgraph = &rgraph;
-	visIn.m_gatherAabbIndices = g_dbgCVar;
+	visIn.m_gatherAabbIndices = g_dbgSceneCVar;
 	RenderTargetHandle hzb = getRenderer().getGBuffer().getHzbRt();
 	visIn.m_hzbRt = &hzb;
 	visIn.m_viewportSize = getRenderer().getInternalResolution();

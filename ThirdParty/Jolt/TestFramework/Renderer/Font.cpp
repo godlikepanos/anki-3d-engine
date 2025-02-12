@@ -41,7 +41,7 @@ bool Font::Create(const char *inFontName, int inCharHeight)
 	constexpr int cSpacingV = 2; // Number of pixels to put vertically between characters
 
 	// Read font data
-	Array<uint8> font_data = ReadData((String("Assets/Fonts/") + inFontName + ".ttf").c_str());
+	Array<uint8> font_data = ReadData((String("Fonts/") + inFontName + ".ttf").c_str());
 
 	// Construct a font info
 	stbtt_fontinfo font;
@@ -145,10 +145,10 @@ try_again:;
 	};
 
 	// Load vertex shader
-	Ref<VertexShader> vtx = mRenderer->CreateVertexShader("Assets/Shaders/FontVertexShader");
+	Ref<VertexShader> vtx = mRenderer->CreateVertexShader("FontVertexShader");
 
 	// Load pixel shader
-	Ref<PixelShader> pix = mRenderer->CreatePixelShader("Assets/Shaders/FontPixelShader");
+	Ref<PixelShader> pix = mRenderer->CreatePixelShader("FontPixelShader");
 
 	mPipelineState = mRenderer->CreatePipelineState(vtx, vertex_desc, std::size(vertex_desc), pix, PipelineState::EDrawPass::Normal, PipelineState::EFillMode::Solid, PipelineState::ETopology::Triangle, PipelineState::EDepthTest::Off, PipelineState::EBlendMode::AlphaBlend, PipelineState::ECullMode::Backface);
 

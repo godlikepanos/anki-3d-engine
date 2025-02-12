@@ -69,36 +69,6 @@ end
 	return Error::kNone;
 }
 
-class RayCast : public PhysicsWorldRayCastCallback
-{
-public:
-	Vec3 m_hitPosition = Vec3(kMaxF32);
-	Vec3 m_hitNormal;
-	Bool m_hit = false;
-
-	RayCast(Vec3 from, Vec3 to, PhysicsMaterialBit mtl)
-		: PhysicsWorldRayCastCallback(from, to, mtl)
-	{
-	}
-
-	void processResult([[maybe_unused]] PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition)
-	{
-		if((m_from - m_to).dot(worldNormal) < 0.0f)
-		{
-			return;
-		}
-
-		if((worldPosition - m_from).getLengthSquared() > (m_hitPosition - m_from).getLengthSquared())
-		{
-			return;
-		}
-
-		m_hitPosition = worldPosition;
-		m_hitNormal = worldNormal;
-		m_hit = true;
-	}
-};
-
 class MyApp : public SampleApp
 {
 public:
@@ -121,87 +91,99 @@ Error MyApp::sampleExtraInit()
 		SceneNode* player;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("player", player));
 		PlayerControllerComponent* playerc = player->newComponent<PlayerControllerComponent>();
-		playerc->moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
-		playerc->getPhysicsPlayerController().setMaterialMask(PhysicsMaterialBit::kStaticGeometry);
+		playerc->moveToPosition(Vec3(0.0f, 10.5f, 0.0f));
 
 		player->addChild(&cam);
 	}
 
-	// Create a body component with joint
+	// Create a body component with hinge joint
+	if(1)
 	{
 		SceneNode* base;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("hingeBase", base));
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
-		bodyc->setBoxCollisionShape(Vec3(0.1f));
+		bodyc->setBoxExtend(Vec3(0.1f));
+		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
 		bodyc->teleportTo(Transform(Vec4(-0.0f, 5.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+
+		SceneNode* joint;
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("hinge", joint));
+		JointComponent* jointc = joint->newComponent<JointComponent>();
+		jointc->setType(JointType::kHinge);
+		joint->setLocalOrigin(Vec4(-0.0f, 4.8f, -3.0f, 0.0f));
+		base->addChild(joint);
 
 		SceneNode* monkey;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("monkey_p2p", monkey));
-		base->addChild(monkey);
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
+		const Aabb aabb = modelc->getModelResource()->getBoundingVolume();
+		const F32 height = aabb.getMax().y() - aabb.getMin().y();
 
 		bodyc = monkey->newComponent<BodyComponent>();
-		bodyc->loadMeshResource("Assets/Suzanne_e3526e1428c0763c.ankimesh");
-		bodyc->teleportTo(Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
+		bodyc->teleportTo(Transform(Vec4(-0.0f, 4.8f - height / 2.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 		bodyc->setMass(2.0f);
 
-		JointComponent* jointc = monkey->newComponent<JointComponent>();
-		jointc->newHingeJoint(Vec3(0.2f, 1.0f, 0.0f), Vec3(0.0f, -1.3f, 0.0f), Vec3(1, 0, 0));
+		joint->addChild(monkey);
 	}
 
 	// Create a chain
+	if(1)
 	{
-		const U LINKS = 5;
+		const U linkCount = 5;
 
 		Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0, 1.0, 1.0, 0.0));
 
 		SceneNode* base;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("p2pBase", base));
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
-		bodyc->setBoxCollisionShape(Vec3(0.1f));
+		bodyc->setBoxExtend(Vec3(0.1f));
+		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
 		bodyc->teleportTo(trf);
 
-		SceneNode* prevBody = nullptr;
-		for(U32 i = 0; i < LINKS; ++i)
+		trf.setOrigin(trf.getOrigin() - Vec4(0.0f, 0.5f, 0.0f, 0.0f));
+
+		SceneNode* prevNode = base;
+
+		for(U32 i = 0; i < linkCount; ++i)
 		{
+			SceneNode* joint;
+			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("joint_chain%u", i), joint));
+			JointComponent* jointc = joint->newComponent<JointComponent>();
+			jointc->setType(JointType::kPoint);
+			joint->setLocalOrigin(trf.getOrigin());
+			joint->setParent(prevNode);
+
 			SceneNode* monkey;
 			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("monkey_chain%u", i).toCString(), monkey));
-			monkey->newComponent<ModelComponent>()->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
+			ModelComponent* modelc = monkey->newComponent<ModelComponent>();
+			modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
+			const Aabb aabb = modelc->getModelResource()->getBoundingVolume();
+			const F32 height = aabb.getMax().y() - aabb.getMin().y();
 
-			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, F32(i * 1) * 1.25f, 0.0f, 0.0f));
-			// trf.getOrigin().x() -= i * 0.25f;
-
-			// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
+			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));
 
 			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
-			bodyc->setMeshFromModelComponent();
+			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
 			bodyc->teleportTo(trf);
 			bodyc->setMass(1.0f);
+			joint->addChild(monkey);
 
-			// Create joint
-			JointComponent* jointc = monkey->newComponent<JointComponent>();
-			if(prevBody == nullptr)
-			{
-				base->addChild(monkey);
-			}
-			else
-			{
-				prevBody->addChild(monkey);
-			}
-			jointc->newPoint2PointJoint2(Vec3(0, 1.0, 0), Vec3(0, -1.0, 0));
+			trf.setOrigin(trf.getOrigin() - Vec4(0.0f, height / 2.0f + 0.1f, 0.0f, 0.0f));
 
-			prevBody = monkey;
+			prevNode = monkey;
 		}
 	}
 
 	// Trigger
+	if(1)
 	{
 		SceneNode* node;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("trigger", node));
 		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
 		triggerc->setSphereVolumeRadius(1.8f);
-		node->setLocalTransform(Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+		node->setLocalTransform(Transform(Vec4(4.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
 	}
 
 	Input::getSingleton().lockCursor(true);
@@ -256,7 +238,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 	if(Input::getSingleton().getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar.set(!g_vrsCVar);
+		g_vrsCVar = !g_vrsCVar;
 	}
 
 	if(Input::getSingleton().getKey(KeyCode::kF1) == 1)
@@ -265,20 +247,27 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgCVar.set(false);
+			g_dbgSceneCVar = false;
 		}
 		else if(mode == 1)
 		{
-			g_dbgCVar.set(true);
+			g_dbgSceneCVar = true;
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			g_dbgCVar.set(true);
+			g_dbgSceneCVar = true;
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
+	}
+
+	if(Input::getSingleton().getKey(KeyCode::kF2) == 1)
+	{
+		g_dbgPhysicsCVar = !g_dbgPhysicsCVar;
+		renderer.getDbg().setDepthTestEnabled(true);
+		renderer.getDbg().setDitheredDepthTestEnabled(false);
 	}
 
 	// Move player
@@ -297,10 +286,6 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		F32 x = Input::getSingleton().getMousePosition().x();
 		if(y != 0.0 || x != 0.0)
 		{
-			// Set origin
-			Vec4 origin = player.getWorldTransform().getOrigin();
-			// origin.y() += 1.9f;
-
 			// Set rotation
 			Mat3x4 rot(Vec3(0.0f), Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
 
@@ -313,11 +298,11 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			rot.reorthogonalize();
 
 			// Update move
-			player.setLocalTransform(Transform(origin, rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+			player.setLocalRotation(rot);
 		}
 
-		const F32 speed = 0.5;
-		Vec4 moveVec(0.0);
+		const F32 speed = 8.5;
+		Vec3 moveVec(0.0);
 		if(Input::getSingleton().getKey(KeyCode::kW))
 		{
 			moveVec.z() += 1.0f;
@@ -325,7 +310,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		if(Input::getSingleton().getKey(KeyCode::kA))
 		{
-			moveVec.x() -= 1.0f;
+			moveVec.x() += 1.0f;
 		}
 
 		if(Input::getSingleton().getKey(KeyCode::kS))
@@ -335,14 +320,35 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		if(Input::getSingleton().getKey(KeyCode::kD))
 		{
-			moveVec.x() += 1.0f;
+			moveVec.x() -= 1.0f;
 		}
 
-		Vec4 dir = -player.getLocalRotation().getZAxis().xyz0();
-		dir.y() = 0.0f;
-		dir.normalize();
+		F32 jumpSpeed = 0.0f;
+		if(Input::getSingleton().getKey(KeyCode::kSpace))
+		{
+			jumpSpeed += 8.0f;
+		}
 
-		playerc.setVelocity(moveVec.z() * speed, moveVec.x() * speed, 0.0, dir);
+		static Bool crouch = false;
+		Bool crouchChanged = false;
+		if(Input::getSingleton().getKey(KeyCode::kC))
+		{
+			crouch = !crouch;
+			crouchChanged = true;
+		}
+
+		if(moveVec != 0.0f || jumpSpeed != 0.0f || crouchChanged)
+		{
+			Vec3 dir;
+			if(moveVec != 0.0f)
+			{
+				dir = -(player.getLocalRotation() * moveVec.xyz0());
+				dir.y() = 0.0f;
+				dir.normalize();
+			}
+
+			playerc.setVelocity(speed, jumpSpeed, dir, crouch);
+		}
 	}
 
 	if(Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
@@ -360,7 +366,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
 		BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
-		bodyc->setMeshFromModelComponent();
+		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
 		bodyc->teleportTo(camTrf);
 		bodyc->setMass(1.0f);
 
@@ -376,15 +382,13 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		Vec3 from = camTrf.getOrigin().xyz();
 		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
-		RayCast ray(from, to, PhysicsMaterialBit::kAll & (~PhysicsMaterialBit::kParticle));
-		ray.m_firstHit = true;
+		v2::RayHitResult result;
+		const Bool hit = v2::PhysicsWorld::getSingleton().castRayClosestHit(from, to, v2::PhysicsLayerBit::kStatic, result);
 
-		PhysicsWorld::getSingleton().rayCast(ray);
-
-		if(ray.m_hit)
+		if(hit)
 		{
 			// Create rotation
-			const Vec3& zAxis = ray.m_hitNormal;
+			const Vec3& zAxis = result.m_normal;
 			Vec3 yAxis = Vec3(0, 1, 0.5);
 			Vec3 xAxis = yAxis.cross(zAxis).getNormalized();
 			yAxis = zAxis.cross(xAxis);
@@ -394,7 +398,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			rot.setYAxis(yAxis);
 			rot.setZAxis(zAxis);
 
-			Transform trf(ray.m_hitPosition.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+			Transform trf(result.m_hitPosition.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 
 			// Create an obj
 			static U32 id = 0;
@@ -438,7 +442,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		SceneNode& node = SceneGraph::getSingleton().findSceneNode("trigger");
 		TriggerComponent& comp = node.getFirstComponentOfType<TriggerComponent>();
 
-		for(U32 i = 0; i < comp.getBodyComponentsEnter().getSize(); ++i)
+		for(U32 i = 0; i < comp.getSceneNodesEnter().getSize(); ++i)
 		{
 			// ANKI_LOGI("Touching %s", comp.getContactSceneNodes()[i]->getName().cstr());
 		}
@@ -465,9 +469,10 @@ int myMain(int argc, char* argv[])
 	}
 	else
 	{
-		delete app;
 		ANKI_LOGI("Bye!!");
 	}
+
+	delete app;
 
 	return 0;
 }

@@ -22,7 +22,7 @@ using namespace anki;
 
 ANKI_TEST(Gr, GrManager)
 {
-	g_validationCVar.set(true);
+	g_validationCVar = true;
 
 	DefaultMemoryPool::allocateSingleton(allocAligned, nullptr);
 	initWindow();

@@ -9,7 +9,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/CpuMeshResource.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 #include <AnKi/Resource/ModelResource.h>
 
 namespace anki {
@@ -25,75 +25,6 @@ BodyComponent::~BodyComponent()
 {
 }
 
-void BodyComponent::removeBody()
-{
-	m_shapeType = ShapeType::kCount;
-	m_body.reset(nullptr);
-	m_teleported = false;
-	m_force = Vec3(0.0f);
-	m_mesh.reset(nullptr);
-	m_collisionShape.reset(nullptr);
-}
-
-void BodyComponent::loadMeshResource(CString meshFilename)
-{
-	CpuMeshResourcePtr rsrc;
-	if(ResourceManager::getSingleton().loadResource(meshFilename, rsrc))
-	{
-		ANKI_SCENE_LOGE("Failed to load mesh");
-		return;
-	}
-
-	removeBody();
-	m_shapeType = ShapeType::kMesh;
-	m_mesh = std::move(rsrc);
-}
-
-void BodyComponent::setMeshFromModelComponent(U32 patchIndex)
-{
-	if(!ANKI_SCENE_ASSERT(m_modelc))
-	{
-		return;
-	}
-
-	if(!ANKI_SCENE_ASSERT(patchIndex < m_modelc->getModelResource()->getModelPatches().getSize()))
-	{
-		return;
-	}
-
-	loadMeshResource(m_modelc->getModelResource()->getModelPatches()[patchIndex].getMesh()->getFilename());
-}
-
-CString BodyComponent::getMeshResourceFilename() const
-{
-	return (m_mesh.isCreated()) ? m_mesh->getFilename() : CString();
-}
-
-void BodyComponent::setBoxCollisionShape(const Vec3& extend)
-{
-	if(ANKI_SCENE_ASSERT(extend > 0.0f))
-	{
-		removeBody();
-		m_shapeType = ShapeType::kAabb;
-		m_boxExtend = extend;
-		m_collisionShape = PhysicsWorld::getSingleton().newInstance<PhysicsBox>(extend);
-	}
-}
-
-void BodyComponent::setMass(F32 mass)
-{
-	if(!ANKI_SCENE_ASSERT(mass >= 0.0f))
-	{
-		return;
-	}
-
-	if(m_mass != mass)
-	{
-		m_mass = mass;
-		m_body.reset(nullptr);
-	}
-}
-
 void BodyComponent::teleportTo(const Transform& trf)
 {
 	m_teleportTrf = trf;
@@ -104,43 +35,66 @@ void BodyComponent::teleportTo(const Transform& trf)
 
 Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(m_shapeType == ShapeType::kCount)
+	if(m_shapeType == BodyComponentCollisionShapeType::kCount
+	   || (m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent && !m_mesh.m_modelc))
 	{
+		ANKI_ASSERT(!m_body);
 		return Error::kNone;
 	}
 
-	const Bool shapeDirty = !m_body.isCreated();
+	const Bool shapeDirty =
+		!m_body.isCreated()
+		|| (m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent && m_mesh.m_modelc->getUuid() != m_mesh.m_modelcUuid);
 	if(shapeDirty)
 	{
 		updated = true;
 
-		PhysicsBodyInitInfo init;
+		v2::PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
 		init.m_transform = (m_teleported) ? m_teleportTrf : m_node->getWorldTransform();
 
-		if(m_shapeType == ShapeType::kMesh)
+		if(m_mass == 0.0f)
 		{
-			init.m_shape = m_mesh->getOrCreateCollisionShape(m_mass == 0.0f);
+			init.m_layer = v2::PhysicsLayer::kStatic;
 		}
 		else
 		{
-			init.m_shape = m_collisionShape;
+			init.m_layer = v2::PhysicsLayer::kMoving;
 		}
 
-		m_body = PhysicsWorld::getSingleton().newInstance<PhysicsBody>(init);
+		if(m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent)
+		{
+			m_mesh.m_modelcUuid = m_mesh.m_modelc->getUuid();
+
+			ANKI_CHECK(m_mesh.m_modelc->getModelResource()->getModelPatches()[0].getMesh()->getOrCreateCollisionShape(
+				m_mass == 0.0f, kMaxLodCount - 1, m_collisionShape));
+		}
+		else if(m_shapeType == BodyComponentCollisionShapeType::kAabb)
+		{
+			m_collisionShape = v2::PhysicsWorld::getSingleton().newBoxCollisionShape(m_box.m_extend);
+		}
+		else
+		{
+			ANKI_ASSERT(m_shapeType == BodyComponentCollisionShapeType::kSphere);
+			m_collisionShape = v2::PhysicsWorld::getSingleton().newSphereCollisionShape(m_sphere.m_radius);
+		}
+
+		init.m_shape = m_collisionShape.get();
+
+		m_body = v2::PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(this);
 
 		m_teleported = false; // Cancel teleportation since the body was re-created
 	}
 
-	if(m_body && m_teleported)
+	if(m_teleported)
 	{
 		updated = true;
 		m_teleported = false;
 		m_body->setTransform(m_teleportTrf);
 	}
 
-	if(m_body && m_body->getTransform() != info.m_node->getWorldTransform())
+	if(m_body->getTransform() != info.m_node->getWorldTransform())
 	{
 		updated = true;
 		info.m_node->setLocalTransform(m_body->getTransform());
@@ -148,11 +102,7 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	if(m_force.getLengthSquared() > 0.0f)
 	{
-		if(m_body)
-		{
-			m_body->applyForce(m_force, m_forcePosition);
-		}
-
+		m_body->applyForce(m_force, m_forcePosition);
 		m_force = Vec3(0.0f);
 	}
 
@@ -166,13 +116,13 @@ void BodyComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool a
 		return;
 	}
 
-	if(added && m_modelc == nullptr)
+	if(added && m_mesh.m_modelc == nullptr)
 	{
-		m_modelc = static_cast<ModelComponent*>(other);
+		m_mesh.m_modelc = static_cast<ModelComponent*>(other);
 	}
-	else if(!added && m_modelc == other)
+	else if(!added && m_mesh.m_modelc == other)
 	{
-		m_modelc = nullptr;
+		m_mesh.m_modelc = nullptr;
 	}
 }
 

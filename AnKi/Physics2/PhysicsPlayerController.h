@@ -73,6 +73,8 @@ private:
 	static constexpr Bool kEnhancedInternalEdgeRemoval = false;
 	static constexpr Bool kEnableCharacterInertia = true;
 	static constexpr F32 kInnerShapeFraction = 0.9f;
+	static constexpr Bool kEnableStickToFloor = true;
+	static constexpr Bool kEnableWalkStairs = true;
 
 	ClassWrapper<JPH::CharacterVirtual> m_jphCharacter;
 	PhysicsCollisionShapePtr m_standingShape;
@@ -99,10 +101,7 @@ private:
 	U32 m_allowSliding : 1 = false;
 	U32 m_crouching : 1 = false;
 
-	PhysicsPlayerController()
-		: PhysicsObjectBase(PhysicsObjectType::kPlayerController)
-	{
-	}
+	PhysicsPlayerController();
 
 	~PhysicsPlayerController();
 

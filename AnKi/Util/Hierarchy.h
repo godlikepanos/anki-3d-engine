@@ -49,14 +49,19 @@ public:
 		return m_parent;
 	}
 
-	Value& getChild(PtrSize i)
+	Value& getChild(U32 i)
 	{
 		return *(*(m_children.getBegin() + i));
 	}
 
-	const Value& getChild(PtrSize i) const
+	const Value& getChild(U32 i) const
 	{
 		return *(*(m_children.getBegin() + i));
+	}
+
+	Bool hasChildren() const
+	{
+		return !m_children.isEmpty();
 	}
 
 	/// Add a new child.
@@ -64,6 +69,20 @@ public:
 
 	/// Remove a child.
 	void removeChild(Value* child);
+
+	void setParent(Value* parent)
+	{
+		ANKI_ASSERT(parent);
+		parent->addChild(static_cast<Value*>(this));
+	}
+
+	void removeParent()
+	{
+		if(m_parent)
+		{
+			m_parent->removeChild(this);
+		}
+	}
 
 	/// Visit the children and the children's children. Use it with lambda
 	template<typename TVisitorFunc>

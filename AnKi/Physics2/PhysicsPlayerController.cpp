@@ -12,6 +12,11 @@ namespace v2 {
 
 thread_local static StaticTempAllocator<1_MB> g_tempAllocator;
 
+PhysicsPlayerController::PhysicsPlayerController()
+	: PhysicsObjectBase(PhysicsObjectType::kPlayerController)
+{
+}
+
 PhysicsPlayerController::~PhysicsPlayerController()
 {
 	m_jphCharacter.destroy();
@@ -50,13 +55,6 @@ void PhysicsPlayerController::init(const PhysicsPlayerControllerInitInfo& init)
 
 void PhysicsPlayerController::prePhysicsUpdate(Second dt)
 {
-	if(!m_input.m_updated)
-	{
-		return;
-	}
-
-	m_input.m_updated = false;
-
 	const Bool bJump = m_input.m_jumpSpeed > 0.0f;
 	const JPH::Vec3 inMovementDirection = toJPH(m_input.m_forwardDir);
 
@@ -143,6 +141,37 @@ void PhysicsPlayerController::prePhysicsUpdate(Second dt)
 			m_jphCharacter->SetInnerBodyShape(innerShape);
 		}
 	}
+
+	if(m_input.m_updated)
+	{
+		m_input.m_updated = false;
+		m_input = {};
+	}
+
+	// Settings for our update function
+	JPH::CharacterVirtual::ExtendedUpdateSettings updateSettings;
+	if(!kEnableStickToFloor)
+	{
+		updateSettings.mStickToFloorStepDown = JPH::Vec3::sZero();
+	}
+	else
+	{
+		updateSettings.mStickToFloorStepDown = -m_jphCharacter->GetUp() * updateSettings.mStickToFloorStepDown.Length();
+	}
+	if(!kEnableWalkStairs)
+	{
+		updateSettings.mWalkStairsStepUp = JPH::Vec3::sZero();
+	}
+	else
+	{
+		updateSettings.mWalkStairsStepUp = m_jphCharacter->GetUp() * updateSettings.mWalkStairsStepUp.Length();
+	}
+
+	// Update the character position
+	JPH::PhysicsSystem& system = *PhysicsWorld::getSingleton().m_jphPhysicsSystem;
+	m_jphCharacter->ExtendedUpdate(F32(dt), -m_jphCharacter->GetUp() * system.GetGravity().Length(), updateSettings,
+								   system.GetDefaultBroadPhaseLayerFilter(JPH::ObjectLayer(PhysicsLayer::kPlayerController)),
+								   system.GetDefaultLayerFilter(JPH::ObjectLayer(PhysicsLayer::kPlayerController)), {}, {}, g_tempAllocator);
 }
 
 void PhysicsPlayerController::postPhysicsUpdate()

@@ -8,7 +8,7 @@
 #include <AnKi/Resource/ResourceObject.h>
 #include <AnKi/Math.h>
 #include <AnKi/Util/WeakArray.h>
-#include <AnKi/Physics/PhysicsCollisionShape.h>
+#include <AnKi/Physics2/PhysicsCollisionShape.h>
 
 namespace anki {
 
@@ -27,26 +27,17 @@ public:
 	/// Load from a mesh file
 	Error load(const ResourceFilename& filename, Bool async);
 
-	ConstWeakArray<Vec3> getPositions() const
-	{
-		return m_positions;
-	}
-
-	ConstWeakArray<U32> getIndices() const
-	{
-		return m_indices;
-	}
-
-	const PhysicsCollisionShapePtr& getOrCreateCollisionShape(Bool isStatic) const;
+	const v2::PhysicsCollisionShapePtr& getOrCreateCollisionShape(Bool isStatic, U32 lod = kMaxLodCount - 1) const;
 
 private:
-	ResourceDynamicArray<Vec3> m_positions;
-	ResourceDynamicArray<U32> m_indices;
+	ResourceDynamicArray<Vec3> m_positionsMaxLod;
+	ResourceDynamicArray<U32> m_indicesMaxLod;
 
-	mutable PhysicsCollisionShapePtr m_collisionShape;
+	mutable v2::PhysicsCollisionShapePtr m_collisionShape;
 	mutable SpinLock m_shapeMtx;
 
 	Bool m_isConvex = false;
+	U8 m_maxLod = 0;
 };
 /// @}
 

@@ -31,9 +31,18 @@ Bool PhysicsBody::MyGroupFilter::CanCollide(const JPH::CollisionGroup& inGroup1,
 	}
 }
 
+PhysicsBody::PhysicsBody()
+	: PhysicsObjectBase(PhysicsObjectType::kBody)
+{
+}
+
+PhysicsBody::~PhysicsBody()
+{
+}
+
 void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 {
-	if(init.m_layer == PhysicsLayer::kStatic)
+	if(init.m_layer == PhysicsLayer::kStatic || init.m_layer == PhysicsLayer::kTrigger)
 	{
 		ANKI_ASSERT(init.m_mass == 0.0f);
 	}
@@ -73,7 +82,7 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 	JPH::BodyCreationSettings settings((scaledShape) ? &scaledShape->m_scaled : &init.m_shape->m_shapeBase, toJPH(pos), toJPH(rot), motionType,
 									   JPH::ObjectLayer(init.m_layer));
 
-	if(init.m_mass)
+	if(init.m_mass > 0.0f)
 	{
 		ANKI_ASSERT(!init.m_isTrigger && "Triggers can't have mass");
 		settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
@@ -140,6 +149,21 @@ void PhysicsBody::activate(Bool activate)
 void PhysicsBody::setGravityFactor(F32 factor)
 {
 	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().SetGravityFactor(m_jphBody->GetID(), factor);
+}
+
+void PhysicsBody::setLinearVelocity(Vec3 v)
+{
+	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().SetLinearVelocity(m_jphBody->GetID(), toJPH(v));
+}
+
+void PhysicsBody::setAngularVelocity(Vec3 v)
+{
+	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().SetAngularVelocity(m_jphBody->GetID(), toJPH(v));
+}
+
+void PhysicsBody::clearForcesAndTorque()
+{
+	m_jphBody->ResetMotion();
 }
 
 void PhysicsBody::postPhysicsUpdate()

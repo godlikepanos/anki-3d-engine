@@ -10,6 +10,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Core/App.h>
+#include <AnKi/Physics2/PhysicsWorld.h>
 
 namespace anki {
 
@@ -98,6 +99,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_aabb.setMax(header.m_boundingVolume.m_aabbMax);
 	m_positionsScale = header.m_vertexAttributes[VertexStreamId::kPosition].m_scale[0];
 	m_positionsTranslation = Vec3(&header.m_vertexAttributes[VertexStreamId::kPosition].m_translation[0]);
+	m_isConvex = !!(loader.getHeader().m_flags & MeshBinaryFlag::kConvex);
 
 	// Submeshes
 	m_subMeshes.resize(header.m_subMeshCount);
@@ -433,6 +435,44 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		transferAlloc.release(handles[i], fence);
 	}
 
+	return Error::kNone;
+}
+
+Error MeshResource::getOrCreateCollisionShape(Bool wantStatic, U32 lod, v2::PhysicsCollisionShapePtr& out) const
+{
+	lod = min<U32>(lod, getLodCount() - 1);
+
+	Bool isConvex = m_isConvex;
+	if(!isConvex && !wantStatic)
+	{
+		ANKI_RESOURCE_LOGW("Requesting a non-static non-convex collision shape is not supported. Will create a convex hull instead");
+		isConvex = true;
+	}
+
+	const Lod& l = m_lods[lod];
+
+	LockGuard lock(l.m_collisionShapeMtx);
+
+	if(!l.m_collisionShapes[isConvex])
+	{
+		MeshBinaryLoader loader(&ResourceMemoryPool::getSingleton());
+		ANKI_CHECK(loader.load(getFilename()));
+
+		ResourceDynamicArray<Vec3> positions;
+		ResourceDynamicArray<U32> indices;
+		ANKI_CHECK(loader.storeIndicesAndPosition(lod, indices, positions));
+
+		if(isConvex)
+		{
+			l.m_collisionShapes[isConvex] = v2::PhysicsWorld::getSingleton().newConvexHullShape(positions);
+		}
+		else
+		{
+			l.m_collisionShapes[isConvex] = v2::PhysicsWorld::getSingleton().newStaticMeshShape(positions, indices);
+		}
+	}
+
+	out = l.m_collisionShapes[isConvex];
 	return Error::kNone;
 }
 

@@ -9,15 +9,9 @@
 #include <Application/DebugUI.h>
 #include <Utils/Log.h>
 #include <Utils/CustomMemoryHook.h>
-#include <Jolt/Core/FPException.h>
 #include <Jolt/Core/Factory.h>
 #include <Jolt/RegisterTypes.h>
 #include <Renderer/DebugRendererImp.h>
-#ifdef JPH_ENABLE_VULKAN
-	#include <Renderer/VK/RendererVK.h>
-#elif defined(JPH_ENABLE_DIRECTX)
-	#include <Renderer/DX12/RendererDX12.h>
-#endif
 #ifdef JPH_PLATFORM_WINDOWS
 	#include <crtdbg.h>
 	#include <Input/Win/KeyboardWin.h>
@@ -36,7 +30,7 @@
 JPH_GCC_SUPPRESS_WARNING("-Wswitch")
 
 // Constructor
-Application::Application([[maybe_unused]] const String &inCommandLine) :
+Application::Application(const char *inApplicationName, [[maybe_unused]] const String &inCommandLine) :
 	mDebugRenderer(nullptr),
 	mRenderer(nullptr),
 	mKeyboard(nullptr),
@@ -81,16 +75,10 @@ Application::Application([[maybe_unused]] const String &inCommandLine) :
 	#else
 		#error No window defined
 	#endif
-		mWindow->Initialize();
+		mWindow->Initialize(inApplicationName);
 
 		// Create renderer
-	#ifdef JPH_ENABLE_VULKAN
-		mRenderer = new RendererVK;
-	#elif defined(JPH_ENABLE_DIRECTX)
-		mRenderer = new RendererDX12;
-	#else
-		#error No renderer defined
-	#endif
+		mRenderer = Renderer::sCreate();
 		mRenderer->Initialize(mWindow);
 
 		// Create font

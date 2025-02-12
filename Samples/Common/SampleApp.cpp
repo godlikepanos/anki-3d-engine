@@ -10,7 +10,7 @@ using namespace anki;
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
 	// Init the super class
-	g_windowFullscreenCVar.set(1);
+	g_windowFullscreenCVar = 1;
 
 #if !ANKI_OS_ANDROID
 	HeapMemoryPool tmpPool(allocAligned, nullptr);
@@ -23,7 +23,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 	else
 	{
-		g_dataPathsCVar.set(BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s|.anki,lua", assetsDataPath.cstr()));
+		g_dataPathsCVar = BaseString<MemoryPoolPtrWrapper<HeapMemoryPool>>(&tmpPool).sprintf("%s|.anki,lua", assetsDataPath.cstr());
 	}
 #endif
 
@@ -64,7 +64,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(in.getKey(KeyCode::kY) == 1)
 	{
 		// renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");
-		g_shadowMappingPcssCVar.set(!g_shadowMappingPcssCVar);
+		g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)
@@ -135,7 +135,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kJ) == 1)
 	{
-		g_vrsCVar.set(!g_vrsCVar);
+		g_vrsCVar = !g_vrsCVar;
 	}
 
 	static Vec2 mousePosOn1stClick = in.getMousePosition();
@@ -151,17 +151,17 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		mode = (mode + 1) % 3;
 		if(mode == 0)
 		{
-			g_dbgCVar.set(false);
+			g_dbgSceneCVar = false;
 		}
 		else if(mode == 1)
 		{
-			g_dbgCVar.set(true);
+			g_dbgSceneCVar = true;
 			renderer.getDbg().setDepthTestEnabled(true);
 			renderer.getDbg().setDitheredDepthTestEnabled(false);
 		}
 		else
 		{
-			g_dbgCVar.set(true);
+			g_dbgSceneCVar = true;
 			renderer.getDbg().setDepthTestEnabled(false);
 			renderer.getDbg().setDitheredDepthTestEnabled(true);
 		}
@@ -169,7 +169,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kF11) == 1 && ANKI_TRACING_ENABLED)
 	{
-		g_tracingEnabledCVar.set(!g_tracingEnabledCVar);
+		g_tracingEnabledCVar = !g_tracingEnabledCVar;
 	}
 
 	if(in.getMouseButton(MouseButton::kRight) || in.hasTouchDevice())

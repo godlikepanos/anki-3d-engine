@@ -7,8 +7,10 @@
 #include <Window/ApplicationWindow.h>
 
 #ifdef __OBJC__
+@class MTKView;
 @class CAMetalLayer;
 #else
+typedef void MTKView;
 typedef void CAMetalLayer;
 #endif
 
@@ -16,25 +18,29 @@ typedef void CAMetalLayer;
 class ApplicationWindowMacOS : public ApplicationWindow
 {
 public:
-	/// Initialize the window
-	virtual void					Initialize() override;
+	/// Destructor
+	virtual							~ApplicationWindowMacOS() override;
 
-	/// Access to the metal layer
-	CAMetalLayer *					GetMetalLayer() const					{ return mMetalLayer; }
+	/// Initialize the window
+	virtual void					Initialize(const char *inTitle) override;
+
+	/// Access to the metal objects
+	MTKView *						GetMetalView() const					{ return mMetalView; }
+	CAMetalLayer *					GetMetalLayer() const;
 
 	/// Enter the main loop and keep rendering frames until the window is closed
 	virtual void					MainLoop(RenderCallback inRenderCallback) override;
 	
 	/// Call the render callback
-	bool							RenderCallback()						{ return mRenderCallback(); }
-	
+	bool							RenderCallback()						{ return mRenderCallback && mRenderCallback(); }
+
 	/// Subscribe to mouse move callbacks that supply window coordinates
 	using MouseMovedCallback = function<void(int, int)>;
 	void							SetMouseMovedCallback(MouseMovedCallback inCallback) { mMouseMovedCallback = inCallback; }
 	void							OnMouseMoved(int inX, int inY)			{ mMouseMovedCallback(inX, inY); }
 
 protected:
-	CAMetalLayer *					mMetalLayer = nullptr;
+	MTKView *						mMetalView = nullptr;
 	ApplicationWindow::RenderCallback mRenderCallback;
 	MouseMovedCallback				mMouseMovedCallback;
 };

@@ -60,7 +60,6 @@ static EventManager* getEventManager(lua_State* l)
 }
 
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
-using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 ]]></head>
 
 	<enums>
@@ -68,6 +67,15 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			<enumerant name="kPoint"/>
 			<enumerant name="kSpot"/>
 			<enumerant name="kDirectional"/>
+		</enum>
+	</enums>
+
+	<enums>
+		<enum name="BodyComponentCollisionShapeType">
+			<enumerant name="kFromModelComponent"/>
+			<enumerant name="kAabb"/>
+			<enumerant name="kSphere"/>
+			<enumerant name="kCount"/>
 		</enum>
 	</enums>
 
@@ -82,19 +90,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<overrideCall><![CDATA[SceneNode* ret = (*self)[arg0];]]></overrideCall>
 					<args><arg>U32</arg></args>
 					<return>SceneNode*</return>
-				</method>
-			</methods>
-		</class>
-
-		<class name="WeakArrayBodyComponentPtr">
-			<methods>
-				<method name="getSize">
-					<return>U32</return>
-				</method>
-				<method name="getAt">
-					<overrideCall><![CDATA[BodyComponent* ret = (*self)[arg0];]]></overrideCall>
-					<args><arg>U32</arg></args>
-					<return>BodyComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -202,12 +197,27 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="BodyComponent">
 			<methods>
-				<method name="loadMeshResource">
+				<method name="setCollisionShapeType">
 					<args>
-						<arg>CString</arg>
+						<arg>BodyComponentCollisionShapeType</arg>
 					</args>
 				</method>
-				<method name="setMeshFromModelComponent"></method>
+				<method name="setBoxExtend">
+					<args>
+						<arg>Vec3</arg>
+					</args>
+				</method>
+				<method name="getBoxExtend">
+					<return>const Vec3&amp;</return>
+				</method>
+				<method name="setSphereRadius">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getSphereRadius">
+					<return>F32</return>
+				</method>
 				<method name="teleportTo">
 					<args>
 						<arg>const Transform&amp;</arg>
@@ -218,14 +228,11 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="TriggerComponent">
 			<methods>
-				<method name="getBodyComponentsEnter">
-					<return>WeakArrayBodyComponentPtr</return>
+				<method name="getSceneNodesEnter">
+					<return>WeakArraySceneNodePtr</return>
 				</method>
-				<method name="getBodyComponentsInside">
-					<return>WeakArrayBodyComponentPtr</return>
-				</method>
-				<method name="getBodyComponentsExit">
-					<return>WeakArrayBodyComponentPtr</return>
+				<method name="getSceneNodesExit">
+					<return>WeakArraySceneNodePtr</return>
 				</method>
 			</methods>
 		</class>

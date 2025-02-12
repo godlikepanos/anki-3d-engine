@@ -14,7 +14,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline BoolCVar g_dbgCVar("R", "Dbg", false, "Enable or not debug visualization");
+inline BoolCVar g_dbgSceneCVar("R", "DbgScene", false, "Enable or not debug visualization of scene");
 inline BoolCVar g_dbgPhysicsCVar("R", "DbgPhysics", false, "Enable or not physics debug visualization");
 
 /// Debugging stage
@@ -77,8 +77,7 @@ private:
 	BufferPtr m_cubeVertsBuffer;
 	BufferPtr m_cubeIndicesBuffer;
 
-	ShaderProgramResourcePtr m_renderablesProg;
-	ShaderProgramResourcePtr m_nonRenderablesProg;
+	ShaderProgramResourcePtr m_dbgProg;
 
 	Bool m_depthTestOn : 1 = false;
 	Bool m_ditheredDepthTestOn : 1 = false;

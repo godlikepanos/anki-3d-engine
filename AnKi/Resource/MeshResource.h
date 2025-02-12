@@ -11,6 +11,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Shaders/Include/MeshTypes.h>
 #include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/Physics2/PhysicsCollisionShape.h>
 
 namespace anki {
 
@@ -105,6 +106,8 @@ public:
 		return m_positionsTranslation;
 	}
 
+	Error getOrCreateCollisionShape(Bool wantStatic, U32 lod, v2::PhysicsCollisionShapePtr& out) const;
+
 private:
 	class LoadTask;
 	class LoadContext;
@@ -118,6 +121,9 @@ private:
 		UnifiedGeometryBufferAllocation m_meshletIndices;
 		UnifiedGeometryBufferAllocation m_meshletBoundingVolumes;
 		UnifiedGeometryBufferAllocation m_meshletGeometryDescriptors;
+
+		mutable Array<v2::PhysicsCollisionShapePtr, 2> m_collisionShapes;
+		mutable SpinLock m_collisionShapeMtx;
 
 		U32 m_indexCount = 0;
 		U32 m_vertexCount = 0;
@@ -145,6 +151,8 @@ private:
 
 	F32 m_positionsScale = 0.0f;
 	Vec3 m_positionsTranslation = Vec3(0.0f);
+
+	Bool m_isConvex = false;
 
 	Error loadAsync(MeshBinaryLoader& loader) const;
 };
