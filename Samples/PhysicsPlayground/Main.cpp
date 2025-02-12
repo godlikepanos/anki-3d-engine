@@ -382,8 +382,8 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		Vec3 from = camTrf.getOrigin().xyz();
 		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
-		v2::RayHitResult result;
-		const Bool hit = v2::PhysicsWorld::getSingleton().castRayClosestHit(from, to, v2::PhysicsLayerBit::kStatic, result);
+		RayHitResult result;
+		const Bool hit = PhysicsWorld::getSingleton().castRayClosestHit(from, to, PhysicsLayerBit::kStatic, result);
 
 		if(hit)
 		{

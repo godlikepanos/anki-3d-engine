@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics2/PhysicsJoint.h>
+#include <AnKi/Physics/PhysicsJoint.h>
 
 namespace anki {
 
@@ -39,7 +39,7 @@ public:
 	}
 
 private:
-	v2::PhysicsJointPtr m_joint;
+	PhysicsJointPtr m_joint;
 
 	U32 m_parentNodeUuid = 0;
 	U32 m_childNodeUuid = 0;

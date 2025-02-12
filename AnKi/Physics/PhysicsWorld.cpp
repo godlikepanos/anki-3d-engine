@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Util/System.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/HighRezTimer.h>
@@ -13,7 +13,6 @@
 #include <Jolt/ConfigurationString.h>
 
 namespace anki {
-namespace v2 {
 
 static StatCounter g_physicsBodiesCreatedStatVar(StatCategory::kMisc, "Phys bodies created", StatFlag::kZeroEveryFrame);
 static StatCounter g_physicsJointsCreatedStatVar(StatCategory::kMisc, "Phys joints created", StatFlag::kZeroEveryFrame);
@@ -750,5 +749,4 @@ void PhysicsWorld::debugDraw(PhysicsDebugDrawerInterface& interface)
 	m_jphPhysicsSystem->DrawConstraints(&renderer);
 }
 
-} // namespace v2
 } // end namespace anki

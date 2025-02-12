@@ -10,7 +10,7 @@
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/Filesystem.h>
 #include <AnKi/Core/App.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
 
@@ -438,7 +438,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 	return Error::kNone;
 }
 
-Error MeshResource::getOrCreateCollisionShape(Bool wantStatic, U32 lod, v2::PhysicsCollisionShapePtr& out) const
+Error MeshResource::getOrCreateCollisionShape(Bool wantStatic, U32 lod, PhysicsCollisionShapePtr& out) const
 {
 	lod = min<U32>(lod, getLodCount() - 1);
 
@@ -464,11 +464,11 @@ Error MeshResource::getOrCreateCollisionShape(Bool wantStatic, U32 lod, v2::Phys
 
 		if(isConvex)
 		{
-			l.m_collisionShapes[isConvex] = v2::PhysicsWorld::getSingleton().newConvexHullShape(positions);
+			l.m_collisionShapes[isConvex] = PhysicsWorld::getSingleton().newConvexHullShape(positions);
 		}
 		else
 		{
-			l.m_collisionShapes[isConvex] = v2::PhysicsWorld::getSingleton().newStaticMeshShape(positions, indices);
+			l.m_collisionShapes[isConvex] = PhysicsWorld::getSingleton().newStaticMeshShape(positions, indices);
 		}
 	}
 

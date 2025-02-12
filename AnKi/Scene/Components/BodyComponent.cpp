@@ -9,7 +9,7 @@
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/CpuMeshResource.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ModelResource.h>
 
 namespace anki {
@@ -49,17 +49,17 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	{
 		updated = true;
 
-		v2::PhysicsBodyInitInfo init;
+		PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
 		init.m_transform = (m_teleported) ? m_teleportTrf : m_node->getWorldTransform();
 
 		if(m_mass == 0.0f)
 		{
-			init.m_layer = v2::PhysicsLayer::kStatic;
+			init.m_layer = PhysicsLayer::kStatic;
 		}
 		else
 		{
-			init.m_layer = v2::PhysicsLayer::kMoving;
+			init.m_layer = PhysicsLayer::kMoving;
 		}
 
 		if(m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent)
@@ -71,17 +71,17 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 		else if(m_shapeType == BodyComponentCollisionShapeType::kAabb)
 		{
-			m_collisionShape = v2::PhysicsWorld::getSingleton().newBoxCollisionShape(m_box.m_extend);
+			m_collisionShape = PhysicsWorld::getSingleton().newBoxCollisionShape(m_box.m_extend);
 		}
 		else
 		{
 			ANKI_ASSERT(m_shapeType == BodyComponentCollisionShapeType::kSphere);
-			m_collisionShape = v2::PhysicsWorld::getSingleton().newSphereCollisionShape(m_sphere.m_radius);
+			m_collisionShape = PhysicsWorld::getSingleton().newSphereCollisionShape(m_sphere.m_radius);
 		}
 
 		init.m_shape = m_collisionShape.get();
 
-		m_body = v2::PhysicsWorld::getSingleton().newPhysicsBody(init);
+		m_body = PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(this);
 
 		m_teleported = false; // Cancel teleportation since the body was re-created

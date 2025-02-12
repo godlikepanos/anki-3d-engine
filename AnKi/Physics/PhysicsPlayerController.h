@@ -5,11 +5,10 @@
 
 #pragma once
 
-#include <AnKi/Physics2/Common.h>
+#include <AnKi/Physics/Common.h>
 #include <AnKi/Util/ClassWrapper.h>
 
 namespace anki {
-namespace v2 {
 
 /// @addtogroup physics
 /// @{
@@ -113,5 +112,4 @@ private:
 };
 /// @}
 
-} // namespace v2
 } // end namespace anki

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <AnKi/Physics2/PhysicsWorld.h>
-#include <AnKi/Physics2/PhysicsBody.h>
-#include <AnKi/Physics2/PhysicsCollisionShape.h>
-#include <AnKi/Physics2/PhysicsJoint.h>
-#include <AnKi/Physics2/PhysicsPlayerController.h>
+#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsBody.h>
+#include <AnKi/Physics/PhysicsCollisionShape.h>
+#include <AnKi/Physics/PhysicsJoint.h>
+#include <AnKi/Physics/PhysicsPlayerController.h>
 
 /// @defgroup physics Physics subsystem

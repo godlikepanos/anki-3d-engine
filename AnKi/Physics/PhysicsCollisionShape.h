@@ -5,12 +5,11 @@
 
 #pragma once
 
-#include <AnKi/Physics2/Common.h>
+#include <AnKi/Physics/Common.h>
 #include <AnKi/Util/WeakArray.h>
 #include <AnKi/Util/ClassWrapper.h>
 
 namespace anki {
-namespace v2 {
 
 /// Wrapper on top of JPH collision shapes.
 class PhysicsCollisionShape : public PhysicsObjectBase
@@ -52,5 +51,4 @@ private:
 	}
 };
 
-} // namespace v2
 } // end namespace anki

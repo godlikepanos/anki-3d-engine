@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Physics2/PhysicsBody.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsBody.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
-namespace v2 {
 
 PhysicsBody::MyGroupFilter PhysicsBody::m_groupFilter;
 
@@ -194,5 +193,4 @@ void PhysicsBody::setCollisionFilterCallback(PhysicsCollisionFilterCallback* cal
 	m_jphBody->SetCollisionGroup(collisionGroup);
 }
 
-} // namespace v2
 } // namespace anki

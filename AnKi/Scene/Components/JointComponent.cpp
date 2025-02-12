@@ -5,7 +5,7 @@
 #include <AnKi/Scene/Components/JointComponent.h>
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
 
@@ -29,8 +29,8 @@ Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bo
 	BodyComponent* bodyc1 = (parent) ? parent->tryGetFirstComponentOfType<BodyComponent>() : nullptr;
 	BodyComponent* bodyc2 = (child) ? child->tryGetFirstComponentOfType<BodyComponent>() : nullptr;
 
-	v2::PhysicsBody* body1 = (bodyc1) ? bodyc1->getPhysicsBody().tryGet() : nullptr;
-	v2::PhysicsBody* body2 = (bodyc2) ? bodyc2->getPhysicsBody().tryGet() : nullptr;
+	PhysicsBody* body1 = (bodyc1) ? bodyc1->getPhysicsBody().tryGet() : nullptr;
+	PhysicsBody* body2 = (bodyc2) ? bodyc2->getPhysicsBody().tryGet() : nullptr;
 
 	if(!body1 || !body2 || m_type == JointType::kCount)
 	{
@@ -57,10 +57,10 @@ Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bo
 		switch(m_type)
 		{
 		case JointType::kPoint:
-			m_joint = v2::PhysicsWorld::getSingleton().newPointJoint(body1, body2, node.getWorldTransform().getOrigin().xyz());
+			m_joint = PhysicsWorld::getSingleton().newPointJoint(body1, body2, node.getWorldTransform().getOrigin().xyz());
 			break;
 		case JointType::kHinge:
-			m_joint = v2::PhysicsWorld::getSingleton().newHingeJoint(body1, body2, node.getWorldTransform());
+			m_joint = PhysicsWorld::getSingleton().newHingeJoint(body1, body2, node.getWorldTransform());
 			break;
 		default:
 			ANKI_ASSERT(0);

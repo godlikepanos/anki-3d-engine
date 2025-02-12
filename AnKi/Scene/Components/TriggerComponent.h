@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics2/PhysicsBody.h>
+#include <AnKi/Physics/PhysicsBody.h>
 
 namespace anki {
 
@@ -40,8 +40,8 @@ private:
 
 	SceneNode* m_node;
 
-	v2::PhysicsCollisionShapePtr m_shape;
-	v2::PhysicsBodyPtr m_trigger;
+	PhysicsCollisionShapePtr m_shape;
+	PhysicsBodyPtr m_trigger;
 
 	SceneDynamicArray<SceneNode*> m_bodiesEnter;
 	SceneDynamicArray<SceneNode*> m_bodiesExit;

@@ -17,7 +17,7 @@
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Collision/ConvexHullShape.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
 
@@ -228,7 +228,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	// Physics
 	if(g_dbgPhysicsCVar)
 	{
-		class MyPhysicsDebugDrawerInterface final : public v2::PhysicsDebugDrawerInterface
+		class MyPhysicsDebugDrawerInterface final : public PhysicsDebugDrawerInterface
 		{
 		public:
 			RendererDynamicArray<HVec4> m_positions;
@@ -251,7 +251,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 			}
 		} drawerInterface;
 
-		v2::PhysicsWorld::getSingleton().debugDraw(drawerInterface);
+		PhysicsWorld::getSingleton().debugDraw(drawerInterface);
 
 		const U32 vertCount = drawerInterface.m_positions.getSize();
 		if(vertCount)

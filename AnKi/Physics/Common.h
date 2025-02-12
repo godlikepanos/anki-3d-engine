@@ -40,7 +40,6 @@
 #include <Jolt/Core/JobSystemThreadPool.h>
 
 namespace anki {
-namespace v2 {
 
 #define ANKI_PHYS_LOGI(...) ANKI_LOG("PHYS", kNormal, __VA_ARGS__)
 #define ANKI_PHYS_LOGE(...) ANKI_LOG("PHYS", kError, __VA_ARGS__)
@@ -241,5 +240,4 @@ inline Transform toAnKi(const JPH::RMat44& jph)
 	return Transform(m);
 }
 
-} // namespace v2
 } // end namespace anki

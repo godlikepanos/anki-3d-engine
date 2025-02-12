@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics2/PhysicsBody.h>
+#include <AnKi/Physics/PhysicsBody.h>
 #include <AnKi/Resource/Forward.h>
 
 namespace anki {
@@ -91,7 +91,7 @@ public:
 		return m_mass;
 	}
 
-	const v2::PhysicsBodyPtr& getPhysicsBody() const
+	const PhysicsBodyPtr& getPhysicsBody() const
 	{
 		return m_body;
 	}
@@ -111,9 +111,9 @@ public:
 
 private:
 	SceneNode* m_node = nullptr;
-	v2::PhysicsBodyPtr m_body;
+	PhysicsBodyPtr m_body;
 
-	v2::PhysicsCollisionShapePtr m_collisionShape;
+	PhysicsCollisionShapePtr m_collisionShape;
 
 	class
 	{

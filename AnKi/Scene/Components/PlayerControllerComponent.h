@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Components/SceneComponent.h>
-#include <AnKi/Physics2/PhysicsPlayerController.h>
+#include <AnKi/Physics/PhysicsPlayerController.h>
 
 namespace anki {
 
@@ -31,13 +31,13 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	v2::PhysicsPlayerController& getPhysicsPlayerController()
+	PhysicsPlayerController& getPhysicsPlayerController()
 	{
 		return *m_player;
 	}
 
 private:
-	v2::PhysicsPlayerControllerPtr m_player;
+	PhysicsPlayerControllerPtr m_player;
 	U32 m_positionVersion = kMaxU32;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;

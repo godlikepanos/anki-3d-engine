@@ -5,15 +5,14 @@
 
 #pragma once
 
-#include <AnKi/Physics2/Common.h>
-#include <AnKi/Physics2/PhysicsCollisionShape.h>
-#include <AnKi/Physics2/PhysicsBody.h>
-#include <AnKi/Physics2/PhysicsJoint.h>
-#include <AnKi/Physics2/PhysicsPlayerController.h>
+#include <AnKi/Physics/Common.h>
+#include <AnKi/Physics/PhysicsCollisionShape.h>
+#include <AnKi/Physics/PhysicsBody.h>
+#include <AnKi/Physics/PhysicsJoint.h>
+#include <AnKi/Physics/PhysicsPlayerController.h>
 #include <AnKi/Util/BlockArray.h>
 
 namespace anki {
-namespace v2 {
 
 /// @addtogroup physics
 /// @{
@@ -146,5 +145,4 @@ private:
 };
 /// @}
 
-} // namespace v2
 } // end namespace anki

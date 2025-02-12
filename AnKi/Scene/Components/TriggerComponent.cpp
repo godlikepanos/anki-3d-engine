@@ -7,16 +7,16 @@
 #include <AnKi/Scene/Components/BodyComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Physics2/PhysicsCollisionShape.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsCollisionShape.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
 
 /// The callbacks execute before the TriggerComponent::update
-class TriggerComponent::MyPhysicsTriggerCallbacks final : public v2::PhysicsTriggerCallbacks
+class TriggerComponent::MyPhysicsTriggerCallbacks final : public PhysicsTriggerCallbacks
 {
 public:
-	void onTriggerEnter(const v2::PhysicsBody& trigger, const v2::PhysicsObjectBase& obj) override
+	void onTriggerEnter(const PhysicsBody& trigger, const PhysicsObjectBase& obj) override
 	{
 		TriggerComponent& triggerc = *reinterpret_cast<TriggerComponent*>(trigger.getUserData());
 		ANKI_ASSERT(triggerc.getType() == TriggerComponent::kClassType);
@@ -27,16 +27,16 @@ public:
 			triggerc.m_resetEnter = false;
 		}
 
-		if(obj.getType() == v2::PhysicsObjectType::kBody)
+		if(obj.getType() == PhysicsObjectType::kBody)
 		{
-			const v2::PhysicsBody& body = static_cast<const v2::PhysicsBody&>(obj);
+			const PhysicsBody& body = static_cast<const PhysicsBody&>(obj);
 			BodyComponent& bodyc = *reinterpret_cast<BodyComponent*>(body.getUserData());
 			ANKI_ASSERT(bodyc.getType() == BodyComponent::kClassType);
 			triggerc.m_bodiesEnter.emplaceBack(&bodyc.getSceneNode());
 		}
 	}
 
-	void onTriggerExit(const v2::PhysicsBody& trigger, const v2::PhysicsObjectBase& obj) override
+	void onTriggerExit(const PhysicsBody& trigger, const PhysicsObjectBase& obj) override
 	{
 		TriggerComponent& triggerc = *reinterpret_cast<TriggerComponent*>(trigger.getUserData());
 		ANKI_ASSERT(triggerc.getType() == TriggerComponent::kClassType);
@@ -47,9 +47,9 @@ public:
 			triggerc.m_resetExit = false;
 		}
 
-		if(obj.getType() == v2::PhysicsObjectType::kBody)
+		if(obj.getType() == PhysicsObjectType::kBody)
 		{
-			const v2::PhysicsBody& body = static_cast<const v2::PhysicsBody&>(obj);
+			const PhysicsBody& body = static_cast<const PhysicsBody&>(obj);
 			BodyComponent& bodyc = *reinterpret_cast<BodyComponent*>(body.getUserData());
 			ANKI_ASSERT(bodyc.getType() == BodyComponent::kClassType);
 			triggerc.m_bodiesExit.emplaceBack(&bodyc.getSceneNode());
@@ -72,15 +72,15 @@ TriggerComponent::~TriggerComponent()
 void TriggerComponent::setSphereVolumeRadius(F32 radius)
 {
 	// Need to re-create it
-	m_shape = v2::PhysicsWorld::getSingleton().newSphereCollisionShape(radius);
+	m_shape = PhysicsWorld::getSingleton().newSphereCollisionShape(radius);
 
-	v2::PhysicsBodyInitInfo init;
+	PhysicsBodyInitInfo init;
 	init.m_isTrigger = true;
 	init.m_shape = m_shape.get();
 	init.m_transform = m_node->getWorldTransform();
-	init.m_layer = v2::PhysicsLayer::kTrigger;
+	init.m_layer = PhysicsLayer::kTrigger;
 
-	m_trigger = v2::PhysicsWorld::getSingleton().newPhysicsBody(init);
+	m_trigger = PhysicsWorld::getSingleton().newPhysicsBody(init);
 	m_trigger->setUserData(this);
 	m_trigger->setPhysicsTriggerCallbacks(&m_callbacks);
 	m_trigger->setTransform(m_node->getWorldTransform());

@@ -6,7 +6,7 @@
 #include <AnKi/Resource/CpuMeshResource.h>
 #include <AnKi/Resource/MeshBinaryLoader.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 
 namespace anki {
 
@@ -23,7 +23,7 @@ Error CpuMeshResource::load(const ResourceFilename& filename, [[maybe_unused]] B
 	return Error::kNone;
 }
 
-const v2::PhysicsCollisionShapePtr& CpuMeshResource::getOrCreateCollisionShape(Bool isStatic, U32 lod) const
+const PhysicsCollisionShapePtr& CpuMeshResource::getOrCreateCollisionShape(Bool isStatic, U32 lod) const
 {
 	lod = min<U32>(lod, m_maxLod);
 	ANKI_ASSERT(lod == m_maxLod && "Not supported ATM");
@@ -39,11 +39,11 @@ const v2::PhysicsCollisionShapePtr& CpuMeshResource::getOrCreateCollisionShape(B
 				ANKI_RESOURCE_LOGE("Requesting a non-static non-convex collision shape is not supported. Will create a convex hull instead");
 			}
 
-			m_collisionShape = v2::PhysicsWorld::getSingleton().newConvexHullShape(m_positionsMaxLod);
+			m_collisionShape = PhysicsWorld::getSingleton().newConvexHullShape(m_positionsMaxLod);
 		}
 		else
 		{
-			m_collisionShape = v2::PhysicsWorld::getSingleton().newStaticMeshShape(m_positionsMaxLod, m_indicesMaxLod);
+			m_collisionShape = PhysicsWorld::getSingleton().newStaticMeshShape(m_positionsMaxLod, m_indicesMaxLod);
 		}
 	}
 

@@ -5,7 +5,7 @@
 
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Scene/RenderStateBucket.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Core/StatsSet.h>
@@ -205,7 +205,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 
 	// Update
 	{
-		v2::PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
+		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
 	}
 
 	{

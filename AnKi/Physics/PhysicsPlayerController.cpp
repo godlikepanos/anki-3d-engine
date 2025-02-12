@@ -3,12 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Physics2/PhysicsPlayerController.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
-#include <AnKi/Physics2/PhysicsCollisionShape.h>
+#include <AnKi/Physics/PhysicsPlayerController.h>
+#include <AnKi/Physics/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsCollisionShape.h>
 
 namespace anki {
-namespace v2 {
 
 thread_local static StaticTempAllocator<1_MB> g_tempAllocator;
 
@@ -184,5 +183,4 @@ void PhysicsPlayerController::postPhysicsUpdate()
 	}
 }
 
-} // namespace v2
 } // namespace anki

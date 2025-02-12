@@ -9,9 +9,9 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Physics2/PhysicsBody.h>
-#include <AnKi/Physics2/PhysicsCollisionShape.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsBody.h>
+#include <AnKi/Physics/PhysicsCollisionShape.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Math.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
 #include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
@@ -127,11 +127,11 @@ public:
 class ParticleEmitterComponent::PhysicsParticle : public ParticleEmitterComponent::ParticleBase
 {
 public:
-	v2::PhysicsBodyPtr m_body;
+	PhysicsBodyPtr m_body;
 
-	PhysicsParticle(const v2::PhysicsBodyInitInfo& init, ParticleEmitterComponent* component)
+	PhysicsParticle(const PhysicsBodyInitInfo& init, ParticleEmitterComponent* component)
 	{
-		m_body = v2::PhysicsWorld::getSingleton().newPhysicsBody(init);
+		m_body = PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(component);
 		m_body->activate(false);
 	}
@@ -280,11 +280,10 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::kPhysicsEngine : SimulationType::kSimple;
 	if(m_simulationType == SimulationType::kPhysicsEngine)
 	{
-		v2::PhysicsCollisionShapePtr collisionShape =
-			v2::PhysicsWorld::getSingleton().newSphereCollisionShape(m_props.m_particle.m_minInitialSize / 2.0f);
+		PhysicsCollisionShapePtr collisionShape = PhysicsWorld::getSingleton().newSphereCollisionShape(m_props.m_particle.m_minInitialSize / 2.0f);
 
-		v2::PhysicsBodyInitInfo binit;
-		binit.m_layer = v2::PhysicsLayer::kDebris;
+		PhysicsBodyInitInfo binit;
+		binit.m_layer = PhysicsLayer::kDebris;
 		binit.m_shape = collisionShape.get();
 
 		m_physicsParticles.resizeStorage(m_props.m_maxNumOfParticles);

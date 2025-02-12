@@ -23,7 +23,7 @@
 #include <AnKi/Window/Input.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Physics2/PhysicsWorld.h>
+#include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Script/ScriptManager.h>
 #include <AnKi/Resource/ResourceFilesystem.h>
@@ -131,7 +131,7 @@ void App::cleanup()
 	UiManager::freeSingleton();
 	GpuSceneMicroPatcher::freeSingleton();
 	ResourceManager::freeSingleton();
-	v2::PhysicsWorld::freeSingleton();
+	PhysicsWorld::freeSingleton();
 	RebarTransientMemoryPool::freeSingleton();
 	GpuVisibleTransientMemoryPool::freeSingleton();
 	UnifiedGeometryBuffer::freeSingleton();
@@ -293,8 +293,8 @@ Error App::initInternal()
 	//
 	// Physics
 	//
-	v2::PhysicsWorld::allocateSingleton();
-	ANKI_CHECK(v2::PhysicsWorld::getSingleton().init(allocCb, allocCbUserData));
+	PhysicsWorld::allocateSingleton();
+	ANKI_CHECK(PhysicsWorld::getSingleton().init(allocCb, allocCbUserData));
 
 	//
 	// Resources
