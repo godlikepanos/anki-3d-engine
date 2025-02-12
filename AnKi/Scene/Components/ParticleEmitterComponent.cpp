@@ -123,7 +123,7 @@ public:
 	}
 };
 
-/// Particle for bullet simulations
+/// Particle for Jolt simulations
 class ParticleEmitterComponent::PhysicsParticle : public ParticleEmitterComponent::ParticleBase
 {
 public:

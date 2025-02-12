@@ -297,15 +297,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SpirvCross "Jolt/Build")
-
-# Bullet config
-option(BUILD_BULLET2_DEMOS OFF)
-option(BUILD_BULLET3 OFF)
-option(BUILD_CPU_DEMOS OFF)
-option(BUILD_OPENGL3_DEMOS OFF)
-option(BUILD_EXTRAS OFF)
-option(BUILD_UNIT_TESTS OFF)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib ImGui MeshOptimizer SpirvCross "Jolt/Build")
 
 # Jolt config
 option(USE_STATIC_MSVC_RUNTIME_LIBRARY "Use the static MSVC runtime library" OFF)
@@ -461,7 +453,6 @@ configure_file("AnKi/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/AnKi/Config.h"
 include_directories(
 	"ThirdParty/Khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
-	"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Bullet/src"
 	"ThirdParty"
 	"ThirdParty/ZLib"
 	"ThirdParty/Jolt"
