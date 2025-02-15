@@ -69,54 +69,82 @@ TriggerComponent::~TriggerComponent()
 {
 }
 
-void TriggerComponent::setSphereVolumeRadius(F32 radius)
+void TriggerComponent::setType(TriggerComponentShapeType type)
 {
-	// Need to re-create it
-	m_shape = PhysicsWorld::getSingleton().newSphereCollisionShape(radius);
-
-	PhysicsBodyInitInfo init;
-	init.m_isTrigger = true;
-	init.m_shape = m_shape.get();
-	init.m_transform = m_node->getWorldTransform();
-	init.m_layer = PhysicsLayer::kTrigger;
-
-	m_trigger = PhysicsWorld::getSingleton().newPhysicsBody(init);
-	m_trigger->setUserData(this);
-	m_trigger->setPhysicsTriggerCallbacks(&m_callbacks);
-	m_trigger->setTransform(m_node->getWorldTransform());
+	if(type != m_type)
+	{
+		// Force to recreate
+		m_trigger.reset(nullptr);
+		m_shape.reset(nullptr);
+		m_type = type;
+	}
 }
 
 Error TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(m_trigger) [[likely]]
+	if(m_type == TriggerComponentShapeType::kCount)
 	{
-		if(!m_resetEnter || !m_resetExit)
-		{
-			updated = true;
-		}
-
-		if(m_resetEnter)
-		{
-			// None entered, cleanup
-			m_bodiesEnter.destroy();
-		}
-
-		if(m_resetExit)
-		{
-			// None exited, cleanup
-			m_bodiesExit.destroy();
-		}
-
-		// Prepare them for the next frame
-		m_resetEnter = true;
-		m_resetExit = true;
-
-		if(info.m_node->movedThisFrame())
-		{
-			updated = true;
-			m_trigger->setTransform(info.m_node->getWorldTransform());
-		}
+		return Error::kNone;
 	}
+
+	if(m_trigger && info.m_node->movedThisFrame() && info.m_node->getWorldTransform().getScale() != m_trigger->getTransform().getScale())
+	{
+		// Body will need to be re-created on scale change
+		m_trigger.reset(nullptr);
+	}
+
+	if(!m_trigger)
+	{
+		// Create it
+
+		updated = true;
+
+		if(m_type == TriggerComponentShapeType::kSphere)
+		{
+			m_shape = PhysicsWorld::getSingleton().newSphereCollisionShape(1.0f);
+		}
+		else
+		{
+			m_shape = PhysicsWorld::getSingleton().newBoxCollisionShape(Vec3(1.0f));
+		}
+
+		PhysicsBodyInitInfo init;
+		init.m_isTrigger = true;
+		init.m_shape = m_shape.get();
+		init.m_transform = info.m_node->getWorldTransform();
+		init.m_layer = PhysicsLayer::kTrigger;
+
+		m_trigger = PhysicsWorld::getSingleton().newPhysicsBody(init);
+		m_trigger->setUserData(this);
+		m_trigger->setPhysicsTriggerCallbacks(&m_callbacks);
+	}
+	else if(info.m_node->movedThisFrame())
+	{
+		updated = true;
+		m_trigger->setPositionAndRotation(info.m_node->getWorldTransform().getOrigin().xyz(),
+										  info.m_node->getWorldTransform().getRotation().getRotationPart());
+	}
+
+	if(!m_resetEnter || !m_resetExit)
+	{
+		updated = true;
+	}
+
+	if(m_resetEnter)
+	{
+		// None entered, cleanup
+		m_bodiesEnter.destroy();
+	}
+
+	if(m_resetExit)
+	{
+		// None exited, cleanup
+		m_bodiesExit.destroy();
+	}
+
+	// Prepare them for the next frame
+	m_resetEnter = true;
+	m_resetExit = true;
 
 	return Error::kNone;
 }

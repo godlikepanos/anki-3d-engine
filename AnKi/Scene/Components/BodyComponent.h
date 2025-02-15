@@ -102,7 +102,7 @@ public:
 		m_forcePosition = relativePosition;
 	}
 
-	void teleportTo(const Transform& trf);
+	void teleportTo(Vec3 position, const Mat3& rotation);
 
 	SceneNode& getSceneNode()
 	{
@@ -136,10 +136,13 @@ private:
 
 	F32 m_mass = 0.0f;
 
-	Transform m_teleportTrf;
+	Vec3 m_teleportPosition;
+	Mat3 m_teleportedRotation;
 
 	Vec3 m_force = Vec3(0.0f);
 	Vec3 m_forcePosition = Vec3(0.0f);
+
+	U32 m_transformVersion = 0;
 
 	Bool m_teleported = false;
 

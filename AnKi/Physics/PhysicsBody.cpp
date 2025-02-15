@@ -107,17 +107,15 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 	setUserData(init.m_userData);
 }
 
-void PhysicsBody::setTransform(const Transform& trf)
+void PhysicsBody::setPositionAndRotation(Vec3 position, const Mat3& rotation)
 {
-	ANKI_ASSERT(trf.getScale() == m_worldTrf.getScale() && "Can't handle dynamic scaling for now");
-
-	const JPH::RVec3 pos = toJPH(trf.getOrigin().xyz());
-	const JPH::Quat rot = toJPH(Quat(trf.getRotation()));
+	const JPH::RVec3 pos = toJPH(position);
+	const JPH::Quat rot = toJPH(Quat(rotation));
 
 	PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().SetPositionAndRotation(m_jphBody->GetID(), pos, rot,
 																									 JPH::EActivation::Activate);
-
-	m_worldTrf = trf;
+	m_worldTrf.setOrigin(position.xyz0());
+	m_worldTrf.setRotation(rotation);
 	++m_worldTrfVersion;
 }
 
@@ -173,7 +171,7 @@ void PhysicsBody::postPhysicsUpdate()
 			toAnKi(PhysicsWorld::getSingleton().m_jphPhysicsSystem->GetBodyInterfaceNoLock().GetWorldTransform(m_jphBody->GetID()));
 		if(newTrf != m_worldTrf)
 		{
-			m_worldTrf = newTrf;
+			m_worldTrf = Transform(newTrf.getOrigin(), newTrf.getRotation(), m_worldTrf.getScale());
 			++m_worldTrfVersion;
 		}
 	}

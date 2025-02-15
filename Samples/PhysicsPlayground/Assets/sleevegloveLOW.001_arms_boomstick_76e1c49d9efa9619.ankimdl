@@ -1,0 +1,12 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh subMeshIndex="0">Assets/sleevegloveLOW.001_893660395596b206.ankimesh</mesh>
+			<material>Assets/arms_3a4232ebbd425e7a.ankimtl</material>
+		</modelPatch>
+		<modelPatch>
+			<mesh subMeshIndex="1">Assets/sleevegloveLOW.001_893660395596b206.ankimesh</mesh>
+			<material>Assets/boomstick_89a614a521ace7fd.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

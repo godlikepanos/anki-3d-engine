@@ -179,7 +179,7 @@ public:
 		Vec3 pos = getRandom(props.m_particle.m_minStartingPosition, props.m_particle.m_maxStartingPosition);
 		pos = trf.transform(pos);
 
-		m_body->setTransform(Transform(pos.xyz0(), trf.getRotation(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+		m_body->setPositionAndRotation(pos, trf.getRotation().getRotationPart());
 		m_crntPosition = pos;
 	}
 

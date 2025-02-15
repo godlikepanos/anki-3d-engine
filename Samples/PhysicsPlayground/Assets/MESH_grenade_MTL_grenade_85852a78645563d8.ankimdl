@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/MESH_grenade_818651700502e14b.ankimesh</mesh>
+			<material>Assets/MTL_grenade_4346150e31bdb957.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

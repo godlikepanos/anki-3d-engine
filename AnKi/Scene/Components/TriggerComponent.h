@@ -13,6 +13,14 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
+/// @memberof TriggerComponent
+enum class TriggerComponentShapeType
+{
+	kSphere,
+	kBox,
+	kCount
+};
+
 /// Trigger component.
 class TriggerComponent : public SceneComponent
 {
@@ -23,7 +31,7 @@ public:
 
 	~TriggerComponent();
 
-	void setSphereVolumeRadius(F32 radius);
+	void setType(TriggerComponentShapeType type);
 
 	WeakArray<SceneNode*> getSceneNodesEnter()
 	{
@@ -45,6 +53,8 @@ private:
 
 	SceneDynamicArray<SceneNode*> m_bodiesEnter;
 	SceneDynamicArray<SceneNode*> m_bodiesExit;
+
+	TriggerComponentShapeType m_type = TriggerComponentShapeType::kCount;
 
 	Bool m_resetEnter = true;
 	Bool m_resetExit = true;

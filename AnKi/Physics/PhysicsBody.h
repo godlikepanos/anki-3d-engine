@@ -72,7 +72,7 @@ public:
 		return m_worldTrf;
 	}
 
-	void setTransform(const Transform& trf);
+	void setPositionAndRotation(Vec3 position, const Mat3& rotation);
 
 	/// @param force In Newton and in world space.
 	/// @param relPos The position to apply the force. It's in the local space of the body.
@@ -121,13 +121,13 @@ private:
 	PhysicsTriggerCallbacks* m_triggerCallbacks = nullptr;
 	PhysicsCollisionFilterCallback* m_collisionFilterCallback = nullptr;
 
-	Transform m_worldTrf;
-	U32 m_worldTrfVersion = 1;
+	F32 m_mass = 0.0f;
 
+	U32 m_worldTrfVersion : 30 = 1;
 	U32 m_activated : 1 = false;
 	U32 m_isTrigger : 1 = false;
 
-	F32 m_mass = 0.0f;
+	Transform m_worldTrf;
 
 	PhysicsBody();
 

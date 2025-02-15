@@ -468,9 +468,9 @@ namespace anki {]]></head>
 				<constructor></constructor>
 				<constructor>
 					<args>
-						<arg>Vec4</arg>
-						<arg>Mat3x4</arg>
-						<arg>Vec4</arg>
+						<arg>Vec3</arg>
+						<arg>Mat3</arg>
+						<arg>Vec3</arg>
 					</args>
 				</constructor>
 			</constructors>
@@ -481,27 +481,30 @@ namespace anki {]]></head>
 					</args>
 				</method>
 				<method name="getOrigin">
-					<return>Vec4</return>
+					<overrideCall>Vec3 ret = self->getOrigin().xyz();</overrideCall>
+					<return>Vec3</return>
 				</method>
 				<method name="setOrigin">
 					<args>
-						<arg>const Vec4&amp;</arg>
+						<arg>const Vec3&amp;</arg>
 					</args>
 				</method>
 				<method name="getRotation">
-					<return>Mat3x4</return>
+					<overrideCall>Mat3 ret = self->getRotation().getRotationPart();</overrideCall>
+					<return>Mat3</return>
 				</method>
 				<method name="setRotation">
 					<args>
-						<arg>const Mat3x4&amp;</arg>
+						<arg>const Mat3&amp;</arg>
 					</args>
 				</method>
 				<method name="getScale">
-					<return>Vec4</return>
+					<overrideCall>Vec3 ret = self->getScale().xyz();</overrideCall>
+					<return>Vec3</return>
 				</method>
 				<method name="setScale">
 					<args>
-						<arg>const Vec4&amp;</arg>
+						<arg>const Vec3&amp;</arg>
 					</args>
 				</method>
 			</methods>

@@ -877,7 +877,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					const ImporterString meshFname = computeMeshResourceFilename(*node.mesh);
 
 					ANKI_CHECK(m_sceneFile.writeText("comp:setCollisionShapeType(BodyComponentCollisionShapeType.kFromModelComponent)\n"));
-					ANKI_CHECK(m_sceneFile.writeText("comp:teleportTo(trf)\n"));
+					ANKI_CHECK(m_sceneFile.writeText("comp:teleportTo(trf:getOrigin(), trf:getRotation())\n"));
 				}
 			}
 		}
@@ -908,17 +908,17 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 Error GltfImporter::writeTransform(const Transform& trf)
 {
 	ANKI_CHECK(m_sceneFile.writeText("trf = Transform.new()\n"));
-	ANKI_CHECK(m_sceneFile.writeTextf("trf:setOrigin(Vec4.new(%f, %f, %f, 0))\n", trf.getOrigin().x(), trf.getOrigin().y(), trf.getOrigin().z()));
+	ANKI_CHECK(m_sceneFile.writeTextf("trf:setOrigin(Vec3.new(%f, %f, %f))\n", trf.getOrigin().x(), trf.getOrigin().y(), trf.getOrigin().z()));
 
-	ANKI_CHECK(m_sceneFile.writeText("rot = Mat3x4.new()\n"));
+	ANKI_CHECK(m_sceneFile.writeText("rot = Mat3.new()\n"));
 	ANKI_CHECK(m_sceneFile.writeText("rot:setAll("));
-	for(U i = 0; i < 12; i++)
+	for(U i = 0; i < 9; i++)
 	{
-		ANKI_CHECK(m_sceneFile.writeTextf((i != 11) ? "%f, " : "%f)\n", trf.getRotation()[i]));
+		ANKI_CHECK(m_sceneFile.writeTextf((i != 8) ? "%f, " : "%f)\n", trf.getRotation().getRotationPart()[i]));
 	}
 	ANKI_CHECK(m_sceneFile.writeText("trf:setRotation(rot)\n"));
 
-	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(Vec4.new(%f, %f, %f, 0))\n", trf.getScale().x(), trf.getScale().y(), trf.getScale().z()));
+	ANKI_CHECK(m_sceneFile.writeTextf("trf:setScale(Vec3.new(%f, %f, %f))\n", trf.getScale().x(), trf.getScale().y(), trf.getScale().z()));
 
 	ANKI_CHECK(m_sceneFile.writeText("node:setLocalTransform(trf)\n"));
 

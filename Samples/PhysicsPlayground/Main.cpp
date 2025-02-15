@@ -86,7 +86,11 @@ Error MyApp::sampleExtraInit()
 	if(1)
 	{
 		SceneNode& cam = SceneGraph::getSingleton().getActiveCameraNode();
-		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 5.0, 0.0), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+		cam.setLocalTransform(Transform(Vec4(0.0, 2.0, 0.0, 0.0), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+
+		SceneNode& arm = SceneGraph::getSingleton().findSceneNode("arm");
+		arm.setLocalTransform(Transform(Vec3(0.065f, -0.13f, -0.4f), Mat3(Euler(0.0f, kPi, 0.0f)), Vec3(1.0f, 1.0f, 1.0f)));
+		arm.setParent(&cam);
 
 		SceneNode* player;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("player", player));
@@ -104,7 +108,7 @@ Error MyApp::sampleExtraInit()
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
 		bodyc->setBoxExtend(Vec3(0.1f));
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
-		bodyc->teleportTo(Transform(Vec4(-0.0f, 5.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+		bodyc->teleportTo(Vec3(-0.0f, 5.0f, -3.0f), Mat3::getIdentity());
 
 		SceneNode* joint;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("hinge", joint));
@@ -122,7 +126,7 @@ Error MyApp::sampleExtraInit()
 
 		bodyc = monkey->newComponent<BodyComponent>();
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
-		bodyc->teleportTo(Transform(Vec4(-0.0f, 4.8f - height / 2.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+		bodyc->teleportTo(Vec3(-0.0f, 4.8f - height / 2.0f, -3.0f), Mat3::getIdentity());
 		bodyc->setMass(2.0f);
 
 		joint->addChild(monkey);
@@ -140,7 +144,7 @@ Error MyApp::sampleExtraInit()
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
 		bodyc->setBoxExtend(Vec3(0.1f));
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
-		bodyc->teleportTo(trf);
+		bodyc->teleportTo(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
 
 		trf.setOrigin(trf.getOrigin() - Vec4(0.0f, 0.5f, 0.0f, 0.0f));
 
@@ -166,7 +170,7 @@ Error MyApp::sampleExtraInit()
 
 			BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
 			bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
-			bodyc->teleportTo(trf);
+			bodyc->teleportTo(trf.getOrigin().xyz(), trf.getRotation().getRotationPart());
 			bodyc->setMass(1.0f);
 			joint->addChild(monkey);
 
@@ -182,8 +186,9 @@ Error MyApp::sampleExtraInit()
 		SceneNode* node;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("trigger", node));
 		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
-		triggerc->setSphereVolumeRadius(1.8f);
-		node->setLocalTransform(Transform(Vec4(4.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+		triggerc->setType(TriggerComponentShapeType::kSphere);
+		node->setLocalScale(Vec4(1.8f, 1.8f, 1.8f, 0.0f));
+		node->setLocalOrigin(Vec4(4.0f, 0.5f, 0.0f, 0.0f));
 	}
 
 	Input::getSingleton().lockCursor(true);
@@ -347,33 +352,41 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 				dir.normalize();
 			}
 
-			playerc.setVelocity(speed, jumpSpeed, dir, crouch);
+			F32 speed1 = speed;
+			if(Input::getSingleton().getKey(KeyCode::kLeftShift))
+			{
+				speed1 *= 2.0f;
+			}
+			playerc.setVelocity(speed1, jumpSpeed, dir, crouch);
 		}
 	}
 
 	if(Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
 	{
-		ANKI_LOGI("Firing a monkey");
+		ANKI_LOGI("Firing a grenade");
 
 		static U32 instance = 0;
 
 		Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
+		const Vec3 newPos = camTrf.getOrigin().xyz() + camTrf.getRotation().getZAxis() * -3.0f;
+		camTrf.setOrigin(newPos.xyz0());
 
-		SceneNode* monkey;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("FireMonkey%u", instance++).toCString(), monkey));
-		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
-		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
+		SceneNode* grenade;
+		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("Grenade%u", instance++).toCString(), grenade));
+		grenade->setLocalScale(Vec3(2.8f).xyz0());
+		ModelComponent* modelc = grenade->newComponent<ModelComponent>();
+		modelc->loadModelResource("Assets/MESH_grenade_MTL_grenade_85852a78645563d8.ankimdl");
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
-		BodyComponent* bodyc = monkey->newComponent<BodyComponent>();
+		BodyComponent* bodyc = grenade->newComponent<BodyComponent>();
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kFromModelComponent);
-		bodyc->teleportTo(camTrf);
+		bodyc->teleportTo(camTrf.getOrigin().xyz(), camTrf.getRotation().getRotationPart());
 		bodyc->setMass(1.0f);
 
-		bodyc->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
+		bodyc->applyForce(camTrf.getRotation().getZAxis().xyz() * -1200.0f, Vec3(0.0f, 0.0f, 0.0f));
 
 		// Create the destruction event
-		ANKI_CHECK(createDestructionEvent(monkey));
+		ANKI_CHECK(createDestructionEvent(grenade));
 	}
 
 	if(Input::getSingleton().getMouseButton(MouseButton::kRight) == 1)

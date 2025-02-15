@@ -25,12 +25,15 @@ BodyComponent::~BodyComponent()
 {
 }
 
-void BodyComponent::teleportTo(const Transform& trf)
+void BodyComponent::teleportTo(Vec3 position, const Mat3& rotation)
 {
-	m_teleportTrf = trf;
+	m_teleportPosition = position;
+	m_teleportedRotation = rotation;
 	m_teleported = true;
 
-	m_node->setLocalTransform(trf); // Set that just to be sure
+	// Set those just to be sure
+	m_node->setLocalOrigin(position.xyz0());
+	m_node->setLocalRotation(Mat3x4(Vec3(0.0f), rotation, Vec3(1.0f)));
 }
 
 Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
@@ -51,7 +54,15 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		PhysicsBodyInitInfo init;
 		init.m_mass = m_mass;
-		init.m_transform = (m_teleported) ? m_teleportTrf : m_node->getWorldTransform();
+		if(m_teleported)
+		{
+			init.m_transform = Transform(m_teleportPosition, m_teleportedRotation, m_node->getLocalTransform().getScale().xyz());
+			m_teleported = false; // Cancel teleportation since the body was re-created
+		}
+		else
+		{
+			init.m_transform = m_node->getLocalTransform();
+		}
 
 		if(m_mass == 0.0f)
 		{
@@ -83,26 +94,34 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		m_body = PhysicsWorld::getSingleton().newPhysicsBody(init);
 		m_body->setUserData(this);
-
-		m_teleported = false; // Cancel teleportation since the body was re-created
 	}
 
 	if(m_teleported)
 	{
 		updated = true;
 		m_teleported = false;
-		m_body->setTransform(m_teleportTrf);
+		m_body->setPositionAndRotation(m_teleportPosition, m_teleportedRotation);
 	}
 
-	if(m_body->getTransform() != info.m_node->getWorldTransform())
+	U32 version;
+	Transform bodyTrf = m_body->getTransform(&version);
+	if(version != m_transformVersion)
 	{
+		m_transformVersion = version;
 		updated = true;
 		info.m_node->setLocalTransform(m_body->getTransform());
 	}
 
 	if(m_force.getLengthSquared() > 0.0f)
 	{
-		m_body->applyForce(m_force, m_forcePosition);
+		if(m_forcePosition != 0.0f)
+		{
+			m_body->applyForce(m_force, m_forcePosition);
+		}
+		else
+		{
+			m_body->applyForce(m_force);
+		}
 		m_force = Vec3(0.0f);
 	}
 

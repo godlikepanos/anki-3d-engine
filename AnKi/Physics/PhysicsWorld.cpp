@@ -449,7 +449,7 @@ void PhysicsWorld::update(Second dt)
 		}
 	}
 
-	constexpr I32 collisionSteps = 1;
+	constexpr I32 collisionSteps = 2;
 	m_jphPhysicsSystem->Update(F32(dt), collisionSteps, &m_tempAllocator, &m_jobSystem);
 
 	// Post-update work

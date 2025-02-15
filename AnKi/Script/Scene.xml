@@ -220,7 +220,8 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="teleportTo">
 					<args>
-						<arg>const Transform&amp;</arg>
+						<arg>Vec3</arg>
+						<arg>const Mat3&amp;</arg>
 					</args>
 				</method>
 			</methods>

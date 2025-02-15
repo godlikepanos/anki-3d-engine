@@ -26,7 +26,7 @@ static void deserializeVec2(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {594303304060146034, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
+LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {7803499094187981619, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
 											   deserializeVec2};
 
 template<>
@@ -1035,7 +1035,7 @@ static void deserializeVec3(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {5669632566763941038, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
+LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {6911238639175218670, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
 											   deserializeVec3};
 
 template<>
@@ -2180,7 +2180,7 @@ static void deserializeVec4(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {-7510298399639860788, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
+LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {-5133042424981777357, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
 											   deserializeVec4};
 
 template<>
@@ -3411,7 +3411,7 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {-8522796721639548452, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {6777119210890395568, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
@@ -3797,7 +3797,7 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {6107000574328002637, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {8812777471101110980, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
 												 nullptr};
 
 template<>
@@ -4202,7 +4202,7 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {-1440284075251026678, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
+LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {5321497660535424691, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
 													nullptr, nullptr};
 
 template<>
@@ -4248,32 +4248,32 @@ static inline int pwrapTransformCtor1(lua_State* l)
 	}
 
 	// Pop arguments
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
 
-	Vec4* iarg0 = ud->getData<Vec4>();
-	Vec4 arg0(*iarg0);
+	Vec3* iarg0 = ud->getData<Vec3>();
+	Vec3 arg0(*iarg0);
 
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3x4, ud)) [[unlikely]]
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
 
-	Mat3x4* iarg1 = ud->getData<Mat3x4>();
-	Mat3x4 arg1(*iarg1);
+	Mat3* iarg1 = ud->getData<Mat3>();
+	Mat3 arg1(*iarg1);
 
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 3, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 3, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
 
-	Vec4* iarg2 = ud->getData<Vec4>();
-	Vec4 arg2(*iarg2);
+	Vec3* iarg2 = ud->getData<Vec3>();
+	Vec3 arg2(*iarg2);
 
 	// Create user data
 	size = LuaUserData::computeSizeForGarbageCollected<Transform>();
@@ -4411,16 +4411,16 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Call the method
-	Vec4 ret = self->getOrigin();
+	Vec3 ret = self->getOrigin().xyz();
 
 	// Push return value
-	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, "Vec4");
+	luaL_setmetatable(l, "Vec3");
 	ud = static_cast<LuaUserData*>(voidp);
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
-	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
 }
@@ -4459,14 +4459,14 @@ static inline int pwrapTransformsetOrigin(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Pop arguments
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
 
-	Vec4* iarg0 = ud->getData<Vec4>();
-	const Vec4& arg0(*iarg0);
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
 
 	// Call the method
 	self->setOrigin(arg0);
@@ -4508,16 +4508,16 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Call the method
-	Mat3x4 ret = self->getRotation();
+	Mat3 ret = self->getRotation().getRotationPart();
 
 	// Push return value
-	size = LuaUserData::computeSizeForGarbageCollected<Mat3x4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, "Mat3x4");
+	luaL_setmetatable(l, "Mat3");
 	ud = static_cast<LuaUserData*>(voidp);
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
-	ud->initGarbageCollected(&luaUserDataTypeInfoMat3x4);
-	::new(ud->getData<Mat3x4>()) Mat3x4(std::move(ret));
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoMat3);
+	::new(ud->getData<Mat3>()) Mat3(std::move(ret));
 
 	return 1;
 }
@@ -4556,14 +4556,14 @@ static inline int pwrapTransformsetRotation(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Pop arguments
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3x4, ud)) [[unlikely]]
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
 
-	Mat3x4* iarg0 = ud->getData<Mat3x4>();
-	const Mat3x4& arg0(*iarg0);
+	Mat3* iarg0 = ud->getData<Mat3>();
+	const Mat3& arg0(*iarg0);
 
 	// Call the method
 	self->setRotation(arg0);
@@ -4605,16 +4605,16 @@ static inline int pwrapTransformgetScale(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Call the method
-	Vec4 ret = self->getScale();
+	Vec3 ret = self->getScale().xyz();
 
 	// Push return value
-	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, "Vec4");
+	luaL_setmetatable(l, "Vec3");
 	ud = static_cast<LuaUserData*>(voidp);
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
-	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
 }
@@ -4653,14 +4653,14 @@ static inline int pwrapTransformsetScale(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Pop arguments
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)) [[unlikely]]
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud)) [[unlikely]]
 	{
 		return -1;
 	}
 
-	Vec4* iarg0 = ud->getData<Vec4>();
-	const Vec4& arg0(*iarg0);
+	Vec3* iarg0 = ud->getData<Vec3>();
+	const Vec3& arg0(*iarg0);
 
 	// Call the method
 	self->setScale(arg0);
