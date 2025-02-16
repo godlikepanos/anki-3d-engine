@@ -171,41 +171,6 @@ public:
 		return m_viewProjMat;
 	}
 
-	/// Check if a shape is inside the frustum.
-	template<typename T>
-	Bool insideFrustum(const T& t) const
-	{
-		for(const Plane& plane : m_viewPlanesW)
-		{
-			if(testPlane(plane, t) < 0.0f)
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
-	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kPerspective);
-		ANKI_ASSERT(!isDirty());
-		return m_perspective.m_hull;
-	}
-
-	const Obb& getOrthographicBoundingShapeWorldSpace() const
-	{
-		ANKI_ASSERT(m_frustumType == FrustumType::kOrthographic);
-		ANKI_ASSERT(!isDirty());
-		return m_ortho.m_obbW;
-	}
-
-	const Array<Plane, U32(FrustumPlaneType::kCount)>& getViewPlanes() const
-	{
-		ANKI_ASSERT(!isDirty());
-		return m_viewPlanesW;
-	}
-
 	void setWorldTransform(const Transform& worldTransform)
 	{
 		m_worldTransform = worldTransform;
@@ -238,9 +203,6 @@ private:
 	public:
 		F32 m_fovX;
 		F32 m_fovY;
-		Array<Vec4, 5> m_edgesW;
-		Array<Vec3, 4> m_edgesL; ///< Don't need the eye point.
-		ConvexHullShape m_hull;
 	};
 
 	class Ortho : public Common
@@ -250,8 +212,6 @@ private:
 		F32 m_right;
 		F32 m_top;
 		F32 m_bottom;
-		Obb m_obbL;
-		Obb m_obbW; ///< Including shape
 	};
 
 	static constexpr F32 kDefaultNear = 0.1f;
@@ -264,10 +224,6 @@ private:
 		Ortho m_ortho;
 		Common m_common;
 	};
-
-	// View planes
-	Array<Plane, U32(FrustumPlaneType::kCount)> m_viewPlanesL;
-	Array<Plane, U32(FrustumPlaneType::kCount)> m_viewPlanesW;
 
 	Transform m_worldTransform = Transform::getIdentity();
 
