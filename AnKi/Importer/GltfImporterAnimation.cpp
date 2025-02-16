@@ -28,7 +28,8 @@ public:
 
 /// Optimize out same animation keys.
 template<typename T, typename TIsIdentityFunc, typename TAlmostEqualFunc, typename TLerpFunc>
-static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, TIsIdentityFunc isIdentityFunc, TAlmostEqualFunc almostEqualFunc, TLerpFunc lerpFunc)
+static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, TIsIdentityFunc isIdentityFunc, TAlmostEqualFunc almostEqualFunc,
+							TLerpFunc lerpFunc)
 {
 	constexpr F32 kMinSkippedToTotalRatio = 0.1f;
 

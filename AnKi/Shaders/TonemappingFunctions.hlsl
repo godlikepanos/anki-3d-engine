@@ -81,17 +81,74 @@ vector<T, 3> invertTonemapACESFilm(vector<T, 3> x)
 	return res;
 }
 
+// https://github.com/KhronosGroup/ToneMapping
+template<typename T>
+vector<T, 3> tonemapNatural(vector<T, 3> color)
+{
+	const T startCompression = T(0.8 - 0.04);
+	const T desaturation = T(0.15);
+
+	const T x = min3(color);
+	const T offset = x < T(0.08) ? x - T(6.25) * x * x : T(0.04);
+	color -= offset;
+
+	const T peak = max3(color);
+	if(peak < startCompression)
+	{
+		return color;
+	}
+
+	const T d = T(1) - startCompression;
+	const T newPeak = T(1) - d * d / (peak + d - startCompression);
+	color *= newPeak / peak;
+
+	const T g = T(1) / (desaturation * (peak - newPeak) + T(1));
+	return lerp(newPeak, color, g);
+}
+
+template<typename T>
+vector<T, 3> invertTonemapNeutral(vector<T, 3> color)
+{
+	const T startCompression = T(0.8 - 0.04);
+	const T desaturation = T(0.15);
+
+	const T peak = max3(color);
+	if(peak > startCompression)
+	{
+		const T d = T(1) - startCompression;
+		const T oldPeak = (d * d) / (T(1) - peak) - d + startCompression;
+		const T fInv = desaturation * (oldPeak - peak) + T(1);
+		const T f = T(1) / fInv;
+
+		color = (color + (f - T(1)) * peak) * fInv;
+
+		const T scale = oldPeak / peak;
+		color *= scale;
+	}
+
+	const T y = min3(color);
+	T offset = T(0.04);
+	if(y < T(0.04))
+	{
+		const T x = sqrt(y / T(6.25));
+		offset = x - T(6.25) * x * x;
+	}
+
+	color += offset;
+	return color;
+}
+
 template<typename T>
 vector<T, 3> tonemap(vector<T, 3> color, vector<T, 3> exposure)
 {
 	color *= exposure;
-	return tonemapACESFilm(color);
+	return tonemapNatural(color);
 }
 
 template<typename T>
 vector<T, 3> invertTonemap(vector<T, 3> color, T exposure)
 {
-	color = invertTonemapACESFilm(color);
+	color = invertTonemapNeutral(color);
 	color /= max(getEpsilon<T>(), exposure);
 	return color;
 }

@@ -166,7 +166,7 @@ public:
 	}
 
 	/// Combine rotations (SIMD version)
-	TQuat operator*(const TQuat& b) requires(kSimdEnabled && ANKI_SIMD_SSE)
+	TQuat operator*(const TQuat& b) requires(kSimdEnabled&& ANKI_SIMD_SSE)
 	{
 		// Taken from: http://momchil-velikov.blogspot.nl/2013/10/fast-sse-quternion-multiplication.html
 		const __m128 abcd = m_value.getSimd();
