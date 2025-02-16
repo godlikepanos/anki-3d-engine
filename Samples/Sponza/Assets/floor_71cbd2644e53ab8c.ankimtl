@@ -14,7 +14,7 @@
 	</shaderProgram>
 
 	<inputs>
-
+		
 		<input name="m_diffuseTex" value="Assets/sponza_floor_a_diff.ankitex"/>
 		<input name="m_diffuseScale" value="1.000000 1.000000 1.000000 1.000000"/>
 		<input name="m_specularScale" value="0.040000 0.040000 0.040000"/>
@@ -24,6 +24,6 @@
 		<input name="m_normalTex" value="Assets/Sponza_Floor_normal.ankitex"/>
 		<input name="m_emissionScale" value="0.000000 0.000000 0.000000"/>
 		<input name="m_subsurface" value="0.000000"/>
-
+		
 	</inputs>
 </material>

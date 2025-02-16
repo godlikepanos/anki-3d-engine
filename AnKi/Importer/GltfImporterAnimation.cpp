@@ -27,8 +27,8 @@ public:
 };
 
 /// Optimize out same animation keys.
-template<typename T, typename TZeroFunc, typename TLerpFunc>
-static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& identity, TZeroFunc isZeroFunc, TLerpFunc lerpFunc)
+template<typename T, typename TIsIdentityFunc, typename TAlmostEqualFunc, typename TLerpFunc>
+static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, TIsIdentityFunc isIdentityFunc, TAlmostEqualFunc almostEqualFunc, TLerpFunc lerpFunc)
 {
 	constexpr F32 kMinSkippedToTotalRatio = 0.1f;
 
@@ -59,7 +59,7 @@ static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& 
 				const F32 factor = F32((middle.m_time - left.m_time) / (right.m_time - left.m_time));
 				ANKI_ASSERT(factor > 0.0f && factor < 1.0f);
 				const T lerpRez = lerpFunc(left.m_value, right.m_value, factor);
-				if(isZeroFunc(middle.m_value - lerpRez))
+				if(almostEqualFunc(middle.m_value, lerpRez))
 				{
 					// It's redundant, skip it
 				}
@@ -84,7 +84,7 @@ static void optimizeChannel(ImporterDynamicArray<GltfAnimKey<T>>& arr, const T& 
 		ANKI_ASSERT(newArr.getSize() <= arr.getSize());
 
 		// Check if identity
-		if(newArr.getSize() == 2 && isZeroFunc(newArr[0].m_value - newArr[1].m_value) && isZeroFunc(newArr[0].m_value - identity))
+		if(newArr.getSize() == 2 && isIdentityFunc(newArr[0].m_value) && isIdentityFunc(newArr[1].m_value))
 		{
 			newArr.destroy();
 		}
@@ -265,25 +265,34 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		for(GltfAnimChannel& channel : tempChannels)
 		{
 			optimizeChannel(
-				channel.m_positions, Vec3(0.0f),
+				channel.m_positions,
 				[&](const Vec3& a) -> Bool {
 					return a.abs() < kKillEpsilon;
+				},
+				[&](const Vec3& a, const Vec3& b) -> Bool {
+					return (a - b).getLength() < kKillEpsilon;
 				},
 				[&](const Vec3& a, const Vec3& b, F32 u) -> Vec3 {
 					return linearInterpolate(a, b, u);
 				});
 			optimizeChannel(
-				channel.m_rotations, Quat::getIdentity(),
+				channel.m_rotations,
 				[&](const Quat& a) -> Bool {
-					return a.abs() < Quat(kEpsilonf * 20.0f);
+					return (Vec4(a) - Vec4(0.0f, 0.0f, 0.0f, 1.0f)).abs() < 0.001f;
+				},
+				[&](const Quat& a, const Quat& b) -> Bool {
+					return (Vec4(a) - Vec4(b)).abs() < 0.001f;
 				},
 				[&](const Quat& a, const Quat& b, F32 u) -> Quat {
 					return a.slerp(b, u);
 				});
 			optimizeChannel(
-				channel.m_scales, 1.0f,
+				channel.m_scales,
 				[&](const F32& a) -> Bool {
-					return absolute(a) < kKillEpsilon;
+					return absolute(a - 1.0f) < kKillEpsilon;
+				},
+				[&](const F32& a, const F32& b) -> Bool {
+					return absolute(a - b) < kKillEpsilon;
 				},
 				[&](const F32& a, const F32& b, F32 u) -> F32 {
 					return linearInterpolate(a, b, u);

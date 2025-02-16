@@ -20,7 +20,7 @@
 		<input name="m_roughnessScale" value="1.000000"/>
 		<input name="m_metalnessScale" value="0.000000"/>
 		
-		<input name="m_emissionScale" value="1.000000 1.000000 1.000000"/>
+		<input name="m_emissionScale" value="10.000000 10.000000 10.000000"/>
 		<input name="m_subsurface" value="0.000000"/>
 		
 	</inputs>
