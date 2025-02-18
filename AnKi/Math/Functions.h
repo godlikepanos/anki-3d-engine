@@ -279,7 +279,7 @@ inline F32 computeTriangleArea(const TVec& a, const TVec& b, const TVec& c)
 {
 	const TVec ab = b - a;
 	const TVec ac = c - a;
-	const F32 area = ab.cross(ac).getLength() / 2.0f;
+	const F32 area = ab.cross(ac).length() / 2.0f;
 	return absolute(area);
 }
 /// @}

@@ -95,17 +95,84 @@ public:
 
 	explicit constexpr TMat(const TQuat<T>& q) requires(kSize == 9)
 	{
-		setRotationPart(q);
+		TMat& m = *this;
+		// If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
+		ANKI_ASSERT(absolute(T(1) - q.length()) <= 0.002);
+
+		T xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
+
+		xs = q.x() + q.x();
+		ys = q.y() + q.y();
+		zs = q.z() + q.z();
+		wx = q.w() * xs;
+		wy = q.w() * ys;
+		wz = q.w() * zs;
+		xx = q.x() * xs;
+		xy = q.x() * ys;
+		xz = q.x() * zs;
+		yy = q.y() * ys;
+		yz = q.y() * zs;
+		zz = q.z() * zs;
+
+		m(0, 0) = T(1) - (yy + zz);
+		m(0, 1) = xy - wz;
+		m(0, 2) = xz + wy;
+
+		m(1, 0) = xy + wz;
+		m(1, 1) = T(1) - (xx + zz);
+		m(1, 2) = yz - wx;
+
+		m(2, 0) = xz - wy;
+		m(2, 1) = yz + wx;
+		m(2, 2) = T(1) - (xx + yy);
 	}
 
 	explicit constexpr TMat(const TEuler<T>& e) requires(kSize == 9)
 	{
-		setRotationPart(e);
+		TMat& m = *this;
+		T ch, sh, ca, sa, cb, sb;
+		sinCos(e.y(), sh, ch);
+		sinCos(e.z(), sa, ca);
+		sinCos(e.x(), sb, cb);
+
+		m(0, 0) = ch * ca;
+		m(0, 1) = sh * sb - ch * sa * cb;
+		m(0, 2) = ch * sa * sb + sh * cb;
+		m(1, 0) = sa;
+		m(1, 1) = ca * cb;
+		m(1, 2) = -ca * sb;
+		m(2, 0) = -sh * ca;
+		m(2, 1) = sh * sa * cb + ch * sb;
+		m(2, 2) = -sh * sa * sb + ch * cb;
 	}
 
 	explicit constexpr TMat(const TAxisang<T>& axisang) requires(kSize == 9)
 	{
-		setRotationPart(axisang);
+		TMat& m = *this;
+		// Not normalized axis
+		ANKI_ASSERT(isZero<T>(T(1) - axisang.getAxis().getLength()));
+
+		T c, s;
+		sinCos(axisang.getAngle(), s, c);
+		T t = T(1) - c;
+
+		const TVec<T, 3>& axis = axisang.getAxis();
+		m(0, 0) = c + axis.x() * axis.x() * t;
+		m(1, 1) = c + axis.y() * axis.y() * t;
+		m(2, 2) = c + axis.z() * axis.z() * t;
+
+		T tmp1 = axis.x() * axis.y() * t;
+		T tmp2 = axis.z() * s;
+		m(1, 0) = tmp1 + tmp2;
+		m(0, 1) = tmp1 - tmp2;
+		tmp1 = axis.x() * axis.z() * t;
+		tmp2 = axis.y() * s;
+		m(2, 0) = tmp1 - tmp2;
+		m(0, 2) = tmp1 + tmp2;
+		tmp1 = axis.y() * axis.z() * t;
+		tmp2 = axis.x() * s;
+		m(2, 1) = tmp1 + tmp2;
+		m(1, 2) = tmp1 - tmp2;
 	}
 
 	// 4x4 specific constructors
@@ -242,7 +309,7 @@ public:
 		return m_arr2[j][i];
 	}
 
-	T operator()(const U j, const U i) const
+	[[nodiscard]] T operator()(const U j, const U i) const
 	{
 		return m_arr2[j][i];
 	}
@@ -252,7 +319,7 @@ public:
 		return m_arr1[n];
 	}
 
-	T operator[](const U n) const
+	[[nodiscard]] T operator[](const U n) const
 	{
 		return m_arr1[n];
 	}
@@ -271,7 +338,7 @@ public:
 		return *this;
 	}
 
-	TMat operator+(const TMat& b) const
+	[[nodiscard]] TMat operator+(const TMat& b) const
 	{
 		TMat c;
 		for(U i = 0; i < kRowCount; ++i)
@@ -290,7 +357,7 @@ public:
 		return *this;
 	}
 
-	TMat operator-(const TMat& b) const
+	[[nodiscard]] TMat operator-(const TMat& b) const
 	{
 		TMat c;
 		for(U i = 0; i < kRowCount; ++i)
@@ -309,7 +376,7 @@ public:
 		return *this;
 	}
 
-	TMat operator*(const TMat& b) const requires(kIsSquare && !kIs4x4Simd)
+	[[nodiscard]] TMat operator*(const TMat& b) const requires(kIsSquare && !kIs4x4Simd)
 	{
 		TMat out;
 		const TMat& a = *this;
@@ -328,7 +395,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TMat operator*(const TMat& b) const requires(kIs4x4Simd)
+	[[nodiscard]] TMat operator*(const TMat& b) const requires(kIs4x4Simd)
 	{
 		TMat out;
 		const auto& m = *this;
@@ -373,7 +440,7 @@ public:
 		return *this;
 	}
 
-	Bool operator==(const TMat& b) const
+	[[nodiscard]] Bool operator==(const TMat& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -385,7 +452,7 @@ public:
 		return true;
 	}
 
-	Bool operator!=(const TMat& b) const
+	[[nodiscard]] Bool operator!=(const TMat& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -400,7 +467,7 @@ public:
 
 	/// @name Operators with T
 	/// @{
-	TMat operator+(const T f) const
+	[[nodiscard]] TMat operator+(const T f) const
 	{
 		TMat out;
 		for(U i = 0; i < kRowCount; ++i)
@@ -419,7 +486,7 @@ public:
 		return *this;
 	}
 
-	TMat operator-(const T f) const
+	[[nodiscard]] TMat operator-(const T f) const
 	{
 		TMat out;
 		for(U i = 0; i < kRowCount; ++i)
@@ -438,7 +505,7 @@ public:
 		return *this;
 	}
 
-	TMat operator*(const T f) const
+	[[nodiscard]] TMat operator*(const T f) const
 	{
 		TMat out;
 		for(U i = 0; i < kRowCount; ++i)
@@ -457,7 +524,7 @@ public:
 		return *this;
 	}
 
-	TMat operator/(const T f) const
+	[[nodiscard]] TMat operator/(const T f) const
 	{
 		ANKI_ASSERT(f != T(0));
 		TMat out;
@@ -481,7 +548,7 @@ public:
 
 	/// @name Operators with other types
 	/// @{
-	ColumnVec operator*(const RowVec& v) const requires(!kHasSimd)
+	[[nodiscard]] ColumnVec operator*(const RowVec& v) const requires(!kHasSimd)
 	{
 		const TMat& m = *this;
 		ColumnVec out;
@@ -498,7 +565,7 @@ public:
 	}
 
 #if ANKI_SIMD_SSE
-	ColumnVec operator*(const RowVec& v) const requires(kIs4x4Simd)
+	[[nodiscard]] ColumnVec operator*(const RowVec& v) const requires(kIs4x4Simd)
 	{
 		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
 		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
@@ -511,7 +578,7 @@ public:
 		return RowVec(_mm_hadd_ps(a, c));
 	}
 
-	ColumnVec operator*(const RowVec& v) const requires(kIs3x4Simd)
+	[[nodiscard]] ColumnVec operator*(const RowVec& v) const requires(kIs3x4Simd)
 	{
 		__m128 a = _mm_mul_ps(m_simd[0], v.getSimd());
 		__m128 b = _mm_mul_ps(m_simd[1], v.getSimd());
@@ -524,8 +591,7 @@ public:
 	}
 
 #else
-
-	ColumnVec operator*(const RowVec& v) const requires(kHasSimd)
+	[[nodiscard]] ColumnVec operator*(const RowVec& v) const requires(kHasSimd)
 	{
 		ColumnVec out;
 		for(U i = 0; i < kTRowCount; i++)
@@ -596,7 +662,7 @@ public:
 		setColumn(3, d);
 	}
 
-	ColumnVec getColumn(const U i) const
+	[[nodiscard]] ColumnVec getColumn(const U i) const
 	{
 		ColumnVec out;
 		for(U j = 0; j < kTRowCount; j++)
@@ -620,19 +686,19 @@ public:
 	}
 
 	/// Get 1st column
-	ColumnVec getXAxis() const
+	[[nodiscard]] ColumnVec getXAxis() const
 	{
 		return getColumn(0);
 	}
 
 	/// Get 2nd column
-	ColumnVec getYAxis() const
+	[[nodiscard]] ColumnVec getYAxis() const
 	{
 		return getColumn(1);
 	}
 
 	/// Get 3rd column
-	ColumnVec getZAxis() const
+	[[nodiscard]] ColumnVec getZAxis() const
 	{
 		return getColumn(2);
 	}
@@ -798,89 +864,7 @@ public:
 		}
 	}
 
-	void setRotationPart(const TQuat<T>& q)
-	{
-		TMat& m = *this;
-		// If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
-		ANKI_ASSERT(absolute(T(1) - q.getLength()) <= 0.002);
-
-		T xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
-
-		xs = q.x() + q.x();
-		ys = q.y() + q.y();
-		zs = q.z() + q.z();
-		wx = q.w() * xs;
-		wy = q.w() * ys;
-		wz = q.w() * zs;
-		xx = q.x() * xs;
-		xy = q.x() * ys;
-		xz = q.x() * zs;
-		yy = q.y() * ys;
-		yz = q.y() * zs;
-		zz = q.z() * zs;
-
-		m(0, 0) = T(1) - (yy + zz);
-		m(0, 1) = xy - wz;
-		m(0, 2) = xz + wy;
-
-		m(1, 0) = xy + wz;
-		m(1, 1) = T(1) - (xx + zz);
-		m(1, 2) = yz - wx;
-
-		m(2, 0) = xz - wy;
-		m(2, 1) = yz + wx;
-		m(2, 2) = T(1) - (xx + yy);
-	}
-
-	void setRotationPart(const TEuler<T>& e)
-	{
-		TMat& m = *this;
-		T ch, sh, ca, sa, cb, sb;
-		sinCos(e.y(), sh, ch);
-		sinCos(e.z(), sa, ca);
-		sinCos(e.x(), sb, cb);
-
-		m(0, 0) = ch * ca;
-		m(0, 1) = sh * sb - ch * sa * cb;
-		m(0, 2) = ch * sa * sb + sh * cb;
-		m(1, 0) = sa;
-		m(1, 1) = ca * cb;
-		m(1, 2) = -ca * sb;
-		m(2, 0) = -sh * ca;
-		m(2, 1) = sh * sa * cb + ch * sb;
-		m(2, 2) = -sh * sa * sb + ch * cb;
-	}
-
-	void setRotationPart(const TAxisang<T>& axisang)
-	{
-		TMat& m = *this;
-		// Not normalized axis
-		ANKI_ASSERT(isZero<T>(T(1) - axisang.getAxis().getLength()));
-
-		T c, s;
-		sinCos(axisang.getAngle(), s, c);
-		T t = T(1) - c;
-
-		const TVec<T, 3>& axis = axisang.getAxis();
-		m(0, 0) = c + axis.x() * axis.x() * t;
-		m(1, 1) = c + axis.y() * axis.y() * t;
-		m(2, 2) = c + axis.z() * axis.z() * t;
-
-		T tmp1 = axis.x() * axis.y() * t;
-		T tmp2 = axis.z() * s;
-		m(1, 0) = tmp1 + tmp2;
-		m(0, 1) = tmp1 - tmp2;
-		tmp1 = axis.x() * axis.z() * t;
-		tmp2 = axis.y() * s;
-		m(2, 0) = tmp1 - tmp2;
-		m(0, 2) = tmp1 + tmp2;
-		tmp1 = axis.y() * axis.z() * t;
-		tmp2 = axis.x() * s;
-		m(2, 1) = tmp1 + tmp2;
-		m(1, 2) = tmp1 - tmp2;
-	}
-
-	TMat<T, 3, 3> getRotationPart() const
+	[[nodiscard]] TMat<T, 3, 3> getRotationPart() const
 	{
 		const TMat& m = *this;
 		TMat<T, 3, 3> m3;
@@ -905,53 +889,66 @@ public:
 		setColumn(3, c);
 	}
 
-	ColumnVec getTranslationPart() const
+	[[nodiscard]] ColumnVec getTranslationPart() const requires(kTColumnCount == 4)
 	{
 		return getColumn(3);
 	}
 
-	void reorthogonalize()
+	[[nodiscard]] TMat reorthogonalize() const requires(kTRowCount == 3)
 	{
 		// There are 2 methods, the standard and the Gram-Schmidt method with a twist for zAxis. This uses the 2nd. For the first see < r664
 		ColumnVec xAxis, yAxis, zAxis;
 		getColumns(xAxis, yAxis, zAxis);
 
-		xAxis.normalize();
+		xAxis = xAxis.normalize();
 
 		yAxis = yAxis - (xAxis * xAxis.dot(yAxis));
-		yAxis.normalize();
+		yAxis = yAxis.normalize();
 
 		zAxis = xAxis.cross(yAxis);
 
-		setColumns(xAxis, yAxis, zAxis);
+		TMat out = *this;
+		out.setColumns(xAxis, yAxis, zAxis);
+		return out;
 	}
 
-	void transpose() requires(kIsSquare && !kHasSimd)
+	[[nodiscard]] TMat transpose() const requires(kIsSquare && !kHasSimd)
 	{
+		TMat out;
 		for(U j = 0; j < kTRowCount; j++)
 		{
-			for(U i = j + 1; i < kTColumnCount; i++)
+			for(U i = 0; i < kTColumnCount; i++)
 			{
-				T tmp = m_arr2[j][i];
-				m_arr2[j][i] = m_arr2[i][j];
-				m_arr2[i][j] = tmp;
+				out.m_arr2[i][j] = m_arr2[j][i];
 			}
 		}
+		return out;
 	}
 
 #if ANKI_ENABLE_SIMD
-	void transpose() requires(kIsSquare&& kHasSimd)
+	[[nodiscard]] TMat transpose() const requires(kIsSquare&& kHasSimd)
 	{
+		TMat out;
+
 #	if ANKI_SIMD_SSE
-		_MM_TRANSPOSE4_PS(m_simd[0], m_simd[1], m_simd[2], m_simd[3]);
+		const __m128 tmp0 = _mm_shuffle_ps(m_simd[0], m_simd[1], 0x44);
+		const __m128 tmp2 = _mm_shuffle_ps(m_simd[0], m_simd[1], 0xEE);
+		const __m128 tmp1 = _mm_shuffle_ps(m_simd[2], m_simd[3], 0x44);
+		const __m128 tmp3 = _mm_shuffle_ps(m_simd[2], m_simd[3], 0xEE);
+
+		out.m_simd[0] = _mm_shuffle_ps(tmp0, tmp1, 0x88);
+		out.m_simd[1] = _mm_shuffle_ps(tmp0, tmp1, 0xDD);
+		out.m_simd[2] = _mm_shuffle_ps(tmp2, tmp3, 0x88);
+		out.m_simd[3] = _mm_shuffle_ps(tmp2, tmp3, 0xDD);
 #	else
 		const float32x4x2_t row01 = vtrnq_f32(m_simd[0], m_simd[1]);
 		const float32x4x2_t row23 = vtrnq_f32(m_simd[2], m_simd[3]);
-		m_simd[0] = vcombine_f32(vget_low_f32(row01.val[0]), vget_low_f32(row23.val[0]));
-		m_simd[1] = vcombine_f32(vget_low_f32(row01.val[1]), vget_low_f32(row23.val[1]));
-		m_simd[2] = vcombine_f32(vget_high_f32(row01.val[0]), vget_high_f32(row23.val[0]));
-		m_simd[3] = vcombine_f32(vget_high_f32(row01.val[1]), vget_high_f32(row23.val[1]));
+		out.m_simd[0] = vcombine_f32(vget_low_f32(row01.val[0]), vget_low_f32(row23.val[0]));
+		out.m_simd[1] = vcombine_f32(vget_low_f32(row01.val[1]), vget_low_f32(row23.val[1]));
+		out.m_simd[2] = vcombine_f32(vget_high_f32(row01.val[0]), vget_high_f32(row23.val[0]));
+		out.m_simd[3] = vcombine_f32(vget_high_f32(row01.val[1]), vget_high_f32(row23.val[1]));
 #	endif
+		return out;
 	}
 #endif
 
@@ -968,20 +965,7 @@ public:
 		}
 	}
 
-	TMat getTransposed() const requires(kIsSquare)
-	{
-		TMat out;
-		for(U j = 0; j < kTRowCount; j++)
-		{
-			for(U i = 0; i < kTColumnCount; i++)
-			{
-				out.m_arr2[i][j] = m_arr2[j][i];
-			}
-		}
-		return out;
-	}
-
-	T getDet() const requires(kSize == 9)
+	[[nodiscard]] T getDet() const requires(kSize == 9)
 	{
 		const auto& m = *this;
 		// For the accurate method see < r664
@@ -989,7 +973,7 @@ public:
 			   + m(0, 2) * (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
 	}
 
-	T getDet() const requires(kSize == 16)
+	[[nodiscard]] T getDet() const requires(kSize == 16)
 	{
 		const auto& t = *this;
 		return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0) - t(0, 2) * t(1, 3) * t(2, 1) * t(3, 0) - t(0, 3) * t(1, 1) * t(2, 2) * t(3, 0)
@@ -1002,7 +986,7 @@ public:
 			   - t(0, 0) * t(1, 2) * t(2, 1) * t(3, 3) - t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) + t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 	}
 
-	TMat getInverse() const requires(kSize == 9)
+	[[nodiscard]] TMat invert() const requires(kSize == 9)
 	{
 		// Using Gramer's method Inv(A) = (1 / getDet(A)) * Adj(A)
 		const TMat& m = *this;
@@ -1034,7 +1018,7 @@ public:
 	}
 
 	/// Invert using Cramer's rule
-	TMat getInverse() const requires(kSize == 16)
+	[[nodiscard]] TMat invert() const requires(kSize == 16)
 	{
 		Array<T, 12> tmp;
 		const auto& in = (*this);
@@ -1108,14 +1092,8 @@ public:
 		return m4;
 	}
 
-	/// See getInverse
-	void invert() requires(kSize == 16 || kSize == 9)
-	{
-		(*this) = getInverse();
-	}
-
 	/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching the 4rth row and allot faster
-	static TMat combineTransformations(const TMat& m0, const TMat& m1) requires(kSize == 16)
+	[[nodiscard]] static TMat combineTransformations(const TMat& m0, const TMat& m1) requires(kSize == 16)
 	{
 		// See the clean code in < r664
 
@@ -1316,7 +1294,7 @@ public:
 	/// Vec2 xy = ndc.xy() * unprojParams.xy() * z;
 	/// Vec3 posViewSpace(xy, z);
 	/// @endcode
-	static TVec<T, 4> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far) requires(kSize == 16)
+	[[nodiscard]] static TVec<T, 4> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far) requires(kSize == 16)
 	{
 		TVec<T, 4> out;
 		const T g = near - far;
@@ -1347,7 +1325,7 @@ public:
 	}
 
 	/// Assuming this is a projection matrix extract the unprojection parameters. See calculatePerspectiveUnprojectionParams for more info.
-	TVec<T, 4> extractPerspectiveUnprojectionParams() const requires(kSize == 16)
+	[[nodiscard]] TVec<T, 4> extractPerspectiveUnprojectionParams() const requires(kSize == 16)
 	{
 		TVec<T, 4> out;
 		const auto& m = *this;
@@ -1359,25 +1337,25 @@ public:
 	}
 
 	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	TMat getInverseTransformation() const requires(kSize == 16)
+	[[nodiscard]] TMat invertTransformation() const requires(kSize == 16)
 	{
-		const TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
+		const TMat<T, 3, 3> invertedRot = getRotationPart().transpose();
 		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
 		invertedTsl = -(invertedRot * invertedTsl);
 		return TMat(invertedTsl.xyz0(), invertedRot);
 	}
 
 	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	TMat getInverseTransformation() const requires(kSize == 12)
+	[[nodiscard]] TMat invertTransformation() const requires(kSize == 12)
 	{
-		const TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
+		const TMat<T, 3, 3> invertedRot = getRotationPart().transpose();
 		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
 		invertedTsl = -(invertedRot * invertedTsl);
 		return TMat(invertedTsl.xyz(), invertedRot);
 	}
 
 	/// @note 9 muls, 9 adds
-	TVec<T, 3> transform(const TVec<T, 3>& v) const requires(kSize == 16)
+	[[nodiscard]] TVec<T, 3> transform(const TVec<T, 3>& v) const requires(kSize == 16)
 	{
 		const auto& m = *this;
 		return TVec<T, 3>(m(0, 0) * v.x() + m(0, 1) * v.y() + m(0, 2) * v.z() + m(0, 3),
@@ -1387,11 +1365,11 @@ public:
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
 	template<U kVecDimensions>
-	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
-					   const TVec<T, kVecDimensions>& up) requires(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)
+	[[nodiscard]] static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+									 const TVec<T, kVecDimensions>& up) requires(kTRowCount == 3 && kTColumnCount == 4 && kVecDimensions >= 3)
 	{
-		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).getNormalized();
-		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).getNormalized();
+		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).normalize();
+		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).normalize();
 		const TVec<T, 3> vside = vdir.cross(vup);
 		TMat out;
 		out.setColumns(vside, vup, -vdir, eye.xyz());
@@ -1400,11 +1378,11 @@ public:
 
 	/// Create a new transform matrix position at eye and looking at refPoint.
 	template<U kVecDimensions>
-	static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
-					   const TVec<T, kVecDimensions>& up) requires(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)
+	[[nodiscard]] static TMat lookAt(const TVec<T, kVecDimensions>& eye, const TVec<T, kVecDimensions>& refPoint,
+									 const TVec<T, kVecDimensions>& up) requires(kTRowCount == 4 && kTColumnCount == 4 && kVecDimensions >= 3)
 	{
-		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).getNormalized();
-		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).getNormalized();
+		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).normalize();
+		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).normalize();
 		const TVec<T, 4> vside = vdir.cross(vup);
 		TMat out;
 		out.setColumns(vside, vup, -vdir, eye.xyz1());
@@ -1412,7 +1390,7 @@ public:
 	}
 
 	/// Create a rotation matrix from some direction. http://jcgt.org/published/0006/01/01/
-	static TMat rotationFromDirection(const TVec<T, 3>& zAxis) requires(kSize == 9)
+	[[nodiscard]] static TMat rotationFromDirection(const TVec<T, 3>& zAxis) requires(kSize == 9)
 	{
 		const TVec<T, 3> z = zAxis;
 		const T sign = (z.z() >= T(0)) ? T(1) : -T(1);
@@ -1427,7 +1405,7 @@ public:
 		return out;
 	}
 
-	TMat lerp(const TMat& b, T t) const
+	[[nodiscard]] TMat lerp(const TMat& b, T t) const
 	{
 		return ((*this) * (T(1) - t)) + (b * t);
 	}
@@ -1467,7 +1445,7 @@ public:
 		return U8(kTColumnCount * kTRowCount);
 	}
 
-	String toString() const requires(std::is_floating_point<T>::value)
+	[[nodiscard]] String toString() const requires(std::is_floating_point<T>::value)
 	{
 		String str;
 		for(U j = 0; j < kTRowCount; ++j)

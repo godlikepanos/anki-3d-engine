@@ -97,16 +97,16 @@ void length()
 	}
 
 	res = T(sqrt(F32(res)));
-	ANKI_TEST_EXPECT_EQ(vec.getLength(), res);
+	ANKI_TEST_EXPECT_EQ(vec.length(), res);
 
 	if(Vec::kIsInteger)
 	{
-		ANKI_TEST_EXPECT_EQ(vec.getNormalized(), vec / res);
+		ANKI_TEST_EXPECT_EQ(vec.normalize(), vec / res);
 	}
 	else
 	{
 		auto a = vec / res;
-		auto b = vec.getNormalized();
+		auto b = vec.normalize();
 		for(U i = 0; i < size; i++)
 		{
 			ANKI_TEST_EXPECT_NEAR(a[i], b[i], 0.0001);
@@ -251,7 +251,7 @@ template<typename Mat>
 void transpose()
 {
 	Mat a = getNonEmptyMat<Mat>();
-	Mat b = a.getTransposed();
+	Mat b = a.transpose();
 
 	for(U j = 0; j < Mat::kRowCount; j++)
 	{

@@ -12,7 +12,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	const Sphere& a = *this;
 
 	const Vec4 c = b.getCenter() - a.getCenter();
-	const F32 cLen = c.getLength();
+	const F32 cLen = c.length();
 
 	if(cLen + b.getRadius() < a.getRadius())
 	{
@@ -28,7 +28,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	const Vec4 ca = (-bnorm) * a.getRadius() + a.getCenter();
 	const Vec4 cb = (bnorm)*b.getRadius() + b.getCenter();
 
-	return Sphere((ca + cb) / 2.0f, (ca - cb).getLength() / 2.0f);
+	return Sphere((ca + cb) / 2.0f, (ca - cb).length() / 2.0f);
 }
 
 void Sphere::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, [[maybe_unused]] PtrSize buffSize)
@@ -64,7 +64,7 @@ void Sphere::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize po
 			ANKI_ASSERT((ptrToNumber(ptr) + sizeof(Vec3) - ptrToNumber(pointBuffer)) <= buffSize);
 			const Vec3& pos = *reinterpret_cast<const Vec3*>(ptr);
 
-			const F32 dist = (Vec4(pos, 0.0f) - m_center).getLengthSquared();
+			const F32 dist = (Vec4(pos, 0.0f) - m_center).lengthSquared();
 			if(dist > maxDist)
 			{
 				maxDist = dist;

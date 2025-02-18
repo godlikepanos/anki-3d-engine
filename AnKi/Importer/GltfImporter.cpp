@@ -56,9 +56,9 @@ static void removeScale(Mat4& m)
 	Vec3 yAxis = m.getColumn(1).xyz();
 	Vec3 zAxis = m.getColumn(2).xyz();
 
-	xAxis.normalize();
-	yAxis.normalize();
-	zAxis.normalize();
+	xAxis = xAxis.normalize();
+	yAxis = yAxis.normalize();
+	zAxis = zAxis.normalize();
 
 	Mat3 rot;
 	rot.setColumns(xAxis, yAxis, zAxis);
@@ -75,7 +75,7 @@ static void getNodeTransform(const cgltf_node& node, Vec3& tsl, Mat3& rot, Vec3&
 		Vec3 yAxis = trf.getColumn(1).xyz();
 		Vec3 zAxis = trf.getColumn(2).xyz();
 
-		scale = Vec3(xAxis.getLength(), yAxis.getLength(), zAxis.getLength());
+		scale = Vec3(xAxis.length(), yAxis.length(), zAxis.length());
 
 		removeScale(trf);
 		rot = trf.getRotationPart();
@@ -1016,7 +1016,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin) const
 		// Bone transform
 		ANKI_CHECK(file.writeText("boneTransform=\""));
 		Mat4 btrf(&boneMats[i][0]);
-		btrf.transpose();
+		btrf = btrf.transpose();
 		const Mat3x4 btrf3x4(btrf);
 		for(U32 j = 0; j < 12; j++)
 		{

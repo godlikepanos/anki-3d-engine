@@ -87,22 +87,33 @@ UnpackedMeshVertex loadVertex(GpuSceneMeshLod mlod, U32 svVertexId, Bool bones)
 	return v;
 }
 
-UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 vertexIndex, Bool bones)
+UnpackedMeshVertex loadVertexLocalIndex(MeshletGeometryDescriptor meshlet, U32 localIdx, Bool bones)
 {
 	UnpackedMeshVertex v;
-	v.m_position = g_unifiedGeom_R16G16B16A16_Unorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kPosition] + vertexIndex];
+	v.m_position = g_unifiedGeom_R16G16B16A16_Unorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kPosition] + localIdx];
 	v.m_position = v.m_position * meshlet.m_positionScale + meshlet.m_positionTranslation;
 
-	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kNormal] + vertexIndex].xyz;
-	v.m_uv = g_unifiedGeom_R32G32_Sfloat[meshlet.m_vertexOffsets[(U32)VertexStreamId::kUv] + vertexIndex];
+	v.m_normal = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kNormal] + localIdx].xyz;
+	v.m_uv = g_unifiedGeom_R32G32_Sfloat[meshlet.m_vertexOffsets[(U32)VertexStreamId::kUv] + localIdx];
 
 	if(bones)
 	{
-		v.m_boneIndices = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + vertexIndex];
-		v.m_boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + vertexIndex];
+		v.m_boneIndices = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_vertexOffsets[(U32)VertexStreamId::kBoneIds] + localIdx];
+		v.m_boneWeights = g_unifiedGeom_R8G8B8A8_Snorm[meshlet.m_vertexOffsets[(U32)VertexStreamId::kBoneWeights] + localIdx];
 	}
 
 	return v;
+}
+
+UnpackedMeshVertex loadVertex(MeshletGeometryDescriptor meshlet, U32 svVertexId, Bool bones)
+{
+	// Indices are stored in R8G8B8A8_Uint per primitive. Last component is not used. Instead of reading 4 bytes use the code bellow to read just 1.
+	// Find prev version in an older commit
+	const U32 componentsPerPrimitive = 4u;
+	const F32 offset = floor(F32(svVertexId) / 3.0f) * F32(componentsPerPrimitive) + fmod(F32(svVertexId), 3.0f);
+	const U32 localIdx = g_unifiedGeom_R8_Uint[meshlet.m_firstPrimitive * componentsPerPrimitive + U32(offset)];
+
+	return loadVertexLocalIndex(meshlet, localIdx, bones);
 }
 
 Bool cullBackfaceMeshlet(MeshletBoundingVolume meshlet, Mat3x4 worldTransform, Vec3 cameraWorldPos)

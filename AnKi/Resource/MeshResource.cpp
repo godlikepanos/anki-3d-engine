@@ -357,8 +357,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 					packSnorm4x8(Vec4(inMeshlet.m_coneDirection, cos(inMeshlet.m_coneAngle / 2.0f)));
 				outMeshletBoundingVolume.m_coneApex = inMeshlet.m_coneApex;
 				outMeshletBoundingVolume.m_sphereRadius =
-					((outMeshletBoundingVolume.m_aabbMin + outMeshletBoundingVolume.m_aabbMax) / 2.0f - outMeshletBoundingVolume.m_aabbMax)
-						.getLength();
+					((outMeshletBoundingVolume.m_aabbMin + outMeshletBoundingVolume.m_aabbMax) / 2.0f - outMeshletBoundingVolume.m_aabbMax).length();
 				outMeshletBoundingVolume.m_primitiveCount = inMeshlet.m_primitiveCount;
 			}
 

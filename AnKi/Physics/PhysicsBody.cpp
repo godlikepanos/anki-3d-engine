@@ -56,7 +56,7 @@ void PhysicsBody::init(const PhysicsBodyInitInfo& init)
 	const Quat rot = Quat(init.m_transform.getRotation());
 
 	// Create a scale shape
-	const Bool hasScale = (init.m_transform.getScale().xyz() - 1.0).getLengthSquared() > kEpsilonf * 10.0;
+	const Bool hasScale = (init.m_transform.getScale().xyz() - 1.0).lengthSquared() > kEpsilonf * 10.0;
 	PhysicsCollisionShapePtr scaledShape;
 	if(hasScale)
 	{

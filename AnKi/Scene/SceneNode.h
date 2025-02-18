@@ -370,7 +370,7 @@ public:
 
 	void lookAtPoint(const Vec4& point)
 	{
-		m_ltrf.lookAt(point, Vec4(0.0f, 1.0f, 0.0f, 0.0f));
+		m_ltrf = m_ltrf.lookAt(point, Vec4::yAxis());
 		m_localTransformDirty = true;
 	}
 	/// @}

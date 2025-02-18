@@ -54,9 +54,9 @@ void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 	points[RTF] = er;
 	points[LBB] = -er;
 
-	const Vec4 xAxis = Vec4(m_rotation.getColumn(0).getNormalized(), 0.0f);
-	const Vec4 yAxis = Vec4(m_rotation.getColumn(1).getNormalized(), 0.0f);
-	const Vec4 zAxis = Vec4(m_rotation.getColumn(2).getNormalized(), 0.0f);
+	const Vec4 xAxis = Vec4(m_rotation.getColumn(0).normalize(), 0.0f);
+	const Vec4 yAxis = Vec4(m_rotation.getColumn(1).normalize(), 0.0f);
+	const Vec4 zAxis = Vec4(m_rotation.getColumn(2).normalize(), 0.0f);
 
 	// Reflection: x1' = 2n|x1.n| - x1
 

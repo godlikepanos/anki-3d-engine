@@ -264,14 +264,7 @@ VertOut main(VertIn input)
 	}
 
 	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
-
-	// Indices are stored in R8G8B8A8_Uint per primitive. Last component is not used. Instead of reading 4 bytes use the code bellow to read just 1.
-	// Find prev version in an older commit
-	const U32 componentsPerPrimitive = 4u;
-	const F32 offset = floor(F32(input.m_svVertexId) / 3.0f) * F32(componentsPerPrimitive) + fmod(F32(input.m_svVertexId), 3.0f);
-	const U32 localIdx = g_unifiedGeom_R8_Uint[meshlet.m_firstPrimitive * componentsPerPrimitive + U32(offset)];
-
-	UnpackedMeshVertex vert = loadVertex(meshlet, localIdx, ANKI_BONES);
+	UnpackedMeshVertex vert = loadVertex(meshlet, input.m_svVertexId, ANKI_BONES);
 
 	const U32 constantsOffset = instance.m_constantsOffset;
 	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
@@ -366,7 +359,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 		{
 			MeshPerVertOut output;
 
-			UnpackedMeshVertex vert = loadVertex(meshlet, idx, ANKI_BONES);
+			UnpackedMeshVertex vert = loadVertexLocalIndex(meshlet, idx, ANKI_BONES);
 
 			const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
 			const Mat3x4 prevWorldTransform = g_transforms[worldTransformsIndex + 1u];
@@ -460,7 +453,7 @@ main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices 
 #endif // ANKI_MESH_SHADER
 
 // ===========================================================================
-// Frag                                                                      =
+// Pixel                                                                     =
 // ===========================================================================
 #if ANKI_PIXEL_SHADER
 

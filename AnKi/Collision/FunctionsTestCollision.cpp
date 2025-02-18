@@ -97,7 +97,7 @@ Bool testCollision(const Aabb& aabb, const Sphere& s)
 	// it's always smaller than rsq
 	const Vec4 sub = c - cp;
 
-	return (sub.getLengthSquared() <= (s.getRadius() * s.getRadius())) ? true : false;
+	return (sub.lengthSquared() <= (s.getRadius() * s.getRadius())) ? true : false;
 }
 
 Bool testCollision(const Aabb& aabb, const Obb& obb)
@@ -170,7 +170,7 @@ Bool testCollision([[maybe_unused]] const Aabb& aabb, [[maybe_unused]] const Con
 Bool testCollision(const Sphere& a, const Sphere& b)
 {
 	const F32 tmp = a.getRadius() + b.getRadius();
-	return (a.getCenter() - b.getCenter()).getLengthSquared() <= tmp * tmp;
+	return (a.getCenter() - b.getCenter()).lengthSquared() <= tmp * tmp;
 }
 
 Bool testCollision(const Sphere& sphere, const Obb& obb)
@@ -192,7 +192,7 @@ Bool testCollision(const Sphere& s, const LineSegment& ls)
 
 	if(w0dv < 0.0f) // if the ang is >90
 	{
-		return w0.getLengthSquared() <= rsq;
+		return w0.lengthSquared() <= rsq;
 	}
 
 	const Vec4 w1 = w0 - v; // aka center - P1, where P1 = seg.origin + seg.dir
@@ -200,12 +200,12 @@ Bool testCollision(const Sphere& s, const LineSegment& ls)
 
 	if(w1dv > 0.0f) // if the ang is <90
 	{
-		return w1.getLengthSquared() <= rsq;
+		return w1.lengthSquared() <= rsq;
 	}
 
 	// the big parenthesis is the projection of w0 to v
-	const Vec4 tmp = w0 - (v * (w0.dot(v) / v.getLengthSquared()));
-	return tmp.getLengthSquared() <= rsq;
+	const Vec4 tmp = w0 - (v * (w0.dot(v) / v.lengthSquared()));
+	return tmp.lengthSquared() <= rsq;
 }
 
 Bool testCollision(const Sphere& sphere, const Cone& cone)
@@ -353,7 +353,7 @@ Bool testCollision(const Plane& plane, const Ray& ray, Vec4& intersection)
 Bool testCollision(const Plane& plane, const Vec4& vector, Vec4& intersection)
 {
 	ANKI_ASSERT(vector.w() == 0.0f);
-	const Vec4 pp = vector.getNormalized();
+	const Vec4 pp = vector.normalize();
 	const F32 dot = pp.dot(plane.getNormal());
 
 	if(!isZero(dot))
@@ -370,7 +370,7 @@ Bool testCollision(const Plane& plane, const Vec4& vector, Vec4& intersection)
 
 Bool intersect(const Sphere& sphere, const Ray& ray, Array<Vec4, 2>& intersectionPoints, U& intersectionPointCount)
 {
-	ANKI_ASSERT(isZero(ray.getDirection().getLengthSquared() - 1.0f));
+	ANKI_ASSERT(isZero(ray.getDirection().lengthSquared() - 1.0f));
 
 	// See https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
 
@@ -382,7 +382,7 @@ Bool intersect(const Sphere& sphere, const Ray& ray, Array<Vec4, 2>& intersectio
 	const Vec4 o_c = o - c;
 
 	const F32 a = l.dot(o_c);
-	const F32 b = a * a - o_c.getLengthSquared() + R2;
+	const F32 b = a * a - o_c.lengthSquared() + R2;
 
 	if(b < 0.0f)
 	{

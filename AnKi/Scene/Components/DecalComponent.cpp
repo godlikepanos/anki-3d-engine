@@ -54,7 +54,7 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		// Calculate the texture matrix
 		const Mat4 worldTransform(info.m_node->getWorldTransform());
 
-		const Mat4 viewMat = worldTransform.getInverse();
+		const Mat4 viewMat = worldTransform.invert();
 
 		const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(), halfBoxSize.y(), -halfBoxSize.y(),
 																		 kClusterObjectFrustumNearPlane, m_boxSize.z());
@@ -77,7 +77,7 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		gpuDecal.m_roughnessMetalnessFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
 		gpuDecal.m_textureMatrix = m_biasProjViewMat;
 		gpuDecal.m_sphereCenter = obbW.getCenter().xyz();
-		gpuDecal.m_sphereRadius = obbW.getExtend().getLength();
+		gpuDecal.m_sphereRadius = obbW.getExtend().length();
 
 		m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 	}

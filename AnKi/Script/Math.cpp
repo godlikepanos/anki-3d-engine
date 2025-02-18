@@ -26,7 +26,7 @@ static void deserializeVec2(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {7803499094187981619, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
+LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {7646200881744055672, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2,
 											   deserializeVec2};
 
 template<>
@@ -812,8 +812,8 @@ static int wrapVec2__eq(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method Vec2::getLength.
-static inline int pwrapVec2getLength(lua_State* l)
+/// Pre-wrap method Vec2::length.
+static inline int pwrapVec2length(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -833,7 +833,7 @@ static inline int pwrapVec2getLength(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Call the method
-	F32 ret = self->getLength();
+	F32 ret = self->length();
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
@@ -841,58 +841,10 @@ static inline int pwrapVec2getLength(lua_State* l)
 	return 1;
 }
 
-/// Wrap method Vec2::getLength.
-static int wrapVec2getLength(lua_State* l)
+/// Wrap method Vec2::length.
+static int wrapVec2length(lua_State* l)
 {
-	int res = pwrapVec2getLength(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method Vec2::getNormalized.
-static inline int pwrapVec2getNormalized(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
-	{
-		return -1;
-	}
-
-	Vec2* self = ud->getData<Vec2>();
-
-	// Call the method
-	Vec2 ret = self->getNormalized();
-
-	// Push return value
-	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
-	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, "Vec2");
-	ud = static_cast<LuaUserData*>(voidp);
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
-	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
-	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
-
-	return 1;
-}
-
-/// Wrap method Vec2::getNormalized.
-static int wrapVec2getNormalized(lua_State* l)
-{
-	int res = pwrapVec2getNormalized(l);
+	int res = pwrapVec2length(l);
 	if(res >= 0)
 	{
 		return res;
@@ -923,9 +875,18 @@ static inline int pwrapVec2normalize(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Call the method
-	self->normalize();
+	Vec2 ret = self->normalize();
 
-	return 0;
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec2");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
+	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
+
+	return 1;
 }
 
 /// Wrap method Vec2::normalize.
@@ -1012,8 +973,7 @@ static inline void wrapVec2(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "__mul", wrapVec2__mul);
 	LuaBinder::pushLuaCFuncMethod(l, "__div", wrapVec2__div);
 	LuaBinder::pushLuaCFuncMethod(l, "__eq", wrapVec2__eq);
-	LuaBinder::pushLuaCFuncMethod(l, "getLength", wrapVec2getLength);
-	LuaBinder::pushLuaCFuncMethod(l, "getNormalized", wrapVec2getNormalized);
+	LuaBinder::pushLuaCFuncMethod(l, "length", wrapVec2length);
 	LuaBinder::pushLuaCFuncMethod(l, "normalize", wrapVec2normalize);
 	LuaBinder::pushLuaCFuncMethod(l, "dot", wrapVec2dot);
 	lua_settop(l, 0);
@@ -1035,7 +995,7 @@ static void deserializeVec3(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {6911238639175218670, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
+LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {7123097970105283442, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3,
 											   deserializeVec3};
 
 template<>
@@ -1955,8 +1915,8 @@ static int wrapVec3__eq(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method Vec3::getLength.
-static inline int pwrapVec3getLength(lua_State* l)
+/// Pre-wrap method Vec3::length.
+static inline int pwrapVec3length(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -1976,7 +1936,7 @@ static inline int pwrapVec3getLength(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Call the method
-	F32 ret = self->getLength();
+	F32 ret = self->length();
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
@@ -1984,58 +1944,10 @@ static inline int pwrapVec3getLength(lua_State* l)
 	return 1;
 }
 
-/// Wrap method Vec3::getLength.
-static int wrapVec3getLength(lua_State* l)
+/// Wrap method Vec3::length.
+static int wrapVec3length(lua_State* l)
 {
-	int res = pwrapVec3getLength(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method Vec3::getNormalized.
-static inline int pwrapVec3getNormalized(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
-	{
-		return -1;
-	}
-
-	Vec3* self = ud->getData<Vec3>();
-
-	// Call the method
-	Vec3 ret = self->getNormalized();
-
-	// Push return value
-	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
-	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, "Vec3");
-	ud = static_cast<LuaUserData*>(voidp);
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
-	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
-	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
-
-	return 1;
-}
-
-/// Wrap method Vec3::getNormalized.
-static int wrapVec3getNormalized(lua_State* l)
-{
-	int res = pwrapVec3getNormalized(l);
+	int res = pwrapVec3length(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2066,9 +1978,18 @@ static inline int pwrapVec3normalize(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Call the method
-	self->normalize();
+	Vec3 ret = self->normalize();
 
-	return 0;
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec3");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
+	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
+
+	return 1;
 }
 
 /// Wrap method Vec3::normalize.
@@ -2157,8 +2078,7 @@ static inline void wrapVec3(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "__mul", wrapVec3__mul);
 	LuaBinder::pushLuaCFuncMethod(l, "__div", wrapVec3__div);
 	LuaBinder::pushLuaCFuncMethod(l, "__eq", wrapVec3__eq);
-	LuaBinder::pushLuaCFuncMethod(l, "getLength", wrapVec3getLength);
-	LuaBinder::pushLuaCFuncMethod(l, "getNormalized", wrapVec3getNormalized);
+	LuaBinder::pushLuaCFuncMethod(l, "length", wrapVec3length);
 	LuaBinder::pushLuaCFuncMethod(l, "normalize", wrapVec3normalize);
 	LuaBinder::pushLuaCFuncMethod(l, "dot", wrapVec3dot);
 	lua_settop(l, 0);
@@ -2180,7 +2100,7 @@ static void deserializeVec4(const void* data, LuaUserData& self)
 	obj->deserialize(data);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {-5133042424981777357, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
+LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {-5145388461665443836, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4,
 											   deserializeVec4};
 
 template<>
@@ -3200,8 +3120,8 @@ static int wrapVec4__eq(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method Vec4::getLength.
-static inline int pwrapVec4getLength(lua_State* l)
+/// Pre-wrap method Vec4::length.
+static inline int pwrapVec4length(lua_State* l)
 {
 	[[maybe_unused]] LuaUserData* ud;
 	[[maybe_unused]] void* voidp;
@@ -3221,7 +3141,7 @@ static inline int pwrapVec4getLength(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Call the method
-	F32 ret = self->getLength();
+	F32 ret = self->length();
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
@@ -3229,58 +3149,10 @@ static inline int pwrapVec4getLength(lua_State* l)
 	return 1;
 }
 
-/// Wrap method Vec4::getLength.
-static int wrapVec4getLength(lua_State* l)
+/// Wrap method Vec4::length.
+static int wrapVec4length(lua_State* l)
 {
-	int res = pwrapVec4getLength(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method Vec4::getNormalized.
-static inline int pwrapVec4getNormalized(lua_State* l)
-{
-	[[maybe_unused]] LuaUserData* ud;
-	[[maybe_unused]] void* voidp;
-	[[maybe_unused]] PtrSize size;
-
-	if(LuaBinder::checkArgsCount(l, 1)) [[unlikely]]
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
-	{
-		return -1;
-	}
-
-	Vec4* self = ud->getData<Vec4>();
-
-	// Call the method
-	Vec4 ret = self->getNormalized();
-
-	// Push return value
-	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
-	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, "Vec4");
-	ud = static_cast<LuaUserData*>(voidp);
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
-	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
-
-	return 1;
-}
-
-/// Wrap method Vec4::getNormalized.
-static int wrapVec4getNormalized(lua_State* l)
-{
-	int res = pwrapVec4getNormalized(l);
+	int res = pwrapVec4length(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3311,9 +3183,18 @@ static inline int pwrapVec4normalize(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Call the method
-	self->normalize();
+	Vec4 ret = self->normalize();
 
-	return 0;
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "Vec4");
+	ud = static_cast<LuaUserData*>(voidp);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
+	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
+
+	return 1;
 }
 
 /// Wrap method Vec4::normalize.
@@ -3404,14 +3285,13 @@ static inline void wrapVec4(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "__mul", wrapVec4__mul);
 	LuaBinder::pushLuaCFuncMethod(l, "__div", wrapVec4__div);
 	LuaBinder::pushLuaCFuncMethod(l, "__eq", wrapVec4__eq);
-	LuaBinder::pushLuaCFuncMethod(l, "getLength", wrapVec4getLength);
-	LuaBinder::pushLuaCFuncMethod(l, "getNormalized", wrapVec4getNormalized);
+	LuaBinder::pushLuaCFuncMethod(l, "length", wrapVec4length);
 	LuaBinder::pushLuaCFuncMethod(l, "normalize", wrapVec4normalize);
 	LuaBinder::pushLuaCFuncMethod(l, "dot", wrapVec4dot);
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {6777119210890395568, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {288806843489649530, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
@@ -3797,7 +3677,7 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {8812777471101110980, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {-5331181224552445128, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr,
 												 nullptr};
 
 template<>
@@ -4202,7 +4082,7 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {5321497660535424691, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
+LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {432149697915855870, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(),
 													nullptr, nullptr};
 
 template<>

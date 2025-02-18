@@ -40,7 +40,7 @@ public:
 		const TVec<T, 3> s1 = m4.getColumn(1).xyz();
 		const TVec<T, 3> s2 = m4.getColumn(2).xyz();
 
-		m_scale = TVec<T, 4>(s0.getLength(), s1.getLength(), s2.getLength(), T(0));
+		m_scale = TVec<T, 4>(s0.length(), s1.length(), s2.length(), T(0));
 
 		m_rotation.setColumns(s0 / m_scale.x(), s1 / m_scale.x(), s2 / m_scale.x(), TVec<T, 3>(T(0)));
 		m_origin = m4.getTranslationPart().xyz0();
@@ -145,7 +145,7 @@ public:
 
 	[[nodiscard]] static TTransform getIdentity()
 	{
-		return TTransform(TVec<T, 4>(T(0)), TMat<T, 3, 4>::getIdentity(), TVec<T, 4>(T(1), T(1), T(1), T(0)));
+		return TTransform();
 	}
 
 	/// @copybrief combineTTransformations
@@ -164,22 +164,15 @@ public:
 	}
 
 	/// Get the inverse transformation. Its faster that inverting a Mat4
-	[[nodiscard]] TTransform getInverse() const
+	[[nodiscard]] TTransform invert() const
 	{
 		TTransform o;
 		o.m_rotation = m_rotation;
 		o.m_rotation.transposeRotationPart();
-		o.m_scale = T(1) / m_scale.xyz1();
+		o.m_scale = TVec<T, 4>(T(1), T(1), T(1), T(0)) / m_scale.xyz1();
 		o.m_origin = -(o.m_rotation * (o.m_scale * m_origin)).xyz0();
-		check();
+		o.check();
 		return o;
-	}
-
-	void invert()
-	{
-		m_rotation.transposeRotationPart();
-		m_scale = T(1) / m_scale;
-		m_origin = -(m_rotation * (m_scale * m_origin));
 	}
 
 	/// Transform a TVec3
@@ -198,14 +191,17 @@ public:
 	}
 
 	template<U kVecComponentCount>
-	TTransform& lookAt(const TVec<T, kVecComponentCount>& refPoint, const TVec<T, kVecComponentCount>& up)
+	[[nodiscard]] TTransform lookAt(const TVec<T, kVecComponentCount>& refPoint, const TVec<T, kVecComponentCount>& up) const
 	{
 		const TVec<T, 4> j = up.xyz0();
-		const TVec<T, 4> vdir = (refPoint.xyz0() - m_origin).getNormalized();
-		const TVec<T, 4> vup = (j - vdir * j.dot(vdir)).getNormalized();
+		const TVec<T, 4> vdir = (refPoint.xyz0() - m_origin).normalize();
+		const TVec<T, 4> vup = (j - vdir * j.dot(vdir)).normalize();
 		const TVec<T, 4> vside = vdir.cross(vup);
-		m_rotation.setColumns(vside.xyz(), vup.xyz(), (-vdir).xyz());
-		return *this;
+		TTransform out;
+		out.m_origin = m_origin;
+		out.m_scale = m_scale;
+		out.m_rotation.setColumns(vside.xyz(), vup.xyz(), (-vdir).xyz());
+		return out;
 	}
 
 	[[nodiscard]] String toString() const requires(std::is_floating_point<T>::value)
@@ -225,7 +221,7 @@ public:
 		return str;
 	}
 
-	Bool hasUniformScale() const
+	[[nodiscard]] Bool hasUniformScale() const
 	{
 		return m_scale.x() == m_scale.y() && m_scale.x() == m_scale.z();
 	}

@@ -6,9 +6,13 @@
 #pragma anki mutator TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
-#pragma anki technique Forward vert pixel
+#pragma anki technique ForwardLegacy vert pixel
+#pragma anki technique ForwardSwMeshletRendering vert pixel
+#pragma anki technique ForwardMeshShaders mesh pixel
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
+
+#define SW_MESHLETS ANKI_TECHNIQUE_ForwardSwMeshletRendering
 
 #pragma anki struct AnKiLocalConstants
 #pragma anki member U32 m_texture
@@ -18,7 +22,7 @@
 
 struct VertIn
 {
-	UVec4 m_gpuSceneRenderable : MISC0;
+	UVec4 m_instanceData : MISC0;
 	U32 m_svVertexId : SV_VERTEXID;
 };
 
@@ -30,27 +34,123 @@ struct VertOut
 	nointerpolation U32 m_constantsOffset : CONSTANTS_OFFSET;
 };
 
+struct MeshPerVertOut
+{
+	Vec4 m_svPosition : SV_POSITION;
+	Vec2 m_uv : TEXCOORD;
+};
+
+struct MeshPerPrimitiveOut
+{
+	ANKI_PER_PRIMITIVE_MEMBER U32 m_constantsOffset : UNIS_OFFSET;
+};
+
+// ===========================================================================
+// Vert                                                                      =
+// ===========================================================================
 #if ANKI_VERTEX_SHADER
 VertOut main(VertIn input)
 {
 	VertOut output;
 
-	const GpuSceneRenderableInstance renderable = unpackGpuSceneRenderableVertex(input.m_gpuSceneRenderable);
-	const GpuSceneMeshLod mesh = g_meshLods[renderable.m_meshLodIndex];
-	const Mat3x4 worldTransform = g_transforms[renderable.m_worldTransformsIndex];
+#	if SW_MESHLETS
+	const GpuSceneMeshletInstance instance = unpackGpuSceneMeshletInstance(input.m_instanceData);
+
+	if(input.m_svVertexId >= (instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit & ((1u << 7u) - 1u)) * 3u)
+	{
+		// Discard the primitive
+		output = (VertOut)0;
+		output.m_svPosition = kNaN;
+		return output;
+	}
+
+	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
+	const UnpackedMeshVertex vertex = loadVertex(meshlet, input.m_svVertexId, false);
+	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
+#	else // SW_MESHLETS
+	const GpuSceneRenderableInstance instance = unpackGpuSceneRenderableVertex(input.m_instanceData);
+	const GpuSceneMeshLod mesh = g_meshLods[instance.m_meshLodIndex];
+	const U32 worldTransformsIndex = instance.m_worldTransformsIndex;
 	const UnpackedMeshVertex vertex = loadVertex(mesh, input.m_svVertexId, false);
+#	endif // SW_MESHLETS
+
+	const U32 constantsOffset = instance.m_constantsOffset;
+
+	const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
 
 	output.m_worldPosition = mul(worldTransform, Vec4(vertex.m_position, 1.0));
 
 	output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(output.m_worldPosition, 1.0));
 
 	output.m_uv = vertex.m_uv;
-	output.m_constantsOffset = renderable.m_constantsOffset;
+	output.m_constantsOffset = constantsOffset;
 
 	return output;
 }
 #endif // ANKI_VERTEX_SHADER
 
+// ===========================================================================
+// Mesh                                                                      =
+// ===========================================================================
+#if ANKI_MESH_SHADER
+[numthreads(ANKI_MESH_SHADER_THREADGROUP_SIZE, 1, 1)] [outputtopology("triangle")] void
+main(U32 svGroupId : SV_GROUPID, U32 svGroupIndex : SV_GROUPINDEX, out vertices MeshPerVertOut verts[kMaxVerticesPerMeshlet],
+	 out primitives MeshPerPrimitiveOut primitives[kMaxPrimitivesPerMeshlet], out indices UVec3 indices[kMaxPrimitivesPerMeshlet])
+{
+	const U32 instanceIdx = g_firstMeshlet[g_consts.m_bucketIndex] + svGroupId;
+
+	const GpuSceneMeshletInstance instance = g_meshletInstances[instanceIdx];
+	const U32 constantsOffset = instance.m_constantsOffset;
+	const U32 worldTransformsIndex = instance.m_worldTransformsIndex_25bit_meshletPrimitiveCount_7bit >> 7u;
+
+	const MeshletGeometryDescriptor meshlet = g_meshletGeometryDescriptors[instance.m_meshletGeometryDescriptorIndex];
+	const U32 primCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint >> 16u;
+	const U32 vertCount = meshlet.m_primitiveCount_R16_Uint_vertexCount_R16_Uint & 0xFFFFu;
+
+	SetMeshOutputCounts(vertCount, primCount);
+
+	// Write the verts
+	const U32 vertLoopCount = kMaxVerticesPerMeshlet / ANKI_MESH_SHADER_THREADGROUP_SIZE;
+	[unroll] for(U32 l = 0; l < vertLoopCount; ++l)
+	{
+		const U32 idx = l * ANKI_MESH_SHADER_THREADGROUP_SIZE + svGroupIndex;
+
+		if(idx < vertCount)
+		{
+			MeshPerVertOut output;
+
+			const UnpackedMeshVertex vert = loadVertexLocalIndex(meshlet, idx, false);
+
+			const Mat3x4 worldTransform = g_transforms[worldTransformsIndex];
+			const Vec3 worldPos = mul(worldTransform, Vec4(vert.m_position, 1.0));
+			output.m_svPosition = mul(g_globalConstants.m_viewProjectionMatrix, Vec4(worldPos, 1.0f));
+
+			output.m_uv = vert.m_uv;
+
+			verts[idx] = output;
+		}
+	}
+
+	// Write the primitive data
+	const U32 primLoopCount = (kMaxPrimitivesPerMeshlet + ANKI_MESH_SHADER_THREADGROUP_SIZE - 1u) / ANKI_MESH_SHADER_THREADGROUP_SIZE;
+	[unroll] for(U32 l = 0; l < primLoopCount; ++l)
+	{
+		const U32 idx = l * ANKI_MESH_SHADER_THREADGROUP_SIZE + svGroupIndex;
+
+		if(idx < primCount)
+		{
+			const UVec3 prim = g_unifiedGeom_R8G8B8A8_Uint[meshlet.m_firstPrimitive + idx].xyz;
+			indices[idx] = prim;
+
+			primitives[idx].m_constantsOffset = constantsOffset;
+		}
+	}
+}
+#endif // ANKI_MESH_SHADER
+
+// ===========================================================================
+// Pixel                                                                     =
+// ===========================================================================
 #if ANKI_PIXEL_SHADER
 PixelOut main(VertOut input)
 {

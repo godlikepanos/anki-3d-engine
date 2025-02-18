@@ -15,7 +15,7 @@ ConvexHullShape ConvexHullShape::getTransformed(const Transform& trf) const
 	ConvexHullShape out = *this;
 
 	out.m_trf = m_trf.combineTransformations(trf);
-	out.m_invTrf = m_trf.getInverse();
+	out.m_invTrf = m_trf.invert();
 	out.m_trfIdentity = false;
 
 	return out;
@@ -24,7 +24,7 @@ ConvexHullShape ConvexHullShape::getTransformed(const Transform& trf) const
 void ConvexHullShape::setTransform(const Transform& trf)
 {
 	m_trf = trf;
-	m_invTrf = m_trf.getInverse();
+	m_invTrf = m_trf.invert();
 	m_trfIdentity = false;
 }
 

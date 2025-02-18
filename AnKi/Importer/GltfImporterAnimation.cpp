@@ -234,8 +234,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 				const F32 scaleEpsilon = 0.0001f;
 
 				// Normalize the scale because scaleEpsilon is relative
-				Vec3 scale = scales[i];
-				scale.normalize();
+				Vec3 scale = scales[i].normalize();
 
 				if(!scaleErrorReported && (absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon))
 				{
@@ -271,7 +270,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 					return a.abs() < kKillEpsilon;
 				},
 				[&](const Vec3& a, const Vec3& b) -> Bool {
-					return (a - b).getLength() < kKillEpsilon;
+					return (a - b).length() < kKillEpsilon;
 				},
 				[&](const Vec3& a, const Vec3& b, F32 u) -> Vec3 {
 					return linearInterpolate(a, b, u);

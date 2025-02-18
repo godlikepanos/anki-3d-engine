@@ -147,7 +147,7 @@ void ShadowMapping::chooseDetail(const Vec3& cameraOrigin, const LightComponent&
 {
 	if(lightc.getLightComponentType() == LightComponentType::kPoint)
 	{
-		const F32 distFromTheCamera = (cameraOrigin - lightc.getWorldPosition()).getLength() - lightc.getRadius();
+		const F32 distFromTheCamera = (cameraOrigin - lightc.getWorldPosition()).length() - lightc.getRadius();
 		if(distFromTheCamera < lodDistances[0])
 		{
 			tileAllocatorHierarchy = kPointLightMaxTileAllocHierarchy;
@@ -643,7 +643,7 @@ void ShadowMapping::createDrawShadowsPass(ConstWeakArray<ShadowSubpassInfo> subp
 			RenderableDrawerArguments args;
 			args.m_renderingTechinuqe = RenderingTechnique::kDepth;
 			args.m_viewMatrix = spass.m_viewMat;
-			args.m_cameraTransform = spass.m_viewMat.getInverseTransformation();
+			args.m_cameraTransform = spass.m_viewMat.invertTransformation();
 			args.m_viewProjectionMatrix = spass.m_viewProjMat;
 			args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 			args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();

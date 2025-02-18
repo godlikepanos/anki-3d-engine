@@ -18,7 +18,7 @@ void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane)
 	{ \
 		const Vec4 planeEqationCoefs = mvp.getRow(a) op mvp.getRow(b); \
 		const Vec4 n = planeEqationCoefs.xyz0(); \
-		const F32 len = n.getLength(); \
+		const F32 len = n.length(); \
 		plane = Plane(n / len, -planeEqationCoefs.w() / len); \
 		break; \
 	}
@@ -29,7 +29,7 @@ void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane)
 	{
 		const Vec4 planeEqationCoefs = mvp.getRow(2);
 		const Vec4 n = planeEqationCoefs.xyz0();
-		const F32 len = n.getLength();
+		const F32 len = n.length();
 		plane = Plane(n / len, -planeEqationCoefs.w() / len);
 		break;
 	}
@@ -72,7 +72,7 @@ static Vec4 computeBoundingSphere2(const Vec3 O, const Vec3 A)
 
 	const Vec3 o = 0.5f * a;
 
-	const F32 radius = o.getLength() + kEpsilonf;
+	const F32 radius = o.length() + kEpsilonf;
 	const Vec3 center = O + o;
 
 	return Vec4(center, radius);
@@ -90,7 +90,7 @@ static Vec4 computeBoundingSphere3(const Vec3 O, const Vec3 A, const Vec3 B)
 	{
 		// A pair in A,B,O are the same point or they are in the same line
 
-		if(a.getLengthSquared() > b.getLengthSquared())
+		if(a.lengthSquared() > b.lengthSquared())
 		{
 			return computeBoundingSphere2(O, A);
 		}
@@ -104,7 +104,7 @@ static Vec4 computeBoundingSphere3(const Vec3 O, const Vec3 A, const Vec3 B)
 	o += a.dot(a) * b.cross(acrossb);
 	o /= denominator;
 
-	const F32 radius = o.getLength() + kEpsilonf;
+	const F32 radius = o.length() + kEpsilonf;
 	const Vec3 center = O + o;
 
 	return Vec4(center, radius);
@@ -167,7 +167,7 @@ Vec4 computeBoundingSphereRecursive(WeakArray<const Vec3*> pPoints, U32 begin, U
 
 	for(U32 i = 0; i < p; i++)
 	{
-		const F32 distSq = (sphere.xyz() - *pPoints[begin + i]).getLengthSquared();
+		const F32 distSq = (sphere.xyz() - *pPoints[begin + i]).lengthSquared();
 		const F32 radiusSq = sphere.w() * sphere.w();
 
 		if(distSq > radiusSq)

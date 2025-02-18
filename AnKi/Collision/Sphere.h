@@ -108,7 +108,7 @@ public:
 	/// Compute the GJK support.
 	Vec4 computeSupport(const Vec4& dir) const
 	{
-		return m_center + dir.getNormalized() * m_radius;
+		return m_center + dir.normalize() * m_radius;
 	}
 
 private:

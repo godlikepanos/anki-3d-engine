@@ -71,7 +71,7 @@ Bool Frustum::update()
 	if(m_worldTransformDirty)
 	{
 		updated = true;
-		m_viewMat = Mat3x4(m_worldTransform.getInverse());
+		m_viewMat = Mat3x4(m_worldTransform.invert());
 	}
 
 	// Updates that are affected by transform & shape updates

@@ -203,7 +203,17 @@ Error MaterialResource::parseShaderProgram(XmlElement shaderProgramEl, Bool asyn
 				m_techniquesMask |= RenderingTechniqueBit::kRtShadow;
 			}
 		}
-		else if(t.m_name.getBegin() == CString("Forward"))
+		else if(t.m_name.getBegin() == CString("ForwardSwMeshletRendering"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kForward;
+			m_shaderTechniques |= ShaderTechniqueBit::kSwMeshletRendering;
+		}
+		else if(t.m_name.getBegin() == CString("ForwardMeshShaders"))
+		{
+			m_techniquesMask |= RenderingTechniqueBit::kForward;
+			m_shaderTechniques |= ShaderTechniqueBit::kMeshSaders;
+		}
+		else if(t.m_name.getBegin() == CString("ForwardLegacy"))
 		{
 			m_techniquesMask |= RenderingTechniqueBit::kForward;
 			m_shaderTechniques |= ShaderTechniqueBit::kLegacy;
@@ -605,7 +615,18 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		}
 		break;
 	case RenderingTechnique::kForward:
-		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "Forward");
+		if(key.getMeshletRendering() && meshShadersSupported)
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kMesh | ShaderTypeBit::kPixel, "ForwardMeshShaders");
+		}
+		else if(key.getMeshletRendering())
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "ForwardSwMeshletRendering");
+		}
+		else
+		{
+			initInfo.requestTechniqueAndTypes(ShaderTypeBit::kVertex | ShaderTypeBit::kPixel, "ForwardLegacy");
+		}
 		break;
 	case RenderingTechnique::kRtShadow:
 		initInfo.requestTechniqueAndTypes(ShaderTypeBit::kAllHit, "RtShadows");

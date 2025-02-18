@@ -112,7 +112,7 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		info.m_node->setLocalTransform(m_body->getTransform());
 	}
 
-	if(m_force.getLengthSquared() > 0.0f)
+	if(m_force.lengthSquared() > 0.0f)
 	{
 		if(m_forcePosition != 0.0f)
 		{

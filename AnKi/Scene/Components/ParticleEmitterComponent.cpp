@@ -159,8 +159,7 @@ public:
 		// force
 		if(forceFlag)
 		{
-			Vec3 forceDir = getRandom(props.m_particle.m_minForceDirection, props.m_particle.m_maxForceDirection);
-			forceDir.normalize();
+			Vec3 forceDir = getRandom(props.m_particle.m_minForceDirection, props.m_particle.m_maxForceDirection).normalize();
 
 			// The forceDir depends on the particle emitter rotation
 			forceDir = trf.getRotation().getRotationPart() * forceDir;

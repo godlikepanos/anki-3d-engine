@@ -177,7 +177,7 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			const Mat4 uvToAtlas(m_shadowAtlasUvViewports[0].z(), 0.0f, 0.0f, m_shadowAtlasUvViewports[0].x(), 0.0f, m_shadowAtlasUvViewports[0].w(),
 								 0.0f, m_shadowAtlasUvViewports[0].y(), 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
-			m_spot.m_viewMat = Mat3x4(m_worldTransform.getInverse());
+			m_spot.m_viewMat = Mat3x4(m_worldTransform.invert());
 			m_spot.m_viewProjMat = proj * Mat4(m_spot.m_viewMat, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 			const Mat4 texMat = uvToAtlas * biasMat4 * m_spot.m_viewProjMat;
 
@@ -280,8 +280,8 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 
 			// View
 			const Vec3 zAxis = m_worldTransform.getRotation().getZAxis();
-			const Vec3 xAxis = Vec3(0.0f, 1.0f, 0.0f).cross(zAxis).getNormalized();
-			const Vec3 yAxis = zAxis.cross(xAxis).getNormalized();
+			const Vec3 xAxis = Vec3(0.0f, 1.0f, 0.0f).cross(zAxis).normalize();
+			const Vec3 yAxis = zAxis.cross(xAxis).normalize();
 			Mat3x4 rot;
 			rot.setXAxis(xAxis);
 			rot.setYAxis(yAxis);
@@ -289,10 +289,10 @@ void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, Const
 			rot.setTranslationPart(Vec3(0.0f));
 
 			const Transform cascadeTransform(eye.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
-			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
+			const Mat4 cascadeViewMat = Mat4(cascadeTransform.invert());
 
 			// Projection
-			const F32 far = (eye - sphereCenter).getLength() + sphereRadius;
+			const F32 far = (eye - sphereCenter).length() + sphereRadius;
 			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(sphereRadius, -sphereRadius, sphereRadius, -sphereRadius,
 																			  kClusterObjectFrustumNearPlane, far);
 

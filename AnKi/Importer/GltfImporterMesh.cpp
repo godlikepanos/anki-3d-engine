@@ -274,7 +274,7 @@ static void fixNormals(const F32 normalsMergeAngle, SubMesh& submesh)
 			const Vec3& otherPos = submesh.m_verts[prevV].m_position;
 
 			// Check the positions dist
-			const F32 posDist = (otherPos - pos).getLengthSquared();
+			const F32 posDist = (otherPos - pos).lengthSquared();
 			if(posDist > kEpsilonf * kEpsilonf)
 			{
 				continue;
@@ -289,7 +289,7 @@ static void fixNormals(const F32 normalsMergeAngle, SubMesh& submesh)
 			}
 
 			// Merge normals
-			const Vec3 newNormal = (otherNormal + normal).getNormalized();
+			const Vec3 newNormal = (otherNormal + normal).normalize();
 			normal = newNormal;
 			otherNormal = newNormal;
 		}

@@ -20,6 +20,10 @@ template<typename T, U kTComponentCount>
 class alignas(MathSimd<T, kTComponentCount>::kAlignment) TVec
 {
 public:
+	friend class TVec<T, 2>;
+	friend class TVec<T, 3>;
+	friend class TVec<T, 4>;
+
 	using Scalar = T;
 	using Simd = typename MathSimd<T, kTComponentCount>::Type;
 	static constexpr U kComponentCount = kTComponentCount;
@@ -112,25 +116,19 @@ public:
 
 	// Vec3 specific
 
-	TVec(const T x_, const T y_, const T z_) requires(kTComponentCount == 3)
+	constexpr TVec(const T x_, const T y_, const T z_) requires(kTComponentCount == 3)
+		: m_arr{x_, y_, z_}
 	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
 	}
 
-	TVec(const TVec<T, 2>& a, const T z_) requires(kTComponentCount == 3)
+	constexpr TVec(const TVec<T, 2>& a, const T z_) requires(kTComponentCount == 3)
+		: m_arr{a.m_arr[0], a.m_arr[1], z_}
 	{
-		x() = a.x();
-		y() = a.y();
-		z() = z_;
 	}
 
-	TVec(const T x_, const TVec<T, 2>& a) requires(kTComponentCount == 3)
+	constexpr TVec(const T x_, const TVec<T, 2>& a) requires(kTComponentCount == 3)
+		: m_arr{x_, a.m_arr[0], a.m_arr[1]}
 	{
-		x() = x_;
-		y() = a.x();
-		z() = a.y();
 	}
 
 	// Vec4 specific
@@ -151,52 +149,34 @@ public:
 	}
 #endif
 
-	TVec(const TVec<T, 3>& a, const T w_) requires(kTComponentCount == 4)
+	constexpr TVec(const TVec<T, 3>& a, const T w_) requires(kTComponentCount == 4)
+		: m_arr{a.m_arr[0], a.m_arr[1], a.m_arr[2], w_}
 	{
-		x() = a.x();
-		y() = a.y();
-		z() = a.z();
-		w() = w_;
 	}
 
-	TVec(const T x_, const TVec<T, 3>& a) requires(kTComponentCount == 4)
+	constexpr TVec(const T x_, const TVec<T, 3>& a) requires(kTComponentCount == 4)
+		: m_arr{x_, a.m_arr[0], a.m_arr[1], a.m_arr[2]}
 	{
-		x() = x_;
-		y() = a.x();
-		z() = a.y();
-		w() = a.z();
 	}
 
-	TVec(const TVec<T, 2>& a, const T z_, const T w_) requires(kTComponentCount == 4)
+	constexpr TVec(const TVec<T, 2>& a, const T z_, const T w_) requires(kTComponentCount == 4)
+		: m_arr{a.m_arr[0], a.m_arr[1], z_, w_}
 	{
-		x() = a.x();
-		y() = a.y();
-		z() = z_;
-		w() = w_;
 	}
 
-	TVec(const T x_, const TVec<T, 2>& a, const T w_) requires(kTComponentCount == 4)
+	constexpr TVec(const T x_, const TVec<T, 2>& a, const T w_) requires(kTComponentCount == 4)
+		: m_arr{x_, a.m_arr[0], a.m_arr[1], w_}
 	{
-		x() = x_;
-		y() = a.x();
-		z() = a.y();
-		w() = w_;
 	}
 
-	TVec(const T x_, const T y_, const TVec<T, 2>& a) requires(kTComponentCount == 4)
+	constexpr TVec(const T x_, const T y_, const TVec<T, 2>& a) requires(kTComponentCount == 4)
+		: m_arr{x_, y_, a.m_arr[0], a.m_arr[1]}
 	{
-		x() = x_;
-		y() = y_;
-		z() = a.x();
-		w() = a.y();
 	}
 
-	TVec(const TVec<T, 2>& a, const TVec<T, 2>& b) requires(kTComponentCount == 4)
+	constexpr TVec(const TVec<T, 2>& a, const TVec<T, 2>& b) requires(kTComponentCount == 4)
+		: m_arr{a.m_arr[0], a.m_arr[1], b.m_arr[0], b.m_arr[1]}
 	{
-		x() = a.x();
-		y() = a.y();
-		z() = b.x();
-		w() = b.y();
 	}
 	/// @}
 
@@ -1975,7 +1955,7 @@ public:
 		return *this;
 	}
 
-	TVec operator+(const TVec& b) const requires(!kVec4Simd)
+	[[nodiscard]] TVec operator+(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -1986,7 +1966,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec operator+(const TVec& b) const requires(kVec4Simd)
+	[[nodiscard]] TVec operator+(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_add_ps(m_simd, b.m_simd));
@@ -2017,7 +1997,7 @@ public:
 	}
 #endif
 
-	TVec operator-(const TVec& b) const requires(!kVec4Simd)
+	[[nodiscard]] TVec operator-(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2028,7 +2008,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec operator-(const TVec& b) const requires(kVec4Simd)
+	[[nodiscard]] TVec operator-(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_sub_ps(m_simd, b.m_simd));
@@ -2059,7 +2039,7 @@ public:
 	}
 #endif
 
-	TVec operator*(const TVec& b) const requires(!kVec4Simd)
+	[[nodiscard]] TVec operator*(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2070,7 +2050,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec operator*(const TVec& b) const requires(kVec4Simd)
+	[[nodiscard]] TVec operator*(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_mul_ps(m_simd, b.m_simd));
@@ -2101,7 +2081,7 @@ public:
 	}
 #endif
 
-	TVec operator/(const TVec& b) const requires(!kVec4Simd)
+	[[nodiscard]] TVec operator/(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2113,7 +2093,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec operator/(const TVec& b) const requires(kVec4Simd)
+	[[nodiscard]] TVec operator/(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_div_ps(m_simd, b.m_simd));
@@ -2145,7 +2125,7 @@ public:
 	}
 #endif
 
-	TVec operator-() const requires(!kVec4Simd)
+	[[nodiscard]] TVec operator-() const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2156,7 +2136,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec operator-() const requires(kVec4Simd)
+	[[nodiscard]] TVec operator-() const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
@@ -2166,7 +2146,7 @@ public:
 	}
 #endif
 
-	TVec operator<<(const TVec& b) const requires(kIsInteger)
+	[[nodiscard]] TVec operator<<(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2185,7 +2165,7 @@ public:
 		return *this;
 	}
 
-	TVec operator>>(const TVec& b) const requires(kIsInteger)
+	[[nodiscard]] TVec operator>>(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2204,7 +2184,7 @@ public:
 		return *this;
 	}
 
-	TVec operator&(const TVec& b) const requires(kIsInteger)
+	[[nodiscard]] TVec operator&(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2223,7 +2203,7 @@ public:
 		return *this;
 	}
 
-	TVec operator|(const TVec& b) const requires(kIsInteger)
+	[[nodiscard]] TVec operator|(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2242,7 +2222,7 @@ public:
 		return *this;
 	}
 
-	TVec operator^(const TVec& b) const requires(kIsInteger)
+	[[nodiscard]] TVec operator^(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2261,7 +2241,7 @@ public:
 		return *this;
 	}
 
-	TVec operator%(const TVec& b) const requires(kIsInteger)
+	[[nodiscard]] TVec operator%(const TVec& b) const requires(kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2280,7 +2260,7 @@ public:
 		return *this;
 	}
 
-	Bool operator==(const TVec& b) const
+	[[nodiscard]] Bool operator==(const TVec& b) const
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2292,12 +2272,12 @@ public:
 		return true;
 	}
 
-	Bool operator!=(const TVec& b) const
+	[[nodiscard]] Bool operator!=(const TVec& b) const
 	{
 		return !operator==(b);
 	}
 
-	Bool operator<(const TVec& b) const
+	[[nodiscard]] Bool operator<(const TVec& b) const
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2309,7 +2289,7 @@ public:
 		return true;
 	}
 
-	Bool operator<=(const TVec& b) const
+	[[nodiscard]] Bool operator<=(const TVec& b) const
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2321,7 +2301,7 @@ public:
 		return true;
 	}
 
-	Bool operator>(const TVec& b) const
+	[[nodiscard]] Bool operator>(const TVec& b) const
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2333,7 +2313,7 @@ public:
 		return true;
 	}
 
-	Bool operator>=(const TVec& b) const
+	[[nodiscard]] Bool operator>=(const TVec& b) const
 	{
 		for(U i = 0; i < kTComponentCount; i++)
 		{
@@ -2348,7 +2328,7 @@ public:
 
 	/// @name Operators with T
 	/// @{
-	TVec operator+(const T f) const
+	[[nodiscard]] TVec operator+(const T f) const
 	{
 		return (*this) + TVec(f);
 	}
@@ -2359,7 +2339,7 @@ public:
 		return *this;
 	}
 
-	TVec operator-(const T f) const
+	[[nodiscard]] TVec operator-(const T f) const
 	{
 		return (*this) - TVec(f);
 	}
@@ -2370,7 +2350,7 @@ public:
 		return *this;
 	}
 
-	TVec operator*(const T f) const
+	[[nodiscard]] TVec operator*(const T f) const
 	{
 		return (*this) * TVec(f);
 	}
@@ -2381,7 +2361,7 @@ public:
 		return *this;
 	}
 
-	TVec operator/(const T f) const
+	[[nodiscard]] TVec operator/(const T f) const
 	{
 		return (*this) / TVec(f);
 	}
@@ -2392,7 +2372,7 @@ public:
 		return *this;
 	}
 
-	TVec operator<<(const T f) const requires(kIsInteger)
+	[[nodiscard]] TVec operator<<(const T f) const requires(kIsInteger)
 	{
 		return (*this) << TVec(f);
 	}
@@ -2403,7 +2383,7 @@ public:
 		return *this;
 	}
 
-	TVec operator>>(const T f) const requires(kIsInteger)
+	[[nodiscard]] TVec operator>>(const T f) const requires(kIsInteger)
 	{
 		return (*this) >> TVec(f);
 	}
@@ -2414,7 +2394,7 @@ public:
 		return *this;
 	}
 
-	TVec operator&(const T f) const requires(kIsInteger)
+	[[nodiscard]] TVec operator&(const T f) const requires(kIsInteger)
 	{
 		return (*this) & TVec(f);
 	}
@@ -2425,7 +2405,7 @@ public:
 		return *this;
 	}
 
-	TVec operator|(const T f) const requires(kIsInteger)
+	[[nodiscard]] TVec operator|(const T f) const requires(kIsInteger)
 	{
 		return (*this) | TVec(f);
 	}
@@ -2436,7 +2416,7 @@ public:
 		return *this;
 	}
 
-	TVec operator^(const T f) const requires(kIsInteger)
+	[[nodiscard]] TVec operator^(const T f) const requires(kIsInteger)
 	{
 		return (*this) ^ TVec(f);
 	}
@@ -2447,7 +2427,7 @@ public:
 		return *this;
 	}
 
-	TVec operator%(const T f) const requires(kIsInteger)
+	[[nodiscard]] TVec operator%(const T f) const requires(kIsInteger)
 	{
 		return (*this) % TVec(f);
 	}
@@ -2458,32 +2438,32 @@ public:
 		return *this;
 	}
 
-	Bool operator==(const T f) const
+	[[nodiscard]] Bool operator==(const T f) const
 	{
 		return *this == TVec(f);
 	}
 
-	Bool operator!=(const T f) const
+	[[nodiscard]] Bool operator!=(const T f) const
 	{
 		return *this != TVec(f);
 	}
 
-	Bool operator<(const T f) const
+	[[nodiscard]] Bool operator<(const T f) const
 	{
 		return *this < TVec(f);
 	}
 
-	Bool operator<=(const T f) const
+	[[nodiscard]] Bool operator<=(const T f) const
 	{
 		return *this <= TVec(f);
 	}
 
-	Bool operator>(const T f) const
+	[[nodiscard]] Bool operator>(const T f) const
 	{
 		return *this > TVec(f);
 	}
 
-	Bool operator>=(const T f) const
+	[[nodiscard]] Bool operator>=(const T f) const
 	{
 		return *this >= TVec(f);
 	}
@@ -2493,7 +2473,7 @@ public:
 	/// @{
 
 	/// @note 16 muls 12 adds
-	TVec operator*(const TMat<T, 4, 4>& m4) const requires(kTComponentCount == 4)
+	[[nodiscard]] TVec operator*(const TMat<T, 4, 4>& m4) const requires(kTComponentCount == 4)
 	{
 		TVec out;
 		out.x() = x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0);
@@ -2506,7 +2486,7 @@ public:
 
 	/// @name Other
 	/// @{
-	T dot(const TVec& b) const requires(!kVec4Simd)
+	[[nodiscard]] T dot(const TVec& b) const requires(!kVec4Simd)
 	{
 		T out = T(0);
 		for(U i = 0; i < kTComponentCount; i++)
@@ -2517,7 +2497,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	T dot(const TVec& b) const requires(kVec4Simd)
+	[[nodiscard]] T dot(const TVec& b) const requires(kVec4Simd)
 	{
 		T o;
 #	if ANKI_SIMD_SSE
@@ -2533,13 +2513,13 @@ public:
 #endif
 
 	/// 6 muls, 3 adds
-	TVec cross(const TVec& b) const requires(kTComponentCount == 3)
+	[[nodiscard]] TVec cross(const TVec& b) const requires(kTComponentCount == 3)
 	{
 		return TVec(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
 	}
 
 	/// It's like calculating the cross of a 3 component TVec.
-	TVec cross(const TVec& b) const requires(kTComponentCount == 4 && !kVec4Simd)
+	[[nodiscard]] TVec cross(const TVec& b) const requires(kTComponentCount == 4 && !kVec4Simd)
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
@@ -2547,7 +2527,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec cross(const TVec& b) const requires(kTComponentCount == 4 && kVec4Simd)
+	[[nodiscard]] TVec cross(const TVec& b) const requires(kTComponentCount == 4 && kVec4Simd)
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
@@ -2575,24 +2555,24 @@ public:
 	}
 #endif
 
-	TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 3)
+	[[nodiscard]] TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 3)
 	{
 		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
 	}
 
-	TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 4)
+	[[nodiscard]] TVec projectTo(const TVec& toThis) const requires(kTComponentCount == 4)
 	{
 		ANKI_ASSERT(w() == T(0));
 		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
 	}
 
-	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 3)
+	[[nodiscard]] TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 3)
 	{
 		const auto& a = *this;
 		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
 	}
 
-	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 4)
+	[[nodiscard]] TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const requires(kTComponentCount == 4)
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(rayOrigin.w() == T(0));
@@ -2602,7 +2582,7 @@ public:
 	}
 
 	/// Perspective divide. Divide the xyzw of this to the w of this. This method will handle some edge cases.
-	TVec perspectiveDivide() const requires(kTComponentCount == 4)
+	[[nodiscard]] TVec perspectiveDivide() const requires(kTComponentCount == 4)
 	{
 		auto invw = T(1) / w(); // This may become (+-)inf
 		invw = (invw > 1e+11) ? 1e+11 : invw; // Clamp
@@ -2610,70 +2590,33 @@ public:
 		return (*this) * invw;
 	}
 
-	T getLengthSquared() const requires(!kVec4Simd)
-	{
-		T out = T(0);
-		for(U i = 0; i < kTComponentCount; i++)
-		{
-			out += m_arr[i] * m_arr[i];
-		}
-		return out;
-	}
-
-	T getLengthSquared() const requires(kVec4Simd)
+	[[nodiscard]] T lengthSquared() const
 	{
 		return dot(*this);
 	}
 
-	T getLength() const
+	[[nodiscard]] T length() const
 	{
-		return sqrt<T>(getLengthSquared());
+		return sqrt<T>(lengthSquared());
 	}
 
-	T getDistanceSquared(const TVec& b) const
+	[[nodiscard]] T distanceSquared(const TVec& b) const
 	{
-		return ((*this) - b).getLengthSquared();
+		return ((*this) - b).lengthSquared();
 	}
 
-	T getDistance(const TVec& b) const
+	[[nodiscard]] T distance(const TVec& b) const
 	{
-		return sqrt<T>(getDistance(b));
+		return sqrt<T>(distance(b));
 	}
 
-	void normalize() requires(!kVec4Simd)
+	[[nodiscard]] TVec normalize() const requires(!kVec4Simd)
 	{
-		(*this) /= getLength();
-	}
-
-#if ANKI_ENABLE_SIMD
-	void normalize() requires(kVec4Simd)
-	{
-#	if ANKI_SIMD_SSE
-		const __m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
-		m_simd = _mm_mul_ps(m_simd, inverseNorm);
-#	else
-		// Dot (len squared)
-		float32x4_t tmp = m_simd * m_simd;
-		float32x2_t sum = vpadd_f32(vget_low_f32(tmp), vget_high_f32(tmp));
-		sum = vpadd_f32(sum, sum);
-		float32x4_t lensq = vdupq_lane_f32(sum, 0);
-
-		// 1/sqrt(lensq)
-		float32x4_t mul = vrsqrteq_f32(lensq);
-
-		// Multiply
-		m_simd *= mul;
-#	endif
-	}
-#endif
-
-	TVec getNormalized() const requires(!kVec4Simd)
-	{
-		return (*this) / getLength();
+		return (*this) / length();
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec getNormalized() const requires(kVec4Simd)
+	[[nodiscard]] TVec normalize() const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		const __m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
@@ -2695,7 +2638,7 @@ public:
 #endif
 
 	/// Return lerp(this, v1, t)
-	TVec lerp(const TVec& v1, const TVec& t) const
+	[[nodiscard]] TVec lerp(const TVec& v1, const TVec& t) const
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2706,12 +2649,12 @@ public:
 	}
 
 	/// Return lerp(this, v1, t)
-	TVec lerp(const TVec& v1, T t) const
+	[[nodiscard]] TVec lerp(const TVec& v1, T t) const
 	{
 		return ((*this) * (T(1) - t)) + (v1 * t);
 	}
 
-	TVec abs() const requires(!kVec4Simd)
+	[[nodiscard]] TVec abs() const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2722,7 +2665,7 @@ public:
 	}
 
 #if ANKI_ENABLE_SIMD
-	TVec abs() const requires(kVec4Simd)
+	[[nodiscard]] TVec abs() const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		const __m128 signMask = _mm_set1_ps(-0.0f);
@@ -2734,19 +2677,19 @@ public:
 #endif
 
 	/// Get clamped between two values.
-	TVec clamp(const T minv, const T maxv) const
+	[[nodiscard]] TVec clamp(const T minv, const T maxv) const
 	{
 		return max(TVec(minv)).min(TVec(maxv));
 	}
 
 	/// Get clamped between two vectors.
-	TVec clamp(const TVec& minv, const TVec& maxv) const
+	[[nodiscard]] TVec clamp(const TVec& minv, const TVec& maxv) const
 	{
 		return max(minv).min(maxv);
 	}
 
 	/// Get the min of all components.
-	TVec min(const TVec& b) const requires(!kVec4Simd)
+	[[nodiscard]] TVec min(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2758,7 +2701,7 @@ public:
 
 #if ANKI_ENABLE_SIMD
 	/// Get the min of all components.
-	TVec min(const TVec& b) const requires(kVec4Simd)
+	[[nodiscard]] TVec min(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_min_ps(m_simd, b.m_simd));
@@ -2769,13 +2712,13 @@ public:
 #endif
 
 	/// Get the min of all components.
-	TVec min(const T b) const
+	[[nodiscard]] TVec min(const T b) const
 	{
 		return min(TVec(b));
 	}
 
 	/// Get the max of all components.
-	TVec max(const TVec& b) const requires(!kVec4Simd)
+	[[nodiscard]] TVec max(const TVec& b) const requires(!kVec4Simd)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2787,7 +2730,7 @@ public:
 
 #if ANKI_ENABLE_SIMD
 	/// Get the max of all components.
-	TVec max(const TVec& b) const requires(kVec4Simd)
+	[[nodiscard]] TVec max(const TVec& b) const requires(kVec4Simd)
 	{
 #	if ANKI_SIMD_SSE
 		return TVec(_mm_max_ps(m_simd, b.m_simd));
@@ -2798,12 +2741,12 @@ public:
 #endif
 
 	/// Get the max of all components.
-	TVec max(const T b) const
+	[[nodiscard]] TVec max(const T b) const
 	{
 		return max(TVec(b));
 	}
 
-	TVec round() const requires(!kIsInteger)
+	[[nodiscard]] TVec round() const requires(!kIsInteger)
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2814,7 +2757,7 @@ public:
 	}
 
 	/// Get a safe 1 / (*this)
-	TVec reciprocal() const
+	[[nodiscard]] TVec reciprocal() const
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2825,7 +2768,7 @@ public:
 	}
 
 	/// Power
-	TVec pow(const TVec& b) const
+	[[nodiscard]] TVec pow(const TVec& b) const
 	{
 		TVec out;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2836,9 +2779,49 @@ public:
 	}
 
 	/// Power
-	TVec pow(T b) const
+	[[nodiscard]] TVec pow(T b) const
 	{
 		return pow(TVec(b));
+	}
+
+	static TVec xAxis() requires(kTComponentCount == 2)
+	{
+		return TVec(T(1), T(0));
+	}
+
+	static TVec xAxis() requires(kTComponentCount == 3)
+	{
+		return TVec(T(1), T(0), T(0));
+	}
+
+	static TVec xAxis() requires(kTComponentCount == 4)
+	{
+		return TVec(T(1), T(0), T(0), T(0));
+	}
+
+	static TVec yAxis() requires(kTComponentCount == 2)
+	{
+		return TVec(T(0), T(1));
+	}
+
+	static TVec yAxis() requires(kTComponentCount == 3)
+	{
+		return TVec(T(0), T(1), T(0));
+	}
+
+	static TVec yAxis() requires(kTComponentCount == 4)
+	{
+		return TVec(T(0), T(1), T(0), T(0));
+	}
+
+	static TVec zAxis() requires(kTComponentCount == 3)
+	{
+		return TVec(T(0), T(0), T(1));
+	}
+
+	static TVec zAxis() requires(kTComponentCount == 4)
+	{
+		return TVec(T(0), T(0), T(1), T(0));
 	}
 
 	/// Serialize the structure.
@@ -2863,7 +2846,7 @@ public:
 		return U8(kTComponentCount);
 	}
 
-	String toString() const requires(std::is_floating_point<T>::value)
+	[[nodiscard]] String toString() const requires(std::is_floating_point<T>::value)
 	{
 		String str;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2874,7 +2857,7 @@ public:
 	}
 
 	static constexpr Bool kClangWorkaround = std::is_integral<T>::value && std::is_unsigned<T>::value;
-	String toString() const requires(kClangWorkaround)
+	[[nodiscard]] String toString() const requires(kClangWorkaround)
 	{
 		String str;
 		for(U i = 0; i < kTComponentCount; ++i)
@@ -2885,7 +2868,7 @@ public:
 	}
 
 	static constexpr Bool kClangWorkaround2 = std::is_integral<T>::value && std::is_signed<T>::value;
-	String toString() const requires(kClangWorkaround2)
+	[[nodiscard]] String toString() const requires(kClangWorkaround2)
 	{
 		String str;
 		for(U i = 0; i < kTComponentCount; ++i)

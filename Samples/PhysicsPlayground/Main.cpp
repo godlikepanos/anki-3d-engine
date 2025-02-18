@@ -296,11 +296,11 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 			rot = player.getLocalRotation().combineTransformations(rot);
 
-			Vec3 newz = rot.getColumn(2).getNormalized();
+			Vec3 newz = rot.getColumn(2).normalize();
 			Vec3 newx = Vec3(0.0, 1.0, 0.0).cross(newz);
 			Vec3 newy = newz.cross(newx);
 			rot.setColumns(newx, newy, newz, Vec3(0.0));
-			rot.reorthogonalize();
+			rot = rot.reorthogonalize();
 
 			// Update move
 			player.setLocalRotation(rot);
@@ -349,7 +349,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			{
 				dir = -(player.getLocalRotation() * moveVec.xyz0());
 				dir.y() = 0.0f;
-				dir.normalize();
+				dir = dir.normalize();
 			}
 
 			F32 speed1 = speed;
@@ -403,7 +403,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			// Create rotation
 			const Vec3& zAxis = result.m_normal;
 			Vec3 yAxis = Vec3(0, 1, 0.5);
-			Vec3 xAxis = yAxis.cross(zAxis).getNormalized();
+			Vec3 xAxis = yAxis.cross(zAxis).normalize();
 			yAxis = zAxis.cross(xAxis);
 
 			Mat3x4 rot = Mat3x4::getIdentity();

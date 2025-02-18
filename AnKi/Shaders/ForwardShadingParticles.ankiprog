@@ -6,7 +6,7 @@
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
-#pragma anki technique Forward vert pixel
+#pragma anki technique ForwardLegacy vert pixel
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 

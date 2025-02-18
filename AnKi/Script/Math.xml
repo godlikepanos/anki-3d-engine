@@ -99,13 +99,12 @@ namespace anki {]]></head>
 					</args>
 					<return>Bool</return>
 				</method>
-				<method name="getLength">
+				<method name="length">
 					<return>F32</return>
 				</method>
-				<method name="getNormalized">
+				<method name="normalize">
 					<return>Vec2</return>
 				</method>
-				<method name="normalize"></method>
 				<method name="dot">
 					<args>
 						<arg>const Vec2&amp;</arg>
@@ -218,13 +217,12 @@ namespace anki {]]></head>
 					</args>
 					<return>Bool</return>
 				</method>
-				<method name="getLength">
+				<method name="length">
 					<return>F32</return>
 				</method>
-				<method name="getNormalized">
+				<method name="normalize">
 					<return>Vec3</return>
 				</method>
-				<method name="normalize"></method>
 				<method name="dot">
 					<args>
 						<arg>const Vec3&amp;</arg>
@@ -350,13 +348,12 @@ namespace anki {]]></head>
 					</args>
 					<return>Bool</return>
 				</method>
-				<method name="getLength">
+				<method name="length">
 					<return>F32</return>
 				</method>
-				<method name="getNormalized">
+				<method name="normalize">
 					<return>Vec4</return>
 				</method>
-				<method name="normalize"></method>
 				<method name="dot">
 					<args>
 						<arg>const Vec4&amp;</arg>

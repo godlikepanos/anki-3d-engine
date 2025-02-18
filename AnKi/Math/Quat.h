@@ -19,6 +19,7 @@ class alignas(16) TQuat
 {
 public:
 	static constexpr Bool kSimdEnabled = std::is_same<T, F32>::value && ANKI_ENABLE_SIMD;
+	static constexpr Bool kSseEnabled = kSimdEnabled && ANKI_SIMD_SSE;
 
 	/// @name Constructors
 	/// @{
@@ -124,7 +125,7 @@ public:
 
 	explicit TQuat(const TAxisang<T>& axisang)
 	{
-		const T lengthsq = axisang.getAxis().getLengthSquared();
+		const T lengthsq = axisang.getAxis().lengthSquared();
 		if(isZero<T>(lengthsq))
 		{
 			(*this) = getIdentity();
@@ -138,10 +139,7 @@ public:
 
 		const T scalefactor = sintheta / sqrt(lengthsq);
 
-		x() = scalefactor * axisang.getAxis().x();
-		y() = scalefactor * axisang.getAxis().y();
-		z() = scalefactor * axisang.getAxis().z();
-		w() = costheta;
+		m_value = TVec<T, 4>(axisang.getAxis(), costheta) * TVec<T, 4>(scalefactor, scalefactor, scalefactor, T(1));
 	}
 	/// @}
 
@@ -165,8 +163,9 @@ public:
 		return m_value != b.m_value;
 	}
 
+#if ANKI_SIMD_SSE
 	/// Combine rotations (SIMD version)
-	TQuat operator*(const TQuat& b) requires(kSimdEnabled&& ANKI_SIMD_SSE)
+	TQuat operator*(const TQuat& b) requires(kSseEnabled)
 	{
 		// Taken from: http://momchil-velikov.blogspot.nl/2013/10/fast-sse-quternion-multiplication.html
 		const __m128 abcd = m_value.getSimd();
@@ -213,9 +212,10 @@ public:
 		// [dw-ax-by-cz,dz+ay-bx+cw,dy-az+bw+cx,dx+aw+bz-cy]
 		return TQuat(TVec<T, 4>(_mm_shuffle_ps(e, e, _MM_SHUFFLE(2, 3, 1, 0))));
 	}
+#endif
 
 	/// Combine rotations (non-SIMD version)
-	TQuat operator*(const TQuat& b) requires(!(kSimdEnabled && ANKI_SIMD_SSE))
+	TQuat operator*(const TQuat& b) requires(!kSseEnabled)
 	{
 		const T lx = m_value.x();
 		const T ly = m_value.y();
@@ -260,7 +260,7 @@ public:
 	{
 		// Rotating a vector by a quaternion is done by: p' = q * p * q^-1 (q^-1 = conjugated(q) for a unit quaternion)
 		ANKI_ASSERT(isZero<T>(T(1) - m_value.getLength()));
-		return TVec<T, 3>((*this * TQuat(TVec<T, 4>(inValue, T(0))) * getConjugated()).m_value.xyz());
+		return TVec<T, 3>((*this * TQuat(TVec<T, 4>(inValue, T(0))) * conjugated()).m_value.xyz());
 	}
 	/// @}
 
@@ -310,57 +310,49 @@ public:
 	/// @name Other
 	/// @{
 
-	T getLength() const
+	[[nodiscard]] T length() const
 	{
-		return m_value.getLength();
+		return m_value.length();
 	}
 
 	/// Calculates the rotation from vector "from" to "to".
-	void setFromPointToPoint(const TVec<T, 3>& from, const TVec<T, 3>& to)
+	static TQuat fromPointToPoint(const TVec<T, 3>& from, const TVec<T, 3>& to)
 	{
 		const TVec<T, 3> axis(from.cross(to));
-		*this = TQuat(axis.x(), axis.y(), axis.z(), from.dot(to));
-		m_value.normalize();
-		w() += T(1);
+		TVec<T, 4> quat = TVec4<T, 4>(axis.x(), axis.y(), axis.z(), from.dot(to));
+		quat = quat.normalize();
+		quat.w() += T(1);
 
-		if(w() <= T(0.0001))
+		if(quat.w() <= T(0.0001))
 		{
 			if(from.z() * from.z() > from.x() * from.x())
 			{
-				*this = TQuat(T(0), from.z(), -from.y(), T(0));
+				quat = TVec<T, 4>(T(0), from.z(), -from.y(), T(0));
 			}
 			else
 			{
-				*this = TQuat(from.y(), -from.x(), T(0), T(0));
+				quat = TVec<T, 4>(from.y(), -from.x(), T(0), T(0));
 			}
 		}
-		m_value.normalize();
+
+		quat = quat.normalize();
+		return TQuat(quat);
 	}
 
-	TQuat getInverted() const
+	[[nodiscard]] TQuat invert() const
 	{
-		const T len = m_value.getLength();
+		const T len = m_value.length();
 		ANKI_ASSERT(!isZero<T>(len));
-		return getConjugated() / len;
+		return conjugated() / len;
 	}
 
-	void invert()
-	{
-		*this = getInverted();
-	}
-
-	void conjugate()
-	{
-		*this = getConjugated();
-	}
-
-	TQuat getConjugated() const
+	[[nodiscard]] TQuat conjugated() const
 	{
 		return TQuat(m_value * TVec<T, 4>(T(-1), T(-1), T(-1), T(1)));
 	}
 
 	/// Returns slerp(this, q1, t)
-	TQuat slerp(const TQuat& destination, const T t) const
+	[[nodiscard]] TQuat slerp(const TQuat& destination, const T t) const
 	{
 		// Difference at which to LERP instead of SLERP
 		const T delta = T(0.0001);
@@ -395,7 +387,30 @@ public:
 
 		// Interpolate between the two quaternions
 		const TVec<T, 4> v = TVec<T, 4>(scale0) * m_value + TVec<T, 4>(scale1) * destination.m_value;
-		return TQuat(v.getNormalized());
+		return TQuat(v.normalize());
+	}
+
+	[[nodiscard]] TQuat rotateXAxis(const T rad) const
+	{
+		const TQuat r(Axisang<T>(rad, TVec<T, 3>(T(1), T(0), T(0))));
+		return r * (*this);
+	}
+
+	[[nodiscard]] TQuat rotateYAxis(const T rad) const
+	{
+		const TQuat r(Axisang<T>(rad, TVec<T, 3>(T(0), T(1), T(0))));
+		return r * (*this);
+	}
+
+	[[nodiscard]] TQuat rotateZAxis(const T rad) const
+	{
+		const TQuat r(Axisang<T>(rad, TVec<T, 3>(T(0), T(0), T(1))));
+		return r * (*this);
+	}
+
+	[[nodiscard]] TQuat normalize() const
+	{
+		return TQuat(m_value.normalize());
 	}
 
 	void setIdentity()

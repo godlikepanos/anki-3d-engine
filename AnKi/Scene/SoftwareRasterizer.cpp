@@ -84,14 +84,14 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 
 		// Find first intersection
 		Vec4 rayOrigin = inVerts[i].xyz0();
-		Vec4 rayDir = (inVerts[next].xyz0() - rayOrigin).getNormalized();
+		Vec4 rayDir = (inVerts[next].xyz0() - rayOrigin).normalize();
 
 		Vec4 intersection0;
 		[[maybe_unused]] Bool intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection0);
 		ANKI_ASSERT(intersects);
 
 		// Find second intersection
-		rayDir = (inVerts[prev].xyz0() - rayOrigin).getNormalized();
+		rayDir = (inVerts[prev].xyz0() - rayOrigin).normalize();
 
 		Vec4 intersection1;
 		intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection1);
@@ -130,7 +130,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 
 		// Find first intersection
 		Vec4 rayOrigin = inVerts[in1].xyz0();
-		Vec4 rayDir = (inVerts[out].xyz0() - rayOrigin).getNormalized();
+		Vec4 rayDir = (inVerts[out].xyz0() - rayOrigin).normalize();
 
 		Vec4 intersection0;
 		[[maybe_unused]] Bool intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection0);
@@ -138,7 +138,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 
 		// Find second intersection
 		rayOrigin = inVerts[in0].xyz0();
-		rayDir = (inVerts[out].xyz0() - rayOrigin).getNormalized();
+		rayDir = (inVerts[out].xyz0() - rayOrigin).normalize();
 
 		Vec4 intersection1;
 		intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection1);

@@ -187,7 +187,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 					RenderableDrawerArguments args;
 					args.m_viewMatrix = viewMat;
-					args.m_cameraTransform = viewMat.getInverseTransformation();
+					args.m_cameraTransform = viewMat.invertTransformation();
 					args.m_viewProjectionMatrix = viewProjMat;
 					args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care about prev mats
 					args.m_sampler = getRenderer().getSamplers().m_trilinearRepeat.get();
@@ -254,7 +254,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 				RenderableDrawerArguments args;
 				args.m_viewMatrix = cascadeViewMat;
-				args.m_cameraTransform = cascadeViewMat.getInverseTransformation();
+				args.m_cameraTransform = cascadeViewMat.invertTransformation();
 				args.m_viewProjectionMatrix = cascadeViewProjMat;
 				args.m_previousViewProjectionMatrix = Mat4::getIdentity(); // Don't care
 				args.m_sampler = getRenderer().getSamplers().m_trilinearRepeatAniso.get();
@@ -319,7 +319,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 				TraditionalDeferredLightShadingDrawInfo dsInfo;
 				dsInfo.m_viewProjectionMatrix = viewProjMat;
-				dsInfo.m_invViewProjectionMatrix = viewProjMat.getInverse();
+				dsInfo.m_invViewProjectionMatrix = viewProjMat.invert();
 				dsInfo.m_cameraPosWSpace = probeToRefresh->getWorldPosition().xyz1();
 				dsInfo.m_viewport = UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 				dsInfo.m_effectiveShadowDistance = probeToRefresh->getShadowsRenderRadius();

@@ -388,7 +388,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_intermediateShadowsRts[1]);
 			rgraphCtx.bindUav(1, 0, m_runCtx.m_varianceRts[1]);
 
-			const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
+			const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.invert();
 			cmdb.setFastConstants(&invProjMat, sizeof(invProjMat));
 
 			dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);
@@ -453,7 +453,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 					rgraphCtx.bindUav(0, 0, m_runCtx.m_historyRt);
 				}
 
-				const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
+				const Mat4& invProjMat = ctx.m_matrices.m_projectionJitter.invert();
 				cmdb.setFastConstants(&invProjMat, sizeof(invProjMat));
 
 				dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x() / 2, getRenderer().getInternalResolution().y() / 2);

@@ -297,7 +297,7 @@ float4 main(VertOut input) : SV_Target0
 
 				constexpr F32 orthoHalfSize = 10.0f;
 				constexpr F32 orthoSize = orthoHalfSize * 2.0f;
-				const Mat4 viewMat = Mat4::getIdentity().getInverse();
+				const Mat4 viewMat = Mat4::getIdentity().invert();
 				const Mat4 projMat =
 					Mat4::calculateOrthographicProjectionMatrix(orthoHalfSize, -orthoHalfSize, orthoHalfSize, -orthoHalfSize, 0.1f, 200.0f);
 				consts.m_viewProjMat = projMat * viewMat;

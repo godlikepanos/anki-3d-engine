@@ -38,7 +38,7 @@ inline GpuSceneRenderableBoundingVolume initGpuSceneRenderableBoundingVolume(Vec
 	const Vec3 sphereCenter = (aabbMin + aabbMax) * 0.5f;
 	const Vec3 aabbExtend = aabbMax - sphereCenter;
 #if defined(__cplusplus)
-	gpuVolume.m_sphereRadius = aabbExtend.getLength();
+	gpuVolume.m_sphereRadius = aabbExtend.length();
 #else
 	gpuVolume.m_sphereRadius = length(aabbExtend);
 #endif
