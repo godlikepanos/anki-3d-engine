@@ -22,27 +22,32 @@ FogDensityComponent ::~FogDensityComponent()
 
 Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
+	if(m_type == FogDensityComponentShape::kCount)
+	{
+		return Error::kNone;
+	}
+
 	updated = m_dirty || info.m_node->movedThisFrame();
 
 	if(updated)
 	{
 		m_dirty = false;
 
-		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
+		const Transform& trf = info.m_node->getWorldTransform();
 
 		// Upload to the GPU scene
 		GpuSceneFogDensityVolume gpuVolume;
-		if(m_isBox)
+		if(m_type == FogDensityComponentShape::kBox)
 		{
-			gpuVolume.m_aabbMinOrSphereCenter = m_aabbMin.xyz();
-			gpuVolume.m_aabbMaxOrSphereRadius = m_aabbMax.xyz();
+			gpuVolume.m_aabbMinOrSphereCenter = Vec3(-1.0f) * trf.getScale().xyz() + trf.getOrigin().xyz();
+			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(+1.0f) * trf.getScale().xyz() + trf.getOrigin().xyz();
 		}
 		else
 		{
-			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(m_sphereRadius);
-			gpuVolume.m_aabbMinOrSphereCenter = m_worldPos.xyz();
+			gpuVolume.m_aabbMaxOrSphereRadius = Vec3(1.0f * max(max(trf.getScale().x(), trf.getScale().y()), trf.getScale().z()));
+			gpuVolume.m_aabbMinOrSphereCenter = trf.getOrigin().xyz();
 		}
-		gpuVolume.m_isBox = m_isBox;
+		gpuVolume.m_isBox = m_type == FogDensityComponentShape::kBox;
 		gpuVolume.m_density = m_density;
 
 		m_gpuSceneVolume.uploadToGpuScene(gpuVolume);

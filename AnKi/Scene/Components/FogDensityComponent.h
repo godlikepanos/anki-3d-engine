@@ -15,6 +15,14 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
+/// @memberof FogDensityComponent
+enum class FogDensityComponentShape : U8
+{
+	kSphere,
+	kBox,
+	kCount
+};
+
 /// Fog density component. Controls the fog density.
 class FogDensityComponent : public SceneComponent
 {
@@ -27,42 +35,18 @@ public:
 
 	~FogDensityComponent();
 
-	void setBoxVolumeSize(Vec3 sizeXYZ)
+	void setShapeType(FogDensityComponentShape type)
 	{
-		sizeXYZ = sizeXYZ.max(Vec3(kMinShapeSize));
-		m_aabbMin = -sizeXYZ / 2.0f;
-		m_aabbMax = sizeXYZ / 2.0f;
-		m_isBox = true;
-		m_dirty = true;
+		if(type != m_type)
+		{
+			m_type = type;
+			m_dirty = true;
+		}
 	}
 
-	Vec3 getBoxVolumeSize() const
+	FogDensityComponentShape getShapeType() const
 	{
-		ANKI_ASSERT(isAabb());
-		return m_aabbMax.xyz() - m_aabbMin.xyz();
-	}
-
-	void setSphereVolumeRadius(F32 radius)
-	{
-		m_sphereRadius = max(kMinShapeSize, radius);
-		m_isBox = false;
-		m_dirty = true;
-	}
-
-	F32 getSphereVolumeRadius() const
-	{
-		ANKI_ASSERT(isSphere());
-		return m_sphereRadius;
-	}
-
-	Bool isAabb() const
-	{
-		return m_isBox == true;
-	}
-
-	Bool isSphere() const
-	{
-		return !m_isBox;
+		return m_type;
 	}
 
 	void setDensity(F32 d)
@@ -78,20 +62,12 @@ public:
 	}
 
 private:
-	Vec3 m_aabbMin = Vec3(0.0f); ///< In local space.
-
-	union
-	{
-		Vec3 m_aabbMax = Vec3(1.0f);
-		F32 m_sphereRadius;
-	};
-
-	Vec3 m_worldPos = Vec3(0.0f);
-	F32 m_density = 1.0f;
-
 	GpuSceneArrays::FogDensityVolume::Allocation m_gpuSceneVolume;
 
-	Bool m_isBox = true;
+	F32 m_density = 1.0f;
+
+	FogDensityComponentShape m_type = FogDensityComponentShape::kSphere;
+
 	Bool m_dirty = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;

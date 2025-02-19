@@ -32,8 +32,8 @@ void BodyComponent::teleportTo(Vec3 position, const Mat3& rotation)
 	m_teleported = true;
 
 	// Set those just to be sure
-	m_node->setLocalOrigin(position.xyz0());
-	m_node->setLocalRotation(Mat3x4(Vec3(0.0f), rotation, Vec3(1.0f)));
+	m_node->setLocalOrigin(position);
+	m_node->setLocalRotation(rotation);
 }
 
 Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)

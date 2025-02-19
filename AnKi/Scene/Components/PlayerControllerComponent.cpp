@@ -31,7 +31,7 @@ Error PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& up
 		updated = true;
 		m_positionVersion = posVersion;
 
-		info.m_node->setLocalOrigin(newPos.xyz0());
+		info.m_node->setLocalOrigin(newPos);
 	}
 
 	return Error::kNone;

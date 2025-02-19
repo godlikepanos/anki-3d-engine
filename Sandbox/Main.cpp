@@ -110,8 +110,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kL) == 1)
 	{
-		Vec4 origin = mover->getWorldTransform().getOrigin();
-		mover->setLocalOrigin(origin + Vec4(0, 15, 0, 0));
+		const Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
+		mover->setLocalOrigin(origin + Vec3(0, 15, 0));
 	}
 
 	if(in.getKey(KeyCode::kF1) == 1)
@@ -271,7 +271,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
 			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.z() = 0.0f;
-			mover->setLocalRotation(Mat3x4(Vec3(0.0f), angles));
+			mover->setLocalRotation(Mat3(angles));
 		}
 
 		static TouchPointer rotateCameraTouch = TouchPointer::kCount;
@@ -301,7 +301,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
 			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.z() = 0.0f;
-			mover->setLocalRotation(Mat3x4(Vec3(0.0f), angles));
+			mover->setLocalRotation(Mat3(angles));
 		}
 
 		static TouchPointer moveCameraTouch = TouchPointer::kCount;

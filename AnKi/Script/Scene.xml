@@ -240,16 +240,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="FogDensityComponent">
 			<methods>
-				<method name="setBoxVolumeSize">
-					<args>
-						<arg>Vec3</arg>
-					</args>
-				</method>
-				<method name="setSphereVolumeRadius">
-					<args>
-						<arg>F32</arg>
-					</args>
-				</method>
 				<method name="setDensity">
 					<args>
 						<arg>F32</arg>
@@ -409,27 +399,27 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 				<method name="setLocalOrigin">
 					<args>
-						<arg>const Vec4&amp;</arg>
+						<arg>const Vec3&amp;</arg>
 					</args>
 				</method>
 				<method name="getLocalOrigin">
-					<return>const Vec4&amp;</return>
+					<return>Vec3</return>
 				</method>
 				<method name="setLocalRotation">
 					<args>
-						<arg>const Mat3x4&amp;</arg>
+						<arg>const Mat3&amp;</arg>
 					</args>
 				</method>
 				<method name="getLocalRotation">
-					<return>const Mat3x4&amp;</return>
+					<return>Mat3</return>
 				</method>
 				<method name="setLocalScale">
 					<args>
-						<arg>const Vec4&amp;</arg>
+						<arg>const Vec3&amp;</arg>
 					</args>
 				</method>
 				<method name="getLocalScale">
-					<return>const Vec4&amp;</return>
+					<return>Vec3</return>
 				</method>
 				<method name="setLocalTransform">
 					<args>

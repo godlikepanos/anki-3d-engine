@@ -261,6 +261,8 @@ public:
 		m_ignoreParentNodeTransform = ignore;
 	}
 
+	/// @name Mess with the local transform
+	/// @{
 	const Transform& getLocalTransform() const
 	{
 		return m_ltrf;
@@ -272,37 +274,37 @@ public:
 		m_localTransformDirty = true;
 	}
 
-	void setLocalOrigin(const Vec4& x)
+	void setLocalOrigin(const Vec3& x)
 	{
 		m_ltrf.setOrigin(x);
 		m_localTransformDirty = true;
 	}
 
-	const Vec4& getLocalOrigin() const
+	Vec3 getLocalOrigin() const
 	{
-		return m_ltrf.getOrigin();
+		return m_ltrf.getOrigin().xyz();
 	}
 
-	void setLocalRotation(const Mat3x4& x)
+	void setLocalRotation(const Mat3& x)
 	{
 		m_ltrf.setRotation(x);
 		m_localTransformDirty = true;
 	}
 
-	const Mat3x4& getLocalRotation() const
+	Mat3 getLocalRotation() const
 	{
-		return m_ltrf.getRotation();
+		return m_ltrf.getRotation().getRotationPart();
 	}
 
-	void setLocalScale(const Vec4& x)
+	void setLocalScale(const Vec3& x)
 	{
 		m_ltrf.setScale(x);
 		m_localTransformDirty = true;
 	}
 
-	const Vec4& getLocalScale() const
+	Vec3 getLocalScale() const
 	{
-		return m_ltrf.getScale();
+		return m_ltrf.getScale().xyz();
 	}
 
 	const Transform& getWorldTransform() const
@@ -315,8 +317,6 @@ public:
 		return m_prevWTrf;
 	}
 
-	/// @name Mess with the local transform
-	/// @{
 	void rotateLocalX(F32 angleRad)
 	{
 		Mat3x4 r = m_ltrf.getRotation();

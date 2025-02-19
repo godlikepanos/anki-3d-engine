@@ -49,9 +49,9 @@ function update(event, prevTime, crntTime)
 	node:setLocalOrigin(pos)
 
 	if density <= 0.0 or radius <= 0.0 then
-		event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
+		node:setMarkedForDeletion()
 	else
-		fogComponent:setSphereVolumeRadius(radius)
+		node:setLocalScale(Vec3.new(radius))
 		fogComponent:setDensity(density)
 	end
 
@@ -114,7 +114,7 @@ Error MyApp::sampleExtraInit()
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("hinge", joint));
 		JointComponent* jointc = joint->newComponent<JointComponent>();
 		jointc->setType(JointType::kHinge);
-		joint->setLocalOrigin(Vec4(-0.0f, 4.8f, -3.0f, 0.0f));
+		joint->setLocalOrigin(Vec3(-0.0f, 4.8f, -3.0f));
 		base->addChild(joint);
 
 		SceneNode* monkey;
@@ -156,7 +156,7 @@ Error MyApp::sampleExtraInit()
 			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("joint_chain%u", i), joint));
 			JointComponent* jointc = joint->newComponent<JointComponent>();
 			jointc->setType(JointType::kPoint);
-			joint->setLocalOrigin(trf.getOrigin());
+			joint->setLocalOrigin(trf.getOrigin().xyz());
 			joint->setParent(prevNode);
 
 			SceneNode* monkey;
@@ -187,8 +187,8 @@ Error MyApp::sampleExtraInit()
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("trigger", node));
 		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
 		triggerc->setType(TriggerComponentShapeType::kSphere);
-		node->setLocalScale(Vec4(1.8f, 1.8f, 1.8f, 0.0f));
-		node->setLocalOrigin(Vec4(4.0f, 0.5f, 0.0f, 0.0f));
+		node->setLocalScale(Vec3(1.8f, 1.8f, 1.8f));
+		node->setLocalOrigin(Vec3(4.0f, 0.5f, 0.0f));
 	}
 
 	Input::getSingleton().lockCursor(true);
@@ -292,14 +292,14 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		if(y != 0.0 || x != 0.0)
 		{
 			// Set rotation
-			Mat3x4 rot(Vec3(0.0f), Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
+			Mat3 rot(Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
 
-			rot = player.getLocalRotation().combineTransformations(rot);
+			rot = player.getLocalRotation() * rot;
 
 			Vec3 newz = rot.getColumn(2).normalize();
 			Vec3 newx = Vec3(0.0, 1.0, 0.0).cross(newz);
 			Vec3 newy = newz.cross(newx);
-			rot.setColumns(newx, newy, newz, Vec3(0.0));
+			rot.setColumns(newx, newy, newz);
 			rot = rot.reorthogonalize();
 
 			// Update move
@@ -347,7 +347,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 			Vec3 dir;
 			if(moveVec != 0.0f)
 			{
-				dir = -(player.getLocalRotation() * moveVec.xyz0());
+				dir = -(player.getLocalRotation() * moveVec);
 				dir.y() = 0.0f;
 				dir = dir.normalize();
 			}
@@ -373,7 +373,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 
 		SceneNode* grenade;
 		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("Grenade%u", instance++).toCString(), grenade));
-		grenade->setLocalScale(Vec3(2.8f).xyz0());
+		grenade->setLocalScale(Vec3(2.8f));
 		ModelComponent* modelc = grenade->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/MESH_grenade_MTL_grenade_85852a78645563d8.ankimdl");
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
@@ -439,7 +439,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 				SceneNode* fogNode;
 				ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(name.toCString(), fogNode));
 				FogDensityComponent* fogComp = fogNode->newComponent<FogDensityComponent>();
-				fogComp->setSphereVolumeRadius(2.1f);
+				fogNode->setLocalScale(Vec3(2.1f));
 				fogComp->setDensity(15.0f);
 
 				fogNode->setLocalTransform(trf);
