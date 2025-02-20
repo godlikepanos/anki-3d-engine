@@ -25,26 +25,14 @@ public:
 
 	~GlobalIlluminationProbeComponent();
 
-	/// Set the bounding box size.
-	void setBoxVolumeSize(const Vec3& sizeXYZ)
-	{
-		m_halfSize = sizeXYZ / 2.0f;
-		updateMembers();
-		m_shapeDirty = true;
-	}
-
-	Vec3 getBoxVolumeSize() const
-	{
-		return m_halfSize * 2.0f;
-	}
-
 	/// Set the cell size in meters.
 	void setCellSize(F32 cellSize)
 	{
-		ANKI_ASSERT(cellSize > 0.0f);
-		m_cellSize = cellSize;
-		updateMembers();
-		m_shapeDirty = true;
+		if(ANKI_SCENE_ASSERT(cellSize > 0.0f) && m_cellSize != cellSize)
+		{
+			m_cellSize = cellSize;
+			m_dirty = true;
+		}
 	}
 
 	F32 getCellSize() const
@@ -59,8 +47,16 @@ public:
 
 	void setFadeDistance(F32 dist)
 	{
-		m_fadeDistance = max(0.0f, dist);
-		m_shapeDirty = true;
+		if(ANKI_SCENE_ASSERT(dist > 0.0f) && m_fadeDistance != dist)
+		{
+			m_fadeDistance = dist;
+			m_dirty = true;
+		}
+	}
+
+	ANKI_INTERNAL Vec3 getBoxVolumeSize() const
+	{
+		return m_halfSize * 2.0f;
 	}
 
 	/// Check if any of the probe's cells need to be re-rendered.
@@ -69,52 +65,47 @@ public:
 		return m_cellsRefreshedCount < m_totalCellCount;
 	}
 
-	U32 getNextCellForRefresh() const
+	ANKI_INTERNAL U32 getNextCellForRefresh() const
 	{
 		ANKI_ASSERT(getCellsNeedsRefresh());
 		return m_cellsRefreshedCount;
 	}
 
 	/// Add to the number of texels that got refreshed this frame.
-	void incrementRefreshedCells(U32 cellCount)
+	ANKI_INTERNAL void incrementRefreshedCells(U32 cellCount)
 	{
 		ANKI_ASSERT(getCellsNeedsRefresh());
 		m_cellsRefreshedCount += cellCount;
 		ANKI_ASSERT(m_cellsRefreshedCount <= m_totalCellCount);
-		m_refreshDirty = true;
-	}
-
-	U32 getUuid() const
-	{
-		return m_uuid;
+		m_dirty = true;
 	}
 
 	/// The radius around the probe's center that can infuence the rendering of the env texture.
-	F32 getRenderRadius() const;
+	ANKI_INTERNAL F32 getRenderRadius() const;
 
-	F32 getShadowsRenderRadius() const;
+	ANKI_INTERNAL F32 getShadowsRenderRadius() const;
 
-	const Vec3& getWorldPosition() const
+	ANKI_INTERNAL const Vec3& getWorldPosition() const
 	{
 		return m_worldPos;
 	}
 
-	const UVec3& getCellCountsPerDimension() const
+	ANKI_INTERNAL const UVec3& getCellCountsPerDimension() const
 	{
 		return m_cellCounts;
 	}
 
-	U32 getCellCount() const
+	ANKI_INTERNAL U32 getCellCount() const
 	{
 		return m_totalCellCount;
 	}
 
-	Texture& getVolumeTexture() const
+	ANKI_INTERNAL Texture& getVolumeTexture() const
 	{
 		return *m_volTex;
 	}
 
-	const GpuSceneArrays::GlobalIlluminationProbe::Allocation& getGpuSceneAllocation() const
+	ANKI_INTERNAL const GpuSceneArrays::GlobalIlluminationProbe::Allocation& getGpuSceneAllocation() const
 	{
 		return m_gpuSceneProbe;
 	}
@@ -134,21 +125,9 @@ private:
 
 	ShaderProgramResourcePtr m_clearTextureProg;
 
-	U32 m_uuid = 0;
-
 	U32 m_cellsRefreshedCount = 0;
 
-	Bool m_shapeDirty = true;
-	Bool m_refreshDirty = true;
-
-	/// Recalc come values.
-	void updateMembers()
-	{
-		const Vec3 dist = m_halfSize * 2.0f;
-		m_cellCounts = UVec3(dist / m_cellSize);
-		m_cellCounts = m_cellCounts.max(UVec3(1));
-		m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
-	}
+	Bool m_dirty = true;
 
 	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };

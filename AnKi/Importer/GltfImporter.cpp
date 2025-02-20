@@ -765,14 +765,11 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
 
-			const Vec3 boxSize = scale * 2.0f;
-
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newReflectionProbeComponent()\n"));
-			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(), boxSize.z()));
 
-			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+			const Transform localTrf = Transform(tsl, rot, scale);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if(stringsExist(extras, {"gi_probe"}))
@@ -782,11 +779,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
 
-			const Vec3 boxSize = scale * 2.0f;
-
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newGlobalIlluminationProbeComponent()\n"));
-			ANKI_CHECK(m_sceneFile.writeTextf("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(), boxSize.z()));
 
 			ANKI_CHECK(getExtra(extras, "gi_probe_fade_distance", extraValuef, extraFound));
 			if(extraFound && extraValuef > 0.0f)
@@ -800,7 +794,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(m_sceneFile.writeTextf("comp:setCellSize(%f)\n", extraValuef));
 			}
 
-			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+			const Transform localTrf = Transform(tsl, rot, scale);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if(stringsExist(extras, {"decal"}))

@@ -134,7 +134,7 @@ struct GpuSceneReflectionProbe
 	U32 m_cubeTexture; ///< Bindless index of the reflection texture.
 
 	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_uuid;
+	U32 m_uuid; ///< The UUID of that probe. If it's zero the GPU will not inform the CPU about it.
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	U32 m_componentArrayIndex; ///< Array in the CPU scene.
@@ -146,7 +146,7 @@ static_assert(sizeof(GpuSceneReflectionProbe) == kSizeof_GpuSceneReflectionProbe
 struct GpuSceneGlobalIlluminationProbe
 {
 	Vec3 m_aabbMin ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
-	U32 m_uuid;
+	U32 m_uuid; ///< The UUID of that probe. If it's zero the GPU will not inform the CPU about it.
 
 	Vec3 m_aabbMax ANKI_CPP_CODE(= Vec3(kSomeFarDistance));
 	U32 m_componentArrayIndex; ///< Array in the CPU scene.

@@ -266,11 +266,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
 		<class name="GlobalIlluminationProbeComponent">
 			<methods>
-				<method name="setBoxVolumeSize">
-					<args>
-						<arg>const Vec3&amp;</arg>
-					</args>
-				</method>
 				<method name="setCellSize">
 					<args>
 						<arg>F32</arg>
@@ -291,16 +286,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 		</class>
 
 		<class name="ReflectionProbeComponent">
-			<methods>
-				<method name="setBoxVolumeSize">
-					<args>
-						<arg>const Vec3&amp;</arg>
-					</args>
-				</method>
-				<method name="getBoxVolumeSize">
-					<return>Vec3</return>
-				</method>
-			</methods>
+			<methods></methods>
 		</class>
 
 		<class name="ParticleEmitterComponent">

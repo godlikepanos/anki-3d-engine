@@ -50,9 +50,10 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	if(updated) [[unlikely]]
 	{
 		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
+		m_halfSize = info.m_node->getWorldTransform().getScale().xyz();
 
 		// Update the UUID
-		m_uuid = (m_reflectionNeedsRefresh) ? SceneGraph::getSingleton().getNewUuid() : 0;
+		const U32 uuid = (m_reflectionNeedsRefresh) ? regenerateUuid() : 0;
 
 		// Upload to the GPU scene
 		GpuSceneReflectionProbe gpuProbe;
@@ -63,7 +64,7 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_aabbMin = aabbWorld.getMin().xyz();
 		gpuProbe.m_aabbMax = aabbWorld.getMax().xyz();
 
-		gpuProbe.m_uuid = m_uuid;
+		gpuProbe.m_uuid = uuid;
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}

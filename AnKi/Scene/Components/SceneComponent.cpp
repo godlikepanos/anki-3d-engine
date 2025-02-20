@@ -14,4 +14,10 @@ SceneComponent::SceneComponent([[maybe_unused]] SceneNode* node, SceneComponentT
 {
 }
 
+U32 SceneComponent::regenerateUuid()
+{
+	m_uuid = SceneGraph::getSingleton().getNewUuid();
+	return m_uuid;
+}
+
 } // namespace anki

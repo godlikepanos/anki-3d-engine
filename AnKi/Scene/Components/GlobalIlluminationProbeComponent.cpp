@@ -33,15 +33,40 @@ GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
 Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	const Bool moved = info.m_node->movedThisFrame();
-	updated = moved || m_shapeDirty || m_refreshDirty;
 
-	if(moved || m_shapeDirty)
+	if(!m_dirty && !moved) [[likely]]
+	{
+		return Error::kNone;
+	}
+
+	updated = true;
+
+	const Vec3 halfSize = info.m_node->getWorldTransform().getScale().xyz();
+	UVec3 newCellCounts = UVec3(2.0f * halfSize / m_cellSize);
+	newCellCounts = newCellCounts.max(UVec3(1));
+
+	const Bool shapeDirty = m_cellCounts != newCellCounts;
+
+	if(shapeDirty)
+	{
+		m_volTex.reset(nullptr);
+		m_cellCounts = newCellCounts;
+		m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
+	}
+
+	if(moved)
+	{
+		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
+		m_halfSize = halfSize;
+	}
+
+	if(moved || shapeDirty)
 	{
 		m_cellsRefreshedCount = 0;
 	}
 
 	// (re-)create the volume texture
-	if(m_shapeDirty) [[unlikely]]
+	if(!m_volTex)
 	{
 		TextureInitInfo texInit("GiProbe");
 		texInit.m_format = (GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat
@@ -92,26 +117,25 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		GrManager::getSingleton().submit(cmdb.get());
 	}
 
-	// Any update
-	if(updated) [[unlikely]]
+	// Upload to GPU scene
+	if(moved || shapeDirty || m_dirty)
 	{
-		m_worldPos = info.m_node->getWorldTransform().getOrigin().xyz();
-
 		// Change the UUID
+		U32 uuid;
 		if(m_cellsRefreshedCount == 0)
 		{
 			// Refresh starts over, get a new UUID
-			m_uuid = SceneGraph::getSingleton().getNewUuid();
+			uuid = regenerateUuid();
 		}
 		else if(m_cellsRefreshedCount < m_totalCellCount)
 		{
 			// In the middle of the refresh process
-			ANKI_ASSERT(m_uuid != 0);
+			uuid = getUuid();
 		}
 		else
 		{
 			// Refresh it done
-			m_uuid = 0;
+			uuid = 0;
 		}
 
 		// Upload to the GPU scene
@@ -124,13 +148,12 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 		gpuProbe.m_volumeTexture = m_volTexBindlessIdx;
 		gpuProbe.m_halfTexelSizeU = 1.0f / (F32(m_cellCounts.y()) * 6.0f) / 2.0f;
 		gpuProbe.m_fadeDistance = m_fadeDistance;
-		gpuProbe.m_uuid = m_uuid;
+		gpuProbe.m_uuid = uuid;
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
 
-	m_shapeDirty = false;
-	m_refreshDirty = false;
+	m_dirty = false;
 
 	return Error::kNone;
 }

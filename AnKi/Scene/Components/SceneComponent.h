@@ -126,6 +126,9 @@ public:
 		return m_updateOrderWeights[type];
 	}
 
+protected:
+	U32 regenerateUuid();
+
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 	U32 m_uuid = 0;

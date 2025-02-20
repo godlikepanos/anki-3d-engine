@@ -28,15 +28,7 @@ public:
 
 	~ReflectionProbeComponent();
 
-	/// Set the local size of the probe volume.
-	void setBoxVolumeSize(const Vec3& sizeXYZ)
-	{
-		m_halfSize = sizeXYZ / 2.0f;
-		m_dirty = true;
-		m_reflectionNeedsRefresh = true;
-	}
-
-	Vec3 getBoxVolumeSize() const
+	ANKI_INTERNAL Vec3 getBoxVolumeSize() const
 	{
 		return m_halfSize * 2.0f;
 	}
@@ -52,28 +44,23 @@ public:
 		m_dirty = true; // To force update of the gpu scene
 	}
 
-	U32 getUuid() const
-	{
-		return m_uuid;
-	}
-
-	Vec3 getWorldPosition() const
+	ANKI_INTERNAL Vec3 getWorldPosition() const
 	{
 		ANKI_ASSERT(m_worldPos.x() != kMaxF32);
 		return m_worldPos;
 	}
 
 	/// The radius around the probe's center that can infuence the rendering of the env texture.
-	F32 getRenderRadius() const;
+	ANKI_INTERNAL F32 getRenderRadius() const;
 
-	F32 getShadowsRenderRadius() const;
+	ANKI_INTERNAL F32 getShadowsRenderRadius() const;
 
-	Texture& getReflectionTexture() const
+	ANKI_INTERNAL Texture& getReflectionTexture() const
 	{
 		return *m_reflectionTex;
 	}
 
-	const GpuSceneArrays::ReflectionProbe::Allocation& getGpuSceneAllocation() const
+	ANKI_INTERNAL const GpuSceneArrays::ReflectionProbe::Allocation& getGpuSceneAllocation() const
 	{
 		return m_gpuSceneProbe;
 	}
@@ -86,7 +73,6 @@ private:
 
 	TexturePtr m_reflectionTex;
 	U32 m_reflectionTexBindlessIndex = kMaxU32;
-	U32 m_uuid = 0;
 
 	Bool m_dirty = true;
 	Bool m_reflectionNeedsRefresh = true;
