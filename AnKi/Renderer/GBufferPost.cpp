@@ -23,54 +23,39 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 	if(GpuSceneArrays::Decal::getSingleton().getElementCount() == 0)
 	{
-		// If there are no decals don't bother
 		return;
 	}
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	// Create pass
-	GraphicsRenderPass& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
+	NonGraphicsRenderPass& rpass = rgraph.newNonGraphicsRenderPass("GBuffPost");
+
+	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kUavCompute);
+	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kUavCompute);
+	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kUavCompute);
+	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
+
+	rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvCompute);
 
 	rpass.setWork([this, &ctx](RenderPassWorkContext& rgraphCtx) {
 		CommandBuffer& cmdb = *rgraphCtx.m_commandBuffer;
 
-		cmdb.setViewport(0, 0, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
-		cmdb.bindShaderProgram(m_grProg.get());
-
-		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
-		cmdb.setBlendFactors(1, BlendFactor::kOne, BlendFactor::kSrcAlpha, BlendFactor::kZero, BlendFactor::kOne);
-
-		// Bind all
-		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_nearestNearestClamp.get());
+		rgraphCtx.bindUav(0, 0, getRenderer().getGBuffer().getColorRt(0));
+		rgraphCtx.bindUav(1, 0, getRenderer().getGBuffer().getColorRt(1));
+		rgraphCtx.bindUav(2, 0, getRenderer().getGBuffer().getColorRt(2));
 
 		rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
-
-		cmdb.bindSampler(1, 0, getRenderer().getSamplers().m_trilinearRepeat.get());
+		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
+		cmdb.bindSrv(2, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
 		cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);
-		cmdb.bindSrv(0, 0, getRenderer().getClusterBinning().getPackedObjectsBuffer(GpuSceneNonRenderableObjectType::kDecal));
-		cmdb.bindSrv(1, 0, getRenderer().getClusterBinning().getClustersBuffer());
 
-		// Draw
-		cmdb.draw(PrimitiveTopology::kTriangles, 3);
+		cmdb.bindSampler(0, 0, getRenderer().getSamplers().m_trilinearClamp.get());
 
-		// Restore state
-		cmdb.setBlendFactors(0, BlendFactor::kOne, BlendFactor::kZero);
-		cmdb.setBlendFactors(1, BlendFactor::kOne, BlendFactor::kZero);
+		cmdb.bindShaderProgram(m_grProg.get());
+
+		dispatchPPCompute(cmdb, 8, 8, getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y());
 	});
-
-	GraphicsRenderPassTargetDesc rt0(getRenderer().getGBuffer().getColorRt(0));
-	rt0.m_loadOperation = RenderTargetLoadOperation::kLoad;
-	GraphicsRenderPassTargetDesc rt1(getRenderer().getGBuffer().getColorRt(1));
-	rt1.m_loadOperation = RenderTargetLoadOperation::kLoad;
-	rpass.setRenderpassInfo({rt0, rt1});
-
-	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(0), TextureUsageBit::kAllRtvDsv);
-	rpass.newTextureDependency(getRenderer().getGBuffer().getColorRt(1), TextureUsageBit::kAllRtvDsv);
-	rpass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvPixel);
-
-	rpass.newBufferDependency(getRenderer().getClusterBinning().getDependency(), BufferUsageBit::kSrvPixel);
 }
 
 } // end namespace anki

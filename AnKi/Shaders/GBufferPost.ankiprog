@@ -3,52 +3,44 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki technique vert pixel
+#pragma anki 16bit
 
-#include <AnKi/Shaders/QuadVert.hlsl>
+#pragma anki technique comp
 
-#if ANKI_PIXEL_SHADER
-#	include <AnKi/Shaders/PackFunctions.hlsl>
-#	include <AnKi/Shaders/Functions.hlsl>
-#	include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
-#	include <AnKi/Shaders/Include/MiscRendererTypes.h>
+#include <AnKi/Shaders/PackFunctions.hlsl>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/ClusteredShadingFunctions.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
 
-SamplerState g_nearestAnyClampSampler : register(s0);
-Texture2D g_depthTex : register(t0);
-SamplerState g_trilinearRepeatSampler : register(s1);
+RWTexture2D<Vec4> g_gbuffer0Tex : register(u0);
+RWTexture2D<Vec4> g_gbuffer1Tex : register(u1);
+RWTexture2D<Vec4> g_gbuffer2Tex : register(u2);
 
-ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
+Texture2D<Vec4> g_depthTex : register(t0);
 StructuredBuffer<Decal> g_decals : register(t1);
 StructuredBuffer<Cluster> g_clusters : register(t2);
 
-struct PixelOut
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
+
+SamplerState g_linearClampAnySampler : register(s0);
+
+[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
 {
-	RVec4 m_diffuse : SV_TARGET0;
-	RVec4 m_roughnessAndOther : SV_TARGET1;
-};
-
-PixelOut main(VertOut input)
-{
-	const Vec2 uv = input.m_uv;
-
-	// This code blends the diffuse and the specular+rougness of the decals with GBuffer render targets.
-	// Normaly the blending is being done ('D' is the decal diffuse and 'f' is decal blend factor):
-	// d=gbuffer.diff
-	// 1st decal: d'=d*(1-f)+D*f
-	// 2nd decal: d''=d'*(1-f')+D'*f' <=> d''=d*(1-f)*(1-f')+D*f*(1-f')+D'*f'
-	// By looking at the trend we will have to multiply the gbuffer.diff with: (1-f)*(1-f') ... (1-f'''')
-
-	RVec4 diffuse = Vec4(0.0, 0.0, 0.0, 1.0);
-	RVec4 roughnessAndOther = Vec4(0.0, 0.0, 0.0, 1.0);
+	UVec2 viewportSize;
+	g_depthTex.GetDimensions(viewportSize.x, viewportSize.y);
+	if(any(svDispatchThreadId >= viewportSize))
+	{
+		return;
+	}
 
 	// Get worldPos
-	const F32 depth = g_depthTex.SampleLevel(g_nearestAnyClampSampler, uv, 0.0).r;
-	const Vec2 ndc = uvToNdc(uv);
+	const F32 depth = g_depthTex[svDispatchThreadId].r;
+	const Vec2 ndc = uvToNdc(Vec2(svDispatchThreadId) / Vec2(viewportSize));
 	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	// Get the cluster
-	Cluster cluster = getClusterFragCoord(g_clusters, g_globalConstants, Vec3(input.m_svPosition.xy, depth));
+	// Get the cluster. Make sure it's dynamically uniform because we are accessing bindless textures later on
+	Cluster cluster = getClusterFragCoord<true>(g_clusters, g_globalConstants, Vec3(svDispatchThreadId, depth));
 
 	// Make the decalsMask uniform across the wave because we are accessing bindless textures later on
 	U32 decalsMask = cluster.m_decalsMask[0];
@@ -57,10 +49,17 @@ PixelOut main(VertOut input)
 		decalsMask |= cluster.m_decalsMask[i];
 	}
 
-	if(WaveActiveAllTrue(decalsMask == 0))
+	if(decalsMask == 0)
 	{
-		discard;
+		return;
 	}
+
+	GbufferInfo<F16> gbuffer = (GbufferInfo<F16>)0;
+	unpackGBufferNoVelocity<F16>(g_gbuffer0Tex[svDispatchThreadId], g_gbuffer1Tex[svDispatchThreadId], g_gbuffer2Tex[svDispatchThreadId], gbuffer);
+
+	HVec3 diffuse = gbuffer.m_diffuse;
+	F16 roughness = gbuffer.m_roughness;
+	F16 metalness = gbuffer.m_metallic;
 
 	U32 idx;
 	[loop] while((idx = iterateDecals(cluster)) != kMaxU32)
@@ -69,52 +68,58 @@ PixelOut main(VertOut input)
 
 		// Project pos to decal space
 		const Vec4 texCoords4 = mul(decal.m_textureMatrix, Vec4(worldPos, 1.0));
-		if(texCoords4.w <= 0.7)
+
+		const F32 depth = texCoords4.z / texCoords4.w;
+		const Vec2 uv = texCoords4.xy / texCoords4.w;
+
+		if(any(Vec3(uv, depth) < 0.0) || any(Vec3(uv, depth) > 1.0))
 		{
-			// Behind the decal, skip
+			// Outside the volume
 			continue;
 		}
 
-		const Vec2 uv = saturate(texCoords4.xy / texCoords4.w);
+		// Fade a bit when approaching depth 0 or 1
+		const F16 edgeFactor = 1.0 - pow(abs(2.0 * depth - 1.0), 8.0);
 
-		// Read textures
-		RVec4 diff;
+		F16 factor = edgeFactor;
+
+		// Do diffuse
 		if(decal.m_diffuseTexture != kMaxU32)
 		{
-			diff = getBindlessTexture2DVec4(decal.m_diffuseTexture).Sample(g_trilinearRepeatSampler, uv);
-		}
-		else
-		{
-			diff = 0.0f;
+			const HVec4 col = getBindlessTexture2DVec4(decal.m_diffuseTexture).SampleLevel(g_linearClampAnySampler, uv, 0.0);
+
+			factor *= col.a;
+			diffuse = lerp(diffuse, col.rgb, factor * decal.m_diffuseBlendFactor);
 		}
 
-		RVec2 roughnessMetalness;
-		RF32 roughnessMetalnessFactor;
+		// Do metal roughness
 		if(decal.m_roughnessMetalnessTexture != kMaxU32)
 		{
-			roughnessMetalness = getBindlessTexture2DVec4(decal.m_roughnessMetalnessTexture).Sample(g_trilinearRepeatSampler, uv).gb;
-			roughnessMetalnessFactor = diff.a;
-		}
-		else
-		{
-			roughnessMetalness = 0.0f;
-			roughnessMetalnessFactor = 0.0f;
-		}
+			const HVec3 col = getBindlessTexture2DVec4(decal.m_roughnessMetalnessTexture).SampleLevel(g_linearClampAnySampler, uv, 0.0).gba;
 
-		// Update diffuse
-		RF32 f = diff.a * decal.m_diffuseBlendFactor;
-		diffuse.rgb = diffuse.rgb * (1.0 - f) + diff.rgb * f;
-		diffuse.a *= (1.0 - f);
+			if(decal.m_diffuseTexture == kMaxU32)
+			{
+				// Can't use the diffuse tex for alpha. Try the alpha from the roughness/metal texture
+				factor *= col.z;
+			}
 
-		// Update only roughness for now. Metalness is weirdly packed
-		f = roughnessMetalnessFactor * decal.m_roughnessMetalnessFactor;
-		roughnessAndOther.r = roughnessMetalness.r * (1.0 - f) + roughnessMetalness.r * f;
-		roughnessAndOther.a *= (1.0 - f);
+			roughness = lerp(roughness, col.x, factor * decal.m_roughnessMetalnessFactor);
+			metalness = lerp(metalness, col.y, factor * decal.m_roughnessMetalnessFactor);
+		}
 	}
 
-	PixelOut output;
-	output.m_diffuse = diffuse;
-	output.m_roughnessAndOther = roughnessAndOther;
-	return output;
+	if(any(diffuse != gbuffer.m_diffuse) || roughness != gbuffer.m_roughness || metalness != gbuffer.m_metallic)
+	{
+		gbuffer.m_diffuse = diffuse;
+		gbuffer.m_roughness = roughness;
+		gbuffer.m_metallic = metalness;
+
+		HVec4 rt0, rt1, rt2;
+		Vec2 rt3;
+		packGBuffer(gbuffer, rt0, rt1, rt2, rt3);
+
+		g_gbuffer0Tex[svDispatchThreadId] = rt0;
+		g_gbuffer1Tex[svDispatchThreadId] = rt1;
+		g_gbuffer2Tex[svDispatchThreadId] = rt2;
+	}
 }
-#endif // ANKI_PIXEL_SHADER

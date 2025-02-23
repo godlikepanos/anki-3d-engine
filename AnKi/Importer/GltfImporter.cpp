@@ -802,29 +802,29 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(m_sceneFile.writeTextf("\nnode = scene:newSceneNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:newDecalComponent()\n"));
 
-			ANKI_CHECK(getExtra(extras, "decal_diffuse_atlas", extraValueStr, extraFound));
+			ANKI_CHECK(getExtra(extras, "decal_diffuse", extraValueStr, extraFound));
 			if(extraFound)
 			{
 				ANKI_CHECK(getExtra(extras, "decal_diffuse_factor", extraValuef, extraFound));
 
 				ANKI_CHECK(
-					m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", extraValueStr.cstr(), (extraFound) ? extraValuef : -1.0f));
+					m_sceneFile.writeTextf("comp:loadDiffuseImageResource(\"%s\", %f)\n", extraValueStr.cstr(), (extraFound) ? extraValuef : 1.0f));
 			}
 
-			ANKI_CHECK(getExtra(extras, "decal_diffuse_sub_texture", extraValueStr, extraFound));
+			ANKI_CHECK(getExtra(extras, "decal_metal_roughness", extraValueStr, extraFound));
 			if(extraFound)
 			{
-				ANKI_CHECK(getExtra(extras, "decal_specular_roughness_metallic_factor", extraValuef, extraFound));
+				ANKI_CHECK(getExtra(extras, "decal_metal_roughness_factor", extraValuef, extraFound));
 
-				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadRoughnessMetallnessTexture(\"%s\", %f)\n", extraValueStr.cstr(),
-												  (extraFound) ? extraValuef : -1.0f));
+				ANKI_CHECK(m_sceneFile.writeTextf("comp:loadMetalRoughnessImageResource(\"%s\", %f)\n", extraValueStr.cstr(),
+												  (extraFound) ? extraValuef : 1.0f));
 			}
 
 			Vec3 tsl;
 			Mat3 rot;
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
-			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+			const Transform localTrf = Transform(tsl, rot, scale);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else

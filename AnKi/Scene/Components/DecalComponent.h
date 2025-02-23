@@ -38,21 +38,9 @@ public:
 		setLayer(fname, blendFactor, LayerType::kDiffuse);
 	}
 
-	void loadRoughnessMetalnessImageResource(CString fname, F32 blendFactor)
+	void loadMetalRoughnessImageResource(CString fname, F32 blendFactor)
 	{
 		setLayer(fname, blendFactor, LayerType::kRoughnessMetalness);
-	}
-
-	/// Update the internal structures.
-	void setBoxVolumeSize(const Vec3& sizeXYZ)
-	{
-		m_boxSize = sizeXYZ;
-		m_dirty = true;
-	}
-
-	const Vec3& getBoxVolumeSize() const
-	{
-		return m_boxSize;
 	}
 
 private:
@@ -67,13 +55,11 @@ private:
 	{
 	public:
 		ImageResourcePtr m_image;
-		F32 m_blendFactor = 0.0f;
+		F32 m_blendFactor = 1.0f;
 		U32 m_bindlessTextureIndex = kMaxU32;
 	};
 
 	Array<Layer, U(LayerType::kCount)> m_layers;
-	Mat4 m_biasProjViewMat = Mat4::getIdentity();
-	Vec3 m_boxSize = Vec3(1.0f);
 
 	GpuSceneArrays::Decal::Allocation m_gpuSceneDecal;
 

@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// Applies SSAO and decals to the GBuffer. It's a seperate pass because it requres the depth buffer.
+/// Applies decals to the GBuffer. It's a seperate pass because it requres the depth buffer.
 class GBufferPost : public RendererObject
 {
 public:

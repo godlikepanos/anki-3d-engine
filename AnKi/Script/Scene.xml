@@ -161,15 +161,10 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>F32</arg>
 					</args>
 				</method>
-				<method name="loadRoughnessMetalnessImageResource">
+				<method name="loadMetalRoughnessImageResource">
 					<args>
 						<arg>CString</arg>
 						<arg>F32</arg>
-					</args>
-				</method>
-				<method name="setBoxVolumeSize">
-					<args>
-						<arg>const Vec3&amp;</arg>
 					</args>
 				</method>
 			</methods>

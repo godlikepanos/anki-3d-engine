@@ -33,7 +33,7 @@ public:
 	UVec2 m_astcBlockSize = UVec2(8u);
 	Bool m_sRgbToLinear = false;
 	Bool m_linearToSRgb = false;
-	Bool m_flipImage = true;
+	Bool m_flipImage = false;
 };
 
 /// Converts images to AnKi's specific format.

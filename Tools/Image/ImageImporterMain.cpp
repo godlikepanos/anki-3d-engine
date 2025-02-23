@@ -32,7 +32,7 @@ Options:
 -v                     : Verbose log
 -to-linear             : Convert sRGB to linear
 -to-srgb               : Convert linear to sRGB
--flip-image <0|1>      : Flip the image. Default is 1
+-flip-image <0|1>      : Flip the image. Default is 0
 -hdr-scale <3 floats>  : Apply some scale to HDR images. Default is {1 1 1}
 -hdr-bias <3 floats>   : Apply some bias to HDR images. Default is {0 0 0}
 )";

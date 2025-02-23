@@ -63,8 +63,8 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		// renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");
-		g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "GBufferAlbedo") ? "" : "GBufferAlbedo");
+		// g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)

@@ -15,6 +15,7 @@ DecalComponent::DecalComponent(SceneNode* node)
 	: SceneComponent(node, kClassType)
 {
 	m_gpuSceneDecal.allocate();
+	loadDiffuseImageResource("EngineAssets/DefaultDecal.png", 0.9f);
 }
 
 DecalComponent::~DecalComponent()
@@ -26,9 +27,7 @@ void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
 	Layer& l = m_layers[type];
 
 	ImageResourcePtr rsrc;
-
-	const Error err = ResourceManager::getSingleton().loadResource(fname, rsrc);
-	if(err)
+	if(ResourceManager::getSingleton().loadResource(fname, rsrc))
 	{
 		ANKI_SCENE_LOGE("Failed to load image");
 		return;
@@ -38,49 +37,45 @@ void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
 
 	l.m_image = std::move(rsrc);
 	l.m_bindlessTextureIndex = l.m_image->getTexture().getOrCreateBindlessTextureIndex(TextureSubresourceDesc::all());
-	l.m_blendFactor = blendFactor;
+	l.m_blendFactor = clamp(blendFactor, 0.0f, 1.0f);
 }
 
 Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_dirty || info.m_node->movedThisFrame();
 
-	if(updated)
+	if(!updated) [[likely]]
 	{
-		m_dirty = false;
-
-		const Vec3 halfBoxSize = m_boxSize / 2.0f;
-
-		// Calculate the texture matrix
-		const Mat4 worldTransform(info.m_node->getWorldTransform());
-
-		const Mat4 viewMat = worldTransform.invert();
-
-		const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(), halfBoxSize.y(), -halfBoxSize.y(),
-																		 kClusterObjectFrustumNearPlane, m_boxSize.z());
-
-		const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-
-		m_biasProjViewMat = biasMat4 * projMat * viewMat;
-
-		// Update the spatial
-		const Vec4 center(0.0f, 0.0f, -halfBoxSize.z(), 0.0f);
-		const Vec4 extend(halfBoxSize.x(), halfBoxSize.y(), halfBoxSize.z(), 0.0f);
-		const Obb obbL(center, Mat3x4::getIdentity(), extend);
-		const Obb obbW = obbL.getTransformed(info.m_node->getWorldTransform());
-
-		// Upload to the GPU scene
-		GpuSceneDecal gpuDecal;
-		gpuDecal.m_diffuseTexture = m_layers[LayerType::kDiffuse].m_bindlessTextureIndex;
-		gpuDecal.m_roughnessMetalnessTexture = m_layers[LayerType::kRoughnessMetalness].m_bindlessTextureIndex;
-		gpuDecal.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
-		gpuDecal.m_roughnessMetalnessFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
-		gpuDecal.m_textureMatrix = m_biasProjViewMat;
-		gpuDecal.m_sphereCenter = obbW.getCenter().xyz();
-		gpuDecal.m_sphereRadius = obbW.getExtend().length();
-
-		m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
+		return Error::kNone;
 	}
+
+	m_dirty = false;
+
+	const Vec3 halfBoxSize = info.m_node->getWorldTransform().getScale().xyz();
+
+	// Calculate the texture matrix
+	Transform trf = info.m_node->getWorldTransform();
+	trf.setScale(Vec3(1.0f));
+	const Mat4 viewMat = Mat4(trf).invert();
+
+	const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(halfBoxSize.x(), -halfBoxSize.x(), halfBoxSize.y(), -halfBoxSize.y(),
+																	 -halfBoxSize.z(), halfBoxSize.z());
+
+	const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+	const Mat4 biasedProjViewMat = biasMat4 * projMat * viewMat;
+
+	// Upload to the GPU scene
+	GpuSceneDecal gpuDecal;
+	gpuDecal.m_diffuseTexture = m_layers[LayerType::kDiffuse].m_bindlessTextureIndex;
+	gpuDecal.m_roughnessMetalnessTexture = m_layers[LayerType::kRoughnessMetalness].m_bindlessTextureIndex;
+	gpuDecal.m_diffuseBlendFactor = m_layers[LayerType::kDiffuse].m_blendFactor;
+	gpuDecal.m_roughnessMetalnessFactor = m_layers[LayerType::kRoughnessMetalness].m_blendFactor;
+	gpuDecal.m_textureMatrix = biasedProjViewMat;
+	gpuDecal.m_sphereCenter = info.m_node->getWorldTransform().getOrigin().xyz();
+	gpuDecal.m_sphereRadius = halfBoxSize.length();
+
+	m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
 
 	return Error::kNone;
 }

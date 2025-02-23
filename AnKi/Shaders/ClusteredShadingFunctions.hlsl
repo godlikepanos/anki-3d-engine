@@ -69,40 +69,57 @@ U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileCountX)
 }
 
 /// Merge the tiles with z splits into a single cluster.
+template<Bool kDynamicallyUniform = false>
 Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 {
-//#define ANKI_OR_MASKS(x) WaveActiveBitOr(x)
-#define ANKI_OR_MASKS(x) (x)
-
 	Cluster outCluster;
 
-	[unroll] for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
+	if(kDynamicallyUniform)
 	{
-		outCluster.m_pointLightsMask[i] = ANKI_OR_MASKS(tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
-		outCluster.m_spotLightsMask[i] = ANKI_OR_MASKS(tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
-	}
+		[unroll] for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
+		{
+			outCluster.m_pointLightsMask[i] = WaveActiveBitOr(tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
+			outCluster.m_spotLightsMask[i] = WaveActiveBitOr(tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
+		}
 
-	[unroll] for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
+		[unroll] for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
+		{
+			outCluster.m_decalsMask[i] = WaveActiveBitOr(tileCluster.m_decalsMask[i] & zCluster.m_decalsMask[i]);
+		}
+
+		outCluster.m_fogDensityVolumesMask = WaveActiveBitOr(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
+		outCluster.m_reflectionProbesMask = WaveActiveBitOr(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
+		outCluster.m_giProbesMask = WaveActiveBitOr(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
+	}
+	else
 	{
-		outCluster.m_decalsMask[i] = ANKI_OR_MASKS(tileCluster.m_decalsMask[i] & zCluster.m_decalsMask[i]);
+		[unroll] for(U32 i = 0; i < kMaxVisibleLights / 32; ++i)
+		{
+			outCluster.m_pointLightsMask[i] = (tileCluster.m_pointLightsMask[i] & zCluster.m_pointLightsMask[i]);
+			outCluster.m_spotLightsMask[i] = (tileCluster.m_spotLightsMask[i] & zCluster.m_spotLightsMask[i]);
+		}
+
+		[unroll] for(U32 i = 0; i < kMaxVisibleDecals / 32; ++i)
+		{
+			outCluster.m_decalsMask[i] = (tileCluster.m_decalsMask[i] & zCluster.m_decalsMask[i]);
+		}
+
+		outCluster.m_fogDensityVolumesMask = (tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
+		outCluster.m_reflectionProbesMask = (tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
+		outCluster.m_giProbesMask = (tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
 	}
-
-	outCluster.m_fogDensityVolumesMask = ANKI_OR_MASKS(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
-	outCluster.m_reflectionProbesMask = ANKI_OR_MASKS(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
-	outCluster.m_giProbesMask = ANKI_OR_MASKS(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
-
-#undef ANKI_OR_MASKS
 
 	return outCluster;
 }
 
 /// Get the final cluster after ORing and ANDing the masks.
+template<Bool kDynamicallyUniform = false>
 Cluster getClusterFragCoord(StructuredBuffer<Cluster> clusters, GlobalRendererConstants consts, Vec3 fragCoord)
 {
 	const Cluster tileCluster = clusters[computeTileClusterIndexFragCoord(fragCoord.xy, consts.m_tileCounts.x)];
 	const Cluster zCluster = clusters[computeZSplitClusterIndex(fragCoord.z, consts.m_zSplitCount, consts.m_zSplitMagic.x, consts.m_zSplitMagic.y)
 									  + consts.m_tileCounts.x * consts.m_tileCounts.y];
-	return mergeClusters(tileCluster, zCluster);
+	return mergeClusters<kDynamicallyUniform>(tileCluster, zCluster);
 }
 
 U32 iteratePointLights(inout Cluster cluster)

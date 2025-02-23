@@ -141,14 +141,6 @@ private:
 
 	void destroy();
 
-	static Error loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-									 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
-
-	static Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-								   DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
-
-	static Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
-
 	static Error loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& height,
 						 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data);
 

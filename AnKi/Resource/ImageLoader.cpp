@@ -231,161 +231,6 @@ public:
 	}
 };
 
-Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-									   DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data)
-{
-	Array<U8, 6> header6;
-
-	// Read the info from header
-	ANKI_CHECK(fs.read(&header6[0], sizeof(header6)));
-
-	width = header6[1] * 256 + header6[0];
-	height = header6[3] * 256 + header6[2];
-	bpp = header6[4];
-
-	if((width == 0) || (height == 0) || ((bpp != 24) && (bpp != 32)))
-	{
-		ANKI_RESOURCE_LOGE("Invalid image information");
-		return Error::kUserData;
-	}
-
-	// Read the data
-	const PtrSize bytesPerPxl = (bpp / 8);
-	const PtrSize imageSize = bytesPerPxl * width * height;
-	data.resize(imageSize);
-
-	ANKI_CHECK(fs.read(reinterpret_cast<char*>(&data[0]), imageSize));
-
-	// Swap red with blue
-	for(PtrSize i = 0; i < imageSize; i += bytesPerPxl)
-	{
-		const U8 temp = data[i];
-		data[i] = data[i + 2];
-		data[i + 2] = temp;
-	}
-
-	return Error::kNone;
-}
-
-Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-									 DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data)
-{
-	Array<U8, 6> header6;
-	ANKI_CHECK(fs.read(&header6[0], sizeof(header6)));
-
-	width = header6[1] * 256 + header6[0];
-	height = header6[3] * 256 + header6[2];
-	bpp = header6[4];
-
-	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
-	{
-		ANKI_RESOURCE_LOGE("Invalid image information");
-		return Error::kUserData;
-	}
-
-	const PtrSize bytesPerPxl = (bpp / 8);
-	const PtrSize imageSize = bytesPerPxl * width * height;
-	data.resize(imageSize);
-
-	const PtrSize pixelCount = height * width;
-	PtrSize currentPixel = 0;
-	PtrSize currentByte = 0;
-	Array<U8, 4> colorbuffer;
-
-	do
-	{
-		U8 chunkheader = 0;
-
-		ANKI_CHECK(fs.read(&chunkheader, sizeof(U8)));
-
-		if(chunkheader < 128)
-		{
-			chunkheader++;
-			for(U8 counter = 0; counter < chunkheader; counter++)
-			{
-				ANKI_CHECK(fs.read(&colorbuffer[0], bytesPerPxl));
-
-				data[currentByte] = colorbuffer[2];
-				data[currentByte + 1] = colorbuffer[1];
-				data[currentByte + 2] = colorbuffer[0];
-
-				if(bytesPerPxl == 4)
-				{
-					data[currentByte + 3] = colorbuffer[3];
-				}
-
-				currentByte += bytesPerPxl;
-				currentPixel++;
-
-				if(currentPixel > pixelCount)
-				{
-					ANKI_RESOURCE_LOGE("Too many pixels read");
-					return Error::kUserData;
-				}
-			}
-		}
-		else
-		{
-			chunkheader = U8(chunkheader - 127);
-			ANKI_CHECK(fs.read(&colorbuffer[0], bytesPerPxl));
-
-			for(U8 counter = 0; counter < chunkheader; counter++)
-			{
-				data[currentByte] = colorbuffer[2];
-				data[currentByte + 1] = colorbuffer[1];
-				data[currentByte + 2] = colorbuffer[0];
-
-				if(bytesPerPxl == 4)
-				{
-					data[currentByte + 3] = colorbuffer[3];
-				}
-
-				currentByte += bytesPerPxl;
-				currentPixel++;
-
-				if(currentPixel > pixelCount)
-				{
-					ANKI_RESOURCE_LOGE("Too many pixels read");
-					data.destroy();
-					return Error::kUserData;
-				}
-			}
-		}
-	} while(currentPixel < pixelCount);
-
-	return Error::kNone;
-}
-
-Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
-						   DynamicArray<U8, MemoryPoolPtrWrapper<BaseMemoryPool>, PtrSize>& data)
-{
-	Array<Char, 12> myTgaHeader;
-
-	ANKI_CHECK(fs.read(&myTgaHeader[0], sizeof(myTgaHeader)));
-
-	if(memcmp(kTgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
-	{
-		ANKI_CHECK(loadUncompressedTga(fs, width, height, bpp, data));
-	}
-	else if(std::memcmp(kTgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
-	{
-		ANKI_CHECK(loadCompressedTga(fs, width, height, bpp, data));
-	}
-	else
-	{
-		ANKI_RESOURCE_LOGE("Invalid image header");
-		return Error::kUserData;
-	}
-
-	if(bpp != 32 && bpp != 24)
-	{
-		ANKI_RESOURCE_LOGE("Invalid bpp");
-		return Error::kUserData;
-	}
-
-	return Error::kNone;
-}
-
 Error ImageLoader::loadAnkiImage(FileInterface& file, U32 maxImageSize, ImageBinaryDataCompression& preferredCompression,
 								 DynamicArray<ImageLoaderSurface, MemoryPoolPtrWrapper<BaseMemoryPool>>& surfaces,
 								 DynamicArray<ImageLoaderVolume, MemoryPoolPtrWrapper<BaseMemoryPool>>& volumes, U32& width, U32& height, U32& depth,
@@ -639,7 +484,7 @@ Error ImageLoader::loadStb(Bool isFloat, FileInterface& fs, U32& width, U32& hei
 
 	// Use STB to read the image
 	int stbw, stbh, comp;
-	stbi_set_flip_vertically_on_load_thread(true);
+	stbi_set_flip_vertically_on_load_thread(false);
 	U8* stbdata;
 	if(isFloat)
 	{
@@ -715,33 +560,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	m_imageType = ImageBinaryType::k2D;
 	m_compression = ImageBinaryDataCompression::kRaw;
 
-	if(ext == "tga")
-	{
-		m_surfaces.resize(1, pool);
-
-		m_mipmapCount = 1;
-		m_depth = 1;
-		m_layerCount = 1;
-		U32 bpp = 0;
-		ANKI_CHECK(loadTga(file, m_surfaces[0].m_width, m_surfaces[0].m_height, bpp, m_surfaces[0].m_data));
-
-		m_width = m_surfaces[0].m_width;
-		m_height = m_surfaces[0].m_height;
-
-		if(bpp == 32)
-		{
-			m_colorFormat = ImageBinaryColorFormat::kRgba8;
-		}
-		else if(bpp == 24)
-		{
-			m_colorFormat = ImageBinaryColorFormat::kRgb8;
-		}
-		else
-		{
-			ANKI_ASSERT(0);
-		}
-	}
-	else if(ext == "ankitex")
+	if(ext == "ankitex")
 	{
 #if ANKI_PLATFORM_MOBILE
 		m_compression = ImageBinaryDataCompression::kAstc;
@@ -752,7 +571,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 		ANKI_CHECK(loadAnkiImage(file, maxImageSize, m_compression, m_surfaces, m_volumes, m_width, m_height, m_depth, m_layerCount, m_mipmapCount,
 								 m_imageType, m_colorFormat, m_astcBlockSize));
 	}
-	else if(ext == "png" || ext == "jpg")
+	else if(ext == "png" || ext == "jpg" || ext == "tga")
 	{
 		m_surfaces.resize(1, pool);
 
