@@ -30,7 +30,9 @@ namespace anki {
 
 static Atomic<U32> g_nextFileId = {1};
 
+#if ANKI_OS_WINDOWS
 static HMODULE g_dxilLib = 0;
+#endif
 static HMODULE g_dxcLib = 0;
 static DxcCreateInstanceProc g_DxcCreateInstance = nullptr;
 static Mutex g_dxcLibMtx;

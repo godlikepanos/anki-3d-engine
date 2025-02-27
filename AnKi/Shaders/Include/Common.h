@@ -423,7 +423,11 @@ constexpr U32 kMaxShadowCascades = 4u;
 constexpr F32 kShadowsPolygonOffsetFactor = 1.25f;
 constexpr F32 kShadowsPolygonOffsetUnits = 2.75f;
 
+#if defined(__HLSL_VERSION)
 constexpr U32 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
+#else
+constexpr U8 kMaxMipsSinglePassDownsamplerCanProduce = 12u;
+#endif
 
 constexpr U32 kMaxPrimitivesPerMeshlet = 124; ///< nVidia prefers 126 but meshoptimizer choks with that value.
 constexpr U32 kMaxVerticesPerMeshlet = 128;

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Scene/Common.h>
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Util/Thread.h>
 

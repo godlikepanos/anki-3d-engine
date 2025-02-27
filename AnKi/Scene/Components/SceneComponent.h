@@ -100,7 +100,7 @@ public:
 
 	ANKI_INTERNAL void setArrayIndex(U32 idx)
 	{
-		m_arrayIdx = idx;
+		m_arrayIdx = idx & (kMaxU32 >> 24u);
 	}
 
 	ANKI_INTERNAL virtual void onDestroy([[maybe_unused]] SceneNode& node)

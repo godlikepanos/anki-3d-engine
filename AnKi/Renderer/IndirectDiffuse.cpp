@@ -10,7 +10,7 @@
 #include <AnKi/Renderer/Sky.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Util/Tracer.h>
-#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>
 

@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Core/App.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 
 namespace anki {
 

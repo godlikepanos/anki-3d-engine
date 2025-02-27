@@ -5,12 +5,11 @@
 
 #pragma once
 
-#include <AnKi/Core/Common.h>
 #include <AnKi/Gr/Utils/SegregatedListsGpuMemoryPool.h>
 
 namespace anki {
 
-/// @addtogroup core
+/// @addtogroup gpu_memory
 /// @{
 
 /// @memberof GpuReadbackMemoryPool

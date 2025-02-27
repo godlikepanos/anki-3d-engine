@@ -9,7 +9,7 @@
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/GpuSceneArray.h>
 #include <AnKi/Resource/ParticleEmitterResource.h>
-#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Util/WeakArray.h>
 

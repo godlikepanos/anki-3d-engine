@@ -36,7 +36,7 @@ public:
 		return m_runCtx.m_rt;
 	}
 
-	U32 getMipmapCount() const
+	U8 getMipmapCount() const
 	{
 		return m_mipCount;
 	}
@@ -49,7 +49,7 @@ private:
 
 	BufferPtr m_counterBuffer;
 
-	U32 m_mipCount = 0;
+	U8 m_mipCount = 0;
 
 	class
 	{

@@ -5,7 +5,7 @@ include_directories("..")
 anki_new_executable(Tests ${sources})
 target_compile_definitions(Tests PRIVATE -DANKI_SOURCE_FILE)
 
-if(!ANDROID)
+if(NOT ANDROID)
 	set(extra_libs "AnKiImporter")
 endif()
 

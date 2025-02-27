@@ -777,7 +777,7 @@ static Error storeAnkiImage(const ImageImporterConfig& config, const ImageImport
 	}
 	header.m_compressionMask = config.m_compressions;
 	header.m_isNormal = false;
-	header.m_mipmapCount = U32(ctx.m_mipmaps.getSize());
+	header.m_mipmapCount = U8(ctx.m_mipmaps.getSize());
 	header.m_astcBlockSizeX = config.m_astcBlockSize.x();
 	header.m_astcBlockSizeY = config.m_astcBlockSize.y();
 	ANKI_CHECK(outFile.write(&header, sizeof(header)));
@@ -944,10 +944,10 @@ static Error importImageInternal(const ImageImporterConfig& configOriginal)
 	ANKI_CHECK(loadFirstMipmap(config, ctx));
 
 	// Generate mipmaps
-	const U32 mipCount = min(config.m_mipmapCount, (config.m_type == ImageBinaryType::k3D)
-													   ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
-													   : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
-	for(U32 mip = 1; mip < mipCount; ++mip)
+	const U8 mipCount = min(config.m_mipmapCount, (config.m_type == ImageBinaryType::k3D)
+													  ? computeMaxMipmapCount3d(width, height, ctx.m_depth, config.m_minMipmapDimension)
+													  : computeMaxMipmapCount2d(width, height, config.m_minMipmapDimension));
+	for(U8 mip = 1; mip < mipCount; ++mip)
 	{
 		ctx.m_mipmaps.emplaceBack();
 

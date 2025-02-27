@@ -91,11 +91,11 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 
 	if(m_texType == TextureType::k3D)
 	{
-		m_mipCount = min<U32>(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipCount = min(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 	else
 	{
-		m_mipCount = min<U32>(init.m_mipmapCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipCount = min(init.m_mipmapCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
 
 	if(external)
@@ -128,7 +128,7 @@ Error TextureImpl::initInternal(ID3D12Resource* external, const TextureInitInfo&
 		desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 		desc.Width = m_width;
 		desc.Height = m_height;
-		desc.MipLevels = U16(m_mipCount);
+		desc.MipLevels = m_mipCount;
 		desc.Format = convertFormat(m_format);
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;

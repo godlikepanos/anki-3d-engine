@@ -12,7 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup core
+/// @addtogroup gpu_memory
 /// @{
 
 inline NumericCVar<PtrSize> g_rebarGpuMemorySizeCvar("Core", "RebarGpuMemorySize", 24_MB, 1_MB, 1_GB, "ReBAR: always mapped GPU memory");

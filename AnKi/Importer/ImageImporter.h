@@ -23,7 +23,7 @@ public:
 	ImageBinaryType m_type = ImageBinaryType::k2D;
 	ImageBinaryDataCompression m_compressions = ImageBinaryDataCompression::kS3tc;
 	U32 m_minMipmapDimension = 4;
-	U32 m_mipmapCount = kMaxU32;
+	U8 m_mipmapCount = kMaxU8;
 	Bool m_noAlpha = true;
 	CString m_tempDirectory;
 	CString m_compressonatorFilename; ///< Optional.

@@ -10,7 +10,7 @@
 #include <AnKi/Window/NativeWindow.h>
 #include <AnKi/Window/Input.h>
 #include <AnKi/Util/CVarSet.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Resource/TransferGpuAllocator.h>
 #include <AnKi/ShaderCompiler/ShaderParser.h>
@@ -390,7 +390,7 @@ SamplerState g_sampler : register(s0);
 float4 main(float4 svPosition : SV_POSITION, float2 uv : TEXCOORDS, uint svPrimId : SV_PRIMITIVEID) : SV_TARGET0
 {
 	if(svPrimId == 1u)
-	{	
+	{
 		return float4(svPosition.xy / g_viewport.m_viewport.zw, 0.0f, 0.0f);
 	}
 	else

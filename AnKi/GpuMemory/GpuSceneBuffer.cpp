@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Resource/ResourceManager.h>
 #include <AnKi/Gr/CommandBuffer.h>

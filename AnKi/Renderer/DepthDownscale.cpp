@@ -44,7 +44,7 @@ Error DepthDownscale::initInternal()
 	// Create RT descr
 	{
 		m_rtDescr = getRenderer().create2DRenderTargetDescription(width, height, Format::kR32_Sfloat, "Downscaled depth");
-		m_rtDescr.m_mipmapCount = U8(m_mipCount);
+		m_rtDescr.m_mipmapCount = m_mipCount;
 		m_rtDescr.bake();
 	}
 
@@ -113,7 +113,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
-			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
+			for(U8 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
 				TextureSubresourceDesc surface = TextureSubresourceDesc::firstSurface();
 				if(mip < m_mipCount)
@@ -140,7 +140,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 	{
 		// Do it with raster
 
-		for(U32 mip = 0; mip < m_mipCount; ++mip)
+		for(U8 mip = 0; mip < m_mipCount; ++mip)
 		{
 			static constexpr Array<CString, 4> passNames = {"Depth downscale #1", "Depth downscale #2", "Depth downscale #3", "Depth downscale #4"};
 			GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(passNames[mip]);

@@ -11,7 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup core
+/// @addtogroup gpu_memory
 /// @{
 
 inline NumericCVar<PtrSize> g_unifiedGometryBufferSizeCvar("Core", "UnifiedGeometryBufferSize", 128_MB, 16_MB, 2_GB,

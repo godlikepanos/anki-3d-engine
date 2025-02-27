@@ -297,7 +297,7 @@ public:
 		}
 
 		// This could be a simple 1<<(low+1) but that may overflow so...
-		ChunkType mask = (ChunkType(1) << ChunkType(low)) - ChunkType(1);
+		ChunkType mask = ChunkType(ChunkType(1) << ChunkType(low)) - ChunkType(1);
 		mask <<= 1;
 		mask |= 1;
 

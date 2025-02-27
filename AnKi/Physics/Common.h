@@ -19,6 +19,11 @@
 #	error "See file"
 #endif
 
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -38,6 +43,10 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
+
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 
 namespace anki {
 
@@ -109,16 +118,17 @@ public:
 
 protected:
 	static constexpr U32 kTypeBits = 5u; ///< 5 is more than enough
+	static constexpr U32 kMaxBockArrayIndex = kMaxU32 >> kTypeBits;
 
 	void* m_userData = nullptr;
 
 	mutable Atomic<U32> m_refcount = {0};
 
 	U32 m_type : kTypeBits;
-	U32 m_blockArrayIndex : 32 - kTypeBits = kMaxU32 >> kTypeBits;
+	U32 m_blockArrayIndex : 32 - kTypeBits = kMaxBockArrayIndex;
 
 	PhysicsObjectBase(PhysicsObjectType type)
-		: m_type(U32(type))
+		: m_type(U32(type) & ((1u << kTypeBits) - 1u))
 	{
 		ANKI_ASSERT(type < PhysicsObjectType::kCount);
 	}
@@ -131,6 +141,11 @@ protected:
 	U32 release() const
 	{
 		return m_refcount.fetchSub(1);
+	}
+
+	void setBlockArrayIndex(U32 idx)
+	{
+		m_blockArrayIndex = idx & kMaxBockArrayIndex;
 	}
 };
 

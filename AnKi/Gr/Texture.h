@@ -129,7 +129,7 @@ public:
 		return m_layerCount;
 	}
 
-	U32 getMipmapCount() const
+	U8 getMipmapCount() const
 	{
 		ANKI_ASSERT(m_mipCount);
 		return m_mipCount;
@@ -167,7 +167,7 @@ protected:
 	U32 m_height = 0;
 	U32 m_depth = 0;
 	U32 m_layerCount = 0;
-	U32 m_mipCount = 0;
+	U8 m_mipCount = 0;
 	TextureType m_texType = TextureType::kCount;
 	TextureUsageBit m_usage = TextureUsageBit::kNone;
 	Format m_format = Format::kNone;
@@ -193,9 +193,9 @@ private:
 class TextureSubresourceDesc
 {
 public:
-	U32 m_mipmap : 5 = 0;
-	U32 m_face : 3 = 0;
-	U32 m_layer : 24 = 0;
+	U16 m_layer = 0;
+	U8 m_mipmap = 0;
+	U8 m_face = 0;
 
 	/// This flag doesn't mean the whole texture unless the m_aspect is equal to the aspect of the Texture.
 	Bool m_allSurfacesOrVolumes = true;
@@ -274,9 +274,9 @@ public:
 
 private:
 	constexpr TextureSubresourceDesc(U32 mip, U32 face, U32 layer, Bool allSurfs, DepthStencilAspectBit aspect)
-		: m_mipmap(mip & ((1u << 5u) - 1u))
-		, m_face(face & ((1u << 3u) - 1u))
-		, m_layer(layer & ((1u << 24u) - 1u))
+		: m_layer(layer & kMaxU16)
+		, m_mipmap(mip & kMaxU8)
+		, m_face(face & kMaxU8)
 		, m_allSurfacesOrVolumes(allSurfs)
 		, m_depthStencilAspect(aspect)
 	{

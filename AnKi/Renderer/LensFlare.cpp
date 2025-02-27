@@ -7,7 +7,7 @@
 #include <AnKi/Renderer/DepthDownscale.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/CVarSet.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Scene/Components/LensFlareComponent.h>
 #include <AnKi/Util/Tracer.h>

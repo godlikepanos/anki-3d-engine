@@ -7,12 +7,12 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 #include <AnKi/Scene/GpuSceneArray.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/GpuVisibilityTypes.h>
-#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>

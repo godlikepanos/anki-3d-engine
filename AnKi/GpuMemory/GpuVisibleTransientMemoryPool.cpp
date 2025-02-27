@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Core/StatsSet.h>
 
 namespace anki {

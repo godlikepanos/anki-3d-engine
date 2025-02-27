@@ -14,7 +14,7 @@
 #include <AnKi/Physics/PhysicsWorld.h>
 #include <AnKi/Math.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 
 namespace anki {
 

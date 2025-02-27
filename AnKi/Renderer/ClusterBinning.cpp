@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/VolumetricLightingAccumulation.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Collision/Functions.h>

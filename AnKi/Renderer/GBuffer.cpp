@@ -50,7 +50,7 @@ Error GBuffer::init()
 		TextureInitInfo texinit = getRenderer().create2DRenderTargetInitInfo(previousPowerOfTwo(getRenderer().getInternalResolution().x()),
 																			 previousPowerOfTwo(getRenderer().getInternalResolution().y()),
 																			 Format::kR32_Sfloat, usage, "GBuffer HZB");
-		texinit.m_mipmapCount = U8(computeMaxMipmapCount2d(texinit.m_width, texinit.m_height));
+		texinit.m_mipmapCount = computeMaxMipmapCount2d(texinit.m_width, texinit.m_height);
 		ClearValue clear;
 		clear.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
 		m_hzbRt = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvCompute, clear);

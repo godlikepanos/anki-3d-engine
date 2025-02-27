@@ -487,7 +487,7 @@ void PhysicsWorld::update(Second dt)
 template<typename TJPHCollisionShape, typename... TArgs>
 PhysicsCollisionShapePtr PhysicsWorld::newCollisionShape(TArgs&&... args)
 {
-	decltype(m_collisionShapes.m_array)::Iterator it;
+	typename decltype(m_collisionShapes.m_array)::Iterator it;
 
 	{
 		LockGuard lock(m_collisionShapes.m_mtx);
@@ -498,7 +498,7 @@ PhysicsCollisionShapePtr PhysicsWorld::newCollisionShape(TArgs&&... args)
 	classw.construct(std::forward<TArgs>(args)...);
 	classw->SetEmbedded();
 
-	it->m_blockArrayIndex = it.getArrayIndex();
+	it->setBlockArrayIndex(it.getArrayIndex());
 	return PhysicsCollisionShapePtr(&(*it));
 }
 
@@ -581,7 +581,7 @@ PhysicsBodyPtr PhysicsWorld::newPhysicsBody(const PhysicsBodyInitInfo& init)
 		auto it = m_bodies.m_array.emplace();
 
 		newBody = &(*it);
-		newBody->m_blockArrayIndex = it.getArrayIndex();
+		newBody->setBlockArrayIndex(it.getArrayIndex());
 	}
 
 	newBody->init(init);
@@ -595,7 +595,7 @@ PhysicsJointPtr PhysicsWorld::newJoint(PhysicsBody* body1, PhysicsBody* body2, T
 
 	g_physicsJointsCreatedStatVar.increment(1);
 
-	decltype(m_joints.m_array)::Iterator it;
+	typename decltype(m_joints.m_array)::Iterator it;
 	{
 		LockGuard lock(m_joints.m_mtx);
 		it = m_joints.m_array.emplace();
@@ -607,7 +607,7 @@ PhysicsJointPtr PhysicsWorld::newJoint(PhysicsBody* body1, PhysicsBody* body2, T
 
 	it->m_body1.reset(body1);
 	it->m_body2.reset(body2);
-	it->m_blockArrayIndex = it.getArrayIndex();
+	it->setBlockArrayIndex(it.getArrayIndex());
 
 	m_jphPhysicsSystem->AddConstraint(&it->m_base); // It's thread-safe
 
@@ -647,7 +647,7 @@ PhysicsPlayerControllerPtr PhysicsWorld::newPlayerController(const PhysicsPlayer
 
 		auto it = m_characters.m_array.emplace();
 		newChar = &(*it);
-		newChar->m_blockArrayIndex = it.getArrayIndex();
+		newChar->setBlockArrayIndex(it.getArrayIndex());
 	}
 
 	newChar->init(init);

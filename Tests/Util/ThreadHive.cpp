@@ -64,8 +64,7 @@ static void taskToWait(void* arg, [[maybe_unused]] U32 threadId, [[maybe_unused]
 ANKI_TEST(Util, ThreadHive)
 {
 	const U32 threadCount = 32;
-	HeapMemoryPool pool(allocAligned, nullptr);
-	ThreadHive hive(threadCount, &pool);
+	ThreadHive hive(threadCount);
 
 	// Simple test
 	if(1)

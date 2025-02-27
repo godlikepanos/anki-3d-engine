@@ -11,7 +11,7 @@
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Scene/Components/SkyboxComponent.h>

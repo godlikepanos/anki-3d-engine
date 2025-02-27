@@ -57,7 +57,7 @@ Error ProbeReflections::init()
 	}
 
 	m_lightShading.m_tileSize = g_reflectionProbeResolutionCVar;
-	m_lightShading.m_mipCount = U8(computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8));
+	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	{
 		const U32 resolution = g_probeReflectionShadowMapResolutionCVar;

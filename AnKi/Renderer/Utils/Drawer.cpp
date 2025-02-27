@@ -10,9 +10,9 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneFunctions.h>
-#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
 #include <AnKi/Core/StatsSet.h>
 #include <AnKi/Scene/RenderStateBucket.h>
 

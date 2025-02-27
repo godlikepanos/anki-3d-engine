@@ -1108,10 +1108,10 @@ public:
 };
 
 /// Compute max number of mipmaps for a 2D texture.
-U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1);
+U8 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1);
 
 /// Compute max number of mipmaps for a 3D texture.
-U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip = 1);
+U8 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip = 1);
 
 /// Visit a SPIR-V binary.
 template<typename TArray, typename TFunc>

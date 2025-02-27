@@ -1,5 +1,5 @@
 file(GLOB_RECURSE sources *.cpp)
 file(GLOB_RECURSE headers *.h)
 add_library(AnKiPhysics ${sources} ${headers})
-target_compile_definitions(AnKiPhysics PRIVATE "-DANKI_SOURCE_FILE" "-DJPH_DEBUG_RENDERER")
+target_compile_definitions(AnKiPhysics PRIVATE "-DANKI_SOURCE_FILE")
 target_link_libraries(AnKiPhysics AnKiUtil Jolt)

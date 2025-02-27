@@ -6,7 +6,7 @@
 #pragma once
 
 #include <AnKi/Renderer/RendererObject.h>
-#include <AnKi/Core/GpuMemory/GpuReadbackMemoryPool.h>
+#include <AnKi/GpuMemory/GpuReadbackMemoryPool.h>
 
 namespace anki {
 

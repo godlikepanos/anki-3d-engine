@@ -12,7 +12,7 @@
 #include <AnKi/Renderer/Utils/HzbGenerator.h>
 #include <AnKi/Core/App.h>
 #include <AnKi/Core/StatsSet.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Scene/Components/LightComponent.h>
 #include <AnKi/Scene/Components/CameraComponent.h>
@@ -93,7 +93,7 @@ Error ShadowMapping::init()
 		size /= 2;
 
 		m_cascadeHzbRtDescrs[i] = getRenderer().create2DRenderTargetDescription(size.x(), size.y(), Format::kR32_Sfloat, name);
-		m_cascadeHzbRtDescrs[i].m_mipmapCount = U8(computeMaxMipmapCount2d(m_cascadeHzbRtDescrs[i].m_width, m_cascadeHzbRtDescrs[i].m_height));
+		m_cascadeHzbRtDescrs[i].m_mipmapCount = computeMaxMipmapCount2d(m_cascadeHzbRtDescrs[i].m_width, m_cascadeHzbRtDescrs[i].m_height);
 		m_cascadeHzbRtDescrs[i].bake();
 	}
 

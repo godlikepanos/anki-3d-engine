@@ -359,7 +359,7 @@ void LightComponent::setShadowAtlasUvViewports(ConstWeakArray<Vec4> viewports)
 
 	if(dirty)
 	{
-		m_shadowAtlasUvViewportCount = U8(viewports.getSize());
+		m_shadowAtlasUvViewportCount = viewports.getSize() & 0b111;
 		for(U32 i = 0; i < viewports.getSize(); ++i)
 		{
 			m_shadowAtlasUvViewports[i] = viewports[i];

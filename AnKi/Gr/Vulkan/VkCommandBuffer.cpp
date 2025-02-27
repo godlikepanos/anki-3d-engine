@@ -495,7 +495,7 @@ void CommandBuffer::endRenderPass()
 	vkCmdEndRendering(self.m_handle);
 }
 
-void CommandBuffer::setVrsRate(VrsRate rate)
+void CommandBuffer::setVrsRate([[maybe_unused]] VrsRate rate)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	ANKI_ASSERT(getGrManagerImpl().getDeviceCapabilities().m_vrs);

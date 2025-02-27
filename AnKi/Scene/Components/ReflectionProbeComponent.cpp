@@ -23,7 +23,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 		(GrManager::getSingleton().getDeviceCapabilities().m_unalignedBbpTextureFormats) ? Format::kR16G16B16_Sfloat : Format::kR16G16B16A16_Sfloat;
 	texInit.m_width = g_reflectionProbeResolutionCVar;
 	texInit.m_height = texInit.m_width;
-	texInit.m_mipmapCount = U8(computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8));
+	texInit.m_mipmapCount = computeMaxMipmapCount2d(texInit.m_width, texInit.m_height, 8);
 	texInit.m_type = TextureType::kCube;
 	texInit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kUavCompute | TextureUsageBit::kAllRtvDsv;
 

@@ -15,9 +15,9 @@
 #include <AnKi/Util/CVarSet.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 #include <AnKi/Shaders/Include/GpuSceneTypes.h>
-#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
 
 namespace anki {
 

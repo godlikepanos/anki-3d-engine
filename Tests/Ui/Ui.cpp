@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Ui.h>
 #include <AnKi/Window.h>

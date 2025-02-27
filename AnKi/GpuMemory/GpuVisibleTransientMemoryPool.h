@@ -12,7 +12,7 @@
 
 namespace anki {
 
-/// @addtogroup core
+/// @addtogroup gpu_memory
 /// @{
 
 /// GPU only transient memory. Used for temporary allocations. Allocations will get reset after each frame.

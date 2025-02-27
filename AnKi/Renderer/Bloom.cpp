@@ -16,7 +16,7 @@ Error Bloom::init()
 	// Pyramid
 	{
 		const UVec2 pyramidSize = getRenderer().getInternalResolution() / 2;
-		const U32 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x(), pyramidSize.y(), g_bloomPyramidLowLimit);
+		const U8 pyramidMipCount = computeMaxMipmapCount2d(pyramidSize.x(), pyramidSize.y(), g_bloomPyramidLowLimit);
 
 		const Bool preferCompute = g_preferComputeCVar;
 
@@ -25,7 +25,7 @@ Error Bloom::init()
 			getRenderer().create2DRenderTargetDescription(pyramidSize.x(), pyramidSize.y(), getRenderer().getHdrFormat(), "Bloom pyramid");
 		texinit.m_usage = TextureUsageBit::kSrvPixel | TextureUsageBit::kSrvCompute;
 		texinit.m_usage |= (preferCompute) ? TextureUsageBit::kUavCompute : TextureUsageBit::kRtvDsvWrite;
-		texinit.m_mipmapCount = U8(pyramidMipCount);
+		texinit.m_mipmapCount = pyramidMipCount;
 		m_pyramidTex = getRenderer().createAndClearRenderTarget(texinit, TextureUsageBit::kSrvCompute);
 
 		// Shader programs
@@ -92,7 +92,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 				GraphicsRenderPass& pass = rgraph.newGraphicsRenderPass(generateTempPassName("Bloom pyramid %u", i));
 
 				GraphicsRenderPassTargetDesc rtInf(m_runCtx.m_pyramidRt);
-				rtInf.m_subresource.m_mipmap = i;
+				rtInf.m_subresource.m_mipmap = U8(i);
 				pass.setRenderpassInfo({rtInf});
 
 				ppass = &pass;

@@ -211,10 +211,14 @@ add_definitions(
 if(NOT MSVC)
 	# When building AnKi define this special flag
 	if(NOT CLANG_WINDOWS)
-		add_compile_options(-fPIC)
+		#add_compile_options(-fPIC)
 	endif()
 
 	add_compile_options(-fno-exceptions)
+
+	if(LINUX)
+		add_compile_options(-fvisibility=hidden)
+	endif()
 
 	if(GCC)
 		add_compile_options(-static-libstdc++)
@@ -224,7 +228,7 @@ if(NOT MSVC)
 		add_compile_options(-msse4)
 	endif()
 
-	add_compile_options(-fno-rtti)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
 	if(ANKI_LTO)
 		add_compile_options(-flto)

@@ -6,7 +6,7 @@
 #include <AnKi/Scene/Components/FogDensityComponent.h>
 #include <AnKi/Scene/SceneNode.h>
 #include <AnKi/Scene/SceneGraph.h>
-#include <AnKi/Core/GpuMemory/GpuSceneBuffer.h>
+#include <AnKi/GpuMemory/GpuSceneBuffer.h>
 
 namespace anki {
 

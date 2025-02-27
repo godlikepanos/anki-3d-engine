@@ -7,8 +7,8 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/GBuffer.h>
-#include <AnKi/Core/GpuMemory/GpuVisibleTransientMemoryPool.h>
-#include <AnKi/Core/GpuMemory/UnifiedGeometryBuffer.h>
+#include <AnKi/GpuMemory/GpuVisibleTransientMemoryPool.h>
+#include <AnKi/GpuMemory/UnifiedGeometryBuffer.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Shaders/Include/MaterialTypes.h>
 

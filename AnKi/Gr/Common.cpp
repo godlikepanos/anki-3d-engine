@@ -94,7 +94,7 @@ PtrSize computeVolumeSize(U32 width32, U32 height32, U32 depth32, Format fmt)
 	}
 }
 
-U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip)
+U8 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip)
 {
 	ANKI_ASSERT(w >= minSizeOfLastMip && h >= minSizeOfLastMip);
 	U32 s = (w < h) ? w : h;
@@ -105,11 +105,12 @@ U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip)
 		++count;
 	}
 
-	return count;
+	ANKI_ASSERT(count < kMaxU8);
+	return U8(count);
 }
 
 /// Compute max number of mipmaps for a 3D texture.
-U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
+U8 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
 {
 	U32 s = (w < h) ? w : h;
 	s = (s < d) ? s : d;
@@ -120,7 +121,8 @@ U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d, U32 minSizeOfLastMip)
 		++count;
 	}
 
-	return count;
+	ANKI_ASSERT(count < kMaxU8);
+	return U8(count);
 }
 
 Error ShaderReflection::linkShaderReflection(const ShaderReflection& a, const ShaderReflection& b, ShaderReflection& c_)

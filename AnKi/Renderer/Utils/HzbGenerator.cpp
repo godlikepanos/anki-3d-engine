@@ -118,10 +118,10 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 		{
 			const DispatchInput& in = dispatchInputsCopy[dispatch];
 
-			const U32 hzbMipCount =
+			const U8 hzbMipCount =
 				min(kMaxMipsSinglePassDownsamplerCanProduce, computeMaxMipmapCount2d(in.m_dstHzbRtSize.x(), in.m_dstHzbRtSize.y()));
 
-			const U32 mipsToCompute = hzbMipCount;
+			const U8 mipsToCompute = hzbMipCount;
 
 			varAU2(dispatchThreadGroupCountXY);
 			varAU2(workGroupOffset); // needed if Left and Top are not 0,0
@@ -142,7 +142,7 @@ void HzbGenerator::populateRenderGraphInternal(ConstWeakArray<DispatchInput> dis
 
 			cmdb.setFastConstants(&pc, sizeof(pc));
 
-			for(U32 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
+			for(U8 mip = 0; mip < kMaxMipsSinglePassDownsamplerCanProduce; ++mip)
 			{
 				TextureSubresourceDesc subresource = TextureSubresourceDesc::firstSurface();
 				if(mip < mipsToCompute)

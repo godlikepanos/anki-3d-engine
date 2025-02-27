@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <AnKi/Core/GpuMemory/RebarTransientMemoryPool.h>
+#include <AnKi/GpuMemory/RebarTransientMemoryPool.h>
 #include <AnKi/Util/Tracer.h>
 #include <AnKi/Gr/GrManager.h>
 #include <AnKi/Gr/Buffer.h>
