@@ -22,8 +22,6 @@ public:
 
 	~DeveloperConsoleUiNode();
 
-	Error init();
-
 	void toggleConsole();
 
 	Bool isConsoleEnabled() const

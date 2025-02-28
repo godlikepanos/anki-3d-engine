@@ -177,7 +177,7 @@ private:
 		Vec3 m_diffuseColor = Vec3(1.0f);
 	} m_fog;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

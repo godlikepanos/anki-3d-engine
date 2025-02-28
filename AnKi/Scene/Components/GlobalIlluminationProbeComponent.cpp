@@ -30,13 +30,13 @@ GlobalIlluminationProbeComponent::~GlobalIlluminationProbeComponent()
 {
 }
 
-Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	const Bool moved = info.m_node->movedThisFrame();
 
 	if(!m_dirty && !moved) [[likely]]
 	{
-		return Error::kNone;
+		return;
 	}
 
 	updated = true;
@@ -154,8 +154,6 @@ Error GlobalIlluminationProbeComponent::update(SceneComponentUpdateInfo& info, B
 	}
 
 	m_dirty = false;
-
-	return Error::kNone;
 }
 
 F32 GlobalIlluminationProbeComponent::getRenderRadius() const

@@ -71,12 +71,12 @@ void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const An
 	m_tracks[track].m_repeatTimes = info.m_repeatTimes;
 }
 
-Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
 	if(!m_skeleton.isCreated())
 	{
-		return Error::kNone;
+		return;
 	}
 
 	const Second dt = info.m_dt;
@@ -205,8 +205,6 @@ Error SkinComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	m_absoluteTime += dt;
-
-	return Error::kNone;
 }
 
 void SkinComponent::visitBones(const Bone& bone, const Mat3x4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)

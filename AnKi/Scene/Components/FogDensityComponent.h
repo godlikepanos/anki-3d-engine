@@ -37,7 +37,7 @@ public:
 
 	void setShapeType(FogDensityComponentShape type)
 	{
-		if(type != m_type)
+		if(ANKI_EXPECT(type < FogDensityComponentShape::kCount) && type != m_type)
 		{
 			m_type = type;
 			m_dirty = true;
@@ -49,11 +49,13 @@ public:
 		return m_type;
 	}
 
-	void setDensity(F32 d)
+	void setDensity(F32 density)
 	{
-		ANKI_ASSERT(d >= 0.0f);
-		m_dirty = true;
-		m_density = d;
+		if(ANKI_EXPECT(density >= 0.0f) && m_density != density)
+		{
+			m_dirty = true;
+			m_density = density;
+		}
 	}
 
 	F32 getDensity() const
@@ -70,7 +72,7 @@ private:
 
 	Bool m_dirty = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 
 } // end namespace anki

@@ -21,7 +21,7 @@ PlayerControllerComponent::PlayerControllerComponent(SceneNode* node)
 	node->setIgnoreParentTransform(true);
 }
 
-Error PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	U32 posVersion;
 	const Vec3 newPos = m_player->getPosition(&posVersion);
@@ -33,8 +33,6 @@ Error PlayerControllerComponent::update(SceneComponentUpdateInfo& info, Bool& up
 
 		info.m_node->setLocalOrigin(newPos);
 	}
-
-	return Error::kNone;
 }
 
 } // end namespace anki

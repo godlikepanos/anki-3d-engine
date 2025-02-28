@@ -40,7 +40,7 @@ private:
 	PhysicsPlayerControllerPtr m_player;
 	U32 m_positionVersion = kMaxU32;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

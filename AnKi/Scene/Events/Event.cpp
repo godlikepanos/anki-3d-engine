@@ -28,9 +28,4 @@ Second Event::getDelta(Second crntTime) const
 	return dp;
 }
 
-void Event::setMarkedForDeletion()
-{
-	SceneGraph::getSingleton().getEventManager().markEventForDeletion(this);
-}
-
 } // end namespace anki

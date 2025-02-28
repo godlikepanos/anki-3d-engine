@@ -15,33 +15,13 @@ namespace anki {
 template<typename T, typename... TArgs>
 static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 {
-	T* ptr;
-	Error err = scene->template newSceneNode<T>(name, ptr, std::forward<TArgs>(args)...);
-
-	if(!err)
-	{
-		return ptr;
-	}
-	else
-	{
-		return nullptr;
-	}
+	return scene->template newSceneNode<T>(name, std::forward<TArgs>(args)...);
 }
 
 template<typename T, typename... TArgs>
 static T* newEvent(EventManager* eventManager, TArgs... args)
 {
-	T* ptr;
-	Error err = eventManager->template newEvent<T>(ptr, std::forward<TArgs>(args)...);
-
-	if(!err)
-	{
-		return ptr;
-	}
-	else
-	{
-		return nullptr;
-	}
+	return eventManager->template newEvent<T>(std::forward<TArgs>(args)...);
 }
 
 static SceneGraph* getSceneGraph(lua_State* l)
@@ -376,7 +356,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>SceneNode*</arg>
 					</args>
 				</method>
-				<method name="setMarkedForDeletion"></method>
+				<method name="markForDeletion"></method>
 
 				<method name="setLocalOrigin">
 					<args>
@@ -544,8 +524,8 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			<methods>
 				<method name="setPositionLimits">
 					<args>
-						<arg>const Vec4&amp;</arg>
-						<arg>const Vec4&amp;</arg>
+						<arg>Vec3</arg>
+						<arg>Vec3</arg>
 					</args>
 				</method>
 			</methods>

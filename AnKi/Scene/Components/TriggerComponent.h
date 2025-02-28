@@ -61,7 +61,7 @@ private:
 
 	static MyPhysicsTriggerCallbacks m_callbacks;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

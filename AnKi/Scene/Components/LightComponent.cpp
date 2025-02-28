@@ -60,7 +60,7 @@ void LightComponent::setLightComponentType(LightComponentType newType)
 	}
 }
 
-Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	const Bool moveUpdated = info.m_node->movedThisFrame();
 	updated = moveUpdated || m_shapeDirty || m_otherDirty;
@@ -200,8 +200,6 @@ Error LightComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 	m_shapeDirty = false;
 	m_otherDirty = false;
-
-	return Error::kNone;
 }
 
 void LightComponent::computeCascadeFrustums(const Frustum& primaryFrustum, ConstWeakArray<F32> cascadeDistances, WeakArray<Mat4> cascadeProjMats,

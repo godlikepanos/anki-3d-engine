@@ -15,6 +15,7 @@
 
 #define ANKI_VERSION_MINOR ${ANKI_VERSION_MINOR}
 #define ANKI_VERSION_MAJOR ${ANKI_VERSION_MAJOR}
+#define ANKI_VERSION_STR "${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}"
 #define ANKI_REVISION ${ANKI_REVISION}
 
 #define ANKI_EXTRA_CHECKS ${_ANKI_EXTRA_CHECKS}
@@ -132,23 +133,28 @@
 #	define ANKI_SIMD_NONE 1
 #	define ANKI_SIMD_SSE 0
 #	define ANKI_SIMD_NEON 0
+#	define ANKI_SIMD_STR "None"
 #elif ANKI_CPU_ARCH_X86
 #	define ANKI_SIMD_NONE 0
 #	define ANKI_SIMD_SSE 1
 #	define ANKI_SIMD_NEON 0
+#	define ANKI_SIMD_STR "SSE"
 #else
 #	define ANKI_SIMD_NONE 0
 #	define ANKI_SIMD_SSE 0
 #	define ANKI_SIMD_NEON 1
+#	define ANKI_SIMD_STR "Neon"
 #endif
 
 // Graphics backend
 #if ${_ANKI_GR_BACKEND} == 0
 #	define ANKI_GR_BACKEND_VULKAN 1
 #	define ANKI_GR_BACKEND_DIRECT3D 0
+#	define ANKI_GR_BACKEND_STR "Vulkan"
 #else
 #	define ANKI_GR_BACKEND_VULKAN 0
 #	define ANKI_GR_BACKEND_DIRECT3D 1
+#	define ANKI_GR_BACKEND_STR "D3D"
 #endif
 
 // Windowing system
@@ -156,14 +162,17 @@
 #	define ANKI_WINDOWING_SYSTEM_HEADLESS 1
 #	define ANKI_WINDOWING_SYSTEM_SDL 0
 #	define ANKI_WINDOWING_SYSTEM_ANDROID 0
+#	define ANKI_WINDOWING_SYSTEM_STR "Headless"
 #elif ${_ANKI_WINDOWING_SYSTEM} == 1
 #	define ANKI_WINDOWING_SYSTEM_HEADLESS 0
 #	define ANKI_WINDOWING_SYSTEM_SDL 1
 #	define ANKI_WINDOWING_SYSTEM_ANDROID 0
+#	define ANKI_WINDOWING_SYSTEM_STR "SDL"
 #elif ${_ANKI_WINDOWING_SYSTEM} == 2
 #	define ANKI_WINDOWING_SYSTEM_HEADLESS 0
 #	define ANKI_WINDOWING_SYSTEM_SDL 0
 #	define ANKI_WINDOWING_SYSTEM_ANDROID 1
+#	define ANKI_WINDOWING_SYSTEM_STR "Android"
 #endif
 
 // Mobile or not
@@ -204,6 +213,56 @@
 #	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #	define ANKI_PURE
 #endif
+
+namespace anki {
+static inline const char* kAnKiBuildConfigString = 
+"ver " ANKI_VERSION_STR 
+
+", git hash " ANKI_REVISION
+
+", " ANKI_COMPILER_STR
+
+", " ANKI_OS_STR " OS"
+
+", " ANKI_GPU_ARCH_STR
+
+", " ANKI_SIMD_STR " SIMD"
+
+", " ANKI_GR_BACKEND_STR " GFX backend"
+
+", " ANKI_WINDOWING_SYSTEM_STR " window system"
+
+#if ANKI_EXTRA_CHECKS
+", extra checks ON"
+#else
+", extra checks OFF"
+#endif
+
+#if ANKI_DEBUG_SYMBOLS
+", debug symbols ON"
+#else
+", debug symbols OFF"
+#endif
+
+#if ANKI_OPTIMIZE
+", optimizations ON"
+#else
+", optimizations OFF"
+#endif
+
+#if ANKI_TRACING_ENABLED
+", tracing ON"
+#else
+", tracing OFF"
+#endif
+
+#if ANKI_STATS_ENABLED
+", stats ON"
+#else
+", stats OFF"
+#endif
+;
+}
 
 // Pack structs
 #if ANKI_COMPILER_MSVC

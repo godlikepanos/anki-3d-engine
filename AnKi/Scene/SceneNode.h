@@ -26,18 +26,10 @@ public:
 	using Base = SceneHierarchy<SceneNode>;
 
 	/// The one and only constructor.
-	/// @param scene The owner scene.
 	/// @param name The unique name of the node. If it's empty the the node is not searchable.
 	SceneNode(CString name);
 
-	/// Unregister node
 	virtual ~SceneNode();
-
-	/// A dummy init for those scene nodes that don't need it.
-	Error init()
-	{
-		return Error::kNone;
-	}
 
 	/// Return the name. It may be empty for nodes that we don't want to track.
 	CString getName() const
@@ -50,12 +42,12 @@ public:
 		return m_uuid;
 	}
 
-	Bool getMarkedForDeletion() const
+	Bool isMarkedForDeletion() const
 	{
 		return m_markedForDeletion;
 	}
 
-	void setMarkedForDeletion();
+	void markForDeletion();
 
 	Timestamp getComponentMaxTimestamp() const
 	{
@@ -81,9 +73,8 @@ public:
 	/// This is called by the scenegraph every frame after all component updates. By default it does nothing.
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
-	virtual Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
+	virtual void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
-		return Error::kNone;
 	}
 
 	/// Iterate all components.
@@ -255,14 +246,25 @@ public:
 		return count;
 	}
 
+	/// Create and append a component to the components container. The SceneNode has the ownership.
+	template<typename TComponent>
+	TComponent* newComponent();
+
+	template<typename TComponent>
+	Bool hasComponent() const
+	{
+		return !!((1u << SceneComponentTypeMask(TComponent::kClassType)) & m_componentTypeMask);
+	}
+
+	/// @name Movement
+	/// @{
+
 	/// Ignore parent nodes's transform.
 	void setIgnoreParentTransform(Bool ignore)
 	{
 		m_ignoreParentNodeTransform = ignore;
 	}
 
-	/// @name Mess with the local transform
-	/// @{
 	const Transform& getLocalTransform() const
 	{
 		return m_ltrf;
@@ -373,7 +375,6 @@ public:
 		m_ltrf = m_ltrf.lookAt(point, Vec4::yAxis());
 		m_localTransformDirty = true;
 	}
-	/// @}
 
 	Bool movedThisFrame() const
 	{
@@ -381,16 +382,7 @@ public:
 	}
 
 	ANKI_INTERNAL Bool updateTransform();
-
-	/// Create and append a component to the components container. The SceneNode has the ownership.
-	template<typename TComponent>
-	TComponent* newComponent();
-
-	template<typename TComponent>
-	Bool hasComponent() const
-	{
-		return !!((1u << SceneComponentTypeMask(TComponent::kClassType)) & m_componentTypeMask);
-	}
+	/// @}
 
 private:
 	SceneString m_name; ///< A unique name.

@@ -18,27 +18,22 @@ namespace anki {
 /// @code
 /// function update(event, prevTime, crntTime)
 /// 	-- Do something
-/// 	return 1
 /// end
 ///
 /// function onKilled(event, prevTime, crntTime)
 /// 	-- Do something
-/// 	return 1
 /// end
 /// @endcode
 class ScriptEvent : public Event
 {
 public:
-	ScriptEvent();
+	ScriptEvent(Second startTime, Second duration, CString script);
 
 	~ScriptEvent();
 
-	/// @param script It's a script or a filename to a script.
-	Error init(Second startTime, Second duration, CString script);
+	void update(Second prevUpdateTime, Second crntTime) override;
 
-	Error update(Second prevUpdateTime, Second crntTime) override;
-
-	Error onKilled(Second prevUpdateTime, Second crntTime) override;
+	void onKilled(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	ScriptResourcePtr m_scriptRsrc;

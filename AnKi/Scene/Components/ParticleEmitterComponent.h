@@ -78,7 +78,7 @@ private:
 	Bool m_resourceUpdated = true;
 	SimulationType m_simulationType = SimulationType::kUndefined;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	template<typename TParticle>
 	void simulate(Second prevUpdateTime, Second crntTime, const Transform& worldTransform, WeakArray<TParticle> particles, Vec3*& positions,

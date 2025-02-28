@@ -8,10 +8,9 @@
 
 namespace anki {
 
-Error MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void MoveComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = info.m_node->updateTransform();
-	return Error::kNone;
 }
 
 } // end namespace anki

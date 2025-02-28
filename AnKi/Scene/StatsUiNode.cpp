@@ -80,16 +80,12 @@ StatsUiNode::StatsUiNode(CString name)
 	{
 		m_averageValues.resize(StatsSet::getSingleton().getCounterCount());
 	}
+
+	ANKI_CHECKF(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
 }
 
 StatsUiNode::~StatsUiNode()
 {
-}
-
-Error StatsUiNode::init()
-{
-	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{24}));
-	return Error::kNone;
 }
 
 void StatsUiNode::draw(CanvasPtr& canvas)

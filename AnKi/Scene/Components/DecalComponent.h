@@ -59,6 +59,8 @@ private:
 		U32 m_bindlessTextureIndex = kMaxU32;
 	};
 
+	ImageResourcePtr m_defaultDecalImage; ///< Keep that loaded to avoid loading it all the time when a new decal is constructed.
+
 	Array<Layer, U(LayerType::kCount)> m_layers;
 
 	GpuSceneArrays::Decal::Allocation m_gpuSceneDecal;
@@ -67,7 +69,7 @@ private:
 
 	void setLayer(CString fname, F32 blendFactor, LayerType type);
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

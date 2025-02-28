@@ -150,7 +150,7 @@ public:
 	{
 		TMat& m = *this;
 		// Not normalized axis
-		ANKI_ASSERT(isZero<T>(T(1) - axisang.getAxis().getLength()));
+		ANKI_ASSERT(isZero<T>(T(1) - axisang.getAxis().length()));
 
 		T c, s;
 		sinCos(axisang.getAngle(), s, c);

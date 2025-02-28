@@ -77,7 +77,7 @@ private:
 	Bool m_dirty = true;
 	Bool m_reflectionNeedsRefresh = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

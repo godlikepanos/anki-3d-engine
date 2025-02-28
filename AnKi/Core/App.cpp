@@ -154,6 +154,8 @@ void App::cleanup()
 
 	CoreMemoryPool::freeSingleton();
 	DefaultMemoryPool::freeSingleton();
+
+	ANKI_CORE_LOGI("Application finished shutting down");
 }
 
 Error App::init()
@@ -182,34 +184,7 @@ Error App::initInternal()
 
 	ANKI_CHECK(initDirs());
 
-	// Print a message
-	const char* buildType =
-#if ANKI_OPTIMIZE
-		"optimized, "
-#else
-		"NOT optimized, "
-#endif
-#if ANKI_DEBUG_SYMBOLS
-		"dbg symbols, "
-#else
-		"NO dbg symbols, "
-#endif
-#if ANKI_EXTRA_CHECKS
-		"extra checks, "
-#else
-		"NO extra checks, "
-#endif
-#if ANKI_TRACING_ENABLED
-		"built with tracing";
-#else
-		"NOT built with tracing";
-#endif
-
-	ANKI_CORE_LOGI("Initializing application");
-	ANKI_CORE_LOGI("\tBuild type %s", buildType);
-	ANKI_CORE_LOGI("\tBuild time %s %s", __DATE__, __TIME__);
-	ANKI_CORE_LOGI("\tCompiler %s", ANKI_COMPILER_STR);
-	ANKI_CORE_LOGI("\tCommit %s", ANKI_REVISION);
+	ANKI_CORE_LOGI("Initializing application. Build config: %s", kAnKiBuildConfigString);
 
 // Check SIMD support
 #if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
@@ -428,7 +403,7 @@ Error App::mainLoop()
 			// User update
 			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));
 
-			ANKI_CHECK(SceneGraph::getSingleton().update(prevUpdateTime, crntTime));
+			SceneGraph::getSingleton().update(prevUpdateTime, crntTime);
 
 			// Render
 			TexturePtr presentableTex = GrManager::getSingleton().acquireNextPresentableTexture();

@@ -36,10 +36,9 @@ void SkyboxComponent::loadImageResource(CString filename)
 	m_type = SkyboxType::kImage2D;
 }
 
-Error SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+void SkyboxComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
-	return Error::kNone;
 }
 
 } // end namespace anki

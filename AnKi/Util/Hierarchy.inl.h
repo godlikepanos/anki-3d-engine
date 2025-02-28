@@ -54,41 +54,39 @@ void Hierarchy<T, TMemoryPool>::removeChild(Value* child)
 }
 
 template<typename T, typename TMemoryPool>
-template<typename VisitorFunc>
-Error Hierarchy<T, TMemoryPool>::visitChildren(VisitorFunc vis)
+template<typename TVisitorFunc>
+Bool Hierarchy<T, TMemoryPool>::visitChildren(TVisitorFunc vis)
 {
-	Error err = Error::kNone;
-	typename Container::Iterator it = m_children.getBegin();
-	for(; it != m_children.getEnd() && !err; it++)
+	auto it = m_children.getBegin();
+	Bool continue_ = true;
+	for(; it != m_children.getEnd() && continue_; it++)
 	{
-		err = vis(*(*it));
+		continue_ = vis(*(*it));
 
-		if(!err)
+		if(continue_)
 		{
-			err = (*it)->visitChildren(vis);
+			continue_ = (*it)->visitChildren(vis);
 		}
 	}
 
-	return err;
+	return continue_;
 }
 
 template<typename T, typename TMemoryPool>
-template<typename VisitorFunc>
-Error Hierarchy<T, TMemoryPool>::visitThisAndChildren(VisitorFunc vis)
+template<typename TVisitorFunc>
+void Hierarchy<T, TMemoryPool>::visitThisAndChildren(TVisitorFunc vis)
 {
-	Error err = vis(*getSelf());
+	const Bool continue_ = vis(*getSelf());
 
-	if(!err)
+	if(continue_)
 	{
-		err = visitChildren(vis);
+		visitChildren(vis);
 	}
-
-	return err;
 }
 
 template<typename T, typename TMemoryPool>
-template<typename VisitorFunc>
-Error Hierarchy<T, TMemoryPool>::visitTree(VisitorFunc vis)
+template<typename TVisitorFunc>
+void Hierarchy<T, TMemoryPool>::visitTree(TVisitorFunc vis)
 {
 	// Move to root
 	Value* root = getSelf();
@@ -97,29 +95,29 @@ Error Hierarchy<T, TMemoryPool>::visitTree(VisitorFunc vis)
 		root = root->m_parent;
 	}
 
-	return root->visitThisAndChildren(vis);
+	root->visitThisAndChildren(vis);
 }
 
 template<typename T, typename TMemoryPool>
-template<typename VisitorFunc>
-Error Hierarchy<T, TMemoryPool>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
+template<typename TVisitorFunc>
+Bool Hierarchy<T, TMemoryPool>::visitChildrenMaxDepth(I maxDepth, TVisitorFunc vis)
 {
 	ANKI_ASSERT(maxDepth >= 0);
-	Error err = Error::kNone;
 	--maxDepth;
 
-	typename Container::Iterator it = m_children.getBegin();
-	for(; it != m_children.getEnd() && !err; ++it)
+	Bool continue_ = true;
+	auto it = m_children.getBegin();
+	for(; it != m_children.getEnd() && continue_; ++it)
 	{
-		err = vis(*(*it));
+		continue_ = vis(*(*it));
 
-		if(!err && maxDepth >= 0)
+		if(continue_ && maxDepth >= 0)
 		{
-			err = (*it)->visitChildrenMaxDepth(maxDepth, vis);
+			continue_ = (*it)->visitChildrenMaxDepth(maxDepth, vis);
 		}
 	}
 
-	return err;
+	return continue_;
 }
 
 } // end namespace anki

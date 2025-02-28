@@ -49,6 +49,13 @@ public:
 
 	Second m_prevUpdateTime;
 	Second m_crntTime;
+
+	DynamicArray<SceneNode*, MemoryPoolPtrWrapper<StackMemoryPool>> m_nodesForDeletion;
+
+	UpdateSceneNodesCtx()
+		: m_nodesForDeletion(&SceneGraph::getSingleton().m_framePool)
+	{
+	}
 };
 
 SceneGraph::SceneGraph()
@@ -57,12 +64,15 @@ SceneGraph::SceneGraph()
 
 SceneGraph::~SceneGraph()
 {
-	[[maybe_unused]] const Error err = iterateSceneNodes([&](SceneNode& s) -> Error {
-		s.setMarkedForDeletion();
-		return Error::kNone;
-	});
+	while(!m_nodesForRegistration.isEmpty())
+	{
+		deleteInstance(SceneMemoryPool::getSingleton(), m_nodesForRegistration.popBack());
+	}
 
-	deleteNodesMarkedForDeletion();
+	while(!m_nodes.isEmpty())
+	{
+		deleteInstance(SceneMemoryPool::getSingleton(), m_nodes.popBack());
+	}
 
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::freeSingleton();
 #include <AnKi/Scene/GpuSceneArrays.def.h>
@@ -77,7 +87,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	m_framePool.init(allocCallback, allocCallbackData, 1_MB, 2.0, 0, true, "SceneGraphFramePool");
 
 	// Init the default main camera
-	ANKI_CHECK(newSceneNode<SceneNode>("mainCamera", m_defaultMainCam));
+	m_defaultMainCam = newSceneNode<SceneNode>("mainCamera");
 	CameraComponent* camc = m_defaultMainCam->newComponent<CameraComponent>();
 	camc->setPerspective(0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
@@ -90,58 +100,13 @@ Error SceneGraph::init(AllocAlignedCallback allocCallback, void* allocCallbackDa
 	// Construct a few common nodex
 	if(g_displayStatsCVar > 0)
 	{
-		StatsUiNode* statsNode;
-		ANKI_CHECK(newSceneNode("_StatsUi", statsNode));
+		StatsUiNode* statsNode = newSceneNode<StatsUiNode>("_StatsUi");
 		statsNode->setFpsOnly(g_displayStatsCVar == 1);
 	}
 
-	DeveloperConsoleUiNode* consoleNode;
-	ANKI_CHECK(newSceneNode("_DevConsole", consoleNode));
+	newSceneNode<DeveloperConsoleUiNode>("_DevConsole");
 
 	return Error::kNone;
-}
-
-Error SceneGraph::registerNode(SceneNode* node)
-{
-	ANKI_ASSERT(node);
-
-	// Add to dict if it has a name
-	if(node->getName())
-	{
-		if(tryFindSceneNode(node->getName()))
-		{
-			ANKI_SCENE_LOGE("Node with the same name already exists");
-			return Error::kUserData;
-		}
-
-		m_nodesDict.emplace(node->getName(), node);
-	}
-
-	// Add to vector
-	m_nodes.pushBack(node);
-	++m_nodesCount;
-
-	return Error::kNone;
-}
-
-void SceneGraph::unregisterNode(SceneNode* node)
-{
-	// Remove from the graph
-	m_nodes.erase(node);
-	--m_nodesCount;
-
-	if(m_mainCam != m_defaultMainCam && m_mainCam == node)
-	{
-		m_mainCam = m_defaultMainCam;
-	}
-
-	// Remove from dict
-	if(node->getName())
-	{
-		auto it = m_nodesDict.find(node->getName());
-		ANKI_ASSERT(it != m_nodesDict.getEnd());
-		m_nodesDict.erase(it);
-	}
 }
 
 SceneNode& SceneGraph::findSceneNode(const CString& name)
@@ -153,39 +118,27 @@ SceneNode& SceneGraph::findSceneNode(const CString& name)
 
 SceneNode* SceneGraph::tryFindSceneNode(const CString& name)
 {
+	// Search registered nodes
 	auto it = m_nodesDict.find(name);
-	return (it == m_nodesDict.getEnd()) ? nullptr : (*it);
-}
-
-void SceneGraph::deleteNodesMarkedForDeletion()
-{
-	/// Delete all nodes pending deletion. At this point all scene threads
-	/// should have finished their tasks
-	while(m_objectsMarkedForDeletionCount.load() > 0)
+	if(it != m_nodesDict.getEnd())
 	{
-		[[maybe_unused]] Bool found = false;
-		auto it = m_nodes.begin();
-		auto end = m_nodes.end();
-		for(; it != end; ++it)
-		{
-			SceneNode& node = *it;
-
-			if(node.getMarkedForDeletion())
-			{
-				// Delete node
-				unregisterNode(&node);
-				deleteInstance(SceneMemoryPool::getSingleton(), &node);
-				m_objectsMarkedForDeletionCount.fetchSub(1);
-				found = true;
-				break;
-			}
-		}
-
-		ANKI_ASSERT(found && "Something is wrong with marked for deletion");
+		return *it;
 	}
+
+	// Didn't found it, search those up for registration
+	LockGuard lock(m_nodesForRegistrationMtx);
+	for(SceneNode& node : m_nodesForRegistration)
+	{
+		if(node.getName() == name)
+		{
+			return &node;
+		}
+	}
+
+	return nullptr;
 }
 
-Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
+void SceneGraph::update(Second prevUpdateTime, Second crntTime)
 {
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_SCOPED_EVENT(SceneUpdate);
@@ -195,24 +148,44 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Reset the framepool
 	m_framePool.reset();
 
-	// Delete stuff
+	// Register new nodes
+	while(!m_nodesForRegistration.isEmpty())
 	{
-		ANKI_TRACE_SCOPED_EVENT(SceneRemoveMarkedForDeletion);
-		const Bool fullCleanup = m_objectsMarkedForDeletionCount.load() != 0;
-		m_events.deleteEventsMarkedForDeletion(fullCleanup);
-		deleteNodesMarkedForDeletion();
+		SceneNode* node = m_nodesForRegistration.popFront();
+
+		// Add to dict if it has a name
+		if(node->getName())
+		{
+			if(tryFindSceneNode(node->getName()))
+			{
+				ANKI_SCENE_LOGE("Node with the same name already exists. New node will not be searchable: %s", node->getName().cstr());
+			}
+			else
+			{
+				m_nodesDict.emplace(node->getName(), node);
+			}
+		}
+
+		// Add to list
+		m_nodes.pushBack(node);
+		++m_nodesCount;
 	}
 
-	// Update
+	// Update physics
+	PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
+
+	// Before the update wake some threads with dummy work
+	for(U i = 0; i < 2; i++)
 	{
-		PhysicsWorld::getSingleton().update(crntTime - prevUpdateTime);
+		CoreThreadJobManager::getSingleton().dispatchTask([]([[maybe_unused]] U32 tid) {});
 	}
 
+	// Update events and scene nodes
+	UpdateSceneNodesCtx updateCtx;
 	{
 		ANKI_TRACE_SCOPED_EVENT(SceneNodesUpdate);
-		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
+		m_events.updateAllEvents(prevUpdateTime, crntTime);
 
-		UpdateSceneNodesCtx updateCtx;
 		updateCtx.m_crntNode = m_nodes.getBegin();
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
@@ -220,28 +193,50 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		for(U i = 0; i < CoreThreadJobManager::getSingleton().getThreadCount(); i++)
 		{
 			CoreThreadJobManager::getSingleton().dispatchTask([this, &updateCtx]([[maybe_unused]] U32 tid) {
-				if(updateNodes(updateCtx))
-				{
-					ANKI_SCENE_LOGF("Will not recover");
-				}
+				updateNodes(updateCtx);
 			});
 		}
 
 		CoreThreadJobManager::getSingleton().waitForAllTasksToFinish();
 	}
 
+	// Cleanup
+	for(SceneNode* node : updateCtx.m_nodesForDeletion)
+	{
+		// Remove from the graph
+		m_nodes.erase(node);
+		ANKI_ASSERT(m_nodesCount > 0);
+		--m_nodesCount;
+
+		if(m_mainCam != m_defaultMainCam && m_mainCam == node)
+		{
+			m_mainCam = m_defaultMainCam;
+		}
+
+		// Remove from dict
+		if(node->getName())
+		{
+			auto it = m_nodesDict.find(node->getName());
+			ANKI_ASSERT(it != m_nodesDict.getEnd());
+			if(*it == node)
+			{
+				m_nodesDict.erase(it);
+			}
+		}
+
+		deleteInstance(SceneMemoryPool::getSingleton(), node);
+	}
+	updateCtx.m_nodesForDeletion.destroy();
+
 #define ANKI_CAT_TYPE(arrayName, gpuSceneType, id, cvarName) GpuSceneArrays::arrayName::getSingleton().flush();
 #include <AnKi/Scene/GpuSceneArrays.def.h>
 
 	g_sceneUpdateTimeStatVar.set((HighRezTimer::getCurrentTime() - startUpdateTime) * 1000.0);
-	return Error::kNone;
 }
 
-Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
+void SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 {
 	ANKI_TRACE_INC_COUNTER(SceneNodeUpdated, 1);
-
-	Error err = Error::kNone;
 
 	// Components update
 	SceneComponentUpdateInfo componentUpdateInfo(prevTime, crntTime);
@@ -249,14 +244,9 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 	Bool atLeastOneComponentUpdated = false;
 	node.iterateComponents([&](SceneComponent& comp) {
-		if(err)
-		{
-			return;
-		}
-
 		componentUpdateInfo.m_node = &node;
 		Bool updated = false;
-		err = comp.update(componentUpdateInfo, updated);
+		comp.update(componentUpdateInfo, updated);
 
 		if(updated)
 		{
@@ -267,15 +257,12 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	});
 
 	// Update children
-	if(!err)
-	{
-		err = node.visitChildrenMaxDepth(0, [&](SceneNode& child) -> Error {
-			return updateNode(prevTime, crntTime, child);
-		});
-	}
+	node.visitChildrenMaxDepth(0, [&](SceneNode& child) {
+		updateNode(prevTime, crntTime, child);
+		return true;
+	});
 
 	// Frame update
-	if(!err)
 	{
 		if(atLeastOneComponentUpdated)
 		{
@@ -286,21 +273,18 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 			// No components or nothing updated, don't change the timestamp
 		}
 
-		err = node.frameUpdate(prevTime, crntTime);
+		node.frameUpdate(prevTime, crntTime);
 	}
-
-	return err;
 }
 
-Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
+void SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(SceneNodeUpdate);
 
 	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
 
 	Bool quit = false;
-	Error err = Error::kNone;
-	while(!quit && !err)
+	while(!quit)
 	{
 		// Fetch a batch of scene nodes that don't have parent
 		Array<SceneNode*, kUpdateNodeBatchSize> batch;
@@ -323,9 +307,18 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 				}
 
 				SceneNode& node = *ctx.m_crntNode;
-				if(node.getParent() == nullptr)
+
+				if(node.isMarkedForDeletion())
+				{
+					ctx.m_nodesForDeletion.emplaceBack(&node);
+				}
+				else if(node.getParent() == nullptr)
 				{
 					batch[batchSize++] = &node;
+				}
+				else
+				{
+					// Ignore
 				}
 
 				++ctx.m_crntNode;
@@ -333,13 +326,11 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx)
 		}
 
 		// Process nodes
-		for(U i = 0; i < batchSize && !err; ++i)
+		for(U i = 0; i < batchSize; ++i)
 		{
-			err = updateNode(ctx.m_prevUpdateTime, ctx.m_crntTime, *batch[i]);
+			updateNode(ctx.m_prevUpdateTime, ctx.m_crntTime, *batch[i]);
 		}
 	}
-
-	return err;
 }
 
 LightComponent* SceneGraph::getDirectionalLight() const

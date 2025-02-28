@@ -46,7 +46,7 @@ private:
 
 	JointType m_type = JointType::kCount;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

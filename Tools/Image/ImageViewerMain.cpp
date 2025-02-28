@@ -27,14 +27,12 @@ public:
 		ANKI_CHECK_AND_IGNORE(ResourceManager::getSingleton().loadResource("ShaderBinaries/UiVisualizeImage.ankiprogbin", m_imageProgram));
 	}
 
-	Error frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
+	void frameUpdate([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime) override
 	{
 		if(!m_imageIdExtra.m_textureView.isValid())
 		{
 			m_imageIdExtra.m_textureView = TextureView(&m_imageResource->getTexture(), TextureSubresourceDesc::all());
 		}
-
-		return Error::kNone;
 	}
 
 private:
@@ -285,8 +283,7 @@ public:
 		NativeWindow::getSingleton().setWindowTitle(title);
 
 		// Create the node
-		TextureViewerUiNode* node;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("TextureViewer", node));
+		TextureViewerUiNode* node = SceneGraph::getSingleton().newSceneNode<TextureViewerUiNode>("TextureViewer");
 		node->m_imageResource = std::move(image);
 
 		return Error::kNone;

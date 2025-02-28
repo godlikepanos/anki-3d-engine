@@ -321,12 +321,11 @@ void ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	}
 }
 
-Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	if(!m_particleEmitterResource.isCreated()) [[unlikely]]
 	{
 		updated = false;
-		return Error::kNone;
 	}
 
 	updated = true;
@@ -482,7 +481,6 @@ Error ParticleEmitterComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 	}
 
 	m_resourceUpdated = false;
-	return Error::kNone;
 }
 
 template<typename TParticle>

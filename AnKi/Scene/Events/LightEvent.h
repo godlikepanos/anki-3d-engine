@@ -17,10 +17,10 @@ namespace anki {
 class LightEvent : public Event
 {
 public:
-	Error init(Second startTime, Second duration, SceneNode* light);
+	LightEvent(Second startTime, Second duration, SceneNode* light);
 
 	/// Implements Event::update
-	Error update(Second prevUpdateTime, Second crntTime) override;
+	void update(Second prevUpdateTime, Second crntTime) override;
 
 	void setRadiusMultiplier(F32 v)
 	{
@@ -37,10 +37,15 @@ public:
 	/// @param deviation Add a randomization to the frequency.
 	void setFrequency(F32 freq, F32 deviation)
 	{
-		ANKI_ASSERT(freq > 0.0);
-		ANKI_ASSERT(freq > deviation);
-		m_freq = freq;
-		m_freqDeviation = deviation;
+		if(ANKI_EXPECT(freq > 0.0))
+		{
+			m_freq = freq;
+		}
+
+		if(ANKI_EXPECT(freq > deviation))
+		{
+			m_freqDeviation = deviation;
+		}
 	}
 
 private:

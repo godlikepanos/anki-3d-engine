@@ -80,11 +80,11 @@ void TriggerComponent::setType(TriggerComponentShapeType type)
 	}
 }
 
-Error TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	if(m_type == TriggerComponentShapeType::kCount)
 	{
-		return Error::kNone;
+		return;
 	}
 
 	if(m_trigger && info.m_node->movedThisFrame() && info.m_node->getWorldTransform().getScale() != m_trigger->getTransform().getScale())
@@ -145,8 +145,6 @@ Error TriggerComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	// Prepare them for the next frame
 	m_resetEnter = true;
 	m_resetExit = true;
-
-	return Error::kNone;
 }
 
 } // end namespace anki

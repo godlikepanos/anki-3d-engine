@@ -35,7 +35,7 @@ private:
 	ScriptResourcePtr m_script;
 	ScriptEnvironment* m_env = nullptr;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

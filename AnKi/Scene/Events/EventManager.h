@@ -22,37 +22,26 @@ public:
 	~EventManager();
 
 	/// Create a new event
-	/// @note It's thread-safe against itself.
-	template<typename T, typename... Args>
-	Error newEvent(T*& event, Args... args)
+	/// @note It's thread-safe against itself. Can be called in Event::update.
+	template<typename T, typename... TArgs>
+	T* newEvent(TArgs&&... args)
 	{
-		event = newInstance<T>(SceneMemoryPool::getSingleton());
-		Error err = event->init(std::forward<Args>(args)...);
-		if(err)
-		{
-			deleteInstance(SceneMemoryPool::getSingleton(), event);
-		}
-		else
-		{
-			LockGuard<Mutex> lock(m_mtx);
-			m_events.pushBack(event);
-		}
-		return err;
+		T* event = newInstance<T>(SceneMemoryPool::getSingleton(), std::forward<TArgs>(args)...);
+		LockGuard lock(m_eventsForRegistrationMtx);
+		m_eventsForRegistration.pushBack(event);
+		return event;
 	}
 
 	/// Update
-	Error updateAllEvents(Second prevUpdateTime, Second crntTime);
-
-	/// Delete events that pending deletion
-	void deleteEventsMarkedForDeletion(Bool fullCleanup);
-
-	/// @note It's thread-safe against itself.
-	void markEventForDeletion(Event* event);
+	ANKI_INTERNAL void updateAllEvents(Second prevUpdateTime, Second crntTime);
 
 private:
 	IntrusiveList<Event> m_events;
-	IntrusiveList<Event> m_eventsMarkedForDeletion;
-	Mutex m_mtx;
+
+	IntrusiveList<Event> m_eventsForRegistration;
+	SpinLock m_eventsForRegistrationMtx;
+
+	static Bool assosiatedNodesMarkedForDeletion(const Event& e);
 };
 /// @}
 

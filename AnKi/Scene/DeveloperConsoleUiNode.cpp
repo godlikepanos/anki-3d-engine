@@ -19,6 +19,8 @@ DeveloperConsoleUiNode::DeveloperConsoleUiNode(CString name)
 		},
 		this);
 	uic->setEnabled(false);
+
+	ANKI_CHECKF(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
 }
 
 DeveloperConsoleUiNode::~DeveloperConsoleUiNode()
@@ -32,12 +34,6 @@ DeveloperConsoleUiNode::~DeveloperConsoleUiNode()
 		m_logItems.popFront();
 		deleteInstance(SceneMemoryPool::getSingleton(), item);
 	}
-}
-
-Error DeveloperConsoleUiNode::init()
-{
-	ANKI_CHECK(UiManager::getSingleton().newInstance(m_font, "EngineAssets/UbuntuMonoRegular.ttf", Array<U32, 1>{16}));
-	return Error::kNone;
 }
 
 void DeveloperConsoleUiNode::toggleConsole()

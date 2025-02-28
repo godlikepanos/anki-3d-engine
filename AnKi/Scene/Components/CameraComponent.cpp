@@ -24,7 +24,7 @@ CameraComponent::~CameraComponent()
 {
 }
 
-Error CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	if(info.m_node->movedThisFrame())
 	{
@@ -32,8 +32,6 @@ Error CameraComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	}
 
 	updated = m_frustum.update();
-
-	return Error::kNone;
 }
 
 } // end namespace anki

@@ -19,7 +19,7 @@ JointComponent::~JointComponent()
 {
 }
 
-Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated)
+void JointComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	SceneNode& node = *info.m_node;
 
@@ -35,7 +35,7 @@ Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bo
 	if(!body1 || !body2 || m_type == JointType::kCount)
 	{
 		m_joint.reset(nullptr);
-		return Error::kNone;
+		return;
 	}
 
 	const Bool parentChanged = parent && m_parentNodeUuid != parent->getUuid();
@@ -66,8 +66,6 @@ Error JointComponent::update([[maybe_unused]] SceneComponentUpdateInfo& info, Bo
 			ANKI_ASSERT(0);
 		}
 	}
-
-	return Error::kNone;
 }
 
 } // end namespace anki

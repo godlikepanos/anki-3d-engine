@@ -200,7 +200,7 @@ private:
 	U8 m_otherDirty : 1 = true;
 	U8 m_shadowAtlasUvViewportCount : 3 = 0;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

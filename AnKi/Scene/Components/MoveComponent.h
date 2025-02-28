@@ -26,7 +26,7 @@ public:
 	~MoveComponent() = default;
 
 private:
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

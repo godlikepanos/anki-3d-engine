@@ -32,7 +32,7 @@ void LensFlareComponent::loadImageResource(CString filename)
 	m_image = std::move(image);
 }
 
-Error LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_dirty || info.m_node->movedThisFrame();
 
@@ -42,8 +42,6 @@ Error LensFlareComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		m_worldPosition = info.m_node->getWorldTransform().getOrigin().xyz();
 	}
-
-	return Error::kNone;
 }
 
 } // end namespace anki

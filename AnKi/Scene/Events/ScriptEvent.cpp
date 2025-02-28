@@ -13,18 +13,9 @@
 
 namespace anki {
 
-ScriptEvent::ScriptEvent()
+ScriptEvent::ScriptEvent(Second startTime, Second duration, CString script)
+	: Event(startTime, duration)
 {
-}
-
-ScriptEvent::~ScriptEvent()
-{
-}
-
-Error ScriptEvent::init(Second startTime, Second duration, CString script)
-{
-	Event::init(startTime, duration);
-
 	// Do the rest
 	String extension;
 	getFilepathExtension(script, extension);
@@ -32,10 +23,18 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	if(!extension.isEmpty() && extension == "lua")
 	{
 		// It's a file
-		ANKI_CHECK(ResourceManager::getSingleton().loadResource(script, m_scriptRsrc));
+		if(!ANKI_EXPECT(!ResourceManager::getSingleton().loadResource(script, m_scriptRsrc)))
+		{
+			markForDeletion();
+			return;
+		}
 
 		// Exec the script
-		ANKI_CHECK(m_env.evalString(m_scriptRsrc->getSource()));
+		if(!ANKI_EXPECT(!m_env.evalString(m_scriptRsrc->getSource())))
+		{
+			markForDeletion();
+			return;
+		}
 	}
 	else
 	{
@@ -43,13 +42,19 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 		m_script = script;
 
 		// Exec the script
-		ANKI_CHECK(m_env.evalString(m_script.toCString()));
+		if(!ANKI_EXPECT(!m_env.evalString(m_script.toCString())))
+		{
+			markForDeletion();
+			return;
+		}
 	}
-
-	return Error::kNone;
 }
 
-Error ScriptEvent::update(Second prevUpdateTime, Second crntTime)
+ScriptEvent::~ScriptEvent()
+{
+}
+
+void ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 {
 	lua_State* lua = &m_env.getLuaState();
 
@@ -61,34 +66,15 @@ Error ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 	lua_pushnumber(lua, prevUpdateTime);
 	lua_pushnumber(lua, crntTime);
 
-	// Do the call (3 arguments, 1 result)
-	if(lua_pcall(lua, 3, 1, 0) != 0)
+	// Do the call (3 arguments, no result)
+	if(lua_pcall(lua, 3, 0, 0) != 0)
 	{
 		ANKI_SCENE_LOGE("Error running ScriptEvent's \"update\": %s", lua_tostring(lua, -1));
-		return Error::kUserData;
+		return;
 	}
-
-	if(!lua_isnumber(lua, -1))
-	{
-		ANKI_SCENE_LOGE("ScriptEvent's \"update\" should return a number");
-		lua_pop(lua, 1);
-		return Error::kUserData;
-	}
-
-	// Get the result
-	lua_Number result = lua_tonumber(lua, -1);
-	lua_pop(lua, 1);
-
-	if(result < 0)
-	{
-		ANKI_SCENE_LOGE("ScriptEvent's \"update\" return an error code");
-		return Error::kUserData;
-	}
-
-	return Error::kNone;
 }
 
-Error ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
+void ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 {
 	lua_State* lua = &m_env.getLuaState();
 
@@ -100,31 +86,12 @@ Error ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 	lua_pushnumber(lua, prevUpdateTime);
 	lua_pushnumber(lua, crntTime);
 
-	// Do the call (3 arguments, 1 result)
-	if(lua_pcall(lua, 3, 1, 0) != 0)
+	// Do the call (3 arguments, no result)
+	if(lua_pcall(lua, 3, 0, 0) != 0)
 	{
 		ANKI_SCENE_LOGE("Error running ScriptEvent's \"onKilled\": %s", lua_tostring(lua, -1));
-		return Error::kUserData;
+		return;
 	}
-
-	if(!lua_isnumber(lua, -1))
-	{
-		ANKI_SCENE_LOGE("ScriptEvent's \"onKilled\" should return a number");
-		lua_pop(lua, 1);
-		return Error::kUserData;
-	}
-
-	// Get the result
-	lua_Number result = lua_tonumber(lua, -1);
-	lua_pop(lua, 1);
-
-	if(result < 0)
-	{
-		ANKI_SCENE_LOGE("ScriptEvent's \"onKilled\" return an error code");
-		return Error::kUserData;
-	}
-
-	return Error::kNone;
 }
 
 } // end namespace anki

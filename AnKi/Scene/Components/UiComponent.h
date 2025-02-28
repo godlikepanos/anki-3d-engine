@@ -61,10 +61,9 @@ private:
 	void* m_userData = nullptr;
 	Bool m_enabled = true;
 
-	Error update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
+	void update([[maybe_unused]] SceneComponentUpdateInfo& info, Bool& updated) override
 	{
 		updated = false;
-		return Error::kNone;
 	}
 };
 /// @}

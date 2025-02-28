@@ -21,8 +21,6 @@ public:
 
 	~StatsUiNode();
 
-	Error init();
-
 	void setFpsOnly(Bool fpsOnly)
 	{
 		m_fpsOnly = fpsOnly;

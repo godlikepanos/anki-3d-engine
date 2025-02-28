@@ -17,10 +17,9 @@ namespace anki {
 class AnimationEvent : public Event
 {
 public:
-	Error init(CString animationFilename, CString channel, SceneNode* movableSceneNode);
+	AnimationEvent(CString animationFilename, CString channel, SceneNode* movableSceneNode);
 
-	/// Implements Event::update
-	Error update(Second prevUpdateTime, Second crntTime) override;
+	void update(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	AnimationResourcePtr m_anim;

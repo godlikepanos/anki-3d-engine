@@ -10,10 +10,20 @@
 
 namespace anki {
 
-Error AnimationEvent::init(CString animationFilename, CString channelName, SceneNode* movableSceneNode)
+AnimationEvent::AnimationEvent(CString animationFilename, CString channelName, SceneNode* movableSceneNode)
+	: Event(0.0, 1.0)
 {
-	ANKI_ASSERT(movableSceneNode);
-	ANKI_CHECK(ResourceManager::getSingleton().loadResource(animationFilename, m_anim));
+	if(!ANKI_EXPECT(movableSceneNode))
+	{
+		markForDeletion();
+		return;
+	}
+
+	if(!ANKI_EXPECT(!ResourceManager::getSingleton().loadResource(animationFilename, m_anim)))
+	{
+		markForDeletion();
+		return;
+	}
 
 	m_channelIndex = 0;
 	for(const AnimationChannel& channel : m_anim->getChannels())
@@ -28,17 +38,16 @@ Error AnimationEvent::init(CString animationFilename, CString channelName, Scene
 	if(m_channelIndex == m_anim->getChannels().getSize())
 	{
 		ANKI_SCENE_LOGE("Can't initialize AnimationEvent. Channel not found: %s", channelName.cstr());
-		return Error::kUserData;
+		markForDeletion();
+		return;
 	}
 
-	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
+	init(m_anim->getStartingTime(), m_anim->getDuration());
 	m_reanimate = true;
 	m_associatedNodes.emplaceBack(movableSceneNode);
-
-	return Error::kNone;
 }
 
-Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
+void AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 {
 	Vec3 pos;
 	Quat rot;
@@ -53,8 +62,6 @@ Error AnimationEvent::update([[maybe_unused]] Second prevUpdateTime, Second crnt
 	trf.setScale(Vec4(scale, scale, scale, 0.0f));
 
 	m_associatedNodes[0]->setLocalTransform(trf);
-
-	return Error::kNone;
 }
 
 } // end namespace anki

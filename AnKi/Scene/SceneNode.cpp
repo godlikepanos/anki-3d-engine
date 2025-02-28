@@ -72,18 +72,11 @@ SceneNode::~SceneNode()
 	}
 }
 
-void SceneNode::setMarkedForDeletion()
+void SceneNode::markForDeletion()
 {
-	// Mark for deletion only when it's not already marked because we don't want to increase the counter again
-	if(!getMarkedForDeletion())
-	{
-		m_markedForDeletion = true;
-		SceneGraph::getSingleton().increaseObjectsMarkedForDeletion();
-	}
-
-	[[maybe_unused]] const Error err = visitChildren([](SceneNode& obj) -> Error {
-		obj.setMarkedForDeletion();
-		return Error::kNone;
+	visitThisAndChildren([](SceneNode& obj) {
+		obj.m_markedForDeletion = true;
+		return true;
 	});
 }
 
@@ -147,12 +140,12 @@ Bool SceneNode::updateTransform()
 		}
 
 		// Make children dirty as well. Don't walk the whole tree because you will re-walk it later
-		[[maybe_unused]] const Error err = visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
+		visitChildrenMaxDepth(1, [](SceneNode& childNode) {
 			if(!childNode.m_ignoreParentNodeTransform)
 			{
 				childNode.m_localTransformDirty = true;
 			}
-			return Error::kNone;
+			return true;
 		});
 	}
 

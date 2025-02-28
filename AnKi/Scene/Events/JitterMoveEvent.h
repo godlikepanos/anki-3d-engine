@@ -17,16 +17,15 @@ namespace anki {
 class JitterMoveEvent : public Event
 {
 public:
-	Error init(Second startTime, Second duration, SceneNode* movableSceneNode);
+	JitterMoveEvent(Second startTime, Second duration, SceneNode* movableSceneNode);
 
-	/// Implements Event::update
-	Error update(Second prevUpdateTime, Second crntTime);
+	void update(Second prevUpdateTime, Second crntTime) override;
 
-	void setPositionLimits(const Vec4& posMin, const Vec4& posMax);
+	void setPositionLimits(Vec3 posMin, Vec3 posMax);
 
 private:
-	Vec4 m_originalPos;
-	Vec4 m_newPos;
+	Vec3 m_originalPos;
+	Vec3 m_newPos;
 };
 /// @}
 

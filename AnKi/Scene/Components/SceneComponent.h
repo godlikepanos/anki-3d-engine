@@ -107,7 +107,7 @@ public:
 	{
 	}
 
-	ANKI_INTERNAL virtual Error update(SceneComponentUpdateInfo& info, Bool& updated) = 0;
+	ANKI_INTERNAL virtual void update(SceneComponentUpdateInfo& info, Bool& updated) = 0;
 
 	ANKI_INTERNAL virtual void onOtherComponentRemovedOrAdded([[maybe_unused]] SceneComponent* other, [[maybe_unused]] Bool added)
 	{

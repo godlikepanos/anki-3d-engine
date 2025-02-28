@@ -9,9 +9,15 @@
 
 namespace anki {
 
-Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
+LightEvent::LightEvent(Second startTime, Second duration, SceneNode* light)
+	: Event(startTime, duration)
 {
-	Event::init(startTime, duration);
+	if(!ANKI_EXPECT(light))
+	{
+		markForDeletion();
+		return;
+	}
+
 	m_associatedNodes.emplaceBack(light);
 
 	LightComponent& lightc = light->getFirstComponentOfType<LightComponent>();
@@ -22,7 +28,7 @@ Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 		m_originalRadius = lightc.getRadius();
 		break;
 	case LightComponentType::kSpot:
-		ANKI_ASSERT("TODO");
+		m_originalRadius = lightc.getDistance();
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -30,15 +36,13 @@ Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 	}
 
 	m_originalDiffColor = lightc.getDiffuseColor();
-
-	return Error::kNone;
 }
 
-Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
+void LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 {
 	const F32 freq = getRandomRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
 
-	F32 factor = F32(sin(crntTime * freq * kPi)) / 2.0f + 0.5f;
+	const F32 factor = F32(sin(crntTime * freq * kPi)) / 2.0f + 0.5f;
 	LightComponent& lightc = m_associatedNodes[0]->getFirstComponentOfType<LightComponent>();
 
 	// Update radius
@@ -50,7 +54,7 @@ Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime
 			lightc.setRadius(m_originalRadius + factor * m_radiusMultiplier);
 			break;
 		case LightComponentType::kSpot:
-			ANKI_ASSERT("TODO");
+			lightc.setDistance(m_originalRadius + factor * m_radiusMultiplier);
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -61,7 +65,7 @@ Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime
 	// Update the color and the lens flare's color if they are the same
 	if(m_intensityMultiplier != Vec4(0.0))
 	{
-		Vec4 outCol = m_originalDiffColor + factor * m_intensityMultiplier;
+		const Vec4 outCol = m_originalDiffColor + factor * m_intensityMultiplier;
 
 		LensFlareComponent* lfc = m_associatedNodes[0]->tryGetFirstComponentOfType<LensFlareComponent>();
 
@@ -72,8 +76,6 @@ Error LightEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime
 
 		lightc.setDiffuseColor(outCol);
 	}
-
-	return Error::kNone;
 }
 
 } // end namespace anki

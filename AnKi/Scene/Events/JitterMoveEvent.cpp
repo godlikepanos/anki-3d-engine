@@ -9,17 +9,20 @@
 
 namespace anki {
 
-Error JitterMoveEvent::init(Second startTime, Second duration, SceneNode* node)
+JitterMoveEvent::JitterMoveEvent(Second startTime, Second duration, SceneNode* node)
+	: Event(startTime, duration)
 {
-	ANKI_ASSERT(node);
-	Event::init(startTime, duration);
-	m_associatedNodes.emplaceBack(node);
-	m_originalPos = node->getWorldTransform().getOrigin();
+	if(!ANKI_EXPECT(node))
+	{
+		markForDeletion();
+		return;
+	}
 
-	return Error::kNone;
+	m_associatedNodes.emplaceBack(node);
+	m_originalPos = node->getWorldTransform().getOrigin().xyz();
 }
 
-void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
+void JitterMoveEvent::setPositionLimits(Vec3 posMin, Vec3 posMax)
 {
 	for(U i = 0; i < 3; i++)
 	{
@@ -30,19 +33,17 @@ void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
 	m_newPos += m_originalPos;
 }
 
-Error JitterMoveEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
+void JitterMoveEvent::update([[maybe_unused]] Second prevUpdateTime, Second crntTime)
 {
 	SceneNode* node = m_associatedNodes[0];
 
 	Transform trf = node->getLocalTransform();
 
-	F32 factor = F32(sin(getDelta(crntTime) * kPi));
+	const F32 factor = F32(sin(getDelta(crntTime) * kPi));
 
 	trf.setOrigin(linearInterpolate(m_originalPos, m_newPos, factor));
 
 	node->setLocalTransform(trf);
-
-	return Error::kNone;
 }
 
 } // end namespace anki

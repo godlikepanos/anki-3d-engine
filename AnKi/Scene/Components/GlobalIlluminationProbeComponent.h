@@ -28,7 +28,7 @@ public:
 	/// Set the cell size in meters.
 	void setCellSize(F32 cellSize)
 	{
-		if(ANKI_SCENE_ASSERT(cellSize > 0.0f) && m_cellSize != cellSize)
+		if(ANKI_EXPECT(cellSize > 0.0f) && m_cellSize != cellSize)
 		{
 			m_cellSize = cellSize;
 			m_dirty = true;
@@ -47,7 +47,7 @@ public:
 
 	void setFadeDistance(F32 dist)
 	{
-		if(ANKI_SCENE_ASSERT(dist > 0.0f) && m_fadeDistance != dist)
+		if(ANKI_EXPECT(dist > 0.0f) && m_fadeDistance != dist)
 		{
 			m_fadeDistance = dist;
 			m_dirty = true;
@@ -129,7 +129,7 @@ private:
 
 	Bool m_dirty = true;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

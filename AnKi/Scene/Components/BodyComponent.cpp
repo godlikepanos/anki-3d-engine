@@ -36,13 +36,13 @@ void BodyComponent::teleportTo(Vec3 position, const Mat3& rotation)
 	m_node->setLocalRotation(rotation);
 }
 
-Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	if(m_shapeType == BodyComponentCollisionShapeType::kCount
 	   || (m_shapeType == BodyComponentCollisionShapeType::kFromModelComponent && !m_mesh.m_modelc))
 	{
 		ANKI_ASSERT(!m_body);
-		return Error::kNone;
+		return;
 	}
 
 	const Bool shapeDirty =
@@ -77,8 +77,12 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		{
 			m_mesh.m_modelcUuid = m_mesh.m_modelc->getUuid();
 
-			ANKI_CHECK(m_mesh.m_modelc->getModelResource()->getModelPatches()[0].getMesh()->getOrCreateCollisionShape(
-				m_mass == 0.0f, kMaxLodCount - 1, m_collisionShape));
+			if(m_mesh.m_modelc->getModelResource()->getModelPatches()[0].getMesh()->getOrCreateCollisionShape(m_mass == 0.0f, kMaxLodCount - 1,
+																											  m_collisionShape))
+			{
+				ANKI_SCENE_LOGE("BodyComponent::update failed");
+				return;
+			}
 		}
 		else if(m_shapeType == BodyComponentCollisionShapeType::kAabb)
 		{
@@ -124,8 +128,6 @@ Error BodyComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 		}
 		m_force = Vec3(0.0f);
 	}
-
-	return Error::kNone;
 }
 
 void BodyComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)

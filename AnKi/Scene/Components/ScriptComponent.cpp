@@ -56,12 +56,12 @@ void ScriptComponent::loadScriptResource(CString fname)
 	}
 }
 
-Error ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = false;
 	if(m_env == nullptr)
 	{
-		return Error::kNone;
+		return;
 	}
 
 	lua_State* lua = &m_env->getLuaState();
@@ -74,33 +74,14 @@ Error ScriptComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	lua_pushnumber(lua, info.m_previousTime);
 	lua_pushnumber(lua, info.m_currentTime);
 
-	// Do the call (3 arguments, 1 result)
-	if(lua_pcall(lua, 3, 1, 0) != 0)
+	// Do the call (3 arguments, no result)
+	if(lua_pcall(lua, 3, 0, 0) != 0)
 	{
 		ANKI_SCENE_LOGE("Error running ScriptComponent's \"update\": %s", lua_tostring(lua, -1));
-		return Error::kUserData;
+		return;
 	}
 
-	if(!lua_isnumber(lua, -1))
-	{
-		ANKI_SCENE_LOGE("ScriptComponent's \"update\" should return a number");
-		lua_pop(lua, 1);
-		return Error::kUserData;
-	}
-
-	// Get the result
-	lua_Number result = lua_tonumber(lua, -1);
-	lua_pop(lua, 1);
-
-	if(result < 0)
-	{
-		ANKI_SCENE_LOGE("ScriptComponent's \"update\" return an error code");
-		return Error::kUserData;
-	}
-
-	updated = (result != 0);
-
-	return Error::kNone;
+	updated = true;
 }
 
 } // end namespace anki

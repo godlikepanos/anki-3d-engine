@@ -36,7 +36,7 @@ ReflectionProbeComponent::~ReflectionProbeComponent()
 {
 }
 
-Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	const Bool moved = info.m_node->movedThisFrame();
 	updated = moved || m_dirty;
@@ -68,8 +68,6 @@ Error ReflectionProbeComponent::update(SceneComponentUpdateInfo& info, Bool& upd
 		gpuProbe.m_componentArrayIndex = getArrayIndex();
 		m_gpuSceneProbe.uploadToGpuScene(gpuProbe);
 	}
-
-	return Error::kNone;
 }
 
 F32 ReflectionProbeComponent::getRenderRadius() const

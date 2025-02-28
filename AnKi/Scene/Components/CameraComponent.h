@@ -25,7 +25,7 @@ public:
 
 	void setNear(F32 near)
 	{
-		if(ANKI_SCENE_ASSERT(near > 0.0f))
+		if(ANKI_EXPECT(near > 0.0f))
 		{
 			m_frustum.setNear(near);
 		}
@@ -38,7 +38,7 @@ public:
 
 	void setFar(F32 far)
 	{
-		if(ANKI_SCENE_ASSERT(far > 0.0f))
+		if(ANKI_EXPECT(far > 0.0f))
 		{
 			m_frustum.setFar(far);
 		}
@@ -51,7 +51,7 @@ public:
 
 	void setFovX(F32 fovx)
 	{
-		if(ANKI_SCENE_ASSERT(fovx > 0.0f && fovx < kPi))
+		if(ANKI_EXPECT(fovx > 0.0f && fovx < kPi))
 		{
 			m_frustum.setFovX(fovx);
 		}
@@ -64,7 +64,7 @@ public:
 
 	void setFovY(F32 fovy)
 	{
-		if(ANKI_SCENE_ASSERT(fovy > 0.0f && fovy < kPi))
+		if(ANKI_EXPECT(fovy > 0.0f && fovy < kPi))
 		{
 			m_frustum.setFovY(fovy);
 		}
@@ -93,7 +93,7 @@ public:
 private:
 	Frustum m_frustum;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 };
 /// @}
 

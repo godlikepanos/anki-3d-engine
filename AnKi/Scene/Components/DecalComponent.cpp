@@ -16,6 +16,8 @@ DecalComponent::DecalComponent(SceneNode* node)
 {
 	m_gpuSceneDecal.allocate();
 	loadDiffuseImageResource("EngineAssets/DefaultDecal.png", 0.9f);
+
+	m_defaultDecalImage = m_layers[LayerType::kDiffuse].m_image;
 }
 
 DecalComponent::~DecalComponent()
@@ -40,13 +42,13 @@ void DecalComponent::setLayer(CString fname, F32 blendFactor, LayerType type)
 	l.m_blendFactor = clamp(blendFactor, 0.0f, 1.0f);
 }
 
-Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	updated = m_dirty || info.m_node->movedThisFrame();
 
 	if(!updated) [[likely]]
 	{
-		return Error::kNone;
+		return;
 	}
 
 	m_dirty = false;
@@ -76,8 +78,6 @@ Error DecalComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 	gpuDecal.m_sphereRadius = halfBoxSize.length();
 
 	m_gpuSceneDecal.uploadToGpuScene(gpuDecal);
-
-	return Error::kNone;
 }
 
 } // end namespace anki

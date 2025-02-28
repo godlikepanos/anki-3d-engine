@@ -117,12 +117,12 @@ void ModelComponent::loadModelResource(CString filename)
 	}
 }
 
-Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
 	if(!isEnabled()) [[unlikely]]
 	{
 		updated = false;
-		return Error::kNone;
+		return;
 	}
 
 	const Bool resourceUpdated = m_resourceChanged;
@@ -347,8 +347,6 @@ Error ModelComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 			}
 		}
 	}
-
-	return Error::kNone;
 }
 
 void ModelComponent::onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added)

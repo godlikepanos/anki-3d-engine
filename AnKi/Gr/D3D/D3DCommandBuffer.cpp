@@ -641,7 +641,7 @@ void CommandBuffer::zeroBuffer(const BufferView& buff)
 	Buffer& zeroBuff = getGrManagerImpl().getZeroBuffer();
 	const PtrSize zeroBuffSize = zeroBuff.getSize();
 
-	const U32 copyRangeCount = (buff.getRange() + (zeroBuffSize - 1)) / zeroBuffSize;
+	const PtrSize copyRangeCount = (buff.getRange() + (zeroBuffSize - 1)) / zeroBuffSize;
 	WeakArray<CopyBufferToBufferInfo> copyRanges;
 	CopyBufferToBufferInfo defaultCopyRange;
 	if(copyRangeCount > 1)

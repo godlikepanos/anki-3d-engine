@@ -89,11 +89,6 @@ public:
 	void setActiveCameraNode(SceneNode* cam)
 	{
 		m_mainCam = cam;
-		m_activeCameraChangeTimestamp = GlobalFrameIndex::getSingleton().m_value;
-	}
-	Timestamp getActiveCameraNodeChangeTimestamp() const
-	{
-		return m_activeCameraChangeTimestamp;
 	}
 
 	U32 getSceneNodesCount() const
@@ -110,44 +105,37 @@ public:
 		return m_events;
 	}
 
-	Error update(Second prevUpdateTime, Second crntTime);
+	void update(Second prevUpdateTime, Second crntTime);
 
-	SceneNode& findSceneNode(const CString& name);
+	/// @note Thread-safe against itself. Can be called by SceneNode::update
 	SceneNode* tryFindSceneNode(const CString& name);
+
+	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	SceneNode& findSceneNode(const CString& name);
 
 	/// Iterate the scene nodes using a lambda
 	template<typename Func>
-	Error iterateSceneNodes(Func func)
+	void iterateSceneNodes(Func func)
 	{
 		for(SceneNode& psn : m_nodes)
 		{
-			Error err = func(psn);
-			if(err)
+			const Bool continue_ = func(psn);
+			if(!continue_)
 			{
-				return err;
+				break;
 			}
 		}
-
-		return Error::kNone;
 	}
-
-	/// Iterate a range of scene nodes using a lambda
-	template<typename Func>
-	Error iterateSceneNodes(PtrSize begin, PtrSize end, Func func);
 
 	/// Create a new SceneNode
-	template<typename Node, typename... Args>
-	Error newSceneNode(const CString& name, Node*& node, Args&&... args);
-
-	/// Delete a scene node. It actualy marks it for deletion
-	void deleteSceneNode(SceneNode* node)
+	/// @note Thread-safe against itself. Can be called by SceneNode::update
+	template<typename TNode>
+	TNode* newSceneNode(CString name)
 	{
-		node->setMarkedForDeletion();
-	}
-
-	void increaseObjectsMarkedForDeletion()
-	{
-		m_objectsMarkedForDeletionCount.fetchAdd(1);
+		TNode* node = newInstance<TNode>(SceneMemoryPool::getSingleton(), name);
+		LockGuard lock(m_nodesForRegistrationMtx);
+		m_nodesForRegistration.pushBack(node);
+		return node;
 	}
 
 	const Vec3& getSceneMin() const
@@ -248,7 +236,6 @@ private:
 	GrHashMap<CString, SceneNode*> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
-	Timestamp m_activeCameraChangeTimestamp = 0;
 	SceneNode* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
@@ -257,7 +244,8 @@ private:
 	Vec3 m_sceneMax = Vec3(kMinF32);
 	mutable SpinLock m_sceneBoundsMtx;
 
-	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
+	IntrusiveList<SceneNode> m_nodesForRegistration;
+	SpinLock m_nodesForRegistrationMtx;
 
 	Atomic<U32> m_nodesUuid = {1};
 
@@ -270,69 +258,9 @@ private:
 
 	~SceneGraph();
 
-	/// Put a node in the appropriate containers
-	Error registerNode(SceneNode* node);
-	void unregisterNode(SceneNode* node);
-
-	/// Delete the nodes that are marked for deletion
-	void deleteNodesMarkedForDeletion();
-
-	Error updateNodes(UpdateSceneNodesCtx& ctx);
-	Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
+	void updateNodes(UpdateSceneNodesCtx& ctx);
+	void updateNode(Second prevTime, Second crntTime, SceneNode& node);
 };
-
-template<typename Node, typename... Args>
-inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&... args)
-{
-	Error err = Error::kNone;
-
-	node = newInstance<Node>(SceneMemoryPool::getSingleton(), name);
-	if(node)
-	{
-		err = node->init(std::forward<Args>(args)...);
-	}
-	else
-	{
-		err = Error::kOutOfMemory;
-	}
-
-	if(!err)
-	{
-		err = registerNode(node);
-	}
-
-	if(err)
-	{
-		ANKI_SCENE_LOGE("Failed to create scene node: %s", (name.isEmpty()) ? "unnamed" : &name[0]);
-
-		if(node)
-		{
-			deleteInstance(SceneMemoryPool::getSingleton(), node);
-			node = nullptr;
-		}
-	}
-
-	return err;
-}
-
-template<typename Func>
-Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
-{
-	ANKI_ASSERT(begin < m_nodesCount && end <= m_nodesCount);
-	auto it = m_nodes.getBegin() + begin;
-
-	PtrSize count = end - begin;
-	Error err = Error::kNone;
-	while(count-- != 0 && !err)
-	{
-		ANKI_ASSERT(it != m_nodes.getEnd());
-		err = func(*it);
-
-		++it;
-	}
-
-	return Error::kNone;
-}
 /// @}
 
 } // end namespace anki

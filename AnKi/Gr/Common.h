@@ -47,7 +47,9 @@ inline BoolCVar g_workGraphcsCVar("Gr", "WorkGraphs", false, "Enable or not Work
 inline NumericCVar<U32> g_maxBindlessSampledTextureCountCVar("Gr", "MaxBindlessSampledTextureCountCVar", 512, 16, kMaxU16);
 inline NumericCVar<Second> g_gpuTimeoutCVar("Gr", "GpuTimeout", 120.0, 0.0, 24.0 * 60.0,
 											"Max time to wait for GPU fences or semaphores. More than that it must be a GPU timeout");
-
+inline NumericCVar<U8> g_asyncComputeCVar("Gr", "AsyncCompute", 0, 0, 2,
+										  "Control the async compute behaviour: 0: Try use separate queue family, 1: Use lower priority queue in the "
+										  "general's queue family, 2: Use the general queue");
 #if ANKI_GR_BACKEND_DIRECT3D
 inline NumericCVar<U16> g_maxRtvDescriptorsCVar("Gr", "MaxRvtDescriptors", 1024, 8, kMaxU16, "Max number of RTVs");
 inline NumericCVar<U16> g_maxDsvDescriptorsCVar("Gr", "MaxDsvDescriptors", 512, 8, kMaxU16, "Max number of DSVs");
@@ -63,9 +65,6 @@ inline BoolCVar g_dredCVar("Gr", "Dred", false, "Enable DRED");
 inline NumericCVar<PtrSize> g_diskShaderCacheMaxSizeCVar("Gr", "DiskShaderCacheMaxSize", 128_MB, 1_MB, 1_GB, "Max size of the pipeline cache file");
 inline BoolCVar g_debugPrintfCVar("Gr", "DebugPrintf", false, "Enable or not debug printf");
 inline BoolCVar g_samplerFilterMinMaxCVar("Gr", "SamplerFilterMinMax", true, "Enable or not min/max sample filtering");
-inline NumericCVar<U8> g_asyncComputeCVar("Gr", "AsyncCompute", 0, 0, 2,
-										  "Control the async compute behaviour: 0: Try use separate queue family, 1: Use lower priority queue in the "
-										  "general's queue family, 2: Use the general queue");
 inline StringCVar g_vkLayersCVar("Gr", "VkLayers", "", "VK layers to enable. Seperated by :");
 #endif
 

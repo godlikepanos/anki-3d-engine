@@ -5,6 +5,7 @@
 
 #include <cstdio>
 #include <Samples/Common/SampleApp.h>
+#include <Samples/PhysicsPlayground/FpsCharacter.h>
 
 using namespace anki;
 
@@ -13,17 +14,14 @@ static Error createDestructionEvent(SceneNode* node)
 	CString script = R"(
 function update(event, prevTime, crntTime)
 	-- Do nothing
-	return 1
 end
 
 function onKilled(event, prevTime, crntTime)
 	logi(string.format("Will kill %s", event:getAssociatedSceneNodes():getAt(0):getName()))
-	event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
-	return 1
+	event:getAssociatedSceneNodes():getAt(0):markForDeletion()
 end
 	)";
-	ScriptEvent* event;
-	ANKI_CHECK(SceneGraph::getSingleton().getEventManager().newEvent(event, -1, 10.0, script));
+	ScriptEvent* event = SceneGraph::getSingleton().getEventManager().newEvent<ScriptEvent>(-1.0f, 10.0f, script);
 	event->addAssociatedSceneNode(node);
 
 	return Error::kNone;
@@ -49,21 +47,18 @@ function update(event, prevTime, crntTime)
 	node:setLocalOrigin(pos)
 
 	if density <= 0.0 or radius <= 0.0 then
-		node:setMarkedForDeletion()
+		node:markForDeletion()
 	else
 		node:setLocalScale(Vec3.new(radius))
 		fogComponent:setDensity(density)
 	end
-
-	return 1
 end
 
 function onKilled(event, prevTime, crntTime)
-	return 1
+	-- Nothing
 end
 	)";
-	ScriptEvent* event;
-	ANKI_CHECK(SceneGraph::getSingleton().getEventManager().newEvent(event, -1, 10.0, script));
+	ScriptEvent* event = SceneGraph::getSingleton().getEventManager().newEvent<ScriptEvent>(-1, 10.0, script);
 	event->addAssociatedSceneNode(node);
 
 	return Error::kNone;
@@ -92,8 +87,7 @@ Error MyApp::sampleExtraInit()
 		arm.setLocalTransform(Transform(Vec3(0.065f, -0.13f, -0.4f), Mat3(Euler(0.0f, kPi, 0.0f)), Vec3(1.0f, 1.0f, 1.0f)));
 		arm.setParent(&cam);
 
-		SceneNode* player;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("player", player));
+		SceneNode* player = SceneGraph::getSingleton().newSceneNode<SceneNode>("player");
 		PlayerControllerComponent* playerc = player->newComponent<PlayerControllerComponent>();
 		playerc->moveToPosition(Vec3(0.0f, 10.5f, 0.0f));
 
@@ -103,22 +97,19 @@ Error MyApp::sampleExtraInit()
 	// Create a body component with hinge joint
 	if(1)
 	{
-		SceneNode* base;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("hingeBase", base));
+		SceneNode* base = SceneGraph::getSingleton().newSceneNode<SceneNode>("hingeBase");
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
 		bodyc->setBoxExtend(Vec3(0.1f));
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
 		bodyc->teleportTo(Vec3(-0.0f, 5.0f, -3.0f), Mat3::getIdentity());
 
-		SceneNode* joint;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("hinge", joint));
+		SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>("hinge");
 		JointComponent* jointc = joint->newComponent<JointComponent>();
 		jointc->setType(JointType::kHinge);
 		joint->setLocalOrigin(Vec3(-0.0f, 4.8f, -3.0f));
 		base->addChild(joint);
 
-		SceneNode* monkey;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("monkey_p2p", monkey));
+		SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>("monkey_p2p");
 		ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 		const Aabb aabb = modelc->getModelResource()->getBoundingVolume();
@@ -139,8 +130,7 @@ Error MyApp::sampleExtraInit()
 
 		Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), Vec4(1.0, 1.0, 1.0, 0.0));
 
-		SceneNode* base;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("p2pBase", base));
+		SceneNode* base = SceneGraph::getSingleton().newSceneNode<SceneNode>("p2pBase");
 		BodyComponent* bodyc = base->newComponent<BodyComponent>();
 		bodyc->setBoxExtend(Vec3(0.1f));
 		bodyc->setCollisionShapeType(BodyComponentCollisionShapeType::kAabb);
@@ -152,15 +142,13 @@ Error MyApp::sampleExtraInit()
 
 		for(U32 i = 0; i < linkCount; ++i)
 		{
-			SceneNode* joint;
-			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("joint_chain%u", i), joint));
+			SceneNode* joint = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("joint_chain%u", i));
 			JointComponent* jointc = joint->newComponent<JointComponent>();
 			jointc->setType(JointType::kPoint);
 			joint->setLocalOrigin(trf.getOrigin().xyz());
 			joint->setParent(prevNode);
 
-			SceneNode* monkey;
-			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("monkey_chain%u", i).toCString(), monkey));
+			SceneNode* monkey = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("monkey_chain%u", i).toCString());
 			ModelComponent* modelc = monkey->newComponent<ModelComponent>();
 			modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
 			const Aabb aabb = modelc->getModelResource()->getBoundingVolume();
@@ -183,8 +171,7 @@ Error MyApp::sampleExtraInit()
 	// Trigger
 	if(1)
 	{
-		SceneNode* node;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode("trigger", node));
+		SceneNode* node = SceneGraph::getSingleton().newSceneNode<SceneNode>("trigger");
 		TriggerComponent* triggerc = node->newComponent<TriggerComponent>();
 		triggerc->setType(TriggerComponentShapeType::kSphere);
 		node->setLocalScale(Vec3(1.8f, 1.8f, 1.8f));
@@ -361,7 +348,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		}
 	}
 
-	if(Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
+	if(Input::getSingleton().getMouseButton(MouseButton::kRight) == 1)
 	{
 		ANKI_LOGI("Firing a grenade");
 
@@ -371,8 +358,7 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		const Vec3 newPos = camTrf.getOrigin().xyz() + camTrf.getRotation().getZAxis() * -3.0f;
 		camTrf.setOrigin(newPos.xyz0());
 
-		SceneNode* grenade;
-		ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("Grenade%u", instance++).toCString(), grenade));
+		SceneNode* grenade = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("Grenade%u", instance++).toCString());
 		grenade->setLocalScale(Vec3(2.8f));
 		ModelComponent* modelc = grenade->newComponent<ModelComponent>();
 		modelc->loadModelResource("Assets/MESH_grenade_MTL_grenade_85852a78645563d8.ankimdl");
@@ -389,63 +375,72 @@ Error MyApp::userMainLoop(Bool& quit, [[maybe_unused]] Second elapsedTime)
 		ANKI_CHECK(createDestructionEvent(grenade));
 	}
 
-	if(Input::getSingleton().getMouseButton(MouseButton::kRight) == 1)
+	if(Input::getSingleton().getMouseButton(MouseButton::kLeft) == 1)
 	{
-		Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
-		Vec3 from = camTrf.getOrigin().xyz();
-		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
+		const Transform camTrf = SceneGraph::getSingleton().getActiveCameraNode().getWorldTransform();
 
-		RayHitResult result;
-		const Bool hit = PhysicsWorld::getSingleton().castRayClosestHit(from, to, PhysicsLayerBit::kStatic, result);
-
-		if(hit)
+		for(U32 i = 0; i < 8; ++i)
 		{
-			// Create rotation
-			const Vec3& zAxis = result.m_normal;
-			Vec3 yAxis = Vec3(0, 1, 0.5);
-			Vec3 xAxis = yAxis.cross(zAxis).normalize();
-			yAxis = zAxis.cross(xAxis);
+			F32 spredAngle = toRad(getRandomRange(-2.0f, 2.0f));
+			Mat3 randDirection(Axisang(spredAngle, Vec3(1.0f, 0.0f, 0.0f)));
+			spredAngle = toRad(getRandomRange(-2.0f, 2.0f));
+			randDirection = randDirection * Mat3(Axisang(spredAngle, Vec3(0.0f, 1.0f, 0.0f)));
+			randDirection = camTrf.getRotation().getRotationPart() * randDirection;
 
-			Mat3x4 rot = Mat3x4::getIdentity();
-			rot.setXAxis(xAxis);
-			rot.setYAxis(yAxis);
-			rot.setZAxis(zAxis);
+			const Vec3 from = camTrf.getOrigin().xyz();
+			const Vec3 to = from + -randDirection.getZAxis() * 100.0f;
 
-			Transform trf(result.m_hitPosition.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+			RayHitResult result;
+			const Bool hit = PhysicsWorld::getSingleton().castRayClosestHit(from, to, PhysicsLayerBit::kStatic, result);
 
-			// Create an obj
-			static U32 id = 0;
-			SceneNode* monkey;
-			ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(String().sprintf("decal%u", id++).toCString(), monkey));
-			ModelComponent* modelc = monkey->newComponent<ModelComponent>();
-			modelc->loadModelResource("Assets/Suzanne_dynamic_36043dae41fe12d5.ankimdl");
-			monkey->setLocalTransform(trf);
+			if(hit)
+			{
+				// Create rotation
+				const Vec3& zAxis = result.m_normal;
+				Vec3 yAxis = Vec3(0, 1, 0.5);
+				Vec3 xAxis = yAxis.cross(zAxis).normalize();
+				yAxis = zAxis.cross(xAxis);
 
-			ANKI_CHECK(createDestructionEvent(monkey));
+				Mat3x4 rot = Mat3x4::getIdentity();
+				rot.setXAxis(xAxis);
+				rot.setYAxis(yAxis);
+				rot.setZAxis(zAxis);
 
-#if 1
+				Transform trf(result.m_hitPosition.xyz0(), rot, Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+
+				// Create an obj
+				static U32 id = 0;
+				SceneNode* bulletDecal = SceneGraph::getSingleton().newSceneNode<SceneNode>(String().sprintf("decal%u", id++).toCString());
+				bulletDecal->setLocalTransform(trf);
+				bulletDecal->setLocalScale(Vec3(0.1f, 0.1f, 0.3f));
+				DecalComponent* decalc = bulletDecal->newComponent<DecalComponent>();
+				decalc->loadDiffuseImageResource("Assets/bullet_hole_decal.ankitex", 1.0f);
+
+				ANKI_CHECK(createDestructionEvent(bulletDecal));
+
+#if 0
 			// Create some particles
 			ParticleEmitterComponent* partc = monkey->newComponent<ParticleEmitterComponent>();
 			partc->loadParticleEmitterResource("Assets/Smoke.ankipart");
 #endif
 
-			// Create some fog volumes
-			for(U i = 0; i < 1; ++i)
-			{
-				static int id = 0;
-				String name;
-				name.sprintf("fog%u", id++);
+				// Create some fog volumes
+				if(i == 0)
+				{
+					static int id = 0;
+					String name;
+					name.sprintf("fog%u", id++);
 
-				SceneNode* fogNode;
-				ANKI_CHECK(SceneGraph::getSingleton().newSceneNode(name.toCString(), fogNode));
-				FogDensityComponent* fogComp = fogNode->newComponent<FogDensityComponent>();
-				fogNode->setLocalScale(Vec3(2.1f));
-				fogComp->setDensity(15.0f);
+					SceneNode* fogNode = SceneGraph::getSingleton().newSceneNode<SceneNode>(name.toCString());
+					FogDensityComponent* fogComp = fogNode->newComponent<FogDensityComponent>();
+					fogNode->setLocalScale(Vec3(2.1f));
+					fogComp->setDensity(15.0f);
 
-				fogNode->setLocalTransform(trf);
+					fogNode->setLocalTransform(trf);
 
-				ANKI_CHECK(createDestructionEvent(fogNode));
-				ANKI_CHECK(createFogVolumeFadeEvent(fogNode));
+					ANKI_CHECK(createDestructionEvent(fogNode));
+					ANKI_CHECK(createFogVolumeFadeEvent(fogNode));
+				}
 			}
 		}
 	}

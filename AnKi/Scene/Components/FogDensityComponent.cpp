@@ -20,12 +20,9 @@ FogDensityComponent ::~FogDensityComponent()
 {
 }
 
-Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
+void FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 {
-	if(m_type == FogDensityComponentShape::kCount)
-	{
-		return Error::kNone;
-	}
+	ANKI_ASSERT(m_type < FogDensityComponentShape::kCount);
 
 	updated = m_dirty || info.m_node->movedThisFrame();
 
@@ -52,8 +49,6 @@ Error FogDensityComponent::update(SceneComponentUpdateInfo& info, Bool& updated)
 
 		m_gpuSceneVolume.uploadToGpuScene(gpuVolume);
 	}
-
-	return Error::kNone;
 }
 
 } // end namespace anki

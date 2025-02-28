@@ -20,7 +20,12 @@ class Event : public IntrusiveListEnabled<Event>
 	friend class EventManager;
 
 public:
-	Event() = default;
+	/// @param startTime The time the event will start. If it's < 0 then start the event now.
+	/// @param duration The duration of the event.
+	Event(Second startTime, Second duration)
+	{
+		init(startTime, duration);
+	}
 
 	virtual ~Event() = default;
 
@@ -39,10 +44,12 @@ public:
 		return crntTime >= m_startTime + m_duration;
 	}
 
-	/// @note It's thread safe.
-	void setMarkedForDeletion();
+	void markForDeletion()
+	{
+		m_markedForDeletion = true;
+	}
 
-	Bool getMarkedForDeletion() const
+	Bool isMarkedForDeletion() const
 	{
 		return m_markedForDeletion;
 	}
@@ -63,6 +70,12 @@ public:
 												  : WeakArray<SceneNode*>(&m_associatedNodes[0], m_associatedNodes.getSize());
 	}
 
+	ConstWeakArray<SceneNode*> getAssociatedSceneNodes() const
+	{
+		return (m_associatedNodes.getSize() == 0) ? ConstWeakArray<SceneNode*>()
+												  : ConstWeakArray<SceneNode*>(&m_associatedNodes[0], m_associatedNodes.getSize());
+	}
+
 	void addAssociatedSceneNode(SceneNode* node)
 	{
 		ANKI_ASSERT(node);
@@ -72,14 +85,13 @@ public:
 	/// This method should be implemented by the derived classes
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
-	virtual Error update(Second prevUpdateTime, Second crntTime) = 0;
+	virtual void update(Second prevUpdateTime, Second crntTime) = 0;
 
 	/// This is called when the event is killed
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
-	virtual Error onKilled([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
+	virtual void onKilled([[maybe_unused]] Second prevUpdateTime, [[maybe_unused]] Second crntTime)
 	{
-		return Error::kNone;
 	}
 
 protected:
@@ -91,13 +103,11 @@ protected:
 
 	SceneDynamicArray<SceneNode*> m_associatedNodes;
 
-	/// @param startTime The time the event will start. If it's < 0 then start the event now.
-	/// @param duration The duration of the event.
-	void init(Second startTime, Second duration);
-
 	/// Return the u between current time and when the event started
 	/// @return A number [0.0, 1.0]
 	Second getDelta(Second crntTime) const;
+
+	void init(Second startTime, Second duration);
 };
 /// @}
 

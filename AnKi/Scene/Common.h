@@ -44,9 +44,9 @@ private:
 
 ANKI_DEFINE_SUBMODULE_UTIL_CONTAINERS(Scene, SceneMemoryPool)
 
-#define ANKI_SCENE_ASSERT(expression) \
+#define ANKI_EXPECT(expression) \
 	std::invoke([&]() -> Bool { \
-		const Bool ok = (expression); \
+		const Bool ok = !!(expression); \
 		if(!ok) [[unlikely]] \
 		{ \
 			ANKI_SCENE_LOGE("Expression failed: " #expression); \

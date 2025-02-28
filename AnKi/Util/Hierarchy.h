@@ -86,19 +86,19 @@ public:
 
 	/// Visit the children and the children's children. Use it with lambda
 	template<typename TVisitorFunc>
-	Error visitChildren(TVisitorFunc vis);
+	Bool visitChildren(TVisitorFunc vis);
 
 	/// Visit this object and move to the children. Use it with lambda
 	template<typename TVisitorFunc>
-	Error visitThisAndChildren(TVisitorFunc vis);
+	void visitThisAndChildren(TVisitorFunc vis);
 
 	/// Visit the whole tree. Use it with lambda
 	template<typename TVisitorFunc>
-	Error visitTree(TVisitorFunc vis);
+	void visitTree(TVisitorFunc vis);
 
 	/// Visit the children and limit the depth. Use it with lambda.
 	template<typename TVisitorFunc>
-	Error visitChildrenMaxDepth(I maxDepth, TVisitorFunc vis);
+	Bool visitChildrenMaxDepth(I maxDepth, TVisitorFunc vis);
 
 private:
 	Value* m_parent = nullptr; ///< May be nullptr

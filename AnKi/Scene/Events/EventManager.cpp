@@ -15,46 +15,39 @@ EventManager::EventManager()
 
 EventManager::~EventManager()
 {
-	while(!m_events.isEmpty())
+	while(!m_eventsForRegistration.isEmpty())
 	{
-		Event* event = &m_events.getFront();
-		event->setMarkedForDeletion();
+		deleteInstance(SceneMemoryPool::getSingleton(), m_eventsForRegistration.popFront());
 	}
 
-	deleteEventsMarkedForDeletion(false);
+	while(!m_events.isEmpty())
+	{
+		deleteInstance(SceneMemoryPool::getSingleton(), m_events.popFront());
+	}
 }
 
-Error EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
+void EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 {
-	Error err = Error::kNone;
+	// Register new events
+	while(!m_eventsForRegistration.isEmpty())
+	{
+		Event* e = m_eventsForRegistration.popFront();
+		m_events.pushBack(e);
+	}
 
+	DynamicArray<Event*, MemoryPoolPtrWrapper<StackMemoryPool>> eventsForDeletion(&SceneGraph::getSingleton().getFrameMemoryPool());
 	for(Event& event : m_events)
 	{
-		// If event or the node's event is marked for deletion then dont do anything else for that event
-		if(event.getMarkedForDeletion())
+		// If event or the event's nodes are marked for deletion, destoy it
+		if(event.isMarkedForDeletion() || assosiatedNodesMarkedForDeletion(event))
 		{
+			eventsForDeletion.emplaceBack(&event);
 			continue;
 		}
 
-		// Check if the associated scene nodes are marked for deletion
-		Bool skip = false;
-		for(SceneNode* node : event.m_associatedNodes)
-		{
-			if(node->getMarkedForDeletion())
-			{
-				skip = true;
-				break;
-			}
-		}
-
-		if(skip)
-		{
-			continue;
-		}
-
-		// Audjust starting time
 		if(event.m_startTime < 0.0)
 		{
+			// Start the event now
 			event.m_startTime = crntTime;
 		}
 
@@ -65,79 +58,48 @@ Error EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 
 			if(event.getStartTime() <= crntTime)
 			{
-				err = event.update(prevUpdateTime, crntTime);
+				event.update(prevUpdateTime, crntTime);
 			}
 		}
 		else
 		{
-			// Dead
+			// Dead, reanimate or kill
 
 			if(event.getReanimate())
 			{
 				event.m_startTime = prevUpdateTime;
-				err = event.update(prevUpdateTime, crntTime);
+				event.update(prevUpdateTime, crntTime);
 			}
 			else
 			{
-				err = event.onKilled(prevUpdateTime, crntTime);
-				if(err || !event.getReanimate())
+				event.onKilled(prevUpdateTime, crntTime);
+				if(!event.getReanimate())
 				{
-					event.setMarkedForDeletion();
+					eventsForDeletion.emplaceBack(&event);
 				}
 			}
 		}
 	}
 
-	return err;
-}
-
-void EventManager::markEventForDeletion(Event* event)
-{
-	ANKI_ASSERT(event);
-	if(event->m_markedForDeletion)
+	for(Event* e : eventsForDeletion)
 	{
-		return;
+		m_events.erase(e);
+		deleteInstance(SceneMemoryPool::getSingleton(), e);
 	}
-
-	LockGuard<Mutex> lock(m_mtx);
-	event->m_markedForDeletion = true;
-	m_events.erase(event);
-	m_eventsMarkedForDeletion.pushBack(event);
+	eventsForDeletion.destroy();
 }
 
-void EventManager::deleteEventsMarkedForDeletion(Bool fullCleanup)
+Bool EventManager::assosiatedNodesMarkedForDeletion(const Event& e)
 {
-	// Mark events with to-be-deleted nodes as also to be deleted
-	if(fullCleanup)
+	for(const SceneNode* node : e.getAssociatedSceneNodes())
 	{
-		// Gather in an array because we can't call setMarkedForDeletion while iterating m_events
-		DynamicArray<Event*, MemoryPoolPtrWrapper<StackMemoryPool>> markedForDeletion(&SceneGraph::getSingleton().getFrameMemoryPool());
-		for(Event& event : m_events)
+		if(node->isMarkedForDeletion())
 		{
-			for(SceneNode* node : event.m_associatedNodes)
-			{
-				if(node->getMarkedForDeletion())
-				{
-					markedForDeletion.emplaceBack(&event);
-					break;
-				}
-			}
-		}
-
-		for(Event* event : markedForDeletion)
-		{
-			event->setMarkedForDeletion();
+			return true;
 		}
 	}
 
-	// Gather events for deletion
-	while(!m_eventsMarkedForDeletion.isEmpty())
-	{
-		Event* event = &m_eventsMarkedForDeletion.getFront();
-		m_eventsMarkedForDeletion.popFront();
-
-		deleteInstance(SceneMemoryPool::getSingleton(), event);
-	}
+	return false;
 }
 
 } // end namespace anki

@@ -36,7 +36,7 @@ public:
 
 	void setBoxExtend(Vec3 extend)
 	{
-		if(ANKI_SCENE_ASSERT(extend > 0.01f) && extend != m_box.m_extend)
+		if(ANKI_EXPECT(extend > 0.01f) && extend != m_box.m_extend)
 		{
 			m_box.m_extend = extend;
 			if(m_shapeType == BodyComponentCollisionShapeType::kAabb)
@@ -53,7 +53,7 @@ public:
 
 	void setSphereRadius(F32 radius)
 	{
-		if(ANKI_SCENE_ASSERT(radius > 0.01f) && radius != m_sphere.m_radius)
+		if(ANKI_EXPECT(radius > 0.01f) && radius != m_sphere.m_radius)
 		{
 			m_sphere.m_radius = radius;
 			if(m_shapeType == BodyComponentCollisionShapeType::kSphere)
@@ -70,7 +70,7 @@ public:
 
 	void setCollisionShapeType(BodyComponentCollisionShapeType type)
 	{
-		if(ANKI_SCENE_ASSERT(type <= BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
+		if(ANKI_EXPECT(type <= BodyComponentCollisionShapeType::kCount) && m_shapeType != type)
 		{
 			m_shapeType = type;
 			m_body.reset(nullptr); // Force recreate
@@ -79,7 +79,7 @@ public:
 
 	void setMass(F32 mass)
 	{
-		if(ANKI_SCENE_ASSERT(mass >= 0.0f) && m_mass != mass)
+		if(ANKI_EXPECT(mass >= 0.0f) && m_mass != mass)
 		{
 			m_mass = mass;
 			m_body.reset(nullptr); // Force recreate
@@ -148,7 +148,7 @@ private:
 
 	BodyComponentCollisionShapeType m_shapeType = BodyComponentCollisionShapeType::kCount;
 
-	Error update(SceneComponentUpdateInfo& info, Bool& updated) override;
+	void update(SceneComponentUpdateInfo& info, Bool& updated) override;
 
 	void onOtherComponentRemovedOrAdded(SceneComponent* other, Bool added) override;
 };
