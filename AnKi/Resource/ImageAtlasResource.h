@@ -34,7 +34,10 @@ namespace anki {
 class ImageAtlasResource : public ResourceObject
 {
 public:
-	ImageAtlasResource() = default;
+	ImageAtlasResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~ImageAtlasResource() = default;
 

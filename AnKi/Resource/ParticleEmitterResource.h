@@ -103,7 +103,10 @@ public:
 class ParticleEmitterResource : public ResourceObject, private ParticleEmitterProperties
 {
 public:
-	ParticleEmitterResource() = default;
+	ParticleEmitterResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~ParticleEmitterResource() = default;
 

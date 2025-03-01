@@ -89,7 +89,10 @@ private:
 class SkeletonResource : public ResourceObject
 {
 public:
-	SkeletonResource() = default;
+	SkeletonResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~SkeletonResource() = default;
 

@@ -17,7 +17,10 @@ namespace anki {
 class GenericResource : public ResourceObject
 {
 public:
-	GenericResource() = default;
+	GenericResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~GenericResource() = default;
 

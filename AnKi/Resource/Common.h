@@ -57,15 +57,10 @@ template<typename T>
 using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 
 // NOTE: Add resources in 3 places
-#define ANKI_INSTANTIATE_RESOURCE(rsrc_, name_) \
-	class rsrc_; \
-	using name_ = ResourcePtr<rsrc_>;
-
-#define ANKI_INSTANSIATE_RESOURCE_DELIMITER()
-
-#include <AnKi/Resource/InstantiationMacros.h>
-#undef ANKI_INSTANTIATE_RESOURCE
-#undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
+#define ANKI_INSTANTIATE_RESOURCE(className) \
+	class className; \
+	using className##Ptr = ResourcePtr<className>;
+#include <AnKi/Resource/Resources.def.h>
 
 /// An alias that denotes a ResourceFilesystem path.
 using ResourceFilename = CString;

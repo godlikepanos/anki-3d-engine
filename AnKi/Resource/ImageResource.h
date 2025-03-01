@@ -20,7 +20,10 @@ inline NumericCVar<U32> g_maxImageSizeCVar("Rsrc", "MaxImageSize", 1024u * 1024u
 class ImageResource : public ResourceObject
 {
 public:
-	ImageResource() = default;
+	ImageResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~ImageResource();
 

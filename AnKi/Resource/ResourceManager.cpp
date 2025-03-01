@@ -38,6 +38,11 @@ ResourceManager::~ResourceManager()
 	deleteInstance(ResourceMemoryPool::getSingleton(), m_transferGpuAlloc);
 	deleteInstance(ResourceMemoryPool::getSingleton(), m_fs);
 
+#define ANKI_INSTANTIATE_RESOURCE(className) \
+	static_cast<TypeData<className>&>(m_allTypes).m_entries.destroy(); \
+	static_cast<TypeData<className>&>(m_allTypes).m_map.destroy();
+#include <AnKi/Resource/Resources.def.h>
+
 	ResourceMemoryPool::freeSingleton();
 }
 
@@ -68,52 +73,105 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
-	Error err = Error::kNone;
+	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
 
-	T* const other = findLoadedResource<T>(filename);
-
-	if(other)
+	// Check if registered
+	using EntryType = typename TypeData<T>::Entry;
+	EntryType* entry;
 	{
-		// Found
-		out.reset(other);
+		RLockGuard lock(type.m_mtx);
+		auto it = type.m_map.find(filename);
+		entry = (it != type.m_map.getEnd()) ? &type.m_entries[*it] : nullptr;
 	}
-	else
+
+	if(!entry)
 	{
-		// Allocate ptr
-		T* ptr = newInstance<T>(ResourceMemoryPool::getSingleton());
-		ANKI_ASSERT(ptr->getRefcount() == 0);
+		// Resource entry doesn't exist, create one
 
-		// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
-		ptr->retain();
+		WLockGuard lock(type.m_mtx);
 
-		err = ptr->load(filename, async);
-		if(err)
+		auto it = type.m_map.find(filename); // Search again
+		if(it != type.m_map.getEnd())
 		{
-			ANKI_RESOURCE_LOGE("Failed to load resource: %s", &filename[0]);
-			deleteInstance(ResourceMemoryPool::getSingleton(), ptr);
-			return err;
+			entry = &type.m_entries[*it];
 		}
+		else
+		{
+			auto arrit = type.m_entries.emplace();
+			type.m_map.emplace(filename, arrit.getArrayIndex());
+			entry = &(*arrit);
+		}
+	}
 
-		ptr->setFilename(filename);
-		ptr->setUuid(++m_uuid);
+	ANKI_ASSERT(entry);
 
-		// Register resource
-		registerResource(ptr);
-		out.reset(ptr);
+	// Try loading the resource
+	Error err = Error::kNone;
+	{
+		LockGuard lock(entry->m_mtx);
 
-		// Decrement because of the increment happened a few lines above
-		ptr->release();
+		if(entry->m_resource == nullptr)
+		{
+			// Resource hasn't been loaded, load it
+
+			T* rsrc = newInstance<T>(ResourceMemoryPool::getSingleton(), filename, m_uuid.fetchAdd(1));
+
+			// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
+			rsrc->retain();
+
+			err = rsrc->load(filename, async);
+
+			// Decrement because of the increment happened a few lines above
+			rsrc->release();
+
+			if(err)
+			{
+				ANKI_RESOURCE_LOGE("Failed to load resource: %s", filename.cstr());
+				deleteInstance(ResourceMemoryPool::getSingleton(), rsrc);
+			}
+			else
+			{
+				entry->m_resource = rsrc;
+			}
+		}
+	}
+
+	if(!err)
+	{
+		out.reset(entry->m_resource);
 	}
 
 	return err;
 }
 
-// Instansiate the ResourceManager::loadResource()
-#define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) \
-	template Error ResourceManager::loadResource<rsrc_>(const CString& filename, ResourcePtr<rsrc_>& out, Bool async);
-#define ANKI_INSTANSIATE_RESOURCE_DELIMITER()
-#include <AnKi/Resource/InstantiationMacros.h>
-#undef ANKI_INSTANTIATE_RESOURCE
-#undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
+template<typename T>
+void ResourceManager::freeResource(T* ptr)
+{
+	ANKI_ASSERT(ptr);
+	ANKI_ASSERT(ptr->m_refcount.load() == 0);
+
+	TypeData<T>& type = static_cast<TypeData<T>&>(m_allTypes);
+
+	typename TypeData<T>::Entry* entry = nullptr;
+	{
+		RLockGuard lock(type.m_mtx);
+		auto it = type.m_map.find(ptr->m_fname);
+		ANKI_ASSERT(it != type.m_map.getEnd());
+		entry = &type.m_entries[*it];
+	}
+
+	{
+		LockGuard lock(entry->m_mtx);
+		ANKI_ASSERT(entry->m_resource);
+		deleteInstance(ResourceMemoryPool::getSingleton(), entry->m_resource);
+		entry->m_resource = nullptr;
+	}
+}
+
+// Instansiate
+#define ANKI_INSTANTIATE_RESOURCE(className) \
+	template Error ResourceManager::loadResource<className>(const CString& filename, ResourcePtr<className>& out, Bool async); \
+	template void ResourceManager::freeResource<className>(className * ptr);
+#include <AnKi/Resource/Resources.def.h>
 
 } // end namespace anki

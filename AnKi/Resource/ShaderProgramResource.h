@@ -103,7 +103,10 @@ private:
 class ShaderProgramResource : public ResourceObject
 {
 public:
-	ShaderProgramResource();
+	ShaderProgramResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~ShaderProgramResource();
 

@@ -16,7 +16,10 @@ namespace anki {
 class ScriptResource : public ResourceObject
 {
 public:
-	ScriptResource() = default;
+	ScriptResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~ScriptResource() = default;
 

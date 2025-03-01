@@ -77,10 +77,6 @@ MaterialVariable::~MaterialVariable()
 {
 }
 
-MaterialResource::MaterialResource()
-{
-}
-
 MaterialResource::~MaterialResource()
 {
 	ResourceMemoryPool::getSingleton().free(m_prefilledLocalConstants);

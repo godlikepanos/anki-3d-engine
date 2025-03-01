@@ -20,7 +20,10 @@ class CpuMeshResource : public ResourceObject
 {
 public:
 	/// Default constructor
-	CpuMeshResource() = default;
+	CpuMeshResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~CpuMeshResource() = default;
 

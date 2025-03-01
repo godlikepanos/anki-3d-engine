@@ -58,7 +58,10 @@ public:
 class AnimationResource : public ResourceObject
 {
 public:
-	AnimationResource() = default;
+	AnimationResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~AnimationResource() = default;
 

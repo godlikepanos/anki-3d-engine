@@ -128,7 +128,10 @@ private:
 class ModelResource : public ResourceObject
 {
 public:
-	ModelResource() = default;
+	ModelResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~ModelResource() = default;
 

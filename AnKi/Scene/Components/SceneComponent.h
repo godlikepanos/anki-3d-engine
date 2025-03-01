@@ -94,13 +94,14 @@ public:
 
 	ANKI_INTERNAL U32 getArrayIndex() const
 	{
-		ANKI_ASSERT(m_arrayIdx != kMaxU32);
+		ANKI_ASSERT(m_arrayIdx != kMaxU32 >> 8u);
 		return m_arrayIdx;
 	}
 
 	ANKI_INTERNAL void setArrayIndex(U32 idx)
 	{
-		m_arrayIdx = idx & (kMaxU32 >> 24u);
+		m_arrayIdx = idx & (kMaxU32 >> 8u);
+		ANKI_ASSERT(m_arrayIdx == idx);
 	}
 
 	ANKI_INTERNAL virtual void onDestroy([[maybe_unused]] SceneNode& node)
@@ -133,7 +134,7 @@ private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 	U32 m_uuid = 0;
 
-	U32 m_arrayIdx : 24 = kMaxU32 >> 24u;
+	U32 m_arrayIdx : 24 = kMaxU32 >> 8u;
 	U32 m_type : 8 = 0; ///< Cache the type ID.
 
 	static constexpr Array<F32, U32(SceneComponentType::kCount)> m_updateOrderWeights = {

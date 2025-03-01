@@ -49,10 +49,6 @@ public:
 	}
 };
 
-MeshResource::MeshResource()
-{
-}
-
 MeshResource::~MeshResource()
 {
 	for(Lod& lod : m_lods)

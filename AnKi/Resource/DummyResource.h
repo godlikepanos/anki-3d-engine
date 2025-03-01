@@ -17,7 +17,10 @@ namespace anki {
 class DummyResource : public ResourceObject
 {
 public:
-	DummyResource() = default;
+	DummyResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~DummyResource()
 	{

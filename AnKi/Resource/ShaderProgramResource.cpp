@@ -22,10 +22,6 @@ ShaderProgramResourceVariant::~ShaderProgramResourceVariant()
 {
 }
 
-ShaderProgramResource::ShaderProgramResource()
-{
-}
-
 ShaderProgramResource::~ShaderProgramResource()
 {
 	for(auto it : m_variants)

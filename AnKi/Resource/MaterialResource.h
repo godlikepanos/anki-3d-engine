@@ -182,7 +182,10 @@ private:
 class MaterialResource : public ResourceObject
 {
 public:
-	MaterialResource();
+	MaterialResource(CString fname, U32 uuid)
+		: ResourceObject(fname, uuid)
+	{
+	}
 
 	~MaterialResource();
 

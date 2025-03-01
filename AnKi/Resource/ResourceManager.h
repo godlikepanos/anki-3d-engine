@@ -10,6 +10,8 @@
 #include <AnKi/Util/List.h>
 #include <AnKi/Util/Functions.h>
 #include <AnKi/Util/String.h>
+#include <AnKi/Util/HashMap.h>
+#include <AnKi/Util/BlockArray.h>
 
 namespace anki {
 
@@ -28,74 +30,8 @@ class ShaderProgramResourceSystem;
 inline NumericCVar<PtrSize> g_transferScratchMemorySizeCVar("Rsrc", "TransferScratchMemorySize", 256_MB, 1_MB, 4_GB,
 															"Memory that is used fot texture and buffer uploads");
 
-/// Manage resources of a certain type
-template<typename Type>
-class TypeResourceManager
-{
-protected:
-	TypeResourceManager()
-	{
-	}
-
-	~TypeResourceManager()
-	{
-		ANKI_ASSERT(m_ptrs.isEmpty() && "Forgot to delete some resources");
-		m_ptrs.destroy();
-	}
-
-	Type* findLoadedResource(const CString& filename)
-	{
-		auto it = find(filename);
-		return (it != m_ptrs.end()) ? *it : nullptr;
-	}
-
-	void registerResource(Type* ptr)
-	{
-		ANKI_ASSERT(find(ptr->getFilename()) == m_ptrs.getEnd());
-		m_ptrs.pushBack(ptr);
-	}
-
-	void unregisterResource(Type* ptr)
-	{
-		auto it = find(ptr->getFilename());
-		ANKI_ASSERT(it != m_ptrs.end());
-		m_ptrs.erase(it);
-	}
-
-private:
-	using Container = ResourceList<Type*>;
-
-	Container m_ptrs;
-
-	typename Container::Iterator find(const CString& filename)
-	{
-		typename Container::Iterator it;
-
-		for(it = m_ptrs.getBegin(); it != m_ptrs.getEnd(); ++it)
-		{
-			if((*it)->getFilename() == filename)
-			{
-				break;
-			}
-		}
-
-		return it;
-	}
-};
-
 /// Resource manager. It holds a few global variables
-class ResourceManager : public MakeSingleton<ResourceManager>,
-
-#define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) \
-public \
-	TypeResourceManager<rsrc_>
-
-#define ANKI_INSTANSIATE_RESOURCE_DELIMITER() ,
-
-#include <AnKi/Resource/InstantiationMacros.h>
-#undef ANKI_INSTANTIATE_RESOURCE
-#undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
-
+class ResourceManager : public MakeSingleton<ResourceManager>
 {
 	template<typename T>
 	friend class ResourcePtrDeleter;
@@ -108,41 +44,25 @@ public:
 	Error init(AllocAlignedCallback allocCallback, void* allocCallbackData);
 
 	/// Load a resource.
+	/// @node Thread-safe against itself and freeResource.
 	template<typename T>
 	Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
 
 	// Internals:
+
+	/// @node Thread-safe against itself and loadResource.
+	template<typename T>
+	ANKI_INTERNAL void freeResource(T* ptr);
 
 	ANKI_INTERNAL TransferGpuAllocator& getTransferGpuAllocator()
 	{
 		return *m_transferGpuAlloc;
 	}
 
-	template<typename T>
-	ANKI_INTERNAL T* findLoadedResource(const CString& filename)
-	{
-		return TypeResourceManager<T>::findLoadedResource(filename);
-	}
-
-	template<typename T>
-	ANKI_INTERNAL void registerResource(T* ptr)
-	{
-		TypeResourceManager<T>::registerResource(ptr);
-	}
-
-	template<typename T>
-	ANKI_INTERNAL void unregisterResource(T* ptr)
-	{
-		TypeResourceManager<T>::unregisterResource(ptr);
-	}
-
 	ANKI_INTERNAL AsyncLoader& getAsyncLoader()
 	{
 		return *m_asyncLoader;
 	}
-
-	/// Get the total number of completed async tasks.
-	ANKI_INTERNAL U64 getAsyncTaskCompletedCount() const;
 
 	/// Return the container of program libraries.
 	ANKI_INTERNAL const ShaderProgramResourceSystem& getShaderProgramResourceSystem() const
@@ -156,12 +76,47 @@ public:
 	}
 
 private:
+	template<typename Type>
+	class TypeData
+	{
+	public:
+		class Entry
+		{
+		public:
+			Type* m_resource = nullptr;
+			SpinLock m_mtx;
+		};
+
+		ResourceHashMap<CString, U32> m_map;
+		ResourceBlockArray<Entry> m_entries;
+		RWMutex m_mtx;
+
+		TypeData()
+		{
+			for([[maybe_unused]] const Entry& e : m_entries)
+			{
+				ANKI_ASSERT(e.m_resource == nullptr && "Forgot to release some resource");
+			}
+		}
+	};
+
+	class AllTypeData:
+#define ANKI_INSTANTIATE_RESOURCE(className) \
+public \
+	TypeData<className>
+#define ANKI_INSTANSIATE_RESOURCE_DELIMITER() ,
+#include <AnKi/Resource/Resources.def.h>
+	{
+	};
+
 	ResourceFilesystem* m_fs = nullptr;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
 
-	U64 m_uuid = 0;
+	AllTypeData m_allTypes;
+
+	Atomic<U32> m_uuid = {1};
 
 	ResourceManager();
 

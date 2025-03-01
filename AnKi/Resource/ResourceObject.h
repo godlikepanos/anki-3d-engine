@@ -23,6 +23,14 @@ class ResourceObject
 	friend class ResourcePtrDeleter;
 
 public:
+	ResourceObject(CString fname, U32 uuid)
+		: m_uuid(uuid)
+		, m_fname(fname)
+	{
+		ANKI_ASSERT(uuid > 0);
+		ANKI_ASSERT(!fname.isEmpty());
+	}
+
 	virtual ~ResourceObject() = default;
 
 	void retain() const
@@ -35,48 +43,35 @@ public:
 		return m_refcount.fetchSub(1);
 	}
 
-	I32 getRefcount() const
-	{
-		return m_refcount.load();
-	}
-
 	CString getFilename() const
 	{
 		ANKI_ASSERT(!m_fname.isEmpty());
 		return m_fname.toCString();
 	}
 
-	// Internals:
-
-	ANKI_INTERNAL void setFilename(const CString& fname)
-	{
-		ANKI_ASSERT(m_fname.isEmpty());
-		m_fname = fname;
-	}
-
-	ANKI_INTERNAL void setUuid(U64 uuid)
-	{
-		ANKI_ASSERT(uuid > 0);
-		m_uuid = uuid;
-	}
-
 	/// To check if 2 resource pointers are actually the same resource.
-	ANKI_INTERNAL U64 getUuid() const
+	U32 getUuid() const
 	{
 		ANKI_ASSERT(m_uuid > 0);
 		return m_uuid;
 	}
 
-	ANKI_INTERNAL Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
+	I32 getRefcount() const
+	{
+		return m_refcount.load();
+	}
 
-	ANKI_INTERNAL Error openFileReadAllText(const ResourceFilename& filename, ResourceString& file);
+protected:
+	Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
-	ANKI_INTERNAL Error openFileParseXml(const ResourceFilename& filename, ResourceXmlDocument& xml);
+	Error openFileReadAllText(const ResourceFilename& filename, ResourceString& file);
+
+	Error openFileParseXml(const ResourceFilename& filename, ResourceXmlDocument& xml);
 
 private:
 	mutable Atomic<I32> m_refcount = {0};
+	U32 m_uuid = 0;
 	ResourceString m_fname; ///< Unique resource name.
-	U64 m_uuid = 0;
 };
 /// @}
 
