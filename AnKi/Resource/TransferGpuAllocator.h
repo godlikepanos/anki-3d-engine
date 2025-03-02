@@ -154,24 +154,29 @@ private:
 
 		// The rest of the functions implement the StackAllocatorBuilder TInterface.
 
-		constexpr PtrSize getInitialChunkSize() const
+		static constexpr PtrSize getInitialChunkSize()
 		{
 			return kChunkInitialSize;
 		}
 
-		constexpr F64 getNextChunkGrowScale() const
+		static constexpr F64 getNextChunkGrowScale()
 		{
 			return 1.0;
 		}
 
-		constexpr PtrSize getNextChunkGrowBias() const
+		static constexpr PtrSize getNextChunkGrowBias()
 		{
 			return 0;
 		}
 
-		constexpr Bool ignoreDeallocationErrors() const
+		static constexpr Bool ignoreDeallocationErrors()
 		{
 			return false;
+		}
+
+		static constexpr PtrSize getMaxChunkSize()
+		{
+			return kChunkInitialSize;
 		}
 
 		Error allocateChunk(PtrSize size, Chunk*& out);

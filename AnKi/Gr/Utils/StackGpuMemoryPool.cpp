@@ -55,6 +55,11 @@ public:
 		return true;
 	}
 
+	static constexpr PtrSize getMaxChunkSize()
+	{
+		return 128_MB;
+	}
+
 	Error allocateChunk(PtrSize size, Chunk*& out)
 	{
 		if(!m_allowToGrow && m_chunkCount > 0)

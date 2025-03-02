@@ -47,6 +47,12 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, P
 	chunk = nullptr;
 	offset = kMaxPtrSize;
 
+	if(size > m_interface.getMaxChunkSize())
+	{
+		ANKI_UTIL_LOGE("Size requested is greated than the max chunk size");
+		return Error::kOutOfMemory;
+	}
+
 	while(true)
 	{
 		// Try to allocate from the current chunk, if there is one
@@ -97,6 +103,10 @@ Error StackAllocatorBuilder<TChunk, TInterface, TLock>::allocate(PtrSize size, P
 			}
 
 			nextChunkSize = max(size, nextChunkSize); // Can't have the allocation fail
+
+			nextChunkSize = min(nextChunkSize, m_interface.getMaxChunkSize());
+
+			ANKI_ASSERT(size <= nextChunkSize); // Should have caught this before
 
 			TChunk* nextChunk;
 			if(crntChunk)

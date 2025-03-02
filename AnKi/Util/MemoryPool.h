@@ -298,6 +298,11 @@ private:
 			return m_nextChunkBias;
 		}
 
+		static constexpr PtrSize getMaxChunkSize()
+		{
+			return 32_GB;
+		}
+
 		Bool ignoreDeallocationErrors() const
 		{
 			return m_ignoreDeallocationErrors;

@@ -25,6 +25,7 @@ namespace anki {
 ///                    PtrSize getInitialChunkSize();
 ///                    F64 getNextChunkGrowScale();
 ///                    PtrSize getNextChunkGrowBias();
+///                    PtrSize getMaxChunkSize();
 ///                    Bool ignoreDeallocationErrors();
 ///                    Error allocateChunk(PtrSize size, TChunk*& out);
 ///                    void freeChunk(TChunk* chunk);
