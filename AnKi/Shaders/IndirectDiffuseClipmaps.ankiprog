@@ -1,0 +1,123 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki 16bit
+
+#pragma anki technique InitTex comp
+#pragma anki technique Test comp
+
+#include <AnKi/Shaders/Include/GpuSceneTypes.h>
+#include <AnKi/Shaders/Functions.hlsl>
+#include <AnKi/Shaders/SH.hlsl>
+#include <AnKi/Shaders/Include/MiscRendererTypes.h>
+
+struct Clipmap
+{
+	F32 m_size;
+	F32 m_padding0;
+	F32 m_padding1;
+	F32 m_padding2;
+};
+
+ANKI_FAST_CONSTANTS(Clipmap, g_clipmap)
+
+Vec3 worldPosToVolumeUvw(Vec3 worldPos, F32 clipmapSize)
+{
+	const Vec3 uvw = frac(worldPos / clipmapSize);
+	return uvw;
+}
+
+UVec3 worldPosToVolumeTexel(Vec3 worldPos, F32 clipmapSize, F32 probeCountPerDim)
+{
+	const Vec3 uvw = worldPosToVolumeUvw(worldPos, clipmapSize);
+	return uvw * probeCountPerDim;
+}
+
+void computeClipmapBounds(Vec3 cameraPos, F32 clipmapSize, out Vec3 aabbMin, out Vec3 aabbMax)
+{
+	aabbMin = round(cameraPos) - clipmapSize * 0.5;
+	aabbMax = round(cameraPos) + clipmapSize * 0.5;
+}
+
+#if NOT_ZERO(ANKI_TECHNIQUE_InitTex)
+RWTexture3D<Vec4> g_volume : register(u0);
+
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
+
+[NumThreads(4, 4, 4)] void main(UVec3 svDispatchThreadId : SV_DispatchThreadID)
+{
+	F32 probeCountPerDim, unused0, unused1;
+	g_volume.GetDimensions(probeCountPerDim, unused0, unused1);
+
+	Vec3 clipmapAabbMin, clipmapAabbMax;
+	computeClipmapBounds(g_globalConstants.m_cameraPosition, g_clipmap.m_size, clipmapAabbMin, clipmapAabbMax);
+
+	const Vec3 prevCameraPos = g_globalConstants.m_previousMatrices.m_cameraTransform.getTranslationPart();
+	Vec3 prevClipmapAabbMin, prevClipmapAabbMax;
+	computeClipmapBounds(prevCameraPos, g_clipmap.m_size, prevClipmapAabbMin, prevClipmapAabbMax);
+
+	const F32 probeSize = g_clipmap.m_size / probeCountPerDim;
+	const Vec3 cellWorldPos = svDispatchThreadId * probeSize + probeSize * 0.5 + clipmapAabbMin;
+
+	const UVec3 probeTexelCoord = worldPosToVolumeTexel(cellWorldPos, g_clipmap.m_size, probeCountPerDim);
+
+	if(any(probeTexelCoord >= probeCountPerDim))
+	{
+		return;
+	}
+
+	Vec3 color;
+	Vec3 prev = g_volume[probeTexelCoord].xyz;
+	if(any(cellWorldPos < prevClipmapAabbMin) || any(cellWorldPos > prevClipmapAabbMax))
+	{
+		color = abs(frac(g_globalConstants.m_frame * cellWorldPos)) + 0.1;
+	}
+	else
+	{
+		color = prev;
+	}
+
+	g_volume[probeTexelCoord] = Vec4(color, 1.0);
+}
+#endif
+
+#if NOT_ZERO(ANKI_TECHNIQUE_Test)
+Texture3D<Vec4> g_volume : register(t0);
+Texture2D<Vec4> g_depthTex : register(t1);
+
+RWTexture2D<Vec4> g_outTex : register(u0);
+
+ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
+
+SamplerState g_linearAnyRepeatSampler : register(s0);
+
+[NumThreads(8, 8, 1)] void main(UVec2 svDispatchThreadId : SV_DispatchThreadID)
+{
+	UVec2 viewportSize;
+	g_outTex.GetDimensions(viewportSize.x, viewportSize.y);
+
+	if(any(svDispatchThreadId >= viewportSize))
+	{
+		return;
+	}
+
+	const F32 depth = g_depthTex[svDispatchThreadId].r;
+	const Vec2 ndc = uvToNdc(Vec2(svDispatchThreadId) / Vec2(viewportSize));
+	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	Vec3 uvw = worldPosToVolumeUvw(worldPos, g_clipmap.m_size);
+	// const Vec3 color = g_volume.SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0);
+	const Vec3 color = g_volume[uvw * 40.0];
+
+	Vec3 clipMin, clipMax;
+	computeClipmapBounds(g_globalConstants.m_cameraPosition, g_clipmap.m_size, clipMin, clipMax);
+
+	if(any(worldPos > clipMax) || any(worldPos < clipMin))
+		g_outTex[svDispatchThreadId] = 0.0;
+	else
+		g_outTex[svDispatchThreadId] = Vec4(color, 1.0);
+}
+#endif

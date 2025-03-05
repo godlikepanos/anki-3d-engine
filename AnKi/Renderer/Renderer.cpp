@@ -49,6 +49,7 @@
 #include <AnKi/Renderer/RtMaterialFetchDbg.h>
 #include <AnKi/Renderer/Reflections.h>
 #include <AnKi/Renderer/IndirectDiffuse.h>
+#include <AnKi/Renderer/IndirectDiffuseClipmaps.h>
 #include <AnKi/Renderer/Utils/Drawer.h>
 #include <AnKi/Renderer/Utils/GpuVisibility.h>
 #include <AnKi/Renderer/Utils/MipmapGenerator.h>
@@ -291,6 +292,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_clusterBinning2->populateRenderGraph(ctx);
 	m_generatedSky->populateRenderGraph(ctx);
 	m_indirectDiffuseProbes->populateRenderGraph(ctx);
+	if(m_indirectDiffuseClipmaps)
+	{
+		m_indirectDiffuseClipmaps->populateRenderGraph(ctx);
+	}
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volumetricLightingAccumulation->populateRenderGraph(ctx);
 	m_motionVectors->populateRenderGraph(ctx);

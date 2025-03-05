@@ -244,6 +244,12 @@ T round(T x);
 template<typename T>
 T ceil(T x);
 
+template<typename T>
+T frac(T x);
+
+template<typename T>
+T lerp(T x, T y, float t);
+
 // Atomics
 
 template<typename T>

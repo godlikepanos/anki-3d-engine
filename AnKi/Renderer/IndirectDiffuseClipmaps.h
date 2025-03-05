@@ -14,22 +14,48 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap0MetersCVar("R", "IndirectDiffuseClipmap0Meters", 20.0, 10.0, 50.0, "The size of the 1st clipmap");
-inline NumericCVar<U32> g_indirectDiffuseClipmap0CellsPerCubicMeterCVar("R", "IndirectDiffuseClipmap0CellsPerCubicMeter", 1, 1, 10 * 3,
-																		"Cell count per cubic meter");
+inline BoolCVar g_rtIndirectDiffuseClipmapsCVar("R", "RtIndirectDiffuseClipmaps", false);
+inline NumericCVar<U32> g_indirectDiffuseClipmap0ProbesPerDimCVar("R", "IndirectDiffuseClipmap0ProbesPerDim", 40, 10, 50,
+																  "The cell count of each dimension of 1st clipmap");
+inline NumericCVar<F32> g_indirectDiffuseClipmap0SizeCVar("R", "IndirectDiffuseClipmap0Size", 20.0, 10.0, 100.0, "The clipmap size in meters");
 
 /// Ambient global illumination passes.
-class IndirectDiffuseProbes2 : public RendererObject
+class IndirectDiffuseClipmaps : public RendererObject
 {
 public:
+	IndirectDiffuseClipmaps()
+	{
+		registerDebugRenderTarget("IndirectDiffuseClipmapsTest");
+	}
+
 	Error init();
 
 	void populateRenderGraph(RenderingContext& ctx);
+
+	void getDebugRenderTarget([[maybe_unused]] CString rtName, Array<RenderTargetHandle, kMaxDebugRenderTargets>& handles,
+							  [[maybe_unused]] ShaderProgramPtr& optionalShaderProgram) const override
+	{
+		handles[0] = m_runCtx.m_tmpRt;
+	}
 
 private:
 	static constexpr U32 kClipmapLevelCount = 3;
 
 	Array<TexturePtr, kClipmapLevelCount> m_clipmapLevelTextures;
+
+	ShaderProgramResourcePtr m_tmpProg;
+	ShaderProgramPtr m_tmpGrProg;
+	ShaderProgramPtr m_tmpGrProg2;
+
+	RenderTargetDesc m_tmpRtDesc;
+
+	Bool m_clipmapsImportedOnce = false;
+
+	class
+	{
+	public:
+		RenderTargetHandle m_tmpRt;
+	} m_runCtx;
 };
 /// @}
 
