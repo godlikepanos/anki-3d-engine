@@ -471,7 +471,7 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 
 	// Check if exists
 	{
-		RLockGuard<RWMutex> lock(m_viewsMtx);
+		RLockGuard lock(m_viewsMtx);
 
 		auto it = m_views.find(hash);
 		if(it != m_views.getEnd())
@@ -480,7 +480,7 @@ VkBufferView BufferImpl::getOrCreateBufferView(Format fmt, PtrSize offset, PtrSi
 		}
 	}
 
-	WLockGuard<RWMutex> lock(m_viewsMtx);
+	WLockGuard lock(m_viewsMtx);
 
 	// Check again
 	auto it = m_views.find(hash);

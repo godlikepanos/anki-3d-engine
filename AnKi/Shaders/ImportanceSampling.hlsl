@@ -25,6 +25,9 @@ Vec2 hammersley2d(U32 i, U32 N)
 
 /// Stolen from Unreal
 /// Returns three elements with 16 random bits each (0-0xffff)
+///
+/// Use it like that:
+/// UVec3 seed = rand3DPCG16(UVec3(coord, frame % 8u));
 UVec3 rand3DPCG16(UVec3 v)
 {
 	v = v * 1664525u + 1013904223u;
@@ -41,6 +44,9 @@ UVec3 rand3DPCG16(UVec3 v)
 
 /// Stolen from Unreal
 /// It will return a uniform 2D point inside [0.0, 1.0]. For random use rand3DPCG16()
+///
+/// Use it like that:
+/// Vec2 randFactors = hammersleyRandom16(sample, sampleCount, rand3DPCG16(...));
 Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
 {
 	const F32 e1 = frac(F32(sampleIdx) / F32(sampleCount) + F32(random.x) * (1.0 / 65536.0));
@@ -50,6 +56,9 @@ Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
 
 /// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 /// From a uniform 2D point inside a circle get a 3D point in the surface of a hemisphere. It's oriented in the +Z. uv is in [0, 1]
+///
+/// Use it like that:
+/// Vec3 dir = hemisphereSampleCos(hammersleyRandom16(...));
 Vec3 hemisphereSampleUniform(Vec2 uv)
 {
 	const F32 phi = uv.y * 2.0 * kPi;

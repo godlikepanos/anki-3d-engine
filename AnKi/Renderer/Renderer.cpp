@@ -336,9 +336,12 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	return Error::kNone;
 }
 
-void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& consts)
+void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendererConstants& outConsts)
 {
 	ANKI_TRACE_SCOPED_EVENT(RWriteGlobalRendererConstants);
+
+	GlobalRendererConstants consts;
+	memset(&consts, 0, sizeof(consts));
 
 	consts.m_renderingSize = Vec2(F32(m_internalResolution.x()), F32(m_internalResolution.y()));
 
@@ -410,6 +413,16 @@ void Renderer::writeGlobalRendererConstants(RenderingContext& ctx, GlobalRendere
 	{
 		consts.m_sky.m_type = 2;
 	}
+
+	if(m_indirectDiffuseClipmaps)
+	{
+		for(U32 i = 0; i < kIndirectDiffuseClipmapCount; ++i)
+		{
+			consts.m_indirectDiffuseClipmaps[i] = m_indirectDiffuseClipmaps->getClipmapsInfo()[i];
+		}
+	}
+
+	outConsts = consts;
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)

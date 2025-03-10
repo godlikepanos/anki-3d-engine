@@ -547,7 +547,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 	// Check if it's initialized
 	{
-		RLockGuard<RWMutex> lock(m_variantMatrixMtx);
+		RLockGuard lock(m_variantMatrixMtx);
 		if(variant.m_prog.isCreated()) [[likely]]
 		{
 			return variant;
@@ -555,7 +555,7 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	}
 
 	// Not initialized, init it
-	WLockGuard<RWMutex> lock(m_variantMatrixMtx);
+	WLockGuard lock(m_variantMatrixMtx);
 
 	// Check again
 	if(variant.m_prog.isCreated())

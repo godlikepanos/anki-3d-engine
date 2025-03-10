@@ -96,7 +96,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 
 	// Check if the variant is in the cache
 	{
-		RLockGuard<RWMutex> lock(m_mtx);
+		RLockGuard lock(m_mtx);
 
 		auto it = m_variants.find(hash);
 		if(it != m_variants.getEnd())
@@ -112,7 +112,7 @@ void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVarian
 	}
 
 	// Create the variant
-	WLockGuard<RWMutex> lock(m_mtx);
+	WLockGuard lock(m_mtx);
 
 	// Check again
 	auto it = m_variants.find(hash);

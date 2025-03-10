@@ -48,10 +48,11 @@ Error Reflections::init()
 		m_libraryGrProg.reset(&variant->getProgram());
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_mainProg);
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", m_missProg));
+
+		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_missProg);
 		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
-		variantInitInfo2.addMutation("SSR_SAMPLE_GBUFFER", bSsrSamplesGBuffer);
-		m_mainProg->getOrCreateVariant(variantInitInfo2, variant);
+		m_missProg->getOrCreateVariant(variantInitInfo2, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
 		m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
@@ -382,6 +383,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
 			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
+			cmdb.bindUav(2, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::firstSurface()));
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());

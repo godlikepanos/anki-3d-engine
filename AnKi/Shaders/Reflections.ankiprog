@@ -10,7 +10,7 @@
 #pragma anki technique Classification comp mutators
 #pragma anki technique Ssr comp
 #pragma anki technique ReflectionProbeFallback comp mutators
-#pragma anki technique RtMaterialFetch rgen miss mutators
+#pragma anki technique RtMaterialFetch rgen mutators
 #pragma anki technique SpatialDenoise comp mutators
 #pragma anki technique TemporalDenoise comp mutators
 #pragma anki technique BilateralDenoiseVertical comp mutators
@@ -54,8 +54,9 @@ enum
 };
 
 // Functions
-Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
-						SamplerState linearAnyClampSampler)
+template<typename T>
+vector<T, 3> getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProbes, Vec3 worldPos, Vec3 worldNormal,
+								SamplerState linearAnyClampSampler)
 {
 	const U32 probeCount = getStructuredBufferElementCount(giProbes);
 	U32 i;
@@ -75,11 +76,11 @@ Vec3 getDiffuseIndirect(StructuredBuffer<GpuSceneGlobalIlluminationProbe> giProb
 	if(probeFound)
 	{
 		const GpuSceneGlobalIlluminationProbe probe = giProbes[i];
-		return sampleGlobalIllumination<F32>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), linearAnyClampSampler);
+		return sampleGlobalIllumination<T>(worldPos, worldNormal, probe, getBindlessTexture3DVec4(probe.m_volumeTexture), linearAnyClampSampler);
 	}
 	else
 	{
-		return 0.0;
+		return T(0);
 	}
 }
 
@@ -675,111 +676,31 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 	const F32 pixelDistFromCamera = length(worldPos - g_globalRendererConstants.m_cameraPosition);
 	const F32 distFactor = pow(pixelDistFromCamera / distanceToMaxMip, 4.0);
 	const F32 maxMips = 8.0;
-	const F32 textureLod = max(roughness, distFactor) * maxMips;
+	const F16 textureLod = max(roughness, distFactor) * maxMips;
 
 	// Trace
-	RtMaterialFetchRayPayload payload;
-	payload = (RtMaterialFetchRayPayload)0;
-	payload.m_textureLod = textureLod;
+	GBufferLight<F16> gbuffer;
+	F32 rayT;
+	const Bool hasHitSky = !materialRayTrace(worldPos, reflDir, max(tmin + kTMinBias, 0.05), g_consts.m_maxRayT, textureLod, gbuffer, rayT);
 
-	constexpr U32 flags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
-	const U32 sbtRecordOffset = 0u;
-	const U32 sbtRecordStride = 0u;
-	const U32 missIndex = 0u;
-	const U32 cullMask = 0xFFu;
-	RayDesc ray;
-	ray.Origin = worldPos;
-	ray.TMin = max(tmin + kTMinBias, 0.05);
-	ray.Direction = reflDir;
-	ray.TMax = g_consts.m_maxRayT;
-	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
-
-	const Bool hasHitSky = payload.m_rayT < 0.0;
-	if(hasHitSky)
-	{
-		payload.m_rayT = g_consts.m_maxRayT;
-	}
-
-	const Vec3 hitPos = worldPos + reflDir * payload.m_rayT;
-
-	// Trace shadow
-	Vec4 vv4 = mul(g_globalRendererConstants.m_matrices.m_viewProjection, Vec4(hitPos, 1.0));
-	vv4.xy /= vv4.w;
-	const Bool bInsideFrustum = all(vv4.xy > -1.0) && all(vv4.xy < 1.0) && vv4.w > 0.0;
-
-	F32 shadow = 0.0;
-	if(hasHitSky)
-	{
-		// Skybox
-		shadow = 1.0;
-
-		if(g_globalRendererConstants.m_sky.m_type == 0)
-		{
-			payload.m_emission = g_globalRendererConstants.m_sky.m_solidColor;
-		}
-		else
-		{
-			const Vec2 uv = (g_globalRendererConstants.m_sky.m_type == 1) ? equirectangularMapping(reflDir) : octahedronEncode(reflDir);
-			payload.m_emission = g_envMap.SampleLevel(g_linearClampAnySampler, uv, 0.0).xyz;
-		}
-	}
-	else if(bInsideFrustum && kTryShadowmapFirst)
-	{
-		const F32 negativeZViewSpace = -mul(g_globalRendererConstants.m_matrices.m_view, Vec4(hitPos, 1.0)).z;
-		const U32 shadowCascadeCount = dirLight.m_shadowCascadeCount_31bit_active_1bit >> 1u;
-
-		const U32 cascadeIdx = computeShadowCascadeIndex(negativeZViewSpace, dirLight.m_shadowCascadeDistances, shadowCascadeCount);
-
-		shadow = computeShadowFactorDirLight<F32>(dirLight, cascadeIdx, hitPos, g_shadowAtlasTex, g_shadowSampler);
-	}
-	else
-	{
-		constexpr U32 qFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
-		RayQuery<qFlags> q;
-		RayDesc ray;
-		ray.Origin = worldPos + reflDir * (payload.m_rayT - 0.01);
-		ray.TMin = 0.1;
-		ray.Direction = -dirLight.m_direction;
-		ray.TMax = g_consts.m_maxRayT;
-		q.TraceRayInline(g_tlas, qFlags, cullMask, ray);
-		q.Proceed();
-		shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
-	}
+	const Vec3 hitPos = worldPos + reflDir * rayT;
 
 	// Do simple light shading
-	Vec3 outColor = payload.m_emission;
-	Vec3 indirectDiffuse = 0.0;
+	HVec3 radiance = directLighting(gbuffer, hitPos, hasHitSky, kTryShadowmapFirst, g_consts.m_maxRayT);
+
 	if(!hasHitSky && g_consts.m_giProbeCount > 0)
 	{
-		indirectDiffuse = getDiffuseIndirect(g_giProbes, hitPos, payload.m_worldNormal, g_linearClampAnySampler);
+		const HVec3 indirectDiffuse = getDiffuseIndirect<F16>(g_giProbes, hitPos, gbuffer.m_worldNormal, g_linearClampAnySampler);
+		radiance += gbuffer.m_diffuse * indirectDiffuse;
 	}
-	outColor += payload.m_diffuseColor * indirectDiffuse;
 
-	const Vec3 l = -dirLight.m_direction;
-	const F32 lambert = max(0.0, dot(l, payload.m_worldNormal));
-	const Vec3 diffC = diffuseLobe(payload.m_diffuseColor);
-	outColor += diffC * dirLight.m_diffuseColor * lambert * shadow;
-
-	g_colorAndPdfTex[realCoord] = Vec4(outColor, max(0.0, pdf));
+	g_colorAndPdfTex[realCoord] = Vec4(radiance, max(0.0, pdf));
 
 	// Move it with camera to avoid precision issues since it's stored in fp16
 	// Store depth in reverse for better precision
 	g_hitPosAndDepthTex[realCoord] = Vec4(hitPos - g_globalRendererConstants.m_cameraPosition, 1.0 - depth);
 }
 #endif // ANKI_RAY_GEN_SHADER
-
-// ===========================================================================
-// Miss                                                                      =
-// ===========================================================================
-#if ANKI_MISS_SHADER
-[shader("miss")] void main(inout RtMaterialFetchRayPayload payload)
-{
-	payload.m_diffuseColor = 0.0;
-	payload.m_worldNormal = 0.0;
-	payload.m_emission = 0.0;
-	payload.m_rayT = -1.0;
-}
-#endif // ANKI_MISS_SHADER
 
 // ===========================================================================
 // SpatialDenoise                                                            =

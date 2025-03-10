@@ -220,14 +220,14 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 
 		// Find using binary search
 		{
-			RLockGuard<RWMutex> lock(m_threadAllocMtx);
+			RLockGuard lock(m_threadAllocMtx);
 			auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
 			alloc = (it != m_threadAllocs.getEnd()) ? (*it) : nullptr;
 		}
 
 		if(alloc == nullptr) [[unlikely]]
 		{
-			WLockGuard<RWMutex> lock(m_threadAllocMtx);
+			WLockGuard lock(m_threadAllocMtx);
 
 			// Check again
 			auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());

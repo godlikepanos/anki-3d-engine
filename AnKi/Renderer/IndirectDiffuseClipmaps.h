@@ -15,9 +15,17 @@ namespace anki {
 /// @{
 
 inline BoolCVar g_rtIndirectDiffuseClipmapsCVar("R", "RtIndirectDiffuseClipmaps", false);
-inline NumericCVar<U32> g_indirectDiffuseClipmap0ProbesPerDimCVar("R", "IndirectDiffuseClipmap0ProbesPerDim", 40, 10, 50,
+
+inline NumericCVar<U32> g_indirectDiffuseClipmap0ProbesPerDimCVar("R", "IndirectDiffuseClipmap0ProbesPerDim", 20, 10, 50,
 																  "The cell count of each dimension of 1st clipmap");
-inline NumericCVar<F32> g_indirectDiffuseClipmap0SizeCVar("R", "IndirectDiffuseClipmap0Size", 20.0, 10.0, 100.0, "The clipmap size in meters");
+inline NumericCVar<U32> g_indirectDiffuseClipmap1ProbesPerDimCVar("R", "IndirectDiffuseClipmap1ProbesPerDim", 20, 10, 50,
+																  "The cell count of each dimension of 2nd clipmap");
+inline NumericCVar<U32> g_indirectDiffuseClipmap2ProbesPerDimCVar("R", "IndirectDiffuseClipmap2ProbesPerDim", 20, 10, 50,
+																  "The cell count of each dimension of 3rd clipmap");
+
+inline NumericCVar<F32> g_indirectDiffuseClipmap0SizeCVar("R", "IndirectDiffuseClipmap0Size", 20.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap1SizeCVar("R", "IndirectDiffuseClipmap1Size", 40.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap2SizeCVar("R", "IndirectDiffuseClipmap2Size", 80.0, 10.0, 1000.0, "The clipmap size in meters");
 
 /// Ambient global illumination passes.
 class IndirectDiffuseClipmaps : public RendererObject
@@ -38,16 +46,34 @@ public:
 		handles[0] = m_runCtx.m_tmpRt;
 	}
 
+	const Array<IndirectDiffuseClipmap, kIndirectDiffuseClipmapCount>& getClipmapsInfo() const
+	{
+		return m_clipmapInfo;
+	}
+
 private:
-	static constexpr U32 kClipmapLevelCount = 3;
+	class ClipmapVolumes
+	{
+	public:
+		Array<TexturePtr, 3> m_perColorComponent;
+	};
 
-	Array<TexturePtr, kClipmapLevelCount> m_clipmapLevelTextures;
+	Array<ClipmapVolumes, kIndirectDiffuseClipmapCount> m_clipmapVolumes;
 
-	ShaderProgramResourcePtr m_tmpProg;
-	ShaderProgramPtr m_tmpGrProg;
-	ShaderProgramPtr m_tmpGrProg2;
+	Array<IndirectDiffuseClipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResourcePtr m_missProg;
+	ShaderProgramResourcePtr m_sbtProg;
+	ShaderProgramPtr m_libraryGrProg;
+	ShaderProgramPtr m_tmpVisGrProg;
+	ShaderProgramPtr m_sbtBuildGrProg;
 
 	RenderTargetDesc m_tmpRtDesc;
+
+	U32 m_sbtRecordSize = 0;
+	U32 m_rayGenShaderGroupIdx = kMaxU32;
+	U32 m_missShaderGroupIdx = kMaxU32;
 
 	Bool m_clipmapsImportedOnce = false;
 

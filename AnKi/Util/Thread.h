@@ -576,52 +576,53 @@ private:
 	TMutex* m_mtx;
 };
 
-/// Read/write lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
-/// @tparam TMutex Can be RWMutex.
-template<typename TMutex, Bool READER>
-class RWLockGuard
+/// Read lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
+template<typename TMutex>
+class RLockGuard
 {
 public:
-	RWLockGuard(TMutex& mtx)
+	RLockGuard(TMutex& mtx)
 		: m_mtx(&mtx)
 	{
-		if(READER)
-		{
-			m_mtx->lockRead();
-		}
-		else
-		{
-			m_mtx->lockWrite();
-		}
+		m_mtx->lockRead();
 	}
 
-	RWLockGuard(const RWLockGuard& b) = delete;
+	RLockGuard(const RLockGuard& b) = delete;
 
-	~RWLockGuard()
+	~RLockGuard()
 	{
-		if(READER)
-		{
-			m_mtx->unlockRead();
-		}
-		else
-		{
-			m_mtx->unlockWrite();
-		}
+		m_mtx->unlockRead();
 	}
 
-	RWLockGuard& operator=(const RWLockGuard& b) = delete;
+	RLockGuard& operator=(const RLockGuard& b) = delete;
 
 private:
 	TMutex* m_mtx;
 };
 
-/// Read lock guard.
+/// Write lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
 template<typename TMutex>
-using RLockGuard = RWLockGuard<TMutex, true>;
+class WLockGuard
+{
+public:
+	WLockGuard(TMutex& mtx)
+		: m_mtx(&mtx)
+	{
+		m_mtx->lockWrite();
+	}
 
-/// Write lock guard.
-template<typename TMutex>
-using WLockGuard = RWLockGuard<TMutex, false>;
+	WLockGuard(const WLockGuard& b) = delete;
+
+	~WLockGuard()
+	{
+		m_mtx->unlockWrite();
+	}
+
+	WLockGuard& operator=(const WLockGuard& b) = delete;
+
+private:
+	TMutex* m_mtx;
+};
 /// @}
 
 } // end namespace anki

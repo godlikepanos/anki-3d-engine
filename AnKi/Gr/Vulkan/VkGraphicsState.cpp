@@ -155,7 +155,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 	// Find the PSO
 	VkPipeline pso = VK_NULL_HANDLE;
 	{
-		RLockGuard<RWMutex> lock(m_mtx);
+		RLockGuard lock(m_mtx);
 
 		auto it = m_map.find(state.m_globalHash);
 		if(it != m_map.getEnd())
@@ -377,7 +377,7 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 
 	// Now try to add the PSO to the hashmap
 	{
-		WLockGuard<RWMutex> lock(m_mtx);
+		WLockGuard lock(m_mtx);
 
 		auto it = m_map.find(state.m_globalHash);
 		if(it == m_map.getEnd())

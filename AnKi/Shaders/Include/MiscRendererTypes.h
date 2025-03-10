@@ -70,6 +70,15 @@ struct Sky
 	U32 m_type;
 };
 
+struct IndirectDiffuseClipmap
+{
+	Vec3 m_probeCounts;
+	F32 m_padding1;
+
+	Vec3 m_size;
+	F32 m_padding2;
+};
+
 /// Common constants for all passes.
 struct GlobalRendererConstants
 {
@@ -100,6 +109,8 @@ struct GlobalRendererConstants
 	CommonMatrices m_previousMatrices;
 
 	Sky m_sky;
+
+	IndirectDiffuseClipmap m_indirectDiffuseClipmaps[kIndirectDiffuseClipmapCount];
 };
 
 // RT shadows

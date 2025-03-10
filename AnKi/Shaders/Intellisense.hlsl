@@ -46,6 +46,7 @@ using I32 = int;
 using U8 = unsigned int;
 using U16 = unsigned int;
 using U32 = unsigned int;
+using F16 = float;
 using F32 = float;
 using Bool = bool;
 

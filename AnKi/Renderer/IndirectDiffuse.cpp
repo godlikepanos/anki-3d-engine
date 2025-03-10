@@ -19,28 +19,28 @@ namespace anki {
 Error IndirectDiffuse::init()
 {
 	const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar;
+	ANKI_ASSERT(bRt);
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IndirectDiffuse.ankiprogbin", m_mainProg));
 
-	if(bRt)
-	{
-		ShaderProgramResourceVariantInitInfo variantInitInfo(m_mainProg);
-		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
-		const ShaderProgramResourceVariant* variant;
-		m_mainProg->getOrCreateVariant(variantInitInfo, variant);
-		m_libraryGrProg.reset(&variant->getProgram());
-		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_mainProg);
+	variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kRayGen, "RtMaterialFetch");
+	const ShaderProgramResourceVariant* variant;
+	m_mainProg->getOrCreateVariant(variantInitInfo, variant);
+	m_libraryGrProg.reset(&variant->getProgram());
+	m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_mainProg);
-		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
-		m_mainProg->getOrCreateVariant(variantInitInfo2, variant);
-		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", m_missProg));
 
-		ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
+	ShaderProgramResourceVariantInitInfo variantInitInfo2(m_missProg);
+	variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
+	m_missProg->getOrCreateVariant(variantInitInfo2, variant);
+	m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
-		m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
-											GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
-	}
+	ANKI_CHECK(loadShaderProgram("ShaderBinaries/RtSbtBuild.ankiprogbin", {{"TECHNIQUE", 1}}, m_sbtProg, m_sbtBuildGrProg, "SbtBuild"));
+
+	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
+										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
 	m_transientRtDesc1 = getRenderer().create2DRenderTargetDescription(
 		getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), Format::kR16G16B16A16_Sfloat, "IndirectDiffuse #1");
