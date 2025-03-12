@@ -1,0 +1,16 @@
+// Copyright (C) 2009-present, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki technique RtMaterialFetch miss
+
+#include <AnKi/Shaders/RtMaterialFetch.hlsl>
+
+[Shader("miss")] void main(inout RtMaterialFetchRayPayload payload)
+{
+	payload.m_diffuseColor = 0.0;
+	payload.m_worldNormal = 0.0;
+	payload.m_emission = 0.0;
+	payload.m_rayT = -1.0;
+}
