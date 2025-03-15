@@ -46,11 +46,23 @@ class RendererPrecreatedSamplers
 {
 public:
 	SamplerPtr m_nearestNearestClamp;
+	SamplerPtr m_nearestNearestRepeat;
 	SamplerPtr m_trilinearClamp;
 	SamplerPtr m_trilinearRepeat;
 	SamplerPtr m_trilinearRepeatAniso;
 	SamplerPtr m_trilinearRepeatAnisoResolutionScalingBias;
 	SamplerPtr m_trilinearClampShadow;
+};
+
+/// Some dummy resources to fill the slots.
+class DummyGpuResources
+{
+public:
+	TexturePtr m_texture2DSrv;
+	TexturePtr m_texture3DSrv;
+	TexturePtr m_texture2DUav;
+	TexturePtr m_texture3DUav;
+	BufferPtr m_buffer;
 };
 
 enum class MeshletRenderingType
@@ -72,6 +84,8 @@ public:
 /// Offscreen renderer.
 class Renderer : public MakeSingleton<Renderer>
 {
+	friend class RendererObject;
+
 public:
 	Renderer();
 
@@ -132,21 +146,6 @@ public:
 
 	[[nodiscard]] TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf, TextureUsageBit initialUsage,
 														const ClearValue& clearVal = ClearValue());
-
-	Texture& getDummyTexture2d() const
-	{
-		return *m_dummyTex2d;
-	}
-
-	Texture& getDummyTexture3d() const
-	{
-		return *m_dummyTex3d;
-	}
-
-	Buffer& getDummyBuffer() const
-	{
-		return *m_dummyBuff;
-	}
 
 	const RendererPrecreatedSamplers& getSamplers() const
 	{
@@ -237,9 +236,7 @@ private:
 
 	Array<Vec2, 64> m_jitterOffsets;
 
-	TexturePtr m_dummyTex2d;
-	TexturePtr m_dummyTex3d;
-	BufferPtr m_dummyBuff;
+	DummyGpuResources m_dummyResources;
 
 	RendererPrecreatedSamplers m_samplers;
 

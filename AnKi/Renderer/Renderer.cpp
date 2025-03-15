@@ -167,18 +167,27 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 
 	// Dummy resources
 	{
-		TextureInitInfo texinit("RendererDummy");
+		TextureInitInfo texinit("DummyTexture");
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kUavCompute;
+		texinit.m_usage = TextureUsageBit::kAllSrv | TextureUsageBit::kRtvDsvWrite;
 		texinit.m_format = Format::kR8G8B8A8_Unorm;
-		m_dummyTex2d = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
+		m_dummyResources.m_texture2DSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
 
 		texinit.m_depth = 4;
 		texinit.m_type = TextureType::k3D;
-		m_dummyTex3d = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
+		m_dummyResources.m_texture3DSrv = createAndClearRenderTarget(texinit, TextureUsageBit::kAllSrv);
 
-		m_dummyBuff = GrManager::getSingleton().newBuffer(
-			BufferInitInfo(1024, BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav, BufferMapAccessBit::kNone, "Dummy"));
+		texinit.m_type = TextureType::k2D;
+		texinit.m_usage = TextureUsageBit::kAllUav;
+		texinit.m_depth = 1;
+		m_dummyResources.m_texture2DUav = createAndClearRenderTarget(texinit, TextureUsageBit::kAllUav);
+
+		texinit.m_depth = 4;
+		texinit.m_type = TextureType::k3D;
+		m_dummyResources.m_texture3DUav = createAndClearRenderTarget(texinit, TextureUsageBit::kAllUav);
+
+		m_dummyResources.m_buffer = GrManager::getSingleton().newBuffer(
+			BufferInitInfo(1024, BufferUsageBit::kAllConstant | BufferUsageBit::kAllUav, BufferMapAccessBit::kNone, "DummyBuffer"));
 	}
 
 	{
@@ -213,7 +222,14 @@ Error Renderer::initInternal(const RendererInitInfo& inf)
 		sinit.m_minMagFilter = SamplingFilter::kNearest;
 		m_samplers.m_nearestNearestClamp = GrManager::getSingleton().newSampler(sinit);
 
+		sinit.setName("NearestNearestRepeat");
+		sinit.m_addressing = SamplingAddressing::kRepeat;
+		sinit.m_mipmapFilter = SamplingFilter::kNearest;
+		sinit.m_minMagFilter = SamplingFilter::kNearest;
+		m_samplers.m_nearestNearestRepeat = GrManager::getSingleton().newSampler(sinit);
+
 		sinit.setName("TrilinearClamp");
+		sinit.m_addressing = SamplingAddressing::kClamp;
 		sinit.m_minMagFilter = SamplingFilter::kLinear;
 		sinit.m_mipmapFilter = SamplingFilter::kLinear;
 		m_samplers.m_trilinearClamp = GrManager::getSingleton().newSampler(sinit);

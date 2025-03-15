@@ -657,11 +657,11 @@ void GpuVisibility::populateRenderGraphInternal(Bool distanceBased, BaseGpuVisib
 
 			cmdb.bindUav(0, 0, stage1Mem.m_counters);
 
-			cmdb.bindUav(1, 0, (bLegacyRendering) ? stage1Mem.m_visibleRenderables : BufferView(&getRenderer().getDummyBuffer()));
-			cmdb.bindUav(2, 0, (bMeshletRendering) ? stage1Mem.m_visibleMeshlets : BufferView(&getRenderer().getDummyBuffer()));
+			cmdb.bindUav(1, 0, (bLegacyRendering) ? stage1Mem.m_visibleRenderables : BufferView(getDummyGpuResources().m_buffer.get()));
+			cmdb.bindUav(2, 0, (bMeshletRendering) ? stage1Mem.m_visibleMeshlets : BufferView(getDummyGpuResources().m_buffer.get()));
 
-			cmdb.bindUav(3, 0, (bLegacyRendering) ? stage1Mem.m_renderablePrefixSums : BufferView(&getRenderer().getDummyBuffer()));
-			cmdb.bindUav(4, 0, (bMeshletRendering) ? stage1Mem.m_meshletPrefixSums : BufferView(&getRenderer().getDummyBuffer()));
+			cmdb.bindUav(3, 0, (bLegacyRendering) ? stage1Mem.m_renderablePrefixSums : BufferView(getDummyGpuResources().m_buffer.get()));
+			cmdb.bindUav(4, 0, (bMeshletRendering) ? stage1Mem.m_meshletPrefixSums : BufferView(getDummyGpuResources().m_buffer.get()));
 
 			cmdb.bindUav(5, 0, stage1Mem.m_gpuVisIndirectDispatchArgs);
 

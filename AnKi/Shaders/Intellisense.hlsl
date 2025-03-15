@@ -246,6 +246,9 @@ template<typename T>
 T ceil(T x);
 
 template<typename T>
+T floor(T x);
+
+template<typename T>
 T frac(T x);
 
 template<typename T>

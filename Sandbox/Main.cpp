@@ -338,7 +338,9 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kY) == 1)
 	{
-		g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "IndirectDiffuseClipmapsTest") ? "" : "IndirectDiffuseClipmapsTest");
+		// g_shadowMappingPcssCVar = !g_shadowMappingPcssCVar;
 	}
 
 	if(in.getKey(KeyCode::kU) == 1)
@@ -353,13 +355,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::kO) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "ResolvedShadows") ? "" : "ResolvedShadows");
-	}
-
-	if(in.getKey(KeyCode::kH) == 1)
-	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "MotionVectorsHistoryLength") ? ""
-																													  : "MotionVectorsHistoryLength");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtMaterialFetchDbg") ? "" : "RtMaterialFetchDbg");
 	}
 
 	/*if(in.getKey(KeyCode::J) == 1)

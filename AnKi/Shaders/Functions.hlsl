@@ -806,3 +806,42 @@ Vec3 octahedronDecode(Vec2 f)
 	n.xy += select(n.xy >= 0.0, -t, t);
 	return normalize(n);
 }
+
+/// Manual texture sampling of a 3D texture.
+template<typename T, U32 kComp>
+vector<T, kComp> linearTextureSampling(Texture3D<Vec4> sam, Vec3 uv)
+{
+	Vec3 texSize;
+	sam.GetDimensions(texSize.x, texSize.y, texSize.z);
+
+	uv = frac(uv);
+	uv = uv * texSize - 0.5;
+	Vec3 iuv = floor(uv);
+	Vec3 fuv = frac(uv);
+
+	vector<T, kComp> o = T(0);
+
+	[unroll] for(F32 x = 0.0; x < 2.0; x += 1.0)
+	{
+		[unroll] for(F32 y = 0.0; y < 2.0; y += 1.0)
+		{
+			[unroll] for(F32 z = 0.0; z < 2.0; z += 1.0)
+			{
+				Vec3 coords = iuv + Vec3(x, y, z);
+
+				// Repeat
+				coords = select(coords >= 0.0, coords, texSize + coords);
+				coords = select(coords < texSize, coords, coords - texSize);
+
+				const vector<T, kComp> s = sam[coords];
+
+				const vector<T, 3> w3 = select(Vec3(x, y, z) == T(0), T(1) - fuv, fuv);
+				const T w = w3.x * w3.y * w3.z;
+
+				o += s * w;
+			}
+		}
+	}
+
+	return o;
+}

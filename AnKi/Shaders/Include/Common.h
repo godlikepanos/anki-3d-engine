@@ -410,6 +410,8 @@ typedef min16float3 RVec3;
 typedef min16float4 RVec4;
 _ANKI_MAT3(RMat3, RVec3, RF32)
 #		endif
+#	else // ANKI_SUPPORTS_16BIT_TYPES == 0
+	_ANKI_MAT3(HMat3, HVec3, F16)
 #	endif // ANKI_SUPPORTS_16BIT_TYPES == 0
 
 #endif // defined(__HLSL_VERSION)

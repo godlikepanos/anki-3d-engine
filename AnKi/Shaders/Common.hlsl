@@ -86,8 +86,10 @@ U32 getMaxNumericLimit()
 	return kMaxU32;
 }
 
-constexpr F32 kPi = 3.14159265358979323846f;
-constexpr F32 kNaN = 0.0f / 0.0f;
+constexpr F32 kPi = 3.14159265358979323846;
+constexpr F32 k2Pi = 2.0 * kPi;
+constexpr F32 kHalfPi = kPi / 2.0;
+constexpr F32 kNaN = 0.0 / 0.0;
 
 struct Barycentrics
 {

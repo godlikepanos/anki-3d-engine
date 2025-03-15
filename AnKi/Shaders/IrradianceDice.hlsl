@@ -37,14 +37,14 @@ template<typename T>
 vector<T, 3> evaluateIrradianceDice(IrradianceDice<T> dice, vector<T, 3> direction)
 {
 	const vector<T, 3> axisWeights = direction * direction;
-	const vector<T, 3> uv = direction * 0.5 + 0.5;
+	const vector<T, 3> uv = direction * T(0.5) + T(0.5);
 
 	vector<T, 3> irradiance = lerp(dice.m_directions[1], dice.m_directions[0], uv.x) * axisWeights.x;
 	irradiance += lerp(dice.m_directions[3], dice.m_directions[2], uv.y) * axisWeights.y;
 	irradiance += lerp(dice.m_directions[5], dice.m_directions[4], uv.z) * axisWeights.z;
 
 	// Divide by weight
-	irradiance /= axisWeights.x + axisWeights.y + axisWeights.z + 0.0001;
+	irradiance /= axisWeights.x + axisWeights.y + axisWeights.z + T(0.0001);
 
 	return irradiance;
 }
@@ -60,47 +60,48 @@ IrradianceDice<T> lerpIrradianceDice(IrradianceDice<T> a, IrradianceDice<T> b, T
 	return a;
 }
 
-template<typename T>
-IrradianceDice<T> loadIrradianceDice(Texture3D<Vec4> volumes[6u], SamplerState sampler, Vec3 uvw)
+template<typename T, U32 kVolumeCount>
+IrradianceDice<T> loadIrradianceDice(Texture3D<Vec4> volumes[kVolumeCount], SamplerState sampler, Vec3 uvw, U32 firstVolume = 0)
 {
 	IrradianceDice<T> dice;
 	[unroll] for(U32 i = 0; i < 6; ++i)
 	{
-		dice.m_directions[i] = volumes[i].SampleLevel(sampler, uvw, 0.0).xyz;
+		dice.m_directions[i] = volumes[firstVolume + i].SampleLevel(sampler, uvw, 0.0).xyz;
+		// dice.m_directions[i] = textureLinear<F16, 3>(volumes[firstVolume + i], uvw).xyz;
 	}
 
 	return dice;
 }
 
-template<typename T>
-IrradianceDice<T> loadIrradianceDice(Texture3D<Vec4> volumes[6u], UVec3 uvw)
+template<typename T, U32 kVolumeCount>
+IrradianceDice<T> loadIrradianceDice(Texture3D<Vec4> volumes[kVolumeCount], UVec3 uvw, U32 firstVolume = 0)
 {
 	IrradianceDice<T> dice;
 	[unroll] for(U32 i = 0; i < 6; ++i)
 	{
-		dice.m_directions[i] = volumes[i][uvw].xyz;
+		dice.m_directions[i] = volumes[firstVolume + i][uvw].xyz;
 	}
 
 	return dice;
 }
 
-template<typename T>
-IrradianceDice<T> loadIrradianceDice(RWTexture3D<Vec4> volumes[6u], UVec3 uvw)
+template<typename T, U32 kVolumeCount>
+IrradianceDice<T> loadIrradianceDice(RWTexture3D<Vec4> volumes[kVolumeCount], UVec3 uvw, U32 firstVolume = 0)
 {
 	IrradianceDice<T> dice;
 	[unroll] for(U32 i = 0; i < 6; ++i)
 	{
-		dice.m_directions[i] = volumes[i][uvw].xyz;
+		dice.m_directions[i] = volumes[firstVolume + i][uvw].xyz;
 	}
 
 	return dice;
 }
 
-template<typename T>
-void storeIrradianceDice(IrradianceDice<T> dice, RWTexture3D<Vec4> volumes[6u], UVec3 coords)
+template<typename T, U32 kVolumeCount>
+void storeIrradianceDice(IrradianceDice<T> dice, RWTexture3D<Vec4> volumes[kVolumeCount], UVec3 coords, U32 firstVolume = 0)
 {
 	[unroll] for(U32 i = 0; i < 6; ++i)
 	{
-		volumes[i][coords] = vector<T, 4>(dice.m_directions[i], T(0));
+		volumes[firstVolume + i][coords] = vector<T, 4>(dice.m_directions[i], T(0));
 	}
 }

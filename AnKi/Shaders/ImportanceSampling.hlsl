@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Common.hlsl>
+#include <AnKi/Shaders/FastMathFunctions.hlsl>
 
 /// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 /// Using reversebits instead of bitwise ops
@@ -119,4 +119,31 @@ Vec2 spatioTemporalNoise(UVec2 fragCoord, U32 temporalIdx)
 	U32 index = hilbertIndex(fragCoord.x, fragCoord.y);
 	index += 288u * (temporalIdx % 64u);
 	return Vec2(frac(0.5f + index * Vec2(0.75487766624669276005f, 0.5698402909980532659114f)));
+}
+
+/// Generates a point on the unit sphere. The frameIndex can be used as a randomizer. No need to modulate the frameIndex.
+/// Usage:
+/// for(U32 s = 0; s < 32; ++s) {
+///		Vec3 point = generateUniformPointOnSphere(s, 32, frameIndex);
+/// }
+template<typename T, typename TInt>
+vector<T, 3> generateUniformPointOnSphere(TInt sampleIndex, TInt sampleCount, U32 frameIndex)
+{
+	const T sampleIndexf = sampleIndex;
+	const T sampleCountf = sampleCount;
+
+	// Apply frame-dependent phase shift for randomness
+	const T phaseShift = (frameIndex % sampleCount) * (T(k2Pi) / sampleCountf);
+
+	// Compute spherical coordinates
+	const T goldenRatio = 1.618;
+	const T theta = fastAcos(T(1) - T(2) * (sampleIndexf + T(0.5)) / sampleCountf); // Evenly spaced latitudes
+	const T phi = fmod((T(k2Pi * goldenRatio) * sampleIndexf + phaseShift), T(k2Pi)); // Golden ratio spiral with phase shift
+
+	// Convert to Cartesian coordinates
+	const T x = fastSin(theta) * fastCos(phi);
+	const T y = fastSin(theta) * fastSin(phi);
+	const T z = fastCos(theta);
+
+	return vector<T, 3>(x, y, z);
 }

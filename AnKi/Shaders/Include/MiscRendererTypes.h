@@ -70,10 +70,10 @@ struct Sky
 	U32 m_type;
 };
 
-struct IndirectDiffuseClipmap
+struct Clipmap
 {
 	Vec3 m_probeCounts;
-	F32 m_padding1;
+	U32 m_padding1;
 
 	Vec3 m_size;
 	F32 m_padding2;
@@ -110,7 +110,7 @@ struct GlobalRendererConstants
 
 	Sky m_sky;
 
-	IndirectDiffuseClipmap m_indirectDiffuseClipmaps[kIndirectDiffuseClipmapCount];
+	Clipmap m_indirectDiffuseClipmaps[kIndirectDiffuseClipmapCount];
 };
 
 // RT shadows

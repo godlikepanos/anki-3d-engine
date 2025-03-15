@@ -28,10 +28,15 @@ Error RtMaterialFetchDbg::init()
 		m_rtProg->getOrCreateVariant(variantInitInfo, variant);
 		m_libraryGrProg.reset(&variant->getProgram());
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
+	}
 
-		ShaderProgramResourceVariantInitInfo variantInitInfo2(m_rtProg);
-		variantInitInfo2.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
-		m_rtProg->getOrCreateVariant(variantInitInfo2, variant);
+	{
+		ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/RtMaterialFetchMiss.ankiprogbin", m_missProg));
+
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_missProg);
+		variantInitInfo.requestTechniqueAndTypes(ShaderTypeBit::kMiss, "RtMaterialFetch");
+		const ShaderProgramResourceVariant* variant;
+		m_missProg->getOrCreateVariant(variantInitInfo, variant);
 		m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 	}
 
@@ -137,14 +142,21 @@ void RtMaterialFetchDbg::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
-			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
-
 			// Fill the rest of the interface resources
-			cmdb.bindSrv(1, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
-			cmdb.bindSrv(2, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
-			cmdb.bindSrv(3, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
-			cmdb.bindSrv(4, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
-			cmdb.bindUav(1, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::firstSurface()));
+			cmdb.bindSrv(1, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(2, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(3, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(5, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(GpuSceneGlobalIlluminationProbe)));
+			cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(PixelFailedSsr)));
+			cmdb.bindSrv(7, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+
+			rgraphCtx.bindUav(0, 2, m_runCtx.m_rt);
+			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+			cmdb.bindUav(2, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+
+			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
+			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
 			cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 						   getRenderer().getInternalResolution().x(), getRenderer().getInternalResolution().y(), 1);

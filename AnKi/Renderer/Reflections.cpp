@@ -362,7 +362,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
 			if(bSkySolidColor)
 			{
-				cmdb.bindSrv(4, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			}
 			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 			{
@@ -377,13 +377,17 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				5, 2,
 				(GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementCount())
 					? GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView()
-					: BufferView(&getRenderer().getDummyBuffer(), 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize()));
+					: BufferView(getDummyGpuResources().m_buffer.get(), 0, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getElementSize()));
 			cmdb.bindSrv(6, 2, pixelsFailedSsrBuff);
 			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
 
-			rgraphCtx.bindUav(0, 2, transientRt1);
-			rgraphCtx.bindUav(1, 2, hitPosAndDepthRt);
-			cmdb.bindUav(2, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::firstSurface()));
+			for(U32 i = 0; i < 6; ++i)
+			{
+				cmdb.bindUav(i, 2, TextureView(getDummyGpuResources().m_texture3DUav.get(), TextureSubresourceDesc::firstSurface()));
+			}
+
+			rgraphCtx.bindUav(7, 2, transientRt1);
+			rgraphCtx.bindUav(8, 2, hitPosAndDepthRt);
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
@@ -439,7 +443,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
 			if(bSkySolidColor)
 			{
-				cmdb.bindSrv(5, 0, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(5, 0, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			}
 			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 			{

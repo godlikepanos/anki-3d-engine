@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Renderer/Common.h>
+#include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Util/StdTypes.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/ResourceManager.h>
@@ -15,7 +15,6 @@
 namespace anki {
 
 // Forward
-class Renderer;
 class ResourceManager;
 
 /// @addtogroup renderer
@@ -121,6 +120,11 @@ protected:
 	static void fillBuffer(CommandBuffer& cmdb, BufferView buffer, U32 value)
 	{
 		fillBuffers(cmdb, ConstWeakArray<BufferView>(&buffer, 1), value);
+	}
+
+	static DummyGpuResources& getDummyGpuResources()
+	{
+		return Renderer::getSingleton().m_dummyResources;
 	}
 };
 /// @}

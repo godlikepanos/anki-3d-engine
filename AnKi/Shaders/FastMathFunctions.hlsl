@@ -8,23 +8,22 @@
 #include <AnKi/Shaders/Common.hlsl>
 
 /// Sin approximation: https://www.desmos.com/calculator/svgcjfskne
-F32 fastSin(F32 x)
+template<typename T>
+T fastSin(T x)
 {
-	const F32 k2Pi = 2.0 * kPi;
-	const F32 kPiOver2 = kPi / 2.0;
-
-	x = (x + kPiOver2) / (k2Pi) + 0.75;
+	x = (x + kHalfPi) / (k2Pi) + T(0.75);
 	x = frac(x);
-	x = x * 2.0 - 1.0;
+	x = x * T(2) - T(1);
 	x = x * abs(x) - x;
-	x *= 4.0;
+	x *= T(4);
 	return x;
 }
 
 /// Cos approximation
-F32 fastCos(F32 x)
+template<typename T>
+T fastCos(T x)
 {
-	return fastSin(x + kPi / 2.0);
+	return fastSin<T>(x + T(kHalfPi));
 }
 
 F32 fastSqrt(F32 x)
@@ -32,9 +31,10 @@ F32 fastSqrt(F32 x)
 	return asfloat(0x1FBD1DF5 + (asint(x) >> 1));
 }
 
-F32 fastAcos(F32 x)
+template<typename T>
+T fastAcos(T x)
 {
-	F32 res = -0.156583f * abs(x) + kPi / 2.0f;
-	res *= fastSqrt(1.0f - abs(x));
-	return (x > 0.0f) ? res : kPi - res;
+	T res = T(-0.156583) * abs(x) + T(kHalfPi);
+	res *= fastSqrt(T(1) - abs(x));
+	return (x > T(0)) ? res : T(kPi) - res;
 }

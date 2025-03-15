@@ -25,6 +25,7 @@ struct [raypayload] RtMaterialFetchRayPayload // TODO make it FP16 when you chan
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0, SPACE);
 
+// SRVs
 RaytracingAccelerationStructure g_tlas : register(t0, SPACE);
 #	if defined(CLIPMAP_VOLUME)
 Texture2D<Vec4> g_dummyTex1 : register(t1, SPACE);
@@ -45,15 +46,13 @@ StructuredBuffer<PixelFailedSsr> g_pixelsFailedSsr : register(t6, SPACE);
 #	endif
 Texture2D<Vec4> g_shadowAtlasTex : register(t7, SPACE);
 
-#	if defined(CLIPMAP_VOLUME)
-RWTexture3D<Vec4> g_clipmapRedVolume : register(u0, SPACE);
-RWTexture3D<Vec4> g_clipmapGreenVolume : register(u1, SPACE);
-RWTexture3D<Vec4> g_clipmapBlueVolume : register(u2, SPACE);
-#	else
-RWTexture2D<Vec4> g_colorAndPdfTex : register(u0, SPACE);
-RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u1, SPACE);
-#	endif
+// UAVs
+RWTexture3D<Vec4> g_clipmapVolumes[6u] : register(u0, SPACE);
 
+RWTexture2D<Vec4> g_colorAndPdfTex : register(u7, SPACE);
+RWTexture2D<Vec4> g_hitPosAndDepthTex : register(u8, SPACE);
+
+// Samplers
 SamplerState g_linearClampAnySampler : register(s0, SPACE);
 SamplerComparisonState g_shadowSampler : register(s1, SPACE);
 
@@ -66,11 +65,11 @@ struct GBufferLight
 };
 
 template<typename T>
-Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT)
+Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T textureLod, out GBufferLight<T> gbuffer, out F32 rayT,
+					  U32 traceFlags = RAY_FLAG_FORCE_OPAQUE)
 {
 	RtMaterialFetchRayPayload payload;
 	payload.m_textureLod = textureLod;
-	const U32 flags = RAY_FLAG_FORCE_OPAQUE;
 	const U32 sbtRecordOffset = 0u;
 	const U32 sbtRecordStride = 0u;
 	const U32 missIndex = 0u;
@@ -80,7 +79,7 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 	ray.TMin = tMin;
 	ray.Direction = rayDir;
 	ray.TMax = tMax;
-	TraceRay(g_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
+	TraceRay(g_tlas, traceFlags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, ray, payload);
 
 	rayT = payload.m_rayT;
 	const Bool hasHitSky = payload.m_rayT < 0.0;
@@ -109,7 +108,8 @@ Bool materialRayTrace(Vec3 rayOrigin, Vec3 rayDir, F32 tMin, F32 tMax, T texture
 }
 
 template<typename T>
-vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bool tryShadowmapFirst, F32 shadowTMax)
+vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bool tryShadowmapFirst, F32 shadowTMax,
+							U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH)
 {
 	vector<T, 3> color = gbuffer.m_emission;
 
@@ -134,16 +134,14 @@ vector<T, 3> directLighting(GBufferLight<T> gbuffer, Vec3 hitPos, Bool isSky, Bo
 		}
 		else
 		{
-			constexpr U32 qFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
-			RayQuery<qFlags> q;
-			const U32 flags = RAY_FLAG_FORCE_OPAQUE;
+			RayQuery<RAY_FLAG_NONE> q;
 			const U32 cullMask = 0xFFu;
 			RayDesc ray;
 			ray.Origin = hitPos;
 			ray.TMin = 0.01;
 			ray.Direction = -dirLight.m_direction;
 			ray.TMax = shadowTMax;
-			q.TraceRayInline(g_tlas, qFlags, cullMask, ray);
+			q.TraceRayInline(g_tlas, traceFlags, cullMask, ray);
 			q.Proceed();
 			shadow = (q.CommittedStatus() == COMMITTED_TRIANGLE_HIT) ? 0.0 : 1.0;
 		}

@@ -18,7 +18,7 @@ namespace anki {
 
 Error IndirectDiffuse::init()
 {
-	const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar;
+	[[maybe_unused]] const Bool bRt = GrManager::getSingleton().getDeviceCapabilities().m_rayTracingEnabled && g_rtIndirectDiffuseCVar;
 	ANKI_ASSERT(bRt);
 
 	ANKI_CHECK(ResourceManager::getSingleton().loadResource("ShaderBinaries/IndirectDiffuse.ankiprogbin", m_mainProg));
@@ -168,7 +168,7 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
 			if(bSkySolidColor)
 			{
-				cmdb.bindSrv(4, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			}
 			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 			{
@@ -180,11 +180,11 @@ void IndirectDiffuse::populateRenderGraph(RenderingContext& ctx)
 			}
 
 			cmdb.bindSrv(5, 2, GpuSceneArrays::GlobalIlluminationProbe::getSingleton().getBufferView());
-			cmdb.bindSrv(6, 2, BufferView(&getRenderer().getDummyBuffer()));
+			cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get()));
 			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
 
 			rgraphCtx.bindUav(0, 2, transientRt1);
-			cmdb.bindUav(1, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			cmdb.bindUav(1, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::all()));
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());

@@ -15,60 +15,64 @@
 #include <AnKi/Shaders/ImportanceSampling.hlsl>
 #include <AnKi/Shaders/PackFunctions.hlsl>
 #include <AnKi/Shaders/SH.hlsl>
+#include <AnKi/Shaders/IrradianceDice.hlsl>
+#include <AnKi/Shaders/FastMathFunctions.hlsl>
 
 #define CLIPMAP_VOLUME 1
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>
 
-struct Clipmap
+Vec3 worldPosToVolumeUvw(Clipmap clipmap, Vec3 worldPos)
 {
-	F32 m_size;
-	F32 m_padding0;
-	F32 m_padding1;
-	F32 m_padding2;
-};
-
-ANKI_FAST_CONSTANTS(Clipmap, g_clipmap)
-
-Vec3 worldPosToVolumeUvw(Vec3 worldPos, Vec3 clipmapSize)
-{
-	const Vec3 uvw = frac(worldPos / clipmapSize);
+	const Vec3 uvw = frac(worldPos / clipmap.m_size);
 	return uvw;
 }
 
-UVec3 worldPosToVolumeTexel(Vec3 worldPos, Vec3 clipmapSize, F32 probeCountPerDim)
+UVec3 worldPosToVolumeTexel(Clipmap clipmap, Vec3 worldPos)
 {
-	const Vec3 uvw = worldPosToVolumeUvw(worldPos, clipmapSize);
-	return uvw * probeCountPerDim;
+	const Vec3 uvw = worldPosToVolumeUvw(clipmap, worldPos);
+	return uvw * clipmap.m_probeCounts;
 }
 
-void computeClipmapBounds(Vec3 cameraPos, Vec3 clipmapSize, out Vec3 aabbMin, out Vec3 aabbMax)
+void computeClipmapBounds(Clipmap clipmap, Vec3 cameraPos, out Vec3 aabbMin, out Vec3 aabbMax)
 {
-	aabbMin = round(cameraPos) - clipmapSize * 0.5;
-	aabbMax = round(cameraPos) + clipmapSize * 0.5;
+	const Vec3 halfSize = clipmap.m_size * 0.5;
+	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+	const Vec3 roundedPos = round(cameraPos / probeSize) * probeSize;
+	aabbMin = roundedPos - halfSize;
+	aabbMax = roundedPos + halfSize;
 }
 
-SHL1<F16> readClipmap(GlobalRendererConstants consts, Texture3D<Vec4> volumes[3 * kIndirectDiffuseClipmapCount], SamplerState linearAnyRepeatSampler,
-					  Vec3 worldPos)
+void computeClipmapBoundsConservative(Clipmap clipmap, Vec3 cameraPos, out Vec3 aabbMin, out Vec3 aabbMax)
+{
+	const Vec3 halfSize = clipmap.m_size * 0.5;
+	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+	const Vec3 roundedPos = round(cameraPos / probeSize) * probeSize;
+	aabbMin = roundedPos - halfSize + probeSize * 0.5;
+	aabbMax = roundedPos + halfSize - probeSize * 0.5;
+}
+
+SHL1<F16> readClipmap(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Texture3D<Vec4> volumes[3 * kIndirectDiffuseClipmapCount],
+					  SamplerState linearAnyRepeatSampler, Vec3 cameraPos, Vec3 worldPos)
 {
 	Vec3 clipmapAabbMin, clipmapAabbMax;
-	computeClipmapBounds(consts.m_cameraPosition, consts.m_indirectDiffuseClipmaps[0].m_size, clipmapAabbMin, clipmapAabbMax);
+	computeClipmapBoundsConservative(clipmaps[0], cameraPos, clipmapAabbMin, clipmapAabbMax);
 	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
 	{
-		const Vec3 uvw = worldPosToVolumeUvw(worldPos, consts.m_indirectDiffuseClipmaps[0].m_size);
+		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[0], worldPos);
 		return loadSH<F16>(volumes[0], volumes[1], volumes[2], linearAnyRepeatSampler, uvw);
 	}
 
-	computeClipmapBounds(consts.m_cameraPosition, consts.m_indirectDiffuseClipmaps[1].m_size, clipmapAabbMin, clipmapAabbMax);
+	computeClipmapBoundsConservative(clipmaps[1], cameraPos, clipmapAabbMin, clipmapAabbMax);
 	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
 	{
-		const Vec3 uvw = worldPosToVolumeUvw(worldPos, consts.m_indirectDiffuseClipmaps[1].m_size);
+		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[1], worldPos);
 		return loadSH<F16>(volumes[3], volumes[4], volumes[5], linearAnyRepeatSampler, uvw);
 	}
 
-	computeClipmapBounds(consts.m_cameraPosition, consts.m_indirectDiffuseClipmaps[2].m_size, clipmapAabbMin, clipmapAabbMax);
+	computeClipmapBoundsConservative(clipmaps[2], cameraPos, clipmapAabbMin, clipmapAabbMax);
 	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
 	{
-		const Vec3 uvw = worldPosToVolumeUvw(worldPos, consts.m_indirectDiffuseClipmaps[2].m_size);
+		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[2], worldPos);
 		return loadSH<F16>(volumes[6], volumes[7], volumes[8], linearAnyRepeatSampler, uvw);
 	}
 
@@ -76,75 +80,99 @@ SHL1<F16> readClipmap(GlobalRendererConstants consts, Texture3D<Vec4> volumes[3 
 	return sh;
 }
 
+IrradianceDice<F16> readClipmap(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Texture3D<Vec4> volumes[6 * kIndirectDiffuseClipmapCount],
+								SamplerState linearAnyRepeatSampler, Vec3 cameraPos, Vec3 worldPos)
+{
+	Vec3 clipmapAabbMin, clipmapAabbMax;
+	computeClipmapBoundsConservative(clipmaps[0], cameraPos, clipmapAabbMin, clipmapAabbMax);
+	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
+	{
+		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[0], worldPos);
+		return loadIrradianceDice<F16>(volumes, linearAnyRepeatSampler, uvw, 0);
+	}
+
+	computeClipmapBoundsConservative(clipmaps[1], cameraPos, clipmapAabbMin, clipmapAabbMax);
+	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
+	{
+		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[1], worldPos);
+		return loadIrradianceDice<F16>(volumes, linearAnyRepeatSampler, uvw, 6);
+	}
+
+	computeClipmapBoundsConservative(clipmaps[2], cameraPos, clipmapAabbMin, clipmapAabbMax);
+	if(all(worldPos > clipmapAabbMin) && all(worldPos < clipmapAabbMax))
+	{
+		const Vec3 uvw = worldPosToVolumeUvw(clipmaps[2], worldPos);
+		return loadIrradianceDice<F16>(volumes, linearAnyRepeatSampler, uvw, 12);
+	}
+
+	IrradianceDice<F16> dice = (IrradianceDice<F16>)0;
+	return dice;
+}
+
 // ===========================================================================
 // RayGen                                                                    =
 // ===========================================================================
 #if ANKI_RAY_GEN_SHADER
 
+struct Consts
+{
+	U32 m_clipmapIdx;
+	F32 m_padding0;
+	F32 m_padding1;
+	F32 m_padding2;
+};
+ANKI_FAST_CONSTANTS(Consts, g_consts)
+
 [Shader("raygeneration")] void main()
 {
-	F32 probeCountPerDim, unused0, unused1;
-	g_clipmapRedVolume.GetDimensions(probeCountPerDim, unused0, unused1);
+	const Clipmap clipmap = g_globalRendererConstants.m_indirectDiffuseClipmaps[g_consts.m_clipmapIdx];
 
 	// Compute clipmap bounds
 	Vec3 clipmapAabbMin, clipmapAabbMax;
-	computeClipmapBounds(g_globalRendererConstants.m_cameraPosition, g_clipmap.m_size, clipmapAabbMin, clipmapAabbMax);
+	computeClipmapBounds(clipmap, g_globalRendererConstants.m_cameraPosition, clipmapAabbMin, clipmapAabbMax);
 
 	const Vec3 prevCameraPos = g_globalRendererConstants.m_previousMatrices.m_cameraTransform.getTranslationPart();
 	Vec3 prevClipmapAabbMin, prevClipmapAabbMax;
-	computeClipmapBounds(prevCameraPos, g_clipmap.m_size, prevClipmapAabbMin, prevClipmapAabbMax);
+	computeClipmapBounds(clipmap, prevCameraPos, prevClipmapAabbMin, prevClipmapAabbMax);
 
 	// Compute probe info
-	const F32 probeSize = g_clipmap.m_size / probeCountPerDim;
+	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
 	const Vec3 cellWorldPos = DispatchRaysIndex().xyz * probeSize + probeSize * 0.5 + clipmapAabbMin;
 
-	const UVec3 probeTexelCoord = worldPosToVolumeTexel(cellWorldPos, g_clipmap.m_size, probeCountPerDim);
-	ANKI_ASSERT(all(probeTexelCoord < probeCountPerDim));
+	const UVec3 probeTexelCoord = worldPosToVolumeTexel(clipmap, cellWorldPos);
+	ANKI_ASSERT(all(probeTexelCoord < clipmap.m_probeCounts));
 
 	// Integrate to build the SH
-	SHL1<F16> sh = (SHL1<F16>)0;
-	const U32 slices = 8u;
-	const U32 rayCount = slices * slices / 2u;
+	IrradianceDice<F16> dice = (IrradianceDice<F16>)0;
+	const U16 sampleCount = 32u;
 
-	const UVec3 seed = rand3DPCG16(UVec3(DispatchRaysIndex().xy, g_globalRendererConstants.m_frame % 32u));
-	const Vec2 randFactors = hammersleyRandom16(0, 1, seed);
-
-	const F32 angle = 2.0 * kPi / slices;
-
-	for(U32 i = 0; i < slices; ++i)
+	for(U16 i = 0; i < sampleCount; ++i)
 	{
-		for(U32 j = 0; j < slices / 2u; ++j)
-		{
-			const F32 phi = angle * i + angle * randFactors.x;
-			const F32 theta = angle * j + angle * randFactors.y;
+		HVec3 dir = generateUniformPointOnSphere<F16>(i, sampleCount, g_globalRendererConstants.m_frame);
 
-			HVec3 dir;
-			dir.x = sin(theta) * cos(phi);
-			dir.y = sin(theta) * sin(phi);
-			dir.z = cos(theta);
+		const F32 tMax = 1000.0; // TODO
 
-			const F32 tMax = 1000.0; // TODO
+		constexpr U32 traceFlags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
 
-			GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
-			F32 rayT = 0.0;
-			const Bool hit = materialRayTrace<F16>(cellWorldPos, dir, 0.01, tMax, 1000.0, gbuffer, rayT);
+		GBufferLight<F16> gbuffer = (GBufferLight<F16>)0;
+		F32 rayT = 0.0;
+		const Bool hit = materialRayTrace<F16>(cellWorldPos, dir, 0.0, tMax, 1000.0, gbuffer, rayT, traceFlags);
 
-			const Vec3 hitPos = cellWorldPos + dir * rayT;
-			const HVec3 radiance = directLighting(gbuffer, hitPos, !hit, true, tMax);
+		const Vec3 hitPos = cellWorldPos + dir * rayT;
+		const HVec3 radiance = directLighting<F16>(gbuffer, hitPos, !hit, false, tMax, traceFlags | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH);
 
-			sh = appendSH(sh, dir, radiance, rayCount);
-		}
+		dice = appendIrradianceDice(dice, dir, radiance, sampleCount);
 	}
 
 	// Store the SH
 	const Bool blendWithHistory = all(cellWorldPos > prevClipmapAabbMin) && all(cellWorldPos < prevClipmapAabbMax);
 	if(blendWithHistory)
 	{
-		const SHL1<F16> historySH = loadSH<F16>(g_clipmapRedVolume, g_clipmapGreenVolume, g_clipmapBlueVolume, probeTexelCoord);
-		sh = lerpSH<F16>(historySH, sh, 0.01);
+		const IrradianceDice<F16> historyDice = loadIrradianceDice<F16>(g_clipmapVolumes, probeTexelCoord);
+		dice = lerpIrradianceDice<F16>(historyDice, dice, 0.01);
 	}
 
-	storeSH(sh, g_clipmapRedVolume, g_clipmapGreenVolume, g_clipmapBlueVolume, probeTexelCoord);
+	storeIrradianceDice(dice, g_clipmapVolumes, probeTexelCoord);
 }
 #endif // ANKI_RAY_GEN_SHADER
 
@@ -155,11 +183,11 @@ SHL1<F16> readClipmap(GlobalRendererConstants consts, Texture3D<Vec4> volumes[3 
 Texture2D<Vec4> g_depthTex : register(t0);
 Texture2D<Vec4> g_gbufferRt2 : register(t1);
 
-Texture3D<Vec4> g_clipmapVolumes[3 * kIndirectDiffuseClipmapCount] : register(t2);
+Texture3D<Vec4> g_clipmapVolumes[6 * kIndirectDiffuseClipmapCount] : register(t2);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
-ConstantBuffer<GlobalRendererConstants> g_globalConstants : register(b0);
+ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(b0);
 
 SamplerState g_linearAnyRepeatSampler : register(s0);
 
@@ -177,29 +205,13 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 
 	const F32 depth = g_depthTex[svDispatchThreadId].r;
 	const Vec2 ndc = uvToNdc(Vec2(svDispatchThreadId) / Vec2(viewportSize));
-	const Vec4 worldPos4 = mul(g_globalConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
+	const Vec4 worldPos4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	worldPos += normal * 0.5;
+	const IrradianceDice<F16> dice = readClipmap(g_globalRendererConstants.m_indirectDiffuseClipmaps, g_clipmapVolumes, g_linearAnyRepeatSampler,
+												 g_globalRendererConstants.m_cameraPosition, worldPos);
+	const HVec3 irradiance = evaluateIrradianceDice<F16>(dice, normal);
 
-	const Vec3 uvw = worldPosToVolumeUvw(worldPos, g_clipmap.m_size);
-
-	const SHL1<F32> sh = loadSH<F32>(g_clipmapVolumes[0], g_clipmapVolumes[1], g_clipmapVolumes[2], g_linearAnyRepeatSampler, uvw);
-	// const SHL1<F32> sh = loadSH<F32>(g_clipmapRedVolume, g_clipmapGreenVolume, g_clipmapBlueVolume, uvw * 20);
-
-	const Vec3 color = evaluateSH(sh, normal);
-
-	// const Vec3 color = g_volume.SampleLevel(g_linearAnyRepeatSampler, uvw, 0.0);
-	// const Vec3 color = g_volume[uvw * 40.0];
-
-	Vec3 clipMin, clipMax;
-	computeClipmapBounds(g_globalConstants.m_cameraPosition, g_clipmap.m_size, clipMin, clipMax);
-	clipMin += 2;
-	clipMax -= 2;
-
-	if(any(worldPos > clipMax) || any(worldPos < clipMin))
-		g_outTex[svDispatchThreadId] = 0.1;
-	else
-		g_outTex[svDispatchThreadId] = Vec4(color, 1.0);
+	g_outTex[svDispatchThreadId] = Vec4(irradiance, 1.0);
 }
 #endif

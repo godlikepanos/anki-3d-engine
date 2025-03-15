@@ -59,7 +59,7 @@ vector<T, 3> evaluateSH(SHL1<T> sh, vector<T, 3> direction)
 {
 	vector<T, 3> res = T(0);
 
-	if(true)
+	if(false)
 	{
 		// L0
 		res += sh.m_c[0];

@@ -558,15 +558,16 @@ BufferView ShadowMapping::createVetVisibilityPass(CString passName, const LightC
 		cmdb.setFastConstants(&lightIndex, sizeof(lightIndex));
 
 		cmdb.bindSrv(0, 0, hashBuff);
-		cmdb.bindUav(0, 0, mdiBuff.isValid() ? mdiBuff : BufferView(&getRenderer().getDummyBuffer()).setRange(sizeof(U32)));
+		cmdb.bindUav(0, 0, mdiBuff.isValid() ? mdiBuff : BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(U32)));
 		cmdb.bindUav(1, 0, GpuSceneArrays::Light::getSingleton().getBufferView());
 		cmdb.bindUav(2, 0, GpuSceneArrays::LightVisibleRenderablesHash::getSingleton().getBufferView());
 		cmdb.bindUav(3, 0, clearTileIndirectArgs);
 		cmdb.bindUav(4, 0,
 					 dispatchMeshIndirectArgs.isValid() ? dispatchMeshIndirectArgs
-														: BufferView(&getRenderer().getDummyBuffer()).setRange(sizeof(DispatchIndirectArgs)));
+														: BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(DispatchIndirectArgs)));
 		cmdb.bindUav(5, 0,
-					 drawIndirectArgs.isValid() ? drawIndirectArgs : BufferView(&getRenderer().getDummyBuffer()).setRange(sizeof(DrawIndirectArgs)));
+					 drawIndirectArgs.isValid() ? drawIndirectArgs
+												: BufferView(getDummyGpuResources().m_buffer.get()).setRange(sizeof(DrawIndirectArgs)));
 
 		ANKI_ASSERT(RenderStateBucketContainer::getSingleton().getBucketCount(RenderingTechnique::kDepth) <= 64 && "TODO");
 		cmdb.dispatchCompute(1, 1, 1);

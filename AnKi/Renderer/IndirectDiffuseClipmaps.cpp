@@ -23,19 +23,23 @@ Error IndirectDiffuseClipmaps::init()
 	m_tmpRtDesc.bake();
 
 	m_clipmapInfo[0].m_probeCounts = Vec3(F32(g_indirectDiffuseClipmap0ProbesPerDimCVar));
+	m_clipmapInfo[1].m_probeCounts = Vec3(F32(g_indirectDiffuseClipmap1ProbesPerDimCVar));
+	m_clipmapInfo[2].m_probeCounts = Vec3(F32(g_indirectDiffuseClipmap2ProbesPerDimCVar));
 	m_clipmapInfo[0].m_size = Vec3(g_indirectDiffuseClipmap0SizeCVar);
+	m_clipmapInfo[1].m_size = Vec3(g_indirectDiffuseClipmap1SizeCVar);
+	m_clipmapInfo[2].m_size = Vec3(g_indirectDiffuseClipmap2SizeCVar);
 
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
-		for(U32 i = 0; i < 3; ++i)
+		for(U32 dir = 0; dir < 6; ++dir)
 		{
 			TextureInitInfo volumeInit = getRenderer().create2DRenderTargetInitInfo(
-				g_indirectDiffuseClipmap0ProbesPerDimCVar, g_indirectDiffuseClipmap0ProbesPerDimCVar, Format::kR16G16B16A16_Sfloat,
-				TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap #%u comp #%u", clipmap, i));
-			volumeInit.m_depth = g_indirectDiffuseClipmap0ProbesPerDimCVar;
+				U32(m_clipmapInfo[clipmap].m_probeCounts.x()), U32(m_clipmapInfo[clipmap].m_probeCounts.y()), Format::kB10G11R11_Ufloat_Pack32,
+				TextureUsageBit::kAllShaderResource, generateTempPassName("IndirectDiffuseClipmap #%u dir #%u", clipmap, dir));
+			volumeInit.m_depth = U32(m_clipmapInfo[clipmap].m_probeCounts.z());
 			volumeInit.m_type = TextureType::k3D;
 
-			m_clipmapVolumes[clipmap].m_perColorComponent[i] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
+			m_clipmapVolumes[clipmap].m_directions[dir] = getRenderer().createAndClearRenderTarget(volumeInit, TextureUsageBit::kSrvCompute);
 		}
 	}
 
@@ -77,19 +81,18 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 	RenderGraphBuilder& rgraph = ctx.m_renderGraphDescr;
 
-	Array2d<RenderTargetHandle, kIndirectDiffuseClipmapCount, 3> volumeRts;
+	Array2d<RenderTargetHandle, kIndirectDiffuseClipmapCount, 6> volumeRts;
 	for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 	{
-		for(U32 c = 0; c < 3; ++c)
+		for(U32 dir = 0; dir < 6; ++dir)
 		{
 			if(!m_clipmapsImportedOnce)
 			{
-				volumeRts[clipmap][c] =
-					rgraph.importRenderTarget(m_clipmapVolumes[clipmap].m_perColorComponent[c].get(), TextureUsageBit::kSrvCompute);
+				volumeRts[clipmap][dir] = rgraph.importRenderTarget(m_clipmapVolumes[clipmap].m_directions[dir].get(), TextureUsageBit::kSrvCompute);
 			}
 			else
 			{
-				volumeRts[clipmap][c] = rgraph.importRenderTarget(m_clipmapVolumes[clipmap].m_perColorComponent[c].get());
+				volumeRts[clipmap][dir] = rgraph.importRenderTarget(m_clipmapVolumes[clipmap].m_directions[dir].get());
 			}
 		}
 	}
@@ -157,9 +160,9 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
-			for(U32 c = 0; c < 3; ++c)
+			for(U32 dir = 0; dir < 6; ++dir)
 			{
-				pass.newTextureDependency(volumeRts[clipmap][c], TextureUsageBit::kUavCompute);
+				pass.newTextureDependency(volumeRts[clipmap][dir], TextureUsageBit::kUavCompute);
 			}
 		}
 		pass.newBufferDependency(sbtHandle, BufferUsageBit::kShaderBindingTable);
@@ -193,9 +196,9 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 			cmdb.bindConstantBuffer(0, 2, ctx.m_globalRenderingConstantsBuffer);
 
 			rgraphCtx.bindSrv(0, 2, getRenderer().getAccelerationStructureBuilder().getAccelerationStructureHandle());
-			cmdb.bindSrv(1, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
-			cmdb.bindSrv(2, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
-			cmdb.bindSrv(3, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(1, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(2, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
+			cmdb.bindSrv(3, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 
 			const LightComponent* dirLight = SceneGraph::getSingleton().getDirectionalLight();
 			const SkyboxComponent* sky = SceneGraph::getSingleton().getSkybox();
@@ -203,7 +206,7 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				(!sky || sky->getSkyboxType() == SkyboxType::kSolidColor || (!dirLight && sky->getSkyboxType() == SkyboxType::kGenerated));
 			if(bSkySolidColor)
 			{
-				cmdb.bindSrv(4, 2, TextureView(&getRenderer().getDummyTexture2d(), TextureSubresourceDesc::all()));
+				cmdb.bindSrv(4, 2, TextureView(getDummyGpuResources().m_texture2DSrv.get(), TextureSubresourceDesc::all()));
 			}
 			else if(sky->getSkyboxType() == SkyboxType::kImage2D)
 			{
@@ -214,24 +217,27 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 				rgraphCtx.bindSrv(4, 2, getRenderer().getGeneratedSky().getEnvironmentMapRt());
 			}
 
-			cmdb.bindSrv(5, 2, BufferView(&getRenderer().getDummyBuffer(), 0, sizeof(U32)));
-			cmdb.bindSrv(6, 2, BufferView(&getRenderer().getDummyBuffer(), 0, sizeof(U32)));
+			cmdb.bindSrv(5, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
+			cmdb.bindSrv(6, 2, BufferView(getDummyGpuResources().m_buffer.get(), 0, sizeof(U32)));
 			rgraphCtx.bindSrv(7, 2, getRenderer().getShadowMapping().getShadowmapRt());
 
 			cmdb.bindSampler(0, 2, getRenderer().getSamplers().m_trilinearClamp.get());
 			cmdb.bindSampler(1, 2, getRenderer().getSamplers().m_trilinearClampShadow.get());
 
+			cmdb.bindUav(7, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+			cmdb.bindUav(8, 2, TextureView(getDummyGpuResources().m_texture2DUav.get(), TextureSubresourceDesc::firstSurface()));
+
 			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 			{
-				for(U32 c = 0; c < 3; ++c)
+				for(U32 dir = 0; dir < 6; ++dir)
 				{
-					rgraphCtx.bindUav(c, 2, volumeRts[clipmap][c]);
+					rgraphCtx.bindUav(dir, 2, volumeRts[clipmap][dir]);
 				}
 
-				const Vec4 consts(F32(U32(g_indirectDiffuseClipmap0SizeCVar) << clipmap));
+				const UVec4 consts(clipmap);
 				cmdb.setFastConstants(&consts, sizeof(consts));
 
-				const U32 probeCount = m_clipmapVolumes[clipmap].m_perColorComponent[0]->getWidth();
+				const U32 probeCount = m_clipmapVolumes[clipmap].m_directions[0]->getWidth();
 				cmdb.traceRays(sbtBuffer, m_sbtRecordSize, GpuSceneArrays::RenderableBoundingVolumeRt::getSingleton().getElementCount(), 1,
 							   probeCount, probeCount, probeCount);
 			}
@@ -241,11 +247,12 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 	{
 		NonGraphicsRenderPass& pass = rgraph.newNonGraphicsRenderPass("IndirectDiffuseClipmaps test");
 
-		const U32 clipmap = 2;
-
-		for(U32 c = 0; c < 3; ++c)
+		for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 		{
-			pass.newTextureDependency(volumeRts[clipmap][c], TextureUsageBit::kSrvCompute);
+			for(U32 dir = 0; dir < 6; ++dir)
+			{
+				pass.newTextureDependency(volumeRts[clipmap][dir], TextureUsageBit::kSrvCompute);
+			}
 		}
 		pass.newTextureDependency(getRenderer().getGBuffer().getDepthRt(), TextureUsageBit::kSrvCompute);
 		pass.newTextureDependency(getRenderer().getGBuffer().getColorRt(2), TextureUsageBit::kSrvCompute);
@@ -256,14 +263,17 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			cmdb.bindShaderProgram(m_tmpVisGrProg.get());
 
-			const Vec4 consts(F32(U32(g_indirectDiffuseClipmap0SizeCVar) << clipmap));
-			cmdb.setFastConstants(&consts, sizeof(consts));
+			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
+			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
 
-			rgraphCtx.bindSrv(0, 0, volumeRts[clipmap][0]);
-			rgraphCtx.bindSrv(1, 0, volumeRts[clipmap][1]);
-			rgraphCtx.bindSrv(2, 0, volumeRts[clipmap][2]);
-			rgraphCtx.bindSrv(3, 0, getRenderer().getGBuffer().getDepthRt());
-			rgraphCtx.bindSrv(4, 0, getRenderer().getGBuffer().getColorRt(2));
+			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
+			{
+				for(U32 dir = 0; dir < 6; ++dir)
+				{
+					rgraphCtx.bindSrv(clipmap * 6 + dir + 2, 0, volumeRts[clipmap][dir]);
+				}
+			}
+
 			rgraphCtx.bindUav(0, 0, m_runCtx.m_tmpRt);
 
 			cmdb.bindConstantBuffer(0, 0, ctx.m_globalRenderingConstantsBuffer);

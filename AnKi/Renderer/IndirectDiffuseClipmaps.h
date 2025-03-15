@@ -16,16 +16,16 @@ namespace anki {
 
 inline BoolCVar g_rtIndirectDiffuseClipmapsCVar("R", "RtIndirectDiffuseClipmaps", false);
 
-inline NumericCVar<U32> g_indirectDiffuseClipmap0ProbesPerDimCVar("R", "IndirectDiffuseClipmap0ProbesPerDim", 20, 10, 50,
+inline NumericCVar<U32> g_indirectDiffuseClipmap0ProbesPerDimCVar("R", "IndirectDiffuseClipmap0ProbesPerDim", 32, 10, 100,
 																  "The cell count of each dimension of 1st clipmap");
-inline NumericCVar<U32> g_indirectDiffuseClipmap1ProbesPerDimCVar("R", "IndirectDiffuseClipmap1ProbesPerDim", 20, 10, 50,
+inline NumericCVar<U32> g_indirectDiffuseClipmap1ProbesPerDimCVar("R", "IndirectDiffuseClipmap1ProbesPerDim", 32, 10, 100,
 																  "The cell count of each dimension of 2nd clipmap");
-inline NumericCVar<U32> g_indirectDiffuseClipmap2ProbesPerDimCVar("R", "IndirectDiffuseClipmap2ProbesPerDim", 20, 10, 50,
+inline NumericCVar<U32> g_indirectDiffuseClipmap2ProbesPerDimCVar("R", "IndirectDiffuseClipmap2ProbesPerDim", 32, 10, 100,
 																  "The cell count of each dimension of 3rd clipmap");
 
-inline NumericCVar<F32> g_indirectDiffuseClipmap0SizeCVar("R", "IndirectDiffuseClipmap0Size", 20.0, 10.0, 1000.0, "The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap1SizeCVar("R", "IndirectDiffuseClipmap1Size", 40.0, 10.0, 1000.0, "The clipmap size in meters");
-inline NumericCVar<F32> g_indirectDiffuseClipmap2SizeCVar("R", "IndirectDiffuseClipmap2Size", 80.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap0SizeCVar("R", "IndirectDiffuseClipmap0Size", 32.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap1SizeCVar("R", "IndirectDiffuseClipmap1Size", 64.0, 10.0, 1000.0, "The clipmap size in meters");
+inline NumericCVar<F32> g_indirectDiffuseClipmap2SizeCVar("R", "IndirectDiffuseClipmap2Size", 128.0, 10.0, 1000.0, "The clipmap size in meters");
 
 /// Ambient global illumination passes.
 class IndirectDiffuseClipmaps : public RendererObject
@@ -46,7 +46,7 @@ public:
 		handles[0] = m_runCtx.m_tmpRt;
 	}
 
-	const Array<IndirectDiffuseClipmap, kIndirectDiffuseClipmapCount>& getClipmapsInfo() const
+	const Array<Clipmap, kIndirectDiffuseClipmapCount>& getClipmapsInfo() const
 	{
 		return m_clipmapInfo;
 	}
@@ -55,12 +55,12 @@ private:
 	class ClipmapVolumes
 	{
 	public:
-		Array<TexturePtr, 3> m_perColorComponent;
+		Array<TexturePtr, 6> m_directions;
 	};
 
 	Array<ClipmapVolumes, kIndirectDiffuseClipmapCount> m_clipmapVolumes;
 
-	Array<IndirectDiffuseClipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
+	Array<Clipmap, kIndirectDiffuseClipmapCount> m_clipmapInfo;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramResourcePtr m_missProg;
