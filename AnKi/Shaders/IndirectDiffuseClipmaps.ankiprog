@@ -51,6 +51,49 @@ void computeClipmapBoundsConservative(Clipmap clipmap, Vec3 cameraPos, out Vec3 
 	aabbMax = roundedPos + halfSize - probeSize * 0.5;
 }
 
+F32 computeClipmapFade(Clipmap clipmap, Vec3 cameraPos, Vec3 worldPos)
+{
+	const Vec3 probeSize = clipmap.m_size / clipmap.m_probeCounts;
+	const Vec3 halfSize = clipmap.m_size * 0.5;
+	const Vec3 aabbMin = cameraPos - halfSize + probeSize;
+	const Vec3 aabbMax = cameraPos + halfSize - probeSize;
+
+	Vec3 a = (worldPos - aabbMin) / (aabbMax - aabbMin);
+	a = 2.0 * a - 1.0;
+	a = pow(abs(a), 8.0);
+	a = 1.0 - a;
+
+	a = select(a > 1.0, 0.0, a);
+	a = max(0.0, a);
+
+	F32 fade = a.x * a.y * a.z;
+
+	return fade;
+}
+
+U16 findClipmapOnPosition(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Vec3 cameraPos, Vec3 worldPos, F32 randFactor)
+{
+	F32 fade = computeClipmapFade(clipmaps[0], cameraPos, worldPos);
+	if(fade > randFactor)
+	{
+		return 0;
+	}
+
+	fade = computeClipmapFade(clipmaps[1], cameraPos, worldPos);
+	if(fade > randFactor)
+	{
+		return 1;
+	}
+
+	fade = computeClipmapFade(clipmaps[2], cameraPos, worldPos);
+	if(fade > randFactor)
+	{
+		return 2;
+	}
+
+	return 3;
+}
+
 SHL1<F16> readClipmap(Clipmap clipmaps[kIndirectDiffuseClipmapCount], Texture3D<Vec4> volumes[3 * kIndirectDiffuseClipmapCount],
 					  SamplerState linearAnyRepeatSampler, Vec3 cameraPos, Vec3 worldPos)
 {
@@ -183,7 +226,9 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 Texture2D<Vec4> g_depthTex : register(t0);
 Texture2D<Vec4> g_gbufferRt2 : register(t1);
 
-Texture3D<Vec4> g_clipmapVolumes[6 * kIndirectDiffuseClipmapCount] : register(t2);
+Texture2D<Vec4> g_blueNoiseTex : register(t2);
+
+Texture3D<Vec4> g_clipmapVolumes[6 * kIndirectDiffuseClipmapCount] : register(t3);
 
 RWTexture2D<Vec4> g_outTex : register(u0);
 
@@ -204,14 +249,50 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	const Vec3 normal = unpackNormalFromGBuffer(g_gbufferRt2[svDispatchThreadId]);
 
 	const F32 depth = g_depthTex[svDispatchThreadId].r;
-	const Vec2 ndc = uvToNdc(Vec2(svDispatchThreadId) / Vec2(viewportSize));
+	const Vec2 uv = Vec2(svDispatchThreadId) / Vec2(viewportSize);
+	const Vec2 ndc = uvToNdc(uv);
 	const Vec4 worldPos4 = mul(g_globalRendererConstants.m_matrices.m_invertedViewProjectionJitter, Vec4(ndc, depth, 1.0));
 	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	const IrradianceDice<F16> dice = readClipmap(g_globalRendererConstants.m_indirectDiffuseClipmaps, g_clipmapVolumes, g_linearAnyRepeatSampler,
-												 g_globalRendererConstants.m_cameraPosition, worldPos);
+	// Rand
+	UVec2 noiseTexSize;
+	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
+	Vec3 noise3 = g_blueNoiseTex[svDispatchThreadId % noiseTexSize];
+	noise3 = animateBlueNoise2(noise3, g_globalRendererConstants.m_frame);
+
+	F32 noise = noise3.x;
+
+	const U16 clipmapIdx =
+		findClipmapOnPosition(g_globalRendererConstants.m_indirectDiffuseClipmaps, g_globalRendererConstants.m_cameraPosition, worldPos, noise);
+	/*if(clipmapIdx == 0)
+	{
+		g_outTex[svDispatchThreadId] = Vec4(1, 0, 0, 0);
+	}
+	else if(clipmapIdx == 1)
+	{
+		g_outTex[svDispatchThreadId] = Vec4(0, 1, 0, 0);
+	}
+	else if(clipmapIdx == 2)
+	{
+		g_outTex[svDispatchThreadId] = Vec4(0, 0, 1, 0);
+	}
+	else
+	{
+		g_outTex[svDispatchThreadId] = Vec4(1, 0, 1, 0);
+	}
+	return;*/
+
+	if(clipmapIdx >= kIndirectDiffuseClipmapCount)
+	{
+		g_outTex[svDispatchThreadId] = 0.0;
+		return;
+	}
+
+	const Vec3 uvw = worldPosToVolumeUvw(g_globalRendererConstants.m_indirectDiffuseClipmaps[clipmapIdx], worldPos);
+
+	const IrradianceDice<F16> dice = loadIrradianceDice<F16>(g_clipmapVolumes, g_linearAnyRepeatSampler, uvw, clipmapIdx * 6);
 	const HVec3 irradiance = evaluateIrradianceDice<F16>(dice, normal);
 
-	g_outTex[svDispatchThreadId] = Vec4(irradiance, 1.0);
+	g_outTex[svDispatchThreadId] = Vec4(irradiance, 0.0);
 }
 #endif

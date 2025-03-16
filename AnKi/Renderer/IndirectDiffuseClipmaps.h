@@ -71,6 +71,8 @@ private:
 
 	RenderTargetDesc m_tmpRtDesc;
 
+	ImageResourcePtr m_blueNoiseImg;
+
 	U32 m_sbtRecordSize = 0;
 	U32 m_rayGenShaderGroupIdx = kMaxU32;
 	U32 m_missShaderGroupIdx = kMaxU32;

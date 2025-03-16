@@ -72,6 +72,8 @@ Error IndirectDiffuseClipmaps::init()
 	m_sbtRecordSize = getAlignedRoundUp(GrManager::getSingleton().getDeviceCapabilities().m_sbtRecordAlignment,
 										GrManager::getSingleton().getDeviceCapabilities().m_shaderGroupHandleSize + U32(sizeof(UVec4)));
 
+	ANKI_CHECK(ResourceManager::getSingleton().loadResource("EngineAssets/BlueNoise_Rgba8_64x64.png", m_blueNoiseImg));
+
 	return Error::kNone;
 }
 
@@ -265,12 +267,13 @@ void IndirectDiffuseClipmaps::populateRenderGraph(RenderingContext& ctx)
 
 			rgraphCtx.bindSrv(0, 0, getRenderer().getGBuffer().getDepthRt());
 			rgraphCtx.bindSrv(1, 0, getRenderer().getGBuffer().getColorRt(2));
+			cmdb.bindSrv(2, 0, TextureView(&m_blueNoiseImg->getTexture(), TextureSubresourceDesc::firstSurface()));
 
 			for(U32 clipmap = 0; clipmap < kIndirectDiffuseClipmapCount; ++clipmap)
 			{
 				for(U32 dir = 0; dir < 6; ++dir)
 				{
-					rgraphCtx.bindSrv(clipmap * 6 + dir + 2, 0, volumeRts[clipmap][dir]);
+					rgraphCtx.bindSrv(clipmap * 6 + dir + 3, 0, volumeRts[clipmap][dir]);
 				}
 			}
 
