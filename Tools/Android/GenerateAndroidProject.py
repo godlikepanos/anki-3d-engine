@@ -88,6 +88,21 @@ def main():
     else:
         print("Asset directory (%s) already exists. Skipping" % assets_dir)
 
+    # Write the asset directory structure to a file
+    dir_structure_file = open(os.path.join(assets_dir, "DirStructure.txt"), "w", newline="\n")
+    for root, dirs, files in os.walk(assets_dir, followlinks=True):
+        for f in files:
+            if f.find("DirStructure.txt") >= 0:
+                continue
+
+            filename = os.path.join(root, f)
+            filename = filename.replace(assets_dir, "")
+            filename = filename.replace("\\", "/")
+            if filename[0] == '/':
+                filename = filename[1:]
+            dir_structure_file.write("%s\n" % filename)
+    dir_structure_file.close()
+
     # strings.xml
     replace_in_file(os.path.join(project_dir, "app/src/main/res/values/strings.xml"), "%APP_NAME%", ctx.target)
 

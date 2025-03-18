@@ -14,11 +14,14 @@
 
 namespace anki {
 
-// Forward
-extern StringCVar g_dataPathsCVar;
-
 /// @addtogroup resource
 /// @{
+
+inline StringCVar
+	g_dataPathsCVar("Rsrc", "DataPaths", ".",
+					"The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive letters in "
+					"Windows). After a path you can add an optional | and what follows it is a number of words to include or exclude paths. "
+					"eg. my_path|include_this,include_that,+exclude_this");
 
 /// Resource filesystem file. An interface that abstracts the resource file.
 class ResourceFile
@@ -121,6 +124,7 @@ private:
 		ResourceStringList m_files; ///< Files inside the directory.
 		ResourceString m_path; ///< A directory or an archive.
 		Bool m_isArchive = false;
+		Bool m_isSpecial = false;
 
 		Path() = default;
 
@@ -138,6 +142,7 @@ private:
 			m_files = std::move(b.m_files);
 			m_path = std::move(b.m_path);
 			m_isArchive = b.m_isArchive;
+			m_isSpecial = b.m_isSpecial;
 			return *this;
 		}
 	};

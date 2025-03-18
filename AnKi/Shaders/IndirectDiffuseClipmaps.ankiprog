@@ -258,7 +258,7 @@ SamplerState g_linearAnyRepeatSampler : register(s0);
 	UVec2 noiseTexSize;
 	g_blueNoiseTex.GetDimensions(noiseTexSize.x, noiseTexSize.y);
 	Vec3 noise3 = g_blueNoiseTex[svDispatchThreadId % noiseTexSize];
-	noise3 = animateBlueNoise2(noise3, g_globalRendererConstants.m_frame);
+	noise3 = animateBlueNoise(noise3, g_globalRendererConstants.m_frame);
 
 	F32 noise = noise3.x;
 

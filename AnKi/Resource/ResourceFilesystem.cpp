@@ -5,7 +5,6 @@
 
 #include <AnKi/Resource/ResourceFilesystem.h>
 #include <AnKi/Util/Filesystem.h>
-#include <AnKi/Util/CVarSet.h>
 #include <AnKi/Util/Tracer.h>
 #include <ZLib/contrib/minizip/unzip.h>
 #if ANKI_OS_ANDROID
@@ -13,11 +12,6 @@
 #endif
 
 namespace anki {
-
-StringCVar g_dataPathsCVar("Rsrc", "DataPaths", ".",
-						   "The engine loads assets only in from these paths. Separate them with : (it's smart enough to identify drive letters in "
-						   "Windows). After a path you can add an optional | and what follows it is a number of words to include or exclude paths. "
-						   "eg. my_path|include_this,include_that,+exclude_this");
 
 static Error tokenizePath(CString path, ResourceString& actualPath, ResourceStringList& includedWords, ResourceStringList& excludedWords)
 {
@@ -282,6 +276,9 @@ Error ResourceFilesystem::init()
 #if ANKI_OS_ANDROID
 	// Add the external storage
 	ANKI_CHECK(addNewPath(g_androidApp->activity->externalDataPath, {}, {}));
+
+	// ...and then the apk assets
+	ANKI_CHECK(addNewPath(".apk assets", {}, {}));
 #endif
 
 	return Error::kNone;
@@ -367,6 +364,30 @@ Error ResourceFilesystem::addNewPath(CString filepath, const ResourceStringList&
 
 		path.m_isArchive = true;
 	}
+#if ANKI_OS_ANDROID
+	else if(filepath == ".apk assets")
+	{
+		File dirStructureFile;
+		ANKI_CHECK(dirStructureFile.open("DirStructure.txt", FileOpenFlag::kRead | FileOpenFlag::kSpecial));
+
+		ResourceString fileTxt;
+		ANKI_CHECK(dirStructureFile.readAllText(fileTxt));
+
+		ResourceStringList lines;
+		lines.splitString(fileTxt, '\n');
+
+		for(const auto& line : lines)
+		{
+			if(includePath(line))
+			{
+				path.m_files.pushBack(line);
+				++fileCount;
+			}
+		}
+
+		path.m_isSpecial = true;
+	}
+#endif
 	else
 	{
 		// It's simple directory
@@ -427,6 +448,7 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 
 Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, ResourceFile*& rfile) const
 {
+	ANKI_RESOURCE_LOGV("Opening resource file: %s", filename.cstr());
 	rfile = nullptr;
 
 	// Search for the fname in reverse order
@@ -450,11 +472,25 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 			else
 			{
 				ResourceString newFname;
-				newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
+				if(!p.m_isSpecial)
+				{
+					newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
+				}
+				else
+				{
+					newFname = filename;
+				}
 
 				CResourceFile* file = newInstance<CResourceFile>(ResourceMemoryPool::getSingleton());
 				rfile = file;
-				ANKI_CHECK(file->m_file.open(newFname, FileOpenFlag::kRead));
+
+				FileOpenFlag openFlags = FileOpenFlag::kRead;
+				if(p.m_isSpecial)
+				{
+					openFlags |= FileOpenFlag::kSpecial;
+				}
+
+				ANKI_CHECK(file->m_file.open(newFname, openFlags));
 
 #if 0
 				printf("Opening asset %s\n", &newFname[0]);
@@ -468,22 +504,22 @@ Error ResourceFilesystem::openFileInternal(const ResourceFilename& filename, Res
 		}
 	} // end for all paths
 
-	// File not found? On Win/Linux try to find it outside the resource dirs. On Android try the archive
+#if !ANKI_OS_ANDROID
+	// File not found? On Win/Linux try to find it outside the resource dirs
 	if(!rfile)
 	{
 		CResourceFile* file = newInstance<CResourceFile>(ResourceMemoryPool::getSingleton());
 		rfile = file;
-
-		FileOpenFlag openFlags = FileOpenFlag::kRead;
-#if ANKI_OS_ANDROID
-		openFlags |= FileOpenFlag::kSpecial;
-#endif
-		ANKI_CHECK(file->m_file.open(filename, openFlags));
-
-#if !ANKI_OS_ANDROID
+		ANKI_CHECK(file->m_file.open(filename, FileOpenFlag::kRead));
 		ANKI_RESOURCE_LOGW("Loading resource outside the resource paths/archives. This is only OK for tools and debugging: %s", filename.cstr());
-#endif
 	}
+#else
+	if(!rfile)
+	{
+		ANKI_RESOURCE_LOGE("Couldn't find file: %s", filename.cstr());
+		return Error::kFileNotFound;
+	}
+#endif
 
 	return Error::kNone;
 }

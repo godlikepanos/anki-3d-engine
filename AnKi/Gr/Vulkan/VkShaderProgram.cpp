@@ -398,6 +398,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.pGroups = &groups[0];
 		ci.maxPipelineRayRecursionDepth = inf.m_rayTracingShaders.m_maxRecursionDepth;
 		ci.layout = m_pplineLayout->getHandle();
+		if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::kKHR_pipeline_executable_properties))
+		{
+			ci.flags |= VK_PIPELINE_CREATE_CAPTURE_STATISTICS_BIT_KHR;
+		}
 
 		{
 			ANKI_TRACE_SCOPED_EVENT(VkPipelineCreate);
@@ -420,6 +424,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		void* mapped = m_rt.m_allHandlesBuff->map(0, kMaxPtrSize, BufferMapAccessBit::kWrite);
 		memcpy(mapped, m_rt.m_allHandles.getBegin(), m_rt.m_allHandles.getSizeInBytes());
 		m_rt.m_allHandlesBuff->unmap();
+
+		getGrManagerImpl().printPipelineShaderInfo(m_rt.m_ppline, getName());
 	}
 
 	// Get shader sizes and a few other things

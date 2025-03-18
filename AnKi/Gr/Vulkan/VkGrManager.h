@@ -176,8 +176,7 @@ private:
 
 	VkDebugUtilsMessengerEXT m_debugUtilsMessager = VK_NULL_HANDLE;
 
-	mutable File m_shaderStatsFile;
-	mutable SpinLock m_shaderStatsFileMtx;
+	mutable SpinLock m_shaderStatsMtx;
 
 	/// @name Surface_related
 	/// @{

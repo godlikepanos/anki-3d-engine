@@ -88,6 +88,11 @@ public:
 		m_verbosityEnabled = enable;
 	}
 
+	Bool verbosityEnabled() const
+	{
+		return m_verbosityEnabled;
+	}
+
 private:
 	class Handler
 	{

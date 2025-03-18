@@ -367,6 +367,8 @@ void GraphicsPipelineFactory::flushState(GraphicsStateTracker& state, VkCommandB
 
 		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(getVkDevice(), PipelineCache::getSingleton().m_cacheHandle, 1, &ci, nullptr, &pso));
 
+		getGrManagerImpl().printPipelineShaderInfo(pso, prog.getName());
+
 #if ANKI_PLATFORM_MOBILE
 		if(PipelineCache::getSingleton().m_globalCreatePipelineMtx)
 		{

@@ -1480,29 +1480,37 @@ void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, U64
 
 Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString name, U64 hash) const
 {
-	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties))
+	if(!!(m_extensions & VulkanExtensions::kKHR_pipeline_executable_properties) && Logger::getSingleton().verbosityEnabled())
 	{
-		GrStringList log;
-
 		VkPipelineInfoKHR pplineInf = {};
 		pplineInf.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_KHR;
 		pplineInf.pipeline = ppline;
 		U32 executableCount = 0;
 		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
 		GrDynamicArray<VkPipelineExecutablePropertiesKHR> executableProps;
-		executableProps.resize(executableCount);
-		for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
-		{
-			prop = {};
-			prop.sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_PROPERTIES_KHR;
-		}
-		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, &executableProps[0]));
 
-		log.pushBackSprintf("Pipeline info \"%s\" (0x%016" PRIx64 "): ", name.cstr(), hash);
+		LockGuard lock(m_shaderStatsMtx); // Lock so that all messages appear together
+
+		ANKI_VK_LOGV("Pipeline info \"%s\" (0x%016" PRIx64 "):", name.cstr(), hash);
+		if(executableCount > 0)
+		{
+			executableProps.resize(executableCount);
+			for(VkPipelineExecutablePropertiesKHR& prop : executableProps)
+			{
+				prop = {};
+				prop.sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_PROPERTIES_KHR;
+			}
+			ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, &executableProps[0]));
+		}
+		else
+		{
+			ANKI_VK_LOGV("\tNo executable count!!!");
+		}
+
 		for(U32 i = 0; i < executableCount; ++i)
 		{
 			const VkPipelineExecutablePropertiesKHR& p = executableProps[i];
-			log.pushBackSprintf("%s: ", p.description);
+			ANKI_VK_LOGV("\tDescription: %s, stages: 0x%X:", p.description, p.stages);
 
 			// Get stats
 			VkPipelineExecutableInfoKHR exeInf = {};
@@ -1527,33 +1535,24 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 				switch(ss.format)
 				{
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_BOOL32_KHR:
-					log.pushBackSprintf("%s: %u, ", ss.name, ss.value.b32);
+					ANKI_VK_LOGV("\t\t%s: %u", ss.name, ss.value.b32);
 					break;
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_INT64_KHR:
-					log.pushBackSprintf("%s: %" PRId64 ", ", ss.name, ss.value.i64);
+					ANKI_VK_LOGV("\t\t%s: %" PRId64, ss.name, ss.value.i64);
 					break;
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_UINT64_KHR:
-					log.pushBackSprintf("%s: %" PRIu64 ", ", ss.name, ss.value.u64);
+					ANKI_VK_LOGV("\t\t%s: %" PRIu64, ss.name, ss.value.u64);
 					break;
 				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_FLOAT64_KHR:
-					log.pushBackSprintf("%s: %f, ", ss.name, ss.value.f64);
+					ANKI_VK_LOGV("\t\t%s: %f", ss.name, ss.value.f64);
 					break;
 				default:
 					ANKI_ASSERT(0);
 				}
 			}
 
-			log.pushBackSprintf("Subgroup size: %u", p.subgroupSize);
-
-			if(i < executableCount - 1)
-			{
-				log.pushBack(", ");
-			}
+			ANKI_VK_LOGV("\t\tSubgroup size: %u", p.subgroupSize);
 		}
-
-		GrString finalLog;
-		log.join("", finalLog);
-		ANKI_VK_LOGV("%s", finalLog.cstr());
 	}
 
 	return Error::kNone;

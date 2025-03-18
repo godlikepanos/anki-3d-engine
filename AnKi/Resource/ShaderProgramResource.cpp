@@ -191,8 +191,15 @@ ShaderProgramResourceVariant* ShaderProgramResource::createNewVariant(const Shad
 	if(!!(info.m_shaderTypes & (ShaderTypeBit::kAllGraphics | ShaderTypeBit::kCompute)))
 	{
 		// Create the program name
-		String progName;
-		getFilepathFilename(getFilename(), progName);
+		String fname;
+		getFilepathFilename(getFilename(), fname);
+
+		ResourceString progName = fname.cstr();
+		for(ShaderType shaderType : EnumBitsIterable<ShaderType, ShaderTypeBit>(info.m_shaderTypes))
+		{
+			progName += "_";
+			progName += info.m_techniqueNames[shaderType].getBegin();
+		}
 
 		ShaderProgramInitInfo progInf(progName);
 		Array<ShaderPtr, U32(ShaderType::kCount)> shaderRefs; // Just for refcounting
