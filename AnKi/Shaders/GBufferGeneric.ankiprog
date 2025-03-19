@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki mutator ANKI_VELOCITY 0 1
 #pragma anki mutator ANKI_BONES 0 1
 #pragma anki mutator DIFFUSE_TEX 0 1
@@ -103,13 +105,13 @@
 #pragma anki member U32 m_emissiveTex
 #pragma anki member U32 m_heightTex
 
-#pragma anki member RVec4 m_diffuseScale
-#pragma anki member RF32 m_roughnessScale
-#pragma anki member RF32 m_metalnessScale
-#pragma anki member RVec3 m_specularScale
-#pragma anki member RVec3 m_emissionScale
-#pragma anki member RF32 m_heightmapScale
-#pragma anki member RF32 m_subsurface
+#pragma anki member Vec4 m_diffuseScale
+#pragma anki member F32 m_roughnessScale
+#pragma anki member F32 m_metalnessScale
+#pragma anki member Vec3 m_specularScale
+#pragma anki member Vec3 m_emissionScale
+#pragma anki member F32 m_heightmapScale
+#pragma anki member F32 m_subsurface
 
 #pragma anki struct_end
 
@@ -137,7 +139,7 @@ struct VertOut
 #endif
 
 #if GBUFFER
-	RVec3 m_normal : NORMAL;
+	HVec3 m_normal : NORMAL;
 #endif
 
 #if VISUALIZE_MESHLETS
@@ -165,7 +167,7 @@ struct MeshPerVertOut
 #endif
 
 #if GBUFFER
-	RVec3 m_normal : NORMAL;
+	HVec3 m_normal : NORMAL;
 #endif
 };
 
@@ -195,7 +197,7 @@ Mat3x4_2 loadBoneTransforms(UnpackedMeshVertex vert, U32 boneTransformsOffset, U
 	return g_gpuScene.Load<Mat3x4_2>(byteOffset);
 }
 
-void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos, inout Vec3 prevPos, inout RVec3 normal)
+void skinning(UnpackedMeshVertex vert, U32 boneTransformsOffset, inout Vec3 pos, inout Vec3 prevPos, inout Vec3 normal)
 {
 	Mat3x4_2 mats = loadBoneTransforms(vert, boneTransformsOffset, 0);
 
@@ -486,8 +488,8 @@ void main(
 #		endif
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, constantsOffset);
-	const RVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(g_globalSampler, vertInput.m_uv);
-	if(diffColorA.a * localConstants.m_diffuseScale.a < 0.5f)
+	const HVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(g_globalSampler, vertInput.m_uv);
+	if(diffColorA.a * F16(localConstants.m_diffuseScale.a) < 0.5f)
 	{
 		discard;
 	}
@@ -520,45 +522,45 @@ GBufferPixelOut main(
 	ANKI_MAYBE_UNUSED(uv);
 
 #		if DIFFUSE_TEX
-	const RVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(g_globalSampler, uv) * localConstants.m_diffuseScale;
-	const RVec3 diffColor = diffColorA.rgb;
+	const HVec4 diffColorA = BINDLESS(localConstants.m_diffuseTex).Sample(g_globalSampler, uv) * HVec4(localConstants.m_diffuseScale);
+	const HVec3 diffColor = diffColorA.rgb;
 #			if REALLY_ALPHA_TEST
-	if(diffColorA.a < 0.5f)
+	if(diffColorA.a < 0.5)
 	{
 		discard;
 	}
 #			endif
 #		else
-	const RVec3 diffColor = localConstants.m_diffuseScale;
+	const HVec3 diffColor = HVec4(localConstants.m_diffuseScale);
 #		endif
 
 #		if SPECULAR_TEX
-	const RVec3 specColor = BINDLESS(localConstants.m_specularTex).Sample(g_globalSampler, uv).rgb * localConstants.m_specularScale;
+	const HVec3 specColor = BINDLESS(localConstants.m_specularTex).Sample(g_globalSampler, uv).rgb * HVec3(localConstants.m_specularScale);
 #		else
-	const RVec3 specColor = localConstants.m_specularScale;
+	const HVec3 specColor = localConstants.m_specularScale;
 #		endif
 
 #		if ROUGHNESS_METALNESS_TEX
-	const RVec3 comp = BINDLESS(localConstants.m_roughnessMetalnessTex).Sample(g_globalSampler, uv).rgb;
-	const RF32 roughness = comp.g * localConstants.m_roughnessScale;
-	const RF32 metallic = comp.b * localConstants.m_metalnessScale;
+	const HVec3 comp = BINDLESS(localConstants.m_roughnessMetalnessTex).Sample(g_globalSampler, uv).rgb;
+	const F16 roughness = comp.g * F16(localConstants.m_roughnessScale);
+	const F16 metallic = comp.b * F16(localConstants.m_metalnessScale);
 #		else
-	const RF32 roughness = localConstants.m_roughnessScale;
-	const RF32 metallic = localConstants.m_metalnessScale;
+	const F16 roughness = localConstants.m_roughnessScale;
+	const F16 metallic = localConstants.m_metalnessScale;
 #		endif
 
 #		if NORMAL_TEX
-	const RVec3 nAtTangentspace = normalize((BINDLESS(localConstants.m_normalTex).Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
+	const HVec3 nAtTangentspace = normalize((BINDLESS(localConstants.m_normalTex).Sample(g_globalSampler, uv).rgb - 0.5) * 2.0);
 	const Vec3 viewDir = -normalize(g_globalConstants.m_cameraTransform.getTranslationPart() - vertInput.m_worldPos);
-	const RVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertInput.m_normal));
+	const HVec3 normal = perturbNormal(nAtTangentspace, viewDir, uv, normalize(vertInput.m_normal));
 #		else
-	const RVec3 normal = normalize(vertInput.m_normal);
+	const HVec3 normal = normalize(vertInput.m_normal);
 #		endif
 
 #		if EMISSIVE_TEX
-	const RVec3 emission = BINDLESS(localConstants.m_emissiveTex).Sample(g_globalSampler, uv).rgb * localConstants.m_emissionScale;
+	const HVec3 emission = BINDLESS(localConstants.m_emissiveTex).Sample(g_globalSampler, uv).rgb * HVec3(localConstants.m_emissionScale);
 #		else
-	const RVec3 emission = localConstants.m_emissionScale;
+	const HVec3 emission = localConstants.m_emissionScale;
 #		endif
 
 #		if ANKI_VELOCITY || ANKI_BONES
@@ -571,7 +573,7 @@ GBufferPixelOut main(
 	const Vec2 velocity = Vec2(1.0, 1.0);
 #		endif
 
-	GbufferInfo<RF32> g;
+	GbufferInfo<F16> g;
 	g.m_diffuse = diffColor;
 	g.m_normal = normal;
 	g.m_f0 = specColor;
@@ -590,22 +592,22 @@ GBufferPixelOut main(
 	switch(meshletIdx)
 	{
 	case 0:
-		g.m_diffuse = Vec3(1.0f, 0.0f, 0.0f);
+		g.m_diffuse = HVec3(1.0, 0.0, 0.0);
 		break;
 	case 1:
-		g.m_diffuse = Vec3(0.0f, 1.0f, 0.0f);
+		g.m_diffuse = HVec3(0.0, 1.0, 0.0);
 		break;
 	case 2:
-		g.m_diffuse = Vec3(0.0f, 0.0f, 1.0f);
+		g.m_diffuse = HVec3(0.0, 0.0, 1.0);
 		break;
 	case 3:
-		g.m_diffuse = Vec3(1.0f, 1.0f, 0.0f);
+		g.m_diffuse = HVec3(1.0, 1.0, 0.0);
 		break;
 	case 4:
-		g.m_diffuse = Vec3(1.0f, 0.0f, 1.0f);
+		g.m_diffuse = HVec3(1.0, 0.0, 1.0);
 		break;
 	case 5:
-		g.m_diffuse = Vec3(0.0f, 1.0f, 1.0f);
+		g.m_diffuse = HVec3(0.0, 1.0, 1.0);
 		break;
 	}
 #		endif
@@ -651,7 +653,7 @@ GBufferPixelOut main(
 	const Vec2 uv = vert0.m_uv * bary.x + vert1.m_uv * bary.y + vert2.m_uv * bary.z;
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, g_gpuSceneRenderable.m_constantsOffset);
-	const RVec4 diffColorA =
+	const HVec4 diffColorA =
 		getBindlessTexture2DVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, 0.0) * localConstants.m_diffuseScale;
 
 	if(diffColorA.a < 1.0)
@@ -709,28 +711,29 @@ GBufferPixelOut main(
 
 	// Metallness
 #		if ROUGHNESS_METALNESS_TEX
-	const RVec3 comp = getBindlessTexture2DVec4(localConstants.m_roughnessMetalnessTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
-	const RF32 metallic = comp.b * localConstants.m_metalnessScale;
+	const HVec3 comp =
+		getBindlessTextureNonUniformIndex2DVec4(localConstants.m_roughnessMetalnessTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
+	const F16 metallic = comp.b * F16(localConstants.m_metalnessScale);
 #		else
-	const RF32 metallic = localConstants.m_metalnessScale;
+	const F16 metallic = localConstants.m_metalnessScale;
 #		endif
 
 	// Diffuse
 #		if DIFFUSE_TEX
-	RVec3 diffColor = getBindlessTexture2DVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
+	HVec3 diffColor = getBindlessTextureNonUniformIndex2DVec4(localConstants.m_diffuseTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).xyz;
 #		else
-	RVec3 diffColor = 1.0;
+	HVec3 diffColor = 1.0;
 #		endif
-	diffColor *= localConstants.m_diffuseScale;
-	payload.m_diffuseColor = diffColor * (1.0 - metallic);
+	diffColor *= HVec4(localConstants.m_diffuseScale);
+	payload.m_diffuseColor = diffColor * (1.0h - metallic);
 
 	// Emissive
 #		if EMISSIVE_TEX
-	RVec3 emission = getBindlessTexture2DVec4(localConstants.m_emissiveTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).rgb;
+	HVec3 emission = getBindlessTextureNonUniformIndex2DVec4(localConstants.m_emissiveTex).SampleLevel(g_globalSampler, uv, payload.m_textureLod).rgb;
 #		else
-	RVec3 emission = 1.0;
+	HVec3 emission = 1.0;
 #		endif
-	emission *= localConstants.m_emissionScale;
+	emission *= HVec3(localConstants.m_emissionScale);
 	payload.m_emission = emission;
 
 	// Normal

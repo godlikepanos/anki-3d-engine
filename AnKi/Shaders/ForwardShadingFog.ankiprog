@@ -3,15 +3,17 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki technique ForwardLegacy vert pixel
 
 #include <AnKi/Shaders/ForwardShadingCommon.hlsl>
 #include <AnKi/Shaders/Functions.hlsl>
 
 #pragma anki struct AnKiLocalConstants
-#pragma anki member RVec3 m_fogColor
-#pragma anki member RF32 m_fogAlphaScale
-#pragma anki member RF32 m_fogDistanceOfMaxThikness
+#pragma anki member Vec3 m_fogColor
+#pragma anki member F32 m_fogAlphaScale
+#pragma anki member F32 m_fogDistanceOfMaxThikness
 #pragma anki struct_end
 
 struct VertIn

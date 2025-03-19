@@ -17,11 +17,11 @@ using namespace anki;
 static const char* kUsage = R"(Dump the shader binary to stdout
 Usage: %s [options] input_shader_program_binary
 Options:
--stats     : Print performance statistics for all shaders. By default it doesn't
--no-binary : Don't print the binary
--no-glsl   : Don't print GLSL
--spirv     : Print SPIR-V
--v         : Verbose log
+-stats <0|1>  : Print performance statistics for all shaders. Default 0
+-binary <0|1> : Print the whole shader program binary. Default 1
+-glsl <0|1>   : Print GLSL. Default 1
+-spirv <0|1>  : Print SPIR-V. Default 0
+-v            : Verbose log
 )";
 
 static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& dumpBinary, Bool& glsl, Bool& spirv, String& filename)
@@ -42,25 +42,97 @@ static Error parseCommandLineArgs(WeakArray<char*> argv, Bool& dumpStats, Bool& 
 	{
 		if(CString(argv[i]) == "-stats")
 		{
-			dumpStats = true;
+			++i;
+			if(i >= argv.getSize())
+			{
+				return Error::kUserData;
+			}
+
+			if(CString(argv[i]) == "1")
+			{
+				dumpStats = true;
+			}
+			else if(CString(argv[i]) == "0")
+			{
+				dumpStats = false;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
 		}
-		else if(CString(argv[i]) == "-no-binary")
+		else if(CString(argv[i]) == "-binary")
 		{
-			dumpBinary = false;
-			dumpStats = true;
+			++i;
+			if(i >= argv.getSize())
+			{
+				return Error::kUserData;
+			}
+
+			if(CString(argv[i]) == "1")
+			{
+				dumpBinary = true;
+			}
+			else if(CString(argv[i]) == "0")
+			{
+				dumpBinary = false;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
 		}
-		else if(CString(argv[i]) == "-no-glsl")
+		else if(CString(argv[i]) == "-glsl")
 		{
-			glsl = false;
+			++i;
+			if(i >= argv.getSize())
+			{
+				return Error::kUserData;
+			}
+
+			if(CString(argv[i]) == "1")
+			{
+				glsl = true;
+			}
+			else if(CString(argv[i]) == "0")
+			{
+				glsl = false;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
 		}
 		else if(CString(argv[i]) == "-spirv")
 		{
-			spirv = true;
+			++i;
+			if(i >= argv.getSize())
+			{
+				return Error::kUserData;
+			}
+
+			if(CString(argv[i]) == "1")
+			{
+				spirv = true;
+			}
+			else if(CString(argv[i]) == "0")
+			{
+				spirv = false;
+			}
+			else
+			{
+				return Error::kUserData;
+			}
 		}
 		else if(CString(argv[i]) == "-v")
 		{
 			Logger::getSingleton().enableVerbosity(true);
 		}
+	}
+
+	if(spirv || glsl)
+	{
+		dumpBinary = true;
 	}
 
 	return Error::kNone;

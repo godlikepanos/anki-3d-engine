@@ -12,11 +12,11 @@
 
 struct [raypayload] RtMaterialFetchRayPayload // TODO make it FP16 when you change the GBufferGeneric.ankiprog
 {
-	Vec3 m_diffuseColor : write(closesthit, miss): read(caller);
-	Vec3 m_worldNormal : write(closesthit, miss): read(caller);
-	Vec3 m_emission : write(closesthit, miss): read(caller);
+	HVec3 m_diffuseColor : write(closesthit, miss): read(caller);
+	HVec3 m_worldNormal : write(closesthit, miss): read(caller);
+	HVec3 m_emission : write(closesthit, miss): read(caller);
+	F16 m_textureLod : write(caller): read(closesthit);
 	F32 m_rayT : write(closesthit, miss): read(caller);
-	F32 m_textureLod : write(caller): read(closesthit);
 };
 
 // Have a common resouce interface for all shaders. It should be compatible between all ray shaders in DX and VK

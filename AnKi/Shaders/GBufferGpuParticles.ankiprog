@@ -3,17 +3,19 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki technique GBuffer vert pixel
 
 #include <AnKi/Shaders/MaterialShadersCommon.hlsl>
 
 #pragma anki struct AnKiLocalConstants
-#pragma anki member RVec3 m_diffColor
-#pragma anki member RF32 m_roughness
-#pragma anki member RVec3 m_specColor
-#pragma anki member RF32 m_metallic
-#pragma anki member RVec3 m_initialEmission
-#pragma anki member RVec3 m_finalEmission
+#pragma anki member Vec3 m_diffColor
+#pragma anki member F32 m_roughness
+#pragma anki member Vec3 m_specColor
+#pragma anki member F32 m_metallic
+#pragma anki member Vec3 m_initialEmission
+#pragma anki member Vec3 m_finalEmission
 #pragma anki struct_end
 
 struct VertIn
@@ -25,7 +27,7 @@ struct VertIn
 struct VertOut
 {
 	nointerpolation Vec2 m_velocity : VELOCITY;
-	nointerpolation RF32 m_lifeFactor : LIFE_FACTOR;
+	nointerpolation F32 m_lifeFactor : LIFE_FACTOR;
 	nointerpolation U32 m_constantsOffset : CONSTANTS_OFFSET;
 	Vec4 m_svPosition : SV_POSITION;
 };
@@ -79,7 +81,7 @@ GBufferPixelOut main(VertOut input)
 	GBufferPixelOut output;
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, input.m_constantsOffset);
 
-	GbufferInfo<RF32> g;
+	GbufferInfo<F16> g;
 	g.m_diffuse = localConstants.m_diffColor;
 
 	const Mat3x4 camTrf = g_globalConstants.m_cameraTransform;

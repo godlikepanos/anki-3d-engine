@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki technique RtMaterialFetch miss
 
 #include <AnKi/Shaders/RtMaterialFetch.hlsl>

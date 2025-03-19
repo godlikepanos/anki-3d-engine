@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
@@ -19,7 +21,7 @@ struct VertIn
 struct VertOut
 {
 	nointerpolation U32 m_constantsOffset : UNIS_OFFSET;
-	nointerpolation RF32 m_alpha : ALPHA;
+	nointerpolation F32 m_alpha : ALPHA;
 	Vec2 m_uv : TEXCOORD;
 	Vec3 m_worldPos : WORLD_POS;
 	Vec4 m_svPosition : SV_POSITION;
@@ -76,17 +78,17 @@ PixelOut main(VertOut input)
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
 #	if ANIMATED_TEXTURE == 1
-	RVec4 texCol = readAnimatedTextureRgba(getBindlessTexture2DArrayVec4(localConstants.m_diffuseMap), g_globalSampler,
-										   localConstants.m_animationPeriod, input.m_uv, g_globalRendererConstants.m_time);
+	Vec4 texCol = readAnimatedTextureRgba(getBindlessTexture2DArrayVec4(localConstants.m_diffuseMap), g_globalSampler,
+										  localConstants.m_animationPeriod, input.m_uv, g_globalRendererConstants.m_time);
 #	else
-	RVec4 texCol = getBindlessTexture2DVec4(localConstants.m_diffuseMap).Sample(g_globalSampler, input.m_uv);
+	Vec4 texCol = getBindlessTexture2DVec4(localConstants.m_diffuseMap).Sample(g_globalSampler, input.m_uv);
 #	endif
 
 #	if LIGHT
 	texCol.rgb = computeLightColorLow(texCol.rgb, input.m_worldPos, input.m_svPosition);
 #	endif
 
-	RVec4 colScale = localConstants.m_colorScale;
+	Vec4 colScale = localConstants.m_colorScale;
 	colScale.a *= input.m_alpha;
 	particleAlpha(texCol, colScale, localConstants.m_colorBias, output);
 

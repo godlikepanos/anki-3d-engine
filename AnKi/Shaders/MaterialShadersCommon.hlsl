@@ -49,7 +49,7 @@ ANKI_FAST_CONSTANTS(Consts, g_consts)
 
 SamplerState g_linearAnyClampSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_LINEAR_CLAMP_SAMPLER));
 Texture2D g_gbufferDepthTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_SCENE_DEPTH));
-Texture3D<RVec4> g_lightVol : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_LIGHT_VOLUME));
+Texture3D<Vec4> g_lightVol : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_LIGHT_VOLUME));
 SamplerComparisonState g_shadowSampler : register(ANKI_REG(s, ANKI_MATERIAL_REGISTER_SHADOW_SAMPLER));
 
 ConstantBuffer<GlobalRendererConstants> g_globalRendererConstants : register(ANKI_REG(b, ANKI_MATERIAL_REGISTER_CLUSTER_SHADING_CONSTANTS));
@@ -63,9 +63,9 @@ Texture2D<Vec4> g_shadowAtlasTex : register(ANKI_REG(t, ANKI_MATERIAL_REGISTER_S
 
 struct GBufferPixelOut
 {
-	RVec4 m_color0 : SV_TARGET0;
-	RVec4 m_color1 : SV_TARGET1;
-	RVec4 m_color2 : SV_TARGET2;
+	HVec4 m_color0 : SV_TARGET0;
+	HVec4 m_color1 : SV_TARGET1;
+	HVec4 m_color2 : SV_TARGET2;
 	Vec2 m_color3 : SV_TARGET3;
 };
 

@@ -19,15 +19,15 @@
 #if ANKI_PIXEL_SHADER
 struct PixelOut
 {
-	RVec4 m_color : SV_TARGET0;
+	Vec4 m_color : SV_TARGET0;
 };
 
 void packGBuffer(Vec4 color, out PixelOut output)
 {
-	output.m_color = RVec4(color.rgb, color.a);
+	output.m_color = Vec4(color.rgb, color.a);
 }
 
-RVec4 readAnimatedTextureRgba(Texture2DArray<Vec4> tex, SamplerState sampl, F32 period, Vec2 uv, F32 time)
+Vec4 readAnimatedTextureRgba(Texture2DArray<Vec4> tex, SamplerState sampl, F32 period, Vec2 uv, F32 time)
 {
 	Vec2 texSize;
 	F32 layerCount;
@@ -56,12 +56,12 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const RF32 att = computeAttenuationFactor<RF32>(light.m_radius, frag2Light);
+		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 
-		RF32 shadow = 1.0;
+		F32 shadow = 1.0;
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			shadow = computeShadowFactorPointLight<RF32>(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
+			shadow = computeShadowFactorPointLight<F32>(light, frag2Light, g_shadowAtlasTex, g_shadowSampler);
 		}
 
 		outColor += diffC * (att * shadow);
@@ -75,16 +75,16 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
 		const Vec3 frag2Light = light.m_position - worldPos;
-		const RF32 att = computeAttenuationFactor<RF32>(light.m_radius, frag2Light);
+		const F32 att = computeAttenuationFactor<F32>(light.m_radius, frag2Light);
 
 		const Vec3 l = normalize(frag2Light);
 
-		const F32 spot = computeSpotFactor<RF32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
+		const F32 spot = computeSpotFactor<F32>(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
 		F32 shadow = 1.0;
 		[branch] if(light.m_shadow != 0u)
 		{
-			shadow = computeShadowFactorSpotLight<RF32>(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
+			shadow = computeShadowFactorSpotLight<F32>(light, worldPos, g_shadowAtlasTex, g_shadowSampler);
 		}
 
 		outColor += diffC * (att * spot * shadow);
@@ -94,7 +94,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 }
 
 // Just read the light color from the vol texture
-RVec3 computeLightColorLow(RVec3 diffCol, RVec3 worldPos, Vec4 svPosition)
+Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos, Vec4 svPosition)
 {
 	ANKI_MAYBE_UNUSED(worldPos);
 
@@ -103,16 +103,16 @@ RVec3 computeLightColorLow(RVec3 diffCol, RVec3 worldPos, Vec4 svPosition)
 	const F32 w = linearDepth * (F32(g_globalRendererConstants.m_zSplitCount) / F32(g_globalRendererConstants.m_lightVolumeLastZSplit + 1u));
 	const Vec3 uvw = Vec3(uv, w);
 
-	const RVec3 light = g_lightVol.SampleLevel(g_linearAnyClampSampler, uvw, 0.0).rgb;
+	const Vec3 light = g_lightVol.SampleLevel(g_linearAnyClampSampler, uvw, 0.0).rgb;
 	return diffuseLobe(diffCol) * light;
 }
 
-void particleAlpha(RVec4 color, RVec4 scaleColor, RVec4 biasColor, out PixelOut output)
+void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor, out PixelOut output)
 {
 	packGBuffer(color * scaleColor + biasColor, output);
 }
 
-void fog(RVec3 color, RF32 fogAlphaScale, RF32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out PixelOut output)
+void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpace, Vec2 svPosition, out PixelOut output)
 {
 	const Vec2 screenSize = 1.0 / g_globalRendererConstants.m_renderingSize;
 

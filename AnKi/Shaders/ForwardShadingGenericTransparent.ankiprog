@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki 16bit
+
 #pragma anki mutator TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
@@ -16,8 +18,8 @@
 
 #pragma anki struct AnKiLocalConstants
 #pragma anki member U32 m_texture
-#pragma anki member RVec4 m_colorScale
-#pragma anki member RVec4 m_colorBias
+#pragma anki member Vec4 m_colorScale
+#pragma anki member Vec4 m_colorBias
 #pragma anki struct_end
 
 struct VertIn
@@ -159,7 +161,7 @@ PixelOut main(VertOut input)
 
 	const AnKiLocalConstants localConstants = loadAnKiLocalConstants(g_gpuScene, WaveReadLaneFirst(input.m_constantsOffset));
 
-	output.m_color = RVec4(1.0, 1.0, 1.0, 1.0);
+	output.m_color = Vec4(1.0, 1.0, 1.0, 1.0);
 
 #	if TEXTURE == 1
 	output.m_color = getBindlessTexture2DVec4(localConstants.m_texture).Sample(g_globalSampler, input.m_uv);
